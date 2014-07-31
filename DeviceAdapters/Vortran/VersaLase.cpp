@@ -34,6 +34,7 @@
 #include <sstream>
 
 const char* DEVICE_NAME = "VLT_VersaLase";
+int lasersPresent[MAX_LASERS];
 
 
 //Required Micro-Manager API Functions&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
@@ -133,275 +134,310 @@ void VersaLase::GetName(char* Name) const
 
 int VersaLase::Initialize()
 {
-     int nRet=0;
-     std::string answer;
-	 CPropertyAction* pAct;
+	int nRet=0;
+	std::string answer;
+	CPropertyAction* pAct;
+	std::ostringstream command;
+	std::vector<std::string> gui1Tokens;
+	std::string gui1Delims="=*";
+	int ret;
 
-     pAct = new CPropertyAction (this, &VersaLase::OnPulPwrA);
-     nRet = CreateProperty("LASER_A_DigitalPeakPowerSetting", "0.00", MM::Float, false, pAct);
-     if (DEVICE_OK != nRet)
-          return nRet;
-     pAct = new CPropertyAction (this, &VersaLase::OnPowerA);
-     nRet = CreateProperty("LASER_A_PowerSetting", "0.00", MM::Float, false, pAct);
-     if (DEVICE_OK != nRet)
-          return nRet;
-     pAct = new CPropertyAction (this, &VersaLase::OnLaserOnOffA);
-     CreateProperty("LASER_A_LaserEmission", "OFF", MM::String, false, pAct);
+	command << "?gui1"; //?GUI1=1*1*1*1*FV*PV => 7 tokens
+	ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+	if (ret != DEVICE_OK) return ret;
+	CDeviceUtils::SleepMs(50);
+	ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+	ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+	PurgeComPort(port_.c_str());
+	if (ret != DEVICE_OK) return ret;
 
-     std::vector<std::string> commandsA;
-     	  commandsA.push_back("OFF");
-     	  commandsA.push_back("ON");
-     SetAllowedValues("LASER_A_LaserEmission", commandsA);
+	VersaLase::Tokenize(answer, gui1Tokens, gui1Delims);
+	if ( 7 == gui1Tokens.size())
+	{
+		lasersPresent[LASER_A]=atoi(gui1Tokens.at(1).c_str());
+		lasersPresent[LASER_B]=atoi(gui1Tokens.at(2).c_str());
+		lasersPresent[LASER_C]=atoi(gui1Tokens.at(3).c_str());
+		lasersPresent[LASER_D]=atoi(gui1Tokens.at(4).c_str());
+	}
 
-     pAct = new CPropertyAction (this, &VersaLase::OnHoursA);
-     nRet = CreateProperty("LASER_A_Hours", "0.00", MM::String, true, pAct);
-     if (DEVICE_OK != nRet)
-          return nRet;
-     pAct = new CPropertyAction (this, &VersaLase::OnFaultCodeA);
-     nRet = CreateProperty("LASER_A_FaultCode", "0.00", MM::String, true, pAct);
-     if (DEVICE_OK != nRet)
-          return nRet;
-     pAct = new CPropertyAction (this, &VersaLase::OnCurrentA);
-     nRet = CreateProperty("LASER_A_Current", "0.00", MM::String, true, pAct);
-     if (DEVICE_OK != nRet)
-          return nRet;
-     pAct = new CPropertyAction (this, &VersaLase::OnFaultA);
-     nRet = CreateProperty("LASER_A_OperatingCondition", "No Fault", MM::String, true, pAct);
-     if (DEVICE_OK != nRet)
-          return nRet;
-     pAct = new CPropertyAction (this, &VersaLase::OnSerialNumberA);
-     nRet = CreateProperty("LASER_A_LaserID", "0", MM::String, true, pAct);
-     if (DEVICE_OK != nRet)
-          return nRet;
-     pAct = new CPropertyAction (this, &VersaLase::OnPowerStatusA);
-     nRet = CreateProperty("LASER_A_Power", "0.00", MM::String, true, pAct);
-     if (DEVICE_OK != nRet)
-          return nRet;
-     pAct = new CPropertyAction (this, &VersaLase::OnPulPwrStatusA);
-     nRet = CreateProperty("LASER_A_DigitalPeakPower", "0.00", MM::String, true, pAct);
-     if (DEVICE_OK != nRet)
-          return nRet;
-     pAct = new CPropertyAction (this, &VersaLase::OnDigModA);
-     nRet = CreateProperty("LASER_A_DigitalModulation", "OFF", MM::String, false, pAct);
-     std::vector<std::string> digModValA;
-     digModValA.push_back("OFF");
-     digModValA.push_back("ON");
-     SetAllowedValues("LASER_A_DigitalModulation", digModValA);
+	if(lasersPresent[LASER_A]==1)
+	{
+		pAct = new CPropertyAction (this, &VersaLase::OnPulPwrA);
+		nRet = CreateProperty("LASER_A_DigitalPeakPowerSetting", "0.00", MM::Float, false, pAct);
+		if (DEVICE_OK != nRet)
+			return nRet;
+		pAct = new CPropertyAction (this, &VersaLase::OnPowerA);
+		nRet = CreateProperty("LASER_A_PowerSetting", "0.00", MM::Float, false, pAct);
+		if (DEVICE_OK != nRet)
+			return nRet;
+		pAct = new CPropertyAction (this, &VersaLase::OnLaserOnOffA);
+		CreateProperty("LASER_A_LaserEmission", "OFF", MM::String, false, pAct);
 
-     pAct = new CPropertyAction (this, &VersaLase::OnEPCA);
-     nRet = CreateProperty("LASER_A_AnalogModulation", "OFF", MM::String, false, pAct);
-     std::vector<std::string> epcValA;
-     epcValA.push_back("OFF");
-     epcValA.push_back("ON");
-     SetAllowedValues("LASER_A_AnalogModulation", epcValA);
+		std::vector<std::string> commandsA;
+		commandsA.push_back("OFF");
+		commandsA.push_back("ON");
+		SetAllowedValues("LASER_A_LaserEmission", commandsA);
 
-     //LASER B
-     pAct = new CPropertyAction (this, &VersaLase::OnPulPwrB);
-	 nRet = CreateProperty("LASER_B_DigitalPeakPowerSetting", "0.00", MM::Float, false, pAct);
-	 if (DEVICE_OK != nRet)
-          return nRet;
+		pAct = new CPropertyAction (this, &VersaLase::OnHoursA);
+		nRet = CreateProperty("LASER_A_Hours", "0.00", MM::String, true, pAct);
+		if (DEVICE_OK != nRet)
+			return nRet;
+		pAct = new CPropertyAction (this, &VersaLase::OnFaultCodeA);
+		nRet = CreateProperty("LASER_A_FaultCode", "0.00", MM::String, true, pAct);
+		if (DEVICE_OK != nRet)
+			return nRet;
+		pAct = new CPropertyAction (this, &VersaLase::OnCurrentA);
+		nRet = CreateProperty("LASER_A_Current", "0.00", MM::String, true, pAct);
+		if (DEVICE_OK != nRet)
+			return nRet;
+		pAct = new CPropertyAction (this, &VersaLase::OnFaultA);
+		nRet = CreateProperty("LASER_A_OperatingCondition", "No Fault", MM::String, true, pAct);
+		if (DEVICE_OK != nRet)
+			return nRet;
+		pAct = new CPropertyAction (this, &VersaLase::OnSerialNumberA);
+		nRet = CreateProperty("LASER_A_LaserID", "0", MM::String, true, pAct);
+		if (DEVICE_OK != nRet)
+			return nRet;
+		pAct = new CPropertyAction (this, &VersaLase::OnPowerStatusA);
+		nRet = CreateProperty("LASER_A_Power", "0.00", MM::String, true, pAct);
+		if (DEVICE_OK != nRet)
+			return nRet;
+		pAct = new CPropertyAction (this, &VersaLase::OnPulPwrStatusA);
+		nRet = CreateProperty("LASER_A_DigitalPeakPower", "0.00", MM::String, true, pAct);
+		if (DEVICE_OK != nRet)
+			return nRet;
+		pAct = new CPropertyAction (this, &VersaLase::OnDigModA);
+		nRet = CreateProperty("LASER_A_DigitalModulation", "OFF", MM::String, false, pAct);
+		std::vector<std::string> digModValA;
+		digModValA.push_back("OFF");
+		digModValA.push_back("ON");
+		SetAllowedValues("LASER_A_DigitalModulation", digModValA);
 
-     pAct = new CPropertyAction (this, &VersaLase::OnPowerB);
-	 nRet = CreateProperty("LASER_B_PowerSetting", "0.00", MM::Float, false, pAct);
-	 if (DEVICE_OK != nRet)
-          return nRet;
+		pAct = new CPropertyAction (this, &VersaLase::OnEPCA);
+		nRet = CreateProperty("LASER_A_AnalogModulation", "OFF", MM::String, false, pAct);
+		std::vector<std::string> epcValA;
+		epcValA.push_back("OFF");
+		epcValA.push_back("ON");
+		SetAllowedValues("LASER_A_AnalogModulation", epcValA);
+	}
 
-     pAct = new CPropertyAction (this, &VersaLase::OnLaserOnOffB);
-     CreateProperty("LASER_B_LaserEmission", "OFF", MM::String, false, pAct);
+	if(lasersPresent[LASER_B]==1)
+	{
 
-     std::vector<std::string> commandsB;
-	      commandsB.push_back("OFF");
-	      commandsB.push_back("ON");
-     SetAllowedValues("LASER_B_LaserEmission", commandsB);
+		//LASER B
+		pAct = new CPropertyAction (this, &VersaLase::OnPulPwrB);
+		nRet = CreateProperty("LASER_B_DigitalPeakPowerSetting", "0.00", MM::Float, false, pAct);
+		if (DEVICE_OK != nRet)
+			return nRet;
 
-     pAct = new CPropertyAction (this, &VersaLase::OnHoursB);
-	 nRet = CreateProperty("LASER_B_Hours", "0.00", MM::String, true, pAct);
-	 if (DEVICE_OK != nRet)
-          return nRet;
-     pAct = new CPropertyAction (this, &VersaLase::OnFaultCodeB);
-	 nRet = CreateProperty("LASER_B_FaultCode", "0.00", MM::String, true, pAct);
-	 if (DEVICE_OK != nRet)
-          return nRet;
-     pAct = new CPropertyAction (this, &VersaLase::OnCurrentB);
-	 nRet = CreateProperty("LASER_B_Current", "0.00", MM::String, true, pAct);
-	 if (DEVICE_OK != nRet)
-          return nRet;
-     pAct = new CPropertyAction (this, &VersaLase::OnFaultB);
-     nRet = CreateProperty("LASER_B_OperatingCondition", "No Fault", MM::String, true, pAct);
-     if (DEVICE_OK != nRet)
-          return nRet;
-     pAct = new CPropertyAction (this, &VersaLase::OnSerialNumberB);
-     nRet = CreateProperty("LASER_B_LaserID", "0", MM::String, true, pAct);
-     if (DEVICE_OK != nRet)
-          return nRet;
-     pAct = new CPropertyAction (this, &VersaLase::OnPowerStatusB);
-     nRet = CreateProperty("LASER_B_Power", "0.00", MM::String, true, pAct);
-     if (DEVICE_OK != nRet)
-          return nRet;
+		pAct = new CPropertyAction (this, &VersaLase::OnPowerB);
+		nRet = CreateProperty("LASER_B_PowerSetting", "0.00", MM::Float, false, pAct);
+		if (DEVICE_OK != nRet)
+			return nRet;
 
-     pAct = new CPropertyAction (this, &VersaLase::OnPulPwrStatusB);
-     nRet = CreateProperty("LASER_B_DigitalPeakPower", "0.00", MM::String, true, pAct);
-     if (DEVICE_OK != nRet)
-          return nRet;
+		pAct = new CPropertyAction (this, &VersaLase::OnLaserOnOffB);
+		CreateProperty("LASER_B_LaserEmission", "OFF", MM::String, false, pAct);
 
-     pAct = new CPropertyAction (this, &VersaLase::OnEPCB);
-     nRet = CreateProperty("LASER_B_AnalogModulation", "OFF", MM::String, false, pAct);
-     std::vector<std::string> epcValB;
-     epcValB.push_back("OFF");
-     epcValB.push_back("ON");
-     SetAllowedValues("LASER_B_AnalogModulation", epcValB);
+		std::vector<std::string> commandsB;
+		commandsB.push_back("OFF");
+		commandsB.push_back("ON");
+		SetAllowedValues("LASER_B_LaserEmission", commandsB);
 
-     pAct = new CPropertyAction (this, &VersaLase::OnDigModB);
-     nRet = CreateProperty("LASER_B_DigitalModulation", "OFF", MM::String, false, pAct);
-     std::vector<std::string> digModValB;
-     digModValB.push_back("OFF");
-     digModValB.push_back("ON");
-     SetAllowedValues("LASER_B_DigitalModulation", digModValB);
+		pAct = new CPropertyAction (this, &VersaLase::OnHoursB);
+		nRet = CreateProperty("LASER_B_Hours", "0.00", MM::String, true, pAct);
+		if (DEVICE_OK != nRet)
+			return nRet;
+		pAct = new CPropertyAction (this, &VersaLase::OnFaultCodeB);
+		nRet = CreateProperty("LASER_B_FaultCode", "0.00", MM::String, true, pAct);
+		if (DEVICE_OK != nRet)
+			return nRet;
+		pAct = new CPropertyAction (this, &VersaLase::OnCurrentB);
+		nRet = CreateProperty("LASER_B_Current", "0.00", MM::String, true, pAct);
+		if (DEVICE_OK != nRet)
+			return nRet;
+		pAct = new CPropertyAction (this, &VersaLase::OnFaultB);
+		nRet = CreateProperty("LASER_B_OperatingCondition", "No Fault", MM::String, true, pAct);
+		if (DEVICE_OK != nRet)
+			return nRet;
+		pAct = new CPropertyAction (this, &VersaLase::OnSerialNumberB);
+		nRet = CreateProperty("LASER_B_LaserID", "0", MM::String, true, pAct);
+		if (DEVICE_OK != nRet)
+			return nRet;
+		pAct = new CPropertyAction (this, &VersaLase::OnPowerStatusB);
+		nRet = CreateProperty("LASER_B_Power", "0.00", MM::String, true, pAct);
+		if (DEVICE_OK != nRet)
+			return nRet;
 
+		pAct = new CPropertyAction (this, &VersaLase::OnPulPwrStatusB);
+		nRet = CreateProperty("LASER_B_DigitalPeakPower", "0.00", MM::String, true, pAct);
+		if (DEVICE_OK != nRet)
+			return nRet;
 
-     //Laser C
-     pAct = new CPropertyAction (this, &VersaLase::OnPulPwrC);
-	 nRet = CreateProperty("LASER_C_DigitalPeakPowerSetting", "0.00", MM::Float, false, pAct);
-	 if (DEVICE_OK != nRet)
-          return nRet;
+		pAct = new CPropertyAction (this, &VersaLase::OnEPCB);
+		nRet = CreateProperty("LASER_B_AnalogModulation", "OFF", MM::String, false, pAct);
+		std::vector<std::string> epcValB;
+		epcValB.push_back("OFF");
+		epcValB.push_back("ON");
+		SetAllowedValues("LASER_B_AnalogModulation", epcValB);
 
+		pAct = new CPropertyAction (this, &VersaLase::OnDigModB);
+		nRet = CreateProperty("LASER_B_DigitalModulation", "OFF", MM::String, false, pAct);
+		std::vector<std::string> digModValB;
+		digModValB.push_back("OFF");
+		digModValB.push_back("ON");
+		SetAllowedValues("LASER_B_DigitalModulation", digModValB);
+	}
 
-     pAct = new CPropertyAction (this, &VersaLase::OnPowerC);
-	 nRet = CreateProperty("LASER_C_PowerSetting", "0.00", MM::Float, false, pAct);
-	 if (DEVICE_OK != nRet)
-          return nRet;
-     pAct = new CPropertyAction (this, &VersaLase::OnLaserOnOffC);
-     CreateProperty("LASER_C_LaserEmission", "OFF", MM::String, false, pAct);
-     std::vector<std::string> commandsC;
-	      commandsC.push_back("OFF");
-	      commandsC.push_back("ON");
-     SetAllowedValues("LASER_C_LaserEmission", commandsC);
-     pAct = new CPropertyAction (this, &VersaLase::OnHoursC);
-	 nRet = CreateProperty("LASER_C_Hours", "0.00", MM::String, true, pAct);
-	 if (DEVICE_OK != nRet)
-          return nRet;
-     pAct = new CPropertyAction (this, &VersaLase::OnFaultCodeC);
-	 nRet = CreateProperty("LASER_C_FaultCode", "0.00", MM::String, true, pAct);
-	 if (DEVICE_OK != nRet)
-          return nRet;
-     pAct = new CPropertyAction (this, &VersaLase::OnCurrentC);
-	 nRet = CreateProperty("LASER_C_Current", "0.00", MM::String, true, pAct);
-	 if (DEVICE_OK != nRet)
-          return nRet;
-     pAct = new CPropertyAction (this, &VersaLase::OnFaultC);
-     nRet = CreateProperty("LASER_C_OperatingCondition", "No Fault", MM::String, true, pAct);
-     if (DEVICE_OK != nRet)
-          return nRet;
-     pAct = new CPropertyAction (this, &VersaLase::OnSerialNumberC);
-     nRet = CreateProperty("LASER_C_LaserID", "0", MM::String, true, pAct);
-     if (DEVICE_OK != nRet)
-          return nRet;
-     pAct = new CPropertyAction (this, &VersaLase::OnPowerStatusC);
-     nRet = CreateProperty("LASER_C_Power", "0.00", MM::String, true, pAct);
-     if (DEVICE_OK != nRet)
-          return nRet;
-     pAct = new CPropertyAction (this, &VersaLase::OnPulPwrStatusC);
-     nRet = CreateProperty("LASER_C_DigitalPeakPower", "0.00", MM::String, true, pAct);
-     if (DEVICE_OK != nRet)
-          return nRet;
-     pAct = new CPropertyAction (this, &VersaLase::OnDigModC);
-     nRet = CreateProperty("LASER_C_DigitalModulation", "OFF", MM::String, false, pAct);
-     std::vector<std::string> digModValC;
-     digModValC.push_back("OFF");
-     digModValC.push_back("ON");
-     SetAllowedValues("LASER_C_DigitalModulation", digModValC);
+	if(lasersPresent[LASER_C]==1)
+	{
+		//Laser C
+		pAct = new CPropertyAction (this, &VersaLase::OnPulPwrC);
+		nRet = CreateProperty("LASER_C_DigitalPeakPowerSetting", "0.00", MM::Float, false, pAct);
+		if (DEVICE_OK != nRet)
+			return nRet;
 
-     pAct = new CPropertyAction (this, &VersaLase::OnEPCC);
-     nRet = CreateProperty("LASER_C_AnalogModulation", "OFF", MM::String, false, pAct);
-     std::vector<std::string> epcValC;
-     epcValC.push_back("OFF");
-     epcValC.push_back("ON");
-     SetAllowedValues("LASER_C_AnalogModulation", epcValC);
+		pAct = new CPropertyAction (this, &VersaLase::OnPowerC);
+		nRet = CreateProperty("LASER_C_PowerSetting", "0.00", MM::Float, false, pAct);
+		if (DEVICE_OK != nRet)
+			return nRet;
+		pAct = new CPropertyAction (this, &VersaLase::OnLaserOnOffC);
+		CreateProperty("LASER_C_LaserEmission", "OFF", MM::String, false, pAct);
+		std::vector<std::string> commandsC;
+		commandsC.push_back("OFF");
+		commandsC.push_back("ON");
+		SetAllowedValues("LASER_C_LaserEmission", commandsC);
+		pAct = new CPropertyAction (this, &VersaLase::OnHoursC);
+		nRet = CreateProperty("LASER_C_Hours", "0.00", MM::String, true, pAct);
+		if (DEVICE_OK != nRet)
+			return nRet;
+		pAct = new CPropertyAction (this, &VersaLase::OnFaultCodeC);
+		nRet = CreateProperty("LASER_C_FaultCode", "0.00", MM::String, true, pAct);
+		if (DEVICE_OK != nRet)
+			return nRet;
+		pAct = new CPropertyAction (this, &VersaLase::OnCurrentC);
+		nRet = CreateProperty("LASER_C_Current", "0.00", MM::String, true, pAct);
+		if (DEVICE_OK != nRet)
+			return nRet;
+		pAct = new CPropertyAction (this, &VersaLase::OnFaultC);
+		nRet = CreateProperty("LASER_C_OperatingCondition", "No Fault", MM::String, true, pAct);
+		if (DEVICE_OK != nRet)
+			return nRet;
+		pAct = new CPropertyAction (this, &VersaLase::OnSerialNumberC);
+		nRet = CreateProperty("LASER_C_LaserID", "0", MM::String, true, pAct);
+		if (DEVICE_OK != nRet)
+			return nRet;
+		pAct = new CPropertyAction (this, &VersaLase::OnPowerStatusC);
+		nRet = CreateProperty("LASER_C_Power", "0.00", MM::String, true, pAct);
+		if (DEVICE_OK != nRet)
+			return nRet;
+		pAct = new CPropertyAction (this, &VersaLase::OnPulPwrStatusC);
+		nRet = CreateProperty("LASER_C_DigitalPeakPower", "0.00", MM::String, true, pAct);
+		if (DEVICE_OK != nRet)
+			return nRet;
+		pAct = new CPropertyAction (this, &VersaLase::OnDigModC);
+		nRet = CreateProperty("LASER_C_DigitalModulation", "OFF", MM::String, false, pAct);
+		std::vector<std::string> digModValC;
+		digModValC.push_back("OFF");
+		digModValC.push_back("ON");
+		SetAllowedValues("LASER_C_DigitalModulation", digModValC);
 
-    //Laser D
-     pAct = new CPropertyAction (this, &VersaLase::OnPulPwrD);
-	 nRet = CreateProperty("LASER_D_DigitalPeakPowerSetting", "0.00", MM::Float, false, pAct);
-	 if (DEVICE_OK != nRet)
-          return nRet;
-     pAct = new CPropertyAction (this, &VersaLase::OnPowerD);
-	 nRet = CreateProperty("LASER_D_PowerSetting", "0.00", MM::Float, false, pAct);
-	 if (DEVICE_OK != nRet)
-          return nRet;
-     pAct = new CPropertyAction (this, &VersaLase::OnLaserOnOffD);
-     CreateProperty("LASER_D_LaserEmission", "OFF", MM::String, false, pAct);
+		pAct = new CPropertyAction (this, &VersaLase::OnEPCC);
+		nRet = CreateProperty("LASER_C_AnalogModulation", "OFF", MM::String, false, pAct);
+		std::vector<std::string> epcValC;
+		epcValC.push_back("OFF");
+		epcValC.push_back("ON");
+		SetAllowedValues("LASER_C_AnalogModulation", epcValC);
+	}
 
-     std::vector<std::string> commandsD;
-	      commandsD.push_back("OFF");
-	      commandsD.push_back("ON");
-     SetAllowedValues("LASER_D_LaserEmission", commandsD);
+	if(lasersPresent[LASER_D]==1)
+	{
+		//Laser D
+		pAct = new CPropertyAction (this, &VersaLase::OnPulPwrD);
+		nRet = CreateProperty("LASER_D_DigitalPeakPowerSetting", "0.00", MM::Float, false, pAct);
+		if (DEVICE_OK != nRet)
+			return nRet;
+		pAct = new CPropertyAction (this, &VersaLase::OnPowerD);
+		nRet = CreateProperty("LASER_D_PowerSetting", "0.00", MM::Float, false, pAct);
+		if (DEVICE_OK != nRet)
+			return nRet;
+		pAct = new CPropertyAction (this, &VersaLase::OnLaserOnOffD);
+		CreateProperty("LASER_D_LaserEmission", "OFF", MM::String, false, pAct);
 
-     pAct = new CPropertyAction (this, &VersaLase::OnHoursD);
-	 nRet = CreateProperty("LASER_D_Hours", "0.00", MM::String, true, pAct);
-	 if (DEVICE_OK != nRet)
-          return nRet;
-     pAct = new CPropertyAction (this, &VersaLase::OnFaultCodeD);
-	 nRet = CreateProperty("LASER_D_FaultCode", "0.00", MM::String, true, pAct);
-	 if (DEVICE_OK != nRet)
-          return nRet;
-     pAct = new CPropertyAction (this, &VersaLase::OnBaseT);
-     nRet = CreateProperty("BaseplateTemp", "0.00", MM::String, true, pAct);
-     if (DEVICE_OK != nRet)
-          return nRet;
-     pAct = new CPropertyAction (this, &VersaLase::OnCurrentD);
-	 nRet = CreateProperty("LASER_D_Current", "0.00", MM::String, true, pAct);
-	 if (DEVICE_OK != nRet)
-          return nRet;
+		std::vector<std::string> commandsD;
+		commandsD.push_back("OFF");
+		commandsD.push_back("ON");
+		SetAllowedValues("LASER_D_LaserEmission", commandsD);
 
-     pAct = new CPropertyAction (this, &VersaLase::OnInterlock);
-     nRet = CreateProperty("Interlock", "Interlock Open", MM::String, true, pAct);
-     if (DEVICE_OK != nRet)
-          return nRet;
+		pAct = new CPropertyAction (this, &VersaLase::OnHoursD);
+		nRet = CreateProperty("LASER_D_Hours", "0.00", MM::String, true, pAct);
+		if (DEVICE_OK != nRet)
+			return nRet;
+		pAct = new CPropertyAction (this, &VersaLase::OnFaultCodeD);
+		nRet = CreateProperty("LASER_D_FaultCode", "0.00", MM::String, true, pAct);
+		if (DEVICE_OK != nRet)
+			return nRet;
 
-     pAct = new CPropertyAction (this, &VersaLase::OnFaultD);
-     nRet = CreateProperty("LASER_D_OperatingCondition", "No Fault", MM::String, true, pAct);
-     if (DEVICE_OK != nRet)
-          return nRet;
+		pAct = new CPropertyAction (this, &VersaLase::OnCurrentD);
+		nRet = CreateProperty("LASER_D_Current", "0.00", MM::String, true, pAct);
+		if (DEVICE_OK != nRet)
+			return nRet;
 
-     pAct = new CPropertyAction (this, &VersaLase::OnSerialNumberD);
-     nRet = CreateProperty("LASER_D_LaserID", "0", MM::String, true, pAct);
-     if (DEVICE_OK != nRet)
-          return nRet;
+		pAct = new CPropertyAction (this, &VersaLase::OnInterlock);
+		nRet = CreateProperty("Interlock", "Interlock Open", MM::String, true, pAct);
+		if (DEVICE_OK != nRet)
+			return nRet;
 
-     pAct = new CPropertyAction (this, &VersaLase::OnVersion);
-     nRet = CreateProperty("FirmwareVersion", "0", MM::String, true, pAct);
-     if (DEVICE_OK != nRet)
-          return nRet;
+		pAct = new CPropertyAction (this, &VersaLase::OnFaultD);
+		nRet = CreateProperty("LASER_D_OperatingCondition", "No Fault", MM::String, true, pAct);
+		if (DEVICE_OK != nRet)
+			return nRet;
 
-     pAct = new CPropertyAction (this, &VersaLase::OnPowerStatusD);
-     nRet = CreateProperty("LASER_D_Power", "0.00", MM::String, true, pAct);
-     if (DEVICE_OK != nRet)
-          return nRet;
+		pAct = new CPropertyAction (this, &VersaLase::OnSerialNumberD);
+		nRet = CreateProperty("LASER_D_LaserID", "0", MM::String, true, pAct);
+		if (DEVICE_OK != nRet)
+			return nRet;
 
-     pAct = new CPropertyAction (this, &VersaLase::OnPulPwrStatusD);
-     nRet = CreateProperty("LASER_D_DigitalPeakPower", "0.00", MM::String, true, pAct);
-     if (DEVICE_OK != nRet)
-          return nRet;
+		pAct = new CPropertyAction (this, &VersaLase::OnPowerStatusD);
+		nRet = CreateProperty("LASER_D_Power", "0.00", MM::String, true, pAct);
+		if (DEVICE_OK != nRet)
+			return nRet;
 
-     pAct = new CPropertyAction (this, &VersaLase::OnDigModD);
-     nRet = CreateProperty("LASER_D_DigitalModulation", "OFF", MM::String, false, pAct);
-     std::vector<std::string> digModValD;
-     digModValD.push_back("OFF");
-     digModValD.push_back("ON");
-     SetAllowedValues("LASER_D_DigitalModulation", digModValD);
+		pAct = new CPropertyAction (this, &VersaLase::OnPulPwrStatusD);
+		nRet = CreateProperty("LASER_D_DigitalPeakPower", "0.00", MM::String, true, pAct);
+		if (DEVICE_OK != nRet)
+			return nRet;
 
-     pAct = new CPropertyAction (this, &VersaLase::OnEPCD);
-     nRet = CreateProperty("LASER_D_AnalogModulation", "OFF", MM::String, false, pAct);
-     std::vector<std::string> epcValD;
-     epcValD.push_back("OFF");
-     epcValD.push_back("ON");
-     SetAllowedValues("LASER_D_AnalogModulation", epcValD);
+		pAct = new CPropertyAction (this, &VersaLase::OnDigModD);
+		nRet = CreateProperty("LASER_D_DigitalModulation", "OFF", MM::String, false, pAct);
+		std::vector<std::string> digModValD;
+		digModValD.push_back("OFF");
+		digModValD.push_back("ON");
+		SetAllowedValues("LASER_D_DigitalModulation", digModValD);
 
-     nRet = UpdateStatus();
-     if (nRet != DEVICE_OK)
-          return nRet;
+		pAct = new CPropertyAction (this, &VersaLase::OnEPCD);
+		nRet = CreateProperty("LASER_D_AnalogModulation", "OFF", MM::String, false, pAct);
+		std::vector<std::string> epcValD;
+		epcValD.push_back("OFF");
+		epcValD.push_back("ON");
+		SetAllowedValues("LASER_D_AnalogModulation", epcValD);
+	}
 
-     initialized_ = true;
-     return DEVICE_OK;
+	pAct = new CPropertyAction (this, &VersaLase::OnBaseT);
+	nRet = CreateProperty("BaseplateTemp", "0.00", MM::String, true, pAct);
+	if (DEVICE_OK != nRet)
+		return nRet;
+
+	pAct = new CPropertyAction (this, &VersaLase::OnVersion);
+	nRet = CreateProperty("FirmwareVersion", "0", MM::String, true, pAct);
+	if (DEVICE_OK != nRet)
+		return nRet;
+
+	nRet = UpdateStatus(); //Executes the BeforeGet function for each property
+	if (nRet != DEVICE_OK)
+		return nRet;
+
+	initialized_ = true;
+	return DEVICE_OK;
 }
 
 
@@ -409,10 +445,14 @@ int VersaLase::Shutdown()
 {
    if (initialized_)
    {
-      LaserOnOffA(false);
-      LaserOnOffB(false);
-      LaserOnOffC(false);
-      LaserOnOffD(false);
+	   if(lasersPresent[LASER_A]==1)
+			LaserOnOffA(false);
+	   if(lasersPresent[LASER_B]==1)
+			LaserOnOffB(false);
+	   if(lasersPresent[LASER_C]==1)
+			LaserOnOffC(false);
+	   if(lasersPresent[LASER_D]==1)
+			LaserOnOffD(false);
 	  initialized_ = false;
    }
    return DEVICE_OK;
@@ -425,11 +465,16 @@ bool VersaLase::Busy()
 
 int VersaLase::SetOpen(bool open)
 {
-   LaserOnOffA((long)open);
-   LaserOnOffB((long)open);
-   LaserOnOffC((long)open);
-   LaserOnOffD((long)open);
-   return DEVICE_OK;
+	if(lasersPresent[LASER_A]==1)
+		LaserOnOffA((long)open);
+	if(lasersPresent[LASER_B]==1)
+		LaserOnOffB((long)open);
+	if(lasersPresent[LASER_C]==1)
+		LaserOnOffC((long)open);
+	if(lasersPresent[LASER_D]==1)
+		LaserOnOffD((long)open);
+
+	return DEVICE_OK;
 }
 
 int VersaLase::GetOpen(bool& open)
@@ -441,27 +486,40 @@ int VersaLase::GetOpen(bool& open)
      std::string delims="=";
      int ret;
 
-     command << "a.?le";
-     ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-	  if (ret != DEVICE_OK) return ret;
-	  CDeviceUtils::SleepMs(50);
-	  ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-	  ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-	  PurgeComPort(port_.c_str());
-	  if (ret != DEVICE_OK) return ret;
+	 if(lasersPresent[LASER_A]==1)
+		command << "a.?le";
+	 else
+		 if(lasersPresent[LASER_B]==1)
+			 command << "b.?le";
+		 else
+			 if(lasersPresent[LASER_C]==1)
+				 command << "c.?le";
+			 else
+				 if(lasersPresent[LASER_D]==1)
+					 command << "d.?le";
+				 else
+					 return DEVICE_OK;
 
-	  VersaLase::Tokenize(answer, tokens, delims);
-	  if ( 2 == tokens.size())
-	  {
-			answer=tokens.at(1).c_str();
-	  }
+	 ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+	 if (ret != DEVICE_OK) return ret;
+	 CDeviceUtils::SleepMs(50);
+	 ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+	 ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+	 PurgeComPort(port_.c_str());
+	 if (ret != DEVICE_OK) return ret;
 
-	  state=atol(answer.c_str());
-	  if (state==1)
-		    open = true;
-	  else if (state==0)
-	       open = false;
-     return DEVICE_OK;
+	 VersaLase::Tokenize(answer, tokens, delims);
+	 if ( 2 == tokens.size())
+	 {
+		 answer=tokens.at(1).c_str();
+	 }
+
+	 state=atol(answer.c_str());
+	 if (state==1)
+		 open = true;
+	 else if (state==0)
+		 open = false;
+	 return DEVICE_OK;
 }
 
 int VersaLase::Fire(double /*deltaT*/)
@@ -845,6 +903,7 @@ int VersaLase::OnDigModA(MM::PropertyBase* pProp, MM::ActionType eAct)
     std::string answer;
     std::vector<std::string> tokens;
     std::string delims="=";
+	int answerNum;
 
     if (eAct == MM::BeforeGet)
     {
@@ -864,10 +923,13 @@ int VersaLase::OnDigModA(MM::PropertyBase* pProp, MM::ActionType eAct)
 		  	   answer=tokens.at(1).c_str();
 		  }
 
-	      if (answer == "0")
+		  answerNum=atol(answer.c_str());
+
+	      if (answerNum == 0)
                digModA_ = "OFF";
-          else if (answer == "1")
+          else if (answerNum == 1)
                digModA_ = "ON";
+
           pProp->Set(digModA_.c_str());
      }
      else
@@ -895,6 +957,7 @@ int VersaLase::OnDigModB(MM::PropertyBase* pProp, MM::ActionType eAct)
     std::string answer;
     std::vector<std::string> tokens;
     std::string delims="=";
+	int answerNum;
 
     if (eAct == MM::BeforeGet)
     {
@@ -914,10 +977,13 @@ int VersaLase::OnDigModB(MM::PropertyBase* pProp, MM::ActionType eAct)
 		  	   answer=tokens.at(1).c_str();
 		  }
 
-	      if (answer == "0")
+		  answerNum=atol(answer.c_str());
+
+	      if (answerNum == 0)
                digModB_ = "OFF";
-          else if (answer == "1")
+          else if (answerNum == 1)
                digModB_ = "ON";
+
           pProp->Set(digModB_.c_str());
      }
      else
@@ -945,6 +1011,7 @@ int VersaLase::OnDigModC(MM::PropertyBase* pProp, MM::ActionType eAct)
     std::string answer;
     std::vector<std::string> tokens;
     std::string delims="=";
+	int answerNum;
 
     if (eAct == MM::BeforeGet)
     {
@@ -964,10 +1031,13 @@ int VersaLase::OnDigModC(MM::PropertyBase* pProp, MM::ActionType eAct)
 		  	   answer=tokens.at(1).c_str();
 		  }
 
-	      if (answer == "0")
+		  answerNum=atol(answer.c_str());
+
+	      if (answerNum == 0)
                digModC_ = "OFF";
-          else if (answer == "1")
+          else if (answerNum == 1)
                digModC_ = "ON";
+
           pProp->Set(digModC_.c_str());
      }
      else
@@ -995,6 +1065,7 @@ int VersaLase::OnDigModD(MM::PropertyBase* pProp, MM::ActionType eAct)
     std::string answer;
     std::vector<std::string> tokens;
     std::string delims="=";
+	int answerNum;
 
     if (eAct == MM::BeforeGet)
     {
@@ -1014,11 +1085,13 @@ int VersaLase::OnDigModD(MM::PropertyBase* pProp, MM::ActionType eAct)
 		  	   answer=tokens.at(1).c_str();
 		  }
 
+		  answerNum=atol(answer.c_str());
 
-	      if (answer == "0")
+	      if (answerNum == 0)
                digModD_ = "OFF";
-          else if (answer == "1")
+          else if (answerNum == 1)
                digModD_ = "ON";
+
           pProp->Set(digModD_.c_str());
      }
      else
@@ -1044,6 +1117,8 @@ int VersaLase::OnEPCA(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
     std::ostringstream command;
     std::string answer;
+	std::string outString;
+	int answerNum;
 
     if (eAct == MM::BeforeGet)
      {
@@ -1066,9 +1141,11 @@ int VersaLase::OnEPCA(MM::PropertyBase* pProp, MM::ActionType eAct)
 			   answer=tokens.at(1).c_str();
 		  }
 
-	      if (answer == "0")
+		  answerNum=atol(answer.c_str());
+
+	      if (answerNum == 0)
                epcA_ = "OFF";
-          else if (answer == "1")
+          else if (answerNum == 1)
                epcA_ = "ON";
 
           pProp->Set(epcA_.c_str());
@@ -1096,6 +1173,7 @@ int VersaLase::OnEPCB(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
     std::ostringstream command;
     std::string answer;
+	int answerNum;
 
     if (eAct == MM::BeforeGet)
      {
@@ -1118,9 +1196,11 @@ int VersaLase::OnEPCB(MM::PropertyBase* pProp, MM::ActionType eAct)
 			   answer=tokens.at(1).c_str();
 		  }
 
-	      if (answer == "0")
+	      answerNum=atol(answer.c_str());
+
+	      if (answerNum == 0)
                epcB_ = "OFF";
-          else if (answer == "1")
+          else if (answerNum == 1)
                epcB_ = "ON";
 
           pProp->Set(epcB_.c_str());
@@ -1148,6 +1228,7 @@ int VersaLase::OnEPCC(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
     std::ostringstream command;
     std::string answer;
+	int answerNum;
 
     if (eAct == MM::BeforeGet)
      {
@@ -1170,9 +1251,11 @@ int VersaLase::OnEPCC(MM::PropertyBase* pProp, MM::ActionType eAct)
 			   answer=tokens.at(1).c_str();
 		  }
 
-	      if (answer == "0")
+	      answerNum=atol(answer.c_str());
+
+	      if (answerNum == 0)
                epcC_ = "OFF";
-          else if (answer == "1")
+          else if (answerNum == 1)
                epcC_ = "ON";
 
           pProp->Set(epcC_.c_str());
@@ -1200,6 +1283,7 @@ int VersaLase::OnEPCD(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
     std::ostringstream command;
     std::string answer;
+	int answerNum;
 
     if (eAct == MM::BeforeGet)
      {
@@ -1222,9 +1306,11 @@ int VersaLase::OnEPCD(MM::PropertyBase* pProp, MM::ActionType eAct)
 			   answer=tokens.at(1).c_str();
 		  }
 
-	      if (answer == "0")
+	      answerNum=atol(answer.c_str());
+
+	      if (answerNum == 0)
                epcD_ = "OFF";
-          else if (answer == "1")
+          else if (answerNum == 1)
                epcD_ = "ON";
 
           pProp->Set(epcD_.c_str());
@@ -2505,13 +2591,14 @@ int VersaLase::OnInterlock(MM::PropertyBase* pProp, MM::ActionType eAct)
      std::string answer;
      std::vector<std::string> tokens;
      std::string delims="=";
+	 int answerNum;
 
      if(eAct==MM::BeforeGet)
      {
         command << "?il";
         int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
         if (ret != DEVICE_OK) return ret;
-        CDeviceUtils::SleepMs(50);
+        CDeviceUtils::SleepMs(100);
         ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
         ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
         PurgeComPort(port_.c_str());
@@ -2523,10 +2610,12 @@ int VersaLase::OnInterlock(MM::PropertyBase* pProp, MM::ActionType eAct)
 		    answer=tokens.at(1).c_str();
         }
 
-        if (answer == "1")
-          interlock_ = "OK";
-        else if (answer == "0")
-          interlock_ = "INTERLOCK OPEN!";
+		answerNum=atol(answer.c_str());
+
+	    if (answerNum == 0)
+             interlock_ = "INTERLOCK OPEN!";
+        else if (answerNum == 1)
+             interlock_ = "OK";
 
         pProp->Set(interlock_.c_str());
      }
@@ -2688,6 +2777,7 @@ int VersaLase::OnLaserOnOffA(MM::PropertyBase* pProp, MM::ActionType eAct)
      std::string answer;
      std::vector<std::string> tokens;
      std::string delims="=";
+	 int answerNum;
 
      if (eAct == MM::BeforeGet)
      {
@@ -2706,9 +2796,11 @@ int VersaLase::OnLaserOnOffA(MM::PropertyBase* pProp, MM::ActionType eAct)
 		     answer=tokens.at(1).c_str();
           }
 
-	      if (answer == "0")
+		  answerNum=atol(answer.c_str());
+
+	      if (answerNum == 0)
                laserOnA_ = "OFF";
-          else if (answer == "1")
+          else if (answerNum == 1)
                laserOnA_ = "ON";
 
           pProp->Set(laserOnA_.c_str());
@@ -2738,6 +2830,7 @@ int VersaLase::OnLaserOnOffB(MM::PropertyBase* pProp, MM::ActionType eAct)
      std::string answer;
      std::vector<std::string> tokens;
      std::string delims="=";
+	 int answerNum;
 
      if (eAct == MM::BeforeGet)
      {
@@ -2756,9 +2849,11 @@ int VersaLase::OnLaserOnOffB(MM::PropertyBase* pProp, MM::ActionType eAct)
 		     answer=tokens.at(1).c_str();
           }
 
-	      if (answer == "0")
+	      answerNum=atol(answer.c_str());
+
+	      if (answerNum == 0)
                laserOnB_ = "OFF";
-          else if (answer == "1")
+          else if (answerNum == 1)
                laserOnB_ = "ON";
 
           pProp->Set(laserOnB_.c_str());
@@ -2788,6 +2883,7 @@ int VersaLase::OnLaserOnOffC(MM::PropertyBase* pProp, MM::ActionType eAct)
      std::string answer;
      std::vector<std::string> tokens;
      std::string delims="=";
+	 int answerNum;
 
      if (eAct == MM::BeforeGet)
      {
@@ -2806,9 +2902,11 @@ int VersaLase::OnLaserOnOffC(MM::PropertyBase* pProp, MM::ActionType eAct)
 		     answer=tokens.at(1).c_str();
           }
 
-	      if (answer == "0")
+	      answerNum=atol(answer.c_str());
+
+	      if (answerNum == 0)
                laserOnC_ = "OFF";
-          else if (answer == "1")
+          else if (answerNum == 1)
                laserOnC_ = "ON";
 
           pProp->Set(laserOnC_.c_str());
@@ -2838,6 +2936,7 @@ int VersaLase::OnLaserOnOffD(MM::PropertyBase* pProp, MM::ActionType eAct)
      std::string answer;
      std::vector<std::string> tokens;
      std::string delims="=";
+	 int answerNum;
 
      if (eAct == MM::BeforeGet)
      {
@@ -2856,9 +2955,11 @@ int VersaLase::OnLaserOnOffD(MM::PropertyBase* pProp, MM::ActionType eAct)
 		     answer=tokens.at(1).c_str();
           }
 
-	      if (answer == "0")
+	      answerNum=atol(answer.c_str());
+
+	      if (answerNum == 0)
                laserOnD_ = "OFF";
-          else if (answer == "1")
+          else if (answerNum == 1)
                laserOnD_ = "ON";
 
           pProp->Set(laserOnD_.c_str());

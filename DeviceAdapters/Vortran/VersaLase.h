@@ -34,6 +34,14 @@
 
 #define ERR_PORT_CHANGE    102
 
+#define MAX_LASERS 4
+
+typedef enum {
+	LASER_A,
+	LASER_B,
+	LASER_C,
+	LASER_D} LASER_SLOT;
+
 class VersaLase: public CShutterBase<VersaLase>
 {
 public:
@@ -120,6 +128,10 @@ public:
     int OnFaultCodeC(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnFaultCodeD(MM::PropertyBase* pProp, MM::ActionType eAct);
     void Tokenize(const std::string& str, std::vector<std::string>& tokens, const std::string& delimiters);
+	int SendVersalaseCommand(std::ostringstream cmd);
+	int GetVersalaseAnswer(void);
+	void VersaLase::SetLaserAsInvalid(LASER_SLOT myLsr);
+
 
 private:
     std::string port_;
