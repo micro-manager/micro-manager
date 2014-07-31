@@ -33,6 +33,13 @@ public interface Datastore {
    public void putImage(Image image, Coords coords) throws DatastoreLockedException;
 
    /**
+    * Return the maximum Image position along the specified access that this
+    * Datastore has seen so far. Will be null if no Reader has been provided
+    * yet.
+    */
+   public Integer getMaxExtent(String axis);
+
+   /**
     * Retrieve the summary metadata for the datastore. Will be null if no
     * Reader has been provided yet.
     */

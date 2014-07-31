@@ -26,6 +26,7 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class TestReader implements Reader {
    private HashMap<Coords, Image> coordsToImage_;
+   private Coords maxExtent_;
 
    public TestReader() {
       coordsToImage_ = new HashMap<Coords, Image>();
@@ -43,12 +44,26 @@ public class TestReader implements Reader {
          TaggedImage tagged = studio.getMMCore().getTaggedImage();
          Image result = new DefaultImage(tagged);
          coordsToImage_.put(coords, result);
+         for (String axis : coords.getAxes()) {
+            if (maxExtent_.getPositionAt(axis) < coords.getPositionAt(axis)) {
+               // Either this image is further along on this axis, or we have
+               // no position for this axis yet.
+               maxExtent_ = maxExtent_.copy()
+                     .position(axis, coords.getPositionAt(axis))
+                     .build();
+            }
+         }
          return result;
       }
       catch (Exception e) {
          ReportingUtils.logError(e, "Failed to generate a new image");
          return null;
       }
+   }
+
+   @Override
+   public Integer getMaxExtent(String axis) {
+      return maxExtent_.getPositionAt(axis);
    }
 
    @Override
