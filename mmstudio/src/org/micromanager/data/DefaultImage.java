@@ -157,7 +157,8 @@ public class DefaultImage implements Image {
    }
 
    /**
-    * Return a raw Object of our pixel data.
+    * Return a raw Object of our pixel data, i.e. a reference to the 
+    * Java array (or whatever) that backs our ImgPlus.
     */
    @Override
    public Object getRawPixels() {

@@ -2942,5 +2942,9 @@ public class MMStudio implements ScriptInterface {
          TestConsumer consumer = new TestConsumer(null);
       }
       catch (NullPointerException e) {}
+      try {
+         TestDisplay display = new TestDisplay(null);
+      }
+      catch (NullPointerException e) {}
    }
 }
