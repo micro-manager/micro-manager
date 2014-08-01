@@ -19,8 +19,9 @@
 			<property name="installdir" location="${plugin.installdir}/${plugin.path}"/>
 		</then>
 		<else>
-			<property name="scratchdir" location="build/genclass-tmp/${ant.project.name}"/>
-			<property name="intdir" location="build/${ant.project.name}"/>
+			<property name="plugin.intdir" location="./build"/>
+			<property name="scratchdir" location="${plugin.intdir}/genclass-tmp/${ant.project.name}"/>
+			<property name="intdir" location="${plugin.intdir}/${ant.project.name}"/>
 			<property name="plugin.outdir" location="."/>
 			<property name="outdir" location="${plugin.outdir}/${plugin.path}"/>
 			<!-- install is not used on Unix -->
