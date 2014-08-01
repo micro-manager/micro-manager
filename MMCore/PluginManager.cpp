@@ -43,7 +43,8 @@
 #include <cstring>
 #include <fstream>
 #include <set>
-using namespace std; // TODO Don't do this
+#include <string>
+#include <vector>
 
 
 #ifdef WIN32
@@ -82,17 +83,18 @@ CPluginManager::~CPluginManager()
  *
  * @param filename the name of the file to look up.
  */
-string CPluginManager::FindInSearchPath(string filename)
+std::string
+CPluginManager::FindInSearchPath(std::string filename)
 {
-   vector<string> searchPaths = GetActualSearchPaths();
+   std::vector<std::string> searchPaths = GetActualSearchPaths();
 
    // look in search paths, if there are any
    if (searchPaths.size() == 0)
       return filename;
 
-   vector<string>::const_iterator it;
+   std::vector<std::string>::const_iterator it;
    for (it = searchPaths.begin(); it != searchPaths.end(); it++) {
-      string path(*it);
+      std::string path(*it);
       #ifdef WIN32
       path += "\\" + filename + ".dll";
       #else
@@ -100,7 +102,7 @@ string CPluginManager::FindInSearchPath(string filename)
       #endif
 
       // test whether it exists
-      ifstream in(path.c_str(), ifstream::in);
+      std::ifstream in(path.c_str(), std::ifstream::in);
       in.close();
 
       if (!in.fail())
@@ -142,7 +144,7 @@ CPluginManager::GetDeviceAdapter(const char* shortName)
    if (it != moduleMap_.end())
       return it->second;
 
-   string name(LIB_NAME_PREFIX);
+   std::string name(LIB_NAME_PREFIX);
    name += shortName;
    name += LIB_NAME_SUFFIX;
    name = FindInSearchPath(name);
@@ -156,7 +158,8 @@ CPluginManager::GetDeviceAdapter(const char* shortName)
 /** 
  * Unload a module.
  */
-void CPluginManager::UnloadPluginLibrary(const char* moduleName)
+void
+CPluginManager::UnloadPluginLibrary(const char* moduleName)
 {
    std::map< std::string, boost::shared_ptr<LoadedDeviceAdapter> >::iterator it =
       moduleMap_.find(moduleName);
@@ -174,7 +177,8 @@ void CPluginManager::UnloadPluginLibrary(const char* moduleName)
 }
 
 
-void CPluginManager::AddLegacyFallbackSearchPath(const std::string& path)
+void
+CPluginManager::AddLegacyFallbackSearchPath(const std::string& path)
 {
    // TODO Should normalize slashes and cases (depending on platform) before
    // comparing.
@@ -200,7 +204,8 @@ void CPluginManager::AddLegacyFallbackSearchPath(const std::string& path)
 // This stop-gap implementation makes the assumption that the argument is in
 // the format that could be returned from MMCorePrivate::GetPathOfThisModule()
 // (e.g. no trailing slashes; real filename present).
-static std::string GetDirName(const std::string& path)
+static std::string
+GetDirName(const std::string& path)
 {
 #ifdef WIN32
    const char* pathSep = "\\/";
@@ -220,7 +225,8 @@ static std::string GetDirName(const std::string& path)
 }
 
 
-std::vector<std::string> CPluginManager::GetDefaultSearchPaths()
+std::vector<std::string>
+CPluginManager::GetDefaultSearchPaths()
 {
    static std::vector<std::string> paths;
    static bool initialized = false;
@@ -243,7 +249,8 @@ std::vector<std::string> CPluginManager::GetDefaultSearchPaths()
 }
 
 
-std::vector<std::string> CPluginManager::GetActualSearchPaths() const
+std::vector<std::string>
+CPluginManager::GetActualSearchPaths() const
 {
    std::vector<std::string> paths(preferredSearchPaths_);
    paths.insert(paths.end(), fallbackSearchPaths_.begin(), fallbackSearchPaths_.end());
@@ -254,11 +261,12 @@ std::vector<std::string> CPluginManager::GetActualSearchPaths() const
 /**
  * List all modules (device libraries) at a given path.
  */
-void CPluginManager::GetModules(vector<string> &modules, const char* searchPath)
+void
+CPluginManager::GetModules(std::vector<std::string> &modules, const char* searchPath)
 {
 
 #ifdef WIN32
-   string path = searchPath;
+   std::string path = searchPath;
    path += "\\";
    path += LIB_NAME_PREFIX;
    path += "*.dll";
@@ -271,7 +279,7 @@ void CPluginManager::GetModules(vector<string> &modules, const char* searchPath)
    {
       do {
          // remove prefix and suffix
-         string strippedName = std::string(moduleFile.name).substr(strlen(LIB_NAME_PREFIX));
+         std::string strippedName = std::string(moduleFile.name).substr(strlen(LIB_NAME_PREFIX));
          strippedName = strippedName.substr(0, strippedName.find_first_of("."));
          modules.push_back(strippedName);
       } while (_findnext(hSearch, &moduleFile) == 0);
@@ -294,7 +302,7 @@ void CPluginManager::GetModules(vector<string> &modules, const char* searchPath)
 #endif
          {
             // remove prefix and suffix
-            string strippedName = std::string(dir_name).substr(strlen(LIB_NAME_PREFIX));
+            std::string strippedName = std::string(dir_name).substr(strlen(LIB_NAME_PREFIX));
             strippedName = strippedName.substr(0, strippedName.length() - strlen(LIB_NAME_SUFFIX));
             modules.push_back(strippedName);
          }
@@ -308,22 +316,23 @@ void CPluginManager::GetModules(vector<string> &modules, const char* searchPath)
 /**
  * List all modules (device libraries) in all search paths.
  */
-vector<string> CPluginManager::GetAvailableDeviceAdapters()
+std::vector<std::string>
+CPluginManager::GetAvailableDeviceAdapters()
 {
-   vector<string> searchPaths = GetActualSearchPaths();
+   std::vector<std::string> searchPaths = GetActualSearchPaths();
 
-   vector<string> modules;
+   std::vector<std::string> modules;
 
-   for (vector<string>::const_iterator it = searchPaths.begin(), end = searchPaths.end(); it != end; ++it)
+   for (std::vector<std::string>::const_iterator it = searchPaths.begin(), end = searchPaths.end(); it != end; ++it)
       GetModules(modules, it->c_str());
 
    // Check for duplicates
    // XXX Is this the right place to be doing this checking? Shouldn't it be an
    // error to have duplicates even if we're not listing all libraries?
-   set<string> moduleSet;
-   for (vector<string>::const_iterator it = modules.begin(), end = modules.end(); it != end; ++it) {
+   std::set<std::string> moduleSet;
+   for (std::vector<std::string>::const_iterator it = modules.begin(), end = modules.end(); it != end; ++it) {
       if (moduleSet.count(*it)) {
-         string msg("Duplicate libraries found with name \"" + *it + "\"");
+         std::string msg("Duplicate libraries found with name \"" + *it + "\"");
          throw CMMError(msg.c_str(), DEVICE_DUPLICATE_LIBRARY);
       }
    }
@@ -332,7 +341,8 @@ vector<string> CPluginManager::GetAvailableDeviceAdapters()
 }
 
 
-std::vector<std::string> CPluginManager::GetModulesInLegacyFallbackSearchPaths()
+std::vector<std::string>
+CPluginManager::GetModulesInLegacyFallbackSearchPaths()
 {
    // Search in default search paths and any that were added to the legacy path
    // list.
@@ -353,8 +363,8 @@ std::vector<std::string> CPluginManager::GetModulesInLegacyFallbackSearchPaths()
    // Check for duplicates
    // XXX Is this the right place to be doing this checking? Shouldn't it be an
    // error to have duplicates even if we're not listing all libraries?
-   set<string> moduleSet;
-   for (vector<string>::const_iterator it = modules.begin(), end = modules.end(); it != end; ++it) {
+   std::set<std::string> moduleSet;
+   for (std::vector<std::string>::const_iterator it = modules.begin(), end = modules.end(); it != end; ++it) {
       if (moduleSet.count(*it)) {
          std::string msg("Duplicate libraries found with name \"" + *it + "\"");
          throw CMMError(msg.c_str(), DEVICE_DUPLICATE_LIBRARY);
@@ -367,9 +377,10 @@ std::vector<std::string> CPluginManager::GetModulesInLegacyFallbackSearchPaths()
 /**
  * List all available devices in the specified module.
  */
-vector<string> CPluginManager::GetAvailableDevices(const char* moduleName)
+std::vector<std::string>
+CPluginManager::GetAvailableDevices(const char* moduleName)
 {
-   vector<string> devices;
+   std::vector<std::string> devices;
    boost::shared_ptr<LoadedDeviceAdapter> module = GetDeviceAdapter(moduleName);
 
    try
@@ -394,9 +405,10 @@ vector<string> CPluginManager::GetAvailableDevices(const char* moduleName)
 /**
  * List all available devices in the specified module.
  */
-vector<string> CPluginManager::GetAvailableDeviceDescriptions(const char* moduleName)
+std::vector<std::string>
+CPluginManager::GetAvailableDeviceDescriptions(const char* moduleName)
 {
-   vector<string> descriptions;
+   std::vector<std::string> descriptions;
    boost::shared_ptr<LoadedDeviceAdapter> module = GetDeviceAdapter(moduleName);
 
    try
@@ -427,9 +439,10 @@ vector<string> CPluginManager::GetAvailableDeviceDescriptions(const char* module
 /**
  * List all device types in the specified module.
  */
-vector<long> CPluginManager::GetAvailableDeviceTypes(const char* moduleName)
+std::vector<long>
+CPluginManager::GetAvailableDeviceTypes(const char* moduleName)
 {
-   vector<long> types;
+   std::vector<long> types;
    boost::shared_ptr<LoadedDeviceAdapter> module = GetDeviceAdapter(moduleName);
 
    try
@@ -472,7 +485,8 @@ vector<long> CPluginManager::GetAvailableDeviceTypes(const char* moduleName)
  * implementations to the core implementation so tightly that we're going to
  * end up with a hard-to-maintain situation. Keeping it for now. - Mark
  */
-bool CPluginManager::removeModuleLock(const char* moduleName)
+bool
+CPluginManager::removeModuleLock(const char* moduleName)
 {
    std::map< std::string, boost::shared_ptr<LoadedDeviceAdapter> >::iterator it =
       moduleMap_.find(moduleName);
