@@ -23,6 +23,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
       private Integer scaleBarColorIndex_ = null;
       private Integer scaleBarLocationIndex_ = null;
       private Boolean shouldShowScaleBar_ = null;
+      private Boolean shouldAutostretch_ = null;
       private Boolean shouldIgnoreOutliers_ = null;
       private Double percentToIgnore_ = null;
       private Boolean shouldUseLogScale_ = null;
@@ -87,6 +88,12 @@ public class DefaultDisplaySettings implements DisplaySettings {
       }
 
       @Override
+      public DisplaySettingsBuilder shouldAutostretch(Boolean shouldAutostretch) {
+         shouldAutostretch_ = shouldAutostretch;
+         return this;
+      }
+
+      @Override
       public DisplaySettingsBuilder shouldIgnoreOutliers(Boolean shouldIgnoreOutliers) {
          shouldIgnoreOutliers_ = shouldIgnoreOutliers;
          return this;
@@ -115,6 +122,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
    private Integer scaleBarColorIndex_ = null;
    private Integer scaleBarLocationIndex_ = null;
    private Boolean shouldShowScaleBar_ = null;
+   private Boolean shouldAutostretch_ = null;
    private Boolean shouldIgnoreOutliers_ = null;
    private Double percentToIgnore_ = null;
    private Boolean shouldUseLogScale_ = null;
@@ -129,6 +137,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
       scaleBarColorIndex_ = builder.scaleBarColorIndex_;
       scaleBarLocationIndex_ = builder.scaleBarLocationIndex_;
       shouldShowScaleBar_ = builder.shouldShowScaleBar_;
+      shouldAutostretch_ = builder.shouldAutostretch_;
       shouldIgnoreOutliers_ = builder.shouldIgnoreOutliers_;
       percentToIgnore_ = builder.percentToIgnore_;
       shouldUseLogScale_ = builder.shouldUseLogScale_;
@@ -180,6 +189,11 @@ public class DefaultDisplaySettings implements DisplaySettings {
    }
 
    @Override
+   public Boolean getShouldAutostretch() {
+      return shouldAutostretch_;
+   }
+
+   @Override
    public Boolean getShouldIgnoreOutliers() {
       return shouldIgnoreOutliers_;
    }
@@ -206,6 +220,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
             .scaleBarColorIndex(scaleBarColorIndex_)
             .scaleBarLocationIndex(scaleBarLocationIndex_)
             .shouldShowScaleBar(shouldShowScaleBar_)
+            .shouldAutostretch(shouldAutostretch_)
             .shouldIgnoreOutliers(shouldIgnoreOutliers_)
             .percentToIgnore(percentToIgnore_)
             .shouldUseLogScale(shouldUseLogScale_);
@@ -255,6 +270,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
          result.put("scaleBarColorIndex", scaleBarColorIndex_);
          result.put("scaleBarLocationIndex", scaleBarLocationIndex_);
          result.put("shouldShowScaleBar", shouldShowScaleBar_);
+         result.put("shouldAutostretch", shouldAutostretch_);
          result.put("shouldIgnoreOutliers", shouldIgnoreOutliers_);
          result.put("percentToIgnore", percentToIgnore_);
          result.put("shouldUseLogScale", shouldUseLogScale_);
