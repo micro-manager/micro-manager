@@ -77,6 +77,7 @@ import org.micromanager.conf2.MicroscopeModel;
 
 import org.micromanager.dialogs.MMAboutDlg;
 import org.micromanager.dialogs.MMIntroDlg;
+import org.micromanager.dialogs.RegistrationDlg;
 
 import org.micromanager.events.EventManager;
 

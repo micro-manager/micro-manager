@@ -47,7 +47,6 @@ import org.micromanager.logging.LogFileManager;
 import org.micromanager.AcqControlDlg;
 import org.micromanager.MMOptions;
 import org.micromanager.MMStudio;
-import org.micromanager.RegistrationDlg;
 import org.micromanager.utils.GUIColors;
 import org.micromanager.utils.MMDialog;
 import org.micromanager.utils.NumberUtils;

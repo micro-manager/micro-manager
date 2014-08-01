@@ -22,7 +22,7 @@
 // CVS:          $Id$
 //
 
-package org.micromanager;
+package org.micromanager.dialogs;
 
 import java.awt.Color;
 import java.awt.Dimension;
