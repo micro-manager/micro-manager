@@ -68,7 +68,7 @@ build/
 # Generated source
 /buildscripts/launchers/micromanager
 /buildscripts/launchers/mmimagej
-/MMCoreJ_wrap/mmcorej/
+/MMCoreJ_wrap/gensrc/
 /MMCoreJ_wrap/MMCoreJ_wrap.cxx
 /MMCoreJ_wrap/MMCoreJ_wrap.h
 /MMCorePy_wrap/MMCorePy.py

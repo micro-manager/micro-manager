@@ -44,8 +44,8 @@ swig_sources = MMCoreJ.i \
 MMCoreJ.stamp: $(swig_sources)
 	@rm -f MMCoreJ.tmp
 	@touch MMCoreJ.tmp
-	$(MKDIR_P) mmcorej
-	$(SWIG) -c++ -java -package mmcorej -outdir mmcorej -module MMCoreJ \
+	$(MKDIR_P) gensrc/mmcorej
+	$(SWIG) -c++ -java -package mmcorej -outdir gensrc/mmcorej -module MMCoreJ \
 		"-DMMCOREJ_LIBRARY_PATH=\"$(MMCOREJ_LIBRARY_PATH)\"" \
 		-o MMCoreJ_wrap.cxx $(srcdir)/MMCoreJ.i
 	@mv -f MMCoreJ.tmp $@
@@ -64,12 +64,18 @@ libMMCoreJ_wrap_la_LIBADD = ../MMCore/libMMCore.la
 
 jar_DATA = MMCoreJ.jar
 
-MMCoreJ.jar: MMCoreJ_wrap.h TaggedImage.java
-	$(MKDIR_P) mmcorej
-	cp $(srcdir)/TaggedImage.java mmcorej
-	$(JAVAC) $(JAVACFLAGS) -d . $(srcdir)/../mmstudio/src/org/json/*.java
-	$(JAVAC) $(JAVACFLAGS) -cp . -d . mmcorej/*.java
-	$(JAR) cf MMCoreJ.jar org/json/*.class mmcorej/*.class
+gensrc/mmcorej/TaggedImage.java: TaggedImage.java
+	$(MKDIR_P) gensrc/mmcorej
+	cp $(srcdir)/TaggedImage.java gensrc/mmcorej
+
+# Use MMCoreJ_wrap.{h,cxx} to ensure SWIG has been run, but use the phony
+# target FORCE to always run Ant so that the Java source mtime is checked
+MMCoreJ.jar: gensrc/mmcorej/TaggedImage.java MMCoreJ_wrap.h MMCoreJ_wrap.cxx FORCE
+	$(ANT) $(ANTFLAGS) -Dsrcdir=gensrc jar
+
+.PHONY: FORCE
+
+FORCE:
 
 
 if NONSTD_JNI_PREFIX
@@ -87,10 +93,11 @@ uninstall-hook:
 endif # NONSTD_JNI_PREFIX
 
 
-CLEANFILES = MMCoreJ.stamp MMCoreJ_wrap.h MMCoreJ_wrap.cxx MMCoreJ.jar
+CLEANFILES = MMCoreJ.stamp MMCoreJ_wrap.h MMCoreJ_wrap.cxx
 
 clean-local:
-	-rm -rf mmcorej org
+	$(ANT) $(ANTFLAGS) -Dsrcdir=gensrc clean
+	-rm -rf gensrc
 
 
 EXTRA_DIST = license.txt
