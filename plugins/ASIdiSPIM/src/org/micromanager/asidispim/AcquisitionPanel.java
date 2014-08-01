@@ -68,8 +68,9 @@ import mmcorej.TaggedImage;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.api.ImageCache;
 import org.micromanager.api.MMTags;
-import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.ComponentTitledBorder;
+
+import org.micromanager.MMStudio;
 import org.micromanager.acquisition.DefaultTaggedImageSink;
 import org.micromanager.acquisition.MMAcquisition;
 import org.micromanager.acquisition.TaggedImageQueue;
@@ -1286,7 +1287,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private void setRootDirectory(JTextField rootField) {
       File result = FileDialogs.openDir(null,
               "Please choose a directory root for image data",
-              MMStudioMainFrame.MM_DATA_SET);
+              MMStudio.MM_DATA_SET);
       if (result != null) {
          rootField.setText(result.getAbsolutePath());
       }

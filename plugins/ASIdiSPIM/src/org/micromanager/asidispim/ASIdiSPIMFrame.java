@@ -39,7 +39,7 @@ import javax.swing.event.ChangeListener;
 
 import org.micromanager.api.MMListenerInterface;
 import org.micromanager.api.ScriptInterface;
-import org.micromanager.MMStudioMainFrame; 
+import org.micromanager.MMStudio; 
 import org.micromanager.asidispim.Utils.StagePositionUpdater;
 import org.micromanager.internalinterfaces.LiveModeListener; 
 
@@ -133,9 +133,9 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       stagePosUpdater_.addPanel(navigationPanel_);
 
       // attach live mode listeners
-      MMStudioMainFrame.getInstance().addLiveModeListener((LiveModeListener) setupPanelB_);
-      MMStudioMainFrame.getInstance().addLiveModeListener((LiveModeListener) setupPanelA_);
-      MMStudioMainFrame.getInstance().addLiveModeListener((LiveModeListener) navigationPanel_);
+      MMStudio.getInstance().addLiveModeListener((LiveModeListener) setupPanelB_);
+      MMStudio.getInstance().addLiveModeListener((LiveModeListener) setupPanelA_);
+      MMStudio.getInstance().addLiveModeListener((LiveModeListener) navigationPanel_);
       
       // make sure gotSelected() gets called whenever we switch tabs
       tabbedPane.addChangeListener(new ChangeListener() {

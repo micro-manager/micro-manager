@@ -33,7 +33,7 @@ import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.MMStudio;
 
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.ReportingUtils;
@@ -168,7 +168,7 @@ public class IntroPage extends PagePanel {
    
    private void loadConfiguration() {
       File f = FileDialogs.openFile(parent_, "Choose a config file",
-              MMStudioMainFrame.MM_CONFIG_FILE);
+              MMStudio.MM_CONFIG_FILE);
       if (f == null)
          return;
       filePathField_.setText(f.getAbsolutePath());

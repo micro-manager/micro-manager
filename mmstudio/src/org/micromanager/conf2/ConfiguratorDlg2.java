@@ -62,7 +62,7 @@ import javax.swing.text.DefaultCaret;
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
 
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.MMStudio;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.HttpUtils;
 import org.micromanager.utils.MMDialog;
@@ -449,7 +449,7 @@ public class ConfiguratorDlg2 extends MMDialog {
 
     private void saveConfiguration() {
         File f = FileDialogs.save(this,
-                "Create a config file", MMStudioMainFrame.MM_CONFIG_FILE);
+                "Create a config file", MMStudio.MM_CONFIG_FILE);
 
         if (f == null) {
             return;

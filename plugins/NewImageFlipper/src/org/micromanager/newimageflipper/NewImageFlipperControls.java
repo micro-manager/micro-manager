@@ -29,7 +29,7 @@ import javax.swing.ImageIcon;
 import mmcorej.StrVector;
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.MMStudio;
 import org.micromanager.api.DataProcessor;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MDUtils;
@@ -73,7 +73,7 @@ public class NewImageFlipperControls extends javax.swing.JFrame {
       initComponents();
       
       selectedCamera_ = prefs_.get(SELECTEDCAMERA, 
-              MMStudioMainFrame.getInstance().getCore().getCameraDevice());
+              MMStudio.getInstance().getCore().getCameraDevice());
       
       mirrorCheckBox_.setSelected(prefs_.getBoolean(selectedCamera_ + MIRROR, false));
             
@@ -86,7 +86,7 @@ public class NewImageFlipperControls extends javax.swing.JFrame {
        
       updateCameras();
       
-      setBackground(MMStudioMainFrame.getInstance().getBackgroundColor());
+      setBackground(MMStudio.getInstance().getBackgroundColor());
 
       // Update the processor with our current settings.
       processor_.setRotation(getRotate());
@@ -112,7 +112,7 @@ public class NewImageFlipperControls extends javax.swing.JFrame {
    final public void updateCameras() {
       cameraComboBox_.removeAllItems();
       try {
-         StrVector cameras = MMStudioMainFrame.getInstance().getCore().getAllowedPropertyValues("Core", "Camera");
+         StrVector cameras = MMStudio.getInstance().getCore().getAllowedPropertyValues("Core", "Camera");
          for (String camera : cameras) {
             cameraComboBox_.addItem(camera);
          }

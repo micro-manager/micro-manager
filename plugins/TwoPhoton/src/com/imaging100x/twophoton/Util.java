@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.MMStudio;
 import org.micromanager.api.MultiStagePosition;
 import org.micromanager.api.PositionList;
 import org.micromanager.api.ScriptInterface;
@@ -29,7 +29,7 @@ public class Util {
    public static String DL_OFFSET_KEY = "Depth list offset";
 
    public static void setDepthListOffset(int posIndex, int offset) {
-      ScriptInterface app = MMStudioMainFrame.getInstance();
+      ScriptInterface app = MMStudio.getInstance();
       try {
          app.getPositionList().getPosition(posIndex).setProperty(DL_OFFSET_KEY,""+offset);
       } catch (MMScriptException ex) {
@@ -41,7 +41,7 @@ public class Util {
       if (posIndex == -1) {
          return 0;
       }
-      ScriptInterface app = MMStudioMainFrame.getInstance();
+      ScriptInterface app = MMStudio.getInstance();
       try {
          return Integer.parseInt(app.getPositionList().getPosition(posIndex).getProperty(DL_OFFSET_KEY));
       } catch (MMScriptException ex) {
@@ -51,9 +51,9 @@ public class Util {
    }
 
    public static void createGrid(double xCenter, double yCenter, int xSize, int ySize, int pixelOverlapX, int pixelOverlapY) {      
-      ScriptInterface app = MMStudioMainFrame.getInstance();
+      ScriptInterface app = MMStudio.getInstance();
       //Get affine transform
-      Preferences prefs = Preferences.userNodeForPackage(MMStudioMainFrame.class);
+      Preferences prefs = Preferences.userNodeForPackage(MMStudio.class);
 
       AffineTransform transform = null;
       try {

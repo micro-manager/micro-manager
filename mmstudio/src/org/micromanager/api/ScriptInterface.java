@@ -49,7 +49,7 @@ import org.micromanager.utils.MMScriptException;
 
 /**
  * Interface to execute commands in the main panel. Implemented by
- * MMStudioMainFrame and available as the gui object in the Beanshell
+ * MMStudio and available as the gui object in the Beanshell
  * scripting panel.
  * 
  * Most functions throw MMScriptException

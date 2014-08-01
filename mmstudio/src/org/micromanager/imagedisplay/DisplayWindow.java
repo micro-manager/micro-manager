@@ -21,7 +21,7 @@ import javax.swing.event.MouseInputAdapter;
 import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.internalinterfaces.DisplayControls;
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.MMStudio;
 import org.micromanager.utils.ReportingUtils;
 
 
@@ -97,8 +97,8 @@ public class DisplayWindow extends StackWindow {
          }
       });
 
-      setBackground(MMStudioMainFrame.getInstance().getBackgroundColor());
-      MMStudioMainFrame.getInstance().addMMBackgroundListener(this);
+      setBackground(MMStudio.getInstance().getBackgroundColor());
+      MMStudio.getInstance().addMMBackgroundListener(this);
 
       bus_ = bus;
       bus.register(this);
@@ -114,7 +114,7 @@ public class DisplayWindow extends StackWindow {
       Point location = getLocation();
       setLocation(new Point(0,0));
 
-      double mag = MMStudioMainFrame.getInstance().getPreferredWindowMag();
+      double mag = MMStudio.getInstance().getPreferredWindowMag();
 
       if (mag < ic.getMagnification()) {
          while (mag < ic.getMagnification()) {
@@ -168,7 +168,7 @@ public class DisplayWindow extends StackWindow {
       } catch (NullPointerException ex) {
          ReportingUtils.showError(ex, "Null pointer error in ImageJ code while closing window");
       }
-      MMStudioMainFrame.getInstance().removeMMBackgroundListener(this);
+      MMStudio.getInstance().removeMMBackgroundListener(this);
       closed_ = true;
    }
 

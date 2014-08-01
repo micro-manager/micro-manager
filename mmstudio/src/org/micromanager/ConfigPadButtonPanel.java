@@ -37,7 +37,7 @@ public final class ConfigPadButtonPanel extends JPanel {
 
    private CMMCore core_;
 
-   private ScriptInterface gui_;
+   private ScriptInterface studio_;
 
    
    
@@ -81,8 +81,8 @@ public final class ConfigPadButtonPanel extends JPanel {
       configPad_ = configPad;
    }
    
-   public void setGUI(MMStudioMainFrame gui) {
-      gui_ = gui;
+   public void setGUI(MMStudio gui) {
+      studio_ = gui;
    }
    
    public void setCore(CMMCore core) {
@@ -120,7 +120,7 @@ public final class ConfigPadButtonPanel extends JPanel {
       JButton theButton = createButton();
       theButton.setText(buttonText);
       if (iconPath.length()>0)
-         theButton.setIcon(SwingResourceManager.getIcon(MMStudioMainFrame.class,iconPath));
+         theButton.setIcon(SwingResourceManager.getIcon(MMStudio.class,iconPath));
       return theButton;
    }
 
@@ -138,12 +138,12 @@ public final class ConfigPadButtonPanel extends JPanel {
          removePreset();
       if (e.getSource() == editPresetButton_)
          editPreset();
-      gui_.refreshGUI();
+      studio_.refreshGUI();
    }
 
    @SuppressWarnings("ResultOfObjectAllocationIgnored")
    public void addGroup() {
-      new GroupEditor("", "", gui_, core_, true);
+      new GroupEditor("", "", studio_, core_, true);
    }
    
    
@@ -156,7 +156,7 @@ public final class ConfigPadButtonPanel extends JPanel {
          if (result == JOptionPane.OK_OPTION) {
             try {
                core_.deleteConfigGroup(groupName);
-               gui_.setConfigChanged(true);
+               studio_.setConfigChanged(true);
             } catch (Exception e) {
                handleException(e);
             }
@@ -172,7 +172,7 @@ public final class ConfigPadButtonPanel extends JPanel {
       if (groupName.length() ==0)
          JOptionPane.showMessageDialog(this, "To edit a group, please select it first, then press the edit button.");         
       else
-         new GroupEditor(groupName, configPad_.getPreset(), gui_, core_, false);
+         new GroupEditor(groupName, configPad_.getPreset(), studio_, core_, false);
    }
    
    
@@ -182,7 +182,7 @@ public final class ConfigPadButtonPanel extends JPanel {
       if (groupName.length()==0)
          JOptionPane.showMessageDialog(this, "To add a preset to a group, please select the group first, then press the edit button.");
       else
-         new PresetEditor(groupName, "", gui_, core_, true);
+         new PresetEditor(groupName, "", studio_, core_, true);
    }
    
    public void removePreset() {
@@ -244,11 +244,11 @@ public final class ConfigPadButtonPanel extends JPanel {
             } catch (Exception ex) {
                ReportingUtils.logError(ex);
             }
-            new PresetEditor(groupName, newPresetName, gui_, core_, false);
+            new PresetEditor(groupName, newPresetName, studio_, core_, false);
 
          }
       } else {
-         new PresetEditor(groupName, presetName, gui_, core_, false);
+         new PresetEditor(groupName, presetName, studio_, core_, false);
       }
    }
 

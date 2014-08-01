@@ -49,7 +49,7 @@ import mmcorej.TaggedImage;
 
 import org.json.JSONArray;
 import org.json.JSONException;
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.MMStudio;
 import org.micromanager.api.MMTags;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.MMScriptException;
@@ -153,7 +153,7 @@ public class SplitViewFrame extends javax.swing.JFrame {
 
       liveButton.setIconTextGap(6);
       liveButton.setFont(buttonFont);
-      liveButton.setIcon(SwingResourceManager.getIcon(MMStudioMainFrame.class, "/org/micromanager/icons/camera_go.png"));
+      liveButton.setIcon(SwingResourceManager.getIcon(MMStudio.class, "/org/micromanager/icons/camera_go.png"));
       liveButton.setText("Live");
 
       snapButton.setIconTextGap(6);
@@ -465,12 +465,12 @@ public class SplitViewFrame extends javax.swing.JFrame {
     private void liveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_liveButtonActionPerformed
        if (timer_.isRunning()) {
           enableLiveMode(false);
-          liveButton.setIcon(SwingResourceManager.getIcon(MMStudioMainFrame.class, "/org/micromanager/icons/camera_go.png"));
+          liveButton.setIcon(SwingResourceManager.getIcon(MMStudio.class, "/org/micromanager/icons/camera_go.png"));
 
        } else {
           timer_.setDelay((int) interval_);
           enableLiveMode(true);
-          liveButton.setIcon(SwingResourceManager.getIcon(MMStudioMainFrame.class, "/org/micromanager/icons/cancel.png"));
+          liveButton.setIcon(SwingResourceManager.getIcon(MMStudio.class, "/org/micromanager/icons/cancel.png"));
        }
     }//GEN-LAST:event_liveButtonActionPerformed
 

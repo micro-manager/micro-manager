@@ -3,7 +3,7 @@ package ch.epfl.leb.autolase;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import mmcorej.CMMCore;
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.MMStudio;
 import org.micromanager.api.ScriptInterface;
 
 /**
@@ -24,7 +24,7 @@ public enum AutoLase {
     Thread dmmt;
     
     CMMCore core;
-    MMStudioMainFrame gui;
+    MMStudio gui;
     
     AutoLaseDialog dlg;
     
@@ -74,7 +74,7 @@ public enum AutoLase {
      * @param app 
      */
     public void setup(ScriptInterface app) {
-        gui = (MMStudioMainFrame) app;
+        gui = (MMStudio) app;
         core = gui.getMMCore();
         
         log("Starting lasing thread and density calculation thread");
@@ -93,7 +93,7 @@ public enum AutoLase {
      */
     public void show() {
         if (dlg==null) {
-            dlg = new AutoLaseDialog(gui, false, this);
+            dlg = new AutoLaseDialog(gui.getFrame(), false, this);
         }
         dlg.setVisible(true);        
     }

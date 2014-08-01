@@ -16,7 +16,7 @@ import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
 
 import mmcorej.StrVector;
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.MMStudio;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.pixelcalibrator.PixelCalibratorPlugin;
 import org.micromanager.utils.ImageUtils;
@@ -46,7 +46,7 @@ public class Hub {
    private double angle_;
    private double pixelSize_;
    private final Preferences prefs_;
-   private final MMStudioMainFrame app_;
+   private final MMStudio app_;
    private RoiManager roiManager_;
    private String surveyPixelSizeConfig_ = "";
    private String navigatePixelSizeConfig_ = "";
@@ -59,7 +59,7 @@ public class Hub {
     * Hub constructor.
     */
    public Hub(ScriptInterface app) {
-      app_ = (MMStudioMainFrame) app;
+      app_ = (MMStudio) app;
       Hub.appRef_ = app;
       core_ = app_.getMMCore();
       prefs_ = Preferences.systemNodeForPackage(this.getClass());
@@ -111,7 +111,7 @@ public class Hub {
 
 
    public static AffineTransform getCurrentAffineTransform(CMMCore core) {
-      Preferences prefs = Preferences.userNodeForPackage(MMStudioMainFrame.class);
+      Preferences prefs = Preferences.userNodeForPackage(MMStudio.class);
 
       AffineTransform transform = null;
       try {

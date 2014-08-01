@@ -119,7 +119,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
    private final JButton setBottomButton_;
    private final JButton setTopButton_;
    protected JComboBox displayModeCombo_;
-   private ScriptInterface gui_;
+   private ScriptInterface studio_;
    private final GUIColors guiColors_;
    private final NumberFormat numberFormat_;
    private final JLabel namePrefixLabel_;
@@ -307,7 +307,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
             exposurePrefs_.putDouble("Exposure_" + acqEng_.getChannelGroup() 
                     + "_" + channel.config,channel.exposure);
             if (options_.syncExposureMainAndMDA_) {
-               gui_.setChannelExposureTime(acqEng_.getChannelGroup(), 
+               studio_.setChannelExposureTime(acqEng_.getChannelGroup(), 
                        channel.config, channel.exposure);
             }
          } else if (col == 3) {
@@ -794,7 +794,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
 
    public void updatePanelBorder(JPanel thePanel) {
       TitledBorder border = (TitledBorder) thePanel.getBorder();
-      if (gui_.getBackgroundStyle().contentEquals("Day")) {
+      if (studio_.getBackgroundStyle().contentEquals("Day")) {
          border.setBorder(dayBorder_);
       } else {
          border.setBorder(nightBorder_);
@@ -869,11 +869,11 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
       super();
 
       prefs_ = prefs;
-      gui_ = gui;
+      studio_ = gui;
       guiColors_ = new GUIColors();
       options_ = options;
 
-      setIconImage(SwingResourceManager.getImage(MMStudioMainFrame.class,
+      setIconImage(SwingResourceManager.getImage(MMStudio.class,
             "icons/microscope.gif"));
       
       Preferences root = Preferences.userNodeForPackage(this.getClass());
@@ -897,7 +897,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
       getContentPane().setLayout(null);
       setResizable(false);
       setTitle("Multi-dimensional Acquisition");
-      setBackground(guiColors_.background.get(gui_.getBackgroundStyle()));
+      setBackground(guiColors_.background.get(studio_.getBackgroundStyle()));
 
       createEmptyPanels();
 
@@ -1009,7 +1009,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
 
          @Override
          public void actionPerformed(ActionEvent e) {
-            gui_.showXYPositionList();
+            studio_.showXYPositionList();
          }
       });
       listButton_.setToolTipText("Open XY list dialog");
@@ -1237,9 +1237,9 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
 
             if (acqEng_.setChannelGroup(newGroup)) {
                model_.cleanUpConfigurationList();
-               if (gui_.getAutofocusManager() != null) {
+               if (studio_.getAutofocusManager() != null) {
                   try {
-                     gui_.getAutofocusManager().refresh();
+                     studio_.getAutofocusManager().refresh();
                   } catch (MMException e) {
                      ReportingUtils.showError(e);
                   }
@@ -1480,7 +1480,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
             saveSettings();
             saveAcqSettings();
             AcqControlDlg.this.dispose();
-            gui_.makeActive();
+            studio_.makeActive();
          }
       });
       closeButton.setText("Close");
@@ -1678,8 +1678,8 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
    }
 
    protected void afOptions() {
-      if (gui_.getAutofocusManager().getDevice() != null) {
-         gui_.getAutofocusManager().showOptionsDialog();
+      if (studio_.getAutofocusManager().getDevice() != null) {
+         studio_.getAutofocusManager().showOptionsDialog();
       }
    }
 
@@ -1716,9 +1716,9 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
       } catch (Throwable t) {
          ReportingUtils.logError(t, "in dispose");
       }
-      if (null != gui_) {
+      if (null != studio_) {
          try {
-            gui_.makeActive();
+            studio_.makeActive();
          } catch (Throwable t) {
             ReportingUtils.logError(t, "in makeActive");
          }
@@ -1953,7 +1953,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
    protected void setRootDirectory() {
       File result = FileDialogs.openDir(this,
               "Please choose a directory root for image data",
-              MMStudioMainFrame.MM_DATA_SET);
+              MMStudio.MM_DATA_SET);
       if (result != null) {
          rootField_.setText(result.getAbsolutePath());
          acqEng_.setRootName(result.getAbsolutePath());
@@ -2075,7 +2075,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
               (Math.abs(zTop - zBottom) /  zStep))));
       int numPositions = 1;
       try {
-         numPositions = Math.max(1, gui_.getPositionList().getNumberOfPositions());
+         numPositions = Math.max(1, studio_.getPositionList().getNumberOfPositions());
       } catch (MMScriptException ex) {
          ReportingUtils.showError(ex);
       }
@@ -2126,7 +2126,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
       double max =  (double) Runtime.getRuntime().maxMemory();
       double used = total - free;
       
-      CMMCore core = MMStudioMainFrame.getInstance().getCore();
+      CMMCore core = MMStudio.getInstance().getCore();
       long byteDepth = core.getBytesPerPixel();
       long width = core.getImageWidth();
       long height = core.getImageHeight();
@@ -2519,7 +2519,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
 
    private void showAdvancedDialog() {
       if (advancedOptionsWindow_ == null) {
-         advancedOptionsWindow_ = new AdvancedOptionsDialog(acqEng_,gui_);
+         advancedOptionsWindow_ = new AdvancedOptionsDialog(acqEng_,studio_);
       }
       advancedOptionsWindow_.setVisible(true);
    }

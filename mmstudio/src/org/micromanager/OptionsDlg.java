@@ -225,7 +225,7 @@ public class OptionsDlg extends MMDialog {
          @Override
          public void actionPerformed(ActionEvent arg0) {
             opts_.closeOnExit_ = closeOnExitCheckBox.isSelected();
-            MMStudioMainFrame.getInstance().setExitStrategy(opts_.closeOnExit_);
+            MMStudio.getFrame().setExitStrategy(opts_.closeOnExit_);
          }
       });
 
@@ -424,7 +424,7 @@ public class OptionsDlg extends MMDialog {
       if (parent_ != null) // test for null just to avoid crashes (should never be null)
       {
          // set background and trigger redraw of parent and its descendant windows
-         MMStudioMainFrame.getInstance().setBackgroundStyle(background);
+         MMStudio.getInstance().setBackgroundStyle(background);
       }
    }
 

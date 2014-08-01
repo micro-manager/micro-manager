@@ -302,7 +302,7 @@ public class MMStudio implements ScriptInterface {
       EventManager manager = new EventManager();
       manager.register(this);
 
-      startLoadingPipelineClass();
+      prepAcquisitionEngine();
 
       options_ = new MMOptions();
       try {
@@ -321,8 +321,6 @@ public class MMStudio implements ScriptInterface {
       studio_ = this;
 
       amRunningAsPlugin_ = shouldRunAsPlugin;
-      frame_.setIconImage(SwingResourceManager.getImage(MMStudio.class,
-            "icons/microscope.gif"));
       isProgramRunning_ = true;
 
       acqMgr_ = new AcquisitionManager();
@@ -337,8 +335,6 @@ public class MMStudio implements ScriptInterface {
          startupScriptFile_ = "";
       }
 
-      ReportingUtils.SetContainingFrame(frame_);
-           
       // set the location for app preferences
       try {
          mainPrefs_ = Preferences.userNodeForPackage(getClass());
@@ -369,13 +365,21 @@ public class MMStudio implements ScriptInterface {
       
       showRegistrationDialogMaybe();
 
-      frame_ = new MainFrame(this, mainPrefs_);
+      try {
+         core_ = new CMMCore();
+      } catch(UnsatisfiedLinkError ex) {
+         ReportingUtils.showError(ex, 
+               "Failed to load the MMCoreJ_wrap native library");
+      }
 
-      // NOTE: only window size and position preferences are loaded,
-      // not the settings for the camera and live imaging -
-      // attempting to set those automatically on startup may cause problems
-      // with the hardware
+      core_.enableStderrLog(true);
+
+      frame_ = new MainFrame(this, core_, mainPrefs_);
+      frame_.setIconImage(SwingResourceManager.getImage(MMStudio.class,
+            "icons/microscope.gif"));
       frame_.loadApplicationPrefs(mainPrefs_, options_.closeOnExit_);
+      ReportingUtils.SetContainingFrame(frame_);
+
       openAcqDirectory_ = mainPrefs_.get(OPEN_ACQ_DIR, "");
       try {
          ImageUtils.setImageStorageClass(Class.forName (mainPrefs_.get(MAIN_SAVE_METHOD,
@@ -405,16 +409,11 @@ public class MMStudio implements ScriptInterface {
     * Initialize the program.
     */
    private void initializationSequence() {
-      // Initialize hardware.
-      try {
-         core_ = new CMMCore();
-      } catch(UnsatisfiedLinkError ex) {
-         ReportingUtils.showError(ex, 
-               "Failed to load the MMCoreJ_wrap native library");
+      if (core_ == null) {
+         // Give up.
          return;
       }
-
-      core_.enableStderrLog(true);
+      // Initialize hardware.
       String logFileName = LogFileManager.makeLogFileNameForCurrentSession();
       new File(logFileName).getParentFile().mkdirs();
       try {
@@ -976,8 +975,12 @@ public class MMStudio implements ScriptInterface {
          listener.liveModeEnabled(enable);
       }
    }
- 
-   private void startLoadingPipelineClass() {
+
+   /**
+    * Spawn a new thread to load the acquisition engine jar, because this
+    * takes significant time (or so Mark claims).
+    */
+   private void prepAcquisitionEngine() {
       Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
       acquisitionEngine2010LoadingThread_ = new Thread("Pipeline Class loading thread") {
          @Override
@@ -1411,6 +1414,11 @@ public class MMStudio implements ScriptInterface {
          ImageCanvas canvas = curWin.getCanvas();
          Rectangle r = canvas.getBounds();
          canvas.zoomOut(r.width / 2, r.height / 2);
+         // Fix the window title, which IJ just mangled.  
+         VirtualAcquisitionDisplay display = VirtualAcquisitionDisplay.getDisplay(curWin.getImagePlus()); 
+         if (display != null) { 
+            display.updateWindowTitleAndStatus(); 
+         } 
       }
    }
 
@@ -1420,6 +1428,11 @@ public class MMStudio implements ScriptInterface {
          ImageCanvas canvas = curWin.getCanvas();
          Rectangle r = canvas.getBounds();
          canvas.zoomIn(r.width / 2, r.height / 2);
+         // Fix the window title, which IJ just mangled.  
+         VirtualAcquisitionDisplay display = VirtualAcquisitionDisplay.getDisplay(curWin.getImagePlus()); 
+         if (display != null) { 
+            display.updateWindowTitleAndStatus(); 
+         }
       }
    }
 

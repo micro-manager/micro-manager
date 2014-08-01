@@ -47,7 +47,7 @@
     (def gui gui)
     (def mmc (.getMMCore gui)))
   ([]
-    (org.micromanager.MMStudioMainFrame/getInstance)))
+    (org.micromanager.MMStudio/getInstance)))
 
 (defn rekey
   "Change the name of key kold to knew."

@@ -11,7 +11,7 @@ import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Rectangle;
 
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.MMStudio;
 import org.micromanager.slideexplorer.Hub.ModeManager;
 import org.micromanager.utils.ContrastSettings;
 import org.micromanager.utils.ImageUtils;
@@ -195,7 +195,7 @@ public class Display {
         proc_ = ImageUtils.makeProcessor(type_, imgp_.getWidth(), imgp_.getHeight());
         imgp_.setProcessor(imgp_.getTitle(), proc_);
         try {
-        ContrastSettings contrastSettings = ((MMStudioMainFrame) hub_.getApp()).getContrastSettings();
+        ContrastSettings contrastSettings = ((MMStudio) hub_.getApp()).getContrastSettings();
         imgp_.setDisplayRange(contrastSettings.min, contrastSettings.max);
         } catch (Exception e) {
             ReportingUtils.logError(e);

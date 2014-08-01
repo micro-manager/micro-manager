@@ -61,7 +61,7 @@ import javax.swing.table.TableColumn;
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.MMStudio;
 import org.micromanager.acquisition.ComponentTitledBorder;
 import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
 import org.micromanager.api.MMPlugin;
@@ -260,7 +260,7 @@ private JCheckBox drawGrid_, drawPosNames_;
 
       GUIUtils.registerImageFocusListener(this);
       //attach depth list runnable
-      MMStudioMainFrame.getInstance().getAcquisitionEngine2010().attachRunnable(-1, -1, -1, -1,
+      MMStudio.getInstance().getAcquisitionEngine2010().attachRunnable(-1, -1, -1, -1,
               new Runnable() {
                  @Override
                  public void run() {        
@@ -860,7 +860,7 @@ private JCheckBox drawGrid_, drawPosNames_;
          core_.setPosition(core_.getFocusDevice(), z);    
          applyDepthSetting(-1,0);
          removeDepthListSelection();
-         MMStudioMainFrame.getInstance().updateZPos(z);
+         MMStudio.getInstance().updateZPos(z);
       } catch (NumberFormatException e) {
          handleError(e.getMessage());
          return;

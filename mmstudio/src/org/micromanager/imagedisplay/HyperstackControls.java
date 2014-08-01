@@ -36,7 +36,7 @@ import org.json.JSONObject;
 
 import org.micromanager.internalinterfaces.DisplayControls;
 import org.micromanager.internalinterfaces.LiveModeListener;
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.MMStudio;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
@@ -93,7 +93,7 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
       initComponents(display, shouldUseLiveControls, isAcquisition);
       display_ = display;
       bus_.register(this);
-      MMStudioMainFrame.getInstance().addLiveModeListener(this);
+      MMStudio.getInstance().addLiveModeListener(this);
    }
 
    private void initComponents(VirtualAcquisitionDisplay display, 
@@ -237,20 +237,20 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
       snapButton_.setPreferredSize(new Dimension(90,28));
       snapButton_.setMaximumSize(new Dimension(90,28));
       snapButton_.setIcon(SwingResourceManager.getIcon(
-            MMStudioMainFrame.class, "/org/micromanager/icons/camera.png"));
+            MMStudio.class, "/org/micromanager/icons/camera.png"));
       snapButton_.setFont(new Font("Arial", Font.PLAIN, 10));
       snapButton_.setToolTipText("Snap single image");
       snapButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            MMStudioMainFrame.getInstance().doSnap();
+            MMStudio.getInstance().doSnap();
          }
 
       });
 
       liveButton_ = new JButton();
       liveButton_.setIcon(SwingResourceManager.getIcon(
-            MMStudioMainFrame.class,
+            MMStudio.class,
             "/org/micromanager/icons/camera_go.png"));
       liveButton_.setIconTextGap(6);
       liveButton_.setText("Live");
@@ -268,7 +268,7 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
       });
     
       snapToAlbumButton_ = new JButton("Album");
-      snapToAlbumButton_.setIcon(SwingResourceManager.getIcon(MMStudioMainFrame.class,
+      snapToAlbumButton_.setIcon(SwingResourceManager.getIcon(MMStudio.class,
               "/org/micromanager/icons/arrow_right.png"));
       snapToAlbumButton_.setIconTextGap(6);
       snapToAlbumButton_.setToolTipText("Add current image to album");
@@ -474,7 +474,7 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
 
    private void snapToAlbumButtonActionPerformed() {
       try {
-         MMStudioMainFrame gui = MMStudioMainFrame.getInstance();
+         MMStudio gui = MMStudio.getInstance();
          gui.copyFromLiveModeToAlbum(display_);
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
@@ -482,7 +482,7 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
    }
 
    private void liveButtonAction() {
-       MMStudioMainFrame.getInstance().enableLiveMode(!MMStudioMainFrame.getInstance().isLiveModeOn());
+       MMStudio.getInstance().enableLiveMode(!MMStudio.getInstance().isLiveModeOn());
     }
 
    private void updateFPS() {
@@ -688,7 +688,7 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
       String label = isEnabled ? "Stop Live" : "Live";
       String iconPath = isEnabled ? "/org/micromanager/icons/cancel.png" : "/org/micromanager/icons/camera_go.png";
       liveButton_.setIcon(
-            SwingResourceManager.getIcon(MMStudioMainFrame.class, iconPath));
+            SwingResourceManager.getIcon(MMStudio.class, iconPath));
       liveButton_.setText(label);
       if (snapButton_ != null) {
          snapButton_.setEnabled(!isEnabled);

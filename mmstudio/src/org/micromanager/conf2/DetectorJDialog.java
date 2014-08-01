@@ -6,7 +6,7 @@
 
 package org.micromanager.conf2;
 
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.MMStudio;
 
 /**
  *
@@ -37,7 +37,7 @@ public class DetectorJDialog extends javax.swing.JDialog {
         super(parent, modal);
         initComponents();
         cancelRequest_ = false;
-        setBackground(MMStudioMainFrame.getInstance().getBackgroundColor());
+        setBackground(MMStudio.getInstance().getBackgroundColor());
     }
 
     /** This method is called from within the constructor to

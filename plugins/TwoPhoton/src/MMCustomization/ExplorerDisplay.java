@@ -23,7 +23,7 @@ import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.MMStudio;
 import org.micromanager.acquisition.AcquisitionEngine;
 
 import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
@@ -55,7 +55,7 @@ public class ExplorerDisplay implements ImageCacheListener  {
     public ExplorerDisplay(final ImageCache stitchedCache, AcquisitionEngine eng, JSONObject summaryMD) {
         eng_ = eng;
         try {
-            MMStudioMainFrame gui = MMStudioMainFrame.getInstance();
+            MMStudio gui = MMStudio.getInstance();
             String camera = gui.getCore().getCameraDevice();
             swapXY_ = gui.getCore().getProperty(camera, MMCoreJ.getG_Keyword_Transpose_SwapXY()).equals("1");
             invertX_ = gui.getCore().getProperty(camera, MMCoreJ.getG_Keyword_Transpose_MirrorX()).equals("1");
@@ -294,8 +294,8 @@ public class ExplorerDisplay implements ImageCacheListener  {
    private void createGrid() {
       try {
          //Assume that image is stitched propoerly and pixels are calibrated properly
-         double pixelSize = MMStudioMainFrame.getInstance().getCore().getPixelSizeUm();
-         String xyStage = MMStudioMainFrame.getInstance().getCore().getXYStageDevice();
+         double pixelSize = MMStudio.getInstance().getCore().getPixelSizeUm();
+         String xyStage = MMStudio.getInstance().getCore().getXYStageDevice();
 
          
          //get coordinates of center of exisitng grid

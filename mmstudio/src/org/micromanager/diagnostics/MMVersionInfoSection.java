@@ -19,7 +19,7 @@ class MMVersionInfoSection implements SystemInfo.SystemInfoSection {
 
       sb.append("MMStudio version: ").append(org.micromanager.MMVersion.VERSION_STRING).append('\n');
 
-      mmcorej.CMMCore core = org.micromanager.MMStudioMainFrame.getInstance().getCore();
+      mmcorej.CMMCore core = org.micromanager.MMStudio.getInstance().getCore();
       sb.append("Core version: ").append(core.getVersionInfo()).append('\n');
       sb.append("Core device API version: ").append(core.getAPIVersionInfo());
 

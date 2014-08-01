@@ -44,7 +44,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONException;
 import org.micromanager.AcqControlDlg;
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.MMStudio;
 import org.micromanager.api.ImageCache;
 import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
@@ -260,9 +260,9 @@ public class MMAcquisition {
       if (!existing_) {
          createDefaultAcqSettings(imageCache);
       }
-      MMStudioMainFrame.createSimpleDisplay(name_, imageCache);
+      MMStudio.createSimpleDisplay(name_, imageCache);
       if (show_) {
-         virtAcq_ = MMStudioMainFrame.getSimpleDisplay();
+         virtAcq_ = MMStudio.getSimpleDisplay();
          virtAcq_.show();
          imageCache_ = virtAcq_.getImageCache();
          imageCache_.addImageCacheListener(virtAcq_);
@@ -346,7 +346,7 @@ public class MMAcquisition {
       }
 
       
-      CMMCore core = MMStudioMainFrame.getInstance().getCore();
+      CMMCore core = MMStudio.getInstance().getCore();
       if (!existing_) {
          int camCh = (int) core.getNumberOfCameraChannels();
          if (camCh > 1) {
@@ -390,7 +390,7 @@ public class MMAcquisition {
 
       try {
          JSONObject summaryMetadata = new JSONObject(summary_, keys);
-         CMMCore core = MMStudioMainFrame.getInstance().getCore();
+         CMMCore core = MMStudio.getInstance().getCore();
 
          summaryMetadata.put("BitDepth", bitDepth_);
          summaryMetadata.put("Channels", numChannels_);
@@ -425,7 +425,7 @@ public class MMAcquisition {
          }
          summaryMetadata.put("IJType", ijType);
          summaryMetadata.put("MetadataVersion", 10);
-         summaryMetadata.put("MicroManagerVersion", MMStudioMainFrame.getInstance().getVersion());
+         summaryMetadata.put("MicroManagerVersion", MMStudio.getInstance().getVersion());
          summaryMetadata.put("NumComponents", 1);
          summaryMetadata.put("Positions", numPositions_);
          summaryMetadata.put("Source", "Micro-Manager");
@@ -451,7 +451,7 @@ public class MMAcquisition {
       Preferences root = Preferences.userNodeForPackage(AcqControlDlg.class);
       Preferences colorPrefs = root.node(root.absolutePath() + "/" + AcqControlDlg.COLOR_SETTINGS_NODE);
       int color = DEFAULT_COLORS[index % DEFAULT_COLORS.length].getRGB();
-      String channelGroup = MMStudioMainFrame.getInstance().getCore().getChannelGroup();
+      String channelGroup = MMStudio.getInstance().getCore().getChannelGroup();
       if (channelGroup == null)
          channelGroup = "";
       color = colorPrefs.getInt("Color_Camera_" + channelName, colorPrefs.getInt("Color_" + channelGroup
@@ -505,7 +505,7 @@ public class MMAcquisition {
                channelNames_.put(0, "Default");
             }
             try {
-               CMMCore core = MMStudioMainFrame.getInstance().getCore();
+               CMMCore core = MMStudio.getInstance().getCore();
                String name = core.getCurrentConfigFromCache(core.getChannelGroup());
                // Only use empty-string names (caused by having a null channel
                // group) if we don't already have a better name.

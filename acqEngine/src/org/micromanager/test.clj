@@ -4,7 +4,7 @@
                                  ConcurrentLinkedQueue TimeUnit)
            (mmcorej TaggedImage)
            (org.json JSONArray JSONObject)
-           (org.micromanager MMStudioMainFrame)
+           (org.micromanager MMStudio)
            (org.micromanager.api DataProcessor)
            (java.nio ByteBuffer ByteOrder)
            (java.io RandomAccessFile)
@@ -14,7 +14,7 @@
             [clojure.java.io :as io])
   (:use [org.micromanager.mm :only (edt load-mm core gui mmc)]))
 
-(load-mm (MMStudioMainFrame/getInstance))
+(load-mm (MMStudio/getInstance))
 
 (def acq (.getAcquisitionEngine gui))
 

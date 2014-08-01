@@ -64,7 +64,7 @@ import mmcorej.TaggedImage;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.MMStudio;
 import org.micromanager.acquisition.AcquisitionEngine;
 import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
 import org.micromanager.acquisition.TaggedImageStorageMultipageTiff;
@@ -341,7 +341,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
     * from getSummaryMetadata()), and set up our controls and view window.
     */
    private void startup(JSONObject firstImageMetadata, AcquisitionVirtualStack virtualStack) {
-      mdPanel_ = MMStudioMainFrame.getInstance().getMetadataPanel();
+      mdPanel_ = MMStudio.getInstance().getMetadataPanel();
       JSONObject summaryMetadata = getSummaryMetadata();
       int numSlices = 1;
       int numFrames = 1;
@@ -810,7 +810,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       
       for (int channel = 0; channel < numChannels; channel++) {
          String channelName = imageCache_.getChannelName(channel);
-         HistogramSettings settings = MMStudioMainFrame.getInstance().loadStoredChannelHistogramSettings(
+         HistogramSettings settings = MMStudio.getInstance().loadStoredChannelHistogramSettings(
                  channelGroup_, channelName, isMDA_);
          histograms_.setChannelContrast(channel, settings.min_, settings.max_, settings.gamma_);
          histograms_.setChannelHistogramDisplayMax(channel, settings.histMax_);
@@ -835,7 +835,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          //store global preference for channel contrast settings
          if (isMDA_) {
             //only store for datasets that were just acquired or snap/live (i.e. no loaded datasets)
-            MMStudioMainFrame.getInstance().saveChannelHistogramSettings(channelGroup_, 
+            MMStudio.getInstance().saveChannelHistogramSettings(channelGroup_, 
                     imageCache_.getChannelName(channelIndex), isMDA_,
                     new HistogramSettings(min,max, gamma, histMax, displayMode));    
          }
@@ -1047,7 +1047,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       for (;;) {
          File f = FileDialogs.save(hyperImage_.getWindow(),
                  "Please choose a location for the data set",
-                 MMStudioMainFrame.MM_DATA_SET);
+                 MMStudio.MM_DATA_SET);
          if (f == null) // Canceled.
          {
             return false;
@@ -1090,7 +1090,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       } catch (JSONException ex) {
          ReportingUtils.showError(ex, "Failed to save file");
       }
-      MMStudioMainFrame.getInstance().setAcqDirectory(root);
+      MMStudio.getInstance().setAcqDirectory(root);
       updateWindowTitleAndStatus();
       return true;
    }
@@ -1188,7 +1188,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       imageCache_.finished();
       imageCache_.close();
 
-      removeFromAcquisitionManager(MMStudioMainFrame.getInstance());
+      removeFromAcquisitionManager(MMStudio.getInstance());
 
       //Call this because for some reason WindowManager doesnt always fire
       mdPanel_.displayChanged(null);

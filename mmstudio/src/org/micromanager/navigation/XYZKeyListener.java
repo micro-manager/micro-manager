@@ -32,7 +32,7 @@ import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
 
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.MMStudio;
 import org.micromanager.internalinterfaces.LiveModeListener;
 import org.micromanager.utils.ReportingUtils;
 
@@ -42,7 +42,7 @@ import org.micromanager.utils.ReportingUtils;
  */
 public final class XYZKeyListener implements KeyListener, LiveModeListener {
 	private CMMCore core_;
-   private MMStudioMainFrame gui_;
+   private MMStudio studio_;
 	private ImageCanvas canvas_;
 	private static boolean isRunning_ = false;
 	private boolean mirrorX_;
@@ -59,9 +59,9 @@ public final class XYZKeyListener implements KeyListener, LiveModeListener {
 	private double stepX;
 	private double stepY;
 
-	public XYZKeyListener(CMMCore core, MMStudioMainFrame gui) {
+	public XYZKeyListener(CMMCore core, MMStudio gui) {
 		core_ = core;
-      gui_ = gui;
+      studio_ = gui;
 	}
 
    @Override
@@ -222,7 +222,7 @@ public final class XYZKeyListener implements KeyListener, LiveModeListener {
 		}
 
       // Cheap way to update XY position in GUI
-      gui_.updateXYPosRelative(mXUm, mYUm);
+      studio_.updateXYPosRelative(mXUm, mYUm);
 	}
 
 	public void IncrementZ(int step) {
@@ -284,7 +284,7 @@ public final class XYZKeyListener implements KeyListener, LiveModeListener {
 
    public void liveModeEnabled(boolean enabled) {
       if (enabled) {
-         this.start(gui_.getImageWin());
+         this.start(studio_.getImageWin());
       } else {
          this.stop();
       }

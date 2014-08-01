@@ -15,7 +15,7 @@ class CorePropertyCacheInfoSection implements SystemInfo.SystemInfoSection {
    public String getTitle() { return "Core information"; }
 
    public String getReport() {
-      mmcorej.CMMCore c = org.micromanager.MMStudioMainFrame.getInstance().getMMCore();
+      mmcorej.CMMCore c = org.micromanager.MMStudio.getInstance().getMMCore();
 
       StringBuilder sb = new StringBuilder();
       sb.append("Core property cache (\"system state cache\") contents:\n");

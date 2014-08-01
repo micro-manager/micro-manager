@@ -18,7 +18,7 @@ import javax.swing.border.LineBorder;
 
 import mmcorej.CMMCore;
 
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.MMStudio;
 
 
 public class BleachControlDlg extends JDialog {
@@ -256,8 +256,8 @@ public class BleachControlDlg extends JDialog {
    }
 
    public void displayImage(Object img) {
-      //ImagePlus implus = WindowManager.getImage(MMStudioMainFrame.LIVE_WINDOW_TITLE);
-      ImagePlus implus = MMStudioMainFrame.getLiveWin().getImagePlus();
+      //ImagePlus implus = WindowManager.getImage(MMStudio.LIVE_WINDOW_TITLE);
+      ImagePlus implus = MMStudio.getLiveWin().getImagePlus();
       if (implus == null) {
          return;
       }

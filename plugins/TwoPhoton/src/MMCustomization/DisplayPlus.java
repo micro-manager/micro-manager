@@ -25,7 +25,7 @@ import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.MMStudio;
 import org.micromanager.acquisition.AcquisitionEngine;
 
 import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
@@ -289,7 +289,7 @@ public class DisplayPlus implements ImageCacheListener {
 
                     Point2D stagePos = stagePositionFromPixelPosition(xPixelDisp, yPixelDisp);
                     try {
-                        MMStudioMainFrame.getInstance().setXYStagePosition(stagePos.getX(), stagePos.getY());
+                        MMStudio.getInstance().setXYStagePosition(stagePos.getX(), stagePos.getY());
                     } catch (MMScriptException ex) {
                         ReportingUtils.showError("Couldn't move xy stage");
                     }
@@ -379,7 +379,7 @@ public class DisplayPlus implements ImageCacheListener {
     private Point2D.Double stagePositionFromPixelPosition(double xPixelDispFromCenter, double yPixelDispFromCenter) {
         try {
             //get coordinates of center of exisitng grid
-            String xyStage = MMStudioMainFrame.getInstance().getCore().getXYStageDevice();
+            String xyStage = MMStudio.getInstance().getCore().getXYStageDevice();
 
             //row column map to coordinates for exisiting stage positiions
             Point2D.Double[][] coordinates = new Point2D.Double[numCols_][numRows_];
@@ -414,10 +414,10 @@ public class DisplayPlus implements ImageCacheListener {
 
             //use affine transform to convert to stage coordinate of center of new grid
             AffineTransform transform = null;
-            Preferences prefs = Preferences.userNodeForPackage(MMStudioMainFrame.class);
+            Preferences prefs = Preferences.userNodeForPackage(MMStudio.class);
             try {
                 transform = (AffineTransform) JavaUtils.getObjectFromPrefs(prefs, "affine_transform_"
-                        + MMStudioMainFrame.getInstance().getCore().getCurrentPixelSizeConfig(), null);
+                        + MMStudio.getInstance().getCore().getCurrentPixelSizeConfig(), null);
                 //set map origin to current stage position
                 double[] matrix = new double[6];
                 transform.getMatrix(matrix);

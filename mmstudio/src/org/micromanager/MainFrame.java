@@ -100,10 +100,11 @@ public class MainFrame extends JFrame implements LiveModeListener {
    private AbstractButton clearRoiButton_;
 
    @SuppressWarnings("LeakingThisInConstructor")
-   public MainFrame(MMStudio studio, Preferences prefs) {
+   public MainFrame(MMStudio studio, CMMCore core, Preferences prefs) {
       org.micromanager.diagnostics.ThreadExceptionLogger.setUp();
 
       studio_ = studio;
+      core_ = core;
       studio_.addLiveModeListener(this);
 
       mainFrame_ = this;

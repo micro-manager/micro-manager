@@ -40,7 +40,7 @@ import javax.swing.SpringLayout;
 import javax.swing.UIManager;
 import javax.swing.border.LineBorder;
 
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.MMStudio;
 import org.micromanager.utils.MMFrame;
 import org.micromanager.utils.ReportingUtils;
 
@@ -230,7 +230,7 @@ public class GraphFrame extends MMFrame {
       btnRefresh.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            MMStudioMainFrame.getInstance().updateLineProfile();
+            MMStudio.getInstance().updateLineProfile();
          }
       });
       btnRefresh.setText("Refresh");

@@ -192,7 +192,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
    public static DataCollectionForm getInstance() {
       if (instance_ == null) {
          instance_ =  new DataCollectionForm();
-         // MMStudioMainFrame.getInstance().addMMBackgroundListener(instance_);
+         // MMStudio.getInstance().addMMBackgroundListener(instance_);
       }
       return instance_;
    }
@@ -330,7 +330,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
          }
       });
 
-      // setBackground(MMStudioMainFrame.getInstance().getBackgroundColor());
+      // setBackground(MMStudio.getInstance().getBackgroundColor());
 
       setVisible(true);
    }
@@ -2544,8 +2544,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
       MathForm mf = new MathForm(rows, rows);
 
-      // mf.setBackground(MMStudioMainFrame.getInstance().getBackgroundColor());
-      // MMStudioMainFrame.getInstance().addMMBackgroundListener(mf);
+      // mf.setBackground(MMStudio.getInstance().getBackgroundColor());
+      // MMStudio.getInstance().addMMBackgroundListener(mf);
 
       mf.setVisible(true);
    }//GEN-LAST:event_mathButton_ActionPerformed

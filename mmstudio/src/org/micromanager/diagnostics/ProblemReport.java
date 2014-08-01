@@ -316,7 +316,7 @@ public class ProblemReport {
    }
 
    private static ConfigFile getCurrentConfigFile() {
-      String fileName = org.micromanager.MMStudioMainFrame.getInstance().getSysConfigFile();
+      String fileName = org.micromanager.MMStudio.getInstance().getSysConfigFile();
       return new ConfigFile(fileName);
    }
 

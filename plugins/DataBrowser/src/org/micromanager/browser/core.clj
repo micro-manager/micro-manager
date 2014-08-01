@@ -96,7 +96,7 @@
 
 (defn get-icon [name]
   (SwingResourceManager/getIcon
-    org.micromanager.MMStudioMainFrame (str "icons/" name)))
+    org.micromanager.MMStudio (str "icons/" name)))
 
 (defn get-table-columns [table]
   (when-let [col-vector (.. table getColumnModel getColumns)]
@@ -779,5 +779,5 @@ inside an existing location in your collection."
 
 (defn test-browser []
   (reset! browser nil)
-  (load-mm (org.micromanager.MMStudioMainFrame/getInstance))
+  (load-mm (org.micromanager.MMStudio/getInstance))
   (start-browser))

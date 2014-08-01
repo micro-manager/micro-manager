@@ -44,7 +44,7 @@ import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.MMStudio;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
@@ -151,7 +151,7 @@ public class MultipageTiffWriter {
                     try {
                         Thread.sleep(1000);
                     } catch (InterruptedException ex) {}
-                    MMStudioMainFrame.getInstance().getAcquisitionEngine().abortRequest();
+                    MMStudio.getInstance().getAcquisitionEngine().abortRequest();
                 } }).start();     
                 ReportingUtils.showError("Insufficent space on disk: no room to write data");
          }

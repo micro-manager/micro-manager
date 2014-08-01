@@ -4,7 +4,7 @@
 //SUBSYSTEM:     mmstudio
 //-----------------------------------------------------------------------------
 //AUTHOR:        Nico Stuurman, 2014
-//               Based on code previously in MMStudioMainFrame
+//               Based on code previously in MMStudio
 //COPYRIGHT:     University of California, San Francisco, 2006-2014
 //LICENSE:       This file is distributed under the BSD license.
 //               License text is included with the source distribution.
@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 import javax.swing.SwingUtilities;
 import mmcorej.TaggedImage;
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.MMStudio;
 import org.micromanager.acquisition.AcquisitionEngine;
 import org.micromanager.api.Autofocus;
 import org.micromanager.api.DataProcessor;
@@ -144,7 +144,7 @@ public class PluginLoader {
             ReportingUtils.logError("Failed instantiating plugin: " + e);
          }
          if (pluginType_ == PluginType.PLUGIN_STANDARD) {
-            ((MMPlugin) plugin_).setApp(MMStudioMainFrame.getInstance());
+            ((MMPlugin) plugin_).setApp(MMStudio.getInstance());
          }
       }
    }
@@ -231,7 +231,7 @@ public class PluginLoader {
               new Runnable() {
          @Override
          public void run() {
-            MMStudioMainFrame.getInstance().addPluginToMenu(pi);
+            MMStudio.getInstance().addPluginToMenu(pi);
          }
       });
    }
@@ -288,7 +288,7 @@ public class PluginLoader {
                   }
                   if (pluginType == PluginType.PLUGIN_PROCESSOR) {
                      // Register the plugin with the acquisition engine.
-                     AcquisitionEngine engine = MMStudioMainFrame.getInstance().getAcquisitionEngine();
+                     AcquisitionEngine engine = MMStudio.getInstance().getAcquisitionEngine();
                      MMProcessorPlugin plugin = (MMProcessorPlugin) pi.getPlugin();
                      String processorName = getNameForPluginClass(clazz);
                      Class<? extends DataProcessor<TaggedImage>> processorClass = getProcessorClassForPluginClass(clazz);
@@ -326,8 +326,13 @@ public class PluginLoader {
 
       for (Class<?> autofocus : autofocusClasses) {
          try {
+<<<<<<< HEAD
             ReportingUtils.logMessage("Installing autofocus plugin " + autofocus.getName() + "...");
             MMStudioMainFrame.getInstance().installAutofocusPlugin(autofocus.getName());
+=======
+            ReportingUtils.logMessage("Attempting to install autofocus plugin " + autofocus.getName());
+            MMStudio.getInstance().installAutofocusPlugin(autofocus.getName());
+>>>>>>> It compiles and runs! Lots of testing still to be done, naturally, but so far
          } catch (Exception e) {
             ReportingUtils.logError("Failed to install the \"" + autofocus.getName() + "\" autofocus plugin.");
          }

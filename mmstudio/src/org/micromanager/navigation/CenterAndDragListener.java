@@ -16,7 +16,7 @@ import java.util.Arrays;
 import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.MMStudio;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -26,7 +26,7 @@ import org.micromanager.utils.ReportingUtils;
 public class CenterAndDragListener implements MouseListener, 
         MouseMotionListener, WindowListener {
       private CMMCore core_;
-      private MMStudioMainFrame gui_;
+      private MMStudio studio_;
 	   private ImageCanvas canvas_;
 	   private static boolean isRunning_ = false;
 	   private boolean mirrorX_;
@@ -35,8 +35,8 @@ public class CenterAndDragListener implements MouseListener,
 	   private boolean correction_;
 	   private int lastX_, lastY_;
 
-	   public CenterAndDragListener(MMStudioMainFrame gui) {
-         gui_ = gui;
+	   public CenterAndDragListener(MMStudio gui) {
+         studio_ = gui;
          core_ = gui.getMMCore();
 	   }
 
@@ -47,7 +47,7 @@ public class CenterAndDragListener implements MouseListener,
 	      isRunning_ = true;
 
 	      // Get a handle to the Live window
-         ImageWindow win = gui_.getImageWin();
+         ImageWindow win = studio_.getImageWin();
          if (win != null) {
             attach(win);
          }
@@ -174,7 +174,7 @@ public class CenterAndDragListener implements MouseListener,
                }
 
                // refresh GUI x,y
-               gui_.updateXYStagePosition();
+               studio_.updateXYStagePosition();
             }
          }
       } 
@@ -253,7 +253,7 @@ public class CenterAndDragListener implements MouseListener,
 	      lastX_ = cX;
 	      lastY_ = cY;
 
-         gui_.updateXYPosRelative(mXUm, mYUm);
+         studio_.updateXYPosRelative(mXUm, mYUm);
 
 	   } 
 

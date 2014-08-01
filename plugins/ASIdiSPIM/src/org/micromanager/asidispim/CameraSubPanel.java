@@ -42,7 +42,7 @@ import com.swtdesigner.SwingResourceManager;
 import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.api.ScriptInterface;
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.MMStudio;
 import org.micromanager.internalinterfaces.LiveModeListener;
 
 /**
@@ -126,9 +126,9 @@ public final class CameraSubPanel extends ListeningJPanel implements LiveModeLis
    */ 
    public final void setLiveButtonAppearance(boolean enable) {
       toggleButtonLive_.setIcon(enable ? SwingResourceManager.getIcon(
-              MMStudioMainFrame.class,
+              MMStudio.class,
             "/org/micromanager/icons/cancel.png")
-            : SwingResourceManager.getIcon(MMStudioMainFrame.class,
+            : SwingResourceManager.getIcon(MMStudio.class,
                   "/org/micromanager/icons/camera_go.png"));
       toggleButtonLive_.setSelected(false);
       toggleButtonLive_.setText(enable ? "Stop Live" : "Live");

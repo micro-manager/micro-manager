@@ -32,7 +32,7 @@ import java.awt.dnd.DropTargetEvent;
 import java.awt.dnd.DropTargetListener;
 import java.io.File;
 import java.io.IOException;
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.MMStudio;
 
 /**
  * DragDropUtil
@@ -94,7 +94,7 @@ public class DragDropUtil implements DropTargetListener {
                      @Override
                      public void run() {
                         try {
-                           MMStudioMainFrame.getInstance().openAcquisitionData(dir, true);
+                           MMStudio.getInstance().openAcquisitionData(dir, true);
                         } catch (MMScriptException ex) {
                            ReportingUtils.showError(ex);
                         }

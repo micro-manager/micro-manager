@@ -23,7 +23,7 @@ import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.MMStudio;
 import org.micromanager.utils.*;
 
 /**
@@ -129,7 +129,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
 
          File saveFile = new File(dir_, fileName);
          if (saveFile.exists()) {
-            MMStudioMainFrame.getInstance().stopAllActivity();
+            MMStudio.getInstance().stopAllActivity();
             throw new IOException("Image saving failed: " + saveFile.getAbsolutePath());
          }
          

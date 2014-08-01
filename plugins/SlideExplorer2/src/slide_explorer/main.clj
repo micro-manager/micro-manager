@@ -4,7 +4,7 @@
            (java.util.prefs Preferences)
            (java.util.concurrent Executors)
            (javax.swing JOptionPane)
-           (org.micromanager AcquisitionEngine2010 MMStudioMainFrame)
+           (org.micromanager AcquisitionEngine2010 MMStudio)
            (org.micromanager.utils ImageUtils JavaUtils)
            (org.micromanager.acquisition TaggedImageQueue))
   (:require [clojure.java.io :as io]
@@ -34,7 +34,7 @@
 
 (defonce positions-atom (atom []))
 
-(def gui-prefs (Preferences/userNodeForPackage MMStudioMainFrame))
+(def gui-prefs (Preferences/userNodeForPackage MMStudio))
 
 (def current-xy-positions (atom {}))
 
@@ -283,7 +283,7 @@ Would you like to run automatic pixel calibration?"
                   JOptionPane/YES_NO_OPTION)]
     (when (= answer JOptionPane/YES_OPTION)
       (doto (eval '(org.micromanager.pixelcalibrator.PixelCalibratorPlugin.))
-        (.setApp (MMStudioMainFrame/getInstance));
+        (.setApp (MMStudio/getInstance));
         .show))))
 
 (defn provide-constraints [screen-state-atom available-keys]
@@ -379,7 +379,7 @@ Would you like to run automatic pixel calibration?"
 (defn go
   "The main function that starts a slide explorer window."
   ([dir new?]
-    (mm/load-mm (MMStudioMainFrame/getInstance))
+    (mm/load-mm (MMStudio/getInstance))
     (when (and new? (not (origin-here-stage-to-pixel-transform)))
       (pixels-not-calibrated))
     (let [settings (if-not new?

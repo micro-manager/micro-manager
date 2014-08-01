@@ -39,7 +39,7 @@ import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.micromanager.api.MMPlugin;
 import org.micromanager.api.ScriptInterface;
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.MMStudio;
 import org.micromanager.acquisition.TaggedImageQueue;
 import org.micromanager.api.MMTags;
 import org.micromanager.utils.MDUtils;
@@ -54,18 +54,18 @@ public class RecallPlugin implements MMPlugin {
    public static final String tooltipDescription =
       "Recalls (live) images left over in the internal sequence buffer";
    private CMMCore core_;
-   private MMStudioMainFrame gui_;
-   private MMStudioMainFrame.DisplayImageRoutine displayImageRoutine_;
+   private MMStudio gui_;
+   private MMStudio.DisplayImageRoutine displayImageRoutine_;
    private final String ACQ_NAME = "Live Replay";
    private int multiChannelCameraNrCh_;
    
   
 
    public void setApp(ScriptInterface app) {
-      gui_ = (MMStudioMainFrame) app;                                        
+      gui_ = (MMStudio) app;                                        
       core_ = app.getMMCore(); 
       
-      displayImageRoutine_ = new MMStudioMainFrame.DisplayImageRoutine() {
+      displayImageRoutine_ = new MMStudio.DisplayImageRoutine() {
          public void show(final TaggedImage ti) {
             try {
                gui_.addImage(ACQ_NAME, ti, true, true);

@@ -29,6 +29,7 @@ import ij.WindowManager;
 import ij.gui.ImageWindow;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashSet;
 import java.util.Vector;
@@ -270,7 +271,7 @@ public class GUIUtils {
     */
    public static void setIcon(AbstractButton component, String iconFileName) {
       component.setIcon(SwingResourceManager.getIcon(
-              org.micromanager.MMStudioMainFrame.class,
+              org.micromanager.MMStudio.class,
               "/org/micromanager/icons/" + iconFileName));
    }
    
@@ -662,4 +663,16 @@ public class GUIUtils {
       });
    }
 
+   public static Runnable makeURLRunnable(final String url) {
+       return new Runnable() {
+          @Override
+          public void run() {
+             try {
+                ij.plugin.BrowserLauncher.openURL(url);
+             } catch (IOException e1) {
+                ReportingUtils.showError(e1);
+             }
+          }
+       };
+   }
 }

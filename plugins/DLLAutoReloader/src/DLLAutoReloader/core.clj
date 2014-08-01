@@ -323,7 +323,7 @@
 (defn plugin-test
   "Test the plugin."
   []
-  (show-plugin (org.micromanager.MMStudioMainFrame/getInstance)))
+  (show-plugin (org.micromanager.MMStudio/getInstance)))
 
 (defn test-lib
   "Get the first module with loaded devices."

@@ -134,7 +134,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
    private static final String APP_NAME = "MMScriptPanel";
    private static final String blackStyleName_ = "blackStyle";
    private static final String redStyleName_ = "Red";
-   private final MMStudioMainFrame gui_;
+   private final MMStudio gui_;
 
    /*
     * Table model that manages the shortcut script table
@@ -293,8 +293,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
    public final void createBeanshellREPL() {
       // Create console and REPL interpreter:
       cons_ = new JConsole();
-      if (gui_.defaultScriptFont_ != null)
-         cons_.setFont(gui_.defaultScriptFont_);
+      cons_.setFont(new Font("Arial", Font.PLAIN, 10));
 
       // TODO Some of the following might belong in BeanShellEngine.
       
@@ -354,7 +353,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
     * Create the dialog
     */
    @SuppressWarnings("LeakingThisInConstructor")
-   public ScriptPanel(CMMCore core, MMOptions options, MMStudioMainFrame gui) {
+   public ScriptPanel(CMMCore core, MMOptions options, MMStudio gui) {
       super();
       gui_ = gui;
 

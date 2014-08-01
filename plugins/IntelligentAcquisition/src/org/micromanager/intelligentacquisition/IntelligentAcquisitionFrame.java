@@ -48,7 +48,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.MMStudio;
 import org.micromanager.api.MMWindow;
 import org.micromanager.utils.JavaUtils;
 
@@ -588,7 +588,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
             AffineTransform af = null;
             try {
                af = (AffineTransform) JavaUtils.getObjectFromPrefs
-                    (Preferences.userNodeForPackage(MMStudioMainFrame.class), "affine_transform_" + core_.getCurrentPixelSizeConfig(), null);
+                    (Preferences.userNodeForPackage(MMStudio.class), "affine_transform_" + core_.getCurrentPixelSizeConfig(), null);
             } catch (Exception ex) {
             }
             if (af == null) {

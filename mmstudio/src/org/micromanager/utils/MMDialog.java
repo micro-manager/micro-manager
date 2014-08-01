@@ -29,7 +29,7 @@ import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.util.prefs.Preferences;
 import javax.swing.JDialog;
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.MMStudio;
 
 /**
  * Base class for the Micro-Manager dialogs.
@@ -58,7 +58,7 @@ public class MMDialog extends JDialog {
 
    private void finishConstructor() {
       prefs_ = Preferences.userNodeForPackage(this.getClass());
-      MMStudioMainFrame mfr = MMStudioMainFrame.getInstance();
+      MMStudio mfr = MMStudio.getInstance();
       if (mfr != null) {
     	  setBackground(mfr.getBackgroundColor());
       }

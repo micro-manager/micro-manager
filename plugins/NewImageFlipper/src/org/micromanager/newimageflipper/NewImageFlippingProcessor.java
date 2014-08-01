@@ -25,7 +25,7 @@ import ij.process.ImageProcessor;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.MMStudio;
 import org.micromanager.acquisition.TaggedImageQueue;
 import org.micromanager.api.DataProcessor;
 import org.micromanager.api.ScriptInterface;
@@ -183,7 +183,7 @@ public class NewImageFlippingProcessor extends DataProcessor<TaggedImage> {
    public void makeConfigurationGUI() {
       if (controls_ == null) {
          controls_ = new NewImageFlipperControls(this);
-         MMStudioMainFrame.getInstance().addMMBackgroundListener(controls_);
+         MMStudio.getInstance().addMMBackgroundListener(controls_);
       }
       else {
          controls_.updateCameras();

@@ -29,7 +29,7 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 
 
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.MMStudio;
 import mmcorej.CMMCore;
 import org.micromanager.internalinterfaces.LiveModeListener;
 import org.micromanager.utils.ReportingUtils;
@@ -38,14 +38,14 @@ import org.micromanager.utils.ReportingUtils;
 */
 public class ZWheelListener implements MouseWheelListener, LiveModeListener {
    private CMMCore core_;
-   private MMStudioMainFrame gui_;
+   private MMStudio studio_;
    private ImageCanvas canvas_;
    private static boolean isRunning_ = false;
    private static final double moveIncrement_ = 0.20;
 
-   public ZWheelListener(CMMCore core, MMStudioMainFrame gui) {
+   public ZWheelListener(CMMCore core, MMStudio gui) {
       core_ = core;
-      gui_ = gui;
+      studio_ = gui;
    }
 
    public void start () {
@@ -111,14 +111,14 @@ public class ZWheelListener implements MouseWheelListener, LiveModeListener {
 			  return;
 		  }
 
-        gui_.updateZPosRelative(move * moveIncrement);
+        studio_.updateZPosRelative(move * moveIncrement);
 	  }
 
    } 
    
    public void liveModeEnabled(boolean enabled) {
       if (enabled) {
-         this.start(gui_.getImageWin());
+         this.start(studio_.getImageWin());
       } else {
          this.stop();
       }

@@ -43,7 +43,7 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.MMStudio;
 import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
 import org.micromanager.internalinterfaces.Histograms;
 import org.micromanager.api.ImageCache;
@@ -224,10 +224,10 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
 
 
       JButton zoomInButton = new JButton();
-      zoomInButton.setIcon(SwingResourceManager.getIcon(MMStudioMainFrame.class,
+      zoomInButton.setIcon(SwingResourceManager.getIcon(MMStudio.class,
               "/org/micromanager/icons/zoom_in.png"));
       JButton zoomOutButton = new JButton();
-      zoomOutButton.setIcon(SwingResourceManager.getIcon(MMStudioMainFrame.class,
+      zoomOutButton.setIcon(SwingResourceManager.getIcon(MMStudio.class,
               "/org/micromanager/icons/zoom_out.png"));
       zoomInButton.addActionListener(new ActionListener() {
 
@@ -664,7 +664,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
     public void imageChanged() {
         boolean update = true;
         if (display_.acquisitionIsRunning() ||
-                (MMStudioMainFrame.getInstance().isLiveModeOn())) {
+                (MMStudio.getInstance().isLiveModeOn())) {
             if (display_.getHistogramControlsState().slowHist) {
                 long time = System.currentTimeMillis();
                 if (time - lastUpdateTime_ < SLOW_HIST_UPDATE_INTERVAL_MS) {

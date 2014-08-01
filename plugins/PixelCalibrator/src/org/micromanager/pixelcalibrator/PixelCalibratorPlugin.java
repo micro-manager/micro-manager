@@ -9,7 +9,7 @@ import mmcorej.CMMCore;
 
 import org.micromanager.CalibrationEditor;
 import org.micromanager.CalibrationListDlg;
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.MMStudio;
 import org.micromanager.api.MMPlugin;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.JavaUtils;
@@ -23,7 +23,7 @@ public class PixelCalibratorPlugin implements MMPlugin {
       "image displacement";
 
    private CMMCore core_;
-   private MMStudioMainFrame app_;
+   private MMStudio app_;
    private CalibrationThread calibrationThread_;
    private PixelCalibratorDialog dialog_;
 
@@ -63,7 +63,7 @@ public class PixelCalibratorPlugin implements MMPlugin {
    }
 
    public void setApp(ScriptInterface app) {
-      app_ = (MMStudioMainFrame) app;
+      app_ = (MMStudio) app;
       core_ = app.getMMCore();
 
    }
@@ -130,7 +130,7 @@ public class PixelCalibratorPlugin implements MMPlugin {
          calDialog.setVisible(true);
 
 
-         Preferences prefs = Preferences.userNodeForPackage(MMStudioMainFrame.class);
+         Preferences prefs = Preferences.userNodeForPackage(MMStudio.class);
          
          try {
             JavaUtils.putObjectInPrefs(prefs, "affine_transform_" + core_.getCurrentPixelSizeConfig(), result);

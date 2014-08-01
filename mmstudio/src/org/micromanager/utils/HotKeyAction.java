@@ -19,8 +19,8 @@ public class HotKeyAction {
       public int type_;  // either GUICOMMAND or BEANSHELLSCRIPT
       public int guiCommand_;
       public java.io.File beanShellScript_;
-      private org.micromanager.MMStudioMainFrame gui_ =
-              org.micromanager.MMStudioMainFrame.getInstance();
+      private org.micromanager.MMStudio studio_ =
+              org.micromanager.MMStudio.getInstance();
 
       public HotKeyAction(int guiCommand) {
          type_ = GUICOMMAND;
@@ -36,22 +36,22 @@ public class HotKeyAction {
          if (type_ == GUICOMMAND) {
             switch (guiCommand_) {
                case SNAP:
-                  gui_.snapSingleImage();
+                  studio_.snapSingleImage();
                   return true;
                case TOGGLELIVE:
-                  if (gui_.getLiveMode())
-                     gui_.enableLiveMode(false);
+                  if (studio_.getLiveMode())
+                     studio_.enableLiveMode(false);
                   else
-                     gui_.enableLiveMode(true);
+                     studio_.enableLiveMode(true);
                   return true;
                case TOGGLESHUTTER:
-                  gui_.toggleShutter();
+                  studio_.toggleShutter();
                   return true;
                case ADD_TO_ALBUM:
-                  gui_.snapAndAddToImage5D();
+                  studio_.snapAndAddToImage5D();
                   return true;
                case MARK:
-                  gui_.markCurrentPosition();
+                  studio_.markCurrentPosition();
                   return true;
             }
          } else {

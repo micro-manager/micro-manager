@@ -13,7 +13,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.Hashtable;
 import mmcorej.CMMCore;
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.MMStudio;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MMScriptException;
@@ -25,7 +25,7 @@ import org.micromanager.utils.ReportingUtils;
  * @author arthur
  */
 public class CalibrationThread extends Thread {
-   private final MMStudioMainFrame app_;
+   private final MMStudio app_;
    private final CMMCore core_;
    private final String xystage_;
    private Hashtable<Point2D.Double, Point2D.Double> pointPairs_;
@@ -45,7 +45,7 @@ public class CalibrationThread extends Thread {
    int side_small;
 
    CalibrationThread(ScriptInterface app, PixelCalibratorPlugin plugin) {
-      app_ = (MMStudioMainFrame) app;
+      app_ = (MMStudio) app;
       plugin_ = plugin;
       core_ = app_.getMMCore();
       xystage_ = core_.getXYStageDevice();

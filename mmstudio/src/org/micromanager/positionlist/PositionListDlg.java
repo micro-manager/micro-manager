@@ -60,7 +60,7 @@ import org.micromanager.api.events.StagePositionChangedEvent;
 import org.micromanager.api.events.XYStagePositionChangedEvent;
 import org.micromanager.events.EventManager;
 import org.micromanager.MMOptions;
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.MMStudio;
 import org.micromanager.utils.GUIColors;
 import org.micromanager.utils.MMDialog;
 
@@ -97,7 +97,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
    private JTable axisTable_;
    private AxisTableModel axisModel_;
    private CMMCore core_;
-   private ScriptInterface gui_;
+   private ScriptInterface studio_;
    private AcqControlDlg acqControlDlg_;
    private MMOptions opts_;
    private Preferences prefs_;
@@ -150,7 +150,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
          }
       });
       core_ = core;
-      gui_ = gui;
+      studio_ = gui;
       bus_ = new EventBus();
       bus_.register(this);
       opts_ = opts;
@@ -224,7 +224,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
             posTable_.clearSelection();
          }
       });
-      markButton_.setIcon(SwingResourceManager.getIcon(MMStudioMainFrame.class, "/org/micromanager/icons/flag_green.png"));
+      markButton_.setIcon(SwingResourceManager.getIcon(MMStudio.class, "/org/micromanager/icons/flag_green.png"));
       markButton_.setText("Mark");
       markButton_.setToolTipText("Adds point with coordinates of current stage position");
       // Separate the layout of the buttons from the layout of the panels to 
@@ -259,7 +259,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
             incrementOrderOfSelectedPosition(-1);
          }
       });
-      upButton.setIcon(SwingResourceManager.getIcon(MMStudioMainFrame.class, "/org/micromanager/icons/arrow_up.png"));
+      upButton.setIcon(SwingResourceManager.getIcon(MMStudio.class, "/org/micromanager/icons/arrow_up.png"));
       upButton.setText(""); // "Up"
       upButton.setToolTipText("Move currently selected position up list (positions higher on list are acquired earlier)");
       arrowPanel.add(upButton, "dock west");
@@ -274,7 +274,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
             incrementOrderOfSelectedPosition(1);
          }
       });
-      downButton.setIcon(SwingResourceManager.getIcon(MMStudioMainFrame.class, "/org/micromanager/icons/arrow_down.png"));
+      downButton.setIcon(SwingResourceManager.getIcon(MMStudio.class, "/org/micromanager/icons/arrow_down.png"));
       downButton.setText(""); // "Down"
       downButton.setToolTipText("Move currently selected position down list (lower positions on list are acquired later)");
       arrowPanel.add(downButton, "dock east");
@@ -292,7 +292,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
             mergePositions(event);
          }
       });
-      mergeButton.setIcon(SwingResourceManager.getIcon(MMStudioMainFrame.class, "/org/micromanager/icons/asterisk_orange.png"));
+      mergeButton.setIcon(SwingResourceManager.getIcon(MMStudio.class, "/org/micromanager/icons/asterisk_orange.png"));
       mergeButton.setText("Merge");
       mergeButton.setToolTipText("Select an axis, and set the selected positions' value along that axis to the current stage position.");
       add(mergeButton);
@@ -307,7 +307,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
             goToCurrentPosition();
          }
       });
-      gotoButton.setIcon(SwingResourceManager.getIcon(MMStudioMainFrame.class, "/org/micromanager/icons/resultset_next.png"));
+      gotoButton.setIcon(SwingResourceManager.getIcon(MMStudio.class, "/org/micromanager/icons/resultset_next.png"));
       gotoButton.setText("Go to");
       gotoButton.setToolTipText("Moves stage to currently selected position");
       add(gotoButton);
@@ -321,7 +321,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
             refreshCurrentPosition();
          }
       });
-      refreshButton.setIcon(SwingResourceManager.getIcon(MMStudioMainFrame.class, "/org/micromanager/icons/arrow_refresh.png"));
+      refreshButton.setIcon(SwingResourceManager.getIcon(MMStudio.class, "/org/micromanager/icons/arrow_refresh.png"));
       refreshButton.setText("Refresh");
       add(refreshButton);
 
@@ -334,7 +334,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
             removeSelectedPositions();
          }
       });
-      removeButton.setIcon(SwingResourceManager.getIcon(MMStudioMainFrame.class, "/org/micromanager/icons/cross.png"));
+      removeButton.setIcon(SwingResourceManager.getIcon(MMStudio.class, "/org/micromanager/icons/cross.png"));
       removeButton.setText("Remove");
       removeButton.setToolTipText("Removes currently selected position from list");
       add(removeButton);
@@ -349,7 +349,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
          }
       });
        
-      setOriginButton.setIcon(SwingResourceManager.getIcon(MMStudioMainFrame.class, "/org/micromanager/icons/empty.png"));
+      setOriginButton.setIcon(SwingResourceManager.getIcon(MMStudio.class, "/org/micromanager/icons/empty.png"));
       setOriginButton.setText("Set Origin");
       setOriginButton.setToolTipText("Drives X and Y stages back to their original positions and zeros their position values");
       add(setOriginButton);
@@ -364,7 +364,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
          }
       });
        
-      offsetButton.setIcon(SwingResourceManager.getIcon(MMStudioMainFrame.class, "/org/micromanager/icons/empty.png"));
+      offsetButton.setIcon(SwingResourceManager.getIcon(MMStudio.class, "/org/micromanager/icons/empty.png"));
       offsetButton.setText("Add Offset");
       offsetButton.setToolTipText("Add an offset to the selected positions.");
       add(offsetButton);
@@ -381,7 +381,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
             }
          }
       });
-      removeAllButton.setIcon(SwingResourceManager.getIcon(MMStudioMainFrame.class, "/org/micromanager/icons/delete.png"));
+      removeAllButton.setIcon(SwingResourceManager.getIcon(MMStudio.class, "/org/micromanager/icons/delete.png"));
       removeAllButton.setText("Clear All");
       removeAllButton.setToolTipText("Removes all positions from list");
       add(removeAllButton);
@@ -395,7 +395,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
             loadPositionList();
          }
       });
-      loadButton.setIcon(SwingResourceManager.getIcon(MMStudioMainFrame.class, "/org/micromanager/icons/empty.png"));
+      loadButton.setIcon(SwingResourceManager.getIcon(MMStudio.class, "/org/micromanager/icons/empty.png"));
       loadButton.setText("Load...");
       loadButton.setToolTipText("Load position list");
       add(loadButton, "gaptop 1:push");
@@ -409,7 +409,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
             savePositionListAs();
          }
       });
-      saveAsButton.setIcon(SwingResourceManager.getIcon(MMStudioMainFrame.class, "/org/micromanager/icons/empty.png"));
+      saveAsButton.setIcon(SwingResourceManager.getIcon(MMStudio.class, "/org/micromanager/icons/empty.png"));
       saveAsButton.setText("Save As...");
       saveAsButton.setToolTipText("Save position list as");
       add(saveAsButton);
@@ -423,7 +423,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
             showCreateTileDlg();
          }
       });
-      tileButton_.setIcon(SwingResourceManager.getIcon(MMStudioMainFrame.class, "/org/micromanager/icons/empty.png"));
+      tileButton_.setIcon(SwingResourceManager.getIcon(MMStudio.class, "/org/micromanager/icons/empty.png"));
       tileButton_.setText("Create Grid");
       tileButton_.setToolTipText("Open new window to create grid of equally spaced positions");
       add(tileButton_);
@@ -438,7 +438,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
             dispose();
          }
       });
-      closeButton.setIcon(SwingResourceManager.getIcon(MMStudioMainFrame.class, "/org/micromanager/icons/empty.png"));
+      closeButton.setIcon(SwingResourceManager.getIcon(MMStudio.class, "/org/micromanager/icons/empty.png"));
       closeButton.setText("Close");
       add(closeButton);
 
@@ -813,8 +813,8 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
 
    protected void showCreateTileDlg() {
       TileCreatorDlg tileCreatorDlg = new TileCreatorDlg(core_, opts_, this);
-      gui_.addMMBackgroundListener(tileCreatorDlg);
-      gui_.addMMListener(tileCreatorDlg);
+      studio_.addMMBackgroundListener(tileCreatorDlg);
+      studio_.addMMListener(tileCreatorDlg);
       tileCreatorDlg.setBackground(guiColors_.background.get(opts_.displayBackground_));
       tileCreatorDlg.setVisible(true);
    }

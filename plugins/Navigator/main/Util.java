@@ -14,7 +14,7 @@ import java.util.prefs.Preferences;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.MMStudio;
 import org.micromanager.api.MultiStagePosition;
 import org.micromanager.api.PositionList;
 import org.micromanager.api.ScriptInterface;
@@ -33,7 +33,7 @@ public class Util {
    public static String DL_OFFSET_KEY = "Depth list offset";
 
    public static void setDepthListOffset(int posIndex, int offset) {
-      ScriptInterface app = MMStudioMainFrame.getInstance();
+      ScriptInterface app = MMStudio.getInstance();
       try {
          app.getPositionList().getPosition(posIndex).setProperty(DL_OFFSET_KEY,""+offset);
       } catch (MMScriptException ex) {
@@ -45,7 +45,7 @@ public class Util {
       if (posIndex == -1) {
          return 0;
       }
-      ScriptInterface app = MMStudioMainFrame.getInstance();
+      ScriptInterface app = MMStudio.getInstance();
       try {
          return Integer.parseInt(app.getPositionList().getPosition(posIndex).getProperty(DL_OFFSET_KEY));
       } catch (MMScriptException ex) {
@@ -58,7 +58,7 @@ public class Util {
 //           double xPixelDispFromCenter, double yPixelDispFromCenter) {
 //      try {
 //         //get coordinates of center of exisitng grid
-//         String xyStage = MMStudioMainFrame.getInstance().getCore().getXYStageDevice();
+//         String xyStage = MMStudio.getInstance().getCore().getXYStageDevice();
 //
 //         //row column map to coordinates for exisiting stage positiions
 //         Point2D.Double[][] coordinates = new Point2D.Double[numCols_][numRows_];
@@ -93,10 +93,10 @@ public class Util {
 //
 //         //use affine transform to convert to stage coordinate of center of new grid
 //         AffineTransform transform = null;
-//         Preferences prefs = Preferences.userNodeForPackage(MMStudioMainFrame.class);
+//         Preferences prefs = Preferences.userNodeForPackage(MMStudio.class);
 //         try {
 //            transform = (AffineTransform) JavaUtils.getObjectFromPrefs(prefs, "affine_transform_"
-//                    + MMStudioMainFrame.getInstance().getCore().getCurrentPixelSizeConfig(), null);
+//                    + MMStudio.getInstance().getCore().getCurrentPixelSizeConfig(), null);
 //            //set map origin to current stage position
 //            double[] matrix = new double[6];
 //            transform.getMatrix(matrix);
@@ -121,12 +121,12 @@ public class Util {
 
    public static AffineTransform getAffineTransform(double xCenter, double yCenter) {
       //Get affine transform
-      Preferences prefs = Preferences.userNodeForPackage(MMStudioMainFrame.class);
+      Preferences prefs = Preferences.userNodeForPackage(MMStudio.class);
 
       AffineTransform transform = null;
       try {
          transform = JavaUtils.getObjectFromPrefs(prefs, "affine_transform_"
-                 + MMStudioMainFrame.getInstance().getMMCore().getCurrentPixelSizeConfig(), (AffineTransform) null);
+                 + MMStudio.getInstance().getMMCore().getCurrentPixelSizeConfig(), (AffineTransform) null);
          //set map origin to current stage position
          double[] matrix = new double[6];
          transform.getMatrix(matrix);
@@ -150,7 +150,7 @@ public class Util {
     * @param pixelOverlapY
     */
    public static void createGrid(double xCenter, double yCenter, int numCols, int numRows, int pixelOverlapX, int pixelOverlapY) {
-      ScriptInterface app = MMStudioMainFrame.getInstance();
+      ScriptInterface app = MMStudio.getInstance();
       AffineTransform transform = getAffineTransform(xCenter, yCenter);
 
       long height = app.getMMCore().getImageHeight();
@@ -196,8 +196,7 @@ public class Util {
          ReportingUtils.showError(e.getMessage());
       }
    }
-   
-   
+
    public static int getPosIndex(JSONArray positionList, int row, int col) {
       for (int i = 0; i < positionList.length(); i++) {
          try {

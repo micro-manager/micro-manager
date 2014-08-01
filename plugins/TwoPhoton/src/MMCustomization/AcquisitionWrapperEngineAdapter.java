@@ -22,7 +22,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.AcqControlDlg;
 import org.micromanager.AcquisitionEngine2010;
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.MMStudio;
 import org.micromanager.acquisition.AcquisitionManager;
 import org.micromanager.acquisition.AcquisitionWrapperEngine;
 import org.micromanager.acquisition.DefaultTaggedImageSink;
@@ -49,25 +49,25 @@ public class AcquisitionWrapperEngineAdapter extends AcquisitionWrapperEngine {
     private TwoPhotonControl twoPC_;
     private double initialZPosition_;
     private double focusOffset_ = 0;
-    private CMMCore core_ = MMStudioMainFrame.getInstance().getCore();
+    private CMMCore core_ = MMStudio.getInstance().getCore();
     private boolean runAutofocus_ = false;
     //most recent storage
     private TaggedImageStorage storage_;
 
     public AcquisitionWrapperEngineAdapter(TwoPhotonControl twoP, Preferences prefs) throws NoSuchFieldException {
         super((AcquisitionManager) JavaUtils.getRestrictedFieldValue(
-                MMStudioMainFrame.getInstance(), MMStudioMainFrame.class, "acqMgr_"));
-        MMStudioMainFrame gui = MMStudioMainFrame.getInstance();
+                MMStudio.getInstance(), MMStudio.class, "acqMgr_"));
+        MMStudio gui = MMStudio.getInstance();
         
-        setCore(MMStudioMainFrame.getInstance().getCore(), gui.getAutofocusManager());
+        setCore(MMStudio.getInstance().getCore(), gui.getAutofocusManager());
         twoPC_ = twoP;
 
         prefs_ = prefs;
-        acqEngine_ = new AcquisitionEngine2010(MMStudioMainFrame.getInstance().getCore());
+        acqEngine_ = new AcquisitionEngine2010(MMStudio.getInstance().getCore());
 
         try {
             gui.setAcquisitionEngine(this);
-            //assorted things copied from MMStudioMainFrame to ensure compatibility
+            //assorted things copied from MMStudio to ensure compatibility
             setParentGUI(gui);
             setZStageDevice(gui.getCore().getFocusDevice());
             setPositionList(gui.getPositionList());
@@ -111,7 +111,7 @@ public class AcquisitionWrapperEngineAdapter extends AcquisitionWrapperEngine {
       if (settings.usePositionList) {
          try {
             //add position list runnables
-            numPositions = MMStudioMainFrame.getInstance().getPositionList().getPositions().length;
+            numPositions = MMStudio.getInstance().getPositionList().getPositions().length;
          } catch (MMScriptException ex) {
          }
       }
@@ -199,7 +199,7 @@ public class AcquisitionWrapperEngineAdapter extends AcquisitionWrapperEngine {
 
         // Start up the acquisition engine
         BlockingQueue<TaggedImage> engineOutputQueue = acqEngine_.run(settings, true, gui_.getPositionList(), 
-                MMStudioMainFrame.getInstance().getAutofocus());
+                MMStudio.getInstance().getAutofocus());
         JSONObject summaryMetadata = acqEngine_.getSummaryMetadata();
 
         //write pixel overlap into metadata
@@ -256,7 +256,7 @@ public class AcquisitionWrapperEngineAdapter extends AcquisitionWrapperEngine {
 
     protected String runAcquisition(SequenceSettings acquisitionSettings, AcquisitionManager acqManager) {
         //refresh GUI so that z returns to original position after acq
-        MMStudioMainFrame.getInstance().refreshGUI();
+        MMStudio.getInstance().refreshGUI();
         if (acquisitionSettings.save) {
             File root = new File(acquisitionSettings.root);
             if (!root.canWrite()) {

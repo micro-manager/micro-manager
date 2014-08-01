@@ -43,7 +43,7 @@ import javax.swing.*;
 
 import net.miginfocom.swing.MigLayout;
 
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.MMStudio;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Utils.StoredFloatLabel;
 import org.micromanager.internalinterfaces.LiveModeListener;
@@ -202,7 +202,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       sheetPanel.add(new JLabel("\u00B5"+"m"), "left");
       
       JButton upButton = new JButton();
-      upButton.setIcon(SwingResourceManager.getIcon(MMStudioMainFrame.class, "icons/arrow_up.png"));
+      upButton.setIcon(SwingResourceManager.getIcon(MMStudio.class, "icons/arrow_up.png"));
       upButton.setText("");
       upButton.setToolTipText("Move slice and piezo together");
       upButton.addActionListener(new ActionListener() {
@@ -224,7 +224,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       });
       
       JButton downButton = new JButton();
-      downButton.setIcon(SwingResourceManager.getIcon(MMStudioMainFrame.class, "icons/arrow_down.png"));
+      downButton.setIcon(SwingResourceManager.getIcon(MMStudio.class, "icons/arrow_down.png"));
       downButton.setText("");
       downButton.setToolTipText("Move slice and piezo together");
       downButton.addActionListener(new ActionListener() {

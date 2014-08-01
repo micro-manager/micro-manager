@@ -12,7 +12,7 @@
 package org.micromanager.pixelcalibrator;
 
 import java.lang.reflect.InvocationTargetException;
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.MMStudio;
 import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.ReportingUtils;
 
@@ -30,8 +30,8 @@ public class PixelCalibratorDialog extends javax.swing.JFrame {
       initComponents();
       GUIUtils.recallPosition(this);
              
-      setBackground(MMStudioMainFrame.getInstance().getBackgroundColor());
-      MMStudioMainFrame.getInstance().addMMBackgroundListener(this);
+      setBackground(MMStudio.getInstance().getBackgroundColor());
+      MMStudio.getInstance().addMMBackgroundListener(this);
    }
 
 

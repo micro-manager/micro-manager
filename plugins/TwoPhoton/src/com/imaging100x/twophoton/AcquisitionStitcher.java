@@ -25,7 +25,7 @@ import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.MMStudio;
 import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
 import org.micromanager.api.ImageCache;
 import org.micromanager.utils.GUIUtils;
@@ -43,7 +43,7 @@ public class AcquisitionStitcher {
    
    private static final String ACQ_NAME = "Stitched";
    
-   private MMStudioMainFrame gui_;
+   private MMStudio gui_;
    private ImageCache cache_;
    private VirtualAcquisitionDisplay display_;
    private ImageWindow imageWindow_;
@@ -61,7 +61,7 @@ public class AcquisitionStitcher {
    
     public AcquisitionStitcher() {
        try {
-           gui_ = MMStudioMainFrame.getInstance();
+           gui_ = MMStudio.getInstance();
            String camera = gui_.getCore().getCameraDevice();
            swapXandY_ = gui_.getCore().getProperty(camera, MMCoreJ.getG_Keyword_Transpose_SwapXY()).equals("1");
            invertX_ = gui_.getCore().getProperty(camera, MMCoreJ.getG_Keyword_Transpose_MirrorX()).equals("1");

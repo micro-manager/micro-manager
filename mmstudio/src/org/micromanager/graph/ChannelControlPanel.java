@@ -41,7 +41,7 @@ import mmcorej.CMMCore;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.micromanager.AcqControlDlg;
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.MMStudio;
 import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
 import org.micromanager.imagedisplay.MMCompositeImage;
 import org.micromanager.api.ImageCache;
@@ -212,10 +212,10 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
                  "12bit (0-4095)", "13bit (0-8191)", "14bit (0-16383)", "15bit (0-32767)", "16bit (0-65535)"}));
 
       zoomInButton_ = new JButton();
-      zoomInButton_.setIcon(SwingResourceManager.getIcon(MMStudioMainFrame.class,
+      zoomInButton_.setIcon(SwingResourceManager.getIcon(MMStudio.class,
             "/org/micromanager/icons/zoom_in.png"));
       zoomOutButton_ = new JButton();
-      zoomOutButton_.setIcon(SwingResourceManager.getIcon(MMStudioMainFrame.class,
+      zoomOutButton_.setIcon(SwingResourceManager.getIcon(MMStudio.class,
             "/org/micromanager/icons/zoom_out.png"));   
       zoomInButton_.addActionListener(new ActionListener() {
          @Override
@@ -429,7 +429,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
     * checks to error on the side of not saving the preference
     */
    private void saveColorPreference(ImageCache cache, int color) {
-      CMMCore core = MMStudioMainFrame.getInstance().getCore();
+      CMMCore core = MMStudio.getInstance().getCore();
       JSONObject summary = cache.getSummaryMetadata();
       if (core == null || summary == null) {
          return;

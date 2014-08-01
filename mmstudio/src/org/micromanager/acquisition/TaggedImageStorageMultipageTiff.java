@@ -33,7 +33,7 @@ import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.imagedisplay.DisplaySettings;
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.MMStudio;
 import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.utils.*;
 
@@ -69,13 +69,13 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
    private TreeMap<String, MultipageTiffReader> tiffReadersByLabel_;
   
    public TaggedImageStorageMultipageTiff(String dir, Boolean newDataSet, JSONObject summaryMetadata) throws IOException {            
-      this(dir, newDataSet, summaryMetadata, MMStudioMainFrame.getInstance().getMetadataFileWithMultipageTiff(),
-              MMStudioMainFrame.getInstance().getSeparateFilesForPositionsMPTiff(),
+      this(dir, newDataSet, summaryMetadata, MMStudio.getInstance().getMetadataFileWithMultipageTiff(),
+              MMStudio.getInstance().getSeparateFilesForPositionsMPTiff(),
               true);
    }
    
    /*
-    * Constructor that doesn't make reference to MMStudioMainFrame so it can be used independently of MM GUI
+    * Constructor that doesn't make reference to MMStudio so it can be used independently of MM GUI
     */
    public TaggedImageStorageMultipageTiff(String dir, boolean newDataSet, JSONObject summaryMetadata, 
          boolean separateMDFile, boolean separateFilesForPositions, boolean fastStorageMode) throws IOException {

@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.MMStudio;
 import org.micromanager.utils.CanvasPaintPending;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
@@ -45,10 +45,10 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class LiveModeTimer {
 
-   private static final String ACQ_NAME = MMStudioMainFrame.SIMPLE_ACQ;
+   private static final String ACQ_NAME = MMStudio.SIMPLE_ACQ;
    private VirtualAcquisitionDisplay win_;
    private CMMCore core_;
-   private MMStudioMainFrame gui_;
+   private MMStudio gui_;
    private int multiChannelCameraNrCh_;
    private long fpsTimer_;
    private long fpsCounter_;
@@ -59,7 +59,7 @@ public class LiveModeTimer {
    private boolean running_ = false;
    private Timer timer_;
    private TimerTask task_;
-   private final MMStudioMainFrame.DisplayImageRoutine displayImageRoutine_;
+   private final MMStudio.DisplayImageRoutine displayImageRoutine_;
    private LinkedBlockingQueue<TaggedImage> imageQueue_;
    private static int mCamImageCounter_ = 0;
    private boolean multiCam_ = false;
@@ -79,12 +79,12 @@ public class LiveModeTimer {
    
    public LiveModeTimer() {
       timerLock_ = new AtomicBoolean(false);
-      gui_ = MMStudioMainFrame.getInstance();
+      gui_ = MMStudio.getInstance();
       core_ = gui_.getCore();
       format_ = NumberFormat.getInstance();
       format_.setMaximumFractionDigits(0x1);
       mCamImageCounter_ = 0;
-      displayImageRoutine_ = new MMStudioMainFrame.DisplayImageRoutine() {
+      displayImageRoutine_ = new MMStudio.DisplayImageRoutine() {
          @Override
          public void show(final TaggedImage ti) {
             try {
@@ -179,7 +179,7 @@ public class LiveModeTimer {
 
          // With first image acquired, create the display
          gui_.checkSimpleAcquisition();
-         win_ = MMStudioMainFrame.getSimpleDisplay();
+         win_ = MMStudio.getSimpleDisplay();
          
          fpsCounter_ = 0;
          fpsTimer_ = System.currentTimeMillis();
@@ -324,7 +324,7 @@ public class LiveModeTimer {
             if (core_.getRemainingImageCount() == 0) {
                return;
             }
-            if (win_.windowClosed() || !gui_.acquisitionExists(MMStudioMainFrame.SIMPLE_ACQ)) {
+            if (win_.windowClosed() || !gui_.acquisitionExists(MMStudio.SIMPLE_ACQ)) {
                gui_.enableLiveMode(false);  //disable live if user closed window
             } else {
                try {

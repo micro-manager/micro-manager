@@ -270,7 +270,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
 //
 //               Point2D stagePos = stagePositionFromPixelPosition(xPixelDisp, yPixelDisp);
 //               try {
-//                  MMStudioMainFrame.getInstance().setXYStagePosition(stagePos.getX(), stagePos.getY());
+//                  MMStudio.getInstance().setXYStagePosition(stagePos.getX(), stagePos.getY());
 //               } catch (MMScriptException ex) {
 //                  ReportingUtils.showError("Couldn't move xy stage");
 //               }

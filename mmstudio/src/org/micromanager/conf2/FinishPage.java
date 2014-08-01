@@ -36,7 +36,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.MMStudio;
 import org.micromanager.utils.FileDialogs;
 
 import org.micromanager.utils.GUIUtils;
@@ -137,7 +137,7 @@ public class FinishPage extends PagePanel {
         String suffixes[] = {".cfg"};
         File f = FileDialogs.save(this.parent_,
                 "Select a configuration file name",
-                MMStudioMainFrame.MM_CONFIG_FILE);
+                MMStudio.MM_CONFIG_FILE);
         if (f != null) {
             setFilePath(f);
             overwrite_ = true;
