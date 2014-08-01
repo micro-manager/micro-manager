@@ -112,6 +112,7 @@ AM_CONDITIONAL([NONSTD_JNI_PREFIX], [test "x$JNI_PREFIX" != xlib])
 
 AC_ARG_VAR([ANT], [Ant command])
 AC_ARG_VAR([ANTFLAGS], [Ant flags])
+test "${ANTFLAGS+set}" = set || ANTFLAGS="-logger org.apache.tools.ant.listener.SimpleBigProjectLogger"
 MM_ARG_WITH_ANT
 AS_IF([test "x$want_ant" != xno],
 [
