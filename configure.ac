@@ -396,6 +396,7 @@ AC_CONFIG_SUBDIRS([DeviceKit])
 
 AC_CONFIG_FILES(m4_strip([
    Makefile
+   buildscripts/AntExtensions/Makefile
    testing/Makefile
    MMDevice/Makefile
    MMCore/Makefile

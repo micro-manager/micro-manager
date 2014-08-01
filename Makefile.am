@@ -108,6 +108,7 @@ CLEANFILES = $(launcher_SCRIPTS)
 
 # TODO: Building of DeviceAdapters could be made optional.
 SUBDIRS = \
+	buildscripts/AntExtensions \
 	testing \
 	MMDevice \
 	$(MMCORE_DIR) \
