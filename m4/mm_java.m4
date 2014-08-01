@@ -171,38 +171,95 @@ AC_DEFUN([MM_HEADERS_JNI],
 [
    AC_ARG_VAR([JNI_CPPFLAGS], [preprocessor flags for Java Native Interface])
    AC_MSG_CHECKING([for user-provided configuration for JNI])
-   AS_IF([test -n "$JNI_CPPFLAGS"],
+   AS_IF([test "${JNI_CPPFLAGS+set}" = set],
    [
       AC_MSG_RESULT([yes; well skip checks])
    ],
    [
       AC_MSG_RESULT([no; will perform availability check])
 
-      AX_JNI_INCLUDE_DIR
-
-      AS_IF([test -n "$JNI_INCLUDE_DIRS"],
+      AS_IF([test -n "$JAVA_HOME"],
       [
-         for dir in $JNI_INCLUDE_DIRS
-         do
-            JNI_CPPFLAGS="$JNI_CPPFLAGS -I$dir"
-         done
+         MM_HEADERS_JNI_SET_IF_USABLE(["$JAVA_HOME/include"])
+      ])
 
-         # Push state
-         AC_LANG_PUSH([C])
-         mm_jni_old_cppflags="$CPPFLAGS"
-         CPPFLAGS="$JNI_CPPFLAGS $mm_jni_old_cppflags"
-
-         AC_CHECK_HEADER([jni.h], [], [JNI_CPPFLAGS=], [#include <jni.h>])
-
-         # Pop state
-         CPPFLAGS="$mm_jni_old_cppflags"
-         AC_LANG_POP([C])
-      ],
+      AS_IF([test "${JNI_CPPFLAGS+set}" != set],
       [
-         JNI_CPPFLAGS=
+         # On OS X, Apple JDK has headers in a nonstandard location. Note that
+         # we do not search within /Library/Java/JavaVirtualMachines; JAVA_HOME
+         # should have been set if we are using a JDK installed there.
+         MM_HEADERS_JNI_SET_IF_USABLE([/System/Library/Frameworks/JavaVM.framework/Headers])
       ])
    ])
-   AS_IF([test -n "$JNI_CPPFLAGS"], [$1], [$2])
+   AS_IF([test "${JNI_CPPFLAGS+set}" = set], [$1], [$2])
+])
+
+
+# Subroutine for MM_HEADERS_JNI
+# Set JNI_CPPFLAGS if the given directory has jni.h, adding any necessary
+# platform-specific subdirectories.
+AC_DEFUN([MM_HEADERS_JNI_SET_IF_USABLE],
+[
+   mm_jni_header_dir=$1
+
+   AC_CHECK_FILE([$mm_jni_header_dir/jni.h],
+   [
+      mm_jni_cppflags="-I$mm_jni_header_dir"
+
+      # Add platform-specific subdirectory that typically contains jni_md.h
+      AC_CHECK_FILE([$mm_jni_header_dir/jni_md.h],
+      [
+         # With Apple JDK, jni_md.h is next to jni.h; no action needed
+      ],
+      [
+         mm_jni_md_dirs=""
+         case "$host_os" in
+            darwin*) mm_jni_md_dirs="darwin";;
+            linux*) mm_jni_md_dirs="linux genunix";;
+            mingw*) mm_jni_md_dirs="win32";;
+            cygwin*) mm_jni_md_dirs="win32";;
+         esac
+         AS_IF([test -z "$mm_jni_md_dirs"],
+         [
+            # Let's hope that the correct subdirectory is the only one present
+            AC_MSG_CHECKING([for jni_md.h])
+            mm_jni_md_first=`find "$mm_jni_header_dir" -name jni_md.h | head -n 1`
+            for mm_jni_md in `find "$mm_jni_header_dir" -name jni_md.h`
+            do
+               AS_IF([cmp -s "$mm_jni_md" "$mm_jni_md_first"],
+               [],
+               [
+                  AC_MSG_RESULT([multiple non-identical copies; do not know which to use])
+                  AC_MSG_ERROR([please set JNI_CPPFLAGS so that the compiler can find jni.h and the correct jni_md.h])
+               ])
+            done
+            AC_MSG_RESULT([$mm_jni_md_first])
+            mm_jni_cppflags="$mm_jni_cppflags -I`dirname $mm_jni_md_first`"
+         ],
+         [
+            for mm_jni_md_dir in $mm_jni_md_dirs
+            do
+               mm_jni_abs_md_dir="$mm_jni_header_dir/$mm_jni_md_dir"
+               AC_CHECK_FILE([$mm_jni_abs_md_dir/jni_md.h],
+               [
+                  mm_jni_cppflags="$mm_jni_cppflags -I$mm_jni_abs_md_dir"
+               ])
+            done
+         ])
+      ])
+
+      # Push state
+      AC_LANG_PUSH([C])
+      mm_jni_old_cppflags="$CPPFLAGS"
+      CPPFLAGS="$mm_jni_cppflags $mm_jni_old_cppflags"
+
+      AC_CHECK_HEADER([jni.h], [JNI_CPPFLAGS="$mm_jni_cppflags"], [],
+                      [#include <jni.h>])
+
+      # Pop state
+      CPPFLAGS="$mm_jni_old_cppflags"
+      AC_LANG_POP([C])
+   ])
 ])
 
 
