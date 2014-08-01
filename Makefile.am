@@ -7,6 +7,7 @@ MMCORE_DIR = MMCore
 endif
 
 if BUILD_MMCOREJ
+ANTEXTENSIONS = buildscripts/AntExtensions
 MMCOREJ_DIR = MMCoreJ_wrap
 endif
 
@@ -21,6 +22,7 @@ endif
 
 if BUILD_JAVA_APP
 
+ANTEXTENSIONS = buildscripts/AntExtensions
 JAVA_APP_DIRS = mmstudio acqEngine autofocus plugins scripts
 
 if INSTALL_AS_IMAGEJ_PLUGIN
@@ -108,7 +110,7 @@ CLEANFILES = $(launcher_SCRIPTS)
 
 # TODO: Building of DeviceAdapters could be made optional.
 SUBDIRS = \
-	buildscripts/AntExtensions \
+	$(ANTEXTENSIONS) \
 	testing \
 	MMDevice \
 	$(MMCORE_DIR) \
