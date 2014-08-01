@@ -15,8 +15,7 @@
 //               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-//CVS:          $Id$
-//
+
 package org.micromanager;
 
 import com.google.common.eventbus.Subscribe;
@@ -140,12 +139,12 @@ import org.micromanager.utils.UIMonitor;
 
 
 /*
- * Main panel and application class for the MMStudio.
+ * Implements the ScriptInterface (i.e. primary API) and does various other
+ * tasks that should probably be refactored out at some point.
  */
 public class MMStudio implements ScriptInterface {
 
    private static final long serialVersionUID = 3556500289598574541L;
-   private static final String MAIN_EXPOSURE = "exposure";
    private static final String MAIN_SAVE_METHOD = "saveMethod";
    private static final String SYSTEM_CONFIG_FILE = "sysconfig_file";
    private static final String OPEN_ACQ_DIR = "openDataDir";
@@ -157,10 +156,12 @@ public class MMStudio implements ScriptInterface {
    private static final String CONTRAST_SETTINGS_NODE = "MainContrastSettings";
    private static final int TOOLTIP_DISPLAY_DURATION_MILLISECONDS = 15000;
    private static final int TOOLTIP_DISPLAY_INITIAL_DELAY_MILLISECONDS = 2000;
+   private static final String DEFAULT_CONFIG_FILE_NAME = "MMConfig_demo.cfg";
+   private static final String DEFAULT_CONFIG_FILE_PROPERTY = "org.micromanager.default.config.file";
 
 
    // cfg file saving
-   private static final String CFGFILE_ENTRY_BASE = "CFGFileEntry"; // + {0, 1, 2, 3, 4}
+   private static final String CFGFILE_ENTRY_BASE = "CFGFileEntry";
    // GUI components
    private MMOptions options_;
    private boolean amRunningAsPlugin_;
@@ -176,8 +177,6 @@ public class MMStudio implements ScriptInterface {
    private List<Component> MMFrames_
            = Collections.synchronizedList(new ArrayList<Component>());
    private AutofocusManager afMgr_;
-   private final static String DEFAULT_CONFIG_FILE_NAME = "MMConfig_demo.cfg";
-   private final static String DEFAULT_CONFIG_FILE_PROPERTY = "org.micromanager.default.config.file";
    private ArrayList<String> MRUConfigFiles_;
    private static final int maxMRUCfgs_ = 5;
    private String sysConfigFile_;

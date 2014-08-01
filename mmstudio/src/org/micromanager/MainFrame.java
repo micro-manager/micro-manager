@@ -63,8 +63,6 @@ public class MainFrame extends JFrame implements LiveModeListener {
    private static final String MAIN_FRAME_HEIGHT = "height";
    private static final String MAIN_FRAME_DIVIDER_POS = "divider_pos";
    private static final String MAIN_EXPOSURE = "exposure";
-   private static final int TOOLTIP_DISPLAY_DURATION_MILLISECONDS = 15000;
-   private static final int TOOLTIP_DISPLAY_INITIAL_DELAY_MILLISECONDS = 2000;
 
    // GUI components
    private JComboBox comboBinning_;
