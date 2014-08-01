@@ -7,9 +7,19 @@
 	<!-- Default settings (importing buildfile can override) -->
 	<property name="product" value="${ant.project.name}"/>
 	<property name="srcdir" value="src"/>
-	<property name="intdir" location="${mm.java.intdir}/${product}"/>
-	<property name="outdir" location="${mm.java.outdir}"/>
-	<property name="installdir" location="${mm.java.installdir}"/>
+	<if>
+		<isset property="mm.platform.is.windows"/>
+		<then>
+			<property name="intdir" location="${mm.java.intdir}/${product}"/>
+			<property name="outdir" location="${mm.java.outdir}"/>
+			<property name="installdir" location="${mm.java.installdir}"/>
+		</then>
+		<else>
+			<property name="intdir" location="build"/>
+			<property name="outdir" location="."/>
+			<!-- install is not used on Unix -->
+		</else>
+	</if>
 
 	<!-- Settings that are normally not overridden -->
 	<property name="jarfilename" value="${product}.jar"/>
@@ -62,6 +72,7 @@
 	</target>
 
 	<target name="install-only" description="Like 'install', but skip the build">
+		<fail unless="installdir"/>
 		<mkdir dir="${installdir}"/>
 		<copy todir="${installdir}" file="${jarfile}"/>
 	</target>
