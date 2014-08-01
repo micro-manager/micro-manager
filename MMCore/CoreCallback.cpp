@@ -153,21 +153,6 @@ int CoreCallback::InsertMultiChannel(const MM::Device* caller,
 
 }
 
-void CoreCallback::SetAcqStatus(const MM::Device* /*caller*/, int /*statusCode*/)
-{
-   // ???
-}
-
-int CoreCallback::OpenFrame(const MM::Device* /*caller*/)
-{
-   return DEVICE_OK;
-}
-
-int CoreCallback::CloseFrame(const MM::Device* /*caller*/)
-{
-   return DEVICE_OK;
-}
-
 int CoreCallback::AcqFinished(const MM::Device* /*caller*/, int /*statusCode*/)
 {
    if (core_->autoShutter_)
@@ -198,14 +183,6 @@ int CoreCallback::PrepareForAcq(const MM::Device* /*caller*/)
          core_->waitForDevice(shutter);
       }
    }
-   return DEVICE_OK;
-}
-
-/**
- * Handler for the status change event from the device.
- */
-int CoreCallback::OnStatusChanged(const MM::Device* /* caller */)
-{
    return DEVICE_OK;
 }
 
@@ -344,16 +321,6 @@ int CoreCallback::OnXYStagePositionChanged(const MM::Device* device, double xPos
       core_->externalCallback_->onXYStagePositionChanged(label, xPos, yPos);
    }
 
-   return DEVICE_OK;
-}
-
-/**
- * Handler for the operation finished event from the device.
- * 
- * It looks like this handler does nothing
- */
-int CoreCallback::OnFinished(const MM::Device* /* caller */)
-{
    return DEVICE_OK;
 }
 
@@ -829,24 +796,4 @@ unsigned long CoreCallback::GetClockTicksUs(const MM::Device* /*caller*/)
 MM::MMTime CoreCallback::GetCurrentMMTime()
 {		
 	return GetMMTimeNow();
-}
-
-MMThreadLock* CoreCallback::getModuleLock(const MM::Device* caller)
-{
-   try
-   {
-      boost::shared_ptr<DeviceInstance> pCaller = core_->deviceManager_.GetDevice(caller);
-      return pCaller->GetAdapterModule()->GetLock();
-   }
-   catch (const CMMError&)
-   {
-      return 0;
-   }
-}
-
-void CoreCallback::removeModuleLock(const MM::Device* caller)
-{
-   char module[MM::MaxStrLength];
-   caller->GetModuleName(module);
-   core_->pluginManager_.removeModuleLock(module);
 }

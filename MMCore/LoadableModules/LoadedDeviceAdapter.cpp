@@ -31,7 +31,6 @@
 
 LoadedDeviceAdapter::LoadedDeviceAdapter(const std::string& name, const std::string& filename) :
    name_(name),
-   useLock_(true),
    InitializeModuleData_(0),
    CreateDevice_(0),
    DeleteDevice_(0),
@@ -70,16 +69,7 @@ LoadedDeviceAdapter::LoadedDeviceAdapter(const std::string& name, const std::str
 MMThreadLock*
 LoadedDeviceAdapter::GetLock()
 {
-   if (useLock_)
-      return &lock_;
-   return 0;
-}
-
-
-void
-LoadedDeviceAdapter::RemoveLock()
-{
-   useLock_ = false;
+   return &lock_;
 }
 
 

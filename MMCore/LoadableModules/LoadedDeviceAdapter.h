@@ -53,7 +53,6 @@ public:
    // The "module lock", used to synchronize _most_ access to the device
    // adapter.
    MMThreadLock* GetLock();
-   void RemoveLock(); // XXX I'm not sure it is a good idea to expose this.
 
    std::vector<std::string> GetAvailableDeviceNames() const;
    std::string GetDeviceDescription(const std::string& deviceName) const;
@@ -109,7 +108,6 @@ private:
    boost::shared_ptr<LoadedModule> module_;
 
    MMThreadLock lock_;
-   bool useLock_;
 
    // Cached function pointers
    mutable fnInitializeModuleData InitializeModuleData_;

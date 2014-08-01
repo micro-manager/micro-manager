@@ -137,14 +137,9 @@ public:
    /*Deprecated*/ int InsertImage(const MM::Device* caller, const unsigned char* buf, unsigned width, unsigned height, unsigned byteDepth, const Metadata* pMd = 0, const bool doProcess = true);
 
    int InsertMultiChannel(const MM::Device* caller, const unsigned char* buf, unsigned numChannels, unsigned width, unsigned height, unsigned byteDepth, Metadata* pMd = 0);
-   void SetAcqStatus(const MM::Device* caller, int statusCode);
    void ClearImageBuffer(const MM::Device* caller);
    bool InitializeImageBuffer(unsigned channels, unsigned slices, unsigned int w, unsigned int h, unsigned int pixDepth);
-   long getImageBufferTotalFrames() {return core_->getBufferTotalCapacity();}
-   long getImageBufferFreeFrames() {return core_->getBufferFreeCapacity();}
 
-   int OpenFrame(const MM::Device* caller);
-   int CloseFrame(const MM::Device* caller);
    int AcqFinished(const MM::Device* caller, int statusCode);
    int PrepareForAcq(const MM::Device* caller);
 
@@ -164,12 +159,10 @@ public:
    int GetChannelConfig(char* channelConfigName, const unsigned int channelConfigIterator);
 
    // notification handlers
-   int OnStatusChanged(const MM::Device* /* caller */);
    int OnPropertiesChanged(const MM::Device* /* caller */);
    int OnPropertyChanged(const MM::Device* device, const char* propName, const char* value);
    int OnStagePositionChanged(const MM::Device* device, double pos);
    int OnXYStagePositionChanged(const MM::Device* device, double xpos, double ypos);
-   int OnFinished(const MM::Device* /* caller */);
    int OnExposureChanged(const MM::Device* device, double newExposure);
    int OnSLMExposureChanged(const MM::Device* device, double newExposure);
    int OnMagnifierChanged(const MM::Device* device);
@@ -247,38 +240,6 @@ public:
       return 0;
    }
 
-   MM::Device* GetPeripheral(const MM::Device* caller, unsigned idx) const
-   {
-      char hubLabel[MM::MaxStrLength];
-      caller->GetLabel(hubLabel);
-      std::vector<std::string> peripheralLabels = core_->deviceManager_.GetLoadedPeripherals(hubLabel);
-      boost::shared_ptr<DeviceInstance> peripheral;
-      try
-      {
-         if (idx < peripheralLabels.size())
-            peripheral = core_->deviceManager_.GetDevice(peripheralLabels[idx]);
-         else
-            return 0;
-      }
-      catch(...)
-      {
-         // this should not happen
-         assert(false);
-         return 0;
-      }
-      if (peripheral)
-         return peripheral->GetRawPtr();
-      return 0;
-   }
-
-   unsigned GetNumberOfPeripherals(const MM::Device* caller)
-   {
-      char hubLabel[MM::MaxStrLength];
-      caller->GetLabel(hubLabel);
-      return (unsigned) core_->deviceManager_.GetLoadedPeripherals(hubLabel).size();
-   }
-
-
    void GetLoadedDeviceOfType(const MM::Device* /* caller */, MM::DeviceType devType,  char* deviceName, const unsigned int deviceIterator)
    {
       deviceName[0] = 0;
@@ -287,9 +248,6 @@ public:
          strncpy( deviceName, v.at(deviceIterator).c_str(), MM::MaxStrLength);
       return;
    }
-
-   MMThreadLock* getModuleLock(const MM::Device* caller);
-   void removeModuleLock(const MM::Device* caller);
 
 private:
    CMMCore* core_;

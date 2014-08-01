@@ -64,9 +64,6 @@ public:
    boost::shared_ptr<LoadedDeviceAdapter>
    GetDeviceAdapter(const char* moduleName);
 
-   // Slated for removal
-   bool removeModuleLock(const char* moduleName);
-
 private:
    static std::vector<std::string> GetDefaultSearchPaths();
    std::vector<std::string> GetActualSearchPaths() const;

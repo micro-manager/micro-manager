@@ -1048,17 +1048,6 @@ protected:
    }
 
    /**
-   * Device changed status
-   * Not implemented in Core and callback
-   */
-   int OnStatusChanged()
-   {
-      if (callback_)
-         return callback_->OnStatusChanged(this);
-      return DEVICE_NO_CALLBACK_REGISTERED;
-   }
-
-   /**
    * Something changed in the property structure.
    * Signals the need for GUI update.
    * This function should be called only after the initialize function finished.
@@ -1125,17 +1114,6 @@ protected:
    {
       if (callback_)
          return callback_->OnMagnifierChanged(this);
-      return DEVICE_NO_CALLBACK_REGISTERED;
-   }
-
-   /**
-    * Device finished a task
-    * Not implemented in Core and callback
-    */
-   int OnFinished()
-   {
-      if (callback_)
-         return callback_->OnFinished(this);
       return DEVICE_NO_CALLBACK_REGISTERED;
    }
 

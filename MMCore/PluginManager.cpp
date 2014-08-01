@@ -384,25 +384,3 @@ CPluginManager::GetModulesInLegacyFallbackSearchPaths()
 
    return modules;
 }
-
-
-/**
- * Removes module lock if it exists.
- * This method is used by devices to defeat module thread locking in MMCore.
- * If device implements its own thread safety mechanism, then it makes sense to
- * defeat the system level locking.
- * XXX I don't think this should be exposed. It will couple the device
- * implementations to the core implementation so tightly that we're going to
- * end up with a hard-to-maintain situation. Keeping it for now. - Mark
- */
-bool
-CPluginManager::removeModuleLock(const char* moduleName)
-{
-   std::map< std::string, boost::shared_ptr<LoadedDeviceAdapter> >::iterator it =
-      moduleMap_.find(moduleName);
-   if (it == moduleMap_.end())
-      return false;
-
-   it->second->RemoveLock();
-   return true;
-}
