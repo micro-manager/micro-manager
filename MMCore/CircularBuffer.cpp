@@ -46,8 +46,7 @@ CircularBuffer::CircularBuffer(unsigned int memorySizeMB) :
    insertIndex_(0), 
    saveIndex_(0), 
    memorySizeMB_(memorySizeMB), 
-   overflow_(false), 
-   estimatedIntervalMs_(0)
+   overflow_(false)
 {
 }
 
@@ -153,18 +152,12 @@ bool CircularBuffer::InsertMultiChannel(const unsigned char* pixArray, unsigned 
 {
    MMThreadGuard guard(g_insertLock);
 
-   static unsigned long previousTicks = 0;
    bool notOverflowed;
    ImgBuffer* pImg;
    unsigned long singleChannelSize = (unsigned long)width * height * byteDepth;
 
    {
       MMThreadGuard guard(g_bufferLock);
-
-      if (previousTicks > 0)
-         estimatedIntervalMs_ = GetClockTicksMs() - previousTicks;
-      else
-         estimatedIntervalMs_ = 0;
 
       // check image dimensions
       if (width != width_ || height != height_ || byteDepth != pixDepth_)
@@ -246,10 +239,7 @@ bool CircularBuffer::InsertMultiChannel(const unsigned char* pixArray, unsigned 
       }
    }
 
-   previousTicks = GetClockTicksMs();
-
    return true;
-
 }
 
 
@@ -328,13 +318,6 @@ const ImgBuffer* CircularBuffer::GetNextImageBuffer(unsigned channel, unsigned s
       return pBuf;
    }
    return 0;
-}
-
-double CircularBuffer::GetAverageIntervalMs() const
-{
-   MMThreadGuard guard(g_bufferLock);
-
-   return (double)estimatedIntervalMs_;
 }
 
 //N.B. an unsigned long millisecond clock tick rolls over in 47 days.

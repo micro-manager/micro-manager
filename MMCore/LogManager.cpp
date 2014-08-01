@@ -218,41 +218,6 @@ LogManager::GetPrimaryLogLevel() const
 }
 
 
-void
-LogManager::TruncatePrimaryLogFile()
-{
-   boost::lock_guard<boost::mutex> lock(mutex_);
-
-   if (primaryFilename_.empty())
-      return;
-
-   // Truncate by removing sink, then creating a new sink for the same file
-   // with append = false.
-
-   if (primaryFileSink_)
-   {
-      loggingCore_->RemoveSink(primaryFileSink_, PrimarySinkMode);
-      primaryFileSink_.reset();
-   }
-
-   try
-   {
-      primaryFileSink_ =
-         boost::make_shared<FileLogSink>(primaryFilename_, false);
-   }
-   catch (const CannotOpenFileException&)
-   {
-      LOG_ERROR(internalLogger_) << "Failed to open file " <<
-         primaryFilename_ << " as primary log file";
-      throw CMMError("Cannot open file " + ToQuotedString(primaryFilename_));
-   }
-
-   loggingCore_->AddSink(primaryFileSink_, PrimarySinkMode);
-   LOG_INFO(internalLogger_) << "Truncated primary log file " <<
-      primaryFilename_;
-}
-
-
 LogManager::LogFileHandle
 LogManager::AddSecondaryLogFile(LogLevel level,
       const std::string& filename, bool truncate, SinkMode mode)

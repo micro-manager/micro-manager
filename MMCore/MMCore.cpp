@@ -43,14 +43,12 @@
 #include "../MMDevice/ImageMetadata.h"
 #include "../MMDevice/ModuleInterface.h"
 #include "CircularBuffer.h"
-#include "Compressor.h"
 #include "ConfigGroup.h"
 #include "Configuration.h"
 #include "CoreCallback.h"
 #include "CoreProperty.h"
 #include "CoreUtils.h"
 #include "Devices/DeviceInstances.h"
-#include "FastLogger.h"
 #include "Host.h"
 #include "MMCore.h"
 #include "MMEventCallback.h"
@@ -102,9 +100,9 @@ using namespace std;
  * This applies to all classes exposed through the SWIG layer (i.e. the whole
  * of the public API of the Core), not just CMMCore.
  */
-const int MMCore_versionMajor = 5;
+const int MMCore_versionMajor = 6;
 const int MMCore_versionMinor = 0;
-const int MMCore_versionPatch = 4;
+const int MMCore_versionPatch = 0;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -134,7 +132,6 @@ CMMCore::CMMCore() :
    configGroups_ = new ConfigGroupCollection();
    pixelSizeGroup_ = new PixelSizeConfigGroup();
    pPostedErrorsLock_ = new MMThreadLock();
-   legacyLogger_ = new FastLogger(logManager_);
 
    // build list of error strings
    errorText_[MMERR_OK] = "No errors.";
@@ -272,7 +269,6 @@ CMMCore::~CMMCore()
       LOG_ERROR(coreLogger_) << "Exception caught in CMMCore destructor.";
    }
 
-   delete legacyLogger_;
    delete callback_;
    delete configGroups_;
    delete properties_;
@@ -304,26 +300,6 @@ void CMMCore::setPrimaryLogFile(const char* filename, bool truncate) throw (CMME
 std::string CMMCore::getPrimaryLogFile() const
 {
    return logManager_.GetPrimaryLogFilename();
-}
-
-/**
- * Delete an existing log file and start a new one.
- *
- * \deprecated There is no good reason for the application to clear the log. To
- * obtain a particular section of the log, use the facilities provided by the
- * secondary log file API.
- */
-void CMMCore::clearLog()
-{
-   try
-   {
-      logManager_.TruncatePrimaryLogFile();
-   }
-   catch (const CMMError&)
-   {
-      // Bug! We have no way to notify the caller of an error.
-      // Don't bother to fix it; we will deprecate this function anyway.
-   }
 }
 
 /**
@@ -2856,16 +2832,6 @@ long CMMCore::getBufferFreeCapacity()
       return cbuf_->GetFreeSize();
    }
    return 0;
-}
-
-/**
- * Deprecated and broken. Do not call.
- *
- * \deprecated Broken.
- */
-double CMMCore::getBufferIntervalMs() const
-{
-   return cbuf_->GetAverageIntervalMs();
 }
 
 bool CMMCore::isBufferOverflowed() const
@@ -6449,115 +6415,6 @@ string CMMCore::getDeviceName(boost::shared_ptr<DeviceInstance> pDev)
    return pDev->GetName();
 }
 
-//
-// Public methods again...
-//
-
-/**
- * Compress the core log into a gz archive return the path of the archive
- *
- * \deprecated Instead, use the secondary log file API.
- */
-
-std::string CMMCore::saveLogArchive(void)
-{
-   char* pLogContents = 0;
-   unsigned long logLength = 0;
-   legacyLogger_->LogContents(&pLogContents, logLength);
-   if( 0 == pLogContents) // file reading failed
-   {
-      const char* pWarning =
-         "MMCore was not able to read the log file!";
-      logLength = static_cast<unsigned long>(strlen(pWarning));
-      pLogContents = new char[logLength];
-      strcpy( pLogContents, pWarning);
-   }
-
-   char* pCompressedContents = 0;
-   unsigned long compressedLength = 0;
-
-   // prepare a gz archive
-   Compressor::CompressData(pLogContents, logLength, &pCompressedContents, compressedLength);
-   // finished with the log contents
-   delete [] pLogContents;
-   pLogContents = 0;
-
-   std::string payLoadPath = legacyLogger_->LogPath() + ".gz";
-
-   std::ofstream ofile( payLoadPath.c_str(), ios::out|ios::binary);
-   if (ofile.is_open())
-   {
-     if( 0!=pCompressedContents)
-      ofile.write( pCompressedContents, compressedLength);
-   }
-   // finished with the compressed contents
-   if( 0 != pCompressedContents)
-    free(pCompressedContents);
-
-   return payLoadPath;
-
-}
-
-/**
- * Just like saveLogArchive, but client can add whatever header desired
- *
- * \deprecated Instead, use the secondary log file API.
- */
-std::string CMMCore::saveLogArchiveWithPreamble(char* preamble, ///< beginning of a header to be prepended to the corelog
-                                                int preambleLength ///< length of the header
-                                                )
-{
-   if( 0 == preamble)
-      preambleLength = 0; // intentionally modifying local copy of arg
-
-   char* pLogContents = 0;
-   unsigned long logLength = 0;
-   legacyLogger_->LogContents(&pLogContents, logLength);
-   if( 0 == pLogContents) // file reading failed
-   {
-      const char* pWarning =
-         "MMCore was not able to read the log file!";
-      logLength = static_cast<unsigned long>(strlen(pWarning));
-      pLogContents = new char[logLength];
-      strcpy( pLogContents, pWarning);
-   }
-
-   char* pEntireMessage = new char[preambleLength + logLength];
-   if(0 < preambleLength)
-      memcpy( pEntireMessage, preamble, preambleLength);
-   memcpy( pEntireMessage + preambleLength, pLogContents, logLength);
-
-   // finished with the log contents
-   delete [] pLogContents;
-   pLogContents = 0;
-
-
-   char* pCompressedContents = 0;
-   unsigned long compressedLength = 0;
-
-   // prepare a gz archive
-   Compressor::CompressData(pEntireMessage, preambleLength + logLength, &pCompressedContents, compressedLength);
-
-   std::string payLoadPath = legacyLogger_->LogPath() + ".gz";
-
-   std::ofstream ofile( payLoadPath.c_str(), ios::out|ios::binary);
-   if (ofile.is_open())
-   {
-     if( 0!=pCompressedContents)
-      ofile.write( pCompressedContents, compressedLength);
-   }
-   // finished with the compressed contents
-   if( 0 != pCompressedContents)
-    free(pCompressedContents);
-
-   return payLoadPath;
-
-}
-
-//
-// Private methods again...
-//
-
 void CMMCore::updateAllowedChannelGroups()
 {
    std::vector<std::string> groups = getAvailableConfigGroups();
@@ -6569,32 +6426,6 @@ void CMMCore::updateAllowedChannelGroups()
    // If we don't have the group assigned to ChannelGroup anymore, set ChannelGroup to blank.
    if (!isGroupDefined(getChannelGroup().c_str()))
       setChannelGroup("");
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-// Acqusition context methods
-// experimental implementation works only with image processor devices
-//
-
-void CMMCore::acqBeforeFrame() throw (CMMError)
-{
-   boost::shared_ptr<ImageProcessorInstance> imageProcessor =
-      currentImageProcessor_.lock();
-   if (imageProcessor)
-   {
-      imageProcessor->AcqBeforeFrame();
-   }
-}
-
-void CMMCore::acqAfterFrame() throw (CMMError)
-{
-   boost::shared_ptr<ImageProcessorInstance> imageProcessor =
-      currentImageProcessor_.lock();
-   if (imageProcessor)
-   {
-      imageProcessor->AcqAfterFrame();
-   }
 }
 
 

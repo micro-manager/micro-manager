@@ -218,12 +218,10 @@ void TestCameraStreaming(CMMCore& core)
    {
       Metadata md;
       core.getLastImageMD(0, 0, md);
-      double interval = core.getBufferIntervalMs();
-      printf("Displaying current image, %ld in que, %.0f ms interval.\n", core.getRemainingImageCount(), interval);
+      printf("Displaying current image, %ld in que.\n", core.getRemainingImageCount());
       MetadataSingleTag mdst = md.GetSingleTag(MM::g_Keyword_Elapsed_Time_ms);
       printf("Elapsed time %s, device %s\n", mdst.GetValue().c_str(), mdst.GetDevice().c_str());
    }
-   printf("Camera finished with %.0f ms interval.\n", core.getBufferIntervalMs());
    core.setProperty(camera.c_str(), "ShutterMode", "Auto");
 
 
@@ -238,12 +236,10 @@ void TestCameraStreaming(CMMCore& core)
    {
       Metadata md;
       core.getLastImageMD(0, 0, md);
-      double interval = core.getBufferIntervalMs();
-      printf("Displaying current image, %ld in que, %.0f ms interval.\n", core.getRemainingImageCount(), interval);
+      printf("Displaying current image, %ld in que.\n", core.getRemainingImageCount());
       MetadataSingleTag mdst = md.GetSingleTag(MM::g_Keyword_Elapsed_Time_ms);
       printf("Elapsed time %s, device %s\n", mdst.GetValue().c_str(), mdst.GetDevice().c_str());
    }
-   printf("Camera finished with %.0f ms interval.\n", core.getBufferIntervalMs());
    core.setProperty(camera.c_str(), "ShutterMode", "Auto");
 
 }
@@ -305,15 +301,11 @@ void TestCameraLive(CMMCore& core)
    while (core.deviceBusy(camera.c_str()))
    {
       core.getLastImage();
-      double interval = core.getBufferIntervalMs();
-      printf("Displaying image %d, %ld in que, %.0f ms interval.\n", count+1, core.getRemainingImageCount(), interval);
+      printf("Displaying image %d, %ld in que.\n", count+1, core.getRemainingImageCount());
       count++;
       if (count >= 100)
          core.stopSequenceAcquisition();
    }
-   printf("Camera finished with %.0f ms interval.\n", core.getBufferIntervalMs());
-   //core.setProperty(camera.c_str(), "ShutterMode", "Auto");
-
 }
 
 /**

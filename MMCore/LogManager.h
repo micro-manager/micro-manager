@@ -65,10 +65,6 @@ public:
    void SetPrimaryLogLevel(logging::LogLevel level);
    logging::LogLevel GetPrimaryLogLevel() const;
 
-   // For supporting legacy functionality. Do not use otherwise, and remove
-   // when no longer used.
-   void TruncatePrimaryLogFile();
-
    LogFileHandle AddSecondaryLogFile(logging::LogLevel level,
          const std::string& filename, bool truncate = true,
          logging::SinkMode mode = logging::SinkModeAsynchronous);

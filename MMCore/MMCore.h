@@ -94,7 +94,6 @@ class CoreCallback;
 class PixelSizeConfigGroup;
 class Metadata;
 class MMEventCallback;
-class FastLogger;
 
 typedef unsigned int* imgRGB32;
 
@@ -170,10 +169,6 @@ public:
          bool truncate = true, bool synchronous = false) throw (CMMError);
    void stopSecondaryLogFile(int handle) throw (CMMError);
 
-   MMCORE_DEPRECATED(void clearLog());
-   MMCORE_DEPRECATED(std::string saveLogArchive(void));
-   MMCORE_DEPRECATED(std::string saveLogArchiveWithPreamble(
-            char* preamble, int length));
    ///@}
 
    /** \name Device listing. */
@@ -394,7 +389,6 @@ public:
    long getRemainingImageCount();
    long getBufferTotalCapacity();
    long getBufferFreeCapacity();
-   MMCORE_DEPRECATED(double getBufferIntervalMs() const);
    bool isBufferOverflowed() const;
    void setCircularBufferMemoryFootprint(unsigned sizeMB) throw (CMMError);
    unsigned getCircularBufferMemoryFootprint();
@@ -561,15 +555,6 @@ public:
    std::string getGalvoChannel(const char* galvoLabel) throw (CMMError);
    ///@}
 
-   /** \name Acquisition context.
-    *
-    * Experimental feature. Not functional. Deprecated.
-    */
-   ///@{
-   MMCORE_DEPRECATED(void acqBeforeFrame() throw (CMMError));
-   MMCORE_DEPRECATED(void acqAfterFrame() throw (CMMError));
-   ///@}
-
    /** \name Device discovery. */
    ///@{
    MM::DeviceDetectionStatus detectDevice(char* deviceLabel);
@@ -607,8 +592,6 @@ private:
    mm::LogManager logManager_;
    boost::shared_ptr<mm::logging::Logger> appLogger_;
    boost::shared_ptr<mm::logging::Logger> coreLogger_;
-
-   FastLogger* legacyLogger_;
 
    bool everSnapped_;
 

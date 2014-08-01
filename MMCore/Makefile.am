@@ -3,15 +3,14 @@ AUTOMAKE_OPTIONS = foreign subdir-objects
 
 # BOOST_THREAD_VERSION must be set to 2 to compile with old versions of Boost
 # (before 2 became the default).
-AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(ZLIB_CPPFLAGS) -DBOOST_THREAD_VERSION=2 -DBOOST_THREAD_DONT_PROVIDE_CONDITION
-AM_CXXFLAGS = $(ZLIB_CFLAGS)
-AM_LDFLAGS = $(BOOST_LDFLAGS) $(ZLIB_LDFLAGS) $(MMCORE_APPLEHOST_LDFLAGS)
+AM_CPPFLAGS = $(BOOST_CPPFLAGS) -DBOOST_THREAD_VERSION=2 -DBOOST_THREAD_DONT_PROVIDE_CONDITION
+AM_LDFLAGS = $(BOOST_LDFLAGS) $(MMCORE_APPLEHOST_LDFLAGS)
 
 noinst_LTLIBRARIES = libMMCore.la
 
 # libMMCore currently requires libMMDevice, due to use of CDeviceUtils,
 # ImgBuffer, and FrameBuffer. This dependency should probably be removed.
-libMMCore_la_LIBADD = $(BOOST_SYSTEM_LIB) $(BOOST_DATE_TIME_LIB) $(BOOST_THREAD_LIB) $(ZLIB_LIBS) ../MMDevice/libMMDevice.la
+libMMCore_la_LIBADD = $(BOOST_SYSTEM_LIB) $(BOOST_DATE_TIME_LIB) $(BOOST_THREAD_LIB) ../MMDevice/libMMDevice.la
 
 libMMCore_la_SOURCES = \
 	../MMDevice/MMDevice.h \
@@ -20,7 +19,6 @@ libMMCore_la_SOURCES = \
 	AppleHost.h \
 	CircularBuffer.cpp \
 	CircularBuffer.h \
-	Compressor.h \
 	ConfigGroup.h \
 	Configuration.cpp \
 	Configuration.h \
@@ -65,8 +63,6 @@ libMMCore_la_SOURCES = \
 	Error.cpp \
 	Error.h \
 	ErrorCodes.h \
-	FastLogger.cpp \
-	FastLogger.h \
 	Host.cpp \
 	Host.h \
 	LibraryInfo/LibraryPaths.h \
