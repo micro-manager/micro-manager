@@ -127,7 +127,8 @@ public:
 
    /** \name Initialization and setup. */
    ///@{
-   void loadDevice(const char* label, const char* library, const char* adapterName) throw (CMMError);
+   void loadDevice(const char* label, const char* moduleName,
+         const char* deviceName) throw (CMMError);
    void unloadDevice(const char* label) throw (CMMError);
    void unloadAllDevices() throw (CMMError);
    void initializeAllDevices() throw (CMMError);
@@ -224,8 +225,8 @@ public:
    long getPropertySequenceMaxLength(const char* label, const char* propName) throw (CMMError);
    void loadPropertySequence(const char* label, const char* propName, std::vector<std::string> eventSequence) throw (CMMError);
 
-   bool deviceBusy(const char* deviceName) throw (CMMError);
-   void waitForDevice(const char* deviceName) throw (CMMError);
+   bool deviceBusy(const char* label) throw (CMMError);
+   void waitForDevice(const char* label) throw (CMMError);
    void waitForConfig(const char* group, const char* configName) throw (CMMError);
    bool systemBusy() throw (CMMError);
    void waitForSystem() throw (CMMError);
@@ -273,7 +274,8 @@ public:
    ///@{
    Configuration getSystemStateCache() const;
    void updateSystemStateCache();
-   std::string getPropertyFromCache(const char* label, const char* propName) const throw (CMMError);
+   std::string getPropertyFromCache(const char* deviceLabel,
+         const char* propName) const throw (CMMError);
    std::string getCurrentConfigFromCache(const char* groupName) throw (CMMError);
    Configuration getConfigGroupStateFromCache(const char* group) throw (CMMError);
    ///@}
@@ -281,20 +283,26 @@ public:
    /** \name Configuration groups. */
    ///@{
    void defineConfig(const char* groupName, const char* configName) throw (CMMError);
-   void defineConfig(const char* groupName, const char* configName, const char* deviceName, const char* propName, const char* value) throw (CMMError);
+   void defineConfig(const char* groupName, const char* configName,
+         const char* deviceLabel, const char* propName,
+         const char* value) throw (CMMError);
    void defineConfigGroup(const char* groupName) throw (CMMError);
    void deleteConfigGroup(const char* groupName) throw (CMMError);
-   void renameConfigGroup(const char* oldGroupName, const char* newGroupName) throw (CMMError);
+   void renameConfigGroup(const char* oldGroupName,
+         const char* newGroupName) throw (CMMError);
    bool isGroupDefined(const char* groupName);
    bool isConfigDefined(const char* groupName, const char* configName);
    void setConfig(const char* groupName, const char* configName) throw (CMMError);
    void deleteConfig(const char* groupName, const char* configName) throw (CMMError);
-   void deleteConfig(const char* groupName, const char* configName, const char* deviceLabel, const char* propName) throw (CMMError);
-   void renameConfig(const char* groupName, const char* oldConfigName, const char* newConfigName) throw (CMMError);
+   void deleteConfig(const char* groupName, const char* configName,
+         const char* deviceLabel, const char* propName) throw (CMMError);
+   void renameConfig(const char* groupName, const char* oldConfigName,
+         const char* newConfigName) throw (CMMError);
    std::vector<std::string> getAvailableConfigGroups() const;
    std::vector<std::string> getAvailableConfigs(const char* configGroup) const;
    std::string getCurrentConfig(const char* groupName) throw (CMMError);
-   Configuration getConfigData(const char* configGroup, const char* configName) throw (CMMError);
+   Configuration getConfigData(const char* configGroup,
+         const char* configName) throw (CMMError);
    ///@}
 
    /** \name The pixel size configuration group. */
@@ -306,19 +314,23 @@ public:
    double getPixelSizeUmByID(const char* resolutionID) throw (CMMError);
    double getMagnificationFactor() const;
    void setPixelSizeUm(const char* resolutionID, double pixSize)  throw (CMMError);
-   void definePixelSizeConfig(const char* resolutionID, const char* deviceName, const char* propName, const char* value) throw (CMMError);
+   void definePixelSizeConfig(const char* resolutionID,
+         const char* deviceLabel, const char* propName,
+         const char* value) throw (CMMError);
    void definePixelSizeConfig(const char* resolutionID) throw (CMMError);
    std::vector<std::string> getAvailablePixelSizeConfigs() const;
    bool isPixelSizeConfigDefined(const char* resolutionID) const throw (CMMError);
    void setPixelSizeConfig(const char* resolutionID) throw (CMMError);
-   void renamePixelSizeConfig(const char* oldConfigName, const char* newConfigName) throw (CMMError);
+   void renamePixelSizeConfig(const char* oldConfigName,
+         const char* newConfigName) throw (CMMError);
    void deletePixelSizeConfig(const char* configName) throw (CMMError);
    Configuration getPixelSizeConfigData(const char* configName) throw (CMMError);
    ///@}
 
    /** \name Property blocks. */
    ///@{
-   void definePropertyBlock(const char* blockName, const char* propertyName, const char* propertyValue);
+   void definePropertyBlock(const char* blockName, const char* propertyName,
+         const char* propertyValue);
    std::vector<std::string> getAvailablePropertyBlocks() const;
    PropertyBlock getPropertyBlockData(const char* blockName);
    ///@}
@@ -330,7 +342,7 @@ public:
    void clearROI() throw (CMMError);
 
    void setExposure(double exp) throw (CMMError);
-   void setExposure(const char* label, double dExp) throw (CMMError);
+   void setExposure(const char* cameraLabel, double dExp) throw (CMMError);
    double getExposure() throw (CMMError);
 
    void snapImage() throw (CMMError);
@@ -347,7 +359,7 @@ public:
    long getImageBufferSize();
 
    void assignImageSynchro(const char* deviceLabel) throw (CMMError);
-   void removeImageSynchro(const char* label) throw (CMMError);
+   void removeImageSynchro(const char* deviceLabel) throw (CMMError);
    void removeImageSynchroAll();
 
    void setAutoShutter(bool state);
@@ -357,21 +369,26 @@ public:
    void setShutterOpen(const char* shutterLabel, bool state) throw (CMMError);
    bool getShutterOpen(const char* shutterLabel) throw (CMMError);
 
-   void startSequenceAcquisition(long numImages, double intervalMs, bool stopOnOverflow) throw (CMMError);
-   void startSequenceAcquisition(const char* cameraLabel, long numImages, double intervalMs, bool stopOnOverflow) throw (CMMError);
+   void startSequenceAcquisition(long numImages, double intervalMs,
+         bool stopOnOverflow) throw (CMMError);
+   void startSequenceAcquisition(const char* cameraLabel, long numImages,
+         double intervalMs, bool stopOnOverflow) throw (CMMError);
    void prepareSequenceAcquisition(const char* cameraLabel) throw (CMMError);
    void startContinuousSequenceAcquisition(double intervalMs) throw (CMMError);
    void stopSequenceAcquisition() throw (CMMError);
-   void stopSequenceAcquisition(const char* label) throw (CMMError);
+   void stopSequenceAcquisition(const char* cameraLabel) throw (CMMError);
    bool isSequenceRunning() throw ();
-   bool isSequenceRunning(const char* label) throw (CMMError);
+   bool isSequenceRunning(const char* cameraLabel) throw (CMMError);
 
    void* getLastImage() throw (CMMError);
    void* popNextImage() throw (CMMError);
-   void* getLastImageMD(unsigned channel, unsigned slice, Metadata& md) const throw (CMMError);
-   void* popNextImageMD(unsigned channel, unsigned slice, Metadata& md) throw (CMMError);
+   void* getLastImageMD(unsigned channel, unsigned slice, Metadata& md)
+      const throw (CMMError);
+   void* popNextImageMD(unsigned channel, unsigned slice, Metadata& md)
+      throw (CMMError);
    void* getLastImageMD(Metadata& md) const throw (CMMError);
-   void* getNBeforeLastImageMD(unsigned long n, Metadata& md) const throw (CMMError);
+   void* getNBeforeLastImageMD(unsigned long n, Metadata& md)
+      const throw (CMMError);
    void* popNextImageMD(Metadata& md) throw (CMMError);
 
    long getRemainingImageCount();
@@ -388,7 +405,8 @@ public:
    void startExposureSequence(const char* cameraLabel) throw (CMMError);
    void stopExposureSequence(const char* cameraLabel) throw (CMMError);
    long getExposureSequenceMaxLength(const char* cameraLabel) throw (CMMError);
-   void loadExposureSequence(const char* cameraLabel, std::vector<double> exposureSequence_ms) throw (CMMError);
+   void loadExposureSequence(const char* cameraLabel,
+         std::vector<double> exposureSequence_ms) throw (CMMError);
    ///@}
 
    /** \name Autofocus control. */
@@ -407,52 +425,62 @@ public:
 
    /** \name State device control. */
    ///@{
-   void setState(const char* deviceLabel, long state) throw (CMMError);
-   long getState(const char* deviceLabel) throw (CMMError);
-   long getNumberOfStates(const char* deviceLabel);
-   void setStateLabel(const char* deviceLabel, const char* stateLabel) throw (CMMError);
-   std::string getStateLabel(const char* deviceLabel) throw (CMMError);
-   void defineStateLabel(const char* deviceLabel, long state, const char* stateLabel) throw (CMMError);
-   std::vector<std::string> getStateLabels(const char* deviceLabel) throw (CMMError);
-   long getStateFromLabel(const char* deviceLabel, const char* stateLabel) throw (CMMError);
-   PropertyBlock getStateLabelData(const char* deviceLabel, const char* stateLabel);
-   PropertyBlock getData(const char* deviceLabel);
+   void setState(const char* stateDeviceLabel, long state) throw (CMMError);
+   long getState(const char* stateDeviceLabel) throw (CMMError);
+   long getNumberOfStates(const char* stateDeviceLabel);
+   void setStateLabel(const char* stateDeviceLabel,
+         const char* stateLabel) throw (CMMError);
+   std::string getStateLabel(const char* stateDeviceLabel) throw (CMMError);
+   void defineStateLabel(const char* stateDeviceLabel,
+         long state, const char* stateLabel) throw (CMMError);
+   std::vector<std::string> getStateLabels(const char* stateDeviceLabel)
+      throw (CMMError);
+   long getStateFromLabel(const char* stateDeviceLabel,
+         const char* stateLabel) throw (CMMError);
+   PropertyBlock getStateLabelData(const char* stateDeviceLabel,
+         const char* stateLabel);
+   PropertyBlock getData(const char* stateDeviceLabel);
    ///@}
 
    /** \name Focus (Z) stage control. */
    ///@{
-   void setPosition(const char* deviceLabel, double position) throw (CMMError);
-   double getPosition(const char* deviceLabel) throw (CMMError);
-   void setRelativePosition(const char* deviceLabel, double d) throw (CMMError);
-   void setOrigin(const char* deviceLabel) throw (CMMError);
-   void setAdapterOrigin(const char* deviceLabel, double d) throw (CMMError);
+   void setPosition(const char* stageLabel, double position) throw (CMMError);
+   double getPosition(const char* stageLabel) throw (CMMError);
+   void setRelativePosition(const char* stageLabel, double d) throw (CMMError);
+   void setOrigin(const char* stageLabel) throw (CMMError);
+   void setAdapterOrigin(const char* stageLabel, double d) throw (CMMError);
 
-   bool isStageSequenceable(const char* label) throw (CMMError);
-   void startStageSequence(const char* label) throw (CMMError);
-   void stopStageSequence(const char* label) throw (CMMError);
-   long getStageSequenceMaxLength(const char* label) throw (CMMError);
-   void loadStageSequence(const char* label, std::vector<double> positionSequence) throw (CMMError);
+   bool isStageSequenceable(const char* stageLabel) throw (CMMError);
+   void startStageSequence(const char* stageLabel) throw (CMMError);
+   void stopStageSequence(const char* stageLabel) throw (CMMError);
+   long getStageSequenceMaxLength(const char* stageLabel) throw (CMMError);
+   void loadStageSequence(const char* stageLabel,
+         std::vector<double> positionSequence) throw (CMMError);
    ///@}
    
    /** \name XY stage control. */
    ///@{
-   void setXYPosition(const char* deviceLabel, double x, double y) throw (CMMError);
-   void setRelativeXYPosition(const char* deviceLabel, double dx, double dy) throw (CMMError);
-   void getXYPosition(const char* deviceLabel, double &x_stage, double &y_stage) throw (CMMError);
-   double getXPosition(const char* deviceLabel) throw (CMMError);
-   double getYPosition(const char* deviceLabel) throw (CMMError);
-   void stop(const char* deviceLabel) throw (CMMError);
-   void home(const char* deviceLabel) throw (CMMError);
-   void setOriginXY(const char* deviceLabel) throw (CMMError);
-   void setAdapterOriginXY(const char* deviceName, double x, double y) throw (CMMError);
+   void setXYPosition(const char* xyStageLabel,
+         double x, double y) throw (CMMError);
+   void setRelativeXYPosition(const char* xyStageLabel,
+         double dx, double dy) throw (CMMError);
+   void getXYPosition(const char* xyStageLabel,
+         double &x_stage, double &y_stage) throw (CMMError);
+   double getXPosition(const char* xyStageLabel) throw (CMMError);
+   double getYPosition(const char* xyStageLabel) throw (CMMError);
+   void stop(const char* xyStageLabel) throw (CMMError);
+   void home(const char* xyStageLabel) throw (CMMError);
+   void setOriginXY(const char* xyStageLabel) throw (CMMError);
+   void setAdapterOriginXY(const char* xyStageLabel,
+         double x, double y) throw (CMMError);
 
-   bool isXYStageSequenceable(const char* label) throw (CMMError);
-   void startXYStageSequence(const char* label) throw (CMMError);
-   void stopXYStageSequence(const char* label) throw (CMMError);
-   long getXYStageSequenceMaxLength(const char* label) throw (CMMError);
-   void loadXYStageSequence(const char* label,
-                            std::vector<double> xSequence,
-                            std::vector<double> ySequence) throw (CMMError);
+   bool isXYStageSequenceable(const char* xyStageLabel) throw (CMMError);
+   void startXYStageSequence(const char* xyStageLabel) throw (CMMError);
+   void stopXYStageSequence(const char* xyStageLabel) throw (CMMError);
+   long getXYStageSequenceMaxLength(const char* xyStageLabel) throw (CMMError);
+   void loadXYStageSequence(const char* xyStageLabel,
+         std::vector<double> xSequence,
+         std::vector<double> ySequence) throw (CMMError);
    ///@}
 
    /** \name Serial port control. */
@@ -465,10 +493,14 @@ public:
       const char* parity,
       const char* stopBits) throw (CMMError);
 
-   void setSerialPortCommand(const char* deviceLabel, const char* command, const char* term) throw (CMMError);
-   std::string getSerialPortAnswer(const char* deviceLabel, const char* term) throw (CMMError);
-   void writeToSerialPort(const char* deviceLabel, const std::vector<char> &data) throw (CMMError);
-   std::vector<char> readFromSerialPort(const char* deviceLabel) throw (CMMError);
+   void setSerialPortCommand(const char* portLabel, const char* command,
+         const char* term) throw (CMMError);
+   std::string getSerialPortAnswer(const char* portLabel,
+         const char* term) throw (CMMError);
+   void writeToSerialPort(const char* portLabel,
+         const std::vector<char> &data) throw (CMMError);
+   std::vector<char> readFromSerialPort(const char* portLabel)
+      throw (CMMError);
    ///@}
 
    /** \name SLM control.
@@ -477,22 +509,28 @@ public:
     * (LCoS), digital micromirror devices (DMD), or multimedia projectors. 
     */
    ///@{
-   void setSLMImage(const char* deviceLabel, unsigned char * pixels) throw (CMMError);
-   void setSLMImage(const char* deviceLabel, imgRGB32 pixels) throw (CMMError);
-   void setSLMPixelsTo(const char* deviceLabel, unsigned char intensity) throw (CMMError);
-   void setSLMPixelsTo(const char* deviceLabel, unsigned char red, unsigned char green, unsigned char blue) throw (CMMError);
-   void displaySLMImage(const char* deviceLabel) throw (CMMError);
-   void setSLMExposure(const char* deviceLabel, double exposure_ms) throw (CMMError);
-   double getSLMExposure(const char* deviceLabel) throw (CMMError);
-   unsigned getSLMWidth(const char* deviceLabel);
-   unsigned getSLMHeight(const char* deviceLabel);
-   unsigned getSLMNumberOfComponents(const char* deviceLabel);
-   unsigned getSLMBytesPerPixel(const char* deviceLabel);
+   void setSLMImage(const char* slmLabel,
+         unsigned char * pixels) throw (CMMError);
+   void setSLMImage(const char* slmLabel, imgRGB32 pixels) throw (CMMError);
+   void setSLMPixelsTo(const char* slmLabel,
+         unsigned char intensity) throw (CMMError);
+   void setSLMPixelsTo(const char* slmLabel,
+         unsigned char red, unsigned char green,
+         unsigned char blue) throw (CMMError);
+   void displaySLMImage(const char* slmLabel) throw (CMMError);
+   void setSLMExposure(const char* slmLabel, double exposure_ms)
+      throw (CMMError);
+   double getSLMExposure(const char* slmLabel) throw (CMMError);
+   unsigned getSLMWidth(const char* slmLabel);
+   unsigned getSLMHeight(const char* slmLabel);
+   unsigned getSLMNumberOfComponents(const char* slmLabel);
+   unsigned getSLMBytesPerPixel(const char* slmLabel);
 
-   long getSLMSequenceMaxLength(const char* deviceLabel);
-   void startSLMSequence(const char* deviceLabel) throw (CMMError);
-   void stopSLMSequence(const char* deviceLabel) throw (CMMError);
-   void loadSLMSequence(const char* label, std::vector<unsigned char*> imageSequence) throw (CMMError);
+   long getSLMSequenceMaxLength(const char* slmLabel);
+   void startSLMSequence(const char* slmLabel) throw (CMMError);
+   void stopSLMSequence(const char* slmLabel) throw (CMMError);
+   void loadSLMSequence(const char* slmLabel,
+         std::vector<unsigned char*> imageSequence) throw (CMMError);
    ///@}
 
    /** \name Galvo control.
@@ -500,20 +538,27 @@ public:
     * Control of beam-steering devices.
     */
    ///@{
-   void pointGalvoAndFire(const char* deviceLabel, double x, double y, double pulseTime_us) throw (CMMError);
-   void setGalvoSpotInterval(const char* deviceLabel, double pulseTime_us) throw (CMMError);
-   void setGalvoPosition(const char* deviceLabel, double x, double y) throw (CMMError);
-   void getGalvoPosition(const char* deviceLabel, double &x_stage, double &y_stage) throw (CMMError); // using x_stage to get swig to work
-   void setGalvoIlluminationState(const char* deviceLabel, bool on) throw (CMMError);
-   double getGalvoXRange(const char* deviceLabel) throw (CMMError);
-   double getGalvoYRange(const char* deviceLabel) throw (CMMError);
-   void addGalvoPolygonVertex(const char* deviceLabel, int polygonIndex, double x, double y) throw (CMMError);
-   void deleteGalvoPolygons(const char* deviceLabel) throw (CMMError);
-   void loadGalvoPolygons(const char* deviceLabel) throw (CMMError);
-   void setGalvoPolygonRepetitions(const char* deviceLabel, int repetitions) throw (CMMError);
-   void runGalvoPolygons(const char* deviceLabel) throw (CMMError);
-   void runGalvoSequence(const char* deviceLabel) throw (CMMError);
-   std::string getGalvoChannel(const char* deviceLabel) throw (CMMError);
+   void pointGalvoAndFire(const char* galvoLabel, double x, double y,
+         double pulseTime_us) throw (CMMError);
+   void setGalvoSpotInterval(const char* galvoLabel,
+         double pulseTime_us) throw (CMMError);
+   void setGalvoPosition(const char* galvoLabel, double x, double y)
+      throw (CMMError);
+   void getGalvoPosition(const char* galvoLabel,
+         double &x_stage, double &y_stage) throw (CMMError); // using x_stage to get swig to work
+   void setGalvoIlluminationState(const char* galvoLabel, bool on)
+      throw (CMMError);
+   double getGalvoXRange(const char* galvoLabel) throw (CMMError);
+   double getGalvoYRange(const char* galvoLabel) throw (CMMError);
+   void addGalvoPolygonVertex(const char* galvoLabel, int polygonIndex,
+         double x, double y) throw (CMMError);
+   void deleteGalvoPolygons(const char* galvoLabel) throw (CMMError);
+   void loadGalvoPolygons(const char* galvoLabel) throw (CMMError);
+   void setGalvoPolygonRepetitions(const char* galvoLabel, int repetitions)
+      throw (CMMError);
+   void runGalvoPolygons(const char* galvoLabel) throw (CMMError);
+   void runGalvoSequence(const char* galvoLabel) throw (CMMError);
+   std::string getGalvoChannel(const char* galvoLabel) throw (CMMError);
    ///@}
 
    /** \name Acquisition context.
@@ -527,16 +572,18 @@ public:
 
    /** \name Device discovery. */
    ///@{
-   MM::DeviceDetectionStatus detectDevice(char* deviceName);
+   MM::DeviceDetectionStatus detectDevice(char* deviceLabel);
    ///@}
 
    /** \name Hub and peripheral devices. */
    ///@{
-   std::string getParentLabel(const char* label) throw (CMMError);
-   void setParentLabel(const char* label, const char* parentLabel) throw (CMMError);
+   std::string getParentLabel(const char* peripheralLabel) throw (CMMError);
+   void setParentLabel(const char* deviceLabel,
+         const char* parentHubLabel) throw (CMMError);
 
-   std::vector<std::string> getInstalledDevices(const char* hubDeviceLabel); 
-   std::string getInstalledDeviceDescription(const char* hubLabel, const char* deviceLabel);
+   std::vector<std::string> getInstalledDevices(const char* hubLabel);
+   std::string getInstalledDeviceDescription(const char* hubLabel,
+         const char* peripheralLabel);
    std::vector<std::string> getLoadedPeripheralDevices(const char* hubLabel);
    ///@}
 
