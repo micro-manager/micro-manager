@@ -82,9 +82,20 @@
 		</javac>
 	</presetdef>
 
-	<presetdef name="mm-jar">
-		<jar compress="true" index="true" indexMetaInf="true"/>
-	</presetdef>
+	<macrodef name="mm-jar">
+		<attribute name="basedir"/>
+		<attribute name="destfile"/>
+		<element name="manifest-elements" optional="true" implicit="true"/>
+		<sequential>
+			<property name="manifest" location="@{basedir}/MANIFEST.MF"/>
+			<manifest file="${manifest}">
+				<manifest-elements/>
+			</manifest>
+			<jar basedir="@{basedir}" destfile="@{destfile}"
+				compress="true" index="true" indexMetaInf="true"
+				manifest="${manifest}"/>
+		</sequential>
+	</macrodef>
 
 	<macrodef name="mm-cljc">
 		<attribute name="namespace"/>

@@ -44,15 +44,9 @@
 
 	<!-- Override javabuild.xml's 'jar' target, to add manifest -->
 	<target name="jar" depends="compile,copy-files">
-		<!-- Note: there is a ${srcdir}/MANIFEST.MF in the repository,
-		     which is probably used by the OS X build. -->
-		<property name="manifest" location="${intdir}/MANIFEST.MF"/>
-		<manifest file="${manifest}">
-			<attribute name="Main-Class" value="org.micromanager.MMStudioMainFrame"/>
-			<!-- TODO Add version information here -->
-		</manifest>
-
 		<mkdir dir="${outdir}"/>
-		<mm-jar basedir="${intdir}" destfile="${jarfile}" manifest="${manifest}"/>
+		<mm-jar basedir="${intdir}" destfile="${jarfile}">
+			<attribute name="Main-Class" value="org.micromanager.MMStudioMainFrame"/>
+		</mm-jar>
 	</target>
 </project>
