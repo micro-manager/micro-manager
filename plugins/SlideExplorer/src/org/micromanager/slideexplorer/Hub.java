@@ -690,8 +690,7 @@ public class Hub {
          Point mapPosition = coords_.tileToMap(tileIndex);
 
          if (!cache_.hasImage(tileIndex)) {
-            if (app_.getLiveMode())
-               app_.enableLiveMode(false);
+            app_.getSnapLiveManager().setLiveMode(false);
             final ImageProcessor img = controller_.grabImageAtMapPosition(mapPosition);
             cache_.addImage(tileIndex, img);
          }

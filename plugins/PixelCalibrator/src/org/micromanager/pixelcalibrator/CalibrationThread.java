@@ -111,7 +111,7 @@ public class CalibrationThread extends Thread {
             Object pix = core_.getTaggedImage().pix;
             app_.displayImage(pix);
             if (liveWin_ == null)
-               liveWin_ = app_.getImageWin();
+               liveWin_ = app_.getSnapLiveManager().getSnapLiveWindow();
             liveWin_.setTitle("Calibrating...");
             return ImageUtils.makeProcessor(core_,pix);
          } catch (InterruptedException e) {
@@ -132,8 +132,6 @@ public class CalibrationThread extends Thread {
          Rectangle guessRect = new Rectangle((int) ((w-side_small)/2-d.x),(int) ((h-side_small)/2-d.y),side_small,side_small);
          ImageProcessor foundImage = getSubImage(snap,guessRect.x, guessRect.y, guessRect.width, guessRect.height);
          liveWin_.getImagePlus().setRoi(guessRect);
-         //new ImagePlus("found at "+dx+","+dy,foundImage).show();
-         //new ImagePlus("simulated at "+dx+","+dy,simulatedImage).show();
          Point2D.Double dChange = measureDisplacement(referenceImage_, foundImage, display);
          return new Point2D.Double(d.x + dChange.x,d.y + dChange.y);
    }

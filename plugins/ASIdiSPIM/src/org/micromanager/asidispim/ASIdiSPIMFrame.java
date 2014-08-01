@@ -133,9 +133,9 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       stagePosUpdater_.addPanel(navigationPanel_);
 
       // attach live mode listeners
-      MMStudio.getInstance().addLiveModeListener((LiveModeListener) setupPanelB_);
-      MMStudio.getInstance().addLiveModeListener((LiveModeListener) setupPanelA_);
-      MMStudio.getInstance().addLiveModeListener((LiveModeListener) navigationPanel_);
+      MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) setupPanelB_);
+      MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) setupPanelA_);
+      MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) navigationPanel_);
       
       // make sure gotSelected() gets called whenever we switch tabs
       tabbedPane.addChangeListener(new ChangeListener() {
