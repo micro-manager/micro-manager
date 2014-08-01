@@ -9,7 +9,6 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.UUID;
 
-import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.PropertySetting;
 import mmcorej.TaggedImage;

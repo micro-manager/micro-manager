@@ -5,10 +5,7 @@ import java.util.Collections;
 import java.util.List;
 
 import mmcorej.CMMCore;
-import mmcorej.DeviceType;
-import mmcorej.MMCoreJ;
 import mmcorej.MMEventCallback;
-import mmcorej.StrVector;
 
 import org.micromanager.acquisition.AcquisitionWrapperEngine;
 import org.micromanager.api.MMListenerInterface;

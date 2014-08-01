@@ -3,15 +3,12 @@ package org.micromanager.imagedisplay;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
-import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import javax.swing.JPanel;
-
-import org.micromanager.utils.ReportingUtils;
 
 /**
  * This class is responsible for containing and managing groups of 

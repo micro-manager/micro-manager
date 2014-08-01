@@ -26,7 +26,6 @@ package org.micromanager.conf2;
 
 import java.awt.Color;
 import java.awt.Dialog;
-import java.awt.Frame;
 import java.util.prefs.Preferences;
 
 import javax.swing.JOptionPane;

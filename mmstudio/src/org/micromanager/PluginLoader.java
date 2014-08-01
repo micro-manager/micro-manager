@@ -36,7 +36,6 @@ import org.micromanager.api.MMBasePlugin;
 import org.micromanager.api.MMPlugin;
 import org.micromanager.api.MMProcessorPlugin;
 import org.micromanager.utils.JavaUtils;
-import org.micromanager.utils.MMException;
 import org.micromanager.utils.ReportingUtils;
 
 /**

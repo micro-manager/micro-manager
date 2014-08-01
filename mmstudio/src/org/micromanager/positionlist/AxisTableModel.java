@@ -7,8 +7,6 @@ import java.util.prefs.Preferences;
 import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
 
-import org.micromanager.utils.ReportingUtils;
-
 /**
  * Model holding axis data, used to determine which axis will be recorded
  */

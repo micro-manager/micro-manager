@@ -7,11 +7,8 @@ import java.awt.Dimension;
 import java.awt.event.MouseEvent;
 
 import javax.swing.event.MouseInputAdapter;
-import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
-
-import org.micromanager.utils.ReportingUtils;
 
 /**
  * This class provides a scrollbar and associated buttons for navigating

@@ -37,7 +37,6 @@ import java.util.Vector;
 import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
@@ -55,7 +54,6 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 
-import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
 
 import org.micromanager.utils.ReportingUtils;

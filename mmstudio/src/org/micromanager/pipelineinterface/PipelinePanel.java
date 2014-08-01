@@ -13,7 +13,6 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
-import javax.swing.WindowConstants;
 
 import mmcorej.TaggedImage;
 
@@ -23,7 +22,6 @@ import org.micromanager.api.ScriptInterface;
 import org.micromanager.events.EventManager;
 import org.micromanager.events.PipelineEvent;
 import org.micromanager.events.ProcessorEvent;
-import org.micromanager.utils.ReportingUtils;
 
 public class PipelinePanel extends JFrame {
    ScriptInterface gui_;
