@@ -1,10 +1,9 @@
 <project name="SlideExplorer" default="jar">
-	<include file="../../buildscripts/buildprops.xml"/>
-	<property name="installdir" location="${mm.java.plugin.installdir}/Acquisition_Tools"/>
+	<property name="plugin.path" value="Acquisition_Tools"/>
 	<import file="../javapluginbuild.xml"/>
 
 	<path id="plugin.classpath">
-		<pathelement location="${mm.java.plugin.outdir}/PixelCalibrator.jar"/>
+		<pathelement location="${plugin.outdir}/Beta/PixelCalibrator.jar"/>
 	</path>
 
 	<target name="prerequisites" depends="mm.javabuild.prerequisites">

@@ -1,5 +1,4 @@
 <project name="ImageFlipper" default="jar">
-	<include file="../../buildscripts/buildprops.xml"/>
-	<property name="installdir" location="${mm.java.plugin.installdir}/Image_Processing"/>
+	<property name="plugin.path" value="Image_Processing"/>
 	<import file="../javapluginbuild.xml"/>
 </project>

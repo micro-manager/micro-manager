@@ -2,9 +2,28 @@
 	<include file="../buildscripts/buildprops.xml"/>
 
 	<property name="product" value="${ant.project.name}"/>
-	<property name="intdir" location="${mm.java.plugin.intdir}/${product}"/>
-	<property name="outdir" location="${mm.java.plugin.outdir}"/>
-	<property name="installdir" location="${mm.java.plugin.installdir}"/>
+
+	<!-- Relative path of plugin directory -->
+	<!-- Should be set with the value attribute (not location), since this
+	     is a path relative to the root of the plugin directory tree -->
+	<property name="plugin.path" value=""/>
+
+	<if>
+		<isset property="mm.platform.is.windows"/>
+		<then>
+			<property name="intdir" location="${mm.java.plugin.intdir}/${ant.project.name}"/>
+			<property name="plugin.outdir" location="${mm.java.plugin.outdir}"/>
+			<property name="plugin.installdir" location="${mm.java.plugin.installdir}"/>
+			<property name="outdir" location="${plugin.outdir}/${plugin.path}"/>
+			<property name="installdir" location="${plugin.installdir}/${plugin.path}"/>
+		</then>
+		<else>
+			<property name="intdir" location="build/${ant.project.name}"/>
+			<property name="plugin.outdir" location="."/>
+			<property name="outdir" location="${plugin.outdir}/${plugin.path}"/>
+			<!-- install is not used on Unix -->
+		</else>
+	</if>
 
 	<!-- Additional classpath items for plugin; empty by default -->
 	<path id="plugin.classpath"/>
