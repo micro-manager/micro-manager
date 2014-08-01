@@ -81,16 +81,21 @@ AM_CONDITIONAL([BUILD_HID], [test "x$use_hidapi" = xyes])
 
 # Only build PVCAM if header files present.
 AC_MSG_CHECKING(for Pvcam)
-AC_FIND_FILE([pvcam.h], [/usr/include/pvcam /Library/Frameworks/PVCAM.framework/Headers], PVCAMINCDIR)
-if test x$PVCAMINCDIR = xNO; then
-   AC_MSG_RESULT([not found])
-fi
-AM_CONDITIONAL([BUILD_PVCAM], [test -f "$PVCAMINCDIR/pvcam.h"])
-if test -f "$PVCAMINCDIR/pvcam.h" ; then
+for dir in /usr/include/pvcam /Library/Frameworks/PVCAM.framework/Headers
+do
+   if test -f "$dir/pvcam.h"; then
+      PVCAMINCDIR="$dir"
+      break
+   fi
+done
+AM_CONDITIONAL([BUILD_PVCAM], [test -n "$PVCAMINCDIR"])
+AM_COND_IF([BUILD_PVCAM],
+[
    AC_MSG_RESULT([found])
-else
+],
+[
    AC_MSG_RESULT([not found])
-fi
+])
 
 # Same for QCam
 AC_MSG_CHECKING(for QCam)
