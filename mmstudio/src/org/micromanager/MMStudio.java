@@ -43,7 +43,6 @@ import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
@@ -93,6 +92,7 @@ import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
 import org.micromanager.logging.LogFileManager;
 
 import org.micromanager.menus.FileMenu;
+import org.micromanager.menus.HelpMenu;
 import org.micromanager.menus.ToolsMenu;
 
 import org.micromanager.navigation.CenterAndDragListener;
@@ -390,6 +390,9 @@ public class MMStudio implements ScriptInterface {
       toolsMenu_ = new ToolsMenu(studio_, core_, options_);
       toolsMenu_.initializeToolsMenu(menuBar_, mainPrefs_);
 
+      HelpMenu helpMenu = new HelpMenu(studio_, core_, options_);
+      helpMenu.initializeHelpMenu(menuBar_, systemPrefs_);
+
       initializationSequence();
    }
 
@@ -501,9 +504,6 @@ public class MMStudio implements ScriptInterface {
 
       frame_.initializeConfigPad();
 
-      // initialize controls
-      initializeHelpMenu();
-      
       String afDevice = mainPrefs_.get(AUTOFOCUS_DEVICE, "");
       if (afMgr_.hasDevice(afDevice)) {
          try {
@@ -557,62 +557,6 @@ public class MMStudio implements ScriptInterface {
       for (int i = 0; i < channels; i++) {
          addToAlbum(ic.getImage(i, 0, 0, 0), ic.getDisplayAndComments());
       }
-   }
-
-   private void initializeHelpMenu() {
-      final JMenu helpMenu = GUIUtils.createMenuInMenuBar(menuBar_, "Help");
-        
-      GUIUtils.addMenuItem(helpMenu, "User's Guide", null,
-         GUIUtils.makeURLRunnable("http://micro-manager.org/wiki/Micro-Manager_User%27s_Guide")
-      );
-        
-      GUIUtils.addMenuItem(helpMenu, "Configuration Guide", null,
-         GUIUtils.makeURLRunnable("http://micro-manager.org/wiki/Micro-Manager_Configuration_Guide")
-      );
-        
-      if (!systemPrefs_.getBoolean(RegistrationDlg.REGISTRATION, false)) {
-         GUIUtils.addMenuItem(helpMenu, 
-            "Register your copy of Micro-Manager...", null,
-            new Runnable() {
-               @Override
-               public void run() {
-                  try {
-                     RegistrationDlg regDlg = new RegistrationDlg(systemPrefs_);
-                     regDlg.setVisible(true);
-                  } catch (Exception e1) {
-                     ReportingUtils.showError(e1);
-                  }
-               }
-            }
-         );
-      }
-
-      GUIUtils.addMenuItem(helpMenu, "Report Problem...", null,
-         new Runnable() {
-            @Override
-            public void run() {
-               org.micromanager.diagnostics.gui.ProblemReportController.start(core_, options_);
-            }
-         }
-      );
-
-      GUIUtils.addMenuItem(helpMenu, "About Micromanager", null,
-         new Runnable() {
-            @Override
-            public void run() {
-               MMAboutDlg dlg = new MMAboutDlg();
-               String versionInfo = "MM Studio version: " + MMVersion.VERSION_STRING;
-               versionInfo += "\n" + core_.getVersionInfo();
-               versionInfo += "\n" + core_.getAPIVersionInfo();
-               versionInfo += "\nUser: " + core_.getUserId();
-               versionInfo += "\nHost: " + core_.getHostName();
-               dlg.setVersionInfo(versionInfo);
-               dlg.setVisible(true);
-            }
-         }
-      );
-      
-      menuBar_.validate();
    }
 
    private void showRegistrationDialogMaybe() {
