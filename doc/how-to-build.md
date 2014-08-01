@@ -58,11 +58,10 @@ Required dependencies are:
 - Boost 1.46 or later
 - zlib
 
-To build MMCoreJ and the Java application (Micro-Manager Studio), you will
-need the Java Development Kit. Micro-Manager Java code is written in Java 1.6.
-On OS X, either Apple's Java 1.6 or Oracle JDK 1.7 will work (you need a
-developer account to get the development kit for Apple JDK 1.6). On Linux,
-OpenJDK 1.6 or 1.7 should work well. (For JDK versions, 1.x is the same as x.)
+To build MMCoreJ and the Java application (Micro-Manager Studio), you will need
+a Java Development Kit. Micro-Manager Java code is written in Java 1.6. On OS
+X, either Apple's Java 1.6 or Oracle JDK 1.7 will work. On Linux, OpenJDK 1.6
+or 1.7 should work well. (For JDK versions, 1.x is the same as x.)
 
 Building the Java components also requires Apache Ant (pre-installed on OS X).
 
@@ -157,8 +156,8 @@ following.
    (Java Runtime Environment) rather than a JDK). Not setting `JAVA_HOME` may
    allow `configure` to autodetect a suitable Java home.
 
-2. Find the desirable Java home on your system. This is a directory that
-   usually has "jdk" and the Java version number (such as 1.6) in its name, and
+2. Find the desirable JDK home on your system. This is a directory that usually
+   has "jdk" and the Java version number (such as 1.6) in its name, and
    contains the directories `bin` (in which `java`, `javac`, and `jar` are
    found) and `include` (in which `jni.h` is found). Pass
    `--with-java=/path/to/java/home` to `configure`. For example:
@@ -167,14 +166,24 @@ following.
         # or, on OS X,
         ./configure --with-java=/Library/Java/JavaVirtualMachines/1.7.0_55.jdk/Contents/Home
 
-3. If the previous step is not possible, because the Java files are spread
-   across several directories (this is the case with older versions of Apple
-   JDK), then you can leave `JAVA_HOME` (and `--with-java`) unset, but override
-   the include path for JNI headers, like this:
+3. On OS X, if you are using Apple's JDK 1.6, the previous step may not be
+   sufficient, because the Java home directory
+   (`/System/Library/Java/JavaVirtualMachines/1.6.0.jdk/Contenst/Home`) does
+   not contain `jni.h` and related headers. There are two solutions to this
+   problem.
 
-        ./configure JNI_CPPFLAGS="-I/System/Library/Frameworks/JavaVM.framework/Versions/A/Headers"
+   The first is to download and install Apple's Java Development Package (you
+   need an Apple Developer account to download it). This will place `jni.h` in
+   `/System/Library/Frameworks/JavaVM.framework/Headers`, which should be
+   automatically detected by `./configure`.
 
-   (This particular example should be autodetected now.)
+   The second is to use the copy of `jni.h` and friends included with the OS X
+   SDK. To do so, run:
+
+        ./configure JAVA_HOME=/System/Library/Java/JavaVirtualMachines/1.6.0.jdk/Contents/Home JNI_CPPFLAGS="-I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.9.sdk/System/Library/Frameworks/JavaVM.framework/Headers"
+
+   You may need to adjust the version of the platform SDK from `10.9` to one of
+   the versions you have.
 
 
 #### Specifying where to find external packages
