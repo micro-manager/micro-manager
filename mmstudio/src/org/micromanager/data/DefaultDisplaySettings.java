@@ -18,6 +18,14 @@ public class DefaultDisplaySettings implements DisplaySettings {
       private Color[] channelColors_ = null;
       private Integer[] channelContrastMins_ = null;
       private Integer[] channelContrastMaxes_ = null;
+      private Boolean isSlowHistogramsOn_ = null;
+      private Boolean shouldSyncChannels_ = null;
+      private Integer scaleBarColorIndex_ = null;
+      private Integer scaleBarLocationIndex_ = null;
+      private Boolean shouldShowScaleBar_ = null;
+      private Boolean shouldIgnoreOutliers_ = null;
+      private Double percentToIgnore_ = null;
+      private Boolean shouldUseLogScale_ = null;
 
       @Override
       public DefaultDisplaySettings build() {
@@ -47,18 +55,83 @@ public class DefaultDisplaySettings implements DisplaySettings {
          channelContrastMaxes_ = channelContrastMaxes;
          return this;
       }
+
+      @Override
+      public DisplaySettingsBuilder isSlowHistogramsOn(Boolean isSlowHistogramsOn) {
+         isSlowHistogramsOn_ = isSlowHistogramsOn;
+         return this;
+      }
+
+      @Override
+      public DisplaySettingsBuilder shouldSyncChannels(Boolean shouldSyncChannels) {
+         shouldSyncChannels_ = shouldSyncChannels;
+         return this;
+      }
+
+      @Override
+      public DisplaySettingsBuilder scaleBarColorIndex(Integer scaleBarColorIndex) {
+         scaleBarColorIndex_ = scaleBarColorIndex;
+         return this;
+      }
+
+      @Override
+      public DisplaySettingsBuilder scaleBarLocationIndex(Integer scaleBarLocationIndex) {
+         scaleBarLocationIndex_ = scaleBarLocationIndex;
+         return this;
+      }
+
+      @Override
+      public DisplaySettingsBuilder shouldShowScaleBar(Boolean shouldShowScaleBar) {
+         shouldShowScaleBar_ = shouldShowScaleBar;
+         return this;
+      }
+
+      @Override
+      public DisplaySettingsBuilder shouldIgnoreOutliers(Boolean shouldIgnoreOutliers) {
+         shouldIgnoreOutliers_ = shouldIgnoreOutliers;
+         return this;
+      }
+
+      @Override
+      public DisplaySettingsBuilder percentToIgnore(Double percentToIgnore) {
+         percentToIgnore_ = percentToIgnore;
+         return this;
+      }
+
+      @Override
+      public DisplaySettingsBuilder shouldUseLogScale(Boolean shouldUseLogScale) {
+         shouldUseLogScale_ = shouldUseLogScale;
+         return this;
+      }
+
    }
 
    private String[] channelNames_ = null;
    private Color[] channelColors_ = null;
    private Integer[] channelContrastMins_ = null;
    private Integer[] channelContrastMaxes_ = null;
+   private Boolean isSlowHistogramsOn_ = null;
+   private Boolean shouldSyncChannels_ = null;
+   private Integer scaleBarColorIndex_ = null;
+   private Integer scaleBarLocationIndex_ = null;
+   private Boolean shouldShowScaleBar_ = null;
+   private Boolean shouldIgnoreOutliers_ = null;
+   private Double percentToIgnore_ = null;
+   private Boolean shouldUseLogScale_ = null;
 
    public DefaultDisplaySettings(Builder builder) {
       channelNames_ = builder.channelNames_;
       channelColors_ = builder.channelColors_;
       channelContrastMins_ = builder.channelContrastMins_;
       channelContrastMaxes_ = builder.channelContrastMaxes_;
+      isSlowHistogramsOn_ = builder.isSlowHistogramsOn_;
+      shouldSyncChannels_ = builder.shouldSyncChannels_;
+      scaleBarColorIndex_ = builder.scaleBarColorIndex_;
+      scaleBarLocationIndex_ = builder.scaleBarLocationIndex_;
+      shouldShowScaleBar_ = builder.shouldShowScaleBar_;
+      shouldIgnoreOutliers_ = builder.shouldIgnoreOutliers_;
+      percentToIgnore_ = builder.percentToIgnore_;
+      shouldUseLogScale_ = builder.shouldUseLogScale_;
    }
 
    @Override
@@ -80,14 +153,62 @@ public class DefaultDisplaySettings implements DisplaySettings {
    public Integer[] getChannelContrastMaxes() {
       return channelContrastMaxes_;
    }
-   
+
+   @Override
+   public Boolean getIsSlowHistogramsOn() {
+      return isSlowHistogramsOn_;
+   }
+
+   @Override
+   public Boolean getShouldSyncChannels() {
+      return shouldSyncChannels_;
+   }
+
+   @Override
+   public Integer getScaleBarColorIndex() {
+      return scaleBarColorIndex_;
+   }
+
+   @Override
+   public Integer getScaleBarLocationIndex() {
+      return scaleBarLocationIndex_;
+   }
+
+   @Override
+   public Boolean getShouldShowScaleBar() {
+      return shouldShowScaleBar_;
+   }
+
+   @Override
+   public Boolean getShouldIgnoreOutliers() {
+      return shouldIgnoreOutliers_;
+   }
+
+   @Override
+   public Double getPercentToIgnore() {
+      return percentToIgnore_;
+   }
+
+   @Override
+   public Boolean getShouldUseLogScale() {
+      return shouldUseLogScale_;
+   }
+
    @Override
    public DisplaySettingsBuilder copy() {
       return new Builder()
             .channelNames(channelNames_)
             .channelColors(channelColors_)
             .channelContrastMins(channelContrastMins_)
-            .channelContrastMaxes(channelContrastMaxes_);
+            .channelContrastMaxes(channelContrastMaxes_)
+            .isSlowHistogramsOn(isSlowHistogramsOn_)
+            .shouldSyncChannels(shouldSyncChannels_)
+            .scaleBarColorIndex(scaleBarColorIndex_)
+            .scaleBarLocationIndex(scaleBarLocationIndex_)
+            .shouldShowScaleBar(shouldShowScaleBar_)
+            .shouldIgnoreOutliers(shouldIgnoreOutliers_)
+            .percentToIgnore(percentToIgnore_)
+            .shouldUseLogScale(shouldUseLogScale_);
    }
 
    /**
@@ -99,7 +220,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
          return new Builder().build();
       }
       try {
-         int color = MDUtils.getChannelColor(tags);
+         Integer color = MDUtils.getChannelColor(tags);
          Color fakeColor = new Color(color, color, color);
          return new Builder()
             .channelNames(new String[] {MDUtils.getChannelName(tags)})
@@ -129,6 +250,14 @@ public class DefaultDisplaySettings implements DisplaySettings {
          MDUtils.setChannelColor(result, channelColors_[0].hashCode());
          result.put("ChContrastMin", channelContrastMins_[0]);
          result.put("ChContrastMax", channelContrastMaxes_[0]);
+         result.put("isSlowHistogramsOn", isSlowHistogramsOn_);
+         result.put("shouldSyncChannels", shouldSyncChannels_);
+         result.put("scaleBarColorIndex", scaleBarColorIndex_);
+         result.put("scaleBarLocationIndex", scaleBarLocationIndex_);
+         result.put("shouldShowScaleBar", shouldShowScaleBar_);
+         result.put("shouldIgnoreOutliers", shouldIgnoreOutliers_);
+         result.put("percentToIgnore", percentToIgnore_);
+         result.put("shouldUseLogScale", shouldUseLogScale_);
          return result;
       }
       catch (JSONException e) {
