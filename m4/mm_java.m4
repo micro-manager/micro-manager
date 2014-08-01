@@ -134,8 +134,18 @@ AC_DEFUN([MM_JAVA_HOME_SET_IF_JDK], [
       ],
       [
          AC_MSG_RESULT([no])
-         mm_java_home_candidate_is_jdk=no
-         break
+         # Apple JDK 6 has an incomplete JAVA_HOME lacking the JNI headers. We
+         # make an exception and allow this to pass as a JAVA_HOME, since we
+         # know how to deal with it specially (see MM_HEADERS_JNI).
+         # We do not need to do this for versions of Apple JDK 6 that get
+         # installed in /Library/Java/JavaVirtualMachines; those do contain an
+         # include directory.
+         AS_IF([test "$mm_java_home_candidate" = "/System/Library/Java/JavaVirtualMachines/1.6.0.jdk/Contents/Home"],
+         [],
+         [
+            mm_java_home_candidate_is_jdk=no
+            break
+         ])
       ])
 
       break
