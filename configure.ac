@@ -78,7 +78,7 @@ AS_IF([test "x$want_java" != xno],
    MM_JAVA_HOME(["$JAVA_PREFIX"])
 
    have_java=no
-   MM_PROGS_JAVA(
+   MM_PROG_JAVA(
    [
       MM_HEADERS_JNI(
       [
@@ -417,12 +417,9 @@ echo ""
 if test "x$use_java" = xyes; then
 echo "   JAVA_HOME    = $JAVA_HOME"
 echo "   JNI_CPPFLAGS = $JNI_CPPFLAGS"
-echo "   JAVAC        = $JAVAC"
-echo ""
-fi
-
 if test "x$use_ant" = xyes; then
-echo "   ANT = $ANT"
+echo "   ANT          = $ANT"
+fi
 echo ""
 fi
 

@@ -141,18 +141,15 @@ AC_DEFUN([MM_JAVA_HOME_SET_IF_JDK], [
 ])
 
 
-# MM_PROGS_JAVA([action-if-all-found], [action-if-any-not-found])
-# Find java, javac, and jar and set JAVA, JAVAC, and JAR. Do not override if
-# set by user. If JAVA_HOME is not empty, search $JAVA_HOME/bin. Otherwise
-# search PATH.
-AC_DEFUN([MM_PROGS_JAVA],
+# MM_PROG_JAVA([action-if-found], [action-if-not-found])
+# Find java executable and set JAVA. Do not override if set by user. If
+# JAVA_HOME is not empty, search $JAVA_HOME/bin. Otherwise search PATH.
+AC_DEFUN([MM_PROG_JAVA],
 [
    AC_ARG_VAR([JAVA], [Java virtual machine])
-   AC_ARG_VAR([JAVAC], [Java compiler])
-   AC_ARG_VAR([JAR], [Java archive tool])
 
-   mm_progs_java_path="$PATH"
-   test -n "$JAVA_HOME" && mm_progs_java_path="$JAVA_HOME/bin"
+   mm_prog_java_path="$PATH"
+   test -n "$JAVA_HOME" && mm_prog_java_path="$JAVA_HOME/bin"
 
    AC_MSG_CHECKING([for user-specified Java virtual machine])
    AS_IF([test -n "$JAVA"],
@@ -161,34 +158,10 @@ AC_DEFUN([MM_PROGS_JAVA],
    ],
    [
       AC_MSG_RESULT([no; will search for one])
-      AC_PATH_PROGS([JAVA], [java kaffe], [], [$mm_progs_java_path])
+      AC_PATH_PROGS([JAVA], [java kaffe], [], [$mm_prog_java_path])
    ])
 
-   AC_MSG_CHECKING([for user-specified Java compiler])
-   AS_IF([test -n "$JAVAC"],
-   [
-      AC_MSG_RESULT([yes ($JAVAC)])
-   ],
-   [
-      AC_MSG_RESULT([no; will search for one])
-      AC_PATH_PROGS([JAVAC], [javac jikes guavac], [], [$mm_progs_java_path])
-   ])
-
-   AC_MSG_CHECKING([for user-specified Java archive tool])
-   AS_IF([test -n "$JAR"],
-   [
-      AC_MSG_RESULT([yes ($JAR)])
-   ],
-   [
-      AC_MSG_RESULT([no; will search for one])
-      AC_PATH_PROG([JAR], [jar], [], [$mm_progs_java_path])
-   ])
-
-   mm_progs_java_all_found=yes
-   if test -z "$JAVA"; then mm_progs_java_all_found=no; fi
-   if test -z "$JAVAC"; then mm_progs_java_all_found=no; fi
-   if test -z "$JAR"; then mm_progs_java_all_found=no; fi
-   AS_IF([test "x$mm_progs_java_all_found" = xyes], [$1], [$2])
+   AS_IF([test -n "$JAVA"], [$1], [$2])
 ])
 
 
