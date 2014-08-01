@@ -22,14 +22,9 @@ import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.JTextField;
@@ -37,7 +32,6 @@ import javax.swing.JToggleButton;
 import javax.swing.SpringLayout;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
 
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
@@ -52,7 +46,6 @@ import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.MMKeyDispatcher;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
-import org.micromanager.utils.TextUtils;
 
 /**
  * GUI code for the primary window of the program. And nothing else.

@@ -30,11 +30,7 @@ import ij.gui.Roi;
 import ij.process.ImageProcessor;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Font;
 import java.awt.Rectangle;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
-import java.awt.event.WindowEvent;
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
@@ -55,7 +51,6 @@ import javax.swing.UIManager;
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import mmcorej.MMCoreJ;
-import mmcorej.MMEventCallback;
 import mmcorej.StrVector;
 
 import org.json.JSONObject;
@@ -64,7 +59,6 @@ import org.micromanager.acquisition.AcquisitionManager;
 
 import org.micromanager.api.Autofocus;
 import org.micromanager.api.DataProcessor;
-import org.micromanager.api.events.ConfigGroupChangedEvent;
 import org.micromanager.api.events.ExposureChangedEvent;
 import org.micromanager.api.events.PixelSizeChangedEvent;
 import org.micromanager.api.events.PropertiesChangedEvent;
@@ -83,7 +77,6 @@ import org.micromanager.conf2.MMConfigFileException;
 import org.micromanager.conf2.MicroscopeModel;
 
 import org.micromanager.events.EventManager;
-import org.micromanager.events.MMListenerProxy;
 
 import org.micromanager.graph.GraphData;
 import org.micromanager.graph.GraphFrame;
@@ -109,7 +102,6 @@ import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MMException;
 import org.micromanager.utils.MMScriptException;
-import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.TextUtils;
 import org.micromanager.utils.WaitDialog;
 
@@ -123,7 +115,6 @@ import ij.gui.ImageWindow;
 import ij.gui.Toolbar;
 
 import java.awt.*;
-import java.awt.dnd.DropTarget;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
