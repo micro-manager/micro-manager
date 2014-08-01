@@ -8,6 +8,12 @@
 	     Autoconf and Automake. Only the Java projects are (will be) built
 	     using Ant. -->
 
+	<!-- Location of temporary files used during the build -->
+	<property name="mm.tmpdir" location="${mm.basedir}"/>
+
+	<!-- C++ artifacts used during build -->
+	<property name="mm.build.java.library.path" location="${mm.basedir}/MMCoreJ_wrap/.libs"/>
+
 	<!-- Java artifacts -->
 	<property name="mm.java.lib.AntExtensions"
 		location="${mm.basedir}/buildscripts/AntExtensions/AntExtensions.jar"/>

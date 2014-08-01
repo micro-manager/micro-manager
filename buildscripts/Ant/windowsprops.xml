@@ -37,6 +37,9 @@
 	<!-- Private symbol (debug info) archives -->
 	<property name="mm.symbolsdir" location="${mm.basedir}/symbols"/>
 
+	<!-- Location of temporary files used during the build -->
+	<property name="mm.tmpdir" location="${mm.intdir}"/>
+
 	<!-- C++ components -->
 	<property name="mm.cpp.intdir" location="${mm.intdir}/${mm.configuration}/${mm.architecture}"/>
 	<property name="mm.cpp.outdir" location="${mm.outdir}/${mm.configuration}/${mm.architecture}"/>
@@ -57,6 +60,9 @@
 	<!-- Swig output -->
 	<property name="mm.swig.javasrcdir" location="${mm.intdir}/Swig"/>
 	<property name="mm.swig.pysrcdir" location="${mm.outdir}/Swig"/>
+
+	<!-- C++ artifacts used during build (architecture matches build system) -->
+	<property name="mm.build.java.library.path" location="${mm.build.cpp.outdir}"/>
 
 	<!-- Java components -->
 	<property name="mm.java.intdir" location="${mm.intdir}/Classes"/>
