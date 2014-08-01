@@ -17,6 +17,12 @@
 		</classpath>
 	</taskdef>
 
+	<path id="mm.junit.classpath">
+		<!-- TODO Get this list from Ivy -->
+		<pathelement location="${mm.basedir}/dependencies/builddeps/junit-4.11.jar"/>
+		<pathelement location="${mm.basedir}/dependencies/builddeps/hamcrest-core-1.3.jar"/>
+	</path>
+
 	<!-- Global definitions for building Micro-Manager -->
 
 	<!-- This file should contain property, reference, and macro

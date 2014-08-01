@@ -67,6 +67,8 @@
 	<!-- Java components -->
 	<property name="mm.java.intdir" location="${mm.intdir}/Classes"/>
 	<property name="mm.java.outdir" location="${mm.outdir}/Java"/>
+	<property name="mm.java.test.intdir" location="${mm.intdir}/TestClasses"/>
+	<property name="mm.java.test.reportdir" location="${mm.outdir}/JavaTestReports"/>
 	<property name="mm.java.installdir" location="${mm.installdir}/plugins/Micro-Manager"/>
 
 	<!-- Java plugins -->

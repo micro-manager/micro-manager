@@ -6,6 +6,15 @@ MMJ_.jar:
 	$(ANT) -Dmm.javacflags="$(JAVACFLAGS)" $(ANTFLAGS) jar
 
 
+check_SCRIPTS = ant_test.sh
+TESTS = ant_test.sh
+.PHONY: ant_test.sh
+ant_test.sh:
+	echo "#!/bin/sh" > $@
+	echo "$(ANT) -Dmm.javacflags="$(JAVACFLAGS)" $(ANTFLAGS) test-only" >> $@
+	chmod u+x $@
+
+
 # TODO Clean up javadoc build
 javadoc:
 	-rm -rf doc

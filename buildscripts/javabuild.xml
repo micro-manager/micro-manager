@@ -13,18 +13,23 @@
 	     -->
 	<property name="product" value="${ant.project.name}"/>
 	<property name="srcdir" value="src"/>
+	<property name="testdir" value="test"/>
 	<if>
 		<isset property="mm.platform.is.windows"/>
 		<then>
 			<property name="scratchdir" location="${mm.java.intdir}/genclass-tmp/${product}"/>
 			<property name="intdir" location="${mm.java.intdir}/${product}"/>
 			<property name="outdir" location="${mm.java.outdir}"/>
+			<property name="test.intdir" location="${mm.java.test.intdir}/${product}"/>
+			<property name="test.reportdir" location="${mm.java.test.reportdir}/${product}"/>
 			<property name="installdir" location="${mm.java.installdir}"/>
 		</then>
 		<else>
 			<property name="scratchdir" location="genclass-tmp"/>
 			<property name="intdir" location="build"/>
 			<property name="outdir" location="."/>
+			<property name="test.intdir" location="test-build"/>
+			<property name="test.reportdir" location="test-reports"/>
 			<!-- install is not used on Unix -->
 		</else>
 	</if>
@@ -36,9 +41,29 @@
 	<!-- Default classpath (override after the 'import' element) -->
 	<path id="project.classpath"/>
 
+	<!-- Classpath for unit tests. Usually should not require overriding -->
+	<path id="project.test.classpath">
+		<path refid="mm.junit.classpath"/>
+		<path refid="project.classpath"/>
+		<pathelement location="${jarfile}"/>
+		<pathelement location="${test.intdir}"/>
+	</path>
+
 	<!-- JARs whose change should trigger a rebuild of the current project
 	     (override after the 'import' element) -->
 	<path id="project.linked.jars"/>
+
+	<!-- Automatically determine whether the project has any tests -->
+	<condition property="has.tests">
+		<and>
+			<resourceexists>
+				<file file="${testdir}"/>
+			</resourceexists>
+			<resourcecount when="greater" count="0">
+				<fileset dir="${testdir}" includes="**/*.java"/>
+			</resourcecount>
+		</and>
+	</condition>
 
 	<!-- Targets -->
 
@@ -78,6 +103,25 @@
 		<mkdir dir="${outdir}"/>
 		<mm-jar basedir="${intdir}" destfile="${jarfile}"/>
 	</target>
+
+	<target name="test-only" if="has.tests">
+		<mkdir dir="${test.intdir}"/>
+		<mm-javac srcdir="${testdir}" destdir="${test.intdir}">
+			<classpath refid="project.test.classpath"/>
+		</mm-javac>
+		<mkdir dir="${test.reportdir}"/>
+		<junit fork="true" haltonfailure="true" printsummary="true">
+			<classpath refid="project.test.classpath"/>
+			<formatter type="plain"/>
+			<batchtest todir="${test.reportdir}">
+				<fileset dir="${testdir}">
+					<include name="**/*.java"/>
+				</fileset>
+			</batchtest>
+		</junit>
+	</target>
+
+	<target name="test" depends="jar,test-only" description="Run unit tests"/>
 
 	<target name="install-only" description="Like 'install', but skip the build">
 		<fail unless="installdir"/>

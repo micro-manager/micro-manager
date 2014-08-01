@@ -22,6 +22,8 @@ ipch/
 # GNU build system
 *.la
 *.lo
+*.o
+*.trs
 .deps/
 .libs/
 Makefile
@@ -54,7 +56,9 @@ __pycache__/
 # Build
 *.class
 *.jar
+ant_test.sh
 build/
+test-reports/
 /doxygen/out/
 /dependencies/
 /dist/
