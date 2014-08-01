@@ -26,6 +26,14 @@ public interface DisplaySettings {
       DisplaySettingsBuilder channelColors(Color[] channelColors);
       DisplaySettingsBuilder channelContrastMins(Integer[] channelContrastMins);
       DisplaySettingsBuilder channelContrastMaxes(Integer[] channelContrastMaxes);
+      DisplaySettingsBuilder isSlowHistogramsOn(Boolean isSlowHistogramsOn);
+      DisplaySettingsBuilder shouldSyncChannels(Boolean shouldSyncChannels);
+      DisplaySettingsBuilder scaleBarColorIndex(Integer scaleBarColorIndex);
+      DisplaySettingsBuilder scaleBarLocationIndex(Integer scaleBarLocationIndex);
+      DisplaySettingsBuilder shouldShowScaleBar(Boolean shouldShowScaleBar);
+      DisplaySettingsBuilder shouldIgnoreOutliers(Boolean shouldIgnoreOutliers);
+      DisplaySettingsBuilder percentToIgnore(Double percentToIgnore);
+      DisplaySettingsBuilder shouldUseLogScale(Boolean shouldUseLogScale);
    }
 
    /**
@@ -38,7 +46,14 @@ public interface DisplaySettings {
    public Color[] getChannelColors();
    public Integer[] getChannelContrastMins();
    public Integer[] getChannelContrastMaxes();
-
+   public Boolean getIsSlowHistogramsOn();
+   public Boolean getShouldSyncChannels();
+   public Integer getScaleBarColorIndex();
+   public Integer getScaleBarLocationIndex();
+   public Boolean getShouldShowScaleBar();
+   public Boolean getShouldIgnoreOutliers();
+   public Double getPercentToIgnore();
+   public Boolean getShouldUseLogScale();
    /**
     * For legacy support only: convert to JSONObject.
     */
