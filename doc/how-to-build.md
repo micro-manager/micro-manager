@@ -62,7 +62,9 @@ To build MMCoreJ and the Java application (Micro-Manager Studio), you will
 need the Java Development Kit. Micro-Manager Java code is written in Java 1.6.
 On OS X, either Apple's Java 1.6 or Oracle JDK 1.7 will work (you need a
 developer account to get the development kit for Apple JDK 1.6). On Linux,
-OpenJDK 1.6 or 1.7 should work well.
+OpenJDK 1.6 or 1.7 should work well. (For JDK versions, 1.x is the same as x.)
+
+Building the Java components also requires Apache Ant (pre-installed on OS X).
 
 To build MMCorePy, you will need Python and Numpy. Recent versions of either
 Python 2 or Python 3 should work.
@@ -162,8 +164,8 @@ following.
    `--with-java=/path/to/java/home` to `configure`. For example:
 
         ./configure --with-java=/usr/lib64/jvm/java-1.7.0-openjdk-1.7.0
-        # or
-        ./configure --with-java=/Library/Java/JavaVirtualMachines/1.6.0_65-b14-462.jdk/Contents/Home
+        # or, on OS X,
+        ./configure --with-java=/Library/Java/JavaVirtualMachines/1.7.0_55.jdk/Contents/Home
 
 3. If the previous step is not possible, because the Java files are spread
    across several directories (this is the case with older versions of Apple
@@ -172,11 +174,7 @@ following.
 
         ./configure JNI_CPPFLAGS="-I/System/Library/Frameworks/JavaVM.framework/Versions/A/Headers"
 
-4. Finally (and this is an uncommon case), if you needed to override
-   `JNI_CPPFLAGS` but `configure` also cannot find `javac` and other tools, you
-   can manually set the absolute path to the necessary tools:
-
-        ./configure JAVA=/path/to/java JAVAC=/path/to/javac JAR=/path/to/jar
+   (This particular example should be autodetected now.)
 
 
 #### Specifying where to find external packages
