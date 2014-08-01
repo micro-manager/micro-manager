@@ -104,7 +104,7 @@ using namespace std;
  */
 const int MMCore_versionMajor = 5;
 const int MMCore_versionMinor = 0;
-const int MMCore_versionPatch = 3;
+const int MMCore_versionPatch = 4;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -468,32 +468,55 @@ string CMMCore::getVersionInfo() const
 /**
  * Get available devices from the specified device library.
  */
-vector<string> CMMCore::getAvailableDevices(const char* library) throw (CMMError)
+std::vector<std::string>
+CMMCore::getAvailableDevices(const char* moduleName) throw (CMMError)
 {
-   if (!library)
-      throw CMMError("Null device adapter name");
-
-   return pluginManager_.GetAvailableDevices(library);
+   boost::shared_ptr<LoadedDeviceAdapter> module =
+      pluginManager_.GetDeviceAdapter(moduleName);
+   return module->GetAvailableDeviceNames();
 }
+
 /**
  * Get descriptions for available devices from the specified library.
  */
-vector<string> CMMCore::getAvailableDeviceDescriptions(const char* library) throw (CMMError)
+std::vector<std::string>
+CMMCore::getAvailableDeviceDescriptions(const char* moduleName) throw (CMMError)
 {
-   if (!library)
-      throw CMMError("Null device adapter name");
-
-   return pluginManager_.GetAvailableDeviceDescriptions(library);
+   // XXX It is a little silly that we return the list of descriptions, rather
+   // than provide access to the description of each device.
+   boost::shared_ptr<LoadedDeviceAdapter> module =
+      pluginManager_.GetDeviceAdapter(moduleName);
+   std::vector<std::string> names = module->GetAvailableDeviceNames();
+   std::vector<std::string> descriptions;
+   descriptions.reserve(names.size());
+   for (std::vector<std::string>::const_iterator
+         it = names.begin(), end = names.end(); it != end; ++it)
+   {
+      descriptions.push_back(module->GetDeviceDescription(*it));
+   }
+   return descriptions;
 }
+
 /**
  * Get type information for available devices from the specified library.
  */
-vector<long> CMMCore::getAvailableDeviceTypes(const char* library) throw (CMMError)
+std::vector<long>
+CMMCore::getAvailableDeviceTypes(const char* moduleName) throw (CMMError)
 {
-   if (!library)
-      throw CMMError("Null device adapter name");
-
-   return pluginManager_.GetAvailableDeviceTypes(library);
+   // XXX It is a little silly that we return the list of types, rather than
+   // provide access to the type of each device.
+   boost::shared_ptr<LoadedDeviceAdapter> module =
+      pluginManager_.GetDeviceAdapter(moduleName);
+   std::vector<std::string> names = module->GetAvailableDeviceNames();
+   std::vector<long> types;
+   types.reserve(names.size());
+   for (std::vector<std::string>::const_iterator
+         it = names.begin(), end = names.end(); it != end; ++it)
+   {
+      MM::DeviceType devType = module->GetAdvertisedDeviceType(*it);
+      types.push_back(static_cast<long>(devType));
+   }
+   return types;
 }
 
 /**

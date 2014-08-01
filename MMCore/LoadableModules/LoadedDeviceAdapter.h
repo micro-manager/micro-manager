@@ -55,25 +55,52 @@ public:
    MMThreadLock* GetLock();
    void RemoveLock(); // XXX I'm not sure it is a good idea to expose this.
 
+   std::vector<std::string> GetAvailableDeviceNames() const;
+   std::string GetDeviceDescription(const std::string& deviceName) const;
+   MM::DeviceType GetAdvertisedDeviceType(const std::string& deviceName) const;
+
    boost::shared_ptr<DeviceInstance> LoadDevice(CMMCore* core,
          const std::string& name, const std::string& label,
          boost::shared_ptr<mm::logging::Logger> deviceLogger,
          boost::shared_ptr<mm::logging::Logger> coreLogger);
 
-   MM::DeviceType GetAdvertisedDeviceType(const std::string& deviceName) const;
-
-   // TODO Make these private and provide higher-level interface
-   unsigned GetNumberOfDevices() const;
-   bool GetDeviceName(unsigned index, char* buf, unsigned bufLen) const;
-   bool GetDeviceDescription(const char* deviceName, char* buf, unsigned bufLen) const;
-
 private:
+   /**
+    * \brief Utility class for getting fixed-length strings from the module
+    */
+   class ModuleStringBuffer : boost::noncopyable
+   {
+      char buf_[MM::MaxStrLength + 1];
+      const LoadedDeviceAdapter* module_;
+      const std::string& funcName_;
+
+   public:
+      ModuleStringBuffer(const LoadedDeviceAdapter* module,
+            const std::string& functionName) :
+         module_(module), funcName_(functionName)
+      { memset(buf_, 0, sizeof(buf_)); }
+
+      char* GetBuffer() { return buf_; }
+      size_t GetMaxStrLen() { return sizeof(buf_) - 1; }
+      std::string Get() const { Check(); return buf_; }
+      bool IsEmpty() const { Check(); return (buf_[0] == '\0'); }
+
+   private:
+      void Check() const
+      { if (buf_[sizeof(buf_) - 1] != '\0') ThrowBufferOverflowError(); }
+      void ThrowBufferOverflowError() const;
+   };
+
    void CheckInterfaceVersion() const;
 
    // Wrappers around raw module interface functions
    void InitializeModuleData();
    long GetModuleVersion() const;
    long GetDeviceInterfaceVersion() const;
+   unsigned GetNumberOfDevices() const;
+   bool GetDeviceName(unsigned index, char* buf, unsigned bufLen) const;
+   bool GetDeviceDescription(const char* deviceName,
+         char* buf, unsigned bufLen) const;
    bool GetDeviceType(const char* deviceName, int* type) const;
    MM::Device* CreateDevice(const char* deviceName);
    void DeleteDevice(MM::Device* device);

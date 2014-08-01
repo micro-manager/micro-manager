@@ -128,31 +128,42 @@ CPluginManager::FindInSearchPath(std::string filename)
  * where the library is not found in our list of search paths. (XXX This should
  * perhaps change, to avoid surprises.)
  *
- * @param shortName Simple module name without path, prefix, or suffix.
- * @return Module handle if successful, throws exception if not
+ * @param moduleName Simple module name without path, prefix, or suffix.
  */
 boost::shared_ptr<LoadedDeviceAdapter>
-CPluginManager::GetDeviceAdapter(const char* shortName)
+CPluginManager::GetDeviceAdapter(const std::string& moduleName)
 {
-   if (!shortName)
-      throw CMMError("Cannot load device adapter (null name)");
-   if (shortName[0] == '\0')
-      throw CMMError("Cannot load device adapter (empty name)");
+   if (moduleName.empty())
+   {
+      throw CMMError("Empty device adapter module name");
+   }
 
    std::map< std::string, boost::shared_ptr<LoadedDeviceAdapter> >::iterator it =
-      moduleMap_.find(shortName);
+      moduleMap_.find(moduleName);
    if (it != moduleMap_.end())
+   {
       return it->second;
+   }
 
-   std::string name(LIB_NAME_PREFIX);
-   name += shortName;
-   name += LIB_NAME_SUFFIX;
-   name = FindInSearchPath(name);
+   std::string filename(LIB_NAME_PREFIX);
+   filename += moduleName;
+   filename += LIB_NAME_SUFFIX;
+   filename = FindInSearchPath(filename);
 
    boost::shared_ptr<LoadedDeviceAdapter> module =
-      boost::make_shared<LoadedDeviceAdapter>(shortName, name);
-   moduleMap_[shortName] = module;
+      boost::make_shared<LoadedDeviceAdapter>(moduleName, filename);
+   moduleMap_[moduleName] = module;
    return module;
+}
+
+boost::shared_ptr<LoadedDeviceAdapter>
+CPluginManager::GetDeviceAdapter(const char* moduleName)
+{
+   if (!moduleName)
+   {
+      throw CMMError("Null device adapter module name");
+   }
+   return GetDeviceAdapter(std::string(moduleName));
 }
 
 /** 
@@ -372,107 +383,6 @@ CPluginManager::GetModulesInLegacyFallbackSearchPaths()
    }
 
    return modules;
-}
-
-/**
- * List all available devices in the specified module.
- */
-std::vector<std::string>
-CPluginManager::GetAvailableDevices(const char* moduleName)
-{
-   std::vector<std::string> devices;
-   boost::shared_ptr<LoadedDeviceAdapter> module = GetDeviceAdapter(moduleName);
-
-   try
-   {
-      unsigned numDev = module->GetNumberOfDevices();
-      for (unsigned i=0; i<numDev; i++)
-      {
-         char deviceName[MM::MaxStrLength];
-         if (module->GetDeviceName(i, deviceName, MM::MaxStrLength))
-            devices.push_back(deviceName);
-      }
-   }
-   catch (CMMError& err)
-   {
-      throw CMMError("Cannot get available devices from module " + ToString(moduleName),
-            MMERR_GENERIC, err);
-   }
-   
-   return devices;
-}
-
-/**
- * List all available devices in the specified module.
- */
-std::vector<std::string>
-CPluginManager::GetAvailableDeviceDescriptions(const char* moduleName)
-{
-   std::vector<std::string> descriptions;
-   boost::shared_ptr<LoadedDeviceAdapter> module = GetDeviceAdapter(moduleName);
-
-   try
-   {
-      unsigned numDev = module->GetNumberOfDevices();
-      for (unsigned i=0; i<numDev; i++)
-      {
-         char deviceName[MM::MaxStrLength];
-         if (module->GetDeviceName(i, deviceName, MM::MaxStrLength))
-         {
-            char deviceDescr[MM::MaxStrLength];
-            if (module->GetDeviceDescription(deviceName, deviceDescr, MM::MaxStrLength))
-               descriptions.push_back(deviceDescr);
-            else
-               descriptions.push_back("N/A");
-         }
-      }
-   }
-   catch (CMMError& err)
-   {
-      throw CMMError("Cannot get device descriptions from module " + ToString(moduleName),
-            MMERR_GENERIC, err);
-   }
-   
-   return descriptions;
-}
-
-/**
- * List all device types in the specified module.
- */
-std::vector<long>
-CPluginManager::GetAvailableDeviceTypes(const char* moduleName)
-{
-   std::vector<long> types;
-   boost::shared_ptr<LoadedDeviceAdapter> module = GetDeviceAdapter(moduleName);
-
-   try
-   {
-      unsigned numDev = module->GetNumberOfDevices();
-
-      for (unsigned i=0; i<numDev; i++)
-      {
-         char deviceName[MM::MaxStrLength];
-         if (!module->GetDeviceName(i, deviceName, MM::MaxStrLength))
-         {
-            types.push_back((long)MM::AnyType);
-            continue;
-         }
-
-         MM::DeviceType advertisedType = module->GetAdvertisedDeviceType(deviceName);
-         if (advertisedType != MM::UnknownType)
-         {
-            types.push_back(static_cast<long>(advertisedType));
-            continue;
-         }
-      }
-   }
-   catch (CMMError& err)
-   {
-      throw CMMError("Cannot get device types from module " + ToString(moduleName),
-            MMERR_GENERIC, err);
-   }
-   
-   return types;
 }
 
 

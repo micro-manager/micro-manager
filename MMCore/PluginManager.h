@@ -56,11 +56,13 @@ public:
    static void AddLegacyFallbackSearchPath(const std::string& path);
    static std::vector<std::string> GetModulesInLegacyFallbackSearchPaths();
 
-   boost::shared_ptr<LoadedDeviceAdapter> GetDeviceAdapter(const char* libName);
-
-   std::vector<std::string> GetAvailableDevices(const char* moduleName);
-   std::vector<std::string> GetAvailableDeviceDescriptions(const char* moduleName);
-   std::vector<long> GetAvailableDeviceTypes(const char* moduleName);
+   /**
+    * Return a device adapter module, loading it if necessary
+    */
+   boost::shared_ptr<LoadedDeviceAdapter>
+   GetDeviceAdapter(const std::string& moduleName);
+   boost::shared_ptr<LoadedDeviceAdapter>
+   GetDeviceAdapter(const char* moduleName);
 
    // Slated for removal
    bool removeModuleLock(const char* moduleName);

@@ -83,6 +83,58 @@ LoadedDeviceAdapter::RemoveLock()
 }
 
 
+std::vector<std::string>
+LoadedDeviceAdapter::GetAvailableDeviceNames() const
+{
+   unsigned deviceCount = GetNumberOfDevices();
+   std::vector<std::string> deviceNames;
+   deviceNames.reserve(deviceCount);
+   for (unsigned i = 0; i < deviceCount; ++i)
+   {
+      ModuleStringBuffer nameBuf(this, "GetDeviceName");
+      bool ok = GetDeviceName(i, nameBuf.GetBuffer(), nameBuf.GetMaxStrLen());
+      if (!ok)
+      {
+         throw CMMError("Cannot get device name at index " + ToString(i) +
+               " from device adapter module " + ToQuotedString(name_));
+      }
+      deviceNames.push_back(nameBuf.Get());
+   }
+   return deviceNames;
+}
+
+
+std::string
+LoadedDeviceAdapter::GetDeviceDescription(const std::string& deviceName) const
+{
+   ModuleStringBuffer descBuf(this, "GetDeviceDescription");
+   bool ok = GetDeviceDescription(deviceName.c_str(), descBuf.GetBuffer(),
+         descBuf.GetMaxStrLen());
+   if (!ok)
+   {
+      throw CMMError("Cannot get description for device " +
+            ToQuotedString(deviceName) + " of device adapter module " +
+            ToQuotedString(name_));
+   }
+   return descBuf.Get();
+}
+
+
+MM::DeviceType
+LoadedDeviceAdapter::GetAdvertisedDeviceType(const std::string& deviceName) const
+{
+   int typeInt = MM::UnknownType;
+   bool ok = GetDeviceType(deviceName.c_str(), &typeInt);
+   if (!ok || typeInt == MM::UnknownType)
+   {
+      throw CMMError("Cannot get type of device " +
+            ToQuotedString(deviceName) + " of device adapter module " +
+            ToQuotedString(name_));
+   }
+   return static_cast<MM::DeviceType>(typeInt);
+}
+
+
 boost::shared_ptr<DeviceInstance>
 LoadedDeviceAdapter::LoadDevice(CMMCore* core, const std::string& name,
       const std::string& label,
@@ -141,12 +193,13 @@ LoadedDeviceAdapter::LoadDevice(CMMCore* core, const std::string& name,
 }
 
 
-MM::DeviceType
-LoadedDeviceAdapter::GetAdvertisedDeviceType(const std::string& deviceName) const
+void
+LoadedDeviceAdapter::ModuleStringBuffer::ThrowBufferOverflowError() const
 {
-   int typeInt = MM::UnknownType;
-   GetDeviceType(deviceName.c_str(), &typeInt);
-   return static_cast<MM::DeviceType>(typeInt);
+   std::string name(module_ ? module_->GetName() : "<unknown>");
+   throw CMMError("Buffer overflow in device adapter module " +
+         ToQuotedString(name) + " while calling " + funcName_ + "(); "
+         "this is most likely a bug in the device adapter");
 }
 
 

@@ -53,9 +53,7 @@ DeviceManager::LoadDevice(boost::shared_ptr<LoadedDeviceAdapter> module,
    boost::shared_ptr<DeviceInstance> device = module->LoadDevice(core,
          deviceName, label, deviceLogger, coreLogger);
 
-   char descr[MM::MaxStrLength] = "N/A";
-   module->GetDeviceDescription(deviceName.c_str(), descr, MM::MaxStrLength);
-   device->SetDescription(descr);
+   device->SetDescription(module->GetDeviceDescription(deviceName));
 
    devices_.push_back(std::make_pair(label, device));
    deviceRawPtrIndex_.insert(std::make_pair(device->GetRawPtr(), device));

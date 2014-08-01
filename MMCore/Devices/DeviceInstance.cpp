@@ -125,10 +125,9 @@ void
 DeviceInstance::DeviceStringBuffer::ThrowBufferOverflowError() const
 {
    std::string label(instance_ ? instance_->GetLabel() : "<unknown>");
-   CMMError e = CMMError("Buffer overflow in device " + ToQuotedString(label) +
+   throw CMMError("Buffer overflow in device " + ToQuotedString(label) +
          " while calling " + funcName_ + "(); "
          "this is most likely a bug in the device adapter");
-   throw e;
 }
 
 std::vector<std::string>
