@@ -1022,11 +1022,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                float piezoAmplitude = (float) ( (numSlices - 1) * 
                        PanelUtils.getSpinnerFloatValue(stepSize_));
                
-               if (spimMode_.getSelectedItem().
-                     equals(AcquisitionModes.Keys.SLICE_SCAN_ONLY)) {
-                  piezoAmplitude = 0;
-               }
-               
                if (sideActiveA) {
                   float sliceARate = prefs_.getFloat(
                         Properties.Keys.PLUGIN_SETUP_PANEL_NAME.toString() + Devices.Sides.A, 
@@ -1043,17 +1038,23 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         Properties.Keys.SA_OFFSET); 
                   float sliceCenterA = (piezoCenterA - sliceAOffset) / sliceARate;
                   props_.setPropValue(Devices.Keys.GALVOA,
-                        Properties.Keys.SA_AMPLITUDE_Y_DEG, sliceAmplitudeA, true);
+                        Properties.Keys.SA_AMPLITUDE_Y_DEG, sliceAmplitudeA);
                   props_.setPropValue(Devices.Keys.GALVOA,
-                        Properties.Keys.SA_OFFSET_Y_DEG, sliceCenterA, true);
+                        Properties.Keys.SA_OFFSET_Y_DEG, sliceCenterA);
                   props_.setPropValue(Devices.Keys.GALVOA,
-                        Properties.Keys.BEAM_ENABLED, Properties.Values.NO, true);
+                        Properties.Keys.BEAM_ENABLED, Properties.Values.NO);
                   props_.setPropValue(Devices.Keys.PIEZOA,
-                        Properties.Keys.SPIM_NUM_SLICES, nrSlices, true);
+                        Properties.Keys.SPIM_NUM_SLICES, nrSlices);
+                  if (spimMode_.getSelectedItem().
+                        equals(AcquisitionModes.Keys.SLICE_SCAN_ONLY)) {
+                     props_.setPropValue(Devices.Keys.PIEZOA,
+                           Properties.Keys.SA_AMPLITUDE, (float) 0.0);
+                  } else {
+                     props_.setPropValue(Devices.Keys.PIEZOA,
+                           Properties.Keys.SA_AMPLITUDE, piezoAmplitude);
+                  }
                   props_.setPropValue(Devices.Keys.PIEZOA,
-                        Properties.Keys.SA_AMPLITUDE, piezoAmplitude, true);
-                  props_.setPropValue(Devices.Keys.PIEZOA,
-                        Properties.Keys.SPIM_STATE, Properties.Values.SPIM_ARMED, true);
+                        Properties.Keys.SPIM_STATE, Properties.Values.SPIM_ARMED);
                }
                
                if (sideActiveB) {
@@ -1072,17 +1073,23 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         Properties.Keys.SA_OFFSET); 
                   float sliceCenterB = (piezoCenterB - sliceBOffset) / sliceBRate;
                   props_.setPropValue(Devices.Keys.GALVOB,
-                        Properties.Keys.SA_AMPLITUDE_Y_DEG, sliceAmplitudeB, true);
+                        Properties.Keys.SA_AMPLITUDE_Y_DEG, sliceAmplitudeB);
                   props_.setPropValue(Devices.Keys.GALVOB,
-                        Properties.Keys.SA_OFFSET_Y_DEG, sliceCenterB, true);
+                        Properties.Keys.SA_OFFSET_Y_DEG, sliceCenterB);
                   props_.setPropValue(Devices.Keys.GALVOB,
-                        Properties.Keys.BEAM_ENABLED, Properties.Values.NO, true);
+                        Properties.Keys.BEAM_ENABLED, Properties.Values.NO);
                   props_.setPropValue(Devices.Keys.PIEZOB,
-                        Properties.Keys.SPIM_NUM_SLICES, nrSlices, true);
+                        Properties.Keys.SPIM_NUM_SLICES, nrSlices);
+                  if (spimMode_.getSelectedItem().
+                        equals(AcquisitionModes.Keys.SLICE_SCAN_ONLY)) {
+                     props_.setPropValue(Devices.Keys.PIEZOB,
+                           Properties.Keys.SA_AMPLITUDE, (float) 0.0);
+                  } else {
+                     props_.setPropValue(Devices.Keys.PIEZOB,
+                           Properties.Keys.SA_AMPLITUDE, piezoAmplitude);
+                  }
                   props_.setPropValue(Devices.Keys.PIEZOB,
-                        Properties.Keys.SA_AMPLITUDE, piezoAmplitude, true);
-                  props_.setPropValue(Devices.Keys.PIEZOB,
-                        Properties.Keys.SPIM_STATE, Properties.Values.SPIM_ARMED, true);
+                        Properties.Keys.SPIM_STATE, Properties.Values.SPIM_ARMED);
                }
                
 
