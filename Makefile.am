@@ -2,6 +2,13 @@
 AUTOMAKE_OPTIONS = foreign
 ACLOCAL_AMFLAGS = -I m4
 
+if BUILD_MMCOREJ
+
+fetchdeps:
+	$(ANT) $(ANTFLAGS) -f buildscripts/fetchdeps.xml
+
+endif
+
 if BUILD_MMCORE
 MMCORE_DIR = MMCore
 endif

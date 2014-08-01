@@ -469,14 +469,8 @@ echo ""
 fi # build_java_app
 
 if test "x$use_java" = xyes; then
-echo "The Java components are now built using Apache Ant, to be consistent with"
-echo "the Windows build system."
-echo "To make available the required ant-contrib extensions, please run the"
-echo "following command before running 'make':"
-echo "    ant -f buildscripts/fetchdeps.xml"
-echo ""
+echo "First type 'make fetchdeps' once to download Java build dependencies."
 fi
-
 echo "Type 'make' to build."
 echo "Then type 'make install' to install."
 echo ""
