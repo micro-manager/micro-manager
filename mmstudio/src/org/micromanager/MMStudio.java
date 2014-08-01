@@ -593,28 +593,28 @@ public class MMStudio implements ScriptInterface {
     * the default processor stack to process images as they arrive on
     * the rawImageQueue.
     */
-    public void runDisplayThread(BlockingQueue<TaggedImage> rawImageQueue, 
+   public void runDisplayThread(BlockingQueue<TaggedImage> rawImageQueue, 
             final DisplayImageRoutine displayImageRoutine) {
-        final BlockingQueue<TaggedImage> processedImageQueue = 
-                ProcessorStack.run(rawImageQueue, 
-                getAcquisitionEngine().getImageProcessors());
+      final BlockingQueue<TaggedImage> processedImageQueue = 
+            ProcessorStack.run(rawImageQueue, 
+            getAcquisitionEngine().getImageProcessors());
         
-        new Thread("Display thread") {
-         @Override
-            public void run() {
-                try {
-                    TaggedImage image;
-                    do {
-                        image = processedImageQueue.take();
-                        if (image != TaggedImageQueue.POISON) {
-                            displayImageRoutine.show(image);
-                        }
-                    } while (image != TaggedImageQueue.POISON);
-                } catch (InterruptedException ex) {
-                    ReportingUtils.logError(ex);
-                }
+      new Thread("Display thread") {
+       @Override
+         public void run() {
+            try {
+               TaggedImage image;
+               do {
+                  image = processedImageQueue.take();
+                  if (image != TaggedImageQueue.POISON) {
+                     displayImageRoutine.show(image);
+                  }
+               } while (image != TaggedImageQueue.POISON);
+            } catch (InterruptedException ex) {
+               ReportingUtils.logError(ex);
             }
-        }.start();
+         }
+      }.start();
    }
 
    public interface DisplayImageRoutine {
@@ -2676,7 +2676,7 @@ public class MMStudio implements ScriptInterface {
       EventManager.register(obj);
    }
 
-    @Override
+   @Override
    public void setROI(Rectangle r) throws MMScriptException {
       boolean liveRunning = false;
       if (isLiveModeOn()) {
@@ -2692,7 +2692,6 @@ public class MMStudio implements ScriptInterface {
       if (liveRunning) {
          enableLiveMode(true);
       }
-
    }
 
    public void setAcquisitionEngine(AcquisitionWrapperEngine eng) {
