@@ -1,5 +1,5 @@
 <project name="mm.javalibs">
-	<property name="mm.java.libs" location="${mm.basedir}/../3rdpartypublic/classext"/>
+	<property name="mm.java.libs" location="${mm.thirdpartypublic}/classext"/>
 
 	<!-- Keep alphabetical, please -->
 	<property name="mm.clojure.lib.clooj" location="${mm.java.libs}/clooj.jar"/>
@@ -22,6 +22,4 @@
 	<property name="mm.java.lib.scifio" location="${mm.java.libs}/scifio.jar"/>
 	<property name="mm.java.lib.swingx" location="${mm.java.libs}/swingx-0.9.5.jar"/>
 	<property name="mm.java.lib.tsfproto" location="${mm.java.libs}/TSFProto.jar"/>
-
-	<!-- TODO See if at least some of these can be fetched using Ivy -->
 </project>
