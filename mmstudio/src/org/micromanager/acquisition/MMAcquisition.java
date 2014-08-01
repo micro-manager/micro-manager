@@ -260,7 +260,7 @@ public class MMAcquisition {
       if (!existing_) {
          createDefaultAcqSettings(imageCache);
       }
-      MMStudio.getInstance().createSimpleDisplay(name_, imageCache);
+      MMStudio.getInstance().getSnapLiveManager().createSnapLiveDisplay(name_, imageCache);
       if (show_) {
          virtAcq_ = MMStudio.getInstance().getSnapLiveManager().getSnapLiveDisplay();
          virtAcq_.show();

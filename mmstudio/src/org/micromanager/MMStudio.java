@@ -527,10 +527,6 @@ public class MMStudio implements ScriptInterface {
       core_.logMessage(message);
    }
 
-   public void createSimpleDisplay(String name, ImageCache cache) throws MMScriptException {
-      snapLiveManager_.createSnapLiveDisplay(name, cache);
-   }
-
    public void saveChannelColor(String chName, int rgb) {
       if (colorPrefs_ != null) {
          colorPrefs_.putInt("Color_" + chName, rgb);      
