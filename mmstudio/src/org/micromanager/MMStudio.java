@@ -30,6 +30,7 @@ import ij.gui.Roi;
 import ij.process.ImageProcessor;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Rectangle;
 import java.awt.geom.Point2D;
 import java.io.File;
@@ -114,7 +115,6 @@ import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
 import ij.gui.Toolbar;
 
-import java.awt.*;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
