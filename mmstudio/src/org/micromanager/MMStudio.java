@@ -559,7 +559,6 @@ public class MMStudio implements ScriptInterface {
     * takes significant time (or so Mark claims).
     */
    private void prepAcquisitionEngine() {
-      Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
       acquisitionEngine2010LoadingThread_ = new Thread("Pipeline Class loading thread") {
          @Override
          public void run() {
@@ -571,6 +570,7 @@ public class MMStudio implements ScriptInterface {
             }
          }
       };
+      acquisitionEngine2010LoadingThread_.setContextClassLoader(getClass().getClassLoader());
       acquisitionEngine2010LoadingThread_.start();
    }
 
