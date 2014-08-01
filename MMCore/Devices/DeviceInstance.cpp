@@ -332,6 +332,10 @@ void
 DeviceInstance::SetParentID(const char* parentId)
 { return pImpl_->SetParentID(parentId); }
 
-void
-DeviceInstance::GetParentID(char* parentID) const
-{ return pImpl_->GetParentID(parentID); }
+std::string
+DeviceInstance::GetParentID() const
+{
+   DeviceStringBuffer nameBuf(this, "GetParentID");
+   pImpl_->GetParentID(nameBuf.GetBuffer());
+   return nameBuf.Get();
+}

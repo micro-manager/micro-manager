@@ -212,5 +212,5 @@ public:
    int AcqAfterStack();
    MM::DeviceDetectionStatus DetectDevice();
    void SetParentID(const char* parentId); // TODO Remove
-   void GetParentID(char* parentID) const; // TODO Remove
+   std::string GetParentID() const; // TODO Remove
 };

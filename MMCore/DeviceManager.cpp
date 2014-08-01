@@ -202,9 +202,8 @@ DeviceManager::GetLoadedPeripherals(const char* label) const
 
    for (DeviceConstIterator it = devices_.begin(), end = devices_.end(); it != end; ++it)
    {
-      char parentID[MM::MaxStrLength];
-      it->second->GetParentID(parentID);
-      if (strncmp(label, parentID, MM::MaxStrLength) == 0)
+      std::string parentID = it->second->GetParentID();
+      if (parentID == label)
       {
          labels.push_back(it->second->GetLabel());
       }
@@ -217,10 +216,9 @@ DeviceManager::GetLoadedPeripherals(const char* label) const
 boost::shared_ptr<HubInstance>
 DeviceManager::GetParentDevice(boost::shared_ptr<DeviceInstance> device) const
 {
-   char parentLabel[MM::MaxStrLength];
-   device->GetParentID(parentLabel);
+   std::string parentLabel = device->GetParentID();
 
-   if (strlen(parentLabel) == 0)
+   if (parentLabel.empty())
    {
       // no parent specified, but we will try to infer one anyway
       // TODO So what happens if there is more than one hub in a given device

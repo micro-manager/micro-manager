@@ -1135,12 +1135,9 @@ std::string CMMCore::getParentLabel(const char* label) throw (CMMError)
    if (IsCoreDeviceLabel(label))
       // XXX Should be a throw
       return "";
-   boost::shared_ptr<DeviceInstance> pDevice = GetDeviceWithCheckedLabel(label);
-
-   mm::DeviceModuleLockGuard guard(pDevice);
-   char id[MM::MaxStrLength];
-   pDevice->GetParentID(id);
-   return id;
+   boost::shared_ptr<DeviceInstance> device = GetDeviceWithCheckedLabel(label);
+   mm::DeviceModuleLockGuard guard(device);
+   return device->GetParentID();
 }
 
 /**
@@ -5645,13 +5642,12 @@ void CMMCore::saveSystemConfiguration(const char* fileName) throw (CMMError)
    os << "# Hub references" << endl;
    for (it=devices.begin(); it != devices.end(); it++)
    {
-      boost::shared_ptr<DeviceInstance> pDev = deviceManager_.GetDevice((*it).c_str());
-      mm::DeviceModuleLockGuard guard(pDev);
-      char parentID[MM::MaxStrLength];
-      pDev->GetParentID(parentID);
-      if (strlen(parentID) > 0)
+      boost::shared_ptr<DeviceInstance> device = deviceManager_.GetDevice((*it).c_str());
+      mm::DeviceModuleLockGuard guard(device);
+      std::string parentID = device->GetParentID();
+      if (!parentID.empty())
       {
-         os << MM::g_CFGCommand_Property << ',' << pDev->GetLabel() << ',' << parentID << endl;
+         os << MM::g_CFGCommand_Property << ',' << device->GetLabel() << ',' << parentID << endl;
       }
    }
 
