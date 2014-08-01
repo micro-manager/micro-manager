@@ -31,6 +31,7 @@ public interface DisplaySettings {
       DisplaySettingsBuilder scaleBarColorIndex(Integer scaleBarColorIndex);
       DisplaySettingsBuilder scaleBarLocationIndex(Integer scaleBarLocationIndex);
       DisplaySettingsBuilder shouldShowScaleBar(Boolean shouldShowScaleBar);
+      DisplaySettingsBuilder shouldAutostretch(Boolean shouldAutostretch);
       DisplaySettingsBuilder shouldIgnoreOutliers(Boolean shouldIgnoreOutliers);
       DisplaySettingsBuilder percentToIgnore(Double percentToIgnore);
       DisplaySettingsBuilder shouldUseLogScale(Boolean shouldUseLogScale);
@@ -51,6 +52,7 @@ public interface DisplaySettings {
    public Integer getScaleBarColorIndex();
    public Integer getScaleBarLocationIndex();
    public Boolean getShouldShowScaleBar();
+   public Boolean getShouldAutostretch();
    public Boolean getShouldIgnoreOutliers();
    public Double getPercentToIgnore();
    public Boolean getShouldUseLogScale();
