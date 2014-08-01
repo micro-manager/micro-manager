@@ -36,4 +36,11 @@ int GalvoInstance::LoadPolygons() { return GetImpl()->LoadPolygons(); }
 int GalvoInstance::SetPolygonRepetitions(int repetitions) { return GetImpl()->SetPolygonRepetitions(repetitions); }
 int GalvoInstance::RunPolygons() { return GetImpl()->RunPolygons(); }
 int GalvoInstance::StopSequence() { return GetImpl()->StopSequence(); }
-int GalvoInstance::GetChannel(char* channelName) { return GetImpl()->GetChannel(channelName); }
+
+std::string GalvoInstance::GetChannel()
+{
+   DeviceStringBuffer nameBuf(this, "GetChannel");
+   int err = GetImpl()->GetChannel(nameBuf.GetBuffer());
+   ThrowIfError(err, "Cannot get current channel name");
+   return nameBuf.Get();
+}

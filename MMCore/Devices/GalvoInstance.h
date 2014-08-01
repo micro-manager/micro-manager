@@ -50,5 +50,5 @@ public:
    int SetPolygonRepetitions(int repetitions);
    int RunPolygons();
    int StopSequence();
-   int GetChannel(char* channelName);
+   std::string GetChannel();
 };

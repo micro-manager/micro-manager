@@ -5418,16 +5418,7 @@ string CMMCore::getGalvoChannel(const char* deviceLabel) throw (CMMError)
    boost::shared_ptr<GalvoInstance> pGalvo = GetDeviceWithCheckedLabelAndType<GalvoInstance>(deviceLabel);
 
    mm::DeviceModuleLockGuard guard(pGalvo);
-
-   char channelName[MM::MaxStrLength];
-   int ret = pGalvo->GetChannel(channelName);
-   
-   if (ret != DEVICE_OK)
-   {
-      logError(deviceLabel, getDeviceErrorText(ret, pGalvo).c_str());
-      throw CMMError(getDeviceErrorText(ret, pGalvo));
-   }
-   return string(channelName);
+   return pGalvo->GetChannel();
 }
 
 /* SYSTEM STATE */
