@@ -7,8 +7,8 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
 
-import org.micromanager.CalibrationEditor;
-import org.micromanager.CalibrationListDlg;
+import org.micromanager.dialogs.CalibrationEditor;
+import org.micromanager.dialogs.CalibrationListDlg;
 import org.micromanager.MMStudio;
 import org.micromanager.api.MMPlugin;
 import org.micromanager.api.ScriptInterface;
