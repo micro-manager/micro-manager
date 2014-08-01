@@ -3,9 +3,19 @@
 
 	<property name="product" value="${ant.project.name}"/>
 	<property name="srcdir" location=".."/>
-	<property name="intdir" location="${mm.java.autofocus.intdir}/${product}"/>
-	<property name="outdir" location="${mm.java.autofocus.outdir}"/>
-	<property name="installdir" location="${mm.java.autofocus.installdir}"/>
+	<if>
+		<isset property="mm.platform.is.windows"/>
+		<then>
+			<property name="intdir" location="${mm.java.autofocus.intdir}/${product}"/>
+			<property name="outdir" location="${mm.java.autofocus.outdir}"/>
+			<property name="installdir" location="${mm.java.autofocus.installdir}"/>
+		</then>
+		<else>
+			<property name="intdir" location="../build/${product}"/>
+			<property name="outdir" location=".."/>
+			<!-- install is not used on Unix -->
+		</else>
+	</if>
 
 	<import file="../../buildscripts/javabuild.xml"/>
 

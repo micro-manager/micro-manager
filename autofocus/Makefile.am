@@ -1,20 +1,25 @@
-
 AUTOMAKE_OPTIONS = foreign subdir-objects
+mmautofocus_DATA = \
+	MMAutofocus.jar \
+	MMAutofocusDuo.jar \
+	MMAutofocusTB.jar \
+	MMOughtaFocus.jar
 
-JARS=MMAutofocus.jar MMAutofocusTB.jar MMAutofocusDuo.jar MMOughtaFocus.jar
+.PHONY: autofocus.stamp
 
-MM%.jar: BUILD=$(patsubst MM%.jar,build-%,$@)
+autofocus.stamp:
+	@rm -f autofocus.tmp
+	@touch autofocus.tmp
+	$(ANT) $(ANTFLAGS) jar
+	@mv -f autofocus.tmp $@
 
-$(JARS):MM%.jar: $(srcdir)/%.java
-	rm -rf $(BUILD)
-	$(MKDIR_P) $(BUILD)
-	$(JAVAC) $(JAVACFLAGS) -sourcepath $(srcdir):. -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):../mmstudio/MMJ_.jar:. $^ -d $(BUILD)
-	cd $(BUILD) && $(JAR) cf ../$@ *
+$(mmautofocus_DATA): autofocus.stamp
+	@if test -f $@; then :; else \
+		rm -f autofocus.stamp; \
+		$(MAKE) $(AM_MAKEFLAGS) autofocus.stamp; \
+	fi
 
-
-mmautofocus_DATA = $(JARS)
-
-CLEANFILES = $(JARS)
+CLEANFILES = autofocus.stamp
 
 clean-local:
-	-rm -rf $(patsubst MM%.jar,build-%,$(JARS))
+	$(ANT) $(ANTFLAGS) clean
