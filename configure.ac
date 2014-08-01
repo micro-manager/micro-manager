@@ -152,10 +152,10 @@ AS_IF([test "x$want_ant" != xno],
 
 
 build_mmcorej=yes
-test "x$can_build_mmcore" = xno && build_mmcorej=no
-test "x$use_java" = xno && build_mmcorej=no
-test "x$use_ant" = xno && build_mmcorej=no
-test -z "$SWIG" && build_mmcorej=no
+test "x$use_ant" = xno && { build_mmcorej=no; nobuild_mmcorej_reason="(Apache Ant not available)"; }
+test "x$use_java" = xno && { build_mmcorej=no; nobuild_mmcorej_reason="(Java not available)"; }
+test -z "$SWIG" && { build_mmcorej=no; nobuild_mmcorej_reason="(SWIG not available)"; }
+test "x$can_build_mmcore" = xno && { build_mmcorej=no; nobuild_mmcorej_reason="(cannot build MMCore)"; }
 AM_CONDITIONAL([BUILD_MMCOREJ], [test "x$build_mmcorej" = xyes])
 
 
@@ -218,9 +218,9 @@ AS_IF([test "x$want_python" != xno],
 
 
 build_mmcorepy=yes
-test "x$can_build_mmcore" = xno && build_mmcorepy=no
-test "x$use_python" = xno && build_mmcorepy=no
-test -z "$SWIG" && build_mmcorepy=no
+test "x$use_python" = xno && { build_mmcorepy=no; nobuild_mmcorepy_reason="(Python not available)"; }
+test -z "$SWIG" && { build_mmcorepy=no; nobuild_mmcorepy_reason="(SWIG not available)"; }
+test "x$can_build_mmcore" = xno && { build_mmcorepy=no; nobuild_mmcorepy_reason="(cannot build MMCore)"; }
 AM_CONDITIONAL([BUILD_MMCOREPY], [test "x$build_mmcorepy" = xyes])
 
 
@@ -239,8 +239,8 @@ AC_ARG_ENABLE([java-app],
    [], [enable_java_app=auto])
 
 build_java_app=yes
-test "x$enable_java_app" = xno && build_java_app=no
-test "x$build_mmcorej" = xno && build_java_app=no
+test "x$build_mmcorej" = xno && { build_java_app=no; nobuild_java_app_reason="(cannot build MMCoreJ)"; }
+test "x$enable_java_app" = xno && { build_java_app=no; nobuild_java_app_reason="(disabled)"; }
 # TODO Require dependency JARs
 
 AS_IF([test "x$enable_java_app" = xyes],
@@ -419,6 +419,8 @@ echo ""
 if test "x$use_java" = xyes; then
 echo "   JAVA_HOME    = $JAVA_HOME"
 echo "   JNI_CPPFLAGS = $JNI_CPPFLAGS"
+echo "   JAVA         = $JAVA"
+echo "   JAVACFLAGS   = $JAVACFLAGS"
 if test "x$use_ant" = xyes; then
 echo "   ANT          = $ANT"
 fi
@@ -432,9 +434,9 @@ echo "   NUMPY_CPPFLAGS  = $NUMPY_CPPFLAGS"
 echo ""
 fi
 
-echo "   Build MMCoreJ (MMCore Java wrapper):    $build_mmcorej"
-echo "   Build MMCorePy (MMCore Python wrapper): $build_mmcorepy"
-echo "   Build Java application (MMStudio):      $build_java_app"
+echo "   Build MMCoreJ (MMCore Java wrapper):    $build_mmcorej $nobuild_mmcorej_reason"
+echo "   Build MMCorePy (MMCore Python wrapper): $build_mmcorepy $nobuild_mmcorepy_reason"
+echo "   Build Java application (MMStudio):      $build_java_app $nobuild_java_app_reason"
 echo "   Build device adapters:                  yes"
 echo "   Build closed-source device adapters:    $build_secretdeviceadapters"
 echo ""
