@@ -227,13 +227,8 @@ class PluginLoader {
 
       for (Class<?> autofocus : autofocusClasses) {
          try {
-<<<<<<< HEAD
-            ReportingUtils.logMessage("Installing autofocus plugin " + autofocus.getName() + "...");
-            MMStudioMainFrame.getInstance().installAutofocusPlugin(autofocus.getName());
-=======
             ReportingUtils.logMessage("Attempting to install autofocus plugin " + autofocus.getName());
             MMStudio.getInstance().installAutofocusPlugin(autofocus.getName());
->>>>>>> It compiles and runs! Lots of testing still to be done, naturally, but so far
          } catch (Exception e) {
             ReportingUtils.logError("Failed to install the \"" + autofocus.getName() + "\" autofocus plugin.");
          }

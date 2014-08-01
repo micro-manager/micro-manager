@@ -1967,6 +1967,15 @@ public class MMStudio implements ScriptInterface {
    public ImageWindow getSnapLiveWin() {
       return snapLiveManager_.getSnapLiveWindow();
    }
+
+   @Override 
+   public ImageCache getCacheForWindow(ImageWindow window) throws IllegalArgumentException { 
+      VirtualAcquisitionDisplay display = VirtualAcquisitionDisplay.getDisplay(window.getImagePlus()); 
+      if (display == null) { 
+         throw new IllegalArgumentException("No matching Micro-Manager display for this window"); 
+      } 
+      return display.getImageCache(); 
+   }
    
    @Override
    public String runAcquisition() throws MMScriptException {
@@ -2329,6 +2338,12 @@ public class MMStudio implements ScriptInterface {
       }
       acq.insertImage(taggedImg);
    }
+
+   @Override 
+   public void setAcquisitionAddImageAsynchronous(String name) throws MMScriptException { 
+      MMAcquisition acq = acqMgr_.getAcquisition(name); 
+      acq.setAsynchronous(); 
+   } 
 
    /**
     * A quick way to implicitly snap an image and add it to the data set. Works

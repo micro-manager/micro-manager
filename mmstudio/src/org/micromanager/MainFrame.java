@@ -44,6 +44,7 @@ import mmcorej.StrVector;
 import org.micromanager.api.events.ConfigGroupChangedEvent;
 import org.micromanager.events.EventManager;
 import org.micromanager.imagedisplay.MetadataPanel;
+import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
 import org.micromanager.internalinterfaces.LiveModeListener;
 import org.micromanager.utils.DragDropUtil;
 import org.micromanager.utils.GUIUtils;

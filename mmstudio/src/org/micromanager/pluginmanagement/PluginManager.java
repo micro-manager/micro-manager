@@ -39,11 +39,11 @@ public class PluginManager {
             new Runnable() {
                @Override
                public void run() {
-                  // Needed for loading clojure-based jars:
-                  Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
                   pluginLoader_.loadPlugins();
                }
       });
+      // Needed for loading clojure-based jars:
+      loadThread.setContextClassLoader(getClass().getClassLoader());
       loadThread.start();
       return loadThread;
    }
