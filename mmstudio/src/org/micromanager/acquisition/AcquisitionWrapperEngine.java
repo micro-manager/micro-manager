@@ -45,7 +45,7 @@ import org.micromanager.utils.ReportingUtils;
 public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    private CMMCore core_;
-   protected ScriptInterface gui_;
+   protected ScriptInterface studio_;
    private PositionList posList_;
    private String zstage_;
    private double sliceZStepUm_;
@@ -110,7 +110,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    
    protected IAcquisitionEngine2010 getAcquisitionEngine2010() {
       if (acquisitionEngine2010 == null) {
-         acquisitionEngine2010 = gui_.getAcquisitionEngine2010();
+         acquisitionEngine2010 = studio_.getAcquisitionEngine2010();
       }
       return acquisitionEngine2010;
    }
@@ -146,8 +146,8 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
          // Start up the acquisition engine
          BlockingQueue<TaggedImage> engineOutputQueue = getAcquisitionEngine2010().run(
                  acquisitionSettings, true,
-                 gui_.getPositionList(),
-                 gui_.getAutofocusManager().getDevice());
+                 studio_.getPositionList(),
+                 studio_.getAutofocusManager().getDevice());
          summaryMetadata_ = getAcquisitionEngine2010().getSummaryMetadata();
 
          // Run the Acquisition Engine output through a pipeline of ImageProcessors
@@ -158,7 +158,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
          // and VirtualImageDisplay if desired
          String acqName = acqManager.createAcquisition(
                  summaryMetadata_, acquisitionSettings.save, this,
-                 gui_.getHideMDADisplayOption());
+                 studio_.getHideMDADisplayOption());
          MMAcquisition acq = acqManager.getAcquisition(acqName);
          imageCache_ = acq.getImageCache();
 
@@ -223,7 +223,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    private long getTotalMB() {
-      CMMCore core = gui_.getMMCore();
+      CMMCore core = studio_.getMMCore();
       long totalMB = core.getImageWidth() * core.getImageHeight() * core.getBytesPerPixel() * ((long) getTotalImages()) / 1048576L;
       return totalMB;
    }
@@ -601,7 +601,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    @Override
    public void setParentGUI(ScriptInterface parent) {
-      gui_ = parent;
+      studio_ = parent;
    }
 
    @Override
