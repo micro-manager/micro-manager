@@ -92,19 +92,38 @@
 		<attribute name="destdir"/>
 		<element name="clj-classpath" optional="false"/>
 		<sequential>
-			<java classname="clojure.lang.Compile" fork="true" failonerror="true">
-				<arg value="@{namespace}"/>
-				<sysproperty key="clojure.compile.path" value="@{destdir}"/>
-				<sysproperty key="java.library.path" value="${mm.build.java.library.path}"/>
-				<!-- Prevent focus switch on OS X -->
-				<sysproperty key="apple.awt.UIElement" value="true"/>
-				<classpath>
-					<pathelement location="@{destdir}"/>
-					<pathelement location="@{srcdir}"/>
-					<pathelement location="${mm.java.lib.clojure}"/>
-					<clj-classpath/>
-				</classpath>
-			</java>
+			<!-- The Clojure compiler is slow, even if all files
+			     are up to date. Bypass the compiler when no
+			     (existing) output files are older than the newest
+			     source file. After unusual operations (such as
+			     removing a Clojure source file or manually
+			     deleting a .class file), the build tree needs to
+			     be cleaned (or another source file should be
+			     touched). -->
+			<!-- The outofdate task is provided by from ant-contrib -->
+			<outofdate property="clj.classes.outofdate">
+				<sourcefiles>
+					<fileset dir="@{srcdir}"/>
+				</sourcefiles>
+				<targetfiles>
+					<fileset dir="@{destdir}"/>
+				</targetfiles>
+				<sequential>
+					<java classname="clojure.lang.Compile" fork="true" failonerror="true">
+						<arg value="@{namespace}"/>
+						<sysproperty key="clojure.compile.path" value="@{destdir}"/>
+						<sysproperty key="java.library.path" value="${mm.build.java.library.path}"/>
+						<!-- Prevent focus switch on OS X -->
+						<sysproperty key="apple.awt.UIElement" value="true"/>
+						<classpath>
+							<pathelement location="@{destdir}"/>
+							<pathelement location="@{srcdir}"/>
+							<pathelement location="${mm.java.lib.clojure}"/>
+							<clj-classpath/>
+						</classpath>
+					</java>
+				</sequential>
+			</outofdate>
 		</sequential>
 	</macrodef>
 
