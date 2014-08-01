@@ -6,10 +6,7 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 
 import org.micromanager.MMStudio;
-import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.GUIUtils;
-import org.micromanager.utils.MMScriptException;
-import org.micromanager.utils.ReportingUtils;
 
 
 

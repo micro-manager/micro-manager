@@ -70,13 +70,11 @@ import org.micromanager.api.ScriptInterface;
 import org.micromanager.api.MMListenerInterface;
 import org.micromanager.api.SequenceSettings;
 
-import org.micromanager.conf2.ConfiguratorDlg2;
 import org.micromanager.conf2.MMConfigFileException;
 import org.micromanager.conf2.MicroscopeModel;
 
 import org.micromanager.dialogs.AcqControlDlg;
 import org.micromanager.dialogs.CalibrationListDlg;
-import org.micromanager.dialogs.MMAboutDlg;
 import org.micromanager.dialogs.MMIntroDlg;
 import org.micromanager.dialogs.RegistrationDlg;
 
@@ -122,7 +120,6 @@ import com.swtdesigner.SwingResourceManager;
 
 import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
-import ij.gui.Toolbar;
 
 import java.util.Collections;
 import java.util.concurrent.BlockingQueue;

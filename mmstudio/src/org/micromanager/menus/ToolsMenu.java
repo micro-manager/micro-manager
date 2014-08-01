@@ -8,14 +8,10 @@ import java.io.File;
 import java.util.prefs.Preferences;
 
 import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
-import javax.swing.ToolTipManager;
-import javax.swing.UIManager;
 
 import mmcorej.CMMCore;
 
