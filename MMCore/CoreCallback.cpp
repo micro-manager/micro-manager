@@ -37,13 +37,23 @@
 */
 Metadata CoreCallback::AddCameraMetadata(const MM::Device* caller, const Metadata* pMd)
 {
-      char label[MM::MaxStrLength];
-      caller->GetLabel(label);
-      
-      char serializedMD[MM::MaxStrLength];
-      ((MM::Camera*) caller)->GetTags(serializedMD);
+   boost::shared_ptr<CameraInstance> camera =
+      boost::static_pointer_cast<CameraInstance>(
+            core_->deviceManager_.GetDevice(caller));
+
+   std::string label = camera->GetLabel();
+   std::string serializedMD;
+   try
+   {
+      serializedMD = camera->GetTags();
+   }
+   catch (const CMMError&)
+   {
+      // Leave empty
+   }
+
       Metadata devMD;
-      devMD.Restore(serializedMD);
+      devMD.Restore(serializedMD.c_str());
 
       // Copy the metadata
       Metadata md;

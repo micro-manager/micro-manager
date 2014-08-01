@@ -27,9 +27,26 @@ const unsigned char* CameraInstance::GetImageBuffer() { return GetImpl()->GetIma
 const unsigned char* CameraInstance::GetImageBuffer(unsigned channelNr) { return GetImpl()->GetImageBuffer(channelNr); }
 const unsigned int* CameraInstance::GetImageBufferAsRGB32() { return GetImpl()->GetImageBufferAsRGB32(); }
 unsigned CameraInstance::GetNumberOfComponents() const { return GetImpl()->GetNumberOfComponents(); }
-int CameraInstance::GetComponentName(unsigned component, char* name) { return GetImpl()->GetComponentName(component, name); }
+
+std::string CameraInstance::GetComponentName(unsigned component)
+{
+   DeviceStringBuffer nameBuf(this, "GetComponentName");
+   int err = GetImpl()->GetComponentName(component, nameBuf.GetBuffer());
+   ThrowIfError(err, "Cannot get component name at index " +
+         ToString(component));
+   return nameBuf.Get();
+}
+
 int unsigned CameraInstance::GetNumberOfChannels() const { return GetImpl()->GetNumberOfChannels(); }
-int CameraInstance::GetChannelName(unsigned channel, char* name) { return GetImpl()->GetChannelName(channel, name); }
+
+std::string CameraInstance::GetChannelName(unsigned channel)
+{
+   DeviceStringBuffer nameBuf(this, "GetChannelName");
+   int err = GetImpl()->GetChannelName(channel, nameBuf.GetBuffer());
+   ThrowIfError(err, "Cannot get channel name at index " + ToString(channel));
+   return nameBuf.Get();
+}
+
 long CameraInstance::GetImageBufferSize()const { return GetImpl()->GetImageBufferSize(); }
 unsigned CameraInstance::GetImageWidth() const { return GetImpl()->GetImageWidth(); }
 unsigned CameraInstance::GetImageHeight() const { return GetImpl()->GetImageHeight(); }
@@ -48,7 +65,18 @@ int CameraInstance::StartSequenceAcquisition(double interval_ms) { return GetImp
 int CameraInstance::StopSequenceAcquisition() { return GetImpl()->StopSequenceAcquisition(); }
 int CameraInstance::PrepareSequenceAcqusition() { return GetImpl()->PrepareSequenceAcqusition(); }
 bool CameraInstance::IsCapturing() { return GetImpl()->IsCapturing(); }
-void CameraInstance::GetTags(char* serializedMetadata) { return GetImpl()->GetTags(serializedMetadata); }
+
+std::string CameraInstance::GetTags()
+{
+   // TODO Probably makes sense to deserialize here.
+   // Also note the danger of limiting serialized metadata to MM::MaxStrLength
+   // (CCameraBase takes no precaution to limit string length; it is an
+   // interface bug).
+   DeviceStringBuffer serializedMetadataBuf(this, "GetTags");
+   GetImpl()->GetTags(serializedMetadataBuf.GetBuffer());
+   return serializedMetadataBuf.Get();
+}
+
 void CameraInstance::AddTag(const char* key, const char* deviceLabel, const char* value) { return GetImpl()->AddTag(key, deviceLabel, value); }
 void CameraInstance::RemoveTag(const char* key) { return GetImpl()->RemoveTag(key); }
 int CameraInstance::IsExposureSequenceable(bool& isSequenceable) const { return GetImpl()->IsExposureSequenceable(isSequenceable); }

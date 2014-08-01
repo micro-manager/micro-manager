@@ -3759,10 +3759,7 @@ string CMMCore::getCameraChannelName(unsigned int channelNr)
    }
 
    mm::DeviceModuleLockGuard guard(camera);
-   char name[MM::MaxStrLength];
-   name[0] = '\0';
-   camera->GetChannelName(channelNr, name);
-   return name;
+   return camera->GetChannelName(channelNr);
 }
 
 /**

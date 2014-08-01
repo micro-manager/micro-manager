@@ -41,9 +41,9 @@ public:
    const unsigned char* GetImageBuffer(unsigned channelNr);
    const unsigned int* GetImageBufferAsRGB32();
    unsigned GetNumberOfComponents() const;
-   int GetComponentName(unsigned component, char* name);
+   std::string GetComponentName(unsigned component);
    int unsigned GetNumberOfChannels() const;
-   int GetChannelName(unsigned channel, char* name);
+   std::string GetChannelName(unsigned channel);
    long GetImageBufferSize()const;
    unsigned GetImageWidth() const;
    unsigned GetImageHeight() const;
@@ -62,7 +62,7 @@ public:
    int StopSequenceAcquisition();
    int PrepareSequenceAcqusition();
    bool IsCapturing();
-   void GetTags(char* serializedMetadata);
+   std::string GetTags();
    void AddTag(const char* key, const char* deviceLabel, const char* value);
    void RemoveTag(const char* key);
    int IsExposureSequenceable(bool& isSequenceable) const;
