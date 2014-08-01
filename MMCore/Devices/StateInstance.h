@@ -39,8 +39,8 @@ public:
    int SetPosition(long pos);
    int SetPosition(const char* label);
    int GetPosition(long& pos) const;
-   int GetPosition(char* label) const;
-   int GetPositionLabel(long pos, char* label) const;
+   std::string GetPositionLabel() const; // Name differs from MM::Device
+   std::string GetPositionLabel(long pos) const;
    int GetLabelPosition(const char* label, long& pos) const;
    int SetPositionLabel(long pos, const char* label);
    unsigned long GetNumberOfPositions() const;

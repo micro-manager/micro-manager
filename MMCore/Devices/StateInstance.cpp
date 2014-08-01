@@ -25,8 +25,23 @@
 int StateInstance::SetPosition(long pos) { return GetImpl()->SetPosition(pos); }
 int StateInstance::SetPosition(const char* label) { return GetImpl()->SetPosition(label); }
 int StateInstance::GetPosition(long& pos) const { return GetImpl()->GetPosition(pos); }
-int StateInstance::GetPosition(char* label) const { return GetImpl()->GetPosition(label); }
-int StateInstance::GetPositionLabel(long pos, char* label) const { return GetImpl()->GetPositionLabel(pos, label); }
+
+std::string StateInstance::GetPositionLabel() const
+{
+   DeviceStringBuffer labelBuf(this, "GetPosition");
+   int err = GetImpl()->GetPosition(labelBuf.GetBuffer());
+   ThrowIfError(err, "Cannot get current position label");
+   return labelBuf.Get();
+}
+
+std::string StateInstance::GetPositionLabel(long pos) const
+{
+   DeviceStringBuffer labelBuf(this, "GetPositionLabel");
+   int err = GetImpl()->GetPositionLabel(pos, labelBuf.GetBuffer());
+   ThrowIfError(err, "Cannot get position label at index " + ToString(pos));
+   return labelBuf.Get();
+}
+
 int StateInstance::GetLabelPosition(const char* label, long& pos) const { return GetImpl()->GetLabelPosition(label, pos); }
 int StateInstance::SetPositionLabel(long pos, const char* label) { return GetImpl()->SetPositionLabel(pos, label); }
 unsigned long StateInstance::GetNumberOfPositions() const { return GetImpl()->GetNumberOfPositions(); }

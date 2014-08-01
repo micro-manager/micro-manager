@@ -3929,13 +3929,11 @@ void CMMCore::setState(const char* deviceLabel, long state) throw (CMMError)
    }
    if (pStateDev->HasProperty(MM::g_Keyword_Label))
    {
-      char posLbl[MM::MaxStrLength];
-      nRet = pStateDev->GetPositionLabel(state, posLbl);
-      if (nRet != DEVICE_OK)
-         throw CMMError(getDeviceErrorText(nRet, pStateDev));
+      std::string posLbl = pStateDev->GetPositionLabel(state);
+
       {
          MMThreadGuard scg(stateCacheLock_);
-         stateCache_.addSetting(PropertySetting(deviceLabel, MM::g_Keyword_Label, posLbl));
+         stateCache_.addSetting(PropertySetting(deviceLabel, MM::g_Keyword_Label, posLbl.c_str()));
       }
    }
 
@@ -4019,13 +4017,7 @@ string CMMCore::getStateLabel(const char* deviceLabel) throw (CMMError)
    boost::shared_ptr<StateInstance> pStateDev = GetDeviceWithCheckedLabelAndType<StateInstance>(deviceLabel);
 
    mm::DeviceModuleLockGuard guard(pStateDev);
-   char pos[MM::MaxStrLength];
-   pos[0] = '\0';
-   int nRet = pStateDev->GetPosition(pos);
-   if (nRet != DEVICE_OK)
-      throw CMMError(getDeviceErrorText(nRet, pStateDev));
-
-   return pos;
+   return pStateDev->GetPositionLabel();
 }
 
 /**
@@ -4042,18 +4034,14 @@ void CMMCore::defineStateLabel(const char* deviceLabel, long state, const char* 
 
    mm::DeviceModuleLockGuard guard(pStateDev);
    // Remember old label so that we can update configurations that use it
-   char oldLabel[MM::MaxStrLength];
-   oldLabel[0] = '\0';
-   int nRet = pStateDev->GetPositionLabel(state, oldLabel);
-   if (nRet != DEVICE_OK)
-      throw CMMError(getDeviceErrorText(nRet, pStateDev));
+   std::string oldLabel = pStateDev->GetPositionLabel(state);
 
    // Set new label
-   nRet = pStateDev->SetPositionLabel(state, label);
+   int nRet = pStateDev->SetPositionLabel(state, label);
    if (nRet != DEVICE_OK)
       throw CMMError(getDeviceErrorText(nRet, pStateDev));
 
-   if (strcmp(label, oldLabel) != 0)
+   if (label != oldLabel)
    {
       // Fix existing configurations that use the old label
       std::vector<std::string> configGroups = getAvailableConfigGroups();
@@ -4067,7 +4055,7 @@ void CMMCore::defineStateLabel(const char* deviceLabel, long state, const char* 
             Configuration conf = getConfigData((*itcfg).c_str(), (*itcf).c_str());
             if (conf.isPropertyIncluded(deviceLabel, MM::g_Keyword_Label) ) 
             {
-               PropertySetting setting(deviceLabel, MM::g_Keyword_Label, oldLabel);
+               PropertySetting setting(deviceLabel, MM::g_Keyword_Label, oldLabel.c_str());
                if (conf.isSettingIncluded(setting))
                {
                   deleteConfig((*itcfg).c_str(), (*itcf).c_str(), deviceLabel, MM::g_Keyword_Label);
@@ -4097,14 +4085,9 @@ vector<string> CMMCore::getStateLabels(const char* deviceLabel) throw (CMMError)
 
    mm::DeviceModuleLockGuard guard(pStateDev);
    vector<string> stateLabels;
-   char label[MM::MaxStrLength];
-   label[0] = '\0';
    for (unsigned i=0; i<pStateDev->GetNumberOfPositions(); i++)
    {
-      int nRet = pStateDev->GetPositionLabel(i, label);
-      if (nRet != DEVICE_OK)
-         throw CMMError(getDeviceErrorText(nRet, pStateDev));
-      stateLabels.push_back(label);
+      stateLabels.push_back(pStateDev->GetPositionLabel(i));
    }
    return stateLabels;
 }
@@ -4894,17 +4877,11 @@ PropertyBlock CMMCore::getData(const char* deviceLabel)
    mm::DeviceModuleLockGuard guard(pStateDev);
 
    // obtain the current state label
-   char pos[MM::MaxStrLength];
-   int nRet = pStateDev->GetPosition(pos);
-   if (nRet != DEVICE_OK)
-   {
-      logError(deviceLabel, getDeviceErrorText(nRet, pStateDev).c_str());
-      throw CMMError(getDeviceErrorText(nRet, pStateDev));
-   }
+   std::string pos = pStateDev->GetPositionLabel();
 
    PropertyBlock blk;
    try {
-      blk = getPropertyBlockData(pos);
+      blk = getPropertyBlockData(pos.c_str());
    } catch (...) {
       ;
       // not an error here - there is just no data for this entry. 
@@ -5671,9 +5648,7 @@ void CMMCore::saveSystemConfiguration(const char* fileName) throw (CMMError)
       unsigned numPos = pSD->GetNumberOfPositions();
       for (unsigned long j=0; j<numPos; j++)
       {
-         char lbl[MM::MaxStrLength];
-         pSD->GetPositionLabel(j, lbl);
-         os << MM::g_CFGCommand_Label << ',' << deviceLabels[i] << ',' << j << ',' << lbl << endl;
+         os << MM::g_CFGCommand_Label << ',' << deviceLabels[i] << ',' << j << ',' << pSD->GetPositionLabel(j) << endl;
       }
    }
 
