@@ -71,12 +71,6 @@ public:
       return device->LogMessage(msg, debugOnly);
    }
 
-   long GetNumberOfDevices() const
-   {
-      assert(core_);
-      return (long)core_->getLoadedDevices().size();
-   }
-
    /**
     * Returns a direct pointer to the device with the specified name.
     */
@@ -302,31 +296,6 @@ public:
 
    MMThreadLock* getModuleLock(const MM::Device* caller);
    void removeModuleLock(const MM::Device* caller);
-
-//#if 0
-   // device discovery  -- todo do we need this on the callback??
-   MM::DeviceDetectionStatus DetectDevice(const MM::Device* /*pCaller*/, char* deviceName)
-   {
-      MM::DeviceDetectionStatus result = MM::Unimplemented; 
-      try
-      {
-         if( NULL != deviceName)
-         {
-            if( 0 < strlen(deviceName))
-            {
-
-               result = core_->detectDevice(deviceName);
-            }
-         }
-      }
-      catch (...)
-      {
-         // trap all exceptions
-      }
-
-      return result;
-   }
-//
 
 private:
    CMMCore* core_;
