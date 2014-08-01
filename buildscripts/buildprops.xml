@@ -32,28 +32,8 @@
 	<!-- Whether to use Fiji-compatible directory structure -->
 	<property name="mm.build.for.imagej2updater" value="false"/>
 
-	<!-- Default build settings; can be overridden on command line -->
-	<!-- TODO Provide reasonable defaults on Unix -->
-	<property name="mm.platform" value="Windows"/>
-	<property name="mm.configuration" value="Release"/>
-	<property name="mm.architecture" value="x64"/>
-
-	<!-- Users know about 32-bit vs 64-bit, not e.g. Win32 vs x64 -->
-	<condition property="mm.architecture.bits" value="64" else="32">
-		<or>
-			<equals arg1="${mm.architecture}" arg2="x64"/> <!-- Windows -->
-			<equals arg1="${mm.architecture}" arg2="x86_64"/> <!-- OS X, Linux -->
-		</or>
-	</condition>
-
-	<!-- XXX Only Windows implemented -->
-	<property name="mm.imagej2.architecture" value="win${mm.architecture.bits}"/>
-
-	<!-- The JVM architecture on which the build is running -->
-	<condition property="mm.build.architecture" value="x64" else="Win32">
-		<!-- XXX Only Windows implemented -->
-		<equals arg1="${os.arch}" arg2="amd64"/>
-	</condition>
+	<!-- Get the properties for platform, arch, etc. -->
+	<include file="Ant/target.xml"/>
 
 	<!-- For now, we are Windows-only, so always include windowsprops -->
 	<include file="Ant/windowsprops.xml"/>

@@ -1,0 +1,80 @@
+<project name="mm.target">
+	<!-- Platform: Windows, OSX, or Linux -->
+	<condition property="mm.platform" value="Windows">
+		<os family="winnt"/>
+	</condition>
+	<condition property="mm.platform" value="OSX">
+		<or>
+			<equals arg1="${os.name}" arg2="Mac OS X"/>
+			<!-- In case JDK changes in future to match official name -->
+			<equals arg1="${os.name}" arg2="OS X"/>
+		</or>
+	</condition>
+	<condition property="mm.platform" value="Linux">
+		<matches casesensitive="false" pattern="^linux"
+			string="${os.name}"/>
+	</condition>
+	<fail unless="mm.platform"
+		message="Cannot determine platform"/>
+
+
+	<!-- Checking for a particular platform -->
+	<condition property="mm.platform.is.windows">
+		<equals arg1="${mm.platform}" arg2="Windows"/>
+	</condition>
+	<condition property="mm.platform.is.osx">
+		<equals arg1="${mm.platform}" arg2="OSX"/>
+	</condition>
+	<condition property="mm.platform.is.linux">
+		<equals arg1="${mm.platform}" arg2="Linux"/>
+	</condition>
+
+
+	<!-- Build host architecture (platform-dependent) -->
+	<!-- Windows: Win32 or x64, to match Visual Studio -->
+	<condition property="mm.build.architecture" value="x64">
+		<and>
+			<isset property="mm.platform.is.windows"/>
+			<equals arg1="${os.arch}" arg2="amd64"/>
+		</and>
+	</condition>
+	<condition property="mm.build.architecture" value="Win32">
+		<isset property="mm.platform.is.windows"/>
+	</condition>
+	<!-- Otherwise, just use os.arch -->
+	<property name="mm.build.architecture" value="${os.arch}"/>
+
+
+	<!-- Target architecture (default to build host) -->
+	<!-- May also be set to "fat" on OS X -->
+	<property name="mm.architecture" value="${mm.build.architecture}"/>
+
+
+	<!-- Build configuration (as in Visual Studio) -->
+	<property name="mm.configuration" value="Release"/>
+
+
+	<!-- 32-bit or 64-bit -->
+	<condition property="mm.architecture.bits" value="fat">
+		<equals arg1="${mm.architecture}" arg2="fat"/>
+	</condition>
+	<condition property="mm.architecture.bits" value="64" else="32">
+		<or>
+			<equals arg1="${mm.architecture}" arg2="x64"/> <!-- Windows -->
+			<equals arg1="${mm.architecture}" arg2="x86_64"/> <!-- OS X, Linux -->
+			<equals arg1="${mm.architecture}" arg2="amd64"/> <!-- just in case -->
+		</or>
+	</condition>
+
+
+	<!-- Architecture as known by the ImageJ Updater -->
+	<condition property="mm.imagej2.architecture" value="macosx">
+		<isset property="mm.platform.is.osx"/>
+	</condition>
+	<condition property="mm.imagej2.architecture" value="win${mm.architecture.bits}">
+		<isset property="mm.platform.is.windows"/>
+	</condition>
+	<condition property="mm.imagej2.architecture" value="linux${mm.architecture.bits}">
+		<isset property="mm.platform.is.linux"/>
+	</condition>
+</project>
