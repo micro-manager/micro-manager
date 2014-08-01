@@ -21,7 +21,7 @@
 //INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 
-package org.micromanager;
+package org.micromanager.dialogs;
 
 import java.awt.Dimension;
 import java.awt.Font;
