@@ -42,7 +42,13 @@ AC_DEFUN([MM_JAVA_HOME], [
       AS_IF([test -n $1],
       [
          MM_JAVA_HOME_SET_IF_JDK([$1])
-         AS_IF([test -n "$JAVA_HOME"], [break])
+         AS_IF([test -n "$JAVA_HOME"],
+         [
+            break
+         ],
+         [
+            AC_MSG_ERROR([path given with --with-java is not a JDK home directory; please correct it, or set JAVA_HOME instead to force its use])
+         ])
       ])
 
       # OS X has java_home command that prints the user-selected Java
