@@ -52,18 +52,16 @@ AC_CHECK_PROGS([SWIG], [swig])
 
 # Java
 
+# Help for users trying to use old options
 if test -n "$with_javaincl"; then
    AC_MSG_ERROR([--with-javaincl has been removed. You can use one of the following:
-  ./configure --with-java=/path/to/java/home
+  ./configure --with-java=/path/to/jdk
   ./configure JNI_CPPFLAGS="-I/path/to/jni/include"
-If you set the Java home, bin/javac and include/jni.h in that directory will be
-used. If you set JNI_CPPFLAGS, it will override any automatic detection.
+If you set the Java home, the JDK installation in that directory will be used.
+If you set JNI_CPPFLAGS, it will override any automatic detection.
 See ./configure --help for more options.])
 fi
 
-AC_ARG_VAR([JAVA_HOME], [JDK home directory])
-AC_ARG_VAR([JAVACFLAGS], [Java compiler flags])
-test "${JAVACFLAGS+set}" = set || JAVACFLAGS="-Xlint:all,-path,-serial"
 MM_ARG_WITH_JAVA
 AS_IF([test "x$want_java" != xno],
 [
@@ -71,20 +69,14 @@ AS_IF([test "x$want_java" != xno],
    [
       AS_IF([test -n "$JAVA_HOME"],
       [
-         AC_MSG_ERROR([--with-java argument and JAVA_HOME both given. Try removing argument from --with-java])
-      ],
-      [
-         JAVA_HOME="$JAVA_PREFIX"
-      ])
-   ],
-   [
-      AS_IF([test -z "$JAVA_HOME"],
-      [
-         case "$build_os" in
-            darwin*) JAVA_HOME=`/usr/libexec/java_home`;;
-         esac
+         AS_IF([test "$JAVA_HOME" != "$JAVA_PREFIX"],
+         [
+            AC_MSG_ERROR([Path argument to --with-java and JAVA_HOME were both given and differ. Try removing one or the other])
+         ])
       ])
    ])
+   MM_JAVA_HOME(["$JAVA_PREFIX"])
+
    have_java=no
    MM_PROGS_JAVA(
    [
@@ -106,6 +98,9 @@ AS_IF([test "x$want_java" != xno],
 [
    use_java=no
 ])
+
+AC_ARG_VAR([JAVACFLAGS], [Java compiler flags])
+test "${JAVACFLAGS+set}" = set || JAVACFLAGS="-Xlint:all,-path,-serial"
 
 MM_JNI_LIBRARY_PREFIX_SUFFIX
 AM_CONDITIONAL([NONSTD_JNI_PREFIX], [test "x$JNI_PREFIX" != xlib])

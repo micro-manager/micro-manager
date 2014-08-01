@@ -20,6 +20,127 @@ AC_DEFUN([MM_ARG_WITH_JAVA], [
 ])
 
 
+# MM_JAVA_HOME([candidate-location])
+# Declare the precious variable JAVA_HOME. If JAVA_HOME is not set, try to find
+# a JDK installation and set it. JAVA_HOME may remain unset even if javac et
+# al. are available, if a canonical Java home directory is not found (e.g. as
+# with Apple JDK 6).
+AC_DEFUN([MM_JAVA_HOME], [
+   AC_ARG_VAR([JAVA_HOME], [JDK home directory])
+
+   while true # fake loop to exit via break
+   do
+      AC_MSG_CHECKING([for user-specified JAVA_HOME])
+      AS_IF([test -n "$JAVA_HOME"],
+      [
+         AC_MSG_RESULT([yes; will skip checks])
+         break
+      ])
+      AC_MSG_RESULT([no; will perform availability check])
+
+      # Check the location suggested by the user (e.g. via --with-java=PATH)
+      AS_IF([test -n $1],
+      [
+         MM_JAVA_HOME_SET_IF_JDK([$1])
+         AS_IF([test -n "$JAVA_HOME"], [break])
+      ])
+
+      # OS X has java_home command that prints the user-selected Java
+      # installation
+      AS_IF([test -x /usr/libexec/java_home],
+      [
+         # TODO Do we need to allow for the absnece of jni.h in this case?
+         MM_JAVA_HOME_SET_IF_JDK([`/usr/libexec/java_home`])
+         AS_IF([test -n "$JAVA_HOME"], [break])
+      ])
+
+      # Try to find from the location of javac, which is located in
+      # $JAVA_HOME/bin in modern JDK installations (but not in Apple JDK 6).
+      # The found javac might be a symbolic link to the javac in the JDK home.
+      # On the other hand, the JDK home itself might be constructed from
+      # symlinks, so we may not want to follow symlinks all the way. So try
+      # after resolving each symlink. Give up if we don't have readlink. We do
+      # not attempt to resolve symlinks in directory components of the path;
+      # this is intentional.
+      AC_PATH_PROGS([mm_java_home_javac], [javac])
+      AC_CHECK_PROGS([mm_java_home_readlink], [readlink])
+      while test -n "$mm_java_home_javac"
+      do
+         mm_java_home_javac_parent=`dirname $mm_java_home_javac`
+         mm_java_home_javac_grandparent=`cd $mm_java_home_javac_parent/..; pwd`
+         MM_JAVA_HOME_SET_IF_JDK(["$mm_java_home_javac_grandparent"])
+         AS_IF([test -n "$JAVA_HOME"], [break])
+         AS_IF([test -z "$mm_java_home_readlink"], [break])
+         mm_java_home_javac=`$mm_java_home_readlink $mm_java_home_javac`
+      done
+      AS_IF([test -n "$JAVA_HOME"], [break])
+
+      break
+   done
+])
+
+
+# Subroutine for MM_JAVA_HOME
+# Check if the given directory looks like a JDK (not JRE) home directory. If
+# so, set JAVA_HOME.
+AC_DEFUN([MM_JAVA_HOME_SET_IF_JDK], [
+   mm_java_home_candidate=$1
+   mm_java_home_candidate_is_jdk=yes
+   while true
+   do
+      AC_MSG_CHECKING([for java in $mm_java_home_candidate/bin])
+      AS_IF([test -x "$mm_java_home_candidate/bin/java"],
+      [
+         AC_MSG_RESULT([yes])
+      ],
+      [
+         AC_MSG_RESULT([no])
+         mm_java_home_candidate_is_jdk=no
+         break
+      ])
+
+      AC_MSG_CHECKING([for javac in $mm_java_home_candidate/bin])
+      AS_IF([test -x "$mm_java_home_candidate/bin/javac"],
+      [
+         AC_MSG_RESULT([yes])
+      ],
+      [
+         AC_MSG_RESULT([no])
+         mm_java_home_candidate_is_jdk=no
+         break
+      ])
+
+      AC_MSG_CHECKING([for jar in $mm_java_home_candidate/bin])
+      AS_IF([test -x "$mm_java_home_candidate/bin/jar"],
+      [
+         AC_MSG_RESULT([yes])
+      ],
+      [
+         AC_MSG_RESULT([no])
+         mm_java_home_candidate_is_jdk=no
+         break
+      ])
+
+      AC_MSG_CHECKING([for jni.h in $mm_java_home_candidate/include])
+      AS_IF([test -f "$mm_java_home_candidate/include/jni.h"],
+      [
+         AC_MSG_RESULT([yes])
+      ],
+      [
+         AC_MSG_RESULT([no])
+         mm_java_home_candidate_is_jdk=no
+         break
+      ])
+
+      break
+   done
+   AS_IF([test "$mm_java_home_candidate_is_jdk" = yes],
+   [
+      JAVA_HOME="$mm_java_home_candidate"
+   ])
+])
+
+
 # MM_PROGS_JAVA([action-if-all-found], [action-if-any-not-found])
 # Find java, javac, and jar and set JAVA, JAVAC, and JAR. Do not override if
 # set by user. If JAVA_HOME is not empty, search $JAVA_HOME/bin. Otherwise
