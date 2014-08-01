@@ -452,10 +452,17 @@ public class MMStudio implements ScriptInterface {
       
       // before loading the system configuration, we need to wait 
       // until the plugins are loaded
-      try {  
-         pluginInitializer.join(2000);
+      try {
+         pluginInitializer.join(15000);
       } catch (InterruptedException ex) {
-         ReportingUtils.logError(ex, "Plugin loader thread was interupted");
+         ReportingUtils.logError(ex,
+               "Interrupted while waiting for plugin loading thread");
+      }
+      if (pluginInitializer.isAlive()) {
+         ReportingUtils.logMessage("Warning: Plugin loading did not finish within 15 seconds; continuing anyway");
+      }
+      else {
+         ReportingUtils.logMessage("Finished waiting for plugins to load");
       }
       
       // if an error occurred during config loading, do not display more 
