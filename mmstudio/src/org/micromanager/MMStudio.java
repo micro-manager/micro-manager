@@ -519,10 +519,7 @@ public class MMStudio implements ScriptInterface {
    }
 
    private void handleError(String message) {
-      if (isLiveModeOn()) {
-         // Should we always stop live mode on any error?
-         enableLiveMode(false);
-      }
+      snapLiveManager_.setLiveMode(false);
       JOptionPane.showMessageDialog(frame_, message);
       core_.logMessage(message);
    }
