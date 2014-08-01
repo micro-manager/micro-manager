@@ -148,6 +148,7 @@
     <ClCompile Include="Configuration.cpp" />
     <ClCompile Include="CoreCallback.cpp" />
     <ClCompile Include="CoreProperty.cpp" />
+    <ClCompile Include="DeviceManager.cpp" />
     <ClCompile Include="Devices\AutoFocusInstance.cpp" />
     <ClCompile Include="Devices\CameraInstance.cpp" />
     <ClCompile Include="Devices\DeviceInstance.cpp" />
@@ -182,6 +183,7 @@
     <ClInclude Include="CoreCallback.h" />
     <ClInclude Include="CoreProperty.h" />
     <ClInclude Include="CoreUtils.h" />
+    <ClInclude Include="DeviceManager.h" />
     <ClInclude Include="Devices\AutoFocusInstance.h" />
     <ClInclude Include="Devices\CameraInstance.h" />
     <ClInclude Include="Devices\DeviceInstance.h" />

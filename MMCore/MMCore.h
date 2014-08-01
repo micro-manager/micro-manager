@@ -58,6 +58,7 @@
 #include "../MMDevice/MMDeviceConstants.h"
 #include "Configuration.h"
 #include "CoreUtils.h"
+#include "DeviceManager.h"
 #include "Devices/DeviceInstances.h"
 #include "Error.h"
 #include "ErrorCodes.h"
@@ -586,6 +587,7 @@ private:
 
    std::vector< boost::weak_ptr<DeviceInstance> > imageSynchroDevices_;
    CPluginManager pluginManager_;
+   mm::DeviceManager deviceManager_;
    std::map<int, std::string> errorText_;
    CPropBlockMap propBlocks_;
 

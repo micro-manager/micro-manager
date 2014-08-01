@@ -29,6 +29,8 @@ libMMCore_la_SOURCES = \
 	CoreProperty.cpp \
 	CoreProperty.h \
 	CoreUtils.h \
+	DeviceManager.cpp \
+	DeviceManager.h \
 	Devices/AutoFocusInstance.cpp \
 	Devices/AutoFocusInstance.h \
 	Devices/CameraInstance.cpp \

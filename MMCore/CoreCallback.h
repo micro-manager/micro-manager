@@ -60,7 +60,7 @@ public:
       boost::shared_ptr<DeviceInstance> device;
       try
       {
-         device = core_->pluginManager_.GetDevice(caller);
+         device = core_->deviceManager_.GetDevice(caller);
       }
       catch (const CMMError&)
       {
@@ -248,7 +248,7 @@ public:
       boost::shared_ptr<HubInstance> hubDevice;
       try
       {
-         hubDevice = core_->pluginManager_.GetParentDevice(core_->pluginManager_.GetDevice(caller));
+         hubDevice = core_->deviceManager_.GetParentDevice(core_->deviceManager_.GetDevice(caller));
       }
       catch (const CMMError&)
       {
@@ -263,12 +263,12 @@ public:
    {
       char hubLabel[MM::MaxStrLength];
       caller->GetLabel(hubLabel);
-      std::vector<std::string> peripheralLabels = core_->pluginManager_.GetLoadedPeripherals(hubLabel);
+      std::vector<std::string> peripheralLabels = core_->deviceManager_.GetLoadedPeripherals(hubLabel);
       boost::shared_ptr<DeviceInstance> peripheral;
       try
       {
          if (idx < peripheralLabels.size())
-            peripheral = core_->pluginManager_.GetDevice(peripheralLabels[idx]);
+            peripheral = core_->deviceManager_.GetDevice(peripheralLabels[idx]);
          else
             return 0;
       }
@@ -287,7 +287,7 @@ public:
    {
       char hubLabel[MM::MaxStrLength];
       caller->GetLabel(hubLabel);
-      return (unsigned) core_->pluginManager_.GetLoadedPeripherals(hubLabel).size();
+      return (unsigned) core_->deviceManager_.GetLoadedPeripherals(hubLabel).size();
    }
 
 
