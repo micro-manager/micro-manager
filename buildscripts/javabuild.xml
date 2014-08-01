@@ -113,7 +113,10 @@
 		<junit fork="true" haltonfailure="true" printsummary="true">
 			<classpath refid="project.test.classpath"/>
 			<formatter type="plain"/>
-			<batchtest todir="${test.reportdir}">
+			<!-- If test.class is set, run one test. Otherwise, run all -->
+			<test if="test.class" name="${test.class}"
+				todir="${test.reportdir}"/>
+			<batchtest unless="test.class" todir="${test.reportdir}">
 				<fileset dir="${testdir}">
 					<include name="**/*.java"/>
 				</fileset>
