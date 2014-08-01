@@ -282,7 +282,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          try {
             long imageIndex = MDUtils.getSequenceNumber(tags);
             // HACK: Ignore the first FPS display event, to prevent us from
-            // showing FPS for the Snap window. 
+            // showing FPS for the Snap window.
             if (lastImageIndex_ != 0) {
                bus_.post(new FPSEvent((imageIndex - lastImageIndex_) / elapsedTime, 
                         imagesDisplayed_ / elapsedTime));
