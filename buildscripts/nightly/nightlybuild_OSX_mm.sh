@@ -142,6 +142,8 @@ if [ "$print_config_only" = yes ]; then
 fi
 
 
+make fetchdeps # Safe, since everything is checksummed
+
 make $MAKEFLAGS
 
 # Remove x86_64 from device adapters that depend on 32-bit only frameworks.
