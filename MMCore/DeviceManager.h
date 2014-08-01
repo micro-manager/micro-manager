@@ -104,10 +104,15 @@ public:
     */
    boost::shared_ptr<HubInstance> GetParentDevice(boost::shared_ptr<DeviceInstance> device) const;
    // TODO GetParentDevice() should be a DeviceInstance method.
+};
 
-   // module level thread locking
-   MMThreadLock* getModuleLock(const boost::shared_ptr<DeviceInstance> pDev);
-   // TODO getModuleLock() should be a DeviceInstance method.
+
+// Scoped acquisition of a device's module's lock
+class DeviceModuleLockGuard
+{
+   MMThreadGuard g_;
+public:
+   explicit DeviceModuleLockGuard(boost::shared_ptr<DeviceInstance> device);
 };
 
 } // namespace mm

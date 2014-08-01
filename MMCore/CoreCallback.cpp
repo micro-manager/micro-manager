@@ -588,7 +588,7 @@ int CoreCallback::MoveFocus(double velocity)
    boost::shared_ptr<StageInstance> focus = core_->currentFocusDevice_.lock();
    if (focus)
    {
-      MMThreadGuard guard(core_->deviceManager_.getModuleLock(focus));
+      mm::DeviceModuleLockGuard g(focus);
       int ret = focus->Move(velocity);
       if (ret != DEVICE_OK)
          return ret;
@@ -632,7 +632,7 @@ int CoreCallback::MoveXYStage(double vx, double vy)
       core_->currentXYStageDevice_.lock();
    if (xyStage)
    {
-      MMThreadGuard guard(core_->deviceManager_.getModuleLock(xyStage));
+      mm::DeviceModuleLockGuard g(xyStage);
       int ret = xyStage->Move(vx, vy);
       if (ret != DEVICE_OK)
          return ret;
@@ -825,7 +825,7 @@ MMThreadLock* CoreCallback::getModuleLock(const MM::Device* caller)
    try
    {
       boost::shared_ptr<DeviceInstance> pCaller = core_->deviceManager_.GetDevice(caller);
-      return core_->deviceManager_.getModuleLock(pCaller);
+      return pCaller->GetAdapterModule()->GetLock();
    }
    catch (const CMMError&)
    {

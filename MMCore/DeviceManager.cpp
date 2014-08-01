@@ -256,14 +256,9 @@ DeviceManager::GetParentDevice(boost::shared_ptr<DeviceInstance> device) const
 }
 
 
-MMThreadLock*
-DeviceManager::getModuleLock(boost::shared_ptr<DeviceInstance> pDev)
-{
-   if (pDev == 0)
-      return 0;
-
-   return pDev->GetAdapterModule()->GetLock();
-}
+DeviceModuleLockGuard::DeviceModuleLockGuard(boost::shared_ptr<DeviceInstance> device) :
+   g_(device->GetAdapterModule()->GetLock())
+{}
 
 
 } // namespace mm
