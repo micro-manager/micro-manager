@@ -37,7 +37,7 @@ import mmcorej.TaggedImage;
 // These ought not be part of the public API and methods that refer to them are
 // deprecated.
 import org.json.JSONObject;
-import org.micromanager.AcqControlDlg;
+import org.micromanager.dialogs.AcqControlDlg;
 import org.micromanager.positionlist.PositionListDlg;
 import org.micromanager.acquisition.MMAcquisition;
 import org.micromanager.utils.AutofocusManager;

@@ -21,7 +21,7 @@
 //
 // CVS:          $Id$
 
-package org.micromanager;
+package org.micromanager.dialogs;
 
 import com.swtdesigner.SwingResourceManager;
 
@@ -56,6 +56,8 @@ import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
 import org.micromanager.acquisition.TaggedImageStorageMultipageTiff;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.internalinterfaces.AcqSettingsListener;
+import org.micromanager.MMOptions;
+import org.micromanager.MMStudio;
 import org.micromanager.utils.AcqOrderMode;
 import org.micromanager.utils.ChannelSpec;
 import org.micromanager.utils.ColorEditor;
@@ -824,7 +826,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
       positionsPanel_.setToolTipText("Acquire images from a series of positions in the XY plane");
       slicesPanel_.setToolTipText("Acquire images from a series of Z positions");
 
-      String imageName = this.getClass().getResource("icons/acq_order_figure.png").toString();
+      String imageName = getClass().getResource("/org/micromanager/icons/acq_order_figure.png").toString();
 
       String acqOrderToolTip =
               "<html>Lets you select the order of image acquisition when some combination of multiple dimensions<br>"
@@ -1960,7 +1962,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
       }
    }
 
-   protected void setTopPosition() {
+   public void setTopPosition() {
       double z = acqEng_.getCurrentZPos();
       zTop_.setText(NumberUtils.doubleToDisplayString(z));
       applySettings();

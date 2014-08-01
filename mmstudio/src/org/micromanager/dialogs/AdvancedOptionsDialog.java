@@ -1,4 +1,4 @@
-package org.micromanager;
+package org.micromanager.dialogs;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;

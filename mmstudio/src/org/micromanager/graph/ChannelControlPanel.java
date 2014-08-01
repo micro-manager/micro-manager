@@ -40,7 +40,7 @@ import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.micromanager.AcqControlDlg;
+import org.micromanager.dialogs.AcqControlDlg;
 import org.micromanager.MMStudio;
 import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
 import org.micromanager.imagedisplay.MMCompositeImage;

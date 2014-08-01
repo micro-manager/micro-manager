@@ -44,7 +44,6 @@ import mmcorej.CMMCore;
 
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.logging.LogFileManager;
-import org.micromanager.AcqControlDlg;
 import org.micromanager.MMOptions;
 import org.micromanager.MMStudio;
 import org.micromanager.utils.GUIColors;

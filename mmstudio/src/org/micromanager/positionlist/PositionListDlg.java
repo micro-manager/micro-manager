@@ -55,9 +55,9 @@ import mmcorej.StrVector;
 
 import net.miginfocom.swing.MigLayout;
 
-import org.micromanager.AcqControlDlg;
 import org.micromanager.api.events.StagePositionChangedEvent;
 import org.micromanager.api.events.XYStagePositionChangedEvent;
+import org.micromanager.dialogs.AcqControlDlg;
 import org.micromanager.events.EventManager;
 import org.micromanager.MMOptions;
 import org.micromanager.MMStudio;
