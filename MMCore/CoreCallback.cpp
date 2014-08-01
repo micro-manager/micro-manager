@@ -32,16 +32,25 @@
 #include "boost/date_time/posix_time/posix_time.hpp"
 
 /**
-* Get the metadata tags attached to device caller, and merge them with metadata
-* stored in pMd. Returns a metadata object (by value).
-*/
-Metadata CoreCallback::AddCameraMetadata(const MM::Device* caller, const Metadata* pMd)
+ * Get the metadata tags attached to device caller, and merge them with metadata
+ * in pMd (if not null). Returns a metadata object.
+ */
+Metadata
+CoreCallback::AddCameraMetadata(const MM::Device* caller, const Metadata* pMd)
 {
+   Metadata newMD;
+   if (pMd)
+   {
+      newMD = *pMd;
+   }
+
    boost::shared_ptr<CameraInstance> camera =
       boost::static_pointer_cast<CameraInstance>(
             core_->deviceManager_.GetDevice(caller));
 
    std::string label = camera->GetLabel();
+   newMD.put("Camera", label);
+
    std::string serializedMD;
    try
    {
@@ -49,22 +58,14 @@ Metadata CoreCallback::AddCameraMetadata(const MM::Device* caller, const Metadat
    }
    catch (const CMMError&)
    {
-      // Leave empty
+      return newMD;
    }
 
-      Metadata devMD;
-      devMD.Restore(serializedMD.c_str());
+   Metadata devMD;
+   devMD.Restore(serializedMD.c_str());
+   newMD.Merge(devMD);
 
-      // Copy the metadata
-      Metadata md;
-      if (pMd)
-      {
-        md = *pMd;
-      }
-      // Add the source Camera as a tag.
-      md.put("Camera",label);
-      md.Merge(devMD);
-      return md;
+   return newMD;
 }
 
 int CoreCallback::InsertImage(const MM::Device* caller, const unsigned char* buf, unsigned width, unsigned height, unsigned byteDepth, const char* serializedMetadata, const bool doProcess)
