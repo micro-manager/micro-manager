@@ -1,0 +1,135 @@
+<!-- Default build settings for Windows build -->
+<!-- Do not include this file directly; it is automatically included by
+     mm.props when building on Windows -->
+<project name="mm.windows.props">
+	<!-- Whether to run (C++) builds in parallel -->
+	<property name="mm.build.parallel" value="true"/>
+
+	<!-- Verbosity setting for MSBuild (VC++); e.g. minimal or normal -->
+	<property name="mm.build.msbuild.verbosity" value="minimal"/>
+
+	<!-- Logging (override with e.g. build id) -->
+	<property name="mm.build.logsuffix" value=""/>
+
+	<!-- Root of build intermediates directory -->
+	<property name="mm.intdir" location="${mm.basedir}/build/intermediates"/>
+
+	<!-- Root of build products directory -->
+	<property name="mm.outdir" location="${mm.basedir}/build"/>
+
+	<!-- Directories for prebuilt files -->
+	<property name="mm.bindist.basedir" location="${mm.basedir}/bindist"/>
+	<property name="mm.common.bindistdir" location="${mm.bindist.basedir}/any-platform"/>
+	<property name="mm.platform.bindistdir" location="${mm.bindist.basedir}/any-Windows"/>
+	<property name="mm.bindistdir" location="${mm.bindist.basedir}/${mm.architecture}"/>
+
+	<!-- Root of install/stage directory -->
+	<!-- Unlike the intermediates and products directory, staging can be
+	     configuration/architecture-specific even for platform-independent
+	     (e.g. Java) components. -->
+	<property name="mm.stagedir" location="${mm.basedir}/stage"/>
+	<property name="mm.installdir" location="${mm.stagedir}/${mm.configuration}/${mm.architecture}"/>
+
+	<!-- Installers -->
+	<property name="mm.distdir" location="${mm.basedir}/dist"/>
+
+	<!-- Private symbol (debug info) archives -->
+	<property name="mm.symbolsdir" location="${mm.basedir}/symbols"/>
+
+	<!-- C++ components -->
+	<property name="mm.cpp.intdir" location="${mm.intdir}/${mm.configuration}/${mm.architecture}"/>
+	<property name="mm.cpp.outdir" location="${mm.outdir}/${mm.configuration}/${mm.architecture}"/>
+	<if>
+		<istrue value="${mm.build.for.imagej2updater}"/>
+		<then>
+			<property name="mm.dll.installdir" location="${mm.installdir}/mm/${mm.imagej2.architecture}"/>
+		</then>
+		<else>
+			<property name="mm.dll.installdir" location="${mm.installdir}"/>
+		</else>
+	</if>
+	<property name="mm.dll.helper.installdir" location="${mm.dll.installdir}"/>
+
+	<!-- C++ DLLs matching the build system architecture -->
+	<property name="mm.build.cpp.outdir" location="${mm.outdir}/${mm.configuration}/${mm.build.architecture}"/>
+
+	<!-- Swig output -->
+	<property name="mm.swig.javasrcdir" location="${mm.intdir}/Swig"/>
+	<property name="mm.swig.pysrcdir" location="${mm.outdir}/Swig"/>
+
+	<!-- Java components -->
+	<property name="mm.java.intdir" location="${mm.intdir}/Classes"/>
+	<property name="mm.java.outdir" location="${mm.outdir}/Java"/>
+	<property name="mm.java.installdir" location="${mm.installdir}/plugins/Micro-Manager"/>
+
+	<!-- Java plugins -->
+	<property name="mm.java.plugin.srcdir" location="${mm.basedir}/plugins"/>
+	<property name="mm.java.plugin.intdir" location="${mm.java.intdir}/plugins"/>
+	<property name="mm.java.plugin.outdir" location="${mm.java.outdir}/plugins"/>
+	<property name="mm.java.plugin.installdir" location="${mm.installdir}/mmplugins"/>
+	<property name="mm.java.autofocus.intdir" location="${mm.java.intdir}/autofocus"/>
+	<property name="mm.java.autofocus.outdir" location="${mm.java.outdir}/autofocus"/>
+	<property name="mm.java.autofocus.installdir" location="${mm.installdir}/mmautofocus"/>
+
+	<!-- Other directories -->
+	<property name="mm.scripts.srcdir" location="${mm.basedir}/scripts"/>
+	<property name="mm.scripts.installdir" location="${mm.installdir}/scripts"/>
+
+	<!-- Location of Java Runtime to package -->
+	<condition property="mm.java.runtime" value="${mm.basedir}/../3rdparty/jre6_32">
+		<equals arg1="${mm.architecture}" arg2="Win32"/>
+	</condition>
+	<condition property="mm.java.runtime" value="${mm.basedir}/../3rdparty/jre">
+		<equals arg1="${mm.architecture}" arg2="x64"/>
+	</condition>
+
+
+	<!-- Build a Visual Studio project or solution -->
+	<!-- We generate separate logs because it is hard to parse MSBuild
+	     output out of the Ant log -->
+	<macrodef name="mm-msbuild">
+		<attribute name="project"/> <!-- Can also be a solution file -->
+		<attribute name="target" default="Build"/>
+		<attribute name="logdir" default="${mm.cpp.outdir}"/>
+		<attribute name="logbasename" default="msbuild"/>
+		<attribute name="parallel" default="${mm.build.parallel}"/>
+		<attribute name="verbosity" default="${mm.build.msbuild.verbosity}"/>
+		<attribute name="failonerror" default="true"/>
+		<sequential>
+			<!-- MSBuild will fail if log dir does not exist -->
+			<mkdir dir="@{logdir}"/>
+			<local name="msbuild.log"/>
+			<property name="msbuild.log" location="@{logdir}/@{logbasename}.log"/>
+
+			<local name="msbuild.flag.parallel"/>
+			<condition property="msbuild.flag.parallel" value="/m" else="">
+				<istrue value="@{parallel}"/>
+			</condition>
+
+			<local name="msbuild.params"/>
+			<property name="msbuild.params"
+				value="@{project} /t:@{target} /p:Configuration=${mm.configuration} /p:Platform=${mm.architecture} /v:@{verbosity} /flp:LogFile=${msbuild.log} ${msbuild.flag.parallel}"/>
+
+			<local name="vs.commontools.dir"/>
+			<property name="vs.commontools.dir" location="${mm.env.VS100COMNTOOLS}"/>
+			<local name="vsvars32"/>
+			<property name="vsvars32" location="${vs.commontools.dir}/vsvars32.bat"/>
+			<fail message="Cannot locate vsvars32.bat for Visual Studio 2010">
+				<condition> <not> <available file="${vsvars32}"/> </not> </condition>
+			</fail>
+
+			<local name="temp.bat"/>
+			<tempfile property="temp.bat" prefix="msbuild" suffix=".bat" destdir="${mm.intdir}"/>
+			<echo file="${temp.bat}">@echo off
+				call "${vsvars32}"
+				if errorlevel 1 exit /b
+				msbuild ${msbuild.params}
+			</echo>
+			<exec executable="cmd" failonerror="@{failonerror}">
+				<arg value="/c"/>
+				<arg value="${temp.bat}"/>
+			</exec>
+			<delete file="${temp.bat}"/>
+		</sequential>
+	</macrodef>
+</project>
