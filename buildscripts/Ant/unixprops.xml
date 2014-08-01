@@ -1,0 +1,17 @@
+<!-- Default build settings for Unix build -->
+<!-- Do not include this file directly; it is automatically included by
+     mm.props when building on Unix using the GNU Autotools -->
+<!-- See also: windowsprops.xml -->
+<project name="mm.unix.props">
+	<!-- There are far fewer properties for the Unix build compared to the
+	     Windows build, because most of the build process is driven by
+	     Autoconf and Automake. Only the Java projects are (will be) built
+	     using Ant. -->
+
+	<!-- Java artifacts -->
+	<property name="mm.java.lib.AntExtensions"
+		location="${mm.basedir}/buildscripts/AntExtensions/AntExtensions.jar"/>
+	<property name="mm.java.lib.mmcorej" location="${mm.basedir}/MMCoreJ_wrap/MMCoreJ.jar"/>
+	<property name="mm.java.lib.mmstudio" location="${mm.basedir}/mmstudio/MMJ_.jar"/>
+	<property name="mm.java.lib.acq-engine" location="${mm.basedir}/acqEngine/MMAcqEngine.jar"/>
+</project>

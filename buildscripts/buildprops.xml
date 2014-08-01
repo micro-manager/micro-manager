@@ -35,8 +35,17 @@
 	<!-- Get the properties for platform, arch, etc. -->
 	<include file="Ant/target.xml"/>
 
-	<!-- For now, we are Windows-only, so always include windowsprops -->
-	<include file="Ant/windowsprops.xml"/>
+	<!-- Properties dependent on the build system (Windows: Ant; Unix: GNU
+	     Autotools) -->
+	<if>
+		<isset property="mm.platform.is.windows"/>
+		<then>
+			<include file="Ant/windowsprops.xml"/>
+		</then>
+		<else>
+			<include file="Ant/unixprops.xml"/>
+		</else>
+	</if>
 
 	<!-- Items not in source tree but at fixed location -->
 	<property name="mm.thirdpartypublic" location="${mm.basedir}/../3rdpartypublic"/>

@@ -1,6 +1,7 @@
 <!-- Default build settings for Windows build -->
 <!-- Do not include this file directly; it is automatically included by
      mm.props when building on Windows -->
+<!-- See also: unixprops.xml -->
 <project name="mm.windows.props">
 	<!-- Whether to run (C++) builds in parallel -->
 	<property name="mm.build.parallel" value="true"/>
