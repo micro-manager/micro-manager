@@ -116,8 +116,6 @@ import ij.gui.ImageWindow;
 import ij.gui.Toolbar;
 
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -130,7 +128,6 @@ import org.micromanager.api.IAcquisitionEngine2010;
 import org.micromanager.graph.HistogramSettings;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.FileDialogs.FileType;
-import org.micromanager.utils.HotKeysDialog;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
@@ -154,7 +151,6 @@ public class MMStudio implements ScriptInterface {
    private static final String SCRIPT_ACQENG_OBJECT = "acq";
    private static final String SCRIPT_GUI_OBJECT = "gui";
    private static final String AUTOFOCUS_DEVICE = "autofocus_device";
-   private static final String MOUSE_MOVES_STAGE = "mouse_moves_stage";
    private static final String EXPOSURE_SETTINGS_NODE = "MainExposureSettings";
    private static final String CONTRAST_SETTINGS_NODE = "MainContrastSettings";
    private static final int TOOLTIP_DISPLAY_DURATION_MILLISECONDS = 15000;
@@ -173,6 +169,7 @@ public class MMStudio implements ScriptInterface {
    private AcqControlDlg acqControlWin_;
    private PluginManager pluginManager_;
    private SnapLiveManager snapLiveManager_;
+   private ToolsMenu toolsMenu_;
 
    private List<Component> MMFrames_
            = Collections.synchronizedList(new ArrayList<Component>());
@@ -230,7 +227,6 @@ public class MMStudio implements ScriptInterface {
    private final Object shutdownLock_ = new Object();
 
    private JMenuBar menuBar_;
-   private final JMenu switchConfigurationMenu_;
    private JCheckBoxMenuItem centerAndDragMenuItem_;
    public static final FileType MM_DATA_SET 
            = new FileType("MM_DATA_SET",
@@ -373,15 +369,16 @@ public class MMStudio implements ScriptInterface {
       ttManager.setDismissDelay(TOOLTIP_DISPLAY_DURATION_MILLISECONDS);
       ttManager.setInitialDelay(TOOLTIP_DISPLAY_INITIAL_DELAY_MILLISECONDS);
       
-      frame_.setBackground(guiColors_.background.get((options_.displayBackground_)));
+      frame_.setBackground(getBackgroundColor());
       
       menuBar_ = new JMenuBar();
-      switchConfigurationMenu_ = new JMenu();
 
       frame_.setJMenuBar(menuBar_);
 
       initializeFileMenu();
-      initializeToolsMenu();
+
+      toolsMenu_ = new ToolsMenu(studio_, core_, options_);
+      toolsMenu_.initializeToolsMenu(menuBar_, mainPrefs_);
 
       initializationSequence();
    }
@@ -444,8 +441,7 @@ public class MMStudio implements ScriptInterface {
          MMIntroDlg introDlg = new MMIntroDlg(
                MMVersion.VERSION_STRING, MRUConfigFiles_);
          introDlg.setConfigFile(sysConfigFile_);
-         introDlg.setBackground(
-               guiColors_.background.get((options_.displayBackground_)));
+         introDlg.setBackground(getBackgroundColor());
          introDlg.setVisible(true);
          if (!introDlg.okChosen()) {
             // User aborted; close the program down.
@@ -516,6 +512,14 @@ public class MMStudio implements ScriptInterface {
 
       // switch error reporting back on
       ReportingUtils.showErrorOn(true);
+   }
+
+   public void showPipelinePanel() {
+      pipelinePanel_.setVisible(true);
+   }
+
+   public void showScriptPanel() {
+      scriptPanel_.setVisible(true);
    }
 
    private void handleError(String message) {
@@ -643,178 +647,6 @@ public class MMStudio implements ScriptInterface {
       menuBar_.validate();
    }
 
-   private void initializeToolsMenu() {
-      final JMenu toolsMenu = GUIUtils.createMenuInMenuBar(menuBar_, "Tools");
-
-      GUIUtils.addMenuItem(toolsMenu, "Refresh GUI",
-              "Refresh all GUI controls directly from the hardware",
-              new Runnable() {
-                 public void run() {
-                    core_.updateSystemStateCache();
-                    updateGUI(true);
-                 }
-              },
-              "arrow_refresh.png");
-
-      GUIUtils.addMenuItem(toolsMenu, "Rebuild GUI",
-              "Regenerate Micro-Manager user interface",
-              new Runnable() {
-                 public void run() {
-                    initializeGUI();
-                    core_.updateSystemStateCache();
-                 }
-              });
-      
-      toolsMenu.addSeparator();
-      
-      GUIUtils.addMenuItem(toolsMenu, "Image Pipeline...",
-            "Display the image processing pipeline",
-            new Runnable() {
-               public void run() {
-                  pipelinePanel_.setVisible(true);
-               }
-            });
-
-      GUIUtils.addMenuItem(toolsMenu, "Script Panel...",
-              "Open Micro-Manager script editor window",
-              new Runnable() {
-                 public void run() {
-                    scriptPanel_.setVisible(true);
-                 }
-              });
-
-      GUIUtils.addMenuItem(toolsMenu, "Shortcuts...",
-              "Create keyboard shortcuts to activate image acquisition, mark positions, or run custom scripts",
-              new Runnable() {
-                 public void run() {
-                    new HotKeysDialog(guiColors_.background.get((options_.displayBackground_)));
-                 }
-              });
-
-      GUIUtils.addMenuItem(toolsMenu, "Device/Property Browser...",
-              "Open new window to view and edit property values in current configuration",
-              new Runnable() {
-                 public void run() {
-                    createPropertyEditor();
-                 }
-              });
-      
-      toolsMenu.addSeparator();
-
-      GUIUtils.addMenuItem(toolsMenu, "XY List...",
-              "Open position list manager window",
-              new Runnable() {
-                 public void run() {
-                    showXYPositionList();
-                 }
-              },
-              "application_view_list.png");
-
-      GUIUtils.addMenuItem(toolsMenu, "Multi-Dimensional Acquisition...",
-              "Open multi-dimensional acquisition setup window",
-              new Runnable() {
-                 public void run() {
-                    openAcqControlDialog();
-                 }
-              },
-              "film.png");
-      
-      
-      centerAndDragMenuItem_ = GUIUtils.addCheckBoxMenuItem(toolsMenu,
-              "Mouse Moves Stage (use Hand Tool)",
-              "When enabled, double clicking or dragging in the snap/live\n"
-              + "window moves the XY-stage. Requires the hand tool.",
-              new Runnable() {
-                 public void run() {
-                    updateCenterAndDragListener();
-                    IJ.setTool(Toolbar.HAND);
-                    mainPrefs_.putBoolean(MOUSE_MOVES_STAGE, centerAndDragMenuItem_.isSelected());
-                 }
-              },
-              mainPrefs_.getBoolean(MOUSE_MOVES_STAGE, false));
-      
-      GUIUtils.addMenuItem(toolsMenu, "Pixel Size Calibration...",
-              "Define size calibrations specific to each objective lens.  "
-              + "When the objective in use has a calibration defined, "
-              + "micromanager will automatically use it when "
-              + "calculating metadata",
-              new Runnable() {
-                 public void run() {
-                    createCalibrationListDlg();
-                 }
-              });
-      toolsMenu.addSeparator();
-
-      GUIUtils.addMenuItem(toolsMenu, "Hardware Configuration Wizard...",
-              "Open wizard to create new hardware configuration",
-              new Runnable() {
-                 public void run() {
-                    runHardwareWizard();
-                 }
-              });
-
-      GUIUtils.addMenuItem(toolsMenu, "Load Hardware Configuration...",
-              "Un-initialize current configuration and initialize new one",
-              new Runnable() {
-                 public void run() {
-                    loadConfiguration();
-                    initializeGUI();
-                 }
-              });
-
-      GUIUtils.addMenuItem(toolsMenu, "Reload Hardware Configuration",
-              "Shutdown current configuration and initialize most recently loaded configuration",
-              new Runnable() {
-                 public void run() {
-                    loadSystemConfiguration();
-                    initializeGUI();
-                 }
-              });
-
-      
-      for (int i=0; i<5; i++)
-      {
-         JMenuItem configItem = new JMenuItem();
-         configItem.setText(Integer.toString(i));
-         switchConfigurationMenu_.add(configItem);
-      }
-      
-      switchConfigurationMenu_.setText("Switch Hardware Configuration");
-      toolsMenu.add(switchConfigurationMenu_);
-      switchConfigurationMenu_.setToolTipText("Switch between recently used configurations");
-
-      GUIUtils.addMenuItem(toolsMenu, "Save Configuration Settings as...",
-              "Save current configuration settings as new configuration file",
-              new Runnable() {
-                 public void run() {
-                    saveConfigPresets();
-                    updateChannelCombos();
-                 }
-              });
-
-      toolsMenu.addSeparator();
-
-      GUIUtils.addMenuItem(toolsMenu, "Options...",
-              "Set a variety of Micro-Manager configuration options",
-              new Runnable() {
-         public void run() {
-            final int oldBufsize = options_.circularBufferSizeMB_;
-
-            OptionsDlg dlg = new OptionsDlg(options_, core_, mainPrefs_,
-                    studio_);
-            dlg.setVisible(true);
-            // adjust memory footprint if necessary
-            if (oldBufsize != options_.circularBufferSizeMB_) {
-               try {
-                  core_.setCircularBufferMemoryFootprint(options_.circularBufferSizeMB_);
-               } catch (Exception exc) {
-                  ReportingUtils.showError(exc);
-               }
-            }
-         }
-      });
-   }
-
    private void showRegistrationDialogMaybe() {
       // show registration dialog if not already registered
       // first check user preferences (for legacy compatibility reasons)
@@ -832,23 +664,6 @@ public class MMStudio implements ScriptInterface {
       }
    }
 
-   private void updateSwitchConfigurationMenu() {
-      switchConfigurationMenu_.removeAll();
-      for (final String configFile : MRUConfigFiles_) {
-         if (!configFile.equals(sysConfigFile_)) {
-            GUIUtils.addMenuItem(switchConfigurationMenu_,
-                    configFile, null,
-                    new Runnable() {
-               public void run() {
-                  sysConfigFile_ = configFile;
-                  loadSystemConfiguration();
-                  mainPrefs_.put(SYSTEM_CONFIG_FILE, sysConfigFile_);
-               }
-            });
-         }
-      }
-   }
-   
    /**
     * Spawn a new thread to load the acquisition engine jar, because this
     * takes significant time (or so Mark claims).
@@ -1028,7 +843,7 @@ public class MMStudio implements ScriptInterface {
       profileWin_.setData(lineProfileData_);
       profileWin_.setAutoScale();
       profileWin_.setTitle("Live line profile");
-      profileWin_.setBackground(guiColors_.background.get((options_.displayBackground_)));
+      profileWin_.setBackground(getBackgroundColor());
       addMMBackgroundListener(profileWin_);
       profileWin_.setVisible(true);
    }
@@ -1220,6 +1035,14 @@ public class MMStudio implements ScriptInterface {
       return sysConfigFile_;
    }
 
+   public void setSysConfigFile(String newFile) {
+      sysConfigFile_ = newFile;
+      configChanged_ = false;
+      frame_.setConfigSaveButtonStatus(configChanged_);
+      mainPrefs_.put(SYSTEM_CONFIG_FILE, sysConfigFile_);
+      loadSystemConfiguration();
+   }
+
    public void setAcqDirectory(String dir) {
       openAcqDirectory_ = dir;
    }
@@ -1325,7 +1148,7 @@ public class MMStudio implements ScriptInterface {
       }
    }
 
-   private void createPropertyEditor() {
+   public void createPropertyEditor() {
       if (propertyBrowser_ != null) {
          propertyBrowser_.dispose();
       }
@@ -1337,7 +1160,7 @@ public class MMStudio implements ScriptInterface {
       propertyBrowser_.setCore(core_);
    }
 
-   private void createCalibrationListDlg() {
+   public void createCalibrationListDlg() {
       if (calibrationListDlg_ != null) {
          calibrationListDlg_.dispose();
       }
@@ -1361,7 +1184,7 @@ public class MMStudio implements ScriptInterface {
          scriptPanel_.insertScriptingObject(SCRIPT_CORE_OBJECT, core_);
          scriptPanel_.insertScriptingObject(SCRIPT_ACQENG_OBJECT, engine_);
          scriptPanel_.setParentGUI(studio_);
-         scriptPanel_.setBackground(guiColors_.background.get((options_.displayBackground_)));
+         scriptPanel_.setBackground(getBackgroundColor());
          addMMBackgroundListener(scriptPanel_);
       }
    }
@@ -1369,7 +1192,7 @@ public class MMStudio implements ScriptInterface {
    private void createPipelinePanel() {
       if (pipelinePanel_ == null) {
          pipelinePanel_ = new PipelinePanel(studio_, engine_);
-         pipelinePanel_.setBackground(guiColors_.background.get((options_.displayBackground_)));
+         pipelinePanel_.setBackground(getBackgroundColor());
          addMMBackgroundListener(pipelinePanel_);
       }
    }
@@ -1448,7 +1271,7 @@ public class MMStudio implements ScriptInterface {
    }
 
    public void updateCenterAndDragListener() {
-      if (centerAndDragMenuItem_.isSelected()) {
+      if (toolsMenu_.getIsCenterAndDragChecked()) {
          centerAndDragListener_.start();
       } else {
          centerAndDragListener_.stop();
@@ -1958,18 +1781,6 @@ public class MMStudio implements ScriptInterface {
       }
    }
 
-   private void loadConfiguration() {
-      File f = FileDialogs.openFile(frame_, "Load a config file",MM_CONFIG_FILE);
-      if (f != null) {
-         sysConfigFile_ = f.getAbsolutePath();
-         configChanged_ = false;
-         frame_.setConfigSaveButtonStatus(configChanged_);
-         mainPrefs_.put(SYSTEM_CONFIG_FILE, sysConfigFile_);
-         loadSystemConfiguration();
-      }
-   }
-
-
    public synchronized boolean closeSequence(boolean calledByImageJ) {
 
       if (!getIsProgramRunning()) {
@@ -2083,7 +1894,7 @@ public class MMStudio implements ScriptInterface {
    /**
     * Loads system configuration from the cfg file.
     */
-   private boolean loadSystemConfiguration() {
+   public boolean loadSystemConfiguration() {
       boolean result = true;
 
       saveMRUConfigFiles();
@@ -2116,7 +1927,7 @@ public class MMStudio implements ScriptInterface {
       frame_.setEnabled(true);
       initializeGUI();
 
-      updateSwitchConfigurationMenu();
+      toolsMenu_.updateSwitchConfigurationMenu();
 
       FileDialogs.storePath(MM_CONFIG_FILE, new File(sysConfigFile_));
 
@@ -2141,6 +1952,10 @@ public class MMStudio implements ScriptInterface {
             mainPrefs_.put(CFGFILE_ENTRY_BASE + icfg.toString(), value);
          }
       }
+   }
+
+   public List<String> getMRUConfigFiles() {
+      return MRUConfigFiles_;
    }
 
    /**
@@ -2194,70 +2009,12 @@ public class MMStudio implements ScriptInterface {
       }
    }
 
-   private void updateChannelCombos() {
+   public void updateChannelCombos() {
       if (acqControlWin_ != null) {
          acqControlWin_.updateChannelAndGroupCombo();
       }
    }
      
-   private void runHardwareWizard() {
-      try {
-         if (configChanged_) {
-            Object[] options = {"Yes", "No"};
-            int n = JOptionPane.showOptionDialog(null,
-                  "Save Changed Configuration?", "Micro-Manager",
-                  JOptionPane.YES_NO_OPTION,
-                  JOptionPane.QUESTION_MESSAGE, null, options,
-                  options[0]);
-            if (n == JOptionPane.YES_OPTION) {
-               saveConfigPresets();
-            }
-            configChanged_ = false;
-         }
-
-         boolean liveRunning = false;
-         if (isLiveModeOn()) {
-            liveRunning = true;
-            enableLiveMode(false);
-         }
-
-         // unload all devices before starting configurator
-         core_.reset();
-         GUIUtils.preventDisplayAdapterChangeExceptions();
-
-         // run Configurator
-         ConfiguratorDlg2 cfg2 = null;
-         try {
-            frame_.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            cfg2 = new ConfiguratorDlg2(core_, sysConfigFile_);
-         } finally {
-            frame_.setCursor(Cursor.getDefaultCursor());        		 
-         }
-
-         if (cfg2 == null)
-         {
-            ReportingUtils.showError("Failed to launch Hardware Configuration Wizard");
-            return;
-         }
-         cfg2.setVisible(true);
-         GUIUtils.preventDisplayAdapterChangeExceptions();
-
-         // re-initialize the system with the new configuration file
-         sysConfigFile_ = cfg2.getFileName();
-
-         mainPrefs_.put(SYSTEM_CONFIG_FILE, sysConfigFile_);
-         loadSystemConfiguration();
-         GUIUtils.preventDisplayAdapterChangeExceptions();
-
-         if (liveRunning) {
-            enableLiveMode(liveRunning);
-         }
-
-      } catch (Exception e) {
-         ReportingUtils.showError(e);
-      }
-   }
-
    public void autofocusNow() {
       if (afMgr_.getDevice() != null) {
          new Thread() {
@@ -2346,10 +2103,14 @@ public class MMStudio implements ScriptInterface {
    }
 
    
-    @Override
+   @Override
    public void setConfigChanged(boolean status) {
       configChanged_ = status;
       frame_.setConfigSaveButtonStatus(configChanged_);
+   }
+
+   public boolean getIsConfigChanged() {
+      return configChanged_;
    }
     
    /**
