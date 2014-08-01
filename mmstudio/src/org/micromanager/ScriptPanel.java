@@ -293,7 +293,6 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
    public final void createBeanshellREPL() {
       // Create console and REPL interpreter:
       cons_ = new JConsole();
-      cons_.setFont(new Font("Arial", Font.PLAIN, 10));
 
       // TODO Some of the following might belong in BeanShellEngine.
       
