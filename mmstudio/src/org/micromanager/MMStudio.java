@@ -1607,8 +1607,7 @@ public class MMStudio implements ScriptInterface {
    }
 
    /**
-    * Executes the beanShell script. This script instance only supports
-    * commands directed to the core object.
+    * Executes the beanShell script.
     */
    private void executeStartupScript() {
       // execute startup script
@@ -1620,7 +1619,6 @@ public class MMStudio implements ScriptInterface {
          waitDlg.showDialog();
          Interpreter interp = new Interpreter();
          try {
-            // insert core object only
             interp.set(SCRIPT_CORE_OBJECT, core_);
             interp.set(SCRIPT_ACQENG_OBJECT, engine_);
             interp.set(SCRIPT_GUI_OBJECT, studio_);
