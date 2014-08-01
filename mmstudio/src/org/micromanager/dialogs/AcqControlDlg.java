@@ -1810,53 +1810,27 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
 
       disableGUItoSettings_ = false;
    }
-
-
        
-    private void updateDoubleValue(double value, JTextField field) {
-        try {
-            if (NumberUtils.displayStringToDouble(field.getText()) != value) {
-                field.setText(NumberUtils.doubleToDisplayString(value));
-            }
-        } catch (ParseException e) {
-            field.setText(NumberUtils.doubleToDisplayString(value));
-        }
-    }
-       
-    private void updateCheckBox(boolean setting,  CheckBoxPanel panel) {
-       if (panel.isSelected() != setting) {
-           panel.setSelected(setting);
+   private void updateDoubleValue(double value, JTextField field) {
+       try {
+           if (NumberUtils.displayStringToDouble(field.getText()) != value) {
+               field.setText(NumberUtils.doubleToDisplayString(value));
+           }
+       } catch (ParseException e) {
+           field.setText(NumberUtils.doubleToDisplayString(value));
        }
-    }
-    
-    @Override      
-    public void settingsChanged() {
-            /*
-        String comment = acqEng_.getComment();
-        if (comment != null)
-        if (!commentTextArea_.getText().contentEquals(comment)) {
-            commentTextArea_.setText(comment);
-        }
-
-       updateDoubleValue(acqEng_.getSliceZBottomUm(), zBottom_);
-       updateDoubleValue(acqEng_.getSliceZStepUm(), zStep_);
-       updateDoubleValue(acqEng_.getZTopUm(), zTop_);
+   }
        
-       boolean absoluteZ = acqEng_.getZAbsoluteMode();
-       if ((zValCombo_.getSelectedIndex() == 1) != absoluteZ) {
-           this.zValCombo_.setSelectedIndex(absoluteZ ? 1 : 0);
-       }
-       
-       updateCheckBox(acqEng_.isFramesSettingEnabled(), this.framesPanel_);
-       updateCheckBox(acqEng_.isMultiPositionEnabled(), this.positionsPanel_);
-       updateCheckBox(acqEng_.isChannelsSettingEnabled(), this.channelsPanel_);
-       updateCheckBox(acqEng_.isZSliceSettingEnabled(), this.slicesPanel_);
-       updateCheckBox(acqEng_.getSaveFiles(), this.savePanel_);
-       * */
-    }
-       
-    
-
+   private void updateCheckBox(boolean setting,  CheckBoxPanel panel) {
+      if (panel.isSelected() != setting) {
+          panel.setSelected(setting);
+      }
+   }
+   
+   @Override      
+   public void settingsChanged() {
+   }
+      
    private void applySettings() {
       if (disableGUItoSettings_) {
          return;
@@ -1949,7 +1923,6 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
    }
 
    private void zValCalcChanged() {
-
       if (zValCombo_.getSelectedIndex() == 0) {
          setTopButton_.setEnabled(false);
          setBottomButton_.setEnabled(false);
@@ -1994,9 +1967,6 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
     */
    public void setBackgroundStyle(String style) {
       setBackground(guiColors_.background.get(style));
-      for (JPanel panel : panelList_) {
-         //updatePanelBorder(panel);
-      }
       repaint();
    }
 
@@ -2009,7 +1979,6 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
 
    @SuppressWarnings("serial")
    public class ComponentTitledPanel extends JPanel {
-
       public ComponentTitledBorder compTitledBorder;
       public boolean borderSet_ = false;
       public Component titleComponent;
@@ -2035,7 +2004,6 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
 
    @SuppressWarnings("serial")
    public class LabelPanel extends ComponentTitledPanel {
-
       LabelPanel(String title) {
          super();
          titleComponent = new JLabel(title);
