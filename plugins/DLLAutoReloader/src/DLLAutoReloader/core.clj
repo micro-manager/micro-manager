@@ -170,19 +170,20 @@
     (when (.contains name "mmgr_dal_") ; else not a lib!
       (second (.split name "mmgr_dal_")))))
 
-(defonce 
-  status-frame
-  (let [l (JLabel.)
-        f (JWindow.)]
-    (edt (doto f
-           (.setAlwaysOnTop true)
-           (.setBounds 0 100 450 50))
-         (.add (.getContentPane f) l)
-         (doto l
-           (.setBackground Color/PINK)
-           (.setOpaque true))
-         )
-    {:label l :frame f}))
+(def status-frame
+  "A JFrame that displays autoreloading status."
+  (memoize
+    (fn []
+      (let [l (JLabel.)
+            f (JWindow.)]
+        (edt (doto f
+               (.setAlwaysOnTop true)
+               (.setBounds 0 100 450 50))
+             (.add (.getContentPane f) l)
+             (doto l
+               (.setBackground Color/PINK)
+               (.setOpaque true)))
+        {:label l :frame f}))))
 
 (defn label-html
   "Create the html for a label with 20-point font and internal padding."
@@ -192,7 +193,7 @@
 (defn notify-user
   "Show the user a message."
   [temporary? & message-parts]
-  (let [{:keys [frame label]} status-frame]
+  (let [{:keys [frame label]} (status-frame)]
     (edt
       (.setText label (apply label-html message-parts))
       (.show frame))
