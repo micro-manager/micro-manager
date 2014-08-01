@@ -60,10 +60,7 @@ import org.micromanager.acquisition.AcquisitionManager;
 import org.micromanager.api.Autofocus;
 import org.micromanager.api.DataProcessor;
 import org.micromanager.api.events.ExposureChangedEvent;
-import org.micromanager.api.events.PixelSizeChangedEvent;
 import org.micromanager.api.events.PropertiesChangedEvent;
-import org.micromanager.api.events.StagePositionChangedEvent;
-import org.micromanager.api.events.XYStagePositionChangedEvent;
 import org.micromanager.api.MMTags;
 import org.micromanager.api.PositionList;
 import org.micromanager.api.ScriptInterface;
@@ -187,11 +184,6 @@ public class MMStudio implements ScriptInterface {
    private String sysConfigFile_;
    private String startupScriptFile_;
    private GraphData lineProfileData_;
-   // labels for standard devices
-   private String cameraLabel_;
-   private String zStageLabel_;
-   private String shutterLabel_;
-   private String xyStageLabel_;
    // applications settings
    private Preferences mainPrefs_;
    private Preferences systemPrefs_;
@@ -242,21 +234,7 @@ public class MMStudio implements ScriptInterface {
    private Thread acquisitionEngine2010LoadingThread_ = null;
    private Class<?> acquisitionEngine2010Class_ = null;
    private IAcquisitionEngine2010 acquisitionEngine2010_ = null;
-
-   /**
-    * Simple class used to cache static info
-    */
-   private static class StaticInfo {
-      public long width_;
-      public long height_;
-      public long bytesPerPixel_;
-      public long imageBitDepth_;
-      public double pixSizeUm_;
-      public double zPos_;
-      public double x_;
-      public double y_;
-   }
-   private StaticInfo staticInfo_ = new StaticInfo();
+   private StaticInfo staticInfo_;
    
    
    /**
@@ -363,6 +341,8 @@ public class MMStudio implements ScriptInterface {
       frame_.loadApplicationPrefs(mainPrefs_, options_.closeOnExit_);
       ReportingUtils.SetContainingFrame(frame_);
 
+      staticInfo_ = new StaticInfo(core_, frame_);
+
       openAcqDirectory_ = mainPrefs_.get(OPEN_ACQ_DIR, "");
       try {
          ImageUtils.setImageStorageClass(Class.forName (mainPrefs_.get(MAIN_SAVE_METHOD,
@@ -422,10 +402,6 @@ public class MMStudio implements ScriptInterface {
       ReportingUtils.setCore(core_);
       logStartupProperties();
               
-      cameraLabel_ = "";
-      shutterLabel_ = "";
-      zStageLabel_ = "";
-      xyStageLabel_ = "";
       engine_ = new AcquisitionWrapperEngine(acqMgr_);
 
       // This entity is a class property to avoid garbage collection.
@@ -594,8 +570,8 @@ public class MMStudio implements ScriptInterface {
    }
 
    public void toggleAutoShutter() {
-      shutterLabel_ = core_.getShutterDevice();
-      if (shutterLabel_.length() == 0) {
+      staticInfo_.shutterLabel_ = core_.getShutterDevice();
+      if (staticInfo_.shutterLabel_.length() == 0) {
          frame_.setToggleShutterButtonEnabled(false);
       } else {
          try {
@@ -877,7 +853,7 @@ public class MMStudio implements ScriptInterface {
             enableLiveMode(false);
          }
          core_.clearROI();
-         updateStaticInfo();
+         staticInfo_.refreshValues();
          if (liveRunning) {
             enableLiveMode(true);
          }
@@ -1042,10 +1018,10 @@ public class MMStudio implements ScriptInterface {
          if (isCameraAvailable()) {
             String item = frame_.getBinMode();
             if (item != null) {
-               core_.setProperty(cameraLabel_, MMCoreJ.getG_Keyword_Binning(), item);
+               core_.setProperty(staticInfo_.cameraLabel_, MMCoreJ.getG_Keyword_Binning(), item);
             }
          }
-         updateStaticInfo();
+         staticInfo_.refreshValues();
 
          if (liveRunning) {
             enableLiveMode(true);
@@ -1106,72 +1082,21 @@ public class MMStudio implements ScriptInterface {
    }
 
    public void updateXYPos(double x, double y) {
-      staticInfo_.x_ = x;
-      staticInfo_.y_ = y;
-
-      updateInfoDisplay();
+      staticInfo_.updateXYPos(x, y);
+   }
+   public void updateXYPosRelative(double x, double y) {
+      staticInfo_.updateXYPosRelative(x, y);
    }
 
    public void updateZPos(double z) {
-      staticInfo_.zPos_ = z;
-
-      updateInfoDisplay();
+      staticInfo_.updateZPos(z);
    }
-
-   public void updateXYPosRelative(double x, double y) {
-      staticInfo_.x_ += x;
-      staticInfo_.y_ += y;
-
-      updateInfoDisplay();
-   }
-
    public void updateZPosRelative(double z) {
-      staticInfo_.zPos_ += z;
-
-      updateInfoDisplay();
+      staticInfo_.updateZPosRelative(z);
    }
 
    public void updateXYStagePosition() {
-      double x[] = new double[1];
-      double y[] = new double[1];
-      try {
-         if (xyStageLabel_.length() > 0) 
-            core_.getXYPosition(xyStageLabel_, x, y);
-      } catch (Exception e) {
-          ReportingUtils.showError(e);
-      }
-
-      staticInfo_.x_ = x[0];
-      staticInfo_.y_ = y[0];
-      updateInfoDisplay();
-   }
-
-   private void updateStaticInfo() {
-      double zPos = 0.0;
-      double x[] = new double[1];
-      double y[] = new double[1];
-
-      try {
-         if (zStageLabel_.length() > 0) {
-            zPos = core_.getPosition(zStageLabel_);
-         }
-         if (xyStageLabel_.length() > 0) {
-            core_.getXYPosition(xyStageLabel_, x, y);
-         }
-      } catch (Exception e) {
-         ReportingUtils.showError(e, "Failed to get stage position");
-      }
-
-      staticInfo_.width_ = core_.getImageWidth();
-      staticInfo_.height_ = core_.getImageHeight();
-      staticInfo_.bytesPerPixel_ = core_.getBytesPerPixel();
-      staticInfo_.imageBitDepth_ = core_.getImageBitDepth();
-      staticInfo_.pixSizeUm_ = core_.getPixelSizeUm();
-      staticInfo_.zPos_ = zPos;
-      staticInfo_.x_ = x[0];
-      staticInfo_.y_ = y[0];
-
-      updateInfoDisplay();
+      staticInfo_.getNewXYStagePosition();
    }
 
    public void toggleShutter() {
@@ -1208,7 +1133,7 @@ public class MMStudio implements ScriptInterface {
    }
 
    private boolean isCameraAvailable() {
-      return cameraLabel_.length() > 0;
+      return staticInfo_.cameraLabel_.length() > 0;
    }
 
    /**
@@ -1400,7 +1325,7 @@ public class MMStudio implements ScriptInterface {
          // Ensure that the acquisition is ready before we add the image.
          snapLiveManager_.validateDisplayAndAcquisition(ti);
          MDUtils.setSummary(ti.tags, getAcquisitionWithName(SnapLiveManager.SIMPLE_ACQ).getSummaryMetadata());
-         addStagePositionToTags(ti);
+         staticInfo_.addStagePositionToTags(ti);
          addImage(SnapLiveManager.SIMPLE_ACQ, ti, update, true);
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
@@ -1413,30 +1338,16 @@ public class MMStudio implements ScriptInterface {
       return true;
    }
    
-   private void addStagePositionToTags(TaggedImage ti) throws JSONException {
-      if (xyStageLabel_.length() > 0) {
-         MDUtils.setXPositionUm(ti.tags, staticInfo_.x_);
-         MDUtils.setYPositionUm(ti.tags, staticInfo_.y_);
-      }
-      if (zStageLabel_.length() > 0) {
-         MDUtils.setZPositionUm(ti.tags, staticInfo_.zPos_);
+   private void configureBinningCombo() throws Exception {
+      if (staticInfo_.cameraLabel_.length() > 0) {
+         frame_.configureBinningComboForCamera(staticInfo_.cameraLabel_);
       }
    }
 
-    private void configureBinningCombo() throws Exception {
-        if (cameraLabel_.length() > 0) {
-            frame_.configureBinningComboForCamera(cameraLabel_);
-        }
-    }
-
    public void initializeGUI() {
       try {
-         // establish device roles
-         cameraLabel_ = core_.getCameraDevice();
-         shutterLabel_ = core_.getShutterDevice();
-         zStageLabel_ = core_.getFocusDevice();
-         xyStageLabel_ = core_.getXYStageDevice();
-         engine_.setZStageDevice(zStageLabel_);  
+         staticInfo_.refreshValues();
+         engine_.setZStageDevice(staticInfo_.zStageLabel_);  
   
          configureBinningCombo();
 
@@ -1466,29 +1377,6 @@ public class MMStudio implements ScriptInterface {
          ReportingUtils.showError(e);
       }
    }
-   
-   /**
-    * Update the little bit of text in the main display that shows the 
-    * camera dimensions, stage position, etc.
-    */
-   private void updateInfoDisplay() {
-      String dimText = "Image info (from camera): " + staticInfo_.width_ + " X " + staticInfo_.height_ + " X "
-            + staticInfo_.bytesPerPixel_ + ", Intensity range: " + staticInfo_.imageBitDepth_ + " bits";
-      dimText += ", " + TextUtils.FMT0.format(staticInfo_.pixSizeUm_ * 1000) + "nm/pix";
-      if (zStageLabel_.length() > 0) {
-         dimText += ", Z=" + TextUtils.FMT2.format(staticInfo_.zPos_) + "um";
-      }
-      if (xyStageLabel_.length() > 0) {
-         dimText += ", XY=(" + TextUtils.FMT2.format(staticInfo_.x_) + "," + TextUtils.FMT2.format(staticInfo_.y_) + ")um";
-      }
-      frame_.updateInfoDisplay(dimText);
-   }
- 
-   @Subscribe
-   public void onPixelSizeChanged(PixelSizeChangedEvent event) {
-      staticInfo_.pixSizeUm_ = event.getNewPixelSizeUm();
-      updateInfoDisplay();
-   }
 
    @Subscribe
    public void onPropertiesChanged(PropertiesChangedEvent event) {
@@ -1496,18 +1384,8 @@ public class MMStudio implements ScriptInterface {
    }
 
    @Subscribe
-   public void onStagePositionChanged(StagePositionChangedEvent event) {
-      updateZPos(event.getPos());
-   }
-
-   @Subscribe
-   public void onXYStagePositionChanged(XYStagePositionChangedEvent event) {
-      updateXYPos(event.getXPos(), event.getYPos());
-   }
-
-   @Subscribe
    public void onExposureChanged(ExposureChangedEvent event) {
-      if (event.getCameraName().equals(cameraLabel_)) {
+      if (event.getCameraName().equals(staticInfo_.cameraLabel_)) {
          frame_.setDisplayedExposureTime(event.getNewExposureTime());
       }
    }
@@ -1518,12 +1396,7 @@ public class MMStudio implements ScriptInterface {
 
    public void updateGUI(boolean updateConfigPadStructure, boolean fromCache) {
       try {
-         // establish device roles
-         cameraLabel_ = core_.getCameraDevice();
-         shutterLabel_ = core_.getShutterDevice();
-         zStageLabel_ = core_.getFocusDevice();
-         xyStageLabel_ = core_.getXYStageDevice();
-
+         staticInfo_.refreshValues();
          afMgr_.refresh();
 
          // camera settings
@@ -1533,9 +1406,9 @@ public class MMStudio implements ScriptInterface {
             configureBinningCombo();
             String binSize;
             if (fromCache) {
-               binSize = core_.getPropertyFromCache(cameraLabel_, MMCoreJ.getG_Keyword_Binning());
+               binSize = core_.getPropertyFromCache(staticInfo_.cameraLabel_, MMCoreJ.getG_Keyword_Binning());
             } else {
-               binSize = core_.getProperty(cameraLabel_, MMCoreJ.getG_Keyword_Binning());
+               binSize = core_.getProperty(staticInfo_.cameraLabel_, MMCoreJ.getG_Keyword_Binning());
             }
             frame_.setBinSize(binSize);
          }
@@ -1579,8 +1452,6 @@ public class MMStudio implements ScriptInterface {
       } catch (Exception e) {
          ReportingUtils.logError(e);
       }
-
-      updateStaticInfo();
       frame_.updateTitle(sysConfigFile_);
    }
 
@@ -2849,7 +2720,7 @@ public class MMStudio implements ScriptInterface {
       } catch (Exception e) {
          throw new MMScriptException(e.getMessage());
       }
-      updateStaticInfo();
+      staticInfo_.refreshValues();
       if (liveRunning) {
          enableLiveMode(true);
       }
