@@ -39,6 +39,7 @@ import mmcorej.Configuration;
 import mmcorej.StrVector;
 
 import org.micromanager.api.ScriptInterface;
+import org.micromanager.dialogs.PresetEditor;
 import org.micromanager.utils.*;
 
 

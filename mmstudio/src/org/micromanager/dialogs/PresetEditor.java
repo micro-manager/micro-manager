@@ -19,7 +19,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager;
+package org.micromanager.dialogs;
 
 
 import mmcorej.CMMCore;

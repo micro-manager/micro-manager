@@ -22,7 +22,7 @@
 //
 // CVS:          $Id: PresetEditor.java 2693 2009-07-02 17:22:39Z arthur $
 
-package org.micromanager;
+package org.micromanager.dialogs;
 
 import java.awt.Font;
 import java.awt.Rectangle;

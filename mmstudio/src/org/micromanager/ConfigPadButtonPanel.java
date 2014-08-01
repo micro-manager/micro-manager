@@ -1,5 +1,7 @@
 package org.micromanager;
 
+import com.swtdesigner.SwingResourceManager;
+
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.Insets;
@@ -15,8 +17,9 @@ import javax.swing.SwingConstants;
 
 import mmcorej.CMMCore;
 
-import com.swtdesigner.SwingResourceManager;
 import org.micromanager.api.ScriptInterface;
+import org.micromanager.dialogs.GroupEditor;
+import org.micromanager.dialogs.PresetEditor;
 import org.micromanager.utils.ReportingUtils;
 
 public final class ConfigPadButtonPanel extends JPanel {
