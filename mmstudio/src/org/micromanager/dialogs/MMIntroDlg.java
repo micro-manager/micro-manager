@@ -22,7 +22,11 @@
 //
 // CVS:          $Id$
 
-package org.micromanager;
+package org.micromanager.dialogs;
+
+import com.swtdesigner.SwingResourceManager;
+
+import ij.IJ;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -33,20 +37,19 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 
+import java.util.ArrayList;
+
+import javax.swing.BorderFactory;
+import javax.swing.border.EtchedBorder;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.border.LineBorder;
 
-
-import com.swtdesigner.SwingResourceManager;
-import ij.IJ;
-import java.util.ArrayList;
-import javax.swing.BorderFactory;
-import javax.swing.JComboBox;
-import javax.swing.JPanel;
-import javax.swing.border.EtchedBorder;
+import org.micromanager.MMStudio;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.JavaUtils;
 

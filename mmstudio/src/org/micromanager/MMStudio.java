@@ -76,6 +76,7 @@ import org.micromanager.conf2.MMConfigFileException;
 import org.micromanager.conf2.MicroscopeModel;
 
 import org.micromanager.dialogs.MMAboutDlg;
+import org.micromanager.dialogs.MMIntroDlg;
 
 import org.micromanager.events.EventManager;
 
