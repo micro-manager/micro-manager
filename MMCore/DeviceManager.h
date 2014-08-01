@@ -60,10 +60,9 @@ public:
    /**
     * \brief Load the specified device and assign a device label.
     */
-   boost::shared_ptr<DeviceInstance> LoadDevice(CMMCore* core,
-         const char* label,
-         boost::shared_ptr<LoadedDeviceAdapter> module,
-         const char* deviceName,
+   boost::shared_ptr<DeviceInstance>
+   LoadDevice(boost::shared_ptr<LoadedDeviceAdapter> module,
+         const std::string& deviceName, const std::string& label, CMMCore* core,
          boost::shared_ptr<mm::logging::Logger> deviceLogger,
          boost::shared_ptr<mm::logging::Logger> coreLogger);
 

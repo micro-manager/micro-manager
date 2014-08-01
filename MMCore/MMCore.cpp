@@ -767,43 +767,45 @@ vector<string> CMMCore::getDeviceLibraries() throw (CMMError)
  * Loads a device from the plugin library.
  * @param label    assigned name for the device during the core session
  * @param moduleName  the name of the device adapter module (short name, not full file name)
- * @param device   the name of the device. The name must correspond to one of the names recognized
+ * @param deviceName   the name of the device. The name must correspond to one of the names recognized
  *                 by the specific plugin library.
  */
-void CMMCore::loadDevice(const char* label, const char* moduleName, const char* device) throw (CMMError)
+void CMMCore::loadDevice(const char* label, const char* moduleName, const char* deviceName) throw (CMMError)
 {
    CheckDeviceLabel(label);
    if (!moduleName)
       throw CMMError("Null device adapter name");
-   if (!device)
+   if (!deviceName)
       throw CMMError("Null device name");
 
+   // Logger for logging from device adapter code
    boost::shared_ptr<mm::logging::Logger> deviceLogger =
       logManager_.NewLogger("dev:" + std::string(label));
+   // Logger for logging related to the device, by us the Core
    boost::shared_ptr<mm::logging::Logger> coreLogger =
       logManager_.NewLogger("Core:dev:" + std::string(label));
 
+   LOG_DEBUG(coreLogger_) << "Will load device " << deviceName <<
+      " from " << moduleName;
+
    try
    {
-      LOG_DEBUG(coreLogger_) << "Will load device " << device <<
-         " from " << moduleName;
-
       boost::shared_ptr<LoadedDeviceAdapter> module =
          pluginManager_.GetDeviceAdapter(moduleName);
       boost::shared_ptr<DeviceInstance> pDevice =
-         deviceManager_.LoadDevice(this, label, module, device,
+         deviceManager_.LoadDevice(module, deviceName, label, this,
                deviceLogger, coreLogger);
-
-      LOG_INFO(coreLogger_) << "Did load device " << device <<
-         " from " << moduleName << "; label = " << label;
-
       pDevice->SetCallback(callback_);
    }
-   catch (CMMError& err)
+   catch (const CMMError& e)
    {
-      logError("MMCore::loadDevice", err.getMsg().c_str());
-      throw;
+      throw CMMError("Failed to load device " + ToQuotedString(deviceName) +
+            " from adapter module " + ToQuotedString(moduleName),
+            e);
    }
+
+   LOG_INFO(coreLogger_) << "Did load device " << deviceName <<
+      " from " << moduleName << "; label = " << label;
 }
 
 void CMMCore::assignDefaultRole(boost::shared_ptr<DeviceInstance> pDevice)
@@ -6214,6 +6216,8 @@ void CMMCore::CheckDeviceLabel(const char* label) throw (CMMError)
 {
    if (!label)
       throw CMMError("Null device label", MMERR_NullPointerException);
+   if (strlen(label) == 0)
+      throw CMMError("Empty device label");
    if (ContainsForbiddenCharacters(label))
       throw CMMError("Device label " + ToQuotedString(label) + " contains reserved characters",
             MMERR_InvalidContents);

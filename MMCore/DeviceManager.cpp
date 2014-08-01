@@ -36,27 +36,25 @@ DeviceManager::~DeviceManager()
 
 
 boost::shared_ptr<DeviceInstance>
-DeviceManager::LoadDevice(CMMCore* core, const char* label,
-      boost::shared_ptr<LoadedDeviceAdapter> module,
-      const char* deviceName,
+DeviceManager::LoadDevice(boost::shared_ptr<LoadedDeviceAdapter> module,
+      const std::string& deviceName, const std::string& label, CMMCore* core,
       boost::shared_ptr<mm::logging::Logger> deviceLogger,
       boost::shared_ptr<mm::logging::Logger> coreLogger)
 {
    for (DeviceConstIterator it = devices_.begin(), end = devices_.end(); it != end; ++it)
    {
       if (it->first == label)
-         throw CMMError("The specified label " + ToQuotedString(label) + " is already in use",
-               MMERR_DuplicateLabel);
+      {
+         throw CMMError("The specified device label " + ToQuotedString(label) +
+               " is already in use", MMERR_DuplicateLabel);
+      }
    }
-
-   if (strlen(label) == 0)
-      throw CMMError("Invalid label (empty string)", MMERR_InvalidLabel);
 
    boost::shared_ptr<DeviceInstance> device = module->LoadDevice(core,
          deviceName, label, deviceLogger, coreLogger);
 
    char descr[MM::MaxStrLength] = "N/A";
-   module->GetDeviceDescription(deviceName, descr, MM::MaxStrLength);
+   module->GetDeviceDescription(deviceName.c_str(), descr, MM::MaxStrLength);
    device->SetDescription(descr);
 
    devices_.push_back(std::make_pair(label, device));
