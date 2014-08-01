@@ -1674,7 +1674,7 @@ int CPCOCam::SetROI(unsigned uX, unsigned uY, unsigned uXSize, unsigned uYSize)
       m_nRoiXMax = roiXMaxFull_ / m_nHBin;
     if(m_nRoiYMax > roiYMaxFull_ / m_nVBin)
       m_nRoiYMax = roiYMaxFull_ / m_nVBin;
-    SetNCheckROI(m_nRoiXMin, m_nRoiXMax, m_nRoiYMin, m_nRoiYMax);
+    SetNCheckROI(&m_nRoiXMin, &m_nRoiXMax, &m_nRoiYMin, &m_nRoiYMax);
   }
   nErr = SetupCamera();
   if (nErr != 0)
@@ -1686,30 +1686,33 @@ int CPCOCam::SetROI(unsigned uX, unsigned uY, unsigned uXSize, unsigned uYSize)
   return DEVICE_OK;
 }
 
-int CPCOCam::SetNCheckROI(int Roix0, int Roix1, int Roiy0, int Roiy1)
+int CPCOCam::SetNCheckROI(int *Roix0, int *Roix1, int *Roiy0, int *Roiy1)
 {
-  m_pCamera->strCam.strSensor.wRoiX0 = (WORD)Roix0;
-  m_pCamera->strCam.strSensor.wRoiY0 = (WORD)Roiy0;
-  m_pCamera->strCam.strSensor.wRoiX1 = (WORD)Roix1;
-  m_pCamera->strCam.strSensor.wRoiY1 = (WORD)Roiy1;
+  m_pCamera->strCam.strSensor.wRoiX0 = (WORD)*Roix0;
+  m_pCamera->strCam.strSensor.wRoiY0 = (WORD)*Roiy0;
+  m_pCamera->strCam.strSensor.wRoiX1 = (WORD)*Roix1;
+  m_pCamera->strCam.strSensor.wRoiY1 = (WORD)*Roiy1;
 
   WORD wmax;
   wmax = (m_pCamera->strCam.strSensor.wSensorformat == 1) ? m_pCamera->strCam.strSensor.strDescription.wMaxHorzResExtDESC
     : m_pCamera->strCam.strSensor.strDescription.wMaxHorzResStdDESC;
   WORD wRoiStepping = m_pCamera->strCam.strSensor.strDescription.wRoiHorStepsDESC;
 
-  m_pCamera->strCam.strSensor.wRoiX0 = m_nRoiXMin;
   if(wRoiStepping > 1)
   {
     m_pCamera->strCam.strSensor.wRoiX0 /= wRoiStepping;
     m_pCamera->strCam.strSensor.wRoiX0 *= wRoiStepping;
     m_pCamera->strCam.strSensor.wRoiX0 += 1;
   }
+  else
+  {
+    m_pCamera->strCam.strSensor.wRoiX0 = 1;
+    m_pCamera->strCam.strSensor.wRoiX1 = wmax;
+  }
 
   if(m_pCamera->strCam.strSensor.wRoiX0 < 1)
     m_pCamera->strCam.strSensor.wRoiX0 = 1;
 
-  m_pCamera->strCam.strSensor.wRoiX1 = m_nRoiXMax;
   if(wRoiStepping > 1)
   {
     m_pCamera->strCam.strSensor.wRoiX1 /= wRoiStepping;
@@ -1723,7 +1726,6 @@ int CPCOCam::SetNCheckROI(int Roix0, int Roix1, int Roiy0, int Roiy1)
 
   wmax = (m_pCamera->strCam.strSensor.wSensorformat == 1) ? m_pCamera->strCam.strSensor.strDescription.wMaxVertResExtDESC
     : m_pCamera->strCam.strSensor.strDescription.wMaxVertResStdDESC;
-  m_pCamera->strCam.strSensor.wRoiY0 = m_nRoiYMin;
 
   wRoiStepping = m_pCamera->strCam.strSensor.strDescription.wRoiVertStepsDESC;
 
@@ -1733,11 +1735,15 @@ int CPCOCam::SetNCheckROI(int Roix0, int Roix1, int Roiy0, int Roiy1)
     m_pCamera->strCam.strSensor.wRoiY0 *= wRoiStepping;
     m_pCamera->strCam.strSensor.wRoiY0 += 1;
   }
+  else
+  {
+    m_pCamera->strCam.strSensor.wRoiY0 = 1;
+    m_pCamera->strCam.strSensor.wRoiY1 = wmax;
+  }
 
   if(m_pCamera->strCam.strSensor.wRoiY0 < 1)
     m_pCamera->strCam.strSensor.wRoiY0 = 1;
 
-  m_pCamera->strCam.strSensor.wRoiY1 = m_nRoiYMax;
   if(wRoiStepping > 1)
   {
     m_pCamera->strCam.strSensor.wRoiY1 /= wRoiStepping;
@@ -1818,6 +1824,10 @@ int CPCOCam::SetNCheckROI(int Roix0, int Roix1, int Roiy0, int Roiy1)
         - m_pCamera->strCam.strSensor.wRoiY1 + 1;
     }
   }
+  *Roix0 = m_pCamera->strCam.strSensor.wRoiX0;
+  *Roiy0 = m_pCamera->strCam.strSensor.wRoiY0;
+  *Roix1 = m_pCamera->strCam.strSensor.wRoiX1;
+  *Roiy1 = m_pCamera->strCam.strSensor.wRoiY1;
   return PCO_NOERROR;
 }
 
@@ -1891,7 +1901,7 @@ int CPCOCam::ClearROI()
       m_nRoiYMin = 1;
       m_nRoiXMax = roiXMaxFull_ / m_nHBin;
       m_nRoiYMax = roiYMaxFull_ / m_nVBin;
-      SetNCheckROI(m_nRoiXMin, m_nRoiXMax, m_nRoiYMin, m_nRoiYMax);
+      SetNCheckROI(&m_nRoiXMin, &m_nRoiXMax, &m_nRoiYMin, &m_nRoiYMax);
     }
   }
   nErr = SetupCamera();
