@@ -12,6 +12,12 @@
 		<pathelement location="${mm.java.lib.gson}"/>
 		<pathelement location="${mm.java.lib.guava}"/>
 		<pathelement location="${mm.java.lib.imagej}"/>
+		<pathelement location="${mm.java.libs}/imglib2-2.0.0-beta-26.jar"/>
+		<pathelement location="${mm.java.libs}/imglib2-algorithms-2.0.0-beta-26.jar"/>
+		<pathelement location="${mm.java.libs}/imglib2-ij-2.0.0-beta-26.jar"/>
+		<pathelement location="${mm.java.libs}/imglib2-meta-2.0.0-beta-26.jar"/>
+		<pathelement location="${mm.java.libs}/imglib2-ops-2.0.0-beta-26.jar"/>
+		<pathelement location="${mm.java.libs}/imglib2-realtransform-2.0.0-beta-26.jar"/>
 		<pathelement location="${mm.java.lib.miglayout}"/>
 		<pathelement location="${mm.java.lib.mmcorej}"/>
 		<pathelement location="${mm.java.lib.rsyntaxtextarea}"/>

@@ -6,6 +6,12 @@
 	<property name="mm.clojure.lib.core-cache" location="${mm.java.libs}/core.cache.jar"/>
 	<property name="mm.clojure.lib.core-memoize" location="${mm.java.libs}/core.memoize.jar"/>
 	<property name="mm.clojure.lib.data-json" location="${mm.java.libs}/data.json.jar"/>
+	<property name="mm.java.lib.imglib2" location="${mm.java.libs}/imglib2-2.0.0-beta-26.jar"/>
+	<property name="mm.java.lib.imglib2-algorithms" location="${mm.java.libs}/imglib2-algorithms-2.0.0-beta-26.jar"/>
+	<property name="mm.java.lib.imglib2-ij" location="${mm.java.libs}/imglib2-ij-2.0.0-beta-26.jar"/>
+	<property name="mm.java.lib.imglib2-meta" location="${mm.java.libs}/imglib2-meta-2.0.0-beta-26.jar"/>
+	<property name="mm.java.lib.imglib2-ops" location="${mm.java.libs}/imglib2-ops-2.0.0-beta-26.jar"/>
+	<property name="mm.java.lib.imglib2-realtransform" location="${mm.java.libs}/imglib2-realtransform-2.0.0-beta-26.jar"/>
 	<property name="mm.java.lib.beanshell" location="${mm.java.libs}/bsh-2.0b4.jar"/>
 	<property name="mm.java.lib.clojure" location="${mm.java.libs}/clojure.jar"/>
 	<property name="mm.java.lib.commons-math" location="${mm.java.libs}/commons-math-2.0.jar"/>
