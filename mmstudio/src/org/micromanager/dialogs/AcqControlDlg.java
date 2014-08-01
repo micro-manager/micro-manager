@@ -1132,15 +1132,15 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
     */
    public void setChannelExposureTime(String channelGroup, String channel, 
            double exposure) {
-      if (channelGroup.equals(acqEng_.getChannelGroup())) {
-         if (acqEng_.getChannelConfigs().length > 0) {
-            for (String config : acqEng_.getChannelConfigs()) {
-               if (channel.equals(config)) {
-                  exposurePrefs_.putDouble("Exposure_" + acqEng_.getChannelGroup()
-                          + "_" + channel, exposure);
-                  model_.setChannelExposureTime(channelGroup, channel, exposure);
-               }
-            }
+      if (!channelGroup.equals(acqEng_.getChannelGroup()) ||
+               acqEng_.getChannelConfigs().length <= 0) {
+         return;
+      }
+      for (String config : acqEng_.getChannelConfigs()) {
+         if (channel.equals(config)) {
+            exposurePrefs_.putDouble("Exposure_" + acqEng_.getChannelGroup()
+                    + "_" + channel, exposure);
+            model_.setChannelExposureTime(channelGroup, channel, exposure);
          }
       }
    }
@@ -1236,7 +1236,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
       acqEng_.setFrames(numFrames, interval);
       acqEng_.enableFramesSetting(acqPrefs_.getBoolean(ACQ_ENABLE_MULTI_FRAME, false));
 
-       boolean framesEnabled = acqEng_.isFramesSettingEnabled(); 
+      boolean framesEnabled = acqEng_.isFramesSettingEnabled(); 
       framesPanel_.setSelected(framesEnabled);
       framesPanel_.setSelected(framesEnabled);
       Component[] comps = framesSubPanel_.getComponents();
@@ -1244,8 +1244,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
          for (Component co: ((JPanel)c).getComponents() )
             co.setEnabled(framesEnabled);
       framesPanel_.repaint();
-      
-      
+            
       numFrames_.setValue(acqEng_.getNumFrames());
 
       int unit = acqPrefs_.getInt(ACQ_TIME_UNIT, 0);
@@ -1277,7 +1276,6 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
       String os_name = System.getProperty("os.name", "");
       rootField_.setText(acqPrefs_.get(ACQ_ROOT_NAME, System.getProperty("user.home") + "/AcquisitionData"));
 
-
       acqEng_.setAcqOrderMode(acqPrefs_.getInt(ACQ_ORDER_MODE, acqEng_.getAcqOrderMode()));
 
       acqEng_.setDisplayMode(acqPrefs_.getInt(ACQ_DISPLAY_MODE, acqEng_.getDisplayMode()));
@@ -1287,7 +1285,6 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
       afPanel_.setSelected(acqEng_.isAutoFocusEnabled());
       acqEng_.keepShutterOpenForChannels(acqPrefs_.getBoolean(ACQ_CHANNELS_KEEP_SHUTTER_OPEN, false));
       acqEng_.keepShutterOpenForStack(acqPrefs_.getBoolean(ACQ_STACK_KEEP_SHUTTER_OPEN, false));
-
 
       ArrayList<Double> customIntervals = new ArrayList<Double>();
       int h = 0;
@@ -1361,7 +1358,6 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
       acqPrefs_.putBoolean(ACQ_SAVE_FILES, savePanel_.isSelected());
       acqPrefs_.put(ACQ_DIR_NAME, nameField_.getText());
       acqPrefs_.put(ACQ_ROOT_NAME, rootField_.getText());
-
 
       acqPrefs_.putInt(ACQ_ORDER_MODE, acqEng_.getAcqOrderMode());
 
@@ -1477,7 +1473,12 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
          acqPrefs_.clear();
          Preferences.importPreferences(in);
          loadAcqSettings();
-         GUIUtils.invokeAndWait(new updateGUI());
+         GUIUtils.invokeAndWait(new Runnable() {
+            @Override
+            public void run() {
+               updateGUIContents();
+            }
+         });
          acqDir_ = acqFile_.getParent();
          if (acqDir_ != null) {
             prefs_.put(ACQ_FILE_DIR, acqDir_);
@@ -1487,21 +1488,9 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
       }
    }
    
-   private class updateGUI implements Runnable {
-
-      public updateGUI() {
-      }
-
-      @Override
-      public void run() {
-         updateGUIContents();
-      }
-   }
-
    protected boolean saveAsAcqSettingsToFile() {
       saveAcqSettings();
       File f = FileDialogs.save(this, "Save the acquisition settings file", ACQ_SETTINGS_FILE);
-
       if (f != null) {
          FileOutputStream os;
          try {
@@ -1519,7 +1508,6 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
          }
          return true;
       }
-
       return false;
    }
    
@@ -1583,7 +1571,6 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
             }
             imagesPerChannel.add(num);
          }
-         
          numImages = 0;
          for (Integer i : imagesPerChannel) {
             numImages += i;
@@ -1599,9 +1586,6 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
          if (positions) {
             numImages *= numPositions;
          }
-         
-         
-         
       }
       
       double free = (double) Runtime.getRuntime().freeMemory();
