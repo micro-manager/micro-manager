@@ -110,9 +110,52 @@ MM_JNI_LIBRARY_PREFIX_SUFFIX
 AM_CONDITIONAL([NONSTD_JNI_PREFIX], [test "x$JNI_PREFIX" != xlib])
 
 
+AC_ARG_VAR([ANT], [Ant command])
+AC_ARG_VAR([ANTFLAGS], [Ant flags])
+MM_ARG_WITH_ANT
+AS_IF([test "x$want_ant" != xno],
+[
+   AS_IF([test -z "$ANT"],
+   [
+      AS_IF([test -z "$JAVA_HOME"],
+      [
+         AC_MSG_ERROR([Cannot determine JAVA_HOME, needed to determine how to run Ant. Either supply --with-java=JAVA_HOME, set the JAVA_HOME variable, or set the ANT variable])
+      ])
+      AS_IF([test -z "$ANTCMD"],
+      [
+         AC_PATH_PROG([ANTCMD], [ant])
+      ])
+      AS_IF([test -z "$ANTCMD"],
+      [
+         have_ant=no
+      ],
+      [
+         have_ant=yes
+         ANT="JAVA_HOME=$JAVA_HOME $ANTCMD"
+      ])
+
+      AS_IF([test "x$want_ant" = xyes],
+      [
+         AS_IF([test "x$have_ant" = xno],
+         [
+            AC_MSG_FAILURE([--with-ant was given, but test for Ant failed])
+         ])
+      ])
+   ],
+   [
+      have_ant=yes
+   ])
+   use_ant=$have_ant
+],
+[
+   use_ant=no
+])
+
+
 build_mmcorej=yes
 test "x$can_build_mmcore" = xno && build_mmcorej=no
 test "x$use_java" = xno && build_mmcorej=no
+test "x$use_ant" = xno && build_mmcorej=no
 test -z "$SWIG" && build_mmcorej=no
 AM_CONDITIONAL([BUILD_MMCOREJ], [test "x$build_mmcorej" = xyes])
 
@@ -377,6 +420,11 @@ if test "x$use_java" = xyes; then
 echo "   JAVA_HOME    = $JAVA_HOME"
 echo "   JNI_CPPFLAGS = $JNI_CPPFLAGS"
 echo "   JAVAC        = $JAVAC"
+echo ""
+fi
+
+if test "x$use_ant" = xyes; then
+echo "   ANT = $ANT"
 echo ""
 fi
 
