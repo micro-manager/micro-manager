@@ -115,7 +115,6 @@ import bsh.Interpreter;
 
 import com.swtdesigner.SwingResourceManager;
 
-import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
 
 import java.util.Collections;
@@ -977,34 +976,6 @@ public class MMStudio implements ScriptInterface {
    @Override
    public String openAcquisitionData(String dir, boolean inRam) throws MMScriptException {
       return openAcquisitionData(dir, inRam, true);
-   }
-
-   protected void zoomOut() {
-      ImageWindow curWin = WindowManager.getCurrentWindow();
-      if (curWin != null) {
-         ImageCanvas canvas = curWin.getCanvas();
-         Rectangle r = canvas.getBounds();
-         canvas.zoomOut(r.width / 2, r.height / 2);
-         // Fix the window title, which IJ just mangled.  
-         VirtualAcquisitionDisplay display = VirtualAcquisitionDisplay.getDisplay(curWin.getImagePlus()); 
-         if (display != null) { 
-            display.updateWindowTitleAndStatus(); 
-         } 
-      }
-   }
-
-   protected void zoomIn() {
-      ImageWindow curWin = WindowManager.getCurrentWindow();
-      if (curWin != null) {
-         ImageCanvas canvas = curWin.getCanvas();
-         Rectangle r = canvas.getBounds();
-         canvas.zoomIn(r.width / 2, r.height / 2);
-         // Fix the window title, which IJ just mangled.  
-         VirtualAcquisitionDisplay display = VirtualAcquisitionDisplay.getDisplay(curWin.getImagePlus()); 
-         if (display != null) { 
-            display.updateWindowTitleAndStatus(); 
-         }
-      }
    }
 
    protected void changeBinning() {

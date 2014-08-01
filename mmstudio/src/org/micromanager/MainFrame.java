@@ -3,6 +3,10 @@ package org.micromanager;
 import com.google.common.eventbus.Subscribe;
 import com.swtdesigner.SwingResourceManager;
 
+import ij.gui.ImageCanvas;
+import ij.gui.ImageWindow;
+import ij.WindowManager;
+
 import java.awt.Dimension;
 import java.awt.dnd.DropTarget;
 import java.awt.event.ActionEvent;
@@ -419,7 +423,7 @@ public class MainFrame extends JFrame implements LiveModeListener {
          new Runnable() {
             @Override
             public void run() {
-               studio_.zoomIn();
+               zoomIn();
             }
          },
          "zoom_in.png", topPanel, 80, 154, 110, 174);
@@ -429,7 +433,7 @@ public class MainFrame extends JFrame implements LiveModeListener {
          new Runnable() {
             @Override
             public void run() {
-               studio_.zoomOut();
+               zoomOut();
             }
          },
          "zoom_out.png", topPanel, 113, 154, 143, 174);
@@ -670,5 +674,33 @@ public class MainFrame extends JFrame implements LiveModeListener {
 
    public MetadataPanel getMetadataPanel() {
       return metadataPanel_;
+   }
+
+   protected void zoomOut() {
+      ImageWindow curWin = WindowManager.getCurrentWindow();
+      if (curWin != null) {
+         ImageCanvas canvas = curWin.getCanvas();
+         Rectangle r = canvas.getBounds();
+         canvas.zoomOut(r.width / 2, r.height / 2);
+         // Fix the window title, which IJ just mangled.  
+         VirtualAcquisitionDisplay display = VirtualAcquisitionDisplay.getDisplay(curWin.getImagePlus());
+         if (display != null) {
+            display.updateWindowTitleAndStatus();
+         }
+      }
+   }
+
+   protected void zoomIn() {
+      ImageWindow curWin = WindowManager.getCurrentWindow();
+      if (curWin != null) {
+         ImageCanvas canvas = curWin.getCanvas();
+         Rectangle r = canvas.getBounds();
+         canvas.zoomIn(r.width / 2, r.height / 2);
+         // Fix the window title, which IJ just mangled.  
+         VirtualAcquisitionDisplay display = VirtualAcquisitionDisplay.getDisplay(curWin.getImagePlus());
+         if (display != null) {
+            display.updateWindowTitleAndStatus();
+         }
+      }
    }
 }
