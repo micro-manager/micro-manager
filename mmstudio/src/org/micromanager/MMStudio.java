@@ -75,6 +75,8 @@ import org.micromanager.conf2.ConfiguratorDlg2;
 import org.micromanager.conf2.MMConfigFileException;
 import org.micromanager.conf2.MicroscopeModel;
 
+import org.micromanager.dialogs.MMAboutDlg;
+
 import org.micromanager.events.EventManager;
 
 import org.micromanager.graph.GraphData;
