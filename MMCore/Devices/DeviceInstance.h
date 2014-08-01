@@ -186,7 +186,7 @@ public:
    int GetPropertyUpperLimit(const char* name, double& hiLimit) const;
    int GetPropertyType(const char* name, MM::PropertyType& pt) const;
    unsigned GetNumberOfPropertyValues(const char* propertyName) const;
-   bool GetPropertyValueAt(const char* propertyName, unsigned index, char* value) const;
+   std::string GetPropertyValueAt(const std::string& propertyName, unsigned index) const;
    int IsPropertySequenceable(const char* name, bool& isSequenceable) const;
    int GetPropertySequenceMaxLength(const char* propertyName, long& nrEvents) const;
    int StartPropertySequence(const char* propertyName);

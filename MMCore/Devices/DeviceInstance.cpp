@@ -214,9 +214,21 @@ unsigned
 DeviceInstance::GetNumberOfPropertyValues(const char* propertyName) const
 { return pImpl_->GetNumberOfPropertyValues(propertyName); }
 
-bool
-DeviceInstance::GetPropertyValueAt(const char* propertyName, unsigned index, char* value) const
-{ return pImpl_->GetPropertyValueAt(propertyName, index, value); }
+std::string
+DeviceInstance::GetPropertyValueAt(const std::string& propertyName, unsigned index) const
+{
+   DeviceStringBuffer valueBuf(this, "GetPropertyValueAt");
+   bool ok = pImpl_->GetPropertyValueAt(propertyName.c_str(), index,
+         valueBuf.GetBuffer());
+   if (!ok)
+   {
+      throw CMMError("Device " + ToQuotedString(GetLabel()) +
+            ": cannot get allowed value at index " +
+            boost::lexical_cast<std::string>(index) + " of property " +
+            ToQuotedString(propertyName));
+   }
+   return valueBuf.Get();
+}
 
 int
 DeviceInstance::IsPropertySequenceable(const char* name, bool& isSequenceable) const

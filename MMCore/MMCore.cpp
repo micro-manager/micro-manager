@@ -3229,6 +3229,7 @@ std::vector<std::string> CMMCore::getAllowedPropertyValues(const char* label, co
 {
    if (IsCoreDeviceLabel(label))
       return properties_->GetAllowedValues(propName);
+
    boost::shared_ptr<DeviceInstance> pDevice = GetDeviceWithCheckedLabel(label);
    CheckPropertyName(propName);
 
@@ -3236,13 +3237,11 @@ std::vector<std::string> CMMCore::getAllowedPropertyValues(const char* label, co
 
    {
       mm::DeviceModuleLockGuard guard(pDevice);
-
-      for (unsigned i = 0, end = pDevice->GetNumberOfPropertyValues(propName); i < end; ++i)
+      unsigned nrValues = pDevice->GetNumberOfPropertyValues(propName);
+      valueList.reserve(nrValues);
+      for (unsigned i = 0; i < nrValues; ++i)
       {
-         char value[MM::MaxStrLength];
-         pDevice->GetPropertyValueAt(propName, i, value);
-         string strVal(value);
-         valueList.push_back(strVal);
+         valueList.push_back(pDevice->GetPropertyValueAt(propName, i));
       }
    }
 
