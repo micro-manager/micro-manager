@@ -168,8 +168,6 @@ public:
    int OnStatusChanged(const MM::Device* /* caller */);
    int OnPropertiesChanged(const MM::Device* /* caller */);
    int OnPropertyChanged(const MM::Device* device, const char* propName, const char* value);
-   int OnConfigGroupChanged(const char* groupName, const char* newConfigName);
-   int OnPixelSizeChanged(double newPixelSizeUm);
    int OnStagePositionChanged(const MM::Device* device, double pos);
    int OnXYStagePositionChanged(const MM::Device* device, double xpos, double ypos);
    int OnFinished(const MM::Device* /* caller */);
@@ -302,6 +300,9 @@ private:
    MMThreadLock* pValueChangeLock_;
 
    Metadata AddCameraMetadata(const MM::Device* caller, const Metadata* pMd);
+
+   int OnConfigGroupChanged(const char* groupName, const char* newConfigName);
+   int OnPixelSizeChanged(double newPixelSizeUm);
 };
 
 #endif // _CORECALLBACK_H_
