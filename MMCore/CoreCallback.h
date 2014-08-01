@@ -81,7 +81,7 @@ public:
 
       try
       {
-         MM::Device* pDevice = core_->GetDeviceWithCheckedLabel(label)->GetRawPtr();
+         MM::Device* pDevice = core_->deviceManager_.GetDevice(label)->GetRawPtr();
          if (pDevice == caller)
             return 0;
          return pDevice;
@@ -97,7 +97,7 @@ public:
       boost::shared_ptr<SerialInstance> pSerial;
       try
       {
-         pSerial = core_->GetDeviceWithCheckedLabelAndType<SerialInstance>(portName);
+         pSerial = core_->deviceManager_.GetDeviceOfType<SerialInstance>(portName);
       }
       catch (...)
       {
@@ -193,32 +193,29 @@ public:
       return 0;
    }
 
-   MM::State* GetStateDevice(const MM::Device* /* caller */, const char* deviceName)
+   MM::State* GetStateDevice(const MM::Device* /* caller */, const char* label)
    {
-      boost::shared_ptr<StateInstance> device;
-      try {
-         device = core_->GetDeviceWithCheckedLabelAndType<StateInstance>(deviceName);
-      } catch(...) {
-         //trap all exceptions
+      try
+      {
+         return core_->deviceManager_.GetDeviceOfType<StateInstance>(label)->
+            GetRawPtr();
+      }
+      catch (const CMMError&)
+      {
          return 0;
       }
-      if (device)
-         return device->GetRawPtr();
-      return 0;
    }
 
-   MM::SignalIO* GetSignalIODevice(const MM::Device* /* caller */, const char* deviceName)
+   MM::SignalIO* GetSignalIODevice(const MM::Device* /* caller */, const char* label)
    {
-      boost::shared_ptr<SignalIOInstance> device;
       try {
-         device = core_->GetDeviceWithCheckedLabelAndType<SignalIOInstance>(deviceName);
-      } catch(...) {
-         //trap all exceptions
+         return core_->deviceManager_.
+            GetDeviceOfType<SignalIOInstance>(label)->GetRawPtr();
+      }
+      catch (const CMMError&)
+      {
          return 0;
       }
-      if (device)
-         return device->GetRawPtr();
-      return 0;
    }
 
    MM::AutoFocus* GetAutoFocus(const MM::Device* /* caller */)

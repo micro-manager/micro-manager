@@ -19,6 +19,9 @@
 
 #include "../MMDevice/MMDevice.h"
 #include "../MMDevice/DeviceThreads.h"
+#include "CoreUtils.h"
+#include "Devices/DeviceInstance.h"
+#include "Error.h"
 #include "Logging/Logging.h"
 
 #include <boost/shared_ptr.hpp>
@@ -29,7 +32,6 @@
 #include <vector>
 
 class CMMCore;
-class DeviceInstance;
 class HubInstance;
 class LoadedDeviceAdapter;
 
@@ -78,7 +80,33 @@ public:
    /**
     * \brief Get a device by label.
     */
+   ///@{
    boost::shared_ptr<DeviceInstance> GetDevice(const std::string& label) const;
+   boost::shared_ptr<DeviceInstance> GetDevice(const char* label) const;
+   ///@}
+
+   /**
+    * \brief Get a device by label, requring a specific type.
+    */
+   ///@{
+   template <class TDeviceInstance>
+   boost::shared_ptr<TDeviceInstance>
+   GetDeviceOfType(boost::shared_ptr<DeviceInstance> device) const
+   {
+      if (device->GetType() != TDeviceInstance::RawDeviceClass::Type)
+         throw CMMError("Device " + ToQuotedString(device->GetLabel()) +
+               " is of the wrong type for the requested operation");
+      return boost::static_pointer_cast<TDeviceInstance>(device);
+   }
+
+   template <class TDeviceInstance>
+   boost::shared_ptr<TDeviceInstance> GetDeviceOfType(const std::string& label) const
+   { return GetDeviceOfType<TDeviceInstance>(GetDevice(label)); }
+
+   template <class TDeviceInstance>
+   boost::shared_ptr<TDeviceInstance> GetDeviceOfType(const char* label) const
+   { return GetDeviceOfType<TDeviceInstance>(GetDevice(label)); }
+   ///@}
 
    /**
     * \brief Get a device from a raw pointer to its MMDevice object.

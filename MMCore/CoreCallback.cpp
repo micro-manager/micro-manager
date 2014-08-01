@@ -439,7 +439,7 @@ int CoreCallback::WriteToSerial(const MM::Device* caller, const char* portName, 
    boost::shared_ptr<SerialInstance> pSerial;
    try
    {
-      pSerial = core_->GetDeviceWithCheckedLabelAndType<SerialInstance>(portName);
+      pSerial = core_->deviceManager_.GetDeviceOfType<SerialInstance>(portName);
    }
    catch (CMMError& err)
    {
@@ -465,7 +465,7 @@ int CoreCallback::ReadFromSerial(const MM::Device* caller, const char* portName,
    boost::shared_ptr<SerialInstance> pSerial;
    try
    {
-      pSerial = core_->GetDeviceWithCheckedLabelAndType<SerialInstance>(portName);
+      pSerial = core_->deviceManager_.GetDeviceOfType<SerialInstance>(portName);
    }
    catch (CMMError& err)
    {
@@ -491,7 +491,7 @@ int CoreCallback::PurgeSerial(const MM::Device* caller, const char* portName)
    boost::shared_ptr<SerialInstance> pSerial;
    try
    {
-      pSerial = core_->GetDeviceWithCheckedLabelAndType<SerialInstance>(portName);
+      pSerial = core_->deviceManager_.GetDeviceOfType<SerialInstance>(portName);
    }
    catch (CMMError& err)
    {

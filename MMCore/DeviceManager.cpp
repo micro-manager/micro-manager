@@ -23,6 +23,8 @@
 #include "Error.h"
 #include "LoadableModules/LoadedDeviceAdapter.h"
 
+#include <algorithm>
+
 namespace mm
 {
 
@@ -140,19 +142,42 @@ DeviceManager::UnloadAllDevices()
 }
 
 
+namespace
+{
+   class DevicePairMatcheslabel
+   {
+      std::string s_;
+   public:
+      DevicePairMatcheslabel(const std::string& s) : s_(s) {}
+      bool operator()(const std::pair< std::string,
+            boost::shared_ptr<DeviceInstance> >& p) const
+      { return p.first == s_; }
+   };
+} // anonymous namespace
+
+
 boost::shared_ptr<DeviceInstance>
 DeviceManager::GetDevice(const std::string& label) const
 {
-   for (DeviceConstIterator it = devices_.begin(), end = devices_.end(); it != end; ++it)
+   DeviceConstIterator found =
+      std::find_if(devices_.begin(), devices_.end(),
+            DevicePairMatcheslabel(label));
+   if (found == devices_.end())
    {
-      if (it->first == label)
-      {
-         return it->second;
-      }
+      throw CMMError("No device with label " + ToQuotedString(label));
    }
+   return found->second;
+}
 
-   std::string msg = "No device with label \"" + label + "\"";
-   throw CMMError(msg.c_str(), MMERR_InvalidLabel);
+
+boost::shared_ptr<DeviceInstance>
+DeviceManager::GetDevice(const char* label) const
+{
+   if (!label)
+   {
+      throw CMMError("Null device label");
+   }
+   return GetDevice(std::string(label));
 }
 
 

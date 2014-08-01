@@ -609,15 +609,6 @@ private:
    static void CheckConfigPresetName(const char* presetName) throw (CMMError);
    static void CheckPropertyBlockName(const char* blockName) throw (CMMError);
    bool IsCoreDeviceLabel(const char* label) const throw (CMMError);
-   boost::shared_ptr<DeviceInstance> GetDeviceWithCheckedLabel(const char* label) const throw (CMMError);
-   template <class TDeviceInstance>
-   boost::shared_ptr<TDeviceInstance> GetDeviceWithCheckedLabelAndType(const char* label) const throw (CMMError)
-   {
-      boost::shared_ptr<DeviceInstance> device = GetDeviceWithCheckedLabel(label);
-      if (device->GetType() != TDeviceInstance::RawDeviceClass::Type)
-         throw CMMError("Device " + ToQuotedString(label) + " is of the wrong type for the requested operation");
-      return boost::static_pointer_cast<TDeviceInstance>(device);
-   }
 
    void applyConfiguration(const Configuration& config) throw (CMMError);
    int applyProperties(std::vector<PropertySetting>& props, std::string& lastError);
