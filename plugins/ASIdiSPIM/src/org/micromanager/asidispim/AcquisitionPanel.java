@@ -21,6 +21,7 @@
 package org.micromanager.asidispim;
 
 
+import org.micromanager.asidispim.Data.AcquisitionModes;
 import org.micromanager.asidispim.Data.Cameras;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.Joystick;
@@ -29,6 +30,7 @@ import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Utils.DevicesListenerInterface;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.PanelUtils;
+import org.micromanager.asidispim.Utils.SliceTiming;
 import org.micromanager.asidispim.Utils.StagePositionUpdater;
 
 import java.awt.Color;
@@ -132,58 +134,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final JButton calculateSliceTiming_;
    private final JCheckBox separateTimePointsCB_;
    private final JCheckBox saveCB_;
+   private final JComboBox spimMode_;
    
    
-   /**
-    * Associative container for slice timing information.
-    * @author Jon
-    *
-    */
-   public static class SliceTiming {
-      float scanDelay;
-      int scanNum;
-      int scanPeriod;
-      float laserDelay;
-      float laserDuration;
-      float cameraDelay;
-      float cameraDuration;
-
-      /**
-       * Chooses some reasonable defaults (may not be controller defaults).
-       */
-      public SliceTiming() {
-         scanDelay = 0;
-         scanNum = 1;
-         scanPeriod = 10;
-         laserDelay = 0;
-         laserDuration = 1;
-         cameraDelay = 0;
-         cameraDuration = 1;
-      }
-      
-      @Override
-      public boolean equals(Object obj) {
-         if ((obj instanceof SliceTiming)) {
-            SliceTiming s = (SliceTiming) obj;
-            return(scanDelay == s.scanDelay
-                  && scanNum == s.scanNum
-                  && scanPeriod == s.scanPeriod
-                  && laserDelay == s.laserDelay
-                  && laserDuration == s.laserDuration
-                  && cameraDelay == s.cameraDelay
-                  && cameraDuration == s.cameraDuration);
-         } else {
-            return false;
-         }
-         
-         
-      }
-    
-   }
-   
-   //private static final String ZSTEPTAG = "z-step_um";
-//   private static final String ELAPSEDTIME = "ElapsedTime-ms";
-
    public AcquisitionPanel(ScriptInterface gui, 
            Devices devices, 
            Properties props, 
@@ -207,6 +160,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       numTimePointsDone_ = 0;
       
       PanelUtils pu = new PanelUtils(gui_, prefs_);
+      
+      AcquisitionModes acqModes = new AcquisitionModes(devices_, props_, prefs_);
 
       // added to spinner controls where we should re-calculate the displayed
       // slice period, volume duration, and time lapse duration
@@ -569,6 +524,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       add(buttonStart_, "cell 0 2, split 2, center");
       add(buttonStop_, "center");
       add(acquisitionStatusLabel_, "center");
+
+      add(new JLabel("SPIM mode: "), "split 2, left");
+      spimMode_ = acqModes.getAcqModeComboBox(); 
+      add(spimMode_);
       
       // properly initialize the advanced slice timing
       advancedSliceTimingCB_.addActionListener(sliceTimingDisableGUIInputs);
@@ -580,7 +539,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       updateActualVolumeDurationLabel();
       updateActualTimeLapseDurationLabel();
       
-
    }//end constructor
 
    
@@ -1063,6 +1021,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                int numSlices = (Integer) numSlices_.getValue();
                float piezoAmplitude = (float) ( (numSlices - 1) * 
                        PanelUtils.getSpinnerFloatValue(stepSize_));
+               
+               if (spimMode_.getSelectedItem().
+                     equals(AcquisitionModes.Keys.SLICE_SCAN_ONLY)) {
+                  piezoAmplitude = 0;
+               }
                
                if (sideActiveA) {
                   float sliceARate = prefs_.getFloat(
