@@ -10,7 +10,7 @@ mmautofocus_DATA = \
 autofocus.stamp:
 	@rm -f autofocus.tmp
 	@touch autofocus.tmp
-	$(ANT) $(ANTFLAGS) jar
+	$(ANT) -Dmm.javacflags="$(JAVACFLAGS)" $(ANTFLAGS) jar
 	@mv -f autofocus.tmp $@
 
 $(mmautofocus_DATA): autofocus.stamp

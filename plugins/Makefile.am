@@ -33,7 +33,7 @@ nobase_mmplugin_DATA = \
 plugins.stamp:
 	@rm -f plugins.tmp
 	@touch plugins.tmp
-	$(ANT) $(ANTFLAGS) -Dplugin.outdir=`pwd` jar
+	$(ANT) -Dmm.javacflags="$(JAVACFLAGS)" $(ANTFLAGS) -Dplugin.outdir=`pwd` jar
 	@mv -f plugins.tmp $@
 
 $(nobase_mmplugin_DATA): plugins.stamp

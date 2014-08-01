@@ -32,6 +32,9 @@
 	<!-- Whether to use Fiji-compatible directory structure -->
 	<property name="mm.build.for.imagej2updater" value="false"/>
 
+	<!-- Pass options to all invocations of javac -->
+	<property name="mm.javacflags" value=""/>
+
 	<!-- Get the properties for platform, arch, etc. -->
 	<include file="Ant/target.xml"/>
 
@@ -67,6 +70,7 @@
 			optimize="on" deprecation="on"
 			source="1.6" target="1.6" includeAntRuntime="true">
 			<compilerarg value="-Xlint"/>
+			<compilerarg line="${mm.javacflags}"/>
 		</javac>
 	</presetdef>
 	<presetdef name="mm-javac">
@@ -74,6 +78,7 @@
 			optimize="on" deprecation="on"
 			source="1.6" target="1.6" includeAntRuntime="false">
 			<compilerarg value="-Xlint:all,-serial"/>
+			<compilerarg line="${mm.javacflags}"/>
 		</javac>
 	</presetdef>
 

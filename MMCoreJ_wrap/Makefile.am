@@ -71,7 +71,7 @@ gensrc/mmcorej/TaggedImage.java: TaggedImage.java
 # Use MMCoreJ_wrap.{h,cxx} to ensure SWIG has been run, but use the phony
 # target FORCE to always run Ant so that the Java source mtime is checked
 MMCoreJ.jar: gensrc/mmcorej/TaggedImage.java MMCoreJ_wrap.h MMCoreJ_wrap.cxx FORCE
-	$(ANT) $(ANTFLAGS) -Dsrcdir=gensrc jar
+	$(ANT) -Dmm.javacflags="$(JAVACFLAGS)" $(ANTFLAGS) -Dsrcdir=gensrc jar
 
 .PHONY: FORCE
 

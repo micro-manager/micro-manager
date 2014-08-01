@@ -3,7 +3,7 @@ jar_DATA = MMJ_.jar
 .PHONY: MMJ_.jar
 
 MMJ_.jar:
-	$(ANT) $(ANTFLAGS) jar
+	$(ANT) -Dmm.javacflags="$(JAVACFLAGS)" $(ANTFLAGS) jar
 
 
 # TODO Clean up javadoc build
