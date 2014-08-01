@@ -113,7 +113,6 @@ $EVAL ./configure \
    --prefix=$MM_BUILDDIR/it-is-a-bug-if-files-go-in-here \
    --disable-hardcoded-mmcorej-library-path \
    --with-boost=$MM_DEPS_PREFIX \
-   --with-zlib=$MM_MACOSX_SDKROOT/usr \
    --with-libdc1394 \
    --with-libusb-0-1 \
    --with-hidapi \

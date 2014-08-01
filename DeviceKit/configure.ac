@@ -26,12 +26,6 @@ AC_CHECK_LIB(dl, dlopen) # for dynamic linking on linux
 
 MM_INSTALL_DIRS
 
-
-# zlib
-MM_ARG_WITH_REQUIRED_LIB([zlib], [zlib], [ZLIB])
-MM_LIB_Z([$ZLIB_PREFIX], [], [MM_MSG_REQUIRED_LIB_FAILURE([zlib], [zlib])])
-
-
 # On the Mac we need some frameworks that can be in the way on Linux
 case $host in
    *apple-darwin*)

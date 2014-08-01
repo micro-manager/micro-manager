@@ -22,12 +22,6 @@ AX_BOOST_SYSTEM
 AX_BOOST_THREAD
 
 
-# zlib
-# TODO Make optional (MMDevice and device adapters do not need zlib)
-MM_ARG_WITH_REQUIRED_LIB([zlib], [zlib], [ZLIB])
-MM_LIB_Z([$ZLIB_PREFIX], [], [MM_MSG_REQUIRED_LIB_FAILURE([zlib], [zlib])])
-
-
 # AppleHost dependencies
 case $host in
    *apple-darwin*) MMCORE_APPLEHOST_LDFLAGS="-framework CoreFoundation -framework IOKit" ;;

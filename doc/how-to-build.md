@@ -56,7 +56,6 @@ You will also need subversion to obtain Micro-Manager source code.
 Required dependencies are:
 
 - Boost 1.46 or later
-- zlib
 
 To build MMCoreJ and the Java application (Micro-Manager Studio), you will need
 a Java Development Kit. Micro-Manager Java code is written in Java 1.6. On OS
