@@ -1266,12 +1266,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       return imageCache_.getSummaryMetadata();
    }
    
-   /*
-   public final JSONObject getImageMetadata(int channel, int slice, int frame, int position) {
-      return imageCache_.getImageTags(channel, slice, frame, position);
-   }
-    */
-
    /**
     * Closes the ImageWindow and associated ImagePlus
     * 
