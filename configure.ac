@@ -63,6 +63,7 @@ fi
 
 AC_ARG_VAR([JAVA_HOME], [JDK home directory])
 AC_ARG_VAR([JAVACFLAGS], [Java compiler flags])
+test "${JAVACFLAGS+set}" = set || JAVACFLAGS="-Xlint:all,-path,-serial"
 MM_ARG_WITH_JAVA
 AS_IF([test "x$want_java" != xno],
 [
