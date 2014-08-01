@@ -1,16 +1,27 @@
 <project name="mm.plugins" basedir="." default="jar">
+	<include file="../buildscripts/buildprops.xml"/>
 	<macrodef name="run-all">
 		<attribute name="target"/>
 		<attribute name="failonerror" default="true"/>
 		<sequential>
-			<subant target="@{target}" failonerror="@{failonerror}">
-				<fileset dir="." includes="*/build.xml"/>
-			</subant>
+			<if>
+				<istrue value="${mm.platform.is.windows}"/>
+				<then>
+					<subant target="@{target}" failonerror="@{failonerror}">
+						<fileset dir="." includes="*/build.xml"/>
+					</subant>
+				</then>
+				<else>
+					<subant target="@{target}" failonerror="@{failonerror}">
+						<fileset dir="." includes="*/build.xml">
+							<exclude name="DLLAutoReloader/build.xml"/>
+						</fileset>
+					</subant>
+				</else>
+			</if>
 		</sequential>
 	</macrodef>
 
-	<!-- Default -->
-	<property name="mm.build.failonerror" value="true"/>
 
 	<target name="compile">
 		<run-all target="compile" failonerror="${mm.build.failonerror}"/>

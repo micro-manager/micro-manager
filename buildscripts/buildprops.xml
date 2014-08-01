@@ -130,8 +130,7 @@
 						<arg value="@{namespace}"/>
 						<sysproperty key="clojure.compile.path" value="@{destdir}"/>
 						<sysproperty key="java.library.path" value="${mm.build.java.library.path}"/>
-						<!-- Prevent focus switch on OS X -->
-						<sysproperty key="apple.awt.UIElement" value="true"/>
+						<sysproperty key="java.awt.headless" value="true"/>
 						<classpath>
 							<pathelement location="@{destdir}"/>
 							<pathelement location="@{srcdir}"/>
