@@ -92,6 +92,7 @@ import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
 
 import org.micromanager.logging.LogFileManager;
 
+import org.micromanager.menus.FileMenu;
 import org.micromanager.menus.ToolsMenu;
 
 import org.micromanager.navigation.CenterAndDragListener;
@@ -383,7 +384,8 @@ public class MMStudio implements ScriptInterface {
 
       frame_.setJMenuBar(menuBar_);
 
-      initializeFileMenu();
+      FileMenu fileMenu = new FileMenu(studio_);
+      fileMenu.initializeFileMenu(menuBar_);
 
       toolsMenu_ = new ToolsMenu(studio_, core_, options_);
       toolsMenu_.initializeToolsMenu(menuBar_, mainPrefs_);
@@ -555,48 +557,6 @@ public class MMStudio implements ScriptInterface {
       for (int i = 0; i < channels; i++) {
          addToAlbum(ic.getImage(i, 0, 0, 0), ic.getDisplayAndComments());
       }
-   }
-
-   private void initializeFileMenu() {
-      JMenu fileMenu = GUIUtils.createMenuInMenuBar(menuBar_, "File");
-
-      GUIUtils.addMenuItem(fileMenu, "Open (Virtual)...", null,
-         new Runnable() {
-            @Override
-            public void run() {
-               new Thread() {
-                  @Override
-                  public void run() {
-                     openAcquisitionData(false);
-                  }
-               }.start();
-            }
-         }
-      );
-
-      GUIUtils.addMenuItem(fileMenu, "Open (RAM)...", null,
-         new Runnable() {
-            @Override
-            public void run() {
-               new Thread() {
-                  @Override
-                  public void run() {
-                     openAcquisitionData(true);
-                  }
-               }.start();
-            }
-         }
-      );
-
-      fileMenu.addSeparator();
-
-      GUIUtils.addMenuItem(fileMenu, "Exit", null,
-         new Runnable() {
-            public void run() {
-               closeSequence(false);
-            }
-         }
-      );
    }
 
    private void initializeHelpMenu() {
@@ -1057,21 +1017,20 @@ public class MMStudio implements ScriptInterface {
 
    /**
     * Open an existing acquisition directory and build viewer window.
-    *
     */
-   public void openAcquisitionData(boolean inRAM) {
-      File f = FileDialogs.openDir(frame_, "Please select an image data set", MM_DATA_SET);
+   public void promptForAcquisitionToOpen(boolean inRAM) {
+      File f = FileDialogs.openDir(frame_,
+            "Please select an image data set", MM_DATA_SET);
       if (f == null) {
          return;
       }
+      String path = f.getParent();
       if (f.isDirectory()) {
-         openAcqDirectory_ = f.getAbsolutePath();
-      } else {
-         openAcqDirectory_ = f.getParent();
+         path = f.getAbsolutePath();
       }
 
       try {
-         openAcquisitionData(openAcqDirectory_, inRAM);
+         openAcquisitionData(path, inRAM);
       } catch (MMScriptException ex) {
          ReportingUtils.showError(ex);
       }
