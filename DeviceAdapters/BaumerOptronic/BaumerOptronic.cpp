@@ -1394,9 +1394,6 @@ void BOImplementationThread::CancelROI()
 
 
 
-// Issue 2014-07-25: an error raises if set or clear ROI sequentially 
-// (if run `clearROI` or `setROI` just after `setROI`). It needs some pause
-// to run smooth.
 void BOImplementationThread::SetROI(const unsigned int x, const unsigned int y, const unsigned int xSize, const unsigned int ySize)
 {
    RECT returnedRect;
