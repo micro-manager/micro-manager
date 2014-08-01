@@ -86,6 +86,8 @@ import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
 
 import org.micromanager.logging.LogFileManager;
 
+import org.micromanager.menus.ToolsMenu;
+
 import org.micromanager.navigation.CenterAndDragListener;
 import org.micromanager.navigation.XYZKeyListener;
 import org.micromanager.navigation.ZWheelListener;

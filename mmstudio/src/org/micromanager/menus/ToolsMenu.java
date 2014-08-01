@@ -1,4 +1,4 @@
-package org.micromanager;
+package org.micromanager.menus;
 
 import ij.gui.Toolbar;
 import ij.IJ;
@@ -20,6 +20,10 @@ import javax.swing.UIManager;
 import mmcorej.CMMCore;
 
 import org.micromanager.conf2.ConfiguratorDlg2;
+import org.micromanager.dialogs.OptionsDlg;
+import org.micromanager.MainFrame;
+import org.micromanager.MMOptions;
+import org.micromanager.MMStudio;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.HotKeysDialog;

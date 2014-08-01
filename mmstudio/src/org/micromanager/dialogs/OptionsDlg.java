@@ -20,7 +20,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager;
+package org.micromanager.dialogs;
 
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
@@ -44,6 +44,10 @@ import mmcorej.CMMCore;
 
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.logging.LogFileManager;
+import org.micromanager.AcqControlDlg;
+import org.micromanager.MMOptions;
+import org.micromanager.MMStudio;
+import org.micromanager.RegistrationDlg;
 import org.micromanager.utils.GUIColors;
 import org.micromanager.utils.MMDialog;
 import org.micromanager.utils.NumberUtils;
