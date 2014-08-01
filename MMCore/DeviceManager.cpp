@@ -21,6 +21,7 @@
 #include "CoreUtils.h"
 #include "Devices/DeviceInstance.h"
 #include "Error.h"
+#include "LoadableModules/LoadedDeviceAdapter.h"
 
 namespace mm
 {
@@ -34,7 +35,8 @@ DeviceManager::~DeviceManager()
 
 boost::shared_ptr<DeviceInstance>
 DeviceManager::LoadDevice(CMMCore* core, const char* label,
-      const char* moduleName, const char* deviceName,
+      boost::shared_ptr<LoadedDeviceAdapter> module,
+      const char* deviceName,
       boost::shared_ptr<mm::logging::Logger> deviceLogger,
       boost::shared_ptr<mm::logging::Logger> coreLogger)
 {
@@ -47,9 +49,6 @@ DeviceManager::LoadDevice(CMMCore* core, const char* label,
 
    if (strlen(label) == 0)
       throw CMMError("Invalid label (empty string)", MMERR_InvalidLabel);
-
-   boost::shared_ptr<LoadedDeviceAdapter> module =
-      pluginManager_.GetDeviceAdapter(moduleName);
 
    boost::shared_ptr<DeviceInstance> device = module->LoadDevice(core,
          deviceName, label, deviceLogger, coreLogger);

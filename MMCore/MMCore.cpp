@@ -129,7 +129,6 @@ CMMCore::CMMCore() :
    externalCallback_(0),
    pixelSizeGroup_(0),
    cbuf_(0),
-   deviceManager_(pluginManager_),
    pPostedErrorsLock_(NULL)
 {
    configGroups_ = new ConfigGroupCollection();
@@ -760,16 +759,14 @@ vector<string> CMMCore::getDeviceLibraries() throw (CMMError)
 /**
  * Loads a device from the plugin library.
  * @param label    assigned name for the device during the core session
- * @param library  the name of the plugin library (dll). The name should be supplied without the
- *                 extension and path since the naming convention and locations are platform
- *                 dependent
+ * @param moduleName  the name of the device adapter module (short name, not full file name)
  * @param device   the name of the device. The name must correspond to one of the names recognized
  *                 by the specific plugin library.
  */
-void CMMCore::loadDevice(const char* label, const char* library, const char* device) throw (CMMError)
+void CMMCore::loadDevice(const char* label, const char* moduleName, const char* device) throw (CMMError)
 {
    CheckDeviceLabel(label);
-   if (!library)
+   if (!moduleName)
       throw CMMError("Null device adapter name");
    if (!device)
       throw CMMError("Null device name");
@@ -782,14 +779,16 @@ void CMMCore::loadDevice(const char* label, const char* library, const char* dev
    try
    {
       LOG_DEBUG(coreLogger_) << "Will load device " << device <<
-         " from " << library;
+         " from " << moduleName;
 
+      boost::shared_ptr<LoadedDeviceAdapter> module =
+         pluginManager_.GetDeviceAdapter(moduleName);
       boost::shared_ptr<DeviceInstance> pDevice =
-         deviceManager_.LoadDevice(this, label, library, device,
+         deviceManager_.LoadDevice(this, label, module, device,
                deviceLogger, coreLogger);
 
       LOG_INFO(coreLogger_) << "Did load device " << device <<
-         " from " << library << "; label = " << label;
+         " from " << moduleName << "; label = " << label;
 
       pDevice->SetCallback(callback_);
    }

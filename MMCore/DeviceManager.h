@@ -17,7 +17,6 @@
 
 #pragma once
 
-#include "PluginManager.h"
 #include "../MMDevice/MMDevice.h"
 #include "../MMDevice/DeviceThreads.h"
 #include "Logging/Logging.h"
@@ -32,6 +31,7 @@
 class CMMCore;
 class DeviceInstance;
 class HubInstance;
+class LoadedDeviceAdapter;
 
 
 namespace mm
@@ -39,8 +39,6 @@ namespace mm
 
 class DeviceManager /* final */
 {
-   CPluginManager& pluginManager_;
-
    // Store devices in an ordered container. We could use a map or hash map to
    // retrieve by name, but the number of devices is so small that it is not
    // known to be worth it.
@@ -55,17 +53,15 @@ class DeviceManager /* final */
    std::map< const MM::Device*, boost::weak_ptr<DeviceInstance> > deviceRawPtrIndex_;
 
 public:
-   // Temporarily use a reference to the plugin manager.
-   DeviceManager(CPluginManager& pluginManager) :
-      pluginManager_(pluginManager)
-   {}
    ~DeviceManager();
 
    /**
     * \brief Load the specified device and assign a device label.
     */
    boost::shared_ptr<DeviceInstance> LoadDevice(CMMCore* core,
-         const char* label, const char* moduleName, const char* deviceName,
+         const char* label,
+         boost::shared_ptr<LoadedDeviceAdapter> module,
+         const char* deviceName,
          boost::shared_ptr<mm::logging::Logger> deviceLogger,
          boost::shared_ptr<mm::logging::Logger> coreLogger);
 
