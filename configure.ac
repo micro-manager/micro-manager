@@ -114,10 +114,6 @@ AS_IF([test "x$want_ant" != xno],
 [
    AS_IF([test -z "$ANT"],
    [
-      AS_IF([test -z "$JAVA_HOME"],
-      [
-         AC_MSG_ERROR([Cannot determine JAVA_HOME, needed to determine how to run Ant. Either supply --with-java=JAVA_HOME, set the JAVA_HOME variable, or set the ANT variable])
-      ])
       AS_IF([test -z "$ANTCMD"],
       [
          AC_PATH_PROG([ANTCMD], [ant])
@@ -128,7 +124,13 @@ AS_IF([test "x$want_ant" != xno],
       ],
       [
          have_ant=yes
-         ANT="JAVA_HOME=$JAVA_HOME $ANTCMD"
+         AS_IF([test -n "$JAVA_HOME"],
+         [
+            ANT="JAVA_HOME=$JAVA_HOME $ANTCMD"
+         ],
+         [
+            ANT="$ANTCMD"
+         ])
       ])
 
       AS_IF([test "x$want_ant" = xyes],
