@@ -179,37 +179,37 @@ private:
    // Exposed through GetPropertyNames() only
    std::string GetPropertyName(size_t idx) const;
 public:
-   int GetPropertyReadOnly(const char* name, bool& readOnly) const;
-   int GetPropertyInitStatus(const char* name, bool& preInit) const;
-   int HasPropertyLimits(const char* name, bool& hasLimits) const;
-   int GetPropertyLowerLimit(const char* name, double& lowLimit) const;
-   int GetPropertyUpperLimit(const char* name, double& hiLimit) const;
-   int GetPropertyType(const char* name, MM::PropertyType& pt) const;
+   bool GetPropertyReadOnly(const char* name) const;
+   bool GetPropertyInitStatus(const char* name) const;
+   bool HasPropertyLimits(const char* name) const;
+   double GetPropertyLowerLimit(const char* name) const;
+   double GetPropertyUpperLimit(const char* name) const;
+   MM::PropertyType GetPropertyType(const char* name) const;
    unsigned GetNumberOfPropertyValues(const char* propertyName) const;
    std::string GetPropertyValueAt(const std::string& propertyName, unsigned index) const;
-   int IsPropertySequenceable(const char* name, bool& isSequenceable) const;
-   int GetPropertySequenceMaxLength(const char* propertyName, long& nrEvents) const;
-   int StartPropertySequence(const char* propertyName);
-   int StopPropertySequence(const char* propertyName);
-   int ClearPropertySequence(const char* propertyName);
-   int AddToPropertySequence(const char* propertyName, const char* value);
-   int SendPropertySequence(const char* propertyName);
+   bool IsPropertySequenceable(const char* name) const;
+   long GetPropertySequenceMaxLength(const char* propertyName) const;
+   void StartPropertySequence(const char* propertyName);
+   void StopPropertySequence(const char* propertyName);
+   void ClearPropertySequence(const char* propertyName);
+   void AddToPropertySequence(const char* propertyName, const char* value);
+   void SendPropertySequence(const char* propertyName);
    std::string GetErrorText(int code) const;
    bool Busy();
    double GetDelayMs() const;
    void SetDelayMs(double delay);
    bool UsesDelay();
-   int Initialize();
-   int Shutdown();
+   void Initialize();
+   void Shutdown();
    MM::DeviceType GetType() const; // TODO Make private (can use RTTI)
    std::string GetName() const;
    void SetCallback(MM::Core* callback);
-   int AcqBefore();
-   int AcqAfter();
-   int AcqBeforeFrame();
-   int AcqAfterFrame();
-   int AcqBeforeStack();
-   int AcqAfterStack();
+   void AcqBefore();
+   void AcqAfter();
+   void AcqBeforeFrame();
+   void AcqAfterFrame();
+   void AcqBeforeStack();
+   void AcqAfterStack();
    MM::DeviceDetectionStatus DetectDevice();
    void SetParentID(const char* parentId); // TODO Remove
    std::string GetParentID() const; // TODO Remove

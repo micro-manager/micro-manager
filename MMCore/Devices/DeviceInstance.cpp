@@ -186,29 +186,53 @@ DeviceInstance::GetPropertyName(size_t idx) const
    return nameBuf.Get();
 }
 
-int
-DeviceInstance::GetPropertyReadOnly(const char* name, bool& readOnly) const
-{ return pImpl_->GetPropertyReadOnly(name, readOnly); }
+bool
+DeviceInstance::GetPropertyReadOnly(const char* name) const
+{
+   bool readOnly;
+   ThrowIfError(pImpl_->GetPropertyReadOnly(name, readOnly));
+   return readOnly;
+}
 
-int
-DeviceInstance::GetPropertyInitStatus(const char* name, bool& preInit) const
-{ return pImpl_->GetPropertyInitStatus(name, preInit); }
+bool
+DeviceInstance::GetPropertyInitStatus(const char* name) const
+{
+   bool isPreInit;
+   ThrowIfError(pImpl_->GetPropertyInitStatus(name, isPreInit));
+   return isPreInit;
+}
 
-int
-DeviceInstance::HasPropertyLimits(const char* name, bool& hasLimits) const
-{ return pImpl_->HasPropertyLimits(name, hasLimits); }
+bool
+DeviceInstance::HasPropertyLimits(const char* name) const
+{
+   bool hasLimits;
+   ThrowIfError(pImpl_->HasPropertyLimits(name, hasLimits));
+   return hasLimits;
+}
 
-int
-DeviceInstance::GetPropertyLowerLimit(const char* name, double& lowLimit) const
-{ return pImpl_->GetPropertyLowerLimit(name, lowLimit); }
+double
+DeviceInstance::GetPropertyLowerLimit(const char* name) const
+{
+   double lowLimit;
+   ThrowIfError(pImpl_->GetPropertyLowerLimit(name, lowLimit));
+   return lowLimit;
+}
 
-int
-DeviceInstance::GetPropertyUpperLimit(const char* name, double& hiLimit) const
-{ return pImpl_->GetPropertyUpperLimit(name, hiLimit); }
+double
+DeviceInstance::GetPropertyUpperLimit(const char* name) const
+{
+   double highLimit;
+   ThrowIfError(pImpl_->GetPropertyUpperLimit(name, highLimit));
+   return highLimit;
+}
 
-int
-DeviceInstance::GetPropertyType(const char* name, MM::PropertyType& pt) const
-{ return pImpl_->GetPropertyType(name, pt); }
+MM::PropertyType
+DeviceInstance::GetPropertyType(const char* name) const
+{
+   MM::PropertyType propType;
+   ThrowIfError(pImpl_->GetPropertyType(name, propType));
+   return propType;
+}
 
 unsigned
 DeviceInstance::GetNumberOfPropertyValues(const char* propertyName) const
@@ -230,33 +254,51 @@ DeviceInstance::GetPropertyValueAt(const std::string& propertyName, unsigned ind
    return valueBuf.Get();
 }
 
-int
-DeviceInstance::IsPropertySequenceable(const char* name, bool& isSequenceable) const
-{ return pImpl_->IsPropertySequenceable(name, isSequenceable); }
+bool
+DeviceInstance::IsPropertySequenceable(const char* name) const
+{
+   bool isSequenceable;
+   ThrowIfError(pImpl_->IsPropertySequenceable(name, isSequenceable));
+   return isSequenceable;
+}
 
-int
-DeviceInstance::GetPropertySequenceMaxLength(const char* propertyName, long& nrEvents) const
-{ return pImpl_->GetPropertySequenceMaxLength(propertyName, nrEvents); }
+long
+DeviceInstance::GetPropertySequenceMaxLength(const char* propertyName) const
+{
+   long nrEvents;
+   ThrowIfError(pImpl_->GetPropertySequenceMaxLength(propertyName, nrEvents));
+   return nrEvents;
+}
 
-int
+void
 DeviceInstance::StartPropertySequence(const char* propertyName)
-{ return pImpl_->StartPropertySequence(propertyName); }
+{
+   ThrowIfError(pImpl_->StartPropertySequence(propertyName));
+}
 
-int
+void
 DeviceInstance::StopPropertySequence(const char* propertyName)
-{ return pImpl_->StopPropertySequence(propertyName); }
+{
+   ThrowIfError(pImpl_->StopPropertySequence(propertyName));
+}
 
-int
+void
 DeviceInstance::ClearPropertySequence(const char* propertyName)
-{ return pImpl_->ClearPropertySequence(propertyName); }
+{
+   ThrowIfError(pImpl_->ClearPropertySequence(propertyName));
+}
 
-int
+void
 DeviceInstance::AddToPropertySequence(const char* propertyName, const char* value)
-{ return pImpl_->AddToPropertySequence(propertyName, value); }
+{
+   ThrowIfError(pImpl_->AddToPropertySequence(propertyName, value));
+}
 
-int
+void
 DeviceInstance::SendPropertySequence(const char* propertyName)
-{ return pImpl_->SendPropertySequence(propertyName); }
+{
+   ThrowIfError(pImpl_->SendPropertySequence(propertyName));
+}
 
 std::string
 DeviceInstance::GetErrorText(int code) const
@@ -282,19 +324,23 @@ DeviceInstance::GetDelayMs() const
 
 void
 DeviceInstance::SetDelayMs(double delay)
-{ return pImpl_->SetDelayMs(delay); }
+{ pImpl_->SetDelayMs(delay); }
 
 bool
 DeviceInstance::UsesDelay()
 { return pImpl_->UsesDelay(); }
 
-int
+void
 DeviceInstance::Initialize()
-{ return pImpl_->Initialize(); }
+{
+   ThrowIfError(pImpl_->Initialize());
+}
 
-int
+void
 DeviceInstance::Shutdown()
-{ return pImpl_->Shutdown(); }
+{
+   ThrowIfError(pImpl_->Shutdown());
+}
 
 MM::DeviceType
 DeviceInstance::GetType() const
@@ -310,31 +356,43 @@ DeviceInstance::GetName() const
 
 void
 DeviceInstance::SetCallback(MM::Core* callback)
-{ return pImpl_->SetCallback(callback); }
+{ pImpl_->SetCallback(callback); }
 
-int
+void
 DeviceInstance::AcqBefore()
-{ return pImpl_->AcqBefore(); }
+{
+   ThrowIfError(pImpl_->AcqBefore());
+}
 
-int
+void
 DeviceInstance::AcqAfter()
-{ return pImpl_->AcqAfter(); }
+{
+   ThrowIfError(pImpl_->AcqAfter());
+}
 
-int
+void
 DeviceInstance::AcqBeforeFrame()
-{ return pImpl_->AcqBeforeFrame(); }
+{
+   ThrowIfError(pImpl_->AcqBeforeFrame());
+}
 
-int
+void
 DeviceInstance::AcqAfterFrame()
-{ return pImpl_->AcqAfterFrame(); }
+{
+   ThrowIfError(pImpl_->AcqAfterFrame());
+}
 
-int
+void
 DeviceInstance::AcqBeforeStack()
-{ return pImpl_->AcqBeforeStack(); }
+{
+   ThrowIfError(pImpl_->AcqBeforeStack());
+}
 
-int
+void
 DeviceInstance::AcqAfterStack()
-{ return pImpl_->AcqAfterStack(); }
+{
+   ThrowIfError(pImpl_->AcqAfterStack());
+}
 
 MM::DeviceDetectionStatus
 DeviceInstance::DetectDevice()
@@ -342,7 +400,7 @@ DeviceInstance::DetectDevice()
 
 void
 DeviceInstance::SetParentID(const char* parentId)
-{ return pImpl_->SetParentID(parentId); }
+{ pImpl_->SetParentID(parentId); }
 
 std::string
 DeviceInstance::GetParentID() const

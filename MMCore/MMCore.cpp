@@ -533,9 +533,16 @@ Configuration CMMCore::getSystemState()
             // allow throwing from this function. Keeping old behavior for now.
          }
 
-         bool readOnly;
-         pDev->GetPropertyReadOnly(it->c_str(), readOnly);
-
+         bool readOnly = false;
+         try
+         {
+            readOnly = pDev->GetPropertyReadOnly(it->c_str());
+         }
+         catch (const CMMError&)
+         {
+            // XXX BUG This should not be ignored, but the interface does not
+            // allow throwing from this function. Keeping old behavior for now.
+         }
          config.addSetting(PropertySetting(i->c_str(), it->c_str(), val.c_str(), readOnly));
       }
    }
@@ -971,12 +978,7 @@ void CMMCore::initializeAllDevices() throw (CMMError)
       }
       mm::DeviceModuleLockGuard guard(pDevice);
       LOG_INFO(coreLogger_) << "Will initialize device " << devices[i];
-      int nRet = pDevice->Initialize();
-      if (nRet != DEVICE_OK)
-      {
-         logError(devices[i].c_str(), getDeviceErrorText(nRet, pDevice).c_str());
-         throw CMMError(getDeviceErrorText(nRet, pDevice).c_str(), MMERR_DEVICE_GENERIC);
-      }
+      pDevice->Initialize();
       LOG_INFO(coreLogger_) << "Did initialize device " << devices[i];
 
       assignDefaultRole(pDevice);
@@ -1025,12 +1027,7 @@ void CMMCore::initializeDevice(const char* label ///< the device to initialize
    mm::DeviceModuleLockGuard guard(pDevice);
 
    LOG_INFO(coreLogger_) << "Will initialize device " << label;
-   int nRet = pDevice->Initialize();
-   if (nRet != DEVICE_OK)
-   {
-      logError(label, getDeviceErrorText(nRet, pDevice).c_str());
-      throw CMMError(getDeviceErrorText(nRet, pDevice).c_str(), MMERR_DEVICE_GENERIC);
-   }
+   pDevice->Initialize();
    LOG_INFO(coreLogger_) << "Did initialize device " << label;
    
    updateCoreProperties();
@@ -3427,12 +3424,7 @@ bool CMMCore::isPropertyReadOnly(const char* label, const char* propName) throw 
    CheckPropertyName(propName);
 
    mm::DeviceModuleLockGuard guard(pDevice);
-   bool bReadOnly;
-   int nRet = pDevice->GetPropertyReadOnly(propName, bReadOnly);
-   if (nRet != DEVICE_OK)
-      throw CMMError(getDeviceErrorText(nRet, pDevice));
-
-   return bReadOnly;
+   return pDevice->GetPropertyReadOnly(propName);
 }
 
 /**
@@ -3450,12 +3442,7 @@ bool CMMCore::isPropertyPreInit(const char* label, const char* propName) throw (
    CheckPropertyName(propName);
 
    mm::DeviceModuleLockGuard guard(pDevice);
-   bool preInit;
-   int nRet = pDevice->GetPropertyInitStatus(propName, preInit);
-   if (nRet != DEVICE_OK)
-      throw CMMError(getDeviceErrorText(nRet, pDevice));
-
-   return preInit;
+   return pDevice->GetPropertyInitStatus(propName);
 }
 
 /**
@@ -3469,11 +3456,7 @@ double CMMCore::getPropertyLowerLimit(const char* label, const char* propName) t
    CheckPropertyName(propName);
 
    mm::DeviceModuleLockGuard guard(pDevice);
-   double limit;
-   int ret = pDevice->GetPropertyLowerLimit(propName, limit);
-   if (ret != DEVICE_OK)
-      throw CMMError(getDeviceErrorText(ret, pDevice));
-   return limit;
+   return pDevice->GetPropertyLowerLimit(propName);
 }
 
 /**
@@ -3487,11 +3470,7 @@ double CMMCore::getPropertyUpperLimit(const char* label, const char* propName) t
    CheckPropertyName(propName);
 
    mm::DeviceModuleLockGuard guard(pDevice);
-   double limit;
-   int ret = pDevice->GetPropertyUpperLimit(propName, limit);
-   if (ret != DEVICE_OK)
-      throw CMMError(getDeviceErrorText(ret, pDevice));
-   return limit;
+   return pDevice->GetPropertyUpperLimit(propName);
 }
 
 /**
@@ -3507,11 +3486,7 @@ bool CMMCore::hasPropertyLimits(const char* label, const char* propName) throw (
    CheckPropertyName(propName);
 
    mm::DeviceModuleLockGuard guard(pDevice);
-   bool hasLimits;
-   int ret = pDevice->HasPropertyLimits(propName, hasLimits);
-   if (ret != DEVICE_OK)
-      throw CMMError(getDeviceErrorText(ret, pDevice));
-   return hasLimits;
+   return pDevice->HasPropertyLimits(propName);
 }
 
 /**
@@ -3527,11 +3502,7 @@ bool CMMCore::isPropertySequenceable(const char* label, const char* propName) th
    CheckPropertyName(propName);
 
    mm::DeviceModuleLockGuard guard(pDevice);
-   bool isSequenceable;
-   int ret = pDevice->IsPropertySequenceable(propName, isSequenceable);
-   if (ret != DEVICE_OK)
-      throw CMMError(getDeviceErrorText(ret, pDevice));
-   return isSequenceable;
+   return pDevice->IsPropertySequenceable(propName);
 }
 
 
@@ -3548,11 +3519,7 @@ long CMMCore::getPropertySequenceMaxLength(const char* label, const char* propNa
    CheckPropertyName(propName);
 
    mm::DeviceModuleLockGuard guard(pDevice);
-   long numEvents;
-   int ret = pDevice->GetPropertySequenceMaxLength(propName, numEvents);
-   if (ret != DEVICE_OK)
-      throw CMMError(getDeviceErrorText(ret, pDevice));
-   return numEvents;
+   return pDevice->GetPropertySequenceMaxLength(propName);
 }
 
 
@@ -3571,9 +3538,7 @@ void CMMCore::startPropertySequence(const char* label, const char* propName) thr
    CheckPropertyName(propName);
 
    mm::DeviceModuleLockGuard guard(pDevice);
-   int ret = pDevice->StartPropertySequence(propName);
-   if (ret != DEVICE_OK)
-      throw CMMError(getDeviceErrorText(ret, pDevice));
+   pDevice->StartPropertySequence(propName);
 }
 
 /**
@@ -3591,9 +3556,7 @@ void CMMCore::stopPropertySequence(const char* label, const char* propName) thro
    CheckPropertyName(propName);
 
    mm::DeviceModuleLockGuard guard(pDevice);
-   int ret = pDevice->StopPropertySequence(propName);
-   if (ret != DEVICE_OK)
-      throw CMMError(getDeviceErrorText(ret, pDevice));
+   pDevice->StopPropertySequence(propName);
 }
 
 /**
@@ -3612,9 +3575,7 @@ void CMMCore::loadPropertySequence(const char* label, const char* propName, std:
    CheckPropertyName(propName);
    
    mm::DeviceModuleLockGuard guard(pDevice);
-   int ret = pDevice->ClearPropertySequence(propName);
-   if (ret != DEVICE_OK)
-      throw CMMError(getDeviceErrorText(ret, pDevice));
+   pDevice->ClearPropertySequence(propName);
 
    std::vector<std::string>::iterator it;
    for (std::vector<std::string>::const_iterator it = eventSequence.begin(),
@@ -3622,14 +3583,10 @@ void CMMCore::loadPropertySequence(const char* label, const char* propName, std:
          it < end; ++it)
    {
       CheckPropertyValue(it->c_str());
-      ret = pDevice->AddToPropertySequence(propName, it->c_str());
-      if (ret != DEVICE_OK)
-         throw CMMError(getDeviceErrorText(ret, pDevice));
+      pDevice->AddToPropertySequence(propName, it->c_str());
    }
 
-   ret = pDevice->SendPropertySequence(propName);
-   if (ret != DEVICE_OK)
-      throw CMMError(getDeviceErrorText(ret, pDevice));
+   pDevice->SendPropertySequence(propName);
 }
 
 /**
@@ -3644,11 +3601,7 @@ MM::PropertyType CMMCore::getPropertyType(const char* label, const char* propNam
    CheckPropertyName(propName);
 
    mm::DeviceModuleLockGuard guard(pDevice);
-   MM::PropertyType pt;
-   int ret = pDevice->GetPropertyType(propName, pt);
-   if (ret != DEVICE_OK)
-      throw CMMError(getDeviceErrorText(ret, pDevice));
-   return pt;
+   return pDevice->GetPropertyType(propName);
 }
 
 
@@ -5592,9 +5545,8 @@ void CMMCore::saveSystemConfiguration(const char* fileName) throw (CMMError)
       if (pDevice)
       {
          mm::DeviceModuleLockGuard guard(pDevice);
-         bool initStatus = false;
-         pDevice->GetPropertyInitStatus(s.getPropertyName().c_str(), initStatus);
-         if (initStatus)
+         bool isPreInit = pDevice->GetPropertyInitStatus(s.getPropertyName().c_str());
+         if (isPreInit)
          {
             os << MM::g_CFGCommand_Property << ',' << s.getDeviceLabel()
                << ',' << s.getPropertyName() << ',' << s.getPropertyValue() << endl;
@@ -6519,12 +6471,7 @@ void CMMCore::acqBeforeFrame() throw (CMMError)
       currentImageProcessor_.lock();
    if (imageProcessor)
    {
-      int ret = imageProcessor->AcqBeforeFrame();
-      if (ret != DEVICE_OK)
-      {
-         logError(imageProcessor->GetName().c_str(), getDeviceErrorText(ret, imageProcessor).c_str());
-         throw CMMError(getDeviceErrorText(ret, imageProcessor).c_str(), MMERR_DEVICE_GENERIC);
-      }
+      imageProcessor->AcqBeforeFrame();
    }
 }
 
@@ -6534,12 +6481,7 @@ void CMMCore::acqAfterFrame() throw (CMMError)
       currentImageProcessor_.lock();
    if (imageProcessor)
    {
-      int ret = imageProcessor->AcqAfterFrame();
-      if (ret != DEVICE_OK)
-      {
-         logError(imageProcessor->GetName().c_str(), getDeviceErrorText(ret, imageProcessor).c_str());
-         throw CMMError(getDeviceErrorText(ret, imageProcessor).c_str(), MMERR_DEVICE_GENERIC);
-      }
+      imageProcessor->AcqAfterFrame();
    }
 }
 
