@@ -230,7 +230,7 @@ public class MMStudio implements ScriptInterface {
    private Color[] multiCameraColors_ = {Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW, Color.CYAN};
    private boolean liveModeSuspended_;
    public static final String SIMPLE_ACQ = "Snap/Live Window";
-   public static FileType MM_CONFIG_FILE
+   public static final FileType MM_CONFIG_FILE
             = new FileType("MM_CONFIG_FILE",
                            "Micro-Manager Config File",
                            "./MyScope.cfg",
@@ -248,7 +248,7 @@ public class MMStudio implements ScriptInterface {
    private JMenuBar menuBar_;
    private final JMenu switchConfigurationMenu_;
    private JCheckBoxMenuItem centerAndDragMenuItem_;
-   public static FileType MM_DATA_SET 
+   public static final FileType MM_DATA_SET 
            = new FileType("MM_DATA_SET",
                  "Micro-Manager Image Location",
                  System.getProperty("user.home") + "/Untitled",
@@ -261,8 +261,7 @@ public class MMStudio implements ScriptInterface {
    /**
     * Simple class used to cache static info
     */
-   private class StaticInfo {
-
+   private static class StaticInfo {
       public long width_;
       public long height_;
       public long bytesPerPixel_;
@@ -281,7 +280,7 @@ public class MMStudio implements ScriptInterface {
    public static void main(String args[]) {
       try {
          UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-         MMStudio studio = new MMStudio(false);
+         new MMStudio(false);
       } catch (Throwable e) {
          ReportingUtils.showError(e, "A java error has caused Micro-Manager to exit.");
          System.exit(1);
@@ -415,7 +414,9 @@ public class MMStudio implements ScriptInterface {
       }
       // Initialize hardware.
       String logFileName = LogFileManager.makeLogFileNameForCurrentSession();
-      new File(logFileName).getParentFile().mkdirs();
+      if (!(new File(logFileName).getParentFile().mkdirs())) {
+         ReportingUtils.logError("Failed to setup logging directories.");
+      }
       try {
          core_.setPrimaryLogFile(logFileName);
       }
@@ -797,7 +798,7 @@ public class MMStudio implements ScriptInterface {
               "Create keyboard shortcuts to activate image acquisition, mark positions, or run custom scripts",
               new Runnable() {
                  public void run() {
-                    HotKeysDialog hk = new HotKeysDialog(guiColors_.background.get((options_.displayBackground_)));
+                    new HotKeysDialog(guiColors_.background.get((options_.displayBackground_)));
                  }
               });
 
@@ -2008,7 +2009,7 @@ public class MMStudio implements ScriptInterface {
 
    @Subscribe
    public void onExposureChanged(ExposureChangedEvent event) {
-      if (event.getCameraName() == cameraLabel_) {
+      if (event.getCameraName().equals(cameraLabel_)) {
          frame_.setDisplayedExposureTime(event.getNewExposureTime());
       }
    }
@@ -2153,15 +2154,14 @@ public class MMStudio implements ScriptInterface {
          acqControlWin_.close();
       }
 
-      if (engine_ != null) {
-         engine_.shutdown();
-      }
-
       if (afMgr_ != null) {
          afMgr_.closeOptionsDialog();
       }
-
-      engine_.disposeProcessors();
+      
+      if (engine_ != null) {
+         engine_.shutdown();
+         engine_.disposeProcessors();
+      }
 
       pluginLoader_.disposePlugins();
 
@@ -3032,26 +3032,25 @@ public class MMStudio implements ScriptInterface {
       // TODO: complete the tag set and initialize the acquisition
       MMAcquisition acq = acqMgr_.getAcquisition(name);
 
-      int positions = acq.getPositions();
-      
       // check position, for multi-position data set the number of declared positions should be at least 2
       if (acq.getPositions() <= 1 && position > 0) {
          throw new MMScriptException("The acquisition was open as a single position data set.\n"
                  + "Open acqusition with two or more positions in order to crate a multi-position data set.");
       }
 
-      // check position, for multi-position data set the number of declared positions should be at least 2
+      // check position, for multi-position data set the number of declared
+      // positions should be at least 2
       if (acq.getChannels() <= channel) {
-         throw new MMScriptException("This acquisition was opened with " + acq.getChannels() + " channels.\n"
-                 + "The channel number must not exceed declared number of positions.");
+         throw new MMScriptException("This acquisition was opened with " + 
+               acq.getChannels() + " channels.\n" + 
+               "The channel number must not exceed declared number of positions.");
       }
-
 
       JSONObject tags = taggedImg.tags;
 
-      // if the acquisition was not previously initialized, set physical dimensions of the image
+      // if the acquisition was not previously initialized, set physical
+      // dimensions of the image
       if (!acq.isInitialized()) {
-
          // automatically initialize physical dimensions of the image
          try {
             initializeAcquisitionFromTags(name, tags);
@@ -3084,11 +3083,9 @@ public class MMStudio implements ScriptInterface {
          if (acq.getFrames() <= frame) {
             acq.setProperty(MMTags.Summary.FRAMES, Integer.toString(frame + 1));
          }
-
       } catch (JSONException e) {
          throw new MMScriptException(e);
       }
-
       acq.insertImage(taggedImg);
    }
 
