@@ -21,10 +21,12 @@ public class HotKeyAction {
       public java.io.File beanShellScript_;
       private org.micromanager.MMStudio studio_ =
               org.micromanager.MMStudio.getInstance();
+      private org.micromanager.SnapLiveManager snapLiveManager_;
 
       public HotKeyAction(int guiCommand) {
          type_ = GUICOMMAND;
          guiCommand_ = guiCommand;
+         snapLiveManager_ = studio_.getSnapLiveManager();
       }
 
       public HotKeyAction(java.io.File beanshellScript) {
@@ -39,16 +41,13 @@ public class HotKeyAction {
                   studio_.snapSingleImage();
                   return true;
                case TOGGLELIVE:
-                  if (studio_.getLiveMode())
-                     studio_.enableLiveMode(false);
-                  else
-                     studio_.enableLiveMode(true);
+                  snapLiveManager_.setLiveMode(!snapLiveManager_.getIsLiveModeOn());
                   return true;
                case TOGGLESHUTTER:
                   studio_.toggleShutter();
                   return true;
                case ADD_TO_ALBUM:
-                  studio_.snapAndAddToImage5D();
+                  snapLiveManager_.snapAndAddToImage5D();
                   return true;
                case MARK:
                   studio_.markCurrentPosition();

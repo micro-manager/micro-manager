@@ -260,9 +260,9 @@ public class MMAcquisition {
       if (!existing_) {
          createDefaultAcqSettings(imageCache);
       }
-      MMStudio.createSimpleDisplay(name_, imageCache);
+      MMStudio.getInstance().createSimpleDisplay(name_, imageCache);
       if (show_) {
-         virtAcq_ = MMStudio.getSimpleDisplay();
+         virtAcq_ = MMStudio.getInstance().getSnapLiveManager().getSnapLiveDisplay();
          virtAcq_.show();
          imageCache_ = virtAcq_.getImageCache();
          imageCache_.addImageCacheListener(virtAcq_);
@@ -345,7 +345,6 @@ public class MMAcquisition {
          imageCache_.saveAs(imageFileManager);
       }
 
-      
       CMMCore core = MMStudio.getInstance().getCore();
       if (!existing_) {
          int camCh = (int) core.getNumberOfCameraChannels();

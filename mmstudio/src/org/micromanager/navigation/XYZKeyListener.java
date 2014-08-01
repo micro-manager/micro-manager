@@ -243,7 +243,6 @@ public final class XYZKeyListener implements KeyListener, LiveModeListener {
 		} catch (Exception ex) {
 			ReportingUtils.showError(ex);
 		}
-
 	}
 
 	public void getOrientation() {
@@ -284,10 +283,9 @@ public final class XYZKeyListener implements KeyListener, LiveModeListener {
 
    public void liveModeEnabled(boolean enabled) {
       if (enabled) {
-         this.start(studio_.getImageWin());
+         start();
       } else {
-         this.stop();
+         stop();
       }
    }
-
 }

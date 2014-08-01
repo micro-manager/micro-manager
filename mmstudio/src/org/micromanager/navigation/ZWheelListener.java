@@ -51,13 +51,14 @@ public class ZWheelListener implements MouseWheelListener, LiveModeListener {
    public void start () {
       // Get a handle to the AcqWindow
       if (WindowManager.getCurrentWindow() != null) {
-         start (WindowManager.getCurrentWindow());
+         start(WindowManager.getCurrentWindow());
       }
    }
    
-   public void start (ImageWindow win) {
-      if (isRunning_)
+   public void start(ImageWindow win) {
+      if (isRunning_) {
          stop(); 
+      }
 
 	  isRunning_ = true;
 	  if (win != null) {
@@ -81,10 +82,6 @@ public class ZWheelListener implements MouseWheelListener, LiveModeListener {
          return;
       canvas_ = win.getCanvas();
       canvas_.addMouseWheelListener(this);
-      // TODO:  add to ImageJ Toolbar
-      //int tool = Toolbar.getInstance().addTool("Test Tool");
-      //Toolbar.getInstance().setTool(tool); 
-      //images_.addElement(id);
    }
 
    @Override
@@ -110,18 +107,15 @@ public class ZWheelListener implements MouseWheelListener, LiveModeListener {
 			  ReportingUtils.showError(ex);
 			  return;
 		  }
-
         studio_.updateZPosRelative(move * moveIncrement);
 	  }
-
    } 
    
    public void liveModeEnabled(boolean enabled) {
       if (enabled) {
-         this.start(studio_.getImageWin());
+         start();
       } else {
-         this.stop();
+         stop();
       }
    }
-
 }

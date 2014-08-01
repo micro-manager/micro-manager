@@ -128,7 +128,6 @@ import org.micromanager.acquisition.*;
 import org.micromanager.api.ImageCache;
 import org.micromanager.api.IAcquisitionEngine2010;
 import org.micromanager.graph.HistogramSettings;
-import org.micromanager.internalinterfaces.LiveModeListener;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.FileDialogs.FileType;
 import org.micromanager.utils.HotKeysDialog;
@@ -173,9 +172,8 @@ public class MMStudio implements ScriptInterface {
    private CalibrationListDlg calibrationListDlg_;
    private AcqControlDlg acqControlWin_;
    private PluginManager pluginManager_;
+   private SnapLiveManager snapLiveManager_;
 
-   private List<LiveModeListener> liveModeListeners_
-           = Collections.synchronizedList(new ArrayList<LiveModeListener>());
    private List<Component> MMFrames_
            = Collections.synchronizedList(new ArrayList<Component>());
    private AutofocusManager afMgr_;
@@ -185,7 +183,6 @@ public class MMStudio implements ScriptInterface {
    private static final int maxMRUCfgs_ = 5;
    private String sysConfigFile_;
    private String startupScriptFile_;
-   private LiveModeTimer liveModeTimer_;
    private GraphData lineProfileData_;
    // labels for standard devices
    private String cameraLabel_;
@@ -216,10 +213,7 @@ public class MMStudio implements ScriptInterface {
    private ZWheelListener zWheelListener_;
    private XYZKeyListener xyzKeyListener_;
    private AcquisitionManager acqMgr_;
-   private static VirtualAcquisitionDisplay simpleDisplay_;
-   private Color[] multiCameraColors_ = {Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW, Color.CYAN};
    private boolean liveModeSuspended_;
-   public static final String SIMPLE_ACQ = "Snap/Live Window";
    public static final FileType MM_CONFIG_FILE
             = new FileType("MM_CONFIG_FILE",
                            "Micro-Manager Config File",
@@ -359,7 +353,9 @@ public class MMStudio implements ScriptInterface {
 
       core_.enableStderrLog(true);
 
-      frame_ = new MainFrame(this, core_, mainPrefs_);
+      snapLiveManager_ = new SnapLiveManager(studio_, core_);
+
+      frame_ = new MainFrame(this, core_, snapLiveManager_, mainPrefs_);
       frame_.setIconImage(SwingResourceManager.getImage(MMStudio.class,
             "icons/microscope.gif"));
       frame_.loadApplicationPrefs(mainPrefs_, options_.closeOnExit_);
@@ -514,9 +510,9 @@ public class MMStudio implements ScriptInterface {
 
       centerAndDragListener_ = new CenterAndDragListener(studio_);
       zWheelListener_ = new ZWheelListener(core_, studio_);
-      studio_.addLiveModeListener(zWheelListener_);
+      snapLiveManager_.addLiveModeListener(zWheelListener_);
       xyzKeyListener_ = new XYZKeyListener(core_, studio_);
-      studio_.addLiveModeListener(xyzKeyListener_);
+      snapLiveManager_.addLiveModeListener(xyzKeyListener_);
 
       // switch error reporting back on
       ReportingUtils.showErrorOn(true);
@@ -531,80 +527,8 @@ public class MMStudio implements ScriptInterface {
       core_.logMessage(message);
    }
 
-   public ImageWindow getImageWin() {
-      return getSnapLiveWin();
-   }
-
-   public static VirtualAcquisitionDisplay getSimpleDisplay() {
-      return simpleDisplay_;
-   }
-
-   public static void createSimpleDisplay(String name, ImageCache cache) throws MMScriptException {
-      simpleDisplay_ = new VirtualAcquisitionDisplay(cache, name); 
-   }
-
-   private void checkSimpleAcquisition(int width, int height, int depth, 
-         int bitDepth, int numCamChannels) {
-      try {
-         if (acquisitionExists(SIMPLE_ACQ)) {
-            if ((getAcquisitionImageWidth(SIMPLE_ACQ) != width) || 
-                  (getAcquisitionImageHeight(SIMPLE_ACQ) != height) ||
-                  (getAcquisitionImageByteDepth(SIMPLE_ACQ) != depth) ||
-                  (getAcquisitionImageBitDepth(SIMPLE_ACQ) != bitDepth) ||
-                  (getAcquisitionMultiCamNumChannels(SIMPLE_ACQ) != numCamChannels)) {
-               //Need to close and reopen simple window
-               closeAcquisitionWindow(SIMPLE_ACQ);
-            }
-         }
-         if (!acquisitionExists(SIMPLE_ACQ)) {
-            openAcquisition(SIMPLE_ACQ, "", 1, numCamChannels, 1, true);
-            if (numCamChannels > 1) {
-               for (long i = 0; i < numCamChannels; i++) {
-                  String chName = core_.getCameraChannelName(i);
-                  int defaultColor = multiCameraColors_[(int) i % multiCameraColors_.length].getRGB();
-                  setChannelColor(SIMPLE_ACQ, (int) i, getChannelColor(chName, defaultColor));
-                  setChannelName(SIMPLE_ACQ, (int) i, chName);
-               }
-            }
-            initializeSimpleAcquisition(SIMPLE_ACQ, 
-                  width, height, depth, bitDepth, numCamChannels);
-            getAcquisition(SIMPLE_ACQ).promptToSave(false);
-            getAcquisition(SIMPLE_ACQ).getAcquisitionWindow().getHyperImage().getWindow().toFront();
-            updateCenterAndDragListener();
-         }
-      } catch (Exception ex) {
-         ReportingUtils.showError(ex);
-      }
-   }
-   
-   public void checkSimpleAcquisition() {
-      if (core_.getCameraDevice().length() == 0) {
-         ReportingUtils.showError("No camera configured");
-         return;
-      }
-      int width = (int) core_.getImageWidth();
-      int height = (int) core_.getImageHeight();
-      int depth = (int) core_.getBytesPerPixel();
-      int bitDepth = (int) core_.getImageBitDepth();
-      int numCamChannels = (int) core_.getNumberOfCameraChannels();
-
-      checkSimpleAcquisition(width, height, depth, bitDepth, numCamChannels);
-   }
-
-   public void checkSimpleAcquisition(TaggedImage image) {
-      JSONObject tags = image.tags;
-      try {
-         int width = MDUtils.getWidth(tags);
-         int height = MDUtils.getHeight(tags);
-         int depth = MDUtils.getDepth(tags);
-         int bitDepth = MDUtils.getBitDepth(tags);
-         int numCamChannels = (int) core_.getNumberOfCameraChannels();
-      
-         checkSimpleAcquisition(width, height, depth, bitDepth, numCamChannels);
-      }
-      catch (Exception ex) {
-         ReportingUtils.showError("Error extracting image info in checkSimpleAcquisition: " + ex);
-      }
+   public void createSimpleDisplay(String name, ImageCache cache) throws MMScriptException {
+      snapLiveManager_.createSnapLiveDisplay(name, cache);
    }
 
    public void saveChannelColor(String chName, int rgb) {
@@ -932,23 +856,6 @@ public class MMStudio implements ScriptInterface {
       }
    }
    
-   public final void addLiveModeListener (LiveModeListener listener) {
-      if (liveModeListeners_.contains(listener)) {
-         return;
-      }
-      liveModeListeners_.add(listener);
-   }
-   
-   public void removeLiveModeListener(LiveModeListener listener) {
-      liveModeListeners_.remove(listener);
-   }
-   
-   public void callLiveModeListeners(boolean enable) {
-      for (LiveModeListener listener : liveModeListeners_) {
-         listener.liveModeEnabled(enable);
-      }
-   }
-
    /**
     * Spawn a new thread to load the acquisition engine jar, because this
     * takes significant time (or so Mark claims).
@@ -1063,22 +970,11 @@ public class MMStudio implements ScriptInterface {
             // Just give up.
             return;
          }
+         snapLiveManager_.safeSetCoreExposure(frame_.getDisplayedExposureTime());
+         // Display the new exposure time
+         double exposure = -1;
          try {
-            if (!isLiveModeOn()) {
-               core_.setExposure(frame_.getDisplayedExposureTime());
-            } else {
-               liveModeTimer_.stop();
-               core_.setExposure(frame_.getDisplayedExposureTime());
-               try {
-                  liveModeTimer_.begin();
-               } catch (Exception e) {
-                  ReportingUtils.showError("Couldn't restart live mode");
-                  liveModeTimer_.stop();
-               }
-            }
-           
-            // Display the new exposure time
-            double exposure = core_.getExposure();
+            exposure = core_.getExposure();
             frame_.setDisplayedExposureTime(exposure);
             
             // update current channel in MDA window with this exposure
@@ -1091,8 +987,10 @@ public class MMStudio implements ScriptInterface {
                   getAcqDlg().setChannelExposureTime(channelGroup, channel, exposure);
                }
             }
-         } catch (Exception exp) {
-            // Do nothing.
+         }
+         catch (Exception e) {
+            ReportingUtils.logError(e, "Couldn't set exposure time.");
+            return;
          }
       } // End synchronization check
    }
@@ -1556,7 +1454,7 @@ public class MMStudio implements ScriptInterface {
       frame_.toggleShutter();
    }
 
-   private void updateCenterAndDragListener() {
+   public void updateCenterAndDragListener() {
       if (centerAndDragMenuItem_.isSelected()) {
          centerAndDragListener_.start();
       } else {
@@ -1662,11 +1560,7 @@ public class MMStudio implements ScriptInterface {
 
    @Override
    public boolean isLiveModeOn() {
-      return (liveModeTimer_ != null && liveModeTimer_.isRunning());
-   }
-
-   public boolean getLiveMode() {
-      return isLiveModeOn();
+      return snapLiveManager_.getIsLiveModeOn();
    }
 
    public boolean displayImage(final Object pixels) {
@@ -1678,24 +1572,12 @@ public class MMStudio implements ScriptInterface {
    }
 
    public boolean displayImage(final Object pixels, boolean wait) {
-      checkSimpleAcquisition();
-      try {   
-            int width = getAcquisition(SIMPLE_ACQ).getWidth();
-            int height = getAcquisition(SIMPLE_ACQ).getHeight();
-            int byteDepth = getAcquisition(SIMPLE_ACQ).getByteDepth();          
-            TaggedImage ti = ImageUtils.makeTaggedImage(pixels, 0, 0, 0,0, width, height, byteDepth);
-            simpleDisplay_.getImageCache().putImage(ti);
-            simpleDisplay_.imageReceived(ti);
-            return true;
-      } catch (Exception ex) {
-         ReportingUtils.showError(ex);
-         return false;
-      }
+      return snapLiveManager_.displayImage(pixels);
    }
 
    public boolean displayImageWithStatusLine(Object pixels, String statusLine) {
       boolean ret = displayImage(pixels);
-      simpleDisplay_.displayStatusLine(statusLine);
+      snapLiveManager_.setStatusLine(statusLine);
       return ret;
    }
 
@@ -1748,7 +1630,6 @@ public class MMStudio implements ScriptInterface {
                      displayImage(image);
                   }
             }
-
          });
          
          for (int i = 0; i < c; ++i) {
@@ -1759,15 +1640,7 @@ public class MMStudio implements ScriptInterface {
          
          snapImageQueue.put(TaggedImageQueue.POISON);
 
-         if (simpleDisplay_ != null) {
-            ImagePlus imgp = simpleDisplay_.getImagePlus();
-            if (imgp != null) {
-               ImageWindow win = imgp.getWindow();
-               if (win != null) {
-                  win.toFront();
-               }
-            }
-         }
+         snapLiveManager_.moveDisplayToFront();
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
       }
@@ -1799,11 +1672,12 @@ public class MMStudio implements ScriptInterface {
 
    private boolean displayTaggedImage(TaggedImage ti, boolean update) {
       try {
-         checkSimpleAcquisition(ti);
          frame_.setCursor(new Cursor(Cursor.WAIT_CURSOR));
-         MDUtils.setSummary(ti.tags, getAcquisition(SIMPLE_ACQ).getSummaryMetadata());
+         // Ensure that the acquisition is ready before we add the image.
+         snapLiveManager_.validateDisplayAndAcquisition(ti);
+         MDUtils.setSummary(ti.tags, getAcquisitionWithName(SnapLiveManager.SIMPLE_ACQ).getSummaryMetadata());
          addStagePositionToTags(ti);
-         addImage(SIMPLE_ACQ, ti, update, true);
+         addImage(SnapLiveManager.SIMPLE_ACQ, ti, update, true);
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
          return false;
@@ -1942,7 +1816,7 @@ public class MMStudio implements ScriptInterface {
             frame_.setBinSize(binSize);
          }
 
-         if (liveModeTimer_ == null || !liveModeTimer_.isRunning()) {
+         if (snapLiveManager_.getIsLiveModeOn()) {
             boolean isAutoShutterEnabled = core_.getAutoShutter();
             frame_.setAutoShutterSelected(isAutoShutterEnabled);
             boolean shutterOpen = core_.getShutterOpen();
@@ -2019,15 +1893,14 @@ public class MMStudio implements ScriptInterface {
             }
          }
       }
-      if (liveModeTimer_ != null)
-         liveModeTimer_.stop();
-      
-       // check needed to avoid deadlock
-       if (!calledByImageJ) {
-           if (!WindowManager.closeAllWindows()) {
-               core_.logMessage("Failed to close some windows");
-           }
-       }
+      snapLiveManager_.setLiveMode(false);
+
+      // check needed to avoid deadlock
+      if (!calledByImageJ) {
+         if (!WindowManager.closeAllWindows()) {
+            core_.logMessage("Failed to close some windows");
+         }
+      }
 
       if (profileWin_ != null) {
          removeMMBackgroundListener(profileWin_);
@@ -2591,10 +2464,7 @@ public class MMStudio implements ScriptInterface {
    
    @Override
    public ImageWindow getSnapLiveWin() {
-      if (simpleDisplay_ == null) {
-         return null;
-      }
-      return simpleDisplay_.getHyperImage().getWindow();
+      return snapLiveManager_.getSnapLiveWindow();
    }
    
    @Override
@@ -2770,13 +2640,6 @@ public class MMStudio implements ScriptInterface {
       return acqMgr_.createAcquisition(summaryMetadata, diskCached, engine_, displayOff);
    }
    
-   private void initializeSimpleAcquisition(String name, int width, int height,
-         int byteDepth, int bitDepth, int multiCamNumCh) throws MMScriptException {
-      MMAcquisition acq = acqMgr_.getAcquisition(name);
-      acq.setImagePhysicalDimensions(width, height, byteDepth, bitDepth, multiCamNumCh);
-      acq.initializeSimpleAcq();
-   }
-
    /**
     * Call initializeAcquisition with values extracted from the provided 
     * JSONObject.
@@ -2880,30 +2743,7 @@ public class MMStudio implements ScriptInterface {
       if (core_ == null) {
          return;
       }
-      if (enable == isLiveModeOn()) {
-         return;
-      }
-      if (enable) {
-         try {
-            if (core_.getCameraDevice().length() == 0) {
-               ReportingUtils.showError("No camera configured");
-               return;
-            }
-            if (liveModeTimer_ == null) {
-               liveModeTimer_ = new LiveModeTimer();
-            }
-            liveModeTimer_.begin();
-            callLiveModeListeners(enable);
-         } catch (Exception e) {
-            ReportingUtils.showError(e);
-            liveModeTimer_.stop();
-            callLiveModeListeners(false);
-            return;
-         }
-      } else {
-         liveModeTimer_.stop();
-         callLiveModeListeners(enable);
-      }
+      snapLiveManager_.setLiveMode(enable);
    }
 
    @Override
@@ -3047,13 +2887,20 @@ public class MMStudio implements ScriptInterface {
    {
       return acqMgr_.getAcquisitionNames();
    }
-   
+
+   // This function shouldn't be exposed in the API since users shouldn't need
+   // direct access to Acquisition objects. For internal use, we have
+   // getAcquisitionWithName(), below.
    @Override
    @Deprecated
    public MMAcquisition getAcquisition(String name) throws MMScriptException {
       return acqMgr_.getAcquisition(name);
    }
-      
+
+   public MMAcquisition getAcquisitionWithName(String name) throws MMScriptException {
+      return acqMgr_.getAcquisition(name);
+   }
+   
    @Override
    public ImageCache getAcquisitionImageCache(String acquisitionName) throws MMScriptException {
       return getAcquisition(acquisitionName).getImageCache();
@@ -3192,6 +3039,10 @@ public class MMStudio implements ScriptInterface {
 
    public AcquisitionWrapperEngine getAcquisitionEngine() {
       return engine_;
+   }
+
+   public SnapLiveManager getSnapLiveManager() {
+      return snapLiveManager_;
    }
 
    @Override
@@ -3341,22 +3192,6 @@ public class MMStudio implements ScriptInterface {
          enableLiveMode(true);
       }
 
-   }
-
-   public void snapAndAddToImage5D() {
-      if (core_.getCameraDevice().length() == 0) {
-         ReportingUtils.showError("No camera configured");
-         return;
-      }
-      try {
-         if (isLiveModeOn()) {
-            copyFromLiveModeToAlbum(simpleDisplay_);
-         } else {
-            doSnap(true);
-         }
-      } catch (Exception ex) {
-         ReportingUtils.logError(ex);
-      }
    }
 
    public void setAcquisitionEngine(AcquisitionWrapperEngine eng) {

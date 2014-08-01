@@ -21,6 +21,8 @@
 //
 package org.micromanager.acquisition;
 
+import ij.gui.ImageWindow;
+
 import java.text.NumberFormat;
 import java.util.HashSet;
 import java.util.Set;
@@ -32,6 +34,7 @@ import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
 import org.micromanager.MMStudio;
+import org.micromanager.SnapLiveManager;
 import org.micromanager.utils.CanvasPaintPending;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
@@ -44,11 +47,10 @@ import org.micromanager.utils.ReportingUtils;
  * @author Henry Pinkard
  */
 public class LiveModeTimer {
-
-   private static final String ACQ_NAME = MMStudio.SIMPLE_ACQ;
    private VirtualAcquisitionDisplay win_;
    private CMMCore core_;
-   private MMStudio gui_;
+   private MMStudio studio_;
+   private SnapLiveManager snapLiveManager_;
    private int multiChannelCameraNrCh_;
    private long fpsTimer_;
    private long fpsCounter_;
@@ -79,8 +81,9 @@ public class LiveModeTimer {
    
    public LiveModeTimer() {
       timerLock_ = new AtomicBoolean(false);
-      gui_ = MMStudio.getInstance();
-      core_ = gui_.getCore();
+      studio_ = MMStudio.getInstance();
+      snapLiveManager_ = studio_.getSnapLiveManager();
+      core_ = studio_.getCore();
       format_ = NumberFormat.getInstance();
       format_.setMaximumFractionDigits(0x1);
       mCamImageCounter_ = 0;
@@ -91,20 +94,21 @@ public class LiveModeTimer {
                if (multiCam_) {
                   mCamImageCounter_++;
                   if (mCamImageCounter_ < multiChannelCameraNrCh_) {
-                     gui_.normalizeTags(ti);
-                     gui_.addImage(ACQ_NAME, ti, false, false);
+                     studio_.normalizeTags(ti);
+                     studio_.addImage(SnapLiveManager.SIMPLE_ACQ, ti, false, false);
                      return;
                   } else { // completes the set
                      mCamImageCounter_ = 0;
                   }              
                }
+               ImageWindow window = snapLiveManager_.getSnapLiveWindow();
                if (!CanvasPaintPending.isMyPaintPending(
-                        gui_.getImageWin().getCanvas(), this) ) {
+                        window.getCanvas(), this) ) {
                   CanvasPaintPending.setPaintPending(
-                        gui_.getImageWin().getCanvas(), this);
-                  gui_.normalizeTags(ti);
-                  gui_.addImage(ACQ_NAME, ti, true, true);
-                  gui_.updateLineProfile();
+                        window.getCanvas(), this);
+                  studio_.normalizeTags(ti);
+                  studio_.addImage(SnapLiveManager.SIMPLE_ACQ, ti, true, true);
+                  studio_.updateLineProfile();
                   updateFPS();
                }
             } catch (MMScriptException e) {
@@ -178,8 +182,8 @@ public class LiveModeTimer {
          TaggedImage timg = core_.getLastTaggedImage();
 
          // With first image acquired, create the display
-         gui_.checkSimpleAcquisition();
-         win_ = MMStudio.getSimpleDisplay();
+         snapLiveManager_.validateDisplayAndAcquisition(timg);
+         win_ = snapLiveManager_.getSnapLiveDisplay();
          
          fpsCounter_ = 0;
          fpsTimer_ = System.currentTimeMillis();
@@ -191,7 +195,7 @@ public class LiveModeTimer {
          
          win_.getImagePlus().getWindow().toFront();
          running_ = true;
-         gui_.runDisplayThread(imageQueue_, displayImageRoutine_);
+         studio_.runDisplayThread(imageQueue_, displayImageRoutine_);
    }
 
    
@@ -293,7 +297,7 @@ public class LiveModeTimer {
             }
             if (win_.windowClosed()) //check is user closed window             
             {
-               gui_.enableLiveMode(false);
+               snapLiveManager_.setLiveMode(false);
             } else {
                try {
                   timerLock_.set(true);
@@ -306,7 +310,7 @@ public class LiveModeTimer {
                   }
                } catch (Exception ex) {
                   ReportingUtils.logMessage("Stopping live mode because of error...");
-                  gui_.enableLiveMode(false);
+                  snapLiveManager_.setLiveMode(false);
                   ReportingUtils.showError(ex);
                } finally {
                   timerLock_.set(false);
@@ -324,8 +328,8 @@ public class LiveModeTimer {
             if (core_.getRemainingImageCount() == 0) {
                return;
             }
-            if (win_.windowClosed() || !gui_.acquisitionExists(MMStudio.SIMPLE_ACQ)) {
-               gui_.enableLiveMode(false);  //disable live if user closed window
+            if (win_.windowClosed() || !studio_.acquisitionExists(SnapLiveManager.SIMPLE_ACQ)) {
+               snapLiveManager_.setLiveMode(false);  //disable live if user closed window
             } else {
                try {
                   timerLock_.set(true);
@@ -353,7 +357,7 @@ public class LiveModeTimer {
                   }
                } catch (Exception exc) {
                   ReportingUtils.logMessage("Stopping live mode because of error...");
-                  gui_.enableLiveMode(false);
+                  snapLiveManager_.setLiveMode(false);
                   ReportingUtils.showError(exc);
                } finally {
                   timerLock_.set(false);

@@ -93,7 +93,7 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
       initComponents(display, shouldUseLiveControls, isAcquisition);
       display_ = display;
       bus_.register(this);
-      MMStudio.getInstance().addLiveModeListener(this);
+      MMStudio.getInstance().getSnapLiveManager().addLiveModeListener(this);
    }
 
    private void initComponents(VirtualAcquisitionDisplay display, 

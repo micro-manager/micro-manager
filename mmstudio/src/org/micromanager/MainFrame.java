@@ -81,6 +81,7 @@ public class MainFrame extends JFrame implements LiveModeListener {
 
    private CMMCore core_;
    private MMStudio studio_;
+   private SnapLiveManager snapLiveManager_;
 
    // Our instance
    private static MainFrame mainFrame_;
@@ -93,12 +94,14 @@ public class MainFrame extends JFrame implements LiveModeListener {
    private AbstractButton clearRoiButton_;
 
    @SuppressWarnings("LeakingThisInConstructor")
-   public MainFrame(MMStudio studio, CMMCore core, Preferences prefs) {
+   public MainFrame(MMStudio studio, CMMCore core, SnapLiveManager manager, 
+         Preferences prefs) {
       org.micromanager.diagnostics.ThreadExceptionLogger.setUp();
 
       studio_ = studio;
       core_ = core;
-      studio_.addLiveModeListener(this);
+      snapLiveManager_ = manager;
+      snapLiveManager_.addLiveModeListener(this);
 
       mainFrame_ = this;
       setTitle(MICRO_MANAGER_TITLE + " " + MMVersion.VERSION_STRING);
@@ -312,7 +315,7 @@ public class MainFrame extends JFrame implements LiveModeListener {
          new Runnable() {
             @Override
             public void run() {
-               studio_.snapAndAddToImage5D();
+               snapLiveManager_.snapAndAddToImage5D();
             }
          }, 
          "camera_plus_arrow.png", topPanel, 7, 48, 95, 69);
