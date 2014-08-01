@@ -138,7 +138,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       MigLayout ml = new MigLayout(
               "",
               "[right]8[align center]8[right]8[]8[center]8[center]8[center]8[center]8[center]",
-              "[]10[]10[]10[]10[]10[]10[]10[]");
+              "[]8[]8[]8[]4[]8[]8[]8[]8[]8[]");
       JPanel sheetPanel = new JPanel(ml);
       
       offsetField_ = pu.makeFloatEntryField(panelName_, 
