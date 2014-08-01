@@ -65,8 +65,6 @@ import org.micromanager.api.events.PixelSizeChangedEvent;
 import org.micromanager.api.events.PropertiesChangedEvent;
 import org.micromanager.api.events.StagePositionChangedEvent;
 import org.micromanager.api.events.XYStagePositionChangedEvent;
-import org.micromanager.api.MMPlugin;
-import org.micromanager.api.MMProcessorPlugin;
 import org.micromanager.api.MMTags;
 import org.micromanager.api.PositionList;
 import org.micromanager.api.ScriptInterface;
@@ -93,6 +91,8 @@ import org.micromanager.navigation.XYZKeyListener;
 import org.micromanager.navigation.ZWheelListener;
 
 import org.micromanager.pipelineinterface.PipelinePanel;
+
+import org.micromanager.pluginmanagement.PluginManager;
 
 import org.micromanager.positionlist.PositionListDlg;
 
@@ -172,9 +172,8 @@ public class MMStudio implements ScriptInterface {
    private PropertyEditor propertyBrowser_;
    private CalibrationListDlg calibrationListDlg_;
    private AcqControlDlg acqControlWin_;
+   private PluginManager pluginManager_;
 
-   private JMenu pluginMenu_;
-   private Map<String, JMenu> pluginSubMenus_;
    private List<LiveModeListener> liveModeListeners_
            = Collections.synchronizedList(new ArrayList<LiveModeListener>());
    private List<Component> MMFrames_
@@ -247,7 +246,6 @@ public class MMStudio implements ScriptInterface {
    private Thread acquisitionEngine2010LoadingThread_ = null;
    private Class<?> acquisitionEngine2010Class_ = null;
    private IAcquisitionEngine2010 acquisitionEngine2010_ = null;
-   private PluginLoader pluginLoader_;
 
    /**
     * Simple class used to cache static info
@@ -304,9 +302,6 @@ public class MMStudio implements ScriptInterface {
       UIMonitor.enable(options_.debugLogEnabled_);
       
       guiColors_ = new GUIColors();
-
-      pluginLoader_ = new PluginLoader();
-      // plugins_ = new ArrayList<PluginItem>();
 
       studio_ = this;
 
@@ -443,7 +438,8 @@ public class MMStudio implements ScriptInterface {
 
       loadMRUConfigFiles();
       afMgr_ = new AutofocusManager(studio_);
-      Thread pluginInitializer = initializePlugins();
+      pluginManager_ = new PluginManager(studio_, menuBar_);
+      Thread pluginInitializer = pluginManager_.initializePlugins();
 
       frame_.paintToFront();
       
@@ -524,21 +520,6 @@ public class MMStudio implements ScriptInterface {
 
       // switch error reporting back on
       ReportingUtils.showErrorOn(true);
-   }
-
-   private Thread initializePlugins() {
-      pluginMenu_ = GUIUtils.createMenuInMenuBar(menuBar_, "Plugins");
-      Thread loadThread = new Thread(new ThreadGroup("Plugin loading"),
-            new Runnable() {
-               @Override
-               public void run() {
-                  // Needed for loading clojure-based jars:
-                  Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
-                  pluginLoader_.loadPlugins();
-               }
-      });
-      loadThread.start();
-      return loadThread;
    }
 
    private void handleError(String message) {
@@ -1889,78 +1870,6 @@ public class MMStudio implements ScriptInterface {
    }
    
    /**
-    * Adds plugin items to the plugins menu
-    * Adds submenus (currently only 1 level deep)
-    * @param plugin - plugin to be added to the menu
-    */
-   public void addPluginToMenu(final PluginLoader.PluginItem plugin) {
-      List<String> path = plugin.getMenuPath();
-      if (path.size() == 1) {
-         GUIUtils.addMenuItem(pluginMenu_, plugin.getMenuItem(), plugin.getTooltip(),
-                 new Runnable() {
-            public void run() {
-               displayPlugin(plugin);
-            }
-         });
-      }
-      if (path.size() == 2) {
-         if (pluginSubMenus_ == null) {
-            pluginSubMenus_ = new HashMap<String, JMenu>();
-         }
-         String groupName = path.get(0);
-         JMenu submenu = pluginSubMenus_.get(groupName);
-         if (submenu == null) {
-            submenu = new JMenu(groupName);
-            pluginSubMenus_.put(groupName, submenu);
-            submenu.validate();
-            pluginMenu_.add(submenu);
-         }
-         GUIUtils.addMenuItem(submenu, plugin.getMenuItem(), plugin.getTooltip(),
-                 new Runnable() {
-            public void run() {
-               displayPlugin(plugin);
-            }
-         });
-      }
-      
-      pluginMenu_.validate();
-      menuBar_.validate();
-   }
-
-   // Handle a plugin being selected from the Plugins menu.
-   private static void displayPlugin(final PluginLoader.PluginItem plugin) {
-      ReportingUtils.logMessage("Plugin command: " + plugin.getMenuItem());
-      plugin.instantiate();
-      switch (plugin.getPluginType()) {
-         case PLUGIN_STANDARD:
-            // Standard plugin; create its UI.
-            ((MMPlugin) plugin.getPlugin()).show();
-            break;
-         case PLUGIN_PROCESSOR:
-            // Processor plugin; check for existing processor of 
-            // this type and show its UI if applicable; otherwise
-            // create a new one.
-            MMProcessorPlugin procPlugin = (MMProcessorPlugin) plugin.getPlugin();
-            String procName = PluginLoader.getNameForPluginClass(procPlugin.getClass());
-            DataProcessor<TaggedImage> pipelineProcessor = studio_.engine_.getProcessorRegisteredAs(procName);
-            if (pipelineProcessor == null) {
-               // No extant processor of this type; make a new one,
-               // which automatically adds it to the pipeline.
-               pipelineProcessor = studio_.engine_.makeProcessor(procName, studio_);
-            }
-            if (pipelineProcessor != null) {
-               // Show the GUI for this processor. The extra null check is 
-               // because making the processor (above) could have failed.
-               pipelineProcessor.makeConfigurationGUI();
-            }
-            break;
-         default:
-            // Unrecognized plugin type; just skip it. 
-            ReportingUtils.logError("Unrecognized plugin type " + plugin.getPluginType());
-      }
-   }
-
-   /**
     * Update the little bit of text in the main display that shows the 
     * camera dimensions, stage position, etc.
     */
@@ -2154,7 +2063,7 @@ public class MMStudio implements ScriptInterface {
          engine_.disposeProcessors();
       }
 
-      pluginLoader_.disposePlugins();
+      pluginManager_.disposePlugins();
 
       synchronized (shutdownLock_) {
          try {

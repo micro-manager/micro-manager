@@ -14,7 +14,7 @@
 //               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-package org.micromanager;
+package org.micromanager.pluginmanagement;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -41,7 +41,7 @@ import org.micromanager.utils.ReportingUtils;
 /**
  * Code for plugin loading
  */
-public class PluginLoader {
+class PluginLoader {
    public static final String MMPLUGINSDIR = "mmplugins";
    public static final String MMAUTOFOCUSDIR = "mmautofocus";
 
@@ -53,6 +53,11 @@ public class PluginLoader {
    }
 
    private ArrayList<PluginItem> plugins_ = new ArrayList<PluginItem>();
+   private PluginManager manager_;
+
+   public PluginLoader(PluginManager manager) {
+      manager_ = manager;
+   }
 
    /**
     * Utility class used to to assemble information about the plugin
@@ -225,12 +230,12 @@ public class PluginLoader {
             msg);
    }
 
-   private static void addPluginToMenuLater(final PluginItem pi) {
+   private void addPluginToMenuLater(final PluginItem pi) {
       SwingUtilities.invokeLater(
               new Runnable() {
          @Override
          public void run() {
-            MMStudio.getInstance().addPluginToMenu(pi);
+            manager_.addPluginToMenu(pi);
          }
       });
    }
