@@ -11,6 +11,7 @@
 	<if>
 		<isset property="mm.platform.is.windows"/>
 		<then>
+			<property name="scratchdir" location="${mm.java.plugin.intdir}/genclass-tmp/${ant.project.name}"/>
 			<property name="intdir" location="${mm.java.plugin.intdir}/${ant.project.name}"/>
 			<property name="plugin.outdir" location="${mm.java.plugin.outdir}"/>
 			<property name="plugin.installdir" location="${mm.java.plugin.installdir}"/>
@@ -18,6 +19,7 @@
 			<property name="installdir" location="${plugin.installdir}/${plugin.path}"/>
 		</then>
 		<else>
+			<property name="scratchdir" location="build/genclass-tmp/${ant.project.name}"/>
 			<property name="intdir" location="build/${ant.project.name}"/>
 			<property name="plugin.outdir" location="."/>
 			<property name="outdir" location="${plugin.outdir}/${plugin.path}"/>

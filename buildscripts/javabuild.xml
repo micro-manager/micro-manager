@@ -5,16 +5,24 @@
 	<include file="buildprops.xml"/>
 
 	<!-- Default settings (importing buildfile can override) -->
+	<!-- intdir - where to put tree of *.class
+	     outdir - where to put JAR
+	     installdir - where to install JAR
+	     scratchdir - used only by clojurebuild_noaot
+	     (intdir and scratchdir must not be shared with other projects)
+	     -->
 	<property name="product" value="${ant.project.name}"/>
 	<property name="srcdir" value="src"/>
 	<if>
 		<isset property="mm.platform.is.windows"/>
 		<then>
+			<property name="scratchdir" location="${mm.java.intdir}/genclass-tmp/${product}"/>
 			<property name="intdir" location="${mm.java.intdir}/${product}"/>
 			<property name="outdir" location="${mm.java.outdir}"/>
 			<property name="installdir" location="${mm.java.installdir}"/>
 		</then>
 		<else>
+			<property name="scratchdir" location="genclass-tmp"/>
 			<property name="intdir" location="build"/>
 			<property name="outdir" location="."/>
 			<!-- install is not used on Unix -->
@@ -82,5 +90,6 @@
 	<target name="clean" description="Delete build product and intermediates">
 		<delete file="${jarfile}"/>
 		<delete dir="${intdir}"/>
+		<delete dir="${scratchdir}"/>
 	</target>
 </project>

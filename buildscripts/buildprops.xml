@@ -109,6 +109,7 @@
 		<attribute name="namespace"/>
 		<attribute name="genclass"/>
 		<attribute name="srcdir"/>
+		<attribute name="scratchdir"/>
 		<attribute name="destdir"/>
 		<element name="cljc-elements" implicit="true"/>
 		<sequential>
@@ -125,24 +126,20 @@
 				</filterchain>
 			</loadresource>
 
-			<tempfile property="genclass.tmpdir" destdir="${mm.tmpdir}" prefix="cljc"/>
-			<mkdir dir="${genclass.tmpdir}"/>
-
+			<mkdir dir="${scratchdir}"/>
 			<mm-cljc namespace="@{namespace}" srcdir="@{srcdir}"
-				destdir="${genclass.tmpdir}">
+				destdir="${scratchdir}">
 				<cljc-elements/>
 			</mm-cljc>
 
 			<!-- Copy the compiled Java class only -->
 			<copy tofile="@{destdir}/${genclass.path}.class"
-				file="${genclass.tmpdir}/${genclass.path}.class"/>
+				file="${scratchdir}/${genclass.path}.class"/>
 
 			<!-- Copy Clojure source files -->
 			<copy todir="@{destdir}">
 				<fileset dir="@{srcdir}" includes="**/*.clj"/>
 			</copy>
-
-			<delete dir="${genclass.tmpdir}"/>
 		</sequential>
 	</macrodef>
 </project>

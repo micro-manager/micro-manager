@@ -11,7 +11,7 @@
 	<target name="compile" depends="prepare" description="Compile Clojure generated class">
 		<mkdir dir="${intdir}"/>
 		<mm-clj-genclass namespace="${namespace}" genclass="${genclass}"
-			srcdir="${srcdir}" destdir="${intdir}">
+			srcdir="${srcdir}" scratchdir="${scratchdir}" destdir="${intdir}">
 			<clj-classpath>
 				<path refid="project.classpath"/>
 			</clj-classpath>
