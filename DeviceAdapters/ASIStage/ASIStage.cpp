@@ -3618,8 +3618,8 @@ int AZ100Turret::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 StateDevice::StateDevice() :
    ASIBase(this, "" /* LX-4000 Prefix Unknown */),
-   axis_("F"),
    numPos_(4),
+   axis_("F"),
    position_(0),
    answerTimeoutMs_(1000)
 {
