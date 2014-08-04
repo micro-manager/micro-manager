@@ -10,7 +10,7 @@
 // COPYRIGHT:     University of California, San Francisco, 2006
 //                Physik Instrumente (PI) GmbH & Co. KG, 2008
 // LICENSE:       This file is distributed under the BSD license.
-//                License text is included with the source distribution.
+//                License text is included with the source distribution.
 //
 //                This file is distributed in the hope that it will be useful,
 //                but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -19,7 +19,7 @@
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-// CVS:           $Id: PIZStage_DLL.h,v 1.6, 2014-03-31 12:51:24Z, Steffen Rau$
+// CVS:           $Id: PIZStage_DLL.h,v 1.7, 2014-05-27 07:22:43Z, Steffen Rau$
 //
 
 #ifndef _PI_ZSTAGE_DLL_H_
@@ -59,10 +59,11 @@ public:
 
    // action interface
    // ----------------
-   int OnControllerName(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnControllerName(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnStepSizeUm(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnAxisName(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnAxisLimit(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnAxisTravelRange(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnStageType(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnHoming(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -73,6 +74,7 @@ private:
    double stepSizeUm_;
    bool initialized_;
    double axisLimitUm_;
+   bool invertTravelRange_;
    std::string stageType_;
    std::string controllerName_;
    PIController* ctrl_;

@@ -19,7 +19,7 @@
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-// CVS:           $Id: PIZStage_DLL.cpp,v 1.10, 2014-03-31 12:51:24Z, Steffen Rau$
+// CVS:           $Id: PIZStage_DLL.cpp,v 1.11, 2014-05-27 07:22:43Z, Steffen Rau$
 //
 
 #include "PIZStage_DLL.h"
@@ -28,6 +28,7 @@
 const char* PIZStage::DeviceName_ = "PIZStage";
 const char* g_PI_ZStageAxisName = "Axis";
 const char* g_PI_ZStageAxisLimitUm = "Limit_um";
+const char* g_PI_ZStageInvertTravelRange = "Invert travel range";
 const char* g_PI_ZStageStageType = "Stage";
 const char* g_PI_ZStageStepSize = "StepSizeUm";
 const char* g_PI_ZStageControllerName = "Controller Name";
@@ -43,6 +44,7 @@ PIZStage::PIZStage()
     , stepSizeUm_(0.1)
     , initialized_(false)
     , axisLimitUm_(500.0)
+    , invertTravelRange_(false)
     , stageType_("DEFAULT_STAGE")
     , controllerName_("")
     , ctrl_(NULL)
@@ -92,6 +94,10 @@ PIZStage::PIZStage()
    // axis limit in um
    pAct = new CPropertyAction (this, &PIZStage::OnAxisLimit);
    CreateProperty(g_PI_ZStageAxisLimitUm, "500.0", MM::Float, false, pAct, true);
+
+   // axis limit in um
+   pAct = new CPropertyAction (this, &PIZStage::OnAxisTravelRange);
+   CreateProperty(g_PI_ZStageInvertTravelRange, "0", MM::Integer, false, pAct, true);
 
    // axis limits (assumed symmetrical)
    pAct = new CPropertyAction (this, &PIZStage::OnPosition);
@@ -187,6 +193,10 @@ int PIZStage::SetPositionUm(double pos)
     {
         return DEVICE_ERR;
     }
+    if (invertTravelRange_)
+    {
+        pos = axisLimitUm_ - pos;
+    }
 	pos *= ctrl_->umToDefaultUnit_;
 	if (!ctrl_->MOV(axisName_, &pos))
 		return ctrl_->GetTranslatedError();
@@ -205,6 +215,10 @@ int PIZStage::GetPositionUm(double& pos)
 		return ctrl_->GetTranslatedError();
     }
 	pos /= ctrl_->umToDefaultUnit_;
+    if (invertTravelRange_)
+    {
+        pos = axisLimitUm_ - pos;
+    }
 	return DEVICE_OK;
 }
 
@@ -278,6 +292,22 @@ int PIZStage::OnAxisLimit(MM::PropertyBase* pProp, MM::ActionType eAct)
    else if (eAct == MM::AfterSet)
    {
       pProp->Get(axisLimitUm_);
+   }
+
+   return DEVICE_OK;
+}
+
+int PIZStage::OnAxisTravelRange(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(long (invertTravelRange_ ? 1 : 0));
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long value;
+      pProp->Get(value);
+      invertTravelRange_ = (value != 0);
    }
 
    return DEVICE_OK;
