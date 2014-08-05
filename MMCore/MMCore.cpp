@@ -1147,7 +1147,14 @@ void CMMCore::setParentLabel(const char* label, const char* parentLabel) throw (
       // XXX Should be a throw
       return; // core can't have parent ID
    boost::shared_ptr<DeviceInstance> pDev = deviceManager_.GetDevice(label);
-   CheckDeviceLabel(parentLabel);
+   if (parentLabel && std::string(parentLabel).empty()) {
+      // Empty label is acceptable, meaning no parent
+   }
+   else {
+      // Note that the parent device is not checked for existence
+      // XXX Should we require that the parent device exist?
+      CheckDeviceLabel(parentLabel);
+   }
 
    mm::DeviceModuleLockGuard guard(pDev);
    pDev->SetParentID(parentLabel);
