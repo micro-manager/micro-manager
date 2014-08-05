@@ -36,6 +36,7 @@ import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.PanelUtils;
+import org.micromanager.asidispim.Utils.StoredFloatLabel;
 
 import mmcorej.CMMCore;
 
@@ -45,7 +46,6 @@ import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.MMStudio;
 import org.micromanager.api.ScriptInterface;
-import org.micromanager.asidispim.Utils.StoredFloatLabel;
 import org.micromanager.internalinterfaces.LiveModeListener;
 
 /**

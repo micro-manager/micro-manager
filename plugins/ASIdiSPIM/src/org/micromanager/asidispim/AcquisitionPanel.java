@@ -69,7 +69,6 @@ import org.micromanager.api.ScriptInterface;
 import org.micromanager.api.ImageCache;
 import org.micromanager.api.MMTags;
 import org.micromanager.acquisition.ComponentTitledBorder;
-
 import org.micromanager.MMStudio;
 import org.micromanager.acquisition.DefaultTaggedImageSink;
 import org.micromanager.acquisition.MMAcquisition;

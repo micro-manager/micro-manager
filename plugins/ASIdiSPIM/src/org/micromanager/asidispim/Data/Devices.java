@@ -315,6 +315,15 @@ public class Devices {
       deviceInfo_.put(key, d);
       callListeners(); // make sure everybody else knows about change
    }
+   
+   /**
+    * Returns true if a device has been assigned
+    * @param key
+    * @return
+    */
+   public boolean isValidMMDevice(Devices.Keys key) {
+      return (getMMDevice(key) != null);
+   }
 
    /**
     * Looks up the Micro-Manager device name currently set for particular Device

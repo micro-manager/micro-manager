@@ -21,6 +21,12 @@
 
 package org.micromanager.asidispim;
 
+import org.micromanager.asidispim.Data.Cameras;
+import org.micromanager.asidispim.Data.Devices;
+import org.micromanager.asidispim.Data.Prefs;
+import org.micromanager.asidispim.Utils.DevicesListenerInterface;
+import org.micromanager.asidispim.Utils.ListeningJPanel;
+
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -30,20 +36,14 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JToggleButton;
 
-
-import org.micromanager.asidispim.Data.Cameras;
-import org.micromanager.asidispim.Data.Devices;
-import org.micromanager.asidispim.Data.Prefs;
-import org.micromanager.asidispim.Utils.DevicesListenerInterface;
-import org.micromanager.asidispim.Utils.ListeningJPanel;
+import org.micromanager.api.ScriptInterface;
+import org.micromanager.MMStudio;
+import org.micromanager.internalinterfaces.LiveModeListener;
 
 import com.swtdesigner.SwingResourceManager;
 
 import net.miginfocom.swing.MigLayout;
 
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.MMStudio;
-import org.micromanager.internalinterfaces.LiveModeListener;
 
 /**
  *
@@ -125,8 +125,8 @@ public final class CameraSubPanel extends ListeningJPanel implements LiveModeLis
    * @param enable - true: live mode is switched on 
    */ 
    public final void setLiveButtonAppearance(boolean enable) {
-      toggleButtonLive_.setIcon(enable ? SwingResourceManager.getIcon(
-              MMStudio.class,
+      toggleButtonLive_.setIcon(enable ? SwingResourceManager.
+            getIcon(MMStudio.class,
             "/org/micromanager/icons/cancel.png")
             : SwingResourceManager.getIcon(MMStudio.class,
                   "/org/micromanager/icons/camera_go.png"));
@@ -140,8 +140,10 @@ public final class CameraSubPanel extends ListeningJPanel implements LiveModeLis
       CameraSelectionBoxListener csbl = new CameraSelectionBoxListener(cameraBox);
       cameraBox.addActionListener(csbl);
       devices_.addListener(csbl);
-      // intentionally set from prefs after adding listeners so programmatic change from prefs will be handled like user change
-      String selectedItem = prefs_.getString(instanceLabel_, Prefs.Keys.CAMERA, Devices.Keys.CAMERAPREVIOUS.toString());
+      // intentionally set from prefs after adding listeners so
+      // programmatic change from prefs will be handled like user change
+      String selectedItem = prefs_.getString(instanceLabel_, 
+            Prefs.Keys.CAMERA, Devices.Keys.CAMERAPREVIOUS.toString());
       cameraBox.setSelectedItem(selectedItem);
       return cameraBox;
    }

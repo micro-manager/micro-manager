@@ -26,6 +26,7 @@ import java.util.EnumMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+
 import org.micromanager.api.ScriptInterface;
 
 // TODO implement fast axis reverse checkbox (may need device adapter change and possibly even firmware-level change)
@@ -149,7 +150,7 @@ public class Joystick {
       List<JSAxisData> list = new ArrayList<JSAxisData>();
       list.add(new JSAxisData(devices_.getDeviceDisplayVerbose(Devices.Keys.NONE), Devices.Keys.NONE, Directions.NONE));  // adds "None" to top of list
       for (Devices.Keys devKey : Devices.STAGES1D) {
-         if (devices_.getMMDevice(devKey)!=null) {
+         if (devices_.isValidMMDevice(devKey)) {
             String dispKey = devices_.getDeviceDisplayWithRole(devKey, Directions.NONE, side); 
             list.add(new JSAxisData(dispKey, devKey, Directions.NONE));
          }
@@ -158,7 +159,7 @@ public class Joystick {
          if (devKey == Devices.Keys.XYSTAGE) { 
             continue;  // don't include the XY stage on wheel list since the device adapter doesn't support that
          }
-         if (devices_.getMMDevice(devKey)!=null) {
+         if (devices_.isValidMMDevice(devKey)) {
             Directions[] dirs = {Directions.X, Directions.Y};
             for (Directions dir : dirs) {  // gets for X and Y for now
                String dispKey = devices_.getDeviceDisplayWithRole(devKey, dir, side);
@@ -178,7 +179,7 @@ public class Joystick {
       List<JSAxisData> list = new ArrayList<JSAxisData>();
       list.add(new JSAxisData(devices_.getDeviceDisplayVerbose(Devices.Keys.NONE), Devices.Keys.NONE, Directions.NONE));
       for (Devices.Keys devKey : Devices.STAGES2D) {
-         if (devices_.getMMDevice(devKey)!=null) {
+         if (devices_.isValidMMDevice(devKey)) {
             String dispKey = devices_.getDeviceDisplayVerbose(devKey);
             list.add(new JSAxisData(dispKey, devKey, Directions.NONE));
          }
@@ -241,7 +242,7 @@ public class Joystick {
       
    /**
     * De-selects the joystick input according to the specified device and JSAxisData.
-    * If this code is modified then probably also need to modify setJoystickOutput
+    * If this code is modified then probably also need to modify setJoystick too.
     * @param jkey
     * @param JSAxisData
     */
@@ -277,7 +278,7 @@ public class Joystick {
    
    /**
     * Selects the joystick input according to the specified device and JSAxisData.
-    * If this code is modified then probably also need to modify unsetJoystickOutput
+    * If this code is modified then probably also need to modify unsetJoystick too.
     * @param jkey
     * @param JSAxisData
     */

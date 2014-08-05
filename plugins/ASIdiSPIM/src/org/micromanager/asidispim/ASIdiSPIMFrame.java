@@ -39,7 +39,7 @@ import javax.swing.event.ChangeListener;
 
 import org.micromanager.api.MMListenerInterface;
 import org.micromanager.api.ScriptInterface;
-import org.micromanager.MMStudio; 
+import org.micromanager.MMStudio;
 import org.micromanager.asidispim.Utils.StagePositionUpdater;
 import org.micromanager.internalinterfaces.LiveModeListener; 
 
