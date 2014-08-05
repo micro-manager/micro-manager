@@ -772,14 +772,14 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       if (hyperImage_ != null) {
          IMMImagePlus immi = (IMMImagePlus) hyperImage_;
          // Ensure proper dimensions are set on the image.
-         if (immi.getNFramesUnverified() <= frame) {
-            immi.setNFramesUnverified(frame);
+         if (immi.getNFramesUnverified() <= frame + 1) {
+            immi.setNFramesUnverified(frame + 1);
          }  
-         if (immi.getNSlicesUnverified() <= slice) {
-            immi.setNSlicesUnverified(slice);
+         if (immi.getNSlicesUnverified() <= slice + 1) {
+            immi.setNSlicesUnverified(slice + 1);
          }  
-         if (immi.getNChannelsUnverified() <= channel) {
-            immi.setNChannelsUnverified(channel);
+         if (immi.getNChannelsUnverified() <= channel + 1) {
+            immi.setNChannelsUnverified(channel + 1);
          }
       }
 
