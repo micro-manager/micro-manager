@@ -40,7 +40,6 @@ import java.util.prefs.Preferences;
 
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
-import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -241,7 +240,7 @@ public class MMStudio implements ScriptInterface {
    public static void main(String args[]) {
       try {
          UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-         new MMStudio(false);
+         MMStudio mmStudio = new MMStudio(false);
       } catch (Throwable e) {
          ReportingUtils.showError(e, "A java error has caused Micro-Manager to exit.");
          System.exit(1);
@@ -260,7 +259,7 @@ public class MMStudio implements ScriptInterface {
       // Set up event handling early, so following code can subscribe/publish
       // events as needed.
       EventManager manager = new EventManager();
-      manager.register(this);
+      EventManager.register(this);
 
       prepAcquisitionEngine();
 
@@ -366,9 +365,10 @@ public class MMStudio implements ScriptInterface {
       toolsMenu_.initializeToolsMenu(menuBar_, mainPrefs_);
 
       HelpMenu helpMenu = new HelpMenu(studio_, core_, options_);
-      helpMenu.initializeHelpMenu(menuBar_, systemPrefs_);
 
       initializationSequence();
+           
+      helpMenu.initializeHelpMenu(menuBar_, systemPrefs_);
    }
 
    /**
@@ -575,8 +575,8 @@ public class MMStudio implements ScriptInterface {
    }
 
    public void toggleAutoShutter() {
-      staticInfo_.shutterLabel_ = core_.getShutterDevice();
-      if (staticInfo_.shutterLabel_.length() == 0) {
+      StaticInfo.shutterLabel_ = core_.getShutterDevice();
+      if (StaticInfo.shutterLabel_.length() == 0) {
          frame_.setToggleShutterButtonEnabled(false);
       } else {
          try {
@@ -670,7 +670,7 @@ public class MMStudio implements ScriptInterface {
          }
          snapLiveManager_.safeSetCoreExposure(frame_.getDisplayedExposureTime());
          // Display the new exposure time
-         double exposure = -1;
+         double exposure;
          try {
             exposure = core_.getExposure();
             frame_.setDisplayedExposureTime(exposure);
@@ -688,7 +688,6 @@ public class MMStudio implements ScriptInterface {
          }
          catch (Exception e) {
             ReportingUtils.logError(e, "Couldn't set exposure time.");
-            return;
          }
       } // End synchronization check
    }
@@ -995,7 +994,7 @@ public class MMStudio implements ScriptInterface {
          if (isCameraAvailable()) {
             String item = frame_.getBinMode();
             if (item != null) {
-               core_.setProperty(staticInfo_.cameraLabel_, MMCoreJ.getG_Keyword_Binning(), item);
+               core_.setProperty(StaticInfo.cameraLabel_, MMCoreJ.getG_Keyword_Binning(), item);
             }
          }
          staticInfo_.refreshValues();
@@ -1110,7 +1109,7 @@ public class MMStudio implements ScriptInterface {
    }
 
    private boolean isCameraAvailable() {
-      return staticInfo_.cameraLabel_.length() > 0;
+      return StaticInfo.cameraLabel_.length() > 0;
    }
 
    /**
@@ -1316,15 +1315,15 @@ public class MMStudio implements ScriptInterface {
    }
    
    private void configureBinningCombo() throws Exception {
-      if (staticInfo_.cameraLabel_.length() > 0) {
-         frame_.configureBinningComboForCamera(staticInfo_.cameraLabel_);
+      if (StaticInfo.cameraLabel_.length() > 0) {
+         frame_.configureBinningComboForCamera(StaticInfo.cameraLabel_);
       }
    }
 
    public void initializeGUI() {
       try {
          staticInfo_.refreshValues();
-         engine_.setZStageDevice(staticInfo_.zStageLabel_);  
+         engine_.setZStageDevice(StaticInfo.zStageLabel_);  
   
          configureBinningCombo();
 
@@ -1362,7 +1361,7 @@ public class MMStudio implements ScriptInterface {
 
    @Subscribe
    public void onExposureChanged(ExposureChangedEvent event) {
-      if (event.getCameraName().equals(staticInfo_.cameraLabel_)) {
+      if (event.getCameraName().equals(StaticInfo.cameraLabel_)) {
          frame_.setDisplayedExposureTime(event.getNewExposureTime());
       }
    }
@@ -1383,9 +1382,9 @@ public class MMStudio implements ScriptInterface {
             configureBinningCombo();
             String binSize;
             if (fromCache) {
-               binSize = core_.getPropertyFromCache(staticInfo_.cameraLabel_, MMCoreJ.getG_Keyword_Binning());
+               binSize = core_.getPropertyFromCache(StaticInfo.cameraLabel_, MMCoreJ.getG_Keyword_Binning());
             } else {
-               binSize = core_.getProperty(staticInfo_.cameraLabel_, MMCoreJ.getG_Keyword_Binning());
+               binSize = core_.getProperty(StaticInfo.cameraLabel_, MMCoreJ.getG_Keyword_Binning());
             }
             frame_.setBinSize(binSize);
          }
@@ -1945,7 +1944,7 @@ public class MMStudio implements ScriptInterface {
     * @return current background color
     */
    @Override
-   public Color getBackgroundColor() {
+   public final Color getBackgroundColor() {
       return guiColors_.background.get((options_.displayBackground_));
    }
 
