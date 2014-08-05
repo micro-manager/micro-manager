@@ -92,11 +92,6 @@ public interface Histograms  {
     */
    public void autoscaleAllChannels() ;
 
-   /*
-    * Initializes all channel controls.
-    */
-   public void setupChannelControls(ImageCache cache);
-
    public int getNumberOfChannels();
 
 }
