@@ -11,6 +11,7 @@ import ij.process.LUT;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 import java.util.prefs.Preferences;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
@@ -26,11 +27,16 @@ import mmcorej.CMMCore;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.DatastoreLockedException;
 import org.micromanager.api.data.DisplaySettings;
+import org.micromanager.api.data.Image;
 import org.micromanager.api.data.NewDisplaySettingsEvent;
+import org.micromanager.api.data.NewImageEvent;
 import org.micromanager.api.data.SummaryMetadata;
+
+import org.micromanager.data.DefaultCoords;
 import org.micromanager.dialogs.AcqControlDlg;
 import org.micromanager.graph.GraphData;
 import org.micromanager.graph.HistogramPanel;
@@ -89,7 +95,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private int pixelMin_ = 0;
    private int pixelMax_ = 255;
    final private int maxIntensity_;
-   final private int bitDepth_;
+   private int bitDepth_;
    private Color color_;
    private String name_;
 
@@ -102,8 +108,16 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       bus_ = bus;
       color_ = settings_.getChannelColors()[channelIndex];
       name_ = settings_.getChannelNames()[channelIndex];
-      // TODO: get proper bit depth
-      bitDepth_ = 8;//store_.getSummaryMetadata().getBitDepth();
+      // This won't be available until there's at least one image in the 
+      // Datastore for our channel.
+      bitDepth_ = -1;
+      List<Image> images = store_.getImagesMatching(
+            new DefaultCoords.Builder().position("channel", channelIndex).build()
+      );
+      if (images != null && images.size() > 0) {
+         // Found an image for our channel!
+         bitDepth_ = images.get(0).getMetadata().getBitDepth();
+      }
       maxIntensity_ = (int) Math.pow(2, bitDepth_) - 1;
       histMax_ = maxIntensity_ + 1;
       binSize_ = histMax_ / NUM_BINS;
@@ -343,6 +357,10 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       return histRangeComboBox_.getSelectedIndex();
    }
    
+   /**
+    * Do a logarithmic (powers of 2) zoom, which in turn updates our displayed
+    * bit depth.
+    */
    private void zoomInAction() {
       int selected = histRangeComboBox_.getSelectedIndex();
       if (selected == 0) {
@@ -844,5 +862,16 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    @Subscribe
    public void onNewDisplaySettings(NewDisplaySettingsEvent event) {
       settings_ = event.getDisplaySettings();
+   }
+
+   /**
+    * A new image has arrived; if it's for our channel and we haven't set bit
+    * depth yet, then do so now.
+    */
+   @Subscribe
+   public void onNewImage(NewImageEvent event) {
+      if (bitDepth_ == -1) {
+         bitDepth_ = event.getImage().getMetadata().getBitDepth();
+      }
    }
 }
