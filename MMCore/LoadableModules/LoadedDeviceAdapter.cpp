@@ -136,7 +136,18 @@ LoadedDeviceAdapter::LoadDevice(CMMCore* core, const std::string& name,
       throw CMMError("Device adapter " + ToQuotedString(GetName()) +
             " failed to instantiate device " + ToQuotedString(name));
 
-   MM::DeviceType expectedType = GetAdvertisedDeviceType(name);
+   MM::DeviceType expectedType;
+   try
+   {
+      expectedType = GetAdvertisedDeviceType(name);
+   }
+   catch (const CMMError&)
+   {
+      // The type of a device that was not explictily registered (e.g. a
+      // peripheral device or a device provided only for backward
+      // compatibility) will not be available.
+      expectedType = MM::UnknownType;
+   }
    MM::DeviceType actualType = pDevice->GetType();
    if (expectedType == MM::UnknownType)
       expectedType = actualType;

@@ -102,7 +102,7 @@ using namespace std;
  */
 const int MMCore_versionMajor = 6;
 const int MMCore_versionMinor = 0;
-const int MMCore_versionPatch = 0;
+const int MMCore_versionPatch = 2;
 
 
 ///////////////////////////////////////////////////////////////////////////////

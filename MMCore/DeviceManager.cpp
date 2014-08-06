@@ -53,7 +53,24 @@ DeviceManager::LoadDevice(boost::shared_ptr<LoadedDeviceAdapter> module,
    boost::shared_ptr<DeviceInstance> device = module->LoadDevice(core,
          deviceName, label, deviceLogger, coreLogger);
 
-   device->SetDescription(module->GetDeviceDescription(deviceName));
+   std::string description;
+   bool moduleHasDescription = false;
+   try
+   {
+      description = module->GetDeviceDescription(deviceName);
+      moduleHasDescription = true;
+   }
+   catch (const CMMError&)
+   {
+      // Module did not have a description for this device.
+   }
+   if (moduleHasDescription && !description.empty())
+   {
+      // If a description could be obtained from the module, set the device's
+      // description (which will be used so long as the device does not
+      // override GetDescription().
+      device->SetDescription(description);
+   }
 
    devices_.push_back(std::make_pair(label, device));
    deviceRawPtrIndex_.insert(std::make_pair(device->GetRawPtr(), device));
