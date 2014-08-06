@@ -26,8 +26,8 @@ public interface Metadata {
       Metadata build();
 
       // The following functions each set the relevant value for the Metadata.
-      MetadataBuilder ROI(Rectangle ROI);
       MetadataBuilder binning(Integer binning);
+      MetadataBuilder bitDepth(Integer bitDepth);
       MetadataBuilder camera(String camera);
       MetadataBuilder channelName(String channelName);
       MetadataBuilder color(Integer color);
@@ -79,6 +79,7 @@ public interface Metadata {
    Double getZPositionUm();
    Double getZStepUm();
    Integer getBinning();
+   Integer getBitDepth();
    Integer getColor();
    Integer getGridColumn();
    Integer getGridRow();
