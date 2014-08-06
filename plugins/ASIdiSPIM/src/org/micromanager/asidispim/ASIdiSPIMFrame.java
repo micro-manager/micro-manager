@@ -44,7 +44,7 @@ import org.micromanager.asidispim.Utils.StagePositionUpdater;
 import org.micromanager.internalinterfaces.LiveModeListener; 
 
 // TODO make sure acquisition works for single SPIM
-// TODO display center position in setup panel
+// TODO save/load plugin settings from file instead of from registry (nice to also include controller settings)
 // TODO support demo cam for testing purposes
 // TODO handle camera binning
 // TODO add check for correct Hamamatsu model

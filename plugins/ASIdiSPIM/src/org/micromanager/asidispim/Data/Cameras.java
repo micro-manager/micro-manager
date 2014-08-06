@@ -229,6 +229,9 @@ public class Cameras {
                      ? Properties.Values.EXTERNAL_LC
                      : Properties.Values.INTERNAL_ANDOR), true);
          break;
+      case DEMOCAM:
+         // do nothing
+         break;
       default:
          break;
       }
@@ -282,6 +285,8 @@ public class Cameras {
             return props_.getPropValueString(camKey, Properties.Keys.PIXEL_READOUT_RATE)
                   .substring(0, 3).equals("216");
          }
+      case DEMOCAM:
+         break;
       default:
          break;
       }
@@ -300,6 +305,8 @@ public class Cameras {
          } else {
             return new Rectangle(0, 0, 2048, 2048);
          }
+      case DEMOCAM:
+         return new Rectangle(0, 0, 512, 512);
       default:
          break;
       }
@@ -341,6 +348,8 @@ public class Cameras {
                return (2592 * 2 / 540e3);
             }
          }
+      case DEMOCAM:
+         return(10e-3);  // dummy 10us row time
       default:
          break;
       }
@@ -370,6 +379,8 @@ public class Cameras {
                true).equals(Properties.Values.ON.toString())) {
             return true;
          }
+         break;
+      case DEMOCAM:
          break;
       default:
          break;
@@ -409,6 +420,9 @@ public class Cameras {
       case ANDORCAM:
          numRowsOverhead = 1;  // TODO make sure this is accurate; don't have sufficient documentation yet
          resetTimeMs = computeCameraReadoutTime(camKey) + (float) (numRowsOverhead * rowReadoutTime);
+         break;
+      case DEMOCAM:
+         resetTimeMs = computeCameraReadoutTime(camKey);
          break;
       default:
          break;
@@ -462,6 +476,10 @@ public class Cameras {
          break;
       case ANDORCAM:
          numReadoutRows = roiReadoutRowsSplitReadout(roi, getSensorSize(camKey));
+         readoutTimeMs = ((float) (numReadoutRows * rowReadoutTime));
+         break;
+      case DEMOCAM:
+         numReadoutRows = roi.height;
          readoutTimeMs = ((float) (numReadoutRows * rowReadoutTime));
          break;
       default:

@@ -107,6 +107,7 @@ public class Devices {
       HAMCAM("HamamatsuHam"), 
       PCOCAM("PCO_Camera"), 
       ANDORCAM("AndorSDK3"),
+      DEMOCAM("DemoCamera"),
       UTILITIES("Utilities"),
       UNKNOWN("Unknown"), // if the device is valid but not one we know about
       ;
@@ -279,16 +280,12 @@ public class Devices {
          try {
             d.type = core_.getDeviceType(mmDevice);
             String library = core_.getDeviceLibrary(mmDevice);
-            if (library.equals(Devices.Libraries.ASITIGER.toString())) {
-               d.deviceLibrary = Devices.Libraries.ASITIGER;
-            } else if (library.equals(Devices.Libraries.HAMCAM.toString())) {
-               d.deviceLibrary = Devices.Libraries.HAMCAM;
-            } else if (library.equals(Devices.Libraries.PCOCAM.toString())) {
-               d.deviceLibrary = Devices.Libraries.PCOCAM;
-            } else if (library.equals(Devices.Libraries.ANDORCAM.toString())) {
-               d.deviceLibrary = Devices.Libraries.ANDORCAM;
-            } else {
-               d.deviceLibrary = Devices.Libraries.UNKNOWN;
+            d.deviceLibrary = Devices.Libraries.UNKNOWN;
+            for (Devices.Libraries lib_test : Devices.Libraries.values()) {
+               if (library.equals(lib_test.toString())) {
+                  d.deviceLibrary = lib_test;
+                  break;
+               }
             }
          } catch (Exception e) {
             d.type = mmcorej.DeviceType.UnknownType;

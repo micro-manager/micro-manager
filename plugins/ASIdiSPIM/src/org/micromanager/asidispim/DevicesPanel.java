@@ -223,6 +223,9 @@ public class DevicesPanel extends ListeningJPanel {
                      ": Andor sCMOS device adapter doesn't have external trigger property");
             }
             break;
+         case DEMOCAM:
+            // no checks
+            break;
          default:
             ReportingUtils.showError("Plugin doesn't support your camera for SPIM yet;"
                   + " contact the authors for support (camera must have hardware trigger)");

@@ -936,6 +936,16 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                  "Please change input");
          return false;
       }
+      if (nrRepeats > 10 && separateTimePointsCB_.isSelected()) {
+         int dialogResult = JOptionPane.showConfirmDialog(null,
+               "This will generate " + nrRepeats + " separate windows. "
+               + "Do you really want to proceed?",
+               "Warning",
+               JOptionPane.OK_CANCEL_OPTION);
+         if (dialogResult == JOptionPane.CANCEL_OPTION) {
+            return false;
+         }
+      }
 
       long acqStart = System.currentTimeMillis();
 
