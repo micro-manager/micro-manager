@@ -77,6 +77,7 @@ public class DefaultCoords implements Coords, Comparable<DefaultCoords> {
       sortedAxes_ = builder.sortedAxes_;
    }
    
+   @Override
    public int getPositionAt(String axis) {
       if (axisToPos_.containsKey(axis)) {
          return axisToPos_.get(axis);
@@ -84,18 +85,32 @@ public class DefaultCoords implements Coords, Comparable<DefaultCoords> {
       return -1;
    }
    
+   @Override
    public boolean getIsAxisEndFor(String axis) {
       return terminalAxes_.contains(axis);
    }
 
+   @Override
    public Set<String> getTerminalAxes() {
       return new HashSet<String>(terminalAxes_);
    }
 
+   @Override
    public List<String> getAxes() {
       return new ArrayList<String>(sortedAxes_);
    }
 
+   @Override
+   public boolean matches(Coords alt) {
+      for (String axis : alt.getAxes()) {
+         if (getPositionAt(axis) != alt.getPositionAt(axis)) {
+            return false;
+         }
+      }
+      return true;
+   }
+
+   @Override
    public CoordsBuilder copy() {
       Builder result = new Builder();
       for (String axis : axisToPos_.keySet()) {
@@ -157,8 +172,8 @@ public class DefaultCoords implements Coords, Comparable<DefaultCoords> {
          return false;
       }
       // Manually verify that we have the same set of axes.
-      HashSet<String> ourAxes = new HashSet(sortedAxes_);
-      HashSet<String> altAxes = new HashSet(((DefaultCoords) alt).getAxes());
+      HashSet<String> ourAxes = new HashSet<String>(sortedAxes_);
+      HashSet<String> altAxes = new HashSet<String>(((DefaultCoords) alt).getAxes());
       return ourAxes.equals(altAxes);
    }
 
