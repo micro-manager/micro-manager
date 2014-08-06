@@ -37,6 +37,9 @@ public class TestDisplay {
       window_ = new DisplayWindow(ijImage_, controls_, bus_);
    }
    
+   /**
+    * Datastore has received a new image.
+    */
    @Subscribe
    public void onNewImage(NewImageEvent event) {
       ReportingUtils.logError("Display caught new image");
@@ -50,5 +53,14 @@ public class TestDisplay {
       catch (Exception e) {
          ReportingUtils.logError(e, "Couldn't set pixels");
       }
+   }
+
+   /**
+    * Something on our display bus (i.e. not the Datastore bus) wants us to
+    * redisplay.
+    */
+   @Subscribe
+   public void onDrawEvent() {
+      ijImage_.drawWithoutUpdate();
    }
 }
