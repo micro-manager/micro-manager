@@ -69,6 +69,14 @@ public interface Coords {
    public List<String> getAxes();
 
    /**
+    * Return true if, for every position in the provided Coords, we have a
+    * matching and equal position in ourself. Returns false if either any
+    * position in the provided Coords differs from our own position, or we
+    * have no position for an axis that is specified in the provided Coords.
+    */
+   public boolean matches(Coords alt);
+
+   /**
     * Generate a new CoordsBuilder based on the values for this Coords.
     */
    public CoordsBuilder copy();
