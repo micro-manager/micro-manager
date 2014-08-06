@@ -60,7 +60,7 @@ public class TestDisplay {
     * redisplay.
     */
    @Subscribe
-   public void onDrawEvent() {
+   public void onDrawEvent(DrawEvent event) {
       ijImage_.drawWithoutUpdate();
    }
 }
