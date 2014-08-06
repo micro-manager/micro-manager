@@ -18,6 +18,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
       private Color[] channelColors_ = null;
       private Integer[] channelContrastMins_ = null;
       private Integer[] channelContrastMaxes_ = null;
+      private Double[] channelGammas_ = null;
       private Boolean isSlowHistogramsOn_ = null;
       private Boolean shouldSyncChannels_ = null;
       private Integer scaleBarColorIndex_ = null;
@@ -54,6 +55,12 @@ public class DefaultDisplaySettings implements DisplaySettings {
       @Override
       public DisplaySettingsBuilder channelContrastMaxes(Integer[] channelContrastMaxes) {
          channelContrastMaxes_ = channelContrastMaxes;
+         return this;
+      }
+
+      @Override
+      public DisplaySettingsBuilder channelGammas(Double[] channelGammas) {
+         channelGammas_ = channelGammas;
          return this;
       }
 
@@ -117,6 +124,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
    private Color[] channelColors_ = null;
    private Integer[] channelContrastMins_ = null;
    private Integer[] channelContrastMaxes_ = null;
+   private Double[] channelGammas_ = null;
    private Boolean isSlowHistogramsOn_ = null;
    private Boolean shouldSyncChannels_ = null;
    private Integer scaleBarColorIndex_ = null;
@@ -132,6 +140,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
       channelColors_ = builder.channelColors_;
       channelContrastMins_ = builder.channelContrastMins_;
       channelContrastMaxes_ = builder.channelContrastMaxes_;
+      channelGammas_ = builder.channelGammas_;
       isSlowHistogramsOn_ = builder.isSlowHistogramsOn_;
       shouldSyncChannels_ = builder.shouldSyncChannels_;
       scaleBarColorIndex_ = builder.scaleBarColorIndex_;
@@ -161,6 +170,11 @@ public class DefaultDisplaySettings implements DisplaySettings {
    @Override
    public Integer[] getChannelContrastMaxes() {
       return channelContrastMaxes_;
+   }
+
+   @Override
+   public Double[] getChannelGammas() {
+      return channelGammas_;
    }
 
    @Override
@@ -215,6 +229,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
             .channelColors(channelColors_)
             .channelContrastMins(channelContrastMins_)
             .channelContrastMaxes(channelContrastMaxes_)
+            .channelGammas(channelGammas_)
             .isSlowHistogramsOn(isSlowHistogramsOn_)
             .shouldSyncChannels(shouldSyncChannels_)
             .scaleBarColorIndex(scaleBarColorIndex_)
