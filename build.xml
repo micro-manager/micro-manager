@@ -163,16 +163,26 @@
 			includes="*.pdb"/>
 	</target>
 
+	<target name="clean-swig">
+		<!-- Delete SWIG-generated source
+		     Sorry for the hard-coding, but even running the Clean
+		     target using MSBuild doesn't seem to delete these. -->
+		<delete file="${mm.basedir}/MMCoreJ_wrap/MMCoreJ_wrap.cpp"/>
+		<delete file="${mm.basedir}/MMCoreJ_wrap/MMCoreJ_wrap.h"/>
+		<delete file="${mm.basedir}/MMCorePy_wrap/MMCorePy_wrap.cpp"/>
+		<delete file="${mm.basedir}/MMCorePy_wrap/MMCorePy_wrap.h"/>
+	</target>
+
 	<target name="clean-java" description="Clean only the Java components">
 		<run-all-java-projects target="clean"/>
 	</target>
 
-	<target name="clean" depends="clean-java" description="Delete build intermediate and output files">
+	<target name="clean" depends="clean-swig,clean-java" description="Delete build intermediate and output files">
 		<delete dir="${mm.cpp.outdir}"/>
 		<delete dir="${mm.cpp.intdir}"/>
 	</target>
 
-	<target name="clean-all" description="Delete build files for all configurations and architectures">
+	<target name="clean-all" depends="clean-swig" description="Delete build files for all configurations and architectures">
 		<delete dir="${mm.outdir}"/>
 		<delete dir="${mm.intdir}"/>
 	</target>
