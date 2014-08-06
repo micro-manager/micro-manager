@@ -63,15 +63,6 @@ using namespace std;
 MODULE_API void InitializeModuleData()
 {
    RegisterDevice(g_TigerCommHubName, MM::HubDevice, g_TigerCommHubDescription);
-   RegisterDevice(g_ZStageDeviceName, MM::StageDevice, g_ZStageDeviceDescription);
-   RegisterDevice(g_XYStageDeviceName, MM::XYStageDevice, g_XYStageDeviceDescription);
-   RegisterDevice(g_FSliderDeviceName, MM::StateDevice, g_FSliderDeviceDescription);
-   RegisterDevice(g_TurretDeviceName, MM::StateDevice, g_TurretDeviceDescription);
-   RegisterDevice(g_FWheelDeviceName, MM::StateDevice, g_FWheelDeviceDescription);
-   RegisterDevice(g_ScannerDeviceName, MM::GalvoDevice, g_ScannerDeviceDescription);
-   RegisterDevice(g_PiezoDeviceName, MM::StageDevice, g_PiezoDeviceDescription);
-   RegisterDevice(g_CRISPDeviceName, MM::AutoFocusDevice, g_CRISPDeviceDescription);
-   RegisterDevice(g_LEDDeviceName, MM::ShutterDevice, g_LEDDeviceDescription);
 }
 
 
