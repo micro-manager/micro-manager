@@ -1,5 +1,6 @@
 package org.micromanager.api.data;
 
+import java.util.List;
 
 /**
  * Readers are responsible for providing image data to Datastores when
@@ -11,7 +12,14 @@ public interface Reader {
     * Retrieve the Image located at the specified coordinates.
     */
    public Image getImage(Coords coords);
-   
+
+   /**
+    * Retrieve a list of all images whose Coords match the given incomplete
+    * Coords instance. For example, providing a Coords of <"z" = 9> would
+    * return all Images whose position along the "z" axis is 9. May be empty.
+    */
+   public List<Image> getImagesMatching(Coords coords);
+
    /**
     * Return the largest stored position along the specified axis.
     */
