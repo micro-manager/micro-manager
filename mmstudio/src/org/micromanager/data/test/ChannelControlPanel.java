@@ -94,7 +94,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private int maxAfterRejectingOutliers_;
    private int pixelMin_ = 0;
    private int pixelMax_ = 255;
-   final private int maxIntensity_;
+   private int maxIntensity_;
    private int bitDepth_;
    private Color color_;
    private String name_;
@@ -108,25 +108,29 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       bus_ = bus;
       color_ = settings_.getChannelColors()[channelIndex];
       name_ = settings_.getChannelNames()[channelIndex];
+      channelIndex_ = channelIndex;
       // This won't be available until there's at least one image in the 
       // Datastore for our channel.
       bitDepth_ = -1;
       List<Image> images = store_.getImagesMatching(
-            new DefaultCoords.Builder().position("channel", channelIndex).build()
+            new DefaultCoords.Builder().position("channel", channelIndex_).build()
       );
       if (images != null && images.size() > 0) {
          // Found an image for our channel!
          bitDepth_ = images.get(0).getMetadata().getBitDepth();
+         initialize();
       }
+      store.registerForEvents(this);
+   }
+
+   private void initialize() {
       maxIntensity_ = (int) Math.pow(2, bitDepth_) - 1;
       histMax_ = maxIntensity_ + 1;
       binSize_ = histMax_ / NUM_BINS;
       histMaxLabel_ = "" + histMax_;
-      channelIndex_ = channelIndex;
       initComponents();
       loadDisplaySettings();
       updateHistogram();
-      store.registerForEvents(this);
    }
 
    private void initComponents() {
@@ -872,6 +876,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    public void onNewImage(NewImageEvent event) {
       if (bitDepth_ == -1) {
          bitDepth_ = event.getImage().getMetadata().getBitDepth();
+         initialize();
       }
    }
 }
