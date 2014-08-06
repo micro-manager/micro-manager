@@ -71,4 +71,9 @@ public interface Datastore {
     * to any subscribers.
     */
    public void lock();
+
+   /**
+    * Returns whether or not the Datastore has been locked.
+    */
+   public boolean getIsLocked();
 }
