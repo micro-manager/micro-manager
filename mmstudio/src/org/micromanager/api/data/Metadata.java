@@ -26,38 +26,39 @@ public interface Metadata {
       Metadata build();
 
       // The following functions each set the relevant value for the Metadata.
-      MetadataBuilder uuid(UUID uuid);
-      MetadataBuilder source(String source);
-      MetadataBuilder initialPositionList(MultiStagePosition initialPositionList);
-      MetadataBuilder zStepUm(Double zStepUm);
-      MetadataBuilder keepShutterOpenSlices(Boolean keepShutterOpenSlices);
-      MetadataBuilder keepShutterOpenChannels(Boolean keepShutterOpenChannels);
-      MetadataBuilder pixelType(String pixelType);
-      MetadataBuilder numComponents(Integer numComponents);
-      MetadataBuilder ijType(Integer ijType);
-      MetadataBuilder channelName(String channelName);
-      MetadataBuilder exposureMs(Double exposureMs);
-      MetadataBuilder elapsedTimeMs(Double elapsedTimeMs);
-      MetadataBuilder startTimeMs(Double startTimeMs);
+      MetadataBuilder ROI(Rectangle ROI);
       MetadataBuilder binning(Integer binning);
-      MetadataBuilder imageNumber(Integer imageNumber);
-      MetadataBuilder gridRow(Integer gridRow);
+      MetadataBuilder camera(String camera);
+      MetadataBuilder channelName(String channelName);
+      MetadataBuilder color(Integer color);
+      MetadataBuilder comments(String comments);
+      MetadataBuilder elapsedTimeMs(Double elapsedTimeMs);
+      MetadataBuilder emissionLabel(String emissionLabel);
+      MetadataBuilder excitationLabel(String excitationLabel);
+      MetadataBuilder exposureMs(Double exposureMs);
       MetadataBuilder gridColumn(Integer gridColumn);
+      MetadataBuilder gridRow(Integer gridRow);
+      MetadataBuilder ijType(Integer ijType);
+      MetadataBuilder imageNumber(Integer imageNumber);
+      MetadataBuilder initialPositionList(MultiStagePosition initialPositionList);
+      MetadataBuilder keepShutterOpenChannels(Boolean keepShutterOpenChannels);
+      MetadataBuilder keepShutterOpenSlices(Boolean keepShutterOpenSlices);
+      MetadataBuilder numComponents(Integer numComponents);
+      MetadataBuilder pixelAspect(Double pixelAspect);
+      MetadataBuilder pixelSizeUm(Double pixelSizeUm);
+      MetadataBuilder pixelType(String pixelType);
       MetadataBuilder positionName(String positionName);
+      MetadataBuilder receivedTime(String receivedTime);
+      MetadataBuilder ROI(Rectangle ROI);
+      MetadataBuilder source(String source);
+      MetadataBuilder startTimeMs(Double startTimeMs);
+      MetadataBuilder summaryMetadata(SummaryMetadata summaryMetadata);
+      MetadataBuilder userMetadata(JSONObject userMetadata);
+      MetadataBuilder uuid(UUID uuid);
       MetadataBuilder xPositionUm(Double xPositionUm);
       MetadataBuilder yPositionUm(Double yPositionUm);
       MetadataBuilder zPositionUm(Double zPositionUm);
-      MetadataBuilder pixelSizeUm(Double pixelSizeUm);
-      MetadataBuilder camera(String camera);
-      MetadataBuilder receivedTime(String receivedTime);
-      MetadataBuilder excitationLabel(String excitationLabel);
-      MetadataBuilder emissionLabel(String emissionLabel);
-      MetadataBuilder ROI(Rectangle ROI);
-      MetadataBuilder comments(String comments);
-      MetadataBuilder color(Integer color);
-      MetadataBuilder pixelAspect(Double pixelAspect);
-      MetadataBuilder userMetadata(JSONObject userMetadata);
-      MetadataBuilder summaryMetadata(SummaryMetadata summaryMetadata);
+      MetadataBuilder zStepUm(Double zStepUm);
    }
 
    /**
@@ -66,38 +67,38 @@ public interface Metadata {
     */
    MetadataBuilder copy();
 
-   UUID getUUID();
-   String getSource();
-   MultiStagePosition getInitialPositionList();
-   Double getZStepUm();
-   Boolean getKeepShutterOpenSlices();
    Boolean getKeepShutterOpenChannels();
-   String getPixelType();
-   Integer getNumComponents();
-   Integer getIjType();
-   String getChannelName();
-   Double getExposureMs();
+   Boolean getKeepShutterOpenSlices();
    Double getElapsedTimeMs();
+   Double getExposureMs();
+   Double getPixelAspect();
+   Double getPixelSizeUm();
    Double getStartTimeMs();
-   Integer getBinning();
-   Integer getImageNumber();
-   Integer getGridRow();
-   Integer getGridColumn();
-   String getPositionName();
    Double getXPositionUm();
    Double getYPositionUm();
    Double getZPositionUm();
-   Double getPixelSizeUm();
-   String getCamera();
-   String getReceivedTime();
-   String getExcitationLabel();
-   String getEmissionLabel();
-   Rectangle getROI();
-   String getComments();
+   Double getZStepUm();
+   Integer getBinning();
    Integer getColor();
-   Double getPixelAspect();
+   Integer getGridColumn();
+   Integer getGridRow();
+   Integer getIjType();
+   Integer getImageNumber();
+   Integer getNumComponents();
    JSONObject getUserMetadata();
+   MultiStagePosition getInitialPositionList();
+   Rectangle getROI();
+   String getCamera();
+   String getChannelName();
+   String getComments();
+   String getEmissionLabel();
+   String getExcitationLabel();
+   String getPixelType();
+   String getPositionName();
+   String getReceivedTime();
+   String getSource();
    SummaryMetadata getSummaryMetadata();
+   UUID getUUID();
 
    /**
     * For legacy support only: convert to JSONObject.
