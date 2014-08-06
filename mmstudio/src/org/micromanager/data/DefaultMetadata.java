@@ -37,6 +37,7 @@ public class DefaultMetadata implements Metadata {
       private Boolean keepShutterOpenChannels_ = null;
 
       private String pixelType_ = null;
+      private Integer bitDepth_ = null;
       private Integer numComponents_ = null;
       private Integer ijType_ = null;
       private String channelName_ = null;
@@ -111,6 +112,12 @@ public class DefaultMetadata implements Metadata {
       @Override
       public MetadataBuilder pixelType(String pixelType) {
          pixelType_ = pixelType;
+         return this;
+      }
+
+      @Override
+      public MetadataBuilder bitDepth(Integer bitDepth) {
+         bitDepth_ = bitDepth;
          return this;
       }
 
@@ -275,6 +282,7 @@ public class DefaultMetadata implements Metadata {
    private Boolean keepShutterOpenChannels_ = null;
 
    private String pixelType_ = null;
+   private Integer bitDepth_ = null;
    private Integer numComponents_ = null;
    private Integer ijType_ = null;
    private String channelName_ = null;
@@ -316,6 +324,7 @@ public class DefaultMetadata implements Metadata {
       keepShutterOpenChannels_ = builder.keepShutterOpenChannels_;
 
       pixelType_ = builder.pixelType_;
+      bitDepth_ = builder.bitDepth_;
       numComponents_ = builder.numComponents_;
       ijType_ = builder.ijType_;
       channelName_ = builder.channelName_;
@@ -357,6 +366,7 @@ public class DefaultMetadata implements Metadata {
             .keepShutterOpenSlices(keepShutterOpenSlices_)
             .keepShutterOpenChannels(keepShutterOpenChannels_)
             .pixelType(pixelType_)
+            .bitDepth(bitDepth_)
             .numComponents(numComponents_)
             .ijType(ijType_)
             .channelName(channelName_)
@@ -415,6 +425,11 @@ public class DefaultMetadata implements Metadata {
    @Override
    public String getPixelType() {
       return pixelType_;
+   }
+
+   @Override
+   public Integer getBitDepth() {
+      return bitDepth_;
    }
 
    @Override
