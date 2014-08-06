@@ -2,7 +2,7 @@ package org.micromanager.data;
 
 import com.google.common.eventbus.EventBus;
 
-import java.util.ArrayList;
+import java.util.List;
 
 import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.Datastore;
@@ -41,6 +41,14 @@ public class DefaultDatastore implements Datastore {
    public Image getImage(Coords coords) {
       if (reader_ != null) {
          return reader_.getImage(coords);
+      }
+      return null;
+   }
+
+   @Override
+   public List<Image> getImagesMatching(Coords coords) {
+      if (reader_ != null) {
+         return reader_.getImagesMatching(coords);
       }
       return null;
    }

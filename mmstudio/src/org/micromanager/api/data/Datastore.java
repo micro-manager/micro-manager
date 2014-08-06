@@ -1,5 +1,7 @@
 package org.micromanager.api.data;
 
+import java.util.List;
+
 /**
  * Datastores provide access to image data and metadata.
  */
@@ -24,6 +26,14 @@ public interface Datastore {
     * Reader has been provided yet.
     */
    public Image getImage(Coords coords);
+
+   /**
+    * Retrieve a list of all images whose Coords match the given incomplete
+    * Coords instance. For example, providing a Coords of <"z" = 9> would
+    * return all Images whose position along the "z" axis is 9. May be empty.
+    * Will be null if no Reader has been provided yet.
+    */
+   public List<Image> getImagesMatching(Coords coords);
 
    /**
     * Insert an image at the specified coordinates. Posts a NewImageEvent to

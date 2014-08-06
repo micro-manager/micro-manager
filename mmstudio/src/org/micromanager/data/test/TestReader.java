@@ -1,6 +1,8 @@
 package org.micromanager.data.test;
 
 import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
 
 import mmcorej.TaggedImage;
 
@@ -59,6 +61,17 @@ public class TestReader implements Reader {
          ReportingUtils.logError(e, "Failed to generate a new image");
          return null;
       }
+   }
+
+   @Override
+   public List<Image> getImagesMatching(Coords coords) {
+      ArrayList<Image> results = new ArrayList<Image>();
+      for (Image image : coordsToImage_.values()) {
+         if (image.getCoords().matches(coords)) {
+            results.add(image);
+         }
+      }
+      return results;
    }
 
    @Override
