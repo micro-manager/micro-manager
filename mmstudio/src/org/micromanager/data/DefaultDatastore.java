@@ -101,4 +101,9 @@ public class DefaultDatastore implements Datastore {
       bus_.post(new DatastoreLockedEvent());
       isLocked_ = true;
    }
+
+   @Override
+   public boolean getIsLocked() {
+      return isLocked_;
+   }
 }
