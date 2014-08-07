@@ -420,7 +420,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    private void fullButtonAction() {
-      if (settings_.getShouldSyncChannels()) {
+      if (settings_.getShouldSyncChannels() != null &&
+            settings_.getShouldSyncChannels()) {
          parent_.fullScaleChannels();
       } else {
          setFullScale();
@@ -533,7 +534,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
               contrastMax_++;
           }
       }
-      if (settings_.getShouldIgnoreOutliers()) {
+      if (settings_.getShouldIgnoreOutliers() != null &&
+            settings_.getShouldIgnoreOutliers()) {
          if (contrastMin_ < minAfterRejectingOutliers_) {
             if (0 < minAfterRejectingOutliers_) {
                contrastMin_ = minAfterRejectingOutliers_;
@@ -596,14 +598,20 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    public void updateChannelNameAndColorFromCache() {
-      color_ = settings_.getChannelColors()[channelIndex_];
+      Color[] allColors = settings_.getChannelColors();
+      if (allColors != null && allColors.length > channelIndex_) {
+         color_ = allColors[channelIndex_];
+      }
       colorPickerLabel_.setBackground(color_);
       hp_.setTraceStyle(true, color_);
-      String name = settings_.getChannelNames()[channelIndex_];
-      if (name.length() > 11) {
-         name = name.substring(0, 9) + "...";
+      String[] allNames = settings_.getChannelNames();
+      if (allNames != null && allNames.length > channelIndex_) {
+         String name = allNames[channelIndex_];
+         if (name.length() > 11) {
+            name = name.substring(0, 9) + "...";
+         }
+         channelNameCheckbox_.setText(name);
       }
-      channelNameCheckbox_.setText(name);
       calcAndDisplayHistAndStats(true);
       parent_.applyLUTToImage();
       this.repaint();
@@ -637,9 +645,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
                // TODO: why do we not do this when the store is locked?
                return;
             }
-            Color color = settings_.getChannelColors()[channelIndex_];
 
-            LUT lut = ImageUtils.makeLUT(color, gamma_);
+            LUT lut = ImageUtils.makeLUT(color_, gamma_);
             lut.min = contrastMin_;
             lut.max = contrastMax_;
             //uses lut.min and lut.max to set min and max of precessor
@@ -733,13 +740,18 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       if (rawHistogram[0] == imgWidth * imgHeight) {
          return;  //Blank pixels 
       }
-      if (settings_.getShouldIgnoreOutliers()) {
+      if (settings_.getShouldIgnoreOutliers() != null &&
+            settings_.getShouldIgnoreOutliers()) {
          // todo handle negative values
          maxAfterRejectingOutliers_ = rawHistogram.length;
          // specified percent of pixels are ignored in the automatic contrast setting
          int totalPoints = imgHeight * imgWidth;
+         Double percentToIgnore = settings_.getPercentToIgnore();
+         if (percentToIgnore == null) {
+            percentToIgnore = 0.0;
+         }
          HistogramUtils hu = new HistogramUtils(rawHistogram, totalPoints, 
-               0.01 * settings_.getPercentToIgnore());
+               0.01 * percentToIgnore);
          minAfterRejectingOutliers_ = hu.getMinAfterRejectingOutliers();
          maxAfterRejectingOutliers_ = hu.getMaxAfterRejectingOutliers();
       }
@@ -765,7 +777,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             }
          }
          total += histogram[i];
-         if (settings_.getShouldUseLogScale()) {
+         if (settings_.getShouldUseLogScale() != null && 
+               settings_.getShouldUseLogScale()) {
             histogram[i] = histogram[i] > 0 ? (int) (1000 * Math.log(histogram[i])) : 0;
          }
       }
@@ -875,7 +888,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    private void applyLUT() {
-      if (settings_.getShouldSyncChannels()) {
+      if (settings_.getShouldSyncChannels() != null &&
+            settings_.getShouldSyncChannels()) {
          parent_.applyContrastToAllChannels(contrastMin_, contrastMax_, gamma_);
       } else {
          parent_.applyLUTToImage();
