@@ -567,6 +567,7 @@ public class DefaultMetadata implements Metadata {
          MDUtils.setChannelName(result, getCamera());
          MDUtils.setROI(result, getROI());
          MDUtils.setBinning(result, getBinning());
+         MDUtils.setBitDepth(result, getBitDepth());
          MDUtils.setPixelSizeUm(result, getPixelSizeUm());
          MDUtils.setUUID(result, getUUID());
          MDUtils.setZStepUm(result, getZStepUm());
