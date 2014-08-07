@@ -87,8 +87,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private int histMax_;
    private JPanel controls_;
    private JPanel controlsHolderPanel_;
-   private int contrastMin_;
-   private int contrastMax_;
+   private int contrastMin_ = -1;
+   private int contrastMax_ = -1;
    private double gamma_ = 1;
    private int minAfterRejectingOutliers_;
    private int maxAfterRejectingOutliers_;
@@ -225,7 +225,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
          @Override
          public void actionPerformed(final ActionEvent e) {
-            if (settings_.getShouldSyncChannels()) {
+            if (settings_.getShouldSyncChannels() != null && 
+                  settings_.getShouldSyncChannels()) {
                parent_.updateOtherDisplayCombos(histRangeComboBox_.getSelectedIndex());
             }
             displayComboAction();
@@ -553,13 +554,22 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
 
    private void loadDisplaySettings() {
-      contrastMax_ =  settings_.getChannelContrastMaxes()[channelIndex_];
+      Integer[] contrastMaxes = settings_.getChannelContrastMaxes();
+      if (contrastMaxes != null && contrastMaxes.length > channelIndex_) {
+         contrastMax_ =  contrastMaxes[channelIndex_];
+      }
       if (contrastMax_ < 0 || contrastMax_ > maxIntensity_) {
          contrastMax_ = maxIntensity_;
       }
-      contrastMin_ = settings_.getChannelContrastMins()[channelIndex_];
-      gamma_ = settings_.getChannelGammas()[channelIndex_];
-      int histMax = settings_.getChannelContrastMaxes()[channelIndex_];
+      Integer[] contrastMins = settings_.getChannelContrastMins();
+      if (contrastMins != null && contrastMins.length > channelIndex_) {
+         contrastMin_ = contrastMins[channelIndex_];
+      }
+      Double[] gammas = settings_.getChannelGammas();
+      if (gammas != null && gammas.length > channelIndex_) {
+         gamma_ = gammas[channelIndex_];
+      }
+      int histMax = contrastMax_;
       int index = (int) (Math.ceil(Math.log(histMax)/Math.log(2)) - 3);
       histRangeComboBox_.setSelectedIndex(index);
 //      parent_.setDisplayMode(cache.getDisplayMode());
