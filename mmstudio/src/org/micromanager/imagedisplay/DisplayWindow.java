@@ -16,6 +16,8 @@ import java.awt.event.WindowEvent;
 import java.awt.Point;
 import java.awt.Toolkit;
 
+import java.lang.Math;
+
 import javax.swing.event.MouseInputAdapter;
 
 import net.miginfocom.swing.MigLayout;
@@ -116,13 +118,17 @@ public class DisplayWindow extends StackWindow {
 
       double mag = MMStudio.getInstance().getPreferredWindowMag();
 
+      // Use approximation here because ImageJ has fixed allowed magnification
+      // levels and we want to be able to be a bit more approximate and snap
+      // to the closest allowed magnification. 
       if (mag < ic.getMagnification()) {
-         while (mag < ic.getMagnification()) {
+         while (mag < ic.getMagnification() &&
+               Math.abs(mag - ic.getMagnification()) > .01) {
             ic.zoomOut(ic.getWidth() / 2, ic.getHeight() / 2);
          }
       } else if (mag > ic.getMagnification()) {
-
-         while (mag > ic.getMagnification()) {
+         while (mag > ic.getMagnification() &&
+               Math.abs(mag - ic.getMagnification()) > .01) {
             ic.zoomIn(ic.getWidth() / 2, ic.getHeight() / 2);
          }
       }
