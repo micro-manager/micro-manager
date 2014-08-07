@@ -47,8 +47,8 @@ public class ScrollerPanel extends JPanel {
    // We'll be communicating with our owner and with our AxisScrollers via
    // this bus.
    private EventBus bus_;
-   // All AxisScrollers we manage.
-   private ArrayList<AxisScroller> scrollers_;
+   // All AxisScrollers we manage. protected visibility to allow subclassing (Navigator plugin)
+   protected ArrayList<AxisScroller> scrollers_;
    // A mapping of axis identifiers to their positions as of the last time
    // checkForImagePositionChanged() was called.
    private HashMap<String, Integer> lastImagePosition_ = null;
