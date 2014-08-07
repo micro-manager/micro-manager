@@ -28,11 +28,11 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class TestReader implements Reader {
    private HashMap<Coords, Image> coordsToImage_;
-   private Coords maxExtent_;
+   private Coords maxIndex_;
 
    public TestReader() {
       coordsToImage_ = new HashMap<Coords, Image>();
-      maxExtent_ = new DefaultCoords.Builder().build();
+      maxIndex_ = new DefaultCoords.Builder().build();
    }
 
    @Override
@@ -48,10 +48,10 @@ public class TestReader implements Reader {
          Image result = new DefaultImage(tagged);
          coordsToImage_.put(coords, result);
          for (String axis : coords.getAxes()) {
-            if (maxExtent_.getPositionAt(axis) < coords.getPositionAt(axis)) {
+            if (maxIndex_.getPositionAt(axis) < coords.getPositionAt(axis)) {
                // Either this image is further along on this axis, or we have
                // no position for this axis yet.
-               maxExtent_ = maxExtent_.copy()
+               maxIndex_ = maxIndex_.copy()
                      .position(axis, coords.getPositionAt(axis))
                      .build();
             }
@@ -76,8 +76,8 @@ public class TestReader implements Reader {
    }
 
    @Override
-   public Integer getMaxExtent(String axis) {
-      return maxExtent_.getPositionAt(axis);
+   public Integer getMaxIndex(String axis) {
+      return maxIndex_.getPositionAt(axis);
    }
 
    @Override

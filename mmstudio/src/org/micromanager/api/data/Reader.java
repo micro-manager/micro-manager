@@ -23,7 +23,7 @@ public interface Reader {
    /**
     * Return the largest stored position along the specified axis.
     */
-   public Integer getMaxExtent(String axis);
+   public Integer getMaxIndex(String axis);
 
    /**
     * Retrieve the SummaryMetadata associated with this dataset.
