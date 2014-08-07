@@ -50,6 +50,10 @@ public class DefaultImage implements Image {
       }
       catch (JSONException e) {}
       try {
+         builder.bitDepth(MDUtils.getBitDepth(tags));
+      }
+      catch (JSONException e) {}
+      try {
          builder.pixelSizeUm(MDUtils.getPixelSizeUm(tags));
       }
       catch (JSONException e) {}
