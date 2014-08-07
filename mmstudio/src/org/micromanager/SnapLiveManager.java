@@ -156,7 +156,7 @@ public class SnapLiveManager {
                studio_.closeAcquisitionWindow(SIMPLE_ACQ);
             }
          }
-         else { // Time to create the acquisition.
+         if (! studio_.acquisitionExists(SIMPLE_ACQ)) { // Time to create the acquisition.
             studio_.openAcquisition(SIMPLE_ACQ, "", 1, numCamChannels, 1, true);
             if (numCamChannels > 1) {
                for (long i = 0; i < numCamChannels; i++) {
