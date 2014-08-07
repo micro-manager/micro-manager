@@ -323,7 +323,7 @@ public class ScrollerPanel extends JPanel {
    /**
     * Resize scroller to new maximum size
     */
-   public void getMaxPosition(String axis, int max) {
+   public void setMaxPosition(String axis, int max) {
       for (AxisScroller scroller : scrollers_) {
          if (scroller.getAxis().equals(axis)) {
             scroller.setMaximum(max);
