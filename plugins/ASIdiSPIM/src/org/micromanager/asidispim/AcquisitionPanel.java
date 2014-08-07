@@ -842,10 +842,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    /**
     * Implementation of acquisition that orchestrates image
     * acquisition itself rather than using the acquisition engine
+    * 
+    * This methods is public so that the scriptinterface can call it
+    * Please do not access this yourself directly
     *
     * @return
     */
-   private boolean runAcquisition() {
+   public boolean runAcquisition() {
       if (gui_.isAcquisitionRunning()) {
          gui_.showError("An acquisition is already running");
          return false;
@@ -1029,7 +1032,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                // We get these through the preferences
 
                int numSlices = (Integer) numSlices_.getValue();
-               float piezoAmplitude = (float) ( (numSlices - 1) * 
+               float piezoAmplitude =  ( (numSlices - 1) * 
                        PanelUtils.getSpinnerFloatValue(stepSize_));
                
                if (sideActiveA) {

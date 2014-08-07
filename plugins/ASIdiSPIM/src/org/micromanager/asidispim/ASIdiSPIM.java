@@ -33,7 +33,7 @@ public class ASIdiSPIM implements MMPlugin {
    public final static Color borderColor = Color.gray;
 
    private ScriptInterface gui_;
-   private ASIdiSPIMFrame myFrame_;
+   private static ASIdiSPIMFrame myFrame_ = null;
 
    @Override
    public void setApp(ScriptInterface app) {
@@ -54,6 +54,10 @@ public class ASIdiSPIM implements MMPlugin {
          }
       }
       myFrame_.setVisible(true);
+   }
+   
+   public static ASIdiSPIMFrame getFrame() {
+      return myFrame_;
    }
 
    /**
