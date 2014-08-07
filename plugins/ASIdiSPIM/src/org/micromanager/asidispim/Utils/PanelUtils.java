@@ -316,7 +316,7 @@ public class PanelUtils {
                // however, this doesn't solve problem of properties that are really
                //    for the card (not for the axis) because other devices on same
                //    card may have been changed but not refreshed in micro-Manager
-               if (!PanelUtils.floatsEqual(props_.getPropValueFloat(devKey, propKey_), spinnerValue)) {
+               if (!MyNumberUtils.floatsEqual(props_.getPropValueFloat(devKey, propKey_), spinnerValue)) {
                   props_.setPropValue(devKey, propKey_, spinnerValue, true);
                // ignore error for sake of missing device assignment
                }
@@ -337,7 +337,7 @@ public class PanelUtils {
       
       // read the existing value of 1st device and make sure it is within our min/max limits
       double origVal = (double)props.getPropValueFloat(devKeys[0], propKey, true);
-      if (floatsEqual((float) origVal, (float) 0)) {
+      if (MyNumberUtils.floatsEqual((float) origVal, (float) 0)) {
          // if getPropValue returned 0 (sign no value existed) then use default
          origVal = defaultVal;
          props.setPropValue(devKeys[0], propKey, (float)defaultVal, true);
@@ -588,36 +588,5 @@ public class PanelUtils {
       myBorder.setTitleJustification(TitledBorder.CENTER);
       return myBorder;
    }
-   
-   /**
-    * Does "equality" test on floats, using locally-defined epsilon (1e-12)
-    * @param f1
-    * @param f2
-    * @return
-    */
-   public static boolean floatsEqual(float f1, float f2) {
-      final float EPS = (float) 1e-12;
-      float diff = f2 - f1;
-      return((diff < EPS) && (diff > -EPS));
-   }
-   
-   /**
-    * "rounds up" to nearest increment of 0.25, e.g. 0 goes to 0 but 0.01 goes to 0.25
-    * @param f
-    * @return
-    */
-   public static float ceilToQuarterMs(float f) {
-      return (float) (Math.ceil(f*4)/4);
-   }
-   
-   /**
-    * "rounds up" to nearest increment of 0.25
-    * @param f
-    * @return
-    */
-   public static float roundToQuarterMs(float f) {
-      return (float) (((float) Math.round(f*4))/4);
-   }
-   
    
 }

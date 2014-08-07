@@ -29,6 +29,7 @@ import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Utils.DevicesListenerInterface;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
+import org.micromanager.asidispim.Utils.MyNumberUtils;
 import org.micromanager.asidispim.Utils.PanelUtils;
 import org.micromanager.asidispim.Utils.SliceTiming;
 import org.micromanager.asidispim.Utils.StagePositionUpdater;
@@ -229,8 +230,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          public void stateChanged(ChangeEvent ce) {
             // make sure is multiple of 0.25
             float val = PanelUtils.getSpinnerFloatValue(desiredSlicePeriod_);
-            float nearestValid = PanelUtils.roundToQuarterMs(val);
-            if (!PanelUtils.floatsEqual(val, nearestValid)) {
+            float nearestValid = MyNumberUtils.roundToQuarterMs(val);
+            if (!MyNumberUtils.floatsEqual(val, nearestValid)) {
                PanelUtils.setSpinnerFloatValue(desiredSlicePeriod_, nearestValid);
             }
          }
@@ -247,7 +248,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             // make sure is 2.5, 2.5, 3.5, ... 
             float val = PanelUtils.getSpinnerFloatValue(desiredLightExposure_);
             float nearestValid = (float) Math.round(val+(float)0.5) - (float)0.5; 
-            if (!PanelUtils.floatsEqual(val, nearestValid)) {
+            if (!MyNumberUtils.floatsEqual(val, nearestValid)) {
                PanelUtils.setSpinnerFloatValue(desiredLightExposure_, nearestValid);
             }
          }
@@ -573,9 +574,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // this assumes "usual" camera mode, not Hamamatsu's "synchronous" or Zyla's "overlap" mode
       // TODO: add the ability to use these faster modes (will require changes in several places
       // and a GUI setting for camera mode); do have Cameras.resetAndReadoutOverlap() to see
-      float cameraReadout_max = PanelUtils.ceilToQuarterMs(cameraReadoutTime);
-      float cameraReset_max = PanelUtils.ceilToQuarterMs(cameraResetTime);
-      float slicePeriod = PanelUtils.roundToQuarterMs(desiredPeriod);
+      float cameraReadout_max = MyNumberUtils.ceilToQuarterMs(cameraReadoutTime);
+      float cameraReset_max = MyNumberUtils.ceilToQuarterMs(cameraResetTime);
+      float slicePeriod = MyNumberUtils.roundToQuarterMs(desiredPeriod);
       int scanPeriod = Math.round(desiredExposure + 2*scanLaserBufferTime);
       // scan will be longer than laser by 0.25ms at both start and end
       float laserDuration = scanPeriod - 2*scanLaserBufferTime;  // will be integer plus 0.5
@@ -584,7 +585,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       // if calculated delay is negative then we have to reduce exposure time in 1 sec increments
       if (globalDelay < 0) {
-         float extraTimeNeeded = PanelUtils.ceilToQuarterMs((float)-1*globalDelay);  // positive number
+         float extraTimeNeeded = MyNumberUtils.ceilToQuarterMs((float)-1*globalDelay);  // positive number
             globalDelay += extraTimeNeeded;
             if (showWarnings) {
                JOptionPane.showMessageDialog(null,
@@ -1042,7 +1043,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   float sliceAOffset = prefs_.getFloat(
                         Properties.Keys.PLUGIN_SETUP_PANEL_NAME.toString() + Devices.Sides.A, 
                         Properties.Keys.PLUGIN_OFFSET_PIEZO_SHEET, 0);
-                  if (PanelUtils.floatsEqual(sliceARate, (float) 0.0)) {
+                  if (MyNumberUtils.floatsEqual(sliceARate, (float) 0.0)) {
                      gui_.showError("Rate for slice A cannot be zero. Re-do calibration on Setup tab.");
                      return false;
                   }
@@ -1077,7 +1078,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   float sliceBOffset = prefs_.getFloat(
                         Properties.Keys.PLUGIN_SETUP_PANEL_NAME.toString() + Devices.Sides.B, 
                         Properties.Keys.PLUGIN_OFFSET_PIEZO_SHEET, 0);
-                  if (PanelUtils.floatsEqual(sliceBRate, (float) 0.0)) {
+                  if (MyNumberUtils.floatsEqual(sliceBRate, (float) 0.0)) {
                      gui_.showError("Rate for slice B cannot be zero. Re-do calibration on Setup tab.");
                      return false;
                   }

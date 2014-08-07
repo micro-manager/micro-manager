@@ -87,8 +87,11 @@ public class Devices {
    public static enum Keys {
       NONE, CORE, PLUGIN,
       CAMERAA, CAMERAB, MULTICAMERA, CAMERALOWER, CAMERAPREVIOUS, 
-      PIEZOA, PIEZOB, GALVOA, GALVOB, XYSTAGE, LOWERZDRIVE, UPPERZDRIVE
+      PIEZOA, PIEZOB, GALVOA, GALVOB, XYSTAGE, LOWERZDRIVE, UPPERZDRIVE,
+      SOURCE_SPIM, SOURCE_LOWER,
       // ASGALVOA, ASGALVOB,
+      // when adding new devices update Devices constructor, 
+      // getDefaultDeviceData(), and Libraries enum
    };
    
    public final static Set<Devices.Keys> STAGES1D = EnumSet.of(
@@ -99,6 +102,9 @@ public class Devices {
    public final static Set<Devices.Keys> CAMERAS = EnumSet.of(
          Devices.Keys.CAMERAA, Devices.Keys.CAMERAB, Devices.Keys.MULTICAMERA,
          Devices.Keys.CAMERALOWER);
+   public final static Set<Devices.Keys> SOURCES = EnumSet.of(
+         Devices.Keys.SOURCE_SPIM, Devices.Keys.SOURCE_LOWER
+         );
 
    public static enum Libraries {
       NODEVICE("NoDevice"), // if the device doesn't exist in Micro-manager
@@ -109,6 +115,7 @@ public class Devices {
       ANDORCAM("AndorSDK3"),
       DEMOCAM("DemoCamera"),
       UTILITIES("Utilities"),
+      TOPTICA_MLE("Toptica_iChrome_MLE"),
       UNKNOWN("Unknown"), // if the device is valid but not one we know about
       ;
       private final String text;
@@ -625,7 +632,8 @@ public class Devices {
    }
 
    /**
-    * gets the initial/default DeviceData structure for the specified device key
+    * Gets the initial/default DeviceData structure for the specified device key.
+    * Should include all possible devices.
     * 
     * @param key
     * @return
@@ -663,6 +671,12 @@ public class Devices {
          // "Anti-striping Micromirror", Sides.A, true);
          // case ASGALVOB: return new DeviceData(Keys.ASGALVOB,
          // "Anti-striping Micromirror", Sides.B, true);
+      case SOURCE_SPIM:
+         return new DeviceData(Keys.SOURCE_SPIM, "SPIM Light Source",
+               Sides.NONE, true);
+      case SOURCE_LOWER:
+         return new DeviceData(Keys.SOURCE_SPIM, "Lower Light Source",
+               Sides.NONE, true);
       case CORE: // special case
          d_new = new DeviceData(Keys.CORE, "Core", Sides.NONE, false);
          d_new.mmDevice = "Core";
@@ -706,6 +720,8 @@ public class Devices {
       deviceInfo_.put(Keys.XYSTAGE, getDefaultDeviceData(Keys.XYSTAGE));
       deviceInfo_.put(Keys.LOWERZDRIVE, getDefaultDeviceData(Keys.LOWERZDRIVE));
       deviceInfo_.put(Keys.UPPERZDRIVE, getDefaultDeviceData(Keys.UPPERZDRIVE));
+      deviceInfo_.put(Keys.SOURCE_SPIM,  getDefaultDeviceData(Keys.SOURCE_SPIM));
+      deviceInfo_.put(Keys.SOURCE_LOWER,  getDefaultDeviceData(Keys.SOURCE_LOWER));
       // deviceInfo_.put(Keys.ASGALVOA, getDefaultDeviceData(Keys.ASGALVOA));
       // deviceInfo_.put(Keys.ASGALVOB, getDefaultDeviceData(Keys.ASGALVOB));
 

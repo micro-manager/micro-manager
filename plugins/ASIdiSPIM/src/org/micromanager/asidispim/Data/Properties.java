@@ -138,6 +138,7 @@ public class Properties {
       PLUGIN_DESIRED_EXPOSURE("DesiredExposure"),
       PLUGIN_DESIRED_SLICE_PERIOD("DesiredSlicePeriod"),
       PLUGIN_ACQUSITION_MODE("AcquisitionMode"),
+      PLUGIN_SPIM_SOURCE_POSITION("SPIMLightSourcePosition"),
       ;
       private final String text;
       Keys(String text) {

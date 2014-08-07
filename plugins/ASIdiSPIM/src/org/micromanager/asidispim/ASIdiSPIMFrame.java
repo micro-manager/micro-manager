@@ -75,6 +75,7 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
    private final SetupPanel setupPanelA_;
    private final SetupPanel setupPanelB_;
    private final NavigationPanel navigationPanel_;
+   private final LightSourcePanel lightSourcePanel_; 
    private final GuiSettingsPanel guiSettingsPanel_;
    private final DataAnalysisPanel dataAnalysisPanel_;
    private final HelpPanel helpPanel_;
@@ -107,6 +108,7 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       stagePosUpdater_ = new StagePositionUpdater(positions_, props_);  // needed for setup and navigation
       acquisitionPanel_ = new AcquisitionPanel(gui, devices_, props_, joystick_, 
             cameras_, prefs_, stagePosUpdater_);
+      lightSourcePanel_ = new LightSourcePanel(gui, devices_, props_, prefs_);
       guiSettingsPanel_ = new GuiSettingsPanel(gui, devices_, props_, prefs_, stagePosUpdater_);
       dataAnalysisPanel_ = new DataAnalysisPanel(gui, prefs_);
       stagePosUpdater_.oneTimeUpdate();  // needed for NavigationPanel
@@ -123,6 +125,7 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       tabbedPane.addLTab(setupPanelA_);
       tabbedPane.addLTab(setupPanelB_);
       tabbedPane.addLTab(navigationPanel_);
+      tabbedPane.addLTab(lightSourcePanel_);
       tabbedPane.addLTab(guiSettingsPanel_);
       tabbedPane.addLTab(dataAnalysisPanel_);
       tabbedPane.addLTab(helpPanel_);
@@ -191,7 +194,7 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       });
       
    }
-  
+   
    /**
     * This accessor function should really only be used by the ScriptInterface
     * Do not get into the internals of this plugin without relying on
