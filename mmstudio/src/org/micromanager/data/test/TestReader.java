@@ -32,6 +32,7 @@ public class TestReader implements Reader {
 
    public TestReader() {
       coordsToImage_ = new HashMap<Coords, Image>();
+      maxExtent_ = new DefaultCoords.Builder().build();
    }
 
    @Override
