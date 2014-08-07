@@ -13,7 +13,7 @@ import main.Util;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.MMStudio;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.ReportingUtils;
 
@@ -34,7 +34,7 @@ public class PositionManager {
    
    private JSONArray positionList_;
    private int minRow_, maxRow_, minCol_, maxCol_; //For the lowest resolution level
-   private String xyStageName_ = MMStudioMainFrame.getInstance().getCore().getXYStageDevice();
+   private String xyStageName_ = MMStudio.getInstance().getCore().getXYStageDevice();
    //Map of Res level to set of nodes
    private TreeMap<Integer,TreeSet<MultiResPositionNode>> positionNodes_; 
 
@@ -231,7 +231,7 @@ public class PositionManager {
          JSONObject coords = new JSONObject();
          xy.put(stageCoords.x);
          xy.put(stageCoords.y);
-         coords.put(MMStudioMainFrame.getInstance().getCore().getXYStageDevice(), xy);
+         coords.put(MMStudio.getInstance().getCore().getXYStageDevice(), xy);
          JSONObject pos = new JSONObject();
          pos.put(COORDINATES_KEY, coords);
          pos.put(COL_KEY, col);
@@ -339,7 +339,7 @@ public class PositionManager {
     */
    private Point2D.Double getStageCoordinates(int row, int col, int pixelOverlapX, int pixelOverlapY) {
       try {
-         ScriptInterface app = MMStudioMainFrame.getInstance();
+         ScriptInterface app = MMStudio.getInstance();
 
          JSONObject existingPosition = positionList_.getJSONObject(0);
 

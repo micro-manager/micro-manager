@@ -27,6 +27,10 @@ public class CustomAcqEngine {
       updateDevicesForAcquisition();
    }
    
+   public Acquisition getCurrentExploreAcquisition() {
+      return exploreAcquisition_;
+   }
+   
    public void updateExploreSettings(double zTop, double zBottom) {
       exploreAcquisition_.setZLimits(zTop, zBottom);
    }
@@ -36,14 +40,16 @@ public class CustomAcqEngine {
       zName_ = core_.getFocusDevice();
    }
    
-   public void newExploreWindow() {
+   public void newExploreWindow(final double zTop, final double zBottom, final double zStep, 
+           final int xOverlap, final int yOverlap, final String dir, final String name) {
       new Thread(new Runnable() {
          @Override
          public void run() {
             //TODO: check if existing open explore that should be finished?
             lastEvent_ = null;
 
-            exploreAcquisition_ = new Acquisition(true, CustomAcqEngine.this, 1);           
+            exploreAcquisition_ = new Acquisition(true, CustomAcqEngine.this, zTop, zBottom, zStep);   
+            exploreAcquisition_.initialize(xOverlap, yOverlap, dir, name);
 
             //acquire first tile
             acquireTiles(0,0,0,0);
@@ -102,14 +108,11 @@ public class CustomAcqEngine {
             //get x and y coordinates of current position
             double x = exploreAcquisition_.getPositionManager().getXCoordinate(posIndices[i]);
             double y = exploreAcquisition_.getPositionManager().getYCoordinate(posIndices[i]);
-            //Add events for each channel, slice
-            double zTop = exploreAcquisition_.getZTop(), zBottom = exploreAcquisition_.getZBottom(),
-                    zStep = exploreAcquisition_.getZStep(), zAbsoluteTop = exploreAcquisition_.getZAbsoluteTop(),
-                    zAbsoluteBottom = exploreAcquisition_.getZAbsoluteBottom();
-            for (double z = zTop; z <= zBottom; z += zStep) {
-               //move focus
-               int sliceIndex = (int) ((z - zAbsoluteTop) / zStep);
-               exploreAcquisition_.addEvent(new AcquisitionEvent(0, 0, sliceIndex, posIndices[i], z, x, y,
+            //update lowest slice for the benefit of the zScrollbar in the viewer
+            exploreAcquisition_.updateLowestAndHighestSlices();
+            //Add events for each channel, slice            
+            for (int sliceIndex = exploreAcquisition_.getMinSliceIndex(); sliceIndex <= exploreAcquisition_.getMaxSliceIndex(); sliceIndex++) {
+               exploreAcquisition_.addEvent(new AcquisitionEvent(0, 0, sliceIndex, posIndices[i], exploreAcquisition_.getZCoordinate(sliceIndex), x, y,
                        newPositionsAdded));
             }
          }

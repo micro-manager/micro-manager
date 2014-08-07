@@ -7,6 +7,7 @@ import ij.gui.ImageWindow;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
+import java.util.prefs.Preferences;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -30,9 +31,11 @@ public class GUI extends javax.swing.JFrame implements ImageFocusListener {
    
    private CustomAcqEngine eng_;
    private DisplayPlus currentDisplay_;
+   private Preferences prefs_;
            
            
-   public GUI() {
+   public GUI(Preferences prefs) {
+      prefs_ = prefs;
       initComponents();
       this.setVisible(true);
       eng_ = new CustomAcqEngine(MMStudio.getInstance().getCore());
@@ -72,28 +75,11 @@ public class GUI extends javax.swing.JFrame implements ImageFocusListener {
         exploreControlsPanel_ = new javax.swing.JPanel();
         newExploreWindowButton_ = new javax.swing.JButton();
         jSeparator2 = new javax.swing.JSeparator();
-        jLabel5 = new javax.swing.JLabel();
-        jTextField1 = new javax.swing.JTextField();
-        jLabel6 = new javax.swing.JLabel();
-        jLabel7 = new javax.swing.JLabel();
-        jTextField2 = new javax.swing.JTextField();
-        jTextField3 = new javax.swing.JTextField();
-        jButton1 = new javax.swing.JButton();
         windowControlsPanel = new javax.swing.JPanel();
-        numRowsSpinner_ = new javax.swing.JSpinner();
-        rowsLabel_ = new javax.swing.JLabel();
-        colsLabel_ = new javax.swing.JLabel();
-        numColsSpinner_ = new javax.swing.JSpinner();
-        createGridButton_ = new javax.swing.JButton();
         fullResButton_ = new javax.swing.JButton();
         jSeparator3 = new javax.swing.JSeparator();
-        pixelOverlapXLabel_ = new javax.swing.JLabel();
-        pixelOverlapXSpinner_ = new javax.swing.JSpinner();
-        pixelOverlapYLabel_ = new javax.swing.JLabel();
-        pixelOverlapYSpinner_ = new javax.swing.JSpinner();
-        newGridButton_ = new javax.swing.JToggleButton();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
         zTextField_.setText("jTextField1");
 
@@ -141,51 +127,13 @@ public class GUI extends javax.swing.JFrame implements ImageFocusListener {
             }
         });
 
-        jLabel5.setText("Z step size");
-
-        jTextField1.setText("jTextField1");
-
-        jLabel6.setText("Saving directory");
-
-        jLabel7.setText("Saving name");
-
-        jTextField2.setText("jTextField2");
-
-        jTextField3.setText("jTextField3");
-
-        jButton1.setText("Browse");
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
-            }
-        });
-
         javax.swing.GroupLayout exploreControlsPanel_Layout = new javax.swing.GroupLayout(exploreControlsPanel_);
         exploreControlsPanel_.setLayout(exploreControlsPanel_Layout);
         exploreControlsPanel_Layout.setHorizontalGroup(
             exploreControlsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(jSeparator2)
             .addGroup(exploreControlsPanel_Layout.createSequentialGroup()
-                .addGroup(exploreControlsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(exploreControlsPanel_Layout.createSequentialGroup()
-                        .addComponent(newExploreWindowButton_)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jLabel5)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(exploreControlsPanel_Layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addGroup(exploreControlsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(exploreControlsPanel_Layout.createSequentialGroup()
-                                .addComponent(jLabel6)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jTextField2, javax.swing.GroupLayout.PREFERRED_SIZE, 296, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jButton1))
-                            .addGroup(exploreControlsPanel_Layout.createSequentialGroup()
-                                .addComponent(jLabel7)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(jTextField3, javax.swing.GroupLayout.PREFERRED_SIZE, 366, javax.swing.GroupLayout.PREFERRED_SIZE)))))
+                .addComponent(newExploreWindowButton_)
                 .addContainerGap())
         );
         exploreControlsPanel_Layout.setVerticalGroup(
@@ -193,81 +141,14 @@ public class GUI extends javax.swing.JFrame implements ImageFocusListener {
             .addGroup(exploreControlsPanel_Layout.createSequentialGroup()
                 .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(exploreControlsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(newExploreWindowButton_)
-                    .addGroup(exploreControlsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jLabel5)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(exploreControlsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel6)
-                    .addComponent(jTextField2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton1))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(exploreControlsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel7)
-                    .addComponent(jTextField3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(36, Short.MAX_VALUE))
+                .addComponent(newExploreWindowButton_)
+                .addContainerGap(91, Short.MAX_VALUE))
         );
-
-        numRowsSpinner_.setModel(new javax.swing.SpinnerNumberModel(3, 1, 65536, 1));
-        numRowsSpinner_.setEnabled(false);
-        numRowsSpinner_.addChangeListener(new javax.swing.event.ChangeListener() {
-            public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                numRowsSpinner_StateChanged(evt);
-            }
-        });
-
-        rowsLabel_.setText("Rows");
-        rowsLabel_.setEnabled(false);
-
-        colsLabel_.setText("Columns");
-        colsLabel_.setEnabled(false);
-
-        numColsSpinner_.setModel(new javax.swing.SpinnerNumberModel(3, 1, 65536, 1));
-        numColsSpinner_.setEnabled(false);
-        numColsSpinner_.addChangeListener(new javax.swing.event.ChangeListener() {
-            public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                numColsSpinner_StateChanged(evt);
-            }
-        });
-
-        createGridButton_.setText("Create");
-        createGridButton_.setEnabled(false);
 
         fullResButton_.setText("Full resolution");
         fullResButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 fullResButton_ActionPerformed(evt);
-            }
-        });
-
-        pixelOverlapXLabel_.setText("Pixel overlap  x");
-        pixelOverlapXLabel_.setEnabled(false);
-
-        pixelOverlapXSpinner_.setModel(new javax.swing.SpinnerNumberModel(0, 0, 1024, 1));
-        pixelOverlapXSpinner_.setEnabled(false);
-        pixelOverlapXSpinner_.addChangeListener(new javax.swing.event.ChangeListener() {
-            public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                pixelOverlapXSpinner_StateChanged(evt);
-            }
-        });
-
-        pixelOverlapYLabel_.setText("y");
-        pixelOverlapYLabel_.setEnabled(false);
-
-        pixelOverlapYSpinner_.setModel(new javax.swing.SpinnerNumberModel(0, 0, 1024, 1));
-        pixelOverlapYSpinner_.setEnabled(false);
-        pixelOverlapYSpinner_.addChangeListener(new javax.swing.event.ChangeListener() {
-            public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                pixelOverlapYSpinner_StateChanged(evt);
-            }
-        });
-
-        newGridButton_.setText("New Grid");
-        newGridButton_.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                newGridButton_ActionPerformed(evt);
             }
         });
 
@@ -277,47 +158,14 @@ public class GUI extends javax.swing.JFrame implements ImageFocusListener {
             windowControlsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(jSeparator3)
             .addGroup(windowControlsPanelLayout.createSequentialGroup()
-                .addGroup(windowControlsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(fullResButton_)
-                    .addGroup(windowControlsPanelLayout.createSequentialGroup()
-                        .addComponent(newGridButton_)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(rowsLabel_)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(numRowsSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(colsLabel_)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(numColsSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(pixelOverlapXLabel_)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(pixelOverlapXSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(pixelOverlapYLabel_)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(pixelOverlapYSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(createGridButton_)))
+                .addComponent(fullResButton_)
                 .addContainerGap())
         );
         windowControlsPanelLayout.setVerticalGroup(
             windowControlsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(windowControlsPanelLayout.createSequentialGroup()
                 .addComponent(jSeparator3, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGroup(windowControlsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(rowsLabel_)
-                    .addComponent(numRowsSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(colsLabel_)
-                    .addComponent(numColsSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(createGridButton_)
-                    .addComponent(pixelOverlapXLabel_)
-                    .addComponent(pixelOverlapXSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(pixelOverlapYLabel_)
-                    .addComponent(pixelOverlapYSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(newGridButton_))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 35, Short.MAX_VALUE)
                 .addComponent(fullResButton_))
         );
 
@@ -349,85 +197,24 @@ public class GUI extends javax.swing.JFrame implements ImageFocusListener {
     }// </editor-fold>//GEN-END:initComponents
 
    private void newExploreWindowButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newExploreWindowButton_ActionPerformed
-      eng_.newExploreWindow();
+      new ExploreInitDialog(prefs_, eng_);
    }//GEN-LAST:event_newExploreWindowButton_ActionPerformed
 
    private void fullResButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fullResButton_ActionPerformed
 
    }//GEN-LAST:event_fullResButton_ActionPerformed
 
-   private void gridSizeChanged() {
-      currentDisplay_.resizeGrid((Integer) numRowsSpinner_.getValue(),
-              (Integer) numColsSpinner_.getValue(),
-              (Integer) pixelOverlapXSpinner_.getValue(),
-              (Integer) pixelOverlapYSpinner_.getValue());
-   }
  
-   private void numRowsSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_numRowsSpinner_StateChanged
-      gridSizeChanged();
-   }//GEN-LAST:event_numRowsSpinner_StateChanged
-
-   private void numColsSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_numColsSpinner_StateChanged
-      gridSizeChanged();
-   }//GEN-LAST:event_numColsSpinner_StateChanged
-
-   private void pixelOverlapXSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_pixelOverlapXSpinner_StateChanged
-      gridSizeChanged();
-   }//GEN-LAST:event_pixelOverlapXSpinner_StateChanged
-
-   private void pixelOverlapYSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_pixelOverlapYSpinner_StateChanged
-      gridSizeChanged();
-   }//GEN-LAST:event_pixelOverlapYSpinner_StateChanged
-
-   private void newGridButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newGridButton_ActionPerformed
-      boolean newGrid = newGridButton_.isSelected();
-      newGridButton_.setText(newGrid ?  "Cancel" : "New grid" );
-      numColsSpinner_.setEnabled(newGrid);
-      numRowsSpinner_.setEnabled(newGrid);
-      pixelOverlapXLabel_.setEnabled(newGrid);
-      pixelOverlapXSpinner_.setEnabled(newGrid);
-      pixelOverlapYLabel_.setEnabled(newGrid);
-      pixelOverlapYSpinner_.setEnabled(newGrid);
-      rowsLabel_.setEnabled(newGrid);
-      colsLabel_.setEnabled(newGrid);
-      createGridButton_.setEnabled(newGrid);
-      currentDisplay_.newGrid(newGrid,(Integer) numRowsSpinner_.getValue(),
-              (Integer) numColsSpinner_.getValue(),
-              (Integer) pixelOverlapXSpinner_.getValue(),
-              (Integer) pixelOverlapYSpinner_.getValue());
-   }//GEN-LAST:event_newGridButton_ActionPerformed
-
-   private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-      // TODO add your handling code here:
-   }//GEN-LAST:event_jButton1ActionPerformed
-
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel colsLabel_;
-    private javax.swing.JButton createGridButton_;
     private javax.swing.JPanel exploreControlsPanel_;
     private javax.swing.JButton fullResButton_;
-    private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel5;
-    private javax.swing.JLabel jLabel6;
-    private javax.swing.JLabel jLabel7;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JSeparator jSeparator2;
     private javax.swing.JSeparator jSeparator3;
-    private javax.swing.JTextField jTextField1;
-    private javax.swing.JTextField jTextField2;
-    private javax.swing.JTextField jTextField3;
     private javax.swing.JButton newExploreWindowButton_;
-    private javax.swing.JToggleButton newGridButton_;
-    private javax.swing.JSpinner numColsSpinner_;
-    private javax.swing.JSpinner numRowsSpinner_;
-    private javax.swing.JLabel pixelOverlapXLabel_;
-    private javax.swing.JSpinner pixelOverlapXSpinner_;
-    private javax.swing.JLabel pixelOverlapYLabel_;
-    private javax.swing.JSpinner pixelOverlapYSpinner_;
     private javax.swing.JPanel propertiesPanel_;
-    private javax.swing.JLabel rowsLabel_;
     private javax.swing.JPanel windowControlsPanel;
     private javax.swing.JPanel zSliderPanel_;
     private javax.swing.JSlider zSlider_;

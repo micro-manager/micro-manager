@@ -4,31 +4,37 @@
  */
 package gui;
 
-import acq.Acquisition;
 import acq.CustomAcqEngine;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import java.awt.BorderLayout;
+import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.*;
 import java.text.DecimalFormat;
 import java.text.ParseException;
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollBar;
+import javax.swing.JSpinner;
+import javax.swing.JTextField;
+import javax.swing.JToggleButton;
+import javax.swing.SpinnerNumberModel;
+import javax.swing.Timer;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.MMStudioMainFrame;
+import org.micromanager.MMStudio;
 import org.micromanager.imagedisplay.DisplayWindow;
-import org.micromanager.imagedisplay.MouseIntensityEvent;
 import org.micromanager.imagedisplay.ScrollerPanel;
 import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
 import org.micromanager.internalinterfaces.DisplayControls;
-import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
@@ -42,26 +48,31 @@ public class DisplayPlusControls extends DisplayControls {
    private final static int DEFAULT_FPS = 10;
    private static final int SCROLLBAR_INCREMENTS = 10000;
    private static final DecimalFormat TWO_DECIMAL_FORMAT = new DecimalFormat("0.00");
-
+   private static final DecimalFormat THREE_DECIMAL_FORMAT = new DecimalFormat("0.000");
+   private final static String GRID_CONTROLS = "Grid controls";
+   private final static String INFO_PANEL = "Info panel";
+   
    
    private EventBus bus_;
-   private VirtualAcquisitionDisplay display_;
+   private DisplayPlus display_;
    private ScrollerPanel scrollerPanel_;
    private Timer nextFrameTimer_;
    private JButton pauseButton_, abortButton_, showFolderButton_;
    private JTextField fpsField_;
    private JLabel zPosLabel_, timeStampLabel_, nextFrameLabel_, posNameLabel_;
-   private JToggleButton gotoButton_, suspendUpdatesButton_;
-   private boolean suspendUpdates_;
+   private JButton gotoButton_, newGridButton_;
    private boolean exploreMode_;
    private JScrollBar zTopSlider_, zBottomSlider_;
    private JTextField zTopTextField_, zBottomTextField_;
    private CustomAcqEngine acqEng_;
    private double zMin_, zMax_;
+   private CardLayout changingPanelLayout_;
+   private JPanel changingPanel_;
+   private JSpinner gridRowSpinner_, gridColSpinner_, gridOverlapXSpinner_, gridOverlapYSpinner_;
    
    private JLabel pixelInfoLabel_, countdownLabel_, imageInfoLabel_;
 
-   public DisplayPlusControls(VirtualAcquisitionDisplay disp, EventBus bus, boolean exploreMode, CustomAcqEngine acq) {
+   public DisplayPlusControls(DisplayPlus disp, EventBus bus, boolean exploreMode, CustomAcqEngine acq) {
       super(new FlowLayout(FlowLayout.LEADING));
       bus_ = bus;
       display_ = disp;
@@ -108,7 +119,7 @@ public class DisplayPlusControls extends DisplayControls {
          //get slider min and max
          //TODO: what if no z device enabled?
          try {
-            CMMCore core = MMStudioMainFrame.getInstance().getCore();
+            CMMCore core = MMStudio.getInstance().getCore();
             String z = core.getFocusDevice();
             double zPos = core.getPosition(z);
             zMin_ = (int) core.getPropertyLowerLimit(z, "Position");
@@ -126,7 +137,7 @@ public class DisplayPlusControls extends DisplayControls {
                   double val = Double.parseDouble(zTopTextField_.getText());
                   int sliderPos = (int) (val / ((double) Math.abs(zMax_ - zMin_)) * SCROLLBAR_INCREMENTS);
                   zTopSlider_.setValue(sliderPos);
-                  zTopTextField_.setText(zTopSlider_.getValue() + "");
+                  updateZTopAndBottom();
                }
             });
             zBottomTextField_ = new JTextField(zPos + "");
@@ -136,7 +147,7 @@ public class DisplayPlusControls extends DisplayControls {
                   double val = Double.parseDouble(zBottomTextField_.getText());
                   int sliderPos = (int) (val / ((double) Math.abs(zMax_ - zMin_)) * SCROLLBAR_INCREMENTS);                  
                   zBottomSlider_.setValue(sliderPos);
-                  zBottomTextField_.setText(zBottomSlider_.getValue() + "");
+                  updateZTopAndBottom();
                }
             });
             zTopSlider_.addAdjustmentListener(new AdjustmentListener() {
@@ -212,22 +223,6 @@ public class DisplayPlusControls extends DisplayControls {
          }
       });
 
-      suspendUpdatesButton_ = new JToggleButton("Suspend updates");
-      suspendUpdatesButton_.addActionListener(new ActionListener() {
-
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            if (suspendUpdatesButton_.isSelected()) {
-               suspendUpdatesButton_.setText("Resume updates");
-               suspendUpdates_ = true;
-            } else {
-               suspendUpdatesButton_.setText("Suspend updates");
-               suspendUpdates_ = false;
-            }
-         }
-      });
-
-
       //button area
       abortButton_ = new JButton();
       abortButton_.setBackground(new java.awt.Color(255, 255, 255));
@@ -267,6 +262,17 @@ public class DisplayPlusControls extends DisplayControls {
          }
       });
       
+      newGridButton_ = new JButton("Create grid");
+      newGridButton_.addActionListener(new ActionListener() {
+
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            //show grid making controls           
+            changingPanelLayout_.show(changingPanel_, GRID_CONTROLS);
+            display_.activateNewGridMode(true);
+            gridSizeChanged();
+         }
+      });
 
       
 
@@ -317,12 +323,74 @@ public class DisplayPlusControls extends DisplayControls {
 //      JLabel fpsLabel = new JLabel("Animation playback FPS: ");
 
       buttonPanel.add(showFolderButton_);
-      buttonPanel.add(suspendUpdatesButton_);
       buttonPanel.add(abortButton_);
       buttonPanel.add(pauseButton_);
-      controlsPanel.add(buttonPanel);
+      buttonPanel.add(newGridButton_);
+     
+      
+      
+      JPanel newGridControlPanel = new JPanel(new MigLayout());
+
+      gridRowSpinner_ = new JSpinner();
+      gridRowSpinner_.setModel(new SpinnerNumberModel(1, 1, 1000, 1));
+      gridColSpinner_ = new JSpinner();
+      gridColSpinner_.setModel(new SpinnerNumberModel(1, 1, 1000, 1));
+      ChangeListener gridCL = new ChangeListener() {
+         @Override
+         public void stateChanged(ChangeEvent e) {
+            gridSizeChanged();
+         }
+      };
+      gridRowSpinner_.addChangeListener(gridCL);
+      gridColSpinner_.addChangeListener(gridCL);
+      
+      final JButton createGridButton = new JButton("Create");
+      createGridButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            display_.createGrid();
+         }
+      });
+
+      JButton cancelButton = new JButton("Cancel");
+      cancelButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+           changingPanelLayout_.show(changingPanel_, INFO_PANEL);
+           display_.activateNewGridMode(false);
+         }
+      });
+
+      gridOverlapXSpinner_ = new JSpinner();
+      gridOverlapXSpinner_.setModel(new SpinnerNumberModel(0, 0, 1000, 1));
+      gridOverlapYSpinner_ = new JSpinner();
+      gridOverlapYSpinner_.setModel(new SpinnerNumberModel(0, 0, 1000, 1));
+
+      newGridControlPanel.add(cancelButton);
+      newGridControlPanel.add(new JLabel("Rows: "));
+      newGridControlPanel.add(gridRowSpinner_);
+      newGridControlPanel.add(new JLabel("Cols: "));
+      newGridControlPanel.add(gridColSpinner_);
+      newGridControlPanel.add(new JLabel("Pixel overlap x: "));
+      newGridControlPanel.add(gridOverlapXSpinner_);
+      newGridControlPanel.add(new JLabel(" y: "));
+      newGridControlPanel.add(gridOverlapYSpinner_);
+      newGridControlPanel.add(createGridButton);
+      
+      JPanel statusPanel = new JPanel(new MigLayout());
+      statusPanel.add(new JLabel("Statuzzzzzzzzz"));
+      changingPanelLayout_ = new CardLayout();
+      changingPanel_ = new JPanel(changingPanelLayout_);
+      changingPanel_.add(newGridControlPanel, GRID_CONTROLS);
+      changingPanel_.add(statusPanel, INFO_PANEL);
+      changingPanelLayout_.show(changingPanel_, INFO_PANEL);
+      
+      controlsPanel.add(buttonPanel, "wrap");
+      controlsPanel.add(changingPanel_);
       this.setLayout(new BorderLayout());
       this.add(controlsPanel,BorderLayout.CENTER);
+     
+      
 
       // Propagate resizing through to our JPanel
       this.addComponentListener(new ComponentAdapter() {
@@ -333,6 +401,14 @@ public class DisplayPlusControls extends DisplayControls {
             validate();
          }
       });
+   }
+   
+   private void gridSizeChanged() {
+      int numRows = (Integer) gridRowSpinner_.getValue();
+      int numCols = (Integer) gridColSpinner_.getValue();
+      int xOverlap = (Integer) gridOverlapXSpinner_.getValue();
+      int yOverlap = (Integer) gridOverlapYSpinner_.getValue();
+      display_.gridSizeChanged(numRows, numCols, xOverlap, yOverlap);
    }
 
    private void updateZTopAndBottom() {
@@ -433,30 +509,12 @@ public class DisplayPlusControls extends DisplayControls {
          int min = s / 60;
          int h = min / 60;
 
-         String time = twoDigitFormat(h) + ":" + twoDigitFormat(min % 60)
-                 + ":" + twoDigitFormat(s % 60) + "." + threeDigitFormat(ms % 1000);
+         String time = TWO_DECIMAL_FORMAT.format(h) + ":" + TWO_DECIMAL_FORMAT.format(min % 60)
+                 + ":" + TWO_DECIMAL_FORMAT.format(s % 60) + "." + THREE_DECIMAL_FORMAT.format(ms % 1000);
 //         timeStampLabel_.setText("Elapsed time: " + time + " ");
       } catch (JSONException ex) {
 //            ReportingUtils.logError("MetaData did not contain ElapsedTime-ms field");
       }
-   }
-
-   private String twoDigitFormat(int i) {
-      String ret = i + "";
-      if (ret.length() == 1) {
-         ret = "0" + ret;
-      }
-      return ret;
-   }
-
-   private String threeDigitFormat(int i) {
-      String ret = i + "";
-      if (ret.length() == 1) {
-         ret = "00" + ret;
-      } else if (ret.length() == 2) {
-         ret = "0" + ret;
-      }
-      return ret;
    }
 
    @Override

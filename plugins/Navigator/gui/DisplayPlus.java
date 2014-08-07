@@ -59,7 +59,6 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
       
       //Set parameters for tile dimensions, num rows and columns, overlap, and image dimensions
       eng_ = eng;
-
       
       controls_ = new DisplayPlusControls(this, this.getEventBus(), exploreMode, eng);
 
@@ -82,7 +81,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
             height += 2*EXPLORE_PIXEL_BUFFER;
          }
          zoomableStack_ = new ZoomableVirtualStack(MDUtils.getIJType(summaryMD), width, height, stitchedCache, nSlices, 
-                 this, multiResStorage, exploreMode_ ? EXPLORE_PIXEL_BUFFER : 0);
+                 this, multiResStorage, exploreMode_ ? EXPLORE_PIXEL_BUFFER : 0, eng.getCurrentExploreAcquisition(), this.getEventBus());
          this.show(zoomableStack_);
       } catch (Exception e) {
          ReportingUtils.showError("Problem with initialization due to missing summary metadata tags");
@@ -101,27 +100,6 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
 
       stitchedCache.addImageCacheListener(this);
    }
-//
-//   public void readGridInfoFromPositionList(JSONArray posList) {
-//      try {
-//         //get grid parameters
-//         for (int i = 0; i < posList.length(); i++) {
-//            long colInd = posList.getJSONObject(i).getLong("GridColumnIndex");
-//            long rowInd = posList.getJSONObject(i).getLong("GridRowIndex");
-//            if (colInd >= numCols_) {
-//               numCols_ = (int) (colInd + 1);
-//            }
-//            if (rowInd >= numRows_) {
-//               numRows_ = (int) (rowInd + 1);
-//            }
-//
-//         }
-//      } catch (Exception e) {
-//         ReportingUtils.showError("Couldnt get grid info");
-//      }
-//      fullResHeight_ = numRows_ * tileHeight_ - (numRows_ - 1) * yOverlap_;
-//      fullResWidth_ = numCols_ * tileWidth_ - (numCols_ - 1) * xOverlap_;
-//   }
 
     
    private void drawZoomIndicatorOverlay() {
@@ -146,7 +124,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
 //      canvas_.setOverlay(overlay);
    }
    
-   private void clearOverlay() {
+   public void clearOverlay() {
       canvas_.setOverlay(null);
    }
 
@@ -171,12 +149,16 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
          @Override
          public void keyTyped(KeyEvent ke) {
              if (ke.getKeyChar() == '=') {
-                clearOverlay();
                zoomableStack_.zoom(cursorOverImage_ ? canvas_.getCursorLoc() : null, -1);
+               if (!newGridMode_) {
+                  clearOverlay();
+               }
                redrawPixels();
             } else if (ke.getKeyChar() == '-') {
-               clearOverlay();
                zoomableStack_.zoom(cursorOverImage_ ? canvas_.getCursorLoc() : null, 1);
+               if (!newGridMode_) {
+                  clearOverlay();
+               }
                redrawPixels();
             }            
          }
@@ -320,14 +302,52 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
          @Override
          public void mouseExited(MouseEvent e) {
             cursorOverImage_ = false;
-            if (!gotoMode_) {
-               return;
+            if (!newGridMode_) {
+               clearOverlay();
             }
          }
       });
    }
+  
+   public void activateNewGridMode(boolean activate) {
+      newGridMode_ = activate;
+      clearOverlay();
+      makeGridOverlay(this.getImagePlus().getWidth() / 2, this.getImagePlus().getHeight() / 2, 1, 1, 0, 0);
+   }
 
-   private void createGrid() {
+   public void gridSizeChanged(int numRows, int numCols, int xOverlap, int yOverlap) {      
+      //resize exisiting grid but keep centered on same area
+      Overlay overlay = this.getImagePlus().getOverlay();
+      if (overlay == null || overlay.get(0) == null) {
+         return;
+      }
+      Rectangle2D oldBounds = overlay.get(0).getFloatBounds();
+      int centerX = (int) oldBounds.getCenterX();
+      int centerY = (int) oldBounds.getCenterY();
+      makeGridOverlay(centerX, centerY, numRows, numCols, xOverlap, yOverlap);
+      canvas_.repaint();
+   }
+   
+   private void makeGridOverlay(int centerX, int centerY, int rows, int cols, int xOverlap, int yOverlap) {
+      Overlay overlay = this.getImagePlus().getOverlay();
+      if (overlay == null || overlay.size() == 0) {
+         overlay = new Overlay();
+      } else {
+         overlay.clear();
+      }
+
+      double dsTileWidth = tileWidth_ / (double) zoomableStack_.getDownsampleFactor();
+      double dsTileHeight = tileHeight_ / (double) zoomableStack_.getDownsampleFactor();
+      int roiWidth = (int) ((cols * dsTileWidth) - ((cols - 1) * xOverlap) / zoomableStack_.getDownsampleFactor());
+      int roiHeight = (int) ((rows * dsTileHeight) - ((rows - 1) * yOverlap) / zoomableStack_.getDownsampleFactor());
+
+      Roi rectangle = new Roi(centerX - roiWidth / 2, centerY - roiHeight / 2, roiWidth, roiHeight);
+      rectangle.setStrokeWidth(10f);
+      overlay.add(rectangle);
+      this.getImagePlus().setOverlay(overlay);
+   }
+
+   public void createGrid() {
 //      try {
 //         //get displacements of center of rectangle from center of stitched image
 //         double rectCenterXDisp = this.getImagePlus().getOverlay().get(0).getFloatBounds().getCenterX()
@@ -348,49 +368,6 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
 //      }
    }
 
-   private void makeGridOverlay(int centerX, int centerY, int rows, int cols, int xOverlap, int yOverlap) {
-//      Overlay overlay = this.getImagePlus().getOverlay();
-//      if (overlay == null || overlay.size() == 0) {
-//         overlay = new Overlay();
-//      } else {
-//         overlay.clear();
-//      }
-//
-//      double dsTileWidth = storage_.getTileWidth() / (double) storage_.getDSFactor();
-//      double dsTileHeight = storage_.getTileHeight() / (double) storage_.getDSFactor();
-//      int roiWidth = (int) ((cols * dsTileWidth) - ((cols - 1) * xOverlap) / storage_.getDSFactor());
-//      int roiHeight = (int) ((rows * dsTileHeight) - ((rows - 1) * yOverlap) / storage_.getDSFactor());
-//
-//      Roi rectangle = new Roi(centerX - roiWidth / 2, centerY - roiHeight / 2, roiWidth, roiHeight);
-//      rectangle.setStrokeWidth(10f);
-//      overlay.add(rectangle);
-//      this.getImagePlus().setOverlay(overlay);
-   }
-
-   public void resizeGrid(int rows, int cols, int xOverlap, int yOverlap) {
-      //resize exisiting grid but keep centered on same area
-      Overlay overlay = this.getImagePlus().getOverlay();
-      if (overlay == null || overlay.get(0) == null) {
-         return;
-      }
-      Rectangle2D oldBounds = overlay.get(0).getFloatBounds();
-      int centerX = (int) oldBounds.getCenterX();
-      int centerY = (int) oldBounds.getCenterY();
-      makeGridOverlay(centerX, centerY, rows, cols, xOverlap, yOverlap);
-   }
-   
-   public void newGrid(boolean selected, int rows, int cols, int xOverlap, int yOverlap) {
-      if (selected) {
-         newGridMode_ = true;
-         makeGridOverlay(this.getImagePlus().getWidth() / 2, this.getImagePlus().getHeight() / 2,
-                 rows, cols, xOverlap, yOverlap);
-      } else {
-         newGridMode_ = false;
-         this.getImagePlus().setOverlay(null);
-         canvas_.repaint();
-      }
-   }
-
    @Override
    public void imageReceived(TaggedImage taggedImage) {
       try {
@@ -402,45 +379,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
       } catch (JSONException ex) {
          ReportingUtils.showError("Couldn't manipulate image tags for display");
       }
-
-      if (!suspendUpdates_) {
-         //make sure scrollbars render properly even if event doesn't come through
-         int channel = 0, frame = 0, slice = 0, position = 0;
-         try {
-            frame = MDUtils.getFrameIndex(taggedImage.tags);
-            slice = MDUtils.getSliceIndex(taggedImage.tags);
-            channel = MDUtils.getChannelIndex(taggedImage.tags);
-            position = MDUtils.getPositionIndex(taggedImage.tags);
-            // Construct a mapping of axis to position so we can post an 
-            // event informing others of the new image.
-            HashMap<String, Integer> axisToPosition = new HashMap<String, Integer>();
-            axisToPosition.put("channel", channel);
-            axisToPosition.put("position", position);
-            axisToPosition.put("time", frame);
-            axisToPosition.put("z", slice);
-            this.getEventBus().post(new NewImageEvent(axisToPosition));
-         } catch (JSONException ex) {
-            ReportingUtils.logError(ex);
-         }
-
-
-         super.imageReceived(taggedImage);
-      } else {
-//         try {
-//            //tSelector will be null on first frame
-//            if (tSelector_ != null) {
-//               int frame = MDUtils.getFrameIndex(taggedImage.tags);
-//               if (tSelector_.getMaximum() <= (1 + frame)) {
-//                  ((IMMImagePlus) this.getHyperImage()).setNFramesUnverified(frame + 1);
-//                  tSelector_.setMaximum(frame + 2);
-//                  tSelector_.invalidate();
-//                  tSelector_.validate();
-//               }
-//            }
-//         } catch (Exception ex) {
-//            ReportingUtils.showError("Couldn't suspend updates");
-//         }
-      }
+      super.imageReceived(taggedImage);
 
    }
 
