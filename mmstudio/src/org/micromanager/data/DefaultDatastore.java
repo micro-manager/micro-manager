@@ -65,9 +65,9 @@ public class DefaultDatastore implements Datastore {
     * Return the largest extent we have seen along the specified axis so far.
     */
    @Override
-   public Integer getMaxExtent(String axis) {
+   public Integer getMaxIndex(String axis) {
       if (reader_ != null) {
-         return reader_.getMaxExtent(axis);
+         return reader_.getMaxIndex(axis);
       }
       return null;
    }
