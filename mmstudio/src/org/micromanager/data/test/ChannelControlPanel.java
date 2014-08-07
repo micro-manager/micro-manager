@@ -106,8 +106,18 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       settings_ = store.getDisplaySettings();
       composite_ = composite;
       bus_ = bus;
-      color_ = settings_.getChannelColors()[channelIndex];
-      name_ = settings_.getChannelNames()[channelIndex];
+      // Default to white; select a better color if available.
+      color_ = Color.WHITE;
+      Color[] allColors = settings_.getChannelColors();
+      if (allColors != null && allColors.length > channelIndex) {
+         color_ = allColors[channelIndex];
+      }
+
+      name_ = String.format("channel %d", channelIndex);
+      String[] allNames = settings_.getChannelNames();
+      if (allNames != null && allNames.length > channelIndex) {
+         name_ = allNames[channelIndex];
+      }
       channelIndex_ = channelIndex;
       // This won't be available until there's at least one image in the 
       // Datastore for our channel.
@@ -467,7 +477,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       String[] dataNames;
       String[] cameraNames = new String[numMultiCamChannels];
       try {
-         numDataChannels = store_.getMaxExtent("channel");
+         numDataChannels = store_.getMaxIndex("channel");
          dataNames = settings_.getChannelNames();
          for (int i = 0; i < numMultiCamChannels; i++) {
             cameraNames[i] = core.getCameraChannelName(i);

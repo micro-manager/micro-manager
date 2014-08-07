@@ -38,7 +38,11 @@ public final class HistogramsPanel extends JPanel implements Histograms {
       this.invalidate();
 
       // TODO: ignoring the possibility of RGB images for now.
-      final int nChannels = store_.getMaxExtent("channels");
+      final int nChannels = store_.getMaxIndex("channel") + 1;
+      if (nChannels == 0) {
+         ReportingUtils.logError("Have zero channels to work with.");
+         return;
+      }
 
       GridLayout layout = new GridLayout(nChannels, 1);
       this.setLayout(layout);

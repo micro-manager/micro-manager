@@ -3,6 +3,8 @@ package org.micromanager.data.test;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
+import java.awt.Panel;
+
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.NewImageEvent;
 
@@ -34,7 +36,15 @@ public class TestDisplay {
       stack_.setImagePlus(plus_);
       ijImage_ = new MMCompositeImage(plus_, 1, "foo", bus_);
 //      controls_ = new HyperstackControls(bus_, false, false);
-      window_ = new DisplayWindow(ijImage_, controls_, bus_);
+      // TODO: For now, stuffing the histograms into the display window. The 
+      // display window takes a Panel but the histograms are a JPanel, hence
+      // the wrapper.
+      Panel temp = new Panel();
+      HistogramsPanel histograms = new HistogramsPanel(store_, ijImage_, bus_);
+      temp.add(histograms);
+      histograms.setVisible(true);
+      temp.validate();
+      window_ = new DisplayWindow(ijImage_, temp, bus_);
    }
    
    /**
