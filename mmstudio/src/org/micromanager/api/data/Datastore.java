@@ -47,7 +47,7 @@ public interface Datastore {
     * Datastore has seen so far. Will be null if no Reader has been provided
     * yet.
     */
-   public Integer getMaxExtent(String axis);
+   public Integer getMaxIndex(String axis);
 
    /**
     * Retrieve the summary metadata for the datastore. Will be null if no
