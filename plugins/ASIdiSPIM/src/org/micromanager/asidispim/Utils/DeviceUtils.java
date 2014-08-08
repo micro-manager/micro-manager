@@ -167,37 +167,54 @@ public class DeviceUtils {
    /**
     * Constructs a JComboBox populated with devices of specified Micro-Manager type
     * Attaches a listener and sets selected item to what is specified in the Devices
-    * class
+    * class.
     * 
     * @param deviceType - Micro-Manager device type (mmcorej.DeviceType)
     * @param deviceName - ASi diSPIM device type (see Devices class)
     * @return final JComboBox
     */
    public JComboBox makeDeviceSelectionBox(mmcorej.DeviceType deviceType, Devices.Keys deviceKey) {
-      
-      // class DeviceBoxListener used to be here as nested class
+      // when editing this method do the same to the one with array argument too
       JComboBox deviceBox = new JComboBox();
-      updateDeviceSelectionBox(deviceBox, deviceType, deviceKey);
+      ArrayList<String> devices = new ArrayList<String>();
+      StrVector strvDevices = core_.getLoadedDevicesOfType(deviceType);
+      devices.addAll(Arrays.asList(strvDevices.toArray()));
+      devices.add(0, "");
+      deviceBox.removeAllItems();
+      for (String device : devices) {
+         deviceBox.addItem(device);
+      }
       deviceBox.addActionListener(new DeviceBoxListener(deviceKey, deviceBox));
       deviceBox.setSelectedItem(devices_.getMMDevice(deviceKey));  // selects whatever device was read in by prefs
       return deviceBox;
    }
    
    /**
-    * Updates the items in a JCombobox with the currently available devices
-    * of the given type 
-    * @param deviceBox - JCombox that should exist
-    * @param deviceType - Micro-Manager device type (mmcorej.DeviceType)
-    * @param deviceKey  - ASI disPIM device type (see Devices class)
+    * Constructs a JComboBox populated with devices of specified Micro-Manager type
+    * Attaches a listener and sets selected item to what is specified in the Devices
+    * class
+    * 
+    * @param deviceTypes - array of Micro-Manager device type (mmcorej.DeviceType)
+    * @param deviceName - ASi diSPIM device type (see Devices class)
+    * @return final JComboBox
     */
-   private void updateDeviceSelectionBox(JComboBox deviceBox, mmcorej.DeviceType deviceType, Devices.Keys deviceKey) {
-      StrVector strvDevices =  core_.getLoadedDevicesOfType(deviceType);
-      ArrayList<String> devices = new ArrayList<String>(Arrays.asList(strvDevices.toArray()));
+   public JComboBox makeDeviceSelectionBox(mmcorej.DeviceType [] deviceTypes, Devices.Keys deviceKey) {
+      // when editing this method do the same to the one with non-array argument too
+      assert deviceTypes.length >= 1;
+      JComboBox deviceBox = new JComboBox();
+      ArrayList<String> devices = new ArrayList<String>();
+      for (mmcorej.DeviceType deviceType : deviceTypes) {
+         StrVector strvDevices = core_.getLoadedDevicesOfType(deviceType);
+         devices.addAll(Arrays.asList(strvDevices.toArray()));
+      }
       devices.add(0, "");
       deviceBox.removeAllItems();
       for (String device : devices) {
          deviceBox.addItem(device);
       }
+      deviceBox.addActionListener(new DeviceBoxListener(deviceKey, deviceBox));
+      deviceBox.setSelectedItem(devices_.getMMDevice(deviceKey));  // selects whatever device was read in by prefs
+      return deviceBox;
    }
    
    /**

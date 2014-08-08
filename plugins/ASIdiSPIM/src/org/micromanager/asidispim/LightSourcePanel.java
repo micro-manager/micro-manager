@@ -74,8 +74,8 @@ public class LightSourcePanel extends ListeningJPanel {
       DeviceUtils du = new DeviceUtils(gui, devices, props);
       
       add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.SOURCE_SPIM) + ":"));
-      // TODO make so shutter device also is accepted => redo makeDeviceSelectionBox
-      spimSourceCB_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StateDevice, Devices.Keys.SOURCE_SPIM); 
+      spimSourceCB_ = du.makeDeviceSelectionBox(new mmcorej.DeviceType[]
+            {mmcorej.DeviceType.StateDevice, mmcorej.DeviceType.ShutterDevice}, Devices.Keys.SOURCE_SPIM); 
 //      spimSourceCB_.addActionListener(new DevicesPanel.DeviceBoxListener(Devices.Keys.SOURCE_SPIM, spimSourceCB_));
       add(spimSourceCB_, "wrap");
       
