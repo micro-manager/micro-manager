@@ -16,8 +16,6 @@ import java.awt.event.WindowEvent;
 import java.awt.Point;
 import java.awt.Toolkit;
 
-import java.lang.Math;
-
 import javax.swing.event.MouseInputAdapter;
 
 import net.miginfocom.swing.MigLayout;
@@ -37,11 +35,15 @@ public class DisplayWindow extends StackWindow {
 
    private boolean closed_ = false;
    private EventBus bus_;
+   private static int screenX_ = 300;
+   private static int screenY_ = 100;
 
    // This class is used to signal that a window is closing.
    public static class RequestToCloseEvent {
       public DisplayWindow window_;
       public RequestToCloseEvent(DisplayWindow window) {
+         screenX_ = window.getLocation().x;
+         screenY_ = window.getLocation().y;
          window_ = window;
       }
    };
@@ -49,6 +51,7 @@ public class DisplayWindow extends StackWindow {
    public DisplayWindow(final ImagePlus ip, DisplayControls controls, 
          final EventBus bus) {
       super(ip);
+      ip.getWindow().setLocation(screenX_, screenY_);
       // HACK: hide ImageJ's native scrollbars; we provide our own.
       if (cSelector != null) {
          remove(cSelector);
@@ -99,22 +102,19 @@ public class DisplayWindow extends StackWindow {
          }
       });
 
-      setBackground(MMStudio.getInstance().getBackgroundColor());
-      MMStudio.getInstance().addMMBackgroundListener(this);
-
       bus_ = bus;
-      bus.register(this);
 
       zoomToPreferredSize();
    }
 
    /**
-    * Set our canvas' magnification based on the preferred window
-    * magnification.
+    * Set our canvas' magnification based on the preferred window magnification.
+    * Also sets the position of the window, based on the position of the last
+    * closed window.
+    * 
     */
    private void zoomToPreferredSize() {
       Point location = getLocation();
-      setLocation(new Point(0,0));
 
       double mag = MMStudio.getInstance().getPreferredWindowMag();
 
