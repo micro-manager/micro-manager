@@ -235,7 +235,11 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
       gridCenteredHereButton.addActionListener(new ActionListener() {
           @Override
           public void actionPerformed(ActionEvent arg0) {
+             try {
               centerGridHere();
+             } catch (TileCreatorException tex) {
+                // zero pixel size exception. User was already told 
+             }
           }
       });
       getContentPane().add(gridCenteredHereButton);
@@ -435,8 +439,8 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
     * a centered grid is changed.
     */
 
-   private void updateCenteredSizeLabel()
-   {
+   private void updateCenteredSizeLabel()  {
+      try {
        double[] centeredSize = getCenteredSize();
        if(centeredSize[0] == 0.0)
            labelWidthUmPx_.setText("");
@@ -444,13 +448,16 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
            labelWidthUmPx_.setText(
                    Integer.toString((int)centeredSize[0]) + "x" + 
                    Integer.toString((int)centeredSize[1]) + "um");
+      } catch (TileCreatorException tex) {
+         // most likely zero pixel size no need to update
+      }
    }
 
    /**
     * Compute the um size of an nxn grid.
     */
 
-   private double[] getCenteredSize() {
+   private double[] getCenteredSize() throws TileCreatorException {
       double imageSizeXUm = getImageSize()[0];
       double imageSizeYUm = getImageSize()[1];
 
@@ -471,7 +478,7 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
     * current location and has a total diameter with the specified number
     * of frames.
     */
-   private void centerGridHere() {
+   private void centerGridHere()  throws TileCreatorException {
       double imageSizeXUm = getImageSize()[0];
       double imageSizeYUm = getImageSize()[1];
 
@@ -599,7 +606,7 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
       return !correction && transposeXY;
    }
 
-   private double getPixelSizeUm() {
+   private double getPixelSizeUm() throws TileCreatorException {
       // check if we are calibrated, TODO: allow input of image size
       double pixSizeUm = 0.0;
       try {
@@ -609,14 +616,14 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
       }
       if (pixSizeUm <= 0.0) {
          JOptionPane.showMessageDialog(this, "Pixel Size should be a value > 0 (usually 0.1 -1 um).  It should be experimentally determined. ");
-         return 0.0;
+         throw new TileCreatorException("Zero pixel size");
       }
 
       return pixSizeUm;
    }
    
 
-   private double[] getTileSize() {
+   private double[] getTileSize() throws TileCreatorException {
       double pixSizeUm = getPixelSizeUm();
       double overlap = 0.0;
       try {
@@ -652,7 +659,7 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
       return new double[] {tileSizeXUm, tileSizeYUm};
    }
 
-   private double[] getImageSize() {     
+   private double[] getImageSize() throws TileCreatorException {     
       double pixSizeUm = getPixelSizeUm();
       boolean swapXY = isSwappedXY();
       double imageSizeXUm = swapXY ? pixSizeUm * core_.getImageHeight() : 
@@ -673,234 +680,243 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
       if (positionListDlg_.get2DAxis() == null) {
          return;
       }
+      try {
+         // Make sure at least two corners were set
+         int nrSet = 0;
+         for (int i = 0; i < 4; i++) {
+            if (endPositionSet_[i]) {
+               nrSet++;
+            }
+         }
+         if (nrSet < 2) {
+            JOptionPane.showMessageDialog(this, "At least two corners should be set");
+            return;
+         }
 
-      // Make sure at least two corners were set
-      int nrSet = 0;
-      for (int i=0; i<4; i++) {
-         if (endPositionSet_[i])
-            nrSet++;
-      }
-      if (nrSet < 2) {
-         JOptionPane.showMessageDialog(this, "At least two corners should be set");
-         return;
-      }
+         boolean hasZPlane = (nrSet >= 3) && (positionListDlg_.get1DAxis() != null);
 
-      boolean hasZPlane = (nrSet >= 3) && (positionListDlg_.get1DAxis() != null);
-
-      // Calculate a bounding rectangle around the defaultXYStage positions
-      // TODO: develop method to deal with multiple axis
-      double minX = Double.POSITIVE_INFINITY; 
-      double minY = Double.POSITIVE_INFINITY;
-      double maxX = Double.NEGATIVE_INFINITY;
-      double maxY = Double.NEGATIVE_INFINITY; 
-      double meanZ = 0.0;
-      StagePosition sp;
-      for (int i=0; i<4; i++) {
-          if (endPositionSet_[i]) {
-              sp = endPosition_[i].get(endPosition_[i].getDefaultXYStage());
-              if (sp.x < minX)
+         // Calculate a bounding rectangle around the defaultXYStage positions
+         // TODO: develop method to deal with multiple axis
+         double minX = Double.POSITIVE_INFINITY;
+         double minY = Double.POSITIVE_INFINITY;
+         double maxX = Double.NEGATIVE_INFINITY;
+         double maxY = Double.NEGATIVE_INFINITY;
+         double meanZ = 0.0;
+         StagePosition sp;
+         for (int i = 0; i < 4; i++) {
+            if (endPositionSet_[i]) {
+               sp = endPosition_[i].get(endPosition_[i].getDefaultXYStage());
+               if (sp.x < minX) {
                   minX = sp.x;
-              if (sp.x > maxX)
+               }
+               if (sp.x > maxX) {
                   maxX = sp.x;
-              if (sp.y < minY)
+               }
+               if (sp.y < minY) {
                   minY = sp.y;
-              if (sp.y > maxY)
+               }
+               if (sp.y > maxY) {
                   maxY = sp.y;
-              if (hasZPlane) {
-                 sp = endPosition_[i].get(endPosition_[i].getDefaultZStage());
-                 meanZ += sp.x;
-              }
-          }
-      }
-
-      meanZ = meanZ/nrSet;
-
-      // if there are at least three set points, use them to define a 
-      // focus plane: a, b, c such that z = f(x, y) = a*x + b*y + c.
-
-      double zPlaneA = 0.0, zPlaneB = 0.0, zPlaneC = 0.0;
-
-      if (hasZPlane) {
-         double x1 = 0.0, y1 = 0.0, z1 = 0.0;
-         double x2 = 0.0, y2 = 0.0, z2 = 0.0;
-         double x3 = 0.0, y3 = 0.0, z3 = 0.0;
-
-         boolean sp1Set = false;
-         boolean sp2Set = false;
-         boolean sp3Set = false;
-
-         // if there are four points set, we should either (a) choose the
-         // three that are least co-linear, or (b) use a linear regression to
-         // fit a focus plane that minimizes the errors at the four selected
-         // positions.  this code does neither - it just uses the first three
-         // positions it finds.
-
-         for (int i=0; i<4; i++) {
-            if (endPositionSet_[i] && !sp1Set) {
-               x1 = endPosition_[i].get(endPosition_[i].getDefaultXYStage()).x;
-               y1 = endPosition_[i].get(endPosition_[i].getDefaultXYStage()).y;
-               z1 = endPosition_[i].get(endPosition_[i].getDefaultZStage()).x;
-               sp1Set = true;
-            } else if (endPositionSet_[i] && !sp2Set) {
-               x2 = endPosition_[i].get(endPosition_[i].getDefaultXYStage()).x;
-               y2 = endPosition_[i].get(endPosition_[i].getDefaultXYStage()).y;
-               z2 = endPosition_[i].get(endPosition_[i].getDefaultZStage()).x;
-               sp2Set = true;
-            } else if (endPositionSet_[i] && !sp3Set) {
-               x3 = endPosition_[i].get(endPosition_[i].getDefaultXYStage()).x;
-               y3 = endPosition_[i].get(endPosition_[i].getDefaultXYStage()).y;
-               z3 = endPosition_[i].get(endPosition_[i].getDefaultZStage()).x;
-               sp3Set = true;
-            }
-         }
-         
-         // define vectors 1-->2, 1-->3
-
-         double x12 = x2 - x1;
-         double y12 = y2 - y1;
-         double z12 = z2 - z1;
-
-         double x13 = x3 - x1;
-         double y13 = y3 - y1;
-         double z13 = z3 - z1;
-
-         // first, make sure the points aren't co-linear: the angle between
-         // vectors 1-->2 and 1-->3 must be "sufficiently" large
- 
-         double dot_prod = x12 * x13 + y12 * y13 + z12 * z13;
-         double magnitude12 = x12 * x12 + y12 * y12 + z12 * z12;
-         magnitude12 = Math.sqrt(magnitude12);
-         double magnitude13 = x13 * x13 + y13 * y13 + z13 * z13;
-         magnitude13 = Math.sqrt(magnitude13);
-
-         double cosTheta = dot_prod / (magnitude12 * magnitude13);
-         double theta = Math.acos(cosTheta);  // in RADIANS
-
-         // "sufficiently" large here is 0.5 radians, or about 30 degrees
-         if(theta < 0.5 
-                 || theta > (2 * Math.PI - 0.5) 
-                 || (theta > (Math.PI - 0.5) && theta < (Math.PI + 0.5))) {
-             hasZPlane = false;
-         }
-         if (Double.isNaN(theta)) {
-            hasZPlane = false;
-         }
-
-         // intermediates: ax + by + cz + d = 0
-
-         double a = y12 * z13 - y13 * z12;
-         double b = z12 * x13 - z13 * x12;
-         double c = x12 * y13 - x13 * y12;
-         double d = -1 * (a * x1 + b * y1 + c * z1);
-
-         // shuffle to z = f(x, y) = zPlaneA * x + zPlaneB * y + zPlaneC
-
-         zPlaneA = a / (-1 * c);
-         zPlaneB = b / (-1 * c);
-         zPlaneC = d / (-1 * c);
-      }
-
-      double pixSizeUm = getPixelSizeUm();
-
-      double imageSizeXUm = getImageSize()[0];
-      double imageSizeYUm = getImageSize()[1];
-
-      double tileSizeXUm = getTileSize()[0];
-      double tileSizeYUm = getTileSize()[1];
-
-      double overlapXUm = imageSizeXUm - tileSizeXUm;
-      double overlapYUm = imageSizeYUm - tileSizeYUm;
-
-      // bounding box size
-      double boundingXUm = maxX - minX + imageSizeXUm;
-      double boundingYUm = maxY - minY + imageSizeYUm;
-
-      // calculate number of images in X and Y
-      int nrImagesX = (int) Math.ceil((boundingXUm - overlapXUm) / tileSizeXUm);
-      int nrImagesY = (int) Math.ceil((boundingYUm - overlapYUm) / tileSizeYUm);
-
-      double totalSizeXUm = nrImagesX * tileSizeXUm + overlapXUm;
-      double totalSizeYUm = nrImagesY * tileSizeYUm + overlapYUm;
-
-      double offsetXUm = (totalSizeXUm - boundingXUm) / 2;
-      double offsetYUm = (totalSizeYUm - boundingYUm) / 2;
-
-      // Increment prefix for these positions
-      prefix_ += 1;
-
-      // todo handle mirrorX mirrorY
-      for (int y = 0; y < nrImagesY; y++) {
-         for (int x = 0; x < nrImagesX; x++) {
-            // on even rows go left to right, on odd rows right to left
-            int tmpX = x;
-            if ((y & 1) == 1) {
-               tmpX = nrImagesX - x - 1;
-            }
-            MultiStagePosition msp = new MultiStagePosition();
-
-            // Add XY position
-            final String xyStage = positionListDlg_.get2DAxis();
-            // xyStage is not null; we've checked above.
-            msp.setDefaultXYStage(xyStage);
-            StagePosition spXY = new StagePosition();
-            spXY.stageName = xyStage;
-            spXY.numAxes = 2;
-            spXY.x = minX - offsetXUm + (tmpX * tileSizeXUm);
-            spXY.y = minY - offsetYUm + (y * tileSizeYUm);
-            msp.add(spXY);
-
-            // Add Z position
-            final String zStage = positionListDlg_.get1DAxis();
-            if (zStage != null) {
-               msp.setDefaultZStage(zStage);
-               StagePosition spZ = new StagePosition();
-               spZ.stageName = zStage;
-               spZ.numAxes = 1;
-
+               }
                if (hasZPlane) {
-                  double z = zPlaneA * spXY.x + zPlaneB * spXY.y + zPlaneC;
-                  spZ.x = z;
-               } else {
-                  spZ.x = meanZ;
+                  sp = endPosition_[i].get(endPosition_[i].getDefaultZStage());
+                  meanZ += sp.x;
+               }
+            }
+         }
+
+         meanZ = meanZ / nrSet;
+
+         // if there are at least three set points, use them to define a 
+         // focus plane: a, b, c such that z = f(x, y) = a*x + b*y + c.
+
+         double zPlaneA = 0.0, zPlaneB = 0.0, zPlaneC = 0.0;
+
+         if (hasZPlane) {
+            double x1 = 0.0, y1 = 0.0, z1 = 0.0;
+            double x2 = 0.0, y2 = 0.0, z2 = 0.0;
+            double x3 = 0.0, y3 = 0.0, z3 = 0.0;
+
+            boolean sp1Set = false;
+            boolean sp2Set = false;
+            boolean sp3Set = false;
+
+            // if there are four points set, we should either (a) choose the
+            // three that are least co-linear, or (b) use a linear regression to
+            // fit a focus plane that minimizes the errors at the four selected
+            // positions.  this code does neither - it just uses the first three
+            // positions it finds.
+
+            for (int i = 0; i < 4; i++) {
+               if (endPositionSet_[i] && !sp1Set) {
+                  x1 = endPosition_[i].get(endPosition_[i].getDefaultXYStage()).x;
+                  y1 = endPosition_[i].get(endPosition_[i].getDefaultXYStage()).y;
+                  z1 = endPosition_[i].get(endPosition_[i].getDefaultZStage()).x;
+                  sp1Set = true;
+               } else if (endPositionSet_[i] && !sp2Set) {
+                  x2 = endPosition_[i].get(endPosition_[i].getDefaultXYStage()).x;
+                  y2 = endPosition_[i].get(endPosition_[i].getDefaultXYStage()).y;
+                  z2 = endPosition_[i].get(endPosition_[i].getDefaultZStage()).x;
+                  sp2Set = true;
+               } else if (endPositionSet_[i] && !sp3Set) {
+                  x3 = endPosition_[i].get(endPosition_[i].getDefaultXYStage()).x;
+                  y3 = endPosition_[i].get(endPosition_[i].getDefaultXYStage()).y;
+                  z3 = endPosition_[i].get(endPosition_[i].getDefaultZStage()).x;
+                  sp3Set = true;
+               }
+            }
+
+            // define vectors 1-->2, 1-->3
+
+            double x12 = x2 - x1;
+            double y12 = y2 - y1;
+            double z12 = z2 - z1;
+
+            double x13 = x3 - x1;
+            double y13 = y3 - y1;
+            double z13 = z3 - z1;
+
+            // first, make sure the points aren't co-linear: the angle between
+            // vectors 1-->2 and 1-->3 must be "sufficiently" large
+
+            double dot_prod = x12 * x13 + y12 * y13 + z12 * z13;
+            double magnitude12 = x12 * x12 + y12 * y12 + z12 * z12;
+            magnitude12 = Math.sqrt(magnitude12);
+            double magnitude13 = x13 * x13 + y13 * y13 + z13 * z13;
+            magnitude13 = Math.sqrt(magnitude13);
+
+            double cosTheta = dot_prod / (magnitude12 * magnitude13);
+            double theta = Math.acos(cosTheta);  // in RADIANS
+
+            // "sufficiently" large here is 0.5 radians, or about 30 degrees
+            if (theta < 0.5
+                    || theta > (2 * Math.PI - 0.5)
+                    || (theta > (Math.PI - 0.5) && theta < (Math.PI + 0.5))) {
+               hasZPlane = false;
+            }
+            if (Double.isNaN(theta)) {
+               hasZPlane = false;
+            }
+
+            // intermediates: ax + by + cz + d = 0
+
+            double a = y12 * z13 - y13 * z12;
+            double b = z12 * x13 - z13 * x12;
+            double c = x12 * y13 - x13 * y12;
+            double d = -1 * (a * x1 + b * y1 + c * z1);
+
+            // shuffle to z = f(x, y) = zPlaneA * x + zPlaneB * y + zPlaneC
+
+            zPlaneA = a / (-1 * c);
+            zPlaneB = b / (-1 * c);
+            zPlaneC = d / (-1 * c);
+         }
+
+         double pixSizeUm = getPixelSizeUm();
+
+         double imageSizeXUm = getImageSize()[0];
+         double imageSizeYUm = getImageSize()[1];
+
+         double tileSizeXUm = getTileSize()[0];
+         double tileSizeYUm = getTileSize()[1];
+
+         double overlapXUm = imageSizeXUm - tileSizeXUm;
+         double overlapYUm = imageSizeYUm - tileSizeYUm;
+
+         // bounding box size
+         double boundingXUm = maxX - minX + imageSizeXUm;
+         double boundingYUm = maxY - minY + imageSizeYUm;
+
+         // calculate number of images in X and Y
+         int nrImagesX = (int) Math.ceil((boundingXUm - overlapXUm) / tileSizeXUm);
+         int nrImagesY = (int) Math.ceil((boundingYUm - overlapYUm) / tileSizeYUm);
+
+         double totalSizeXUm = nrImagesX * tileSizeXUm + overlapXUm;
+         double totalSizeYUm = nrImagesY * tileSizeYUm + overlapYUm;
+
+         double offsetXUm = (totalSizeXUm - boundingXUm) / 2;
+         double offsetYUm = (totalSizeYUm - boundingYUm) / 2;
+
+         // Increment prefix for these positions
+         prefix_ += 1;
+
+         // todo handle mirrorX mirrorY
+         for (int y = 0; y < nrImagesY; y++) {
+            for (int x = 0; x < nrImagesX; x++) {
+               // on even rows go left to right, on odd rows right to left
+               int tmpX = x;
+               if ((y & 1) == 1) {
+                  tmpX = nrImagesX - x - 1;
+               }
+               MultiStagePosition msp = new MultiStagePosition();
+
+               // Add XY position
+               final String xyStage = positionListDlg_.get2DAxis();
+               // xyStage is not null; we've checked above.
+               msp.setDefaultXYStage(xyStage);
+               StagePosition spXY = new StagePosition();
+               spXY.stageName = xyStage;
+               spXY.numAxes = 2;
+               spXY.x = minX - offsetXUm + (tmpX * tileSizeXUm);
+               spXY.y = minY - offsetYUm + (y * tileSizeYUm);
+               msp.add(spXY);
+
+               // Add Z position
+               final String zStage = positionListDlg_.get1DAxis();
+               if (zStage != null) {
+                  msp.setDefaultZStage(zStage);
+                  StagePosition spZ = new StagePosition();
+                  spZ.stageName = zStage;
+                  spZ.numAxes = 1;
+
+                  if (hasZPlane) {
+                     double z = zPlaneA * spXY.x + zPlaneB * spXY.y + zPlaneC;
+                     spZ.x = z;
+                  } else {
+                     spZ.x = meanZ;
+                  }
+
+                  msp.add(spZ);
                }
 
-               msp.add(spZ);
+               // Add 'metadata'
+               msp.setGridCoordinates(y, tmpX);
+
+               if (overlapUnit_ == OverlapUnitEnum.UM || overlapUnit_ == OverlapUnitEnum.PX) {
+                  msp.setProperty("OverlapUm", NumberUtils.doubleToCoreString(overlapXUm));
+                  int overlapPix = (int) Math.floor(overlapXUm / pixSizeUm);
+
+                  msp.setProperty("OverlapPixels", NumberUtils.intToCoreString(overlapPix));
+               } else { // overlapUnit_ == OverlapUnit.PERCENT
+                  // overlapUmX != overlapUmY; store both
+                  msp.setProperty("OverlapUmX", NumberUtils.doubleToCoreString(overlapXUm));
+                  msp.setProperty("OverlapUmY", NumberUtils.doubleToCoreString(overlapYUm));
+                  int overlapPixX = (int) Math.floor(overlapXUm / pixSizeUm);
+                  int overlapPixY = (int) Math.floor(overlapYUm / pixSizeUm);
+                  msp.setProperty("OverlapPixelsX", NumberUtils.intToCoreString(overlapPixX));
+                  msp.setProperty("OverlapPixelsY", NumberUtils.intToCoreString(overlapPixY));
+               }
+
+               // Add to position list
+               positionListDlg_.addPosition(msp, generatePosLabel(prefix_ + "-Pos", tmpX, y));
             }
-
-            // Add 'metadata'
-            msp.setGridCoordinates(y, tmpX);
-
-            if (overlapUnit_ == OverlapUnitEnum.UM || overlapUnit_ == OverlapUnitEnum.PX) {
-               msp.setProperty("OverlapUm", NumberUtils.doubleToCoreString(overlapXUm));
-               int overlapPix = (int) Math.floor(overlapXUm / pixSizeUm);
-
-               msp.setProperty("OverlapPixels", NumberUtils.intToCoreString(overlapPix));
-            } else { // overlapUnit_ == OverlapUnit.PERCENT
-               // overlapUmX != overlapUmY; store both
-               msp.setProperty("OverlapUmX", NumberUtils.doubleToCoreString(overlapXUm));
-               msp.setProperty("OverlapUmY", NumberUtils.doubleToCoreString(overlapYUm));
-               int overlapPixX = (int) Math.floor(overlapXUm / pixSizeUm);
-               int overlapPixY = (int) Math.floor(overlapYUm / pixSizeUm);
-               msp.setProperty("OverlapPixelsX", NumberUtils.intToCoreString(overlapPixX));
-               msp.setProperty("OverlapPixelsY", NumberUtils.intToCoreString(overlapPixY));
-            }
-
-            // Add to position list
-            positionListDlg_.addPosition(msp, generatePosLabel(prefix_ + "-Pos", tmpX, y));
          }
-      }
 
-      positionListDlg_.activateAxisTable(true);
-      dispose();
+         positionListDlg_.activateAxisTable(true);
+         dispose();
+      } catch (TileCreatorException tex) {
+         // user was already warned
+      }
    }
 
    /**
-    * Delete all positions from the dialog and update labels.  
-    * Re-read pixel calibration - when available - from the core 
+    * Delete all positions from the dialog and update labels. Re-read pixel
+    * calibration - when available - from the core
     */
    private void reset() {
-      for (int i = 0; i < 4; i++)
+      for (int i = 0; i < 4; i++) {
          endPositionSet_[i] = false;
+      }
       labelTop_.setText("");
       labelRight_.setText("");
       labelBottom_.setText("");
@@ -912,12 +928,12 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
       pixelSizeField_.setText(NumberUtils.doubleToDisplayString(pxsz));
       centeredFrames_ = 0;
    }
-   
+
    /**
     * Move stage to position
     */
    private void goToPosition(MultiStagePosition position) {
-      try { 
+      try {
          MultiStagePosition.goToPosition(position, core_);
       } catch (Exception e) {
          ReportingUtils.logError(e);
@@ -928,10 +944,8 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
       String name = prefix + "_" + FMT_POS.format(x) + "_" + FMT_POS.format(y);
       return name;
    }
-   
-   
+
    // Implementation of MMListenerInterface
-   
    @Override
    public void propertiesChangedAlert() {
    }
@@ -943,7 +957,7 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
    @Override
    public void configGroupChangedAlert(String groupName, String newConfig) {
    }
-   
+
    @Override
    public void systemConfigurationLoaded() {
    }
@@ -969,5 +983,25 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
    @Override
    public void slmExposureChanged(String cameraName, double newExposureTime) {
    }
-   
+
+   private class TileCreatorException extends Exception {
+
+      private static final long serialVersionUID = -84723856111238971L;
+      private Throwable cause;
+      private static final String MSG_PREFIX = "MMScript error: ";
+
+      public TileCreatorException(String message) {
+         super(MSG_PREFIX + message);
+      }
+
+      public TileCreatorException(Throwable t) {
+         super(MSG_PREFIX + t.getMessage());
+         this.cause = t;
+      }
+
+      @Override
+      public Throwable getCause() {
+         return this.cause;
+      }
+   }
 }
