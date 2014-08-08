@@ -76,30 +76,30 @@ public class DevicesPanel extends ListeningJPanel {
       // turn off listeners while we build the panel
       devices_.enableListeners(false);
 
-      add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.XYSTAGE) + ":", null, JLabel.RIGHT));
+      add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.XYSTAGE) + ":"));
       boxXY_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.XYStageDevice, Devices.Keys.XYSTAGE); 
       add(boxXY_, "span 2, center, wrap");
       
-      add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.LOWERZDRIVE) + ":", null, JLabel.RIGHT));
+      add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.LOWERZDRIVE) + ":"));
       boxLowerZ_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice, Devices.Keys.LOWERZDRIVE);
       add(boxLowerZ_, "span 2, center, wrap");
       
-      add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.UPPERZDRIVE) + ":", null, JLabel.RIGHT));
+      add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.UPPERZDRIVE) + ":"));
       boxUpperZ_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice, Devices.Keys.UPPERZDRIVE);
       add(boxUpperZ_, "span 2, center, wrap");
       
-      add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.CAMERALOWER) + ":", null, JLabel.RIGHT));
+      add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.CAMERALOWER) + ":"));
       boxLowerCam_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.CameraDevice, Devices.Keys.CAMERALOWER);
       add(boxLowerCam_, "span 2, center, wrap");
             
-      add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.MULTICAMERA) + ":", null, JLabel.RIGHT));
+      add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.MULTICAMERA) + ":"));
       boxMultiCam_ = du.makeMultiCameraDeviceBox(Devices.Keys.MULTICAMERA);
       add(boxMultiCam_, "span 2, center, wrap");
 
       add(new JLabel("Imaging Path A"), "skip 1");
       add(new JLabel("Imaging Path B"), "wrap");
       
-      JLabel label = new JLabel(devices_.getDeviceDisplayGeneric(Devices.Keys.GALVOA) + ":", null, JLabel.RIGHT);
+      JLabel label = new JLabel(devices_.getDeviceDisplayGeneric(Devices.Keys.GALVOA) + ":");
       label.setToolTipText("Should be the first two axes on the MicroMirror card, usually AB");
       add (label);
       boxScannerA_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.GalvoDevice, Devices.Keys.GALVOA);
@@ -107,13 +107,13 @@ public class DevicesPanel extends ListeningJPanel {
       boxScannerB_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.GalvoDevice, Devices.Keys.GALVOB);
       add(boxScannerB_, "wrap");
       
-      add(new JLabel(devices_.getDeviceDisplayGeneric(Devices.Keys.PIEZOA) + ":", null, JLabel.RIGHT));
+      add(new JLabel(devices_.getDeviceDisplayGeneric(Devices.Keys.PIEZOA) + ":"));
       boxPiezoA_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice, Devices.Keys.PIEZOA);
       add(boxPiezoA_);
       boxPiezoB_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice, Devices.Keys.PIEZOB);
       add(boxPiezoB_, "wrap");
 
-      add(new JLabel("Camera:", null, JLabel.RIGHT));
+      add(new JLabel("Camera:"));
       boxCameraA_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.CameraDevice, Devices.Keys.CAMERAA);
       add(boxCameraA_);
       boxCameraB_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.CameraDevice, Devices.Keys.CAMERAB);
