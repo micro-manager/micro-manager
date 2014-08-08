@@ -27,38 +27,13 @@ import org.micromanager.utils.ReportingUtils;
  *
  * @author Henry
  */
-public class Util {
-   
-   
-   public static String DL_OFFSET_KEY = "Depth list offset";
+public class AffineUtils {
+    
 
-   public static void setDepthListOffset(int posIndex, int offset) {
-      ScriptInterface app = MMStudio.getInstance();
-      try {
-         app.getPositionList().getPosition(posIndex).setProperty(DL_OFFSET_KEY,""+offset);
-      } catch (MMScriptException ex) {
-         ReportingUtils.showError("Couldn't get depth list offset");
-      }
-   }
-   
-   public static int getDepthListOffset(int posIndex) {
-      if (posIndex == -1) {
-         return 0;
-      }
-      ScriptInterface app = MMStudio.getInstance();
-      try {
-         return Integer.parseInt(app.getPositionList().getPosition(posIndex).getProperty(DL_OFFSET_KEY));
-      } catch (MMScriptException ex) {
-         ReportingUtils.showError("Couldn't get depth list offset");
-         return 0;
-      }
-   }
-
-//   public static Point2D.Double stagePositionFromPixelPosition(
-//           double xPixelDispFromCenter, double yPixelDispFromCenter) {
+//   public static Point2D.Double pixelCoordsToStageCoords(double xPixelDispFromCenter, double yPixelDispFromCenter) {
 //      try {
 //         //get coordinates of center of exisitng grid
-//         String xyStage = MMStudioMainFrame.getInstance().getCore().getXYStageDevice();
+//         String xyStage = MMStudio.getInstance().getCore().getXYStageDevice();
 //
 //         //row column map to coordinates for exisiting stage positiions
 //         Point2D.Double[][] coordinates = new Point2D.Double[numCols_][numRows_];
@@ -93,10 +68,10 @@ public class Util {
 //
 //         //use affine transform to convert to stage coordinate of center of new grid
 //         AffineTransform transform = null;
-//         Preferences prefs = Preferences.userNodeForPackage(MMStudioMainFrame.class);
+//         Preferences prefs = Preferences.userNodeForPackage(MMStudio.class);
 //         try {
 //            transform = (AffineTransform) JavaUtils.getObjectFromPrefs(prefs, "affine_transform_"
-//                    + MMStudioMainFrame.getInstance().getCore().getCurrentPixelSizeConfig(), null);
+//                    + MMStudio.getInstance().getCore().getCurrentPixelSizeConfig(), null);
 //            //set map origin to current stage position
 //            double[] matrix = new double[6];
 //            transform.getMatrix(matrix);
@@ -196,104 +171,5 @@ public class Util {
          ReportingUtils.showError(e.getMessage());
       }
    }
-   
-   
-   public static int getPosIndex(JSONArray positionList, int row, int col) {
-      for (int i = 0; i < positionList.length(); i++) {
-         try {
-            long colInd = positionList.getJSONObject(i).getLong("GridColumnIndex");
-            long rowInd = positionList.getJSONObject(i).getLong("GridRowIndex");
-            if (rowInd == row && colInd == col) {
-               return i;
-            }
-         } catch (JSONException ex) {
-            ReportingUtils.showError("Couldn't read position list");
-         }
-      }
-      return -1;
-   }
-   
-   public static int rowFromPosIndex(JSONArray positionList, int index) {
-      try {
-         return (int) positionList.getJSONObject(index).getLong("GridRowIndex");
-      } catch (JSONException ex) {
-         ex.printStackTrace();
-         ReportingUtils.showError("Couldnt find tile indices");
-         return 0;
-      }
-   }
-
-   public static int colFromPosIndex(JSONArray positionList, int index) {
-      try {
-         return (int) positionList.getJSONObject(index).getLong("GridColumnIndex");
-      } catch (JSONException ex) {
-         ex.printStackTrace();
-         ReportingUtils.showError("Couldnt find tile indices");
-         return 0;
-      }
-   }
-
-   public static int getStitchedImageLength(int numTiles, int tileLength, int overlap) {
-      return numTiles * tileLength - (numTiles - 1) * overlap;
-   }
-
-   //get the tile index from the pixel index in larger stitched image
-   public static int stitchedPixelToTile(int i, int overlap, int tileLength, int numTiles) {
-      int tile;
-      if (i < tileLength - overlap / 2) {
-         tile = 0;
-      } else if (i > getStitchedImageLength(numTiles, tileLength, overlap) - (tileLength - overlap / 2)) {
-         tile = numTiles - 1;
-      } else {
-         tile = 1 + (i - (tileLength - overlap / 2)) / (tileLength - overlap);
-      }
-      return tile;
-   }
-   
-   public static int tileToLastStitchedPixel(int tile, int overlap, int tileLength, int numTiles, int imageLength) {
-      if (tile == numTiles - 1) {
-         return imageLength - 1;
-      } else {
-         return tile * (tileLength - overlap) + (tileLength - overlap / 2) - 1;
-      }
-   }
-   
-   //get the index of first pixel in the stitched image of the given tile
-   public static int tileToFirstStitchedPixel(int tile, int overlap, int tileLength, int numTiles, int imageLength) {
-      if (tile == 0) {
-         return 0;
-      } else if (tile == numTiles -1) {
-         return imageLength - (tileLength - overlap / 2) + 1;
-      } else {
-         return (tile - 1) * (tileLength - overlap) + (tileLength - overlap / 2);
-      }
-      
-   }
-   
-   //get the stiched pixel index from the tile pixel index
-   public static int tilePixelToStitchedPixel(int tilePixel, int overlap, int tileLength, int tileIndex) {
-      if (tileIndex == 0) {
-         return tilePixel; //0th tile
-      }
-      int stitchedPixel = tileLength - overlap / 2; //account for 0th tile
-      stitchedPixel += (tileIndex - 1) * (tileLength - overlap); //account for additional tiles
-      stitchedPixel += tilePixel - overlap / 2; //account for location in particular tile
-      return stitchedPixel;
-   }
-   
-   public static int stitchedPixelToTilePixel(int stitchedPixel, int overlap, int tileLength, int numTiles) {      
-      if (stitchedPixel < tileLength - overlap / 2) {
-         return stitchedPixel; //in 0th tile
-      } 
-      stitchedPixel -= tileLength - overlap / 2;
-      int tilePixel = stitchedPixel % (tileLength - overlap);
-      if ( stitchedPixel / (tileLength - overlap) + 1 == numTiles ) {
-         //Add in correction for trailing edge of last tile
-         tilePixel += tileLength - overlap;
-      }
-      //convert to tile index by adding leading edge
-      return tilePixel + overlap / 2;
-   }
-
  
 }

@@ -284,7 +284,7 @@ public class ExploreInitDialog extends javax.swing.JFrame {
    }//GEN-LAST:event_browseButton_ActionPerformed
 
    private void startExploreButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_startExploreButton_ActionPerformed
-      eng_.newExploreWindow(((Number)zTopSpinner_.getValue()).doubleValue(), ((Number)zBottomSpinner_.getValue()).doubleValue(), ((Number) zStepSpinner_.getValue()).doubleValue(), 
+      eng_.newExploreAcquisition(((Number)zTopSpinner_.getValue()).doubleValue(), ((Number)zBottomSpinner_.getValue()).doubleValue(), ((Number) zStepSpinner_.getValue()).doubleValue(), 
               (Integer) xOverlap_.getValue(), (Integer) yOverlap_.getValue(), savingDirTextField_.getText(), savingNameTextField_.getText());
       this.setVisible(false);
       this.dispose();

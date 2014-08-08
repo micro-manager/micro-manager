@@ -4,12 +4,16 @@
  */
 package acq;
 
+import java.awt.Point;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import main.Util;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import main.AffineUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -37,10 +41,13 @@ public class PositionManager {
    private String xyStageName_ = MMStudio.getInstance().getCore().getXYStageDevice();
    //Map of Res level to set of nodes
    private TreeMap<Integer,TreeSet<MultiResPositionNode>> positionNodes_; 
-
-   public PositionManager(JSONObject summaryMD) {
+   private int tileWidth_, tileHeight_;
+   
+   public PositionManager(JSONObject summaryMD, int tileWidth, int tileHeight) {
       positionNodes_ = new TreeMap<Integer,TreeSet<MultiResPositionNode>>();
       readRowsAndColsFromPositionList(summaryMD);
+      tileWidth_ = tileWidth;
+      tileHeight_ = tileHeight;
    }
    
    public String getSerializedPositionList() {
@@ -226,7 +233,7 @@ public class PositionManager {
          //TODO: change if overlap added
          int xOverlap = 0;
          int yOverlap = 0;
-         Point2D.Double stageCoords = getStageCoordinates(row, col, xOverlap, yOverlap);
+         Point2D.Double stageCoords = getStagePositionCoordinates(row, col, xOverlap, yOverlap);
 
          JSONObject coords = new JSONObject();
          xy.put(stageCoords.x);
@@ -329,6 +336,65 @@ public class PositionManager {
    
 
    /**
+    * 
+    * @param stageCoords x and y coordinates of image in stage space
+    * @return absolute, full resolution pixel coordinate of given stage posiiton
+    */
+   public Point getPixelCoordsFromStageCoords(double stageX, double stageY) {
+      try {
+          JSONObject existingPosition = positionList_.getJSONObject(0);
+         double exisitngX = existingPosition.getJSONObject(COORDINATES_KEY).getJSONArray(xyStageName_).getDouble(0);
+         double exisitngY = existingPosition.getJSONObject(COORDINATES_KEY).getJSONArray(xyStageName_).getDouble(1);
+         int existingRow = existingPosition.getInt(ROW_KEY);
+         int existingColumn = existingPosition.getInt(COL_KEY);
+  
+         //get stage displacement from center of the tile we have coordinates for
+         double dx = stageX - exisitngX;
+         double dy = stageY - exisitngY;
+         AffineTransform transform = AffineUtils.getAffineTransform(0, 0);
+         Point2D.Double pixelOffset = new Point2D.Double(); // offset in number of pixels from the center of this tile
+         transform.inverseTransform(new Point2D.Double(dx,dy), pixelOffset);                     
+         //Add pixel offset to pixel center of this tile to get absolute pixel position
+         int xPixel = (int) ((existingColumn + 0.5) * tileWidth_  + pixelOffset.x);
+         int yPixel = (int) ((existingRow + 0.5) * tileHeight_  + pixelOffset.y);
+         return new Point(xPixel,yPixel);
+      } catch (JSONException ex) {
+         ReportingUtils.showError("Problem with current position metadata");
+         return null;
+      } catch (NoninvertibleTransformException e) {
+         ReportingUtils.showError("Problem using affine transform to convert stage coordinates to pixel coordinates");
+         return null;
+      }
+   }
+
+   /**
+    * 
+    * @param xAbsolute x coordinate in the full Res stitched image
+    * @param yAbsolute y coordinate in the full res stitched image
+    * @return stage coordinates of the given pixel position
+    */
+   public Point2D.Double getStageCoordsFromPixelCoords(int xAbsolute, int yAbsolute) {
+      try {
+         JSONObject existingPosition = positionList_.getJSONObject(0);
+         double exisitngX = existingPosition.getJSONObject(COORDINATES_KEY).getJSONArray(xyStageName_).getDouble(0);
+         double exisitngY = existingPosition.getJSONObject(COORDINATES_KEY).getJSONArray(xyStageName_).getDouble(1);
+         int existingRow = existingPosition.getInt(ROW_KEY);
+         int existingColumn = existingPosition.getInt(COL_KEY);
+         //get pixel displacement from center of the tile we have coordinates for
+         int dxPix = (int) (xAbsolute - (existingColumn + 0.5) * tileWidth_);
+         int dyPix = (int) (yAbsolute - (existingRow + 0.5) * tileHeight_);
+         AffineTransform transform = AffineUtils.getAffineTransform(exisitngX, exisitngY);
+         Point2D.Double stagePos = new Point2D.Double();
+         transform.transform(new Point2D.Double(dxPix, dyPix), stagePos);  
+         return stagePos;
+      } catch (JSONException ex) {
+         ReportingUtils.showError("Problem with current position= metadata");
+         return null;
+      }
+      
+   }
+   
+   /**
     * Calculate the x and y stage coordinates of a new position given its row
     * and column and the existing metadata for another position
     *
@@ -337,7 +403,7 @@ public class PositionManager {
     * @param existingPosition
     * @return
     */
-   private Point2D.Double getStageCoordinates(int row, int col, int pixelOverlapX, int pixelOverlapY) {
+   private Point2D.Double getStagePositionCoordinates(int row, int col, int pixelOverlapX, int pixelOverlapY) {
       try {
          ScriptInterface app = MMStudio.getInstance();
 
@@ -353,7 +419,7 @@ public class PositionManager {
          double xPixelOffset = (col - existingColumn) * (width - pixelOverlapX);
          double yPixelOffset = (row - existingRow) * (height - pixelOverlapY);
 
-         AffineTransform transform = Util.getAffineTransform(exisitngX, exisitngY);
+         AffineTransform transform = AffineUtils.getAffineTransform(exisitngX, exisitngY);
          Point2D.Double stagePos = new Point2D.Double();
          transform.transform(new Point2D.Double(xPixelOffset, yPixelOffset), stagePos);
          return stagePos;

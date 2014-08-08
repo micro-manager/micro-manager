@@ -69,15 +69,11 @@ public class GUI extends javax.swing.JFrame implements ImageFocusListener {
         zSliderPanel_ = new javax.swing.JPanel();
         zTextField_ = new javax.swing.JTextField();
         zSlider_ = new javax.swing.JSlider();
-        propertiesPanel_ = new javax.swing.JPanel();
-        jLabel1 = new javax.swing.JLabel();
-        jSeparator1 = new javax.swing.JSeparator();
-        exploreControlsPanel_ = new javax.swing.JPanel();
         newExploreWindowButton_ = new javax.swing.JButton();
-        jSeparator2 = new javax.swing.JSeparator();
-        windowControlsPanel = new javax.swing.JPanel();
-        fullResButton_ = new javax.swing.JButton();
-        jSeparator3 = new javax.swing.JSeparator();
+        jLabel2 = new javax.swing.JLabel();
+        jLabel1 = new javax.swing.JLabel();
+        jLabel3 = new javax.swing.JLabel();
+        jLabel4 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -99,27 +95,6 @@ public class GUI extends javax.swing.JFrame implements ImageFocusListener {
             .addComponent(zTextField_, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
         );
 
-        jLabel1.setText("add focus changable props here");
-
-        javax.swing.GroupLayout propertiesPanel_Layout = new javax.swing.GroupLayout(propertiesPanel_);
-        propertiesPanel_.setLayout(propertiesPanel_Layout);
-        propertiesPanel_Layout.setHorizontalGroup(
-            propertiesPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jSeparator1, javax.swing.GroupLayout.Alignment.TRAILING)
-            .addGroup(propertiesPanel_Layout.createSequentialGroup()
-                .addGap(143, 143, 143)
-                .addComponent(jLabel1)
-                .addContainerGap())
-        );
-        propertiesPanel_Layout.setVerticalGroup(
-            propertiesPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(propertiesPanel_Layout.createSequentialGroup()
-                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jLabel1)
-                .addContainerGap())
-        );
-
         newExploreWindowButton_.setText("New explore window");
         newExploreWindowButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -127,70 +102,59 @@ public class GUI extends javax.swing.JFrame implements ImageFocusListener {
             }
         });
 
-        javax.swing.GroupLayout exploreControlsPanel_Layout = new javax.swing.GroupLayout(exploreControlsPanel_);
-        exploreControlsPanel_.setLayout(exploreControlsPanel_Layout);
-        exploreControlsPanel_Layout.setHorizontalGroup(
-            exploreControlsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jSeparator2)
-            .addGroup(exploreControlsPanel_Layout.createSequentialGroup()
-                .addComponent(newExploreWindowButton_)
-                .addContainerGap())
-        );
-        exploreControlsPanel_Layout.setVerticalGroup(
-            exploreControlsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(exploreControlsPanel_Layout.createSequentialGroup()
-                .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(newExploreWindowButton_)
-                .addContainerGap(91, Short.MAX_VALUE))
-        );
+        jLabel2.setText("Focus changable properties");
 
-        fullResButton_.setText("Full resolution");
-        fullResButton_.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                fullResButton_ActionPerformed(evt);
-            }
-        });
+        jLabel1.setText("Surface/Grid object");
 
-        javax.swing.GroupLayout windowControlsPanelLayout = new javax.swing.GroupLayout(windowControlsPanel);
-        windowControlsPanel.setLayout(windowControlsPanelLayout);
-        windowControlsPanelLayout.setHorizontalGroup(
-            windowControlsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jSeparator3)
-            .addGroup(windowControlsPanelLayout.createSequentialGroup()
-                .addComponent(fullResButton_)
-                .addContainerGap())
-        );
-        windowControlsPanelLayout.setVerticalGroup(
-            windowControlsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(windowControlsPanelLayout.createSequentialGroup()
-                .addComponent(jSeparator3, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 35, Short.MAX_VALUE)
-                .addComponent(fullResButton_))
-        );
+        jLabel3.setText("MDA acqusition");
+
+        jLabel4.setText("autofocus");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(propertiesPanel_, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(windowControlsPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(zSliderPanel_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(newExploreWindowButton_)
+                        .addGap(113, 113, 113))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel2)
+                            .addComponent(jLabel1))
+                        .addContainerGap())))
+            .addGroup(layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(zSliderPanel_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel3)
+                            .addComponent(jLabel4))))
                 .addGap(0, 0, Short.MAX_VALUE))
-            .addComponent(exploreControlsPanel_, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(zSliderPanel_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(22, 22, 22)
-                .addComponent(propertiesPanel_, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(exploreControlsPanel_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(windowControlsPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(35, 35, 35))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(newExploreWindowButton_)
+                        .addGap(74, 74, 74))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(36, 36, 36)
+                        .addComponent(jLabel2)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jLabel1)
+                        .addGap(18, 18, 18)
+                        .addComponent(jLabel3)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel4)
+                        .addContainerGap(186, Short.MAX_VALUE))))
         );
 
         pack();
@@ -200,22 +164,14 @@ public class GUI extends javax.swing.JFrame implements ImageFocusListener {
       new ExploreInitDialog(prefs_, eng_);
    }//GEN-LAST:event_newExploreWindowButton_ActionPerformed
 
-   private void fullResButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fullResButton_ActionPerformed
-
-   }//GEN-LAST:event_fullResButton_ActionPerformed
-
  
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JPanel exploreControlsPanel_;
-    private javax.swing.JButton fullResButton_;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JSeparator jSeparator1;
-    private javax.swing.JSeparator jSeparator2;
-    private javax.swing.JSeparator jSeparator3;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
     private javax.swing.JButton newExploreWindowButton_;
-    private javax.swing.JPanel propertiesPanel_;
-    private javax.swing.JPanel windowControlsPanel;
     private javax.swing.JPanel zSliderPanel_;
     private javax.swing.JSlider zSlider_;
     private javax.swing.JTextField zTextField_;

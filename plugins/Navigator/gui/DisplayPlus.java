@@ -3,18 +3,23 @@ package gui;
 /*
  * Master stitched window to display real time stitched images, allow navigating of XY more easily
  */
+import acq.Acquisition;
 import acq.CustomAcqEngine;
+import acq.ExploreAcquisition;
 import acq.MultiResMultipageTiffStorage;
 import acq.PositionManager;
+import acq.SurfaceInterpolater;
 import ij.CompositeImage;
 import ij.IJ;
 import ij.gui.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.HashMap;
 import javax.swing.*;
+import javax.vecmath.Point3d;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -31,36 +36,38 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
 
    private static final int EXPLORE_PIXEL_BUFFER = 96;
    
+   private static final int NONE = 0, PAN = 1, GOTO = 2, NEWGRID = 3, NEWSURFACE = 4;
+   
    private static final Color TRANSPARENT_BLUE = new Color(0, 0, 255, 100);
    private static final Color TRANSPARENT_MAGENTA = new Color(255, 0, 255, 100);
    private ImageCanvas canvas_;
    private DisplayPlusControls controls_;
-   private CustomAcqEngine eng_;
-   private JSpinner gridXSpinner_, gridYSpinner_;
-   private Point clickStart_;
-   private Point gridStart_, mouseDragStartPoint_;
-   private boolean suspendUpdates_ = false;
+   private Acquisition acq_;
+   private Point mouseDragStartPoint_;
    private ArrayList<Point> selectedPositions_ = new ArrayList<Point>();
-   private boolean gotoMode_ = false, newGridMode_ = false;
    private ZoomableVirtualStack zoomableStack_;
    private final boolean exploreMode_;
    private PositionManager posManager_;
    private int tileWidth_, tileHeight_;
-   private boolean spacebarDown_ = false;
    private boolean cursorOverImage_;
+   private int mode_ = NONE;
+   private NewGridParams newGrid_ = null;
+   private SurfaceInterpolater newSurface_ = null;
+   
+   
 
-   public DisplayPlus(final ImageCache stitchedCache, CustomAcqEngine eng, JSONObject summaryMD, 
-           MultiResMultipageTiffStorage multiResStorage, boolean exploreMode) {
+   public DisplayPlus(final ImageCache stitchedCache, Acquisition acq, JSONObject summaryMD, 
+           MultiResMultipageTiffStorage multiResStorage) {
       super(stitchedCache, null, "test", true);
       tileWidth_ = multiResStorage.getTileWidth();
       tileHeight_ = multiResStorage.getTileHeight();
       posManager_ = multiResStorage.getPositionManager();
-      exploreMode_ = exploreMode;
+      exploreMode_ = acq instanceof ExploreAcquisition;
       
       //Set parameters for tile dimensions, num rows and columns, overlap, and image dimensions
-      eng_ = eng;
+      acq_ = acq;
       
-      controls_ = new DisplayPlusControls(this, this.getEventBus(), exploreMode, eng);
+      controls_ = new DisplayPlusControls(this, this.getEventBus(), acq);
 
       //Add in custom controls
       try {
@@ -81,7 +88,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
             height += 2*EXPLORE_PIXEL_BUFFER;
          }
          zoomableStack_ = new ZoomableVirtualStack(MDUtils.getIJType(summaryMD), width, height, stitchedCache, nSlices, 
-                 this, multiResStorage, exploreMode_ ? EXPLORE_PIXEL_BUFFER : 0, eng.getCurrentExploreAcquisition(), this.getEventBus());
+                 this, multiResStorage, exploreMode_ ? EXPLORE_PIXEL_BUFFER : 0, acq_);
          this.show(zoomableStack_);
       } catch (Exception e) {
          ReportingUtils.showError("Problem with initialization due to missing summary metadata tags");
@@ -99,6 +106,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
       IJ.setTool(Toolbar.SPARE6);
 
       stitchedCache.addImageCacheListener(this);
+      canvas_.requestFocus();
    }
 
     
@@ -123,11 +131,105 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
 //      overlay.add(innerRect);
 //      canvas_.setOverlay(overlay);
    }
+
+   public void drawOverlay() {
+
+      if (mode_ == NONE && exploreMode_) {
+         //highlight tiles as appropriate
+         if (mouseDragStartPoint_ != null) {
+            //highlight multiple tiles       
+            Point p2Tiles = zoomableStack_.getTileIndicesFromDisplayedPixel(canvas_.getCursorLoc().x, canvas_.getCursorLoc().y),
+                    p1Tiles = zoomableStack_.getTileIndicesFromDisplayedPixel(mouseDragStartPoint_.x, mouseDragStartPoint_.y);
+            highlightTiles(Math.min(p1Tiles.y, p2Tiles.y), Math.max(p1Tiles.y, p2Tiles.y),
+                    Math.min(p1Tiles.x, p2Tiles.x), Math.max(p1Tiles.x, p2Tiles.x), TRANSPARENT_MAGENTA);
+         } else if (cursorOverImage_) {
+            Point coords = zoomableStack_.getTileIndicesFromDisplayedPixel(canvas_.getCursorLoc().x, canvas_.getCursorLoc().y);
+            highlightTiles(coords.y, coords.y, coords.x, coords.x, TRANSPARENT_MAGENTA); //highligh single tile
+         } else {
+            canvas_.setOverlay(null);
+         }
+      } else if (mode_ == NEWGRID) {
+         drawNewGridOverlay();
+      } else if (mode_ == PAN) { 
+         //draw nothing (or maybe zoom indicator?) 
+         canvas_.setOverlay(null);
+      } else if (mode_ == GOTO) {
+         //nothing
+      } else if (mode_ == NEWSURFACE) {
+         drawNewSurfaceOverlay();
+      }
+
+   }
    
-   public void clearOverlay() {
-      canvas_.setOverlay(null);
+   private void mouseReleasedActions(MouseEvent e) {
+      if (exploreMode_ && mode_ == NONE) {
+
+         Point p2 = e.getPoint();
+         //find top left row and column and number of columns spanned by drage event
+         Point tile1 = zoomableStack_.getTileIndicesFromDisplayedPixel(mouseDragStartPoint_.x, mouseDragStartPoint_.y);
+         Point tile2 = zoomableStack_.getTileIndicesFromDisplayedPixel(p2.x, p2.y);
+         //create events to acquire one or more tiles
+         ((ExploreAcquisition)acq_).acquireTiles(tile1.y, tile1.x, tile2.y, tile2.x);
+      } else if (mode_ == NEWSURFACE) {
+         //convert to real coordinates in 3D space
+         //Click point --> full res pixel point --> stage coordinate
+         Point fullResPixel = zoomableStack_.getAbsoluteFullResPixelCoordinate(e.getPoint().x, e.getPoint().y);
+         Point2D.Double stagePos = posManager_.getStageCoordsFromPixelCoords(fullResPixel.x, fullResPixel.y);                        
+         double z = zoomableStack_.getZCoordinateOfDisplayedSlice(this.getHyperImage().getSlice(), this.getHyperImage().getFrame());
+         newSurface_.addPoint(stagePos.x, stagePos.y, z);
+      }
    }
 
+   private void mouseDraggedActions(MouseEvent e) {
+      Point currentPoint = e.getPoint();
+      if (mode_ == NEWGRID) {
+         int dx = (int) ((currentPoint.x - mouseDragStartPoint_.x) / canvas_.getMagnification());
+         int dy = (int) ((currentPoint.y - mouseDragStartPoint_.y) / canvas_.getMagnification());
+         newGrid_.centerX += dx;
+         newGrid_.centerY += dy;
+         mouseDragStartPoint_ = currentPoint;
+      } else if (mode_ == PAN) {
+         zoomableStack_.translateView(mouseDragStartPoint_.x - currentPoint.x, mouseDragStartPoint_.y - currentPoint.y);
+         redrawPixels();
+         mouseDragStartPoint_ = currentPoint;
+         drawZoomIndicatorOverlay();
+      } 
+   }
+
+   private void drawNewGridOverlay() {
+      Overlay overlay = new Overlay();
+
+      double dsTileWidth = tileWidth_ / (double) zoomableStack_.getDownsampleFactor();
+      double dsTileHeight = tileHeight_ / (double) zoomableStack_.getDownsampleFactor();
+      int roiWidth = (int) ((newGrid_.cols * dsTileWidth) - ((newGrid_.cols - 1) * newGrid_.overlapX) / zoomableStack_.getDownsampleFactor());
+      int roiHeight = (int) ((newGrid_.rows * dsTileHeight) - ((newGrid_.rows - 1) * newGrid_.overlapY) / zoomableStack_.getDownsampleFactor());
+      
+      Roi rectangle = new Roi(newGrid_.centerX - roiWidth / 2, newGrid_.centerY - roiHeight / 2, roiWidth, roiHeight);
+      rectangle.setStrokeWidth(10f);
+      overlay.add(rectangle);
+      this.getImagePlus().setOverlay(overlay);
+   }
+   
+   private void drawNewSurfaceOverlay() {
+      Overlay overlay = new Overlay();
+      for (Point3d point : newSurface_.getPoints()) {
+         //convert back to pixel coordinates
+         Point xy = posManager_.getPixelCoordsFromStageCoords(point.x,point.y);
+         //convert ful res pixel coordinates to coordinates of the viewed image
+         Point displayLocation = zoomableStack_.getDisplayImageCoordsFromFullImageCoords(xy);
+         int slice = zoomableStack_.getDisplaySliceIndexFromZCoordinate(point.z, this.getHyperImage().getFrame());
+         
+         if (slice != this.getHyperImage().getSlice()) {
+            continue;
+         }
+         
+         int diameter = 4;
+         Roi circle = new OvalRoi(displayLocation.x - diameter / 2, displayLocation.y - diameter / 2, diameter, diameter);
+         overlay.add(circle);
+      }
+      this.getImagePlus().setOverlay(overlay);
+   }
+   
    private void highlightTiles(int row1, int row2, int col1, int col2, Color color) {
       Point topLeft = zoomableStack_.getDisplayedPixel(row1,col1);
       int width = (int) Math.round(tileWidth_ / (double) zoomableStack_.getDownsampleFactor() * (col2 - col1 + 1));
@@ -139,212 +241,32 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
       canvas_.setOverlay(overlay);
    }
 
-   private void setupKeyListeners() {
-      //remove ImageJ key listeners
-      ImageWindow window = this.getImagePlus().getWindow();
-      window.removeKeyListener(this.getImagePlus().getWindow().getKeyListeners()[0]);
-      canvas_.removeKeyListener(canvas_.getKeyListeners()[0]);     
-      
-      KeyListener kl = new KeyListener() {
-         @Override
-         public void keyTyped(KeyEvent ke) {
-             if (ke.getKeyChar() == '=') {
-               zoomableStack_.zoom(cursorOverImage_ ? canvas_.getCursorLoc() : null, -1);
-               if (!newGridMode_) {
-                  clearOverlay();
-               }
-               redrawPixels();
-            } else if (ke.getKeyChar() == '-') {
-               zoomableStack_.zoom(cursorOverImage_ ? canvas_.getCursorLoc() : null, 1);
-               if (!newGridMode_) {
-                  clearOverlay();
-               }
-               redrawPixels();
-            }            
-         }
-
-         @Override
-         public void keyPressed(KeyEvent ke) {
-            if (ke.getKeyCode() == KeyEvent.VK_SPACE) {
-               clearOverlay();
-               spacebarDown_ = true;
-            }
-         }
-
-         @Override
-         public void keyReleased(KeyEvent ke) {
-            if (ke.getKeyCode() == KeyEvent.VK_SPACE) {
-               spacebarDown_ = false;
-            }
-         }
-      };
-      
-      //add keylistener to window and all subscomponenets so it will fire whenever
-      //focus in anywhere in the window
-      addRecursively(window, kl);  
+   public void zoom(boolean in) {
+      zoomableStack_.zoom(cursorOverImage_ ? canvas_.getCursorLoc() : null, in ? -1 :1);
+      redrawPixels();
+      drawOverlay();
    }
    
-   private void addRecursively(Component c, KeyListener kl) {
-      c.addKeyListener(kl);
-      if (c instanceof Container) {
-         for (Component subC : ((Container) c).getComponents() ) {
-            addRecursively(subC, kl);
-         }
-      }      
+   public void activatePanMode(boolean activate) {
+      mode_ = activate ? PAN : NONE;
    }
    
-   private void setupMouseListeners() {
-      //remove channel switching scroll wheel listener
-      this.getImagePlus().getWindow().removeMouseWheelListener(
-              this.getImagePlus().getWindow().getMouseWheelListeners()[0]);
-      //remove canvas mouse listener and virtualacquisitiondisplay as mouse listener
-      canvas_.removeMouseListener(canvas_.getMouseListeners()[0]);
-      canvas_.removeMouseListener(canvas_.getMouseListeners()[0]);
-      
-      canvas_.addMouseMotionListener(new MouseMotionListener() {
-         @Override
-         public void mouseDragged(MouseEvent e) {               
-            Point currentPoint = e.getPoint();
-            if (newGridMode_) {
-               int dx = (int) ((currentPoint.x - clickStart_.x) / canvas_.getMagnification());
-               int dy = (int) ((currentPoint.y - clickStart_.y) / canvas_.getMagnification());
-               DisplayPlus.this.getImagePlus().getOverlay().get(0).setLocation(gridStart_.x + dx, gridStart_.y + dy);
-               if (!CanvasPaintPending.isMyPaintPending(canvas_, this)) {
-                  canvas_.setPaintPending(true);
-                  canvas_.paint(canvas_.getGraphics());
-               }
-            } else if  ( spacebarDown_) {
-               zoomableStack_.translateView(mouseDragStartPoint_.x - currentPoint.x,mouseDragStartPoint_.y - currentPoint.y);
-               redrawPixels();
-               mouseDragStartPoint_ = currentPoint;
-               drawZoomIndicatorOverlay();               
-            } else if (exploreMode_) {
-               //find top left row and column and number of columns spanned by drage event          
-               Point p2Tiles = zoomableStack_.getTileIndicesFromDisplayedPixel(e.getPoint().x, e.getPoint().y),
-                       p1Tiles = zoomableStack_.getTileIndicesFromDisplayedPixel(mouseDragStartPoint_.x, mouseDragStartPoint_.y);
-               highlightTiles(Math.min(p1Tiles.y, p2Tiles.y), Math.max(p1Tiles.y, p2Tiles.y),
-                       Math.min(p1Tiles.x, p2Tiles.x), Math.max(p1Tiles.x, p2Tiles.x), TRANSPARENT_MAGENTA);
-            }
-         }
-
-         @Override
-         public void mouseMoved(MouseEvent e) {
-            if (exploreMode_ && !newGridMode_ && !spacebarDown_) {
-               Point coords = zoomableStack_.getTileIndicesFromDisplayedPixel(e.getPoint().x, e.getPoint().y);
-               int row = coords.y, col = coords.x;
-               //highlight tile(s)
-               highlightTiles(row, row, col, col, TRANSPARENT_MAGENTA);
-            }
-         }
-      });
-
-      canvas_.addMouseListener(new MouseListener() {
-
-         @Override
-         public void mouseClicked(MouseEvent e) {
-            if (gotoMode_) {
-//               //translate point into stage coordinates and move there
-//               Point p = e.getPoint();
-//               double xPixelDisp = (p.x / canvas_.getMagnification())
-//                       + canvas_.getSrcRect().x - vad_.getImagePlus().getWidth() / 2;
-//               double yPixelDisp = (p.y / canvas_.getMagnification())
-//                       + canvas_.getSrcRect().y - vad_.getImagePlus().getHeight() / 2;
-//
-//               Point2D stagePos = stagePositionFromPixelPosition(xPixelDisp, yPixelDisp);
-//               try {
-//                  MMStudio.getInstance().setXYStagePosition(stagePos.getX(), stagePos.getY());
-//               } catch (MMScriptException ex) {
-//                  ReportingUtils.showError("Couldn't move xy stage");
-//               }
-//               controls_.clearSelectedButtons();
-            } 
-         }
-
-         @Override
-         public void mousePressed(MouseEvent e) {
-            if (newGridMode_) {
-               clickStart_ = e.getPoint();
-               Roi rect = DisplayPlus.this.getImagePlus().getOverlay().get(0);
-               Rectangle2D bounds = rect.getFloatBounds();
-               gridStart_ = new Point((int) bounds.getX(), (int) bounds.getY());
-            } else if ( exploreMode_) {
-               //used for both multiple tile selection and dragging to zoom
-               mouseDragStartPoint_ = e.getPoint();
-            } 
-         }
-
-         @Override
-         public void mouseReleased(MouseEvent e) {
-            if (exploreMode_ && !newGridMode_  && !spacebarDown_) {
-
-               Point p2 = e.getPoint();
-               //find top left row and column and number of columns spanned by drage event
-               Point tile1 = zoomableStack_.getTileIndicesFromDisplayedPixel(mouseDragStartPoint_.x, mouseDragStartPoint_.y);
-               Point tile2 = zoomableStack_.getTileIndicesFromDisplayedPixel(p2.x, p2.y);
-               //create events to acquire one or more tiles
-               eng_.acquireTiles(tile1.y, tile1.x, tile2.y, tile2.x);
-
-               //TODO: immediately redraw image to reflect updates positions in position manager
-               
-               //redraw overlay to potentially reflect new grid   
-//               Point coords = storage_.tileIndicesFromLoResPixel(e.getPoint().x, e.getPoint().y);
-//               int row = coords.x, col = coords.y;
-//               //highlight tile(s)
-//               highlightTiles(row, row, col, col, TRANSPARENT_MAGENTA);
-            }
-         }
-
-         @Override
-         public void mouseEntered(MouseEvent e) {
-            cursorOverImage_ = true;
-         }
-
-         @Override
-         public void mouseExited(MouseEvent e) {
-            cursorOverImage_ = false;
-            if (!newGridMode_) {
-               clearOverlay();
-            }
-         }
-      });
-   }
-  
    public void activateNewGridMode(boolean activate) {
-      newGridMode_ = activate;
-      clearOverlay();
-      makeGridOverlay(this.getImagePlus().getWidth() / 2, this.getImagePlus().getHeight() / 2, 1, 1, 0, 0);
+      mode_ = activate ? NEWGRID : NONE;
+      newGrid_ = new NewGridParams(1, 1, 0, 0, this.getImagePlus().getWidth() / 2, this.getImagePlus().getHeight() / 2);
+   }
+   
+   public void activateNewSurfaceMode(boolean activate) {
+      mode_ = activate ? NEWSURFACE : NONE;
+      newSurface_ = new SurfaceInterpolater();
    }
 
    public void gridSizeChanged(int numRows, int numCols, int xOverlap, int yOverlap) {      
-      //resize exisiting grid but keep centered on same area
-      Overlay overlay = this.getImagePlus().getOverlay();
-      if (overlay == null || overlay.get(0) == null) {
-         return;
-      }
-      Rectangle2D oldBounds = overlay.get(0).getFloatBounds();
-      int centerX = (int) oldBounds.getCenterX();
-      int centerY = (int) oldBounds.getCenterY();
-      makeGridOverlay(centerX, centerY, numRows, numCols, xOverlap, yOverlap);
-      canvas_.repaint();
-   }
-   
-   private void makeGridOverlay(int centerX, int centerY, int rows, int cols, int xOverlap, int yOverlap) {
-      Overlay overlay = this.getImagePlus().getOverlay();
-      if (overlay == null || overlay.size() == 0) {
-         overlay = new Overlay();
-      } else {
-         overlay.clear();
-      }
-
-      double dsTileWidth = tileWidth_ / (double) zoomableStack_.getDownsampleFactor();
-      double dsTileHeight = tileHeight_ / (double) zoomableStack_.getDownsampleFactor();
-      int roiWidth = (int) ((cols * dsTileWidth) - ((cols - 1) * xOverlap) / zoomableStack_.getDownsampleFactor());
-      int roiHeight = (int) ((rows * dsTileHeight) - ((rows - 1) * yOverlap) / zoomableStack_.getDownsampleFactor());
-
-      Roi rectangle = new Roi(centerX - roiWidth / 2, centerY - roiHeight / 2, roiWidth, roiHeight);
-      rectangle.setStrokeWidth(10f);
-      overlay.add(rectangle);
-      this.getImagePlus().setOverlay(overlay);
+      newGrid_.rows = numRows;
+      newGrid_.cols = numCols;
+      newGrid_.overlapX = xOverlap;
+      newGrid_.overlapY = yOverlap;
+      drawOverlay();
    }
 
    public void createGrid() {
@@ -409,5 +331,119 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
       }
       CanvasPaintPending.setPaintPending(canvas_, this);
       this.updateAndDraw(true);
+   }
+
+   private void setupMouseListeners() {
+      //remove channel switching scroll wheel listener
+      this.getImagePlus().getWindow().removeMouseWheelListener(
+              this.getImagePlus().getWindow().getMouseWheelListeners()[0]);
+      //remove canvas mouse listener and virtualacquisitiondisplay as mouse listener
+      canvas_.removeMouseListener(canvas_.getMouseListeners()[0]);
+      canvas_.removeMouseListener(canvas_.getMouseListeners()[0]);
+
+      canvas_.addMouseMotionListener(new MouseMotionListener() {
+
+         @Override
+         public void mouseDragged(MouseEvent e) {
+            mouseDraggedActions(e);
+            drawOverlay();
+         }
+
+         @Override
+         public void mouseMoved(MouseEvent e) {
+            drawOverlay();
+         }
+      });
+
+      canvas_.addMouseListener(new MouseListener() {
+
+         @Override
+         public void mouseClicked(MouseEvent e) {
+         }
+
+         @Override
+         public void mousePressed(MouseEvent e) {
+            mouseDragStartPoint_ = e.getPoint();
+            drawOverlay();
+         }
+
+         @Override
+         public void mouseReleased(MouseEvent e) {
+            mouseReleasedActions(e);
+            mouseDragStartPoint_ = null;
+            drawOverlay();
+         }
+
+         @Override
+         public void mouseEntered(MouseEvent e) {
+            cursorOverImage_ = true;
+            drawOverlay();
+         }
+
+         @Override
+         public void mouseExited(MouseEvent e) {
+            cursorOverImage_ = false;
+            drawOverlay();
+         }
+      });
+   }
+
+   private void setupKeyListeners() {
+      //remove ImageJ key listeners
+      ImageWindow window = this.getImagePlus().getWindow();
+      window.removeKeyListener(this.getImagePlus().getWindow().getKeyListeners()[0]);
+      canvas_.removeKeyListener(canvas_.getKeyListeners()[0]);
+
+      KeyListener kl = new KeyListener() {
+
+         @Override
+         public void keyTyped(KeyEvent ke) {
+            if (ke.getKeyChar() == '=') {
+               zoom(true);
+            } else if (ke.getKeyChar() == '-') {
+               zoom(false);
+            } else if (ke.getKeyChar() == ' ') {
+               controls_.togglePanMode();
+               drawOverlay();
+            }
+         }
+
+         @Override
+         public void keyPressed(KeyEvent ke) {
+         }
+
+         @Override
+         public void keyReleased(KeyEvent ke) {         
+         }
+      };
+
+      //add keylistener to window and all subscomponenets so it will fire whenever
+      //focus in anywhere in the window
+      addRecursively(window, kl);
+   }
+
+   private void addRecursively(Component c, KeyListener kl) {
+      c.addKeyListener(kl);
+      if (c instanceof Container) {
+         for (Component subC : ((Container) c).getComponents()) {
+            addRecursively(subC, kl);
+         }
+      }
+   }
+   
+   class NewGridParams {
+      
+      double centerX, centerY;
+      int overlapX, overlapY, rows, cols;
+      
+      public NewGridParams(int r, int c, int ox, int oy, double cx, double cy) {
+         centerX = cx;
+         centerY = cy;
+         rows = r;
+         cols = c;
+         overlapX = ox;
+         overlapY = oy;
+      }
+      
    }
 }
