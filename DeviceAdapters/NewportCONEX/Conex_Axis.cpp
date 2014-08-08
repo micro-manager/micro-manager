@@ -41,6 +41,9 @@ const char* g_X_AxisDeviceName  = "XAxis";
 const char* g_Y_AxisDeviceName  = "YAxis";
 const char* g_Z_AxisDeviceName  = "ZAxis";
 
+const char* g_SearchForHomeNowProp = "SearchForHome";
+const char* g_SearchForHomeNowValue = "Search for HOME position now";
+
 using namespace std;
 
 
@@ -481,6 +484,17 @@ int X_Axis::Initialize()
    speed_=GetSpeed();
    acceleration_=GetAcceleration();
    initialized_ = true;
+
+   ret = CreateStringProperty(g_SearchForHomeNowProp, "", false,
+         new CPropertyAction(this, &X_Axis::OnSearchHomeNow));
+   if (ret != DEVICE_OK)
+      return ret;
+   ret = AddAllowedValue(g_SearchForHomeNowProp, "");
+   if (ret != DEVICE_OK)
+      return ret;
+   ret = AddAllowedValue(g_SearchForHomeNowProp, g_SearchForHomeNowValue);
+   if (ret != DEVICE_OK)
+      return ret;
    
 /* these lines can added to test function when the axis is initialized
 test();
@@ -588,6 +602,24 @@ int X_Axis::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
 
+int X_Axis::OnSearchHomeNow(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set("");
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      std::string value;
+      pProp->Get(value);
+      if (value == g_SearchForHomeNowValue)
+      {
+         return Home();
+      }
+   }
+   return DEVICE_OK;
+}
+
 
 
 ///////////////// //////////////////////////////////////////////////////////////
@@ -636,6 +668,18 @@ int Y_Axis::Initialize()
    speed_=GetSpeed();
    acceleration_=GetAcceleration();
    initialized_ = true;
+
+   ret = CreateStringProperty(g_SearchForHomeNowProp, "", false,
+         new CPropertyAction(this, &Y_Axis::OnSearchHomeNow));
+   if (ret != DEVICE_OK)
+      return ret;
+   ret = AddAllowedValue(g_SearchForHomeNowProp, "");
+   if (ret != DEVICE_OK)
+      return ret;
+   ret = AddAllowedValue(g_SearchForHomeNowProp, g_SearchForHomeNowValue);
+   if (ret != DEVICE_OK)
+      return ret;
+
    return DEVICE_OK;
 }
 
@@ -726,6 +770,25 @@ int Y_Axis::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
 
+int Y_Axis::OnSearchHomeNow(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set("");
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      std::string value;
+      pProp->Get(value);
+      if (value == g_SearchForHomeNowValue)
+      {
+         return Home();
+      }
+   }
+   return DEVICE_OK;
+}
+
+
 ///////////////// //////////////////////////////////////////////////////////////
 // Z - Stage (Single axis stage
 ///////////////////////////////////////////////////////////////////////////////
@@ -772,6 +835,18 @@ int Z_Axis::Initialize()
    speed_=GetSpeed();
    acceleration_=GetAcceleration();
    initialized_ = true;
+
+   ret = CreateStringProperty(g_SearchForHomeNowProp, "", false,
+         new CPropertyAction(this, &Z_Axis::OnSearchHomeNow));
+   if (ret != DEVICE_OK)
+      return ret;
+   ret = AddAllowedValue(g_SearchForHomeNowProp, "");
+   if (ret != DEVICE_OK)
+      return ret;
+   ret = AddAllowedValue(g_SearchForHomeNowProp, g_SearchForHomeNowValue);
+   if (ret != DEVICE_OK)
+      return ret;
+
    return DEVICE_OK;
 }
 
@@ -861,3 +936,21 @@ int Z_Axis::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+
+int Z_Axis::OnSearchHomeNow(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set("");
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      std::string value;
+      pProp->Get(value);
+      if (value == g_SearchForHomeNowValue)
+      {
+         return Home();
+      }
+   }
+   return DEVICE_OK;
+}

@@ -123,6 +123,7 @@ public:
    // action interface
    // ----------------
    int OnPort     (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSearchHomeNow(MM::PropertyBase* pProp, MM::ActionType eAct);
 };
 
 
@@ -159,6 +160,7 @@ public:
    // action interface
    // ----------------
    int OnPort     (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSearchHomeNow(MM::PropertyBase* pProp, MM::ActionType eAct);
 };
 
 
@@ -195,6 +197,7 @@ public:
    // action interface
    // ----------------
    int OnPort     (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSearchHomeNow(MM::PropertyBase* pProp, MM::ActionType eAct);
 };
 
 
