@@ -9,6 +9,7 @@ import java.util.List;
 
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
+import org.json.JSONException;
 
 import org.json.JSONObject;
 
@@ -19,6 +20,7 @@ import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
 import org.micromanager.internalinterfaces.LiveModeListener;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MDUtils;
+import org.micromanager.utils.MMException;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
@@ -26,13 +28,12 @@ import org.micromanager.utils.ReportingUtils;
  * Handles logic specific to the Snap/Live window.
  */
 public class SnapLiveManager {
-   private MMStudio studio_;
-   private CMMCore core_;
+   private final MMStudio studio_;
+   private final CMMCore core_;
    private LiveModeTimer liveModeTimer_;
-   private List<LiveModeListener> liveModeListeners_
+   private final List<LiveModeListener> liveModeListeners_
          = Collections.synchronizedList(new ArrayList<LiveModeListener>());
    private static VirtualAcquisitionDisplay display_;
-   private boolean liveModeSuspended_;
    public static final String SIMPLE_ACQ = "Snap/Live Window";
    private final Color[] multiCameraColors_ = {Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW, Color.CYAN};
 
@@ -43,6 +44,7 @@ public class SnapLiveManager {
 
    /**
     * Safely set the core exposure time, reseting live-mode as needed.
+    * @param exposureTime - desired camera exposure time (in ms) 
     */
    public void safeSetCoreExposure(double exposureTime) {
       boolean isOn = getIsLiveModeOn();
@@ -116,7 +118,7 @@ public class SnapLiveManager {
       try {
          display_ = new VirtualAcquisitionDisplay(cache, name);
       }
-      catch (Exception e) {
+      catch (MMScriptException e) {
          ReportingUtils.logError(e, "Failed to create Snap/Live display");
       }
    }
@@ -142,6 +144,11 @@ public class SnapLiveManager {
    /**
     * Verify that the current acquisition settings for the Snap/Live window
     * match the provided settings. Recreate the display if they do not match.
+    * @param width in pixels of the current image
+    * @param height in pixels of the current image
+    * @param depth in bytes of the current image
+    * @param bitDepth in bytes of the current image
+    * @param numCamChannels 
     */
    public void validateDisplayAndAcquisition(int width, int height, int depth, int bitDepth,
          int numCamChannels) {
@@ -173,7 +180,7 @@ public class SnapLiveManager {
             getSnapLiveWindow().toFront();
             studio_.updateCenterAndDragListener();
          }
-      } catch (Exception ex) {
+      } catch (MMScriptException ex) {
          ReportingUtils.showError(ex);
       }
    }
@@ -189,7 +196,9 @@ public class SnapLiveManager {
 
          validateDisplayAndAcquisition(width, height, depth, bitDepth, numCamChannels);
       }
-      catch (Exception ex) {
+      catch (JSONException ex) {
+         ReportingUtils.showError("Error extracting image info in validateDisplayAndAcquisition: " + ex);
+      } catch (MMScriptException ex) {
          ReportingUtils.showError("Error extracting image info in validateDisplayAndAcquisition: " + ex);
       }
    }
@@ -226,7 +235,10 @@ public class SnapLiveManager {
          display_.getImageCache().putImage(ti);
          display_.imageReceived(ti);
          return true;
-      } catch (Exception ex) {
+      } catch (MMScriptException ex) {
+         ReportingUtils.showError(ex);
+         return false;
+      } catch (MMException ex) {
          ReportingUtils.showError(ex);
          return false;
       }
@@ -257,7 +269,9 @@ public class SnapLiveManager {
          } else {
             studio_.doSnap(true);
          }
-      } catch (Exception ex) {
+      } catch (JSONException ex) {
+         ReportingUtils.logError(ex);
+      } catch (MMScriptException ex) {
          ReportingUtils.logError(ex);
       }
    }
