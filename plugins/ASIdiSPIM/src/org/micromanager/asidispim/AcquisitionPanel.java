@@ -934,7 +934,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          return false;
       }
       double volumeDuration = computeActualVolumeDuration();
-      if (volumeDuration > timeBetweenTimepointsMs) {
+      if (nrRepeats > 1 && 
+            volumeDuration > timeBetweenTimepointsMs) {
          gui_.showError("Repeat interval is set too short, shorter than" +
                  " the time to collect a single volume.\n" +
                  "Please change input");
