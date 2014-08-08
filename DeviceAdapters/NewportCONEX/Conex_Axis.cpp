@@ -107,7 +107,7 @@ int Conex_AxisBase::ClearPort(void)
 // Communication "send" utility function:
 int Conex_AxisBase::SendCommand(const char *command) const
 {
-   const char* g_TxTerm = "\n\r"; //unique termination from MM to Conex_Axis communication
+   const char* g_TxTerm = "\r\n";
    int ret;
 
    std::string base_command = "";
@@ -121,7 +121,7 @@ int Conex_AxisBase::SendCommand(const char *command) const
 // Communication "send & receive" utility function:
 int Conex_AxisBase::QueryCommand(const char *command, std::string &answer) const
 {
-   const char* g_RxTerm = "\r"; //unique termination from Conex_Axis to MM communication   std::string base_command = "";
+   const char* g_RxTerm = "\r\n";
    int ret;
    // send command
    ret = SendCommand(command);
