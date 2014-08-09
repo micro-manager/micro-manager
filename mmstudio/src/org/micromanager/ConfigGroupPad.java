@@ -55,7 +55,7 @@ public class ConfigGroupPad extends JScrollPane{
    private StateTableData data_;
    private ScriptInterface parentGUI_;
    Preferences prefs_;
-   private String COLUMN_WIDTH = "group_col_width";
+   private final String COLUMN_WIDTH = "group_col_width";
    public PresetEditor presetEditor_ = null;
    public String groupName_ = "";
 
@@ -162,7 +162,7 @@ public class ConfigGroupPad extends JScrollPane{
       };
       ArrayList<StateItem> groupList_ = new ArrayList<StateItem>();
       private CMMCore core_ = null;
-      private boolean configDirty_;
+      private final boolean configDirty_;
 
       public StateTableData(CMMCore core) {
          core_ = core;

@@ -71,7 +71,7 @@ import org.micromanager.utils.ReportingUtils;
  * aka the "Device/Property Browser"
  */
 public class PropertyEditor extends MMFrame{
-   private SpringLayout springLayout;
+   private final SpringLayout springLayout;
    private static final long serialVersionUID = 1507097881635431043L;
    
    private JTable table_;
@@ -85,7 +85,7 @@ public class PropertyEditor extends MMFrame{
    private JCheckBox showStateDevicesCheckBox_;
    private JCheckBox showOtherCheckBox_;
    private JCheckBox showReadonlyCheckBox_;
-   private JScrollPane scrollPane_;
+   private final JScrollPane scrollPane_;
    private ScriptInterface gui_;
    
    public class myMMListener extends MMListenerAdapter {
@@ -104,7 +104,7 @@ public class PropertyEditor extends MMFrame{
       }
    }
 
-   private myMMListener myMMListener_ = new myMMListener();
+   private final myMMListener myMMListener_ = new myMMListener();
 
    public void setGui(ScriptInterface gui) {
       gui_ = gui;

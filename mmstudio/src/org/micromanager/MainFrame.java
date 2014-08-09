@@ -1,3 +1,25 @@
+///////////////////////////////////////////////////////////////////////////////
+//FILE:          MainFrame.java
+//PROJECT:       Micro-Manager
+//SUBSYSTEM:     mmstudio
+//-----------------------------------------------------------------------------
+//
+// AUTHOR:       
+//
+// COPYRIGHT:    University of California, San Francisco, 2014
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+//
+
 package org.micromanager;
 
 import com.google.common.eventbus.Subscribe;
@@ -20,6 +42,7 @@ import java.awt.event.WindowEvent;
 import java.awt.Font;
 import java.awt.KeyboardFocusManager;
 import java.awt.Rectangle;
+import java.text.ParseException;
 import java.util.prefs.Preferences;
 
 import javax.swing.AbstractButton;
@@ -80,14 +103,11 @@ public class MainFrame extends JFrame implements LiveModeListener {
    
    private ConfigGroupPad configPad_;
 
-   private Font defaultFont_ = new Font("Arial", Font.PLAIN, 10);
+   private final Font defaultFont_ = new Font("Arial", Font.PLAIN, 10);
 
-   private CMMCore core_;
-   private MMStudio studio_;
-   private SnapLiveManager snapLiveManager_;
-
-   // Our instance
-   private static MainFrame mainFrame_;
+   private final CMMCore core_;
+   private final MMStudio studio_;
+   private final SnapLiveManager snapLiveManager_;
 
    private ConfigPadButtonPanel configPadButtonPanel_;
    private final MetadataPanel metadataPanel_;
@@ -106,7 +126,6 @@ public class MainFrame extends JFrame implements LiveModeListener {
       snapLiveManager_ = manager;
       snapLiveManager_.addLiveModeListener(this);
 
-      mainFrame_ = this;
       setTitle(MICRO_MANAGER_TITLE + " " + MMVersion.VERSION_STRING);
       setMinimumSize(new Dimension(605,480));
       
@@ -126,7 +145,7 @@ public class MainFrame extends JFrame implements LiveModeListener {
       // Add our own keyboard manager that handles Micro-Manager shortcuts
       MMKeyDispatcher mmKD = new MMKeyDispatcher();
       KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(mmKD);
-      new DropTarget(this, new DragDropUtil());
+      DropTarget dropTarget = new DropTarget(this, new DragDropUtil());
       setVisible(true);
    }
       
@@ -493,6 +512,7 @@ public class MainFrame extends JFrame implements LiveModeListener {
 
    /**
     * Updates Status line in main window.
+    * @param text text to be shown 
     */
    public void updateInfoDisplay(String text) {
       labelImageDimensions_.setText(text);
@@ -604,6 +624,7 @@ public class MainFrame extends JFrame implements LiveModeListener {
 
    /**
     * Return the current selection from the comboBinning_ menu, or null.
+    * @return bin setting in UI as a String
     */
    public String getBinMode() {
       Object item = comboBinning_.getSelectedItem();
@@ -635,6 +656,7 @@ public class MainFrame extends JFrame implements LiveModeListener {
 
    /**
     * Save our settings to the provided Preferences object.
+    * @param prefs local preferences to be saved
     */
    public void savePrefs(Preferences prefs) {
       Rectangle r = getBounds();
@@ -655,7 +677,7 @@ public class MainFrame extends JFrame implements LiveModeListener {
    public double getDisplayedExposureTime() {
       try {
          return NumberUtils.displayStringToDouble(textFieldExp_.getText());
-      } catch (Exception e) {
+      } catch (ParseException e) {
          ReportingUtils.logError(e, "Couldn't convert displayed exposure time to double");
       }
       return -1;

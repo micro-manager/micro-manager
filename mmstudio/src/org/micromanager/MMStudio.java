@@ -27,6 +27,8 @@ import ij.WindowManager;
 import ij.gui.Line;
 import ij.gui.Roi;
 import ij.process.ImageProcessor;
+import ij.gui.ImageWindow;
+
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
@@ -37,7 +39,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.prefs.Preferences;
-
+import java.util.Collections;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.lang.reflect.InvocationTargetException;
+import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
 import javax.swing.JMenuBar;
@@ -50,8 +56,10 @@ import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
+import mmcorej.TaggedImage;
 
 import org.json.JSONObject;
+import org.json.JSONException;
 
 import org.micromanager.acquisition.AcquisitionManager;
 
@@ -108,20 +116,6 @@ import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.TextUtils;
 import org.micromanager.utils.WaitDialog;
 
-import bsh.EvalError;
-import bsh.Interpreter;
-
-import com.swtdesigner.SwingResourceManager;
-
-import ij.gui.ImageWindow;
-
-import java.util.Collections;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-
-import mmcorej.TaggedImage;
-
-import org.json.JSONException;
 import org.micromanager.acquisition.*;
 import org.micromanager.api.ImageCache;
 import org.micromanager.api.IAcquisitionEngine2010;
@@ -132,6 +126,11 @@ import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
 import org.micromanager.utils.UIMonitor;
+
+import bsh.EvalError;
+import bsh.Interpreter;
+
+import com.swtdesigner.SwingResourceManager;
 
 
 
@@ -170,8 +169,8 @@ public class MMStudio implements ScriptInterface {
    private CalibrationListDlg calibrationListDlg_;
    private AcqControlDlg acqControlWin_;
    private PluginManager pluginManager_;
-   private SnapLiveManager snapLiveManager_;
-   private ToolsMenu toolsMenu_;
+   private final SnapLiveManager snapLiveManager_;
+   private final ToolsMenu toolsMenu_;
 
    private List<Component> MMFrames_
            = Collections.synchronizedList(new ArrayList<Component>());
@@ -221,7 +220,7 @@ public class MMStudio implements ScriptInterface {
    // Lock invoked while shutting down
    private final Object shutdownLock_ = new Object();
 
-   private JMenuBar menuBar_;
+   private final JMenuBar menuBar_;
    private JCheckBoxMenuItem centerAndDragMenuItem_;
    public static final FileType MM_DATA_SET 
            = new FileType("MM_DATA_SET",
@@ -231,17 +230,27 @@ public class MMStudio implements ScriptInterface {
    private Thread acquisitionEngine2010LoadingThread_ = null;
    private Class<?> acquisitionEngine2010Class_ = null;
    private IAcquisitionEngine2010 acquisitionEngine2010_ = null;
-   private StaticInfo staticInfo_;
+   private final StaticInfo staticInfo_;
    
    
    /**
     * Main procedure for stand alone operation.
+    * @param args
     */
    public static void main(String args[]) {
       try {
          UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
          MMStudio mmStudio = new MMStudio(false);
-      } catch (Throwable e) {
+      } catch (ClassNotFoundException e) {
+         ReportingUtils.showError(e, "A java error has caused Micro-Manager to exit.");
+         System.exit(1);
+      } catch (IllegalAccessException e) {
+         ReportingUtils.showError(e, "A java error has caused Micro-Manager to exit.");
+         System.exit(1);
+      } catch (InstantiationException e) {
+         ReportingUtils.showError(e, "A java error has caused Micro-Manager to exit.");
+         System.exit(1);
+      } catch (UnsupportedLookAndFeelException e) {
          ReportingUtils.showError(e, "A java error has caused Micro-Manager to exit.");
          System.exit(1);
       }
@@ -564,7 +573,7 @@ public class MMStudio implements ScriptInterface {
          public void run() {
             try {
                acquisitionEngine2010Class_  = Class.forName("org.micromanager.AcquisitionEngine2010");
-            } catch (Exception ex) {
+            } catch (ClassNotFoundException ex) {
                ReportingUtils.logError(ex);
                acquisitionEngine2010Class_ = null;
             }
@@ -599,6 +608,8 @@ public class MMStudio implements ScriptInterface {
     * Shows images as they appear in the default display window. Uses
     * the default processor stack to process images as they arrive on
     * the rawImageQueue.
+    * @param rawImageQueue
+    * @param displayImageRoutine
     */
    public void runDisplayThread(BlockingQueue<TaggedImage> rawImageQueue, 
             final DisplayImageRoutine displayImageRoutine) {
@@ -632,6 +643,10 @@ public class MMStudio implements ScriptInterface {
     * used to store contrast settings to be later used for initialization of contrast of new windows.
     *  Shouldn't be called by loaded data sets, only
     * ones that have been acquired
+    * @param channelGroup
+    * @param channel
+    * @param mda
+    * @param settings
     */
    public void saveChannelHistogramSettings(String channelGroup, String channel, boolean mda, 
            HistogramSettings settings) {
@@ -844,7 +859,7 @@ public class MMStudio implements ScriptInterface {
          // Stop (and restart) live mode if it is running
          setROI(r);
 
-      } catch (Exception e) {
+      } catch (MMScriptException e) {
          ReportingUtils.showError(e);
       }
    }
@@ -877,6 +892,7 @@ public class MMStudio implements ScriptInterface {
 
    /**
     * Returns singleton instance of MMStudio
+    * @return singleton instance of MMStudio
     */
    public static MMStudio getInstance() {
       return studio_;
@@ -885,6 +901,7 @@ public class MMStudio implements ScriptInterface {
    /**
     * Returns singleton instance of MainFrame. You should ideally not need
     * to use this function.
+    * @return singleton instance of the mainFrame
     */
    public static MainFrame getFrame() {
       return frame_;
@@ -938,6 +955,7 @@ public class MMStudio implements ScriptInterface {
 
    /**
     * Open an existing acquisition directory and build viewer window.
+    * @param inRAM whether or not to keep data in RAM 
     */
    public void promptForAcquisitionToOpen(boolean inRAM) {
       File f = FileDialogs.openDir(frame_,
@@ -976,7 +994,10 @@ public class MMStudio implements ScriptInterface {
 
    /**
     * Opens an existing data set. Shows the acquisition in a window.
+    * @param dir location of data set
+    * @param inRam whether not to open completely in RAM
     * @return The acquisition object.
+    * @throws org.micromanager.utils.MMScriptException
     */
    @Override
    public String openAcquisitionData(String dir, boolean inRam) throws MMScriptException {
@@ -1040,7 +1061,7 @@ public class MMStudio implements ScriptInterface {
 
    private void createScriptPanel() {
       if (scriptPanel_ == null) {
-         scriptPanel_ = new ScriptPanel(core_, options_, studio_);
+         scriptPanel_ = new ScriptPanel(core_, studio_);
          scriptPanel_.insertScriptingObject(SCRIPT_CORE_OBJECT, core_);
          scriptPanel_.insertScriptingObject(SCRIPT_ACQENG_OBJECT, engine_);
          scriptPanel_.setParentGUI(studio_);
@@ -1178,7 +1199,7 @@ public class MMStudio implements ScriptInterface {
          }
          return true;
 
-      } catch (Exception ex) {
+      } catch (NumberFormatException ex) {
          throw new MMScriptException ("Format of version String should be \"a.b.c\"");
       }
    } 
@@ -1275,6 +1296,7 @@ public class MMStudio implements ScriptInterface {
     * Is this function still needed?  It does some magic with tags. I found 
     * it to do harmful thing with tags when a Multi-Camera device is
     * present (that issue is now fixed).
+    * @param ti
     */
    public void normalizeTags(TaggedImage ti) {
       if (ti != TaggedImageQueue.POISON) {
@@ -1303,7 +1325,10 @@ public class MMStudio implements ScriptInterface {
          MDUtils.setSummary(ti.tags, getAcquisitionWithName(SnapLiveManager.SIMPLE_ACQ).getSummaryMetadata());
          staticInfo_.addStagePositionToTags(ti);
          addImage(SnapLiveManager.SIMPLE_ACQ, ti, update, true);
-      } catch (Exception ex) {
+      } catch (JSONException ex) {
+         ReportingUtils.logError(ex);
+         return false;
+      } catch (MMScriptException ex) {
          ReportingUtils.logError(ex);
          return false;
       }
@@ -1646,6 +1671,7 @@ public class MMStudio implements ScriptInterface {
 
    /**
     * Loads system configuration from the cfg file.
+    * @return true when successful
     */
    public boolean loadSystemConfiguration() {
       boolean result = true;
@@ -1700,7 +1726,7 @@ public class MMStudio implements ScriptInterface {
          for (Integer icfg = 0; icfg < MRUConfigFiles_.size(); ++icfg) {
             String value = "";
             if (null != MRUConfigFiles_.get(icfg)) {
-               value = MRUConfigFiles_.get(icfg).toString();
+               value = MRUConfigFiles_.get(icfg);
             }
             mainPrefs_.put(CFGFILE_ENTRY_BASE + icfg.toString(), value);
          }
@@ -1869,6 +1895,7 @@ public class MMStudio implements ScriptInterface {
    /**
     * Lets JComponents register themselves so that their background can be
     * manipulated
+    * @param comp
     */
    @Override
    public void addMMBackgroundListener(Component comp) {
@@ -1880,6 +1907,7 @@ public class MMStudio implements ScriptInterface {
    /**
     * Lets JComponents remove themselves from the list whose background gets
     * changes
+    * @param comp
     */
    @Override
    public void removeMMBackgroundListener(Component comp) {
@@ -2055,7 +2083,7 @@ public class MMStudio implements ScriptInterface {
          if (acqControlWin_ != null) {
             acqControlWin_.loadAcqSettingsFromFile(path);
          }
-      } catch (Exception ex) {
+      } catch (MMScriptException ex) {
          throw new MMScriptException(ex.getMessage());
       }
 
@@ -2276,6 +2304,11 @@ public class MMStudio implements ScriptInterface {
     * The basic method for adding images to an existing data set.
     * If the acquisition was not previously initialized, it will attempt to 
     * initialize it from the available image data
+    * @param frame
+    * @param channel
+    * @param slice
+    * @param position
+    * @throws org.micromanager.utils.MMScriptException
     */
    @Override
    public void addImageToAcquisition(String name,
@@ -2354,6 +2387,8 @@ public class MMStudio implements ScriptInterface {
    /**
     * A quick way to implicitly snap an image and add it to the data set. Works
     * in the same way as above.
+    * @param slice
+    * @throws org.micromanager.utils.MMScriptException
     */
    @Override
    public void snapAndAddImage(String name, int frame, int channel, int slice, int position) throws MMScriptException {
@@ -2606,7 +2641,25 @@ public class MMStudio implements ScriptInterface {
             acquisitionEngine2010_ = (IAcquisitionEngine2010) acquisitionEngine2010Class_.getConstructor(ScriptInterface.class).newInstance(studio_);
          }
          return acquisitionEngine2010_;
-      } catch (Exception e) {
+      } catch (IllegalAccessException e) {
+         ReportingUtils.logError(e);
+         return null;
+      } catch (IllegalArgumentException e) {
+         ReportingUtils.logError(e);
+         return null;
+      } catch (InstantiationException e) {
+         ReportingUtils.logError(e);
+         return null;
+      } catch (InterruptedException e) {
+         ReportingUtils.logError(e);
+         return null;
+      } catch (NoSuchMethodException e) {
+         ReportingUtils.logError(e);
+         return null;
+      } catch (SecurityException e) {
+         ReportingUtils.logError(e);
+         return null;
+      } catch (InvocationTargetException e) {
          ReportingUtils.logError(e);
          return null;
       }
@@ -2751,6 +2804,7 @@ public class MMStudio implements ScriptInterface {
    
    /**
     * Allows MMListeners to register themselves
+    * @param newL
     */
    @Override
    public void addMMListener(MMListenerInterface newL) {
@@ -2759,6 +2813,7 @@ public class MMStudio implements ScriptInterface {
 
    /**
     * Allows MMListeners to remove themselves
+    * @param oldL
     */
    @Override
    public void removeMMListener(MMListenerInterface oldL) {

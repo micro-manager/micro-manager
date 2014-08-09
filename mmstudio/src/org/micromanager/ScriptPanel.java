@@ -273,7 +273,9 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
                         scriptPaneSaved_ = true;
                         setTitle(file.getName());
                         model_.setLastMod(table_.getSelectedRow(), 0, file.lastModified());
-                     } catch (Exception ee) {
+                     } catch (IOException ee) {
+                        ReportingUtils.logError(ee);
+                     } catch (MMScriptException ee) {
                         ReportingUtils.logError(ee);
                      }
                   } else if (EXT_ACQ.equals(getExtension(file))) {
@@ -350,9 +352,11 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
    
    /**
     * Create the dialog
+    * @param core - MMCore object
+    * @param gui - MM script-interface implementation
     */
    @SuppressWarnings("LeakingThisInConstructor")
-   public ScriptPanel(CMMCore core, MMOptions options, MMStudio gui) {
+   public ScriptPanel(CMMCore core, MMStudio gui) {
       super();
       gui_ = gui;
 
@@ -995,9 +999,11 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
                      scriptFile_ = curFile;
                      scriptPaneSaved_ = true;
                      model_.setLastMod(scriptTable_.getSelectedRow(), 0, curFile.lastModified());
-                  } catch (Exception e) {
+                  } catch (IOException e) {
                      handleException (e);
-                  }
+                  } catch (MMScriptException e) {
+                     handleException (e);
+            }
                   break;
                case JOptionPane.NO_OPTION:
                   break;
@@ -1018,7 +1024,8 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
 
 
   /**
-   * Runs the content of the editor Pane
+   * Runs the content of the provided file
+    * @param curFile - script file to be run
    */
    public static void runFile(File curFile)
    {
@@ -1026,10 +1033,8 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
       if (curFile != null) {
          try {
             interp_.evaluateAsync(getContents(curFile));
-            //interp_.evaluate(scriptArea_.getText());
          } catch (MMScriptException e) {
             ReportingUtils.logError(e);
-            //messageException(e.getMessage(), -1);
          }
       }
    }
@@ -1106,7 +1111,9 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
             scriptFile_ = curFile;
             scriptPaneSaved_ = true;
             this.setTitle(curFile.getName());
-         } catch (Exception e) {
+         } catch (IOException e) {
+            handleException (e);
+         } catch (MMScriptException e) {
             handleException (e);
          } finally {
 
@@ -1119,7 +1126,9 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
       try {
          interp_.insertGlobalObject(varName, obj);
          beanshellREPLint_.set(varName,obj);
-      } catch (Exception e) {
+      } catch (EvalError e) {
+         handleException(e);
+      } catch (MMScriptException e) {
          handleException(e);
       }
    }  
