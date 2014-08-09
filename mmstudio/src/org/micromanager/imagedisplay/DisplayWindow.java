@@ -2,26 +2,22 @@ package org.micromanager.imagedisplay;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
-
 import ij.ImagePlus;
 import ij.gui.StackWindow;
 import ij.gui.Toolbar;
-
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.WindowEvent;
 import java.awt.Point;
 import java.awt.Toolkit;
-
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.WindowEvent;
+import java.util.prefs.Preferences;
 import javax.swing.event.MouseInputAdapter;
-
 import net.miginfocom.swing.MigLayout;
-
-import org.micromanager.internalinterfaces.DisplayControls;
 import org.micromanager.MMStudio;
+import org.micromanager.internalinterfaces.DisplayControls;
 import org.micromanager.utils.ReportingUtils;
 
 
@@ -34,24 +30,40 @@ import org.micromanager.utils.ReportingUtils;
 public class DisplayWindow extends StackWindow {
 
    private boolean closed_ = false;
-   private EventBus bus_;
-   private static int screenX_ = 300;
-   private static int screenY_ = 100;
-
+   private final EventBus bus_;
+   
+   // store window location in Java Preferences
+   private static final int DEFAULTPOSX = 300;
+   private static final int DEFAULTPOSY = 100;
+   private static Preferences displayPrefs_;
+   private static final String WINDOWPOSX = "WindowPosX";
+   private static final String WINDOWPOSY = "WindowPosY";
+   
    // This class is used to signal that a window is closing.
    public static class RequestToCloseEvent {
       public DisplayWindow window_;
       public RequestToCloseEvent(DisplayWindow window) {
-         screenX_ = window.getLocation().x;
-         screenY_ = window.getLocation().y;
+         if (displayPrefs_ != null) {
+            displayPrefs_.putInt(WINDOWPOSX, window.getLocation().x);
+            displayPrefs_.putInt(WINDOWPOSY, window.getLocation().y);
+         }
          window_ = window;
       }
    };
 
+  
+   
    public DisplayWindow(final ImagePlus ip, DisplayControls controls, 
          final EventBus bus) {
       super(ip);
-      ip.getWindow().setLocation(screenX_, screenY_);
+      initializePrefs();
+      int posX = DEFAULTPOSX, posY = DEFAULTPOSY;
+      if (displayPrefs_ != null) {
+         posX = displayPrefs_.getInt(WINDOWPOSX, DEFAULTPOSX); 
+         posY = displayPrefs_.getInt(WINDOWPOSY, DEFAULTPOSY);
+      }
+      ip.getWindow().setLocation(posX, posY);
+      
       // HACK: hide ImageJ's native scrollbars; we provide our own.
       if (cSelector != null) {
          remove(cSelector);
@@ -108,6 +120,19 @@ public class DisplayWindow extends StackWindow {
    }
 
    /**
+    * Keep class specific preferences to store window location
+    */
+   private void initializePrefs() {
+      if (displayPrefs_ == null) {
+         try {
+            displayPrefs_ = Preferences.userNodeForPackage(getClass());
+         } catch (Exception e) {
+            ReportingUtils.logError(e);
+         }
+      }
+   }
+   
+   /**
     * Set our canvas' magnification based on the preferred window magnification.
     * Also sets the position of the window, based on the position of the last
     * closed window.
@@ -161,6 +186,7 @@ public class DisplayWindow extends StackWindow {
 
    /**
     * Our controls have changed size; repack the window.
+    * @param event
     */
    @Subscribe
    public void onLayoutChange(ScrollerPanel.LayoutChangedEvent event) {
@@ -202,6 +228,7 @@ public class DisplayWindow extends StackWindow {
     * this behavior for everyone else causes *them* to break horribly, hence
     * why we have to examine the stack trace to determine our caller. Ugh!
     * HACK HACK HACK HACK HACK HACK ACK HACK HACK HACK HACK HACK ACK HACK
+    * @return 
     */
    @Override
    public Component[] getComponents() {
