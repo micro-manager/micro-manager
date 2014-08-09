@@ -429,25 +429,7 @@ public class MMStudio implements ScriptInterface {
 
       frame_.paintToFront();
       
-      if (!options_.doNotAskForConfigFile_) {
-         // Ask the user for a configuration file.
-         MMIntroDlg introDlg = new MMIntroDlg(
-               MMVersion.VERSION_STRING, MRUConfigFiles_);
-         introDlg.setConfigFile(sysConfigFile_);
-         introDlg.setBackground(getBackgroundColor());
-         introDlg.setVisible(true);
-         if (!introDlg.okChosen()) {
-            // User aborted; close the program down.
-            closeSequence(false);
-            return;
-         }
-         sysConfigFile_ = introDlg.getConfigFile();
-      }
-      saveMRUConfigFiles();
-
-      mainPrefs_.put(SYSTEM_CONFIG_FILE, sysConfigFile_);
-
-      engine_.setCore(core_, afMgr_);
+            engine_.setCore(core_, afMgr_);
       posList_ = new PositionList();
       engine_.setPositionList(posList_);
       // load (but do no show) the scriptPanel
@@ -459,8 +441,32 @@ public class MMStudio implements ScriptInterface {
       hotKeys_ = new org.micromanager.utils.HotKeys();
       hotKeys_.loadSettings();
       
+      if (!options_.doNotAskForConfigFile_) {
+         // Ask the user for a configuration file.
+         MMIntroDlg introDlg = new MMIntroDlg(
+               MMVersion.VERSION_STRING, MRUConfigFiles_);
+         introDlg.setConfigFile(sysConfigFile_);
+         introDlg.setBackground(getBackgroundColor());
+         introDlg.setVisible(true);
+         introDlg.toFront();
+         if (!introDlg.okChosen()) {
+            // User aborted; close the program down.
+            closeSequence(false);
+            return;
+         }
+         sysConfigFile_ = introDlg.getConfigFile();
+      }
+      saveMRUConfigFiles();
+
+      mainPrefs_.put(SYSTEM_CONFIG_FILE, sysConfigFile_);
+      
       // before loading the system configuration, we need to wait 
       // until the plugins are loaded
+      final WaitDialog waitDlg = new WaitDialog(
+              "Loading plugins, please wait...");
+
+      waitDlg.setAlwaysOnTop(true);
+      waitDlg.showDialog();
       try {
          pluginInitializer.join(15000);
       } catch (InterruptedException ex) {
@@ -473,6 +479,7 @@ public class MMStudio implements ScriptInterface {
       else {
          ReportingUtils.logMessage("Finished waiting for plugins to load");
       }
+      waitDlg.closeDialog();
       
       // if an error occurred during config loading, do not display more 
       // errors than needed
