@@ -25,6 +25,7 @@ import org.micromanager.asidispim.Data.AcquisitionModes;
 import org.micromanager.asidispim.Data.Cameras;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.Joystick;
+import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Utils.DevicesListenerInterface;
@@ -145,7 +146,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
            Cameras cameras, 
            Prefs prefs, 
            StagePositionUpdater stagePosUpdater) {
-      super("Acquisition",
+      super(MyStrings.TabNames.ACQUSITION.toString(),
               new MigLayout(
               "",
               "[right]16[center]16[center]16[center]16[center]",
@@ -160,7 +161,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       core_ = gui_.getMMCore();
       numTimePointsDone_ = 0;
       
-      PanelUtils pu = new PanelUtils(gui_, prefs_);
+      PanelUtils pu = new PanelUtils(gui_, prefs_, props_, devices_);
       
       AcquisitionModes acqModes = new AcquisitionModes(devices_, props_, prefs_);
 
@@ -186,7 +187,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       volPanel_.setBorder(PanelUtils.makeTitledBorder("Volume Settings"));
 
       volPanel_.add(new JLabel("Number of sides:"));
-      numSides_ = pu.makeSpinnerInteger(1, 2, props_, devices_,
+      numSides_ = pu.makeSpinnerInteger(1, 2,
               new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
               Properties.Keys.SPIM_NUM_SIDES, 2);
       numSides_.addChangeListener(recalculateTimingDisplay);
@@ -194,27 +195,27 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
       volPanel_.add(new JLabel("First side:"));
       String[] ab = {Devices.Sides.A.toString(), Devices.Sides.B.toString()};
-      firstSide_ = pu.makeDropDownBox(ab, props_, devices_,
+      firstSide_ = pu.makeDropDownBox(ab,
               new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
               Properties.Keys.SPIM_FIRSTSIDE);
       volPanel_.add(firstSide_, "wrap");
       
       volPanel_.add(new JLabel("Delay before side [ms]:"));
-      delaySide_ = pu.makeSpinnerFloat(0, 10000, 0.25, props_, devices_,
+      delaySide_ = pu.makeSpinnerFloat(0, 10000, 0.25,
               new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
               Properties.Keys.SPIM_DELAY_SIDE, 0);
       delaySide_.addChangeListener(recalculateTimingDisplay);
       volPanel_.add(delaySide_, "wrap");
 
       volPanel_.add(new JLabel("Slices per volume:"));
-      numSlices_ = pu.makeSpinnerInteger(1, 1000, props_, devices_,
+      numSlices_ = pu.makeSpinnerInteger(1, 1000,
               new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
               Properties.Keys.SPIM_NUM_SLICES, 20);
       numSlices_.addChangeListener(recalculateTimingDisplay);
       volPanel_.add(numSlices_, "wrap");
       
       volPanel_.add(new JLabel("Slice step size [\u00B5m]:"));
-      stepSize_ = pu.makeSpinnerFloat(0, 100, 0.1, props_, devices_,
+      stepSize_ = pu.makeSpinnerFloat(0, 100, 0.1,
             new Devices.Keys[]{Devices.Keys.PLUGIN}, Properties.Keys.PLUGIN_SLICE_STEP_SIZE,
             1.0);
       volPanel_.add(stepSize_, "wrap");
@@ -222,7 +223,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // special field that is enabled/disabled depending on whether advanced timing is enabled
       desiredSlicePeriodLabel_ = new JLabel("Slice period [ms]:"); 
       volPanel_.add(desiredSlicePeriodLabel_);
-      desiredSlicePeriod_ = pu.makeSpinnerFloat(5, 1000, 0.25, props_, devices_,
+      desiredSlicePeriod_ = pu.makeSpinnerFloat(5, 1000, 0.25,
             new Devices.Keys[]{Devices.Keys.PLUGIN}, Properties.Keys.PLUGIN_DESIRED_SLICE_PERIOD, 30);
       volPanel_.add(desiredSlicePeriod_, "wrap");
       desiredSlicePeriod_.addChangeListener(new ChangeListener() {
@@ -240,7 +241,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // special field that is enabled/disabled depending on whether advanced timing is enabled
       desiredLightExposureLabel_ = new JLabel("Laser exposure [ms]:"); 
       volPanel_.add(desiredLightExposureLabel_);
-      desiredLightExposure_ = pu.makeSpinnerFloat(2.5, 1000.5, 1, props_, devices_,
+      desiredLightExposure_ = pu.makeSpinnerFloat(2.5, 1000.5, 1,
             new Devices.Keys[]{Devices.Keys.PLUGIN}, Properties.Keys.PLUGIN_DESIRED_EXPOSURE, 8.5);
       desiredLightExposure_.addChangeListener(new ChangeListener() {
          @Override
@@ -318,21 +319,21 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       slicePanel_.setBorder(componentBorder);
 
       slicePanel_.add(new JLabel("Delay before scan [ms]:"));
-      delayScan_ = pu.makeSpinnerFloat(0, 10000, 0.25, props_, devices_,
+      delayScan_ = pu.makeSpinnerFloat(0, 10000, 0.25,
             new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SPIM_DELAY_SCAN, 0);
       delayScan_.addChangeListener(recalculateTimingDisplay);
       slicePanel_.add(delayScan_, "wrap");
 
       slicePanel_.add(new JLabel("Lines scans per slice:"));
-      numScansPerSlice_ = pu.makeSpinnerInteger(1, 1000, props_, devices_,
+      numScansPerSlice_ = pu.makeSpinnerInteger(1, 1000,
               new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
               Properties.Keys.SPIM_NUM_SCANSPERSLICE, 1);
       numScansPerSlice_.addChangeListener(recalculateTimingDisplay);
       slicePanel_.add(numScansPerSlice_, "wrap");
 
       slicePanel_.add(new JLabel("Line scan period [ms]:"));
-      lineScanPeriod_ = pu.makeSpinnerInteger(1, 10000, props_, devices_,
+      lineScanPeriod_ = pu.makeSpinnerInteger(1, 10000,
               new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
               Properties.Keys.SPIM_LINESCAN_PERIOD, 10);
       lineScanPeriod_.addChangeListener(recalculateTimingDisplay);
@@ -341,14 +342,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       slicePanel_.add(new JSeparator(), "span 2, wrap");
       
       slicePanel_.add(new JLabel("Delay before laser [ms]:"));
-      delayLaser_ = pu.makeSpinnerFloat(0, 10000, 0.25, props_, devices_,
+      delayLaser_ = pu.makeSpinnerFloat(0, 10000, 0.25,
             new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SPIM_DELAY_LASER, 0);
       delayLaser_.addChangeListener(recalculateTimingDisplay);
       slicePanel_.add(delayLaser_, "wrap");
       
       slicePanel_.add(new JLabel("Laser duration [ms]:"));
-      durationLaser_ = pu.makeSpinnerFloat(0, 10000, 0.25, props_, devices_,
+      durationLaser_ = pu.makeSpinnerFloat(0, 10000, 0.25,
             new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SPIM_DURATION_LASER, 1);
       durationLaser_.addChangeListener(recalculateTimingDisplay);
@@ -357,14 +358,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       slicePanel_.add(new JSeparator(), "wrap");
 
       slicePanel_.add(new JLabel("Delay before camera [ms]:"));
-      delayCamera_ = pu.makeSpinnerFloat(0, 10000, 0.25, props_, devices_,
+      delayCamera_ = pu.makeSpinnerFloat(0, 10000, 0.25,
             new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SPIM_DELAY_CAMERA, 0);
       delayCamera_.addChangeListener(recalculateTimingDisplay);
       slicePanel_.add(delayCamera_, "wrap");
       
       slicePanel_.add(new JLabel("Camera duration [ms]:"));
-      durationCamera_ = pu.makeSpinnerFloat(0, 1000, 0.25, props_, devices_,
+      durationCamera_ = pu.makeSpinnerFloat(0, 1000, 0.25,
             new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SPIM_DURATION_CAMERA, 0);
       durationCamera_.addChangeListener(recalculateTimingDisplay);
@@ -393,14 +394,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       };
 
       repeatPanel_.add(new JLabel("Number of time points:"));
-      numAcquisitions_ = pu.makeSpinnerInteger(1, 32000, props_, devices_,
+      numAcquisitions_ = pu.makeSpinnerInteger(1, 32000,
               new Devices.Keys[]{Devices.Keys.PLUGIN},
               Properties.Keys.PLUGIN_NUM_ACQUISITIONS, 1);
       numAcquisitions_.addChangeListener(recalculateTimeLapseDisplay);
       repeatPanel_.add(numAcquisitions_, "wrap");
 
       repeatPanel_.add(new JLabel("Time point interval [s]:"));
-      acquisitionInterval_ = pu.makeSpinnerFloat(1, 32000, 0.1, props_, devices_,
+      acquisitionInterval_ = pu.makeSpinnerFloat(1, 32000, 0.1,
               new Devices.Keys[]{Devices.Keys.PLUGIN},
               Properties.Keys.PLUGIN_ACQUISITION_INTERVAL, 60);
       acquisitionInterval_.addChangeListener(recalculateTimeLapseDisplay);
@@ -1039,10 +1040,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                
                if (sideActiveA) {
                   float sliceARate = prefs_.getFloat(
-                        Properties.Keys.PLUGIN_SETUP_PANEL_NAME.toString() + Devices.Sides.A, 
+                        MyStrings.TabNames.SETUP.toString() + Devices.Sides.A, 
                         Properties.Keys.PLUGIN_RATE_PIEZO_SHEET, -80);
                   float sliceAOffset = prefs_.getFloat(
-                        Properties.Keys.PLUGIN_SETUP_PANEL_NAME.toString() + Devices.Sides.A, 
+                        MyStrings.TabNames.SETUP.toString() + Devices.Sides.A, 
                         Properties.Keys.PLUGIN_OFFSET_PIEZO_SHEET, 0);
                   if (MyNumberUtils.floatsEqual(sliceARate, (float) 0.0)) {
                      gui_.showError("Rate for slice A cannot be zero. Re-do calibration on Setup tab.");
@@ -1074,10 +1075,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                
                if (sideActiveB) {
                   float sliceBRate = prefs_.getFloat(
-                        Properties.Keys.PLUGIN_SETUP_PANEL_NAME.toString() + Devices.Sides.B, 
+                        MyStrings.TabNames.SETUP.toString() + Devices.Sides.B, 
                         Properties.Keys.PLUGIN_RATE_PIEZO_SHEET, -80);
                   float sliceBOffset = prefs_.getFloat(
-                        Properties.Keys.PLUGIN_SETUP_PANEL_NAME.toString() + Devices.Sides.B, 
+                        MyStrings.TabNames.SETUP.toString() + Devices.Sides.B, 
                         Properties.Keys.PLUGIN_OFFSET_PIEZO_SHEET, 0);
                   if (MyNumberUtils.floatsEqual(sliceBRate, (float) 0.0)) {
                      gui_.showError("Rate for slice B cannot be zero. Re-do calibration on Setup tab.");
@@ -1366,7 +1367,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          MDUtils.setPositionIndex(tags, position);
          MDUtils.setElapsedTimeMs(tags, ms);
          MDUtils.setImageTime(tags, MDUtils.getCurrentTime());
-
+         MDUtils.setZStepUm(tags, PanelUtils.getSpinnerFloatValue(stepSize_));
+         
          if (!tags.has(MMTags.Summary.SLICES_FIRST) && !tags.has(MMTags.Summary.TIME_FIRST)) {
             // add default setting
             tags.put(MMTags.Summary.SLICES_FIRST, true);

@@ -32,6 +32,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import org.micromanager.asidispim.Data.Devices;
+import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
@@ -68,7 +69,7 @@ public class GuiSettingsPanel extends ListeningJPanel {
     */
    public GuiSettingsPanel(ScriptInterface gui, Devices devices, 
            Properties props, Prefs prefs, StagePositionUpdater stagePosUpdater) {    
-      super ("GUI Settings", 
+      super (MyStrings.TabNames.SETTINGS.toString(), 
             new MigLayout(
               "", 
               "[right]",
@@ -80,7 +81,7 @@ public class GuiSettingsPanel extends ListeningJPanel {
       gui_ = gui;
       stagePosUpdater_ = stagePosUpdater;
       
-      PanelUtils pu = new PanelUtils(gui_, prefs_);
+      PanelUtils pu = new PanelUtils(gui_, prefs_, props_, devices_);
       
       final JCheckBox activeTimerCheckBox = new JCheckBox("Update positions continually");
       ActionListener ae = new ActionListener() {
@@ -105,7 +106,7 @@ public class GuiSettingsPanel extends ListeningJPanel {
       add(activeTimerCheckBox, "center, span 2, wrap");
       
       add(new JLabel("Position refresh interval (s):"));
-      positionRefreshInterval_ = pu.makeSpinnerFloat(0.5, 1000, 0.5, props_, devices_, 
+      positionRefreshInterval_ = pu.makeSpinnerFloat(0.5, 1000, 0.5,
             new Devices.Keys [] {Devices.Keys.PLUGIN,},
             Properties.Keys.PLUGIN_POSITION_REFRESH_INTERVAL, 1);
       ChangeListener listenerLast = new ChangeListener() {
@@ -124,13 +125,13 @@ public class GuiSettingsPanel extends ListeningJPanel {
       add(new JSeparator(JSeparator.VERTICAL), "growy, cell 2 0 1 9");
       
       add(new JLabel("Scanner filter freq, sheet axis [kHz]:"), "cell 3 0");
-      scannerFilterX_ = pu.makeSpinnerFloat(0.1, 5, 0.1, props_, devices_, 
+      scannerFilterX_ = pu.makeSpinnerFloat(0.1, 5, 0.1,
             new Devices.Keys [] {Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SCANNER_FILTER_X, 0.8);
       add(scannerFilterX_, "wrap");
       
       add(new JLabel("Scanner filter freq, slice axis [kHz]:"), "cell 3 1");
-      scannerFilterY_ = pu.makeSpinnerFloat(0.1, 5, 0.1, props_, devices_, 
+      scannerFilterY_ = pu.makeSpinnerFloat(0.1, 5, 0.1,
             new Devices.Keys [] {Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SCANNER_FILTER_Y, 0.4);
       add(scannerFilterY_, "wrap");

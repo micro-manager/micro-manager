@@ -5,6 +5,7 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ImageProcessor;
+
 import java.awt.Cursor;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
@@ -13,6 +14,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.concurrent.ExecutionException;
+
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -21,9 +23,12 @@ import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JTextField;
 import javax.swing.SwingWorker;
+
 import net.miginfocom.swing.MigLayout;
+
 import org.micromanager.api.MMWindow;
 import org.micromanager.api.ScriptInterface;
+import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
@@ -58,7 +63,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
     * @param prefs - Plugin-wide preferences
     */
    public DataAnalysisPanel(ScriptInterface gui, Prefs prefs) {    
-      super("Data Analysis",
+      super(MyStrings.TabNames.DATAANALYSIS.toString(),
               new MigLayout(
               "",
               "[right]",

@@ -123,7 +123,6 @@ public class Properties {
       PLUGIN_PIEZO_SHEET_INCREMENT("PiezoSheetIncrement"),  // piezo increment for moving piezo and galvo together
       PLUGIN_OFFSET_PIEZO_SHEET("OffsetPiezoSheet"),  // Offset in piezo/sheet relation
       PLUGIN_RATE_PIEZO_SHEET ("RatePiezoSheet"),     // Rate in piezo/sheet 
-      PLUGIN_SETUP_PANEL_NAME ("Setup Path"),         // Setup Panel Name
       PLUGIN_SHEET_START_POS ("SheetStartPosition"),  // Sheet start position for internal use
       PLUGIN_SHEET_END_POS ("SheetEndPosition"),      // Sheet end position for internal use
       PLUGIN_PIEZO_START_POS ("PiezoStartPosition"),  // Piezo start position for internal use
@@ -139,15 +138,32 @@ public class Properties {
       PLUGIN_DESIRED_SLICE_PERIOD("DesiredSlicePeriod"),
       PLUGIN_ACQUSITION_MODE("AcquisitionMode"),
       PLUGIN_SPIM_SOURCE_POSITION("SPIMLightSourcePosition"),
+      PLUGIN_SPIM_SOURCE_INTENSITY("SPIMLightSourceIntensity"),
+      TOPTICA_LASER_LEVEL("Laser <int>: 3. Level %", true);
       ;
       private final String text;
+      private final boolean hasPattern;  // true if string has substitution pattern
       Keys(String text) {
          this.text = text;
+         this.hasPattern = false;
+      }
+      Keys(String text, boolean hasPattern) {
+         this.text = text;
+         this.hasPattern = hasPattern;
       }
       @Override
       public String toString() {
          return text;
       }
+      public String toString(int intVal) {
+         if (!hasPattern) {
+            return toString();
+         } else {
+            String str = "" + intVal;
+            return text.replace("<int>", str);
+         }
+      }
+      
    }
    
    // values for properties
@@ -427,7 +443,8 @@ public class Properties {
     * @param intVal value in integer form, sent to core using setProperty()
     * @param ignoreError false (default) will do error checking, true means ignores non-existing property
     */
-   public void setPropValue(Devices.Keys device, Properties.Keys name, float floatVal, boolean ignoreError) {
+   public void setPropValue(Devices.Keys device, Properties.Keys name, float floatVal,
+         boolean ignoreError, Object [] args) {
       if (device == Devices.Keys.PLUGIN) {
          prefs_.putFloat(PLUGIN_PREF_NODE, name, floatVal);
       }
@@ -437,7 +454,11 @@ public class Properties {
             mmDevice = devices_.getMMDevice(device);
             if (mmDevice != null) {
                try {
-                  core_.setProperty(mmDevice, name.toString(), floatVal);
+                  if (args != null) {
+                     core_.setProperty(mmDevice, name.toString((Integer)args[0]), floatVal);
+                  } else {
+                     core_.setProperty(mmDevice, name.toString(), floatVal);
+                  }
                } catch (Exception ex) {
                   // do nothing
                }
@@ -445,13 +466,22 @@ public class Properties {
          } else {
             try {
                mmDevice = devices_.getMMDeviceException(device);
-               core_.setProperty(mmDevice, name.toString(), floatVal);
+               if (args != null) {
+                  core_.setProperty(mmDevice, name.toString((Integer)args[0]), floatVal);
+               } else {
+                  core_.setProperty(mmDevice, name.toString(), floatVal);
+               }
             } catch (Exception ex) {
                gui_.showError(ex, "Error setting float property " + 
                      name.toString() + " in device " + mmDevice);
             }
          }
       }
+   }
+   
+   public void setPropValue(Devices.Keys device, Properties.Keys name, float floatVal,
+         boolean ignoreError) {
+      setPropValue(device, name, floatVal, ignoreError, null);
    }
    
    /**

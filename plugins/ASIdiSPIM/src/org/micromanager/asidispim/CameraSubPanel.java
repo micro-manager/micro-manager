@@ -23,6 +23,7 @@ package org.micromanager.asidispim;
 
 import org.micromanager.asidispim.Data.Cameras;
 import org.micromanager.asidispim.Data.Devices;
+import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Utils.DevicesListenerInterface;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
@@ -74,7 +75,7 @@ public final class CameraSubPanel extends ListeningJPanel implements LiveModeLis
            Devices.Sides side, 
            Prefs prefs, 
            boolean showLiveButton) {    
-      super ("Camera_"+instanceLabel,
+      super (MyStrings.TabNames.CAMERA_SUBPANEL.toString() + instanceLabel,
             new MigLayout(
               "", 
               "[right]8[align center]",

@@ -31,6 +31,7 @@ import javax.swing.BorderFactory;
 import org.micromanager.asidispim.Data.Cameras;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.Joystick;
+import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Positions;
 import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
@@ -86,7 +87,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
     */
    public NavigationPanel(ScriptInterface gui, Devices devices, Properties props, 
            Joystick joystick, Positions positions, Prefs prefs, Cameras cameras) {    
-      super ("Navigation",
+      super (MyStrings.TabNames.NAVIGATION.toString(),
             new MigLayout(
               "", 
               "[right]8[align center]16[right]8[60px,center]8[center]8[center]2[center]2[center]8[center]8[center]8[center]",
@@ -99,7 +100,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       cameras_ = cameras;
       gui_ = gui;
       core_ = gui_.getMMCore();
-      PanelUtils pu = new PanelUtils(gui_, prefs_);
+      PanelUtils pu = new PanelUtils(gui_, prefs_, props_, devices_);
       
       joystickPanel_ = new JoystickSubPanel(joystick_, devices_, panelName_, Devices.Sides.NONE, prefs_);
       add(joystickPanel_, "span 2 4");  // make artificially tall to keep stage positions in line with each other
@@ -148,7 +149,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       add(makeMoveToOriginButton(Devices.Keys.UPPERZDRIVE, Joystick.Directions.NONE));
       add(makeSetOriginHereButton(Devices.Keys.UPPERZDRIVE, Joystick.Directions.NONE), "wrap");   
       
-      beamPanel_ = new BeamSubPanel(devices_, panelName_, Devices.Sides.NONE, prefs_, props_);
+      beamPanel_ = new BeamSubPanel(gui_, devices_, panelName_, Devices.Sides.NONE, prefs_, props_);
       beamPanel_.setBorder(BorderFactory.createLineBorder(ASIdiSPIM.borderColor));
       add(beamPanel_, "center, span 2 3");
       

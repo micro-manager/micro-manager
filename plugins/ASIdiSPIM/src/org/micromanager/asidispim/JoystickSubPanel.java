@@ -26,13 +26,14 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.HashMap;
-import javax.swing.BorderFactory;
 
+import javax.swing.BorderFactory;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.Joystick;
+import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Utils.DevicesListenerInterface;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
@@ -65,7 +66,7 @@ public final class JoystickSubPanel extends ListeningJPanel {
     */
    public JoystickSubPanel(Joystick joystick, Devices devices, String instanceLabel,
          Devices.Sides side, Prefs prefs) {    
-      super ("Joystick_"+instanceLabel,
+      super (MyStrings.TabNames.JOYSTICK_SUBPANEL.toString() + instanceLabel,
             new MigLayout(
               "", 
               "[right]8[align center]",

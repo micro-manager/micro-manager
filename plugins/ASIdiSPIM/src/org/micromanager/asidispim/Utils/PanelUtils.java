@@ -23,11 +23,14 @@ package org.micromanager.asidispim.Utils;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Hashtable;
 
 import javax.swing.BorderFactory;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
@@ -56,10 +59,14 @@ import org.micromanager.asidispim.Data.Properties;
 public class PanelUtils {
    private final ScriptInterface gui_;
    private final Prefs prefs_;
+   private final Properties props_;
+   private final Devices devices_;
    
-   public PanelUtils(ScriptInterface gui, Prefs prefs) {
+   public PanelUtils(ScriptInterface gui, Prefs prefs, Properties props, Devices devices) {
       gui_ = gui;
       prefs_ = prefs;
+      props_ = props;
+      devices_ = devices;
    }
    
    /**
@@ -67,21 +74,19 @@ public class PanelUtils {
     * before internal representation as integer (as JSlider requires)
     * @return
     */
-   public JSlider makeSlider(double min, double max, final int scalefactor, Properties props, Devices devs,
+   public JSlider makeSlider(double min, double max, final int scalefactor,
          Devices.Keys devKey, Properties.Keys propKey) {
       
       class sliderListener implements ChangeListener, UpdateFromPropertyListenerInterface, DevicesListenerInterface {
          private final JSlider js_;
          private final int scalefactor_;
-         private final Properties props_;
          private final Devices.Keys devKey_;
          private final Properties.Keys propKey_;
          
-         public sliderListener(JSlider js, int scalefactor, Properties props, 
+         public sliderListener(JSlider js, int scalefactor,
                  Devices.Keys devKey, Properties.Keys propKey) {
             js_ = js;
             scalefactor_ = scalefactor;
-            props_ = props;
             devKey_ = devKey;
             propKey_ = propKey;
          }
@@ -110,11 +115,11 @@ public class PanelUtils {
       int intmax = (int)(max*scalefactor);
       
       JSlider js = new JSlider(JSlider.HORIZONTAL, intmin, intmax, intmin);  // initialize with min value, will set to current value shortly 
-      ChangeListener l = new sliderListener(js, scalefactor, props, devKey, propKey);
+      ChangeListener l = new sliderListener(js, scalefactor, devKey, propKey);
       ((UpdateFromPropertyListenerInterface) l).updateFromProperty();  // set to value of property at present
       js.addChangeListener(l);
-      devs.addListener((DevicesListenerInterface) l);
-      props.addListener((UpdateFromPropertyListenerInterface) l);
+      devices_.addListener((DevicesListenerInterface) l);
+      props_.addListener((UpdateFromPropertyListenerInterface) l);
 
       js.setMajorTickSpacing(intmax-intmin);
       js.setMinorTickSpacing(scalefactor);
@@ -142,23 +147,19 @@ public class PanelUtils {
     * @param devs - singleton device class instance holding device info
     * @param devKeys - array of device keys, use inline constructor "new Devices.Keys[]{<list of devices>}"
     * @param propKey - property key for this spinner
-    * @param saveToPrefs - will be saved to prefs using the supplied propKey; not needed if being saved on controller
-    * @param prefNode - preference node to save under, usually supplied as panelName_
     * @return the created JSpinner
     */
-   public JSpinner makeSpinnerInteger(int min, int max, Properties props, Devices devs, 
+   public JSpinner makeSpinnerInteger(int min, int max, 
          Devices.Keys [] devKeys, Properties.Keys propKey, int defaultVal) {
 
       class SpinnerListenerInt implements ChangeListener, UpdateFromPropertyListenerInterface, DevicesListenerInterface {
          private final JSpinner sp_;
-         private final Properties props_;
          private final Devices.Keys [] devKeys_;
          private final Properties.Keys propKey_;
          
-         public SpinnerListenerInt(JSpinner sp, Properties props, 
+         public SpinnerListenerInt(JSpinner sp, 
                Devices.Keys [] devKeys, Properties.Keys propKey) {
             sp_ = sp;
-            props_ = props;
             devKeys_ = devKeys;
             propKey_ = propKey;
          }
@@ -196,29 +197,29 @@ public class PanelUtils {
       }
       
       // read the existing value of 1st device and make sure it is within our min/max limits
-      int origVal = props.getPropValueInteger(devKeys[0], propKey, true);
+      int origVal = props_.getPropValueInteger(devKeys[0], propKey, true);
       if (origVal == 0) {
       // if getPropValue returned 0 (sign no value existed) then use default
          origVal = defaultVal;
-         props.setPropValue(devKeys[0], propKey, defaultVal, true);
+         props_.setPropValue(devKeys[0], propKey, defaultVal, true);
       }
       if (origVal < min) {
          origVal = min;
-         props.setPropValue(devKeys[0], propKey, min, true);
+         props_.setPropValue(devKeys[0], propKey, min, true);
          // ignore error for sake of missing device assignment
       }
       if (origVal > max) {
          origVal = max;
-         props.setPropValue(devKeys[0], propKey, max, true);
+         props_.setPropValue(devKeys[0], propKey, max, true);
          // ignore error for sake of missing device assignment
       }
 
       SpinnerModel jspm = new SpinnerNumberModel(origVal, min, max, 1);
       JSpinner jsp = new JSpinner(jspm);
-      SpinnerListenerInt ispl = new SpinnerListenerInt(jsp, props, devKeys, propKey);
+      SpinnerListenerInt ispl = new SpinnerListenerInt(jsp, devKeys, propKey);
       jsp.addChangeListener(ispl);
-      devs.addListener(ispl);
-      props.addListener(ispl);
+      devices_.addListener(ispl);
+      props_.addListener(ispl);
       JComponent editor = jsp.getEditor();
       JFormattedTextField tf = ((JSpinner.DefaultEditor) editor).getTextField();
       tf.setColumns(4);
@@ -284,25 +285,22 @@ public class PanelUtils {
     * @param devs - singleton device class instance holding device info
     * @param devKeys - array of device keys, use inline constructor "new Devices.Keys[]{<list of devices>}"
     * @param propKey - property key for this spinner
-    * @param saveToPrefs - will be saved to prefs using the supplied propKey; not needed if being saved on controller
-    * @param prefNode - preference node to save under, usually supplied as panelName_
+    * @param defaultVal - 
     * @return the created JSpinner
     */
-   public JSpinner makeSpinnerFloat(double min, double max, double step, Properties props, Devices devs, 
+   public JSpinner makeSpinnerFloat(double min, double max, double step,
          Devices.Keys [] devKeys, Properties.Keys propKey, double defaultVal) {
       // same as IntSpinnerListener except
       //  - different getSpinnerValue() implementation
       //  - getPropValueFloat in stateChanged()
       class SpinnerListenerFloat implements ChangeListener, UpdateFromPropertyListenerInterface, DevicesListenerInterface {
          private final JSpinner sp_;
-         private final Properties props_;
          private final Devices.Keys [] devKeys_;
          private final Properties.Keys propKey_;
 
-         public SpinnerListenerFloat(JSpinner sp, Properties props, Devices.Keys [] devKeys, 
+         public SpinnerListenerFloat(JSpinner sp, Devices.Keys [] devKeys, 
                Properties.Keys propKey) {
             sp_ = sp;
-            props_ = props;
             devKeys_ = devKeys;
             propKey_ = propKey;
          }
@@ -336,20 +334,20 @@ public class PanelUtils {
       }
       
       // read the existing value of 1st device and make sure it is within our min/max limits
-      double origVal = (double)props.getPropValueFloat(devKeys[0], propKey, true);
+      double origVal = (double)props_.getPropValueFloat(devKeys[0], propKey, true);
       if (MyNumberUtils.floatsEqual((float) origVal, (float) 0)) {
          // if getPropValue returned 0 (sign no value existed) then use default
          origVal = defaultVal;
-         props.setPropValue(devKeys[0], propKey, (float)defaultVal, true);
+         props_.setPropValue(devKeys[0], propKey, (float)defaultVal, true);
       }
       if (origVal < min) {
          origVal = min;
-         props.setPropValue(devKeys[0], propKey, (float)min, true);
+         props_.setPropValue(devKeys[0], propKey, (float)min, true);
          // ignore error for sake of missing device assignment
       }
       if (origVal > max) {
          origVal = max;
-         props.setPropValue(devKeys[0], propKey, (float)max, true);
+         props_.setPropValue(devKeys[0], propKey, (float)max, true);
          // ignore error for sake of missing device assignment
       }
       
@@ -357,10 +355,10 @@ public class PanelUtils {
       
       SpinnerModel jspm = new SpinnerNumberModel(origVal, min, max, step);
       JSpinner jsp = new JSpinner(jspm);
-      SpinnerListenerFloat ispl = new SpinnerListenerFloat(jsp, props, devKeys, propKey);
+      SpinnerListenerFloat ispl = new SpinnerListenerFloat(jsp, devKeys, propKey);
       jsp.addChangeListener(ispl);
-      devs.addListener(ispl);
-      props.addListener(ispl);
+      devices_.addListener(ispl);
+      props_.addListener(ispl);
       JComponent editor = jsp.getEditor();
       JFormattedTextField tf = ((JSpinner.DefaultEditor) editor).getTextField();
       tf.setColumns(4);
@@ -379,7 +377,7 @@ public class PanelUtils {
     * @param devKeys 
     * @return constructed JComboBox
     */
-   public JComboBox makeDropDownBox(String[] vals, Properties props, Devices devs,
+   public JComboBox makeDropDownBox(String[] vals,
          Devices.Keys [] devKeys, Properties.Keys propKey) {
       /**
        * Listener for the string-based dropdown boxes
@@ -387,13 +385,11 @@ public class PanelUtils {
        */
       class StringBoxListener implements ActionListener, UpdateFromPropertyListenerInterface, DevicesListenerInterface {
          private final JComboBox box_;
-         private final Properties props_;
          private final Devices.Keys [] devKeys_;
          private final Properties.Keys propKey_;
 
-         public StringBoxListener(JComboBox box, Properties props, Devices.Keys [] devKeys, Properties.Keys propKey) {
+         public StringBoxListener(JComboBox box, Devices.Keys [] devKeys, Properties.Keys propKey) {
             box_ = box;
-            props_ = props;
             devKeys_ = devKeys;
             propKey_ = propKey;
          }
@@ -429,14 +425,89 @@ public class PanelUtils {
          }
       }
       
-      String origVal = props.getPropValueString(devKeys[0], propKey);
+      String origVal = props_.getPropValueString(devKeys[0], propKey);
       JComboBox jcb = new JComboBox(vals);
       jcb.setSelectedItem(origVal);
-      StringBoxListener l = new StringBoxListener(jcb, props, devKeys, propKey);
+      StringBoxListener l = new StringBoxListener(jcb, devKeys, propKey);
       jcb.addActionListener(l);
-      devs.addListener(l);
-      props.addListener(l);
+      devices_.addListener(l);
+      props_.addListener(l);
       return jcb;
+   }
+   
+   
+   /**
+    * Constructs JCheckBox tied to property
+    * @param label the GUI label
+    * @param offValue the value of the property when not checked
+    * @param onValue the value of the property when checked
+    * @param props
+    * @param devs
+    * @param devKey
+    * @param propKey
+    * @param prefNode
+    * @return constructed JCheckBox
+    */
+   public JCheckBox makeCheckBox(String label,
+         Properties.Values offValue, Properties.Values onValue,
+         Devices.Keys devKey, Properties.Keys propKey,
+         String prefNode, Prefs.Keys prefKey) {
+      
+      /**
+       * nested inner class 
+       * @author Jon
+       */
+      class checkBoxListener implements ItemListener, UpdateFromPropertyListenerInterface, DevicesListenerInterface {
+         private final JCheckBox jc_;
+         private final Properties.Values offValue_;
+         private final Properties.Values onValue_;
+         private final Devices.Keys devKey_;
+         private final Properties.Keys propKey_;
+         private final String prefNode_;
+         private final Prefs.Keys prefKey_;
+         
+         public checkBoxListener(JCheckBox jc, 
+               Properties.Values offValue, Properties.Values onValue,
+               Devices.Keys devKey, Properties.Keys propKey,
+               String prefNode, Prefs.Keys prefKey) {
+            jc_ = jc;
+            offValue_ = offValue;
+            onValue_ = onValue;
+            devKey_ = devKey;
+            propKey_ = propKey;
+            prefNode_ = prefNode;
+            prefKey_ = prefKey;
+         }
+         
+         // only called when the user selects/deselects from GUI or the value _changes_ programmatically
+         @Override
+         public void itemStateChanged(ItemEvent e) {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+               props_.setPropValue(devKey_, propKey_, onValue_, true);
+               prefs_.putBoolean(prefNode_, prefKey_, true);
+            } else {
+               props_.setPropValue(devKey_, propKey_, offValue_, true);
+               prefs_.putBoolean(prefNode_, prefKey_, false);
+            }
+         }
+         
+         @Override
+         public void updateFromProperty() {
+            jc_.setSelected(props_.getPropValueString(devKey_, propKey_, true).equals(onValue_.toString()));
+         }
+         
+         @Override
+         public void devicesChangedAlert() {
+            updateFromProperty();
+         }
+      }
+      
+      JCheckBox jc = new JCheckBox(label, 
+            prefs_.getBoolean(prefNode, propKey, false));
+      checkBoxListener l = new checkBoxListener(jc, offValue, onValue, devKey, propKey, prefNode, prefKey);
+      jc.addItemListener(l);
+      devices_.addListener(l);
+      return jc;
    }
    
    

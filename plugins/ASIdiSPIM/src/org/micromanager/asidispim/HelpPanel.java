@@ -33,6 +33,7 @@ import javax.swing.JTextPane;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 
+import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 
 import net.miginfocom.swing.MigLayout;
@@ -51,7 +52,7 @@ public class HelpPanel extends ListeningJPanel {
     * @param gui -implementation of the Micro-Manager ScriptInterface api
     */
    public HelpPanel(ScriptInterface gui) {    
-      super ("Help", 
+      super (MyStrings.TabNames.HELP.toString(), 
             new MigLayout(
               "", 
               "[right]",

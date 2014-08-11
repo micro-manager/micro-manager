@@ -22,6 +22,7 @@
 package org.micromanager.asidispim;
 
 import org.micromanager.asidispim.Data.Devices;
+import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Utils.DeviceUtils;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
@@ -64,7 +65,7 @@ public class DevicesPanel extends ListeningJPanel {
     * @param devices - instance of class that holds information about devices
     */
    public DevicesPanel(ScriptInterface gui, Devices devices, Properties props) {
-      super("Devices", 
+      super(MyStrings.TabNames.DEVICES.toString(), 
             new MigLayout(
               "",
               "[right]25[align center]16[align center]",

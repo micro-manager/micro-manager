@@ -31,6 +31,7 @@ import java.awt.geom.Point2D;
 import org.micromanager.asidispim.Data.Cameras;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.Joystick;
+import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Positions;
 import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
@@ -94,7 +95,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    public SetupPanel(ScriptInterface gui, Devices devices, Properties props, 
            Joystick joystick, Devices.Sides side, Positions positions, 
            Cameras cameras, Prefs prefs) {
-      super(Properties.Keys.PLUGIN_SETUP_PANEL_NAME.toString() + side.toString(),
+      super(MyStrings.TabNames.SETUP.toString() + side.toString(),
               new MigLayout(
               "",
               "[center]8[align center]",
@@ -108,7 +109,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       prefs_ = prefs;
       gui_ = gui;
       core_ = gui_.getMMCore();
-      PanelUtils pu = new PanelUtils(gui_, prefs_);
+      PanelUtils pu = new PanelUtils(gui_, prefs_, props_, devices);
 
       piezoImagingDeviceKey_ = Devices.getSideSpecificKey(Devices.Keys.PIEZOA, side);
       piezoIlluminationDeviceKey_ = Devices.getSideSpecificKey(Devices.Keys.PIEZOA, Devices.getOppositeSide(side));
@@ -446,9 +447,10 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       sheetPanel.add(makeIncrementButton(micromirrorDeviceKey_, Properties.Keys.SA_AMPLITUDE_X_DEG, "-", (float)-0.01), "skip 1, split 2");
       sheetPanel.add(makeIncrementButton(micromirrorDeviceKey_, Properties.Keys.SA_AMPLITUDE_X_DEG, "+", (float)0.01));
       JSlider tmp_sl = pu.makeSlider(0, // 0 is min amplitude
-              props_.getPropValueFloat(micromirrorDeviceKey_,Properties.Keys.MAX_DEFLECTION_X) - props_.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.MIN_DEFLECTION_X), // compute max amplitude
+              props_.getPropValueFloat(micromirrorDeviceKey_,Properties.Keys.MAX_DEFLECTION_X) - 
+              props_.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.MIN_DEFLECTION_X), // compute max amplitude
               1000, // the scale factor between internal integer representation and float representation
-              props_, devices_, micromirrorDeviceKey_, Properties.Keys.SA_AMPLITUDE_X_DEG);
+              micromirrorDeviceKey_, Properties.Keys.SA_AMPLITUDE_X_DEG);
       sheetPanel.add(tmp_sl, "span 5, growx, center, wrap");
 
 
@@ -460,7 +462,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
               props.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.MIN_DEFLECTION_X), // min value
               props.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.MAX_DEFLECTION_X), // max value
               1000, // the scale factor between internal integer representation and float representation
-              props_, devices_, micromirrorDeviceKey_, Properties.Keys.SA_OFFSET_X_DEG);
+              micromirrorDeviceKey_, Properties.Keys.SA_OFFSET_X_DEG);
       sheetPanel.add(tmp_sl, "span 5, growx, center, wrap");
 
 
@@ -472,7 +474,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       sheetPanel.setBorder(BorderFactory.createLineBorder(ASIdiSPIM.borderColor));
       add(sheetPanel, "center, aligny top, span 1 3, wrap");
 
-      beamPanel_ = new BeamSubPanel(devices_, panelName_, side, prefs_, props_);
+      beamPanel_ = new BeamSubPanel(gui_, devices_, panelName_, side, prefs_, props_);
       beamPanel_.setBorder(BorderFactory.createLineBorder(ASIdiSPIM.borderColor));
       add(beamPanel_, "center, wrap");
 
