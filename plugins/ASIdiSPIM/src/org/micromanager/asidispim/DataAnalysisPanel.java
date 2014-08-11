@@ -76,7 +76,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
       mipavPanel_.setBorder(PanelUtils.makeTitledBorder("Export to mipav"));
       
       JLabel instructions = new JLabel("Exports data to a format \n"
-              + "compatible with the mipav GenerateFusion Plugin");
+              + "compatible with the MIPAV GenerateFusion Plugin");
       mipavPanel_.add(instructions, "span 3, wrap");
       
       mipavPanel_.add(new JLabel("Export directory:"), "");
@@ -224,11 +224,11 @@ public class DataAnalysisPanel extends ListeningJPanel {
                   // optional transformation
                   switch (transformIndex_) {
                      case 1: {
-                        iProc2 = iProc2.rotateRight();
+                        iProc2.rotate(90);
                         break;
                      }
                      case 2: {
-                        iProc2 = iProc2.rotateLeft();
+                        iProc2.rotate(-90);
                         break;
                      }  
                   }
