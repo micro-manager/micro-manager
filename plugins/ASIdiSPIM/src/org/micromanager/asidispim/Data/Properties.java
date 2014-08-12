@@ -139,7 +139,9 @@ public class Properties {
       PLUGIN_ACQUSITION_MODE("AcquisitionMode"),
       PLUGIN_SPIM_SOURCE_POSITION("SPIMLightSourcePosition"),
       PLUGIN_SPIM_SOURCE_INTENSITY("SPIMLightSourceIntensity"),
-      TOPTICA_LASER_LEVEL("Laser <int>: 3. Level %", true);
+      PLUGIN_SPIM_SOURCE_ENABLED("SPIMLightSourceEnabled"),
+      TOPTICA_LASER_LEVEL("Laser <string>: 3. Level %", true),
+      TOPTICA_LASER_EMISSION("Laser <string>: 2. Emission", true),
       ;
       private final String text;
       private final boolean hasPattern;  // true if string has substitution pattern
@@ -155,12 +157,11 @@ public class Properties {
       public String toString() {
          return text;
       }
-      public String toString(int intVal) {
-         if (!hasPattern) {
+      public String toString(String substitute) {
+         if (!hasPattern || substitute == null) {
             return toString();
          } else {
-            String str = "" + intVal;
-            return text.replace("<int>", str);
+            return text.replace("<string>", substitute);
          }
       }
       
@@ -222,15 +223,17 @@ public class Properties {
       prefs_ = prefs;
       listeners_ = new ArrayList<UpdateFromPropertyListenerInterface>();
    }
-
+   
    /**
     * sees if property exists in given device
     * @param device enum key for device 
     * @param name enum key for property 
     * @param ignoreError false (default) will do error checking, true means ignores non-existing property
+    * @param propNameSubstitute string to substitute for pattern in property name, or null if not used
     * @return
     */
-   public boolean hasProperty(Devices.Keys device, Properties.Keys name, boolean ignoreError) {
+   public boolean hasProperty(Devices.Keys device, Properties.Keys name,
+         boolean ignoreError, String propNameSubstitute) {
       if (device == Devices.Keys.PLUGIN) {
          return prefs_.keyExists(PLUGIN_PREF_NODE, name);
       } else {
@@ -238,17 +241,17 @@ public class Properties {
          if (ignoreError) {
             try {
                mmDevice = devices_.getMMDevice(device);
-               return ((mmDevice!=null) &&  core_.hasProperty(mmDevice, name.toString()));
+               return ((mmDevice!=null) &&  core_.hasProperty(mmDevice, name.toString(propNameSubstitute)));
             } catch (Exception ex){
                // do nothing
             }
          } else {
             try {
                mmDevice = devices_.getMMDeviceException(device);
-               return core_.hasProperty(mmDevice, name.toString());
+               return core_.hasProperty(mmDevice, name.toString(propNameSubstitute));
             } catch (Exception ex) {
                gui_.showError(ex, "Couldn't find property " + 
-                     name.toString() + " in device " + mmDevice);
+                     name.toString(propNameSubstitute) + " in device " + mmDevice);
             }
          }
       }
@@ -262,7 +265,19 @@ public class Properties {
     * @return
     */
    public boolean hasProperty(Devices.Keys device, Properties.Keys name) {
-      return hasProperty(device, name, false);
+      return hasProperty(device, name, false, null);
+   }
+   
+   /**
+    * sees if property exists in given device
+    * @param device enum key for device 
+    * @param name enum key for property 
+    * @param ignoreError false (default) will do error checking, true means ignores non-existing property
+    * @return
+    */
+   public boolean hasProperty(Devices.Keys device, Properties.Keys name,
+         boolean ignoreError) {
+      return hasProperty(device, name, ignoreError, null);
    }
    
    /**
@@ -271,8 +286,10 @@ public class Properties {
     * @param name enum key for property 
     * @param strVal value in string form, sent to core using setProperty()
     * @param ignoreError false (default) will do error checking, true means ignores non-existing property
+    * @param propNameSubstitute string to substitute for pattern in property name, or null if not used
     */
-   public void setPropValue(Devices.Keys device, Properties.Keys name, String strVal, boolean ignoreError) {
+   public void setPropValue(Devices.Keys device, Properties.Keys name, String strVal,
+         boolean ignoreError, String propNameSubstitute) {
       if (device == Devices.Keys.PLUGIN) {
          prefs_.putString(PLUGIN_PREF_NODE, name, strVal);
       }
@@ -282,20 +299,20 @@ public class Properties {
             mmDevice = devices_.getMMDevice(device);
             if (mmDevice != null) {
                try {
-                  core_.setProperty(mmDevice, name.toString(), strVal);
+                  core_.setProperty(mmDevice, name.toString(propNameSubstitute), strVal);
                } catch (Exception ex) {
                   // log to file but nothing else
                   gui_.logMessage("Device " + mmDevice + 
-                        " does not have property: " + name.toString());
+                        " does not have property: " + name.toString(propNameSubstitute));
                }
             }
          } else {
             try {
                mmDevice = devices_.getMMDeviceException(device);
-               core_.setProperty(mmDevice, name.toString(), strVal);
+               core_.setProperty(mmDevice, name.toString(propNameSubstitute), strVal);
             } catch (Exception ex) {
                gui_.showError(ex, "Error setting string property " + 
-                     name.toString() + " to " + strVal + " in device " + mmDevice);
+                     name.toString(propNameSubstitute) + " to " + strVal + " in device " + mmDevice);
             }
          }
       }
@@ -305,35 +322,12 @@ public class Properties {
     * writes string property value to the device adapter using a core call
     * @param device enum key for device 
     * @param name enum key for property 
-    * @param val value in Properties.Values enum form, sent to core using setProperty() after toString() call
+    * @param strVal value in string form, sent to core using setProperty()
     * @param ignoreError false (default) will do error checking, true means ignores non-existing property
     */
-   public void setPropValue(Devices.Keys device, Properties.Keys name, Properties.Values val, boolean ignoreError) {
-      if (device == Devices.Keys.PLUGIN) {
-         prefs_.putString(PLUGIN_PREF_NODE, name, val.toString());
-      }
-      else {
-         String mmDevice = null;
-         if (ignoreError) {
-            mmDevice = devices_.getMMDevice(device);
-            if (mmDevice != null) {
-               try {
-                  core_.setProperty(mmDevice, name.toString(), val.toString());
-               } catch (Exception ex) {
-                  // do nothing
-               }
-            }
-         } else {
-            try {
-               mmDevice = devices_.getMMDeviceException(device);
-               core_.setProperty(mmDevice, name.toString(), val.toString());
-            } catch (Exception ex) {
-               gui_.showError(ex, "Error setting string property " + 
-                     name.toString() + " to " + val.toString() + " in device " + 
-                     mmDevice);
-            }
-         }
-      }
+   public void setPropValue(Devices.Keys device, Properties.Keys name, String strVal,
+         boolean ignoreError) {
+      setPropValue(device, name, strVal, ignoreError, null);
    }
    
    /**
@@ -343,7 +337,7 @@ public class Properties {
     * @param strVal value in string form, sent to core using setProperty()
     */
    public void setPropValue(Devices.Keys device, Properties.Keys name, String strVal) {
-      setPropValue(device, name, strVal, false);
+      setPropValue(device, name, strVal, false, null);
    }
    
    /**
@@ -354,8 +348,57 @@ public class Properties {
     */
    public void setPropValue(Devices.Keys [] devices, Properties.Keys name, String strVal) {
       for (Devices.Keys device : devices) {
-         setPropValue(device, name, strVal, false);
+         setPropValue(device, name, strVal, false, null);
       }
+   }
+   
+   /**
+    * writes string property value to the device adapter using a core call
+    * @param device enum key for device 
+    * @param name enum key for property 
+    * @param val value in Properties.Values enum form, sent to core using setProperty() after toString() call
+    * @param ignoreError false (default) will do error checking, true means ignores non-existing property
+    * @param propNameSubstitute string to substitute for pattern in property name, or null if not used
+    */
+   public void setPropValue(Devices.Keys device, Properties.Keys name, Properties.Values val,
+         boolean ignoreError, String propNameSubstitute) {
+      if (device == Devices.Keys.PLUGIN) {
+         prefs_.putString(PLUGIN_PREF_NODE, name, val.toString());
+      }
+      else {
+         String mmDevice = null;
+         if (ignoreError) {
+            mmDevice = devices_.getMMDevice(device);
+            if (mmDevice != null) {
+               try {
+                  core_.setProperty(mmDevice, name.toString(propNameSubstitute), val.toString());
+               } catch (Exception ex) {
+                  // do nothing
+               }
+            }
+         } else {
+            try {
+               mmDevice = devices_.getMMDeviceException(device);
+               core_.setProperty(mmDevice, name.toString(propNameSubstitute), val.toString());
+            } catch (Exception ex) {
+               gui_.showError(ex, "Error setting string property " + 
+                     name.toString(propNameSubstitute) + " to " + val.toString() + " in device " + 
+                     mmDevice);
+            }
+         }
+      }
+   }
+   
+   /**
+    * writes string property value to the device adapter using a core call
+    * @param device enum key for device 
+    * @param name enum key for property 
+    * @param val value in Properties.Values enum form, sent to core using setProperty() after toString() call
+    * @param ignoreError false (default) will do error checking, true means ignores non-existing property
+    */
+   public void setPropValue(Devices.Keys device, Properties.Keys name, Properties.Values val,
+         boolean ignoreError) {
+      setPropValue(device, name, val, ignoreError, null);
    }
    
    /**
@@ -365,7 +408,7 @@ public class Properties {
     * @param val value in Properties.Values enum form, sent to core using setProperty() after toString() call
     */
    public void setPropValue(Devices.Keys device, Properties.Keys name, Properties.Values val) {
-      setPropValue(device, name, val.toString(), false);
+      setPropValue(device, name, val.toString(), false, null);
    }
    
    /**
@@ -376,7 +419,7 @@ public class Properties {
     */
    public void setPropValue(Devices.Keys [] devices, Properties.Keys name, Properties.Values val) {
       for (Devices.Keys device : devices) {
-         setPropValue(device, name, val.toString(), false);
+         setPropValue(device, name, val.toString(), false, null);
       }
    }
  
@@ -386,8 +429,10 @@ public class Properties {
     * @param name enum key for property 
     * @param intVal value in integer form, sent to core using setProperty()
     * @param ignoreError false (default) will do error checking, true means ignores non-existing property
+    * @param propNameSubstitute string to substitute for pattern in property name, or null if not used
     */
-   public void setPropValue(Devices.Keys device, Properties.Keys name, int intVal, boolean ignoreError) {
+   public void setPropValue(Devices.Keys device, Properties.Keys name, int intVal,
+         boolean ignoreError, String propNameSubstitute) {
       if (device == Devices.Keys.PLUGIN) {
          prefs_.putInt(PLUGIN_PREF_NODE, name, intVal);
       }
@@ -397,7 +442,7 @@ public class Properties {
             mmDevice = devices_.getMMDevice(device);
             if (mmDevice != null) {
                try {
-                  core_.setProperty(mmDevice, name.toString(), intVal);
+                  core_.setProperty(mmDevice, name.toString(propNameSubstitute), intVal);
                } catch (Exception ex) {
                   // do nothing
                }
@@ -405,10 +450,10 @@ public class Properties {
          } else {
             try {
                mmDevice = devices_.getMMDeviceException(device);
-               core_.setProperty(mmDevice, name.toString(), intVal);
+               core_.setProperty(mmDevice, name.toString(propNameSubstitute), intVal);
             } catch (Exception ex) {
                gui_.showError(ex, "Error setting int property " + 
-                     name.toString() + " in device " + mmDevice);
+                     name.toString(propNameSubstitute) + " in device " + mmDevice);
             }
          }
       }
@@ -421,7 +466,7 @@ public class Properties {
     * @param intVal value in integer form, sent to core using setProperty()
     */
    public void setPropValue(Devices.Keys device, Properties.Keys name, int intVal) {
-      setPropValue(device, name, intVal, false);
+      setPropValue(device, name, intVal, false, null);
    }
    
    /**
@@ -432,7 +477,7 @@ public class Properties {
     */
    public void setPropValue(Devices.Keys [] devices, Properties.Keys name, int intVal) {
       for (Devices.Keys device : devices) {
-         setPropValue(device, name, intVal, false);
+         setPropValue(device, name, intVal, false, null);
       }
    }
 
@@ -442,9 +487,10 @@ public class Properties {
     * @param name enum key for property 
     * @param intVal value in integer form, sent to core using setProperty()
     * @param ignoreError false (default) will do error checking, true means ignores non-existing property
+    * @param propNameSubstitute string to substitute for pattern in property name, or null if not used
     */
    public void setPropValue(Devices.Keys device, Properties.Keys name, float floatVal,
-         boolean ignoreError, Object [] args) {
+         boolean ignoreError, String propNameSubstitute) {
       if (device == Devices.Keys.PLUGIN) {
          prefs_.putFloat(PLUGIN_PREF_NODE, name, floatVal);
       }
@@ -454,11 +500,7 @@ public class Properties {
             mmDevice = devices_.getMMDevice(device);
             if (mmDevice != null) {
                try {
-                  if (args != null) {
-                     core_.setProperty(mmDevice, name.toString((Integer)args[0]), floatVal);
-                  } else {
-                     core_.setProperty(mmDevice, name.toString(), floatVal);
-                  }
+                  core_.setProperty(mmDevice, name.toString(propNameSubstitute), floatVal);
                } catch (Exception ex) {
                   // do nothing
                }
@@ -466,14 +508,10 @@ public class Properties {
          } else {
             try {
                mmDevice = devices_.getMMDeviceException(device);
-               if (args != null) {
-                  core_.setProperty(mmDevice, name.toString((Integer)args[0]), floatVal);
-               } else {
-                  core_.setProperty(mmDevice, name.toString(), floatVal);
-               }
+               core_.setProperty(mmDevice, name.toString(propNameSubstitute), floatVal);
             } catch (Exception ex) {
                gui_.showError(ex, "Error setting float property " + 
-                     name.toString() + " in device " + mmDevice);
+                     name.toString(propNameSubstitute) + " in device " + mmDevice);
             }
          }
       }
@@ -491,7 +529,7 @@ public class Properties {
     * @param intVal value in integer form, sent to core using setProperty()
     */
    public void setPropValue(Devices.Keys device, Properties.Keys name, float floatVal) {
-      setPropValue(device, name, floatVal, false);
+      setPropValue(device, name, floatVal, false, null);
    }
    
    /**
@@ -502,7 +540,7 @@ public class Properties {
     */
    public void setPropValue(Devices.Keys [] devices, Properties.Keys name, float floatVal) {
       for (Devices.Keys device : devices) {
-         setPropValue(device, name, floatVal, false);
+         setPropValue(device, name, floatVal, false, null);
       }
    }
 
@@ -511,14 +549,16 @@ public class Properties {
     * or empty string if it can't find property.
     * @param device enum key for device 
     * @param name enum key for property 
+    * @param propNameSubstitute string to substitute for pattern in property name, or null if not used
     * @return value in string form, returned from core call to getProperty()
     */
-   private String getPropValue(Devices.Keys device, Properties.Keys name, boolean ignoreError) {
+   private String getPropValue(Devices.Keys device, Properties.Keys name,
+         boolean ignoreError, String propNameSubstitute) {
       String val = "";
       if (device == Devices.Keys.PLUGIN) {
          if (!ignoreError & !prefs_.keyExists(PLUGIN_PREF_NODE, name)) {
             gui_.showError("Could not get property " + 
-                  name.toString() + " from special plugin \"device\"");
+                  name.toString(propNameSubstitute) + " from special plugin \"device\"");
          }
          val = prefs_.getString(PLUGIN_PREF_NODE, name, "");
       } else {
@@ -528,7 +568,7 @@ public class Properties {
             val = "";  // set to be empty string to avoid null pointer exceptions
             if (mmDevice != null) {
                try {
-                  val = core_.getProperty(mmDevice, name.toString());
+                  val = core_.getProperty(mmDevice, name.toString(propNameSubstitute));
                } catch (Exception ex) {
                   // do nothing, just let empty string stay
                }
@@ -536,10 +576,10 @@ public class Properties {
          } else {
             try {
                mmDevice = devices_.getMMDeviceException(device);
-               val = core_.getProperty(mmDevice, name.toString());
+               val = core_.getProperty(mmDevice, name.toString(propNameSubstitute));
             } catch (Exception ex) {
                gui_.showError(ex, "Could not get property " + 
-                     name.toString() + " from device " + mmDevice);
+                     name.toString(propNameSubstitute) + " from device " + mmDevice);
             }
          }
       }
@@ -554,7 +594,7 @@ public class Properties {
     * @return
     */
    public String getPropValueString(Devices.Keys device, Properties.Keys name) {
-      return getPropValue(device, name, true);
+      return getPropValue(device, name, true, null);
    }
    
    /**
@@ -567,7 +607,7 @@ public class Properties {
     */
    public String getPropValueString(Devices.Keys device, Properties.Keys name, 
            boolean ignoreError) {
-      return getPropValue(device, name, ignoreError);
+      return getPropValue(device, name, ignoreError, null);
    }
    
    /**
@@ -578,10 +618,9 @@ public class Properties {
     * @return
     */
    public int getPropValueInteger(Devices.Keys device, Properties.Keys name) {
-      return getPropValueInteger(device, name, true);
+      return getPropValueInteger(device, name, true, null);
    }
    
-
    /**
     * returns an integer value for the specified property (assumes the caller knows the property contains an integer).
     * If property isn't found, returns 0.  If ignoreError then user is warned too. 
@@ -590,25 +629,41 @@ public class Properties {
     * @param ignoreError false (default) will do error checking, true means ignores non-existing property
     * @return
     */
-   public int getPropValueInteger(Devices.Keys device, Properties.Keys name, boolean ignoreError) {
+   public int getPropValueInteger(Devices.Keys device, Properties.Keys name,
+         boolean ignoreError) {
+      return getPropValueInteger(device, name, ignoreError, null);
+   }
+
+
+   /**
+    * returns an integer value for the specified property (assumes the caller knows the property contains an integer).
+    * If property isn't found, returns 0.  If ignoreError then user is warned too. 
+    * @param device enum key for device 
+    * @param name enum key for property 
+    * @param ignoreError false (default) will do error checking, true means ignores non-existing property
+    * @param propNameSubstitute string to substitute for pattern in property name, or null if not used
+    * @return
+    */
+   public int getPropValueInteger(Devices.Keys device, Properties.Keys name,
+         boolean ignoreError, String propNameSubstitute) {
       int val = 0;
       if (device == Devices.Keys.PLUGIN) {
          if (!ignoreError & !prefs_.keyExists(PLUGIN_PREF_NODE, name)) {
             gui_.showError("Could not get property " + 
-                  name.toString() + " from special plugin \"device\"");
+                  name.toString(propNameSubstitute) + " from special plugin \"device\"");
          }
          val = prefs_.getInt(PLUGIN_PREF_NODE, name, 0);
       }
       else {
          String strVal = null;
          try {
-            strVal = getPropValue(device, name, ignoreError);
+            strVal = getPropValue(device, name, ignoreError, propNameSubstitute);
             if (!ignoreError || !strVal.equals("")) {
                val = NumberUtils.coreStringToInt(strVal);
             }
          } catch (ParseException ex) {
             gui_.showError(ex, "Could not parse int value of " + 
-                  strVal + " for " + name.toString() + " in device " + 
+                  strVal + " for " + name.toString(propNameSubstitute) + " in device " + 
                   device.toString());
          } catch (NullPointerException ex) {
             gui_.showError(ex, "Null Pointer error in function getPropValueInteger");
@@ -625,8 +680,21 @@ public class Properties {
     * @return
     */
    public float getPropValueFloat(Devices.Keys device, Properties.Keys name) {
-      return getPropValueFloat(device, name, true);
+      return getPropValueFloat(device, name, true, null);
    }
+   
+   /**
+    * returns an float value for the specified property (assumes the caller knows the property contains a float).
+    * If property isn't found, returns 0.  If ignoreError then user is warned too.
+    * @param device enum key for device 
+    * @param name enum key for property
+    * @param ignoreError true to ignore error (usually unassigned device) 
+    * @return
+    */
+    public float getPropValueFloat(Devices.Keys device, Properties.Keys name,
+          boolean ignoreError) {
+       return getPropValueFloat(device, name, ignoreError, null);
+    }
    
    /**
    * returns an float value for the specified property (assumes the caller knows the property contains a float).
@@ -634,27 +702,29 @@ public class Properties {
    * @param device enum key for device 
    * @param name enum key for property
    * @param ignoreError true to ignore error (usually unassigned device) 
+   * @param propNameSubstitute string to substitute for pattern in property name, or null if not used
    * @return
    */
-  public float getPropValueFloat(Devices.Keys device, Properties.Keys name, boolean ignoreError) {
+  public float getPropValueFloat(Devices.Keys device, Properties.Keys name,
+        boolean ignoreError, String propNameSubstitute) {
      float val = 0;
      if (device == Devices.Keys.PLUGIN) {
         if (!ignoreError & !prefs_.keyExists(PLUGIN_PREF_NODE, name)) {
            gui_.showError("Could not get property " + 
-                 name.toString() + " from special plugin \"device\"");
+                 name.toString(propNameSubstitute) + " from special plugin \"device\"");
         }
         val = prefs_.getFloat(PLUGIN_PREF_NODE, name, 0);
      }
      else {
         String strVal = null;
         try {
-           strVal = getPropValue(device, name, ignoreError);
+           strVal = getPropValue(device, name, ignoreError, propNameSubstitute);
            if (!ignoreError || !strVal.equals("")) {
               val = (float)NumberUtils.coreStringToDouble(strVal);
            }
         } catch (ParseException ex) {
            gui_.showError(ex, "Could not parse int value of " + 
-                 strVal + " for " + name.toString() + " in device " + 
+                 strVal + " for " + name.toString(propNameSubstitute) + " in device " + 
                  device.toString());
         } catch (NullPointerException ex) {
            gui_.showError(ex, "Null Pointer error in function getPropValueFLoat");
@@ -662,7 +732,6 @@ public class Properties {
      }
      return val;
   }
- 
   
   /**
    * Used to add classes implementing DeviceListenerInterface as listeners
