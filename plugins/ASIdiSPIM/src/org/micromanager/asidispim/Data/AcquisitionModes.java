@@ -39,9 +39,9 @@ import org.micromanager.asidispim.Utils.DevicesListenerInterface;
  */
 public class AcquisitionModes {
    
-   @SuppressWarnings("unused")
+   @SuppressWarnings("unused") // will be used in future
    private Devices devices_;   // object holding information about selected/available devices
-   @SuppressWarnings("unused")
+   @SuppressWarnings("unused") // will be used in future
    private Properties props_;  // object handling all property read/writes
    private Prefs prefs_;
    
@@ -97,7 +97,8 @@ public class AcquisitionModes {
       
       @Override
       public void actionPerformed(ActionEvent ae) {
-         prefs_.putInt("Acquisition", Properties.Keys.PLUGIN_ACQUSITION_MODE,
+         prefs_.putInt(MyStrings.PanelNames.ACQUSITION.toString(),
+               Properties.Keys.PLUGIN_ACQUSITION_MODE,
                ((Keys) jcb_.getSelectedItem()).getPrefCode());
       }
       
@@ -116,7 +117,7 @@ public class AcquisitionModes {
        */
       private void updateSelections() {
          // save the existing selection if it exists
-         int origCode = prefs_.getInt("Acquisition",
+         int origCode = prefs_.getInt(MyStrings.PanelNames.ACQUSITION.toString(),
                Properties.Keys.PLUGIN_ACQUSITION_MODE, 0);
          
          DefaultComboBoxModel cbModel = new DefaultComboBoxModel();
