@@ -76,7 +76,7 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
    private final SetupPanel setupPanelB_;
    private final NavigationPanel navigationPanel_;
    private final LightSourcePanel lightSourcePanel_; 
-   private final GuiSettingsPanel guiSettingsPanel_;
+   private final SettingsPanel settingsPanel_;
    private final DataAnalysisPanel dataAnalysisPanel_;
    private final HelpPanel helpPanel_;
    private final StagePositionUpdater stagePosUpdater_;
@@ -109,8 +109,8 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       acquisitionPanel_ = new AcquisitionPanel(gui, devices_, props_, joystick_, 
             cameras_, prefs_, stagePosUpdater_);
       lightSourcePanel_ = new LightSourcePanel(gui, devices_, props_, prefs_);
-      guiSettingsPanel_ = new GuiSettingsPanel(gui, devices_, props_, prefs_, stagePosUpdater_);
       dataAnalysisPanel_ = new DataAnalysisPanel(gui, prefs_);
+      settingsPanel_ = new SettingsPanel(gui, devices_, props_, prefs_, stagePosUpdater_);
       stagePosUpdater_.oneTimeUpdate();  // needed for NavigationPanel
       navigationPanel_ = new NavigationPanel(gui, devices_, props_, joystick_,
             positions_, prefs_, cameras_);
@@ -126,8 +126,8 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       tabbedPane.addLTab(setupPanelB_);
       tabbedPane.addLTab(navigationPanel_);
       tabbedPane.addLTab(lightSourcePanel_);
-      tabbedPane.addLTab(guiSettingsPanel_);
       tabbedPane.addLTab(dataAnalysisPanel_);
+      tabbedPane.addLTab(settingsPanel_);
       tabbedPane.addLTab(helpPanel_);
 
       // attach position updaters
@@ -184,7 +184,7 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
             setupPanelB_.saveSettings();
             navigationPanel_.saveSettings();
             acquisitionPanel_.saveSettings();
-            guiSettingsPanel_.saveSettings();
+            settingsPanel_.saveSettings();
 
             // save pane location in prefs
             prefs_.putInt(MAIN_PREF_NODE, Prefs.Keys.WIN_LOC_X, evt.getWindow().getX());

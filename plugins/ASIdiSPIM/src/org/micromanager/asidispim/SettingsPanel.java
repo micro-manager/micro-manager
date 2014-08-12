@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          GuiSettingsPanel.java
+//FILE:          SettingsPanel.java
 //PROJECT:       Micro-Manager 
 //SUBSYSTEM:     ASIdiSPIM plugin
 //-----------------------------------------------------------------------------
@@ -26,7 +26,7 @@ import java.awt.event.ActionListener;
 
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
-import javax.swing.JSeparator;
+import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -48,7 +48,7 @@ import org.micromanager.api.ScriptInterface;
  * @author Jon
  */
 @SuppressWarnings("serial")
-public class GuiSettingsPanel extends ListeningJPanel {
+public class SettingsPanel extends ListeningJPanel {
    
    private final Devices devices_;
    private final Properties props_;
@@ -58,6 +58,9 @@ public class GuiSettingsPanel extends ListeningJPanel {
    private final JSpinner scannerFilterY_;
    private final StagePositionUpdater stagePosUpdater_;
    private final ScriptInterface gui_;
+   
+   private final JPanel guiPanel_;
+   private final JPanel scannerPanel_;
      
    /**
     * 
@@ -67,12 +70,12 @@ public class GuiSettingsPanel extends ListeningJPanel {
     * @param prefs
     * @param stagePosUpdater
     */
-   public GuiSettingsPanel(ScriptInterface gui, Devices devices, 
+   public SettingsPanel(ScriptInterface gui, Devices devices, 
            Properties props, Prefs prefs, StagePositionUpdater stagePosUpdater) {    
       super (MyStrings.PanelNames.SETTINGS.toString(), 
             new MigLayout(
               "", 
-              "[right]",
+              "[right]16[center]16[center]",
               "[]16[]"));
      
       devices_ = devices;
@@ -83,7 +86,17 @@ public class GuiSettingsPanel extends ListeningJPanel {
       
       PanelUtils pu = new PanelUtils(gui_, prefs_, props_, devices_);
       
-      final JCheckBox activeTimerCheckBox = new JCheckBox("Update positions continually");
+      guiPanel_ = new JPanel(new MigLayout(
+            "",
+            "[right]16[center]",
+            "[]8[]"));
+      
+      
+      // start GUI panel
+      
+      guiPanel_.setBorder(PanelUtils.makeTitledBorder("GUI"));
+      
+      final JCheckBox activeTimerCheckBox = new JCheckBox("Update axis positions continually");
       ActionListener ae = new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) { 
@@ -103,9 +116,9 @@ public class GuiSettingsPanel extends ListeningJPanel {
       //   it is not called by setSelected unless there is a change in the value
       activeTimerCheckBox.doClick();
       activeTimerCheckBox.doClick();
-      add(activeTimerCheckBox, "center, span 2, wrap");
+      guiPanel_.add(activeTimerCheckBox, "center, span 2, wrap");
       
-      add(new JLabel("Position refresh interval (s):"));
+      guiPanel_.add(new JLabel("Position refresh interval (s):"));
       positionRefreshInterval_ = pu.makeSpinnerFloat(0.5, 1000, 0.5,
             new Devices.Keys [] {Devices.Keys.PLUGIN,},
             Properties.Keys.PLUGIN_POSITION_REFRESH_INTERVAL, 1);
@@ -116,25 +129,47 @@ public class GuiSettingsPanel extends ListeningJPanel {
                // restart, doing this grabs the interval from the plugin property
                stagePosUpdater_.start();
             }
+            prefs_.putFloat(panelName_, Properties.Keys.PLUGIN_POSITION_REFRESH_INTERVAL,
+                  PanelUtils.getSpinnerFloatValue(positionRefreshInterval_));
          }
       };
       pu.addListenerLast(positionRefreshInterval_, listenerLast);
-      add(positionRefreshInterval_, "wrap");
+      guiPanel_.add(positionRefreshInterval_, "wrap");
+      
+      // end GUI subpanel
+      
+      // start scanner panel
+      
+      scannerPanel_ = new JPanel(new MigLayout(
+            "",
+            "[right]16[center]",
+            "[]8[]"));
       
       
-      add(new JSeparator(JSeparator.VERTICAL), "growy, cell 2 0 1 9");
+      // start GUI panel
       
-      add(new JLabel("Scanner filter freq, sheet axis [kHz]:"), "cell 3 0");
+      scannerPanel_.setBorder(PanelUtils.makeTitledBorder("Scanner"));
+
+      
+      
+      scannerPanel_.add(new JLabel("Filter freq, sheet axis [kHz]:"), "cell 3 0");
       scannerFilterX_ = pu.makeSpinnerFloat(0.1, 5, 0.1,
             new Devices.Keys [] {Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SCANNER_FILTER_X, 0.8);
-      add(scannerFilterX_, "wrap");
+      scannerPanel_.add(scannerFilterX_, "wrap");
       
-      add(new JLabel("Scanner filter freq, slice axis [kHz]:"), "cell 3 1");
+      scannerPanel_.add(new JLabel("Filter freq, slice axis [kHz]:"), "cell 3 1");
       scannerFilterY_ = pu.makeSpinnerFloat(0.1, 5, 0.1,
             new Devices.Keys [] {Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SCANNER_FILTER_Y, 0.4);
-      add(scannerFilterY_, "wrap");
+      scannerPanel_.add(scannerFilterY_, "wrap");
+      
+      // end scanner panel
+      
+      
+      // construct main panel
+      add(guiPanel_);
+      add(scannerPanel_);
       
       
       
@@ -143,10 +178,7 @@ public class GuiSettingsPanel extends ListeningJPanel {
    
    @Override
    public void saveSettings() {
-      // save 
-      prefs_.putFloat(panelName_, Properties.Keys.PLUGIN_POSITION_REFRESH_INTERVAL,
-            props_.getPropValueFloat(Devices.Keys.PLUGIN, 
-                  Properties.Keys.PLUGIN_POSITION_REFRESH_INTERVAL));
+
    }
    
    
