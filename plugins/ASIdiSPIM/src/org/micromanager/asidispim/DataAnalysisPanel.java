@@ -63,7 +63,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
     * @param prefs - Plugin-wide preferences
     */
    public DataAnalysisPanel(ScriptInterface gui, Prefs prefs) {    
-      super(MyStrings.TabNames.DATAANALYSIS.toString(),
+      super(MyStrings.PanelNames.DATAANALYSIS.toString(),
               new MigLayout(
               "",
               "[right]",

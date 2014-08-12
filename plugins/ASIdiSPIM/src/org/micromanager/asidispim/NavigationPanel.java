@@ -87,7 +87,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
     */
    public NavigationPanel(ScriptInterface gui, Devices devices, Properties props, 
            Joystick joystick, Positions positions, Prefs prefs, Cameras cameras) {    
-      super (MyStrings.TabNames.NAVIGATION.toString(),
+      super (MyStrings.PanelNames.NAVIGATION.toString(),
             new MigLayout(
               "", 
               "[right]8[align center]16[right]8[60px,center]8[center]8[center]2[center]2[center]8[center]8[center]8[center]",

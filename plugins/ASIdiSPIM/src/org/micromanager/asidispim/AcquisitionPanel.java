@@ -146,7 +146,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
            Cameras cameras, 
            Prefs prefs, 
            StagePositionUpdater stagePosUpdater) {
-      super(MyStrings.TabNames.ACQUSITION.toString(),
+      super(MyStrings.PanelNames.ACQUSITION.toString(),
               new MigLayout(
               "",
               "[right]16[center]16[center]16[center]16[center]",
@@ -1040,10 +1040,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                
                if (sideActiveA) {
                   float sliceARate = prefs_.getFloat(
-                        MyStrings.TabNames.SETUP.toString() + Devices.Sides.A, 
+                        MyStrings.PanelNames.SETUP.toString() + Devices.Sides.A, 
                         Properties.Keys.PLUGIN_RATE_PIEZO_SHEET, -80);
                   float sliceAOffset = prefs_.getFloat(
-                        MyStrings.TabNames.SETUP.toString() + Devices.Sides.A, 
+                        MyStrings.PanelNames.SETUP.toString() + Devices.Sides.A, 
                         Properties.Keys.PLUGIN_OFFSET_PIEZO_SHEET, 0);
                   if (MyNumberUtils.floatsEqual(sliceARate, (float) 0.0)) {
                      gui_.showError("Rate for slice A cannot be zero. Re-do calibration on Setup tab.");
@@ -1075,10 +1075,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                
                if (sideActiveB) {
                   float sliceBRate = prefs_.getFloat(
-                        MyStrings.TabNames.SETUP.toString() + Devices.Sides.B, 
+                        MyStrings.PanelNames.SETUP.toString() + Devices.Sides.B, 
                         Properties.Keys.PLUGIN_RATE_PIEZO_SHEET, -80);
                   float sliceBOffset = prefs_.getFloat(
-                        MyStrings.TabNames.SETUP.toString() + Devices.Sides.B, 
+                        MyStrings.PanelNames.SETUP.toString() + Devices.Sides.B, 
                         Properties.Keys.PLUGIN_OFFSET_PIEZO_SHEET, 0);
                   if (MyNumberUtils.floatsEqual(sliceBRate, (float) 0.0)) {
                      gui_.showError("Rate for slice B cannot be zero. Re-do calibration on Setup tab.");

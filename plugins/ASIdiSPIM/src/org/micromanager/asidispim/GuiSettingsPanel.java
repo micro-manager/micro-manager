@@ -69,7 +69,7 @@ public class GuiSettingsPanel extends ListeningJPanel {
     */
    public GuiSettingsPanel(ScriptInterface gui, Devices devices, 
            Properties props, Prefs prefs, StagePositionUpdater stagePosUpdater) {    
-      super (MyStrings.TabNames.SETTINGS.toString(), 
+      super (MyStrings.PanelNames.SETTINGS.toString(), 
             new MigLayout(
               "", 
               "[right]",

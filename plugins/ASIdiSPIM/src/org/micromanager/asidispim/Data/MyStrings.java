@@ -30,13 +30,13 @@ package org.micromanager.asidispim.Data;
  */
 public class MyStrings {
    
-   public static enum TabNames {
+   public static enum PanelNames {
      DEVICES("Devices"),
      ACQUSITION("Acquisition"),
      SETUP("Setup Path "),
      NAVIGATION("Navigation"),
      LIGHTSOURCE("Light"),
-     SETTINGS("GUI Settings"),
+     SETTINGS("Settings"),
      DATAANALYSIS("Data Analysis"),
      HELP("Help"),
      BEAM_SUBPANEL("Beam_"),
@@ -44,7 +44,7 @@ public class MyStrings {
      JOYSTICK_SUBPANEL("Joystick_"),
       ;
       private final String text;
-      TabNames(String text) {
+      PanelNames(String text) {
          this.text = text;
       }
       @Override

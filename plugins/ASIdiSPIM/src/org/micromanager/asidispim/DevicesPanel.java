@@ -65,7 +65,7 @@ public class DevicesPanel extends ListeningJPanel {
     * @param devices - instance of class that holds information about devices
     */
    public DevicesPanel(ScriptInterface gui, Devices devices, Properties props) {
-      super(MyStrings.TabNames.DEVICES.toString(), 
+      super(MyStrings.PanelNames.DEVICES.toString(), 
             new MigLayout(
               "",
               "[right]25[align center]16[align center]",

@@ -46,7 +46,13 @@ public class Prefs {
       myPrefs_ = prefs;
    }// constructor
 
-   // useful static constants 
+   // Can also use the name of the property as the key
+   // for calls to pref functions.  This is preferred if 
+   // there is a single corresponding property.  
+   // But sometimes the same property needs to be stored
+   // in several preferences, such as beam/sheet control,
+   // or else there is no corresponding property.
+   // In that case use pref keys.
    public static enum Keys {
       JOYSTICK("Joystick"), 
       RIGHT_WHEEL("Right Wheel"),
@@ -64,7 +70,6 @@ public class Prefs {
       ENABLE_BEAM_SETTINGS("EnableBeamSettings"),
       SPIM_EXPOSURE("AcquisitionExposure"),
       POSITION_REFRESH_INTERVAL("PositionRefreshInterval"),
-      // can also use the name of the property as the key
       NONE("None");
       private final String text;
       Keys(String text) {

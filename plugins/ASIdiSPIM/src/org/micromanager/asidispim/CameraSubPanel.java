@@ -75,7 +75,7 @@ public final class CameraSubPanel extends ListeningJPanel implements LiveModeLis
            Devices.Sides side, 
            Prefs prefs, 
            boolean showLiveButton) {    
-      super (MyStrings.TabNames.CAMERA_SUBPANEL.toString() + instanceLabel,
+      super (MyStrings.PanelNames.CAMERA_SUBPANEL.toString() + instanceLabel,
             new MigLayout(
               "", 
               "[right]8[align center]",

@@ -95,7 +95,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    public SetupPanel(ScriptInterface gui, Devices devices, Properties props, 
            Joystick joystick, Devices.Sides side, Positions positions, 
            Cameras cameras, Prefs prefs) {
-      super(MyStrings.TabNames.SETUP.toString() + side.toString(),
+      super(MyStrings.PanelNames.SETUP.toString() + side.toString(),
               new MigLayout(
               "",
               "[center]8[align center]",

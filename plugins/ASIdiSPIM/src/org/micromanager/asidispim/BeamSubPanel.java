@@ -64,7 +64,7 @@ public final class BeamSubPanel extends ListeningJPanel {
     */
    public BeamSubPanel(ScriptInterface gui, Devices devices, String instanceLabel, 
          Devices.Sides side, Prefs prefs, Properties props) {    
-      super (MyStrings.TabNames.BEAM_SUBPANEL.toString() + instanceLabel,
+      super (MyStrings.PanelNames.BEAM_SUBPANEL.toString() + instanceLabel,
             new MigLayout(
               "", 
               "[right]8[left]",

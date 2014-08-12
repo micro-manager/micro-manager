@@ -66,7 +66,7 @@ public final class JoystickSubPanel extends ListeningJPanel {
     */
    public JoystickSubPanel(Joystick joystick, Devices devices, String instanceLabel,
          Devices.Sides side, Prefs prefs) {    
-      super (MyStrings.TabNames.JOYSTICK_SUBPANEL.toString() + instanceLabel,
+      super (MyStrings.PanelNames.JOYSTICK_SUBPANEL.toString() + instanceLabel,
             new MigLayout(
               "", 
               "[right]8[align center]",

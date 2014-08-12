@@ -52,7 +52,7 @@ public class HelpPanel extends ListeningJPanel {
     * @param gui -implementation of the Micro-Manager ScriptInterface api
     */
    public HelpPanel(ScriptInterface gui) {    
-      super (MyStrings.TabNames.HELP.toString(), 
+      super (MyStrings.PanelNames.HELP.toString(), 
             new MigLayout(
               "", 
               "[right]",

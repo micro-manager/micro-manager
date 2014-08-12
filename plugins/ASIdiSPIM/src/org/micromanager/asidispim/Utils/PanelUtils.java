@@ -444,8 +444,8 @@ public class PanelUtils {
     * @param props
     * @param devs
     * @param devKey
-    * @param propKey
     * @param prefNode
+    * @param propKey
     * @return constructed JCheckBox
     */
    public JCheckBox makeCheckBox(String label,
