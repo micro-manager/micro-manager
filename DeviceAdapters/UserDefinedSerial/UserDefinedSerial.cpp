@@ -483,9 +483,16 @@ FixedLengthResponseDetector::NewByName(const std::string& name)
    const std::string prefix(g_PropValuePrefix_ResponseFixedByteCount);
    if (name.substr(0, prefix.size()) == prefix)
    {
-      size_t byteCount =
-         boost::lexical_cast<size_t>(name.substr(prefix.size()));
-      ret.reset(new FixedLengthResponseDetector(byteCount));
+      try
+      {
+         size_t byteCount =
+            boost::lexical_cast<size_t>(name.substr(prefix.size()));
+         ret.reset(new FixedLengthResponseDetector(byteCount));
+      }
+      catch (const boost::bad_lexical_cast&)
+      {
+         // Programming error; leave ret unset.
+      }
    }
    return ret;
 }
