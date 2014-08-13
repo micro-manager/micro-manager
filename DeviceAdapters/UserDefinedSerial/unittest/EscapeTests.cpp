@@ -34,7 +34,7 @@ protected:
    }
 };
 
-TEST_P(ParameterizedEscapeTest, Basic)
+TEST_P(ParameterizedEscapeTest, MatchWithExpected)
 {
    ASSERT_EQ(expectedOutput_, EscapedStringFromByteString(input_));
 }
@@ -60,9 +60,9 @@ INSTANTIATE_TEST_CASE_P(BasicTestCase, ParameterizedEscapeTest,
       std::make_pair(std::vector<char>(1, '\n'), "\\n"),
       std::make_pair(std::vector<char>(2, '\n'), "\\n\\n"),
       // Null char
-      std::make_pair(std::vector<char>(1, '\0'), "\\0"),
-      std::make_pair(std::vector<char>(2, '\0'), "\\0\\0"),
-      std::make_pair(NullFollowedByX(), "\\0X"),
+      std::make_pair(std::vector<char>(1, '\0'), "\\x00"),
+      std::make_pair(std::vector<char>(2, '\0'), "\\x00\\x00"),
+      std::make_pair(NullFollowedByX(), "\\x00X"),
       // Non-null control char
       std::make_pair(std::vector<char>(1, '\1'), "\\x01"),
       std::make_pair(std::vector<char>(2, '\1'), "\\x01\\x01"),

@@ -77,7 +77,6 @@ EscapedStringFromByteString(const std::vector<char>& bytes)
       {
          switch (*it)
          {
-            case '\0': result += "\\0"; break;
             case '\\': result += "\\\\"; break;
             case '\n': result += "\\n"; break;
             case '\r': result += "\\r"; break;
