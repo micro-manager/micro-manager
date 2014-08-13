@@ -60,6 +60,8 @@ const char* const g_PropValue_ResponseCRTerminated = "Terminator-CR";
 const char* const g_PropValue_ResponseLFTerminated = "Terminator-LF";
 const char* const g_PropValuePrefix_ResponseFixedByteCount =
    "Fixed byte count-";
+const char* const g_PropValue_ResponseVariableByteCount =
+   "Variable byte count";
 
 
 template <template <class> class TBasicDevice, class UConcreteDevice>
@@ -136,8 +138,8 @@ UserDefSerialBase<TBasicDevice, UConcreteDevice>::RegisterErrorMessages()
          "Timeout waiting for response from device");
    Super::SetErrorText(ERR_UNEXPECTED_RESPONSE,
          "Unexpected response from device");
-   Super::SetErrorText(ERR_QUERY_COMMAND_EMPTY, // Programming error
-         "Cannot query device with empty command");
+   Super::SetErrorText(ERR_QUERY_COMMAND_EMPTY,
+         "Cannot query device with empty command (programming error)");
    Super::SetErrorText(ERR_ASCII_COMMAND_CONTAINS_NULL,
          "Null character in ASCII-mode command");
    Super::SetErrorText(ERR_TRAILING_BACKSLASH,
@@ -152,6 +154,11 @@ UserDefSerialBase<TBasicDevice, UConcreteDevice>::RegisterErrorMessages()
          "Cannot check responses when set to ignore responses");
    Super::SetErrorText(ERR_EXPECTED_RESPONSE_LENGTH_MISMATCH,
          "Length of expected response differs from the fixed response length");
+   Super::SetErrorText(ERR_NO_RESPONSE_ALTERNATIVES,
+         "No alternative responses to check (programming error)");
+   Super::SetErrorText(ERR_VAR_LEN_RESPONSE_MUST_NOT_BE_EMPTY,
+         "Expected response cannot be empty for variable byte count mode "
+         "(programming error)");
 }
 
 
@@ -206,6 +213,8 @@ UserDefSerialBase<TBasicDevice, UConcreteDevice>::CreatePreInitProperties()
             (g_PropValuePrefix_ResponseFixedByteCount +
              boost::lexical_cast<std::string>(byteCount)).c_str());
    }
+   Super::AddAllowedValue(g_PropName_ResponseDetectionMethod,
+         g_PropValue_ResponseVariableByteCount);
 
    CreateByteStringProperty(g_PropName_InitializeCommand,
          initializeCommand_, true);

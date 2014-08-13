@@ -40,6 +40,8 @@ const int ERR_EMPTY_HEX_ESCAPE_SEQUENCE = 2006;
 const int ERR_CANNOT_GET_PORT_TIMEOUT = 2007;
 const int ERR_CANNOT_QUERY_IN_IGNORE_MODE = 2008;
 const int ERR_EXPECTED_RESPONSE_LENGTH_MISMATCH = 2009;
+const int ERR_NO_RESPONSE_ALTERNATIVES = 2010;
+const int ERR_VAR_LEN_RESPONSE_MUST_NOT_BE_EMPTY = 2011;
 
 
 /**
@@ -124,7 +126,14 @@ private:
          std::vector<char>& response);
 };
 
-class FixedLengthResponseDetector : public ResponseDetector
+class BinaryResponseDetector : public ResponseDetector
+{
+protected:
+   int Recv(MM::Core* core, MM::Device* device, const std::string& port,
+         size_t recvLen, std::vector<char>& response);
+};
+
+class FixedLengthResponseDetector : public BinaryResponseDetector
 {
    size_t byteCount_;
 
@@ -141,8 +150,23 @@ public:
 
 private:
    FixedLengthResponseDetector(size_t byteCount) : byteCount_(byteCount) {}
-   int Recv(MM::Core* core, MM::Device* device, const std::string& port,
-         size_t recvLen, std::vector<char>& response);
+};
+
+class VariableLengthResponseDetector : public BinaryResponseDetector
+{
+public:
+   static std::auto_ptr<ResponseDetector> NewByName(const std::string& name);
+
+   virtual std::string GetMethodName() const;
+   virtual int RecvExpected(MM::Core* core, MM::Device* device,
+         const std::string& port, const std::vector<char>& expected);
+   virtual int RecvAlternative(MM::Core* core, MM::Device* device,
+         const std::string& port,
+         const std::vector< std::vector<char> >& alternatives,
+         size_t& index);
+
+private:
+   VariableLengthResponseDetector() {}
 };
 
 
