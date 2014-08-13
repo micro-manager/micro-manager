@@ -448,6 +448,7 @@ m4_define([device_adapter_dirs], [m4_strip([
    ThorlabsSC10
    Tofra
    USBManager
+   UserDefinedSerial
    Utilities
    VariLC
    Video4Linux

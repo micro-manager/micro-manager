@@ -141,6 +141,7 @@ SUBDIRS = \
 	ThorlabsFilterWheel \
 	ThorlabsSC10 \
 	Tofra \
+	UserDefinedSerial \
 	Utilities \
 	VariLC \
 	Vincent \
