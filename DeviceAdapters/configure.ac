@@ -449,6 +449,7 @@ m4_define([device_adapter_dirs], [m4_strip([
    Tofra
    USBManager
    UserDefinedSerial
+   UserDefinedSerial/unittest
    Utilities
    VariLC
    Video4Linux

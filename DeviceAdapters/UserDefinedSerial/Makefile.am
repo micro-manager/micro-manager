@@ -4,4 +4,6 @@ libmmgr_dal_UserDefinedSerial_la_SOURCES = UserDefinedSerial.cpp UserDefinedSeri
 libmmgr_dal_UserDefinedSerial_la_LIBADD = $(MMDEVAPI_LIBADD)
 libmmgr_dal_UserDefinedSerial_la_LDFLAGS = $(MMDEVAPI_LDFLAGS)
 
+SUBDIRS = . unittest
+
 EXTRA_DIST = license.txt
