@@ -316,7 +316,7 @@ UserDefSerialBase<TBasicDevice, UConcreteDevice>::
 CreateByteStringProperty(const char* name, std::vector<char>& varRef,
       bool preInit)
 {
-   class Functor : public MM::ActionFunctor
+   class Functor : public MM::ActionFunctor, boost::noncopyable
    {
       std::vector<char>& varRef_;
    public:
@@ -432,7 +432,7 @@ Send(const std::vector<char>& command)
    {
       err = Super::WriteToComPort(port_.c_str(),
             reinterpret_cast<const unsigned char*>(&command[0]),
-            command.size());
+            static_cast<unsigned int>(command.size()));
       if (err != DEVICE_OK)
          return err;
    }

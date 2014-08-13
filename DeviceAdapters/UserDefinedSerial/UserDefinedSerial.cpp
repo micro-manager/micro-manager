@@ -303,8 +303,8 @@ IgnoringResponseDetector::GetMethodName() const
 
 
 int
-IgnoringResponseDetector::Recv(MM::Core* core, MM::Device* device,
-      const std::string& port, std::vector<char>& response)
+IgnoringResponseDetector::Recv(MM::Core*, MM::Device*,
+      const std::string&, std::vector<char>& response)
 {
    response.clear();
    return DEVICE_OK;
@@ -391,7 +391,7 @@ FixedLengthResponseDetector::Recv(MM::Core* core, MM::Device* device,
    unsigned char* bufPtr = reinterpret_cast<unsigned char*>(&response[0]);
    unsigned long bytesRead;
    int err = core->ReadFromSerial(device, port.c_str(),
-         bufPtr, response.size(), bytesRead);
+         bufPtr, static_cast<unsigned long>(response.size()), bytesRead);
    if (bytesRead < byteCount_)
       response.resize(bytesRead);
    if (err != DEVICE_OK)
@@ -569,14 +569,15 @@ UserDefSerialStateDevice::GetName(char* name) const
 unsigned long
 UserDefSerialStateDevice::GetNumberOfPositions() const
 {
-   return numPositions_;
+   return static_cast<long>(numPositions_);
 }
 
 
 void
 UserDefSerialStateDevice::CreatePreInitProperties()
 {
-   CreateIntegerProperty(g_PropName_NumPositions, numPositions_, false,
+   CreateIntegerProperty(g_PropName_NumPositions,
+         static_cast<long>(numPositions_), false,
          new CPropertyAction(this, &Self::OnNumberOfPositions), true);
    SetPropertyLimits(g_PropName_NumPositions, 2.0, 256.0);
 
@@ -593,7 +594,8 @@ UserDefSerialStateDevice::CreatePostInitProperties()
    if (err != DEVICE_OK)
       return err;
 
-   err = CreateIntegerProperty(MM::g_Keyword_State, currentPosition_, false,
+   err = CreateIntegerProperty(MM::g_Keyword_State,
+         static_cast<long>(currentPosition_), false,
          new CPropertyAction(this, &Self::OnState));
    if (err != DEVICE_OK)
       return err;
@@ -696,7 +698,7 @@ UserDefSerialStateDevice::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       long pos;
       pProp->Get(pos);
-      if (pos < 0 || pos > numPositions_)
+      if (pos < 0 || static_cast<size_t>(pos) > numPositions_)
          return DEVICE_UNKNOWN_POSITION;
       int err;
       err = SendRecv(positionCommands_[pos], positionResponses_[pos]);
