@@ -132,6 +132,9 @@ template <template <class> class TBasicDevice, class UConcreteDevice>
 void
 UserDefSerialBase<TBasicDevice, UConcreteDevice>::RegisterErrorMessages()
 {
+   Super::SetErrorText(ERR_BINARY_SERIAL_TIMEOUT,
+         "Timeout waiting for response from device");
+
    Super::SetErrorText(ERR_UNEXPECTED_RESPONSE,
          "Unexpected response from device");
 
@@ -147,6 +150,9 @@ UserDefSerialBase<TBasicDevice, UConcreteDevice>::RegisterErrorMessages()
          "Unknown escape sequence in command or response string");
    Super::SetErrorText(ERR_EMPTY_HEX_ESCAPE_SEQUENCE,
          "Empty hexadecimal escape sequence in command or response string");
+
+   Super::SetErrorText(ERR_CANNOT_GET_PORT_TIMEOUT,
+         "Cannot get the timeout setting for the port");
 
    // Unlikely - usually should get a timeout error instead
    Super::SetErrorText(ERR_BINARY_SERIAL_READ_FEWER_THAN_REQUESTED,

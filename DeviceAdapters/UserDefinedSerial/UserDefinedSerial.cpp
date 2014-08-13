@@ -379,6 +379,31 @@ FixedLengthResponseDetector::GetMethodName() const
 }
 
 
+// Helper for FixedLengthResponseDetector::Recv()
+static int
+GetPortAnswerTimeout(MM::Core* core, MM::Device* device,
+      const std::string& port, double& timeoutMs)
+{
+   int err;
+   char timeoutString[MM::MaxStrLength];
+   err = core->GetDeviceProperty(port.c_str(), MM::g_Keyword_AnswerTimeout,
+         timeoutString);
+   if (err != DEVICE_OK)
+      return ERR_CANNOT_GET_PORT_TIMEOUT;
+   try
+   {
+      timeoutMs = boost::lexical_cast<double>(timeoutString);
+   }
+   catch (const boost::bad_lexical_cast&)
+   {
+      return ERR_CANNOT_GET_PORT_TIMEOUT;
+   }
+   if (timeoutMs < 0.0)
+      return ERR_CANNOT_GET_PORT_TIMEOUT;
+   return DEVICE_OK;
+}
+
+
 int
 FixedLengthResponseDetector::Recv(MM::Core* core, MM::Device* device,
       const std::string& port, std::vector<char>& response)
@@ -387,17 +412,36 @@ FixedLengthResponseDetector::Recv(MM::Core* core, MM::Device* device,
       return DEVICE_NO_CALLBACK_REGISTERED;
 
    response.clear();
-   response.resize(byteCount_, '\0');
-   unsigned char* bufPtr = reinterpret_cast<unsigned char*>(&response[0]);
-   unsigned long bytesRead;
-   int err = core->ReadFromSerial(device, port.c_str(),
-         bufPtr, static_cast<unsigned long>(response.size()), bytesRead);
-   if (bytesRead < byteCount_)
-      response.resize(bytesRead);
+   if (byteCount_ == 0)
+      return DEVICE_OK;
+
+   int err;
+
+   // The binary interface does not use a timeout(!), so we need to handle that
+   // ourselves.
+   double timeoutMs;
+   err = GetPortAnswerTimeout(core, device, port, timeoutMs);
    if (err != DEVICE_OK)
       return err;
-   if (bytesRead < byteCount_) // err should not have been DEVICE_OK
-      return ERR_BINARY_SERIAL_READ_FEWER_THAN_REQUESTED;
+   MM::MMTime deadline = core->GetCurrentMMTime() +
+      MM::MMTime(1000.0 * timeoutMs);
+   std::vector<char> buf(byteCount_);
+   do
+   {
+      unsigned char* bufPtr = reinterpret_cast<unsigned char*>(&buf[0]);
+      unsigned long bytesRead = 0;
+      err = core->ReadFromSerial(device, port.c_str(),
+            bufPtr, static_cast<unsigned long>(buf.size()), bytesRead);
+      if (err != DEVICE_OK)
+         return err;
+
+      std::copy(buf.begin(), buf.begin() + bytesRead,
+            std::back_inserter(response));
+   }
+   while (response.size() < byteCount_ && core->GetCurrentMMTime() < deadline);
+
+   if (response.size() < byteCount_)
+      return ERR_BINARY_SERIAL_TIMEOUT;
 
    return DEVICE_OK;
 }
