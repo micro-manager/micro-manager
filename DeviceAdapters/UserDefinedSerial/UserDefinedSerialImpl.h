@@ -62,15 +62,6 @@ const char* const g_PropValuePrefix_ResponseFixedByteCount =
    "Fixed byte count-";
 
 
-const int ERR_UNEXPECTED_RESPONSE = 2001;
-const int ERR_QUERY_COMMAND_EMPTY = 2002;
-const int ERR_ASCII_COMMAND_CONTAINS_NULL = 2003;
-const int ERR_TRAILING_BACKSLASH = 2004;
-const int ERR_UNKNOWN_ESCAPE_SEQUENCE = 2005;
-const int ERR_EMPTY_HEX_ESCAPE_SEQUENCE = 2006;
-const int ERR_BINARY_SERIAL_READ_FEWER_THAN_REQUESTED = 2007;
-
-
 template <template <class> class TBasicDevice, class UConcreteDevice>
 UserDefSerialBase<TBasicDevice, UConcreteDevice>::UserDefSerialBase() :
    port_("Undefined"),

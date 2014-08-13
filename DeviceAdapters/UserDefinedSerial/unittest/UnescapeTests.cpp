@@ -44,8 +44,11 @@ TEST_P(ParameterizedUnescapeTest, MatchWithReescaped)
    std::vector<char> output;
    int err = ByteStringFromEscapedString(input_, output);
    ASSERT_EQ(expectedRetVal_, err);
-   ASSERT_EQ(expectedReescapedOutput_,
-         EscapedStringFromByteString(output));
+   if (err == DEVICE_OK) // output is undefined on error
+   {
+      ASSERT_EQ(expectedReescapedOutput_,
+            EscapedStringFromByteString(output));
+   }
 }
 
 template <typename T, typename U, typename V>
@@ -76,7 +79,19 @@ INSTANTIATE_TEST_CASE_P(SingleEscapeTestCase, ParameterizedUnescapeTest,
          mktesttriple("\\n", DEVICE_OK, "\\n"),
          mktesttriple("\\r", DEVICE_OK, "\\r"),
          mktesttriple("\\t", DEVICE_OK, "\\x09"),
-         mktesttriple("\\v", DEVICE_OK, "\\x0b")
+         mktesttriple("\\v", DEVICE_OK, "\\x0b"),
+         mktesttriple("\\r\\nX\\rY\\n\\r", DEVICE_OK, "\\r\\nX\\rY\\n\\r"),
+         mktesttriple("Z\\r\\nX\\rY\\n\\r", DEVICE_OK, "Z\\r\\nX\\rY\\n\\r")
+      ));
+
+INSTANTIATE_TEST_CASE_P(EscapeErrorTestCase, ParameterizedUnescapeTest,
+      ::testing::Values(
+         // The output won't be checked if the error is correctly reported
+         mktesttriple("\\", ERR_TRAILING_BACKSLASH, "NC"),
+         mktesttriple("\\\\\\", ERR_TRAILING_BACKSLASH, "NC"),
+         mktesttriple("\\X", ERR_UNKNOWN_ESCAPE_SEQUENCE, "NC"),
+         mktesttriple("\\Z", ERR_UNKNOWN_ESCAPE_SEQUENCE, "NC"),
+         mktesttriple("\\xZ", ERR_EMPTY_HEX_ESCAPE_SEQUENCE, "NC")
       ));
 
 INSTANTIATE_TEST_CASE_P(OctalEscapeTestCase, ParameterizedUnescapeTest,
@@ -88,7 +103,8 @@ INSTANTIATE_TEST_CASE_P(OctalEscapeTestCase, ParameterizedUnescapeTest,
          mktesttriple("\\000", DEVICE_OK, "\\x00"),
          mktesttriple("\\000x", DEVICE_OK, "\\x00x"),
          mktesttriple("\\0000", DEVICE_OK, "\\x000"),
-         mktesttriple("\\00000", DEVICE_OK, "\\x0000")
+         mktesttriple("\\00000", DEVICE_OK, "\\x0000"),
+         mktesttriple("x\\0x", DEVICE_OK, "x\\x00x")
       ));
 
 INSTANTIATE_TEST_CASE_P(HexEscapeTestCase, ParameterizedUnescapeTest,
@@ -100,7 +116,8 @@ INSTANTIATE_TEST_CASE_P(HexEscapeTestCase, ParameterizedUnescapeTest,
          mktesttriple("\\x000", DEVICE_OK, "\\x000"),
          mktesttriple("\\x000x", DEVICE_OK, "\\x000x"),
          mktesttriple("\\x0000", DEVICE_OK, "\\x0000"),
-         mktesttriple("\\x00000", DEVICE_OK, "\\x00000")
+         mktesttriple("\\x00000", DEVICE_OK, "\\x00000"),
+         mktesttriple("x\\x0x", DEVICE_OK, "x\\x00x")
       ));
 
 
