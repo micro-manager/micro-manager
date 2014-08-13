@@ -38,7 +38,8 @@ const int ERR_TRAILING_BACKSLASH = 2004;
 const int ERR_UNKNOWN_ESCAPE_SEQUENCE = 2005;
 const int ERR_EMPTY_HEX_ESCAPE_SEQUENCE = 2006;
 const int ERR_CANNOT_GET_PORT_TIMEOUT = 2007;
-const int ERR_BINARY_SERIAL_READ_FEWER_THAN_REQUESTED = 2008;
+const int ERR_CANNOT_QUERY_IN_IGNORE_MODE = 2008;
+const int ERR_EXPECTED_RESPONSE_LENGTH_MISMATCH = 2009;
 
 
 /**
@@ -64,8 +65,21 @@ public:
    virtual ~ResponseDetector() {}
 
    virtual std::string GetMethodName() const = 0;
-   virtual int Recv(MM::Core* core, MM::Device* device,
-         const std::string& port, std::vector<char>& response) = 0;
+
+   /**
+    * \brief Receive and match to an expected response.
+    * \return error code if could not receive or did not match
+    */
+   virtual int RecvExpected(MM::Core* core, MM::Device* device,
+         const std::string& port, const std::vector<char>& expected) = 0;
+
+   /**
+    * \brief Receive and match to one of a number of possible responses.
+    */
+   virtual int RecvAlternative(MM::Core* core, MM::Device* device,
+         const std::string& port,
+         const std::vector< std::vector<char> >& alternatives,
+         size_t& index) = 0;
 };
 
 class IgnoringResponseDetector : public ResponseDetector
@@ -74,8 +88,12 @@ public:
    static std::auto_ptr<ResponseDetector> NewByName(const std::string& name);
 
    virtual std::string GetMethodName() const;
-   virtual int Recv(MM::Core* core, MM::Device* device,
-         const std::string& port, std::vector<char>& response);
+   virtual int RecvExpected(MM::Core* core, MM::Device* device,
+         const std::string& port, const std::vector<char>& expected);
+   virtual int RecvAlternative(MM::Core* core, MM::Device* device,
+         const std::string& port,
+         const std::vector< std::vector<char> >& alternatives,
+         size_t& index);
 
 private:
    IgnoringResponseDetector() {}
@@ -90,14 +108,20 @@ public:
    static std::auto_ptr<ResponseDetector> NewByName(const std::string& name);
 
    virtual std::string GetMethodName() const;
-   virtual int Recv(MM::Core* core, MM::Device* device,
-         const std::string& port, std::vector<char>& response);
+   virtual int RecvExpected(MM::Core* core, MM::Device* device,
+         const std::string& port, const std::vector<char>& expected);
+   virtual int RecvAlternative(MM::Core* core, MM::Device* device,
+         const std::string& port,
+         const std::vector< std::vector<char> >& alternatives,
+         size_t& index);
 
 private:
    TerminatorResponseDetector(const char* terminator,
          const char* terminatorName) :
       terminator_(terminator), terminatorName_(terminatorName)
    {}
+   int Recv(MM::Core* core, MM::Device* device, const std::string& port,
+         std::vector<char>& response);
 };
 
 class FixedLengthResponseDetector : public ResponseDetector
@@ -108,11 +132,17 @@ public:
    static std::auto_ptr<ResponseDetector> NewByName(const std::string& name);
 
    virtual std::string GetMethodName() const;
-   virtual int Recv(MM::Core* core, MM::Device* device,
-         const std::string& port, std::vector<char>& response);
+   virtual int RecvExpected(MM::Core* core, MM::Device* device,
+         const std::string& port, const std::vector<char>& expected);
+   virtual int RecvAlternative(MM::Core* core, MM::Device* device,
+         const std::string& port,
+         const std::vector< std::vector<char> >& alternatives,
+         size_t& index);
 
 private:
    FixedLengthResponseDetector(size_t byteCount) : byteCount_(byteCount) {}
+   int Recv(MM::Core* core, MM::Device* device, const std::string& port,
+         size_t recvLen, std::vector<char>& response);
 };
 
 

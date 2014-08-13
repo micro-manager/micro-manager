@@ -303,11 +303,18 @@ IgnoringResponseDetector::GetMethodName() const
 
 
 int
-IgnoringResponseDetector::Recv(MM::Core*, MM::Device*,
-      const std::string&, std::vector<char>& response)
+IgnoringResponseDetector::RecvExpected(MM::Core*, MM::Device*,
+      const std::string&, const std::vector<char>&)
 {
-   response.clear();
    return DEVICE_OK;
+}
+
+
+int
+IgnoringResponseDetector::RecvAlternative(MM::Core*, MM::Device*,
+      const std::string&, const std::vector< std::vector<char> >&, size_t&)
+{
+   return ERR_CANNOT_QUERY_IN_IGNORE_MODE;
 }
 
 
@@ -329,6 +336,44 @@ std::string
 TerminatorResponseDetector::GetMethodName() const
 {
    return g_PropValuePrefix_ResponseTerminated + terminatorName_;
+}
+
+
+int
+TerminatorResponseDetector::RecvExpected(MM::Core* core, MM::Device* device,
+      const std::string& port, const std::vector<char>& expected)
+{
+   int err;
+   std::vector<char> response;
+   err = Recv(core, device, port, response);
+   if (err != DEVICE_OK)
+      return err;
+
+   if (response != expected)
+      return ERR_UNEXPECTED_RESPONSE;
+
+   return DEVICE_OK;
+}
+
+
+int
+TerminatorResponseDetector::RecvAlternative(MM::Core* core, MM::Device* device,
+      const std::string& port,
+      const std::vector< std::vector<char> >& alternatives, size_t& index)
+{
+   int err;
+   std::vector<char> response;
+   err = Recv(core, device, port, response);
+   if (err != DEVICE_OK)
+      return err;
+
+   std::vector< std::vector<char> >::const_iterator foundAlt =
+      std::find(alternatives.begin(), alternatives.end(), response);
+   if (foundAlt == alternatives.end())
+      return ERR_UNEXPECTED_RESPONSE;
+   index = std::distance(alternatives.begin(), foundAlt);
+
+   return DEVICE_OK;
 }
 
 
@@ -379,6 +424,55 @@ FixedLengthResponseDetector::GetMethodName() const
 }
 
 
+int
+FixedLengthResponseDetector::RecvExpected(MM::Core* core, MM::Device* device,
+      const std::string& port, const std::vector<char>& expected)
+{
+   if (expected.size() != byteCount_)
+      return ERR_EXPECTED_RESPONSE_LENGTH_MISMATCH;
+
+   int err;
+   std::vector<char> response;
+   err = Recv(core, device, port, byteCount_, response);
+   if (err != DEVICE_OK)
+      return err;
+
+   if (response != expected)
+      return ERR_UNEXPECTED_RESPONSE;
+
+   return DEVICE_OK;
+}
+
+
+int
+FixedLengthResponseDetector::RecvAlternative(MM::Core* core,
+      MM::Device* device, const std::string& port,
+      const std::vector< std::vector<char> >& alternatives, size_t& index)
+{
+   typedef std::vector< std::vector<char> >::const_iterator Iter;
+   for (Iter it = alternatives.begin(), end = alternatives.end();
+         it != end; ++it)
+   {
+      if (it->size() != byteCount_)
+         return ERR_EXPECTED_RESPONSE_LENGTH_MISMATCH;
+   }
+
+   int err;
+   std::vector<char> response;
+   err = Recv(core, device, port, byteCount_, response);
+   if (err != DEVICE_OK)
+      return err;
+
+   std::vector< std::vector<char> >::const_iterator foundAlt =
+      std::find(alternatives.begin(), alternatives.end(), response);
+   if (foundAlt == alternatives.end())
+      return ERR_UNEXPECTED_RESPONSE;
+   index = std::distance(alternatives.begin(), foundAlt);
+
+   return DEVICE_OK;
+}
+
+
 // Helper for FixedLengthResponseDetector::Recv()
 static int
 GetPortAnswerTimeout(MM::Core* core, MM::Device* device,
@@ -406,13 +500,13 @@ GetPortAnswerTimeout(MM::Core* core, MM::Device* device,
 
 int
 FixedLengthResponseDetector::Recv(MM::Core* core, MM::Device* device,
-      const std::string& port, std::vector<char>& response)
+      const std::string& port, size_t recvLen, std::vector<char>& response)
 {
    if (!core)
       return DEVICE_NO_CALLBACK_REGISTERED;
 
    response.clear();
-   if (byteCount_ == 0)
+   if (recvLen == 0)
       return DEVICE_OK;
 
    int err;
@@ -425,7 +519,7 @@ FixedLengthResponseDetector::Recv(MM::Core* core, MM::Device* device,
       return err;
    MM::MMTime deadline = core->GetCurrentMMTime() +
       MM::MMTime(1000.0 * timeoutMs);
-   std::vector<char> buf(byteCount_);
+   std::vector<char> buf(recvLen);
    do
    {
       unsigned char* bufPtr = reinterpret_cast<unsigned char*>(&buf[0]);
@@ -438,9 +532,9 @@ FixedLengthResponseDetector::Recv(MM::Core* core, MM::Device* device,
       std::copy(buf.begin(), buf.begin() + bytesRead,
             std::back_inserter(response));
    }
-   while (response.size() < byteCount_ && core->GetCurrentMMTime() < deadline);
+   while (response.size() < recvLen && core->GetCurrentMMTime() < deadline);
 
-   if (response.size() < byteCount_)
+   if (response.size() < recvLen)
       return ERR_BINARY_SERIAL_TIMEOUT;
 
    return DEVICE_OK;

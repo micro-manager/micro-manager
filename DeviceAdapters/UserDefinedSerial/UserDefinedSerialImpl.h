@@ -134,14 +134,10 @@ UserDefSerialBase<TBasicDevice, UConcreteDevice>::RegisterErrorMessages()
 {
    Super::SetErrorText(ERR_BINARY_SERIAL_TIMEOUT,
          "Timeout waiting for response from device");
-
    Super::SetErrorText(ERR_UNEXPECTED_RESPONSE,
          "Unexpected response from device");
-
-   // Unlikely - programming error in this device adapter
-   Super::SetErrorText(ERR_QUERY_COMMAND_EMPTY,
+   Super::SetErrorText(ERR_QUERY_COMMAND_EMPTY, // Programming error
          "Cannot query device with empty command");
-
    Super::SetErrorText(ERR_ASCII_COMMAND_CONTAINS_NULL,
          "Null character in ASCII-mode command");
    Super::SetErrorText(ERR_TRAILING_BACKSLASH,
@@ -150,13 +146,12 @@ UserDefSerialBase<TBasicDevice, UConcreteDevice>::RegisterErrorMessages()
          "Unknown escape sequence in command or response string");
    Super::SetErrorText(ERR_EMPTY_HEX_ESCAPE_SEQUENCE,
          "Empty hexadecimal escape sequence in command or response string");
-
    Super::SetErrorText(ERR_CANNOT_GET_PORT_TIMEOUT,
          "Cannot get the timeout setting for the port");
-
-   // Unlikely - usually should get a timeout error instead
-   Super::SetErrorText(ERR_BINARY_SERIAL_READ_FEWER_THAN_REQUESTED,
-         "Fewer than the expected number of bytes were sent by the device");
+   Super::SetErrorText(ERR_CANNOT_QUERY_IN_IGNORE_MODE,
+         "Cannot check responses when set to ignore responses");
+   Super::SetErrorText(ERR_EXPECTED_RESPONSE_LENGTH_MISMATCH,
+         "Length of expected response differs from the fixed response length");
 }
 
 
@@ -375,14 +370,10 @@ SendRecv(const std::vector<char>& command,
    if (expectedResponse.empty())
       return DEVICE_OK;
 
-   std::vector<char> response;
-   err = responseDetector_->Recv(Super::GetCoreCallback(), this,
-         port_, response);
+   err = responseDetector_->RecvExpected(Super::GetCoreCallback(), this,
+         port_, expectedResponse);
    if (err != DEVICE_OK)
       return err;
-
-   if (response != expectedResponse)
-      return ERR_UNEXPECTED_RESPONSE;
 
    return DEVICE_OK;
 }
@@ -408,17 +399,10 @@ SendQueryRecvAlternative(const std::vector<char>& command,
    if (err != DEVICE_OK)
       return err;
 
-   std::vector<char> response;
-   err = responseDetector_->Recv(Super::GetCoreCallback(), this,
-         port_, response);
+   err = responseDetector_->RecvAlternative(Super::GetCoreCallback(), this,
+         port_, responseAlts, responseAltIndex);
    if (err != DEVICE_OK)
       return err;
-
-   std::vector< std::vector<char> >::const_iterator foundAlt =
-      std::find(responseAlts.begin(), responseAlts.end(), response);
-   if (foundAlt == responseAlts.end())
-      return ERR_UNEXPECTED_RESPONSE;
-   responseAltIndex = std::distance(responseAlts.begin(), foundAlt);
 
    return DEVICE_OK;
 }
