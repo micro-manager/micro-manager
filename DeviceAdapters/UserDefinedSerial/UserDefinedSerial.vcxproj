@@ -136,12 +136,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="ResponseDetector.h" />
+    <ClInclude Include="StringEscapes.h" />
     <ClInclude Include="UserDefinedSerial.h" />
     <ClInclude Include="UserDefinedSerialConstants.h" />
     <ClInclude Include="UserDefinedSerialImpl.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ResponseDetector.cpp" />
+    <ClCompile Include="StringEscapes.cpp" />
     <ClCompile Include="UserDefinedSerial.cpp" />
   </ItemGroup>
   <ItemGroup>

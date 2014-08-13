@@ -17,8 +17,10 @@
 
 #include <gtest/gtest.h>
 
-#include "UserDefinedSerial.h"
+#include "StringEscapes.h"
 #include "UserDefinedSerialConstants.h"
+
+#include "MMDeviceConstants.h"
 
 
 // EscapedStringFromByteString() is simple, already tested, and trustworthy, so

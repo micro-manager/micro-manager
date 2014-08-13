@@ -17,7 +17,7 @@
 
 #include <gtest/gtest.h>
 
-#include "UserDefinedSerial.h"
+#include "StringEscapes.h"
 
 
 class ParameterizedEscapeTest : public ::testing::Test,

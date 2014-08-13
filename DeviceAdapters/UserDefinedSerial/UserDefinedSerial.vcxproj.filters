@@ -27,12 +27,18 @@
     <ClInclude Include="UserDefinedSerialConstants.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="StringEscapes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="UserDefinedSerial.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ResponseDetector.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="StringEscapes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

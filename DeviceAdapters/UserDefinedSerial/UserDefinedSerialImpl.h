@@ -20,9 +20,11 @@
 #include "UserDefinedSerial.h"
 
 #include "ResponseDetector.h"
+#include "StringEscapes.h"
 #include "UserDefinedSerialConstants.h"
 
 #include <boost/lexical_cast.hpp>
+#include <boost/utility.hpp>
 
 #include <algorithm>
 #include <iterator>

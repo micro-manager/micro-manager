@@ -3,6 +3,8 @@ deviceadapter_LTLIBRARIES = libmmgr_dal_UserDefinedSerial.la
 libmmgr_dal_UserDefinedSerial_la_SOURCES = \
 					   ResponseDetector.cpp \
 					   ResponseDetector.h \
+					   StringEscapes.cpp \
+					   StringEscapes.h \
 					   UserDefinedSerial.cpp \
 					   UserDefinedSerial.h \
 					   UserDefinedSerialConstants.h \

@@ -21,25 +21,12 @@
 #include "DeviceUtils.h"
 
 #include <boost/scoped_array.hpp>
-#include <boost/utility.hpp>
 
 #include <memory>
 #include <string>
 #include <vector>
 
 class ResponseDetector;
-
-
-/**
- * \brief Convert bytes to C-style escaped string.
- */
-std::string EscapedStringFromByteString(const std::vector<char>& bytes);
-
-/**
- * \brief Convert C-style escaped string to bytes.
- */
-int ByteStringFromEscapedString(const std::string& escaped,
-      std::vector<char>& bytes);
 
 
 /**
