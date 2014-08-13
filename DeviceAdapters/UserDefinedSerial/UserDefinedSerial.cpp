@@ -26,10 +26,6 @@
 #include <boost/lexical_cast.hpp>
 
 
-const char *const g_DeviceName_Shutter = "UserDefinedSerialShutter";
-const char *const g_DeviceName_StateDevice = "UserDefinedSerialStateDevice";
-
-
 MODULE_API void
 InitializeModuleData()
 {
