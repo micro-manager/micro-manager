@@ -589,7 +589,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          float extraTimeNeeded = MyNumberUtils.ceilToQuarterMs((float)-1*globalDelay);  // positive number
             globalDelay += extraTimeNeeded;
             if (showWarnings) {
-               JOptionPane.showMessageDialog(null,
+               JOptionPane.showMessageDialog(this,
                      "Increasing slice period to meet laser exposure constraint\n"
                            + "(some time required for camera readout).\n",
                            "Warning",
@@ -997,6 +997,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             gui_.initializeAcquisition(acqName, (int) core_.getImageWidth(),
                     (int) core_.getImageHeight(), (int) core_.getBytesPerPixel(),
                     (int) core_.getImageBitDepth());
+            //gui_.setAcquisitionAddImageAsynchronous(acqName);
             MMAcquisition acq = gui_.getAcquisition(acqName);
             
             // Dive into MM internals since script interface does not support pipelines
@@ -1163,8 +1164,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         if (camera.equals(secondCamera)) {
                            ch = 1;
                         }
+                        // gui_.addImageToAcquisition(acqName, f, ch, frNumber[ch], 
+                        //        0, timg);
                         addImageToAcquisition(acqName, f, ch, frNumber[ch], 0,
-                                now - acqStart, timg, bq);
+                               now - acqStart, timg, bq);
                         frNumber[ch]++;
                      } else {
                         Thread.sleep(1);
