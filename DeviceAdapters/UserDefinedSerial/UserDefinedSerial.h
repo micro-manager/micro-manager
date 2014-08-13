@@ -142,6 +142,9 @@ public:
    virtual bool Busy(); // Should not be overridden
 
 private:
+   // Register error messages for all derived devices (we use common codes
+   // within this device adapter)
+   void RegisterErrorMessages();
    // No point in making virtual (called from ctor)
    void CreatePreInitProperties();
 

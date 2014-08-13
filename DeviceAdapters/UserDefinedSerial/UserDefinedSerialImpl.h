@@ -71,6 +71,7 @@ UserDefSerialBase<TBasicDevice, UConcreteDevice>::UserDefSerialBase() :
    asciiTerminator_(""),
    responseDetector_(ResponseDetector::NewByName(g_PropValue_ResponseIgnore))
 {
+   RegisterErrorMessages();
    CreatePreInitProperties();
    Super::SetDelayMs(0.0);
    Super::EnableDelay();
@@ -124,6 +125,32 @@ UserDefSerialBase<TBasicDevice, UConcreteDevice>::Busy()
    MM::MMTime now = Super::GetCurrentMMTime();
    MM::MMTime finishTime = lastActionTime_ + MM::MMTime(delayUs);
    return now < finishTime;
+}
+
+
+template <template <class> class TBasicDevice, class UConcreteDevice>
+void
+UserDefSerialBase<TBasicDevice, UConcreteDevice>::RegisterErrorMessages()
+{
+   Super::SetErrorText(ERR_UNEXPECTED_RESPONSE,
+         "Unexpected response from device");
+
+   // Unlikely - programming error in this device adapter
+   Super::SetErrorText(ERR_QUERY_COMMAND_EMPTY,
+         "Cannot query device with empty command");
+
+   Super::SetErrorText(ERR_ASCII_COMMAND_CONTAINS_NULL,
+         "Null character in ASCII-mode command");
+   Super::SetErrorText(ERR_TRAILING_BACKSLASH,
+         "Trailing backslash in command or response string");
+   Super::SetErrorText(ERR_UNKNOWN_ESCAPE_SEQUENCE,
+         "Unknown escape sequence in command or response string");
+   Super::SetErrorText(ERR_EMPTY_HEX_ESCAPE_SEQUENCE,
+         "Empty hexadecimal escape sequence in command or response string");
+
+   // Unlikely - usually should get a timeout error instead
+   Super::SetErrorText(ERR_BINARY_SERIAL_READ_FEWER_THAN_REQUESTED,
+         "Fewer than the expected number of bytes were sent by the device");
 }
 
 
