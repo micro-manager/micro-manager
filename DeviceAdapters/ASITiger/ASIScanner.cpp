@@ -335,7 +335,7 @@ int CScanner::Initialize()
    AddAllowedValue(g_AxisPolarityY, g_AxisPolarityNormal);
 
    // end now if we are pre-2.8 firmware
-   if (firmwareVersion_ < 2.8)
+   if (firmwareVersion_ < 2.795)
    {
       initialized_ = true;
       return DEVICE_OK;
@@ -926,7 +926,6 @@ int CScanner::OnUpperLimY(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int CScanner::OnMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 // assume X axis's mode is for both, and then set mode for both axes together just like XYStage properties
-// todo change to using PM for v2.8 and above
 {
    ostringstream command; command.str("");
    long tmp = 0;
