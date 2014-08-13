@@ -59,6 +59,16 @@ DeleteDevice(MM::Device* pDevice)
 }
 
 
+// Change type without changing bits
+inline char UnsignedToSignedByte(unsigned char ch)
+{ return *reinterpret_cast<char*>(&ch); }
+
+
+// Change type without changing bits
+inline unsigned char SignedToUnsignedByte(char ch)
+{ return *reinterpret_cast<unsigned char*>(&ch); }
+
+
 std::string
 EscapedStringFromByteString(const std::vector<char>& bytes)
 {
@@ -82,9 +92,9 @@ EscapedStringFromByteString(const std::vector<char>& bytes)
             case '\r': result += "\\r"; break;
             default:
                {
-                  // First convert to unsigned char to prevent sign extension.
-                  const unsigned char byte =
-                     *reinterpret_cast<const unsigned char*>(&*it);
+                  // First convert to unsigned char to prevent sign extension
+                  // upon converting to unsigned int.
+                  unsigned char byte = SignedToUnsignedByte(*it);
                   result += (boost::format("\\x%02x") %
                      static_cast<unsigned int>(byte)).str();
                }
@@ -121,7 +131,7 @@ ParseOctalEscape(const std::string& input, size_t& i,
       }
    }
    --i; // "Unread" the non-digit or 4th char
-   bytes.push_back(*reinterpret_cast<char*>(&byte));
+   bytes.push_back(UnsignedToSignedByte(byte));
    return DEVICE_OK;
 }
 
@@ -168,7 +178,7 @@ ParseHexEscape(const std::string& input, size_t& i,
    --i; // "Unread" the non-digit or 3rd char
    if (i < start)
       return ERR_EMPTY_HEX_ESCAPE_SEQUENCE;
-   bytes.push_back(*reinterpret_cast<char*>(&byte));
+   bytes.push_back(UnsignedToSignedByte(byte));
    return DEVICE_OK;
 }
 

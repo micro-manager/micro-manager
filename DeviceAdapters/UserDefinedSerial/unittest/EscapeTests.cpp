@@ -70,7 +70,10 @@ INSTANTIATE_TEST_CASE_P(BasicTestCase, ParameterizedEscapeTest,
       std::make_pair(std::vector<char>(1, '~'), "~"),
       std::make_pair(std::vector<char>(1, 127), "\\x7f"),
       std::make_pair(std::vector<char>(1, ' '), " "),
-      std::make_pair(std::vector<char>(1, '\x1f'), "\x1f")
+      std::make_pair(std::vector<char>(1, '\x1f'), "\x1f"),
+      // High range
+      std::make_pair(std::vector<char>(1, '\x80'), "\\x80"),
+      std::make_pair(std::vector<char>(1, '\xff'), "\\xff")
    ));
 
 

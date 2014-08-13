@@ -117,7 +117,16 @@ INSTANTIATE_TEST_CASE_P(HexEscapeTestCase, ParameterizedUnescapeTest,
          mktesttriple("\\x000x", DEVICE_OK, "\\x000x"),
          mktesttriple("\\x0000", DEVICE_OK, "\\x0000"),
          mktesttriple("\\x00000", DEVICE_OK, "\\x00000"),
-         mktesttriple("x\\x0x", DEVICE_OK, "x\\x00x")
+         mktesttriple("x\\x0x", DEVICE_OK, "x\\x00x"),
+
+         mktesttriple("\\x7f", DEVICE_OK, "\\x7f"),
+         mktesttriple("\\x7F", DEVICE_OK, "\\x7f")
+      ));
+
+INSTANTIATE_TEST_CASE_P(EightBitTestCase, ParameterizedUnescapeTest,
+      ::testing::Values(
+         mktesttriple("\\x80", DEVICE_OK, "\\x80"),
+         mktesttriple("\\xff", DEVICE_OK, "\\xff")
       ));
 
 
