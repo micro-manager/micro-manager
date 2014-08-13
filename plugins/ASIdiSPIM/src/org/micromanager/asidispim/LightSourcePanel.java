@@ -102,13 +102,13 @@ public class LightSourcePanel extends ListeningJPanel {
       // TODO implement updateFromProperties-type function when this is changed
       spimPanel_.add(new JLabel("Position:"));
       spimSourcePosition_ = pu.makeSpinnerInteger(1, 4,
-            new Devices.Keys[]{Devices.Keys.PLUGIN},
+            Devices.Keys.PLUGIN,
             Properties.Keys.PLUGIN_SPIM_SOURCE_POSITION, 0);
       spimPanel_.add(spimSourcePosition_, "wrap");
       
       spimPanel_.add(new JLabel("Intensity:"));
       spimSourceIntensity_ = pu.makeSpinnerFloat(0.0, 100.0, 1.0,
-            new Devices.Keys[]{Devices.Keys.SOURCE_SPIM},
+            Devices.Keys.SOURCE_SPIM,
             Properties.Keys.PLUGIN_SPIM_SOURCE_INTENSITY, 0);
       spimPanel_.add(spimSourceIntensity_, "wrap");
       // TODO make this function in separate utility file for light sources

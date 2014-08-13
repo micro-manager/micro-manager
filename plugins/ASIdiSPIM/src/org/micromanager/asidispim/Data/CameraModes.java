@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          AcquisitionModes.java
+//FILE:          CameraModes.java
 //PROJECT:       Micro-Manager 
 //SUBSYSTEM:     ASIdiSPIM plugin
 //-----------------------------------------------------------------------------
@@ -33,11 +33,11 @@ import org.micromanager.asidispim.Utils.DevicesListenerInterface;
 
 
 /**
- * Class that holds utilities related to SPIM acquisition mode
+ * Class that holds utilities camera readout mode
  * 
  * @author Jon
  */
-public class AcquisitionModes {
+public class CameraModes {
    
    private Devices devices_;   // object holding information about selected/available devices
    @SuppressWarnings("unused") // will be used in future
@@ -50,9 +50,8 @@ public class AcquisitionModes {
     * can be easily changed. 
     */
    public static enum Keys { 
-      PIEZO_SLICE_SCAN("Synchronous Piezo + Slice Scan", 1),
-      SLICE_SCAN_ONLY("Slice Scan Only", 2),
-      STAGE_SCAN("Stage Scan", 3),
+      STANDARD("Standard", 1),
+      OVERLAP("Simultaneous reset/readout", 2),
       NONE("None", 0);
       private final String text;
       private final int prefCode;
@@ -69,7 +68,7 @@ public class AcquisitionModes {
       }
    };
    
-   public AcquisitionModes(Devices devices, Properties props, Prefs prefs) {
+   public CameraModes(Devices devices, Properties props, Prefs prefs) {
       devices_ = devices;
       props_ = props;
       prefs_ = prefs;
@@ -78,26 +77,27 @@ public class AcquisitionModes {
    
    public JComboBox getComboBox() {
       JComboBox jcb = new JComboBox();
-      ActionListener l = new ComboBoxListener(jcb);
+      ActionListener l = new CameraModeComboBoxListener(jcb);
       jcb.addActionListener(l);
       // when devices are changed we want to regenerate the list
       devices_.addListener((DevicesListenerInterface) l);
       return jcb;
    }
    
-   private class ComboBoxListener implements ActionListener, DevicesListenerInterface {
+   private class CameraModeComboBoxListener implements ActionListener,
+      DevicesListenerInterface {
       
       private final JComboBox jcb_;
       
-      public ComboBoxListener(JComboBox jcb) {
+      public CameraModeComboBoxListener(JComboBox jcb) {
          jcb_ = jcb;
          updateSelections();  // do initial rendering
       }
       
       @Override
       public void actionPerformed(ActionEvent ae) {
-         prefs_.putInt(MyStrings.PanelNames.ACQUSITION.toString(),
-               Properties.Keys.PLUGIN_ACQUSITION_MODE,
+         prefs_.putInt(MyStrings.PanelNames.SETTINGS.toString(),
+               Properties.Keys.PLUGIN_CAMERA_MODE,
                ((Keys) jcb_.getSelectedItem()).getPrefCode());
       }
       
@@ -116,8 +116,8 @@ public class AcquisitionModes {
        */
       private void updateSelections() {
          // save the existing selection if it exists
-         int origCode = prefs_.getInt(MyStrings.PanelNames.ACQUSITION.toString(),
-               Properties.Keys.PLUGIN_ACQUSITION_MODE, 0);
+         int origCode = prefs_.getInt(MyStrings.PanelNames.SETTINGS.toString(),
+               Properties.Keys.PLUGIN_CAMERA_MODE, 0);
          
          DefaultComboBoxModel cbModel = new DefaultComboBoxModel();
          
@@ -134,22 +134,72 @@ public class AcquisitionModes {
             jcb_.setSelectedItem(origItem);
          }
       }//updateSelections
+      
+      
+      /**
+       * Does camera support overlap/synchronous mode?
+       * @param devKey
+       * @return
+       */
+      private boolean cameraSupportsOverlap(Devices.Keys devKey) {
+         Devices.Libraries devLib = devices_.getMMDeviceLibrary(devKey);
+         return (devLib == Devices.Libraries.HAMCAM ||
+               devLib == Devices.Libraries.ANDORCAM);
+      }
+      
+      private boolean cameraInvalid(Devices.Keys devKey) {
+         Devices.Libraries devLib = devices_.getMMDeviceLibrary(devKey);
+         return (devLib == Devices.Libraries.UNKNOWN ||
+               devLib == Devices.Libraries.NODEVICE);
+      }
+      
+      
 
 
       /**
        * Returns whatever acquisition modes are available based on devices
-       * and installed firmware.  Will need to be expanded in the future
+       * and installed firmware.  Can be expanded in the future
        * (will use devices_ and props_)
        * @return
        */
       private List<Keys> getValidModeKeys() {
          List<Keys> keyList = new ArrayList<Keys>();
-         keyList.add(Keys.PIEZO_SLICE_SCAN);
-         keyList.add(Keys.SLICE_SCAN_ONLY);
+         boolean twoSided = true; // ASIdiSPIM.getFrame().getAcquisitionPanel().isTwoSided();
+         boolean sideAFirst = true; // ASIdiSPIM.getFrame().getAcquisitionPanel().isFirstSideA();
+         
+         if (twoSided) {
+            if (cameraInvalid(Devices.Keys.CAMERAA) ||
+                  cameraInvalid(Devices.Keys.CAMERAB)) {
+               return keyList;
+            }
+            keyList.add(Keys.STANDARD);
+            if (cameraSupportsOverlap(Devices.Keys.CAMERAA) &&
+                  cameraSupportsOverlap(Devices.Keys.CAMERAB)) {
+               keyList.add(Keys.OVERLAP);
+            }
+         } else {
+            if (sideAFirst) {
+               if (cameraInvalid(Devices.Keys.CAMERAA)) {
+                  return keyList;
+               }
+               keyList.add(Keys.STANDARD);
+               if(cameraSupportsOverlap(Devices.Keys.CAMERAA)) {
+                  keyList.add(Keys.OVERLAP);
+               }
+            } else { // side B is first
+               if (cameraInvalid(Devices.Keys.CAMERAB)) {
+                  return keyList;
+               }
+               keyList.add(Keys.STANDARD);
+               if(cameraSupportsOverlap(Devices.Keys.CAMERAB)) {
+                  keyList.add(Keys.OVERLAP);
+               }
+            }
+         }
+
          return keyList;
       }
 
-      
-   }
+   } // end CameraModeComboBoxListener
 
 }

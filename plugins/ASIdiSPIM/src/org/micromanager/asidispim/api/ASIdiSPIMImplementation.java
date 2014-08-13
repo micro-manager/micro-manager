@@ -28,7 +28,7 @@ import org.micromanager.asidispim.AcquisitionPanel;
 /**
  * Implementation of the ASidiSPIMInterface
  * To avoid depending on the internals of this class and restrict yourself
- * to the ASIdiSPIMInterface, always cast the sintance of this class to ASIdiSPIMInterface
+ * to the ASIdiSPIMInterface, always cast the instance of this class to ASIdiSPIMInterface
  * e.g.: 
  * 
  * ASIdiSPIMInterface diSPIM = new ASIdiSPIMImplementation();

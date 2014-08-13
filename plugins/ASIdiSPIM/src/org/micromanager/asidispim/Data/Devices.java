@@ -395,7 +395,7 @@ public class Devices {
     * Device key.
     * 
     * @param key Device key (enum) as defined in this class
-    * @return Micro-Manager device library, or empty string if not found
+    * @return Micro-Manager device library, or Devices.Libraries.UNKNOWN
     */
    public Libraries getMMDeviceLibrary(Devices.Keys key) {
       return deviceInfo_.get(key).deviceLibrary;

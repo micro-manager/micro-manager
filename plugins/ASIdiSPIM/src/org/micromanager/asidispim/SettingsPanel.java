@@ -25,12 +25,14 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import org.micromanager.asidispim.Data.CameraModes;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Prefs;
@@ -61,6 +63,7 @@ public class SettingsPanel extends ListeningJPanel {
    
    private final JPanel guiPanel_;
    private final JPanel scannerPanel_;
+   private final JPanel cameraPanel_;
      
    /**
     * 
@@ -85,15 +88,14 @@ public class SettingsPanel extends ListeningJPanel {
       stagePosUpdater_ = stagePosUpdater;
       
       PanelUtils pu = new PanelUtils(gui_, prefs_, props_, devices_);
+
+      
+      // start GUI panel
       
       guiPanel_ = new JPanel(new MigLayout(
             "",
             "[right]16[center]",
             "[]8[]"));
-      
-      
-      // start GUI panel
-      
       guiPanel_.setBorder(PanelUtils.makeTitledBorder("GUI"));
       
       final JCheckBox activeTimerCheckBox = new JCheckBox("Update axis positions continually");
@@ -144,14 +146,8 @@ public class SettingsPanel extends ListeningJPanel {
             "",
             "[right]16[center]",
             "[]8[]"));
-      
-      
-      // start GUI panel
-      
       scannerPanel_.setBorder(PanelUtils.makeTitledBorder("Scanner"));
 
-      
-      
       scannerPanel_.add(new JLabel("Filter freq, sheet axis [kHz]:"), "cell 3 0");
       scannerFilterX_ = pu.makeSpinnerFloat(0.1, 5, 0.1,
             new Devices.Keys [] {Devices.Keys.GALVOA, Devices.Keys.GALVOB},
@@ -167,9 +163,25 @@ public class SettingsPanel extends ListeningJPanel {
       // end scanner panel
       
       
+      // start camera panel
+      
+      cameraPanel_ = new JPanel(new MigLayout(
+            "",
+            "[right]16[center]",
+            "[]8[]"));
+      cameraPanel_.setBorder(PanelUtils.makeTitledBorder("Camera"));
+      CameraModes camModeSingleton = new CameraModes(devices_, props_, prefs_);
+      JComboBox camModeCB = camModeSingleton.getComboBox();
+      cameraPanel_.add(camModeCB);
+      
+      
+      // end camera panel
+      
+      
       // construct main panel
       add(guiPanel_);
       add(scannerPanel_);
+      add(cameraPanel_);
       
       
       

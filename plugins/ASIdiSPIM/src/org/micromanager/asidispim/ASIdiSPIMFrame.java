@@ -45,7 +45,7 @@ import org.micromanager.internalinterfaces.LiveModeListener;
 
 // TODO make sure acquisition works for single SPIM
 // TODO save/load plugin settings from file instead of from registry (nice to also include controller settings)
-// TODO support demo cam for testing purposes
+// TODO troubleshoot LiveMode requirement
 // TODO handle camera binning
 // TODO add check for correct Hamamatsu model
 // TODO support for laser shutters (update device panel too?)
