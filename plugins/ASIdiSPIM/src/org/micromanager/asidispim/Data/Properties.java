@@ -473,6 +473,18 @@ public class Properties {
    }
    
    /**
+    * writes integer property value to the device adapter using a core call
+    * @param device enum key for device 
+    * @param name enum key for property 
+    * @param intVal value in integer form, sent to core using setProperty()
+    * @param ignoreError false (default) will do error checking, true means ignores non-existing property
+    */
+   public void setPropValue(Devices.Keys device, Properties.Keys name, int intVal,
+         boolean ignoreError) {
+      setPropValue(device, name, intVal, ignoreError, null);
+   }
+   
+   /**
     * writes integer property value to several device adapters using a core call, with error checking
     * @param devices array of enum key for device 
     * @param name enum key for property 
