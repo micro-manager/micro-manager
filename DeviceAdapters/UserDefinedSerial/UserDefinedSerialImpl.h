@@ -15,53 +15,17 @@
 //
 // AUTHOR:        Mark Tsuchida
 
+#pragma once
+
 #include "UserDefinedSerial.h"
+
+#include "ResponseDetector.h"
+#include "UserDefinedSerialConstants.h"
 
 #include <boost/lexical_cast.hpp>
 
 #include <algorithm>
 #include <iterator>
-
-
-const char* const g_PropName_CommandSendMode = "Command mode";
-const char* const g_PropName_ResponseDetectionMethod = "Response detection";
-
-const char* const g_PropName_InitializeCommand = "Initialize-command";
-const char* const g_PropName_InitializeResponse = "Initialize-response";
-const char* const g_PropName_ShutdownCommand = "Shutdown-command";
-const char* const g_PropName_ShutdownResponse = "Shutdown-response";
-
-const char* const g_PropName_OpenCommand = "Open-command";
-const char* const g_PropName_OpenResponse = "Open-response";
-const char* const g_PropName_CloseCommand = "Close-command";
-const char* const g_PropName_CloseResponse = "Close-response";
-const char* const g_PropName_QueryStateCommand = "QueryState-command";
-const char* const g_PropName_QueryOpenResponse = "QueryState-open-response";
-const char* const g_PropName_QueryCloseResponse =
-   "QueryState-closed-response";
-
-const char* const g_PropName_NumPositions = "Number of positions";
-const char* const g_PropNamePrefix_SetStateCommand = "SetState-command-";
-const char* const g_PropNamePrefix_SetStateResponse = "SetState-response-";
-const char* const g_PropName_QueryPositionCommand = "QueryPosition-command";
-const char* const g_PropNamePrefix_QueryPositionResponse =
-   "QueryPosition-response-";
-
-const char* const g_PropValue_ASCII_NoTerminator = "ASCII-no-terminator";
-const char* const g_PropValue_ASCII_CRLF = "ASCII-CRLF-terminator";
-const char* const g_PropValue_ASCII_CR = "ASCII-CR-terminator";
-const char* const g_PropValue_ASCII_LF = "ASCII-LF-terminator";
-const char* const g_PropValue_Binary = "Binary";
-
-const char* const g_PropValue_ResponseIgnore = "Ignore responses";
-const char* const g_PropValuePrefix_ResponseTerminated = "Terminator-";
-const char* const g_PropValue_ResponseCRLFTerminated = "Terminator-CRLF";
-const char* const g_PropValue_ResponseCRTerminated = "Terminator-CR";
-const char* const g_PropValue_ResponseLFTerminated = "Terminator-LF";
-const char* const g_PropValuePrefix_ResponseFixedByteCount =
-   "Fixed byte count-";
-const char* const g_PropValue_ResponseVariableByteCount =
-   "Variable byte count";
 
 
 template <template <class> class TBasicDevice, class UConcreteDevice>

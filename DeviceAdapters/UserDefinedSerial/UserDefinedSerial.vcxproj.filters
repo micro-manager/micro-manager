@@ -21,9 +21,18 @@
     <ClInclude Include="UserDefinedSerialImpl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ResponseDetector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UserDefinedSerialConstants.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="UserDefinedSerial.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ResponseDetector.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
