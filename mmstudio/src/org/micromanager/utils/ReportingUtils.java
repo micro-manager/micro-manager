@@ -36,6 +36,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
 import mmcorej.CMMCore;
+import org.micromanager.MMStudio;
 
 /**
  *
@@ -111,14 +112,16 @@ public class ReportingUtils {
       int maxNrLines = 30;
       String test[] = fullMsg.split("\n");
       if (test.length < maxNrLines) {
-         JOptionPane.showMessageDialog(null, fullMsg, "Micro-Manager Error", JOptionPane.ERROR_MESSAGE);
+         JOptionPane.showMessageDialog(MMStudio.getFrame(), fullMsg, 
+                 "Micro-Manager Error", JOptionPane.ERROR_MESSAGE);
       } else {
          JTextArea area = new JTextArea(fullMsg);
          area.setRows(maxNrLines);
          area.setColumns(50);
          area.setLineWrap(true);
          JScrollPane pane = new JScrollPane(area);
-         JOptionPane.showMessageDialog(null, pane, "Micro-Manager Error", JOptionPane.ERROR_MESSAGE);
+         JOptionPane.showMessageDialog(MMStudio.getFrame(), pane,
+                 "Micro-Manager Error", JOptionPane.ERROR_MESSAGE);
       }
 }
 
