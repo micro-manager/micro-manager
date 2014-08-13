@@ -267,7 +267,6 @@ public class DataAnalysisPanel extends ListeningJPanel {
                if (cause instanceof SaveTaskException) {
                   JOptionPane.showMessageDialog(null, cause.getMessage(), 
                           "Data Export Error", JOptionPane.ERROR_MESSAGE);
-      
                } else {
                   ReportingUtils.showError(ex);
                }

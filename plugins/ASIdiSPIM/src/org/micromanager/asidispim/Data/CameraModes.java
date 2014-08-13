@@ -74,6 +74,17 @@ public class CameraModes {
       prefs_ = prefs;
    }
    
+   /**
+    * @return null if prefCode not found, or the Key if it is
+    */
+   public static Keys getKeyFromPrefCode(int prefCode) {
+      for (Keys k : Keys.values()) {
+         if (k.getPrefCode() == prefCode) {
+            return k;
+         }
+      }
+      return null;
+   }
    
    public JComboBox getComboBox() {
       JComboBox jcb = new JComboBox();
@@ -153,9 +164,6 @@ public class CameraModes {
                devLib == Devices.Libraries.NODEVICE);
       }
       
-      
-
-
       /**
        * Returns whatever acquisition modes are available based on devices
        * and installed firmware.  Can be expanded in the future

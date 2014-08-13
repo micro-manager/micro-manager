@@ -170,8 +170,8 @@ public class SettingsPanel extends ListeningJPanel {
             "[right]16[center]",
             "[]8[]"));
       cameraPanel_.setBorder(PanelUtils.makeTitledBorder("Camera"));
-      CameraModes camModeSingleton = new CameraModes(devices_, props_, prefs_);
-      JComboBox camModeCB = camModeSingleton.getComboBox();
+      CameraModes camModeObject = new CameraModes(devices_, props_, prefs_);
+      JComboBox camModeCB = camModeObject.getComboBox();
       cameraPanel_.add(camModeCB);
       
       

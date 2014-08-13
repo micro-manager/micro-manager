@@ -29,6 +29,7 @@ import java.util.List;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
 
+import org.micromanager.asidispim.Data.CameraModes.Keys;
 import org.micromanager.asidispim.Utils.DevicesListenerInterface;
 
 
@@ -73,6 +74,18 @@ public class AcquisitionModes {
       devices_ = devices;
       props_ = props;
       prefs_ = prefs;
+   }
+   
+   /**
+    * @return null if prefCode not found, or the Key if it is
+    */
+   public static Keys getKeyFromPrefCode(int prefCode) {
+      for (Keys k : Keys.values()) {
+         if (k.getPrefCode() == prefCode) {
+            return k;
+         }
+      }
+      return null;
    }
    
    
