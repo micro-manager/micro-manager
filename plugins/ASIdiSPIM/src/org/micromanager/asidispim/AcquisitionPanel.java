@@ -114,7 +114,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private JLabel actualSlicePeriodLabel_;
    private JLabel actualVolumeDurationLabel_;
    private JLabel actualTimeLapseDurationLabel_;
-   private final JSpinner numAcquisitions_;
+   private final JSpinner numTimepoints_;
    private final JSpinner acquisitionInterval_;
    private final JButton buttonStart_;
    private final JButton buttonStop_;
@@ -403,11 +403,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       };
 
       repeatPanel_.add(new JLabel("Number of time points:"));
-      numAcquisitions_ = pu.makeSpinnerInteger(1, 32000,
+      numTimepoints_ = pu.makeSpinnerInteger(1, 32000,
               Devices.Keys.PLUGIN,
               Properties.Keys.PLUGIN_NUM_ACQUISITIONS, 1);
-      numAcquisitions_.addChangeListener(recalculateTimeLapseDisplay);
-      repeatPanel_.add(numAcquisitions_, "wrap");
+      numTimepoints_.addChangeListener(recalculateTimeLapseDisplay);
+      repeatPanel_.add(numTimepoints_, "wrap");
 
       repeatPanel_.add(new JLabel("Time point interval [s]:"));
       acquisitionInterval_ = pu.makeSpinnerFloat(1, 32000, 0.1,
@@ -431,7 +431,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
               "[]8[]"));
       savePanel_.setBorder(PanelUtils.makeTitledBorder("Data Saving Settings"));
       
-      separateTimePointsCB_ = new JCheckBox("Separate viewer for each time point");
+      separateTimePointsCB_ = new JCheckBox("Separate viewer / file for each time point");
       separateTimePointsCB_.setSelected(prefs_.getBoolean(panelName_, 
               Properties.Keys.PLUGIN_SEPARATE_VIEWERS_FOR_TIMEPOINTS, false));
       savePanel_.add(separateTimePointsCB_, "span 3, left, wrap");
@@ -556,24 +556,42 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    /**
     * @return either "A" or "B"
     */
-   public String getFirstSide() {
+   private String getFirstSide() {
       return (String)firstSide_.getSelectedItem();
    }
    
-   public boolean isFirstSideA() {
+   private boolean isFirstSideA() {
       return getFirstSide().equals("A");
    }
 
    /**
     * @return either 1 or 2
     */
-   public int getNumSides() {
+   private int getNumSides() {
       return (numSides_.getSelectedIndex() + 1);
    }
    
-   public boolean isTwoSided() {
+   private boolean isTwoSided() {
       return getNumSides() > 1;
    }
+   
+   private int getNumTimepoints() {
+      return (Integer) numTimepoints_.getValue();
+   }
+   
+   private int getLineScanPeriod() {
+      return (Integer) lineScanPeriod_.getValue();
+   }
+   
+   private int getNumScansPerSlice() {
+      return (Integer) numScansPerSlice_.getValue();
+   }
+   
+   private int getNumSlices() {
+      return (Integer) numSlices_.getValue();
+   }
+   
+   
    
    
    /**
@@ -664,7 +682,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private boolean recalculateSliceTiming(boolean promptBeforeChange, boolean showWarnings) {
       if (!isSliceTimingUpToDate(showWarnings)) {
          if (promptBeforeChange) {
-            int dialogResult = JOptionPane.showConfirmDialog(null,
+            int dialogResult = JOptionPane.showConfirmDialog(this,
                   "OK to modify slice timing settings?", 
                   "Warning",
                   JOptionPane.OK_CANCEL_OPTION);
@@ -686,8 +704,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private SliceTiming getCurrentSliceTiming() {
       SliceTiming s = new SliceTiming();
       s.scanDelay = PanelUtils.getSpinnerFloatValue(delayScan_);
-      s.scanNum = (Integer) numScansPerSlice_.getValue();
-      s.scanPeriod = (Integer) lineScanPeriod_.getValue();
+      s.scanNum = getNumScansPerSlice();
+      s.scanPeriod = getLineScanPeriod();
       s.laserDelay = PanelUtils.getSpinnerFloatValue(delayLaser_);
       s.laserDuration = PanelUtils.getSpinnerFloatValue(durationLaser_);
       s.cameraDelay = PanelUtils.getSpinnerFloatValue(delayCamera_);
@@ -716,8 +734,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private double computeActualSlicePeriod() {
       double period = Math.max(Math.max(
             PanelUtils.getSpinnerFloatValue(delayScan_) +   // scan time
-            ((Integer) lineScanPeriod_.getValue() * 
-                  (Integer) numScansPerSlice_.getValue()),
+            (getLineScanPeriod() * getNumScansPerSlice()),
                   PanelUtils.getSpinnerFloatValue(delayLaser_)
                   + PanelUtils.getSpinnerFloatValue(durationLaser_)  // laser time
             ),
@@ -743,7 +760,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private double computeActualVolumeDuration() {
       double duration = getNumSides() * 
             (PanelUtils.getSpinnerFloatValue(delaySide_) +
-                  (Integer) numSlices_.getValue() * computeActualSlicePeriod());
+                  getNumSlices() * computeActualSlicePeriod());
       return duration;
    }
    
@@ -761,7 +778,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * @return duration in s
     */
    private double computeActualTimeLapseDuration() {
-      double duration = ((Integer) numAcquisitions_.getValue() - 1) * 
+      double duration = (getNumTimepoints() - 1) * 
             PanelUtils.getSpinnerFloatValue(acquisitionInterval_)
             + computeActualVolumeDuration()/1000;
       return duration;
@@ -836,14 +853,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       acquisitionStatusLabel_.setText("Acquiring time point "
               + NumberUtils.intToDisplayString(numTimePointsDone_)
               + " of "
-              + NumberUtils.intToDisplayString((Integer) numAcquisitions_.getValue()));
+              + NumberUtils.intToDisplayString(getNumTimepoints()));
    }
    
    private void updateAcquisitonStatusWaitingForNext(int secsToNextAcquisition) {
       acquisitionStatusLabel_.setText("Finished "
               + NumberUtils.intToDisplayString(numTimePointsDone_)
               + " of "
-              + NumberUtils.intToDisplayString((Integer) numAcquisitions_.getValue())
+              + NumberUtils.intToDisplayString(getNumTimepoints())
               + " time points; next in "
               + NumberUtils.intToDisplayString(secsToNextAcquisition)
               + " s."
@@ -877,7 +894,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * @return false if there was some error that should abort acquisition
     */
    private boolean prepareControllerForAquisition(Devices.Sides side) {
-      int numSlices = (Integer) numSlices_.getValue();
+      int numSlices = getNumSlices();
       float piezoAmplitude =  ( (numSlices - 1) * 
               PanelUtils.getSpinnerFloatValue(stepSize_));
       float sliceRate = prefs_.getFloat(
@@ -976,20 +993,20 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // TODO: get these from the UI
       boolean show = true;
       boolean save = saveCB_.isSelected();
-      boolean singleTimePoints = separateTimePointsCB_.isSelected();
+      boolean singleTimePointViewers = separateTimePointsCB_.isSelected();
       String rootDir = rootField_.getText();
 
-      int nrRepeats = (Integer) numAcquisitions_.getValue();
+      int nrRepeats = getNumTimepoints();  // this is how many acquisition windows to open
       int nrFrames = 1;
-      if (!singleTimePoints) {
-         nrFrames = nrRepeats;
+      if (!singleTimePointViewers) {
+         nrFrames = nrRepeats;             // how many Micro-manager "frames" to take
          nrRepeats = 1;
       }
 
-      long timeBetweenTimepointsMs = Math.round(
+      long timepointsIntervalMs = Math.round(
               PanelUtils.getSpinnerFloatValue(acquisitionInterval_) * 1000d);
       int nrSides = getNumSides();  // TODO: multi-channel
-      int nrSlices = (Integer) numSlices_.getValue();
+      int nrSlices = getNumSlices();
       int nrPos = 1;
 
       boolean autoShutter = core_.getAutoShutter();
@@ -1013,15 +1030,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          return false;
       }
       double volumeDuration = computeActualVolumeDuration();
-      if (nrRepeats > 1 && 
-            volumeDuration > timeBetweenTimepointsMs) {
-         gui_.showError("Repeat interval is set too short, shorter than" +
-                 " the time to collect a single volume.\n" +
-                 "Please change input");
+      if (getNumTimepoints() > 1 && 
+            volumeDuration > timepointsIntervalMs) {
+         gui_.showError("Time point interval shorter than" +
+                 " the time to collect a single volume.\n");
          return false;
       }
       if (nrRepeats > 10 && separateTimePointsCB_.isSelected()) {
-         int dialogResult = JOptionPane.showConfirmDialog(null,
+         int dialogResult = JOptionPane.showConfirmDialog(this,
                "This will generate " + nrRepeats + " separate windows. "
                + "Do you really want to proceed?",
                "Warning",
@@ -1054,11 +1070,25 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       boolean separateImageFilesOriginally =
             ImageUtils.getImageStorageClass().equals(TaggedImageStorageDiskDefault.class);
       ImageUtils.setImageStorageClass(TaggedImageStorageMultipageTiff.class);
+      
+      // Set up controller SPIM parameters (including from Setup panel settings)
+      if (sideActiveA) {
+         boolean success = prepareControllerForAquisition(Devices.Sides.A);
+         if (! success) {
+            return false;
+         }
+      }
+      if (sideActiveB) {
+         boolean success = prepareControllerForAquisition(Devices.Sides.B);
+         if (! success) {
+            return false;
+         }
+      }
 
       for (int tp = 0; tp < nrRepeats && !stop_.get(); tp++) {
          BlockingQueue<TaggedImage> bq = new LinkedBlockingQueue<TaggedImage>(10);
          String acqName = gui_.getUniqueAcquisitionName(nameField_.getText());
-         if (singleTimePoints) {
+         if (singleTimePointViewers) {
             acqName = gui_.getUniqueAcquisitionName(nameField_.getText() + "-" + tp);
          }
          try {
@@ -1092,36 +1122,21 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             // that feature is, so leave it out for now.
             for (int f = 0; f < nrFrames && !stop_.get(); f++) {
                long acqNow = System.currentTimeMillis();
-               long delay = acqStart + f * timeBetweenTimepointsMs - acqNow;
+               long delay = acqStart + f * timepointsIntervalMs - acqNow;
                while (delay > 0 && !stop_.get()) {
                   updateAcquisitonStatusWaitingForNext((int) (delay / 1000));
                   long sleepTime = Math.min(1000, delay);
                   Thread.sleep(sleepTime);
                   acqNow = System.currentTimeMillis();
-                  delay = acqStart + f * timeBetweenTimepointsMs - acqNow;
+                  delay = acqStart + f * timepointsIntervalMs - acqNow;
                }
 
                numTimePointsDone_++;
                updateAcqusitionStatusAcquiringTimePoint();
-
+               
                core_.startSequenceAcquisition(firstCamera, nrSlices, 0, true);
                if (nrSides == 2) {
                   core_.startSequenceAcquisition(secondCamera, nrSlices, 0, true);
-               }
-
-               // Set up controller SPIM parameters
-               // Calculate them from settings in the Setup panels
-               if (sideActiveA) {
-                  boolean success = prepareControllerForAquisition(Devices.Sides.A);
-                  if (! success) {
-                     return false;
-                  }
-               }
-               if (sideActiveB) {
-                  boolean success = prepareControllerForAquisition(Devices.Sides.B);
-                  if (! success) {
-                     return false;
-                  }
                }
 
                // deal with shutter
