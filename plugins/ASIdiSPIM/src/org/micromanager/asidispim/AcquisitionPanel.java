@@ -1134,6 +1134,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                numTimePointsDone_++;
                updateAcqusitionStatusAcquiringTimePoint();
                
+               if (core_.getBufferTotalCapacity() == 0) {
+                  core_.initializeCircularBuffer();
+               }
                core_.startSequenceAcquisition(firstCamera, nrSlices, 0, true);
                if (nrSides == 2) {
                   core_.startSequenceAcquisition(secondCamera, nrSlices, 0, true);
