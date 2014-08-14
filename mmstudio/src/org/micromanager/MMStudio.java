@@ -1421,19 +1421,23 @@ public class MMStudio implements ScriptInterface {
             frame_.setBinSize(binSize);
          }
 
-         if (snapLiveManager_.getIsLiveModeOn()) {
-            boolean isAutoShutterEnabled = core_.getAutoShutter();
-            frame_.setAutoShutterSelected(isAutoShutterEnabled);
-            boolean shutterOpen = core_.getShutterOpen();
-            frame_.setShutterButton(shutterOpen);
-            frame_.setToggleShutterButtonEnabled(!isAutoShutterEnabled);
-         }
+
 
          // active shutter combo
          if (shutters_ != null) {
             String activeShutter = core_.getShutterDevice();
             frame_.setShutterComboSelection(
                   activeShutter != null ? activeShutter : "");
+         }
+         
+         // Set AutoShutterCheckBox
+         frame_.setAutoShutterSelected(core_.getAutoShutter());
+          
+         // Set Shutter button
+         frame_.setShutterButton(core_.getShutterOpen());
+            
+         if (snapLiveManager_.getIsLiveModeOn()) {
+            frame_.setToggleShutterButtonEnabled(!core_.getAutoShutter());
          }
 
          ConfigGroupPad pad = frame_.getConfigPad();
