@@ -544,10 +544,19 @@ public class MainFrame extends JFrame implements LiveModeListener {
    }
 
    public void toggleAutoShutter(boolean enabled) {
-      toggleShutterButton_.setEnabled(enabled);
-      toggleShutterButton_.setText("Open");
-      if (!enabled) {
-         toggleShutterButton_.setSelected(false);
+      StaticInfo.shutterLabel_ = core_.getShutterDevice();
+      if (StaticInfo.shutterLabel_.length() == 0) {
+         setToggleShutterButtonEnabled(false);
+      } else {
+         setToggleShutterButtonEnabled(enabled);
+         try {
+            setShutterButton(core_.getShutterOpen());
+         } catch (Exception ex) {
+            ReportingUtils.logError(ex);
+         }
+         if (!enabled) {
+            toggleShutterButton_.setSelected(false);
+         }
       }
    }
 
@@ -644,6 +653,11 @@ public class MainFrame extends JFrame implements LiveModeListener {
 
    public void setShutterComboSelection(String activeShutter) {
       shutterComboBox_.setSelectedItem(activeShutter);
+      if (activeShutter.equals("") || core_.getAutoShutter()) {
+         setToggleShutterButtonEnabled(false);
+      } else {
+         setToggleShutterButtonEnabled(true);
+      }
    }
 
    public boolean getAutoShutterChecked() {

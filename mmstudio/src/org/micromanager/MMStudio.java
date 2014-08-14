@@ -591,24 +591,20 @@ public class MMStudio implements ScriptInterface {
    }
 
    public void toggleAutoShutter() {
-      StaticInfo.shutterLabel_ = core_.getShutterDevice();
-      if (StaticInfo.shutterLabel_.length() == 0) {
-         frame_.setToggleShutterButtonEnabled(false);
-      } else {
-         try {
-            if (frame_.getAutoShutterChecked()) {
-               core_.setAutoShutter(true);
-               core_.setShutterOpen(false);
-               frame_.toggleAutoShutter(false);
-            } else {
-               core_.setAutoShutter(false);
-               core_.setShutterOpen(false);
-               frame_.toggleAutoShutter(true);
-            }
-         } catch (Exception exc) {
-            ReportingUtils.logError(exc);
+      try {
+         if (frame_.getAutoShutterChecked()) {
+            core_.setAutoShutter(true);
+            core_.setShutterOpen(false);
+            frame_.toggleAutoShutter(false);
+         } else {
+            core_.setAutoShutter(false);
+            core_.setShutterOpen(false);
+            frame_.toggleAutoShutter(true);
          }
+      } catch (Exception exc) {
+         ReportingUtils.logError(exc);
       }
+
    }
 
    /**
