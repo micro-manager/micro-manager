@@ -53,6 +53,8 @@ INSTANTIATE_TEST_CASE_P(BasicTestCase, ParameterizedEscapeTest,
       std::make_pair(std::vector<char>(1, 'x'), "x"),
       std::make_pair(std::vector<char>(2, 'x'), "xx"),
       std::make_pair(std::vector<char>(3, 'x'), "xxx"),
+      // Comma (not allowed in property values)
+      std::make_pair(std::vector<char>(1, ','), "\\x2c"),
       // Backslash
       std::make_pair(std::vector<char>(1, '\\'), "\\\\"),
       std::make_pair(std::vector<char>(2, '\\'), "\\\\\\\\"),
