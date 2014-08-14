@@ -191,6 +191,12 @@ private:
    size_t numPositions_;
    size_t currentPosition_;
 
+   // Because we use references to the command and response strings to bind
+   // them to the properties (see
+   // UserDefSerialBase::CreateByteStringProperty()), the std::vector<char>
+   // must be at a fixed location (between initialization and shutdown). Thus,
+   // we use boost::scoped_array which, unlike std::vector, never reallocates
+   // its storage.
    boost::scoped_array< std::vector<char> > positionCommands_;
    boost::scoped_array< std::vector<char> > positionResponses_;
    std::vector<char> queryCommand_;

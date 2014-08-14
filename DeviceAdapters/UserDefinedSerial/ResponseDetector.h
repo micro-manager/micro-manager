@@ -28,25 +28,43 @@
 
 /**
  * \brief Interface for serial response detection.
+ *
+ * This is a strategy class that provides different implementations for
+ * receiving and checking responses.
  */
 class ResponseDetector : boost::noncopyable
 {
 public:
+   /**
+    * \brief Create an instance for the named stragtegy.
+    *
+    * This version in the abstract base class calls the derived classes'
+    * NewByName() functions to create the appropriate instance. If name is not
+    * a known name, returns null.
+    */
    static std::auto_ptr<ResponseDetector> NewByName(const std::string& name);
 
    virtual ~ResponseDetector() {}
 
+   /**
+    * \brief Return the method name.
+    *
+    * This is equal to the name passed to NewByName() to create the instance.
+    */
    virtual std::string GetMethodName() const = 0;
 
    /**
     * \brief Receive and match to an expected response.
-    * \return error code if could not receive or did not match
+    * \return error code if could not receive or did not match.
     */
    virtual int RecvExpected(MM::Core* core, MM::Device* device,
          const std::string& port, const std::vector<char>& expected) = 0;
 
    /**
     * \brief Receive and match to one of a number of possible responses.
+    * \param alternatives The possible responses to match against.
+    * \param index The index of the matched alternative is returned.
+    * \return error cde if could not receive or did not match.
     */
    virtual int RecvAlternative(MM::Core* core, MM::Device* device,
          const std::string& port,
@@ -54,6 +72,9 @@ public:
          size_t& index) = 0;
 };
 
+/**
+ * \brief Response detector that ignores all responses.
+ */
 class IgnoringResponseDetector : public ResponseDetector
 {
 public:
@@ -71,6 +92,9 @@ private:
    IgnoringResponseDetector() {}
 };
 
+/**
+ * \brief Response detector for ASCII responses terminated with newlines.
+ */
 class TerminatorResponseDetector : public ResponseDetector
 {
    std::string terminator_;
@@ -96,6 +120,9 @@ private:
          std::vector<char>& response);
 };
 
+/**
+ * \brief Common base for binary response detectors.
+ */
 class BinaryResponseDetector : public ResponseDetector
 {
 protected:
@@ -103,6 +130,9 @@ protected:
          size_t recvLen, std::vector<char>& response);
 };
 
+/**
+ * \brief Response detector for fixed-length binary responses.
+ */
 class FixedLengthResponseDetector : public BinaryResponseDetector
 {
    size_t byteCount_;
@@ -122,6 +152,11 @@ private:
    FixedLengthResponseDetector(size_t byteCount) : byteCount_(byteCount) {}
 };
 
+/**
+ * \brief Response detector for variable-length binary responses.
+ *
+ * The response length is determined from the expected response(s).
+ */
 class VariableLengthResponseDetector : public BinaryResponseDetector
 {
 public:
