@@ -129,6 +129,8 @@ INSTANTIATE_TEST_CASE_P(HexEscapeTestCase, ParameterizedUnescapeTest,
 INSTANTIATE_TEST_CASE_P(EightBitTestCase, ParameterizedUnescapeTest,
       ::testing::Values(
          mktesttriple("\\x80", DEVICE_OK, "\\x80"),
+         mktesttriple("\\xaB", DEVICE_OK, "\\xab"),
+         mktesttriple("\\xAb", DEVICE_OK, "\\xab"),
          mktesttriple("\\xff", DEVICE_OK, "\\xff")
       ));
 
