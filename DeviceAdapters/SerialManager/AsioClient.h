@@ -104,10 +104,29 @@ private:
          boost::asio::serial_port_base::baud_rate baud_option(baud); 
          boost::system::error_code anError;
 
-         LogMessage(("Attempting to set baud of " + deviceName + " to " + boost::lexical_cast<std::string,int>(baud)).c_str(), true);
-         serialPortImplementation_.set_option(baud_option, anError); // set the baud rate after the port has been opened 
-         if( !!anError)
-            LogMessage(("error setting baud in AsioClient(): "+boost::lexical_cast<std::string,int>(anError.value()) + " " + anError.message()).c_str(), false);
+         LogMessage(("Attempting to set baud of " + deviceName + " to " +
+                  boost::lexical_cast<std::string>(baud)).c_str(), true);
+#ifdef __APPLE__
+         // Use ioctl() instead of Boost's implementation (which uses termios),
+         // so that nonstandard baudrates can be set.
+         speed_t speed = static_cast<speed_t>(baud);
+         boost::asio::serial_port::native_handle_type portFd =
+            serialPortImplementation_.native_handle();
+         if (ioctl(portFd, IOSSIOSPEED, &speed))
+         {
+            const char* msg = strerror(errno);
+            LogMessage((std::string("Error setting baud: ") + msg).c_str(),
+                  false);
+         }
+#else
+         serialPortImplementation_.set_option(baud_option, anError);
+         if (!!anError)
+         {
+            LogMessage(("error setting baud: " +
+                     boost::lexical_cast<std::string>(anError.value()) + " " +
+                     anError.message()).c_str(), false);
+         }
+#endif
 
          ChangeFlowControl(flow);
 
