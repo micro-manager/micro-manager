@@ -84,6 +84,10 @@ public abstract class Acquisition {
    
    public abstract int getDisplaySliceIndexFromZCoordinate(double z, int displayFrameIndex);
    
+   public double getZStep() {
+      return zStep_;
+   }
+   
    public PositionManager getPositionManager() {
       return posManager_;
    }

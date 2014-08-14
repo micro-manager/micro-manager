@@ -67,7 +67,7 @@ public class DisplayPlusControls extends DisplayControls {
    private JTextField fpsField_;
    private JLabel zPosLabel_, timeStampLabel_, nextFrameLabel_, posNameLabel_;
    private JButton newGridButton_, createSurfaceButton_, zoomInButton_, zoomOutButton_;
-   private JToggleButton panButton_, gotoButton_;
+   private JToggleButton exploreButton_, gotoButton_;
    private JScrollBar zTopSlider_, zBottomSlider_;
    private JTextField zTopTextField_, zBottomTextField_;
    private Acquisition acq_;
@@ -277,13 +277,16 @@ public class DisplayPlusControls extends DisplayControls {
          }
       });
 
-      panButton_ = new JToggleButton("Pan");
-      panButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            display_.activatePanMode(panButton_.isSelected());
-         }
-      });
+      if (acq_ instanceof ExploreAcquisition) {
+         exploreButton_ = new JToggleButton("Explore");
+         exploreButton_.setSelected(true);
+         exploreButton_.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+               display_.activateExploreMode(exploreButton_.isSelected());
+            }
+         });
+      }
       
       zoomInButton_ = new JButton("Zoom in");
       zoomInButton_.setToolTipText("Keyboard shortcut: \"+\" key");
@@ -307,7 +310,7 @@ public class DisplayPlusControls extends DisplayControls {
 //      gotoButton_.addActionListener(null);
       
       
-      createSurfaceButton_ = new JButton("Mark sample surface");
+      createSurfaceButton_ = new JButton("Mark surface");
       createSurfaceButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -322,7 +325,7 @@ public class DisplayPlusControls extends DisplayControls {
       buttonPanel.add(abortButton_);
       buttonPanel.add(pauseButton_);
       buttonPanel.add(newGridButton_);
-      buttonPanel.add(panButton_);
+      buttonPanel.add(exploreButton_);
       buttonPanel.add(zoomInButton_);
       buttonPanel.add(zoomOutButton_);
       buttonPanel.add(createSurfaceButton_);
@@ -362,7 +365,7 @@ public class DisplayPlusControls extends DisplayControls {
    private JPanel makeSurfaceControlPanel() {
        JPanel newSurfaceControlPanel = new JPanel(new MigLayout());
        
-       JToggleButton markPointsButton = new JToggleButton("Mark points on surface");
+       JToggleButton markPointsButton = new JToggleButton("nothing yet");
        markPointsButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -533,9 +536,9 @@ public class DisplayPlusControls extends DisplayControls {
       ((ExploreAcquisition) acq_).setZLimits(zTop, zBottom);
    }
 
-   public void togglePanMode() {
-      panButton_.setSelected(!panButton_.isSelected());
-      panButton_.getActionListeners()[0].actionPerformed(null);
+   public void toggleExploreMode() {
+      exploreButton_.setSelected(!exploreButton_.isSelected());
+      exploreButton_.getActionListeners()[0].actionPerformed(null);
    }
    
    public ScrollerPanel getScrollerPanel() {
@@ -569,7 +572,7 @@ public class DisplayPlusControls extends DisplayControls {
       }
 
       display_.getHyperImage().setPosition(channel, slice, frame);
-      display_.drawOverlay();
+      display_.drawOverlay(true);
    }
 
    @Subscribe

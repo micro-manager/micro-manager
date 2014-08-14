@@ -15,7 +15,7 @@ import org.micromanager.api.ScriptInterface;
  */
 public class Navigator implements MMPlugin{
 
-   private static final String VERSION = "1.0";
+   private static final String VERSION = "Beta";
    
    public static final String PREF_SAVING_DIR = "Saving Directory";
    public static final String PREF_SAVING_NAME = "Saving name";
@@ -24,6 +24,7 @@ public class Navigator implements MMPlugin{
    public static final String tooltipDescription = "Navigator plugin";
 
    private Preferences prefs_;
+   private ScriptInterface mmAPI_;
    
    
    public Navigator() {
@@ -36,11 +37,12 @@ public class Navigator implements MMPlugin{
 
    @Override
    public void setApp(ScriptInterface si) {
+      mmAPI_ = si;
    }
 
    @Override
    public void show() {
-      new GUI(prefs_);
+      new GUI(prefs_, mmAPI_,VERSION);
    }
 
    @Override

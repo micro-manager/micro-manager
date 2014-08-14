@@ -7,56 +7,77 @@ import ij.gui.ImageWindow;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
+import java.text.DecimalFormat;
 import java.util.prefs.Preferences;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.border.LineBorder;
+import mmcorej.CMMCore;
 import org.jdesktop.swingx.*;
 import org.jdesktop.swingx.multislider.DefaultMultiThumbModel;
 import org.jdesktop.swingx.multislider.MultiThumbModel;
 import org.micromanager.MMStudio;
+import org.micromanager.api.ScriptInterface;
 import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
 import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.ImageFocusListener;
+import org.micromanager.utils.ReportingUtils;
 
 
 /**
  *
  * @author Henry
  */
-public class GUI extends javax.swing.JFrame implements ImageFocusListener {
+public class GUI extends javax.swing.JFrame {
 
+   private static final DecimalFormat TWO_DECIMAL_FORMAT = new DecimalFormat("0.00");
+   private static final int SLIDER_TICKS = 100000;
    
+   private ScriptInterface mmAPI_;
+   private CMMCore core_;
    private CustomAcqEngine eng_;
-   private DisplayPlus currentDisplay_;
    private Preferences prefs_;
+   private String zName_, xyName_;
+   private double zMin_, zMax_;
            
            
-   public GUI(Preferences prefs) {
+   public GUI(Preferences prefs, ScriptInterface mmapi, String version) {
       prefs_ = prefs;
+      mmAPI_ = mmapi;
+      core_ = mmapi.getMMCore();
+      this.setTitle("5D Navigator " + version);
       initComponents();
+      moreInitialization();
+      refresh();
       this.setVisible(true);
-      eng_ = new CustomAcqEngine(MMStudio.getInstance().getCore());
-      GUIUtils.registerImageFocusListener(this);
+      eng_ = new CustomAcqEngine(mmAPI_.getMMCore());
+   }
+   
+   private void moreInitialization() {
+      zSlider_.setMaximum(SLIDER_TICKS);
+      //TODO: delete and replace with actual values
+      zMin_ = 0;
+      zMax_ = 50;
+      zName_ = core_.getFocusDevice();
+      xyName_ = core_.getXYStageDevice();
+      try {
+         setZSliderPosition(core_.getPosition(zName_));
+      } catch (Exception e) {
+         ReportingUtils.showError("Couldn't get focus position from core");
+      }
+      zSliderAdjusted(null);
+      
+      
    }
      
-   @Override
-   public void focusReceived(ImageWindow focusedWindow) {
-       if (focusedWindow == null) {
-           currentDisplay_ = null;
-           return;
-       }
-      Object disp = VirtualAcquisitionDisplay.getDisplay(focusedWindow.getImagePlus());
-      if (disp == null || !(disp instanceof DisplayPlus) ) {
-         currentDisplay_ = null;
-      } else {
-         currentDisplay_ = (DisplayPlus) disp;
-      }
-      //TODO enable GUI controls specific to window type
+   private void refresh() {
+      //Refresh z stage, xy stage, etc and transmit them to eng?
+      
    }
 
+ 
    /**
     * This method is called from within the constructor to initialize the form.
     * WARNING: Do NOT modify this code. The content of this method is always
@@ -66,34 +87,33 @@ public class GUI extends javax.swing.JFrame implements ImageFocusListener {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        zSliderPanel_ = new javax.swing.JPanel();
-        zTextField_ = new javax.swing.JTextField();
-        zSlider_ = new javax.swing.JSlider();
+        jPanel1 = new javax.swing.JPanel();
         newExploreWindowButton_ = new javax.swing.JButton();
-        jLabel2 = new javax.swing.JLabel();
         jLabel1 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
+        zTextField_ = new javax.swing.JTextField();
+        zLabel_ = new javax.swing.JLabel();
+        zSlider_ = new javax.swing.JSlider();
+        jTabbedPane1 = new javax.swing.JTabbedPane();
+        FocusChangablePanel = new javax.swing.JPanel();
+        jLabel2 = new javax.swing.JLabel();
+        jPanel2 = new javax.swing.JPanel();
+        customPropsScrollPane_ = new javax.swing.JScrollPane();
+        jTable1 = new javax.swing.JTable();
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 100, Short.MAX_VALUE)
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 100, Short.MAX_VALUE)
+        );
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-
-        zTextField_.setText("jTextField1");
-
-        javax.swing.GroupLayout zSliderPanel_Layout = new javax.swing.GroupLayout(zSliderPanel_);
-        zSliderPanel_.setLayout(zSliderPanel_Layout);
-        zSliderPanel_Layout.setHorizontalGroup(
-            zSliderPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(zSliderPanel_Layout.createSequentialGroup()
-                .addComponent(zTextField_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(zSlider_, javax.swing.GroupLayout.PREFERRED_SIZE, 396, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        zSliderPanel_Layout.setVerticalGroup(
-            zSliderPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(zSlider_, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-            .addComponent(zTextField_, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-        );
 
         newExploreWindowButton_.setText("New explore window");
         newExploreWindowButton_.addActionListener(new java.awt.event.ActionListener() {
@@ -102,59 +122,134 @@ public class GUI extends javax.swing.JFrame implements ImageFocusListener {
             }
         });
 
-        jLabel2.setText("Focus changable properties");
-
         jLabel1.setText("Surface/Grid object");
 
         jLabel3.setText("MDA acqusition");
 
         jLabel4.setText("autofocus");
 
+        zTextField_.setText("jTextField1");
+        zTextField_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                zTextField_ActionPerformed(evt);
+            }
+        });
+
+        zLabel_.setText("Z: ");
+
+        zSlider_.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                zSliderAdjusted(evt);
+            }
+        });
+
+        jLabel2.setText("Focus changable properties");
+
+        javax.swing.GroupLayout FocusChangablePanelLayout = new javax.swing.GroupLayout(FocusChangablePanel);
+        FocusChangablePanel.setLayout(FocusChangablePanelLayout);
+        FocusChangablePanelLayout.setHorizontalGroup(
+            FocusChangablePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(FocusChangablePanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabel2)
+                .addContainerGap(408, Short.MAX_VALUE))
+        );
+        FocusChangablePanelLayout.setVerticalGroup(
+            FocusChangablePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, FocusChangablePanelLayout.createSequentialGroup()
+                .addContainerGap(62, Short.MAX_VALUE)
+                .addComponent(jLabel2)
+                .addGap(57, 57, 57))
+        );
+
+        jTabbedPane1.addTab("Focus-varying properties", FocusChangablePanel);
+
+        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
+        jPanel2.setLayout(jPanel2Layout);
+        jPanel2Layout.setHorizontalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 550, Short.MAX_VALUE)
+        );
+        jPanel2Layout.setVerticalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 133, Short.MAX_VALUE)
+        );
+
+        jTabbedPane1.addTab("tab2", jPanel2);
+
+        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null}
+            },
+            new String [] {
+                "Title 1", "Title 2", "Title 3", "Title 4"
+            }
+        ));
+        customPropsScrollPane_.setViewportView(jTable1);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(newExploreWindowButton_)
-                        .addGap(113, 113, 113))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel2)
-                            .addComponent(jLabel1))
-                        .addContainerGap())))
+                .addComponent(jTabbedPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(30, Short.MAX_VALUE))
             .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(zSliderPanel_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(layout.createSequentialGroup()
                         .addContainerGap()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel3)
-                            .addComponent(jLabel4))))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(customPropsScrollPane_, javax.swing.GroupLayout.PREFERRED_SIZE, 535, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 40, Short.MAX_VALUE))
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(128, 128, 128)
+                                .addComponent(jLabel3)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(newExploreWindowButton_)
+                                .addGap(41, 41, 41)
+                                .addComponent(jLabel1)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(zLabel_)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(zTextField_, javax.swing.GroupLayout.PREFERRED_SIZE, 68, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(zSlider_, javax.swing.GroupLayout.PREFERRED_SIZE, 444, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(39, 39, 39)
+                        .addComponent(jLabel4)))
                 .addGap(0, 0, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(zSliderPanel_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(3, 3, 3)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(newExploreWindowButton_)
-                        .addGap(74, 74, 74))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(36, 36, 36)
-                        .addComponent(jLabel2)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jLabel1)
-                        .addGap(18, 18, 18)
-                        .addComponent(jLabel3)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(zTextField_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(zLabel_))
+                    .addComponent(zSlider_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(customPropsScrollPane_, javax.swing.GroupLayout.PREFERRED_SIZE, 124, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 114, Short.MAX_VALUE)
+                .addComponent(jTabbedPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 161, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(28, 28, 28)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(newExploreWindowButton_)
+                            .addComponent(jLabel3))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jLabel4)
-                        .addContainerGap(186, Short.MAX_VALUE))))
+                        .addGap(4, 4, 4))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addComponent(jLabel1)
+                        .addGap(41, 41, 41))))
         );
 
         pack();
@@ -164,15 +259,39 @@ public class GUI extends javax.swing.JFrame implements ImageFocusListener {
       new ExploreInitDialog(prefs_, eng_);
    }//GEN-LAST:event_newExploreWindowButton_ActionPerformed
 
+   private void zTextField_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zTextField_ActionPerformed
+      double val = Double.parseDouble(zTextField_.getText());
+      val = Math.max(Math.min(val,zMax_),zMin_);
+      setZSliderPosition(val);
+      zSliderAdjusted(null); 
+   }//GEN-LAST:event_zTextField_ActionPerformed
+ 
+   private void setZSliderPosition(double pos) {
+      int ticks = (int) (((pos - zMin_) / (zMax_ - zMin_)) * SLIDER_TICKS);
+      zSlider_.setValue(ticks);
+   }
+   
+   private void zSliderAdjusted(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_zSliderAdjusted
+     int ticks = zSlider_.getValue();
+      double zVal = zMin_ + (zMax_ - zMin_) * (ticks / (double) SLIDER_TICKS);
+      zTextField_.setText(TWO_DECIMAL_FORMAT.format(zVal));
+   }//GEN-LAST:event_zSliderAdjusted
+
  
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JPanel FocusChangablePanel;
+    private javax.swing.JScrollPane customPropsScrollPane_;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
+    private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel2;
+    private javax.swing.JTabbedPane jTabbedPane1;
+    private javax.swing.JTable jTable1;
     private javax.swing.JButton newExploreWindowButton_;
-    private javax.swing.JPanel zSliderPanel_;
+    private javax.swing.JLabel zLabel_;
     private javax.swing.JSlider zSlider_;
     private javax.swing.JTextField zTextField_;
     // End of variables declaration//GEN-END:variables

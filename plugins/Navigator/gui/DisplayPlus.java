@@ -17,10 +17,13 @@ import java.awt.event.*;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import javax.swing.*;
 import javax.vecmath.Point3d;
 import mmcorej.TaggedImage;
+import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -36,9 +39,10 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
 
    private static final int EXPLORE_PIXEL_BUFFER = 96;
    
-   private static final int NONE = 0, PAN = 1, GOTO = 2, NEWGRID = 3, NEWSURFACE = 4;
+   private static final int NONE = 0, EXPLORE = 1, GOTO = 2, NEWGRID = 3, NEWSURFACE = 4;
    
-   private static final Color TRANSPARENT_BLUE = new Color(0, 0, 255, 100);
+   private static final Color TRANSPARENT_BLUE = new Color(0, 0, 255, 100);   
+   private static final Color TRANSPARENT_GREEN = new Color(0, 255, 0, 100);
    private static final Color TRANSPARENT_MAGENTA = new Color(255, 0, 255, 100);
    private ImageCanvas canvas_;
    private DisplayPlusControls controls_;
@@ -46,13 +50,14 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
    private Point mouseDragStartPoint_;
    private ArrayList<Point> selectedPositions_ = new ArrayList<Point>();
    private ZoomableVirtualStack zoomableStack_;
-   private final boolean exploreMode_;
+   private final boolean exploreAcq_;
    private PositionManager posManager_;
    private int tileWidth_, tileHeight_;
    private boolean cursorOverImage_;
    private int mode_ = NONE;
    private NewGridParams newGrid_ = null;
    private SurfaceInterpolater newSurface_ = null;
+   private boolean mouseDragging_ = false;
    
    
 
@@ -62,7 +67,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
       tileWidth_ = multiResStorage.getTileWidth();
       tileHeight_ = multiResStorage.getTileHeight();
       posManager_ = multiResStorage.getPositionManager();
-      exploreMode_ = acq instanceof ExploreAcquisition;
+      exploreAcq_ = acq instanceof ExploreAcquisition;
       
       //Set parameters for tile dimensions, num rows and columns, overlap, and image dimensions
       acq_ = acq;
@@ -83,12 +88,13 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
          int width = MDUtils.getWidth(summaryMD);
          int height = MDUtils.getHeight(summaryMD);
          //25 pixel buffer for exploring
-         if (exploreMode_) {
+         if (exploreAcq_) {
             width += 2*EXPLORE_PIXEL_BUFFER;
             height += 2*EXPLORE_PIXEL_BUFFER;
+            mode_ = EXPLORE;
          }
          zoomableStack_ = new ZoomableVirtualStack(MDUtils.getIJType(summaryMD), width, height, stitchedCache, nSlices, 
-                 this, multiResStorage, exploreMode_ ? EXPLORE_PIXEL_BUFFER : 0, acq_);
+                 this, multiResStorage, exploreAcq_ ? EXPLORE_PIXEL_BUFFER : 0, acq_);
          this.show(zoomableStack_);
       } catch (Exception e) {
          ReportingUtils.showError("Problem with initialization due to missing summary metadata tags");
@@ -132,9 +138,9 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
 //      canvas_.setOverlay(overlay);
    }
 
-   public void drawOverlay() {
+   public void drawOverlay(boolean fullUpdate) {
 
-      if (mode_ == NONE && exploreMode_) {
+      if (mode_ == EXPLORE) {
          //highlight tiles as appropriate
          if (mouseDragStartPoint_ != null) {
             //highlight multiple tiles       
@@ -150,27 +156,28 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
          }
       } else if (mode_ == NEWGRID) {
          drawNewGridOverlay();
-      } else if (mode_ == PAN) { 
+      } else if (mode_ == NONE ) { 
          //draw nothing (or maybe zoom indicator?) 
          canvas_.setOverlay(null);
       } else if (mode_ == GOTO) {
          //nothing
       } else if (mode_ == NEWSURFACE) {
-         drawNewSurfaceOverlay();
+         if (fullUpdate) {
+            drawNewSurfaceOverlay();
+         }
       }
 
    }
    
    private void mouseReleasedActions(MouseEvent e) {
-      if (exploreMode_ && mode_ == NONE) {
-
+      if (exploreAcq_ && mode_ == EXPLORE) {
          Point p2 = e.getPoint();
          //find top left row and column and number of columns spanned by drage event
          Point tile1 = zoomableStack_.getTileIndicesFromDisplayedPixel(mouseDragStartPoint_.x, mouseDragStartPoint_.y);
          Point tile2 = zoomableStack_.getTileIndicesFromDisplayedPixel(p2.x, p2.y);
          //create events to acquire one or more tiles
          ((ExploreAcquisition)acq_).acquireTiles(tile1.y, tile1.x, tile2.y, tile2.x);
-      } else if (mode_ == NEWSURFACE) {
+      } else if (mode_ == NEWSURFACE && !mouseDragging_) {
          //convert to real coordinates in 3D space
          //Click point --> full res pixel point --> stage coordinate
          Point fullResPixel = zoomableStack_.getAbsoluteFullResPixelCoordinate(e.getPoint().x, e.getPoint().y);
@@ -178,22 +185,24 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
          double z = zoomableStack_.getZCoordinateOfDisplayedSlice(this.getHyperImage().getSlice(), this.getHyperImage().getFrame());
          newSurface_.addPoint(stagePos.x, stagePos.y, z);
       }
+      mouseDragging_ = false;
    }
-
+   
    private void mouseDraggedActions(MouseEvent e) {
       Point currentPoint = e.getPoint();
+      mouseDragging_ = true;
       if (mode_ == NEWGRID) {
          int dx = (int) ((currentPoint.x - mouseDragStartPoint_.x) / canvas_.getMagnification());
          int dy = (int) ((currentPoint.y - mouseDragStartPoint_.y) / canvas_.getMagnification());
          newGrid_.centerX += dx;
          newGrid_.centerY += dy;
          mouseDragStartPoint_ = currentPoint;
-      } else if (mode_ == PAN) {
+      } else if (mode_ == NONE || mode_ == NEWSURFACE) {
          zoomableStack_.translateView(mouseDragStartPoint_.x - currentPoint.x, mouseDragStartPoint_.y - currentPoint.y);
          redrawPixels();
          mouseDragStartPoint_ = currentPoint;
          drawZoomIndicatorOverlay();
-      } 
+      }
    }
 
    private void drawNewGridOverlay() {
@@ -210,26 +219,90 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
       this.getImagePlus().setOverlay(overlay);
    }
    
+   private Point2D.Double stageCoordFromImageCoord(int x, int y) {
+      Point fullResPix = zoomableStack_.getAbsoluteFullResPixelCoordinate(x,y);
+      return posManager_.getStageCoordsFromPixelCoords(fullResPix.x, fullResPix.y);
+   }
+   
    private void drawNewSurfaceOverlay() {
-      Overlay overlay = new Overlay();
+      Overlay overlay = new Overlay();      
+      //draw all points
       for (Point3d point : newSurface_.getPoints()) {
          //convert back to pixel coordinates
          Point xy = posManager_.getPixelCoordsFromStageCoords(point.x,point.y);
          //convert ful res pixel coordinates to coordinates of the viewed image
          Point displayLocation = zoomableStack_.getDisplayImageCoordsFromFullImageCoords(xy);
          int slice = zoomableStack_.getDisplaySliceIndexFromZCoordinate(point.z, this.getHyperImage().getFrame());
-         
+
          if (slice != this.getHyperImage().getSlice()) {
             continue;
          }
-         
+
          int diameter = 4;
          Roi circle = new OvalRoi(displayLocation.x - diameter / 2, displayLocation.y - diameter / 2, diameter, diameter);
          overlay.add(circle);
       }
+      
+      try {
+         //draw the surface itself by interpolating a grid over viewable area
+         int width = this.getImagePlus().getWidth();
+         int height = this.getImagePlus().getHeight();
+         //Make numTestPoints a factor of image size for clean display of surface
+         int numTestPointsX = width / 6;
+         int numTestPointsY = height / 6;
+         double roiWidth = width / (double) numTestPointsX;
+         double roiHeight = height / (double) numTestPointsY;
+
+         //get stage coordinates for topleft and bottom right of viewable region of image
+         Point2D.Double topLeft = stageCoordFromImageCoord((int) (roiWidth / 2), (int) (roiHeight / 2));
+         Point2D.Double bottomRight = stageCoordFromImageCoord((int) (width - roiWidth / 2), (int) (height - roiHeight / 2));
+         Object[] interpAndInside = newSurface_.getInterpolatedValues(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y, numTestPointsX, numTestPointsY);  
+         float[][] interpZ = (float[][]) interpAndInside[0];
+         boolean[][] insideHull = (boolean[][]) interpAndInside[1];
+         boolean flipX = newSurface_.getFlipX(), flipY = newSurface_.getFlipY();
+         double zStep = acq_.getZStep();
+         double sliceZ = zoomableStack_.getZCoordinateOfDisplayedSlice(this.getHyperImage().getSlice(), this.getHyperImage().getFrame());
+         for (int x = 0; x < interpZ[0].length; x++) {
+            for (int y = 0; y < interpZ.length; y++) {
+               if (insideHull[y][x] && Math.abs(sliceZ - interpZ[y][x]) < zStep / 2) {
+                  int xIndex = (flipX ? (interpZ[0].length - x - 1) : x);
+                  int yIndex = (flipY ? (interpZ.length - y - 1) : y);
+                  double roiX = roiWidth * xIndex;
+                  double roiY = roiHeight * yIndex;
+                  int displayWidth = (int) (roiWidth * (xIndex + 1)) - (int) (roiX);
+                  int displayHeight = (int) (roiHeight * (yIndex + 1)) - (int) (roiY);
+                  Roi rect = new Roi(roiX, roiY, displayWidth, displayHeight);
+                  rect.setFillColor(TRANSPARENT_BLUE);
+                  overlay.add(rect);
+               }
+            }
+         }
+      } catch (Exception e) {
+         e.printStackTrace();
+         ReportingUtils.logError("Couldn't interpolate surface");
+      }
+      
+      if (newSurface_.getPoints().size() > 2) {
+         //draw convex hull
+         Vector2D[] hullPoints = newSurface_.getConvexHullPoints();
+         Point lastPoint = null, firstPoint = null;
+         for (Vector2D v : hullPoints) {
+            //convert to image coords
+            Point p = zoomableStack_.getDisplayImageCoordsFromFullImageCoords(posManager_.getPixelCoordsFromStageCoords(v.getX(), v.getY()));
+            if (lastPoint != null) {
+               overlay.add(new Line(p.x, p.y, lastPoint.x, lastPoint.y));
+            } else {
+               firstPoint = p; 
+            }
+            lastPoint = p;
+         }
+         //draw last connection         
+         overlay.add(new Line(firstPoint.x, firstPoint.y, lastPoint.x, lastPoint.y));
+      }
+      
       this.getImagePlus().setOverlay(overlay);
    }
-   
+
    private void highlightTiles(int row1, int row2, int col1, int col2, Color color) {
       Point topLeft = zoomableStack_.getDisplayedPixel(row1,col1);
       int width = (int) Math.round(tileWidth_ / (double) zoomableStack_.getDownsampleFactor() * (col2 - col1 + 1));
@@ -244,11 +317,11 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
    public void zoom(boolean in) {
       zoomableStack_.zoom(cursorOverImage_ ? canvas_.getCursorLoc() : null, in ? -1 :1);
       redrawPixels();
-      drawOverlay();
+      drawOverlay(true);
    }
    
-   public void activatePanMode(boolean activate) {
-      mode_ = activate ? PAN : NONE;
+   public void activateExploreMode(boolean activate) {
+      mode_ = activate && exploreAcq_ ? EXPLORE : NONE;
    }
    
    public void activateNewGridMode(boolean activate) {
@@ -258,7 +331,9 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
    
    public void activateNewSurfaceMode(boolean activate) {
       mode_ = activate ? NEWSURFACE : NONE;
-      newSurface_ = new SurfaceInterpolater();
+      if (newSurface_ == null) {      
+         newSurface_ = new SurfaceInterpolater();
+      }
    }
 
    public void gridSizeChanged(int numRows, int numCols, int xOverlap, int yOverlap) {      
@@ -266,7 +341,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
       newGrid_.cols = numCols;
       newGrid_.overlapX = xOverlap;
       newGrid_.overlapY = yOverlap;
-      drawOverlay();
+      drawOverlay(true);
    }
 
    public void createGrid() {
@@ -346,12 +421,12 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
          @Override
          public void mouseDragged(MouseEvent e) {
             mouseDraggedActions(e);
-            drawOverlay();
+            drawOverlay(true);
          }
 
          @Override
          public void mouseMoved(MouseEvent e) {
-            drawOverlay();
+            drawOverlay(false);
          }
       });
 
@@ -364,26 +439,26 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
          @Override
          public void mousePressed(MouseEvent e) {
             mouseDragStartPoint_ = e.getPoint();
-            drawOverlay();
+            drawOverlay(false);
          }
 
          @Override
          public void mouseReleased(MouseEvent e) {
             mouseReleasedActions(e);
             mouseDragStartPoint_ = null;
-            drawOverlay();
+            drawOverlay(true);
          }
 
          @Override
          public void mouseEntered(MouseEvent e) {
             cursorOverImage_ = true;
-            drawOverlay();
+            drawOverlay(false);
          }
 
          @Override
          public void mouseExited(MouseEvent e) {
             cursorOverImage_ = false;
-            drawOverlay();
+            drawOverlay(false);
          }
       });
    }
@@ -403,8 +478,8 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
             } else if (ke.getKeyChar() == '-') {
                zoom(false);
             } else if (ke.getKeyChar() == ' ') {
-               controls_.togglePanMode();
-               drawOverlay();
+               controls_.toggleExploreMode();
+               drawOverlay(false);
             }
          }
 

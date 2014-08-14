@@ -131,7 +131,6 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
     * @return 
     */  
    public Point getDisplayImageCoordsFromFullImageCoords(Point fullImageCoords) {
-      System.out.println(fullImageCoords);
       return new Point(fullImageCoords.x / getDownsampleFactor() - xView_, fullImageCoords.y / getDownsampleFactor() - yView_);
    }
    
