@@ -146,10 +146,10 @@ int Conex_AxisBase::CheckDeviceStatus(void)
   int ret = ClearPort();
   if (ret != DEVICE_OK) return ret;
   // Conex_Axis Version
-  ret = QueryCommand("1ve",resp);
+  ret = QueryCommand("1VE",resp);
   if (ret != DEVICE_OK) return ret;
   if (resp.length() < 1) return  DEVICE_NOT_CONNECTED;
-  if (resp.find("Conex") <=0) return DEVICE_SERIAL_COMMAND_FAILED;
+  if (resp.find("CONEX") <=0) return DEVICE_SERIAL_COMMAND_FAILED;
   initialized_ = true;
   return DEVICE_OK;
 }
@@ -181,7 +181,8 @@ double Conex_AxisBase:: GetPosition(void)
    ret = QueryCommand("1TP", resp);
    if (ret != DEVICE_OK) return DEVICE_UNSUPPORTED_COMMAND;
    if (resp.length() < 4) return DEVICE_SERIAL_COMMAND_FAILED;
-   strcpy(iBufString,resp.c_str()+4);
+   resp.erase(0,3);
+   strcpy(iBufString,resp.c_str());
    sscanf(iBufString, "%f", &Vfloat);
    return Vfloat*coef_ ;
 }	
@@ -197,7 +198,8 @@ double Conex_AxisBase:: GetPositiveLimit(void)
    ret = QueryCommand("1SR?", resp);
    if (ret != DEVICE_OK) return DEVICE_UNSUPPORTED_COMMAND;
    if (resp.length() < 4) return DEVICE_SERIAL_COMMAND_FAILED;
-   strcpy(iBufString,resp.c_str()+4);
+   resp.erase(0,3);
+   strcpy(iBufString,resp.c_str());
    sscanf(iBufString, "%f", &Vfloat);
    return Vfloat*coef_;
 }	
@@ -214,7 +216,8 @@ double Conex_AxisBase:: GetNegativeLimit(void)
    ret = QueryCommand("1SL?", resp);
    if (ret != DEVICE_OK) return DEVICE_UNSUPPORTED_COMMAND;
    if (resp.length() < 4) return DEVICE_SERIAL_COMMAND_FAILED;
-   strcpy(iBufString,resp.c_str()+4);
+   resp.erase(0,3);
+   strcpy(iBufString,resp.c_str());
    sscanf(iBufString, "%f", &Vfloat);
    return Vfloat*coef_;
 }	
@@ -230,7 +233,8 @@ double Conex_AxisBase:: GetSpeed(void)
    ret = QueryCommand("1VA?", resp);
    if (ret != DEVICE_OK) return DEVICE_UNSUPPORTED_COMMAND;
    if (resp.length() < 4) return DEVICE_SERIAL_COMMAND_FAILED;
-   strcpy(iBufString,resp.c_str()+4);
+   resp.erase(0,3);
+   strcpy(iBufString,resp.c_str());
    sscanf(iBufString, "%f", &Vfloat);
    return Vfloat*coef_;
 }	
@@ -242,7 +246,7 @@ int Conex_AxisBase:: SetSpeed(double speed)
    int ret;
 
    setlocale(LC_ALL,"C");
-   sprintf(oBufString,"1VA%6.3f",speed/coef_);
+   sprintf(oBufString,"1VA%6.6f",speed/coef_);
    ret=SendCommand(oBufString);
    return ret;
 }	
@@ -254,7 +258,7 @@ int Conex_AxisBase:: SetAcceleration(double acceleration)
    int ret;
 
    setlocale(LC_ALL,"C");
-   sprintf(oBufString,"1AC%6.3f",acceleration/coef_);
+   sprintf(oBufString,"1AC%6.6f",acceleration/coef_);
    ret=SendCommand(oBufString);
    return ret;
 }	
@@ -265,7 +269,7 @@ int Conex_AxisBase:: SetPositiveLimit(double limit)
    int ret;
 
    setlocale(LC_ALL,"C");
-   sprintf(oBufString,"1SR%6.3f",limit/coef_);
+   sprintf(oBufString,"1SR%6.6f",limit/coef_);
    ret=SendCommand(oBufString);
    return ret;
 }	
@@ -277,7 +281,7 @@ int Conex_AxisBase:: SetNegativeLimit(double limit)
    int ret;
 
    setlocale(LC_ALL,"C");
-   sprintf(oBufString,"1SL%6.3f",limit/coef_);
+   sprintf(oBufString,"1SL%6.6f",limit/coef_);
    ret=SendCommand(oBufString);
    return ret;
 }	
@@ -292,7 +296,7 @@ bool Conex_AxisBase::Moving()
   if (ret == DEVICE_OK)
       {
       string rep;
-	  rep=resp.substr(8,255);
+	  rep=resp.substr(7,2);
 	  if ((rep=="1E") || (rep=="28"))
 		  return true;
 	  else
@@ -311,7 +315,7 @@ bool Conex_AxisBase::Referenced()
   if (ret == DEVICE_OK)
       {
       string rep;
-	  rep=resp.substr(8,255);      
+      rep=resp.substr(7,2);
 	  if ((rep=="0A") || (rep=="0B")|| (rep=="0C")|| (rep=="0D")|| (rep=="0E")|| (rep=="0F")|| (rep=="10"))
 		  return false;
 	  else
@@ -330,7 +334,7 @@ bool Conex_AxisBase::Ready()
   if (ret == DEVICE_OK)
       {
       string rep;
-	  rep=resp.substr(8,255);      
+      rep=resp.substr(7,2);
 	  if ((rep=="32") || (rep=="33")|| (rep=="34")|| (rep=="35")|| (rep=="36")|| (rep=="37")|| (rep=="38"))
 		  return true;
 	  else
@@ -349,7 +353,7 @@ bool Conex_AxisBase::Enabled()
   if (ret == DEVICE_OK)
       {
       string rep;
-	  rep=resp.substr(8,255);     
+      rep=resp.substr(7,2);
 	  if ((rep=="3C") || (rep=="3D")|| (rep=="3E")|| (rep=="3F"))
 		  return false;
 	  else
@@ -404,7 +408,7 @@ int  Conex_AxisBase::MoveRelative(double position)
    int ret;
 
    setlocale(LC_ALL,"C");
-   sprintf(oBufString,"1PR%6.3f",position/coef_);
+   sprintf(oBufString,"1PR%6.6f",position/coef_);
    ret=SendCommand(oBufString);
    return ret;
 }	
@@ -415,7 +419,7 @@ int Conex_AxisBase:: MoveAbsolute( double target)
    int ret;
 
    setlocale(LC_ALL,"C");
-   sprintf(oBufString,"1PA%6.3f",target/coef_);
+   sprintf(oBufString,"1PA%6.6f",target/coef_);
    ret=SendCommand(oBufString);
    return ret;
 }	
