@@ -74,6 +74,6 @@ const char* const g_PropValue_ResponseCRLFTerminated = "Terminator-CRLF";
 const char* const g_PropValue_ResponseCRTerminated = "Terminator-CR";
 const char* const g_PropValue_ResponseLFTerminated = "Terminator-LF";
 const char* const g_PropValuePrefix_ResponseFixedByteCount =
-   "Fixed byte count-";
+   "Fixed-length binary-";
 const char* const g_PropValue_ResponseVariableByteCount =
-   "Variable byte count";
+   "Variable-length binary";
