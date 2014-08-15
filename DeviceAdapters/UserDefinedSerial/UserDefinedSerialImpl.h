@@ -173,12 +173,6 @@ UserDefSerialBase<TBasicDevice, UConcreteDevice>::CreatePreInitProperties()
          g_PropValue_ResponseLFTerminated);
    Super::AddAllowedValue(g_PropName_ResponseDetectionMethod,
          g_PropValue_ResponseCRLFTerminated);
-   for (unsigned byteCount = 1; byteCount < 17; ++byteCount)
-   {
-      Super::AddAllowedValue(g_PropName_ResponseDetectionMethod,
-            (g_PropValuePrefix_ResponseFixedByteCount +
-             boost::lexical_cast<std::string>(byteCount)).c_str());
-   }
    Super::AddAllowedValue(g_PropName_ResponseDetectionMethod,
          g_PropValue_ResponseVariableByteCount);
 
