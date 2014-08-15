@@ -908,6 +908,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                " cannot be zero. Re-do calibration on Setup tab.");
          return false;
       }
+      if (props_.getPropValueInteger(
+            Devices.getSideSpecificKey(Devices.Keys.GALVOA, side), 
+            Properties.Keys.SPIM_NUM_REPEATS) != 1) {
+         gui_.showError("Number of acquisitions set in plugin. " +
+            "Please change scanner property \"SPIMNumRepeats\" to 1.");
+         return false;
+      }
       float sliceAmplitude = piezoAmplitude / sliceRate;
       float piezoCenter =  props_.getPropValueFloat(
             Devices.getSideSpecificKey(Devices.Keys.PIEZOA, side),

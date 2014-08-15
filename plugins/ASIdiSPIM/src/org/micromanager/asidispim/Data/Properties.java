@@ -80,6 +80,7 @@ public class Properties {
       SPIM_DURATION_CAMERA("SPIMCameraDuration(ms)"),
       SPIM_FIRSTSIDE("SPIMFirstSide"),
       SPIM_STATE("SPIMState"),
+      SPIM_NUMREPEATS("SPIMNumRepeats"),
       SA_AMPLITUDE("SingleAxisAmplitude(um)"),
       SA_OFFSET("SingleAxisOffset(um)"),
       SA_AMPLITUDE_X_DEG("SingleAxisXAmplitude(deg)"),
