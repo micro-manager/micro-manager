@@ -240,7 +240,7 @@ class TiltFeature : public ModalFeature, public ScalarFeature
 {
 public:
    IIDC_DEFINE_FEATURE_CTOR(TiltFeature, DC1394_FEATURE_TILT);
-   virtual std::string GetAbsoluteControl() const { return "deg"; }
+   virtual std::string GetAbsoluteUnits() const { return "deg"; }
 };
 
 
