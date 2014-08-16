@@ -145,7 +145,9 @@ const int MMIIDC_Error_AdHoc_Max = 30000;
 inline bool HostIsLittleEndian()
 {
    const uint16_t test = 1;
-   return *reinterpret_cast<const uint8_t*>(&test) != 0;
+   // Use unsigned char*, not uint8_t*, to prevent undefined behavior due to
+   // the strict aliasing rule.
+   return *reinterpret_cast<const unsigned char*>(&test) != 0;
 }
 
 #ifdef _MSC_VER
