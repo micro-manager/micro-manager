@@ -64,7 +64,6 @@ class MMIIDCCamera : public CCameraBase<MMIIDCCamera>
     */
    boost::shared_array<unsigned char> snappedPixels_;
    size_t snappedWidth_, snappedHeight_, snappedBytesPerPixel_;
-   unsigned snappedBitDepth_;
    IIDC::PixelFormat snappedPixelFormat_;
 
 public:
