@@ -1446,9 +1446,9 @@ MMIIDCCamera::SequenceCallback(const void* pixels, size_t width, size_t height, 
 int
 MMIIDCCamera::AdHocErrorCode(const std::string& message)
 {
+   if (nextAdHocErrorCode_ > MMIIDC_Error_AdHoc_Max)
+      nextAdHocErrorCode_ = MMIIDC_Error_AdHoc_Min;
    int code = nextAdHocErrorCode_++;
-   if (code > MMIIDC_Error_AdHoc_Max)
-      code = MMIIDC_Error_AdHoc_Min;
    SetErrorText(code, message.c_str());
    return code;
 }
