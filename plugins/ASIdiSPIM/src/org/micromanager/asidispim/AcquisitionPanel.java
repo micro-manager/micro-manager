@@ -1004,18 +1004,21 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       boolean singleTimePointViewers = separateTimePointsCB_.isSelected();
       String rootDir = rootField_.getText();
 
-      int nrRepeats = getNumTimepoints();  // this is how many acquisition windows to open
-      int nrFrames = 1;
-      if (!singleTimePointViewers) {
-         nrFrames = nrRepeats;             // how many Micro-manager "frames" to take
+      int nrRepeats;
+      int nrFrames;
+      if (singleTimePointViewers) {
+         nrFrames = 1;
+         nrRepeats = getNumTimepoints();  // this is how many acquisition windows to open
+      } else {
+         nrFrames = getNumTimepoints();    // how many Micro-manager "frames" = time points to take
          nrRepeats = 1;
       }
 
       long timepointsIntervalMs = Math.round(
               PanelUtils.getSpinnerFloatValue(acquisitionInterval_) * 1000d);
-      int nrSides = getNumSides();  // TODO: multi-channel
+      int nrSides = getNumSides();  // TODO: multi-channel in sense of excitation color, etc.
       int nrSlices = getNumSlices();
-      int nrPos = 1;
+      int nrPos = 1;  // TODO: multi XY points
 
       boolean autoShutter = core_.getAutoShutter();
       boolean shutterOpen = false;
@@ -1093,11 +1096,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
       }
 
+      // do not want to return from within this loop
       for (int tp = 0; tp < nrRepeats && !stop_.get(); tp++) {
          BlockingQueue<TaggedImage> bq = new LinkedBlockingQueue<TaggedImage>(10);
-         String acqName = gui_.getUniqueAcquisitionName(nameField_.getText());
+         String acqName;
          if (singleTimePointViewers) {
-            acqName = gui_.getUniqueAcquisitionName(nameField_.getText() + "-" + tp);
+            acqName = gui_.getUniqueAcquisitionName(nameField_.getText() + "_" + tp);
+         } else {
+            acqName = gui_.getUniqueAcquisitionName(nameField_.getText());
          }
          try {
             gui_.openAcquisition(acqName, rootDir, nrFrames, nrSides, nrSlices, nrPos,
@@ -1243,7 +1249,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             gui_.showError(mex);
          } catch (Exception ex) {
             gui_.showError(ex);
-         } finally {
+         } finally {  // end of this acquisition (could be about to restart if separate viewers
             try {
                if (core_.isSequenceRunning(firstCamera)) {
                   core_.stopSequenceAcquisition(firstCamera);
@@ -1259,31 +1265,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   }
                }
                
-               // the controller will end with both beams disabled and scan off so reflect
-               // that in device properties
-               props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.BEAM_ENABLED,
-                     Properties.Values.NO, true);
-               props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.BEAM_ENABLED,
-                     Properties.Values.NO, true);
-               props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SA_MODE_X,
-                     Properties.Values.SAM_DISABLED, true);
-               props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.SA_MODE_X,
-                     Properties.Values.SAM_DISABLED, true);
-               
-               // take care of cleanup tasks
-               updateAcqusitionStatusDone();
-               stagePosUpdater_.setAcqRunning(false);
                bq.put(TaggedImageQueue.POISON);
                gui_.closeAcquisition(acqName);
                gui_.logMessage("diSPIM plugin acquisition took: " + 
                        (System.currentTimeMillis() - acqStart) + "ms");
-               if (separateImageFilesOriginally) {
-                  ImageUtils.setImageStorageClass(TaggedImageStorageDiskDefault.class);
-               }
-               cameras_.setSPIMCameraTriggerMode(Cameras.TriggerModes.INTERNAL);
-               if (liveModeOriginally) {
-                  gui_.enableLiveMode(true);
-               }
                
             } catch (Exception ex) {
                // exception while stopping sequence acquisition, not sure what to do...
@@ -1291,6 +1276,30 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             }
          }
 
+      }
+      
+      // cleanup after end of all acquisitions
+      
+      // the controller will end with both beams disabled and scan off so reflect
+      // that in device properties
+      props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.BEAM_ENABLED,
+            Properties.Values.NO, true);
+      props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.BEAM_ENABLED,
+            Properties.Values.NO, true);
+      props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SA_MODE_X,
+            Properties.Values.SAM_DISABLED, true);
+      props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.SA_MODE_X,
+            Properties.Values.SAM_DISABLED, true);
+      
+      updateAcqusitionStatusDone();
+      stagePosUpdater_.setAcqRunning(false);
+      
+      if (separateImageFilesOriginally) {
+         ImageUtils.setImageStorageClass(TaggedImageStorageDiskDefault.class);
+      }
+      cameras_.setSPIMCameraTriggerMode(Cameras.TriggerModes.INTERNAL);
+      if (liveModeOriginally) {
+         gui_.enableLiveMode(true);
       }
 
       return true;
