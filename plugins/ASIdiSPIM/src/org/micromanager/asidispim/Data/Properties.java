@@ -122,6 +122,7 @@ public class Properties {
       PLUGIN_DIRECTORY_ROOT("DirectoryRoot"),
       PLUGIN_NAME_PREFIX("NamePrefix"),
       PLUGIN_SAVE_WHILE_ACQUIRING("SaveWhileAcquiring"),
+      PLUGIN_HIDE_WHILE_ACQUIRING("HideWhileAcquiring"),
       PLUGIN_SEPARATE_VIEWERS_FOR_TIMEPOINTS("SeparateViewersForTimePoints"),
       PLUGIN_PIEZO_SHEET_INCREMENT("PiezoSheetIncrement"),  // piezo increment for moving piezo and galvo together
       PLUGIN_OFFSET_PIEZO_SHEET("OffsetPiezoSheet"),  // Offset in piezo/sheet relation
