@@ -23,11 +23,15 @@ package org.micromanager.imagedisplay;
 
 import ij.ImagePlus;
 import ij.gui.ImageWindow;
+
 import java.awt.Font;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.Arrays;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.Vector;
+
 import javax.swing.DebugGraphics;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
@@ -43,8 +47,10 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableModel;
+
 import org.json.JSONException;
 import org.json.JSONObject;
+
 import org.micromanager.api.ImageCache;
 import org.micromanager.graph.ContrastPanel;
 import org.micromanager.utils.ImageFocusListener;
@@ -86,6 +92,7 @@ public class MetadataPanel extends JPanel
    private boolean showUnchangingKeys_;
    private ImageWindow currentWindow_;
    private VirtualAcquisitionDisplay currentDisplay_;
+   private Timer updateTimer_;
 
    /** Creates new form MetadataPanel */
    public MetadataPanel() {
@@ -467,7 +474,10 @@ public class MetadataPanel extends JPanel
    public ImageWindow getCurrentWindow() {
       return currentWindow_;
    }
-   
+  
+   /**
+    * Adjust which window we are currently displaying metadata for.
+    */
    public synchronized void displayChanged(ImageWindow win) {
       if (win == currentWindow_) {
          return;
@@ -506,8 +516,11 @@ public class MetadataPanel extends JPanel
     * call draw because this function should be only be called just before 
     * ImagePlus.draw or CompositieImage.draw runs as a result of the overriden 
     * methods in MMCompositeImage and MMImagePlus
+    * We postpone metadata display updates slightly in case the image display
+    * is changing rapidly, to ensure that we don't end up with a race condition
+    * that causes us to display the wrong metadata.
     */
-   public void imageChangedUpdate(VirtualAcquisitionDisplay disp) { 
+   public void imageChangedUpdate(final VirtualAcquisitionDisplay disp) { 
       int tabSelected = tabbedPane.getSelectedIndex();
       if (disp == null || !disp.isActiveDisplay()) {
          imageMetadataModel_.setMetadata(null);
@@ -516,26 +529,38 @@ public class MetadataPanel extends JPanel
          imageCommentsTextArea.setText("");
          contrastPanel_.imageChanged();
       } else {
-         //Update image comment
-         imageCommentsTextArea.setText(disp.getImageComment());
+         if (updateTimer_ == null) {
+            updateTimer_ = new Timer("Metadata update");
+         }
+         TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+               //Update image comment
+               imageCommentsTextArea.setText(disp.getImageComment());
+               AcquisitionVirtualStack stack = disp.virtualStack_;
+               if (stack != null) {
+                  JSONObject md = disp.getCurrentMetadata();
+                  if (md == null) {
+                     imageMetadataModel_.setMetadata(null);
+                  } else {
+                     if (!showUnchangingKeys_) {
+                        md = selectChangingTags(disp.getHyperImage(), md);
+                     }
+                     imageMetadataModel_.setMetadata(md);
+                  }
+                  summaryMetadataModel_.setMetadata(disp.getSummaryMetadata());
+               } else {
+                  imageMetadataModel_.setMetadata(null);
+               }
+            }
+         };
+         // Cancel all pending tasks and then schedule our task for execution
+         // 125ms in the future.
+         updateTimer_.purge();
+         updateTimer_.schedule(task, 125);
          //repaint histograms
          if (tabSelected == 0) {
             contrastPanel_.imageChanged();
-         }
-         AcquisitionVirtualStack stack = disp.virtualStack_;
-         if (stack != null) {
-            JSONObject md = disp.getCurrentMetadata();
-            if (md == null) {
-               imageMetadataModel_.setMetadata(null);
-            } else {
-               if (!showUnchangingKeys_) {
-                  md = selectChangingTags(disp.getHyperImage(), md);
-               }
-               imageMetadataModel_.setMetadata(md);
-            }
-            summaryMetadataModel_.setMetadata(disp.getSummaryMetadata());
-         } else {
-            imageMetadataModel_.setMetadata(null);
          }
       }
       
