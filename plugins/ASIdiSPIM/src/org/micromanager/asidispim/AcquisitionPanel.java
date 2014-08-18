@@ -232,16 +232,16 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // special field that is enabled/disabled depending on whether advanced timing is enabled
       desiredSlicePeriodLabel_ = new JLabel("Slice period [ms]:"); 
       volPanel_.add(desiredSlicePeriodLabel_);
-      desiredSlicePeriod_ = pu.makeSpinnerFloat(5, 1000, 0.25,
+      desiredSlicePeriod_ = pu.makeSpinnerFloat(0, 1000, 0.25,
             Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_DESIRED_SLICE_PERIOD, 30);
       volPanel_.add(desiredSlicePeriod_, "wrap");
       desiredSlicePeriod_.addChangeListener(new ChangeListener() {
          @Override
          public void stateChanged(ChangeEvent ce) {
             // make sure is multiple of 0.25
-            float val = PanelUtils.getSpinnerFloatValue(desiredSlicePeriod_);
-            float nearestValid = MyNumberUtils.roundToQuarterMs(val);
-            if (!MyNumberUtils.floatsEqual(val, nearestValid)) {
+            float userVal = PanelUtils.getSpinnerFloatValue(desiredSlicePeriod_);
+            float nearestValid = MyNumberUtils.roundToQuarterMs(userVal);
+            if (!MyNumberUtils.floatsEqual(userVal, nearestValid)) {
                PanelUtils.setSpinnerFloatValue(desiredSlicePeriod_, nearestValid);
             }
          }
@@ -252,6 +252,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       volPanel_.add(desiredLightExposureLabel_);
       desiredLightExposure_ = pu.makeSpinnerFloat(2.5, 1000.5, 1,
             Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_DESIRED_EXPOSURE, 8.5);
+      desiredLightExposure_.setToolTipText("Set to 0 for minimum slice period.");
       desiredLightExposure_.addChangeListener(new ChangeListener() {
          @Override
          public void stateChanged(ChangeEvent ce) {
@@ -270,7 +271,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       calculateSliceTiming_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            recalculateSliceTiming(false, true);
+            if (MyNumberUtils.floatsEqual(
+                  PanelUtils.getSpinnerFloatValue(desiredSlicePeriod_), (float) 0.0)) {
+               recalculateSliceTiming(false);
+            } else {
+               recalculateSliceTiming(true);
+            }
          }
       });
       volPanel_.add(calculateSliceTiming_, "center, span 2, wrap");
@@ -637,12 +643,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             if (showWarnings) {
                JOptionPane.showMessageDialog(this,
                      "Increasing slice period to meet laser exposure constraint\n"
-                           + "(some time required for camera readout).\n",
+                           + "(time required for camera readout; readout time depends on ROI).\n",
                            "Warning",
                   JOptionPane.WARNING_MESSAGE);
                elementToColor.setForeground(foregroundColorError);
                // considered actually changing the value, but decided against it because
                // maybe the user just needs to set the ROI appropriately and recalculate
+            } else {
+               elementToColor.setForeground(foregroundColorOK);
             }
       } else {
          elementToColor.setForeground(foregroundColorOK);
@@ -663,7 +671,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    /**
     * @return true if the slice timing matches the current user parameters and ROI
     */
-   private boolean isSliceTimingUpToDate(boolean showWarnings) {
+   private boolean isSliceTimingUpToDate() {
       SliceTiming currentTiming = getCurrentSliceTiming();
       SliceTiming newTiming = getTimingFromPeriodAndLightExposure(false);
       return currentTiming.equals(newTiming);
@@ -679,17 +687,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * @param showWarnings will show warning if the user-specified slice period too short
     * @return true if any change actually made  
     */
-   private boolean recalculateSliceTiming(boolean promptBeforeChange, boolean showWarnings) {
-      if (!isSliceTimingUpToDate(showWarnings)) {
-         if (promptBeforeChange) {
-            int dialogResult = JOptionPane.showConfirmDialog(this,
-                  "OK to modify slice timing settings?", 
-                  "Warning",
-                  JOptionPane.OK_CANCEL_OPTION);
-            if (dialogResult != JOptionPane.OK_OPTION) {
-               return false;
-            }
-         }
+   private boolean recalculateSliceTiming(boolean showWarnings) {
+      if (!isSliceTimingUpToDate() || 
+            ! MyNumberUtils.floatsEqual((float)computeActualSlicePeriod(),
+                  PanelUtils.getSpinnerFloatValue(desiredSlicePeriod_))) {
          SliceTiming newTiming = getTimingFromPeriodAndLightExposure(showWarnings);
          setCurrentSliceTiming(newTiming);
          return true;
@@ -988,7 +989,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       // make sure slice timings are up to date 
       if (!advancedSliceTimingCB_.isSelected()) {
-         if(!isSliceTimingUpToDate(false)) {
+         if(!isSliceTimingUpToDate()) {
             gui_.showError("Slice timing is not up to date, please recalculate.");
             return false;
          }
