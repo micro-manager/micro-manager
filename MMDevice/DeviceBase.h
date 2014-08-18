@@ -853,7 +853,7 @@ protected:
    * @param msg - message text
    * @param debugOnly - if true the meassage will be sent only in the log-debug mode
    */
-   int LogMessage(std::string msg, bool debugOnly = false) const
+   int LogMessage(const std::string& msg, bool debugOnly = false) const
    {
       if (callback_)
          return callback_->LogMessage(this, msg.c_str(), debugOnly);
@@ -885,7 +885,7 @@ protected:
    * @param message - message that will be displayed in output
    * @param debugOnly - if true the meassage will be sent only in the log-debug mode
    */
-   int LogTimeDiff(MM::MMTime start, MM::MMTime end, std::string message, bool debugOnly = false) const
+   int LogTimeDiff(MM::MMTime start, MM::MMTime end, const std::string& message, bool debugOnly = false) const
    {
       std::ostringstream os;
       MM::MMTime t = end-start;
