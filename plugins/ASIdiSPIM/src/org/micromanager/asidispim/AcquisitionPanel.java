@@ -136,6 +136,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final JButton calculateSliceTiming_;
    private final JCheckBox separateTimePointsCB_;
    private final JCheckBox saveCB_;
+   private final JCheckBox hideCB_;
    private final JComboBox spimMode_;
    
    
@@ -191,7 +192,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
       volPanel_ = new JPanel(new MigLayout(
               "",
-              "[right]16[center]",
+              "[right]10[center]",
               "[]8[]"));
 
       volPanel_.setBorder(PanelUtils.makeTitledBorder("Volume Settings"));
@@ -291,7 +292,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
       slicePanel_ = new JPanel(new MigLayout(
               "",
-              "[right]16[center]",
+              "[right]10[center]",
               "[]8[]"));
       
       final boolean slicePanelEnabled = prefs_.getBoolean(panelName_,
@@ -396,7 +397,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
       repeatPanel_ = new JPanel(new MigLayout(
               "",
-              "[right]16[center]",
+              "[right]12[center]",
               "[]8[]"));
 
       repeatPanel_.setBorder(PanelUtils.makeTitledBorder("Time Lapse Settings"));
@@ -430,10 +431,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       // start savePanel
       
-      int textFieldWidth = 20;
+      final int textFieldWidth = 20;
       savePanel_ = new JPanel(new MigLayout(
               "",
-              "[right]16[center]8[left]",
+              "[right]10[center]8[left]",
               "[]8[]"));
       savePanel_.setBorder(PanelUtils.makeTitledBorder("Data Saving Settings"));
       
@@ -442,20 +443,24 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
               Properties.Keys.PLUGIN_SEPARATE_VIEWERS_FOR_TIMEPOINTS, false));
       savePanel_.add(separateTimePointsCB_, "span 3, left, wrap");
       
+      hideCB_ = new JCheckBox("Hide viewer");
+      hideCB_.setSelected(prefs_.getBoolean(panelName_, 
+            Properties.Keys.PLUGIN_HIDE_WHILE_ACQUIRING, false));
+      savePanel_.add(hideCB_, "left");
+      
       saveCB_ = new JCheckBox("Save while acquiring");
       saveCB_.setSelected(prefs_.getBoolean(panelName_, 
               Properties.Keys.PLUGIN_SAVE_WHILE_ACQUIRING, false));
-      
-      savePanel_.add(saveCB_, "span 3, left, wrap");
+      savePanel_.add(saveCB_, "span 2, center, wrap");
 
-      JLabel dirRootLabel = new JLabel ("Directory root");
+      JLabel dirRootLabel = new JLabel ("Directory root:");
       savePanel_.add(dirRootLabel);
 
       rootField_ = new JTextField();
       rootField_.setText( prefs_.getString(panelName_, 
               Properties.Keys.PLUGIN_DIRECTORY_ROOT, "") );
       rootField_.setColumns(textFieldWidth);
-      savePanel_.add(rootField_);
+      savePanel_.add(rootField_, "span 2");
 
       JButton browseRootButton = new JButton();
       browseRootButton.addActionListener(new ActionListener() {
@@ -471,17 +476,17 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       savePanel_.add(browseRootButton, "wrap");
 
       JLabel namePrefixLabel = new JLabel();
-      namePrefixLabel.setText("Name prefix");
+      namePrefixLabel.setText("Name prefix:");
       savePanel_.add(namePrefixLabel);
 
       nameField_ = new JTextField("acq");
       nameField_.setText( prefs_.getString(panelName_,
               Properties.Keys.PLUGIN_NAME_PREFIX, "acq"));
       nameField_.setColumns(textFieldWidth);
-      savePanel_.add(nameField_, "wrap");
+      savePanel_.add(nameField_, "span 2, wrap");
       
       final JComponent[] saveComponents = { browseRootButton, rootField_, 
-                                            dirRootLabel };
+                                            dirRootLabel, namePrefixLabel, nameField_ };
       setDataSavingComponents(saveComponents);
       
       saveCB_.addActionListener(new ActionListener() {
@@ -998,19 +1003,18 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       float cameraReadoutTime = computeCameraReadoutTime();
       double exposureTime = PanelUtils.getSpinnerFloatValue(durationCamera_);
       
-      // TODO: get these from the UI
-      boolean show = true;
+      boolean show = !hideCB_.isSelected();
       boolean save = saveCB_.isSelected();
       boolean singleTimePointViewers = separateTimePointsCB_.isSelected();
       String rootDir = rootField_.getText();
 
-      int nrRepeats;
-      int nrFrames;
+      int nrRepeats;  // how many acquisition windows to open
+      int nrFrames;   // how many Micro-manager "frames" = time points to take
       if (singleTimePointViewers) {
          nrFrames = 1;
-         nrRepeats = getNumTimepoints();  // this is how many acquisition windows to open
+         nrRepeats = getNumTimepoints();
       } else {
-         nrFrames = getNumTimepoints();    // how many Micro-manager "frames" = time points to take
+         nrFrames = getNumTimepoints();
          nrRepeats = 1;
       }
 
@@ -1134,7 +1138,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             // If the interval between frames is shorter than the time to acquire
             // them, we can switch to hardware based solution.  Not sure how important 
             // that feature is, so leave it out for now.
-            for (int f = 0; f < nrFrames && !stop_.get(); f++) {
+            for (int f = 0; f < nrFrames && !stop_.get(); f++) {  // loop over time points
                long acqNow = System.currentTimeMillis();
                long delay = acqStart + f * timepointsIntervalMs - acqNow;
                while (delay > 0 && !stop_.get()) {
