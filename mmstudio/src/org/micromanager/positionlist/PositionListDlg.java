@@ -47,6 +47,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
 import javax.swing.table.TableCellRenderer;
 
 import mmcorej.CMMCore;
@@ -714,13 +715,25 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
    // The stage position changed; update curMsp_.
    @Subscribe
    public void onStagePositionChanged(StagePositionChangedEvent event) {
-      refreshCurrentPosition();
+      // Do the update on the EDT (1) to prevent data races and (2) to prevent
+      // deadlock by calling back into the stage device adapter.
+      SwingUtilities.invokeLater(new Runnable() {
+         @Override public void run() {
+            refreshCurrentPosition();
+         }
+      });
    }
 
    // The stage position changed; update curMsp_.
    @Subscribe
    public void onXYStagePositionChanged(XYStagePositionChangedEvent event) {
-      refreshCurrentPosition();
+      // Do the update on the EDT (1) to prevent data races and (2) to prevent
+      // deadlock by calling back into the stage device adapter.
+      SwingUtilities.invokeLater(new Runnable() {
+         @Override public void run() {
+            refreshCurrentPosition();
+         }
+      });
    }
 
    /**
