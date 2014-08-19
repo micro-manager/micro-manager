@@ -133,123 +133,12 @@ CMMCore::CMMCore() :
    pixelSizeGroup_ = new PixelSizeConfigGroup();
    pPostedErrorsLock_ = new MMThreadLock();
 
-   // build list of error strings
-   errorText_[MMERR_OK] = "No errors.";
-   errorText_[MMERR_GENERIC] = "Core error occurred.";
-   errorText_[MMERR_DEVICE_GENERIC] = "Device error encountered.";
-   errorText_[MMERR_NoDevice] = "Device not defined or initialized.";
-   errorText_[MMERR_SetPropertyFailed] = "Property does not exist, or value not allowed.";
-   errorText_[MMERR_LoadLibraryFailed] = "Unable to load library: file not accessible or corrupted.";
-   errorText_[MMERR_LibraryFunctionNotFound] =
-      "Unable to identify expected interface: the library is not comaptible or corrupted.";
-   errorText_[MMERR_CreateNotFound] =
-      "Unable to identify CreateDevice function: the library is not comaptible or corrupted.";
-   errorText_[MMERR_DeleteNotFound] =
-      "Unable to identify DeleteDevice function: the library is not comaptible or corrupted.";
-   errorText_[MMERR_CreateFailed] = "DeviceCreate function failed.";
-   errorText_[MMERR_DeleteFailed] = "DeviceDelete function failed.";
-   errorText_[MMERR_UnknownModule] = "Current device can't be unloaded: using unknown library.";
-   errorText_[MMERR_UnexpectedDevice] = "Unexpected device encountered.";
-   errorText_[MMERR_ModuleVersionMismatch] = "Module version mismatch.";
-   errorText_[MMERR_DeviceVersionMismatch] = "Device interface version mismatch.";
-   errorText_[MMERR_DeviceUnloadFailed] =
-      "Requested device seems fine, but the current one failed to unload.";
-   errorText_[MMERR_CameraNotAvailable] = "Camera not loaded or initialized.";
-   errorText_[MMERR_InvalidStateDevice] = "Unsupported API. This device is not a state device";
-   errorText_[MMERR_NoConfiguration] = "Configuration not defined";
-   errorText_[MMERR_InvalidPropertyBlock] = "Property block not defined";
-   errorText_[MMERR_UnhandledException] =
-      "Internal inconsistency: unknown system exception encountered";
-   errorText_[MMERR_DevicePollingTimeout] = "Device timed out";
-   errorText_[MMERR_InvalidShutterDevice] = "Unsupported interface. This device is not a shutter.";
-   errorText_[MMERR_DuplicateLabel] = "Specified device label already in use.";
-   errorText_[MMERR_InvalidSerialDevice] =
-      "Unsupported interface. The specified device is not a serial port.";
-   errorText_[MMERR_InvalidSpecificDevice] =
-      "Unsupported interface. Device is not of the correct type.";
-   errorText_[MMERR_InvalidLabel] = "Can't find the device with the specified label.";
-   errorText_[MMERR_FileOpenFailed] = "File open failed.";
-   errorText_[MMERR_InvalidCFGEntry] =
-      "Invalid configuration file line encountered. Wrong number of tokens for the current context.";
-   errorText_[MMERR_InvalidContents] =
-      "Reserved character(s) encountered in the value or name string.";
-   errorText_[MMERR_InvalidCoreProperty] = "Unrecognized core property.";
-   errorText_[MMERR_InvalidCoreValue] =
-      "Core property is read-only or the requested value is not allowed.";
-   errorText_[MMERR_NoConfigGroup] = "Configuration group not defined";
-   errorText_[MMERR_DuplicateConfigGroup] = "Group name already in use.";
-   errorText_[MMERR_CameraBufferReadFailed] = "Camera image buffer read failed.";
-   errorText_[MMERR_CircularBufferFailedToInitialize] =
-      "Failed to initialize circular buffer - memory requirements not adequate.";
-   errorText_[MMERR_CircularBufferEmpty] = "Circular buffer is empty.";
-   errorText_[MMERR_ContFocusNotAvailable] = "Auto-focus focus device not defined.";
-   errorText_[MMERR_BadConfigName] = "Configuration name contains illegale characters (/\\*!')";
-   errorText_[MMERR_NotAllowedDuringSequenceAcquisition] =
-      "This operation can not be executed while sequence acquisition is runnning.";
-   errorText_[MMERR_OutOfMemory] = "Out of memory.";
-   errorText_[MMERR_InvalidImageSequence] = "Issue snapImage before getImage.";
-   errorText_[MMERR_NullPointerException] = "Null Pointer Exception.";
-   errorText_[MMERR_CreatePeripheralFailed] = "Hub failed to create specified peripheral device.";
+   InitializeErrorMessages();
 
    callback_ = new CoreCallback(this);
    cbuf_ = new CircularBuffer(10); // allocate 10MB initially
 
-   // set-up core properties
-   properties_ = new CorePropertyCollection(this);
-
-   // Initialize
-   CoreProperty propInit("0", false);
-   propInit.AddAllowedValue("0");
-   propInit.AddAllowedValue("1");
-   properties_->Add(MM::g_Keyword_CoreInitialize, propInit);
-
-   // Auto shutter
-   CoreProperty propAutoShutter("1", false);
-   propAutoShutter.AddAllowedValue("0");
-   propAutoShutter.AddAllowedValue("1");
-   properties_->Add(MM::g_Keyword_CoreAutoShutter, propAutoShutter);
-
-   CoreProperty propCamera;
-   properties_->Add(MM::g_Keyword_CoreCamera, propCamera);
-   properties_->AddAllowedValue(MM::g_Keyword_CoreCamera, "");
-
-   CoreProperty propShutter;
-   properties_->Add(MM::g_Keyword_CoreShutter, propShutter);
-   properties_->AddAllowedValue(MM::g_Keyword_CoreShutter, "");
-
-   CoreProperty propFocus;
-   properties_->Add(MM::g_Keyword_CoreFocus, propFocus);
-   properties_->AddAllowedValue(MM::g_Keyword_CoreFocus, "");
-
-   CoreProperty propXYStage;
-   properties_->Add(MM::g_Keyword_CoreXYStage, propXYStage);
-   properties_->AddAllowedValue(MM::g_Keyword_CoreXYStage, "");
-
-   CoreProperty propAutoFocus;
-   properties_->Add(MM::g_Keyword_CoreAutoFocus, propAutoFocus);
-   properties_->AddAllowedValue(MM::g_Keyword_CoreAutoFocus, "");
-
-   CoreProperty propImageProc;
-   properties_->Add(MM::g_Keyword_CoreImageProcessor, propImageProc);
-   properties_->AddAllowedValue(MM::g_Keyword_CoreImageProcessor, "");
-
-   CoreProperty propSLM;
-   properties_->Add(MM::g_Keyword_CoreSLM, propSLM);
-   properties_->AddAllowedValue(MM::g_Keyword_CoreSLM, "");
-
-   CoreProperty propGalvo;
-   properties_->Add(MM::g_Keyword_CoreGalvo, propGalvo);
-   properties_->AddAllowedValue(MM::g_Keyword_CoreGalvo, "");
-
-   CoreProperty propChannelGroup;
-   properties_->Add(MM::g_Keyword_CoreChannelGroup, propChannelGroup);
-   properties_->AddAllowedValue(MM::g_Keyword_CoreChannelGroup, "");
-
-   // Time after which we give up on checking the Busy flag status
-   CoreProperty propBusyTimeoutMs;
-   properties_->Add(MM::g_Keyword_CoreTimeoutMs, propBusyTimeoutMs);
-
-   properties_->Refresh();
+   CreateCoreProperties();
 }
 
 /**
@@ -6202,6 +6091,125 @@ double CMMCore::getAutoFocusOffset() throw (CMMError)
 ///////////////////////////////////////////////////////////////////////////////
 // Private methods
 ///////////////////////////////////////////////////////////////////////////////
+
+void CMMCore::InitializeErrorMessages()
+{
+   errorText_[MMERR_OK] = "No errors.";
+   errorText_[MMERR_GENERIC] = "Core error occurred.";
+   errorText_[MMERR_DEVICE_GENERIC] = "Device error encountered.";
+   errorText_[MMERR_NoDevice] = "Device not defined or initialized.";
+   errorText_[MMERR_SetPropertyFailed] = "Property does not exist, or value not allowed.";
+   errorText_[MMERR_LoadLibraryFailed] = "Unable to load library: file not accessible or corrupted.";
+   errorText_[MMERR_LibraryFunctionNotFound] =
+      "Unable to identify expected interface: the library is not comaptible or corrupted.";
+   errorText_[MMERR_CreateNotFound] =
+      "Unable to identify CreateDevice function: the library is not comaptible or corrupted.";
+   errorText_[MMERR_DeleteNotFound] =
+      "Unable to identify DeleteDevice function: the library is not comaptible or corrupted.";
+   errorText_[MMERR_CreateFailed] = "DeviceCreate function failed.";
+   errorText_[MMERR_DeleteFailed] = "DeviceDelete function failed.";
+   errorText_[MMERR_UnknownModule] = "Current device can't be unloaded: using unknown library.";
+   errorText_[MMERR_UnexpectedDevice] = "Unexpected device encountered.";
+   errorText_[MMERR_ModuleVersionMismatch] = "Module version mismatch.";
+   errorText_[MMERR_DeviceVersionMismatch] = "Device interface version mismatch.";
+   errorText_[MMERR_DeviceUnloadFailed] =
+      "Requested device seems fine, but the current one failed to unload.";
+   errorText_[MMERR_CameraNotAvailable] = "Camera not loaded or initialized.";
+   errorText_[MMERR_InvalidStateDevice] = "Unsupported API. This device is not a state device";
+   errorText_[MMERR_NoConfiguration] = "Configuration not defined";
+   errorText_[MMERR_InvalidPropertyBlock] = "Property block not defined";
+   errorText_[MMERR_UnhandledException] =
+      "Internal inconsistency: unknown system exception encountered";
+   errorText_[MMERR_DevicePollingTimeout] = "Device timed out";
+   errorText_[MMERR_InvalidShutterDevice] = "Unsupported interface. This device is not a shutter.";
+   errorText_[MMERR_DuplicateLabel] = "Specified device label already in use.";
+   errorText_[MMERR_InvalidSerialDevice] =
+      "Unsupported interface. The specified device is not a serial port.";
+   errorText_[MMERR_InvalidSpecificDevice] =
+      "Unsupported interface. Device is not of the correct type.";
+   errorText_[MMERR_InvalidLabel] = "Can't find the device with the specified label.";
+   errorText_[MMERR_FileOpenFailed] = "File open failed.";
+   errorText_[MMERR_InvalidCFGEntry] =
+      "Invalid configuration file line encountered. Wrong number of tokens for the current context.";
+   errorText_[MMERR_InvalidContents] =
+      "Reserved character(s) encountered in the value or name string.";
+   errorText_[MMERR_InvalidCoreProperty] = "Unrecognized core property.";
+   errorText_[MMERR_InvalidCoreValue] =
+      "Core property is read-only or the requested value is not allowed.";
+   errorText_[MMERR_NoConfigGroup] = "Configuration group not defined";
+   errorText_[MMERR_DuplicateConfigGroup] = "Group name already in use.";
+   errorText_[MMERR_CameraBufferReadFailed] = "Camera image buffer read failed.";
+   errorText_[MMERR_CircularBufferFailedToInitialize] =
+      "Failed to initialize circular buffer - memory requirements not adequate.";
+   errorText_[MMERR_CircularBufferEmpty] = "Circular buffer is empty.";
+   errorText_[MMERR_ContFocusNotAvailable] = "Auto-focus focus device not defined.";
+   errorText_[MMERR_BadConfigName] = "Configuration name contains illegale characters (/\\*!')";
+   errorText_[MMERR_NotAllowedDuringSequenceAcquisition] =
+      "This operation can not be executed while sequence acquisition is runnning.";
+   errorText_[MMERR_OutOfMemory] = "Out of memory.";
+   errorText_[MMERR_InvalidImageSequence] = "Issue snapImage before getImage.";
+   errorText_[MMERR_NullPointerException] = "Null Pointer Exception.";
+   errorText_[MMERR_CreatePeripheralFailed] = "Hub failed to create specified peripheral device.";
+}
+
+void CMMCore::CreateCoreProperties()
+{
+   properties_ = new CorePropertyCollection(this);
+
+   // Initialize
+   CoreProperty propInit("0", false);
+   propInit.AddAllowedValue("0");
+   propInit.AddAllowedValue("1");
+   properties_->Add(MM::g_Keyword_CoreInitialize, propInit);
+
+   // Auto shutter
+   CoreProperty propAutoShutter("1", false);
+   propAutoShutter.AddAllowedValue("0");
+   propAutoShutter.AddAllowedValue("1");
+   properties_->Add(MM::g_Keyword_CoreAutoShutter, propAutoShutter);
+
+   CoreProperty propCamera;
+   properties_->Add(MM::g_Keyword_CoreCamera, propCamera);
+   properties_->AddAllowedValue(MM::g_Keyword_CoreCamera, "");
+
+   CoreProperty propShutter;
+   properties_->Add(MM::g_Keyword_CoreShutter, propShutter);
+   properties_->AddAllowedValue(MM::g_Keyword_CoreShutter, "");
+
+   CoreProperty propFocus;
+   properties_->Add(MM::g_Keyword_CoreFocus, propFocus);
+   properties_->AddAllowedValue(MM::g_Keyword_CoreFocus, "");
+
+   CoreProperty propXYStage;
+   properties_->Add(MM::g_Keyword_CoreXYStage, propXYStage);
+   properties_->AddAllowedValue(MM::g_Keyword_CoreXYStage, "");
+
+   CoreProperty propAutoFocus;
+   properties_->Add(MM::g_Keyword_CoreAutoFocus, propAutoFocus);
+   properties_->AddAllowedValue(MM::g_Keyword_CoreAutoFocus, "");
+
+   CoreProperty propImageProc;
+   properties_->Add(MM::g_Keyword_CoreImageProcessor, propImageProc);
+   properties_->AddAllowedValue(MM::g_Keyword_CoreImageProcessor, "");
+
+   CoreProperty propSLM;
+   properties_->Add(MM::g_Keyword_CoreSLM, propSLM);
+   properties_->AddAllowedValue(MM::g_Keyword_CoreSLM, "");
+
+   CoreProperty propGalvo;
+   properties_->Add(MM::g_Keyword_CoreGalvo, propGalvo);
+   properties_->AddAllowedValue(MM::g_Keyword_CoreGalvo, "");
+
+   CoreProperty propChannelGroup;
+   properties_->Add(MM::g_Keyword_CoreChannelGroup, propChannelGroup);
+   properties_->AddAllowedValue(MM::g_Keyword_CoreChannelGroup, "");
+
+   // Time after which we give up on checking the Busy flag status
+   CoreProperty propBusyTimeoutMs;
+   properties_->Add(MM::g_Keyword_CoreTimeoutMs, propBusyTimeoutMs);
+
+   properties_->Refresh();
+}
 
 static bool ContainsForbiddenCharacters(const std::string& str)
 {

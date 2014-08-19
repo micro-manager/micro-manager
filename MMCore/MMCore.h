@@ -630,6 +630,9 @@ private:
    mutable std::deque<std::pair< int, std::string> > postedErrors_;
 
 private:
+   void InitializeErrorMessages();
+   void CreateCoreProperties();
+
    // Parameter/value validation
    static void CheckDeviceLabel(const char* label) throw (CMMError);
    static void CheckPropertyName(const char* propName) throw (CMMError);
