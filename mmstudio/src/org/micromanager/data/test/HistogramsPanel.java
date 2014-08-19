@@ -18,7 +18,7 @@ import org.micromanager.utils.ReportingUtils;
 public final class HistogramsPanel extends JPanel implements Histograms {
    private static final int SLOW_HIST_UPDATE_INTERVAL_MS = 1000;
    private long lastUpdateTime_;
-   private ArrayList<ChannelControlPanel> ccpList_;
+   private ArrayList<ChannelControlPanel> channelPanels_;
    private Datastore store_;
    private CompositeImage composite_;
    private EventBus bus_;
@@ -50,53 +50,53 @@ public final class HistogramsPanel extends JPanel implements Histograms {
               nChannels * ChannelControlPanel.MINIMUM_SIZE.height);
       this.setMinimumSize(dim);
       this.setSize(dim);
-      ccpList_ = new ArrayList<ChannelControlPanel>();
+      channelPanels_ = new ArrayList<ChannelControlPanel>();
       for (int i = 0; i < nChannels; ++i) {
-         ChannelControlPanel ccp = new ChannelControlPanel(i, this, store_,
+         ChannelControlPanel panel = new ChannelControlPanel(i, this, store_,
                composite_, bus_);
-         this.add(ccp);
-         ccpList_.add(ccp);
+         this.add(panel);
+         channelPanels_.add(panel);
       }
 
       this.validate();
    }
    
    public void updateChannelNamesAndColors() {
-      if (ccpList_ == null) {
+      if (channelPanels_ == null) {
          return;
       }
-      for (ChannelControlPanel c : ccpList_) {
-         c.updateChannelNameAndColorFromCache();
+      for (ChannelControlPanel panel : channelPanels_) {
+         panel.updateChannelNameAndColorFromCache();
       }
    }
 
    public void fullScaleChannels() {
-      if (ccpList_ == null) {
+      if (channelPanels_ == null) {
          return;
       }
-      for (ChannelControlPanel c : ccpList_) {
-         c.setFullScale();
+      for (ChannelControlPanel panel : channelPanels_) {
+         panel.setFullScale();
       }
       applyLUTToImage();
    }
 
    public void applyContrastToAllChannels(int min, int max, double gamma) {
-      if (ccpList_ == null) {
+      if (channelPanels_ == null) {
          return;
       }
-      for (ChannelControlPanel c : ccpList_) {
-         c.setContrast(min, max, gamma);
+      for (ChannelControlPanel panel : channelPanels_) {
+         panel.setContrast(min, max, gamma);
       }
       applyLUTToImage();
    }
 
    @Override
    public ContrastSettings getChannelContrastSettings(int channel) {
-      if (ccpList_ == null || ccpList_.size() - 1 > channel) {
+      if (channelPanels_ == null || channelPanels_.size() - 1 > channel) {
          return null;
       }
-      return new ContrastSettings(ccpList_.get(channel).getContrastMin(),
-              ccpList_.get(channel).getContrastMax(), ccpList_.get(channel).getContrastGamma());
+      return new ContrastSettings(channelPanels_.get(channel).getContrastMin(),
+              channelPanels_.get(channel).getContrastMax(), channelPanels_.get(channel).getContrastGamma());
    }
 
    public void updateOtherDisplayCombos(int selectedIndex) {
@@ -104,50 +104,50 @@ public final class HistogramsPanel extends JPanel implements Histograms {
          return;
       }
       updatingCombos_ = true;
-      for (int i = 0; i < ccpList_.size(); i++) {
-         ccpList_.get(i).setDisplayComboIndex(selectedIndex);
+      for (int i = 0; i < channelPanels_.size(); i++) {
+         channelPanels_.get(i).setDisplayComboIndex(selectedIndex);
       }
       updatingCombos_ = false;
    }
 
    public void setChannelDisplayModeFromFirst() {
-      if (ccpList_ == null || ccpList_.size() <= 1) {
+      if (channelPanels_ == null || channelPanels_.size() <= 1) {
          return;
       }
-      int displayIndex = ccpList_.get(0).getDisplayComboIndex();
+      int displayIndex = channelPanels_.get(0).getDisplayComboIndex();
       //automatically syncs other channels
-      ccpList_.get(0).setDisplayComboIndex(displayIndex);
+      channelPanels_.get(0).setDisplayComboIndex(displayIndex);
    }
 
    public void setChannelContrastFromFirst() {
-      if (ccpList_ == null || ccpList_.size() <= 1) {
+      if (channelPanels_ == null || channelPanels_.size() <= 1) {
          return;
       }
-      int min = ccpList_.get(0).getContrastMin();
-      int max = ccpList_.get(0).getContrastMax();
-      double gamma = ccpList_.get(0).getContrastGamma();
-      for (int i = 1; i < ccpList_.size(); i++) {
-         ccpList_.get(i).setContrast(min, max, gamma);
+      int min = channelPanels_.get(0).getContrastMin();
+      int max = channelPanels_.get(0).getContrastMax();
+      double gamma = channelPanels_.get(0).getContrastGamma();
+      for (int i = 1; i < channelPanels_.size(); i++) {
+         channelPanels_.get(i).setContrast(min, max, gamma);
       }
       applyLUTToImage();
    }
 
    @Override
    public void setChannelHistogramDisplayMax(int channelIndex, int histMax) {
-      if (ccpList_ == null || ccpList_.size() <= channelIndex) {
+      if (channelPanels_ == null || channelPanels_.size() <= channelIndex) {
          return;
       }
       int index = (int) (histMax == -1 ? 0 : Math.ceil(Math.log(histMax) / Math.log(2)) - 3);
-      ccpList_.get(channelIndex).setDisplayComboIndex(index);
+      channelPanels_.get(channelIndex).setDisplayComboIndex(index);
    }
 
    @Override
    public void applyLUTToImage() {
-      if (ccpList_ == null) {
+      if (channelPanels_ == null) {
          return;
       }
-      for (ChannelControlPanel c : ccpList_) {
-         c.applyChannelLUTToImage();
+      for (ChannelControlPanel panel : channelPanels_) {
+         panel.applyChannelLUTToImage();
       }
       bus_.post(new DrawEvent());
    }
@@ -170,14 +170,14 @@ public final class HistogramsPanel extends JPanel implements Histograms {
       updateActiveChannels();
       
       if (update) {
-         for (ChannelControlPanel c : ccpList_) {
+         for (ChannelControlPanel panel : channelPanels_) {
             // TODO: used to check if we're the active display, as the boolean
             // here.
-            c.calcAndDisplayHistAndStats(true);
+            panel.calcAndDisplayHistAndStats(true);
             if (store_.getDisplaySettings().getShouldAutostretch()) {
-               c.autostretch();
+               panel.autostretch();
             }
-            c.applyChannelLUTToImage();
+            panel.applyChannelLUTToImage();
          }
       }
    }
@@ -194,10 +194,10 @@ public final class HistogramsPanel extends JPanel implements Histograms {
 
    @Override
    public void setChannelContrast(int channelIndex, int min, int max, double gamma) {
-      if (channelIndex >= ccpList_.size()) {
+      if (channelIndex >= channelPanels_.size()) {
          return;
       }
-      ccpList_.get(channelIndex).setContrast(min, max, gamma);
+      channelPanels_.get(channelIndex).setContrast(min, max, gamma);
    }
    
    public void setDisplayMode(int mode) {
@@ -207,43 +207,43 @@ public final class HistogramsPanel extends JPanel implements Histograms {
 
    @Override
    public void autoscaleAllChannels() {
-      if (ccpList_ != null && ccpList_.size() > 0) {
-         for (ChannelControlPanel c : ccpList_) {
-            c.autoButtonAction();
+      if (channelPanels_ != null && channelPanels_.size() > 0) {
+         for (ChannelControlPanel panel : channelPanels_) {
+            panel.autoButtonAction();
          }
       }
    }
 
    @Override
    public void rejectOutliersChangeAction() {
-      if (ccpList_ != null && ccpList_.size() > 0) {
-         for (ChannelControlPanel c : ccpList_) {
-            c.calcAndDisplayHistAndStats(true);
-            c.autoButtonAction();
+      if (channelPanels_ != null && channelPanels_.size() > 0) {
+         for (ChannelControlPanel panel : channelPanels_) {
+            panel.calcAndDisplayHistAndStats(true);
+            panel.autoButtonAction();
          }
       }
    }
 
    @Override
    public void calcAndDisplayHistAndStats(boolean drawHist) {
-      if (ccpList_ != null) {
-         for (ChannelControlPanel c : ccpList_) {
-            c.calcAndDisplayHistAndStats(drawHist);
+      if (channelPanels_ != null) {
+         for (ChannelControlPanel panel : channelPanels_) {
+            panel.calcAndDisplayHistAndStats(drawHist);
          }
       }
    }
 
    @Override
    public void autostretch() {
-      if (ccpList_ != null) {
-         for (ChannelControlPanel c : ccpList_) {
-            c.autostretch();
+      if (channelPanels_ != null) {
+         for (ChannelControlPanel panel : channelPanels_) {
+            panel.autostretch();
          }
       }
    }
 
    @Override
    public int getNumberOfChannels() {
-      return ccpList_.size();
+      return channelPanels_.size();
    }
 }
