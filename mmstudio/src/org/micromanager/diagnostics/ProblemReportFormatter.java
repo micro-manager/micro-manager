@@ -15,6 +15,14 @@ import org.micromanager.diagnostics.ProblemReport;
 
 
 public class ProblemReportFormatter {
+   static final String FORMAT_VERSION = "2.1";
+   /*
+    * Version history:
+    * 2    Introduced versioning.
+    * 2.1  Added Pid field.
+    */
+
+
    /**
     * Return a filename for use upon report upload.
     */
@@ -68,7 +76,7 @@ public class ProblemReportFormatter {
       // changed without extreme care.
       StringBuilder sb = new StringBuilder(512);
 
-      sb.append(preambleKeyValue("Report Format Version", "2"));
+      sb.append(preambleKeyValue("Report Format Version", FORMAT_VERSION));
       sb.append(preambleKeyValue("User Name", report.getUserName()));
       sb.append(preambleKeyValue("Organization", report.getUserOrganization()));
       sb.append(preambleKeyValue("User e-mail", report.getUserEmail()));
@@ -92,6 +100,7 @@ public class ProblemReportFormatter {
       }
 
       sb.append(preambleKeyValue("User", report.getUserId()));
+      sb.append(preambleKeyValue("Pid", Integer.toString(report.getPid())));
 
       // Note: Older versions had a single "configuration file" key (note
       // lowercase), and included only the configuration at the time of sending

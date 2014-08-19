@@ -33,6 +33,7 @@ public class ProblemReport {
    private String ipAddress_;
    private String hostName_;
 
+   private final int pid_;
    private final java.util.Date date_; // Treat as if immutable!
 
    private ConfigFile startCfg_;
@@ -47,6 +48,18 @@ public class ProblemReport {
 
    public ProblemReport(mmcorej.CMMCore core, org.micromanager.MMOptions prefs) {
       core_ = core;
+
+      java.lang.management.RuntimeMXBean rtMXB =
+         java.lang.management.ManagementFactory.getRuntimeMXBean();
+      final String jvmName = rtMXB.getName();
+      int pid;
+      try {
+         pid = Integer.parseInt(jvmName.split("@")[0]);
+      }
+      catch (NumberFormatException e) {
+         pid = 0;
+      }
+      pid_ = pid;
 
       date_ = new java.util.Date();
 
@@ -236,6 +249,10 @@ public class ProblemReport {
 
    String getUserId() {
       return core_.getUserId();
+   }
+
+   int getPid() {
+      return pid_;
    }
 
    java.util.Date getDate() {
