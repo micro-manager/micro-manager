@@ -62,7 +62,7 @@ import org.micromanager.utils.ReportingUtils;
 public class ChannelControlPanel extends JPanel implements CursorListener {
 
    private static final Dimension CONTROLS_SIZE = new Dimension(130, 150);
-   public static final Dimension MINIMUM_SIZE = new Dimension(400,CONTROLS_SIZE.height);
+   public static final Dimension MINIMUM_SIZE = new Dimension(400, CONTROLS_SIZE.height);
    
    private static final int NUM_BINS = 256;
    private final int channelIndex_;
@@ -126,7 +126,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             new DefaultCoords.Builder().position("channel", channelIndex_).build()
       );
       if (images != null && images.size() > 0) {
-         // Found an image for our channel!
+         // Found an image for our channel
          bitDepth_ = images.get(0).getMetadata().getBitDepth();
          initialize();
       }
@@ -406,20 +406,22 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          histMax_ = (int) (Math.pow(2, bits) - 1);
       }
       binSize_ = ((double) (histMax_ + 1)) / ((double) NUM_BINS);
+      ReportingUtils.logError("binSize_ set to " + binSize_);
       histMaxLabel_ = histMax_ + "";
       updateHistogram();
       calcAndDisplayHistAndStats(true);
       storeDisplaySettings();
-      
    }
 
    private void updateHistogram() {
-      hp_.setCursorText(contrastMin_ +"", contrastMax_ + "");
+      ReportingUtils.logError("updateHistogram");
+      hp_.setCursorText(contrastMin_ + "", contrastMax_ + "");
       hp_.setCursors(contrastMin_ / binSize_, (contrastMax_+1) / binSize_, gamma_);
       hp_.repaint();
    }
 
    private void fullButtonAction() {
+      ReportingUtils.logError("fullButton");
       if (settings_.getShouldSyncChannels() != null &&
             settings_.getShouldSyncChannels()) {
          parent_.fullScaleChannels();
@@ -635,10 +637,10 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       gamma_ = gamma;
    }
 
-   //Need to put this on EDT to avoid index out of bounds because of setting currentChannel to -1
    public void applyChannelLUTToImage() {
+      // Need to put this on EDT to avoid index out of bounds because of
+      // setting currentChannel to -1
       Runnable run = new Runnable() {
-
          @Override
          public void run() {
             if (store_.getIsLocked()) {
@@ -649,13 +651,14 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             LUT lut = ImageUtils.makeLUT(color_, gamma_);
             lut.min = contrastMin_;
             lut.max = contrastMax_;
-            //uses lut.min and lut.max to set min and max of precessor
+            // uses lut.min and lut.max to set min and max of precessor
             composite_.setChannelLut(lut, channelIndex_ + 1);
 
-            //ImageJ workaround: do this so the appropriate color model and min/max get applied 
-            //in color or grayscael mode
+            // ImageJ workaround: do this so the appropriate color model and
+            // min/max get applied in color or grayscale mode
             try {
-               JavaUtils.setRestrictedFieldValue(composite_, CompositeImage.class, "currentChannel", -1);
+               JavaUtils.setRestrictedFieldValue(composite_, 
+                     CompositeImage.class, "currentChannel", -1);
             } catch (NoSuchFieldException ex) {
                ReportingUtils.logError(ex);
             }
@@ -672,9 +675,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
                }
             }
             storeDisplaySettings();
-
             updateHistogram();
-
          }
       };
       if (SwingUtilities.isEventDispatchThread()) {
@@ -699,7 +700,9 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
     * 
     */
    public void calcAndDisplayHistAndStats(boolean drawHist) {
+      ReportingUtils.logError("Calculating histogram...");
       if (composite_ == null || composite_.getProcessor() == null) {
+         ReportingUtils.logError("No image to work with");
          return;
       }
       ImageProcessor ip;
@@ -710,34 +713,37 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
       } else {
          MMCompositeImage ci = (MMCompositeImage) composite_;
-         int flatIndex = 1 + channelIndex_ + (composite_.getSlice() - 1) * ci.getNChannelsUnverified()
-                 + (composite_.getFrame() - 1) * ci.getNSlicesUnverified() * ci.getNChannelsUnverified();
+         int flatIndex = 1 + channelIndex_ + 
+               (composite_.getSlice() - 1) * ci.getNChannelsUnverified() +
+               (composite_.getFrame() - 1) * ci.getNSlicesUnverified() * ci.getNChannelsUnverified();
          ip = composite_.getStack().getProcessor(flatIndex);
-
+      }
+      if (ip == null ) {
+         ReportingUtils.logError("No processor; mode is composite? " + (composite_.getMode() == CompositeImage.COMPOSITE));
+         return;
       }
 
       if (((MMCompositeImage) composite_).getNChannelsUnverified() <= 7) {
          boolean active = composite_.getActiveChannels()[channelIndex_];
          channelNameCheckbox_.setSelected(active);
          if (!active) {
+            ReportingUtils.logError("Can't draw histogram because not active");
             drawHist = false;
          }
       }
       if (((MMCompositeImage) composite_).getMode() != CompositeImage.COMPOSITE) {
          if (composite_.getChannel() - 1 != channelIndex_) {
+            ReportingUtils.logError("Can't draw histogram because not composite and wrong channel");
             drawHist = false;
          }
       }
       
-      if (ip == null ) {
-         return;
-      }
-
       int[] rawHistogram = ip.getHistogram();
       int imgWidth = composite_.getWidth();
       int imgHeight = composite_.getHeight();
 
       if (rawHistogram[0] == imgWidth * imgHeight) {
+         ReportingUtils.logError("No pixels");
          return;  //Blank pixels 
       }
       if (settings_.getShouldIgnoreOutliers() != null &&
@@ -763,6 +769,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       int numBins = (int) Math.min(rawHistogram.length / binSize_, NUM_BINS);
       int[] histogram = new int[NUM_BINS];
       int total = 0;
+      ReportingUtils.logError("Generating histogram data with " + numBins + " bins");
       for (int i = 0; i < numBins; i++) {
          histogram[i] = 0;
          for (int j = 0; j < binSize_; j++) {
@@ -776,6 +783,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
                }
             }
          }
+         ReportingUtils.logError("Histogram at " + i + " is " + histogram[i]);
          total += histogram[i];
          if (settings_.getShouldUseLogScale() != null && 
                settings_.getShouldUseLogScale()) {
