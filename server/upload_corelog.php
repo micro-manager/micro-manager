@@ -59,7 +59,7 @@ else
               $user_email = trim(substr($line, strlen($user_email_tag), 256));
            $mess = $mess . rtrim($line) . "\n";
            $lineCount = $lineCount + 1;
-           if( 2000 < $lineCount)
+           if( 10000 < $lineCount)
                break 1;
            }
        } 
