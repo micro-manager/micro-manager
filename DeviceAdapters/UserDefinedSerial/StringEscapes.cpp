@@ -88,7 +88,7 @@ ParseOctalEscape(const std::string& input, size_t& i,
    for (size_t start = i; i < input.size() && i < start + 3; ++i)
    {
       char ch = input[i];
-      if (ch >= '0' && ch <= '0')
+      if (ch >= '0' && ch < '8')
       {
          byte *= 8;
          byte += ch - '0';
@@ -160,7 +160,7 @@ ParseAfterBackslash(const std::string& input, size_t& i,
       std::vector<char>& bytes)
 {
    char ch = input[i];
-   if (ch >= '0' && ch <= '9')
+   if (ch >= '0' && ch < '8')
    {
       int err = ParseOctalEscape(input, i, bytes);
       if (err != DEVICE_OK)

@@ -94,6 +94,8 @@ INSTANTIATE_TEST_CASE_P(EscapeErrorTestCase, ParameterizedUnescapeTest,
          mktesttriple("\\\\\\", ERR_TRAILING_BACKSLASH, "NC"),
          mktesttriple("\\X", ERR_UNKNOWN_ESCAPE_SEQUENCE, "NC"),
          mktesttriple("\\Z", ERR_UNKNOWN_ESCAPE_SEQUENCE, "NC"),
+         mktesttriple("\\8", ERR_UNKNOWN_ESCAPE_SEQUENCE, "NC"),
+         mktesttriple("\\9", ERR_UNKNOWN_ESCAPE_SEQUENCE, "NC"),
          mktesttriple("\\xZ", ERR_EMPTY_HEX_ESCAPE_SEQUENCE, "NC")
       ));
 
@@ -107,7 +109,16 @@ INSTANTIATE_TEST_CASE_P(OctalEscapeTestCase, ParameterizedUnescapeTest,
          mktesttriple("\\000x", DEVICE_OK, "\\x00x"),
          mktesttriple("\\0000", DEVICE_OK, "\\x000"),
          mktesttriple("\\00000", DEVICE_OK, "\\x0000"),
-         mktesttriple("x\\0x", DEVICE_OK, "x\\x00x")
+         mktesttriple("x\\0x", DEVICE_OK, "x\\x00x"),
+         mktesttriple("\\1", DEVICE_OK, "\\x01"),
+         mktesttriple("\\7", DEVICE_OK, "\\x07"),
+         mktesttriple("\\01", DEVICE_OK, "\\x01"),
+         mktesttriple("\\10", DEVICE_OK, "\\x08"),
+         mktesttriple("\\17", DEVICE_OK, "\\x0f"),
+         mktesttriple("\\71", DEVICE_OK, "9"),
+         mktesttriple("\\70", DEVICE_OK, "8"),
+         mktesttriple("\\123", DEVICE_OK, "S"),
+         mktesttriple("\\1234", DEVICE_OK, "S4")
       ));
 
 INSTANTIATE_TEST_CASE_P(HexEscapeTestCase, ParameterizedUnescapeTest,
