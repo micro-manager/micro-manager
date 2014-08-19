@@ -272,12 +272,12 @@ UserDefSerialStateDevice::CreatePostInitProperties()
    queryResponses_.reset(new std::vector<char>[numPositions_]);
    for (size_t i = 0; i < numPositions_; ++i)
    {
-      err = CreateByteStringProperty(g_PropNamePrefix_SetStateCommand +
+      err = CreateByteStringProperty(g_PropNamePrefix_SetPositionCommand +
             boost::lexical_cast<std::string>(i), positionCommands_[i]);
       if (err != DEVICE_OK)
          return err;
 
-      err = CreateByteStringProperty(g_PropNamePrefix_SetStateResponse +
+      err = CreateByteStringProperty(g_PropNamePrefix_SetPositionResponse +
             boost::lexical_cast<std::string>(i), positionResponses_[i]);
       if (err != DEVICE_OK)
          return err;

@@ -56,8 +56,8 @@ const char* const g_PropName_QueryCloseResponse =
    "QueryState-closed-response";
 
 const char* const g_PropName_NumPositions = "Number of positions";
-const char* const g_PropNamePrefix_SetStateCommand = "SetState-command-";
-const char* const g_PropNamePrefix_SetStateResponse = "SetState-response-";
+const char* const g_PropNamePrefix_SetPositionCommand = "SetPosition-command-";
+const char* const g_PropNamePrefix_SetPositionResponse = "SetPosition-response-";
 const char* const g_PropName_QueryPositionCommand = "QueryPosition-command";
 const char* const g_PropNamePrefix_QueryPositionResponse =
    "QueryPosition-response-";
