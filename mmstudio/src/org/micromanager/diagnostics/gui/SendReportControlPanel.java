@@ -72,7 +72,7 @@ class SendReportControlPanel extends ControlPanel {
          }
       });
 
-      sendButton_ = new JButton("Send Report");
+      sendButton_ = new JButton("Send Report...");
       sendButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {

@@ -358,6 +358,10 @@ public class ProblemReportController {
          return;
       }
 
+      if (!confirmEmailAddress()) {
+         return;
+      }
+
       final SendReportControlPanel panel = (SendReportControlPanel) frame_.getControlPanel();
       panel.setUIMode(SendReportControlPanel.UIMode.SENDING);
       getDescriptionTextArea().setEnabled(false);
@@ -401,6 +405,21 @@ public class ProblemReportController {
             getDescriptionTextArea().setEnabled(true);
          }
       }.execute();
+   }
+
+   private boolean confirmEmailAddress() {
+      String confirmEmail = JOptionPane.showInputDialog(frame_,
+            "Please enter your email address once more:",
+            "Send Problem Report", JOptionPane.QUESTION_MESSAGE);
+      if (confirmEmail == null) {
+         return false;
+      }
+      if (!confirmEmail.equals(email_)) {
+         JOptionPane.showMessageDialog(frame_,
+               "Email address does not match; please check your typing.");
+         return false;
+      }
+      return true;
    }
 
    private void copyUserEnteredValuesToReport() {
