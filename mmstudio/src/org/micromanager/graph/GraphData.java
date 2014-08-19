@@ -77,13 +77,13 @@ public class GraphData {
       b.yMax = Double.MIN_VALUE;
       b.yMin = Double.MAX_VALUE;
       
-      for (int i=0; i<xVals_.length; i++) {
+      for (int i = 0; i < xVals_.length; i++) {
          if (xVals_[i] > b.xMax)
             b.xMax = xVals_[i];
          if (xVals_[i] < b.xMin)
             b.xMin = xVals_[i];
       }
-      for (int i=0; i<yVals_.length; i++) {
+      for (int i = 0; i < yVals_.length; i++) {
          if (yVals_[i] > b.yMax)
             b.yMax = yVals_[i];
          if (yVals_[i] < b.yMin)
