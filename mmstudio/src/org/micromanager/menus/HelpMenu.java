@@ -24,10 +24,9 @@ public class HelpMenu {
    private CMMCore core_;
    private MMOptions options_;
 
-   public HelpMenu(MMStudio studio, CMMCore core, MMOptions options) {
+   public HelpMenu(MMStudio studio, CMMCore core) {
       studio_ = studio;
       core_ = core;
-      options_ = options;
    }
    
    public void initializeHelpMenu(JMenuBar menuBar, final Preferences prefs) {
@@ -62,7 +61,7 @@ public class HelpMenu {
          new Runnable() {
             @Override
             public void run() {
-               org.micromanager.diagnostics.gui.ProblemReportController.start(core_, options_);
+               org.micromanager.diagnostics.gui.ProblemReportController.start(core_);
             }
          }
       );

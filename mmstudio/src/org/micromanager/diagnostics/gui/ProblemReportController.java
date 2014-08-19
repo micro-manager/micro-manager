@@ -36,10 +36,9 @@ public class ProblemReportController {
     * Activates the Problem Report window. If one is already open, brings it to
     * the front; if not, creates the window.
     */
-   public static void start(final mmcorej.CMMCore core,
-         final org.micromanager.MMOptions prefs) {
+   public static void start(final mmcorej.CMMCore core) {
       if (instance_ == null) {
-         instance_ = new ProblemReportController(core, prefs);
+         instance_ = new ProblemReportController(core);
       }
       instance_.showFrame();
    }
@@ -49,7 +48,6 @@ public class ProblemReportController {
     */
 
    private final mmcorej.CMMCore core_;
-   private final org.micromanager.MMOptions prefs_;
 
    private ProblemReportFrame frame_ = null;
    private boolean hasUnsentContent_ = false;
@@ -63,10 +61,8 @@ public class ProblemReportController {
    private volatile ProblemReport report_;
 
    // Constructed solely by static method
-   private ProblemReportController(final mmcorej.CMMCore core,
-         final org.micromanager.MMOptions prefs) {
+   private ProblemReportController(final mmcorej.CMMCore core) {
       core_ = core;
-      prefs_ = prefs;
    }
 
    void showFrame() {
@@ -199,7 +195,7 @@ public class ProblemReportController {
       panel.setButtonsEnabled(false);
       frame_.setControlPanel(panel);
 
-      report_ = new ProblemReport(core_, prefs_);
+      report_ = new ProblemReport(core_);
       report_.startCapturingLog();
       new SwingWorker<Object, Object>() {
          @Override

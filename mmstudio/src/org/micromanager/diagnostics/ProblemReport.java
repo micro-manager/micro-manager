@@ -46,7 +46,7 @@ public class ProblemReport {
       }
    }
 
-   public ProblemReport(mmcorej.CMMCore core, org.micromanager.MMOptions prefs) {
+   public ProblemReport(mmcorej.CMMCore core) {
       core_ = core;
 
       java.lang.management.RuntimeMXBean rtMXB =
