@@ -33,6 +33,7 @@ import java.awt.geom.Point2D.Float;
 import java.util.ArrayList;
 import javax.swing.JPanel;
 import javax.swing.UIManager;
+
 import org.micromanager.utils.JavaUtils;
 
 /**
@@ -711,8 +712,7 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
       drawCursor(g2d, box, cursorLoPos_);
       drawCursor(g2d, box, cursorHiPos_);
       drawMapping(g2d, box, cursorLoPos_, cursorHiPos_, gamma_);
-    
-           
+
       // restore settings
       g2d.setPaint(oldPaint);
       g2d.setStroke(oldStroke);
