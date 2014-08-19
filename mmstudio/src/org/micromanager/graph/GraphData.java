@@ -53,6 +53,10 @@ public class GraphData {
       double getRangeY(){
          return yMax - yMin;
       }
+
+      public String toString() {
+         return String.format("[X: %.2f to %.2f; Y: %.2f to %.2f]", xMin, xMax, yMin, yMax);
+      }
    }
    
    public GraphData(){
