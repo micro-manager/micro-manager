@@ -5,6 +5,7 @@ import com.google.common.eventbus.Subscribe;
 import com.swtdesigner.SwingResourceManager;
 
 import ij.CompositeImage;
+import ij.ImagePlus;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
 
@@ -53,12 +54,8 @@ import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
 
 /**
- * Draws one histogram of the Multi-Channel control panel
- * 
- * 
+ * Handles controls for a single histogram.
  */
-
-
 public class ChannelControlPanel extends JPanel implements CursorListener {
 
    private static final Dimension CONTROLS_SIZE = new Dimension(130, 150);
@@ -70,6 +67,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private HistogramsPanel parent_;
    private Datastore store_;
    private DisplaySettings settings_;
+   private ImagePlus plus_;
    private CompositeImage composite_;
    private EventBus bus_;
    private JButton autoButton_;
@@ -100,11 +98,18 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private String name_;
 
    public ChannelControlPanel(int channelIndex, HistogramsPanel parent,
-         Datastore store, CompositeImage composite, EventBus bus) {
+         Datastore store, ImagePlus plus, EventBus bus) {
       parent_ = parent;
       store_ = store;
       settings_ = store.getDisplaySettings();
-      composite_ = composite;
+      plus_ = plus;
+      // We may be for a single-channel system or a multi-channel one; the two
+      // require different backing objects (ImagePlus vs. CompositeImage).
+      // Hence why we have both the plus_ and composite_ objects, and use the
+      // appropriate one depending on context.
+      if (plus_ instanceof CompositeImage) {
+         composite_ = (CompositeImage) plus_;
+      }
       bus_ = bus;
       // Default to white; select a better color if available.
       color_ = Color.WHITE;
@@ -504,6 +509,10 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    private void channelNameCheckboxAction() {
+      if (composite_ == null) {
+         // Not multi-channel; ignore.
+         return;
+      }
       boolean[] active = composite_.getActiveChannels();
       if (composite_.getMode() != CompositeImage.COMPOSITE) {
          if (active[channelIndex_]) {
@@ -512,10 +521,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          } else {
 //            display_.setChannel(channelIndex_);
          }
-      } else {
-         composite_.getActiveChannels()[channelIndex_] = channelNameCheckbox_.isSelected();
       }
-        
+
       composite_.getActiveChannels()[channelIndex_] = channelNameCheckbox_.isSelected();
       composite_.updateAndDraw();
    }
@@ -651,29 +658,35 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             LUT lut = ImageUtils.makeLUT(color_, gamma_);
             lut.min = contrastMin_;
             lut.max = contrastMax_;
-            // uses lut.min and lut.max to set min and max of precessor
-            composite_.setChannelLut(lut, channelIndex_ + 1);
-
-            // ImageJ workaround: do this so the appropriate color model and
-            // min/max get applied in color or grayscale mode
-            try {
-               JavaUtils.setRestrictedFieldValue(composite_, 
-                     CompositeImage.class, "currentChannel", -1);
-            } catch (NoSuchFieldException ex) {
-               ReportingUtils.logError(ex);
+            if (composite_ == null) {
+               // Single-channel case is straightforward.
+               plus_.getProcessor().setColorModel(lut);
             }
+            else {
+               // uses lut.min and lut.max to set min and max of processor
+               composite_.setChannelLut(lut, channelIndex_ + 1);
 
-            if (composite_.getChannel() == channelIndex_ + 1) {
-               LUT grayLut = ImageUtils.makeLUT(Color.white, gamma_);
-               ImageProcessor processor = composite_.getProcessor();
-               if (processor != null) {
-                  processor.setColorModel(grayLut);
-                  processor.setMinAndMax(contrastMin_, contrastMax_);
+               // ImageJ workaround: do this so the appropriate color model and
+               // min/max get applied in color or grayscale mode
+               try {
+                  JavaUtils.setRestrictedFieldValue(composite_, 
+                        CompositeImage.class, "currentChannel", -1);
+               } catch (NoSuchFieldException ex) {
+                  ReportingUtils.logError(ex);
                }
-               if (composite_.getMode() == CompositeImage.GRAYSCALE) {
-                  composite_.updateImage();
+
+               if (composite_.getChannel() == channelIndex_ + 1) {
+                  LUT grayLut = ImageUtils.makeLUT(Color.white, gamma_);
+                  ImageProcessor processor = composite_.getProcessor();
+                  if (processor != null) {
+                     processor.setColorModel(grayLut);
+                     processor.setMinAndMax(contrastMin_, contrastMax_);
+                  }
+                  if (composite_.getMode() == CompositeImage.GRAYSCALE) {
+                     composite_.updateImage();
+                  }
                }
-            }
+            } // End multi-channel case.
             storeDisplaySettings();
             updateHistogram();
          }
@@ -696,51 +709,59 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    /**
-    * @param drawHist - set true if hist and stats calculated successfully
-    * 
+    * @param shouldDrawHistogram - set true if hist and stats calculated
+    * successfully.
     */
-   public void calcAndDisplayHistAndStats(boolean drawHist) {
+   public void calcAndDisplayHistAndStats(boolean shouldDrawHistogram) {
       ReportingUtils.logError("Calculating histogram...");
-      if (composite_ == null || composite_.getProcessor() == null) {
+      if (plus_ == null || plus_.getProcessor() == null) {
          ReportingUtils.logError("No image to work with");
          return;
       }
-      ImageProcessor ip;
-      if (composite_.getMode() == CompositeImage.COMPOSITE) {
-         ip = composite_.getProcessor(channelIndex_ + 1);
-         if (ip != null) {
-            ip.setRoi(composite_.getRoi());
-         }
-      } else {
-         MMCompositeImage ci = (MMCompositeImage) composite_;
-         int flatIndex = 1 + channelIndex_ + 
-               (composite_.getSlice() - 1) * ci.getNChannelsUnverified() +
-               (composite_.getFrame() - 1) * ci.getNSlicesUnverified() * ci.getNChannelsUnverified();
-         ip = composite_.getStack().getProcessor(flatIndex);
+      ImageProcessor processor;
+      if (composite_ == null) {
+         // Single-channel mode.
+         processor = plus_.getProcessor();
       }
-      if (ip == null ) {
-         ReportingUtils.logError("No processor; mode is composite? " + (composite_.getMode() == CompositeImage.COMPOSITE));
+      else {
+         // Multi-channel mode.
+         if (composite_.getMode() == CompositeImage.COMPOSITE) {
+            processor = composite_.getProcessor(channelIndex_ + 1);
+            if (processor != null) {
+               processor.setRoi(composite_.getRoi());
+            }
+         } else {
+            MMCompositeImage ci = (MMCompositeImage) composite_;
+            int flatIndex = 1 + channelIndex_ + 
+                  (composite_.getSlice() - 1) * ci.getNChannelsUnverified() +
+                  (composite_.getFrame() - 1) * ci.getNSlicesUnverified() * ci.getNChannelsUnverified();
+            processor = composite_.getStack().getProcessor(flatIndex);
+         }
+      }
+      if (processor == null ) {
+         ReportingUtils.logError("No processor");
          return;
       }
 
-      if (((MMCompositeImage) composite_).getNChannelsUnverified() <= 7) {
-         boolean active = composite_.getActiveChannels()[channelIndex_];
-         channelNameCheckbox_.setSelected(active);
-         if (!active) {
-            ReportingUtils.logError("Can't draw histogram because not active");
-            drawHist = false;
+      if (composite_ != null) {
+         if (((MMCompositeImage) composite_).getNChannelsUnverified() <= 7) {
+            boolean active = composite_.getActiveChannels()[channelIndex_];
+            channelNameCheckbox_.setSelected(active);
+            if (!active) {
+               ReportingUtils.logError("Can't draw histogram because not active");
+               shouldDrawHistogram = false;
+            }
          }
-      }
-      if (((MMCompositeImage) composite_).getMode() != CompositeImage.COMPOSITE) {
-         if (composite_.getChannel() - 1 != channelIndex_) {
+         if (((MMCompositeImage) composite_).getMode() != CompositeImage.COMPOSITE &&
+               composite_.getChannel() - 1 != channelIndex_) {
             ReportingUtils.logError("Can't draw histogram because not composite and wrong channel");
-            drawHist = false;
+            shouldDrawHistogram = false;
          }
       }
-      
-      int[] rawHistogram = ip.getHistogram();
-      int imgWidth = composite_.getWidth();
-      int imgHeight = composite_.getHeight();
+
+      int[] rawHistogram = processor.getHistogram();
+      int imgWidth = plus_.getWidth();
+      int imgHeight = plus_.getHeight();
 
       if (rawHistogram[0] == imgWidth * imgHeight) {
          ReportingUtils.logError("No pixels");
@@ -805,7 +826,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
       // work around what is apparently a bug in ImageJ
       if (total == 0) {
-         if (composite_.getProcessor().getMin() == 0) {
+         if (plus_.getProcessor().getMin() == 0) {
             histogram[0] = imgWidth * imgHeight;
          } else {
             histogram[numBins - 1] = imgWidth * imgHeight;
@@ -813,7 +834,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       }
 
       
-      if (drawHist) {
+      if (shouldDrawHistogram) {
          hp_.setVisible(true);
          //Draw histogram and stats
          histogramData.setData(histogram);
@@ -826,7 +847,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       } else {
           hp_.setVisible(false);        
       }
-      
    }
    
    public void contrastMaxInput(int max) {
