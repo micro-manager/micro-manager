@@ -69,7 +69,7 @@ public class ProblemReportController {
     * Prompt user to reopen an interrupted Problem Report if one exists.
     * Does nothing if the Problem Report window is currently being displayed.
     */
-   public static void startIfInterruptedOnExit(final mmcorej.CMMCore core) {
+   public static void startIfInterruptedOnExit() {
       if (instance_ != null && instance_.frame_ != null) {
          return; // Don't mess if frame is being shown
       }
@@ -77,9 +77,9 @@ public class ProblemReportController {
       int answer = checkForInterruptedReport(false);
       if (answer == JOptionPane.YES_OPTION) {
          if (instance_ == null) {
-            instance_ = new ProblemReportController(core);
+            instance_ = new ProblemReportController();
          }
-         instance_.showFrame(true);
+         instance_.showFrame(true, null);
       }
    }
 
@@ -89,16 +89,16 @@ public class ProblemReportController {
     */
    public static void start(final mmcorej.CMMCore core) {
       if (instance_ == null) {
-         instance_ = new ProblemReportController(core);
+         instance_ = new ProblemReportController();
       }
-      instance_.showFrame(false);
+      instance_.showFrame(false, core);
    }
 
    /*
     * Instance fields and methods
     */
 
-   private final mmcorej.CMMCore core_;
+   private mmcorej.CMMCore core_;
 
    private ProblemReportFrame frame_ = null;
    private boolean hasUnsentContent_ = false;
@@ -107,12 +107,13 @@ public class ProblemReportController {
    // The problem report model may be accessed from a background thread
    private volatile ProblemReport report_;
 
-   // Constructed solely by static method
-   private ProblemReportController(final mmcorej.CMMCore core) {
-      core_ = core;
+   // Constructed solely by static methods
+   private ProblemReportController() {
    }
 
-   void showFrame(boolean forceReopen) {
+   void showFrame(boolean forceReopen, mmcorej.CMMCore core) {
+      core_ = core;
+
       if (frame_ == null) {
          int reopenAnswer = forceReopen ? JOptionPane.YES_OPTION :
                checkForInterruptedReport(true);
