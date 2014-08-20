@@ -52,6 +52,7 @@
 #include "Host.h"
 #include "MMCore.h"
 #include "MMEventCallback.h"
+#include "LogManager.h"
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 
@@ -115,8 +116,9 @@ const int MMCore_versionPatch = 2;
  * devices at this point.
  */
 CMMCore::CMMCore() :
-   appLogger_(logManager_.NewLogger("App")),
-   coreLogger_(logManager_.NewLogger("Core")),
+   logManager_(new mm::LogManager()),
+   appLogger_(logManager_->NewLogger("App")),
+   coreLogger_(logManager_->NewLogger("Core")),
    everSnapped_(false),
    pollingIntervalMs_(10),
    timeoutMs_(5000),
@@ -180,7 +182,7 @@ void CMMCore::setPrimaryLogFile(const char* filename, bool truncate) throw (CMME
    if (filename)
       filenameStr = filename;
 
-   logManager_.SetPrimaryLogFilename(filenameStr, truncate);
+   logManager_->SetPrimaryLogFilename(filenameStr, truncate);
 }
 
 /**
@@ -188,7 +190,7 @@ void CMMCore::setPrimaryLogFile(const char* filename, bool truncate) throw (CMME
  */
 std::string CMMCore::getPrimaryLogFile() const
 {
-   return logManager_.GetPrimaryLogFilename();
+   return logManager_->GetPrimaryLogFilename();
 }
 
 /**
@@ -216,13 +218,13 @@ void CMMCore::logMessage(const char* msg, bool debugOnly)
  */
 void CMMCore::enableDebugLog(bool enable)
 {
-   logManager_.SetPrimaryLogLevel(enable ? mm::logging::LogLevelTrace :
+   logManager_->SetPrimaryLogLevel(enable ? mm::logging::LogLevelTrace :
          mm::logging::LogLevelInfo);
 }
 
 bool CMMCore::debugLogEnabled()
 {
-   return (logManager_.GetPrimaryLogLevel() < mm::logging::LogLevelInfo);
+   return (logManager_->GetPrimaryLogLevel() < mm::logging::LogLevelInfo);
 }
 
 /**
@@ -231,12 +233,12 @@ bool CMMCore::debugLogEnabled()
  */
 void CMMCore::enableStderrLog(bool enable)
 {
-   logManager_.SetUseStdErr(enable);
+   logManager_->SetUseStdErr(enable);
 }
 
 bool CMMCore::stderrLogEnabled()
 {
-   return logManager_.IsUsingStdErr();
+   return logManager_->IsUsingStdErr();
 }
 
 
@@ -262,7 +264,7 @@ int CMMCore::startSecondaryLogFile(const char* filename, bool enableDebug,
    using namespace mm::logging;
    typedef mm::LogManager::LogFileHandle LogFileHandle;
 
-   LogFileHandle handle = logManager_.AddSecondaryLogFile(
+   LogFileHandle handle = logManager_->AddSecondaryLogFile(
             (enableDebug ? LogLevelTrace : LogLevelInfo),
             filename, truncate,
             (synchronous ? SinkModeSynchronous : SinkModeAsynchronous));
@@ -279,7 +281,7 @@ void CMMCore::stopSecondaryLogFile(int handle) throw (CMMError)
 {
    typedef mm::LogManager::LogFileHandle LogFileHandle;
    LogFileHandle h = static_cast<LogFileHandle>(handle);
-   logManager_.RemoveSecondaryLogFile(h);
+   logManager_->RemoveSecondaryLogFile(h);
 }
 
 
@@ -668,10 +670,10 @@ void CMMCore::loadDevice(const char* label, const char* moduleName, const char* 
 
    // Logger for logging from device adapter code
    boost::shared_ptr<mm::logging::Logger> deviceLogger =
-      logManager_.NewLogger("dev:" + std::string(label));
+      logManager_->NewLogger("dev:" + std::string(label));
    // Logger for logging related to the device, by us the Core
    boost::shared_ptr<mm::logging::Logger> coreLogger =
-      logManager_.NewLogger("Core:dev:" + std::string(label));
+      logManager_->NewLogger("Core:dev:" + std::string(label));
 
    LOG_DEBUG(coreLogger_) << "Will load device " << deviceName <<
       " from " << moduleName;

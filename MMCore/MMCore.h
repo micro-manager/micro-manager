@@ -62,7 +62,6 @@
 #include "Devices/DeviceInstances.h"
 #include "Error.h"
 #include "ErrorCodes.h"
-#include "LogManager.h"
 #include "PluginManager.h"
 
 #include <cstring>
@@ -94,6 +93,10 @@ class CoreCallback;
 class PixelSizeConfigGroup;
 class Metadata;
 class MMEventCallback;
+
+namespace mm {
+   class LogManager;
+} // namespace mm
 
 typedef unsigned int* imgRGB32;
 
@@ -589,7 +592,7 @@ private:
 private:
    // LogManager should be the first data member, so that it is available for
    // as long as possible during construction and (especially) destruction.
-   mm::LogManager logManager_;
+   boost::shared_ptr<mm::LogManager> logManager_;
    boost::shared_ptr<mm::logging::Logger> appLogger_;
    boost::shared_ptr<mm::logging::Logger> coreLogger_;
 
