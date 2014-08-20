@@ -51,7 +51,7 @@ public class ProblemReportController {
             "exited. Would you like to reopen the interrupted report?",
             "Continue Problem Report",
             JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
-            null, options, null);
+            null, options, options[0]);
 
       if (answer == JOptionPane.YES_OPTION) {
          return JOptionPane.YES_OPTION;
