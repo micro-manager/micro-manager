@@ -85,7 +85,9 @@ public final class HistogramsPanel extends JPanel implements Histograms {
    }
 
    public void applyContrastToAllChannels(int min, int max, double gamma) {
+      ReportingUtils.logError("Applying " + min + " " + max + " " + gamma + " to all channels");
       if (channelPanels_ == null) {
+         ReportingUtils.logError("Oops no channel panels");
          return;
       }
       for (ChannelControlPanel panel : channelPanels_) {
@@ -148,8 +150,10 @@ public final class HistogramsPanel extends JPanel implements Histograms {
    @Override
    public void applyLUTToImage() {
       if (channelPanels_ == null) {
+         ReportingUtils.logError("Oops, no channel panels");
          return;
       }
+      ReportingUtils.logError("Applying LUT across " + channelPanels_.size() + " channel panels");
       for (ChannelControlPanel panel : channelPanels_) {
          panel.applyChannelLUTToImage();
       }
