@@ -643,7 +643,10 @@ public class ProblemReport {
          tempFile.delete();
       }
 
-      deferredSyncTimer_ = null;
+      if (deferredSyncTimer_ != null) {
+         deferredSyncTimer_.cancel();
+         deferredSyncTimer_ = null;
+      }
    }
 
    private void syncStartingConfig() {
