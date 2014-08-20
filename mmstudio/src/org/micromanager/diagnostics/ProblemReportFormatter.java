@@ -55,7 +55,7 @@ public class ProblemReportFormatter {
       // sending the log. This was confusing.
       sb.append(fileSection("Starting Config (" + report.getStartingConfigFileName() + ")",
                report.getStartingConfig()));
-      if (report.configChangedDuringLogCapture()) {
+      if (report.configChangedDuringLogCapture() && report.hasEndingConfig()) {
          sb.append(fileSection("Ending Config (" + report.getEndingConfigFileName() + ")",
                   report.getEndingConfig()));
       }

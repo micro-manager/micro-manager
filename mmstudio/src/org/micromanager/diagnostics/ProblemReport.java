@@ -370,6 +370,10 @@ public class ProblemReport {
     * Package-private accessors used by report formatter
     */
 
+   boolean hasEndingConfig() {
+      return endCfg_ != null;
+   }
+
    boolean configChangedDuringLogCapture() {
       if (startCfg_ == null || endCfg_ == null) {
          return startCfg_ != endCfg_;
