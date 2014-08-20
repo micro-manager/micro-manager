@@ -362,7 +362,7 @@ public class ProblemReport {
    }
 
    public void logUserComment(String comment) {
-      core_.logMessage("User remark: " + comment);
+      core_.logMessage("##### User remark: " + comment);
    }
 
    /*

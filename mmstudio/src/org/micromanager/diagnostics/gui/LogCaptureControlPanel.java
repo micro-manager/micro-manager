@@ -15,6 +15,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JSeparator;
+import javax.swing.JTextField;
 
 
 class LogCaptureControlPanel extends ControlPanel {
@@ -32,6 +34,7 @@ class LogCaptureControlPanel extends ControlPanel {
 
       JButton cancelButton = new JButton("Cancel");
       cancelButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent e) {
             controller_.cancelRequested();
          }
@@ -39,6 +42,7 @@ class LogCaptureControlPanel extends ControlPanel {
 
       startOverButton_ = new JButton("Start Over");
       startOverButton_.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent e) {
             controller_.startLogCapture();
          }
@@ -46,6 +50,7 @@ class LogCaptureControlPanel extends ControlPanel {
 
       doneButton_ = new JButton("Done");
       doneButton_.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent e) {
             controller_.finishLogCapture();
          }
@@ -53,6 +58,7 @@ class LogCaptureControlPanel extends ControlPanel {
 
       cannotReproButton_ = new JButton("Cannot Reproduce");
       cannotReproButton_.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent e) {
             controller_.finishWithoutReproducing();
          }
@@ -65,6 +71,18 @@ class LogCaptureControlPanel extends ControlPanel {
       instructionsLabel_ = new JLabel();
       instructionsLabel_.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
       setInstructions("Please wait.");
+
+      final JTextField remarkTextField = new JTextField();
+      final JButton remarkButton = new JButton("Insert");
+      remarkButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            String remark = remarkTextField.getText();
+            if (!remark.isEmpty()) {
+               controller_.insertTimestampedRemark(remark);
+            }
+         }
+      });
 
       setLayout(new net.miginfocom.swing.MigLayout(
                "fillx, insets 0",
@@ -83,7 +101,13 @@ class LogCaptureControlPanel extends ControlPanel {
       add(cannotReproButton_, "sizegroup btns");
       add(doneButton_, "sizegroup btns, wrap");
 
-      add(cancelButton, "gapright push");
+      add(cancelButton, "gapright push, wrap");
+
+      add(new JSeparator(), "grow, wrap");
+      add(new JLabel("Insert timestamped remark into log:"),
+            "align left, wrap");
+      add(remarkTextField, "split 2, grow, gapright related");
+      add(remarkButton, "");
    }
 
    void setStatus(String status) {

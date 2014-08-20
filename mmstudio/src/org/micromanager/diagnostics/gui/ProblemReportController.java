@@ -328,6 +328,13 @@ public class ProblemReportController {
       markReportUnsent();
    }
 
+   void insertTimestampedRemark(String remark) {
+      if (report_ == null) {
+         return;
+      }
+      report_.logUserComment(remark);
+   }
+
    void finishLogCapture() {
       if (report_ == null) { // Canceled
          return;
