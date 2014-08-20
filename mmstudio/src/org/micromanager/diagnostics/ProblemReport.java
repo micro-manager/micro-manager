@@ -231,7 +231,7 @@ public class ProblemReport {
     * Save the current hardware configuration file, then start capturing the
     * CoreLog.
     */
-   public void startCapturingLog() {
+   public void startCapturingLog(boolean useCrashRobust) {
       startCfg_ = getCurrentConfigFile();
       syncStartingConfig();
 
@@ -269,7 +269,8 @@ public class ProblemReport {
       String filename = logFile.getAbsolutePath();
 
       try {
-         logFileHandle_ = core_.startSecondaryLogFile(filename, true, true);
+         logFileHandle_ = core_.startSecondaryLogFile(filename,
+               true, true, useCrashRobust);
       }
       catch (Exception e) {
          capturedLogContent_ = "<<<Failed to start log capture>>>";

@@ -11,7 +11,10 @@
 
 package org.micromanager.diagnostics.gui;
 
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 
 
 class InitialControlPanel extends ControlPanel {
@@ -21,20 +24,35 @@ class InitialControlPanel extends ControlPanel {
       controller_ = controller;
 
       JButton cancelButton = new JButton("Cancel");
-      cancelButton.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent e) {
+      cancelButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
             controller_.cancelRequested();
          }
       });
 
       JButton startButton = new JButton("Generate Report...");
-      startButton.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent e) {
+      startButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
             controller_.startLogCapture();
          }
       });
 
+      final JCheckBox crashRobustCheckBox =
+         new JCheckBox("Use crash-robust logging");
+      crashRobustCheckBox.setSelected(controller_.getUseCrashRobustLogging());
+      crashRobustCheckBox.setToolTipText("Prevents lost log entries. " +
+            "Uncheck if it masks the problem to be reported.");
+      crashRobustCheckBox.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            controller_.setUseCrashRobustLogging(crashRobustCheckBox.isSelected());
+         }
+      });
+
       add(cancelButton, "align left");
-      add(startButton, "align right");
+      add(startButton, "align right, wrap");
+      add(crashRobustCheckBox, "align left, span 2");
    }
 }

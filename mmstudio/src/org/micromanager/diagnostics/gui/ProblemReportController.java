@@ -104,6 +104,8 @@ public class ProblemReportController {
    private boolean hasUnsentContent_ = false;
    private javax.swing.JTextArea descriptionTextArea_;
 
+   private boolean useCrashRobustLogging_ = true;
+
    // The problem report model may be accessed from a background thread
    private volatile ProblemReport report_;
 
@@ -241,6 +243,14 @@ public class ProblemReportController {
       return report_ == null ? null : report_.getUserEmail();
    }
 
+   void setUseCrashRobustLogging(boolean flag) {
+      useCrashRobustLogging_ = flag;
+   }
+
+   boolean getUseCrashRobustLogging() {
+      return useCrashRobustLogging_;
+   }
+
    /*
     * UI actions
     */
@@ -285,7 +295,7 @@ public class ProblemReportController {
       report_ = ProblemReport.NewPersistentReport(core_, reportDir);
       copyDescriptionToReport();
 
-      report_.startCapturingLog();
+      report_.startCapturingLog(useCrashRobustLogging_);
       new SwingWorker<Object, Object>() {
          @Override
          public Object doInBackground() {
