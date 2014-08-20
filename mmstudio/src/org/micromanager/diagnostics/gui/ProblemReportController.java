@@ -512,16 +512,7 @@ public class ProblemReportController {
          return;
       }
 
-      String description;
-      try {
-         description = descriptionTextArea_.getDocument().getText(0,
-               descriptionTextArea_.getDocument().getLength());
-      }
-      catch (javax.swing.text.BadLocationException impossible) {
-         description = null;
-      }
-
-      report_.setDescription(description);
+      report_.setDescription(descriptionTextArea_.getText());
    }
 
    private void openReportWindow(String report) {
