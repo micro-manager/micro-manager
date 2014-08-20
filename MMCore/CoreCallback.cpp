@@ -25,11 +25,180 @@
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-#include "CoreCallback.h"
-#include "CircularBuffer.h"
-#include "../MMDevice/DeviceUtils.h"
 #include "../MMDevice/DeviceThreads.h"
+#include "../MMDevice/DeviceUtils.h"
+#include "CircularBuffer.h"
+#include "CoreCallback.h"
+#include "DeviceManager.h"
+
 #include "boost/date_time/posix_time/posix_time.hpp"
+
+
+CoreCallback::CoreCallback(CMMCore* c) :
+   core_(c),
+   pValueChangeLock_(NULL)
+{
+   assert(core_);
+   pValueChangeLock_ = new MMThreadLock();
+}
+
+
+CoreCallback::~CoreCallback()
+{
+   delete pValueChangeLock_;
+}
+
+
+int
+CoreCallback::LogMessage(const MM::Device* caller, const char* msg,
+      bool debugOnly) const
+{
+   boost::shared_ptr<DeviceInstance> device;
+   try
+   {
+      device = core_->deviceManager_->GetDevice(caller);
+   }
+   catch (const CMMError&)
+   {
+      LOG_ERROR(core_->coreLogger_) <<
+         "Attempt to log message from unregistered device: " << msg;
+      return DEVICE_OK;
+   }
+   return device->LogMessage(msg, debugOnly);
+}
+
+
+MM::Device*
+CoreCallback::GetDevice(const MM::Device* caller, const char* label)
+{
+   if (!caller || !label)
+      return 0;
+
+   try
+   {
+      MM::Device* pDevice = core_->deviceManager_->GetDevice(label)->GetRawPtr();
+      if (pDevice == caller)
+         return 0;
+      return pDevice;
+   }
+   catch (const CMMError&)
+   {
+      return 0;
+   }
+}
+
+
+MM::PortType
+CoreCallback::GetSerialPortType(const char* portName) const
+{
+   boost::shared_ptr<SerialInstance> pSerial;
+   try
+   {
+      pSerial = core_->deviceManager_->GetDeviceOfType<SerialInstance>(portName);
+   }
+   catch (...)
+   {
+      return MM::InvalidPort;
+   }
+
+   return pSerial->GetPortType();
+}
+
+
+MM::ImageProcessor*
+CoreCallback::GetImageProcessor(const MM::Device*)
+{
+   boost::shared_ptr<ImageProcessorInstance> imageProcessor =
+      core_->currentImageProcessor_.lock();
+   if (imageProcessor)
+   {
+      return imageProcessor->GetRawPtr();
+   }
+   return 0;
+}
+
+
+MM::State*
+CoreCallback::GetStateDevice(const MM::Device*, const char* label)
+{
+   try
+   {
+      return core_->deviceManager_->GetDeviceOfType<StateInstance>(label)->
+         GetRawPtr();
+   }
+   catch (const CMMError&)
+   {
+      return 0;
+   }
+}
+
+
+MM::SignalIO*
+CoreCallback::GetSignalIODevice(const MM::Device*, const char* label)
+{
+   try {
+      return core_->deviceManager_->
+         GetDeviceOfType<SignalIOInstance>(label)->GetRawPtr();
+   }
+   catch (const CMMError&)
+   {
+      return 0;
+   }
+}
+
+
+MM::AutoFocus*
+CoreCallback::GetAutoFocus(const MM::Device*)
+{
+   boost::shared_ptr<AutoFocusInstance> autofocus =
+      core_->currentAutofocusDevice_.lock();
+   if (autofocus)
+   {
+      return autofocus->GetRawPtr();
+   }
+   return 0;
+}
+
+
+MM::Hub*
+CoreCallback::GetParentHub(const MM::Device* caller) const
+{
+   if (caller == 0)
+      return 0;
+
+   boost::shared_ptr<HubInstance> hubDevice;
+   try
+   {
+      hubDevice = core_->deviceManager_->GetParentDevice(core_->deviceManager_->GetDevice(caller));
+   }
+   catch (const CMMError&)
+   {
+      return 0;
+   }
+   if (hubDevice)
+      return hubDevice->GetRawPtr();
+   return 0;
+}
+
+
+void
+CoreCallback::GetLoadedDeviceOfType(const MM::Device*, MM::DeviceType devType,
+      char* deviceName, const unsigned int deviceIterator)
+{
+   deviceName[0] = 0;
+   std::vector<std::string> v = core_->getLoadedDevicesOfType(devType);
+   if( deviceIterator < v.size())
+      strncpy( deviceName, v.at(deviceIterator).c_str(), MM::MaxStrLength);
+   return;
+}
+
+
+void
+CoreCallback::Sleep(const MM::Device*, double intervalMs)
+{
+   CDeviceUtils::SleepMs((long)(0.5 + intervalMs));
+}
+
 
 /**
  * Get the metadata tags attached to device caller, and merge them with metadata
@@ -760,13 +929,13 @@ void CoreCallback::NextPostedError(int& errorCode, char* pMessage, int maxlen, i
 	return ;
 }
 
-void CoreCallback::PostError( const int errorCode, const char* pMessage /* length */ )
+void CoreCallback::PostError(const int errorCode, const char* pMessage)
 {
    MMThreadGuard g(*(core_->pPostedErrorsLock_));
    core_->postedErrors_.push_back(std::make_pair(errorCode, std::string(pMessage)));
 }
 
-void CoreCallback::ClearPostedErrors( void)
+void CoreCallback::ClearPostedErrors()
 {
    MMThreadGuard g(*(core_->pPostedErrorsLock_));
 	core_->postedErrors_.clear();

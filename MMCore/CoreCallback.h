@@ -27,11 +27,14 @@
 
 #include "Devices/DeviceInstances.h"
 #include "CoreUtils.h"
-#include "DeviceManager.h"
 #include "MMCore.h"
 #include "MMEventCallback.h"
 #include "../MMDevice/DeviceUtils.h"
 
+namespace mm
+{
+   class DeviceManager;
+}
 
 using namespace std;
 
@@ -42,12 +45,8 @@ using namespace std;
 class CoreCallback : public MM::Core
 {
 public:
-   CoreCallback(CMMCore* c) : core_(c), pValueChangeLock_(NULL) 
-   {
-      assert(core_);
-      pValueChangeLock_ = new MMThreadLock();
-   }
-   ~CoreCallback() { delete pValueChangeLock_; }
+   CoreCallback(CMMCore* c);
+   ~CoreCallback();
 
    int GetDeviceProperty(const char* deviceName, const char* propName, char* value);
    int SetDeviceProperty(const char* deviceName, const char* propName, const char* value);
@@ -55,57 +54,15 @@ public:
    /**
     * Writes a message to the Micro-Manager log file.
     */
-   int LogMessage(const MM::Device* caller, const char* msg, bool debugOnly) const
-   {
-      boost::shared_ptr<DeviceInstance> device;
-      try
-      {
-         device = core_->deviceManager_->GetDevice(caller);
-      }
-      catch (const CMMError&)
-      {
-         LOG_ERROR(core_->coreLogger_) <<
-            "Attempt to log message from unregistered device: " << msg;
-         return DEVICE_OK;
-      }
-      return device->LogMessage(msg, debugOnly);
-   }
+   int LogMessage(const MM::Device* caller, const char* msg,
+         bool debugOnly) const;
 
    /**
     * Returns a direct pointer to the device with the specified name.
     */
-   MM::Device* GetDevice(const MM::Device* caller, const char* label)
-   {
-      if (!caller || !label)
-         return 0;
+   MM::Device* GetDevice(const MM::Device* caller, const char* label);
 
-      try
-      {
-         MM::Device* pDevice = core_->deviceManager_->GetDevice(label)->GetRawPtr();
-         if (pDevice == caller)
-            return 0;
-         return pDevice;
-      }
-      catch (const CMMError&)
-      {
-         return 0;
-      }
-   }
-   
-   MM::PortType GetSerialPortType(const char* portName) const
-   {
-      boost::shared_ptr<SerialInstance> pSerial;
-      try
-      {
-         pSerial = core_->deviceManager_->GetDeviceOfType<SerialInstance>(portName);
-      }
-      catch (...)
-      {
-         return MM::InvalidPort;
-      }
-
-      return pSerial->GetPortType();
-   }
+   MM::PortType GetSerialPortType(const char* portName) const;
  
    int SetSerialProperties(const char* portName,
                            const char* answerTimeout,
@@ -121,15 +78,12 @@ public:
    int SetSerialCommand(const MM::Device*, const char* portName, const char* command, const char* term);
    int GetSerialAnswer(const MM::Device*, const char* portName, unsigned long ansLength, char* answerTxt, const char* term);
 
-	unsigned long GetClockTicksUs(const MM::Device* /*caller*/);
+	unsigned long GetClockTicksUs(const MM::Device* caller);
 
 	// MMTime, in epoch beginning at 2000 01 01
    MM::MMTime GetCurrentMMTime();
 
-   void Sleep (const MM::Device* /*caller*/, double intervalMs)
-   {
-		CDeviceUtils::SleepMs((long)(0.5+ intervalMs));
-   }
+   void Sleep(const MM::Device* caller, double intervalMs);
 
    // continous acquisition support
    int InsertImage(const MM::Device* caller, const ImgBuffer& imgBuf);
@@ -160,7 +114,7 @@ public:
    int GetChannelConfig(char* channelConfigName, const unsigned int channelConfigIterator);
 
    // notification handlers
-   int OnPropertiesChanged(const MM::Device* /* caller */);
+   int OnPropertiesChanged(const MM::Device* caller);
    int OnPropertyChanged(const MM::Device* device, const char* propName, const char* value);
    int OnStagePositionChanged(const MM::Device* device, double pos);
    int OnXYStagePositionChanged(const MM::Device* device, double xpos, double ypos);
@@ -169,86 +123,19 @@ public:
    int OnMagnifierChanged(const MM::Device* device);
 
 
-   void NextPostedError(int& /*errorCode*/, char* /*pMessage*/, int /*maxlen*/, int& /*messageLength*/);
-   void PostError(const  int, const char*);
-   void ClearPostedErrors( void);
+   void NextPostedError(int& errorCode, char* pMessage, int maxlen, int& messageLength);
+   void PostError(const int errorCode, const char* pMessage);
+   void ClearPostedErrors();
 
 
-   // device management
-   MM::ImageProcessor* GetImageProcessor(const MM::Device* /* caller */)
-   {
-      boost::shared_ptr<ImageProcessorInstance> imageProcessor =
-         core_->currentImageProcessor_.lock();
-      if (imageProcessor)
-      {
-         return imageProcessor->GetRawPtr();
-      }
-      return 0;
-   }
-
-   MM::State* GetStateDevice(const MM::Device* /* caller */, const char* label)
-   {
-      try
-      {
-         return core_->deviceManager_->GetDeviceOfType<StateInstance>(label)->
-            GetRawPtr();
-      }
-      catch (const CMMError&)
-      {
-         return 0;
-      }
-   }
-
-   MM::SignalIO* GetSignalIODevice(const MM::Device* /* caller */, const char* label)
-   {
-      try {
-         return core_->deviceManager_->
-            GetDeviceOfType<SignalIOInstance>(label)->GetRawPtr();
-      }
-      catch (const CMMError&)
-      {
-         return 0;
-      }
-   }
-
-   MM::AutoFocus* GetAutoFocus(const MM::Device* /* caller */)
-   {
-      boost::shared_ptr<AutoFocusInstance> autofocus =
-         core_->currentAutofocusDevice_.lock();
-      if (autofocus)
-      {
-         return autofocus->GetRawPtr();
-      }
-      return 0;
-   }
-
-   MM::Hub* GetParentHub(const MM::Device* caller) const
-   {
-      if (caller == 0)
-         return 0;
-
-      boost::shared_ptr<HubInstance> hubDevice;
-      try
-      {
-         hubDevice = core_->deviceManager_->GetParentDevice(core_->deviceManager_->GetDevice(caller));
-      }
-      catch (const CMMError&)
-      {
-         return 0;
-      }
-      if (hubDevice)
-         return hubDevice->GetRawPtr();
-      return 0;
-   }
-
-   void GetLoadedDeviceOfType(const MM::Device* /* caller */, MM::DeviceType devType,  char* deviceName, const unsigned int deviceIterator)
-   {
-      deviceName[0] = 0;
-      std::vector<std::string> v = core_->getLoadedDevicesOfType(devType);
-      if( deviceIterator < v.size())
-         strncpy( deviceName, v.at(deviceIterator).c_str(), MM::MaxStrLength);
-      return;
-   }
+   MM::ImageProcessor* GetImageProcessor(const MM::Device* caller);
+   MM::State* GetStateDevice(const MM::Device* caller, const char* label);
+   MM::SignalIO* GetSignalIODevice(const MM::Device* caller,
+         const char* label);
+   MM::AutoFocus* GetAutoFocus(const MM::Device* caller);
+   MM::Hub* GetParentHub(const MM::Device* caller) const;
+   void GetLoadedDeviceOfType(const MM::Device* caller, MM::DeviceType devType,
+         char* deviceName, const unsigned int deviceIterator);
 
 private:
    CMMCore* core_;
