@@ -81,7 +81,11 @@ public class ProblemReportFormatter {
       sb.append(preambleKeyValue("Organization", report.getUserOrganization()));
       sb.append(preambleKeyValue("User e-mail", report.getUserEmail()));
 
-      String description = report.getDescription().replaceAll("\\s+$", ""); // Trim right
+      String description = report.getDescription();
+      if (description == null) {
+         description = "null";
+      }
+      description = description.replaceAll("\\s+$", ""); // Trim right
       description = description.replaceAll("(?m)^", "|  "); // Indent each line
       sb.append(preambleKeyValue("User Description", "\n" + description));
 
