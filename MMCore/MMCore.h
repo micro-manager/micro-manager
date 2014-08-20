@@ -85,7 +85,6 @@
 class CPluginManager;
 class CircularBuffer;
 class ConfigGroupCollection;
-class Configuration;
 class CoreCallback;
 class CorePropertyCollection;
 class MMEventCallback;
