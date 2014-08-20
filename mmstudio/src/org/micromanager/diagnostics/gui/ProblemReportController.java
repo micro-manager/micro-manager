@@ -531,6 +531,7 @@ public class ProblemReportController {
             if (result.warning != null) {
                JOptionPane.showMessageDialog(frame_, result.warning);
             }
+            report_.deleteStorage();
             markReportSent();
             panel.setUIMode(SendReportControlPanel.UIMode.SENT);
             getDescriptionTextArea().setEnabled(true);

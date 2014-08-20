@@ -344,7 +344,9 @@ public class ProblemReport {
 
    public void deleteStorage() {
       deleteReportDir(reportDir_);
+      reportDir_ = null;
       deleteReportDir(leftoverDir_);
+      leftoverDir_ = null;
    }
 
    /**
