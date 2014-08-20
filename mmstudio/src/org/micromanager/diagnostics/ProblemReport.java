@@ -20,15 +20,12 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
-import com.google.gson.stream.JsonWriter;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.OutputStreamWriter;
+import java.io.Reader;
 import java.lang.reflect.Type;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.charset.Charset;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -478,50 +475,36 @@ public class ProblemReport {
       metadata_.userLogin = core_.getUserId();
    }
 
-   private static Charset getUTF8CharsetWithoutStupidExceptions() {
-      // Java 7 has java.nio.charset.StandardCharsets.UTF_8.
-      // In Java 6, you need 10 lines to get the same thing.
-      Charset utf8Charset = null;
-      try {
-         utf8Charset = Charset.forName("UTF-8");
-      }
-      catch (java.nio.charset.IllegalCharsetNameException wontHappen) {
-         // "UTF-8" is guaranteed to be available.
-      }
-      catch (java.nio.charset.UnsupportedCharsetException wontHappen) {
-         // "UTF-8" is guaranteed to be supported.
-      }
-      catch (IllegalArgumentException wontHappen) {
-         // This could only happen if we say Charset.forName(null).
-      }
-      return utf8Charset;
-   }
-
    private static String readTextFile(java.io.File file) {
-      Charset utf8Charset = getUTF8CharsetWithoutStupidExceptions();
-      FileInputStream inputStream;
+      // Important: do NOT try to use java.nio mapped file channel to read.
+      // Windows will not be able to delete a file once it has been mapped in
+      // the current process, no matter how correctly we "close" it.
+      Reader reader = null;
       try {
-         inputStream = new FileInputStream(file);
+         reader = new FileReader(file);
       }
       catch (java.io.FileNotFoundException e) {
-         return null;
+         return e.getMessage();
       }
+      StringBuilder sb = new StringBuilder();
       try {
-         FileChannel fChan = inputStream.getChannel();
-         MappedByteBuffer mappedBuf =
-            fChan.map(FileChannel.MapMode.READ_ONLY, 0, fChan.size());
-         return utf8Charset.decode(mappedBuf).toString();
+         int read;
+         char[] buf = new char[8192];
+         while ((read = reader.read(buf)) > 0) {
+            sb.append(buf, 0, read);
+         }
       }
       catch (java.io.IOException e) {
-         return null;
+         return e.getMessage();
       }
       finally {
          try {
-            inputStream.close();
+            reader.close();
          }
          catch (java.io.IOException ignore) {
          }
       }
+      return sb.toString();
    }
 
    private static void writeTextFile(java.io.File file, String text) {
