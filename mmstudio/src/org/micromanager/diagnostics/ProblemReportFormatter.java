@@ -53,8 +53,10 @@ public class ProblemReportFormatter {
 
       // Note: Older versions included only the configuration at the time of
       // sending the log. This was confusing.
-      sb.append(fileSection("Starting Config (" + report.getStartingConfigFileName() + ")",
-               report.getStartingConfig()));
+      if (report.hasStartingConfig()) {
+         sb.append(fileSection("Starting Config (" + report.getStartingConfigFileName() + ")",
+                  report.getStartingConfig()));
+      }
       if (report.configChangedDuringLogCapture() && report.hasEndingConfig()) {
          sb.append(fileSection("Ending Config (" + report.getEndingConfigFileName() + ")",
                   report.getEndingConfig()));
@@ -92,7 +94,8 @@ public class ProblemReportFormatter {
       }
       description = description.replaceAll("\\s+$", ""); // Trim right
       description = description.replaceAll("(?m)^", "|  "); // Indent each line
-      sb.append(preambleKeyValue("User Description", "\n" + description));
+      sb.append(preambleKeyValue("User Description",
+            description.isEmpty() ? "" : "\n" + description));
 
       String reportMACAddress = report.getMACAddress();
       if (reportMACAddress != null && reportMACAddress.length() > 0) {

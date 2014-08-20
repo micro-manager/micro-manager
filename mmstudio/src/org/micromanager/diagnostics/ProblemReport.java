@@ -367,6 +367,10 @@ public class ProblemReport {
     * Package-private accessors used by report formatter
     */
 
+   boolean hasStartingConfig() {
+      return startCfg_ != null;
+   }
+
    boolean hasEndingConfig() {
       return endCfg_ != null;
    }
@@ -735,6 +739,9 @@ public class ProblemReport {
 
    private static NamedTextFile getCurrentConfigFile() {
       String fileName = org.micromanager.MMStudio.getInstance().getSysConfigFile();
+      if (fileName == null || fileName.isEmpty()) {
+         return null;
+      }
       return new NamedTextFile(fileName);
    }
 
