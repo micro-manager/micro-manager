@@ -3,6 +3,7 @@ package org.micromanager.imagedisplay;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
+
 import ij.CompositeImage;
 import ij.gui.GUI;
 import ij.IJ;
@@ -16,6 +17,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.Panel;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
@@ -74,8 +76,8 @@ public class DisplayWindow extends StackWindow {
    };
 
   
-   
-   public DisplayWindow(final ImagePlus plus, DisplayControls controls, 
+
+   public DisplayWindow(final ImagePlus plus, Panel controls, 
          final EventBus bus) {
       super(plus);
       plus_ = plus;
