@@ -31,7 +31,9 @@
 #include "CoreCallback.h"
 #include "DeviceManager.h"
 
-#include "boost/date_time/posix_time/posix_time.hpp"
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <string>
+#include <vector>
 
 
 CoreCallback::CoreCallback(CMMCore* c) :
@@ -417,9 +419,9 @@ int CoreCallback::OnPropertyChanged(const MM::Device* device, const char* propNa
           
 
       // Check if pixel size was potentially affected.  If so, update from cache
-      vector<string> pixelSizeConfigs = core_->getAvailablePixelSizeConfigs();
+      std::vector<std::string> pixelSizeConfigs = core_->getAvailablePixelSizeConfigs();
       bool found = false;
-      for (vector<string>::iterator itpsc = pixelSizeConfigs.begin();
+      for (std::vector<std::string>::iterator itpsc = pixelSizeConfigs.begin();
             itpsc != pixelSizeConfigs.end() && !found; itpsc++) 
       {
          Configuration pixelSizeConfig = core_->getPixelSizeConfigData( (*itpsc).c_str());
@@ -668,7 +670,7 @@ int CoreCallback::SetSerialCommand(const MM::Device*, const char* portName, cons
  */
 int CoreCallback::GetSerialAnswer(const MM::Device*, const char* portName, unsigned long ansLength, char* answerTxt, const char* term)
 {
-   string answer;
+   std::string answer;
    try {
       answer = core_->getSerialPortAnswer(portName, term);
       if (answer.length() >= ansLength)
@@ -838,7 +840,7 @@ int CoreCallback::GetCurrentConfig(const char* group, int bufLen, char* name)
 {
    try 
    {
-      string cfgName = core_->getCurrentConfig(group);
+      std::string cfgName = core_->getCurrentConfig(group);
       strncpy(name, cfgName.c_str(), bufLen);
    }
    catch (...)
@@ -858,7 +860,7 @@ int CoreCallback::GetChannelConfig(char* channelConfigName, const unsigned int c
    {
       channelConfigName[0] = 0;
 
-      vector<string> cfgs = core_->getAvailableConfigs(core_->getChannelGroup().c_str());
+      std::vector<std::string> cfgs = core_->getAvailableConfigs(core_->getChannelGroup().c_str());
       if( channelConfigIterator < cfgs.size())
       {
          strncpy( channelConfigName, cfgs.at(channelConfigIterator).c_str(), MM::MaxStrLength);
@@ -876,7 +878,7 @@ int CoreCallback::GetDeviceProperty(const char* deviceName, const char* propName
 {
    try
    {
-      string propVal = core_->getProperty(deviceName, propName);
+      std::string propVal = core_->getProperty(deviceName, propName);
       CDeviceUtils::CopyLimitedString(value, propVal.c_str());
    }
    catch(CMMError& e)
@@ -891,7 +893,7 @@ int CoreCallback::SetDeviceProperty(const char* deviceName, const char* propName
 {
    try
    {
-      string propVal(value);
+      std::string propVal(value);
       core_->setProperty(deviceName, propName, propVal.c_str());
    }
    catch(CMMError& e)
