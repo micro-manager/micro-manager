@@ -470,9 +470,24 @@ public class ProblemReportController {
       panel.setUIMode(SendReportControlPanel.UIMode.SENDING);
       getDescriptionTextArea().setEnabled(false);
 
-      new SwingWorker<Boolean, Object>() {
+      class Result {
+         public boolean success;
+         public String warning;
+      }
+      new SwingWorker<Result, Object>() {
+         private boolean tooManyLines(String str, int limit) {
+            int index = -1;
+            for (int count = 0; count < limit; count++) {
+               index = str.indexOf('\n', index + 1);
+               if (index == -1) {
+                  return false;
+               }
+            }
+            return true;
+         }
+
          @Override
-         public Boolean doInBackground() throws Exception {
+         public Result doInBackground() throws Exception {
             ProblemReportFormatter formatter = new ProblemReportFormatter();
             String reportStr = formatter.format(report_);
             String reportFileName = formatter.generateFileName(report_);
@@ -482,14 +497,25 @@ public class ProblemReportController {
             ReportSender sender = new ReportSender();
             sender.sendReport(reportStr, reportFileName, url);
 
-            return true;
+            Result r = new Result();
+            r.success = true;
+            r.warning = null;
+            if (tooManyLines(reportStr, 10000)) {
+               r.warning =
+                  "<html><body><p style='width: 400px;'>" +
+                  "The report has been sent, but may have been truncated " +
+                  "due to exceeding the size limit. It is recommended that " +
+                  "you keep a backup by clicking on View Report and saving " +
+                  "a copy.</p></body></html>";
+            }
+            return r;
          }
 
          @Override
          public void done() {
-            boolean sendSuccessful = false;
+            Result result = null;
             try {
-               sendSuccessful = get();
+               result = get();
             }
             catch (Exception e) {
                JOptionPane.showMessageDialog(frame_,
@@ -498,10 +524,13 @@ public class ProblemReportController {
                getDescriptionTextArea().setEnabled(true);
                return;
             }
-            if (!sendSuccessful) {
+            if (!result.success) {
                return; // Should have been an exception
             }
 
+            if (result.warning != null) {
+               JOptionPane.showMessageDialog(frame_, result.warning);
+            }
             markReportSent();
             panel.setUIMode(SendReportControlPanel.UIMode.SENT);
             getDescriptionTextArea().setEnabled(true);
