@@ -11,6 +11,7 @@
 
 package org.micromanager.diagnostics.gui;
 
+import java.io.File;
 import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 import org.micromanager.diagnostics.ProblemReport;
@@ -53,10 +54,6 @@ public class ProblemReportController {
    private boolean hasUnsentContent_ = false;
    private javax.swing.JTextArea descriptionTextArea_;
 
-   private String name_;
-   private String organization_;
-   private String email_;
-
    // The problem report model may be accessed from a background thread
    private volatile ProblemReport report_;
 
@@ -81,13 +78,13 @@ public class ProblemReportController {
    }
 
    private boolean isContactInfoValid() {
-      if (name_ == null || name_.length() < 1) {
+      if (getName() == null || getName().length() < 1) {
          return false;
       }
-      if (organization_ == null || organization_.length() < 1) {
+      if (getOrganization() == null || getOrganization().length() < 1) {
          return false;
       }
-      if (email_ == null || !isValidEmailAddress(email_)) {
+      if (getEmail() == null || !isValidEmailAddress(getEmail())) {
          return false;
       }
       return true;
@@ -122,6 +119,7 @@ public class ProblemReportController {
    }
 
    void markDescriptionModified() {
+      copyDescriptionToReport();
       markReportUnsent();
    }
 
@@ -134,27 +132,30 @@ public class ProblemReportController {
    }
 
    void setName(String name) {
-      name_ = name;
+      if (report_ != null)
+         report_.setUserName(name);
    }
 
    String getName() {
-      return name_;
+      return report_ == null ? null : report_.getUserName();
    }
 
    void setOrganization(String organization) {
-      organization_ = organization;
+      if (report_ != null)
+         report_.setUserOrganization(organization);
    }
 
    String getOrganization() {
-      return organization_;
+      return report_ == null ? null : report_.getUserOrganization();
    }
 
    void setEmail(String email) {
-      email_ = email;
+      if (report_ != null)
+         report_.setUserEmail(email);
    }
 
    String getEmail() {
-      return email_;
+      return report_ == null ? null : report_.getUserEmail();
    }
 
    /*
@@ -177,6 +178,7 @@ public class ProblemReportController {
 
       if (report_ != null) {
          report_.cancelLogCapture();
+         report_.deleteStorage();
          report_ = null;
       }
 
@@ -187,6 +189,7 @@ public class ProblemReportController {
    void startLogCapture() {
       if (report_ != null) {
          report_.cancelLogCapture();
+         report_.deleteStorage();
          report_ = null;
       }
 
@@ -195,7 +198,19 @@ public class ProblemReportController {
       panel.setButtonsEnabled(false);
       frame_.setControlPanel(panel);
 
-      report_ = new ProblemReport(core_);
+      // TODO Put this in a persistent report manager
+      File reportDir = null;
+      String homePath = System.getProperty("user.home");
+      if (homePath != null && !homePath.isEmpty()) {
+         File homeDir = new File(homePath);
+         if (homeDir.isDirectory()) {
+            reportDir = new File(homeDir, "MMProblemReport");
+         }
+      }
+
+      report_ = ProblemReport.NewPersistentReport(core_, reportDir);
+      copyDescriptionToReport();
+
       report_.startCapturingLog();
       new SwingWorker<Object, Object>() {
          @Override
@@ -335,8 +350,6 @@ public class ProblemReportController {
          return; // Should not happen
       }
 
-      copyUserEnteredValuesToReport();
-
       ProblemReportFormatter formatter = new ProblemReportFormatter();
       String reportStr = formatter.format(report_);
 
@@ -365,8 +378,6 @@ public class ProblemReportController {
       final SendReportControlPanel panel = (SendReportControlPanel) frame_.getControlPanel();
       panel.setUIMode(SendReportControlPanel.UIMode.SENDING);
       getDescriptionTextArea().setEnabled(false);
-
-      copyUserEnteredValuesToReport();
 
       new SwingWorker<Boolean, Object>() {
          @Override
@@ -414,7 +425,7 @@ public class ProblemReportController {
       if (confirmEmail == null) {
          return false;
       }
-      if (!confirmEmail.equals(email_)) {
+      if (!confirmEmail.equals(getEmail())) {
          JOptionPane.showMessageDialog(frame_,
                "Email address does not match; please check your typing.");
          return false;
@@ -422,7 +433,11 @@ public class ProblemReportController {
       return true;
    }
 
-   private void copyUserEnteredValuesToReport() {
+   private void copyDescriptionToReport() {
+      if (report_ == null) {
+         return;
+      }
+
       String description;
       try {
          description = descriptionTextArea_.getDocument().getText(0,
@@ -433,9 +448,6 @@ public class ProblemReportController {
       }
 
       report_.setDescription(description);
-      report_.setUserName(name_);
-      report_.setUserOrganization(organization_);
-      report_.setUserEmail(email_);
    }
 
    private void openReportWindow(String report) {
