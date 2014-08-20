@@ -46,6 +46,15 @@ public class ProblemReport {
       }
    }
 
+   /**
+    * Create a problem report using the given core.
+    *
+    * Note that although core is used for logging control, but the information
+    * logged may come from global state (the system information classes obtain
+    * the Core from the MMStudio singleton).
+    *
+    * @param core the Core.
+    */
    public ProblemReport(mmcorej.CMMCore core) {
       core_ = core;
 
@@ -66,38 +75,80 @@ public class ProblemReport {
       collectHostInformation();
    }
 
+   /**
+    * Set the user full name.
+    *
+    * This is for the name entered by the user, not the login name.
+    * @param name the name.
+    */
    public void setUserName(String name) {
       userName_ = name;
    }
 
+   /**
+    * Get the user full name.
+    *
+    * This is the human-readable name entered by the user, not the login name.
+    * @return the name.
+    */
    public String getUserName() {
       return userName_;
    }
 
+   /**
+    * Set the user organization name.
+    * @param organization the organization name.
+    */
    public void setUserOrganization(String organization) {
       userOrganization_ = organization;
    }
 
+   /**
+    * Get the user organization name.
+    * @return the organization name.
+    */
    public String getUserOrganization() {
       return userOrganization_;
    }
 
+   /**
+    * Set the user email address.
+    * @param email the email address.
+    */
    public void setUserEmail(String email) {
       userEmail_ = email;
    }
 
+   /**
+    * Get the user email address.
+    * @return the email address.
+    */
    public String getUserEmail() {
       return userEmail_;
    }
 
+   /**
+    * Set the user-entered description.
+    * @param description the description.
+    */
    public void setDescription(String description) {
       description_ = description;
    }
 
+   /**
+    * Get the user-entered description.
+    * @return the description.
+    */
    public String getDescription() {
       return description_;
    }
 
+   /**
+    * Start CoreLog capture.
+    *
+    * Save the current hardware configuration file, then start capturing the
+    * CoreLog.
+    */
    public void startCapturingLog() {
       startCfg_ = getCurrentConfigFile();
 
@@ -131,6 +182,9 @@ public class ProblemReport {
       core_.logMessage("Problem Report: Start of log capture");
    }
 
+   /**
+    * Stop CoreLog capture and discard captured log.
+    */
    public void cancelLogCapture() {
       if (logFileHandle_ == null) {
          return;
@@ -147,6 +201,12 @@ public class ProblemReport {
       logFileHandle_ = null;
    }
 
+   /**
+    * Stop CoreLog capture and record the captured log as part of the report.
+    *
+    * After stopping CoreLog capture, the current hardware configuration file
+    * is also recorded.
+    */
    public void finishCapturingLog() {
       if (logFileHandle_ == null) {
          // Either starting the capture failed, or we were erroneously called
@@ -181,6 +241,13 @@ public class ProblemReport {
       endCfg_ = getCurrentConfigFile();
    }
 
+   /**
+    * Dump system information to the CoreLog.
+    *
+    * This is intended to be called after startCapturingLog().
+    *
+    * @param incremental if true, only dump info that is likely to change.
+    */
    public void logSystemInfo(boolean incremental) {
       final String inc = incremental ? " (incremental)" : "";
       core_.logMessage("***** BEGIN Problem Report System Info" + inc + " *****");
