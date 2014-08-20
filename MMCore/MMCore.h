@@ -58,9 +58,12 @@
 #include "../MMDevice/MMDeviceConstants.h"
 #include "Configuration.h"
 #include "CoreUtils.h"
-#include "Devices/DeviceInstances.h"
 #include "Error.h"
 #include "ErrorCodes.h"
+#include "Logging/Logging.h"
+
+#include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 
 #include <cstring>
 #include <deque>
@@ -91,6 +94,18 @@ class MMEventCallback;
 class Metadata;
 class PixelSizeConfigGroup;
 class PropertyBlock;
+
+class AutoFocusInstance;
+class CameraInstance;
+class DeviceInstance;
+class GalvoInstance;
+class ImageProcessorInstance;
+class SLMInstance;
+class ShutterInstance;
+class StageInstance;
+class XYStageInstance;
+
+class CMMCore;
 
 namespace mm {
    class DeviceManager;
