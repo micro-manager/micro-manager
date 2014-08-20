@@ -33,6 +33,56 @@ public class ProblemReportController {
 
    private static ProblemReportController instance_;
 
+   private static int checkForInterruptedReport(boolean userInitiated) {
+      ProblemReport report = loadLeftoverReport();
+      if (report == null) {
+         return JOptionPane.NO_OPTION;
+      }
+
+      String[] options;
+      if (userInitiated) {
+         options = new String[]{ "Reopen", "Discard", "Cancel" };
+      }
+      else {
+         options = new String[]{ "Reopen", "Discard", "Not Now" };
+      }
+      int answer = JOptionPane.showOptionDialog(null,
+            "A Problem Report was in progress when Micro-Manager " +
+            "exited. Would you like to reopen the interrupted report?",
+            "Continue Problem Report",
+            JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
+            null, options, null);
+
+      if (answer == JOptionPane.YES_OPTION) {
+         return JOptionPane.YES_OPTION;
+      }
+      else if (answer == JOptionPane.NO_OPTION) {
+         report.deleteStorage();
+         return JOptionPane.NO_OPTION;
+      }
+      else {
+         return JOptionPane.CANCEL_OPTION;
+      }
+   }
+
+   /**
+    * Prompt user to reopen an interrupted Problem Report if one exists.
+    * Does nothing if the Problem Report window is currently being displayed.
+    */
+   public static void startIfInterruptedOnExit(final mmcorej.CMMCore core) {
+      if (instance_ != null && instance_.frame_ != null) {
+         return; // Don't mess if frame is being shown
+      }
+
+      int answer = checkForInterruptedReport(false);
+      if (answer == JOptionPane.YES_OPTION) {
+         if (instance_ == null) {
+            instance_ = new ProblemReportController(core);
+         }
+         instance_.showFrame(true);
+      }
+   }
+
    /**
     * Activates the Problem Report window. If one is already open, brings it to
     * the front; if not, creates the window.
@@ -41,7 +91,7 @@ public class ProblemReportController {
       if (instance_ == null) {
          instance_ = new ProblemReportController(core);
       }
-      instance_.showFrame();
+      instance_.showFrame(false);
    }
 
    /*
@@ -62,32 +112,16 @@ public class ProblemReportController {
       core_ = core;
    }
 
-   void showFrame() {
+   void showFrame(boolean forceReopen) {
       if (frame_ == null) {
-         boolean continueLeftover = false;
-         if (loadLeftoverReport()) {
-            int answer = JOptionPane.showOptionDialog(frame_,
-                  "A Problem Report was in progress when Micro-Manager " +
-                  "exited. Would you like to load the leftover report?",
-                  "Continue Problem Report",
-                  JOptionPane.YES_NO_CANCEL_OPTION,
-                  JOptionPane.QUESTION_MESSAGE, null,
-                  new String[]{"Load Interrupted Report",
-                     "Discard and Start New",
-                     "Cancel"}, null);
-            if (answer == JOptionPane.YES_OPTION) {
-               continueLeftover = true;
-            }
-            else if (answer == JOptionPane.NO_OPTION) {
-               report_.deleteStorage();
-               report_ = null;
-            }
-            else {
-               return;
-            }
+         int reopenAnswer = forceReopen ? JOptionPane.YES_OPTION :
+               checkForInterruptedReport(true);
+         if (reopenAnswer == JOptionPane.CANCEL_OPTION) {
+            return;
          }
          frame_ = new ProblemReportFrame(this);
-         if (continueLeftover) {
+         if (reopenAnswer == JOptionPane.YES_OPTION) {
+            report_ = loadLeftoverReport();
             frame_.setControlPanel(new SendReportControlPanel(this, false));
             markReportUnsent();
          }
@@ -103,7 +137,7 @@ public class ProblemReportController {
       frame_.requestFocus();
    }
 
-   private File getReportDirectory() {
+   private static File getReportDirectory() {
       String homePath = System.getProperty("user.home");
       if (homePath != null && !homePath.isEmpty()) {
          File homeDir = new File(homePath);
@@ -114,14 +148,14 @@ public class ProblemReportController {
       return null;
    }
 
-   private boolean loadLeftoverReport() {
+   private static ProblemReport loadLeftoverReport() {
       File reportDir = getReportDirectory();
-      report_ = ProblemReport.LoadFromPersistence(reportDir);
-      if (report_.isUsefulReport()) {
-         return true;
+      ProblemReport report = ProblemReport.LoadFromPersistence(reportDir);
+      if (report.isUsefulReport()) {
+         return report;
       }
-      report_.deleteStorage();
-      return false;
+      report.deleteStorage();
+      return null;
    }
 
    private boolean isContactInfoValid() {
