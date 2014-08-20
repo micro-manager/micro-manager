@@ -66,9 +66,9 @@ public class ProblemReport {
    private Integer logFileHandle_;
    private String logFileName_;
 
-   private ConfigFile startCfg_;
+   private NamedTextFile startCfg_;
    private String capturedLogContent_;
-   private ConfigFile endCfg_;
+   private NamedTextFile endCfg_;
 
    private Timer deferredSyncTimer_ = null;
 
@@ -385,14 +385,14 @@ public class ProblemReport {
       if (startCfg_ == null) {
          return null;
       }
-      return startCfg_.getFileName();
+      return startCfg_.getFilename();
    }
 
    String getEndingConfigFileName() {
       if (endCfg_ == null) {
          return null;
       }
-      return endCfg_.getFileName();
+      return endCfg_.getFilename();
    }
 
    String getStartingConfig() {
@@ -653,7 +653,7 @@ public class ProblemReport {
       createReportDir();
 
       if (startCfg_ != null) {
-         metadata_.startCfgFilename = startCfg_.getFileName();
+         metadata_.startCfgFilename = startCfg_.getFilename();
          syncMetadata();
          writeTextFile(new File(reportDir_, START_CFG_FILENAME),
                startCfg_.getContent());
@@ -671,7 +671,7 @@ public class ProblemReport {
       createReportDir();
 
       if (endCfg_ != null) {
-         metadata_.endCfgFilename = endCfg_.getFileName();
+         metadata_.endCfgFilename = endCfg_.getFilename();
          syncMetadata();
          writeTextFile(new File(reportDir_, END_CFG_FILENAME),
                endCfg_.getContent());
@@ -701,12 +701,12 @@ public class ProblemReport {
       metadata_ = gson.fromJson(metadataJson, Metadata.class);
 
       if (metadata_.startCfgFilename != null) {
-         startCfg_ = new ConfigFile(metadata_.startCfgFilename,
+         startCfg_ = new NamedTextFile(metadata_.startCfgFilename,
                new File(directory, START_CFG_FILENAME));
       }
 
       if (metadata_.endCfgFilename != null) {
-         endCfg_ = new ConfigFile(metadata_.endCfgFilename,
+         endCfg_ = new NamedTextFile(metadata_.endCfgFilename,
                new File(directory, END_CFG_FILENAME));
       }
 
@@ -716,73 +716,43 @@ public class ProblemReport {
       // TODO Load hs_err_pid if found
    }
 
-   private static ConfigFile getCurrentConfigFile() {
+   private static NamedTextFile getCurrentConfigFile() {
       String fileName = org.micromanager.MMStudio.getInstance().getSysConfigFile();
-      return new ConfigFile(fileName);
+      return new NamedTextFile(fileName);
    }
 
-   private static class ConfigFile {
-      final private String fileName_;
+   // A text file's name and content.
+   private static class NamedTextFile {
+      final private String filename_;
       final private String content_;
 
-      public ConfigFile(String fileName) {
-         this(fileName, new File(fileName));
+      public NamedTextFile(String filename) {
+         this(filename, new File(filename));
       }
 
-      public ConfigFile(String fileName, File file) {
-         fileName_ = fileName;
-         String content = null;
-
-         java.io.Reader reader = null;
-         try {
-            reader = new java.io.FileReader(file);
-         }
-         catch (java.io.FileNotFoundException e) {
-            content = e.getMessage();
-         }
-
-         StringBuilder sb = new StringBuilder();
-         if (reader != null) {
-            try {
-               int read;
-               char[] buf = new char[8192];
-               while ((read = reader.read(buf)) > 0) {
-                  sb.append(buf, 0, read);
-               }
-            }
-            catch (java.io.IOException e) {
-               content = e.getMessage();
-            }
-            finally {
-               try {
-                  reader.close();
-               }
-               catch (java.io.IOException ignore) {
-               }
-            }
-         }
-
-         if (content == null) {
-            content = sb.toString();
-         }
-
-         content_ = content;
+      public NamedTextFile(File file) {
+         this(file.getAbsolutePath(), file);
       }
 
-      public boolean equals(ConfigFile rhs) {
+      public NamedTextFile(String filename, File file) {
+         filename_ = filename;
+         content_ = readTextFile(file);
+      }
+
+      public boolean equals(NamedTextFile rhs) {
          if (this == rhs) {
             return true;
          }
 
-         if (!fileName_.equals(rhs.fileName_)) {
+         if (!filename_.equals(rhs.filename_)) {
             return false;
          }
 
          return content_.equals(rhs.content_);
       }
 
-      public String getFileName() {
-         return fileName_;
+      public String getFilename() {
+         return filename_;
       }
 
       public String getContent() {
