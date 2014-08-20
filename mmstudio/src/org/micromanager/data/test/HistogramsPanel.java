@@ -3,9 +3,13 @@ package org.micromanager.data.test;
 import com.google.common.eventbus.EventBus;
 
 import ij.CompositeImage;
+import ij.ImagePlus;
+
 import java.awt.Dimension;
 import java.awt.GridLayout;
+
 import java.util.ArrayList;
+
 import javax.swing.JPanel;
 
 import org.micromanager.api.data.Datastore;
@@ -20,15 +24,15 @@ public final class HistogramsPanel extends JPanel implements Histograms {
    private long lastUpdateTime_;
    private ArrayList<ChannelControlPanel> channelPanels_;
    private Datastore store_;
-   private CompositeImage composite_;
+   private ImagePlus plus_;
    private EventBus bus_;
    private boolean updatingCombos_ = false;
 
-   public HistogramsPanel(Datastore store, CompositeImage composite,
+   public HistogramsPanel(Datastore store, ImagePlus plus,
          EventBus bus) {
       super();
       store_ = store;
-      composite_ = composite;
+      plus_ = plus;
       bus_ = bus;
       setupChannelControls();
    }
@@ -53,7 +57,7 @@ public final class HistogramsPanel extends JPanel implements Histograms {
       channelPanels_ = new ArrayList<ChannelControlPanel>();
       for (int i = 0; i < nChannels; ++i) {
          ChannelControlPanel panel = new ChannelControlPanel(i, this, store_,
-               composite_, bus_);
+               plus_, bus_);
          this.add(panel);
          channelPanels_.add(panel);
       }
@@ -182,10 +186,23 @@ public final class HistogramsPanel extends JPanel implements Histograms {
       }
    }
    
+   public boolean amInCompositeMode() {
+      return ((plus_ instanceof CompositeImage) &&
+            ((CompositeImage) plus_).getMode() != CompositeImage.COMPOSITE);
+   }
+
+   public boolean amMultiChannel() {
+      return (plus_ instanceof CompositeImage);
+   }
+
    private void updateActiveChannels() {
-      int currentChannel = composite_.getChannel() - 1;
-      boolean[] active = composite_.getActiveChannels();
-      if (composite_.getMode() != CompositeImage.COMPOSITE) {
+      if (!amMultiChannel()) {
+         return;
+      }
+      CompositeImage composite = (CompositeImage) plus_;
+      int currentChannel = composite.getChannel() - 1;
+      boolean[] active = composite.getActiveChannels();
+      if (amInCompositeMode()) {
          for (int i = 0; i < active.length; i++) {
             active[i] = (currentChannel == i);
          }
