@@ -678,9 +678,8 @@ public class MMAcquisition {
             throw new MMScriptException("Pixel type does not match MMAcquisition.");
          }
 
-         int channel = MDUtils.getChannelIndex(tags);
-         int frame = MDUtils.getFrameIndex(tags);
          if (!MDUtils.getPixelType(tags).startsWith("RGB")) {
+            int channel = MDUtils.getChannelIndex(tags);
             MDUtils.setChannelName(tags, getChannelName(channel));
          }
          long elapsedTimeMillis = System.currentTimeMillis() - startTimeMs_;
