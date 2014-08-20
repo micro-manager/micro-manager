@@ -41,6 +41,7 @@ public class ProblemReport {
    private final CMMCore core_;
 
    private File reportDir_; // null if non-persistent
+   private File leftoverDir_;
 
    // Designed for serialization via GSON.
    private static class Metadata {
@@ -57,6 +58,7 @@ public class ProblemReport {
       public String macAddress;
       public String ipAddress;
       public String hostName;
+      public String userLogin;
    }
 
    private Metadata metadata_;
@@ -113,7 +115,7 @@ public class ProblemReport {
    }
 
    /**
-    * Create a report by loading a disk-backed report.
+    * Create a report by loading a leftover disk-backed report.
     *
     * @param storageDirectory where to load the report data from.
     */
@@ -342,15 +344,8 @@ public class ProblemReport {
    }
 
    public void deleteStorage() {
-      if (reportDir_ != null) {
-         new File(reportDir_, LOG_CAPTURE_FILENAME).delete();
-         new File(reportDir_, START_CFG_FILENAME).delete();
-         new File(reportDir_, END_CFG_FILENAME).delete();
-         new File(reportDir_, METADATA_FILENAME).delete();
-         new File(reportDir_, METADATA_TEMP_FILENAME).delete();
-         new File(reportDir_, README_FILENAME).delete();
-         reportDir_.delete();
-      }
+      deleteReportDir(reportDir_);
+      deleteReportDir(leftoverDir_);
    }
 
    /**
@@ -427,7 +422,7 @@ public class ProblemReport {
    }
 
    String getUserId() {
-      return core_.getUserId();
+      return metadata_.userLogin;
    }
 
    int getPid() {
@@ -475,6 +470,8 @@ public class ProblemReport {
       }
       catch (java.io.IOException ignore) {
       }
+
+      metadata_.userLogin = core_.getUserId();
    }
 
    private static Charset getUTF8CharsetWithoutStupidExceptions() {
@@ -568,6 +565,18 @@ public class ProblemReport {
          }
       }
       // Ignore errors.
+   }
+
+   private void deleteReportDir(File directory) {
+      if (directory != null) {
+         new File(directory, LOG_CAPTURE_FILENAME).delete();
+         new File(directory, START_CFG_FILENAME).delete();
+         new File(directory, END_CFG_FILENAME).delete();
+         new File(directory, METADATA_FILENAME).delete();
+         new File(directory, METADATA_TEMP_FILENAME).delete();
+         new File(directory, README_FILENAME).delete();
+         directory.delete();
+      }
    }
 
    private Gson makeGson() {
@@ -673,6 +682,8 @@ public class ProblemReport {
       if (!directory.isDirectory()) {
          return;
       }
+
+      leftoverDir_ = directory;
 
       File metadataFile = new File(directory, METADATA_FILENAME);
       if (!metadataFile.isFile()) {

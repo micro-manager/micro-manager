@@ -64,7 +64,33 @@ public class ProblemReportController {
 
    void showFrame() {
       if (frame_ == null) {
+         boolean continueLeftover = false;
+         if (loadLeftoverReport()) {
+            int answer = JOptionPane.showOptionDialog(frame_,
+                  "A Problem Report was in progress when Micro-Manager " +
+                  "exited. Would you like to load the leftover report?",
+                  "Continue Problem Report",
+                  JOptionPane.YES_NO_CANCEL_OPTION,
+                  JOptionPane.QUESTION_MESSAGE, null,
+                  new String[]{"Load Interrupted Report",
+                     "Discard and Start New",
+                     "Cancel"}, null);
+            if (answer == JOptionPane.YES_OPTION) {
+               continueLeftover = true;
+            }
+            else if (answer == JOptionPane.NO_OPTION) {
+               report_.deleteStorage();
+               report_ = null;
+            }
+            else {
+               return;
+            }
+         }
          frame_ = new ProblemReportFrame(this);
+         if (continueLeftover) {
+            frame_.setControlPanel(new SendReportControlPanel(this, false));
+            markReportUnsent();
+         }
       }
 
       frame_.setVisible(true);
@@ -75,6 +101,27 @@ public class ProblemReportController {
 
       frame_.toFront();
       frame_.requestFocus();
+   }
+
+   private File getReportDirectory() {
+      String homePath = System.getProperty("user.home");
+      if (homePath != null && !homePath.isEmpty()) {
+         File homeDir = new File(homePath);
+         if (homeDir.isDirectory()) {
+            return new File(homeDir, "MMProblemReport");
+         }
+      }
+      return null;
+   }
+
+   private boolean loadLeftoverReport() {
+      File reportDir = getReportDirectory();
+      report_ = ProblemReport.LoadFromPersistence(reportDir);
+      if (report_.isUsefulReport()) {
+         return true;
+      }
+      report_.deleteStorage();
+      return false;
    }
 
    private boolean isContactInfoValid() {
@@ -198,16 +245,7 @@ public class ProblemReportController {
       panel.setButtonsEnabled(false);
       frame_.setControlPanel(panel);
 
-      // TODO Put this in a persistent report manager
-      File reportDir = null;
-      String homePath = System.getProperty("user.home");
-      if (homePath != null && !homePath.isEmpty()) {
-         File homeDir = new File(homePath);
-         if (homeDir.isDirectory()) {
-            reportDir = new File(homeDir, "MMProblemReport");
-         }
-      }
-
+      File reportDir = getReportDirectory();
       report_ = ProblemReport.NewPersistentReport(core_, reportDir);
       copyDescriptionToReport();
 

@@ -46,6 +46,11 @@ class SendReportControlPanel extends ControlPanel {
    UIMode mode_ = UIMode.UNSENT;
 
    SendReportControlPanel(ProblemReportController controller) {
+      this(controller, true);
+   }
+
+   SendReportControlPanel(ProblemReportController controller,
+         boolean allowRestart) {
       controller_ = controller;
 
       cancelButton_ = new JButton("Cancel");
@@ -56,13 +61,18 @@ class SendReportControlPanel extends ControlPanel {
          }
       });
 
-      startOverButton_ = new JButton("Start Over");
-      startOverButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            controller_.startLogCapture();
-         }
-      });
+      if (allowRestart) {
+         startOverButton_ = new JButton("Start Over");
+         startOverButton_.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+               controller_.startLogCapture();
+            }
+         });
+      }
+      else {
+         startOverButton_ = null;
+      }
 
       viewButton_ = new JButton("View Report");
       viewButton_.addActionListener(new ActionListener() {
@@ -146,8 +156,13 @@ class SendReportControlPanel extends ControlPanel {
       add(new JLabel("Email:"));
       add(emailField_, "wrap");
 
-      add(cancelButton_, "span 2, split 4, sizegroup cancelbtns");
-      add(startOverButton_, "gapright push, sizegroup cancelbtns");
+      if (startOverButton_ != null) {
+         add(cancelButton_, "span 2, split 4, sizegroup cancelbtns");
+         add(startOverButton_, "gapright push, sizegroup cancelbtns");
+      }
+      else {
+         add(cancelButton_, "span 2, split 3, gapright push, sizegroup cancelbtns");
+      }
       add(viewButton_, "sizegroup actionbtns");
       add(sendButton_, "sizegroup actionbtns");
 
@@ -183,7 +198,9 @@ class SendReportControlPanel extends ControlPanel {
       emailField_.setEnabled(editable);
 
       cancelButton_.setEnabled(!disabled);
-      startOverButton_.setEnabled(!disabled);
+      if (startOverButton_ != null) {
+         startOverButton_.setEnabled(!disabled);
+      }
       // Leave view button always enabled.
       sendButton_.setEnabled(sendable);
 
