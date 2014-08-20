@@ -46,7 +46,7 @@ CoreCallback::AddCameraMetadata(const MM::Device* caller, const Metadata* pMd)
 
    boost::shared_ptr<CameraInstance> camera =
       boost::static_pointer_cast<CameraInstance>(
-            core_->deviceManager_.GetDevice(caller));
+            core_->deviceManager_->GetDevice(caller));
 
    std::string label = camera->GetLabel();
    newMD.put("Camera", label);
@@ -406,7 +406,7 @@ int CoreCallback::WriteToSerial(const MM::Device* caller, const char* portName, 
    boost::shared_ptr<SerialInstance> pSerial;
    try
    {
-      pSerial = core_->deviceManager_.GetDeviceOfType<SerialInstance>(portName);
+      pSerial = core_->deviceManager_->GetDeviceOfType<SerialInstance>(portName);
    }
    catch (CMMError& err)
    {
@@ -432,7 +432,7 @@ int CoreCallback::ReadFromSerial(const MM::Device* caller, const char* portName,
    boost::shared_ptr<SerialInstance> pSerial;
    try
    {
-      pSerial = core_->deviceManager_.GetDeviceOfType<SerialInstance>(portName);
+      pSerial = core_->deviceManager_->GetDeviceOfType<SerialInstance>(portName);
    }
    catch (CMMError& err)
    {
@@ -458,7 +458,7 @@ int CoreCallback::PurgeSerial(const MM::Device* caller, const char* portName)
    boost::shared_ptr<SerialInstance> pSerial;
    try
    {
-      pSerial = core_->deviceManager_.GetDeviceOfType<SerialInstance>(portName);
+      pSerial = core_->deviceManager_->GetDeviceOfType<SerialInstance>(portName);
    }
    catch (CMMError& err)
    {

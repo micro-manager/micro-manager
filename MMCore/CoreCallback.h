@@ -27,6 +27,7 @@
 
 #include "Devices/DeviceInstances.h"
 #include "CoreUtils.h"
+#include "DeviceManager.h"
 #include "MMCore.h"
 #include "MMEventCallback.h"
 #include "../MMDevice/DeviceUtils.h"
@@ -59,7 +60,7 @@ public:
       boost::shared_ptr<DeviceInstance> device;
       try
       {
-         device = core_->deviceManager_.GetDevice(caller);
+         device = core_->deviceManager_->GetDevice(caller);
       }
       catch (const CMMError&)
       {
@@ -80,7 +81,7 @@ public:
 
       try
       {
-         MM::Device* pDevice = core_->deviceManager_.GetDevice(label)->GetRawPtr();
+         MM::Device* pDevice = core_->deviceManager_->GetDevice(label)->GetRawPtr();
          if (pDevice == caller)
             return 0;
          return pDevice;
@@ -96,7 +97,7 @@ public:
       boost::shared_ptr<SerialInstance> pSerial;
       try
       {
-         pSerial = core_->deviceManager_.GetDeviceOfType<SerialInstance>(portName);
+         pSerial = core_->deviceManager_->GetDeviceOfType<SerialInstance>(portName);
       }
       catch (...)
       {
@@ -189,7 +190,7 @@ public:
    {
       try
       {
-         return core_->deviceManager_.GetDeviceOfType<StateInstance>(label)->
+         return core_->deviceManager_->GetDeviceOfType<StateInstance>(label)->
             GetRawPtr();
       }
       catch (const CMMError&)
@@ -201,7 +202,7 @@ public:
    MM::SignalIO* GetSignalIODevice(const MM::Device* /* caller */, const char* label)
    {
       try {
-         return core_->deviceManager_.
+         return core_->deviceManager_->
             GetDeviceOfType<SignalIOInstance>(label)->GetRawPtr();
       }
       catch (const CMMError&)
@@ -229,7 +230,7 @@ public:
       boost::shared_ptr<HubInstance> hubDevice;
       try
       {
-         hubDevice = core_->deviceManager_.GetParentDevice(core_->deviceManager_.GetDevice(caller));
+         hubDevice = core_->deviceManager_->GetParentDevice(core_->deviceManager_->GetDevice(caller));
       }
       catch (const CMMError&)
       {

@@ -58,7 +58,6 @@
 #include "../MMDevice/MMDeviceConstants.h"
 #include "Configuration.h"
 #include "CoreUtils.h"
-#include "DeviceManager.h"
 #include "Devices/DeviceInstances.h"
 #include "Error.h"
 #include "ErrorCodes.h"
@@ -95,6 +94,7 @@ class PixelSizeConfigGroup;
 class PropertyBlock;
 
 namespace mm {
+   class DeviceManager;
    class LogManager;
 } // namespace mm
 
@@ -620,7 +620,7 @@ private:
 
    std::vector< boost::weak_ptr<DeviceInstance> > imageSynchroDevices_;
    boost::shared_ptr<CPluginManager> pluginManager_;
-   mm::DeviceManager deviceManager_;
+   boost::shared_ptr<mm::DeviceManager> deviceManager_;
    std::map<int, std::string> errorText_;
    CPropBlockMap propBlocks_;
 
