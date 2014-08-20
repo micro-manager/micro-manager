@@ -516,6 +516,8 @@ public class MMStudio implements ScriptInterface {
 
       // switch error reporting back on
       ReportingUtils.showErrorOn(true);
+
+      org.micromanager.diagnostics.gui.ProblemReportController.startIfInterruptedOnExit();
    }
 
    public void showPipelinePanel() {
