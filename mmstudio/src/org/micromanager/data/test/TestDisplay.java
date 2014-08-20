@@ -32,6 +32,7 @@ public class TestDisplay {
       store_ = store;
       store_.registerForEvents(this);
       bus_ = new EventBus();
+      bus_.register(this);
       stack_ = new MMVirtualStack(store);
       plus_ = new MMImagePlus("foo", stack_, bus_);
       stack_.setImagePlus(plus_);
@@ -90,7 +91,8 @@ public class TestDisplay {
     */
    @Subscribe
    public void onDrawEvent(DrawEvent event) {
-      ijImage_.updateImage();
+      ReportingUtils.logError("Draw event!");
+      ijImage_.updateAndDraw();
 //      ijImage_.drawWithoutUpdate();
       histograms_.calcAndDisplayHistAndStats(true);
    }

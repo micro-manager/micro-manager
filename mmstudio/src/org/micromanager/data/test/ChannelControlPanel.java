@@ -419,14 +419,12 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    private void updateHistogram() {
-      ReportingUtils.logError("updateHistogram");
       hp_.setCursorText(contrastMin_ + "", contrastMax_ + "");
       hp_.setCursors(contrastMin_ / binSize_, (contrastMax_+1) / binSize_, gamma_);
       hp_.repaint();
    }
 
    private void fullButtonAction() {
-      ReportingUtils.logError("fullButton");
       if (settings_.getShouldSyncChannels() != null &&
             settings_.getShouldSyncChannels()) {
          parent_.fullScaleChannels();
@@ -652,6 +650,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          public void run() {
             if (store_.getIsLocked()) {
                // TODO: why do we not do this when the store is locked?
+               ReportingUtils.logError("Store locked; no LUT for us");
                return;
             }
 
@@ -661,6 +660,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             if (composite_ == null) {
                // Single-channel case is straightforward.
                plus_.getProcessor().setColorModel(lut);
+               plus_.getProcessor().setMinAndMax(lut.min, lut.max);
             }
             else {
                // uses lut.min and lut.max to set min and max of processor
@@ -916,12 +916,12 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    private void applyLUT() {
+      ReportingUtils.logError("Applying LUT to channel " + channelIndex_);
       if (settings_.getShouldSyncChannels() != null &&
             settings_.getShouldSyncChannels()) {
          parent_.applyContrastToAllChannels(contrastMin_, contrastMax_, gamma_);
       } else {
          parent_.applyLUTToImage();
-         bus_.post(new DrawEvent());
       }
    }
 
