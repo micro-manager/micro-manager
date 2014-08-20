@@ -56,6 +56,7 @@ public class ProblemReport {
       public String ipAddress;
       public String hostName;
       public String userLogin;
+      public String currentDir;
    }
 
    private Metadata metadata_;
@@ -495,6 +496,7 @@ public class ProblemReport {
       }
 
       metadata_.userLogin = core_.getUserId();
+      metadata_.currentDir = System.getProperty("user.dir");
    }
 
    private static String readTextFile(java.io.File file) {
@@ -728,10 +730,15 @@ public class ProblemReport {
 
    private void loadHotSpotErrorLogForPid(int pid) {
       String logFilename = "hs_err_pid" + Integer.toString(pid) + ".log";
-      // The log is saved in the current directory. Let's assume that the
-      // current directory has not changed since the last run that crashed.
-      File logFile = new File(new File(System.getProperty("user.dir")),
-              logFilename);
+      File logDir;
+      if (metadata_.currentDir != null) {
+         logDir = new File(metadata_.currentDir);
+      }
+      else {
+         // Try the current current directory, in case we get lucky.
+         logDir = new File(System.getProperty("user.dir"));
+      }
+      File logFile = new File(logDir, logFilename);
       if (logFile.isFile()) {
          hotSpotErrorLog_ = new NamedTextFile(logFile);
       }
