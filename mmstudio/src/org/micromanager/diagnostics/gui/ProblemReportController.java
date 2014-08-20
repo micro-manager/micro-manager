@@ -122,6 +122,7 @@ public class ProblemReportController {
          frame_ = new ProblemReportFrame(this);
          if (reopenAnswer == JOptionPane.YES_OPTION) {
             report_ = loadLeftoverReport();
+            descriptionTextArea_.setText(report_.getDescription());
             frame_.setControlPanel(new SendReportControlPanel(this, false));
             markReportUnsent();
          }
