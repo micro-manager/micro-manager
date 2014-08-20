@@ -62,7 +62,6 @@
 #include "Devices/DeviceInstances.h"
 #include "Error.h"
 #include "ErrorCodes.h"
-#include "PluginManager.h"
 
 #include <cstring>
 #include <deque>
@@ -84,15 +83,16 @@
 #endif
 
 
+class CPluginManager;
 class CircularBuffer;
-class Configuration;
-class PropertyBlock;
 class ConfigGroupCollection;
-class CorePropertyCollection;
+class Configuration;
 class CoreCallback;
-class PixelSizeConfigGroup;
-class Metadata;
+class CorePropertyCollection;
 class MMEventCallback;
+class Metadata;
+class PixelSizeConfigGroup;
+class PropertyBlock;
 
 namespace mm {
    class LogManager;
@@ -619,7 +619,7 @@ private:
    CircularBuffer* cbuf_;
 
    std::vector< boost::weak_ptr<DeviceInstance> > imageSynchroDevices_;
-   CPluginManager pluginManager_;
+   boost::shared_ptr<CPluginManager> pluginManager_;
    mm::DeviceManager deviceManager_;
    std::map<int, std::string> errorText_;
    CPropBlockMap propBlocks_;

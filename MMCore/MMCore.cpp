@@ -50,9 +50,10 @@
 #include "CoreUtils.h"
 #include "Devices/DeviceInstances.h"
 #include "Host.h"
+#include "LogManager.h"
 #include "MMCore.h"
 #include "MMEventCallback.h"
-#include "LogManager.h"
+#include "PluginManager.h"
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 
@@ -129,6 +130,7 @@ CMMCore::CMMCore() :
    externalCallback_(0),
    pixelSizeGroup_(0),
    cbuf_(0),
+   pluginManager_(new CPluginManager()),
    pPostedErrorsLock_(NULL)
 {
    configGroups_ = new ConfigGroupCollection();
@@ -339,7 +341,7 @@ std::vector<std::string>
 CMMCore::getAvailableDevices(const char* moduleName) throw (CMMError)
 {
    boost::shared_ptr<LoadedDeviceAdapter> module =
-      pluginManager_.GetDeviceAdapter(moduleName);
+      pluginManager_->GetDeviceAdapter(moduleName);
    return module->GetAvailableDeviceNames();
 }
 
@@ -352,7 +354,7 @@ CMMCore::getAvailableDeviceDescriptions(const char* moduleName) throw (CMMError)
    // XXX It is a little silly that we return the list of descriptions, rather
    // than provide access to the description of each device.
    boost::shared_ptr<LoadedDeviceAdapter> module =
-      pluginManager_.GetDeviceAdapter(moduleName);
+      pluginManager_->GetDeviceAdapter(moduleName);
    std::vector<std::string> names = module->GetAvailableDeviceNames();
    std::vector<std::string> descriptions;
    descriptions.reserve(names.size());
@@ -373,7 +375,7 @@ CMMCore::getAvailableDeviceTypes(const char* moduleName) throw (CMMError)
    // XXX It is a little silly that we return the list of types, rather than
    // provide access to the type of each device.
    boost::shared_ptr<LoadedDeviceAdapter> module =
-      pluginManager_.GetDeviceAdapter(moduleName);
+      pluginManager_->GetDeviceAdapter(moduleName);
    std::vector<std::string> names = module->GetAvailableDeviceNames();
    std::vector<long> types;
    types.reserve(names.size());
@@ -584,7 +586,7 @@ void CMMCore::setSystemState(const Configuration& conf)
  */
 std::vector<std::string> CMMCore::getDeviceAdapterSearchPaths()
 {
-   return pluginManager_.GetSearchPaths();
+   return pluginManager_->GetSearchPaths();
 }
 
 /**
@@ -601,7 +603,7 @@ std::vector<std::string> CMMCore::getDeviceAdapterSearchPaths()
  */
 void CMMCore::setDeviceAdapterSearchPaths(const std::vector<std::string>& paths)
 {
-   pluginManager_.SetSearchPaths(paths.begin(), paths.end());
+   pluginManager_->SetSearchPaths(paths.begin(), paths.end());
 }
 
 /**
@@ -613,7 +615,7 @@ void CMMCore::setDeviceAdapterSearchPaths(const std::vector<std::string>& paths)
  */
 std::vector<std::string> CMMCore::getDeviceAdapterNames() throw (CMMError)
 {
-   return pluginManager_.GetAvailableDeviceAdapters();
+   return pluginManager_->GetAvailableDeviceAdapters();
 }
 
 /**
@@ -681,7 +683,7 @@ void CMMCore::loadDevice(const char* label, const char* moduleName, const char* 
    try
    {
       boost::shared_ptr<LoadedDeviceAdapter> module =
-         pluginManager_.GetDeviceAdapter(moduleName);
+         pluginManager_->GetDeviceAdapter(moduleName);
       boost::shared_ptr<DeviceInstance> pDevice =
          deviceManager_.LoadDevice(module, deviceName, label, this,
                deviceLogger, coreLogger);
@@ -992,7 +994,7 @@ void CMMCore::unloadLibrary(const char* moduleName) throw (CMMError)
             } catch (CMMError& /*e*/) {} // ignore error; device may already have been unloaded
          }
       }
-      pluginManager_.UnloadPluginLibrary(moduleName);
+      pluginManager_->UnloadPluginLibrary(moduleName);
    }
    catch (CMMError& /* err */)
    {
