@@ -66,6 +66,7 @@ public class ProblemReport {
    private NamedTextFile startCfg_;
    private String capturedLogContent_;
    private NamedTextFile endCfg_;
+   private NamedTextFile hotSpotErrorLog_;
 
    private Timer deferredSyncTimer_ = null;
 
@@ -409,6 +410,24 @@ public class ProblemReport {
       return capturedLogContent_;
    }
 
+   boolean hasHotSpotErrorLog() {
+      return hotSpotErrorLog_ != null;
+   }
+
+   String getHotSpotErrorLogFileName() {
+      if (hotSpotErrorLog_ == null) {
+         return null;
+      }
+      return hotSpotErrorLog_.getFilename();
+   }
+
+   String getHotSpotErrorLogContent() {
+      if (hotSpotErrorLog_ == null) {
+         return null;
+      }
+      return hotSpotErrorLog_.getContent();
+   }
+
    String getMACAddress() {
       return metadata_.macAddress;
    }
@@ -698,7 +717,20 @@ public class ProblemReport {
       capturedLogContent_ =
          readTextFile(new File(directory, LOG_CAPTURE_FILENAME));
 
-      // TODO Load hs_err_pid if found
+      if (metadata_.pid != null) {
+         loadHotSpotErrorLogForPid(metadata_.pid);
+      }
+   }
+
+   private void loadHotSpotErrorLogForPid(int pid) {
+      String logFilename = "hs_err_pid" + Integer.toString(pid) + ".log";
+      // The log is saved in the current directory. Let's assume that the
+      // current directory has not changed since the last run that crashed.
+      File logFile = new File(new File(System.getProperty("user.dir")),
+              logFilename);
+      if (logFile.isFile()) {
+         hotSpotErrorLog_ = new NamedTextFile(logFile);
+      }
    }
 
    private static NamedTextFile getCurrentConfigFile() {

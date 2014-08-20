@@ -62,6 +62,11 @@ public class ProblemReportFormatter {
 
       sb.append(fileSection("Captured Log", report.getCapturedLogContent()));
 
+      if (report.hasHotSpotErrorLog()) {
+         sb.append(fileSection("HotSpot Error Log (" + report.getHotSpotErrorLogFileName() + ")",
+                 report.getHotSpotErrorLogContent()));
+      }
+
       sb.append("***** END OF PROBLEM REPORT *****");
       return sb.toString();
    }
