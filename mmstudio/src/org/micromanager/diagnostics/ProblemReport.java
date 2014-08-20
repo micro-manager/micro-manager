@@ -74,7 +74,6 @@ public class ProblemReport {
    private static final String START_CFG_FILENAME = "StartConfig.cfg";
    private static final String END_CFG_FILENAME = "EndConfig.cfg";
    private static final String METADATA_FILENAME = "ReportInfo.txt";
-   private static final String METADATA_TEMP_FILENAME = "ReportInfo.tmp";
    private static final String README_FILENAME = "README.txt";
 
    /**
@@ -560,7 +559,6 @@ public class ProblemReport {
          new File(directory, START_CFG_FILENAME).delete();
          new File(directory, END_CFG_FILENAME).delete();
          new File(directory, METADATA_FILENAME).delete();
-         new File(directory, METADATA_TEMP_FILENAME).delete();
          new File(directory, README_FILENAME).delete();
          directory.delete();
       }
@@ -618,13 +616,14 @@ public class ProblemReport {
       }
       createReportDir();
 
-      File tempFile = new File(reportDir_, METADATA_TEMP_FILENAME);
+      // I wanted to first write to a temp file and then atomically rename it
+      // to the destination file. But Windows fails to rename even if I delete
+      // the destination file just before the rename (it does work if there is
+      // some pause between the delete and rename, but that is not a viable
+      // workaround). So I'm giving up and just overwriting the file.
+      File metadataFile = new File(reportDir_, METADATA_FILENAME);
       Gson gson = makeGson();
-      writeTextFile(tempFile, gson.toJson(metadata_));
-
-      if (!tempFile.renameTo(new File(reportDir_, METADATA_FILENAME))) {
-         tempFile.delete();
-      }
+      writeTextFile(metadataFile, gson.toJson(metadata_));
 
       if (deferredSyncTimer_ != null) {
          deferredSyncTimer_.cancel();
