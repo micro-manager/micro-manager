@@ -206,7 +206,13 @@ public class AcquisitionManager {
          album = createNewAlbum();
          openAcquisition(album, "", true, false);
          acq = getAcquisition(album);
-         acq.setDimensions(2, numChannels, 1, 1);   
+         // HACK: adjust number of frames based on number of channels.  If we
+         // don't do this, then multi-channel images don't display properly (we
+         // just get repeat images), because the ImageJ object refuses to
+         // change which frame it displays. I have *no idea* why this happens,
+         // but instead of debugging and patching ImageJ itself, we're
+         // resorting to this workaround.
+         acq.setDimensions(numChannels > 1 ? 2 : 1, numChannels, 1, 1);
          acq.setImagePhysicalDimensions(imageWidth, imageHeight, imageDepth, imageBitDepth, numChannels);
 
          try {
@@ -235,36 +241,40 @@ public class AcquisitionManager {
          win.setLocation(prefs.getInt(ALBUM_WIN_X, 0), prefs.getInt(ALBUM_WIN_Y, 0));
       }
 
-      int f = 1 + acq.getLastAcquiredFrame();
-      try {
-         //update summary metadata
-         acq.getSummaryMetadata().put("Frames", f+1);
-      } catch (JSONException ex) {
-         ReportingUtils.logError("Couldn't update number of frames in album summary metadata");
-      }
+      // This image goes, by default, into the next frame.
+      int newImageFrame = acq.getLastAcquiredFrame() + 1;
       
-      //This makes sure that the second multicamera image has the correct frame index
+      // This makes sure that the second multicamera image has the correct
+      // frame index.
+      // Assumes that multi channel additions add channel 0 first.
       if (numChannels > 1) {
-         try {    // assumes that multi channel additions add channel 0 first
+         try {
             JSONObject lastTags = acq.getImageCache().getLastImageTags();
             int lastCh = -1;
-            if (lastTags != null)
+            if (lastTags != null) {
                lastCh = MDUtils.getChannelIndex(lastTags);
-            if (lastCh == 0)
-               f = acq.getLastAcquiredFrame();
+            }
+            if (lastCh == 0) {
+               newImageFrame = acq.getLastAcquiredFrame();
+            }
          } catch (JSONException ex) {
            ReportingUtils.logError(ex);
          }
       }
       try {
-         MDUtils.setFrameIndex(tags, f);
+         MDUtils.setFrameIndex(tags, newImageFrame);
       } catch (JSONException ex) {
          ReportingUtils.showError(ex);
       }
+      try {
+         // update summary metadata
+         acq.getSummaryMetadata().put("Frames", newImageFrame + 1);
+      } catch (JSONException ex) {
+         ReportingUtils.logError("Couldn't update number of frames in album summary metadata");
+      }
       acq.insertImage(image);
-      
 
-      //Apply appropriate contrast            
+      //Apply appropriate contrast
       if (numChannels == 1) { //monochrome
          try {
            if (MDUtils.getFrameIndex(tags) == 0) {
