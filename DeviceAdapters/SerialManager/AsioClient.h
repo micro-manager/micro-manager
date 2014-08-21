@@ -413,7 +413,6 @@ private:
 
    MMThreadLock readBufferLock_;
    MMThreadLock writeBufferLock_;
-   MMThreadLock serviceLock_;
    MMThreadLock implementationLock_;
    bool shutDownInProgress_;
 }; 
