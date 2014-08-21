@@ -18,31 +18,35 @@
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-// CVS:           $Id$
-//
 
-#ifndef _SERIALMANAGER_H_
-#define _SERIALMANAGER_H_
+#pragma once
 
-#include "../../MMDevice/MMDevice.h"
-#include "../../MMDevice/DeviceBase.h"
-#include <string>
+// Prevent windows.h (through DeviceBase.h) from includeing winsock.h
+// before boost/asio.h (which results in an #error).
+#define WIN32_LEAN_AND_MEAN
+
+#include "DeviceBase.h"
+
+#ifdef __APPLE__
+// OS X 10.5 kqueue does not support serial
+// See https://svn.boost.org/trac/boost/ticket/2565 and
+// http://sourceforge.net/p/asio/mailman/message/24889328/
+#define BOOST_ASIO_DISABLE_KQUEUE
+// (This must come before all boost/asio includes, including indirect ones.)
+
+#include <IOKit/serial/ioss.h>
+#endif // __APPLE__
+
+#include <boost/asio.hpp>
+#include <boost/asio/serial_port.hpp>
+#include <boost/thread.hpp>
+
 #include <iostream>
+#include <map>
+#include <string>
+#include <vector>
 
-#ifdef WIN32
-// suppress an incomprehensible warning from inside boost future.
-#pragma warning( push )
-#pragma warning( disable : 4512 )
-#endif
-
-#include <boost/bind.hpp> 
-#include <boost/asio.hpp> 
-#include <boost/asio/serial_port.hpp> 
-#include <boost/thread.hpp> 
-
-#ifdef WIN32
-#pragma warning( pop )
-#endif
+class AsioClient;
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -61,7 +65,6 @@
 #define ERR_PORT_BLACKLISTED 110
 #define ERR_PORT_NOTINITIALIZED 111
 
-class AsioClient;
 
 //////////////////////////////////////////////////////////////////////////////
 // Implementation of the MMDevice and MMStateDevice interfaces
@@ -170,5 +173,3 @@ class SerialPortLister
       static void ListPorts(std::vector<std::string> &availablePorts);
       static bool portAccessible(const char*  portName);                     
 };
-
-#endif //_SERIALMANAGER_H_

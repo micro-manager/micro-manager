@@ -19,47 +19,33 @@
 //
 // AUTHOR:        Nenad Amodaj - Mark I - use CSerial class
 //                Karl Hoover - Mark II - use boost, also simplify handling of terminators
-//
-// CVS:           $Id$
-//
 
-#ifdef WIN32
-   #define WIN32_LEAN_AND_MEAN
-   #include <windows.h>
-#endif
+#include "SerialManager.h"
 
-#ifdef __APPLE__    
+#include "AsioClient.h"
 
-#define BOOST_ASIO_DISABLE_KQUEUE  // suggested to fix "Operation not supported" on OS X
+#include "ModuleInterface.h"
+#include "DeviceUtils.h"
+
+#ifdef __APPLE__
 #include <CoreFoundation/CoreFoundation.h>
+#include <IOKit/IOBSD.h>
 #include <IOKit/IOKitLib.h>
 #include <IOKit/serial/IOSerialKeys.h>
-#if defined(MAC_OS_X_VERSION_10_3) && (MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_3)
-   #include <IOKit/serial/ioss.h>
-#endif
-#include <IOKit/IOBSD.h>
 #endif
 
-#ifdef linux
+#ifdef __linux__
 #include <dirent.h>
 #endif
 
-#include "../../MMDevice/ModuleInterface.h"
-#include "../../MMDevice/DeviceUtils.h"
-#include "SerialManager.h"
+#include <boost/bind.hpp>
+#include <boost/date_time/posix_time/posix_time_types.hpp>
+#include <boost/format.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/thread.hpp>
 
 #include <iostream>
 #include <sstream>
-
-#include <boost/bind.hpp> 
-#include <boost/thread.hpp> 
-#include <boost/lexical_cast.hpp> 
-#include <boost/date_time/posix_time/posix_time_types.hpp> 
-#include <boost/format.hpp>
-
-
-// serial device implementation class
-#include "AsioClient.h"
 
 
 SerialManager g_serialManager;
@@ -101,9 +87,6 @@ const char* g_Parity_Even = "Even";
 const char* g_Parity_Mark = "Mark";
 const char* g_Parity_Space = "Space";
 
-#ifdef WIN32
-#include <time.h>
-#endif
 
 /*
  * Tests whether given serial port can be used by opening it

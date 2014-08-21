@@ -18,21 +18,18 @@
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 // AUTHOR:        Karl Hoover
-//
-// CVS:           $Id$
-//
 
-#ifndef ASIOCLIENT_H
-#define ASIOCLIENT_H
-
-#include "../../MMDevice/DeviceUtils.h"
+#pragma once
 
 #include "SerialManager.h"
+
+#include "DeviceUtils.h"
 
 #include <boost/asio.hpp>
 #include <boost/asio/serial_port.hpp>
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
+
 #include <deque>
 #include <exception>
 #include <string>
@@ -415,7 +412,4 @@ private:
    MMThreadLock writeBufferLock_;
    MMThreadLock implementationLock_;
    bool shutDownInProgress_;
-}; 
-
-#endif // ASIOCLIENT_H
-
+};
