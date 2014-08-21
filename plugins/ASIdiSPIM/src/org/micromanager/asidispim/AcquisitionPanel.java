@@ -602,6 +602,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       return (Integer) numSlices_.getValue();
    }
    
+   private double getStepSizeUm() {
+      return PanelUtils.getSpinnerFloatValue(stepSize_);
+   }
    
    
    
@@ -1120,9 +1123,39 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             if (nrSides == 2 && secondCamera != null) {
                gui_.setChannelName(acqName, 1, secondCamera);
             }
+            
+            // This Property has to be set before initialization to be propagated 
+            // to the ImageJ metadata
+            gui_.setAcquisitionProperty(acqName, "z-step_um",  
+                    NumberUtils.doubleToDisplayString(getStepSizeUm()) );
+            
+            // initialize acquisition
             gui_.initializeAcquisition(acqName, (int) core_.getImageWidth(),
                     (int) core_.getImageHeight(), (int) core_.getBytesPerPixel(),
                     (int) core_.getImageBitDepth());
+            
+            // These metadata have to added after initialization, otherwise
+            // they will not be shown?!
+            gui_.setAcquisitionProperty(acqName, "NumberOfSides", 
+                    NumberUtils.doubleToDisplayString(getNumSides()) );
+            String firstSide = "B";
+            if (isFirstSideA()) {
+               firstSide = "A";
+            }            
+            gui_.setAcquisitionProperty(acqName, "FirstSide", firstSide);
+            gui_.setAcquisitionProperty(acqName, "SlicePeriod_ms", 
+                    NumberUtils.doubleToDisplayString(
+                    PanelUtils.getSpinnerFloatValue(desiredSlicePeriod_)) );
+            gui_.setAcquisitionProperty(acqName, "LaserExposure_ms",
+                    NumberUtils.doubleToDisplayString(
+                    PanelUtils.getSpinnerFloatValue(desiredLightExposure_)));
+            // ugly: get volume duration from GUI text to avoid recalculation
+            gui_.setAcquisitionProperty(acqName, "VolumeDuration", 
+                    actualVolumeDurationLabel_.getText().substring(17));
+            gui_.setAcquisitionProperty(acqName, "SPIMmode", 
+                    ((AcquisitionModes.Keys) spimMode_.getSelectedItem()).toString());
+            
+            // TODO: use new acqusition interface that goes through the pipeline
             //gui_.setAcquisitionAddImageAsynchronous(acqName); 
             MMAcquisition acq = gui_.getAcquisition(acqName);
             
