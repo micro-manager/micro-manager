@@ -20,21 +20,36 @@
 //
 
 #pragma once
-#include "DeviceThreads.h"
 
 #ifdef WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#define MM_THREAD_EVENT                                  HANDLE
-#define MM_THREAD_CREATE_EVENT(pevent,manual,initial)    *pevent = CreateEvent(NULL,manual,initial,NULL)
-#define MM_THREAD_DELETE_EVENT(pevent)                   CloseHandle(*pevent)
-#else
-#include <sys/errno.h>
-#include <pthread.h>
-#include "../../MMCore/CoreUtils.h"
-#define MM_THREAD_EVENT                                  pthread_cond_t
-#define MM_THREAD_CREATE_EVENT(pevent,manual,initial)    pthread_cond_init(pevent,NULL)
-#define MM_THREAD_DELETE_EVENT(pevent)                   pthread_cond_destroy(pevent)
+#   define WIN32_LEAN_AND_MEAN
+#   include <windows.h>
+#   define MMQC_THREAD_EVENT                                  HANDLE
+#   define MMQC_THREAD_CREATE_EVENT(pevent,manual,initial)    *pevent = CreateEvent(NULL,manual,initial,NULL)
+#   define MMQC_THREAD_DELETE_EVENT(pevent)                   CloseHandle(*pevent)
+#else // WIN32
+#   include <sys/errno.h>
+#   include <pthread.h>
+#   include "../../MMCore/CoreUtils.h"
+#   define MMQC_THREAD_GUARD pthread_mutex_t
+#   ifdef linux
+#      define _MUTEX_RECURSIVE PTHREAD_MUTEX_RECURSIVE_NP
+#   else
+#      define _MUTEX_RECURSIVE PTHREAD_MUTEX_RECURSIVE
+#   endif
+#   define MMQC_THREAD_INITIALIZE_GUARD(plock) do { \
+         pthread_mutexattr_t a; \
+         pthread_mutexattr_init(&a); \
+         pthread_mutexattr_settype(&a, _MUTEX_RECURSIVE); \
+         pthread_mutex_init(plock, &a); \
+         pthread_mutexattr_destroy(&a); \
+    } while (0)
+#   define MMQC_THREAD_DELETE_GUARD(plock) pthread_mutex_destroy(plock)
+#   define MMQC_THREAD_GUARD_LOCK(plock) pthread_mutex_lock(plock)
+#   define MMQC_THREAD_GUARD_UNLOCK(plock) pthread_mutex_unlock(plock)
+#   define MMQC_THREAD_EVENT                                  pthread_cond_t
+#   define MMQC_THREAD_CREATE_EVENT(pevent,manual,initial)    pthread_cond_init(pevent,NULL)
+#   define MMQC_THREAD_DELETE_EVENT(pevent)                   pthread_cond_destroy(pevent)
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
@@ -55,9 +70,9 @@
 class MMEvent
 {
 private:
-   MM_THREAD_EVENT event_;
+   MMQC_THREAD_EVENT event_;
 #ifndef WIN32
-   MM_THREAD_GUARD lock_;
+   MMQC_THREAD_GUARD lock_;
    bool isSet_;
 #endif
    
@@ -67,18 +82,18 @@ public:
     */
    MMEvent(bool initialState)
    {
-      MM_THREAD_CREATE_EVENT(&event_, false, initialState);
+      MMQC_THREAD_CREATE_EVENT(&event_, false, initialState);
 #ifndef WIN32
-      MM_THREAD_INITIALIZE_GUARD(&lock_);
+      MMQC_THREAD_INITIALIZE_GUARD(&lock_);
       isSet_ = initialState;
 #endif
    }
    
    MMEvent()
    {
-      MM_THREAD_CREATE_EVENT(&event_, false, false);
+      MMQC_THREAD_CREATE_EVENT(&event_, false, false);
 #ifndef WIN32
-      MM_THREAD_INITIALIZE_GUARD(&lock_);
+      MMQC_THREAD_INITIALIZE_GUARD(&lock_);
       isSet_ = false;
 #endif
    }
@@ -86,9 +101,9 @@ public:
    /** Default destructor */
    ~MMEvent()
    {
-      MM_THREAD_DELETE_EVENT(&event_);
+      MMQC_THREAD_DELETE_EVENT(&event_);
 #ifndef WIN32
-      MM_THREAD_DELETE_GUARD(&lock_);
+      MMQC_THREAD_DELETE_GUARD(&lock_);
 #endif
    }
    
@@ -101,10 +116,10 @@ public:
 #ifdef WIN32
       SetEvent(event_);
 #else
-      MM_THREAD_GUARD_LOCK(&lock_)
+      MMQC_THREAD_GUARD_LOCK(&lock_);
       pthread_cond_signal(&event_);
       isSet_ = true;
-      MM_THREAD_GUARD_UNLOCK(&lock_);
+      MMQC_THREAD_GUARD_UNLOCK(&lock_);
 #endif
    }
    
@@ -119,9 +134,9 @@ public:
 #ifdef WIN32
       ResetEvent(event_);
 #else
-      MM_THREAD_GUARD_LOCK(&lock_)
+      MMQC_THREAD_GUARD_LOCK(&lock_);
       isSet_ = false;
-      MM_THREAD_GUARD_UNLOCK(&lock_);
+      MMQC_THREAD_GUARD_UNLOCK(&lock_);
 #endif
    }
    
@@ -144,11 +159,11 @@ public:
             return MM_WAIT_FAILED;
       }
 #else
-      MM_THREAD_GUARD_LOCK(&lock_);
+      MMQC_THREAD_GUARD_LOCK(&lock_);
       if (isSet_) {
          // already signalled. Don't call pthread_cond_wait or it will lock.
          isSet_ = false;
-         MM_THREAD_GUARD_UNLOCK(&lock_);
+         MMQC_THREAD_GUARD_UNLOCK(&lock_);
          return MM_WAIT_OK;
       }
       //printf("Begin wait...\n");
@@ -190,7 +205,7 @@ public:
       } else {
          result = MM_WAIT_FAILED;
       }
-      MM_THREAD_GUARD_UNLOCK(&lock_);
+      MMQC_THREAD_GUARD_UNLOCK(&lock_);
       return result;
 #endif
    }
