@@ -17,9 +17,6 @@
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-//
-// CVS:           $Id: DeviceUtils.h 393 2007-07-26 00:06:54Z nenad $
-//
 
 #pragma once
 #include <assert.h>
@@ -27,40 +24,41 @@
 #ifdef WIN32
    #define WIN32_LEAN_AND_MEAN
    #include <windows.h>
-   #define MM_THREAD_HANDLE HANDLE
+   typedef HANDLE MM_THREAD_HANDLE;
    #define MM_THREAD_JOIN(thd) WaitForSingleObject(thd, INFINITE)
-   #define MM_THREAD_GUARD CRITICAL_SECTION
+   typedef CRITICAL_SECTION MM_THREAD_GUARD;
    #define MM_THREAD_INITIALIZE_GUARD(plock) InitializeCriticalSection(plock)
    #define MM_THREAD_DELETE_GUARD(plock) DeleteCriticalSection(plock)
-   #define MM_THREAD_GUARD_LOCK(plock) EnterCriticalSection(plock);
-   #define MM_THREAD_GUARD_UNLOCK(plock) LeaveCriticalSection(plock);
-   #define MM_THREAD_CREATE(pthd, threadFunc, param) DWORD id; *pthd = CreateThread(NULL, 0, threadFunc, param, 0, &id) 
-   #define MM_THREAD_FUNC_DECL DWORD WINAPI
-   #define MM_THREAD_FUNC_RETURN_TYPE DWORD
+   #define MM_THREAD_GUARD_LOCK(plock) EnterCriticalSection(plock)
+   #define MM_THREAD_GUARD_UNLOCK(plock) LeaveCriticalSection(plock)
+   #define MM_THREAD_CREATE(pthd, threadFunc, param) do { \
+      DWORD id; *pthd = CreateThread(NULL, 0, threadFunc, param, 0, &id); \
+   } while (0)
+   #define MM_THREAD_FUNC_DECL WINAPI
+   typedef DWORD MM_THREAD_FUNC_RETURN_TYPE;
 #else
    #include <pthread.h>
-   #define MM_THREAD_HANDLE pthread_t
+   typedef pthread_t MM_THREAD_HANDLE;
    #define MM_THREAD_JOIN(thd) pthread_join(thd, NULL)
-   #define MM_THREAD_GUARD pthread_mutex_t
-  // #define MM_THREAD_INITIALIZE_GUARD(plock) pthread_mutex_init(plock, NULL)
-
+   typedef pthread_mutex_t MM_THREAD_GUARD;
 #ifdef linux
-  #define _MUTEX_RECURSIVE PTHREAD_MUTEX_RECURSIVE_NP
+   #define _MUTEX_RECURSIVE PTHREAD_MUTEX_RECURSIVE_NP
 #else
-  /* OS X, ... */
-  #define _MUTEX_RECURSIVE PTHREAD_MUTEX_RECURSIVE
+   #define _MUTEX_RECURSIVE PTHREAD_MUTEX_RECURSIVE
 #endif
-  #define MM_THREAD_INITIALIZE_GUARD(plock) \
-      { pthread_mutexattr_t a; pthread_mutexattr_init( &a ); \
-        pthread_mutexattr_settype( &a, _MUTEX_RECURSIVE ); \
-        pthread_mutex_init(plock,&a); pthread_mutexattr_destroy( &a ); \
-      }
+   #define MM_THREAD_INITIALIZE_GUARD(plock) do { \
+      pthread_mutexattr_t a; \
+      pthread_mutexattr_init(&a); \
+      pthread_mutexattr_settype(&a, _MUTEX_RECURSIVE); \
+      pthread_mutex_init(plock,&a); \
+      pthread_mutexattr_destroy(&a); \
+   } while (0)
    #define MM_THREAD_DELETE_GUARD(plock) pthread_mutex_destroy(plock)
-   #define MM_THREAD_GUARD_LOCK(plock) pthread_mutex_lock(plock);
-   #define MM_THREAD_GUARD_UNLOCK(plock) pthread_mutex_unlock(plock);
+   #define MM_THREAD_GUARD_LOCK(plock) pthread_mutex_lock(plock)
+   #define MM_THREAD_GUARD_UNLOCK(plock) pthread_mutex_unlock(plock)
    #define MM_THREAD_CREATE(pthd, threadFunc, param) pthread_create(pthd, NULL, threadFunc, param)
-   #define MM_THREAD_FUNC_DECL void*
-   #define MM_THREAD_FUNC_RETURN_TYPE void*
+   #define MM_THREAD_FUNC_DECL
+   typedef void* MM_THREAD_FUNC_RETURN_TYPE;
 #endif
 
 /**
@@ -87,7 +85,7 @@ private:
    MMDeviceThreadBase& operator=(const MMDeviceThreadBase&);
 
    MM_THREAD_HANDLE thread_;
-   static MM_THREAD_FUNC_DECL ThreadProc(void* param)
+   static MM_THREAD_FUNC_RETURN_TYPE MM_THREAD_FUNC_DECL ThreadProc(void* param)
    {
       MMDeviceThreadBase* pThrObj = (MMDeviceThreadBase*) param;
    #ifdef WIN32
@@ -115,8 +113,8 @@ public:
       MM_THREAD_DELETE_GUARD(&lock_);
    }
 
-   void Lock() {MM_THREAD_GUARD_LOCK(&lock_)};
-   void Unlock() {MM_THREAD_GUARD_UNLOCK(&lock_)};
+   void Lock() { MM_THREAD_GUARD_LOCK(&lock_); }
+   void Unlock() { MM_THREAD_GUARD_UNLOCK(&lock_); }
 
 private:
    // Forbid copying
@@ -160,11 +158,8 @@ private:
 #undef MM_THREAD_CREATE
 #undef MM_THREAD_DELETE_GUARD
 #undef MM_THREAD_FUNC_DECL
-#undef MM_THREAD_FUNC_RETURN_TYPE
-#undef MM_THREAD_GUARD
 #undef MM_THREAD_GUARD_LOCK
 #undef MM_THREAD_GUARD_UNLOCK
-#undef MM_THREAD_HANDLE
 #undef MM_THREAD_INITIALIZE_GUARD
 #undef MM_THREAD_JOIN
 #undef _MUTEX_RECURSIVE
