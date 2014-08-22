@@ -72,7 +72,7 @@
 #include <vector>
 
 
-#ifndef SWIG
+#if !defined(SWIGJAVA) && !defined(SWIGPYTHON)
 #   ifdef _MSC_VER
 #      define MMCORE_DEPRECATED(prototype) __declspec(deprecated) prototype
 #   elif defined(__GNUC__)
