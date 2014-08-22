@@ -45,6 +45,16 @@ public class MMVirtualStack extends ij.VirtualStack {
     */
    @Override
    public Object getPixels(int flatIndex) {
+      if (plus_ == null) {
+         ReportingUtils.logError("Asked to get pixels when I don't have an ImagePlus");
+         return null;
+      }
+      // Note: index is 1-based.
+      if (flatIndex > plus_.getStackSize()) {
+         ReportingUtils.logError("Stack asked for image at " + flatIndex + 
+               " that exceeds total of " + plus_.getStackSize() + " images");
+         return null;
+      }
       // These coordinates are missing all axes that ImageJ doesn't know 
       // about (e.g. stage position), so we augment curCoords with them and
       // use that for our lookup.
@@ -58,22 +68,20 @@ public class MMVirtualStack extends ij.VirtualStack {
          slice = pos3D[1] - 1;
          frame = pos3D[2] - 1;
       }
-      // Only augment a given axis if it's actually present in our current
-      // coordinates.
+      // Only augment a given axis if it's actually present in our datastore.
       Coords.CoordsBuilder builder = curCoords_.copy();
-      if (curCoords_.getPositionAt("channel") != -1) {
+      if (store_.getMaxIndex("channel") != -1) {
          builder.position("channel", channel);
       }
-      if (curCoords_.getPositionAt("slice") != -1) {
+      if (store_.getMaxIndex("slice") != -1) {
          builder.position("slice", channel);
       }
-      if (curCoords_.getPositionAt("frame") != -1) {
+      if (store_.getMaxIndex("frame") != -1) {
          builder.position("frame", channel);
       }
       curCoords_ = builder.build();
       DefaultImage image = (DefaultImage) store_.getImage(curCoords_);
       if (image != null) {
-         ReportingUtils.logError("Found an image at " + curCoords_);
          return image.getRawPixels();
       }
       ReportingUtils.logError("Null image at " + curCoords_);
