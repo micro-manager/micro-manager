@@ -1,5 +1,7 @@
 package org.micromanager.data.test;
 
+import java.awt.Color;
+
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.List;
@@ -87,6 +89,8 @@ public class TestReader implements Reader {
 
    @Override
    public DisplaySettings getDisplaySettings() {
-      return (new DefaultDisplaySettings.Builder()).build();
+      return (new DefaultDisplaySettings.Builder())
+            .channelColors(new Color[] {Color.RED, Color.GREEN})
+            .build();
    }
 }
