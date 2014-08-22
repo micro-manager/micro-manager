@@ -24,17 +24,17 @@ public class TestConsumer {
 
    @Subscribe
    public void onNewImage(NewImageEvent event) {
-      ReportingUtils.logError("Received new image");
+      ReportingUtils.logError("TestConsumer received new image");
    }
 
    @Subscribe
    public void onNewSummaryMetadata(NewSummaryMetadataEvent event) {
-      ReportingUtils.logError("Received new summary metadata");
+      ReportingUtils.logError("TestConsumer received new summary metadata");
    }
 
    @Subscribe
    public void onNewDisplaySettings(NewDisplaySettingsEvent event) {
-      ReportingUtils.logError("Received new display settings");
+      ReportingUtils.logError("TestConsumer received new display settings");
    }
 
    public void unregister() {
