@@ -1,5 +1,6 @@
 #include "AbsImgBuffer.h"
 #include "CamUSB_API_Util.h"
+#include <assert.h>
 
 CAbsImgBuffer::CAbsImgBuffer(void)
 : ImgBuffer()
