@@ -70,7 +70,6 @@ class TestRefreshThread : public MMDeviceThreadBase
     void Stop() {stop_=true;}
 
 private:
-    MM_THREAD_HANDLE thread_;
 	TestControl& okoDevice_;
     bool stop_;
 };
