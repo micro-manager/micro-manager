@@ -130,6 +130,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       List<Image> images = store_.getImagesMatching(
             new DefaultCoords.Builder().position("channel", channelIndex_).build()
       );
+      ReportingUtils.logError("For channel " + channelIndex_ + " found " + images.size() + " images");
       if (images != null && images.size() > 0) {
          // Found an image for our channel
          bitDepth_ = images.get(0).getMetadata().getBitDepth();
@@ -139,6 +140,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    private void initialize() {
+      ReportingUtils.logError("Initializing " + channelIndex_ + " histogram panel");
       maxIntensity_ = (int) Math.pow(2, bitDepth_) - 1;
       histMax_ = maxIntensity_ + 1;
       binSize_ = histMax_ / NUM_BINS;
@@ -149,6 +151,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    private void initComponents() {
+      ReportingUtils.logError("Channel " + channelIndex_ + " making components");
       fullButton_ = new javax.swing.JButton();
       autoButton_ = new javax.swing.JButton();
       colorPickerLabel_ = new javax.swing.JLabel();
@@ -699,7 +702,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
    
    private void storeDisplaySettings() {
-      int histMax = histRangeComboBox_.getSelectedIndex() == 0 ? -1 : histMax_;
+//      int histMax = histRangeComboBox_.getSelectedIndex() == 0 ? -1 : histMax_;
 //      display_.storeChannelHistogramSettings(channelIndex_, contrastMin_, contrastMax_,
 //              gamma_, histMax,((MMCompositeImage) composite_).getMode());
    }
@@ -730,18 +733,21 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             if (processor != null) {
                processor.setRoi(composite_.getRoi());
             }
+            ReportingUtils.logError("Asking for processor at channel " + (channelIndex_ + 1) + " gave " + processor);
          } else {
             MMCompositeImage ci = (MMCompositeImage) composite_;
             int flatIndex = 1 + channelIndex_ + 
                   (composite_.getSlice() - 1) * ci.getNChannelsUnverified() +
                   (composite_.getFrame() - 1) * ci.getNSlicesUnverified() * ci.getNChannelsUnverified();
             processor = composite_.getStack().getProcessor(flatIndex);
+            ReportingUtils.logError("Asking for processor at " + flatIndex + " gave " + processor);
          }
       }
       if (processor == null ) {
          ReportingUtils.logError("No processor");
          return;
       }
+      ReportingUtils.logError("Have valid processor " + processor + " and composite channels " + composite_.getActiveChannels() + " and checkbox " + channelNameCheckbox_);
 
       if (composite_ != null) {
          if (((MMCompositeImage) composite_).getNChannelsUnverified() <= 7) {
@@ -936,7 +942,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
     */
    @Subscribe
    public void onNewImage(NewImageEvent event) {
-      if (bitDepth_ == -1) {
+      if (bitDepth_ == -1 && 
+            event.getCoords().getPositionAt("channel") == channelIndex_) {
          bitDepth_ = event.getImage().getMetadata().getBitDepth();
          initialize();
       }
