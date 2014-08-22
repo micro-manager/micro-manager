@@ -16,6 +16,12 @@ public interface Image {
    public ImgPlus getPixels();
 
    /**
+    * Generate a copy of this Image, except that its Coords object is at a
+    * different location, as specified.
+    */
+   public Image copyAt(Coords coords);
+
+   /**
     * Return a reference to whatever entity stores the actual pixel data for
     * this Image. Is most likely a byte[] or short[] but could be of any
     * non-primitive type.
