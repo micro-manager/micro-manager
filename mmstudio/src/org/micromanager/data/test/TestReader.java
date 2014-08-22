@@ -45,7 +45,7 @@ public class TestReader implements Reader {
       try {
          studio.snapSingleImage();
          TaggedImage tagged = studio.getMMCore().getTaggedImage();
-         Image result = new DefaultImage(tagged);
+         Image result = new DefaultImage(tagged).copyAt(coords);
          coordsToImage_.put(coords, result);
          for (String axis : coords.getAxes()) {
             if (maxIndex_.getPositionAt(axis) < coords.getPositionAt(axis)) {
