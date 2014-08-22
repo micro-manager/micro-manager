@@ -111,6 +111,11 @@ public class DefaultImage implements Image {
       pixels_ = generateImgPlusFromPixels(pixels, width, height, bytesPerPixel);
    }
 
+   /**
+    * NOTE: if you want to add additional datatypes at this stage, make certain
+    * you also update the copyAt() function to be able to extract the 
+    * appropriate bytes per pixel from the ArrayImg later.
+    */
    private ImgPlus generateImgPlusFromPixels(Object pixels, int width, 
          int height, int bytesPerPixel)
          throws IllegalArgumentException {
@@ -158,6 +163,23 @@ public class DefaultImage implements Image {
    @Override
    public Coords getCoords() {
       return coords_;
+   }
+
+   @Override
+   public Image copyAt(Coords coords) {
+      // Assume byte type by default.
+      int bytesPerPixel = 1;
+      if (pixels_.firstElement() instanceof UnsignedShortType) {
+         bytesPerPixel = 2;
+      }
+      else if (pixels_.firstElement() instanceof ARGBType) {
+         bytesPerPixel = 4;
+      }
+      // Have to cast from long to int for the dimensions. It seems unlikely
+      // that we'll ever have images with more than 2^32 pixels along a given
+      // axis.
+      return new DefaultImage(getRawPixels(), (int) pixels_.dimension(0),
+            (int) pixels_.dimension(1), bytesPerPixel, coords, metadata_);
    }
 
    /**
