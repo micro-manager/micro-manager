@@ -24,14 +24,14 @@
 #ifdef WIN32
 #   define WIN32_LEAN_AND_MEAN
 #   include <windows.h>
-#   define MMQC_THREAD_EVENT                                  HANDLE
+    typedef HANDLE MMQC_THREAD_EVENT;
 #   define MMQC_THREAD_CREATE_EVENT(pevent,manual,initial)    *pevent = CreateEvent(NULL,manual,initial,NULL)
 #   define MMQC_THREAD_DELETE_EVENT(pevent)                   CloseHandle(*pevent)
 #else // WIN32
 #   include <sys/errno.h>
 #   include <pthread.h>
 #   include "../../MMCore/CoreUtils.h"
-#   define MMQC_THREAD_GUARD pthread_mutex_t
+    typedef pthread_mutex_t MMQC_THREAD_GUARD;
 #   ifdef linux
 #      define _MUTEX_RECURSIVE PTHREAD_MUTEX_RECURSIVE_NP
 #   else
@@ -47,7 +47,7 @@
 #   define MMQC_THREAD_DELETE_GUARD(plock) pthread_mutex_destroy(plock)
 #   define MMQC_THREAD_GUARD_LOCK(plock) pthread_mutex_lock(plock)
 #   define MMQC_THREAD_GUARD_UNLOCK(plock) pthread_mutex_unlock(plock)
-#   define MMQC_THREAD_EVENT                                  pthread_cond_t
+    typedef pthread_cond_t MMQC_THREAD_EVENT;
 #   define MMQC_THREAD_CREATE_EVENT(pevent,manual,initial)    pthread_cond_init(pevent,NULL)
 #   define MMQC_THREAD_DELETE_EVENT(pevent)                   pthread_cond_destroy(pevent)
 #endif
