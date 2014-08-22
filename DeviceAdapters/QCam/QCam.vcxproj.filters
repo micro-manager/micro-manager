@@ -23,5 +23,8 @@
     <ClInclude Include="QICamera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="DeviceEvents.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

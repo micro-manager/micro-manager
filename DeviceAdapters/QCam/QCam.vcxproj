@@ -167,6 +167,7 @@
     <ClCompile Include="QICamera.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="DeviceEvents.h" />
     <ClInclude Include="QICamera.h" />
   </ItemGroup>
   <ItemGroup>
