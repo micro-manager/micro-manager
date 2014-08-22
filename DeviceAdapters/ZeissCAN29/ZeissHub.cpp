@@ -91,15 +91,12 @@ ZeissHub::ZeissHub() :
    commandGroup_[0x25]=0xA3; 
    commandGroup_[0x26]=0xA3; 
    commandGroup_[0x27]=0xA3;
-
-   MM_THREAD_INITIALIZE_GUARD(&mutex);
 }
 
 ZeissHub::~ZeissHub()
 {
    if (monitoringThread_ != 0)
       delete(monitoringThread_);
-   MM_THREAD_DELETE_GUARD(&mutex);
 }
 
 /**
@@ -1708,9 +1705,8 @@ bool ZeissHub::signatureFound(unsigned char* answer, unsigned char* signature, u
  * Sets position in scope model.  
  */
 int ZeissHub::SetModelPosition(ZeissUByte devId, ZeissLong position) {
-   MM_THREAD_GUARD_LOCK(&mutex);
+   MMThreadGuard guard(mutex_);
    deviceInfo_[devId].currentPos = position;
-   MM_THREAD_GUARD_UNLOCK(&mutex);
    return DEVICE_OK;
 }
 
@@ -1718,9 +1714,8 @@ int ZeissHub::SetModelPosition(ZeissUByte devId, ZeissLong position) {
  * Sets Upper Hardware Stop in scope model 
  */
 int ZeissHub::SetUpperHardwareStop(ZeissUByte devId, ZeissLong position) {
-   MM_THREAD_GUARD_LOCK(&mutex);
+   MMThreadGuard guard(mutex_);
    deviceInfo_[devId].upperHardwareStop = position;
-   MM_THREAD_GUARD_UNLOCK(&mutex);
    return DEVICE_OK;
 }
 
@@ -1728,9 +1723,8 @@ int ZeissHub::SetUpperHardwareStop(ZeissUByte devId, ZeissLong position) {
  * Sets Lower Hardware Stop in scope model 
  */
 int ZeissHub::SetLowerHardwareStop(ZeissUByte devId, ZeissLong position) {
-   MM_THREAD_GUARD_LOCK(&mutex);
+   MMThreadGuard guard(mutex_);
    deviceInfo_[devId].lowerHardwareStop = position;
-   MM_THREAD_GUARD_UNLOCK(&mutex);
    return DEVICE_OK;
 }
 
@@ -1738,9 +1732,8 @@ int ZeissHub::SetLowerHardwareStop(ZeissUByte devId, ZeissLong position) {
  * Gets Upper Hardware Stop in scope model 
  */
 int ZeissHub::GetUpperHardwareStop(ZeissUByte devId, ZeissLong& position) {
-   MM_THREAD_GUARD_LOCK(&mutex);
+   MMThreadGuard guard(mutex_);
    position = deviceInfo_[devId].upperHardwareStop;
-   MM_THREAD_GUARD_UNLOCK(&mutex);
    return DEVICE_OK;
 }
 
@@ -1748,9 +1741,8 @@ int ZeissHub::GetUpperHardwareStop(ZeissUByte devId, ZeissLong& position) {
  * Gets Lower Hardware Stop in scope model 
  */
 int ZeissHub::GetLowerHardwareStop(ZeissUByte devId, ZeissLong& position) {
-   MM_THREAD_GUARD_LOCK(&mutex);
+   MMThreadGuard guard(mutex_);
    position = deviceInfo_[devId].lowerHardwareStop;
-   MM_THREAD_GUARD_UNLOCK(&mutex);
    return DEVICE_OK;
 }
 
@@ -1758,9 +1750,8 @@ int ZeissHub::GetLowerHardwareStop(ZeissUByte devId, ZeissLong& position) {
  * Sets status in scope model.  
  */
 int ZeissHub::SetModelStatus(ZeissUByte devId, ZeissULong status) {
-   MM_THREAD_GUARD_LOCK(&mutex);
+   MMThreadGuard guard(mutex_);
    deviceInfo_[devId].status = status;
-   MM_THREAD_GUARD_UNLOCK(&mutex);
    return DEVICE_OK;
 }
 
@@ -1769,9 +1760,8 @@ int ZeissHub::SetModelStatus(ZeissUByte devId, ZeissULong status) {
  * Sets busy flag in scope model.  
  */
 int ZeissHub::SetModelBusy(ZeissUByte devId, bool busy) {
-   MM_THREAD_GUARD_LOCK(&mutex);
+   MMThreadGuard guard(mutex_);
    deviceInfo_[devId].busy = busy;
-   MM_THREAD_GUARD_UNLOCK(&mutex);
    return DEVICE_OK;
 }
 
@@ -1784,9 +1774,10 @@ int ZeissHub::GetModelPosition(MM::Device& device, MM::Core& core, ZeissUByte de
       if (ret != DEVICE_OK)
          return ret;
    }
-   MM_THREAD_GUARD_LOCK(&mutex);
-   position = deviceInfo_[devId].currentPos;
-   MM_THREAD_GUARD_UNLOCK(&mutex);
+   {
+      MMThreadGuard guard(mutex_);
+      position = deviceInfo_[devId].currentPos;
+   }
    // TODO: Remove after debugging!!!
    std::ostringstream os;
    os << "GetModel Position is reporting position " << position << " for device with ID: " << std::hex << (unsigned int) devId;
@@ -1804,9 +1795,8 @@ int ZeissHub::GetModelMaxPosition(MM::Device& device, MM::Core& core, ZeissUByte
       if (ret != DEVICE_OK)
          return ret;
    }
-   MM_THREAD_GUARD_LOCK(&mutex);
+   MMThreadGuard guard(mutex_);
    maxPosition = deviceInfo_[devId].maxPos;
-   MM_THREAD_GUARD_UNLOCK(&mutex);
    return DEVICE_OK;
 
 }
@@ -1820,9 +1810,8 @@ int ZeissHub::GetModelStatus(MM::Device& device, MM::Core& core, ZeissUByte devI
       if (ret != DEVICE_OK)
          return ret;
    }
-   MM_THREAD_GUARD_LOCK(&mutex);
+   MMThreadGuard guard(mutex_);
    status = deviceInfo_[devId].status;
-   MM_THREAD_GUARD_UNLOCK(&mutex);
    return DEVICE_OK;
 }
 
@@ -1835,9 +1824,8 @@ int ZeissHub::GetModelPresent(MM::Device& device, MM::Core& core, ZeissUByte dev
       if (ret != DEVICE_OK)
          return ret;
    }
-   MM_THREAD_GUARD_LOCK(&mutex);
+   MMThreadGuard guard(mutex_);
    present = deviceInfo_[devId].present;
-   MM_THREAD_GUARD_UNLOCK(&mutex);
    return DEVICE_OK;
 }
 
@@ -1850,8 +1838,7 @@ int ZeissHub::GetModelBusy(MM::Device& device, MM::Core& core, ZeissUByte devId,
       if (ret != DEVICE_OK)
          return ret;
    }
-   MM_THREAD_GUARD_LOCK(&mutex);
+   MMThreadGuard guard(mutex_);
    busy = deviceInfo_[devId].busy;
-   MM_THREAD_GUARD_UNLOCK(&mutex);
    return DEVICE_OK;
 }

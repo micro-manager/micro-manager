@@ -36,7 +36,6 @@
 #include "LeicaDMIModel.h"
 #include "../../MMDevice/ModuleInterface.h"
 
-//MM_THREAD_GUARD mutex;
 
 LeicaDeviceModel::LeicaDeviceModel() :
    position_(1),
@@ -44,43 +43,37 @@ LeicaDeviceModel::LeicaDeviceModel() :
    maxPosition_(1),
 	busy_(false)
 {
-   MM_THREAD_INITIALIZE_GUARD(&mutex_);
 }
 
 LeicaDeviceModel::~LeicaDeviceModel()
 {
-   MM_THREAD_DELETE_GUARD(&mutex_);
 }
 
 int LeicaDeviceModel::SetPosition(int position)
 {
-   MM_THREAD_GUARD_LOCK(&mutex_);
+   MMThreadGuard guard(mutex_);
    position_ = position;
-   MM_THREAD_GUARD_UNLOCK(&mutex_);
    return DEVICE_OK;
 }
 
 int LeicaDeviceModel::GetPosition(int& position)
 {
-   MM_THREAD_GUARD_LOCK(&mutex_);
+   MMThreadGuard guard(mutex_);
    position = position_;
-   MM_THREAD_GUARD_UNLOCK(&mutex_);
    return DEVICE_OK;
 }
 
 int LeicaDeviceModel::SetBusy(bool busy)
 {
-   MM_THREAD_GUARD_LOCK(&mutex_);
+   MMThreadGuard guard(mutex_);
    busy_ = busy;
-   MM_THREAD_GUARD_UNLOCK(&mutex_);
    return DEVICE_OK;
 }
 
 int LeicaDeviceModel::GetBusy(bool& busy)
 {
-   MM_THREAD_GUARD_LOCK(&mutex_);
+   MMThreadGuard guard(mutex_);
    busy = busy_;
-   MM_THREAD_GUARD_UNLOCK(&mutex_);
    return DEVICE_OK;
 }
 
@@ -89,17 +82,15 @@ int LeicaDeviceModel::GetBusy(bool& busy)
  */
 int LeicaTransmittedLightModel::SetManual(int manual)
 {
-   MM_THREAD_GUARD_LOCK(&mutex_);
+   MMThreadGuard guard(mutex_);
    manual_ = manual;
-   MM_THREAD_GUARD_UNLOCK(&mutex_);
    return DEVICE_OK;
 }
 
 int LeicaTransmittedLightModel::GetManual(int & manual)
 {
-   MM_THREAD_GUARD_LOCK(&mutex_);
+   MMThreadGuard guard(mutex_);
    manual = manual_;
-   MM_THREAD_GUARD_UNLOCK(&mutex_);
    return DEVICE_OK;
 }
 
@@ -176,17 +167,15 @@ LeicaObjectiveTurretModel::LeicaObjectiveTurretModel() :
 
 int LeicaObjectiveTurretModel::SetImmersion(char method)
 {
-   MM_THREAD_GUARD_LOCK(&mutex_);
+   MMThreadGuard guard(mutex_);
    method_ = method;
-   MM_THREAD_GUARD_UNLOCK(&mutex_);
    return DEVICE_OK;
 }
 
 int LeicaObjectiveTurretModel::GetImmersion(char & method)
 {
-   MM_THREAD_GUARD_LOCK(&mutex_);
+   MMThreadGuard guard(mutex_);
    method = method_;
-   MM_THREAD_GUARD_UNLOCK(&mutex_);
    return DEVICE_OK;
 }
 
@@ -201,18 +190,16 @@ LeicaFastFilterWheelModel::LeicaFastFilterWheelModel() :
 
    int LeicaFastFilterWheelModel::SetPositionLabel(int position, std::string label)
 {
-   MM_THREAD_GUARD_LOCK(&mutex_);
+   MMThreadGuard guard(mutex_);
    positionLabels_[position] = label;
-   MM_THREAD_GUARD_UNLOCK(&mutex_);
    return DEVICE_OK;
 
 }
 
 std::string LeicaFastFilterWheelModel::GetPositionLabel(int position)
 {
-   MM_THREAD_GUARD_LOCK(&mutex_);
+   MMThreadGuard guard(mutex_);
    std::string label = positionLabels_[position];
-   MM_THREAD_GUARD_UNLOCK(&mutex_);
    return label;
 }
 
@@ -230,17 +217,15 @@ LeicaDICPrismTurretModel::LeicaDICPrismTurretModel() :
 
 int LeicaDICPrismTurretModel::GetFinePosition(int& finePosition)
 {
-   MM_THREAD_GUARD_LOCK(&mutex_);
+   MMThreadGuard guard(mutex_);
    finePosition = finePosition_;
-   MM_THREAD_GUARD_UNLOCK(&mutex_);
    return DEVICE_OK;
 }
 
 int LeicaDICPrismTurretModel::SetFinePosition(int finePosition)
 {
-   MM_THREAD_GUARD_LOCK(&mutex_);
+   MMThreadGuard guard(mutex_);
    finePosition_ = finePosition;
-   MM_THREAD_GUARD_UNLOCK(&mutex_);
    return DEVICE_OK;
 }
 
@@ -257,49 +242,43 @@ LeicaDriveModel::LeicaDriveModel()  :
 
 int LeicaDriveModel::GetRamp(int& ramp)
 {
-   MM_THREAD_GUARD_LOCK(&mutex_);
+   MMThreadGuard guard(mutex_);
    ramp = ramp_;
-   MM_THREAD_GUARD_UNLOCK(&mutex_);
    return DEVICE_OK;
 }
 
 int LeicaDriveModel::SetRamp(int ramp)
 {
-   MM_THREAD_GUARD_LOCK(&mutex_);
+   MMThreadGuard guard(mutex_);
    ramp_ = ramp;
-   MM_THREAD_GUARD_UNLOCK(&mutex_);
    return DEVICE_OK;
 }
 
 int LeicaDriveModel::GetSpeed(int& speed)
 {
-   MM_THREAD_GUARD_LOCK(&mutex_);
+   MMThreadGuard guard(mutex_);
    speed = speed_;
-   MM_THREAD_GUARD_UNLOCK(&mutex_);
    return DEVICE_OK;
 }
 
 int LeicaDriveModel::SetSpeed(int speed)
 {
-   MM_THREAD_GUARD_LOCK(&mutex_);
+   MMThreadGuard guard(mutex_);
    speed_ = speed;
-   MM_THREAD_GUARD_UNLOCK(&mutex_);
    return DEVICE_OK;
 }
 
 int LeicaDriveModel::GetPosFocus(int& posFocus)
 {
-   MM_THREAD_GUARD_LOCK(&mutex_);
+   MMThreadGuard guard(mutex_);
    posFocus = posFocus_;
-   MM_THREAD_GUARD_UNLOCK(&mutex_);
    return DEVICE_OK;
 }
 
 int LeicaDriveModel::SetPosFocus(int posFocus)
 {
-   MM_THREAD_GUARD_LOCK(&mutex_);
+   MMThreadGuard guard(mutex_);
    posFocus_ = posFocus;
-   MM_THREAD_GUARD_UNLOCK(&mutex_);
    return DEVICE_OK;
 }
 
@@ -313,17 +292,15 @@ LeicaMagChangerModel::LeicaMagChangerModel() :
 
 int LeicaMagChangerModel::GetMagnification(int pos, double& mag)
 {
-   MM_THREAD_GUARD_LOCK(&mutex_);
+   MMThreadGuard guard(mutex_);
    mag = magnification_.at(pos);
-   MM_THREAD_GUARD_UNLOCK(&mutex_);
    return DEVICE_OK;
 }
 
 int LeicaMagChangerModel::SetMagnification(int pos, double mag)
 {
-   MM_THREAD_GUARD_LOCK(&mutex_);
+   MMThreadGuard guard(mutex_);
    magnification_[pos] = mag;
-   MM_THREAD_GUARD_UNLOCK(&mutex_);
    return DEVICE_OK;
 }
 
@@ -337,51 +314,45 @@ LeicaAFCModel::LeicaAFCModel() :
 
 int LeicaAFCModel::GetOffset(double& offset)
 {
-   MM_THREAD_GUARD_LOCK(&mutex_);
+   MMThreadGuard guard(mutex_);
    offset = offset_;
-   MM_THREAD_GUARD_UNLOCK(&mutex_);
    return DEVICE_OK;
 }
 
 int LeicaAFCModel::SetOffset(double offset)
 {
-   MM_THREAD_GUARD_LOCK(&mutex_);
+   MMThreadGuard guard(mutex_);
    offset_ = offset;
-   MM_THREAD_GUARD_UNLOCK(&mutex_);
    return DEVICE_OK;
 }
 
 int LeicaAFCModel::GetMode(bool& on)
 {
-   MM_THREAD_GUARD_LOCK(&mutex_);
+   MMThreadGuard guard(mutex_);
    on = mode_;
-   MM_THREAD_GUARD_UNLOCK(&mutex_);
    return DEVICE_OK;
 }
 
 int LeicaAFCModel::SetMode(bool on)
 {
-   MM_THREAD_GUARD_LOCK(&mutex_);
+   MMThreadGuard guard(mutex_);
    mode_ = on;
-   MM_THREAD_GUARD_UNLOCK(&mutex_);
    return DEVICE_OK;
 }
 
 int LeicaAFCModel::GetLEDColors(int& topColor, int& bottomColor)
 {
-   MM_THREAD_GUARD_LOCK(&mutex_);
+   MMThreadGuard guard(mutex_);
    topColor = topLEDColor_;
    bottomColor = bottomLEDColor_;
-   MM_THREAD_GUARD_UNLOCK(&mutex_);
    return DEVICE_OK;
 }
 
 int LeicaAFCModel::SetLEDColors(int topColor, int bottomColor)
 {
-   MM_THREAD_GUARD_LOCK(&mutex_);
+   MMThreadGuard guard(mutex_);
    topLEDColor_ = topColor;
    bottomLEDColor_ = bottomColor;
-   MM_THREAD_GUARD_UNLOCK(&mutex_);
    return DEVICE_OK;
 }
 

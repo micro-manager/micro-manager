@@ -102,8 +102,6 @@ initialized_ (false)
 	serialTerminator_ = g_SerialTerminator_2;
 	serialTerminatorText_ = g_SerialTerminator_2_Text;
 
-   MM_THREAD_INITIALIZE_GUARD(&mutex);
-   
 	//	"The communication port to the microscope can not be opened");
 	SetErrorText(ERR_PORT_CHANGE_FORBIDDEN, "You can't change the port after device has been initialized.");
 	SetErrorText(ERR_NO_PORT_SET, "Port not set. The pgFocus Hub needs to use a Serial Port");
@@ -306,9 +304,8 @@ const char * pgFocusHub::GetFirmwareVersion() {
 			if (monitoringThread_->isRunning() == false) {
 				GetSerialAnswer(GetPort().c_str(), "\r\n", answer);
 
-				MM_THREAD_GUARD_LOCK(&mutex);
+				MMThreadGuard guard(mutex_);
 				version_ = answer;
-				MM_THREAD_GUARD_UNLOCK(&mutex);
 			}
 			else answer = version_; // we already should have the version if thread is started
 		}
@@ -330,13 +327,11 @@ void pgFocusHub::SetFocusDevice (pgFocusStabilization *device)
 
 int pgFocusHub::OnFirmwareVersion(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-
-	MM_THREAD_GUARD_LOCK(&mutex);
+	MMThreadGuard guard(mutex_);
 	if (eAct == MM::BeforeGet)
 	{
 		pProp->Set(version_.c_str());
 	}
-	MM_THREAD_GUARD_UNLOCK(&mutex);
 
 	return DEVICE_OK;
 }
@@ -363,31 +358,27 @@ int pgFocusHub::OnSerialTerminator(MM::PropertyBase* pProp, MM::ActionType eAct)
 		pProp->Get(tmpstr);
 
 		if (tmpstr.compare(g_SerialTerminator_0_Text) == 0){
-			MM_THREAD_GUARD_LOCK(&mutex);
+			MMThreadGuard guard(mutex_);
 			serialTerminator_ = g_SerialTerminator_0;
 			serialTerminatorText_ = g_SerialTerminator_0_Text;
-			MM_THREAD_GUARD_UNLOCK(&mutex);
 		}
 		else if (tmpstr.compare(g_SerialTerminator_1_Text) == 0)
 		{
-			MM_THREAD_GUARD_LOCK(&mutex);
+			MMThreadGuard guard(mutex_);
 			serialTerminator_ = g_SerialTerminator_1;
 			serialTerminatorText_ = g_SerialTerminator_1_Text;
-			MM_THREAD_GUARD_UNLOCK(&mutex);
 		}
 		else if (tmpstr.compare(g_SerialTerminator_2_Text) == 0)
 		{
-			MM_THREAD_GUARD_LOCK(&mutex);
+			MMThreadGuard guard(mutex_);
 			serialTerminator_ = g_SerialTerminator_2;
 			serialTerminatorText_ = g_SerialTerminator_2_Text;
-			MM_THREAD_GUARD_UNLOCK(&mutex);
 		}
 		else if (tmpstr.compare(g_SerialTerminator_3_Text) == 0)
 		{
-			MM_THREAD_GUARD_LOCK(&mutex);
+			MMThreadGuard guard(mutex_);
 			serialTerminator_ = g_SerialTerminator_3;
 			serialTerminatorText_ = g_SerialTerminator_3_Text;
-			MM_THREAD_GUARD_UNLOCK(&mutex);
 		}
 		else {
 		 return DEVICE_INVALID_PROPERTY_VALUE;
@@ -398,7 +389,7 @@ int pgFocusHub::OnSerialTerminator(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int pgFocusHub::OnPort(MM::PropertyBase* pProp, MM::ActionType pAct)
 {
-   MM_THREAD_GUARD_LOCK(&mutex);
+   MMThreadGuard guard(mutex_);
    if (pAct == MM::BeforeGet)
    {
       pProp->Set(port_.c_str());
@@ -408,7 +399,6 @@ int pgFocusHub::OnPort(MM::PropertyBase* pProp, MM::ActionType pAct)
       pProp->Get(port_);
       portAvailable_ = true;
    }
-   MM_THREAD_GUARD_UNLOCK(&mutex);
    return DEVICE_OK;
 }
 
@@ -471,9 +461,8 @@ int pgFocusHub::ClearPort()
 std::string pgFocusHub::GetPort()
 {
 	std::string port;
-	MM_THREAD_GUARD_LOCK(&mutex);
+	MMThreadGuard guard(mutex_);
 	port = port_;
-	MM_THREAD_GUARD_UNLOCK(&mutex);
 
 	return port;
 }
@@ -516,18 +505,18 @@ double pgFocusHub::standard_deviation ()
 double pgFocusHub::GetOffset()
 {
 	double answer;
-	MM_THREAD_GUARD_LOCK(&mutex);
+	MMThreadGuard guard(mutex_);
 	answer = offset_;
-	MM_THREAD_GUARD_UNLOCK(&mutex);
 
 	return answer;
 }
 
 int pgFocusHub::AddOffset(double offset)
 {
-	MM_THREAD_GUARD_LOCK(&mutex);
-	offset_ = offset;
-	MM_THREAD_GUARD_UNLOCK(&mutex);
+	{
+		MMThreadGuard guard(mutex_);
+		offset_ = offset;
+	}
 
 	if (qoffsets_.size() > qoffsetMax_) qoffsets_.pop_back();
 	qoffsets_.push_front(offset_);
@@ -539,9 +528,10 @@ int pgFocusHub::AddOffset(double offset)
 int pgFocusHub::SetOffset(double offset, bool hardware)
 {
 	if (offset >=0 && offset < 128) {
-		MM_THREAD_GUARD_LOCK(&mutex);
-		offset_ = offset;
-		MM_THREAD_GUARD_UNLOCK(&mutex);
+		{
+			MMThreadGuard guard(mutex_);
+			offset_ = offset;
+		}
 		if (hardware) {
 			std::ostringstream oss;
 			oss << "offset " << offset;
@@ -556,19 +546,17 @@ long pgFocusHub::GetMicronPerVolt()
 {
 	int answer;
 
-	MM_THREAD_GUARD_LOCK(&mutex);
+	MMThreadGuard guard(mutex_);
 	answer = micronPerVolt_;
-	MM_THREAD_GUARD_UNLOCK(&mutex);
 
 	return answer;
 }
 
 std::string pgFocusHub::GetFocusMode()
 {
-
 	std::string focusMode;
 
-	MM_THREAD_GUARD_LOCK(&mutex);
+	MMThreadGuard guard(mutex_);
 	if (mode_ == PGFOCUS_MODE_UNLOCK) {
 		focusMode = focusMode_ = g_pgFocus_Unlock;
 	}
@@ -580,8 +568,6 @@ std::string pgFocusHub::GetFocusMode()
 	if (mode_ == PGFOCUS_MODE_CALIBRATION) {
 		focusMode = focusMode_ = g_pgFocus_Calibration;
 	}
-
-	MM_THREAD_GUARD_UNLOCK(&mutex);
 
 	return focusMode;
 }
@@ -615,8 +601,7 @@ int pgFocusHub::SetFocusMode(std::string focusMode)
 
 int pgFocusHub::SetFocusMode(int mode)
 {
-
-	MM_THREAD_GUARD_LOCK(&mutex);
+	MMThreadGuard guard(mutex_);
 	mode_ = mode;
 	if (mode_ == PGFOCUS_MODE_UNLOCK) {
 		focusMode_ = g_pgFocus_Unlock;
@@ -630,17 +615,15 @@ int pgFocusHub::SetFocusMode(int mode)
 		focusMode_ = g_pgFocus_Calibration;
 	}
 
-	MM_THREAD_GUARD_UNLOCK(&mutex);
-
 	return DEVICE_OK;
 }
 
 int pgFocusHub::SetContinuousFocusing(bool mode)
 {
-
-	MM_THREAD_GUARD_LOCK(&mutex);
-	continuousFocusing_ = mode;
-	MM_THREAD_GUARD_UNLOCK(&mutex);
+	{
+		MMThreadGuard guard(mutex_);
+		continuousFocusing_ = mode;
+	}
 
 	if (continuousFocusing_) {
 		SendCommand("f"); // start pgFocus
@@ -658,9 +641,8 @@ int pgFocusHub::SetContinuousFocusing(bool mode)
 
 int pgFocusHub::GetContinuousFocusing(bool& state)
 {
-	MM_THREAD_GUARD_LOCK(&mutex);
+	MMThreadGuard guard(mutex_);
 	state = continuousFocusing_;
-	MM_THREAD_GUARD_UNLOCK(&mutex);
 
 	return DEVICE_OK;
 }
@@ -669,10 +651,10 @@ int pgFocusHub::GetContinuousFocusing(bool& state)
 int pgFocusHub::SetMicronPerVolt(int mpv, bool hardware) {
 
 	if (mpv > 0) {
-
-		MM_THREAD_GUARD_LOCK(&mutex);
-		micronPerVolt_ = mpv;
-		MM_THREAD_GUARD_UNLOCK(&mutex);
+		{
+			MMThreadGuard guard(mutex_);
+			micronPerVolt_ = mpv;
+		}
 
 		if (hardware) {
 			std::ostringstream oss;
@@ -689,9 +671,8 @@ double pgFocusHub::GetStandardDeviation()
 {
 	double answer;
 
-	MM_THREAD_GUARD_LOCK(&mutex);
+	MMThreadGuard guard(mutex_);
 	answer = standardDeviation_;
-	MM_THREAD_GUARD_UNLOCK(&mutex);
 
 	return answer;
 }
@@ -699,9 +680,8 @@ double pgFocusHub::GetStandardDeviation()
 
 int pgFocusHub::SetStandardDeviation(double SD )
 {
-	MM_THREAD_GUARD_LOCK(&mutex);
+	MMThreadGuard guard(mutex_);
 	standardDeviation_ = SD;
-	MM_THREAD_GUARD_UNLOCK(&mutex);
 
 	return DEVICE_OK;
 }
@@ -710,9 +690,8 @@ int pgFocusHub::SetWaitTime(long time)
 {
 	if (!monitoringThread_) return ERR_SERVICE_THREAD_NOT_FOUND;
 
-	MM_THREAD_GUARD_LOCK(&mutex);
+	MMThreadGuard guard(mutex_);
 	if (time >=0) monitoringThread_->setWaitTime(time);
-	MM_THREAD_GUARD_UNLOCK(&mutex);
 
 	return DEVICE_OK;
 }
@@ -723,9 +702,8 @@ long pgFocusHub::GetWaitTime()
 
 	if (!monitoringThread_) return ERR_SERVICE_THREAD_NOT_FOUND;
 
-	MM_THREAD_GUARD_LOCK(&mutex);
+	MMThreadGuard guard(mutex_);
 	answer = monitoringThread_->getWaitTime();
-	MM_THREAD_GUARD_UNLOCK(&mutex);
 
 	return answer;
 }
@@ -734,19 +712,16 @@ long pgFocusHub::GetLoopTime()
 {
 	long answer;
 
-	MM_THREAD_GUARD_LOCK(&mutex);
+	MMThreadGuard guard(mutex_);
 	answer = loopTime_;
-	MM_THREAD_GUARD_UNLOCK(&mutex);
 
 	return answer;
 }
 
 int pgFocusHub::SetLoopTime(long time)
 {
-
-	MM_THREAD_GUARD_LOCK(&mutex);
+	MMThreadGuard guard(mutex_);
 	loopTime_ = time;
-	MM_THREAD_GUARD_UNLOCK(&mutex);
 
 	return DEVICE_OK;
 }
@@ -755,19 +730,16 @@ long pgFocusHub::GetRunningTime()
 {
 	long answer;
 
-	MM_THREAD_GUARD_LOCK(&mutex);
+	MMThreadGuard guard(mutex_);
 	answer = runningTime_;
-	MM_THREAD_GUARD_UNLOCK(&mutex);
 
 	return answer;
 }
 
 int pgFocusHub::SetRunningTime(long time)
 {
-
-	MM_THREAD_GUARD_LOCK(&mutex);
+	MMThreadGuard guard(mutex_);
 	runningTime_ = time;
-	MM_THREAD_GUARD_UNLOCK(&mutex);
 
 	return DEVICE_OK;
 }
@@ -776,9 +748,8 @@ long pgFocusHub::GetExposure()
 {
 	long answer;
 
-	MM_THREAD_GUARD_LOCK(&mutex);
+	MMThreadGuard guard(mutex_);
 	answer = exposure_;
-	MM_THREAD_GUARD_UNLOCK(&mutex);
 
 	return answer;
 }
@@ -790,9 +761,10 @@ int pgFocusHub::SetExposure(long exposure, bool hardware)
 	if (exposure < 0) return ERR_OUT_OF_RANGE;
 
 	if (exposure != exposure_) {
-		MM_THREAD_GUARD_LOCK(&mutex);
-		exposure_ = exposure;
-		MM_THREAD_GUARD_UNLOCK(&mutex);
+		{
+			MMThreadGuard guard(mutex_);
+			exposure_ = exposure;
+		}
 
 		if (hardware) {
 			std::ostringstream oss;
@@ -809,9 +781,8 @@ bool pgFocusHub::GetAutoExposure()
 {
 	bool autoExposure;
 
-	MM_THREAD_GUARD_LOCK(&mutex);
+	MMThreadGuard guard(mutex_);
 	autoExposure = autoExposure_;
-	MM_THREAD_GUARD_UNLOCK(&mutex);
 
 	return (autoExposure);
 
@@ -819,10 +790,10 @@ bool pgFocusHub::GetAutoExposure()
 
 int pgFocusHub::SetAutoExposure(bool autoExposure)
 {
-
-	MM_THREAD_GUARD_LOCK(&mutex);
-	autoExposure_ = autoExposure;
-	MM_THREAD_GUARD_UNLOCK(&mutex);
+	{
+		MMThreadGuard guard(mutex_);
+		autoExposure_ = autoExposure;
+	}
 
 	if (autoExposure == true) SendCommand("E"); // default, turn on auto exposure
 	else SendCommand("e"); // default, turn off auto exposure
@@ -833,10 +804,9 @@ int pgFocusHub::SetAutoExposure(bool autoExposure)
 
 std::string pgFocusHub::GetCalibrationCurve()
 {
-
 	std::ostringstream oss;
 
-	MM_THREAD_GUARD_LOCK(&mutex);
+	MMThreadGuard guard(mutex_);
 
 	for (std::vector<std::string>::size_type i = 0; i< calibration_curve_.size();i++)
 	{
@@ -845,68 +815,50 @@ std::string pgFocusHub::GetCalibrationCurve()
 		if ((i + 1) < calibration_curve_.size()) oss << ",";
 	}
 
-	MM_THREAD_GUARD_UNLOCK(&mutex);
-
 	return(oss.str());
 }
 
 int pgFocusHub::AddCalibration(std::string dau, std::string pixel)
 {
-	MM_THREAD_GUARD_LOCK(&mutex);
+	MMThreadGuard guard(mutex_);
 	calibration_curve_.push_back(dau);
 	calibration_curve_.push_back(pixel);
-	MM_THREAD_GUARD_UNLOCK(&mutex);
 
 	return DEVICE_OK;
 }
 
 int pgFocusHub::ClearCalibrationCurve()
 {
-
-	MM_THREAD_GUARD_LOCK(&mutex);
+	MMThreadGuard guard(mutex_);
 	calibration_curve_.clear();
-	MM_THREAD_GUARD_UNLOCK(&mutex);
 
 	return DEVICE_OK;
 }
 
 std::string pgFocusHub::GetSerialTerminator()
 {
-
 	std::string serialTerminator;
 
-	MM_THREAD_GUARD_LOCK(&mutex);
-
+	MMThreadGuard guard(mutex_);
 	serialTerminator = serialTerminator_;
-
-	MM_THREAD_GUARD_UNLOCK(&mutex);
-
 
 	return(serialTerminator);
 }
 
 int pgFocusHub::SetSerialTerminator(std::string serialTerminator)
 {
-
-
-	MM_THREAD_GUARD_LOCK(&mutex);
-
+	MMThreadGuard guard(mutex_);
 	serialTerminator_ = serialTerminator;
-
-	MM_THREAD_GUARD_UNLOCK(&mutex);
-
 
 	return DEVICE_OK;
 }
 
 double pgFocusHub::GetGain()
 {
-
 	double answer;
 
-	MM_THREAD_GUARD_LOCK(&mutex);
+	MMThreadGuard guard(mutex_);
 	answer = gain_;
-	MM_THREAD_GUARD_UNLOCK(&mutex);
 
 	return answer;
 }
@@ -914,10 +866,10 @@ double pgFocusHub::GetGain()
 
 int pgFocusHub::SetGain(double gain, bool hardware)
 {
-
-	MM_THREAD_GUARD_LOCK(&mutex);
-	gain_ = gain;
-	MM_THREAD_GUARD_UNLOCK(&mutex);
+	{
+		MMThreadGuard guard(mutex_);
+		gain_ = gain;
+	}
 
 	if (hardware) {
 		std::ostringstream oss;
@@ -931,12 +883,10 @@ int pgFocusHub::SetGain(double gain, bool hardware)
 // in DAU, not volts
 long pgFocusHub::GetADC()
 {
-
 	long DAU;
 
-	MM_THREAD_GUARD_LOCK(&mutex);
+	MMThreadGuard guard(mutex_);
 	DAU = ADC_;
-	MM_THREAD_GUARD_UNLOCK(&mutex);
 
 	return DAU;
 }
@@ -945,21 +895,18 @@ long pgFocusHub::GetADC()
 
 int pgFocusHub::SetADC(long DAU)
 {
-	MM_THREAD_GUARD_LOCK(&mutex);
+	MMThreadGuard guard(mutex_);
 	ADC_ = DAU;
-	MM_THREAD_GUARD_UNLOCK(&mutex);
 
 	return DEVICE_OK;
 }
 
 long pgFocusHub::GetDAC()
 {
-
 	long DAU;
 
-	MM_THREAD_GUARD_LOCK(&mutex);
+	MMThreadGuard guard(mutex_);
 	DAU = DAC_;
-	MM_THREAD_GUARD_UNLOCK(&mutex);
 
 	return DAU;
 }
@@ -967,10 +914,10 @@ long pgFocusHub::GetDAC()
 
 int pgFocusHub::SetDAC(long DAU, bool hardware)
 {
-
-	MM_THREAD_GUARD_LOCK(&mutex);
-	DAC_ = DAU;
-	MM_THREAD_GUARD_UNLOCK(&mutex);
+	{
+		MMThreadGuard guard(mutex_);
+		DAC_ = DAU;
+	}
 
 	if (hardware) {
                 std::ostringstream oss;
@@ -983,145 +930,118 @@ int pgFocusHub::SetDAC(long DAU, bool hardware)
 
 int pgFocusHub::SetDiffADC(long DAU)
 {
-
-
-	MM_THREAD_GUARD_LOCK(&mutex);
+	MMThreadGuard guard(mutex_);
 	diffADC_ = DAU;
-	MM_THREAD_GUARD_UNLOCK(&mutex);
 
 	return DEVICE_OK;
 }
 
 double pgFocusHub::GetSlope()
 {
-
 	double answer;
 
-	MM_THREAD_GUARD_LOCK(&mutex);
+	MMThreadGuard guard(mutex_);
 	answer = slope_;
-	MM_THREAD_GUARD_UNLOCK(&mutex);
 
 	return answer;
 }
 
 int pgFocusHub::SetSlope(double slope)
 {
-	MM_THREAD_GUARD_LOCK(&mutex);
+	MMThreadGuard guard(mutex_);
 	slope_ = slope;
-	MM_THREAD_GUARD_UNLOCK(&mutex);
 
 	return DEVICE_OK;
 }
 
 double pgFocusHub::GetResiduals()
 {
-
 	double answer;
 
-	MM_THREAD_GUARD_LOCK(&mutex);
+	MMThreadGuard guard(mutex_);
 	answer = residuals_;
-	MM_THREAD_GUARD_UNLOCK(&mutex);
 
 	return answer;
-
 }
 
 int pgFocusHub::SetResiduals(double residuals)
 {
-
-	MM_THREAD_GUARD_LOCK(&mutex);
+	MMThreadGuard guard(mutex_);
 	residuals_ = residuals;
-	MM_THREAD_GUARD_UNLOCK(&mutex);
 
 	return DEVICE_OK;
 }
 
 double pgFocusHub::GetIntercept()
 {
-
 	double answer;
 
-	MM_THREAD_GUARD_LOCK(&mutex);
+	MMThreadGuard guard(mutex_);
 	answer = intercept_;
-	MM_THREAD_GUARD_UNLOCK(&mutex);
 
 	return answer;
 }
 
 int pgFocusHub::SetIntercept(double intercept)
 {
-
-	MM_THREAD_GUARD_LOCK(&mutex);
+	MMThreadGuard guard(mutex_);
 	intercept_ = intercept;
-	MM_THREAD_GUARD_UNLOCK(&mutex);
 
 	return DEVICE_OK;
 }
 
 long pgFocusHub::GetMaxLight()
 {
-
 	long answer;
 
-	MM_THREAD_GUARD_LOCK(&mutex);
+	MMThreadGuard guard(mutex_);
 	answer = max_;
-	MM_THREAD_GUARD_UNLOCK(&mutex);
 
 	return answer;
 }
 
 long pgFocusHub::GetMinLight()
 {
-
 	long answer;
 
-	MM_THREAD_GUARD_LOCK(&mutex);
+	MMThreadGuard guard(mutex_);
 	answer = min_;
-	MM_THREAD_GUARD_UNLOCK(&mutex);
 
 	return answer;
 }
 
 int pgFocusHub::SetMaxLight(long max)
 {
-
-	MM_THREAD_GUARD_LOCK(&mutex);
+	MMThreadGuard guard(mutex_);
 	max_ = max;
-	MM_THREAD_GUARD_UNLOCK(&mutex);
 
 	return DEVICE_OK;
 }
 
 int pgFocusHub::SetMinLight(long min)
 {
-
-	MM_THREAD_GUARD_LOCK(&mutex);
+	MMThreadGuard guard(mutex_);
 	min_ = min;
-	MM_THREAD_GUARD_UNLOCK(&mutex);
 
 	return DEVICE_OK;
 }
 
 const char * pgFocusHub::GetLastError()
 {
-
 	std::string answer;
 
-	MM_THREAD_GUARD_LOCK(&mutex);
+	MMThreadGuard guard(mutex_);
 	answer = error_;
-	MM_THREAD_GUARD_UNLOCK(&mutex);
 
 	return answer.c_str();
 }
 
 const char * pgFocusHub::GetLastStatus()
 {
-
 	std::string answer;
 
-	MM_THREAD_GUARD_LOCK(&mutex);
+	MMThreadGuard guard(mutex_);
 	answer = status_;
-	MM_THREAD_GUARD_UNLOCK(&mutex);
 
 	return answer.c_str();
 }
@@ -1129,22 +1049,16 @@ const char * pgFocusHub::GetLastStatus()
 
 int pgFocusHub::SetLastError(std::string error)
 {
-
-
-	MM_THREAD_GUARD_LOCK(&mutex);
+	MMThreadGuard guard(mutex_);
 	error_ = error;
-	MM_THREAD_GUARD_UNLOCK(&mutex);
 
 	return DEVICE_OK;
 }
 
 int pgFocusHub::SetLastStatus(std::string status)
 {
-
-
-	MM_THREAD_GUARD_LOCK(&mutex);
+	MMThreadGuard guard(mutex_);
 	status_ = status;
-	MM_THREAD_GUARD_UNLOCK(&mutex);
 
 	return DEVICE_OK;
 
@@ -1152,23 +1066,20 @@ int pgFocusHub::SetLastStatus(std::string status)
 
 int pgFocusHub::SetFirmwareVersion(std::string version)
 {
-	MM_THREAD_GUARD_LOCK(&mutex);
+	MMThreadGuard guard(mutex_);
 	version_ = version;
-	MM_THREAD_GUARD_UNLOCK(&mutex);
 
 	return DEVICE_OK;
 }
 
 long pgFocusHub::GetLight(long index)
 {
-
 	long answer = 0;
 
 	if ((index >= 0) && (index < 128))
 	{
-		MM_THREAD_GUARD_LOCK(&mutex);
+		MMThreadGuard guard(mutex_);
 		answer  = lightArray_[index];
-		MM_THREAD_GUARD_UNLOCK(&mutex);
 	}
 
 	return answer;
@@ -1176,13 +1087,10 @@ long pgFocusHub::GetLight(long index)
 
 int pgFocusHub::SetLight(long index, long light)
 {
-
-
 	if ((index >= 0) && (index < 128))
 	{
-		MM_THREAD_GUARD_LOCK(&mutex);
+		MMThreadGuard guard(mutex_);
 		lightArray_[index] = light;
-		MM_THREAD_GUARD_UNLOCK(&mutex);
 	}
 
 	return DEVICE_OK;

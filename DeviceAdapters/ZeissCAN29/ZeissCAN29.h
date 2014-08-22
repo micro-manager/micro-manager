@@ -458,7 +458,7 @@ class ZeissHub
       // vector to store CAN nodes present in the system
       std::vector<ZeissByte> canNodes_;
 
-      MM_THREAD_GUARD mutex;
+      MMThreadLock mutex_;
       MMThreadLock executeLock_;
       std::vector<ZeissUByte > availableDevices_;
       std::string version_;

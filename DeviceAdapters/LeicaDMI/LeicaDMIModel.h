@@ -64,7 +64,7 @@ public:
    int SetMinPosition(int minPosition) {minPosition_ = minPosition; return DEVICE_OK;};
 
 protected:
-   MM_THREAD_GUARD mutex_;
+   MMThreadLock mutex_;
    int position_;
    int minPosition_;
    int maxPosition_;

@@ -448,7 +448,7 @@ class pgFocusHub :  public HubBase<pgFocusHub>
 		std::string serialNumber_;		// Not used yet, but will be serial version of the hardware
 		std::string identity_;			// Used to idenditfy the board as a pgFocus board
 
-		MM_THREAD_GUARD mutex;
+		MMThreadLock mutex_;
 
 		pgFocusMonitoringThread* monitoringThread_;
 		pgFocusStabilization* pgFocusStabilizationDevice;
