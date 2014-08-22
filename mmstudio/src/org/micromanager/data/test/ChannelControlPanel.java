@@ -747,7 +747,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          ReportingUtils.logError("No processor");
          return;
       }
-      ReportingUtils.logError("Have valid processor " + processor + " and composite channels " + composite_.getActiveChannels() + " and checkbox " + channelNameCheckbox_);
 
       if (composite_ != null) {
          if (((MMCompositeImage) composite_).getNChannelsUnverified() <= 7) {
@@ -810,7 +809,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
                }
             }
          }
-         ReportingUtils.logError("Histogram at " + i + " is " + histogram[i]);
          total += histogram[i];
          if (settings_.getShouldUseLogScale() != null && 
                settings_.getShouldUseLogScale()) {
