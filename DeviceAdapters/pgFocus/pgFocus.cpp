@@ -294,8 +294,8 @@ int pgFocusHub::GetIdentity()
 
 }
 
-const char * pgFocusHub::GetFirmwareVersion() {
-
+std::string pgFocusHub::GetFirmwareVersion()
+{
 	std::string answer;
 
 	if (version_.compare(g_Default_String) == 0) {
@@ -312,7 +312,7 @@ const char * pgFocusHub::GetFirmwareVersion() {
 	}
 	else answer = version_;
 
-	return answer.c_str();
+	return answer;
 }
 
 void pgFocusHub::SetFocusDevice (pgFocusStabilization *device)
@@ -1026,24 +1026,24 @@ int pgFocusHub::SetMinLight(long min)
 	return DEVICE_OK;
 }
 
-const char * pgFocusHub::GetLastError()
+std::string pgFocusHub::GetLastError()
 {
 	std::string answer;
 
 	MMThreadGuard guard(mutex_);
 	answer = error_;
 
-	return answer.c_str();
+	return answer;
 }
 
-const char * pgFocusHub::GetLastStatus()
+std::string pgFocusHub::GetLastStatus()
 {
 	std::string answer;
 
 	MMThreadGuard guard(mutex_);
 	answer = status_;
 
-	return answer.c_str();
+	return answer;
 }
 
 
@@ -1557,7 +1557,7 @@ int pgFocusStabilization::OnFirmwareVersion(MM::PropertyBase* pProp, MM::ActionT
 
 	if (eAct == MM::BeforeGet)
 	{
-		pProp->Set(hub->GetFirmwareVersion());
+		pProp->Set(hub->GetFirmwareVersion().c_str());
 	}
 	return DEVICE_OK;
 }
@@ -1975,7 +1975,7 @@ int pgFocusStabilization::OnLastError(MM::PropertyBase* pProp, MM::ActionType eA
 
 	if (eAct == MM::BeforeGet)
 	{
-		pProp->Set(hub->GetLastError());
+		pProp->Set(hub->GetLastError().c_str());
 	}
 
 
@@ -1991,7 +1991,7 @@ int pgFocusStabilization::OnLastStatus(MM::PropertyBase* pProp, MM::ActionType e
 
 	if (eAct == MM::BeforeGet)
 	{
-		pProp->Set(hub->GetLastStatus());
+		pProp->Set(hub->GetLastStatus().c_str());
 	}
 
 

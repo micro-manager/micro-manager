@@ -350,10 +350,10 @@ class pgFocusHub :  public HubBase<pgFocusHub>
 		long GetMinLight();
 		long GetLight(long index);
 
-		const char * GetLastError();
-		const char * GetLastStatus();
+		std::string GetLastError();
+		std::string GetLastStatus();
 		int GetIdentity();
-		const char * GetFirmwareVersion();
+		std::string GetFirmwareVersion();
 
 		std::string GetSerialTerminator();
 		int SetSerialTerminator(std::string);
