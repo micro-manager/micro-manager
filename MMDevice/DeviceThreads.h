@@ -23,41 +23,8 @@
 #ifdef WIN32
    #define WIN32_LEAN_AND_MEAN
    #include <windows.h>
-   typedef HANDLE MM_THREAD_HANDLE;
-   #define MM_THREAD_JOIN(thd) WaitForSingleObject(thd, INFINITE)
-   typedef CRITICAL_SECTION MM_THREAD_GUARD;
-   #define MM_THREAD_INITIALIZE_GUARD(plock) InitializeCriticalSection(plock)
-   #define MM_THREAD_DELETE_GUARD(plock) DeleteCriticalSection(plock)
-   #define MM_THREAD_GUARD_LOCK(plock) EnterCriticalSection(plock)
-   #define MM_THREAD_GUARD_UNLOCK(plock) LeaveCriticalSection(plock)
-   #define MM_THREAD_CREATE(pthd, threadFunc, param) do { \
-      DWORD id; *pthd = CreateThread(NULL, 0, threadFunc, param, 0, &id); \
-   } while (0)
-   #define MM_THREAD_FUNC_DECL WINAPI
-   typedef DWORD MM_THREAD_FUNC_RETURN_TYPE;
 #else
    #include <pthread.h>
-   typedef pthread_t MM_THREAD_HANDLE;
-   #define MM_THREAD_JOIN(thd) pthread_join(thd, NULL)
-   typedef pthread_mutex_t MM_THREAD_GUARD;
-#ifdef linux
-   #define _MUTEX_RECURSIVE PTHREAD_MUTEX_RECURSIVE_NP
-#else
-   #define _MUTEX_RECURSIVE PTHREAD_MUTEX_RECURSIVE
-#endif
-   #define MM_THREAD_INITIALIZE_GUARD(plock) do { \
-      pthread_mutexattr_t a; \
-      pthread_mutexattr_init(&a); \
-      pthread_mutexattr_settype(&a, _MUTEX_RECURSIVE); \
-      pthread_mutex_init(plock,&a); \
-      pthread_mutexattr_destroy(&a); \
-   } while (0)
-   #define MM_THREAD_DELETE_GUARD(plock) pthread_mutex_destroy(plock)
-   #define MM_THREAD_GUARD_LOCK(plock) pthread_mutex_lock(plock)
-   #define MM_THREAD_GUARD_UNLOCK(plock) pthread_mutex_unlock(plock)
-   #define MM_THREAD_CREATE(pthd, threadFunc, param) pthread_create(pthd, NULL, threadFunc, param)
-   #define MM_THREAD_FUNC_DECL
-   typedef void* MM_THREAD_FUNC_RETURN_TYPE;
 #endif
 
 /**
@@ -73,26 +40,51 @@ public:
 
    virtual int activate()
    {
-      MM_THREAD_CREATE(&thread_, ThreadProc, this);
+#ifdef _WIN32
+      DWORD id;
+      thread_ = CreateThread(NULL, 0, ThreadProc, this, 0, &id);
+#else
+      pthread_create(&thread_, NULL, ThreadProc, this);
+#endif
       return 0; // TODO: return thread id
-   };
-   void wait() {MM_THREAD_JOIN(thread_);}
+   }
+
+   void wait()
+   {
+#ifdef _WIN32
+      WaitForSingleObject(thread_, INFINITE);
+#else
+      pthread_join(thread_, NULL);
+#endif
+   }
 
 private:
    // Forbid copying
    MMDeviceThreadBase(const MMDeviceThreadBase&);
    MMDeviceThreadBase& operator=(const MMDeviceThreadBase&);
 
-   MM_THREAD_HANDLE thread_;
-   static MM_THREAD_FUNC_RETURN_TYPE MM_THREAD_FUNC_DECL ThreadProc(void* param)
+#ifdef _WIN32
+   HANDLE
+#else
+   pthread_t
+#endif
+   thread_;
+
+   static
+#ifdef _WIN32
+   DWORD WINAPI
+#else
+   void*
+#endif
+   ThreadProc(void* param)
    {
       MMDeviceThreadBase* pThrObj = (MMDeviceThreadBase*) param;
-   #ifdef WIN32
+#ifdef _WIN32
       return pThrObj->svc();
-   #else
+#else
       pThrObj->svc();
       return (void*) 0;
-   #endif
+#endif
    }
 };
 
@@ -104,23 +96,62 @@ class MMThreadLock
 public:
    MMThreadLock()
    {
-      MM_THREAD_INITIALIZE_GUARD(&lock_);
+#ifdef _WIN32
+      InitializeCriticalSection(&lock_);
+#else
+      pthread_mutexattr_t a;
+      pthread_mutexattr_init(&a);
+      pthread_mutexattr_settype(&a,
+#ifdef __linux__
+         // Not sure if _NP is needed any more
+         PTHREAD_MUTEX_RECURSIVE_NP
+#else
+         PTHREAD_MUTEX_RECURSIVE
+#endif
+      );
+      pthread_mutex_init(&lock_, &a);
+      pthread_mutexattr_destroy(&a);
+#endif
    }
 
    ~MMThreadLock()
    {
-      MM_THREAD_DELETE_GUARD(&lock_);
+#ifdef _WIN32
+      DeleteCriticalSection(&lock_);
+#else
+      pthread_mutex_destroy(&lock_);
+#endif
    }
 
-   void Lock() { MM_THREAD_GUARD_LOCK(&lock_); }
-   void Unlock() { MM_THREAD_GUARD_UNLOCK(&lock_); }
+   void Lock()
+   {
+#ifdef _WIN32
+      EnterCriticalSection(&lock_);
+#else
+      pthread_mutex_lock(&lock_);
+#endif
+   }
+
+   void Unlock()
+   {
+#ifdef _WIN32
+      LeaveCriticalSection(&lock_);
+#else
+      pthread_mutex_unlock(&lock_);
+#endif
+   }
 
 private:
    // Forbid copying
    MMThreadLock(const MMThreadLock&);
    MMThreadLock& operator=(const MMThreadLock&);
 
-   MM_THREAD_GUARD lock_;
+#ifdef _WIN32
+   CRITICAL_SECTION
+#else
+   pthread_mutex_t
+#endif
+   lock_;
 };
 
 class MMThreadGuard
@@ -152,13 +183,3 @@ private:
 
    MMThreadLock* lock_;
 };
-
-
-#undef MM_THREAD_CREATE
-#undef MM_THREAD_DELETE_GUARD
-#undef MM_THREAD_FUNC_DECL
-#undef MM_THREAD_GUARD_LOCK
-#undef MM_THREAD_GUARD_UNLOCK
-#undef MM_THREAD_INITIALIZE_GUARD
-#undef MM_THREAD_JOIN
-#undef _MUTEX_RECURSIVE
