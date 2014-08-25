@@ -570,8 +570,12 @@ public class DefaultMetadata implements Metadata {
          MDUtils.setBitDepth(result, getBitDepth());
          MDUtils.setPixelSizeUm(result, getPixelSizeUm());
          MDUtils.setUUID(result, getUUID());
-         MDUtils.setZStepUm(result, getZStepUm());
-         MDUtils.setElapsedTimeMs(result, getElapsedTimeMs());
+         // If we don't do these manual conversions, we get null pointer
+         // exceptions because the argument type for setZStepUm is double.
+         MDUtils.setZStepUm(result, 
+               (getZStepUm() == null) ? 0 : getZStepUm());
+         MDUtils.setElapsedTimeMs(result, 
+               (getElapsedTimeMs() == null) ? 0 : getElapsedTimeMs());
          MDUtils.setComments(result, getComments());
          return result;
       }
