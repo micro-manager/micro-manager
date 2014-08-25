@@ -33,6 +33,7 @@ public class TestDisplay {
    private MMVirtualStack stack_;
    private HyperstackControls controls_;
    private HistogramsPanel histograms_;
+   private MetadataPanel metadata_;
 
    private EventBus bus_;
    
@@ -59,7 +60,7 @@ public class TestDisplay {
          ((MMCompositeImage) ijImage_).reset();
       }
 //      controls_ = new HyperstackControls(bus_, false, false);
-      window_ = new DisplayWindow(ijImage_, makeHistogramsPanel(), bus_);
+      window_ = new DisplayWindow(ijImage_, makeInfoPanel(), bus_);
       window_.setTitle("Hello, world!");
       histograms_.calcAndDisplayHistAndStats(true);
    }
@@ -79,7 +80,7 @@ public class TestDisplay {
       composite.reset();
 
       if (window_ != null) {
-         window_.setControls(makeHistogramsPanel());
+         window_.setControls(makeInfoPanel());
          histograms_.calcAndDisplayHistAndStats(true);
       }
    }
@@ -99,14 +100,14 @@ public class TestDisplay {
       plus_.setDimensions(numChannels, numSlices, numFrames);
    }
 
-   // TODO: For now, stuffing the histograms into the display window. The 
-   // display window takes a Panel but the histograms are a JPanel, hence
-   // the wrapper.
-   private Panel makeHistogramsPanel() {
+   // TODO: For now, stuffing the histograms and metadata into the display
+   // window.
+   private Panel makeInfoPanel() {
       Panel temp = new Panel();
       histograms_ = new HistogramsPanel(store_, ijImage_, bus_);
       temp.add(histograms_);
-      histograms_.setVisible(true);
+      metadata_ = new MetadataPanel(store_);
+      temp.add(metadata_);
       temp.validate();
       return temp;
    }
@@ -124,7 +125,7 @@ public class TestDisplay {
          // Have multiple channels.
          ReportingUtils.logError("Augmenting to MMCompositeImage now");
          shiftToCompositeImage();
-         Panel temp = makeHistogramsPanel();
+         Panel temp = makeInfoPanel();
          window_.setControls(temp);
       }
       if (ijImage_ instanceof MMCompositeImage) {
@@ -154,5 +155,6 @@ public class TestDisplay {
       ijImage_.updateAndDraw();
 //      ijImage_.drawWithoutUpdate();
       histograms_.calcAndDisplayHistAndStats(true);
+      metadata_.imageChangedUpdate(store_.getImage(stack_.getCurrentImageCoords()));
    }
 }

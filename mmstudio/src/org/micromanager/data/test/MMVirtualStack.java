@@ -113,4 +113,11 @@ public class MMVirtualStack extends ij.VirtualStack {
    public void setCoords(Coords coords) {
       curCoords_ = coords;
    }
+
+   /**
+    * Return our current coordinates.
+    */
+   public Coords getCurrentImageCoords() {
+      return curCoords_;
+   }
 }
