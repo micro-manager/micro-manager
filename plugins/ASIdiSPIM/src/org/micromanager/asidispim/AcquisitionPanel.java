@@ -198,8 +198,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       volPanel_.setBorder(PanelUtils.makeTitledBorder("Volume Settings"));
 
       volPanel_.add(new JLabel("Number of sides:"));
-      String [] sides12 = {"1", "2"};
-      numSides_ = pu.makeDropDownBox(sides12, Devices.Keys.PLUGIN,
+      String [] sides21 = {"2", "1"};
+      numSides_ = pu.makeDropDownBox(sides21, Devices.Keys.PLUGIN,
             Properties.Keys.PLUGIN_NUM_SIDES);
       numSides_.addActionListener(recalculateTimingDisplayAL);
       volPanel_.add(numSides_, "wrap");
