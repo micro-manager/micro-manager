@@ -502,7 +502,8 @@ public class MDUtils {
 
    public static void setROI(JSONObject tags, Rectangle r) throws JSONException {
       String roiString = String.format("%d-%d-%d-%d", 
-            r.getX(), r.getY(), r.getWidth(), r.getHeight());
+            (int) r.getX(), (int) r.getY(), 
+            (int) r.getWidth(), (int) r.getHeight());
       tags.put("ROI", roiString);
    }
 
