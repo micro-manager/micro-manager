@@ -583,7 +583,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    }
    
    private boolean isTwoSided() {
-      return getNumSides() > 1;
+      return (getNumSides() > 1);
    }
    
    private int getNumTimepoints() {
