@@ -13,7 +13,8 @@ public class HotKeyAction {
       public static final int TOGGLESHUTTER = 2;
       public static final int ADD_TO_ALBUM = 3;
       public static final int MARK = 4;
-      public static final String[] guiItems_ = {"Snap", "Toggle Live", "Toggle Shutter", "->Album", "Mark Position"};
+      public static final int AUTOSTRETCH = 5;
+      public static final String[] guiItems_ = {"Snap", "Toggle Live", "Toggle Shutter", "->Album", "Mark Position", "Autostretch histograms"};
       public static final int NRGUICOMMANDS = guiItems_.length;
 
       public int type_;  // either GUICOMMAND or BEANSHELLSCRIPT
@@ -52,6 +53,8 @@ public class HotKeyAction {
                case MARK:
                   studio_.markCurrentPosition();
                   return true;
+               case AUTOSTRETCH:
+                  studio_.autostretchCurrentWindow();
             }
          } else {
             org.micromanager.ScriptPanel.runFile(beanShellScript_);

@@ -799,4 +799,9 @@ public interface ScriptInterface {
     */
     public void registerForEvents(Object obj);
 
+   /**
+    * Autostretch each histogram for the currently-active window, as if the
+    * "Auto" button had been clicked for each one.
+    */
+    public void autostretchCurrentWindow();
 }

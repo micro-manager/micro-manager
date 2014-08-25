@@ -2869,4 +2869,11 @@ public class MMStudio implements ScriptInterface {
       ReportingUtils.showError(msg);
    }
    
+   @Override
+   public void autostretchCurrentWindow() {
+      VirtualAcquisitionDisplay display = VirtualAcquisitionDisplay.getDisplay(WindowManager.getCurrentImage());
+      if (display != null) {
+         display.getHistograms().autoscaleAllChannels();
+      }
+   }
 }
