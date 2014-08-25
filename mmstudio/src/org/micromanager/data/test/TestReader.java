@@ -1,5 +1,7 @@
 package org.micromanager.data.test;
 
+import com.google.common.eventbus.Subscribe;
+
 import java.awt.Color;
 
 import java.util.HashMap;
@@ -9,9 +11,11 @@ import java.util.List;
 import mmcorej.TaggedImage;
 
 import org.micromanager.api.data.Coords;
+import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.DisplaySettings;
 import org.micromanager.api.data.Image;
 import org.micromanager.api.data.Metadata;
+import org.micromanager.api.data.NewSummaryMetadataEvent;
 import org.micromanager.api.data.Reader;
 import org.micromanager.api.data.SummaryMetadata;
 
@@ -31,10 +35,13 @@ import org.micromanager.utils.ReportingUtils;
 public class TestReader implements Reader {
    private HashMap<Coords, Image> coordsToImage_;
    private Coords maxIndex_;
+   private SummaryMetadata summaryMetadata_;
 
-   public TestReader() {
+   public TestReader(Datastore store) {
       coordsToImage_ = new HashMap<Coords, Image>();
       maxIndex_ = new DefaultCoords.Builder().build();
+      summaryMetadata_ = (new DefaultSummaryMetadata.Builder()).build();
+      store.registerForEvents(this);
    }
 
    @Override
@@ -84,7 +91,7 @@ public class TestReader implements Reader {
 
    @Override
    public SummaryMetadata getSummaryMetadata() {
-      return (new DefaultSummaryMetadata.Builder()).build();
+      return summaryMetadata_;
    }
 
    @Override
@@ -92,5 +99,10 @@ public class TestReader implements Reader {
       return (new DefaultDisplaySettings.Builder())
             .channelColors(new Color[] {Color.RED, Color.GREEN})
             .build();
+   }
+
+   @Subscribe
+   public void onNewSummary(NewSummaryMetadataEvent event) {
+      summaryMetadata_ = event.getSummaryMetadata();
    }
 }
