@@ -90,7 +90,7 @@ public class DevicesPanel extends ListeningJPanel {
       add(boxUpperZ_, "span 2, center, wrap");
       
       add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.CAMERALOWER) + ":"));
-      boxLowerCam_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.CameraDevice, Devices.Keys.CAMERALOWER);
+      boxLowerCam_ = du.makeSingleCameraDeviceBox(Devices.Keys.CAMERALOWER);
       add(boxLowerCam_, "span 2, center, wrap");
             
       add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.MULTICAMERA) + ":"));
@@ -115,9 +115,9 @@ public class DevicesPanel extends ListeningJPanel {
       add(boxPiezoB_, "wrap");
 
       add(new JLabel("Camera:"));
-      boxCameraA_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.CameraDevice, Devices.Keys.CAMERAA);
+      boxCameraA_ = du.makeSingleCameraDeviceBox(Devices.Keys.CAMERAA);
       add(boxCameraA_);
-      boxCameraB_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.CameraDevice, Devices.Keys.CAMERAB);
+      boxCameraB_ = du.makeSingleCameraDeviceBox(Devices.Keys.CAMERAB);
       add(boxCameraB_, "wrap");
       
       add(new JLabel("Note: plugin must be restarted for some changes to take full effect."), "span 3");
