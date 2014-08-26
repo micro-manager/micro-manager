@@ -61,9 +61,9 @@ WriteLinesToStreamWithStandardFormat(std::ostream& stream,
       if (filter && !filter->Filter(it->GetMetadataConstRef()))
          continue;
 
-      // If soft newline (broken up just to fit into LinePacket buffer), splice
-      // the lines.
-      if (it->GetLineLevel() == LineLevelSoftNewline)
+      // If line continuation (broken up just to fit into LinePacket buffer),
+      // splice the lines.
+      if (it->GetPacketState() == PacketStateLineContinuation)
       {
          stream << it->GetLine();
          continue;
@@ -75,9 +75,9 @@ WriteLinesToStreamWithStandardFormat(std::ostream& stream,
 
       // Write metadata on first line of entry; write empty prefix of same
       // width on subsequent lines.
-      if (it->GetLineLevel() == LineLevelFirstLine)
+      if (it->GetPacketState() == PacketStateEntryFirstLine)
          formatter.FormatLinePrefix(stream, it->GetMetadataConstRef());
-      else // LineLevelHardNewline
+      else // PacketStateNewLine
          formatter.FormatContinuationPrefix(stream);
 
       stream << ' ' << it->GetLine();
