@@ -31,17 +31,16 @@ namespace logging
 {
 
 
-typedef internal::GenericLoggingCore<LoggerData, EntryData, StampData>
-   LoggingCore;
+typedef internal::GenericLoggingCore<Metadata> LoggingCore;
 
-typedef LoggingCore::SinkType LogSink;
-typedef internal::GenericStdErrLogSink<LoggingCore::MetadataType,
-        internal::MetadataFormatter> StdErrLogSink;
-typedef internal::GenericFileLogSink<LoggingCore::MetadataType,
-        internal::MetadataFormatter> FileLogSink;
+typedef internal::GenericSink<Metadata> LogSink;
+typedef internal::GenericStdErrLogSink<Metadata, internal::MetadataFormatter>
+   StdErrLogSink;
+typedef internal::GenericFileLogSink<Metadata, internal::MetadataFormatter>
+   FileLogSink;
 
-typedef internal::GenericEntryFilter<LoggingCore::MetadataType> EntryFilter;
 
+typedef internal::GenericEntryFilter<Metadata> EntryFilter;
 
 class LevelFilter : public EntryFilter
 {

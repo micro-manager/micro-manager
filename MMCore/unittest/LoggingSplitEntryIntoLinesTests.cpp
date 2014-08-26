@@ -8,7 +8,7 @@
 
 using namespace mm::logging;
 
-typedef LoggingCore::MetadataType MetadataType;
+typedef Metadata MetadataType;
 const size_t MaxLogLineLen =
    internal::GenericLinePacket<MetadataType>::PacketTextLen;
 

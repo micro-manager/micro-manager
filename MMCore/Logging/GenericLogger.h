@@ -54,7 +54,7 @@ public:
 /**
  * Log an entry upon destruction.
  */
-template <typename TLogger>
+template <class TLogger>
 class GenericLogStream : public std::ostringstream, boost::noncopyable
 {
 public:

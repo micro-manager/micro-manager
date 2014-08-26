@@ -25,7 +25,7 @@ namespace internal
 {
 
 
-template <typename TMetadata>
+template <class TMetadata>
 class GenericEntryFilter
 {
 public:

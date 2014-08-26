@@ -50,22 +50,19 @@ namespace internal
 {
 
 
-template <
-   typename TLoggerData,
-   typename UEntryData,
-   typename VStampData
->
+template <class TMetadata>
 class GenericLoggingCore :
-   public boost::enable_shared_from_this<
-      GenericLoggingCore<TLoggerData, UEntryData, VStampData>
-   >
+   public boost::enable_shared_from_this< GenericLoggingCore<TMetadata> >
 {
 public:
-   typedef GenericMetadata<TLoggerData, UEntryData, VStampData> MetadataType;
-   typedef internal::GenericSink<MetadataType> SinkType;
+   typedef typename TMetadata::LoggerDataType LoggerDataType;
+   typedef typename TMetadata::EntryDataType EntryDataType;
+   typedef typename TMetadata::StampDataType StampDataType;
+
+   typedef internal::GenericSink<TMetadata> SinkType;
 
 private:
-   typedef internal::GenericLinePacket<MetadataType> LinePacketType;
+   typedef internal::GenericLinePacket<TMetadata> LinePacketType;
    typedef boost::container::vector<LinePacketType> PacketVectorType;
 
    // When acquiring both syncSinksMutex_ and asyncQueueMutex_, acquire in that
@@ -89,11 +86,11 @@ public:
     *
     * Loggers are callables taking the entry metadata and entry text.
     */
-   internal::GenericLogger<UEntryData> NewLogger(TLoggerData metadata)
+   internal::GenericLogger<EntryDataType> NewLogger(LoggerDataType metadata)
    {
       // Loggers hold a shared pointer to the LoggingCore, so that they are
       // guaranteed to be safe to call at any time.
-      return internal::GenericLogger<UEntryData>(
+      return internal::GenericLogger<EntryDataType>(
             boost::bind<void>(&GenericLoggingCore::SendEntryToShared,
                this->shared_from_this(), metadata, _1, _2));
    }
@@ -238,7 +235,7 @@ public:
       {
          boost::shared_ptr<SinkType> sink = it->first.first;
          SinkMode mode = it->first.second;
-         boost::shared_ptr< internal::GenericEntryFilter<MetadataType> > filter =
+         boost::shared_ptr< internal::GenericEntryFilter<TMetadata> > filter =
             it->second;
 
          typedef std::vector< boost::shared_ptr<SinkType> > SinkListType;
@@ -265,17 +262,18 @@ private:
    // Static wrapper allowing the use of a shared_ptr for the target instance
    static void
    SendEntryToShared(boost::shared_ptr<GenericLoggingCore> self,
-         TLoggerData loggerData, UEntryData entryData, const char* entryText)
+         LoggerDataType loggerData, EntryDataType entryData,
+         const char* entryText)
    { self->SendEntry(loggerData, entryData, entryText); }
 
-   void SendEntry(TLoggerData loggerData, UEntryData entryData,
+   void SendEntry(LoggerDataType loggerData, EntryDataType entryData,
          const char* entryText)
    {
-      VStampData stampData;
+      StampDataType stampData;
       stampData.Stamp();
 
       PacketVectorType packets;
-      SplitEntryIntoPackets<MetadataType>(packets, loggerData, entryData,
+      SplitEntryIntoPackets<TMetadata>(packets, loggerData, entryData,
             stampData, entryText);
 
       {

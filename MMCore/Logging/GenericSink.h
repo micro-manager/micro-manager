@@ -46,7 +46,7 @@ namespace internal
 
 // Despite the template parameter, this is currently hard-coded to the default
 // metadata.
-template <class TFormatter, typename UMetadata, typename VPacketIter>
+template <class TFormatter, class UMetadata, typename VPacketIter>
 void
 WritePacketsToStream(std::ostream& stream,
       VPacketIter first, VPacketIter last,
@@ -90,7 +90,7 @@ WritePacketsToStream(std::ostream& stream,
 }
 
 
-template <typename TMetadata>
+template <class TMetadata>
 class GenericSink
 {
 private:
@@ -115,7 +115,7 @@ public:
 };
 
 
-template <typename TMetadata, class UFormatter>
+template <class TMetadata, class UFormatter>
 class GenericStdErrLogSink : public GenericSink<TMetadata>
 {
    bool hadError_;
@@ -149,7 +149,7 @@ public:
 };
 
 
-template <typename TMetadata, class UFormatter>
+template <class TMetadata, class UFormatter>
 class GenericFileLogSink : public GenericSink<TMetadata>, boost::noncopyable
 {
    std::string filename_;

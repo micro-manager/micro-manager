@@ -43,7 +43,7 @@ enum PacketState
  * and are the elements of the queue used to send content to the asynchronous
  * backend.
  */
-template <typename TMetadata>
+template <class TMetadata>
 class GenericLinePacket
 {
 public:
@@ -75,7 +75,7 @@ public:
 };
 
 
-template <typename TMetadata, class UPacketVector>
+template <class TMetadata, class UPacketVector>
 void SplitEntryIntoPackets(
       UPacketVector& packets,
       typename TMetadata::LoggerDataType loggerData,
