@@ -55,18 +55,19 @@ private:
 
 public:
    // Since we don't have C++11 emplace, for now we construct without
-   // initialization. Compiler-generated copy ctor and operator=() are fine.
-   void Set(TimestampType timestamp, ThreadIdType threadId,
-         LogLevel level, const char* componentLabel)
-   {
-      timestamp_ = timestamp;
-      threadId_ = threadId;
-      level_ = level;
-      componentLabel_ = componentLabel;
-   }
+   // initialization. Then we can "emplace" using the placement new operator
+   // with the argument-taking constructor below.
+   LogEntryMetadata() {} // Leave uninitialized (!)
 
-   void Construct(LogLevel level, const char* componentLabel)
-   { Set(Now(), GetTid(), level, componentLabel); }
+   LogEntryMetadata(LogLevel level, const char* componentLabel) :
+      timestamp_(Now()),
+      threadId_(GetTid()),
+      level_(level),
+      componentLabel_(componentLabel)
+   {}
+
+   // Compiler-generated copy ctor and operator=() are fine.
+   // N.B. Default constructor will leave object uninitialized.
 
    TimestampType GetTimestamp() const { return timestamp_; }
    ThreadIdType GetThreadId() const { return threadId_; }

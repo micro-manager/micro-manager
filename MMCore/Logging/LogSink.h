@@ -72,9 +72,7 @@ WriteLinesToStreamWithStandardFormat(std::ostream& stream,
    {
       // Apply filter if present
       if (filter &&
-            !filter->Filter(it->GetThreadId(),
-               it->GetLogLevel(),
-               it->GetComponentLabel()))
+            !filter->Filter(it->GetMetadataConstRef()))
          continue;
 
       // If soft newline (broken up just to fit into LogLine buffer), splice
@@ -93,14 +91,15 @@ WriteLinesToStreamWithStandardFormat(std::ostream& stream,
       // width on subsequent lines.
       if (it->GetLineLevel() == LineLevelFirstLine)
       {
+         // TODO This implementation should belong to the metadata class
          std::ostream::pos_type prefixStart = stream.tellp();
-         WriteTimeToStream(stream, it->GetTimestamp());
-         stream << " tid" << it->GetThreadId() << ' ';
+         WriteTimeToStream(stream, it->GetMetadataConstRef().GetTimestamp());
+         stream << " tid" << it->GetMetadataConstRef().GetThreadId() << ' ';
          openBracketCol = static_cast<size_t>(stream.tellp() - prefixStart);
          stream << '[';
          std::ostream::pos_type bracketedStart = stream.tellp();
-         stream << LevelString(it->GetLogLevel()) <<
-            ',' << it->GetComponentLabel();
+         stream << LevelString(it->GetMetadataConstRef().GetLogLevel()) <<
+            ',' << it->GetMetadataConstRef().GetComponentLabel();
          bracketedWidth = static_cast<size_t>(stream.tellp() - bracketedStart);
          stream << ']';
       }

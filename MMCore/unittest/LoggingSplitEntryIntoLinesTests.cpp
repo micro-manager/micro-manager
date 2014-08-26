@@ -24,7 +24,7 @@ protected:
    std::vector<detail::LogLine> result_;
    virtual void SetUp()
    {
-      metadata_.Construct(LogLevelInfo, "component");
+      metadata_ = detail::LogEntryMetadata(LogLevelInfo, "component");
    }
    virtual void Split(const char* s)
    {
@@ -37,10 +37,11 @@ TEST_F(SplitEntryIntoLinesTest, Metadata)
 {
    Split("");
    ASSERT_EQ(1, result_.size());
-   EXPECT_EQ(detail::GetTid(), result_[0].GetThreadId());
-   EXPECT_EQ(LogLevelInfo, result_[0].GetLogLevel());
+   detail::LogEntryMetadata md(result_[0].GetMetadataConstRef());
+   EXPECT_EQ(detail::GetTid(), md.GetThreadId());
+   EXPECT_EQ(LogLevelInfo, md.GetLogLevel());
+   EXPECT_STREQ("component", md.GetComponentLabel());
    EXPECT_EQ(detail::LineLevelFirstLine, result_[0].GetLineLevel());
-   EXPECT_STREQ("component", result_[0].GetComponentLabel());
 }
 
 

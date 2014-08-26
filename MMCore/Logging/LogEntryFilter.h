@@ -31,9 +31,7 @@ class LogEntryFilter
 {
 public:
    virtual ~LogEntryFilter() {}
-
-   virtual bool Filter(ThreadIdType tid, LogLevel level,
-         const char* componentLabel) const = 0;
+   virtual bool Filter(const LogEntryMetadata& metadata) const = 0;
 };
 
 
@@ -44,8 +42,8 @@ class LevelFilter : public LogEntryFilter
 public:
    LevelFilter(LogLevel minLevel) : minLevel_(minLevel) {}
 
-   virtual bool Filter(ThreadIdType, LogLevel level, const char*) const
-   { return level >= minLevel_; }
+   virtual bool Filter(const LogEntryMetadata& metadata) const
+   { return metadata.GetLogLevel() >= minLevel_; }
 };
 
 } // namespace detail

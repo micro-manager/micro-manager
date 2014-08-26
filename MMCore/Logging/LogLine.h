@@ -45,9 +45,6 @@ enum LineLevel
  * memory allocation by the logger. Log lines serve as input to log sinks, and
  * are the elements of the queue used to send content to the asynchronous
  * backend.
- *
- * Warning: For efficiency reasons (and lack of C++11), this internal data
- * structure is unsafe and behaves more like a C struct than a proper class.
  */
 template <typename TMetadata>
 class GenericLogLine
@@ -70,22 +67,19 @@ private:
 
 public:
    // Since we don't have C++11 emplace, for now we construct without
-   // initialization. Compiler-generated copy ctor and operator=() are fine.
+   // initialization. Then we can "emplace" using the placement new operator
+   // with the argument-taking constructor below.
+   GenericLogLine() {} // Leave uninitialized (!)
 
-   void SetMetadata(const MetadataType& metadata)
-   {
-      metadata_ = metadata;
-      level_ = static_cast<LineLevel>(metadata.GetLogLevel());
-   }
-   void SetLineLevel(LineLevel level) { level_ = level; }
+   // The line buffer remains uninitialized (!)
+   GenericLogLine(const MetadataType& metadata, LineLevel level) :
+      level_(level), metadata_(metadata)
+   {}
+
+   // Compiler-generated copy ctor and operator=() are fine.
 
    char* GetLineBufferPtr() { return line_; }
-
-   TimestampType GetTimestamp() const { return metadata_.GetTimestamp(); }
-   ThreadIdType GetThreadId() const { return metadata_.GetThreadId(); }
-   LogLevel GetLogLevel() const { return metadata_.GetLogLevel(); }
-   const char* GetComponentLabel() const
-   { return metadata_.GetComponentLabel(); }
+   const MetadataType& GetMetadataConstRef() const { return metadata_; }
 
    LineLevel GetLineLevel() const { return level_; }
    const char* GetLine() const { return line_; }
@@ -109,10 +103,10 @@ void SplitEntryIntoLines(std::vector<TLogLine>& lines,
    std::size_t pastLastNonEmptyIndex = 0;
    do
    {
-      // Emulate emplace
+      // Emulate emplace (assuming TLogLine default ctor is noop)
       lines.resize(lines.size() + 1);
-      lines.back().SetMetadata(metadata);
-      lines.back().SetLineLevel(nextLevel);
+      lines.back().~TLogLine();
+      new (&lines.back()) TLogLine(metadata, nextLevel);
 
       nextLevel = LineLevelSoftNewline;
 

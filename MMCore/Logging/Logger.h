@@ -53,8 +53,7 @@ public:
       // Metadata is constructed at the earliest possible opportunity, so that
       // the timestamp is accurate and so that we don't have to pass around
       // multiple parameters.
-      typename TLoggingCore::MetadataType metadata;
-      metadata.Construct(level, componentLabel_);
+      typename TLoggingCore::MetadataType metadata(level, componentLabel_);
 
       loggingCore_->LogEntry(metadata, text);
    }
