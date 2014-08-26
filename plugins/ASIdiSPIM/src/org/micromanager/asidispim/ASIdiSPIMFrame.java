@@ -34,6 +34,7 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.util.prefs.Preferences;
 
+import javax.swing.JTabbedPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -118,7 +119,7 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       // all added tabs must be of type ListeningJPanel
       // only use addLTab, not addTab to guarantee this
       final ListeningJTabbedPane tabbedPane = new ListeningJTabbedPane();
-      
+      tabbedPane.setTabPlacement(JTabbedPane.LEFT);
       tabbedPane.addLTab(navigationPanel_);
       tabbedPane.addLTab(setupPanelA_);
       tabbedPane.addLTab(setupPanelB_);
