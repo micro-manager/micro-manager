@@ -25,7 +25,7 @@
 #include "../CoreUtils.h"
 #include "../Error.h"
 #include "../LoadableModules/LoadedDeviceAdapter.h"
-#include "../Logging/Logging.h"
+#include "../Logging/Logger.h"
 #include "../MMCore.h"
 
 

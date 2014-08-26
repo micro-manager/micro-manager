@@ -21,7 +21,7 @@
 
 #include "../../MMDevice/MMDeviceConstants.h"
 #include "../Error.h"
-#include "../Logging/Logging.h"
+#include "../Logging/Logger.h"
 
 #include <string>
 #include <vector>

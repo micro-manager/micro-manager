@@ -17,10 +17,11 @@
 #pragma once
 
 #include "GenericEntryFilter.h"
-#include "GenericLogger.h"
 #include "GenericLoggingCore.h"
-#include "GenericMetadata.h"
 #include "GenericSink.h"
+
+#include "Logger.h"
+#include "Metadata.h"
 
 
 namespace mm
@@ -36,38 +37,6 @@ typedef internal::GenericStdErrLogSink<LoggingCore::MetadataType> StdErrLogSink;
 typedef internal::GenericFileLogSink<LoggingCore::MetadataType> FileLogSink;
 
 typedef internal::GenericEntryFilter<LoggingCore::MetadataType> EntryFilter;
-
-typedef internal::GenericLogger<EntryData> Logger;
-typedef internal::GenericLogStream<Logger> LogStream;
-
-// Shorthands for LogStream
-//
-// Usage:
-//
-//     LOG_INFO(myLogger) << x << y << z;
-
-// You might think that we don't need the following macros, because we could
-// just write
-//
-//     LogStream(myLogger, someLevel) << x << y << z;
-//
-// However, that would only work with C++11, where the standard operator<<()
-// implementations include overloads for rvalue references (basic_ostream&&).
-// In C++ pre-11, the above statement will fail for some data types of x (e.g.
-// const char*). So, to make the left hand side of << an lvalue, we need to use
-// a trick.
-
-#define LOG_WITH_LEVEL(logger, level) \
-   for (::mm::logging::LogStream strm((logger), (level)); \
-         !strm.Used(); strm.MarkUsed()) \
-      strm
-
-#define LOG_TRACE(logger) LOG_WITH_LEVEL((logger), ::mm::logging::LogLevelTrace)
-#define LOG_DEBUG(logger) LOG_WITH_LEVEL((logger), ::mm::logging::LogLevelDebug)
-#define LOG_INFO(logger) LOG_WITH_LEVEL((logger), ::mm::logging::LogLevelInfo)
-#define LOG_WARNING(logger) LOG_WITH_LEVEL((logger), ::mm::logging::LogLevelWarning)
-#define LOG_ERROR(logger) LOG_WITH_LEVEL((logger), ::mm::logging::LogLevelError)
-#define LOG_FATAL(logger) LOG_WITH_LEVEL((logger), ::mm::logging::LogLevelFatal)
 
 } // namespace logging
 } // namespace mm

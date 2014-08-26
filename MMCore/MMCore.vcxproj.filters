@@ -251,6 +251,9 @@
     <ClInclude Include="Logging\GenericSink.h">
       <Filter>Header Files\Logging</Filter>
     </ClInclude>
+    <ClInclude Include="Logging\Logger.h">
+      <Filter>Header Files\Logging</Filter>
+    </ClInclude>
     <ClInclude Include="Logging\Logging.h">
       <Filter>Header Files\Logging</Filter>
     </ClInclude>

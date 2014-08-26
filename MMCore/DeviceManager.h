@@ -22,7 +22,7 @@
 #include "CoreUtils.h"
 #include "Devices/DeviceInstance.h"
 #include "Error.h"
-#include "Logging/Logging.h"
+#include "Logging/Logger.h"
 
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>

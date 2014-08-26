@@ -84,6 +84,7 @@ libMMCore_la_SOURCES = \
 	Logging/GenericMetadata.h \
 	Logging/GenericPacketQueue.h \
 	Logging/GenericSink.h \
+	Logging/Logger.h \
 	Logging/Logging.h \
 	Logging/Metadata.cpp \
 	Logging/Metadata.h \

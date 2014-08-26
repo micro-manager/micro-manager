@@ -25,7 +25,7 @@
 #include "../../MMDevice/DeviceThreads.h"
 #include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/ModuleInterface.h"
-#include "../Logging/Logging.h"
+#include "../Logging/Logger.h"
 
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/shared_ptr.hpp>

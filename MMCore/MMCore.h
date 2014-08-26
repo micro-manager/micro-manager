@@ -60,7 +60,7 @@
 #include "CoreUtils.h"
 #include "Error.h"
 #include "ErrorCodes.h"
-#include "Logging/Logging.h"
+#include "Logging/Logger.h"
 
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
