@@ -122,6 +122,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final JPanel slicePanel_;
    private final JPanel repeatPanel_;
    private final JPanel savePanel_;
+   private final JPanel durationPanel_;
    private final JTextField rootField_;
    private final JTextField nameField_;
    private final JLabel acquisitionStatusLabel_;
@@ -282,9 +283,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       });
       volPanel_.add(calculateSliceTiming_, "center, span 2, wrap");
       
-      actualVolumeDurationLabel_ = new JLabel();
-      volPanel_.add(actualVolumeDurationLabel_, "center, span 2, wrap");
-
       // end volume sub-panel
       
       
@@ -319,7 +317,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             desiredLightExposure_.setEnabled(!enabled);
             desiredLightExposureLabel_.setEnabled(!enabled);
             calculateSliceTiming_.setEnabled(!enabled);
-            actualSlicePeriodLabel_.setEnabled(true);
          } 
       };
       
@@ -387,9 +384,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       durationCamera_.addChangeListener(recalculateTimingDisplayCL);
       slicePanel_.add(durationCamera_, "wrap");
       
-      actualSlicePeriodLabel_ = new JLabel();
-      slicePanel_.add(actualSlicePeriodLabel_, "center, span 2, wrap");
-      
       // end slice sub-panel
       
 
@@ -423,9 +417,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       acquisitionInterval_.addChangeListener(recalculateTimeLapseDisplay);
       repeatPanel_.add(acquisitionInterval_, "wrap");
       
-      actualTimeLapseDurationLabel_ = new JLabel();
-      repeatPanel_.add(actualTimeLapseDurationLabel_, "center, span 2, wrap");
-
       // end repeat sub-panel
       
       
@@ -498,6 +489,28 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       // end save panel
       
+      // start duration report panel
+      
+      durationPanel_ = new JPanel(new MigLayout(
+            "",
+            "[right]10[left]",
+            "[]6[]"));
+      durationPanel_.setBorder(PanelUtils.makeTitledBorder("Durations"));
+      
+      durationPanel_.add(new JLabel("Slice:"));
+      actualSlicePeriodLabel_ = new JLabel();
+      durationPanel_.add(actualSlicePeriodLabel_, "wrap");
+      
+      durationPanel_.add(new JLabel("Volume:"));
+      actualVolumeDurationLabel_ = new JLabel();
+      durationPanel_.add(actualVolumeDurationLabel_, "wrap");
+      
+      durationPanel_.add(new JLabel("Time lapse:"));
+      actualTimeLapseDurationLabel_ = new JLabel();
+      durationPanel_.add(actualTimeLapseDurationLabel_, "wrap");
+      
+      // end duration report panel
+      
 
       buttonStart_ = new JButton("Start!");
       buttonStart_.addActionListener(new ActionListener() {
@@ -539,7 +552,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       updateAcquisitionStatusNone();
 
       // set up tabbed panel for GUI
-      add(repeatPanel_, "top");
+      add(repeatPanel_, "top, split 2");
+      add(durationPanel_, "top");
       add(volPanel_, "spany 2, top");
       add(slicePanel_, "spany 2, top, wrap");
       add(savePanel_, "wrap");
@@ -761,7 +775,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * Update the displayed slice period.
     */
    private void updateActualSlicePeriodLabel() {
-      actualSlicePeriodLabel_.setText("Slice period: " + 
+      actualSlicePeriodLabel_.setText(
             NumberUtils.doubleToDisplayString(computeActualSlicePeriod()) +
             " ms");
    }
@@ -781,7 +795,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * Update the displayed volume duration.
     */
    private void updateActualVolumeDurationLabel() {
-      actualVolumeDurationLabel_.setText("Volume duration: " + 
+      actualVolumeDurationLabel_.setText(
             NumberUtils.doubleToDisplayString(computeActualVolumeDuration()) +
             " ms");
    }
@@ -801,7 +815,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * Update the displayed time lapse duration.
     */
    private void updateActualTimeLapseDurationLabel() {
-      String s = "Time lapse duration: ";
+      String s = "";
       double duration = computeActualTimeLapseDuration();
       if (duration < 60) {  // less than 1 min
          s += NumberUtils.doubleToDisplayString(duration) + " s";
@@ -1155,9 +1169,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             gui_.setAcquisitionProperty(acqName, "LaserExposure_ms",
                     NumberUtils.doubleToDisplayString(
                     PanelUtils.getSpinnerFloatValue(desiredLightExposure_)));
-            // ugly: get volume duration from GUI text to avoid recalculation
             gui_.setAcquisitionProperty(acqName, "VolumeDuration", 
-                    actualVolumeDurationLabel_.getText().substring(17));
+                    actualVolumeDurationLabel_.getText());
             gui_.setAcquisitionProperty(acqName, "SPIMmode", 
                     ((AcquisitionModes.Keys) spimMode_.getSelectedItem()).toString());
             
