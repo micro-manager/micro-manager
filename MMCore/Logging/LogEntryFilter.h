@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include "LoggingDefs.h"
 #include "LogEntryMetadata.h"
 
 
@@ -26,28 +27,24 @@ namespace logging
 namespace detail
 {
 
-template <typename TThreadId>
-class GenericLogEntryFilter
+class LogEntryFilter
 {
 public:
-   virtual ~GenericLogEntryFilter() {}
+   virtual ~LogEntryFilter() {}
 
-   virtual bool Filter(TThreadId tid, LogLevel level,
+   virtual bool Filter(ThreadIdType tid, LogLevel level,
          const char* componentLabel) const = 0;
 };
 
 
-template <typename TThreadId>
-class GenericLevelFilter : public GenericLogEntryFilter<TThreadId>
+class LevelFilter : public LogEntryFilter
 {
    LogLevel minLevel_;
 
 public:
-   GenericLevelFilter(LogLevel minLevel) :
-      minLevel_(minLevel)
-   {}
+   LevelFilter(LogLevel minLevel) : minLevel_(minLevel) {}
 
-   virtual bool Filter(TThreadId, LogLevel level, const char*) const
+   virtual bool Filter(ThreadIdType, LogLevel level, const char*) const
    { return level >= minLevel_; }
 };
 

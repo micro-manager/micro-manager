@@ -85,6 +85,7 @@ libMMCore_la_SOURCES = \
 	Logging/Logger.h \
 	Logging/Logging.h \
 	Logging/LoggingCore.h \
+	Logging/LoggingDefs.h \
 	MMCore.cpp \
 	MMCore.h \
 	PluginManager.cpp \

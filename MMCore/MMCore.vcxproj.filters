@@ -248,5 +248,8 @@
     <ClInclude Include="DeviceManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Logging\LoggingDefs.h">
+      <Filter>Header Files\Logging</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -37,8 +37,7 @@ TEST_F(SplitEntryIntoLinesTest, Metadata)
 {
    Split("");
    ASSERT_EQ(1, result_.size());
-   EXPECT_EQ(detail::GetTid<detail::LogEntryMetadata::ThreadIdType>(),
-         result_[0].GetThreadId());
+   EXPECT_EQ(detail::GetTid(), result_[0].GetThreadId());
    EXPECT_EQ(LogLevelInfo, result_[0].GetLogLevel());
    EXPECT_EQ(detail::LineLevelFirstLine, result_[0].GetLineLevel());
    EXPECT_STREQ("component", result_[0].GetComponentLabel());

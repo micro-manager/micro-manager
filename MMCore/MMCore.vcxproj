@@ -204,6 +204,7 @@
     <ClInclude Include="Logging\Logger.h" />
     <ClInclude Include="Logging\Logging.h" />
     <ClInclude Include="Logging\LoggingCore.h" />
+    <ClInclude Include="Logging\LoggingDefs.h" />
     <ClInclude Include="Logging\LogLine.h" />
     <ClInclude Include="Logging\LogSink.h" />
     <ClInclude Include="LogManager.h" />

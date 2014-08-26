@@ -18,8 +18,8 @@
 
 #include "LogEntryFilter.h"
 #include "LogLine.h"
+#include "LoggingDefs.h"
 
-#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/utility.hpp>
 
 #include <exception>
@@ -42,12 +42,6 @@ public:
 
 namespace detail
 {
-
-template <typename TTime>
-void
-WriteTimeToStream(std::ostream& stream, TTime timestamp);
-// Implementations provided by template specializations.
-
 
 inline const char*
 LevelString(LogLevel logLevel)
@@ -100,7 +94,7 @@ WriteLinesToStreamWithStandardFormat(std::ostream& stream,
       if (it->GetLineLevel() == LineLevelFirstLine)
       {
          std::ostream::pos_type prefixStart = stream.tellp();
-         WriteTimeToStream(stream, it->GetTimeStamp());
+         WriteTimeToStream(stream, it->GetTimestamp());
          stream << " tid" << it->GetThreadId() << ' ';
          openBracketCol = static_cast<size_t>(stream.tellp() - prefixStart);
          stream << '[';
@@ -133,15 +127,11 @@ WriteLinesToStreamWithStandardFormat(std::ostream& stream,
 template <typename TLogLine>
 class GenericLogSink
 {
-public:
-   typedef GenericLogEntryFilter<typename TLogLine::MetadataType::ThreadIdType>
-      FilterType;
-
 private:
-   boost::shared_ptr<FilterType> filter_;
+   boost::shared_ptr<LogEntryFilter> filter_;
 
 protected:
-   boost::shared_ptr<FilterType> GetFilter() const { return filter_; }
+   boost::shared_ptr<LogEntryFilter> GetFilter() const { return filter_; }
 
 public:
    virtual ~GenericLogSink() {}
@@ -149,7 +139,7 @@ public:
 
    // Note: If setting the filter while the sink is in use, you must pause the
    // logger. See the LoggingCore member function AtomicSetSinkFilters().
-   void SetFilter(boost::shared_ptr<FilterType> filter)
+   void SetFilter(boost::shared_ptr<LogEntryFilter> filter)
    { filter_ = filter; }
 };
 

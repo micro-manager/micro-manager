@@ -46,13 +46,15 @@ enum SinkMode
 namespace detail
 {
 
-template <typename TTime, typename UThreadId>
-class GenericLoggingCore :
-   public boost::enable_shared_from_this< GenericLoggingCore<TTime, UThreadId> >
+class LogEntryMetadata;
+
+
+class LoggingCore :
+   public boost::enable_shared_from_this<LoggingCore>
 {
 public:
-   typedef GenericLoggingCore Self;
-   typedef detail::GenericLogEntryMetadata<TTime, UThreadId> MetadataType;
+   typedef LoggingCore Self;
+   typedef detail::LogEntryMetadata MetadataType;
    typedef detail::GenericLogger<Self> LoggerType;
 
 private:
@@ -82,8 +84,8 @@ private:
    boost::mutex componentLabelsMutex_;
 
 public:
-   GenericLoggingCore() { StartAsyncReceiveLoop(); }
-   ~GenericLoggingCore() { StopAsyncReceiveLoop(); }
+   LoggingCore() { StartAsyncReceiveLoop(); }
+   ~LoggingCore() { StopAsyncReceiveLoop(); }
 
    /**
     * Create a new Logger instance.
@@ -131,7 +133,7 @@ public:
          case SinkModeSynchronous:
          {
             boost::lock_guard<boost::mutex> lock(syncSinksMutex_);
-            typename std::vector< boost::shared_ptr<SinkType> >::iterator it =
+            std::vector< boost::shared_ptr<SinkType> >::iterator it =
                std::find(synchronousSinks_.begin(), synchronousSinks_.end(),
                      sink);
             if (it != synchronousSinks_.end())
@@ -142,7 +144,7 @@ public:
          {
             boost::lock_guard<boost::mutex> lock(asyncQueueMutex_);
             StopAsyncReceiveLoop();
-            typename std::vector< boost::shared_ptr<SinkType> >::iterator it =
+            std::vector< boost::shared_ptr<SinkType> >::iterator it =
                std::find(asynchronousSinks_.begin(), asynchronousSinks_.end(),
                      sink);
             if (it != asynchronousSinks_.end())
@@ -234,7 +236,7 @@ public:
       {
          boost::shared_ptr<SinkType> sink = it->first.first;
          SinkMode mode = it->first.second;
-         boost::shared_ptr<typename SinkType::FilterType> filter = it->second;
+         boost::shared_ptr<LogEntryFilter> filter = it->second;
 
          typedef std::vector< boost::shared_ptr<SinkType> > SinkListType;
          SinkListType* pSinkList = 0;
@@ -278,7 +280,7 @@ private:
       {
          boost::lock_guard<boost::mutex> lock(syncSinksMutex_);
 
-         for (typename std::vector< boost::shared_ptr<SinkType> >::iterator
+         for (std::vector< boost::shared_ptr<SinkType> >::iterator
                it = synchronousSinks_.begin(), end = synchronousSinks_.end();
                it != end; ++it)
          {
@@ -291,7 +293,7 @@ private:
    // Called on the receive thread of AsyncLoggingQueue
    void RunAsynchronousSinks(std::vector<LogLineType>& lines)
    {
-      for (typename std::vector< boost::shared_ptr<SinkType> >::iterator
+      for (std::vector< boost::shared_ptr<SinkType> >::iterator
             it = asynchronousSinks_.begin(), end = asynchronousSinks_.end();
             it != end; ++it)
       {
@@ -302,7 +304,7 @@ private:
    void StartAsyncReceiveLoop()
    {
       asyncQueue_.RunReceiveLoop(
-            boost::bind<void>(&GenericLoggingCore::RunAsynchronousSinks,
+            boost::bind<void>(&LoggingCore::RunAsynchronousSinks,
                this, _1));
    }
 

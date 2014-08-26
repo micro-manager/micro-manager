@@ -17,6 +17,7 @@
 #pragma once
 
 #include "LogEntryMetadata.h"
+#include "LoggingDefs.h"
 
 #include <cstddef>
 #include <vector>
@@ -57,7 +58,7 @@ public:
    // A reasonable size to break lines into (the vast majority of entry lines
    // fit in this size in practice), allowing for a fixed-size buffer to be
    // used. Let the size of GenericLogLine be 256, so that it is cache aligned
-   // (for what it's worth).
+   // (for what it's worth; may be messed up by alignment anyway).
    static const std::size_t LineStructSize = 256;
    static const std::size_t MaxLogLineLen = LineStructSize -
       sizeof(MetadataType) - sizeof(LineLevel) - 1;
@@ -80,10 +81,8 @@ public:
 
    char* GetLineBufferPtr() { return line_; }
 
-   typename MetadataType::TimeType GetTimeStamp() const
-   { return metadata_.GetTimeStamp(); }
-   typename MetadataType::ThreadIdType GetThreadId() const
-   { return metadata_.GetThreadId(); }
+   TimestampType GetTimestamp() const { return metadata_.GetTimestamp(); }
+   ThreadIdType GetThreadId() const { return metadata_.GetThreadId(); }
    LogLevel GetLogLevel() const { return metadata_.GetLogLevel(); }
    const char* GetComponentLabel() const
    { return metadata_.GetComponentLabel(); }
