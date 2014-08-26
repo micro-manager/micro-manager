@@ -6,6 +6,8 @@ import net.imglib2.img.array.ArrayImg;
 import net.imglib2.img.array.ArrayImgs;
 import net.imglib2.img.basictypeaccess.array.ArrayDataAccess;
 import net.imglib2.meta.ImgPlus;
+import net.imglib2.RandomAccess;
+import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
@@ -114,7 +116,8 @@ public class DefaultImage implements Image {
    /**
     * NOTE: if you want to add additional datatypes at this stage, make certain
     * you also update the copyAt() function to be able to extract the 
-    * appropriate bytes per pixel from the ArrayImg later.
+    * appropriate bytes per pixel from the ArrayImg later, and the 
+    * getIntensityAt() function for similar reasons.
     */
    private ImgPlus generateImgPlusFromPixels(Object pixels, int width, 
          int height, int bytesPerPixel)
@@ -190,6 +193,31 @@ public class DefaultImage implements Image {
    public Object getRawPixels() {
       ArrayDataAccess accessor = (ArrayDataAccess) ((ArrayImg) pixels_.getImg()).update(null);
       return accessor.getCurrentStorageArray();
+   }
+
+   /**
+    * Return the intensity of the pixel at the specified XY position, as a 
+    * double (regardless of the actual format of the pixel).
+    */
+   @Override
+   public double getIntensityAt(int x, int y) {
+      RandomAccess accessor = pixels_.randomAccess();
+      accessor.move(new int[] {x, y});
+      Object result = accessor.get();
+      if (result instanceof UnsignedByteType) {
+         return (byte) ((UnsignedByteType) result).get();
+      }
+      else if (result instanceof UnsignedShortType) {
+         return (short) ((UnsignedShortType) result).get();
+      }
+      else if (result instanceof ARGBType) {
+         ReportingUtils.logError("Asked for intensity of RGB image; unsure result is sensible.");
+         return (short) ((ARGBType) result).get();
+      }
+      else {
+         ReportingUtils.logError("Unrecognized data type; can't get intensity");
+         return -1;
+      }
    }
 
    /**
