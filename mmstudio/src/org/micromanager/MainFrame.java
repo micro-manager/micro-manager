@@ -137,7 +137,8 @@ public class MainFrame extends MMFrame implements LiveModeListener {
 
       createTopPanelWidgets((JPanel) splitPane_.getComponent(0));
       
-      metadataPanel_ = createMetadataPanel((JPanel) splitPane_.getComponent(1));
+//      metadataPanel_ = createMetadataPanel((JPanel) splitPane_.getComponent(1));
+      metadataPanel_ = null;
 
       setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
       setupWindowHandlers();
