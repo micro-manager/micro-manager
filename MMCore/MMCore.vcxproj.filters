@@ -263,5 +263,8 @@
     <ClInclude Include="Logging\MetadataFormatter.h">
       <Filter>Header Files\Logging</Filter>
     </ClInclude>
+    <ClInclude Include="Logging\GenericStreamSink.h">
+      <Filter>Header Files\Logging</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

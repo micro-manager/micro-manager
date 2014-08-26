@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include "GenericStreamSink.h"
 #include "GenericEntryFilter.h"
 #include "GenericLoggingCore.h"
 #include "GenericSink.h"

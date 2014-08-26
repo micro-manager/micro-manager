@@ -206,6 +206,7 @@
     <ClInclude Include="Logging\GenericMetadata.h" />
     <ClInclude Include="Logging\GenericPacketQueue.h" />
     <ClInclude Include="Logging\GenericSink.h" />
+    <ClInclude Include="Logging\GenericStreamSink.h" />
     <ClInclude Include="Logging\Logger.h" />
     <ClInclude Include="Logging\Logging.h" />
     <ClInclude Include="Logging\Metadata.h" />
