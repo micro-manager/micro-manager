@@ -8,11 +8,9 @@ import org.micromanager.api.data.Image;
  */
 public class NewImageEvent implements org.micromanager.api.data.NewImageEvent {
    public Image image_;
-   public Coords coords_;
    
-   public NewImageEvent(Image image, Coords coords) {
+   public NewImageEvent(Image image) {
       image_ = image;
-      coords_ = coords;
    }
 
    @Override
@@ -22,6 +20,6 @@ public class NewImageEvent implements org.micromanager.api.data.NewImageEvent {
 
    @Override
    public Coords getCoords() {
-      return coords_;
+      return image_.getCoords();
    }
 }
