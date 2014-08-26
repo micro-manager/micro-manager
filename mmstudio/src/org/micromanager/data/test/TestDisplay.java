@@ -8,12 +8,12 @@ import ij.ImagePlus;
 import java.awt.Panel;
 import java.lang.Math;
 
+import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.Image;
 import org.micromanager.api.data.NewImageEvent;
 
 import org.micromanager.imagedisplay.DisplayWindow;
-import org.micromanager.imagedisplay.HyperstackControls;
 import org.micromanager.imagedisplay.IMMImagePlus;
 import org.micromanager.imagedisplay.MMCompositeImage;
 import org.micromanager.imagedisplay.MMImagePlus;
@@ -59,7 +59,7 @@ public class TestDisplay {
       if (ijImage_ instanceof MMCompositeImage) {
          ((MMCompositeImage) ijImage_).reset();
       }
-//      controls_ = new HyperstackControls(bus_, false, false);
+
       window_ = new DisplayWindow(ijImage_, makeInfoPanel(), bus_);
       window_.setTitle("Hello, world!");
       histograms_.calcAndDisplayHistAndStats(true);
@@ -104,6 +104,8 @@ public class TestDisplay {
    // window.
    private Panel makeInfoPanel() {
       Panel temp = new Panel();
+      controls_ = new HyperstackControls(store_, stack_, bus_, false, false);
+      temp.add(controls_);
       histograms_ = new HistogramsPanel(store_, ijImage_, bus_);
       temp.add(histograms_);
       metadata_ = new MetadataPanel(store_);
@@ -151,10 +153,11 @@ public class TestDisplay {
     */
    @Subscribe
    public void onDrawEvent(DrawEvent event) {
-      ReportingUtils.logError("Draw event!");
+      Coords drawCoords = stack_.getCurrentImageCoords();
+      ReportingUtils.logError("Drawing at " + drawCoords);
       ijImage_.updateAndDraw();
 //      ijImage_.drawWithoutUpdate();
       histograms_.calcAndDisplayHistAndStats(true);
-      metadata_.imageChangedUpdate(store_.getImage(stack_.getCurrentImageCoords()));
+      metadata_.imageChangedUpdate(store_.getImage(drawCoords));
    }
 }
