@@ -50,6 +50,12 @@ public interface Datastore {
    public Integer getMaxIndex(String axis);
 
    /**
+    * Return a List of all axis names for Images in the store. Will be null if
+    * no Reader has been provided yet.
+    */
+   public List<String> getAxes();
+
+   /**
     * Retrieve the summary metadata for the datastore. Will be null if no
     * Reader has been provided yet.
     */
