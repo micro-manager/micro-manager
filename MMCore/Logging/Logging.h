@@ -30,6 +30,7 @@ namespace mm
 namespace logging
 {
 
+
 typedef internal::GenericLoggingCore<LoggerData, EntryData, StampData>
    LoggingCore;
 
@@ -40,6 +41,19 @@ typedef internal::GenericFileLogSink<LoggingCore::MetadataType,
         internal::MetadataFormatter> FileLogSink;
 
 typedef internal::GenericEntryFilter<LoggingCore::MetadataType> EntryFilter;
+
+
+class LevelFilter : public EntryFilter
+{
+   LogLevel minLevel_;
+
+public:
+   LevelFilter(LogLevel minLevel) : minLevel_(minLevel) {}
+
+   virtual bool Filter(const Metadata& metadata) const
+   { return metadata.GetEntryData().GetLevel() >= minLevel_; }
+};
+
 
 } // namespace logging
 } // namespace mm

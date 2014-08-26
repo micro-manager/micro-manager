@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include "GenericEntryFilter.h"
 #include "GenericMetadata.h"
 
 #ifdef _WIN32
@@ -130,18 +129,6 @@ private:
 
 
 typedef internal::GenericMetadata<LoggerData, EntryData, StampData> Metadata;
-
-
-class LevelFilter : public internal::GenericEntryFilter<Metadata>
-{
-   LogLevel minLevel_;
-
-public:
-   LevelFilter(LogLevel minLevel) : minLevel_(minLevel) {}
-
-   virtual bool Filter(const Metadata& metadata) const
-   { return metadata.GetEntryData().GetLevel() >= minLevel_; }
-};
 
 
 } // namespace logging
