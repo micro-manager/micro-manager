@@ -579,11 +579,15 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * @return either 1 or 2
     */
    private int getNumSides() {
-      return (numSides_.getSelectedIndex() + 1);
+      if (numSides_.getSelectedIndex() == 1) {
+         return 1;
+      } else {
+         return 2;
+      }
    }
    
    private boolean isTwoSided() {
-      return (getNumSides() > 1);
+      return (numSides_.getSelectedIndex() == 0);
    }
    
    private int getNumTimepoints() {
@@ -971,7 +975,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       if (liveModeOriginally) {
          gui_.enableLiveMode(false);
       }
-      cameras_.setSPIMCameraTriggerMode(Cameras.TriggerModes.EXTERNAL_START);
       
       boolean sideActiveA, sideActiveB;
       if (isTwoSided()) {
@@ -993,6 +996,17 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       } else {
          firstCamera = devices_.getMMDevice(Devices.Keys.CAMERAB);
          secondCamera = devices_.getMMDevice(Devices.Keys.CAMERAA);
+      }
+      
+      // make sure we have cameras selected
+      int nrSides = getNumSides();  // TODO: multi-channel in sense of excitation color, etc.
+      if (firstCamera == null) {
+         gui_.showError("Please select a valid camera for the first imaging path on the Devices Panel");
+         return false;
+      }
+      if (nrSides == 2 && secondCamera == null) {
+         gui_.showError("Please select a valid camera for the second imaging path on the Devices Panel.");
+         return false;
       }
       
       // make sure slice timings are up to date 
@@ -1023,23 +1037,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
       long timepointsIntervalMs = Math.round(
               PanelUtils.getSpinnerFloatValue(acquisitionInterval_) * 1000d);
-      int nrSides = getNumSides();  // TODO: multi-channel in sense of excitation color, etc.
       int nrSlices = getNumSlices();
       int nrPos = 1;  // TODO: multi XY points
 
       boolean autoShutter = core_.getAutoShutter();
       boolean shutterOpen = false;
 
-      // Sanity checks
-      if (firstCamera == null) {
-         gui_.showError("Please set up a camera first on the Devices Panel");
-         return false;
-      }
-      if (nrSides == 2 && secondCamera == null) {
-         gui_.showError("2 Sides requested, but second camera is not configured."
-                 + "\nPlease configure the Imaging Path B camera on the Devices Panel");
-         return false;
-      }
+      // more sanity checks
       double lineScanTime = computeActualSlicePeriod();
       if (exposureTime + cameraReadoutTime > lineScanTime) {
          gui_.showError("Exposure time is longer than time needed for a line scan.\n" +
@@ -1076,6 +1080,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          gui_.showError(ex, "Error emptying out the circular buffer");
          return false;
       }
+      
+      cameras_.setSPIMCameraTriggerMode(Cameras.TriggerModes.EXTERNAL_START);
 
       // stop the serial traffic for position updates during acquisition
       stagePosUpdater_.setAcqRunning(true);
