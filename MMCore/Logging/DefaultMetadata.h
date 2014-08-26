@@ -16,6 +16,9 @@
 
 #pragma once
 
+#include "LogEntryFilter.h"
+#include "LogEntryMetadata.h"
+
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -123,6 +126,22 @@ public:
 
 private:
    static const char* InternString(const std::string& s);
+};
+
+
+typedef detail::GenericMetadata<DefaultLoggerData, DefaultEntryData,
+        DefaultStampData> DefaultMetadata;
+
+
+class LevelFilter : public detail::GenericEntryFilter<DefaultMetadata>
+{
+   LogLevel minLevel_;
+
+public:
+   LevelFilter(LogLevel minLevel) : minLevel_(minLevel) {}
+
+   virtual bool Filter(const DefaultMetadata& metadata) const
+   { return metadata.entryData_.GetLevel() >= minLevel_; }
 };
 
 

@@ -16,9 +16,6 @@
 
 #pragma once
 
-#include "DefaultMetadata.h"
-#include "LogEntryMetadata.h"
-
 
 namespace mm
 {
@@ -27,29 +24,15 @@ namespace logging
 namespace detail
 {
 
+
 template <typename TMetadata>
-class LogEntryFilter
+class GenericEntryFilter
 {
 public:
-   virtual ~LogEntryFilter() {}
+   virtual ~GenericEntryFilter() {}
    virtual bool Filter(const TMetadata& metadata) const = 0;
 };
 
-
-class LevelFilter :
-   public LogEntryFilter<
-      GenericMetadata<DefaultLoggerData, DefaultEntryData, DefaultStampData>
-   >
-{
-   LogLevel minLevel_;
-
-public:
-   LevelFilter(LogLevel minLevel) : minLevel_(minLevel) {}
-
-   virtual bool Filter(const GenericMetadata<DefaultLoggerData,
-         DefaultEntryData, DefaultStampData>& metadata) const
-   { return metadata.entryData_.GetLevel() >= minLevel_; }
-};
 
 } // namespace detail
 } // namespace logging

@@ -66,7 +66,7 @@ template <typename TMetadata, typename ULineIterator>
 void
 WriteLinesToStreamWithStandardFormat(std::ostream& stream,
       ULineIterator first, ULineIterator last,
-      boost::shared_ptr< LogEntryFilter<TMetadata> > filter)
+      boost::shared_ptr< GenericEntryFilter<TMetadata> > filter)
 {
    bool beforeFirst = true;
    size_t openBracketCol = 0;
@@ -134,10 +134,10 @@ template <typename TMetadata>
 class GenericLogSink
 {
 private:
-   boost::shared_ptr< LogEntryFilter<TMetadata> > filter_;
+   boost::shared_ptr< GenericEntryFilter<TMetadata> > filter_;
 
 protected:
-   boost::shared_ptr< LogEntryFilter<TMetadata> > GetFilter() const
+   boost::shared_ptr< GenericEntryFilter<TMetadata> > GetFilter() const
    { return filter_; }
 
 public:
@@ -150,7 +150,7 @@ public:
 
    // Note: If setting the filter while the sink is in use, you must pause the
    // logger. See the LoggingCore member function AtomicSetSinkFilters().
-   void SetFilter(boost::shared_ptr< LogEntryFilter<TMetadata> > filter)
+   void SetFilter(boost::shared_ptr< GenericEntryFilter<TMetadata> > filter)
    { filter_ = filter; }
 };
 

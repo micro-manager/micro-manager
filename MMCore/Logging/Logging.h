@@ -35,8 +35,7 @@ typedef LoggingCore::SinkType LogSink;
 typedef detail::GenericStdErrLogSink<LoggingCore::MetadataType> StdErrLogSink;
 typedef detail::GenericFileLogSink<LoggingCore::MetadataType> FileLogSink;
 
-typedef detail::LogEntryFilter<LoggingCore::MetadataType> LogEntryFilter;
-typedef detail::LevelFilter LevelFilter;
+typedef detail::GenericEntryFilter<LoggingCore::MetadataType> EntryFilter;
 
 typedef detail::GenericLogger<DefaultEntryData> Logger;
 typedef detail::GenericLogStream<Logger> LogStream;

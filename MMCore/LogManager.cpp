@@ -181,13 +181,13 @@ LogManager::SetPrimaryLogLevel(LogLevel level)
    LOG_INFO(internalLogger_) << "Switching primary log level from " <<
       StringForLogLevel(oldLevel) << " to " << StringForLogLevel(level);
 
-   boost::shared_ptr<LogEntryFilter> filter =
+   boost::shared_ptr<EntryFilter> filter =
       boost::make_shared<LevelFilter>(level);
 
    std::vector<
       std::pair<
          std::pair<boost::shared_ptr<LogSink>, SinkMode>,
-         boost::shared_ptr<LogEntryFilter>
+         boost::shared_ptr<EntryFilter>
       >
    > changes;
    if (stdErrSink_)

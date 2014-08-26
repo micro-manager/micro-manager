@@ -238,7 +238,7 @@ public:
       {
          boost::shared_ptr<SinkType> sink = it->first.first;
          SinkMode mode = it->first.second;
-         boost::shared_ptr< detail::LogEntryFilter<MetadataType> > filter =
+         boost::shared_ptr< detail::GenericEntryFilter<MetadataType> > filter =
             it->second;
 
          typedef std::vector< boost::shared_ptr<SinkType> > SinkListType;
