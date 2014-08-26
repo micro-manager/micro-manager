@@ -69,8 +69,8 @@ private:
    const std::string label_;
    std::string description_;
    DeleteDeviceFunction deleteFunction_;
-   boost::shared_ptr<mm::logging::Logger> deviceLogger_;
-   boost::shared_ptr<mm::logging::Logger> coreLogger_;
+   mm::logging::Logger deviceLogger_;
+   mm::logging::Logger coreLogger_;
 
 public:
    boost::shared_ptr<LoadedDeviceAdapter> GetAdapterModule() const /* final */ { return adapter_; }
@@ -94,14 +94,14 @@ protected:
          MM::Device* pDevice,
          DeleteDeviceFunction deleteFunction,
          const std::string& label,
-         boost::shared_ptr<mm::logging::Logger> deviceLogger,
-         boost::shared_ptr<mm::logging::Logger> coreLogger);
+         mm::logging::Logger deviceLogger,
+         mm::logging::Logger coreLogger);
 
    virtual ~DeviceInstance();
 
    CMMCore* GetCore() const /* final */ { return core_; }
 
-   boost::shared_ptr<mm::logging::Logger> Logger() const
+   const mm::logging::Logger& Logger() const
    { return coreLogger_; }
 
    CMMError MakeException() const;

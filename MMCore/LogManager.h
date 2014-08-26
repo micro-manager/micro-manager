@@ -20,7 +20,7 @@ public:
 
 private:
    boost::shared_ptr<logging::LoggingCore> loggingCore_;
-   boost::shared_ptr<logging::Logger> internalLogger_;
+   logging::Logger internalLogger_;
 
    mutable boost::mutex mutex_;
 
@@ -72,7 +72,7 @@ public:
    // We could add an atomic SwapSecondaryLogFile(handle, filename, truncate),
    // nice for log rotation, but we don't need it now.
 
-   boost::shared_ptr<logging::Logger> NewLogger(const std::string& label);
+   logging::Logger NewLogger(const std::string& label);
 };
 
 } // namespace mm

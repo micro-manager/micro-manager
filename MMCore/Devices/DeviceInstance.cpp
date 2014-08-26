@@ -32,7 +32,7 @@
 int
 DeviceInstance::LogMessage(const char* msg, bool debugOnly)
 {
-   deviceLogger_->Log(debugOnly ? mm::logging::LogLevelDebug :
+   deviceLogger_(debugOnly ? mm::logging::LogLevelDebug :
          mm::logging::LogLevelInfo, msg);
    return DEVICE_OK;
 }
@@ -44,8 +44,8 @@ DeviceInstance::DeviceInstance(CMMCore* core,
       MM::Device* pDevice,
       DeleteDeviceFunction deleteFunction,
       const std::string& label,
-      boost::shared_ptr<mm::logging::Logger> deviceLogger,
-      boost::shared_ptr<mm::logging::Logger> coreLogger) :
+      mm::logging::Logger deviceLogger,
+      mm::logging::Logger coreLogger) :
    pImpl_(pDevice),
    core_(core),
    adapter_(adapter),

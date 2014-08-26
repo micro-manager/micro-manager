@@ -38,8 +38,8 @@ DeviceManager::~DeviceManager()
 boost::shared_ptr<DeviceInstance>
 DeviceManager::LoadDevice(boost::shared_ptr<LoadedDeviceAdapter> module,
       const std::string& deviceName, const std::string& label, CMMCore* core,
-      boost::shared_ptr<mm::logging::Logger> deviceLogger,
-      boost::shared_ptr<mm::logging::Logger> coreLogger)
+      mm::logging::Logger deviceLogger,
+      mm::logging::Logger coreLogger)
 {
    for (DeviceConstIterator it = devices_.begin(), end = devices_.end(); it != end; ++it)
    {

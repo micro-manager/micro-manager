@@ -20,6 +20,7 @@
 #include "LogLine.h"
 #include "LoggingDefs.h"
 
+#include <boost/container/vector.hpp>
 #include <boost/utility.hpp>
 
 #include <exception>
@@ -59,16 +60,18 @@ LevelString(LogLevel logLevel)
 }
 
 
-template <typename TLineIterator, typename UFilterType>
+// Despite the template parameter, this is currently hard-coded to the default
+// metadata.
+template <typename TMetadata, typename ULineIterator>
 void
 WriteLinesToStreamWithStandardFormat(std::ostream& stream,
-      TLineIterator first, TLineIterator last,
-      boost::shared_ptr<UFilterType> filter)
+      ULineIterator first, ULineIterator last,
+      boost::shared_ptr< LogEntryFilter<TMetadata> > filter)
 {
    bool beforeFirst = true;
    size_t openBracketCol = 0;
    size_t bracketedWidth = 0;
-   for (TLineIterator it = first; it != last; ++it)
+   for (ULineIterator it = first; it != last; ++it)
    {
       // Apply filter if present
       if (filter &&
@@ -92,14 +95,18 @@ WriteLinesToStreamWithStandardFormat(std::ostream& stream,
       if (it->GetLineLevel() == LineLevelFirstLine)
       {
          // TODO This implementation should belong to the metadata class
+         // TODO Avoid the slow tellp()
          std::ostream::pos_type prefixStart = stream.tellp();
-         WriteTimeToStream(stream, it->GetMetadataConstRef().GetTimestamp());
-         stream << " tid" << it->GetMetadataConstRef().GetThreadId() << ' ';
+         WriteTimeToStream(stream,
+               it->GetMetadataConstRef().stampData_.GetTimestamp());
+         stream << " tid" <<
+            it->GetMetadataConstRef().stampData_.GetThreadId() << ' ';
          openBracketCol = static_cast<size_t>(stream.tellp() - prefixStart);
          stream << '[';
          std::ostream::pos_type bracketedStart = stream.tellp();
-         stream << LevelString(it->GetMetadataConstRef().GetLogLevel()) <<
-            ',' << it->GetMetadataConstRef().GetComponentLabel();
+         stream <<
+            LevelString(it->GetMetadataConstRef().entryData_.GetLevel()) <<
+            ',' << it->GetMetadataConstRef().loggerData_.GetComponentLabel();
          bracketedWidth = static_cast<size_t>(stream.tellp() - bracketedStart);
          stream << ']';
       }
@@ -123,35 +130,43 @@ WriteLinesToStreamWithStandardFormat(std::ostream& stream,
 }
 
 
-template <typename TLogLine>
+template <typename TMetadata>
 class GenericLogSink
 {
 private:
-   boost::shared_ptr<LogEntryFilter> filter_;
+   boost::shared_ptr< LogEntryFilter<TMetadata> > filter_;
 
 protected:
-   boost::shared_ptr<LogEntryFilter> GetFilter() const { return filter_; }
+   boost::shared_ptr< LogEntryFilter<TMetadata> > GetFilter() const
+   { return filter_; }
 
 public:
+   typedef boost::container::vector< GenericLogLine<TMetadata> >
+      LineVectorType;
+
    virtual ~GenericLogSink() {}
-   virtual void Consume(const std::vector<TLogLine>& lines) = 0;
+   virtual void Consume(const LineVectorType& lines)
+      = 0;
 
    // Note: If setting the filter while the sink is in use, you must pause the
    // logger. See the LoggingCore member function AtomicSetSinkFilters().
-   void SetFilter(boost::shared_ptr<LogEntryFilter> filter)
+   void SetFilter(boost::shared_ptr< LogEntryFilter<TMetadata> > filter)
    { filter_ = filter; }
 };
 
 
-template <typename TLogLine>
-class GenericStdErrLogSink : public GenericLogSink<TLogLine>
+template <typename TMetadata>
+class GenericStdErrLogSink : public GenericLogSink<TMetadata>
 {
    bool hadError_;
 
 public:
+   typedef GenericLogSink<TMetadata> Super;
+   typedef typename Super::LineVectorType LineVectorType;
+
    GenericStdErrLogSink() : hadError_(false) {}
 
-   virtual void Consume(const std::vector<TLogLine>& lines)
+   virtual void Consume(const LineVectorType& lines)
    {
       WriteLinesToStreamWithStandardFormat(std::clog,
             lines.begin(), lines.end(), this->GetFilter());
@@ -174,14 +189,17 @@ public:
 };
 
 
-template <typename TLogLine>
-class GenericFileLogSink : public GenericLogSink<TLogLine>, boost::noncopyable
+template <typename TMetadata>
+class GenericFileLogSink : public GenericLogSink<TMetadata>, boost::noncopyable
 {
    std::string filename_;
    std::ofstream fileStream_;
    bool hadError_;
 
 public:
+   typedef GenericLogSink<TMetadata> Super;
+   typedef typename Super::LineVectorType LineVectorType;
+
    GenericFileLogSink(const std::string& filename, bool append = false) :
       filename_(filename),
       hadError_(false)
@@ -194,7 +212,7 @@ public:
          throw CannotOpenFileException();
    }
 
-   virtual void Consume(const std::vector<TLogLine>& lines)
+   virtual void Consume(const LineVectorType& lines)
    {
       WriteLinesToStreamWithStandardFormat(fileStream_,
             lines.begin(), lines.end(), this->GetFilter());

@@ -18,11 +18,44 @@
 
 #include "LoggingDefs.h"
 
+#include <boost/thread.hpp>
+
+#include <set>
+
 
 namespace mm
 {
 namespace logging
 {
+
+namespace detail
+{
+
+template <
+   typename TLoggerData,
+   typename UEntryData,
+   typename VStampData
+>
+struct GenericMetadata
+{
+   typedef TLoggerData LoggerDataType;
+   typedef UEntryData EntryDataType;
+   typedef VStampData StampDataType;
+
+   LoggerDataType loggerData_;
+   EntryDataType entryData_;
+   StampDataType stampData_;
+
+   GenericMetadata(LoggerDataType loggerData, EntryDataType entryData,
+         StampDataType stampData) :
+      loggerData_(loggerData),
+      entryData_(entryData),
+      stampData_(stampData)
+   {}
+};
+
+} // namespace detail
+
 
 enum LogLevel
 {
@@ -35,46 +68,65 @@ enum LogLevel
 };
 
 
-namespace detail
+class DefaultEntryData
 {
-
-/**
- * Log entry metadata.
- *
- * Warning: For efficiency reasons (and lack of C++11), this internal data
- * structure is unsafe and behaves more like a C struct than a proper class.
- */
-class LogEntryMetadata
-{
-private:
-   // No dynamically allocated data.
-   TimestampType timestamp_;
-   ThreadIdType threadId_;
    LogLevel level_;
-   const char* componentLabel_;
 
 public:
-   // Since we don't have C++11 emplace, for now we construct without
-   // initialization. Then we can "emplace" using the placement new operator
-   // with the argument-taking constructor below.
-   LogEntryMetadata() {} // Leave uninitialized (!)
+   // Implicitly construct from LogLevel
+   DefaultEntryData(LogLevel level) : level_(level) {}
 
-   LogEntryMetadata(LogLevel level, const char* componentLabel) :
-      timestamp_(Now()),
-      threadId_(GetTid()),
-      level_(level),
-      componentLabel_(componentLabel)
-   {}
-
-   // Compiler-generated copy ctor and operator=() are fine.
-   // N.B. Default constructor will leave object uninitialized.
-
-   TimestampType GetTimestamp() const { return timestamp_; }
-   ThreadIdType GetThreadId() const { return threadId_; }
-   LogLevel GetLogLevel() const { return level_; }
-   const char* GetComponentLabel() const { return componentLabel_; }
+   LogLevel GetLevel() const { return level_; }
 };
 
-} // namespace detail
+
+class DefaultStampData
+{
+   detail::TimestampType time_;
+   detail::ThreadIdType tid_;
+
+public:
+   void Stamp()
+   {
+      time_ = detail::Now();
+      tid_ = detail::GetTid();
+   }
+
+   detail::TimestampType GetTimestamp() const { return time_; }
+   detail::ThreadIdType GetThreadId() const { return tid_; }
+};
+
+
+class DefaultLoggerData
+{
+   const char* component_;
+
+public:
+   // Construct implicitly from strings
+   DefaultLoggerData(const char* componentLabel) :
+      component_(InternString(componentLabel))
+   {}
+   DefaultLoggerData(const std::string& componentLabel) :
+      component_(InternString(componentLabel))
+   {}
+
+   const char* GetComponentLabel() const { return component_; }
+
+private:
+   static const char* InternString(const std::string& s)
+   {
+      // Never remove strings from this set. Since we only ever insert into
+      // this set, iterators (and thus const char* to the contained strings)
+      // are never invalidated and can be used as a light-weight handle. Thus,
+      // we need to protect only insertion by a mutex.
+      static boost::mutex mutex;
+      static std::set<std::string> strings;
+
+      boost::lock_guard<boost::mutex> lock(mutex);
+      return strings.insert(s).first->c_str();
+   }
+};
+
+
 } // namespace logging
 } // namespace mm

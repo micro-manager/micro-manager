@@ -60,8 +60,8 @@ public:
 
    boost::shared_ptr<DeviceInstance> LoadDevice(CMMCore* core,
          const std::string& name, const std::string& label,
-         boost::shared_ptr<mm::logging::Logger> deviceLogger,
-         boost::shared_ptr<mm::logging::Logger> coreLogger);
+         mm::logging::Logger deviceLogger,
+         mm::logging::Logger coreLogger);
 
 private:
    /**

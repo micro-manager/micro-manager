@@ -1,40 +1,42 @@
 #include <gtest/gtest.h>
 
+#include "Logging/LogLine.h"
 #include "Logging/Logging.h"
 
+#include <boost/container/vector.hpp>
 #include <string>
-#include <vector>
 
 using namespace mm::logging;
-size_t MaxLogLineLen = detail::LogLine::MaxLogLineLen;
+
+typedef LoggingCore::MetadataType MetadataType;
+const size_t MaxLogLineLen =
+   detail::GenericLogLine<MetadataType>::MaxLogLineLen;
 
 
 class SplitEntryIntoLinesTest : public ::testing::Test
 {
+public:
+   SplitEntryIntoLinesTest() :
+      loggerData_("component"),
+      entryData_(LogLevelInfo)
+   {}
+
 protected:
-   detail::LogEntryMetadata metadata_;
-   std::vector<detail::LogLine> result_;
+   MetadataType::LoggerDataType loggerData_;
+   MetadataType::EntryDataType entryData_;
+   MetadataType::StampDataType stampData_;
+
+   boost::container::vector< detail::GenericLogLine<MetadataType> > result_;
    virtual void SetUp()
    {
-      metadata_ = detail::LogEntryMetadata(LogLevelInfo, "component");
+      stampData_.Stamp();
    }
    virtual void Split(const char* s)
    {
-      detail::SplitEntryIntoLines(result_, metadata_, s);
+      detail::SplitEntryIntoLines<MetadataType>(result_, loggerData_,
+            entryData_, stampData_, s);
    }
 };
-
-
-TEST_F(SplitEntryIntoLinesTest, Metadata)
-{
-   Split("");
-   ASSERT_EQ(1, result_.size());
-   detail::LogEntryMetadata md(result_[0].GetMetadataConstRef());
-   EXPECT_EQ(detail::GetTid(), md.GetThreadId());
-   EXPECT_EQ(LogLevelInfo, md.GetLogLevel());
-   EXPECT_STREQ("component", md.GetComponentLabel());
-   EXPECT_EQ(detail::LineLevelFirstLine, result_[0].GetLineLevel());
-}
 
 
 class SplitEntryIntoLinesParameterizedTest : public SplitEntryIntoLinesTest,

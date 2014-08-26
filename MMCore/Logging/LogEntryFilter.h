@@ -27,23 +27,28 @@ namespace logging
 namespace detail
 {
 
+template <typename TMetadata>
 class LogEntryFilter
 {
 public:
    virtual ~LogEntryFilter() {}
-   virtual bool Filter(const LogEntryMetadata& metadata) const = 0;
+   virtual bool Filter(const TMetadata& metadata) const = 0;
 };
 
 
-class LevelFilter : public LogEntryFilter
+class LevelFilter :
+   public LogEntryFilter<
+      GenericMetadata<DefaultLoggerData, DefaultEntryData, DefaultStampData>
+   >
 {
    LogLevel minLevel_;
 
 public:
    LevelFilter(LogLevel minLevel) : minLevel_(minLevel) {}
 
-   virtual bool Filter(const LogEntryMetadata& metadata) const
-   { return metadata.GetLogLevel() >= minLevel_; }
+   virtual bool Filter(const GenericMetadata<DefaultLoggerData,
+         DefaultEntryData, DefaultStampData>& metadata) const
+   { return metadata.entryData_.GetLevel() >= minLevel_; }
 };
 
 } // namespace detail

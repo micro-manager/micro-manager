@@ -607,8 +607,8 @@ private:
    // LogManager should be the first data member, so that it is available for
    // as long as possible during construction and (especially) destruction.
    boost::shared_ptr<mm::LogManager> logManager_;
-   boost::shared_ptr<mm::logging::Logger> appLogger_;
-   boost::shared_ptr<mm::logging::Logger> coreLogger_;
+   mm::logging::Logger appLogger_;
+   mm::logging::Logger coreLogger_;
 
    bool everSnapped_;
 

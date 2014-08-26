@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include "LogEntryMetadata.h"
 #include "LoggingDefs.h"
 
 #include <cstddef>
@@ -50,8 +49,6 @@ template <typename TMetadata>
 class GenericLogLine
 {
 public:
-   typedef TMetadata MetadataType;
-
    // A reasonable size to break lines into (the vast majority of entry lines
    // fit in this size in practice), allowing for a fixed-size buffer to be
    // used.
@@ -59,33 +56,33 @@ public:
 
 private:
    LineLevel level_;
-   MetadataType metadata_;
+   TMetadata metadata_;
    char line_[MaxLogLineLen + 1];
 
 public:
-   // Since we don't have C++11 emplace, for now we construct without
-   // initialization. Then we can "emplace" using the placement new operator
-   // with the argument-taking constructor below.
-   GenericLogLine() {} // Leave uninitialized (!)
+   GenericLogLine(LineLevel level,
+         typename TMetadata::LoggerDataType loggerData,
+         typename TMetadata::EntryDataType entryData,
+         typename TMetadata::StampDataType stampData) :
+      level_(level),
+      metadata_(loggerData, entryData, stampData)
+   { line_[0] = '\0'; }
 
-   // The line buffer remains uninitialized (!)
-   GenericLogLine(const MetadataType& metadata, LineLevel level) :
-      level_(level), metadata_(metadata)
-   {}
-
-   // Compiler-generated copy ctor and operator=() are fine.
-
+   // For C-style access
    char* GetLineBufferPtr() { return line_; }
-   const MetadataType& GetMetadataConstRef() const { return metadata_; }
 
    LineLevel GetLineLevel() const { return level_; }
+   const TMetadata& GetMetadataConstRef() const { return metadata_; }
    const char* GetLine() const { return line_; }
 };
 
 
-template <typename TLogLine>
-void SplitEntryIntoLines(std::vector<TLogLine>& lines,
-      const typename TLogLine::MetadataType& metadata,
+template <typename TMetadata, class ULineVector>
+void SplitEntryIntoLines(
+      ULineVector& lines,
+      typename TMetadata::LoggerDataType loggerData,
+      typename TMetadata::EntryDataType entryData,
+      typename TMetadata::StampDataType stampData,
       const char* entryText)
 {
    // Break up entryText into lines, either at CRLF or LF (hard newline), or
@@ -95,20 +92,19 @@ void SplitEntryIntoLines(std::vector<TLogLine>& lines,
    // writing into the vector of lines in linear address order. (Okay, this
    // is probably overkill, but it's easy enough.)
 
+   typedef GenericLogLine<TMetadata> LogLineType;
+
    const char* pText = entryText;
    LineLevel nextLevel = LineLevelFirstLine;
    std::size_t pastLastNonEmptyIndex = 0;
    do
    {
-      // Emulate emplace (assuming TLogLine default ctor is noop)
-      lines.resize(lines.size() + 1);
-      lines.back().~TLogLine();
-      new (&lines.back()) TLogLine(metadata, nextLevel);
+      lines.emplace_back(nextLevel, loggerData, entryData, stampData);
 
       nextLevel = LineLevelSoftNewline;
 
       char* pLine = lines.back().GetLineBufferPtr();
-      const char* endLine = pLine + TLogLine::MaxLogLineLen;
+      const char* endLine = pLine + LogLineType::MaxLogLineLen;
       while (*pText && pLine < endLine)
       {
          // The sequences "\r", "\r\n", and "\n" are considered newlines.

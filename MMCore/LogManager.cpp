@@ -272,7 +272,7 @@ LogManager::RemoveSecondaryLogFile(LogManager::LogFileHandle handle)
 }
 
 
-boost::shared_ptr<Logger>
+Logger
 LogManager::NewLogger(const std::string& label)
 {
    return loggingCore_->NewLogger(label);

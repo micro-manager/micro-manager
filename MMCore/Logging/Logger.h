@@ -30,34 +30,24 @@ namespace logging
 namespace detail
 {
 
-/**
- * Input port to the logger.
- *
- * Instances are obtained from LoggingCore.
- */
-template <typename TLoggingCore>
+
+template <typename TEntryData>
 class GenericLogger
 {
-   boost::shared_ptr<TLoggingCore> loggingCore_;
-   const char* componentLabel_;
+   boost::function<void (TEntryData, const char*)> impl_;
 
 public:
-   GenericLogger(boost::shared_ptr<TLoggingCore> core,
-         const std::string& componentLabel) :
-      loggingCore_(core),
-      componentLabel_(core->RegisterComponentLabel(componentLabel))
+   GenericLogger(boost::function<void (TEntryData, const char*)> f) :
+      impl_(f)
    {}
 
-   void Log(LogLevel level, const char* text)
-   {
-      // Metadata is constructed at the earliest possible opportunity, so that
-      // the timestamp is accurate and so that we don't have to pass around
-      // multiple parameters.
-      typename TLoggingCore::MetadataType metadata(level, componentLabel_);
+   void operator()(TEntryData entryData, const char* message) const
+   { impl_(entryData, message); }
 
-      loggingCore_->LogEntry(metadata, text);
-   }
+   void operator()(TEntryData entryData, const std::string& message) const
+   { impl_(entryData, message.c_str()); }
 };
+
 
 /**
  * Log an entry upon destruction.
@@ -65,12 +55,12 @@ public:
 template <typename TLogger>
 class GenericLogStream : public std::ostringstream, boost::noncopyable
 {
-   boost::shared_ptr<TLogger> logger_;
+   const TLogger& logger_;
    LogLevel level_;
    bool used_;
 
 public:
-   GenericLogStream(boost::shared_ptr<TLogger> logger, LogLevel level) :
+   GenericLogStream(const TLogger& logger, LogLevel level) :
       logger_(logger),
       level_(level),
       used_(false)
@@ -82,7 +72,7 @@ public:
 
    virtual ~GenericLogStream()
    {
-      logger_->Log(level_, str().c_str());
+      logger_(level_, str());
    }
 };
 

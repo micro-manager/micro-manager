@@ -202,7 +202,7 @@ std::string CMMCore::getPrimaryLogFile() const
  */
 void CMMCore::logMessage(const char* msg)
 {
-   appLogger_->Log(mm::logging::LogLevelInfo, msg);
+   appLogger_(mm::logging::LogLevelInfo, msg);
 }
 
 
@@ -211,7 +211,7 @@ void CMMCore::logMessage(const char* msg)
  */
 void CMMCore::logMessage(const char* msg, bool debugOnly)
 {
-   appLogger_->Log(debugOnly ? mm::logging::LogLevelDebug :
+   appLogger_(debugOnly ? mm::logging::LogLevelDebug :
          mm::logging::LogLevelInfo, msg);
 }
 
@@ -673,10 +673,10 @@ void CMMCore::loadDevice(const char* label, const char* moduleName, const char* 
       throw CMMError("Null device name");
 
    // Logger for logging from device adapter code
-   boost::shared_ptr<mm::logging::Logger> deviceLogger =
+   mm::logging::Logger deviceLogger =
       logManager_->NewLogger("dev:" + std::string(label));
    // Logger for logging related to the device, by us the Core
-   boost::shared_ptr<mm::logging::Logger> coreLogger =
+   mm::logging::Logger coreLogger =
       logManager_->NewLogger("Core:dev:" + std::string(label));
 
    LOG_DEBUG(coreLogger_) << "Will load device " << deviceName <<

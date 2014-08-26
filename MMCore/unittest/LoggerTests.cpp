@@ -20,11 +20,11 @@ TEST(LoggerTests, BasicSynchronous)
 
    c->AddSink(boost::make_shared<StdErrLogSink>(), SinkModeSynchronous);
 
-   boost::shared_ptr<Logger> lgr = c->NewLogger("mylabel");
+   Logger lgr = c->NewLogger("mylabel");
 
-   lgr->Log(LogLevelDebug, "My entry text\nMy second line");
+   lgr(LogLevelDebug, "My entry text\nMy second line");
    for (unsigned i = 0; i < 1000; ++i)
-      lgr->Log(LogLevelDebug, "More lines!\n\n\n");
+      lgr(LogLevelDebug, "More lines!\n\n\n");
 }
 
 
@@ -35,11 +35,11 @@ TEST(LoggerTests, BasicAsynchronous)
 
    c->AddSink(boost::make_shared<StdErrLogSink>(), SinkModeAsynchronous);
 
-   boost::shared_ptr<Logger> lgr = c->NewLogger("mylabel");
+   Logger lgr = c->NewLogger("mylabel");
 
-   lgr->Log(LogLevelDebug, "My entry text\nMy second line");
+   lgr(LogLevelDebug, "My entry text\nMy second line");
    for (unsigned i = 0; i < 1000; ++i)
-      lgr->Log(LogLevelDebug, "More lines!\n\n\n");
+      lgr(LogLevelDebug, "More lines!\n\n\n");
 }
 
 
@@ -50,7 +50,7 @@ TEST(LoggerTests, BasicLogStream)
 
    c->AddSink(boost::make_shared<StdErrLogSink>(), SinkModeSynchronous);
 
-   boost::shared_ptr<Logger> lgr = c->NewLogger("mylabel");
+   Logger lgr = c->NewLogger("mylabel");
 
    LOG_INFO(lgr) << 123 << "ABC" << 456;
 }
@@ -69,7 +69,7 @@ public:
 
    void Run()
    {
-      boost::shared_ptr<Logger> lgr =
+      Logger lgr =
          c_->NewLogger("thread" + boost::lexical_cast<std::string>(n_));
       char ch = '0' + n_;
       if (ch < '0' || ch > 'z')

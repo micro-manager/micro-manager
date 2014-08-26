@@ -45,8 +45,8 @@ protected:
          MM::Device* pDevice,
          DeleteDeviceFunction deleteFunction,
          const std::string& label,
-         boost::shared_ptr<mm::logging::Logger> deviceLogger,
-         boost::shared_ptr<mm::logging::Logger> coreLogger) :
+         mm::logging::Logger deviceLogger,
+         mm::logging::Logger coreLogger) :
       DeviceInstance(core, adapter, name, pDevice, deleteFunction,
             label, deviceLogger, coreLogger)
    {
