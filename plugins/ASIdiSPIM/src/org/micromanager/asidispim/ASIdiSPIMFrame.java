@@ -118,12 +118,13 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       // all added tabs must be of type ListeningJPanel
       // only use addLTab, not addTab to guarantee this
       final ListeningJTabbedPane tabbedPane = new ListeningJTabbedPane();
-      tabbedPane.addLTab(devicesPanel_);
-      tabbedPane.addLTab(acquisitionPanel_);
+      
+      tabbedPane.addLTab(navigationPanel_);
       tabbedPane.addLTab(setupPanelA_);
       tabbedPane.addLTab(setupPanelB_);
-      tabbedPane.addLTab(navigationPanel_);
-      tabbedPane.addLTab(dataAnalysisPanel_);
+      tabbedPane.addLTab(acquisitionPanel_);
+      tabbedPane.addLTab(dataAnalysisPanel_);    
+      tabbedPane.addLTab(devicesPanel_);
       tabbedPane.addLTab(settingsPanel_);
       tabbedPane.addLTab(helpPanel_);
 
