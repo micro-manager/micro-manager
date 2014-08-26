@@ -22,6 +22,7 @@
 
 #include "Logger.h"
 #include "Metadata.h"
+#include "MetadataFormatter.h"
 
 
 namespace mm
@@ -33,8 +34,10 @@ typedef internal::GenericLoggingCore<LoggerData, EntryData, StampData>
    LoggingCore;
 
 typedef LoggingCore::SinkType LogSink;
-typedef internal::GenericStdErrLogSink<LoggingCore::MetadataType> StdErrLogSink;
-typedef internal::GenericFileLogSink<LoggingCore::MetadataType> FileLogSink;
+typedef internal::GenericStdErrLogSink<LoggingCore::MetadataType,
+        internal::MetadataFormatter> StdErrLogSink;
+typedef internal::GenericFileLogSink<LoggingCore::MetadataType,
+        internal::MetadataFormatter> FileLogSink;
 
 typedef internal::GenericEntryFilter<LoggingCore::MetadataType> EntryFilter;
 

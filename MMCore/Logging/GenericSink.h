@@ -44,38 +44,21 @@ public:
 namespace internal
 {
 
-inline const char*
-LevelString(LogLevel logLevel)
-{
-   switch (logLevel)
-   {
-      case LogLevelTrace: return "trc";
-      case LogLevelDebug: return "dbg";
-      case LogLevelInfo: return "IFO";
-      case LogLevelWarning: return "WRN";
-      case LogLevelError: return "ERR";
-      case LogLevelFatal: return "FTL";
-      default: return "???";
-   }
-}
-
-
 // Despite the template parameter, this is currently hard-coded to the default
 // metadata.
-template <typename TMetadata, typename ULineIterator>
+template <class TFormatter, typename UMetadata, typename VLineIterator>
 void
 WriteLinesToStreamWithStandardFormat(std::ostream& stream,
-      ULineIterator first, ULineIterator last,
-      boost::shared_ptr< GenericEntryFilter<TMetadata> > filter)
+      VLineIterator first, VLineIterator last,
+      boost::shared_ptr< GenericEntryFilter<UMetadata> > filter)
 {
+   TFormatter formatter;
+
    bool beforeFirst = true;
-   size_t openBracketCol = 0;
-   size_t bracketedWidth = 0;
-   for (ULineIterator it = first; it != last; ++it)
+   for (VLineIterator it = first; it != last; ++it)
    {
       // Apply filter if present
-      if (filter &&
-            !filter->Filter(it->GetMetadataConstRef()))
+      if (filter && !filter->Filter(it->GetMetadataConstRef()))
          continue;
 
       // If soft newline (broken up just to fit into LogLine buffer), splice
@@ -93,33 +76,9 @@ WriteLinesToStreamWithStandardFormat(std::ostream& stream,
       // Write metadata on first line of entry; write empty prefix of same
       // width on subsequent lines.
       if (it->GetLineLevel() == LineLevelFirstLine)
-      {
-         // TODO This implementation should belong to the metadata class
-         // TODO Avoid the slow tellp()
-         std::ostream::pos_type prefixStart = stream.tellp();
-         WriteTimeToStream(stream,
-               it->GetMetadataConstRef().GetStampData().GetTimestamp());
-         stream << " tid" <<
-            it->GetMetadataConstRef().GetStampData().GetThreadId() << ' ';
-         openBracketCol = static_cast<size_t>(stream.tellp() - prefixStart);
-         stream << '[';
-         std::ostream::pos_type bracketedStart = stream.tellp();
-         stream <<
-            LevelString(it->GetMetadataConstRef().GetEntryData().GetLevel()) <<
-            ',' <<
-            it->GetMetadataConstRef().GetLoggerData().GetComponentLabel();
-         bracketedWidth = static_cast<size_t>(stream.tellp() - bracketedStart);
-         stream << ']';
-      }
+         formatter.FormatLinePrefix(stream, it->GetMetadataConstRef());
       else // LineLevelHardNewline
-      {
-         for (size_t i = 0; i < openBracketCol; ++i)
-            stream.put(' ');
-         stream << '[';
-         for (size_t i = 0; i < bracketedWidth; ++i)
-            stream.put(' ');
-         stream << ']';
-      }
+         formatter.FormatContinuationPrefix(stream);
 
       stream << ' ' << it->GetLine();
       beforeFirst = false;
@@ -156,7 +115,7 @@ public:
 };
 
 
-template <typename TMetadata>
+template <typename TMetadata, class UFormatter>
 class GenericStdErrLogSink : public GenericSink<TMetadata>
 {
    bool hadError_;
@@ -169,7 +128,7 @@ public:
 
    virtual void Consume(const LineVectorType& lines)
    {
-      WriteLinesToStreamWithStandardFormat(std::clog,
+      WriteLinesToStreamWithStandardFormat<UFormatter>(std::clog,
             lines.begin(), lines.end(), this->GetFilter());
       try
       {
@@ -190,7 +149,7 @@ public:
 };
 
 
-template <typename TMetadata>
+template <typename TMetadata, class UFormatter>
 class GenericFileLogSink : public GenericSink<TMetadata>, boost::noncopyable
 {
    std::string filename_;
@@ -215,7 +174,7 @@ public:
 
    virtual void Consume(const LineVectorType& lines)
    {
-      WriteLinesToStreamWithStandardFormat(fileStream_,
+      WriteLinesToStreamWithStandardFormat<UFormatter>(fileStream_,
             lines.begin(), lines.end(), this->GetFilter());
       try
       {

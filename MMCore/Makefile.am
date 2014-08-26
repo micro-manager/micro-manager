@@ -88,6 +88,7 @@ libMMCore_la_SOURCES = \
 	Logging/Logging.h \
 	Logging/Metadata.cpp \
 	Logging/Metadata.h \
+	Logging/MetadataFormatter.h \
 	MMCore.cpp \
 	MMCore.h \
 	PluginManager.cpp \

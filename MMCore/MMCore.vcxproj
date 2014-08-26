@@ -209,6 +209,7 @@
     <ClInclude Include="Logging\Logger.h" />
     <ClInclude Include="Logging\Logging.h" />
     <ClInclude Include="Logging\Metadata.h" />
+    <ClInclude Include="Logging\MetadataFormatter.h" />
     <ClInclude Include="LogManager.h" />
     <ClInclude Include="MMCore.h" />
     <ClInclude Include="MMEventCallback.h" />
