@@ -47,19 +47,24 @@ LevelString(LogLevel logLevel)
 }
 
 
+// A stateful formatter for the metadata prefix and corresponding
+// continuation-line prefix. Intended for single-threaded use only.
 class MetadataFormatter
 {
+   // Reuse buffers for efficiency
+   std::string buf_;
+   std::ostringstream sstrm_;
    size_t openBracketCol_;
-   size_t bracketedWidth_;
+   size_t closeBracketCol_;
 
 public:
-   MetadataFormatter() : openBracketCol_(0), bracketedWidth_(0) {}
+   MetadataFormatter() : openBracketCol_(0), closeBracketCol_(0) {}
 
    // Format the line prefix for the first line of an entry
    void FormatLinePrefix(std::ostream& stream, const Metadata& metadata);
 
    // Format the line prefix for subsequent lines of an entry
-   void FormatContinuationPrefix(std::ostream& stream) const;
+   void FormatContinuationPrefix(std::ostream& stream);
 };
 
 
@@ -67,35 +72,37 @@ inline void
 MetadataFormatter::FormatLinePrefix(std::ostream& stream,
       const Metadata& metadata)
 {
-   std::string timeStr = boost::posix_time::to_iso_extended_string(
+   // Pre-forming string is more efficient than writing bit by bit to stream.
+
+   buf_ = boost::posix_time::to_iso_extended_string(
          metadata.GetStampData().GetTimestamp());
-   std::ostringstream sstrm(timeStr, std::ios_base::ate);
-   sstrm << " tid" << metadata.GetStampData().GetThreadId() << ' ';
-   std::string timeTid = sstrm.str();
-   openBracketCol_ = timeTid.size();
+   buf_ += " tid";
+   sstrm_.str(std::string());
+   sstrm_ << metadata.GetStampData().GetThreadId();
+   buf_ += sstrm_.str();
+   buf_ += ' ';
 
-   stream << timeTid;
+   openBracketCol_ = buf_.size();
+   buf_ += '[';
 
-   stream << '[';
+   buf_ += LevelString(metadata.GetEntryData().GetLevel());
+   buf_ += ',';
+   buf_ += metadata.GetLoggerData().GetComponentLabel();
 
-   const char* levelStr = LevelString(metadata.GetEntryData().GetLevel());
-   const char* compLabel = metadata.GetLoggerData().GetComponentLabel();
-   bracketedWidth_ = strlen(levelStr) + 1 + strlen(compLabel);
-   stream << levelStr << ',' << compLabel;
+   closeBracketCol_ = buf_.size();
+   buf_ += ']';
 
-   stream << ']';
+   stream << buf_;
 }
 
 
 inline void
-MetadataFormatter::FormatContinuationPrefix(std::ostream& stream) const
+MetadataFormatter::FormatContinuationPrefix(std::ostream& stream)
 {
-   for (size_t i = 0; i < openBracketCol_; ++i)
-      stream.put(' ');
-   stream << '[';
-   for (size_t i = 0; i < bracketedWidth_; ++i)
-      stream.put(' ');
-   stream << ']';
+   buf_.assign(closeBracketCol_ + 1, ' ');
+   buf_[openBracketCol_] = '[';
+   buf_[closeBracketCol_] = ']';
+   stream << buf_;
 }
 
 
