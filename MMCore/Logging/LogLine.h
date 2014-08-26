@@ -16,8 +16,6 @@
 
 #pragma once
 
-#include "LoggingDefs.h"
-
 #include <cstddef>
 #include <vector>
 

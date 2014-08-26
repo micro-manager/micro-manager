@@ -14,7 +14,11 @@
 //
 // AUTHOR:        Mark Tsuchida
 
-#pragma once
+#include "DefaultMetadata.h"
+
+#include <boost/thread.hpp>
+
+#include <set>
 
 
 namespace mm
@@ -22,32 +26,21 @@ namespace mm
 namespace logging
 {
 
-namespace detail
+
+const char*
+DefaultLoggerData::InternString(const std::string& s)
 {
+   // Never remove strings from this set. Since we only ever insert into
+   // this set, iterators (and thus const char* to the contained strings)
+   // are never invalidated and can be used as a light-weight handle. Thus,
+   // we need to protect only insertion by a mutex.
+   static boost::mutex mutex;
+   static std::set<std::string> strings;
 
-template <
-   typename TLoggerData,
-   typename UEntryData,
-   typename VStampData
->
-struct GenericMetadata
-{
-   typedef TLoggerData LoggerDataType;
-   typedef UEntryData EntryDataType;
-   typedef VStampData StampDataType;
+   boost::lock_guard<boost::mutex> lock(mutex);
+   return strings.insert(s).first->c_str();
+}
 
-   LoggerDataType loggerData_;
-   EntryDataType entryData_;
-   StampDataType stampData_;
 
-   GenericMetadata(LoggerDataType loggerData, EntryDataType entryData,
-         StampDataType stampData) :
-      loggerData_(loggerData),
-      entryData_(entryData),
-      stampData_(stampData)
-   {}
-};
-
-} // namespace detail
 } // namespace logging
 } // namespace mm

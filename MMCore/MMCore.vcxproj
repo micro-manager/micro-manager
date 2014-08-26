@@ -162,6 +162,7 @@
     <ClCompile Include="LoadableModules\LoadedModule.cpp" />
     <ClCompile Include="LoadableModules\LoadedModuleImpl.cpp" />
     <ClCompile Include="LoadableModules\LoadedModuleImplWindows.cpp" />
+    <ClCompile Include="Logging\DefaultMetadata.cpp" />
     <ClCompile Include="LogManager.cpp" />
     <ClCompile Include="MMCore.cpp" />
     <ClCompile Include="PluginManager.cpp" />
@@ -199,6 +200,7 @@
     <ClInclude Include="LoadableModules\LoadedModuleImpl.h" />
     <ClInclude Include="LoadableModules\LoadedModuleImplWindows.h" />
     <ClInclude Include="Logging\AsyncLoggingQueue.h" />
+    <ClInclude Include="Logging\DefaultMetadata.h" />
     <ClInclude Include="Logging\LogEntryFilter.h" />
     <ClInclude Include="Logging\LogEntryMetadata.h" />
     <ClInclude Include="Logging\Logger.h" />

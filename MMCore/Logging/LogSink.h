@@ -18,7 +18,7 @@
 
 #include "LogEntryFilter.h"
 #include "LogLine.h"
-#include "LoggingDefs.h"
+#include "DefaultMetadata.h"
 
 #include <boost/container/vector.hpp>
 #include <boost/utility.hpp>

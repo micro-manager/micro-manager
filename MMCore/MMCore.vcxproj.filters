@@ -28,6 +28,9 @@
     <Filter Include="Header Files\Logging">
       <UniqueIdentifier>{00ee4ab9-5b43-400c-915c-0ac80094558b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Logging">
+      <UniqueIdentifier>{55d1c48b-4777-4d68-9b8a-5d6b45de8d7f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CircularBuffer.cpp">
@@ -116,6 +119,9 @@
     </ClCompile>
     <ClCompile Include="DeviceManager.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Logging\DefaultMetadata.cpp">
+      <Filter>Source Files\Logging</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -249,6 +255,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Logging\LoggingDefs.h">
+      <Filter>Header Files\Logging</Filter>
+    </ClInclude>
+    <ClInclude Include="Logging\DefaultMetadata.h">
       <Filter>Header Files\Logging</Filter>
     </ClInclude>
   </ItemGroup>

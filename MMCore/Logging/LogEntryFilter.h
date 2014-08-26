@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "LoggingDefs.h"
+#include "DefaultMetadata.h"
 #include "LogEntryMetadata.h"
 
 

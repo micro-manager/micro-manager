@@ -17,6 +17,7 @@
 #pragma once
 
 #ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #else
 #include <pthread.h>
@@ -29,10 +30,10 @@ namespace mm
 {
 namespace logging
 {
+
 namespace detail
 {
 
-// Platform-dependent types
 
 typedef boost::posix_time::ptime TimestampType;
 
@@ -61,6 +62,69 @@ inline ThreadIdType
 GetTid() { return ::pthread_self(); }
 #endif
 
+
 } // namespace detail
+
+
+enum LogLevel
+{
+   LogLevelTrace,
+   LogLevelDebug,
+   LogLevelInfo,
+   LogLevelWarning,
+   LogLevelError,
+   LogLevelFatal,
+};
+
+
+class DefaultEntryData
+{
+   LogLevel level_;
+
+public:
+   // Implicitly construct from LogLevel
+   DefaultEntryData(LogLevel level) : level_(level) {}
+
+   LogLevel GetLevel() const { return level_; }
+};
+
+
+class DefaultStampData
+{
+   detail::TimestampType time_;
+   detail::ThreadIdType tid_;
+
+public:
+   void Stamp()
+   {
+      time_ = detail::Now();
+      tid_ = detail::GetTid();
+   }
+
+   detail::TimestampType GetTimestamp() const { return time_; }
+   detail::ThreadIdType GetThreadId() const { return tid_; }
+};
+
+
+class DefaultLoggerData
+{
+   const char* component_;
+
+public:
+   // Construct implicitly from strings
+   DefaultLoggerData(const char* componentLabel) :
+      component_(InternString(componentLabel))
+   {}
+   DefaultLoggerData(const std::string& componentLabel) :
+      component_(InternString(componentLabel))
+   {}
+
+   const char* GetComponentLabel() const { return component_; }
+
+private:
+   static const char* InternString(const std::string& s);
+};
+
+
 } // namespace logging
 } // namespace mm

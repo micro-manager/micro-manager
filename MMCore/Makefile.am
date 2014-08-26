@@ -78,6 +78,8 @@ libMMCore_la_SOURCES = \
 	LogManager.cpp \
 	LogManager.h \
 	Logging/AsyncLoggingQueue.h \
+	Logging/DefaultMetadata.cpp \
+	Logging/DefaultMetadata.h \
 	Logging/LogEntryFilter.h \
 	Logging/LogEntryMetadata.h \
 	Logging/LogLine.h \
@@ -85,7 +87,6 @@ libMMCore_la_SOURCES = \
 	Logging/Logger.h \
 	Logging/Logging.h \
 	Logging/LoggingCore.h \
-	Logging/LoggingDefs.h \
 	MMCore.cpp \
 	MMCore.h \
 	PluginManager.cpp \
