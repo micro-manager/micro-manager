@@ -65,8 +65,8 @@ public:
    typedef internal::GenericSink<MetadataType> SinkType;
 
 private:
-   typedef internal::GenericLinePacket<MetadataType> LogLineType;
-   typedef boost::container::vector<LogLineType> LineVectorType;
+   typedef internal::GenericLinePacket<MetadataType> LinePacketType;
+   typedef boost::container::vector<LinePacketType> LineVectorType;
 
    // When acquiring both syncSinksMutex_ and asyncQueueMutex_, acquire in that
    // order.
@@ -75,7 +75,7 @@ private:
    std::vector< boost::shared_ptr<SinkType> > synchronousSinks_;
 
    boost::mutex asyncQueueMutex_; // Protect start/stop and sinks change
-   internal::GenericPacketQueue<LogLineType> asyncQueue_;
+   internal::GenericPacketQueue<LinePacketType> asyncQueue_;
    // Changes to asynchronousSinks_ must be made with asyncQueueMutex_ held
    // _and_ the queue receive loop stopped.
    std::vector< boost::shared_ptr<SinkType> > asynchronousSinks_;

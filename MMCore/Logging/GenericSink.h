@@ -61,7 +61,7 @@ WriteLinesToStreamWithStandardFormat(std::ostream& stream,
       if (filter && !filter->Filter(it->GetMetadataConstRef()))
          continue;
 
-      // If soft newline (broken up just to fit into LogLine buffer), splice
+      // If soft newline (broken up just to fit into LinePacket buffer), splice
       // the lines.
       if (it->GetLineLevel() == LineLevelSoftNewline)
       {

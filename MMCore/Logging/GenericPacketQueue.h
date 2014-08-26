@@ -33,12 +33,11 @@ namespace logging
 namespace internal
 {
 
-template <typename TLogLine>
+template <typename TLinePacket>
 class GenericPacketQueue
 {
 public:
-   typedef TLogLine LogLineType;
-   typedef boost::container::vector<LogLineType> LineVectorType;
+   typedef boost::container::vector<TLinePacket> LineVectorType;
 
 private:
    // The "queue" for asynchronous sinks. It is a vector, because the async

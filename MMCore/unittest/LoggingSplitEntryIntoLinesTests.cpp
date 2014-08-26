@@ -10,7 +10,7 @@ using namespace mm::logging;
 
 typedef LoggingCore::MetadataType MetadataType;
 const size_t MaxLogLineLen =
-   internal::GenericLinePacket<MetadataType>::MaxLogLineLen;
+   internal::GenericLinePacket<MetadataType>::PacketTextLen;
 
 
 class SplitEntryIntoLinesTest : public ::testing::Test

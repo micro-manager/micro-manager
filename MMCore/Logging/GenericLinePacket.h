@@ -50,12 +50,12 @@ public:
    // A reasonable size to break lines into (the vast majority of entry lines
    // fit in this size in practice), allowing for a fixed-size buffer to be
    // used.
-   static const std::size_t MaxLogLineLen = 127;
+   static const std::size_t PacketTextLen = 127;
 
 private:
    LineLevel level_;
    TMetadata metadata_;
-   char line_[MaxLogLineLen + 1];
+   char line_[PacketTextLen + 1];
 
 public:
    GenericLinePacket(LineLevel level,
@@ -84,13 +84,13 @@ void SplitEntryIntoLines(
       const char* entryText)
 {
    // Break up entryText into lines, either at CRLF or LF (hard newline), or
-   // at MaxLogLineLen (soft newline).
+   // at PacketTextLen (soft newline).
    //
    // Do all that without scanning through entryText more than once, and
    // writing into the vector of lines in linear address order. (Okay, this
    // is probably overkill, but it's easy enough.)
 
-   typedef GenericLinePacket<TMetadata> LogLineType;
+   typedef GenericLinePacket<TMetadata> LinePacketType;
 
    const char* pText = entryText;
    LineLevel nextLevel = LineLevelFirstLine;
@@ -102,7 +102,7 @@ void SplitEntryIntoLines(
       nextLevel = LineLevelSoftNewline;
 
       char* pLine = lines.back().GetLineBufferPtr();
-      const char* endLine = pLine + LogLineType::MaxLogLineLen;
+      const char* endLine = pLine + LinePacketType::PacketTextLen;
       while (*pText && pLine < endLine)
       {
          // The sequences "\r", "\r\n", and "\n" are considered newlines.
