@@ -34,7 +34,7 @@ namespace mm
 namespace logging
 {
 
-namespace detail
+namespace internal
 {
 
 
@@ -66,7 +66,7 @@ GetTid() { return ::pthread_self(); }
 #endif
 
 
-} // namespace detail
+} // namespace internal
 
 
 enum LogLevel
@@ -94,18 +94,18 @@ public:
 
 class StampData
 {
-   detail::TimestampType time_;
-   detail::ThreadIdType tid_;
+   internal::TimestampType time_;
+   internal::ThreadIdType tid_;
 
 public:
    void Stamp()
    {
-      time_ = detail::Now();
-      tid_ = detail::GetTid();
+      time_ = internal::Now();
+      tid_ = internal::GetTid();
    }
 
-   detail::TimestampType GetTimestamp() const { return time_; }
-   detail::ThreadIdType GetThreadId() const { return tid_; }
+   internal::TimestampType GetTimestamp() const { return time_; }
+   internal::ThreadIdType GetThreadId() const { return tid_; }
 };
 
 
@@ -129,10 +129,10 @@ private:
 };
 
 
-typedef detail::GenericMetadata<LoggerData, EntryData, StampData> Metadata;
+typedef internal::GenericMetadata<LoggerData, EntryData, StampData> Metadata;
 
 
-class LevelFilter : public detail::GenericEntryFilter<Metadata>
+class LevelFilter : public internal::GenericEntryFilter<Metadata>
 {
    LogLevel minLevel_;
 

@@ -28,7 +28,7 @@ namespace mm
 {
 namespace logging
 {
-namespace detail
+namespace internal
 {
 
 
@@ -82,6 +82,6 @@ public:
    }
 };
 
-} // namespace detail
+} // namespace internal
 } // namespace logging
 } // namespace mm

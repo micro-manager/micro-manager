@@ -28,16 +28,17 @@ namespace mm
 namespace logging
 {
 
-typedef detail::GenericLoggingCore<LoggerData, EntryData, StampData> LoggingCore;
+typedef internal::GenericLoggingCore<LoggerData, EntryData, StampData>
+   LoggingCore;
 
 typedef LoggingCore::SinkType LogSink;
-typedef detail::GenericStdErrLogSink<LoggingCore::MetadataType> StdErrLogSink;
-typedef detail::GenericFileLogSink<LoggingCore::MetadataType> FileLogSink;
+typedef internal::GenericStdErrLogSink<LoggingCore::MetadataType> StdErrLogSink;
+typedef internal::GenericFileLogSink<LoggingCore::MetadataType> FileLogSink;
 
-typedef detail::GenericEntryFilter<LoggingCore::MetadataType> EntryFilter;
+typedef internal::GenericEntryFilter<LoggingCore::MetadataType> EntryFilter;
 
-typedef detail::GenericLogger<EntryData> Logger;
-typedef detail::GenericLogStream<Logger> LogStream;
+typedef internal::GenericLogger<EntryData> Logger;
+typedef internal::GenericLogStream<Logger> LogStream;
 
 // Shorthands for LogStream
 //

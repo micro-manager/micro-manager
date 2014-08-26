@@ -10,7 +10,7 @@ using namespace mm::logging;
 
 typedef LoggingCore::MetadataType MetadataType;
 const size_t MaxLogLineLen =
-   detail::GenericLinePacket<MetadataType>::MaxLogLineLen;
+   internal::GenericLinePacket<MetadataType>::MaxLogLineLen;
 
 
 class SplitEntryIntoLinesTest : public ::testing::Test
@@ -26,14 +26,14 @@ protected:
    MetadataType::EntryDataType entryData_;
    MetadataType::StampDataType stampData_;
 
-   boost::container::vector< detail::GenericLinePacket<MetadataType> > result_;
+   boost::container::vector< internal::GenericLinePacket<MetadataType> > result_;
    virtual void SetUp()
    {
       stampData_.Stamp();
    }
    virtual void Split(const char* s)
    {
-      detail::SplitEntryIntoLines<MetadataType>(result_, loggerData_,
+      internal::SplitEntryIntoLines<MetadataType>(result_, loggerData_,
             entryData_, stampData_, s);
    }
 };
@@ -90,9 +90,9 @@ class SplitEntryIntoLinesTwoLineResultTest :
 TEST_P(SplitEntryIntoLinesTwoLineResultTest, TwoLineXYResult)
 {
    ASSERT_EQ(2, result_.size());
-   EXPECT_EQ(detail::LineLevelFirstLine, result_[0].GetLineLevel());
+   EXPECT_EQ(internal::LineLevelFirstLine, result_[0].GetLineLevel());
    EXPECT_STREQ("X", result_[0].GetLine());
-   EXPECT_EQ(detail::LineLevelHardNewline, result_[1].GetLineLevel());
+   EXPECT_EQ(internal::LineLevelHardNewline, result_[1].GetLineLevel());
    EXPECT_STREQ("Y", result_[1].GetLine());
 }
 
@@ -114,11 +114,11 @@ class SplitEntryIntoLinesXEmptyYResultTest :
 TEST_P(SplitEntryIntoLinesXEmptyYResultTest, XEmptyYResult)
 {
    ASSERT_EQ(3, result_.size());
-   EXPECT_EQ(detail::LineLevelFirstLine, result_[0].GetLineLevel());
+   EXPECT_EQ(internal::LineLevelFirstLine, result_[0].GetLineLevel());
    EXPECT_STREQ("X", result_[0].GetLine());
-   EXPECT_EQ(detail::LineLevelHardNewline, result_[1].GetLineLevel());
+   EXPECT_EQ(internal::LineLevelHardNewline, result_[1].GetLineLevel());
    EXPECT_STREQ("", result_[1].GetLine());
-   EXPECT_EQ(detail::LineLevelHardNewline, result_[2].GetLineLevel());
+   EXPECT_EQ(internal::LineLevelHardNewline, result_[2].GetLineLevel());
    EXPECT_STREQ("Y", result_[2].GetLine());
 }
 
@@ -146,11 +146,11 @@ protected:
 TEST_P(SplitEntryIntoLinesLeadingNewlineTest, CorrectLeadingNewlines)
 {
    ASSERT_EQ(expected_ + 1, result_.size());
-   EXPECT_EQ(detail::LineLevelFirstLine, result_[0].GetLineLevel());
+   EXPECT_EQ(internal::LineLevelFirstLine, result_[0].GetLineLevel());
    for (size_t i = 0; i < expected_; ++i)
    {
       EXPECT_STREQ("", result_[i].GetLine());
-      EXPECT_EQ(detail::LineLevelHardNewline, result_[i + 1].GetLineLevel());
+      EXPECT_EQ(internal::LineLevelHardNewline, result_[i + 1].GetLineLevel());
    }
    EXPECT_STREQ("X", result_[expected_].GetLine());
 }
@@ -180,12 +180,12 @@ TEST_P(SplitEntryIntoLinesSoftNewlineTest, CorrectSplit)
    size_t inputLen = GetParam().size();
    size_t nLines = inputLen ? (inputLen - 1) / MaxLogLineLen + 1 : 1;
    ASSERT_EQ(nLines, result_.size());
-   EXPECT_EQ(detail::LineLevelFirstLine, result_[0].GetLineLevel());
+   EXPECT_EQ(internal::LineLevelFirstLine, result_[0].GetLineLevel());
    for (size_t i = 0; i < nLines; ++i)
    {
       if (i > 0)
       {
-         EXPECT_EQ(detail::LineLevelSoftNewline, result_[i].GetLineLevel());
+         EXPECT_EQ(internal::LineLevelSoftNewline, result_[i].GetLineLevel());
       }
       EXPECT_STREQ(
             GetParam().substr(i * MaxLogLineLen, MaxLogLineLen).c_str(),

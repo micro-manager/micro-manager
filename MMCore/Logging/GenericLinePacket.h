@@ -24,7 +24,7 @@ namespace mm
 {
 namespace logging
 {
-namespace detail
+namespace internal
 {
 
 enum LineLevel
@@ -146,6 +146,6 @@ void SplitEntryIntoLines(
    lines.erase(lines.begin() + pastLastNonEmptyIndex, lines.end());
 }
 
-} // namespace detail
+} // namespace internal
 } // namespace logging
 } // namespace mm

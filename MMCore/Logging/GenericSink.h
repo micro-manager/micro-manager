@@ -41,7 +41,7 @@ public:
 };
 
 
-namespace detail
+namespace internal
 {
 
 inline const char*
@@ -232,6 +232,6 @@ public:
    }
 };
 
-} // namespace detail
+} // namespace internal
 } // namespace logging
 } // namespace mm

@@ -30,7 +30,7 @@ namespace mm
 {
 namespace logging
 {
-namespace detail
+namespace internal
 {
 
 template <typename TLogLine>
@@ -185,6 +185,6 @@ private:
    }
 };
 
-} // namespace detail
+} // namespace internal
 } // namespace logging
 } // namespace mm

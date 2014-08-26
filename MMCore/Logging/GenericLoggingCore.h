@@ -46,7 +46,7 @@ enum SinkMode
 };
 
 
-namespace detail
+namespace internal
 {
 
 
@@ -62,10 +62,10 @@ class GenericLoggingCore :
 {
 public:
    typedef GenericMetadata<TLoggerData, UEntryData, VStampData> MetadataType;
-   typedef detail::GenericSink<MetadataType> SinkType;
+   typedef internal::GenericSink<MetadataType> SinkType;
 
 private:
-   typedef detail::GenericLinePacket<MetadataType> LogLineType;
+   typedef internal::GenericLinePacket<MetadataType> LogLineType;
    typedef boost::container::vector<LogLineType> LineVectorType;
 
    // When acquiring both syncSinksMutex_ and asyncQueueMutex_, acquire in that
@@ -75,7 +75,7 @@ private:
    std::vector< boost::shared_ptr<SinkType> > synchronousSinks_;
 
    boost::mutex asyncQueueMutex_; // Protect start/stop and sinks change
-   detail::GenericPacketQueue<LogLineType> asyncQueue_;
+   internal::GenericPacketQueue<LogLineType> asyncQueue_;
    // Changes to asynchronousSinks_ must be made with asyncQueueMutex_ held
    // _and_ the queue receive loop stopped.
    std::vector< boost::shared_ptr<SinkType> > asynchronousSinks_;
@@ -89,11 +89,11 @@ public:
     *
     * Loggers are callables taking the entry metadata and entry text.
     */
-   detail::GenericLogger<UEntryData> NewLogger(TLoggerData metadata)
+   internal::GenericLogger<UEntryData> NewLogger(TLoggerData metadata)
    {
       // Loggers hold a shared pointer to the LoggingCore, so that they are
       // guaranteed to be safe to call at any time.
-      return detail::GenericLogger<UEntryData>(
+      return internal::GenericLogger<UEntryData>(
             boost::bind<void>(&GenericLoggingCore::SendEntryToShared,
                this->shared_from_this(), metadata, _1, _2));
    }
@@ -238,7 +238,7 @@ public:
       {
          boost::shared_ptr<SinkType> sink = it->first.first;
          SinkMode mode = it->first.second;
-         boost::shared_ptr< detail::GenericEntryFilter<MetadataType> > filter =
+         boost::shared_ptr< internal::GenericEntryFilter<MetadataType> > filter =
             it->second;
 
          typedef std::vector< boost::shared_ptr<SinkType> > SinkListType;
@@ -316,6 +316,6 @@ private:
 };
 
 
-} // namespace detail
+} // namespace internal
 } // namespace logging
 } // namespace mm
