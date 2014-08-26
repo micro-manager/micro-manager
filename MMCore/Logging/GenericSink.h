@@ -98,15 +98,16 @@ WriteLinesToStreamWithStandardFormat(std::ostream& stream,
          // TODO Avoid the slow tellp()
          std::ostream::pos_type prefixStart = stream.tellp();
          WriteTimeToStream(stream,
-               it->GetMetadataConstRef().stampData_.GetTimestamp());
+               it->GetMetadataConstRef().GetStampData().GetTimestamp());
          stream << " tid" <<
-            it->GetMetadataConstRef().stampData_.GetThreadId() << ' ';
+            it->GetMetadataConstRef().GetStampData().GetThreadId() << ' ';
          openBracketCol = static_cast<size_t>(stream.tellp() - prefixStart);
          stream << '[';
          std::ostream::pos_type bracketedStart = stream.tellp();
          stream <<
-            LevelString(it->GetMetadataConstRef().entryData_.GetLevel()) <<
-            ',' << it->GetMetadataConstRef().loggerData_.GetComponentLabel();
+            LevelString(it->GetMetadataConstRef().GetEntryData().GetLevel()) <<
+            ',' <<
+            it->GetMetadataConstRef().GetLoggerData().GetComponentLabel();
          bracketedWidth = static_cast<size_t>(stream.tellp() - bracketedStart);
          stream << ']';
       }

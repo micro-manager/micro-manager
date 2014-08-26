@@ -17,7 +17,6 @@
 #pragma once
 
 #include <boost/function.hpp>
-#include <boost/shared_ptr.hpp>
 #include <boost/utility.hpp>
 
 #include <sstream>

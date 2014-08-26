@@ -30,22 +30,29 @@ template <
    typename UEntryData,
    typename VStampData
 >
-struct GenericMetadata
+class GenericMetadata
 {
+public:
    typedef TLoggerData LoggerDataType;
    typedef UEntryData EntryDataType;
    typedef VStampData StampDataType;
 
+private:
    LoggerDataType loggerData_;
    EntryDataType entryData_;
    StampDataType stampData_;
 
+public:
    GenericMetadata(LoggerDataType loggerData, EntryDataType entryData,
          StampDataType stampData) :
       loggerData_(loggerData),
       entryData_(entryData),
       stampData_(stampData)
    {}
+
+   LoggerDataType GetLoggerData() const { return loggerData_; }
+   EntryDataType GetEntryData() const { return entryData_; }
+   StampDataType GetStampData() const { return stampData_; }
 };
 
 } // namespace internal

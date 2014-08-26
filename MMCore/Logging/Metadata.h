@@ -140,7 +140,7 @@ public:
    LevelFilter(LogLevel minLevel) : minLevel_(minLevel) {}
 
    virtual bool Filter(const Metadata& metadata) const
-   { return metadata.entryData_.GetLevel() >= minLevel_; }
+   { return metadata.GetEntryData().GetLevel() >= minLevel_; }
 };
 
 
