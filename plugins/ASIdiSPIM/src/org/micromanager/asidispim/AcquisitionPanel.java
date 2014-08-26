@@ -1164,11 +1164,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             }            
             gui_.setAcquisitionProperty(acqName, "FirstSide", firstSide);
             gui_.setAcquisitionProperty(acqName, "SlicePeriod_ms", 
-                    NumberUtils.doubleToDisplayString(
-                    PanelUtils.getSpinnerFloatValue(desiredSlicePeriod_)) );
+                  actualSlicePeriodLabel_.getText());
             gui_.setAcquisitionProperty(acqName, "LaserExposure_ms",
-                    NumberUtils.doubleToDisplayString(
-                    PanelUtils.getSpinnerFloatValue(desiredLightExposure_)));
+                  NumberUtils.doubleToDisplayString(
+                        (double)PanelUtils.getSpinnerFloatValue(durationLaser_)));
             gui_.setAcquisitionProperty(acqName, "VolumeDuration", 
                     actualVolumeDurationLabel_.getText());
             gui_.setAcquisitionProperty(acqName, "SPIMmode", 
