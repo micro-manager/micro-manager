@@ -13,10 +13,10 @@ const size_t MaxLogLineLen =
    internal::GenericLinePacket<MetadataType>::PacketTextLen;
 
 
-class SplitEntryIntoLinesTest : public ::testing::Test
+class SplitEntryIntoPacketsTest : public ::testing::Test
 {
 public:
-   SplitEntryIntoLinesTest() :
+   SplitEntryIntoPacketsTest() :
       loggerData_("component"),
       entryData_(LogLevelInfo)
    {}
@@ -33,103 +33,105 @@ protected:
    }
    virtual void Split(const char* s)
    {
-      internal::SplitEntryIntoLines<MetadataType>(result_, loggerData_,
+      internal::SplitEntryIntoPackets<MetadataType>(result_, loggerData_,
             entryData_, stampData_, s);
    }
 };
 
 
-class SplitEntryIntoLinesParameterizedTest : public SplitEntryIntoLinesTest,
+class SplitEntryIntoPacketsParameterizedTest :
+   public SplitEntryIntoPacketsTest,
    public ::testing::WithParamInterface<std::string>
 {
    virtual void SetUp()
    {
-      SplitEntryIntoLinesTest::SetUp();
+      SplitEntryIntoPacketsTest::SetUp();
       Split(GetParam().c_str());
    }
 };
 
 
-class SplitEntryIntoLinesEmptyResultTest :
-   public SplitEntryIntoLinesParameterizedTest
+class SplitEntryIntoPacketsEmptyResultTest :
+   public SplitEntryIntoPacketsParameterizedTest
 {};
 
-TEST_P(SplitEntryIntoLinesEmptyResultTest, EmptyResult)
+TEST_P(SplitEntryIntoPacketsEmptyResultTest, EmptyResult)
 {
    ASSERT_EQ(1, result_.size());
-   EXPECT_STREQ("", result_[0].GetLine());
+   EXPECT_STREQ("", result_[0].GetText());
 }
 
-INSTANTIATE_TEST_CASE_P(NewlinesCase, SplitEntryIntoLinesEmptyResultTest,
+INSTANTIATE_TEST_CASE_P(NewlinesCase, SplitEntryIntoPacketsEmptyResultTest,
       ::testing::Values("", "\r", "\n", "\r\r", "\r\n", "\n\n",
          "\r\r\r", "\r\r\n", "\r\n\r", "\r\n\n",
          "\n\r\r", "\n\r\n", "\n\n\r", "\n\n\n"));
 
 
-class SplitEntryIntoLinesSingleCharResultTest :
-   public SplitEntryIntoLinesParameterizedTest
+class SplitEntryIntoPacketsSingleCharResultTest :
+   public SplitEntryIntoPacketsParameterizedTest
 {};
 
-TEST_P(SplitEntryIntoLinesSingleCharResultTest, SingleXResult)
+TEST_P(SplitEntryIntoPacketsSingleCharResultTest, SingleXResult)
 {
    ASSERT_EQ(1, result_.size());
-   EXPECT_STREQ("X", result_[0].GetLine());
+   EXPECT_STREQ("X", result_[0].GetText());
 }
 
 INSTANTIATE_TEST_CASE_P(XFollowedByNewlinesCase,
-      SplitEntryIntoLinesSingleCharResultTest,
+      SplitEntryIntoPacketsSingleCharResultTest,
       ::testing::Values("X", "X\r", "X\n", "X\r\r", "X\r\n", "X\n\n",
          "X\r\r\r", "X\r\r\n", "X\r\n\r", "X\r\n\n",
          "X\n\r\r", "X\n\r\n", "X\n\n\r", "X\n\n\n"));
 
 
-class SplitEntryIntoLinesTwoLineResultTest :
-   public SplitEntryIntoLinesParameterizedTest
+class SplitEntryIntoPacketsTwoLineResultTest :
+   public SplitEntryIntoPacketsParameterizedTest
 {};
 
-TEST_P(SplitEntryIntoLinesTwoLineResultTest, TwoLineXYResult)
+TEST_P(SplitEntryIntoPacketsTwoLineResultTest, TwoLineXYResult)
 {
    ASSERT_EQ(2, result_.size());
    EXPECT_EQ(internal::PacketStateEntryFirstLine, result_[0].GetPacketState());
-   EXPECT_STREQ("X", result_[0].GetLine());
+   EXPECT_STREQ("X", result_[0].GetText());
    EXPECT_EQ(internal::PacketStateNewLine, result_[1].GetPacketState());
-   EXPECT_STREQ("Y", result_[1].GetLine());
+   EXPECT_STREQ("Y", result_[1].GetText());
 }
 
 INSTANTIATE_TEST_CASE_P(XNewlineYCase,
-      SplitEntryIntoLinesTwoLineResultTest,
+      SplitEntryIntoPacketsTwoLineResultTest,
       ::testing::Values("X\rY", "X\nY", "X\r\nY"));
 
 INSTANTIATE_TEST_CASE_P(XLinefeedYNewlinesCase,
-      SplitEntryIntoLinesTwoLineResultTest,
+      SplitEntryIntoPacketsTwoLineResultTest,
       ::testing::Values("X\nY\r", "X\nY\n", "X\nY\r\r", "X\nY\r\n", "X\nY\n\n",
          "X\nY\r\r\r", "X\nY\r\r\n", "X\nY\r\n\r", "X\nY\r\n\n",
          "X\nY\n\r\r", "X\nY\n\r\n", "X\nY\n\n\r", "X\nY\n\n\n"));
 
 
-class SplitEntryIntoLinesXEmptyYResultTest :
-   public SplitEntryIntoLinesParameterizedTest
+class SplitEntryIntoPacketsXEmptyYResultTest :
+   public SplitEntryIntoPacketsParameterizedTest
 {};
 
-TEST_P(SplitEntryIntoLinesXEmptyYResultTest, XEmptyYResult)
+TEST_P(SplitEntryIntoPacketsXEmptyYResultTest, XEmptyYResult)
 {
    ASSERT_EQ(3, result_.size());
    EXPECT_EQ(internal::PacketStateEntryFirstLine, result_[0].GetPacketState());
-   EXPECT_STREQ("X", result_[0].GetLine());
+   EXPECT_STREQ("X", result_[0].GetText());
    EXPECT_EQ(internal::PacketStateNewLine, result_[1].GetPacketState());
-   EXPECT_STREQ("", result_[1].GetLine());
+   EXPECT_STREQ("", result_[1].GetText());
    EXPECT_EQ(internal::PacketStateNewLine, result_[2].GetPacketState());
-   EXPECT_STREQ("Y", result_[2].GetLine());
+   EXPECT_STREQ("Y", result_[2].GetText());
 }
 
 INSTANTIATE_TEST_CASE_P(XNewlineNewlineYCase,
-      SplitEntryIntoLinesXEmptyYResultTest,
+      SplitEntryIntoPacketsXEmptyYResultTest,
       ::testing::Values("X\r\rY", "X\n\nY", "X\n\rY",
          "X\r\n\rY", "X\r\n\nY", "X\r\r\nY", "X\n\r\nY",
          "X\r\n\r\nY"));
 
 
-class SplitEntryIntoLinesLeadingNewlineTest : public SplitEntryIntoLinesTest,
+class SplitEntryIntoPacketsLeadingNewlineTest :
+   public SplitEntryIntoPacketsTest,
    public ::testing::WithParamInterface< std::pair<size_t, std::string> >
 {
 protected:
@@ -137,26 +139,26 @@ protected:
 
    virtual void SetUp()
    {
-      SplitEntryIntoLinesTest::SetUp();
+      SplitEntryIntoPacketsTest::SetUp();
       expected_ = GetParam().first;
       Split(GetParam().second.c_str());
    }
 };
 
-TEST_P(SplitEntryIntoLinesLeadingNewlineTest, CorrectLeadingNewlines)
+TEST_P(SplitEntryIntoPacketsLeadingNewlineTest, CorrectLeadingNewlines)
 {
    ASSERT_EQ(expected_ + 1, result_.size());
    EXPECT_EQ(internal::PacketStateEntryFirstLine, result_[0].GetPacketState());
    for (size_t i = 0; i < expected_; ++i)
    {
-      EXPECT_STREQ("", result_[i].GetLine());
+      EXPECT_STREQ("", result_[i].GetText());
       EXPECT_EQ(internal::PacketStateNewLine, result_[i + 1].GetPacketState());
    }
-   EXPECT_STREQ("X", result_[expected_].GetLine());
+   EXPECT_STREQ("X", result_[expected_].GetText());
 }
 
 INSTANTIATE_TEST_CASE_P(LeadingNewlinesCase,
-      SplitEntryIntoLinesLeadingNewlineTest,
+      SplitEntryIntoPacketsLeadingNewlineTest,
       ::testing::Values(std::make_pair(0, "X"),
          std::make_pair(1, "\rX"),
          std::make_pair(1, "\nX"),
@@ -170,11 +172,11 @@ INSTANTIATE_TEST_CASE_P(LeadingNewlinesCase,
          std::make_pair(2, "\n\r\nX")));
 
 
-class SplitEntryIntoLinesSoftNewlineTest :
-   public SplitEntryIntoLinesParameterizedTest
+class SplitEntryIntoPacketsSoftNewlineTest :
+   public SplitEntryIntoPacketsParameterizedTest
 {};
 
-TEST_P(SplitEntryIntoLinesSoftNewlineTest, CorrectSplit)
+TEST_P(SplitEntryIntoPacketsSoftNewlineTest, CorrectSplit)
 {
    // We are assuming input did not contain hard newlines
    size_t inputLen = GetParam().size();
@@ -190,25 +192,25 @@ TEST_P(SplitEntryIntoLinesSoftNewlineTest, CorrectSplit)
       }
       EXPECT_STREQ(
             GetParam().substr(i * MaxLogLineLen, MaxLogLineLen).c_str(),
-            result_[i].GetLine());
+            result_[i].GetText());
    }
 }
 
 INSTANTIATE_TEST_CASE_P(NoSoftSplitCase,
-      SplitEntryIntoLinesSoftNewlineTest,
+      SplitEntryIntoPacketsSoftNewlineTest,
       ::testing::Values(
          std::string(MaxLogLineLen - 1, 'x'),
          std::string(MaxLogLineLen, 'x')));
 
 INSTANTIATE_TEST_CASE_P(OneSoftSplitCase,
-      SplitEntryIntoLinesSoftNewlineTest,
+      SplitEntryIntoPacketsSoftNewlineTest,
       ::testing::Values(
          std::string(MaxLogLineLen + 1, 'x'),
          std::string(2 * MaxLogLineLen - 1, 'x'),
          std::string(2 * MaxLogLineLen, 'x')));
 
 INSTANTIATE_TEST_CASE_P(TwoSoftSplitCase,
-      SplitEntryIntoLinesSoftNewlineTest,
+      SplitEntryIntoPacketsSoftNewlineTest,
       ::testing::Values(
          std::string(2 * MaxLogLineLen + 1, 'x'),
          std::string(3 * MaxLogLineLen - 1, 'x'),

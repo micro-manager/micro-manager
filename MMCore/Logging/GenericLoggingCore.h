@@ -66,7 +66,7 @@ public:
 
 private:
    typedef internal::GenericLinePacket<MetadataType> LinePacketType;
-   typedef boost::container::vector<LinePacketType> LineVectorType;
+   typedef boost::container::vector<LinePacketType> PacketVectorType;
 
    // When acquiring both syncSinksMutex_ and asyncQueueMutex_, acquire in that
    // order.
@@ -274,8 +274,8 @@ private:
       VStampData stampData;
       stampData.Stamp();
 
-      LineVectorType lines;
-      SplitEntryIntoLines<MetadataType>(lines, loggerData, entryData,
+      PacketVectorType packets;
+      SplitEntryIntoPackets<MetadataType>(packets, loggerData, entryData,
             stampData, entryText);
 
       {
@@ -285,20 +285,20 @@ private:
                it = synchronousSinks_.begin(), end = synchronousSinks_.end();
                it != end; ++it)
          {
-            (*it)->Consume(lines);
+            (*it)->Consume(packets);
          }
       }
-      asyncQueue_.SendLines(lines.begin(), lines.end());
+      asyncQueue_.SendPackets(packets.begin(), packets.end());
    }
 
    // Called on the receive thread of GenericPacketQueue
-   void RunAsynchronousSinks(LineVectorType& lines)
+   void RunAsynchronousSinks(PacketVectorType& packets)
    {
       for (typename std::vector< boost::shared_ptr<SinkType> >::iterator
             it = asynchronousSinks_.begin(), end = asynchronousSinks_.end();
             it != end; ++it)
       {
-         (*it)->Consume(lines);
+         (*it)->Consume(packets);
       }
    }
 

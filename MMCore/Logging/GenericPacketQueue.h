@@ -37,17 +37,17 @@ template <typename TLinePacket>
 class GenericPacketQueue
 {
 public:
-   typedef boost::container::vector<TLinePacket> LineVectorType;
+   typedef boost::container::vector<TLinePacket> PacketVectorType;
 
 private:
    // The "queue" for asynchronous sinks. It is a vector, because the async
    // backend dequeues all elements at once using std::swap.
    boost::mutex mutex_;
    boost::condition_variable condVar_;
-   LineVectorType queue_;
+   PacketVectorType queue_;
 
    // Swapped with queue_ and accessed from receiving thread.
-   LineVectorType received_;
+   PacketVectorType received_;
 
    bool shutdownRequested_; // Protected by mutex_
 
@@ -61,15 +61,15 @@ public:
       shutdownRequested_(false)
    {}
 
-   void SendLines(typename LineVectorType::const_iterator first,
-         typename LineVectorType::const_iterator last)
+   void SendPackets(typename PacketVectorType::const_iterator first,
+         typename PacketVectorType::const_iterator last)
    {
       boost::lock_guard<boost::mutex> lock(mutex_);
       std::copy(first, last, std::back_inserter(queue_));
       condVar_.notify_one();
    }
 
-   void RunReceiveLoop(boost::function<void (LineVectorType&)>
+   void RunReceiveLoop(boost::function<void (PacketVectorType&)>
          consume)
    {
       boost::lock_guard<boost::mutex> lock(threadMutex_);
@@ -109,7 +109,7 @@ public:
    }
 
 private:
-   void ReceiveLoop(boost::function<void (LineVectorType&)> consume)
+   void ReceiveLoop(boost::function<void (PacketVectorType&)> consume)
    {
       // The loop operates in one of two modes: timed wait and untimed wait.
       //

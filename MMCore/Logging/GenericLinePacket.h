@@ -36,11 +36,11 @@ enum PacketState
 
 
 /**
- * Lines of a partially formatted log entry.
+ * Packet data structure for asynchronous logging
  *
  * This is a fixed-size data structure so that we can minimize the frequency of
- * memory allocation by the logger. Log lines serve as input to log sinks, and
- * are the elements of the queue used to send content to the asynchronous
+ * memory allocation by the logger. Log packets serve as input to log sinks,
+ * and are the elements of the queue used to send content to the asynchronous
  * backend.
  */
 template <typename TMetadata>
@@ -55,7 +55,7 @@ public:
 private:
    PacketState state_;
    TMetadata metadata_;
-   char line_[PacketTextLen + 1];
+   char text_[PacketTextLen + 1];
 
 public:
    GenericLinePacket(PacketState packetState,
@@ -64,30 +64,30 @@ public:
          typename TMetadata::StampDataType stampData) :
       state_(packetState),
       metadata_(loggerData, entryData, stampData)
-   { line_[0] = '\0'; }
+   { text_[0] = '\0'; }
 
    // For C-style access
-   char* GetLineBufferPtr() { return line_; }
+   char* GetTextBuffer() { return text_; }
 
    PacketState GetPacketState() const { return state_; }
    const TMetadata& GetMetadataConstRef() const { return metadata_; }
-   const char* GetLine() const { return line_; }
+   const char* GetText() const { return text_; }
 };
 
 
-template <typename TMetadata, class ULineVector>
-void SplitEntryIntoLines(
-      ULineVector& lines,
+template <typename TMetadata, class UPacketVector>
+void SplitEntryIntoPackets(
+      UPacketVector& packets,
       typename TMetadata::LoggerDataType loggerData,
       typename TMetadata::EntryDataType entryData,
       typename TMetadata::StampDataType stampData,
       const char* entryText)
 {
-   // Break up entryText into lines, either at CRLF or LF (new line), or at
+   // Break up entryText into packets, either at CRLF or LF (new line), or at
    // PacketTextLen (line continuation).
    //
    // Do all that without scanning through entryText more than once, and
-   // writing into the vector of lines in linear address order. (Okay, this
+   // writing into the vector of packets in linear address order. (Okay, this
    // is probably overkill, but it's easy enough.)
 
    typedef GenericLinePacket<TMetadata> LinePacketType;
@@ -97,11 +97,11 @@ void SplitEntryIntoLines(
    std::size_t pastLastNonEmptyIndex = 0;
    do
    {
-      lines.emplace_back(nextState, loggerData, entryData, stampData);
+      packets.emplace_back(nextState, loggerData, entryData, stampData);
 
       nextState = PacketStateLineContinuation;
 
-      char* pLine = lines.back().GetLineBufferPtr();
+      char* pLine = packets.back().GetTextBuffer();
       const char* endLine = pLine + LinePacketType::PacketTextLen;
       while (*pText && pLine < endLine)
       {
@@ -133,16 +133,16 @@ void SplitEntryIntoLines(
          *pLine++ = *pText++;
       }
       *pLine = '\0';
-      if (pLine > lines.back().GetLineBufferPtr())
+      if (pLine > packets.back().GetTextBuffer())
       {
-         pastLastNonEmptyIndex = lines.size();
+         pastLastNonEmptyIndex = packets.size();
       }
    } while (*pText);
 
    // Remove trailing empty lines (but keep at least one line).
    if (pastLastNonEmptyIndex == 0)
       pastLastNonEmptyIndex++;
-   lines.erase(lines.begin() + pastLastNonEmptyIndex, lines.end());
+   packets.erase(packets.begin() + pastLastNonEmptyIndex, packets.end());
 }
 
 } // namespace internal

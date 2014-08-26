@@ -46,26 +46,26 @@ namespace internal
 
 // Despite the template parameter, this is currently hard-coded to the default
 // metadata.
-template <class TFormatter, typename UMetadata, typename VLineIterator>
+template <class TFormatter, typename UMetadata, typename VPacketIter>
 void
-WriteLinesToStreamWithStandardFormat(std::ostream& stream,
-      VLineIterator first, VLineIterator last,
+WritePacketsToStream(std::ostream& stream,
+      VPacketIter first, VPacketIter last,
       boost::shared_ptr< GenericEntryFilter<UMetadata> > filter)
 {
    TFormatter formatter;
 
    bool beforeFirst = true;
-   for (VLineIterator it = first; it != last; ++it)
+   for (VPacketIter it = first; it != last; ++it)
    {
       // Apply filter if present
       if (filter && !filter->Filter(it->GetMetadataConstRef()))
          continue;
 
       // If line continuation (broken up just to fit into LinePacket buffer),
-      // splice the lines.
+      // splice the packets.
       if (it->GetPacketState() == PacketStateLineContinuation)
       {
-         stream << it->GetLine();
+         stream << it->GetText();
          continue;
       }
 
@@ -80,7 +80,7 @@ WriteLinesToStreamWithStandardFormat(std::ostream& stream,
       else // PacketStateNewLine
          formatter.FormatContinuationPrefix(stream);
 
-      stream << ' ' << it->GetLine();
+      stream << ' ' << it->GetText();
       beforeFirst = false;
    }
 
@@ -102,10 +102,10 @@ protected:
 
 public:
    typedef boost::container::vector< GenericLinePacket<TMetadata> >
-      LineVectorType;
+      PacketVectorType;
 
    virtual ~GenericSink() {}
-   virtual void Consume(const LineVectorType& lines)
+   virtual void Consume(const PacketVectorType& packets)
       = 0;
 
    // Note: If setting the filter while the sink is in use, you must pause the
@@ -122,14 +122,14 @@ class GenericStdErrLogSink : public GenericSink<TMetadata>
 
 public:
    typedef GenericSink<TMetadata> Super;
-   typedef typename Super::LineVectorType LineVectorType;
+   typedef typename Super::PacketVectorType PacketVectorType;
 
    GenericStdErrLogSink() : hadError_(false) {}
 
-   virtual void Consume(const LineVectorType& lines)
+   virtual void Consume(const PacketVectorType& packets)
    {
-      WriteLinesToStreamWithStandardFormat<UFormatter>(std::clog,
-            lines.begin(), lines.end(), this->GetFilter());
+      WritePacketsToStream<UFormatter>(std::clog,
+            packets.begin(), packets.end(), this->GetFilter());
       try
       {
          std::clog.flush();
@@ -158,7 +158,7 @@ class GenericFileLogSink : public GenericSink<TMetadata>, boost::noncopyable
 
 public:
    typedef GenericSink<TMetadata> Super;
-   typedef typename Super::LineVectorType LineVectorType;
+   typedef typename Super::PacketVectorType PacketVectorType;
 
    GenericFileLogSink(const std::string& filename, bool append = false) :
       filename_(filename),
@@ -172,10 +172,10 @@ public:
          throw CannotOpenFileException();
    }
 
-   virtual void Consume(const LineVectorType& lines)
+   virtual void Consume(const PacketVectorType& packets)
    {
-      WriteLinesToStreamWithStandardFormat<UFormatter>(fileStream_,
-            lines.begin(), lines.end(), this->GetFilter());
+      WritePacketsToStream<UFormatter>(fileStream_,
+            packets.begin(), packets.end(), this->GetFilter());
       try
       {
          fileStream_.flush();
