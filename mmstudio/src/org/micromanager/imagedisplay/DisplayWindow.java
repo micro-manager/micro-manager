@@ -105,15 +105,6 @@ public class DisplayWindow extends StackWindow {
          }
       });
 
-      // Repack on window size change, since our controls may have also changed
-      // size.
-      addComponentListener(new ComponentAdapter() {
-         @Override
-         public void componentResized(ComponentEvent e) {
-            pack();
-         }
-      });
-
       bus_ = bus;
 
       zoomToPreferredSize();
@@ -185,7 +176,8 @@ public class DisplayWindow extends StackWindow {
    }
 
    /**
-    * Our controls have changed size; repack the window.
+    * Our controls have changed size; repack the window to ensure all controls
+    * are displayed.
     * @param event
     */
    @Subscribe
