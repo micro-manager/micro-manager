@@ -1288,7 +1288,8 @@ public class MMStudio implements ScriptInterface {
                         ReportingUtils.showError(ex);
                      }
                   } else {
-                     displayImage(image);
+                     // TODO: reimplement this with new display logic
+//                     displayImage(image);
                   }
             }
          });
