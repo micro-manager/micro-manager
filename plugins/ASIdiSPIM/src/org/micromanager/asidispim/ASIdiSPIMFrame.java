@@ -161,7 +161,7 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       // put pane back where it was last time
       // gotSelected will be called because we put this after adding the ChangeListener
       setLocation(prefs_.getInt(MAIN_PREF_NODE, Prefs.Keys.WIN_LOC_X, 100), prefs_.getInt(MAIN_PREF_NODE, Prefs.Keys.WIN_LOC_Y, 100));
-      tabbedPane.setSelectedIndex(prefs_.getInt(MAIN_PREF_NODE, Prefs.Keys.TAB_INDEX, 0));
+      tabbedPane.setSelectedIndex(prefs_.getInt(MAIN_PREF_NODE, Prefs.Keys.TAB_INDEX, 5));  // default to devicesPanel_
 
       // set up the window
       add(tabbedPane);  // add the pane to the GUI window
