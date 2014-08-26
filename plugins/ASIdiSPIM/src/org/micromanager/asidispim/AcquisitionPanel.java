@@ -150,7 +150,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       super(MyStrings.PanelNames.ACQUSITION.toString(),
               new MigLayout(
               "",
-              "[right]16[center]16[center]16[center]16[center]",
+              "[center]16[center]16[center]",
               "[]8[]"));
       gui_ = gui;
       devices_ = devices;
@@ -539,9 +539,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       updateAcquisitionStatusNone();
 
       // set up tabbed panel for GUI
-      add(slicePanel_, "spany 2, top");
-      add(volPanel_, "spany2, top");
-      add(repeatPanel_, "top, wrap");
+      add(repeatPanel_, "top");
+      add(volPanel_, "spany 2, top");
+      add(slicePanel_, "spany 2, top, wrap");
       add(savePanel_, "wrap");
       add(buttonStart_, "cell 0 2, split 2, center");
       add(buttonStop_, "center");
