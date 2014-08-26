@@ -22,6 +22,11 @@ public interface Image {
    public Image copyAt(Coords coords);
 
    /**
+    * Retrieve the intensity of the pixel at the specified position.
+    */
+   public double getIntensityAt(int x, int y);
+
+   /**
     * Return a reference to whatever entity stores the actual pixel data for
     * this Image. Is most likely a byte[] or short[] but could be of any
     * non-primitive type.
