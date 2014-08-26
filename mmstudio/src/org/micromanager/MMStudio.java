@@ -2868,7 +2868,22 @@ public class MMStudio implements ScriptInterface {
    public void showError(String msg) {
       ReportingUtils.showError(msg);
    }
-   
+
+   @Override
+   public void showError(Exception e, String msg, Component parent) {
+      ReportingUtils.showError(e, msg, parent);
+   }
+
+   @Override
+   public void showError(Exception e, Component parent) {
+      ReportingUtils.showError(e, parent);
+   }
+
+   @Override
+   public void showError(String msg, Component parent) {
+      ReportingUtils.showError(msg, parent);
+   }
+
    @Override
    public void autostretchCurrentWindow() {
       VirtualAcquisitionDisplay display = VirtualAcquisitionDisplay.getDisplay(WindowManager.getCurrentImage());

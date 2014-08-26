@@ -500,24 +500,45 @@ public interface ScriptInterface {
    public void logError(String msg);
 
    /**
-    * Shows an error including stacktrace in the UI and logs to the Micro-
-    * Manager log
+    * Shows an error in the UI and logs stacktrace to the Micro-Manager log.
     * @param e - Java exception to be shown and logged
     * @param msg - Error message to be shown and logged
     */
    public void showError(Exception e, String msg);
 
    /**
-    * Shows and logs a Java exception
+    * Shows and logs a Java exception.
     * @param e - Java excpetion to be shown and logged
     */
    public void showError(Exception e);
 
    /**
-    * Shows an error message in the UI and logs to the Micro-Manager log
+    * Shows an error message in the UI and logs to the Micro-Manager log.
     * @param msg - error message to be shown and logged
     */
    public void showError(String msg);
+
+   /**
+    * Shows an error in the UI and logs stacktrace to the Micro-Manager log.
+    * @param e - Java exception to be shown and logged
+    * @param msg - Error message to be shown and logged
+    * @param parent - frame in which to show dialog, or null for caller
+    */
+   public void showError(Exception e, String msg, Component parent);
+
+   /**
+    * Shows and logs a Java exception.
+    * @param e - Java exception to be shown and logged
+    * @param parent - frame in which to show dialog, or null for caller
+    */
+   public void showError(Exception e, Component parent);
+
+   /**
+    * Shows an error message in the UI and logs to the Micro-Manager log.
+    * @param msg - error message to be shown and logged
+    * @param parent - frame in which to show dialog, or null for caller
+    */
+   public void showError(String msg, Component parent);
 
    /**
     * Allows MMListeners to register themselves so that they will receive

@@ -21,6 +21,7 @@
 
 package org.micromanager.utils;
 
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 
 import java.beans.PropertyChangeEvent;
@@ -90,7 +91,7 @@ public class ReportingUtils {
       logError(null, msg);
    }
 
-   public static void showError(Throwable e, String msg) {
+   public static void showError(Throwable e, String msg, Component parent) {
       logError(e, msg);
 
       if (!show_)
@@ -112,7 +113,7 @@ public class ReportingUtils {
       int maxNrLines = 30;
       String test[] = fullMsg.split("\n");
       if (test.length < maxNrLines) {
-         JOptionPane.showMessageDialog(MMStudio.getFrame(), fullMsg, 
+         JOptionPane.showMessageDialog(parent, fullMsg,
                  "Micro-Manager Error", JOptionPane.ERROR_MESSAGE);
       } else {
          JTextArea area = new JTextArea(fullMsg);
@@ -120,17 +121,29 @@ public class ReportingUtils {
          area.setColumns(50);
          area.setLineWrap(true);
          JScrollPane pane = new JScrollPane(area);
-         JOptionPane.showMessageDialog(MMStudio.getFrame(), pane,
+         JOptionPane.showMessageDialog(parent, pane,
                  "Micro-Manager Error", JOptionPane.ERROR_MESSAGE);
       }
 }
 
    public static void showError(Throwable e) {
-      showError(e, "");
+      showError(e, "", MMStudio.getFrame());
    }
 
    public static void showError(String msg) {
-      showError(null, msg);
+      showError(null, msg, MMStudio.getFrame());
+   }
+
+   public static void showError(Throwable e, String msg) {
+      showError(e, msg, MMStudio.getFrame());
+   }
+
+   public static void showError(Throwable e, Component parent) {
+      showError(e, "", parent);
+   }
+
+   public static void showError(String msg, Component parent) {
+      showError(null, msg, parent);
    }
 
    private static String getStackTraceAsString(Throwable aThrowable) {
