@@ -7,14 +7,6 @@
 
 using namespace mm::logging;
 size_t MaxLogLineLen = detail::LogLine::MaxLogLineLen;
-size_t ExpectedLogLineSize = detail::LogLine::LineStructSize;
-
-
-// Really a static test, but...
-TEST(LogLineTest, LogLineSize)
-{
-   ASSERT_EQ(ExpectedLogLineSize, sizeof(detail::LogLine));
-}
 
 
 class SplitEntryIntoLinesTest : public ::testing::Test

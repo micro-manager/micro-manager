@@ -54,15 +54,12 @@ public:
 
    // A reasonable size to break lines into (the vast majority of entry lines
    // fit in this size in practice), allowing for a fixed-size buffer to be
-   // used. Let the size of GenericLogLine be 256, so that it is cache aligned
-   // (for what it's worth; may be messed up by alignment anyway).
-   static const std::size_t LineStructSize = 256;
-   static const std::size_t MaxLogLineLen = LineStructSize -
-      sizeof(MetadataType) - sizeof(LineLevel) - 1;
+   // used.
+   static const std::size_t MaxLogLineLen = 127;
 
 private:
-   MetadataType metadata_;
    LineLevel level_;
+   MetadataType metadata_;
    char line_[MaxLogLineLen + 1];
 
 public:
