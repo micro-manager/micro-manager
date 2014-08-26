@@ -36,11 +36,11 @@ public interface Datastore {
    public List<Image> getImagesMatching(Coords coords);
 
    /**
-    * Insert an image at the specified coordinates. Posts a NewImageEvent to
-    * the event bus.
+    * Insert an image into the Datastore. Posts a NewImageEvent to the event
+    * bus.
     * @throws DatastoreLockedException if the lock() method has been called.
     */
-   public void putImage(Image image, Coords coords) throws DatastoreLockedException;
+   public void putImage(Image image) throws DatastoreLockedException;
 
    /**
     * Return the maximum Image position along the specified access that this

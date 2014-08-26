@@ -54,11 +54,11 @@ public class DefaultDatastore implements Datastore {
    }
 
    @Override
-   public void putImage(Image image, Coords coords) throws DatastoreLockedException {
+   public void putImage(Image image) throws DatastoreLockedException {
       if (isLocked_) {
          throw new DatastoreLockedException();
       }
-      bus_.post(new NewImageEvent(image, coords));
+      bus_.post(new NewImageEvent(image));
    }
 
    @Override
