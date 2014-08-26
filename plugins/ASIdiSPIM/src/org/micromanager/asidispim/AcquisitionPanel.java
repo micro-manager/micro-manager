@@ -1252,11 +1252,18 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         int ch = 0;
                         if (camera.equals(secondCamera)) {
                            ch = 1;
+                           // reverse the slice order for the second channel:
+                           
                         }
                         // gui_.addImageToAcquisition(acqName, f, ch, frNumber[ch],  
                         //        0, timg);
-                        addImageToAcquisition(acqName, f, ch, frNumber[ch], 0,
+                        if (ch == 0) {
+                           addImageToAcquisition(acqName, f, ch, frNumber[ch], 0,
                               now - acqStart, timg, bq);
+                        } else {
+                           addImageToAcquisition(acqName, f, ch, nrSlices - frNumber[ch], 0,
+                              now - acqStart, timg, bq);
+                        }
                         frNumber[ch]++;
                      } else {
                         Thread.sleep(1);
