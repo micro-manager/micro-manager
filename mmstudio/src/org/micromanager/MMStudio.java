@@ -390,9 +390,7 @@ public class MMStudio implements ScriptInterface {
       }
       // Initialize hardware.
       String logFileName = LogFileManager.makeLogFileNameForCurrentSession();
-      if (!(new File(logFileName).getParentFile().mkdirs())) {
-         ReportingUtils.logError("Failed to setup logging directories.");
-      }
+      new File(logFileName).getParentFile().mkdirs();
       try {
          core_.setPrimaryLogFile(logFileName);
       }
