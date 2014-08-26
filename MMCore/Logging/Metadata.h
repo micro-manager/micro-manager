@@ -25,7 +25,7 @@
 #include <pthread.h>
 #endif
 
-#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/date_time/posix_time/posix_time_types.hpp>
 
 
 namespace mm
@@ -46,10 +46,6 @@ typedef boost::posix_time::ptime TimestampType;
 inline TimestampType
 Now()
 { return boost::posix_time::microsec_clock::local_time(); }
-
-inline void
-WriteTimeToStream(std::ostream& stream, TimestampType timestamp)
-{ stream << boost::posix_time::to_iso_extended_string(timestamp); }
 
 
 #ifdef _WIN32

@@ -16,7 +16,11 @@
 
 #pragma once
 
+#include <boost/date_time/posix_time/posix_time.hpp>
+
+#include <cstring>
 #include <ostream>
+#include <string>
 
 
 namespace mm
@@ -25,22 +29,6 @@ namespace logging
 {
 namespace internal
 {
-
-
-class MetadataFormatter
-{
-   size_t openBracketCol_;
-   size_t bracketedWidth_;
-
-public:
-   MetadataFormatter() : openBracketCol_(0), bracketedWidth_(0) {}
-
-   // Format the line prefix for the first line of an entry
-   void FormatLinePrefix(std::ostream& stream, const Metadata& metadata);
-
-   // Format the line prefix for subsequent lines of an entry
-   void FormatContinuationPrefix(std::ostream& stream) const;
-};
 
 
 inline const char*
@@ -59,20 +47,42 @@ LevelString(LogLevel logLevel)
 }
 
 
+class MetadataFormatter
+{
+   size_t openBracketCol_;
+   size_t bracketedWidth_;
+
+public:
+   MetadataFormatter() : openBracketCol_(0), bracketedWidth_(0) {}
+
+   // Format the line prefix for the first line of an entry
+   void FormatLinePrefix(std::ostream& stream, const Metadata& metadata);
+
+   // Format the line prefix for subsequent lines of an entry
+   void FormatContinuationPrefix(std::ostream& stream) const;
+};
+
+
 inline void
 MetadataFormatter::FormatLinePrefix(std::ostream& stream,
       const Metadata& metadata)
 {
-   // TODO Avoid the slow tellp()
-   std::ostream::pos_type prefixStart = stream.tellp();
-   WriteTimeToStream(stream, metadata.GetStampData().GetTimestamp());
-   stream << " tid" << metadata.GetStampData().GetThreadId() << ' ';
-   openBracketCol_ = static_cast<size_t>(stream.tellp() - prefixStart);
+   std::string timeStr = boost::posix_time::to_iso_extended_string(
+         metadata.GetStampData().GetTimestamp());
+   std::ostringstream sstrm(timeStr, std::ios_base::ate);
+   sstrm << " tid" << metadata.GetStampData().GetThreadId() << ' ';
+   std::string timeTid = sstrm.str();
+   openBracketCol_ = timeTid.size();
+
+   stream << timeTid;
+
    stream << '[';
-   std::ostream::pos_type bracketedStart = stream.tellp();
-   stream << LevelString(metadata.GetEntryData().GetLevel()) << ',' <<
-      metadata.GetLoggerData().GetComponentLabel();
-   bracketedWidth_ = static_cast<size_t>(stream.tellp() - bracketedStart);
+
+   const char* levelStr = LevelString(metadata.GetEntryData().GetLevel());
+   const char* compLabel = metadata.GetLoggerData().GetComponentLabel();
+   bracketedWidth_ = strlen(levelStr) + 1 + strlen(compLabel);
+   stream << levelStr << ',' << compLabel;
+
    stream << ']';
 }
 
