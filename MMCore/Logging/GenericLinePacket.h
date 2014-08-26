@@ -44,7 +44,7 @@ enum LineLevel
  * backend.
  */
 template <typename TMetadata>
-class GenericLogLine
+class GenericLinePacket
 {
 public:
    // A reasonable size to break lines into (the vast majority of entry lines
@@ -58,7 +58,7 @@ private:
    char line_[MaxLogLineLen + 1];
 
 public:
-   GenericLogLine(LineLevel level,
+   GenericLinePacket(LineLevel level,
          typename TMetadata::LoggerDataType loggerData,
          typename TMetadata::EntryDataType entryData,
          typename TMetadata::StampDataType stampData) :
@@ -90,7 +90,7 @@ void SplitEntryIntoLines(
    // writing into the vector of lines in linear address order. (Okay, this
    // is probably overkill, but it's easy enough.)
 
-   typedef GenericLogLine<TMetadata> LogLineType;
+   typedef GenericLinePacket<TMetadata> LogLineType;
 
    const char* pText = entryText;
    LineLevel nextLevel = LineLevelFirstLine;

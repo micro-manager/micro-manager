@@ -28,7 +28,7 @@ namespace logging
 
 
 const char*
-DefaultLoggerData::InternString(const std::string& s)
+LoggerData::InternString(const std::string& s)
 {
    // Never remove strings from this set. Since we only ever insert into
    // this set, iterators (and thus const char* to the contained strings)

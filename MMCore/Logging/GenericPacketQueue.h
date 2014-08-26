@@ -34,7 +34,7 @@ namespace detail
 {
 
 template <typename TLogLine>
-class AsyncLoggingQueue
+class GenericPacketQueue
 {
 public:
    typedef TLogLine LogLineType;
@@ -58,7 +58,7 @@ private:
    boost::thread loopThread_; // Protected by threadMutex_
 
 public:
-   AsyncLoggingQueue() :
+   GenericPacketQueue() :
       shutdownRequested_(false)
    {}
 
@@ -86,7 +86,7 @@ public:
          loopThread_.join();
       }
 
-      boost::thread t(boost::bind<void>(&AsyncLoggingQueue::ReceiveLoop,
+      boost::thread t(boost::bind<void>(&GenericPacketQueue::ReceiveLoop,
                this, consume));
       boost::swap(loopThread_, t);
    }

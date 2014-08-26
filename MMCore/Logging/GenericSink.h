@@ -131,7 +131,7 @@ WriteLinesToStreamWithStandardFormat(std::ostream& stream,
 
 
 template <typename TMetadata>
-class GenericLogSink
+class GenericSink
 {
 private:
    boost::shared_ptr< GenericEntryFilter<TMetadata> > filter_;
@@ -141,10 +141,10 @@ protected:
    { return filter_; }
 
 public:
-   typedef boost::container::vector< GenericLogLine<TMetadata> >
+   typedef boost::container::vector< GenericLinePacket<TMetadata> >
       LineVectorType;
 
-   virtual ~GenericLogSink() {}
+   virtual ~GenericSink() {}
    virtual void Consume(const LineVectorType& lines)
       = 0;
 
@@ -156,12 +156,12 @@ public:
 
 
 template <typename TMetadata>
-class GenericStdErrLogSink : public GenericLogSink<TMetadata>
+class GenericStdErrLogSink : public GenericSink<TMetadata>
 {
    bool hadError_;
 
 public:
-   typedef GenericLogSink<TMetadata> Super;
+   typedef GenericSink<TMetadata> Super;
    typedef typename Super::LineVectorType LineVectorType;
 
    GenericStdErrLogSink() : hadError_(false) {}
@@ -190,14 +190,14 @@ public:
 
 
 template <typename TMetadata>
-class GenericFileLogSink : public GenericLogSink<TMetadata>, boost::noncopyable
+class GenericFileLogSink : public GenericSink<TMetadata>, boost::noncopyable
 {
    std::string filename_;
    std::ofstream fileStream_;
    bool hadError_;
 
 public:
-   typedef GenericLogSink<TMetadata> Super;
+   typedef GenericSink<TMetadata> Super;
    typedef typename Super::LineVectorType LineVectorType;
 
    GenericFileLogSink(const std::string& filename, bool append = false) :

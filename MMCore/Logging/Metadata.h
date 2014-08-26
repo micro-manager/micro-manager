@@ -80,19 +80,19 @@ enum LogLevel
 };
 
 
-class DefaultEntryData
+class EntryData
 {
    LogLevel level_;
 
 public:
    // Implicitly construct from LogLevel
-   DefaultEntryData(LogLevel level) : level_(level) {}
+   EntryData(LogLevel level) : level_(level) {}
 
    LogLevel GetLevel() const { return level_; }
 };
 
 
-class DefaultStampData
+class StampData
 {
    detail::TimestampType time_;
    detail::ThreadIdType tid_;
@@ -109,16 +109,16 @@ public:
 };
 
 
-class DefaultLoggerData
+class LoggerData
 {
    const char* component_;
 
 public:
    // Construct implicitly from strings
-   DefaultLoggerData(const char* componentLabel) :
+   LoggerData(const char* componentLabel) :
       component_(InternString(componentLabel))
    {}
-   DefaultLoggerData(const std::string& componentLabel) :
+   LoggerData(const std::string& componentLabel) :
       component_(InternString(componentLabel))
    {}
 
@@ -129,18 +129,17 @@ private:
 };
 
 
-typedef detail::GenericMetadata<DefaultLoggerData, DefaultEntryData,
-        DefaultStampData> DefaultMetadata;
+typedef detail::GenericMetadata<LoggerData, EntryData, StampData> Metadata;
 
 
-class LevelFilter : public detail::GenericEntryFilter<DefaultMetadata>
+class LevelFilter : public detail::GenericEntryFilter<Metadata>
 {
    LogLevel minLevel_;
 
 public:
    LevelFilter(LogLevel minLevel) : minLevel_(minLevel) {}
 
-   virtual bool Filter(const DefaultMetadata& metadata) const
+   virtual bool Filter(const Metadata& metadata) const
    { return metadata.entryData_.GetLevel() >= minLevel_; }
 };
 

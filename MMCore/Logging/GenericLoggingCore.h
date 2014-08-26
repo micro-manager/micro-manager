@@ -62,10 +62,10 @@ class GenericLoggingCore :
 {
 public:
    typedef GenericMetadata<TLoggerData, UEntryData, VStampData> MetadataType;
-   typedef detail::GenericLogSink<MetadataType> SinkType;
+   typedef detail::GenericSink<MetadataType> SinkType;
 
 private:
-   typedef detail::GenericLogLine<MetadataType> LogLineType;
+   typedef detail::GenericLinePacket<MetadataType> LogLineType;
    typedef boost::container::vector<LogLineType> LineVectorType;
 
    // When acquiring both syncSinksMutex_ and asyncQueueMutex_, acquire in that
@@ -75,7 +75,7 @@ private:
    std::vector< boost::shared_ptr<SinkType> > synchronousSinks_;
 
    boost::mutex asyncQueueMutex_; // Protect start/stop and sinks change
-   detail::AsyncLoggingQueue<LogLineType> asyncQueue_;
+   detail::GenericPacketQueue<LogLineType> asyncQueue_;
    // Changes to asynchronousSinks_ must be made with asyncQueueMutex_ held
    // _and_ the queue receive loop stopped.
    std::vector< boost::shared_ptr<SinkType> > asynchronousSinks_;
@@ -291,7 +291,7 @@ private:
       asyncQueue_.SendLines(lines.begin(), lines.end());
    }
 
-   // Called on the receive thread of AsyncLoggingQueue
+   // Called on the receive thread of GenericPacketQueue
    void RunAsynchronousSinks(LineVectorType& lines)
    {
       for (typename std::vector< boost::shared_ptr<SinkType> >::iterator

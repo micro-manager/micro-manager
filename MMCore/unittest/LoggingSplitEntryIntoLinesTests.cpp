@@ -10,7 +10,7 @@ using namespace mm::logging;
 
 typedef LoggingCore::MetadataType MetadataType;
 const size_t MaxLogLineLen =
-   detail::GenericLogLine<MetadataType>::MaxLogLineLen;
+   detail::GenericLinePacket<MetadataType>::MaxLogLineLen;
 
 
 class SplitEntryIntoLinesTest : public ::testing::Test
@@ -26,7 +26,7 @@ protected:
    MetadataType::EntryDataType entryData_;
    MetadataType::StampDataType stampData_;
 
-   boost::container::vector< detail::GenericLogLine<MetadataType> > result_;
+   boost::container::vector< detail::GenericLinePacket<MetadataType> > result_;
    virtual void SetUp()
    {
       stampData_.Stamp();
