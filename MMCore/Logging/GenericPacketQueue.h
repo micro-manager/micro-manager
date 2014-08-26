@@ -61,8 +61,8 @@ public:
       shutdownRequested_(false)
    {}
 
-   void SendPackets(typename PacketVectorType::const_iterator first,
-         typename PacketVectorType::const_iterator last)
+   template <typename TPacketIter>
+   void SendPackets(TPacketIter first, TPacketIter last)
    {
       boost::lock_guard<boost::mutex> lock(mutex_);
       std::copy(first, last, std::back_inserter(queue_));
