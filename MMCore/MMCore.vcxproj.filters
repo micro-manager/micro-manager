@@ -266,5 +266,8 @@
     <ClInclude Include="Logging\GenericStreamSink.h">
       <Filter>Header Files\Logging</Filter>
     </ClInclude>
+    <ClInclude Include="Logging\GenericPacketArray.h">
+      <Filter>Header Files\Logging</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

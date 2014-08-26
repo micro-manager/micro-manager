@@ -83,6 +83,7 @@ libMMCore_la_SOURCES = \
 	Logging/GenericLogger.h \
 	Logging/GenericLoggingCore.h \
 	Logging/GenericMetadata.h \
+	Logging/GenericPacketArray.h \
 	Logging/GenericPacketQueue.h \
 	Logging/GenericSink.h \
 	Logging/Logger.h \

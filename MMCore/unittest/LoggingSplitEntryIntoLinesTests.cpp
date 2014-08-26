@@ -2,13 +2,17 @@
 
 #include "Logging/GenericLinePacket.h"
 #include "Logging/Logging.h"
+#include "Logging/GenericPacketArray.h"
 
-#include <boost/container/vector.hpp>
+#include <algorithm>
+#include <iterator>
 #include <string>
+#include <vector>
 
 using namespace mm::logging;
 
 typedef Metadata MetadataType;
+typedef internal::GenericPacketArray<Metadata> PacketArrayType;
 const size_t MaxLogLineLen =
    internal::GenericLinePacket<MetadataType>::PacketTextLen;
 
@@ -26,15 +30,16 @@ protected:
    MetadataType::EntryDataType entryData_;
    MetadataType::StampDataType stampData_;
 
-   boost::container::vector< internal::GenericLinePacket<MetadataType> > result_;
+   std::vector< internal::GenericLinePacket<MetadataType> > result_;
    virtual void SetUp()
    {
       stampData_.Stamp();
    }
    virtual void Split(const char* s)
    {
-      internal::SplitEntryIntoPackets<MetadataType>(result_, loggerData_,
-            entryData_, stampData_, s);
+      PacketArrayType array;
+      array.AppendEntry(loggerData_, entryData_, stampData_, s);
+      std::copy(array.Begin(), array.End(), std::back_inserter(result_));
    }
 };
 

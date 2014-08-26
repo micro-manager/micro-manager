@@ -204,6 +204,7 @@
     <ClInclude Include="Logging\GenericLogger.h" />
     <ClInclude Include="Logging\GenericLoggingCore.h" />
     <ClInclude Include="Logging\GenericMetadata.h" />
+    <ClInclude Include="Logging\GenericPacketArray.h" />
     <ClInclude Include="Logging\GenericPacketQueue.h" />
     <ClInclude Include="Logging\GenericSink.h" />
     <ClInclude Include="Logging\GenericStreamSink.h" />

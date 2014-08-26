@@ -18,6 +18,7 @@
 
 #include "GenericEntryFilter.h"
 #include "GenericLinePacket.h"
+#include "GenericPacketArray.h"
 
 #include <boost/container/vector.hpp>
 #include <boost/shared_ptr.hpp>
@@ -42,11 +43,10 @@ protected:
    { return filter_; }
 
 public:
-   typedef boost::container::vector< GenericLinePacket<TMetadata> >
-      PacketVectorType;
+   typedef GenericPacketArray<TMetadata> PacketArrayType;
 
    virtual ~GenericSink() {}
-   virtual void Consume(const PacketVectorType& packets) = 0;
+   virtual void Consume(const PacketArrayType& packets) = 0;
 
    // Note: If setting the filter while the sink is in use, you must pause the
    // logger. See the LoggingCore member function AtomicSetSinkFilters().

@@ -23,13 +23,11 @@
 #include "GenericSink.h"
 
 #include <boost/bind.hpp>
-#include <boost/container/vector.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/thread.hpp>
 
 #include <algorithm>
-#include <set>
 #include <string>
 #include <vector>
 
@@ -63,7 +61,7 @@ public:
 
 private:
    typedef internal::GenericLinePacket<TMetadata> LinePacketType;
-   typedef boost::container::vector<LinePacketType> PacketVectorType;
+   typedef GenericPacketArray<TMetadata> PacketArrayType;
 
    // When acquiring both syncSinksMutex_ and asyncQueueMutex_, acquire in that
    // order.
@@ -72,7 +70,7 @@ private:
    std::vector< boost::shared_ptr<SinkType> > synchronousSinks_;
 
    boost::mutex asyncQueueMutex_; // Protect start/stop and sinks change
-   internal::GenericPacketQueue<LinePacketType> asyncQueue_;
+   internal::GenericPacketQueue<TMetadata> asyncQueue_;
    // Changes to asynchronousSinks_ must be made with asyncQueueMutex_ held
    // _and_ the queue receive loop stopped.
    std::vector< boost::shared_ptr<SinkType> > asynchronousSinks_;
@@ -272,9 +270,8 @@ private:
       StampDataType stampData;
       stampData.Stamp();
 
-      PacketVectorType packets;
-      SplitEntryIntoPackets<TMetadata>(packets, loggerData, entryData,
-            stampData, entryText);
+      PacketArrayType packets;
+      packets.AppendEntry(loggerData, entryData, stampData, entryText);
 
       {
          boost::lock_guard<boost::mutex> lock(syncSinksMutex_);
@@ -286,11 +283,11 @@ private:
             (*it)->Consume(packets);
          }
       }
-      asyncQueue_.SendPackets(packets.begin(), packets.end());
+      asyncQueue_.SendPackets(packets.Begin(), packets.End());
    }
 
    // Called on the receive thread of GenericPacketQueue
-   void RunAsynchronousSinks(PacketVectorType& packets)
+   void RunAsynchronousSinks(PacketArrayType& packets)
    {
       for (typename std::vector< boost::shared_ptr<SinkType> >::iterator
             it = asynchronousSinks_.begin(), end = asynchronousSinks_.end();

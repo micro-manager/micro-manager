@@ -19,6 +19,7 @@
 #include <boost/thread.hpp>
 
 #include <set>
+#include <string>
 
 
 namespace mm

@@ -17,13 +17,9 @@
 #pragma once
 
 #include <boost/bind.hpp>
-#include <boost/container/vector.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/function.hpp>
 #include <boost/thread.hpp>
-
-#include <algorithm>
-#include <vector>
 
 
 namespace mm
@@ -33,21 +29,19 @@ namespace logging
 namespace internal
 {
 
-template <typename TLinePacket>
+template <typename TMetadata>
 class GenericPacketQueue
 {
-public:
-   typedef boost::container::vector<TLinePacket> PacketVectorType;
+   typedef GenericPacketArray<TMetadata> PacketArrayType;
 
 private:
-   // The "queue" for asynchronous sinks. It is a vector, because the async
-   // backend dequeues all elements at once using std::swap.
+   // The "queue" for asynchronous sinks.
    boost::mutex mutex_;
    boost::condition_variable condVar_;
-   PacketVectorType queue_;
+   PacketArrayType queue_;
 
    // Swapped with queue_ and accessed from receiving thread.
-   PacketVectorType received_;
+   PacketArrayType received_;
 
    bool shutdownRequested_; // Protected by mutex_
 
@@ -65,11 +59,11 @@ public:
    void SendPackets(TPacketIter first, TPacketIter last)
    {
       boost::lock_guard<boost::mutex> lock(mutex_);
-      std::copy(first, last, std::back_inserter(queue_));
+      queue_.Append(first, last);
       condVar_.notify_one();
    }
 
-   void RunReceiveLoop(boost::function<void (PacketVectorType&)>
+   void RunReceiveLoop(boost::function<void (PacketArrayType&)>
          consume)
    {
       boost::lock_guard<boost::mutex> lock(threadMutex_);
@@ -109,7 +103,7 @@ public:
    }
 
 private:
-   void ReceiveLoop(boost::function<void (PacketVectorType&)> consume)
+   void ReceiveLoop(boost::function<void (PacketArrayType&)> consume)
    {
       // The loop operates in one of two modes: timed wait and untimed wait.
       //
@@ -143,15 +137,15 @@ private:
                   shutdownRequested_ = false; // Allow for restarting
                   shuttingDown = true;
                }
-               if (!shuttingDown && queue_.empty())
+               if (!shuttingDown && queue_.IsEmpty())
                {
                   timedWaitMode = false;
                   continue;
                }
-               std::swap(queue_, received_);
+               queue_.Swap(received_);
             }
             consume(received_);
-            received_.clear();
+            received_.Clear();
 
             if (shuttingDown)
                return;
@@ -160,7 +154,7 @@ private:
          {
             {
                boost::unique_lock<boost::mutex> lock(mutex_);
-               while (queue_.empty())
+               while (queue_.IsEmpty())
                {
                   condVar_.wait(lock);
                   if (shutdownRequested_)
@@ -170,10 +164,10 @@ private:
                      break;
                   }
                }
-               std::swap(queue_, received_);
+               queue_.Swap(received_);
             }
             consume(received_);
-            received_.clear();
+            received_.Clear();
 
             if (shuttingDown)
                return;

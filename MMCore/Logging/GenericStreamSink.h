@@ -94,14 +94,14 @@ class GenericStdErrLogSink : public GenericSink<TMetadata>
 
 public:
    typedef GenericSink<TMetadata> Super;
-   typedef typename Super::PacketVectorType PacketVectorType;
+   typedef typename Super::PacketArrayType PacketArrayType;
 
    GenericStdErrLogSink() : hadError_(false) {}
 
-   virtual void Consume(const PacketVectorType& packets)
+   virtual void Consume(const PacketArrayType& packets)
    {
       WritePacketsToStream<UFormatter>(std::clog,
-            packets.begin(), packets.end(), this->GetFilter());
+            packets.Begin(), packets.End(), this->GetFilter());
       try
       {
          std::clog.flush();
@@ -130,7 +130,7 @@ class GenericFileLogSink : public GenericSink<TMetadata>, boost::noncopyable
 
 public:
    typedef GenericSink<TMetadata> Super;
-   typedef typename Super::PacketVectorType PacketVectorType;
+   typedef typename Super::PacketArrayType PacketArrayType;
 
    GenericFileLogSink(const std::string& filename, bool append = false) :
       filename_(filename),
@@ -144,10 +144,10 @@ public:
          throw CannotOpenFileException();
    }
 
-   virtual void Consume(const PacketVectorType& packets)
+   virtual void Consume(const PacketArrayType& packets)
    {
       WritePacketsToStream<UFormatter>(fileStream_,
-            packets.begin(), packets.end(), this->GetFilter());
+            packets.Begin(), packets.End(), this->GetFilter());
       try
       {
          fileStream_.flush();

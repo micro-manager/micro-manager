@@ -17,7 +17,6 @@
 #pragma once
 
 #include <cstddef>
-#include <vector>
 
 
 namespace mm
@@ -26,6 +25,7 @@ namespace logging
 {
 namespace internal
 {
+
 
 enum PacketState
 {
@@ -74,76 +74,6 @@ public:
    const char* GetText() const { return text_; }
 };
 
-
-template <class TMetadata, class UPacketVector>
-void SplitEntryIntoPackets(
-      UPacketVector& packets,
-      typename TMetadata::LoggerDataType loggerData,
-      typename TMetadata::EntryDataType entryData,
-      typename TMetadata::StampDataType stampData,
-      const char* entryText)
-{
-   // Break up entryText into packets, either at CRLF or LF (new line), or at
-   // PacketTextLen (line continuation).
-   //
-   // Do all that without scanning through entryText more than once, and
-   // writing into the vector of packets in linear address order. (Okay, this
-   // is probably overkill, but it's easy enough.)
-
-   typedef GenericLinePacket<TMetadata> LinePacketType;
-
-   const char* pText = entryText;
-   PacketState nextState = PacketStateEntryFirstLine;
-   std::size_t pastLastNonEmptyIndex = 0;
-   do
-   {
-      packets.emplace_back(nextState, loggerData, entryData, stampData);
-
-      nextState = PacketStateLineContinuation;
-
-      char* pLine = packets.back().GetTextBuffer();
-      const char* endLine = pLine + LinePacketType::PacketTextLen;
-      while (*pText && pLine < endLine)
-      {
-         // The sequences "\r", "\r\n", and "\n" are considered newlines. If we
-         // see one of those, mark the next as new line state. At which point,
-         // pText will point to the next char after the newline sequence.
-         if (*pText == '\r')
-         {
-            if (!*pText++)
-               break;
-            if (*pText == '\n')
-            {
-               if (!*pText++)
-                  break;
-               nextState = PacketStateNewLine;
-               break;
-            }
-            nextState = PacketStateNewLine;
-            break;
-         }
-         if (*pText == '\n')
-         {
-            if (!*pText++)
-               break;
-            nextState = PacketStateNewLine;
-            break;
-         }
-
-         *pLine++ = *pText++;
-      }
-      *pLine = '\0';
-      if (pLine > packets.back().GetTextBuffer())
-      {
-         pastLastNonEmptyIndex = packets.size();
-      }
-   } while (*pText);
-
-   // Remove trailing empty lines (but keep at least one line).
-   if (pastLastNonEmptyIndex == 0)
-      pastLastNonEmptyIndex++;
-   packets.erase(packets.begin() + pastLastNonEmptyIndex, packets.end());
-}
 
 } // namespace internal
 } // namespace logging
