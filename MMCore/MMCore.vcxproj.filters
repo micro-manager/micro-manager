@@ -120,7 +120,7 @@
     <ClCompile Include="DeviceManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Logging\DefaultMetadata.cpp">
+    <ClCompile Include="Logging\Metadata.cpp">
       <Filter>Source Files\Logging</Filter>
     </ClCompile>
   </ItemGroup>
@@ -224,40 +224,37 @@
     <ClInclude Include="LibraryInfo\LibraryPaths.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Logging\AsyncLoggingQueue.h">
-      <Filter>Header Files\Logging</Filter>
-    </ClInclude>
-    <ClInclude Include="Logging\LogEntryMetadata.h">
-      <Filter>Header Files\Logging</Filter>
-    </ClInclude>
-    <ClInclude Include="Logging\Logger.h">
-      <Filter>Header Files\Logging</Filter>
-    </ClInclude>
-    <ClInclude Include="Logging\LoggingCore.h">
-      <Filter>Header Files\Logging</Filter>
-    </ClInclude>
-    <ClInclude Include="Logging\LogLine.h">
-      <Filter>Header Files\Logging</Filter>
-    </ClInclude>
-    <ClInclude Include="Logging\LogSink.h">
-      <Filter>Header Files\Logging</Filter>
-    </ClInclude>
     <ClInclude Include="LogManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Logging\LogEntryFilter.h">
+    <ClInclude Include="DeviceManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Logging\GenericEntryFilter.h">
+      <Filter>Header Files\Logging</Filter>
+    </ClInclude>
+    <ClInclude Include="Logging\GenericLinePacket.h">
+      <Filter>Header Files\Logging</Filter>
+    </ClInclude>
+    <ClInclude Include="Logging\GenericLogger.h">
+      <Filter>Header Files\Logging</Filter>
+    </ClInclude>
+    <ClInclude Include="Logging\GenericLoggingCore.h">
+      <Filter>Header Files\Logging</Filter>
+    </ClInclude>
+    <ClInclude Include="Logging\GenericMetadata.h">
+      <Filter>Header Files\Logging</Filter>
+    </ClInclude>
+    <ClInclude Include="Logging\GenericPacketQueue.h">
+      <Filter>Header Files\Logging</Filter>
+    </ClInclude>
+    <ClInclude Include="Logging\GenericSink.h">
       <Filter>Header Files\Logging</Filter>
     </ClInclude>
     <ClInclude Include="Logging\Logging.h">
       <Filter>Header Files\Logging</Filter>
     </ClInclude>
-    <ClInclude Include="DeviceManager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Logging\LoggingDefs.h">
-      <Filter>Header Files\Logging</Filter>
-    </ClInclude>
-    <ClInclude Include="Logging\DefaultMetadata.h">
+    <ClInclude Include="Logging\Metadata.h">
       <Filter>Header Files\Logging</Filter>
     </ClInclude>
   </ItemGroup>

@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "Logging/LogLine.h"
+#include "Logging/GenericLinePacket.h"
 #include "Logging/Logging.h"
 
 #include <boost/container/vector.hpp>

@@ -16,11 +16,11 @@
 
 #pragma once
 
-#include "AsyncLoggingQueue.h"
-#include "LogEntryMetadata.h"
-#include "LogLine.h"
-#include "LogSink.h"
-#include "Logger.h"
+#include "GenericLinePacket.h"
+#include "GenericLogger.h"
+#include "GenericMetadata.h"
+#include "GenericPacketQueue.h"
+#include "GenericSink.h"
 
 #include <boost/bind.hpp>
 #include <boost/container/vector.hpp>

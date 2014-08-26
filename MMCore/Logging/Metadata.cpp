@@ -14,7 +14,7 @@
 //
 // AUTHOR:        Mark Tsuchida
 
-#include "DefaultMetadata.h"
+#include "Metadata.h"
 
 #include <boost/thread.hpp>
 

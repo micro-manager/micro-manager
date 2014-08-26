@@ -38,6 +38,8 @@ class GenericLogger
    boost::function<void (TEntryData, const char*)> impl_;
 
 public:
+   typedef TEntryData EntryDataType;
+
    GenericLogger(boost::function<void (TEntryData, const char*)> f) :
       impl_(f)
    {}
@@ -56,12 +58,15 @@ public:
 template <typename TLogger>
 class GenericLogStream : public std::ostringstream, boost::noncopyable
 {
+public:
+   typedef typename TLogger::EntryDataType EntryDataType;
+
    const TLogger& logger_;
-   LogLevel level_;
+   EntryDataType level_;
    bool used_;
 
 public:
-   GenericLogStream(const TLogger& logger, LogLevel level) :
+   GenericLogStream(const TLogger& logger, EntryDataType level) :
       logger_(logger),
       level_(level),
       used_(false)

@@ -35,7 +35,7 @@ libMMCore_la_SOURCES = \
 	Devices/CameraInstance.h \
 	Devices/DeviceInstance.cpp \
 	Devices/DeviceInstance.h \
-	Devices/DeviceInstanceBase.h \
+	Devices/GenericDeviceInstance.h \
 	Devices/DeviceInstances.h \
 	Devices/GalvoInstance.cpp \
 	Devices/GalvoInstance.h \
@@ -77,16 +77,16 @@ libMMCore_la_SOURCES = \
 	LoadableModules/LoadedModuleImplUnix.h \
 	LogManager.cpp \
 	LogManager.h \
-	Logging/AsyncLoggingQueue.h \
-	Logging/DefaultMetadata.cpp \
-	Logging/DefaultMetadata.h \
-	Logging/LogEntryFilter.h \
-	Logging/LogEntryMetadata.h \
-	Logging/LogLine.h \
-	Logging/LogSink.h \
-	Logging/Logger.h \
+	Logging/GenericEntryFilter.h \
+	Logging/GenericLinePacket.h \
+	Logging/GenericLogger.h \
+	Logging/GenericLoggingCore.h \
+	Logging/GenericMetadata.h \
+	Logging/GenericPacketQueue.h \
+	Logging/GenericSink.h \
 	Logging/Logging.h \
-	Logging/LoggingCore.h \
+	Logging/Metadata.cpp \
+	Logging/Metadata.h \
 	MMCore.cpp \
 	MMCore.h \
 	PluginManager.cpp \

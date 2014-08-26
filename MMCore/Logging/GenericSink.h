@@ -16,9 +16,9 @@
 
 #pragma once
 
-#include "LogEntryFilter.h"
-#include "LogLine.h"
-#include "DefaultMetadata.h"
+#include "GenericEntryFilter.h"
+#include "GenericLinePacket.h"
+#include "Metadata.h"
 
 #include <boost/container/vector.hpp>
 #include <boost/utility.hpp>

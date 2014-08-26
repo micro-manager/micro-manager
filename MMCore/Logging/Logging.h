@@ -16,11 +16,11 @@
 
 #pragma once
 
-#include "LogEntryFilter.h"
-#include "LogEntryMetadata.h"
-#include "LogSink.h"
-#include "Logger.h"
-#include "LoggingCore.h"
+#include "GenericEntryFilter.h"
+#include "GenericLogger.h"
+#include "GenericLoggingCore.h"
+#include "GenericMetadata.h"
+#include "GenericSink.h"
 
 
 namespace mm
