@@ -26,6 +26,11 @@ public interface Reader {
    public Integer getMaxIndex(String axis);
 
    /**
+    * Return a List of all axis names for Images we know about.
+    */
+   public List<String> getAxes();
+
+   /**
     * Retrieve the SummaryMetadata associated with this dataset.
     */
    public SummaryMetadata getSummaryMetadata();

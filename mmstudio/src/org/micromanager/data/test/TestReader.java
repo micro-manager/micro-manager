@@ -90,6 +90,11 @@ public class TestReader implements Reader {
    }
 
    @Override
+   public List<String> getAxes() {
+      return maxIndex_.getAxes();
+   }
+
+   @Override
    public SummaryMetadata getSummaryMetadata() {
       return summaryMetadata_;
    }

@@ -61,13 +61,18 @@ public class DefaultDatastore implements Datastore {
       bus_.post(new NewImageEvent(image, coords));
    }
 
-   /**
-    * Return the largest extent we have seen along the specified axis so far.
-    */
    @Override
    public Integer getMaxIndex(String axis) {
       if (reader_ != null) {
          return reader_.getMaxIndex(axis);
+      }
+      return null;
+   }
+
+   @Override
+   public List<String> getAxes() {
+      if (reader_ != null) {
+         return reader_.getAxes();
       }
       return null;
    }
