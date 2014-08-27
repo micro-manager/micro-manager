@@ -2,20 +2,29 @@ package org.micromanager.imagedisplay;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
+
 import ij.ImagePlus;
 import ij.gui.StackWindow;
 import ij.gui.Toolbar;
+
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.util.prefs.Preferences;
+import java.util.Timer;
+import java.util.TimerTask;
+
 import javax.swing.event.MouseInputAdapter;
+import javax.swing.JPanel;
+
 import net.miginfocom.swing.MigLayout;
+
 import org.micromanager.MMStudio;
 import org.micromanager.internalinterfaces.DisplayControls;
 import org.micromanager.utils.ReportingUtils;
@@ -31,6 +40,7 @@ public class DisplayWindow extends StackWindow {
 
    private boolean closed_ = false;
    private final EventBus bus_;
+   private ImagePlus plus_;
    
    // store window location in Java Preferences
    private static final int DEFAULTPOSX = 300;
@@ -53,16 +63,17 @@ public class DisplayWindow extends StackWindow {
 
   
    
-   public DisplayWindow(final ImagePlus ip, DisplayControls controls, 
+   public DisplayWindow(final ImagePlus plus, DisplayControls controls, 
          final EventBus bus) {
-      super(ip);
+      super(plus);
+      plus_ = plus;
       initializePrefs();
       int posX = DEFAULTPOSX, posY = DEFAULTPOSY;
       if (displayPrefs_ != null) {
          posX = displayPrefs_.getInt(WINDOWPOSX, DEFAULTPOSX); 
          posY = displayPrefs_.getInt(WINDOWPOSY, DEFAULTPOSY);
       }
-      ip.getWindow().setLocation(posX, posY);
+      plus_.getWindow().setLocation(posX, posY);
       
       // HACK: hide ImageJ's native scrollbars; we provide our own.
       if (cSelector != null) {
@@ -80,11 +91,54 @@ public class DisplayWindow extends StackWindow {
       setLayout(new MigLayout("insets 1, fillx, filly",
          "[grow, fill]", "[grow, fill]related[]"));
       // Re-add the ImageJ canvas.
+      // HACK: set the minimum size. If we don't do this, then the canvas
+      // doesn't shrink properly when the window size is reduced. Why?!
       ic.setMinimumSize(new Dimension(64, 64));
-      add(ic, "align center, wrap");
+      // Wrap the canvas in a subpanel so that we can get events when it
+      // resizes.
+      final JPanel subPanel = new JPanel();
+      subPanel.add(ic);
+      add(subPanel, "align center, wrap");
       add(controls, "align center, wrap, growx");
 
       pack();
+
+      // Propagate resizing to the canvas, adjusting the view rectangle.
+      subPanel.addComponentListener(new ComponentAdapter() {
+         @Override
+         public void componentResized(ComponentEvent e) {
+            Dimension size = subPanel.getSize();
+            double dataAspect = ((double) plus_.getWidth()) / plus_.getHeight();
+            double viewAspect = ((double) size.width) / size.height;
+            // Derive canvas view width/height based on maximum available space
+            // along the appropriate axis.
+            int viewWidth = size.width;
+            int viewHeight = size.height;
+            if (viewAspect > dataAspect) { // Wide view; Y constrains growth
+               viewWidth = (int) (viewHeight * dataAspect);
+            }
+            else { // Tall view; X constrains growth
+               viewHeight = (int) (viewWidth / dataAspect);
+            }
+            ic.setDrawingSize(viewWidth, viewHeight);
+            // Reset the "source rect", i.e. the sub-area being viewed when
+            // the image won't fit into the window. Try to maintain the same
+            // center as the current rect has.
+            // Fun fact: there's setSourceRect and setSrcRect, but no
+            // getSourceRect.
+            Rectangle curRect = ic.getSrcRect();
+            int xCenter = curRect.x + (curRect.width / 2);
+            int yCenter = curRect.y + (curRect.height / 2);
+            double curMag = ic.getMagnification();
+            int newWidth = (int) (viewWidth / curMag);
+            int newHeight = (int) (viewHeight / curMag);
+            int xCorner = xCenter - newWidth / 2;
+            int yCorner = yCenter - newHeight / 2;
+            ic.setSourceRect(new Rectangle(xCorner, yCorner, 
+                     newWidth, newHeight));
+            doLayout();
+         }
+      });
 
       // Add a listener so we can update the histogram when an ROI is drawn,
       // and to override the title-setting behavior of ImagePlus when the 
@@ -99,10 +153,10 @@ public class DisplayWindow extends StackWindow {
 
          @Override
          public void mouseReleased(MouseEvent me) {
-            if (ip instanceof MMCompositeImage) {
-               ((MMCompositeImage) ip).updateAndDraw(true);
+            if (plus_ instanceof MMCompositeImage) {
+               ((MMCompositeImage) plus_).updateAndDraw(true);
             } else {
-               ip.updateAndDraw();
+               plus_.updateAndDraw();
             }
          }
       });
