@@ -77,8 +77,10 @@ public class DisplayWindow extends StackWindow {
       // Override the default layout with our own, so we can do more 
       // customized controls. 
       // This layout is intended to minimize distances between elements.
-      setLayout(new MigLayout("insets 1, fillx"));
+      setLayout(new MigLayout("insets 1, fillx, filly",
+         "[grow, fill]", "[grow, fill]related[]"));
       // Re-add the ImageJ canvas.
+      ic.setMinimumSize(new Dimension(64, 64));
       add(ic, "align center, wrap");
       add(controls, "align center, wrap, growx");
 
