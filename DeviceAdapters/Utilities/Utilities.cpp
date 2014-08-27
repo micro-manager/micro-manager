@@ -1729,7 +1729,7 @@ DAXYStage::DAXYStage() :
    CreateProperty(MM::g_Keyword_Name, g_DeviceNameDAZStage, MM::String, true); 
                                                                              
    // Description                                                            
-   CreateProperty(MM::g_Keyword_Description, "XYStage controlled with voltage provided by a Digital to Analog output", MM::String, true);
+   CreateProperty(MM::g_Keyword_Description, "XYStage controlled with voltage provided by two Digital to Analog outputs", MM::String, true);
 
    // min volts
    CPropertyAction* pAct = new CPropertyAction (this, &DAXYStage::OnStageMinVoltX);      
@@ -1743,20 +1743,20 @@ DAXYStage::DAXYStage() :
 
    pAct = new CPropertyAction (this, &DAXYStage::OnStageMaxVoltY);      
    CreateProperty("Stage Y High Voltage", "5", MM::Float, false, pAct, true);   
+
    // min pos
-   /*
-   pAct = new CPropertyAction (this, &DAXYStage::OnStageMinPosX); 
-   CreateProperty(g_PropertyMinUm, "0", MM::Float, false, pAct, true); 
-   
-   pAct = new CPropertyAction (this, &DAXYStage::OnStageMinPosX); 
-   CreateProperty(g_PropertyMinUm, "0", MM::Float, false, pAct, true); 
+   pAct = new CPropertyAction (this, &DAXYStage::OnStageMinPosX);
+   CreateProperty("Stage X Minimum Position","0", MM::Float, false, pAct, true);
+
+   pAct = new CPropertyAction (this, &DAXYStage::OnStageMinPosY);
+   CreateProperty("Stage Y Minimum Position", "0", MM::Float, false, pAct, true);
+
    //max pos
-   pAct = new CPropertyAction (this, &DAXYStage::OnStageMaxPosX);      
-   CreateProperty(g_PropertyMaxUm, "200", MM::Float, false, pAct, true);
-   
-   pAct = new CPropertyAction (this, &DAXYStage::OnStageMaxPosX);      
-   CreateProperty(g_PropertyMaxUm, "200", MM::Float, false, pAct, true);  
-   */
+   pAct = new CPropertyAction (this, &DAXYStage::OnStageMaxPosX);
+   CreateProperty("Stage X Maximum Position", "200", MM::Float, false, pAct, true);
+
+   pAct = new CPropertyAction (this, &DAXYStage::OnStageMaxPosY);
+   CreateProperty("Stage Y Maximum Position", "200", MM::Float, false, pAct, true);
 }  
  
 DAXYStage::~DAXYStage()
@@ -2228,7 +2228,65 @@ int DAXYStage::OnStageMaxVoltY(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int DAXYStage::OnStageMinPosX(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(minStagePosX_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      double minStagePos;
+      pProp->Get(minStagePos);
+      minStagePosX_ = minStagePos;
+   }
+   return DEVICE_OK;
+}
 
+int DAXYStage::OnStageMinPosY(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(minStagePosY_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      double minStagePos;
+      pProp->Get(minStagePos);
+      minStagePosY_ = minStagePos;
+   }
+   return DEVICE_OK;
+}
+
+int DAXYStage::OnStageMaxPosX(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(maxStagePosX_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      double maxStagePos;
+      pProp->Get(maxStagePos);
+      maxStagePosX_ = maxStagePos;
+   }
+   return DEVICE_OK;
+}
+
+int DAXYStage::OnStageMaxPosY(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(maxStagePosY_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      double maxStagePos;
+      pProp->Get(maxStagePos);
+      maxStagePosY_ = maxStagePos;
+   }
+   return DEVICE_OK;
+}
 
 /**************************
  * AutoFocusStage implementation

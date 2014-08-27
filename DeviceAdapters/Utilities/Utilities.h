@@ -369,12 +369,12 @@ public:
   // int OnPositionY(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnStageMinVoltX(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnStageMaxVoltX(MM::PropertyBase* pProp, MM::ActionType eAct);
-   //int OnStageMinPosX(MM::PropertyBase* pProp, MM::ActionType eAct);
-   //int OnStageMaxPosX(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnStageMinPosX(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnStageMaxPosX(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnStageMinVoltY(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnStageMaxVoltY(MM::PropertyBase* pProp, MM::ActionType eAct);
-   //int OnStageMinPosY(MM::PropertyBase* pProp, MM::ActionType eAct);
-   //int OnStageMaxPosY(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnStageMinPosY(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnStageMaxPosY(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    double stepSizeXUm_;
    double stepSizeYUm_;
