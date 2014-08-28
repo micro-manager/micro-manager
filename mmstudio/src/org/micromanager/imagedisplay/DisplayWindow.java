@@ -3,6 +3,7 @@ package org.micromanager.imagedisplay;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
+import ij.CompositeImage;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.ImageCanvas;
@@ -10,6 +11,7 @@ import ij.gui.StackWindow;
 import ij.gui.Toolbar;
 import ij.Prefs;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -109,6 +111,16 @@ public class DisplayWindow extends StackWindow {
          @Override
          public void paint(Graphics g) {
             super.paint(g);
+            // Determine the color to use (default is black).
+            if (plus_.isComposite()) {
+               Color color = ((CompositeImage) plus_).getChannelColor();
+               // Re-implement the same hack that ImageWindow uses in its
+               // paint() method...
+               if (Color.green.equals(color)) {
+                  color = new Color(0, 180, 0);
+               }
+               g.setColor(color);
+            }
             Rectangle rect = getBounds();
             // Tighten the rect down to what the canvas is actually drawing, as
             // opposed to the space it is taking up in the window as a 
