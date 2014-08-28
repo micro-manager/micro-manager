@@ -3,12 +3,16 @@ package org.micromanager.imagedisplay;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
+import ij.IJ;
 import ij.ImagePlus;
+import ij.gui.ImageCanvas;
 import ij.gui.StackWindow;
 import ij.gui.Toolbar;
+import ij.Prefs;
 
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
@@ -16,6 +20,7 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
+import java.lang.Math;
 import java.util.prefs.Preferences;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -41,6 +46,7 @@ public class DisplayWindow extends StackWindow {
    private boolean closed_ = false;
    private final EventBus bus_;
    private ImagePlus plus_;
+   private JPanel canvasPanel_;
    
    // store window location in Java Preferences
    private static final int DEFAULTPOSX = 300;
@@ -90,24 +96,54 @@ public class DisplayWindow extends StackWindow {
       // This layout is intended to minimize distances between elements.
       setLayout(new MigLayout("insets 1, fillx, filly",
          "[grow, fill]", "[grow, fill]related[]"));
-      // Re-add the ImageJ canvas.
+      // Re-create the ImageJ canvas. We need it to manually draw its own
+      // border (by comparison, in standard ImageJ the ImageWindow draws the
+      // border), because we're changing the layout heirarchy so the 
+      // ImageWindow doesn't draw it in the right place. Thus, we have to 
+      // override its paint() method.
+      remove(ic);
+      ic = new ImageCanvas(plus_) {
+         @Override
+         public void paint(Graphics g) {
+            super.paint(g);
+            Rectangle rect = getBounds();
+            // Tighten the rect down to what the canvas is actually drawing, as
+            // opposed to the space it is taking up in the window as a 
+            // Component.
+            int drawnWidth = (int) (plus_.getWidth() * ic.getMagnification());
+            int drawnHeight = (int) (plus_.getHeight() * ic.getMagnification());
+            int widthSlop = rect.width - drawnWidth;
+            int heightSlop = rect.height - drawnHeight;
+            rect.x += widthSlop / 2;
+            rect.y += heightSlop / 2;
+            rect.width = drawnWidth;
+            rect.height = drawnHeight;
+            // Not sure why we need to do this exactly, except that if we don't
+            // the rectangle draws in the wrong place on narrow windows.
+            rect.y -= getBounds().y;
+            if (!Prefs.noBorder && !IJ.isLinux()) {
+               g.drawRect(rect.x - 1, rect.y - 1, rect.width + 1, rect.height + 1);
+            }
+         }
+      };
       // HACK: set the minimum size. If we don't do this, then the canvas
       // doesn't shrink properly when the window size is reduced. Why?!
       ic.setMinimumSize(new Dimension(64, 64));
       // Wrap the canvas in a subpanel so that we can get events when it
       // resizes.
-      final JPanel subPanel = new JPanel();
-      subPanel.add(ic);
-      add(subPanel, "align center, wrap");
+      canvasPanel_ = new JPanel();
+      canvasPanel_.setLayout(new MigLayout("insets 0, fill"));
+      canvasPanel_.add(ic);
+      add(canvasPanel_, "align center, wrap");
       add(controls, "align center, wrap, growx");
 
       pack();
 
       // Propagate resizing to the canvas, adjusting the view rectangle.
-      subPanel.addComponentListener(new ComponentAdapter() {
+      canvasPanel_.addComponentListener(new ComponentAdapter() {
          @Override
          public void componentResized(ComponentEvent e) {
-            Dimension size = subPanel.getSize();
+            Dimension size = canvasPanel_.getSize();
             double dataAspect = ((double) plus_.getWidth()) / plus_.getHeight();
             double viewAspect = ((double) size.width) / size.height;
             // Derive canvas view width/height based on maximum available space
@@ -164,6 +200,18 @@ public class DisplayWindow extends StackWindow {
       bus_ = bus;
 
       zoomToPreferredSize();
+   }
+
+   /**
+    * HACK: Override painting of the ImageWindow, because we need it to *not*
+    * draw the canvas border, but still need it to draw the info text at the
+    * top of the window. It can't draw the border properly anyway, since the
+    * canvas is now contained in a JPanel and the canvas's size is such that
+    * if any other entity draws the border, the canvas will "shadow" the 
+    * border and make it largely invisible.
+    */
+   public void paint(Graphics g) {
+      drawInfo(g);
    }
 
    /**
