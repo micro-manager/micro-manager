@@ -1704,7 +1704,7 @@ int CPCOCam::SetNCheckROI(int *Roix0, int *Roix1, int *Roiy0, int *Roiy1)
     m_pCamera->strCam.strSensor.wRoiX0 *= wRoiStepping;
     m_pCamera->strCam.strSensor.wRoiX0 += 1;
   }
-  else
+  if(wRoiStepping == 0)
   {
     m_pCamera->strCam.strSensor.wRoiX0 = 1;
     m_pCamera->strCam.strSensor.wRoiX1 = wmax;
@@ -1735,7 +1735,7 @@ int CPCOCam::SetNCheckROI(int *Roix0, int *Roix1, int *Roiy0, int *Roiy1)
     m_pCamera->strCam.strSensor.wRoiY0 *= wRoiStepping;
     m_pCamera->strCam.strSensor.wRoiY0 += 1;
   }
-  else
+  if(wRoiStepping == 0)
   {
     m_pCamera->strCam.strSensor.wRoiY0 = 1;
     m_pCamera->strCam.strSensor.wRoiY1 = wmax;
