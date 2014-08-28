@@ -137,6 +137,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final JLabel desiredLightExposureLabel_;
    private final JSpinner desiredLightExposure_;
    private final JButton calculateSliceTiming_;
+   private final JCheckBox minSlicePeriodCB_;
    private final JCheckBox separateTimePointsCB_;
    private final JCheckBox saveCB_;
    private final JCheckBox hideCB_;
@@ -233,11 +234,28 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             1.0);
       volPanel_.add(stepSize_, "wrap");
       
+      // out of order so we can reference it
+      desiredSlicePeriod_ = pu.makeSpinnerFloat(1, 1000, 0.25,
+            Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_DESIRED_SLICE_PERIOD, 30);
+      
+      minSlicePeriodCB_ = new JCheckBox("Minimize slice period",
+            prefs_.getBoolean(panelName_,
+            Properties.Keys.PLUGIN_MINIMIZE_SLICE_PERIOD, false));
+      minSlicePeriodCB_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            boolean doMin = minSlicePeriodCB_.isSelected();
+            desiredSlicePeriod_.setEnabled(!doMin);
+         }
+      });
+      // initialize correctly
+      minSlicePeriodCB_.doClick();
+      minSlicePeriodCB_.doClick();
+      volPanel_.add(minSlicePeriodCB_, "span 2, wrap");
+      
       // special field that is enabled/disabled depending on whether advanced timing is enabled
       desiredSlicePeriodLabel_ = new JLabel("Slice period [ms]:"); 
       volPanel_.add(desiredSlicePeriodLabel_);
-      desiredSlicePeriod_ = pu.makeSpinnerFloat(0, 1000, 0.25,
-            Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_DESIRED_SLICE_PERIOD, 30);
       volPanel_.add(desiredSlicePeriod_, "wrap");
       desiredSlicePeriod_.addChangeListener(new ChangeListener() {
          @Override
@@ -256,7 +274,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       volPanel_.add(desiredLightExposureLabel_);
       desiredLightExposure_ = pu.makeSpinnerFloat(2.5, 1000.5, 1,
             Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_DESIRED_EXPOSURE, 8.5);
-      desiredLightExposure_.setToolTipText("Set to 0 for minimum slice period.");
       desiredLightExposure_.addChangeListener(new ChangeListener() {
          @Override
          public void stateChanged(ChangeEvent ce) {
@@ -275,12 +292,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       calculateSliceTiming_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            if (MyNumberUtils.floatsEqual(
-                  PanelUtils.getSpinnerFloatValue(desiredSlicePeriod_), (float) 0.0)) {
-               recalculateSliceTiming(false);
-            } else {
-               recalculateSliceTiming(true);
-            }
+            recalculateSliceTiming(!minSlicePeriodCB_.isSelected());
          }
       });
       volPanel_.add(calculateSliceTiming_, "center, span 2, wrap");
@@ -295,11 +307,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
               "[right]10[center]",
               "[]8[]"));
       
-      final boolean slicePanelEnabled = prefs_.getBoolean(panelName_,
-            Properties.Keys.PLUGIN_ADVANCED_SLICE_TIMING, true);
-      
       // special checkbox in titled border to enable/disable sub-panel plus more
-      advancedSliceTimingCB_ = new JCheckBox("Slice Timing Settings (Advanced)", slicePanelEnabled);
+      advancedSliceTimingCB_ = new JCheckBox("Slice Timing Settings (Advanced)",
+            prefs_.getBoolean(panelName_,
+            Properties.Keys.PLUGIN_ADVANCED_SLICE_TIMING, true));
       advancedSliceTimingCB_.setToolTipText("See ASI Tiger SPIM documentation for details");
       advancedSliceTimingCB_.setFocusPainted(false); 
       ComponentTitledBorder componentBorder = 
@@ -315,11 +326,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             for(int i = 0; i<comp.length; i++){ 
                comp[i].setEnabled(enabled); 
             }
-            desiredSlicePeriod_.setEnabled(!enabled);
+            desiredSlicePeriod_.setEnabled(!enabled && !minSlicePeriodCB_.isSelected());
             desiredSlicePeriodLabel_.setEnabled(!enabled);
             desiredLightExposure_.setEnabled(!enabled);
             desiredLightExposureLabel_.setEnabled(!enabled);
             calculateSliceTiming_.setEnabled(!enabled);
+            minSlicePeriodCB_.setEnabled(!enabled);
          } 
       };
       
@@ -654,7 +666,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       float cameraResetTime = computeCameraResetTime();      // recalculate for safety
       float cameraReadoutTime = computeCameraReadoutTime();  // recalculate for safety
       
-      float desiredPeriod = PanelUtils.getSpinnerFloatValue(desiredSlicePeriod_);
+      float desiredPeriod = minSlicePeriodCB_.isSelected() ? 0 :
+         PanelUtils.getSpinnerFloatValue(desiredSlicePeriod_);
       float desiredExposure = PanelUtils.getSpinnerFloatValue(desiredLightExposure_);
       
       // this assumes "usual" camera mode, not Hamamatsu's "synchronous" or Zyla's "overlap" mode
@@ -1385,6 +1398,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       prefs_.putBoolean(panelName_,
               Properties.Keys.PLUGIN_SEPARATE_VIEWERS_FOR_TIMEPOINTS,
               separateTimePointsCB_.isSelected());
+      prefs_.putBoolean(panelName_,
+            Properties.Keys.PLUGIN_MINIMIZE_SLICE_PERIOD,
+            minSlicePeriodCB_.isSelected());
 
       // save controller settings
       props_.setPropValue(Devices.Keys.PIEZOA, Properties.Keys.SAVE_CARD_SETTINGS,
