@@ -140,6 +140,7 @@ public class Properties {
       PLUGIN_SLICE_STEP_SIZE("SliceStepSize"),
       PLUGIN_DESIRED_EXPOSURE("DesiredExposure"),
       PLUGIN_DESIRED_SLICE_PERIOD("DesiredSlicePeriod"),
+      PLUGIN_MINIMIZE_SLICE_PERIOD("MinimizeSlicePeriod"),
       PLUGIN_ACQUSITION_MODE("AcquisitionMode"),
       PLUGIN_CAMERA_MODE("CameraMode"),
       PLUGIN_SPIM_SOURCE_POSITION("SPIMLightSourcePosition"),
