@@ -250,7 +250,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       });
       
       // special field that is enabled/disabled depending on whether advanced timing is enabled
-      desiredLightExposureLabel_ = new JLabel("Cample exposure [ms]:"); 
+      desiredLightExposureLabel_ = new JLabel("Sample exposure [ms]:"); 
       volPanel_.add(desiredLightExposureLabel_);
       desiredLightExposure_ = pu.makeSpinnerFloat(2.5, 1000.5, 1,
             Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_DESIRED_EXPOSURE, 8.5);
@@ -297,7 +297,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             Properties.Keys.PLUGIN_ADVANCED_SLICE_TIMING, true);
       
       // special checkbox in titled border to enable/disable sub-panel plus more
-      advancedSliceTimingCB_ = new JCheckBox("Slice Timing Settings (Advanced)", slicePanelEnabled); 
+      advancedSliceTimingCB_ = new JCheckBox("Slice Timing Settings (Advanced)", slicePanelEnabled);
+      advancedSliceTimingCB_.setToolTipText("See ASI Tiger SPIM documentation for details");
       advancedSliceTimingCB_.setFocusPainted(false); 
       ComponentTitledBorder componentBorder = 
               new ComponentTitledBorder(advancedSliceTimingCB_, slicePanel_ 
@@ -361,7 +362,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       delayLaser_.addChangeListener(recalculateTimingDisplayCL);
       slicePanel_.add(delayLaser_, "wrap");
       
-      slicePanel_.add(new JLabel("Laser duration [ms]:"));
+      slicePanel_.add(new JLabel("Laser trig duration [ms]:"));
       durationLaser_ = pu.makeSpinnerFloat(0, 10000, 0.25,
             new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SPIM_DURATION_LASER, 1);
@@ -377,7 +378,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       delayCamera_.addChangeListener(recalculateTimingDisplayCL);
       slicePanel_.add(delayCamera_, "wrap");
       
-      slicePanel_.add(new JLabel("Camera trigger [ms]:"));
+      slicePanel_.add(new JLabel("Camera trig duration [ms]:"));
       durationCamera_ = pu.makeSpinnerFloat(0, 1000, 0.25,
             new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SPIM_DURATION_CAMERA, 0);
@@ -403,14 +404,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
       };
 
-      repeatPanel_.add(new JLabel("Number of time points:"));
+      repeatPanel_.add(new JLabel("Num time points:"));
       numTimepoints_ = pu.makeSpinnerInteger(1, 32000,
               Devices.Keys.PLUGIN,
               Properties.Keys.PLUGIN_NUM_ACQUISITIONS, 1);
       numTimepoints_.addChangeListener(recalculateTimeLapseDisplay);
       repeatPanel_.add(numTimepoints_, "wrap");
 
-      repeatPanel_.add(new JLabel("Time point interval [s]:"));
+      repeatPanel_.add(new JLabel("Interval [s]:"));
       acquisitionInterval_ = pu.makeSpinnerFloat(1, 32000, 0.1,
               Devices.Keys.PLUGIN,
               Properties.Keys.PLUGIN_ACQUISITION_INTERVAL, 60);
@@ -493,7 +494,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       durationPanel_ = new JPanel(new MigLayout(
             "",
-            "[right]10[left]",
+            "[right]6[left, 40%!]",
             "[]6[]"));
       durationPanel_.setBorder(PanelUtils.makeTitledBorder("Durations"));
       
