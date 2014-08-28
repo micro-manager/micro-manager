@@ -941,6 +941,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                " cannot be zero. Re-do calibration on Setup tab.");
          return false;
       }
+      if (!devices_.isValidMMDevice(
+            Devices.getSideSpecificKey(Devices.Keys.GALVOA, side))) {
+         gui_.showError("Scanner device required; please chece Devices tab.");
+            return false;
+      }
       if (props_.getPropValueInteger(
             Devices.getSideSpecificKey(Devices.Keys.GALVOA, side), 
             Properties.Keys.SPIM_NUM_REPEATS) != 1) {
