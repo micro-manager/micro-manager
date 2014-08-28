@@ -42,7 +42,6 @@ import javax.swing.JButton;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
 
 import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
@@ -86,7 +85,6 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
    /**
     * Navigation panel constructor.
     */
-   @SuppressWarnings("LeakingThisInConstructor")
    public NavigationPanel(ScriptInterface gui, Devices devices, Properties props, 
            Joystick joystick, Positions positions, Prefs prefs, Cameras cameras) {    
       super (MyStrings.PanelNames.NAVIGATION.toString(),
@@ -116,7 +114,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       add(deltaXField);
       add(makeIncrementButton(Devices.Keys.XYSTAGE, Joystick.Directions.X, deltaXField, "+", 1));
       add(makeMoveToOriginButton(Devices.Keys.XYSTAGE, Joystick.Directions.X));
-      add(makeSetOriginHereButton(this, Devices.Keys.XYSTAGE, Joystick.Directions.X), "wrap");
+      add(makeSetOriginHereButton(Devices.Keys.XYSTAGE, Joystick.Directions.X), "wrap");
       
       add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.XYSTAGE, Joystick.Directions.Y) + ":"));
       yPositionLabel_ = new JLabel("");
@@ -127,7 +125,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       add(deltaYField);
       add(makeIncrementButton(Devices.Keys.XYSTAGE, Joystick.Directions.Y, deltaYField, "+", 1));
       add(makeMoveToOriginButton(Devices.Keys.XYSTAGE, Joystick.Directions.Y));
-      add(makeSetOriginHereButton(this, Devices.Keys.XYSTAGE, Joystick.Directions.Y), "wrap");
+      add(makeSetOriginHereButton(Devices.Keys.XYSTAGE, Joystick.Directions.Y), "wrap");
       
       add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.LOWERZDRIVE) + ":"));
       lowerZPositionLabel_ = new JLabel("");
@@ -138,7 +136,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       add(deltaZField);
       add(makeIncrementButton(Devices.Keys.LOWERZDRIVE, Joystick.Directions.NONE, deltaZField, "+", 1));
       add(makeMoveToOriginButton(Devices.Keys.LOWERZDRIVE, Joystick.Directions.NONE));
-      add(makeSetOriginHereButton(this, Devices.Keys.LOWERZDRIVE, Joystick.Directions.NONE), "wrap");
+      add(makeSetOriginHereButton(Devices.Keys.LOWERZDRIVE, Joystick.Directions.NONE), "wrap");
       
       add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.UPPERZDRIVE) + ":"));
       upperZPositionLabel_ = new JLabel("");
@@ -149,7 +147,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       add(deltaFField);
       add(makeIncrementButton(Devices.Keys.UPPERZDRIVE, Joystick.Directions.NONE, deltaFField, "+", 1));
       add(makeMoveToOriginButton(Devices.Keys.UPPERZDRIVE, Joystick.Directions.NONE));
-      add(makeSetOriginHereButton(this, Devices.Keys.UPPERZDRIVE, Joystick.Directions.NONE), "wrap");   
+      add(makeSetOriginHereButton(Devices.Keys.UPPERZDRIVE, Joystick.Directions.NONE), "wrap");   
       
       beamPanel_ = new BeamSubPanel(gui_, devices_, panelName_, Devices.Sides.NONE, prefs_, props_);
       beamPanel_.setBorder(BorderFactory.createLineBorder(ASIdiSPIM.borderColor));
@@ -304,16 +302,15 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
     * @param dir
     * @return
     */
-   private JButton makeSetOriginHereButton(JPanel panel, Devices.Keys key, 
+   private JButton makeSetOriginHereButton(Devices.Keys key, 
            Joystick.Directions dir) {
       class zeroButtonActionListener implements ActionListener {
-         private final JPanel panel_;
          private final Devices.Keys key_;
          private final Joystick.Directions dir_;
          
          @Override
          public void actionPerformed(ActionEvent e) {
-            int dialogResult = JOptionPane.showConfirmDialog(panel_,
+            int dialogResult = JOptionPane.showConfirmDialog(null,
                   "This will change the coordinate system.  Are you sure you want to proceed?",
                   "Warning",
                   JOptionPane.OK_CANCEL_OPTION);
@@ -322,9 +319,8 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
             }
          }
 
-         private zeroButtonActionListener(JPanel panel, Devices.Keys key, 
+         private zeroButtonActionListener(Devices.Keys key, 
                  Joystick.Directions dir) {
-            panel_ = panel;
             key_ = key;
             dir_ = dir;
          }
@@ -333,7 +329,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       JButton jb = new JButton("Set 0");
       jb.setMargin(new Insets(4,8,4,8));
       jb.setToolTipText("Similar to pressing \"ZERO\" button on joystick, but only for this axis");
-      ActionListener l = new zeroButtonActionListener(panel, key, dir);
+      ActionListener l = new zeroButtonActionListener(key, dir);
       jb.addActionListener(l);
       return jb;
    }
