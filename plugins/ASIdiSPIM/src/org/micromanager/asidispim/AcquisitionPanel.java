@@ -250,7 +250,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       });
       
       // special field that is enabled/disabled depending on whether advanced timing is enabled
-      desiredLightExposureLabel_ = new JLabel("Laser exposure [ms]:"); 
+      desiredLightExposureLabel_ = new JLabel("Cample exposure [ms]:"); 
       volPanel_.add(desiredLightExposureLabel_);
       desiredLightExposure_ = pu.makeSpinnerFloat(2.5, 1000.5, 1,
             Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_DESIRED_EXPOSURE, 8.5);
@@ -377,7 +377,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       delayCamera_.addChangeListener(recalculateTimingDisplayCL);
       slicePanel_.add(delayCamera_, "wrap");
       
-      slicePanel_.add(new JLabel("Camera duration [ms]:"));
+      slicePanel_.add(new JLabel("Camera trigger [ms]:"));
       durationCamera_ = pu.makeSpinnerFloat(0, 1000, 0.25,
             new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SPIM_DURATION_CAMERA, 0);
