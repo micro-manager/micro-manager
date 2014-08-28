@@ -534,14 +534,15 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       add(volPanel_, "spany 2, top");
       add(slicePanel_, "spany 2, top, wrap");
       add(savePanel_, "wrap");
-      add(buttonStart_, "cell 0 2, split 2, left");
-      add(acquisitionStatusLabel_, "center");
-
-      add(new JLabel("SPIM mode: "), "split 2, left");
+      
+      add(new JLabel("SPIM mode: "), "cell 0 2, split 2, left");
       AcquisitionModes acqModes = new AcquisitionModes(devices_, props_, prefs_);
       spimMode_ = acqModes.getComboBox(); 
       add(spimMode_);
       
+      add(buttonStart_, "cell 0 3, split 2, left");
+      add(acquisitionStatusLabel_, "center");
+
       // properly initialize the advanced slice timing
       advancedSliceTimingCB_.addActionListener(sliceTimingDisableGUIInputs);
       advancedSliceTimingCB_.doClick();
