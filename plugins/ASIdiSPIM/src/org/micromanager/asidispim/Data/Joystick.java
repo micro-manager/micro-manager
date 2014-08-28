@@ -207,7 +207,7 @@ public class Joystick {
             }
          }
       } catch (Exception ex) {
-         gui_.showError("Problem clearing all joysticks");
+         gui_.showError("Problem clearing all joysticks", null);
       }
    }
    
@@ -236,7 +236,7 @@ public class Joystick {
             }
          }
       } catch (Exception ex) {
-         gui_.showError("Problem clearing joystick");
+         gui_.showError("Problem clearing joystick", null);
       }
    }
       
@@ -272,7 +272,8 @@ public class Joystick {
             props_.setPropValue(dev, prop, VALUES.get(Joystick.Keys.NONE));
          }
       } catch (Exception ex) {
-         gui_.showError("Problem unsetting joysticks for " + jkey.toString() + " in device " + dev.toString());
+         gui_.showError("Problem unsetting joysticks for " + jkey.toString() +
+               " in device " + dev.toString(), null);
       }
    }
    
@@ -308,7 +309,8 @@ public class Joystick {
             props_.setPropValue(dev, prop, VALUES.get(jkey));
          }
       } catch (Exception ex) {
-         gui_.showError("Problem setting joysticks for " + jkey.toString() + " in device " + dev.toString());
+         gui_.showError("Problem setting joysticks for " + jkey.toString() +
+               " in device " + dev.toString(), null);
       }
    }
   

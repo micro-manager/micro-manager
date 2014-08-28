@@ -22,6 +22,7 @@
 package org.micromanager.asidispim;
 
 
+import java.awt.Component;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -246,7 +247,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
                   core_.setSerialPortCommand(port, "\\",  "\r");
                }
             } catch (Exception ex) {
-               gui_.showError("could not halt motion");
+               gui_.showError("could not halt motion", null);
             }
          }
       });
@@ -275,7 +276,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
             try {
                positions_.setPosition(key_, dir_, 0.0);
             } catch (Exception ex) {
-               gui_.showError(ex);
+               gui_.showError(ex, (Component) null);
             }
          }
 
@@ -348,7 +349,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
                positions_.setPositionRelative(key_, dir_, 
                        ((Double)field_.getValue()) * scaleFactor_);
             } catch (Exception ex) {
-               gui_.showError(ex);
+               gui_.showError(ex, (Component) null);
             }
          }
 

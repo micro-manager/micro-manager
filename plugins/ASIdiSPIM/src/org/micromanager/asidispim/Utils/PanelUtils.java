@@ -21,6 +21,7 @@
 
 package org.micromanager.asidispim.Utils;
 
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -586,7 +587,7 @@ public class PanelUtils {
             try {
                prefs_.putFloat(prefNode_, prefKey_, ((Double)tf_.getValue()).floatValue());
             } catch (Exception e) {
-               gui_.showError(e);
+               gui_.showError(e, (Component) null);
             }
          }
          
@@ -625,7 +626,7 @@ public class PanelUtils {
             try {
                positions_.setPosition(key_, dir_, ((Number)evt.getNewValue()).doubleValue());
             } catch (Exception e) {
-               gui_.showError(e);
+               gui_.showError(e, (Component) null);
             }
          }
 
@@ -651,7 +652,7 @@ public class PanelUtils {
             try {
                positions_.setPosition(key_, dir_, ((Number)tf_.getValue()).doubleValue());
             } catch (Exception e) {
-               gui_.showError(e);
+               gui_.showError(e, (Component) null);
             }
          }
          

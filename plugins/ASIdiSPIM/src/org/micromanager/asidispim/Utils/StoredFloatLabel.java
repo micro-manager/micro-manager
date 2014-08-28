@@ -20,6 +20,7 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 package org.micromanager.asidispim.Utils;
 
+import java.awt.Component;
 import java.text.ParseException;
 
 import javax.swing.JLabel;
@@ -76,7 +77,7 @@ public class StoredFloatLabel extends JLabel {
             prefs_.putFloat(prefNode_, prefKey_,
                   ((Double) NumberUtils.displayStringToDouble(txt)).floatValue());
          } catch (ParseException e) {
-            gui_.showError(e);
+            gui_.showError(e, (Component) null);
          }
       }
    }

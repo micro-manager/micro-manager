@@ -74,9 +74,9 @@ public class HelpPanel extends ListeningJPanel {
                try {
                    Desktop.getDesktop().browse(new URI(hle.getURL().toString()));
                } catch (URISyntaxException ex) {
-                  gui_.showError("Could not open web browser."); 
+                  gui_.showError("Could not open web browser.", null); 
                } catch (IOException ex) {
-                  gui_.showError("Could not open web browser.");
+                  gui_.showError("Could not open web browser.", null);
                }
 
            }

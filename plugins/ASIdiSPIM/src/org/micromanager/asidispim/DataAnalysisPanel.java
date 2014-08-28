@@ -6,6 +6,7 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ImageProcessor;
 
+import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
@@ -268,11 +269,11 @@ public class DataAnalysisPanel extends ListeningJPanel {
                   JOptionPane.showMessageDialog(null, cause.getMessage(), 
                           "Data Export Error", JOptionPane.ERROR_MESSAGE);
                } else {
-                  ReportingUtils.showError(ex);
+                  ReportingUtils.showError(ex, (Component) null);
                }
             }
          } catch (InterruptedException ex) {
-             ReportingUtils.showError(ex, "Interrupted while saving data");
+             ReportingUtils.showError(ex, "Interrupted while saving data", null);
          }
       }
    }

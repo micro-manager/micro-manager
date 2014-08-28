@@ -21,6 +21,7 @@
 
 package org.micromanager.asidispim.Data;
 
+import java.awt.Component;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -32,8 +33,8 @@ import java.util.Set;
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
-import org.micromanager.api.ScriptInterface;
 
+import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Utils.DevicesListenerInterface;
 
 
@@ -312,7 +313,7 @@ public class Devices {
                         + core_.getProperty(mmDevice, "AxisLetterY");
                }
             } catch (Exception ex) {
-               gui_.showError(ex);
+               gui_.showError(ex, (Component) null);
             }
          }
       }

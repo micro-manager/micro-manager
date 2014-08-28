@@ -70,7 +70,7 @@ public class DeviceUtils {
             } else if (firmwareVersion < (float) 2.829) {
                ReportingUtils.showError("Device " + devices_.getMMDevice(key)
                        + ": Piezo firmware is old; piezo may not move correctly in sync with sheet."
-                       + " Contact ASI for updated firmware.");
+                       + " Contact ASI for updated firmware.", null);
             }
             break;
          case GALVOA:
@@ -80,15 +80,15 @@ public class DeviceUtils {
             } else if (firmwareVersion < (float) 2.809) {
                ReportingUtils.showError("Device " + devices_.getMMDevice(key)
                        + ": Micromirror firmware is old; wheel control of some scanner axes may not work."
-                       + " Contact ASI for updated firmware.");
+                       + " Contact ASI for updated firmware.", null);
             } else if (firmwareVersion < (float) 2.829) {
                ReportingUtils.showError("Device " + devices_.getMMDevice(key)
                        + ": Micromirror firmware is old; imaging piezo not set correctly the first stack."
-                       + " Contact ASI for updated firmware.");
+                       + " Contact ASI for updated firmware.", null);
             } else if (firmwareVersion < (float) 2.859) {
                ReportingUtils.showError("Device " + devices_.getMMDevice(key)
                        + ": Micromirror firmware is old; not all timing parameters are supported."
-                       + " Contact ASI for updated firmware.");
+                       + " Contact ASI for updated firmware.", null);
             }
             break;
          default:
@@ -112,24 +112,24 @@ public class DeviceUtils {
          case HAMCAM:
             if (! devices_.hasProperty(key, Properties.Keys.TRIGGER_SOURCE) ) {
                ReportingUtils.showError("Device " + devices_.getMMDevice(key) + 
-                     ": Hamamatsu device adapter doesn't have external trigger property");
+                     ": Hamamatsu device adapter doesn't have external trigger property", null);
             }
             if (! (props_.getPropValueString(key, Properties.Keys.TRIGGER_POLARITY)                  
                   .equals(Properties.Values.POSITIVE.toString()))) {
                ReportingUtils.showError("Device " + devices_.getMMDevice(key) + 
-                     ": set TriggerPolarity property to POSITIVE for desired behavior");
+                     ": set TriggerPolarity property to POSITIVE for desired behavior", null);
             }
             break;
          case PCOCAM:
             if (! devices_.hasProperty(key, Properties.Keys.TRIGGER_MODE) ) {
                ReportingUtils.showError("Device " + devices_.getMMDevice(key) + 
-                     ": PCO device adapter doesn't have external trigger property");
+                     ": PCO device adapter doesn't have external trigger property", null);
             }
             break;
          case ANDORCAM:
             if (! devices_.hasProperty(key, Properties.Keys.TRIGGER_MODE_ANDOR) ) {
                ReportingUtils.showError("Device " + devices_.getMMDevice(key) + 
-                     ": Andor sCMOS device adapter doesn't have external trigger property");
+                     ": Andor sCMOS device adapter doesn't have external trigger property", null);
             }
             break;
          case DEMOCAM:
@@ -137,7 +137,7 @@ public class DeviceUtils {
             break;
          default:
             ReportingUtils.showError("Plugin doesn't support your camera for SPIM yet;"
-                  + " contact the authors for support (camera must have hardware trigger)");
+                  + " contact the authors for support (camera must have hardware trigger)", null);
             break;
          } // CamA/B case
          break;
@@ -239,7 +239,7 @@ public class DeviceUtils {
             }
          }
       } catch (Exception ex) {
-         ReportingUtils.showError("Error detecting multiCamera devices");
+         ReportingUtils.showError("Error detecting multi camera devices", null);
       }
       
       JComboBox deviceBox = new JComboBox(multiCameras.toArray());
@@ -272,7 +272,7 @@ public class DeviceUtils {
             }
          }
       } catch (Exception ex) {
-         ReportingUtils.showError("Error detecting multiCamera devices");
+         ReportingUtils.showError("Error detecting single camera devices", null);
       } finally {
          props_.setPropValue(Devices.Keys.CORE, Properties.Keys.CAMERA, originalCamera);
       }

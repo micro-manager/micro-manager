@@ -21,6 +21,7 @@
 
 package org.micromanager.asidispim.Data;
 
+import java.awt.Component;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -159,7 +160,7 @@ public class Cameras {
                   enableLiveMode(true);
                }
             } catch (Exception ex) {
-               gui_.showError("Failed to set Core Camera property");
+               gui_.showError("Failed to set Core Camera property", null);
             }
          }
       }
@@ -312,7 +313,7 @@ public class Cameras {
       }
       ReportingUtils.showError(
             "Was not able to get sensor size of camera " 
-            + devices_.getMMDevice(camKey));
+            + devices_.getMMDevice(camKey), null);
       return new Rectangle(0, 0, 0, 0);
    }
    
@@ -355,7 +356,7 @@ public class Cameras {
       }
       ReportingUtils.showError(
             "Was not able to get per-row readout time of camera " 
-            + devices_.getMMDevice(camKey));
+            + devices_.getMMDevice(camKey), null);
       return 1;
    }
    
@@ -449,7 +450,7 @@ public class Cameras {
          setCamera(camKey);
          roi = core_.getROI();
       } catch (Exception e) {
-         gui_.showError(e);
+         gui_.showError(e, (Component) null);
       } finally {
          props_.setPropValue(Devices.Keys.CORE, Properties.Keys.CAMERA, origCamera);
       }

@@ -952,19 +952,19 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             Properties.Keys.PLUGIN_OFFSET_PIEZO_SHEET, 0);
       if (MyNumberUtils.floatsEqual(sliceRate, (float) 0.0)) {
          gui_.showError("Rate for slice " + side.toString() + 
-               " cannot be zero. Re-do calibration on Setup tab.");
+               " cannot be zero. Re-do calibration on Setup tab.", null);
          return false;
       }
       if (!devices_.isValidMMDevice(
             Devices.getSideSpecificKey(Devices.Keys.GALVOA, side))) {
-         gui_.showError("Scanner device required; please chece Devices tab.");
+         gui_.showError("Scanner device required; please check Devices tab.", null);
             return false;
       }
       if (props_.getPropValueInteger(
             Devices.getSideSpecificKey(Devices.Keys.GALVOA, side), 
             Properties.Keys.SPIM_NUM_REPEATS) != 1) {
          gui_.showError("Number of acquisitions set in plugin. " +
-            "Please change scanner property \"SPIMNumRepeats\" to 1.");
+            "Please change scanner property \"SPIMNumRepeats\" to 1.", null);
          return false;
       }
       float sliceAmplitude = piezoAmplitude / sliceRate;
@@ -1006,7 +1006,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     */
    public boolean runAcquisition() {
       if (gui_.isAcquisitionRunning()) {
-         gui_.showError("An acquisition is already running");
+         gui_.showError("An acquisition is already running", null);
          return false;
       }
       
@@ -1040,18 +1040,20 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // make sure we have cameras selected
       int nrSides = getNumSides();  // TODO: multi-channel in sense of excitation color, etc.
       if (firstCamera == null) {
-         gui_.showError("Please select a valid camera for the first imaging path on the Devices Panel");
+         gui_.showError("Please select a valid camera for the first " +
+               "imaging path on the Devices Panel", null);
          return false;
       }
       if (nrSides == 2 && secondCamera == null) {
-         gui_.showError("Please select a valid camera for the second imaging path on the Devices Panel.");
+         gui_.showError("Please select a valid camera for the second " +
+               "imaging path on the Devices Panel.", null);
          return false;
       }
       
       // make sure slice timings are up to date 
       if (!advancedSliceTimingCB_.isSelected()) {
          if(!isSliceTimingUpToDate()) {
-            gui_.showError("Slice timing is not up to date, please recalculate.");
+            gui_.showError("Slice timing is not up to date, please recalculate.", null);
             return false;
          }
       }
@@ -1087,18 +1089,18 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       if (exposureTime + cameraReadoutTime > lineScanTime) {
          gui_.showError("Exposure time is longer than time needed for a line scan.\n" +
                  "This will result in dropped frames.\n" +
-                 "Please change input");
+                 "Please change input", null);
          return false;
       }
       double volumeDuration = computeActualVolumeDuration();
       if (getNumTimepoints() > 1 && 
             volumeDuration > timepointsIntervalMs) {
          gui_.showError("Time point interval shorter than" +
-                 " the time to collect a single volume.\n");
+                 " the time to collect a single volume.\n", null);
          return false;
       }
       if (nrRepeats > 10 && separateTimePointsCB_.isSelected()) {
-         int dialogResult = JOptionPane.showConfirmDialog(this,
+         int dialogResult = JOptionPane.showConfirmDialog(null,
                "This will generate " + nrRepeats + " separate windows. "
                + "Do you really want to proceed?",
                "Warning",
@@ -1116,7 +1118,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             core_.popNextImage();
          }
       } catch (Exception ex) {
-         gui_.showError(ex, "Error emptying out the circular buffer");
+         gui_.showError(ex, "Error emptying out the circular buffer", null);
          return false;
       }
       
@@ -1307,7 +1309,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      }
                   }
                } catch (InterruptedException iex) {
-                  gui_.showError(iex);
+                  gui_.showError(iex, (Component) null);
                }
 
                if (core_.isSequenceRunning(firstCamera)) {
@@ -1325,9 +1327,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                }
             }
          } catch (MMScriptException mex) {
-            gui_.showError(mex);
+            gui_.showError(mex, (Component) null);
          } catch (Exception ex) {
-            gui_.showError(ex);
+            gui_.showError(ex, (Component) null);
          } finally {  // end of this acquisition (could be about to restart if separate viewers
             try {
                if (core_.isSequenceRunning(firstCamera)) {
@@ -1351,7 +1353,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                
             } catch (Exception ex) {
                // exception while stopping sequence acquisition, not sure what to do...
-               gui_.showError(ex, "Problem while finsihing acquisition");
+               gui_.showError(ex, "Problem while finsihing acquisition", null);
             }
          }
 
