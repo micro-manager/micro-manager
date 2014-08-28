@@ -1036,6 +1036,7 @@ int BOImplementationThread::BOInitializationSequence()
          }
          else
          {
+            // XXX BUG! We should be returning an error in this case, but we're not.
             sprintf(fxMess,"# cameras must be 1, but %d cameras found \n", DevCount);
             LLogMessage(fxMess);
          }
@@ -1625,6 +1626,8 @@ int CBaumerOptronic::Initialize()
       // yeild until the libaries have been loaded
       CDeviceUtils::SleepMs(10);
    } while (Ready != pWorkerThread_->CameraState());
+   // XXX BUG! Error not handled if timed out (not that we should be using
+   // timeout as a way to detect failure in the first place).
 
    // query the 'formats' structures
    pWorkerThread_->QueryCapabilities();
