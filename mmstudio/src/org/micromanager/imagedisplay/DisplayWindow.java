@@ -79,7 +79,7 @@ public class DisplayWindow extends StackWindow {
          posX = displayPrefs_.getInt(WINDOWPOSX, DEFAULTPOSX); 
          posY = displayPrefs_.getInt(WINDOWPOSY, DEFAULTPOSY);
       }
-      plus_.getWindow().setLocation(posX, posY);
+      setLocation(posX, posY);
       
       // HACK: hide ImageJ's native scrollbars; we provide our own.
       if (cSelector != null) {
