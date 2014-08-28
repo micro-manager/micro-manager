@@ -56,6 +56,7 @@ import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
 import javax.swing.JSpinner;
+import javax.swing.JToggleButton;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -83,6 +84,8 @@ import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
+
+import com.swtdesigner.SwingResourceManager;
 
 /**
  *
@@ -116,8 +119,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private JLabel actualTimeLapseDurationLabel_;
    private final JSpinner numTimepoints_;
    private final JSpinner acquisitionInterval_;
-   private final JButton buttonStart_;
-   private final JButton buttonStop_;
+   private final JToggleButton buttonStart_;
    private final JPanel volPanel_;
    private final JPanel slicePanel_;
    private final JPanel repeatPanel_;
@@ -513,41 +515,15 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // end duration report panel
       
 
-      buttonStart_ = new JButton("Start!");
+      buttonStart_ = new JToggleButton();
+      buttonStart_.setIconTextGap(6);
       buttonStart_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            stop_.set(false);
-
-            class acqThread extends Thread {
-               acqThread(String threadName) {
-                  super(threadName);
-               }
-
-               @Override
-               public void run() {
-                  buttonStart_.setEnabled(false);
-                  buttonStop_.setEnabled(true);
-                  runAcquisition();
-                  buttonStop_.setEnabled(false);
-                  buttonStart_.setEnabled(true);
-               }
-            }            
-            acqThread acqt = new acqThread("diSPIM Acquisition");
-            acqt.start();          
+            updateStartButton();
          }
       });
-
-      buttonStop_ = new JButton("Stop!");
-      buttonStop_.setEnabled(false);
-      buttonStop_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            stop_.set(true);
-            buttonStop_.setEnabled(false);
-            buttonStart_.setEnabled(true);
-         }
-      });
+      updateStartButton();
 
       acquisitionStatusLabel_ = new JLabel("");
       updateAcquisitionStatusNone();
@@ -558,8 +534,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       add(volPanel_, "spany 2, top");
       add(slicePanel_, "spany 2, top, wrap");
       add(savePanel_, "wrap");
-      add(buttonStart_, "cell 0 2, split 2, center");
-      add(buttonStop_, "center");
+      add(buttonStart_, "cell 0 2, split 2, left");
       add(acquisitionStatusLabel_, "center");
 
       add(new JLabel("SPIM mode: "), "split 2, left");
@@ -578,7 +553,37 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       updateActualTimeLapseDurationLabel();
       
    }//end constructor
+   
+   private void updateStartButton() {
+      boolean started = buttonStart_.isSelected();
+      stop_.set(!started);
+      if (started) {
+         class acqThread extends Thread {
+            acqThread(String threadName) {
+               super(threadName);
+            }
 
+            @Override
+            public void run() {
+               runAcquisition();
+               if (buttonStart_.isSelected()) {
+                  buttonStart_.doClick();
+               }
+            }
+         }            
+         acqThread acqt = new acqThread("diSPIM Acquisition");
+         acqt.start();          
+      }
+      buttonStart_.setText(started ? "Stop!" : "Start!");
+      buttonStart_.setBackground(started ? Color.red : Color.green);
+      buttonStart_.setIcon(started ?
+            SwingResourceManager.
+            getIcon(MMStudio.class,
+            "/org/micromanager/icons/cancel.png")
+            : SwingResourceManager.getIcon(MMStudio.class,
+                  "/org/micromanager/icons/arrow_right.png"));
+   }
+   
    /**
     * @return either "A" or "B"
     */
@@ -1346,6 +1351,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.SA_MODE_X,
             Properties.Values.SAM_DISABLED, true);
       
+      if (stop_.get()) {  // if user stopped us in middle
+         numTimePointsDone_--;  
+      }
       updateAcqusitionStatusDone();
       stagePosUpdater_.setAcqRunning(false);
       
