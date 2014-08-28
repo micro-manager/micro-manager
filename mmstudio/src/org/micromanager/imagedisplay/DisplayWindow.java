@@ -101,6 +101,9 @@ public class DisplayWindow extends StackWindow {
       // border), because we're changing the layout heirarchy so the 
       // ImageWindow doesn't draw it in the right place. Thus, we have to 
       // override its paint() method.
+      // TODO: since we're overriding the canvas anyway, why not replace
+      // its setMagnification2() method, which overrides our nice window
+      // titles?
       remove(ic);
       ic = new ImageCanvas(plus_) {
          @Override
@@ -122,13 +125,14 @@ public class DisplayWindow extends StackWindow {
             // the rectangle draws in the wrong place on narrow windows.
             rect.y -= getBounds().y;
             if (!Prefs.noBorder && !IJ.isLinux()) {
-               g.drawRect(rect.x - 1, rect.y - 1, rect.width + 1, rect.height + 1);
+               g.drawRect(rect.x - 1, rect.y - 1,
+                     rect.width + 1, rect.height + 1);
             }
          }
       };
       // HACK: set the minimum size. If we don't do this, then the canvas
       // doesn't shrink properly when the window size is reduced. Why?!
-      ic.setMinimumSize(new Dimension(64, 64));
+      ic.setMinimumSize(new Dimension(16, 16));
       // Wrap the canvas in a subpanel so that we can get events when it
       // resizes.
       canvasPanel_ = new JPanel();
@@ -156,7 +160,8 @@ public class DisplayWindow extends StackWindow {
             else { // Tall view; X constrains growth
                viewHeight = (int) (viewWidth / dataAspect);
             }
-            ic.setDrawingSize(viewWidth, viewHeight);
+            ic.setDrawingSize((int) Math.ceil(viewWidth),
+               (int) Math.ceil(viewHeight));
             // Reset the "source rect", i.e. the sub-area being viewed when
             // the image won't fit into the window. Try to maintain the same
             // center as the current rect has.
@@ -166,12 +171,13 @@ public class DisplayWindow extends StackWindow {
             int xCenter = curRect.x + (curRect.width / 2);
             int yCenter = curRect.y + (curRect.height / 2);
             double curMag = ic.getMagnification();
-            int newWidth = (int) (viewWidth / curMag);
-            int newHeight = (int) (viewHeight / curMag);
+            int newWidth = (int) Math.ceil(viewWidth / curMag);
+            int newHeight = (int) Math.ceil(viewHeight / curMag);
             int xCorner = xCenter - newWidth / 2;
             int yCorner = yCenter - newHeight / 2;
-            ic.setSourceRect(new Rectangle(xCorner, yCorner, 
-                     newWidth, newHeight));
+            Rectangle viewRect = new Rectangle(xCorner, yCorner, 
+                  newWidth, newHeight);
+            ic.setSourceRect(viewRect);
             doLayout();
          }
       });
@@ -335,5 +341,30 @@ public class DisplayWindow extends StackWindow {
          }
       }
       return super.getComponents();
+   }
+
+   /**
+    * HACK HACK HACK etc. you get the idea.
+    * For some reason, when our zoom level has a repeating decimal in it
+    * (e.g. 33.333..%, 16.666..%), our canvas will calculate the wrong size
+    * for display and leave it inadequate screen space to draw the entire
+    * image, causing it to draw the "zoom indicator". By overriding the pack()
+    * method and changing our size and our canvas's size to be 2px larger
+    * in X and Y, we can avoid this. We shouldn't accumulate error as long as
+    * nobody goes around doing "pack(); pack(); pack();" or the like, since
+    * we recalculate our size based on our components every time the canvas
+    * size changes.
+    * Is this the *right* fix? Probably not! But a proper fix would likely
+    * require being able to change ImageCanvas in extensive ways, and that's
+    * part of ImageJ.
+    */
+   @Override
+   public void pack() {
+      super.pack();
+      Dimension curSize = getSize();
+      setSize(curSize.width + 2, curSize.height + 2);
+      Dimension canvasSize = ic.getSize();
+      ic.setDrawingSize(canvasSize.width + 2, canvasSize.height + 2);
+      super.pack();
    }
 }
