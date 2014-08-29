@@ -7,7 +7,11 @@ import ij.ImagePlus;
 
 import java.awt.Component;
 import java.lang.Math;
-import java.util.HashMap;
+import java.util.ArrayList;
+
+import javax.swing.JPanel;
+
+import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.Datastore;
@@ -61,7 +65,8 @@ public class TestDisplay {
          ((MMCompositeImage) ijImage_).reset();
       }
 
-      window_ = new DisplayWindow(ijImage_, generateControls(), bus_);
+      window_ = new DisplayWindow(ijImage_, bus_);
+      setWindowControls();
       window_.setTitle("Hello, world!");
       histograms_.calcAndDisplayHistAndStats(true);
    }
@@ -81,7 +86,7 @@ public class TestDisplay {
       composite.reset();
 
       if (window_ != null) {
-         window_.setupLayout(generateControls());
+         setWindowControls();
          histograms_.calcAndDisplayHistAndStats(true);
       }
    }
@@ -105,15 +110,20 @@ public class TestDisplay {
     * Generate the controls that we'll stuff into the DisplayWindow, along
     * with the rules that will be used to lay them out.
     */
-   private HashMap<Component, String> generateControls() {
-      HashMap<Component, String> result = new HashMap<Component, String>();
+   private void setWindowControls() {
+      ArrayList<Component> widgets = new ArrayList<Component>();
+      ArrayList<String> rules = new ArrayList<String>();
       controls_ = new HyperstackControls(store_, stack_, bus_, false, false);
-      result.put(controls_, "align center, wrap, growx");
+      widgets.add(controls_);
+      rules.add("align center, wrap, growx");
+      JPanel subPanel = new JPanel(new MigLayout("insets 0, filly"));
       histograms_ = new HistogramsPanel(store_, ijImage_, bus_);
-      result.put(histograms_, "align center, wrap");
+      subPanel.add(histograms_, "growx, wrap");
       metadata_ = new MetadataPanel(store_);
-      result.put(metadata_, "dock east, growy");
-      return result;
+      subPanel.add(metadata_, "grow, wrap");
+      widgets.add(subPanel);
+      rules.add("dock east, growy");
+      window_.setupLayout(widgets, rules);
    }
 
    /**
@@ -129,7 +139,7 @@ public class TestDisplay {
          // Have multiple channels.
          ReportingUtils.logError("Augmenting to MMCompositeImage now");
          shiftToCompositeImage();
-         window_.setupLayout(generateControls());
+         setWindowControls();
       }
       if (ijImage_ instanceof MMCompositeImage) {
          // Verify that ImageJ has the right number of channels.

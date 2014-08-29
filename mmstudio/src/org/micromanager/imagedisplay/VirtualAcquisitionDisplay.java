@@ -42,6 +42,7 @@ import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -1103,9 +1104,12 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
 
    private void createWindow() {
       makeHistograms();
-      HashMap<Component, String> temp = new HashMap<Component, String>();
-      temp.put(controls_, "align center, wrap, growx");
-      DisplayWindow win = new DisplayWindow(hyperImage_, temp, bus_);
+      DisplayWindow win = new DisplayWindow(hyperImage_, bus_);
+      ArrayList<Component> widgets = new ArrayList<Component>();
+      widgets.add(controls_);
+      ArrayList<String> rules = new ArrayList<String>();
+      rules.add("align center, wrap, growx");
+      win.setupLayout(widgets, rules);
       win.setBackground(MMStudio.getInstance().getBackgroundColor());
       MMStudio.getInstance().addMMBackgroundListener(win);
       bus_.register(win);
