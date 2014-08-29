@@ -5,8 +5,9 @@ import com.google.common.eventbus.Subscribe;
 
 import ij.ImagePlus;
 
-import java.awt.Panel;
+import java.awt.Component;
 import java.lang.Math;
+import java.util.HashMap;
 
 import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.Datastore;
@@ -60,7 +61,7 @@ public class TestDisplay {
          ((MMCompositeImage) ijImage_).reset();
       }
 
-      window_ = new DisplayWindow(ijImage_, makeInfoPanel(), bus_);
+      window_ = new DisplayWindow(ijImage_, generateControls(), bus_);
       window_.setTitle("Hello, world!");
       histograms_.calcAndDisplayHistAndStats(true);
    }
@@ -80,7 +81,7 @@ public class TestDisplay {
       composite.reset();
 
       if (window_ != null) {
-         window_.setControls(makeInfoPanel());
+         window_.setupLayout(generateControls());
          histograms_.calcAndDisplayHistAndStats(true);
       }
    }
@@ -100,18 +101,19 @@ public class TestDisplay {
       plus_.setDimensions(numChannels, numSlices, numFrames);
    }
 
-   // TODO: For now, stuffing the histograms and metadata into the display
-   // window.
-   private Panel makeInfoPanel() {
-      Panel temp = new Panel();
+   /**
+    * Generate the controls that we'll stuff into the DisplayWindow, along
+    * with the rules that will be used to lay them out.
+    */
+   private HashMap<Component, String> generateControls() {
+      HashMap<Component, String> result = new HashMap<Component, String>();
       controls_ = new HyperstackControls(store_, stack_, bus_, false, false);
-      temp.add(controls_);
+      result.put(controls_, "align center, wrap, growx");
       histograms_ = new HistogramsPanel(store_, ijImage_, bus_);
-      temp.add(histograms_);
+      result.put(histograms_, "align center, wrap");
       metadata_ = new MetadataPanel(store_);
-      temp.add(metadata_);
-      temp.validate();
-      return temp;
+      result.put(metadata_, "dock east, growy");
+      return result;
    }
 
    /**
@@ -127,8 +129,7 @@ public class TestDisplay {
          // Have multiple channels.
          ReportingUtils.logError("Augmenting to MMCompositeImage now");
          shiftToCompositeImage();
-         Panel temp = makeInfoPanel();
-         window_.setControls(temp);
+         window_.setupLayout(generateControls());
       }
       if (ijImage_ instanceof MMCompositeImage) {
          // Verify that ImageJ has the right number of channels.
