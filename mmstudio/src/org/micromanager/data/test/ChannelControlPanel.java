@@ -351,6 +351,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       } else {
          setFullScale();
          parent_.applyLUTToImage();
+         repaint();
       }
    }
 
@@ -364,7 +365,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       //so it is ok to get image cache in this way
       String name = "selected";
       String[] channelNames = settings_.getChannelNames();
-      if (channelNames.length > channelIndex_) {
+      if (channelNames != null && channelNames.length > channelIndex_) {
          name = channelNames[channelIndex_];
       }
       Color[] channelColors = settings_.getChannelColors();
@@ -837,6 +838,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          parent_.applyContrastToAllChannels(contrastMin_, contrastMax_, gamma_);
       } else {
          parent_.applyLUTToImage();
+         repaint();
       }
    }
 
