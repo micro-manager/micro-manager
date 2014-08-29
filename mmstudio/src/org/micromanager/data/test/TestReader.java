@@ -49,6 +49,7 @@ public class TestReader implements Reader {
       if (coordsToImage_.containsKey(coords)) {
          return coordsToImage_.get(coords);
       }
+      ReportingUtils.logError("Snapping new image for " + coords);
 
       MMStudio studio = MMStudio.getInstance();
       try {
