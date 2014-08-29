@@ -92,7 +92,6 @@ public class MMVirtualStack extends ij.VirtualStack {
    public ImageProcessor getProcessor(int flatIndex) {
       // TODO: defaulting to 16-bit grayscale 512x512 images.
       ImageProcessor result = ImageUtils.makeProcessor(ImagePlus.GRAY16, 512, 512, getPixels(flatIndex));
-      ReportingUtils.logError("Processor at " + flatIndex + " is " + result);
       return result;
    }
 
