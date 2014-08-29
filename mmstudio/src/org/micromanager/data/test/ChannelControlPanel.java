@@ -130,7 +130,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       List<Image> images = store_.getImagesMatching(
             new DefaultCoords.Builder().position("channel", channelIndex_).build()
       );
-      ReportingUtils.logError("For channel " + channelIndex_ + " found " + images.size() + " images");
       if (images != null && images.size() > 0) {
          // Found an image for our channel
          bitDepth_ = images.get(0).getMetadata().getBitDepth();
@@ -140,7 +139,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    private void initialize() {
-      ReportingUtils.logError("Initializing " + channelIndex_ + " histogram panel");
       maxIntensity_ = (int) Math.pow(2, bitDepth_) - 1;
       histMax_ = maxIntensity_ + 1;
       binSize_ = histMax_ / NUM_BINS;
@@ -151,7 +149,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    private void initComponents() {
-      ReportingUtils.logError("Channel " + channelIndex_ + " making components");
       fullButton_ = new javax.swing.JButton();
       autoButton_ = new javax.swing.JButton();
       colorPickerLabel_ = new javax.swing.JLabel();
@@ -414,7 +411,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          histMax_ = (int) (Math.pow(2, bits) - 1);
       }
       binSize_ = ((double) (histMax_ + 1)) / ((double) NUM_BINS);
-      ReportingUtils.logError("binSize_ set to " + binSize_);
       histMaxLabel_ = histMax_ + "";
       updateHistogram();
       calcAndDisplayHistAndStats(true);
@@ -716,7 +712,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
     * successfully.
     */
    public void calcAndDisplayHistAndStats(boolean shouldDrawHistogram) {
-      ReportingUtils.logError("Calculating histogram...");
       if (plus_ == null || plus_.getProcessor() == null) {
          ReportingUtils.logError("No image to work with");
          return;
@@ -733,14 +728,12 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             if (processor != null) {
                processor.setRoi(composite_.getRoi());
             }
-            ReportingUtils.logError("Asking for processor at channel " + (channelIndex_ + 1) + " gave " + processor);
          } else {
             MMCompositeImage ci = (MMCompositeImage) composite_;
             int flatIndex = 1 + channelIndex_ + 
                   (composite_.getSlice() - 1) * ci.getNChannelsUnverified() +
                   (composite_.getFrame() - 1) * ci.getNSlicesUnverified() * ci.getNChannelsUnverified();
             processor = composite_.getStack().getProcessor(flatIndex);
-            ReportingUtils.logError("Asking for processor at " + flatIndex + " gave " + processor);
          }
       }
       if (processor == null ) {
@@ -795,7 +788,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       int numBins = (int) Math.min(rawHistogram.length / binSize_, NUM_BINS);
       int[] histogram = new int[NUM_BINS];
       int total = 0;
-      ReportingUtils.logError("Generating histogram data with " + numBins + " bins");
       for (int i = 0; i < numBins; i++) {
          histogram[i] = 0;
          for (int j = 0; j < binSize_; j++) {
@@ -920,7 +912,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    private void applyLUT() {
-      ReportingUtils.logError("Applying LUT to channel " + channelIndex_);
       if (settings_.getShouldSyncChannels() != null &&
             settings_.getShouldSyncChannels()) {
          parent_.applyContrastToAllChannels(contrastMin_, contrastMax_, gamma_);
