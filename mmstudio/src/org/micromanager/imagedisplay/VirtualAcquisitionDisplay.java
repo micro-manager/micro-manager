@@ -33,6 +33,7 @@ import ij.gui.ImageWindow;
 import ij.io.FileInfo;
 import ij.measure.Calibration;
 
+import java.awt.Component;
 import java.awt.MouseInfo;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
@@ -1101,8 +1102,9 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
 
    private void createWindow() {
       makeHistograms();
-      DisplayWindow win = new DisplayWindow(hyperImage_, 
-            (java.awt.Panel) controls_, bus_);
+      HashMap<Component, String> temp = new HashMap<Component, String>();
+      temp.put(controls_, "align center, wrap, growx");
+      DisplayWindow win = new DisplayWindow(hyperImage_, temp, bus_);
       win.setBackground(MMStudio.getInstance().getBackgroundColor());
       MMStudio.getInstance().addMMBackgroundListener(win);
       bus_.register(win);
