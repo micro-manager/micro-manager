@@ -25,6 +25,8 @@ import javax.swing.SwingUtilities;
 
 import mmcorej.CMMCore;
 
+import net.miginfocom.swing.MigLayout;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -58,8 +60,7 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class ChannelControlPanel extends JPanel implements CursorListener {
 
-   private static final Dimension CONTROLS_SIZE = new Dimension(130, 50);
-   public static final Dimension MINIMUM_SIZE = new Dimension(400, CONTROLS_SIZE.height);
+   public static final Dimension CONTROLS_SIZE = new Dimension(80, 80);
    
    private static final int NUM_BINS = 256;
    private final int channelIndex_;
@@ -84,7 +85,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private String histMaxLabel_;
    private int histMax_;
    private JPanel controls_;
-   private JPanel controlsHolderPanel_;
    private int contrastMin_ = -1;
    private int contrastMax_ = -1;
    private double gamma_ = 1;
@@ -214,10 +214,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       });
 
       histogramPanelHolder_.setToolTipText("Adjust the brightness and contrast by dragging triangles at top and bottom. Change the gamma by dragging the curve. (These controls only change display, and do not edit the image data.)");
-      histogramPanelHolder_.setAlignmentX(0.3F);
-      histogramPanelHolder_.setPreferredSize(new java.awt.Dimension(0, 100));
-      histogramPanelHolder_.setLayout(new BorderLayout());
-
+      histogramPanelHolder_.setPreferredSize(new java.awt.Dimension(0, 50));
+      histogramPanelHolder_.setLayout(new MigLayout("insets 0, fill"));
 
       minMaxLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       minMaxLabel_.setText("Min:   Max:");
@@ -262,110 +260,33 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
       });
 
-      
-      
-      this.setMinimumSize(MINIMUM_SIZE);
-      this.setPreferredSize(MINIMUM_SIZE);
-      
-      hp_ = addHistogramPanel();
+      hp_ = makeHistogramPanel();
+      histogramPanelHolder_.add(hp_, "grow");
 
-      this.setLayout(new BorderLayout());     
-      controlsHolderPanel_ = new JPanel(new BorderLayout());    
-      controlsHolderPanel_.setPreferredSize(CONTROLS_SIZE);
-      
-      controls_ = new JPanel();
-      this.add(controlsHolderPanel_, BorderLayout.LINE_START);
-      this.add(histogramPanelHolder_, BorderLayout.CENTER);
+      setLayout(new MigLayout("debug, insets 0, fill"));
 
-      controlsHolderPanel_.add(controls_, BorderLayout.PAGE_START);
-      GridBagLayout gbl = new GridBagLayout();
-      controls_.setLayout(gbl);
-      
+      controls_ = new JPanel(new MigLayout("debug, insets 0"));
+      add(controls_, "growy");
+      add(histogramPanelHolder_, "grow");
 
-      JLabel histRangeLabel = new JLabel("Hist. range:");
-      histRangeLabel.setFont(new Font("Lucida Grande", 0, 11));
+      controls_.add(channelNameCheckbox_);
 
-      GridBagConstraints gbc = new GridBagConstraints();
-      gbc.gridx = 0;
-      gbc.gridy = 0;
-      gbc.gridwidth = 5;
-      gbc.weightx = 1;
-      gbc.weighty = 1;
-      gbc.anchor = GridBagConstraints.LINE_START;
-      gbc.fill = GridBagConstraints.HORIZONTAL;
-      controls_.add(channelNameCheckbox_, gbc);      
-      
-      fullButton_.setPreferredSize(new Dimension(45, 20));
+      fullButton_.setPreferredSize(new Dimension(45, 20));      
+      controls_.add(fullButton_);
+
       autoButton_.setPreferredSize(new Dimension(45, 20));
+      controls_.add(autoButton_);
+
       colorPickerLabel_.setPreferredSize(new Dimension(18,18));
-      FlowLayout flow = new FlowLayout();
-      flow.setHgap(4);
-      flow.setVgap(0);
-      JPanel line2 = new JPanel(flow);
-      line2.setPreferredSize(CONTROLS_SIZE);
-      line2.add(fullButton_);
-      line2.add(autoButton_);
-      line2.add(colorPickerLabel_);
-      line2.setPreferredSize(new Dimension(CONTROLS_SIZE.width,20));
-      
-      
-      gbc = new GridBagConstraints();
-      gbc.gridx = 0;
-      gbc.gridy = 1;
-      gbc.weightx = 1;
-      gbc.weighty = 1;
-      gbc.gridwidth = 5;
-      gbc.anchor = GridBagConstraints.LINE_START;
-      controls_.add(line2,gbc);
-      
-      gbc = new GridBagConstraints();
-      gbc.gridx = 0;
-      gbc.gridy = 2;
-      gbc.weightx = 1;
-      gbc.weighty = 1;
-      gbc.gridwidth = 3;
-      gbc.anchor = GridBagConstraints.LINE_START;
-      controls_.add(histRangeLabel, gbc);
+      controls_.add(colorPickerLabel_, "wrap");
 
-      zoomInButton_.setPreferredSize(new Dimension(22, 22));
-      zoomOutButton_.setPreferredSize(new Dimension(22, 22));
-      gbc = new GridBagConstraints();
-      gbc.gridx = 4;
-      gbc.gridy = 2;
-      gbc.weightx = 0;
-      gbc.weighty = 1;
-      gbc.gridwidth = 1;
-      controls_.add(zoomInButton_, gbc);
-
-      gbc = new GridBagConstraints();
-      gbc.gridx = 3;
-      gbc.gridy = 2;
-      gbc.weightx = 0;
-      gbc.weighty = 1;
-      gbc.gridwidth = 1;
-      controls_.add(zoomOutButton_, gbc);
-
-      gbc = new GridBagConstraints();
-      gbc.gridx = 0;
-      gbc.gridy = 3;
-      gbc.weightx = 1;
-      gbc.weighty = 1;
-      gbc.gridwidth = 5;
-      gbc.anchor = GridBagConstraints.LINE_START;
-      gbc.fill = GridBagConstraints.HORIZONTAL;
-      controls_.add(histRangeComboBox_, gbc);
-
-      gbc = new GridBagConstraints();
-      gbc.gridx = 0;
-      gbc.gridy = 4;
-      gbc.weightx = 1;
-      gbc.weighty = 1;
-      gbc.gridwidth = 5;
-      gbc.anchor = GridBagConstraints.LINE_START;
-      gbc.fill = GridBagConstraints.HORIZONTAL;
-      controls_.add(minMaxLabel_, gbc);
+      controls_.add(zoomInButton_, "split 2");
+      controls_.add(zoomOutButton_, "span 2");
+      controls_.add(histRangeComboBox_);
+      controls_.add(minMaxLabel_);
 
       controls_.setPreferredSize(controls_.getMinimumSize());
+      validate();
    }
 
    
@@ -583,7 +504,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 //      parent_.setDisplayMode(cache.getDisplayMode());
    }
 
-   private HistogramPanel addHistogramPanel() {
+   private HistogramPanel makeHistogramPanel() {
       HistogramPanel hp = new HistogramPanel() {
 
          @Override
@@ -596,9 +517,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
       };
       hp.setMargins(12, 12);
-      hp.setTraceStyle(true, color_);         
+      hp.setTraceStyle(true, color_);
       hp.setToolTipText("Click and drag curve to adjust gamma");
-      histogramPanelHolder_.add(hp, BorderLayout.CENTER);
       hp.addCursorListener(this);
       return hp;
    }
@@ -620,7 +540,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       }
       calcAndDisplayHistAndStats(true);
       parent_.applyLUTToImage();
-      this.repaint();
+      repaint();
    }
 
    public int getContrastMin() {
