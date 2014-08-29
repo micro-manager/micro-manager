@@ -2930,22 +2930,10 @@ public class MMStudio implements ScriptInterface {
       if (display != null) {
          display.getHistograms().autoscaleAllChannels();
       }
+   }
    
    @Override
    public Datastore createNewDatastore() {
       return new DefaultDatastore();
-   }
-
-   // HACK TODO FORCING COMPILATION OF TEST MODULES.
-   public void loadTestModules() {
-      TestReader reader = new TestReader();
-      try {
-         TestConsumer consumer = new TestConsumer(null);
-      }
-      catch (NullPointerException e) {}
-      try {
-         TestDisplay display = new TestDisplay(null);
-      }
-      catch (NullPointerException e) {}
    }
 }
