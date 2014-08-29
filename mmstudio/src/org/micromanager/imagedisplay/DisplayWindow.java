@@ -78,12 +78,7 @@ public class DisplayWindow extends StackWindow {
    };
 
   
-   /**
-    * @param widgetToLayoutRule Maps components to the MigLayout rules used
-    *        to place them in the display.
-    */
-   public DisplayWindow(final ImagePlus plus, 
-         HashMap<Component, String> widgetToLayoutRule, final EventBus bus) {
+   public DisplayWindow(final ImagePlus plus, final EventBus bus) {
       super(plus);
       plus_ = plus;
       bus_ = bus;
@@ -109,76 +104,17 @@ public class DisplayWindow extends StackWindow {
       if (zSelector != null) {
          remove(zSelector);
       }
-      setupLayout(widgetToLayoutRule);
-
-      // Propagate resizing to the canvas, adjusting the view rectangle.
-      // Note that this occasionally results in the canvas being 2px too
-      // small to show everything, causing the "zoom indicator" overlay to
-      // be drawn semi-pointlessly.
-      canvasPanel_.addComponentListener(new ComponentAdapter() {
-         @Override
-         public void componentResized(ComponentEvent e) {
-            Dimension size = canvasPanel_.getSize();
-            double dataAspect = ((double) plus_.getWidth()) / plus_.getHeight();
-            double viewAspect = ((double) size.width) / size.height;
-            // Derive canvas view width/height based on maximum available space
-            // along the appropriate axis.
-            int viewWidth = size.width;
-            int viewHeight = size.height;
-            if (viewAspect > dataAspect) { // Wide view; Y constrains growth
-               viewWidth = (int) (viewHeight * dataAspect);
-            }
-            else { // Tall view; X constrains growth
-               viewHeight = (int) (viewWidth / dataAspect);
-            }
-            ic.setDrawingSize((int) Math.ceil(viewWidth),
-               (int) Math.ceil(viewHeight));
-            // Reset the "source rect", i.e. the sub-area being viewed when
-            // the image won't fit into the window. Try to maintain the same
-            // center as the current rect has.
-            // Fun fact: there's setSourceRect and setSrcRect, but no
-            // getSourceRect.
-            Rectangle curRect = ic.getSrcRect();
-            int xCenter = curRect.x + (curRect.width / 2);
-            int yCenter = curRect.y + (curRect.height / 2);
-            double curMag = ic.getMagnification();
-            int newWidth = (int) Math.ceil(viewWidth / curMag);
-            int newHeight = (int) Math.ceil(viewHeight / curMag);
-            int xCorner = xCenter - newWidth / 2;
-            int yCorner = yCenter - newHeight / 2;
-            Rectangle viewRect = new Rectangle(xCorner, yCorner, 
-                  newWidth, newHeight);
-            ic.setSourceRect(viewRect);
-            doLayout();
-         }
-      });
-
-      // Add a listener so we can update the histogram when an ROI is drawn,
-      // and to override the title-setting behavior of ImagePlus when the 
-      // magnification tool is used.
-      ic.addMouseListener(new MouseInputAdapter() {
-         @Override
-         public void mousePressed(MouseEvent me) {
-            if (Toolbar.getToolId() == 11) { // zoom tool selected
-               bus.post(new UpdateTitleEvent());
-            }
-         }
-
-         @Override
-         public void mouseReleased(MouseEvent me) {
-            if (plus_ instanceof MMCompositeImage) {
-               ((MMCompositeImage) plus_).updateAndDraw(true);
-            } else {
-               plus_.updateAndDraw();
-            }
-         }
-      });
 
       zoomToPreferredSize();
       pack();
    }
 
-   public void setupLayout(HashMap<Component, String> widgetToLayoutRule) {
+   /**
+    * @param widgets List of Components to add to the display.
+    * @param layoutRules List of MigLayout layout definition strings 
+    *        corresponding to the widgets.
+    */
+   public void setupLayout(List<Component> widgets, List<String> layoutRules) {
       // Override the default layout with our own, so we can do more 
       // customized controls. 
       // This layout is intended to minimize distances between elements.
@@ -237,11 +173,72 @@ public class DisplayWindow extends StackWindow {
       canvasPanel_.setLayout(new MigLayout("insets 0, fill"));
       canvasPanel_.add(ic);
       add(canvasPanel_, "align center, wrap");
-      for (Component component : widgetToLayoutRule.keySet()) {
-         add(component, widgetToLayoutRule.get(component));
+      for (int i = 0; i < widgets.size(); ++i) {
+         add(widgets.get(i), layoutRules.get(i));
       }
 
       pack();
+      validate();
+
+      // Propagate resizing to the canvas, adjusting the view rectangle.
+      canvasPanel_.addComponentListener(new ComponentAdapter() {
+         @Override
+         public void componentResized(ComponentEvent e) {
+            Dimension size = canvasPanel_.getSize();
+            double dataAspect = ((double) plus_.getWidth()) / plus_.getHeight();
+            double viewAspect = ((double) size.width) / size.height;
+            // Derive canvas view width/height based on maximum available space
+            // along the appropriate axis.
+            int viewWidth = size.width;
+            int viewHeight = size.height;
+            if (viewAspect > dataAspect) { // Wide view; Y constrains growth
+               viewWidth = (int) (viewHeight * dataAspect);
+            }
+            else { // Tall view; X constrains growth
+               viewHeight = (int) (viewWidth / dataAspect);
+            }
+            ic.setDrawingSize((int) Math.ceil(viewWidth),
+               (int) Math.ceil(viewHeight));
+            // Reset the "source rect", i.e. the sub-area being viewed when
+            // the image won't fit into the window. Try to maintain the same
+            // center as the current rect has.
+            // Fun fact: there's setSourceRect and setSrcRect, but no
+            // getSourceRect.
+            Rectangle curRect = ic.getSrcRect();
+            int xCenter = curRect.x + (curRect.width / 2);
+            int yCenter = curRect.y + (curRect.height / 2);
+            double curMag = ic.getMagnification();
+            int newWidth = (int) Math.ceil(viewWidth / curMag);
+            int newHeight = (int) Math.ceil(viewHeight / curMag);
+            int xCorner = xCenter - newWidth / 2;
+            int yCorner = yCenter - newHeight / 2;
+            Rectangle viewRect = new Rectangle(xCorner, yCorner, 
+                  newWidth, newHeight);
+            ic.setSourceRect(viewRect);
+            doLayout();
+         }
+      });
+
+      // Add a listener so we can update the histogram when an ROI is drawn,
+      // and to override the title-setting behavior of ImagePlus when the 
+      // magnification tool is used.
+      ic.addMouseListener(new MouseInputAdapter() {
+         @Override
+         public void mousePressed(MouseEvent me) {
+            if (Toolbar.getToolId() == 11) { // zoom tool selected
+               bus_.post(new UpdateTitleEvent());
+            }
+         }
+
+         @Override
+         public void mouseReleased(MouseEvent me) {
+            if (plus_ instanceof MMCompositeImage) {
+               ((MMCompositeImage) plus_).updateAndDraw(true);
+            } else {
+               plus_.updateAndDraw();
+            }
+         }
+      });
    }
 
    /**
