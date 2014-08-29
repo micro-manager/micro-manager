@@ -26,6 +26,8 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.lang.Math;
+import java.util.HashMap;
+import java.util.List;
 import java.util.prefs.Preferences;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -76,9 +78,12 @@ public class DisplayWindow extends StackWindow {
    };
 
   
-
-   public DisplayWindow(final ImagePlus plus, Panel controls, 
-         final EventBus bus) {
+   /**
+    * @param widgetToLayoutRule Maps components to the MigLayout rules used
+    *        to place them in the display.
+    */
+   public DisplayWindow(final ImagePlus plus, 
+         HashMap<Component, String> widgetToLayoutRule, final EventBus bus) {
       super(plus);
       plus_ = plus;
       bus_ = bus;
@@ -104,7 +109,7 @@ public class DisplayWindow extends StackWindow {
       if (zSelector != null) {
          remove(zSelector);
       }
-      setupLayout(controls);
+      setupLayout(widgetToLayoutRule);
 
       // Propagate resizing to the canvas, adjusting the view rectangle.
       // Note that this occasionally results in the canvas being 2px too
@@ -173,7 +178,7 @@ public class DisplayWindow extends StackWindow {
       pack();
    }
 
-   private void setupLayout(Panel controls) {
+   public void setupLayout(HashMap<Component, String> widgetToLayoutRule) {
       // Override the default layout with our own, so we can do more 
       // customized controls. 
       // This layout is intended to minimize distances between elements.
@@ -232,15 +237,11 @@ public class DisplayWindow extends StackWindow {
       canvasPanel_.setLayout(new MigLayout("insets 0, fill"));
       canvasPanel_.add(ic);
       add(canvasPanel_, "align center, wrap");
-      if (controls != null) {
-         add(controls, "align center, wrap, growx");
+      for (Component component : widgetToLayoutRule.keySet()) {
+         add(component, widgetToLayoutRule.get(component));
       }
 
       pack();
-   }
-
-   public void setControls(Panel controls) {
-      setupLayout(controls);
    }
 
    /**
