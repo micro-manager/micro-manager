@@ -50,8 +50,8 @@ public final class HistogramsPanel extends JPanel implements Histograms {
 
       GridLayout layout = new GridLayout(nChannels, 1);
       this.setLayout(layout);
-      Dimension dim = new Dimension(ChannelControlPanel.MINIMUM_SIZE.width,
-              nChannels * ChannelControlPanel.MINIMUM_SIZE.height);
+      Dimension dim = new Dimension(ChannelControlPanel.CONTROLS_SIZE.width,
+              nChannels * ChannelControlPanel.CONTROLS_SIZE.height);
       this.setMinimumSize(dim);
       this.setSize(dim);
       channelPanels_ = new ArrayList<ChannelControlPanel>();
