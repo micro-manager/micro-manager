@@ -58,7 +58,7 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class ChannelControlPanel extends JPanel implements CursorListener {
 
-   private static final Dimension CONTROLS_SIZE = new Dimension(130, 150);
+   private static final Dimension CONTROLS_SIZE = new Dimension(130, 50);
    public static final Dimension MINIMUM_SIZE = new Dimension(400, CONTROLS_SIZE.height);
    
    private static final int NUM_BINS = 256;
