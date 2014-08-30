@@ -453,6 +453,20 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       hideCB_.setSelected(prefs_.getBoolean(panelName_, 
             Properties.Keys.PLUGIN_HIDE_WHILE_ACQUIRING, false));
       savePanel_.add(hideCB_, "left");
+      hideCB_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent ae) {
+            // if viewer is hidden then force saving to disk
+            if (hideCB_.isSelected()) {
+               if (!saveCB_.isSelected()) {
+                  saveCB_.doClick();
+               }
+               saveCB_.setEnabled(false);
+            } else {
+               saveCB_.setEnabled(true);
+            }
+         }
+      });
       
       saveCB_ = new JCheckBox("Save while acquiring");
       saveCB_.setSelected(prefs_.getBoolean(panelName_, 
@@ -655,7 +669,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // 1. camera readout time
       // 2. any extra delay time
       // 3. camera reset
-      // 4. start scan and then slice (0.25 time on either end of the scan the laser is off)
+      // 4. start scan and then turn on laser (the laser is off 0.25ms at the start and end of the scan)
       
       final float scanLaserBufferTime = (float) 0.25;
       final Color foregroundColorOK = Color.BLACK;
@@ -1108,6 +1122,15 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          if (dialogResult == JOptionPane.CANCEL_OPTION) {
             return false;
          }
+      }
+      if (hideCB_.isSelected() && !saveCB_.isSelected()) {
+         gui_.showError("Must save data to disk if viewer is hidden", null);
+         return false;
+      }
+      if (hideCB_.isSelected() && separateTimePointsCB_.isSelected()) {
+         gui_.showError("Cannot have hidden viewer with separate viewers per time point." +
+               "If you really need this pester the developers.", null);
+         return false;
       }
 
       long acqStart = System.currentTimeMillis();
