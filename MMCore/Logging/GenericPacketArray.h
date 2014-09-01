@@ -52,7 +52,7 @@ public:
    { std::copy(first, last, std::back_inserter(packets_)); }
    bool IsEmpty() const { return packets_.empty(); }
    void Clear() { packets_.clear(); }
-   void Swap(GenericPacketArray& other) { std::swap(packets_, other.packets_); }
+   void Swap(GenericPacketArray& other) { packets_.swap(other.packets_); }
    IteratorType Begin() { return packets_.begin(); }
    IteratorType End() { return packets_.end(); }
    ConstIteratorType Begin() const { return packets_.begin(); }
