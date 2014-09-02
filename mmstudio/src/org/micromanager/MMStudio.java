@@ -106,6 +106,8 @@ import org.micromanager.pluginmanagement.PluginManager;
 
 import org.micromanager.positionlist.PositionListDlg;
 
+import org.micromanager.script.ScriptPanel;
+
 import org.micromanager.utils.AutofocusManager;
 import org.micromanager.utils.ContrastSettings;
 import org.micromanager.utils.GUIColors;

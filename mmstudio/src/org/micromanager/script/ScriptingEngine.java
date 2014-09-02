@@ -1,5 +1,6 @@
-package org.micromanager.utils;
+package org.micromanager.script;
 
+import org.micromanager.utils.MMScriptException;
 
 import bsh.Interpreter;
 

@@ -20,7 +20,13 @@
 //INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 
-package org.micromanager;
+package org.micromanager.script;
+
+import bsh.EvalError;
+import bsh.Interpreter;
+import bsh.util.JConsole;
+
+import com.swtdesigner.SwingResourceManager;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -35,17 +41,20 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.prefs.Preferences;
 
 import javax.swing.BoxLayout;
 import javax.swing.InputMap;
 import javax.swing.JButton;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -63,6 +72,7 @@ import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.text.BadLocationException;
 import javax.swing.text.PlainDocument;
 import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
@@ -70,31 +80,22 @@ import javax.swing.text.StyleContext;
 
 import mmcorej.CMMCore;
 
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.utils.ScriptingEngine;
-import org.micromanager.utils.ScriptingGUI;
-import org.micromanager.script.BeanshellEngine;
-import org.micromanager.utils.MMFrame;
-import org.micromanager.utils.MMScriptException;
-
-import bsh.EvalError;
-import bsh.Interpreter;
-import bsh.util.JConsole;
-
-import com.swtdesigner.SwingResourceManager;
-import java.io.BufferedReader;
-import java.util.List;
-import javax.swing.JLabel;
-import javax.swing.text.BadLocationException;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 import org.fife.ui.rtextarea.RTextScrollPane;
 import org.fife.ui.rtextarea.SearchContext;
 import org.fife.ui.rtextarea.SearchEngine;
 import org.fife.ui.rtextarea.SearchResult;
-import org.micromanager.utils.FileDialogs;
+
+import org.micromanager.MMStudio;
+import org.micromanager.PropertyEditor;
+import org.micromanager.api.ScriptInterface;
+import org.micromanager.script.BeanshellEngine;
 import org.micromanager.utils.FileDialogs.FileType;
+import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.HotKeysDialog;
+import org.micromanager.utils.MMFrame;
+import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 import org.micromanager.utils.TooltipTextMaker;
 
