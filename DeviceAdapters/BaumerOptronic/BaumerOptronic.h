@@ -191,12 +191,12 @@ public:
       return cameraState_;
    }
 
-   void* CurrentImage(unsigned short& xDim, unsigned short& yDim,
-         unsigned short& bitsInOneColor, unsigned short& colors, unsigned long& bufSize,
+   void* CurrentImage(unsigned& xDim, unsigned& yDim,
+         int& bitsInOneColor, int& colors, unsigned long& bufSize,
          MMThreadGuard** pImageBufferGuard_a);
 
-   void CurrentImageSize(unsigned short& xDim, unsigned short& yDim,
-         unsigned short& bitsInOneColor, unsigned short& colors, unsigned long& bufSize);
+   void CurrentImageSize(unsigned& xDim, unsigned& yDim,
+         int& bitsInOneColor, int& colors, unsigned long& bufSize);
 
    bool MonoChrome();
    bool Color();
@@ -256,10 +256,10 @@ private:
    void* pColorBuf_; // extra buffer with empty color dithered in for gui
    unsigned long colorBufSize_;
 
-   unsigned short xDim_;
-   unsigned short yDim_;
-   unsigned short bitsInOneColor_;
-   unsigned short nPlanes_;
+   unsigned xDim_;
+   unsigned yDim_;
+   int bitsInOneColor_;
+   int nPlanes_;
    long frameCount_;
 
    int BOInitializationSequence();

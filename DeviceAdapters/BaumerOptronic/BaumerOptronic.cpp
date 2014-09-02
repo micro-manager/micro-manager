@@ -105,24 +105,22 @@ bool mTerminateFlag_g = false;
 bool imageReady_g = false; // (guarded by imageReadyLock_s)
 
 // globals used to store data as reported by the camera
-unsigned short xDim_g;
-unsigned short yDim_g;
-unsigned short bitsInOneColor_g;
+unsigned xDim_g;
+unsigned yDim_g;
+int bitsInOneColor_g;
 
-unsigned short BytesInOneComponent(unsigned short bitsInOneColor)
+inline int BytesInOneComponent(int bitsInOneColor)
 {
-   short ret = (short)(bitsInOneColor + 7);
-   ret = (short)(ret/8);
-   return ret;
+   return (bitsInOneColor + 7) / 8;
 }
 
 
 // BO library sends out two possible RGB formats, both with code BOIMF_RGB
 // if planes = 3 the R, G, and B images are sent out successively
 // if 'canals' = 3, the RGB pixels are interleaved.
-unsigned short nPlanes_g;
-unsigned short nCanals_g;
-unsigned short iCode_g;
+int nPlanes_g;
+int nCanals_g;
+eBOIMGCODEINF iCode_g;
 
 
 // turn acquisition on & off
@@ -387,11 +385,11 @@ void BOImplementationThread::Acquire()
 }
 
 
-void* BOImplementationThread::CurrentImage(unsigned short& xDim, unsigned short& yDim,
-      unsigned short& bitsInOneColor, unsigned short& nColors,
+void* BOImplementationThread::CurrentImage(unsigned& xDim, unsigned& yDim,
+      int& bitsInOneColor, int& nColors,
       unsigned long& bufSize, MMThreadGuard** ppImageBufferGuard)
 {
-   unsigned short nCanals;
+   int nCanals;
    void* bufferToReturn = NULL;
    *ppImageBufferGuard = NULL;
 
@@ -551,7 +549,8 @@ void* BOImplementationThread::CurrentImage(unsigned short& xDim, unsigned short&
 }
 
 
-void BOImplementationThread::CurrentImageSize(unsigned short& xDim, unsigned short& yDim, unsigned short& bitsInOneColor, unsigned short& nColors, unsigned long& bufSize)
+void BOImplementationThread::CurrentImageSize(unsigned& xDim, unsigned& yDim,
+      int& bitsInOneColor, int& nColors, unsigned long& bufSize)
 {
    xDim = xDim_;
    yDim = yDim_;
@@ -764,15 +763,15 @@ void BOImplementationThread::QueryCameraCurrentFormat()
    dcBoType.iSizeof = sizeof(dcBoType);
    dcBoStatus.iSizeof = sizeof(dcBoStatus);
    fxRet = FX_GetCameraInfo(gCameraId[0], &dcBoType, &dcBoStatus);
-   ::iCode_g = static_cast<unsigned short>(dcBoStatus.eCurImgCode.iCode);
+   iCode_g = dcBoStatus.eCurImgCode.iCode;
    if (fxRet != CE_SUCCESS)
    {
       LLogMessage(GetSDKErrorMessage(fxRet));
    }
    else
    {
-      bitsInOneColor_ = static_cast<unsigned short>(dcBoStatus.eCurImgCode.iCanalBits);
-      nPlanes_ = static_cast<unsigned short>(dcBoStatus.eCurImgCode.iPlanes);
+      bitsInOneColor_ = dcBoStatus.eCurImgCode.iCanalBits;
+      nPlanes_ = dcBoStatus.eCurImgCode.iPlanes;
    }
    FindImageFormatInFormatCache(dcBoStatus.eCurImgFormat);
 
@@ -1131,7 +1130,7 @@ tBoImgCode BOImplementationThread::ImageCode()
    dcBoType.iSizeof = sizeof(dcBoType);
    dcBoStatus.iSizeof = sizeof(dcBoStatus);
    int fxRet = FX_GetCameraInfo(gCameraId[0], &dcBoType, &dcBoStatus);
-   ::iCode_g = static_cast<unsigned short>(dcBoStatus.eCurImgCode.iCode);
+   iCode_g = dcBoStatus.eCurImgCode.iCode;
 
    if (1 != fxRet)
    {
@@ -1237,7 +1236,7 @@ void BOImplementationThread::BinSize(const int v)
    }
 }
 
-int BOImplementationThread::SetBitsInOneColor(const int bits)
+int BOImplementationThread::SetBitsInOneColor(int bits)
 {
 
    MMThreadGuard g(stateMachineLock_);
@@ -1397,7 +1396,7 @@ void BOImplementationThread::CancelROI()
 
 
 
-void BOImplementationThread::SetROI(const unsigned int x, const unsigned int y, const unsigned int xSize, const unsigned int ySize)
+void BOImplementationThread::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 {
    RECT returnedRect;
    if ((0 == x) && (0 == y) && (xSize == xDim_) && (ySize == yDim_)) // ROI is being cleared, use full image format
@@ -1426,8 +1425,8 @@ void BOImplementationThread::SetROI(const unsigned int x, const unsigned int y, 
          // Set new image shape same as returnedRect,
          // otherwise circular buffer would not initialized properly
          MMThreadGuard g(BOImplementationThread::imageBufferLock_s);
-         xDim_ = static_cast<unsigned int>(roi_.right - roi_.left);
-         yDim_ = static_cast<unsigned int>(roi_.bottom - roi_.top);
+         xDim_ = roi_.right - roi_.left;
+         yDim_ = roi_.bottom - roi_.top;
          std::ostringstream os;
          os << "Image shape changed by ROI to xDim_: " << xDim_ << " yDim_: " << yDim_ << endl;
          LLogMessage(os.str().c_str());
@@ -1436,15 +1435,15 @@ void BOImplementationThread::SetROI(const unsigned int x, const unsigned int y, 
    QueryCameraCurrentFormat();
 }
 
-void BOImplementationThread::GetROI(unsigned int & x, unsigned int & y, unsigned int & xSize, unsigned int & ySize)
+void BOImplementationThread::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize)
 {
 
    if (partialScanMode_) // subregion was successfully set and is in use
    {
-      x = static_cast<unsigned int>(roi_.left);
-      y = static_cast<unsigned int>(roi_.top);
-      ySize = static_cast<unsigned int>(roi_.bottom - roi_.top);
-      xSize = static_cast<unsigned int>(roi_.right - roi_.left);
+      x = roi_.left;
+      y = roi_.top;
+      ySize = roi_.bottom - roi_.top;
+      xSize = roi_.right - roi_.left;
    }
    else
    {
@@ -1504,12 +1503,12 @@ unsigned int __stdcall mSeqEventHandler(void* pArguments)
          if (gotImage == TRUE)
          {
             MMThreadGuard g(BOImplementationThread::imageBufferLock_s);
-            xDim_g = static_cast<unsigned short>(imgHeader.iSizeX);
-            yDim_g = static_cast<unsigned short>(imgHeader.iSizeY);
-            bitsInOneColor_g = static_cast<unsigned short>(imgHeader.sDataCode.iCanalBits);
-            nPlanes_g = static_cast<unsigned short>(imgHeader.sDataCode.iPlanes);
-            nCanals_g = static_cast<unsigned short>(imgHeader.sDataCode.iCanals);
-            iCode_g = static_cast<unsigned short>(imgHeader.sDataCode.iCode);
+            xDim_g = imgHeader.iSizeX;
+            yDim_g = imgHeader.iSizeY;
+            bitsInOneColor_g = imgHeader.sDataCode.iCanalBits;
+            nPlanes_g = imgHeader.sDataCode.iPlanes;
+            nCanals_g = imgHeader.sDataCode.iCanals;
+            iCode_g = imgHeader.sDataCode.iCode;
 
             {
                MMThreadGuard guard(BOImplementationThread::imageReadyLock_s);
@@ -1876,7 +1875,8 @@ int CBaumerOptronic::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySi
    {
       pWorkerThread_->CancelROI();
 
-      unsigned short x,y,bits,colors;
+      unsigned x, y;
+      int bits, colors;
       unsigned long bufs;
       pWorkerThread_->CurrentImageSize(x,y,bits,colors,bufs);
       pWorkerThread_->SetROI(0, 0, x, y);
@@ -2001,7 +2001,8 @@ int CBaumerOptronic::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
             pWorkerThread_->BinSize(binFactor);
             // needed so that everyone learns about the new image size
             SnapImage();
-            unsigned short x,y,bits,colors;
+            unsigned x, y;
+            int bits, colors;
             unsigned long bufs;
             pWorkerThread_->CurrentImageSize(x,y,bits,colors,bufs);
             img_.Resize(x, y);
@@ -2176,10 +2177,10 @@ int CBaumerOptronic::StartSequenceAcquisition(long numImages, double interval_ms
       return ret;
    }
 
-   unsigned short xDim;
-   unsigned short yDim;
-   unsigned short bitsInOneColor;
-   unsigned short nColors;
+   unsigned xDim;
+   unsigned yDim;
+   int bitsInOneColor;
+   int nColors;
    unsigned long bufSize;
 
    pWorkerThread_->CurrentImageSize(xDim, yDim, bitsInOneColor, nColors, bufSize);
@@ -2228,10 +2229,10 @@ int CBaumerOptronic::StopSequenceAcquisition()
 int CBaumerOptronic::WaitForImageAndCopyToBuffer()
 {
    // Wait for image and put it in img_
-   unsigned short xDim;
-   unsigned short yDim;
-   unsigned short bitsInOneColor;
-   unsigned short nPlanes;
+   unsigned xDim;
+   unsigned yDim;
+   int bitsInOneColor;
+   int nPlanes;
    unsigned long bufSize;
 
    MMThreadGuard* pImageBufferGuard = NULL;
@@ -2241,7 +2242,7 @@ int CBaumerOptronic::WaitForImageAndCopyToBuffer()
    void* pixBuffer = NULL;
    if (p)
    {
-      short bytesInOnePlane = BytesInOneComponent(bitsInOneColor);
+      int bytesInOnePlane = BytesInOneComponent(bitsInOneColor);
 
       img_.Resize(xDim, yDim, nPlanes * bytesInOnePlane);
 
@@ -2312,10 +2313,10 @@ int CBaumerOptronic::ResizeImageBuffer()
    }
 
 
-   unsigned short xDim;
-   unsigned short yDim;
-   unsigned short bitsInOneColor;
-   unsigned short colors;
+   unsigned xDim;
+   unsigned yDim;
+   int bitsInOneColor;
+   int colors;
    unsigned long bufSize;
    pWorkerThread_->CurrentImageSize(xDim, yDim, bitsInOneColor, colors, bufSize);
 
