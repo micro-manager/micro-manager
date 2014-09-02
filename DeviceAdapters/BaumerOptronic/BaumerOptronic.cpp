@@ -179,7 +179,7 @@ BOImplementationThread::BOImplementationThread(CBaumerOptronic* pCamera) :
    numImages_(1),
    acquisitionThread_(NULL),
    imageNotificationEvent_(0),
-   quantizedExposure_(0),
+   exposureUs_(0),
    quantizedGain_(0.),
    bitsInOneColor_(0),
    nPlanes_(0),
@@ -231,7 +231,7 @@ void BOImplementationThread::TriggerMode(const bool v)
    cameraState_ = prevState;
 }
 
-void BOImplementationThread::Exposure(int v)
+void BOImplementationThread::ExposureUs(int v)
 {
    MMThreadGuard g(stateMachineLock_);
    WorkerState prevState(cameraState_);
@@ -244,9 +244,9 @@ void BOImplementationThread::Exposure(int v)
    }
    else
    {
-      quantizedExposure_ = m_Expo.timeNear;
+      exposureUs_ = m_Expo.timeNear;
       LLogMessage(std::string("exposure set to ") +
-            boost::lexical_cast<std::string,int>(quantizedExposure_), true);
+            boost::lexical_cast<std::string>(exposureUs_), true);
    }
    cameraState_ = prevState;
 }
@@ -407,7 +407,9 @@ void* BOImplementationThread::CurrentImage(unsigned short& xDim, unsigned short&
       CDeviceUtils::SleepMs(1);
    }
 
-   MM::TimeoutMs timerOut(CurrentMMTimeMM(), (long)(2 * Exposure() + 5000));
+   unsigned long timeoutMs = 5000UL +
+      2UL * static_cast<unsigned long>(ExposureUs()) / 1000UL;
+   MM::TimeoutMs timerOut(CurrentMMTimeMM(), timeoutMs);
    for (;;) // Wait for the image to become ready
    {
       {
@@ -875,7 +877,7 @@ int BOImplementationThread::svc()
                Acquire();
 
                // complicated way to wait for one exposure time
-               MM::TimeoutMs timerOut(CurrentMMTimeMM(), Exposure() / 1000);
+               MM::TimeoutMs timerOut(CurrentMMTimeMM(), ExposureUs() / 1000);
                for (;;)
                {
                   if (StopSequence == Command())
@@ -2097,14 +2099,14 @@ int CBaumerOptronic::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
    // while the driver returns the value in micro-seconds
    if (eAct == MM::BeforeGet)
    {
-      pProp->Set(static_cast<long>(pWorkerThread_->Exposure()) / 1000);
+      pProp->Set(static_cast<long>(pWorkerThread_->ExposureUs()) / 1000);
    }
    else if (eAct == MM::AfterSet)
    {
-      long val;
-      pProp->Get(val);
-      imageTimeoutMs_g = val + 500;
-      pWorkerThread_->Exposure(static_cast<int>(1000 * val));
+      long millisecs;
+      pProp->Get(millisecs);
+      imageTimeoutMs_g = millisecs + 500;
+      pWorkerThread_->ExposureUs(static_cast<int>(1000 * millisecs));
    }
    return DEVICE_OK;
 }
@@ -2155,7 +2157,7 @@ int CBaumerOptronic::StartSequenceAcquisition(long numImages, double interval_ms
    stopOnOverflow_ = stopOnOverflow;
    pWorkerThread_->Interval(interval_ms);
 
-   LogMessage(" sequence starting, exposure is " + boost::lexical_cast<std::string, int>(pWorkerThread_->Exposure()), true);
+   LogMessage(" sequence starting, exposure (us) is " + boost::lexical_cast<std::string>(pWorkerThread_->ExposureUs()), true);
 
    pWorkerThread_->FrameCount(0);
    pWorkerThread_->SetLength(numImages);
@@ -2197,7 +2199,10 @@ int CBaumerOptronic::StartSequenceAcquisition(long numImages, double interval_ms
 int CBaumerOptronic::StopSequenceAcquisition()
 {
    pWorkerThread_->Command(StopSequence);
-   MM::TimeoutMs timerOut(GetCurrentMMTime(), (long)(pWorkerThread_->Exposure() + 1000));
+
+   unsigned long timeoutMs = 1000UL +
+      static_cast<unsigned long>(pWorkerThread_->ExposureUs()) / 1000UL;
+   MM::TimeoutMs timerOut(GetCurrentMMTime(), timeoutMs);
 
    while (Acquiring == pWorkerThread_->CameraState())
    {

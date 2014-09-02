@@ -144,7 +144,7 @@ public:
    MMThreadLock stateMachineLock_;
 
    void TriggerMode(const bool v);
-   void Exposure(int v);
+   void ExposureUs(int v);
    void Gain(double v);
 
    bool TriggerMode()
@@ -158,10 +158,10 @@ public:
       return quantizedGain_;
    }
 
-   int Exposure()
+   int ExposureUs()
    {
       MMThreadGuard g(stateMachineLock_);
-      return quantizedExposure_; // exposure in micro-seconds
+      return exposureUs_;
    }
 
    void QueryCapabilities();
@@ -267,7 +267,7 @@ private:
    void LLogMessage(const std::string m_a, const bool debugOnly_a = false); // log a message to the mm device
    MM::MMTime CurrentMMTimeMM(); // MMTime as milliseconds
    double quantizedGain_;
-   int quantizedExposure_; // microseconds
+   int exposureUs_;
 
    std::vector<int> binSizes_;
    std::vector<int> pixelDepths_;
