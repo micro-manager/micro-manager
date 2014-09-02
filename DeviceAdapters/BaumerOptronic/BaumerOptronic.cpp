@@ -2099,14 +2099,15 @@ int CBaumerOptronic::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
    // while the driver returns the value in micro-seconds
    if (eAct == MM::BeforeGet)
    {
-      pProp->Set(static_cast<long>(pWorkerThread_->ExposureUs()) / 1000);
+      pProp->Set(static_cast<double>(pWorkerThread_->ExposureUs()) / 1000.0);
    }
    else if (eAct == MM::AfterSet)
    {
-      long millisecs;
+      double millisecs;
       pProp->Get(millisecs);
-      imageTimeoutMs_g = millisecs + 500;
-      pWorkerThread_->ExposureUs(static_cast<int>(1000 * millisecs));
+      imageTimeoutMs_g = static_cast<unsigned long>(millisecs) + 500UL;
+      int exposureUs = static_cast<int>(1000.0 * millisecs + 0.5);
+      pWorkerThread_->ExposureUs(exposureUs);
    }
    return DEVICE_OK;
 }
