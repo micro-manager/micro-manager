@@ -150,7 +150,11 @@ public class SnapLiveManager {
    }
 
    public ImageWindow getSnapLiveWindow() {
-      if (display_ != null) {
+      // The check for getHyperImage() protects us against a rare null-pointer
+      // exception where the display exists, but has not yet finished
+      // initializing. This is possibly caused when the display is unusually
+      // large (e.g. for 2500x2000 displays).
+      if (display_ != null && display_.getHyperImage() != null) {
          return display_.getHyperImage().getWindow();
       }
       return null;
