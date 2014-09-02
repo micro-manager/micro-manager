@@ -212,7 +212,7 @@ public final class HotKeysDialog extends MMDialog {
     public void updateComboBox() {
        // Add Beanshell scripts
        int nrScripts = 0;
-       ArrayList<File> scriptList = org.micromanager.ScriptPanel.getScriptList();
+       ArrayList<File> scriptList = org.micromanager.script.ScriptPanel.getScriptList();
        if (scriptList != null) {
           nrScripts = scriptList.size();
        }
