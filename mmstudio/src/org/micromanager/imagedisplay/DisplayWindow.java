@@ -177,9 +177,6 @@ public class DisplayWindow extends StackWindow {
          add(widgets.get(i), layoutRules.get(i));
       }
 
-      pack();
-      validate();
-
       // Propagate resizing to the canvas, adjusting the view rectangle.
       canvasPanel_.addComponentListener(new ComponentAdapter() {
          @Override
@@ -239,6 +236,7 @@ public class DisplayWindow extends StackWindow {
             }
          }
       });
+      pack();
    }
 
    /**
@@ -251,6 +249,10 @@ public class DisplayWindow extends StackWindow {
     */
    public void paint(Graphics g) {
       drawInfo(g);
+      // Propagate painting to our sub-components.
+      for (Component c : getComponents()) {
+         c.repaint();
+      }
    }
 
    /**

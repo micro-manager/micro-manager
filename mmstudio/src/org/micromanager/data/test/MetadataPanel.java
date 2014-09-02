@@ -128,7 +128,7 @@ public class MetadataPanel extends JPanel {
       imageCommentsTextArea = new JTextArea();
 
       tabbedPane.setFocusable(false);
-      tabbedPane.setPreferredSize(new java.awt.Dimension(400, 640));
+      tabbedPane.setPreferredSize(new java.awt.Dimension(300, 300));
       tabbedPane.addChangeListener(new ChangeListener() {
 
          @Override
@@ -188,10 +188,10 @@ public class MetadataPanel extends JPanel {
       metadataSplitPane.setRightComponent(imageMetadataScrollPane);
 
       summaryMetadataPanel.setMinimumSize(new java.awt.Dimension(0, 100));
-      summaryMetadataPanel.setPreferredSize(new java.awt.Dimension(539, 100));
+      summaryMetadataPanel.setPreferredSize(new java.awt.Dimension(300, 100));
 
       summaryMetadataScrollPane.setMinimumSize(new java.awt.Dimension(0, 0));
-      summaryMetadataScrollPane.setPreferredSize(new java.awt.Dimension(454, 80));
+      summaryMetadataScrollPane.setPreferredSize(new java.awt.Dimension(300, 80));
 
       summaryMetadataTable.setModel(new DefaultTableModel(
               new Object[][]{
@@ -252,7 +252,7 @@ public class MetadataPanel extends JPanel {
 
       CommentsSplitPane.setLeftComponent(summaryCommentsPane);
 
-      imageCommentsPanel.setPreferredSize(new java.awt.Dimension(500, 300));
+      imageCommentsPanel.setPreferredSize(new java.awt.Dimension(300, 200));
 
       imageCommentsLabel.setText("Per-image comments:");
 
