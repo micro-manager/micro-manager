@@ -75,6 +75,7 @@ public class DisplayWindow extends StackWindow {
          final EventBus bus) {
       super(plus);
       plus_ = plus;
+      bus_ = bus;
       initializePrefs();
       int posX = DEFAULTPOSX, posY = DEFAULTPOSY;
       if (displayPrefs_ != null) {
@@ -153,8 +154,6 @@ public class DisplayWindow extends StackWindow {
       add(canvasPanel_, "align center, wrap");
       add(controls, "align center, wrap, growx");
 
-      pack();
-
       // Propagate resizing to the canvas, adjusting the view rectangle.
       canvasPanel_.addComponentListener(new ComponentAdapter() {
          @Override
@@ -215,9 +214,8 @@ public class DisplayWindow extends StackWindow {
          }
       });
 
-      bus_ = bus;
-
       zoomToPreferredSize();
+      pack();
    }
 
    /**
@@ -376,7 +374,18 @@ public class DisplayWindow extends StackWindow {
       Dimension curSize = getSize();
       setSize(curSize.width + 2, curSize.height + 2);
       Dimension canvasSize = ic.getSize();
-      ic.setDrawingSize(canvasSize.width + 2, canvasSize.height + 2);
+      // Ensure that neither dimension gets blown out (e.g. from a 2500x2000
+      // camera display, we could otherwise end up with a 2500x600 image
+      // window). Calculate the expected width/height based on the aspect
+      // ratio and the corresponding other dimension, and go with whichever
+      // is smaller.
+      if (plus_ != null) {
+         double aspect = ((double) plus_.getWidth()) / plus_.getHeight();
+         int targetWidth = (int) (aspect * canvasSize.height) + 2;
+         int targetHeight = (int) (canvasSize.width / aspect) + 2;
+         ic.setDrawingSize(Math.min(targetWidth, canvasSize.width + 2), 
+               Math.min(targetHeight, canvasSize.height + 2));
+      }
       super.pack();
    }
 }
