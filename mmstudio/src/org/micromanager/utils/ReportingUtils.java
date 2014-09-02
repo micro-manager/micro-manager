@@ -159,6 +159,18 @@ public class ReportingUtils {
       }
    }
 
+   /**
+    * As above, but doesn't require a Throwable; a convenience function for
+    * logging when you want to know where you were called from.
+    */
+   public static String getStackTraceAsString() {
+      String result = "";
+      for (StackTraceElement line : java.lang.Thread.currentThread().getStackTrace()) {
+         result += "  at " + line.toString() + "\n";
+      }
+      return result;
+   }
+
    public static void showError(ActionEvent e) {
       throw new UnsupportedOperationException("Not yet implemented");
    }
