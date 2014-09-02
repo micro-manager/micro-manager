@@ -112,6 +112,8 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
    private JTextField immediatePane_;
    private JSplitPane rightSplitPane_;
    private JSplitPane splitPane_;
+   private JButton runButton_;
+   private JButton stopButton_;
    private List<String> immediatePaneHistory_ = new ArrayList<String>(HISTORYSIZE);
    private int immediatePaneHistoryIndex_ = 0;
    private Preferences prefs_;
@@ -566,33 +568,34 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
       
       // -------- top row of buttons -------- //
       
-      final JButton runPaneButton = new JButton();
-      topRightPanel.add(runPaneButton);
-      runPaneButton.setFont(new Font("", Font.PLAIN, 10));
-      runPaneButton.addActionListener(new ActionListener() {
+      runButton_ = new JButton();
+      topRightPanel.add(runButton_);
+      runButton_.setFont(new Font("", Font.PLAIN, 10));
+      runButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
              runPane();
          }
       });
-      runPaneButton.setText("Run");
-      runPaneButton.setPreferredSize(buttonSize);
-      spTopRight.putConstraint(SpringLayout.NORTH, runPaneButton, gap, SpringLayout.NORTH, topRightPanel);
-      spTopRight.putConstraint(SpringLayout.WEST, runPaneButton, gap, SpringLayout.WEST, topRightPanel);
+      runButton_.setText("Run");
+      runButton_.setPreferredSize(buttonSize);
+      spTopRight.putConstraint(SpringLayout.NORTH, runButton_, gap, SpringLayout.NORTH, topRightPanel);
+      spTopRight.putConstraint(SpringLayout.WEST, runButton_, gap, SpringLayout.WEST, topRightPanel);
       
-      final JButton stopButton = new JButton();
-      topRightPanel.add(stopButton);
-      stopButton.setFont(new Font("", Font.PLAIN, 10));
-      stopButton.addActionListener(new ActionListener() {
+      stopButton_ = new JButton();
+      topRightPanel.add(stopButton_);
+      stopButton_.setFont(new Font("", Font.PLAIN, 10));
+      stopButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
-            stopScript();
+            stopScript(stopButton_.getText() == "Interrupt");
          }
       });
-      stopButton.setText("Stop");
-      stopButton.setPreferredSize(buttonSize);
-      spTopRight.putConstraint(SpringLayout.NORTH, stopButton, gap, SpringLayout.NORTH, topRightPanel);
-      spTopRight.putConstraint(SpringLayout.WEST, stopButton, gap, SpringLayout.EAST, runPaneButton);
+      stopButton_.setText("Interrupt");
+      stopButton_.setEnabled(false);
+      stopButton_.setPreferredSize(buttonSize);
+      spTopRight.putConstraint(SpringLayout.NORTH, stopButton_, gap, SpringLayout.NORTH, topRightPanel);
+      spTopRight.putConstraint(SpringLayout.WEST, stopButton_, gap, SpringLayout.EAST, runButton_);
 
       final JButton newButton = new JButton();
       topRightPanel.add(newButton);
@@ -606,7 +609,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
       newButton.setText("New");
       newButton.setPreferredSize(buttonSize);
       spTopRight.putConstraint(SpringLayout.NORTH, newButton, gap, SpringLayout.NORTH, topRightPanel);
-      spTopRight.putConstraint(SpringLayout.WEST, newButton, gap, SpringLayout.EAST, stopButton);
+      spTopRight.putConstraint(SpringLayout.WEST, newButton, gap, SpringLayout.EAST, stopButton_);
 
       final JButton openButton = new JButton();
       topRightPanel.add(openButton);
@@ -749,8 +752,9 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
       getScriptsFromPrefs();
    }
 
-   protected void stopScript() {
-      interp_.stopRequest();
+   protected void stopScript(boolean shouldInterrupt) {
+      interp_.stopRequest(shouldInterrupt);
+      stopButton_.setText("Terminate");
    }
 
    protected class MyDocumentListener implements DocumentListener {
@@ -1014,9 +1018,26 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
          }
       }
       try {
-    
+         runButton_.setEnabled(false);
+         stopButton_.setText("Interrupt");
+         stopButton_.setEnabled(true);
+         
          interp_.evaluateAsync(scriptArea_.getText());
-         //interp_.evaluate(scriptArea_.getText());
+
+         // Spawn a thread that waits for the execution thread to exit and then
+         // updates the buttons as appropriate.
+         Thread sentinel = new Thread(new Runnable() {
+            @Override
+            public void run() {
+               try {
+                  interp_.joinEvalThread();
+               }
+               catch (InterruptedException e) {} // Assume thread is done.
+               runButton_.setEnabled(true);
+               stopButton_.setEnabled(false);
+            }
+         });
+         sentinel.start();
       } catch (MMScriptException e) {
          ReportingUtils.logError(e);
          messageException(e.getMessage(), -1);

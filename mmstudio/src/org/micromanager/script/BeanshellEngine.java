@@ -83,7 +83,12 @@ public class BeanshellEngine implements ScriptingEngine {
       }
    }
 
-   
+   @Override
+   public void joinEvalThread() throws InterruptedException {
+      if (evalThd_.isAlive()) {
+         evalThd_.join();
+      }
+   }
    
    @Override
    public void evaluateAsync(String script) throws MMScriptException {
@@ -105,14 +110,17 @@ public class BeanshellEngine implements ScriptingEngine {
 
    @SuppressWarnings("deprecation")
    @Override
-   public void stopRequest() {
-	  // Thread.stop() is deprecated, but I use it here
-	  // because it is apparently the only way to actually interrupt
-	  // a Thread executing a beanshell interpreter that has
-	  // been created external to it. Thread.interrupt() doesn't work.
-      if (evalThd_.isAlive())    	  
-         evalThd_.stop();
-      stop_ = true;
+   public void stopRequest(boolean shouldInterrupt) {
+      if (evalThd_.isAlive()) {
+         if (shouldInterrupt) {
+            evalThd_.interrupt();
+         }
+         else {
+            // HACK: kill the thread.
+            evalThd_.stop();
+            stop_ = true;
+         }
+      }
    }
 
    @Override
