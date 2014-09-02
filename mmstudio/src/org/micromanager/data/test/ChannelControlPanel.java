@@ -77,7 +77,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private JCheckBox channelNameCheckbox_;
    private JLabel colorPickerLabel_;
    private JButton fullButton_;
-   private JPanel histogramPanelHolder_;
    private JLabel minMaxLabel_;
    private JComboBox histRangeComboBox_;
    private double binSize_;
@@ -153,7 +152,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       autoButton_ = new javax.swing.JButton();
       colorPickerLabel_ = new javax.swing.JLabel();
       channelNameCheckbox_ = new javax.swing.JCheckBox();
-      histogramPanelHolder_ = new javax.swing.JPanel();
       minMaxLabel_ = new javax.swing.JLabel();
 
       setOpaque(false);
@@ -196,7 +194,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       colorPickerLabel_.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
       colorPickerLabel_.setOpaque(true);
       colorPickerLabel_.addMouseListener(new java.awt.event.MouseAdapter() {
-
          @Override
          public void mouseClicked(java.awt.event.MouseEvent evt) {
             colorPickerLabelMouseClicked();
@@ -213,14 +210,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
       });
 
-      histogramPanelHolder_.setToolTipText("Adjust the brightness and contrast by dragging triangles at top and bottom. Change the gamma by dragging the curve. (These controls only change display, and do not edit the image data.)");
-      histogramPanelHolder_.setPreferredSize(new java.awt.Dimension(0, 50));
-      histogramPanelHolder_.setLayout(new MigLayout("insets 0, fill"));
-
       minMaxLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
-      minMaxLabel_.setText("Min:   Max:");
-
-
+      minMaxLabel_.setText("<html>Min: 000000<br>Max: 000000</html>");
 
       histRangeComboBox_ = new JComboBox();
       histRangeComboBox_.setFont(new Font("", Font.PLAIN, 10));
@@ -260,32 +251,37 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
       });
 
+      JPanel histogramPanelHolder = new javax.swing.JPanel();
+      histogramPanelHolder.setToolTipText("Adjust the brightness and contrast by dragging triangles at top and bottom. Change the gamma by dragging the curve. (These controls only change display, and do not edit the image data.)");
+      histogramPanelHolder.setLayout(new MigLayout("insets 0, fill"));
       hp_ = makeHistogramPanel();
-      histogramPanelHolder_.add(hp_, "grow");
+      histogramPanelHolder.add(hp_, "grow");
 
-      setLayout(new MigLayout("debug, insets 0, fill"));
+      // No insets on the top/bottom/right, only on the left.
+      // Ensure that only the histogram column is allowed to grow.
+      setLayout(new MigLayout("fill, insets 0 n 0 0",
+               "[grow 0] [fill, grow 1]"));
 
-      controls_ = new JPanel(new MigLayout("debug, insets 0"));
-      add(controls_, "growy");
-      add(histogramPanelHolder_, "grow");
+      controls_ = new JPanel(new MigLayout("insets 0"));
+      add(controls_);
+      add(histogramPanelHolder, "grow");
 
       controls_.add(channelNameCheckbox_);
 
       fullButton_.setPreferredSize(new Dimension(45, 20));      
-      controls_.add(fullButton_);
+      controls_.add(fullButton_, "split 2");
 
       autoButton_.setPreferredSize(new Dimension(45, 20));
-      controls_.add(autoButton_);
+      controls_.add(autoButton_, "wrap");
 
-      colorPickerLabel_.setPreferredSize(new Dimension(18,18));
-      controls_.add(colorPickerLabel_, "wrap");
+      colorPickerLabel_.setPreferredSize(new Dimension(18, 18));
+      controls_.add(colorPickerLabel_, "split 3");
 
-      controls_.add(zoomInButton_, "split 2");
-      controls_.add(zoomOutButton_, "span 2");
-      controls_.add(histRangeComboBox_);
+      controls_.add(zoomInButton_);
+      controls_.add(zoomOutButton_);
+      controls_.add(histRangeComboBox_, "split 2");
       controls_.add(minMaxLabel_);
 
-      controls_.setPreferredSize(controls_.getMinimumSize());
       validate();
    }
 
@@ -759,8 +755,10 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          hp_.setAutoScale();
          hp_.repaint();
 
-         minMaxLabel_.setText("Min: " + NumberUtils.intToDisplayString( pixelMin_) + "   "
-                 + "Max: " + NumberUtils.intToDisplayString( pixelMax_));
+         minMaxLabel_.setText("<html>Min: " +
+               NumberUtils.intToDisplayString( pixelMin_) + "<br>" +
+               "Max: " + NumberUtils.intToDisplayString( pixelMax_) +
+               "</html>");
       } else {
           hp_.setVisible(false);        
       }
