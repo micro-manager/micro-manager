@@ -128,10 +128,10 @@ public class DisplayWindow extends StackWindow {
             // Component.
             int drawnWidth = (int) (plus_.getWidth() * ic.getMagnification());
             int drawnHeight = (int) (plus_.getHeight() * ic.getMagnification());
-            int widthSlop = rect.width - drawnWidth;
-            int heightSlop = rect.height - drawnHeight;
-            rect.x += widthSlop / 2;
-            rect.y += heightSlop / 2;
+            int widthSlop = (rect.width - drawnWidth) / 2;
+            int heightSlop = (rect.height - drawnHeight) / 2;
+            rect.x += widthSlop;
+            rect.y += heightSlop;
             rect.width = drawnWidth;
             rect.height = drawnHeight;
             // Not sure why we need to do this exactly, except that if we don't
@@ -141,6 +141,17 @@ public class DisplayWindow extends StackWindow {
                g.drawRect(rect.x - 1, rect.y - 1,
                      rect.width + 1, rect.height + 1);
             }
+            // Blank out everything outside of the drawn canvas rect.
+            // If we don't do this, then when resizing the window, parts of
+            // the area outside the canvas will show parts of the old canvas.
+            // 1-pixel fiddle factor to avoid blanking the border we just drew.
+            Dimension size = getSize();
+            g.clearRect(0, 0, size.width, heightSlop - 1);
+            g.clearRect(0, 0, widthSlop - 1, size.height);
+            g.clearRect(widthSlop + drawnWidth + 1, 0,
+                  widthSlop, size.height);
+            g.clearRect(0, heightSlop + drawnHeight + 1,
+                  size.width, heightSlop);
          }
       };
       // HACK: set the minimum size. If we don't do this, then the canvas
