@@ -269,11 +269,11 @@ public class DataAnalysisPanel extends ListeningJPanel {
                   JOptionPane.showMessageDialog(null, cause.getMessage(), 
                           "Data Export Error", JOptionPane.ERROR_MESSAGE);
                } else {
-                  ReportingUtils.showError(ex, (Component) null);
+                  ReportingUtils.showError(ex, (Component) ASIdiSPIM.getFrame());
                }
             }
          } catch (InterruptedException ex) {
-             ReportingUtils.showError(ex, "Interrupted while saving data", null);
+             ReportingUtils.showError(ex, "Interrupted while saving data", ASIdiSPIM.getFrame());
          }
       }
    }

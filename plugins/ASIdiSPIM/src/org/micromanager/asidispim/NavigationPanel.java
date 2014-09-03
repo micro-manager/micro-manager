@@ -247,7 +247,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
                   core_.setSerialPortCommand(port, "\\",  "\r");
                }
             } catch (Exception ex) {
-               gui_.showError("could not halt motion", null);
+               gui_.showError("could not halt motion", ASIdiSPIM.getFrame());
             }
          }
       });
@@ -276,7 +276,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
             try {
                positions_.setPosition(key_, dir_, 0.0);
             } catch (Exception ex) {
-               gui_.showError(ex, (Component) null);
+               gui_.showError(ex, (Component) ASIdiSPIM.getFrame());
             }
          }
 
@@ -349,7 +349,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
                positions_.setPositionRelative(key_, dir_, 
                        ((Double)field_.getValue()) * scaleFactor_);
             } catch (Exception ex) {
-               gui_.showError(ex, (Component) null);
+               gui_.showError(ex, (Component) ASIdiSPIM.getFrame());
             }
          }
 

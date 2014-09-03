@@ -197,13 +197,13 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
    /**
     * This accessor function should really only be used by the ScriptInterface
     * Do not get into the internals of this plugin without relying on
-    * asidiSPIM.api
+    * ASIdiSPIM.api
     * @return 
     */
    public AcquisitionPanel getAcquisitionPanel() {
       return acquisitionPanel_;
    }
-
+   
    // MMListener mandated member functions
    @Override
    public void propertiesChangedAlert() {

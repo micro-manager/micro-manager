@@ -28,6 +28,7 @@ import java.util.List;
 import mmcorej.CMMCore;
 
 import org.micromanager.api.ScriptInterface;
+import org.micromanager.asidispim.ASIdiSPIM;
 import org.micromanager.asidispim.Utils.UpdateFromPropertyListenerInterface;
 import org.micromanager.utils.NumberUtils;
 
@@ -257,7 +258,8 @@ public class Properties {
                return core_.hasProperty(mmDevice, name.toString(propNameSubstitute));
             } catch (Exception ex) {
                gui_.showError(ex, "Couldn't find property " + 
-                     name.toString(propNameSubstitute) + " in device " + mmDevice, null);
+                     name.toString(propNameSubstitute) + " in device " + mmDevice,
+                     ASIdiSPIM.getFrame());
             }
          }
       }
@@ -319,7 +321,7 @@ public class Properties {
             } catch (Exception ex) {
                gui_.showError(ex, "Error setting string property " + 
                      name.toString(propNameSubstitute) + " to " + strVal + " in device "
-                     + mmDevice, null);
+                     + mmDevice, ASIdiSPIM.getFrame());
             }
          }
       }
@@ -390,7 +392,7 @@ public class Properties {
             } catch (Exception ex) {
                gui_.showError(ex, "Error setting string property " + 
                      name.toString(propNameSubstitute) + " to " + val.toString() + " in device " + 
-                     mmDevice, null);
+                     mmDevice, ASIdiSPIM.getFrame());
             }
          }
       }
@@ -460,7 +462,8 @@ public class Properties {
                core_.setProperty(mmDevice, name.toString(propNameSubstitute), intVal);
             } catch (Exception ex) {
                gui_.showError(ex, "Error setting int property " + 
-                     name.toString(propNameSubstitute) + " in device " + mmDevice, null);
+                     name.toString(propNameSubstitute) + " in device " + mmDevice,
+                     ASIdiSPIM.getFrame());
             }
          }
       }
@@ -530,7 +533,8 @@ public class Properties {
                core_.setProperty(mmDevice, name.toString(propNameSubstitute), floatVal);
             } catch (Exception ex) {
                gui_.showError(ex, "Error setting float property " + 
-                     name.toString(propNameSubstitute) + " in device " + mmDevice, null);
+                     name.toString(propNameSubstitute) + " in device " + mmDevice,
+                     ASIdiSPIM.getFrame());
             }
          }
       }
@@ -577,7 +581,8 @@ public class Properties {
       if (device == Devices.Keys.PLUGIN) {
          if (!ignoreError & !prefs_.keyExists(PLUGIN_PREF_NODE, name)) {
             gui_.showError("Could not get property " + 
-                  name.toString(propNameSubstitute) + " from special plugin \"device\"", null);
+                  name.toString(propNameSubstitute) + " from special plugin \"device\"",
+                  ASIdiSPIM.getFrame());
          }
          val = prefs_.getString(PLUGIN_PREF_NODE, name, "");
       } else {
@@ -598,7 +603,8 @@ public class Properties {
                val = core_.getProperty(mmDevice, name.toString(propNameSubstitute));
             } catch (Exception ex) {
                gui_.showError(ex, "Could not get property " + 
-                     name.toString(propNameSubstitute) + " from device " + mmDevice, null);
+                     name.toString(propNameSubstitute) + " from device " + mmDevice,
+                     ASIdiSPIM.getFrame());
             }
          }
       }
@@ -669,7 +675,8 @@ public class Properties {
       if (device == Devices.Keys.PLUGIN) {
          if (!ignoreError & !prefs_.keyExists(PLUGIN_PREF_NODE, name)) {
             gui_.showError("Could not get property " + 
-                  name.toString(propNameSubstitute) + " from special plugin \"device\"", null);
+                  name.toString(propNameSubstitute) + " from special plugin \"device\"",
+                  ASIdiSPIM.getFrame());
          }
          val = prefs_.getInt(PLUGIN_PREF_NODE, name, 0);
       }
@@ -683,9 +690,10 @@ public class Properties {
          } catch (ParseException ex) {
             gui_.showError(ex, "Could not parse int value of " + 
                   strVal + " for " + name.toString(propNameSubstitute) + " in device " + 
-                  device.toString(), null);
+                  device.toString(), ASIdiSPIM.getFrame());
          } catch (NullPointerException ex) {
-            gui_.showError(ex, "Null Pointer error in function getPropValueInteger", null);
+            gui_.showError(ex, "Null Pointer error in function getPropValueInteger",
+                  ASIdiSPIM.getFrame());
          }
       }
       return val;
@@ -730,7 +738,8 @@ public class Properties {
      if (device == Devices.Keys.PLUGIN) {
         if (!ignoreError & !prefs_.keyExists(PLUGIN_PREF_NODE, name)) {
            gui_.showError("Could not get property " + 
-                 name.toString(propNameSubstitute) + " from special plugin \"device\"", null);
+                 name.toString(propNameSubstitute) + " from special plugin \"device\"",
+                 ASIdiSPIM.getFrame());
         }
         val = prefs_.getFloat(PLUGIN_PREF_NODE, name, 0);
      }
@@ -744,9 +753,10 @@ public class Properties {
         } catch (ParseException ex) {
            gui_.showError(ex, "Could not parse int value of " + 
                  strVal + " for " + name.toString(propNameSubstitute) + " in device " + 
-                 device.toString(), null);
+                 device.toString(), ASIdiSPIM.getFrame());
         } catch (NullPointerException ex) {
-           gui_.showError(ex, "Null Pointer error in function getPropValueFLoat", null);
+           gui_.showError(ex, "Null Pointer error in function getPropValueFLoat",
+                 ASIdiSPIM.getFrame());
         }
      }
      return val;

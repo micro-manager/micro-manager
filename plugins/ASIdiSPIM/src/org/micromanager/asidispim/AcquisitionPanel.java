@@ -966,19 +966,22 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             Properties.Keys.PLUGIN_OFFSET_PIEZO_SHEET, 0);
       if (MyNumberUtils.floatsEqual(sliceRate, (float) 0.0)) {
          gui_.showError("Rate for slice " + side.toString() + 
-               " cannot be zero. Re-do calibration on Setup tab.", null);
+               " cannot be zero. Re-do calibration on Setup tab.",
+               ASIdiSPIM.getFrame());
          return false;
       }
       if (!devices_.isValidMMDevice(
             Devices.getSideSpecificKey(Devices.Keys.GALVOA, side))) {
-         gui_.showError("Scanner device required; please check Devices tab.", null);
+         gui_.showError("Scanner device required; please check Devices tab.",
+               ASIdiSPIM.getFrame());
             return false;
       }
       if (props_.getPropValueInteger(
             Devices.getSideSpecificKey(Devices.Keys.GALVOA, side), 
             Properties.Keys.SPIM_NUM_REPEATS) != 1) {
          gui_.showError("Number of acquisitions set in plugin. " +
-            "Please change scanner property \"SPIMNumRepeats\" to 1.", null);
+            "Please change scanner property \"SPIMNumRepeats\" to 1.",
+            ASIdiSPIM.getFrame());
          return false;
       }
       float sliceAmplitude = piezoAmplitude / sliceRate;
@@ -1020,7 +1023,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     */
    public boolean runAcquisition() {
       if (gui_.isAcquisitionRunning()) {
-         gui_.showError("An acquisition is already running", null);
+         gui_.showError("An acquisition is already running",
+               ASIdiSPIM.getFrame());
          return false;
       }
       
@@ -1055,19 +1059,22 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       int nrSides = getNumSides();  // TODO: multi-channel in sense of excitation color, etc.
       if (firstCamera == null) {
          gui_.showError("Please select a valid camera for the first " +
-               "imaging path on the Devices Panel", null);
+               "imaging path on the Devices Panel",
+               ASIdiSPIM.getFrame());
          return false;
       }
       if (nrSides == 2 && secondCamera == null) {
          gui_.showError("Please select a valid camera for the second " +
-               "imaging path on the Devices Panel.", null);
+               "imaging path on the Devices Panel.",
+               ASIdiSPIM.getFrame());
          return false;
       }
       
       // make sure slice timings are up to date 
       if (!advancedSliceTimingCB_.isSelected()) {
          if(!isSliceTimingUpToDate()) {
-            gui_.showError("Slice timing is not up to date, please recalculate.", null);
+            gui_.showError("Slice timing is not up to date, please recalculate.", 
+                  ASIdiSPIM.getFrame());
             return false;
          }
       }
@@ -1103,14 +1110,16 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       if (exposureTime + cameraReadoutTime > lineScanTime) {
          gui_.showError("Exposure time is longer than time needed for a line scan.\n" +
                  "This will result in dropped frames.\n" +
-                 "Please change input", null);
+                 "Please change input",
+                 ASIdiSPIM.getFrame());
          return false;
       }
       double volumeDuration = computeActualVolumeDuration();
       if (getNumTimepoints() > 1 && 
             volumeDuration > timepointsIntervalMs) {
          gui_.showError("Time point interval shorter than" +
-                 " the time to collect a single volume.\n", null);
+                 " the time to collect a single volume.\n",
+                 ASIdiSPIM.getFrame());
          return false;
       }
       if (nrRepeats > 10 && separateTimePointsCB_.isSelected()) {
@@ -1124,12 +1133,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
       }
       if (hideCB_.isSelected() && !saveCB_.isSelected()) {
-         gui_.showError("Must save data to disk if viewer is hidden", null);
+         gui_.showError("Must save data to disk if viewer is hidden",
+               ASIdiSPIM.getFrame());
          return false;
       }
       if (hideCB_.isSelected() && separateTimePointsCB_.isSelected()) {
          gui_.showError("Cannot have hidden viewer with separate viewers per time point." +
-               "If you really need this pester the developers.", null);
+               "Pester the developers if you really need this.",
+               ASIdiSPIM.getFrame());
          return false;
       }
 
@@ -1141,7 +1152,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             core_.popNextImage();
          }
       } catch (Exception ex) {
-         gui_.showError(ex, "Error emptying out the circular buffer", null);
+         gui_.showError(ex, "Error emptying out the circular buffer",
+               ASIdiSPIM.getFrame());
          return false;
       }
       
@@ -1332,7 +1344,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      }
                   }
                } catch (InterruptedException iex) {
-                  gui_.showError(iex, (Component) null);
+                  gui_.showError(iex, (Component) ASIdiSPIM.getFrame());
                }
 
                if (core_.isSequenceRunning(firstCamera)) {
@@ -1350,9 +1362,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                }
             }
          } catch (MMScriptException mex) {
-            gui_.showError(mex, (Component) null);
+            gui_.showError(mex, (Component) ASIdiSPIM.getFrame());
          } catch (Exception ex) {
-            gui_.showError(ex, (Component) null);
+            gui_.showError(ex, (Component) ASIdiSPIM.getFrame());
          } finally {  // end of this acquisition (could be about to restart if separate viewers
             try {
                if (core_.isSequenceRunning(firstCamera)) {
@@ -1376,7 +1388,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                
             } catch (Exception ex) {
                // exception while stopping sequence acquisition, not sure what to do...
-               gui_.showError(ex, "Problem while finsihing acquisition", null);
+               gui_.showError(ex, "Problem while finsihing acquisition", ASIdiSPIM.getFrame());
             }
          }
 

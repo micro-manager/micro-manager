@@ -28,6 +28,7 @@ import java.util.HashMap;
 import mmcorej.CMMCore;
 
 import org.micromanager.api.ScriptInterface;
+import org.micromanager.asidispim.ASIdiSPIM;
 import org.micromanager.utils.NumberUtils;
 
 /**
@@ -142,7 +143,7 @@ public class Positions {
             return pt.y;
          }
       } catch (Exception ex) {
-         gui_.showError(ex, (Component) null);
+         gui_.showError(ex, (Component) ASIdiSPIM.getFrame());
       }
       return 0;
    }
@@ -222,7 +223,7 @@ public class Positions {
             }
          }
       } catch (Exception ex) {
-         gui_.showError(ex, (Component) null);
+         gui_.showError(ex, (Component) ASIdiSPIM.getFrame());
       }
    }
    
@@ -252,7 +253,7 @@ public class Positions {
             }
          }
       } catch (Exception ex) {
-         gui_.showError(ex, (Component) null);
+         gui_.showError(ex, (Component) ASIdiSPIM.getFrame());
       }
    }
    
@@ -286,7 +287,7 @@ public class Positions {
             break;
          }
       } catch (Exception ex) {
-         gui_.showError(ex, (Component) null);
+         gui_.showError(ex, (Component) ASIdiSPIM.getFrame());
       }
    }
 

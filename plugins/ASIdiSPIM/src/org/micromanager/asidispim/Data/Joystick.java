@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.micromanager.api.ScriptInterface;
+import org.micromanager.asidispim.ASIdiSPIM;
 
 // TODO implement fast axis reverse checkbox (may need device adapter change and possibly even firmware-level change)
 
@@ -207,7 +208,7 @@ public class Joystick {
             }
          }
       } catch (Exception ex) {
-         gui_.showError("Problem clearing all joysticks", null);
+         gui_.showError("Problem clearing all joysticks", ASIdiSPIM.getFrame());
       }
    }
    
@@ -236,7 +237,7 @@ public class Joystick {
             }
          }
       } catch (Exception ex) {
-         gui_.showError("Problem clearing joystick", null);
+         gui_.showError("Problem clearing joystick", ASIdiSPIM.getFrame());
       }
    }
       
@@ -273,7 +274,7 @@ public class Joystick {
          }
       } catch (Exception ex) {
          gui_.showError("Problem unsetting joysticks for " + jkey.toString() +
-               " in device " + dev.toString(), null);
+               " in device " + dev.toString(), ASIdiSPIM.getFrame());
       }
    }
    
@@ -310,7 +311,7 @@ public class Joystick {
          }
       } catch (Exception ex) {
          gui_.showError("Problem setting joysticks for " + jkey.toString() +
-               " in device " + dev.toString(), null);
+               " in device " + dev.toString(), ASIdiSPIM.getFrame());
       }
    }
   

@@ -23,6 +23,7 @@ package org.micromanager.asidispim;
 
 import java.awt.Color;
 import java.awt.event.WindowEvent;
+
 import org.micromanager.api.MMPlugin;
 import org.micromanager.api.ScriptInterface;
 
@@ -59,7 +60,7 @@ public class ASIdiSPIM implements MMPlugin {
    public static ASIdiSPIMFrame getFrame() {
       return myFrame_;
    }
-
+   
    /**
     * The main app calls this method to remove the module window
     */

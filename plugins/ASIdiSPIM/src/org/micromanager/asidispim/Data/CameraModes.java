@@ -155,7 +155,8 @@ public class CameraModes {
       private boolean cameraSupportsOverlap(Devices.Keys devKey) {
          Devices.Libraries devLib = devices_.getMMDeviceLibrary(devKey);
          return (devLib == Devices.Libraries.HAMCAM ||
-               devLib == Devices.Libraries.ANDORCAM);
+               devLib == Devices.Libraries.ANDORCAM ||
+               devLib == Devices.Libraries.DEMOCAM);
       }
       
       private boolean cameraInvalid(Devices.Keys devKey) {

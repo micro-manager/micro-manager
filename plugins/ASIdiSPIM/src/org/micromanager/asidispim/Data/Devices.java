@@ -35,6 +35,7 @@ import mmcorej.DeviceType;
 import mmcorej.StrVector;
 
 import org.micromanager.api.ScriptInterface;
+import org.micromanager.asidispim.ASIdiSPIM;
 import org.micromanager.asidispim.Utils.DevicesListenerInterface;
 
 
@@ -313,7 +314,7 @@ public class Devices {
                         + core_.getProperty(mmDevice, "AxisLetterY");
                }
             } catch (Exception ex) {
-               gui_.showError(ex, (Component) null);
+               gui_.showError(ex, (Component) ASIdiSPIM.getFrame());
             }
          }
       }
