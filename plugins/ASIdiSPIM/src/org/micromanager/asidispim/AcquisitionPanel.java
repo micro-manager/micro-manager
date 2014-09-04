@@ -129,7 +129,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final JTextField nameField_;
    private final JLabel acquisitionStatusLabel_;
    private int numTimePointsDone_;
-   private AtomicBoolean stop_ = new AtomicBoolean(false);
+   private AtomicBoolean stop_ = new AtomicBoolean(false);  // true if we should stop acquisition
    private final StagePositionUpdater stagePosUpdater_;
    private final JSpinner stepSize_;
    private final JLabel desiredSlicePeriodLabel_;
@@ -549,7 +549,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             updateStartButton();
          }
       });
-      updateStartButton();
+      updateStartButton();  // do once to start, isSelected() will be false
 
       acquisitionStatusLabel_ = new JLabel("");
       updateAcquisitionStatusNone();
@@ -599,7 +599,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             }
          }            
          acqThread acqt = new acqThread("diSPIM Acquisition");
-         acqt.start();          
+         acqt.start(); 
       }
       buttonStart_.setText(started ? "Stop!" : "Start!");
       buttonStart_.setBackground(started ? Color.red : Color.green);
@@ -1022,6 +1022,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * @return
     */
    public boolean runAcquisition() {
+      
       if (gui_.isAcquisitionRunning()) {
          gui_.showError("An acquisition is already running",
                ASIdiSPIM.getFrame());
@@ -1033,18 +1034,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          gui_.enableLiveMode(false);
       }
       
-      boolean sideActiveA, sideActiveB;
-      if (isTwoSided()) {
-         sideActiveA = true;
-         sideActiveB = true;
-      } else if (isFirstSideA()) {
-         sideActiveA = true;
-         sideActiveB = false;
-      } else {
-         sideActiveA = false;
-         sideActiveB = true;
-      }
-
       // get MM device names for first/second cameras to acquire
       String firstCamera, secondCamera;
       if (isFirstSideA()) {
@@ -1053,6 +1042,21 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       } else {
          firstCamera = devices_.getMMDevice(Devices.Keys.CAMERAB);
          secondCamera = devices_.getMMDevice(Devices.Keys.CAMERAA);
+      }
+      
+      boolean sideActiveA, sideActiveB;
+      if (isTwoSided()) {
+         sideActiveA = true;
+         sideActiveB = true;
+      } else {
+         secondCamera = null;
+         if (isFirstSideA()) {
+            sideActiveA = true;
+            sideActiveB = false;
+         } else {
+            sideActiveA = false;
+            sideActiveB = true;
+         }
       }
       
       // make sure we have cameras selected
@@ -1144,8 +1148,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          return false;
       }
 
-      long acqStart = System.currentTimeMillis();
-
       try {
          // empty out circular buffer
          while (core_.getRemainingImageCount() > 0) {
@@ -1184,6 +1186,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             return false;
          }
       }
+
+      long acqStart = System.currentTimeMillis();
 
       // do not want to return from within this loop
       for (int tp = 0; tp < nrRepeats && !stop_.get(); tp++) {
@@ -1299,12 +1303,16 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                long start = System.currentTimeMillis();
                long now = start;
                long timeout = 10000;
-               while (core_.getRemainingImageCount() == 0 && (now - start < timeout)) {
+               while (core_.getRemainingImageCount() == 0 && (now - start < timeout)
+                     && !stop_.get()) {
                   now = System.currentTimeMillis();
                   Thread.sleep(5);
                }
                if (now - start >= timeout) {
                   throw new Exception("Camera did not send image within a reasonable time");
+               }
+               if (stop_.get()) {
+                  throw new IllegalMonitorStateException("User stopped the acquisition");
                }
 
                // run the loop that takes images from the cameras and puts them 
@@ -1361,6 +1369,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   }
                }
             }
+         } catch (IllegalMonitorStateException ex) {
+            // do nothing, the acquisition was simply halted before the camera sent images 
          } catch (MMScriptException mex) {
             gui_.showError(mex, (Component) ASIdiSPIM.getFrame());
          } catch (Exception ex) {
