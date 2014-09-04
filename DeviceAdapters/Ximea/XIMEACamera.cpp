@@ -166,7 +166,7 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
 
 	for(DWORD i = 0; i < numDevices; i++){
 		if (strcmp(deviceName, avail_devs[i].c_str()) == 0)
-			return new XIMEACamera();
+			return new XIMEACamera(deviceName);
 	}
 
 	// ...supplied name not recognized
@@ -192,7 +192,8 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 * the constructor. We should do as little as possible in the constructor and
 * perform most of the initialization in the Initialize() method.
 */
-XIMEACamera::XIMEACamera() :
+XIMEACamera::XIMEACamera(const char* name) :
+	name_(name),
 	handle (0),
 	binning_ (1),
 	acqTout_(0),
@@ -235,8 +236,9 @@ XIMEACamera::~XIMEACamera()
 */
 void XIMEACamera::GetName(char* name) const
 {
-	// We just return the name we use for referring to this device adapter.
-	xiGetParamString( handle, XI_PRM_DEVICE_NAME, name, 256);  
+	// Do not use xiGetParamString(handle, XI_PRM_DEVICE_NAME, ...) here,
+	// because we may be called before Initialize().
+	CDeviceUtils::CopyLimitedString(name, name_.c_str());
 }
 
 /***********************************************************************

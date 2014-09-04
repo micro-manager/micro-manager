@@ -37,7 +37,7 @@ class MySequenceThread;
 class XIMEACamera : public CCameraBase<XIMEACamera>  
 {
 public:
-   XIMEACamera();
+   XIMEACamera(const char* name);
    ~XIMEACamera();
   
    //////////////////////////////////////////////////////////////
@@ -119,6 +119,7 @@ public:
    int OnHousTemp(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
+	const std::string name_;
 	void* handle;
 	XI_IMG image;
 	int binning_;
