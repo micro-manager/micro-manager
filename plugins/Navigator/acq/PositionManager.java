@@ -111,7 +111,8 @@ public class PositionManager {
             node = node.parent;
          }
          return node.positionIndex;
-      } catch (JSONException e) {
+      } catch (Exception e) {
+         e.printStackTrace();
          ReportingUtils.showError("Couldnt read position list correctly");
          return 0;
       }
@@ -272,20 +273,28 @@ public class PositionManager {
       }
       return fullResNodes;
    }
-
-   private void updateLowerResolutionNodes() throws JSONException {
+   
+   private void updateLowerResolutionNodes() {
       int gridLength = Math.max(maxRow_ - minRow_ + 1, maxCol_ - minCol_ + 1);
-      int lowestResLevel = (int) Math.ceil(Math.log(gridLength) / Math.log(2));
+      //check for lower resolution as a result of user zoom
+      int lowestResLevel = (int) Math.max(positionNodes_.keySet().size() - 1, Math.ceil(Math.log(gridLength) / Math.log(2)));      
+      updateLowerResolutionNodes(lowestResLevel);
+   }
 
-      //Go through all base resolution positions and make a list of their multiResNodes, creating nodes when neccessary
-      MultiResPositionNode[] fullResNodes = getFullResNodes();
-      for (MultiResPositionNode node : fullResNodes) {
-         //recursively link all nodes to their parents to ensure that correct
-         //position indices and grid/col indices are know for all needed res levels
-         linkToParentNodes(node, lowestResLevel);
+   public void updateLowerResolutionNodes(int lowestResLevel) {
+      try {
+         //Go through all base resolution positions and make a list of their multiResNodes, creating nodes when neccessary
+         MultiResPositionNode[] fullResNodes = getFullResNodes();
+         for (MultiResPositionNode node : fullResNodes) {
+            //recursively link all nodes to their parents to ensure that correct
+            //position indices and grid/col indices are know for all needed res levels
+            linkToParentNodes(node, lowestResLevel);
+         }
+      } catch (JSONException e) {
+         ReportingUtils.showError("Problem reading position metadata");
       }
    }
-   
+
    //Lower res levels are actually higher numbers: 0 is full res, 1 is factor of two, 2 facotr of 4, etc
    //lowestResLevel tells you the lowest resolution data is being downsampled to
    private void linkToParentNodes(MultiResPositionNode node, int lowestResLevel) {
@@ -323,9 +332,9 @@ public class PositionManager {
          node.parent = parentNode;
          parentNode.child = node;
       }
-      linkToParentNodes(node.parent, lowestResLevel); //keep traveling up the parent chanin
+      linkToParentNodes(node.parent, lowestResLevel); //keep traveling up the parent chain
    }
-   
+
    private MultiResPositionNode findExisitngNode(int resLevel, long gridRow, long gridCol ) {
       MultiResPositionNode nodeToFind = new MultiResPositionNode(resLevel, gridRow, gridCol);
       if (positionNodes_.containsKey(resLevel) && positionNodes_.get(resLevel).contains(nodeToFind)) {
@@ -388,9 +397,9 @@ public class PositionManager {
          transform.transform(new Point2D.Double(dxPix, dyPix), stagePos);  
          return stagePos;
       } catch (JSONException ex) {
-         ReportingUtils.showError("Problem with current position= metadata");
+         ReportingUtils.showError("Problem with current position metadata");
          return null;
-      }
+}
       
    }
    

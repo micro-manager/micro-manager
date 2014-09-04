@@ -12,6 +12,9 @@ import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.micromanager.api.MMTags;
 import org.micromanager.utils.ReportingUtils;
+import surfacesandregions.RegionManager;
+import surfacesandregions.SurfaceManager;
+import surfacesandregions.SurfaceOrRegionManager;
 
 /**
  *
@@ -24,10 +27,14 @@ public class CustomAcqEngine {
    private String xyStageName_, zName_;
    private Thread acquisitionThread_;
    protected BlockingQueue<AcquisitionEvent> events_;
+   private SurfaceManager surfaceManager_;
+   private RegionManager regionManager_;
 
 
-   public CustomAcqEngine(CMMCore core) {
+   public CustomAcqEngine(CMMCore core, RegionManager rManager, SurfaceManager sManager) {
       core_ = core;
+      regionManager_ = rManager;
+      surfaceManager_ = sManager;
       updateDeviceNamesForAcquisition();
       events_ = new LinkedBlockingQueue<AcquisitionEvent>();
       //create and start acquisition thread
@@ -50,6 +57,14 @@ public class CustomAcqEngine {
          }
       }, "Explorer acquisition thread");
       acquisitionThread_.start();
+   }
+   
+   public SurfaceManager getSurfaceManager() {
+      return surfaceManager_;
+   }
+   
+   public RegionManager getRegionManager() {
+      return regionManager_;
    }
 
    private void updateDeviceNamesForAcquisition() {

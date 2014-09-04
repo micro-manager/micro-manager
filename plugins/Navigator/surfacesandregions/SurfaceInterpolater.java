@@ -2,28 +2,17 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package acq;
+package surfacesandregions;
 
 import edu.mines.jtk.dsp.Sampling;
-import edu.mines.jtk.interp.BlendedGridder2;
-import edu.mines.jtk.interp.DiscreteSibsonGridder2;
 import edu.mines.jtk.interp.Gridder2;
-import edu.mines.jtk.interp.NearestGridder2;
-import edu.mines.jtk.interp.RadialGridder2;
-import edu.mines.jtk.interp.RadialInterpolator2;
-import edu.mines.jtk.interp.SibsonGridder2;
 import edu.mines.jtk.interp.SplinesGridder2;
-import java.awt.geom.Point2D;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.LinkedList;
 import javax.vecmath.Point3d;
-import org.apache.commons.math3.exception.ConvergenceException;
-import org.apache.commons.math3.exception.NullArgumentException;
 import org.apache.commons.math3.geometry.euclidean.twod.Euclidean2D;
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
 import org.apache.commons.math3.geometry.euclidean.twod.hull.ConvexHull2D;
-import org.apache.commons.math3.geometry.euclidean.twod.hull.ConvexHullGenerator2D;
 import org.apache.commons.math3.geometry.euclidean.twod.hull.MonotoneChain;
 import org.apache.commons.math3.geometry.partitioning.Region;
 
@@ -73,18 +62,48 @@ public class SurfaceInterpolater {
       return convexHullRegion_.checkPoint(new Vector2D(x,y)) != Region.Location.OUTSIDE;
    }
    
+   /**
+    * delete closest point within XY tolerance
+    * @param x
+    * @param y
+    * @param tolerance radius in stage space
+    */
+   public void deleteClosestPoint(double x, double y, double tolerance) {
+      double minDistance = tolerance + 1;
+      int minDistanceIndex = -1;
+      for (int i = 0; i < points_.size(); i++) {
+         double distance = Math.sqrt( (x-points_.get(i).x)*(x-points_.get(i).x) + (y-points_.get(i).y)*(y-points_.get(i).y) );
+         if (distance < minDistance) {
+            minDistance = distance;
+            minDistanceIndex = i;
+         }         
+      }
+      //delete if within tolerance
+      if (minDistance < tolerance) {
+         points_.remove(minDistanceIndex);
+         xyPoints_.remove(minDistanceIndex);
+      }
+      updateConvexHullAndInterpolator();
+   }
+   
    public void addPoint(double x, double y, double z) {
       points_.add(new Point3d(x,y,z)); //for interpolation
       xyPoints_.add(new Vector2D(x,y)); //for convex hull
-      //calc convex hull 
+      updateConvexHullAndInterpolator(); 
+   }
+   
+   private void updateConvexHullAndInterpolator() {
       if (points_.size() > 2) {
          ConvexHull2D hull = mChain_.generate(xyPoints_);
          convexHullRegion_ = hull.createRegion();
          convexHullVertices_ = hull.getVertices();
+      } else {
+         convexHullRegion_ = null;
+         convexHullVertices_ = null;
       }
       setInterpolatorData();
    }
-   
+
    public LinkedList<Point3d> getPoints() {
       return points_;
    }

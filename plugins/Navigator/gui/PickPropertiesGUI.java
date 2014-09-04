@@ -4,12 +4,11 @@
  */
 package gui;
 
+import java.awt.Dialog;
+import java.awt.Window;
 import tables.PropertyChooserTableModel;
-import tables.PropertyControlTableModel;
 import java.util.prefs.Preferences;
-import javax.swing.JFrame;
-import javax.swing.JTable;
-import org.micromanager.api.ScriptInterface;
+import javax.swing.JDialog;
 
 /**
  *
@@ -27,7 +26,6 @@ public class PickPropertiesGUI extends javax.swing.JFrame {
       propChooserModel_ = new PropertyChooserTableModel(prefs);
       initComponents();
       this.setVisible(true);
-      this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
       //set column sizes
       propertiesTable_.getColumnModel().getColumn(0).setMaxWidth(60);
       this.setLocationRelativeTo(null);
@@ -48,7 +46,7 @@ public class PickPropertiesGUI extends javax.swing.JFrame {
         okButton_ = new javax.swing.JButton();
         cancelButton_ = new javax.swing.JButton();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Select properties");
 
         propertiesTable_.setModel( propChooserModel_

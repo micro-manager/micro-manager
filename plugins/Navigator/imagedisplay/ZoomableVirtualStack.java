@@ -1,4 +1,4 @@
-package gui;
+package imagedisplay;
 
 /*
  * To change this template, choose Tools | Templates
@@ -59,10 +59,13 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
       } 
       
       //TODO: add ability to arbitraily zoom out
-//      //If we haven't already gotten to this low of a resolution, create it
-//      if (downsampleIndex_ + numLevels >= multiResStorage_.getNumResLevels()) {
-//         multiResStorage_.addLowerResolution(downsampleIndex_ + numLevels);
-//      }
+      //If we haven't already gotten to this low of a resolution, create it
+      while (downsampleIndex_ + numLevels >= multiResStorage_.getNumResLevels()) {
+         boolean success = multiResStorage_.addLowerResolution();
+         if (!success) {
+            return;
+         }
+      }
       
       //keep cursor in same location relative to full res data for fast zooming/unzooming
       if (downsampleIndex_ + numLevels >= 0 && downsampleIndex_ + numLevels < multiResStorage_.getNumResLevels()) {
@@ -125,7 +128,7 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
    }
    
    /**
-    * Account for zoom and viewing are to get the display image pixel ccorsepnding
+    * Account for zoom and viewing are to get the display image pixel corresponding
     * to the full res image pixel given
     * @param fullImageCoords
     * @return 

@@ -4,7 +4,7 @@
  */
 package acq;
 
-import gui.DisplayPlus;
+import imagedisplay.DisplayPlus;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import mmcorej.CMMCore;
@@ -67,7 +67,7 @@ public abstract class Acquisition {
       imageCache.setSummaryMetadata(summaryMetadata);
 
       posManager_ = storage.getPositionManager();
-      new DisplayPlus(imageCache, this, summaryMetadata, storage);
+      new DisplayPlus(imageCache, this, summaryMetadata, storage, eng_.getRegionManager(),eng_.getSurfaceManager());
 
       DefaultTaggedImageSink sink = new DefaultTaggedImageSink(engineOutputQueue_, imageCache);
       sink.start();

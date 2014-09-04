@@ -224,6 +224,29 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
       return new TaggedImage(pixels, topLeftMD);
    }
    
+   /**
+    * create an additional lower resolution level so that image can be zoomed out 
+    */
+   public boolean addLowerResolution() {
+      synchronized(this) {
+         if (fullResStorage_.imageKeys().size() == 0) {
+            //nothing to downsample
+            return false;
+         }
+         //create a null pointer in lower res storages to signal addToLoResStorage function
+         //to continue downsampling to this level
+         lowResStorages_.put(1 + lowResStorages_.keySet().size(), null);
+         //update position manager to reflect addition of new resolution level
+         posManager_.updateLowerResolutionNodes(lowResStorages_.keySet().size());
+         //TODO: change this somehow when timepoints factor in
+         String aLabel = fullResStorage_.imageKeys().iterator().next();
+         int[] indices = MDUtils.getIndices(aLabel);
+         TaggedImage anImage = fullResStorage_.getImage(indices[0], indices[1], indices[2], indices[3]);         
+         addToLowResStorage(anImage, 0, indices[3]);
+         return true;
+      }
+   }
+   
    private void addToLowResStorage(TaggedImage img, int imageResIndex, int fullResPositionIndex) {
       //Read indices
       int channel = 0, slice = 0, frame = 0;
@@ -231,9 +254,6 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
          channel = MDUtils.getChannelIndex(img.tags);
          slice = MDUtils.getSliceIndex(img.tags);
          frame = MDUtils.getFrameIndex(img.tags);
-         if (fullResPositionIndex == -1) {
-            fullResPositionIndex = MDUtils.getPositionIndex(img.tags);
-         }
       } catch (JSONException e) {
          ReportingUtils.showError("Couldn't find tags");
       }
@@ -244,11 +264,14 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
       int yOffset = yOverlap_ / 2;
       byte[] previousLevelPix = (byte[]) img.pix;
       int resolutionIndex = imageResIndex + 1;
-      //Downsample until max number of tiles in either direction is less than the highest dsFactor
-      while (posManager_.getNumRows() >= Math.pow(2, resolutionIndex) || posManager_.getNumCols() >= Math.pow(2, resolutionIndex)) {
+      
+      //Auto downsample until max number of tiles in either direction is less than the highest dsFactor
+      //or keep going until lowest user created resolution exists
+      while (lowResStorages_.containsKey(resolutionIndex) ||
+              (posManager_.getNumRows() >= Math.pow(2, resolutionIndex) || posManager_.getNumCols() >= Math.pow(2, resolutionIndex)) ) {
 
          //See if storage level exists
-         if (!lowResStorages_.containsKey(resolutionIndex)) {
+         if (!lowResStorages_.containsKey(resolutionIndex) || lowResStorages_.get(resolutionIndex) == null) {
             createDownsampledStorage(resolutionIndex);
             //add all tiles from existing resolution levels to this new one            
             TaggedImageStorage previousLevelStorage;
@@ -264,7 +287,7 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
                        Integer.parseInt(indices[2]), Integer.parseInt(indices[3]));
                addToLowResStorage(ti, resolutionIndex - 1, posManager_.getFullResPositionIndex(Integer.parseInt(indices[3]), resolutionIndex - 1)); 
             }
-            return; //this will include the lower res tile just added, so can return here and
+            return; //this will include the higher res tile intially added, so can return here and
             //not worry about having to add it again
          }
          //Create pixels or get appropriate pixels to add to
@@ -300,7 +323,7 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
                try {
                   currentLevelPix[((y + yPos * tileHeight_) * tileWidth_ + (x + xPos * tileWidth_)) / 2] = (byte) (sum / count);
                } catch (Exception e) {
-                  System.out.println();
+                  ReportingUtils.showError("Couldn't copy pixels to lower resolution");
                }
             }
          }
@@ -359,13 +382,17 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
    @Override
    public void putImage(TaggedImage taggedImage) throws MMException {
       try {
-         //write to full res storage as normal (i.e. with overlap pixels present)
-         fullResStorage_.putImage(taggedImage, true);
-         addToLowResStorage(taggedImage, 0, -1);
+         synchronized (this) {
+            //write to full res storage as normal (i.e. with overlap pixels present)
+            fullResStorage_.putImage(taggedImage, true);
+            addToLowResStorage(taggedImage, 0, MDUtils.getPositionIndex(taggedImage.tags));
+         }
       } catch (InterruptedException ex) {
          ReportingUtils.showError(ex.toString());
       } catch (ExecutionException ex) {    
          ReportingUtils.showError(ex.toString());
+      } catch (JSONException ex) {
+         ReportingUtils.showError("Position index missing from tags");
       }
    }
 

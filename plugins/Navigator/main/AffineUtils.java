@@ -22,7 +22,7 @@ import org.micromanager.utils.ReportingUtils;
  * @author Henry
  */
 public class AffineUtils {
-
+   
    public static AffineTransform getAffineTransform(double xCenter, double yCenter) {
       //Get affine transform
       Preferences prefs = Preferences.userNodeForPackage(MMStudio.class);
