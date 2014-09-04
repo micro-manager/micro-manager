@@ -1417,6 +1417,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.SA_MODE_X,
             Properties.Values.SAM_DISABLED, true);
       
+      // make sure to stop the SPIM state machine in case the acquisition was cancelled
+      props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SPIM_STATE,
+            Properties.Values.SPIM_IDLE, true);
+      props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.SPIM_STATE,
+            Properties.Values.SPIM_IDLE, true);
+      
       if (stop_.get()) {  // if user stopped us in middle
          numTimePointsDone_--;  
       }
