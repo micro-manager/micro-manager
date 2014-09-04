@@ -118,9 +118,10 @@ public class TestDisplay {
       rules.add("align center, wrap, growx");
       JPanel subPanel = new JPanel(new MigLayout("insets 0, filly"));
       histograms_ = new HistogramsPanel(store_, ijImage_, bus_);
-      subPanel.add(histograms_, "growx, wrap");
+      histograms_.setMinimumSize(new java.awt.Dimension(280, 0));
+      subPanel.add(histograms_, "grow 0, wrap");
       metadata_ = new MetadataPanel(store_);
-      subPanel.add(metadata_, "grow, wrap");
+      subPanel.add(metadata_, "growy, wrap");
       widgets.add(subPanel);
       rules.add("dock east, growy");
       window_.setupLayout(widgets, rules);
@@ -165,9 +166,7 @@ public class TestDisplay {
    @Subscribe
    public void onDrawEvent(DrawEvent event) {
       Coords drawCoords = stack_.getCurrentImageCoords();
-      ReportingUtils.logError("Drawing at " + drawCoords);
       ijImage_.updateAndDraw();
-//      ijImage_.drawWithoutUpdate();
       histograms_.calcAndDisplayHistAndStats(true);
       metadata_.imageChangedUpdate(store_.getImage(drawCoords));
    }
