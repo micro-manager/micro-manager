@@ -80,10 +80,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private JLabel minMaxLabel_;
    private JComboBox histRangeComboBox_;
    private double binSize_;
-   private int height_;
    private String histMaxLabel_;
    private int histMax_;
-   private JPanel controls_;
    private int contrastMin_ = -1;
    private int contrastMax_ = -1;
    private double gamma_ = 1;
@@ -155,14 +153,11 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       minMaxLabel_ = new javax.swing.JLabel();
 
       setOpaque(false);
-      setPreferredSize(new java.awt.Dimension(250, height_));
 
       fullButton_.setFont(fullButton_.getFont().deriveFont((float) 9));
       fullButton_.setName("Full channel histogram width");
       fullButton_.setText("Full");
       fullButton_.setToolTipText("Stretch the display gamma curve over the full pixel range");
-      fullButton_.setMargin(new java.awt.Insets(2, 4, 2, 4));
-      fullButton_.setPreferredSize(new java.awt.Dimension(75, 30));
       fullButton_.addActionListener(new java.awt.event.ActionListener() {
 
          @Override
@@ -177,10 +172,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       autoButton_.setToolTipText("Align the display gamma curve with minimum and maximum measured intensity values");
       autoButton_.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
       autoButton_.setIconTextGap(0);
-      autoButton_.setMargin(new java.awt.Insets(2, 4, 2, 4));
-      autoButton_.setMaximumSize(new java.awt.Dimension(75, 30));
-      autoButton_.setMinimumSize(new java.awt.Dimension(75, 30));
-      autoButton_.setPreferredSize(new java.awt.Dimension(75, 30));
       autoButton_.addActionListener(new java.awt.event.ActionListener() {
 
          @Override
@@ -235,15 +226,18 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       zoomInButton_ = new JButton();
       zoomInButton_.setIcon(SwingResourceManager.getIcon(MMStudio.class,
             "/org/micromanager/icons/zoom_in.png"));
-      zoomOutButton_ = new JButton();
-      zoomOutButton_.setIcon(SwingResourceManager.getIcon(MMStudio.class,
-            "/org/micromanager/icons/zoom_out.png"));   
+      zoomInButton_.setMinimumSize(new Dimension(20, 20));
       zoomInButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
             zoomInAction();
          }
       });
+      
+      zoomOutButton_ = new JButton();
+      zoomOutButton_.setIcon(SwingResourceManager.getIcon(MMStudio.class,
+            "/org/micromanager/icons/zoom_out.png"));   
+      zoomOutButton_.setMinimumSize(new Dimension(20, 20));
       zoomOutButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -251,37 +245,41 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
       });
 
-      JPanel histogramPanelHolder = new javax.swing.JPanel();
-      histogramPanelHolder.setToolTipText("Adjust the brightness and contrast by dragging triangles at top and bottom. Change the gamma by dragging the curve. (These controls only change display, and do not edit the image data.)");
-      histogramPanelHolder.setLayout(new MigLayout("insets 0, fill"));
-      hp_ = makeHistogramPanel();
-      histogramPanelHolder.add(hp_, "grow");
-
       // No insets on the top/bottom/right, only on the left.
-      // Ensure that only the histogram column is allowed to grow.
-      setLayout(new MigLayout("fill, insets 0 n 0 0",
-               "[grow 0] [fill, grow 1]"));
+      setLayout(new MigLayout("fill, flowy, insets 0",
+               "[]0[]0[]", "[]0[]0[]"));
 
-      controls_ = new JPanel(new MigLayout("insets 0"));
-      add(controls_);
-      add(histogramPanelHolder, "grow");
+      JPanel firstRow = new JPanel(new MigLayout("insets 0"));
 
-      controls_.add(channelNameCheckbox_);
+      firstRow.add(channelNameCheckbox_);
 
-      fullButton_.setPreferredSize(new Dimension(45, 20));      
-      controls_.add(fullButton_, "split 2");
+      firstRow.add(colorPickerLabel_);
 
-      autoButton_.setPreferredSize(new Dimension(45, 20));
-      controls_.add(autoButton_, "wrap");
+      fullButton_.setPreferredSize(new Dimension(35, 20));
+      firstRow.add(fullButton_);
 
-      colorPickerLabel_.setPreferredSize(new Dimension(18, 18));
-      controls_.add(colorPickerLabel_, "split 3");
+      autoButton_.setPreferredSize(new Dimension(35, 20));
+      firstRow.add(autoButton_, "wrap");
 
-      controls_.add(zoomInButton_);
-      controls_.add(zoomOutButton_);
-      controls_.add(histRangeComboBox_, "split 2");
-      controls_.add(minMaxLabel_);
+      add(firstRow);
 
+      hp_ = makeHistogramPanel();
+      hp_.setMinimumSize(new Dimension(100, 60));
+      hp_.setToolTipText("Adjust the brightness and contrast by dragging triangles at top and bottom. Change the gamma by dragging the curve. (These controls only change display, and do not edit the image data.)");
+
+      add(hp_, "grow");
+
+      JPanel secondRow = new JPanel(new MigLayout("insets 0"));
+      colorPickerLabel_.setMinimumSize(new Dimension(18, 18));
+
+      secondRow.add(zoomInButton_);
+      secondRow.add(zoomOutButton_);
+      secondRow.add(histRangeComboBox_);
+      secondRow.add(minMaxLabel_);
+
+      add(secondRow);
+
+      setPreferredSize(getMinimumSize());
       validate();
    }
 
