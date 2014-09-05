@@ -959,21 +959,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       Devices.Keys galvoDevice = Devices.getSideSpecificKey(Devices.Keys.GALVOA, side);
       Devices.Keys piezoDevice = Devices.getSideSpecificKey(Devices.Keys.PIEZOA, side);
       
-      int numSlices = getNumSlices();
-      float piezoAmplitude =  ( (numSlices - 1) * 
-              PanelUtils.getSpinnerFloatValue(stepSize_));
-      float sliceRate = prefs_.getFloat(
-            MyStrings.PanelNames.SETUP.toString() + side.toString(), 
-            Properties.Keys.PLUGIN_RATE_PIEZO_SHEET, -80);
-      float sliceOffset = prefs_.getFloat(
-            MyStrings.PanelNames.SETUP.toString() + side.toString(), 
-            Properties.Keys.PLUGIN_OFFSET_PIEZO_SHEET, 0);
-      if (MyNumberUtils.floatsEqual(sliceRate, (float) 0.0)) {
-         gui_.showError("Rate for slice " + side.toString() + 
-               " cannot be zero. Re-do calibration on Setup tab.",
-               ASIdiSPIM.getFrame());
-         return false;
-      }
+      // checks to prevent hard-to-diagnose other errors
       if (!devices_.isValidMMDevice(galvoDevice)) {
          gui_.showError("Scanner device required; please check Devices tab.",
                ASIdiSPIM.getFrame());
@@ -987,11 +973,33 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          return false;
       }
       
-      float sliceAmplitude = piezoAmplitude / sliceRate;
+      // figure out the piezo and slice parameters
+      int numSlices = getNumSlices();
+      float piezoAmplitude =  ( (numSlices - 1) * 
+              PanelUtils.getSpinnerFloatValue(stepSize_));
       float piezoCenter = prefs_.getFloat(
             MyStrings.PanelNames.SETUP.toString() + side.toString(), 
             Properties.Keys.PLUGIN_PIEZO_CENTER_POS, 0);
+      float sliceRate = prefs_.getFloat(
+            MyStrings.PanelNames.SETUP.toString() + side.toString(), 
+            Properties.Keys.PLUGIN_RATE_PIEZO_SHEET, -80);
+      if (MyNumberUtils.floatsEqual(sliceRate, (float) 0.0)) {
+         gui_.showError("Rate for slice " + side.toString() + 
+               " cannot be zero. Re-do calibration on Setup tab.",
+               ASIdiSPIM.getFrame());
+         return false;
+      }
+      float sliceOffset = prefs_.getFloat(
+            MyStrings.PanelNames.SETUP.toString() + side.toString(), 
+            Properties.Keys.PLUGIN_OFFSET_PIEZO_SHEET, 0);
+      float sliceAmplitude = piezoAmplitude / sliceRate;
       float sliceCenter = (piezoCenter - sliceOffset) / sliceRate;
+
+      
+//      CameraModes.Keys cameraMode = CameraModes.getKeyFromPrefCode(
+//            prefs_.getInt(MyStrings.PanelNames.SETTINGS.toString(),
+//                  Properties.Keys.PLUGIN_CAMERA_MODE, 0));
+      
       
       // get the micro-mirror card ready
       // SA_AMPLITUDE_X_DEG and SA_OFFSET_X_DEG done by setup tabs
