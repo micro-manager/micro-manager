@@ -547,38 +547,6 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       jb.addActionListener(l);
       return jb;
    }
-                       
-   /**
-    * updates single-axis parameters for stepped piezos according to
-    * sheetStartPos_ and sheetEndPos_
-    */
-   public void updateImagingSAParams() {
-      if (devices_.getMMDevice(piezoImagingDeviceKey_) == null) {
-         return;
-      }
-      float amplitude = (float) (imagingPiezoStopPos_ - imagingPiezoStartPos_);
-      float offset = (float) (imagingPiezoStartPos_ + imagingPiezoStopPos_) / 2;
-      props_.setPropValue(piezoImagingDeviceKey_, 
-              Properties.Keys.SA_AMPLITUDE, amplitude);
-      props_.setPropValue(piezoImagingDeviceKey_, 
-              Properties.Keys.SA_OFFSET, offset);
-   }
-
-   /**
-    * updates single-axis parameters for slice positions of micromirrors
-    * according to sheetStartPos_ and sheetEndPos_
-    */
-   public void updateSheetSAParams() {
-      if (devices_.getMMDevice(micromirrorDeviceKey_) == null) {
-         return;
-      }
-      float amplitude = (float) (sliceStopPos_ - sliceStartPos_);
-      float offset = (float) (sliceStartPos_ + sliceStopPos_) / 2;
-      props_.setPropValue(micromirrorDeviceKey_, 
-              Properties.Keys.SA_AMPLITUDE_Y_DEG, amplitude);
-      props_.setPropValue(micromirrorDeviceKey_, 
-              Properties.Keys.SA_OFFSET_Y_DEG, offset);
-   }
 
    /**
     * finds the appropriate COM port, because we have to send "home" (!) and
