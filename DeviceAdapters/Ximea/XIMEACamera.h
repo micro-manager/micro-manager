@@ -26,7 +26,6 @@
 #include "ImgBuffer.h"
 
 #include "xiApi.h"
-#include "xiExt.h"
 #include "m3Api.h"
 #include "m3Ext.h"
 
@@ -82,6 +81,7 @@ public:
    // action interface
    int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnDataFormat(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSensorTaps(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnGain(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnAcqTout(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTrigger(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -123,6 +123,7 @@ private:
 	void* handle;
 	XI_IMG image;
 	int binning_;
+	int tapcnt_;
 	double acqTout_;
 	int bytesPerPixel_;
 	double gain_;

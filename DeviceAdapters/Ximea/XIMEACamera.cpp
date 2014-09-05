@@ -30,8 +30,10 @@ vector<string> avail_devs;
 
 /////////////////////////////////////////////////////
 
-const char* g_API_Version      = "API Version";
+const char* g_API_Version     = "API Version";
 const char* g_Driver_version  = "Driver Version";
+const char* g_MCU_version     = "MCU Version";
+const char* g_FPGA_version    = "FPGA Version";
 
 /////////////////////////////////////////////////////
 
@@ -45,6 +47,10 @@ const char* g_PixelType_Raw12  = "RAW 12";
 const char* g_PixelType_Mono14 = "Mono 14";
 const char* g_PixelType_Raw14  = "RAW 14";
 const char* g_PixelType_RGB32  = "RGB 32";
+
+/////////////////////////////////////////////////////
+
+const char* g_SensorTaps       = "Sensor taps";
 
 /////////////////////////////////////////////////////
 
@@ -74,6 +80,13 @@ const char* g_Gpo_FrameActive    = "Frame active";
 const char* g_Gpo_FrameActiveNeg = "Frame active neg.";
 const char* g_Gpo_ExpActive      = "Exposure active";
 const char* g_Gpo_ExpActiveNeg   = "Exposure active neg.";
+
+const char* g_Gpo_FrmTrgWait     = "Frame trig. wait";
+const char* g_Gpo_FrmTrgWaitNeg  = "Frame trig. wait neg.";
+const char* g_Gpo_ExpPulse       = "Exposure pulse"; 
+const char* g_Gpo_ExpPulseNeg    = "Exposure pulse neg."; 
+const char* g_Gpo_Busy           = "Busy"; 
+const char* g_Gpo_BusyNeg        = "Busy neg."; 
 
 /////////////////////////////////////////////////////
 
@@ -196,10 +209,11 @@ XIMEACamera::XIMEACamera(const char* name) :
 	name_(name),
 	handle (0),
 	binning_ (1),
+	tapcnt_ (1),
 	acqTout_(0),
 	bytesPerPixel_(1),
 	gain_(0.8),
-	adc_(8),
+	adc_(0),
 	exposureMs_(10.0),
 	nComponents_(1),
 	initialized_(false),
@@ -262,7 +276,7 @@ int XIMEACamera::Initialize()
 	// Set property list
 	// -------------------------------------------------------------------------------------
 	// camera identification
-	char buf[256];
+	char buf[256]="";
 	
 	xiGetParamString( handle, XI_PRM_DEVICE_SN, buf, 256);
 	ret = CreateProperty(MM::g_Keyword_CameraID, buf, MM::String, true);
@@ -282,6 +296,14 @@ int XIMEACamera::Initialize()
 
 	xiGetParamString( handle, XI_PRM_DRV_VERSION, buf, 256);
 	ret = CreateProperty(g_Driver_version, buf, MM::String, true);
+	assert(ret == DEVICE_OK);
+
+	xiGetParamString( handle, XI_PRM_MCU1_VERSION, buf, 256);
+	ret = CreateProperty(g_MCU_version, buf, MM::String, true);
+	assert(ret == DEVICE_OK);
+
+	xiGetParamString( handle, XI_PRM_FPGA1_VERSION, buf, 256);
+	ret = CreateProperty(g_FPGA_version, buf, MM::String, true);
 	assert(ret == DEVICE_OK);
 
 	// -------------------------------------------------------------------------------------
@@ -314,6 +336,7 @@ int XIMEACamera::Initialize()
 	DWORD family=0;
 	xiGetParamInt( handle, XI_PRM_IMAGE_IS_COLOR, &isColor);
 	mmGetModelFamily( handle, &family);
+	xiGetParamInt(handle, XI_PRM_OUTPUT_DATA_BIT_DEPTH, &adc_);
 
 	pAct = new CPropertyAction (this, &XIMEACamera::OnDataFormat);
 	ret = CreateProperty(g_Data_Format, g_PixelType_Mono8, MM::String, false, pAct);
@@ -323,17 +346,46 @@ int XIMEACamera::Initialize()
 	pixelTypeValues.push_back(g_PixelType_Mono8);
 	pixelTypeValues.push_back(g_PixelType_Mono10);
 	pixelTypeValues.push_back(g_PixelType_Mono12);
-	if(family==FAMILY_MR) pixelTypeValues.push_back(g_PixelType_Mono14); 
+	
+	if(family == FAMILY_MR || family == FAMILY_MD) 
+		pixelTypeValues.push_back(g_PixelType_Mono14); 
+
 	if(isColor){
 		pixelTypeValues.push_back(g_PixelType_Raw8);
 		pixelTypeValues.push_back(g_PixelType_Raw10);
 		pixelTypeValues.push_back(g_PixelType_Raw12);
-		if(family==FAMILY_MR) pixelTypeValues.push_back(g_PixelType_Raw14); 
+		if(family==FAMILY_MR || family == FAMILY_MD) 
+			pixelTypeValues.push_back(g_PixelType_Raw14); 
 		pixelTypeValues.push_back(g_PixelType_RGB32); 
 	}
 
 	ret = SetAllowedValues(g_Data_Format, pixelTypeValues);
 	assert(ret == DEVICE_OK);
+
+	// -------------------------------------------------------------------------------------
+	// sensor taps for MD cameras
+	if(family == FAMILY_MD)
+	{
+		pAct = new CPropertyAction (this, &XIMEACamera::OnSensorTaps);
+		ret = CreateProperty(g_SensorTaps, "1", MM::Integer, false, pAct);
+		assert(ret == DEVICE_OK);
+	
+		int maxTaps = 0;
+		vector<string> tapsValues;
+		xiGetParamInt( handle, XI_PRM_SENSOR_TAPS XI_PRM_INFO_MAX, &maxTaps);
+
+		for(int i = 1; i <= maxTaps; i++){
+			if(xiSetParamInt(handle, XI_PRM_SENSOR_TAPS, i) == XI_OK){
+				char buf[16];
+				sprintf(buf, "%d", i);
+				binningValues.push_back(buf);
+			}
+		}
+
+		xiSetParamInt(handle, XI_PRM_SENSOR_TAPS, 1);
+		ret = SetAllowedValues(MM::g_Keyword_Binning, binningValues);
+		assert(ret == DEVICE_OK);
+	}
 
 	// -------------------------------------------------------------------------------------
 	// gain
@@ -400,6 +452,12 @@ int XIMEACamera::Initialize()
 		gpoTypeValues.push_back(g_Gpo_FrameActiveNeg);
 		gpoTypeValues.push_back(g_Gpo_ExpActive);
 		gpoTypeValues.push_back(g_Gpo_ExpActiveNeg);
+		gpoTypeValues.push_back(g_Gpo_FrmTrgWait);
+		gpoTypeValues.push_back(g_Gpo_FrmTrgWaitNeg);
+		gpoTypeValues.push_back(g_Gpo_ExpPulse);
+		gpoTypeValues.push_back(g_Gpo_ExpPulseNeg);
+		gpoTypeValues.push_back(g_Gpo_Busy);
+		gpoTypeValues.push_back(g_Gpo_BusyNeg);
 		// init GPI1
 		pAct = new CPropertyAction (this, &XIMEACamera::OnGpi1);
 		ret = CreateProperty(g_Gpi_1, g_Gpi_Off, MM::String, false, pAct);
@@ -416,6 +474,23 @@ int XIMEACamera::Initialize()
 		assert(ret == DEVICE_OK);
 		xiSetParamInt( handle, XI_PRM_GPO_SELECTOR, 1);
 		xiSetParamInt( handle, XI_PRM_GPO_MODE, XI_GPO_FRAME_ACTIVE);
+
+		// MD cameras have additional input and output
+		if(family == FAMILY_MD)
+		{
+			pAct = new CPropertyAction (this, &XIMEACamera::OnGpi2);
+			ret = CreateProperty(g_Gpi_2, g_Gpi_Off, MM::String, false, pAct);
+			assert(ret == DEVICE_OK);
+			ret = SetAllowedValues(g_Gpi_2, gpiTypeValues);
+			assert(ret == DEVICE_OK);
+
+			pAct = new CPropertyAction (this, &XIMEACamera::OnGpo2);
+			ret = CreateProperty(g_Gpo_2, g_Gpo_FrameActive, MM::String, false, pAct);
+			assert(ret == DEVICE_OK);
+			ret = SetAllowedValues(g_Gpo_2, gpoTypeValues);
+			assert(ret == DEVICE_OK);
+		}
+
 	} else if((strcmp(buf, "USB2.0") == 0) || strcmp(buf, "CURRERA") == 0){
 		vector<string> gpoTypeValues;
 		if((strcmp(buf, "USB2.0") == 0)){
@@ -672,9 +747,8 @@ int XIMEACamera::Initialize()
 	int width = 0, height = 0;
 	xiGetParamInt( handle, XI_PRM_WIDTH, &width);
 	xiGetParamInt( handle, XI_PRM_HEIGHT, &height);
-	bytesPerPixel_ = 1;
-	img_ = new ImgBuffer(  width, height, bytesPerPixel_);
-	
+		
+	img_ = new ImgBuffer(  width, height, bytesPerPixel_);	
 	ret = ResizeImageBuffer();
 	if (ret != DEVICE_OK)
 		return ret;
@@ -737,7 +811,10 @@ int XIMEACamera::SnapImage()
 */
 const unsigned char* XIMEACamera::GetImageBuffer()
 {
-	img_->SetPixels(image.bp);
+	if(image.padding_x == 0)
+		img_->SetPixels(image.bp);
+	else
+		img_->SetPixelsPadded(image.bp, image.padding_x);
 	return const_cast<unsigned char*>(img_->GetPixels());
 }
 
@@ -1072,7 +1149,6 @@ bool XIMEACamera::IsCapturing()
 	return !thd_->IsStopped();
 }
 
-
 ///////////////////////////////////////////////////////////////////////////////
 // XIMEACamera Action handlers
 /***********************************************************************
@@ -1110,18 +1186,19 @@ int XIMEACamera::OnDataFormat(MM::PropertyBase* pProp, MM::ActionType eAct)
 	{
 		string val;
 		int img_format=0;
+		bool update_bpp = true;
 		pProp->Get(val);
 		int ret = DEVICE_ERR;
 		//MONO8
 		if (val.compare(g_PixelType_Mono8) == 0){ 
 			img_format=XI_MONO8;
-			adc_=8;
+			update_bpp=false;
 			bytesPerPixel_ = 1;
 			nComponents_ = 1;
 		//RAW8
 		}else if (val.compare(g_PixelType_Raw8) == 0){ 
 			img_format=XI_RAW8;
-			adc_=8;
+			update_bpp=false;
 			bytesPerPixel_ = 1;
 			nComponents_ = 1;
 		//MONO10
@@ -1163,7 +1240,7 @@ int XIMEACamera::OnDataFormat(MM::PropertyBase* pProp, MM::ActionType eAct)
 		//RGB32
 		}else if (val.compare(g_PixelType_RGB32) == 0){
 			img_format=XI_RGB32;
-			adc_=8;
+			adc_=12;
 			bytesPerPixel_ = 4;
 			nComponents_ = 4;
 		}else
@@ -1171,8 +1248,11 @@ int XIMEACamera::OnDataFormat(MM::PropertyBase* pProp, MM::ActionType eAct)
 		
 		ret = xiSetParamInt( handle, XI_PRM_IMAGE_DATA_FORMAT, img_format);
 		if(ret != XI_OK) return ret;
-		mmSetExtention( handle, EXT_ADCBPP, adc_);
-		if(ret != XI_OK) return ret;
+		if(update_bpp)
+		{
+			ret = xiSetParamInt( handle, XI_PRM_OUTPUT_DATA_BIT_DEPTH, adc_);
+			if(ret != XI_OK) return ret;
+		}
 		ResizeImageBuffer();
 		return ret;
 	}
@@ -1210,6 +1290,28 @@ int XIMEACamera::OnDataFormat(MM::PropertyBase* pProp, MM::ActionType eAct)
 	}
 
 	return DEVICE_OK;
+}
+
+/***********************************************************************
+* Handles "SensorTaps" property.
+*/
+int XIMEACamera::OnSensorTaps(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	int ret = DEVICE_OK;
+	if (eAct == MM::AfterSet)
+	{
+		long tapCnt;
+		pProp->Get(tapCnt);
+		tapcnt_ = (int)tapCnt;
+		ret = xiSetParamInt( handle, XI_PRM_SENSOR_TAPS, tapcnt_);
+		ResizeImageBuffer();
+	}
+	else if (eAct == MM::BeforeGet)
+	{
+		pProp->Set((long)tapcnt_);
+	}
+
+	return ret;
 }
 
 /***********************************************************************
@@ -1404,6 +1506,18 @@ int setGpoMode(void* handle, int portNum, string val)
 		ret = xiSetParamInt( handle, XI_PRM_GPO_MODE, XI_GPO_EXPOSURE_ACTIVE);
 	else if(strcmp(val.c_str(), g_Gpo_ExpActiveNeg) == 0)
 		ret = xiSetParamInt( handle, XI_PRM_GPO_MODE, XI_GPO_EXPOSURE_ACTIVE_NEG);
+	else if(strcmp(val.c_str(), g_Gpo_FrmTrgWait) == 0)
+		ret = xiSetParamInt( handle, XI_PRM_GPO_MODE, XI_GPO_FRAME_TRIGGER_WAIT);		
+	else if(strcmp(val.c_str(), g_Gpo_FrmTrgWaitNeg) == 0)
+		ret = xiSetParamInt( handle, XI_PRM_GPO_MODE, XI_GPO_FRAME_TRIGGER_WAIT_NEG);		
+	else if(strcmp(val.c_str(), g_Gpo_ExpPulse) == 0)
+		ret = xiSetParamInt( handle, XI_PRM_GPO_MODE, XI_GPO_EXPOSURE_PULSE);
+	else if(strcmp(val.c_str(), g_Gpo_ExpPulseNeg) == 0)
+		ret = xiSetParamInt( handle, XI_PRM_GPO_MODE, XI_GPO_EXPOSURE_PULSE_NEG);
+	else if(strcmp(val.c_str(), g_Gpo_Busy) == 0)
+		ret = xiSetParamInt( handle, XI_PRM_GPO_MODE, XI_GPO_BUSY);
+	else if(strcmp(val.c_str(), g_Gpo_BusyNeg) == 0)
+		ret = xiSetParamInt( handle, XI_PRM_GPO_MODE, XI_GPO_BUSY_NEG);
 	else
 		assert(false); // this should never happen
 	return ret;
@@ -1418,12 +1532,18 @@ string getGpoMode(void* handle, int portNum)
 
 	switch(mode)
 	{
-		case XI_GPO_OFF                  : val = g_Gpo_Off; break;
-		case XI_GPO_ON                   : val = g_Gpo_On; break;
-		case XI_GPO_FRAME_ACTIVE         : val = g_Gpo_FrameActive; break;
-		case XI_GPO_FRAME_ACTIVE_NEG     : val = g_Gpo_FrameActiveNeg; break;
-		case XI_GPO_EXPOSURE_ACTIVE      : val = g_Gpo_ExpActive; break;
-		case XI_GPO_EXPOSURE_ACTIVE_NEG  : val = g_Gpo_ExpActiveNeg; break;
+		case XI_GPO_OFF                     : val = g_Gpo_Off; break;
+		case XI_GPO_ON                      : val = g_Gpo_On; break;
+		case XI_GPO_FRAME_ACTIVE            : val = g_Gpo_FrameActive; break;
+		case XI_GPO_FRAME_ACTIVE_NEG        : val = g_Gpo_FrameActiveNeg; break;
+		case XI_GPO_EXPOSURE_ACTIVE         : val = g_Gpo_ExpActive; break;
+		case XI_GPO_EXPOSURE_ACTIVE_NEG     : val = g_Gpo_ExpActiveNeg; break;
+		case XI_GPO_FRAME_TRIGGER_WAIT      : val = g_Gpo_FrmTrgWait; break;
+		case XI_GPO_FRAME_TRIGGER_WAIT_NEG  : val = g_Gpo_FrmTrgWaitNeg; break;
+		case XI_GPO_EXPOSURE_PULSE          : val = g_Gpo_ExpPulse; break;
+		case XI_GPO_EXPOSURE_PULSE_NEG      : val = g_Gpo_ExpPulseNeg; break;
+		case XI_GPO_BUSY                    : val = g_Gpo_Busy; break;
+		case XI_GPO_BUSY_NEG                : val = g_Gpo_BusyNeg; break;		
 		default: assert(false); // this should never happen
 	
 	}
@@ -1932,9 +2052,19 @@ int XIMEACamera::OnHousTemp(MM::PropertyBase* pProp, MM::ActionType eAct)
 */
 int XIMEACamera::ResizeImageBuffer()
 {
-	int width = 0, height = 0;
+	int width = 0, height = 0, frm = 0;
 	xiGetParamInt( handle, XI_PRM_WIDTH, &width);
 	xiGetParamInt( handle, XI_PRM_HEIGHT, &height);
+	xiGetParamInt( handle, XI_PRM_IMAGE_DATA_FORMAT, &frm);
+	switch(frm)
+	{
+	case XI_MONO8  : 
+	case XI_RAW8   : bytesPerPixel_ = 1; break;
+	case XI_MONO16 : 
+	case XI_RAW16  : bytesPerPixel_ = 2; break;
+	case XI_RGB32  : bytesPerPixel_ = 4; break;
+	default: assert(false); // this should never happen
+	}
 
 	img_->Resize(width, height, bytesPerPixel_);
 		
