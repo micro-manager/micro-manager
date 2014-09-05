@@ -68,6 +68,22 @@ void ImgBuffer::SetPixels(const void* pix)
    memcpy((void*)pixels_, pix, width_ * height_ * pixDepth_);
 }
 
+// Set pixels, from a source that has extra bytes at the end of each scanline
+// (row).
+void ImgBuffer::SetPixelsPadded(const void* pixArray, int paddingBytesPerLine)
+{
+   char* src = reinterpret_cast<char*>(pixArray);
+   char* dst = reinterpret_cast<char*>(pixels_);
+   const size_t lineSize = width_ * pixDepth_;
+
+   for(size_t i = 0; i < height_; i++)
+   {
+      memcpy(dst, src, lineSize);
+      src += lineSize + paddingBytesPerLine;
+      dst += lineSize;
+   }
+}
+
 void ImgBuffer::ResetPixels()
 {
    if (pixels_)
