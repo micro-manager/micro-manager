@@ -31,6 +31,8 @@ class VerticalButton extends JToggleButton {
       Dimension size = getMinimumSize();
       setText("");
       setMinimumSize(new Dimension(size.height, size.width));
+      // Don't grow the button's width; it looks weird.
+      setMaximumSize(new Dimension(size.height, 32767));
       label_ = label;
    }
 
