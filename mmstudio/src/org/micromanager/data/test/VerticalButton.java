@@ -54,7 +54,9 @@ class VerticalButton extends JToggleButton {
             new FontRenderContext(new AffineTransform(), true, false));
 
       // Note swapping of width/height due to the 90-degree rotation.
-      double xOffset = xCenter - (labelBounds.getHeight() / 2.0);
+      // Unsure why we need a divisor of 4 for the width, but it looks off
+      // if we use 2.
+      double xOffset = xCenter - (labelBounds.getHeight() / 4.0);
       double yOffset = yCenter - (labelBounds.getWidth() / 2.0);
       g2d.translate(xOffset, yOffset);
       g2d.rotate(Math.PI / 2);
