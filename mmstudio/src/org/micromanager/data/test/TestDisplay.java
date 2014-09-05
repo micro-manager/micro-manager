@@ -116,13 +116,16 @@ public class TestDisplay {
       controls_ = new HyperstackControls(store_, stack_, bus_, false, false);
       widgets.add(controls_);
       rules.add("align center, wrap, growx");
-      JPanel subPanel = new JPanel(new MigLayout("insets 0, filly"));
+      MultiModePanel modePanel = new MultiModePanel(bus_);
+      
       histograms_ = new HistogramsPanel(store_, ijImage_, bus_);
       histograms_.setMinimumSize(new java.awt.Dimension(280, 0));
-      subPanel.add(histograms_, "grow 0, wrap");
+      modePanel.addMode("Contrast", histograms_);
+
       metadata_ = new MetadataPanel(store_);
-      subPanel.add(metadata_, "growy, wrap");
-      widgets.add(subPanel);
+      modePanel.addMode("Metadata", metadata_);
+
+      widgets.add(modePanel);
       rules.add("dock east, growy");
       window_.setupLayout(widgets, rules);
    }
@@ -157,6 +160,14 @@ public class TestDisplay {
       }
       setIJBounds();
       ijImage_.getProcessor().setPixels(event.getImage().getRawPixels());
+   }
+
+   /**
+    * Our layout has changed and we need to repack.
+    */
+   @Subscribe
+   public void onLayoutChanged(LayoutChangedEvent event) {
+      window_.pack();
    }
 
    /**
