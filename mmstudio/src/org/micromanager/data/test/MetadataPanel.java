@@ -62,26 +62,11 @@ import org.micromanager.utils.ReportingUtils;
 
 
 public class MetadataPanel extends JPanel {
-   private JSplitPane CommentsSplitPane;
-   private JLabel imageCommentsLabel;
-   private JPanel imageCommentsPanel;
-   private JScrollPane imageCommentsScrollPane;
-   private JTextArea imageCommentsTextArea;
-   private JPanel imageMetadataScrollPane;
-   private JTable imageMetadataTable;
-   private JScrollPane imageMetadataTableScrollPane;
-   private JLabel jLabel2;
-   private JLabel jLabel3;
-   private JSplitPane metadataSplitPane;
-   private JCheckBox showUnchangingPropertiesCheckbox;
-   private JLabel summaryCommentsLabel;
-   private JPanel summaryCommentsPane;
-   private JScrollPane summaryCommentsScrollPane;
-   private JTextArea summaryCommentsTextArea;
-   private JPanel summaryMetadataPanel;
-   private JScrollPane summaryMetadataScrollPane;
-   private JTable summaryMetadataTable;
-   private JTabbedPane tabbedPane;
+   private JTextArea imageCommentsTextArea_;
+   private JTable imageMetadataTable_;
+   private JCheckBox showUnchangingPropertiesCheckbox_;
+   private JTextArea summaryCommentsTextArea_;
+   private JTable summaryMetadataTable_;
    private final MetadataTableModel imageMetadataModel_;
    private final MetadataTableModel summaryMetadataModel_;
    private final String[] columnNames_ = {"Property", "Value"};
@@ -96,33 +81,33 @@ public class MetadataPanel extends JPanel {
       imageMetadataModel_ = new MetadataTableModel();
       summaryMetadataModel_ = new MetadataTableModel();
       initialize();
-      imageMetadataTable.setModel(imageMetadataModel_);
-      summaryMetadataTable.setModel(summaryMetadataModel_);
+      imageMetadataTable_.setModel(imageMetadataModel_);
+      summaryMetadataTable_.setModel(summaryMetadataModel_);
       addTextChangeListeners();
       addFocusListeners();
    }
 
    private void initialize() {
-      tabbedPane = new JTabbedPane();
-      metadataSplitPane = new JSplitPane();
-      imageMetadataScrollPane = new JPanel();
-      imageMetadataTableScrollPane = new JScrollPane();
-      imageMetadataTable = new JTable();
-      showUnchangingPropertiesCheckbox = new JCheckBox();
-      jLabel2 = new JLabel();
-      summaryMetadataPanel = new JPanel();
-      summaryMetadataScrollPane = new JScrollPane();
-      summaryMetadataTable = new JTable();
-      jLabel3 = new JLabel();
-      CommentsSplitPane = new JSplitPane();
-      summaryCommentsPane = new JPanel();
-      summaryCommentsLabel = new JLabel();
-      summaryCommentsScrollPane = new JScrollPane();
-      summaryCommentsTextArea = new JTextArea();
-      imageCommentsPanel = new JPanel();
-      imageCommentsLabel = new JLabel();
-      imageCommentsScrollPane = new JScrollPane();
-      imageCommentsTextArea = new JTextArea();
+      JTabbedPane tabbedPane = new JTabbedPane();
+      JSplitPane metadataSplitPane = new JSplitPane();
+      JPanel imageMetadataScrollPane = new JPanel();
+      JScrollPane imageMetadataTableScrollPane = new JScrollPane();
+      imageMetadataTable_ = new JTable();
+      showUnchangingPropertiesCheckbox_ = new JCheckBox();
+      JLabel jLabel2 = new JLabel();
+      JPanel summaryMetadataPanel = new JPanel();
+      JScrollPane summaryMetadataScrollPane = new JScrollPane();
+      summaryMetadataTable_ = new JTable();
+      JLabel jLabel3 = new JLabel();
+      JSplitPane CommentsSplitPane = new JSplitPane();
+      JPanel summaryCommentsPane = new JPanel();
+      JLabel summaryCommentsLabel = new JLabel();
+      JScrollPane summaryCommentsScrollPane = new JScrollPane();
+      summaryCommentsTextArea_ = new JTextArea();
+      JPanel imageCommentsPanel = new JPanel();
+      JLabel imageCommentsLabel = new JLabel();
+      JScrollPane imageCommentsScrollPane = new JScrollPane();
+      imageCommentsTextArea_ = new JTextArea();
 
       tabbedPane.setFocusable(false);
       tabbedPane.setPreferredSize(new java.awt.Dimension(250, 250));
@@ -137,7 +122,7 @@ public class MetadataPanel extends JPanel {
       metadataSplitPane.setBorder(null);
       metadataSplitPane.setOrientation(JSplitPane.VERTICAL_SPLIT);
 
-      imageMetadataTable.setModel(new DefaultTableModel(
+      imageMetadataTable_.setModel(new DefaultTableModel(
               new Object[][]{},
               new String[]{"Property", "Value"}) {
 
@@ -158,14 +143,14 @@ public class MetadataPanel extends JPanel {
             return canEdit[columnIndex];
          }
       });
-      imageMetadataTable.setToolTipText("Metadata tags for each individual image");
-      imageMetadataTable.setDebugGraphicsOptions(DebugGraphics.NONE_OPTION);
-      imageMetadataTable.setDoubleBuffered(true);
-      imageMetadataTableScrollPane.setViewportView(imageMetadataTable);
+      imageMetadataTable_.setToolTipText("Metadata tags for each individual image");
+      imageMetadataTable_.setDebugGraphicsOptions(DebugGraphics.NONE_OPTION);
+      imageMetadataTable_.setDoubleBuffered(true);
+      imageMetadataTableScrollPane.setViewportView(imageMetadataTable_);
 
-      showUnchangingPropertiesCheckbox.setText("Show unchanging properties");
-      showUnchangingPropertiesCheckbox.setToolTipText("Show/hide properties that are the same for all images in the acquisition");
-      showUnchangingPropertiesCheckbox.addActionListener(new java.awt.event.ActionListener() {
+      showUnchangingPropertiesCheckbox_.setText("Show unchanging properties");
+      showUnchangingPropertiesCheckbox_.setToolTipText("Show/hide properties that are the same for all images in the acquisition");
+      showUnchangingPropertiesCheckbox_.addActionListener(new java.awt.event.ActionListener() {
 
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -178,9 +163,9 @@ public class MetadataPanel extends JPanel {
       javax.swing.GroupLayout imageMetadataScrollPaneLayout = new javax.swing.GroupLayout(imageMetadataScrollPane);
       imageMetadataScrollPane.setLayout(imageMetadataScrollPaneLayout);
       imageMetadataScrollPaneLayout.setHorizontalGroup(
-              imageMetadataScrollPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING).addComponent(imageMetadataTableScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 250, Short.MAX_VALUE).addGroup(javax.swing.GroupLayout.Alignment.TRAILING, imageMetadataScrollPaneLayout.createSequentialGroup().addComponent(jLabel2).addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 250, Short.MAX_VALUE).addComponent(showUnchangingPropertiesCheckbox)));
+              imageMetadataScrollPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING).addComponent(imageMetadataTableScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 250, Short.MAX_VALUE).addGroup(javax.swing.GroupLayout.Alignment.TRAILING, imageMetadataScrollPaneLayout.createSequentialGroup().addComponent(jLabel2).addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 250, Short.MAX_VALUE).addComponent(showUnchangingPropertiesCheckbox_)));
       imageMetadataScrollPaneLayout.setVerticalGroup(
-              imageMetadataScrollPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING).addGroup(imageMetadataScrollPaneLayout.createSequentialGroup().addGroup(imageMetadataScrollPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE).addComponent(showUnchangingPropertiesCheckbox).addComponent(jLabel2)).addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED).addComponent(imageMetadataTableScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 250, Short.MAX_VALUE)));
+              imageMetadataScrollPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING).addGroup(imageMetadataScrollPaneLayout.createSequentialGroup().addGroup(imageMetadataScrollPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE).addComponent(showUnchangingPropertiesCheckbox_).addComponent(jLabel2)).addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED).addComponent(imageMetadataTableScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 250, Short.MAX_VALUE)));
 
       metadataSplitPane.setRightComponent(imageMetadataScrollPane);
 
@@ -190,7 +175,7 @@ public class MetadataPanel extends JPanel {
       summaryMetadataScrollPane.setMinimumSize(new java.awt.Dimension(0, 0));
       summaryMetadataScrollPane.setPreferredSize(new java.awt.Dimension(250, 80));
 
-      summaryMetadataTable.setModel(new DefaultTableModel(
+      summaryMetadataTable_.setModel(new DefaultTableModel(
               new Object[][]{
                  {null, null},
                  {null, null},
@@ -210,8 +195,8 @@ public class MetadataPanel extends JPanel {
             return canEdit[columnIndex];
          }
       });
-      summaryMetadataTable.setToolTipText("Metadata tags for the whole acquisition");
-      summaryMetadataScrollPane.setViewportView(summaryMetadataTable);
+      summaryMetadataTable_.setToolTipText("Metadata tags for the whole acquisition");
+      summaryMetadataScrollPane.setViewportView(summaryMetadataTable_);
 
       jLabel3.setText("Acquisition properties");
 
@@ -232,13 +217,13 @@ public class MetadataPanel extends JPanel {
 
       summaryCommentsLabel.setText("Acquisition comments:");
 
-      summaryCommentsTextArea.setColumns(20);
-      summaryCommentsTextArea.setLineWrap(true);
-      summaryCommentsTextArea.setRows(1);
-      summaryCommentsTextArea.setTabSize(3);
-      summaryCommentsTextArea.setToolTipText("Enter your comments for the whole acquisition here");
-      summaryCommentsTextArea.setWrapStyleWord(true);
-      summaryCommentsScrollPane.setViewportView(summaryCommentsTextArea);
+      summaryCommentsTextArea_.setColumns(20);
+      summaryCommentsTextArea_.setLineWrap(true);
+      summaryCommentsTextArea_.setRows(1);
+      summaryCommentsTextArea_.setTabSize(3);
+      summaryCommentsTextArea_.setToolTipText("Enter your comments for the whole acquisition here");
+      summaryCommentsTextArea_.setWrapStyleWord(true);
+      summaryCommentsScrollPane.setViewportView(summaryCommentsTextArea_);
 
       javax.swing.GroupLayout summaryCommentsPaneLayout = new javax.swing.GroupLayout(summaryCommentsPane);
       summaryCommentsPane.setLayout(summaryCommentsPaneLayout);
@@ -253,13 +238,13 @@ public class MetadataPanel extends JPanel {
 
       imageCommentsLabel.setText("Per-image comments:");
 
-      imageCommentsTextArea.setColumns(20);
-      imageCommentsTextArea.setLineWrap(true);
-      imageCommentsTextArea.setRows(1);
-      imageCommentsTextArea.setTabSize(3);
-      imageCommentsTextArea.setToolTipText("Comments for each image may be entered here.");
-      imageCommentsTextArea.setWrapStyleWord(true);
-      imageCommentsScrollPane.setViewportView(imageCommentsTextArea);
+      imageCommentsTextArea_.setColumns(20);
+      imageCommentsTextArea_.setLineWrap(true);
+      imageCommentsTextArea_.setRows(1);
+      imageCommentsTextArea_.setTabSize(3);
+      imageCommentsTextArea_.setToolTipText("Comments for each image may be entered here.");
+      imageCommentsTextArea_.setWrapStyleWord(true);
+      imageCommentsScrollPane.setViewportView(imageCommentsTextArea_);
 
       javax.swing.GroupLayout imageCommentsPanelLayout = new javax.swing.GroupLayout(imageCommentsPanel);
       imageCommentsPanel.setLayout(imageCommentsPanelLayout);
@@ -281,7 +266,7 @@ public class MetadataPanel extends JPanel {
    }
 
    private void showUnchangingPropertiesCheckboxActionPerformed(java.awt.event.ActionEvent evt) {
-      showUnchangingKeys_ = showUnchangingPropertiesCheckbox.isSelected();
+      showUnchangingKeys_ = showUnchangingPropertiesCheckbox_.isSelected();
       ReportingUtils.logError("TODO: implement showUnchangingProperties");
    }
 
@@ -298,12 +283,12 @@ public class MetadataPanel extends JPanel {
             ReportingUtils.logError("TODO: write display settings on lost focus");
          }
       };
-      summaryCommentsTextArea.addFocusListener(listener);
-      imageCommentsTextArea.addFocusListener(listener);
+      summaryCommentsTextArea_.addFocusListener(listener);
+      imageCommentsTextArea_.addFocusListener(listener);
    }
    
    private void addTextChangeListeners() {
-      summaryCommentsTextArea.getDocument().addDocumentListener(new DocumentListener() {
+      summaryCommentsTextArea_.getDocument().addDocumentListener(new DocumentListener() {
 
          private void handleChange() {
             ReportingUtils.logError("TODO: write summary comments");
@@ -325,7 +310,7 @@ public class MetadataPanel extends JPanel {
          }
       });
 
-      imageCommentsTextArea.getDocument().addDocumentListener(new DocumentListener() {
+      imageCommentsTextArea_.getDocument().addDocumentListener(new DocumentListener() {
 
          private void handleChange() {
             ReportingUtils.logError("TODO: write image comments");
@@ -456,7 +441,7 @@ public class MetadataPanel extends JPanel {
          public void run() {
             Metadata data = image.getMetadata();
             // Update image comment
-            imageCommentsTextArea.setText(data.getComments());
+            imageCommentsTextArea_.setText(data.getComments());
             imageMetadataModel_.setMetadata(data.legacyToJSON());
             summaryMetadataModel_.setMetadata(store_.getSummaryMetadata().legacyToJSON());
          }
