@@ -72,7 +72,7 @@ void ImgBuffer::SetPixels(const void* pix)
 // (row).
 void ImgBuffer::SetPixelsPadded(const void* pixArray, int paddingBytesPerLine)
 {
-   char* src = reinterpret_cast<char*>(pixArray);
+   const char* src = reinterpret_cast<const char*>(pixArray);
    char* dst = reinterpret_cast<char*>(pixels_);
    const size_t lineSize = width_ * pixDepth_;
 
