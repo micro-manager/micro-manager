@@ -22,6 +22,7 @@ package org.micromanager.asidispim;
 
 
 import org.micromanager.asidispim.Data.AcquisitionModes;
+import org.micromanager.asidispim.Data.CameraModes;
 import org.micromanager.asidispim.Data.Cameras;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.Joystick;
@@ -223,8 +224,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
       volPanel_.add(new JLabel("Slices per volume:"));
       numSlices_ = pu.makeSpinnerInteger(1, 1000,
-              new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
-              Properties.Keys.SPIM_NUM_SLICES, 20);
+              Devices.Keys.PLUGIN,
+              Properties.Keys.PLUGIN_NUM_SLICES, 20);
       numSlices_.addChangeListener(recalculateTimingDisplayCL);
       volPanel_.add(numSlices_, "wrap");
       
@@ -973,13 +974,26 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          return false;
       }
       
-      // figure out the piezo and slice parameters
+      // figure out the piezo parameters
       int numSlices = getNumSlices();
       float piezoAmplitude =  ( (numSlices - 1) * 
               PanelUtils.getSpinnerFloatValue(stepSize_));
       float piezoCenter = prefs_.getFloat(
             MyStrings.PanelNames.SETUP.toString() + side.toString(), 
             Properties.Keys.PLUGIN_PIEZO_CENTER_POS, 0);
+      
+      // tweak the parameters if we are using synchronous/overlap mode
+      // object is to get exact same piezo/scanner positions in first
+      // N frames (piezo/scanner will move to N+1st position but no image taken)
+      CameraModes.Keys cameraMode = CameraModes.getKeyFromPrefCode(
+            prefs_.getInt(MyStrings.PanelNames.SETTINGS.toString(),
+                  Properties.Keys.PLUGIN_CAMERA_MODE, 0));
+      if (cameraMode == CameraModes.Keys.OVERLAP) {
+         piezoAmplitude *= ((float)numSlices)/(numSlices-1);
+         piezoCenter += piezoAmplitude/(2*numSlices);
+         numSlices += 1;
+      }
+      
       float sliceRate = prefs_.getFloat(
             MyStrings.PanelNames.SETUP.toString() + side.toString(), 
             Properties.Keys.PLUGIN_RATE_PIEZO_SHEET, -80);
@@ -995,12 +1009,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       float sliceAmplitude = piezoAmplitude / sliceRate;
       float sliceCenter = (piezoCenter - sliceOffset) / sliceRate;
 
-      
-//      CameraModes.Keys cameraMode = CameraModes.getKeyFromPrefCode(
-//            prefs_.getInt(MyStrings.PanelNames.SETTINGS.toString(),
-//                  Properties.Keys.PLUGIN_CAMERA_MODE, 0));
-      
-      
       // get the micro-mirror card ready
       // SA_AMPLITUDE_X_DEG and SA_OFFSET_X_DEG done by setup tabs
       props_.setPropValue(galvoDevice,
@@ -1009,6 +1017,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             Properties.Keys.SA_OFFSET_Y_DEG, sliceCenter);
       props_.setPropValue(galvoDevice,
             Properties.Keys.BEAM_ENABLED, Properties.Values.NO);
+      props_.setPropValue(galvoDevice,
+            Properties.Keys.SPIM_NUM_SLICES, numSlices);
       props_.setPropValue(galvoDevice,
             Properties.Keys.SPIM_NUM_SIDES, getNumSides());
       props_.setPropValue(galvoDevice,
@@ -1124,17 +1134,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       int nrSlices = getNumSlices();
       int nrPos = 1;  // TODO: multi XY points
       
-//      CameraModes.Keys cameraMode = CameraModes.getKeyFromPrefCode(
-//            prefs_.getInt(MyStrings.PanelNames.SETTINGS.toString(),
-//            Properties.Keys.PLUGIN_CAMERA_MODE, 0));
-//      
-//      // TEMPORARY
-//      // TODO change so that we increase number of triggers we send instead
-//      // will also have to change scan range, etc.
-//      if (cameraMode == CameraModes.Keys.OVERLAP) {
-//         nrSlices--;  
-//      }
-
       boolean autoShutter = core_.getAutoShutter();
       boolean shutterOpen = false;
 
