@@ -985,9 +985,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          return false;
       }
       float sliceAmplitude = piezoAmplitude / sliceRate;
-      float piezoCenter =  props_.getPropValueFloat(
-            Devices.getSideSpecificKey(Devices.Keys.PIEZOA, side),
-            Properties.Keys.SA_OFFSET); 
+      float piezoCenter = prefs_.getFloat(
+            MyStrings.PanelNames.SETUP.toString() + side.toString(), 
+            Properties.Keys.PLUGIN_PIEZO_CENTER_POS, 0);
       float sliceCenter = (piezoCenter - sliceOffset) / sliceRate;
       props_.setPropValue(Devices.getSideSpecificKey(Devices.Keys.GALVOA, side),
             Properties.Keys.SA_AMPLITUDE_Y_DEG, sliceAmplitude);
@@ -995,6 +995,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             Properties.Keys.SA_OFFSET_Y_DEG, sliceCenter);
       props_.setPropValue(Devices.getSideSpecificKey(Devices.Keys.GALVOA, side),
             Properties.Keys.BEAM_ENABLED, Properties.Values.NO);
+      props_.setPropValue(Devices.getSideSpecificKey(Devices.Keys.PIEZOA, side),
+            Properties.Keys.SA_OFFSET, piezoCenter);
       props_.setPropValue(Devices.getSideSpecificKey(Devices.Keys.PIEZOA, side),
             Properties.Keys.SPIM_NUM_SLICES, numSlices);
       props_.setPropValue(Devices.getSideSpecificKey(Devices.Keys.GALVOA, side),
@@ -1105,6 +1107,17 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
               PanelUtils.getSpinnerFloatValue(acquisitionInterval_) * 1000d);
       int nrSlices = getNumSlices();
       int nrPos = 1;  // TODO: multi XY points
+      
+//      CameraModes.Keys cameraMode = CameraModes.getKeyFromPrefCode(
+//            prefs_.getInt(MyStrings.PanelNames.SETTINGS.toString(),
+//            Properties.Keys.PLUGIN_CAMERA_MODE, 0));
+//      
+//      // TEMPORARY
+//      // TODO change so that we increase number of triggers we send instead
+//      // will also have to change scan range, etc.
+//      if (cameraMode == CameraModes.Keys.OVERLAP) {
+//         nrSlices--;  
+//      }
 
       boolean autoShutter = core_.getAutoShutter();
       boolean shutterOpen = false;
@@ -1190,6 +1203,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       long acqStart = System.currentTimeMillis();
 
       // do not want to return from within this loop
+      // loop is executed once per acquisition (once if separate viewers isn't selected)
       for (int tp = 0; tp < nrRepeats && !stop_.get(); tp++) {
          BlockingQueue<TaggedImage> bq = new LinkedBlockingQueue<TaggedImage>(10);
          String acqName;
@@ -1252,10 +1266,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             DefaultTaggedImageSink sink = new DefaultTaggedImageSink(bq, imageCache);
             sink.start();
 
+            // Loop over all the time points
             // If the interval between frames is shorter than the time to acquire
             // them, we can switch to hardware based solution.  Not sure how important 
             // that feature is, so leave it out for now.
-            for (int f = 0; f < nrFrames && !stop_.get(); f++) {  // loop over time points
+            for (int f = 0; f < nrFrames && !stop_.get(); f++) {
                long acqNow = System.currentTimeMillis();
                long delay = acqStart + f * timepointsIntervalMs - acqNow;
                while (delay > 0 && !stop_.get()) {
@@ -1286,7 +1301,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   }
                }
 
-               // trigger controller
+               // trigger the Tiger controller
                // TODO generalize this for different ways of running SPIM
                // only matters which device we trigger if there are two micro-mirror cards
                if (isFirstSideA()) {
@@ -1297,8 +1312,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         Properties.Values.SPIM_RUNNING, true);
                }
                   
-
-               // get images from camera and stick into acquisition
                // Wait for first image to create ImageWindow, so that we can be sure about image size
                long start = System.currentTimeMillis();
                long now = start;
@@ -1315,8 +1328,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   throw new IllegalMonitorStateException("User stopped the acquisition");
                }
 
-               // run the loop that takes images from the cameras and puts them 
-               // into the acquisition
+               // gather all the images from the cameras, put them into the acquisition
                int[] frNumber = new int[2];
                boolean done = false;
                long timeout2;
@@ -1375,7 +1387,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             gui_.showError(mex, (Component) ASIdiSPIM.getFrame());
          } catch (Exception ex) {
             gui_.showError(ex, (Component) ASIdiSPIM.getFrame());
-         } finally {  // end of this acquisition (could be about to restart if separate viewers
+         } finally {  // end of this acquisition (could be about to restart if separate viewers)
             try {
                if (core_.isSequenceRunning(firstCamera)) {
                   core_.stopSequenceAcquisition(firstCamera);

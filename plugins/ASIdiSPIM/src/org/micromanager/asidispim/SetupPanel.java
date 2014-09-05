@@ -161,8 +161,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
          @Override
          public void actionPerformed(ActionEvent e) {
             try {
-               imagingCenterPos_ = props_.getPropValueFloat(piezoImagingDeviceKey_,
-                       Properties.Keys.SA_OFFSET);
+               imagingCenterPos_ = imagingCenterPosLabel_.getFloat();
                core_.setPosition(devices_.getMMDeviceException(piezoImagingDeviceKey_), 
                        imagingCenterPos_);
                double sliceCenterPos = computeGalvoFromPiezo(imagingCenterPos_);
@@ -185,8 +184,6 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
             try {
                imagingCenterPos_ = core_.getPosition(
                     devices_.getMMDeviceException(piezoImagingDeviceKey_));
-               props_.setPropValue(piezoImagingDeviceKey_, 
-                        Properties.Keys.SA_OFFSET, (float) imagingCenterPos_);
                imagingCenterPosLabel_.setFloat((float)imagingCenterPos_);
             } catch (Exception ex) {
                gui_.showError(ex, (Component) ASIdiSPIM.getFrame());
