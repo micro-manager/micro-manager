@@ -207,7 +207,7 @@ public class CenterAndDragListener implements MouseListener,
          // (is it really needed to run this every time?)
          getOrientation();
          String xyStage = core_.getXYStageDevice();
-         if (xyStage == null)
+         if (xyStage == null && !xyStage.equals(""))
             return;
          try {
             if (core_.deviceBusy(xyStage))
