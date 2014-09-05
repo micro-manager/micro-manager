@@ -955,6 +955,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * @return false if there was some error that should abort acquisition
     */
    private boolean prepareControllerForAquisition(Devices.Sides side) {
+      
+      Devices.Keys galvoDevice = Devices.getSideSpecificKey(Devices.Keys.GALVOA, side);
+      Devices.Keys piezoDevice = Devices.getSideSpecificKey(Devices.Keys.PIEZOA, side);
+      
       int numSlices = getNumSlices();
       float piezoAmplitude =  ( (numSlices - 1) * 
               PanelUtils.getSpinnerFloatValue(stepSize_));
@@ -970,46 +974,50 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                ASIdiSPIM.getFrame());
          return false;
       }
-      if (!devices_.isValidMMDevice(
-            Devices.getSideSpecificKey(Devices.Keys.GALVOA, side))) {
+      if (!devices_.isValidMMDevice(galvoDevice)) {
          gui_.showError("Scanner device required; please check Devices tab.",
                ASIdiSPIM.getFrame());
             return false;
       }
-      if (props_.getPropValueInteger(
-            Devices.getSideSpecificKey(Devices.Keys.GALVOA, side), 
+      if (props_.getPropValueInteger(galvoDevice, 
             Properties.Keys.SPIM_NUM_REPEATS) != 1) {
          gui_.showError("Number of acquisitions set in plugin. " +
             "Please change scanner property \"SPIMNumRepeats\" to 1.",
             ASIdiSPIM.getFrame());
          return false;
       }
+      
       float sliceAmplitude = piezoAmplitude / sliceRate;
       float piezoCenter = prefs_.getFloat(
             MyStrings.PanelNames.SETUP.toString() + side.toString(), 
             Properties.Keys.PLUGIN_PIEZO_CENTER_POS, 0);
       float sliceCenter = (piezoCenter - sliceOffset) / sliceRate;
-      props_.setPropValue(Devices.getSideSpecificKey(Devices.Keys.GALVOA, side),
+      
+      // get the micro-mirror card ready
+      // SA_AMPLITUDE_X_DEG and SA_OFFSET_X_DEG done by setup tabs
+      props_.setPropValue(galvoDevice,
             Properties.Keys.SA_AMPLITUDE_Y_DEG, sliceAmplitude);
-      props_.setPropValue(Devices.getSideSpecificKey(Devices.Keys.GALVOA, side),
+      props_.setPropValue(galvoDevice,
             Properties.Keys.SA_OFFSET_Y_DEG, sliceCenter);
-      props_.setPropValue(Devices.getSideSpecificKey(Devices.Keys.GALVOA, side),
+      props_.setPropValue(galvoDevice,
             Properties.Keys.BEAM_ENABLED, Properties.Values.NO);
-      props_.setPropValue(Devices.getSideSpecificKey(Devices.Keys.PIEZOA, side),
-            Properties.Keys.SA_OFFSET, piezoCenter);
-      props_.setPropValue(Devices.getSideSpecificKey(Devices.Keys.PIEZOA, side),
-            Properties.Keys.SPIM_NUM_SLICES, numSlices);
-      props_.setPropValue(Devices.getSideSpecificKey(Devices.Keys.GALVOA, side),
+      props_.setPropValue(galvoDevice,
             Properties.Keys.SPIM_NUM_SIDES, getNumSides());
-      props_.setPropValue(Devices.getSideSpecificKey(Devices.Keys.GALVOA, side),
+      props_.setPropValue(galvoDevice,
             Properties.Keys.SPIM_FIRSTSIDE, getFirstSide());
+      
+      // get the piezo card ready
       if (spimMode_.getSelectedItem().
             equals(AcquisitionModes.Keys.SLICE_SCAN_ONLY)) {
          piezoAmplitude = (float) 0.0;
       }
-      props_.setPropValue(Devices.getSideSpecificKey(Devices.Keys.PIEZOA, side),
+      props_.setPropValue(piezoDevice,
             Properties.Keys.SA_AMPLITUDE, piezoAmplitude);
-      props_.setPropValue(Devices.getSideSpecificKey(Devices.Keys.PIEZOA, side),
+      props_.setPropValue(piezoDevice,
+            Properties.Keys.SA_OFFSET, piezoCenter);
+      props_.setPropValue(piezoDevice,
+            Properties.Keys.SPIM_NUM_SLICES, numSlices);
+      props_.setPropValue(piezoDevice,
             Properties.Keys.SPIM_STATE, Properties.Values.SPIM_ARMED);
       return true;
    }
