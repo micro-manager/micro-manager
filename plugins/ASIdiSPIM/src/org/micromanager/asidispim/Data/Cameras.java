@@ -45,19 +45,16 @@ public class Cameras {
    private final Devices devices_; // object holding information about
                                    // selected/available devices
    private final Properties props_; // object handling all property read/writes
+   private final Prefs prefs_;
    private final ScriptInterface gui_;
    private final CMMCore core_;
    private Devices.Keys currentCameraKey_;
 
-   public static enum TriggerModes {
-      EXTERNAL_START,
-      EXTERNAL_BULB,
-      INTERNAL;
-   }
 
-   public Cameras(ScriptInterface gui, Devices devices, Properties props) {
+   public Cameras(ScriptInterface gui, Devices devices, Properties props, Prefs prefs) {
       devices_ = devices;
       props_ = props;
+      prefs_ = prefs;
       gui_ = gui;
       core_ = gui_.getMMCore();
    }// constructor
@@ -187,7 +184,7 @@ public class Cameras {
     */
    public void enableLiveMode(boolean enable) {
       if (enable) {
-         setSPIMCameraTriggerMode(TriggerModes.INTERNAL);
+         setSPIMCamerasForAcquisition(false);
       }
       gui_.enableLiveMode(enable);
    }
@@ -200,36 +197,56 @@ public class Cameras {
     * @param devKey
     * @param mode enum from this class
     */
-   private void setCameraTriggerMode(Devices.Keys devKey, TriggerModes mode) {
+   private void setCameraTriggerMode(Devices.Keys devKey, CameraModes.Keys mode) {
       Devices.Libraries camLibrary = devices_.getMMDeviceLibrary(devKey);
       switch (camLibrary) {
       case HAMCAM:
          props_.setPropValue(
                devKey,
                Properties.Keys.TRIGGER_SOURCE,
-               ((mode == TriggerModes.EXTERNAL_START) 
-                     ? Properties.Values.EXTERNAL
-                     : Properties.Values.INTERNAL), true);
-         // // this mode useful for maximum speed: exposure is ended by start of
-         // next frame => requires one extra trigger pulse?
-         // props_.setPropValue(devKey, Properties.Keys.TRIGGER_ACTIVE,
-         // Properties.Values.SYNCREADOUT);
+               ((mode == CameraModes.Keys.INTERNAL) 
+                     ? Properties.Values.INTERNAL
+                     : Properties.Values.EXTERNAL), true);
+         switch (mode) {
+         case EDGE:
+            props_.setPropValue(devKey, Properties.Keys.TRIGGER_ACTIVE,
+                  Properties.Values.EDGE);
+            break;
+         case LEVEL:
+            props_.setPropValue(devKey, Properties.Keys.TRIGGER_ACTIVE,
+                  Properties.Values.LEVEL);
+            break;
+         case OVERLAP:
+            props_.setPropValue(devKey, Properties.Keys.TRIGGER_ACTIVE,
+                  Properties.Values.SYNCREADOUT);
+            break;
+         default:
+            break;
+         }
          break;
       case PCOCAM:
+         // TODO add level-sensitive trigger
          props_.setPropValue(
                devKey,
                Properties.Keys.TRIGGER_MODE,
-               ((mode == TriggerModes.EXTERNAL_START) 
+               ((mode == CameraModes.Keys.EDGE) 
                      ? Properties.Values.EXTERNAL_LC
                      : Properties.Values.INTERNAL_LC), true);
          break;
       case ANDORCAM:
+         // TODO add level-sensitive trigger
          props_.setPropValue(
                devKey,
                Properties.Keys.TRIGGER_MODE_ANDOR,
-               ((mode == TriggerModes.EXTERNAL_START) 
+               ((mode == CameraModes.Keys.EDGE) 
                      ? Properties.Values.EXTERNAL_LC
                      : Properties.Values.INTERNAL_ANDOR), true);
+         props_.setPropValue(
+               devKey,
+               Properties.Keys.ANDOR_OVERLAP,
+               ((mode == CameraModes.Keys.OVERLAP) 
+                     ? Properties.Values.ON
+                     : Properties.Values.OFF), true);
          break;
       case DEMOCAM:
          // do nothing
@@ -362,35 +379,6 @@ public class Cameras {
    }
    
    /**
-    * True if reset and readout occur at same time (synchronous or overlap mode)
-    * @param camKey
-    * @return
-    */
-   public boolean resetAndReadoutOverlap(Devices.Keys camKey) {
-      switch (devices_.getMMDeviceLibrary(camKey)) {
-      case HAMCAM:
-         if (props_.getPropValueString(camKey, Properties.Keys.TRIGGER_ACTIVE,
-               true).equals(Properties.Values.SYNCREADOUT.toString())) {
-            return true;
-         }
-         break;
-      case PCOCAM:
-         break;
-      case ANDORCAM:
-         if (props_.getPropValueString(camKey, Properties.Keys.ANDOR_OVERLAP,
-               true).equals(Properties.Values.ON.toString())) {
-            return true;
-         }
-         break;
-      case DEMOCAM:
-         break;
-      default:
-         break;
-      }
-      return false;
-   }
-
-   /**
     * Gets an estimate of a specific camera's time between trigger and global
     * exposure, i.e. how long it takes for reset. Will depend on whether we
     * have/use global reset, the ROI size, etc.
@@ -491,15 +479,32 @@ public class Cameras {
             " for camera" + devices_.getMMDevice(camKey), true);
       return readoutTimeMs;  // assume 10ms readout if not otherwise possible to calculate
    }
+   
+   /**
+    * private utility/shortcut function to set both SPIM cameras
+    * @param trigMode
+    */
+   private void setSPIMTriggerMode(CameraModes.Keys trigMode) {
+      // TODO look at whether both sides are active before setting cameras up
+      setCameraTriggerMode(Devices.Keys.CAMERAA, trigMode);
+      setCameraTriggerMode(Devices.Keys.CAMERAB, trigMode);
+   }
 
    /**
-    * Sets cameras A and B to external or internal mode
-    * 
-    * @param external
+    * Sets up SPIM cameras in correct mode for acquisition when called with true.
+    * Uses the camera mode setting to see which external trigger mode.
+    * @param acq
     */
-   public void setSPIMCameraTriggerMode(TriggerModes mode) {
-      setCameraTriggerMode(Devices.Keys.CAMERAA, mode);
-      setCameraTriggerMode(Devices.Keys.CAMERAB, mode);
+   public void setSPIMCamerasForAcquisition(boolean acq) {
+      if (acq) {
+         CameraModes.Keys cameraMode = CameraModes.getKeyFromPrefCode(
+               prefs_.getInt(MyStrings.PanelNames.SETTINGS.toString(),
+                     Properties.Keys.PLUGIN_CAMERA_MODE, 0));
+         setSPIMTriggerMode(cameraMode);
+      } else { // for Live mode
+         setSPIMTriggerMode(CameraModes.Keys.INTERNAL);
+      }
    }
+   
 
 }

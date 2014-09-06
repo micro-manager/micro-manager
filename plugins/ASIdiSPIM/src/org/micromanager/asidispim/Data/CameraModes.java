@@ -50,9 +50,10 @@ public class CameraModes {
     * can be easily changed. 
     */
    public static enum Keys { 
-      STANDARD("Standard", 1),
-      OVERLAP("Simultaneous reset/readout", 2),
-      NONE("None", 0);
+      EDGE("Edge trigger", 1),
+      OVERLAP("Overlap/synchronous", 2),
+      LEVEL("Level trigger (not yet implemented)", 3),
+      INTERNAL("Internal", 0);
       private final String text;
       private final int prefCode;
       Keys(String text, int prefCode) {
@@ -181,7 +182,8 @@ public class CameraModes {
                   cameraInvalid(Devices.Keys.CAMERAB)) {
                return keyList;
             }
-            keyList.add(Keys.STANDARD);
+            keyList.add(Keys.EDGE);
+//            keyList.add(Keys.LEVEL);
             if (cameraSupportsOverlap(Devices.Keys.CAMERAA) &&
                   cameraSupportsOverlap(Devices.Keys.CAMERAB)) {
                keyList.add(Keys.OVERLAP);
@@ -191,7 +193,8 @@ public class CameraModes {
                if (cameraInvalid(Devices.Keys.CAMERAA)) {
                   return keyList;
                }
-               keyList.add(Keys.STANDARD);
+               keyList.add(Keys.EDGE);
+//               keyList.add(Keys.LEVEL);
                if(cameraSupportsOverlap(Devices.Keys.CAMERAA)) {
                   keyList.add(Keys.OVERLAP);
                }
@@ -199,7 +202,8 @@ public class CameraModes {
                if (cameraInvalid(Devices.Keys.CAMERAB)) {
                   return keyList;
                }
-               keyList.add(Keys.STANDARD);
+               keyList.add(Keys.EDGE);
+//               keyList.add(Keys.LEVEL);
                if(cameraSupportsOverlap(Devices.Keys.CAMERAB)) {
                   keyList.add(Keys.OVERLAP);
                }

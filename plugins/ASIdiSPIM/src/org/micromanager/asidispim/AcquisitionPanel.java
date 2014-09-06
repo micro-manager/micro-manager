@@ -1187,7 +1187,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          return false;
       }
       
-      cameras_.setSPIMCameraTriggerMode(Cameras.TriggerModes.EXTERNAL_START);
+      cameras_.setSPIMCamerasForAcquisition(true);
 
       // stop the serial traffic for position updates during acquisition
       stagePosUpdater_.setAcqRunning(true);
@@ -1459,7 +1459,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       if (separateImageFilesOriginally) {
          ImageUtils.setImageStorageClass(TaggedImageStorageDiskDefault.class);
       }
-      cameras_.setSPIMCameraTriggerMode(Cameras.TriggerModes.INTERNAL);
+      cameras_.setSPIMCamerasForAcquisition(false);
       if (liveModeOriginally) {
          gui_.enableLiveMode(true);
       }

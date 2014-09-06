@@ -44,9 +44,9 @@ import org.micromanager.MMStudio;
 import org.micromanager.asidispim.Utils.StagePositionUpdater;
 import org.micromanager.internalinterfaces.LiveModeListener; 
 
+// TODO account for overlap mode in timing calcutations
 // TODO make sure acquisition works for single SPIM
 // TODO save/load plugin settings from file instead of from registry (nice to also include controller settings)
-// TODO troubleshoot LiveMode requirement
 // TODO handle camera binning
 // TODO add check for correct Hamamatsu model
 // TODO support for laser shutters (update device panel too?)
@@ -95,7 +95,7 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       props_ = new Properties(gui, devices_, prefs_);
       positions_ = new Positions(gui, devices_);
       joystick_ = new Joystick(gui, devices_, props_);
-      cameras_ = new Cameras(gui, devices_, props_);
+      cameras_ = new Cameras(gui, devices_, props_, prefs_);
       
       // create the panels themselves
       // in some cases dependencies create required ordering
