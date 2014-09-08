@@ -39,6 +39,7 @@ public class TestDisplay {
    private HyperstackControls controls_;
    private HistogramsPanel histograms_;
    private MetadataPanel metadata_;
+   private CommentsPanel comments_;
 
    private EventBus bus_;
    
@@ -124,6 +125,9 @@ public class TestDisplay {
 
       metadata_ = new MetadataPanel(store_);
       modePanel.addMode("Metadata", metadata_);
+
+      comments_ = new CommentsPanel(store_);
+      modePanel.addMode("Comments", comments_);
 
       widgets.add(modePanel);
       rules.add("dock east, growy");
