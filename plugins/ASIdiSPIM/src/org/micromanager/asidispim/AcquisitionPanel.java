@@ -1347,7 +1347,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                int[] frNumber = new int[2];
                boolean done = false;
                long timeout2;
-               timeout2 = Math.max(10000, Math.round(computeActualVolumeDuration()));
+               timeout2 = Math.max(10000, Math.round(1.2*computeActualVolumeDuration()));
                start = System.currentTimeMillis();
                try {
                   while ((core_.getRemainingImageCount() > 0
@@ -1364,7 +1364,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         }
                         addImageToAcquisition(acqName, f, ch, frNumber[ch], 0,
                               now - acqStart, timg, bq);
-                        
                         frNumber[ch]++;
                      } else {
                         Thread.sleep(1);
@@ -1374,26 +1373,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      }
                      if (now - start >= timeout2) {
                         gui_.logError("No image arrived withing a reasonable period");
-                        // stop_.set(true);
                         done = true;
                      }
                   }
                } catch (InterruptedException iex) {
                   gui_.showError(iex, (Component) ASIdiSPIM.getFrame());
-               }
-
-               if (core_.isSequenceRunning(firstCamera)) {
-                  core_.stopSequenceAcquisition(firstCamera);
-               }
-               if (secondCamera != null && core_.isSequenceRunning(secondCamera)) {
-                  core_.stopSequenceAcquisition(secondCamera);
-               }
-               if (autoShutter) {
-                  core_.setAutoShutter(true);
-
-                  if (!shutterOpen) {
-                     core_.setShutterOpen(false);
-                  }
                }
             }
          } catch (IllegalMonitorStateException ex) {
