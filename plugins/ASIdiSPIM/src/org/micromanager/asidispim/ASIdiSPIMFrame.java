@@ -106,13 +106,13 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
             Devices.Sides.B, positions_, cameras_, prefs_);
       // get initial positions, even if user doesn't want continual refresh
       stagePosUpdater_ = new StagePositionUpdater(positions_, props_);  // needed for setup and navigation
+      navigationPanel_ = new NavigationPanel(gui, devices_, props_, joystick_,
+            positions_, prefs_, cameras_);
       acquisitionPanel_ = new AcquisitionPanel(gui, devices_, props_, joystick_, 
             cameras_, prefs_, stagePosUpdater_);
       dataAnalysisPanel_ = new DataAnalysisPanel(gui, prefs_);
       settingsPanel_ = new SettingsPanel(gui, devices_, props_, prefs_, stagePosUpdater_);
       stagePosUpdater_.oneTimeUpdate();  // needed for NavigationPanel
-      navigationPanel_ = new NavigationPanel(gui, devices_, props_, joystick_,
-            positions_, prefs_, cameras_);
       helpPanel_ = new HelpPanel(gui);
       
       // now add tabs to GUI
@@ -202,6 +202,16 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
     */
    public AcquisitionPanel getAcquisitionPanel() {
       return acquisitionPanel_;
+   }
+   
+   /**
+    * For use of acquisition panel code (getting joystick settings)
+    * Do not get into the internals of this plugin without relying on
+    * ASIdiSPIM.api
+    * @return 
+    */
+   public NavigationPanel getNavigationPanel() {
+      return navigationPanel_;
    }
    
    // MMListener mandated member functions

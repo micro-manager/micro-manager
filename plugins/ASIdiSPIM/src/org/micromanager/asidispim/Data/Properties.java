@@ -126,6 +126,7 @@ public class Properties {
       PLUGIN_SAVE_WHILE_ACQUIRING("SaveWhileAcquiring"),
       PLUGIN_HIDE_WHILE_ACQUIRING("HideWhileAcquiring"),
       PLUGIN_SEPARATE_VIEWERS_FOR_TIMEPOINTS("SeparateViewersForTimePoints"),
+      PLUGIN_USE_NAVIGATION_JOYSTICKS("UseNavigationJoysticks"),
       PLUGIN_PIEZO_SHEET_INCREMENT("PiezoSheetIncrement"),  // piezo increment for moving piezo and galvo together
       PLUGIN_OFFSET_PIEZO_SHEET("OffsetPiezoSheet"),  // Offset in piezo/sheet relation
       PLUGIN_RATE_PIEZO_SHEET ("RatePiezoSheet"),     // Rate in piezo/sheet 

@@ -143,6 +143,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final JCheckBox saveCB_;
    private final JCheckBox hideCB_;
    private final JComboBox spimMode_;
+   private final JCheckBox navigationJoysticksCB_;
    
    
    public AcquisitionPanel(ScriptInterface gui, 
@@ -190,7 +191,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             updateActualTimeLapseDurationLabel();
          }
       };
-      
       
       
       // start volume (main) sub-panel
@@ -541,7 +541,22 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       // end duration report panel
       
-
+      navigationJoysticksCB_ = new JCheckBox("Use navigation joystick settings");
+      navigationJoysticksCB_.setSelected(prefs_.getBoolean(panelName_,
+            Properties.Keys.PLUGIN_USE_NAVIGATION_JOYSTICKS, false));
+      navigationJoysticksCB_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) { 
+            if (navigationJoysticksCB_.isSelected()) {
+               ASIdiSPIM.getFrame().getNavigationPanel().doJoystickSettings();
+            } else {
+               joystick_.unsetAllJoysticks();
+            }
+            prefs_.putBoolean(panelName_, Properties.Keys.PLUGIN_USE_NAVIGATION_JOYSTICKS,
+                  navigationJoysticksCB_.isSelected());
+         }
+      });
+      
       buttonStart_ = new JToggleButton();
       buttonStart_.setIconTextGap(6);
       buttonStart_.addActionListener(new ActionListener() {
@@ -566,6 +581,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       AcquisitionModes acqModes = new AcquisitionModes(devices_, props_, prefs_);
       spimMode_ = acqModes.getComboBox(); 
       add(spimMode_);
+      
+      add(navigationJoysticksCB_);
       
       add(buttonStart_, "cell 0 3, split 2, left");
       add(acquisitionStatusLabel_, "center");
@@ -1484,7 +1501,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    @Override
    public void gotSelected() {
       props_.callListeners();
-      joystick_.unsetAllJoysticks();  // disable all joysticks on this tab
+      if (navigationJoysticksCB_.isSelected()) {
+         if (ASIdiSPIM.getFrame() != null) {
+            ASIdiSPIM.getFrame().getNavigationPanel().doJoystickSettings();
+         }
+      } else {
+         joystick_.unsetAllJoysticks();  // disable all joysticks on this tab
+      }
    }
 
    /**
@@ -1551,7 +1574,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          throw new MMScriptException("This acquisition was opened with " + acq.getChannels() + " channels.\n"
                  + "The channel number must not exceed declared number of positions.");
       }
-
 
       JSONObject tags = taggedImg.tags;
 

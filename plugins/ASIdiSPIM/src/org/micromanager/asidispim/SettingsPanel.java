@@ -110,7 +110,7 @@ public class SettingsPanel extends ListeningJPanel {
             prefs_.putBoolean(panelName_, Prefs.Keys.ENABLE_POSITION_UPDATES,
                   activeTimerCheckBox.isSelected());
          }
-      }; 
+      };
       activeTimerCheckBox.addActionListener(ae);
       activeTimerCheckBox.setSelected(prefs_.getBoolean(panelName_,
             Prefs.Keys.ENABLE_POSITION_UPDATES, true));

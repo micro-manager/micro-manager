@@ -493,7 +493,7 @@ public class Cameras {
    /**
     * Sets up SPIM cameras in correct mode for acquisition when called with true.
     * Uses the camera mode setting to see which external trigger mode.
-    * @param acq
+    * @param acq true if setting for acquisition, false if setting for live
     */
    public void setSPIMCamerasForAcquisition(boolean acq) {
       if (acq) {

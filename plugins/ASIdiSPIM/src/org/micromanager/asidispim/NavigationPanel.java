@@ -219,15 +219,6 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       add(makeIncrementButton(Devices.Keys.GALVOB, Joystick.Directions.Y, deltaDField, "+", 1));
       add(makeMoveToOriginButton(Devices.Keys.GALVOB, Joystick.Directions.Y), "wrap");
       
-//      JButton buttonUpdate = new JButton("Update once");
-//      buttonUpdate.addActionListener(new ActionListener() {
-//         @Override
-//         public void actionPerformed(ActionEvent e) {
-//            stagePosUpdater.oneTimeUpdate();
-//         }
-//      });
-//      add(buttonUpdate, "center");
-      
       JButton buttonHalt = new JButton("Halt!");
       buttonHalt.setMargin(new Insets(4,8,4,8));
       buttonHalt.addActionListener(new ActionListener() {
@@ -410,4 +401,10 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       galvoByPositionLabel_.setText(positions_.getPositionString(Devices.Keys.GALVOB, Joystick.Directions.Y)); 
    }
    
+   /**
+    * created so that Navigation panel's joystick settings could be invoked from elsewhere
+    */
+   public void doJoystickSettings() {
+      joystickPanel_.gotSelected();
+   }
 }
