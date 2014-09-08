@@ -3,6 +3,8 @@ package org.micromanager.data.test;
 import com.google.common.eventbus.EventBus;
 
 import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -25,6 +27,7 @@ class MultiModePanel extends JPanel {
    JPanel buttonPanel_;
    JPanel modePanel_;
    EventBus bus_;
+
    public MultiModePanel(EventBus bus) {
       bus_ = bus;
       widgetToButton_ = new HashMap<Component, VerticalButton>();
@@ -36,11 +39,6 @@ class MultiModePanel extends JPanel {
       JScrollPane scroller = new JScrollPane(modePanel_);
       scroller.setBorder(null);
       add(scroller, "grow");
-
-      // TODO: constraining height here for the time being. Ideally it should
-      // come from the window's height, and it does most of the time, but
-      // not consistently.
-      setMaximumSize(new Dimension(32767, 700));
    }
 
    public void addMode(String label, Component widget) {
@@ -69,5 +67,19 @@ class MultiModePanel extends JPanel {
          }
       }
       bus_.post(new LayoutChangedEvent());
+   }
+
+   /**
+    * HACK: In addition to the usual validation work, we constrain our height
+    * to the maximum height of our parent to ensure we don't make the window
+    * grow when our contents change.
+    */
+   @Override
+   public void validate() {
+      Container parent = getParent();
+      if (parent != null) {
+         setMaximumSize(new Dimension(32767, parent.getSize().height - 50));
+      }
+      super.validate();
    }
 }
