@@ -146,6 +146,8 @@ public class Properties {
       PLUGIN_MINIMIZE_SLICE_PERIOD("MinimizeSlicePeriod"),
       PLUGIN_ACQUSITION_MODE("AcquisitionMode"),
       PLUGIN_CAMERA_MODE("CameraMode"),
+      PLUGIN_ENABLE_POSITION_UPDATES("EnablePositionUpdates"),
+      PLUGIN_ENABLE_ILLUM_PIEZO_HOME("EnableIllumPiezoHome"),
       PLUGIN_SPIM_SOURCE_POSITION("SPIMLightSourcePosition"),
       PLUGIN_SPIM_SOURCE_INTENSITY("SPIMLightSourceIntensity"),
       PLUGIN_SPIM_SOURCE_ENABLED("SPIMLightSourceEnabled"),

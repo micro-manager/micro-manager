@@ -63,8 +63,6 @@ public class Prefs {
       TAB_INDEX("tabIndex"),
       WIN_LOC_X("xlocation"),
       WIN_LOC_Y("ylocation"),
-      ENABLE_POSITION_UPDATES("EnablePositionUpdates"),
-      ENABLE_ILLUM_PIEZO_HOME("EnableIllumPiezoHome"),
       SHEET_BEAM_ENABLED("SheetBeamEnabled"),
       SHEET_SCAN_ENABLED("SheetScanEnabled"),
       EPI_BEAM_ENABLED("EpiBeamEnabled"),

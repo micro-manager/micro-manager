@@ -98,7 +98,8 @@ public class SettingsPanel extends ListeningJPanel {
             "[]8[]"));
       guiPanel_.setBorder(PanelUtils.makeTitledBorder("GUI"));
       
-      final JCheckBox activeTimerCheckBox = new JCheckBox("Update axis positions continually");
+      final JCheckBox activeTimerCheckBox = pu.makeCheckBox("Update axis positions continually",
+            Properties.Keys.PLUGIN_ENABLE_POSITION_UPDATES, panelName_, true); 
       ActionListener ae = new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) { 
@@ -107,13 +108,9 @@ public class SettingsPanel extends ListeningJPanel {
             } else {
                stagePosUpdater_.stop();
             }
-            prefs_.putBoolean(panelName_, Prefs.Keys.ENABLE_POSITION_UPDATES,
-                  activeTimerCheckBox.isSelected());
          }
       };
       activeTimerCheckBox.addActionListener(ae);
-      activeTimerCheckBox.setSelected(prefs_.getBoolean(panelName_,
-            Prefs.Keys.ENABLE_POSITION_UPDATES, true));
       // programmatically click twice to make sure the action handler is called;
       //   it is not called by setSelected unless there is a change in the value
       activeTimerCheckBox.doClick();
@@ -122,7 +119,7 @@ public class SettingsPanel extends ListeningJPanel {
       
       guiPanel_.add(new JLabel("Position refresh interval (s):"));
       positionRefreshInterval_ = pu.makeSpinnerFloat(0.5, 1000, 0.5,
-            new Devices.Keys [] {Devices.Keys.PLUGIN,},
+            Devices.Keys.PLUGIN,
             Properties.Keys.PLUGIN_POSITION_REFRESH_INTERVAL, 1);
       ChangeListener listenerLast = new ChangeListener() {
          @Override

@@ -490,15 +490,55 @@ public class PanelUtils {
    
    
    /**
+    * Constructs JCheckBox tied to preference (but not property)
+    * @param label the GUI label
+    * @param propKey
+    * @param prefNode
+    * @param defaultValue
+    * @return constructed JCheckBox
+    */
+   public JCheckBox makeCheckBox(String label, Properties.Keys propKey,
+         String prefNode, boolean defaultValue) {
+      
+      /**
+       * nested inner class 
+       * @author Jon
+       */
+      class checkBoxListener implements ActionListener {
+         final JCheckBox jc_;
+         final Properties.Keys propKey_;
+         final String prefNode_;
+         
+         public checkBoxListener(JCheckBox jc, Properties.Keys propKey,
+               String prefNode) {
+            jc_ = jc;
+            propKey_ = propKey;
+            prefNode_ = prefNode;
+         }
+
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            prefs_.putBoolean(prefNode_, propKey_, jc_.isSelected());
+         }
+         
+      }
+      
+      final JCheckBox jc = new JCheckBox(label, 
+            prefs_.getBoolean(prefNode, propKey, defaultValue));
+      jc.addActionListener(new checkBoxListener(jc, propKey, prefNode));
+      return jc;
+   }
+
+   
+   /**
     * Constructs JCheckBox tied to property
     * @param label the GUI label
     * @param offValue the value of the property when not checked
     * @param onValue the value of the property when checked
-    * @param props
-    * @param devs
     * @param devKey
-    * @param prefNode
     * @param propKey
+    * @param prefNode
+    * @param prefKey
     * @return constructed JCheckBox
     */
    public JCheckBox makeCheckBox(String label,

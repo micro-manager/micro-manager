@@ -76,7 +76,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    private double imagingCenterPos_;
    private double sliceStartPos_;
    private double sliceStopPos_;
-   private boolean illumPiezoHomeEnable_;
+   private final JCheckBox illumPiezoHomeEnable_;
    private final JFormattedTextField piezoDeltaField_;
    private final JFormattedTextField offsetField_;
    private final JFormattedTextField rateField_;
@@ -431,18 +431,9 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       });
       sheetPanel.add(tmp_but);
 
-      final JCheckBox illumPiezoHomeEnable = new JCheckBox("Go home on tab activate");
-      ActionListener ae = new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            illumPiezoHomeEnable_ = illumPiezoHomeEnable.isSelected();
-            prefs_.putBoolean(panelName_, Prefs.Keys.ENABLE_ILLUM_PIEZO_HOME, illumPiezoHomeEnable.isSelected());
-         }
-      };
-      illumPiezoHomeEnable.addActionListener(ae);
-      illumPiezoHomeEnable.setSelected(prefs_.getBoolean(panelName_, Prefs.Keys.ENABLE_ILLUM_PIEZO_HOME, true));
-      ae.actionPerformed(null);
-      sheetPanel.add(illumPiezoHomeEnable, "span 3, wrap");
+      illumPiezoHomeEnable_ = pu.makeCheckBox("Go home on tab activate",
+            Properties.Keys.PLUGIN_ENABLE_ILLUM_PIEZO_HOME, panelName_, false); 
+      sheetPanel.add(illumPiezoHomeEnable_, "span 3, wrap");
 
 
       sheetPanel.add(new JLabel("Sheet width:"));
@@ -613,7 +604,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       if (port_ == null) {
          return;
       }
-      if (illumPiezoHomeEnable_) {
+      if (illumPiezoHomeEnable_.isSelected()) {
          try {
             letter = props_.getPropValueString(piezoIlluminationDeviceKey_,
                   Properties.Keys.AXIS_LETTER);

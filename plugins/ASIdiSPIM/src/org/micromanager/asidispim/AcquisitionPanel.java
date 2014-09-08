@@ -239,9 +239,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       desiredSlicePeriod_ = pu.makeSpinnerFloat(1, 1000, 0.25,
             Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_DESIRED_SLICE_PERIOD, 30);
       
-      minSlicePeriodCB_ = new JCheckBox("Minimize slice period",
-            prefs_.getBoolean(panelName_,
-            Properties.Keys.PLUGIN_MINIMIZE_SLICE_PERIOD, false));
+      minSlicePeriodCB_ = pu.makeCheckBox("Minimize slice period",
+            Properties.Keys.PLUGIN_MINIMIZE_SLICE_PERIOD, panelName_, false); 
       minSlicePeriodCB_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -309,9 +308,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
               "[]8[]"));
       
       // special checkbox in titled border to enable/disable sub-panel plus more
-      advancedSliceTimingCB_ = new JCheckBox("Slice Timing Settings (Advanced)",
-            prefs_.getBoolean(panelName_,
-            Properties.Keys.PLUGIN_ADVANCED_SLICE_TIMING, true));
+      
+      advancedSliceTimingCB_ = pu.makeCheckBox("Slice Timing Settings (Advanced)",
+            Properties.Keys.PLUGIN_ADVANCED_SLICE_TIMING, panelName_, true);
       advancedSliceTimingCB_.setToolTipText("See ASI Tiger SPIM documentation for details");
       advancedSliceTimingCB_.setFocusPainted(false); 
       ComponentTitledBorder componentBorder = 
@@ -445,14 +444,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
               "[]8[]"));
       savePanel_.setBorder(PanelUtils.makeTitledBorder("Data Saving Settings"));
       
-      separateTimePointsCB_ = new JCheckBox("Separate viewer / file for each time point");
-      separateTimePointsCB_.setSelected(prefs_.getBoolean(panelName_, 
-              Properties.Keys.PLUGIN_SEPARATE_VIEWERS_FOR_TIMEPOINTS, false));
+      separateTimePointsCB_ = pu.makeCheckBox("Separate viewer / file for each time point",
+            Properties.Keys.PLUGIN_SEPARATE_VIEWERS_FOR_TIMEPOINTS, panelName_, false); 
       savePanel_.add(separateTimePointsCB_, "span 3, left, wrap");
       
-      hideCB_ = new JCheckBox("Hide viewer");
-      hideCB_.setSelected(prefs_.getBoolean(panelName_, 
-            Properties.Keys.PLUGIN_HIDE_WHILE_ACQUIRING, false));
+      hideCB_ = pu.makeCheckBox("Hide viewer",
+            Properties.Keys.PLUGIN_HIDE_WHILE_ACQUIRING, panelName_, false); 
       savePanel_.add(hideCB_, "left");
       hideCB_.addActionListener(new ActionListener() {
          @Override
@@ -469,9 +466,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
       });
       
-      saveCB_ = new JCheckBox("Save while acquiring");
-      saveCB_.setSelected(prefs_.getBoolean(panelName_, 
-              Properties.Keys.PLUGIN_SAVE_WHILE_ACQUIRING, false));
+      
+      saveCB_ = pu.makeCheckBox("Save while acquiring",
+            Properties.Keys.PLUGIN_SAVE_WHILE_ACQUIRING, panelName_, false);
+      // init the save while acquiring CB; could also do two doClick() calls
+      if (hideCB_.isSelected()) {
+         saveCB_.setEnabled(false);
+      }
       savePanel_.add(saveCB_, "span 2, center, wrap");
 
       JLabel dirRootLabel = new JLabel ("Directory root:");
@@ -1470,18 +1471,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
    @Override
    public void saveSettings() {
-      prefs_.putBoolean(panelName_, Properties.Keys.PLUGIN_SAVE_WHILE_ACQUIRING,
-              saveCB_.isSelected());
       prefs_.putString(panelName_, Properties.Keys.PLUGIN_DIRECTORY_ROOT,
               rootField_.getText());
       prefs_.putString(panelName_, Properties.Keys.PLUGIN_NAME_PREFIX,
               nameField_.getText());
-      prefs_.putBoolean(panelName_,
-              Properties.Keys.PLUGIN_SEPARATE_VIEWERS_FOR_TIMEPOINTS,
-              separateTimePointsCB_.isSelected());
-      prefs_.putBoolean(panelName_,
-            Properties.Keys.PLUGIN_MINIMIZE_SLICE_PERIOD,
-            minSlicePeriodCB_.isSelected());
 
       // save controller settings
       props_.setPropValue(Devices.Keys.PIEZOA, Properties.Keys.SAVE_CARD_SETTINGS,
