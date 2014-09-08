@@ -65,7 +65,6 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import org.apache.commons.math.stat.StatUtils;
-import org.jfree.data.xy.XYDataItem;
 import org.jfree.data.xy.XYSeries;
 
 
@@ -467,6 +466,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       showButton_ = new javax.swing.JButton();
       jLabel2 = new javax.swing.JLabel();
       jLabel3 = new javax.swing.JLabel();
+      combineButton_ = new javax.swing.JButton();
       jPanel2 = new javax.swing.JPanel();
       jScrollPane1_ = new javax.swing.JScrollPane();
       jTable1_ = new javax.swing.JTable();
@@ -746,6 +746,14 @@ public class DataCollectionForm extends javax.swing.JFrame {
       jLabel3.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
       jLabel3.setText("< spot <");
 
+      combineButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+      combineButton_.setText("Combine");
+      combineButton_.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            combineButton_ActionPerformed(evt);
+         }
+      });
+
       javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
       jPanel1.setLayout(jPanel1Layout);
       jPanel1Layout.setHorizontalGroup(
@@ -761,14 +769,19 @@ public class DataCollectionForm extends javax.swing.JFrame {
                      .addComponent(saveButton, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
                      .addComponent(loadButton, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
                      .addComponent(showButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE))
-                  .addGap(4, 4, 4)
                   .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                     .addComponent(saveFormatBox_, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
                      .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(6, 6, 6)
+                        .addGap(4, 4, 4)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                           .addComponent(removeButton, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
-                           .addComponent(infoButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE))))))
+                           .addComponent(saveFormatBox_, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
+                           .addGroup(jPanel1Layout.createSequentialGroup()
+                              .addGap(6, 6, 6)
+                              .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                 .addComponent(removeButton, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                 .addComponent(infoButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE)))))
+                     .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(combineButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE)))))
             .addGap(7, 7, 7)
             .addComponent(jSeparator3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
             .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -910,7 +923,10 @@ public class DataCollectionForm extends javax.swing.JFrame {
                   .addGap(21, 21, 21)
                   .addComponent(removeButton, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)
                   .addGap(1, 1, 1)
-                  .addComponent(infoButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE))
+                  .addComponent(infoButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                  .addComponent(combineButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)
+                  .addContainerGap())
                .addGroup(jPanel1Layout.createSequentialGroup()
                   .addComponent(c2StandardButton, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)
                   .addGap(33, 33, 33)
@@ -2727,17 +2743,17 @@ public void run() {
               rowData_.get(rows[0]).maxNrSpots_);
       String[] parts = range_.split(",");
       try {
-      for (String part : parts) {
-         String[] tokens = part.split("-");
-         for (int i = Integer.parseInt(tokens[0].trim()); 
-                 i <= Integer.parseInt(tokens[1].trim()); i++) {
-            desiredFrameNumbers.add(i);
+         for (String part : parts) {
+            String[] tokens = part.split("-");
+            for (int i = Integer.parseInt(tokens[0].trim());
+                    i <= Integer.parseInt(tokens[1].trim()); i++) {
+               desiredFrameNumbers.add(i);
+            }
          }
-      }
       } catch (NumberFormatException ex) {
          ReportingUtils.showError(ex, "Could not parse input");
       }
-      
+
       final ArrayList<Integer> desiredFrameNumbersCopy = desiredFrameNumbers;          
       
       Runnable doWorkRunnable = new Runnable() {
@@ -2759,6 +2775,55 @@ public void run() {
       doWorkRunnable.run();
 
    }//GEN-LAST:event_SubRangeActionPerformed
+
+   private void combineButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_combineButton_ActionPerformed
+      try {
+         final int[] rows = jTable1_.getSelectedRows();
+         
+         if (rows == null || rows.length < 2) {
+            JOptionPane.showMessageDialog(getInstance(), 
+                    "Please select two or more datasets to combine");
+            return;
+         }
+         semaphore_.acquire();
+
+         Runnable doWorkRunnable = new Runnable() {
+            @Override
+            public void run() {
+
+               List<GaussianSpotData> newData =
+                       Collections.synchronizedList(new ArrayList<GaussianSpotData>());
+               for (int i = 0; i < rows.length; i++) {
+                  RowData rowData = rowData_.get(rows[i]);
+                  for (GaussianSpotData gs : rowData.spotList_) {
+                     newData.add(gs);
+                  }
+               }
+
+               // Add transformed data to data overview window
+               // for now, copy header of first data set
+               RowData rowData = rowData_.get(rows[0]);
+               addSpotData(rowData.name_ + "-Combined",
+                       rowData.title_,
+                       referenceName_.getText(), rowData.width_,
+                       rowData.height_, rowData.pixelSizeNm_,
+                       rowData.zStackStepSizeNm_, rowData.shape_,
+                       rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
+                       rowData.nrSlices_, 1, rowData.maxNrSpots_, newData,
+                       rowData.timePoints_,
+                       false, Coordinates.NM, false, 0.0, 0.0);
+
+               semaphore_.release();
+            }
+         };
+
+         (new Thread(doWorkRunnable)).start();
+      } catch (InterruptedException ex) {
+         ReportingUtils.showError(ex, "Data set combiner got interupted");
+      }
+      
+      
+   }//GEN-LAST:event_combineButton_ActionPerformed
 
    /**
     * Given a list of linked spots, create a single spot entry that will be added 
@@ -2826,6 +2891,7 @@ public void run() {
    private javax.swing.JButton c2CorrectButton;
    private javax.swing.JButton c2StandardButton;
    private javax.swing.JButton centerTrackButton_;
+   private javax.swing.JButton combineButton_;
    private javax.swing.JCheckBox filterIntensityCheckBox_;
    private javax.swing.JCheckBox filterSigmaCheckBox_;
    private javax.swing.JButton infoButton_;
@@ -3800,7 +3866,10 @@ public void run() {
 
       XYSeries[] datas = new XYSeries[rowDatas.length];
 
-      boolean useS = false;
+             
+      // Todo: check all rows and throw an error when there is a difference
+      boolean useS = useSeconds(rowDatas[0]);
+      boolean hasTimeInfo = hasTimeInfo(rowDatas[0]);
 
       String xAxis = null;
 
@@ -3814,14 +3883,14 @@ public void run() {
                        0, 400, useShapes, logLog);
 
             } else {
-               for (int index = 0; index < rowDatas.length || !useS; index++) {
+               for (int index = 0; index < rowDatas.length; index++) {
                   datas[index] = new XYSeries(rowDatas[index].ID_);
-                  useS = useSeconds(rowDatas[index]);
                }
+
                for (int index = 0; index < rowDatas.length; index++) {
                   for (int i = 0; i < rowDatas[index].spotList_.size(); i++) {
                      GaussianSpotData spot = rowDatas[index].spotList_.get(i);
-                     if (rowDatas[index].timePoints_ != null) {
+                     if (hasTimeInfo) {
                         double timePoint = rowDatas[index].timePoints_.get(i);
                         if (useS) {
                            timePoint /= 1000;
@@ -3832,7 +3901,7 @@ public void run() {
                      }
                   }
                   xAxis = "Time (frameNr)";
-                  if (rowDatas[index].timePoints_ != null) {
+                  if (hasTimeInfo) {
                      xAxis = "Time (ms)";
                      if (useS) {
                         xAxis = "Time(s)";
@@ -3851,15 +3920,14 @@ public void run() {
                GaussianUtils.plotDataN(title + " PSD", datas, xAxis, "Strength",
                        0, 400, useShapes, logLog);
             } else {
-               for (int index = 0; index < rowDatas.length || !useS; index++) {
+               for (int index = 0; index < rowDatas.length; index++) {
                   datas[index] = new XYSeries(rowDatas[index].ID_);
-                  useS = useSeconds(rowDatas[index]);
                }
                for (int index = 0; index < rowDatas.length; index++) {
                   datas[index] = new XYSeries(rowDatas[index].ID_);
                   for (int i = 0; i < rowDatas[index].spotList_.size(); i++) {
                      GaussianSpotData spot = rowDatas[index].spotList_.get(i);
-                     if (rowDatas[index].timePoints_ != null) {
+                     if (hasTimeInfo) {
                         double timePoint = rowDatas[index].timePoints_.get(i);
                         if (useS) {
                            timePoint /= 1000;
@@ -3870,7 +3938,7 @@ public void run() {
                      }
                   }
                   xAxis = "Time (frameNr)";
-                  if (rowDatas[index].timePoints_ != null) {
+                  if (hasTimeInfo) {
                      xAxis = "Time (ms)";
                      if (useS) {
                         xAxis = "Time(s)";
@@ -3892,9 +3960,8 @@ public void run() {
                        0, 400, useShapes, logLog);
                        * */
             } else {
-               for (int index = 0; index < rowDatas.length || !useS; index++) {
+               for (int index = 0; index < rowDatas.length; index++) {
                   datas[index] = new XYSeries(rowDatas[index].ID_);
-                  useS = useSeconds(rowDatas[index]);
                }
                for (int index = 0; index < rowDatas.length; index++) {
                   datas[index] = new XYSeries(rowDatas[index].ID_);
@@ -3906,7 +3973,7 @@ public void run() {
                      double distY = (sp.getYCenter() - spot.getYCenter())
                              * (sp.getYCenter() - spot.getYCenter());
                      double dist = Math.sqrt(distX + distY);
-                     if (rowDatas[index].timePoints_ != null) {
+                     if (hasTimeInfo) {
                         double timePoint = rowDatas[index].timePoints_.get(i);
                         if (useS) {
                            timePoint /= 1000.0;
@@ -3917,7 +3984,7 @@ public void run() {
                      }
                   }
                   xAxis = "Time (frameNr)";
-                  if (rowDatas[index].timePoints_ != null) {
+                  if (hasTimeInfo) {
                      xAxis = "Time (ms)";
                      if (useS) {
                         xAxis = "Time (s)";
@@ -3933,15 +4000,14 @@ public void run() {
             if (doPSD) {
                 JOptionPane.showMessageDialog(this, "Function is not implemented");
             } else {
-               for (int index = 0; index < rowDatas.length || !useS; index++) {
+               for (int index = 0; index < rowDatas.length; index++) {
                   datas[index] = new XYSeries(rowDatas[index].ID_);
-                  useS = useSeconds(rowDatas[index]);
                }
                for (int index = 0; index < rowDatas.length; index++) {
                   datas[index] = new XYSeries(rowDatas[index].ID_);
                   for (int i = 0; i < rowDatas[index].spotList_.size(); i++) {
                      GaussianSpotData spot = rowDatas[index].spotList_.get(i);
-                     if (rowDatas[index].timePoints_ != null) {
+                     if (hasTimeInfo) {
                         double timePoint = rowDatas[index].timePoints_.get(i);
                         if (useS) {
                            timePoint /= 1000;
@@ -3952,7 +4018,7 @@ public void run() {
                      }
                   }
                   xAxis = "Time (frameNr)";
-                  if (rowDatas[index].timePoints_ != null) {
+                  if (hasTimeInfo) {
                      xAxis = "Time (ms)";
                      if (useS) {
                         xAxis = "Time (s)";
@@ -4024,6 +4090,17 @@ public void run() {
          }
       }
       return useS;
+   }
+   
+   private boolean hasTimeInfo(RowData row) {
+      boolean hasTimeInfo = false;
+      if (row.timePoints_ != null) {
+         if (row.timePoints_.get(row.timePoints_.size() - 1)
+                 - row.timePoints_.get(0) > 0) {
+            hasTimeInfo = true;
+         }
+      }
+      return hasTimeInfo;
    }
    
    /**

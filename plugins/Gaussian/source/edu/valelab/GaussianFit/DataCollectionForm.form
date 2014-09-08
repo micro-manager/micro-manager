@@ -65,15 +65,23 @@
                               <Component id="loadButton" min="-2" pref="70" max="-2" attributes="0"/>
                               <Component id="showButton_" min="-2" pref="70" max="-2" attributes="0"/>
                           </Group>
-                          <EmptySpace min="4" pref="4" max="4" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="saveFormatBox_" min="-2" pref="90" max="-2" attributes="0"/>
-                              <Group type="102" alignment="0" attributes="0">
-                                  <EmptySpace min="6" pref="6" max="-2" attributes="0"/>
+                              <Group type="102" attributes="0">
+                                  <EmptySpace min="4" pref="4" max="4" attributes="0"/>
                                   <Group type="103" groupAlignment="0" attributes="0">
-                                      <Component id="removeButton" min="-2" pref="80" max="-2" attributes="0"/>
-                                      <Component id="infoButton_" min="-2" pref="81" max="-2" attributes="0"/>
+                                      <Component id="saveFormatBox_" min="-2" pref="90" max="-2" attributes="0"/>
+                                      <Group type="102" alignment="0" attributes="0">
+                                          <EmptySpace min="6" pref="6" max="-2" attributes="0"/>
+                                          <Group type="103" groupAlignment="0" attributes="0">
+                                              <Component id="removeButton" min="-2" pref="80" max="-2" attributes="0"/>
+                                              <Component id="infoButton_" min="-2" pref="81" max="-2" attributes="0"/>
+                                          </Group>
+                                      </Group>
                                   </Group>
+                              </Group>
+                              <Group type="102" alignment="0" attributes="0">
+                                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                                  <Component id="combineButton_" min="-2" pref="81" max="-2" attributes="0"/>
                               </Group>
                           </Group>
                       </Group>
@@ -266,6 +274,9 @@
                           <Component id="removeButton" min="-2" pref="19" max="-2" attributes="0"/>
                           <EmptySpace min="1" pref="1" max="1" attributes="0"/>
                           <Component id="infoButton_" min="-2" pref="19" max="-2" attributes="0"/>
+                          <EmptySpace max="32767" attributes="0"/>
+                          <Component id="combineButton_" min="-2" pref="19" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
                       </Group>
                       <Group type="102" alignment="0" attributes="0">
                           <Component id="c2StandardButton" min="-2" pref="19" max="-2" attributes="0"/>
@@ -860,6 +871,17 @@
             </Property>
             <Property name="text" type="java.lang.String" value="&lt; spot &lt;"/>
           </Properties>
+        </Component>
+        <Component class="javax.swing.JButton" name="combineButton_">
+          <Properties>
+            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+              <Font name="Lucida Grande" size="10" style="0"/>
+            </Property>
+            <Property name="text" type="java.lang.String" value="Combine"/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="combineButton_ActionPerformed"/>
+          </Events>
         </Component>
       </SubComponents>
     </Container>
