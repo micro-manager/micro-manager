@@ -569,7 +569,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       updateStartButton();  // do once to start, isSelected() will be false
 
       acquisitionStatusLabel_ = new JLabel("");
-      updateAcquisitionStatusNone();
+      updateAcquisitionStatus(AcquisitionStatus.NONE);
 
       // set up tabbed panel for GUI
       add(repeatPanel_, "top, split 2");
@@ -923,36 +923,52 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
       return readoutTime;
    }
-
-   private void updateAcquisitionStatusNone() {
-      acquisitionStatusLabel_.setText("No acquisition in progress.");
+   
+   /**
+    * used for updateAcquisitionStatus() calls 
+    */
+   private static enum AcquisitionStatus {
+      NONE,
+      ACQUIRING,
+      WAITING,
+      DONE,
    }
    
-   private void updateAcqusitionStatusAcquiringTimePoint() {
-      // updates the same field as 
-      acquisitionStatusLabel_.setText("Acquiring time point "
-              + NumberUtils.intToDisplayString(numTimePointsDone_)
-              + " of "
-              + NumberUtils.intToDisplayString(getNumTimepoints()));
+   private void updateAcquisitionStatus(AcquisitionStatus phase) {
+      updateAcquisitionStatus(phase, (int) 0);
    }
    
-   private void updateAcquisitonStatusWaitingForNext(int secsToNextAcquisition) {
-      acquisitionStatusLabel_.setText("Finished "
-              + NumberUtils.intToDisplayString(numTimePointsDone_)
-              + " of "
-              + NumberUtils.intToDisplayString(getNumTimepoints())
-              + " time points; next in "
-              + NumberUtils.intToDisplayString(secsToNextAcquisition)
-              + " s."
-              );
+   private void updateAcquisitionStatus(AcquisitionStatus phase, int secsToNextAcquisition) {
+      String text = "";
+      switch(phase) {
+      case NONE:
+         text = "No acquisition in progress.";
+         break;
+      case ACQUIRING:
+         text = "Acquiring time point "
+               + NumberUtils.intToDisplayString(numTimePointsDone_)
+               + " of "
+               + NumberUtils.intToDisplayString(getNumTimepoints());
+         break;
+      case WAITING:
+         text = "Finished "
+               + NumberUtils.intToDisplayString(numTimePointsDone_)
+               + " of "
+               + NumberUtils.intToDisplayString(getNumTimepoints())
+               + " time points; next in "
+               + NumberUtils.intToDisplayString(secsToNextAcquisition)
+               + " s.";
+         break;
+      case DONE:
+         text = "Acquisition finished with "
+               + NumberUtils.intToDisplayString(numTimePointsDone_)
+               + " time points.";
+         break;
+      default:
+         break;   
+      }
+      acquisitionStatusLabel_.setText(text);
    }
-   
-   private void updateAcqusitionStatusDone() {
-      acquisitionStatusLabel_.setText("Acquisition finished with "
-            + NumberUtils.intToDisplayString(numTimePointsDone_)
-            + " time points.");
-   }
-   
 
    private void setDataSavingComponents(JComponent[] saveComponents) {
       if (saveCB_.isSelected()) {
@@ -1307,7 +1323,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                long acqNow = System.currentTimeMillis();
                long delay = acqStart + f * timepointsIntervalMs - acqNow;
                while (delay > 0 && !stop_.get()) {
-                  updateAcquisitonStatusWaitingForNext((int) (delay / 1000));
+                  updateAcquisitionStatus(AcquisitionStatus.WAITING, (int) (delay / 1000));
                   long sleepTime = Math.min(1000, delay);
                   Thread.sleep(sleepTime);
                   acqNow = System.currentTimeMillis();
@@ -1315,7 +1331,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                }
 
                numTimePointsDone_++;
-               updateAcqusitionStatusAcquiringTimePoint();
+               updateAcquisitionStatus(AcquisitionStatus.ACQUIRING);
                
                if (core_.getBufferTotalCapacity() == 0) {
                   core_.initializeCircularBuffer();
@@ -1455,7 +1471,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       if (stop_.get()) {  // if user stopped us in middle
          numTimePointsDone_--;  
       }
-      updateAcqusitionStatusDone();
+      updateAcquisitionStatus(AcquisitionStatus.DONE);
       stagePosUpdater_.setAcqRunning(false);
       
       if (separateImageFilesOriginally) {
