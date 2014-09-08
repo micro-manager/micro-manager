@@ -699,6 +699,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       float cameraResetTime = computeCameraResetTime();      // recalculate for safety
       float cameraReadoutTime = computeCameraReadoutTime();  // recalculate for safety
       
+      CameraModes.Keys cameraMode = CameraModes.getKeyFromPrefCode(
+            prefs_.getInt(MyStrings.PanelNames.SETTINGS.toString(),
+                  Properties.Keys.PLUGIN_CAMERA_MODE, 0));
+      if (cameraMode == CameraModes.Keys.OVERLAP) {
+         cameraResetTime = 0;
+      }
+      
       float desiredPeriod = minSlicePeriodCB_.isSelected() ? 0 :
          PanelUtils.getSpinnerFloatValue(desiredSlicePeriod_);
       float desiredExposure = PanelUtils.getSpinnerFloatValue(desiredLightExposure_);
