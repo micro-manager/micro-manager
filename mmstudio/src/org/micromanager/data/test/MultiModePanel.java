@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -32,7 +33,14 @@ class MultiModePanel extends JPanel {
       modePanel_ = new JPanel(new MigLayout("insets 0, flowy"));
       setLayout(new MigLayout("insets 0"));
       add(buttonPanel_, "growy");
-      add(modePanel_, "growy");
+      JScrollPane scroller = new JScrollPane(modePanel_);
+      scroller.setBorder(null);
+      add(scroller, "grow");
+
+      // TODO: constraining height here for the time being. Ideally it should
+      // come from the window's height, and it does most of the time, but
+      // not consistently.
+      setMaximumSize(new Dimension(32767, 700));
    }
 
    public void addMode(String label, Component widget) {
