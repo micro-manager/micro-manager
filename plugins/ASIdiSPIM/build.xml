@@ -3,6 +3,7 @@
 
 	<import file="../javapluginbuild.xml"/>
 	<path id="plugin.classpath">
+		<pathelement location="${mm.java.lib.commons-math3}"/>
 		<pathelement location="${mm.java.lib.miglayout}"/>
 	</path>
 
