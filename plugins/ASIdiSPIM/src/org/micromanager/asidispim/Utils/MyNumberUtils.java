@@ -21,6 +21,8 @@
 
 package org.micromanager.asidispim.Utils;
 
+import org.apache.commons.math3.util.Precision;
+
 
 /**
  * @author Jon
@@ -32,15 +34,15 @@ public class MyNumberUtils {
    
    
    /**
-    * Does "equality" test on floats, using locally-defined epsilon (1e-12)
+    * Does "equality" test on floats using commons-math3 library
+    * and epsilon of 10*maxUlps
+    * (before r14313 used locally-defined epsilon of 1e-12)
     * @param f1
     * @param f2
     * @return
     */
    public static boolean floatsEqual(float f1, float f2) {
-      final float EPS = (float) 1e-12;
-      float diff = f2 - f1;
-      return((diff < EPS) && (diff > -EPS));
+      return(Precision.equals(f1, f2, (int) 10));
    }
    
    /**
