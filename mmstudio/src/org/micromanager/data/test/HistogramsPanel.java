@@ -38,8 +38,8 @@ public final class HistogramsPanel extends JPanel implements Histograms {
    }
 
    public synchronized void setupChannelControls() {
-      this.removeAll();
-      this.invalidate();
+      removeAll();
+      invalidate();
 
       // TODO: ignoring the possibility of RGB images for now.
       final int nChannels = store_.getMaxIndex("channel") + 1;
@@ -49,20 +49,20 @@ public final class HistogramsPanel extends JPanel implements Histograms {
       }
 
       GridLayout layout = new GridLayout(nChannels, 1);
-      this.setLayout(layout);
+      setLayout(layout);
       Dimension dim = new Dimension(ChannelControlPanel.CONTROLS_SIZE.width,
               nChannels * ChannelControlPanel.CONTROLS_SIZE.height);
-      this.setMinimumSize(dim);
-      this.setSize(dim);
+      setMinimumSize(dim);
+      setSize(dim);
       channelPanels_ = new ArrayList<ChannelControlPanel>();
       for (int i = 0; i < nChannels; ++i) {
          ChannelControlPanel panel = new ChannelControlPanel(i, this, store_,
                plus_, bus_);
-         this.add(panel);
+         add(panel);
          channelPanels_.add(panel);
       }
 
-      this.validate();
+      validate();
    }
    
    public void updateChannelNamesAndColors() {
