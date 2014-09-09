@@ -162,7 +162,7 @@ public class MetadataPanel extends JPanel {
       imageMetadataScrollPane.add(imageMetadataTableScrollPane, "grow");
 
       metadataSplitPane.setRightComponent(imageMetadataScrollPane);
-      metadataSplitPane.setDividerLocation(.5);
+      metadataSplitPane.setResizeWeight(.5);
 
       setLayout(new MigLayout("flowy"));
       add(metadataSplitPane, "grow");
