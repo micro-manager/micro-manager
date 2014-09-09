@@ -750,6 +750,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       s.cameraDelay = cameraReadout_max + globalDelay;
       s.cameraDuration = cameraReset_max + scanPeriod;  // approx. same as exposure, can be used in bulb mode
       
+      if (cameraMode == CameraModes.Keys.OVERLAP) {
+         s.cameraDuration = 1;
+      }
+      
       return s;
    }
    
