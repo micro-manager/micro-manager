@@ -23,8 +23,6 @@ import org.micromanager.imagedisplay.IMMImagePlus;
 import org.micromanager.imagedisplay.MMCompositeImage;
 import org.micromanager.imagedisplay.MMImagePlus;
 
-import org.micromanager.MMStudio;
-
 import org.micromanager.utils.ReportingUtils;
 
 
@@ -69,7 +67,6 @@ public class TestDisplay {
       }
 
       window_ = new DisplayWindow(ijImage_, displayBus_);
-      MMStudio.getInstance().addMMBackgroundListener(window_);
       setWindowControls();
       window_.setTitle("Hello, world!");
       histograms_.calcAndDisplayHistAndStats(true);
