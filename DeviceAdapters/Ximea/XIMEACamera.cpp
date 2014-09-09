@@ -347,7 +347,7 @@ int XIMEACamera::Initialize()
 	pixelTypeValues.push_back(g_PixelType_Mono10);
 	pixelTypeValues.push_back(g_PixelType_Mono12);
 	
-	if(family == FAMILY_MR || family == FAMILY_MD) 
+	if(family == FAMILY_MR || (family == FAMILY_MD && !isColor)) 
 		pixelTypeValues.push_back(g_PixelType_Mono14); 
 
 	if(isColor){
