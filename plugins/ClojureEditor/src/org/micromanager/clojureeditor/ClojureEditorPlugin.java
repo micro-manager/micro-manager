@@ -21,7 +21,26 @@ public class ClojureEditorPlugin implements MMPlugin {
    }
 
    public void show() {
-      clooj.core.show();
+      // The current thread's context class loader must be set for Clojure
+      // class to load. We don't want to globally set the EDT's context class
+      // loader, so let's spawn a new thread on which Clooj is loaded.
+
+      Thread loadingThread = new Thread() {
+         @Override public void run() {
+            clooj.core.show();
+         }
+      };
+
+      loadingThread.setContextClassLoader(getClass().getClassLoader());
+
+      loadingThread.start();
+
+      try {
+         loadingThread.join();
+      }
+      catch (InterruptedException ignore) {
+         // Nobody should be interrupting the EDT.
+      }
    }
 
    public void configurationChanged() {
