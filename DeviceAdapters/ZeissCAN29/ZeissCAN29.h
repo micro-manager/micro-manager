@@ -833,8 +833,6 @@ public:
    int OnVelocity(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-   ZeissAxis xAxis_;
-   ZeissAxis yAxis_;
    double stepSize_um_;
    bool initialized_;
    long moveMode_;
