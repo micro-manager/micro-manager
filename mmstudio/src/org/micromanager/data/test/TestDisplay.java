@@ -185,7 +185,17 @@ public class TestDisplay {
    @Subscribe
    public void onDrawEvent(DrawEvent event) {
       Coords drawCoords = stack_.getCurrentImageCoords();
-      ReportingUtils.logError("Drawing image at " + drawCoords);
+      Image image = store_.getImage(drawCoords);
+      if (ijImage_ instanceof MMCompositeImage) {
+         MMCompositeImage composite = (MMCompositeImage) ijImage_;
+         // Per old comments, calling reset() forces the image to rebuild
+         // its channels by pulling data from the VirtualStack.
+         composite.reset();
+         // And this is apparently necessary for when we're operating in
+         // grayscale mode.
+         composite.getProcessor().setPixels(
+               stack_.getPixels(composite.getCurrentSlice()));
+      }
       ijImage_.updateAndDraw();
       histograms_.calcAndDisplayHistAndStats(true);
       metadata_.imageChangedUpdate(store_.getImage(drawCoords));
