@@ -16,6 +16,8 @@ import javax.swing.JScrollPane;
 
 import net.miginfocom.swing.MigLayout;
 
+import org.micromanager.utils.ReportingUtils;
+
 /**
  * This class is a JPanel that displays a set of vertically-oriented buttons
  * on the left, each of which is associated with a Component. When the button
@@ -78,7 +80,8 @@ class MultiModePanel extends JPanel {
    public void validate() {
       Container parent = getParent();
       if (parent != null) {
-         setMaximumSize(new Dimension(32767, parent.getSize().height - 50));
+         setMaximumSize(new Dimension(32767,
+                  parent.getSize().height - 50));
       }
       super.validate();
    }

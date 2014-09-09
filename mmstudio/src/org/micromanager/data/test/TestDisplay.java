@@ -171,6 +171,9 @@ public class TestDisplay {
     */
    @Subscribe
    public void onLayoutChanged(LayoutChangedEvent event) {
+      // This is necessary to get the window to notice changes to components
+      // contained within it (due to AWT/Swing mixing?).
+      window_.validate();
       window_.pack();
    }
 
