@@ -1175,17 +1175,29 @@ AT_64 CAndorSDK3Camera::GetTimeStamp(unsigned char* pBuf)
       LogMessage(s);
       cameraDevice->Release(imageSizeBytes);
    }
-   int i_imageSize = static_cast<int>(imageSize);
-   // Move to end of image. This is assuming reading metadata right to left.
-   unsigned char* puc_metadata = pBuf + i_imageSize;
    AT_64 i64_timestamp = 0;
-   puc_metadata -= LENGTH_FIELD_SIZE;
-   AT_U32 timestampSize = *(reinterpret_cast<AT_U32*>(puc_metadata));
-   puc_metadata -= CID_FIELD_SIZE;
-   AT_U32 cid = *(reinterpret_cast<AT_U32*>(puc_metadata));
-   if (CID_FPGA_TICKS == cid) {
-      i64_timestamp = *(reinterpret_cast<AT_64*>(puc_metadata - (timestampSize-CID_FIELD_SIZE)));
+
+   bool foundTimestamp = false;
+   AT_U8* puc_metadata = pBuf + static_cast<int>(imageSize); //start at end of buffer
+   do {    
+      //move pointer to length field
+      puc_metadata -= LENGTH_FIELD_SIZE;
+      AT_U32 featureSize = *(reinterpret_cast<AT_U32*>(puc_metadata));
+    
+      //move pointer to Chunk identifier
+      puc_metadata -= CID_FIELD_SIZE;
+      AT_U32 cid = *(reinterpret_cast<AT_U32*>(puc_metadata));
+    
+      //move pointer to start of data
+      puc_metadata -= (featureSize-CID_FIELD_SIZE);
+
+      if (CID_FPGA_TICKS == cid) {
+        i64_timestamp = *(reinterpret_cast<AT_64*>(puc_metadata));
+        foundTimestamp = true;
+      }
    }
+   while(!foundTimestamp && puc_metadata > pBuf);
+
    return i64_timestamp;
 }
 
