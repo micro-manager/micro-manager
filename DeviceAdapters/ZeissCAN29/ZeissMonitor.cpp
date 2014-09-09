@@ -132,12 +132,13 @@ void ZeissMonitoringThread::interpretMessage(unsigned char* message)
             hub_.SetModelBusy(message[7], true);
          }
          else if (message[6] == 0x02) { // actual moving position 
-            ZeissLong position = 0;
-            if (message[4] == 0xA3) {
+            if (message[4] == 0xA3) { // axis device (position is LONG)
+               ZeissLong position = 0;
                memcpy(&position, message + 8, 4);
                position = ntohl(position);
                hub_.SetModelPosition(message[7], position);
             } else {
+               ZeissShort position = 0;
                memcpy(&position, message + 8, 2);
                position = ntohs((unsigned short) position);
                // Changers and Shutters will report 0 when they are in transit
@@ -147,16 +148,16 @@ void ZeissMonitoringThread::interpretMessage(unsigned char* message)
             hub_.SetModelBusy(message[7], true);
          }
          else if (message[6] == 0x03) { // target position settled
-            if (message[4] == 0xA3) {
+            if (message[4] == 0xA3) { // axis device (position is LONG)
                ZeissLong position = 0;
                memcpy(&position, message + 8, 4);
                position = ntohl(position);
+               hub_.SetModelPosition(message[7], position);
             } else {
                ZeissShort position = 0;
                memcpy(&position, message + 8, 2);
                position = ntohs((unsigned short) position);
                hub_.SetModelPosition(message[7], position);
-               hub_.SetModelBusy(message[7], false);
                // TODO: remove after debugging
                if (debug_) {
                   std::ostringstream os;
@@ -164,6 +165,7 @@ void ZeissMonitoringThread::interpretMessage(unsigned char* message)
                   core_.LogMessage(&device_, os.str().c_str(), true);
                }
             }
+            hub_.SetModelBusy(message[7], false);
          }
          else if (message[6] == 0x04) { // status changed
             if (hub_.GetAxioType() == AXIOOBSERVER) { // status is a short in Imager and documentation is unclear, so only use on Observer
