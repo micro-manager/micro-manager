@@ -54,7 +54,7 @@ public class ScrollerPanel extends JPanel {
 
    // We'll be communicating with our owner and with our AxisScrollers via
    // this bus.
-   private EventBus bus_;
+   private EventBus displayBus_;
    // All AxisScrollers we manage. protected visibility to allow subclassing
    // (c.f. Navigator plugin)
    protected ArrayList<AxisScroller> scrollers_;
@@ -75,13 +75,13 @@ public class ScrollerPanel extends JPanel {
     * @param axisToLength Mapping of axis labels to the number of images along
     *        that axis.
     */
-   public ScrollerPanel(EventBus bus, HashMap<String, Integer> axisToLength,
-         double framesPerSec) {
+   public ScrollerPanel(EventBus displayBus, HashMap<String,
+         Integer> axisToLength, double framesPerSec) {
       // Minimize whitespace around our components.
       super(new net.miginfocom.swing.MigLayout("insets 0, fillx"));
       
-      bus_ = bus;
-      bus_.register(this);
+      displayBus_ = displayBus;
+      displayBus_.register(this);
       framesPerSec_ = framesPerSec;
       scrollers_ = new ArrayList<AxisScroller>();
 
@@ -96,7 +96,7 @@ public class ScrollerPanel extends JPanel {
             // Scroll bars do not allow zero "ticks".
             max = 1;
          }
-         AxisScroller scroller = new AxisScroller(axis, max, bus, true);
+         AxisScroller scroller = new AxisScroller(axis, max, displayBus, true);
          if (max <= 1) {
             scroller.setVisible(false);
          }
@@ -119,7 +119,7 @@ public class ScrollerPanel extends JPanel {
     * Check to see if the image we are currently "pointing to" with the 
     * scrollers is different from the image that we were last pointing to
     * when this function was called. If so, then we need to post a
-    * SetImageEvent to the event bus so that the image display gets updated.
+    * SetImageEvent to the displayBus so that the image display gets updated.
     */
    private void checkForImagePositionChanged() {
       boolean shouldPostEvent = false;
@@ -137,7 +137,7 @@ public class ScrollerPanel extends JPanel {
          lastImagePosition_.put(axis, position);
       }
       if (shouldPostEvent) {
-         bus_.post(new SetImageEvent(lastImagePosition_));
+         displayBus_.post(new SetImageEvent(lastImagePosition_));
       }
    }
 
@@ -260,7 +260,7 @@ public class ScrollerPanel extends JPanel {
       }
       if (didShowNewScrollers) {
          // Post an event informing our masters that our layout has changed.
-         bus_.post(new LayoutChangedEvent());
+         displayBus_.post(new LayoutChangedEvent());
       }
       if (canShowNewImage && canMakeTimers_) {
          // Start up a timer to restore the scrollers to their original

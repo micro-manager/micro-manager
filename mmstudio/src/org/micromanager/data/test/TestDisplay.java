@@ -41,15 +41,15 @@ public class TestDisplay {
    private MetadataPanel metadata_;
    private CommentsPanel comments_;
 
-   private EventBus bus_;
+   private EventBus displayBus_;
    
    public TestDisplay(Datastore store) {
       store_ = store;
       store_.registerForEvents(this);
-      bus_ = new EventBus();
-      bus_.register(this);
+      displayBus_ = new EventBus();
+      displayBus_.register(this);
       stack_ = new MMVirtualStack(store);
-      plus_ = new MMImagePlus("foo", stack_, bus_);
+      plus_ = new MMImagePlus("foo", stack_, displayBus_);
       plus_.setOpenAsHyperStack(true);
       stack_.setImagePlus(plus_);
       // The ImagePlus object needs to be pseudo-polymorphic, depending on
@@ -66,7 +66,7 @@ public class TestDisplay {
          ((MMCompositeImage) ijImage_).reset();
       }
 
-      window_ = new DisplayWindow(ijImage_, bus_);
+      window_ = new DisplayWindow(ijImage_, displayBus_);
       setWindowControls();
       window_.setTitle("Hello, world!");
       histograms_.calcAndDisplayHistAndStats(true);
@@ -77,7 +77,7 @@ public class TestDisplay {
    private void shiftToCompositeImage() {
       // TODO: assuming mode 1 for now.
       ReportingUtils.logError("Changing to multiple channels");
-      ijImage_ = new MMCompositeImage(plus_, 1, "foo", bus_);
+      ijImage_ = new MMCompositeImage(plus_, 1, "foo", displayBus_);
       ijImage_.setOpenAsHyperStack(true);
       MMCompositeImage composite = (MMCompositeImage) ijImage_;
       int numChannels = store_.getMaxIndex("channel") + 1;
@@ -114,12 +114,13 @@ public class TestDisplay {
    private void setWindowControls() {
       ArrayList<Component> widgets = new ArrayList<Component>();
       ArrayList<String> rules = new ArrayList<String>();
-      controls_ = new HyperstackControls(store_, stack_, bus_, false, false);
+      controls_ = new HyperstackControls(store_, stack_, displayBus_,
+            false, false);
       widgets.add(controls_);
       rules.add("align center, wrap, growx");
-      MultiModePanel modePanel = new MultiModePanel(bus_);
+      MultiModePanel modePanel = new MultiModePanel(displayBus_);
       
-      histograms_ = new HistogramsPanel(store_, ijImage_, bus_);
+      histograms_ = new HistogramsPanel(store_, ijImage_, displayBus_);
       histograms_.setMinimumSize(new java.awt.Dimension(280, 0));
       modePanel.addMode("Contrast", histograms_);
 
@@ -184,6 +185,7 @@ public class TestDisplay {
    @Subscribe
    public void onDrawEvent(DrawEvent event) {
       Coords drawCoords = stack_.getCurrentImageCoords();
+      ReportingUtils.logError("Drawing image at " + drawCoords);
       ijImage_.updateAndDraw();
       histograms_.calcAndDisplayHistAndStats(true);
       metadata_.imageChangedUpdate(store_.getImage(drawCoords));
