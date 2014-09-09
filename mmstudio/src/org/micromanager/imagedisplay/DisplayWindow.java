@@ -105,6 +105,8 @@ public class DisplayWindow extends StackWindow {
          remove(zSelector);
       }
 
+      setBackground(MMStudio.getInstance().getBackgroundColor());
+      MMStudio.getInstance().addMMBackgroundListener(this);
       zoomToPreferredSize();
       pack();
    }
