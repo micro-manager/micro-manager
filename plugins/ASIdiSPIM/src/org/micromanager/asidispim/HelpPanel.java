@@ -23,7 +23,6 @@ package org.micromanager.asidispim;
 
 
 import java.awt.Desktop;
-import java.awt.Dimension;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -54,9 +53,9 @@ public class HelpPanel extends ListeningJPanel {
    public HelpPanel(ScriptInterface gui) {    
       super (MyStrings.PanelNames.HELP.toString(), 
             new MigLayout(
-              "", 
-              "[right]",
-              "[]16[]"));
+              "fill", 
+              "[center]",
+              "[]"));
       gui_ = gui;
       final JTextPane textPane = new JTextPane();
       textPane.setEditable(false);
@@ -83,10 +82,9 @@ public class HelpPanel extends ListeningJPanel {
          }
       });
       final JScrollPane editScroll = new JScrollPane(textPane);
-      editScroll.setPreferredSize(new Dimension(700,250));
       editScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
       editScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-      add(editScroll);
+      add(editScroll, "center, grow");
    }
    
    

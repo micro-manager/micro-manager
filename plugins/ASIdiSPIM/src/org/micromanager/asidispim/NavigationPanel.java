@@ -248,7 +248,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       //   has been filled via the main plugin frame's call to stagePosUpdater.oneTimeUpdate()
       updateStagePositions();
       
-   }
+   }// constructor
 
    
    /**

@@ -144,6 +144,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final JCheckBox hideCB_;
    private final JComboBox spimMode_;
    private final JCheckBox navigationJoysticksCB_;
+   private final JPanel leftColumnPanel_;
+   private final JPanel centerColumnPanel_;
+   private final JPanel rightColumnPanel_;
    
    
    public AcquisitionPanel(ScriptInterface gui, 
@@ -156,8 +159,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       super(MyStrings.PanelNames.ACQUSITION.toString(),
               new MigLayout(
               "",
-              "[center]16[center]16[center]",
-              "[]8[]"));
+              "[center]0[center]0[center]",
+              "[top]0[]"));
       gui_ = gui;
       devices_ = devices;
       props_ = props;
@@ -542,7 +545,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       // end duration report panel
       
-      navigationJoysticksCB_ = new JCheckBox("Use navigation joystick settings");
+      navigationJoysticksCB_ = new JCheckBox("Use Navigation joystick settings");
       navigationJoysticksCB_.setSelected(prefs_.getBoolean(panelName_,
             Properties.Keys.PLUGIN_USE_NAVIGATION_JOYSTICKS, false));
       navigationJoysticksCB_.addActionListener(new ActionListener() {
@@ -570,24 +573,46 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
       acquisitionStatusLabel_ = new JLabel("");
       updateAcquisitionStatus(AcquisitionStatus.NONE);
-
-      // set up tabbed panel for GUI
-      add(repeatPanel_, "top, split 2");
-      add(durationPanel_, "top");
-      add(volPanel_, "spany 2, top");
-      add(slicePanel_, "spany 2, top, wrap");
-      add(savePanel_, "wrap");
       
-      add(new JLabel("SPIM mode: "), "cell 0 2, split 2, left");
+      // set up tabbed panel for GUI, 3 panels for columns of settings to
+      // get vertical space right in each column
+      
+      leftColumnPanel_ = new JPanel(new MigLayout(
+            "",
+            "[]",
+            "[]8[]"));
+      
+      leftColumnPanel_.add(repeatPanel_, "split 2");
+      leftColumnPanel_.add(durationPanel_, "wrap");
+      leftColumnPanel_.add(savePanel_, "wrap");
+      leftColumnPanel_.add(new JLabel("SPIM mode: "), "split 2, left");
       AcquisitionModes acqModes = new AcquisitionModes(devices_, props_, prefs_);
       spimMode_ = acqModes.getComboBox(); 
-      add(spimMode_);
+      leftColumnPanel_.add(spimMode_, "wrap");
+      leftColumnPanel_.add(buttonStart_, "split 2, left");
+      leftColumnPanel_.add(acquisitionStatusLabel_);
       
-      add(navigationJoysticksCB_);
+      centerColumnPanel_ = new JPanel(new MigLayout(
+            "",
+            "[]",
+            "[]8[]"));
       
-      add(buttonStart_, "cell 0 3, split 2, left");
-      add(acquisitionStatusLabel_, "center");
-
+      centerColumnPanel_.add(volPanel_, "wrap");
+      centerColumnPanel_.add(navigationJoysticksCB_);
+      
+      rightColumnPanel_ = new JPanel(new MigLayout(
+            "",
+            "[]",
+            "[]8[]"));
+      
+      
+      rightColumnPanel_.add(slicePanel_);
+      
+      // add the column panels to the main panel
+      add(leftColumnPanel_);
+      add(centerColumnPanel_);
+      add(rightColumnPanel_);
+      
       // properly initialize the advanced slice timing
       advancedSliceTimingCB_.addActionListener(sliceTimingDisableGUIInputs);
       advancedSliceTimingCB_.doClick();
