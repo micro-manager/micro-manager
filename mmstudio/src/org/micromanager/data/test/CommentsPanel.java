@@ -83,7 +83,7 @@ public class CommentsPanel extends JPanel {
             summaryPanel, commentsPanel);
       // Don't draw a border around the outside of the SplitPane.
       splitter.setBorder(null);
-      splitter.setDividerLocation(.5);
+      splitter.setResizeWeight(.5);
       add(splitter, "grow");
    }
 
