@@ -3,7 +3,7 @@
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   Thorlabs device adapters: BBD102 Controller
+// DESCRIPTION:   Thorlabs device adapters: BBD Controller
 //
 // COPYRIGHT:     Thorlabs, 2011
 //

@@ -3,7 +3,7 @@
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   Thorlabs device adapters: BBD102 Controller
+// DESCRIPTION:   Thorlabs device adapters: BBD Controller
 //
 // COPYRIGHT:     Thorlabs Inc, 2011
 //
@@ -87,7 +87,8 @@ private:
    int SendCommand(const ThorlabsCommand cmd);
    int SetCommand(const unsigned char* command, unsigned length);
    int ParseStatus(const unsigned char* buf, int bufLen, DCMOTSTATUS& stat);
-   int GetCommandAnswer(unsigned char *reply, int reply_size, double timeout = -1);
+   int ProcessEndOfMove(const unsigned char* buf, int bufLen);
+   int GetCommandAnswer(unsigned char *reply, int reply_size, double timeout = -1, bool yieldToPolling = false);
 
    std::string port_;            // communications port
    int axis_;                    // which axis to control (0 = x, 1 = y, etc.)
@@ -96,6 +97,8 @@ private:
    MOTTYPE type_;                // type of stage (servo, stepper)
    MM::Device *parent_;  // parent device (XYStage, MotorXStage)
    MM::Core *core_;
+   bool pollingPositionStep_;
+   bool blockPolling_;   
 };
 
 #endif //_MOTORSTAGE_H_

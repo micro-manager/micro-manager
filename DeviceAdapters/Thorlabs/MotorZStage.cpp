@@ -226,6 +226,11 @@ bool MotorZStage::RecognizedDevice(char *model)
            stepSizeUm_ = stepSizeUmStepper;
       return true;
    }
+   if(strcmp(model, "TDC001") == 0)
+   {
+           stepSizeUm_ = stepSizeUmServo;
+      return true;
+   }
    if(strcmp(model, "ODC001") == 0)
    {
            stepSizeUm_ = stepSizeUmServo;

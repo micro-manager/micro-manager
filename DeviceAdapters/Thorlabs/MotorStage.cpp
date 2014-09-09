@@ -3,7 +3,7 @@
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   Thorlabs device adapters: BBD102 Controller
+// DESCRIPTION:   Thorlabs device adapters: BBD Controller
 //
 // COPYRIGHT:     Thorlabs, 2011
 //
@@ -64,7 +64,7 @@ const unsigned char setRelPositionSgn = 0x64;
 
 // stop (immediate)
 const ThorlabsCommand stopCmd = {0x0465, 0x01, 0x01, DEVICE_CHANNEL0, false, DEVICE_HOSTPC};
-const unsigned char stopSgn[2] = {0x04, 0x66};
+const unsigned char stopSgn[2] = {0x66, 0x04};
 
 // get status
 const ThorlabsCommand getStatusCmd = {0x0490, 0x01, 0x00, DEVICE_CHANNEL0, false, DEVICE_HOSTPC};
@@ -82,7 +82,10 @@ MotorStage::MotorStage(MM::Device *parent, MM::Core *core, std::string port, int
    axis_(axis), 
    type_(MOTORSTAGE_UNDEFINED),
    parent_(parent),
-   core_(core)
+   core_(core),
+   moveTimeoutMs_(mTimeoutMs),
+   pollingPositionStep_(false),
+   blockPolling_(false)
 {
 }
 
@@ -137,7 +140,7 @@ core_->LogMessage(parent_, msg.str().c_str());
  * If the specified number of bytes is not retrieved from the port within
  * (answerTimeoutMs_) interval, we return with error.
  */
-int MotorStage::GetCommandAnswer(unsigned char *response, int length, double timeout)
+int MotorStage::GetCommandAnswer(unsigned char *response, int length, double timeout, bool yieldToPolling)
 {
    MM::MMTime startTime = core_->GetCurrentMMTime();
    long totalBytesRead = 0;
@@ -150,11 +153,17 @@ int MotorStage::GetCommandAnswer(unsigned char *response, int length, double tim
       if ((core_->GetCurrentMMTime() - startTime).getMsec() > timeout)
          return ERR_RESPONSE_TIMEOUT;
 
-      unsigned long bytesRead(0);
-      int ret = core_->ReadFromSerial(parent_, port_.c_str(), response + totalBytesRead, length-totalBytesRead, bytesRead);
-      if (ret != DEVICE_OK)
-         return ret;
-      totalBytesRead += bytesRead;
+	  if (yieldToPolling && blockPolling_)
+		  return DEVICE_OK;  // This happens if end of move message processed by GetPositionSteps()
+
+	  if (!pollingPositionStep_ || !yieldToPolling)
+	  {
+		unsigned long bytesRead(0);
+		int ret = core_->ReadFromSerial(parent_, port_.c_str(), response + totalBytesRead, length-totalBytesRead, bytesRead);
+		if (ret != DEVICE_OK)
+			return ret;
+		totalBytesRead += bytesRead;
+	  }
    }
 #if 0
 {
@@ -219,14 +228,28 @@ int MotorStage::Initialize(HWINFO *info)
    // check for supported models
    if (strcmp(info_.szModelNum, "BBD102") == 0)
       type_ = MOTORSTAGE_SERVO;
+   else if (strcmp(info_.szModelNum, "BBD101") == 0)
+      type_ = MOTORSTAGE_SERVO;
+   else if (strcmp(info_.szModelNum, "BBD103") == 0)
+      type_ = MOTORSTAGE_SERVO;
+   else if (strcmp(info_.szModelNum, "BBD201") == 0)
+      type_ = MOTORSTAGE_SERVO;
+   else if (strcmp(info_.szModelNum, "BBD202") == 0)
+      type_ = MOTORSTAGE_SERVO;
+   else if (strcmp(info_.szModelNum, "BBD203") == 0)
+      type_ = MOTORSTAGE_SERVO;
    else if (strcmp(info_.szModelNum, "TST001") == 0)
       type_ = MOTORSTAGE_STEPPER;
    else if (strcmp(info_.szModelNum, "OST001") == 0)
       type_ = MOTORSTAGE_STEPPER;
+   else if (strcmp(info_.szModelNum, "TDC001") == 0)
+      type_ = MOTORSTAGE_SERVO;
    else if (strcmp(info_.szModelNum, "ODC001") == 0)
       type_ = MOTORSTAGE_SERVO;
    else
       return ERR_UNRECOGNIZED_DEVICE;
+
+   blockPolling_ = true;
 
    return DEVICE_OK;
 }
@@ -332,7 +355,11 @@ int MotorStage::MoveBlocking(long pos, bool relative)
    // get answer to command
    {
       unsigned char answer[cmdLength];
-      ret = GetCommandAnswer(answer, cmdLength, moveTimeoutMs_);
+      blockPolling_ = false;
+      ret = GetCommandAnswer(answer, cmdLength, moveTimeoutMs_, true);
+	  if (blockPolling_)
+		 return ret;  // This happens if end of move message processed by GetPositionSteps()
+	  blockPolling_ = true;
       if (ret != DEVICE_OK)
          return ret; 
 
@@ -340,26 +367,31 @@ int MotorStage::MoveBlocking(long pos, bool relative)
       if (answer[0] != (relative ? setRelPositionSgn : setPositionSgn))
          return ERR_UNRECOGNIZED_ANSWER;
 
+	  ret = ProcessEndOfMove(answer, cmdLength);
+      if (ret != DEVICE_OK)
+         return ret;
+   }
+
+   return DEVICE_OK;
+}
+
+int MotorStage::ProcessEndOfMove(const unsigned char* buf, int bufLen)
+{
       // get data packed and parse it
       unsigned short packetLength(0);
-      memcpy(&packetLength, answer+2, sizeof(short));
+      memcpy(&packetLength, buf+2, sizeof(short));
 
       const unsigned short expectedLength = 14;
       if (packetLength != expectedLength)
          return ERR_INVALID_PACKET_LENGTH;
 
       unsigned char packet[expectedLength];
-      ret = GetCommandAnswer(packet, expectedLength);
+      int ret = GetCommandAnswer(packet, expectedLength);
       if (ret != DEVICE_OK)
          return ret;
 
       DCMOTSTATUS stat;
-      ret  = ParseStatus(packet, expectedLength, stat);
-      if (ret != DEVICE_OK)
-         return ret;
-   }
-
-   return DEVICE_OK;
+      return ParseStatus(packet, expectedLength, stat);
 }
 
 /**
@@ -381,7 +413,7 @@ int MotorStage::Stop()
       if (ret != DEVICE_OK)
          return ret;
 
-      if (memcmp(stopSgn, answer, sizeof(stopSgn) != 0))
+      if (memcmp(stopSgn, answer, sizeof(stopSgn)) != 0)
          return ERR_UNRECOGNIZED_ANSWER;
 
       // get data packed and parse it
@@ -410,8 +442,14 @@ int MotorStage::Stop()
 int MotorStage::GetPositionSteps(long& p)
 {
    int ret;
+   bool receivedEndOfMove = false;
 
-   ClearPort();
+   if (blockPolling_)
+   {
+      return DEVICE_OK;
+   }
+
+   pollingPositionStep_ = true;
    ret = SendCommand(getPositionCmd);
    if (ret != DEVICE_OK)
       return ret;
@@ -421,11 +459,26 @@ int MotorStage::GetPositionSteps(long& p)
    if (ret != DEVICE_OK)
       return ret;
 
+   if (answer[0] == setRelPositionSgn || answer[0] == setPositionSgn)
+   {
+	  ret = ProcessEndOfMove(answer, cmdLength);
+	  if (ret != DEVICE_OK)
+		 return ret;
+
+	  ret = GetCommandAnswer(answer, cmdLength);
+      if (ret != DEVICE_OK)
+         return ret;
+
+	  receivedEndOfMove = true;
+   }
+
    if (answer[0] != getPositionSgn)
    {
       ostringstream os;
       os << "GetPosition invalid response: " << hex << answer;
       core_->LogMessage(parent_, os.str().c_str(), true);
+      pollingPositionStep_ = false;
+      blockPolling_ = true;
       return ERR_UNRECOGNIZED_ANSWER;
    }
 
@@ -439,6 +492,8 @@ int MotorStage::GetPositionSteps(long& p)
 
    unsigned char packet[packetLength];
    ret = GetCommandAnswer(packet, packetLength);
+   pollingPositionStep_ = false;
+   blockPolling_ = receivedEndOfMove;
    if (ret != DEVICE_OK)
       return ret;
 
