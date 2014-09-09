@@ -574,7 +574,6 @@ class ZeissAxis : public ZeissDevice
       int SetRelativePosition(MM::Device& device, MM::Core& core, ZeissUByte devId, long increment, ZeissByte moveMode);
       int FindHardwareStop(MM::Device& device, MM::Core& core, ZeissUByte devId, HardwareStops stop);
       int StopMove(MM::Device& device, MM::Core& core, ZeissUByte devId, ZeissByte moveMode);
-      ZeissUByte devId_;
 
    private:
       const static ZeissUByte commandGroup_ = 0xA3;
@@ -784,6 +783,7 @@ public:
    int OnVelocity(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
+   ZeissUByte devId_;
    //int GetUpperLimit();
    //int GetLowerLimit();
    double stepSize_um_;
