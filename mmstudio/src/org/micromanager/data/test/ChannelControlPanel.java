@@ -70,7 +70,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private DisplaySettings settings_;
    private ImagePlus plus_;
    private CompositeImage composite_;
-   private EventBus bus_;
+   private EventBus displayBus_;
    private JButton autoButton_;
    private JButton zoomInButton_;
    private JButton zoomOutButton_;
@@ -95,7 +95,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private String name_;
 
    public ChannelControlPanel(int channelIndex, HistogramsPanel parent,
-         Datastore store, ImagePlus plus, EventBus bus) {
+         Datastore store, ImagePlus plus, EventBus displayBus) {
       parent_ = parent;
       store_ = store;
       settings_ = store.getDisplaySettings();
@@ -107,7 +107,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       if (plus_ instanceof CompositeImage) {
          composite_ = (CompositeImage) plus_;
       }
-      bus_ = bus;
+      displayBus_ = displayBus;
       // Default to white; select a better color if available.
       color_ = Color.WHITE;
       Color[] allColors = settings_.getChannelColors();

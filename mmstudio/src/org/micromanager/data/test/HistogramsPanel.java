@@ -25,15 +25,15 @@ public final class HistogramsPanel extends JPanel implements Histograms {
    private ArrayList<ChannelControlPanel> channelPanels_;
    private Datastore store_;
    private ImagePlus plus_;
-   private EventBus bus_;
+   private EventBus displayBus_;
    private boolean updatingCombos_ = false;
 
    public HistogramsPanel(Datastore store, ImagePlus plus,
-         EventBus bus) {
+         EventBus displayBus) {
       super();
       store_ = store;
       plus_ = plus;
-      bus_ = bus;
+      displayBus_ = displayBus;
       setupChannelControls();
    }
 
@@ -57,7 +57,7 @@ public final class HistogramsPanel extends JPanel implements Histograms {
       channelPanels_ = new ArrayList<ChannelControlPanel>();
       for (int i = 0; i < nChannels; ++i) {
          ChannelControlPanel panel = new ChannelControlPanel(i, this, store_,
-               plus_, bus_);
+               plus_, displayBus_);
          add(panel);
          channelPanels_.add(panel);
       }
@@ -157,7 +157,7 @@ public final class HistogramsPanel extends JPanel implements Histograms {
       for (ChannelControlPanel panel : channelPanels_) {
          panel.applyChannelLUTToImage();
       }
-      bus_.post(new DrawEvent());
+      displayBus_.post(new DrawEvent());
    }
 
    @Override

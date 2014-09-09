@@ -221,7 +221,6 @@ public class MetadataPanel extends JPanel {
 
       public synchronized void setMetadata(JSONObject md) {
          clear();
-         ReportingUtils.logError("Received metadata " + md);
          if (md != null) {
             String[] keys = MDUtils.getKeys(md);
             Arrays.sort(keys);

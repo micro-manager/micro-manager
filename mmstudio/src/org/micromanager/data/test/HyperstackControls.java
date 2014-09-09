@@ -56,7 +56,7 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
    // Height in pixels of our controls, not counting scrollbars.
    private final static int CONTROLS_HEIGHT = 65;
 
-   private EventBus bus_;
+   private EventBus displayBus_;
    private Datastore store_;
    private MMVirtualStack stack_;
 
@@ -95,14 +95,15 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
     *        come in, instead). 
     */
    public HyperstackControls(Datastore store, MMVirtualStack stack,
-         EventBus bus, boolean shouldUseLiveControls, boolean isAcquisition) {
+         EventBus displayBus, boolean shouldUseLiveControls,
+         boolean isAcquisition) {
       super(new FlowLayout(FlowLayout.LEADING));
-      bus_ = bus;
+      displayBus_ = displayBus;
       store_ = store;
       store_.registerForEvents(this);
       stack_ = stack;
       initComponents(shouldUseLiveControls, isAcquisition);
-      bus_.register(this);
+      displayBus_.register(this);
       MMStudio.getInstance().getSnapLiveManager().addLiveModeListener(this);
    }
 
@@ -133,7 +134,7 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
       for (String axis : store_.getAxes()) {
          axisToLength.put(axis, store_.getMaxIndex(axis) + 1);
       }
-      scrollerPanel_ = new ScrollerPanel(bus_, axisToLength, DEFAULT_FPS);
+      scrollerPanel_ = new ScrollerPanel(displayBus_, axisToLength, DEFAULT_FPS);
       subPanel_.add(scrollerPanel_, "span, growx, wrap 0px");
 
       // Hacky layout to minimize gaps between components. 
@@ -382,7 +383,7 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
          builder.position(axis, event.getPositionForAxis(axis));
       }
       stack_.setCoords(builder.build());
-      bus_.post(new DrawEvent());
+      displayBus_.post(new DrawEvent());
    }
 
    /**
@@ -575,7 +576,7 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
 
    public void prepareForClose() {
       scrollerPanel_.prepareForClose();
-      bus_.unregister(this);
+      displayBus_.unregister(this);
       MMStudio.getInstance().getSnapLiveManager().removeLiveModeListener(this);
    }
 
