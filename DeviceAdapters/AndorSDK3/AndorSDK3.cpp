@@ -421,7 +421,12 @@ int CAndorSDK3Camera::Initialize()
          }
       }
    }
-   
+
+   if (cameraDevice == NULL)
+   {
+      return DEVICE_NOT_CONNECTED;
+   }
+
    // Description
    int ret = CreateProperty(MM::g_Keyword_Description, g_CameraDeviceDescription, MM::String, true);
    assert(DEVICE_OK == ret);
