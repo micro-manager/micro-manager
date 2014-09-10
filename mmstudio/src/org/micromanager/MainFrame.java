@@ -43,6 +43,10 @@ import java.awt.Font;
 import java.awt.KeyboardFocusManager;
 import java.awt.Rectangle;
 import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.prefs.Preferences;
 
 import javax.swing.AbstractButton;
@@ -595,6 +599,30 @@ public class MainFrame extends JFrame implements LiveModeListener {
       configPad_.refreshGroup(event.getGroupName(), event.getNewConfig());
    }
 
+   private List<String> sortBinningItems(final List<String> items) {
+      ArrayList<Integer> binSizes = new ArrayList<Integer>();
+
+      // Check if all items are valid integers
+      for (String s : items) {
+         Integer i;
+         try {
+            i = Integer.valueOf(s);
+         }
+         catch (NumberFormatException e) {
+            // Not a number; give up sorting and return original list
+            return items;
+         }
+         binSizes.add(i);
+      }
+
+      Collections.sort(binSizes);
+      ArrayList<String> ret = new ArrayList<String>();
+      for (Integer i : binSizes) {
+         ret.add(i.toString());
+      }
+      return ret;
+   }
+
    public void configureBinningComboForCamera(String cameraLabel) {
       ActionListener[] listeners;
       if (comboBinning_.getItemCount() > 0) {
@@ -603,16 +631,19 @@ public class MainFrame extends JFrame implements LiveModeListener {
       try {
          StrVector binSizes = core_.getAllowedPropertyValues(
                  cameraLabel, MMCoreJ.getG_Keyword_Binning());
+         List<String> items = sortBinningItems(Arrays.asList(binSizes.toArray()));
+
          listeners = comboBinning_.getActionListeners();
          for (int i = 0; i < listeners.length; i++) {
              comboBinning_.removeActionListener(listeners[i]);
          }
-         for (int i = 0; i < binSizes.size(); i++) {
-             comboBinning_.addItem(binSizes.get(i));
+
+         for (String item : items) {
+             comboBinning_.addItem(item);
          }
 
-         comboBinning_.setMaximumRowCount((int) binSizes.size());
-         if (binSizes.isEmpty()) {
+         comboBinning_.setMaximumRowCount((int) items.size());
+         if (items.isEmpty()) {
              comboBinning_.setEditable(true);
          } else {
              comboBinning_.setEditable(false);
