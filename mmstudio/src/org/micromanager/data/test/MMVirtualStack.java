@@ -36,7 +36,7 @@ public class MMVirtualStack extends ij.VirtualStack {
 
    /**
     * Retrieve the image at the specified index, which we map into a
-    * channel/frame/slice offset. This will also update curCoords_ as needed.
+    * channel/frame/z offset. This will also update curCoords_ as needed.
     * Note that we only pay attention to a given offset if we already have
     * a position along that axis (e.g. so that we don't try to ask the
     * Datastore for an image at time=0 when none of the images in the Datastore
@@ -59,12 +59,12 @@ public class MMVirtualStack extends ij.VirtualStack {
       // use that for our lookup.
       // If we have no ImagePlus yet to translate this index into something
       // more meaningful, then default to all zeros.
-      int channel = 0, slice = 0, frame = 0;
+      int channel = 0, z = 0, frame = 0;
       if (plus_ != null) {
          int[] pos3D = plus_.convertIndexToPosition(flatIndex);
          // ImageJ coordinates are 1-indexed.
          channel = pos3D[0] - 1;
-         slice = pos3D[1] - 1;
+         z = pos3D[1] - 1;
          frame = pos3D[2] - 1;
       }
       // Only augment a given axis if it's actually present in our datastore.
@@ -72,11 +72,11 @@ public class MMVirtualStack extends ij.VirtualStack {
       if (store_.getMaxIndex("channel") != -1) {
          builder.position("channel", channel);
       }
-      if (store_.getMaxIndex("slice") != -1) {
-         builder.position("slice", channel);
+      if (store_.getMaxIndex("z") != -1) {
+         builder.position("z", z);
       }
       if (store_.getMaxIndex("frame") != -1) {
-         builder.position("frame", channel);
+         builder.position("frame", frame);
       }
       curCoords_ = builder.build();
       DefaultImage image = (DefaultImage) store_.getImage(curCoords_);
@@ -110,8 +110,8 @@ public class MMVirtualStack extends ij.VirtualStack {
     */
    public void setCoords(Coords coords) {
       curCoords_ = coords;
-      plus_.setPosition(coords.getPositionAt("channel"),
-            coords.getPositionAt("z"), coords.getPositionAt("frame"));
+      plus_.setPosition(coords.getPositionAt("channel") + 1,
+            coords.getPositionAt("z") + 1, coords.getPositionAt("frame") + 1);
    }
 
    /**

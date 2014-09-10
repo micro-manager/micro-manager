@@ -98,7 +98,7 @@ public class TestDisplay {
       IMMImagePlus temp = (IMMImagePlus) ijImage_;
       int numChannels = Math.max(1, store_.getMaxIndex("channel") + 1);
       int numFrames = Math.max(1, store_.getMaxIndex("frame") + 1);
-      int numSlices = Math.max(1, store_.getMaxIndex("slice") + 1);
+      int numSlices = Math.max(1, store_.getMaxIndex("z") + 1);
       temp.setNChannelsUnverified(numChannels);
       temp.setNFramesUnverified(numFrames);
       temp.setNSlicesUnverified(numSlices);
@@ -120,7 +120,11 @@ public class TestDisplay {
       rules.add("align center, wrap, growx");
       MultiModePanel modePanel = new MultiModePanel(displayBus_);
       
-      histograms_ = new HistogramsPanel(store_, ijImage_, displayBus_);
+      DisplaySettingsPanel settings = new DisplaySettingsPanel(
+            store_, ijImage_);
+      modePanel.addMode("Settings", settings);
+
+      histograms_ = new HistogramsPanel(store_, stack_, ijImage_, displayBus_);
       histograms_.setMinimumSize(new java.awt.Dimension(280, 0));
       modePanel.addMode("Contrast", histograms_);
 

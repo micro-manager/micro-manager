@@ -67,6 +67,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private HistogramPanel hp_;
    private HistogramsPanel parent_;
    private Datastore store_;
+   private MMVirtualStack stack_;
    private DisplaySettings settings_;
    private ImagePlus plus_;
    private CompositeImage composite_;
@@ -95,9 +96,11 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private String name_;
 
    public ChannelControlPanel(int channelIndex, HistogramsPanel parent,
-         Datastore store, ImagePlus plus, EventBus displayBus) {
+         Datastore store, MMVirtualStack stack,
+         ImagePlus plus, EventBus displayBus) {
       parent_ = parent;
       store_ = store;
+      stack_ = stack;
       settings_ = store.getDisplaySettings();
       plus_ = plus;
       // We may be for a single-channel system or a multi-channel one; the two
@@ -432,7 +435,9 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             channelNameCheckbox_.setSelected(true);
             return;
          } else {
-//            display_.setChannel(channelIndex_);
+            // Change which channel the stack is pointing at.
+            stack_.setCoords(stack_.getCurrentImageCoords().copy().position("channel", channelIndex_).build());
+            composite_.updateAndDraw();
          }
       }
 
@@ -661,13 +666,13 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             boolean active = composite_.getActiveChannels()[channelIndex_];
             channelNameCheckbox_.setSelected(active);
             if (!active) {
-               ReportingUtils.logError("Can't draw histogram because not active");
+               ReportingUtils.logError("Can't draw histogram because not active (channel " + channelIndex_ + ")");
                shouldDrawHistogram = false;
             }
          }
          if (((MMCompositeImage) composite_).getMode() != CompositeImage.COMPOSITE &&
                composite_.getChannel() - 1 != channelIndex_) {
-            ReportingUtils.logError("Can't draw histogram because not composite and wrong channel");
+            ReportingUtils.logError("Can't draw histogram because not composite and wrong channel (" + channelIndex_ + " vs. " + (composite_.getChannel() - 1) + ")");
             shouldDrawHistogram = false;
          }
       }
