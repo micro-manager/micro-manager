@@ -24,14 +24,16 @@ public final class HistogramsPanel extends JPanel implements Histograms {
    private long lastUpdateTime_;
    private ArrayList<ChannelControlPanel> channelPanels_;
    private Datastore store_;
+   private MMVirtualStack stack_;
    private ImagePlus plus_;
    private EventBus displayBus_;
    private boolean updatingCombos_ = false;
 
-   public HistogramsPanel(Datastore store, ImagePlus plus,
-         EventBus displayBus) {
+   public HistogramsPanel(Datastore store, MMVirtualStack stack,
+         ImagePlus plus, EventBus displayBus) {
       super();
       store_ = store;
+      stack_ = stack;
       plus_ = plus;
       displayBus_ = displayBus;
       setupChannelControls();
@@ -57,7 +59,7 @@ public final class HistogramsPanel extends JPanel implements Histograms {
       channelPanels_ = new ArrayList<ChannelControlPanel>();
       for (int i = 0; i < nChannels; ++i) {
          ChannelControlPanel panel = new ChannelControlPanel(i, this, store_,
-               plus_, displayBus_);
+               stack_, plus_, displayBus_);
          add(panel);
          channelPanels_.add(panel);
       }
