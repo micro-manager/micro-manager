@@ -4,6 +4,7 @@
  */
 package acq;
 
+import coordinates.PositionManager;
 import java.io.File;
 import java.io.IOException;
 import java.util.LinkedList;

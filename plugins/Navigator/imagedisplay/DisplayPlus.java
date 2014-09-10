@@ -7,8 +7,9 @@ import acq.Acquisition;
 import acq.CustomAcqEngine;
 import acq.ExploreAcquisition;
 import acq.MultiResMultipageTiffStorage;
-import acq.PositionManager;
-import surfacesandregions.SurfaceInterpolater;
+import coordinates.PositionManager;
+import coordinates.StageCoordinates;
+import surfacesandregions.SurfaceInterpolator;
 import ij.CompositeImage;
 import ij.IJ;
 import ij.gui.*;
@@ -20,9 +21,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.TreeMap;
 import javax.swing.*;
+import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
 import javax.vecmath.Point3d;
 import mmcorej.TaggedImage;
+import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -39,9 +44,13 @@ import surfacesandregions.RegionManager;
 import surfacesandregions.SurfaceManager;
 import surfacesandregions.SurfaceOrRegionManager;
 
-public class DisplayPlus extends VirtualAcquisitionDisplay  {
+public class DisplayPlus extends VirtualAcquisitionDisplay  implements ListDataListener {
 
    private static final int EXPLORE_PIXEL_BUFFER = 96;
+   
+   private static final int[] ICE_RED =  {0,0,0,0,0,0,19,29,50,48,79,112,134,158,186,201,217,229,242,250,250,250,250,251,250,250,250,250,251,251,243,230};
+   private static final int[] ICE_GREEN =  {156,165,176,184,190,196,193,184,171,162,146,125,107,93,81,87,92,97,95,93,93,90,85,69,64,54,47,35,19,0,4,0};
+   private static final int[] ICE_BLUE =  {140,147,158,166,170,176,209,220,234,225,236,246,250,251,250,250,245,230,230,222,202,180,163,142,123,114,106,94,84,64,26,27};
    
    private static final int NONE = 0, EXPLORE = 1, GOTO = 2, NEWGRID = 3, NEWSURFACE = 4;
    
@@ -62,6 +71,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
    private boolean mouseDragging_ = false;
    private RegionManager regionManager_;
    private SurfaceManager surfaceManager_;
+   private boolean showSurface_ = true, showConvexHull_ = true, showStagePositions_ = true;
    
    
 
@@ -74,6 +84,8 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
       exploreAcq_ = acq instanceof ExploreAcquisition;
       regionManager_ = rManager;
       surfaceManager_ = sManager;
+      
+      surfaceManager_.addListDataListener(this);
       
       //Set parameters for tile dimensions, num rows and columns, overlap, and image dimensions
       acq_ = acq;
@@ -119,6 +131,13 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
 
       stitchedCache.addImageCacheListener(this);
       canvas_.requestFocus();
+   }
+   
+   public void setSurfaceDisplaySettings(boolean convexHull, boolean stagePos, boolean surf) {
+      showSurface_ = surf;
+      showConvexHull_ = convexHull;
+      showStagePositions_ = stagePos;
+      drawOverlay(true);
    }
 
     
@@ -183,8 +202,8 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
          Point tile2 = zoomableStack_.getTileIndicesFromDisplayedPixel(p2.x, p2.y);
          //create events to acquire one or more tiles
          ((ExploreAcquisition) acq_).acquireTiles(tile1.y, tile1.x, tile2.y, tile2.x);
-      } else if (mode_ == NEWSURFACE && !mouseDragging_) {
-         if (SwingUtilities.isRightMouseButton(e)) {
+      } else if (mode_ == NEWSURFACE ) {
+         if (SwingUtilities.isRightMouseButton(e) && !mouseDragging_) {
             //delete point if one is nearby
             Point fullResPixel = zoomableStack_.getAbsoluteFullResPixelCoordinate(e.getPoint().x, e.getPoint().y);
             Point2D.Double stagePos = posManager_.getStageCoordsFromPixelCoords(fullResPixel.x, fullResPixel.y);
@@ -196,6 +215,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
             double stageDistanceTolerance = Math.sqrt( (toleranceStagePos.x - stagePos.x)*(toleranceStagePos.x - stagePos.x) +
                     (toleranceStagePos.y - stagePos.y)*(toleranceStagePos.y - stagePos.y) );
             surfaceManager_.getCurrentSurface().deleteClosestPoint(stagePos.x, stagePos.y, stageDistanceTolerance);    
+            surfaceManager_.updateListeners();
          } else if (SwingUtilities.isLeftMouseButton(e)) {
             //convert to real coordinates in 3D space
             //Click point --> full res pixel point --> stage coordinate
@@ -203,6 +223,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
             Point2D.Double stagePos = posManager_.getStageCoordsFromPixelCoords(fullResPixel.x, fullResPixel.y);
             double z = zoomableStack_.getZCoordinateOfDisplayedSlice(this.getHyperImage().getSlice(), this.getHyperImage().getFrame());
             surfaceManager_.getCurrentSurface().addPoint(stagePos.x, stagePos.y, z);
+            surfaceManager_.updateListeners();
          }
       }
       mouseDragging_ = false;
@@ -250,16 +271,22 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
    }
    
    private Point2D.Double stageCoordFromImageCoord(int x, int y) {
-      Point fullResPix = zoomableStack_.getAbsoluteFullResPixelCoordinate(x,y);
+      Point fullResPix = zoomableStack_.getAbsoluteFullResPixelCoordinate(x, y);
       return posManager_.getStageCoordsFromPixelCoords(fullResPix.x, fullResPix.y);
    }
-   
+
    private void drawNewSurfaceOverlay() {
-      Overlay overlay = new Overlay();      
+      Overlay overlay = new Overlay();
+      SurfaceInterpolator newSurface = surfaceManager_.getCurrentSurface();
+      if (newSurface == null) {
+         this.getImagePlus().setOverlay(null);
+         return;
+      }
+
       //draw all points
-      for (Point3d point : surfaceManager_.getCurrentSurface().getPoints()) {
+      for (Point3d point : newSurface.getPoints()) {
          //convert back to pixel coordinates
-         Point xy = posManager_.getPixelCoordsFromStageCoords(point.x,point.y);
+         Point xy = posManager_.getPixelCoordsFromStageCoords(point.x, point.y);
          //convert ful res pixel coordinates to coordinates of the viewed image
          Point displayLocation = zoomableStack_.getDisplayImageCoordsFromFullImageCoords(xy);
          int slice = zoomableStack_.getDisplaySliceIndexFromZCoordinate(point.z, this.getHyperImage().getFrame());
@@ -272,64 +299,98 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
          Roi circle = new OvalRoi(displayLocation.x - diameter / 2, displayLocation.y - diameter / 2, diameter, diameter);
          overlay.add(circle);
       }
-      
-      try {
-         //draw the surface itself by interpolating a grid over viewable area
-         int width = this.getImagePlus().getWidth();
-         int height = this.getImagePlus().getHeight();
-         //Make numTestPoints a factor of image size for clean display of surface
-         int numTestPointsX = width / 6;
-         int numTestPointsY = height / 6;
-         double roiWidth = width / (double) numTestPointsX;
-         double roiHeight = height / (double) numTestPointsY;
 
-         //get stage coordinates for topleft and bottom right of viewable region of image
-         Point2D.Double topLeft = stageCoordFromImageCoord((int) (roiWidth / 2), (int) (roiHeight / 2));
-         Point2D.Double bottomRight = stageCoordFromImageCoord((int) (width - roiWidth / 2), (int) (height - roiHeight / 2));
-         Object[] interpAndInside = surfaceManager_.getCurrentSurface().getInterpolatedValues(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y, numTestPointsX, numTestPointsY);  
-         float[][] interpZ = (float[][]) interpAndInside[0];
-         boolean[][] insideHull = (boolean[][]) interpAndInside[1];
-         boolean flipX = surfaceManager_.getCurrentSurface().getFlipX(), flipY = surfaceManager_.getCurrentSurface().getFlipY();
-         double zStep = acq_.getZStep();
-         double sliceZ = zoomableStack_.getZCoordinateOfDisplayedSlice(this.getHyperImage().getSlice(), this.getHyperImage().getFrame());
-         for (int x = 0; x < interpZ[0].length; x++) {
-            for (int y = 0; y < interpZ.length; y++) {
-               if (insideHull[y][x] && Math.abs(sliceZ - interpZ[y][x]) < zStep / 2) {
-                  int xIndex = (flipX ? (interpZ[0].length - x - 1) : x);
-                  int yIndex = (flipY ? (interpZ.length - y - 1) : y);
-                  double roiX = roiWidth * xIndex;
-                  double roiY = roiHeight * yIndex;
-                  int displayWidth = (int) (roiWidth * (xIndex + 1)) - (int) (roiX);
-                  int displayHeight = (int) (roiHeight * (yIndex + 1)) - (int) (roiY);
-                  Roi rect = new Roi(roiX, roiY, displayWidth, displayHeight);
-                  rect.setFillColor(TRANSPARENT_BLUE);
-                  overlay.add(rect);
+      if (showSurface_) {
+         try {
+            //draw the surface itself by interpolating a grid over viewable area
+            int width = this.getImagePlus().getWidth();
+            int height = this.getImagePlus().getHeight();
+            //Make numTestPoints a factor of image size for clean display of surface
+            int numTestPointsX = width / 10;
+            int numTestPointsY = height / 10;
+            double roiWidth = width / (double) numTestPointsX;
+            double roiHeight = height / (double) numTestPointsY;
+
+            double zStep = acq_.getZStep();
+            double sliceZ = zoomableStack_.getZCoordinateOfDisplayedSlice(this.getHyperImage().getSlice(), this.getHyperImage().getFrame());
+            for (int x = 0; x < numTestPointsX; x++) {
+               for (int y = 0; y < numTestPointsY; y++) {
+                  Point2D.Double stageCoord = stageCoordFromImageCoord((int) ((x+0.5) * roiWidth), (int) ((y+0.5) * roiHeight));
+                  Float interpZ = surfaceManager_.getCurrentSurface().getInterpolatedValue(stageCoord.x, stageCoord.y);
+                  if (interpZ == null) {
+                     continue;
+                  }
+                  if (Math.abs(sliceZ - interpZ) < zStep / 2) {
+                     double roiX = roiWidth * x;
+                     double roiY = roiHeight * y;
+                     //calculate distance from last ROI for uninterrupted coverage of image
+                     int displayWidth = (int) (roiWidth * (x + 1)) - (int) (roiX);
+                     int displayHeight = (int) (roiHeight * (y + 1)) - (int) (roiY);
+                     Roi rect = new Roi(roiX, roiY, displayWidth, displayHeight); //make ROI
+                     //ICE LUT
+                     double colorScale = ((sliceZ - interpZ) / (zStep / 2) + 1) / 2; //between 0 and 1
+                     rect.setFillColor(new Color(ICE_RED[(int) (colorScale * ICE_RED.length)],
+                             ICE_GREEN[(int) (colorScale * ICE_RED.length)], ICE_BLUE[(int) (colorScale * ICE_RED.length)], 100));
+                     overlay.add(rect);
+                  }
                }
             }
+
+         } catch (Exception e) {
+            e.printStackTrace();
+            ReportingUtils.logError("Couldn't interpolate surface");
          }
-      } catch (Exception e) {
-         e.printStackTrace();
-         ReportingUtils.logError("Couldn't interpolate surface");
       }
-      
-      if (surfaceManager_.getCurrentSurface().getPoints().size() > 2) {
+
+      if (showConvexHull_) {
          //draw convex hull
-         Vector2D[] hullPoints = surfaceManager_.getCurrentSurface().getConvexHullPoints();
-         Point lastPoint = null, firstPoint = null;
-         for (Vector2D v : hullPoints) {
-            //convert to image coords
-            Point p = zoomableStack_.getDisplayImageCoordsFromFullImageCoords(posManager_.getPixelCoordsFromStageCoords(v.getX(), v.getY()));
-            if (lastPoint != null) {
-               overlay.add(new Line(p.x, p.y, lastPoint.x, lastPoint.y));
-            } else {
-               firstPoint = p; 
+         if (surfaceManager_.getCurrentSurface().getPoints().size() > 2) {
+            Vector2D[] hullPoints = surfaceManager_.getCurrentSurface().getConvexHullPoints();
+            Point lastPoint = null, firstPoint = null;
+            for (Vector2D v : hullPoints) {
+               //convert to image coords
+               Point p = zoomableStack_.getDisplayImageCoordsFromFullImageCoords(posManager_.getPixelCoordsFromStageCoords(v.getX(), v.getY()));
+               if (lastPoint != null) {
+                  overlay.add(new Line(p.x, p.y, lastPoint.x, lastPoint.y));
+               } else {
+                  firstPoint = p;
+               }
+               lastPoint = p;
             }
-            lastPoint = p;
+            //draw last connection         
+            overlay.add(new Line(firstPoint.x, firstPoint.y, lastPoint.x, lastPoint.y));
          }
-         //draw last connection         
-         overlay.add(new Line(firstPoint.x, firstPoint.y, lastPoint.x, lastPoint.y));
       }
+
       
+      if (showStagePositions_) {
+         //draw grid of positions
+         if (surfaceManager_.getCurrentSurface().getPoints().size() > 2) {
+            double zPosition = zoomableStack_.getZCoordinateOfDisplayedSlice(this.getHyperImage().getSlice(), this.getHyperImage().getFrame());
+
+            ArrayList<StageCoordinates> positionsAtSlice = surfaceManager_.getCurrentSurface().getXYPositonsAtSlice(zPosition);
+            for (StageCoordinates pos : positionsAtSlice) {
+               Point corner1 = zoomableStack_.getDisplayImageCoordsFromFullImageCoords(posManager_.getPixelCoordsFromStageCoords(pos.corners[0].x, pos.corners[0].y));
+               Point corner2 = zoomableStack_.getDisplayImageCoordsFromFullImageCoords(posManager_.getPixelCoordsFromStageCoords(pos.corners[1].x, pos.corners[1].y));
+               Point corner3 = zoomableStack_.getDisplayImageCoordsFromFullImageCoords(posManager_.getPixelCoordsFromStageCoords(pos.corners[2].x, pos.corners[2].y));
+               Point corner4 = zoomableStack_.getDisplayImageCoordsFromFullImageCoords(posManager_.getPixelCoordsFromStageCoords(pos.corners[3].x, pos.corners[3].y));
+               //add lines connecting 4 corners
+               Line l1 = new Line(corner1.x, corner1.y, corner2.x, corner2.y);
+               Line l2 = new Line(corner2.x, corner2.y, corner3.x, corner3.y);
+               Line l3 = new Line(corner3.x, corner3.y, corner4.x, corner4.y);
+               Line l4 = new Line(corner4.x, corner4.y, corner1.x, corner1.y);
+               l1.setStrokeColor(Color.red);
+               l2.setStrokeColor(Color.red);
+               l3.setStrokeColor(Color.red);
+               l4.setStrokeColor(Color.red);
+               overlay.add(l1);
+               overlay.add(l2);
+               overlay.add(l3);
+               overlay.add(l4);
+            }
+         }
+      }
+
       this.getImagePlus().setOverlay(overlay);
    }
 
@@ -507,6 +568,19 @@ public class DisplayPlus extends VirtualAcquisitionDisplay  {
             addRecursively(subC, kl);
          }
       }
+   }
+
+   @Override
+   public void intervalAdded(ListDataEvent e) {
+   }
+
+   @Override
+   public void intervalRemoved(ListDataEvent e) {
+   }
+
+   @Override
+   public void contentsChanged(ListDataEvent e) {
+      this.drawOverlay(true);
    }
    
 }

@@ -4,6 +4,7 @@
  */
 package acq;
 
+import coordinates.PositionManager;
 import imagedisplay.DisplayPlus;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;

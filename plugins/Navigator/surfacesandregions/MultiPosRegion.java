@@ -68,7 +68,6 @@ public class MultiPosRegion {
       }
       
       public void translate(int dx, int dy) {
-         System.out.println(centerX_ + "\t" + centerY_ + "\t" + dx + "\t" + dy);
          centerX_ += dx;
          centerY_ += dy;
       }

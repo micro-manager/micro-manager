@@ -6,7 +6,6 @@ package imagedisplay;
 
 import imagedisplay.DisplayPlus;
 import acq.Acquisition;
-import acq.CustomAcqEngine;
 import acq.ExploreAcquisition;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
@@ -19,9 +18,9 @@ import java.awt.FlowLayout;
 import java.awt.Point;
 import java.awt.event.*;
 import java.text.DecimalFormat;
-import java.text.ParseException;
 import java.util.HashMap;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -33,10 +32,6 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.Timer;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.event.ListDataEvent;
-import javax.swing.event.ListDataListener;
 import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
 import org.json.JSONException;
@@ -47,16 +42,13 @@ import org.micromanager.imagedisplay.DisplayWindow;
 import org.micromanager.imagedisplay.IMMImagePlus;
 import org.micromanager.imagedisplay.NewImageEvent;
 import org.micromanager.imagedisplay.ScrollerPanel;
-import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
 import org.micromanager.internalinterfaces.DisplayControls;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
 import surfacesandregions.MultiPosRegion;
 import surfacesandregions.RegionManager;
-import surfacesandregions.SurfaceInterpolater;
 import surfacesandregions.SurfaceManager;
-import surfacesandregions.SurfaceOrRegionManager;
 
 /**
  *
@@ -78,7 +70,7 @@ public class DisplayPlusControls extends DisplayControls {
    private Timer nextFrameTimer_;
    private JButton pauseButton_, abortButton_, showFolderButton_;
    private JTextField fpsField_;
-   private JLabel zPosLabel_, timeStampLabel_, nextFrameLabel_, posNameLabel_;
+   private JLabel statusLine_;
    private JToggleButton newGridButton_, createSurfaceButton_;
    private JButton zoomInButton_, zoomOutButton_;
    private JToggleButton exploreButton_, gotoButton_;
@@ -175,25 +167,15 @@ public class DisplayPlusControls extends DisplayControls {
          } catch (Exception e) {
             ReportingUtils.showError("Couldn't create z sliders");
          }
-      } else {
-         JPanel labelsPanel = new JPanel(new MigLayout("insets 0"));
-         pixelInfoLabel_ = new JLabel("                                         ");
-         pixelInfoLabel_.setMinimumSize(new Dimension(150, 10));
-         pixelInfoLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
-         labelsPanel.add(pixelInfoLabel_);
+      }
 
-         imageInfoLabel_ = new JLabel("                                         ");
-         imageInfoLabel_.setMinimumSize(new Dimension(150, 10));
-         imageInfoLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
-         labelsPanel.add(imageInfoLabel_);
 
-         countdownLabel_ = new JLabel("                                         ");
-         countdownLabel_.setMinimumSize(new Dimension(150, 10));
-         countdownLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
-         labelsPanel.add(countdownLabel_);
+      JPanel labelsPanel = new JPanel(new MigLayout(""));
+      statusLine_ = new JLabel("Right click and drag to pan, use + and - keys to zoom");
+      labelsPanel.add(statusLine_);
 
-         controlsPanel.add(labelsPanel, "span, growx, align center, wrap");
-         //      nextFrameTimer_ = new Timer(1000, new ActionListener() {
+      controlsPanel.add(labelsPanel, "span, growx, align center, wrap");
+      //      nextFrameTimer_ = new Timer(1000, new ActionListener() {
 //
 //         @Override
 //         public void actionPerformed(ActionEvent e) {
@@ -218,10 +200,10 @@ public class DisplayPlusControls extends DisplayControls {
 //         }
 //      });
 //      nextFrameTimer_.start();
-      }
 
 
-      JPanel buttonPanel = new JPanel(new MigLayout());
+
+      JPanel buttonPanel = new JPanel(new MigLayout("insets 0"));
 
       showFolderButton_ = new JButton();
       showFolderButton_.setBackground(new java.awt.Color(255, 255, 255));
@@ -298,6 +280,7 @@ public class DisplayPlusControls extends DisplayControls {
             
             //show grid making controls           
             changingPanelLayout_.show(changingPanel_, GRID_PANEL);
+            statusLine_.setText("Left click and drag to move grid, right click and drag to pan");
             display_.activateNewGridMode(true);
             gridSizeChanged();
             exploreButton_.setSelected(false);
@@ -317,6 +300,7 @@ public class DisplayPlusControls extends DisplayControls {
                   return;
                }
                changingPanelLayout_.show(changingPanel_, EXPLORE_PANEL);
+               statusLine_.setText("Left click or click and drag to acquire tiles, right click to pan, +/- keys to zoom");
                display_.activateExploreMode(exploreButton_.isSelected());
                display_.drawOverlay(true);
                createSurfaceButton_.setSelected(false);
@@ -357,10 +341,11 @@ public class DisplayPlusControls extends DisplayControls {
             }
             //make a surface if none exists
             if (surfaceManager_.getSize() == 0) {
-               surfaceManager_.addNewSurface("New Surface 1");
+               surfaceManager_.addNewSurface("New Surface 1");              
             }
             //show surface creation controls           
             changingPanelLayout_.show(changingPanel_, SURFACE_PANEL);
+            statusLine_.setText("Left click to add points, right click to remove points, right click and drag to pan");
             display_.activateNewSurfaceMode(true);
             exploreButton_.setSelected(false);
             newGridButton_.setSelected(false);
@@ -381,6 +366,7 @@ public class DisplayPlusControls extends DisplayControls {
       
       JPanel explorePanel = new JPanel(new MigLayout());
       explorePanel.add(new JLabel("Explore mode"));
+      
       changingPanelLayout_ = new CardLayout();
       changingPanel_ = new JPanel(changingPanelLayout_);
       changingPanel_.add(newGridControlPanel, GRID_PANEL);
@@ -390,6 +376,12 @@ public class DisplayPlusControls extends DisplayControls {
       
       controlsPanel.add(buttonPanel, "wrap");
       controlsPanel.add(changingPanel_);
+      
+//      JPanel test = new JPanel(new MigLayout());
+//      test.add(new JLabel("Henry"));
+//      controlsPanel.add(test, "wrap");
+      
+      
       this.setLayout(new BorderLayout());
       this.add(controlsPanel,BorderLayout.CENTER);
      
@@ -409,7 +401,7 @@ public class DisplayPlusControls extends DisplayControls {
    private JPanel makeSurfaceControlPanel() {
       JPanel newSurfaceControlPanel = new JPanel(new MigLayout());
       
-      JLabel currentSurfLabel = new JLabel("Current surface: ");
+      JLabel currentSurfLabel = new JLabel("Surface: ");
       final JComboBox surfacesCombo = new JComboBox(surfaceManager_);
       surfacesCombo.addActionListener(new ActionListener() {
          @Override
@@ -418,7 +410,7 @@ public class DisplayPlusControls extends DisplayControls {
          }  
       });
       surfaceManager_.addListDataListener(surfacesCombo);      
-      JToggleButton newSurfaceButton = new JToggleButton("New surface");
+      JToggleButton newSurfaceButton = new JToggleButton("New");
       newSurfaceButton.addActionListener(new ActionListener() {
          
          @Override
@@ -438,17 +430,37 @@ public class DisplayPlusControls extends DisplayControls {
          }
       });      
       
+      JPanel showPanel = new JPanel(new MigLayout());
+      showPanel.add(new JLabel("Show: "));
+      final JCheckBox footprintCheckbox = new JCheckBox("Footprint");
+      final JCheckBox stagePosCheckbox = new JCheckBox("Stage positions");
+      final JCheckBox surfaceCheckbox = new JCheckBox("Surface");
+      footprintCheckbox.setSelected(true);
+      stagePosCheckbox.setSelected(true);
+      surfaceCheckbox.setSelected(true);
+      showPanel.add(footprintCheckbox);
+      showPanel.add(stagePosCheckbox);
+      showPanel.add(surfaceCheckbox);
+      ActionListener showActionListener = new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            display_.setSurfaceDisplaySettings(footprintCheckbox.isSelected(), stagePosCheckbox.isSelected(), surfaceCheckbox.isSelected());
+         }
+      };
+      footprintCheckbox.addActionListener(showActionListener);
+      stagePosCheckbox.addActionListener(showActionListener);
+      surfaceCheckbox.addActionListener(showActionListener);
+      
       newSurfaceControlPanel.add(newSurfaceButton);
       newSurfaceControlPanel.add(currentSurfLabel);
       newSurfaceControlPanel.add(surfacesCombo, "w 100!");
       newSurfaceControlPanel.add(renameButton);
-      newSurfaceControlPanel.add(new JLabel("Right click to add points, left click to remove"));
+      newSurfaceControlPanel.add(showPanel);
       return newSurfaceControlPanel;
    }
    
    private JPanel makeNewGridControlPanel() {
       JPanel newGridControlPanel = new JPanel(new MigLayout());
-
       
       final JComboBox gridsCombo = new JComboBox(regionManager_);
       gridsCombo.addActionListener(new ActionListener() {

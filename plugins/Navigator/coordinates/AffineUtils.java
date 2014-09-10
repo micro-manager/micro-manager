@@ -1,10 +1,11 @@
-package main;
+package coordinates;
 
 /*
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
 import java.awt.geom.AffineTransform;
+import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.prefs.Preferences;

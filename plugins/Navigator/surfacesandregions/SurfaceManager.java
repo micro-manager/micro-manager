@@ -9,22 +9,25 @@ package surfacesandregions;
  * @author Henry
  */
 public class SurfaceManager extends SurfaceOrRegionManager {
-
    
-   public SurfaceInterpolater getCurrentSurface() {
-      return (SurfaceInterpolater) super.getCurrentSuregion();
+   public SurfaceInterpolator getCurrentSurface() {
+       if (selectedIndex_ == -1) {
+         return null;
+      }
+      return (SurfaceInterpolator) suregions_.get(suregionNames_.get(selectedIndex_));
    }
    
    public void addNewSurface(String name) {
-      suregions_.put(name, new SurfaceInterpolater());
-      selectedItem_ = name;
+      suregions_.put(name,new SurfaceInterpolator());
+      suregionNames_.add(name);
+      selectedIndex_ = suregionNames_.size() - 1;
       super.updateListeners();
    }
    
-//   public SurfaceInterpolater getSurface(int index) {
-//      return (SurfaceInterpolater) suregions_.get(super.getElementAt(index));
-//   }
-
+   public SurfaceInterpolator getSurface(int index) {
+      return (SurfaceInterpolator) suregions_.get(super.getElementAt(index));
+   }
+  
    @Override
    public String getNewName() {
       String base = "New Surface";

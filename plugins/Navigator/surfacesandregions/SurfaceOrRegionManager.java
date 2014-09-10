@@ -1,6 +1,7 @@
 package surfacesandregions;
 
 import java.awt.Component;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.TreeMap;
 import javax.swing.DefaultComboBoxModel;
@@ -14,64 +15,83 @@ import javax.swing.event.ListDataListener;
  */
 public abstract class SurfaceOrRegionManager implements MutableComboBoxModel<String> {
    
+   protected ArrayList<String> suregionNames_ = new ArrayList<String>();
    protected TreeMap<String, Object> suregions_ = new TreeMap<String, Object>();
-   protected String selectedItem_ = null;
+   protected int selectedIndex_ = -1;
    protected LinkedList<ListDataListener> dataListeners_ = new LinkedList<ListDataListener>();
 
    public void renameCurrentSuregion(String newName) {
-      if (selectedItem_ == null) {
+      if (selectedIndex_ == -1) {
          return;
       }
-      suregions_.put(newName, suregions_.remove(selectedItem_));
-      selectedItem_ = newName;
-      updateListeners();
+      renameSuregion(selectedIndex_, newName);
    }
    
    public void renameSuregion(int index, String newName) {
-      boolean renameSelected = getElementAt(index).equals(selectedItem_);
-      suregions_.put(newName, suregions_.remove(getElementAt(index)));
-      if (renameSelected) {
-         selectedItem_ = newName;
+      if (index >= suregionNames_.size()) {
+         return;
       }
+      suregionNames_.add(index, newName);
+      String oldName = suregionNames_.remove(selectedIndex_ + 1);
+      suregions_.put(newName, suregions_.remove(oldName));
       updateListeners();
    }
    
    public boolean containsSuregionNamed(String name) {
-      return suregions_.keySet().contains(name);
+      return suregionNames_.contains(name);
    }
    
    public void removeSuregion(String name) {
       suregions_.remove(name);
+      suregionNames_.remove(name);
       updateListeners();
    }
    
-   public Object getCurrentSuregion() {
-      return selectedItem_ == null ? null : suregions_.get(selectedItem_);
+   public abstract String getNewName();
+
+   public void deleteAll() {
+      suregions_.clear();
+      suregionNames_.clear();
+      selectedIndex_ = -1;
+      updateListeners();
    }
    
-   public abstract String getNewName();
-   
+   public void delete(int index) {
+      boolean needNewSelection = selectedIndex_ == index;
+      suregions_.remove(suregionNames_.get(index));
+      suregionNames_.remove(index);
+      if (needNewSelection) {
+         if (suregionNames_.size() == 0) {
+            selectedIndex_ = -1;
+         } else if (selectedIndex_ >= suregionNames_.size()) {
+            selectedIndex_--;
+         }
+      }
+      updateListeners();
+   }
+
    @Override
    public void setSelectedItem(Object anItem) {
-      selectedItem_ = (String) anItem;
+      selectedIndex_ = suregionNames_.indexOf(anItem);
       updateListeners();  
    }
 
    @Override
    public String getSelectedItem() {
-      return selectedItem_;
+      if (selectedIndex_ == -1) {
+         return null;
+      }
+      return suregionNames_.get(selectedIndex_);
    }
 
    @Override
    public int getSize() {
-      return suregions_.keySet().size();
+      return suregionNames_.size();
    }
 
    @Override
    public String getElementAt(int index) {
-      LinkedList<String> keyList = new LinkedList<String>();
-      keyList.addAll(suregions_.keySet());
-      return keyList.get(index);
+      return suregionNames_.get(index);
    } 
    
    public void updateListeners() {
@@ -81,23 +101,15 @@ public abstract class SurfaceOrRegionManager implements MutableComboBoxModel<Str
    }
 
    @Override
-   //subclass specific implementations of this behavior
-   public void addElement(String item) {
-   }
-
-   @Override
    public void removeElement(Object obj) {
       suregions_.remove(obj);
+      suregionNames_.remove(obj);
    }
-
-   @Override
-   public void insertElementAt(String item, int index) {
-      
-   }
-
+   
    @Override
    public void removeElementAt(int index) {
-      suregions_.remove(getElementAt(index));
+      suregions_.remove(suregionNames_.get(index));
+      suregionNames_.remove(index);
    }
 
    @Override
@@ -108,5 +120,15 @@ public abstract class SurfaceOrRegionManager implements MutableComboBoxModel<Str
    @Override
    public void removeListDataListener(ListDataListener l) {
       dataListeners_.remove(l);
+   }
+   
+      @Override
+   public void addElement(String item) {
+      throw new UnsupportedOperationException("Not supported");
+   }
+
+   @Override
+   public void insertElementAt(String item, int index) {
+      throw new UnsupportedOperationException("Not supported");
    }
 }

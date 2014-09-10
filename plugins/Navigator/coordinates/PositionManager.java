@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package acq;
+package coordinates;
 
 import java.awt.Point;
 import java.awt.geom.AffineTransform;
@@ -13,7 +13,6 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import main.AffineUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;

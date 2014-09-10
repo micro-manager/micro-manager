@@ -22,6 +22,7 @@ import surfacesandregions.SurfaceManager;
 import surfacesandregions.SurfaceOrRegionManager;
 import tables.GridTableModel;
 import tables.SimpleChannelTableModel;
+import tables.SurfaceTableModel;
 
 
 /**
@@ -164,11 +165,16 @@ public class GUI extends javax.swing.JFrame {
         gridsPanel_ = new javax.swing.JPanel();
         jScrollPane2 = new javax.swing.JScrollPane();
         gridTable_ = new javax.swing.JTable();
-        deleteSelectedButton_ = new javax.swing.JButton();
-        deleteAllButton_ = new javax.swing.JButton();
+        deleteSelectedRegionButton_ = new javax.swing.JButton();
+        deleteAllRegionsButton_ = new javax.swing.JButton();
         surfacesPanel_ = new javax.swing.JPanel();
+        deleteSelectedSurfaceButton_ = new javax.swing.JButton();
+        deleteAllSurfacesButton_ = new javax.swing.JButton();
+        jScrollPane3 = new javax.swing.JScrollPane();
+        surfacesTable_ = new javax.swing.JTable();
         SettingsButton = new javax.swing.JButton();
         jButton1 = new javax.swing.JButton();
+        jLabel1 = new javax.swing.JLabel();
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -183,7 +189,7 @@ public class GUI extends javax.swing.JFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
-        newExploreWindowButton_.setText("New explore window");
+        newExploreWindowButton_.setText("New explore acquisition");
         newExploreWindowButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 newExploreWindowButton_ActionPerformed(evt);
@@ -570,17 +576,17 @@ public class GUI extends javax.swing.JFrame {
         gridTable_.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         jScrollPane2.setViewportView(gridTable_);
 
-        deleteSelectedButton_.setText("Delete selected");
-        deleteSelectedButton_.addActionListener(new java.awt.event.ActionListener() {
+        deleteSelectedRegionButton_.setText("Delete selected");
+        deleteSelectedRegionButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                deleteSelectedButton_ActionPerformed(evt);
+                deleteSelectedRegionButton_ActionPerformed(evt);
             }
         });
 
-        deleteAllButton_.setText("Delete all");
-        deleteAllButton_.addActionListener(new java.awt.event.ActionListener() {
+        deleteAllRegionsButton_.setText("Delete all");
+        deleteAllRegionsButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                deleteAllButton_ActionPerformed(evt);
+                deleteAllRegionsButton_ActionPerformed(evt);
             }
         });
 
@@ -590,9 +596,10 @@ public class GUI extends javax.swing.JFrame {
             gridsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 695, Short.MAX_VALUE)
             .addGroup(gridsPanel_Layout.createSequentialGroup()
-                .addComponent(deleteSelectedButton_)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(deleteAllButton_)
+                .addContainerGap()
+                .addComponent(deleteSelectedRegionButton_)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(deleteAllRegionsButton_)
                 .addGap(0, 0, Short.MAX_VALUE))
         );
         gridsPanel_Layout.setVerticalGroup(
@@ -601,22 +608,52 @@ public class GUI extends javax.swing.JFrame {
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(gridsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(deleteSelectedButton_)
-                    .addComponent(deleteAllButton_))
+                    .addComponent(deleteSelectedRegionButton_)
+                    .addComponent(deleteAllRegionsButton_))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Grids", gridsPanel_);
 
+        deleteSelectedSurfaceButton_.setText("Delete selected");
+        deleteSelectedSurfaceButton_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deleteSelectedSurfaceButton_ActionPerformed(evt);
+            }
+        });
+
+        deleteAllSurfacesButton_.setText("Delete all");
+        deleteAllSurfacesButton_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deleteAllSurfacesButton_ActionPerformed(evt);
+            }
+        });
+
+        surfacesTable_.setModel(new SurfaceTableModel(surfaceManager_));
+        surfacesTable_.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        jScrollPane3.setViewportView(surfacesTable_);
+
         javax.swing.GroupLayout surfacesPanel_Layout = new javax.swing.GroupLayout(surfacesPanel_);
         surfacesPanel_.setLayout(surfacesPanel_Layout);
         surfacesPanel_Layout.setHorizontalGroup(
             surfacesPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 695, Short.MAX_VALUE)
+            .addGroup(surfacesPanel_Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(deleteSelectedSurfaceButton_)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(deleteAllSurfacesButton_)
+                .addGap(0, 0, Short.MAX_VALUE))
+            .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 695, Short.MAX_VALUE)
         );
         surfacesPanel_Layout.setVerticalGroup(
             surfacesPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 136, Short.MAX_VALUE)
+            .addGroup(surfacesPanel_Layout.createSequentialGroup()
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(surfacesPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(deleteAllSurfacesButton_)
+                    .addComponent(deleteSelectedSurfaceButton_))
+                .addContainerGap())
         );
 
         jTabbedPane1.addTab("Surfaces", surfacesPanel_);
@@ -635,6 +672,9 @@ public class GUI extends javax.swing.JFrame {
             }
         });
 
+        jLabel1.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
+        jLabel1.setText("Acquisition Settings");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -642,26 +682,31 @@ public class GUI extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(21, 21, 21)
-                        .addComponent(newExploreWindowButton_)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(jButton1)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(SettingsButton))
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addComponent(zLabel_)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(zTextField_, javax.swing.GroupLayout.PREFERRED_SIZE, 68, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(zSlider_, javax.swing.GroupLayout.PREFERRED_SIZE, 532, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                                 .addComponent(acqTabbedPane_, javax.swing.GroupLayout.PREFERRED_SIZE, 700, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(jTabbedPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 700, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addComponent(jTabbedPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 700, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(zLabel_)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(zTextField_, javax.swing.GroupLayout.PREFERRED_SIZE, 68, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(zSlider_, javax.swing.GroupLayout.PREFERRED_SIZE, 532, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(jLabel1)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addComponent(newExploreWindowButton_)
+                                        .addGap(9, 9, 9)))))
                         .addGap(0, 0, Short.MAX_VALUE)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -674,11 +719,14 @@ public class GUI extends javax.swing.JFrame {
                     .addComponent(zSlider_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jTabbedPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 164, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 46, Short.MAX_VALUE)
-                .addComponent(acqTabbedPane_, javax.swing.GroupLayout.PREFERRED_SIZE, 171, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(151, 151, 151)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(newExploreWindowButton_)
+                    .addComponent(jLabel1))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(acqTabbedPane_, javax.swing.GroupLayout.PREFERRED_SIZE, 171, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(163, 163, 163)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(SettingsButton)
                     .addComponent(jButton1))
                 .addContainerGap())
@@ -760,13 +808,25 @@ public class GUI extends javax.swing.JFrame {
       new PickPropertiesGUI(prefs_, this);
    }//GEN-LAST:event_jButton1ActionPerformed
 
-   private void deleteSelectedButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteSelectedButton_ActionPerformed
-      regionManager_.deleteRegion((String) gridTable_.getValueAt(gridTable_.getSelectedRow(), 0) );
-   }//GEN-LAST:event_deleteSelectedButton_ActionPerformed
+   private void deleteSelectedRegionButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteSelectedRegionButton_ActionPerformed
+      if (gridTable_.getSelectedRow() != -1) {
+         regionManager_.delete(gridTable_.getSelectedRow());
+      }
+   }//GEN-LAST:event_deleteSelectedRegionButton_ActionPerformed
 
-   private void deleteAllButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteAllButton_ActionPerformed
+   private void deleteAllRegionsButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteAllRegionsButton_ActionPerformed
       regionManager_.deleteAll();
-   }//GEN-LAST:event_deleteAllButton_ActionPerformed
+   }//GEN-LAST:event_deleteAllRegionsButton_ActionPerformed
+
+   private void deleteAllSurfacesButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteAllSurfacesButton_ActionPerformed
+      surfaceManager_.deleteAll();
+   }//GEN-LAST:event_deleteAllSurfacesButton_ActionPerformed
+
+   private void deleteSelectedSurfaceButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteSelectedSurfaceButton_ActionPerformed
+     if (surfacesTable_.getSelectedRow() != -1) {
+         surfaceManager_.delete(surfacesTable_.getSelectedRow());
+      }
+   }//GEN-LAST:event_deleteSelectedSurfaceButton_ActionPerformed
 
  
 
@@ -777,14 +837,17 @@ public class GUI extends javax.swing.JFrame {
     private javax.swing.JPanel autofocusTab_l;
     private javax.swing.JCheckBox channelsCheckBox_;
     private javax.swing.JScrollPane customPropsScrollPane_;
-    private javax.swing.JButton deleteAllButton_;
-    private javax.swing.JButton deleteSelectedButton_;
+    private javax.swing.JButton deleteAllRegionsButton_;
+    private javax.swing.JButton deleteAllSurfacesButton_;
+    private javax.swing.JButton deleteSelectedRegionButton_;
+    private javax.swing.JButton deleteSelectedSurfaceButton_;
     private javax.swing.JTable gridTable_;
     private javax.swing.JPanel gridsPanel_;
     private javax.swing.JButton jButton1;
     private javax.swing.JComboBox jComboBox1;
     private javax.swing.JComboBox jComboBox2;
     private javax.swing.JComboBox jComboBox4;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel5;
@@ -797,6 +860,7 @@ public class GUI extends javax.swing.JFrame {
     private javax.swing.JRadioButton jRadioButton2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JSpinner jSpinner1;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JTable jTable1;
@@ -812,6 +876,7 @@ public class GUI extends javax.swing.JFrame {
     private javax.swing.JPanel surfaceZPanel_;
     private javax.swing.JCheckBox surfaceZStackCheckBox_;
     private javax.swing.JPanel surfacesPanel_;
+    private javax.swing.JTable surfacesTable_;
     private javax.swing.JCheckBox timePointsCheckBox_;
     private javax.swing.JPanel timePointsPanel_;
     private javax.swing.JPanel timePointsTab_;
