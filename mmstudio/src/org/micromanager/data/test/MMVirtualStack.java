@@ -2,7 +2,6 @@ package org.micromanager.data.test;
 
 import ij.ImagePlus;
 import ij.process.ImageProcessor;
-import java.awt.image.ColorModel;
 
 import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.Datastore;
@@ -111,6 +110,8 @@ public class MMVirtualStack extends ij.VirtualStack {
     */
    public void setCoords(Coords coords) {
       curCoords_ = coords;
+      plus_.setPosition(coords.getPositionAt("channel"),
+            coords.getPositionAt("z"), coords.getPositionAt("frame"));
    }
 
    /**
