@@ -74,9 +74,9 @@ public class DefaultCoords implements Coords, Comparable<DefaultCoords> {
    private ArrayList<String> sortedAxes_;
 
    public DefaultCoords(Builder builder) {
-      axisToPos_ = builder.axisToPos_;
-      terminalAxes_ = builder.terminalAxes_;
-      sortedAxes_ = builder.sortedAxes_;
+      axisToPos_ = new HashMap<String, Integer>(builder.axisToPos_);
+      terminalAxes_ = new HashSet<String>(builder.terminalAxes_);
+      sortedAxes_ = new ArrayList<String>(builder.sortedAxes_);
    }
    
    @Override
