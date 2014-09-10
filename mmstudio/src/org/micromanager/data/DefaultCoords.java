@@ -36,12 +36,14 @@ public class DefaultCoords implements Coords, Comparable<DefaultCoords> {
       
       public CoordsBuilder position(String axis, int position) {
          axisToPos_.put(axis, new Integer(position));
-         sortedAxes_.add(axis);
-         try {
-            Collections.sort(sortedAxes_);
-         }
-         catch (UnsupportedOperationException e) {
-            ReportingUtils.logError(e, "Unable to sort coordinate axes");
+         if (!sortedAxes_.contains(axis)) {
+            sortedAxes_.add(axis);
+            try {
+               Collections.sort(sortedAxes_);
+            }
+            catch (UnsupportedOperationException e) {
+               ReportingUtils.logError(e, "Unable to sort coordinate axes");
+            }
          }
          return this;
       }
