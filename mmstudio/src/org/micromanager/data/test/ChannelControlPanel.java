@@ -657,7 +657,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
       }
       if (processor == null ) {
-         ReportingUtils.logError("No processor");
+         ReportingUtils.logError("No processor for " + channelIndex_);
          return;
       }
 
