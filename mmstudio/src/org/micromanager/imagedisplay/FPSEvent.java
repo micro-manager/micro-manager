@@ -4,7 +4,7 @@ package org.micromanager.imagedisplay;
  * This class handles notifications of the current incoming image rate (data 
  * rate) and displayed image rate.
  */
-class FPSEvent {
+public class FPSEvent {
    private double dataFPS_;
    private double displayFPS_;
 
