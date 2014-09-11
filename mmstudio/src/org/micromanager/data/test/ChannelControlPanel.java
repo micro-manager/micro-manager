@@ -666,13 +666,11 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             boolean active = composite_.getActiveChannels()[channelIndex_];
             channelNameCheckbox_.setSelected(active);
             if (!active) {
-               ReportingUtils.logError("Can't draw histogram because not active (channel " + channelIndex_ + ")");
                shouldDrawHistogram = false;
             }
          }
          if (((MMCompositeImage) composite_).getMode() != CompositeImage.COMPOSITE &&
                composite_.getChannel() - 1 != channelIndex_) {
-            ReportingUtils.logError("Can't draw histogram because not composite and wrong channel (" + channelIndex_ + " vs. " + (composite_.getChannel() - 1) + ")");
             shouldDrawHistogram = false;
          }
       }
