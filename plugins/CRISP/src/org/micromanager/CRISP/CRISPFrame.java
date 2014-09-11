@@ -76,13 +76,21 @@ public class CRISPFrame extends javax.swing.JFrame {
        boolean found = false;
        for (String af : afs) {
          try {
-            if (core_.hasProperty(af, "Description")) {
-               tiger_ = core_.getProperty(af, "Description").startsWith("ASI CRISP AutoFocus"); // Tiger
-               if (tiger_ || core_.getProperty(af, "Description").equals("ASI CRISP Autofocus adapter"))
-               {
-                  found = true;
-                  CRISP_ = af;
-               }
+            // takes 
+            if (core_.getDeviceLibrary(af).equals("ASITiger") &&
+                  core_.hasProperty(af, "Description") &&
+                  core_.getProperty(af, "Description").startsWith("ASI CRISP AutoFocus")) {
+               tiger_ = true;
+               CRISP_ = af;
+               found = true;
+               break;
+            }
+            if (core_.getDeviceLibrary(af).equals("ASIStage") &&
+                  core_.hasProperty(af, "Description") &&
+                  core_.getProperty(af, "Description").equals("ASI CRISP Autofocus adapter")) {
+               found = true;
+               CRISP_ = af;
+               break;
             }
          } catch (Exception ex) {
             Logger.getLogger(CRISPFrame.class.getName()).log(Level.SEVERE, null, ex);
