@@ -1,0 +1,143 @@
+package org.micromanager.patternoverlay;
+
+import ij.ImagePlus;
+import ij.gui.Overlay;
+
+import java.awt.Color;
+import java.util.prefs.Preferences;
+
+import org.micromanager.utils.ReportingUtils;
+
+/**
+ * Parent class that implements most functionality of overlays.
+ * 
+ * Derived classes should implement updateOverlay(int, int).
+ * 
+ * @author Jon
+ *
+ */
+public abstract class GenericOverlay {
+   
+   protected Overlay overlay_;
+   protected int size_;  // 0 to 100
+   protected int colorCode_;
+   protected Color color_;
+   protected boolean isShowing_;
+   private final Preferences prefs_;
+   private final String prefPrefix_;
+
+   public GenericOverlay(Preferences prefs, String prefPrefix) {
+      isShowing_ = false;
+      prefs_ = prefs;
+      prefPrefix_ = prefPrefix;
+      size_ = prefs_.getInt(prefPrefix_ + Constants.SIZE_SLIDER, 50);
+      colorCode_ = prefs_.getInt(prefPrefix_ + Constants.COLOR_BOX_IDX, 0);
+   }
+
+   /**
+    * Change the overlay size.  Takes effect immediately.
+    * @param size should be 0 to 100
+    */
+   public void setSize(int size) {
+      size_ = size;
+      prefs_.putInt(prefPrefix_ + Constants.SIZE_SLIDER, size);
+      refresh();
+   }
+   
+   /**
+    * Gets the current size of the overlay
+    * @return
+    */
+   public int getSize() {
+      return size_;
+   }
+   
+   /**
+    * Sets the color of the overlay.  Takes effect immediately.
+    * @param color
+    */
+   public void setColorCode(int colorCode) {
+      colorCode_ = colorCode;
+      prefs_.putInt(prefPrefix_ + Constants.COLOR_BOX_IDX, colorCode);
+      color_ = Constants.LOOKUP_COLOR_BY_INDEX.get(colorCode_);
+      refresh();
+   }
+   
+   /**
+    * Gets the current color of the overlay
+    * @return
+    */
+   public int getColorCode() {
+      return colorCode_;
+   }
+
+   /**
+    * 
+    * @param visible
+    * @throws Exception
+    */
+   public void setVisible(boolean visible) throws Exception {
+      if (visible) {
+         show();
+      } else {
+         hide();
+      }
+      isShowing_ = visible;
+   }
+   
+   /**
+    * True if the overlay is showing
+    * @return
+    */
+   public boolean isVisible() {
+      return isShowing_;
+   }
+   
+   /**
+    * Updates the object overlay_.  Should be implemented in child class.
+    */
+   protected void updateOverlay(int width, int height) {
+      overlay_ = new Overlay();
+   }
+   
+   /**
+    *  Create a new overlay with the desired characteristics as set through
+    *  setSize and setColor. This can fail if no live image window is found,
+    *  or if something unspeakable happens during creation of the overlay.
+    *
+    *  @throws Exception
+    */
+   private void show () throws Exception {
+      ImagePlus image = PatternOverlayFrame.getLiveWindowImage();
+      if (image == null)
+         throw new Exception("Live image window required.");
+      updateOverlay(image.getWidth(), image.getHeight());
+      image.setOverlay(overlay_);
+   }
+
+   /**
+    *  Clear the overlay. This removes any and all trace of the overlay
+    *  from the live image window. A call to show() is required to
+    *  recreate the overlay.
+    */
+   private void hide () {
+      if (overlay_ != null)
+         overlay_.clear();
+   }
+
+   /**
+    *  Attempt to clear and recreate the overlay. This could, but should not,
+    *  fail if the overlay was working before this call.
+    */
+   private void refresh () {
+      if (isShowing_) { 
+         try {
+            hide();
+            show();
+         } catch (Exception e) {
+            ReportingUtils.logError("Could not show overlay after changing size.");
+         }        
+      }
+   }
+   
+}
