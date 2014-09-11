@@ -23,7 +23,7 @@ public class TargetOverlay extends GenericOverlay {
    }
 
    @Override
-   protected void updateOverlay(int width, int height) {
+   protected Overlay getOverlay(int width, int height) {
       
       // makes diameters of relative size 1, 3, and 5
       
@@ -39,9 +39,9 @@ public class TargetOverlay extends GenericOverlay {
       Ellipse2D.Double circle3 = new Ellipse2D.Double(width/2 - radius, height/2 - radius, 2*radius, 2*radius);
       path.append(circle3, false);
       
-      Roi roi     = new ShapeRoi(path);
+      Roi roi = new ShapeRoi(path);
       roi.setStrokeColor(color_);
-      overlay_     = new Overlay(roi);
+      return new Overlay(roi);
    }
 
 

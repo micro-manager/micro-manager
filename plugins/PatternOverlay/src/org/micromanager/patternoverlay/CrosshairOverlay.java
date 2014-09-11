@@ -21,7 +21,7 @@ public class CrosshairOverlay extends GenericOverlay {
    }
 
    @Override
-   protected void updateOverlay(int width, int height) {
+   protected Overlay getOverlay(int width, int height) {
       
       // based on http://micro-manager.3463995.n2.nabble.com/Reference-lines-in-live-view-tt7583130.html#a7583134
       
@@ -34,9 +34,9 @@ public class CrosshairOverlay extends GenericOverlay {
       path.moveTo(width / 2 + dWidth, height / 2 - dHeight);
       path.lineTo(width / 2 - dWidth, height / 2 + dHeight);
       
-      Roi roi     = new ShapeRoi(path);
+      Roi roi = new ShapeRoi(path);
       roi.setStrokeColor(color_);
-      overlay_     = new Overlay(roi);
+      return new Overlay(roi);
    }
 
 

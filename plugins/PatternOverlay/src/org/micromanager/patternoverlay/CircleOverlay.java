@@ -22,15 +22,15 @@ public class CircleOverlay extends GenericOverlay {
    }
 
    @Override
-   protected void updateOverlay(int width, int height) {
+   protected Overlay getOverlay(int width, int height) {
       
       double radius = java.lang.Math.min(width, height)/2 * size_/100;
       
       Ellipse2D.Double circle = new Ellipse2D.Double(width/2 - radius, height/2 - radius, 2*radius, 2*radius);
       
-      Roi roi     = new ShapeRoi(circle);
+      Roi roi = new ShapeRoi(circle);
       roi.setStrokeColor(color_);
-      overlay_     = new Overlay(roi);
+      return new Overlay(roi);
    }
 
 

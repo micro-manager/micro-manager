@@ -18,10 +18,10 @@ import org.micromanager.utils.ReportingUtils;
  */
 public abstract class GenericOverlay {
    
-   protected Overlay overlay_;
    protected int size_;  // 0 to 100
    protected Color color_;
    
+   private Overlay overlay_;
    private int colorCode_;
    private boolean isShowing_;
    private final Preferences prefs_;
@@ -65,7 +65,7 @@ public abstract class GenericOverlay {
    }
    
    /**
-    * Gets the current color of the overlay
+    * Gets the current color code (stored in prefs) of the overlay
     * @return
     */
    public int getColorCode() {
@@ -97,7 +97,7 @@ public abstract class GenericOverlay {
    /**
     * Updates the object overlay_.  Must be implemented in child class.
     */
-   abstract void updateOverlay(int width, int height);
+   abstract Overlay getOverlay(int width, int height);
    
    /**
     *  Create a new overlay with the desired characteristics as set through
@@ -110,7 +110,7 @@ public abstract class GenericOverlay {
       ImagePlus image = PatternOverlayFrame.getLiveWindowImage();
       if (image == null)
          throw new Exception("Live image window required.");
-      updateOverlay(image.getWidth(), image.getHeight());
+      overlay_ = getOverlay(image.getWidth(), image.getHeight());
       image.setOverlay(overlay_);
    }
 

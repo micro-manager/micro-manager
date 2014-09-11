@@ -22,7 +22,7 @@ public class GridOverlay extends GenericOverlay {
    }
 
    @Override
-   protected void updateOverlay(int width, int height) {
+   protected Overlay getOverlay(int width, int height) {
       
       // based on http://rsbweb.nih.gov/ij/plugins/download/Grid_Overlay.java
       
@@ -44,9 +44,9 @@ public class GridOverlay extends GenericOverlay {
          yoff += dWidth;
       }
       
-      Roi roi     = new ShapeRoi(path);
+      Roi roi = new ShapeRoi(path);
       roi.setStrokeColor(color_);
-      overlay_     = new Overlay(roi);
+      return new Overlay(roi);
    }
 
 
