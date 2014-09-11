@@ -43,6 +43,16 @@ public interface Image {
    public Coords getCoords();
 
    /**
+    * Get the width of the image in pixels.
+    */
+   public int getWidth();
+
+   /**
+    * Get the height of the image in pixels.
+    */
+   public int getHeight();
+
+   /**
     * For legacy support only: convert to TaggedImage;
     */
    public TaggedImage legacyToTaggedImage();

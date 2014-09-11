@@ -227,4 +227,14 @@ public class DefaultImage implements Image {
    public TaggedImage legacyToTaggedImage() {
       return new TaggedImage(getRawPixels(), metadata_.legacyToJSON());
    }
+
+   @Override
+   public int getWidth() {
+      return (int) pixels_.dimension(0);
+   }
+
+   @Override
+   public int getHeight() {
+      return (int) pixels_.dimension(1);
+   }
 }
