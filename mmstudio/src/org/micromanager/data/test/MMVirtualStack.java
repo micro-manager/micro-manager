@@ -46,6 +46,7 @@ public class MMVirtualStack extends ij.VirtualStack {
          return null;
       }
       DefaultImage image = getImage(flatIndex);
+      ReportingUtils.logError("Asked for image at " + flatIndex + " a.k.a. " + image.getCoords() + " considering our position at " + curCoords_);
       if (image != null) {
          return image.getRawPixels();
       }

@@ -178,14 +178,9 @@ public class TestDisplay {
     */
    private void showImage(Image image) {
       if (ijImage_ instanceof MMCompositeImage) {
+         stack_.setCoords(image.getCoords());
          MMCompositeImage composite = (MMCompositeImage) ijImage_;
-         // Per old comments, calling reset() forces the image to rebuild
-         // its channels by pulling data from the VirtualStack.
-         composite.reset();
-         // And this is apparently necessary for when we're operating in
-         // grayscale mode.
-         composite.getProcessor().setPixels(
-               stack_.getPixels(composite.getCurrentSlice()));
+         composite.getProcessor().setPixels(image.getRawPixels());
       }
       ijImage_.updateAndDraw();
       histograms_.calcAndDisplayHistAndStats(true);
@@ -238,13 +233,11 @@ public class TestDisplay {
     */
    private void shiftToCompositeImage() {
       // TODO: assuming mode 1 for now.
-      ReportingUtils.logError("Changing to multiple channels");
       ijImage_ = new MMCompositeImage(plus_, 1, "foo", displayBus_);
       ijImage_.setOpenAsHyperStack(true);
       MMCompositeImage composite = (MMCompositeImage) ijImage_;
       int numChannels = store_.getMaxIndex("channel") + 1;
       composite.setNChannelsUnverified(numChannels);
-      ReportingUtils.logError("Set number of channels to " + numChannels);
       stack_.setImagePlus(ijImage_);
       composite.reset();
 
