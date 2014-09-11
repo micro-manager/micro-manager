@@ -262,15 +262,15 @@ const char* const g_SATTLPolYPropertyName = "SingleAxisYTTLPolarity";
 const char* const g_SAPatternModeYPropertyName = "SingleAxisYPatternByte";
 
 // CRISP property names
-const char* const g_WaitAfterLockPropertyName = "Wait time after Lock(ms)";
-const char* const g_ObjectiveNAPropertyName = "Objective NA";
-const char* const g_LockRangePropertyName = "Lock Range(mm)";
-const char* const g_CalibrationGainPropertyName = "Calibration Gain";
-const char* const g_LEDIntensityPropertyName = "LED Intensity(%)";
-const char* const g_LoopGainMultiplierPropertyName = "LoopGainMultiplier";
-const char* const g_NumberAveragesPropertyName = "Number of Averages";
-const char* const g_SNRPropertyName = "Signal to Noise Ratio";
-const char* const g_DitherErrorPropertyName = "Dither Error";
+const char* const g_CRISPWaitAfterLockPropertyName = "Wait ms after Lock";
+const char* const g_CRISPObjectiveNAPropertyName = "Objective NA";
+const char* const g_CRISPLockRangePropertyName = "Max Lock Range(mm)";
+const char* const g_CRISPCalibrationGainPropertyName = "Calibration Gain";
+const char* const g_CRISPLEDIntensityPropertyName = "LED Intensity";
+const char* const g_CRISPLoopGainMultiplierPropertyName = "GainMultiplier";
+const char* const g_CRISPNumberAveragesPropertyName = "Number of Averages";
+const char* const g_CRISPSNRPropertyName = "Signal Noise Ratio";
+const char* const g_CRISPDitherErrorPropertyName = "Dither Error";
 
 // ring buffer property names
 const char* const g_RB_DelayPropertyName = "RingBufferDelayBetweenPoints(ms)";
@@ -301,7 +301,7 @@ const char* const g_LaserOutputModePropertyName = "LaserOutputMode";
 const char* const g_LaserSwitchTimePropertyName = "LaserSwitchTime(ms)";
 
 // LED property names
-//const char* const g_LEDIntensityPropertyName = "LEDIntensity(%)";  // already in CRISP
+const char* const g_LEDIntensityPropertyName = "LED Intensity(%)";
 const char* const g_ShutterState = "State";
 
 // SPIM enums

@@ -95,44 +95,44 @@ int CCRISP::Initialize()
    AddAllowedValue(g_CRISPState, g_CRISP_SSZ);
 
    pAct = new CPropertyAction(this, &CCRISP::OnWaitAfterLock);
-   CreateProperty(g_WaitAfterLockPropertyName, "1000", MM::Integer, false, pAct);
-   UpdateProperty(g_WaitAfterLockPropertyName);
+   CreateProperty(g_CRISPWaitAfterLockPropertyName, "1000", MM::Integer, false, pAct);
+   UpdateProperty(g_CRISPWaitAfterLockPropertyName);
 
    pAct = new CPropertyAction(this, &CCRISP::OnNA);
-   CreateProperty(g_ObjectiveNAPropertyName, "0.8", MM::Float, false, pAct);
-   UpdateProperty(g_ObjectiveNAPropertyName);
-   SetPropertyLimits(g_ObjectiveNAPropertyName, 0, 1.65);
+   CreateProperty(g_CRISPObjectiveNAPropertyName, "0.8", MM::Float, false, pAct);
+   UpdateProperty(g_CRISPObjectiveNAPropertyName);
+   SetPropertyLimits(g_CRISPObjectiveNAPropertyName, 0, 1.65);
 
    pAct = new CPropertyAction(this, &CCRISP::OnLockRange);
-   CreateProperty(g_LockRangePropertyName, "0.05", MM::Float, false, pAct);
-   UpdateProperty(g_LockRangePropertyName);
+   CreateProperty(g_CRISPLockRangePropertyName, "0.05", MM::Float, false, pAct);
+   UpdateProperty(g_CRISPLockRangePropertyName);
 
    pAct = new CPropertyAction(this, &CCRISP::OnCalGain);
-   CreateProperty(g_CalibrationGainPropertyName, "0", MM::Float, false, pAct);
-   UpdateProperty(g_CalibrationGainPropertyName);
+   CreateProperty(g_CRISPCalibrationGainPropertyName, "0", MM::Float, false, pAct);
+   UpdateProperty(g_CRISPCalibrationGainPropertyName);
 
    pAct = new CPropertyAction(this, &CCRISP::OnLEDIntensity);
-   CreateProperty(g_LEDIntensityPropertyName, "50", MM::Integer, false, pAct);
-   UpdateProperty(g_LEDIntensityPropertyName);
-   SetPropertyLimits(g_LEDIntensityPropertyName, 0, 100);
+   CreateProperty(g_CRISPLEDIntensityPropertyName, "50", MM::Integer, false, pAct);
+   UpdateProperty(g_CRISPLEDIntensityPropertyName);
+   SetPropertyLimits(g_CRISPLEDIntensityPropertyName, 0, 100);
 
    pAct = new CPropertyAction(this, &CCRISP::OnLoopGainMultiplier);
-   CreateProperty(g_LoopGainMultiplierPropertyName, "10", MM::Integer, false, pAct);
-   UpdateProperty(g_LoopGainMultiplierPropertyName);
-   SetPropertyLimits(g_LoopGainMultiplierPropertyName, 0, 100);
+   CreateProperty(g_CRISPLoopGainMultiplierPropertyName, "10", MM::Integer, false, pAct);
+   UpdateProperty(g_CRISPLoopGainMultiplierPropertyName);
+   SetPropertyLimits(g_CRISPLoopGainMultiplierPropertyName, 0, 100);
 
    pAct = new CPropertyAction(this, &CCRISP::OnNumAvg);
-   CreateProperty(g_NumberAveragesPropertyName, "1", MM::Integer, false, pAct);
-   UpdateProperty(g_NumberAveragesPropertyName);
-   SetPropertyLimits(g_NumberAveragesPropertyName, 0, 8);
+   CreateProperty(g_CRISPNumberAveragesPropertyName, "1", MM::Integer, false, pAct);
+   UpdateProperty(g_CRISPNumberAveragesPropertyName);
+   SetPropertyLimits(g_CRISPNumberAveragesPropertyName, 0, 8);
 
    pAct = new CPropertyAction(this, &CCRISP::OnSNR);
-   CreateProperty(g_SNRPropertyName, "", MM::Float, true, pAct);
-   UpdateProperty(g_SNRPropertyName);
+   CreateProperty(g_CRISPSNRPropertyName, "", MM::Float, true, pAct);
+   UpdateProperty(g_CRISPSNRPropertyName);
 
    pAct = new CPropertyAction(this, &CCRISP::OnDitherError);
-   CreateProperty(g_DitherErrorPropertyName, "", MM::Integer, true, pAct);
-   UpdateProperty(g_DitherErrorPropertyName);
+   CreateProperty(g_CRISPDitherErrorPropertyName, "", MM::Integer, true, pAct);
+   UpdateProperty(g_CRISPDitherErrorPropertyName);
 
    initialized_ = true;
    return DEVICE_OK;
