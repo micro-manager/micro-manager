@@ -11,7 +11,6 @@ import java.lang.reflect.InvocationTargetException;
 
 import javax.swing.SwingUtilities;
 
-import org.micromanager.utils.CanvasPaintPending;
 import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.ReportingUtils;
@@ -133,6 +132,7 @@ public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
       } catch (NoSuchFieldException e) {
          ReportingUtils.logError(e, "ImageJ ContrastAdjuster doesn't have field named instance");
       }
+
       super.updateImage();
 
       // Restore the value we had previously set. Bizarrely, not doing this
@@ -147,16 +147,12 @@ public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
 
       }
    }
-   
+  
+   /**
+    * TODO: remove useless parameter.
+    */
    public void updateAndDraw(boolean forceUpdateAndPaint) {
-      if (forceUpdateAndPaint) {
-         // there may be a paint pending, but we want to make sure this update
-         // gets called regardless
-         CanvasPaintPending.removePaintPending(hyperImage_.getCanvas(), this);
-         updateAndDraw();
-      } else {    
-         updateAndDraw();
-      }
+      updateAndDraw();
    }
 
    /*
@@ -164,11 +160,6 @@ public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
     */
    @Override
    public void updateAndDraw() {
-      if (CanvasPaintPending.isMyPaintPending(super.getCanvas(), this)) {
-         return;
-      }
-      CanvasPaintPending.setPaintPending(super.getCanvas(), this);
-      
       superUpdateImage(); 
       bus_.post(new DrawEvent());
       try {

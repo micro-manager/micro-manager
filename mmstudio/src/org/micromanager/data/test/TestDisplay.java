@@ -7,9 +7,13 @@ import ij.ImagePlus;
 
 import java.awt.Component;
 import java.lang.Math;
+import java.lang.Thread;
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
-import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -19,10 +23,12 @@ import org.micromanager.api.data.Image;
 import org.micromanager.api.data.NewImageEvent;
 
 import org.micromanager.imagedisplay.DisplayWindow;
+import org.micromanager.imagedisplay.FPSEvent;
 import org.micromanager.imagedisplay.IMMImagePlus;
 import org.micromanager.imagedisplay.MMCompositeImage;
 import org.micromanager.imagedisplay.MMImagePlus;
 
+import org.micromanager.utils.CanvasPaintPending;
 import org.micromanager.utils.ReportingUtils;
 
 
@@ -32,15 +38,25 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class TestDisplay {
    private Datastore store_;
-   private DisplayWindow window_;
+   private MMVirtualStack stack_;
    private ImagePlus ijImage_;
    private MMImagePlus plus_;
-   private MMVirtualStack stack_;
+
+   private DisplayWindow window_;
    private HyperstackControls controls_;
    private HistogramsPanel histograms_;
    private MetadataPanel metadata_;
    private CommentsPanel comments_;
 
+   // These objects are used by the display thread and for tracking our
+   // display FPS.
+   private LinkedBlockingQueue<Coords> coordsQueue_;
+   private AtomicBoolean shouldStopDisplayThread_;
+   private Thread displayThread_;
+   private int imagesDisplayed_ = 0;
+   private long lastImageIndex_ = 0;
+   private long lastFPSUpdateTimestamp_ = -1;
+   
    private EventBus displayBus_;
    
    public TestDisplay(Datastore store) {
@@ -70,10 +86,156 @@ public class TestDisplay {
       setWindowControls();
       window_.setTitle("Hello, world!");
       histograms_.calcAndDisplayHistAndStats(true);
+
+      shouldStopDisplayThread_ = new AtomicBoolean(false);
+      startDisplayThread();
    }
 
-   // Turns out we need to represent a multichannel image, so convert from
-   // ImagePlus to CompositeImage.
+   /**
+    * Spawn a new thread to display images.
+    */
+   private void startDisplayThread() {
+      coordsQueue_ = new LinkedBlockingQueue<Coords>();
+      displayThread_ = new Thread(new Runnable() {
+         @Override
+         public void run() {
+            Coords coords = null;
+            while (!shouldStopDisplayThread_.get()) {
+               boolean haveValidImage = false;
+               // Extract images from the queue until we get to the end.
+               do {
+                  try {
+                     // This will block until an image is available or we need
+                     // to send a new FPS update.
+                     coords = coordsQueue_.poll(500, TimeUnit.MILLISECONDS);
+                     haveValidImage = (coords != null);
+                     if (coords == null) {
+                        try {
+                           // We still need to generate an FPS update at 
+                           // regular intervals; we just have to do it without
+                           // any image coords.
+                           sendFPSUpdate(null);
+                        }
+                        catch (Exception e) {
+                           // Can't get image coords, apparently; give up.
+                           break;
+                        }
+                        continue;
+                     }
+                  }
+                  catch (InterruptedException e) {
+                     // Interrupted while waiting for the queue to be 
+                     // populated. 
+                     if (shouldStopDisplayThread_.get()) {
+                        // Time to stop.
+                        return;
+                     }
+                  }
+               } while (coordsQueue_.peek() != null);
+
+               if (coords == null || !haveValidImage) {
+                  // Nothing to show. 
+                  continue;
+               }
+
+               if (ijImage_ != null && ijImage_.getCanvas() != null) {
+                  // Wait for the canvas to be available. If we don't do this,
+                  // then our framerate tanks, possibly because of repaint
+                  // events piling up in the EDT. It's hard to tell. 
+                  while (CanvasPaintPending.isMyPaintPending(
+                        ijImage_.getCanvas(), ijImage_)) {
+                     try {
+                        Thread.sleep(10);
+                     }
+                     catch (InterruptedException e) {
+                        if (shouldStopDisplayThread_.get()) {
+                           // Time to stop.
+                           return;
+                        }
+                     }
+                  }
+                  CanvasPaintPending.setPaintPending(
+                        ijImage_.getCanvas(), ijImage_);
+               }
+               final Image image = store_.getImage(coords);
+               // This must be on the EDT because drawing is not thread-safe.
+               SwingUtilities.invokeLater(new Runnable() {
+                  @Override
+                  public void run() {
+                     showImage(image);
+                     imagesDisplayed_++;
+                     sendFPSUpdate(image);
+                  }
+               });
+            } // End while loop
+         }
+      });
+      displayThread_.start();
+   }
+
+   /**
+    * Show an image.
+    */
+   private void showImage(Image image) {
+      if (ijImage_ instanceof MMCompositeImage) {
+         MMCompositeImage composite = (MMCompositeImage) ijImage_;
+         // Per old comments, calling reset() forces the image to rebuild
+         // its channels by pulling data from the VirtualStack.
+         composite.reset();
+         // And this is apparently necessary for when we're operating in
+         // grayscale mode.
+         composite.getProcessor().setPixels(
+               stack_.getPixels(composite.getCurrentSlice()));
+      }
+      ijImage_.updateAndDraw();
+      histograms_.calcAndDisplayHistAndStats(true);
+      metadata_.imageChangedUpdate(image);
+   }
+
+   /**
+    * Send an update on our FPS, both data rate and image display rate. Only
+    * if it has been at least 500ms since our last update.
+    */
+   private void sendFPSUpdate(Image image) {
+      long curTimestamp = System.currentTimeMillis();
+      // Hack: if we have null image, then post a "blank" FPS event.
+      if (image == null) {
+         displayBus_.post(new FPSEvent(0, 0));
+         return;
+      }
+      if (lastFPSUpdateTimestamp_ == -1) {
+         // No data to operate on yet.
+         lastFPSUpdateTimestamp_ = curTimestamp;
+      }
+      else if (curTimestamp - lastFPSUpdateTimestamp_ >= 500) {
+         // More than 500ms since last update.
+         double elapsedTime = (curTimestamp - lastFPSUpdateTimestamp_) / 1000.0;
+         try {
+            Integer imageIndex = image.getMetadata().getImageNumber();
+            if (imageIndex != null) {
+               // HACK: Ignore the first FPS display event, to prevent us from
+               // showing FPS for the Snap window.
+               if (lastImageIndex_ != 0) {
+                  displayBus_.post(new FPSEvent((imageIndex - lastImageIndex_) / elapsedTime,
+                           imagesDisplayed_ / elapsedTime));
+               }
+               lastImageIndex_ = imageIndex;
+            }
+         }
+         catch (Exception e) {
+            // Post a "blank" event. This likely happens because the image
+            // image don't contain a sequence number (e.g. during an MDA).
+            displayBus_.post(new FPSEvent(0, 0));
+         }
+         imagesDisplayed_ = 0;
+         lastFPSUpdateTimestamp_ = curTimestamp;
+      }
+   }
+
+
+   /**
+    * We've discovered that we need to represent a multichannel image.
+    */
    private void shiftToCompositeImage() {
       // TODO: assuming mode 1 for now.
       ReportingUtils.logError("Changing to multiple channels");
@@ -189,19 +351,6 @@ public class TestDisplay {
    @Subscribe
    public void onDrawEvent(DrawEvent event) {
       Coords drawCoords = stack_.getCurrentImageCoords();
-      Image image = store_.getImage(drawCoords);
-      if (ijImage_ instanceof MMCompositeImage) {
-         MMCompositeImage composite = (MMCompositeImage) ijImage_;
-         // Per old comments, calling reset() forces the image to rebuild
-         // its channels by pulling data from the VirtualStack.
-         composite.reset();
-         // And this is apparently necessary for when we're operating in
-         // grayscale mode.
-         composite.getProcessor().setPixels(
-               stack_.getPixels(composite.getCurrentSlice()));
-      }
-      ijImage_.updateAndDraw();
-      histograms_.calcAndDisplayHistAndStats(true);
-      metadata_.imageChangedUpdate(store_.getImage(drawCoords));
+      coordsQueue_.add(drawCoords);
    }
 }
