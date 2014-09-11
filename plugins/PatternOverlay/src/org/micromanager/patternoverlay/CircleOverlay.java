@@ -9,11 +9,9 @@ import java.util.prefs.Preferences;
 
 
 /**
- *  Since this creates an overlay, stored images will not be affected, and
- *  no persistent change is made to the actual image; rather, this adds another
- *  layer on top of the life view window.
- *
- *  @author Jon
+ * Single circle in center.
+ * 
+ * @author Jon
  */
 public class CircleOverlay extends GenericOverlay {
    

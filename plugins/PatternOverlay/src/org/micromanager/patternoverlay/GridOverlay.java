@@ -9,11 +9,10 @@ import java.util.prefs.Preferences;
 
 
 /**
- *  Since this creates an overlay, stored images will not be affected, and
- *  no persistent change is made to the actual image; rather, this adds another
- *  layer on top of the life view window.
- *
- *  @author Jon
+ * Form a grid pattern where the region is broken into N horizontal sections
+ * and N vertical sections.
+ * 
+ * @author Jon
  */
 public class GridOverlay extends GenericOverlay {
    

@@ -10,11 +10,9 @@ import java.util.prefs.Preferences;
 
 
 /**
- *  Since this creates an overlay, stored images will not be affected, and
- *  no persistent change is made to the actual image; rather, this adds another
- *  layer on top of the life view window.
- *
- *  @author Jon
+ * Three concentric circles with diameters of relative size 1, 3, and 5
+ * 
+ * @author Jon
  */
 public class TargetOverlay extends GenericOverlay {
    
@@ -24,8 +22,6 @@ public class TargetOverlay extends GenericOverlay {
 
    @Override
    protected Overlay getOverlay(int width, int height) {
-      
-      // makes diameters of relative size 1, 3, and 5
       
       double radius = java.lang.Math.min(width, height)/2 * size_/100;
       
