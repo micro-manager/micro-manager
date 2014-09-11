@@ -6,6 +6,7 @@
 package org.micromanager.CRISP;
 
 import mmcorej.CMMCore;
+
 import org.micromanager.api.MMPlugin;
 import org.micromanager.api.ScriptInterface;
 
@@ -18,6 +19,7 @@ public class CRISP implements MMPlugin {
    public static final String menuName = "ASI CRISP Control";
    public static final String tooltipDescription =
       "Control the ASI CRISP Autofocus System";
+   @SuppressWarnings("unused")
    private CMMCore core_;
    private ScriptInterface gui_;
    private CRISPFrame myFrame_;
@@ -46,7 +48,8 @@ public class CRISP implements MMPlugin {
 
     @Override
    public void show() {
-         String ig = "ASI CRISP Control";
+       @SuppressWarnings("unused")
+       String ig = "ASI CRISP Control";
    }
 
     @Override

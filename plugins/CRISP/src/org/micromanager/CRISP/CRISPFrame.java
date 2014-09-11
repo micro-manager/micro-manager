@@ -23,12 +23,15 @@ import java.awt.geom.Ellipse2D;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
+
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.SpinnerModel;
 import javax.swing.Timer;
+
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
+
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartFrame;
 import org.jfree.chart.JFreeChart;
@@ -45,6 +48,7 @@ import org.jfree.data.xy.XYSeriesCollection;
  * 
  * @author Nico Stuurman
  */
+@SuppressWarnings("serial")
 public class CRISPFrame extends javax.swing.JFrame {
 
     private final ScriptInterface gui_;
@@ -54,6 +58,7 @@ public class CRISPFrame extends javax.swing.JFrame {
 
     private int frameXPos_ = 100;
     private int frameYPos_ = 100;
+    private boolean tiger_ = false;
 
     private static final String FRAMEXPOS = "FRAMEXPOS";
     private static final String FRAMEYPOS = "FRAMEYPOS";
@@ -72,8 +77,9 @@ public class CRISPFrame extends javax.swing.JFrame {
        for (String af : afs) {
          try {
             if (core_.hasProperty(af, "Description")) {
-               if (core_.getProperty(af, "Description").equals("ASI CRISP Autofocus adapter") ||
-                     core_.getProperty(af, "Description").startsWith("ASI CRISP AutoFocus")) {  // this line is for Tiger
+               tiger_ = core_.getProperty(af, "Description").startsWith("ASI CRISP AutoFocus"); // Tiger
+               if (tiger_ || core_.getProperty(af, "Description").equals("ASI CRISP Autofocus adapter"))
+               {
                   found = true;
                   CRISP_ = af;
                }
@@ -408,6 +414,7 @@ public class CRISPFrame extends javax.swing.JFrame {
          
          final JLabel jl = new JLabel();
          final JLabel jlA = new JLabel();
+         @SuppressWarnings("unused")
          final JLabel jlB = new JLabel();
          final String msg1 = "Value:  ";
          final String msg2 = "Adjust the detector lateral adjustment screw until the value is > 100 or" +
