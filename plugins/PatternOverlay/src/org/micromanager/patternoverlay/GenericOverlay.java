@@ -20,9 +20,10 @@ public abstract class GenericOverlay {
    
    protected Overlay overlay_;
    protected int size_;  // 0 to 100
-   protected int colorCode_;
    protected Color color_;
-   protected boolean isShowing_;
+   
+   private int colorCode_;
+   private boolean isShowing_;
    private final Preferences prefs_;
    private final String prefPrefix_;
 
@@ -94,11 +95,9 @@ public abstract class GenericOverlay {
    }
    
    /**
-    * Updates the object overlay_.  Should be implemented in child class.
+    * Updates the object overlay_.  Must be implemented in child class.
     */
-   protected void updateOverlay(int width, int height) {
-      overlay_ = new Overlay();
-   }
+   abstract void updateOverlay(int width, int height);
    
    /**
     *  Create a new overlay with the desired characteristics as set through
