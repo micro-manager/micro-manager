@@ -351,6 +351,9 @@ public class CoordinateMapper {
    /**
     * Feeds control points into this class
     * Performs initial calculations for lwm and affine transforms
+    * @param pointMap pairs of reference points
+    * @param order polynomial order for Kd tree 
+    * @param method Affine, LWM, non-reflective similarity
     * 
     */
    public CoordinateMapper(PointMap pointMap, int order, int method) {

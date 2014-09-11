@@ -1505,14 +1505,14 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
 
             if (xyPointsCh2.isEmpty()) {
-               JOptionPane.showMessageDialog(getInstance(), "No points found in second channel.  Is this a dual channel dataset?");
+               JOptionPane.showMessageDialog(getInstance(), 
+                       "No points found in second channel.  Is this a dual channel dataset?");
                return;
             }
 
 
             // Find matching points in the two ArrayLists
             Iterator it2 = xyPointsCh1.iterator();
-            //HashMap<Point2D.Double, Point2D.Double> points = new HashMap<Point2D.Double, Point2D.Double>();
             NearestPoint2D np;
             try {
                np = new NearestPoint2D(xyPointsCh2,
@@ -1539,6 +1539,47 @@ public class DataCollectionForm extends javax.swing.JFrame {
          // we have pairs from all images, construct the coordinate mapper
          try {
             c2t_ = new CoordinateMapper(points, 2, 1);
+            boolean continueQualityCheck = true;
+            int nrOfRemovedSpots = 0;
+
+            while (continueQualityCheck && points.size() > 4) {
+               // quality control on our new coordinate mapper.  
+               // Apply an affine transform on our data and check distribution 
+               int method = CoordinateMapper.AFFINE;
+               c2t_.setMethod(method);
+               CoordinateMapper.PointMap corPoints = new CoordinateMapper.PointMap();
+               List<Double> distances = new ArrayList<Double>();
+               double maxDistance = 0.0;
+               Point2D.Double maxPairKey = null;
+               for (Map.Entry pair : points.entrySet()) {
+                  Point2D.Double uPt = (Point2D.Double) pair.getValue();
+                  Point2D.Double otherPt = (Point2D.Double) pair.getKey();
+                  Point2D.Double corPt = (Point2D.Double) c2t_.transform(otherPt);
+                  corPoints.put(uPt, corPt);
+                  double distance = Math.sqrt(NearestPoint2D.distance2(uPt, corPt));
+                  if (distance > maxDistance) {
+                     maxDistance = distance;
+                     maxPairKey = otherPt;
+                  }
+                  distances.add(distance);
+               }
+               Double avg = listAvg(distances);
+               Double stdDev = listStdDev(distances, avg);
+
+               // Quality control check
+               if (2 * stdDev > avg) {
+                  nrOfRemovedSpots+=1;
+                  points.remove(maxPairKey);
+                  c2t_ = new CoordinateMapper(points, 2, 1);
+               } else {
+                  continueQualityCheck = false;
+                  ij.IJ.log("Removed " + nrOfRemovedSpots + " pairs, " + ", avg. distance: " +
+                    avg + ", std. dev: " + stdDev);
+               }
+            }
+            
+            //ij.IJ.showMessage("Corrected data have average of: " + avg + ",  std. dev. of: " + stdDev);
+            
             String name = "ID: " + rowData_.get(rows[0]).ID_;
             if (rows.length > 1) {
                for (int i = 1; i < rows.length; i++) {
@@ -1551,6 +1592,11 @@ public class DataCollectionForm extends javax.swing.JFrame {
                "Error setting color reference.  Did you have enough input points?");
          }
 
+         
+      
+         
+         
+         
       }
    }//GEN-LAST:event_c2StandardButtonActionPerformed
 
@@ -1842,7 +1888,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
       final int[] rows = jTable1_.getSelectedRows();
       if (rows.length < 1) {
-         JOptionPane.showMessageDialog(getInstance(), "Please select a dataset for the List Particles function");
+         JOptionPane.showMessageDialog(getInstance(), 
+                 "Please select a dataset for the List Particles function");
 
          return;
       }
@@ -1900,7 +1947,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
                   }
 
                   if (xyPointsCh2.isEmpty()) {
-                     ReportingUtils.logError("Pairs function in Localization plugin: no points found in second channel in frame " + frame);
+                     ReportingUtils.logError(
+                             "Pairs function in Localization plugin: no points found in second channel in frame " 
+                             + frame);
                      continue;
                   }
 
@@ -2131,7 +2180,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
     * @param list
     * @return average
     */
-   private static double listAvg (ArrayList<Double> list) {
+   private static double listAvg (List<Double> list) {
       double total = 0.0;
       Iterator it = list.iterator();
       while (it.hasNext()) {
@@ -2150,7 +2199,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
     * @param avg average of the list
     * @return standard deviation as defined above
     */
-   private static double listStdDev (ArrayList<Double> list, double avg) {
+   private static double listStdDev (List<Double> list, double avg) {
       
       double errorsSquared = 0;
       Iterator it = list.iterator();
@@ -3777,7 +3826,8 @@ public void run() {
          return;
       }
       if (c2t_ == null) {
-         JOptionPane.showMessageDialog(getInstance(), "No calibration data available.  First Calibrate using 2C Reference");
+         JOptionPane.showMessageDialog(getInstance(), 
+                 "No calibration data available.  First Calibrate using 2C Reference");
          return;
       }
 
