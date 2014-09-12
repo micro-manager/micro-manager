@@ -728,7 +728,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             prefs_.getInt(MyStrings.PanelNames.SETTINGS.toString(),
                   Properties.Keys.PLUGIN_CAMERA_MODE, 0));
       if (cameraMode == CameraModes.Keys.OVERLAP) {
-         cameraResetTime = 0;
+         cameraReadoutTime = 0;
       }
       
       float desiredPeriod = minSlicePeriodCB_.isSelected() ? 0 :
@@ -1466,7 +1466,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                }
                if (autoShutter) {
                   core_.setAutoShutter(true);
-
                   if (shutterOpen) {
                      core_.setShutterOpen(false);
                   }

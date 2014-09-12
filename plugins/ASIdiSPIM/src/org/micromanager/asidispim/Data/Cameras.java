@@ -139,27 +139,25 @@ public class Cameras {
     * effects.
     */
    public void setCamera(Devices.Keys key) {
-      if (Devices.CAMERAS.contains(key)) {
-         if (key == Devices.Keys.CAMERAPREVIOUS) {
-            return;
-         }
-         String mmDevice = devices_.getMMDevice(key);
-         if (mmDevice != null) {
-            try {
-               boolean liveEnabled = gui_.isLiveModeOn();
-               if (liveEnabled) {
-                  enableLiveMode(false);
-               }
-               currentCameraKey_ = key;
-               props_.setPropValue(Devices.Keys.CORE, Properties.Keys.CAMERA,
-                     mmDevice);
-               gui_.refreshGUIFromCache();
-               if (liveEnabled) {
-                  enableLiveMode(true);
-               }
-            } catch (Exception ex) {
-               gui_.showError("Failed to set Core Camera property", ASIdiSPIM.getFrame());
+      if (!Devices.CAMERAS.contains(key) ||
+            key == Devices.Keys.CAMERAPREVIOUS) {
+         return;
+      }
+      String mmDevice = devices_.getMMDevice(key);
+      if (mmDevice != null) {
+         try {
+            boolean liveEnabled = gui_.isLiveModeOn();
+            if (liveEnabled) {
+               enableLiveMode(false);
             }
+            currentCameraKey_ = key;
+            core_.setCameraDevice(mmDevice);
+            gui_.refreshGUIFromCache();
+            if (liveEnabled) {
+               enableLiveMode(true);
+            }
+         } catch (Exception ex) {
+            gui_.showError("Failed to set Core Camera property", ASIdiSPIM.getFrame());
          }
       }
    }
@@ -201,8 +199,7 @@ public class Cameras {
       Devices.Libraries camLibrary = devices_.getMMDeviceLibrary(devKey);
       switch (camLibrary) {
       case HAMCAM:
-         props_.setPropValue(
-               devKey,
+         props_.setPropValue(devKey,
                Properties.Keys.TRIGGER_SOURCE,
                ((mode == CameraModes.Keys.INTERNAL) 
                      ? Properties.Values.INTERNAL
@@ -226,27 +223,46 @@ public class Cameras {
          break;
       case PCOCAM:
          // TODO add level-sensitive trigger
-         props_.setPropValue(
-               devKey,
-               Properties.Keys.TRIGGER_MODE,
+         props_.setPropValue(devKey,
+               Properties.Keys.TRIGGER_MODE_PCO,
                ((mode == CameraModes.Keys.EDGE) 
                      ? Properties.Values.EXTERNAL_LC
                      : Properties.Values.INTERNAL_LC), true);
          break;
       case ANDORCAM:
-         // TODO add level-sensitive trigger
-         props_.setPropValue(
-               devKey,
-               Properties.Keys.TRIGGER_MODE_ANDOR,
-               ((mode == CameraModes.Keys.EDGE) 
-                     ? Properties.Values.EXTERNAL_LC
-                     : Properties.Values.INTERNAL_ANDOR), true);
-         props_.setPropValue(
-               devKey,
-               Properties.Keys.ANDOR_OVERLAP,
-               ((mode == CameraModes.Keys.OVERLAP) 
-                     ? Properties.Values.ON
-                     : Properties.Values.OFF), true);
+         switch (mode) {
+         case EDGE:
+            props_.setPropValue(devKey,
+                  Properties.Keys.TRIGGER_MODE,
+                  Properties.Values.EXTERNAL_LC, true);
+            props_.setPropValue(devKey,
+                  Properties.Keys.ANDOR_OVERLAP,
+                  Properties.Values.OFF, true);
+            break;
+         case INTERNAL:
+            props_.setPropValue(devKey,
+                  Properties.Keys.TRIGGER_MODE,
+                  Properties.Values.INTERNAL_ANDOR, true);
+            break;
+         case LEVEL:
+            props_.setPropValue(devKey,
+                  Properties.Keys.TRIGGER_MODE,
+                  Properties.Values.LEVEL_ANDOR, true);
+            props_.setPropValue(devKey,
+                  Properties.Keys.ANDOR_OVERLAP,
+                  Properties.Values.OFF, true);
+            break;
+         case OVERLAP:
+            props_.setPropValue(devKey,
+                  Properties.Keys.TRIGGER_MODE,
+                  Properties.Values.LEVEL_ANDOR, true);
+            props_.setPropValue(devKey,
+                  Properties.Keys.ANDOR_OVERLAP,
+                  Properties.Values.ON, true);
+            break;
+         default:
+            break;
+         }
          break;
       case DEMOCAM:
          // do nothing
@@ -418,7 +434,7 @@ public class Cameras {
          break;
       }
       core_.logMessage("camera reset time computed as " + resetTimeMs + 
-            " for camera" + devices_.getMMDevice(camKey), true);
+            " for camera " + devices_.getMMDevice(camKey), true);
       return resetTimeMs;  // assume 10ms readout if not otherwise possible to calculate
    }
    
@@ -432,7 +448,7 @@ public class Cameras {
    public float computeCameraReadoutTime(Devices.Keys camKey) {
       float readoutTimeMs = 10;
       Rectangle roi = new Rectangle();
-      String origCamera = props_.getPropValueString(Devices.Keys.CORE, Properties.Keys.CAMERA, false);
+      String origCamera = core_.getCameraDevice(); 
       try {
          // to get the correct ROI we first set the camera to be active
          // (return to original value in finally statement)
@@ -441,7 +457,11 @@ public class Cameras {
       } catch (Exception e) {
          gui_.showError(e, (Component) ASIdiSPIM.getFrame());
       } finally {
-         props_.setPropValue(Devices.Keys.CORE, Properties.Keys.CAMERA, origCamera);
+         try {
+            core_.setCameraDevice(origCamera);
+         } catch (Exception e) {
+            gui_.showError(e, (Component) ASIdiSPIM.getFrame());
+         }
       }
      
       double rowReadoutTime = getRowReadoutTime(camKey);
@@ -476,7 +496,7 @@ public class Cameras {
          break;
       }
       core_.logMessage("camera readout time computed as " + readoutTimeMs + 
-            " for camera" + devices_.getMMDevice(camKey), true);
+            " for camera " + devices_.getMMDevice(camKey), true);
       return readoutTimeMs;  // assume 10ms readout if not otherwise possible to calculate
    }
    

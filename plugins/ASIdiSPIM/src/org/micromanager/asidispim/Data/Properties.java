@@ -108,8 +108,8 @@ public class Properties {
       READOUTTIME("ReadoutTime"),         // for Hamamatsu
       SENSOR_MODE("SENSOR MODE"),         // for Hamamatsu
       SCAN_MODE("ScanMode"),              // for Hamamatsu, 1 = slow scan, 2 = fast scan
-      TRIGGER_MODE("Triggermode"),        // for PCO
-      TRIGGER_MODE_ANDOR("TriggerMode"),       // for Andor Zyla
+      TRIGGER_MODE_PCO("Triggermode"),        // for PCO
+      TRIGGER_MODE("TriggerMode"),             // for Andor Zyla
       CAMERA_NAME("CameraName"),               // for Andor Zyla
       PIXEL_READOUT_RATE("PixelReadoutRate"),  // for Andor Zyla
       ANDOR_OVERLAP("Overlap"),                // for Andor Zyla
@@ -200,6 +200,7 @@ public class Properties {
       INTERNAL_LC("Internal"),
       EXTERNAL_LC("External"),
       INTERNAL_ANDOR("Internal (Recommended for fast acquisitions)"),
+      LEVEL_ANDOR("External Exposure"),
       POSITIVE("POSITIVE"),
       NEGATIVE("NEGATIVE"),
       AREA("AREA"),                // for Hamamatsu's SENSOR MODE

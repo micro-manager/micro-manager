@@ -176,7 +176,9 @@ public final class CameraSubPanel extends ListeningJPanel implements LiveModeLis
             return;  // don't go through this if we are rebuilding selections
          }
          Cameras.CameraData sel = CameraDataHash_.get( (String) box_.getSelectedItem());
-         cameras_.setCamera(sel.deviceKey);
+         if (cameras_.getCurrentCamera() != sel.deviceKey) {
+            cameras_.setCamera(sel.deviceKey);
+         }
          prefs_.putString(instanceLabel_, Prefs.Keys.CAMERA, (String) box_.getSelectedItem());
       }
       

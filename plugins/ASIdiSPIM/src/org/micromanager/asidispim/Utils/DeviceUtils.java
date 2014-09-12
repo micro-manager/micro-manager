@@ -121,13 +121,13 @@ public class DeviceUtils {
             }
             break;
          case PCOCAM:
-            if (! devices_.hasProperty(key, Properties.Keys.TRIGGER_MODE) ) {
+            if (! devices_.hasProperty(key, Properties.Keys.TRIGGER_MODE_PCO) ) {
                ReportingUtils.showError("Device " + devices_.getMMDevice(key) + 
                      ": PCO device adapter doesn't have external trigger property", null);
             }
             break;
          case ANDORCAM:
-            if (! devices_.hasProperty(key, Properties.Keys.TRIGGER_MODE_ANDOR) ) {
+            if (! devices_.hasProperty(key, Properties.Keys.TRIGGER_MODE) ) {
                ReportingUtils.showError("Device " + devices_.getMMDevice(key) + 
                      ": Andor sCMOS device adapter doesn't have external trigger property", null);
             }
@@ -261,12 +261,12 @@ public class DeviceUtils {
    public JComboBox makeSingleCameraDeviceBox(Devices.Keys deviceName) {
       List<String> singleCameras = new ArrayList<String>();
       singleCameras.add(0, "");
-      String originalCamera = props_.getPropValueString(Devices.Keys.CORE, Properties.Keys.CAMERA); 
+      String originalCamera = core_.getCameraDevice();
       try {
          StrVector strvDevices = core_.getLoadedDevicesOfType(mmcorej.DeviceType.CameraDevice);
          for (int i = 0; i < strvDevices.size(); i++) {
             String test = strvDevices.get(i);
-            core_.setProperty("Core", "Camera", test);
+            core_.setCameraDevice(test);
             if (core_.getNumberOfCameraChannels() == 1) {
                singleCameras.add(test);
             }
@@ -274,7 +274,11 @@ public class DeviceUtils {
       } catch (Exception ex) {
          ReportingUtils.showError("Error detecting single camera devices", null);
       } finally {
-         props_.setPropValue(Devices.Keys.CORE, Properties.Keys.CAMERA, originalCamera);
+         try {
+            core_.setCameraDevice(originalCamera);
+         } catch (Exception e) {
+            ReportingUtils.showError(e);
+         }
       }
       
       JComboBox deviceBox = new JComboBox(singleCameras.toArray());
