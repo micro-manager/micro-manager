@@ -25,8 +25,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
       private Integer scaleBarLocationIndex_ = null;
       private Boolean shouldShowScaleBar_ = null;
       private Boolean shouldAutostretch_ = null;
-      private Boolean shouldIgnoreOutliers_ = null;
-      private Double percentToIgnore_ = null;
+      private Double trimPercentage_ = null;
       private Boolean shouldUseLogScale_ = null;
 
       @Override
@@ -101,14 +100,8 @@ public class DefaultDisplaySettings implements DisplaySettings {
       }
 
       @Override
-      public DisplaySettingsBuilder shouldIgnoreOutliers(Boolean shouldIgnoreOutliers) {
-         shouldIgnoreOutliers_ = shouldIgnoreOutliers;
-         return this;
-      }
-
-      @Override
-      public DisplaySettingsBuilder percentToIgnore(Double percentToIgnore) {
-         percentToIgnore_ = percentToIgnore;
+      public DisplaySettingsBuilder trimPercentage(Double trimPercentage) {
+         trimPercentage_ = trimPercentage;
          return this;
       }
 
@@ -131,8 +124,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
    private Integer scaleBarLocationIndex_ = null;
    private Boolean shouldShowScaleBar_ = null;
    private Boolean shouldAutostretch_ = null;
-   private Boolean shouldIgnoreOutliers_ = null;
-   private Double percentToIgnore_ = null;
+   private Double trimPercentage_ = null;
    private Boolean shouldUseLogScale_ = null;
 
    public DefaultDisplaySettings(Builder builder) {
@@ -147,8 +139,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
       scaleBarLocationIndex_ = builder.scaleBarLocationIndex_;
       shouldShowScaleBar_ = builder.shouldShowScaleBar_;
       shouldAutostretch_ = builder.shouldAutostretch_;
-      shouldIgnoreOutliers_ = builder.shouldIgnoreOutliers_;
-      percentToIgnore_ = builder.percentToIgnore_;
+      trimPercentage_ = builder.trimPercentage_;
       shouldUseLogScale_ = builder.shouldUseLogScale_;
    }
 
@@ -208,13 +199,8 @@ public class DefaultDisplaySettings implements DisplaySettings {
    }
 
    @Override
-   public Boolean getShouldIgnoreOutliers() {
-      return shouldIgnoreOutliers_;
-   }
-
-   @Override
-   public Double getPercentToIgnore() {
-      return percentToIgnore_;
+   public Double getTrimPercentage() {
+      return trimPercentage_;
    }
 
    @Override
@@ -236,8 +222,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
             .scaleBarLocationIndex(scaleBarLocationIndex_)
             .shouldShowScaleBar(shouldShowScaleBar_)
             .shouldAutostretch(shouldAutostretch_)
-            .shouldIgnoreOutliers(shouldIgnoreOutliers_)
-            .percentToIgnore(percentToIgnore_)
+            .trimPercentage(trimPercentage_)
             .shouldUseLogScale(shouldUseLogScale_);
    }
 
@@ -286,8 +271,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
          result.put("scaleBarLocationIndex", scaleBarLocationIndex_);
          result.put("shouldShowScaleBar", shouldShowScaleBar_);
          result.put("shouldAutostretch", shouldAutostretch_);
-         result.put("shouldIgnoreOutliers", shouldIgnoreOutliers_);
-         result.put("percentToIgnore", percentToIgnore_);
+         result.put("trimPercentage", trimPercentage_);
          result.put("shouldUseLogScale", shouldUseLogScale_);
          return result;
       }
