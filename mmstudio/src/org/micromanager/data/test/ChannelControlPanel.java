@@ -461,26 +461,17 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
               contrastMax_++;
           }
       }
-      if (settings_.getShouldIgnoreOutliers() != null &&
-            settings_.getShouldIgnoreOutliers()) {
-         if (contrastMin_ < minAfterRejectingOutliers_) {
-            if (0 < minAfterRejectingOutliers_) {
-               contrastMin_ = minAfterRejectingOutliers_;
-            }
-         }
-         if (maxAfterRejectingOutliers_ < contrastMax_) {
-            contrastMax_ = maxAfterRejectingOutliers_;
-         }
-         if (contrastMax_ <= contrastMin_) {
-             if (contrastMax_ > 0) {
-                 contrastMin_ = contrastMax_ - 1;
-             } else {
-                 contrastMax_ = contrastMin_ + 1;
-             }
-         }
+      contrastMin_ = Math.max(0,
+            Math.max(contrastMin_, minAfterRejectingOutliers_));
+      contrastMax_ = Math.min(contrastMax_, maxAfterRejectingOutliers_);
+      if (contrastMax_ <= contrastMin_) {
+          if (contrastMax_ > 0) {
+              contrastMin_ = contrastMax_ - 1;
+          } else {
+              contrastMax_ = contrastMin_ + 1;
+          }
       }
    }
-
 
    private void loadDisplaySettings() {
       Integer[] contrastMaxes = settings_.getChannelContrastMaxes();
@@ -683,21 +674,19 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          ReportingUtils.logError("No pixels");
          return;  //Blank pixels 
       }
-      if (settings_.getShouldIgnoreOutliers() != null &&
-            settings_.getShouldIgnoreOutliers()) {
-         // todo handle negative values
-         maxAfterRejectingOutliers_ = rawHistogram.length;
-         // specified percent of pixels are ignored in the automatic contrast setting
-         int totalPoints = imgHeight * imgWidth;
-         Double percentToIgnore = settings_.getPercentToIgnore();
-         if (percentToIgnore == null) {
-            percentToIgnore = 0.0;
-         }
-         HistogramUtils hu = new HistogramUtils(rawHistogram, totalPoints, 
-               0.01 * percentToIgnore);
-         minAfterRejectingOutliers_ = hu.getMinAfterRejectingOutliers();
-         maxAfterRejectingOutliers_ = hu.getMaxAfterRejectingOutliers();
+
+      // Determine what percentage of the histogram range to autotrim.
+      maxAfterRejectingOutliers_ = rawHistogram.length;
+      int totalPoints = imgHeight * imgWidth;
+      Double trimPercentage = settings_.getTrimPercentage();
+      if (trimPercentage == null) {
+         trimPercentage = 0.0;
       }
+      HistogramUtils hu = new HistogramUtils(rawHistogram, totalPoints, 
+            0.01 * trimPercentage);
+      minAfterRejectingOutliers_ = hu.getMinAfterRejectingOutliers();
+      maxAfterRejectingOutliers_ = hu.getMaxAfterRejectingOutliers();
+
       GraphData histogramData = new GraphData();
 
       pixelMin_ = -1;

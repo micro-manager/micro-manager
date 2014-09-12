@@ -33,8 +33,7 @@ public interface DisplaySettings {
       DisplaySettingsBuilder scaleBarLocationIndex(Integer scaleBarLocationIndex);
       DisplaySettingsBuilder shouldShowScaleBar(Boolean shouldShowScaleBar);
       DisplaySettingsBuilder shouldAutostretch(Boolean shouldAutostretch);
-      DisplaySettingsBuilder shouldIgnoreOutliers(Boolean shouldIgnoreOutliers);
-      DisplaySettingsBuilder percentToIgnore(Double percentToIgnore);
+      DisplaySettingsBuilder trimPercentage(Double trimPercentage);
       DisplaySettingsBuilder shouldUseLogScale(Boolean shouldUseLogScale);
    }
 
@@ -55,8 +54,7 @@ public interface DisplaySettings {
    public Integer getScaleBarLocationIndex();
    public Boolean getShouldShowScaleBar();
    public Boolean getShouldAutostretch();
-   public Boolean getShouldIgnoreOutliers();
-   public Double getPercentToIgnore();
+   public Double getTrimPercentage();
    public Boolean getShouldUseLogScale();
    /**
     * For legacy support only: convert to JSONObject.
