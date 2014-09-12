@@ -19,7 +19,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
       private Integer[] channelContrastMins_ = null;
       private Integer[] channelContrastMaxes_ = null;
       private Double[] channelGammas_ = null;
-      private Boolean isSlowHistogramsOn_ = null;
+      private Double histogramUpdateRate_ = null;
       private Boolean shouldSyncChannels_ = null;
       private Integer scaleBarColorIndex_ = null;
       private Integer scaleBarLocationIndex_ = null;
@@ -65,8 +65,8 @@ public class DefaultDisplaySettings implements DisplaySettings {
       }
 
       @Override
-      public DisplaySettingsBuilder isSlowHistogramsOn(Boolean isSlowHistogramsOn) {
-         isSlowHistogramsOn_ = isSlowHistogramsOn;
+      public DisplaySettingsBuilder histogramUpdateRate(Double histogramUpdateRate) {
+         histogramUpdateRate_ = histogramUpdateRate;
          return this;
       }
 
@@ -125,7 +125,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
    private Integer[] channelContrastMins_ = null;
    private Integer[] channelContrastMaxes_ = null;
    private Double[] channelGammas_ = null;
-   private Boolean isSlowHistogramsOn_ = null;
+   private Double histogramUpdateRate_ = null;
    private Boolean shouldSyncChannels_ = null;
    private Integer scaleBarColorIndex_ = null;
    private Integer scaleBarLocationIndex_ = null;
@@ -141,7 +141,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
       channelContrastMins_ = builder.channelContrastMins_;
       channelContrastMaxes_ = builder.channelContrastMaxes_;
       channelGammas_ = builder.channelGammas_;
-      isSlowHistogramsOn_ = builder.isSlowHistogramsOn_;
+      histogramUpdateRate_ = builder.histogramUpdateRate_;
       shouldSyncChannels_ = builder.shouldSyncChannels_;
       scaleBarColorIndex_ = builder.scaleBarColorIndex_;
       scaleBarLocationIndex_ = builder.scaleBarLocationIndex_;
@@ -178,8 +178,8 @@ public class DefaultDisplaySettings implements DisplaySettings {
    }
 
    @Override
-   public Boolean getIsSlowHistogramsOn() {
-      return isSlowHistogramsOn_;
+   public Double getHistogramUpdateRate() {
+      return histogramUpdateRate_;
    }
 
    @Override
@@ -230,7 +230,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
             .channelContrastMins(channelContrastMins_)
             .channelContrastMaxes(channelContrastMaxes_)
             .channelGammas(channelGammas_)
-            .isSlowHistogramsOn(isSlowHistogramsOn_)
+            .histogramUpdateRate(histogramUpdateRate_)
             .shouldSyncChannels(shouldSyncChannels_)
             .scaleBarColorIndex(scaleBarColorIndex_)
             .scaleBarLocationIndex(scaleBarLocationIndex_)
@@ -280,7 +280,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
          MDUtils.setChannelColor(result, channelColors_[0].hashCode());
          result.put("ChContrastMin", channelContrastMins_[0]);
          result.put("ChContrastMax", channelContrastMaxes_[0]);
-         result.put("isSlowHistogramsOn", isSlowHistogramsOn_);
+         result.put("histogramUpdateRate", histogramUpdateRate_);
          result.put("shouldSyncChannels", shouldSyncChannels_);
          result.put("scaleBarColorIndex", scaleBarColorIndex_);
          result.put("scaleBarLocationIndex", scaleBarLocationIndex_);
