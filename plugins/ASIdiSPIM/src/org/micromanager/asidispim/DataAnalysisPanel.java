@@ -245,6 +245,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
                   setProgress( (int) Math.round(rate));
                }
                ImagePlus ipN = new ImagePlus("tmp", stack);
+               ipN.setCalibration(ip.getCalibration());
                if (c == 0) {
                   ij.IJ.save(ipN, spimADir + "\\" + acqName + "_" + "SPIMA-" + t + ".tif");
                } else if (c == 1) {
