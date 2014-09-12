@@ -37,9 +37,10 @@ import org.json.JSONObject;
 
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.Image;
+import org.micromanager.api.display.DrawEvent;
+
 import org.micromanager.data.DefaultCoords;
 import org.micromanager.data.NewImageEvent;
-//import org.micromanager.imagedisplay.FPSEvent;
 import org.micromanager.imagedisplay.MouseIntensityEvent;
 import org.micromanager.internalinterfaces.DisplayControls;
 import org.micromanager.internalinterfaces.LiveModeListener;
