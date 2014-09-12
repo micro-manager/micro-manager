@@ -20,7 +20,6 @@ import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
 
 public final class HistogramsPanel extends JPanel implements Histograms {
-   private static final int SLOW_HIST_UPDATE_INTERVAL_MS = 1000;
    private long lastUpdateTime_;
    private ArrayList<ChannelControlPanel> channelPanels_;
    private Datastore store_;
@@ -165,15 +164,17 @@ public final class HistogramsPanel extends JPanel implements Histograms {
    @Override
    public void imageChanged() {
       boolean update = true;
-      if (//display_.acquisitionIsRunning() ||
+      if (//TODO display_.acquisitionIsRunning() ||
             (MMStudio.getInstance().isLiveModeOn())) {
-         if (store_.getDisplaySettings().getIsSlowHistogramsOn()) {
-            long time = System.currentTimeMillis();
-            if (time - lastUpdateTime_ < SLOW_HIST_UPDATE_INTERVAL_MS) {
-               update = false;
-            } else {
-               lastUpdateTime_ = time;
-            }
+         long time = System.currentTimeMillis();
+         double updateRate = store_.getDisplaySettings().getHistogramUpdateRate();
+         // If the update rate is negative or it's been too soon since the
+         // last update, then don't update. 
+         if (updateRate < 0 ||
+               time - lastUpdateTime_ < updateRate * 1000) {
+            update = false;
+         } else {
+            lastUpdateTime_ = time;
          }
       }
  
