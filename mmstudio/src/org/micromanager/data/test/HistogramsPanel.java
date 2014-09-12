@@ -182,8 +182,6 @@ public final class HistogramsPanel extends JPanel implements Histograms {
       
       if (update) {
          for (ChannelControlPanel panel : channelPanels_) {
-            // TODO: used to check if we're the active display, as the boolean
-            // here.
             panel.calcAndDisplayHistAndStats(true);
             if (store_.getDisplaySettings().getShouldAutostretch()) {
                panel.autostretch();
