@@ -59,8 +59,15 @@ public class DisplaySettingsPanel extends JPanel {
       });
       add(histogramUpdateRate, "wrap");
       
-      JCheckBox shouldShowScaleBar = new JCheckBox("Display scale bar");
-      add(shouldShowScaleBar);
+      final JCheckBox shouldAutostretch = new JCheckBox("Autostretch histograms");
+      shouldAutostretch.setToolTipText("Automatically rescale the histograms every time a new image is displayed.");
+      shouldAutostretch.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent event) {
+            setShouldAutostretch(shouldAutostretch);
+         }
+      });
+      add(shouldAutostretch);
    }
 
    /**
@@ -108,6 +115,20 @@ public class DisplaySettingsPanel extends JPanel {
       }
       catch (NumberFormatException e) {
          // No valid number in the string; ignore it.
+      }
+      catch (DatastoreLockedException e) {
+         ReportingUtils.showError("The datastore is locked; settings cannot be changed.");
+      }
+   }
+
+   /**
+    * The user is toggling autostretch on/off.
+    */
+   private void setShouldAutostretch(JCheckBox shouldAutostretch) {
+      DisplaySettings settings = store_.getDisplaySettings();
+      settings = settings.copy().shouldAutostretch(shouldAutostretch.isSelected()).build();
+      try {
+         store_.setDisplaySettings(settings);
       }
       catch (DatastoreLockedException e) {
          ReportingUtils.showError("The datastore is locked; settings cannot be changed.");
