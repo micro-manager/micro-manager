@@ -1467,7 +1467,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                if (autoShutter) {
                   core_.setAutoShutter(true);
 
-                  if (!shutterOpen) {
+                  if (shutterOpen) {
                      core_.setShutterOpen(false);
                   }
                }
