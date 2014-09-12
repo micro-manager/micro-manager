@@ -868,4 +868,10 @@ public interface ScriptInterface {
     * return it.
     */
    public Datastore createNewDatastore();
+
+   /**
+    * Register an OverlayPanel with the program so that it is attached to all
+    * existing and new image display windows.
+    */
+   public void registerOverlay(OverlayPanel panel);
 }

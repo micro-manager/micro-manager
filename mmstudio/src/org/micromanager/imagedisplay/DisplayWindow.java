@@ -164,6 +164,8 @@ public class DisplayWindow extends StackWindow {
                g.drawRect(rect.x - 1, rect.y - 1,
                      rect.width + 1, rect.height + 1);
             }
+
+            bus_.post(new CanvasDrawEvent(g, ic));
          }
       };
       // HACK: set the minimum size. If we don't do this, then the canvas

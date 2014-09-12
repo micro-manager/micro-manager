@@ -21,6 +21,7 @@ import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.Image;
 import org.micromanager.api.data.NewImageEvent;
+import org.micromanager.api.display.DrawEvent;
 
 import org.micromanager.imagedisplay.DisplayWindow;
 import org.micromanager.imagedisplay.FPSEvent;
@@ -288,6 +289,9 @@ public class TestDisplay {
 
       comments_ = new CommentsPanel(store_);
       modePanel.addMode("Comments", comments_);
+
+      modePanel.addMode("Overlays",
+            new OverlaysPanel(store_, stack_, ijImage_, displayBus_));
 
       widgets.add(modePanel);
       rules.add("dock east, growy");
