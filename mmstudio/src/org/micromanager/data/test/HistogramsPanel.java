@@ -13,6 +13,8 @@ import java.util.ArrayList;
 import javax.swing.JPanel;
 
 import org.micromanager.api.data.Datastore;
+import org.micromanager.api.display.DrawEvent;
+
 import org.micromanager.MMStudio;
 import org.micromanager.internalinterfaces.Histograms;
 import org.micromanager.utils.ContrastSettings;
