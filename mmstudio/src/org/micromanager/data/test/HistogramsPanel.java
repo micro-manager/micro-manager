@@ -102,8 +102,9 @@ public final class HistogramsPanel extends JPanel implements Histograms {
       if (channelPanels_ == null || channelPanels_.size() - 1 > channel) {
          return null;
       }
-      return new ContrastSettings(channelPanels_.get(channel).getContrastMin(),
-              channelPanels_.get(channel).getContrastMax(), channelPanels_.get(channel).getContrastGamma());
+      ChannelControlPanel panel = channelPanels_.get(channel);
+      return new ContrastSettings(panel.getContrastMin(),
+              panel.getContrastMax(), panel.getContrastGamma());
    }
 
    public void updateOtherDisplayCombos(int selectedIndex) {
@@ -154,7 +155,6 @@ public final class HistogramsPanel extends JPanel implements Histograms {
          ReportingUtils.logError("Oops, no channel panels");
          return;
       }
-      ReportingUtils.logError("Applying LUT across " + channelPanels_.size() + " channel panels");
       for (ChannelControlPanel panel : channelPanels_) {
          panel.applyChannelLUTToImage();
       }

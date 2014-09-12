@@ -5,6 +5,11 @@ import ij.ImagePlus;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -13,6 +18,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
+import javax.swing.SpinnerNumberModel;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -68,6 +74,24 @@ public class DisplaySettingsPanel extends JPanel {
          }
       });
       add(shouldAutostretch);
+
+      add(new JLabel("Auto-trim histograms by: "));
+      final JSpinner trimPercentage = new JSpinner();
+      trimPercentage.setToolTipText("When autostretching histograms, the min and max will be moved inwards by the specifide percentage (e.g. if this is set to 10, then the scaling will be from the 10th percentile to the 90th).");
+      trimPercentage.setModel(new SpinnerNumberModel(0.0, 0.0, 100.0, 1.0));
+      trimPercentage.addChangeListener(new ChangeListener() {
+         @Override
+         public void stateChanged(ChangeEvent event) {
+            setTrimPercentage(trimPercentage);
+         }
+      });
+      trimPercentage.addKeyListener(new KeyAdapter() {
+         @Override
+         public void keyPressed(KeyEvent event) {
+            setTrimPercentage(trimPercentage);
+         }
+      });
+      add(trimPercentage);
    }
 
    /**
@@ -127,6 +151,21 @@ public class DisplaySettingsPanel extends JPanel {
    private void setShouldAutostretch(JCheckBox shouldAutostretch) {
       DisplaySettings settings = store_.getDisplaySettings();
       settings = settings.copy().shouldAutostretch(shouldAutostretch.isSelected()).build();
+      try {
+         store_.setDisplaySettings(settings);
+      }
+      catch (DatastoreLockedException e) {
+         ReportingUtils.showError("The datastore is locked; settings cannot be changed.");
+      }
+   }
+
+   /**
+    * The user set a new trim percentage.
+    */
+   private void setTrimPercentage(JSpinner trimPercentage) {
+      DisplaySettings settings = store_.getDisplaySettings();
+      double percentage = (Double) trimPercentage.getValue();
+      settings = settings.copy().trimPercentage(percentage).build();
       try {
          store_.setDisplaySettings(settings);
       }
