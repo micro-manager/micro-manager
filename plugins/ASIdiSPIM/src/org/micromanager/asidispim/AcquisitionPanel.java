@@ -1044,6 +1044,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          return false;
       }
       
+      AcquisitionModes.Keys spimMode = (AcquisitionModes.Keys) spimMode_.getSelectedItem();
+      
       // figure out the piezo parameters
       int numSlices = getNumSlices();
       float piezoAmplitude =  ( (numSlices - 1) * 
@@ -1051,6 +1053,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       float piezoCenter = prefs_.getFloat(
             MyStrings.PanelNames.SETUP.toString() + side.toString(), 
             Properties.Keys.PLUGIN_PIEZO_CENTER_POS, 0);
+      
+      // if we set piezoAmplitude to 0 here then sliceAmplitude will also be 0
+      if (spimMode.equals(AcquisitionModes.Keys.NO_SCAN)) {
+         piezoAmplitude = (float) 0.0;
+      }
       
       // tweak the parameters if we are using synchronous/overlap mode
       // object is to get exact same piezo/scanner positions in first
@@ -1095,8 +1102,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             Properties.Keys.SPIM_FIRSTSIDE, getFirstSide());
       
       // get the piezo card ready
-      if (spimMode_.getSelectedItem().
-            equals(AcquisitionModes.Keys.SLICE_SCAN_ONLY)) {
+      if (spimMode.equals(AcquisitionModes.Keys.SLICE_SCAN_ONLY)) {
          piezoAmplitude = (float) 0.0;
       }
       props_.setPropValue(piezoDevice,

@@ -52,7 +52,8 @@ public class AcquisitionModes {
    public static enum Keys { 
       PIEZO_SLICE_SCAN("Synchronous piezo/slice scan (standard)", 1),
       SLICE_SCAN_ONLY("Slice scan only (beam thickness measurement)", 2),
-      STAGE_SCAN("Stage scan", 3),
+      NO_SCAN("No piezo or slice scan (vibration measurement)", 3),
+      STAGE_SCAN("Stage scan", 4),
       NONE("None", 0);
       private final String text;
       private final int prefCode;
@@ -158,6 +159,7 @@ public class AcquisitionModes {
          List<Keys> keyList = new ArrayList<Keys>();
          keyList.add(Keys.PIEZO_SLICE_SCAN);
          keyList.add(Keys.SLICE_SCAN_ONLY);
+         keyList.add(Keys.NO_SCAN);
          return keyList;
       }
 
