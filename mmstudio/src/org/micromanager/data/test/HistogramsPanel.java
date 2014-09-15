@@ -12,6 +12,8 @@ import java.util.ArrayList;
 
 import javax.swing.JPanel;
 
+import net.miginfocom.swing.MigLayout;
+
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.display.DrawEvent;
 
@@ -51,17 +53,12 @@ public final class HistogramsPanel extends JPanel implements Histograms {
          return;
       }
 
-      GridLayout layout = new GridLayout(nChannels, 1);
-      setLayout(layout);
-      Dimension dim = new Dimension(ChannelControlPanel.CONTROLS_SIZE.width,
-              nChannels * ChannelControlPanel.CONTROLS_SIZE.height);
-      setMinimumSize(dim);
-      setSize(dim);
+      setLayout(new MigLayout("flowy"));
       channelPanels_ = new ArrayList<ChannelControlPanel>();
       for (int i = 0; i < nChannels; ++i) {
          ChannelControlPanel panel = new ChannelControlPanel(i, this, store_,
                stack_, plus_, displayBus_);
-         add(panel);
+         add(panel, "growy");
          channelPanels_.add(panel);
       }
 
