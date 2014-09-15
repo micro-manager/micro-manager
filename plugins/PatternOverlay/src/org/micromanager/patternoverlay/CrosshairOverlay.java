@@ -1,6 +1,5 @@
 package org.micromanager.patternoverlay;
 
-import ij.gui.Overlay;
 import ij.gui.Roi;
 import ij.gui.ShapeRoi;
 
@@ -21,7 +20,7 @@ public class CrosshairOverlay extends GenericOverlay {
    }
 
    @Override
-   protected Overlay getOverlay(int width, int height) {
+   protected Roi getRoi(int width, int height) {
       
       // based on http://micro-manager.3463995.n2.nabble.com/Reference-lines-in-live-view-tt7583130.html#a7583134
       
@@ -36,7 +35,7 @@ public class CrosshairOverlay extends GenericOverlay {
       
       Roi roi = new ShapeRoi(path);
       roi.setStrokeColor(color_);
-      return new Overlay(roi);
+      return roi;
    }
 
 

@@ -52,8 +52,9 @@ import net.miginfocom.swing.MigLayout;
  *  Enables the user to set preferences like overlay type and size.
  *  
  *  To make a new pattern:
- *  1. Derive from class GenericOverlay and implement getOverlay() which
- *     creates and return the overlay. See existing overlays as examples
+ *  1. Derive from class GenericOverlay and implement getRoi() which
+ *     creates and returns an ImageJ Roi object for the overlay.
+ *     See existing overlays as examples
  *     (e.g. CrosshairOverlay.java, GridOverlay.java).
  *  2. Add an entry to the OverayOption.Keys enum
  *  3. Create/add the object along with associated key to the overlayModel

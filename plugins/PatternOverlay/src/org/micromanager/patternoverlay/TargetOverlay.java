@@ -1,6 +1,5 @@
 package org.micromanager.patternoverlay;
 
-import ij.gui.Overlay;
 import ij.gui.Roi;
 import ij.gui.ShapeRoi;
 
@@ -21,7 +20,7 @@ public class TargetOverlay extends GenericOverlay {
    }
 
    @Override
-   protected Overlay getOverlay(int width, int height) {
+   protected Roi getRoi(int width, int height) {
       
       double radius = java.lang.Math.min(width, height)/2 * size_/100;
       
@@ -37,7 +36,7 @@ public class TargetOverlay extends GenericOverlay {
       
       Roi roi = new ShapeRoi(path);
       roi.setStrokeColor(color_);
-      return new Overlay(roi);
+      return roi;
    }
 
 

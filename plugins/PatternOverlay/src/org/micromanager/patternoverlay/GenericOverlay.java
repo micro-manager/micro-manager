@@ -2,6 +2,7 @@ package org.micromanager.patternoverlay;
 
 import ij.ImagePlus;
 import ij.gui.Overlay;
+import ij.gui.Roi;
 
 import java.awt.Color;
 import java.util.prefs.Preferences;
@@ -101,7 +102,7 @@ public abstract class GenericOverlay {
    /**
     * Updates the object overlay_.  Must be implemented in child class.
     */
-   abstract Overlay getOverlay(int width, int height);
+   abstract Roi getRoi(int width, int height);
    
    /**
     *  Create a new overlay with the desired characteristics as set through
@@ -114,7 +115,7 @@ public abstract class GenericOverlay {
       ImagePlus image = PatternOverlayFrame.getLiveWindowImage();
       if (image == null)
          throw new Exception("Live image window required.");
-      overlay_ = getOverlay(image.getWidth(), image.getHeight());
+      overlay_ = new Overlay(getRoi(image.getWidth(), image.getHeight()));
       image.setOverlay(overlay_);
    }
 
