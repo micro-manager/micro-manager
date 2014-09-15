@@ -85,7 +85,7 @@ public class TestDisplay {
 
       window_ = new DisplayWindow(ijImage_, displayBus_);
       setWindowControls();
-      window_.setTitle("Hello, world!");
+      window_.setTitle("Micro-Manager image display prototype");
       histograms_.calcAndDisplayHistAndStats(true);
 
       shouldStopDisplayThread_ = new AtomicBoolean(false);
