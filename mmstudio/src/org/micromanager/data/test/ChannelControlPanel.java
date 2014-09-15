@@ -7,6 +7,7 @@ import com.swtdesigner.SwingResourceManager;
 import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.process.ImageProcessor;
+import ij.process.ImageStatistics;
 import ij.process.LUT;
 
 import java.awt.*;
@@ -90,6 +91,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private int maxAfterRejectingOutliers_;
    private int pixelMin_ = 0;
    private int pixelMax_ = 255;
+   private int pixelMean_ = 0;
    private int maxIntensity_;
    private int bitDepth_;
    private Color color_;
@@ -205,7 +207,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       });
 
       minMaxLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
-      minMaxLabel_.setText("<html>Min: 000000<br>Max: 000000</html>");
+      minMaxLabel_.setText("Min/Max/Mean:<br>00/00/00");
 
       histRangeComboBox_ = new JComboBox();
       histRangeComboBox_.setFont(new Font("", Font.PLAIN, 10));
@@ -691,6 +693,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
       pixelMin_ = -1;
       pixelMax_ = 0;
+      pixelMean_ = (int) plus_.getStatistics(ImageStatistics.MEAN).mean;
 
       int numBins = (int) Math.min(rawHistogram.length / binSize_, NUM_BINS);
       int[] histogram = new int[NUM_BINS];
@@ -745,10 +748,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          hp_.setAutoScale();
          hp_.repaint();
 
-         minMaxLabel_.setText("<html>Min: " +
-               NumberUtils.intToDisplayString( pixelMin_) + "<br>" +
-               "Max: " + NumberUtils.intToDisplayString( pixelMax_) +
-               "</html>");
+         minMaxLabel_.setText(String.format("<html>Min/Max/Mean:<br>%d/%d/%d</html>", pixelMin_, pixelMax_, pixelMean_));
       } else {
           hp_.setVisible(false);        
       }
