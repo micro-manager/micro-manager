@@ -2892,8 +2892,9 @@ int CScanner::OnRBMode(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
-      command << addressChar_ << "RM X?";
-      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A X="));
+      command << addressChar_ << ((firmwareVersion_ < 2.885) ? "RM X?" : "RM F?");
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(),
+            (firmwareVersion_ < 2.885) ? ":A X=" : ":A F="));
       RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       if (tmp >= 128)
       {
@@ -2922,7 +2923,7 @@ int CScanner::OnRBMode(MM::PropertyBase* pProp, MM::ActionType eAct)
          tmp = 3;
       else
          return DEVICE_INVALID_PROPERTY_VALUE;
-      command << addressChar_ << "RM X=" << tmp;
+      command << addressChar_ << ((firmwareVersion_ < 2.885) ? "RM X=" : "RM F=") << tmp;
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
    }
    return DEVICE_OK;
@@ -2956,8 +2957,9 @@ int CScanner::OnRBRunning(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       if (!refreshProps_ && initialized_ && !justSet)
          return DEVICE_OK;
-      command << addressChar_ << "RM X?";
-      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A X="));
+      command << addressChar_ << ((firmwareVersion_ < 2.885) ? "RM X?" : "RM F?");
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(),
+            (firmwareVersion_ < 2.885) ? ":A X=" : ":A F="));
       RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       bool success;
       if (tmp >= 128)
