@@ -85,6 +85,7 @@ public class TestDisplay {
 
       window_ = new DisplayWindow(ijImage_, displayBus_);
       setWindowControls();
+      window_.zoomToPreferredSize();
       window_.setTitle("Micro-Manager image display prototype");
       histograms_.calcAndDisplayHistAndStats(true);
 
