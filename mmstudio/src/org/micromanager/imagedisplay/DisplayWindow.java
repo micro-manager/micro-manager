@@ -278,7 +278,7 @@ public class DisplayWindow extends StackWindow {
     * closed window.
     * 
     */
-   private void zoomToPreferredSize() {
+   public void zoomToPreferredSize() {
       Point location = getLocation();
 
       double mag = MMStudio.getInstance().getPreferredWindowMag();
