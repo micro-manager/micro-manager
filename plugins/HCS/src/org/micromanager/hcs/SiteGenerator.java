@@ -5,17 +5,14 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.Point2D;
-import java.io.File;
 import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
-import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
-import javax.swing.JToggleButton;
 import javax.swing.SpringLayout;
 import javax.swing.UIManager;
 
@@ -52,13 +49,13 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
 	private JTextField rowsField_;
 	private JComboBox plateIDCombo_;
 	private static final long serialVersionUID = 1L;
-	private SpringLayout springLayout;
+	private final SpringLayout springLayout;
 	private SBSPlate plate_;
 	private PlatePanel platePanel_;
 	private ScriptInterface app_;
-	private Point2D.Double xyStagePos_;
+	private final Point2D.Double xyStagePos_;
 	private double zStagePos_;
-	private Point2D.Double cursorPos_;
+	private final Point2D.Double cursorPos_;
 	private String stageWell_;
 	private String stageSite_;
 	private String cursorWell_;
@@ -81,13 +78,13 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
 	public static final String tooltipDescription =
 		"Generate position list for multi-well plates";
 	//private JCheckBox lockAspectCheckBox_;
-	private JLabel statusLabel_;
+	private final JLabel statusLabel_;
 
 	static private final String VERSION_INFO = "1.4.1";
 	static private final String COPYRIGHT_NOTICE = "Copyright by UCSF, 2013";
 	static private final String DESCRIPTION = "Generate imaging site positions for micro-well plates and slides";
 	static private final String INFO = "Not available";
-   private JCheckBox chckbxThreePt_;
+   private final JCheckBox chckbxThreePt_;
    private final ButtonGroup toolButtonGroup = new ButtonGroup();
    private JRadioButton rdbtnSelectWells_;
    private JRadioButton rdbtnMoveStage_;
@@ -114,6 +111,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
 		super();
 		setMinimumSize(new Dimension(815, 600));
 		addWindowListener(new WindowAdapter() {
+         @Override
 			public void windowClosing(final WindowEvent e) {
 				savePosition();
 				saveSettings();
@@ -129,10 +127,10 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
 		xyStagePos_ = new Point2D.Double(0.0, 0.0);
 		cursorPos_ = new Point2D.Double(0.0, 0.0);
 
-		stageWell_ = new String("undef");
-		cursorWell_ = new String("undef");
-		stageSite_ = new String("undef");
-		cursorSite_ = new String("undef");
+		stageWell_ = "undef";
+		cursorWell_ = "undef";
+		stageSite_ = "undef";
+		cursorSite_ = "undef";
 		
 		threePtList_ = null;
 		focusPlane_ = null;
@@ -158,13 +156,15 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
 		springLayout.putConstraint(SpringLayout.WEST, plateIDCombo_, 6, SpringLayout.EAST, platePanel_);
 		springLayout.putConstraint(SpringLayout.EAST, plateIDCombo_, -4, SpringLayout.EAST, getContentPane());
 		getContentPane().add(plateIDCombo_);
-                plateIDCombo_.addItem(SBSPlate.SBS_24_WELL);
+      plateIDCombo_.addItem(SBSPlate.SBS_24_WELL);
+      plateIDCombo_.addItem(SBSPlate.SBS_48_WELL);
 		plateIDCombo_.addItem(SBSPlate.SBS_96_WELL);
 		plateIDCombo_.addItem(SBSPlate.SBS_384_WELL);
 	   plateIDCombo_.addItem(SBSPlate.SLIDE_HOLDER);
 
 		//comboBox.addItem(SBSPlate.CUSTOM);
 		plateIDCombo_.addActionListener(new ActionListener() {
+         @Override
 			public void actionPerformed(final ActionEvent e) {
 				plate_.initialize((String)plateIDCombo_.getSelectedItem());
 				PositionList sites = generateSites(Integer.parseInt(rowsField_.getText()), Integer.parseInt(columnsField_.getText()), 
@@ -258,6 +258,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
 		springLayout.putConstraint(SpringLayout.NORTH, calibrateXyButton, 340, SpringLayout.NORTH, getContentPane());
       calibrateXyButton.setIcon(SwingResourceManager.getIcon(SiteGenerator.class, "/org/micromanager/icons/cog.png"));
 		calibrateXyButton.addActionListener(new ActionListener() {
+         @Override
 		   public void actionPerformed(final ActionEvent e) {
 		      calibrateXY();
 		   }
@@ -274,6 +275,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
 		springLayout.putConstraint(SpringLayout.EAST, setPositionListButton, -4, SpringLayout.EAST, getContentPane());
 		setPositionListButton.setIcon(SwingResourceManager.getIcon(SiteGenerator.class, "/org/micromanager/icons/table.png"));
 		setPositionListButton.addActionListener(new ActionListener() {
+         @Override
 			public void actionPerformed(final ActionEvent e) {
 				setPositionList();
 			}
@@ -370,6 +372,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       springLayout.putConstraint(SpringLayout.EAST, btnMarkPt, -4, SpringLayout.EAST, getContentPane());
       btnMarkPt.setIcon(SwingResourceManager.getIcon(SiteGenerator.class, "/org/micromanager/icons/plus.png"));
 		btnMarkPt.addActionListener(new ActionListener() {
+         @Override
 		   public void actionPerformed(ActionEvent arg0) {
 		      markOnePoint();
 		   }
@@ -384,6 +387,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       springLayout.putConstraint(SpringLayout.EAST, btnSetThreePt, -4, SpringLayout.EAST, getContentPane());
       btnSetThreePt.setIcon(SwingResourceManager.getIcon(SiteGenerator.class, "/org/micromanager/icons/asterisk_orange.png"));
 		btnSetThreePt.addActionListener(new ActionListener() {
+         @Override
 		   public void actionPerformed(ActionEvent e) {
 		      setThreePoint();
 		   }
@@ -408,6 +412,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
 		
 		rdbtnMoveStage_ = new JRadioButton("Move Stage");
 		rdbtnMoveStage_.addActionListener(new ActionListener() {
+         @Override
 		   public void actionPerformed(ActionEvent e) {
             if (rdbtnMoveStage_.isSelected())
                platePanel_.setTool(PlatePanel.Tool.MOVE);
@@ -422,6 +427,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
 		
 		JButton btnAbout = new JButton("About...");
 		btnAbout.addActionListener(new ActionListener() {
+         @Override
 		   public void actionPerformed(ActionEvent e) {
 		      HCSAbout dlgAbout = new HCSAbout(SiteGenerator.this);
 		      dlgAbout.setVisible(true);
@@ -458,7 +464,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
 		//prefs.put(ROOT_DIR, rootDirField_.getText());
 	}
 
-	protected void loadSettings() {
+	protected final void loadSettings() {
 		Preferences prefs = getPrefsNode();
 		plateIDCombo_.setSelectedItem(prefs.get(PLATE_FORMAT_ID, SBSPlate.SBS_96_WELL));
 		spacingField_.setText(prefs.get(SITE_SPACING, "200"));
@@ -504,7 +510,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
 				   StagePosition sp = new StagePosition();
 				   sp.numAxes = 1;
 				   sp.x = focusPlane_.getZPos(mpl.getX(), mpl.getY());
-				   sp.stageName = new String(mpl.getDefaultZStage());
+				   sp.stageName = mpl.getDefaultZStage();
 				   mpl.add(sp);
 				}
 				
@@ -529,9 +535,8 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
 	}
 	
 	private void setThreePoint() {
-	   PositionList plist = new PositionList();
 	   try {
-         plist = app_.getPositionList();
+         PositionList plist = app_.getPositionList();
          if (plist.getNumberOfPositions() != 3) {
             displayError("We need exactly three positions to fit AF plane. Please create XY list with 3 positions.");
             return;
@@ -578,6 +583,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
 		return sites;
 	}
 
+   @Override
 	public void updatePointerXYPosition(double x, double y, String wellLabel, String siteLabel) {
 		cursorPos_.x = x;
 		cursorPos_.y = y;
@@ -598,6 +604,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
 		statusLabel_.setText(statusTxt);
 	}
 
+   @Override
 	public void updateStagePositions(double x, double y, double z, String wellLabel, String siteLabel) {
 		xyStagePos_.x = x;
 		xyStagePos_.y = y;
@@ -608,6 +615,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
 		displayStatus();
 	}
 
+   @Override
 	public String getXYStageName() {
 		if (app_ != null)
 			return app_.getXYStageName();
@@ -678,19 +686,23 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
 		// TODO:
 	}
 
+   @Override
 	public String getCopyright() {
 		return COPYRIGHT_NOTICE;
 	}
 
+   @Override
 	public String getDescription()
 	{
 		return DESCRIPTION;
 	}
 
+   @Override
 	public String getInfo() {
 		return INFO;
 	}
 
+   @Override
 	public String getVersion() {
 		return VERSION_INFO;
 	}
@@ -713,6 +725,6 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       if (focusPlane_ == null)
          return null;
       
-      return new Double(focusPlane_.getZPos(x,  y));
+      return focusPlane_.getZPos(x,  y);
    }
 }

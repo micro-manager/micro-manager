@@ -51,18 +51,19 @@ public class SBSPlate {
    private String description_;
    private Hashtable<String, Well> wellMap_;
 
-   private static String ROWS = "rows";
-   private static String COLS = "cols";
-   private static String WELL_SPACING_X = "well_spacing_X";
-   private static String WELL_SPACING_Y = "well_spacing_Y";
-   private static String PLATE_SIZE_X = "plate_size_X";
-   private static String PLATE_SIZE_Y = "plate_size_Y";
-   private static String ID = "id";
-   private static String DESCRIPTION = "description";
-   private static String FIRST_WELL_X = "first_well_x";
-   private static String FIRST_WELL_Y = "first_well_y";
+   private static final String ROWS = "rows";
+   private static final String COLS = "cols";
+   private static final String WELL_SPACING_X = "well_spacing_X";
+   private static final String WELL_SPACING_Y = "well_spacing_Y";
+   private static final String PLATE_SIZE_X = "plate_size_X";
+   private static final String PLATE_SIZE_Y = "plate_size_Y";
+   private static final String ID = "id";
+   private static final String DESCRIPTION = "description";
+   private static final String FIRST_WELL_X = "first_well_x";
+   private static final String FIRST_WELL_Y = "first_well_y";
 
    public static final String SBS_24_WELL= "24WELL";
+   public static final String SBS_48_WELL= "48WELL";
    public static final String SBS_96_WELL= "96WELL";
    public static final String SBS_384_WELL= "384WELL";
    public static final String SLIDE_HOLDER ="SLIDES";
@@ -71,7 +72,7 @@ public class SBSPlate {
    private static final String METADATA_SITE_PREFIX = "Site";
 
 
-   private static char rowAlphabet[] = { 'A','B','C','D','E',
+   private static final char rowAlphabet[] = { 'A','B','C','D','E',
       'F','G','H','I','J',
       'K','L','M','N','O',
       'P','Q','R','S','T',
@@ -83,11 +84,12 @@ public class SBSPlate {
       initialize(SBS_96_WELL);
    }
    
+   @Override
    public String toString() {
       return id_;
    }
 
-   public boolean initialize(String id) {
+   public final boolean initialize(String id) {
       /* // SDS definition, does not seem to be adhered to
          // replaced with definition below
         if (id.equals(SBS_24_WELL)){
@@ -116,6 +118,19 @@ public class SBSPlate {
          firstWellY_ = 13670.0;        
          wellSizeX_ = 15540.0;
          wellSizeY_ = 15540.0;
+         circular_ = true;
+      } else if (id.equals(SBS_48_WELL)){
+         id_ = SBS_48_WELL;
+         numColumns_ = 8;
+         numRows_ = 6;
+         sizeXUm_ = 127760.0;
+         sizeYUm_ = 85480.0;
+         wellSpacingX_ = 13000.0;
+         wellSpacingY_ = 13000.0;
+         firstWellX_ = 18380.0;
+         firstWellY_ = 10240.0;        
+         wellSizeX_ = 11370.0;
+         wellSizeY_ = 11370.0;
          circular_ = true;
       } else if (id.equals(SBS_96_WELL)){
          id_ = SBS_96_WELL;
@@ -306,11 +321,11 @@ public class SBSPlate {
    }
    
    public String getID() {
-      return new String(id_);
+      return id_;
    }
 
    public String getDescription() {
-      return new String(description_);
+      return description_;
    }
 
    public double getWellXUm(String wellLabel) throws HCSException {
