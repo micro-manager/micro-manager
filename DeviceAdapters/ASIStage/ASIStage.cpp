@@ -3646,6 +3646,7 @@ StateDevice::StateDevice() :
    pAct = new CPropertyAction (this, &StateDevice::OnAxis);
    CreateProperty("Axis", "F", MM::String, false, pAct, true);
    AddAllowedValue("Axis", "F");
+   AddAllowedValue("Axis", "T");
    AddAllowedValue("Axis", "Z");
 
 }
