@@ -1036,13 +1036,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                ASIdiSPIM.getFrame());
             return false;
       }
-      if (props_.getPropValueInteger(galvoDevice, 
-            Properties.Keys.SPIM_NUM_REPEATS) != 1) {
-         gui_.showError("Number of acquisitions set in plugin. " +
-            "Please change scanner property \"SPIMNumRepeats\" to 1.",
-            ASIdiSPIM.getFrame());
-         return false;
-      }
+
+      props_.setPropValue(galvoDevice, Properties.Keys.SPIM_NUM_REPEATS, 1);
       
       AcquisitionModes.Keys spimMode = (AcquisitionModes.Keys) spimMode_.getSelectedItem();
       
@@ -1503,14 +1498,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.SA_MODE_X,
             Properties.Values.SAM_DISABLED, true);
       
-      // make sure to stop the SPIM state machine in case the acquisition was cancelled
-      props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SPIM_STATE,
-            Properties.Values.SPIM_IDLE, true);
-      props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.SPIM_STATE,
-            Properties.Values.SPIM_IDLE, true);
-      
       if (stop_.get()) {  // if user stopped us in middle
          numTimePointsDone_--;  
+         // make sure to stop the SPIM state machine in case the acquisition was cancelled
+         props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SPIM_STATE,
+               Properties.Values.SPIM_IDLE, true);
+         props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.SPIM_STATE,
+               Properties.Values.SPIM_IDLE, true);
       }
       updateAcquisitionStatus(AcquisitionStatus.DONE);
       stagePosUpdater_.setAcqRunning(false);
