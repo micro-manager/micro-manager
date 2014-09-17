@@ -206,17 +206,19 @@ bool ABSTools::GetOsVersion(OSVERSIONINFOEX &sOSVerEx)
     memset(&sOSVerEx, 0, sizeof(OSVERSIONINFOEX));
     sOSVerEx.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
 
-    if( !(bOsVersionInfoEx = (GetVersionEx((OSVERSIONINFO *) &sOSVerEx)==TRUE)) )
+    bOsVersionInfoEx = ( TRUE == GetVersionEx( (OSVERSIONINFO *) &sOSVerEx ) );
+
+    if ( false == bOsVersionInfoEx )
     {
-        // OSVersionEx - Struct wird nicht unterstützt!
-        // lese die default Struct...
-        sOSVerEx.dwOSVersionInfoSize = sizeof (OSVERSIONINFO);
-        if (!GetVersionEx ( (OSVERSIONINFO *) &sOSVerEx) ) 
-        {            
-            return false;
-        }			
+      // OSVersionEx - Struct wird nicht unterstützt!
+      // lese die default Struct...
+      sOSVerEx.dwOSVersionInfoSize = sizeof (OSVERSIONINFO);
+      if (!GetVersionEx ( (OSVERSIONINFO *) &sOSVerEx) ) 
+      {
+        return false;
+      }
     }
-    return bOsVersionInfoEx;    
+    return bOsVersionInfoEx;
 }
   
 bool ABSTools::CreateFolder(char* szPath)
@@ -571,71 +573,81 @@ PathToLocalizedPath_ENDE:
 
 bool ABSTools::PathToLocalizedPath( WCHAR* wzSrcPath, WCHAR* wzDstPath, UINT nDstSize )
 {
-	bool						bRC = false;
-	LPWSTR						wzExt = NULL;
-	int							nDriveNr = -1;
-	std::wstring				strFileName;
-	std::wstring				strSrcPath = std::wstring(wzSrcPath);
-	WCHAR*						wzSrc;
-	WCHAR						wzSrcNew[MAX_PATH] = {0};	
-	std::vector<std::wstring>	wzPathList;
-	
-	wzSrc = (WCHAR*) strSrcPath.c_str();
+  bool          bRC = false;
+  LPWSTR        wzExt = NULL;
+  int           nDriveNr = -1;
+  std::wstring  wstrFileName;
+  std::wstring  wstrSrcPath = std::wstring(wzSrcPath);
+  std::wstring  wstrDstPath;
+  WCHAR*        wzSrc;
+  WCHAR         wzSrcNew[MAX_PATH] = {0};
+  std::vector<std::wstring> wzPathList;
 
-	// get the drive number
-	nDriveNr = PathGetDriveNumberW(wzSrc);
+  // invalid destination buffer size
+  if (0 == nDstSize)
+    return false; 
 
-	// it is not possible to localize this path abort (if driver letter is invalid)
-	if (nDriveNr == -1) return false; 
+  wzSrc = (WCHAR*) wstrSrcPath.c_str();
 
-	wzSrc = PathSkipRootW(wzSrc);
+  // get the drive number
+  nDriveNr = PathGetDriveNumberW( wzSrc );
 
-	wzExt = PathFindExtensionW(wzSrc);
-	if (NULL != wzExt) // store and remove file informations from path
-	{
-		strFileName = std::wstring( PathFindFileNameW( wzSrc ) );
-		PathRemoveFileSpecW( wzSrc );
-	}
-	else
-	{
+  // it is not possible to localize this path abort (if driver letter is invalid)
+  if (nDriveNr == -1)
+   return false; 
 
-	#if _MSC_VER < 1300   
-		strFileName.erase(strFileName.begin(), strFileName.end());
-	#else
-		strFileName.clear();
-	#endif
+  wzSrc = PathSkipRootW( wzSrc );
+  wzExt = PathFindExtensionW(wzSrc);
+  if (NULL != wzExt) // store and remove file informations from path
+  {
+    wstrFileName = std::wstring( PathFindFileNameW( wzSrc ) );
+    PathRemoveFileSpecW( wzSrc );
+  }
+  else
+  {
 
-	}
+#if _MSC_VER < 1300
+    wstrFileName.erase(wstrFileName.begin(), wstrFileName.end());
+#else
+    wstrFileName.clear();
+#endif
+
+  }
+
+  while ( !PathIsFileSpecW(wzSrc) )
+  {
+    const std::wstring strTmp = std::wstring( PathFindFileNameW(wzSrc) ) ;
+    wzPathList.push_back( strTmp );
+    PathRemoveFileSpecW(wzSrc);
+  }
 
 
-	while (!PathIsFileSpecW(wzSrc))
-	{
-		std::wstring strTmp;
-		strTmp = std::wstring( PathFindFileNameW(wzSrc) ) ;
-		wzPathList.push_back( strTmp );
-		PathRemoveFileSpecW(wzSrc);
-	}
-    
+  // check for non localized path
+  if (GetLocalizedName( (WCHAR*) wstrSrcPath.c_str(), wzSrcNew, MAX_PATH) )
+  {
+    // set internal destination buffer
+    wstrDstPath.resize( MAX_PATH, 0 );
 
-	// check for non localized path
-	if (GetLocalizedName( (WCHAR*) strSrcPath.c_str(), wzSrcNew, MAX_PATH) )
-	{
-        std::wstring strTest;
+    PathBuildRootW( (LPWSTR) wstrDstPath.c_str(), nDriveNr);
+    PathAppendW(    (LPWSTR) wstrDstPath.c_str(), wzSrcNew);
 
-		PathBuildRootW(wzDstPath, nDriveNr);
-		PathAppendW(wzDstPath, wzSrcNew);
+    // reconstruct the original path
+    for (int i = (int)max(wzPathList.size()-1, 0); i >= 0; i--)
+    {
+      PathAppendW((LPWSTR) wstrDstPath.c_str(), wzPathList[i].c_str());
+    }
+    PathAppendW((LPWSTR) wstrDstPath.c_str(), wstrFileName.c_str());
 
-		// reconstruct the original path
-		for (int i = (int)max(wzPathList.size()-1, 0); i >= 0; i--)
-		{
-            PathAppendW(wzDstPath, wzPathList[i].c_str());
-		}
+    str::ResizeByZeroTermination(wstrDstPath);
 
-		PathAppendW(wzDstPath, strFileName.c_str());
-		bRC = true;
-	}
+    if ( nDstSize > wstrDstPath.size() )
+    {
+      wcsncpy( wzDstPath, (LPWSTR) wstrDstPath.c_str(), min(wstrDstPath.size(), (nDstSize-1) ) );
+      bRC = true;
+    }
+  }
 
-	return bRC;
+  return bRC;
 }
 
 bool ABSTools::WildCmp(const char *wild, const char *string) 
@@ -701,36 +713,39 @@ GetFolderPath_ENDE:
 
 bool ABSTools::GetFolderPath( int nFolder, WCHAR* wzPath, UINT nSize, DWORD dwFlag /*= SHGFP_TYPE_CURRENT*/)
 {
-	bool bRC = false;
+  bool bRC = false;
 
-	#if _MSC_VER < 1310   
+  if ( nSize < MAX_PATH )
+    return false;
 
-		HINSTANCE hShell32;
-		LPSHGetFolderPathW SHGetFolderPathW = NULL;
-		
-		hShell32 = LoadLibraryA( "Shell32.dll");
-		if (NULL != hShell32)
-		{
-			SHGetFolderPathW = (LPSHGetFolderPathW) GetProcAddress( hShell32, "SHGetFolderPathW" );
-			
-			if (NULL != SHGetFolderPathW) 
-			{
-				__try
-				{
-					bRC = (S_OK == SHGetFolderPathW( NULL, nFolder, NULL, dwFlag, (WCHAR*) wzPath));
-				}
-				__except(GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION ? EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH)
-				{
-					bRC = false;						
-				}
-			}
-		}		
-		FreeLibrary(hShell32);
-	#else
-		bRC = (S_OK == SHGetFolderPathW( NULL, nFolder, NULL, dwFlag, (WCHAR*) wzPath));
-	#endif
+#if _MSC_VER < 1310
 
-	return bRC;
+  HINSTANCE hShell32;
+  LPSHGetFolderPathW SHGetFolderPathW = NULL;
+
+  hShell32 = LoadLibraryA( "Shell32.dll");
+  if (NULL != hShell32)
+  {
+    SHGetFolderPathW = (LPSHGetFolderPathW) GetProcAddress( hShell32, "SHGetFolderPathW" );
+
+    if (NULL != SHGetFolderPathW) 
+    {
+      __try
+      {
+        bRC = (S_OK == SHGetFolderPathW( NULL, nFolder, NULL, dwFlag, (WCHAR*) wzPath));
+      }
+      __except(GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION ? EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH)
+      {
+        bRC = false;
+      }
+    }
+  }
+  FreeLibrary(hShell32);
+#else
+  bRC = (S_OK == SHGetFolderPathW( NULL, nFolder, NULL, dwFlag, (WCHAR*) wzPath));
+#endif
+
+  return bRC;
 }
 
 #pragma warning( disable : 4035 ) 

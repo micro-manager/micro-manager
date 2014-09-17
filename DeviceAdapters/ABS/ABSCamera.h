@@ -184,7 +184,7 @@ public:
   int   OnShadingCorrectionSetup  (MM::PropertyBase* pProp, MM::ActionType eAct);
   int   OnFractionOfPixelsToDropOrSaturate(MM::PropertyBase* pProp, MM::ActionType eAct);
 
-  string buildCameraDeviceID( unsigned long serialNumber, const char* deviceName );
+  string buildCameraDeviceID( unsigned long serialNumber, const string & deviceName );
   string cameraDeviceID( void ) const;
   void  setCameraDeviceID( string cameraDeviceID );
 
@@ -193,8 +193,8 @@ public:
   int   GetPropertyString( const char* name, std::string & value );
 
 protected:
-  static int  accquireDeviceNumber( void );
-  static void releaseDeviceNumber( int deviceNo );
+  static u08  accquireDeviceNumber( void );
+  static void releaseDeviceNumber( const u08  deviceNo );
 
   double  getFramerate() const;
   void    setFramerate( double fps );
@@ -235,7 +235,7 @@ protected:
   void  setColor( const bool colorCamera );
   void  getAvailableCameras( CCameraList & cCameraList );
   void  setDeviceNo( int deviceNo );
-  int   deviceNo( void ) const;
+  u08   deviceNo( void ) const;
 
   int convertApiErrorCode( unsigned long errorNumber, const char* functionName = 0 );	
 
@@ -258,6 +258,8 @@ private:
   int   mmToApiErrorCode( unsigned long mmErrorNumber ) const;
   string getFramerateString( void ) const;
   string getDeviceNameString( void ) const;
+  string getDeviceNameString( const S_CAMERA_VERSION & sCamVer ) const;
+
 
   static volatile int staticDeviceNo;
   string                    cameraDeviceID_;

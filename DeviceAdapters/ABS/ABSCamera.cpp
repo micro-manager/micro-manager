@@ -310,7 +310,7 @@ int CABSCamera::Initialize()
     CCameraList::iterator iter = cCameraList.begin();
     while ( iter != cCameraList.end() )
     {
-      if ( cameraDeviceID() == buildCameraDeviceID( iter->sVersion.dwSerialNumber, (const char*) iter->sVersion.szDeviceName ).c_str() )
+      if ( cameraDeviceID() == buildCameraDeviceID( iter->sVersion.dwSerialNumber, getDeviceNameString( iter->sVersion ) ).c_str() )
       {
         serialNumber = iter->sVersion.dwSerialNumber;
         platformID = iter->sVersion.bPlatformID;
@@ -323,7 +323,7 @@ int CABSCamera::Initialize()
 
   // open camera device
   u32 dwRC;
-  int deviceNumber = accquireDeviceNumber();
+  u08 deviceNumber = accquireDeviceNumber();
   // open camera without reboot
   dwRC = GET_RC( CamUSB_InitCameraEx( deviceNumber, serialNumber, 0, 0, platformID ), deviceNumber );
 
@@ -737,10 +737,10 @@ int CABSCamera::Initialize()
 Initialize_Done:
   if (nRet != DEVICE_OK)
   {
-    int deviceNumber = deviceNo();
+    u08 deviceNumber = deviceNo();
     setDeviceNo( NO_CAMERA_DEVICE );
 
-    if ( NO_CAMERA_DEVICE != deviceNumber )
+    if ( static_cast<u08>(NO_CAMERA_DEVICE) != deviceNumber )
     {
       CamUSB_FreeCamera( deviceNumber );
       releaseDeviceNumber( deviceNumber );
@@ -2650,7 +2650,8 @@ int CABSCamera::OnGamma(MM::PropertyBase* pProp, MM::ActionType eAct )
 
 int CABSCamera::OnHueSaturationCommon(const char* propName, MM::PropertyBase* pProp, MM::ActionType eAct )
 {
-  u32 rc, size;
+  u32 rc = retOK;
+  u32 size;
   S_HUE_SATURATION_PARAMS sHueSatP = {0};
   size = sizeof(sHueSatP);
 
@@ -2740,7 +2741,6 @@ int CABSCamera::OnColorCorrection(MM::PropertyBase* pProp, MM::ActionType eAct )
   }
   else if (eAct == MM::AfterSet)
   {
-    S_CCM ccm = {0};
     std::string ccmFileName;
     pProp->Get( ccmFileName );
 
@@ -3074,7 +3074,9 @@ int CABSCamera::OnCameraSelection(MM::PropertyBase* pProp, MM::ActionType eAct)
         CCameraList::iterator iter = cCameraList.begin();
         while ( iter != cCameraList.end() )
         {
-          AddAllowedValue( "Camera", buildCameraDeviceID( iter->sVersion.dwSerialNumber, (const char*) iter->sVersion.szDeviceName ).c_str() ); // no camera yet
+          // attention: "iter->sVersion.szDeviceName" isn't a zero terminated string in any case
+          // so getDeviceNameString has to be used to work around this problem
+          AddAllowedValue( "Camera", buildCameraDeviceID( iter->sVersion.dwSerialNumber, getDeviceNameString( iter->sVersion ) ).c_str() ); // no camera yet
           iter++;
         }
       }
@@ -3117,11 +3119,11 @@ bool CABSCamera::isApiDllAvailable( void )
   return bAvailable;
 }
 
-string CABSCamera::buildCameraDeviceID( unsigned long serialNumber, const char* deviceName )
+string CABSCamera::buildCameraDeviceID( unsigned long serialNumber, const string & deviceName )
 {
   string cameraDeviceID;
   str::sprintf( cameraDeviceID, "#%05X", serialNumber );
-  return (string( deviceName ) + cameraDeviceID);
+  return (deviceName + cameraDeviceID);
 }
 
 bool CABSCamera::isInitialized( void ) const
@@ -3159,19 +3161,19 @@ void CABSCamera::setDeviceNo( int deviceNo )
   deviceNo_ = deviceNo;
 }
 
-int CABSCamera::deviceNo( void ) const
+u08 CABSCamera::deviceNo( void ) const
 {
-  return deviceNo_;
+  return (u08) deviceNo_;
 }
 
-int CABSCamera::accquireDeviceNumber( void )
+u08 CABSCamera::accquireDeviceNumber( void )
 {
-  return ++staticDeviceNo;
+  return static_cast<u08> (++staticDeviceNo);
 }
 
-void CABSCamera::releaseDeviceNumber( int deviceNo )
+void CABSCamera::releaseDeviceNumber( const u08 deviceNo )
 {
-  if (deviceNo != NO_CAMERA_DEVICE)
+  if (deviceNo != static_cast<u08> (NO_CAMERA_DEVICE) )
     if (staticDeviceNo != NO_CAMERA_DEVICE)
       --staticDeviceNo;
 }
@@ -3826,7 +3828,6 @@ void CABSCamera::setAllowedFramerates( )
     if ((framerateCaps->sFramerateRange[0].dwMin != 0) &&
         (framerateCaps->sFramerateRange[framerateCaps->dwCountRanges-1].dwMax != 0) )
     {
-      u32 dwLastFps = -1;
       u32 dwFps;
       string temp;
       map<f32, u32>::iterator iter;
@@ -3951,10 +3952,18 @@ string CABSCamera::getFramerateString( void ) const
 
 string CABSCamera::getDeviceNameString( void ) const
 {
-  string deviceName( (const char*)cameraVersion_.szDeviceName, CNT_ELEMENTS(cameraVersion_.szDeviceName) );
+  return getDeviceNameString( cameraVersion_ );
+}
+
+// ----------------------------------------------------------------------------
+
+string CABSCamera::getDeviceNameString( const S_CAMERA_VERSION & sCamVer ) const
+{
+  string deviceName( (const char*)sCamVer.szDeviceName, CNT_ELEMENTS(sCamVer.szDeviceName) );
   str::ResizeByZeroTermination( deviceName );
   return deviceName;
 }
+
 // ----------------------------------------------------------------------------
 
 double CABSCamera::getFramerate() const

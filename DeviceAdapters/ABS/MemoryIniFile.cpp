@@ -16,7 +16,9 @@
 
 // -------------------------- Includes ----------------------------------------
 //
-#define _CRT_SECURE_NO_WARNINGS
+#ifndef _CRT_SECURE_NO_WARNINGS
+  #define _CRT_SECURE_NO_WARNINGS
+#endif
 #include "stdlib.h"
 #include <stdio.h>
 #include <iostream>
@@ -392,7 +394,6 @@ bool CMemoryIniFile::loadIniFromMemory( const char* szIniBuffer, unsigned long d
 bool CMemoryIniFile::ReadBySecID( unsigned long nSectionID, char* szName, std::string& strValue)
 {
     bool bRC = false;
-    bool bEntryFound = false;
     std::string strName(szName);
     str::ToLower(strName);    
     CIniEntryLst::iterator entryIter;
@@ -755,8 +756,6 @@ bool CMemoryIniFile::isFileWriteAccess(void)
             NULL );
     }
 
-    unsigned long dwRC = GetLastError();
-
     // if file successfully opened
     bResult = (hFile != INVALID_HANDLE_VALUE);
 
@@ -764,7 +763,7 @@ bool CMemoryIniFile::isFileWriteAccess(void)
 
     if (bDeleteFile) DeleteFileA( (char*) m_strIniFile.c_str());
 
-    // on error return error with failure	
+    // on error return error with failure
     return bResult;
 }
 //
@@ -788,15 +787,14 @@ bool CMemoryIniFile::isPathExisting(void)
 // ----------------------------------------------------------------------------
 //
 void CMemoryIniFile::initIniFilePath( void )
-{	    
-    char szAppName[MAX_PATH+2] = {0};		
-    std::string strModuleName;	
+{
+    char szAppName[MAX_PATH+2] = {0};
+    std::string strModuleName;
     std::string strCommonAppPath;
-    char* szModuleName = NULL;
 
     getCommonAppFolder(strCommonAppPath);
     // build config file name
-    m_strIniFile = strCommonAppPath + "\\" + std::string(ABSTools::GetAppName(szAppName, MAX_PATH)) + ".ini";    
+    m_strIniFile = strCommonAppPath + "\\" + std::string(ABSTools::GetAppName(szAppName, MAX_PATH)) + ".ini";
 }
 //
 // ----------------------------------------------------------------------------

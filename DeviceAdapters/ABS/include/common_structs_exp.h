@@ -67,7 +67,7 @@
   {
     u32   wParam;        //!< window message parameter value
 
-    struct
+    struct S_CAMERA_NOTIFY
     {
       u08   bUSB_ID;     //!< camera USB-ID
       u08   bPlatformID; //!< camera platform id
