@@ -448,20 +448,10 @@ public class Cameras {
    public float computeCameraReadoutTime(Devices.Keys camKey) {
       float readoutTimeMs = 10;
       Rectangle roi = new Rectangle();
-      String origCamera = core_.getCameraDevice(); 
       try {
-         // to get the correct ROI we first set the camera to be active
-         // (return to original value in finally statement)
-         setCamera(camKey);
-         roi = core_.getROI();
+         roi = core_.getROI(devices_.getMMDevice(camKey));
       } catch (Exception e) {
          gui_.showError(e, (Component) ASIdiSPIM.getFrame());
-      } finally {
-         try {
-            core_.setCameraDevice(origCamera);
-         } catch (Exception e) {
-            gui_.showError(e, (Component) ASIdiSPIM.getFrame());
-         }
       }
      
       double rowReadoutTime = getRowReadoutTime(camKey);
