@@ -773,6 +773,16 @@
       getROI(a[0], a[1], a[2], a[3]);
       return new Rectangle(a[0][0], a[1][0], a[2][0], a[3][0]);
    }
+   
+    /*
+    * Convenience function. Returns the ROI of specified camera in a java.awt.Rectangle.
+    */
+   public Rectangle getROI(String label) throws java.lang.Exception {
+      // ROI values are given as x,y,w,h in individual one-member arrays (pointers in C++):
+      int[][] a = new int[4][1];
+      getROI(label, a[0], a[1], a[2], a[3]);
+      return new Rectangle(a[0][0], a[1][0], a[2][0], a[3][0]);
+   }
 
    /* 
     * Convenience function. Returns the current x,y position of the stage in a Point2D.Double.

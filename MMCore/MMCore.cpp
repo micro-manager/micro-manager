@@ -3777,6 +3777,33 @@ void CMMCore::getROI(int& x, int& y, int& xSize, int& ySize) throw (CMMError)
 }
 
 /**
+ * Returns info on the current Region Of Interest (ROI)
+ * of a specified camera device.
+ *
+ * @param label  camera name
+ * @param x      coordinate of the top left corner
+ * @param y      coordinate of the top left corner
+ * @param xSize  horizontal dimension
+ * @param ySize  vertical dimension
+ */
+void CMMCore::getROI(const char* label, int& x, int& y, int& xSize, int& ySize) throw (CMMError)
+{
+   boost::shared_ptr<CameraInstance> pCam =
+      deviceManager_->GetDeviceOfType<CameraInstance>(label);
+
+   unsigned uX(0), uY(0), uXSize(0), uYSize(0);
+   mm::DeviceModuleLockGuard guard(pCam);
+   int nRet = pCam->GetROI(uX, uY, uXSize, uYSize);
+   if (nRet != DEVICE_OK)
+      throw CMMError(getDeviceErrorText(nRet, pCam).c_str(), MMERR_DEVICE_GENERIC);
+
+   x = (int) uX;
+   y = (int) uY;
+   xSize = (int) uXSize;
+   ySize = (int) uYSize;
+}
+
+/**
  * Resets the current ROI to the full frame.
  */
 void CMMCore::clearROI() throw (CMMError)
