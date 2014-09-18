@@ -201,7 +201,6 @@ public class MMStudio implements ScriptInterface {
    private ZWheelListener zWheelListener_;
    private XYZKeyListener xyzKeyListener_;
    private AcquisitionManager acqMgr_;
-   private boolean liveModeSuspended_;
    public static final FileType MM_CONFIG_FILE
             = new FileType("MM_CONFIG_FILE",
                            "Micro-Manager Config File",
