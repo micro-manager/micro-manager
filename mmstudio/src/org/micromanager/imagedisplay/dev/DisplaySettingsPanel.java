@@ -1,4 +1,4 @@
-package org.micromanager.data.test;
+package org.micromanager.imagedisplay.dev;
 
 import ij.CompositeImage;
 import ij.ImagePlus;

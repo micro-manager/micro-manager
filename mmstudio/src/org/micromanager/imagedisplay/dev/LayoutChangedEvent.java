@@ -1,4 +1,4 @@
-package org.micromanager.data.test;
+package org.micromanager.imagedisplay.dev;
 
 /**
  * This class signifies that the layout of the display window has changed and
