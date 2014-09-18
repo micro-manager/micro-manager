@@ -66,7 +66,7 @@ public class DefaultDatastore implements Datastore {
       if (reader_ != null) {
          return reader_.getMaxIndex(axis);
       }
-      return null;
+      return -1;
    }
 
    @Override
