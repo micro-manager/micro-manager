@@ -3,7 +3,7 @@
  *
  * Created on Jul 15, 2010, 2:54:37 PM
  */
-package org.micromanager.data.test;
+package org.micromanager.imagedisplay.dev;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
