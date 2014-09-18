@@ -345,7 +345,9 @@ XYStage::XYStage() :
    joyStickSpeedSlow_(5),
    joyStickMirror_(false),
    nrMoveRepetitions_(0),
-   answerTimeoutMs_(1000)
+   answerTimeoutMs_(1000),
+   serialOnlySendChanged_(true),
+   manualSerialAnswer_("")
 {
    InitializeDefaultErrorMessages();
 
@@ -492,6 +494,20 @@ int XYStage::Initialize()
    CreateProperty("JoyStick Slow Speed", "100", MM::Integer, false, pAct);
    SetPropertyLimits("JoyStick Slow Speed", 1, 100);
 
+   // property to allow sending arbitrary serial commands and receiving response
+   pAct = new CPropertyAction (this, &XYStage::OnSerialCommand);
+   CreateProperty("SerialCommand", "", MM::String, false, pAct);
+
+   // this is only changed programmatically, never by user
+   // contains last response to the OnSerialCommand action
+   pAct = new CPropertyAction (this, &XYStage::OnSerialResponse);
+   CreateProperty("SerialResponse", "", MM::String, true, pAct);
+
+   // disable sending serial commands unless changed (by default this is enabled)
+   pAct = new CPropertyAction (this, &XYStage::OnSerialCommandOnlySendChanged);
+   CreateProperty("OnlySendSerialCommandOnChange", "Yes", MM::String, false, pAct);
+   AddAllowedValue("OnlySendSerialCommandOnChange", "Yes");
+   AddAllowedValue("OnlySendSerialCommandOnChange", "No");
 
    /* Disabled.  Use the MA command instead
    // Number of times stage approaches a new position (+1)
@@ -1613,6 +1629,53 @@ int XYStage::OnJSSlowSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int XYStage::OnSerialCommand(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      // do nothing
+   }
+   else if (eAct == MM::AfterSet) {
+      static string last_command;
+      string tmpstr;
+      pProp->Get(tmpstr);
+      tmpstr =   UnescapeControlCharacters(tmpstr);
+      // only send the command if it has been updated, or if the feature has been set to "no"/false then always send
+      if (!serialOnlySendChanged_ || (tmpstr.compare(last_command) != 0))
+      {
+         last_command = tmpstr;
+         int ret = QueryCommand(tmpstr.c_str(), manualSerialAnswer_);
+         if (ret != DEVICE_OK)
+            return ret;
+      }
+   }
+   return DEVICE_OK;
+}
+
+int XYStage::OnSerialResponse(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet || eAct == MM::AfterSet)
+   {
+      // always read
+      if (!pProp->Set(EscapeControlCharacters(manualSerialAnswer_).c_str()))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   return DEVICE_OK;
+}
+
+int XYStage::OnSerialCommandOnlySendChanged(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   string tmpstr;
+   if (eAct == MM::AfterSet) {
+      pProp->Get(tmpstr);
+      if (tmpstr.compare("Yes") == 0)
+         serialOnlySendChanged_ = true;
+      else
+         serialOnlySendChanged_ = false;
+   }
+   return DEVICE_OK;
+}
+
 
 int XYStage::GetPositionStepsSingle(char /*axis*/, long& /*steps*/)
 {
@@ -1638,6 +1701,105 @@ int XYStage::SetAxisDirection()
    }
 
    return ERR_UNRECOGNIZED_ANSWER;
+}
+
+string XYStage::EscapeControlCharacters(const string v)
+// based on similar function in FreeSerialPort.cpp
+{
+   ostringstream mess;  mess.str("");
+   for( string::const_iterator ii = v.begin(); ii != v.end(); ++ii)
+   {
+      if (*ii > 31)
+         mess << *ii;
+      else if (*ii == 13)
+         mess << "\\r";
+      else if (*ii == 10)
+         mess << "\\n";
+      else if (*ii == 9)
+         mess << "\\t";
+      else
+         mess << "\\" << (unsigned int)(*ii);
+   }
+   return mess.str();
+}
+
+string XYStage::UnescapeControlCharacters(const string v0)
+// based on similar function in FreeSerialPort.cpp
+{
+   // the string input from the GUI can contain escaped control characters, currently these are always preceded with \ (0x5C)
+   // and always assumed to be decimal or C style, not hex
+
+   string detokenized;
+   string v = v0;
+
+   for( string::iterator jj = v.begin(); jj != v.end(); ++jj)
+   {
+      bool breakNow = false;
+      if( '\\' == *jj )
+      {
+         // the next 1 to 3 characters might be converted into a control character
+         ++jj;
+         if( v.end() == jj)
+         {
+            // there was an escape at the very end of the input string so output it literally
+            detokenized.push_back('\\');
+            break;
+         }
+         const string::iterator nextAfterEscape = jj;
+         std::string thisControlCharacter;
+         // take any decimal digits immediately after the escape character and convert to a control character
+         while(0x2F < *jj && *jj < 0x3A )
+         {
+            thisControlCharacter.push_back(*jj++);
+            if( v.end() == jj)
+            {
+               breakNow = true;
+               break;
+            }
+         }
+         int code = -1;
+         if ( 0 < thisControlCharacter.length())
+         {
+            istringstream tmp(thisControlCharacter);
+            tmp >> code;
+         }
+         // otherwise, if we are still at the first character after the escape,
+         // possibly treat the next character like a 'C' control character
+         if( nextAfterEscape == jj)
+         {
+            switch( *jj)
+            {
+            case 'r':
+               ++jj;
+               code = 13; // CR \r
+               break;
+            case 'n':
+               ++jj;
+               code = 10; // LF \n
+               break;
+            case 't':
+               ++jj;
+               code = 9; // TAB \t
+               break;
+            case '\\':
+               ++jj;
+               code = '\\';
+               break;
+            default:
+               code = '\\'; // the '\' wasn't really an escape character....
+               break;
+            }
+            if( v.end() == jj)
+               breakNow = true;
+         }
+         if( -1 < code)
+            detokenized.push_back((char)code);
+      }
+      if( breakNow)
+         break;
+      detokenized.push_back(*jj);
+   }
+   return detokenized;
 }
 
 

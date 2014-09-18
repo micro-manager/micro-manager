@@ -137,10 +137,15 @@ private:
    int OnJSSwapXY(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnJSFastSpeed(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnJSSlowSpeed(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSerialCommand(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSerialResponse(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSerialCommandOnlySendChanged(MM::PropertyBase* pProp, MM::ActionType eAct);
    int GetPositionStepsSingle(char axis, long& steps);
    int SetAxisDirection();
    bool hasCommand(std::string commnand);
    void Wait();
+   static std::string EscapeControlCharacters(const std::string v);
+   static std::string UnescapeControlCharacters(const std::string v0 );
   
    double stepSizeXUm_;
    double stepSizeYUm_;
@@ -154,6 +159,8 @@ private:
    long nrMoveRepetitions_;
    double answerTimeoutMs_;
    bool stopSignal_;
+   bool serialOnlySendChanged_;        // if true the serial command is only sent when it has changed
+   std::string manualSerialAnswer_; // last answer received when the SerialCommand property was used
 };
 
 class ZStage : public CStageBase<ZStage>, public ASIBase
