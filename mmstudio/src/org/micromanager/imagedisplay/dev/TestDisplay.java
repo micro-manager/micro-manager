@@ -351,4 +351,18 @@ public class TestDisplay {
       Coords drawCoords = stack_.getCurrentImageCoords();
       coordsQueue_.add(drawCoords);
    }
+
+   // TODO: this should be redundant once this module is merged with 
+   // DisplayWindow.
+   public DisplayWindow getWindow() {
+      return window_;
+   }
+
+   public ImagePlus getImagePlus() {
+      return ijImage_;
+   }
+
+   public Datastore getDatastore() {
+      return store_;
+   }
 }
