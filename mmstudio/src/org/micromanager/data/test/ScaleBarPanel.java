@@ -23,7 +23,7 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.Image;
 import org.micromanager.api.display.DrawEvent;
-import org.micromanager.api.OverlayPanel;
+import org.micromanager.api.display.OverlayPanel;
 
 /**
  * This class provides a GUI for drawing a scale bar.

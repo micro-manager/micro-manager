@@ -77,7 +77,7 @@ import org.micromanager.api.IAcquisitionEngine2010;
 import org.micromanager.api.ImageCache;
 import org.micromanager.api.MMListenerInterface;
 import org.micromanager.api.MMTags;
-import org.micromanager.api.OverlayPanel;
+import org.micromanager.api.display.OverlayPanel;
 import org.micromanager.api.PositionList;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.api.SequenceSettings;
