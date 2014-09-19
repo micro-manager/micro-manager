@@ -30,10 +30,12 @@ public class DefaultCoords implements Coords, Comparable<DefaultCoords> {
          sortedAxes_ = new ArrayList<String>();
       }
 
+      @Override
       public DefaultCoords build() {
          return new DefaultCoords(this);
       }
       
+      @Override
       public CoordsBuilder position(String axis, int position) {
          axisToPos_.put(axis, new Integer(position));
          if (!sortedAxes_.contains(axis)) {
@@ -48,6 +50,7 @@ public class DefaultCoords implements Coords, Comparable<DefaultCoords> {
          return this;
       }
 
+      @Override
       public CoordsBuilder offset(String axis, int offset) throws IllegalArgumentException {
          if (!axisToPos_.containsKey(axis)) {
             throw new IllegalArgumentException("Axis " + axis + " is not a part of this CoordsBuilder.");
@@ -60,9 +63,18 @@ public class DefaultCoords implements Coords, Comparable<DefaultCoords> {
          return this;
       }
       
+      @Override
       public CoordsBuilder isAxisEndFor(String axis) {
          terminalAxes_.add(axis);
          return this;
+      }
+
+      @Override
+      public int getPositionAt(String axis) {
+         if (axisToPos_.containsKey(axis)) {
+            return axisToPos_.get(axis);
+         }
+         return -1;
       }
    }
 
