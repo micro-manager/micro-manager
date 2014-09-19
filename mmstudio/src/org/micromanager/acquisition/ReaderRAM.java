@@ -15,6 +15,8 @@ import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.DisplaySettings;
 import org.micromanager.api.data.Image;
 import org.micromanager.api.data.Metadata;
+import org.micromanager.api.data.NewDisplaySettingsEvent;
+import org.micromanager.api.data.NewImageEvent;
 import org.micromanager.api.data.NewSummaryMetadataEvent;
 import org.micromanager.api.data.Reader;
 import org.micromanager.api.data.SummaryMetadata;
@@ -36,12 +38,17 @@ public class ReaderRAM implements Reader {
    private HashMap<Coords, Image> coordsToImage_;
    private Coords maxIndex_;
    private SummaryMetadata summaryMetadata_;
+   private DisplaySettings displaySettings_;
    private boolean amInDebugMode_ = false;
 
    public ReaderRAM(Datastore store) {
       coordsToImage_ = new HashMap<Coords, Image>();
       maxIndex_ = new DefaultCoords.Builder().build();
       summaryMetadata_ = (new DefaultSummaryMetadata.Builder()).build();
+      // TODO: arbitrarily deciding color settings.
+      displaySettings_ = (new DefaultDisplaySettings.Builder())
+            .channelColors(new Color[] {Color.RED, Color.GREEN})
+            .build();
       store.registerForEvents(this);
    }
 
@@ -115,13 +122,21 @@ public class ReaderRAM implements Reader {
 
    @Override
    public DisplaySettings getDisplaySettings() {
-      return (new DefaultDisplaySettings.Builder())
-            .channelColors(new Color[] {Color.RED, Color.GREEN})
-            .build();
+      return displaySettings_;
    }
 
    @Subscribe
    public void onNewSummary(NewSummaryMetadataEvent event) {
       summaryMetadata_ = event.getSummaryMetadata();
+   }
+
+   @Subscribe
+   public void onNewDisplaySettings(NewDisplaySettingsEvent event) {
+      displaySettings_ = event.getDisplaySettings();
+   }
+
+   @Subscribe
+   public void onNewImage(NewImageEvent event) {
+      coordsToImage_.put(event.getImage().getCoords(), event.getImage());
    }
 }
