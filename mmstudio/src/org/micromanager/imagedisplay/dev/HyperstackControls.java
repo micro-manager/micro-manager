@@ -393,10 +393,11 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
     */
    @Subscribe
    public void onNewImage(NewImageEvent event) {
-      if (mouseX_ != -1 && mouseY_ != -1) {
+      Image image = event.getImage();
+      if (mouseX_ >= 0 && mouseX_ < image.getWidth() &&
+            mouseY_ >= 0 && mouseY_ < image.getHeight()) {
          try {
-            Image curImage = store_.getImage(event.getCoords());
-            int intensity = (int) curImage.getIntensityAt(mouseX_, mouseY_);
+            int intensity = (int) image.getIntensityAt(mouseX_, mouseY_);
             setPixelInfo(mouseX_, mouseY_, intensity);
          }
          catch (Exception e) {
