@@ -46,7 +46,6 @@ public class MMVirtualStack extends ij.VirtualStack {
          return null;
       }
       DefaultImage image = getImage(flatIndex);
-      ReportingUtils.logError("Asked for image at " + flatIndex + " a.k.a. " + image.getCoords() + " considering our position at " + curCoords_);
       if (image != null) {
          return image.getRawPixels();
       }
@@ -90,8 +89,16 @@ public class MMVirtualStack extends ij.VirtualStack {
       if (store_.getMaxIndex("z") != -1) {
          builder.position("z", z);
       }
-      if (store_.getMaxIndex("frame") != -1) {
-         builder.position("frame", frame);
+      if (store_.getMaxIndex("time") != -1) {
+         builder.position("time", frame);
+      }
+      // Augment all missing axes with zeros.
+      // TODO: is this always what we want to do? It makes an implicit
+      // assumption that all images in the datastore have the same axes.
+      for (String axis : store_.getAxes()) {
+         if (builder.getPositionAt(axis) == -1) {
+            builder.position(axis, 0);
+         }
       }
       curCoords_ = builder.build();
       return (DefaultImage) store_.getImage(curCoords_);
@@ -104,6 +111,10 @@ public class MMVirtualStack extends ij.VirtualStack {
          return new ByteProcessor(1, 1);
       }
       DefaultImage image = getImage(flatIndex);
+      if (image == null) {
+         // Ditto.
+         return new ByteProcessor(1, 1);
+      }
       int width = image.getWidth();
       int height = image.getHeight();
       int depth = image.getMetadata().getBitDepth();
@@ -134,7 +145,7 @@ public class MMVirtualStack extends ij.VirtualStack {
    public void setCoords(Coords coords) {
       curCoords_ = coords;
       plus_.setPosition(coords.getPositionAt("channel") + 1,
-            coords.getPositionAt("z") + 1, coords.getPositionAt("frame") + 1);
+            coords.getPositionAt("z") + 1, coords.getPositionAt("time") + 1);
    }
 
    /**
