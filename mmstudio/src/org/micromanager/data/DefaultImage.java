@@ -87,7 +87,7 @@ public class DefaultImage implements Image {
       }
       catch (JSONException e) {}
       try {
-         cBuilder.position("slice", MDUtils.getSliceIndex(tags));
+         cBuilder.position("z", MDUtils.getSliceIndex(tags));
       }
       catch (JSONException e) {}
       try {
@@ -236,5 +236,9 @@ public class DefaultImage implements Image {
    @Override
    public int getHeight() {
       return (int) pixels_.dimension(1);
+   }
+
+   public String toString() {
+      return String.format("<%dx%d image at %s>", getWidth(), getHeight(), coords_);
    }
 }
