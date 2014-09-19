@@ -37,6 +37,12 @@ public interface Coords {
        * stack, then the 10th image would have this set for the "Z" axis.
        */
       CoordsBuilder isAxisEndFor(String axis);
+
+      /**
+       * Return the position for the Builder at the specified axis, as per
+       * Coords.getPositionAt(), below.
+       */
+      int getPositionAt(String axis);
    }
    
    /**
