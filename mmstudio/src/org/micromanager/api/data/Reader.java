@@ -39,4 +39,9 @@ public interface Reader {
     * Retrieve the DisplaySettings associated with this dataset.
     */
    public DisplaySettings getDisplaySettings();
+
+   /**
+    * Return the number of images in this dataset.
+    */
+   public int getNumImages();
 }

@@ -12,9 +12,12 @@ public interface Datastore {
    public void setReader(Reader reader);
 
    /**
-    * Subscribe the provided object to the Datastore's event bus.
+    * Subscribe the provided object to the Datastore's event bus. Lower
+    * priority numbers are notified of events before higher priority numbers.
+    * Do not set a priority of 0 or lower as this will cause unpredictable
+    * behaviors.
     */
-   public void registerForEvents(Object obj);
+   public void registerForEvents(Object obj, int priority);
 
    /**
     * Unsubscribe the provided object from the Datastore's event bus.
@@ -92,4 +95,10 @@ public interface Datastore {
     * Returns whether or not the Datastore has been locked.
     */
    public boolean getIsLocked();
+
+   /**
+    * Returns the total number of Images in the Datastore. Returns -1 if no
+    * Reader has been provided yet.
+    */
+   public int getNumImages();
 }
