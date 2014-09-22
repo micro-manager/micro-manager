@@ -101,7 +101,7 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
       super(new FlowLayout(FlowLayout.LEADING));
       displayBus_ = displayBus;
       store_ = store;
-      store_.registerForEvents(this);
+      store_.registerForEvents(this, 100);
       stack_ = stack;
       initComponents(shouldUseLiveControls, isAcquisition);
       displayBus_.register(this);

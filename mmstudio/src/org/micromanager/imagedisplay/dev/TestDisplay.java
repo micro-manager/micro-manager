@@ -62,13 +62,22 @@ public class TestDisplay {
    
    public TestDisplay(Datastore store) {
       store_ = store;
-      store_.registerForEvents(this);
+      store_.registerForEvents(this, 100);
       displayBus_ = new EventBus();
       displayBus_.register(this);
-      stack_ = new MMVirtualStack(store);
-      plus_ = new MMImagePlus("foo", stack_, displayBus_);
-      plus_.setOpenAsHyperStack(true);
+      // Delay generating our UI until we have at least one image, because
+      // otherwise ImageJ gets badly confused.
+      if (store_.getNumImages() > 0) {
+         makeWindowAndIJObjects();
+      }
+   }
+
+   private void makeWindowAndIJObjects() {
+      stack_ = new MMVirtualStack(store_);
+      plus_ = new MMImagePlus(displayBus_);
       stack_.setImagePlus(plus_);
+      plus_.setStack("foo", stack_);
+      plus_.setOpenAsHyperStack(true);
       // The ImagePlus object needs to be pseudo-polymorphic, depending on
       // the number of channels in the Datastore. However, we may not
       // have all of the channels available to us at the time this display is
@@ -182,8 +191,8 @@ public class TestDisplay {
       if (ijImage_ instanceof MMCompositeImage) {
          stack_.setCoords(image.getCoords());
          MMCompositeImage composite = (MMCompositeImage) ijImage_;
-         composite.getProcessor().setPixels(image.getRawPixels());
       }
+      ijImage_.getProcessor().setPixels(image.getRawPixels());
       ijImage_.updateAndDraw();
       histograms_.calcAndDisplayHistAndStats(true);
       metadata_.imageChangedUpdate(image);
@@ -254,14 +263,16 @@ public class TestDisplay {
    private void setIJBounds() {
       IMMImagePlus temp = (IMMImagePlus) ijImage_;
       int numChannels = Math.max(1, store_.getMaxIndex("channel") + 1);
-      int numFrames = Math.max(1, store_.getMaxIndex("frame") + 1);
+      int numFrames = Math.max(1, store_.getMaxIndex("time") + 1);
       int numSlices = Math.max(1, store_.getMaxIndex("z") + 1);
       temp.setNChannelsUnverified(numChannels);
       temp.setNFramesUnverified(numFrames);
       temp.setNSlicesUnverified(numSlices);
       // TODO: VirtualAcquisitionDisplay folds "components" into channels;
       // what are components used for?
-      plus_.setDimensions(numChannels, numSlices, numFrames);
+      // TODO: calling this causes ImageJ to create its own additional
+      // window, which looks terrible, so we're leaving it out for now.
+      //plus_.setDimensions(numChannels, numSlices, numFrames);
    }
 
    /**
@@ -305,30 +316,37 @@ public class TestDisplay {
    @Subscribe
    public void onNewImage(NewImageEvent event) {
       ReportingUtils.logError("Display caught new image at " + event.getCoords());
-      // Check if we're transitioning from grayscale to multi-channel at this
-      // time.
-      if (!(ijImage_ instanceof MMCompositeImage) && 
-            event.getImage().getCoords().getPositionAt("channel") > 0) {
-         // Have multiple channels.
-         ReportingUtils.logError("Augmenting to MMCompositeImage now");
-         shiftToCompositeImage();
-         setWindowControls();
+      if (window_ == null) {
+         // Now we have some images with which to set up our display.
+         makeWindowAndIJObjects();
       }
-      if (ijImage_ instanceof MMCompositeImage) {
-         // Verify that ImageJ has the right number of channels.
-         int numChannels = store_.getMaxIndex("channel");
-         MMCompositeImage composite = (MMCompositeImage) ijImage_;
-         composite.setNChannelsUnverified(numChannels);
-         ReportingUtils.logError("Set number of channels to " + store_.getMaxIndex("channel"));
-         composite.reset();
-         for (int i = 0; i < numChannels; ++i) {
-            if (composite.getProcessor(i + 1) != null) {
-               composite.getProcessor(i + 1).setPixels(event.getImage().getRawPixels());
+      try {
+         // Check if we're transitioning from grayscale to multi-channel at this
+         // time.
+         if (!(ijImage_ instanceof MMCompositeImage) &&
+               event.getImage().getCoords().getPositionAt("channel") > 0) {
+            // Have multiple channels.
+            shiftToCompositeImage();
+            setWindowControls();
+         }
+         if (ijImage_ instanceof MMCompositeImage) {
+            // Verify that ImageJ has the right number of channels.
+            int numChannels = store_.getMaxIndex("channel");
+            MMCompositeImage composite = (MMCompositeImage) ijImage_;
+            composite.setNChannelsUnverified(numChannels);
+            composite.reset();
+            for (int i = 0; i < numChannels; ++i) {
+               if (composite.getProcessor(i + 1) != null) {
+                  composite.getProcessor(i + 1).setPixels(event.getImage().getRawPixels());
+               }
             }
          }
+         setIJBounds();
+         coordsQueue_.put(event.getCoords());
       }
-      setIJBounds();
-      ijImage_.getProcessor().setPixels(event.getImage().getRawPixels());
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Couldn't display new image");
+      }
    }
 
    /**
@@ -364,5 +382,9 @@ public class TestDisplay {
 
    public Datastore getDatastore() {
       return store_;
+   }
+
+   public void close() {
+      window_.close();
    }
 }
