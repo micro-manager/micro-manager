@@ -1,7 +1,5 @@
 package org.micromanager.data;
 
-import com.google.common.eventbus.EventBus;
-
 import java.util.List;
 
 import org.micromanager.api.data.Coords;
@@ -12,14 +10,15 @@ import org.micromanager.api.data.Image;
 import org.micromanager.api.data.Reader;
 import org.micromanager.api.data.SummaryMetadata;
 
+import org.micromanager.utils.PrioritizedEventBus;
 
 public class DefaultDatastore implements Datastore {
    private Reader reader_ = null;
-   private EventBus bus_;
+   private PrioritizedEventBus bus_;
    private boolean isLocked_ = false;
 
    public DefaultDatastore() {
-      bus_ = new EventBus();
+      bus_ = new PrioritizedEventBus();
    }
 
    @Override
@@ -28,8 +27,8 @@ public class DefaultDatastore implements Datastore {
    }
 
    @Override
-   public void registerForEvents(Object obj) {
-      bus_.register(obj);
+   public void registerForEvents(Object obj, int priority) {
+      bus_.register(obj, priority);
    }
 
    @Override
@@ -118,5 +117,13 @@ public class DefaultDatastore implements Datastore {
    @Override
    public boolean getIsLocked() {
       return isLocked_;
+   }
+
+   @Override
+   public int getNumImages() {
+      if (reader_ != null) {
+         return reader_.getNumImages();
+      }
+      return -1;
    }
 }
