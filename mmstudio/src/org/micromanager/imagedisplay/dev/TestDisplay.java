@@ -37,7 +37,7 @@ import org.micromanager.utils.ReportingUtils;
  * This class is responsible for intermediating between the different
  * components that combine to form the image display.
  */
-public class TestDisplay {
+public class TestDisplay implements org.micromanager.api.data.DisplayWindow {
    private Datastore store_;
    private MMVirtualStack stack_;
    private ImagePlus ijImage_;
@@ -45,6 +45,7 @@ public class TestDisplay {
 
    private DisplayWindow window_;
    private HyperstackControls controls_;
+   private MultiModePanel modePanel_;
    private HistogramsPanel histograms_;
    private MetadataPanel metadata_;
    private CommentsPanel comments_;
@@ -63,6 +64,7 @@ public class TestDisplay {
    public TestDisplay(Datastore store) {
       store_ = store;
       store_.registerForEvents(this, 100);
+      store_.associateDisplay(this);
       displayBus_ = new EventBus();
       displayBus_.register(this);
       // Delay generating our UI until we have at least one image, because
@@ -286,26 +288,26 @@ public class TestDisplay {
             false, false);
       widgets.add(controls_);
       rules.add("align center, wrap, growx");
-      MultiModePanel modePanel = new MultiModePanel(displayBus_);
+      modePanel_ = new MultiModePanel(displayBus_);
       
       DisplaySettingsPanel settings = new DisplaySettingsPanel(
             store_, ijImage_);
-      modePanel.addMode("Settings", settings);
+      modePanel_.addMode("Settings", settings);
 
       histograms_ = new HistogramsPanel(store_, stack_, ijImage_, displayBus_);
       histograms_.setMinimumSize(new java.awt.Dimension(280, 0));
-      modePanel.addMode("Contrast", histograms_);
+      modePanel_.addMode("Contrast", histograms_);
 
       metadata_ = new MetadataPanel(store_);
-      modePanel.addMode("Metadata", metadata_);
+      modePanel_.addMode("Metadata", metadata_);
 
       comments_ = new CommentsPanel(store_);
-      modePanel.addMode("Comments", comments_);
+      modePanel_.addMode("Comments", comments_);
 
-      modePanel.addMode("Overlays",
+      modePanel_.addMode("Overlays",
             new OverlaysPanel(store_, stack_, ijImage_, displayBus_));
 
-      widgets.add(modePanel);
+      widgets.add(modePanel_);
       rules.add("dock east, growy");
       window_.setupLayout(widgets, rules);
    }
@@ -370,21 +372,38 @@ public class TestDisplay {
       coordsQueue_.add(drawCoords);
    }
 
+   /**
+    * Manually display the image at the specified coordinates.
+    */
+   @Override
+   public void setDisplayedImageTo(Coords coords) {
+      coordsQueue_.add(coords);
+   }
+
+   @Override
+   public void addControlPanel(String label, Component widget) {
+      modePanel_.addMode(label, widget);
+   }
+
    // TODO: this should be redundant once this module is merged with 
    // DisplayWindow.
    public DisplayWindow getWindow() {
       return window_;
    }
 
+   @Override
    public ImagePlus getImagePlus() {
       return ijImage_;
    }
 
+   @Override
    public Datastore getDatastore() {
       return store_;
    }
 
+   @Override
    public void close() {
       window_.close();
+      store_.removeDisplay(this);
    }
 }
