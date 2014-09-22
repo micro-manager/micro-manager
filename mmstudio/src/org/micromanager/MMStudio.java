@@ -89,9 +89,6 @@ import org.micromanager.conf2.MicroscopeModel;
 import org.micromanager.data.DefaultDatastore;
 import org.micromanager.data.DefaultImage;
 
-// HACK TODO FORCING COMPILATION OF THESE MODULES
-import org.micromanager.data.test.*;
-
 import org.micromanager.dialogs.AcqControlDlg;
 import org.micromanager.dialogs.CalibrationListDlg;
 import org.micromanager.dialogs.MMIntroDlg;
