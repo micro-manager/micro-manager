@@ -1,11 +1,13 @@
 package org.micromanager.data;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.DatastoreLockedException;
 import org.micromanager.api.data.DisplaySettings;
+import org.micromanager.api.data.DisplayWindow;
 import org.micromanager.api.data.Image;
 import org.micromanager.api.data.Reader;
 import org.micromanager.api.data.SummaryMetadata;
@@ -16,9 +18,11 @@ public class DefaultDatastore implements Datastore {
    private Reader reader_ = null;
    private PrioritizedEventBus bus_;
    private boolean isLocked_ = false;
+   private ArrayList<DisplayWindow> displays_;
 
    public DefaultDatastore() {
       bus_ = new PrioritizedEventBus();
+      displays_ = new ArrayList<DisplayWindow>();
    }
 
    @Override
@@ -125,5 +129,22 @@ public class DefaultDatastore implements Datastore {
          return reader_.getNumImages();
       }
       return -1;
+   }
+
+   @Override
+   public void associateDisplay(DisplayWindow display) {
+      displays_.add(display);
+   }
+
+   @Override
+   public void removeDisplay(DisplayWindow display) {
+      if (displays_.contains(display)) {
+         displays_.remove(display);
+      }
+   }
+
+   @Override
+   public List<DisplayWindow> getDisplays() {
+      return displays_;
    }
 }
