@@ -107,12 +107,16 @@ public class MMVirtualStack extends ij.VirtualStack {
    @Override
    public ImageProcessor getProcessor(int flatIndex) {
       if (plus_ == null) {
-         // We have to supply a processor, even if it's totally bogus.
+         // We have to supply a processor, even if it's totally bogus. Ideally
+         // we'd throw an exception heer but that wouldn't match the function
+         // signature.
+         ReportingUtils.logError("Tried to get a processor when there's no ImagePlus");
          return new ByteProcessor(1, 1);
       }
       DefaultImage image = getImage(flatIndex);
       if (image == null) {
-         // Ditto.
+         // See above comment.
+         ReportingUtils.logError("Tried to get a processor for an invalid image index");
          return new ByteProcessor(1, 1);
       }
       int width = image.getWidth();
