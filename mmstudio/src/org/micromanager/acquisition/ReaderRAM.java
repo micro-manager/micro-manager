@@ -49,7 +49,9 @@ public class ReaderRAM implements Reader {
       displaySettings_ = (new DefaultDisplaySettings.Builder())
             .channelColors(new Color[] {Color.RED, Color.GREEN})
             .build();
-      store.registerForEvents(this);
+      // It is imperative that we be notified of new images before anyone who
+      // wants to retrieve the images from the store is notified.
+      store.registerForEvents(this, 0);
    }
 
    /**
@@ -60,6 +62,23 @@ public class ReaderRAM implements Reader {
       amInDebugMode_ = amInDebugMode;
    }
 
+   /**
+    * Add a new image to our storage, and update maxIndex_.
+    */
+   private void addImage(Image image) {
+      Coords coords = image.getCoords();
+      coordsToImage_.put(coords, image);
+      for (String axis : coords.getAxes()) {
+         if (maxIndex_.getPositionAt(axis) < coords.getPositionAt(axis)) {
+            // Either this image is further along on this axis, or we have
+            // no position for this axis yet.
+            maxIndex_ = maxIndex_.copy()
+                  .position(axis, coords.getPositionAt(axis))
+                  .build();
+         }
+      }
+   }
+
    @Override
    public Image getImage(Coords coords) {
       if (coordsToImage_.containsKey(coords)) {
@@ -67,6 +86,7 @@ public class ReaderRAM implements Reader {
       }
       if (!amInDebugMode_) {
          // No image available, and can't make a new one.
+         ReportingUtils.logError("No image at " + coords + " compare keys " + coordsToImage_.keySet());
          return null;
       }
       ReportingUtils.logError("Snapping new image for " + coords);
@@ -76,16 +96,7 @@ public class ReaderRAM implements Reader {
          studio.snapSingleImage();
          TaggedImage tagged = studio.getMMCore().getTaggedImage();
          Image result = new DefaultImage(tagged).copyAt(coords);
-         coordsToImage_.put(coords, result);
-         for (String axis : coords.getAxes()) {
-            if (maxIndex_.getPositionAt(axis) < coords.getPositionAt(axis)) {
-               // Either this image is further along on this axis, or we have
-               // no position for this axis yet.
-               maxIndex_ = maxIndex_.copy()
-                     .position(axis, coords.getPositionAt(axis))
-                     .build();
-            }
-         }
+         addImage(result);
          return result;
       }
       catch (Exception e) {
@@ -137,6 +148,12 @@ public class ReaderRAM implements Reader {
 
    @Subscribe
    public void onNewImage(NewImageEvent event) {
-      coordsToImage_.put(event.getImage().getCoords(), event.getImage());
+      ReportingUtils.logError("Reader adding image at " + event.getCoords());
+      addImage(event.getImage());
+   }
+
+   @Override
+   public int getNumImages() {
+      return coordsToImage_.size();
    }
 }
