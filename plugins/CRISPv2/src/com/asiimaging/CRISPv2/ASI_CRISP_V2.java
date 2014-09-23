@@ -6,7 +6,7 @@
 * Last Updated 9/10/2014
 
  */
-package ASI_CRISP_V2;
+package com.asiimaging.CRISPv2;
 
 import mmcorej.CMMCore;
 import org.micromanager.api.MMPlugin;
