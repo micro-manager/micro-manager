@@ -28,11 +28,17 @@ public class LiveMode {
    private DefaultDatastore store_;
    private ArrayList<LiveModeListener> listeners_;
    private boolean isOn_ = false;
+   // Suspended means that we *would* be running except we temporarily need
+   // to halt for the duration of some action (e.g. changing the exposure
+   // time). See setSuspended().
+   private boolean isSuspended_ = false;
    private boolean shouldStopGrabberThread_ = false;
    private Thread grabberThread_;
 
    public LiveMode() {
       core_ = MMStudio.getInstance().getMMCore();
+      store_ = new DefaultDatastore();
+      store_.setReader(new ReaderRAM(store_));
    }
 
    public void setLiveMode(boolean isOn) {
@@ -48,13 +54,32 @@ public class LiveMode {
       }
    }
 
+   /**
+    * If live mode needs to temporarily stop for some action (e.g. changing
+    * the exposure time), then clients can blindly call setSuspended(true)
+    * to stop it and then setSuspended(false) to resume-only-if-necessary.
+    */
+   public void setSuspended(boolean shouldSuspend) {
+      if (shouldSuspend && isOn_) {
+         // Need to stop now.`
+         setLiveMode(false);
+         isSuspended_ = true;
+      }
+      else if (!shouldSuspend && isSuspended_) {
+         // Need to resume now.
+         setLiveMode(true);
+         isSuspended_ = false;
+      }
+   }
+
    private void startLiveMode() {
       // First, ensure that any extant grabber thread is dead.
       stopLiveMode();
       shouldStopGrabberThread_ = false;
-      store_ = new DefaultDatastore();
-      store_.setReader(new ReaderRAM(store_));
-      display_ = new TestDisplay(store_);
+      if (display_ == null || display_.getIsClosed()) {
+         // We need to recreate the display.
+         display_ = new TestDisplay(store_);
+      }
       grabberThread_ = new Thread(new Runnable() {
          @Override
          public void run() {
@@ -79,7 +104,6 @@ public class LiveMode {
          catch (InterruptedException e) {
             ReportingUtils.logError(e, "Interrupted while waiting for grabber thread to end");
          }
-         display_.close();
       }
    }
 

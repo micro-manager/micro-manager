@@ -409,6 +409,7 @@ public class TestDisplay implements org.micromanager.api.data.DisplayWindow {
 
    @Override
    public boolean getIsClosed() {
+      // TODO: is this a proper indicator for if the window is closed?
       return !window_.isVisible();
    }
 }
