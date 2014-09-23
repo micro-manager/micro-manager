@@ -415,7 +415,7 @@ int CScanner::Initialize()
          CreateProperty(g_SPIMLaserDurationPropertyName, "0", MM::Float, false, pAct);
          UpdateProperty(g_SPIMLaserDurationPropertyName);
 
-         if (firmwareVersion_ < 2.879)  // as of v2.88 this changed a bit and will be added later if define present
+         if (firmwareVersion_ < 2.879)  // as of v2.88 this changed; property will be added later if define present
          {
             pAct = new CPropertyAction (this, &CScanner::OnLaserOutputMode);
             CreateProperty(g_LaserOutputModePropertyName, "0", MM::String, false, pAct);
@@ -424,6 +424,21 @@ int CScanner::Initialize()
             AddAllowedValue(g_LaserOutputModePropertyName, g_SPIMLaserOutputMode_2);
             UpdateProperty(g_LaserOutputModePropertyName);
          }
+      }
+
+      if (firmwareVersion_ > 2.885)  // get 2.89 features
+      {
+         pAct = new CPropertyAction (this, &CScanner::OnSPIMScannerHomeEnable);
+         CreateProperty(g_SPIMScannerHomeEnable, "0", MM::String, false, pAct);
+         AddAllowedValue(g_SPIMScannerHomeEnable, g_YesState);
+         AddAllowedValue(g_SPIMScannerHomeEnable, g_NoState);
+         UpdateProperty(g_SPIMScannerHomeEnable);
+
+         pAct = new CPropertyAction (this, &CScanner::OnSPIMPiezoHomeEnable);
+         CreateProperty(g_SPIMPiezoHomeEnable, "0", MM::String, false, pAct);
+         AddAllowedValue(g_SPIMPiezoHomeEnable, g_YesState);
+         AddAllowedValue(g_SPIMPiezoHomeEnable, g_NoState);
+         UpdateProperty(g_SPIMPiezoHomeEnable);
       }
 
    }
@@ -2516,7 +2531,7 @@ int CScanner::OnLaserOutputMode(MM::PropertyBase* pProp, MM::ActionType eAct)
    ostringstream command; command.str("");
    long tmp = 0;
    bool success;
-   if (firmwareVersion_ < 2.879)  // corresponding serial command changed in v2.88
+   if (firmwareVersion_ < 2.879)  // corresponding serial command changed to LED Z in v2.88
    {
       if (eAct == MM::BeforeGet)
       {
@@ -2601,6 +2616,100 @@ int CScanner::OnLaserOutputMode(MM::PropertyBase* pProp, MM::ActionType eAct)
          command << addressChar_ << "LED Z=" << tmp;
          RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
       }
+   }
+   return DEVICE_OK;
+}
+
+int CScanner::OnSPIMScannerHomeEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   long tmp = 0;
+   bool success;
+
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "NR Z?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
+      tmp = tmp >> 2;   // shift left to get bits 2 in position of LSB
+      tmp &= (0x01);    // mask off all but what used to be bit 2
+      switch (tmp)
+      {
+         // note that bit set high _disables_ the feature
+         case 0: success = pProp->Set(g_YesState); break;
+         case 1: success = pProp->Set(g_NoState); break;
+         default: success = 0;
+      }
+      if (!success)
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_YesState) == 0)
+         tmp = 0;
+      else if (tmpstr.compare(g_NoState) == 0)
+         tmp = 1;
+      else
+         return DEVICE_INVALID_PROPERTY_VALUE;
+      tmp = tmp << 2;  // right shift to get the value to bits 2
+      command << addressChar_ << "NR Z?";
+      long tmp2;
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp2) );
+      tmp += (tmp2 & (0xFB));  // keep bit 2 from tmp, all others use current setting
+      command.str("");
+      command << addressChar_ << "NR Z=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CScanner::OnSPIMPiezoHomeEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   long tmp = 0;
+   bool success;
+
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "NR Z?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
+      tmp = tmp >> 3;   // shift left to get bits 3 in position of LSB
+      tmp &= (0x01);    // mask off all but what used to be bit 3
+      switch (tmp)
+      {
+         // note that bit set high _disables_ the feature
+         case 0: success = pProp->Set(g_YesState); break;
+         case 1: success = pProp->Set(g_NoState); break;
+         default: success = 0;
+      }
+      if (!success)
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_YesState) == 0)
+         tmp = 0;
+      else if (tmpstr.compare(g_NoState) == 0)
+         tmp = 1;
+      else
+         return DEVICE_INVALID_PROPERTY_VALUE;
+      tmp = tmp << 3;  // right shift to get the value to bits 3
+      command << addressChar_ << "NR Z?";
+      long tmp2;
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp2) );
+      tmp += (tmp2 & (0xF7));  // keep bit 3 from tmp, all others use current setting
+      command.str("");
+      command << addressChar_ << "NR Z=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;
 }
