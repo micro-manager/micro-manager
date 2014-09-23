@@ -35,4 +35,9 @@ public interface DisplayWindow {
     * Close the display and remove it from the Datastore.
     */
    public void close();
+
+   /**
+    * Return true iff the window has been closed.
+    */
+   public boolean getIsClosed();
 }
