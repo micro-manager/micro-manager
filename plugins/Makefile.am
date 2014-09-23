@@ -10,6 +10,7 @@ nobase_mmplugin_DATA = \
 	Acquisition_Tools/IntelligentAcquisition.jar \
 	Acquisition_Tools/MMTracker.jar \
 	Acquisition_Tools/SlideExplorer.jar \
+	Beta/CRISPv2.jar \
 	Beta/PixelCalibrator.jar \
 	Beta/SlideExplorer2.jar \
 	Big.jar \
