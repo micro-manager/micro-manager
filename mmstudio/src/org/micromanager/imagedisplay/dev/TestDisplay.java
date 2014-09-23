@@ -403,7 +403,12 @@ public class TestDisplay implements org.micromanager.api.data.DisplayWindow {
 
    @Override
    public void close() {
-      window_.close();
+      window_.forceClosed();
       store_.removeDisplay(this);
+   }
+
+   @Override
+   public boolean getIsClosed() {
+      return !window_.isVisible();
    }
 }
