@@ -1,309 +1,195 @@
-///////////////////////////////////////////////////////////////////////////////
-//FILE:          SnapLiveManager.java
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     mmstudio
-//-----------------------------------------------------------------------------
-//
-// AUTHOR:       
-//
-// COPYRIGHT:    University of California, San Francisco, 2014
-//
-// LICENSE:      This file is distributed under the BSD license.
-//               License text is included with the source distribution.
-//
-//               This file is distributed in the hope that it will be useful,
-//               but WITHOUT ANY WARRANTY; without even the implied warranty
-//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-//
-//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
-//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-//
-
 package org.micromanager;
 
-import ij.gui.ImageWindow;
-
-import java.awt.Color;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
-import org.json.JSONException;
 
-import org.json.JSONObject;
+import org.micromanager.acquisition.ReaderRAM;
 
-import org.micromanager.acquisition.LiveModeTimer;
-import org.micromanager.acquisition.MMAcquisition;
-import org.micromanager.api.ImageCache;
-import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
+import org.micromanager.api.data.Coords;
+import org.micromanager.api.data.DisplayWindow;
+
+import org.micromanager.data.DefaultCoords;
+import org.micromanager.data.DefaultDatastore;
+import org.micromanager.data.DefaultImage;
+
+import org.micromanager.imagedisplay.dev.TestDisplay;
+
 import org.micromanager.internalinterfaces.LiveModeListener;
-import org.micromanager.utils.ImageUtils;
-import org.micromanager.utils.MDUtils;
-import org.micromanager.utils.MMException;
-import org.micromanager.utils.MMScriptException;
+
+import org.micromanager.MMStudio;
+
 import org.micromanager.utils.ReportingUtils;
 
-/*
- * Handles logic specific to the Snap/Live window.
+/**
+ * This class is responsible for all logic surrounding live mode.
  */
-public class SnapLiveManager {
-   private final MMStudio studio_;
-   private final CMMCore core_;
-   private LiveModeTimer liveModeTimer_;
-   private final List<LiveModeListener> liveModeListeners_
-         = Collections.synchronizedList(new ArrayList<LiveModeListener>());
-   private static VirtualAcquisitionDisplay display_;
-   public static final String SIMPLE_ACQ = "Snap/Live Window";
-   private final Color[] multiCameraColors_ = {Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW, Color.CYAN};
+public class LiveMode {
+   // Maximum number of timepoints to keep in the Datastore at a time before
+   // we start overwriting images.
+   private static final int MAX_TIMEPOINTS = 50;
+   
+   private CMMCore core_;
+   private DisplayWindow display_;
+   private DefaultDatastore store_;
+   private ArrayList<LiveModeListener> listeners_;
+   private boolean isOn_ = false;
+   // Suspended means that we *would* be running except we temporarily need
+   // to halt for the duration of some action (e.g. changing the exposure
+   // time). See setSuspended().
+   private boolean isSuspended_ = false;
+   private boolean shouldStopGrabberThread_ = false;
+   private Thread grabberThread_;
+   private int lastTimepoint_ = 0;
 
-   public SnapLiveManager(MMStudio studio, CMMCore core) {
-      studio_ = studio;
-      core_ = core;
-   }
-
-   /**
-    * Safely set the core exposure time, reseting live-mode as needed.
-    * @param exposureTime - desired camera exposure time (in ms) 
-    */
-   public void safeSetCoreExposure(double exposureTime) {
-      boolean isOn = getIsLiveModeOn();
-      if (isOn) {
-         setLiveMode(false);
-      }
-      try {
-         core_.setExposure(exposureTime);
-      }
-      catch (Exception e) {
-         ReportingUtils.logError(e, "Failed to set core exposure time.");
-      }
-      if (isOn) {
-         setLiveMode(true);
-      }
-   }
-
-   public boolean getIsLiveModeOn() {
-      return (liveModeTimer_ != null && liveModeTimer_.isRunning());
+   public LiveMode() {
+      core_ = MMStudio.getInstance().getMMCore();
+      store_ = new DefaultDatastore();
+      store_.setReader(new ReaderRAM(store_));
    }
 
    public void setLiveMode(boolean isOn) {
-      if (isOn == getIsLiveModeOn()) {
-         // No need to do anything.
+      if (isOn_ == isOn) {
          return;
       }
-      if (isOn && liveModeTimer_ == null) {
-         // Need to create the timer first.
-         if (core_.getCameraDevice().length() == 0) {
-            ReportingUtils.showError("No camera configured.");
-         }
-         liveModeTimer_ = new LiveModeTimer();
+      isOn_ = isOn;
+      if (isOn_) {
+         startLiveMode();
       }
-      if (liveModeTimer_ != null) {
-         if (isOn) {
-            try {
-               liveModeTimer_.begin();
-               callLiveModeListeners(true);
-            }
-            catch (Exception e) {
-               ReportingUtils.logError(e, "Couldn't restart live mode after changing exposure time.");
-               liveModeTimer_.stop();
-               callLiveModeListeners(false);
-            }
-         }
-         else {
-            liveModeTimer_.stop();
-            callLiveModeListeners(false);
-         }
+      else {
+         stopLiveMode();
       }
-   }
-
-   public final void addLiveModeListener (LiveModeListener listener) {
-      if (liveModeListeners_.contains(listener)) {
-         return;
-      }
-      liveModeListeners_.add(listener);
-   }
-
-   public void removeLiveModeListener(LiveModeListener listener) {
-      liveModeListeners_.remove(listener);
-   }
-
-   public void callLiveModeListeners(boolean enable) {
-      for (LiveModeListener listener : liveModeListeners_) {
-         listener.liveModeEnabled(enable);
-      }
-   }
-
-   public void createSnapLiveDisplay(String name, ImageCache cache) {
-      try {
-         display_ = new VirtualAcquisitionDisplay(cache, name);
-      }
-      catch (MMScriptException e) {
-         ReportingUtils.logError(e, "Failed to create Snap/Live display");
-      }
-   }
-
-   public VirtualAcquisitionDisplay getSnapLiveDisplay() {
-      return display_;
-   }
-
-   public ImageWindow getSnapLiveWindow() {
-      // The check for getHyperImage() protects us against a rare null-pointer
-      // exception where the display exists, but has not yet finished
-      // initializing. This is possibly caused when the display is unusually
-      // large (e.g. for 2500x2000 displays).
-      if (display_ != null && display_.getHyperImage() != null) {
-         return display_.getHyperImage().getWindow();
-      }
-      return null;
-   }
-
-   public void moveDisplayToFront() {
-      ImageWindow window = getSnapLiveWindow();
-      if (window != null) {
-         window.toFront();
+      for (LiveModeListener listener : listeners_) {
+         listener.liveModeEnabled(isOn_);
       }
    }
 
    /**
-    * Verify that the current acquisition settings for the Snap/Live window
-    * match the provided settings. Recreate the display if they do not match.
-    * @param width in pixels of the current image
-    * @param height in pixels of the current image
-    * @param depth in bytes of the current image
-    * @param bitDepth in bytes of the current image
-    * @param numCamChannels 
+    * If live mode needs to temporarily stop for some action (e.g. changing
+    * the exposure time), then clients can blindly call setSuspended(true)
+    * to stop it and then setSuspended(false) to resume-only-if-necessary.
+    * Note that this function will not notify listeners.
     */
-   public void validateDisplayAndAcquisition(int width, int height, int depth, int bitDepth,
-         int numCamChannels) {
-      try {
-         if (studio_.acquisitionExists(SIMPLE_ACQ)) {
-            if ((studio_.getAcquisitionImageWidth(SIMPLE_ACQ) != width) ||
-                  (studio_.getAcquisitionImageHeight(SIMPLE_ACQ) != height) ||
-                  (studio_.getAcquisitionImageByteDepth(SIMPLE_ACQ) != depth) ||
-                  (studio_.getAcquisitionImageBitDepth(SIMPLE_ACQ) != bitDepth) ||
-                  (studio_.getAcquisitionMultiCamNumChannels(SIMPLE_ACQ) != numCamChannels)) {
-               //Need to close and reopen simple window
-               studio_.closeAcquisitionWindow(SIMPLE_ACQ);
-            }
+   public void setSuspended(boolean shouldSuspend) {
+      if (shouldSuspend && isOn_) {
+         // Need to stop now.`
+         stopLiveMode();
+         isSuspended_ = true;
+      }
+      else if (!shouldSuspend && isSuspended_) {
+         // Need to resume now.
+         startLiveMode();
+         isSuspended_ = false;
+      }
+   }
+
+   private void startLiveMode() {
+      // First, ensure that any extant grabber thread is dead.
+      stopLiveMode();
+      shouldStopGrabberThread_ = false;
+      if (display_ == null || display_.getIsClosed()) {
+         // We need to recreate the display. Unfortunately it won't actually
+         // appear until images are available, so we'll be setting display_
+         // later on in the grabber thread.
+         new TestDisplay(store_);
+      }
+      grabberThread_ = new Thread(new Runnable() {
+         @Override
+         public void run() {
+            grabImages();
          }
-         if (! studio_.acquisitionExists(SIMPLE_ACQ)) { // Time to create the acquisition.
-            studio_.openAcquisition(SIMPLE_ACQ, "", 1, numCamChannels, 1, true);
-            if (numCamChannels > 1) {
-               for (long i = 0; i < numCamChannels; i++) {
-                  String chName = core_.getCameraChannelName(i);
-                  int defaultColor = multiCameraColors_[(int) i % multiCameraColors_.length].getRGB();
-                  studio_.setChannelColor(SIMPLE_ACQ, 
-                        (int) i, studio_.getChannelColor(chName, defaultColor));
-                  studio_.setChannelName(SIMPLE_ACQ, (int) i, chName);
+      });
+      grabberThread_.start();
+      try {
+         core_.startContinuousSequenceAcquisition(0);
+      }
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Couldn't start live mode sequence acquisition");
+      }
+   }
+
+   private void stopLiveMode() {
+      if (grabberThread_ != null) {
+         shouldStopGrabberThread_ = true;
+         try {
+            grabberThread_.join();
+         }
+         catch (InterruptedException e) {
+            ReportingUtils.logError(e, "Interrupted while waiting for grabber thread to end");
+         }
+      }
+   }
+
+   /**
+    * This function is expected to run in its own thread. It continuously
+    * polls the core for new images, which then get inserted into the 
+    * Datastore (which in turn propagates them to the display).
+    * TODO: our polling approach blindly assigns images to channels on the
+    * assumption that a) images always arrive from cameras in the same order,
+    * and b) images don't arrive in the middle of our polling action. Obviously
+    * this breaks down sometimes, which can cause images to "swap channels"
+    * in the display. Fixing it would require the core to provide blocking
+    * "get next image" calls, though, which it doesn't.
+    */
+   private void grabImages() {
+      // No point in grabbing things faster than we can display, which is
+      // currently around 30FPS.
+      int interval = 33;
+      try {
+         interval = (int) Math.max(interval, core_.getExposure());
+      }
+      catch (Exception e) {
+         // Getting exposure time failed; go with the default.
+         ReportingUtils.logError(e, "Couldn't get exposure time for live mode.");
+      }
+      long numChannels = core_.getNumberOfCameraChannels();
+      while (!shouldStopGrabberThread_) {
+         try {
+            for (int c = 0; c < numChannels; ++c) {
+               TaggedImage tagged;
+               try {
+                  tagged = core_.getNBeforeLastTaggedImage(c);
+               }
+               catch (Exception e) {
+                  // No image in the sequence buffer.
+                  continue;
+               }
+               DefaultImage image = new DefaultImage(tagged);
+               // TODO: this doesn't take multiple channels into account.
+               Coords newCoords = image.getCoords().copy()
+                  .position("time", lastTimepoint_ % MAX_TIMEPOINTS)
+                  .position("channel", c).build();
+               store_.putImage(image.copyAt(newCoords));
+               if (display_ == null || display_.getIsClosed()) {
+                  // Now that we know that the TestDisplay we made earlier will
+                  // have made a DisplayWindow, access it for ourselves.
+                  List<DisplayWindow> displays = store_.getDisplays();
+                  if (displays.size() > 0) {
+                     display_ = displays.get(0);
+                  }
                }
             }
-            initializeAcquisition(width, height, depth, bitDepth, numCamChannels);
-            studio_.getAcquisition(SIMPLE_ACQ).promptToSave(false);
-            display_ = studio_.getAcquisition(SIMPLE_ACQ).getAcquisitionWindow();
-            getSnapLiveWindow().toFront();
-            studio_.updateCenterAndDragListener();
-         }
-      } catch (MMScriptException ex) {
-         ReportingUtils.showError(ex);
-      }
-   }
-
-   public void validateDisplayAndAcquisition(TaggedImage image) {
-      JSONObject tags = image.tags;
-      try {
-         int width = MDUtils.getWidth(tags);
-         int height = MDUtils.getHeight(tags);
-         int depth = MDUtils.getDepth(tags);
-         int bitDepth = MDUtils.getBitDepth(tags);
-         int numCamChannels = (int) core_.getNumberOfCameraChannels();
-
-         validateDisplayAndAcquisition(width, height, depth, bitDepth, numCamChannels);
-      }
-      catch (JSONException ex) {
-         ReportingUtils.showError("Error extracting image info in validateDisplayAndAcquisition: " + ex);
-      } catch (MMScriptException ex) {
-         ReportingUtils.showError("Error extracting image info in validateDisplayAndAcquisition: " + ex);
-      }
-   }
-
-   public void validateDisplayAndAcquisition() {
-      if (core_.getCameraDevice().length() == 0) {
-         ReportingUtils.showError("No camera configured");
-         return;
-      }
-      int width = (int) core_.getImageWidth();
-      int height = (int) core_.getImageHeight();
-      int depth = (int) core_.getBytesPerPixel();
-      int bitDepth = (int) core_.getImageBitDepth();
-      int numCamChannels = (int) core_.getNumberOfCameraChannels();
-      validateDisplayAndAcquisition(width, height, depth, bitDepth, numCamChannels);
-   }
-
-   private void initializeAcquisition(int width, int height, int byteDepth,
-         int bitDepth, int numMultiCamChannels) throws MMScriptException {
-      MMAcquisition acq = studio_.getAcquisitionWithName(SIMPLE_ACQ);
-      acq.setImagePhysicalDimensions(width, height, byteDepth, bitDepth, numMultiCamChannels);
-      acq.initializeSimpleAcq();
-   }
-
-   public boolean displayImage(Object pixels) {
-      validateDisplayAndAcquisition();
-      try {
-         MMAcquisition acquisition = studio_.getAcquisition(SIMPLE_ACQ);
-         int width = acquisition.getWidth();
-         int height = acquisition.getHeight();
-         int byteDepth = acquisition.getByteDepth();
-         TaggedImage ti = ImageUtils.makeTaggedImage(pixels, 0, 0, 0,0, 
-               width, height, byteDepth);
-         try {
-            display_.getImageCache().putImage(ti);
-         }
-         catch (java.io.IOException e) {
-            ReportingUtils.logError(e, "This should never happen!");
-         }
-         display_.imageReceived(ti);
-         return true;
-      } catch (MMScriptException ex) {
-         ReportingUtils.showError(ex);
-         return false;
-      } catch (MMException ex) {
-         ReportingUtils.showError(ex);
-         return false;
-      }
-   }
-
-   public void displayTaggedImage(TaggedImage image) {
-      validateDisplayAndAcquisition(image);
-   }
-
-   public void setStatusLine(String status) {
-      display_.displayStatusLine(status);
-   }
-
-   public void snapAndAddToImage5D() {
-      if (core_.getCameraDevice().length() == 0) {
-         ReportingUtils.showError("No camera configured");
-         return;
-      }
-      try {
-         if (getIsLiveModeOn()) {
-            // Just grab the most recent image.
-            ImageCache cache = display_.getImageCache();
-            int channels = cache.getSummaryMetadata().getInt("Channels");
-            for (int i = 0; i < channels; i++) {
-               studio_.addToAlbum(cache.getImage(i, 0, 0, 0), 
-                     cache.getDisplayAndComments());
+            lastTimepoint_++;
+            try {
+               Thread.sleep(interval);
             }
-         } else {
-            studio_.doSnap(true);
+            catch (InterruptedException e) {}
          }
-      } catch (JSONException ex) {
-         ReportingUtils.logError(ex);
-      } catch (MMScriptException ex) {
-         ReportingUtils.logError(ex);
+         catch (Exception e) {
+            ReportingUtils.logError(e, "Exception in image grabber thread.");
+         }
+      }
+   }
+
+   public void addLiveModeListener(LiveModeListener listener) {
+      listeners_.add(listener);
+   }
+
+   public void removeLiveModeListener(LiveModeListener listener) {
+      if (listeners_.contains(listener)) {
+         listeners_.remove(listener);
       }
    }
 }
