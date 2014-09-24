@@ -332,7 +332,7 @@ public class MMStudio implements ScriptInterface {
 
       core_.enableStderrLog(true);
 
-      snapLiveManager_ = new SnapLiveManager(studio_, core_);
+      snapLiveManager_ = new SnapLiveManager(core_);
 
       frame_ = new MainFrame(this, core_, snapLiveManager_, mainPrefs_);
       frame_.setIconImage(SwingResourceManager.getImage(MMStudio.class,
@@ -689,7 +689,15 @@ public class MMStudio implements ScriptInterface {
             // Just give up.
             return;
          }
-         snapLiveManager_.safeSetCoreExposure(exposureTime);
+         snapLiveManager_.setSuspended(true);
+         try {
+            core_.setExposure(exposureTime);
+         }
+         catch (Exception e) {
+            ReportingUtils.logError(e, "Failed to set core exposure time.");
+         }
+         snapLiveManager_.setSuspended(false);
+
          // Display the new exposure time
          double exposure;
          try {
@@ -1221,24 +1229,6 @@ public class MMStudio implements ScriptInterface {
       return snapLiveManager_.getIsLiveModeOn();
    }
 
-   public boolean displayImage(final Object pixels) {
-      if (pixels instanceof TaggedImage) {
-         return displayTaggedImage((TaggedImage) pixels, true);
-      } else {
-         return displayImage(pixels, true);
-      }
-   }
-
-   public boolean displayImage(final Object pixels, boolean wait) {
-      return snapLiveManager_.displayImage(pixels);
-   }
-
-   public boolean displayImageWithStatusLine(Object pixels, String statusLine) {
-      boolean ret = displayImage(pixels);
-      snapLiveManager_.setStatusLine(statusLine);
-      return ret;
-   }
-
    public void displayStatusLine(String statusLine) {
       ImagePlus ip = WindowManager.getCurrentImage();
       if (!(ip.getWindow() instanceof DisplayWindow)) {
@@ -1278,16 +1268,23 @@ public class MMStudio implements ScriptInterface {
          runDisplayThread(snapImageQueue, new DisplayImageRoutine() {
             @Override
             public void show(final TaggedImage image) {
-                  if (shouldAddToAlbum) {
-                     try {
-                        addToAlbum(image);
-                     } catch (MMScriptException ex) {
-                        ReportingUtils.showError(ex);
-                     }
-                  } else {
-                     // TODO: reimplement this with new display logic
-//                     displayImage(image);
+               if (shouldAddToAlbum) {
+                  try {
+                     addToAlbum(image);
+                  } catch (MMScriptException ex) {
+                     ReportingUtils.showError(ex);
                   }
+               } else {
+                  try {
+                     snapLiveManager_.displayImage(new DefaultImage(image));
+                  }
+                  catch (JSONException e) {
+                     ReportingUtils.logError(e, "Couldn't generate Image from TaggedImage");
+                  }
+                  catch (MMScriptException e) {
+                     ReportingUtils.logError(e, "Couldn't generate Image from TaggedImage");
+                  }
+               }
             }
          });
          
@@ -1334,10 +1331,9 @@ public class MMStudio implements ScriptInterface {
       try {
          frame_.setCursor(new Cursor(Cursor.WAIT_CURSOR));
          // Ensure that the acquisition is ready before we add the image.
-         snapLiveManager_.validateDisplayAndAcquisition(ti);
-         MDUtils.setSummary(ti.tags, getAcquisitionWithName(SnapLiveManager.SIMPLE_ACQ).getSummaryMetadata());
+         // TODO: set summary metadata for the image? We used to do this.
          staticInfo_.addStagePositionToTags(ti);
-         addImage(SnapLiveManager.SIMPLE_ACQ, ti, update, true);
+         snapLiveManager_.displayImage(new DefaultImage(ti));
       } catch (JSONException ex) {
          ReportingUtils.logError(ex);
          return false;

@@ -1,5 +1,7 @@
 package org.micromanager;
 
+import ij.gui.ImageWindow;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,7 +11,9 @@ import mmcorej.TaggedImage;
 import org.micromanager.acquisition.ReaderRAM;
 
 import org.micromanager.api.data.Coords;
+import org.micromanager.api.data.DatastoreLockedException;
 import org.micromanager.api.data.DisplayWindow;
+import org.micromanager.api.data.Image;
 
 import org.micromanager.data.DefaultCoords;
 import org.micromanager.data.DefaultDatastore;
@@ -19,14 +23,13 @@ import org.micromanager.imagedisplay.dev.TestDisplay;
 
 import org.micromanager.internalinterfaces.LiveModeListener;
 
-import org.micromanager.MMStudio;
-
 import org.micromanager.utils.ReportingUtils;
 
 /**
- * This class is responsible for all logic surrounding live mode.
+ * This class is responsible for all logic surrounding live mode and the
+ * "snap image" display (which is the same display as that used for live mode).
  */
-public class LiveMode {
+public class SnapLiveManager {
    // Maximum number of timepoints to keep in the Datastore at a time before
    // we start overwriting images.
    private static final int MAX_TIMEPOINTS = 50;
@@ -43,11 +46,13 @@ public class LiveMode {
    private boolean shouldStopGrabberThread_ = false;
    private Thread grabberThread_;
    private int lastTimepoint_ = 0;
+   private Image lastImage_ = null;
 
-   public LiveMode() {
-      core_ = MMStudio.getInstance().getMMCore();
+   public SnapLiveManager(CMMCore core) {
+      core_ = core;
       store_ = new DefaultDatastore();
       store_.setReader(new ReaderRAM(store_));
+      listeners_ = new ArrayList<LiveModeListener>();
    }
 
    public void setLiveMode(boolean isOn) {
@@ -161,15 +166,7 @@ public class LiveMode {
                Coords newCoords = image.getCoords().copy()
                   .position("time", lastTimepoint_ % MAX_TIMEPOINTS)
                   .position("channel", c).build();
-               store_.putImage(image.copyAt(newCoords));
-               if (display_ == null || display_.getIsClosed()) {
-                  // Now that we know that the TestDisplay we made earlier will
-                  // have made a DisplayWindow, access it for ourselves.
-                  List<DisplayWindow> displays = store_.getDisplays();
-                  if (displays.size() > 0) {
-                     display_ = displays.get(0);
-                  }
-               }
+               displayImage(image.copyAt(newCoords));
             }
             lastTimepoint_++;
             try {
@@ -184,12 +181,61 @@ public class LiveMode {
    }
 
    public void addLiveModeListener(LiveModeListener listener) {
-      listeners_.add(listener);
+      if (!listeners_.contains(listener)) {
+         listeners_.add(listener);
+      }
    }
 
    public void removeLiveModeListener(LiveModeListener listener) {
       if (listeners_.contains(listener)) {
          listeners_.remove(listener);
       }
+   }
+
+   public boolean getIsLiveModeOn() {
+      return isOn_;
+   }
+
+   public ImageWindow getSnapLiveWindow() {
+      if (display_ != null && !display_.getIsClosed()) {
+         return display_.getImageWindow();
+      }
+      return null;
+   }
+
+   public void displayImage(Image image) {
+      try {
+         store_.putImage(image);
+      }
+      catch (DatastoreLockedException e) {
+         ReportingUtils.showError(e, "Snap/Live display datastore locked.");
+      }
+      if (display_ == null || display_.getIsClosed()) {
+         // Now that we know that the TestDisplay we made earlier will
+         // have made a DisplayWindow, access it for ourselves.
+         List<DisplayWindow> displays = store_.getDisplays();
+         if (displays.size() > 0) {
+            display_ = displays.get(0);
+         }
+      }
+      lastImage_ = image;
+   }
+
+   public void moveDisplayToFront() {
+      if (display_ != null && !display_.getIsClosed()) {
+         display_.toFront();
+      }
+   }
+
+   /**
+    * Snap an image, display it, and return it.
+    */
+   public Image snap() {
+      if (isOn_) {
+         // Just return the most recent image.
+         return lastImage_;
+      }
+      ReportingUtils.logError("TODO: do snap");
+      return null;
    }
 }

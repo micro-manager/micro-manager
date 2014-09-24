@@ -250,31 +250,6 @@ public class MMAcquisition {
       }
       rootDirectory_ = dir;
    }
-
-   //used to initialize snap and live, which only store a single image at a time
-   public void initializeSimpleAcq() throws MMScriptException {
-      if (initialized_) {
-         throw new MMScriptException("Acquisition is already initialized");
-      }
-
-      TaggedImageStorage imageFileManager = new TaggedImageStorageRamFast(null);
-      MMImageCache imageCache = new MMImageCache(imageFileManager);
-
-      if (!existing_) {
-         createDefaultAcqSettings(imageCache);
-      }
-      MMStudio.getInstance().getSnapLiveManager().createSnapLiveDisplay(name_, imageCache);
-      if (show_) {
-         virtAcq_ = MMStudio.getInstance().getSnapLiveManager().getSnapLiveDisplay();
-         virtAcq_.show();
-         imageCache_ = virtAcq_.getImageCache();
-         imageCache_.addImageCacheListener(virtAcq_);
-      }
-
-      initialized_ = true;
-   }
-
-   
    
    public void initialize() throws MMScriptException {
       if (initialized_) {
