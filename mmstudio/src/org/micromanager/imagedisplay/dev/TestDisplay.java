@@ -7,6 +7,7 @@ import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.NewImageEvent;
 import org.micromanager.imagedisplay.MMCompositeImage;
 import org.micromanager.imagedisplay.MMImagePlus;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  * This class largely serves as a holding area for when we need to create a
@@ -45,10 +46,15 @@ public class TestDisplay {
     */
    @Subscribe
    public void onNewImage(NewImageEvent event) {
-      if (window_ == null) {
-         // Now we have some images with which to set up our display.
-         makeWindowAndIJObjects();
+      try {
+         if (window_ == null) {
+            // Now we have some images with which to set up our display.
+            makeWindowAndIJObjects();
+         }
+         window_.receiveNewImage(event.getImage());
       }
-      window_.receiveNewImage(event.getImage());
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Couldn't process new image");
+      }
    }
 }
