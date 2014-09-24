@@ -148,7 +148,7 @@ public class ReaderRAM implements Reader {
 
    @Subscribe
    public void onNewImage(NewImageEvent event) {
-      ReportingUtils.logError("Reader adding image at " + event.getCoords());
+      ReportingUtils.logError("Reader adding image at " + event.getCoords() + " with corner pixel " + event.getImage().getIntensityAt(0, 0));
       addImage(event.getImage());
    }
 

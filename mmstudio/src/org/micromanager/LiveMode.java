@@ -124,6 +124,16 @@ public class LiveMode {
     * Datastore (which in turn propagates them to the display).
     */
    private void grabImages() {
+      // No point in grabbing things faster than we can display, which is
+      // currently around 30FPS.
+      int interval = 33;
+      try {
+         interval = (int) Math.max(interval, core_.getExposure());
+      }
+      catch (Exception e) {
+         // Getting exposure time failed; go with the default.
+         ReportingUtils.logError(e, "Couldn't get exposure time for live mode.");
+      }
       while (!shouldStopGrabberThread_) {
          try {
             TaggedImage tagged = core_.getLastTaggedImage();
@@ -141,6 +151,10 @@ public class LiveMode {
                   display_ = displays.get(0);
                }
             }
+            try {
+               Thread.sleep(interval);
+            }
+            catch (InterruptedException e) {}
          }
          catch (Exception e) {
             ReportingUtils.logError(e, "Exception in image grabber thread.");
