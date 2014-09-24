@@ -100,6 +100,7 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
       store_.associateDisplay(this);
       stack_ = stack;
       plus_ = plus;
+      ijImage_ = plus_;
       displayBus_ = bus;
       displayBus_.register(this);
 
@@ -463,6 +464,7 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
       int numChannels = store_.getMaxIndex("channel") + 1;
       composite.setNChannelsUnverified(numChannels);
       composite.reset();
+      stack_.setImagePlus(ijImage_);
 
       makeWindowControls();
       histograms_.calcAndDisplayHistAndStats(true);
