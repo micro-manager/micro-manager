@@ -116,6 +116,17 @@ public class SnapLiveManager {
    }
 
    private void stopLiveMode() {
+      try {
+         if (core_.isSequenceRunning()) {
+            core_.stopSequenceAcquisition();
+         }
+      }
+      catch (Exception e) {
+         // TODO: in prior versions we tried to stop the sequence acquisition
+         // again, after waiting 1s, with claims that the error was caused by
+         // failing to close a shutter. I've left that out of this version.
+         ReportingUtils.showError(e, "Failed to stop sequence acquisition.");
+      }
       if (grabberThread_ != null) {
          shouldStopGrabberThread_ = true;
          try {
