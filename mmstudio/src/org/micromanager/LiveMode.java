@@ -8,6 +8,7 @@ import mmcorej.TaggedImage;
 
 import org.micromanager.acquisition.ReaderRAM;
 
+import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.DisplayWindow;
 
 import org.micromanager.data.DefaultCoords;
@@ -26,6 +27,10 @@ import org.micromanager.utils.ReportingUtils;
  * This class is responsible for all logic surrounding live mode.
  */
 public class LiveMode {
+   // Maximum number of timepoints to keep in the Datastore at a time before
+   // we start overwriting images.
+   private static final int MAX_TIMEPOINTS = 50;
+   
    private CMMCore core_;
    private DisplayWindow display_;
    private DefaultDatastore store_;
@@ -37,6 +42,7 @@ public class LiveMode {
    private boolean isSuspended_ = false;
    private boolean shouldStopGrabberThread_ = false;
    private Thread grabberThread_;
+   private int lastTimepoint_ = 0;
 
    public LiveMode() {
       core_ = MMStudio.getInstance().getMMCore();
@@ -122,7 +128,11 @@ public class LiveMode {
          try {
             TaggedImage tagged = core_.getLastTaggedImage();
             DefaultImage image = new DefaultImage(tagged);
-            store_.putImage(image);
+            // TODO: this doesn't take multiple channels into account.
+            Coords newCoords = image.getCoords().copy().position(
+                  "time", lastTimepoint_ % MAX_TIMEPOINTS).build();
+            lastTimepoint_++;
+            store_.putImage(image.copyAt(newCoords));
             if (display_ == null || display_.getIsClosed()) {
                // Now that we know that the TestDisplay we made earlier will
                // have made a DisplayWindow, access it for ourselves.
