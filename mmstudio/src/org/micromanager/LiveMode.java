@@ -122,6 +122,12 @@ public class LiveMode {
     * This function is expected to run in its own thread. It continuously
     * polls the core for new images, which then get inserted into the 
     * Datastore (which in turn propagates them to the display).
+    * TODO: our polling approach blindly assigns images to channels on the
+    * assumption that a) images always arrive from cameras in the same order,
+    * and b) images don't arrive in the middle of our polling action. Obviously
+    * this breaks down sometimes, which can cause images to "swap channels"
+    * in the display. Fixing it would require the core to provide blocking
+    * "get next image" calls, though, which it doesn't.
     */
    private void grabImages() {
       // No point in grabbing things faster than we can display, which is
@@ -134,23 +140,34 @@ public class LiveMode {
          // Getting exposure time failed; go with the default.
          ReportingUtils.logError(e, "Couldn't get exposure time for live mode.");
       }
+      long numChannels = core_.getNumberOfCameraChannels();
       while (!shouldStopGrabberThread_) {
          try {
-            TaggedImage tagged = core_.getLastTaggedImage();
-            DefaultImage image = new DefaultImage(tagged);
-            // TODO: this doesn't take multiple channels into account.
-            Coords newCoords = image.getCoords().copy().position(
-                  "time", lastTimepoint_ % MAX_TIMEPOINTS).build();
-            lastTimepoint_++;
-            store_.putImage(image.copyAt(newCoords));
-            if (display_ == null || display_.getIsClosed()) {
-               // Now that we know that the TestDisplay we made earlier will
-               // have made a DisplayWindow, access it for ourselves.
-               List<DisplayWindow> displays = store_.getDisplays();
-               if (displays.size() > 0) {
-                  display_ = displays.get(0);
+            for (int c = 0; c < numChannels; ++c) {
+               TaggedImage tagged;
+               try {
+                  tagged = core_.getNBeforeLastTaggedImage(c);
+               }
+               catch (Exception e) {
+                  // No image in the sequence buffer.
+                  continue;
+               }
+               DefaultImage image = new DefaultImage(tagged);
+               // TODO: this doesn't take multiple channels into account.
+               Coords newCoords = image.getCoords().copy()
+                  .position("time", lastTimepoint_ % MAX_TIMEPOINTS)
+                  .position("channel", c).build();
+               store_.putImage(image.copyAt(newCoords));
+               if (display_ == null || display_.getIsClosed()) {
+                  // Now that we know that the TestDisplay we made earlier will
+                  // have made a DisplayWindow, access it for ourselves.
+                  List<DisplayWindow> displays = store_.getDisplays();
+                  if (displays.size() > 0) {
+                     display_ = displays.get(0);
+                  }
                }
             }
+            lastTimepoint_++;
             try {
                Thread.sleep(interval);
             }
