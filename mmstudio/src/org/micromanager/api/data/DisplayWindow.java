@@ -1,5 +1,6 @@
 package org.micromanager.api.data;
 
+import ij.gui.ImageWindow;
 import ij.ImagePlus;
 
 import java.awt.Component;
@@ -40,4 +41,15 @@ public interface DisplayWindow {
     * Return true iff the window has been closed.
     */
    public boolean getIsClosed();
+
+   /**
+    * Raise the display to the front.
+    */
+   public void toFront();
+
+   /**
+    * If appropriate, return the ImageWindow that this display represents.
+    * Otherwise return null.
+    */
+   public ImageWindow getImageWindow();
 }

@@ -7,6 +7,7 @@ import ij.CompositeImage;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.ImageCanvas;
+import ij.gui.ImageWindow;
 import ij.gui.StackWindow;
 import ij.gui.Toolbar;
 import ij.Prefs;
@@ -579,6 +580,11 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
    public boolean getIsClosed() {
       // TODO: is this a proper indicator for if the window is closed?
       return !isVisible();
+   }
+
+   @Override
+   public ImageWindow getImageWindow() {
+      return this;
    }
 
    @Subscribe
