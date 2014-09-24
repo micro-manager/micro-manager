@@ -144,7 +144,7 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
       histograms_.calcAndDisplayHistAndStats(true);
       pack();
       
-      canvasThread_ = new CanvasUpdateThread(store_, stack_, ijImage_, displayBus_);
+      canvasThread_ = new CanvasUpdateThread(store_, stack_, plus_, displayBus_);
       canvasThread_.start();
    }
 
@@ -459,13 +459,9 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
       // TODO: assuming mode 1 for now.
       ijImage_ = new MMCompositeImage(plus_, 1, "foo", displayBus_);
       ijImage_.setOpenAsHyperStack(true);
-      if (canvasThread_ != null) {
-         canvasThread_.setImagePlus(ijImage_);
-      }
       MMCompositeImage composite = (MMCompositeImage) ijImage_;
       int numChannels = store_.getMaxIndex("channel") + 1;
       composite.setNChannelsUnverified(numChannels);
-      stack_.setImagePlus(ijImage_);
       composite.reset();
 
       makeWindowControls();
@@ -585,11 +581,6 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
 
    @Subscribe
    public void onPixelsSet(CanvasUpdateThread.PixelsSetEvent event) {
-      ReportingUtils.logError("I BROKE DRAWING AUGH");
-      ijImage_.getProcessor().setPixels(event.getImage().getRawPixels());
-      plus_.getProcessor().setPixels(event.getImage().getRawPixels());
-      ijImage_.updateAndDraw();
-      plus_.updateAndDraw();
       histograms_.calcAndDisplayHistAndStats(true);
       metadata_.imageChangedUpdate(event.getImage());
    }
