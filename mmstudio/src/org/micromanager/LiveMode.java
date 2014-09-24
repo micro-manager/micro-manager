@@ -1,11 +1,14 @@
 package org.micromanager;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 
 import org.micromanager.acquisition.ReaderRAM;
+
+import org.micromanager.api.data.DisplayWindow;
 
 import org.micromanager.data.DefaultCoords;
 import org.micromanager.data.DefaultDatastore;
@@ -24,7 +27,7 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class LiveMode {
    private CMMCore core_;
-   private TestDisplay display_;
+   private DisplayWindow display_;
    private DefaultDatastore store_;
    private ArrayList<LiveModeListener> listeners_;
    private boolean isOn_ = false;
@@ -77,8 +80,10 @@ public class LiveMode {
       stopLiveMode();
       shouldStopGrabberThread_ = false;
       if (display_ == null || display_.getIsClosed()) {
-         // We need to recreate the display.
-         display_ = new TestDisplay(store_);
+         // We need to recreate the display. Unfortunately it won't actually
+         // appear until images are available, so we'll be setting display_
+         // later on in the grabber thread.
+         new TestDisplay(store_);
       }
       grabberThread_ = new Thread(new Runnable() {
          @Override
@@ -118,6 +123,14 @@ public class LiveMode {
             TaggedImage tagged = core_.getLastTaggedImage();
             DefaultImage image = new DefaultImage(tagged);
             store_.putImage(image);
+            if (display_ == null || display_.getIsClosed()) {
+               // Now that we know that the TestDisplay we made earlier will
+               // have made a DisplayWindow, access it for ourselves.
+               List<DisplayWindow> displays = store_.getDisplays();
+               if (displays.size() > 0) {
+                  display_ = displays.get(0);
+               }
+            }
          }
          catch (Exception e) {
             ReportingUtils.logError(e, "Exception in image grabber thread.");
