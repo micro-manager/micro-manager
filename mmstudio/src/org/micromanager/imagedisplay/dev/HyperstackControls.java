@@ -19,7 +19,6 @@ import java.awt.Font;
 import java.lang.Math;
 import java.text.ParseException;
 import java.util.concurrent.TimeUnit;
-import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -131,11 +130,7 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
 
       subPanel_.add(labelsPanel, "span, growx, align center, wrap");
 
-      HashMap<String, Integer> axisToLength = new HashMap<String, Integer>();
-      for (String axis : store_.getAxes()) {
-         axisToLength.put(axis, store_.getMaxIndex(axis) + 1);
-      }
-      scrollerPanel_ = new ScrollerPanel(displayBus_, axisToLength, DEFAULT_FPS);
+      scrollerPanel_ = new ScrollerPanel(store_, displayBus_, DEFAULT_FPS);
       subPanel_.add(scrollerPanel_, "span, growx, wrap 0px");
 
       // Hacky layout to minimize gaps between components. 

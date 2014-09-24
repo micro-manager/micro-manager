@@ -11,6 +11,7 @@ import java.util.TimerTask;
 import javax.swing.JPanel;
 
 import org.micromanager.api.data.Coords;
+import org.micromanager.api.data.Datastore;
 import org.micromanager.data.NewImageEvent;
 import org.micromanager.imagedisplay.AxisScroller;
 
@@ -52,6 +53,7 @@ public class ScrollerPanel extends JPanel {
     */
    public static class LayoutChangedEvent {}
 
+   private Datastore store_;
    // We'll be communicating with our owner and with our AxisScrollers via
    // this bus.
    private EventBus displayBus_;
@@ -75,11 +77,13 @@ public class ScrollerPanel extends JPanel {
     * @param axisToLength Mapping of axis labels to the number of images along
     *        that axis.
     */
-   public ScrollerPanel(EventBus displayBus, HashMap<String,
-         Integer> axisToLength, double framesPerSec) {
+   public ScrollerPanel(Datastore store, EventBus displayBus,
+         double framesPerSec) {
       // Minimize whitespace around our components.
       super(new net.miginfocom.swing.MigLayout("insets 0, fillx"));
-      
+
+      store_ = store;
+      store.registerForEvents(this, 100);
       displayBus_ = displayBus;
       displayBus_.register(this);
       framesPerSec_ = framesPerSec;
@@ -90,9 +94,9 @@ public class ScrollerPanel extends JPanel {
       // at least 2, um, "ticks"; they'll be shown once there's more than one
       // option along that axis.
       // TODO: for now assuming all axes can animate.
-      for (String axis : axisToLength.keySet()) {
-         int max = axisToLength.get(axis);
-         if (max < 1) {
+      for (String axis : store_.getAxes()) {
+         int max = store_.getMaxIndex(axis) + 1;
+         if (max < 1) { // TODO: should be impossible now.
             // Scroll bars do not allow zero "ticks".
             max = 1;
          }
