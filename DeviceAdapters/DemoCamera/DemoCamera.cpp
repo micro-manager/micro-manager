@@ -1397,7 +1397,7 @@ int CDemoCamera::OnShouldRotateImages(MM::PropertyBase* pProp, MM::ActionType eA
    {
       long tvalue = 0;
       pProp->Get(tvalue);
-      shouldRotateImages_ = (bool) tvalue;
+      shouldRotateImages_ = (tvalue != 0);
    }
    else if (eAct == MM::BeforeGet)
    {

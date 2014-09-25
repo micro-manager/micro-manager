@@ -200,7 +200,7 @@ private:
    bool fastImage_;
 	bool saturatePixels_;
 	double fractionOfPixelsToDropOrSaturate_;
-    bool shouldRotateImages_;
+   bool shouldRotateImages_;
 
 	double testProperty_[10];
    MMThreadLock imgPixelsLock_;
