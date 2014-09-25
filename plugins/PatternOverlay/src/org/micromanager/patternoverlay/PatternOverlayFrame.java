@@ -164,7 +164,7 @@ public class PatternOverlayFrame extends javax.swing.JFrame {
       
       // setting this from prefs needs to come after toggle button is created
       // and also color and size boxes because all are referenced by ActionListener
-      overlayBox_.setSelectedIndex((int) prefs_.getInt(Constants.TYPE_BOX_IDX, 0));
+      overlayBox_.setSelectedIndex(prefs_.getInt(Constants.TYPE_BOX_IDX, 0));
       updateToggleButtonLabel();
       
       // make sure plugin window is on the screen (if screen size changes) and ideally in last location

@@ -42,7 +42,7 @@ public class MyNumberUtils {
     * @return
     */
    public static boolean floatsEqual(float f1, float f2) {
-      return(Precision.equals(f1, f2, (int) 10));
+      return Precision.equals(f1, f2, 10);
    }
    
    /**
@@ -60,7 +60,7 @@ public class MyNumberUtils {
     * @return
     */
    public static float roundToQuarterMs(float f) {
-      return (float) (((float) Math.round(f*4))/4);
+      return ((float) Math.round(f*4))/4;
    }
    
    

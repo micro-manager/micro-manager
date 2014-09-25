@@ -185,10 +185,10 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
    }
    
    // Sets the targeting shutter. Should be the name of a loaded Shutter device.
-   void setTargetingShutter(String shutterNAme) {
-      targetingShutter_ = (String) shutterNAme;
-      if (shutterNAme != null) {
-         Preferences.userNodeForPackage(this.getClass()).put("shutter", shutterNAme);
+   void setTargetingShutter(String shutterName) {
+      targetingShutter_ = shutterName;
+      if (shutterName != null) {
+         Preferences.userNodeForPackage(this.getClass()).put("shutter", shutterName);
       }
    }
    
@@ -267,7 +267,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       long previousExposure = dev_.getExposure();
       long newExposure = (long) intervalUs;
       if (previousExposure != newExposure) {
-         dev_.setExposure((long) newExposure);
+         dev_.setExposure(newExposure);
       }
    }
    

@@ -38,7 +38,7 @@ public class FlatFieldCollection {
        if (index_ == -1){
            return null;
        } else {       
-           return (Float[]) flatFieldList_.get(index_);
+           return flatFieldList_.get(index_);
        }
    }
    
@@ -47,7 +47,7 @@ public class FlatFieldCollection {
        if (index_ == -1){
            return null;
        } else {       
-           return (Float[]) normalizedFlatFieldList_.get(index_);
+           return normalizedFlatFieldList_.get(index_);
        }
    }
    

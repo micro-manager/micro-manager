@@ -642,7 +642,7 @@ public class MainFrame extends JFrame implements LiveModeListener {
              comboBinning_.addItem(item);
          }
 
-         comboBinning_.setMaximumRowCount((int) items.size());
+         comboBinning_.setMaximumRowCount(items.size());
          if (items.isEmpty()) {
              comboBinning_.setEditable(true);
          } else {

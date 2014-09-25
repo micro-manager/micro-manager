@@ -1554,7 +1554,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                for (Map.Entry pair : points.entrySet()) {
                   Point2D.Double uPt = (Point2D.Double) pair.getValue();
                   Point2D.Double otherPt = (Point2D.Double) pair.getKey();
-                  Point2D.Double corPt = (Point2D.Double) c2t_.transform(otherPt);
+                  Point2D.Double corPt = c2t_.transform(otherPt);
                   corPoints.put(uPt, corPt);
                   double distance = Math.sqrt(NearestPoint2D.distance2(uPt, corPt));
                   if (distance > maxDistance) {

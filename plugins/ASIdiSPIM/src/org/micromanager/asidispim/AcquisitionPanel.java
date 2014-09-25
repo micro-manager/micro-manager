@@ -971,7 +971,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    }
    
    private void updateAcquisitionStatus(AcquisitionStatus phase) {
-      updateAcquisitionStatus(phase, (int) 0);
+      updateAcquisitionStatus(phase, 0);
    }
    
    private void updateAcquisitionStatus(AcquisitionStatus phase, int secsToNextAcquisition) {
