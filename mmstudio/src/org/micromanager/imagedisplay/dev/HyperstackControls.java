@@ -570,6 +570,8 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
    public void prepareForClose() {
       scrollerPanel_.prepareForClose();
       displayBus_.unregister(this);
+      store_.unregisterForEvents(this);
+      scrollerPanel_.prepareForClose();
       MMStudio.getInstance().getSnapLiveManager().removeLiveModeListener(this);
    }
 
