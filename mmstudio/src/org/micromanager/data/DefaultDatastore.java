@@ -41,6 +41,11 @@ public class DefaultDatastore implements Datastore {
    }
 
    @Override
+   public void publishEvent(Object obj) {
+      bus_.post(obj);
+   }
+
+   @Override
    public Image getImage(Coords coords) {
       if (reader_ != null) {
          return reader_.getImage(coords);

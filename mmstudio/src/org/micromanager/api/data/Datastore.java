@@ -25,6 +25,11 @@ public interface Datastore {
    public void unregisterForEvents(Object obj);
 
    /**
+    * Publish the given event on the Datastore's event bus.
+    */
+   public void publishEvent(Object obj);
+
+   /**
     * Retrieve the image at the specified coordinates. Will be null if no
     * Reader has been provided yet.
     */

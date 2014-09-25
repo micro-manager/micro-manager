@@ -1,5 +1,7 @@
 package org.micromanager;
 
+import com.google.common.eventbus.Subscribe;
+
 import ij.gui.ImageWindow;
 
 import java.util.ArrayList;
@@ -10,6 +12,7 @@ import mmcorej.TaggedImage;
 
 import org.micromanager.acquisition.ReaderRAM;
 
+import org.micromanager.api.data.AbortEvent;
 import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.DatastoreLockedException;
 import org.micromanager.api.data.DisplayWindow;
@@ -51,6 +54,7 @@ public class SnapLiveManager {
    public SnapLiveManager(CMMCore core) {
       core_ = core;
       store_ = new DefaultDatastore();
+      store_.registerForEvents(this, 100);
       store_.setReader(new ReaderRAM(store_));
       listeners_ = new ArrayList<LiveModeListener>();
    }
@@ -133,6 +137,11 @@ public class SnapLiveManager {
             ReportingUtils.logError(e, "Interrupted while waiting for grabber thread to end");
          }
       }
+   }
+
+   @Subscribe
+   public void onAbort(AbortEvent event) {
+      setLiveMode(false);
    }
 
    /**

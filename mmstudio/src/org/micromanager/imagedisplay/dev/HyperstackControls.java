@@ -38,6 +38,7 @@ import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.Image;
 import org.micromanager.api.display.DrawEvent;
 
+import org.micromanager.data.AbortEvent;
 import org.micromanager.data.DefaultCoords;
 import org.micromanager.data.NewImageEvent;
 import org.micromanager.imagedisplay.MouseIntensityEvent;
@@ -423,7 +424,7 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
    }
 
    private void abortButtonActionPerformed(java.awt.event.ActionEvent evt) {
-      ReportingUtils.logError("TODO: abort button");
+      store_.publishEvent(new AbortEvent());
    }
 
    private void pauseAndResumeToggleButtonActionPerformed(java.awt.event.ActionEvent evt) {
