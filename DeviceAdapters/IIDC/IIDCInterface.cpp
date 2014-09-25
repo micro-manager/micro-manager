@@ -222,7 +222,9 @@ Camera::~Camera()
       dc1394error_t err;
       err = dc1394_camera_set_power(libdc1394camera_, DC1394_OFF);
       if (err != DC1394_SUCCESS)
-         ; // TODO Log
+      {
+         // TODO Log
+      }
    }
 
    dc1394_camera_free(libdc1394camera_);
