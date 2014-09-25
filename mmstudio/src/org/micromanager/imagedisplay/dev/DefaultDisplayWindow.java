@@ -11,6 +11,7 @@ import ij.gui.ImageWindow;
 import ij.gui.StackWindow;
 import ij.gui.Toolbar;
 import ij.Prefs;
+import ij.WindowManager;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -349,14 +350,6 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
       setLocation(newLocation);
    }
 
-   @Override
-   public void windowClosing(WindowEvent e) {
-      if (!closed_) {
-         // TODO: handle save/abort/etc. logic
-//         displayBus_.post(new RequestToCloseEvent(this));
-      }
-   }
-
    /**
     * Our controls have changed size; repack the window to ensure all controls
     * are displayed.
@@ -365,17 +358,6 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
    @Subscribe
    public void onLayoutChange(ScrollerPanel.LayoutChangedEvent event) {
       pack();
-   }
-
-   // Force this window to go away.
-   public void forceClosed() {
-      try {
-         super.close();
-      } catch (NullPointerException ex) {
-         ReportingUtils.showError(ex, "Null pointer error in ImageJ code while closing window");
-      }
-      MMStudio.getInstance().removeMMBackgroundListener(this);
-      closed_ = true;
    }
 
    @Override
@@ -556,23 +538,41 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
    }
 
    @Override
-   public ImagePlus getImagePlus() {
-      return ijImage_;
-   }
-
-   @Override
    public Datastore getDatastore() {
       return store_;
    }
 
    @Override
+   public void windowClosing(WindowEvent e) {
+      ReportingUtils.logError("windowClosing called");
+      if (!closed_) {
+         // TODO: handle save/abort/etc. logic
+//         displayBus_.post(new RequestToCloseEvent(this));
+      }
+   }
+
+   // Force this window to go away.
+   public void forceClosed() {
+      ReportingUtils.logError("forceClosed called");
+      try {
+         super.close();
+      } catch (NullPointerException ex) {
+         ReportingUtils.showError(ex, "Null pointer error in ImageJ code while closing window");
+      }
+      MMStudio.getInstance().removeMMBackgroundListener(this);
+      closed_ = true;
+   }
+
+   @Override
    public boolean close() {
+      ReportingUtils.logError("close called");
       closeDisplay();
       return true;
    }
 
    @Override
    public void closeDisplay() {
+      ReportingUtils.logError("closeDisplay called");
       forceClosed();
       store_.removeDisplay(this);
    }
