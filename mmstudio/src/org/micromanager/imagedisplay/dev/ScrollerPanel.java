@@ -93,13 +93,8 @@ public class ScrollerPanel extends JPanel {
       // axis as the label. Default all scrollers to invisible unless they have
       // at least 2, um, "ticks"; they'll be shown once there's more than one
       // option along that axis.
-      // TODO: for now assuming all axes can animate.
       for (String axis : store_.getAxes()) {
          int max = store_.getMaxIndex(axis) + 1;
-         if (max < 1) { // TODO: should be impossible now.
-            // Scroll bars do not allow zero "ticks".
-            max = 1;
-         }
          AxisScroller scroller = new AxisScroller(axis, max, displayBus, true);
          if (max <= 1) {
             scroller.setVisible(false);
