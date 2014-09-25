@@ -1610,7 +1610,6 @@ int CIDS_uEye::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 
   case MM::BeforeGet:{
 
-    long bytesPerPixel = GetImageBytesPerPixel();
     int colorMode;
 
     colorMode=is_SetColorMode(hCam, IS_GET_COLOR_MODE);
