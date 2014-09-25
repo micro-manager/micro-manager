@@ -302,7 +302,7 @@ public class DisplayPlusControls extends DisplayControls {
                changingPanelLayout_.show(changingPanel_, EXPLORE_PANEL);
                statusLine_.setText("Left click or click and drag to acquire tiles, right click to pan, +/- keys to zoom");
                display_.activateExploreMode(exploreButton_.isSelected());
-               display_.drawOverlay(true);
+               display_.drawOverlay();
                createSurfaceButton_.setSelected(false);
                newGridButton_.setSelected(false);
             }
@@ -406,7 +406,7 @@ public class DisplayPlusControls extends DisplayControls {
       surfacesCombo.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            display_.drawOverlay(true);
+            display_.drawOverlay();
          }  
       });
       surfaceManager_.addListDataListener(surfacesCombo);      
@@ -417,7 +417,7 @@ public class DisplayPlusControls extends DisplayControls {
          public void actionPerformed(ActionEvent e) {            
             surfaceManager_.addNewSurface(surfaceManager_.getNewName());
             surfacesCombo.repaint();          
-            display_.drawOverlay(true); //update the shown surface
+            display_.drawOverlay(); //update the shown surface
          }
       });
       
@@ -470,7 +470,7 @@ public class DisplayPlusControls extends DisplayControls {
                gridRowSpinner_.setValue(regionManager_.getCurrentRegion().numRows());
                gridColSpinner_.setValue(regionManager_.getCurrentRegion().numCols());
             }
-            display_.drawOverlay(true);
+            display_.drawOverlay();
          }  
       });
       regionManager_.addListDataListener(gridsCombo);
@@ -504,7 +504,7 @@ public class DisplayPlusControls extends DisplayControls {
          @Override
          public void actionPerformed(ActionEvent e) {
             regionManager_.addNewRegion(regionManager_.getNewName(), createNewGrid());         
-            display_.drawOverlay(true); //update the shown surface
+            display_.drawOverlay(); //update the shown surface
          }
       });
 
@@ -641,7 +641,7 @@ public class DisplayPlusControls extends DisplayControls {
       int numCols = (Integer) gridColSpinner_.getValue();
       regionManager_.getCurrentRegion().updateParams(numRows, numCols);
       regionManager_.updateListeners();
-      display_.drawOverlay(true);
+      display_.drawOverlay();
    }
 
    private void updateZTopAndBottom() {
@@ -690,7 +690,7 @@ public class DisplayPlusControls extends DisplayControls {
       }
 
       display_.getHyperImage().setPosition(channel, slice, frame);
-      display_.drawOverlay(true);
+      display_.drawOverlay();
    }
 
    @Subscribe

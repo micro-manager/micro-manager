@@ -4,21 +4,39 @@
  */
 package surfacesandregions;
 
+import java.util.LinkedList;
+
 /**
  *
  * @author Henry
  */
 public class SurfaceManager extends SurfaceOrRegionManager {
-   
+
+//   private LinkedList<InterpolatorListener> interpolatorListeners_ = new LinkedList<InterpolatorListener>();
+//
+//   public void updateInterpolatorListeners(Interpolation interp) {
+//      for (InterpolatorListener il : interpolatorListeners_) {
+//         il.interpolationUpdated(interp);
+//      }
+//   }
+//
+//   public void removeInterpolatorListener(InterpolatorListener il) {
+//      interpolatorListeners_.remove(il);
+//   }
+//
+//   public void addInterpolatorListener(InterpolatorListener il) {
+//      interpolatorListeners_.add(il);
+//   }
+
    public SurfaceInterpolator getCurrentSurface() {
-       if (selectedIndex_ == -1) {
+      if (selectedIndex_ == -1) {
          return null;
       }
       return (SurfaceInterpolator) suregions_.get(suregionNames_.get(selectedIndex_));
    }
    
    public void addNewSurface(String name) {
-      suregions_.put(name,new SurfaceInterpolator());
+      suregions_.put(name,new SurfaceInterpolator(this));
       suregionNames_.add(name);
       selectedIndex_ = suregionNames_.size() - 1;
       super.updateListeners();

@@ -17,6 +17,17 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import javax.vecmath.Point3d;
 import coordinates.AffineUtils;
+import edu.mines.jtk.interp.RadialGridder2;
+import edu.mines.jtk.interp.SibsonInterpolator2;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 import org.apache.commons.math3.geometry.euclidean.twod.Euclidean2D;
 import org.apache.commons.math3.geometry.euclidean.twod.PolygonsSet;
@@ -34,22 +45,28 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class SurfaceInterpolator {
    
+   public static final int MIN_PIXELS_PER_INTERP_POINT = 1;
+   
    private LinkedList<Point3d> points_;
-   private Gridder2 gridder_;
-   private boolean interpFlipX_, interpFlipY_;
+//   private Gridder2 gridder_;
+   private SibsonInterpolator2 interpolator_;
    private MonotoneChain mChain_;
    private RegionFactory<Euclidean2D> regionFacotry_ = new RegionFactory<Euclidean2D>();
-   private Vector2D[] convexHullVertices_;
+   private volatile Vector2D[] convexHullVertices_;
    private Region<Euclidean2D> convexHullRegion_;
    private LinkedList<Vector2D> xyPoints_;
    private int numRows_, numCols_;
-   private ArrayList<StageCoordinates> positions_ = new ArrayList<StageCoordinates>();
+   private volatile ArrayList<StageCoordinates> xyPositions_;
    private double xyPadding_um_ = 0, zPadding_um_;
    private double boundXMin_, boundXMax_, boundYMin_, boundYMax_;
    private int boundXPixelMin_,boundXPixelMax_,boundYPixelMin_,boundYPixelMax_;
-   private float[][] interpolation_;
+   private ExecutorService executor_; 
+   private volatile Interpolation currentInterpolation_;
+   private SurfaceManager manager_;
+   private Future currentInterpolationTask_;
    
-   public SurfaceInterpolator() {
+   public SurfaceInterpolator(SurfaceManager manager) {
+      manager_ = manager;
       points_ = new LinkedList<Point3d>();
       mChain_ = new MonotoneChain(true);  
       xyPoints_ = new LinkedList<Vector2D>();
@@ -63,20 +80,27 @@ public class SurfaceInterpolator {
       //useful for debugging
 //           gridder_ = new NearestGridder2(new float[0],new float[0],new float[0]); //fast, like nearest neighbor, complexity decreases with # samples
       
-      //Biggest difference between these two appears to be that Splines can come up with z values outside the range of smaple points
-      //   not sure if this is good or bad yet
-      gridder_ = new SibsonGridder2(new float[]{0},new float[]{0},new float[]{0});
-//     gridder_ = new DiscreteSibsonGridder2(new float[0],new float[0],new float[0]); //fast, like nearest neighbor, complexity decreases with # samples
-//      gridder_ = new SplinesGridder2(new float[0], new float[0], new float[0]);  //Fast and appears good
-
+      interpolator_ = new SibsonInterpolator2(new float[]{0},new float[]{0},new float[]{0});
+//      gridder_ = new SibsonGridder2(new float[]{0},new float[]{0},new float[]{0});      
+//      gridder_ = new RadialGridder2(new RadialGridder2.Biharmonic(),new float[]{0},new float[]{0},new float[]{0});
+         
+      executor_ = new ThreadPoolExecutor(1,1,0,TimeUnit.MILLISECONDS,new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
+         @Override
+         public Thread newThread(Runnable r) {
+            return new Thread(r, "Interpolation calculation thread ");
+         }
+      });      
    }
    
    /**
-    * REturns the number of XY positions spanned by the footprint of this surface
+    * Returns the number of XY positions spanned by the footprint of this surface
     * @return 
     */
    public int getNumPositions() {
-      return positions_.size();
+      if (xyPositions_ == null) {
+         return -1;
+      }
+      return xyPositions_.size();
    }
    
    public double getZPadding() {
@@ -115,7 +139,11 @@ public class SurfaceInterpolator {
    }
    
    public ArrayList<StageCoordinates> getPositions() {
-      return positions_;
+      return xyPositions_;
+   }
+   
+   public Interpolation getCurrentInterpolation() {
+      return currentInterpolation_;
    }
 
    /**
@@ -123,15 +151,14 @@ public class SurfaceInterpolator {
     * Assumes positions_ contains list of all possible positions for fitting  
     * @param zPos 
     */
-   public ArrayList<StageCoordinates> getXYPositonsAtSlice(double zPos) {
+   public ArrayList<StageCoordinates> getXYPositonsAtSlice(double zPos, Interpolation interp) {
       ArrayList<StageCoordinates> positionsAtSlice = new ArrayList<StageCoordinates>();
-      
-      for (StageCoordinates pos : positions_) {
+      for (StageCoordinates pos : xyPositions_) {
          //get the corners with padding added in
          Point2D.Double[] corners = getPositionCornersWithPadding(pos);
          //First check position corners 
          for (Point2D.Double point : corners) {
-            Float interpVal = getInterpolatedValue(point.x, point.y);
+            Float interpVal = interp.getInterpolatedValue(point.x, point.y);
             if (interpVal == null) {
                continue;
             }
@@ -154,7 +181,6 @@ public class SurfaceInterpolator {
          } catch (NoninvertibleTransformException ex) {
             ReportingUtils.showError("Problem inverting affine transform");
          }
-         System.out.println("New Pos");
          outerloop:
          for (double x = 0; x <= pixelSpan.x; x += pixelSpan.x / (double) numTestPoints) {
             for (double y = 0; y <= pixelSpan.y; y += pixelSpan.y / (double) numTestPoints) {
@@ -163,24 +189,21 @@ public class SurfaceInterpolator {
                Point2D.Double stageCoords = new Point2D.Double();
                transform.transform(new Point2D.Double(x, y), stageCoords);
                //test point for inclusion of position
-               System.out.println(stageCoords.x + "\t\t" + stageCoords.y);   
-               Float interpVal = getInterpolatedValue(stageCoords.x, stageCoords.y);
+               Float interpVal = interp.getInterpolatedValue(stageCoords.x, stageCoords.y);
                if (interpVal == null) {
                   continue;
                }
-               if (interpVal <= zPos + zPadding_um_) {   //TODO: account for different signs of Z
+               if (interpVal <= zPos + zPadding_um_) {   //TODO: account for different signs of Z?
                   positionsAtSlice.add(pos);
                   break outerloop;
                }
 
             }
          }
-
-
       }
       return positionsAtSlice;
    }
-
+   
    private Point2D.Double[] getPositionCornersWithPadding(StageCoordinates pos) {
       if (xyPadding_um_ == 0) {
          return pos.corners;
@@ -261,31 +284,48 @@ public class SurfaceInterpolator {
          boundXPixelMax_ = (int) Math.max(boundXPixelMax_, pixelOffset.x);
       }
    }
-   
-   private void interpolateSurface() {
-      long startTime = System.currentTimeMillis();
-      //provide interpolator with current list of data points
-      float x[] = new float[points_.size()];
-      float y[] = new float[points_.size()];
-      float z[] = new float[points_.size()];
-      for (int i = 0; i < points_.size(); i++) {
-         x[i] = (float) points_.get(i).x;
-         y[i] = (float) points_.get(i).y;
-         z[i] = (float) points_.get(i).z;
+
+   private void interpolateSurface(LinkedList<Point3d> points) {
+      try {
+
+         //provide interpolator with current list of data points
+         float x[] = new float[points.size()];
+         float y[] = new float[points.size()];
+         float z[] = new float[points.size()];
+         for (int i = 0; i < points.size(); i++) {
+            x[i] = (float) points.get(i).x;
+            y[i] = (float) points.get(i).y;
+            z[i] = (float) points.get(i).z;
+         }
+//      gridder_.setScattered(z, x, y);
+         interpolator_.setSamples(z, x, y);
+
+         int maxPixelDimension = (int) (Math.max(boundXMax_ - boundXMin_, boundYMax_ - boundYMin_) / MMStudio.getInstance().getCore().getPixelSizeUm());
+         //Start with at least 20 interp points and go smaller and smaller until every pixel interped?
+         int pixelsPerInterpPoint = 1;
+         while (maxPixelDimension / (pixelsPerInterpPoint + 1) > 20) {
+            pixelsPerInterpPoint *= 2;
+         }
+         if (Thread.interrupted()) {
+            throw new InterruptedException();
+         }
+
+         while (pixelsPerInterpPoint >= MIN_PIXELS_PER_INTERP_POINT) {
+            System.out.println("Interpolating, pixels per interp point: " + pixelsPerInterpPoint);
+            int numInterpPointsX = (int) (((boundXMax_ - boundXMin_) / MMStudio.getInstance().getCore().getPixelSizeUm()) / pixelsPerInterpPoint);
+            int numInterpPointsY = (int) (((boundYMax_ - boundYMin_) / MMStudio.getInstance().getCore().getPixelSizeUm()) / pixelsPerInterpPoint);
+
+            //do interpolation
+            Sampling xSampling = new Sampling(numInterpPointsX, (boundXMax_ - boundXMin_) / (numInterpPointsX - 1), boundXMin_);
+            Sampling ySampling = new Sampling(numInterpPointsY, (boundYMax_ - boundYMin_) / (numInterpPointsY - 1), boundYMin_);
+            interpolator_.setNullValue(Float.MIN_VALUE);
+            interpolator_.useConvexHullBounds();
+            float[][] interpVals = interpolator_.interpolate(xSampling, ySampling);
+            currentInterpolation_ = new Interpolation(pixelsPerInterpPoint, interpVals, boundXMin_, boundXMax_, boundYMin_, boundYMax_, convexHullRegion_);
+            pixelsPerInterpPoint /= 2;
+         }
+      } catch (InterruptedException e) {
       }
-      gridder_.setScattered(z, x, y);
-
-      //TODO: optimal sampling interval/ range--pixel?
-      //Interpolation point at least every 10 pixels
-      int numInterpPointsX = (int) (((boundXMax_ - boundXMin_) / MMStudio.getInstance().getCore().getPixelSizeUm()) / 10);
-      int numInterpPointsY = (int) (((boundYMax_ - boundYMin_) / MMStudio.getInstance().getCore().getPixelSizeUm()) / 10);
-
-      //do interpolation
-      Sampling xSampling = new Sampling(numInterpPointsX, (boundXMax_ - boundXMin_) / (numInterpPointsX - 1), boundXMin_);
-      Sampling ySampling = new Sampling(numInterpPointsY, (boundYMax_ - boundYMin_) / (numInterpPointsY - 1), boundYMin_);
-      interpolation_ = gridder_.grid(xSampling, ySampling);
-
-      System.out.println("Interpolation time: " + (System.currentTimeMillis() - startTime) );
    }
 
    private void fitXYPositionsToConvexHull() {
@@ -319,7 +359,7 @@ public class SurfaceInterpolator {
             positions.add(new StageCoordinates(label, stagePos, tileWidth, tileHeight));
          }
       }
-      //delete positions squares (+padding) that do not overlap convez hull
+      //delete positions squares (+padding) that do not overlap convex hull
       for (int i = positions.size() - 1; i >= 0; i--) {
          StageCoordinates pos = positions.get(i);
          //create square region correpsonding to stage pos
@@ -331,7 +371,7 @@ public class SurfaceInterpolator {
          }
          square.getBoundarySize();
       }             
-      positions_ = positions;
+      xyPositions_ = positions;
    }
    
    /**
@@ -355,70 +395,74 @@ public class SurfaceInterpolator {
          points_.remove(minDistanceIndex);
          xyPoints_.remove(minDistanceIndex);
       }
-      updateConvexHullAndInterpolate();
+      //duplicate points for use on caluclation thread
+      LinkedList<Point3d> points = new LinkedList<Point3d>(points_);
+      LinkedList<Vector2D> xyPoints = new LinkedList<Vector2D>(xyPoints_);
+      updateConvexHullAndInterpolate(points,xyPoints); 
    }
    
    public void addPoint(double x, double y, double z) {
       points_.add(new Point3d(x,y,z)); //for interpolation
       xyPoints_.add(new Vector2D(x,y)); //for convex hull
-      updateConvexHullAndInterpolate(); 
-   }
-   
-   private void updateConvexHullAndInterpolate() {
-      if (points_.size() > 2) {
-         ConvexHull2D hull = mChain_.generate(xyPoints_);
-         convexHullRegion_ = hull.createRegion();
-         convexHullVertices_ = hull.getVertices();
-         calculateConvexHullBounds();
-         fitXYPositionsToConvexHull();
-         interpolateSurface();
-      } else {
-         convexHullRegion_ = null;
-         convexHullVertices_ = null;
-         numRows_ = 0;
-         numCols_ = 0;
-      }
-   }
-
-   public LinkedList<Point3d> getPoints() {
-      return points_;
-   }
-   
-   public boolean getFlipX() {
-      return interpFlipX_;
-   }
-   
-   public boolean getFlipY() {
-      return interpFlipY_;
-   }
-   
-   private boolean isInsideConvexHull(double x, double y) {
-      if (convexHullRegion_ == null) {
-         return false;
-      }
-      return convexHullRegion_.checkPoint(new Vector2D(x, y)) != Region.Location.OUTSIDE;
+      //duplicate points for use on caluclation thread
+      LinkedList<Point3d> points = new LinkedList<Point3d>(points_);
+      LinkedList<Vector2D> xyPoints = new LinkedList<Vector2D>(xyPoints_);
+      updateConvexHullAndInterpolate(points,xyPoints); 
    }
    
    /**
-    * 
-    * @param x
-    * @param y
-    * @return null if not inside  
+    * Constantly checks for interrupts in case list of points is updated
+    * @param points
+    * @param xyPoints 
     */
-   public Float getInterpolatedValue(double x, double y) {
-      //check if theres anyhting to interpolate
-      if (points_.size() < 3) {
-         return null;
+   private synchronized void updateConvexHullAndInterpolate(final LinkedList<Point3d> points, final LinkedList<Vector2D> xyPoints) {
+      xyPositions_ = null;
+      convexHullVertices_ = null;
+      if (currentInterpolationTask_ != null) {
+         //interpolation points have changed so cancel exisiting ones
+         currentInterpolationTask_.cancel(true);
+         currentInterpolation_ = null;
       }
-      if (!isInsideConvexHull(x, y)) {
-         return null;
-      }
-      
-      int numInterpPointsX = interpolation_[0].length;
-      int numInterpPointsY = interpolation_.length;
-      
-      int xIndex = (int) Math.round(((x - boundXMin_) / (boundXMax_ - boundXMin_) ) * (numInterpPointsX - 1));
-      int yIndex = (int) Math.round(((y - boundYMin_) / (boundYMax_ - boundYMin_) ) * (numInterpPointsY - 1));
-      return interpolation_[yIndex][xIndex];
+      Runnable interpRunnable = new Runnable() {
+         @Override
+         public void run() {
+                     
+            if (points.size() > 2) {
+               ConvexHull2D hull = mChain_.generate(xyPoints);
+               if (Thread.interrupted()) {
+                  return;
+               }
+               convexHullVertices_ = hull.getVertices();
+               if (Thread.interrupted()) {
+                  return;
+               }
+               convexHullRegion_ = hull.createRegion();
+               if (Thread.interrupted()) {                  
+                  return;
+               }
+               calculateConvexHullBounds();
+               if (Thread.interrupted()) {                  
+                  return;
+               }
+               fitXYPositionsToConvexHull();
+               if (Thread.interrupted()) {
+                  return;
+               }
+               interpolateSurface(points);
+            } else {
+               convexHullRegion_ = null;
+               convexHullVertices_ = null;
+               numRows_ = 0;
+               numCols_ = 0;
+            }
+
+         }
+      };
+      currentInterpolationTask_ = executor_.submit(interpRunnable);
    }
+
+   public Point3d[] getPoints() {
+      return points_.toArray(new Point3d[0]);
+   }
+   
 }

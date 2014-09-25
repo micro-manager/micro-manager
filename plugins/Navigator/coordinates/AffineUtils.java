@@ -8,6 +8,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
+import java.util.TreeMap;
 import java.util.prefs.Preferences;
 import org.micromanager.MMStudio;
 import org.micromanager.api.MultiStagePosition;
@@ -24,20 +25,28 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class AffineUtils {
    
+   private static TreeMap<String, AffineTransform> affineTransforms_ = new TreeMap<String,AffineTransform>();
+   
+   //Only read from preferences one time, so that an inordinate amount of time isn't spent in native system calls
    public static AffineTransform getAffineTransform(double xCenter, double yCenter) {
-      //Get affine transform
-      Preferences prefs = Preferences.userNodeForPackage(MMStudio.class);
-
-      AffineTransform transform = null;
       try {
-         transform = JavaUtils.getObjectFromPrefs(prefs, "affine_transform_"
-                 + MMStudio.getInstance().getMMCore().getCurrentPixelSizeConfig(), (AffineTransform) null);
+
+         String pixelSizeConfig = MMStudio.getInstance().getMMCore().getCurrentPixelSizeConfig();
+         AffineTransform transform = null;
+         if (affineTransforms_.containsKey(pixelSizeConfig)) {
+            transform = affineTransforms_.get(pixelSizeConfig);
+         } else {
+            //Get affine transform from prefs
+            Preferences prefs = Preferences.userNodeForPackage(MMStudio.class);
+            transform = JavaUtils.getObjectFromPrefs(prefs, "affine_transform_" + pixelSizeConfig, (AffineTransform) null);
+            affineTransforms_.put(pixelSizeConfig, transform);
+         }
          //set map origin to current stage position
          double[] matrix = new double[6];
          transform.getMatrix(matrix);
          matrix[4] = xCenter;
          matrix[5] = yCenter;
-         return new AffineTransform(matrix);     
+         return new AffineTransform(matrix);
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
          ReportingUtils.showError("Couldnt get affine transform");
