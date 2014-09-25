@@ -847,4 +847,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          initialize();
       }
    }
+
+   public void prepareForClose() {
+      store_.unregisterForEvents(this);
+   }
 }

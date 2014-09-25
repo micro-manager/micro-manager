@@ -20,7 +20,6 @@ import org.micromanager.imagedisplay.AxisScroller;
  * AxisScrollers, and how they affect the display of a collection of images.
  */
 public class ScrollerPanel extends JPanel {
-   
    /**
     * This class signifies that the currently-displayed image needs to be 
     * updated.
@@ -154,6 +153,7 @@ public class ScrollerPanel extends JPanel {
     * that no new ones can get created.
     */
    public void prepareForClose() {
+      store_.unregisterForEvents(this);
       canMakeTimers_ = false;
       for (AxisScroller scroller : scrollers_) {
          scroller.setIsAnimated(false);
