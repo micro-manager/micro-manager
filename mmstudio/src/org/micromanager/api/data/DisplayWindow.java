@@ -28,9 +28,18 @@ public interface DisplayWindow {
    public Datastore getDatastore();
 
    /**
-    * Close the display and remove it from the Datastore.
+    * Publish a RequestToCloseEvent, which may cause any relevant subscribers
+    * to call forceClosed(), below. This is the recommended way to close
+    * DisplayWindows, so that cleanup logic can be performed (e.g. saving of
+    * unsaved data, or stopping acquisitions/live mode).
     */
-   public void closeDisplay();
+   public void requestToClose();
+
+   /**
+    * Close the display and remove it from the Datastore, bypassing any logic
+    * that would normally occur when the window is closed.
+    */
+   public void forceClosed();
 
    /**
     * Return true iff the window has been closed.
@@ -47,4 +56,17 @@ public interface DisplayWindow {
     * Otherwise return null.
     */
    public ImageWindow getImageWindow();
+
+   /**
+    * Register for access to the EventBus that the window uses for propagating
+    * events. Note that this is different from the EventBus that the Datastore
+    * uses; this EventBus is specifically for events related to the display.
+    */
+   public void registerForEvents(Object obj);
+
+   /**
+    * Unregister for events for this display. See documentation for
+    * registerForEvents().
+    */
+   public void unregisterForEvents(Object obj);
 }
