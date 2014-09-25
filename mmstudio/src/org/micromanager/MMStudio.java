@@ -1419,6 +1419,8 @@ public class MMStudio implements ScriptInterface {
          profileWin_.dispose();
       }
 
+      LineProfile.cleanup();
+
       if (scriptPanel_ != null) {
          removeMMBackgroundListener(scriptPanel_);
          scriptPanel_.closePanel();
