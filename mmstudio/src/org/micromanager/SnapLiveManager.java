@@ -22,7 +22,7 @@ import org.micromanager.data.DefaultCoords;
 import org.micromanager.data.DefaultDatastore;
 import org.micromanager.data.DefaultImage;
 
-import org.micromanager.imagedisplay.dev.TestDisplay;
+import org.micromanager.imagedisplay.dev.DisplayStarter;
 
 import org.micromanager.internalinterfaces.LiveModeListener;
 
@@ -226,7 +226,7 @@ public class SnapLiveManager {
     * Datastore), so we'll be setting display_ later on in displayImage().
     */
    private void createDisplay() {
-      new TestDisplay(store_);
+      new DisplayStarter(store_);
    }
 
    public void displayImage(Image image) {
@@ -237,7 +237,7 @@ public class SnapLiveManager {
          ReportingUtils.showError(e, "Snap/Live display datastore locked.");
       }
       if (display_ == null || display_.getIsClosed()) {
-         // Now that we know that the TestDisplay we made earlier will
+         // Now that we know that the DisplayStarter we made earlier will
          // have made a DisplayWindow, access it for ourselves.
          List<DisplayWindow> displays = store_.getDisplays();
          if (displays.size() > 0) {
@@ -266,7 +266,7 @@ public class SnapLiveManager {
       try {
          if (shouldDisplay) {
             if (display_ == null || display_.getIsClosed()) {
-               // Assume that there's no TestDisplay waiting to create a
+               // Assume that there's no DisplayStarter waiting to create a
                // DisplayWindow, and create one now.
                createDisplay();
             }

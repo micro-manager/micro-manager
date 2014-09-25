@@ -99,6 +99,7 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
       super(plus);
       store_ = store;
       store_.associateDisplay(this);
+      store_.registerForEvents(this, 100);
       stack_ = stack;
       plus_ = plus;
       ijImage_ = plus_;
@@ -591,5 +592,13 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
    public void onPixelsSet(CanvasUpdateThread.PixelsSetEvent event) {
       histograms_.calcAndDisplayHistAndStats(true);
       metadata_.imageChangedUpdate(event.getImage());
+   }
+
+   /**
+    * Datastore has received a new image; display it.
+    */
+   @Subscribe
+   public void onNewImage(NewImageEvent event) {
+      receiveNewImage(event.getImage());
    }
 }
