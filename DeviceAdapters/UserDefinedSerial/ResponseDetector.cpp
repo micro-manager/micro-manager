@@ -174,7 +174,7 @@ TerminatorResponseDetector::Recv(MM::Core* core, MM::Device* device,
 
 // Helper for BinaryResponseDetector::Recv()
 static int
-GetPortAnswerTimeout(MM::Core* core, MM::Device* device,
+GetPortAnswerTimeout(MM::Core* core, MM::Device*,
       const std::string& port, double& timeoutMs)
 {
    int err;
