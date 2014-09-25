@@ -112,7 +112,7 @@ public class CanvasUpdateThread extends Thread {
             // Wait for the canvas to be available. If we don't do this,
             // then our framerate tanks, possibly because of repaint
             // events piling up in the EDT. It's hard to tell. 
-            while (CanvasPaintPending.isMyPaintPending(
+            while (!shouldStop_.get() && CanvasPaintPending.isMyPaintPending(
                   plus_.getCanvas(), plus_)) {
                try {
                   Thread.sleep(10);
@@ -144,10 +144,14 @@ public class CanvasUpdateThread extends Thread {
     * Show an image -- set the pixels of the canvas and update the display.
     */
    private void showImage(Image image) {
-      stack_.setCoords(image.getCoords());
-      plus_.getProcessor().setPixels(image.getRawPixels());
-      plus_.updateAndDraw();
-      displayBus_.post(new PixelsSetEvent(image));
+      // This null check protects us against harmless exception spew when
+      // e.g. live mode is running and the user closes the window.
+      if (plus_.getProcessor() != null) {
+         stack_.setCoords(image.getCoords());
+         plus_.getProcessor().setPixels(image.getRawPixels());
+         plus_.updateAndDraw();
+         displayBus_.post(new PixelsSetEvent(image));
+      }
    }
 
    /**
