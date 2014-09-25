@@ -151,7 +151,9 @@ FrameRetriever::RetrieveFrame(unsigned timeoutMs, unsigned pollingIntervalMs)
          dc1394error_t enqErr;
          enqErr = dc1394_capture_enqueue(libdc1394camera_, dequeuedFrame);
          if (enqErr != DC1394_SUCCESS)
-            ; // TODO Log
+         {
+            // TODO Log
+         }
          throw;
       }
    }
