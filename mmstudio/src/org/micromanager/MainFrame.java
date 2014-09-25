@@ -316,7 +316,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
          new Runnable() {
             @Override
             public void run() {
-               studio_.doSnap();
+               studio_.doSnap(false);
             }
          }, 
          "camera.png", topPanel, 7, 4, 95, 25);
@@ -336,7 +336,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
          new Runnable() {
             @Override
             public void run() {
-               snapLiveManager_.snap();
+               studio_.doSnap(true);
             }
          }, 
          "camera_plus_arrow.png", topPanel, 7, 48, 95, 69);

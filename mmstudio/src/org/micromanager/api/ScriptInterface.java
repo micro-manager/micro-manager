@@ -217,14 +217,16 @@ public interface ScriptInterface {
    public String getCurrentAlbum();
 
    /**
-    * Add a TaggedImage to an album; creates a new album if the image and current album
-    * do not match in image dimensions, bits per pixel, bytes per pixel, or number of channels.
-    * The current album is the most recently created one
-    * Albums are also used by the "Camera --&gt; Album" button in the main window of Micro-Manager and 
-    * the "--&gt; Album" button on the snap/live window
+    * Add the provided image to the current active album. If that album does
+    * not exist or has been locked, then a new one will be created.
     */
-   public void addToAlbum(TaggedImage image) throws MMScriptException;
-   
+   public void addToAlbum(Image image);
+  
+   /**
+    * Return the Datastore that is storing images in the current album.
+    */
+   public Datastore getAlbumDatastore();
+
    /**
     * Checks whether an acquisition with the given name already exists.
     */
