@@ -29,6 +29,8 @@
 MODULE_API void
 InitializeModuleData()
 {
+   RegisterDevice(g_DeviceName_GenericDevice, MM::GenericDevice,
+         "Generic device using user-defined serial commands");
    RegisterDevice(g_DeviceName_Shutter, MM::ShutterDevice,
          "Generic shutter using user-defined serial commands");
    RegisterDevice(g_DeviceName_StateDevice, MM::StateDevice,
@@ -42,7 +44,9 @@ CreateDevice(const char* name)
    if (!name)
       return 0;
 
-   if (strcmp(name, g_DeviceName_Shutter) == 0)
+   if (strcmp(name, g_DeviceName_GenericDevice) == 0)
+      return new UserDefSerialGenericDevice();
+   else if (strcmp(name, g_DeviceName_Shutter) == 0)
       return new UserDefSerialShutter();
    else if (strcmp(name, g_DeviceName_StateDevice) == 0)
       return new UserDefSerialStateDevice();
@@ -55,6 +59,18 @@ MODULE_API void
 DeleteDevice(MM::Device* pDevice)
 {
    delete pDevice;
+}
+
+
+UserDefSerialGenericDevice::UserDefSerialGenericDevice()
+{
+}
+
+
+void
+UserDefSerialGenericDevice::GetName(char* name) const
+{
+   CDeviceUtils::CopyLimitedString(name, g_DeviceName_GenericDevice);
 }
 
 

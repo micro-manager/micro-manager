@@ -113,12 +113,26 @@ private:
 };
 
 
+class UserDefSerialGenericDevice :
+   public UserDefSerialBase<CGenericBase, UserDefSerialGenericDevice>
+{
+protected:
+   typedef UserDefSerialGenericDevice Self;
+   typedef UserDefSerialBase< ::CGenericBase, Self > Super;
+
+public:
+   UserDefSerialGenericDevice();
+
+   virtual void GetName(char* name) const;
+};
+
+
 class UserDefSerialShutter :
    public UserDefSerialBase<CShutterBase, UserDefSerialShutter>
 {
 protected:
    typedef UserDefSerialShutter Self;
-   typedef UserDefSerialBase< ::CShutterBase, UserDefSerialShutter > Super;
+   typedef UserDefSerialBase< ::CShutterBase, Self > Super;
 
 public:
    UserDefSerialShutter();
@@ -163,8 +177,7 @@ class UserDefSerialStateDevice :
 {
 protected:
    typedef UserDefSerialStateDevice Self;
-   typedef UserDefSerialBase< ::CStateDeviceBase, UserDefSerialStateDevice >
-      Super;
+   typedef UserDefSerialBase< ::CStateDeviceBase, Self > Super;
 
 public:
    UserDefSerialStateDevice();

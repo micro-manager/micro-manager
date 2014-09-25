@@ -34,8 +34,9 @@ const int ERR_NO_RESPONSE_ALTERNATIVES = 2010;
 const int ERR_VAR_LEN_RESPONSE_MUST_NOT_BE_EMPTY = 2011;
 
 
-const char *const g_DeviceName_Shutter = "UserDefinedShutter";
-const char *const g_DeviceName_StateDevice = "UserDefinedStateDevice";
+const char* const g_DeviceName_GenericDevice = "UserDefinedGenericDevice";
+const char* const g_DeviceName_Shutter = "UserDefinedShutter";
+const char* const g_DeviceName_StateDevice = "UserDefinedStateDevice";
 
 
 const char* const g_PropName_CommandSendMode = "Command mode";
