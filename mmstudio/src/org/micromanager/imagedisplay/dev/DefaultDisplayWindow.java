@@ -56,9 +56,9 @@ import org.micromanager.imagedisplay.IMMImagePlus;
 import org.micromanager.imagedisplay.MMCompositeImage;
 import org.micromanager.imagedisplay.MMImagePlus;
 
+import org.micromanager.LineProfile;
 import org.micromanager.MMStudio;
 
-import org.micromanager.utils.CanvasPaintPending;
 import org.micromanager.utils.ReportingUtils;
 
 
@@ -592,6 +592,9 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
    public void onPixelsSet(CanvasUpdateThread.PixelsSetEvent event) {
       histograms_.calcAndDisplayHistAndStats(true);
       metadata_.imageChangedUpdate(event.getImage());
+      if (WindowManager.getCurrentWindow() == this) {
+         LineProfile.updateLineProfile();
+      }
    }
 
    /**

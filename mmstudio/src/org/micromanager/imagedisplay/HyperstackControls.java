@@ -475,7 +475,7 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
    private void snapToAlbumButtonActionPerformed() {
       try {
          MMStudio gui = MMStudio.getInstance();
-         gui.copyFromLiveModeToAlbum(display_);
+         gui.doSnap(true);
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
