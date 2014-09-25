@@ -1688,8 +1688,9 @@ int CTIScamera::OnRotate(MM::PropertyBase* pProp, MM::ActionType eAct)
             roiYSize_ = info.dim.cy;
 
 			ResizeImageBuffer();
-		    bool bSuccess = pGrabber->startLive(ACTIVEMOVIE);
-			assert (bSuccess == true);
+			bool bSuccess;
+			bSuccess = pGrabber->startLive(ACTIVEMOVIE);
+			assert (bSuccess);
 		}
 		else if (lAngleOld != lAngleNew)
 		{
