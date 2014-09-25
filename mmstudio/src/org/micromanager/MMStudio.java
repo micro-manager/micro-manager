@@ -96,8 +96,6 @@ import org.micromanager.dialogs.CalibrationListDlg;
 import org.micromanager.dialogs.MMIntroDlg;
 import org.micromanager.dialogs.RegistrationDlg;
 import org.micromanager.events.EventManager;
-import org.micromanager.graph.GraphData;
-import org.micromanager.graph.GraphFrame;
 
 import org.micromanager.imagedisplay.dev.DisplayStarter;
 import org.micromanager.imagedisplay.DisplayWindow;
@@ -161,7 +159,6 @@ public class MMStudio implements ScriptInterface {
    private MMOptions options_;
    private boolean amRunningAsPlugin_;
    private GUIColors guiColors_;
-   private GraphFrame profileWin_;
    private PropertyEditor propertyBrowser_;
    private CalibrationListDlg calibrationListDlg_;
    private AcqControlDlg acqControlWin_;
@@ -177,7 +174,6 @@ public class MMStudio implements ScriptInterface {
    private static final int maxMRUCfgs_ = 5;
    private String sysConfigFile_;
    private String startupScriptFile_;
-   private GraphData lineProfileData_;
    // applications settings
    private Preferences mainPrefs_;
    private Preferences systemPrefs_;
@@ -734,35 +730,6 @@ public class MMStudio implements ScriptInterface {
       return options_.hideMDADisplay_;
    }
 
-   public void updateLineProfile() {
-      if (WindowManager.getCurrentWindow() == null || profileWin_ == null
-            || !profileWin_.isShowing()) {
-         return;
-      }
-
-      calculateLineProfileData(WindowManager.getCurrentImage());
-      profileWin_.setData(lineProfileData_);
-   }
-
-   public void openLineProfileWindow() {
-      if (WindowManager.getCurrentWindow() == null || 
-              WindowManager.getCurrentWindow().isClosed()) {
-         return;
-      }
-      calculateLineProfileData(WindowManager.getCurrentImage());
-      if (lineProfileData_ == null) {
-         return;
-      }
-      profileWin_ = new GraphFrame();
-      profileWin_.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-      profileWin_.setData(lineProfileData_);
-      profileWin_.setAutoScale();
-      profileWin_.setTitle("Live line profile");
-      profileWin_.setBackground(getBackgroundColor());
-      addMMBackgroundListener(profileWin_);
-      profileWin_.setVisible(true);
-   }
-
    @Override
    public Rectangle getROI() throws MMScriptException {
       // ROI values are given as x,y,w,h in individual one-member arrays (pointers in C++):
@@ -774,38 +741,6 @@ public class MMStudio implements ScriptInterface {
       }
       // Return as a single array with x,y,w,h:
       return new Rectangle(a[0][0], a[1][0], a[2][0], a[3][0]);
-   }
-
-   private void calculateLineProfileData(ImagePlus imp) {
-      // generate line profile
-      Roi roi = imp.getRoi();
-      if (roi == null || !roi.isLine()) {
-
-         // if there is no line ROI, create one
-         Rectangle r = imp.getProcessor().getRoi();
-         int iWidth = r.width;
-         int iHeight = r.height;
-         int iXROI = r.x;
-         int iYROI = r.y;
-         if (roi == null) {
-            iXROI += iWidth / 2;
-            iYROI += iHeight / 2;
-         }
-
-         roi = new Line(iXROI - iWidth / 4, iYROI - iWidth / 4, iXROI
-               + iWidth / 4, iYROI + iHeight / 4);
-         imp.setRoi(roi);
-         roi = imp.getRoi();
-      }
-
-      ImageProcessor ip = imp.getProcessor();
-      ip.setInterpolate(true);
-      Line line = (Line) roi;
-
-      if (lineProfileData_ == null) {
-         lineProfileData_ = new GraphData();
-      }
-      lineProfileData_.setData(line.getPixels());
    }
 
    public void setROI() {
@@ -1301,7 +1236,7 @@ public class MMStudio implements ScriptInterface {
       }
       if (update) {
          frame_.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-         updateLineProfile();
+         LineProfile.updateLineProfile();
       }
       return true;
    }
