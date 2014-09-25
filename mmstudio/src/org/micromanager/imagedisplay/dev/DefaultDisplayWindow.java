@@ -544,16 +544,29 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
 
    @Override
    public void windowClosing(WindowEvent e) {
-      ReportingUtils.logError("windowClosing called");
       if (!closed_) {
          // TODO: handle save/abort/etc. logic
-//         displayBus_.post(new RequestToCloseEvent(this));
+         closeDisplay();
       }
+   }
+
+   @Override
+   public boolean close() {
+      closeDisplay();
+      return true;
+   }
+
+   @Override
+   public void closeDisplay() {
+      controls_.prepareForClose();
+      histograms_.prepareForClose();
+      store_.removeDisplay(this);
+      store_.unregisterForEvents(this);
+      forceClosed();
    }
 
    // Force this window to go away.
    public void forceClosed() {
-      ReportingUtils.logError("forceClosed called");
       try {
          super.close();
       } catch (NullPointerException ex) {
@@ -561,20 +574,6 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
       }
       MMStudio.getInstance().removeMMBackgroundListener(this);
       closed_ = true;
-   }
-
-   @Override
-   public boolean close() {
-      ReportingUtils.logError("close called");
-      closeDisplay();
-      return true;
-   }
-
-   @Override
-   public void closeDisplay() {
-      ReportingUtils.logError("closeDisplay called");
-      forceClosed();
-      store_.removeDisplay(this);
    }
 
    @Override
