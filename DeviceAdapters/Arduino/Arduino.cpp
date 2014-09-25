@@ -1501,7 +1501,7 @@ int CArduinoInput::Initialize()
 
    }
 
-   mThread_ = new ArduinoInputMonitorThread(*this, true);
+   mThread_ = new ArduinoInputMonitorThread(*this);
    mThread_->Start();
 
    initialized_ = true;
@@ -1663,7 +1663,7 @@ int CArduinoInput::ReadNBytes(CArduinoHub* hub, unsigned int n, unsigned char* a
    return DEVICE_OK;
 }
 
-ArduinoInputMonitorThread::ArduinoInputMonitorThread(CArduinoInput& aInput, bool debug) :
+ArduinoInputMonitorThread::ArduinoInputMonitorThread(CArduinoInput& aInput) :
    state_(0),
    aInput_(aInput)
 {

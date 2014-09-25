@@ -247,7 +247,7 @@ private:
 class ArduinoInputMonitorThread : public MMDeviceThreadBase
 {
    public:
-      ArduinoInputMonitorThread(CArduinoInput& aInput, bool debug);
+      ArduinoInputMonitorThread(CArduinoInput& aInput);
      ~ArduinoInputMonitorThread();
       int svc();
       int open (void*) { return 0;}
