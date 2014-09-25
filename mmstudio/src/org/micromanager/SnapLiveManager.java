@@ -95,10 +95,7 @@ public class SnapLiveManager {
       stopLiveMode();
       shouldStopGrabberThread_ = false;
       if (display_ == null || display_.getIsClosed()) {
-         // We need to recreate the display. Unfortunately it won't actually
-         // appear until images are available, so we'll be setting display_
-         // later on in the grabber thread.
-         new TestDisplay(store_);
+         createDisplay(); // See comments on this function.
       }
       grabberThread_ = new Thread(new Runnable() {
          @Override
@@ -173,7 +170,6 @@ public class SnapLiveManager {
                   continue;
                }
                DefaultImage image = new DefaultImage(tagged);
-               // TODO: this doesn't take multiple channels into account.
                Coords newCoords = image.getCoords().copy()
                   .position("time", lastTimepoint_ % MAX_TIMEPOINTS)
                   .position("channel", c).build();
@@ -214,6 +210,16 @@ public class SnapLiveManager {
       return null;
    }
 
+   /**
+    * We need to [re]create the display. Unfortunately it won't actually
+    * appear until images are available (since we can't create the ImagePlus
+    * used for drawing things until after at least one image is in the
+    * Datastore), so we'll be setting display_ later on in displayImage().
+    */
+   private void createDisplay() {
+      new TestDisplay(store_);
+   }
+
    public void displayImage(Image image) {
       try {
          store_.putImage(image);
@@ -240,13 +246,38 @@ public class SnapLiveManager {
 
    /**
     * Snap an image, display it, and return it.
+    * TODO: for multichannel images we are just returning the last channel's
+    * image.
     */
    public Image snap() {
       if (isOn_) {
          // Just return the most recent image.
          return lastImage_;
       }
-      ReportingUtils.logError("TODO: do snap");
+      try {
+         if (display_ == null || display_.getIsClosed()) {
+            // Assume that there's no TestDisplay waiting to create a
+            // DisplayWindow, and create one now.
+            createDisplay();
+         }
+         else {
+            display_.toFront();
+         }
+         core_.snapImage();
+         Image result = null;
+         for (int c = 0; c < core_.getNumberOfCameraChannels(); ++c) {
+            TaggedImage tagged = core_.getTaggedImage(c);
+            result = new DefaultImage(tagged);
+            Coords newCoords = result.getCoords().copy()
+               .position("channel", c).build();
+            result = result.copyAt(newCoords);
+            displayImage(result);
+         }
+         return result;
+      }
+      catch (Exception e) {
+         ReportingUtils.showError(e, "Failed to snap image");
+      }
       return null;
    }
 }

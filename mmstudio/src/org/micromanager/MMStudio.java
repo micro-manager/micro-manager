@@ -1258,47 +1258,9 @@ public class MMStudio implements ScriptInterface {
          ReportingUtils.showError("No camera configured");
          return;
       }
-
-      BlockingQueue<TaggedImage> snapImageQueue = 
-              new LinkedBlockingQueue<TaggedImage>();
-      
-      try {
-         core_.snapImage();
-         long c = core_.getNumberOfCameraChannels();
-         runDisplayThread(snapImageQueue, new DisplayImageRoutine() {
-            @Override
-            public void show(final TaggedImage image) {
-               if (shouldAddToAlbum) {
-                  try {
-                     addToAlbum(image);
-                  } catch (MMScriptException ex) {
-                     ReportingUtils.showError(ex);
-                  }
-               } else {
-                  try {
-                     snapLiveManager_.displayImage(new DefaultImage(image));
-                  }
-                  catch (JSONException e) {
-                     ReportingUtils.logError(e, "Couldn't generate Image from TaggedImage");
-                  }
-                  catch (MMScriptException e) {
-                     ReportingUtils.logError(e, "Couldn't generate Image from TaggedImage");
-                  }
-               }
-            }
-         });
-         
-         for (int i = 0; i < c; ++i) {
-            TaggedImage img = core_.getTaggedImage(i);
-            MDUtils.setNumChannels(img.tags, (int) c);
-            snapImageQueue.put(img);
-         }
-         
-         snapImageQueue.put(TaggedImageQueue.POISON);
-
-         snapLiveManager_.moveDisplayToFront();
-      } catch (Exception ex) {
-         ReportingUtils.showError(ex);
+      Image image = snapLiveManager_.snap();
+      if (shouldAddToAlbum) {
+         ReportingUtils.showError("TODO: add image to album.");
       }
    }
 
