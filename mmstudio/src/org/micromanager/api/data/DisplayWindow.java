@@ -23,11 +23,6 @@ public interface DisplayWindow {
    public void addControlPanel(String label, Component widget);
 
    /**
-    * Retrieve the ImageJ ImagePlus object.
-    */
-   public ImagePlus getImagePlus();
-
-   /**
     * Retrieve the Datastore backing this display.
     */
    public Datastore getDatastore();
