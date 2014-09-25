@@ -17,6 +17,7 @@ import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.DatastoreLockedException;
 import org.micromanager.api.data.DisplayWindow;
 import org.micromanager.api.data.Image;
+import org.micromanager.api.data.RequestToCloseEvent;
 
 import org.micromanager.data.DefaultCoords;
 import org.micromanager.data.DefaultDatastore;
@@ -242,6 +243,7 @@ public class SnapLiveManager {
          List<DisplayWindow> displays = store_.getDisplays();
          if (displays.size() > 0) {
             display_ = displays.get(0);
+            display_.registerForEvents(this);
          }
       }
       lastImage_ = image;
@@ -292,5 +294,12 @@ public class SnapLiveManager {
          ReportingUtils.showError(e, "Failed to snap image");
       }
       return null;
+   }
+
+   @Subscribe
+   public void onRequestToClose(RequestToCloseEvent event) {
+      // Closing is fine by us, but we need to stop live mode first.
+      setLiveMode(false);
+      display_.forceClosed();
    }
 }
