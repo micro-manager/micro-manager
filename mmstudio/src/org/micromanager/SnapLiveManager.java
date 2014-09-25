@@ -245,23 +245,25 @@ public class SnapLiveManager {
    }
 
    /**
-    * Snap an image, display it, and return it.
+    * Snap an image, display it if indicated, and return it.
     * TODO: for multichannel images we are just returning the last channel's
     * image.
     */
-   public Image snap() {
+   public Image snap(boolean shouldDisplay) {
       if (isOn_) {
          // Just return the most recent image.
          return lastImage_;
       }
       try {
-         if (display_ == null || display_.getIsClosed()) {
-            // Assume that there's no TestDisplay waiting to create a
-            // DisplayWindow, and create one now.
-            createDisplay();
-         }
-         else {
-            display_.toFront();
+         if (shouldDisplay) {
+            if (display_ == null || display_.getIsClosed()) {
+               // Assume that there's no TestDisplay waiting to create a
+               // DisplayWindow, and create one now.
+               createDisplay();
+            }
+            else {
+               display_.toFront();
+            }
          }
          core_.snapImage();
          Image result = null;
@@ -271,7 +273,9 @@ public class SnapLiveManager {
             Coords newCoords = result.getCoords().copy()
                .position("channel", c).build();
             result = result.copyAt(newCoords);
-            displayImage(result);
+            if (shouldDisplay) {
+               displayImage(result);
+            }
          }
          return result;
       }
