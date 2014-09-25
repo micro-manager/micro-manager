@@ -1560,8 +1560,6 @@ int Universal::SnapImage()
 	//	Reset event handle
 	ResetEvent(hDataUpdatedEvent_);
 
-	void* pixBuffer = const_cast<unsigned char*> (img_.GetPixels());
-
 	snappingSingleFrame_ = true;
 	numImages_ = 1; 
 	curImageCnt_ = 0;
@@ -1825,7 +1823,6 @@ int Universal::buildSpdTable()
 	camSpdTable_.clear();
 	camSpdTableReverse_.clear();
 
-	pibln      committed;
     const PicamCollectionConstraint* speed_capable=NULL;
     const PicamCollectionConstraint* port_capable=NULL;
     const PicamCollectionConstraint* gain_capable=NULL;
@@ -1836,7 +1833,6 @@ int Universal::buildSpdTable()
 	piint nDefaultPort=0;
 	piint nDefaultADC=0;
 	piflt dDefaultAdcSpeed;
-	char szStr[256];
 
 	/* Get the bit depth */
     Picam_CanReadParameter(hPICAM_, PicamParameter_PixelBitDepth, &readable );
@@ -2117,7 +2113,6 @@ int Universal::ResizeImageBufferSingle()
 		img_.Resize(roi_.newXSize, roi_.newYSize);
 		colorImg_.Resize(roi_.newXSize, roi_.newYSize, 4);
 
-		piint frameSize = 0;
 		piint pvExposureMode = 0;
 		piflt pvExposure = 0.0;
 		nRet = GetPvExposureSettings( pvExposureMode, pvExposure );
@@ -2203,15 +2198,8 @@ int Universal::ThreadRun(void)
 	int     ret = DEVICE_ERR;
 	char dbgBuf[128]; // Debug log buffer
 	uniAcqThd_->setStop(false); // make sure this thread's status is updated properly.
-	PicamError err;
 	pibln bRunning=TRUE;
-    PicamAvailableData dataFrame;
-    PicamAcquisitionStatus status;
-    piint readoutstride = 0;
 	Metadata md;
-	unsigned char* finalImageBuf;
-	char szStr[256];
-	DWORD dwError;
 
 	try 
 	{
@@ -2323,7 +2311,6 @@ int Universal::StartSequenceAcquisition(long numImages, double interval_ms, bool
 	numImages_       = numImages;
 	curImageCnt_     = 0;
 	pibln committed;
-	char szStr[256];
 
 	MM::MMTime start = GetCurrentMMTime();
 	g_picamLock.Lock();
