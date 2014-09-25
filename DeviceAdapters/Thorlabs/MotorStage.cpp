@@ -80,10 +80,10 @@ const ThorlabsCommand setVelocityProfileCmd = {0x0413, 0x0E, 0x00, DEVICE_CHANNE
 MotorStage::MotorStage(MM::Device *parent, MM::Core *core, std::string port, int axis, double aTimeoutMs, double mTimeoutMs) :
    port_(port), 
    axis_(axis), 
+   moveTimeoutMs_(mTimeoutMs),
    type_(MOTORSTAGE_UNDEFINED),
    parent_(parent),
    core_(core),
-   moveTimeoutMs_(mTimeoutMs),
    pollingPositionStep_(false),
    blockPolling_(false)
 {
