@@ -161,7 +161,7 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
       ArrayList<Component> widgets = new ArrayList<Component>();
       ArrayList<String> rules = new ArrayList<String>();
       controls_ = new HyperstackControls(store_, stack_, displayBus_,
-            false, false);
+            false);
       widgets.add(controls_);
       rules.add("align center, wrap, growx");
       modePanel_ = new MultiModePanel(displayBus_);
