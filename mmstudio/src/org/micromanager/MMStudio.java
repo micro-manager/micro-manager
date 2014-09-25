@@ -70,7 +70,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.acquisition.*;
 import org.micromanager.api.Autofocus;
+import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.Datastore;
+import org.micromanager.api.data.DatastoreLockedException;
 import org.micromanager.api.data.Image;
 import org.micromanager.api.DataProcessor;
 import org.micromanager.api.IAcquisitionEngine2010;
@@ -96,7 +98,8 @@ import org.micromanager.dialogs.RegistrationDlg;
 import org.micromanager.events.EventManager;
 import org.micromanager.graph.GraphData;
 import org.micromanager.graph.GraphFrame;
-import org.micromanager.graph.HistogramSettings;
+
+import org.micromanager.imagedisplay.dev.TestDisplay;
 import org.micromanager.imagedisplay.DisplayWindow;
 import org.micromanager.imagedisplay.MetadataPanel;
 import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
@@ -164,6 +167,7 @@ public class MMStudio implements ScriptInterface {
    private AcqControlDlg acqControlWin_;
    private PluginManager pluginManager_;
    private final SnapLiveManager snapLiveManager_;
+   private Datastore albumDatastore_;
    private final ToolsMenu toolsMenu_;
 
    private List<Component> MMFrames_
@@ -546,18 +550,6 @@ public class MMStudio implements ScriptInterface {
          defaultColor = colorPrefs_.getInt("Color_" + chName, defaultColor);
       }
       return new Color(defaultColor);
-   }
-
-   public void copyFromLiveModeToAlbum(VirtualAcquisitionDisplay display) throws MMScriptException, JSONException {
-      ImageCache ic = display.getImageCache();
-      int channels = ic.getSummaryMetadata().getInt("Channels");
-      for (int i = 0; i < channels; i++) {
-         // Make a copy of the image we get, so we don't interfere with
-         // the Live mode version.
-         TaggedImage image = ic.getImage(i, 0, 0, 0);
-         addToAlbum(ImageUtils.copyMetadata(image),
-               ic.getDisplayAndComments());
-      }
    }
 
    private void showRegistrationDialogMaybe() {
@@ -1264,9 +1256,9 @@ public class MMStudio implements ScriptInterface {
          ReportingUtils.showError("No camera configured");
          return;
       }
-      Image image = snapLiveManager_.snap();
+      Image image = snapLiveManager_.snap(!shouldAddToAlbum);
       if (shouldAddToAlbum) {
-         ReportingUtils.showError("TODO: add image to album.");
+         addToAlbum(image);
       }
    }
 
@@ -2290,13 +2282,28 @@ public class MMStudio implements ScriptInterface {
    }
 
    @Override
-   public void addToAlbum(TaggedImage taggedImg) throws MMScriptException {
-      addToAlbum(taggedImg, null);
+   public void addToAlbum(Image image) {
+      if (albumDatastore_ == null || albumDatastore_.getIsLocked()) {
+         // Need to create a new album.
+         albumDatastore_ = new DefaultDatastore();
+         albumDatastore_.setReader(new ReaderRAM(albumDatastore_));
+         new TestDisplay(albumDatastore_);
+      }
+      // Adjust image coordinates to be at the N+1th timepoint.
+      Coords newCoords = image.getCoords().copy()
+         .position("time", albumDatastore_.getMaxIndex("time") + 1)
+         .build();
+      try {
+         albumDatastore_.putImage(image.copyAt(newCoords));
+      }
+      catch (DatastoreLockedException e) {
+         ReportingUtils.showError(e, "Album datastore is locked.");
+      }
    }
-   
-   public void addToAlbum(TaggedImage taggedImg, JSONObject displaySettings) throws MMScriptException {
-      normalizeTags(taggedImg);
-      acqMgr_.addToAlbum(taggedImg,displaySettings);
+
+   @Override
+   public Datastore getAlbumDatastore() {
+      return albumDatastore_;
    }
 
    /**
