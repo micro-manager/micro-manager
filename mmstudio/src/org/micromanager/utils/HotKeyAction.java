@@ -48,7 +48,7 @@ public class HotKeyAction {
                   studio_.toggleShutter();
                   return true;
                case ADD_TO_ALBUM:
-                  snapLiveManager_.snapAndAddToImage5D();
+                  studio_.doSnap(true);
                   return true;
                case MARK:
                   studio_.markCurrentPosition();

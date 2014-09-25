@@ -36,6 +36,7 @@ import javax.swing.JTextField;
 import javax.swing.SpringLayout;
 import javax.swing.border.LineBorder;
 
+import org.micromanager.LineProfile;
 import org.micromanager.MMStudio;
 import org.micromanager.utils.MMFrame;
 
@@ -219,7 +220,7 @@ public class GraphFrame extends MMFrame {
       btnRefresh.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            MMStudio.getInstance().updateLineProfile();
+            LineProfile.updateLineProfile();
          }
       });
       btnRefresh.setText("Refresh");
