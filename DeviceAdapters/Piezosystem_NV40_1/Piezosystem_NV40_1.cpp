@@ -124,7 +124,7 @@ void splitString(char* string, const char* delimiter, char** dest){
 /**
  * Single axis stage.
  */
-Stage::Stage(int nr):
+Stage::Stage(int /* nr */):
    initialized_(false),
 	loop_(false),
 	voltage_(0),
