@@ -330,7 +330,7 @@ inline void CoverImage24( BYTE* pSour, BYTE* pDest, int sz, int m_iBytesPerPixel
     {
       for(int i = 0; i < sz; i++)
       {
-        *pDest++ = (pSour[0]*299 + pSour[1]*587 + pSour[3]*114)/1000;
+        *pDest++ = static_cast<BYTE>((pSour[0]*299 + pSour[1]*587 + pSour[3]*114) / 1000);
         pSour += 3;
       }
     }
@@ -937,7 +937,6 @@ int CMoticCamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
        char buf[MM::MaxStrLength];
        GetProperty(MM::g_Keyword_PixelType, buf);
        std::string pixelType(buf);
-       unsigned int bytesPerPixel = 1;
        if (pixelType.compare(g_PixelType_8bit) == 0)
        {
          if(m_iBytesPerPixel == 2)
@@ -1288,7 +1287,7 @@ void CMoticCamera::InitGain()
   
   MIDP_GetGainRange(&m_dMinGain, &m_dMaxGain);
   CPropertyAction *pAct = new CPropertyAction (this, &CMoticCamera::OnGain);
-   int ret = CreateProperty(MM::g_Keyword_Gain, "1.0", MM::Float, false, pAct);
+   CreateProperty(MM::g_Keyword_Gain, "1.0", MM::Float, false, pAct);
    //assert(ret == DEVICE_OK);
    SetPropertyLimits(MM::g_Keyword_Gain, m_dMinGain, m_dMaxGain);
    m_dGain = 1.0;
@@ -1306,8 +1305,7 @@ void CMoticCamera::InitExposure()
   char buf[10];
   sprintf(buf, "%0.1f\0", m_dExposurems);
   CPropertyAction *pAct = new CPropertyAction (this, &CMoticCamera::OnExposure);
-   int ret = CreateProperty(MM::g_Keyword_Exposure, buf, MM::Float, false, pAct);
-   //assert(ret == DEVICE_OK);
+   CreateProperty(MM::g_Keyword_Exposure, buf, MM::Float, false, pAct);
    SetPropertyLimits(MM::g_Keyword_Exposure, (double)m_lMinExposure/100.0, (double)m_lMaxExposure/100.0);
   // m_dExposurems = 10.0;
 }
