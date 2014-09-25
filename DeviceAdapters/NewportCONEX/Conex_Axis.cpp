@@ -549,12 +549,12 @@ int X_Axis::GetPositionUm(double& pos)
 	 return DEVICE_OK;
 }
   
-int X_Axis::SetPositionSteps(long pos)
+int X_Axis::SetPositionSteps(long)
 {
    return DEVICE_UNSUPPORTED_COMMAND;
 }
   
-int X_Axis::GetPositionSteps(long& steps)
+int X_Axis::GetPositionSteps(long&)
 {
 	  return DEVICE_UNSUPPORTED_COMMAND;
 }
@@ -564,7 +564,7 @@ int X_Axis::SetOrigin()
 }
 
 
-int X_Axis::Move(double v)
+int X_Axis::Move(double)
 {
     return DEVICE_UNSUPPORTED_COMMAND;
 }
@@ -717,12 +717,12 @@ int Y_Axis::GetPositionUm(double& pos)
     return DEVICE_OK;
 }
   
-int Y_Axis::SetPositionSteps(long pos)
+int Y_Axis::SetPositionSteps(long)
 {
    return DEVICE_UNSUPPORTED_COMMAND;
 }
   
-int Y_Axis::GetPositionSteps(long& steps)
+int Y_Axis::GetPositionSteps(long&)
 {
 	  return DEVICE_UNSUPPORTED_COMMAND;
 }
@@ -732,7 +732,7 @@ int Y_Axis::SetOrigin()
 }
 
 
-int Y_Axis::Move(double v)
+int Y_Axis::Move(double)
 {
     return DEVICE_UNSUPPORTED_COMMAND;
 }
@@ -884,12 +884,12 @@ int Z_Axis::GetPositionUm(double& pos)
 	return DEVICE_OK;
 }
   
-int Z_Axis::SetPositionSteps(long pos)
+int Z_Axis::SetPositionSteps(long)
 {
    return DEVICE_UNSUPPORTED_COMMAND;
 }
   
-int Z_Axis::GetPositionSteps(long& steps)
+int Z_Axis::GetPositionSteps(long&)
 {
 	  return DEVICE_UNSUPPORTED_COMMAND;
 }
@@ -899,7 +899,7 @@ int Z_Axis::SetOrigin()
 }
 
 
-int Z_Axis::Move(double v)
+int Z_Axis::Move(double)
 {
     return DEVICE_UNSUPPORTED_COMMAND;
 }
