@@ -545,34 +545,37 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
    @Override
    public void windowClosing(WindowEvent e) {
       if (!closed_) {
-         // TODO: handle save/abort/etc. logic
-         closeDisplay();
+         requestToClose();
       }
    }
 
    @Override
    public boolean close() {
-      closeDisplay();
-      return true;
+      requestToClose();
+      return closed_;
    }
 
    @Override
-   public void closeDisplay() {
+   public void requestToClose() {
+      displayBus_.post(new RequestToCloseEvent(this));
+   }
+
+   @Override
+   public void forceClosed() {
+      canvasThread_.stopDisplayUpdates();
+      // Note: we don't join the canvas thread here because this thread is
+      // presumably the EDT, and the canvas thread also does actions in the
+      // EDT, so there's some deadlock potential.
       controls_.prepareForClose();
       histograms_.prepareForClose();
       store_.removeDisplay(this);
       store_.unregisterForEvents(this);
-      forceClosed();
-   }
-
-   // Force this window to go away.
-   public void forceClosed() {
+      MMStudio.getInstance().removeMMBackgroundListener(this);
       try {
          super.close();
       } catch (NullPointerException ex) {
          ReportingUtils.showError(ex, "Null pointer error in ImageJ code while closing window");
       }
-      MMStudio.getInstance().removeMMBackgroundListener(this);
       closed_ = true;
    }
 
@@ -585,6 +588,16 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
    @Override
    public ImageWindow getImageWindow() {
       return this;
+   }
+
+   @Override
+   public void registerForEvents(Object obj) {
+      displayBus_.register(obj);
+   }
+
+   @Override
+   public void unregisterForEvents(Object obj) {
+      displayBus_.unregister(obj);
    }
 
    @Subscribe
