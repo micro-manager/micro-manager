@@ -91,25 +91,20 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
    /**
     * @param shouldUseLiveControls - indicates if we should use the buttons for 
     *        the "Snap/Live" window or the buttons for normal displays.
-    * @param isAcquisition - indicates if we should auto-size the scrollbars
-    *        to the dataset or not (in an acquisition we resize them as images
-    *        come in, instead). 
     */
    public HyperstackControls(Datastore store, MMVirtualStack stack,
-         EventBus displayBus, boolean shouldUseLiveControls,
-         boolean isAcquisition) {
+         EventBus displayBus, boolean shouldUseLiveControls) {
       super(new FlowLayout(FlowLayout.LEADING));
       displayBus_ = displayBus;
       store_ = store;
       store_.registerForEvents(this, 100);
       stack_ = stack;
-      initComponents(shouldUseLiveControls, isAcquisition);
+      initComponents(shouldUseLiveControls);
       displayBus_.register(this);
       MMStudio.getInstance().getSnapLiveManager().addLiveModeListener(this);
    }
 
-   private void initComponents(final boolean shouldUseLiveControls,
-         boolean isAcquisition) {
+   private void initComponents(final boolean shouldUseLiveControls) {
       // This layout minimizes space between components.
       subPanel_ = new JPanel(new MigLayout("insets 0, fillx, align center"));
 
