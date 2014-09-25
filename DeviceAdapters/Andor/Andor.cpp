@@ -1573,7 +1573,7 @@ int AndorCamera::GetListOfAvailableCameras()
       if(DRV_SUCCESS!=ret)
         return ret;
       fReadOutTime = fKinetic;
-      SetExposureTime(currentExpMS_/1000.0f);
+      SetExposureTime(static_cast<float>(currentExpMS_ / 1000.0));
 
       
       ret = GetAcquisitionTimings(&fExposure,&fAccumTime,&fKinetic);
