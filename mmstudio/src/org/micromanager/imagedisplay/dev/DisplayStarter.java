@@ -10,16 +10,20 @@ import org.micromanager.imagedisplay.MMImagePlus;
 import org.micromanager.utils.ReportingUtils;
 
 /**
- * This class largely serves as a holding area for when we need to create a
- * new display, but our Datastore does not necessarily have any images to
- * show us yet.
+ * This class exists for one reason only: if we try to create a display (and
+ * corresponding ImageJ objects) for a Datastore that does not have any actual
+ * images yet, then we get horrific display bugs and exceptions. So this
+ * class attaches to the Datastore, waits for an image to arrive, and *then*
+ * creates a DefaultDisplayWindow. This does make things tricky for anyone who
+ * wants to create and then maintain access to the DisplayWindow; best advice
+ * is to make use of Datastore.getDisplays().
  */
-public class TestDisplay {
+public class DisplayStarter {
    private Datastore store_;
    private EventBus displayBus_;
    private DefaultDisplayWindow window_;
    
-   public TestDisplay(Datastore store) {
+   public DisplayStarter(Datastore store) {
       store_ = store;
       store_.registerForEvents(this, 100);
       displayBus_ = new EventBus();
@@ -48,10 +52,13 @@ public class TestDisplay {
    public void onNewImage(NewImageEvent event) {
       try {
          if (window_ == null) {
-            // Now we have some images with which to set up our display.
+            // Now we have some images with which to set up our display, so
+            // we can make it, give it the new image, and then end our
+            // responsibilities.
             makeWindowAndIJObjects();
+            window_.receiveNewImage(event.getImage());
+            store_.unregisterForEvents(this);
          }
-         window_.receiveNewImage(event.getImage());
       }
       catch (Exception e) {
          ReportingUtils.logError(e, "Couldn't process new image");
