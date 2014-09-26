@@ -140,9 +140,11 @@ public class DeviceUtils {
             checkPropertyValueEquals(key, Properties.Keys.TRIGGER_POLARITY, Properties.Values.POSITIVE);
             break;
          case PCOCAM:
+            // TODO check trigger polarity
             checkPropertyExists(key, Properties.Keys.TRIGGER_MODE_PCO);
             break;
          case ANDORCAM:
+            // TODO check trigger polarity
             checkPropertyExists(key, Properties.Keys.TRIGGER_MODE);
             break;
          case DEMOCAM:
