@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import javax.swing.JComboBox;
+import javax.swing.JOptionPane;
 
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
@@ -57,8 +58,9 @@ public class DeviceUtils {
     * @param key
     */
    private void checkFirmwareVersion(Devices.Keys key) {
-      // firmware version check only for ASI devices => safely discard cameras
-      if (Devices.CAMERAS.contains(key)) {
+      // firmware version check only for ASI devices
+      Devices.Libraries deviceLibrary = devices_.getMMDeviceLibrary(key);
+      if (deviceLibrary != Devices.Libraries.ASITIGER) {
          return;
       }
       float firmwareVersion = props_.getPropValueFloat(key, Properties.Keys.FIRMWARE_VERSION);
@@ -96,41 +98,52 @@ public class DeviceUtils {
       }
    }
 
+   private void checkPropertyValueEquals(Devices.Keys devKey, Properties.Keys propKey,
+         Properties.Values expectedValue) {
+      if (! (props_.getPropValueString(devKey, propKey)                  
+            .equals(expectedValue.toString()))) {
+         int dialogResult = JOptionPane.showConfirmDialog(null,
+               "This plugin may not work if property \"" + propKey.toString() +
+               "\" of device \"" + devices_.getMMDevice(devKey) + "\" is not set to \"" +
+               expectedValue.toString() + "\".  Set it now?" ,
+               "Warning",
+               JOptionPane.YES_NO_OPTION);
+         if (dialogResult == JOptionPane.YES_OPTION) {
+            props_.setPropValue(devKey, propKey, expectedValue);
+         }
+      }
+   }
+   
+   private void checkPropertyExists(Devices.Keys devKey, Properties.Keys propKey) {
+      if (! devices_.hasProperty(devKey, propKey) ) {
+         ReportingUtils.showError("Device \"" + devices_.getMMDevice(devKey) + 
+               "\" doesn't have required property \"" + propKey.toString() + "\"", null);
+      }
+   }
+   
    /**
-    * checks that the device library is supported and that we have correct properties
+    * checks that the device has correct library, properties that we need,
+    *  and correct values set as needed
     * @param key
     */
    private void checkDeviceLibrary(Devices.Keys key) {
       Devices.Libraries deviceLibrary = devices_.getMMDeviceLibrary(key);
+      if (deviceLibrary == Devices.Libraries.NODEVICE) {
+         return;
+      }
       switch (key) {
       case CAMERAA:
       case CAMERAB:
          switch (deviceLibrary) {
-         case NODEVICE:
-            // do nothing if there isn't a camera
-            break;
          case HAMCAM:
-            if (! devices_.hasProperty(key, Properties.Keys.TRIGGER_SOURCE) ) {
-               ReportingUtils.showError("Device " + devices_.getMMDevice(key) + 
-                     ": Hamamatsu device adapter doesn't have external trigger property", null);
-            }
-            if (! (props_.getPropValueString(key, Properties.Keys.TRIGGER_POLARITY)                  
-                  .equals(Properties.Values.POSITIVE.toString()))) {
-               ReportingUtils.showError("Device " + devices_.getMMDevice(key) + 
-                     ": set TriggerPolarity property to POSITIVE for desired behavior", null);
-            }
+            checkPropertyExists(key, Properties.Keys.TRIGGER_SOURCE);
+            checkPropertyValueEquals(key, Properties.Keys.TRIGGER_POLARITY, Properties.Values.POSITIVE);
             break;
          case PCOCAM:
-            if (! devices_.hasProperty(key, Properties.Keys.TRIGGER_MODE_PCO) ) {
-               ReportingUtils.showError("Device " + devices_.getMMDevice(key) + 
-                     ": PCO device adapter doesn't have external trigger property", null);
-            }
+            checkPropertyExists(key, Properties.Keys.TRIGGER_MODE_PCO);
             break;
          case ANDORCAM:
-            if (! devices_.hasProperty(key, Properties.Keys.TRIGGER_MODE) ) {
-               ReportingUtils.showError("Device " + devices_.getMMDevice(key) + 
-                     ": Andor sCMOS device adapter doesn't have external trigger property", null);
-            }
+            checkPropertyExists(key, Properties.Keys.TRIGGER_MODE);
             break;
          case DEMOCAM:
             // no checks
@@ -138,8 +151,23 @@ public class DeviceUtils {
          default:
             ReportingUtils.showError("Plugin doesn't support your camera for SPIM yet;"
                   + " contact the authors for support (camera must have hardware trigger)", null);
-            break;
          } // CamA/B case
+         break;
+      case GALVOA:
+      case GALVOB:
+         if (deviceLibrary == Devices.Libraries.ASITIGER) {
+            checkPropertyValueEquals(key, Properties.Keys.INPUT_MODE, Properties.Values.INTERNAL_INPUT);
+         } else {
+            ReportingUtils.showError("Plugin doesn't support galvo devices other than ASITiger", null);
+         }
+         break;
+      case PIEZOA:
+      case PIEZOB:
+         if (deviceLibrary == Devices.Libraries.ASITIGER) {
+            checkPropertyValueEquals(key, Properties.Keys.PIEZO_MODE, Properties.Values.INTERNAL_CLOSEDLOOP_INPUT);
+         } else {
+            ReportingUtils.showError("Plugin doesn't support piezo devices other than ASITiger", null);
+         }
          break;
       default:
          break;

@@ -102,6 +102,8 @@ public class Properties {
       MIN_DEFLECTION_X("MinDeflectionX(deg)"),
       BEAM_ENABLED("BeamEnabled"),
       SAVE_CARD_SETTINGS("SaveCardSettings"),
+      INPUT_MODE("InputMode"),
+      PIEZO_MODE("PiezoMode"),
       TRIGGER_SOURCE("TRIGGER SOURCE"),   // for Hamamatsu
       TRIGGER_POLARITY("TriggerPolarity"),// for Hamamatsu
       TRIGGER_ACTIVE("TRIGGER ACTIVE"),   // for Hamamatsu
@@ -210,6 +212,8 @@ public class Properties {
       EDGE("EDGE"),                // for Hamamatsu's TRIGGER ACTIVE
       ON("On"),
       OFF("Off"),
+      INTERNAL_INPUT("internal input"),
+      INTERNAL_CLOSEDLOOP_INPUT("0 - internal input closed-loop")
       ;
       private final String text;
       Values(String text) {

@@ -44,7 +44,10 @@ import org.micromanager.MMStudio;
 import org.micromanager.asidispim.Utils.StagePositionUpdater;
 import org.micromanager.internalinterfaces.LiveModeListener; 
 
-// TODO account for overlap mode in timing calcutations
+// TODO easy mode that pulls most-used bits from all panels
+// TODO camera control ROI panel
+// TODO track Z/F for sample finding
+// TODO integrate with MDA acquisition?
 // TODO finish eliminating Prefs.Keys in favor of Properties.Keys with plugin values
 // TODO make sure acquisition works for single SPIM
 // TODO save/load plugin settings from file instead of from registry (nice to also include controller settings)
@@ -54,6 +57,7 @@ import org.micromanager.internalinterfaces.LiveModeListener;
 // TODO display certain properties like positions, e.g. scan amplitudes/offsets
 // TODO resolve whether Home/Stop should be added to 1axis stage API, use here if possible
 // TODO add sethome property to device adapter and use it here
+// TODO automatically find scanner/pizeo focus (http://dx.doi.org/10.1364/OE.16.008670)
 
 
 /**
