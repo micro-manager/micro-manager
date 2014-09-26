@@ -217,6 +217,7 @@ CDemoCamera::CDemoCamera() :
    saturatePixels_(false),
 	fractionOfPixelsToDropOrSaturate_(0.002),
     shouldRotateImages_(false),
+    shouldDisplayImageNumber_(false),
    nComponents_(1)
 {
    memset(testProperty_,0,sizeof(testProperty_));
@@ -438,6 +439,11 @@ int CDemoCamera::Initialize()
    CreateIntegerProperty("RotateImages", 0, false, pAct);
    AddAllowedValue("RotateImages", "0");
    AddAllowedValue("RotateImages", "1");
+
+   pAct = new CPropertyAction(this, &CDemoCamera::OnShouldDisplayImageNumber);
+   CreateIntegerProperty("DisplayImageNumber", 0, false, pAct);
+   AddAllowedValue("DisplayImageNumber", "0");
+   AddAllowedValue("DisplayImageNumber", "1");
 
    // Whether or not to use exposure time sequencing
    pAct = new CPropertyAction (this, &CDemoCamera::OnIsSequenceable);
@@ -1407,6 +1413,22 @@ int CDemoCamera::OnShouldRotateImages(MM::PropertyBase* pProp, MM::ActionType eA
    return DEVICE_OK;
 }
 
+int CDemoCamera::OnShouldDisplayImageNumber(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::AfterSet)
+   {
+      long tvalue = 0;
+      pProp->Get(tvalue);
+      shouldDisplayImageNumber_ = (tvalue != 0);
+   }
+   else if (eAct == MM::BeforeGet)
+   {
+      pProp->Set((long) shouldDisplayImageNumber_);
+   }
+
+   return DEVICE_OK;
+}
+
 /*
 * Handles "ScanMode" property.
 * Changes allowed Binning values to test whether the UI updates properly
@@ -1602,7 +1624,10 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
       return;
 
    const double cPi = 3.14159265358979;
-   long lPeriod = img.Width()/2;
+   int imgWidth = img.Width();
+   unsigned int* rawBuf = (unsigned int*) img.GetPixelsRW();
+   double maxDrawnVal = 0;
+   long lPeriod = imgWidth/2;
    double dLinePhase = 0.0;
    const double dAmp = exp;
    double cLinePhaseInc = 2.0 * cPi / 4.0 / img.Height();
@@ -1627,10 +1652,10 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
 
 	long pixelsToDrop = 0;
 	if( dropPixels_)
-		pixelsToDrop = (long)(0.5 + fractionOfPixelsToDropOrSaturate_*img.Height()*img.Width());
+		pixelsToDrop = (long)(0.5 + fractionOfPixelsToDropOrSaturate_*img.Height()*imgWidth);
 	long pixelsToSaturate = 0;
 	if( saturatePixels_)
-		pixelsToSaturate = (long)(0.5 + fractionOfPixelsToDropOrSaturate_*img.Height()*img.Width());
+		pixelsToSaturate = (long)(0.5 + fractionOfPixelsToDropOrSaturate_*img.Height()*imgWidth);
 
    unsigned j, k;
    if (pixelType.compare(g_PixelType_8bit) == 0)
@@ -1639,25 +1664,29 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
       unsigned char* pBuf = const_cast<unsigned char*>(img.GetPixels());
       for (j=0; j<img.Height(); j++)
       {
-         for (k=0; k<img.Width(); k++)
+         for (k=0; k<imgWidth; k++)
          {
-            long lIndex = img.Width()*j + k;
-            *(pBuf + lIndex) = (unsigned char) (g_IntensityFactor_ * min(255.0, (pedestal + dAmp * sin(dPhase_ + dLinePhase + (2.0 * cPi * k) / lPeriod))));
+            long lIndex = imgWidth*j + k;
+            unsigned char val = (unsigned char) (g_IntensityFactor_ * min(255.0, (pedestal + dAmp * sin(dPhase_ + dLinePhase + (2.0 * cPi * k) / lPeriod))));
+            if (val > maxDrawnVal) {
+                maxDrawnVal = val;
+            }
+            *(pBuf + lIndex) = val;
          }
          dLinePhase += cLinePhaseInc;
       }
 	   for(int snoise = 0; snoise < pixelsToSaturate; ++snoise)
 		{
 			j = (unsigned)( (double)(img.Height()-1)*(double)rand()/(double)RAND_MAX);
-			k = (unsigned)( (double)(img.Width()-1)*(double)rand()/(double)RAND_MAX);
-			*(pBuf + img.Width()*j + k) = (unsigned char)maxValue;
+			k = (unsigned)( (double)(imgWidth-1)*(double)rand()/(double)RAND_MAX);
+			*(pBuf + imgWidth*j + k) = (unsigned char)maxValue;
 		}
 		int pnoise;
 		for(pnoise = 0; pnoise < pixelsToDrop; ++pnoise)
 		{
 			j = (unsigned)( (double)(img.Height()-1)*(double)rand()/(double)RAND_MAX);
-			k = (unsigned)( (double)(img.Width()-1)*(double)rand()/(double)RAND_MAX);
-			*(pBuf + img.Width()*j + k) = 0;
+			k = (unsigned)( (double)(imgWidth-1)*(double)rand()/(double)RAND_MAX);
+			*(pBuf + imgWidth*j + k) = 0;
 		}
 
    }
@@ -1668,25 +1697,29 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
       unsigned short* pBuf = (unsigned short*) const_cast<unsigned char*>(img.GetPixels());
       for (j=0; j<img.Height(); j++)
       {
-         for (k=0; k<img.Width(); k++)
+         for (k=0; k<imgWidth; k++)
          {
-            long lIndex = img.Width()*j + k;
-            *(pBuf + lIndex) = (unsigned short) (g_IntensityFactor_ * min((double)maxValue, pedestal + dAmp16 * sin(dPhase_ + dLinePhase + (2.0 * cPi * k) / lPeriod)));
+            long lIndex = imgWidth*j + k;
+            unsigned short val = (unsigned short) (g_IntensityFactor_ * min((double)maxValue, pedestal + dAmp16 * sin(dPhase_ + dLinePhase + (2.0 * cPi * k) / lPeriod)));
+            if (val > maxDrawnVal) {
+                maxDrawnVal = val;
+            }
+            *(pBuf + lIndex) = val;
          }
          dLinePhase += cLinePhaseInc;
       }         
 	   for(int snoise = 0; snoise < pixelsToSaturate; ++snoise)
 		{
 			j = (unsigned)(0.5 + (double)img.Height()*(double)rand()/(double)RAND_MAX);
-			k = (unsigned)(0.5 + (double)img.Width()*(double)rand()/(double)RAND_MAX);
-			*(pBuf + img.Width()*j + k) = (unsigned short)maxValue;
+			k = (unsigned)(0.5 + (double)imgWidth*(double)rand()/(double)RAND_MAX);
+			*(pBuf + imgWidth*j + k) = (unsigned short)maxValue;
 		}
 		int pnoise;
 		for(pnoise = 0; pnoise < pixelsToDrop; ++pnoise)
 		{
 			j = (unsigned)(0.5 + (double)img.Height()*(double)rand()/(double)RAND_MAX);
-			k = (unsigned)(0.5 + (double)img.Width()*(double)rand()/(double)RAND_MAX);
-			*(pBuf + img.Width()*j + k) = 0;
+			k = (unsigned)(0.5 + (double)imgWidth*(double)rand()/(double)RAND_MAX);
+			*(pBuf + imgWidth*j + k) = 0;
 		}
 	
 	}
@@ -1695,14 +1728,17 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
       double pedestal = 127 * exp / 100.0 * GetBinning() * GetBinning();
       float* pBuf = (float*) const_cast<unsigned char*>(img.GetPixels());
       float saturatedValue = 255.;
-      memset(pBuf, 0, img.Height()*img.Width()*4);
+      memset(pBuf, 0, img.Height()*imgWidth*4);
       // static unsigned int j2;
       for (j=0; j<img.Height(); j++)
       {
-         for (k=0; k<img.Width(); k++)
+         for (k=0; k<imgWidth; k++)
          {
-            long lIndex = img.Width()*j + k;
+            long lIndex = imgWidth*j + k;
             double value =  (g_IntensityFactor_ * min(255.0, (pedestal + dAmp * sin(dPhase_ + dLinePhase + (2.0 * cPi * k) / lPeriod))));
+            if (value > maxDrawnVal) {
+                maxDrawnVal = value;
+            }
             *(pBuf + lIndex) = (float) value;
             if( 0 == lIndex)
             {
@@ -1718,28 +1754,28 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
 	   for(int snoise = 0; snoise < pixelsToSaturate; ++snoise)
 		{
 			j = (unsigned)(0.5 + (double)img.Height()*(double)rand()/(double)RAND_MAX);
-			k = (unsigned)(0.5 + (double)img.Width()*(double)rand()/(double)RAND_MAX);
-			*(pBuf + img.Width()*j + k) = saturatedValue;
+			k = (unsigned)(0.5 + (double)imgWidth*(double)rand()/(double)RAND_MAX);
+			*(pBuf + imgWidth*j + k) = saturatedValue;
 		}
 		int pnoise;
 		for(pnoise = 0; pnoise < pixelsToDrop; ++pnoise)
 		{
 			j = (unsigned)(0.5 + (double)img.Height()*(double)rand()/(double)RAND_MAX);
-			k = (unsigned)(0.5 + (double)img.Width()*(double)rand()/(double)RAND_MAX);
-			*(pBuf + img.Width()*j + k) = 0;
+			k = (unsigned)(0.5 + (double)imgWidth*(double)rand()/(double)RAND_MAX);
+			*(pBuf + imgWidth*j + k) = 0;
       }
 	
 	}
 	else if (pixelType.compare(g_PixelType_32bitRGB) == 0)
 	{
       double pedestal = 127 * exp / 100.0;
-      unsigned int * pBuf = (unsigned int*) img.GetPixelsRW();
+      unsigned int * pBuf = (unsigned int*) rawBuf;
 
       unsigned char* pTmpBuffer = NULL;
 
       if(debugRGB)
       {
-         const unsigned long bfsize = img.Height() * img.Width() * 3;
+         const unsigned long bfsize = img.Height() * imgWidth * 3;
          if(  bfsize != dbgBufferSize)
          {
             if (NULL != pDebug)
@@ -1759,14 +1795,14 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
       pTmpBuffer = pDebug;
       unsigned char* pTmp2 = pTmpBuffer;
       if( NULL!= pTmpBuffer)
-			memset( pTmpBuffer, 0, img.Height() * img.Width() * 3);
+			memset( pTmpBuffer, 0, img.Height() * imgWidth * 3);
 
       for (j=0; j<img.Height(); j++)
       {
          unsigned char theBytes[4];
-         for (k=0; k<img.Width(); k++)
+         for (k=0; k<imgWidth; k++)
          {
-            long lIndex = img.Width()*j + k;
+            long lIndex = imgWidth*j + k;
             unsigned char value0 =   (unsigned char) min(255.0, (pedestal + dAmp * sin(dPhase_ + dLinePhase + (2.0 * cPi * k) / lPeriod)));
             theBytes[0] = value0;
             if( NULL != pTmpBuffer)
@@ -1784,6 +1820,9 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
             }
             theBytes[3] = 0;
             unsigned long tvalue = *(unsigned long*)(&theBytes[0]);
+            if (tvalue > maxDrawnVal) {
+                maxDrawnVal = tvalue;
+            }
             *(pBuf + lIndex) =  tvalue ;  //value0+(value1<<8)+(value2<<16);
          }
          dLinePhase += cLinePhaseInc;
@@ -1796,7 +1835,7 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
          // write the compact debug image...
          char ctmp[12];
          snprintf(ctmp,12,"%ld",iseq++);
-         writeCompactTiffRGB(img.Width(), img.Height(), pTmpBuffer, ("democamera" + std::string(ctmp)).c_str());
+         writeCompactTiffRGB(imgWidth, img.Height(), pTmpBuffer, ("democamera" + std::string(ctmp)).c_str());
       }
 
 	}
@@ -1808,22 +1847,89 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
       double dAmp16 = dAmp * maxValue/255.0; // scale to behave like 8-bit
       
 		double maxPixelValue = (1<<(bitDepth_))-1;
-      unsigned long long * pBuf = (unsigned long long*) img.GetPixelsRW();
+      unsigned long long * pBuf = (unsigned long long*) rawBuf;
       for (j=0; j<img.Height(); j++)
       {
-         for (k=0; k<img.Width(); k++)
+         for (k=0; k<imgWidth; k++)
          {
-            long lIndex = img.Width()*j + k;
+            long lIndex = imgWidth*j + k;
             unsigned long long value0 = (unsigned short) min(maxPixelValue, (pedestal + dAmp16 * sin(dPhase_ + dLinePhase + (2.0 * cPi * k) / lPeriod)));
             unsigned long long value1 = (unsigned short) min(maxPixelValue, (pedestal + dAmp16 * sin(dPhase_ + dLinePhase*2 + (2.0 * cPi * k) / lPeriod)));
             unsigned long long value2 = (unsigned short) min(maxPixelValue, (pedestal + dAmp16 * sin(dPhase_ + dLinePhase*4 + (2.0 * cPi * k) / lPeriod)));
             unsigned long long tval = value0+(value1<<16)+(value2<<32);
-         *(pBuf + lIndex) = tval;
+            if (tval > maxDrawnVal) {
+                maxDrawnVal = tval;
+            }
+            *(pBuf + lIndex) = tval;
 			}
          dLinePhase += cLinePhaseInc;
       }
 	}
 
+    if (shouldDisplayImageNumber_) {
+        // Draw a seven-segment display in the upper-left corner of the image,
+        // indicating the image number.
+        int divisor = 1;
+        int numDigits = 0;
+        while (imageCounter_ / divisor > 0) {
+            divisor *= 10;
+            numDigits += 1;
+        }
+        int remainder = imageCounter_;
+        for (int i = 0; i < numDigits; ++i) {
+            // Black out the background for this digit.
+            // TODO: for now, hardcoded sizes, which will cause buffer
+            // overflows if the image size is too small -- but that seems
+            // unlikely.
+            int xBase = (numDigits - i - 1) * 20 + 2;
+            int yBase = 2;
+            for (int x = xBase; x < xBase + 20; ++x) {
+                for (int y = yBase; y < yBase + 20; ++y) {
+                    long lIndex = imgWidth*y + x;
+
+                    if (pixelType.compare(g_PixelType_8bit) == 0) {
+                        *((unsigned char*) rawBuf + lIndex) = 0;
+                    }
+                    else if (pixelType.compare(g_PixelType_16bit) == 0) {
+                        *((unsigned short*) rawBuf + lIndex) = 0;
+                    }
+                    else if (pixelType.compare(g_PixelType_32bit) == 0 ||
+                             pixelType.compare(g_PixelType_32bitRGB) == 0) {
+                        *((unsigned int*) rawBuf + lIndex) = 0;
+                    }
+                }
+            }
+            // Draw each segment, if appropriate.
+            int digit = remainder % 10;
+            for (int segment = 0; segment < 7; ++segment) {
+                if (!((1 << segment) & SEVEN_SEGMENT_RULES[digit])) {
+                    // This segment is not drawn.
+                    continue;
+                }
+                // Determine if the segment is horizontal or vertical.
+                int xStep = SEVEN_SEGMENT_HORIZONTALITY[segment];
+                int yStep = (xStep + 1) % 2;
+                // Calculate starting point for drawing the segment.
+                int xStart = xBase + SEVEN_SEGMENT_X_OFFSET[segment] * 16;
+                int yStart = yBase + SEVEN_SEGMENT_Y_OFFSET[segment] * 8 + 1;
+                // Draw one pixel at a time of the segment.
+                for (int pixNum = 0; pixNum < 8 * (xStep + 1); ++pixNum) {
+                    long lIndex = imgWidth * (yStart + pixNum * yStep) + (xStart + pixNum * xStep);
+                    if (pixelType.compare(g_PixelType_8bit) == 0) {
+                        *((unsigned char*) rawBuf + lIndex) = maxDrawnVal;
+                    }
+                    else if (pixelType.compare(g_PixelType_16bit) == 0) {
+                        *((unsigned short*) rawBuf + lIndex) = maxDrawnVal;
+                    }
+                    else if (pixelType.compare(g_PixelType_32bit) == 0 ||
+                             pixelType.compare(g_PixelType_32bitRGB) == 0) {
+                        *((unsigned int*) rawBuf + lIndex) = maxDrawnVal;
+                    }
+                }
+            }
+            remainder /= 10;
+        }
+    }
    dPhase_ += cPi / 4.;
 }
 

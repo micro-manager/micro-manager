@@ -49,6 +49,24 @@
 
 const char* NoHubError = "Parent Hub not defined.";
 
+// Defines which segments in a seven-segment display are lit up for each of
+// the numbers 0-9. Segments are:
+//
+//  0       1
+// 1 2     2 4
+//  3       8
+// 4 5    16 32
+//  6      64
+const int SEVEN_SEGMENT_RULES[] = {1+2+4+16+32+64, 4+32, 1+4+8+16+64,
+      1+4+8+32+64, 2+4+8+32, 1+2+8+32+64, 2+8+16+32+64, 1+4+32,
+      1+2+4+8+16+32+64, 1+2+4+8+32+64};
+// Indicates if the segment is horizontal or vertical.
+const int SEVEN_SEGMENT_HORIZONTALITY[] = {1, 0, 0, 1, 0, 0, 1};
+// X offset for this segment.
+const int SEVEN_SEGMENT_X_OFFSET[] = {0, 0, 1, 0, 0, 1, 0};
+// Y offset for this segment.
+const int SEVEN_SEGMENT_Y_OFFSET[] = {0, 0, 0, 1, 1, 1, 2};
+
 ////////////////////////
 // DemoHub
 //////////////////////
@@ -156,6 +174,7 @@ public:
    int OnSaturatePixels(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFractionOfPixelsToDropOrSaturate(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnShouldRotateImages(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnShouldDisplayImageNumber(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnCCDTemp(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnIsSequenceable(MM::PropertyBase* pProp, MM::ActionType eAct);
 
@@ -201,6 +220,7 @@ private:
 	bool saturatePixels_;
 	double fractionOfPixelsToDropOrSaturate_;
    bool shouldRotateImages_;
+   bool shouldDisplayImageNumber_;
 
 	double testProperty_[10];
    MMThreadLock imgPixelsLock_;
