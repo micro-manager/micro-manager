@@ -22,6 +22,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       private String metadataVersion_ = null;
       private String computerName_ = null;
       private String directory_ = null;
+      private String comments_ = null;
       
       private Double waitInterval_ = null;
       private Double[] customIntervalsMs_ = null;
@@ -83,6 +84,12 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       }
 
       @Override
+      public SummaryMetadataBuilder comments(String comments) {
+         comments_ = comments;
+         return this;
+      }
+
+      @Override
       public SummaryMetadataBuilder waitInterval(Double waitInterval) {
          waitInterval_ = waitInterval;
          return this;
@@ -121,6 +128,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
    private String metadataVersion_ = null;
    private String computerName_ = null;
    private String directory_ = null;
+   private String comments_ = null;
    
    private Double waitInterval_ = null;
    private Double[] customIntervalsMs_ = null;
@@ -137,6 +145,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       metadataVersion_ = builder.metadataVersion_;
       computerName_ = builder.computerName_;
       directory_ = builder.directory_;
+      comments_ = builder.comments_;
       
       waitInterval_ = builder.waitInterval_;
       customIntervalsMs_ = builder.customIntervalsMs_;
@@ -186,6 +195,11 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
    }
 
    @Override
+   public String getComments() {
+      return comments_;
+   }
+
+   @Override
    public Double getWaitInterval() {
       return waitInterval_;
    }
@@ -221,6 +235,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
             .metadataVersion(metadataVersion_)
             .computerName(computerName_)
             .directory(directory_)
+            .comments(comments_)
             .waitInterval(waitInterval_)
             .customIntervalsMs(customIntervalsMs_)
             .startDate(startDate_)
@@ -336,6 +351,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
          result.put("MetadataVersion", metadataVersion_);
          result.put("ComputerName", computerName_);
          result.put("Directory", directory_);
+         result.put("Comments", comments_);
          result.put("WaitInterval", waitInterval_);
          result.put("CustomIntervals_ms", customIntervalsMs_);
          result.put("StartTime", startDate_);
