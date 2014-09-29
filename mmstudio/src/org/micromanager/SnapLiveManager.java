@@ -10,7 +10,7 @@ import java.util.List;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 
-import org.micromanager.acquisition.ReaderRAM;
+import org.micromanager.acquisition.StorageRAM;
 
 import org.micromanager.api.data.AbortEvent;
 import org.micromanager.api.data.Coords;
@@ -56,7 +56,7 @@ public class SnapLiveManager {
       core_ = core;
       store_ = new DefaultDatastore();
       store_.registerForEvents(this, 100);
-      store_.setReader(new ReaderRAM(store_));
+      store_.setStorage(new StorageRAM(store_));
       listeners_ = new ArrayList<LiveModeListener>();
    }
 
