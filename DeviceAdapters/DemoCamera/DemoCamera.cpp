@@ -1624,7 +1624,7 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
       return;
 
    const double cPi = 3.14159265358979;
-   int imgWidth = img.Width();
+   unsigned imgWidth = img.Width();
    unsigned int* rawBuf = (unsigned int*) img.GetPixelsRW();
    double maxDrawnVal = 0;
    long lPeriod = imgWidth/2;
@@ -1858,7 +1858,7 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
             unsigned long long value2 = (unsigned short) min(maxPixelValue, (pedestal + dAmp16 * sin(dPhase_ + dLinePhase*4 + (2.0 * cPi * k) / lPeriod)));
             unsigned long long tval = value0+(value1<<16)+(value2<<32);
             if (tval > maxDrawnVal) {
-                maxDrawnVal = tval;
+                maxDrawnVal = static_cast<double>(tval);
             }
             *(pBuf + lIndex) = tval;
 			}
@@ -1916,14 +1916,14 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
                 for (int pixNum = 0; pixNum < 8 * (xStep + 1); ++pixNum) {
                     long lIndex = imgWidth * (yStart + pixNum * yStep) + (xStart + pixNum * xStep);
                     if (pixelType.compare(g_PixelType_8bit) == 0) {
-                        *((unsigned char*) rawBuf + lIndex) = maxDrawnVal;
+                        *((unsigned char*) rawBuf + lIndex) = static_cast<unsigned char>(maxDrawnVal);
                     }
                     else if (pixelType.compare(g_PixelType_16bit) == 0) {
-                        *((unsigned short*) rawBuf + lIndex) = maxDrawnVal;
+                        *((unsigned short*) rawBuf + lIndex) = static_cast<unsigned short>(maxDrawnVal);
                     }
                     else if (pixelType.compare(g_PixelType_32bit) == 0 ||
                              pixelType.compare(g_PixelType_32bitRGB) == 0) {
-                        *((unsigned int*) rawBuf + lIndex) = maxDrawnVal;
+                        *((unsigned int*) rawBuf + lIndex) = static_cast<unsigned int>(maxDrawnVal);
                     }
                 }
             }
