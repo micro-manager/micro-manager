@@ -163,18 +163,15 @@ public final class HistogramsPanel extends JPanel implements Histograms {
    @Override
    public void imageChanged() {
       boolean update = true;
-      if (//TODO display_.acquisitionIsRunning() ||
-            (MMStudio.getInstance().isLiveModeOn())) {
-         long time = System.currentTimeMillis();
-         double updateRate = store_.getDisplaySettings().getHistogramUpdateRate();
-         // If the update rate is negative or it's been too soon since the
-         // last update, then don't update. 
-         if (updateRate < 0 ||
-               time - lastUpdateTime_ < updateRate * 1000) {
-            update = false;
-         } else {
-            lastUpdateTime_ = time;
-         }
+      long time = System.currentTimeMillis();
+      double updateRate = store_.getDisplaySettings().getHistogramUpdateRate();
+      // If the update rate is negative or it's been too soon since the
+      // last update, then don't update. 
+      if (updateRate < 0 ||
+            time - lastUpdateTime_ < updateRate * 1000) {
+         update = false;
+      } else {
+         lastUpdateTime_ = time;
       }
  
       updateActiveChannels();
