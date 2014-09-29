@@ -48,6 +48,7 @@ import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.DisplayWindow;
 import org.micromanager.api.data.Image;
 import org.micromanager.api.data.NewImageEvent;
+import org.micromanager.api.data.SummaryMetadata;
 import org.micromanager.api.display.DrawEvent;
 
 import org.micromanager.imagedisplay.CanvasDrawEvent;
@@ -141,10 +142,11 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
       setBackground(MMStudio.getInstance().getBackgroundColor());
       MMStudio.getInstance().addMMBackgroundListener(this);
 
+      resetTitle();
+
       makeWindowControls();
       zoomToPreferredSize();
       setIJBounds();
-      setTitle("Micro-Manager image display prototype");
       histograms_.calcAndDisplayHistAndStats(true);
       pack();
       
@@ -263,7 +265,13 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
    }
 
    private void resetTitle() {
-      ReportingUtils.logError("TODO: reset the title now.");
+      SummaryMetadata summary = store_.getSummaryMetadata();
+      String filename = summary.getFileName();
+      String title = "MM image display";
+      if (filename != null) {
+         title += " (" + filename + ")";
+      }
+      setTitle(title);
    }
 
    /**
