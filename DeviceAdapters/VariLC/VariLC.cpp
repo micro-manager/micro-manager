@@ -700,7 +700,7 @@ int VariLC::OnSendToVariLC(MM::PropertyBase* pProp, MM::ActionType eAct)
 	  else if ((std::string)state=="State") {   
 		  	  
 			  std::vector<char> val(len-5);
-			  for (int i=5; i < len; i++) {				  
+			  for (size_t i=5; i < len; i++) {
 					val[5-i] = sendToVariLC_[i];
 			  }
 			  val[len] = '\0';
