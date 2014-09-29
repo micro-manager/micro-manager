@@ -177,7 +177,7 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
       metadata_ = new MetadataPanel(store_);
       modePanel_.addMode("Metadata", metadata_);
 
-      comments_ = new CommentsPanel(store_);
+      comments_ = new CommentsPanel(store_, stack_);
       modePanel_.addMode("Comments", comments_);
 
       modePanel_.addMode("Overlays",

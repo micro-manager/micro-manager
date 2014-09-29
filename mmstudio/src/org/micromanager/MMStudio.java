@@ -2234,7 +2234,7 @@ public class MMStudio implements ScriptInterface {
          .position("time", albumDatastore_.getMaxIndex("time") + 1)
          .build();
       try {
-         albumDatastore_.putImage(image.copyAt(newCoords));
+         albumDatastore_.putImage(image.copyAtCoords(newCoords));
       }
       catch (DatastoreLockedException e) {
          ReportingUtils.showError(e, "Album datastore is locked.");

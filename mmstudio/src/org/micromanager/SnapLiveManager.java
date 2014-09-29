@@ -183,7 +183,7 @@ public class SnapLiveManager {
                Coords newCoords = image.getCoords().copy()
                   .position("time", lastTimepoint_ % MAX_TIMEPOINTS)
                   .position("channel", c).build();
-               displayImage(image.copyAt(newCoords));
+               displayImage(image.copyAtCoords(newCoords));
             }
             lastTimepoint_++;
             try {
@@ -283,7 +283,7 @@ public class SnapLiveManager {
             result = new DefaultImage(tagged);
             Coords newCoords = result.getCoords().copy()
                .position("channel", c).build();
-            result = result.copyAt(newCoords);
+            result = result.copyAtCoords(newCoords);
             if (shouldDisplay) {
                displayImage(result);
             }
