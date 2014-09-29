@@ -18,7 +18,7 @@ import org.micromanager.api.data.Metadata;
 import org.micromanager.api.data.NewDisplaySettingsEvent;
 import org.micromanager.api.data.NewImageEvent;
 import org.micromanager.api.data.NewSummaryMetadataEvent;
-import org.micromanager.api.data.Reader;
+import org.micromanager.api.data.Storage;
 import org.micromanager.api.data.SummaryMetadata;
 
 import org.micromanager.data.DefaultCoords;
@@ -34,14 +34,14 @@ import org.micromanager.utils.ReportingUtils;
 /**
  * Simple RAM-based storage for Datastores.
  */
-public class ReaderRAM implements Reader {
+public class StorageRAM implements Storage {
    private HashMap<Coords, Image> coordsToImage_;
    private Coords maxIndex_;
    private SummaryMetadata summaryMetadata_;
    private DisplaySettings displaySettings_;
    private boolean amInDebugMode_ = false;
 
-   public ReaderRAM(Datastore store) {
+   public StorageRAM(Datastore store) {
       coordsToImage_ = new HashMap<Coords, Image>();
       maxIndex_ = new DefaultCoords.Builder().build();
       summaryMetadata_ = (new DefaultSummaryMetadata.Builder()).build();
@@ -148,7 +148,7 @@ public class ReaderRAM implements Reader {
 
    @Subscribe
    public void onNewImage(NewImageEvent event) {
-      ReportingUtils.logError("Reader " + hashCode() + " adding image at " + event.getCoords() + " with corner pixel " + event.getImage().getIntensityAt(0, 0));
+      ReportingUtils.logError("Storage " + hashCode() + " adding image at " + event.getCoords() + " with corner pixel " + event.getImage().getIntensityAt(0, 0));
       addImage(event.getImage());
    }
 

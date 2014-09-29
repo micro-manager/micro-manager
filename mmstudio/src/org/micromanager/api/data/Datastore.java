@@ -9,7 +9,7 @@ public interface Datastore {
    /**
     * Sets the source for data for this Datastore.
     */
-   public void setReader(Reader reader);
+   public void setStorage(Storage storage);
 
    /**
     * Subscribe the provided object to the Datastore's event bus. Lower
@@ -31,7 +31,7 @@ public interface Datastore {
 
    /**
     * Retrieve the image at the specified coordinates. Will be null if no
-    * Reader has been provided yet.
+    * Storage has been provided yet.
     */
    public Image getImage(Coords coords);
 
@@ -39,7 +39,7 @@ public interface Datastore {
     * Retrieve a list of all images whose Coords match the given incomplete
     * Coords instance. For example, providing a Coords of <"z" = 9> would
     * return all Images whose position along the "z" axis is 9. May be empty.
-    * Will be null if no Reader has been provided yet.
+    * Will be null if no Storage has been provided yet.
     */
    public List<Image> getImagesMatching(Coords coords);
 
@@ -52,20 +52,20 @@ public interface Datastore {
 
    /**
     * Return the maximum Image position along the specified access that this
-    * Datastore has seen so far. Will be null if no Reader has been provided
+    * Datastore has seen so far. Will be null if no Storage has been provided
     * yet.
     */
    public Integer getMaxIndex(String axis);
 
    /**
     * Return a List of all axis names for Images in the store. Will be null if
-    * no Reader has been provided yet.
+    * no Storage has been provided yet.
     */
    public List<String> getAxes();
 
    /**
     * Retrieve the summary metadata for the datastore. Will be null if no
-    * Reader has been provided yet.
+    * Storage has been provided yet.
     */
    public SummaryMetadata getSummaryMetadata();
 
@@ -78,7 +78,7 @@ public interface Datastore {
 
    /**
     * Retrieve the DisplaySettings for the datastore. Will be null if no
-    * Reader has been provided yet.
+    * Storage has been provided yet.
     */
    public DisplaySettings getDisplaySettings();
 
@@ -103,7 +103,7 @@ public interface Datastore {
 
    /**
     * Returns the total number of Images in the Datastore. Returns -1 if no
-    * Reader has been provided yet.
+    * Storage has been provided yet.
     */
    public int getNumImages();
 

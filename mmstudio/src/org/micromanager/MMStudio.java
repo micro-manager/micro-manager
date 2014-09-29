@@ -69,6 +69,9 @@ import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.acquisition.*;
+import org.micromanager.acquisition.AcquisitionManager;
+import org.micromanager.acquisition.StorageRAM;
+
 import org.micromanager.api.Autofocus;
 import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.Datastore;
@@ -2221,7 +2224,7 @@ public class MMStudio implements ScriptInterface {
       if (albumDatastore_ == null || albumDatastore_.getIsLocked()) {
          // Need to create a new album.
          albumDatastore_ = new DefaultDatastore();
-         albumDatastore_.setReader(new ReaderRAM(albumDatastore_));
+         albumDatastore_.setStorage(new StorageRAM(albumDatastore_));
          new DisplayStarter(albumDatastore_);
       }
       // Adjust image coordinates to be at the N+1th timepoint.
