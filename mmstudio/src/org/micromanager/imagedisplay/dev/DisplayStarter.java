@@ -3,6 +3,8 @@ package org.micromanager.imagedisplay.dev;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
+import java.awt.Component;
+
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.NewImageEvent;
 import org.micromanager.imagedisplay.MMCompositeImage;
@@ -24,10 +26,16 @@ public class DisplayStarter {
    private Datastore store_;
    private EventBus displayBus_;
    private DefaultDisplayWindow window_;
-   
-   public DisplayStarter(Datastore store) {
+   private Component customControls_;
+
+   /**
+    * @param customControls Additional controls that will be displayed
+    * beneath the scrollbars in the display window. May be null.
+    */
+   public DisplayStarter(Datastore store, Component customControls) {
       store_ = store;
       store_.registerForEvents(this, 100);
+      customControls_ = customControls;
       displayBus_ = new EventBus();
       displayBus_.register(this);
       // Delay generating our UI until we have at least one image, because
@@ -43,7 +51,8 @@ public class DisplayStarter {
       stack.setImagePlus(plus);
       plus.setStack(generateImagePlusName(), stack);
       plus.setOpenAsHyperStack(true);
-      window_ = new DefaultDisplayWindow(store_, stack, plus, displayBus_, null);
+      window_ = new DefaultDisplayWindow(store_, stack, plus, displayBus_,
+            customControls_);
    }
 
    /**
