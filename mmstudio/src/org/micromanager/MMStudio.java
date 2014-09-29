@@ -2849,4 +2849,9 @@ public class MMStudio implements ScriptInterface {
    public DisplayWindow getCurrentWindow() {
       return DefaultDisplayWindow.getCurrentWindow();
    }
+
+   @Override
+   public List<DisplayWindow> getAllImageWindows() {
+      return DefaultDisplayWindow.getAllImageWindows();
+   }
 }
