@@ -43,7 +43,7 @@ public class DisplayStarter {
       stack.setImagePlus(plus);
       plus.setStack(generateImagePlusName(), stack);
       plus.setOpenAsHyperStack(true);
-      window_ = new DefaultDisplayWindow(store_, stack, plus, displayBus_);
+      window_ = new DefaultDisplayWindow(store_, stack, plus, displayBus_, null);
    }
 
    /**

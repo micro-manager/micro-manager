@@ -78,6 +78,7 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
 
    private JPanel canvasPanel_;
    private HyperstackControls controls_;
+   private Component customControls_;
    private MultiModePanel modePanel_;
    private HistogramsPanel histograms_;
    private MetadataPanel metadata_;
@@ -95,9 +96,15 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
    private static Preferences displayPrefs_;
    private static final String WINDOWPOSX = "WindowPosX";
    private static final String WINDOWPOSY = "WindowPosY";
-   
+  
+   /**
+    * In addition to the fairly self-evident objects, the customControls is
+    * a Component that will be displayed immediately beneath the
+    * HyperstackControls (the scrollbars). The creator is responsible for the
+    * logic implemented by these controls. They may be null.
+    */
    public DefaultDisplayWindow(Datastore store, MMVirtualStack stack,
-            MMImagePlus plus, EventBus bus) {
+            MMImagePlus plus, EventBus bus, Component customControls) {
       super(plus);
       store_ = store;
       store_.associateDisplay(this);
@@ -107,6 +114,7 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
       ijImage_ = plus_;
       displayBus_ = bus;
       displayBus_.register(this);
+      customControls_ = customControls;
 
       // The ImagePlus object needs to be pseudo-polymorphic, depending on
       // the number of channels in the Datastore. However, we may not
@@ -172,6 +180,10 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
       controls_ = new HyperstackControls(store_, stack_, displayBus_,
             false);
       add(controls_, "align center, wrap, growx");
+
+      if (customControls_ != null) {
+         add(customControls_, "align center, wrap, growx");
+      }
 
       modePanel_ = new MultiModePanel(displayBus_);
 
