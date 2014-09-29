@@ -439,7 +439,7 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
 
    private void snapToAlbumButtonActionPerformed() {
       try {
-         ReportingUtils.logError("TODO: snap to album");
+         MMStudio.getInstance().addToAlbum(store_.getImage(stack_.getCurrentImageCoords()));
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
