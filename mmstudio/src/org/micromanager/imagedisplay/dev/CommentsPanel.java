@@ -38,8 +38,10 @@ import javax.swing.event.DocumentListener;
 import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.api.data.Datastore;
+import org.micromanager.api.data.DatastoreLockedException;
 import org.micromanager.api.data.Image;
 import org.micromanager.api.data.Metadata;
+import org.micromanager.api.data.SummaryMetadata;
 
 import org.micromanager.utils.ReportingUtils;
 
@@ -49,11 +51,13 @@ public class CommentsPanel extends JPanel {
    private JTextArea summaryCommentsTextArea_;
    private ImageWindow currentWindow_;
    private Datastore store_;
+   private MMVirtualStack stack_;
    private Timer updateTimer_;
 
    /** Creates new form CommentsPanel */
-   public CommentsPanel(Datastore store) {
+   public CommentsPanel(Datastore store, MMVirtualStack stack) {
       store_ = store;
+      stack_ = stack;
       initialize();
       addTextChangeListeners();
       addFocusListeners();
@@ -98,13 +102,36 @@ public class CommentsPanel extends JPanel {
       return result;
    }
 
+   private void recordCommentsChanges() {
+      Image curImage = store_.getImage(stack_.getCurrentImageCoords());
+      Metadata metadata = curImage.getMetadata();
+      try {
+         String oldComments = metadata.getComments();
+         if (oldComments == null ||
+               !oldComments.equals(imageCommentsTextArea_.getText())) {
+            metadata = metadata.copy().comments(imageCommentsTextArea_.getText()).build();
+            store_.putImage(curImage.copyWithMetadata(metadata));
+         }
+         SummaryMetadata summary = store_.getSummaryMetadata();
+         String oldSummary = summary.getComments();
+         if (oldSummary == null ||
+               !oldSummary.equals(summaryCommentsTextArea_.getText())) {
+            summary = summary.copy().comments(summaryCommentsTextArea_.getText()).build();
+            store_.setSummaryMetadata(summary);
+         }
+      }
+      catch (DatastoreLockedException e) {
+         ReportingUtils.showError("Comments cannot be changed because the datastore has been locked.");
+      }
+   }
+
    private void addFocusListeners() {
       FocusListener listener = new FocusListener() {
          @Override
-         public void focusGained(FocusEvent e) { }
+         public void focusGained(FocusEvent event) { }
          @Override
-         public void focusLost(FocusEvent e) {
-            ReportingUtils.logError("TODO: write display settings on lost focus");
+         public void focusLost(FocusEvent event) {
+            recordCommentsChanges();
          }
       };
       summaryCommentsTextArea_.addFocusListener(listener);
@@ -112,55 +139,24 @@ public class CommentsPanel extends JPanel {
    }
    
    private void addTextChangeListeners() {
-      summaryCommentsTextArea_.getDocument().addDocumentListener(new DocumentListener() {
-         private void handleChange() {
-            ReportingUtils.logError("TODO: write summary comments");
-         }
-
+      DocumentListener listener = new DocumentListener() {
          @Override
          public void insertUpdate(DocumentEvent e) {
-            handleChange();
+            recordCommentsChanges();
          }
 
          @Override
          public void removeUpdate(DocumentEvent e) {
-            handleChange();
+            recordCommentsChanges();
          }
 
          @Override
          public void changedUpdate(DocumentEvent e) {
-            handleChange();
+            recordCommentsChanges();
          }
-      });
-
-      imageCommentsTextArea_.getDocument().addDocumentListener(new DocumentListener() {
-         private void handleChange() {
-            ReportingUtils.logError("TODO: write image comments");
-         }
-
-         @Override
-         public void insertUpdate(DocumentEvent e) {
-            handleChange();
-         }
-
-         @Override
-         public void removeUpdate(DocumentEvent e) {
-            handleChange();
-         }
-
-         @Override
-         public void changedUpdate(DocumentEvent e) {
-            handleChange();
-         }
-      });
-   }
-
-   private void writeSummaryComments() {
-      ReportingUtils.logError("TODO: write summary comments");
-   }
-
-   private void writeImageComments() {
-      ReportingUtils.logError("TODO: write image comments");
+      };
+      summaryCommentsTextArea_.getDocument().addDocumentListener(listener);
+      imageCommentsTextArea_.getDocument().addDocumentListener(listener);
    }
 
    /**
