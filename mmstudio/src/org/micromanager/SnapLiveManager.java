@@ -1,14 +1,23 @@
 package org.micromanager;
 
 import com.google.common.eventbus.Subscribe;
+import com.swtdesigner.SwingResourceManager;
 
 import ij.gui.ImageWindow;
 
+import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.JButton;
+import javax.swing.JPanel;
+
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
+
+import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.acquisition.StorageRAM;
 
@@ -53,6 +62,10 @@ public class SnapLiveManager {
    private int lastTimepoint_ = 0;
    private Image lastImage_ = null;
 
+   private JButton snapButton_;
+   private JButton liveButton_;
+   private JButton toAlbumButton_;
+
    public SnapLiveManager(CMMCore core) {
       core_ = core;
       store_ = new DefaultDatastore();
@@ -84,6 +97,16 @@ public class SnapLiveManager {
       }
       for (LiveModeListener listener : listeners_) {
          listener.liveModeEnabled(isOn_);
+      }
+
+      // Update our buttons, if they exist yet.
+      if (snapButton_ != null) {
+         snapButton_.setEnabled(!isOn_);
+         String label = isOn_ ? "Stop Live" : "Live";
+         String iconPath = isOn_ ? "/org/micromanager/icons/cancel.png" : "/org/micromanager/icons/camera_go.png";
+         liveButton_.setIcon(
+               SwingResourceManager.getIcon(MMStudio.class, iconPath));
+         liveButton_.setText(label);
       }
    }
 
@@ -238,7 +261,44 @@ public class SnapLiveManager {
     * Datastore), so we'll be setting display_ later on in displayImage().
     */
    private void createDisplay() {
-      new DisplayStarter(store_);
+      JPanel controlPanel = new JPanel(new MigLayout());
+      snapButton_ = new JButton("Snap",
+            SwingResourceManager.getIcon(MMStudio.class,
+               "/org/micromanager/icons/camera.png"));
+      snapButton_.setPreferredSize(new Dimension(90, 28));
+      snapButton_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent event) {
+            snap(true);
+         }
+      });
+      controlPanel.add(snapButton_);
+
+      liveButton_ = new JButton("Live",
+            SwingResourceManager.getIcon(MMStudio.class,
+               "/org/micromanager/icons/camera_go.png"));
+      liveButton_.setPreferredSize(new Dimension(90, 28));
+      liveButton_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent event) {
+            setLiveMode(!isOn_);
+         }
+      });
+      controlPanel.add(liveButton_);
+
+      toAlbumButton_ = new JButton("Album",
+            SwingResourceManager.getIcon(MMStudio.class,
+               "/org/micromanager/icons/arrow_right.png"));
+      toAlbumButton_.setPreferredSize(new Dimension(90, 28));
+      toAlbumButton_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent event) {
+            MMStudio.getInstance().doSnap(true);
+         }
+      });
+      controlPanel.add(toAlbumButton_);
+
+      new DisplayStarter(store_, controlPanel);
    }
 
    public void displayImage(Image image) {
