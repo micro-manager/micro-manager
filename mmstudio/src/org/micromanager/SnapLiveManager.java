@@ -18,6 +18,7 @@ import org.micromanager.api.data.DatastoreLockedException;
 import org.micromanager.api.data.DisplayWindow;
 import org.micromanager.api.data.Image;
 import org.micromanager.api.data.RequestToCloseEvent;
+import org.micromanager.api.data.SummaryMetadata;
 
 import org.micromanager.data.DefaultCoords;
 import org.micromanager.data.DefaultDatastore;
@@ -57,6 +58,16 @@ public class SnapLiveManager {
       store_ = new DefaultDatastore();
       store_.registerForEvents(this, 100);
       store_.setStorage(new StorageRAM(store_));
+      // Update the summary metadata so that the "filename" field is used to
+      // generate an appropriate display window title.
+      SummaryMetadata summary = store_.getSummaryMetadata();
+      summary = summary.copy().fileName("Snap/Live View").build();
+      try {
+         store_.setSummaryMetadata(summary);
+      }
+      catch (DatastoreLockedException e) {
+         ReportingUtils.showError(e, "Failed to set snap/live title; what on Earth is going on?");
+      }
       listeners_ = new ArrayList<LiveModeListener>();
    }
 
