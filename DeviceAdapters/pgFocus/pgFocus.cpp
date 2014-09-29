@@ -476,7 +476,7 @@ double pgFocusHub::standard_deviation ()
 
 	double mean=0.0, sum_deviation=0.0;
 
-	int i;
+	size_t i;
 	size_t n;
 
 	n = qoffsets_.size();
