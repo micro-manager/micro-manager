@@ -153,17 +153,24 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
    }
 
    /**
-    * Generate the controls for adjusting the display, showing metadata, etc.
-    * TODO: our methodology here is still a bit screwy, leftovers from a
-    * refactor.
+    * [Re]generate the controls for adjusting the display, showing metadata,
+    * etc.
     */
    private void makeWindowControls() {
-      ArrayList<Component> widgets = new ArrayList<Component>();
-      ArrayList<String> rules = new ArrayList<String>();
+      removeAll();
+      // Override the default layout with our own, so we can do more
+      // customized controls.
+      // This layout is intended to minimize distances between elements.
+      setLayout(new MigLayout("insets 1, fillx, filly",
+         "[grow, fill]", "[grow, fill]related[]"));
+
+      recreateCanvas();
+      add(canvasPanel_, "align center, wrap");
+
       controls_ = new HyperstackControls(store_, stack_, displayBus_,
             false);
-      widgets.add(controls_);
-      rules.add("align center, wrap, growx");
+      add(controls_, "align center, wrap, growx");
+
       modePanel_ = new MultiModePanel(displayBus_);
 
       DisplaySettingsPanel settings = new DisplaySettingsPanel(
@@ -183,24 +190,15 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
       modePanel_.addMode("Overlays",
             new OverlaysPanel(store_, stack_, ijImage_, displayBus_));
 
-      widgets.add(modePanel_);
-      rules.add("dock east, growy");
-      setupLayout(widgets, rules);
+      add(modePanel_, "dock east, growy");
+
+      pack();
    }
 
    /**
-    * Reset our layout -- remove all controls, then re-add them as needed.
-    * @param widgets List of Components to add to the display.
-    * @param layoutRules List of MigLayout layout definition strings 
-    *        corresponding to the widgets.
+    * Re-generate our image canvas and canvas panel, along with resize logic.
     */
-   public void setupLayout(List<Component> widgets, List<String> layoutRules) {
-      removeAll();
-      // Override the default layout with our own, so we can do more 
-      // customized controls. 
-      // This layout is intended to minimize distances between elements.
-      setLayout(new MigLayout("insets 1, fillx, filly",
-         "[grow, fill]", "[grow, fill]related[]"));
+   private void recreateCanvas() {
       ic = new MMImageCanvas(ijImage_, plus_, displayBus_);
       
       // HACK: set the minimum size. If we don't do this, then the canvas
@@ -211,10 +209,6 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
       canvasPanel_ = new JPanel();
       canvasPanel_.setLayout(new MigLayout("insets 0, fill"));
       canvasPanel_.add(ic);
-      add(canvasPanel_, "align center, wrap");
-      for (int i = 0; i < widgets.size(); ++i) {
-         add(widgets.get(i), layoutRules.get(i));
-      }
 
       // Propagate resizing to the canvas, adjusting the view rectangle.
       canvasPanel_.addComponentListener(new ComponentAdapter() {
@@ -255,17 +249,8 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
          }
       });
 
-      // Add a listener so we can update the histogram when an ROI is drawn,
-      // and to override the title-setting behavior of ImagePlus when the 
-      // magnification tool is used.
+      // Add a listener so we can update the histogram when an ROI is drawn.
       ic.addMouseListener(new MouseInputAdapter() {
-         @Override
-         public void mousePressed(MouseEvent me) {
-            if (Toolbar.getToolId() == 11) { // zoom tool selected
-               resetTitle();
-            }
-         }
-
          @Override
          public void mouseReleased(MouseEvent me) {
             if (ijImage_ instanceof MMCompositeImage) {
@@ -275,7 +260,6 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
             }
          }
       });
-      pack();
    }
 
    private void resetTitle() {
