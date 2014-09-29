@@ -19,7 +19,19 @@ public interface Image {
     * Generate a copy of this Image, except that its Coords object is at a
     * different location, as specified.
     */
-   public Image copyAt(Coords coords);
+   public Image copyAtCoords(Coords coords);
+
+   /**
+    * Generate a copy of this Image, except that its Metadata object uses
+    * the provided Metadata.
+    */
+   public Image copyWithMetadata(Metadata metadata);
+
+   /**
+    * Generate a copy of this Image, except that its Coords object is at the
+    * provided location, and it uses the provided Metadata.
+    */
+   public Image copyWith(Coords coords, Metadata metadata);
 
    /**
     * Retrieve the intensity of the pixel at the specified position.
