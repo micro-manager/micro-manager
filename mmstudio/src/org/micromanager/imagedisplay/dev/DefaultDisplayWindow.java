@@ -600,4 +600,12 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
    public void onNewImage(NewImageEvent event) {
       receiveNewImage(event.getImage());
    }
+
+   public static DisplayWindow getCurrentWindow() {
+      ImageWindow current = WindowManager.getCurrentWindow();
+      if (current instanceof DisplayWindow) {
+         return (DisplayWindow) current;
+      }
+      return null;
+   }
 }

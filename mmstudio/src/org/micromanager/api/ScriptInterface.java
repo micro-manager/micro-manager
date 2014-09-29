@@ -40,6 +40,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import org.micromanager.api.data.Datastore;
+import org.micromanager.api.data.DisplayWindow;
 import org.micromanager.api.data.Image;
 import org.micromanager.api.display.OverlayPanel;
 import org.micromanager.dialogs.AcqControlDlg;
@@ -877,4 +878,11 @@ public interface ScriptInterface {
     * existing and new image display windows.
     */
    public void registerOverlay(OverlayPanel panel);
+
+   /**
+    * Return the DisplayWindow for the top-level window. Will be null if there
+    * is no such window or that window is not a DisplayWindow (e.g. it is an
+    * ImageJ window instead).
+    */
+   public DisplayWindow getCurrentWindow();
 }
