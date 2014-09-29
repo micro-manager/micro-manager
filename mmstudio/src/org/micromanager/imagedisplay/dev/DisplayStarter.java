@@ -19,6 +19,8 @@ import org.micromanager.utils.ReportingUtils;
  * is to make use of Datastore.getDisplays().
  */
 public class DisplayStarter {
+   private static int titleID = 0;
+
    private Datastore store_;
    private EventBus displayBus_;
    private DefaultDisplayWindow window_;
@@ -39,7 +41,7 @@ public class DisplayStarter {
       MMVirtualStack stack = new MMVirtualStack(store_);
       MMImagePlus plus = new MMImagePlus(displayBus_);
       stack.setImagePlus(plus);
-      plus.setStack("foo", stack);
+      plus.setStack(generateImagePlusName(), stack);
       plus.setOpenAsHyperStack(true);
       window_ = new DefaultDisplayWindow(store_, stack, plus, displayBus_);
    }
@@ -63,5 +65,13 @@ public class DisplayStarter {
       catch (Exception e) {
          ReportingUtils.logError(e, "Couldn't process new image");
       }
+   }
+
+   /**
+    * Generate a unique name for our ImagePlus object.
+    */
+   private static String generateImagePlusName() {
+      titleID++;
+      return String.format("MM dataset %d", titleID);
    }
 }

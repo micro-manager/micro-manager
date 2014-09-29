@@ -426,7 +426,8 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
     */
    private void shiftToCompositeImage() {
       // TODO: assuming mode 1 for now.
-      ijImage_ = new MMCompositeImage(plus_, 1, "foo", displayBus_);
+      ijImage_ = new MMCompositeImage(plus_, 1, plus_.getTitle(),
+            displayBus_);
       ijImage_.setOpenAsHyperStack(true);
       MMCompositeImage composite = (MMCompositeImage) ijImage_;
       int numChannels = store_.getMaxIndex("channel") + 1;
