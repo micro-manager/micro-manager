@@ -2228,7 +2228,7 @@ public class MMStudio implements ScriptInterface {
          // Need to create a new album.
          albumDatastore_ = new DefaultDatastore();
          albumDatastore_.setStorage(new StorageRAM(albumDatastore_));
-         new DisplayStarter(albumDatastore_);
+         new DisplayStarter(albumDatastore_, null);
       }
       // Adjust image coordinates to be at the N+1th timepoint.
       Coords newCoords = image.getCoords().copy()
