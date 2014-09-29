@@ -29,6 +29,7 @@ public interface SummaryMetadata {
       SummaryMetadataBuilder metadataVersion(String metadataVersion);
       SummaryMetadataBuilder computerName(String computerName);
       SummaryMetadataBuilder directory(String directory);
+      SummaryMetadataBuilder comments(String comments);
       
       SummaryMetadataBuilder waitInterval(Double waitInterval);
       SummaryMetadataBuilder customIntervalsMs(Double[] customIntervalsMs);
@@ -51,6 +52,7 @@ public interface SummaryMetadata {
    public String getMetadataVersion();
    public String getComputerName();
    public String getDirectory();
+   public String getComments();
    public Double getWaitInterval();
    public Double[] getCustomIntervalsMs();
    public String getStartDate();
