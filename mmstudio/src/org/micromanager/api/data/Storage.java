@@ -3,11 +3,11 @@ package org.micromanager.api.data;
 import java.util.List;
 
 /**
- * Readers are responsible for providing image data to Datastores when
- * requested. Different Readers may have different mechanisms -- for example,
+ * Storages are responsible for providing image data to Datastores when
+ * requested. Different Storages may have different mechanisms -- for example,
  * by storing images in a file, or in RAM.
  */
-public interface Reader {
+public interface Storage {
    /**
     * Retrieve the Image located at the specified coordinates.
     */

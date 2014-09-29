@@ -9,13 +9,13 @@ import org.micromanager.api.data.DatastoreLockedException;
 import org.micromanager.api.data.DisplaySettings;
 import org.micromanager.api.data.DisplayWindow;
 import org.micromanager.api.data.Image;
-import org.micromanager.api.data.Reader;
+import org.micromanager.api.data.Storage;
 import org.micromanager.api.data.SummaryMetadata;
 
 import org.micromanager.utils.PrioritizedEventBus;
 
 public class DefaultDatastore implements Datastore {
-   private Reader reader_ = null;
+   private Storage storage_ = null;
    private PrioritizedEventBus bus_;
    private boolean isLocked_ = false;
    private ArrayList<DisplayWindow> displays_;
@@ -26,8 +26,8 @@ public class DefaultDatastore implements Datastore {
    }
 
    @Override
-   public void setReader(Reader reader) {
-      reader_ = reader;
+   public void setStorage(Storage storage) {
+      storage_ = storage;
    }
 
    @Override
@@ -47,16 +47,16 @@ public class DefaultDatastore implements Datastore {
 
    @Override
    public Image getImage(Coords coords) {
-      if (reader_ != null) {
-         return reader_.getImage(coords);
+      if (storage_ != null) {
+         return storage_.getImage(coords);
       }
       return null;
    }
 
    @Override
    public List<Image> getImagesMatching(Coords coords) {
-      if (reader_ != null) {
-         return reader_.getImagesMatching(coords);
+      if (storage_ != null) {
+         return storage_.getImagesMatching(coords);
       }
       return null;
    }
@@ -71,24 +71,24 @@ public class DefaultDatastore implements Datastore {
 
    @Override
    public Integer getMaxIndex(String axis) {
-      if (reader_ != null) {
-         return reader_.getMaxIndex(axis);
+      if (storage_ != null) {
+         return storage_.getMaxIndex(axis);
       }
       return -1;
    }
 
    @Override
    public List<String> getAxes() {
-      if (reader_ != null) {
-         return reader_.getAxes();
+      if (storage_ != null) {
+         return storage_.getAxes();
       }
       return null;
    }
 
    @Override
    public SummaryMetadata getSummaryMetadata() {
-      if (reader_ != null) {
-         return reader_.getSummaryMetadata();
+      if (storage_ != null) {
+         return storage_.getSummaryMetadata();
       }
       return null;
    }
@@ -103,8 +103,8 @@ public class DefaultDatastore implements Datastore {
 
    @Override
    public DisplaySettings getDisplaySettings() {
-      if (reader_ != null) {
-         return reader_.getDisplaySettings();
+      if (storage_ != null) {
+         return storage_.getDisplaySettings();
       }
       return null;
    }
@@ -130,8 +130,8 @@ public class DefaultDatastore implements Datastore {
 
    @Override
    public int getNumImages() {
-      if (reader_ != null) {
-         return reader_.getNumImages();
+      if (storage_ != null) {
+         return storage_.getNumImages();
       }
       return -1;
    }
