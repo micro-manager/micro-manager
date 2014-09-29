@@ -608,4 +608,17 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
       }
       return null;
    }
+
+   public static List<DisplayWindow> getAllImageWindows() {
+      ArrayList<DisplayWindow> result = new ArrayList<DisplayWindow>();
+      int[] plusIDs = WindowManager.getIDList();
+      for (int id : plusIDs) {
+         ImagePlus plus = WindowManager.getImage(id);
+         ImageWindow window = plus.getWindow();
+         if (window instanceof DisplayWindow) {
+            result.add((DisplayWindow) window);
+         }
+      }
+      return result;
+   }
 }
