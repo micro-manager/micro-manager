@@ -76,6 +76,7 @@ import org.micromanager.api.Autofocus;
 import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.DatastoreLockedException;
+import org.micromanager.api.data.DisplayWindow;
 import org.micromanager.api.data.Image;
 import org.micromanager.api.DataProcessor;
 import org.micromanager.api.IAcquisitionEngine2010;
@@ -100,8 +101,8 @@ import org.micromanager.dialogs.MMIntroDlg;
 import org.micromanager.dialogs.RegistrationDlg;
 import org.micromanager.events.EventManager;
 
+import org.micromanager.imagedisplay.dev.DefaultDisplayWindow;
 import org.micromanager.imagedisplay.dev.DisplayStarter;
-import org.micromanager.imagedisplay.DisplayWindow;
 import org.micromanager.imagedisplay.MetadataPanel;
 import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
 import org.micromanager.logging.LogFileManager;
@@ -2840,5 +2841,10 @@ public class MMStudio implements ScriptInterface {
    @Override
    public void registerOverlay(OverlayPanel panel) {
       ReportingUtils.logError("TODO: Implement this");
+   }
+
+   @Override
+   public DisplayWindow getCurrentWindow() {
+      return DefaultDisplayWindow.getCurrentWindow();
    }
 }
