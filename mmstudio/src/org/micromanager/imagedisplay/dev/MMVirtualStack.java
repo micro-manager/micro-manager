@@ -122,10 +122,19 @@ public class MMVirtualStack extends ij.VirtualStack {
       int width = image.getWidth();
       int height = image.getHeight();
       int depth = image.getMetadata().getBitDepth();
-      // TODO: find a better way of setting the mode.
-      int mode = ImagePlus.GRAY8;
-      if (depth > 8) {
-         mode = ImagePlus.GRAY16;
+      int mode = -1;
+      switch(image.getBytesPerPixel()) {
+         case 1:
+            mode = ImagePlus.GRAY8;
+            break;
+         case 2:
+            mode = ImagePlus.GRAY16;
+            break;
+         case 4:
+            mode = ImagePlus.COLOR_RGB;
+            break;
+         default:
+            ReportingUtils.showError("Unrecognized image with " + image.getBytesPerPixel() + " bytes per pixel");
       }
       Object pixels = image.getRawPixels();
       ImageProcessor result = ImageUtils.makeProcessor(mode, width, height, pixels);
