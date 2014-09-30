@@ -1,5 +1,9 @@
 package org.micromanager.data;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.IntBuffer;
+
 import mmcorej.TaggedImage;
 
 import net.imglib2.img.array.ArrayImg;
@@ -130,30 +134,35 @@ public class DefaultImage implements Image {
          int height, int bytesPerPixel)
          throws IllegalArgumentException {
       long[] dimensions = new long[] {width, height};
-      if (pixels instanceof short[]) {
-         if (bytesPerPixel == 8) {
-            // Indicates an RGBA datatype. Currently I don't believe we're 
-            // using short-based RGBA anywhere.
-            throw new IllegalArgumentException("No 64-bit RGBA support yet.");
+      if (pixels instanceof byte[]) {
+         if (bytesPerPixel == 4) {
+            // RGB type. The argbs() method only takes int[] or long[] though,
+            // so we have to do some type conversion. Adapted from
+            // http://stackoverflow.com/questions/11437203/byte-array-to-int-array
+            // Additionally, imglib2 uses ARGB, not RGBA, so our pixels may be
+            // in the wrong order.
+            // TODO: fix pixel order.
+            IntBuffer intBuf = ByteBuffer.wrap((byte[]) pixels).order(ByteOrder.BIG_ENDIAN).asIntBuffer();
+            int[] temp = new int[intBuf.remaining()];
+            intBuf.get(temp);
+            ReportingUtils.logMessage("Casting RGBA to ARGB; pixels may be misleading!");
+            return new ImgPlus<ARGBType>(ArrayImgs.argbs(temp, dimensions));
          }
+         // Otherwise assume grayscale.
+         return new ImgPlus<UnsignedByteType>(
+               ArrayImgs.unsignedBytes((byte[]) pixels, dimensions));
+      }
+      else if (pixels instanceof short[]) {
          // Assume grayscale.
          return new ImgPlus<UnsignedShortType>(
                ArrayImgs.unsignedShorts((short[]) pixels, dimensions));
       }
-      else if (pixels instanceof byte[]) {
-         if (bytesPerPixel == 4) {
-            // Indicates an RGBA type. imglib2 uses ARGB though. For now we
-            // aren't bothering to re-order pixels, which could potentially
-            // cause problems down the road.
-            // TODO: Reorder pixels to the proper ordering.
-            ReportingUtils.logMessage("Casting RGBA to ARGB; pixels may be misleading!");
-            return new ImgPlus<ARGBType>(
-                  ArrayImgs.argbs((int[]) pixels, dimensions));
-         }
-         else { // Grayscale image
-            return new ImgPlus<UnsignedByteType>(
-                  ArrayImgs.unsignedBytes((byte[]) pixels, dimensions));
-         }
+      else if (pixels instanceof int[]) {
+         // TODO: assuming RGBA type as no MM cameras currently support 32-bit
+         // grayscale. This branch will execute when cloning an existing
+         // DefaultImage.
+         return new ImgPlus<ARGBType>(
+               ArrayImgs.argbs((int[]) pixels, dimensions));
       }
       else {
          throw new IllegalArgumentException("Unsupported image array type.");
@@ -244,13 +253,18 @@ public class DefaultImage implements Image {
    }
 
    public int getBytesPerPixel() {
-      // Assume byte type by default.
-      int result = 1;
-      if (pixels_.firstElement() instanceof UnsignedShortType) {
+      int result = -1;
+      if (pixels_.firstElement() instanceof UnsignedByteType) {
+         result = 1;
+      }
+      else if (pixels_.firstElement() instanceof UnsignedShortType) {
          result = 2;
       }
       else if (pixels_.firstElement() instanceof ARGBType) {
          result = 4;
+      }
+      else {
+         ReportingUtils.logError("Can't recognize type of our own pixels array.");
       }
       return result;
    }
