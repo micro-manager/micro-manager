@@ -4,6 +4,7 @@ import ij.gui.ImageWindow;
 import ij.ImagePlus;
 
 import java.awt.Component;
+import java.util.List;
 
 /**
  * A DisplayWindow is the interface to Micro-Manager's custom image display
@@ -26,6 +27,11 @@ public interface DisplayWindow {
     * Retrieve the Datastore backing this display.
     */
    public Datastore getDatastore();
+
+   /**
+    * Retrieve the Images currently being displayed (all channels.
+    */
+   public List<Image> getDisplayedImages();
 
    /**
     * Publish a RequestToCloseEvent, which may cause any relevant subscribers
