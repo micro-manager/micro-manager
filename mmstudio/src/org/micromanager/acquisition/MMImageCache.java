@@ -224,6 +224,7 @@ public class MMImageCache implements ImageCache {
       }
    }
 
+   @Override
    public TaggedImage getImage(int channel, int slice, int frame, int position) {
       TaggedImage taggedImg = null;
       if (taggedImg == null) {

@@ -24,6 +24,9 @@ package org.micromanager.api;
 
 import java.awt.Color;
 import java.util.Set;
+
+import mmcorej.TaggedImage;
+
 import org.json.JSONObject;
 
 /**
@@ -181,6 +184,9 @@ public interface ImageCache extends TaggedImageStorage {
     */
    public String getPixelType();
    
-  
-
+   /**
+    * Return the TaggedImage at the specified coordinates, or null if that
+    * image does not exist.
+    */
+   public TaggedImage getImage(int channel, int slice, int frame, int position);
 }
