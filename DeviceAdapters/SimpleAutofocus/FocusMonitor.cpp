@@ -55,7 +55,8 @@ const char* g_ON = "ON";
 const char* g_OFF = "OFF";
 
 FocusMonitor::FocusMonitor() : 
-   initialized_(false)
+   initialized_(false),
+   delayThd_(0)
 {
    // call the base class method to set-up default error codes/messages
    InitializeDefaultErrorMessages();
