@@ -548,6 +548,20 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
    }
 
    @Override
+   public List<Image> getDisplayedImages() {
+      ArrayList<Image> result = new ArrayList<Image>();
+      Coords curCoords = stack_.getCurrentImageCoords();
+      for (int i = 0; i <= store_.getMaxIndex("channel"); ++i) {
+         result.add(store_.getImage(curCoords.copy().position("channel", i).build()));
+      }
+      if (result.size() == 0) {
+         // No "channel" axis; just return the current image.
+         result.add(store_.getImage(curCoords));
+      }
+      return result;
+   }
+
+   @Override
    public void windowClosing(WindowEvent e) {
       if (!closed_) {
          requestToClose();
