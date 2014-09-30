@@ -3,7 +3,7 @@
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   ASI motorized one-axis stage device adapter
+// DESCRIPTION:   ASI LED shutter device adapter
 //
 // COPYRIGHT:     Applied Scientific Instrumentation, Eugene OR
 //
@@ -77,6 +77,12 @@ int CLED::Initialize()
    UpdateProperty(g_ShutterState);
    AddAllowedValue(g_ShutterState, g_OpenState);
    AddAllowedValue(g_ShutterState, g_ClosedState);
+
+   // refresh properties from controller every time; default is false = no refresh (speeds things up by not redoing so much serial comm)
+   pAct = new CPropertyAction (this, &CLED::OnRefreshProperties);
+   CreateProperty(g_RefreshPropValsPropertyName, g_NoState, MM::String, false, pAct);
+   AddAllowedValue(g_RefreshPropValsPropertyName, g_NoState);
+   AddAllowedValue(g_RefreshPropValsPropertyName, g_YesState);
 
    // save settings to controller if requested
    pAct = new CPropertyAction (this, &CLED::OnSaveCardSettings);

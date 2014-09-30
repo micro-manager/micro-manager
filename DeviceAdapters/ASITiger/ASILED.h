@@ -3,7 +3,7 @@
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   ASI motorized one-axis stage device adapter
+// DESCRIPTION:   ASI LED shutter device adapter
 //
 // COPYRIGHT:     Applied Scientific Instrumentation, Eugene OR
 //
