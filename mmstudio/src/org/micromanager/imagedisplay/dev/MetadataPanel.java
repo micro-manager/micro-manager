@@ -57,8 +57,6 @@ public class MetadataPanel extends JPanel {
    private JTable summaryMetadataTable_;
    private final MetadataTableModel imageMetadataModel_;
    private final MetadataTableModel summaryMetadataModel_;
-   private final String[] columnNames_ = {"Property", "Value"};
-   private boolean showUnchangingKeys_;
    private ImageWindow currentWindow_;
    private Datastore store_;
    private Timer updateTimer_;
@@ -146,13 +144,6 @@ public class MetadataPanel extends JPanel {
 
       showUnchangingPropertiesCheckbox_.setText("Show unchanging properties");
       showUnchangingPropertiesCheckbox_.setToolTipText("Show/hide properties that are the same for all images in the acquisition");
-      showUnchangingPropertiesCheckbox_.addActionListener(new java.awt.event.ActionListener() {
-
-         @Override
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            showUnchangingPropertiesCheckboxActionPerformed(evt);
-         }
-      });
 
       jLabel2.setText("Per-image properties");
 
@@ -169,98 +160,6 @@ public class MetadataPanel extends JPanel {
       setMaximumSize(new Dimension(300, 500));
    }
 
-   private void showUnchangingPropertiesCheckboxActionPerformed(java.awt.event.ActionEvent evt) {
-      showUnchangingKeys_ = showUnchangingPropertiesCheckbox_.isSelected();
-      ReportingUtils.logError("TODO: implement showUnchangingProperties");
-   }
-
-   class MetadataTableModel extends AbstractTableModel {
-
-      Vector<Vector<String>> data_;
-
-      MetadataTableModel() {
-         data_ = new Vector<Vector<String>>();
-      }
-
-      @Override
-      public int getRowCount() {
-         return data_.size();
-      }
-
-      public void addRow(Vector<String> rowData) {
-         data_.add(rowData);
-      }
-
-      @Override
-      public int getColumnCount() {
-         return 2;
-      }
-
-      @Override
-      public synchronized Object getValueAt(int rowIndex, int columnIndex) {
-         if (data_.size() > rowIndex) {
-            Vector<String> row = data_.get(rowIndex);
-            if (row.size() > columnIndex) {
-               return data_.get(rowIndex).get(columnIndex);
-            } else {
-               return "";
-            }
-         } else {
-            return "";
-         }
-      }
-
-      public void clear() {
-         data_.clear();
-      }
-
-      @Override
-      public String getColumnName(int colIndex) {
-         return columnNames_[colIndex];
-      }
-
-      public synchronized void setMetadata(JSONObject md) {
-         clear();
-         if (md != null) {
-            String[] keys = MDUtils.getKeys(md);
-            Arrays.sort(keys);
-            for (String key : keys) {
-               Vector<String> rowData = new Vector<String>();
-               rowData.add(key);
-               try {
-                  rowData.add(md.getString(key));
-               } catch (JSONException ex) {
-                  //ReportingUtils.logError(ex);
-               }
-               addRow(rowData);
-            }
-         }
-         fireTableDataChanged();
-      }
-   }
-
-   private JSONObject selectChangingTags(ImagePlus imgp, JSONObject md) {
-      JSONObject mdChanging = new JSONObject();
-//      ImageCache cache = getCache(imgp);
-//      if (cache != null) {
-//         for (String key : cache.getChangingKeys()) {
-//            if (md.has(key)) {
-//               try {
-//                  mdChanging.put(key, md.get(key));
-//               } catch (JSONException ex) {
-//                  try {
-//                     mdChanging.put(key, "");
-//                     //ReportingUtils.logError(ex);
-//                  } catch (JSONException ex1) {
-//                     ReportingUtils.logError(ex1);
-//                  }
-//               }
-//            }
-//         }
-//      }
-      return mdChanging;
-   }
-
    /**
     * We postpone metadata display updates slightly in case the image display
     * is changing rapidly, to ensure that we don't end up with a race condition
@@ -274,8 +173,10 @@ public class MetadataPanel extends JPanel {
          @Override
          public void run() {
             Metadata data = image.getMetadata();
-            imageMetadataModel_.setMetadata(data.legacyToJSON());
-            summaryMetadataModel_.setMetadata(store_.getSummaryMetadata().legacyToJSON());
+            imageMetadataModel_.setMetadata(data.legacyToJSON(),
+                  showUnchangingPropertiesCheckbox_.isSelected());
+            summaryMetadataModel_.setMetadata(store_.getSummaryMetadata().legacyToJSON(),
+                  true);
          }
       };
       // Cancel all pending tasks and then schedule our task for execution
