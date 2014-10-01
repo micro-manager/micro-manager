@@ -45,6 +45,9 @@ public class DefaultImage implements Image {
    // indicates the range of values that the camera can output (e.g. a 12-bit
    // pixel has values in [0, 4095].
    int bytesPerPixel_;
+   // How many components are packed into each pixel's worth of data (e.g. an
+   // RGB or CMYK image).
+   int numComponents_;
 
    /**
     * @param taggedImage A TaggedImage to base the Image on.
@@ -113,13 +116,14 @@ public class DefaultImage implements Image {
       pixelWidth_ = MDUtils.getWidth(tags);
       pixelHeight_ = MDUtils.getHeight(tags);
       bytesPerPixel_ = MDUtils.getBytesPerPixel(tags);
+      numComponents_ = MDUtils.getNumberOfComponents(tags);
    }
 
    /**
     * @param pixels Assumed to be a Java array of either bytes or shorts.
     */
    public DefaultImage(Object pixels, int width, int height, int bytesPerPixel,
-         Coords coords, Metadata metadata) 
+         int numComponents, Coords coords, Metadata metadata) 
          throws IllegalArgumentException {
       metadata_ = metadata;
       coords_ = coords;
@@ -128,6 +132,7 @@ public class DefaultImage implements Image {
       pixelWidth_ = width;
       pixelHeight_ = height;
       bytesPerPixel_ = bytesPerPixel;
+      numComponents_ = numComponents;
    }
 
    public DefaultImage(DefaultImage source, Coords coords, Metadata metadata) {
@@ -137,6 +142,7 @@ public class DefaultImage implements Image {
       pixelWidth_ = source.getWidth();
       pixelHeight_ = source.getHeight();
       bytesPerPixel_ = source.getBytesPerPixel();
+      numComponents_ = source.getNumComponents();
    }
 
    @Override
@@ -219,31 +225,79 @@ public class DefaultImage implements Image {
       return rawPixels_;
    }
 
-   /**
-    * Return the intensity of the pixel at the specified XY position, as a 
-    * double (regardless of the actual format of the pixel).
-    * TODO: this doesn't handle RGB pixel formats at all.
-    */
+   // This is a bit ugly, due to needing to examine the type of rawPixels_,
+   // but what else can we do?
    @Override
-   public long getIntensityAt(int x, int y) {
-      long result = 0;
+   public Object getRawPixelsForComponent(int component) {
+      Object result;
+      int length;
       if (rawPixels_ instanceof byte[]) {
-         for (int i = 0; i < bytesPerPixel_; ++i) {
-            result += ((byte[]) rawPixels_)[x * pixelWidth_ + y + i];
-            // NB Java will let you use "<<=" in this situation.
-            result = result << 8;
-         }
+         length = ((byte[]) rawPixels_).length / bytesPerPixel_;
+         result = (Object) new byte[length];
       }
       else if (rawPixels_ instanceof short[]) {
-         for (int i = 0; i < bytesPerPixel_ / 2; ++i) {
-            result += ((short[]) rawPixels_)[x * pixelWidth_ + y + i];
-            result = result <<  16;
-         }
+         length = ((short[]) rawPixels_).length / bytesPerPixel_;
+         result = (Object) new short[length];
       }
       else {
-         ReportingUtils.logError("Unrecognized data type for raw pixels; can't get pixel intensity.");
+         ReportingUtils.logError("Unrecognized pixel buffer type.");
+         return null;
+      }
+      for (int i = 0; i < length; ++i) {
+         int sourceIndex = i * bytesPerPixel_ + component;
+         if (rawPixels_ instanceof byte[]) {
+            ((byte[]) result)[i] = ((byte[]) rawPixels_)[sourceIndex];
+         }
+         else if (rawPixels_ instanceof short[]) {
+            ((short[]) result)[i] = ((short[]) rawPixels_)[sourceIndex];
+         }
       }
       return result;
+   }
+
+   @Override
+   public long getIntensityAt(int x, int y) {
+      return getComponentIntensityAt(x, y, 0);
+   }
+
+   @Override
+   public long getComponentIntensityAt(int x, int y, int component) {
+      long result = 0;
+      int divisor = numComponents_;
+      int exponent = 8;
+      if (rawPixels_ instanceof short[]) {
+         divisor *= 2;
+         exponent = 16;
+      }
+      for (int i = 0; i < bytesPerPixel_ / divisor; ++i) {
+         int index = x * pixelWidth_ + y + component + i;
+         if (rawPixels_ instanceof byte[]) {
+            result += ((byte[]) rawPixels_)[index];
+         }
+         else if (rawPixels_ instanceof short[]) {
+            result += ((short[]) rawPixels_)[index];
+         }
+         // NB Java will let you use "<<=" in this situation.
+         result = result << exponent;
+      }
+      return result;
+   }
+
+   @Override
+   public String getIntensityStringAt(int x, int y) {
+      if (numComponents_ == 1) {
+         return String.format("%d", getIntensityAt(x, y));
+      }
+      else {
+         String result = "[";
+         for (int i = 0; i < numComponents_; ++i) {
+            result += String.format("%d", getComponentIntensityAt(x, y, i));
+            if (i != numComponents_ - 1) {
+               result += "/";
+            }
+         }
+         return result + "]";
+      }
    }
 
    /**
@@ -264,8 +318,14 @@ public class DefaultImage implements Image {
       return pixelHeight_;
    }
 
+   @Override
    public int getBytesPerPixel() {
       return bytesPerPixel_;
+   }
+
+   @Override
+   public int getNumComponents() {
+      return numComponents_;
    }
 
    public String toString() {
