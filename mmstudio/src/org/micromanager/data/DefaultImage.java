@@ -33,9 +33,18 @@ import org.micromanager.utils.ReportingUtils;
  * Coords instance).
  */
 public class DefaultImage implements Image {
-   private ImgPlus pixels_;
    private Metadata metadata_;
    private Coords coords_;
+   private Object rawPixels_;
+   // Width of the image, in pixels
+   int pixelWidth_;
+   // Height of the image, in pixels
+   int pixelHeight_;
+   // How many bytes are allocated to each pixel in rawPixels_. This is
+   // different from the bits per pixel, which is in the Metadata, and
+   // indicates the range of values that the camera can output (e.g. a 12-bit
+   // pixel has values in [0, 4095].
+   int bytesPerPixel_;
 
    /**
     * @param taggedImage A TaggedImage to base the Image on.
@@ -100,9 +109,10 @@ public class DefaultImage implements Image {
       catch (JSONException e) {}
       coords_ = cBuilder.build();
 
-      pixels_ = generateImgPlusFromPixels(tagged.pix, 
-            MDUtils.getWidth(tags), MDUtils.getHeight(tags),
-            MDUtils.getBytesPerPixel(tags));
+      rawPixels_ = tagged.pix;
+      pixelWidth_ = MDUtils.getWidth(tags);
+      pixelHeight_ = MDUtils.getHeight(tags);
+      bytesPerPixel_ = MDUtils.getBytesPerPixel(tags);
    }
 
    /**
@@ -114,21 +124,31 @@ public class DefaultImage implements Image {
       metadata_ = metadata;
       coords_ = coords;
 
-      pixels_ = generateImgPlusFromPixels(pixels, width, height, bytesPerPixel);
+      rawPixels_ = pixels;
+      pixelWidth_ = width;
+      pixelHeight_ = height;
+      bytesPerPixel_ = bytesPerPixel;
    }
 
    public DefaultImage(DefaultImage source, Coords coords, Metadata metadata) {
       metadata_ = metadata;
       coords_ = coords;
-      pixels_ = generateImgPlusFromPixels(source.getRawPixels(),
-            source.getWidth(), source.getHeight(), source.getBytesPerPixel());
+      rawPixels_ = source.getRawPixels();
+      pixelWidth_ = source.getWidth();
+      pixelHeight_ = source.getHeight();
+      bytesPerPixel_ = source.getBytesPerPixel();
+   }
+
+   @Override
+   public ImgPlus getImgPlus() {
+      return generateImgPlusFromPixels(rawPixels_, pixelWidth_, pixelHeight_,
+            bytesPerPixel_);
    }
 
    /**
-    * NOTE: if you want to add additional datatypes at this stage, make certain
-    * you also update the getBytesPerPixel() function to be able to extract the
-    * appropriate bytes per pixel from the ArrayImg later, and the 
-    * getIntensityAt() function for similar reasons.
+    * Inspect our pixel array and bytes per pixel, and generate an ImgPlus
+    * based on what we find.
+    * TODO: our handling of RGB images is imperfect.
     */
    private ImgPlus generateImgPlusFromPixels(Object pixels, int width, 
          int height, int bytesPerPixel)
@@ -170,11 +190,6 @@ public class DefaultImage implements Image {
    }
 
    @Override
-   public ImgPlus getPixels() {
-      return pixels_;
-   }
-
-   @Override
    public Metadata getMetadata() {
       return metadata_;
    }
@@ -199,39 +214,36 @@ public class DefaultImage implements Image {
       return new DefaultImage(this, coords, metadata);
    }
 
-   /**
-    * Return a raw Object of our pixel data, i.e. a reference to the 
-    * Java array (or whatever) that backs our ImgPlus.
-    */
    @Override
    public Object getRawPixels() {
-      ArrayDataAccess accessor = (ArrayDataAccess) ((ArrayImg) pixels_.getImg()).update(null);
-      return accessor.getCurrentStorageArray();
+      return rawPixels_;
    }
 
    /**
     * Return the intensity of the pixel at the specified XY position, as a 
     * double (regardless of the actual format of the pixel).
+    * TODO: this doesn't handle RGB pixel formats at all.
     */
    @Override
-   public double getIntensityAt(int x, int y) {
-      RandomAccess accessor = pixels_.randomAccess();
-      accessor.move(new int[] {x, y});
-      Object result = accessor.get();
-      if (result instanceof UnsignedByteType) {
-         return (byte) ((UnsignedByteType) result).get();
+   public long getIntensityAt(int x, int y) {
+      long result = 0;
+      if (rawPixels_ instanceof byte[]) {
+         for (int i = 0; i < bytesPerPixel_; ++i) {
+            result += ((byte[]) rawPixels_)[x * pixelWidth_ + y + i];
+            // NB Java will let you use "<<=" in this situation.
+            result = result << 8;
+         }
       }
-      else if (result instanceof UnsignedShortType) {
-         return (short) ((UnsignedShortType) result).get();
-      }
-      else if (result instanceof ARGBType) {
-         ReportingUtils.logError("Asked for intensity of RGB image; unsure result is sensible.");
-         return (short) ((ARGBType) result).get();
+      else if (rawPixels_ instanceof short[]) {
+         for (int i = 0; i < bytesPerPixel_ / 2; ++i) {
+            result += ((short[]) rawPixels_)[x * pixelWidth_ + y + i];
+            result = result <<  16;
+         }
       }
       else {
-         ReportingUtils.logError("Unrecognized data type; can't get intensity");
-         return -1;
+         ReportingUtils.logError("Unrecognized data type for raw pixels; can't get pixel intensity.");
       }
+      return result;
    }
 
    /**
@@ -244,29 +256,16 @@ public class DefaultImage implements Image {
 
    @Override
    public int getWidth() {
-      return (int) pixels_.dimension(0);
+      return pixelWidth_;
    }
 
    @Override
    public int getHeight() {
-      return (int) pixels_.dimension(1);
+      return pixelHeight_;
    }
 
    public int getBytesPerPixel() {
-      int result = -1;
-      if (pixels_.firstElement() instanceof UnsignedByteType) {
-         result = 1;
-      }
-      else if (pixels_.firstElement() instanceof UnsignedShortType) {
-         result = 2;
-      }
-      else if (pixels_.firstElement() instanceof ARGBType) {
-         result = 4;
-      }
-      else {
-         ReportingUtils.logError("Can't recognize type of our own pixels array.");
-      }
-      return result;
+      return bytesPerPixel_;
    }
 
    public String toString() {
