@@ -41,7 +41,7 @@ import org.micromanager.api.display.DrawEvent;
 import org.micromanager.data.AbortEvent;
 import org.micromanager.data.DefaultCoords;
 import org.micromanager.data.NewImageEvent;
-import org.micromanager.imagedisplay.MouseIntensityEvent;
+import org.micromanager.imagedisplay.MouseMovedEvent;
 import org.micromanager.MMStudio;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.NumberUtils;
@@ -145,17 +145,23 @@ public class HyperstackControls extends JPanel {
     * images?
     */
    @Subscribe
-   public void onMouseMoved(MouseIntensityEvent event) {
-      mouseX_ = event.x_;
-      mouseY_ = event.y_;
-      setPixelInfo(mouseX_, mouseY_, event.intensities_[0]);
+   public void onMouseMoved(MouseMovedEvent event) {
+      try {
+         mouseX_ = event.getX();
+         mouseY_ = event.getY();
+         setPixelInfo(mouseX_, mouseY_,
+               store_.getImage(stack_.getCurrentImageCoords()).getIntensityStringAt(mouseX_, mouseY_));
+      }
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Whoops!");
+      }
    }
 
    /**
     * Update our pixel info text.
     */
-   private void setPixelInfo(int x, int y, int intensity) {
-      pixelInfoLabel_.setText(String.format("x=%d, y=%d, value=%d",
+   private void setPixelInfo(int x, int y, String intensity) {
+      pixelInfoLabel_.setText(String.format("x=%d, y=%d, value=%s",
                x, y, intensity));
    }
 
@@ -183,8 +189,8 @@ public class HyperstackControls extends JPanel {
       if (mouseX_ >= 0 && mouseX_ < image.getWidth() &&
             mouseY_ >= 0 && mouseY_ < image.getHeight()) {
          try {
-            int intensity = (int) image.getIntensityAt(mouseX_, mouseY_);
-            setPixelInfo(mouseX_, mouseY_, intensity);
+            setPixelInfo(mouseX_, mouseY_,
+                  image.getIntensityStringAt(mouseX_, mouseY_));
          }
          catch (Exception e) {
             ReportingUtils.logError(e, "Error in HyperstackControls onNewImage");

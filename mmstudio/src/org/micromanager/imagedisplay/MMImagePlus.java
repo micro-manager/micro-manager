@@ -47,7 +47,7 @@ public class MMImagePlus extends ImagePlus implements IMMImagePlus {
    @Override
    public void mouseMoved(int x, int y) {
       super.mouseMoved(x, y);
-      bus_.post(new MouseIntensityEvent(x, y, getPixel(x, y)));
+      bus_.post(new MouseMovedEvent(x, y));
    }
 
    @Override
