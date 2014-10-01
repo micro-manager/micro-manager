@@ -47,6 +47,10 @@ public class MMVirtualStack extends ij.VirtualStack {
       }
       DefaultImage image = getImage(flatIndex);
       if (image != null) {
+         if (image.getNumComponents() != 1) {
+            // Extract the appropriate component.
+            return image.getRawPixelsForComponent((flatIndex - 1) % image.getNumComponents());
+         }
          return image.getRawPixels();
       }
       ReportingUtils.logError("Null image at " + curCoords_);
@@ -121,7 +125,7 @@ public class MMVirtualStack extends ij.VirtualStack {
       }
       int width = image.getWidth();
       int height = image.getHeight();
-      int depth = image.getMetadata().getBitDepth();
+      Object pixels = getPixels(flatIndex);
       int mode = -1;
       switch(image.getBytesPerPixel()) {
          case 1:
@@ -131,12 +135,18 @@ public class MMVirtualStack extends ij.VirtualStack {
             mode = ImagePlus.GRAY16;
             break;
          case 4:
-            mode = ImagePlus.COLOR_RGB;
+            if (image.getNumComponents() == 3) {
+               // Rely on our getPixels() call to have split out the
+               // appropriate component already.
+               mode = ImagePlus.GRAY8;
+            }
+            else {
+               mode = ImagePlus.COLOR_RGB;
+            }
             break;
          default:
             ReportingUtils.showError("Unrecognized image with " + image.getBytesPerPixel() + " bytes per pixel");
       }
-      Object pixels = image.getRawPixels();
       ImageProcessor result = ImageUtils.makeProcessor(mode, width, height, pixels);
       return result;
    }
