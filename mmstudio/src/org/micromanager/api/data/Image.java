@@ -11,9 +11,16 @@ import mmcorej.TaggedImage;
  */
 public interface Image {
    /**
-    * Retrieve the ImgPlus that provides access to the image's pixel data.
+    * Return an ImgPlus that allows for manipulation of the pixels in the image.
     */
-   public ImgPlus getPixels();
+   public ImgPlus getImgPlus();
+
+   /**
+    * Return a reference to whatever entity stores the actual pixel data for
+    * this Image. Is most likely a byte[] or short[] but could be of any
+    * non-primitive type.
+    */
+   public Object getRawPixels();
 
    /**
     * Generate a copy of this Image, except that its Coords object is at a
@@ -36,14 +43,8 @@ public interface Image {
    /**
     * Retrieve the intensity of the pixel at the specified position.
     */
-   public double getIntensityAt(int x, int y);
+   public long getIntensityAt(int x, int y);
 
-   /**
-    * Return a reference to whatever entity stores the actual pixel data for
-    * this Image. Is most likely a byte[] or short[] but could be of any
-    * non-primitive type.
-    */
-   public Object getRawPixels();
    /**
     * Retrieve the Metadata for this Image.
     */
@@ -63,6 +64,12 @@ public interface Image {
     * Get the height of the image in pixels.
     */
    public int getHeight();
+
+   /**
+    * Get the number of bytes used to represent each pixel in the raw pixel
+    * data.
+    */
+   public int getBytesPerPixel();
 
    /**
     * For legacy support only: convert to TaggedImage;
