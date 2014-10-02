@@ -142,7 +142,9 @@ CMMCore::CMMCore() :
    InitializeErrorMessages();
 
    callback_ = new CoreCallback(this);
-   cbuf_ = new CircularBuffer(10); // allocate 10MB initially
+
+   const unsigned seqBufMegabytes = (sizeof(void*) > 4) ? 250 : 25;
+   cbuf_ = new CircularBuffer(seqBufMegabytes);
 
    CreateCoreProperties();
 }

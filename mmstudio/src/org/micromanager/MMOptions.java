@@ -70,7 +70,9 @@ public class MMOptions {
       debugLogEnabled_ = false;
       doNotAskForConfigFile_ = false;
       closeOnExit_ = true;
-      circularBufferSizeMB_ = 25;
+      boolean is64BitJVM =
+         System.getProperty("sun.arch.data.model", "32").equals("64");
+      circularBufferSizeMB_ = is64BitJVM ? 250 : 25;
       displayBackground_ = "Day";
       startupScript_ = "MMStartup.bsh";
       windowMag_ = 1.0;
