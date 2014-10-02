@@ -1510,15 +1510,9 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
       }
       return false;
    }
-   
-   // Returns false if user chooses to cancel.
-   private boolean warnIfMemoryMayNotBeSufficient() {
-      if (savePanel_.isSelected())
-         return true; 
-      
-      Runtime.getRuntime().gc();
-      
-      //Calculate number of images
+
+   private long estimateMemoryUsage() {
+      // XXX This ought to be done by the acquisition engine
       boolean channels = channelsPanel_.isSelected();
       boolean frames = framesPanel_.isSelected();
       boolean slices = slicesPanel_.isSelected();
@@ -1540,7 +1534,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
          zStep = NumberUtils.displayStringToDouble(zStep_.getText()); 
       } catch (ParseException ex) {
          ReportingUtils.showError("Invalid Z-Stacks input value");
-         return false;
+         return -1;
       }
       
       int numSlices = Math.max(1, (int) (1 + Math.floor( 
@@ -1588,27 +1582,54 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
             numImages *= numPositions;
          }
       }
-      
-      double free = (double) Runtime.getRuntime().freeMemory();
-      double total = (double) Runtime.getRuntime().totalMemory();
-      double max =  (double) Runtime.getRuntime().maxMemory();
-      double used = total - free;
-      
+
       CMMCore core = MMStudio.getInstance().getCore();
       long byteDepth = core.getBytesPerPixel();
       long width = core.getImageWidth();
       long height = core.getImageHeight();
       long bytesPerImage = byteDepth*width*height;
-      
-      long acqTotalBytes = bytesPerImage * numImages;
-      
-      if (used + acqTotalBytes > 0.72*max) {
-         int selection = JOptionPane.showConfirmDialog(this, "Warning: available RAM may "
-                 + "be insufficient for full acquisition. \nSave images to disk or increase "
-                 + "maximum memory by selecting \nEdit--Options--Memory & Threads on ImageJ "
-                 + "toolbar. \n\n Would you like to run acquisition anyway?",
-                 "Insufficient memory warning", JOptionPane.YES_NO_OPTION);
-         return selection == 0 ? true : false;
+
+      return bytesPerImage * numImages;
+   }
+
+   // Returns false if user chooses to cancel.
+   private boolean warnIfMemoryMayNotBeSufficient() {
+      if (savePanel_.isSelected())
+         return true; 
+
+      long acqTotalBytes = estimateMemoryUsage();
+      if (acqTotalBytes < 0) {
+         return false;
+      }
+
+      // Currently, images are stored in direct byte buffers in the case of
+      // acquire-to-RAM. This means that the image (pixel and metadata) data do
+      // not fill up the Java heap memory. The best we can do is to try to
+      // estimate the available physical memory.
+      long freeRAM;
+      java.lang.management.OperatingSystemMXBean osMXB =
+         java.lang.management.ManagementFactory.getOperatingSystemMXBean();
+      try { // Use HotSpot extensions if available
+         Class<?> sunOSMXBClass = Class.forName("com.sun.management.OperatingSystemMXBean");
+         java.lang.reflect.Method freeMemMethod = sunOSMXBClass.getMethod("getFreePhysicalMemorySize");
+         freeRAM = ((Long) freeMemMethod.invoke(osMXB)).longValue();
+      }
+      catch (Exception e) {
+         return true; // We just don't warn the user in this case.
+      }
+
+      // There is no hard reason for the 80% factor.
+      if (acqTotalBytes > 0.8 * freeRAM) {
+         int answer = JOptionPane.showConfirmDialog(this,
+               "<html><body><p width='400'>" +
+               "Available RAM may not be sufficient for this acquisition " +
+               "(the estimate is approximate). After RAM is exhausted, the " +
+               "acquisition may slow down or fail.</p>" +
+               "<p>Would you like to start the acquisition anyway?</p>" +
+               "</body></html>",
+               "Insufficient memory warning",
+               JOptionPane.YES_NO_OPTION);
+         return answer == 0 ? true : false;
       }
       return true;
    }
