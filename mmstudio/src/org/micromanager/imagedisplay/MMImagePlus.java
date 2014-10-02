@@ -20,11 +20,6 @@ public class MMImagePlus extends ImagePlus implements IMMImagePlus {
    }
 
    @Override
-   public int getImageStackSize() {
-      return super.nChannels * super.nSlices * super.nFrames;
-   }
-
-   @Override
    public int getStackSize() {
       return getImageStackSize();
    }
