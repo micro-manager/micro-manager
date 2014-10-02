@@ -1511,7 +1511,8 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
       return false;
    }
    
-   private boolean enoughMemoryAvailable() {
+   // Returns false if user chooses to cancel.
+   private boolean warnIfMemoryMayNotBeSufficient() {
       if (savePanel_.isSelected())
          return true; 
       
@@ -1618,7 +1619,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
          return null;
       }
 
-      if (!enoughMemoryAvailable()) {
+      if (!warnIfMemoryMayNotBeSufficient()) {
          return null;
       }
 
@@ -1643,7 +1644,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
          return null;
       }
 
-      if (! enoughMemoryAvailable()) {
+      if (! warnIfMemoryMayNotBeSufficient()) {
          return null;
       }
 
