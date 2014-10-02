@@ -148,7 +148,7 @@ public class StorageRAM implements Storage {
 
    @Subscribe
    public void onNewImage(NewImageEvent event) {
-      ReportingUtils.logError("Storage " + hashCode() + " adding image at " + event.getCoords() + " with corner pixel " + event.getImage().getIntensityAt(0, 0));
+      ReportingUtils.logError("Storage " + hashCode() + " adding image at " + event.getCoords() + " with corner pixel " + event.getImage().getIntensityStringAt(0, 0));
       addImage(event.getImage());
    }
 
