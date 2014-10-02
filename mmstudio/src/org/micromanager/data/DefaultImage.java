@@ -3,6 +3,8 @@ package org.micromanager.data;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 import mmcorej.TaggedImage;
 
@@ -20,6 +22,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import org.micromanager.api.data.Coords;
+import org.micromanager.api.data.Datastore;
+import org.micromanager.api.data.DatastoreLockedException;
 import org.micromanager.api.data.Image;
 import org.micromanager.api.data.Metadata;
 import org.micromanager.utils.MDUtils;
@@ -135,7 +139,7 @@ public class DefaultImage implements Image {
       numComponents_ = numComponents;
    }
 
-   public DefaultImage(DefaultImage source, Coords coords, Metadata metadata) {
+   public DefaultImage(Image source, Coords coords, Metadata metadata) {
       metadata_ = metadata;
       coords_ = coords;
       rawPixels_ = source.getRawPixels();
@@ -298,6 +302,32 @@ public class DefaultImage implements Image {
          }
          return result + "]";
       }
+   }
+
+   /**
+    * Split this multi-component Image into several single-component Images
+    * and add them to the Datastore. They will be positioned based on our
+    * current position, with the channel incrementing by 1 for each new
+    * component.
+    */
+   public List<Image> splitMultiComponentIntoStore(Datastore store) throws DatastoreLockedException {
+      ArrayList<Image> result = new ArrayList<Image>();
+      if (numComponents_ == 1) {
+         // No need to do anything fancy.
+         store.putImage(this);
+         result.add(this);
+         return result;
+      }
+      for (int i = 0; i < numComponents_; ++i) {
+         Object pixels = getRawPixelsForComponent(i);
+         Image newImage = new DefaultImage(pixels, pixelWidth_, pixelHeight_,
+               bytesPerPixel_ / numComponents_, 1,
+               coords_.copy().position("channel", coords_.getPositionAt("channel") + i).build(),
+               metadata_);
+         store.putImage(newImage);
+         result.add(newImage);
+      }
+      return result;
    }
 
    /**
