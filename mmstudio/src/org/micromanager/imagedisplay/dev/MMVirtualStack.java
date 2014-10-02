@@ -153,7 +153,16 @@ public class MMVirtualStack extends ij.VirtualStack {
 
    @Override
    public int getSize() {
-      return 1;
+      // Calculate the total number of "addressable" images along the
+      // axes that ImageJ knows about.
+      String[] axes = {"channel", "time", "z"};
+      int result = 1;
+      for (String axis : axes) {
+         if (store_.getMaxIndex(axis) != -1) {
+            result *= (store_.getMaxIndex(axis) + 1);
+         }
+      }
+      return result;
    }
 
    @Override
