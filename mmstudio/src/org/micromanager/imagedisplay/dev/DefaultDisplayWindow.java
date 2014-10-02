@@ -154,7 +154,6 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
 
       makeWindowControls();
       zoomToPreferredSize();
-      setIJBounds();
       histograms_.calcAndDisplayHistAndStats(true);
       pack();
       
@@ -459,23 +458,6 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
       histograms_.calcAndDisplayHistAndStats(true);
    }
 
-   // Ensure that our ImageJ object has the correct number of channels, 
-   // frames, and slices.
-   private void setIJBounds() {
-      IMMImagePlus temp = (IMMImagePlus) ijImage_;
-      int numChannels = Math.max(1, store_.getMaxIndex("channel") + 1);
-      int numFrames = Math.max(1, store_.getMaxIndex("time") + 1);
-      int numSlices = Math.max(1, store_.getMaxIndex("z") + 1);
-      temp.setNChannelsUnverified(numChannels);
-      temp.setNFramesUnverified(numFrames);
-      temp.setNSlicesUnverified(numSlices);
-      // TODO: VirtualAcquisitionDisplay folds "components" into channels;
-      // what are components used for?
-      // TODO: calling this causes ImageJ to create its own additional
-      // window, which looks terrible, so we're leaving it out for now.
-      //plus_.setDimensions(numChannels, numSlices, numFrames);
-   }
-
    /**
     * Receive a new image from our controller.
     */
@@ -491,7 +473,7 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
          }
          if (ijImage_ instanceof MMCompositeImage) {
             // Verify that ImageJ has the right number of channels.
-            int numChannels = store_.getMaxIndex("channel");
+            int numChannels = store_.getMaxIndex("channel") + 1;
             MMCompositeImage composite = (MMCompositeImage) ijImage_;
             composite.setNChannelsUnverified(numChannels);
             composite.reset();
@@ -501,7 +483,6 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
                }
             }
          }
-         setIJBounds();
          canvasThread_.addCoords(image.getCoords());
       }
       catch (Exception e) {
