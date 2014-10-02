@@ -10,6 +10,8 @@ import org.micromanager.api.data.Datastore;
 import org.micromanager.data.DefaultCoords;
 import org.micromanager.data.DefaultImage;
 
+import org.micromanager.imagedisplay.IMMImagePlus;
+
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.ReportingUtils;
 
@@ -111,17 +113,13 @@ public class MMVirtualStack extends ij.VirtualStack {
    @Override
    public ImageProcessor getProcessor(int flatIndex) {
       if (plus_ == null) {
-         // We have to supply a processor, even if it's totally bogus. Ideally
-         // we'd throw an exception heer but that wouldn't match the function
-         // signature.
          ReportingUtils.logError("Tried to get a processor when there's no ImagePlus");
-         return new ByteProcessor(1, 1);
+         return null;
       }
       DefaultImage image = getImage(flatIndex);
       if (image == null) {
-         // See above comment.
-         ReportingUtils.logError("Tried to get a processor for an invalid image index");
-         return new ByteProcessor(1, 1);
+         ReportingUtils.logError("Tried to get a processor for an invalid image index " + flatIndex);
+         return null;
       }
       int width = image.getWidth();
       int height = image.getHeight();
@@ -172,10 +170,28 @@ public class MMVirtualStack extends ij.VirtualStack {
 
    /**
     * Update the current position we are centered on. This in turn will affect
-    * future calls to getPixels().
+    * future calls to getPixels(). In the process we also ensure that the
+    * ImagePlus object has the right dimensions to encompass these coordinates.
     */
    public void setCoords(Coords coords) {
       curCoords_ = coords;
+      int numChannels = Math.max(1, store_.getMaxIndex("channel") + 1);
+      int numFrames = Math.max(1, store_.getMaxIndex("time") + 1);
+      int numSlices = Math.max(1, store_.getMaxIndex("z") + 1);
+      if (plus_ instanceof IMMImagePlus) {
+         IMMImagePlus temp = (IMMImagePlus) plus_;
+         temp.setNChannelsUnverified(numChannels);
+         temp.setNFramesUnverified(numFrames);
+         temp.setNSlicesUnverified(numSlices);
+      }
+      // TODO: calling this causes ImageJ to create its own additional
+      // window, which looks terrible, so we're leaving it out for now.
+      // HACK: if we call this with all 1s then ImageJ will create a new
+      // display window in addition to our own (WHY?!), so only call it if
+      // we actually have at least 2 images across these axes.
+      if (numChannels != 1 || numSlices != 1 || numFrames != 1) {
+         plus_.setDimensions(numChannels, numSlices, numFrames);
+      }
       plus_.setPosition(coords.getPositionAt("channel") + 1,
             coords.getPositionAt("z") + 1, coords.getPositionAt("time") + 1);
    }
