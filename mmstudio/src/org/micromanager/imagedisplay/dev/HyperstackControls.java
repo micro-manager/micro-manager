@@ -175,8 +175,13 @@ public class HyperstackControls extends JPanel {
       for (String axis : event.getAxes()) {
          builder.position(axis, event.getPositionForAxis(axis));
       }
-      stack_.setCoords(builder.build());
-      displayBus_.post(new DrawEvent());
+      try {
+         stack_.setCoords(builder.build());
+         displayBus_.post(new DrawEvent());
+      }
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Couldn't set display to show image at " + builder.build());
+      }
    }
 
    /**
