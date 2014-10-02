@@ -571,7 +571,7 @@ const unsigned char* SpotCamera::GetImageBuffer()
 		LogMessage(messs.str().c_str());
 		CodeUtility::DebugOutput(messs.str().c_str());
 
-		// a mechanism to throw an error here would be nice
+		return 0;
 	}
 
 	if( pImplementation_->AutoExposure())
