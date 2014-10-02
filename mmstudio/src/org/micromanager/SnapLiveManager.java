@@ -303,7 +303,9 @@ public class SnapLiveManager {
 
    public void displayImage(Image image) {
       try {
-         store_.putImage(image);
+         DefaultImage temp = new DefaultImage(image, image.getCoords(), image.getMetadata());
+         List<Image> splitted = temp.splitMultiComponentIntoStore(store_);
+         lastImage_ = splitted.get(splitted.size() - 1);
       }
       catch (DatastoreLockedException e) {
          ReportingUtils.showError(e, "Snap/Live display datastore locked.");
@@ -317,7 +319,6 @@ public class SnapLiveManager {
             display_.registerForEvents(this);
          }
       }
-      lastImage_ = image;
    }
 
    public void moveDisplayToFront() {
