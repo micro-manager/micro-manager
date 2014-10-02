@@ -197,6 +197,10 @@ public class OptionsDlg extends MMDialog {
                // restore registration flag
                mainPrefs_.putBoolean(RegistrationDlg.REGISTRATION, previouslyRegistered);
 
+               // Rather than updating all the GUI elements, let's just close
+               // the dialog.
+               dispose();
+               opts_.resetSettings();
             } catch (BackingStoreException exc) {
                ReportingUtils.showError(e);
             }

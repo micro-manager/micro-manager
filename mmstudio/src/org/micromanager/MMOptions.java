@@ -23,6 +23,7 @@
 
 package org.micromanager;
 
+import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
 /**
@@ -46,25 +47,50 @@ public class MMOptions {
    private static final String DELETE_OLD_CORELOGS = "DeleteOldCoreLogs";
    private static final String DELETE_CORELOG_AFTER_DAYS =
       "DeleteCoreLogAfterDays";
-   
-   public boolean debugLogEnabled_ = false;
-   public boolean doNotAskForConfigFile_ = false;
-   public boolean closeOnExit_ = true;
-   public int circularBufferSizeMB_ = 25;
-   public String displayBackground_ = "Day";
-   public String startupScript_ = "MMStartup.bsh";
-   public double windowMag_ = 1.0;
-   public boolean mpTiffMetadataFile_ = false;
-   public boolean mpTiffSeparateFilesForPositions_ = true;
-   public boolean syncExposureMainAndMDA_ = false;
-   public boolean hideMDADisplay_ = false;
-   public boolean deleteOldCoreLogs_ = false;
-   public int deleteCoreLogAfterDays_ = 7;
-   
-   public void saveSettings() {
-      Preferences root = Preferences.userNodeForPackage( this.getClass());
+
+   public boolean debugLogEnabled_;
+   public boolean doNotAskForConfigFile_;
+   public boolean closeOnExit_;
+   public int circularBufferSizeMB_;
+   public String displayBackground_;
+   public String startupScript_;
+   public double windowMag_;
+   public boolean mpTiffMetadataFile_;
+   public boolean mpTiffSeparateFilesForPositions_;
+   public boolean syncExposureMainAndMDA_;
+   public boolean hideMDADisplay_;
+   public boolean deleteOldCoreLogs_;
+   public int deleteCoreLogAfterDays_;
+
+   public MMOptions() {
+      setDefaultValues();
+   }
+
+   private void setDefaultValues() {
+      debugLogEnabled_ = false;
+      doNotAskForConfigFile_ = false;
+      closeOnExit_ = true;
+      circularBufferSizeMB_ = 25;
+      displayBackground_ = "Day";
+      startupScript_ = "MMStartup.bsh";
+      windowMag_ = 1.0;
+      mpTiffMetadataFile_ = false;
+      mpTiffSeparateFilesForPositions_ = true;
+      syncExposureMainAndMDA_ = false;
+      hideMDADisplay_ = false;
+      deleteOldCoreLogs_ = false;
+      deleteCoreLogAfterDays_ = 7;
+   }
+
+   private Preferences getPrefNode() {
+      Preferences root = Preferences.userNodeForPackage(this.getClass());
       Preferences prefs = root.node(root.absolutePath() + "/" + PREF_DIR);
-      
+      return prefs;
+   }
+
+   public void saveSettings() {
+      Preferences prefs = getPrefNode();
+
       prefs.putBoolean(DEBUG_LOG, debugLogEnabled_);
       prefs.putBoolean(SKIP_CONFIG, doNotAskForConfigFile_);
       prefs.putBoolean(CLOSE_ON_EXIT, closeOnExit_);
@@ -79,11 +105,10 @@ public class MMOptions {
       prefs.putBoolean(DELETE_OLD_CORELOGS, deleteOldCoreLogs_);
       prefs.putInt(DELETE_CORELOG_AFTER_DAYS, deleteCoreLogAfterDays_);
    }
-   
+
    public void loadSettings() {
-      Preferences root = Preferences.userNodeForPackage(this.getClass());
-      Preferences prefs = root.node(root.absolutePath() + "/" + PREF_DIR);
-      
+      Preferences prefs = getPrefNode();
+
       debugLogEnabled_ = prefs.getBoolean(DEBUG_LOG, debugLogEnabled_);
       doNotAskForConfigFile_ = prefs.getBoolean(SKIP_CONFIG, doNotAskForConfigFile_);
       closeOnExit_ = prefs.getBoolean(CLOSE_ON_EXIT, closeOnExit_);
@@ -99,5 +124,10 @@ public class MMOptions {
          prefs.getBoolean(DELETE_OLD_CORELOGS, deleteOldCoreLogs_);
       deleteCoreLogAfterDays_ =
          prefs.getInt(DELETE_CORELOG_AFTER_DAYS, deleteCoreLogAfterDays_);
+   }
+
+   public void resetSettings() throws BackingStoreException {
+      getPrefNode().clear();
+      setDefaultValues();
    }
 }
