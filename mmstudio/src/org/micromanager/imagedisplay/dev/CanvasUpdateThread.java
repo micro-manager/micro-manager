@@ -55,6 +55,7 @@ public class CanvasUpdateThread extends Thread {
 
    public CanvasUpdateThread(Datastore store, MMVirtualStack stack,
          ImagePlus plus, EventBus bus) {
+      setName("Canvas display thread for store " + store.hashCode());
       store_ = store;
       stack_ = stack;
       plus_ = plus;
