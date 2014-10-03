@@ -30,7 +30,9 @@ import org.micromanager.utils.ReportingUtils;
 
 /**
  * This class provides controls for the general display settings, including
- * some settings that control how the histograms behave.
+ * some settings that control how the histograms behave. Note this is
+ * distinct from the DisplaySettings metadata in the Datastore for the display;
+ * some of that is addressed here, and some in the histograms.
  */
 public class DisplaySettingsPanel extends JPanel {
    private Datastore store_;
