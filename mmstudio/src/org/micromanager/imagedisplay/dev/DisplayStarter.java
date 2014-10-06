@@ -3,6 +3,8 @@ package org.micromanager.imagedisplay.dev;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
+import ij.ImagePlus;
+
 import java.awt.Component;
 
 import org.micromanager.api.data.Datastore;
@@ -38,6 +40,7 @@ public class DisplayStarter {
       customControls_ = customControls;
       displayBus_ = new EventBus();
       displayBus_.register(this);
+
       // Delay generating our UI until we have at least one image, because
       // otherwise ImageJ gets badly confused.
       if (store_.getNumImages() > 0) {
@@ -47,10 +50,27 @@ public class DisplayStarter {
 
    private void makeWindowAndIJObjects() {
       MMVirtualStack stack = new MMVirtualStack(store_);
-      MMImagePlus plus = new MMImagePlus(displayBus_);
+      ImagePlus plus = new MMImagePlus(displayBus_);
       stack.setImagePlus(plus);
       plus.setStack(generateImagePlusName(), stack);
       plus.setOpenAsHyperStack(true);
+      // Check if we need to convert to a composite image now. This
+      // duplicates logic in DefaultDisplayWindow's shiftToCompositeImage();
+      // however, if we run this logic later in that class, then the display
+      // doesn't work.
+      // TODO: remove this code duplication by fixing whatever breaks
+      // multichannel display.
+      if (store_.getMaxIndex("channel") > 0) {
+         // TODO: assuming mode 1 for now.
+         MMCompositeImage composite = new MMCompositeImage(
+               plus, 1, "foo", displayBus_);
+         int numChannels = store_.getMaxIndex("channel") + 1;
+         composite.setNChannelsUnverified(numChannels);
+         stack.setImagePlus(composite);
+         composite.reset();
+         plus = composite;
+      }
+
       window_ = new DefaultDisplayWindow(store_, stack, plus, displayBus_,
             customControls_);
    }

@@ -74,7 +74,6 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
    private Datastore store_;
    private MMVirtualStack stack_;
    private ImagePlus ijImage_;
-   private MMImagePlus plus_;
 
    private JPanel canvasPanel_;
    private HyperstackControls controls_;
@@ -104,14 +103,13 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
     * logic implemented by these controls. They may be null.
     */
    public DefaultDisplayWindow(Datastore store, MMVirtualStack stack,
-            MMImagePlus plus, EventBus bus, Component customControls) {
-      super(plus);
+            ImagePlus ijImage, EventBus bus, Component customControls) {
+      super(ijImage);
       store_ = store;
       store_.associateDisplay(this);
       store_.registerForEvents(this, 100);
       stack_ = stack;
-      plus_ = plus;
-      ijImage_ = plus_;
+      ijImage_ = ijImage;
       displayBus_ = bus;
       displayBus_.register(this);
       customControls_ = customControls;
@@ -157,7 +155,7 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
       histograms_.calcAndDisplayHistAndStats(true);
       pack();
       
-      canvasThread_ = new CanvasUpdateThread(store_, stack_, plus_, displayBus_);
+      canvasThread_ = new CanvasUpdateThread(store_, stack_, ijImage_, displayBus_);
       canvasThread_.start();
    }
 
@@ -212,7 +210,7 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
     * Re-generate our image canvas and canvas panel, along with resize logic.
     */
    private void recreateCanvas() {
-      ic = new MMImageCanvas(ijImage_, plus_, displayBus_);
+      ic = new MMImageCanvas(ijImage_, displayBus_);
       
       // HACK: set the minimum size. If we don't do this, then the canvas
       // doesn't shrink properly when the window size is reduced. Why?!
@@ -228,7 +226,7 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
          @Override
          public void componentResized(ComponentEvent e) {
             Dimension size = canvasPanel_.getSize();
-            double dataAspect = ((double) plus_.getWidth()) / plus_.getHeight();
+            double dataAspect = ((double) ijImage_.getWidth()) / ijImage_.getHeight();
             double viewAspect = ((double) size.width) / size.height;
             // Derive canvas view width/height based on maximum available space
             // along the appropriate axis.
@@ -269,7 +267,7 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
             if (ijImage_ instanceof MMCompositeImage) {
                ((MMCompositeImage) ijImage_).updateAndDraw(true);
             } else {
-               plus_.updateAndDraw();
+               ijImage_.updateAndDraw();
             }
          }
       });
@@ -445,7 +443,7 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
     */
    private void shiftToCompositeImage() {
       // TODO: assuming mode 1 for now.
-      ijImage_ = new MMCompositeImage(plus_, 1, plus_.getTitle(),
+      ijImage_ = new MMCompositeImage(ijImage_, 1, ijImage_.getTitle(),
             displayBus_);
       ijImage_.setOpenAsHyperStack(true);
       MMCompositeImage composite = (MMCompositeImage) ijImage_;
