@@ -23,14 +23,11 @@ import org.micromanager.imagedisplay.MMImagePlus;
  */
 class MMImageCanvas extends ImageCanvas {
    ImagePlus ijImage_;
-   MMImagePlus plus_;
    EventBus displayBus_;
    
-   public MMImageCanvas(ImagePlus ijImage, MMImagePlus plus,
-         EventBus displayBus) {
-      super(plus);
+   public MMImageCanvas(ImagePlus ijImage, EventBus displayBus) {
+      super(ijImage);
       ijImage_ = ijImage;
-      plus_ = plus;
       displayBus_ = displayBus;
    }
 
@@ -51,8 +48,8 @@ class MMImageCanvas extends ImageCanvas {
       // Tighten the rect down to what the canvas is actually drawing, as
       // opposed to the space it is taking up in the window as a 
       // Component.
-      int drawnWidth = (int) (plus_.getWidth() * getMagnification());
-      int drawnHeight = (int) (plus_.getHeight() * getMagnification());
+      int drawnWidth = (int) (ijImage_.getWidth() * getMagnification());
+      int drawnHeight = (int) (ijImage_.getHeight() * getMagnification());
       int widthSlop = rect.width - drawnWidth;
       int heightSlop = rect.height - drawnHeight;
       rect.x += widthSlop / 2;
