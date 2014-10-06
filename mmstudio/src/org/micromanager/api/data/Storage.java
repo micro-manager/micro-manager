@@ -31,6 +31,11 @@ public interface Storage {
    public List<String> getAxes();
 
    /**
+    * Return a Coords that provides the maximum index along all available axes.
+    */
+   public Coords getMaxIndices();
+
+   /**
     * Retrieve the SummaryMetadata associated with this dataset.
     */
    public SummaryMetadata getSummaryMetadata();

@@ -64,6 +64,12 @@ public interface Datastore {
    public List<String> getAxes();
 
    /**
+    * Return a Coord that represents the maximum possible index along all
+    * available axes. Will be null if no Storage has been provided yet.
+    */
+   public Coords getMaxIndices();
+
+   /**
     * Retrieve the summary metadata for the datastore. Will be null if no
     * Storage has been provided yet.
     */

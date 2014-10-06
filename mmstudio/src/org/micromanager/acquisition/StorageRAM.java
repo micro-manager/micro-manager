@@ -127,6 +127,11 @@ public class StorageRAM implements Storage {
    }
 
    @Override
+   public Coords getMaxIndices() {
+      return maxIndex_;
+   }
+
+   @Override
    public SummaryMetadata getSummaryMetadata() {
       return summaryMetadata_;
    }
