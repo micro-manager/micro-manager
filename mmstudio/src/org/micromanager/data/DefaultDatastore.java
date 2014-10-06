@@ -86,6 +86,14 @@ public class DefaultDatastore implements Datastore {
    }
 
    @Override
+   public Coords getMaxIndices() {
+      if (storage_ != null) {
+         return storage_.getMaxIndices();
+      }
+      return null;
+   }
+
+   @Override
    public SummaryMetadata getSummaryMetadata() {
       if (storage_ != null) {
          return storage_.getSummaryMetadata();
