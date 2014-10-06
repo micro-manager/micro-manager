@@ -679,7 +679,7 @@ public class MMStudio implements ScriptInterface {
       contrastPrefs_.getInt("ContrastHistDisplayMode_" + channelGroup + "_" + type + channel, 1) );
    }
 
-   public void setExposure() {
+   public void setExposure(double exposureTime) {
       // This is synchronized with the shutdown lock primarily so that
       // the exposure-time field in MainFrame won't cause issues when it loses
       // focus during shutdown.
@@ -688,7 +688,7 @@ public class MMStudio implements ScriptInterface {
             // Just give up.
             return;
          }
-         snapLiveManager_.safeSetCoreExposure(frame_.getDisplayedExposureTime());
+         snapLiveManager_.safeSetCoreExposure(exposureTime);
          // Display the new exposure time
          double exposure;
          try {
@@ -1962,7 +1962,7 @@ public class MMStudio implements ScriptInterface {
          if (channelGroup != null && channelGroup.equals(core_.getChannelGroup())) {
             if (channel != null && !channel.equals("") && 
                     channel.equals(core_.getCurrentConfigFromCache(channelGroup))) {
-               setExposure();
+               setExposure(exposure);
             }
          }
       } catch (Exception ex) {
