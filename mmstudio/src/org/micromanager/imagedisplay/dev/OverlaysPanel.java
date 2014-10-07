@@ -62,4 +62,8 @@ class OverlaysPanel extends JPanel {
                event.getCanvas());
       }
    }
+
+   public void cleanup() {
+      displayBus_.unregister(this);
+   }
 }
