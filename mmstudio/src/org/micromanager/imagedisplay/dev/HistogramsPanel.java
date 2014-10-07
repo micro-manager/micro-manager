@@ -265,9 +265,9 @@ public final class HistogramsPanel extends JPanel implements Histograms {
       return channelPanels_.size();
    }
 
-   public void prepareForClose() {
+   public void cleanup() {
       for (ChannelControlPanel panel : channelPanels_) {
-         panel.prepareForClose();
+         panel.cleanup();
       }
    }
 }

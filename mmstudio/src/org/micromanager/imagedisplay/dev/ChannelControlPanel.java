@@ -609,7 +609,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          SwingUtilities.invokeLater(run);
       }
    }
-   
+
+   // TODO: implement.
    private void storeDisplaySettings() {
 //      int histMax = histRangeComboBox_.getSelectedIndex() == 0 ? -1 : histMax_;
 //      display_.storeChannelHistogramSettings(channelIndex_, contrastMin_, contrastMax_,
@@ -848,7 +849,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       }
    }
 
-   public void prepareForClose() {
+   public void cleanup() {
       store_.unregisterForEvents(this);
    }
 }

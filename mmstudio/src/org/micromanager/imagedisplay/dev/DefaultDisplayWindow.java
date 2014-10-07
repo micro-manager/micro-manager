@@ -82,6 +82,7 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
    private HistogramsPanel histograms_;
    private MetadataPanel metadata_;
    private CommentsPanel comments_;
+   private OverlaysPanel overlays_;
 
    private boolean closed_ = false;
    private final EventBus displayBus_;
@@ -165,6 +166,12 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
     */
    private void makeWindowControls() {
       removeAll();
+      // Clean up our old controls, so they don't respond to events.
+      if (controls_ != null) {
+         controls_.cleanup();
+         histograms_.cleanup();
+         overlays_.cleanup();
+      }
       // Override the default layout with our own, so we can do more
       // customized controls.
       // This layout is intended to minimize distances between elements.
@@ -198,8 +205,8 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
       comments_ = new CommentsPanel(store_, stack_);
       modePanel_.addMode("Comments", comments_);
 
-      modePanel_.addMode("Overlays",
-            new OverlaysPanel(store_, stack_, ijImage_, displayBus_));
+      overlays_ = new OverlaysPanel(store_, stack_, ijImage_, displayBus_);
+      modePanel_.addMode("Overlays", overlays_);
 
       add(modePanel_, "dock east, growy");
 
@@ -475,11 +482,6 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
             MMCompositeImage composite = (MMCompositeImage) ijImage_;
             composite.setNChannelsUnverified(numChannels);
             composite.reset();
-            for (int i = 0; i < numChannels; ++i) {
-               if (composite.getProcessor(i + 1) != null) {
-                  composite.getProcessor(i + 1).setPixels(image.getRawPixels());
-               }
-            }
          }
          canvasThread_.addCoords(image.getCoords());
       }
@@ -564,8 +566,8 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
       // Note: we don't join the canvas thread here because this thread is
       // presumably the EDT, and the canvas thread also does actions in the
       // EDT, so there's some deadlock potential.
-      controls_.prepareForClose();
-      histograms_.prepareForClose();
+      controls_.cleanup();
+      histograms_.cleanup();
       store_.removeDisplay(this);
       store_.unregisterForEvents(this);
       MMStudio.getInstance().removeMMBackgroundListener(this);

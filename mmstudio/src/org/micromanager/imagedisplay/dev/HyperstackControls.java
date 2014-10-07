@@ -290,10 +290,9 @@ public class HyperstackControls extends JPanel {
       return hoursString + minutesString + secondsString;
    }
 
-   public void prepareForClose() {
-      scrollerPanel_.prepareForClose();
+   public void cleanup() {
+      scrollerPanel_.cleanup();
       displayBus_.unregister(this);
       store_.unregisterForEvents(this);
-      scrollerPanel_.prepareForClose();
    }
 }
