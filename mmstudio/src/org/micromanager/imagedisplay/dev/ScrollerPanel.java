@@ -28,7 +28,7 @@ public class ScrollerPanel extends JPanel {
       // Maps axis labels to their positions. 
       private HashMap<String, Integer> axisToPosition_;
       public SetImageEvent(HashMap<String, Integer> axisToPosition) {
-         axisToPosition_ = axisToPosition;
+         axisToPosition_ = new HashMap<String, Integer>(axisToPosition);
       }
 
       public ArrayList<String> getAxes() {
@@ -62,7 +62,7 @@ public class ScrollerPanel extends JPanel {
    // A mapping of axis identifiers to their positions as of the last time
    // checkForImagePositionChanged() was called.
    private HashMap<String, Integer> lastImagePosition_ = null;
-   // This will get set to false in prepareForClose, in turn barring any more
+   // This will get set to false in cleanup, in turn barring any more
    // timers from getting created.
    private boolean canMakeTimers_ = true;
    // Timer for handling animation.
@@ -152,7 +152,7 @@ public class ScrollerPanel extends JPanel {
     * The window we're in is closing; cancel animations and timers, and ensure
     * that no new ones can get created.
     */
-   public void prepareForClose() {
+   public void cleanup() {
       store_.unregisterForEvents(this);
       canMakeTimers_ = false;
       for (AxisScroller scroller : scrollers_) {
@@ -235,7 +235,7 @@ public class ScrollerPanel extends JPanel {
             break;
          }
       }
-      int height = 0;
+
       Coords imageCoords = event.getCoords();
       for (AxisScroller scroller : scrollers_) {
          int imagePosition = imageCoords.getPositionAt(scroller.getAxis());
@@ -252,9 +252,6 @@ public class ScrollerPanel extends JPanel {
          }
          if (canShowNewImage) {
             scroller.forcePosition(imagePosition);
-         }
-         if (scroller.isVisible()) {
-            height += scroller.getPreferredSize().height;
          }
       }
       if (didShowNewScrollers) {
