@@ -1,8 +1,11 @@
 package org.micromanager.imagedisplay.dev;
 
+import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.process.ImageProcessor;
 import ij.process.ByteProcessor;
+
+import java.util.HashMap;
 
 import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.Datastore;
@@ -27,36 +30,16 @@ public class MMVirtualStack extends ij.VirtualStack {
    private Datastore store_;
    private ImagePlus plus_;
    private Coords curCoords_;
+   private HashMap<Integer, DefaultImage> channelToLastValidImage_;
 
    public MMVirtualStack(Datastore store) {
       store_ = store;
       curCoords_ = new DefaultCoords.Builder().build();
+      channelToLastValidImage_ = new HashMap<Integer, DefaultImage>();
    }
 
    public void setImagePlus(ImagePlus plus) {
       plus_ = plus;
-   }
-
-   /**
-    * Retrieve the pixel buffer for the image at the specified offset. See
-    * getImage() for more details.
-    */
-   @Override
-   public Object getPixels(int flatIndex) {
-      if (plus_ == null) {
-         ReportingUtils.logError("Asked to get pixels when I don't have an ImagePlus");
-         return null;
-      }
-      DefaultImage image = getImage(flatIndex);
-      if (image != null) {
-         if (image.getNumComponents() != 1) {
-            // Extract the appropriate component.
-            return image.getRawPixelsForComponent((flatIndex - 1) % image.getNumComponents());
-         }
-         return image.getRawPixels();
-      }
-      ReportingUtils.logError("Null image at " + curCoords_);
-      return null;
    }
 
    /**
@@ -79,7 +62,7 @@ public class MMVirtualStack extends ij.VirtualStack {
       // use that for our lookup.
       // If we have no ImagePlus yet to translate this index into something
       // more meaningful, then default to all zeros.
-      int channel = 0, z = 0, frame = 0;
+      int channel = -1, z = -1, frame = -1;
       if (plus_ != null) {
          int[] pos3D = plus_.convertIndexToPosition(flatIndex);
          // ImageJ coordinates are 1-indexed.
@@ -107,7 +90,44 @@ public class MMVirtualStack extends ij.VirtualStack {
          }
       }
       curCoords_ = builder.build();
-      return (DefaultImage) store_.getImage(curCoords_);
+      DefaultImage result = (DefaultImage) store_.getImage(curCoords_);
+      if (result == null) {
+         // HACK: ImageJ may ask us for images that aren't available yet,
+         // for example if a draw attempt happens in-between images for a
+         // multichannel Z-stack. For now, we return the most recent image
+         // we've received for that channel (if any).
+         // TODO: In the future we may want multiple strategies for handling
+         // missing images, depending on context.
+         if (channel != -1 && channelToLastValidImage_.containsKey(channel)) {
+            result = channelToLastValidImage_.get(channel);
+         }
+      }
+      if (channel != -1) {
+         channelToLastValidImage_.put(channel, result);
+      }
+      return result;
+   }
+
+   /**
+    * Retrieve the pixel buffer for the image at the specified offset. See
+    * getImage() for more details.
+    */
+   @Override
+   public Object getPixels(int flatIndex) {
+      if (plus_ == null) {
+         ReportingUtils.logError("Asked to get pixels when I don't have an ImagePlus");
+         return null;
+      }
+      DefaultImage image = getImage(flatIndex);
+      if (image != null) {
+         if (image.getNumComponents() != 1) {
+            // Extract the appropriate component.
+            return image.getRawPixelsForComponent((flatIndex - 1) % image.getNumComponents());
+         }
+         return image.getRawPixels();
+      }
+      ReportingUtils.logError("Null image at " + curCoords_);
+      return null;
    }
 
    @Override
@@ -184,16 +204,21 @@ public class MMVirtualStack extends ij.VirtualStack {
          temp.setNFramesUnverified(numFrames);
          temp.setNSlicesUnverified(numSlices);
       }
-      // TODO: calling this causes ImageJ to create its own additional
-      // window, which looks terrible, so we're leaving it out for now.
       // HACK: if we call this with all 1s then ImageJ will create a new
       // display window in addition to our own (WHY?!), so only call it if
       // we actually have at least 2 images across these axes.
       if (numChannels != 1 || numSlices != 1 || numFrames != 1) {
          plus_.setDimensions(numChannels, numSlices, numFrames);
       }
-      plus_.setPosition(coords.getPositionAt("channel") + 1,
-            coords.getPositionAt("z") + 1, coords.getPositionAt("time") + 1);
+      int channel = coords.getPositionAt("channel") + 1;
+      int z = coords.getPositionAt("z") + 1;
+      int time = coords.getPositionAt("time") + 1;
+      boolean isCompositeMode = (plus_.isComposite() &&
+            ((CompositeImage) plus_).getMode() == CompositeImage.COMPOSITE);
+      if (z != plus_.getSlice() || time != plus_.getFrame() ||
+            (!isCompositeMode && channel != plus_.getChannel())) {
+         plus_.setPosition(channel, z, time);
+      }
    }
 
    /**
