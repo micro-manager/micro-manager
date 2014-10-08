@@ -166,12 +166,6 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
     */
    private void makeWindowControls() {
       removeAll();
-      // Clean up our old controls, so they don't respond to events.
-      if (controls_ != null) {
-         controls_.cleanup();
-         histograms_.cleanup();
-         overlays_.cleanup();
-      }
       // Override the default layout with our own, so we can do more
       // customized controls.
       // This layout is intended to minimize distances between elements.
@@ -181,32 +175,37 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
       recreateCanvas();
       add(canvasPanel_, "align center, wrap");
 
-      controls_ = new HyperstackControls(store_, stack_, displayBus_,
-            false);
+      if (controls_ == null) {
+         controls_ = new HyperstackControls(store_, stack_, displayBus_,
+               false);
+      }
       add(controls_, "align center, wrap, growx");
 
       if (customControls_ != null) {
          add(customControls_, "align center, wrap, growx");
       }
 
-      modePanel_ = new MultiModePanel(displayBus_);
+      if (modePanel_ == null) {
+         modePanel_ = new MultiModePanel(displayBus_);
 
-      DisplaySettingsPanel settings = new DisplaySettingsPanel(
+         DisplaySettingsPanel settings = new DisplaySettingsPanel(
             store_, ijImage_);
-      modePanel_.addMode("Settings", settings);
+         modePanel_.addMode("Settings", settings);
 
-      histograms_ = new HistogramsPanel(store_, stack_, ijImage_, displayBus_);
-      histograms_.setMinimumSize(new java.awt.Dimension(280, 0));
-      modePanel_.addMode("Contrast", histograms_);
+         histograms_ = new HistogramsPanel(store_, stack_, ijImage_,
+               displayBus_);
+         histograms_.setMinimumSize(new java.awt.Dimension(280, 0));
+         modePanel_.addMode("Contrast", histograms_);
 
-      metadata_ = new MetadataPanel(store_);
-      modePanel_.addMode("Metadata", metadata_);
+         metadata_ = new MetadataPanel(store_);
+         modePanel_.addMode("Metadata", metadata_);
 
-      comments_ = new CommentsPanel(store_, stack_);
-      modePanel_.addMode("Comments", comments_);
+         comments_ = new CommentsPanel(store_, stack_);
+         modePanel_.addMode("Comments", comments_);
 
-      overlays_ = new OverlaysPanel(store_, stack_, ijImage_, displayBus_);
-      modePanel_.addMode("Overlays", overlays_);
+         overlays_ = new OverlaysPanel(store_, stack_, ijImage_, displayBus_);
+         modePanel_.addMode("Overlays", overlays_);
+      }
 
       add(modePanel_, "dock east, growy");
 
@@ -483,7 +482,6 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
             composite.setNChannelsUnverified(numChannels);
             composite.reset();
          }
-         canvasThread_.addCoords(image.getCoords());
       }
       catch (Exception e) {
          ReportingUtils.logError(e, "Couldn't display new image");
@@ -507,6 +505,10 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
     */
    @Subscribe
    public void onDrawEvent(DrawEvent event) {
+      if (event.getCoords() != null) {
+         // In particular, they want to display this image.
+         stack_.setCoords(event.getCoords());
+      }
       canvasThread_.addCoords(stack_.getCurrentImageCoords());
    }
 
