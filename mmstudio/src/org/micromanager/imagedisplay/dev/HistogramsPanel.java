@@ -15,9 +15,9 @@ import javax.swing.JPanel;
 import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.api.data.Datastore;
-import org.micromanager.api.display.DrawEvent;
 
 import org.micromanager.MMStudio;
+import org.micromanager.imagedisplay.DrawEvent;
 import org.micromanager.internalinterfaces.Histograms;
 import org.micromanager.utils.ContrastSettings;
 import org.micromanager.utils.MDUtils;

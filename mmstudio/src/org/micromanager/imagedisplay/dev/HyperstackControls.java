@@ -36,11 +36,11 @@ import org.json.JSONObject;
 
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.Image;
-import org.micromanager.api.display.DrawEvent;
 
 import org.micromanager.data.AbortEvent;
 import org.micromanager.data.DefaultCoords;
 import org.micromanager.data.NewImageEvent;
+import org.micromanager.imagedisplay.DrawEvent;
 import org.micromanager.imagedisplay.MouseMovedEvent;
 import org.micromanager.MMStudio;
 import org.micromanager.utils.MDUtils;
