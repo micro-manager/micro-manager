@@ -171,8 +171,7 @@ public class HyperstackControls extends JPanel {
    @Subscribe
    public void onSetImage(ScrollerPanel.SetImageEvent event) {
       try {
-         stack_.setCoords(event.getCoords());
-         displayBus_.post(new DefaultRequestToDrawEvent());
+         displayBus_.post(new DefaultRequestToDrawEvent(event.getCoords()));
       }
       catch (Exception e) {
          ReportingUtils.logError(e, "Couldn't set display to show image at " + event.getCoords());
