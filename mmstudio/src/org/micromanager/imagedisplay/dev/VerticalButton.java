@@ -14,8 +14,6 @@ import java.lang.Math;
 
 import javax.swing.JToggleButton;
 
-import net.miginfocom.swing.MigLayout;
-
 /**
  * This class is simply a JToggleButton whose text is rotated 90 degrees.
  */
