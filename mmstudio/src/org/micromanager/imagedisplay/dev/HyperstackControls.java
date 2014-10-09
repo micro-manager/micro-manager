@@ -170,16 +170,12 @@ public class HyperstackControls extends JPanel {
     */
    @Subscribe
    public void onSetImage(ScrollerPanel.SetImageEvent event) {
-      DefaultCoords.Builder builder = new DefaultCoords.Builder();
-      for (String axis : event.getAxes()) {
-         builder.position(axis, event.getPositionForAxis(axis));
-      }
       try {
-         stack_.setCoords(builder.build());
+         stack_.setCoords(event.getCoords());
          displayBus_.post(new DefaultRequestToDrawEvent());
       }
       catch (Exception e) {
-         ReportingUtils.logError(e, "Couldn't set display to show image at " + builder.build());
+         ReportingUtils.logError(e, "Couldn't set display to show image at " + event.getCoords());
       }
    }
 
