@@ -218,6 +218,7 @@ CDemoCamera::CDemoCamera() :
 	fractionOfPixelsToDropOrSaturate_(0.002),
     shouldRotateImages_(false),
     shouldDisplayImageNumber_(false),
+    stripeWidth_(1.0),
    nComponents_(1)
 {
    memset(testProperty_,0,sizeof(testProperty_));
@@ -444,6 +445,10 @@ int CDemoCamera::Initialize()
    CreateIntegerProperty("DisplayImageNumber", 0, false, pAct);
    AddAllowedValue("DisplayImageNumber", "0");
    AddAllowedValue("DisplayImageNumber", "1");
+
+   pAct = new CPropertyAction(this, &CDemoCamera::OnStripeWidth);
+   CreateFloatProperty("StripeWidth", 0, false, pAct);
+   SetPropertyLimits("StripeWidth", 0, 10);
 
    // Whether or not to use exposure time sequencing
    pAct = new CPropertyAction (this, &CDemoCamera::OnIsSequenceable);
@@ -1429,6 +1434,19 @@ int CDemoCamera::OnShouldDisplayImageNumber(MM::PropertyBase* pProp, MM::ActionT
    return DEVICE_OK;
 }
 
+int CDemoCamera::OnStripeWidth(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::AfterSet)
+   {
+      pProp->Get(stripeWidth_);
+   }
+   else if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(stripeWidth_);
+   }
+
+   return DEVICE_OK;
+}
 /*
 * Handles "ScanMode" property.
 * Changes allowed Binning values to test whether the UI updates properly
@@ -1623,14 +1641,14 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
 	if (img.Height() == 0 || img.Width() == 0 || img.Depth() == 0)
       return;
 
-   const double cPi = 3.14159265358979;
+   double lSinePeriod = 3.14159265358979 * stripeWidth_;
    unsigned imgWidth = img.Width();
    unsigned int* rawBuf = (unsigned int*) img.GetPixelsRW();
    double maxDrawnVal = 0;
-   long lPeriod = imgWidth/2;
+   long lPeriod = (long) imgWidth / 2;
    double dLinePhase = 0.0;
    const double dAmp = exp;
-   double cLinePhaseInc = 2.0 * cPi / 4.0 / img.Height();
+   double cLinePhaseInc = 2.0 * lSinePeriod / 4.0 / img.Height();
    if (shouldRotateImages_) {
       // Adjust the angle of the sin wave pattern based on how many images
       // we've taken, to increase the period (i.e. time between repeat images).
@@ -1667,7 +1685,7 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
          for (k=0; k<imgWidth; k++)
          {
             long lIndex = imgWidth*j + k;
-            unsigned char val = (unsigned char) (g_IntensityFactor_ * min(255.0, (pedestal + dAmp * sin(dPhase_ + dLinePhase + (2.0 * cPi * k) / lPeriod))));
+            unsigned char val = (unsigned char) (g_IntensityFactor_ * min(255.0, (pedestal + dAmp * sin(dPhase_ + dLinePhase + (2.0 * lSinePeriod * k) / lPeriod))));
             if (val > maxDrawnVal) {
                 maxDrawnVal = val;
             }
@@ -1700,7 +1718,7 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
          for (k=0; k<imgWidth; k++)
          {
             long lIndex = imgWidth*j + k;
-            unsigned short val = (unsigned short) (g_IntensityFactor_ * min((double)maxValue, pedestal + dAmp16 * sin(dPhase_ + dLinePhase + (2.0 * cPi * k) / lPeriod)));
+            unsigned short val = (unsigned short) (g_IntensityFactor_ * min((double)maxValue, pedestal + dAmp16 * sin(dPhase_ + dLinePhase + (2.0 * lSinePeriod * k) / lPeriod)));
             if (val > maxDrawnVal) {
                 maxDrawnVal = val;
             }
@@ -1735,7 +1753,7 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
          for (k=0; k<imgWidth; k++)
          {
             long lIndex = imgWidth*j + k;
-            double value =  (g_IntensityFactor_ * min(255.0, (pedestal + dAmp * sin(dPhase_ + dLinePhase + (2.0 * cPi * k) / lPeriod))));
+            double value =  (g_IntensityFactor_ * min(255.0, (pedestal + dAmp * sin(dPhase_ + dLinePhase + (2.0 * lSinePeriod * k) / lPeriod))));
             if (value > maxDrawnVal) {
                 maxDrawnVal = value;
             }
@@ -1803,15 +1821,15 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
          for (k=0; k<imgWidth; k++)
          {
             long lIndex = imgWidth*j + k;
-            unsigned char value0 =   (unsigned char) min(255.0, (pedestal + dAmp * sin(dPhase_ + dLinePhase + (2.0 * cPi * k) / lPeriod)));
+            unsigned char value0 =   (unsigned char) min(255.0, (pedestal + dAmp * sin(dPhase_ + dLinePhase + (2.0 * lSinePeriod * k) / lPeriod)));
             theBytes[0] = value0;
             if( NULL != pTmpBuffer)
                pTmp2[2] = value0;
-            unsigned char value1 =   (unsigned char) min(255.0, (pedestal + dAmp * sin(dPhase_ + dLinePhase*2 + (2.0 * cPi * k) / lPeriod)));
+            unsigned char value1 =   (unsigned char) min(255.0, (pedestal + dAmp * sin(dPhase_ + dLinePhase*2 + (2.0 * lSinePeriod * k) / lPeriod)));
             theBytes[1] = value1;
             if( NULL != pTmpBuffer)
                pTmp2[1] = value1;
-            unsigned char value2 = (unsigned char) min(255.0, (pedestal + dAmp * sin(dPhase_ + dLinePhase*4 + (2.0 * cPi * k) / lPeriod)));
+            unsigned char value2 = (unsigned char) min(255.0, (pedestal + dAmp * sin(dPhase_ + dLinePhase*4 + (2.0 * lSinePeriod * k) / lPeriod)));
             theBytes[2] = value2;
 
             if( NULL != pTmpBuffer){
@@ -1853,9 +1871,9 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
          for (k=0; k<imgWidth; k++)
          {
             long lIndex = imgWidth*j + k;
-            unsigned long long value0 = (unsigned short) min(maxPixelValue, (pedestal + dAmp16 * sin(dPhase_ + dLinePhase + (2.0 * cPi * k) / lPeriod)));
-            unsigned long long value1 = (unsigned short) min(maxPixelValue, (pedestal + dAmp16 * sin(dPhase_ + dLinePhase*2 + (2.0 * cPi * k) / lPeriod)));
-            unsigned long long value2 = (unsigned short) min(maxPixelValue, (pedestal + dAmp16 * sin(dPhase_ + dLinePhase*4 + (2.0 * cPi * k) / lPeriod)));
+            unsigned long long value0 = (unsigned short) min(maxPixelValue, (pedestal + dAmp16 * sin(dPhase_ + dLinePhase + (2.0 * lSinePeriod * k) / lPeriod)));
+            unsigned long long value1 = (unsigned short) min(maxPixelValue, (pedestal + dAmp16 * sin(dPhase_ + dLinePhase*2 + (2.0 * lSinePeriod * k) / lPeriod)));
+            unsigned long long value2 = (unsigned short) min(maxPixelValue, (pedestal + dAmp16 * sin(dPhase_ + dLinePhase*4 + (2.0 * lSinePeriod * k) / lPeriod)));
             unsigned long long tval = value0+(value1<<16)+(value2<<32);
             if (tval > maxDrawnVal) {
                 maxDrawnVal = static_cast<double>(tval);
@@ -1930,7 +1948,7 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
             remainder /= 10;
         }
     }
-   dPhase_ += cPi / 4.;
+   dPhase_ += lSinePeriod / 4.;
 }
 
 
