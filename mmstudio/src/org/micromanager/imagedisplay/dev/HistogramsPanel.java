@@ -27,23 +27,31 @@ public final class HistogramsPanel extends JPanel implements Histograms {
    private ArrayList<ChannelControlPanel> channelPanels_;
    private Datastore store_;
    private MMVirtualStack stack_;
-   private ImagePlus plus_;
+   private ImagePlus ijImage_;
    private EventBus displayBus_;
    private boolean updatingCombos_ = false;
 
    public HistogramsPanel(Datastore store, MMVirtualStack stack,
-         ImagePlus plus, EventBus displayBus) {
+         ImagePlus ijImage, EventBus displayBus) {
       super();
       store_ = store;
       stack_ = stack;
-      plus_ = plus;
+      ijImage_ = ijImage;
       displayBus_ = displayBus;
       setupChannelControls();
    }
 
+   /**
+    * Remove our existing UI, if any, and create it anew.
+    */
    public synchronized void setupChannelControls() {
       removeAll();
       invalidate();
+      if (channelPanels_ != null) {
+         for (ChannelControlPanel panel : channelPanels_) {
+            panel.cleanup();
+         }
+      }
 
       // TODO: ignoring the possibility of RGB images for now.
       final int nChannels = store_.getMaxIndex("channel") + 1;
@@ -56,7 +64,7 @@ public final class HistogramsPanel extends JPanel implements Histograms {
       channelPanels_ = new ArrayList<ChannelControlPanel>();
       for (int i = 0; i < nChannels; ++i) {
          ChannelControlPanel panel = new ChannelControlPanel(i, this, store_,
-               stack_, plus_, displayBus_);
+               stack_, ijImage_, displayBus_);
          add(panel, "growy");
          channelPanels_.add(panel);
       }
@@ -187,19 +195,19 @@ public final class HistogramsPanel extends JPanel implements Histograms {
    }
    
    public boolean amInCompositeMode() {
-      return ((plus_ instanceof CompositeImage) &&
-            ((CompositeImage) plus_).getMode() != CompositeImage.COMPOSITE);
+      return ((ijImage_ instanceof CompositeImage) &&
+            ((CompositeImage) ijImage_).getMode() != CompositeImage.COMPOSITE);
    }
 
    public boolean amMultiChannel() {
-      return (plus_ instanceof CompositeImage);
+      return (ijImage_ instanceof CompositeImage);
    }
 
    private void updateActiveChannels() {
       if (!amMultiChannel()) {
          return;
       }
-      CompositeImage composite = (CompositeImage) plus_;
+      CompositeImage composite = (CompositeImage) ijImage_;
       int currentChannel = composite.getChannel() - 1;
       boolean[] active = composite.getActiveChannels();
       if (amInCompositeMode()) {
@@ -268,5 +276,10 @@ public final class HistogramsPanel extends JPanel implements Histograms {
       for (ChannelControlPanel panel : channelPanels_) {
          panel.cleanup();
       }
+   }
+
+   public void setImagePlus(ImagePlus ijImage) {
+      ijImage_ = ijImage;
+      setupChannelControls();
    }
 }
