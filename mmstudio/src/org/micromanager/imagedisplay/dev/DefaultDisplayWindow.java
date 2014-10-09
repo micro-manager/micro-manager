@@ -457,6 +457,9 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
       composite.setNChannelsUnverified(numChannels);
       composite.reset();
       stack_.setImagePlus(ijImage_);
+      if (histograms_ != null) {
+         histograms_.setImagePlus(ijImage_);
+      }
 
       makeWindowControls();
       histograms_.calcAndDisplayHistAndStats(true);
