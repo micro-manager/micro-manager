@@ -509,11 +509,12 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
     */
    @Subscribe
    public void onDrawEvent(RequestToDrawEvent event) {
+      Coords drawCoords = stack_.getCurrentImageCoords();
       if (event.getCoords() != null) {
          // In particular, they want to display this image.
-         stack_.setCoords(event.getCoords());
+         drawCoords = event.getCoords();
       }
-      canvasThread_.addCoords(stack_.getCurrentImageCoords());
+      canvasThread_.addCoords(drawCoords);
    }
 
    /**
