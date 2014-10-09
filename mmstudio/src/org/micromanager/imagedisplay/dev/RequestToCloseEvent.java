@@ -1,8 +1,8 @@
 package org.micromanager.imagedisplay.dev;
 
-import org.micromanager.api.data.DisplayWindow;
+import org.micromanager.api.display.DisplayWindow;
 
-public class RequestToCloseEvent implements org.micromanager.api.data.RequestToCloseEvent {
+public class RequestToCloseEvent implements org.micromanager.api.display.RequestToCloseEvent {
    private DisplayWindow window_;
    public RequestToCloseEvent(DisplayWindow window) {
       window_ = window;

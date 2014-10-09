@@ -40,8 +40,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import org.micromanager.api.data.Datastore;
-import org.micromanager.api.data.DisplayWindow;
 import org.micromanager.api.data.Image;
+import org.micromanager.api.display.DisplayWindow;
 import org.micromanager.api.display.OverlayPanel;
 import org.micromanager.dialogs.AcqControlDlg;
 import org.micromanager.positionlist.PositionListDlg;

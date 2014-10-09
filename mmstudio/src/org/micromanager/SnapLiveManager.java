@@ -24,10 +24,10 @@ import org.micromanager.acquisition.StorageRAM;
 import org.micromanager.api.data.AbortEvent;
 import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.DatastoreLockedException;
-import org.micromanager.api.data.DisplayWindow;
 import org.micromanager.api.data.Image;
-import org.micromanager.api.data.RequestToCloseEvent;
 import org.micromanager.api.data.SummaryMetadata;
+import org.micromanager.api.display.DisplayWindow;
+import org.micromanager.api.display.RequestToCloseEvent;
 
 import org.micromanager.data.DefaultCoords;
 import org.micromanager.data.DefaultDatastore;

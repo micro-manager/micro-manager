@@ -1,10 +1,14 @@
-package org.micromanager.api.data;
+package org.micromanager.api.display;
 
 import ij.gui.ImageWindow;
 import ij.ImagePlus;
 
 import java.awt.Component;
 import java.util.List;
+
+import org.micromanager.api.data.Coords;
+import org.micromanager.api.data.Datastore;
+import org.micromanager.api.data.Image;
 
 /**
  * A DisplayWindow is the interface to Micro-Manager's custom image display
