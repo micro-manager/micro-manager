@@ -3,19 +3,14 @@ package org.micromanager.imagedisplay.dev;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
-import ij.CompositeImage;
 import ij.ImagePlus;
-import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
 import ij.gui.StackWindow;
-import ij.Prefs;
 import ij.WindowManager;
 
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
-import java.awt.Panel;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
