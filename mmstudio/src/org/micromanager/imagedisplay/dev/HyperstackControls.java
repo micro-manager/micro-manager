@@ -7,27 +7,18 @@ package org.micromanager.imagedisplay.dev;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
-import com.swtdesigner.SwingResourceManager;
 
 import java.awt.Dimension;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentAdapter;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.lang.Math;
-import java.text.ParseException;
 import java.util.concurrent.TimeUnit;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.SwingConstants;
-
-import net.imglib2.RandomAccess;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -37,11 +28,8 @@ import org.json.JSONObject;
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.Image;
 
-import org.micromanager.data.AbortEvent;
-import org.micromanager.data.DefaultCoords;
 import org.micromanager.data.NewImageEvent;
 import org.micromanager.imagedisplay.MouseMovedEvent;
-import org.micromanager.MMStudio;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;

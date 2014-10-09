@@ -28,9 +28,6 @@ import mmcorej.CMMCore;
 
 import net.miginfocom.swing.MigLayout;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
-
 import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.DatastoreLockedException;
@@ -38,7 +35,6 @@ import org.micromanager.api.data.DisplaySettings;
 import org.micromanager.api.data.Image;
 import org.micromanager.api.data.NewDisplaySettingsEvent;
 import org.micromanager.api.data.NewImageEvent;
-import org.micromanager.api.data.SummaryMetadata;
 
 import org.micromanager.data.DefaultCoords;
 import org.micromanager.dialogs.AcqControlDlg;
@@ -52,8 +48,6 @@ import org.micromanager.imagedisplay.MMCompositeImage;
 import org.micromanager.utils.HistogramUtils;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.JavaUtils;
-import org.micromanager.utils.MDUtils;
-import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
 
 /**

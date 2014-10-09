@@ -3,7 +3,6 @@ package org.micromanager.imagedisplay.dev;
 import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.process.ImageProcessor;
-import ij.process.ByteProcessor;
 
 import java.util.HashMap;
 

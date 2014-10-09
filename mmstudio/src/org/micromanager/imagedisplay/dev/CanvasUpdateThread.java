@@ -12,7 +12,6 @@ import java.util.concurrent.TimeUnit;
 import javax.swing.SwingUtilities;
 
 import org.micromanager.imagedisplay.FPSEvent;
-import org.micromanager.imagedisplay.MMCompositeImage;
 
 import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.Datastore;
