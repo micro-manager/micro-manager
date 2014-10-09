@@ -22,22 +22,6 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class ScrollerPanel extends JPanel {
    /**
-    * This class signifies that the currently-displayed image needs to be 
-    * updated.
-    */
-   public static class SetImageEvent {
-      private Coords coords_;
-
-      public SetImageEvent(Coords coords) {
-         coords_ = coords;
-      }
-
-      public Coords getCoords() {
-         return coords_;
-      }
-   }
-
-   /**
     * This class signifies that our layout has changed and our owner needs to 
     * revalidate.
     */
@@ -108,7 +92,8 @@ public class ScrollerPanel extends JPanel {
     * Check to see if the image we are currently "pointing to" with the 
     * scrollers is different from the image that we were last pointing to
     * when this function was called. If so, then we need to post a
-    * SetImageEvent to the displayBus so that the image display gets updated.
+    * RequestToDrawEvent to the displayBus so that the image display gets
+    * updated.
     */
    private void checkForImagePositionChanged() {
       boolean shouldPostEvent = false;
@@ -127,7 +112,7 @@ public class ScrollerPanel extends JPanel {
       }
       lastImagePosition_ = newPositionBuilder.build();
       if (shouldPostEvent) {
-         displayBus_.post(new SetImageEvent(lastImagePosition_));
+         displayBus_.post(new DefaultRequestToDrawEvent(lastImagePosition_));
       }
    }
 
