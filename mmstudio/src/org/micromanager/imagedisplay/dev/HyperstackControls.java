@@ -165,20 +165,6 @@ public class HyperstackControls extends JPanel {
    }
 
    /**
-    * Our ScrollerPanel is informing us that we need to display a different
-    * image.
-    */
-   @Subscribe
-   public void onSetImage(ScrollerPanel.SetImageEvent event) {
-      try {
-         displayBus_.post(new DefaultRequestToDrawEvent(event.getCoords()));
-      }
-      catch (Exception e) {
-         ReportingUtils.logError(e, "Couldn't set display to show image at " + event.getCoords());
-      }
-   }
-
-   /**
     * A new image has been made available. Update our pixel info, assuming
     * we have a valid mouse position.
     */
