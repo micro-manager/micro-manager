@@ -1,4 +1,4 @@
-package org.micromanager.api.data;
+package org.micromanager.api.display;
 
 /**
  * This event signifies that a DisplayWindow wants to close. If this is

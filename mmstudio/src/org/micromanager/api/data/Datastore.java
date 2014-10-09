@@ -2,6 +2,8 @@ package org.micromanager.api.data;
 
 import java.util.List;
 
+import org.micromanager.api.display.DisplayWindow;
+
 /**
  * Datastores provide access to image data and metadata.
  */

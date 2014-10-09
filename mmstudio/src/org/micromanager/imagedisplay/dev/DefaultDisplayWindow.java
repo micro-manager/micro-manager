@@ -45,10 +45,10 @@ import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.Datastore;
-import org.micromanager.api.data.DisplayWindow;
 import org.micromanager.api.data.Image;
 import org.micromanager.api.data.NewImageEvent;
 import org.micromanager.api.data.SummaryMetadata;
+import org.micromanager.api.display.DisplayWindow;
 import org.micromanager.api.display.RequestToDrawEvent;
 
 import org.micromanager.imagedisplay.CanvasDrawEvent;

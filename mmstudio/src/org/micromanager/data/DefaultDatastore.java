@@ -7,10 +7,10 @@ import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.DatastoreLockedException;
 import org.micromanager.api.data.DisplaySettings;
-import org.micromanager.api.data.DisplayWindow;
 import org.micromanager.api.data.Image;
 import org.micromanager.api.data.Storage;
 import org.micromanager.api.data.SummaryMetadata;
+import org.micromanager.api.display.DisplayWindow;
 
 import org.micromanager.utils.PrioritizedEventBus;
 
