@@ -4,12 +4,10 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
 import ij.CompositeImage;
-import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
 import ij.gui.StackWindow;
-import ij.gui.Toolbar;
 import ij.Prefs;
 import ij.WindowManager;
 
@@ -29,15 +27,9 @@ import java.awt.event.WindowEvent;
 import java.lang.Math;
 
 import java.util.ArrayList;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.TimeUnit;
-import java.util.HashMap;
 import java.util.List;
 import java.util.prefs.Preferences;
-import java.util.Timer;
-import java.util.TimerTask;
 
-import javax.swing.SwingUtilities;
 import javax.swing.event.MouseInputAdapter;
 import javax.swing.JPanel;
 
@@ -46,16 +38,11 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.Image;
-import org.micromanager.api.data.NewImageEvent;
 import org.micromanager.api.data.SummaryMetadata;
 import org.micromanager.api.display.DisplayWindow;
 import org.micromanager.api.display.RequestToDrawEvent;
 
-import org.micromanager.imagedisplay.CanvasDrawEvent;
-import org.micromanager.imagedisplay.FPSEvent;
-import org.micromanager.imagedisplay.IMMImagePlus;
 import org.micromanager.imagedisplay.MMCompositeImage;
-import org.micromanager.imagedisplay.MMImagePlus;
 
 import org.micromanager.LineProfile;
 import org.micromanager.MMStudio;

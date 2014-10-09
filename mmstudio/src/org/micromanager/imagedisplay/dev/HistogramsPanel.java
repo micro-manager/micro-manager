@@ -5,9 +5,6 @@ import com.google.common.eventbus.EventBus;
 import ij.CompositeImage;
 import ij.ImagePlus;
 
-import java.awt.Dimension;
-import java.awt.GridLayout;
-
 import java.util.ArrayList;
 
 import javax.swing.JPanel;
@@ -16,10 +13,8 @@ import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.api.data.Datastore;
 
-import org.micromanager.MMStudio;
 import org.micromanager.internalinterfaces.Histograms;
 import org.micromanager.utils.ContrastSettings;
-import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
 
 public final class HistogramsPanel extends JPanel implements Histograms {

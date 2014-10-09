@@ -15,7 +15,6 @@ import java.lang.Math;
 
 import org.micromanager.imagedisplay.CanvasDrawEvent;
 import org.micromanager.imagedisplay.MMCompositeImage;
-import org.micromanager.imagedisplay.MMImagePlus;
 
 /**
  * MMImageCanvas is a customization of ImageJ's ImageCanvas class with

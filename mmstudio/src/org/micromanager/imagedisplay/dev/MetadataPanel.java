@@ -20,14 +20,11 @@
 //
 package org.micromanager.imagedisplay.dev;
 
-import ij.ImagePlus;
 import ij.gui.ImageWindow;
 
 import java.awt.Dimension;
-import java.util.Arrays;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.Vector;
 
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
@@ -35,19 +32,14 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
-import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableModel;
 
 import net.miginfocom.swing.MigLayout;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.Image;
 import org.micromanager.api.data.Metadata;
 
-import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
 
 
