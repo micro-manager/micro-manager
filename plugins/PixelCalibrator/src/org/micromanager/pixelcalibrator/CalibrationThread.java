@@ -117,6 +117,7 @@ public class CalibrationThread extends Thread {
             core_.waitForDevice(core_.getXYStageDevice());
             core_.snapImage();
             TaggedImage image = core_.getTaggedImage();
+            Object pix = image.pix;
             app_.displayImage(image);
             if (liveWin_ == null)
                liveWin_ = app_.getSnapLiveManager().getSnapLiveWindow();
