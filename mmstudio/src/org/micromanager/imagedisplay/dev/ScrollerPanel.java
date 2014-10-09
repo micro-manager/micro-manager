@@ -4,7 +4,6 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -12,8 +11,10 @@ import javax.swing.JPanel;
 
 import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.Datastore;
+import org.micromanager.data.DefaultCoords;
 import org.micromanager.data.NewImageEvent;
 import org.micromanager.imagedisplay.AxisScroller;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  * This class is responsible for containing and managing groups of 
@@ -25,24 +26,14 @@ public class ScrollerPanel extends JPanel {
     * updated.
     */
    public static class SetImageEvent {
-      // Maps axis labels to their positions. 
-      private HashMap<String, Integer> axisToPosition_;
-      public SetImageEvent(HashMap<String, Integer> axisToPosition) {
-         axisToPosition_ = new HashMap<String, Integer>(axisToPosition);
+      private Coords coords_;
+
+      public SetImageEvent(Coords coords) {
+         coords_ = coords;
       }
 
-      public ArrayList<String> getAxes() {
-         return new ArrayList<String>(axisToPosition_.keySet());
-      }
-      /**
-       * Retrieve the desired position along the specified axis, or 0 if we 
-       * don't have a marker for that axis.
-       */
-      public Integer getPositionForAxis(String axis) {
-         if (axisToPosition_.containsKey(axis)) {
-            return axisToPosition_.get(axis);
-         }
-         return 0;
+      public Coords getCoords() {
+         return coords_;
       }
    }
 
@@ -59,9 +50,9 @@ public class ScrollerPanel extends JPanel {
    // All AxisScrollers we manage. protected visibility to allow subclassing
    // (c.f. Navigator plugin)
    protected ArrayList<AxisScroller> scrollers_;
-   // A mapping of axis identifiers to their positions as of the last time
+   // The positions of all our scrollers the last time
    // checkForImagePositionChanged() was called.
-   private HashMap<String, Integer> lastImagePosition_ = null;
+   private DefaultCoords lastImagePosition_;
    // This will get set to false in cleanup, in turn barring any more
    // timers from getting created.
    private boolean canMakeTimers_ = true;
@@ -122,18 +113,19 @@ public class ScrollerPanel extends JPanel {
    private void checkForImagePositionChanged() {
       boolean shouldPostEvent = false;
       if (lastImagePosition_ == null) {
-         lastImagePosition_ = new HashMap<String, Integer>();
+         lastImagePosition_ = (new DefaultCoords.Builder()).build();
       }
+      DefaultCoords.Builder newPositionBuilder = new DefaultCoords.Builder();
       for (AxisScroller scroller : scrollers_) {
          String axis = scroller.getAxis();
          Integer position = scroller.getPosition();
-         if (!lastImagePosition_.containsKey(axis) ||
-               lastImagePosition_.get(axis) != position) {
+         newPositionBuilder.position(axis, position);
+         if (lastImagePosition_.getPositionAt(axis) != position) {
             // Position along this axis has changed; we need to refresh.
             shouldPostEvent = true;
          }
-         lastImagePosition_.put(axis, position);
       }
+      lastImagePosition_ = newPositionBuilder.build();
       if (shouldPostEvent) {
          displayBus_.post(new SetImageEvent(lastImagePosition_));
       }
