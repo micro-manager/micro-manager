@@ -49,7 +49,7 @@ import org.micromanager.api.data.DisplayWindow;
 import org.micromanager.api.data.Image;
 import org.micromanager.api.data.NewImageEvent;
 import org.micromanager.api.data.SummaryMetadata;
-import org.micromanager.api.display.DrawEvent;
+import org.micromanager.api.display.RequestToDrawEvent;
 
 import org.micromanager.imagedisplay.CanvasDrawEvent;
 import org.micromanager.imagedisplay.FPSEvent;
@@ -482,6 +482,7 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
             composite.setNChannelsUnverified(numChannels);
             composite.reset();
          }
+         canvasThread_.addCoords(image.getCoords());
       }
       catch (Exception e) {
          ReportingUtils.logError(e, "Couldn't display new image");
@@ -504,7 +505,7 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
     * redisplay.
     */
    @Subscribe
-   public void onDrawEvent(DrawEvent event) {
+   public void onDrawEvent(RequestToDrawEvent event) {
       if (event.getCoords() != null) {
          // In particular, they want to display this image.
          stack_.setCoords(event.getCoords());

@@ -7,6 +7,6 @@ import org.micromanager.api.data.Coords;
  * refresh its display. Optionally, you can specify the coordinates of an
  * Image to display.
  */
-public interface DrawEvent {
+public interface RequestToDrawEvent {
    public Coords getCoords();
 }
