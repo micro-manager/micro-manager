@@ -284,11 +284,35 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
     * if any other entity draws the border, the canvas will "shadow" the 
     * border and make it largely invisible.
     */
+   @Override
    public void paint(Graphics g) {
+      // Manually blank the background of the info text. Normally this would
+      // be done for us by Component.update(), but we're overriding that
+      // behavior (see below).
+      // HACK: the height of the rect to clear here is basically empirically-
+      // derived, which is of course an incredibly brittle way to run things.
+      g.clearRect(0, 0, getWidth(), 35);
       drawInfo(g);
       // Propagate painting to our sub-components.
       for (Component c : getComponents()) {
-         c.repaint();
+         if (g.hitClip(c.getX(), c.getY(), c.getWidth(), c.getHeight())) {
+            // This component needs to be repainted.
+            c.repaint();
+         }
+      }
+   }
+
+   /**
+    * HACK: override this method to avoid blanking the entire window whenever
+    * we draw; Java by default handles mixing AWT and Swing by blanking out
+    * the entire frame, which causes horrendous flicker. There are presumably
+    * some consequences to not blanking the entire frame, but if so, I haven't
+    * been able to find them.
+    */
+   @Override
+   public void update(Graphics g) {
+      if (isShowing()) {
+         paint(g);
       }
    }
 
