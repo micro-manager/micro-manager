@@ -28,7 +28,6 @@ import mmcorej.CMMCore;
 
 import net.miginfocom.swing.MigLayout;
 
-import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.DatastoreLockedException;
 import org.micromanager.api.data.DisplaySettings;

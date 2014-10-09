@@ -5,7 +5,6 @@ import com.google.common.eventbus.Subscribe;
 
 import ij.ImagePlus;
 
-import java.awt.Graphics;
 import java.util.ArrayList;
 
 import javax.swing.JPanel;

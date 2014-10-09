@@ -12,7 +12,6 @@ import java.awt.Dimension;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentAdapter;
 import java.awt.FlowLayout;
-import java.awt.Font;
 import java.lang.Math;
 import java.util.concurrent.TimeUnit;
 
