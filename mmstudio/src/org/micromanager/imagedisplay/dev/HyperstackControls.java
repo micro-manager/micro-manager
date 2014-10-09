@@ -40,7 +40,6 @@ import org.micromanager.api.data.Image;
 import org.micromanager.data.AbortEvent;
 import org.micromanager.data.DefaultCoords;
 import org.micromanager.data.NewImageEvent;
-import org.micromanager.imagedisplay.DrawEvent;
 import org.micromanager.imagedisplay.MouseMovedEvent;
 import org.micromanager.MMStudio;
 import org.micromanager.utils.MDUtils;
@@ -177,7 +176,7 @@ public class HyperstackControls extends JPanel {
       }
       try {
          stack_.setCoords(builder.build());
-         displayBus_.post(new DrawEvent());
+         displayBus_.post(new DefaultRequestToDrawEvent());
       }
       catch (Exception e) {
          ReportingUtils.logError(e, "Couldn't set display to show image at " + builder.build());

@@ -17,7 +17,6 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.api.data.Datastore;
 
 import org.micromanager.MMStudio;
-import org.micromanager.imagedisplay.DrawEvent;
 import org.micromanager.internalinterfaces.Histograms;
 import org.micromanager.utils.ContrastSettings;
 import org.micromanager.utils.MDUtils;
@@ -157,7 +156,7 @@ public final class HistogramsPanel extends JPanel implements Histograms {
       for (ChannelControlPanel panel : channelPanels_) {
          panel.applyChannelLUTToImage();
       }
-      displayBus_.post(new DrawEvent());
+      displayBus_.post(new DefaultRequestToDrawEvent());
    }
 
    @Override
