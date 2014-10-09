@@ -32,7 +32,8 @@ import org.micromanager.MMStudio;
 import org.micromanager.utils.ReportingUtils;
 
 /**
- * Simple RAM-based storage for Datastores.
+ * Simple RAM-based storage for Datastores. Methods that interact with the
+ * HashMap that is our image storage are synchronized.
  */
 public class StorageRAM implements Storage {
    private HashMap<Coords, Image> coordsToImage_;
@@ -65,7 +66,7 @@ public class StorageRAM implements Storage {
    /**
     * Add a new image to our storage, and update maxIndex_.
     */
-   private void addImage(Image image) {
+   private synchronized void addImage(Image image) {
       Coords coords = image.getCoords();
       coordsToImage_.put(coords, image);
       for (String axis : coords.getAxes()) {
@@ -80,7 +81,7 @@ public class StorageRAM implements Storage {
    }
 
    @Override
-   public Image getImage(Coords coords) {
+   public synchronized Image getImage(Coords coords) {
       if (coordsToImage_.containsKey(coords)) {
          return coordsToImage_.get(coords);
       }
@@ -106,7 +107,7 @@ public class StorageRAM implements Storage {
    }
 
    @Override
-   public List<Image> getImagesMatching(Coords coords) {
+   public synchronized List<Image> getImagesMatching(Coords coords) {
       ArrayList<Image> results = new ArrayList<Image>();
       for (Image image : coordsToImage_.values()) {
          if (image.getCoords().matches(coords)) {
