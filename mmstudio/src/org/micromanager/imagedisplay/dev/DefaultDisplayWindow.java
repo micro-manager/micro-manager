@@ -615,14 +615,6 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
       }
    }
 
-   /**
-    * Datastore has received a new image; display it.
-    */
-   @Subscribe
-   public void onNewImage(NewImageEvent event) {
-      receiveNewImage(event.getImage());
-   }
-
    public static DisplayWindow getCurrentWindow() {
       ImageWindow current = WindowManager.getCurrentWindow();
       if (current instanceof DisplayWindow) {
