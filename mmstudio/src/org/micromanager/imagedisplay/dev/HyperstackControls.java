@@ -137,7 +137,7 @@ public class HyperstackControls extends JPanel {
                store_.getImage(stack_.getCurrentImageCoords()).getIntensityStringAt(mouseX_, mouseY_));
       }
       catch (Exception e) {
-         ReportingUtils.logError(e, "Whoops!");
+         ReportingUtils.logError(e, "Failed to get image pixel info");
       }
    }
 
