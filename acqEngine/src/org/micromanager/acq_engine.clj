@@ -15,42 +15,34 @@
 ;               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 (ns org.micromanager.acq-engine
-  (:use [org.micromanager.mm :only
-          [when-lets map-config get-config get-positions load-mm store-mmcore
-           get-default-devices core log log-cmd mmc gui with-core-setting
-           do-when if-args get-system-config-cached select-values-match?
-           get-property get-camera-roi parse-core-metadata
-           json-to-data get-pixel-type get-msp-z-position set-msp-z-position
-           get-msp MultiStagePosition-to-map ChannelSpec-to-map
-           get-pixel-type get-current-time-str rekey
-           data-object-to-map str-vector double-vector
-           get-property-value edt attempt-all]]
-        [org.micromanager.sequence-generator :only [generate-acq-sequence
-                                                    make-property-sequences]])
-  (:require [clojure.set]
-            [org.micromanager.mm :as mm])
-  (:import [org.micromanager.acquisition TaggedImageQueue]
-  		   [org.micromanager.acquisition MMAcquisition]
-           [org.micromanager.api SequenceSettings]
-           [org.micromanager.api PositionList]
-           [org.micromanager.utils ReportingUtils MMListenerAdapter]
-           [mmcorej TaggedImage Configuration Metadata]
-           (java.util.concurrent Executors TimeUnit)
-           [java.util.prefs Preferences]
-           [java.net InetAddress]
-           [java.util.concurrent LinkedBlockingQueue TimeUnit CountDownLatch]
-           [org.micromanager.utils MDUtils
-                                   ReportingUtils]
-           [org.json JSONObject JSONArray]
-           [java.util Date UUID]
-           [javax.swing SwingUtilities]
-           [ij ImagePlus])
-   (:gen-class
-     :name org.micromanager.AcquisitionEngine2010
-     :implements [org.micromanager.api.IAcquisitionEngine2010]
-     :init init
-     :constructors {[org.micromanager.api.ScriptInterface] [] [mmcorej.CMMCore] []}
-     :state state))
+  (:use
+    [org.micromanager.mm :only
+     [ChannelSpec-to-map MultiStagePosition-to-map attempt-all core
+      data-object-to-map do-when double-vector get-camera-roi
+      get-current-time-str get-msp get-msp-z-position get-pixel-type
+      get-property get-property-value get-system-config-cached gui json-to-data
+      load-mm log map-config mmc rekey set-msp-z-position store-mmcore
+      str-vector when-lets with-core-setting]]
+    [org.micromanager.sequence-generator :only [generate-acq-sequence]])
+  (:require
+    [clojure.set]
+    [org.micromanager.mm :as mm])
+  (:import
+    [ij ImagePlus]
+    [java.net InetAddress]
+    [java.util Date UUID]
+    [java.util.concurrent CountDownLatch LinkedBlockingQueue TimeUnit]
+    [mmcorej Configuration Metadata TaggedImage]
+    [org.json JSONArray JSONObject]
+    [org.micromanager.acquisition MMAcquisition TaggedImageQueue]
+    [org.micromanager.api PositionList SequenceSettings]
+    [org.micromanager.utils MDUtils MMListenerAdapter ReportingUtils])
+  (:gen-class
+    :name org.micromanager.AcquisitionEngine2010
+    :implements [org.micromanager.api.IAcquisitionEngine2010]
+    :init init
+    :constructors {[org.micromanager.api.ScriptInterface] [] [mmcorej.CMMCore] []}
+    :state state))
 
 ;; test utils
 
