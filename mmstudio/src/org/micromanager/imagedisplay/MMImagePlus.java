@@ -40,12 +40,6 @@ public class MMImagePlus extends ImagePlus implements IMMImagePlus {
    }
 
    @Override
-   public void mouseMoved(int x, int y) {
-      super.mouseMoved(x, y);
-      bus_.post(new MouseMovedEvent(x, y));
-   }
-
-   @Override
    public void setNChannelsUnverified(int nChannels) {
       super.nChannels = nChannels;
    }

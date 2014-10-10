@@ -8,6 +8,8 @@ import ij.ImagePlus;
 import ij.Prefs;
 
 import java.awt.Color;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.Graphics;
 import java.awt.Rectangle;
 
@@ -15,6 +17,7 @@ import java.lang.Math;
 
 import org.micromanager.imagedisplay.CanvasDrawEvent;
 import org.micromanager.imagedisplay.MMCompositeImage;
+import org.micromanager.imagedisplay.MouseMovedEvent;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -29,6 +32,13 @@ class MMImageCanvas extends ImageCanvas {
       super(ijImage);
       ijImage_ = ijImage;
       displayBus_ = displayBus;
+      // Publish information on the mouse position.
+      addMouseMotionListener(new MouseAdapter() {
+         @Override
+         public void mouseMoved(MouseEvent event) {
+            displayBus_.post(new MouseMovedEvent(event.getX(), event.getY()));
+         }
+      });
    }
 
    /**
