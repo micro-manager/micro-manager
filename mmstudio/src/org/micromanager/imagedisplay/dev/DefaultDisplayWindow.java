@@ -277,7 +277,8 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
     * top of the window. It can't draw the border properly anyway, since the
     * canvas is now contained in a JPanel and the canvas's size is such that
     * if any other entity draws the border, the canvas will "shadow" the 
-    * border and make it largely invisible.
+    * border and make it largely invisible. Instead, the canvas draws the
+    * border itself.
     */
    @Override
    public void paint(Graphics g) {
