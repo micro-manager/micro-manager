@@ -274,15 +274,15 @@ public class DefaultImage implements Image {
          exponent = 16;
       }
       for (int i = 0; i < bytesPerPixel_ / divisor; ++i) {
-         int index = x * pixelWidth_ + y + component + i;
+         // NB Java will let you use "<<=" in this situation.
+         result = result << exponent;
+         int index = y * pixelHeight_ + x + component + i;
          if (rawPixels_ instanceof byte[]) {
             result += ((byte[]) rawPixels_)[index];
          }
          else if (rawPixels_ instanceof short[]) {
             result += ((short[]) rawPixels_)[index];
          }
-         // NB Java will let you use "<<=" in this situation.
-         result = result << exponent;
       }
       return result;
    }
