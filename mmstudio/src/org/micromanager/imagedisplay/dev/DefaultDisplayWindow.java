@@ -156,7 +156,9 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
          "[grow, fill]", "[grow, fill]related[]"));
 
       recreateCanvas();
-      add(canvasPanel_, "align center, wrap");
+      // We don't want the canvas to grow, because that results in weird
+      // zoom levels that make for blurry images.
+      add(canvasPanel_, "align center, wrap, grow 0");
 
       if (controls_ == null) {
          controls_ = new HyperstackControls(store_, stack_, displayBus_,
