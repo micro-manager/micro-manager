@@ -15,6 +15,7 @@ import java.lang.Math;
 
 import org.micromanager.imagedisplay.CanvasDrawEvent;
 import org.micromanager.imagedisplay.MMCompositeImage;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  * MMImageCanvas is a customization of ImageJ's ImageCanvas class with
@@ -30,9 +31,15 @@ class MMImageCanvas extends ImageCanvas {
       displayBus_ = displayBus;
    }
 
+   /**
+    * In addition to drawing the image canvas, we also draw a border around it,
+    * using a color that indicates the current active channel.
+    */
    @Override
    public void paint(Graphics g) {
+      // Draw the actual canvas image
       super.paint(g);
+
       // Determine the color to use (default is black).
       if (ijImage_.isComposite()) {
          Color color = ((MMCompositeImage) ijImage_).getChannelColor();
@@ -43,18 +50,17 @@ class MMImageCanvas extends ImageCanvas {
          }
          g.setColor(color);
       }
+      else {
+         g.setColor(Color.BLACK);
+      }
+
       Rectangle rect = getBounds();
-      // Tighten the rect down to what the canvas is actually drawing, as
-      // opposed to the space it is taking up in the window as a 
-      // Component.
-      int drawnWidth = (int) (ijImage_.getWidth() * getMagnification());
-      int drawnHeight = (int) (ijImage_.getHeight() * getMagnification());
-      int widthSlop = rect.width - drawnWidth;
-      int heightSlop = rect.height - drawnHeight;
-      rect.x += widthSlop / 2;
-      rect.y += heightSlop / 2;
-      rect.width = drawnWidth;
-      rect.height = drawnHeight;
+      // Shrink it slightly -- if we draw the bounds directly then we end up
+      // drawing exactly out of bounds and the border ends up invisible.
+      rect.x += 1;
+      rect.y += 1;
+      rect.width -= 2;
+      rect.height -= 2;
       // Not sure why we need to do this exactly, except that if we don't
       // the rectangle draws in the wrong place on narrow windows.
       rect.y -= getBounds().y;
