@@ -1,6 +1,7 @@
 package org.micromanager.imagedisplay.dev;
 
 import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
 
 import ij.CompositeImage;
 import ij.ImagePlus;
@@ -12,6 +13,7 @@ import javax.swing.JPanel;
 import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.api.data.Datastore;
+import org.micromanager.api.data.NewImageEvent;
 
 import org.micromanager.internalinterfaces.Histograms;
 import org.micromanager.utils.ContrastSettings;
@@ -30,6 +32,7 @@ public final class HistogramsPanel extends JPanel implements Histograms {
          ImagePlus ijImage, EventBus displayBus) {
       super();
       store_ = store;
+      store_.registerForEvents(this, 100);
       stack_ = stack;
       ijImage_ = ijImage;
       displayBus_ = displayBus;
@@ -276,5 +279,13 @@ public final class HistogramsPanel extends JPanel implements Histograms {
    public void setImagePlus(ImagePlus ijImage) {
       ijImage_ = ijImage;
       setupChannelControls();
+   }
+
+   @Subscribe
+   public void onNewImage(NewImageEvent event) {
+      if (event.getImage().getCoords().getPositionAt("channel") >= channelPanels_.size()) {
+         // Need to add a new channel histogram.
+         setupChannelControls();
+      }
    }
 }
