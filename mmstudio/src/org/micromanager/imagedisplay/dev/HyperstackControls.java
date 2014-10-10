@@ -24,6 +24,7 @@ import net.miginfocom.swing.MigLayout;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.Image;
 
@@ -133,8 +134,25 @@ public class HyperstackControls extends JPanel {
       try {
          mouseX_ = event.getX();
          mouseY_ = event.getY();
-         setPixelInfo(mouseX_, mouseY_,
-               store_.getImage(stack_.getCurrentImageCoords()).getIntensityStringAt(mouseX_, mouseY_));
+         int numChannels = store_.getMaxIndex("channel") + 1;
+         String intensity = "";
+         if (numChannels > 1) {
+            // Multi-channel case: display each channel with a "/" in-between.
+            intensity += "[";
+            for (int i = 0; i < numChannels; ++i) {
+               Coords imageCoords = stack_.getCurrentImageCoords().copy().position("channel", i).build();
+               intensity += store_.getImage(imageCoords).getIntensityStringAt(mouseX_, mouseY_);
+               if (i != numChannels - 1) {
+                  intensity += "/";
+               }
+            }
+            intensity += "]";
+         }
+         else {
+            // Single-channel case; simple.
+            intensity = store_.getImage(stack_.getCurrentImageCoords()).getIntensityStringAt(mouseX_, mouseY_);
+         }
+         setPixelInfo(mouseX_, mouseY_, intensity);
       }
       catch (Exception e) {
          ReportingUtils.logError(e, "Failed to get image pixel info");
