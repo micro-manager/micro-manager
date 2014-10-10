@@ -480,8 +480,9 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
       try {
          // Check if we're transitioning from grayscale to multi-channel at this
          // time.
+         int imageChannel = image.getCoords().getPositionAt("channel");
          if (!(ijImage_ instanceof MMCompositeImage) &&
-               image.getCoords().getPositionAt("channel") > 0) {
+               imageChannel > 0) {
             // Have multiple channels.
             shiftToCompositeImage();
             makeWindowControls();
@@ -625,7 +626,8 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
    }
 
    /**
-    * Datastore has received a new image; display it.
+    * Datastore has received a new image; display it, and adjust our
+    * ImageJ object if necessary.
     */
    @Subscribe
    public void onNewImage(NewImageEvent event) {
