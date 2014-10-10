@@ -33,6 +33,7 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.Image;
+import org.micromanager.api.data.NewImageEvent;
 import org.micromanager.api.data.SummaryMetadata;
 import org.micromanager.api.display.DisplayWindow;
 import org.micromanager.api.display.RequestToDrawEvent;
@@ -621,6 +622,14 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
       if (WindowManager.getCurrentWindow() == this) {
          LineProfile.updateLineProfile();
       }
+   }
+
+   /**
+    * Datastore has received a new image; display it.
+    */
+   @Subscribe
+   public void onNewImage(NewImageEvent event) {
+      receiveNewImage(event.getImage());
    }
 
    public static DisplayWindow getCurrentWindow() {
