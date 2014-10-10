@@ -127,8 +127,6 @@ public class HyperstackControls extends JPanel {
 
    /**
     * User moused over the display; update our indication of pixel intensities.
-    * TODO: only providing the first intensity; what about multichannel 
-    * images?
     */
    @Subscribe
    public void onMouseMoved(MouseMovedEvent event) {

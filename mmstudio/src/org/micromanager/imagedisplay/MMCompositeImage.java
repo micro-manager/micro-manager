@@ -28,12 +28,6 @@ public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
    }
    
    @Override
-   public void mouseMoved(int x, int y) {
-      super.mouseMoved(x, y);
-      bus_.post(new MouseMovedEvent(x, y));
-   }
-
-   @Override
    public String getTitle() {
       return title_;
    }
