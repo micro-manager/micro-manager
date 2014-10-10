@@ -36,7 +36,7 @@ class MMImageCanvas extends ImageCanvas {
       addMouseMotionListener(new MouseAdapter() {
          @Override
          public void mouseMoved(MouseEvent event) {
-            displayBus_.post(new MouseMovedEvent(event.getX(), event.getY()));
+            publishMouseInfo(event.getX(), event.getY());
          }
       });
    }
@@ -91,5 +91,23 @@ class MMImageCanvas extends ImageCanvas {
       // Apply the same range clamping that ImageJ does.
       mag = Math.max(Math.min(32.0, mag), .03125);
       this.magnification = mag;
+   }
+
+   /**
+    * Post a MouseMovedEvent indicating the coordinates of the pixel underneath
+    * the mouse. This is made unpleasant by the fact that we have two methods
+    * of zooming the display available to us: first by using the zoom tool,
+    * and second by simply resizing the window the canvas is in. The canvas'
+    * "magnification" field only accounts for the first of these.
+    */
+   private void publishMouseInfo(int x, int y) {
+      // Derive an effective zoom level by comparing the size we take up in
+      // the window to the size of the image we are displaying.
+      int pixelWidth = ijImage_.getWidth();
+      int displayedWidth = getSize().width;
+      double effectiveZoom = ((double) displayedWidth) / pixelWidth;
+      int pixelX = (int) (x / magnification / effectiveZoom);
+      int pixelY = (int) (y / magnification / effectiveZoom);
+      displayBus_.post(new MouseMovedEvent(pixelX, pixelY));
    }
 }
