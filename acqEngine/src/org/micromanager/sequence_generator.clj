@@ -20,7 +20,7 @@
 (def MAX-Z-TRIGGER-DIST 5.0)
 
 (defstruct acq-settings :frames :positions :channels :slices :slices-first
-  :time-first :keep-shutter-open-slices :keep-shuftter-open-channels
+  :time-first :keep-shutter-open-slices :keep-shutter-open-channels
   :use-autofocus :autofocus-skip :relative-slices :exposure :interval-ms :custom-intervals-ms)
 
 (defn all-equal?
