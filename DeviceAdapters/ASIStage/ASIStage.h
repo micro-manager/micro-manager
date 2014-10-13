@@ -195,6 +195,7 @@ public:
    int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnAxis(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSequence(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnFastSequence(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnRingBufferSize(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    // Sequence functions
@@ -219,6 +220,7 @@ private:
    double stepSizeUm_;
    double answerTimeoutMs_;
    bool sequenceable_;
+   bool runningFastSequence_;
    bool hasRingBuffer_;
    long nrEvents_;
    long curSteps_;

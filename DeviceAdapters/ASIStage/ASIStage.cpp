@@ -1814,6 +1814,7 @@ ZStage::ZStage() :
    stepSizeUm_(0.1),
    answerTimeoutMs_(1000),
    sequenceable_(false),
+   runningFastSequence_(false),
    hasRingBuffer_(false),
    nrEvents_(50)
 {
@@ -1892,6 +1893,12 @@ int ZStage::Initialize()
       CreateProperty(spn, "No", MM::String, false, pAct);
       AddAllowedValue(spn, "No");
       AddAllowedValue(spn, "Yes");
+
+      pAct = new CPropertyAction (this, &ZStage::OnFastSequence);
+      spn = "Use Fast Sequence";
+      CreateProperty(spn, "No", MM::String, false, pAct);
+      AddAllowedValue(spn, "No");
+      AddAllowedValue(spn, "Armed");
    }
       
    initialized_ = true;
@@ -1909,6 +1916,11 @@ int ZStage::Shutdown()
 
 bool ZStage::Busy()
 {
+   if (runningFastSequence_)
+   {
+      return false;
+   }
+
    // empty the Rx serial buffer before sending command
    ClearPort();
 
@@ -1931,6 +1943,11 @@ bool ZStage::Busy()
 
 int ZStage::SetPositionUm(double pos)
 {
+   if (runningFastSequence_)
+   {
+      return DEVICE_OK;
+   }
+
    // empty the Rx serial buffer before sending command
    ClearPort();
 
@@ -1996,6 +2013,11 @@ int ZStage::GetPositionUm(double& pos)
   
 int ZStage::SetPositionSteps(long pos)
 {
+   if (runningFastSequence_)
+   {
+      return DEVICE_OK;
+   }
+
    ostringstream command;
    command << "M " << axis_ << "=" << pos; // in 10th of micros
 
@@ -2121,9 +2143,13 @@ bool ZStage::HasRingBuffer()
    return hasRingBuffer_;
 }
 
-
 int ZStage::StartStageSequence()
 {
+   if (runningFastSequence_)
+   {
+      return DEVICE_OK;
+   }
+
    string answer;
    
    // ensure that ringbuffer pointer points to first entry and 
@@ -2150,6 +2176,11 @@ int ZStage::StartStageSequence()
 
 int ZStage::StopStageSequence() 
 {
+   if (runningFastSequence_)
+   {
+      return DEVICE_OK;
+   }
+
    std::string answer;
    int ret = QueryCommand("TTL X=0", answer); // switches off TTL triggering
    if (ret != DEVICE_OK)
@@ -2163,6 +2194,11 @@ int ZStage::StopStageSequence()
 
 int ZStage::SendStageSequence()
 {
+   if (runningFastSequence_)
+   {
+      return DEVICE_OK;
+   }
+
    // first clear the buffer in the device
    std::string answer;
    int ret = QueryCommand("RM X=0", answer); // clears the ringbuffer
@@ -2176,6 +2212,9 @@ int ZStage::SendStageSequence()
          ostringstream os;
          os.precision(0);
          // Strange, but this command needs <CR><LF>.  
+         // It appears for WhizKid the LD reply is :A without <CR><LF> so maybe sending extra one helps
+         // that is also why the answer can have :N-1
+         // basically we are trying to compensate for the controller's faults here
          os << fixed << "LD " << axis_ << "=" << sequence_[i] * 10 << "\r\n"; 
          ret = QueryCommand(os.str().c_str(), answer);
          if (ret != DEVICE_OK)
@@ -2192,6 +2231,11 @@ int ZStage::SendStageSequence()
 
 int ZStage::ClearStageSequence()
 {
+   if (runningFastSequence_)
+   {
+      return DEVICE_OK;
+   }
+
    sequence_.clear();
 
    // clear the buffer in the device
@@ -2322,6 +2366,49 @@ int ZStage::OnSequence(MM::PropertyBase* pProp, MM::ActionType eAct)
       if (prop == "Yes")
          sequenceable_ = true;
    }
+
+   return DEVICE_OK;
+}
+
+int ZStage::OnFastSequence(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   int ret;
+
+   if (eAct == MM::BeforeGet)
+   {
+      if (runningFastSequence_)
+         pProp->Set("Armed");
+      else
+         pProp->Set("No");
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      std::string prop;
+      pProp->Get(prop);
+
+      // only let user do fast sequence if regular one is enabled
+      if (!sequenceable_) {
+         pProp->Set("No");
+         return DEVICE_OK;
+      }
+
+      if (prop.compare("Armed") == 0)
+      {
+         runningFastSequence_ = false;
+         ret = SendStageSequence();
+         if (ret) return ret;  // same as RETURN_ON_MM_ERROR
+         ret = StartStageSequence();
+         if (ret) return ret;  // same as RETURN_ON_MM_ERROR
+         runningFastSequence_ = true;
+      }
+      else
+      {
+         runningFastSequence_ = false;
+         ret = StopStageSequence();
+         if (ret) return ret;  // same as RETURN_ON_MM_ERROR
+      }
+   }
+
 
    return DEVICE_OK;
 }
