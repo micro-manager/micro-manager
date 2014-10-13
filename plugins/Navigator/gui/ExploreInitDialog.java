@@ -5,6 +5,7 @@
 package gui;
 
 import acq.CustomAcqEngine;
+import acq.ExploreAcqSettings;
 import java.io.File;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -23,19 +24,19 @@ import org.micromanager.utils.ReportingUtils;
 public class ExploreInitDialog extends javax.swing.JFrame {
 
    
-   private Preferences prefs_;
+   private String dir_, name_;
    private CustomAcqEngine eng_;
 
    
    /**
     * Creates new form ExploreInitDialog
     */
-   public ExploreInitDialog(Preferences prefs, CustomAcqEngine eng) {
-      prefs_ = prefs;
+   public ExploreInitDialog(CustomAcqEngine eng, String dir, String name) {
       initComponents();
       initializeValues();
-      addTextFieldListeners();
       eng_ = eng;
+      dir_ = dir;
+      name_ = name;
       this.setLocationRelativeTo(null);
       this.setVisible(true);
    }
@@ -56,15 +57,6 @@ public class ExploreInitDialog extends javax.swing.JFrame {
         zTopSpinner_ = new javax.swing.JSpinner();
         zBottomLabel_ = new javax.swing.JLabel();
         zBottomSpinner_ = new javax.swing.JSpinner();
-        savingDirLabel_ = new javax.swing.JLabel();
-        savingNameLabel_ = new javax.swing.JLabel();
-        savingDirTextField_ = new javax.swing.JTextField();
-        browseButton_ = new javax.swing.JButton();
-        savingNameTextField_ = new javax.swing.JTextField();
-        xOverlapLabel_ = new javax.swing.JLabel();
-        xOverlap_ = new javax.swing.JSpinner();
-        yOverlapLabel_ = new javax.swing.JLabel();
-        yOverlap_ = new javax.swing.JSpinner();
         cancelButton_ = new javax.swing.JButton();
         startExploreButton_ = new javax.swing.JButton();
 
@@ -82,39 +74,6 @@ public class ExploreInitDialog extends javax.swing.JFrame {
         zBottomLabel_.setText("Initial Z bottom (µm): ");
 
         zBottomSpinner_.setModel(new javax.swing.SpinnerNumberModel(Double.valueOf(1.0d), null, null, Double.valueOf(1.0d)));
-
-        savingDirLabel_.setText("Saving directory: ");
-
-        savingNameLabel_.setText("Saving name: ");
-
-        savingDirTextField_.setText("jTextField1");
-        savingDirTextField_.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                savingDirTextField_ActionPerformed(evt);
-            }
-        });
-
-        browseButton_.setText("Browse");
-        browseButton_.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                browseButton_ActionPerformed(evt);
-            }
-        });
-
-        savingNameTextField_.setText("jTextField2");
-        savingNameTextField_.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                savingNameTextField_ActionPerformed(evt);
-            }
-        });
-
-        xOverlapLabel_.setText("X Pixel overlap: ");
-
-        xOverlap_.setModel(new javax.swing.SpinnerNumberModel(0, 0, 10000, 1));
-
-        yOverlapLabel_.setText("Y Pixel overlap: ");
-
-        yOverlap_.setModel(new javax.swing.SpinnerNumberModel(0, 0, 10000, 1));
 
         cancelButton_.setText("Cancel");
         cancelButton_.addActionListener(new java.awt.event.ActionListener() {
@@ -135,47 +94,25 @@ public class ExploreInitDialog extends javax.swing.JFrame {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(zStepLabel_)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(savingDirTextField_)
-                            .addComponent(savingNameTextField_)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(savingNameLabel_)
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addComponent(zStepLabel_)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(zStepSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 55, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                        .addComponent(zTopLabel_)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(zTopSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 56, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                        .addComponent(zBottomLabel_)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(zBottomSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 56, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addComponent(xOverlapLabel_)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(xOverlap_, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addGap(18, 18, 18)
-                                        .addComponent(yOverlapLabel_)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(yOverlap_, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addComponent(savingDirLabel_)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(browseButton_)))
-                                .addGap(0, 14, Short.MAX_VALUE))))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(155, 155, 155)
                         .addComponent(cancelButton_)
-                        .addGap(58, 58, 58)
-                        .addComponent(startExploreButton_)
-                        .addGap(0, 0, Short.MAX_VALUE)))
-                .addContainerGap())
+                        .addGap(106, 106, 106)
+                        .addComponent(startExploreButton_))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(zStepSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 55, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(zTopLabel_)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(zTopSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 56, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(zBottomLabel_)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(zBottomSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 56, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(24, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -188,67 +125,16 @@ public class ExploreInitDialog extends javax.swing.JFrame {
                     .addComponent(zBottomLabel_)
                     .addComponent(zBottomSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(zStepSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(xOverlapLabel_)
-                    .addComponent(xOverlap_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(yOverlapLabel_)
-                    .addComponent(yOverlap_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(savingDirLabel_)
-                    .addComponent(browseButton_))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(savingDirTextField_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(savingNameLabel_)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(savingNameTextField_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cancelButton_)
                     .addComponent(startExploreButton_))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(19, Short.MAX_VALUE))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-   private void addTextFieldListeners() {
-      savingDirTextField_.getDocument().addDocumentListener(new DocumentListener() {
-
-         @Override
-         public void insertUpdate(DocumentEvent e) {
-            prefs_.put(Navigator.PREF_SAVING_DIR, savingDirTextField_.getText());
-         }
-
-         @Override
-         public void removeUpdate(DocumentEvent e) {
-            prefs_.put(Navigator.PREF_SAVING_DIR, savingDirTextField_.getText());
-         }
-
-         @Override
-         public void changedUpdate(DocumentEvent e) {       
-            prefs_.put(Navigator.PREF_SAVING_DIR, savingDirTextField_.getText());
-         }
-      });
-      savingNameTextField_.getDocument().addDocumentListener(new DocumentListener() {
-         @Override
-         public void insertUpdate(DocumentEvent e) {
-            prefs_.put(Navigator.PREF_SAVING_NAME, savingNameTextField_.getText());
-         }
-
-         @Override
-         public void removeUpdate(DocumentEvent e) {
-            prefs_.put(Navigator.PREF_SAVING_NAME, savingNameTextField_.getText());
-         }
-
-         @Override
-         public void changedUpdate(DocumentEvent e) {
-            prefs_.put(Navigator.PREF_SAVING_NAME, savingNameTextField_.getText());
-         }
-      });
-   }
    
    private void initializeValues() {
       CMMCore core = MMStudio.getInstance().getCore();
@@ -261,61 +147,26 @@ public class ExploreInitDialog extends javax.swing.JFrame {
       zStepSpinner_.setValue(1);
       zBottomSpinner_.setValue(zPos);
       zTopSpinner_.setValue(zPos);
-      savingDirTextField_.setText(prefs_.get(Navigator.PREF_SAVING_DIR, ""));
-      savingNameTextField_.setText(prefs_.get(Navigator.PREF_SAVING_NAME, ""));
    }
    
-   private void browseButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseButton_ActionPerformed
-     String root = "";
-      if (savingDirTextField_.getText() != null && !savingDirTextField_.getText().equals("")) {
-         root = savingDirTextField_.getText();
-      }
-      JFileChooser chooser = new JFileChooser(root);
-      chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-      int option = chooser.showSaveDialog(this);
-      if (option != JFileChooser.APPROVE_OPTION) {
-         return;
-      }
-      File f = chooser.getSelectedFile();
-      if (!f.isDirectory()) {
-         f = f.getParentFile();
-      }
-      savingDirTextField_.setText(f.getAbsolutePath());
-   }//GEN-LAST:event_browseButton_ActionPerformed
-
    private void startExploreButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_startExploreButton_ActionPerformed
-      eng_.newExploreAcquisition(((Number)zTopSpinner_.getValue()).doubleValue(), ((Number)zBottomSpinner_.getValue()).doubleValue(), ((Number) zStepSpinner_.getValue()).doubleValue(), 
-              (Integer) xOverlap_.getValue(), (Integer) yOverlap_.getValue(), savingDirTextField_.getText(), savingNameTextField_.getText());
+      ExploreAcqSettings settings = new ExploreAcqSettings(((Number)zTopSpinner_.getValue()).doubleValue(), ((Number)zBottomSpinner_.getValue()).doubleValue(), 
+              ((Number) zStepSpinner_.getValue()).doubleValue(), dir_, name_);
+      eng_.newExploreAcquisition(settings);
       this.setVisible(false);
       this.dispose();
    }//GEN-LAST:event_startExploreButton_ActionPerformed
-
-   private void savingDirTextField_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_savingDirTextField_ActionPerformed
-   }//GEN-LAST:event_savingDirTextField_ActionPerformed
 
    private void cancelButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButton_ActionPerformed
       this.setVisible(false);
       this.dispose();
    }//GEN-LAST:event_cancelButton_ActionPerformed
 
-   private void savingNameTextField_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_savingNameTextField_ActionPerformed
-      prefs_.put(Navigator.PREF_SAVING_NAME, savingNameTextField_.getText());
-   }//GEN-LAST:event_savingNameTextField_ActionPerformed
-
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton browseButton_;
     private javax.swing.JButton cancelButton_;
     private javax.swing.JSpinner jSpinner1;
-    private javax.swing.JLabel savingDirLabel_;
-    private javax.swing.JTextField savingDirTextField_;
-    private javax.swing.JLabel savingNameLabel_;
-    private javax.swing.JTextField savingNameTextField_;
     private javax.swing.JButton startExploreButton_;
-    private javax.swing.JLabel xOverlapLabel_;
-    private javax.swing.JSpinner xOverlap_;
-    private javax.swing.JLabel yOverlapLabel_;
-    private javax.swing.JSpinner yOverlap_;
     private javax.swing.JLabel zBottomLabel_;
     private javax.swing.JSpinner zBottomSpinner_;
     private javax.swing.JLabel zStepLabel_;

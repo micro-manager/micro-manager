@@ -16,14 +16,27 @@ public class MultiPosRegion {
    
      private int centerX_, centerY_; //stored in pixel space
      private int overlapX_, overlapY_, rows_, cols_;
+     private RegionManager manager_;
+     private String name_;
 
-      public MultiPosRegion(int r, int c, int cx, int cy) {
+      public MultiPosRegion(RegionManager manager, int r, int c, int cx, int cy) {
+         manager_ = manager;
+         name_ = manager.getNewName();
          centerX_ = cx;
          centerY_ = cy;
          rows_ = r;
          cols_ = c;
          overlapX_ = SettingsDialog.getOverlapX();
          overlapY_ = SettingsDialog.getOverlapY();
+      }
+      
+      public String getName() {
+         return name_;
+      }
+      
+      public void rename(String newName) {
+         name_ = newName;
+         manager_.updateRegionTableAndCombos();
       }
       
       public double getWidth_um() {
@@ -45,6 +58,8 @@ public class MultiPosRegion {
          overlapY_ = SettingsDialog.getOverlapY();
          rows_ = rows;
          cols_ = cols;
+         manager_.updateRegionTableAndCombos();
+         manager_.drawRegionOverlay(this);
       }
       
       public int numCols() {
@@ -70,6 +85,7 @@ public class MultiPosRegion {
       public void translate(int dx, int dy) {
          centerX_ += dx;
          centerY_ += dy;
+         manager_.drawRegionOverlay(this);
       }
       
    

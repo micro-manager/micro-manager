@@ -13,14 +13,14 @@ import org.micromanager.utils.ReportingUtils;
  *
  * @author Henry
  */
-public class Interpolation {
+public class SingleResolutionInterpolation {
    
    private final int pixPerInterpPoint_;
    private final float[][] interpolation_;
    private final double boundXMin_, boundXMax_, boundYMin_, boundYMax_;
    private Region<Euclidean2D> convexHullRegion_;
    
-   public Interpolation(int pixPerPoint, float[][] interp, double boundXMin, double boundXMax, double boundYMin, double boundYMax, Region<Euclidean2D> ch) {
+   public SingleResolutionInterpolation(int pixPerPoint, float[][] interp, double boundXMin, double boundXMax, double boundYMin, double boundYMax, Region<Euclidean2D> ch) {
       pixPerInterpPoint_ = pixPerPoint;
       interpolation_ = interp;      
       boundXMax_ = boundXMax;

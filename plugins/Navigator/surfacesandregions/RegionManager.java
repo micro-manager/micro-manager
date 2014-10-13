@@ -1,40 +1,104 @@
 package surfacesandregions;
 
+import imagedisplay.DisplayPlus;
+import java.util.ArrayList;
+
 /**
  *
  * class to keep track of the surfaces/regions
  */
-public class RegionManager extends SurfaceOrRegionManager {
+public class RegionManager {
 
-   public MultiPosRegion getCurrentRegion() {
-      if (selectedIndex_ == -1) {
-         return null;
-      }
-      return (MultiPosRegion) suregions_.get(suregionNames_.get(selectedIndex_));
+   private ArrayList<MultiPosRegion> regions_ = new ArrayList<MultiPosRegion>();
+   private ArrayList<RegionComboBoxModel> comboBoxModels_ = new ArrayList<RegionComboBoxModel>();
+   private RegionTableModel tableModel_;
+   private static RegionManager singletonInstance_;
+   
+   public RegionManager() {
+      singletonInstance_ = this;
+   }
+   
+   public static RegionManager getInstance() {
+      return singletonInstance_;
    }
    
    public MultiPosRegion getRegion(int index) {
-      return (MultiPosRegion) suregions_.get(super.getElementAt(index));
-   }
-   
-   public void addNewRegion(String name, MultiPosRegion region) {
-      suregions_.put(name,region);
-      suregionNames_.add(name);
-      selectedIndex_ = suregionNames_.size() - 1;
-      super.updateListeners();
-   }
-   
-   @Override
-   public String getNewName() {
-      String base = "New Grid";
-      int index = 1;
-      while (true) {
-         String potentialName = base + " " + index;
-         if (!suregions_.keySet().contains(potentialName)) {
-            return potentialName;
-         }
-         index++;
+      if (index < 0 || index >= regions_.size()) {
+         return null;
       }
+      return regions_.get(index);
    }
 
+   public RegionTableModel createGridTableModel() {
+      tableModel_ = new RegionTableModel(this);
+      return tableModel_;
+   }
+
+   public RegionComboBoxModel createGridComboBoxModel() {
+      RegionComboBoxModel model = new RegionComboBoxModel(this);
+      comboBoxModels_.add(model);
+      return model;
+   }
+
+   public void deleteAll() {
+      regions_.clear();
+      for (RegionComboBoxModel combo : comboBoxModels_) {
+         combo.setSelectedIndex(-1);
+      }
+      updateRegionTableAndCombos();
+   }
+   
+   public void delete(int index) {
+      regions_.remove(index);
+      for (RegionComboBoxModel combo : comboBoxModels_) {
+         if (index == 0 && regions_.isEmpty()) {
+            combo.setSelectedIndex(-1); //set selectionto null cause no surfaces left
+         } else if (combo.getSelectedIndex() == 0) {
+            //do noting, so selection stays at top of list
+         } else if (index <= combo.getSelectedIndex()) {
+            combo.setSelectedIndex(combo.getSelectedIndex() - 1); //decrment selection so combo stays on same object
+         }
+      }
+      updateRegionTableAndCombos();
+   }
+   
+   public void addNewRegion(MultiPosRegion region) {
+      regions_.add(region);
+      updateRegionTableAndCombos();
+   }
+   
+   public int getNumberOfRegions() {
+      return regions_.size();
+   }
+  
+   public String getNewName() {
+      String base = "New Region";
+      int index = 1;
+      String potentialName = base + " " + index;
+      while (true) {
+         boolean uniqueName = true;
+         for (MultiPosRegion region : regions_) {
+            if (region.getName().equals(potentialName)) {
+               index++;
+               potentialName = base + " " + index;
+               uniqueName = false;
+            }
+         }
+         if (uniqueName) {
+            break;
+         }
+      }
+      return potentialName;
+   }
+
+   public void drawRegionOverlay(MultiPosRegion region) {
+      DisplayPlus.redrawRegionOverlay(region); //redraw overlay for all displays showing this surface
+   }
+   
+   public void updateRegionTableAndCombos() {
+      for (RegionComboBoxModel m : comboBoxModels_) {
+         m.update();
+      }
+      tableModel_.fireTableDataChanged();
+   }
 }

@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package tables;
+package surfacesandregions;
 
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
@@ -16,19 +16,18 @@ import surfacesandregions.SurfaceManager;
  *
  * @author Henry
  */
-public class SurfaceTableModel extends AbstractTableModel implements ListDataListener {
+class SurfaceTableModel extends AbstractTableModel  {
 
    private final String[] COLUMNS = {"Name", "XY padding (µm)", "Z padding (µm)", "# Positions", "Width (µm)", "Height (µm)"};
    private SurfaceManager manager_;
    
    public SurfaceTableModel(SurfaceManager manager) {
       manager_ = manager;
-      manager.addListDataListener(this);
    }
    
    @Override
    public int getRowCount() {
-      return manager_.getSize();
+      return manager_.getNumberOfSurfaces();
    }
    
    @Override
@@ -52,13 +51,11 @@ public class SurfaceTableModel extends AbstractTableModel implements ListDataLis
    @Override   
    public void setValueAt(Object value, int row, int col) {
       if (col == 0) {
-         manager_.renameSuregion(row, (String) value);
+         manager_.getSurface(row).rename((String) value);
       } else if (col == 1) {
          manager_.getSurface(row).setXYPadding(Double.parseDouble((String) value));
-         manager_.updateListeners();
       } else if (col == 2) {
-         manager_.getSurface(row).setZPadding(Double.parseDouble((String) value));
-         manager_.updateListeners();
+         manager_.getSurface(row).setZPadding(Double.parseDouble((String) value));         
       }
    }
    
@@ -66,33 +63,21 @@ public class SurfaceTableModel extends AbstractTableModel implements ListDataLis
    public Object getValueAt(int rowIndex, int columnIndex) {
       SurfaceInterpolator surface = manager_.getSurface(rowIndex);
       if (columnIndex == 0) {
-         return manager_.getElementAt(rowIndex);
+         return manager_.getSurface(rowIndex).getName();
       } else if (columnIndex == 1) {
          return surface.getXYPadding();
       } else if (columnIndex == 2) {
          return surface.getZPadding();
       } else if (columnIndex == 3) {
-         return surface.getNumPositions();
+         int numPositions = surface.getNumPositions();
+         return numPositions == -1 ? "" : numPositions;
       } else if (columnIndex == 4) {
-         return surface.getWidth_um();
+         double width = surface.getWidth_um();         
+         return width == 0 ? "" : width;
       } else {
-         return surface.getHeight_um();
+         double height =  surface.getHeight_um();
+         return height == 0 ? "" : height;
       }
-   }
-
-   @Override
-   public void intervalAdded(ListDataEvent e) {
-      this.fireTableDataChanged();
-   }
-
-   @Override
-   public void intervalRemoved(ListDataEvent e) {
-      this.fireTableDataChanged();
-   }
-
-   @Override
-   public void contentsChanged(ListDataEvent e) {
-      this.fireTableDataChanged();
    }
    
 }

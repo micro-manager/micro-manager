@@ -8,6 +8,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.TreeMap;
 import java.util.prefs.Preferences;
 import org.micromanager.MMStudio;
@@ -28,13 +29,15 @@ public class AffineUtils {
    private static TreeMap<String, AffineTransform> affineTransforms_ = new TreeMap<String,AffineTransform>();
    
    //Only read from preferences one time, so that an inordinate amount of time isn't spent in native system calls
-   public static AffineTransform getAffineTransform(double xCenter, double yCenter) {
+   public static AffineTransform getAffineTransform(String pixelSizeConfig, double xCenter, double yCenter) {
       try {
-
-         String pixelSizeConfig = MMStudio.getInstance().getMMCore().getCurrentPixelSizeConfig();
          AffineTransform transform = null;
          if (affineTransforms_.containsKey(pixelSizeConfig)) {
             transform = affineTransforms_.get(pixelSizeConfig);
+            //copy transform so multiple referneces with different translations cause problems
+            double[] newMat = new double[6];
+            transform.getMatrix(newMat);
+            transform = new AffineTransform(newMat);
          } else {
             //Get affine transform from prefs
             Preferences prefs = Preferences.userNodeForPackage(MMStudio.class);
@@ -63,52 +66,52 @@ public class AffineUtils {
     * @param pixelOverlapX
     * @param pixelOverlapY
     */
-   public static void createGrid(double xCenter, double yCenter, int numCols, int numRows, int pixelOverlapX, int pixelOverlapY) {
-      ScriptInterface app = MMStudio.getInstance();
-      AffineTransform transform = getAffineTransform(xCenter, yCenter);
-
-      long height = app.getMMCore().getImageHeight();
-      long width = app.getMMCore().getImageWidth();
-      ArrayList<MultiStagePosition> positions = new ArrayList<MultiStagePosition>();
-      //due to affine transform, xindex and yindex correspond to image space
-      for (int col = 0; col < numCols; col++) {
-         double xPixelOffset = (col - (numCols - 1) / 2.0) * (width - pixelOverlapX);
-         for (int row = 0; row < numRows; row++) {
-            double yPixelOffset = (row - (numRows - 1) / 2.0) * (height - pixelOverlapY);
-
-            Point2D.Double pixelPos = new Point2D.Double(xPixelOffset, yPixelOffset);
-            Point2D.Double stagePos = new Point2D.Double();
-            transform.transform(pixelPos, stagePos);
-
-            MultiStagePosition mpl = new MultiStagePosition();
-            StagePosition sp = new StagePosition();
-            sp.numAxes = 2;
-            sp.stageName = app.getMMCore().getXYStageDevice();
-            sp.x = stagePos.x;
-            sp.y = stagePos.y;
-            mpl.add(sp);
-
-            //label should be Grid_(x index of tile)_(y index of tile) (in image space)
-            String lab = new String("Grid_" + col + "_" + row);
-
-            mpl.setLabel(lab);
-            //row, column (in image space)
-            mpl.setGridCoordinates(row, col);
-            positions.add(mpl);            
-         }
-      }
-   
-      try {
-         PositionList list = app.getPositionList();
-         list.clearAllPositions();
-         for (MultiStagePosition p : positions ) {
-            list.addPosition(p);
-         }
-
-         list.notifyChangeListeners();
-      } catch (MMScriptException e) {
-         ReportingUtils.showError(e.getMessage());
-      }
-   }
+//   public static void createGrid(double xCenter, double yCenter, int numCols, int numRows, int pixelOverlapX, int pixelOverlapY) {
+//      ScriptInterface app = MMStudio.getInstance();
+//      AffineTransform transform = getAffineTransform(xCenter, yCenter);
+//
+//      long height = app.getMMCore().getImageHeight();
+//      long width = app.getMMCore().getImageWidth();
+//      ArrayList<MultiStagePosition> positions = new ArrayList<MultiStagePosition>();
+//      //due to affine transform, xindex and yindex correspond to image space
+//      for (int col = 0; col < numCols; col++) {
+//         double xPixelOffset = (col - (numCols - 1) / 2.0) * (width - pixelOverlapX);
+//         for (int row = 0; row < numRows; row++) {
+//            double yPixelOffset = (row - (numRows - 1) / 2.0) * (height - pixelOverlapY);
+//
+//            Point2D.Double pixelPos = new Point2D.Double(xPixelOffset, yPixelOffset);
+//            Point2D.Double stagePos = new Point2D.Double();
+//            transform.transform(pixelPos, stagePos);
+//
+//            MultiStagePosition mpl = new MultiStagePosition();
+//            StagePosition sp = new StagePosition();
+//            sp.numAxes = 2;
+//            sp.stageName = app.getMMCore().getXYStageDevice();
+//            sp.x = stagePos.x;
+//            sp.y = stagePos.y;
+//            mpl.add(sp);
+//
+//            //label should be Grid_(x index of tile)_(y index of tile) (in image space)
+//            String lab = new String("Grid_" + col + "_" + row);
+//
+//            mpl.setLabel(lab);
+//            //row, column (in image space)
+//            mpl.setGridCoordinates(row, col);
+//            positions.add(mpl);            
+//         }
+//      }
+//   
+//      try {
+//         PositionList list = app.getPositionList();
+//         list.clearAllPositions();
+//         for (MultiStagePosition p : positions ) {
+//            list.addPosition(p);
+//         }
+//
+//         list.notifyChangeListeners();
+//      } catch (MMScriptException e) {
+//         ReportingUtils.showError(e.getMessage());
+//      }
+//   }
  
 }

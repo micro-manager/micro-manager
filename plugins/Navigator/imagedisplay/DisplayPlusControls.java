@@ -9,7 +9,8 @@ import acq.Acquisition;
 import acq.ExploreAcquisition;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
-import gui.RenameDialog;
+import gui.SettingsDialog;
+import ij.gui.StackWindow;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
@@ -19,6 +20,8 @@ import java.awt.Point;
 import java.awt.event.*;
 import java.text.DecimalFormat;
 import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -40,9 +43,11 @@ import org.micromanager.MMStudio;
 import org.micromanager.imagedisplay.AxisScroller;
 import org.micromanager.imagedisplay.DisplayWindow;
 import org.micromanager.imagedisplay.IMMImagePlus;
+import org.micromanager.imagedisplay.MMCompositeImage;
 import org.micromanager.imagedisplay.NewImageEvent;
 import org.micromanager.imagedisplay.ScrollerPanel;
 import org.micromanager.internalinterfaces.DisplayControls;
+import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
@@ -70,8 +75,8 @@ public class DisplayPlusControls extends DisplayControls {
    private Timer nextFrameTimer_;
    private JButton pauseButton_, abortButton_, showFolderButton_;
    private JTextField fpsField_;
-   private JLabel statusLine_;
-   private JToggleButton newGridButton_, createSurfaceButton_;
+   private JLabel helpLabel_, nextFrameLabel_, zPosLabel_, timeStampLabel_;
+   private JToggleButton gridButton_, surfaceButton_;
    private JButton zoomInButton_, zoomOutButton_;
    private JToggleButton exploreButton_, gotoButton_;
    private JScrollBar zTopSlider_, zBottomSlider_;
@@ -84,15 +89,17 @@ public class DisplayPlusControls extends DisplayControls {
    private RegionManager regionManager_;
    private SurfaceManager surfaceManager_;
    private JLabel pixelInfoLabel_, countdownLabel_, imageInfoLabel_;
+   private JComboBox surfacesCombo_, regionsCombo_;
+   
 
-   public DisplayPlusControls(DisplayPlus disp, EventBus bus, Acquisition acq, RegionManager rManager, SurfaceManager sManager) {
+   public DisplayPlusControls(DisplayPlus disp, EventBus bus, Acquisition acq) {
       super(new FlowLayout(FlowLayout.LEADING));
       bus_ = bus;
       display_ = disp;
       bus_.register(this);
       acq_ = acq;
-      surfaceManager_ = sManager;
-      regionManager_ = rManager;
+      surfaceManager_ = SurfaceManager.getInstance();
+      regionManager_ = RegionManager.getInstance();
       initComponents();
    }
 
@@ -111,10 +118,11 @@ public class DisplayPlusControls extends DisplayControls {
             String z = core.getFocusDevice();
             double zPos = core.getPosition(z);
             zMin_ = (int) core.getPropertyLowerLimit(z, "Position");
-//          zMax_ = (int) core.getPropertyUpperLimit(z, "Position");
-            //TODO: remove this, which is only for testing
-            zMax_ = 50;
-            /////////
+            zMax_ = (int) core.getPropertyUpperLimit(z, "Position");
+            if (SettingsDialog.getDemoMode()) {
+               zMin_ = 0;
+               zMax_ = 399;
+            }    
             int sliderPos = (int) (zPos / ((double) Math.abs(zMax_ - zMin_)) * SCROLLBAR_INCREMENTS);
             zTopSlider_ = new JScrollBar(JScrollBar.HORIZONTAL,sliderPos,10,0,SCROLLBAR_INCREMENTS);
             zBottomSlider_ = new JScrollBar(JScrollBar.HORIZONTAL,sliderPos,10,0,SCROLLBAR_INCREMENTS);
@@ -158,6 +166,13 @@ public class DisplayPlusControls extends DisplayControls {
                   updateZTopAndBottom();                  
                }
             });
+            //initialize properly
+            zTopTextField_.setText(((ExploreAcquisition) acq_).getZTop() + "");
+            zBottomTextField_.setText(((ExploreAcquisition) acq_).getZBottom() + "");
+            zTopTextField_.getActionListeners()[0].actionPerformed(null);
+            zBottomTextField_.getActionListeners()[0].actionPerformed(null);
+
+
             sliderPanel.add(new JLabel("Z limits"), "span 1 2");
             sliderPanel.add(zTopTextField_, "w 50!");
             sliderPanel.add(zTopSlider_, "growx, wrap");
@@ -171,35 +186,42 @@ public class DisplayPlusControls extends DisplayControls {
 
 
       JPanel labelsPanel = new JPanel(new MigLayout(""));
-      statusLine_ = new JLabel("Right click and drag to pan, use + and - keys to zoom");
-      labelsPanel.add(statusLine_);
+      makeStatusLabels();
+      labelsPanel.add(zPosLabel_);
+      if (!(acq_ instanceof ExploreAcquisition))  {
+         labelsPanel.add(timeStampLabel_);
+         labelsPanel.add(zPosLabel_);
+      }
 
       controlsPanel.add(labelsPanel, "span, growx, align center, wrap");
-      //      nextFrameTimer_ = new Timer(1000, new ActionListener() {
-//
-//         @Override
-//         public void actionPerformed(ActionEvent e) {
-//            long nextImageTime = 0;
-//            try {
-//               nextImageTime = display_.getNextWakeTime();
-//            } catch (NullPointerException ex) {
-//               nextFrameTimer_.stop();
-//            }
-//            if (!display_.acquisitionIsRunning()) {
-//               nextFrameTimer_.stop();
-//            }
-//            double timeRemainingS = (nextImageTime - System.nanoTime() / 1000000) / 1000;
-//            if (timeRemainingS > 0 && display_.acquisitionIsRunning()) {
-//               nextFrameLabel_.setText("Next frame: " + NumberUtils.doubleToDisplayString(1 + timeRemainingS) + " s");
-//               nextFrameTimer_.setDelay(100);
-//            } else {
-//               nextFrameTimer_.setDelay(1000);
-//               nextFrameLabel_.setText("");
-//            }
-//
-//         }
-//      });
-//      nextFrameTimer_.start();
+      if (!(acq_ instanceof ExploreAcquisition))  {
+         labelsPanel.add(nextFrameLabel_);
+         nextFrameTimer_ = new Timer(1000, new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+               long nextImageTime = 0;
+               try {
+                  nextImageTime = display_.getNextWakeTime();
+               } catch (NullPointerException ex) {
+                  nextFrameTimer_.stop();
+               }
+               if (display_.acquisitionFinished()) {
+                  nextFrameTimer_.stop();
+               }
+               double timeRemainingS = (nextImageTime - System.currentTimeMillis()) / 1000;
+               if (timeRemainingS > 0 && !display_.acquisitionFinished()) {
+                  nextFrameLabel_.setText("Next frame: " + NumberUtils.doubleToDisplayString(1 + timeRemainingS) + " s");
+                  nextFrameTimer_.setDelay(100);
+               } else {
+                  nextFrameTimer_.setDelay(1000);
+                  nextFrameLabel_.setText("");
+               }
+
+            }
+         });
+         nextFrameTimer_.start();
+      }
 
 
 
@@ -264,27 +286,28 @@ public class DisplayPlusControls extends DisplayControls {
          }
       });
       
-      newGridButton_ = new JToggleButton("Create/edit grid");
-      newGridButton_.addActionListener(new ActionListener() {
+      gridButton_ = new JToggleButton("Grid");
+      gridButton_.setToolTipText("Create, view, and edit rectangular grids of XY stage positions");
+      gridButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            if (!newGridButton_.isSelected()) { //keep button selected unless another one is pressed
-               newGridButton_.setSelected(true);
+            if (!gridButton_.isSelected()) { //keep button selected unless another one is pressed
+               gridButton_.setSelected(true);
                return;
             }
 
-            //make a grid if none exists
-            if (regionManager_.getSize() == 0) {
-               regionManager_.addNewRegion("New Grid 1", createNewGrid());
+            //make a grid if none exists"
+            if (regionManager_.getNumberOfRegions() == 0) {
+               regionManager_.addNewRegion(createNewGrid());
+               regionsCombo_.setSelectedIndex(0);
             }            
             
             //show grid making controls           
             changingPanelLayout_.show(changingPanel_, GRID_PANEL);
-            statusLine_.setText("Left click and drag to move grid, right click and drag to pan");
-            display_.activateNewGridMode(true);
-            gridSizeChanged();
+            helpLabel_.setText("Left click and drag to move grid, right click and drag to pan");
+            display_.setMode(DisplayPlus.NEWGRID);
             exploreButton_.setSelected(false);
-            createSurfaceButton_.setSelected(false);
+            surfaceButton_.setSelected(false);
          }
       });
 
@@ -300,66 +323,76 @@ public class DisplayPlusControls extends DisplayControls {
                   return;
                }
                changingPanelLayout_.show(changingPanel_, EXPLORE_PANEL);
-               statusLine_.setText("Left click or click and drag to acquire tiles, right click to pan, +/- keys to zoom");
-               display_.activateExploreMode(exploreButton_.isSelected());
-               display_.drawOverlay();
-               createSurfaceButton_.setSelected(false);
-               newGridButton_.setSelected(false);
+               helpLabel_.setText("Left click or click and drag to acquire tiles, right click to pan, +/- keys to zoom");
+               display_.setMode(exploreButton_.isSelected() ? DisplayPlus.EXPLORE : DisplayPlus.NONE );
+               surfaceButton_.setSelected(false);
+               gridButton_.setSelected(false);
             }
          });
       }
       
-      zoomInButton_ = new JButton("Zoom in");
-      zoomInButton_.setToolTipText("Keyboard shortcut: \"+\" key");
-      zoomInButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            display_.zoom(true);
-         }
-      });
-      
-      zoomOutButton_ = new JButton("Zoom out");
-      zoomOutButton_.setToolTipText("Keyboard shortcut: \"-\" key");
-      zoomOutButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            display_.zoom(false);
-         }
-      });
+//      zoomInButton_ = new JButton("Zoom in");
+//      zoomInButton_.setToolTipText("Keyboard shortcut: \"+\" key");
+//      zoomInButton_.addActionListener(new ActionListener() {
+//         @Override
+//         public void actionPerformed(ActionEvent e) {
+//            display_.zoom(true);
+//         }
+//      });
+//      
+//      zoomOutButton_ = new JButton("Zoom out");
+//      zoomOutButton_.setToolTipText("Keyboard shortcut: \"-\" key");
+//      zoomOutButton_.addActionListener(new ActionListener() {
+//         @Override
+//         public void actionPerformed(ActionEvent e) {
+//            display_.zoom(false);
+//         }
+//      });
       
 //      gotoButton_ = new JToggleButton("Goto");
 //      gotoButton_.addActionListener(null);
       
       
-      createSurfaceButton_ = new JToggleButton("Create/edit surface");
-      createSurfaceButton_.addActionListener(new ActionListener() {
+      surfaceButton_ = new JToggleButton("Surface");
+      surfaceButton_.setToolTipText("Create, view, and edit 3D interpolated surfaces"); 
+      surfaceButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            if (!createSurfaceButton_.isSelected() ) { //keep button selected unless another one is pressed
-               createSurfaceButton_.setSelected(true);
+            if (!surfaceButton_.isSelected() ) { //keep button selected unless another one is pressed
+               surfaceButton_.setSelected(true);
                return;
             }
             //make a surface if none exists
-            if (surfaceManager_.getSize() == 0) {
-               surfaceManager_.addNewSurface("New Surface 1");              
+            if (surfaceManager_.getNumberOfSurfaces() == 0) {
+               surfaceManager_.addNewSurface();    
+               surfacesCombo_.setSelectedIndex(0);
             }
             //show surface creation controls           
             changingPanelLayout_.show(changingPanel_, SURFACE_PANEL);
-            statusLine_.setText("Left click to add points, right click to remove points, right click and drag to pan");
-            display_.activateNewSurfaceMode(true);
-            exploreButton_.setSelected(false);
-            newGridButton_.setSelected(false);
+            helpLabel_.setText("Left click to add points, right click to remove points, right click and drag to pan");
+            display_.setMode(DisplayPlus.NEWSURFACE);
+            if (acq_ instanceof ExploreAcquisition) {
+               exploreButton_.setSelected(false);
+            }
+            gridButton_.setSelected(false);
          }
       });
+      
+      helpLabel_ = new JLabel("Right click and drag to pan, use + and - keys to zoom");
 
+      
       buttonPanel.add(showFolderButton_);
       buttonPanel.add(abortButton_);
       buttonPanel.add(pauseButton_);
-      buttonPanel.add(zoomInButton_);
-      buttonPanel.add(zoomOutButton_);
-      buttonPanel.add(exploreButton_);
-      buttonPanel.add(newGridButton_);
-      buttonPanel.add(createSurfaceButton_);
+//      buttonPanel.add(zoomInButton_);
+//      buttonPanel.add(zoomOutButton_);
+      if (acq_ instanceof ExploreAcquisition) {
+         buttonPanel.add(exploreButton_);
+      }
+      buttonPanel.add(gridButton_);
+      buttonPanel.add(surfaceButton_);
+      buttonPanel.add(helpLabel_);
+
       
       JPanel newGridControlPanel = makeNewGridControlPanel();
       JPanel newSurfaceControlPanel = makeSurfaceControlPanel();
@@ -402,33 +435,26 @@ public class DisplayPlusControls extends DisplayControls {
       JPanel newSurfaceControlPanel = new JPanel(new MigLayout());
       
       JLabel currentSurfLabel = new JLabel("Surface: ");
-      final JComboBox surfacesCombo = new JComboBox(surfaceManager_);
-      surfacesCombo.addActionListener(new ActionListener() {
+      surfacesCombo_ = new JComboBox(surfaceManager_.createSurfaceComboBoxModel());
+      surfacesCombo_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            display_.drawOverlay();
-         }  
+            display_.setCurrentSurface(surfaceManager_.getSurface(surfacesCombo_.getSelectedIndex()));
+         }
       });
-      surfaceManager_.addListDataListener(surfacesCombo);      
+//      surfaceManager_.addListDataListener(surfacesCombo);      
       JToggleButton newSurfaceButton = new JToggleButton("New");
       newSurfaceButton.addActionListener(new ActionListener() {
          
          @Override
          public void actionPerformed(ActionEvent e) {            
-            surfaceManager_.addNewSurface(surfaceManager_.getNewName());
-            surfacesCombo.repaint();          
-            display_.drawOverlay(); //update the shown surface
+            surfaceManager_.addNewSurface();
+            surfacesCombo_.setSelectedIndex(surfacesCombo_.getItemCount() - 1);
+            display_.setCurrentSurface(surfaceManager_.getSurface(surfacesCombo_.getSelectedIndex()));
+            surfacesCombo_.repaint();          
          }
       });
-      
-      JButton renameButton = new JButton("Rename");
-      renameButton.addActionListener(new ActionListener() {         
          
-         @Override
-         public void actionPerformed(ActionEvent e) {
-         new RenameDialog(display_.getImagePlus().getWindow().getOwner(),surfaceManager_.getSelectedItem(), surfaceManager_);            
-         }
-      });      
       
       JPanel showPanel = new JPanel(new MigLayout());
       showPanel.add(new JLabel("Show: "));
@@ -453,8 +479,7 @@ public class DisplayPlusControls extends DisplayControls {
       
       newSurfaceControlPanel.add(newSurfaceButton);
       newSurfaceControlPanel.add(currentSurfLabel);
-      newSurfaceControlPanel.add(surfacesCombo, "w 100!");
-      newSurfaceControlPanel.add(renameButton);
+      newSurfaceControlPanel.add(surfacesCombo_, "w 100!");
       newSurfaceControlPanel.add(showPanel);
       return newSurfaceControlPanel;
    }
@@ -462,27 +487,20 @@ public class DisplayPlusControls extends DisplayControls {
    private JPanel makeNewGridControlPanel() {
       JPanel newGridControlPanel = new JPanel(new MigLayout());
       
-      final JComboBox gridsCombo = new JComboBox(regionManager_);
-      gridsCombo.addActionListener(new ActionListener() {
+      regionsCombo_ = new JComboBox(regionManager_.createGridComboBoxModel());
+      regionsCombo_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            if (regionManager_.getCurrentRegion() != null) {
-               gridRowSpinner_.setValue(regionManager_.getCurrentRegion().numRows());
-               gridColSpinner_.setValue(regionManager_.getCurrentRegion().numCols());
+            display_.setCurrentRegion(regionManager_.getRegion(regionsCombo_.getSelectedIndex()));
+            
+            if (regionsCombo_.getSelectedItem() != null) {
+               gridRowSpinner_.setValue(regionManager_.getRegion(regionsCombo_.getSelectedIndex()).numRows());
+               gridColSpinner_.setValue(regionManager_.getRegion(regionsCombo_.getSelectedIndex()).numCols());
             }
-            display_.drawOverlay();
          }  
       });
-      regionManager_.addListDataListener(gridsCombo);
+//      regionManager_.addListDataListener(gridsCombo);
 
-      JButton renameButton = new JButton("Rename");
-      renameButton.addActionListener(new ActionListener() {
-
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            new RenameDialog(display_.getImagePlus().getWindow().getOwner(), regionManager_.getSelectedItem(), regionManager_);
-         }
-      });
 
       gridRowSpinner_ = new JSpinner();
       gridRowSpinner_.setModel(new SpinnerNumberModel(1, 1, 1000, 1));
@@ -491,8 +509,9 @@ public class DisplayPlusControls extends DisplayControls {
       ChangeListener gridCL = new ChangeListener() {
 
          @Override
-         public void stateChanged(ChangeEvent e) {
-            gridSizeChanged();
+         public void stateChanged(ChangeEvent e) { 
+            regionManager_.getRegion(regionsCombo_.getSelectedIndex()).updateParams((Integer) gridRowSpinner_.getValue(), 
+                    (Integer) gridColSpinner_.getValue());
          }
       };
       gridRowSpinner_.addChangeListener(gridCL);
@@ -503,16 +522,17 @@ public class DisplayPlusControls extends DisplayControls {
 
          @Override
          public void actionPerformed(ActionEvent e) {
-            regionManager_.addNewRegion(regionManager_.getNewName(), createNewGrid());         
-            display_.drawOverlay(); //update the shown surface
+            regionManager_.addNewRegion(createNewGrid());
+            regionsCombo_.setSelectedIndex(regionsCombo_.getItemCount() - 1);
+            display_.setCurrentRegion(regionManager_.getRegion(regionsCombo_.getSelectedIndex()));
+            regionsCombo_.repaint();
          }
       });
 
    
       newGridControlPanel.add(newGridButton);
       newGridControlPanel.add(new JLabel("Current grid: "));
-      newGridControlPanel.add(gridsCombo, "w 100!");
-      newGridControlPanel.add(renameButton, "w 80!");
+      newGridControlPanel.add(regionsCombo_, "w 100!");
       newGridControlPanel.add(new JLabel("Rows: "));
       newGridControlPanel.add(gridRowSpinner_, "w 40!");
       newGridControlPanel.add(new JLabel("Cols: "));
@@ -550,8 +570,8 @@ public class DisplayPlusControls extends DisplayControls {
                   axisToPosition.put("channel", channel);
                   axisToPosition.put("z", z);
                }
-               super.onNewImageEvent(event);
             }
+            super.onNewImageEvent(event);
          }
       };
    }
@@ -562,7 +582,7 @@ public class DisplayPlusControls extends DisplayControls {
       ZoomableVirtualStack stack = (ZoomableVirtualStack) display_.getImagePlus().getStack();
       Point center = stack.getAbsoluteFullResPixelCoordinate(imageWidth / 2, imageHeight / 2);
       
-      return new MultiPosRegion((Integer) gridRowSpinner_.getValue(), (Integer) gridColSpinner_.getValue(),center.x, center.y);
+      return new MultiPosRegion(regionManager_,(Integer) gridRowSpinner_.getValue(), (Integer) gridColSpinner_.getValue(),center.x, center.y);
    }
    
    private void createGrid() {
@@ -587,61 +607,52 @@ public class DisplayPlusControls extends DisplayControls {
    }
 
    private void makeStatusLabels() {
-       
-
       //text area
-//      zPosLabel_ = new JLabel("Z:") {
-//
-//         @Override
-//         public void setText(String s) {
-//            DisplayPlusControls.this.invalidate();
-//            super.setText(s);
-//            DisplayPlusControls.this.validate();
-//         }
-//      };
-//      timeStampLabel_ = new JLabel("Elapsed time:") {
-//
-//         @Override
-//         public void setText(String s) {
-//            DisplayPlusControls.this.invalidate();
-//            super.setText(s);
-//            DisplayPlusControls.this.validate();
-//         }
-//      };
-//      nextFrameLabel_ = new JLabel("Next frame: ") {
-//
-//         @Override
-//         public void setText(String s) {
-//            DisplayPlusControls.this.invalidate();
-//            super.setText(s);
-//            DisplayPlusControls.this.validate();
-//         }
-//      };
-//      fpsField_ = new JTextField();
-//      fpsField_.setText("7");
-//      fpsField_.setToolTipText("Set the speed at which the acquisition is played back.");
-//      fpsField_.setPreferredSize(new Dimension(25, 18));
-//      fpsField_.addFocusListener(new java.awt.event.FocusAdapter() {
-//
-//         public void focusLost(java.awt.event.FocusEvent evt) {
+      zPosLabel_ = new JLabel("Z:") {
+
+         @Override
+         public void setText(String s) {
+            DisplayPlusControls.this.invalidate();
+            super.setText(s);
+            DisplayPlusControls.this.validate();
+         }
+      };
+      timeStampLabel_ = new JLabel("Elapsed time:") {
+
+         @Override
+         public void setText(String s) {
+            DisplayPlusControls.this.invalidate();
+            super.setText(s);
+            DisplayPlusControls.this.validate();
+         }
+      };
+      nextFrameLabel_ = new JLabel("Next frame: ") {
+
+         @Override
+         public void setText(String s) {
+            DisplayPlusControls.this.invalidate();
+            super.setText(s);
+            DisplayPlusControls.this.validate();
+         }
+      };
+      fpsField_ = new JTextField();
+      fpsField_.setText("7");
+      fpsField_.setToolTipText("Set the speed at which the acquisition is played back.");
+      fpsField_.setPreferredSize(new Dimension(25, 18));
+      fpsField_.addFocusListener(new java.awt.event.FocusAdapter() {
+
+         public void focusLost(java.awt.event.FocusEvent evt) {
 //            updateFPS();
-//         }
-//      });
-//      fpsField_.addKeyListener(new java.awt.event.KeyAdapter() {
-//
-//         public void keyReleased(java.awt.event.KeyEvent evt) {
+//            TODO: this
+         }
+      });
+      fpsField_.addKeyListener(new java.awt.event.KeyAdapter() {
+
+         public void keyReleased(java.awt.event.KeyEvent evt) {
 //            updateFPS();
-//         }
-//      });
-//      JLabel fpsLabel = new JLabel("Animation playback FPS: ");
-   }
-   
-   private void gridSizeChanged() {
-      int numRows = (Integer) gridRowSpinner_.getValue();
-      int numCols = (Integer) gridColSpinner_.getValue();
-      regionManager_.getCurrentRegion().updateParams(numRows, numCols);
-      regionManager_.updateListeners();
-      display_.drawOverlay();
+         }
+      });
+      JLabel fpsLabel = new JLabel("Animation playback FPS: ");
    }
 
    private void updateZTopAndBottom() {
@@ -670,7 +681,7 @@ public class DisplayPlusControls extends DisplayControls {
    @Subscribe
    public void onSetImage(ScrollerPanel.SetImageEvent event) {
       int position = event.getPositionForAxis("position");
-      display_.updatePosition(position);
+      display_.updatePosition(position); //TODO: get rid of this because no positions???
       // Positions for ImageJ are 1-indexed but positions from the event are 
       // 0-indexed.
       int channel = event.getPositionForAxis("channel") + 1;
@@ -688,9 +699,20 @@ public class DisplayPlusControls extends DisplayControls {
       if (immi.getNChannelsUnverified() < channel ) {
          immi.setNChannelsUnverified(channel);
       }
+      //for compisite images, make sure the window knows current number of slices so images display properly
+      if (display_.getHyperImage() instanceof MMCompositeImage) {
+         StackWindow win = (StackWindow) display_.getHyperImage().getWindow();
+         try {
+            JavaUtils.setRestrictedFieldValue(win, StackWindow.class, "nSlices", ((MMCompositeImage) display_.getHyperImage()).getNSlicesUnverified());
+            //also set z position since it doesn't automatically work due to null z scrollbat              
+            JavaUtils.setRestrictedFieldValue(win, StackWindow.class, "z", slice);
+         } catch (NoSuchFieldException ex) {
+           ReportingUtils.showError("Couldn't set number of slices in ImageJ stack window"); 
+         }
+      }
 
       display_.getHyperImage().setPosition(channel, slice, frame);
-      display_.drawOverlay();
+      display_.drawOverlay(true);
    }
 
    @Subscribe

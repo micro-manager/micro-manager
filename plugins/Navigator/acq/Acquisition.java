@@ -1,12 +1,11 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package acq;
 
 import coordinates.PositionManager;
+import gui.SettingsDialog;
 import imagedisplay.DisplayPlus;
+import java.awt.Color;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
@@ -14,7 +13,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.MMStudio;
-import org.micromanager.acquisition.DefaultTaggedImageSink;
 import org.micromanager.acquisition.MMAcquisition;
 import org.micromanager.acquisition.MMImageCache;
 import org.micromanager.api.ImageCache;
@@ -22,33 +20,54 @@ import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
 
 /**
- * Abstract class that manages a generic acquisition. Subclassed into specific types of acquisition
+ * Abstract class that manages a generic acquisition. Subclassed into specific
+ * types of acquisition
  */
 public abstract class Acquisition {
-   
+
    protected volatile double zStep_ = 1;
    protected BlockingQueue<TaggedImage> engineOutputQueue_;
    protected CMMCore core_ = MMStudio.getInstance().getCore();
-   protected CustomAcqEngine eng_;
    protected String xyStage_, zStage_;
    protected PositionManager posManager_;
+   protected BlockingQueue<AcquisitionEvent> events_;
+   protected TaggedImageSink imageSink_;
+   protected String pixelSizeConfig_;
 
 
-   public Acquisition(CustomAcqEngine eng, double zStep) {
-      eng_ = eng;
+   public Acquisition(double zStep) {
       xyStage_ = core_.getXYStageDevice();
       zStage_ = core_.getFocusDevice();
       zStep_ = zStep;
+      events_ = new LinkedBlockingQueue<AcquisitionEvent>();
+      try {
+         pixelSizeConfig_ = MMStudio.getInstance().getCore().getCurrentPixelSizeConfig();
+      } catch (Exception ex) {
+         ReportingUtils.showError("couldnt get pixel size config");
+      }
    }
-   
-   public void initialize(int xOverlap, int yOverlap, String dir, String name) {
+
+   /**
+    * indices are 1 based and positive
+    *
+    * @param sliceIndex -
+    * @param frameIndex -
+    * @return
+    */
+   public abstract double getZCoordinateOfSlice(int displaySliceIndex, int displayFrameIndex);
+
+   public abstract int getDisplaySliceIndexFromZCoordinate(double z, int displayFrameIndex);
+
+   protected void initialize(String dir, String name) {
+      int xOverlap = SettingsDialog.getOverlapX();
+      int yOverlap = SettingsDialog.getOverlapY();
 
       //TODO: add limit to this queue in case saving and display goes much slower than acquisition?
       engineOutputQueue_ = new LinkedBlockingQueue<TaggedImage>();
 
       JSONObject summaryMetadata = makeSummaryMD(1, (int) core_.getNumberOfCameraChannels(), name);
 //         JSONObject summaryMetadata = makeSummaryMD(1,2);
-      MultiResMultipageTiffStorage storage = new MultiResMultipageTiffStorage(dir, true, summaryMetadata, xOverlap, yOverlap);
+      MultiResMultipageTiffStorage storage = new MultiResMultipageTiffStorage(dir, true, summaryMetadata, xOverlap, yOverlap, pixelSizeConfig_);
       ImageCache imageCache = new MMImageCache(storage) {
 
          @Override
@@ -66,37 +85,28 @@ public abstract class Acquisition {
          }
       };
       imageCache.setSummaryMetadata(summaryMetadata);
-
       posManager_ = storage.getPositionManager();
-      new DisplayPlus(imageCache, this, summaryMetadata, storage, eng_.getRegionManager(),eng_.getSurfaceManager());
-
-      DefaultTaggedImageSink sink = new DefaultTaggedImageSink(engineOutputQueue_, imageCache);
-      sink.start();
-
+      new DisplayPlus(imageCache, this, summaryMetadata, storage);
+      imageSink_ = new TaggedImageSink(engineOutputQueue_, imageCache);
+      imageSink_.start();
    }
    
-   /**
-    * indices are 1 based and positive
-    * @param sliceIndex - 
-    * @param frameIndex - 
-    * @return 
-    */
-   public abstract double getZCoordinateOfSlice(int displaySliceIndex, int displayFrameIndex);
-   
-   public abstract int getDisplaySliceIndexFromZCoordinate(double z, int displayFrameIndex);
-   
+   public BlockingQueue<AcquisitionEvent> getEventQueue() {
+      return events_;
+   }
+
    public double getZStep() {
       return zStep_;
    }
-   
+
    public PositionManager getPositionManager() {
       return posManager_;
    }
-   
+
    public void addEvent(AcquisitionEvent e) {
-       eng_.addEvent(e);
+      events_.add(e);
    }
-   
+
    public void addImage(TaggedImage img) {
       engineOutputQueue_.add(img);
    }
@@ -104,16 +114,21 @@ public abstract class Acquisition {
    public void finish() {
       engineOutputQueue_.add(new TaggedImage(null, null));
    }
-   
-      //to be removed once this is factored out of acq engine in micromanager
+
+   protected abstract JSONArray createInitialPositionList();
+
+   //to be removed if this is factored out of acq engine in micromanager
    //TODO: mkae sure Prefix is in new summary MD
-   public static JSONObject makeSummaryMD(int numSlices, int numChannels, String prefix) {
+   private JSONObject makeSummaryMD(int numSlices, int numChannels, String prefix) {
       try {
+         if (SettingsDialog.getDemoMode()) {
+            numChannels = SettingsDialog.getDemoNumChannels();
+         }
+         
          CMMCore core = MMStudio.getInstance().getCore();
          JSONObject summary = new JSONObject();
          summary.put("Slices", numSlices);
          //TODO: set slices to maximum number given the z device so that file size is overestimated
-         summary.put("Positions", 100);
          summary.put("Channels", numChannels);
          summary.put("Frames", 1);
          summary.put("SlicesFirst", true);
@@ -123,35 +138,29 @@ public abstract class Acquisition {
          summary.put("Width", core.getImageWidth());
          summary.put("Height", core.getImageHeight());
          summary.put("Prefix", prefix);
+         JSONArray initialPosList = createInitialPositionList();
+         summary.put("InitialPositionList", initialPosList);
+         summary.put("Positions", initialPosList);
 
-         //make intitial position list, with current position and 0,0 as coordinates
-         JSONArray pList = new JSONArray();
-         //create first position based on current XYStage position
-         JSONObject coordinates = new JSONObject();
-         JSONArray xy = new JSONArray();
-         xy.put(core.getXPosition(core.getXYStageDevice()));
-         xy.put(core.getYPosition(core.getXYStageDevice()));
-         coordinates.put(core.getXYStageDevice(),xy );
-         JSONObject pos = new JSONObject();
-         pos.put("DeviceCoordinatesUm", coordinates);
-         //first position is 1,1
-         pos.put("GridColumnIndex", 0);
-         pos.put("GridRowIndex", 0);   
-         pos.put("Properties",new JSONObject());
-         pList.put(pos);             
-         summary.put("InitialPositionList", pList);
 
-         
-          JSONArray chNames = new JSONArray();
-          JSONArray chColors = new JSONArray();
-          for (int i = 0; i < core.getNumberOfCameraChannels(); i++) {
-              chNames.put(core.getCameraChannelName(i));
-              chColors.put(MMAcquisition.getMultiCamDefaultChannelColor(i, core.getCameraChannelName(i)));
-          }
-          summary.put("ChNames", chNames);
-          summary.put("ChColors", chColors);
-         
-         
+         JSONArray chNames = new JSONArray();
+         JSONArray chColors = new JSONArray();
+         for (int i = 0; i < numChannels; i++) {
+            if (SettingsDialog.getDemoMode()) {
+               String[] names = {"Violet", "Blue", "Green", "Yellow", "Red", "Far red"};
+               int[] colors = {new Color(127,0,255).getRGB(), Color.blue.getRGB(), Color.green.getRGB(), 
+                  Color.yellow.getRGB(), Color.red.getRGB(), Color.pink.getRGB()};
+               chNames.put(names[i]);
+               chColors.put(colors[i]);
+            } else {
+               chNames.put(core.getCameraChannelName(i));
+               chColors.put(MMAcquisition.getMultiCamDefaultChannelColor(i, core.getCameraChannelName(i)));
+            }
+         }
+         summary.put("ChNames", chNames);
+         summary.put("ChColors", chColors);
+
+
          //write pixel overlap into metadata
 //         summary.put("GridPixelOverlapX", SettingsDialog.getXOverlap());
 //         summary.put("GridPixelOverlapY", SettingsDialog.getYOverlap());
@@ -161,7 +170,4 @@ public abstract class Acquisition {
       }
       return null;
    }
-   
-   
 }
-

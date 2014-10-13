@@ -1,7 +1,7 @@
 package imagedisplay;
 
 import acq.Acquisition;
-import coordinates.StageCoordinates;
+import coordinates.XYStagePosition;
 import ij.gui.ImageCanvas;
 import ij.gui.Line;
 import ij.gui.OvalRoi;
@@ -12,26 +12,19 @@ import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
-import javax.vecmath.Point3d;
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
 import org.micromanager.utils.ReportingUtils;
-import surfacesandregions.Interpolation;
+import surfacesandregions.SingleResolutionInterpolation;
 import surfacesandregions.MultiPosRegion;
-import surfacesandregions.RegionManager;
+import surfacesandregions.Point3d;
 import surfacesandregions.SurfaceInterpolator;
-import surfacesandregions.SurfaceManager;
 
 /**
  * Class that encapsulates calculation of overlays for DisplayPlus
@@ -52,8 +45,6 @@ public class DisplayOverlayer   {
    private static final Color TRANSPARENT_MAGENTA = new Color(255, 0, 255, 100);
    
    private DisplayPlus display_;
-   private SurfaceManager surfManager_;
-   private RegionManager regionManager_;
    private Acquisition acq_;
    private boolean showSurface_ = true, showConvexHull_ = true, showStagePositions_ = true;
    private ZoomableVirtualStack zoomableStack_;
@@ -64,13 +55,10 @@ public class DisplayOverlayer   {
    private volatile Thread updatingThread_;
 
    
-   public DisplayOverlayer(DisplayPlus display, SurfaceManager surfManager, RegionManager regionManager, 
-           Acquisition acq, int tileWidth, int tileHeight) {
+   public DisplayOverlayer(DisplayPlus display, Acquisition acq, int tileWidth, int tileHeight) {
       display_ = display;
       tileWidth_ = tileWidth;
       tileHeight_ = tileHeight;
-      surfManager_ = surfManager;
-      regionManager_ = regionManager;
       acq_ = acq;
       canvas_ = display.getImagePlus().getCanvas();
       zoomableStack_ = (ZoomableVirtualStack) display.virtualStack_;
@@ -151,14 +139,17 @@ public class DisplayOverlayer   {
       int mode = display_.getMode();
       if (mode == DisplayPlus.EXPLORE) {
          //highlight tiles as appropriate
-         if (display_.getMouseDragStartPointLeft() != null) {
+         if (display_.getCurrentMouseLocation() == null) {
+            setOverlay(null);
+         } else if (display_.getMouseDragStartPointLeft() != null) {
             //highlight multiple tiles       
-            Point p2Tiles = zoomableStack_.getTileIndicesFromDisplayedPixel(canvas_.getCursorLoc().x, canvas_.getCursorLoc().y),
+            Point p2Tiles = zoomableStack_.getTileIndicesFromDisplayedPixel(display_.getCurrentMouseLocation().x, display_.getCurrentMouseLocation().y),
                     p1Tiles = zoomableStack_.getTileIndicesFromDisplayedPixel(display_.getMouseDragStartPointLeft().x, display_.getMouseDragStartPointLeft().y);
+            
             setOverlay(highlightTileOverlay(Math.min(p1Tiles.y, p2Tiles.y), Math.max(p1Tiles.y, p2Tiles.y),
                     Math.min(p1Tiles.x, p2Tiles.x), Math.max(p1Tiles.x, p2Tiles.x), TRANSPARENT_GREEN));
          } else if (display_.cursorOverImage()) {
-            Point coords = zoomableStack_.getTileIndicesFromDisplayedPixel(canvas_.getCursorLoc().x, canvas_.getCursorLoc().y);
+            Point coords = zoomableStack_.getTileIndicesFromDisplayedPixel(display_.getCurrentMouseLocation().x, display_.getCurrentMouseLocation().y);
             setOverlay(highlightTileOverlay(coords.y, coords.y, coords.x, coords.x, TRANSPARENT_GREEN)); //highligh single tile
          } else {
             setOverlay(null);
@@ -201,10 +192,10 @@ public class DisplayOverlayer   {
    private void drawConvexHull(Overlay overlay) throws InterruptedException {
       if (showConvexHull_) {
          //draw convex hull
-         Vector2D[] hullPoints = surfManager_.getCurrentSurface().getConvexHullPoints();
+         Vector2D[] hullPoints = display_.getCurrentSurface().getConvexHullPoints();
          while (hullPoints == null) {
             Thread.sleep(5);
-            hullPoints = surfManager_.getCurrentSurface().getConvexHullPoints();
+            hullPoints = display_.getCurrentSurface().getConvexHullPoints();
          }
          Point lastPoint = null, firstPoint = null;
          for (Vector2D v : hullPoints) {
@@ -228,10 +219,10 @@ public class DisplayOverlayer   {
 
    private Overlay createPointsConvexHullOverlay() throws InterruptedException {
       Overlay overlay = new Overlay();
-      SurfaceInterpolator newSurface = surfManager_.getCurrentSurface();
+      SurfaceInterpolator newSurface = display_.getCurrentSurface();
       if (newSurface != null) {
          drawInterpPoints(newSurface, overlay);
-         if (surfManager_.getCurrentSurface().getPoints().length > 2) {
+         if (display_.getCurrentSurface().getPoints().length > 2) {
             drawConvexHull(overlay);
          }
       }
@@ -239,24 +230,26 @@ public class DisplayOverlayer   {
    }
 
    private void createSurfaceOverlay() throws InterruptedException {
-      SurfaceInterpolator surf = surfManager_.getCurrentSurface();
+      SurfaceInterpolator surf = display_.getCurrentSurface();
       if (surf == null) {
+         setOverlay(null);
          return;
       }
       if (surf.getPoints().length < 3) {
          setOverlay(createPointsConvexHullOverlay()); //no surfcae to draw yet
       } else {
-         
+
          final Overlay baseOverlay = createPointsConvexHullOverlay();
          //initial drawing of points and maybe convex hull for GUI responsiveness
          SwingUtilities.invokeLater(new Runnable() {
+
             @Override
             public void run() {
                canvas_.setOverlay(baseOverlay);
             }
          });
-         
-         Interpolation interp = surf.getCurrentInterpolation();
+
+         SingleResolutionInterpolation interp = surf.getCurrentInterpolation();
          while (interp == null) {
             Thread.sleep(10);
             interp = surf.getCurrentInterpolation();
@@ -282,7 +275,6 @@ public class DisplayOverlayer   {
             if (pixPerInterpPoint == SurfaceInterpolator.MIN_PIXELS_PER_INTERP_POINT && !Thread.interrupted()) {
                //finished  
                surfaceNeedsUpdate_.set(false);
-               System.out.println("Surface update false");
                return;
             }
             pixPerInterpPoint /= 2;
@@ -291,8 +283,8 @@ public class DisplayOverlayer   {
    }
    
    //draw the surface itself by interpolating a grid over viewable area
-   private void calculateAndAddSurfaceToOverlay(Overlay overlay, Interpolation interp, int pixPerInterpPoint) throws InterruptedException {        
-      if (!showSurface_ || surfManager_.getCurrentSurface().getPoints().length <= 2) {
+   private void calculateAndAddSurfaceToOverlay(Overlay overlay, SingleResolutionInterpolation interp, int pixPerInterpPoint) throws InterruptedException {        
+      if (!showSurface_ || display_.getCurrentSurface().getPoints().length <= 2) {
          return;
       }
       
@@ -335,20 +327,20 @@ public class DisplayOverlayer   {
       }
    }
    
-   private void drawStagePositions(Overlay overlay, Interpolation interp) throws InterruptedException {
+   private void drawStagePositions(Overlay overlay, SingleResolutionInterpolation interp) throws InterruptedException {
       if (showStagePositions_) {
          //wait until XY positions areound footprint are calculated
-         while (surfManager_.getCurrentSurface().getPositions() == null) {
-            System.out.println("Waiting for XY positions calculation");
+         while (display_.getCurrentSurface().getXYPositions() == null) {
             Thread.sleep(5);
          }
          double zPosition = zoomableStack_.getZCoordinateOfDisplayedSlice(display_.getHyperImage().getSlice(), display_.getHyperImage().getFrame());
-         ArrayList<StageCoordinates> positionsAtSlice = surfManager_.getCurrentSurface().getXYPositonsAtSlice(zPosition, interp);
-         for (StageCoordinates pos : positionsAtSlice) {
-            Point corner1 = display_.imageCoordsFromStageCoords(pos.corners[0].x, pos.corners[0].y);
-            Point corner2 = display_.imageCoordsFromStageCoords(pos.corners[1].x, pos.corners[1].y);
-            Point corner3 = display_.imageCoordsFromStageCoords(pos.corners[2].x, pos.corners[2].y);
-            Point corner4 = display_.imageCoordsFromStageCoords(pos.corners[3].x, pos.corners[3].y);
+         ArrayList<XYStagePosition> positionsAtSlice = display_.getCurrentSurface().getXYPositonsAtSlice(zPosition, interp);
+         for (XYStagePosition pos : positionsAtSlice) {
+            Point2D.Double[] corners = pos.getCorners();
+            Point corner1 = display_.imageCoordsFromStageCoords(corners[0].x, corners[0].y);
+            Point corner2 = display_.imageCoordsFromStageCoords(corners[1].x, corners[1].y);
+            Point corner3 = display_.imageCoordsFromStageCoords(corners[2].x, corners[2].y);
+            Point corner4 = display_.imageCoordsFromStageCoords(corners[3].x, corners[3].y);
             //add lines connecting 4 corners
             Line l1 = new Line(corner1.x, corner1.y, corner2.x, corner2.y);
             Line l2 = new Line(corner2.x, corner2.y, corner3.x, corner3.y);
@@ -375,7 +367,7 @@ public class DisplayOverlayer   {
 
       double dsTileWidth = tileWidth_ / (double) zoomableStack_.getDownsampleFactor();
       double dsTileHeight = tileHeight_ / (double) zoomableStack_.getDownsampleFactor();
-      MultiPosRegion newGrid = regionManager_.getCurrentRegion();
+      MultiPosRegion newGrid = display_.getCurrentRegion();
       if (newGrid == null) {
          display_.getImagePlus().setOverlay(null);
          return null;

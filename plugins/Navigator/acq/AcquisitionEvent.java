@@ -12,12 +12,12 @@ import java.awt.geom.Point2D;
 public class AcquisitionEvent {
    
    final public Acquisition acquisition_;
-   final public int frameIndex_, sliceIndex_, channelIndex_, positionIndex_;
+   final public int timeIndex_, sliceIndex_, channelIndex_, positionIndex_;
    final public double zPosition_, xPosition_, yPosition_;
    
    public AcquisitionEvent(Acquisition acq, int frameIndex, int channelIndex, int sliceIndex, int positionIndex, 
            double zPos, double xPos, double yPos) {
-      frameIndex_ = frameIndex;
+      timeIndex_ = frameIndex;
       sliceIndex_ = sliceIndex;
       channelIndex_ = channelIndex;
       positionIndex_ = positionIndex;    
@@ -25,6 +25,11 @@ public class AcquisitionEvent {
       xPosition_ = xPos;
       yPosition_ = yPos;
       acquisition_ = acq;
+   }
+   
+   @Override
+   public String toString() {
+      return "P: " + positionIndex_ + "\t\tT: " + timeIndex_ + "\t\tZ: " + sliceIndex_ + "\t\tC: " + channelIndex_; 
    }
    
 }

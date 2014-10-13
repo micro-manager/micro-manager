@@ -11,15 +11,12 @@ import java.util.LinkedList;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.acquisition.TaggedImageStorageMultipageTiff;
-import org.micromanager.api.MMTags;
 import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MDUtils;
@@ -47,7 +44,7 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
    private PositionManager posManager_;
 
    public MultiResMultipageTiffStorage(String dir, boolean newDataSet, JSONObject summaryMetadata,
-           int overlapX, int overlapY) {
+           int overlapX, int overlapY, String pixelSizeConfig) {
       try {
          xOverlap_ = overlapX;
          yOverlap_ = overlapY;
@@ -84,7 +81,7 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
          try {
             //make a copy in case tag changes are needed later
             summaryMD_ = new JSONObject(summaryMetadata.toString());
-            posManager_ = new PositionManager(summaryMD_, tileWidth_, tileHeight_);
+            posManager_ = new PositionManager(pixelSizeConfig, summaryMD_, tileWidth_, tileHeight_);
          } catch (JSONException ex) {
             ReportingUtils.showError("Couldnt copy summary metadata");
          }
@@ -207,6 +204,9 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
                   tileYPix += tileHeight_;
                }
                try {
+                  if (((byte[]) tile.pix).length == 0) {
+                     ReportingUtils.showError("zero length pixels");
+                  }
                   System.arraycopy(tile.pix, tileYPix * tileWidth_ + tileXPix, pixels, xOffset + width * line, lineWidths.get(col - colStart));
                } catch (Exception e) {
                   e.printStackTrace();

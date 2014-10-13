@@ -5,6 +5,7 @@ package imagedisplay;
  */
 import acq.Acquisition;
 import acq.ExploreAcquisition;
+import acq.FixedAreaAcquisition;
 import acq.MultiResMultipageTiffStorage;
 import coordinates.PositionManager;
 import ij.CompositeImage;
@@ -29,18 +30,23 @@ import org.micromanager.imagedisplay.MMCompositeImage;
 import org.micromanager.utils.*;
 import surfacesandregions.MultiPosRegion;
 import surfacesandregions.RegionManager;
+import surfacesandregions.SurfaceInterpolator;
 import surfacesandregions.SurfaceManager;
 
-public class DisplayPlus extends VirtualAcquisitionDisplay {
+public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataListener {
 
    private static final int EXPLORE_PIXEL_BUFFER = 96;
    
+   private static final int DELETE_SURF_POINT_PIXEL_TOLERANCE = 10;
+   
    public static final int NONE = 0, EXPLORE = 1, GOTO = 2, NEWGRID = 3, NEWSURFACE = 4;
+   
+   private static ArrayList<DisplayPlus> activeDisplays_ = new ArrayList<DisplayPlus>();
    
    private ImageCanvas canvas_;
    private DisplayPlusControls controls_;
    private Acquisition acq_;
-   private Point mouseDragStartPointLeft_, mouseDragStartPointRight_;
+   private Point mouseDragStartPointLeft_, mouseDragStartPointRight_, currentMouseLocation_;
    private ArrayList<Point> selectedPositions_ = new ArrayList<Point>();
    private ZoomableVirtualStack zoomableStack_;
    private final boolean exploreAcq_;
@@ -51,24 +57,26 @@ public class DisplayPlus extends VirtualAcquisitionDisplay {
    private RegionManager regionManager_;
    private SurfaceManager surfaceManager_;
    private DisplayOverlayer overlayer_;
+   private SurfaceInterpolator currentSurface_;
+   private MultiPosRegion currentRegion_;
    
    
 
    public DisplayPlus(final ImageCache stitchedCache, Acquisition acq, JSONObject summaryMD, 
-           MultiResMultipageTiffStorage multiResStorage, RegionManager rManager, SurfaceManager sManager) {
+           MultiResMultipageTiffStorage multiResStorage) {
       super(stitchedCache, null, "test", true);
       posManager_ = multiResStorage.getPositionManager();
       exploreAcq_ = acq instanceof ExploreAcquisition;
-      regionManager_ = rManager;
-      surfaceManager_ = sManager;
-      
-//      surfaceManager_.addListDataListener(this);
-      
+      regionManager_ = RegionManager.getInstance();
+      surfaceManager_ = SurfaceManager.getInstance();
+            
       //Set parameters for tile dimensions, num rows and columns, overlap, and image dimensions
       acq_ = acq;
       
-      controls_ = new DisplayPlusControls(this, this.getEventBus(), acq, regionManager_, surfaceManager_);
+      controls_ = new DisplayPlusControls(this, this.getEventBus(), acq);
 
+      this.getEventBus().register(this);
+      
       //Add in custom controls
       try {
          JavaUtils.setRestrictedFieldValue(this, VirtualAcquisitionDisplay.class, "controls_", controls_);
@@ -87,6 +95,9 @@ public class DisplayPlus extends VirtualAcquisitionDisplay {
             width += 2*EXPLORE_PIXEL_BUFFER;
             height += 2*EXPLORE_PIXEL_BUFFER;
             mode_ = EXPLORE;
+         } else {
+            width += 100;
+            height += 100;
          }
          zoomableStack_ = new ZoomableVirtualStack(MDUtils.getIJType(summaryMD), width, height, stitchedCache, nSlices, 
                  this, multiResStorage, exploreAcq_ ? EXPLORE_PIXEL_BUFFER : 0, acq_);
@@ -95,7 +106,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay {
          ReportingUtils.showError("Problem with initialization due to missing summary metadata tags");
          return;
       }
-      overlayer_ = new DisplayOverlayer(this, sManager, rManager, acq, multiResStorage.getTileWidth(), multiResStorage.getTileHeight());
+      overlayer_ = new DisplayOverlayer(this, acq, multiResStorage.getTileWidth(), multiResStorage.getTileHeight());
 
       canvas_ = this.getImagePlus().getCanvas();
       
@@ -107,6 +118,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay {
       IJ.setTool(Toolbar.SPARE6);
       stitchedCache.addImageCacheListener(this);
       canvas_.requestFocus();
+      activeDisplays_.add(this);
    }
    
    public void setSurfaceDisplaySettings(boolean convexHull, boolean stagePos, boolean surf) {
@@ -117,13 +129,43 @@ public class DisplayPlus extends VirtualAcquisitionDisplay {
    public int getMode() {
       return mode_;
    }
+   
+   public static void redrawRegionOverlay(MultiPosRegion region) {
+      for (DisplayPlus display : activeDisplays_) {
+         if (display.getCurrentRegion() == region) {
+            display.drawOverlay(true);
+         }
+      }
+   }
 
-   public void drawOverlay() {
+   public static void redrawSurfaceOverlay(SurfaceInterpolator surface) {
+      for (DisplayPlus display : activeDisplays_) {
+         if (display.getCurrentSurface() == surface) {
+            display.drawOverlay(true);
+         }
+      }
+   }
+   
+   public void setCurrentSurface(SurfaceInterpolator surf) {
+      currentSurface_ = surf;
       drawOverlay(true);
    }
    
-   public void drawOverlay(boolean interrupt) {
-      overlayer_.renderOverlay(interrupt);
+   public void setCurrentRegion(MultiPosRegion region) {
+      currentRegion_ = region;
+      drawOverlay(false);
+   }
+   
+   public SurfaceInterpolator getCurrentSurface() {
+      return currentSurface_;
+   }
+   
+   public MultiPosRegion getCurrentRegion() {
+      return currentRegion_;
+   }
+   
+   public void drawOverlay(boolean interruptSurfcaeRendering) {
+      overlayer_.renderOverlay(interruptSurfcaeRendering);
    }
 
    private void mouseReleasedActions(MouseEvent e) {
@@ -139,19 +181,16 @@ public class DisplayPlus extends VirtualAcquisitionDisplay {
             //delete point if one is nearby
             Point2D.Double stagePos = stageCoordFromImageCoords(e.getPoint().x, e.getPoint().y);
             //calculate tolerance
-            int pixelDistTolerance = 10;
-            Point2D.Double toleranceStagePos = stageCoordFromImageCoords(e.getPoint().x + pixelDistTolerance, e.getPoint().y + pixelDistTolerance);
+            Point2D.Double toleranceStagePos = stageCoordFromImageCoords(e.getPoint().x + DELETE_SURF_POINT_PIXEL_TOLERANCE, e.getPoint().y + DELETE_SURF_POINT_PIXEL_TOLERANCE);
             double stageDistanceTolerance = Math.sqrt( (toleranceStagePos.x - stagePos.x)*(toleranceStagePos.x - stagePos.x) +
                     (toleranceStagePos.y - stagePos.y)*(toleranceStagePos.y - stagePos.y) );
-            surfaceManager_.getCurrentSurface().deleteClosestPoint(stagePos.x, stagePos.y, stageDistanceTolerance);    
-            surfaceManager_.updateListeners();
+            currentSurface_.deleteClosestPoint(stagePos.x, stagePos.y, stageDistanceTolerance);            
          } else if (SwingUtilities.isLeftMouseButton(e)) {
             //convert to real coordinates in 3D space
             //Click point --> full res pixel point --> stage coordinate
             Point2D.Double stagePos = stageCoordFromImageCoords(e.getPoint().x, e.getPoint().y);
             double z = zoomableStack_.getZCoordinateOfDisplayedSlice(this.getHyperImage().getSlice(), this.getHyperImage().getFrame());
-            surfaceManager_.getCurrentSurface().addPoint(stagePos.x, stagePos.y, z);
-            surfaceManager_.updateListeners();
+            currentSurface_.addPoint(stagePos.x, stagePos.y, z);
          }
       }
       mouseDragging_ = false;
@@ -170,9 +209,9 @@ public class DisplayPlus extends VirtualAcquisitionDisplay {
          if (mode_ == NEWGRID) {  
             int dx = (currentPoint.x - mouseDragStartPointLeft_.x) * zoomableStack_.getDownsampleFactor();
             int dy = (currentPoint.y - mouseDragStartPointLeft_.y) * zoomableStack_.getDownsampleFactor();
-            regionManager_.getCurrentRegion().translate(dx,dy);
+            currentRegion_.translate(dx,dy);
             mouseDragStartPointLeft_ = currentPoint;
-         }
+         }              
       }
    }
    
@@ -191,20 +230,11 @@ public class DisplayPlus extends VirtualAcquisitionDisplay {
    public void zoom(boolean in) {
       zoomableStack_.zoom(cursorOverImage_ ? canvas_.getCursorLoc() : null, in ? -1 :1);
       redrawPixels();
-      drawOverlay();
    }
    
-   public void activateExploreMode(boolean activate) {
-      mode_ = activate && exploreAcq_ ? EXPLORE : NONE;
-   }
-   
-   public void activateNewGridMode(boolean activate) {
-      mode_ = activate ? NEWGRID : NONE;
-   }
-   
-   public void activateNewSurfaceMode(boolean activate) {
-      mode_ = activate ? NEWSURFACE : NONE;
-      drawOverlay();
+   public void setMode(int mode) {
+      mode_ = mode;
+      drawOverlay(true);
    }
 
    @Override
@@ -248,10 +278,16 @@ public class DisplayPlus extends VirtualAcquisitionDisplay {
       }
       CanvasPaintPending.setPaintPending(canvas_, this);
       this.updateAndDraw(true);
+      this.canvas_.setOverlay(null);
+      drawOverlay(true);
    }
    
    public boolean cursorOverImage() {
       return cursorOverImage_;
+   }
+   
+   public Point getCurrentMouseLocation() {
+      return currentMouseLocation_;
    }
    
    public Point getMouseDragStartPointLeft() {
@@ -285,12 +321,14 @@ public class DisplayPlus extends VirtualAcquisitionDisplay {
 
          @Override
          public void mouseDragged(MouseEvent e) {
+            currentMouseLocation_ = e.getPoint();
             mouseDraggedActions(e);
-            drawOverlay();
+            drawOverlay(false);
          }
 
          @Override
          public void mouseMoved(MouseEvent e) {
+            currentMouseLocation_ = e.getPoint();
             drawOverlay(false);
          }
       });
@@ -308,7 +346,6 @@ public class DisplayPlus extends VirtualAcquisitionDisplay {
             } else if (SwingUtilities.isLeftMouseButton(e)) {
                mouseDragStartPointLeft_ = e.getPoint();
             }         
-            drawOverlay();
          }
 
          @Override
@@ -316,7 +353,6 @@ public class DisplayPlus extends VirtualAcquisitionDisplay {
             mouseReleasedActions(e);
             mouseDragStartPointLeft_ = null;
             mouseDragStartPointRight_ = null;
-            drawOverlay();
          }
 
          @Override
@@ -327,6 +363,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay {
 
          @Override
          public void mouseExited(MouseEvent e) {
+            currentMouseLocation_ = null;
             cursorOverImage_ = false;
             drawOverlay(false);
          }
@@ -348,8 +385,9 @@ public class DisplayPlus extends VirtualAcquisitionDisplay {
             } else if (ke.getKeyChar() == '-') {
                zoom(false);
             } else if (ke.getKeyChar() == ' ') {
-               controls_.toggleExploreMode();
-               drawOverlay();
+               if (acq_ instanceof ExploreAcquisition) {
+                  controls_.toggleExploreMode();
+               }
             }
          }
 
@@ -375,17 +413,40 @@ public class DisplayPlus extends VirtualAcquisitionDisplay {
          }
       }
    }
+   
+   public boolean acquisitionFinished() {
+      return ((FixedAreaAcquisition) acq_).isFinsihed();
+   }
+   
+   @Override
+   public long getNextWakeTime() {
+      return ((FixedAreaAcquisition) acq_).getNextWakeTime_ms();
+   }
+   
+   @Override
+   public void intervalAdded(ListDataEvent e) {
+      if (mode_ == NEWSURFACE) {
+         drawOverlay(true);
+      } else if (mode_ == NEWGRID) {
+         drawOverlay(false);
+      }
+   }
 
-//   @Override
-//   public void intervalAdded(ListDataEvent e) {
-//   }
-//
-//   @Override
-//   public void intervalRemoved(ListDataEvent e) {
-//   }
-//
-//   @Override
-//   public void contentsChanged(ListDataEvent e) {
-//      this.drawOverlay();
-//   }
+   @Override
+   public void intervalRemoved(ListDataEvent e) {
+      if (mode_ == NEWSURFACE) {
+         drawOverlay(true);
+      } else if (mode_ == NEWGRID) {
+         drawOverlay(false);
+      }
+   }
+
+   @Override
+   public void contentsChanged(ListDataEvent e) {
+      if (mode_ == NEWSURFACE) {
+         drawOverlay(true);
+      } else if (mode_ == NEWGRID) {
+         drawOverlay(false);
+      }
+   }
 }

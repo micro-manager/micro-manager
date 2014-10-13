@@ -22,16 +22,16 @@ import org.micromanager.api.TaggedImageStorage;
  */
 public class ZoomableVirtualStack extends AcquisitionVirtualStack {
          
-   private int downsampleIndex_ = 0;
+   private volatile int downsampleIndex_ = 0;
    private int displayImageWidth_, displayImageHeight_;
-   private int xView_ = 0, yView_ = 0;  //top left pixel of view in current res
+   private volatile int xView_ = 0, yView_ = 0;  //top left pixel of view in current res
    private MultiResMultipageTiffStorage multiResStorage_;
-   private int tileWidth_, tileHeight_;
+   private final int tileWidth_, tileHeight_;
    private Acquisition acquisition_;
    
    public ZoomableVirtualStack(int type, int width, int height, TaggedImageStorage imageCache,
            int nSlices, VirtualAcquisitionDisplay vad, MultiResMultipageTiffStorage multiResStorage,
-           int outerPixelBuffer, Acquisition exploreAcq) {
+           int outerPixelBuffer, Acquisition acq) {
       super(width, height,type, null, imageCache, nSlices, vad);
       multiResStorage_ = multiResStorage;
       //display image could conceivably be bigger than a single FOV, but not smaller
@@ -41,7 +41,7 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
       tileWidth_ = multiResStorage.getTileWidth();      
       xView_ = -outerPixelBuffer;
       yView_ = -outerPixelBuffer;
-      acquisition_ = exploreAcq;
+      acquisition_ = acq;
    }  
    
    public int getDownsampleIndex() {

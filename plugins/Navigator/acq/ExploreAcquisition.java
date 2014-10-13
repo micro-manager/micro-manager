@@ -4,6 +4,14 @@
  */
 package acq;
 
+import coordinates.XYStagePosition;
+import java.awt.geom.Point2D;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import mmcorej.CMMCore;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.micromanager.MMStudio;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -16,18 +24,12 @@ public class ExploreAcquisition extends Acquisition {
    private final double zOrigin_;   
    private int lowestSliceIndex_ = 0, highestSliceIndex_ = 0;
 
-   public ExploreAcquisition(CustomAcqEngine eng, double zTop, double zBottom, double zStep) {
-      super(eng, zStep);
-      zTop_ = zTop;
-      zBottom_ = zBottom;
-      zOrigin_ = zTop;
-   }
-   
-   @Override
-   public void initialize(int xOverlap, int yOverlap, String dir, String name) {
-      super.initialize(xOverlap, yOverlap, dir, name);
-      //acquire first tile
-      acquireTiles(0,0,0,0);
+   public ExploreAcquisition(CustomAcqEngine eng, ExploreAcqSettings settings) {
+      super(settings.zStep_);
+      zTop_ = settings.zTop_;
+      zBottom_ = settings.zBottom_;
+      zOrigin_ = zTop_;
+      initialize(settings.dir_, settings.name_);
    }
 
    public void acquireTiles(int row1, int col1, int row2, int col2) {
@@ -74,7 +76,7 @@ public class ExploreAcquisition extends Acquisition {
             updateLowestAndHighestSlices();
             //Add events for each channel, slice            
             for (int sliceIndex = getMinSliceIndex(); sliceIndex <= getMaxSliceIndex(); sliceIndex++) {
-               eng_.addEvent(new AcquisitionEvent(this, 0, 0, sliceIndex, posIndices[i], getZCoordinate(sliceIndex), x, y));
+               addEvent(new AcquisitionEvent(this, 0, 0, sliceIndex, posIndices[i], getZCoordinate(sliceIndex), x, y));
             }
          }
       } catch (Exception e) {
@@ -147,6 +149,30 @@ public class ExploreAcquisition extends Acquisition {
       //Convention: z top should always be lower than zBottom
       zBottom_ = Math.max(zTop, zBottom);
       zTop_ = Math.min(zTop, zBottom);
+   }
+   
+   public double getZTop() {
+      return zTop_;
+   }
+   
+   public double getZBottom() {
+      return zBottom_;
+   }
+   
+   @Override
+   protected JSONArray createInitialPositionList() {
+      try {
+         //make intitial position list, with current position and 0,0 as coordinates
+         CMMCore core = MMStudio.getInstance().getCore();
+         JSONArray pList = new JSONArray();
+         //create first position based on current XYStage position
+         pList.put(new XYStagePosition("Grid_0_0", new Point2D.Double(core.getXPosition(core.getXYStageDevice()), core.getYPosition(core.getXYStageDevice())),
+                 0, 0, 0, 0, pixelSizeConfig_).getMMPosition());
+         return pList;
+      } catch (Exception e) {
+         ReportingUtils.showError("Couldn't create initial position list");
+         return null;
+      }
    }
 
  

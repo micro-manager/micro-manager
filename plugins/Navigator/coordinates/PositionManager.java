@@ -34,7 +34,7 @@ public class PositionManager {
    private static final String MULTI_RES_NODE_KEY = "MultiResPositionNode";
    
    
-   
+   private String pixelSizeConfig_;
    private JSONArray positionList_;
    private int minRow_, maxRow_, minCol_, maxCol_; //For the lowest resolution level
    private String xyStageName_ = MMStudio.getInstance().getCore().getXYStageDevice();
@@ -42,7 +42,8 @@ public class PositionManager {
    private TreeMap<Integer,TreeSet<MultiResPositionNode>> positionNodes_; 
    private int tileWidth_, tileHeight_;
    
-   public PositionManager(JSONObject summaryMD, int tileWidth, int tileHeight) {
+   public PositionManager(String pixelSizeConfig, JSONObject summaryMD, int tileWidth, int tileHeight) {
+      pixelSizeConfig_ = pixelSizeConfig;
       positionNodes_ = new TreeMap<Integer,TreeSet<MultiResPositionNode>>();
       readRowsAndColsFromPositionList(summaryMD);
       tileWidth_ = tileWidth;
@@ -216,9 +217,9 @@ public class PositionManager {
       minRow_ = 0; maxRow_ = 0; minCol_ = 0; maxRow_ = 0;
       try {
          if (summaryMD.has("InitialPositionList") && !summaryMD.isNull("InitialPositionList")) {
-            positionList_ = summaryMD.getJSONArray("InitialPositionList");
-            updateLowerResolutionNodes(); //make sure nodes created for all preexisiting positions
+            positionList_ = summaryMD.getJSONArray("InitialPositionList");           
             updateMinAndMaxRowsAndCols();
+            updateLowerResolutionNodes(); //make sure nodes created for all preexisiting positions
          } else {
             positionList_ = new JSONArray();
          }
@@ -359,7 +360,7 @@ public class PositionManager {
          //get stage displacement from center of the tile we have coordinates for
          double dx = stageX - exisitngX;
          double dy = stageY - exisitngY;
-         AffineTransform transform = AffineUtils.getAffineTransform(0, 0);
+         AffineTransform transform = AffineUtils.getAffineTransform(pixelSizeConfig_,0, 0);
          Point2D.Double pixelOffset = new Point2D.Double(); // offset in number of pixels from the center of this tile
          transform.inverseTransform(new Point2D.Double(dx,dy), pixelOffset);                     
          //Add pixel offset to pixel center of this tile to get absolute pixel position
@@ -391,7 +392,7 @@ public class PositionManager {
          //get pixel displacement from center of the tile we have coordinates for
          int dxPix = (int) (xAbsolute - (existingColumn + 0.5) * tileWidth_);
          int dyPix = (int) (yAbsolute - (existingRow + 0.5) * tileHeight_);
-         AffineTransform transform = AffineUtils.getAffineTransform(exisitngX, exisitngY);
+         AffineTransform transform = AffineUtils.getAffineTransform(pixelSizeConfig_,exisitngX, exisitngY);
          Point2D.Double stagePos = new Point2D.Double();
          transform.transform(new Point2D.Double(dxPix, dyPix), stagePos);  
          return stagePos;
@@ -427,7 +428,7 @@ public class PositionManager {
          double xPixelOffset = (col - existingColumn) * (width - pixelOverlapX);
          double yPixelOffset = (row - existingRow) * (height - pixelOverlapY);
 
-         AffineTransform transform = AffineUtils.getAffineTransform(exisitngX, exisitngY);
+         AffineTransform transform = AffineUtils.getAffineTransform(pixelSizeConfig_,exisitngX, exisitngY);
          Point2D.Double stagePos = new Point2D.Double();
          transform.transform(new Point2D.Double(xPixelOffset, yPixelOffset), stagePos);
          return stagePos;

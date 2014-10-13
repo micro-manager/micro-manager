@@ -4,6 +4,7 @@
  */
 package gui;
 
+import demo.DemoModeImageData;
 import java.awt.Dialog;
 import java.util.prefs.Preferences;
 
@@ -17,6 +18,7 @@ public class SettingsDialog extends javax.swing.JDialog {
    private GUI gui_;
    private static int overlapX_ = 0;
    private static int overlapY_ = 0;
+   private static boolean demoMode_ = false;
    
    
    public SettingsDialog(Preferences prefs, GUI gui) {
@@ -34,6 +36,19 @@ public class SettingsDialog extends javax.swing.JDialog {
    
    public static int getOverlapY() {
       return overlapY_;
+   }
+   
+   public static boolean getDemoMode() {
+      return demoMode_;
+   }
+   
+   public static int getDemoNumChannels() {
+      return 6;
+   }
+   
+   public static void setDemoMode(boolean demo) {
+      demoMode_ = true;
+      new DemoModeImageData();
    }
 
    /**

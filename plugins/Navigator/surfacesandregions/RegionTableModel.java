@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package tables;
+package surfacesandregions;
 
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
@@ -14,19 +14,18 @@ import surfacesandregions.RegionManager;
  *
  * @author Henry
  */
-public class GridTableModel extends AbstractTableModel implements ListDataListener {
+class RegionTableModel extends AbstractTableModel implements ListDataListener {
 
    private final String[] COLUMNS = {"Name", "# Rows", "# Cols", "Width (µm)", "Height (µm)"};
    private RegionManager manager_;
    
-   public GridTableModel(RegionManager manager) {
+   public RegionTableModel(RegionManager manager) {
       manager_ = manager;
-      manager.addListDataListener(this);
    }
    
    @Override
    public int getRowCount() {
-      return manager_.getSize();
+      return manager_.getNumberOfRegions();
    }
    
    @Override
@@ -50,7 +49,7 @@ public class GridTableModel extends AbstractTableModel implements ListDataListen
    @Override 
    public void setValueAt(Object value, int row, int col) {
       if (col == 0) {
-         manager_.renameSuregion(row, (String) value);
+         manager_.getRegion(row).rename((String) value);
       }
    }
    
@@ -58,7 +57,7 @@ public class GridTableModel extends AbstractTableModel implements ListDataListen
    public Object getValueAt(int rowIndex, int columnIndex) {
       MultiPosRegion region = manager_.getRegion(rowIndex);
       if (columnIndex == 0) {
-         return manager_.getElementAt(rowIndex);
+         return manager_.getRegion(rowIndex).getName();
       } else if (columnIndex == 1) {
          return region.numRows();
       } else if (columnIndex == 2) {
