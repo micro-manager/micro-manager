@@ -54,11 +54,12 @@ public class DisplaySettingsPanel extends JPanel {
             setDisplayMode(displayMode);
          }
       });
-      add(displayMode);
+      add(displayMode, "wrap");
       
-      add(new JLabel("Histogram update rate: "));
-      final JTextField histogramUpdateRate = new JTextField("0", 4);
-      histogramUpdateRate.setToolTipText("Set how frequently the histograms are allowed to be recalculated, in seconds. This may be useful in reducing CPU load. Use 0 to update histograms as fast as possible, and -1 to disable histograms altogether.");
+      add(new JLabel("Histograms update "), "split 2");
+      final JComboBox histogramUpdateRate = new JComboBox(
+            new String[] {"Never", "Every image", "Once per second"});
+      histogramUpdateRate.setToolTipText("Select how frequently to update histograms. Reduced histogram update rate may help reduce CPU load.");
       histogramUpdateRate.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent event) {
@@ -75,11 +76,11 @@ public class DisplaySettingsPanel extends JPanel {
             setShouldAutostretch(shouldAutostretch);
          }
       });
-      add(shouldAutostretch);
+      add(shouldAutostretch, "wrap");
 
-      add(new JLabel("Auto-trim histograms by: "));
+      add(new JLabel("Truncate histograms: "), "split 2");
       final JSpinner trimPercentage = new JSpinner();
-      trimPercentage.setToolTipText("When autostretching histograms, the min and max will be moved inwards by the specifide percentage (e.g. if this is set to 10, then the scaling will be from the 10th percentile to the 90th).");
+      trimPercentage.setToolTipText("When autostretching histograms, the min and max will be moved inwards by the specified percentage (e.g. if this is set to 10, then the scaling will be from the 10th percentile to the 90th).");
       trimPercentage.setModel(new SpinnerNumberModel(0.0, 0.0, 100.0, 1.0));
       trimPercentage.addChangeListener(new ChangeListener() {
          @Override
@@ -93,7 +94,7 @@ public class DisplaySettingsPanel extends JPanel {
             setTrimPercentage(trimPercentage);
          }
       });
-      add(trimPercentage);
+      add(trimPercentage, "wrap");
    }
 
    /**
@@ -132,15 +133,22 @@ public class DisplaySettingsPanel extends JPanel {
    /** 
     * The user is setting a new update rate for the histograms.
     */
-   private void setHistogramUpdateRate(JTextField histogramUpdateRate) {
-      try {
-         double updateRate = Double.parseDouble(histogramUpdateRate.getText());
-         DisplaySettings settings = store_.getDisplaySettings();
-         settings = settings.copy().histogramUpdateRate(updateRate).build();
-         store_.setDisplaySettings(settings);
+   private void setHistogramUpdateRate(JComboBox histogramUpdateRate) {
+      String selection = (String) histogramUpdateRate.getSelectedItem();
+      double rate = 0; // i.e. update as often as possible.
+      if (selection.equals("Never")) {
+         rate = -1;
       }
-      catch (NumberFormatException e) {
-         // No valid number in the string; ignore it.
+      else if (selection.equals("Every image")) {
+         rate = 0;
+      }
+      else if (selection.equals("Once per second")) {
+         rate = 1;
+      }
+      DisplaySettings settings = store_.getDisplaySettings();
+      settings = settings.copy().histogramUpdateRate(rate).build();
+      try {
+         store_.setDisplaySettings(settings);
       }
       catch (DatastoreLockedException e) {
          ReportingUtils.showError("The datastore is locked; settings cannot be changed.");
