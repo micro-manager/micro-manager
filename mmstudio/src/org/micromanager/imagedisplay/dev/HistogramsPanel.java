@@ -7,12 +7,15 @@ import ij.CompositeImage;
 import ij.ImagePlus;
 
 import java.util.ArrayList;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.swing.JPanel;
 
 import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.api.data.Datastore;
+import org.micromanager.api.data.DisplaySettings;
 import org.micromanager.api.data.NewImageEvent;
 
 import org.micromanager.internalinterfaces.Histograms;
@@ -20,12 +23,13 @@ import org.micromanager.utils.ContrastSettings;
 import org.micromanager.utils.ReportingUtils;
 
 public final class HistogramsPanel extends JPanel implements Histograms {
-   private long lastUpdateTime_;
    private ArrayList<ChannelControlPanel> channelPanels_;
    private Datastore store_;
    private MMVirtualStack stack_;
    private ImagePlus ijImage_;
    private EventBus displayBus_;
+   private Timer histogramUpdateTimer_;
+   private long lastUpdateTime_ = 0;
    private boolean updatingCombos_ = false;
 
    public HistogramsPanel(Datastore store, MMVirtualStack stack,
@@ -165,33 +169,6 @@ public final class HistogramsPanel extends JPanel implements Histograms {
       displayBus_.post(new DefaultRequestToDrawEvent());
    }
 
-   @Override
-   public void imageChanged() {
-      boolean update = true;
-      long time = System.currentTimeMillis();
-      double updateRate = store_.getDisplaySettings().getHistogramUpdateRate();
-      // If the update rate is negative or it's been too soon since the
-      // last update, then don't update. 
-      if (updateRate < 0 ||
-            time - lastUpdateTime_ < updateRate * 1000) {
-         update = false;
-      } else {
-         lastUpdateTime_ = time;
-      }
- 
-      updateActiveChannels();
-      
-      if (update) {
-         for (ChannelControlPanel panel : channelPanels_) {
-            panel.calcAndDisplayHistAndStats(true);
-            if (store_.getDisplaySettings().getShouldAutostretch()) {
-               panel.autostretch();
-            }
-            panel.applyChannelLUTToImage();
-         }
-      }
-   }
-   
    public boolean amInCompositeMode() {
       return ((ijImage_ instanceof CompositeImage) &&
             ((CompositeImage) ijImage_).getMode() != CompositeImage.COMPOSITE);
@@ -199,20 +176,6 @@ public final class HistogramsPanel extends JPanel implements Histograms {
 
    public boolean amMultiChannel() {
       return (ijImage_ instanceof CompositeImage);
-   }
-
-   private void updateActiveChannels() {
-      if (!amMultiChannel()) {
-         return;
-      }
-      CompositeImage composite = (CompositeImage) ijImage_;
-      int currentChannel = composite.getChannel() - 1;
-      boolean[] active = composite.getActiveChannels();
-      if (amInCompositeMode()) {
-         for (int i = 0; i < active.length; i++) {
-            active[i] = (currentChannel == i);
-         }
-      }
    }
 
    @Override
@@ -247,12 +210,54 @@ public final class HistogramsPanel extends JPanel implements Histograms {
       }
    }
 
+   private double getHistogramUpdateRate() {
+      DisplaySettings settings = store_.getDisplaySettings();
+      if (settings == null || settings.getHistogramUpdateRate() == null) {
+         // Assume we update every time.
+         return 0;
+      }
+      return settings.getHistogramUpdateRate();
+   }
+
    @Override
-   public void calcAndDisplayHistAndStats(boolean drawHist) {
-      if (channelPanels_ != null) {
-         for (ChannelControlPanel panel : channelPanels_) {
-            panel.calcAndDisplayHistAndStats(drawHist);
+   public void calcAndDisplayHistAndStats() {
+      if (channelPanels_ == null) {
+         return;
+      }
+      double updateRate = getHistogramUpdateRate();
+      if (updateRate < 0) {
+         // Update rate is set to "never".
+         return;
+      }
+      else if (updateRate == 0) {
+         // Update every time an image comes through.
+         updateHistograms();
+      }
+      else {
+         // Set up a timer to update the histograms at the right time.
+         if (histogramUpdateTimer_ == null) {
+            histogramUpdateTimer_ = new Timer();
          }
+         TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+               updateHistograms();
+            }
+         };
+         histogramUpdateTimer_.schedule(task, (long) (updateRate * 1000));
+      }
+   }
+
+   // Ensure it's been the right amount of time since the last update, then
+   // redraw histograms.
+   private void updateHistograms() {
+      long curTime = System.currentTimeMillis();
+      if (curTime - lastUpdateTime_ > getHistogramUpdateRate() * 1000) {
+         // It's time to do an update.
+         for (ChannelControlPanel panel : channelPanels_) {
+            panel.calcAndDisplayHistAndStats(true);
+         }
+         lastUpdateTime_ = curTime;
       }
    }
 
