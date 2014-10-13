@@ -104,8 +104,8 @@ using namespace std;
  * of the public API of the Core), not just CMMCore.
  */
 const int MMCore_versionMajor = 6;
-const int MMCore_versionMinor = 0;
-const int MMCore_versionPatch = 2;
+const int MMCore_versionMinor = 2;
+const int MMCore_versionPatch = 0;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2644,10 +2644,10 @@ void* CMMCore::popNextImageMD(Metadata& md) throw (CMMError)
 }
 
 /**
- * Removes all images from the circular buffer
- * It will rarely be needed to call this directly since starting a sequence
- * acquisition will call this function.  However, clearig the circular buffer
- * before requesting images from it can help avoid showing stale images
+ * Removes all images from the circular buffer.
+ *
+ * It is rarely necessary to call this directly since starting a sequence
+ * acquisition or changing the ROI will always clear the buffer.
  */
 void CMMCore::clearCircularBuffer() throw (CMMError)
 {
@@ -3723,13 +3723,18 @@ double CMMCore::getExposure() throw (CMMError)
 }
 
 /**
- * Sets hardware Region Of Interest (ROI). This command will
- * change dimensions of the image.
- * 
+ * Set the hardware region of interest for the current camera.
+ *
+ * A successful call to this method will clear any images in the sequence
+ * buffer, even if the ROI does not change.
+ *
+ * The coordinates are in units of binned pixels. That is, conceptually,
+ * binning is applied before the ROI.
+ *
  * @param x      coordinate of the top left corner
  * @param y      coordinate of the top left corner
- * @param xSize  horizontal dimension
- * @param ySize  vertical dimension
+ * @param xSize  number of horizontal pixels
+ * @param ySize  number of horizontal pixels
  */
 void CMMCore::setROI(int x, int y, int xSize, int ySize) throw (CMMError)
 {
@@ -3743,6 +3748,12 @@ void CMMCore::setROI(int x, int y, int xSize, int ySize) throw (CMMError)
       int nRet = camera->SetROI(x, y, xSize, ySize);
       if (nRet != DEVICE_OK)
          throw CMMError(getDeviceErrorText(nRet, camera).c_str(), MMERR_DEVICE_GENERIC);
+
+      // Any images left over in the sequence buffer may have sizes
+      // inconsistent with the current image size. There is no way to "fix"
+      // popNextImage() to handle this correctly, so we need to make sure we
+      // discard such images.
+      cbuf_->Clear();
    }
    else
       throw CMMError(getCoreErrorText(MMERR_CameraNotAvailable).c_str(), MMERR_CameraNotAvailable);
@@ -3753,12 +3764,15 @@ void CMMCore::setROI(int x, int y, int xSize, int ySize) throw (CMMError)
 }
 
 /**
- * Returns info on the current Region Of Interest (ROI).
- * 
+ * Return the current hardware region of interest for the current camera.
+ *
+ * The coordinates are in units of binned pixels. That is, conceptually,
+ * binning is applied before the ROI.
+ *
  * @param x      coordinate of the top left corner
  * @param y      coordinate of the top left corner
- * @param xSize  horizontal dimension
- * @param ySize  vertical dimension
+ * @param xSize  number of horizontal pixels
+ * @param ySize  number of horizontal pixels
  */
 void CMMCore::getROI(int& x, int& y, int& xSize, int& ySize) throw (CMMError)
 {
@@ -3779,14 +3793,13 @@ void CMMCore::getROI(int& x, int& y, int& xSize, int& ySize) throw (CMMError)
 }
 
 /**
- * Returns info on the current Region Of Interest (ROI)
- * of a specified camera device.
+ * Return the current hardware region of interest for a camera.
  *
- * @param label  camera name
+ * @param label  camera label
  * @param x      coordinate of the top left corner
  * @param y      coordinate of the top left corner
- * @param xSize  horizontal dimension
- * @param ySize  vertical dimension
+ * @param xSize  number of horizontal pixels
+ * @param ySize  number of vertical pixels
  */
 void CMMCore::getROI(const char* label, int& x, int& y, int& xSize, int& ySize) throw (CMMError)
 {
@@ -3806,7 +3819,10 @@ void CMMCore::getROI(const char* label, int& x, int& y, int& xSize, int& ySize) 
 }
 
 /**
- * Resets the current ROI to the full frame.
+ * Set the region of interest of the current camera to the full frame.
+ *
+ * A successful call to this method will clear any images in the sequence
+ * buffer, even if the ROI does not change.
  */
 void CMMCore::clearROI() throw (CMMError)
 {
@@ -3818,6 +3834,12 @@ void CMMCore::clearROI() throw (CMMError)
       int nRet = camera->ClearROI();
       if (nRet != DEVICE_OK)
          throw CMMError(getDeviceErrorText(nRet, camera).c_str(), MMERR_DEVICE_GENERIC);
+
+      // Any images left over in the sequence buffer may have sizes
+      // inconsistent with the current image size. There is no way to "fix"
+      // popNextImage() to handle this correctly, so we need to make sure we
+      // discard such images.
+      cbuf_->Clear();
    }
 }
 
