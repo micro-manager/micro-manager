@@ -1152,54 +1152,72 @@ int CDemoCamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
          {
             nComponents_ = 1;
             img_.Resize(img_.Width(), img_.Height(), 2);
+            bitDepth_ = 16;
             ret=DEVICE_OK;
          }
-			else if ( pixelType.compare(g_PixelType_32bitRGB) == 0)
-			{
+         else if ( pixelType.compare(g_PixelType_32bitRGB) == 0)
+         {
             nComponents_ = 4;
             img_.Resize(img_.Width(), img_.Height(), 4);
+            bitDepth_ = 8;
             ret=DEVICE_OK;
-			}
-			else if ( pixelType.compare(g_PixelType_64bitRGB) == 0)
-			{
+         }
+         else if ( pixelType.compare(g_PixelType_64bitRGB) == 0)
+         {
             nComponents_ = 4;
             img_.Resize(img_.Width(), img_.Height(), 8);
+            bitDepth_ = 16;
             ret=DEVICE_OK;
-			}
+         }
          else if ( pixelType.compare(g_PixelType_32bit) == 0)
-			{
+         {
             nComponents_ = 1;
             img_.Resize(img_.Width(), img_.Height(), 4);
+            bitDepth_ = 32;
             ret=DEVICE_OK;
-			}
+         }
          else
          {
             // on error switch to default pixel type
             nComponents_ = 1;
             img_.Resize(img_.Width(), img_.Height(), 1);
             pProp->Set(g_PixelType_8bit);
+            bitDepth_ = 8;
             ret = ERR_UNKNOWN_MODE;
          }
-      } break;
+      }
+      break;
    case MM::BeforeGet:
       {
          long bytesPerPixel = GetImageBytesPerPixel();
          if (bytesPerPixel == 1)
+         {
          	pProp->Set(g_PixelType_8bit);
+         }
          else if (bytesPerPixel == 2)
+         {
          	pProp->Set(g_PixelType_16bit);
+         }
          else if (bytesPerPixel == 4)
          {
-            if(4 == this->nComponents_) // todo SEPARATE bitdepth from #components
-				   pProp->Set(g_PixelType_32bitRGB);
-            else if( 1 == nComponents_)
+            if (nComponents_ == 4)
+            {
+			   pProp->Set(g_PixelType_32bitRGB);
+            }
+            else if (nComponents_ == 1)
+            {
                pProp->Set(::g_PixelType_32bit);
+            }
          }
-         else if (bytesPerPixel == 8) // todo SEPARATE bitdepth from #components
-				pProp->Set(g_PixelType_64bitRGB);
-			else
-				pProp->Set(g_PixelType_8bit);
-         ret=DEVICE_OK;
+         else if (bytesPerPixel == 8)
+         {
+            pProp->Set(g_PixelType_64bitRGB);
+         }
+		 else
+         {
+            pProp->Set(g_PixelType_8bit);
+         }
+         ret = DEVICE_OK;
       } break;
    default:
       break;
