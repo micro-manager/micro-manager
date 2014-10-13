@@ -136,7 +136,7 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
 
       makeWindowControls();
       zoomToPreferredSize();
-      histograms_.calcAndDisplayHistAndStats(true);
+      histograms_.calcAndDisplayHistAndStats();
       pack();
       
       canvasThread_ = new CanvasUpdateThread(store_, stack_, ijImage_, displayBus_);
@@ -472,7 +472,7 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
       }
 
       makeWindowControls();
-      histograms_.calcAndDisplayHistAndStats(true);
+      histograms_.calcAndDisplayHistAndStats();
    }
 
    /**
@@ -620,7 +620,7 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
 
    @Subscribe
    public void onPixelsSet(CanvasUpdateThread.PixelsSetEvent event) {
-      histograms_.calcAndDisplayHistAndStats(true);
+      histograms_.calcAndDisplayHistAndStats();
       metadata_.imageChangedUpdate(event.getImage());
       if (WindowManager.getCurrentWindow() == this) {
          LineProfile.updateLineProfile();

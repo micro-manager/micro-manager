@@ -181,7 +181,6 @@ public final class MultiChannelHistograms extends JPanel implements Histograms {
       }
    }
 
-   @Override
    public void imageChanged() {
      boolean update = true;
         if (display_.acquisitionIsRunning() ||
@@ -252,7 +251,8 @@ public final class MultiChannelHistograms extends JPanel implements Histograms {
    }
 
    @Override
-   public void calcAndDisplayHistAndStats(boolean drawHist) {
+   public void calcAndDisplayHistAndStats() {
+      boolean drawHist = true;
       if (ccpList_ != null) {
          for (ChannelControlPanel c : ccpList_) {
             c.calcAndDisplayHistAndStats(drawHist);
