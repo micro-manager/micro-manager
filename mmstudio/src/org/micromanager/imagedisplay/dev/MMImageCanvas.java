@@ -91,6 +91,7 @@ class MMImageCanvas extends ImageCanvas {
       // Apply the same range clamping that ImageJ does.
       mag = Math.max(Math.min(32.0, mag), .03125);
       this.magnification = mag;
+      displayBus_.post(new LayoutChangedEvent());
    }
 
    /**
