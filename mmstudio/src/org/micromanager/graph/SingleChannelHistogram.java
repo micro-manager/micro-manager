@@ -372,7 +372,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
 
    private void histRangeComboAction() {
       setHistMaxAndBinSize();     
-      calcAndDisplayHistAndStats(true);
+      calcAndDisplayHistAndStats();
    }
    
    // todo: implement!
@@ -383,7 +383,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
 
    @Override
    public void rejectOutliersChangeAction() {
-      calcAndDisplayHistAndStats(true);
+      calcAndDisplayHistAndStats();
       autoButtonAction();
    }
 
@@ -660,7 +660,6 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
       contrastMax_ = histMax_;
    }
 
-   @Override
     public void imageChanged() {
         boolean update = true;
         if (display_.acquisitionIsRunning() ||
@@ -676,7 +675,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
         }
 
         if (update) {
-            calcAndDisplayHistAndStats(display_.isActiveDisplay());
+            calcAndDisplayHistAndStats();
             if (display_.getHistogramControlsState().autostretch) {
                 autostretch();
             }
@@ -685,7 +684,8 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
     }
 
    @Override
-   public void calcAndDisplayHistAndStats(boolean drawHist) {
+   public void calcAndDisplayHistAndStats() {
+      boolean drawHist = true;
        if (img_ == null || img_.getProcessor() == null) {
          return;
       }

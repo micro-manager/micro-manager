@@ -545,7 +545,7 @@ public class ContrastPanel extends JPanel {
    private void logScaleCheckBoxActionPerformed() {
       saveCheckBoxStates();
       if (currentHistograms_ != null) {
-         currentHistograms_.calcAndDisplayHistAndStats(true);
+         currentHistograms_.calcAndDisplayHistAndStats();
       }
    }
 

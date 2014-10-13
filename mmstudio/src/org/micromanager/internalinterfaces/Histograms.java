@@ -39,13 +39,6 @@ public interface Histograms  {
    public void applyLUTToImage();
 
    /**
-    * Called just before the image is about to draw itself.  Calls 
-    * calcAndDisplayHistAndStats and applyLutToImage to make sure that the image has
-    * the correct LUT and that the histogram is in sync with the image
-    */
-   public void imageChanged();
-
-   /**
     * Manually set the contrast min, max and gamma values for this channel (channel = 0)
     * for single channel contrast panel).  Does not redraw image or histogram
     * @param channelIndex Index of the channel to set the contrast of
@@ -58,9 +51,8 @@ public interface Histograms  {
    /**
     * Calculates the image histogram and optionally displays image statistics
     * (pixel min, max, mean, etc) and draws the histogram)
-    * @param drawHist flag for optional display of statistics and drawing of histogram
     */
-   public void calcAndDisplayHistAndStats(boolean drawHist);
+   public void calcAndDisplayHistAndStats();
    
    /*
     * Sets the contrast min and max to the stored pixel min and max values

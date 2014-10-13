@@ -1442,9 +1442,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
             }
          }
       }
-      if (histograms_ != null) {
-         histograms_.imageChanged();
-      }
       if (isActiveDisplay()) {
          mdPanel_.imageChangedUpdate(this);
          if (updatePixelSize) {
