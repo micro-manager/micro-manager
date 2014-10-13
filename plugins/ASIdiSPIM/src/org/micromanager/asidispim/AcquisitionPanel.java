@@ -1247,11 +1247,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          return false;
       }
 
+      // empty out circular buffer
       try {
-         // empty out circular buffer
-         while (core_.getRemainingImageCount() > 0) {
-            core_.popNextImage();
-         }
+         core_.clearCircularBuffer();
       } catch (Exception ex) {
          gui_.showError(ex, "Error emptying out the circular buffer",
                ASIdiSPIM.getFrame());
