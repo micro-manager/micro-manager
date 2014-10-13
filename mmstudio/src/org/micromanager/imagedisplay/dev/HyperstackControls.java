@@ -165,6 +165,8 @@ public class HyperstackControls extends JPanel {
    private void setPixelInfo(int x, int y, String intensity) {
       pixelInfoLabel_.setText(String.format("x=%d, y=%d, value=%s",
                x, y, intensity));
+      // This validate call reduces the chance that the text will be truncated.
+      validate();
    }
 
    /**
