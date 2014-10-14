@@ -359,6 +359,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       if (histograms_ != null) {
          histograms_.setImagePlus(ijImage_);
       }
+      dummyWindow_.setImagePlus(ijImage_);
 
       makeWindowControls();
       histograms_.calcAndDisplayHistAndStats();

@@ -44,4 +44,14 @@ public class DummyImageWindow extends ImageWindow {
    public DefaultDisplayWindow getMaster() {
       return master_;
    }
+
+   /**
+    * The ImagePlus has changed; we need to recreate various links that
+    * ImageJ depends on.
+    */
+   public void setImagePlus(ImagePlus plus) {
+      imp = plus;
+      imp.setWindow(this);
+      ic = new ImageCanvas(imp);
+   }
 }
