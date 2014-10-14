@@ -23,7 +23,6 @@ public class LineProfile {
    private static GraphFrame profileWin_;
    
    public static void openLineProfileWindow() {
-      ReportingUtils.logError("Line profile opening...");
       if (WindowManager.getCurrentWindow() == null ||
             WindowManager.getCurrentWindow().isClosed()) {
          ReportingUtils.logError("Nope, window bad");
