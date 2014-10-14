@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.prefs.Preferences;
 
 import javax.swing.event.MouseInputAdapter;
+import javax.swing.JFrame;
 import javax.swing.JPanel;
 
 import net.miginfocom.swing.MigLayout;
@@ -52,13 +53,16 @@ import org.micromanager.utils.ReportingUtils;
  * HACK: we have overridden getComponents() on this function to "fix" bugs
  * in other bits of code; see that function's comment.
  */
-public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
+public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
 
    private Datastore store_;
    private MMVirtualStack stack_;
    private ImagePlus ijImage_;
+   // This will be our intermediary with ImageJ.
+   private DummyImageWindow dummyWindow_;
 
    private JPanel canvasPanel_;
+   private MMImageCanvas canvas_;
    private HyperstackControls controls_;
    private Component customControls_;
    private MultiModePanel modePanel_;
@@ -88,7 +92,6 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
     */
    public DefaultDisplayWindow(Datastore store, MMVirtualStack stack,
             ImagePlus ijImage, EventBus bus, Component customControls) {
-      super(ijImage);
       store_ = store;
       store_.associateDisplay(this);
       store_.registerForEvents(this, 100);
@@ -117,17 +120,6 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
          posY = displayPrefs_.getInt(WINDOWPOSY, DEFAULTPOSY);
       }
       setLocation(posX, posY);
-      
-      // HACK: hide ImageJ's native scrollbars; we provide our own.
-      if (cSelector != null) {
-         remove(cSelector);
-      }
-      if (tSelector != null) {
-         remove(tSelector);
-      }
-      if (zSelector != null) {
-         remove(zSelector);
-      }
 
       setBackground(MMStudio.getInstance().getBackgroundColor());
       MMStudio.getInstance().addMMBackgroundListener(this);
@@ -136,11 +128,13 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
 
       makeWindowControls();
       zoomToPreferredSize();
+      setVisible(true);
       histograms_.calcAndDisplayHistAndStats();
-      pack();
       
       canvasThread_ = new CanvasUpdateThread(store_, stack_, ijImage_, displayBus_);
       canvasThread_.start();
+
+      dummyWindow_ = new DummyImageWindow(ijImage, this);
    }
 
    /**
@@ -148,7 +142,8 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
     * etc.
     */
    private void makeWindowControls() {
-      removeAll();
+      // NB calling removeAll() on a JFrame works weirdly.
+      getContentPane().removeAll();
       // Override the default layout with our own, so we can do more
       // customized controls.
       // This layout is intended to minimize distances between elements.
@@ -201,16 +196,16 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
     * Re-generate our image canvas and canvas panel, along with resize logic.
     */
    private void recreateCanvas() {
-      ic = new MMImageCanvas(ijImage_, displayBus_);
+      canvas_ = new MMImageCanvas(ijImage_, displayBus_);
       
       // HACK: set the minimum size. If we don't do this, then the canvas
       // doesn't shrink properly when the window size is reduced. Why?!
-      ic.setMinimumSize(new Dimension(16, 16));
+      canvas_.setMinimumSize(new Dimension(16, 16));
       // Wrap the canvas in a subpanel so that we can get events when it
       // resizes.
       canvasPanel_ = new JPanel();
       canvasPanel_.setLayout(new MigLayout("insets 0, fill"));
-      canvasPanel_.add(ic);
+      canvasPanel_.add(canvas_);
 
       // Propagate resizing to the canvas, adjusting the view rectangle.
       canvasPanel_.addComponentListener(new ComponentAdapter() {
@@ -229,30 +224,30 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
             else { // Tall view; X constrains growth
                viewHeight = (int) (viewWidth / dataAspect);
             }
-            ic.setDrawingSize((int) Math.ceil(viewWidth),
+            canvas_.setDrawingSize((int) Math.ceil(viewWidth),
                (int) Math.ceil(viewHeight));
             // Reset the "source rect", i.e. the sub-area being viewed when
             // the image won't fit into the window. Try to maintain the same
             // center as the current rect has.
             // Fun fact: there's setSourceRect and setSrcRect, but no
             // getSourceRect.
-            Rectangle curRect = ic.getSrcRect();
+            Rectangle curRect = canvas_.getSrcRect();
             int xCenter = curRect.x + (curRect.width / 2);
             int yCenter = curRect.y + (curRect.height / 2);
-            double curMag = ic.getMagnification();
+            double curMag = canvas_.getMagnification();
             int newWidth = (int) Math.ceil(viewWidth / curMag);
             int newHeight = (int) Math.ceil(viewHeight / curMag);
             int xCorner = xCenter - newWidth / 2;
             int yCorner = yCenter - newHeight / 2;
             Rectangle viewRect = new Rectangle(xCorner, yCorner, 
                   newWidth, newHeight);
-            ic.setSourceRect(viewRect);
+            canvas_.setSourceRect(viewRect);
             doLayout();
          }
       });
 
       // Add a listener so we can update the histogram when an ROI is drawn.
-      ic.addMouseListener(new MouseInputAdapter() {
+      canvas_.addMouseListener(new MouseInputAdapter() {
          @Override
          public void mouseReleased(MouseEvent me) {
             if (ijImage_ instanceof MMCompositeImage) {
@@ -291,28 +286,17 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
       // HACK: the height of the rect to clear here is basically empirically-
       // derived, which is of course an incredibly brittle way to run things.
       g.clearRect(0, 0, getWidth(), 35);
-      drawInfo(g);
-      // Propagate painting to our sub-components.
-      for (Component c : getComponents()) {
-         if (g.hitClip(c.getX(), c.getY(), c.getWidth(), c.getHeight())) {
-            // This component needs to be repainted.
-            c.repaint();
-         }
-      }
-   }
-
-   /**
-    * HACK: override this method to avoid blanking the entire window whenever
-    * we draw; Java by default handles mixing AWT and Swing by blanking out
-    * the entire frame, which causes horrendous flicker. There are presumably
-    * some consequences to not blanking the entire frame, but if so, I haven't
-    * been able to find them.
-    */
-   @Override
-   public void update(Graphics g) {
-      if (isShowing()) {
-         paint(g);
-      }
+      // This is kind of a dumb way to get the text we need, but hey, it works.
+      dummyWindow_.drawInfo(g);
+      super.paint(g);
+      ReportingUtils.logError("Painted the window");
+//      // Propagate painting to our sub-components.
+//      for (Component c : getComponents()) {
+//         if (g.hitClip(c.getX(), c.getY(), c.getWidth(), c.getHeight())) {
+//            // This component needs to be repainted.
+//            c.repaint();
+//         }
+//      }
    }
 
    /**
@@ -342,15 +326,15 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
       // Use approximation here because ImageJ has fixed allowed magnification
       // levels and we want to be able to be a bit more approximate and snap
       // to the closest allowed magnification. 
-      if (mag < ic.getMagnification()) {
-         while (mag < ic.getMagnification() &&
-               Math.abs(mag - ic.getMagnification()) > .01) {
-            ic.zoomOut(ic.getWidth() / 2, ic.getHeight() / 2);
+      if (mag < canvas_.getMagnification()) {
+         while (mag < canvas_.getMagnification() &&
+               Math.abs(mag - canvas_.getMagnification()) > .01) {
+            canvas_.zoomOut(canvas_.getWidth() / 2, canvas_.getHeight() / 2);
          }
-      } else if (mag > ic.getMagnification()) {
-         while (mag > ic.getMagnification() &&
-               Math.abs(mag - ic.getMagnification()) > .01) {
-            ic.zoomIn(ic.getWidth() / 2, ic.getHeight() / 2);
+      } else if (mag > canvas_.getMagnification()) {
+         while (mag > canvas_.getMagnification() &&
+               Math.abs(mag - canvas_.getMagnification()) > .01) {
+            canvas_.zoomIn(canvas_.getWidth() / 2, canvas_.getHeight() / 2);
          }
       }
 
@@ -375,83 +359,6 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
    @Subscribe
    public void onLayoutChange(ScrollerPanel.LayoutChangedEvent event) {
       pack();
-   }
-
-   @Override
-   public void windowClosed(WindowEvent E) {
-      try {
-         super.windowClosed(E);
-      } catch (NullPointerException ex) {
-            ReportingUtils.showError(ex, "Null pointer error in ImageJ code while closing window");
-      }
-   }
-
-   @Override
-   public void windowActivated(WindowEvent e) {
-      if (!isClosed()) {
-         super.windowActivated(e);
-      }
-   }
-
-   /**
-    * HACK HACK HACK HACK HACK HACK ACK HACK HACK HACK HACK HACK ACK HACK
-    * We override this function to "fix" the Orthogonal Views plugin, which
-    * assumes that item #2 in the array returned by getComponents() is the 
-    * cSelector object of an ImageJ StackWindow. Of course, actually changing
-    * this behavior for everyone else causes *them* to break horribly, hence
-    * why we have to examine the stack trace to determine our caller. Ugh!
-    * HACK HACK HACK HACK HACK HACK ACK HACK HACK HACK HACK HACK ACK HACK
-    * @return 
-    */
-   @Override
-   public Component[] getComponents() {
-      StackTraceElement[] stack = Thread.currentThread().getStackTrace();
-      for (StackTraceElement element : stack) {
-         if (element.getClassName().contains("Orthogonal_Views")) {
-            return new Component[] {ic, cSelector};
-         }
-      }
-      return super.getComponents();
-   }
-
-   /**
-    * HACK HACK HACK etc you get the idea.
-    * Manually re-size components, and set our own size. Otherwise, changes in
-    * the sizes of components we contain end up not affecting our own size
-    * properly.
-    * Additionally, we need to pad out the canvas object's size by 2px;
-    * otherwise, at certain zoom levels (33.333% and divisors of same,
-    * basically any zoom level that can't be precisely expressed in decimal
-    * form), it doesn't take up *quite* enough space to draw itself, which
-    * means we get the "zoom indicator" overlay and part of the canvas
-    * isn't drawn.
-    */
-   @Override
-   public void pack() {
-      // Ensure all components have the right sizes.
-      for (Component c : getComponents()) {
-         c.setSize(c.getPreferredSize());
-      }
-      setSize(getPreferredSize());
-      super.pack();
-
-      // Ensure the canvas is padded properly.
-      Dimension canvasSize = ic.getSize();
-      if (paddedCanvasSize_ != null &&
-            paddedCanvasSize_.width == canvasSize.width &&
-            paddedCanvasSize_.height == canvasSize.height) {
-         // Canvas is already padded, so we're done here.
-         return;
-      }
-
-      // Pad the canvas, and then pad ourselves so there's room for it.
-      ic.setDrawingSize(canvasSize.width + 2, canvasSize.height + 2);
-      // ImageJ hacks getPreferredSize to return the "drawing size"
-      // (there's no getDrawingSize() method).
-      paddedCanvasSize_ = ic.getPreferredSize();
-      Dimension ourSize = getSize();
-      setSize(ourSize.width + 2, ourSize.height + 2);
-      super.pack();
    }
 
    /**
@@ -560,14 +467,6 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
       return result;
    }
 
-   @Override
-   public void windowClosing(WindowEvent e) {
-      if (!closed_) {
-         requestToClose();
-      }
-   }
-
-   @Override
    public boolean close() {
       requestToClose();
       return closed_;
@@ -590,10 +489,11 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
       store_.unregisterForEvents(this);
       MMStudio.getInstance().removeMMBackgroundListener(this);
       try {
-         super.close();
+         dummyWindow_.close();
       } catch (NullPointerException ex) {
          ReportingUtils.showError(ex, "Null pointer error in ImageJ code while closing window");
       }
+      dispose();
       closed_ = true;
    }
 
@@ -605,7 +505,7 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
 
    @Override
    public ImageWindow getImageWindow() {
-      return this;
+      return dummyWindow_;
    }
 
    @Override
@@ -622,7 +522,8 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
    public void onPixelsSet(CanvasUpdateThread.PixelsSetEvent event) {
       histograms_.calcAndDisplayHistAndStats();
       metadata_.imageChangedUpdate(event.getImage());
-      if (WindowManager.getCurrentWindow() == this) {
+      // TODO: I think this means we're on top, but I'm not certain.
+      if (isFocusableWindow()) {
          LineProfile.updateLineProfile();
       }
    }
@@ -655,5 +556,10 @@ public class DefaultDisplayWindow extends StackWindow implements DisplayWindow {
          }
       }
       return result;
+   }
+
+   // Implemented to help out DummyImageWindow.
+   public MMImageCanvas getCanvas() {
+      return canvas_;
    }
 }
