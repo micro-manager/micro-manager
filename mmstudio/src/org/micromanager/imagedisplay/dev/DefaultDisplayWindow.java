@@ -521,8 +521,8 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
 
    public static DisplayWindow getCurrentWindow() {
       ImageWindow current = WindowManager.getCurrentWindow();
-      if (current instanceof DisplayWindow) {
-         return (DisplayWindow) current;
+      if (current instanceof DummyImageWindow) {
+         return ((DummyImageWindow) current).getMaster();
       }
       return null;
    }
