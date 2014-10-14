@@ -328,7 +328,7 @@ public class Devices {
     * @return
     */
    public boolean isValidMMDevice(Devices.Keys key) {
-      return (getMMDevice(key) != null);
+      return (key != Devices.Keys.NONE && getMMDevice(key) != null);
    }
 
    /**

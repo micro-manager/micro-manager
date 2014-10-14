@@ -724,6 +724,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       float cameraResetTime = computeCameraResetTime();      // recalculate for safety
       float cameraReadoutTime = computeCameraReadoutTime();  // recalculate for safety
       
+      // for Hamamatsu's "synchronous" or Zyla's "overlap" mode (reset and readout
+      // occur simultaneously), set readout time to 0 for calculating timing
       CameraModes.Keys cameraMode = CameraModes.getKeyFromPrefCode(
             prefs_.getInt(MyStrings.PanelNames.SETTINGS.toString(),
                   Properties.Keys.PLUGIN_CAMERA_MODE, 0));
@@ -735,9 +737,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          PanelUtils.getSpinnerFloatValue(desiredSlicePeriod_);
       float desiredExposure = PanelUtils.getSpinnerFloatValue(desiredLightExposure_);
       
-      // this assumes "usual" camera mode, not Hamamatsu's "synchronous" or Zyla's "overlap" mode
-      // TODO: add the ability to use these faster modes (will require changes in several places
-      // and a GUI setting for camera mode); do have Cameras.resetAndReadoutOverlap() to see
       float cameraReadout_max = MyNumberUtils.ceilToQuarterMs(cameraReadoutTime);
       float cameraReset_max = MyNumberUtils.ceilToQuarterMs(cameraResetTime);
       float slicePeriod = MyNumberUtils.roundToQuarterMs(desiredPeriod);
@@ -1096,18 +1095,21 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       props_.setPropValue(galvoDevice,
             Properties.Keys.SPIM_FIRSTSIDE, getFirstSide());
       
-      // get the piezo card ready
-      if (spimMode.equals(AcquisitionModes.Keys.SLICE_SCAN_ONLY)) {
-         piezoAmplitude = (float) 0.0;
+      // get the piezo card ready; skip if no piezo specified
+      if (devices_.isValidMMDevice(piezoDevice)) {
+         if (spimMode.equals(AcquisitionModes.Keys.SLICE_SCAN_ONLY)) {
+            piezoAmplitude = (float) 0.0;
+         }
+         props_.setPropValue(piezoDevice,
+               Properties.Keys.SA_AMPLITUDE, piezoAmplitude);
+         props_.setPropValue(piezoDevice,
+               Properties.Keys.SA_OFFSET, piezoCenter);
+         props_.setPropValue(piezoDevice,
+               Properties.Keys.SPIM_NUM_SLICES, numSlices);
+         props_.setPropValue(piezoDevice,
+               Properties.Keys.SPIM_STATE, Properties.Values.SPIM_ARMED);
       }
-      props_.setPropValue(piezoDevice,
-            Properties.Keys.SA_AMPLITUDE, piezoAmplitude);
-      props_.setPropValue(piezoDevice,
-            Properties.Keys.SA_OFFSET, piezoCenter);
-      props_.setPropValue(piezoDevice,
-            Properties.Keys.SPIM_NUM_SLICES, numSlices);
-      props_.setPropValue(piezoDevice,
-            Properties.Keys.SPIM_STATE, Properties.Values.SPIM_ARMED);
+      
       return true;
    }
 
@@ -1337,10 +1339,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             gui_.setAcquisitionProperty(acqName, "SPIMmode", 
                     ((AcquisitionModes.Keys) spimMode_.getSelectedItem()).toString());
             
-            // TODO: use new acqusition interface that goes through the pipeline
+            // TODO: use new acquisition interface that goes through the pipeline
             //gui_.setAcquisitionAddImageAsynchronous(acqName); 
             MMAcquisition acq = gui_.getAcquisition(acqName);
-            
+        
             // Dive into MM internals since script interface does not support pipelines
             ImageCache imageCache = acq.getImageCache();
             VirtualAcquisitionDisplay vad = acq.getAcquisitionWindow();
