@@ -47,7 +47,7 @@ public class ScaleBarPanel extends OverlayPanel {
    private JComboBox position_;
    
    public ScaleBarPanel() {
-      setLayout(new MigLayout());
+      setLayout(new MigLayout("flowy"));
       shouldDraw_ = new JCheckBox("Draw scale bar");
       shouldDraw_.addActionListener(new ActionListener() {
          @Override
@@ -67,7 +67,7 @@ public class ScaleBarPanel extends OverlayPanel {
       });
       add(color_);
 
-      add(new JLabel("X offset: "));
+      add(new JLabel("X offset: "), "split 2, flowx");
       xOffset_ = new JTextField("0", 3);
       xOffset_.addKeyListener(new KeyAdapter() {
          @Override
@@ -97,7 +97,7 @@ public class ScaleBarPanel extends OverlayPanel {
       });
       add(position_);
 
-      add(new JLabel("Y offset: "));
+      add(new JLabel("Y offset: "), "split 2, flowx");
       yOffset_ = new JTextField("0", 3);
       yOffset_.addKeyListener(new KeyAdapter() {
          @Override
@@ -127,7 +127,7 @@ public class ScaleBarPanel extends OverlayPanel {
          return;
       }
 
-      double width = pixelSize * 80;
+      double width = pixelSize * 80 / canvas.getMagnification();
       g.setColor(COLORS[color_.getSelectedIndex()]);
       int xOffset = 0, yOffset = 0;
       try {
