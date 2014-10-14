@@ -188,15 +188,6 @@ public class HyperstackControls extends JPanel {
       }
    }
 
-   /**
-    * Our ScrollerPanel is informing us that its layout has changed.
-    */
-   @Subscribe
-   public void onLayoutChange(ScrollerPanel.LayoutChangedEvent event) {
-      invalidate();
-      validate();
-   }
-
    public void setImageInfoLabel(String text) {
       imageInfoLabel_.setText(text);
    }
