@@ -40,4 +40,8 @@ public class DummyImageWindow extends ImageWindow {
    public void toFront() {
       master_.toFront();
    }
+
+   public DefaultDisplayWindow getMaster() {
+      return master_;
+   }
 }
