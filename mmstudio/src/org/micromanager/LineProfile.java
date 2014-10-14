@@ -13,8 +13,6 @@ import javax.swing.JFrame;
 import org.micromanager.graph.GraphData;
 import org.micromanager.graph.GraphFrame;
 
-import org.micromanager.utils.ReportingUtils;
-
 /**
  * This class collects information related to the Line Profile display.
  */
@@ -25,12 +23,10 @@ public class LineProfile {
    public static void openLineProfileWindow() {
       if (WindowManager.getCurrentWindow() == null ||
             WindowManager.getCurrentWindow().isClosed()) {
-         ReportingUtils.logError("Nope, window bad");
          return;
       }
       calculateLineProfileData(WindowManager.getCurrentImage());
       if (lineProfileData_ == null) {
-         ReportingUtils.logError("Nope, null data");
          return;
       }
       profileWin_ = new GraphFrame();
