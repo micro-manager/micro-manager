@@ -21,11 +21,6 @@ import org.micromanager.utils.ReportingUtils;
  * AxisScrollers, and how they affect the display of a collection of images.
  */
 public class ScrollerPanel extends JPanel {
-   /**
-    * This class signifies that our layout has changed and our owner needs to 
-    * revalidate.
-    */
-   public static class LayoutChangedEvent {}
 
    private Datastore store_;
    // We'll be communicating with our owner and with our AxisScrollers via

@@ -352,16 +352,6 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
    }
 
    /**
-    * Our controls have changed size; repack the window to ensure all controls
-    * are displayed.
-    * @param event
-    */
-   @Subscribe
-   public void onLayoutChange(ScrollerPanel.LayoutChangedEvent event) {
-      pack();
-   }
-
-   /**
     * We've discovered that we need to represent a multichannel image.
     */
    private void shiftToCompositeImage() {
@@ -561,5 +551,45 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
    // Implemented to help out DummyImageWindow.
    public MMImageCanvas getCanvas() {
       return canvas_;
+   }
+
+   /**
+    * HACK HACK HACK etc you get the idea.
+    * Manually re-size components, and set our own size. Otherwise, changes in
+    * the sizes of components we contain end up not affecting our own size
+    * properly.
+    * Additionally, we need to pad out the canvas object's size by 2px;
+    * otherwise, at certain zoom levels (33.333% and divisors of same,
+    * basically any zoom level that can't be precisely expressed in decimal
+    * form), it doesn't take up *quite* enough space to draw itself, which
+    * means we get the "zoom indicator" overlay and part of the canvas
+    * isn't drawn.
+    */
+   @Override
+   public void pack() {
+      // Ensure all components have the right sizes.
+      for (Component c : getComponents()) {
+         c.setSize(c.getPreferredSize());
+      }
+      setSize(getPreferredSize());
+      super.pack();
+
+      // Ensure the canvas is padded properly.
+      Dimension canvasSize = canvas_.getSize();
+      if (paddedCanvasSize_ != null &&
+            paddedCanvasSize_.width == canvasSize.width &&
+            paddedCanvasSize_.height == canvasSize.height) {
+         // Canvas is already padded, so we're done here.
+         return;
+      }
+
+      // Pad the canvas, and then pad ourselves so there's room for it.
+      canvas_.setDrawingSize(canvasSize.width + 2, canvasSize.height + 2);
+      // ImageJ hacks getPreferredSize to return the "drawing size"
+      // (there's no getDrawingSize() method).
+      paddedCanvasSize_ = canvas_.getPreferredSize();
+      Dimension ourSize = getSize();
+      setSize(ourSize.width + 2, ourSize.height + 2);
+      super.pack();
    }
 }
