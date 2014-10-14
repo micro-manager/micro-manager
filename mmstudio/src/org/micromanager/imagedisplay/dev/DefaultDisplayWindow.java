@@ -289,13 +289,6 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       // This is kind of a dumb way to get the text we need, but hey, it works.
       dummyWindow_.drawInfo(g);
       super.paint(g);
-//      // Propagate painting to our sub-components.
-//      for (Component c : getComponents()) {
-//         if (g.hitClip(c.getX(), c.getY(), c.getWidth(), c.getHeight())) {
-//            // This component needs to be repainted.
-//            c.repaint();
-//         }
-//      }
    }
 
    /**
