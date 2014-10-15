@@ -31,6 +31,9 @@ public interface DisplaySettings {
       DisplaySettingsBuilder shouldSyncChannels(Boolean shouldSyncChannels);
       DisplaySettingsBuilder scaleBarColorIndex(Integer scaleBarColorIndex);
       DisplaySettingsBuilder scaleBarLocationIndex(Integer scaleBarLocationIndex);
+      DisplaySettingsBuilder scaleBarOffsetX(Integer scaleBarOffsetX);
+      DisplaySettingsBuilder scaleBarOffsetY(Integer scaleBarOffsetY);
+      DisplaySettingsBuilder scaleBarIsFilled(Boolean scaleBarIsFilled);
       DisplaySettingsBuilder shouldShowScaleBar(Boolean shouldShowScaleBar);
       DisplaySettingsBuilder shouldAutostretch(Boolean shouldAutostretch);
       DisplaySettingsBuilder trimPercentage(Double trimPercentage);
@@ -52,6 +55,9 @@ public interface DisplaySettings {
    public Boolean getShouldSyncChannels();
    public Integer getScaleBarColorIndex();
    public Integer getScaleBarLocationIndex();
+   public Integer getScaleBarOffsetX();
+   public Integer getScaleBarOffsetY();
+   public Boolean getScaleBarIsFilled();
    public Boolean getShouldShowScaleBar();
    public Boolean getShouldAutostretch();
    public Double getTrimPercentage();
