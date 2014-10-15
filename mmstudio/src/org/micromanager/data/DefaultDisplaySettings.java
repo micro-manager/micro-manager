@@ -1,6 +1,7 @@
 package org.micromanager.data;
 
 import java.awt.Color;
+import java.util.prefs.Preferences;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -13,6 +14,48 @@ import org.micromanager.utils.ReportingUtils;
 
 public class DefaultDisplaySettings implements DisplaySettings {
 
+   /**
+    * Retrieve the display settings that have been saved in the preferences.
+    */
+   public static DefaultDisplaySettings getStandardSettings() {
+      Builder builder = new Builder();
+      Preferences prefs = Preferences.userNodeForPackage(DefaultDisplaySettings.class);
+      if (prefs == null) {
+         // No saved settings.
+         return builder.build();
+      }
+      builder.histogramUpdateRate(prefs.getDouble("histogramUpdateRate", 0));
+      builder.shouldSyncChannels(prefs.getBoolean("shouldSyncChannels", false));
+      builder.scaleBarColorIndex(prefs.getInt("scaleBarColorIndex", 0));
+      builder.scaleBarLocationIndex(prefs.getInt("scaleBarLocationIndex", 0));
+      builder.scaleBarOffsetX(prefs.getInt("scaleBarOffsetX", 15));
+      builder.scaleBarOffsetY(prefs.getInt("scaleBarOffsetY", 15));
+      builder.scaleBarIsFilled(prefs.getBoolean("scaleBarIsFilled", true));
+      builder.shouldShowScaleBar(prefs.getBoolean("shouldShowScaleBar", false));
+      builder.shouldAutostretch(prefs.getBoolean("shouldAutostretch", false));
+      builder.trimPercentage(prefs.getDouble("trimPercentage", 0));
+      builder.shouldUseLogScale(prefs.getBoolean("shouldUseLogScale", false));
+      return builder.build();
+   }
+
+   /**
+    * Set new settings in the preferences.
+    */
+   public static void setStandardSettings(DisplaySettings settings) {
+      Preferences prefs = Preferences.userNodeForPackage(DefaultDisplaySettings.class);
+      prefs.putDouble("histogramUpdateRate", settings.getHistogramUpdateRate());
+      prefs.putBoolean("shouldSyncChannels", settings.getShouldSyncChannels());
+      prefs.putInt("scaleBarColorIndex", settings.getScaleBarColorIndex());
+      prefs.putInt("scaleBarLocationIndex", settings.getScaleBarLocationIndex());
+      prefs.putInt("scaleBarOffsetX", settings.getScaleBarOffsetX());
+      prefs.putInt("scaleBarOffsetY", settings.getScaleBarOffsetY());
+      prefs.putBoolean("scaleBarIsFilled", settings.getScaleBarIsFilled());
+      prefs.putBoolean("shouldShowScaleBar", settings.getShouldShowScaleBar());
+      prefs.putBoolean("shouldAutostretch", settings.getShouldAutostretch());
+      prefs.putDouble("trimPercentage", settings.getTrimPercentage());
+      prefs.putBoolean("shouldUseLogScale", settings.getShouldUseLogScale());
+   }
+
    public static class Builder implements DisplaySettings.DisplaySettingsBuilder {
       private String[] channelNames_ = null;
       private Color[] channelColors_ = null;
@@ -23,6 +66,9 @@ public class DefaultDisplaySettings implements DisplaySettings {
       private Boolean shouldSyncChannels_ = null;
       private Integer scaleBarColorIndex_ = null;
       private Integer scaleBarLocationIndex_ = null;
+      private Integer scaleBarOffsetX_ = null;
+      private Integer scaleBarOffsetY_ = null;
+      private Boolean scaleBarIsFilled_ = null;
       private Boolean shouldShowScaleBar_ = null;
       private Boolean shouldAutostretch_ = null;
       private Double trimPercentage_ = null;
@@ -88,6 +134,24 @@ public class DefaultDisplaySettings implements DisplaySettings {
       }
 
       @Override
+      public DisplaySettingsBuilder scaleBarOffsetX(Integer scaleBarOffsetX) {
+         scaleBarOffsetX_ = scaleBarOffsetX;
+         return this;
+      }
+
+      @Override
+      public DisplaySettingsBuilder scaleBarOffsetY(Integer scaleBarOffsetY) {
+         scaleBarOffsetY_ = scaleBarOffsetY;
+         return this;
+      }
+
+      @Override
+      public DisplaySettingsBuilder scaleBarIsFilled(Boolean scaleBarIsFilled) {
+         scaleBarIsFilled_ = scaleBarIsFilled;
+         return this;
+      }
+
+      @Override
       public DisplaySettingsBuilder shouldShowScaleBar(Boolean shouldShowScaleBar) {
          shouldShowScaleBar_ = shouldShowScaleBar;
          return this;
@@ -122,6 +186,9 @@ public class DefaultDisplaySettings implements DisplaySettings {
    private Boolean shouldSyncChannels_ = null;
    private Integer scaleBarColorIndex_ = null;
    private Integer scaleBarLocationIndex_ = null;
+   private Integer scaleBarOffsetX_ = null;
+   private Integer scaleBarOffsetY_ = null;
+   private Boolean scaleBarIsFilled_ = null;
    private Boolean shouldShowScaleBar_ = null;
    private Boolean shouldAutostretch_ = null;
    private Double trimPercentage_ = null;
@@ -137,6 +204,9 @@ public class DefaultDisplaySettings implements DisplaySettings {
       shouldSyncChannels_ = builder.shouldSyncChannels_;
       scaleBarColorIndex_ = builder.scaleBarColorIndex_;
       scaleBarLocationIndex_ = builder.scaleBarLocationIndex_;
+      scaleBarOffsetX_ = builder.scaleBarOffsetX_;
+      scaleBarOffsetY_ = builder.scaleBarOffsetY_;
+      scaleBarIsFilled_ = builder.scaleBarIsFilled_;
       shouldShowScaleBar_ = builder.shouldShowScaleBar_;
       shouldAutostretch_ = builder.shouldAutostretch_;
       trimPercentage_ = builder.trimPercentage_;
@@ -189,6 +259,21 @@ public class DefaultDisplaySettings implements DisplaySettings {
    }
 
    @Override
+   public Integer getScaleBarOffsetX() {
+      return scaleBarOffsetX_;
+   }
+
+   @Override
+   public Integer getScaleBarOffsetY() {
+      return scaleBarOffsetY_;
+   }
+
+   @Override
+   public Boolean getScaleBarIsFilled() {
+      return scaleBarIsFilled_;
+   }
+
+   @Override
    public Boolean getShouldShowScaleBar() {
       return shouldShowScaleBar_;
    }
@@ -220,6 +305,9 @@ public class DefaultDisplaySettings implements DisplaySettings {
             .shouldSyncChannels(shouldSyncChannels_)
             .scaleBarColorIndex(scaleBarColorIndex_)
             .scaleBarLocationIndex(scaleBarLocationIndex_)
+            .scaleBarOffsetX(scaleBarOffsetX_)
+            .scaleBarOffsetY(scaleBarOffsetY_)
+            .scaleBarIsFilled(scaleBarIsFilled_)
             .shouldShowScaleBar(shouldShowScaleBar_)
             .shouldAutostretch(shouldAutostretch_)
             .trimPercentage(trimPercentage_)
