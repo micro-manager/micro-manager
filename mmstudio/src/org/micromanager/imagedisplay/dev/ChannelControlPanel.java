@@ -58,7 +58,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    
    private static final int NUM_BINS = 256;
    private final int channelIndex_;
-   private HistogramPanel hp_;
+   private HistogramPanel histogram_;
    private HistogramsPanel parent_;
    private Datastore store_;
    private MMVirtualStack stack_;
@@ -261,11 +261,11 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
       add(firstRow);
 
-      hp_ = makeHistogramPanel();
-      hp_.setMinimumSize(new Dimension(100, 60));
-      hp_.setToolTipText("Adjust the brightness and contrast by dragging triangles at top and bottom. Change the gamma by dragging the curve. (These controls only change display, and do not edit the image data.)");
+      histogram_ = makeHistogramPanel();
+      histogram_.setMinimumSize(new Dimension(100, 60));
+      histogram_.setToolTipText("Adjust the brightness and contrast by dragging triangles at top and bottom. Change the gamma by dragging the curve. (These controls only change display, and do not edit the image data.)");
 
-      add(hp_, "grow");
+      add(histogram_, "grow");
 
       JPanel secondRow = new JPanel(new MigLayout("insets 0"));
       colorPickerLabel_.setMinimumSize(new Dimension(18, 18));
@@ -331,9 +331,9 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    private void updateHistogram() {
-      hp_.setCursorText(contrastMin_ + "", contrastMax_ + "");
-      hp_.setCursors(contrastMin_ / binSize_, (contrastMax_+1) / binSize_, gamma_);
-      hp_.repaint();
+      histogram_.setCursorText(contrastMin_ + "", contrastMax_ + "");
+      histogram_.setCursors(contrastMin_ / binSize_, (contrastMax_+1) / binSize_, gamma_);
+      histogram_.repaint();
    }
 
    private void fullButtonAction() {
@@ -515,7 +515,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          color_ = allColors[channelIndex_];
       }
       colorPickerLabel_.setBackground(color_);
-      hp_.setTraceStyle(true, color_);
+      histogram_.setTraceStyle(true, color_);
       String[] allNames = settings_.getChannelNames();
       if (allNames != null && allNames.length > channelIndex_) {
          String name = allNames[channelIndex_];
@@ -735,16 +735,16 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
       
       if (shouldDrawHistogram) {
-         hp_.setVisible(true);
+         histogram_.setVisible(true);
          //Draw histogram and stats
          histogramData.setData(histogram);
-         hp_.setData(histogramData);
-         hp_.setAutoScale();
-         hp_.repaint();
+         histogram_.setData(histogramData);
+         histogram_.setAutoScale();
+         histogram_.repaint();
 
          minMaxLabel_.setText(String.format("<html>Min/Max/Mean:<br>%d/%d/%d</html>", pixelMin_, pixelMax_, pixelMean_));
       } else {
-          hp_.setVisible(false);        
+          histogram_.setVisible(false);
       }
    }
    
