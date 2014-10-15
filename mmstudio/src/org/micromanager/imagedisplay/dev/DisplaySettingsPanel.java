@@ -11,6 +11,7 @@ import java.awt.event.KeyEvent;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -25,6 +26,7 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.DatastoreLockedException;
 import org.micromanager.api.data.DisplaySettings;
+import org.micromanager.data.DefaultDisplaySettings;
 
 import org.micromanager.utils.ReportingUtils;
 
@@ -112,6 +114,16 @@ public class DisplaySettingsPanel extends JPanel {
       });
       trimPercentage.setValue(settings.getTrimPercentage());
       add(trimPercentage, "wrap");
+
+      JButton saveButton = new JButton("Set as default");
+      saveButton.setToolTipText("Save the current display settings as default for all new image windows.");
+      saveButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            saveAsDefaults();
+         }
+      });
+      add(saveButton, "wrap");
    }
 
    /**
@@ -126,25 +138,36 @@ public class DisplaySettingsPanel extends JPanel {
       
       CompositeImage composite = (CompositeImage) ijImage_;
       String selection = (String) displayMode.getSelectedItem();
+      DisplaySettings.DisplaySettingsBuilder builder = store_.getDisplaySettings().copy();
       if (selection.equals("Composite")) {
          if (store_.getMaxIndex("channel") > 6) {
             JOptionPane.showMessageDialog(null,
                "Images with more than 7 channels cannot be displayed in Composite mode.");
             // Send them back to Color mode.
             displayMode.setSelectedIndex(0);
+            builder.channelDisplayModeIndex(0);
          }
          else {
             composite.setMode(CompositeImage.COMPOSITE);
+            builder.channelDisplayModeIndex(2);
          }
       }
       else if (selection.equals("Color")) {
          composite.setMode(CompositeImage.COLOR);
+         builder.channelDisplayModeIndex(0);
       }
       else {
          // Assume grayscale mode.
          composite.setMode(CompositeImage.GRAYSCALE);
+         builder.channelDisplayModeIndex(1);
       }
       composite.updateAndDraw();
+      try {
+         store_.setDisplaySettings(builder.build());
+      }
+      catch (DatastoreLockedException e) {
+         ReportingUtils.showError(e, "Couldn't save display settings.");
+      }
    }
 
    /** 
@@ -199,5 +222,12 @@ public class DisplaySettingsPanel extends JPanel {
       catch (DatastoreLockedException e) {
          ReportingUtils.showError("The datastore is locked; settings cannot be changed.");
       }
+   }
+
+   /**
+    * Save the current display settings as default settings.
+    */
+   private void saveAsDefaults() {
+      DefaultDisplaySettings.setStandardSettings(store_.getDisplaySettings());
    }
 }
