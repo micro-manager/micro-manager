@@ -318,6 +318,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
             .channelContrastMins(channelContrastMins_)
             .channelContrastMaxes(channelContrastMaxes_)
             .channelGammas(channelGammas_)
+            .channelDisplayModeIndex(channelDisplayModeIndex_)
             .histogramUpdateRate(histogramUpdateRate_)
             .shouldSyncChannels(shouldSyncChannels_)
             .scaleBarColorIndex(scaleBarColorIndex_)
