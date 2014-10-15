@@ -362,13 +362,21 @@ public class DefaultDisplaySettings implements DisplaySettings {
    public JSONObject legacyToJSON() {
       try {
          JSONObject result = new JSONObject();
-         MDUtils.setChannelName(result, channelNames_[0]);
+         if (channelNames_ != null) {
+            MDUtils.setChannelName(result, channelNames_[0]);
+         }
          // TODO: no idea how we represent a color with an int in the current
          // system, but at least using a hashCode() uniquely represents this
          // RGBA color!
-         MDUtils.setChannelColor(result, channelColors_[0].hashCode());
-         result.put("ChContrastMin", channelContrastMins_[0]);
-         result.put("ChContrastMax", channelContrastMaxes_[0]);
+         if (channelColors_ != null && channelColors_.length > 0) {
+            MDUtils.setChannelColor(result, channelColors_[0].hashCode());
+         }
+         if (channelContrastMins_ != null && channelContrastMins_.length > 0) {
+            result.put("ChContrastMin", channelContrastMins_[0]);
+         }
+         if (channelContrastMaxes_ != null && channelContrastMaxes_.length > 0) {
+            result.put("ChContrastMax", channelContrastMaxes_[0]);
+         }
          result.put("histogramUpdateRate", histogramUpdateRate_);
          result.put("shouldSyncChannels", shouldSyncChannels_);
          result.put("scaleBarColorIndex", scaleBarColorIndex_);
@@ -383,5 +391,10 @@ public class DefaultDisplaySettings implements DisplaySettings {
          ReportingUtils.logError(e, "Couldn't convert DefaultDisplaySettings to JSON");
          return null;
       }
+   }
+
+   @Override
+   public String toString() {
+      return legacyToJSON().toString();
    }
 }
