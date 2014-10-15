@@ -1,6 +1,7 @@
 package org.micromanager.data;
 
 import java.awt.Color;
+import java.lang.reflect.Field;
 import java.util.prefs.Preferences;
 
 import org.json.JSONException;
@@ -393,8 +394,27 @@ public class DefaultDisplaySettings implements DisplaySettings {
       }
    }
 
+   /**
+    * Generate a textual description of this object. For debugging purposes
+    * only.
+    */
    @Override
    public String toString() {
-      return legacyToJSON().toString();
+      Field[] fields = getClass().getDeclaredFields();
+      String result = "<DisplaySettings: ";
+      for (Field field : fields) {
+         try {
+            Object val = field.get(this);
+            if (val == null) {
+               val = "null";
+            }
+            result += String.format("\n    %s: %s", field.getName(), val.toString());
+         }
+         catch (IllegalAccessException e) {
+            ReportingUtils.logError(e, "Couldn't access field " + field.getName());
+         }
+      }
+      result += ">";
+      return result;
    }
 }
