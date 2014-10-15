@@ -29,6 +29,7 @@ import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.Image;
 
 import org.micromanager.data.NewImageEvent;
+import org.micromanager.imagedisplay.FPSEvent;
 import org.micromanager.imagedisplay.MouseMovedEvent;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.NumberUtils;
@@ -47,21 +48,19 @@ public class HyperstackControls extends JPanel {
    private MMVirtualStack stack_;
 
    // Last known mouse positions.
-   private int mouseX_ = -1;
-   private int mouseY_ = -1;
+   private int mouseX_ = 0;
+   private int mouseY_ = 0;
 
    // JPanel that holds all controls.
    private JPanel subPanel_;
    // Controls common to both control sets
    private ScrollerPanel scrollerPanel_;
    private JLabel pixelInfoLabel_;
-   // Displays information on the currently-displayed image.
-   private JLabel imageInfoLabel_;
+   private JLabel fpsLabel_;
    // Displays the countdown to the next frame.
    private JLabel countdownLabel_;
    private JButton showFolderButton_;
    private JButton saveButton_;
-   private JLabel fpsLabel_;
 
    // Standard control set
    private javax.swing.JTextField fpsField_;
@@ -92,20 +91,23 @@ public class HyperstackControls extends JPanel {
       // This layout minimizes space between components.
       subPanel_ = new JPanel(new MigLayout("insets 0, fillx, align center"));
 
+      java.awt.Font labelFont = new java.awt.Font("Lucida Grande", 0, 10);
+      String labelString = "                                            ";
+      Dimension labelDimension = new Dimension(150, 10);
       JPanel labelsPanel = new JPanel(new MigLayout("insets 0"));
-      pixelInfoLabel_ = new JLabel("                                         ");
-      pixelInfoLabel_.setMinimumSize(new Dimension(150, 10));
-      pixelInfoLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+      pixelInfoLabel_ = new JLabel(labelString);
+      pixelInfoLabel_.setMinimumSize(labelDimension);
+      pixelInfoLabel_.setFont(labelFont);
       labelsPanel.add(pixelInfoLabel_);
+
+      fpsLabel_ = new JLabel(labelString);
+      fpsLabel_.setMinimumSize(labelDimension);
+      fpsLabel_.setFont(labelFont);
+      labelsPanel.add(fpsLabel_);
       
-      imageInfoLabel_ = new JLabel("                                         ");
-      imageInfoLabel_.setMinimumSize(new Dimension(150, 10));
-      imageInfoLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
-      labelsPanel.add(imageInfoLabel_);
-      
-      countdownLabel_ = new JLabel("                                         ");
-      countdownLabel_.setMinimumSize(new Dimension(150, 10));
-      countdownLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+      countdownLabel_ = new JLabel(labelString);
+      countdownLabel_.setMinimumSize(labelDimension);
+      countdownLabel_.setFont(labelFont);
       labelsPanel.add(countdownLabel_);
 
       subPanel_.add(labelsPanel, "span, growx, align center, wrap");
@@ -134,35 +136,39 @@ public class HyperstackControls extends JPanel {
       try {
          mouseX_ = event.getX();
          mouseY_ = event.getY();
-         int numChannels = store_.getMaxIndex("channel") + 1;
-         String intensity = "";
-         if (numChannels > 1) {
-            // Multi-channel case: display each channel with a "/" in-between.
-            intensity += "[";
-            for (int i = 0; i < numChannels; ++i) {
-               Coords imageCoords = stack_.getCurrentImageCoords().copy().position("channel", i).build();
-               intensity += store_.getImage(imageCoords).getIntensityStringAt(mouseX_, mouseY_);
-               if (i != numChannels - 1) {
-                  intensity += "/";
-               }
-            }
-            intensity += "]";
-         }
-         else {
-            // Single-channel case; simple.
-            intensity = store_.getImage(stack_.getCurrentImageCoords()).getIntensityStringAt(mouseX_, mouseY_);
-         }
-         setPixelInfo(mouseX_, mouseY_, intensity);
+         setPixelInfo(mouseX_, mouseY_);
       }
       catch (Exception e) {
          ReportingUtils.logError(e, "Failed to get image pixel info");
       }
    }
 
+   public String getIntensityString(int x, int y) {
+      int numChannels = store_.getMaxIndex("channel") + 1;
+      if (numChannels > 1) {
+         // Multi-channel case: display each channel with a "/" in-between.
+         String intensity = "[";
+         for (int i = 0; i < numChannels; ++i) {
+            Coords imageCoords = stack_.getCurrentImageCoords().copy().position("channel", i).build();
+            intensity += store_.getImage(imageCoords).getIntensityStringAt(x, y);
+            if (i != numChannels - 1) {
+               intensity += "/";
+            }
+         }
+         intensity += "]";
+         return intensity;
+      }
+      else {
+         // Single-channel case; simple.
+         return store_.getImage(stack_.getCurrentImageCoords()).getIntensityStringAt(x, y);
+      }
+   }
+
    /**
     * Update our pixel info text.
     */
-   private void setPixelInfo(int x, int y, String intensity) {
+   private void setPixelInfo(int x, int y) {
+      String intensity = getIntensityString(x, y);
       pixelInfoLabel_.setText(String.format("x=%d, y=%d, value=%s",
                x, y, intensity));
       // This validate call reduces the chance that the text will be truncated.
@@ -179,8 +185,7 @@ public class HyperstackControls extends JPanel {
       if (mouseX_ >= 0 && mouseX_ < image.getWidth() &&
             mouseY_ >= 0 && mouseY_ < image.getHeight()) {
          try {
-            setPixelInfo(mouseX_, mouseY_,
-                  image.getIntensityStringAt(mouseX_, mouseY_));
+            setPixelInfo(mouseX_, mouseY_);
          }
          catch (Exception e) {
             ReportingUtils.logError(e, "Error in HyperstackControls onNewImage");
@@ -188,50 +193,23 @@ public class HyperstackControls extends JPanel {
       }
    }
 
-   public void setImageInfoLabel(String text) {
-      imageInfoLabel_.setText(text);
-   }
-
-   private void updateStatusLine(JSONObject tags) {
-      String status = "";
-      try {
-         String xyPosition;
-         try {
-            xyPosition = MDUtils.getPositionName(tags);
-            if (xyPosition != null && !xyPosition.contentEquals("null")) {
-               status += xyPosition + ", ";
-            }
-         } catch (Exception e) {
-            //Oh well...
-         }
-
-         try {
-            double seconds = MDUtils.getElapsedTimeMs(tags) / 1000;
-            status += elapsedTimeDisplayString(seconds);
-         } catch (JSONException ex) {
-            ReportingUtils.logError("MetaData did not contain ElapsedTime-ms field");
-         }
-
-         String zPosition;
-         try {
-            zPosition = NumberUtils.doubleToDisplayString(MDUtils.getZPositionUm(tags));
-            status += ", z: " + zPosition + " um";
-         } catch (Exception e) {
-         }
-         String chan;
-         try {
-            chan = MDUtils.getChannelName(tags);
-            if (chan != null && !chan.contentEquals("null")) {
-               status += ", " + chan;
-            }
-         } catch (Exception ex) {
-         }
-
-         setImageInfoLabel(status);
-      } catch (Exception ex) {
-         ReportingUtils.logError(ex);
+   /**
+    * New information on our FPS; update a label.
+    */
+   @Subscribe
+   public void onFPSUpdate(FPSEvent event) {
+      ReportingUtils.logError("FPSEvent with " + event.getDataFPS() + " and display " + event.getDisplayFPS());
+      // Default to assuming we'll be blanking the label.
+      String newLabel = "";
+      if (event.getDataFPS() != 0) {
+         newLabel = String.format("FPS: %.1f (display %.1f)",
+               event.getDataFPS(), event.getDisplayFPS());
       }
-
+      else if (event.getDisplayFPS() != 0) {
+         newLabel = String.format("Display FPS: %.1f", event.getDisplayFPS());
+      }
+      fpsLabel_.setText(newLabel);
+      validate();
    }
 
    public static String elapsedTimeDisplayString(double seconds) {
