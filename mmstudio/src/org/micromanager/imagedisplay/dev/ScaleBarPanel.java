@@ -23,6 +23,8 @@ import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.Image;
 import org.micromanager.api.display.OverlayPanel;
 
+import org.micromanager.data.DefaultDisplaySettings;
+
 /**
  * This class provides a GUI for drawing a scale bar.
  */
@@ -48,6 +50,7 @@ public class ScaleBarPanel extends OverlayPanel {
    
    public ScaleBarPanel() {
       setLayout(new MigLayout("flowy"));
+      DefaultDisplaySettings settings = DefaultDisplaySettings.getStandardSettings();
       shouldDraw_ = new JCheckBox("Draw scale bar");
       shouldDraw_.addActionListener(new ActionListener() {
          @Override
@@ -55,6 +58,7 @@ public class ScaleBarPanel extends OverlayPanel {
             redraw();
          }
       });
+      shouldDraw_.setSelected(settings.getShouldShowScaleBar());
       add(shouldDraw_);
       
       add(new JLabel("Color: "));
@@ -65,6 +69,7 @@ public class ScaleBarPanel extends OverlayPanel {
             redraw();
          }
       });
+      color_.setSelectedIndex(settings.getScaleBarColorIndex());
       add(color_);
 
       add(new JLabel("X offset: "), "split 2, flowx");
@@ -75,6 +80,7 @@ public class ScaleBarPanel extends OverlayPanel {
             redraw();
          }
       });
+      xOffset_.setText(String.valueOf(settings.getScaleBarOffsetX()));
       add(xOffset_, "wrap");
 
       isBarFilled_ = new JCheckBox("Solid scale bar");
@@ -84,6 +90,7 @@ public class ScaleBarPanel extends OverlayPanel {
             redraw();
          }
       });
+      isBarFilled_.setSelected(settings.getScaleBarIsFilled());
       add(isBarFilled_);
 
       add(new JLabel("Position: "));
@@ -95,6 +102,7 @@ public class ScaleBarPanel extends OverlayPanel {
             redraw();
          }
       });
+      position_.setSelectedIndex(settings.getScaleBarLocationIndex());
       add(position_);
 
       add(new JLabel("Y offset: "), "split 2, flowx");
@@ -105,6 +113,7 @@ public class ScaleBarPanel extends OverlayPanel {
             redraw();
          }
       });
+      yOffset_.setText(String.valueOf(settings.getScaleBarOffsetY()));
       add(yOffset_);
    }
 
