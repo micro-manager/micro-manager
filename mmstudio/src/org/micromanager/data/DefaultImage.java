@@ -95,6 +95,10 @@ public class DefaultImage implements Image {
          builder.comments(MDUtils.getComments(tags));
       }
       catch (JSONException e) {}
+      try {
+         builder.imageNumber((int) MDUtils.getSequenceNumber(tags));
+      }
+      catch (JSONException e) {}
       metadata_ = builder.build();
 
       DefaultCoords.Builder cBuilder = new DefaultCoords.Builder();
