@@ -25,7 +25,6 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.DatastoreLockedException;
 import org.micromanager.api.data.DisplaySettings;
-import org.micromanager.data.DefaultDisplaySettings;
 
 import org.micromanager.utils.ReportingUtils;
 
@@ -45,7 +44,7 @@ public class DisplaySettingsPanel extends JPanel {
       store_ = store;
       ijImage_ = ijImage;
 
-      DefaultDisplaySettings settings = DefaultDisplaySettings.getStandardSettings();
+      DisplaySettings settings = store_.getDisplaySettings();
 
       add(new JLabel("Display mode: "), "split 2");
       final JComboBox displayMode = new JComboBox(

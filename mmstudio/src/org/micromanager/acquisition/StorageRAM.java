@@ -46,10 +46,7 @@ public class StorageRAM implements Storage {
       coordsToImage_ = new HashMap<Coords, Image>();
       maxIndex_ = new DefaultCoords.Builder().build();
       summaryMetadata_ = (new DefaultSummaryMetadata.Builder()).build();
-      // TODO: arbitrarily deciding color settings.
-      displaySettings_ = (new DefaultDisplaySettings.Builder())
-            .channelColors(new Color[] {Color.RED, Color.GREEN})
-            .build();
+      displaySettings_ = DefaultDisplaySettings.getStandardSettings();
       // It is imperative that we be notified of new images before anyone who
       // wants to retrieve the images from the store is notified.
       store.registerForEvents(this, 0);

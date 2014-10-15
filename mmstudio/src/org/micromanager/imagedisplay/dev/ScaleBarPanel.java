@@ -20,10 +20,10 @@ import javax.swing.JTextField;
 import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.api.data.Datastore;
+import org.micromanager.api.data.DisplaySettings;
 import org.micromanager.api.data.Image;
 import org.micromanager.api.display.OverlayPanel;
 
-import org.micromanager.data.DefaultDisplaySettings;
 
 /**
  * This class provides a GUI for drawing a scale bar.
@@ -48,9 +48,9 @@ public class ScaleBarPanel extends OverlayPanel {
    private JTextField yOffset_;
    private JComboBox position_;
    
-   public ScaleBarPanel() {
+   public ScaleBarPanel(Datastore store) {
       setLayout(new MigLayout("flowy"));
-      DefaultDisplaySettings settings = DefaultDisplaySettings.getStandardSettings();
+      DisplaySettings settings = store.getDisplaySettings();
       shouldDraw_ = new JCheckBox("Draw scale bar");
       shouldDraw_.addActionListener(new ActionListener() {
          @Override
