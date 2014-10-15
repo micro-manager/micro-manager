@@ -70,6 +70,18 @@ public class DisplaySettingsPanel extends JPanel {
             setHistogramUpdateRate(histogramUpdateRate);
          }
       });
+      double updateRate = settings.getHistogramUpdateRate();
+      if (updateRate < 0) {
+         histogramUpdateRate.setSelectedIndex(0);
+      }
+      else if (updateRate == 0) {
+         histogramUpdateRate.setSelectedIndex(1);
+      }
+      else {
+         // TODO: this ignores the possibility that the actual update rate will
+         // be a value other than once per second.
+         histogramUpdateRate.setSelectedIndex(2);
+      }
       add(histogramUpdateRate, "wrap");
       
       final JCheckBox shouldAutostretch = new JCheckBox("Autostretch histograms");
@@ -80,6 +92,7 @@ public class DisplaySettingsPanel extends JPanel {
             setShouldAutostretch(shouldAutostretch);
          }
       });
+      shouldAutostretch.setSelected(settings.getShouldAutostretch());
       add(shouldAutostretch, "wrap");
 
       add(new JLabel("Truncate histograms: "), "split 2");
@@ -98,6 +111,7 @@ public class DisplaySettingsPanel extends JPanel {
             setTrimPercentage(trimPercentage);
          }
       });
+      trimPercentage.setValue(settings.getTrimPercentage());
       add(trimPercentage, "wrap");
    }
 
