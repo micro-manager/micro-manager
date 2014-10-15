@@ -112,7 +112,7 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
       }
    }
    
-   ThreadPoolExecutor getWritingExecutor() {
+   public ThreadPoolExecutor getWritingExecutor() {
       return writingExecutor_;
    }
    
@@ -182,7 +182,8 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
 
       //DEbugging code for a strange exception found in core log
       try {
-         return tiffReadersByLabel_.get(label).readImage(label);
+         TaggedImage img = tiffReadersByLabel_.get(label).readImage(label);
+         return img;     
       } catch (NullPointerException e) {
          ReportingUtils.logError("Couldn't find image that TiffReader is supposed to contain");
          if (tiffReadersByLabel_ == null) {
