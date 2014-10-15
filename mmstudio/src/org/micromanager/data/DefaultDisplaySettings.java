@@ -24,6 +24,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
          // No saved settings.
          return builder.build();
       }
+      builder.channelDisplayModeIndex(prefs.getInt("channelDisplayModeIndex", 0));
       builder.histogramUpdateRate(prefs.getDouble("histogramUpdateRate", 0));
       builder.shouldSyncChannels(prefs.getBoolean("shouldSyncChannels", false));
       builder.scaleBarColorIndex(prefs.getInt("scaleBarColorIndex", 0));
@@ -43,6 +44,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
     */
    public static void setStandardSettings(DisplaySettings settings) {
       Preferences prefs = Preferences.userNodeForPackage(DefaultDisplaySettings.class);
+      prefs.putInt("channelDisplayModeIndex", settings.getChannelDisplayModeIndex());
       prefs.putDouble("histogramUpdateRate", settings.getHistogramUpdateRate());
       prefs.putBoolean("shouldSyncChannels", settings.getShouldSyncChannels());
       prefs.putInt("scaleBarColorIndex", settings.getScaleBarColorIndex());
@@ -62,6 +64,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
       private Integer[] channelContrastMins_ = null;
       private Integer[] channelContrastMaxes_ = null;
       private Double[] channelGammas_ = null;
+      private Integer channelDisplayModeIndex_ = null;
       private Double histogramUpdateRate_ = null;
       private Boolean shouldSyncChannels_ = null;
       private Integer scaleBarColorIndex_ = null;
@@ -106,6 +109,12 @@ public class DefaultDisplaySettings implements DisplaySettings {
       @Override
       public DisplaySettingsBuilder channelGammas(Double[] channelGammas) {
          channelGammas_ = channelGammas;
+         return this;
+      }
+
+      @Override
+      public DisplaySettingsBuilder channelDisplayModeIndex(Integer channelDisplayModeIndex) {
+         channelDisplayModeIndex_ = channelDisplayModeIndex;
          return this;
       }
 
@@ -182,6 +191,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
    private Integer[] channelContrastMins_ = null;
    private Integer[] channelContrastMaxes_ = null;
    private Double[] channelGammas_ = null;
+   private Integer channelDisplayModeIndex_ = null;
    private Double histogramUpdateRate_ = null;
    private Boolean shouldSyncChannels_ = null;
    private Integer scaleBarColorIndex_ = null;
@@ -200,6 +210,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
       channelContrastMins_ = builder.channelContrastMins_;
       channelContrastMaxes_ = builder.channelContrastMaxes_;
       channelGammas_ = builder.channelGammas_;
+      channelDisplayModeIndex_ = builder.channelDisplayModeIndex_;
       histogramUpdateRate_ = builder.histogramUpdateRate_;
       shouldSyncChannels_ = builder.shouldSyncChannels_;
       scaleBarColorIndex_ = builder.scaleBarColorIndex_;
@@ -236,6 +247,11 @@ public class DefaultDisplaySettings implements DisplaySettings {
    @Override
    public Double[] getChannelGammas() {
       return channelGammas_;
+   }
+
+   @Override
+   public Integer getChannelDisplayModeIndex() {
+      return channelDisplayModeIndex_;
    }
 
    @Override
