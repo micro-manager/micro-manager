@@ -198,7 +198,6 @@ public class HyperstackControls extends JPanel {
     */
    @Subscribe
    public void onFPSUpdate(FPSEvent event) {
-      ReportingUtils.logError("FPSEvent with " + event.getDataFPS() + " and display " + event.getDisplayFPS());
       // Default to assuming we'll be blanking the label.
       String newLabel = "";
       if (event.getDataFPS() != 0) {
