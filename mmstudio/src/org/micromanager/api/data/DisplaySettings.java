@@ -27,6 +27,7 @@ public interface DisplaySettings {
       DisplaySettingsBuilder channelContrastMins(Integer[] channelContrastMins);
       DisplaySettingsBuilder channelContrastMaxes(Integer[] channelContrastMaxes);
       DisplaySettingsBuilder channelGammas(Double[] channelGammas);
+      DisplaySettingsBuilder channelDisplayModeIndex(Integer channelDisplayModeIndex);
       DisplaySettingsBuilder histogramUpdateRate(Double histogramUpdateRate);
       DisplaySettingsBuilder shouldSyncChannels(Boolean shouldSyncChannels);
       DisplaySettingsBuilder scaleBarColorIndex(Integer scaleBarColorIndex);
@@ -51,6 +52,7 @@ public interface DisplaySettings {
    public Integer[] getChannelContrastMins();
    public Integer[] getChannelContrastMaxes();
    public Double[] getChannelGammas();
+   public Integer getChannelDisplayModeIndex();
    public Double getHistogramUpdateRate();
    public Boolean getShouldSyncChannels();
    public Integer getScaleBarColorIndex();
