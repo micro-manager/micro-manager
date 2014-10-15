@@ -38,7 +38,7 @@ class OverlaysPanel extends JPanel {
       displayBus_.register(this);
 
       panels_ = new ArrayList<OverlayPanel>();
-      ScaleBarPanel panel = new ScaleBarPanel();
+      ScaleBarPanel panel = new ScaleBarPanel(store_);
       panel.setBus(displayBus_);
       panels_.add(panel);
 
