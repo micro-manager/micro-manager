@@ -240,14 +240,14 @@ public class MainFrame extends JFrame implements LiveModeListener {
       textFieldExp_.addFocusListener(new FocusAdapter() {
          @Override
          public void focusLost(FocusEvent fe) {
-            studio_.setExposure(Double.parseDouble(textFieldExp_.getText()));
+            studio_.setExposure(getDisplayedExposureTime());
          }
       });
       textFieldExp_.setFont(defaultFont_);
       textFieldExp_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            studio_.setExposure(Double.parseDouble(textFieldExp_.getText()));
+            studio_.setExposure(getDisplayedExposureTime());
          }
       });
       GUIUtils.addWithEdges(topPanel, textFieldExp_, 203, 21, 276, 40);
