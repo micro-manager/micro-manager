@@ -134,7 +134,7 @@ public class SnapLiveManager {
       stopLiveMode();
       shouldStopGrabberThread_ = false;
       if (display_ == null || display_.getIsClosed()) {
-         createDisplay(); // See comments on this function.
+         createDisplay();
       }
       grabberThread_ = new Thread(new Runnable() {
          @Override
@@ -255,10 +255,7 @@ public class SnapLiveManager {
    }
 
    /**
-    * We need to [re]create the display. Unfortunately it won't actually
-    * appear until images are available (since we can't create the ImagePlus
-    * used for drawing things until after at least one image is in the
-    * Datastore), so we'll be setting display_ later on in displayImage().
+    * We need to [re]create the display and its associated custom controls.
     */
    private void createDisplay() {
       JPanel controlPanel = new JPanel(new MigLayout());
@@ -298,26 +295,20 @@ public class SnapLiveManager {
       });
       controlPanel.add(toAlbumButton_);
 
-      new DefaultDisplayWindow(store_, controlPanel);
+      display_ = new DefaultDisplayWindow(store_, controlPanel);
+      display_.registerForEvents(this);
    }
 
    public void displayImage(Image image) {
       try {
          DefaultImage temp = new DefaultImage(image, image.getCoords(), image.getMetadata());
+         // This will put the images into the datastore, which in turn will
+         // cause them to be displayed.
          List<Image> splitted = temp.splitMultiComponentIntoStore(store_);
          lastImage_ = splitted.get(splitted.size() - 1);
       }
       catch (DatastoreLockedException e) {
          ReportingUtils.showError(e, "Snap/Live display datastore locked.");
-      }
-      if (display_ == null || display_.getIsClosed()) {
-         // Now that we know that the DisplayStarter we made earlier will
-         // have made a DisplayWindow, access it for ourselves.
-         List<DisplayWindow> displays = store_.getDisplays();
-         if (displays.size() > 0) {
-            display_ = displays.get(0);
-            display_.registerForEvents(this);
-         }
       }
    }
 
@@ -340,8 +331,6 @@ public class SnapLiveManager {
       try {
          if (shouldDisplay) {
             if (display_ == null || display_.getIsClosed()) {
-               // Assume that there's no DisplayStarter waiting to create a
-               // DisplayWindow, and create one now.
                createDisplay();
             }
             else {
