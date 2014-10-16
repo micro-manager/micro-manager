@@ -12,7 +12,7 @@ AC_PROG_CXX([clang++ llvm-g++ g++ c++])
 AC_PROG_CC([clang llvm-gcc gcc cc])
 
 # TODO: Following should decide whether adapters depending on BOOST get build
-AX_BOOST_BASE([1.40.0])
+AX_BOOST_BASE([1.48.0])
 AX_BOOST_THREAD
 AX_BOOST_ASIO
 AX_BOOST_SYSTEM
