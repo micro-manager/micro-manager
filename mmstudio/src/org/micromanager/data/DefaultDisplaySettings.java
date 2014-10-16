@@ -25,6 +25,15 @@ public class DefaultDisplaySettings implements DisplaySettings {
          // No saved settings.
          return builder.build();
       }
+      // We have to convert colors to/from byte arrays, that being the only
+      // way to store complex datatypes in Preferences. Fortunately colors
+      // aren't that complex.
+      Color[] defaultColors = new Color[] {Color.RED, Color.GREEN, Color.BLUE,
+         Color.YELLOW, Color.CYAN, Color.MAGENTA, Color.ORANGE};
+      byte[] defaultByteColors = colorsToBytes(defaultColors);
+      byte[] preferenceColors = prefs.getByteArray("channelColors", defaultByteColors);
+      builder.channelColors(bytesToColors(preferenceColors));
+
       builder.channelDisplayModeIndex(prefs.getInt("channelDisplayModeIndex", 0));
       builder.histogramUpdateRate(prefs.getDouble("histogramUpdateRate", 0));
       builder.shouldSyncChannels(prefs.getBoolean("shouldSyncChannels", false));
@@ -45,6 +54,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
     */
    public static void setStandardSettings(DisplaySettings settings) {
       Preferences prefs = Preferences.userNodeForPackage(DefaultDisplaySettings.class);
+      prefs.putByteArray("channelColors", colorsToBytes(settings.getChannelColors()));
       prefs.putInt("channelDisplayModeIndex", settings.getChannelDisplayModeIndex());
       prefs.putDouble("histogramUpdateRate", settings.getHistogramUpdateRate());
       prefs.putBoolean("shouldSyncChannels", settings.getShouldSyncChannels());
@@ -57,6 +67,36 @@ public class DefaultDisplaySettings implements DisplaySettings {
       prefs.putBoolean("shouldAutostretch", settings.getShouldAutostretch());
       prefs.putDouble("trimPercentage", settings.getTrimPercentage());
       prefs.putBoolean("shouldUseLogScale", settings.getShouldUseLogScale());
+   }
+
+   /**
+    * Convert the provided array of Colors to an array of Bytes, in RGB order.
+    */
+   private static byte[] colorsToBytes(Color[] colors) {
+      byte[] result = new byte[colors.length * 3];
+      for (int i = 0; i < colors.length; ++i) {
+         result[i * 3] = (byte) colors[i].getRed();
+         result[i * 3 + 1] = (byte) colors[i].getGreen();
+         result[i * 3 + 2] = (byte) colors[i].getBlue();
+      }
+      return result;
+   }
+
+   /**
+    * Reverse the process performed by colorsToBytes().
+    */
+   private static Color[] bytesToColors(byte[] bytes) {
+      Color[] result = new Color[bytes.length / 3];
+      for (int i = 0; i < result.length; ++i) {
+         // Java bytes are signed, automatically, which puts them in the range
+         // [-127, 128]. We need values in the range [0, 255]; this conversion
+         // below will accomplish that for us.
+         int red = ((int) bytes[i * 3]) & 0xff;
+         int green = ((int) bytes[i * 3 + 1]) & 0xff;
+         int blue = ((int) bytes[i * 3 + 2]) & 0xff;
+         result[i] = new Color(red, green, blue);
+      }
+      return result;
    }
 
    public static class Builder implements DisplaySettings.DisplaySettingsBuilder {
