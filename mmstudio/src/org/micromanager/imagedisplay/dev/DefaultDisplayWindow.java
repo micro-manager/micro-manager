@@ -169,7 +169,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
          modePanel_ = new MultiModePanel(displayBus_);
 
          DisplaySettingsPanel settings = new DisplaySettingsPanel(
-            store_, ijImage_);
+            store_, ijImage_, displayBus_);
          modePanel_.addMode("Settings", settings);
 
          histograms_ = new HistogramsPanel(store_, stack_, ijImage_,
