@@ -16,6 +16,19 @@ import org.micromanager.utils.ReportingUtils;
 public class DefaultDisplaySettings implements DisplaySettings {
 
    /**
+    * Clear preferences associated with this class.
+    */
+   public static void clearPrefs() {
+      Preferences prefs = Preferences.userNodeForPackage(DefaultDisplaySettings.class);
+      try {
+         prefs.clear();
+      }
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Unable to clear preferences for DefaultDisplaySettings");
+      }
+   }
+
+   /**
     * Retrieve the display settings that have been saved in the preferences.
     */
    public static DefaultDisplaySettings getStandardSettings() {
@@ -28,8 +41,10 @@ public class DefaultDisplaySettings implements DisplaySettings {
       // We have to convert colors to/from byte arrays, that being the only
       // way to store complex datatypes in Preferences. Fortunately colors
       // aren't that complex.
-      Color[] defaultColors = new Color[] {Color.RED, Color.GREEN, Color.BLUE,
-         Color.YELLOW, Color.CYAN, Color.MAGENTA, Color.ORANGE};
+      // Seven colors because ImageJ only supports 7 channels; put yellow/cyan
+      // first for colorblind-friendliness.
+      Color[] defaultColors = new Color[] {Color.YELLOW, Color.CYAN,
+         Color.MAGENTA, Color.RED, Color.GREEN, Color.BLUE, Color.ORANGE};
       byte[] defaultByteColors = colorsToBytes(defaultColors);
       byte[] preferenceColors = prefs.getByteArray("channelColors", defaultByteColors);
       builder.channelColors(bytesToColors(preferenceColors));
