@@ -186,11 +186,6 @@ public final class HistogramsPanel extends JPanel implements Histograms {
       channelPanels_.get(channelIndex).setContrast(min, max, gamma);
    }
    
-   public void setDisplayMode(int mode) {
-      // TODO: skipping for now.
-//      display_.setDisplayMode(mode);
-   }
-
    @Override
    public void autoscaleAllChannels() {
       if (channelPanels_ != null && channelPanels_.size() > 0) {
