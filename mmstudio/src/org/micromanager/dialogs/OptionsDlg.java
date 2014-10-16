@@ -43,6 +43,7 @@ import javax.swing.WindowConstants;
 import mmcorej.CMMCore;
 
 import org.micromanager.api.ScriptInterface;
+import org.micromanager.data.DefaultDisplaySettings;
 import org.micromanager.logging.LogFileManager;
 import org.micromanager.MMOptions;
 import org.micromanager.MMStudio;
@@ -169,10 +170,10 @@ public class OptionsDlg extends MMDialog {
          }
       });
 
-      final JButton clearRegistryButton = new JButton();
-      clearRegistryButton.setText("Reset Preferences");
-      clearRegistryButton.setToolTipText("Clear all preference settings and restore defaults");
-      clearRegistryButton.addActionListener(new ActionListener() {
+      final JButton clearPreferencesButton = new JButton();
+      clearPreferencesButton.setText("Reset Preferences");
+      clearPreferencesButton.setToolTipText("Clear all preference settings and restore defaults");
+      clearPreferencesButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(final ActionEvent e) {
             int answer = JOptionPane.showConfirmDialog(OptionsDlg.this,
@@ -185,10 +186,15 @@ public class OptionsDlg extends MMDialog {
             }
 
             try {
+               // TODO: just call removeNode() on mainPrefs_. This will require
+               // updating every object that has a reference to mainPrefs_
+               // (or alternatively setting things up so that nobody maintains
+               // such a reference).
                boolean previouslyRegistered = mainPrefs_.getBoolean(RegistrationDlg.REGISTRATION, false);
                mainPrefs_.clear();
                Preferences acqPrefs = mainPrefs_.node(mainPrefs_.absolutePath() + "/" + AcqControlDlg.ACQ_SETTINGS_NODE);
                acqPrefs.clear();
+               DefaultDisplaySettings.clearPrefs();
 
                // restore registration flag
                mainPrefs_.putBoolean(RegistrationDlg.REGISTRATION, previouslyRegistered);
@@ -408,7 +414,7 @@ public class OptionsDlg extends MMDialog {
 
       add(new JSeparator(), "wrap");
 
-      add(clearRegistryButton,
+      add(clearPreferencesButton,
             "split 2, sizegroup bottomBtns, gapright unrelated");
       add(closeButton, "sizegroup bottomBtns");
 
