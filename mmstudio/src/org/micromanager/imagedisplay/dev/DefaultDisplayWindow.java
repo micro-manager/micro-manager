@@ -126,14 +126,16 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
 
       resetTitle();
 
+      // Make the canvas thread before any of our other control objects, which
+      // may perform draw requests that need to be processed.
+      canvasThread_ = new CanvasUpdateThread(store_, stack_, ijImage_, displayBus_);
+      canvasThread_.start();
+
       makeWindowControls();
       zoomToPreferredSize();
       setVisible(true);
       histograms_.calcAndDisplayHistAndStats();
       
-      canvasThread_ = new CanvasUpdateThread(store_, stack_, ijImage_, displayBus_);
-      canvasThread_.start();
-
       dummyWindow_ = new DummyImageWindow(ijImage, this);
    }
 
@@ -362,9 +364,6 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       if (dummyWindow_ != null) {
          dummyWindow_.setImagePlus(ijImage_);
       }
-
-      makeWindowControls();
-      histograms_.calcAndDisplayHistAndStats();
    }
 
    /**
@@ -380,6 +379,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
             // Have multiple channels.
             shiftToCompositeImage();
             makeWindowControls();
+            histograms_.calcAndDisplayHistAndStats();
          }
          if (ijImage_ instanceof MMCompositeImage) {
             // Verify that ImageJ has the right number of channels.
@@ -412,12 +412,17 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
     */
    @Subscribe
    public void onDrawEvent(RequestToDrawEvent event) {
-      Coords drawCoords = stack_.getCurrentImageCoords();
-      if (event.getCoords() != null) {
-         // In particular, they want to display this image.
-         drawCoords = event.getCoords();
+      try {
+         Coords drawCoords = stack_.getCurrentImageCoords();
+         if (event.getCoords() != null) {
+            // In particular, they want to display this image.
+            drawCoords = event.getCoords();
+         }
+         canvasThread_.addCoords(drawCoords);
       }
-      canvasThread_.addCoords(drawCoords);
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Couldn't process RequestToDrawEvent");
+      }
    }
 
    /**
