@@ -1,5 +1,7 @@
 package org.micromanager.imagedisplay.dev;
 
+import com.google.common.eventbus.EventBus;
+
 import ij.CompositeImage;
 import ij.ImagePlus;
 
@@ -39,12 +41,15 @@ import org.micromanager.utils.ReportingUtils;
 public class DisplaySettingsPanel extends JPanel {
    private Datastore store_;
    private ImagePlus ijImage_;
+   private EventBus displayBus_;
 
-   public DisplaySettingsPanel(Datastore store, ImagePlus ijImage) {
+   public DisplaySettingsPanel(Datastore store, ImagePlus ijImage,
+         EventBus displayBus) {
       super(new MigLayout());
 
       store_ = store;
       ijImage_ = ijImage;
+      displayBus_ = displayBus;
 
       DisplaySettings settings = store_.getDisplaySettings();
 
@@ -168,6 +173,7 @@ public class DisplaySettingsPanel extends JPanel {
       catch (DatastoreLockedException e) {
          ReportingUtils.showError(e, "Couldn't save display settings.");
       }
+      displayBus_.post(new DefaultRequestToDrawEvent());
    }
 
    /** 
@@ -207,6 +213,7 @@ public class DisplaySettingsPanel extends JPanel {
       catch (DatastoreLockedException e) {
          ReportingUtils.showError("The datastore is locked; settings cannot be changed.");
       }
+      displayBus_.post(new DefaultRequestToDrawEvent());
    }
 
    /**
@@ -222,6 +229,7 @@ public class DisplaySettingsPanel extends JPanel {
       catch (DatastoreLockedException e) {
          ReportingUtils.showError("The datastore is locked; settings cannot be changed.");
       }
+      displayBus_.post(new DefaultRequestToDrawEvent());
    }
 
    /**
