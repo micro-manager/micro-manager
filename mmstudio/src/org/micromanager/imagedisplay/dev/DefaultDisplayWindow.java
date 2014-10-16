@@ -5,7 +5,6 @@ import com.google.common.eventbus.Subscribe;
 
 import ij.ImagePlus;
 import ij.gui.ImageWindow;
-import ij.gui.StackWindow;
 import ij.WindowManager;
 
 import java.awt.Component;
@@ -40,6 +39,7 @@ import org.micromanager.api.display.DisplayWindow;
 import org.micromanager.api.display.RequestToDrawEvent;
 
 import org.micromanager.imagedisplay.MMCompositeImage;
+import org.micromanager.imagedisplay.MMImagePlus;
 
 import org.micromanager.LineProfile;
 import org.micromanager.MMStudio;
@@ -48,10 +48,11 @@ import org.micromanager.utils.ReportingUtils;
 
 
 /**
- * This class is the Frame that handles image viewing: it contains the 
+ * This class is the window that handles image viewing: it contains the
  * canvas and controls for determining which channel, Z-slice, etc. is shown. 
- * HACK: we have overridden getComponents() on this function to "fix" bugs
- * in other bits of code; see that function's comment.
+ * Note that it is *not* an ImageJ ImageWindow; instead, it creates a
+ * DummyImageWindow instance for liaising with ImageJ. See that class for
+ * more information on why we do this.
  */
 public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
 
@@ -76,6 +77,8 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
    private Dimension paddedCanvasSize_;
 
    private CanvasUpdateThread canvasThread_;
+
+   private static int titleID = 0;
    
    // store window location in Java Preferences
    private static final int DEFAULTPOSX = 300;
@@ -85,33 +88,17 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
    private static final String WINDOWPOSY = "WindowPosY";
   
    /**
-    * In addition to the fairly self-evident objects, the customControls is
-    * a Component that will be displayed immediately beneath the
-    * HyperstackControls (the scrollbars). The creator is responsible for the
-    * logic implemented by these controls. They may be null.
+    * customControls is a Component that will be displayed immediately beneath
+    * the HyperstackControls (the scrollbars). The creator is responsible for
+    * the logic implemented by these controls. They may be null.
     */
-   public DefaultDisplayWindow(Datastore store, MMVirtualStack stack,
-            ImagePlus ijImage, EventBus bus, Component customControls) {
+   public DefaultDisplayWindow(Datastore store, Component customControls) {
       store_ = store;
       store_.associateDisplay(this);
       store_.registerForEvents(this, 100);
-      stack_ = stack;
-      ijImage_ = ijImage;
-      displayBus_ = bus;
+      displayBus_ = new EventBus();
       displayBus_.register(this);
       customControls_ = customControls;
-
-      // The ImagePlus object needs to be pseudo-polymorphic, depending on
-      // the number of channels in the Datastore. However, we may not
-      // have all of the channels available to us at the time this display is
-      // created, so we may need to re-create things down the road.
-      if (store_.getMaxIndex("channel") > 0) {
-         // Have multiple channels.
-         shiftToCompositeImage();
-      }
-      if (ijImage_ instanceof MMCompositeImage) {
-         ((MMCompositeImage) ijImage_).reset();
-      }
 
       initializePrefs();
       int posX = DEFAULTPOSX, posY = DEFAULTPOSY;
@@ -126,6 +113,33 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
 
       resetTitle();
 
+      if (store_.getNumImages() > 0) {
+         makeWindowAndIJObjects();
+      }
+   }
+
+   /**
+    * Now that there's at least one image in the Datastore, we need to create
+    * our UI and the objects we'll use to communicate with ImageJ.
+    */
+   private void makeWindowAndIJObjects() {
+      stack_ = new MMVirtualStack(store_);
+      ijImage_ = new MMImagePlus(displayBus_);
+      stack_.setImagePlus(ijImage_);
+      ijImage_.setStack(generateImagePlusName(), stack_);
+      ijImage_.setOpenAsHyperStack(true);
+      // The ImagePlus object needs to be pseudo-polymorphic, depending on
+      // the number of channels in the Datastore. However, we may not
+      // have all of the channels available to us at the time this display is
+      // created, so we may need to re-create things down the road.
+      if (store_.getMaxIndex("channel") > 0) {
+         // Have multiple channels.
+         shiftToCompositeImage();
+      }
+      if (ijImage_ instanceof MMCompositeImage) {
+         ((MMCompositeImage) ijImage_).reset();
+      }
+
       // Make the canvas thread before any of our other control objects, which
       // may perform draw requests that need to be processed.
       canvasThread_ = new CanvasUpdateThread(store_, stack_, ijImage_, displayBus_);
@@ -136,7 +150,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       setVisible(true);
       histograms_.calcAndDisplayHistAndStats();
       
-      dummyWindow_ = new DummyImageWindow(ijImage, this);
+      dummyWindow_ = new DummyImageWindow(ijImage_, this);
    }
 
    /**
@@ -371,6 +385,11 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
     */
    public void receiveNewImage(Image image) {
       try {
+         if (dummyWindow_ == null) {
+            // There's now at least one image in the Datastore; time to make
+            // our controls.
+            makeWindowAndIJObjects();
+         }
          // Check if we're transitioning from grayscale to multi-channel at this
          // time.
          int imageChannel = image.getCoords().getPositionAt("channel");
@@ -546,6 +565,14 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
          }
       }
       return result;
+   }
+
+   /**
+    * Generate a unique name for our ImagePlus object.
+    */
+   private static String generateImagePlusName() {
+      titleID++;
+      return String.format("MM dataset %d", titleID);
    }
 
    // Implemented to help out DummyImageWindow.
