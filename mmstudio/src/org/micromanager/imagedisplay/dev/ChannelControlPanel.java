@@ -441,7 +441,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    public void setFullScale() {
-//      display_.disableAutoStretchCheckBox();
       contrastMin_ = 0;
       contrastMax_ = histMax_;
    }
@@ -487,12 +486,10 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       int histMax = contrastMax_;
       int index = (int) (Math.ceil(Math.log(histMax)/Math.log(2)) - 3);
       histRangeComboBox_.setSelectedIndex(index);
-//      parent_.setDisplayMode(cache.getDisplayMode());
    }
 
    private HistogramPanel makeHistogramPanel() {
       HistogramPanel hp = new HistogramPanel() {
-
          @Override
          public void paint(Graphics g) {
             super.paint(g);
@@ -502,6 +499,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             g.drawString(histMaxLabel_, this.getSize().width - 8 * histMaxLabel_.length(), this.getSize().height);
          }
       };
+
       hp.setMargins(12, 12);
       hp.setTraceStyle(true, color_);
       hp.setToolTipText("Click and drag curve to adjust gamma");
@@ -620,7 +618,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
     */
    public void calcAndDisplayHistAndStats(boolean shouldDrawHistogram) {
       if (plus_ == null || plus_.getProcessor() == null) {
-         ReportingUtils.logError("No image to work with");
+         ReportingUtils.logError("Can't draw histogram: no image to work with");
          return;
       }
       ImageProcessor processor;
@@ -644,7 +642,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
       }
       if (processor == null ) {
-         ReportingUtils.logError("No processor for " + channelIndex_);
+         ReportingUtils.logError("Can't draw histogram: no processor for " + channelIndex_);
          return;
       }
 
@@ -667,8 +665,14 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       int imgHeight = plus_.getHeight();
 
       if (rawHistogram[0] == imgWidth * imgHeight) {
-         ReportingUtils.logError("No pixels");
+         ReportingUtils.logError("Can't draw histogram: no pixels");
          return;  //Blank pixels 
+      }
+
+      // Autostretch, if necessary.
+      if (settings_.getShouldAutostretch()) {
+         autostretch();
+         applyLUT();
       }
 
       // Determine what percentage of the histogram range to autotrim.
@@ -732,7 +736,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             histogram[numBins - 1] = imgWidth * imgHeight;
          }
       }
-
       
       if (shouldDrawHistogram) {
          histogram_.setVisible(true);
