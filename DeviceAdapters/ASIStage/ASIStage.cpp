@@ -1943,11 +1943,6 @@ bool ZStage::Busy()
 
 int ZStage::SetPositionUm(double pos)
 {
-   if (runningFastSequence_)
-   {
-      return DEVICE_OK;
-   }
-
    // empty the Rx serial buffer before sending command
    ClearPort();
 
@@ -2013,11 +2008,6 @@ int ZStage::GetPositionUm(double& pos)
   
 int ZStage::SetPositionSteps(long pos)
 {
-   if (runningFastSequence_)
-   {
-      return DEVICE_OK;
-   }
-
    ostringstream command;
    command << "M " << axis_ << "=" << pos; // in 10th of micros
 
