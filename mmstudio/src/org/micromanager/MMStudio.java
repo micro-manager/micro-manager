@@ -178,6 +178,11 @@ public class MMStudio implements ScriptInterface {
    private String sysConfigFile_;
    private String startupScriptFile_;
    // applications settings
+   // TODO: move these objects out of MMStudio wherever possible, and avoid
+   // letting multiple objects keep references to them. Then we can also fix
+   // the OptionsDlg's "clear preferences" button to actually remove all
+   // preferences objects with removeNode() instead of manually clearing
+   // individual nodes.
    private Preferences mainPrefs_;
    private Preferences systemPrefs_;
    private Preferences colorPrefs_;
