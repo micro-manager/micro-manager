@@ -101,7 +101,6 @@ import org.micromanager.dialogs.RegistrationDlg;
 import org.micromanager.events.EventManager;
 
 import org.micromanager.imagedisplay.dev.DefaultDisplayWindow;
-import org.micromanager.imagedisplay.dev.DisplayStarter;
 import org.micromanager.imagedisplay.MetadataPanel;
 import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
 import org.micromanager.logging.LogFileManager;
@@ -2230,7 +2229,7 @@ public class MMStudio implements ScriptInterface {
          // Need to create a new album.
          albumDatastore_ = new DefaultDatastore();
          albumDatastore_.setStorage(new StorageRAM(albumDatastore_));
-         new DisplayStarter(albumDatastore_, null);
+         new DefaultDisplayWindow(albumDatastore_, null);
       }
       // Adjust image coordinates to be at the N+1th timepoint.
       Coords newCoords = image.getCoords().copy()
