@@ -59,7 +59,6 @@ public class DummyImageWindow extends StackWindow {
       master_ = master;
       plus.setWindow(this);
       setVisible(false);
-      WindowManager.addWindow(this);
       displayBus.register(this);
    }
 
@@ -109,9 +108,14 @@ public class DummyImageWindow extends StackWindow {
     * ImageJ depends on.
     */
    public void setImagePlus(ImagePlus plus) {
+      // Remove, and then later re-add ourselves to the window manager, to
+      // force it to refresh its cache of what our ImagePlus object is.
+      // Otherwise it won't be able to find us via our ImagePlus later.
+      WindowManager.removeWindow(this);
       imp = plus;
       imp.setWindow(this);
       ic = new ImageCanvas(imp);
+      WindowManager.addWindow(this);
    }
 
    /**
