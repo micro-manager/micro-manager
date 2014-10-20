@@ -1,5 +1,7 @@
 package org.micromanager.imagedisplay.dev;
 
+import com.google.common.eventbus.EventBus;
+
 import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.process.ImageProcessor;
@@ -27,12 +29,14 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class MMVirtualStack extends ij.VirtualStack {
    private Datastore store_;
+   private EventBus displayBus_;
    private ImagePlus plus_;
    private Coords curCoords_;
    private HashMap<Integer, DefaultImage> channelToLastValidImage_;
 
-   public MMVirtualStack(Datastore store) {
+   public MMVirtualStack(Datastore store, EventBus displayBus) {
       store_ = store;
+      displayBus_ = displayBus;
       curCoords_ = new DefaultCoords.Builder().build();
       channelToLastValidImage_ = new HashMap<Integer, DefaultImage>();
    }
@@ -218,6 +222,7 @@ public class MMVirtualStack extends ij.VirtualStack {
             (!isCompositeMode && channel != plus_.getChannel())) {
          plus_.setPosition(channel, z, time);
       }
+      displayBus_.post(new StackPositionChangedEvent(curCoords_));
    }
 
    /**
