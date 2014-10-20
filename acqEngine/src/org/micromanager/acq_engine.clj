@@ -704,39 +704,57 @@
                              (when-let [t (:wait-time-ms event)]
                                (< 1000 t))))]
     (filter identity
-      (flatten
-        (list
-          #(log "acquisition event:" event)
-          (when (:new-position event)
-            (for [[axis pos] (:axes (MultiStagePosition-to-map
-                                      (get-msp (@state :position-list) current-position)))
-                  :when pos]
-              #(apply set-stage-position axis pos)))
-          (for [prop (get-in event [:channel :properties])]
-            #(set-property prop))
-          #(when-lets [exposure (:exposure event)
-                       camera (core getCameraDevice)]
-             (set-exposure camera exposure))
-          #(when check-z-ref
-             (recall-z-reference current-position))
-          #(when-let [wait-time-ms (:wait-time-ms event)]
-             (acq-sleep wait-time-ms))
-          #(when (get event :autofocus)
-             (wait-for-pending-devices)
-             (run-autofocus))
-          #(when check-z-ref
-             (store-z-reference current-position)
-             (update-z-positions current-position))
-          #(when z-drive
-             (let [z (compute-z-position event)]
-               (set-stage-position z-drive z)))
-          (for [runnable (event :runnables)]
-            #(.run runnable))
-          #(do
-            (wait-for-pending-devices)
-            (expose event)
-            (collect event out-queue)
-            (stop-triggering)))))))
+            (flatten
+              (list
+                #(log "#####" "BEGIN acquisition event:" event)
+                (when (:new-position event)
+                  (for [[axis pos]
+                        (:axes (MultiStagePosition-to-map
+                                 (get-msp (@state :position-list) current-position)))
+                        :when pos]
+                    #(do
+                       (log "BEGIN move a stage to position")
+                       (apply set-stage-position axis pos)
+                       (log "END move a stage to position"))))
+                #(log "BEGIN channel properties and exposure")
+                (for [prop (get-in event [:channel :properties])]
+                  #(set-property prop))
+                #(when-lets [exposure (:exposure event)
+                             camera (core getCameraDevice)]
+                            (set-exposure camera exposure))
+                #(log "END channel properties and exposure")
+                #(when check-z-ref
+                   (log "BEGIN recall-z-reference")
+                   (recall-z-reference current-position)
+                   (log "END recall-z-reference"))
+                #(when-let [wait-time-ms (:wait-time-ms event)]
+                   (acq-sleep wait-time-ms))
+                #(when (get event :autofocus)
+                   (wait-for-pending-devices)
+                   (run-autofocus))
+                #(when check-z-ref
+                   (log "BEGIN store/update z reference")
+                   (store-z-reference current-position)
+                   (update-z-positions current-position)
+                   (log "END store/update z reference"))
+                #(when z-drive
+                   (log "BEGIN set z position")
+                   (let [z (compute-z-position event)]
+                     (set-stage-position z-drive z))
+                   (log "END set z position"))
+                (for [runnable (event :runnables)]
+                  #(do
+                     (log "BEGIN run one runnable")
+                     (.run runnable)
+                     (log "END run one runnable")))
+                #(do
+                   (wait-for-pending-devices)
+                   (log "BEGIN acquire")
+                   (expose event)
+                   (collect event out-queue)
+                   (stop-triggering)
+                   (log "END acquire"))
+                #(log "#####" "END acquisition event"))))))
 
 (defn execute [event-fns]
   (doseq [event-fn event-fns :while (not (:stop @state))]
