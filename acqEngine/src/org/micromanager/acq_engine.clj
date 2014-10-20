@@ -713,9 +713,9 @@
                                  (get-msp (@state :position-list) current-position)))
                         :when pos]
                     #(do
-                       (log "BEGIN move a stage to position")
+                       (log "BEGIN set position of stage" axis)
                        (apply set-stage-position axis pos)
-                       (log "END move a stage to position"))))
+                       (log "END set position of stage" axis))))
                 #(log "BEGIN channel properties and exposure")
                 (for [prop (get-in event [:channel :properties])]
                   #(set-property prop))
