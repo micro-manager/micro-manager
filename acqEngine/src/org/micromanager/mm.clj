@@ -90,7 +90,7 @@
       (clojure.pprint/pprint x))))
 
 (defn send-to-debug-log [s]
-    (.logMessage mmc s true))
+    (.logMessage mmc (str "[AE] " s) true))
 
 (defn cleanup-multiline
   "Take a string, remove empty lines and redundant newline-like characters, and
