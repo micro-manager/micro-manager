@@ -466,7 +466,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          return;
       }
       updateDisplay(null);
-      updateAndDraw(true);
       if (!(eng_ != null && eng_.abortRequested())) {
          updateWindowTitleAndStatus();
       }
