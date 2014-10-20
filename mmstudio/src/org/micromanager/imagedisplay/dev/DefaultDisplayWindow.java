@@ -123,7 +123,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
     * our UI and the objects we'll use to communicate with ImageJ.
     */
    private void makeWindowAndIJObjects() {
-      stack_ = new MMVirtualStack(store_);
+      stack_ = new MMVirtualStack(store_, displayBus_);
       ijImage_ = new MMImagePlus(displayBus_);
       stack_.setImagePlus(ijImage_);
       ijImage_.setStack(generateImagePlusName(), stack_);
@@ -149,8 +149,8 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       zoomToPreferredSize();
       setVisible(true);
       histograms_.calcAndDisplayHistAndStats();
-      
-      dummyWindow_ = new DummyImageWindow(ijImage_, this);
+
+      dummyWindow_ = DummyImageWindow.makeWindow(ijImage_, this, displayBus_);
    }
 
    /**
