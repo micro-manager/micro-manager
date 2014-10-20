@@ -23,7 +23,8 @@
            [java.util Date]
            [ij IJ]
            [javax.swing SwingUtilities])
-  (:require [clojure.pprint]))
+  (:require [clojure.pprint]
+            [clojure.string]))
 
 (declare gui)
 (declare mmc)
@@ -81,33 +82,42 @@
   "Standard pretty print, unless we have a string, in which case
    omit the quotation marks."
   [x]
-  (binding [*print-length* 20]
+  ; 30 items is arbitrary but usually enough to show all settings
+  ; Use wide lines to avoid excessive line breaks
+  (binding [*print-length* 30 clojure.pprint/*print-right-margin* 136]
     (if (.contains (str (type x)) "class [")
       (print x)
       (clojure.pprint/pprint x))))
 
-(defn send-to-log [s]
+(defn send-to-debug-log [s]
     (.logMessage mmc s true))
 
 (defn cleanup-multiline
-  "Takes a string, removes empty lines and redundant newline-like
-   characters, and re-assembles into a multiline string. Prepended
-   by a newline if it has more than one line."
-  [x]
-  (let [lines (.split x "\n")
-        trimmed-lines (remove empty? (map #(.trim %) lines))
-        reassembled (join-string "\n" trimmed-lines)]
-    (if (< 1 (count trimmed-lines))
-      (str "\n" reassembled)
-      reassembled)))
+  "Take a string, remove empty lines and redundant newline-like characters, and
+  re-assemble into a multiline string. Optionally prepend a newline if the
+  result is more than one line."
+  ([x] (cleanup-multiline x false))
+  ([x add-newline]
+   (let [lines (clojure.string/split-lines x)
+         trimmed-lines (remove empty? (map clojure.string/trimr lines))
+         reassembled (join-string "\n" trimmed-lines)]
+     (if (and
+           add-newline
+           (< 1 (count trimmed-lines)))
+       (str "\n" reassembled)
+       reassembled))))
 
-(defn form-to-log-string [x]
-  (cleanup-multiline
-    (with-out-str
-      (very-pretty-print x))))
+(defn form-to-log-string
+  "Format a form for logging. Prepend a newline if the result is more than one
+  line."
+  [x]
+  (let [formatted (cleanup-multiline
+                    (with-out-str (very-pretty-print x))
+                    true)]
+    formatted))
 
 (defn log
-  "Log form x to the Micro-Manager log output (debug only)."
+  "Log string or form x to the Core log output (debug only)."
   [& x]
   (let [converted (for [item x]
                     (if (string? item)
@@ -116,19 +126,16 @@
     (->> converted
          (join-string " ")
          cleanup-multiline
-         send-to-log)))
+         send-to-debug-log)))
 
 (defmacro log-cmd
-  "Log the enclosed expr to the Micro-Manager log output (debug only)."
+  "Log the enclosed expr to the Core log output (debug only)."
   ([cmd-count expr]
     (let [[cmd# args#] (split-at cmd-count expr)]
       `(let [expr# (concat '~cmd# (list ~@args#))]
-         (log expr#)
+         (log "<--" expr#)
          (let [result# ~expr]
-           (send-to-log
-             (str "--> "
-                  (form-to-log-string
-                    result#)))
+           (log "-->" result#)
            result#))))
    ([expr] `(log-cmd 1 ~expr)))
 

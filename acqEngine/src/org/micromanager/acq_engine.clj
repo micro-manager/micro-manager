@@ -259,7 +259,7 @@
   (let [z-drive (@state :default-z-drive)
         z0 (get-z-stage-position z-drive)]
   (try
-    (log "running autofocus " (-> @state :autofocus-device .getDeviceName))
+    (log "running autofocus" (-> @state :autofocus-device .getDeviceName))
     (let [z (-> @state :autofocus-device .fullFocus)]
       (swap! state assoc-in [:last-stage-positions (@state :default-z-drive)] z))
     (catch Exception e
@@ -355,7 +355,7 @@
 
 (defn pop-tagged-image-timeout
   [timeout-ms]
-  (log "(pop-tagged-image-timeout" timeout-ms ")")
+  (log "waiting for burst image with timeout" timeout-ms "ms")
   (let [start-time (System/currentTimeMillis)]
     (loop []
       (if-let [image (pop-tagged-image)]
@@ -706,7 +706,7 @@
     (filter identity
       (flatten
         (list
-          #(log event)
+          #(log "acquisition event:" event)
           (when (:new-position event)
             (for [[axis pos] (:axes (MultiStagePosition-to-map
                                       (get-msp (@state :position-list) current-position)))
@@ -746,7 +746,7 @@
 (defn run-acquisition [settings out-queue cleanup? position-list autofocus-device]
     (try
       (def acq-settings settings) ; for debugging
-      (log "Starting MD Acquisition: " settings)
+      (log "Starting MD Acquisition:" settings)
       (when gui
         (doto gui
           (.enableLiveMode false)
@@ -960,7 +960,7 @@
   (let [state (.state this)]
     (swap! state assoc :stop true)
     (do-when #(.countDown %) (:sleepy @state))
-    (log @state)))
+    (log "state:" @state)))
 
 (defn -isRunning [this]
   (if-let [acq-thread (:acq-thread @(.state this))]
