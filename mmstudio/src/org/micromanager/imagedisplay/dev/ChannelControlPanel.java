@@ -109,7 +109,10 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       // Default to white; select a better color if available.
       color_ = Color.WHITE;
       Color[] allColors = settings_.getChannelColors();
-      if (allColors != null && allColors.length > channelIndex) {
+      // Coerce white when there's only one channel (i.e. ignore the chosen
+      // color).
+      if (store_.getMaxIndex("channel") > 0 &&
+            allColors != null && allColors.length > channelIndex) {
          color_ = allColors[channelIndex];
       }
 
