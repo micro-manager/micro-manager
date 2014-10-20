@@ -16,6 +16,7 @@ import java.awt.Toolkit;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 import java.lang.Math;
@@ -72,7 +73,6 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
    private CommentsPanel comments_;
    private OverlaysPanel overlays_;
 
-   private boolean closed_ = false;
    private final EventBus displayBus_;
    private Dimension paddedCanvasSize_;
 
@@ -151,6 +151,12 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       histograms_.calcAndDisplayHistAndStats();
 
       dummyWindow_ = DummyImageWindow.makeWindow(ijImage_, this, displayBus_);
+      addWindowListener(new WindowAdapter() {
+         @Override
+         public void windowClosing(WindowEvent event) {
+            requestToClose();
+         }
+      });
    }
 
    /**
@@ -476,11 +482,6 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       return result;
    }
 
-   public boolean close() {
-      requestToClose();
-      return closed_;
-   }
-
    @Override
    public void requestToClose() {
       displayBus_.post(new RequestToCloseEvent(this));
@@ -498,12 +499,11 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       store_.unregisterForEvents(this);
       MMStudio.getInstance().removeMMBackgroundListener(this);
       try {
-         dummyWindow_.close();
+         dummyWindow_.dispose();
       } catch (NullPointerException ex) {
          ReportingUtils.showError(ex, "Null pointer error in ImageJ code while closing window");
       }
       dispose();
-      closed_ = true;
    }
 
    @Override
