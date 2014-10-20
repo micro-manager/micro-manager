@@ -477,10 +477,6 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
       scriptArea_.setCodeFoldingEnabled(true);
       scriptArea_.setAutoIndentEnabled(true);
       
-      //if (gui_.defaultScriptFont_ != null) {
-      //   scriptArea_.getPainter().setFont(gui_.defaultScriptFont_);
-      //}
-      
       scriptArea_.getDocument().putProperty(PlainDocument.tabSizeAttribute, 3);
       scriptArea_.setBackground(Color.WHITE);
       scriptArea_.getDocument().addDocumentListener(new MyDocumentListener());
@@ -762,10 +758,10 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
        public void insertUpdate(DocumentEvent e) {
           scriptPaneSaved_ = false;
           try {
-             // Strange, but it seems to be out responsibility to keep the number
-             // of lines in the scriptArea_ current
+             // Strange, but it seems to be our responsibility to keep the
+             // number of lines in the scriptArea_ current
              String change = e.getDocument().getText(e.getOffset(), e.getLength());
-             int nrNewLines = change.length() - change.replace("\n", "").length();
+             int nrNewLines = change.length() - change.replace("\n", "").length() + 1;
              scriptArea_.setRows(scriptArea_.getRows() + nrNewLines);
              sp.revalidate();
           } catch (BadLocationException ble) {
@@ -777,12 +773,11 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
        public void removeUpdate(DocumentEvent e) {
           scriptPaneSaved_ = false;
            try {
-              // Expensive way to determine the current line number
-              // it would be cheaper to find out what was removed and see if that 
-              // included new lines, but I don't know how to find out what was
-              // removed
+              // Expensive way to determine the current line number it would be
+              // cheaper to find out what was removed and see if that included
+              // new lines, but I don't know how to find out what was removed
               String txt = e.getDocument().getText(0, e.getDocument().getLength());
-              int nrLines = txt.length() - txt.replace("\n", "").length();
+              int nrLines = txt.length() - txt.replace("\n", "").length() + 1;
               scriptArea_.setRows(nrLines);
               sp.revalidate();
           } catch (BadLocationException ble) {
