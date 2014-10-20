@@ -85,6 +85,12 @@ public class DummyImageWindow extends StackWindow {
       }
    }
 
+   @Override
+   public void dispose() {
+      WindowManager.removeWindow(this);
+      super.dispose();
+   }
+
    /**
     * Never display us; instead display our master.
     */
