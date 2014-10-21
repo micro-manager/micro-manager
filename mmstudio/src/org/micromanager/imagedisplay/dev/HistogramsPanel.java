@@ -17,6 +17,7 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.DisplaySettings;
 import org.micromanager.api.data.NewImageEvent;
+import org.micromanager.api.display.NewImagePlusEvent;
 
 import org.micromanager.internalinterfaces.Histograms;
 import org.micromanager.utils.ContrastSettings;
@@ -40,6 +41,7 @@ public final class HistogramsPanel extends JPanel implements Histograms {
       stack_ = stack;
       ijImage_ = ijImage;
       displayBus_ = displayBus;
+      displayBus_.register(this);
       setupChannelControls();
    }
 
@@ -287,5 +289,10 @@ public final class HistogramsPanel extends JPanel implements Histograms {
          // Need to add a new channel histogram.
          setupChannelControls();
       }
+   }
+
+   @Subscribe
+   public void onNewImagePlus(NewImagePlusEvent event) {
+      setImagePlus(event.getImagePlus());
    }
 }

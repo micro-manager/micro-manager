@@ -377,13 +377,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       int numChannels = store_.getMaxIndex("channel") + 1;
       composite.setNChannelsUnverified(numChannels);
       composite.reset();
-      stack_.setImagePlus(ijImage_);
-      if (histograms_ != null) {
-         histograms_.setImagePlus(ijImage_);
-      }
-      if (dummyWindow_ != null) {
-         dummyWindow_.setImagePlus(ijImage_);
-      }
+      displayBus_.post(new DefaultNewImagePlusEvent(ijImage_));
    }
 
    /**
