@@ -1,6 +1,7 @@
 package org.micromanager.imagedisplay.dev;
 
 import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
 
 import ij.CompositeImage;
 import ij.ImagePlus;
@@ -30,6 +31,7 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.DatastoreLockedException;
 import org.micromanager.api.data.DisplaySettings;
+import org.micromanager.api.display.NewImagePlusEvent;
 import org.micromanager.data.DefaultDisplaySettings;
 
 import org.micromanager.utils.ReportingUtils;
@@ -61,6 +63,7 @@ public class DisplaySettingsPanel extends JPanel {
       store_ = store;
       ijImage_ = ijImage;
       displayBus_ = displayBus;
+      displayBus_.register(this);
 
       DisplaySettings settings = store_.getDisplaySettings();
 
@@ -268,5 +271,14 @@ public class DisplaySettingsPanel extends JPanel {
     */
    private void saveAsDefaults() {
       DefaultDisplaySettings.setStandardSettings(store_.getDisplaySettings());
+   }
+
+   /**
+    * This is mostly relevant for our handling of the display mode (grayscale,
+    * composite, etc.).
+    */
+   @Subscribe
+   public void onNewImagePlus(NewImagePlusEvent event) {
+      ijImage_ = event.getImagePlus();
    }
 }
