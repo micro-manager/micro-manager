@@ -11,6 +11,7 @@ import ij.WindowManager;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.micromanager.api.data.Coords;
+import org.micromanager.api.display.NewImagePlusEvent;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -110,21 +111,6 @@ public class DummyImageWindow extends StackWindow {
    }
 
    /**
-    * The ImagePlus has changed; we need to recreate various links that
-    * ImageJ depends on.
-    */
-   public void setImagePlus(ImagePlus plus) {
-      // Remove, and then later re-add ourselves to the window manager, to
-      // force it to refresh its cache of what our ImagePlus object is.
-      // Otherwise it won't be able to find us via our ImagePlus later.
-      WindowManager.removeWindow(this);
-      imp = plus;
-      imp.setWindow(this);
-      ic = new ImageCanvas(imp);
-      WindowManager.addWindow(this);
-   }
-
-   /**
     * We need to update our scrollers whenever the stack changes position,
     * so that anything on ImageJ's side that cares about e.g. changing channel
     * can be notified.
@@ -146,5 +132,21 @@ public class DummyImageWindow extends StackWindow {
       catch (Exception e) {
          ReportingUtils.logError(e, "Couldn't update Dummy's selectors to " + coords);
       }
+   }
+
+   /**
+    * The ImagePlus has changed; we need to recreate various links that
+    * ImageJ depends on.
+    */
+   @Subscribe
+   public void onNewImagePlus(NewImagePlusEvent event) {
+      // Remove, and then later re-add ourselves to the window manager, to
+      // force it to refresh its cache of what our ImagePlus object is.
+      // Otherwise it won't be able to find us via our ImagePlus later.
+      WindowManager.removeWindow(this);
+      imp = event.getImagePlus();
+      imp.setWindow(this);
+      ic = new ImageCanvas(imp);
+      WindowManager.addWindow(this);
    }
 }
