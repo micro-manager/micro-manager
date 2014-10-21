@@ -27,7 +27,7 @@ import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-
+import java.lang.reflect.InvocationTargetException;
 import java.util.Calendar;
 
 import javax.swing.JDialog;
@@ -35,6 +35,7 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.SwingUtilities;
 
 import mmcorej.CMMCore;
 import org.micromanager.MMStudio;
@@ -49,6 +50,7 @@ public class ReportingUtils {
    private static JFrame owningFrame_;
    private static boolean show_ = true;
 
+   // Intended for setting to the main frame.
    public static void SetContainingFrame(JFrame f) {
       owningFrame_ = f;
    }
@@ -69,7 +71,24 @@ public class ReportingUtils {
       }
    }
 
-   public static void showMessage(String msg) {
+   public static void showMessage(final String msg) {
+      if (!SwingUtilities.isEventDispatchThread()) {
+         try {
+            SwingUtilities.invokeAndWait(new Runnable() {
+               @Override
+               public void run() {
+                  ReportingUtils.showMessage(msg);
+               }
+            });
+         }
+         catch (InterruptedException unlikely) {
+            Thread.currentThread().interrupt();
+         }
+         catch (InvocationTargetException ignore) {
+         }
+         return;
+      }
+
       JOptionPane.showMessageDialog(null, msg);
    }
 
@@ -108,6 +127,27 @@ public class ReportingUtils {
          fullMsg = "Error: " + e.getStackTrace()[0];
       } else {
          fullMsg = "Unknown error (please check CoreLog.txt file for more information)";
+      }
+
+      ReportingUtils.showErrorMessage(fullMsg, parent);
+   }
+
+   private static void showErrorMessage(final String fullMsg, final Component parent) {
+      if (!SwingUtilities.isEventDispatchThread()) {
+         try {
+            SwingUtilities.invokeAndWait(new Runnable() {
+               @Override
+               public void run() {
+                  ReportingUtils.showErrorMessage(fullMsg, parent);
+               }
+            });
+         }
+         catch (InterruptedException unlikely) {
+            Thread.currentThread().interrupt();
+         }
+         catch (InvocationTargetException ignore) {
+         }
+         return;
       }
 
       int maxNrLines = 30;
@@ -175,7 +215,17 @@ public class ReportingUtils {
       throw new UnsupportedOperationException("Not yet implemented");
    }
 
-   public static void displayNonBlockingMessage(String message) {
+   public static void displayNonBlockingMessage(final String message) {
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+               ReportingUtils.displayNonBlockingMessage(message);
+            }
+         });
+         return;
+      }
+
       if (null != owningFrame_) {
          Calendar c = Calendar.getInstance();
          final JOptionPane optionPane = new JOptionPane(c.getTime().toString() + " " + message, JOptionPane.WARNING_MESSAGE, JOptionPane.OK_CANCEL_OPTION);

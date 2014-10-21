@@ -3,6 +3,7 @@ package org.micromanager.acquisition;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import mmcorej.TaggedImage;
 import org.micromanager.api.ImageCache;
 import org.micromanager.utils.ReportingUtils;
@@ -64,16 +65,30 @@ public class DefaultTaggedImageSink  {
       savingThread.start();
    }
 
-   private void handleOutOfMemory(OutOfMemoryError e,
+   // Never called from EDT
+   private void handleOutOfMemory(final OutOfMemoryError e,
          Runnable sinkFullCallback)
    {
       ReportingUtils.logError(e);
       if (sinkFullCallback != null) {
          sinkFullCallback.run();
       }
-      JOptionPane.showMessageDialog(null,
-            "Out of memory to store images: " + e.getMessage(),
-            "Out of image storage memory", JOptionPane.ERROR_MESSAGE);
+
+      try {
+         SwingUtilities.invokeAndWait(new Runnable() {
+            @Override
+            public void run() {
+               JOptionPane.showMessageDialog(null,
+                     "Out of memory to store images: " + e.getMessage(),
+                     "Out of image storage memory", JOptionPane.ERROR_MESSAGE);
+            }
+         });
+      }
+      catch (InterruptedException ex) {
+         Thread.currentThread().interrupt();
+      }
+      catch (java.lang.reflect.InvocationTargetException ignore) {
+      }
    }
 
    public ImageCache getImageCache() {
