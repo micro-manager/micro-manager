@@ -5,10 +5,12 @@ import com.google.common.eventbus.EventBus;
 import ij.CompositeImage;
 import ij.ImagePlus;
 
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.Arrays;
 
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -39,6 +41,15 @@ import org.micromanager.utils.ReportingUtils;
  * some of that is addressed here, and some in the histograms.
  */
 public class DisplaySettingsPanel extends JPanel {
+   private static String[] COLOR_DESCRIPTORS = new String[] {
+      "RGBCMYW", "CMYRGBW"};
+   private static Color[][] DEFAULT_COLORS = new Color[][] {
+      {Color.RED, Color.GREEN, Color.BLUE, Color.CYAN, Color.MAGENTA,
+         Color.YELLOW, Color.WHITE},
+      {Color.CYAN, Color.MAGENTA, Color.YELLOW, Color.RED, Color.GREEN,
+         Color.BLUE, Color.WHITE}
+   };
+
    private Datastore store_;
    private ImagePlus ijImage_;
    private EventBus displayBus_;
@@ -65,7 +76,27 @@ public class DisplaySettingsPanel extends JPanel {
       });
       displayMode.setSelectedIndex(settings.getChannelDisplayModeIndex());
       add(displayMode, "wrap");
-      
+
+      add(new JLabel("Channel colors: "), "split 2");
+      final JComboBox colorPresets = new JComboBox(COLOR_DESCRIPTORS);
+      colorPresets.setToolTipText("Select a preset color combination for multichannel setups");
+      // Select the appropriate index.
+      if (settings.getChannelColors() != null) {
+         for (int i = 0; i < COLOR_DESCRIPTORS.length; ++i) {
+            if (Arrays.deepEquals(DEFAULT_COLORS[i], settings.getChannelColors())) {
+               colorPresets.setSelectedIndex(i);
+               break;
+            }
+         }
+      }
+      colorPresets.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent event) {
+            setColorPreset(colorPresets);
+         }
+      });
+      add(colorPresets, "wrap");
+
       add(new JLabel("Histograms update "), "split 2");
       final JComboBox histogramUpdateRate = new JComboBox(
             new String[] {"Never", "Every image", "Once per second"});
@@ -167,13 +198,28 @@ public class DisplaySettingsPanel extends JPanel {
          builder.channelDisplayModeIndex(1);
       }
       composite.updateAndDraw();
+      saveSettings(builder.build());
+      displayBus_.post(new DefaultRequestToDrawEvent());
+   }
+
+   /**
+    * The user wants to select one of our color presets.
+    */
+   private void setColorPreset(JComboBox colorPresets) {
+      int i = colorPresets.getSelectedIndex();
+      DisplaySettings settings = store_.getDisplaySettings();
+      settings = settings.copy().channelColors(DEFAULT_COLORS[i]).build();
+      saveSettings(settings);
+      displayBus_.post(new DefaultRequestToDrawEvent());
+   }
+
+   private void saveSettings(DisplaySettings settings) {
       try {
-         store_.setDisplaySettings(builder.build());
+         store_.setDisplaySettings(settings);
       }
       catch (DatastoreLockedException e) {
-         ReportingUtils.showError(e, "Couldn't save display settings.");
+         ReportingUtils.showError(e, "The datastore is locked; settings cannot be changed.");
       }
-      displayBus_.post(new DefaultRequestToDrawEvent());
    }
 
    /** 
@@ -193,12 +239,7 @@ public class DisplaySettingsPanel extends JPanel {
       }
       DisplaySettings settings = store_.getDisplaySettings();
       settings = settings.copy().histogramUpdateRate(rate).build();
-      try {
-         store_.setDisplaySettings(settings);
-      }
-      catch (DatastoreLockedException e) {
-         ReportingUtils.showError("The datastore is locked; settings cannot be changed.");
-      }
+      saveSettings(settings);
    }
 
    /**
@@ -207,12 +248,7 @@ public class DisplaySettingsPanel extends JPanel {
    private void setShouldAutostretch(JCheckBox shouldAutostretch) {
       DisplaySettings settings = store_.getDisplaySettings();
       settings = settings.copy().shouldAutostretch(shouldAutostretch.isSelected()).build();
-      try {
-         store_.setDisplaySettings(settings);
-      }
-      catch (DatastoreLockedException e) {
-         ReportingUtils.showError("The datastore is locked; settings cannot be changed.");
-      }
+      saveSettings(settings);
       displayBus_.post(new DefaultRequestToDrawEvent());
    }
 
@@ -223,12 +259,7 @@ public class DisplaySettingsPanel extends JPanel {
       DisplaySettings settings = store_.getDisplaySettings();
       double percentage = (Double) trimPercentage.getValue();
       settings = settings.copy().trimPercentage(percentage).build();
-      try {
-         store_.setDisplaySettings(settings);
-      }
-      catch (DatastoreLockedException e) {
-         ReportingUtils.showError("The datastore is locked; settings cannot be changed.");
-      }
+      saveSettings(settings);
       displayBus_.post(new DefaultRequestToDrawEvent());
    }
 
