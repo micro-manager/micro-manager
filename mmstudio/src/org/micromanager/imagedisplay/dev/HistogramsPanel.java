@@ -93,6 +93,7 @@ public final class HistogramsPanel extends JPanel implements Histograms {
          panel.setFullScale();
       }
       applyLUTToImage();
+      displayBus_.post(new DefaultRequestToDrawEvent());
    }
 
    public void applyContrastToAllChannels(int min, int max, double gamma) {
@@ -105,6 +106,7 @@ public final class HistogramsPanel extends JPanel implements Histograms {
          panel.setContrast(min, max, gamma);
       }
       applyLUTToImage();
+      displayBus_.post(new DefaultRequestToDrawEvent());
    }
 
    @Override
@@ -148,6 +150,7 @@ public final class HistogramsPanel extends JPanel implements Histograms {
          channelPanels_.get(i).setContrast(min, max, gamma);
       }
       applyLUTToImage();
+      displayBus_.post(new DefaultRequestToDrawEvent());
    }
 
    @Override
@@ -168,7 +171,6 @@ public final class HistogramsPanel extends JPanel implements Histograms {
       for (ChannelControlPanel panel : channelPanels_) {
          panel.applyChannelLUTToImage();
       }
-      displayBus_.post(new DefaultRequestToDrawEvent());
    }
 
    public boolean amInCompositeMode() {
