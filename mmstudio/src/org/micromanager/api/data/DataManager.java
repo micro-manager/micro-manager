@@ -19,6 +19,18 @@ public interface DataManager {
    public Datastore createNewDatastore();
 
    /**
+    * Retrieve the Datastore associated with the current open album, or null
+    * if there is no album.
+    */
+   public Datastore getAlbumDatastore();
+
+   /**
+    * Add the specified image to the current album datastore. If the current
+    * album doesn't exist or has been locked, a new album will be created.
+    */
+   public void addToAlbum(Image image);
+
+   /**
     * Generate a "blank" DisplaySettingsBuilder for use in constructing new
     * DisplaySettings instances.
     */

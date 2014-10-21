@@ -220,17 +220,6 @@ public interface ScriptInterface {
    public String getCurrentAlbum();
 
    /**
-    * Add the provided image to the current active album. If that album does
-    * not exist or has been locked, then a new one will be created.
-    */
-   public void addToAlbum(Image image);
-  
-   /**
-    * Return the Datastore that is storing images in the current album.
-    */
-   public Datastore getAlbumDatastore();
-
-   /**
     * Checks whether an acquisition with the given name already exists.
     */
    public Boolean acquisitionExists(String name);
