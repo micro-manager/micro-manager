@@ -15,6 +15,10 @@ import org.micromanager.api.MultiStagePosition;
  * MetadataBuilder.
  * All fields of the Metadata that are not explicitly initialized will default
  * to null.
+ * You are not expected to implement this interface; it is here to describe how
+ * you can interact with Metadata created by Micro-Manager itself. If you need
+ * to get a MetadataBuilder, call the getMetadataBuilder() method of the
+ * DataManager class, or use the copy() method of an existing Metadata.
  */
 public interface Metadata {
 

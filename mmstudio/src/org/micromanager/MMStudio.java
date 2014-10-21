@@ -74,6 +74,7 @@ import org.micromanager.acquisition.StorageRAM;
 
 import org.micromanager.api.Autofocus;
 import org.micromanager.api.data.Coords;
+import org.micromanager.api.data.DataManager;
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.DatastoreLockedException;
 import org.micromanager.api.data.Image;
@@ -92,6 +93,7 @@ import org.micromanager.conf2.MMConfigFileException;
 import org.micromanager.conf2.MicroscopeModel;
 
 import org.micromanager.data.DefaultCoords;
+import org.micromanager.data.DefaultDataManager;
 import org.micromanager.data.DefaultDatastore;
 import org.micromanager.data.DefaultImage;
 
@@ -165,6 +167,7 @@ public class MMStudio implements ScriptInterface {
    private PropertyEditor propertyBrowser_;
    private CalibrationListDlg calibrationListDlg_;
    private AcqControlDlg acqControlWin_;
+   private DataManager dataManager_;
    private PluginManager pluginManager_;
    private final SnapLiveManager snapLiveManager_;
    private Datastore albumDatastore_;
@@ -431,6 +434,8 @@ public class MMStudio implements ScriptInterface {
 
       engine_.setParentGUI(studio_);
 
+      dataManager_ = new DefaultDataManager();
+
       loadMRUConfigFiles();
       afMgr_ = new AutofocusManager(studio_);
       pluginManager_ = new PluginManager(studio_, menuBar_);
@@ -438,7 +443,7 @@ public class MMStudio implements ScriptInterface {
 
       frame_.paintToFront();
       
-            engine_.setCore(core_, afMgr_);
+      engine_.setCore(core_, afMgr_);
       posList_ = new PositionList();
       engine_.setPositionList(posList_);
       // load (but do no show) the scriptPanel
@@ -2841,11 +2846,6 @@ public class MMStudio implements ScriptInterface {
    }
    
    @Override
-   public Datastore createNewDatastore() {
-      return new DefaultDatastore();
-   }
-
-   @Override
    public void registerOverlay(OverlayPanel panel) {
       ReportingUtils.logError("TODO: Implement this");
    }
@@ -2861,7 +2861,7 @@ public class MMStudio implements ScriptInterface {
    }
 
    @Override
-   public Coords.CoordsBuilder getCoordsBuilder() {
-      return new DefaultCoords.Builder();
+   public DataManager data() {
+      return dataManager_;
    }
 }

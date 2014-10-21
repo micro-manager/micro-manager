@@ -40,6 +40,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import org.micromanager.api.data.Coords;
+import org.micromanager.api.data.DataManager;
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.Image;
 import org.micromanager.api.display.DisplayWindow;
@@ -868,12 +869,6 @@ public interface ScriptInterface {
     */
     public void autostretchCurrentWindow();
 
-    /**
-    * Generate a new, "blank" Datastore with no Reader or subscribers, and
-    * return it.
-    */
-   public Datastore createNewDatastore();
-
    /**
     * Register an OverlayPanel with the program so that it is attached to all
     * existing and new image display windows.
@@ -894,8 +889,8 @@ public interface ScriptInterface {
    public List<DisplayWindow> getAllImageWindows();
 
    /**
-    * Generate a Coords.CoordsBuilder for you to generate your own Coords,
-    * when you don't have one handy to use its copy() method.
+    * Provide access to the DataManager instance for accessing Micro-Manager
+    * data constructs.
     */
-   public Coords.CoordsBuilder getCoordsBuilder();
+   public DataManager data();
 }

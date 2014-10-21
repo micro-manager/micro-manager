@@ -9,6 +9,11 @@ import org.micromanager.api.MultiStagePosition;
  * dataset. It is immutable; construct it with a SummaryMetadataBuilder.
  * All fields of the SummaryMetadata that are not explicitly initialized will
  * default to null.
+ * You are not expected to implement this interface; it is here to describe how
+ * you can interact with SummaryMetadata created by Micro-Manager itself. If
+ * you need to create a new SummaryMetadat, either use the
+ * getSummaryMetadataBuilder() method of the DataManager class, or call the
+ * copy() method of an existing SummaryMetadata instance.
  */
 public interface SummaryMetadata {
 

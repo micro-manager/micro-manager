@@ -7,6 +7,9 @@ import java.util.Set;
 /**
  * The Coords class tracks the position of an image in the dataset. They are
  * immutable; construct a Coords using a CoordsBuilder.
+ * You are not expected to implement your own Coords class. If you need to
+ * generate a new Coords, use the getCoordsBuilder() method of the
+ * DataManager class, or call the copy() method of an existing Coords instance.
  */
 public interface Coords {
    
