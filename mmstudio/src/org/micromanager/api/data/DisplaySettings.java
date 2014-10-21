@@ -10,6 +10,11 @@ import org.micromanager.api.MultiStagePosition;
  * This class defines the parameters that control how a given dataset is
  * displayed.
  * It is immutable; construct it with a DisplaySettingsBuilder.
+ * You are not expected to implement this interface; it is here to describe how
+ * you can interact with DisplaySettings created by Micro-Manager itself. If
+ * you need a DisplaySettingsBuilder, you can generate one via the
+ * DataManager's getDisplaySettingsBuilder() method, or by using the copy()
+ * method of an existing DisplaySettings instance.
  */
 public interface DisplaySettings {
 

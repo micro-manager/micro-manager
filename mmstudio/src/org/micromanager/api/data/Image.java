@@ -8,6 +8,8 @@ import mmcorej.TaggedImage;
  * An Image is a single image plane with associated metadata. Functionally 
  * similar to TaggedImage, but with more rigidly-defined metadata and 
  * dataset positioning information.
+ * You are not expected to implement this interface; it is here to describe how
+ * you can interact with Images created by Micro-Manager itself.
  */
 public interface Image {
    /**
@@ -18,7 +20,7 @@ public interface Image {
    /**
     * Return a reference to whatever entity stores the actual pixel data for
     * this Image. Is most likely a byte[] or short[] but could be of any
-    * non-primitive type.
+    * primitive type.
     */
    public Object getRawPixels();
 
