@@ -91,6 +91,7 @@ import org.micromanager.api.events.PropertiesChangedEvent;
 import org.micromanager.conf2.MMConfigFileException;
 import org.micromanager.conf2.MicroscopeModel;
 
+import org.micromanager.data.DefaultCoords;
 import org.micromanager.data.DefaultDatastore;
 import org.micromanager.data.DefaultImage;
 
@@ -2857,5 +2858,10 @@ public class MMStudio implements ScriptInterface {
    @Override
    public List<DisplayWindow> getAllImageWindows() {
       return DefaultDisplayWindow.getAllImageWindows();
+   }
+
+   @Override
+   public Coords.CoordsBuilder getCoordsBuilder() {
+      return new DefaultCoords.Builder();
    }
 }
