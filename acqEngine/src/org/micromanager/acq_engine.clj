@@ -29,6 +29,7 @@
     [org.micromanager.mm :as mm])
   (:import
     [ij ImagePlus]
+    [java.io EOFException] ; abused to indicate canceled burst image collection
     [java.net InetAddress]
     [java.util Date UUID]
     [java.util.concurrent CountDownLatch LinkedBlockingQueue TimeUnit]
@@ -356,18 +357,21 @@
 (defn pop-tagged-image-timeout
   [timeout-ms]
   (log "waiting for burst image with timeout" timeout-ms "ms")
-  (let [start-time (System/currentTimeMillis)]
+  (let [deadline (+ (System/currentTimeMillis) timeout-ms)]
     (loop []
+      (when (@state :stop)
+        (log "halting image collection due to engine stop")
+        (throw (EOFException. "(Aborted)")))
       (if-let [image (pop-tagged-image)]
         image
-        (if (< timeout-ms (- (System/currentTimeMillis) start-time))
-          (throw-exception "Timed out waiting for image to arrive from camera.")
-          (do 
+        (if (< deadline (System/currentTimeMillis))
+          (do
+            (log "halting image collection due to timeout")
+            (throw-exception "Timed out waiting for image to arrive from camera."))
+          (do
             (when (. mmc isBufferOverflowed)
-                (println "Circular buffer overflowed")
-                (throw-exception "Circular buffer overflowed."))
-            (when (@state :stop)
-              (throw-exception "Aborted!"))
+              (log "halting image collection due to circular buffer overflow")
+              (throw-exception "Circular buffer overflowed."))
             (Thread/sleep 1)
             (recur)))))))
 
@@ -381,7 +385,7 @@
    Will block whenever queue reaches queue-size. If function
    throws an exception, this exception will be placed on
    the queue, the thread will stop, and the final call to .take
-   on the queue will re-throw the exception."
+   on the queue will re-throw the exception (wrapped in RuntimeException)."
   [n queue-size function]
   (let [queue (proxy [LinkedBlockingQueue] [queue-size]
                 (take [] (let [item (proxy-super take)]
@@ -391,9 +395,9 @@
     (future (try
               (dotimes [_ n]
                 (try (.put queue (function))
-                     (catch Throwable t
-                            (.put queue t)
-                            (throw t))))
+                  (catch Throwable t
+                    (.put queue t)
+                    (throw t))))
               (catch Throwable t nil)))
     queue))
 
@@ -425,8 +429,6 @@
 
 (defn burst-cleanup []
   (log "burst-cleanup")
-  (when (core isBufferOverflowed)
-    (throw-exception "Circular buffer overflowed."))
   (core stopSequenceAcquisition)
   (while (and (not (@state :stop)) (. mmc isSequenceRunning))
     (Thread/sleep 5)))
@@ -454,17 +456,26 @@
         camera-channel-name (nth camera-channel-names cam-chan)
         num-camera-channels (count camera-channel-names)
         event (-> burst-event
-                  (update-in [:channel-index]
-                             make-multicamera-channel
-                             cam-chan num-camera-channels)
-                  (update-in [:channel :name]
-                             super-channel-name
-                             camera-channel-name num-camera-channels)
-                  (assoc :camera-channel-index cam-chan))
-        time-stamp (burst-time (:tags image) @state)
-        ]
-    ;image))
+                (update-in [:channel-index]
+                           make-multicamera-channel
+                           cam-chan num-camera-channels)
+                (update-in [:channel :name]
+                           super-channel-name
+                           camera-channel-name num-camera-channels)
+                (assoc :camera-channel-index cam-chan))
+        time-stamp (burst-time (:tags image) @state)]
     (annotate-image image event @state time-stamp)))
+
+(defn send-tagged-image
+  "Send out image to output queue, but avoid hanging if we stop while blocking
+  on the output queue"
+  [out-queue tagged-image]
+  (loop []
+    (when (@state :stop)
+      (log "canceling image output due to engine stop")
+      (throw (EOFException. "(Aborted)")))
+    (when (not (.offer out-queue tagged-image 1000 (TimeUnit/MILLISECONDS)))
+      (recur))))
 
 (defn produce-burst-images
   "Pops images from circular buffer, tags them, and sends them to output queue."
@@ -474,15 +485,21 @@
         camera-index-tag (str (. mmc getCameraDevice) "-CameraChannelIndex")
         image-number-offset (if (first-trigger-missing?) -1 0)
         image-queue (pop-burst-images total timeout-ms)]
-    (doseq [i (range total) :while (not (@state :stop))]
-      ;(println i)
-      (.put out-queue
-            (-> (.take image-queue)
-                (tag-burst-image burst-events camera-channel-names camera-index-tag
-                                 image-number-offset)
-                make-TaggedImage
-                ))))
-  (burst-cleanup))
+    (try
+      (doseq [i (range total)]
+        (send-tagged-image
+          out-queue
+          (let [image (try
+                        (.take image-queue)
+                        (catch RuntimeException e
+                          (if (.getCause e) ; unwrap rethrown exception
+                            (throw (.getCause e))
+                            (throw e))))]
+            (-> image
+              (tag-burst-image burst-events camera-channel-names camera-index-tag
+                               image-number-offset)
+              make-TaggedImage))))
+      (finally (burst-cleanup)))))
 
 (defn collect-burst-images [event out-queue]
   (let [pop-timeout-ms (+ 20000 (* 10 (:exposure event)))]
@@ -498,7 +515,7 @@
     (select-keys event [:position-index :frame-index
                         :slice-index :channel-index])
     (when out-queue
-      (.put out-queue
+      (send-tagged-image out-queue
             (make-TaggedImage (annotate-image image event @state (elapsed-time @state)))))
     image))
 
@@ -563,10 +580,14 @@
       nil)))
 
 (defn collect [event out-queue]
-  (condp = (:task event)
-                :snap (doseq [sub-event (make-multicamera-events event)]
-                        (collect-snap-image sub-event out-queue))
-                :burst (collect-burst-images event out-queue)))
+  (log "collecting image(s)")
+  (try
+    (condp = (:task event)
+      :snap (doseq [sub-event (make-multicamera-events event)]
+              (collect-snap-image sub-event out-queue))
+      :burst (collect-burst-images event out-queue))
+    (catch EOFException eat
+      (log "halted image collection and output due to engine stop"))))
 
 (defn z-in-msp [msp z-drive]
   (-> msp MultiStagePosition-to-map :axes (get z-drive) first))
@@ -704,6 +725,8 @@
                              (when-let [t (:wait-time-ms event)]
                                (< 1000 t))))]
     (filter identity
+            ; The items of the flattened list get executed without stopping or
+            ; pausing in between (except when throwing)
             (flatten
               (list
                 #(log "#####" "BEGIN acquisition event:" event)
@@ -776,12 +799,24 @@
         (def acq-sequence acq-seq) ; for debugging
         (execute (mapcat #(make-event-fns % out-queue) acq-seq)))
       (catch Throwable t
-             (def acq-error t)
+             (def acq-error t) ; for debugging
+             ; XXX There ought to be a way to get errors programmatically...
              (future (ReportingUtils/showError t "Acquisition failed.")))
       (finally
         (when cleanup?
           (cleanup))
-        (.put out-queue TaggedImageQueue/POISON))))
+        (if (:stop @state)
+          ; In the case where we canceled the acquisition via stop, it is
+          ; possible that the out-queue is full. But we have already given up
+          ; on sending images in that case, so it can't do any further harm to
+          ; drain the queue.
+          (if (.offer out-queue TaggedImageQueue/POISON)
+            nil
+            (do
+              (.clear out-queue)
+              (.put out-queue TaggedImageQueue/POISON)))
+          (.put out-queue TaggedImageQueue/POISON))
+        (log "acquisition thread exiting"))))
 
 ;; generic metadata
 
