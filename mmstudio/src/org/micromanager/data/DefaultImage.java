@@ -313,6 +313,10 @@ public class DefaultImage implements Image {
     * and add them to the Datastore. They will be positioned based on our
     * current position, with the channel incrementing by 1 for each new
     * component.
+    * TODO: this will work horribly if there are any cameras located "after"
+    * this camera along the channel axis, since it blindly inserts new images
+    * at C, C+1...C+N where C is its channel position and N is the number of
+    * components.
     */
    public List<Image> splitMultiComponentIntoStore(Datastore store) throws DatastoreLockedException {
       ArrayList<Image> result = new ArrayList<Image>();
