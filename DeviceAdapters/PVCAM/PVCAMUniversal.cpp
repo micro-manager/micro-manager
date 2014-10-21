@@ -67,6 +67,8 @@
 #include <string>
 #include <sstream>
 #include <iomanip>
+#include <algorithm>
+#include <cmath>
 
 using namespace std;
 
@@ -132,6 +134,10 @@ const char* g_Keyword_AcqMethod_Callbacks = "Callbacks";
 const char* g_Keyword_AcqMethod_Polling   = "Polling";
 const char* g_Keyword_OutputTriggerFirstMissing = "OutputTriggerFirstMissing";
 const char* g_Keyword_CircBufFrameCnt     = "CircularBufferFrameCount";
+#ifdef PVCAM_SMART_STREAMING_SUPPORTED
+const char* g_Keyword_SmartStreamingValues   = "SMARTStreamingValues[ms]";
+const char* g_Keyword_SmartStreamingEnable   = "SMARTStreamingEnabled";
+#endif
 
 // Universal parameters
 // These parameters, their ranges or allowed values are read out from the camera automatically.
@@ -188,6 +194,10 @@ newBinSize_(1),
 newBinXSize_(1),
 newBinYSize_(1),
 rgbaColor_(false)
+#ifdef PVCAM_SMART_STREAMING_SUPPORTED
+, smartStreamEntries_(4),
+ssWasOn_(false)
+#endif
 #ifdef PVCAM_FRAME_INFO_SUPPORTED
 ,pFrameInfo_(0)
 #endif
@@ -253,7 +263,12 @@ Universal::~Universal()
        delete prmReadoutPort_;
    if ( prmColorMode_ )
        delete prmColorMode_;
-
+#ifdef PVCAM_SMART_STREAMING_SUPPORTED
+   if ( prmSmartStreamingEnabled_ )
+       delete prmSmartStreamingEnabled_;
+   if ( prmSmartStreamingValues_ )
+       delete prmSmartStreamingValues_;
+#endif
    // Delete universal parameters
    for ( unsigned i = 0; i < universalParams_.size(); i++ )
        delete universalParams_[i];
@@ -430,6 +445,50 @@ int Universal::Initialize()
    pAct = new CPropertyAction (this, &Universal::OnExposure);
    nRet = CreateProperty(MM::g_Keyword_Exposure, "10.0", MM::Float, false, pAct);
    assert(nRet == DEVICE_OK);
+
+   
+#ifdef PVCAM_SMART_STREAMING_SUPPORTED
+   /// SMART STREAMING
+   /// SMART streaming is enabled/disabled in OnSmartStreamingEnable
+   /// SMART streaming values are updated in OnSmartStreamingValues
+   /// SMART streaming vlaues are sent to camera in SendSmartStreamingToCamera
+
+
+   prmSmartStreamingEnabled_ = new PvParam<rs_bool>( g_Keyword_SmartStreamingEnable, PARAM_SMART_STREAM_MODE_ENABLED, this );
+   prmSmartStreamingValues_ = new PvParam<smart_stream_type>( g_Keyword_SmartStreamingValues, PARAM_SMART_STREAM_EXP_PARAMS, this );
+   if (prmSmartStreamingEnabled_->IsAvailable() && prmSmartStreamingValues_->IsAvailable())
+   {
+      LogMessage("This camera supports SMART streaming");
+      pAct = new CPropertyAction (this, &Universal::OnSmartStreamingEnable);
+      nRet = CreateProperty(g_Keyword_SmartStreamingEnable, g_Keyword_No, MM::String, false, pAct);
+      assert(nRet == DEVICE_OK);
+      AddAllowedValue(g_Keyword_SmartStreamingEnable, g_Keyword_No);
+      AddAllowedValue(g_Keyword_SmartStreamingEnable, g_Keyword_Yes);
+      
+      // disable SMART streaming on launch as it is not reset to OFF by PVCAM and camera 
+      // would remember the previous settings unless it was power-cycled
+      if (DEVICE_OK == prmSmartStreamingEnabled_->Set(FALSE))
+      {
+          if (DEVICE_OK == prmSmartStreamingEnabled_->Apply())
+          {
+              LogMessage("SMART streaming disabled on launch");
+          }
+      
+      }
+      //not handling else for the first if because prmSmartStreamingEnabled->Set always returns DEVICE_OK, might be added later
+
+      //number of smartStreamEntries_ initialized has been initiailized to 4 in the constructor, so now 
+      //set initial values to SMART streaming parameters to populate the UI on launch
+      smartStreamValuesDouble_[0] = 10000;
+      smartStreamValuesDouble_[1] = 20000;
+      smartStreamValuesDouble_[2] = 30000;
+      smartStreamValuesDouble_[3] = 40000;
+      
+      pAct = new CPropertyAction (this, &Universal::OnSmartStreamingValues);
+      nRet = CreateProperty(g_Keyword_SmartStreamingValues, "10000;20000;30000;40000", MM::String, false, pAct);
+      assert(nRet == DEVICE_OK);
+   }
+#endif
 
    /// SYMMETRIC BINNING used to set the bin from MM GUI. Instead of asymmetric binning the
    /// value is restricted to specific values.
@@ -993,6 +1052,218 @@ int Universal::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    return DEVICE_OK;
 }
+#ifdef PVCAM_SMART_STREAMING_SUPPORTED
+/**
+* Enable or disable SMART streaming based on user's input
+*/
+int Universal::OnSmartStreamingEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   START_ONPROPERTY("Universal::OnSmartStreamingEnable", eAct);
+
+   if (eAct == MM::AfterSet)
+   {
+      string val;
+      
+      pProp->Get(val);
+
+      // restart the acquisition only if SMART streaming enable value 
+      // has changed, currently it appears MM is restarting acquisition
+      // whenever a parameter was touched by user in the UI
+      if (prmSmartStreamingEnabled_->Current() != (0 == val.compare(g_Keyword_Yes)) ||
+          !prmSmartStreamingEnabled_->Current()!= (0 == val.compare(g_Keyword_No)))
+      {
+          // The acquisition must be stopped, and will be automatically started again by MMCore
+          if (IsCapturing())
+             StopSequenceAcquisition();
+
+          // this param requires reconfiguration of the acquisition
+          singleFrameModeReady_ = false;
+          sequenceModeReady_ = false;
+      }
+
+      // enable SMART streaming if user selected Yes
+      if ( val.compare(g_Keyword_Yes) == 0 )
+      {
+         if (DEVICE_OK == prmSmartStreamingEnabled_->Set(TRUE))
+         {
+             if (DEVICE_OK != prmSmartStreamingEnabled_->Apply())
+                return DEVICE_CAN_NOT_SET_PROPERTY;
+         }
+      }
+      // disable SMART streaming if user selected No
+      else
+      {
+         if (DEVICE_OK == prmSmartStreamingEnabled_->Set(FALSE))
+         {
+             if (DEVICE_OK != prmSmartStreamingEnabled_->Apply())
+                return DEVICE_CAN_NOT_SET_PROPERTY;
+         }
+      }
+   }
+   else if (eAct == MM::BeforeGet)
+   {
+      if ( prmSmartStreamingEnabled_->Current() == TRUE )
+         pProp->Set( g_Keyword_Yes );
+      else
+         pProp->Set( g_Keyword_No );
+   }
+   return DEVICE_OK;
+}
+#endif
+
+#ifdef PVCAM_SMART_STREAMING_SUPPORTED
+/***
+* Updates SMART streaming values based on user's input
+* User always enters the values in miliseconds
+* Internally value is converted to microseconds
+*/
+int Universal::OnSmartStreamingValues(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   START_ONPROPERTY("Universal::OnSmartStreamingValues", eAct);
+   // exposure property is stored in milliseconds,
+   // whereas the driver returns the value in seconds
+   if (eAct == MM::BeforeGet)
+   {
+       char expListChars[SMART_STREAM_MAX_EXPOSURES*20];
+       int written = 0;
+       
+       // for values with decimal part > 0.001 display decimal part
+       // otherwise display value as integer
+       for (int i = 0; i < smartStreamEntries_; i++)
+       {
+           if (fabs(smartStreamValuesDouble_[i]/1000-round(smartStreamValuesDouble_[i]/1000)) >= 0.001)
+           {
+              //add semicolon to all but last entry
+              if (i<smartStreamEntries_-1)
+                 written += sprintf(expListChars+written, "%.3f;", smartStreamValuesDouble_[i]/1000);
+              else
+                 written += sprintf(expListChars+written, "%.3f", smartStreamValuesDouble_[i]/1000);
+           }
+           else
+           {
+              //add semicolon to all but last entry
+               if (i<smartStreamEntries_-1)
+                 written += sprintf(expListChars+written, "%.0f;", smartStreamValuesDouble_[i]/1000);
+              else
+                 written += sprintf(expListChars+written, "%.0f", smartStreamValuesDouble_[i]/1000);
+           }
+       }
+       pProp->Set(expListChars);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      string expListChars;
+
+      // The acquisition must be stopped, and will be automatically started again by MMCore
+      if (IsCapturing())
+         StopSequenceAcquisition();
+
+      // this param requires reconfiguration of the acquisition
+      singleFrameModeReady_ = false;
+      sequenceModeReady_ = false;
+
+      pProp->Get(expListChars);
+      // check only allowed characters have been entered
+      if (expListChars.find_first_not_of("0123456789;.") != std::string::npos)
+      {
+          LogCamError(__LINE__, "SMART Streaming exposures contain forbidden characters");
+          return DEVICE_INVALID_PROPERTY_VALUE;
+      }
+
+      // currently our cameras support maximum 12 exposures in the SMART streaming list
+      // we have allocated space for 128 (SMART_STREAM_MAX_EXPOSURES) exposures each 
+      // 20 characters long, check that this hasn't been exceeded
+      if (expListChars.length() > 20*SMART_STREAM_MAX_EXPOSURES)
+      {
+          LogCamError(__LINE__, "SMART Streaming exposure string is too long");
+          return DEVICE_INVALID_PROPERTY_VALUE;
+      }
+
+      // check that user entered non-empty string
+      if (expListChars.length() == 0)
+      {
+          LogCamError(__LINE__, "SMART Streaming values are empty");
+          return DEVICE_INVALID_PROPERTY_VALUE;
+      }
+
+
+      // add semicolon after the last entry if user failed to do so
+      // to make the further value processing simpler
+      if (expListChars.at(expListChars.length()-1) != ';') 
+      {
+         expListChars.append(";");
+      }
+
+      // back up current number of exposures
+      uns16 smartStreamEntriesRecovery = smartStreamEntries_;
+      
+      // get number of SMART streaming entries
+      smartStreamEntries_ = (uns16)std::count(expListChars.begin(), expListChars.end(), ';');
+      
+      // if user entered more than max allowed number of entries
+      // return error and restore previous value of smartStreamEntries
+      if (smartStreamEntries_ > prmSmartStreamingValues_->Max().entries)
+      {
+          LogCamError(__LINE__, "Too many SMART Streaming exposures requested");
+          smartStreamEntries_ = smartStreamEntriesRecovery;
+          return DEVICE_CAN_NOT_SET_PROPERTY;
+      }
+
+      // parse the input string and load the SMART streaming values to our 
+      // internal structure smartStreamValuesDouble_
+      std::size_t foundAt = 0;
+      std::size_t oldFoundAt = 0;
+      
+
+      for (int i = 0; i < smartStreamEntries_; i++)
+      {
+          // look for semicolons and read values
+          foundAt = expListChars.find(';', foundAt);
+
+          // check the length of each exposure entry
+          std::size_t expCharLength = foundAt - oldFoundAt;
+
+          // if two semicolons were entered with no value between them
+          // reject this SMART streaming exposure list
+          if (expCharLength == 0)
+          {
+              LogCamError(__LINE__, "SMART streaming exposure value empty (two semicolons with no value between them)");
+              smartStreamEntries_ = smartStreamEntriesRecovery;
+              return DEVICE_CAN_NOT_SET_PROPERTY;
+          }
+
+          // we should not need more than 10 values before decimal point and 10 values after decimal point, 
+          // add one character for decimal point
+          // user enters values in miliseconds so this allows hours of exposures, additionally there is no 
+          // reason to use SMART streaming with exposures longer than a few hundred miliseconds
+          if (expCharLength > 21)
+          {
+              LogCamError(__LINE__, "SMART streaming exposure value too large");
+              smartStreamEntries_ = smartStreamEntriesRecovery;
+              return DEVICE_CAN_NOT_SET_PROPERTY;
+          }
+          
+          // 
+          std::string substringExposure = expListChars.substr(oldFoundAt, expCharLength);
+          
+          // check number of decimal points in each exposure time, return error if more than 
+          // one decimal point is found in any of the values
+          long long nrOfPeriods = std::count(substringExposure.begin(), substringExposure.end(), '.');
+          if (nrOfPeriods > 1)
+          {
+             LogCamError(__LINE__, "SMART streaming exposure value contains too many decimal points");
+             smartStreamEntries_ = smartStreamEntriesRecovery;
+             return DEVICE_CAN_NOT_SET_PROPERTY;
+          }
+
+          smartStreamValuesDouble_[i] = 1000*atof(substringExposure.c_str());
+          oldFoundAt = ++foundAt;
+      }
+
+   }
+   return DEVICE_OK;
+}
+#endif
 
 /***
 * The PARAM_BIT_DEPTH is read only. The bit depth depends on selected Port and Speed.
@@ -1642,6 +1913,17 @@ int Universal::SnapImage()
 
    end = GetCurrentMMTime();
 
+#ifdef PVCAM_SMART_STREAMING_SUPPORTED
+   g_pvcamLock.Lock(); 
+
+   //after the image was snapped enable SMART streaming if it was enabled before the Snap
+   if (ssWasOn_ == true)
+   {
+       SetProperty(g_Keyword_SmartStreamingEnable, g_Keyword_Yes);
+   }
+   g_pvcamLock.Unlock();
+#endif
+
    LogTimeDiff(start, end, "Exposure took 4: ", true);
 
    return nRet;
@@ -1946,6 +2228,19 @@ int Universal::speedChanged()
     }
     SetProperty( MM::g_Keyword_Gain, CDeviceUtils::ConvertToString(camCurrentSpeed_.gainMin) );
        
+    // If the current gain is applicable for the new speed we want to restore it.
+    // Change in speed automatically resets GAIN in PVCAM, so we want to preserve it.
+    // We can use the prmGainIndex_->Current() because it still contains the previous
+    // cached value (we didn't call Update/Apply yet)
+    int16 curGain = prmGainIndex_->Current();
+    if ( curGain < camCurrentSpeed_.gainMin || curGain > camCurrentSpeed_.gainMax )
+    {
+        // The new speed does not support this gain index, so we reset it to the first available
+        curGain = camCurrentSpeed_.gainMin;
+    }
+
+    SetProperty( MM::g_Keyword_Gain, CDeviceUtils::ConvertToString(curGain) );
+       
     return DEVICE_OK;
 }
 
@@ -2072,6 +2367,82 @@ int Universal::GetPvExposureSettings( int16& pvExposeOutMode, uns32& pvExposureV
     return nRet;
 }
 
+#ifdef PVCAM_SMART_STREAMING_SUPPORTED
+int Universal::SendSmartStreamingToCamera()
+{
+    START_METHOD("Universal::SendSmartStreamingToCamera");
+
+    int nRet = DEVICE_OK;
+    smart_stream_type smartStreamInts;
+    smartStreamInts.params = NULL;
+    double greatestSmartExp;
+    uns16 expRes = EXP_RES_ONE_MILLISEC;
+
+    // If the exposure is smaller than 60 milliseconds (MM works in milliseconds but uses float type)
+    // we switch the camera to microseconds so user can type 59.5 and we send 59500 to PVCAM.
+    
+    // find the greatest SMART streaming exposure so a decision can be made whether to use 
+    // microsecond or milisecond exposure resolution
+    if (prmSmartStreamingEnabled_->Current() == TRUE)
+    {
+        greatestSmartExp = smartStreamValuesDouble_[0];
+        for (int i = 1; i < smartStreamEntries_; i++)
+        {
+            if (smartStreamValuesDouble_[i] > greatestSmartExp)
+            {
+                greatestSmartExp = smartStreamValuesDouble_[i];
+            }
+        } 
+        
+        // the SMART streaming exposure values sent to cameras are uns32 while internally we need
+        // to be working with doubles
+        // allocate and populate regular smart_stream_type structure with values received from the UI
+        smartStreamInts.params = new uns32[smartStreamEntries_];
+        smartStreamInts.entries = smartStreamEntries_;
+
+        // if all exposures are shorter than 60ms and camera supports microsecond resolution
+        // just convert doubles to uns32 exposures and send values to camera in microseconds
+        if (greatestSmartExp < 60000 && microsecResSupported_)
+        {
+            expRes = EXP_RES_ONE_MICROSEC;
+            for (int i = 0; i < smartStreamEntries_; i++)
+            {
+                smartStreamInts.params[i] = (uns32)(smartStreamValuesDouble_[i]);
+            }
+        }
+        // if either one exposure is longer than 60ms or microsecond resolution is not supported
+        // convert the exposures to miliseconds and uns32
+        // in this case all exposures shorter than 1ms will be reduced to 0ms
+        else
+        {
+            expRes = EXP_RES_ONE_MILLISEC;
+            for (int i = 0; i < smartStreamEntries_; i++)
+            {
+                smartStreamInts.params[i] = (uns32)(smartStreamValuesDouble_[i] / 1000.0);
+            }
+            
+        }
+        g_pvcamLock.Lock();
+
+        // send the SMART streaming structure to camera
+        prmSmartStreamingValues_->Set(smartStreamInts);
+        prmSmartStreamingValues_->Apply();
+
+        // If the PARAM_EXP_RES_INDEX is not available, we use the exposure number as it is.
+        if ( prmExpResIndex_->IsAvailable() )
+        {
+            nRet = prmExpResIndex_->Set( expRes );
+            if (nRet == DEVICE_OK)
+                nRet = prmExpResIndex_->Apply();
+        }
+        g_pvcamLock.Unlock();
+    }
+
+    delete[] smartStreamInts.params;
+  return 0;
+}
+#endif
+
 int Universal::ResizeImageBufferContinuous()
 {
    START_METHOD("Universal::ResizeImageBufferContinuous");
@@ -2089,7 +2460,13 @@ int Universal::ResizeImageBufferContinuous()
       nRet = GetPvExposureSettings( pvExposureMode, pvExposure );
       if ( nRet != DEVICE_OK )
           return nRet;
-
+#ifdef PVCAM_SMART_STREAMING_SUPPORTED
+      if (prmSmartStreamingEnabled_->IsAvailable() && (prmSmartStreamingEnabled_->Current() == TRUE) )
+      {
+          SendSmartStreamingToCamera();
+          pvExposure = 10; //make sure non-zero exposure time ise sent in setup in Smart Streaming mode
+      }
+#endif
       g_pvcamLock.Lock();
       if (!pl_exp_setup_cont(hPVCAM_, 1, &camRegion_, pvExposureMode, pvExposure, &frameSize, CIRC_OVERWRITE)) 
       {
@@ -2153,6 +2530,18 @@ int Universal::ResizeImageBufferSingle()
           return nRet;
 
       g_pvcamLock.Lock();
+#ifdef PVCAM_SMART_STREAMING_SUPPORTED 
+      // in the single Snap mode turn off the SMART streaming so the exposure used is the one in the exposure field,
+      // not the first one from the SMART streaming list
+      // SMART streaming will be returned to its current state in SnapImage() function 
+      // after the current frame is returned
+      if (prmSmartStreamingEnabled_->Current() == TRUE)
+      {
+          ssWasOn_ = true;
+          SetProperty(g_Keyword_SmartStreamingEnable, g_Keyword_No);
+      }
+#endif
+
       if (!pl_exp_setup_seq(hPVCAM_, 1, 1, &camRegion_, pvExposureMode, pvExposure, &frameSize ))
       {
          g_pvcamLock.Unlock();

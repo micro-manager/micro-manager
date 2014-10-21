@@ -68,6 +68,123 @@ private:
 
 };
 
+
+#ifdef PVCAM_SMART_STREAMING_SUPPORTED
+template<>
+class PvParam <smart_stream_type>: public PvParamBase
+{
+    public:
+    PvParam( std::string aName, uns32 aParamId, Universal* aCamera ) : PvParamBase( aName, aParamId, aCamera )
+    {
+        mCurrent.entries=SMART_STREAM_MAX_EXPOSURES;
+        mCurrent.params = new uns32[SMART_STREAM_MAX_EXPOSURES];
+        if (IsAvailable())
+        {
+            Update();
+        }
+    }
+    
+    /*~PvParam()
+    {
+        delete[] mCurrent.params;
+    }*/
+    
+
+
+    // Getters
+    smart_stream_type     Current()   { return mCurrent; }
+    smart_stream_type     Max()       { return mMax; }
+    smart_stream_type     Min()       { return mMin; }
+    smart_stream_type     Increment() { return mIncrement; }
+    smart_stream_type     Count()     { return mCount; }
+
+/***
+    * Returns the current parameter value as string (useful for settings MM property)
+    */
+    virtual std::string ToString()
+    {
+       std::ostringstream os;
+       for (int i = 0; i < mCurrent.entries; i++)
+          os << mCurrent.params[i] << ';';
+       return os.str();
+
+    }
+
+    /***
+    * Sets the parameter value but does not apply the settings. Use Write() to 
+    * send the parameter to the camera.
+    * TODO: Revisit the method name (might be confusing to have Set/Apply/Update methods)
+    */
+    int Set(smart_stream_type aValue)
+    {
+       mCurrent = aValue;
+       return DEVICE_OK;
+    }
+
+    /***
+    * Reads the current parameter value and range from the camera
+    */
+    int Update()
+    {
+       // must be set to max exposures number so we can retrieve current number of exposures
+       // from the camera in case new requested exposures count is greater than the previous  
+       mCurrent.entries=SMART_STREAM_MAX_EXPOSURES;
+       if (pl_get_param(mCamera->Handle(), mId, ATTR_CURRENT, &mCurrent ) != PV_OK)
+       {
+           mCamera->LogCamError(__LINE__, "pl_get_param ATTR_CURRENT");
+           mCurrent.entries = 0;
+           return DEVICE_ERR;
+       }
+       if (pl_get_param(mCamera->Handle(), mId, ATTR_MIN, &mMin ) != PV_OK)
+       {
+           mCamera->LogCamError(__LINE__, "pl_get_param ATTR_MIN");
+           return DEVICE_ERR;
+       }
+       if (pl_get_param(mCamera->Handle(), mId, ATTR_MAX, &mMax ) != PV_OK)
+       {
+           mCamera->LogCamError(__LINE__, "pl_get_param ATTR_MAX");
+           return DEVICE_ERR;
+       }
+       if (pl_get_param(mCamera->Handle(), mId, ATTR_COUNT, &mCount ) != PV_OK)
+       {
+           mCamera->LogCamError(__LINE__, "pl_get_param ATTR_COUNT");
+           return DEVICE_ERR;
+       }
+       if (pl_get_param(mCamera->Handle(), mId, ATTR_INCREMENT, &mIncrement ) != PV_OK)
+       {
+           mCamera->LogCamError(__LINE__, "pl_get_param ATTR_INCREMENT");
+           return DEVICE_ERR;
+       }
+       return DEVICE_OK;
+    }
+
+
+    /***
+    * Sends the parameter value to the camera
+    */
+    int Apply()
+    {
+        // Write the current value to camera
+        if (pl_set_param(mCamera->Handle(), mId, (void_ptr)&mCurrent) != PV_OK)
+        {
+           Update(); // On failure we need to update the cache with actual camera value
+           mCamera->LogCamError(__LINE__, "pl_set_param");
+           return DEVICE_CAN_NOT_SET_PROPERTY;
+        }
+        return DEVICE_OK;
+    }
+
+protected:
+
+    smart_stream_type mCurrent;
+    smart_stream_type mMax;
+    smart_stream_type mMin;
+    smart_stream_type mCount;     // PARAM_SMART_STREAM_EXP_PARAMS is the only parameter where ATTR_COUNT is not uns32 type
+    smart_stream_type mIncrement;
+
+};
+#endif
+
 /***
 * Template class for PVCAM parameters. This class makes the access to PVCAM parameters easier.
 * The user must use the correct parameter type as defined in PVCAM manual.

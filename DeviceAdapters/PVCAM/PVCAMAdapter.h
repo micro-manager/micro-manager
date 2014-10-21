@@ -65,8 +65,10 @@
 #define PVCAM_FRAME_INFO_SUPPORTED
 // Callbacks are not supported on Linux and Mac (as for 01/2014)
 #define PVCAM_CALLBACKS_SUPPORTED
-// The new parameter is implmented in PVCAM for Windows only (PVCAM 3+)
+// The new parameter is implemented in PVCAM for Windows only (PVCAM 3+)
 #define PVCAM_PARAM_EXPOSE_OUT_DEFINED
+// The SMART streaming feature is currently only supported on Windows (PVCAM 2.8.0+)
+#define PVCAM_SMART_STREAMING_SUPPORTED
 #endif
 
 #include <string>
@@ -81,6 +83,11 @@
 #define ERR_STREAM_MODE_NOT_SUPPORTED 10005
 #define ERR_CAMERA_NOT_FOUND          10006
 #define ERR_ROI_SIZE_NOT_SUPPORTED    10007
+
+//////////////////////////////////////////////////////////////////////////////
+// Constants
+//
+#define SMART_STREAM_MAX_EXPOSURES 128
 
 /***
 * User selected region of interest
@@ -156,6 +163,12 @@ typedef struct
     uns32 portIndex;       // Port index
     std::string spdString; // A string that describes this choice in GUI
 } SpdTabEntry;
+
+inline double round( double value )
+{
+   return floor( 0.5 + value);
+};
+
 
 class AcqSequenceThread;
 template<class T> class PvParam;
@@ -273,7 +286,10 @@ public:
 #ifdef PVCAM_CALLBACKS_SUPPORTED
    int OnAcquisitionMethod(MM::PropertyBase* pProp, MM::ActionType eAct);
 #endif
-
+#ifdef PVCAM_SMART_STREAMING_SUPPORTED
+   int OnSmartStreamingEnable(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSmartStreamingValues(MM::PropertyBase* pProp, MM::ActionType eAct);
+#endif
    bool IsCapturing();
 
    // Published to allow other classes access the camera
@@ -301,6 +317,9 @@ private:
    int ResizeImageBufferContinuous();
    int ResizeImageBufferSingle();
    bool WaitForExposureDone() throw();
+#ifdef PVCAM_SMART_STREAMING_SUPPORTED
+   int SendSmartStreamingToCamera();
+#endif
    MM::MMTime GetCurrentTime() { return GetCurrentMMTime();}
 
 
@@ -324,7 +343,9 @@ private:
    bool            snappingSingleFrame_;  // Single frame mode acquisition ongoing
    bool            singleFrameModeReady_; // Single frame mode acquisition prepared
    bool            sequenceModeReady_;    // Continuous acquisition prepared
-
+#ifdef PVCAM_SMART_STREAMING_SUPPORTED
+   bool            ssWasOn_;              // Remember SMART streaming state before Snap was pressed
+#endif
    bool            isUsingCallbacks_;
    bool            isAcquiring_;
 
@@ -345,6 +366,10 @@ private:
    uns16           camSerSize_;           // CCD serial size
    uns32           camFWellCapacity_;     // CCD full well capacity
    double          exposure_;             // Current Exposure
+#ifdef PVCAM_SMART_STREAMING_SUPPORTED
+   double          smartStreamValuesDouble_[SMART_STREAM_MAX_EXPOSURES];
+   uns16           smartStreamEntries_;
+#endif
    unsigned        binSize_;              // Symmetric binning value
    unsigned        binXSize_;             // Asymmetric binning value
    unsigned        binYSize_;             // Asymmetric binning value
@@ -360,6 +385,10 @@ private:
    PvParam<int16>* prmTempSetpoint_;      // Desired CCD temperature
    PvParam<int16>* prmGainIndex_;
    PvParam<uns16>* prmGainMultFactor_;
+#ifdef PVCAM_SMART_STREAMING_SUPPORTED
+   PvParam<smart_stream_type>* prmSmartStreamingValues_;
+   PvParam<rs_bool>* prmSmartStreamingEnabled_;
+#endif
    PvEnumParam*    prmTriggerMode_;       // (PARAM_EXPOSURE_MODE)
    PvParam<uns16>* prmExpResIndex_;
    PvEnumParam*    prmExpRes_;
