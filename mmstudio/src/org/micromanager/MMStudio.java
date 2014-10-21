@@ -170,7 +170,6 @@ public class MMStudio implements ScriptInterface {
    private DataManager dataManager_;
    private PluginManager pluginManager_;
    private final SnapLiveManager snapLiveManager_;
-   private Datastore albumDatastore_;
    private final ToolsMenu toolsMenu_;
 
    private List<Component> MMFrames_
@@ -1206,7 +1205,7 @@ public class MMStudio implements ScriptInterface {
       }
       Image image = snapLiveManager_.snap(!shouldAddToAlbum);
       if (shouldAddToAlbum) {
-         addToAlbum(image);
+         dataManager_.addToAlbum(image);
       }
    }
 
@@ -2229,32 +2228,6 @@ public class MMStudio implements ScriptInterface {
          return;
       }
       snapLiveManager_.setLiveMode(enable);
-   }
-
-   @Override
-   public void addToAlbum(Image image) {
-      if (albumDatastore_ == null || albumDatastore_.getIsLocked()) {
-         // Need to create a new album.
-         albumDatastore_ = new DefaultDatastore();
-         albumDatastore_.setStorage(new StorageRAM(albumDatastore_));
-         new DefaultDisplayWindow(albumDatastore_, null);
-      }
-      // Adjust image coordinates to be at the N+1th timepoint.
-      Coords newCoords = image.getCoords().copy()
-         .position("time", albumDatastore_.getMaxIndex("time") + 1)
-         .build();
-      try {
-         DefaultImage temp = new DefaultImage(image, newCoords, image.getMetadata());
-         temp.splitMultiComponentIntoStore(albumDatastore_);
-      }
-      catch (DatastoreLockedException e) {
-         ReportingUtils.showError(e, "Album datastore is locked.");
-      }
-   }
-
-   @Override
-   public Datastore getAlbumDatastore() {
-      return albumDatastore_;
    }
 
    /**
