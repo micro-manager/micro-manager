@@ -5,7 +5,9 @@ import java.util.List;
 import org.micromanager.api.display.DisplayWindow;
 
 /**
- * Datastores provide access to image data and metadata.
+ * Datastores provide access to image data and metadata. You are not expected
+ * to implement this interface; it is here to describe how you can interact
+ * with Datastores created by Micro-Manager itself.
  */
 public interface Datastore {
    /**

@@ -6,6 +6,9 @@ import java.util.List;
  * Storages are responsible for providing image data to Datastores when
  * requested. Different Storages may have different mechanisms -- for example,
  * by storing images in a file, or in RAM.
+ * In practice you are unlikely to need to implement your own Storage class,
+ * and most of its methods are simply "backings" for similar methods in
+ * Datastore.
  */
 public interface Storage {
    /**
