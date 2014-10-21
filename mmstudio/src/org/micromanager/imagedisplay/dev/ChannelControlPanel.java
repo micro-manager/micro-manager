@@ -93,6 +93,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    public ChannelControlPanel(int channelIndex, HistogramsPanel parent,
          Datastore store, MMVirtualStack stack,
          ImagePlus plus, EventBus displayBus) {
+      channelIndex_ = channelIndex;
       parent_ = parent;
       store_ = store;
       stack_ = stack;
@@ -107,21 +108,14 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       }
       displayBus_ = displayBus;
       // Default to white; select a better color if available.
-      color_ = Color.WHITE;
-      Color[] allColors = settings_.getChannelColors();
-      // Coerce white when there's only one channel (i.e. ignore the chosen
-      // color).
-      if (store_.getMaxIndex("channel") > 0 &&
-            allColors != null && allColors.length > channelIndex) {
-         color_ = allColors[channelIndex];
+      color_ = getColorFromSettings();
+
+      name_ = String.format("channel %d", channelIndex_);
+      String[] allNames = settings_.getChannelNames();
+      if (allNames != null && allNames.length > channelIndex_) {
+         name_ = allNames[channelIndex_];
       }
 
-      name_ = String.format("channel %d", channelIndex);
-      String[] allNames = settings_.getChannelNames();
-      if (allNames != null && allNames.length > channelIndex) {
-         name_ = allNames[channelIndex];
-      }
-      channelIndex_ = channelIndex;
       // This won't be available until there's at least one image in the 
       // Datastore for our channel.
       bitDepth_ = -1;
@@ -511,10 +505,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    public void updateChannelNameAndColorFromCache() {
-      Color[] allColors = settings_.getChannelColors();
-      if (allColors != null && allColors.length > channelIndex_) {
-         color_ = allColors[channelIndex_];
-      }
+      color_ = getColorFromSettings();
       colorPickerLabel_.setBackground(color_);
       histogram_.setTraceStyle(true, color_);
       String[] allNames = settings_.getChannelNames();
@@ -528,6 +519,18 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       calcAndDisplayHistAndStats(true);
       parent_.applyLUTToImage();
       repaint();
+   }
+
+   private Color getColorFromSettings() {
+      Color result = Color.WHITE;
+      Color[] allColors = settings_.getChannelColors();
+      // Coerce white when there's only one channel (i.e. ignore the chosen
+      // color).
+      if (store_.getMaxIndex("channel") > 0 &&
+            allColors != null && allColors.length > channelIndex_) {
+         result = allColors[channelIndex_];
+      }
+      return result;
    }
 
    public int getContrastMin() {
@@ -825,8 +828,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
     * events when our drawing code calls this method.
     */
    private void applyLUT(boolean shouldRedisplay) {
-      if (settings_.getShouldSyncChannels() != null &&
-            settings_.getShouldSyncChannels()) {
+      // This looks silly, but the function can return null.
+      if (settings_.getShouldSyncChannels() == true) {
          parent_.applyContrastToAllChannels(contrastMin_, contrastMax_, gamma_);
       } else {
          parent_.applyLUTToImage();
