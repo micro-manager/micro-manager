@@ -93,8 +93,13 @@ public class TaggedImageStorageRamFast implements TaggedImageStorage {
    public void putImage(final TaggedImage taggedImage) throws MMException {
       String label = MDUtils.getLabel(taggedImage.tags);
       try {
+         // Allocate the direct tagged image before altering any data, in case
+         // OutOfMemoryError is thrown.
+         DirectTaggedImage directImage =
+               taggedImageToDirectTaggedImage(taggedImage);
+
          lruCache_.put(label, taggedImage);
-         imageMap_.put(label, taggedImageToDirectTaggedImage(taggedImage));
+         imageMap_.put(label, directImage);
          lastFrame_ = Math.max(lastFrame_, MDUtils.getFrameIndex(taggedImage.tags));
       } catch (Exception ex) {
          ReportingUtils.logError(ex);

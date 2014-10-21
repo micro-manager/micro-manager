@@ -165,7 +165,12 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
          // Start pumping processed images into the ImageCache
          DefaultTaggedImageSink sink = new DefaultTaggedImageSink(
                  procStackOutputQueue, imageCache_);
-         sink.start();
+         sink.start(new Runnable() {
+            @Override
+            public void run() {
+               getAcquisitionEngine2010().stop();
+            }
+         });
         
          return acqName;
 

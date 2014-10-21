@@ -2,6 +2,7 @@ package org.micromanager.acquisition;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
+import javax.swing.JOptionPane;
 import mmcorej.TaggedImage;
 import org.micromanager.api.ImageCache;
 import org.micromanager.utils.ReportingUtils;
@@ -23,6 +24,12 @@ public class DefaultTaggedImageSink  {
    }
 
    public void start() {
+      start(null);
+   }
+
+   // sinkFullCallback is a way to stop production of images when/if the sink
+   // can no longer accept images.
+   public void start(final Runnable sinkFullCallback) {
       Thread savingThread = new Thread("tagged image sink thread") {
 
          @Override
@@ -37,7 +44,13 @@ public class DefaultTaggedImageSink  {
                         break;
                      }
                      ++imageCount;
-                     imageCache_.putImage(image);
+                     try {
+                        imageCache_.putImage(image);
+                     }
+                     catch (OutOfMemoryError e) {
+                        handleOutOfMemory(e, sinkFullCallback);
+                        break;
+                     }
                   }
                }
             } catch (Exception ex2) {
@@ -51,6 +64,17 @@ public class DefaultTaggedImageSink  {
       savingThread.start();
    }
 
+   private void handleOutOfMemory(OutOfMemoryError e,
+         Runnable sinkFullCallback)
+   {
+      ReportingUtils.logError(e);
+      if (sinkFullCallback != null) {
+         sinkFullCallback.run();
+      }
+      JOptionPane.showMessageDialog(null,
+            "Out of memory to store images: " + e.getMessage(),
+            "Out of image storage memory", JOptionPane.ERROR_MESSAGE);
+   }
 
    public ImageCache getImageCache() {
       return imageCache_;
