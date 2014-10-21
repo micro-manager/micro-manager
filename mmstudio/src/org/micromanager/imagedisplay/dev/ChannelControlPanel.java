@@ -830,9 +830,13 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       }
    }
 
+   /**
+    * Display settings have changed; update our color.
+    */
    @Subscribe
    public void onNewDisplaySettings(NewDisplaySettingsEvent event) {
       settings_ = event.getDisplaySettings();
+      updateChannelNameAndColorFromCache();
    }
 
    /**
