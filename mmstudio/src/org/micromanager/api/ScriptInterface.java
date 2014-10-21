@@ -39,6 +39,7 @@ import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.Image;
 import org.micromanager.api.display.DisplayWindow;
@@ -891,4 +892,10 @@ public interface ScriptInterface {
     * by Micro-Manager (e.g. not windows created by ImageJ).
     */
    public List<DisplayWindow> getAllImageWindows();
+
+   /**
+    * Generate a Coords.CoordsBuilder for you to generate your own Coords,
+    * when you don't have one handy to use its copy() method.
+    */
+   public Coords.CoordsBuilder getCoordsBuilder();
 }
