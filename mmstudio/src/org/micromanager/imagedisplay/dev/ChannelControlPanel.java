@@ -352,7 +352,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
    public void autoButtonAction() {
       autostretch();
-      applyLUT();
+      applyLUT(true);
    }
 
    private void colorPickerLabelMouseClicked() {
@@ -675,7 +675,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       // Autostretch, if necessary.
       if (settings_.getShouldAutostretch()) {
          autostretch();
-         applyLUT();
+         applyLUT(false);
       }
 
       // Determine what percentage of the histogram range to autotrim.
@@ -755,7 +755,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
    
    public void contrastMaxInput(int max) {
-//      display_.disableAutoStretchCheckBox();
+      disableAutostretch();
       contrastMax_ = max;
       if (contrastMax_ > maxIntensity_ ) {
          contrastMax_ = maxIntensity_;
@@ -766,12 +766,12 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       if (contrastMin_ > contrastMax_) {
          contrastMin_ = contrastMax_;
       }
-      applyLUT();
+      applyLUT(true);
    }
    
    @Override
    public void contrastMinInput(int min) {    
-//      display_.disableAutoStretchCheckBox();
+      disableAutostretch();
       contrastMin_ = min;
       if (contrastMin_ >= maxIntensity_)
           contrastMin_ = maxIntensity_ - 1;
@@ -781,23 +781,23 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       if (contrastMax_ < contrastMin_) {
          contrastMax_ = contrastMin_ + 1;
       }
-      applyLUT();
+      applyLUT(true);
    }
 
    public void onLeftCursor(double pos) {
-//      display_.disableAutoStretchCheckBox();
+      disableAutostretch();
       contrastMin_ = (int) (Math.max(0, pos) * binSize_);
       if (contrastMin_ >= maxIntensity_)
           contrastMin_ = maxIntensity_ - 1;
       if (contrastMax_ < contrastMin_) {
          contrastMax_ = contrastMin_ + 1;
       }
-      applyLUT();
+      applyLUT(true);
    }
 
    @Override
    public void onRightCursor(double pos) {
-//      display_.disableAutoStretchCheckBox();
+      disableAutostretch();
       contrastMax_ = (int) (Math.min(NUM_BINS - 1, pos) * binSize_);
       if (contrastMax_ < 1) {
          contrastMax_ = 1;
@@ -805,7 +805,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       if (contrastMin_ > contrastMax_) {
          contrastMin_ = contrastMax_;
       }
-      applyLUT();
+      applyLUT(true);
    }
 
    @Override
@@ -816,17 +816,33 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          } else {
             gamma_ = gamma;
          }
-         applyLUT();
+         applyLUT(true);
       }
    }
 
-   private void applyLUT() {
+   /**
+    * We provide the boolean mostly so that we don't get into cyclic draw
+    * events when our drawing code calls this method.
+    */
+   private void applyLUT(boolean shouldRedisplay) {
       if (settings_.getShouldSyncChannels() != null &&
             settings_.getShouldSyncChannels()) {
          parent_.applyContrastToAllChannels(contrastMin_, contrastMax_, gamma_);
       } else {
          parent_.applyLUTToImage();
          repaint();
+      }
+      if (shouldRedisplay) {
+         displayBus_.post(new DefaultRequestToDrawEvent());
+      }
+   }
+
+   private void disableAutostretch() {
+      try {
+         store_.setDisplaySettings(store_.getDisplaySettings().copy().shouldAutostretch(false).build());
+      }
+      catch (DatastoreLockedException e) {
+         // Just ignore it.
       }
    }
 
