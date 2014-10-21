@@ -55,6 +55,7 @@ public class DisplaySettingsPanel extends JPanel {
    private Datastore store_;
    private ImagePlus ijImage_;
    private EventBus displayBus_;
+   private JComboBox displayMode_;
 
    public DisplaySettingsPanel(Datastore store, ImagePlus ijImage,
          EventBus displayBus) {
@@ -68,17 +69,18 @@ public class DisplaySettingsPanel extends JPanel {
       DisplaySettings settings = store_.getDisplaySettings();
 
       add(new JLabel("Display mode: "), "split 2");
-      final JComboBox displayMode = new JComboBox(
+      displayMode_ = new JComboBox(
             new String[] {"Color", "Grayscale", "Composite"});
-      displayMode.setToolTipText("<html>Set the display mode for the image:<ul><li>Color: single channel, in color<li>Grayscale: single-channel grayscale<li>Composite: multi-channel color overlay</ul></html>");
-      displayMode.addActionListener(new ActionListener() {
+      displayMode_.setToolTipText("<html>Set the display mode for the image:<ul><li>Color: single channel, in color<li>Grayscale: single-channel grayscale<li>Composite: multi-channel color overlay</ul></html>");
+      displayMode_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent event) {
-            setDisplayMode(displayMode);
+            setDisplayMode(displayMode_);
          }
       });
-      displayMode.setSelectedIndex(settings.getChannelDisplayModeIndex());
-      add(displayMode, "wrap");
+      displayMode_.setSelectedIndex(settings.getChannelDisplayModeIndex());
+      displayMode_.setEnabled(ijImage_ instanceof CompositeImage);
+      add(displayMode_, "wrap");
 
       add(new JLabel("Channel colors: "), "split 2");
       final JComboBox colorPresets = new JComboBox(COLOR_DESCRIPTORS);
@@ -280,5 +282,6 @@ public class DisplaySettingsPanel extends JPanel {
    @Subscribe
    public void onNewImagePlus(NewImagePlusEvent event) {
       ijImage_ = event.getImagePlus();
+      displayMode_.setEnabled((ijImage_ instanceof CompositeImage));
    }
 }
