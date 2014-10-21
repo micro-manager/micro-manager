@@ -128,15 +128,20 @@ public class CanvasUpdateThread extends Thread {
                   plus_.getCanvas(), plus_);
          }
          final Image image = store_.getImage(coords);
-         // This must be on the EDT because drawing is not thread-safe.
-         SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-               showImage(image);
-               imagesDisplayed_++;
-               sendFPSUpdate(image);
-            }
-         });
+         if (image != null) {
+            // This must be on the EDT because drawing is not thread-safe.
+            SwingUtilities.invokeLater(new Runnable() {
+               @Override
+               public void run() {
+                  showImage(image);
+                  imagesDisplayed_++;
+                  sendFPSUpdate(image);
+               }
+            });
+         }
+         else {
+            ReportingUtils.logError("Attempted to draw null image at " + coords);
+         }
       } // End while loop
    }
 
