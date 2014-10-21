@@ -819,7 +819,7 @@ int CPCOCam::SetupCamera()
   if (nErr != 0)
     return nErr;
 
-  uiMode = 0x20000 + 0x10000 + 0x0010;//Avoid adding buffers, Preview, Single
+  uiMode = 0x10000 + 0x0010;//Avoid adding buffers, Preview, Single
   nErr = m_pCamera->PreStartCam(uiMode, 0, 0, 0);            // schaltet automatisch auf internen Trigger
   if (nErr != 0)
     return nErr;
@@ -1707,7 +1707,7 @@ int CPCOCam::SetNCheckROI(int *Roix0, int *Roix1, int *Roiy0, int *Roiy1)
   if(wRoiStepping == 0)
   {
     m_pCamera->strCam.strSensor.wRoiX0 = 1;
-    m_pCamera->strCam.strSensor.wRoiX1 = wmax;
+    m_pCamera->strCam.strSensor.wRoiX1 = wmax / m_pCamera->strCam.strSensor.wBinHorz;
   }
 
   if(m_pCamera->strCam.strSensor.wRoiX0 < 1)
@@ -1738,7 +1738,7 @@ int CPCOCam::SetNCheckROI(int *Roix0, int *Roix1, int *Roiy0, int *Roiy1)
   if(wRoiStepping == 0)
   {
     m_pCamera->strCam.strSensor.wRoiY0 = 1;
-    m_pCamera->strCam.strSensor.wRoiY1 = wmax;
+    m_pCamera->strCam.strSensor.wRoiY1 = wmax / m_pCamera->strCam.strSensor.wBinVert;
   }
 
   if(m_pCamera->strCam.strSensor.wRoiY0 < 1)
