@@ -70,8 +70,6 @@ import mmcorej.StrVector;
 
 import org.micromanager.api.events.ConfigGroupChangedEvent;
 import org.micromanager.events.EventManager;
-import org.micromanager.imagedisplay.MetadataPanel;
-import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
 import org.micromanager.internalinterfaces.LiveModeListener;
 import org.micromanager.utils.DragDropUtil;
 import org.micromanager.utils.GUIUtils;
@@ -111,7 +109,6 @@ public class MainFrame extends MMFrame implements LiveModeListener {
    private final SnapLiveManager snapLiveManager_;
 
    private ConfigPadButtonPanel configPadButtonPanel_;
-   private final MetadataPanel metadataPanel_;
    private final JSplitPane splitPane_;
 
    private AbstractButton setRoiButton_;
@@ -137,9 +134,6 @@ public class MainFrame extends MMFrame implements LiveModeListener {
 
       createTopPanelWidgets((JPanel) splitPane_.getComponent(0));
       
-//      metadataPanel_ = createMetadataPanel((JPanel) splitPane_.getComponent(1));
-      metadataPanel_ = null;
-
       setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
       setupWindowHandlers();
 
@@ -362,13 +356,6 @@ public class MainFrame extends MMFrame implements LiveModeListener {
             }
          },
          "arrow_refresh.png", topPanel, 7, 92, 95, 113);
-   }
-
-   private static MetadataPanel createMetadataPanel(JPanel bottomPanel) {
-      MetadataPanel metadataPanel = new MetadataPanel();
-      GUIUtils.addWithEdges(bottomPanel, metadataPanel, 0, 0, 0, 0);
-      metadataPanel.setBorder(BorderFactory.createEmptyBorder());
-      return metadataPanel;
    }
 
    private void createPleaLabel(JPanel topPanel) {
@@ -725,10 +712,6 @@ public class MainFrame extends MMFrame implements LiveModeListener {
                clearRoiButton_.setEnabled(enabled);
            }
        });
-   }
-
-   public MetadataPanel getMetadataPanel() {
-      return metadataPanel_;
    }
 
    protected void zoomOut() {
