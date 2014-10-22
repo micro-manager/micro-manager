@@ -20,6 +20,7 @@ import mmcorej.StrVector;
 import mmcorej.TaggedImage;
 
 import org.json.JSONObject;
+import org.micromanager.api.data.Datastore;
 import org.micromanager.api.DataProcessor;
 import org.micromanager.api.ImageCache;
 import org.micromanager.api.IAcquisitionEngine2010;
@@ -38,10 +39,7 @@ import org.micromanager.utils.MMException;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
 
-/**
- *
- * @author arthur
- */
+
 public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    private CMMCore core_;
@@ -75,7 +73,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private ArrayList<Double> customTimeIntervalsMs_;
    private boolean useCustomIntervals_;
    protected JSONObject summaryMetadata_;
-   protected ImageCache imageCache_;
+   protected Datastore store_;
    private ArrayList<AcqSettingsListener> settingsListeners_;
    private AcquisitionManager acqManager_;
 
@@ -160,11 +158,11 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
                  summaryMetadata_, acquisitionSettings.save, this,
                  studio_.getHideMDADisplayOption());
          MMAcquisition acq = acqManager.getAcquisition(acqName);
-         imageCache_ = acq.getImageCache();
+         store_ = acq.getDatastore();
 
          // Start pumping processed images into the ImageCache
          DefaultTaggedImageSink sink = new DefaultTaggedImageSink(
-                 procStackOutputQueue, imageCache_);
+                 procStackOutputQueue, store_);
          sink.start(new Runnable() {
             @Override
             public void run() {
@@ -1201,12 +1199,9 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       return summaryMetadata_;
    }
 
-   /*
-    * Returns the image cache associated with the most recent acquisition.
-    */
    @Override
-   public ImageCache getImageCache() {
-      return imageCache_;
+   public Datastore getDatastore() {
+      return store_;
    }
 
     @Override
