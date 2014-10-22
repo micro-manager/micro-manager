@@ -112,6 +112,16 @@ public interface Datastore {
    public boolean getIsLocked();
 
    /**
+    * Tell the Datastore whether or not its image data has been saved.
+    */
+   public void setIsSaved();
+
+   /**
+    * Retrieve whether or not the image data has been saved.
+    */
+   public boolean getIsSaved();
+
+   /**
     * Returns the total number of Images in the Datastore. Returns -1 if no
     * Storage has been provided yet.
     */
