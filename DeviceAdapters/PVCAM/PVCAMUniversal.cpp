@@ -2206,7 +2206,6 @@ int Universal::portChanged()
     // Set the current speed to first avalable rate
     SetProperty( g_ReadoutRate, spdChoices[0].c_str()); 
 
-
     return DEVICE_OK;
 }
 
@@ -2226,7 +2225,6 @@ int Universal::speedChanged()
         }
         SetAllowedValues(MM::g_Keyword_Gain, gainChoices);
     }
-    SetProperty( MM::g_Keyword_Gain, CDeviceUtils::ConvertToString(camCurrentSpeed_.gainMin) );
        
     // If the current gain is applicable for the new speed we want to restore it.
     // Change in speed automatically resets GAIN in PVCAM, so we want to preserve it.
@@ -2373,8 +2371,6 @@ int Universal::SendSmartStreamingToCamera()
     START_METHOD("Universal::SendSmartStreamingToCamera");
 
     int nRet = DEVICE_OK;
-    smart_stream_type smartStreamInts;
-    smartStreamInts.params = NULL;
     double greatestSmartExp;
     uns16 expRes = EXP_RES_ONE_MILLISEC;
 
@@ -2397,7 +2393,7 @@ int Universal::SendSmartStreamingToCamera()
         // the SMART streaming exposure values sent to cameras are uns32 while internally we need
         // to be working with doubles
         // allocate and populate regular smart_stream_type structure with values received from the UI
-        smartStreamInts.params = new uns32[smartStreamEntries_];
+        smart_stream_type smartStreamInts = prmSmartStreamingValues_->Current();
         smartStreamInts.entries = smartStreamEntries_;
 
         // if all exposures are shorter than 60ms and camera supports microsecond resolution
@@ -2438,7 +2434,6 @@ int Universal::SendSmartStreamingToCamera()
         g_pvcamLock.Unlock();
     }
 
-    delete[] smartStreamInts.params;
   return 0;
 }
 #endif

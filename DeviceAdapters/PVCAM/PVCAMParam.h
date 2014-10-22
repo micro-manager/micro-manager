@@ -84,10 +84,10 @@ class PvParam <smart_stream_type>: public PvParamBase
         }
     }
     
-    /*~PvParam()
+    ~PvParam()
     {
         delete[] mCurrent.params;
-    }*/
+    }
     
 
 
