@@ -2163,11 +2163,6 @@ public class MMStudio implements ScriptInterface {
    }
 
    @Override
-   public void closeAcquisitionWindow(String acquisitionName) throws MMScriptException {
-      acqMgr_.closeImageWindow(acquisitionName);
-   }
-
-   @Override
    public void refreshGUI() {
       updateGUI(true);
    }
@@ -2465,13 +2460,6 @@ public class MMStudio implements ScriptInterface {
    // Deprecated; use correctly spelled version. (Used to be part of API.)
    public void setAcqusitionSettings(SequenceSettings ss) {
       setAcquisitionSettings(ss);
-   }
-   
-   @Override
-   public String getAcquisitionPath() {
-	   if (engine_ == null)
-		   return null;
-	   return engine_.getImageCache().getDiskLocation();
    }
    
    @Override
