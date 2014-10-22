@@ -239,4 +239,8 @@ public class MMVirtualStack extends ij.VirtualStack {
    public void onNewImagePlus(NewImagePlusEvent event) {
       setImagePlus(event.getImagePlus());
    }
+
+   public Datastore getDatastore() {
+      return store_;
+   }
 }
