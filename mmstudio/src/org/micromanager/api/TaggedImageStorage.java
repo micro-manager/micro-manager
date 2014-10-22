@@ -21,6 +21,7 @@
 
 package org.micromanager.api;
 
+import java.io.IOException;
 import java.util.Set;
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
@@ -52,7 +53,7 @@ public interface TaggedImageStorage {
    /*
     * Call this method to add a TaggedImage to the storage.
     */
-   public void putImage(TaggedImage taggedImage) throws MMException;
+   public void putImage(TaggedImage taggedImage) throws MMException, IOException;
 
    /*
     * Returns the set of image keys available in this image store. An

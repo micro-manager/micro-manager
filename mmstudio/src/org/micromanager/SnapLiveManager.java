@@ -258,7 +258,12 @@ public class SnapLiveManager {
          int byteDepth = acquisition.getByteDepth();
          TaggedImage ti = ImageUtils.makeTaggedImage(pixels, 0, 0, 0,0, 
                width, height, byteDepth);
-         display_.getImageCache().putImage(ti);
+         try {
+            display_.getImageCache().putImage(ti);
+         }
+         catch (java.io.IOException e) {
+            ReportingUtils.logError(e, "This should never happen!");
+         }
          display_.imageReceived(ti);
          return true;
       } catch (MMScriptException ex) {

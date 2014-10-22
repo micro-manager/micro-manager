@@ -120,7 +120,7 @@ public class MultipageTiffWriter {
    
    public MultipageTiffWriter(String directory, String filename, 
            JSONObject summaryMD, TaggedImageStorageMultipageTiff mpTiffStorage,
-           boolean fastStorageMode, boolean splitByPositions) {
+           boolean fastStorageMode, boolean splitByPositions) throws IOException {
       fastStorageMode_ = fastStorageMode;
       masterMPTiffStorage_ = mpTiffStorage;
       omeTiff_ = mpTiffStorage.omeTiff_;        
@@ -139,33 +139,29 @@ public class MultipageTiffWriter {
       long fileSize = Math.min(MAX_FILE_SIZE, summaryMD.toString().length() + 2000000
               + numFrames_ * numChannels_ * numSlices_ * ((long) bytesPerImagePixels_ + 2000));
       
+      f.createNewFile();
+      raFile_ = new RandomAccessFile(f, "rw");
       try {
-         f.createNewFile();
-         raFile_ = new RandomAccessFile(f, "rw");
-         try {
-            raFile_.setLength(fileSize);
-         } catch (IOException e) {       
-          new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException ex) {}
-                    MMStudio.getInstance().getAcquisitionEngine().abortRequest();
-                } }).start();     
-                ReportingUtils.showError("Insufficent space on disk: no room to write data");
-         }
-         fileChannel_ = raFile_.getChannel();
-         writingExecutor_ = masterMPTiffStorage_.getWritingExecutor();
-         indexMap_ = new HashMap<String, Long>();
-         reader_.setFileChannel(fileChannel_);
-         reader_.setIndexMap(indexMap_);
-         buffers_ = new LinkedList<ByteBuffer>();
-         
-         writeMMHeaderAndSummaryMD(summaryMD);
-      } catch (IOException ex) {
-         ReportingUtils.logError(ex);
+         raFile_.setLength(fileSize);
+      } catch (IOException e) {       
+       new Thread(new Runnable() {
+             @Override
+             public void run() {
+                 try {
+                     Thread.sleep(1000);
+                 } catch (InterruptedException ex) {}
+                 MMStudio.getInstance().getAcquisitionEngine().abortRequest();
+             } }).start();     
+             ReportingUtils.showError("Insufficent space on disk: no room to write data");
       }
+      fileChannel_ = raFile_.getChannel();
+      writingExecutor_ = masterMPTiffStorage_.getWritingExecutor();
+      indexMap_ = new HashMap<String, Long>();
+      reader_.setFileChannel(fileChannel_);
+      reader_.setIndexMap(indexMap_);
+      buffers_ = new LinkedList<ByteBuffer>();
+      
+      writeMMHeaderAndSummaryMD(summaryMD);
       try {
          summaryMDString_ = summaryMD.toString(2);
       } catch (JSONException ex) {

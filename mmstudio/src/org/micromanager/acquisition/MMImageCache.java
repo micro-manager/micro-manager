@@ -21,23 +21,29 @@
 package org.micromanager.acquisition;
 
 import ij.CompositeImage;
+
 import java.awt.Color;
-import org.micromanager.api.ImageCache;
-import org.micromanager.api.ImageCacheListener;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import org.micromanager.api.TaggedImageStorage;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
 import javax.swing.SwingUtilities;
+
 import mmcorej.TaggedImage;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import org.micromanager.api.ImageCache;
+import org.micromanager.api.ImageCacheListener;
+import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMException;
 import org.micromanager.utils.MMScriptException;
@@ -150,32 +156,39 @@ public class MMImageCache implements ImageCache {
 
       final String progressBarTitle = (newImageFileManager instanceof TaggedImageStorageRamFast) ? "Loading images..." : "Saving images...";
       final ProgressBar progressBar = new ProgressBar(progressBarTitle, 0, 100);
-            ArrayList<String> keys = new ArrayList<String>(imageKeys());
-            final int n = keys.size();
-            progressBar.setRange(0, n);
-            progressBar.setProgress(0);
-            progressBar.setVisible(true);
-            for (int i = 0; i < n; ++i) {
-               final int i1 = i;
-               int pos[] = MDUtils.getIndices(keys.get(i));
-               try {
-                  newImageFileManager.putImage(getImage(pos[0], pos[1], pos[2], pos[3]));
-               } catch (MMException ex) {
-                  ReportingUtils.logError(ex);
-               }
-                  SwingUtilities.invokeLater(new Runnable() {
-                     @Override
-                     public void run() {
-                        progressBar.setProgress(i1);
-                     }
-                  });
+      ArrayList<String> keys = new ArrayList<String>(imageKeys());
+      final int n = keys.size();
+      progressBar.setRange(0, n);
+      progressBar.setProgress(0);
+      progressBar.setVisible(true);
+      boolean wasSuccessful = true;
+      for (int i = 0; i < n; ++i) {
+         final int i1 = i;
+         int pos[] = MDUtils.getIndices(keys.get(i));
+         try {
+            newImageFileManager.putImage(getImage(pos[0], pos[1], pos[2], pos[3]));
+         } catch (MMException ex) {
+            ReportingUtils.logError(ex);
+         } catch (IOException ex) {
+            ReportingUtils.showError(ex, "Unable to write image " + i);
+            wasSuccessful = false;
+            break;
+         }
+         SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+               progressBar.setProgress(i1);
             }
-            newImageFileManager.finished();
-            progressBar.setVisible(false);
-            if (useNewStorage) {
-               imageStorage_ = newImageFileManager;
-            }
-      
+         });
+      }
+      if (wasSuccessful) {
+         // Successfully saved all images.
+         newImageFileManager.finished();
+      }
+      progressBar.setVisible(false);
+      if (useNewStorage) {
+         imageStorage_ = newImageFileManager;
+      }
    }
 
    public void putImage(final TaggedImage taggedImg) {

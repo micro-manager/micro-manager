@@ -216,7 +216,7 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
       fileSets_.get(position).overwritePixels(pix, channel, slice, frame, position); 
    }
    
-   public void putImage(TaggedImage taggedImage, boolean waitForWritingToFinish) throws MMException, InterruptedException, ExecutionException {      
+   public void putImage(TaggedImage taggedImage, boolean waitForWritingToFinish) throws MMException, InterruptedException, ExecutionException, IOException {
       putImage(taggedImage);
       if (waitForWritingToFinish) {
          Future f = writingExecutor_.submit(new Runnable() {
@@ -229,7 +229,7 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
    }
 
    @Override
-   public void putImage(TaggedImage taggedImage) throws MMException {
+   public void putImage(TaggedImage taggedImage) throws MMException, IOException {
       if (!newDataSet_) {
          ReportingUtils.showError("Tried to write image to a finished data set");
          throw new MMException("This ImageFileManager is read-only.");
@@ -300,80 +300,84 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
          return;
       }
       newDataSet_ = false;
+      if (fileSets_ == null) {
+         // Nothing to be done.
+         finished_ = true;
+         return;
+      }
+      ProgressBar progressBar = new ProgressBar("Finishing Files", 0, fileSets_.size());
       try {
-         if (fileSets_ != null) {
-             
-            int count = 0;
-            ProgressBar progressBar = new ProgressBar("Finishing Files", 0, fileSets_.size());
-            progressBar.setProgress(count);
-            progressBar.setVisible(true);
-            for (FileSet p : fileSets_.values()) {
-               p.finishAbortedAcqIfNeeded();
+         int count = 0;
+         progressBar.setProgress(count);
+         progressBar.setVisible(true);
+         for (FileSet p : fileSets_.values()) {
+            p.finishAbortedAcqIfNeeded();
+         }
+     
+         try {
+            //fill in missing tiffdata tags for OME meteadata--needed for acquisitions in which 
+            //z and t arent the same for every channel
+            for (int p = 0; p <= lastAcquiredPosition_; p++) {
+               //set sizeT in case of aborted acq
+               int currentFrame =  fileSets_.get(splitByXYPosition_ ? p : 0).getCurrentFrame();
+               omeMetadata_.setNumFrames(p, currentFrame + 1);
+               omeMetadata_.fillInMissingTiffDatas(lastAcquiredFrame(), p);
             }
-        
-            try {
-               //fill in missing tiffdata tags for OME meteadata--needed for acquisitions in which 
-               //z and t arent the same for every channel
-               for (int p = 0; p <= lastAcquiredPosition_; p++) {
-                  //set sizeT in case of aborted acq
-                  int currentFrame =  fileSets_.get(splitByXYPosition_ ? p : 0).getCurrentFrame();
-                  omeMetadata_.setNumFrames(p, currentFrame + 1);
-                  omeMetadata_.fillInMissingTiffDatas(lastAcquiredFrame(), p);
-               }
-            } catch (Exception e) {
-               //don't want errors in this code to trip up correct file finishing
-               ReportingUtils.logError("Couldn't fill in missing frames in OME");
-            }
+         } catch (Exception e) {
+            //don't want errors in this code to trip up correct file finishing
+            ReportingUtils.logError("Couldn't fill in missing frames in OME");
+         }
 
-            //figure out where the full string of OME metadata can be stored 
-            String fullOMEXMLMetadata = omeMetadata_.toString();
-            int length = fullOMEXMLMetadata.length();
-            String uuid = null, filename = null;
-            FileSet master = null;
-            for (FileSet p : fileSets_.values()) {
-               if (p.hasSpaceForFullOMEXML(length)) {
-                  uuid = p.getCurrentUUID();
-                  filename = p.getCurrentFilename();
-                  p.finished(fullOMEXMLMetadata);
-                  master = p;
-                  count++;
-                  progressBar.setProgress(count);
-                  break;
-               }
-            }
-            
-            if (uuid == null) {
-               //in the rare case that no files have extra space to fit the full block of OME XML,
-               //generate a file specifically for holding it that all other files can point to
-               //simplest way to do this is to make a .ome text file 
-                filename = "OMEXMLMetadata.ome";
-                uuid = "urn:uuid:" + UUID.randomUUID().toString();
-                PrintWriter pw = new PrintWriter(directory_ + File.separator + filename);
-                pw.print(fullOMEXMLMetadata);
-                pw.close();
-            }
-            
-            String partialOME = OMEMetadata.getOMEStringPointerToMasterFile(filename, uuid);
-
-            for (FileSet p : fileSets_.values()) {
-               if (p == master) {
-                  continue;
-               }
-               p.finished(partialOME);
+         //figure out where the full string of OME metadata can be stored 
+         String fullOMEXMLMetadata = omeMetadata_.toString();
+         int length = fullOMEXMLMetadata.length();
+         String uuid = null, filename = null;
+         FileSet master = null;
+         for (FileSet p : fileSets_.values()) {
+            if (p.hasSpaceForFullOMEXML(length)) {
+               uuid = p.getCurrentUUID();
+               filename = p.getCurrentFilename();
+               p.finished(fullOMEXMLMetadata);
+               master = p;
                count++;
                progressBar.setProgress(count);
-            }            
-            //shut down writing executor--pause here until all tasks have finished writing
-            //so that no attempt is made to close the dataset (and thus the FileChannel)
-            //before everything has finished writing
-            //mkae sure all images have finished writing if they are on seperate thread 
-            if (writingExecutor_ != null && !writingExecutor_.isShutdown()) {
-               writingExecutor_.shutdown();
+               break;
             }
-            progressBar.setVisible(false);
+         }
+         
+         if (uuid == null) {
+            //in the rare case that no files have extra space to fit the full block of OME XML,
+            //generate a file specifically for holding it that all other files can point to
+            //simplest way to do this is to make a .ome text file 
+             filename = "OMEXMLMetadata.ome";
+             uuid = "urn:uuid:" + UUID.randomUUID().toString();
+             PrintWriter pw = new PrintWriter(directory_ + File.separator + filename);
+             pw.print(fullOMEXMLMetadata);
+             pw.close();
+         }
+         
+         String partialOME = OMEMetadata.getOMEStringPointerToMasterFile(filename, uuid);
+
+         for (FileSet p : fileSets_.values()) {
+            if (p == master) {
+               continue;
+            }
+            p.finished(partialOME);
+            count++;
+            progressBar.setProgress(count);
+         }            
+         //shut down writing executor--pause here until all tasks have finished writing
+         //so that no attempt is made to close the dataset (and thus the FileChannel)
+         //before everything has finished writing
+         //mkae sure all images have finished writing if they are on seperate thread 
+         if (writingExecutor_ != null && !writingExecutor_.isShutdown()) {
+            writingExecutor_.shutdown();
          }
       } catch (IOException ex) {
          ReportingUtils.logError(ex);
+      }
+      finally {
+         progressBar.setVisible(false);
       }
       finished_ = true;
    }
@@ -517,7 +521,7 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
       int currentFrame_ = 0;
 
       
-      public FileSet(JSONObject firstImageTags, TaggedImageStorageMultipageTiff mpt) {
+      public FileSet(JSONObject firstImageTags, TaggedImageStorageMultipageTiff mpt) throws IOException {
          tiffWriters_ = new LinkedList<MultipageTiffWriter>();  
          mpTiff_ = mpt;
          
