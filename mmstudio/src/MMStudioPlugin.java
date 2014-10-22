@@ -33,7 +33,7 @@ import javax.swing.UIManager;
 import mmcorej.CMMCore;
 
 import org.micromanager.MMStudio;
-import org.micromanager.imagedisplay.AcquisitionVirtualStack;
+import org.micromanager.imagedisplay.dev.MMVirtualStack;
 import org.micromanager.utils.AutofocusManager;
 import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.JavaUtils;
@@ -113,7 +113,7 @@ public class MMStudioPlugin implements PlugIn, CommandListener {
          }
          return command;
       }  else if (command.equals("Crop")) {
-         if (IJ.getImage().getStack() instanceof AcquisitionVirtualStack) {
+         if (IJ.getImage().getStack() instanceof MMVirtualStack) {
 
             new Duplicator().run(IJ.getImage()).show();
 
@@ -123,9 +123,9 @@ public class MMStudioPlugin implements PlugIn, CommandListener {
       } else if (command.equals("Add Noise")) {
          // blanket method to make sure that ImageJ filters do not execute on disk-cached images
          // this may backfire!
-         if (IJ.getImage().getStack() instanceof AcquisitionVirtualStack) {
-            AcquisitionVirtualStack avs = (AcquisitionVirtualStack) IJ.getImage().getStack();
-            if (avs.getVirtualAcquisitionDisplay().isDiskCached()) {
+         if (IJ.getImage().getStack() instanceof MMVirtualStack) {
+            MMVirtualStack stack = (MMVirtualStack) IJ.getImage().getStack();
+            if (stack.getDatastore().getIsSaved()) {
                // duplicate the image and then run the ImageJ command on what is now the new image
                new Duplicator().run(IJ.getImage()).show();
             } else {
