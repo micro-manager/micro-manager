@@ -47,7 +47,6 @@ import javax.swing.table.*;
 import mmcorej.CMMCore;
 
 import org.micromanager.acquisition.AcquisitionEngine;
-import org.micromanager.acquisition.ComponentTitledBorder;
 import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
 import org.micromanager.acquisition.TaggedImageStorageMultipageTiff;
 import org.micromanager.api.ScriptInterface;
