@@ -51,8 +51,10 @@ public interface DisplayWindow {
     * - This causes requestToClose() to be called
     * - "Owner" of the DisplayWindow determines if window can be closed
     * - Owner calls forceClosed(), below, if appropriate
+    *
+    * @return True if the window is closed, false if it remains open.
     */
-   public void requestToClose();
+   public boolean requestToClose();
 
    /**
     * Close the display and remove it from the Datastore, bypassing any logic
