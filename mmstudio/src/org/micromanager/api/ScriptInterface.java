@@ -159,19 +159,6 @@ public interface ScriptInterface {
    public void initializeAcquisition(String name, int width, int height, int bytesPerPixel, int bitDepth) throws MMScriptException;
         
    /**
-    * Inserts image into the data set.
-    * @param name - data set name
-    * @param frame - 0 based frame number
-    * @param channel - 0 based channel number
-    * @param slice - 0 based (z) slice number
-    * @param position - 0 based position number
-    * @param taggedImg Tagged Image (image with associated metadata) 
-    * @throws MMScriptException
-    */
-   public void addImageToAcquisition(String name, int frame, int channel, int slice, 
-           int position, TaggedImage taggedImg) throws MMScriptException;   
-
-   /**
     * Change an acquisition so that adding images to it is done asynchronously.
     * All calls to e.g. addImageToAcquisition() and other similar functions
     * will return nearly-instantly.
@@ -179,18 +166,6 @@ public interface ScriptInterface {
     * @throws MMScriptException if the specified acquisition does not exist.
     */
    public void setAcquisitionAddImageAsynchronous(String name) throws MMScriptException;
-
-   /**
-    * Snaps an image with the current settings and places pixels in the specified position
-    * of the Micro-Manager Image viewer
-    * @param name Name of the acquisition.
-    * @param frame Frame number (time point, 0-based) in which this image should be inserted.
-    * @param channel Channel number (0-based) in which this image should be inserted.
-    * @param z Slice number (0-based) in which this image should be inserted.
-    * @param position Position number (0-based) in which this image should be inserted. 
-    * @throws MMScriptException
-    */
-   public void snapAndAddImage(String name, int frame, int channel, int z, int position) throws MMScriptException;
 
    /**
     * Provides access to the data set through the MMAcquisition interface.
@@ -271,16 +246,6 @@ public interface ScriptInterface {
    public int getAcquisitionMultiCamNumChannels(String acqName) throws MMScriptException;
    
    /**
-    * Sets custom property attached to the acquisition summary
-    */
-   public void setAcquisitionProperty(String acqName, String propertyName, String value) throws MMScriptException;
-   
-   /**
-    * Sets property attached to an individual image.
-    */
-   public void setImageProperty(String acqName, int frame, int channel, int slice, String propName, String value) throws MMScriptException;
-   
-   /**
     * Executes Acquisition with current settings
     * Will open the Acquisition Dialog when it is not open yet
     * Returns after Acquisition finishes
@@ -326,21 +291,6 @@ public interface ScriptInterface {
    public PositionList getPositionList() throws MMScriptException;
    
    /**
-    * Sets the color of the specified channel in the image viewer.  Only has an effect
-    * for images with 2 or more channels
-    */
-   public void setChannelColor(String title, int channel, Color color) throws MMScriptException;
-   
-   /**
-    * Sets the channel name (label)
-    * @param title - acquisition name
-    * @param channel - channel index
-    * @param name - channel label
-    * @throws MMScriptException
-    */
-   public void setChannelName(String title, int channel, String name) throws MMScriptException;
-   
-   /**
     * Updates the exposure time associated with the given preset
     * If the channelgroup and channel name match the current state
     * the exposure time will also be updated
@@ -352,27 +302,6 @@ public interface ScriptInterface {
     */
    public void setChannelExposureTime(String channelGroup, String channel,
            double exposure);
-   
-   /**
-    * Sets min (black) and max (white or the channel's color) pixel value clipping levels for each channel.
-    * @param title - acquisition name
-    * @param channel - channel index (use 0 if there is only a single channel)
-    * @param min - black clipping level
-    * @param max - white clipping level
-    * @throws MMScriptException
-    */
-   public void setChannelContrast(String title, int channel, int min, int max) throws MMScriptException;
-   
-   /**
-    * Autoscales contrast for each channel at the current position based on pixel values
-    * at the current slice and frame
-    * @param title - acquisition name
-    * @param frame - frame number
-    * @param slice - slice number
-    * @throws MMScriptException
-    */
-   public void setContrastBasedOnFrame(String title, int frame, int slice) throws MMScriptException;
-   
    
     /**
     * Returns exposure time for the desired preset in the given channelgroup
@@ -457,13 +386,6 @@ public interface ScriptInterface {
     * Returns the ImageJ ImageWindow instance that is used for Snap and Live display.
     */
    public ImageWindow getSnapLiveWin();
-
-   /**
-    * Given an ImageWindow, retrieve the associated ImageCache. Throws an
-    * IllegalArgumentException if the window is not one that Micro-Manager
-    * controls.
-    */
-   public ImageCache getCacheForWindow(ImageWindow window) throws IllegalArgumentException;
 
    /**
    * Installs an autofocus plugin class from the class path.
@@ -632,15 +554,6 @@ public interface ScriptInterface {
     * @throws MMScriptException
     */
    public void setROI(Rectangle r) throws MMScriptException;
-
-   /**
-    * Get a reference to the ImageCache object associated with the acquisition.
-    * @param acquisitionName Name of the acquisition
-    * @return ImageCache object associated with the acquisition
-    * @throws org.micromanager.utils.MMScriptException
-    */
-   public ImageCache getAcquisitionImageCache(String acquisitionName) throws MMScriptException;
-
 
    /**
     * Opens the XYPositionList when it is not opened.
