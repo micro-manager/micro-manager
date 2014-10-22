@@ -22,6 +22,11 @@ public interface DisplayWindow {
    public void setDisplayedImageTo(Coords coords);
 
    /**
+    * Display the specified status string.
+    */
+   public void displayStatusString(String status);
+
+   /**
     * Add an additional "mode button" to the display window, to show/hide
     * the provided Component when clicked.
     */
@@ -41,7 +46,11 @@ public interface DisplayWindow {
     * Publish a RequestToCloseEvent, which may cause any relevant subscribers
     * to call forceClosed(), below. This is the recommended way to close
     * DisplayWindows, so that cleanup logic can be performed (e.g. saving of
-    * unsaved data, or stopping acquisitions/live mode).
+    * unsaved data, or stopping acquisitions/live mode). The workflow is:
+    * - User clicks close button
+    * - This causes requestToClose() to be called
+    * - "Owner" of the DisplayWindow determines if window can be closed
+    * - Owner calls forceClosed(), below, if appropriate
     */
    public void requestToClose();
 
