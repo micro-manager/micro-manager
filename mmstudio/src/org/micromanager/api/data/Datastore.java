@@ -114,7 +114,7 @@ public interface Datastore {
    /**
     * Tell the Datastore whether or not its image data has been saved.
     */
-   public void setIsSaved();
+   public void setIsSaved(boolean isSaved);
 
    /**
     * Retrieve whether or not the image data has been saved.
