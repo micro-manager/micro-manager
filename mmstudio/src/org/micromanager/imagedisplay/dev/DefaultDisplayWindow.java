@@ -482,8 +482,9 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
    }
 
    @Override
-   public void requestToClose() {
+   public boolean requestToClose() {
       displayBus_.post(new RequestToCloseEvent(this));
+      return getIsClosed();
    }
 
    @Override
