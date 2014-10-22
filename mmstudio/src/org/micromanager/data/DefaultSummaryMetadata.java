@@ -8,6 +8,7 @@ import org.json.JSONObject;
 import org.micromanager.api.data.SummaryMetadata;
 import org.micromanager.api.MultiStagePosition;
 
+import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
 
 public class DefaultSummaryMetadata implements SummaryMetadata {
@@ -314,10 +315,13 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       }
 
       try {
-         builder.customIntervalsMs(new Double[] {Double.parseDouble(tags.getString("CustomIntervals_ms"))});
+         builder.customIntervalsMs(new Double[] {NumberUtils.displayStringToDouble(tags.getString("CustomIntervals_ms"))});
       }
       catch (JSONException e) {
-         ReportingUtils.logError("Failed to set field customIntervalsMs(new Double[] {Double.parseDouble");
+         ReportingUtils.logError("Failed to set field customIntervalsMs");
+      }
+      catch (java.text.ParseException e) {
+         ReportingUtils.logError("Failed to parse input string for customIntervalsMs");
       }
 
       try {
