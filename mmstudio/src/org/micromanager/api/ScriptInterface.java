@@ -316,15 +316,6 @@ public interface ScriptInterface {
    public double getChannelExposureTime(String channelGroup, String channel,
            double defaultExp);
    
-   
-   /**
-    * Closes the image window corresponding to the acquisition.  If being used along with
-    * closeAcquisitiion, this method should be called first
-    * @param acquisitionName - Name of the acquisition
-    * @throws MMScriptException
-    */
-   public void closeAcquisitionWindow(String acquisitionName) throws MMScriptException;
-
    /**
     * Obtain the current XY stage position.
     * Returns a point in device coordinates in microns.
@@ -748,11 +739,6 @@ public interface ScriptInterface {
      */ 
     public void setAcquisitionSettings(SequenceSettings settings);
  
-    /**
-     * Return the current acquisition path, or null if not applicable
-     */
-    public String getAcquisitionPath();
-
     /**
      * Display dialog to save data for one of the currently open acquisitions
      */
