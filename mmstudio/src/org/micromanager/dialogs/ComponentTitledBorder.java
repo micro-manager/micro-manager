@@ -1,5 +1,5 @@
 
-package org.micromanager.acquisition;
+package org.micromanager.dialogs;
 
 import java.awt.Component;
 import java.awt.Container;
