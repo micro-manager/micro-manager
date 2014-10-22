@@ -18,6 +18,7 @@ public class DefaultDatastore implements Datastore {
    private Storage storage_ = null;
    private PrioritizedEventBus bus_;
    private boolean isLocked_ = false;
+   private boolean isSaved_ = false;
    private ArrayList<DisplayWindow> displays_;
 
    public DefaultDatastore() {
@@ -134,6 +135,16 @@ public class DefaultDatastore implements Datastore {
    @Override
    public boolean getIsLocked() {
       return isLocked_;
+   }
+
+   @Override
+   public void setIsSaved(boolean isSaved) {
+      isSaved_ = isSaved;
+   }
+
+   @Override
+   public boolean getIsSaved() {
+      return isSaved_;
    }
 
    @Override
