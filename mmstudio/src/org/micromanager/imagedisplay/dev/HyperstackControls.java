@@ -59,6 +59,8 @@ public class HyperstackControls extends JPanel {
    private JLabel fpsLabel_;
    // Displays the countdown to the next frame.
    private JLabel countdownLabel_;
+   // Displays general status information.
+   private JLabel statusLabel_;
    private JButton showFolderButton_;
    private JButton saveButton_;
 
@@ -109,6 +111,11 @@ public class HyperstackControls extends JPanel {
       countdownLabel_.setMinimumSize(labelDimension);
       countdownLabel_.setFont(labelFont);
       labelsPanel.add(countdownLabel_);
+
+      statusLabel_ = new JLabel(labelString);
+      statusLabel_.setMinimumSize(labelDimension);
+      statusLabel_.setFont(labelFont);
+      labelsPanel.add(statusLabel_);
 
       subPanel_.add(labelsPanel, "span, growx, align center, wrap");
 
@@ -209,6 +216,11 @@ public class HyperstackControls extends JPanel {
       }
       fpsLabel_.setText(newLabel);
       validate();
+   }
+
+   @Subscribe
+   public void onStatus(StatusEvent event) {
+      statusLabel_.setText(event.getStatus());
    }
 
    public static String elapsedTimeDisplayString(double seconds) {

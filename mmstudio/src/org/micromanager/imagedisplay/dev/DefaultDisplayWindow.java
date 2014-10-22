@@ -450,7 +450,12 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
    @Override
    public void setDisplayedImageTo(Coords coords) {
       canvasThread_.addCoords(coords);
-   }  
+   }
+
+   @Override
+   public void displayStatusString(String status) {
+      displayBus_.post(new StatusEvent(status));
+   }
       
    @Override
    public void addControlPanel(String label, Component widget) {
