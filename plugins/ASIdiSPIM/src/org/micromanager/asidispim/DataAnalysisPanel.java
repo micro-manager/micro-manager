@@ -52,7 +52,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
    private final JTextField saveDestinationField_;
    private Prefs prefs_;
    public static final String[] TRANSFORMOPTIONS = 
-      {"None", "Rotate Right 90\u00B0", "Rotate Left 90\u00B0"};
+      {"None", "Rotate Right 90\u00B0", "Rotate Left 90\u00B0", "Rotate outward"};
    public static FileDialogs.FileType MIPAV_DATA_SET 
            = new FileDialogs.FileType("MIPAV_DATA_SET",
                  "Export to mipav Location",
@@ -236,7 +236,11 @@ public class DataAnalysisPanel extends ListeningJPanel {
                      case 2: {
                         iProc2.rotate(-90);
                         break;
-                     }  
+                     }
+                     case 3: {
+                        iProc2.rotate((c==1) ? 90 : -90);
+                        break;
+                     }
                   }
                   
                   stack.addSlice(iProc2);
