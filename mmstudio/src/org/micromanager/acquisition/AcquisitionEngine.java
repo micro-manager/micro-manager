@@ -32,8 +32,8 @@ import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 
 import org.json.JSONObject;
+import org.micromanager.api.data.Datastore;
 import org.micromanager.api.DataProcessor;
-import org.micromanager.api.ImageCache;
 import org.micromanager.api.PositionList;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.internalinterfaces.AcqSettingsListener;
@@ -584,18 +584,15 @@ public interface AcquisitionEngine {
     */
    public JSONObject getSummaryMetadata();
 
-    /*
-     * Get the image cache for the most recent acquisition.
-     */
-    public ImageCache getImageCache();
+   public Datastore getDatastore();
 
-    public List<DataProcessor<TaggedImage>> getImageProcessors();
+   public List<DataProcessor<TaggedImage>> getImageProcessors();
 
-    public String getComment();
+   public String getComment();
 
-    public void addSettingsListener(AcqSettingsListener listener);
+   public void addSettingsListener(AcqSettingsListener listener);
 
-    public void removeSettingsListener(AcqSettingsListener listener);
-    
-    public boolean getZAbsoluteMode();
+   public void removeSettingsListener(AcqSettingsListener listener);
+   
+   public boolean getZAbsoluteMode();
 }
