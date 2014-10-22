@@ -1501,14 +1501,10 @@ public class MMStudio implements ScriptInterface {
 
       stopAllActivity();
       
-      try {
-         // Close all image windows associated with MM.  Canceling saving of 
-         // any of these should abort shutdown
-         if (!acqMgr_.closeAllImageWindows()) {
-            return false;
-         }
-      } catch (MMScriptException ex) {
-         // Not sure what to do here...
+      // Close all image windows associated with MM.  Canceling saving of 
+      // any of these should abort shutdown
+      if (!acqMgr_.closeAllImageWindows()) {
+         return false;
       }
 
       if (!cleanupOnClose(calledByImageJ)) {

@@ -16,7 +16,12 @@ import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import org.micromanager.api.data.Datastore;
+import org.micromanager.api.data.DatastoreLockedException;
+import org.micromanager.api.display.DisplayWindow;
 import org.micromanager.api.ImageCache;
+import org.micromanager.data.DefaultDisplaySettings;
 import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
@@ -81,36 +86,6 @@ public class AcquisitionManager {
       } catch (Exception e) {
          ReportingUtils.showError(e);
       }
-   }
-   
-   /**
-    * Closes display window associated with an acquisition
-    * @param name of acquisition
-    * @return false if canceled by user, true otherwise
-    * @throws MMScriptException 
-    */
-   public boolean closeImageWindow(String name) throws MMScriptException {
-      if (!acquisitionExists(name))
-         throw new MMScriptException("The name does not exist");
-      
-      return acqs_.get(name).closeImageWindow();
-   }
-   
-   /**
-    * Closes all windows associated with acquisitions
-    * Can be interrupted by the user (by pressing cancel)
-    * 
-    * @return false is saving was canceled, true otherwise
-    * @throws MMScriptException 
-    */
-   public boolean closeAllImageWindows() throws MMScriptException {
-      String[] acqNames = getAcquisitionNames();
-      for (String acqName : acqNames) {
-         if (!closeImageWindow(acqName)) {
-            return false;
-         }
-      }       
-      return true;
    }
    
    public boolean acquisitionExists(String name) {
@@ -179,39 +154,12 @@ public class AcquisitionManager {
    private void copyDisplaySettings(MMAcquisition acq, JSONObject displaySettings) {
       if (displaySettings == null) 
          return;
-      ImageCache ic = acq.getImageCache();
-      for (int i = 0; i < ic.getNumDisplayChannels(); i++) {
-         try {
-            JSONObject channelSetting = (JSONObject) ((JSONArray) displaySettings.get("Channels")).get(i);
-            int color = channelSetting.getInt("Color");
-            int min = channelSetting.getInt("Min");
-            int max = channelSetting.getInt("Max");
-            double gamma = channelSetting.getDouble("Gamma");
-            String name = channelSetting.getString("Name");
-            int histMax;
-            if (channelSetting.has("HistogramMax")) {
-               histMax = channelSetting.getInt("HistogramMax");
-            }
-            else {
-               histMax = -1;
-            }
-            int displayMode = CompositeImage.COMPOSITE;
-            if (channelSetting.has("DisplayMode")) {
-               displayMode = channelSetting.getInt("DisplayMode");
-            }
-            
-            ic.storeChannelDisplaySettings(i, min, max, gamma, histMax, displayMode);
-            acq.getAcquisitionWindow().setChannelHistogramDisplayMax(i,histMax);
-            acq.getAcquisitionWindow().setChannelContrast(i, min, max, gamma);
-            acq.getAcquisitionWindow().setDisplayMode(displayMode);
-            acq.setChannelColor(i, color);
-            acq.setChannelName(i, name);
-
-         } catch (JSONException ex) {
-            ReportingUtils.logError("Something wrong with Display and Comments");
-         } catch (MMScriptException e) {
-            ReportingUtils.logError(e);
-         }
+      Datastore store = acq.getDatastore();
+      try {
+         store.setDisplaySettings(DefaultDisplaySettings.legacyFromJSON(displaySettings));
+      }
+      catch (DatastoreLockedException e) {
+         ReportingUtils.logError(e, "Couldn't copy display settings");
       }
    }
  
@@ -225,5 +173,18 @@ public class AcquisitionManager {
       String name = this.getUniqueAcquisitionName("Acq");
       acqs_.put(name, new MMAcquisition(name, summaryMetadata, diskCached, engine, !displayOff));
       return name;
+   }
+
+   public boolean closeAllImageWindows() {
+      for (String name : getAcquisitionNames()) {
+         MMAcquisition acq = acqs_.get(name);
+         Datastore store = acq.getDatastore();
+         for (DisplayWindow display : store.getDisplays()) {
+            if (!display.requestToClose()) {
+               return false;
+            }
+         }
+      }
+      return true;
    }
 }

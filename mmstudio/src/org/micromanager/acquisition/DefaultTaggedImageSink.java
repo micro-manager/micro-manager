@@ -5,7 +5,8 @@ import java.util.concurrent.TimeUnit;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import mmcorej.TaggedImage;
-import org.micromanager.api.ImageCache;
+import org.micromanager.api.data.Datastore;
+import org.micromanager.data.DefaultImage;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -16,12 +17,12 @@ import org.micromanager.utils.ReportingUtils;
 public class DefaultTaggedImageSink  {
 
    private final BlockingQueue<TaggedImage> imageProducingQueue_;
-   private ImageCache imageCache_ = null;
+   private Datastore store_;
 
-   public DefaultTaggedImageSink(BlockingQueue<TaggedImage> imageProducingQueue,
-                  ImageCache imageCache) {
+   public DefaultTaggedImageSink(
+         BlockingQueue<TaggedImage> imageProducingQueue, Datastore store) {
       imageProducingQueue_ = imageProducingQueue;
-         imageCache_ = imageCache;
+      store_ = store;
    }
 
    public void start() {
@@ -39,14 +40,15 @@ public class DefaultTaggedImageSink  {
             int imageCount = 0;
             try {
                while (true) {
-                  TaggedImage image = imageProducingQueue_.poll(1, TimeUnit.SECONDS);
-                  if (image != null) {
-                     if (TaggedImageQueue.isPoison(image)) {
+                  TaggedImage tagged = imageProducingQueue_.poll(1, TimeUnit.SECONDS);
+                  if (tagged != null) {
+                     if (TaggedImageQueue.isPoison(tagged)) {
                         break;
                      }
                      ++imageCount;
+                     DefaultImage image = new DefaultImage(tagged);
                      try {
-                        imageCache_.putImage(image);
+                        image.splitMultiComponentIntoStore(store_);
                      }
                      catch (OutOfMemoryError e) {
                         handleOutOfMemory(e, sinkFullCallback);
@@ -59,7 +61,7 @@ public class DefaultTaggedImageSink  {
             }
             long t2 = System.currentTimeMillis();
             ReportingUtils.logMessage(imageCount + " images stored in " + (t2 - t1) + " ms.");
-            imageCache_.finished();
+            store_.lock();
          }
       };
       savingThread.start();
@@ -82,9 +84,5 @@ public class DefaultTaggedImageSink  {
                   "Out of image storage memory", JOptionPane.ERROR_MESSAGE);
          }
       });
-   }
-
-   public ImageCache getImageCache() {
-      return imageCache_;
    }
 }
