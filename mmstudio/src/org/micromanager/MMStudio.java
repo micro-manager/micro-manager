@@ -77,6 +77,7 @@ import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.DataManager;
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.DatastoreLockedException;
+import org.micromanager.api.data.DisplaySettings;
 import org.micromanager.api.data.Image;
 import org.micromanager.api.DataProcessor;
 import org.micromanager.api.display.DisplayWindow;
@@ -104,8 +105,7 @@ import org.micromanager.dialogs.RegistrationDlg;
 import org.micromanager.events.EventManager;
 
 import org.micromanager.imagedisplay.dev.DefaultDisplayWindow;
-import org.micromanager.imagedisplay.MetadataPanel;
-import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
+
 import org.micromanager.logging.LogFileManager;
 import org.micromanager.menus.FileMenu;
 import org.micromanager.menus.HelpMenu;
@@ -796,15 +796,11 @@ public class MMStudio implements ScriptInterface {
          // necessary).
          Rectangle originalROI = null;
 
-         VirtualAcquisitionDisplay virtAcq =
-            VirtualAcquisitionDisplay.getDisplay(curImage);
-         JSONObject tags = virtAcq.getCurrentMetadata();
-         try {
-            originalROI = MDUtils.getROI(tags);
-         }
-         catch (JSONException e) {
-         }
-         catch (MMScriptException e) {
+         DisplayWindow curWindow = getCurrentWindow();
+         if (curWindow != null) {
+            List<Image> images = curWindow.getDisplayedImages();
+            // Just take the first one.
+            originalROI = images.get(0).getMetadata().getROI();
          }
 
          if (originalROI == null) {
@@ -863,10 +859,6 @@ public class MMStudio implements ScriptInterface {
     */
    public static MainFrame getFrame() {
       return frame_;
-   }
-
-   public MetadataPanel getMetadataPanel() {
-      return frame_.getMetadataPanel();
    }
 
    @Override
@@ -1170,14 +1162,6 @@ public class MMStudio implements ScriptInterface {
    @Override
    public boolean isLiveModeOn() {
       return snapLiveManager_.getIsLiveModeOn();
-   }
-
-   public void displayStatusLine(String statusLine) {
-      ImagePlus ip = WindowManager.getCurrentImage();
-      if (!(ip.getWindow() instanceof DisplayWindow)) {
-         return;
-      }
-      VirtualAcquisitionDisplay.getDisplay(ip).displayStatusLine(statusLine);
    }
 
    private boolean isCurrentImageFormatSupported() {
@@ -1559,10 +1543,23 @@ public class MMStudio implements ScriptInterface {
    //TODO: Deprecated @Override
    // Last I checked, this is only used by the SlideExplorer plugin.
    public ContrastSettings getContrastSettings() {
-      ImagePlus img = WindowManager.getCurrentImage();
-      if (img == null || VirtualAcquisitionDisplay.getDisplay(img) == null )
-         return null;
-      return VirtualAcquisitionDisplay.getDisplay(img).getChannelContrastSettings(0);
+      DisplaySettings settings = getCurrentWindow().getDatastore().getDisplaySettings();
+      int min = 0;
+      int max = 0;
+      double gamma = 1;
+      Integer[] mins = settings.getChannelContrastMins();
+      if (mins != null && mins.length > 0) {
+         min = mins[0];
+      }
+      Integer[] maxes = settings.getChannelContrastMaxes();
+      if (maxes != null && maxes.length > 0) {
+         max = maxes[0];
+      }
+      Double[] gammas = settings.getChannelGammas();
+      if (gammas != null && gammas.length > 0) {
+         gamma = gammas[0];
+      }
+      return new ContrastSettings(min, max, gamma);
    }
    
    public boolean getIsProgramRunning() {
@@ -1941,15 +1938,6 @@ public class MMStudio implements ScriptInterface {
    }
 
    @Override
-   public ImageCache getCacheForWindow(ImageWindow window) throws IllegalArgumentException {
-      VirtualAcquisitionDisplay display = VirtualAcquisitionDisplay.getDisplay(window.getImagePlus());
-      if (display == null) {
-         throw new IllegalArgumentException("No matching Micro-Manager display for this window");
-      }
-      return display.getImageCache();
-   }
-   
-   @Override
    public String runAcquisition() throws MMScriptException {
       if (SwingUtilities.isEventDispatchThread()) {
          throw new MMScriptException("Acquisition can not be run from this (EDT) thread");
@@ -1978,24 +1966,11 @@ public class MMStudio implements ScriptInterface {
       if (acqControlWin_ != null) {
          String acqName = acqControlWin_.runAcquisition(name, root);
          try {
-            while (acqControlWin_.isAcquisitionRunning()) {
+            MMAcquisition acq = acqMgr_.getAcquisition(acqName);
+            Datastore store = acq.getDatastore();
+            while (!store.getIsLocked()) {
                Thread.sleep(100);
             }
-            // ensure that the acquisition has finished.
-            // This does not seem to work, needs something better
-            MMAcquisition acq = acqMgr_.getAcquisition(acqName);
-            boolean finished = false;
-            while (!finished) {
-               ImageCache imCache = acq.getImageCache();
-               if (imCache != null) {
-                  if (imCache.isFinished()) {
-                     finished = true;
-                  } else {
-                     Thread.sleep(100);
-                  }
-               }
-            }
-
          } catch (InterruptedException e) {
             ReportingUtils.showError(e);
          }
@@ -2201,21 +2176,6 @@ public class MMStudio implements ScriptInterface {
    }
 
    @Override
-   public void setAcquisitionProperty(String acqName, String propertyName,
-         String value) throws MMScriptException {
-      MMAcquisition acq = acqMgr_.getAcquisition(acqName);
-      acq.setProperty(propertyName, value);
-   }
-
-   @Override
-   public void setImageProperty(String acqName, int frame, int channel,
-         int slice, String propName, String value) throws MMScriptException {
-      MMAcquisition acq = acqMgr_.getAcquisition(acqName);
-      acq.setProperty(frame, channel, slice, propName, value);
-   }
-
-
-   @Override
    public String getCurrentAlbum() {
       return acqMgr_.getCurrentAlbum();
    }
@@ -2228,132 +2188,10 @@ public class MMStudio implements ScriptInterface {
       snapLiveManager_.setLiveMode(enable);
    }
 
-   /**
-    * The basic method for adding images to an existing data set.
-    * If the acquisition was not previously initialized, it will attempt to 
-    * initialize it from the available image data
-    * @param frame
-    * @param channel
-    * @param slice
-    * @param position
-    * @throws org.micromanager.utils.MMScriptException
-    */
-   @Override
-   public void addImageToAcquisition(String name,
-           int frame,
-           int channel,
-           int slice,
-           int position,
-           TaggedImage taggedImg) throws MMScriptException {
-
-      // TODO: complete the tag set and initialize the acquisition
-      MMAcquisition acq = acqMgr_.getAcquisition(name);
-
-      // check position, for multi-position data set the number of declared positions should be at least 2
-      if (acq.getPositions() <= 1 && position > 0) {
-         throw new MMScriptException("The acquisition was open as a single position data set.\n"
-                 + "Open acqusition with two or more positions in order to crate a multi-position data set.");
-      }
-
-      // check position, for multi-position data set the number of declared
-      // positions should be at least 2
-      if (acq.getChannels() <= channel) {
-         throw new MMScriptException("This acquisition was opened with " + 
-               acq.getChannels() + " channels.\n" + 
-               "The channel number must not exceed declared number of positions.");
-      }
-
-      JSONObject tags = taggedImg.tags;
-
-      // if the acquisition was not previously initialized, set physical
-      // dimensions of the image
-      if (!acq.isInitialized()) {
-         // automatically initialize physical dimensions of the image
-         try {
-            initializeAcquisitionFromTags(name, tags);
-         } catch (JSONException e) {
-            throw new MMScriptException(e);
-         }
-      }
-
-      // create required coordinate tags
-      try {
-         MDUtils.setFrameIndex(tags, frame);
-         MDUtils.setChannelIndex(tags, channel);
-         MDUtils.setSliceIndex(tags, slice);
-         MDUtils.setPositionIndex(tags, position);
-
-         if (!MDUtils.hasSlicesFirst(tags) && !MDUtils.hasTimeFirst(tags)) {
-            // add default setting
-            MDUtils.setSlicesFirst(tags, true);
-            MDUtils.setTimeFirst(tags, false);
-         }
-
-         if (acq.getPositions() > 1) {
-            // if no position name is defined we need to insert a default one
-            if (!MDUtils.hasPositionName(tags)) {
-               MDUtils.setPositionName(tags, "Pos" + position);
-            }
-         }
-
-         // update frames if necessary
-         if (acq.getFrames() <= frame) {
-            acq.setProperty(MMTags.Summary.FRAMES, Integer.toString(frame + 1));
-         }
-      } catch (JSONException e) {
-         throw new MMScriptException(e);
-      }
-      acq.insertImage(taggedImg);
-   }
-
    @Override
    public void setAcquisitionAddImageAsynchronous(String name) throws MMScriptException {
       MMAcquisition acq = acqMgr_.getAcquisition(name);
       acq.setAsynchronous();
-   }
-
-   /**
-    * A quick way to implicitly snap an image and add it to the data set. Works
-    * in the same way as above.
-    * @param slice
-    * @throws org.micromanager.utils.MMScriptException
-    */
-   @Override
-   public void snapAndAddImage(String name, int frame, int channel, int slice, int position) throws MMScriptException {
-      TaggedImage ti;
-      try {
-         if (core_.isSequenceRunning()) {
-            ti = core_.getLastTaggedImage();
-         } else {
-            core_.snapImage();
-            ti = core_.getTaggedImage();
-         }
-         MDUtils.setChannelIndex(ti.tags, channel);
-         MDUtils.setFrameIndex(ti.tags, frame);
-         MDUtils.setSliceIndex(ti.tags, slice);
-
-         MDUtils.setPositionIndex(ti.tags, position);
-
-         MMAcquisition acq = acqMgr_.getAcquisition(name);
-         if (!acq.isInitialized()) {
-            long width = core_.getImageWidth();
-            long height = core_.getImageHeight();
-            long depth = core_.getBytesPerPixel();
-            long bitDepth = core_.getImageBitDepth();
-            int multiCamNumCh = (int) core_.getNumberOfCameraChannels();
-
-            acq.setImagePhysicalDimensions((int) width, (int) height, (int) depth, (int) bitDepth, multiCamNumCh);
-            acq.initialize();
-         }
-
-         if (acq.getPositions() > 1) {
-            MDUtils.setPositionName(ti.tags, "Pos" + position);
-         }
-
-         addImageToAcquisition(name, frame, channel, slice, position, ti);
-      } catch (Exception e) {
-         throw new MMScriptException(e);
-      }
    }
 
    public void addImage(String name, TaggedImage taggedImg,
@@ -2387,11 +2225,6 @@ public class MMStudio implements ScriptInterface {
    }
    
    @Override
-   public ImageCache getAcquisitionImageCache(String acquisitionName) throws MMScriptException {
-      return getAcquisition(acquisitionName).getImageCache();
-   }
-
-   @Override
    public void message(final String text) throws MMScriptException {
       if (scriptPanel_ != null) {
          if (scriptPanel_.stopRequestPending()) {
@@ -2417,35 +2250,6 @@ public class MMStudio implements ScriptInterface {
          }
          scriptPanel_.clearOutput();
       }
-   }
-
-   @Override
-   public void setChannelContrast(String title, int channel, int min, int max)
-         throws MMScriptException {
-      MMAcquisition acq = acqMgr_.getAcquisition(title);
-      acq.setChannelContrast(channel, min, max);
-   }
-
-   @Override
-   public void setChannelName(String title, int channel, String name)
-         throws MMScriptException {
-      MMAcquisition acq = acqMgr_.getAcquisition(title);
-      acq.setChannelName(channel, name);
-
-   }
-
-   @Override
-   public void setChannelColor(String title, int channel, Color color)
-         throws MMScriptException {
-      MMAcquisition acq = acqMgr_.getAcquisition(title);
-      acq.setChannelColor(channel, color.getRGB());
-   }
-   
-   @Override
-   public void setContrastBasedOnFrame(String title, int frame, int slice)
-         throws MMScriptException {
-      MMAcquisition acq = acqMgr_.getAcquisition(title);
-      acq.setContrastBasedOnFrame(frame, slice);
    }
 
    @Override
@@ -2810,9 +2614,21 @@ public class MMStudio implements ScriptInterface {
 
    @Override
    public void autostretchCurrentWindow() {
-      VirtualAcquisitionDisplay display = VirtualAcquisitionDisplay.getDisplay(WindowManager.getCurrentImage());
-      if (display != null) {
-         display.getHistograms().autoscaleAllChannels();
+      Datastore store = getCurrentWindow().getDatastore();
+      DisplaySettings settings = store.getDisplaySettings();
+      if (settings.getShouldAutostretch() != true) {
+         // Autostretch is not currently enabled; toggle it to perform the
+         // autostretching.
+         // TODO: this seems like a rather hacky way to do things.
+         try {
+            settings = settings.copy().shouldAutostretch(true).build();
+            store.setDisplaySettings(settings);
+            settings = settings.copy().shouldAutostretch(false).build();
+            store.setDisplaySettings(settings);
+         }
+         catch (DatastoreLockedException e) {
+            ReportingUtils.showError("Can't autostretch as the datastore is locked.");
+         }
       }
    }
    
