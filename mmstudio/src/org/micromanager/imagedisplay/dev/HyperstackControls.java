@@ -157,7 +157,12 @@ public class HyperstackControls extends JPanel {
          String intensity = "[";
          for (int i = 0; i < numChannels; ++i) {
             Coords imageCoords = stack_.getCurrentImageCoords().copy().position("channel", i).build();
-            intensity += store_.getImage(imageCoords).getIntensityStringAt(x, y);
+            Image image = store_.getImage(imageCoords);
+            // It can be null if not all channels for this imaging event have
+            // arrived yet.
+            if (image != null) {
+               intensity += image.getIntensityStringAt(x, y);
+            }
             if (i != numChannels - 1) {
                intensity += "/";
             }
