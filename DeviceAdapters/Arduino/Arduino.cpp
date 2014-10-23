@@ -215,7 +215,7 @@ MM::DeviceDetectionStatus CArduinoHub::DetectDevice(void)
          GetCoreCallback()->SetDeviceProperty(port_.c_str(), "DelayBetweenCharsMs", "0");
          MM::Device* pS = GetCoreCallback()->GetDevice(this, port_.c_str());
          pS->Initialize();
-         // The first second or so after opening the serial port, the Arduino is waiting for firmwareupgrades.  Simply sleep 1 second.
+         // The first second or so after opening the serial port, the Arduino is waiting for firmwareupgrades.  Simply sleep 2 seconds.
          CDeviceUtils::SleepMs(2000);
          MMThreadGuard myLock(lock_);
          PurgeComPort(port_.c_str());
@@ -632,7 +632,7 @@ int CArduinoSwitch::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
       long pos;
       pProp->Get(pos);
       hub->SetSwitchState(pos);
-      if (hub->GetSwitchState() > 0)
+      if (hub->GetShutterState() > 0)
          return WriteToPort(pos);
    }
    else if (eAct == MM::IsSequenceable)                                      
