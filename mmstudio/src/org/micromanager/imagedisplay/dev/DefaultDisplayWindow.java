@@ -45,6 +45,7 @@ import org.micromanager.imagedisplay.MMImagePlus;
 import org.micromanager.LineProfile;
 import org.micromanager.MMStudio;
 
+import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.ReportingUtils;
 
 
@@ -309,7 +310,11 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       // derived, which is of course an incredibly brittle way to run things.
       g.clearRect(0, 0, getWidth(), 35);
       // This is kind of a dumb way to get the text we need, but hey, it works.
-      dummyWindow_.drawInfo(g);
+      // TODO: how can dummyWindow_ be null here? I started getting
+      // NullPointerExceptions once I integrated the MDA into the new system.
+      if (dummyWindow_ != null) {
+         dummyWindow_.drawInfo(g);
+      }
       super.paint(g);
    }
 
@@ -378,40 +383,6 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       composite.setNChannelsUnverified(numChannels);
       composite.reset();
       displayBus_.post(new DefaultNewImagePlusEvent(ijImage_));
-   }
-
-   /**
-    * Receive a new image from our controller.
-    */
-   public void receiveNewImage(Image image) {
-      try {
-         if (dummyWindow_ == null) {
-            // There's now at least one image in the Datastore; time to make
-            // our controls.
-            makeWindowAndIJObjects();
-         }
-         // Check if we're transitioning from grayscale to multi-channel at this
-         // time.
-         int imageChannel = image.getCoords().getPositionAt("channel");
-         if (!(ijImage_ instanceof MMCompositeImage) &&
-               imageChannel > 0) {
-            // Have multiple channels.
-            shiftToCompositeImage();
-            makeWindowControls();
-            histograms_.calcAndDisplayHistAndStats();
-         }
-         if (ijImage_ instanceof MMCompositeImage) {
-            // Verify that ImageJ has the right number of channels.
-            int numChannels = store_.getMaxIndex("channel") + 1;
-            MMCompositeImage composite = (MMCompositeImage) ijImage_;
-            composite.setNChannelsUnverified(numChannels);
-            composite.reset();
-         }
-         canvasThread_.addCoords(image.getCoords());
-      }
-      catch (Exception e) {
-         ReportingUtils.logError(e, "Couldn't display new image");
-      }
    }
 
    /**   
@@ -542,8 +513,55 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
     * ImageJ object if necessary.
     */
    @Subscribe
-   public void onNewImage(NewImageEvent event) {
+   public void onNewImage(final NewImageEvent event) {
+      if (dummyWindow_ == null) {
+         // Time to make our components, but we should only do so in the EDT.
+         final DefaultDisplayWindow thisWindow = this;
+         try {
+            GUIUtils.invokeAndWait(new Runnable() {
+               @Override
+               public void run() {
+                  thisWindow.makeWindowAndIJObjects();
+               }
+            });
+         }
+         catch (InterruptedException e) {
+            ReportingUtils.logError(e, "Couldn't make window controls");
+         }
+         catch (java.lang.reflect.InvocationTargetException e) {
+            ReportingUtils.logError(e, "Couldn't make window controls");
+         }
+      }
       receiveNewImage(event.getImage());
+   }
+
+   /**
+    * Process a new image.
+    */
+   private void receiveNewImage(Image image) {
+      try {
+         // Check if we're transitioning from grayscale to multi-channel at this
+         // time.
+         int imageChannel = image.getCoords().getPositionAt("channel");
+         if (!(ijImage_ instanceof MMCompositeImage) &&
+               imageChannel > 0) {
+            // Have multiple channels.
+            shiftToCompositeImage();
+            makeWindowControls();
+            histograms_.calcAndDisplayHistAndStats();
+         }
+         if (ijImage_ instanceof MMCompositeImage) {
+            // Verify that ImageJ has the right number of channels.
+            int numChannels = store_.getMaxIndex("channel") + 1;
+            MMCompositeImage composite = (MMCompositeImage) ijImage_;
+            composite.setNChannelsUnverified(numChannels);
+            composite.reset();
+         }
+         canvasThread_.addCoords(image.getCoords());
+      }
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Couldn't display new image");
+      }
    }
 
    public static DisplayWindow getCurrentWindow() {
