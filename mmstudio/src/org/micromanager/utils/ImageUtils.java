@@ -465,11 +465,11 @@ public class ImageUtils {
       int max;
    }
 
-   private static int unsignedValue(byte b) {
+   public static int unsignedValue(byte b) {
       return ((0x100 + b) % 0x100);
    }
 
-   private static int unsignedValue(short s) {
+   public static int unsignedValue(short s) {
       return ((0x10000 + s) % 0x10000);
    }
 
