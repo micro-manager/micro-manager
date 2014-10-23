@@ -466,11 +466,13 @@ public class ImageUtils {
    }
 
    public static int unsignedValue(byte b) {
-      return ((0x100 + b) % 0x100);
+      // Sign-extend, then mask
+      return ((int) b) & 0x000000ff;
    }
 
    public static int unsignedValue(short s) {
-      return ((0x10000 + s) % 0x10000);
+      // Sign-extend, then mask
+      return ((int) s) & 0x0000ffff;
    }
 
    public static int getMin(final Object pixels) {
