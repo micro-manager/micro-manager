@@ -588,7 +588,7 @@ public class MMAcquisition {
       if (display_ != null) {
          display_.requestToClose();
       }
-      store_.lock();
+//      store_.lock();
    }
 
    public boolean isInitialized() {
