@@ -646,10 +646,6 @@ public class MMAcquisition {
       return store_;
    }
 
-   public DisplayWindow getDisplay() {
-      return display_;
-   }
-
    public void setAsynchronous() {
       isAsynchronous_ = true;
    }
