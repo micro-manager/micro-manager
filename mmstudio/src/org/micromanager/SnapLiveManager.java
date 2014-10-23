@@ -60,7 +60,7 @@ public class SnapLiveManager {
    private boolean shouldStopGrabberThread_ = false;
    private Thread grabberThread_;
    private int lastTimepoint_ = 0;
-   private Image lastImage_ = null;
+   private DefaultImage lastImage_ = null;
 
    private JButton snapButton_;
    private JButton liveButton_;
@@ -68,19 +68,6 @@ public class SnapLiveManager {
 
    public SnapLiveManager(CMMCore core) {
       core_ = core;
-      store_ = new DefaultDatastore();
-      store_.registerForEvents(this, 100);
-      store_.setStorage(new StorageRAM(store_));
-      // Update the summary metadata so that the "filename" field is used to
-      // generate an appropriate display window title.
-      SummaryMetadata summary = store_.getSummaryMetadata();
-      summary = summary.copy().fileName("Snap/Live View").build();
-      try {
-         store_.setSummaryMetadata(summary);
-      }
-      catch (DatastoreLockedException e) {
-         ReportingUtils.showError(e, "Failed to set snap/live title; what on Earth is going on?");
-      }
       listeners_ = new ArrayList<LiveModeListener>();
    }
 
@@ -133,9 +120,6 @@ public class SnapLiveManager {
       // First, ensure that any extant grabber thread is dead.
       stopLiveMode();
       shouldStopGrabberThread_ = false;
-      if (display_ == null || display_.getIsClosed()) {
-         createDisplay();
-      }
       grabberThread_ = new Thread(new Runnable() {
          @Override
          public void run() {
@@ -255,6 +239,28 @@ public class SnapLiveManager {
    }
 
    /**
+    * We need to [re]create the Datastore and its backing storage.
+    */
+   private void createDatastore() {
+      if (store_ != null) {
+         store_.unregisterForEvents(this);
+      }
+      store_ = new DefaultDatastore();
+      store_.registerForEvents(this, 100);
+      store_.setStorage(new StorageRAM(store_));
+      // Update the summary metadata so that the "filename" field is used to
+      // generate an appropriate display window title.
+      SummaryMetadata summary = store_.getSummaryMetadata();
+      summary = summary.copy().fileName("Snap/Live View").build();
+      try {
+         store_.setSummaryMetadata(summary);
+      }
+      catch (DatastoreLockedException e) {
+         ReportingUtils.showError(e, "Failed to set snap/live title; what on Earth is going on?");
+      }
+   }
+
+   /**
     * We need to [re]create the display and its associated custom controls.
     */
    private void createDisplay() {
@@ -299,13 +305,34 @@ public class SnapLiveManager {
       display_.registerForEvents(this);
    }
 
+   /**
+    * Display the provided image. Due to limitations of ImageJ, if the image's
+    * parameters (width, height, or pixel type) change, we have to recreate
+    * the display and datastore.
+    */
    public void displayImage(Image image) {
       try {
-         DefaultImage temp = new DefaultImage(image, image.getCoords(), image.getMetadata());
+         DefaultImage newImage = new DefaultImage(image, image.getCoords(), image.getMetadata());
+         if (lastImage_ == null ||
+               newImage.getWidth() != lastImage_.getWidth() ||
+               newImage.getHeight() != lastImage_.getHeight() ||
+               newImage.getNumComponents() != lastImage_.getNumComponents() ||
+               newImage.getBytesPerPixel() != lastImage_.getBytesPerPixel()) {
+            // Format changing and/or we have no display; we need to recreate
+            // everything.
+            if (display_ != null) {
+               display_.forceClosed();
+            }
+            createDatastore();
+            createDisplay();
+         }
+         else if (display_ == null || display_.getIsClosed()) {
+            createDisplay();
+         }
+         lastImage_ = newImage;
          // This will put the images into the datastore, which in turn will
          // cause them to be displayed.
-         List<Image> splitted = temp.splitMultiComponentIntoStore(store_);
-         lastImage_ = splitted.get(splitted.size() - 1);
+         lastImage_.splitMultiComponentIntoStore(store_);
       }
       catch (DatastoreLockedException e) {
          ReportingUtils.showError(e, "Snap/Live display datastore locked.");
@@ -329,14 +356,6 @@ public class SnapLiveManager {
          return lastImage_;
       }
       try {
-         if (shouldDisplay) {
-            if (display_ == null || display_.getIsClosed()) {
-               createDisplay();
-            }
-            else {
-               display_.toFront();
-            }
-         }
          core_.snapImage();
          Image result = null;
          for (int c = 0; c < core_.getNumberOfCameraChannels(); ++c) {
@@ -347,6 +366,7 @@ public class SnapLiveManager {
             result = result.copyAtCoords(newCoords);
             if (shouldDisplay) {
                displayImage(result);
+               display_.toFront();
             }
          }
          return result;
