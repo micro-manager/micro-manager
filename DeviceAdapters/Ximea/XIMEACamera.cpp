@@ -409,7 +409,7 @@ int XIMEACamera::Initialize()
 	//-------------------------------------------------------------------------------------
 	// Trigger
 	pAct = new CPropertyAction (this, &XIMEACamera::OnTrigger);
-	ret = xiSetParamInt( handle, XI_PRM_TRG_SOURCE, XI_TRG_SOFTWARE);
+	ret = xiSetParamInt( handle, XI_PRM_TRG_SOURCE, XI_TRG_OFF);
 	assert(ret == DEVICE_OK);
 	ret = CreateProperty(g_Trigger_Mode, g_Trigger_Off, MM::String, false, pAct);
 	assert(ret == DEVICE_OK);
@@ -793,7 +793,6 @@ int XIMEACamera::SnapImage()
 	MM::MMTime startTime = GetCurrentMMTime();
 	image.size = sizeof(XI_IMG);
 	int ret = DEVICE_OK;
-	if(!isTrg_)	xiSetParamInt( handle, XI_PRM_TRG_SOFTWARE, 0); // use SW trigger only in trg_off mode
 	ret = xiGetImage( handle, (DWORD)acqTout_, &image);
 	readoutStartTime_ = GetCurrentMMTime();
 	return ret;
@@ -1357,7 +1356,7 @@ int XIMEACamera::OnTrigger(MM::PropertyBase* pProp, MM::ActionType eAct)
 		string val;
 		pProp->Get(val);
 		if (val.compare(g_Trigger_Off) == 0){
-			ret = xiSetParamInt( handle, XI_PRM_TRG_SOURCE, XI_TRG_SOFTWARE);
+			ret = xiSetParamInt( handle, XI_PRM_TRG_SOURCE, XI_TRG_OFF);
 			isTrg_=false;
 		}else if (val.compare(g_HW_Rising) == 0){
 			ret = xiSetParamInt( handle, XI_PRM_TRG_SOURCE, XI_TRG_EDGE_RISING);
@@ -1377,7 +1376,7 @@ int XIMEACamera::OnTrigger(MM::PropertyBase* pProp, MM::ActionType eAct)
 		
 		switch(trgMd)
 		{
-		case XI_TRG_SOFTWARE     : pProp->Set(g_Trigger_Off); break;
+		case XI_TRG_OFF          : pProp->Set(g_Trigger_Off); break;
 		case XI_TRG_EDGE_RISING  : pProp->Set(g_HW_Rising); break;
 		case XI_TRG_EDGE_FALLING : pProp->Set(g_HW_Falling); break;
 		default: assert(false); // this should never happen
