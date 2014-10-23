@@ -262,63 +262,63 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
          builder.acquisitionName(tags.getString("Name"));
       }
       catch (JSONException e) {
-         ReportingUtils.logError("Failed to set field acquisitionName");
+         ReportingUtils.logError("SummaryMetadata failed to extract field acquisitionName");
       }
 
       try {
          builder.prefix(tags.getString("Prefix"));
       }
       catch (JSONException e) {
-         ReportingUtils.logError("Failed to set field prefix");
+         ReportingUtils.logError("SummaryMetadata failed to extract field prefix");
       }
 
       try {
          builder.userName(tags.getString("UserName"));
       }
       catch (JSONException e) {
-         ReportingUtils.logError("Failed to set field userName");
+         ReportingUtils.logError("SummaryMetadata failed to extract field userName");
       }
 
       try {
          builder.microManagerVersion(tags.getString("MicroManagerVersion"));
       }
       catch (JSONException e) {
-         ReportingUtils.logError("Failed to set field microManagerVersion");
+         ReportingUtils.logError("SummaryMetadata failed to extract field microManagerVersion");
       }
 
       try {
          builder.metadataVersion(tags.getString("MetadataVersion"));
       }
       catch (JSONException e) {
-         ReportingUtils.logError("Failed to set field metadataVersion");
+         ReportingUtils.logError("SummaryMetadata failed to extract field metadataVersion");
       }
 
       try {
          builder.computerName(tags.getString("ComputerName"));
       }
       catch (JSONException e) {
-         ReportingUtils.logError("Failed to set field computerName");
+         ReportingUtils.logError("SummaryMetadata failed to extract field computerName");
       }
 
       try {
          builder.directory(tags.getString("Directory"));
       }
       catch (JSONException e) {
-         ReportingUtils.logError("Failed to set field directory");
+         ReportingUtils.logError("SummaryMetadata failed to extract field directory");
       }
 
       try {
          builder.waitInterval(tags.getDouble("WaitInterval"));
       }
       catch (JSONException e) {
-         ReportingUtils.logError("Failed to set field waitInterval");
+         ReportingUtils.logError("SummaryMetadata failed to extract field waitInterval");
       }
 
       try {
          builder.customIntervalsMs(new Double[] {NumberUtils.displayStringToDouble(tags.getString("CustomIntervals_ms"))});
       }
       catch (JSONException e) {
-         ReportingUtils.logError("Failed to set field customIntervalsMs");
+         ReportingUtils.logError("SummaryMetadata failed to extract field customIntervalsMs");
       }
       catch (java.text.ParseException e) {
          ReportingUtils.logError("Failed to parse input string for customIntervalsMs");
@@ -328,14 +328,14 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
          builder.startDate(tags.getString("StartTime"));
       }
       catch (JSONException e) {
-         ReportingUtils.logError("Failed to set field startDate");
+         ReportingUtils.logError("SummaryMetadata failed to extract field startDate");
       }
 
       try {
          builder.numComponents(tags.getInt("NumComponents"));
       }
       catch (JSONException e) {
-         ReportingUtils.logError("Failed to set field numComponents");
+         ReportingUtils.logError("SummaryMetadata failed to extract field numComponents");
       }
       return builder.build();
    }
