@@ -335,6 +335,9 @@ public class DisplayOverlayer   {
          }
          double zPosition = zoomableStack_.getZCoordinateOfDisplayedSlice(display_.getHyperImage().getSlice(), display_.getHyperImage().getFrame());
          ArrayList<XYStagePosition> positionsAtSlice = display_.getCurrentSurface().getXYPositonsAtSlice(zPosition, interp);
+         if (positionsAtSlice == null) {
+            return; //interpolation isn't detailed enough yet
+         }
          for (XYStagePosition pos : positionsAtSlice) {
             Point2D.Double[] corners = pos.getCorners();
             Point corner1 = display_.imageCoordsFromStageCoords(corners[0].x, corners[0].y);

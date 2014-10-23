@@ -7,10 +7,12 @@ package acq;
 import coordinates.PositionManager;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import mmcorej.TaggedImage;
@@ -33,6 +35,7 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class MultiResMultipageTiffStorage implements TaggedImageStorage {
 
+   private static final byte EMPTY_PIXEL_VALUE = (byte) 30;
    private static final String FULL_RES_SUFFIX = "Full resolution";
    private static final String DOWNSAMPLE_SUFFIX = "Downsampled_x";
    private TaggedImageStorageMultipageTiff fullResStorage_;
@@ -180,11 +183,17 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
                tile = fullResStorage_.getImage(channel, slice, frame, posManager_.getPositionIndexFromTilePosition(dsIndex, row, col));
             } else {
                tile = lowResStorages_.get(dsIndex).getImage(channel, slice, frame, posManager_.getPositionIndexFromTilePosition(dsIndex, row, col));
-
             }
             if (tile == null) {
                yOffset += lineHeights.get(row - rowStart); //increment y offset so new tiles appear in correct position
                continue; //If no data present for this tile go on to next one
+            } else if ( (tile.pix instanceof byte[] && ((byte[]) tile.pix).length == 0) ||
+                    (tile.pix instanceof short[] && ((short[]) tile.pix).length == 0))  {
+               //Somtimes an inability to read IFDs soon after they are written results in an image being read 
+               //with 0 length pixels. Can't figure out why this happens, but it is rare and will result at worst with
+               //a black flickering during acquisition
+               yOffset += lineHeights.get(row - rowStart); //increment y offset so new tiles appear in correct position
+               continue;
             }
             //take top left tile for metadata
             if (topLeftMD == null) {
@@ -204,9 +213,6 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
                   tileYPix += tileHeight_;
                }
                try {
-                  if (((byte[]) tile.pix).length == 0) {
-                     ReportingUtils.showError("zero length pixels");
-                  }
                   System.arraycopy(tile.pix, tileYPix * tileWidth_ + tileXPix, pixels, xOffset + width * line, lineWidths.get(col - colStart));
                } catch (Exception e) {
                   e.printStackTrace();

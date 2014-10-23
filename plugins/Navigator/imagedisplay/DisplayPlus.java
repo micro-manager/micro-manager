@@ -15,6 +15,10 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
@@ -54,12 +58,10 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
    private boolean cursorOverImage_;
    private int mode_ = NONE;
    private boolean mouseDragging_ = false;
-   private RegionManager regionManager_;
-   private SurfaceManager surfaceManager_;
    private DisplayOverlayer overlayer_;
    private SurfaceInterpolator currentSurface_;
    private MultiPosRegion currentRegion_;
-   
+   private ThreadPoolExecutor redrawPixelsExecutor_;
    
 
    public DisplayPlus(final ImageCache stitchedCache, Acquisition acq, JSONObject summaryMD, 
@@ -67,8 +69,14 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
       super(stitchedCache, null, "test", true);
       posManager_ = multiResStorage.getPositionManager();
       exploreAcq_ = acq instanceof ExploreAcquisition;
-      regionManager_ = RegionManager.getInstance();
-      surfaceManager_ = SurfaceManager.getInstance();
+
+      //create redraw pixels executor
+      redrawPixelsExecutor_ = new ThreadPoolExecutor(1,1,0,TimeUnit.MILLISECONDS,new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
+         @Override
+         public Thread newThread(Runnable r) {
+            return new Thread(r, "Pixel update thread ");
+         }
+      });
             
       //Set parameters for tile dimensions, num rows and columns, overlap, and image dimensions
       acq_ = acq;
@@ -193,6 +201,10 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
             currentSurface_.addPoint(stagePos.x, stagePos.y, z);
          }
       }
+      if (mouseDragging_ && SwingUtilities.isRightMouseButton(e)) {
+         //drag event finished, make sure pixels updated
+         redrawPixels(true);
+      }
       mouseDragging_ = false;
    }
    
@@ -202,7 +214,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
       if (SwingUtilities.isRightMouseButton(e)) {
          //pan
          zoomableStack_.translateView(mouseDragStartPointRight_.x - currentPoint.x, mouseDragStartPointRight_.y - currentPoint.y);
-         redrawPixels();
+         redrawPixels(false);
          mouseDragStartPointRight_ = currentPoint;
       } else if (SwingUtilities.isLeftMouseButton(e)) {
          //only move grid
@@ -229,7 +241,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
 
    public void zoom(boolean in) {
       zoomableStack_.zoom(cursorOverImage_ ? canvas_.getCursorLoc() : null, in ? -1 :1);
-      redrawPixels();
+      redrawPixels(true);
    }
    
    public void setMode(int mode) {
@@ -252,34 +264,45 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
 
    }
 
-   private void redrawPixels() {
-      if (!this.getHyperImage().isComposite()) {
-         int index = this.getHyperImage().getCurrentSlice();
-         Object pixels = zoomableStack_.getPixels(index);
-         this.getHyperImage().getProcessor().setPixels(pixels);
-      } else {
-         CompositeImage ci = (CompositeImage) this.getHyperImage();
-         if (ci.getMode() == CompositeImage.COMPOSITE) {
-            for (int i = 0; i < ((MMCompositeImage) ci).getNChannelsUnverified(); i++) {
-               //Dont need to set pixels if processor is null because it will get them from stack automatically  
-               Object pixels = zoomableStack_.getPixels(ci.getCurrentSlice() - ci.getChannel() + i + 1);
-               if (ci.getProcessor(i + 1) != null && pixels != null) {
-                  ci.getProcessor(i + 1).setPixels(pixels);
+   private void redrawPixels(final boolean forcePaint) {
+      redrawPixelsExecutor_.execute(new Runnable() {
+
+         @Override
+         public void run() {
+            //Set pixels, do this every time
+            if (!DisplayPlus.this.getHyperImage().isComposite()) {
+               int index = DisplayPlus.this.getHyperImage().getCurrentSlice();
+               Object pixels = zoomableStack_.getPixels(index);
+               DisplayPlus.this.getHyperImage().getProcessor().setPixels(pixels);
+            } else {
+               CompositeImage ci = (CompositeImage) DisplayPlus.this.getHyperImage();
+               if (ci.getMode() == CompositeImage.COMPOSITE) {
+                  for (int i = 0; i < ((MMCompositeImage) ci).getNChannelsUnverified(); i++) {
+                     //Dont need to set pixels if processor is null because it will get them from stack automatically  
+                     Object pixels = zoomableStack_.getPixels(ci.getCurrentSlice() - ci.getChannel() + i + 1);
+                     if (ci.getProcessor(i + 1) != null && pixels != null) {
+                        ci.getProcessor(i + 1).setPixels(pixels);
+                     }
+                  }
+               }
+               Object pixels = zoomableStack_.getPixels(DisplayPlus.this.getHyperImage().getCurrentSlice());
+               if (pixels != null) {
+                  ci.getProcessor().setPixels(pixels);
                }
             }
+            //always draw overlay when pixels need to be updated, because this call will interrupt itself if need be     
+            drawOverlay(true);
+
+            //send back to EDT
+            SwingUtilities.invokeLater(new Runnable() {
+               @Override
+               public void run() {
+                  DisplayPlus.this.updateAndDraw(forcePaint);
+               }
+            });
+
          }
-         Object pixels = zoomableStack_.getPixels(this.getHyperImage().getCurrentSlice());
-         if (pixels != null) {
-            ci.getProcessor().setPixels(pixels);
-         }
-      }
-      if (CanvasPaintPending.isMyPaintPending(canvas_, this)) {
-         return;
-      }
-      CanvasPaintPending.setPaintPending(canvas_, this);
-      this.updateAndDraw(true);
-      this.canvas_.setOverlay(null);
-      drawOverlay(true);
+      });
    }
    
    public boolean cursorOverImage() {

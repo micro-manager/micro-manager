@@ -113,6 +113,7 @@ public class FixedAreaAcquisition extends Acquisition {
                         continue; //position is above imaging volume
                      }
                      if (isZBelowImagingVolume(position, zPos)) {
+                        System.out.println("pos index: " + positionIndex + "   z: " + zPos);
                         //position is below z stack, z stack finished
                         break;
                      }
@@ -141,7 +142,7 @@ public class FixedAreaAcquisition extends Acquisition {
    }
    
    private void endOfTimePoint(int timeIndex) {
-      
+      //run autofocus
    }
    
    private boolean isZAboveImagingVolume(XYStagePosition position, double zPos) {      

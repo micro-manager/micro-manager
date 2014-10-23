@@ -62,7 +62,6 @@ import surfacesandregions.SurfaceManager;
 public class DisplayPlusControls extends DisplayControls {
 
    private final static int DEFAULT_FPS = 10;
-   private static final int SCROLLBAR_INCREMENTS = 10000;
    private static final DecimalFormat TWO_DECIMAL_FORMAT = new DecimalFormat("0.00");
    private static final DecimalFormat THREE_DECIMAL_FORMAT = new DecimalFormat("0.000");
    private final static String GRID_PANEL = "Grid controls", EXPLORE_PANEL = "Explore panel",
@@ -82,7 +81,8 @@ public class DisplayPlusControls extends DisplayControls {
    private JScrollBar zTopSlider_, zBottomSlider_;
    private JTextField zTopTextField_, zBottomTextField_;
    private Acquisition acq_;
-   private double zMin_, zMax_;
+   private double zMin_, zMax_, zStep_;
+   private int numZSteps_;
    private CardLayout changingPanelLayout_;
    private JPanel changingPanel_;
    private JSpinner gridRowSpinner_, gridColSpinner_;
@@ -98,6 +98,7 @@ public class DisplayPlusControls extends DisplayControls {
       display_ = disp;
       bus_.register(this);
       acq_ = acq;
+      zStep_ = acq_.getZStep();
       surfaceManager_ = SurfaceManager.getInstance();
       regionManager_ = RegionManager.getInstance();
       initComponents();
@@ -123,15 +124,22 @@ public class DisplayPlusControls extends DisplayControls {
                zMin_ = 0;
                zMax_ = 399;
             }    
-            int sliderPos = (int) (zPos / ((double) Math.abs(zMax_ - zMin_)) * SCROLLBAR_INCREMENTS);
-            zTopSlider_ = new JScrollBar(JScrollBar.HORIZONTAL,sliderPos,10,0,SCROLLBAR_INCREMENTS);
-            zBottomSlider_ = new JScrollBar(JScrollBar.HORIZONTAL,sliderPos,10,0,SCROLLBAR_INCREMENTS);
+            //Always initialize so current position falls exactly on a step, 
+            //so don't have to auto move z when launching explore
+            int stepsAbove = (int) Math.floor((zPos - zMin_) / zStep_);
+            int stepsBelow = (int) Math.floor((zMax_ - zPos) / zStep_);
+            //change min and max to reflect stepped positions
+            zMin_ = zPos - stepsAbove * zStep_;
+            zMax_ = zPos + stepsBelow * zStep_;
+            numZSteps_ = stepsBelow + stepsAbove + 1;
+            zTopSlider_ = new JScrollBar(JScrollBar.HORIZONTAL,stepsAbove,1,0,numZSteps_);
+            zBottomSlider_ = new JScrollBar(JScrollBar.HORIZONTAL,stepsAbove,1,0,numZSteps_);
             zTopTextField_ = new JTextField(zPos + "");
             zTopTextField_.addActionListener(new ActionListener() {
                @Override
                public void actionPerformed(ActionEvent ae) {
                   double val = Double.parseDouble(zTopTextField_.getText());
-                  int sliderPos = (int) (val / ((double) Math.abs(zMax_ - zMin_)) * SCROLLBAR_INCREMENTS);
+                  int sliderPos = (int) (val / ((double) Math.abs(zMax_ - zMin_)) * numZSteps_);
                   zTopSlider_.setValue(sliderPos);
                   updateZTopAndBottom();
                }
@@ -141,7 +149,7 @@ public class DisplayPlusControls extends DisplayControls {
                @Override
                public void actionPerformed(ActionEvent ae) {
                   double val = Double.parseDouble(zBottomTextField_.getText());
-                  int sliderPos = (int) (val / ((double) Math.abs(zMax_ - zMin_)) * SCROLLBAR_INCREMENTS);                  
+                  int sliderPos = (int) (val / ((double) Math.abs(zMax_ - zMin_)) * numZSteps_);                  
                   zBottomSlider_.setValue(sliderPos);
                   updateZTopAndBottom();
                }
@@ -656,13 +664,11 @@ public class DisplayPlusControls extends DisplayControls {
    }
 
    private void updateZTopAndBottom() {
-      double zBottom = (zBottomSlider_.getValue() / (double) SCROLLBAR_INCREMENTS)
-              * Math.abs(zMax_ - zMin_) + zMin_;
+      double zBottom = zStep_ * zBottomSlider_.getValue() + zMin_;
       zBottomTextField_.setText(TWO_DECIMAL_FORMAT.format(zBottom));
-      double zTop = (zTopSlider_.getValue() / (double) SCROLLBAR_INCREMENTS)
-              * Math.abs(zMax_ - zMin_) + zMin_;
+      double zTop = zStep_ * zTopSlider_.getValue() + zMin_;
       zTopTextField_.setText(TWO_DECIMAL_FORMAT.format(zTop));
-      ((ExploreAcquisition) acq_).setZLimits(zTop, zBottom);
+      ((ExploreAcquisition) acq_).setZLimits(zTop, zBottom);   
    }
 
    public void toggleExploreMode() {

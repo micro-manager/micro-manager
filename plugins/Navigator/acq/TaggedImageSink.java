@@ -28,7 +28,7 @@ public class TaggedImageSink  {
    public String getLastImageLabel() {
       return lastImageLabel_;
    }
-
+   
    public void start() {
       Thread savingThread = new Thread("tagged image sink thread") {
 

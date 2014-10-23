@@ -9,6 +9,8 @@ import java.io.File;
 import java.net.InetAddress;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JFileChooser;
@@ -103,8 +105,8 @@ public class GUI extends javax.swing.JFrame {
 
    
    private void moreInitialization() {
-      zSlider_.setMaximum(SLIDER_TICKS);
       zName_ = core_.getFocusDevice();
+      zSlider_.setMaximum(SLIDER_TICKS);
       try {
          zMax_ = (int) core_.getPropertyUpperLimit(zName_, "Position");
          zMin_ = (int) core_.getPropertyLowerLimit(zName_, "Position");
@@ -295,8 +297,6 @@ public class GUI extends javax.swing.JFrame {
         configPropsButton_ = new javax.swing.JButton();
         runAcqButton_ = new javax.swing.JButton();
         newExploreWindowButton_ = new javax.swing.JButton();
-
-        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
         zTextField_.setText("jTextField1");
         zTextField_.addActionListener(new java.awt.event.ActionListener() {
@@ -978,11 +978,9 @@ public class GUI extends javax.swing.JFrame {
                         .addGap(143, 143, 143)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(configPropsButton_)
-                            .addComponent(SettingsButton))
-                        .addGap(21, 21, 21))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(runAcqButton_)
-                        .addContainerGap())))
+                            .addComponent(SettingsButton)))
+                    .addComponent(runAcqButton_))
+                .addGap(21, 21, 21))
         );
 
         pack();
@@ -1008,6 +1006,11 @@ public class GUI extends javax.swing.JFrame {
      int ticks = zSlider_.getValue();
       double zVal = zMin_ + (zMax_ - zMin_) * (ticks / (double) SLIDER_TICKS);
       zTextField_.setText(TWO_DECIMAL_FORMAT.format(zVal));
+      try {
+         core_.setPosition(zName_,zVal);
+      } catch (Exception ex) {
+         ReportingUtils.showError("Couldn't set z position");
+      }
    }//GEN-LAST:event_zSliderAdjusted
 
    private void newChannelButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newChannelButton_ActionPerformed

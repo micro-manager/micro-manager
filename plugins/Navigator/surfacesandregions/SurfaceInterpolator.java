@@ -38,24 +38,24 @@ import org.micromanager.utils.ReportingUtils;
  *
  * @author Henry
  */
-public class SurfaceInterpolator {
+public abstract class SurfaceInterpolator {
    
-   public static final int MIN_PIXELS_PER_INTERP_POINT = 1;
+   public static final int MIN_PIXELS_PER_INTERP_POINT = 2;
+   public static final int NUM_XY_TEST_POINTS = 8;
    
    private String name_;
    private TreeSet<Point3d> points_;
-   private SibsonInterpolator2 interpolator_;
    private MonotoneChain mChain_;
    private RegionFactory<Euclidean2D> regionFacotry_ = new RegionFactory<Euclidean2D>();
    private volatile Vector2D[] convexHullVertices_;
-   private Region<Euclidean2D> convexHullRegion_;
+   protected Region<Euclidean2D> convexHullRegion_;
    private int numRows_, numCols_;
    private volatile ArrayList<XYStagePosition> xyPositions_;
    private double xyPadding_um_ = 0, zPadding_um_;
-   private double boundXMin_, boundXMax_, boundYMin_, boundYMax_;
+   protected double boundXMin_, boundXMax_, boundYMin_, boundYMax_;
    private int boundXPixelMin_,boundXPixelMax_,boundYPixelMin_,boundYPixelMax_;
    private ExecutorService executor_; 
-   private volatile SingleResolutionInterpolation currentInterpolation_;
+   protected volatile SingleResolutionInterpolation currentInterpolation_;
    private SurfaceManager manager_;
    private Future currentInterpolationTask_;
    private String pixelSizeConfig_;
@@ -94,13 +94,16 @@ public class SurfaceInterpolator {
          }
       });
       mChain_ = new MonotoneChain(true);      
-      interpolator_ = new SibsonInterpolator2(new float[]{0},new float[]{0},new float[]{0});
       executor_ = new ThreadPoolExecutor(1,1,0,TimeUnit.MILLISECONDS,new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
          @Override
          public Thread newThread(Runnable r) {
             return new Thread(r, "Interpolation calculation thread ");
          }
       });      
+   }
+   
+   public void shutdown() {
+      executor_.shutdownNow();
    }
    
    public String getName() {
@@ -219,7 +222,6 @@ public class SurfaceInterpolator {
       }
       //then check a grid of points spanning entire position        
       //9x9 square of points to check for each position
-      int numTestPoints = 8;
       //square is aligned with axes in pixel space, so convert to pixel space to generate test points
       double xSpan = corners[2].getX() - corners[0].getX();
       double ySpan = corners[2].getY() - corners[0].getY();
@@ -231,8 +233,8 @@ public class SurfaceInterpolator {
          ReportingUtils.showError("Problem inverting affine transform");
       }
       outerloop:
-      for (double x = 0; x <= pixelSpan.x; x += pixelSpan.x / (double) numTestPoints) {
-         for (double y = 0; y <= pixelSpan.y; y += pixelSpan.y / (double) numTestPoints) {
+      for (double x = 0; x <= pixelSpan.x; x += pixelSpan.x / (double) NUM_XY_TEST_POINTS) {
+         for (double y = 0; y <= pixelSpan.y; y += pixelSpan.y / (double) NUM_XY_TEST_POINTS) {
             //convert these abritray pixel coordinates back to stage coordinates
             transform.setToTranslation(corners[0].getX(), corners[0].getY());
             Point2D.Double stageCoords = new Point2D.Double();
@@ -263,9 +265,15 @@ public class SurfaceInterpolator {
    /**
     * figure out which of the positions need to be collected at a given slice
     * Assumes positions_ contains list of all possible positions for fitting  
+    * returns null if interpolation isn't yet detailed enough for calculating positions
     * @param zPos 
     */
    public ArrayList<XYStagePosition> getXYPositonsAtSlice(double zPos, SingleResolutionInterpolation interp) {
+      int tileWidth = (int) MMStudio.getInstance().getCore().getImageWidth() - SettingsDialog.getOverlapX();
+      int tileHeight = (int) MMStudio.getInstance().getCore().getImageHeight() - SettingsDialog.getOverlapY();
+      if (interp.getPixelsPerInterpPoint() >= Math.max(tileWidth,tileHeight) / NUM_XY_TEST_POINTS ) {
+         return null; //don't calculate posisiitons unless interp is detailed enough for them to make sense
+      }
       ArrayList<XYStagePosition> positionsAtSlice = new ArrayList<XYStagePosition>();
       for (XYStagePosition pos : xyPositions_) {
          if (!isPositionCompletelyAboveSurface(pos, interp, zPos, zPadding_um_)) {
@@ -358,47 +366,7 @@ public class SurfaceInterpolator {
       }
    }
 
-   private void interpolateSurface(LinkedList<Point3d> points) {
-      try {
-
-         //provide interpolator with current list of data points
-         float x[] = new float[points.size()];
-         float y[] = new float[points.size()];
-         float z[] = new float[points.size()];
-         for (int i = 0; i < points.size(); i++) {
-            x[i] = (float) points.get(i).x;
-            y[i] = (float) points.get(i).y;
-            z[i] = (float) points.get(i).z;
-         }
-//      gridder_.setScattered(z, x, y);
-         interpolator_.setSamples(z, x, y);
-
-         int maxPixelDimension = (int) (Math.max(boundXMax_ - boundXMin_, boundYMax_ - boundYMin_) / MMStudio.getInstance().getCore().getPixelSizeUm());
-         //Start with at least 20 interp points and go smaller and smaller until every pixel interped?
-         int pixelsPerInterpPoint = 1;
-         while (maxPixelDimension / (pixelsPerInterpPoint + 1) > 20) {
-            pixelsPerInterpPoint *= 2;
-         }
-         if (Thread.interrupted()) {
-            throw new InterruptedException();
-         }
-
-         while (pixelsPerInterpPoint >= MIN_PIXELS_PER_INTERP_POINT) {
-            int numInterpPointsX = (int) (((boundXMax_ - boundXMin_) / MMStudio.getInstance().getCore().getPixelSizeUm()) / pixelsPerInterpPoint);
-            int numInterpPointsY = (int) (((boundYMax_ - boundYMin_) / MMStudio.getInstance().getCore().getPixelSizeUm()) / pixelsPerInterpPoint);
-
-            //do interpolation
-            Sampling xSampling = new Sampling(numInterpPointsX, (boundXMax_ - boundXMin_) / (numInterpPointsX - 1), boundXMin_);
-            Sampling ySampling = new Sampling(numInterpPointsY, (boundYMax_ - boundYMin_) / (numInterpPointsY - 1), boundYMin_);
-            interpolator_.setNullValue(Float.MIN_VALUE);
-            interpolator_.useConvexHullBounds();
-            float[][] interpVals = interpolator_.interpolate(xSampling, ySampling);
-            currentInterpolation_ = new SingleResolutionInterpolation(pixelsPerInterpPoint, interpVals, boundXMin_, boundXMax_, boundYMin_, boundYMax_, convexHullRegion_);
-            pixelsPerInterpPoint /= 2;
-         }
-      } catch (InterruptedException e) {
-      }
-   }
+   protected abstract void interpolateSurface(LinkedList<Point3d> points);
 
    private void fitXYPositionsToConvexHull() throws InterruptedException {
       
@@ -535,7 +503,7 @@ public class SurfaceInterpolator {
             } else {
                convexHullRegion_ = null;
                convexHullVertices_ = null;
-               numRows_ = 0;
+               numRows_ = 0; 
                numCols_ = 0;
             }
 

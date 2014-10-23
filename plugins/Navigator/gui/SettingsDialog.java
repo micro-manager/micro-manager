@@ -43,7 +43,7 @@ public class SettingsDialog extends javax.swing.JDialog {
    }
    
    public static int getDemoNumChannels() {
-      return 6;
+      return 1;
    }
    
    public static void setDemoMode(boolean demo) {

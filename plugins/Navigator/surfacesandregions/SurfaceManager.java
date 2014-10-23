@@ -43,6 +43,9 @@ public class SurfaceManager {
    }
    
    public void deleteAll() {
+      for (SurfaceInterpolator s: surfaces_) {
+         s.shutdown();
+      }
       surfaces_.clear();
       for (SurfaceComboBoxModel combo : comboBoxModels_) {
          combo.setSelectedIndex(-1);
@@ -51,7 +54,8 @@ public class SurfaceManager {
    }
    
    public void delete(int index) {
-      surfaces_.remove(index);
+      SurfaceInterpolator s = surfaces_.remove(index);
+      s.shutdown();
       for (SurfaceComboBoxModel combo : comboBoxModels_) {
          if (index == 0 && surfaces_.isEmpty()) {
             combo.setSelectedIndex(-1); //set selectionto null cause no surfaces left
@@ -65,7 +69,8 @@ public class SurfaceManager {
    }
    
    public void addNewSurface() {
-      surfaces_.add(new SurfaceInterpolator(this));
+//      surfaces_.add(new SurfaceInterpolatorSibson(this));
+      surfaces_.add(new SurfaceInterpolatorSimple(this));
       updateSurfaceTableAndCombos();
    }
    
