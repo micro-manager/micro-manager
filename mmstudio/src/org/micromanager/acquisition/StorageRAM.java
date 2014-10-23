@@ -84,7 +84,6 @@ public class StorageRAM implements Storage {
       }
       if (!amInDebugMode_) {
          // No image available, and can't make a new one.
-         ReportingUtils.logError("No image at " + coords + " compare keys " + coordsToImage_.keySet());
          return null;
       }
       ReportingUtils.logError("Snapping new image for " + coords);
