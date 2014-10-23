@@ -281,12 +281,17 @@ public class DefaultImage implements Image {
          // NB Java will let you use "<<=" in this situation.
          result = result << exponent;
          int index = y * pixelHeight_ + x + component + i;
+         // Java doesn't have unsigned number types, so we have to manually
+         // convert; otherwise large numbers will set the sign bit and show
+         // as negative.
+         int addend = 0;
          if (rawPixels_ instanceof byte[]) {
-            result += ((byte[]) rawPixels_)[index];
+            addend = (int) ((byte[]) rawPixels_)[index] & 0xff;
          }
          else if (rawPixels_ instanceof short[]) {
-            result += ((short[]) rawPixels_)[index];
+            addend = (int) ((short[]) rawPixels_)[index] & 0xffff;
          }
+         result += addend;
       }
       return result;
    }
