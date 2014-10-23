@@ -10,6 +10,7 @@ import org.json.JSONObject;
 import org.micromanager.api.data.DisplaySettings;
 import org.micromanager.api.MultiStagePosition;
 
+import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
 
@@ -103,12 +104,9 @@ public class DefaultDisplaySettings implements DisplaySettings {
    private static Color[] bytesToColors(byte[] bytes) {
       Color[] result = new Color[bytes.length / 3];
       for (int i = 0; i < result.length; ++i) {
-         // Java bytes are signed, automatically, which puts them in the range
-         // [-127, 128]. We need values in the range [0, 255]; this conversion
-         // below will accomplish that for us.
-         int red = ((int) bytes[i * 3]) & 0xff;
-         int green = ((int) bytes[i * 3 + 1]) & 0xff;
-         int blue = ((int) bytes[i * 3 + 2]) & 0xff;
+         int red = ImageUtils.unsignedValue(bytes[i * 3]);
+         int green = ImageUtils.unsignedValue(bytes[i * 3 + 1]);
+         int blue = ImageUtils.unsignedValue(bytes[i * 3 + 2]);
          result[i] = new Color(red, green, blue);
       }
       return result;
