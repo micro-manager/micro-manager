@@ -26,6 +26,7 @@ import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.DatastoreLockedException;
 import org.micromanager.api.data.Image;
 import org.micromanager.api.data.Metadata;
+import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
@@ -286,10 +287,10 @@ public class DefaultImage implements Image {
          // as negative.
          int addend = 0;
          if (rawPixels_ instanceof byte[]) {
-            addend = (int) ((byte[]) rawPixels_)[index] & 0xff;
+            addend = ImageUtils.unsignedValue(((byte[]) rawPixels_)[index]);
          }
          else if (rawPixels_ instanceof short[]) {
-            addend = (int) ((short[]) rawPixels_)[index] & 0xffff;
+            addend = ImageUtils.unsignedValue(((short[]) rawPixels_)[index]);
          }
          result += addend;
       }
