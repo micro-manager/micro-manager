@@ -32,7 +32,7 @@ public class DefaultTaggedImageSink  {
    // sinkFullCallback is a way to stop production of images when/if the sink
    // can no longer accept images.
    public void start(final Runnable sinkFullCallback) {
-      Thread savingThread = new Thread("tagged image sink thread") {
+      Thread savingThread = new Thread("TaggedImage sink thread for " + store_.hashCode()) {
 
          @Override
          public void run() {
@@ -61,7 +61,7 @@ public class DefaultTaggedImageSink  {
             }
             long t2 = System.currentTimeMillis();
             ReportingUtils.logMessage(imageCount + " images stored in " + (t2 - t1) + " ms.");
-            store_.lock();
+//            store_.lock();
          }
       };
       savingThread.start();
