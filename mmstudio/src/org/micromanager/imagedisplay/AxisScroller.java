@@ -7,6 +7,7 @@ import java.awt.Dimension;
 import java.awt.event.MouseEvent;
 
 import javax.swing.event.MouseInputAdapter;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
 
@@ -68,6 +69,7 @@ public class AxisScroller extends JPanel {
    private boolean shouldIgnoreScrollbarEvent_;
    // Used to turn animation on/off.
    private ScrollbarAnimateIcon animateIcon_;
+   private JLabel positionLabel_;
    // Used to select an image to view along our axis.
    final private JScrollBar scrollbar_;
    private ScrollbarLockIcon lock_;
@@ -79,9 +81,10 @@ public class AxisScroller extends JPanel {
 
    public AxisScroller(String axis, int maximum, final EventBus bus, 
          boolean canAnimate) {
-      // Only allow the scrollbar (not the buttons on either side) to grow.
+      // Only allow the scrollbar (not the buttons on either side, nor the
+      // position label) to grow.
       super(new net.miginfocom.swing.MigLayout("insets 0, fillx",
-               "[][grow][]"));
+               "[][][grow][]"));
       axis_ = axis;
       bus_ = bus;
       shouldIgnoreScrollbarEvent_ = false;
@@ -104,6 +107,9 @@ public class AxisScroller extends JPanel {
          });
       }
       add(animateIcon_, "grow 0");
+
+      positionLabel_ = new JLabel("   ");
+      add(positionLabel_, "grow 0");
 
       scrollbar_ = new JScrollBar(JScrollBar.HORIZONTAL, 0, 1, 
             0, maximum);
@@ -133,7 +139,9 @@ public class AxisScroller extends JPanel {
          shouldIgnoreScrollbarEvent_ = false;
       }
       else {
-         bus_.post(new ScrollPositionEvent(this, scrollbar_.getValue()));
+         int newPosition = scrollbar_.getValue();
+         bus_.post(new ScrollPositionEvent(this, newPosition));
+         positionLabel_.setText(String.valueOf(newPosition));
       }
    }
 
@@ -204,6 +212,7 @@ public class AxisScroller extends JPanel {
    public void setPosition(int newPosition) {
       if (!lock_.getIsLocked()) {
          scrollbar_.setValue(newPosition);
+         positionLabel_.setText(String.valueOf(newPosition));
       }
    }
 
