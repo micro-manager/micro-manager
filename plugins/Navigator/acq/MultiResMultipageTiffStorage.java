@@ -396,6 +396,8 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
          }
       } catch (InterruptedException ex) {
          ReportingUtils.showError(ex.toString());
+      } catch (IOException ex) {
+         ReportingUtils.showError(ex.toString());
       } catch (ExecutionException ex) {    
          ReportingUtils.showError(ex.toString());
       } catch (JSONException ex) {
