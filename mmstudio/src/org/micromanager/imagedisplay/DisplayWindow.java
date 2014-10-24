@@ -34,6 +34,7 @@ import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.MMStudio;
 import org.micromanager.internalinterfaces.DisplayControls;
+import org.micromanager.utils.CanvasPaintPending;
 import org.micromanager.utils.ReportingUtils;
 
 
@@ -108,6 +109,8 @@ public class DisplayWindow extends StackWindow {
       // its setMagnification2() method, which overrides our nice window
       // titles?
       remove(ic);
+      // Ensure that all references to this canvas are removed.
+      CanvasPaintPending.removeAllPaintPending(ic);
       ic = new ImageCanvas(plus_) {
          @Override
          public void paint(Graphics g) {
