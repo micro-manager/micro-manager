@@ -12,6 +12,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import org.micromanager.api.data.Coords;
 import org.micromanager.api.display.NewImagePlusEvent;
+import org.micromanager.utils.CanvasPaintPending;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -146,6 +147,8 @@ public class DummyImageWindow extends StackWindow {
       WindowManager.removeWindow(this);
       imp = event.getImagePlus();
       imp.setWindow(this);
+      // Ensure nobody's keeping around a reference to our canvas.
+      CanvasPaintPending.removeAllPaintPending(ic);
       ic = new ImageCanvas(imp);
       WindowManager.addWindow(this);
    }
