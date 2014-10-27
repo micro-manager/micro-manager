@@ -1,3 +1,5 @@
+package org.micromanager.ae2010tests;
+
 import java.util.List;
 import mmcorej.CMMCore;
 import org.junit.Rule;
@@ -11,7 +13,7 @@ import static org.junit.Assert.*;
 import static org.micromanager.testing.TestImageDecoder.InfoPacket;
 
 
-public class SanityTest {
+public class EmptySettingsTest {
    @Rule
    public MMCoreWithTestHubResource coreResource =
       new MMCoreWithTestHubResource();
