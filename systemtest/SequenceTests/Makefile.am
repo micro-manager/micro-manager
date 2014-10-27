@@ -9,5 +9,7 @@ ant_test.sh:
 	@echo "$(ANT) -Dmm.javacflags="$(JAVACFLAGS)" \$$testclassarg $(ANTFLAGS) test-only" >> $@
 	@chmod u+x $@
 
+CLEANFILES = ant_test.sh
+
 clean-local:
 	$(ANT) $(ANTFLAGS) clean

@@ -31,5 +31,6 @@ clean-local:
 	$(ANT) $(ANTFLAGS) clean
 	-rm -rf doc
 
+CLEANFILES = ant_test.sh
 
 EXTRA_DIST = bin src build.xml license.txt
