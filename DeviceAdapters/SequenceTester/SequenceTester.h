@@ -25,49 +25,14 @@
 
 #include "SettingLogger.h"
 
+#include "InterDevice.h"
 #include "LoggedSetting.h"
 
 #include "DeviceBase.h"
 
-#include <boost/enable_shared_from_this.hpp>
 #include <boost/thread.hpp>
 #include <boost/unordered_map.hpp>
 #include <string>
-
-
-class TesterHub;
-
-
-// Common mixin interface for inter-device communication. Provides an interface
-// for communication among devices belonging to the same hub, orthogonal to the
-// Micro-Manager device interface. This way, we can use
-// boost::shared_ptr<InterDevice> to reference any peer device.
-class InterDevice : public boost::enable_shared_from_this<InterDevice>
-{
-public:
-   typedef boost::shared_ptr<InterDevice> Ptr;
-
-   InterDevice(const std::string& name) : name_(name) {}
-   virtual ~InterDevice() {}
-   virtual void SetHub(boost::shared_ptr<TesterHub> hub) { hub_ = hub; }
-
-   virtual std::string GetDeviceName() const { return name_; }
-   virtual boost::shared_ptr<TesterHub> GetHub() { return hub_; }
-   virtual boost::shared_ptr<const TesterHub> GetHub() const { return hub_; }
-   virtual SettingLogger* GetLogger();
-   virtual CountDownSetting::Ptr GetBusySetting() = 0;
-
-   virtual EdgeTriggerSignal* GetEdgeTriggerSource(const std::string& port);
-
-protected:
-   void RegisterEdgeTriggerSource(const std::string& port,
-         EdgeTriggerSignal& signal);
-
-private:
-   const std::string name_;
-   boost::shared_ptr<TesterHub> hub_;
-   boost::unordered_map<std::string, EdgeTriggerSignal*> edgeTriggersSources_;
-};
 
 
 // Common base class for all devices. Goes in between TDeviceBase and

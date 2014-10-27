@@ -141,32 +141,6 @@ DeleteDevice(MM::Device* pDevice)
 }
 
 
-SettingLogger*
-InterDevice::GetLogger()
-{
-   return GetHub()->GetLogger();
-}
-
-
-EdgeTriggerSignal*
-InterDevice::GetEdgeTriggerSource(const std::string& port)
-{
-   boost::unordered_map<std::string, EdgeTriggerSignal*>::const_iterator
-      found = edgeTriggersSources_.find(port);
-   if (found == edgeTriggersSources_.end())
-      return 0;
-   return found->second;
-}
-
-
-void
-InterDevice::RegisterEdgeTriggerSource(const std::string& port,
-      EdgeTriggerSignal& signal)
-{
-   edgeTriggersSources_[port] = &signal;
-}
-
-
 TesterHub::TesterHub(const std::string& name) :
    Super(name)
 {
