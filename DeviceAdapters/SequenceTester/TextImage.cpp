@@ -175,6 +175,9 @@ DrawTextImage(uint8_t* buffer, size_t width, size_t height,
 namespace TextImageFont
 {
 
+// Glyphs are in ASCII order below (except for lowercase letters, which use the
+// uppercase glyphs).
+
 // Not all characters are defined. All missing characters are drawn using the
 // '\0' glyph.
 const Pixel glyph_null[GLYPH_HEIGHT * 4] = {
@@ -194,6 +197,60 @@ const Pixel glyph_space[GLYPH_HEIGHT * 4] = {
    0,0,0,0,
 };
 GlyphDef def_space(' ', glyph_space, sizeof(glyph_space));
+
+const Pixel glyph_leftparen[GLYPH_HEIGHT * 3] = {
+   0,0,1,
+   0,1,0,
+   0,1,0,
+   0,1,0,
+   0,0,1,
+};
+GlyphDef def_leftparen('(', glyph_leftparen, sizeof(glyph_leftparen));
+
+const Pixel glyph_rightparen[GLYPH_HEIGHT * 3] = {
+   1,0,0,
+   0,1,0,
+   0,1,0,
+   0,1,0,
+   1,0,0,
+};
+GlyphDef def_rightparen(')', glyph_rightparen, sizeof(glyph_rightparen));
+
+const Pixel glyph_plus[GLYPH_HEIGHT * 3] = {
+   0,0,0,
+   0,1,0,
+   1,1,1,
+   0,1,0,
+   0,0,0,
+};
+GlyphDef def_plus('+', glyph_plus, sizeof(glyph_plus));
+
+const Pixel glyph_comma[GLYPH_HEIGHT * 2] = {
+   0,0,
+   0,0,
+   0,0,
+   0,1,
+   1,0,
+};
+GlyphDef def_comma(',', glyph_comma, sizeof(glyph_comma));
+
+const Pixel glyph_minus[GLYPH_HEIGHT * 3] = {
+   0,0,0,
+   0,0,0,
+   1,1,1,
+   0,0,0,
+   0,0,0,
+};
+GlyphDef def_minus('-', glyph_minus, sizeof(glyph_minus));
+
+const Pixel glyph_period[GLYPH_HEIGHT * 1] = {
+   0,
+   0,
+   0,
+   0,
+   1,
+};
+GlyphDef def_period('.', glyph_period, sizeof(glyph_period));
 
 const Pixel glyph_0[GLYPH_HEIGHT * 3] = {
    0,1,0,
@@ -285,60 +342,6 @@ const Pixel glyph_9[GLYPH_HEIGHT * 3] = {
 };
 GlyphDef def_9('9', glyph_9, sizeof(glyph_9));
 
-const Pixel glyph_leftparen[GLYPH_HEIGHT * 3] = {
-   0,0,1,
-   0,1,0,
-   0,1,0,
-   0,1,0,
-   0,0,1,
-};
-GlyphDef def_leftparen('(', glyph_leftparen, sizeof(glyph_leftparen));
-
-const Pixel glyph_rightparen[GLYPH_HEIGHT * 3] = {
-   1,0,0,
-   0,1,0,
-   0,1,0,
-   0,1,0,
-   1,0,0,
-};
-GlyphDef def_rightparen(')', glyph_rightparen, sizeof(glyph_rightparen));
-
-const Pixel glyph_plus[GLYPH_HEIGHT * 3] = {
-   0,0,0,
-   0,1,0,
-   1,1,1,
-   0,1,0,
-   0,0,0,
-};
-GlyphDef def_plus('+', glyph_plus, sizeof(glyph_plus));
-
-const Pixel glyph_comma[GLYPH_HEIGHT * 2] = {
-   0,0,
-   0,0,
-   0,0,
-   0,1,
-   1,0,
-};
-GlyphDef def_comma(',', glyph_comma, sizeof(glyph_comma));
-
-const Pixel glyph_minus[GLYPH_HEIGHT * 3] = {
-   0,0,0,
-   0,0,0,
-   1,1,1,
-   0,0,0,
-   0,0,0,
-};
-GlyphDef def_minus('-', glyph_minus, sizeof(glyph_minus));
-
-const Pixel glyph_period[GLYPH_HEIGHT * 1] = {
-   0,
-   0,
-   0,
-   0,
-   1,
-};
-GlyphDef def_period('.', glyph_period, sizeof(glyph_period));
-
 const Pixel glyph_colon[GLYPH_HEIGHT * 2] = {
    0,0,
    1,0,
@@ -365,15 +368,6 @@ const Pixel glyph_equals[GLYPH_HEIGHT * 4] = {
    0,0,0,0,
 };
 GlyphDef def_equals('=', glyph_equals, sizeof(glyph_equals));
-
-const Pixel glyph_underscore[GLYPH_HEIGHT * 4] = {
-   0,0,0,0,
-   0,0,0,0,
-   0,0,0,0,
-   0,0,0,0,
-   1,1,1,1,
-};
-GlyphDef def_underscore('_', glyph_underscore, sizeof(glyph_underscore));
 
 const Pixel glyph_leftbracket[GLYPH_HEIGHT * 3] = {
    0,1,1,
@@ -652,5 +646,14 @@ const Pixel glyph_Z[GLYPH_HEIGHT * 4] = {
 };
 GlyphDef def_Z('Z', glyph_Z, sizeof(glyph_Z));
 GlyphDef def_z('z', glyph_Z, sizeof(glyph_Z));
+
+const Pixel glyph_underscore[GLYPH_HEIGHT * 4] = {
+   0,0,0,0,
+   0,0,0,0,
+   0,0,0,0,
+   0,0,0,0,
+   1,1,1,1,
+};
+GlyphDef def_underscore('_', glyph_underscore, sizeof(glyph_underscore));
 
 } // namespace TextImageFont
