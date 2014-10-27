@@ -165,10 +165,10 @@ TesterCamera::Initialize()
    if (err != DEVICE_OK)
       return err;
 
-   exposureSetting_ = boost::make_shared< FloatSetting<Self> >(
-         GetLogger(), this, "Exposure", 100.0, true, 0.1, 1000.0);
-   binningSetting_ = boost::make_shared< IntegerSetting<Self> >(
-         GetLogger(), this, "Binning", 1, true, 1, 1);
+   exposureSetting_ = FloatSetting<Self>::New(GetLogger(), this, "Exposure",
+         100.0, true, 0.1, 1000.0);
+   binningSetting_ = IntegerSetting<Self>::New(GetLogger(), this, "Binning",
+         1, true, 1, 1);
 
    CreateFloatProperty("Exposure", exposureSetting_);
    CreateIntegerProperty("Binning", binningSetting_);
@@ -442,8 +442,8 @@ TesterShutter::Initialize()
    if (err != DEVICE_OK)
       return err;
 
-   shutterOpen_ = boost::make_shared< BoolSetting<Self> >(
-         GetLogger(), this, "ShutterState", false);
+   shutterOpen_ = BoolSetting<Self>::New(GetLogger(), this, "ShutterState",
+         false);
    CreateOneZeroProperty("State", shutterOpen_);
 
    return DEVICE_OK;
@@ -473,16 +473,14 @@ TesterAutofocus::Initialize()
    if (err != DEVICE_OK)
       return err;
 
-   continuousFocusEnabled_ = boost::make_shared< BoolSetting<Self> >(
-         GetLogger(), this, "ContinuousFocusEnabled", false);
+   continuousFocusEnabled_ = BoolSetting<Self>::New(GetLogger(), this,
+         "ContinuousFocusEnabled", false);
 
-   offset_ = boost::make_shared< FloatSetting<Self> >(
-         GetLogger(), this, "Offset", 0.0, false);
+   offset_ = FloatSetting<Self>::New(GetLogger(), this, "Offset", 0.0, false);
 
-   fullFocus_ = boost::make_shared< OneShotSetting<Self> >(
-         GetLogger(), this, "FullFocus");
-   incrementalFocus_ = boost::make_shared< OneShotSetting<Self> >(
-         GetLogger(), this, "IncrementalFocus");
+   fullFocus_ = OneShotSetting<Self>::New(GetLogger(), this, "FullFocus");
+   incrementalFocus_ = OneShotSetting<Self>::New(GetLogger(), this,
+         "IncrementalFocus");
 
    return DEVICE_OK;
 }

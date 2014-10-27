@@ -66,6 +66,10 @@ public:
    BoolSetting(SettingLogger* logger, TDevice* device,
          const std::string& name, bool initialValue);
 
+   static Ptr New(SettingLogger* logger, TDevice* device,
+         const std::string& name, bool initialValue)
+   { return boost::make_shared<Self>(logger, device, name, initialValue); }
+
    int Set(bool newValue);
    int Get(bool& value) const;
    bool Get() const;
@@ -95,7 +99,15 @@ public:
 
    IntegerSetting(SettingLogger* logger, TDevice* device,
          const std::string& name, long initialValue,
-         bool hasMinMax, long minimum = 0, long maximum = 0);
+         bool hasMinMax, long minimum, long maximum);
+
+   static Ptr New(SettingLogger* logger, TDevice* device,
+         const std::string& name, long initialValue,
+         bool hasMinMax, long minimum = 0, long maximum = 0)
+   {
+      return boost::make_shared<Self>(logger, device, name, initialValue,
+         hasMinMax, minimum, maximum);
+   }
 
    bool HasMinMax() const { return hasMinMax_; }
    long GetMin() const { return min_; }
@@ -123,7 +135,16 @@ public:
 
    FloatSetting(SettingLogger* logger, TDevice* device,
          const std::string& name, double initialValue,
-         bool hasMinMax, double minimum = 0.0, double maximum = 0.0);
+         bool hasMinMax, double minimum, double maximum);
+
+   static Ptr New(SettingLogger* logger, TDevice* device,
+         const std::string& name, double initialValue,
+         bool hasMinMax, double minimum = 0.0, double maximum = 0.0)
+   {
+      return boost::make_shared<Self>(logger, device, name, initialValue,
+            hasMinMax, minimum, maximum);
+   }
+
 
    bool HasMinMax() const { return hasMinMax_; }
    double GetMin() const { return min_; }
@@ -147,6 +168,11 @@ public:
 
    OneShotSetting(SettingLogger* logger, TDevice* device,
          const std::string& name);
+
+   static Ptr New(SettingLogger* logger, TDevice* device,
+         const std::string& name)
+   { return boost::make_shared<Self>(logger, device, name); }
+
 
    int Set();
 };

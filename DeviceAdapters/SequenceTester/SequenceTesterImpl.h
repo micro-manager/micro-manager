@@ -463,10 +463,10 @@ TesterStageBase<TConcreteStage, UMicronsPerStep>::Initialize()
    if (err != DEVICE_OK)
       return err;
 
-   zPositionUm_ = boost::make_shared< FloatSetting<TConcreteStage> >(
-         Super::GetLogger(), This(), "ZPositionUm", 0.0, false);
-   originSet_ = boost::make_shared< OneShotSetting<TConcreteStage> >(
-         Super::GetLogger(), This(), "OriginSet");
+   zPositionUm_ = FloatSetting<TConcreteStage>::New(Super::GetLogger(), This(),
+         "ZPositionUm", 0.0, false);
+   originSet_ = OneShotSetting<TConcreteStage>::New(Super::GetLogger(), This(),
+         "OriginSet");
 
    return DEVICE_OK;
 }
