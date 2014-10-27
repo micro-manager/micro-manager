@@ -514,25 +514,30 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
     */
    @Subscribe
    public void onNewImage(final NewImageEvent event) {
-      if (dummyWindow_ == null) {
-         // Time to make our components, but we should only do so in the EDT.
-         final DefaultDisplayWindow thisWindow = this;
-         try {
-            GUIUtils.invokeAndWait(new Runnable() {
-               @Override
-               public void run() {
-                  thisWindow.makeWindowAndIJObjects();
-               }
-            });
+      try {
+         if (dummyWindow_ == null) {
+            // Time to make our components, but we should only do so in the EDT.
+            final DefaultDisplayWindow thisWindow = this;
+            try {
+               GUIUtils.invokeAndWait(new Runnable() {
+                  @Override
+                  public void run() {
+                     thisWindow.makeWindowAndIJObjects();
+                  }
+               });
+            }
+            catch (InterruptedException e) {
+               ReportingUtils.logError(e, "Couldn't make window controls");
+            }
+            catch (java.lang.reflect.InvocationTargetException e) {
+               ReportingUtils.logError(e, "Couldn't make window controls");
+            }
          }
-         catch (InterruptedException e) {
-            ReportingUtils.logError(e, "Couldn't make window controls");
-         }
-         catch (java.lang.reflect.InvocationTargetException e) {
-            ReportingUtils.logError(e, "Couldn't make window controls");
-         }
+         receiveNewImage(event.getImage());
       }
-      receiveNewImage(event.getImage());
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Error processing new image");
+      }
    }
 
    /**
