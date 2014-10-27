@@ -187,6 +187,39 @@ private:
 };
 
 
+class TesterXYStage : public TesterBase<CXYStageBase, TesterXYStage>
+{
+   typedef TesterXYStage Self;
+   typedef TesterBase< ::CXYStageBase, TesterXYStage > Super;
+
+   static const long stepsPerUm = 10;
+
+public:
+   TesterXYStage(const std::string& name) : Super(name) {}
+
+   virtual int Initialize();
+
+   virtual int SetPositionSteps(long x, long y);
+   virtual int GetPositionSteps(long& x, long& y);
+   virtual int Home();
+   virtual int Stop();
+   virtual int SetOrigin();
+   virtual int GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax);
+   virtual int GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax);
+   virtual double GetStepSizeXUm() { return 1.0 / stepsPerUm; }
+   virtual double GetStepSizeYUm() { return 1.0 / stepsPerUm; }
+   virtual int IsXYStageSequenceable(bool& isSequenceable) const
+   { isSequenceable = false; return DEVICE_OK; }
+
+private:
+   IntegerSetting<Self>::Ptr xPositionSteps_;
+   IntegerSetting<Self>::Ptr yPositionSteps_;
+   OneShotSetting<Self>::Ptr home_;
+   OneShotSetting<Self>::Ptr stop_;
+   OneShotSetting<Self>::Ptr setOrigin_;
+};
+
+
 template <class TConcreteStage, long UMicronsPerStep = 1>
 class Tester1DStageBase : public TesterBase<CStageBase, TConcreteStage>
 {

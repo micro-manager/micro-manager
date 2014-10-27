@@ -73,6 +73,8 @@ CreateDevice(const char* deviceName)
       return new TesterCamera(name);
    if (StartsWith("TShutter", name))
       return new TesterShutter(name);
+   if (StartsWith("TXYStage", name))
+      return new TesterXYStage(name);
    if (StartsWith("TZStage", name))
       return new TesterZStage(name);
    if (StartsWith("TAFStage", name))
@@ -130,6 +132,8 @@ TesterHub::DetectInstalledDevices()
    AddInstalledDevice(new TesterCamera("TCamera-1"));
    AddInstalledDevice(new TesterShutter("TShutter-0"));
    AddInstalledDevice(new TesterShutter("TShutter-1"));
+   AddInstalledDevice(new TesterXYStage("TXYStage-0"));
+   AddInstalledDevice(new TesterXYStage("TXYStage-1"));
    AddInstalledDevice(new TesterZStage("TZStage-0"));
    AddInstalledDevice(new TesterZStage("TZStage-1"));
    AddInstalledDevice(new TesterAFStage("TAFStage-0"));
@@ -436,6 +440,105 @@ TesterCamera::SendSequence(bool finite, long count, bool stopOnOverflow)
    }
 
    delete[] bytes;
+}
+
+
+int
+TesterXYStage::Initialize()
+{
+   int err;
+
+   err = Super::Initialize();
+   if (err != DEVICE_OK)
+      return err;
+
+   xPositionSteps_ = IntegerSetting<Self>::New(GetLogger(), this,
+         "XPositionSteps", 0, false);
+   yPositionSteps_ = IntegerSetting<Self>::New(GetLogger(), this,
+         "YPositionSteps", 0, false);
+   home_ = OneShotSetting<Self>::New(GetLogger(), this, "Home");
+   stop_ = OneShotSetting<Self>::New(GetLogger(), this, "Stop");
+   setOrigin_ = OneShotSetting<Self>::New(GetLogger(), this, "SetOrigin");
+
+   return DEVICE_OK;
+}
+
+
+int
+TesterXYStage::SetPositionSteps(long x, long y)
+{
+   SettingLogger::GuardType g = GetLogger()->Guard();
+   MarkBusy();
+   int err1 = xPositionSteps_->Set(x);
+   int err2 = yPositionSteps_->Set(y);
+   if (err1 != DEVICE_OK)
+      return err1;
+   if (err2 != DEVICE_OK)
+      return err2;
+   return DEVICE_OK;
+}
+
+
+int
+TesterXYStage::GetPositionSteps(long& x, long& y)
+{
+   int err1 = xPositionSteps_->Get(x);
+   int err2 = yPositionSteps_->Get(y);
+   if (err1 != DEVICE_OK)
+      return err1;
+   if (err2 != DEVICE_OK)
+      return err2;
+   return DEVICE_OK;
+}
+
+
+int
+TesterXYStage::Home()
+{
+   SettingLogger::GuardType g = GetLogger()->Guard();
+   MarkBusy();
+   return home_->Set();
+}
+
+
+int
+TesterXYStage::Stop()
+{
+   SettingLogger::GuardType g = GetLogger()->Guard();
+   MarkBusy();
+   return stop_->Set();
+}
+
+
+int
+TesterXYStage::SetOrigin()
+{
+   SettingLogger::GuardType g = GetLogger()->Guard();
+   MarkBusy();
+   return setOrigin_->Set();
+}
+
+
+int
+TesterXYStage::GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax)
+{
+   // Not (yet) designed for testing
+   xMin = yMin = -10000000;
+   xMax = yMax = +10000000;
+   return DEVICE_OK;
+}
+
+
+int
+TesterXYStage::GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax)
+{
+   long x, X, y, Y;
+   int err = GetStepLimits(x, X, y, Y);
+   xMin = static_cast<double>(x) / stepsPerUm;
+   xMax = static_cast<double>(X) / stepsPerUm;
+   yMin = static_cast<double>(y) / stepsPerUm;
+   yMax = static_cast<double>(Y) / stepsPerUm;
+   return err;
 }
 
 
