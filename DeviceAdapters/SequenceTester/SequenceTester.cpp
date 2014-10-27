@@ -81,6 +81,8 @@ CreateDevice(const char* deviceName)
       return new TesterAFStage(name);
    if (StartsWith("TAutofocus", name))
       return new TesterAutofocus(name);
+   if (StartsWith("TSwitcher", name))
+      return new TesterSwitcher(name);
    return 0;
 }
 
@@ -140,6 +142,8 @@ TesterHub::DetectInstalledDevices()
    AddInstalledDevice(new TesterAFStage("TAFStage-1"));
    AddInstalledDevice(new TesterAutofocus("TAutofocus-0"));
    AddInstalledDevice(new TesterAutofocus("TAutofocus-1"));
+   AddInstalledDevice(new TesterSwitcher("TSwitcher-0"));
+   AddInstalledDevice(new TesterSwitcher("TSwitcher-1"));
    return DEVICE_OK;
 }
 
@@ -673,4 +677,28 @@ TesterAutofocus::SetOffset(double offset)
    SettingLogger::GuardType g = GetLogger()->Guard();
    MarkBusy();
    return offset_->Set(offset);
+}
+
+
+int
+TesterSwitcher::Initialize()
+{
+   int err;
+
+   err = Super::Initialize();
+   if (err != DEVICE_OK)
+      return err;
+
+   position_ = IntegerSetting<Self>::New(GetLogger(), this, "Position",
+         0, true, 0, nrPositions_);
+   CreateIntegerProperty("State", position_);
+
+   return DEVICE_OK;
+}
+
+
+unsigned long
+TesterSwitcher::GetNumberOfPositions() const
+{
+   return nrPositions_;
 }

@@ -297,3 +297,23 @@ private:
    OneShotSetting<Self>::Ptr fullFocus_;
    OneShotSetting<Self>::Ptr incrementalFocus_;
 };
+
+
+class TesterSwitcher : public TesterBase<CStateDeviceBase, TesterSwitcher>
+{
+   typedef TesterSwitcher Self;
+   typedef TesterBase< ::CStateDeviceBase, TesterSwitcher > Super;
+
+   // More than enough positions for most testing use
+   static const unsigned nrPositions_ = 16;
+
+public:
+   TesterSwitcher(const std::string& name) : Super(name) {}
+
+   virtual int Initialize();
+
+   virtual unsigned long GetNumberOfPositions() const;
+
+private:
+   IntegerSetting<Self>::Ptr position_;
+};
