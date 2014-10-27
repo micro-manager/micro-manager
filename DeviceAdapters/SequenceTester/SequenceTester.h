@@ -31,6 +31,7 @@
 
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/thread.hpp>
+#include <boost/unordered_map.hpp>
 #include <string>
 
 
@@ -54,9 +55,16 @@ public:
    virtual SettingLogger* GetLogger();
    virtual CountDownSetting::Ptr GetBusySetting() = 0;
 
+   virtual EdgeTriggerSignal* GetEdgeTriggerSource(const std::string& port);
+
+protected:
+   void RegisterEdgeTriggerSource(const std::string& port,
+         EdgeTriggerSignal& signal);
+
 private:
    const std::string name_;
    boost::shared_ptr<TesterHub> hub_;
+   boost::unordered_map<std::string, EdgeTriggerSignal*> edgeTriggersSources_;
 };
 
 
