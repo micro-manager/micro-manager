@@ -258,13 +258,6 @@
    property are grouped together in a vector: [[dev prop] value]."
   [dev prop]
   [[dev prop] (get-property-value dev prop)])
-       
-(defn get-positions
-  "Get the position list as a vector of MultiStagePositions."
-  ([position-list]
-    (vec (.getPositions (or position-list (.getPositionList gui)))))
-  ([]
-    (get-positions nil)))
 
 (defn get-allowed-property-values
   "Returns a sequence of the allowed property values
@@ -377,30 +370,11 @@
    index number."
   ([position-list idx]
     (when idx
-      (let [position-list (or position-list (.getPositionList gui))]
+      (when position-list
         (when (pos? (.getNumberOfPositions position-list))
           (.getPosition position-list idx)))))
   ([idx]
     (get-msp nil idx)))
-
-
-(defn add-msp
-  "Add a MultiStagePosition object to the position list."
-  ([position-list label x y z]
-    (.addPosition position-list
-                  (doto
-                    (MultiStagePosition.
-                      (core getXYStageDevice) x y
-                      (core getFocusDevice) z)
-                    (.setLabel label))))
-  ([label x y z]
-    (add-msp (.getPositionList gui) label x y z)))
-
-(defn remove-msp
-  ([position-list idx]
-    (.removePosition position-list idx))
-  ([idx]
-    (remove-msp (.getPositionList gui) idx)))
 
 (defn get-msp-z-position
   "Get the z position for a given z-stage from the MultiStagePosition
@@ -421,12 +395,6 @@
       (set! (. stage-pos x) z))))
   ([idx z-stage z]
     (set-msp-z-position nil idx z-stage z)))  
-
-(defn positions-map [position-list]
-  (let [position (map MultiStagePosition-to-map (get-positions))]
-    (zipmap
-      (map :label position)
-      (map :axes position))))
 
 (defn swig-vector-contents
   "Returns a string containing all values in a swig vector
