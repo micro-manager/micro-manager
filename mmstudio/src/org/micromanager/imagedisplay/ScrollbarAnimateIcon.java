@@ -33,6 +33,10 @@ public class ScrollbarAnimateIcon extends Canvas {
       repaint();
    }
 
+   public boolean getIsAnimated() {
+      return isAnimated_;
+   }
+
    /** Overrides Component getPreferredSize(). */
    @Override
    public Dimension getPreferredSize() {
