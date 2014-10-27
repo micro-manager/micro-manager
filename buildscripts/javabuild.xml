@@ -41,12 +41,17 @@
 	<!-- Default classpath (override after the 'import' element) -->
 	<path id="project.classpath"/>
 
-	<!-- Classpath for unit tests. Usually should not require overriding -->
-	<path id="project.test.classpath">
+	<!-- Default classpath for unit tests -->
+	<path id="mm.test.classpath">
 		<path refid="mm.junit.classpath"/>
 		<path refid="project.classpath"/>
 		<pathelement location="${jarfile}"/>
 		<pathelement location="${test.intdir}"/>
+	</path>
+
+	<!-- Classpath for unit tests -->
+	<path id="project.test.classpath">
+		<path refid="mm.test.classpath"/>
 	</path>
 
 	<!-- JARs whose change should trigger a rebuild of the current project
@@ -111,6 +116,7 @@
 		</mm-javac>
 		<mkdir dir="${test.reportdir}"/>
 		<junit fork="true" haltonfailure="true" printsummary="true">
+			<sysproperty key="java.awt.headless" value="true"/>
 			<classpath refid="project.test.classpath"/>
 			<formatter type="plain"/>
 			<!-- If test.class is set, run one test. Otherwise, run all -->
@@ -138,5 +144,7 @@
 		<delete file="${jarfile}"/>
 		<delete dir="${intdir}"/>
 		<delete dir="${scratchdir}"/>
+		<delete dir="${test.intdir}"/>
+		<delete dir="${test.reportdir}"/>
 	</target>
 </project>

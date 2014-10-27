@@ -28,14 +28,19 @@
 #include <string>
 
 
+// This file effectively defines the MessagePack wire format for our test
+// images. Unfortunately, there is no automatic mechanism to keep the Java (and
+// possibly other) decoder in sync, so be careful! Field order is crucial.
+
+
 void
 IntegerSettingValue::Write(msgpack::sbuffer& sbuf) const
 {
    msgpack::packer<msgpack::sbuffer> pk(&sbuf);
-   pk.pack_map(2);
-   pk.pack(std::string("type"));
+   pk.pack_array(2);
+   // type
    pk.pack(std::string("int"));
-   pk.pack(std::string("value"));
+   // value
    pk.pack(value_);
 }
 
@@ -44,10 +49,10 @@ void
 FloatSettingValue::Write(msgpack::sbuffer& sbuf) const
 {
    msgpack::packer<msgpack::sbuffer> pk(&sbuf);
-   pk.pack_map(2);
-   pk.pack(std::string("type"));
+   pk.pack_array(2);
+   // type
    pk.pack(std::string("float"));
-   pk.pack(std::string("value"));
+   // value
    pk.pack(value_);
 }
 
@@ -56,10 +61,10 @@ void
 StringSettingValue::Write(msgpack::sbuffer& sbuf) const
 {
    msgpack::packer<msgpack::sbuffer> pk(&sbuf);
-   pk.pack_map(2);
-   pk.pack(std::string("type"));
+   pk.pack_array(2);
+   // type
    pk.pack(std::string("string"));
-   pk.pack(std::string("value"));
+   // value
    pk.pack(value_);
 }
 
@@ -68,9 +73,11 @@ void
 OneShotSettingValue::Write(msgpack::sbuffer& sbuf) const
 {
    msgpack::packer<msgpack::sbuffer> pk(&sbuf);
-   pk.pack_map(1);
-   pk.pack(std::string("type"));
+   pk.pack_array(2);
+   // type
    pk.pack(std::string("one_shot"));
+   // value
+   pk.pack_nil();
 }
 
 
@@ -78,10 +85,10 @@ void
 SettingKey::Write(msgpack::sbuffer& sbuf) const
 {
    msgpack::packer<msgpack::sbuffer> pk(&sbuf);
-   pk.pack_map(2);
-   pk.pack(std::string("device"));
+   pk.pack_array(2);
+   // device
    pk.pack(device_);
-   pk.pack(std::string("key"));
+   // key
    pk.pack(key_);
 }
 
@@ -90,12 +97,12 @@ void
 SettingEvent::Write(msgpack::sbuffer& sbuf) const
 {
    msgpack::packer<msgpack::sbuffer> pk(&sbuf);
-   pk.pack_map(3);
-   pk.pack(std::string("key"));
+   pk.pack_array(3);
+   // key
    key_.Write(sbuf);
-   pk.pack(std::string("value"));
+   // value
    value_->Write(sbuf);
-   pk.pack(std::string("ctr"));
+   // count
    pk.pack(count_);
 }
 
@@ -104,14 +111,14 @@ void
 CameraInfo::Write(msgpack::sbuffer& sbuf) const
 {
    msgpack::packer<msgpack::sbuffer> pk(&sbuf);
-   pk.pack_map(4);
-   pk.pack(std::string("name"));
+   pk.pack_array(4);
+   // name
    pk.pack(camera_);
-   pk.pack(std::string("is_sequence"));
+   // isSequence
    pk.pack(isSequence_);
-   pk.pack(std::string("serial_number"));
+   // serialNumber
    pk.pack(serialNum_);
-   pk.pack(std::string("frame_number"));
+   // frameNumber
    pk.pack(frameNum_);
 }
 
@@ -309,22 +316,22 @@ SettingLogger::PackAndReset(char* dest, size_t destSize,
 
       typedef std::string s;
 
-      pk.pack_map(8);
-      pk.pack(s("serial_number"));
+      pk.pack_array(8);
+      // packetNumber
       pk.pack(GetNextGlobalImageCount());
-      pk.pack(s("camera"));
+      // camera
       cameraInfo.Write(sbuf);
-      pk.pack(s("busy_devices"));
-      WriteBusyDevices(sbuf);
-      pk.pack(s("start_state"));
-      WriteSettingMap(sbuf, startingValues_);
-      pk.pack(s("current_state"));
-      WriteSettingMap(sbuf, settingValues_);
-      pk.pack(s("start_counter"));
+      // startCounter
       pk.pack(counterAtLastReset_);
-      pk.pack(s("current_counter"));
+      // currentCounter
       pk.pack(counter_);
-      pk.pack(s("history"));
+      // busyDevices
+      WriteBusyDevices(sbuf);
+      // startState
+      WriteSettingMap(sbuf, startingValues_);
+      // currentState
+      WriteSettingMap(sbuf, settingValues_);
+      // history
       WriteHistory(sbuf);
 
       Reset();
@@ -375,10 +382,10 @@ SettingLogger::WriteSettingMap(msgpack::sbuffer& sbuf,
    for (SettingConstIterator it = values.begin(), end = values.end();
          it != end; ++it)
    {
-      pk.pack_map(2);
-      pk.pack(std::string("key"));
+      pk.pack_array(2);
+      // key
       it->first.Write(sbuf);
-      pk.pack(std::string("value"));
+      // value
       it->second->Write(sbuf);
    }
 }

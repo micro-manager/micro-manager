@@ -31,6 +31,7 @@ if BUILD_JAVA_APP
 
 ANTEXTENSIONS = buildscripts/AntExtensions
 JAVA_APP_DIRS = mmstudio acqEngine autofocus plugins scripts
+SYSTEMTEST_DIR = systemtest
 
 if INSTALL_AS_IMAGEJ_PLUGIN
 
@@ -126,6 +127,7 @@ SUBDIRS = \
 	$(JAVA_APP_DIRS) \
 	DeviceAdapters \
 	$(SECRETDEVICEADAPTERS) \
+	$(SYSTEMTEST_DIR)
 	bindist
 
 

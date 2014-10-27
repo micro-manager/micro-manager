@@ -401,6 +401,8 @@ AC_CONFIG_FILES(m4_strip([
    plugins/Makefile
    autofocus/Makefile
    scripts/Makefile
+   systemtest/Makefile
+   systemtest/SequenceTests/Makefile
    bindist/Makefile
 ]))
 
