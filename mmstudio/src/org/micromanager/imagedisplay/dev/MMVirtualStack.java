@@ -11,10 +11,12 @@ import java.util.HashMap;
 
 import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.Datastore;
+import org.micromanager.api.data.Image;
 import org.micromanager.api.display.NewImagePlusEvent;
 
 import org.micromanager.data.DefaultCoords;
 import org.micromanager.data.DefaultImage;
+import org.micromanager.data.DefaultMetadata;
 
 import org.micromanager.imagedisplay.IMMImagePlus;
 
@@ -34,14 +36,14 @@ public class MMVirtualStack extends ij.VirtualStack {
    private EventBus displayBus_;
    private ImagePlus plus_;
    private Coords curCoords_;
-   private HashMap<Integer, DefaultImage> channelToLastValidImage_;
+   private HashMap<Integer, Image> channelToLastValidImage_;
 
    public MMVirtualStack(Datastore store, EventBus displayBus) {
       store_ = store;
       displayBus_ = displayBus;
       displayBus_.register(this);
       curCoords_ = new DefaultCoords.Builder().build();
-      channelToLastValidImage_ = new HashMap<Integer, DefaultImage>();
+      channelToLastValidImage_ = new HashMap<Integer, Image>();
    }
 
    public void setImagePlus(ImagePlus plus) {
@@ -49,20 +51,10 @@ public class MMVirtualStack extends ij.VirtualStack {
    }
 
    /**
-    * Retrieve the image at the specified index, which we map into a
-    * channel/frame/z offset. This will also update curCoords_ as needed.
-    * Note that we only pay attention to a given offset if we already have
-    * a position along that axis (e.g. so that we don't try to ask the
-    * Datastore for an image at time=0 when none of the images in the Datastore
-    * have a time axis whatsoever).
+    * Given a flat index number, convert that into a Coords object for our
+    * dataset.
     */
-   private DefaultImage getImage(int flatIndex) {
-      // Note: index is 1-based.
-      if (flatIndex > plus_.getStackSize()) {
-         ReportingUtils.logError("Stack asked for image at " + flatIndex + 
-               " that exceeds total of " + plus_.getStackSize() + " images");
-         return null;
-      }
+   public Coords mapFlatIndexToCoords(int flatIndex) {
       // These coordinates are missing all axes that ImageJ doesn't know 
       // about (e.g. stage position), so we augment curCoords with them and
       // use that for our lookup.
@@ -95,8 +87,27 @@ public class MMVirtualStack extends ij.VirtualStack {
             builder.position(axis, 0);
          }
       }
-      curCoords_ = builder.build();
-      DefaultImage result = (DefaultImage) store_.getImage(curCoords_);
+      return builder.build();
+   }
+
+   /**
+    * Retrieve the image at the specified index, which we map into a
+    * channel/frame/z offset. This will also update curCoords_ as needed.
+    * Note that we only pay attention to a given offset if we already have
+    * a position along that axis (e.g. so that we don't try to ask the
+    * Datastore for an image at time=0 when none of the images in the Datastore
+    * have a time axis whatsoever).
+    */
+   private Image getImage(int flatIndex) {
+      // Note: index is 1-based.
+      if (flatIndex > plus_.getStackSize()) {
+         ReportingUtils.logError("Stack asked for image at " + flatIndex +
+               " that exceeds total of " + plus_.getStackSize() + " images");
+         return null;
+      }
+      curCoords_ = mapFlatIndexToCoords(flatIndex);
+      Image result = store_.getImage(curCoords_);
+      int channel = curCoords_.getPositionAt("channel");
       if (result == null) {
          // HACK: ImageJ may ask us for images that aren't available yet,
          // for example if a draw attempt happens in-between images for a
@@ -107,11 +118,56 @@ public class MMVirtualStack extends ij.VirtualStack {
          if (channel != -1 && channelToLastValidImage_.containsKey(channel)) {
             result = channelToLastValidImage_.get(channel);
          }
+         else {
+            // We have no images whatsoever for this channel. Unfortunately
+            // we *still* can't return null in this case (lest ImageJ break
+            // horribly), so we synthesize a new image that matches
+            // dimensionality with any existing image.
+            result = generateFakeImage(curCoords_);
+         }
       }
       if (channel != -1) {
          channelToLastValidImage_.put(channel, result);
       }
       return result;
+   }
+
+   /**
+    * Generate an image of all zeros that matches the width, height, and
+    * bit depth of an existing image in the datastore.
+    */
+   private Image generateFakeImage(Coords pos) {
+      DefaultCoords.Builder builder = new DefaultCoords.Builder();
+      for (String axis : store_.getAxes()) {
+         builder.position(axis, store_.getMaxIndex(axis));
+      }
+      Image tmp = store_.getImage(builder.build());
+      int width = tmp.getWidth();
+      int height = tmp.getHeight();
+      int bytesPerPixel = tmp.getBytesPerPixel();
+      int numComponents = tmp.getNumComponents();
+      Object rawPixels = tmp.getRawPixels();
+      // Replace rawPixels with an appropriately-sized array of the right
+      // datatype.
+      int size = width * height * numComponents;
+      if (rawPixels instanceof byte[]) {
+         rawPixels = new byte[size];
+         for (int i = 0; i < size; ++i) {
+            ((byte[]) rawPixels)[i] = 0;
+         }
+      }
+      else if (rawPixels instanceof short[]) {
+         size /= 2; // Because shorts are 2 bytes each.
+         rawPixels = new short[size];
+         for (int i = 0; i < size; ++i) {
+            ((short[]) rawPixels)[i] = 0;
+         }
+      }
+      else {
+         ReportingUtils.logError("Unrecognized datatype for image; can't generate new dummy image.");
+      }
+      return new DefaultImage(rawPixels, width, height, bytesPerPixel,
+            numComponents, pos, new DefaultMetadata.Builder().build());
    }
 
    /**
@@ -124,7 +180,7 @@ public class MMVirtualStack extends ij.VirtualStack {
          ReportingUtils.logError("Asked to get pixels when I don't have an ImagePlus");
          return null;
       }
-      DefaultImage image = getImage(flatIndex);
+      Image image = getImage(flatIndex);
       if (image != null) {
          if (image.getNumComponents() != 1) {
             // Extract the appropriate component.
@@ -142,9 +198,9 @@ public class MMVirtualStack extends ij.VirtualStack {
          ReportingUtils.logError("Tried to get a processor when there's no ImagePlus");
          return null;
       }
-      DefaultImage image = getImage(flatIndex);
+      Image image = getImage(flatIndex);
       if (image == null) {
-         ReportingUtils.logError("Tried to get a processor for an invalid image index " + flatIndex);
+         ReportingUtils.logError("Tried to get a processor for an invalid image index " + flatIndex + " which ImageJ treats as " + mapFlatIndexToCoords(flatIndex));
          return null;
       }
       int width = image.getWidth();
