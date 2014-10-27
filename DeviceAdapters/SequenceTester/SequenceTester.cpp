@@ -177,6 +177,8 @@ TesterHub::Shutdown()
 int
 TesterHub::DetectInstalledDevices()
 {
+   TesterHub::Guard g(GetHub()->LockGlobalMutex());
+
    ClearInstalledDevices();
    AddInstalledDevice(new TesterCamera("TCamera-0"));
    AddInstalledDevice(new TesterCamera("TCamera-1"));
@@ -221,6 +223,8 @@ TesterCamera::Initialize()
    if (err != DEVICE_OK)
       return err;
 
+   TesterHub::Guard g(GetHub()->LockGlobalMutex());
+
    exposureSetting_ = FloatSetting<Self>::New(GetLogger(), this, "Exposure",
          100.0, true, 0.1, 1000.0);
    binningSetting_ = IntegerSetting<Self>::New(GetLogger(), this, "Binning",
@@ -234,21 +238,10 @@ TesterCamera::Initialize()
 
 
 int
-TesterCamera::Shutdown()
-{
-   int err;
-
-   err = Super::Shutdown();
-   if (err != DEVICE_OK)
-      return err;
-
-   return DEVICE_OK;
-}
-
-
-int
 TesterCamera::SnapImage()
 {
+   TesterHub::Guard g(GetHub()->LockGlobalMutex());
+
    delete[] snapImage_;
    snapImage_ = GenerateLogImage(false, snapCounter_++);
 
@@ -259,6 +252,8 @@ TesterCamera::SnapImage()
 const unsigned char*
 TesterCamera::GetImageBuffer()
 {
+   TesterHub::Guard g(GetHub()->LockGlobalMutex());
+
    return snapImage_;
 }
 
@@ -266,6 +261,8 @@ TesterCamera::GetImageBuffer()
 int
 TesterCamera::GetBinning() const
 {
+   TesterHub::Guard g(GetHub()->LockGlobalMutex());
+
    return static_cast<int>(binningSetting_->Get());
 }
 
@@ -273,7 +270,8 @@ TesterCamera::GetBinning() const
 int
 TesterCamera::SetBinning(int binSize)
 {
-   SettingLogger::GuardType g = GetLogger()->Guard();
+   TesterHub::Guard g(GetHub()->LockGlobalMutex());
+
    MarkBusy();
    return binningSetting_->Set(binSize);
 }
@@ -303,7 +301,8 @@ TesterCamera::GetImageHeight() const
 void
 TesterCamera::SetExposure(double exposureMs)
 {
-   SettingLogger::GuardType g = GetLogger()->Guard();
+   TesterHub::Guard g(GetHub()->LockGlobalMutex());
+
    MarkBusy();
    exposureSetting_->Set(exposureMs);
 }
@@ -312,6 +311,8 @@ TesterCamera::SetExposure(double exposureMs)
 double
 TesterCamera::GetExposure() const
 {
+   TesterHub::Guard g(GetHub()->LockGlobalMutex());
+
    return exposureSetting_->Get();
 }
 
@@ -319,7 +320,8 @@ TesterCamera::GetExposure() const
 int
 TesterCamera::SetROI(unsigned, unsigned, unsigned, unsigned)
 {
-   SettingLogger::GuardType g = GetLogger()->Guard();
+   TesterHub::Guard g(GetHub()->LockGlobalMutex());
+
    MarkBusy();
    return DEVICE_UNSUPPORTED_COMMAND;
 }
@@ -354,6 +356,8 @@ int
 TesterCamera::StartSequenceAcquisitionImpl(bool finite, long count,
       bool stopOnOverflow)
 {
+   TesterHub::Guard g(GetHub()->LockGlobalMutex());
+
    {
       boost::lock_guard<boost::mutex> lock(sequenceMutex_);
       if (!stopSequence_)
@@ -379,6 +383,8 @@ TesterCamera::StartSequenceAcquisitionImpl(bool finite, long count,
 int
 TesterCamera::StopSequenceAcquisition()
 {
+   TesterHub::Guard g(GetHub()->LockGlobalMutex());
+
    {
       boost::lock_guard<boost::mutex> lock(sequenceMutex_);
       if (stopSequence_)
@@ -408,6 +414,9 @@ TesterCamera::StopSequenceAcquisition()
 bool
 TesterCamera::IsCapturing()
 {
+   // Skip locking of hub global mutex, since we only access stopSequence_
+   // which is protected by its own mutex.
+
    boost::lock_guard<boost::mutex> lock(sequenceMutex_);
    return !stopSequence_;
 }
@@ -454,7 +463,11 @@ TesterCamera::SendSequence(bool finite, long count, bool stopOnOverflow)
       }
 
       delete[] bytes;
-      bytes = GenerateLogImage(true, cumulativeSequenceCounter_++, frame);
+
+      {
+         TesterHub::Guard g(GetHub()->LockGlobalMutex());
+         bytes = GenerateLogImage(true, cumulativeSequenceCounter_++, frame);
+      }
 
       try
       {
@@ -504,6 +517,8 @@ TesterXYStage::Initialize()
    if (err != DEVICE_OK)
       return err;
 
+   TesterHub::Guard g(GetHub()->LockGlobalMutex());
+
    xPositionSteps_ = IntegerSetting<Self>::New(GetLogger(), this,
          "XPositionSteps", 0, false);
    yPositionSteps_ = IntegerSetting<Self>::New(GetLogger(), this,
@@ -519,7 +534,8 @@ TesterXYStage::Initialize()
 int
 TesterXYStage::SetPositionSteps(long x, long y)
 {
-   SettingLogger::GuardType g = GetLogger()->Guard();
+   TesterHub::Guard g(GetHub()->LockGlobalMutex());
+
    MarkBusy();
    int err1 = xPositionSteps_->Set(x);
    int err2 = yPositionSteps_->Set(y);
@@ -534,6 +550,8 @@ TesterXYStage::SetPositionSteps(long x, long y)
 int
 TesterXYStage::GetPositionSteps(long& x, long& y)
 {
+   TesterHub::Guard g(GetHub()->LockGlobalMutex());
+
    int err1 = xPositionSteps_->Get(x);
    int err2 = yPositionSteps_->Get(y);
    if (err1 != DEVICE_OK)
@@ -547,7 +565,8 @@ TesterXYStage::GetPositionSteps(long& x, long& y)
 int
 TesterXYStage::Home()
 {
-   SettingLogger::GuardType g = GetLogger()->Guard();
+   TesterHub::Guard g(GetHub()->LockGlobalMutex());
+
    MarkBusy();
    return home_->Set();
 }
@@ -556,7 +575,8 @@ TesterXYStage::Home()
 int
 TesterXYStage::Stop()
 {
-   SettingLogger::GuardType g = GetLogger()->Guard();
+   TesterHub::Guard g(GetHub()->LockGlobalMutex());
+
    MarkBusy();
    return stop_->Set();
 }
@@ -565,7 +585,8 @@ TesterXYStage::Stop()
 int
 TesterXYStage::SetOrigin()
 {
-   SettingLogger::GuardType g = GetLogger()->Guard();
+   TesterHub::Guard g(GetHub()->LockGlobalMutex());
+
    MarkBusy();
    return setOrigin_->Set();
 }
@@ -603,6 +624,8 @@ TesterShutter::Initialize()
    if (err != DEVICE_OK)
       return err;
 
+   TesterHub::Guard g(GetHub()->LockGlobalMutex());
+
    shutterOpen_ = BoolSetting<Self>::New(GetLogger(), this, "ShutterState",
          false);
    CreateOneZeroProperty("State", shutterOpen_);
@@ -614,7 +637,8 @@ TesterShutter::Initialize()
 int
 TesterShutter::SetOpen(bool open)
 {
-   SettingLogger::GuardType g = GetLogger()->Guard();
+   TesterHub::Guard g(GetHub()->LockGlobalMutex());
+
    MarkBusy();
    return shutterOpen_->Set(open);
 }
@@ -623,6 +647,8 @@ TesterShutter::SetOpen(bool open)
 int
 TesterShutter::GetOpen(bool& open)
 {
+   TesterHub::Guard g(GetHub()->LockGlobalMutex());
+
    return shutterOpen_->Get(open);
 }
 
@@ -635,6 +661,8 @@ TesterAutofocus::Initialize()
    err = Super::Initialize();
    if (err != DEVICE_OK)
       return err;
+
+   TesterHub::Guard g(GetHub()->LockGlobalMutex());
 
    continuousFocusEnabled_ = BoolSetting<Self>::New(GetLogger(), this,
          "ContinuousFocusEnabled", false);
@@ -652,7 +680,8 @@ TesterAutofocus::Initialize()
 int
 TesterAutofocus::SetContinuousFocusing(bool state)
 {
-   SettingLogger::GuardType g = GetLogger()->Guard();
+   TesterHub::Guard g(GetHub()->LockGlobalMutex());
+
    MarkBusy();
    return continuousFocusEnabled_->Set(state);
 }
@@ -661,6 +690,8 @@ TesterAutofocus::SetContinuousFocusing(bool state)
 int
 TesterAutofocus::GetContinuousFocusing(bool& state)
 {
+   TesterHub::Guard g(GetHub()->LockGlobalMutex());
+
    return continuousFocusEnabled_->Get(state);
 }
 
@@ -668,6 +699,8 @@ TesterAutofocus::GetContinuousFocusing(bool& state)
 bool
 TesterAutofocus::IsContinuousFocusLocked()
 {
+   TesterHub::Guard g(GetHub()->LockGlobalMutex());
+
    bool enabled = (continuousFocusEnabled_->Get() != 0);
    if (!enabled)
       return false;
@@ -681,6 +714,8 @@ TesterAutofocus::IsContinuousFocusLocked()
 int
 TesterAutofocus::FullFocus()
 {
+   TesterHub::Guard g(GetHub()->LockGlobalMutex());
+
    return fullFocus_->Set();
 }
 
@@ -688,6 +723,8 @@ TesterAutofocus::FullFocus()
 int
 TesterAutofocus::IncrementalFocus()
 {
+   TesterHub::Guard g(GetHub()->LockGlobalMutex());
+
    return incrementalFocus_->Set();
 }
 
@@ -695,6 +732,8 @@ TesterAutofocus::IncrementalFocus()
 int
 TesterAutofocus::GetLastFocusScore(double& score)
 {
+   TesterHub::Guard g(GetHub()->LockGlobalMutex());
+
    // I don't see any non-dead use of this function except for one mysterious
    // case in acqEngine that might be a bug. For now, return a constant.
    // Returning an error is not an option due to poor assumptions made by
@@ -715,6 +754,8 @@ TesterAutofocus::GetCurrentFocusScore(double& score)
 int
 TesterAutofocus::GetOffset(double& offset)
 {
+   TesterHub::Guard g(GetHub()->LockGlobalMutex());
+
    return offset_->Get(offset);
 }
 
@@ -722,7 +763,8 @@ TesterAutofocus::GetOffset(double& offset)
 int
 TesterAutofocus::SetOffset(double offset)
 {
-   SettingLogger::GuardType g = GetLogger()->Guard();
+   TesterHub::Guard g(GetHub()->LockGlobalMutex());
+
    MarkBusy();
    return offset_->Set(offset);
 }
@@ -736,6 +778,8 @@ TesterSwitcher::Initialize()
    err = Super::Initialize();
    if (err != DEVICE_OK)
       return err;
+
+   TesterHub::Guard g(GetHub()->LockGlobalMutex());
 
    position_ = IntegerSetting<Self>::New(GetLogger(), this, "Position",
          0, true, 0, nrPositions_);

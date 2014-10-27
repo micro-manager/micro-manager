@@ -27,7 +27,6 @@
 
 #include <boost/make_shared.hpp>
 #include <boost/shared_ptr.hpp>
-#include <boost/thread.hpp>
 #include <boost/weak_ptr.hpp>
 
 #include <map>
@@ -161,12 +160,7 @@ public:
       counter_(0),
       counterAtLastReset_(0),
       globalImageCount_(0)
-   { GuardType g = Guard(); }
-
-   // Locking
-   typedef boost::unique_lock<boost::recursive_mutex> GuardType;
-   GuardType Guard() const
-   { return boost::unique_lock<boost::recursive_mutex>(mutex_); }
+   {}
 
    // Recording and querying
 
@@ -195,8 +189,6 @@ public:
          size_t cameraSeqNum, size_t acquisitionSeqNum);
 
 private:
-   mutable boost::recursive_mutex mutex_; // Protects all data
-
    uint64_t counter_;
    uint64_t counterAtLastReset_;
    uint64_t globalImageCount_;

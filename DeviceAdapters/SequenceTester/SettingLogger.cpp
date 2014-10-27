@@ -139,8 +139,6 @@ void
 SettingLogger::SetBool(const std::string& device, const std::string& key,
       bool value, bool logEvent)
 {
-   GuardType g = Guard();
-
    SettingKey keyRecord = SettingKey(device, key);
    boost::shared_ptr<SettingValue> valueRecord =
       boost::make_shared<BoolSettingValue>(value);
@@ -159,8 +157,6 @@ bool
 SettingLogger::GetBool(const std::string& device,
       const std::string& key) const
 {
-   GuardType g = Guard();
-
    SettingKey keyRecord = SettingKey(device, key);
    SettingConstIterator found = settingValues_.find(keyRecord);
    if (found == settingValues_.end())
@@ -173,8 +169,6 @@ void
 SettingLogger::SetInteger(const std::string& device, const std::string& key,
       long value, bool logEvent)
 {
-   GuardType g = Guard();
-
    SettingKey keyRecord = SettingKey(device, key);
    boost::shared_ptr<SettingValue> valueRecord =
       boost::make_shared<IntegerSettingValue>(value);
@@ -193,8 +187,6 @@ long
 SettingLogger::GetInteger(const std::string& device,
       const std::string& key) const
 {
-   GuardType g = Guard();
-
    SettingKey keyRecord = SettingKey(device, key);
    SettingConstIterator found = settingValues_.find(keyRecord);
    if (found == settingValues_.end())
@@ -207,8 +199,6 @@ void
 SettingLogger::SetFloat(const std::string& device, const std::string& key,
       double value, bool logEvent)
 {
-   GuardType g = Guard();
-
    SettingKey keyRecord = SettingKey(device, key);
    boost::shared_ptr<SettingValue> valueRecord =
       boost::make_shared<FloatSettingValue>(value);
@@ -227,8 +217,6 @@ double
 SettingLogger::GetFloat(const std::string& device,
       const std::string& key) const
 {
-   GuardType g = Guard();
-
    SettingKey keyRecord = SettingKey(device, key);
    SettingConstIterator found = settingValues_.find(keyRecord);
    if (found == settingValues_.end())
@@ -241,8 +229,6 @@ void
 SettingLogger::SetString(const std::string& device, const std::string& key,
       const std::string& value, bool logEvent)
 {
-   GuardType g = Guard();
-
    SettingKey keyRecord = SettingKey(device, key);
    boost::shared_ptr<SettingValue> valueRecord =
       boost::make_shared<StringSettingValue>(value);
@@ -261,8 +247,6 @@ std::string
 SettingLogger::GetString(const std::string& device,
       const std::string& key) const
 {
-   GuardType g = Guard();
-
    SettingKey keyRecord = SettingKey(device, key);
    SettingConstIterator found = settingValues_.find(keyRecord);
    if (found == settingValues_.end())
@@ -275,8 +259,6 @@ void
 SettingLogger::FireOneShot(const std::string& device, const std::string& key,
       bool logEvent)
 {
-   GuardType g = Guard();
-
    SettingKey keyRecord = SettingKey(device, key);
    boost::shared_ptr<SettingValue> valueRecord =
       boost::make_shared<OneShotSettingValue>();
@@ -294,8 +276,6 @@ SettingLogger::FireOneShot(const std::string& device, const std::string& key,
 void
 SettingLogger::MarkBusy(const std::string& device, bool logEvent)
 {
-   GuardType g = Guard();
-
    bool becameBusy = false;
 
    std::map<std::string, unsigned>::iterator busy =
@@ -319,8 +299,6 @@ SettingLogger::MarkBusy(const std::string& device, bool logEvent)
 bool
 SettingLogger::IsBusy(const std::string& device, bool queryNonDestructively)
 {
-   GuardType g = Guard();
-
    std::map<std::string, unsigned>::iterator busy =
       busyPoints_.find(device);
 
@@ -357,31 +335,27 @@ SettingLogger::PackAndReset(char* dest, size_t destSize,
    msgpack::sbuffer sbuf;
    msgpack::packer<msgpack::sbuffer> pk(&sbuf);
 
-   {
-      GuardType g = Guard();
+   typedef std::string s;
 
-      typedef std::string s;
+   pk.pack_array(8);
+   // packetNumber
+   pk.pack(GetNextGlobalImageCount());
+   // camera
+   cameraInfo.Write(sbuf);
+   // startCounter
+   pk.pack(counterAtLastReset_);
+   // currentCounter
+   pk.pack(counter_);
+   // busyDevices
+   WriteBusyDevices(sbuf);
+   // startState
+   WriteSettingMap(sbuf, startingValues_);
+   // currentState
+   WriteSettingMap(sbuf, settingValues_);
+   // history
+   WriteHistory(sbuf);
 
-      pk.pack_array(8);
-      // packetNumber
-      pk.pack(GetNextGlobalImageCount());
-      // camera
-      cameraInfo.Write(sbuf);
-      // startCounter
-      pk.pack(counterAtLastReset_);
-      // currentCounter
-      pk.pack(counter_);
-      // busyDevices
-      WriteBusyDevices(sbuf);
-      // startState
-      WriteSettingMap(sbuf, startingValues_);
-      // currentState
-      WriteSettingMap(sbuf, settingValues_);
-      // history
-      WriteHistory(sbuf);
-
-      Reset();
-   }
+   Reset();
 
    if (sbuf.size() <= destSize)
    {

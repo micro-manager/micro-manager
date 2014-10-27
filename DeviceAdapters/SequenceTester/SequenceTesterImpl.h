@@ -67,6 +67,7 @@ template <template <class> class TDeviceBase, class UConcreteDevice>
 bool
 TesterBase<TDeviceBase, UConcreteDevice>::Busy()
 {
+   TesterHub::Guard g(GetHub()->LockGlobalMutex());
    return GetLogger()->IsBusy(GetDeviceName());
 }
 
@@ -154,6 +155,8 @@ Tester1DStageBase<TConcreteStage, UStepsPerMicrometer>::Initialize()
    if (err != DEVICE_OK)
       return err;
 
+   TesterHub::Guard g(Super::GetHub()->LockGlobalMutex());
+
    zPositionUm_ = FloatSetting<TConcreteStage>::New(Super::GetLogger(), This(),
          "ZPositionUm", 0.0, false);
    originSet_ = OneShotSetting<TConcreteStage>::New(Super::GetLogger(), This(),
@@ -167,7 +170,7 @@ template <class TConcreteStage, long UStepsPerMicrometer>
 int
 Tester1DStageBase<TConcreteStage, UStepsPerMicrometer>::SetPositionUm(double pos)
 {
-   SettingLogger::GuardType g = Super::GetLogger()->Guard();
+   TesterHub::Guard g(Super::GetHub()->LockGlobalMutex());
    Super::MarkBusy();
    return zPositionUm_->Set(pos);
 }
@@ -177,6 +180,7 @@ template <class TConcreteStage, long UStepsPerMicrometer>
 int
 Tester1DStageBase<TConcreteStage, UStepsPerMicrometer>::GetPositionUm(double& pos)
 {
+   TesterHub::Guard g(Super::GetHub()->LockGlobalMutex());
    return zPositionUm_->Get(pos);
 }
 
@@ -185,7 +189,7 @@ template <class TConcreteStage, long UStepsPerMicrometer>
 int
 Tester1DStageBase<TConcreteStage, UStepsPerMicrometer>::SetPositionSteps(long steps)
 {
-   SettingLogger::GuardType g = Super::GetLogger()->Guard();
+   TesterHub::Guard g(Super::GetHub()->LockGlobalMutex());
    Super::MarkBusy();
    return zPositionUm_->Set(0.1 * steps);
 }
@@ -195,6 +199,7 @@ template <class TConcreteStage, long UStepsPerMicrometer>
 int
 Tester1DStageBase<TConcreteStage, UStepsPerMicrometer>::GetPositionSteps(long& steps)
 {
+   TesterHub::Guard g(Super::GetHub()->LockGlobalMutex());
    double um;
    int err = zPositionUm_->Get(um);
    if (err != DEVICE_OK)
@@ -208,7 +213,7 @@ template <class TConcreteStage, long UStepsPerMicrometer>
 int
 Tester1DStageBase<TConcreteStage, UStepsPerMicrometer>::SetOrigin()
 {
-   SettingLogger::GuardType g = Super::GetLogger()->Guard();
+   TesterHub::Guard g(Super::GetHub()->LockGlobalMutex());
    Super::MarkBusy();
    return originSet_->Set();
 }

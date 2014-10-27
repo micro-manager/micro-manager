@@ -50,6 +50,7 @@ public:
 
    virtual std::string GetDeviceName() const { return name_; }
    virtual boost::shared_ptr<TesterHub> GetHub() { return hub_; }
+   virtual boost::shared_ptr<const TesterHub> GetHub() const { return hub_; }
    virtual SettingLogger* GetLogger();
    void MarkBusy() { GetLogger()->MarkBusy(name_); }
 
@@ -97,6 +98,15 @@ protected:
 // owned by the hub instance.
 class TesterHub : public TesterBase<HubBase, TesterHub>
 {
+   // Synchronizes access to the hub and all devices attached to it. Must be
+   // locked during every call from the Core (except for the ones that do not
+   // access or modify state) _and_ when reading the current state from the
+   // camera's sequence acquisition thread. (There is not much point in having
+   // finer-grained locking because the Core already synchronizes access to the
+   // device adapter. However, we do need this lock to be per-hub so that
+   // access from different Core instances can run concurrently.)
+   mutable boost::recursive_mutex hubGlobalMutex_;
+
    SettingLogger logger_;
 
 public:
@@ -109,6 +119,9 @@ public:
    virtual int Shutdown();
 
    virtual int DetectInstalledDevices();
+
+   typedef boost::unique_lock<boost::recursive_mutex> Guard;
+   Guard LockGlobalMutex() const { return Guard(hubGlobalMutex_); }
 
    boost::shared_ptr<TesterHub> GetSharedPtr()
    { return boost::static_pointer_cast<TesterHub>(shared_from_this()); }
@@ -126,7 +139,6 @@ public:
    virtual ~TesterCamera();
 
    virtual int Initialize();
-   virtual int Shutdown();
 
    virtual int SnapImage();
    virtual const unsigned char* GetImageBuffer();
@@ -170,7 +182,10 @@ private:
 
    const unsigned char* snapImage_;
 
-   boost::mutex sequenceMutex_; // Guards stopSequence_ (only)
+   // Guards stopSequence_. Always acquire after acquiring the hub global mutex
+   // (if acquiring both).
+   boost::mutex sequenceMutex_;
+
    bool stopSequence_; // Guarded by sequenceMutex_
 
    // Note: boost::future in more recent versions
