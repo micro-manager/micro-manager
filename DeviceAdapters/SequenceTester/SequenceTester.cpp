@@ -49,7 +49,7 @@ MODULE_API void
 InitializeModuleData()
 {
    RegisterDevice("THub", MM::HubDevice,
-         "Fake devices for automated testing");
+         "Fake devices for automated and interactive testing");
 }
 
 
