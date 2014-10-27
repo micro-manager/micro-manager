@@ -117,6 +117,7 @@ BoolSetting<TDevice>::NewPropertyAction(PropertyDisplay displayMode)
          }
          else if (eAct == MM::AfterSet)
          {
+            setting_.MarkDeviceBusy();
             std::string strVal;
             long intVal;
             switch (displayMode_)
@@ -206,6 +207,7 @@ IntegerSetting<TDevice>::NewPropertyAction()
          }
          else if (eAct == MM::AfterSet)
          {
+            setting_.MarkDeviceBusy();
             long v;
             pProp->Get(v);
             return setting_.Set(v);
@@ -284,6 +286,7 @@ FloatSetting<TDevice>::NewPropertyAction()
          }
          else if (eAct == MM::AfterSet)
          {
+            setting_.MarkDeviceBusy();
             double v;
             pProp->Get(v);
             return setting_.Set(v);

@@ -49,6 +49,8 @@ protected:
 public:
    LoggedSetting(SettingLogger* logger, TDevice* device,
          const std::string& name);
+
+   void MarkDeviceBusy() { logger_->MarkBusy(device_->GetDeviceName()); }
 };
 
 
