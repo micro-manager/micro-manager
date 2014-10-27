@@ -606,6 +606,44 @@ TesterCamera::SendSequence(bool finite, long count, bool stopOnOverflow)
 
 
 int
+TesterShutter::Initialize()
+{
+   int err;
+
+   err = Super::Initialize();
+   if (err != DEVICE_OK)
+      return err;
+
+   TesterHub::Guard g(GetHub()->LockGlobalMutex());
+
+   shutterOpen_ = BoolSetting::New(GetLogger(), this, "ShutterState", false);
+   shutterOpen_->SetBusySetting(GetBusySetting());
+   CreateOneZeroProperty("State", shutterOpen_);
+
+   return DEVICE_OK;
+}
+
+
+int
+TesterShutter::SetOpen(bool open)
+{
+   TesterHub::Guard g(GetHub()->LockGlobalMutex());
+
+   shutterOpen_->MarkBusy();
+   return shutterOpen_->Set(open);
+}
+
+
+int
+TesterShutter::GetOpen(bool& open)
+{
+   TesterHub::Guard g(GetHub()->LockGlobalMutex());
+
+   return shutterOpen_->Get(open);
+}
+
+
+int
 TesterXYStage::Initialize()
 {
    int err;
@@ -715,44 +753,6 @@ TesterXYStage::GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMa
    yMin = static_cast<double>(y) / stepsPerUm;
    yMax = static_cast<double>(Y) / stepsPerUm;
    return err;
-}
-
-
-int
-TesterShutter::Initialize()
-{
-   int err;
-
-   err = Super::Initialize();
-   if (err != DEVICE_OK)
-      return err;
-
-   TesterHub::Guard g(GetHub()->LockGlobalMutex());
-
-   shutterOpen_ = BoolSetting::New(GetLogger(), this, "ShutterState", false);
-   shutterOpen_->SetBusySetting(GetBusySetting());
-   CreateOneZeroProperty("State", shutterOpen_);
-
-   return DEVICE_OK;
-}
-
-
-int
-TesterShutter::SetOpen(bool open)
-{
-   TesterHub::Guard g(GetHub()->LockGlobalMutex());
-
-   shutterOpen_->MarkBusy();
-   return shutterOpen_->Set(open);
-}
-
-
-int
-TesterShutter::GetOpen(bool& open)
-{
-   TesterHub::Guard g(GetHub()->LockGlobalMutex());
-
-   return shutterOpen_->Get(open);
 }
 
 
