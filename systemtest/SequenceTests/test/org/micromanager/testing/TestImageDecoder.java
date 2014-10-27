@@ -20,12 +20,8 @@ import static org.msgpack.template.Templates.*;
  * Note that order of fields in static nested classes is important, since
  * MessagePack deserializes these objects from an array, not a map.
  */
+@org.junit.Ignore
 public class TestImageDecoder {
-   @org.junit.Test
-   public void dummyTest() {
-      // Prevent JUnit from complaining that there are no methods to run.
-   }
-
    @Message
    public static class SettingValue {
       public String type;
