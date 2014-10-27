@@ -29,6 +29,7 @@
 
 #include "DeviceBase.h"
 
+#include <boost/enable_shared_from_this.hpp>
 #include <boost/thread.hpp>
 #include <string>
 
@@ -36,10 +37,21 @@
 class TesterHub;
 
 
+// Common mixin interface for inter-device communication. Provides an interface
+// for communication among devices belonging to the same hub, orthogonal to the
+// Micro-Manager device interface. This way, we can use
+// boost::shared_ptr<InterDevice> to reference any peer device.
+class InterDevice : public boost::enable_shared_from_this<InterDevice>
+{
+public:
+   virtual ~InterDevice() {}
+};
+
+
 // Common base class for all devices. Goes in between TDeviceBase and
 // UConcreteDevice in the inheritance graph.
 template <template <class> class TDeviceBase, class UConcreteDevice>
-class TesterBase : public TDeviceBase<UConcreteDevice>
+class TesterBase : public TDeviceBase<UConcreteDevice>, public InterDevice
 {
 public:
    typedef TesterBase Self;

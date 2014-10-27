@@ -29,6 +29,7 @@
 #include <boost/bind.hpp>
 #include <boost/move/move.hpp>
 #include <boost/thread.hpp>
+#include <boost/unordered_map.hpp>
 #include <exception>
 #include <sstream>
 #include <string>
@@ -58,6 +59,52 @@ inline bool StartsWith(const std::string& prefix, const std::string& s)
 }
 
 
+namespace
+{
+   // The only way to manage our devices using shared_ptr is to hold a mapping
+   // from MM::Device* to the shared_ptrs. This is because there is no way to
+   // extract our shared_ptr from the MM::Device* passed to DeleteDevice()
+   // without static knowledge of the concrete type of the device object.
+   // We let this map also serve as a mechanism to retain the devices during
+   // their lifetime.
+   class DeviceRetainer
+   {
+      static boost::mutex mutex_;
+      static boost::unordered_map<
+         MM::Device*,
+         boost::shared_ptr<InterDevice>
+      > devices_;
+
+   public:
+      template <class TDevice>
+      static MM::Device* CreateDevice(const std::string& name)
+      {
+         boost::lock_guard<boost::mutex> g(mutex_);
+
+         boost::shared_ptr<InterDevice> interdev =
+            boost::make_shared<TDevice>(name);
+
+         MM::Device* pDevice = static_cast<TDevice*>(interdev.get());
+         devices_.insert(std::make_pair(pDevice, interdev));
+
+         return pDevice;
+      }
+
+      static void DeleteDevice(MM::Device* pDevice)
+      {
+         boost::lock_guard<boost::mutex> g(mutex_);
+         devices_.erase(pDevice);
+      }
+   };
+
+   boost::mutex DeviceRetainer::mutex_;
+   boost::unordered_map<
+      MM::Device*,
+      boost::shared_ptr<InterDevice>
+   > DeviceRetainer::devices_;
+}
+
+
 MODULE_API MM::Device*
 CreateDevice(const char* deviceName)
 {
@@ -70,19 +117,19 @@ CreateDevice(const char* deviceName)
    // By using prefix matching, we can allow the creation of an arbitrary
    // number of each device for testing.
    if (StartsWith("TCamera", name))
-      return new TesterCamera(name);
+      return DeviceRetainer::CreateDevice<TesterCamera>(name);
    if (StartsWith("TShutter", name))
-      return new TesterShutter(name);
+      return DeviceRetainer::CreateDevice<TesterShutter>(name);
    if (StartsWith("TXYStage", name))
-      return new TesterXYStage(name);
+      return DeviceRetainer::CreateDevice<TesterXYStage>(name);
    if (StartsWith("TZStage", name))
-      return new TesterZStage(name);
+      return DeviceRetainer::CreateDevice<TesterZStage>(name);
    if (StartsWith("TAFStage", name))
-      return new TesterAFStage(name);
+      return DeviceRetainer::CreateDevice<TesterAFStage>(name);
    if (StartsWith("TAutofocus", name))
-      return new TesterAutofocus(name);
+      return DeviceRetainer::CreateDevice<TesterAutofocus>(name);
    if (StartsWith("TSwitcher", name))
-      return new TesterSwitcher(name);
+      return DeviceRetainer::CreateDevice<TesterSwitcher>(name);
    return 0;
 }
 
@@ -90,7 +137,7 @@ CreateDevice(const char* deviceName)
 MODULE_API void
 DeleteDevice(MM::Device* pDevice)
 {
-   delete pDevice;
+   DeviceRetainer::DeleteDevice(pDevice);
 }
 
 
