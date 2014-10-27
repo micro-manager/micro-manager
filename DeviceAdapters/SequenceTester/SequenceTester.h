@@ -44,7 +44,13 @@ class TesterHub;
 class InterDevice : public boost::enable_shared_from_this<InterDevice>
 {
 public:
+   InterDevice(const std::string& name) : name_(name) {}
    virtual ~InterDevice() {}
+
+   virtual std::string GetDeviceName() const { return name_; }
+
+private:
+   const std::string name_;
 };
 
 
@@ -57,15 +63,13 @@ public:
    typedef TesterBase Self;
    typedef TDeviceBase<UConcreteDevice> Super;
 
-   TesterBase(const std::string& name);
-   virtual ~TesterBase();
+   TesterBase(const std::string& name) : InterDevice(name) {}
+   virtual ~TesterBase() {}
 
    virtual void GetName(char* name) const;
    virtual int Initialize();
    virtual int Shutdown();
    virtual bool Busy();
-
-   virtual std::string GetName() const { return name_; }
 
 protected:
    virtual TesterHub* GetHub();
@@ -82,10 +86,7 @@ protected:
    void CreateFloatProperty(const std::string& name,
          typename FloatSetting<UConcreteDevice>::Ptr setting);
 
-   void MarkBusy() { GetLogger()->MarkBusy(name_); }
-
-private:
-   const std::string name_;
+   void MarkBusy() { GetLogger()->MarkBusy(GetDeviceName()); }
 };
 
 

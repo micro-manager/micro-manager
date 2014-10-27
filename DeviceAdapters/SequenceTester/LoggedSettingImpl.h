@@ -45,7 +45,7 @@ BoolSetting<TDevice>::BoolSetting(SettingLogger* logger,
       bool initialValue) :
    LoggedSetting<TDevice>(logger, device, name)
 {
-   Super::GetLogger()->SetBool(Super::GetDevice()->GetName(),
+   Super::GetLogger()->SetBool(Super::GetDevice()->GetDeviceName(),
          Super::GetName(), initialValue, false);
 }
 
@@ -54,7 +54,7 @@ template <class TDevice>
 int
 BoolSetting<TDevice>::Set(bool newValue)
 {
-   Super::GetLogger()->SetBool(Super::GetDevice()->GetName(),
+   Super::GetLogger()->SetBool(Super::GetDevice()->GetDeviceName(),
          Super::GetName(), newValue);
    return DEVICE_OK;
 }
@@ -73,7 +73,7 @@ template <class TDevice>
 bool
 BoolSetting<TDevice>::Get() const
 {
-   return Super::GetLogger()->GetBool(Super::GetDevice()->GetName(),
+   return Super::GetLogger()->GetBool(Super::GetDevice()->GetDeviceName(),
          Super::GetName());
 }
 
@@ -149,7 +149,7 @@ IntegerSetting<TDevice>::IntegerSetting(SettingLogger* logger,
    min_(minimum),
    max_(maximum)
 {
-   Super::GetLogger()->SetInteger(Super::GetDevice()->GetName(),
+   Super::GetLogger()->SetInteger(Super::GetDevice()->GetDeviceName(),
          Super::GetName(), initialValue, false);
 }
 
@@ -158,7 +158,7 @@ template <class TDevice>
 int
 IntegerSetting<TDevice>::Set(long newValue)
 {
-   Super::GetLogger()->SetInteger(Super::GetDevice()->GetName(),
+   Super::GetLogger()->SetInteger(Super::GetDevice()->GetDeviceName(),
          Super::GetName(), newValue);
    return DEVICE_OK;
 }
@@ -177,7 +177,7 @@ template <class TDevice>
 long
 IntegerSetting<TDevice>::Get() const
 {
-   return Super::GetLogger()->GetInteger(Super::GetDevice()->GetName(),
+   return Super::GetLogger()->GetInteger(Super::GetDevice()->GetDeviceName(),
          Super::GetName());
 }
 
@@ -227,7 +227,7 @@ FloatSetting<TDevice>::FloatSetting(SettingLogger* logger,
    min_(minimum),
    max_(maximum)
 {
-   Super::GetLogger()->SetFloat(Super::GetDevice()->GetName(),
+   Super::GetLogger()->SetFloat(Super::GetDevice()->GetDeviceName(),
          Super::GetName(), initialValue, false);
 }
 
@@ -236,7 +236,7 @@ template <class TDevice>
 int
 FloatSetting<TDevice>::Set(double newValue)
 {
-   Super::GetLogger()->SetFloat(Super::GetDevice()->GetName(),
+   Super::GetLogger()->SetFloat(Super::GetDevice()->GetDeviceName(),
          Super::GetName(), newValue);
    return DEVICE_OK;
 }
@@ -255,7 +255,7 @@ template <class TDevice>
 double
 FloatSetting<TDevice>::Get() const
 {
-   return Super::GetLogger()->GetFloat(Super::GetDevice()->GetName(),
+   return Super::GetLogger()->GetFloat(Super::GetDevice()->GetDeviceName(),
          Super::GetName());
 }
 
@@ -301,7 +301,7 @@ OneShotSetting<TDevice>::OneShotSetting(SettingLogger* logger,
       TDevice* device, const std::string& name) :
    LoggedSetting<TDevice>(logger, device, name)
 {
-   Super::GetLogger()->FireOneShot(Super::GetDevice()->GetName(),
+   Super::GetLogger()->FireOneShot(Super::GetDevice()->GetDeviceName(),
          Super::GetName(), false);
 }
 
@@ -310,7 +310,7 @@ template <class TDevice>
 int
 OneShotSetting<TDevice>::Set()
 {
-   Super::GetLogger()->FireOneShot(Super::GetDevice()->GetName(),
+   Super::GetLogger()->FireOneShot(Super::GetDevice()->GetDeviceName(),
          Super::GetName());
    return DEVICE_OK;
 }

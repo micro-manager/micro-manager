@@ -420,7 +420,7 @@ TesterCamera::GenerateLogImage(bool isSequenceImage,
    char* bytes = new char[bufSize];
 
    GetLogger()->PackAndReset(bytes, bufSize,
-         GetName(), isSequenceImage, cumulativeCount, localCount);
+         GetDeviceName(), isSequenceImage, cumulativeCount, localCount);
 
    return reinterpret_cast<unsigned char*>(bytes);
 }

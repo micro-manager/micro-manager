@@ -33,23 +33,10 @@
 
 
 template <template <class> class TDeviceBase, class UConcreteDevice>
-TesterBase<TDeviceBase, UConcreteDevice>::TesterBase(const std::string& name) :
-   name_(name)
-{
-}
-
-
-template <template <class> class TDeviceBase, class UConcreteDevice>
-TesterBase<TDeviceBase, UConcreteDevice>::~TesterBase()
-{
-}
-
-
-template <template <class> class TDeviceBase, class UConcreteDevice>
 void
 TesterBase<TDeviceBase, UConcreteDevice>::GetName(char* name) const
 {
-   CDeviceUtils::CopyLimitedString(name, name_.c_str());
+   CDeviceUtils::CopyLimitedString(name, GetDeviceName().c_str());
 }
 
 
@@ -73,7 +60,7 @@ template <template <class> class TDeviceBase, class UConcreteDevice>
 bool
 TesterBase<TDeviceBase, UConcreteDevice>::Busy()
 {
-   return GetLogger()->IsBusy(GetName());
+   return GetLogger()->IsBusy(GetDeviceName());
 }
 
 
