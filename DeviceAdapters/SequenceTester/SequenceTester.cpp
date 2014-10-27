@@ -220,6 +220,39 @@ TesterHub::DetectInstalledDevices()
 }
 
 
+int
+TesterHub::RegisterDevice(const std::string& name, InterDevice::Ptr device)
+{
+   InterDevice::Ptr& ptr = devices_[name];
+   if (!ptr)
+   {
+      ptr = device;
+      return DEVICE_OK;
+   }
+   // Forbid creation of multiple instances of devices with the same name under
+   // the same hub.
+   return DEVICE_ERR;
+}
+
+
+void
+TesterHub::UnregisterDevice(const std::string& name)
+{
+   devices_.erase(name);
+}
+
+
+InterDevice::Ptr
+TesterHub::FindPeerDevice(const std::string& name)
+{
+   boost::unordered_map<std::string, InterDevice::Ptr>::iterator found =
+      devices_.find(name);
+   if (found == devices_.end())
+      return InterDevice::Ptr();
+   return found->second;
+}
+
+
 TesterCamera::TesterCamera(const std::string& name) :
    Super(name),
    snapCounter_(0),

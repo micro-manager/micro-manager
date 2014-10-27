@@ -60,6 +60,10 @@ template <template <class> class TDeviceBase, class UConcreteDevice>
 int
 TesterBase<TDeviceBase, UConcreteDevice>::CommonHubPeripheralInitialize()
 {
+   int err = GetHub()->RegisterDevice(GetDeviceName(), shared_from_this());
+   if (err != DEVICE_OK)
+      return err;
+
    // Devices are initially "busy"
    busySetting_ = CountDownSetting::New(GetLogger(), this, "Busy", 1);
    return DEVICE_OK;
@@ -73,6 +77,14 @@ TesterBase<TDeviceBase, UConcreteDevice>::Shutdown()
    CommonHubPeripheralShutdown();
    InterDevice::SetHub(boost::shared_ptr<TesterHub>());
    return DEVICE_OK;
+}
+
+
+template <template <class> class TDeviceBase, class UConcreteDevice>
+void
+TesterBase<TDeviceBase, UConcreteDevice>::CommonHubPeripheralShutdown()
+{
+   GetHub()->UnregisterDevice(GetDeviceName());
 }
 
 

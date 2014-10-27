@@ -45,6 +45,8 @@ class TesterHub;
 class InterDevice : public boost::enable_shared_from_this<InterDevice>
 {
 public:
+   typedef boost::shared_ptr<InterDevice> Ptr;
+
    InterDevice(const std::string& name) : name_(name) {}
    virtual ~InterDevice() {}
    virtual void SetHub(boost::shared_ptr<TesterHub> hub) { hub_ = hub; }
@@ -88,7 +90,7 @@ public:
    // Must be called after setting hub if overriding Initialize()
    int CommonHubPeripheralInitialize();
    // Must be called before hub becomes unavailable if overriding Shutdown()
-   void CommonHubPeripheralShutdown() {}
+   void CommonHubPeripheralShutdown();
 
    virtual CountDownSetting::Ptr GetBusySetting() { return busySetting_; }
 
@@ -129,6 +131,8 @@ class TesterHub : public TesterBase<HubBase, TesterHub>
 
    SettingLogger logger_;
 
+   boost::unordered_map<std::string, InterDevice::Ptr> devices_;
+
 public:
    typedef TesterHub Self;
    typedef TesterBase< ::HubBase, TesterHub > Super;
@@ -146,6 +150,10 @@ public:
    boost::shared_ptr<TesterHub> GetSharedPtr()
    { return boost::static_pointer_cast<TesterHub>(shared_from_this()); }
    virtual SettingLogger* GetLogger() { return &logger_; }
+
+   int RegisterDevice(const std::string& name, InterDevice::Ptr device);
+   void UnregisterDevice(const std::string& name);
+   InterDevice::Ptr FindPeerDevice(const std::string& name);
 };
 
 
