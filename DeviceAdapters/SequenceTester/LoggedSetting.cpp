@@ -159,7 +159,7 @@ BoolSetting::StopTriggerSequence()
 void
 BoolSetting::HandleEdgeTrigger()
 {
-   if (!sequenceRunning_)
+   if (!sequenceRunning_ || triggerSequence_.empty())
       return;
 
    uint8_t newValue = triggerSequence_[nextTriggerIndex_++];
@@ -364,7 +364,7 @@ IntegerSetting::StopTriggerSequence()
 void
 IntegerSetting::HandleEdgeTrigger()
 {
-   if (!sequenceRunning_)
+   if (!sequenceRunning_ || triggerSequence_.empty())
       return;
 
    long newValue = triggerSequence_[nextTriggerIndex_++];
@@ -530,7 +530,7 @@ FloatSetting::StopTriggerSequence()
 void
 FloatSetting::HandleEdgeTrigger()
 {
-   if (!sequenceRunning_)
+   if (!sequenceRunning_ || triggerSequence_.empty())
       return;
 
    double newValue = triggerSequence_[nextTriggerIndex_++];
