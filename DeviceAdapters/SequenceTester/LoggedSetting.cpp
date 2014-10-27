@@ -21,17 +21,16 @@
 //
 // Author: Mark Tsuchida
 
-#pragma once
-
 #include "LoggedSetting.h"
+
+#include "SequenceTester.h" // For InterDevice; TODO make separate header
 
 #include <boost/utility.hpp>
 #include <string>
 
 
-template <class TDevice>
-LoggedSetting<TDevice>::LoggedSetting(SettingLogger* logger,
-      TDevice* device, const std::string& name) :
+LoggedSetting::LoggedSetting(SettingLogger* logger,
+      InterDevice* device, const std::string& name) :
    logger_(logger),
    device_(device),
    name_(name)
@@ -39,20 +38,25 @@ LoggedSetting<TDevice>::LoggedSetting(SettingLogger* logger,
 }
 
 
-template <class TDevice>
-BoolSetting<TDevice>::BoolSetting(SettingLogger* logger,
-      TDevice* device, const std::string& name,
+void
+LoggedSetting::MarkDeviceBusy()
+{
+   logger_->MarkBusy(device_->GetDeviceName());
+}
+
+
+BoolSetting::BoolSetting(SettingLogger* logger,
+      InterDevice* device, const std::string& name,
       bool initialValue) :
-   LoggedSetting<TDevice>(logger, device, name)
+   LoggedSetting(logger, device, name)
 {
    Super::GetLogger()->SetBool(Super::GetDevice()->GetDeviceName(),
          Super::GetName(), initialValue, false);
 }
 
 
-template <class TDevice>
 int
-BoolSetting<TDevice>::Set(bool newValue)
+BoolSetting::Set(bool newValue)
 {
    Super::GetLogger()->SetBool(Super::GetDevice()->GetDeviceName(),
          Super::GetName(), newValue);
@@ -60,35 +64,32 @@ BoolSetting<TDevice>::Set(bool newValue)
 }
 
 
-template <class TDevice>
 int
-BoolSetting<TDevice>::Get(bool& value) const
+BoolSetting::Get(bool& value) const
 {
    value = Get();
    return DEVICE_OK;
 }
 
 
-template <class TDevice>
 bool
-BoolSetting<TDevice>::Get() const
+BoolSetting::Get() const
 {
    return Super::GetLogger()->GetBool(Super::GetDevice()->GetDeviceName(),
          Super::GetName());
 }
 
 
-template <class TDevice>
 MM::ActionFunctor*
-BoolSetting<TDevice>::NewPropertyAction(PropertyDisplay displayMode)
+BoolSetting::NewPropertyAction(PropertyDisplay displayMode)
 {
    class Functor : public MM::ActionFunctor, boost::noncopyable
    {
-      BoolSetting<TDevice>& setting_;
+      BoolSetting& setting_;
       PropertyDisplay displayMode_;
 
    public:
-      Functor(BoolSetting<TDevice>& setting, PropertyDisplay displayMode) :
+      Functor(BoolSetting& setting, PropertyDisplay displayMode) :
          setting_(setting),
          displayMode_(displayMode)
       {}
@@ -141,11 +142,10 @@ BoolSetting<TDevice>::NewPropertyAction(PropertyDisplay displayMode)
 }
 
 
-template <class TDevice>
-IntegerSetting<TDevice>::IntegerSetting(SettingLogger* logger,
-      TDevice* device, const std::string& name,
+IntegerSetting::IntegerSetting(SettingLogger* logger,
+      InterDevice* device, const std::string& name,
       long initialValue, bool hasMinMax, long minimum, long maximum) :
-   LoggedSetting<TDevice>(logger, device, name),
+   LoggedSetting(logger, device, name),
    hasMinMax_(hasMinMax),
    min_(minimum),
    max_(maximum)
@@ -155,9 +155,8 @@ IntegerSetting<TDevice>::IntegerSetting(SettingLogger* logger,
 }
 
 
-template <class TDevice>
 int
-IntegerSetting<TDevice>::Set(long newValue)
+IntegerSetting::Set(long newValue)
 {
    Super::GetLogger()->SetInteger(Super::GetDevice()->GetDeviceName(),
          Super::GetName(), newValue);
@@ -165,34 +164,31 @@ IntegerSetting<TDevice>::Set(long newValue)
 }
 
 
-template <class TDevice>
 int
-IntegerSetting<TDevice>::Get(long& value) const
+IntegerSetting::Get(long& value) const
 {
    value = Get();
    return DEVICE_OK;
 }
 
 
-template <class TDevice>
 long
-IntegerSetting<TDevice>::Get() const
+IntegerSetting::Get() const
 {
    return Super::GetLogger()->GetInteger(Super::GetDevice()->GetDeviceName(),
          Super::GetName());
 }
 
 
-template <class TDevice>
 MM::ActionFunctor*
-IntegerSetting<TDevice>::NewPropertyAction()
+IntegerSetting::NewPropertyAction()
 {
    class Functor : public MM::ActionFunctor, boost::noncopyable
    {
-      IntegerSetting<TDevice>& setting_;
+      IntegerSetting& setting_;
 
    public:
-      Functor(IntegerSetting<TDevice>& setting) : setting_(setting) {}
+      Functor(IntegerSetting& setting) : setting_(setting) {}
 
       virtual int Execute(MM::PropertyBase* pProp, MM::ActionType eAct)
       {
@@ -220,11 +216,10 @@ IntegerSetting<TDevice>::NewPropertyAction()
 }
 
 
-template <class TDevice>
-FloatSetting<TDevice>::FloatSetting(SettingLogger* logger,
-      TDevice* device, const std::string& name,
+FloatSetting::FloatSetting(SettingLogger* logger,
+      InterDevice* device, const std::string& name,
       double initialValue, bool hasMinMax, double minimum, double maximum) :
-   LoggedSetting<TDevice>(logger, device, name),
+   LoggedSetting(logger, device, name),
    hasMinMax_(hasMinMax),
    min_(minimum),
    max_(maximum)
@@ -234,9 +229,8 @@ FloatSetting<TDevice>::FloatSetting(SettingLogger* logger,
 }
 
 
-template <class TDevice>
 int
-FloatSetting<TDevice>::Set(double newValue)
+FloatSetting::Set(double newValue)
 {
    Super::GetLogger()->SetFloat(Super::GetDevice()->GetDeviceName(),
          Super::GetName(), newValue);
@@ -244,34 +238,31 @@ FloatSetting<TDevice>::Set(double newValue)
 }
 
 
-template <class TDevice>
 int
-FloatSetting<TDevice>::Get(double& value) const
+FloatSetting::Get(double& value) const
 {
    value = Get();
    return DEVICE_OK;
 }
 
 
-template <class TDevice>
 double
-FloatSetting<TDevice>::Get() const
+FloatSetting::Get() const
 {
    return Super::GetLogger()->GetFloat(Super::GetDevice()->GetDeviceName(),
          Super::GetName());
 }
 
 
-template <class TDevice>
 MM::ActionFunctor*
-FloatSetting<TDevice>::NewPropertyAction()
+FloatSetting::NewPropertyAction()
 {
    class Functor : public MM::ActionFunctor, boost::noncopyable
    {
-      FloatSetting<TDevice>& setting_;
+      FloatSetting& setting_;
 
    public:
-      Functor(FloatSetting<TDevice>& setting) : setting_(setting) {}
+      Functor(FloatSetting& setting) : setting_(setting) {}
 
       virtual int Execute(MM::PropertyBase* pProp, MM::ActionType eAct)
       {
@@ -299,19 +290,17 @@ FloatSetting<TDevice>::NewPropertyAction()
 }
 
 
-template <class TDevice>
-OneShotSetting<TDevice>::OneShotSetting(SettingLogger* logger,
-      TDevice* device, const std::string& name) :
-   LoggedSetting<TDevice>(logger, device, name)
+OneShotSetting::OneShotSetting(SettingLogger* logger,
+      InterDevice* device, const std::string& name) :
+   LoggedSetting(logger, device, name)
 {
    Super::GetLogger()->FireOneShot(Super::GetDevice()->GetDeviceName(),
          Super::GetName(), false);
 }
 
 
-template <class TDevice>
 int
-OneShotSetting<TDevice>::Set()
+OneShotSetting::Set()
 {
    Super::GetLogger()->FireOneShot(Super::GetDevice()->GetDeviceName(),
          Super::GetName());

@@ -30,43 +30,45 @@
 #include <string>
 
 
+class InterDevice;
+class SettingLogger;
+
+
 // A "setting" in this device adapter is a property or a property-like entity
 // (e.g. camera exposure, stage position).
-template <class TDevice>
 class LoggedSetting
 {
    SettingLogger* logger_;
-   TDevice* device_;
+   InterDevice* device_;
    const std::string name_;
 
 protected:
    SettingLogger* GetLogger() { return logger_; }
    const SettingLogger* GetLogger() const { return logger_; }
-   TDevice* GetDevice() { return device_; }
-   const TDevice* GetDevice() const { return device_; }
+   InterDevice* GetDevice() { return device_; }
+   const InterDevice* GetDevice() const { return device_; }
    std::string GetName() const { return name_; }
 
 public:
-   LoggedSetting(SettingLogger* logger, TDevice* device,
+   LoggedSetting(SettingLogger* logger, InterDevice* device,
          const std::string& name);
 
-   void MarkDeviceBusy() { logger_->MarkBusy(device_->GetDeviceName()); }
+   void MarkDeviceBusy();
 };
 
 
-template <class TDevice>
-class BoolSetting : private LoggedSetting<TDevice>
+class BoolSetting : private LoggedSetting
 {
-   typedef BoolSetting<TDevice> Self;
-   typedef LoggedSetting<TDevice> Super;
+   typedef BoolSetting Self;
+   typedef LoggedSetting Super;
 
 public:
    typedef boost::shared_ptr<Self> Ptr;
 
-   BoolSetting(SettingLogger* logger, TDevice* device,
+   BoolSetting(SettingLogger* logger, InterDevice* device,
          const std::string& name, bool initialValue);
 
-   static Ptr New(SettingLogger* logger, TDevice* device,
+   static Ptr New(SettingLogger* logger, InterDevice* device,
          const std::string& name, bool initialValue)
    { return boost::make_shared<Self>(logger, device, name, initialValue); }
 
@@ -84,24 +86,23 @@ public:
 };
 
 
-template <class TDevice>
-class IntegerSetting : private LoggedSetting<TDevice>
+class IntegerSetting : private LoggedSetting
 {
    bool hasMinMax_;
    long min_;
    long max_;
 
-   typedef IntegerSetting<TDevice> Self;
-   typedef LoggedSetting<TDevice> Super;
+   typedef IntegerSetting Self;
+   typedef LoggedSetting Super;
 
 public:
    typedef boost::shared_ptr<Self> Ptr;
 
-   IntegerSetting(SettingLogger* logger, TDevice* device,
+   IntegerSetting(SettingLogger* logger, InterDevice* device,
          const std::string& name, long initialValue,
          bool hasMinMax, long minimum, long maximum);
 
-   static Ptr New(SettingLogger* logger, TDevice* device,
+   static Ptr New(SettingLogger* logger, InterDevice* device,
          const std::string& name, long initialValue,
          bool hasMinMax, long minimum = 0, long maximum = 0)
    {
@@ -120,24 +121,23 @@ public:
 };
 
 
-template <class TDevice>
-class FloatSetting : private LoggedSetting<TDevice>
+class FloatSetting : private LoggedSetting
 {
    bool hasMinMax_;
    double min_;
    double max_;
 
-   typedef FloatSetting<TDevice> Self;
-   typedef LoggedSetting<TDevice> Super;
+   typedef FloatSetting Self;
+   typedef LoggedSetting Super;
 
 public:
    typedef boost::shared_ptr<Self> Ptr;
 
-   FloatSetting(SettingLogger* logger, TDevice* device,
+   FloatSetting(SettingLogger* logger, InterDevice* device,
          const std::string& name, double initialValue,
          bool hasMinMax, double minimum, double maximum);
 
-   static Ptr New(SettingLogger* logger, TDevice* device,
+   static Ptr New(SettingLogger* logger, InterDevice* device,
          const std::string& name, double initialValue,
          bool hasMinMax, double minimum = 0.0, double maximum = 0.0)
    {
@@ -157,19 +157,18 @@ public:
 };
 
 
-template <class TDevice>
-class OneShotSetting : private LoggedSetting<TDevice>
+class OneShotSetting : private LoggedSetting
 {
-   typedef OneShotSetting<TDevice> Self;
-   typedef LoggedSetting<TDevice> Super;
+   typedef OneShotSetting Self;
+   typedef LoggedSetting Super;
 
 public:
    typedef boost::shared_ptr<Self> Ptr;
 
-   OneShotSetting(SettingLogger* logger, TDevice* device,
+   OneShotSetting(SettingLogger* logger, InterDevice* device,
          const std::string& name);
 
-   static Ptr New(SettingLogger* logger, TDevice* device,
+   static Ptr New(SettingLogger* logger, InterDevice* device,
          const std::string& name)
    { return boost::make_shared<Self>(logger, device, name); }
 

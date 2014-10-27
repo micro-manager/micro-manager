@@ -225,9 +225,9 @@ TesterCamera::Initialize()
 
    TesterHub::Guard g(GetHub()->LockGlobalMutex());
 
-   exposureSetting_ = FloatSetting<Self>::New(GetLogger(), this, "Exposure",
+   exposureSetting_ = FloatSetting::New(GetLogger(), this, "Exposure",
          100.0, true, 0.1, 1000.0);
-   binningSetting_ = IntegerSetting<Self>::New(GetLogger(), this, "Binning",
+   binningSetting_ = IntegerSetting::New(GetLogger(), this, "Binning",
          1, true, 1, 1);
 
    CreateFloatProperty("Exposure", exposureSetting_);
@@ -519,13 +519,13 @@ TesterXYStage::Initialize()
 
    TesterHub::Guard g(GetHub()->LockGlobalMutex());
 
-   xPositionSteps_ = IntegerSetting<Self>::New(GetLogger(), this,
+   xPositionSteps_ = IntegerSetting::New(GetLogger(), this,
          "XPositionSteps", 0, false);
-   yPositionSteps_ = IntegerSetting<Self>::New(GetLogger(), this,
+   yPositionSteps_ = IntegerSetting::New(GetLogger(), this,
          "YPositionSteps", 0, false);
-   home_ = OneShotSetting<Self>::New(GetLogger(), this, "Home");
-   stop_ = OneShotSetting<Self>::New(GetLogger(), this, "Stop");
-   setOrigin_ = OneShotSetting<Self>::New(GetLogger(), this, "SetOrigin");
+   home_ = OneShotSetting::New(GetLogger(), this, "Home");
+   stop_ = OneShotSetting::New(GetLogger(), this, "Stop");
+   setOrigin_ = OneShotSetting::New(GetLogger(), this, "SetOrigin");
 
    return DEVICE_OK;
 }
@@ -626,8 +626,7 @@ TesterShutter::Initialize()
 
    TesterHub::Guard g(GetHub()->LockGlobalMutex());
 
-   shutterOpen_ = BoolSetting<Self>::New(GetLogger(), this, "ShutterState",
-         false);
+   shutterOpen_ = BoolSetting::New(GetLogger(), this, "ShutterState", false);
    CreateOneZeroProperty("State", shutterOpen_);
 
    return DEVICE_OK;
@@ -664,13 +663,13 @@ TesterAutofocus::Initialize()
 
    TesterHub::Guard g(GetHub()->LockGlobalMutex());
 
-   continuousFocusEnabled_ = BoolSetting<Self>::New(GetLogger(), this,
+   continuousFocusEnabled_ = BoolSetting::New(GetLogger(), this,
          "ContinuousFocusEnabled", false);
 
-   offset_ = FloatSetting<Self>::New(GetLogger(), this, "Offset", 0.0, false);
+   offset_ = FloatSetting::New(GetLogger(), this, "Offset", 0.0, false);
 
-   fullFocus_ = OneShotSetting<Self>::New(GetLogger(), this, "FullFocus");
-   incrementalFocus_ = OneShotSetting<Self>::New(GetLogger(), this,
+   fullFocus_ = OneShotSetting::New(GetLogger(), this, "FullFocus");
+   incrementalFocus_ = OneShotSetting::New(GetLogger(), this,
          "IncrementalFocus");
 
    return DEVICE_OK;
@@ -781,7 +780,7 @@ TesterSwitcher::Initialize()
 
    TesterHub::Guard g(GetHub()->LockGlobalMutex());
 
-   position_ = IntegerSetting<Self>::New(GetLogger(), this, "Position",
+   position_ = IntegerSetting::New(GetLogger(), this, "Position",
          0, true, 0, nrPositions_);
    CreateIntegerProperty("State", position_);
 

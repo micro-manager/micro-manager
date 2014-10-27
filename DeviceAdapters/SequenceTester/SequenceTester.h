@@ -79,15 +79,15 @@ public:
 
 protected:
    void CreateOnOffProperty(const std::string& name,
-         typename BoolSetting<UConcreteDevice>::Ptr setting);
+         BoolSetting::Ptr setting);
    void CreateYesNoProperty(const std::string& name,
-         typename BoolSetting<UConcreteDevice>::Ptr setting);
+         BoolSetting::Ptr setting);
    void CreateOneZeroProperty(const std::string& name,
-         typename BoolSetting<UConcreteDevice>::Ptr setting);
+         BoolSetting::Ptr setting);
    void CreateIntegerProperty(const std::string& name,
-         typename IntegerSetting<UConcreteDevice>::Ptr setting);
+         IntegerSetting::Ptr setting);
    void CreateFloatProperty(const std::string& name,
-         typename FloatSetting<UConcreteDevice>::Ptr setting);
+         FloatSetting::Ptr setting);
 };
 
 
@@ -192,8 +192,8 @@ private:
    boost::unique_future<void> sequenceFuture_;
    boost::thread sequenceThread_;
 
-   FloatSetting<Self>::Ptr exposureSetting_;
-   IntegerSetting<Self>::Ptr binningSetting_;
+   FloatSetting::Ptr exposureSetting_;
+   IntegerSetting::Ptr binningSetting_;
 };
 
 
@@ -212,7 +212,7 @@ public:
    virtual int Fire(double) { return DEVICE_UNSUPPORTED_COMMAND; }
 
 private:
-   BoolSetting<Self>::Ptr shutterOpen_;
+   BoolSetting::Ptr shutterOpen_;
 };
 
 
@@ -241,11 +241,11 @@ public:
    { isSequenceable = false; return DEVICE_OK; }
 
 private:
-   IntegerSetting<Self>::Ptr xPositionSteps_;
-   IntegerSetting<Self>::Ptr yPositionSteps_;
-   OneShotSetting<Self>::Ptr home_;
-   OneShotSetting<Self>::Ptr stop_;
-   OneShotSetting<Self>::Ptr setOrigin_;
+   IntegerSetting::Ptr xPositionSteps_;
+   IntegerSetting::Ptr yPositionSteps_;
+   OneShotSetting::Ptr home_;
+   OneShotSetting::Ptr stop_;
+   OneShotSetting::Ptr setOrigin_;
 };
 
 
@@ -271,8 +271,8 @@ public:
    virtual bool IsContinuousFocusDrive() const { return false; }
 
 private:
-   typename FloatSetting<TConcreteStage>::Ptr zPositionUm_;
-   typename OneShotSetting<TConcreteStage>::Ptr originSet_;
+   FloatSetting::Ptr zPositionUm_;
+   OneShotSetting::Ptr originSet_;
 };
 
 
@@ -321,10 +321,10 @@ public:
    virtual int SetOffset(double offset);
 
 private:
-   BoolSetting<Self>::Ptr continuousFocusEnabled_;
-   FloatSetting<Self>::Ptr offset_;
-   OneShotSetting<Self>::Ptr fullFocus_;
-   OneShotSetting<Self>::Ptr incrementalFocus_;
+   BoolSetting::Ptr continuousFocusEnabled_;
+   FloatSetting::Ptr offset_;
+   OneShotSetting::Ptr fullFocus_;
+   OneShotSetting::Ptr incrementalFocus_;
 };
 
 
@@ -344,5 +344,5 @@ public:
    virtual unsigned long GetNumberOfPositions() const;
 
 private:
-   IntegerSetting<Self>::Ptr position_;
+   IntegerSetting::Ptr position_;
 };

@@ -14,7 +14,7 @@ libmmgr_dal_SequenceTester_la_SOURCES = SequenceTester.cpp \
 					SettingLogger.cpp \
 					SettingLogger.h \
 					LoggedSetting.h \
-					LoggedSettingImpl.h
+					LoggedSetting.cpp
 
 libmmgr_dal_SequenceTester_la_LIBADD = $(MMDEVAPI_LIBADD) \
 				       $(BOOST_THREAD_LIB) \

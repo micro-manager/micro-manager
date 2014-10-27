@@ -25,7 +25,7 @@
 
 #include "SequenceTester.h"
 
-#include "LoggedSettingImpl.h"
+#include "LoggedSetting.h"
 
 #include "DeviceUtils.h"
 
@@ -75,12 +75,11 @@ TesterBase<TDeviceBase, UConcreteDevice>::Busy()
 template <template <class> class TDeviceBase, class UConcreteDevice>
 void
 TesterBase<TDeviceBase, UConcreteDevice>::
-CreateOnOffProperty(const std::string& name,
-      typename BoolSetting<UConcreteDevice>::Ptr setting)
+CreateOnOffProperty(const std::string& name, BoolSetting::Ptr setting)
 {
    Super::CreateStringProperty(name.c_str(),
          setting->Get() ? "On" : "Off", false,
-         setting->NewPropertyAction(BoolSetting<UConcreteDevice>::ON_OFF));
+         setting->NewPropertyAction(BoolSetting::ON_OFF));
    Super::AddAllowedValue(name.c_str(), "Off");
    Super::AddAllowedValue(name.c_str(), "On");
 }
@@ -89,12 +88,11 @@ CreateOnOffProperty(const std::string& name,
 template <template <class> class TDeviceBase, class UConcreteDevice>
 void
 TesterBase<TDeviceBase, UConcreteDevice>::
-CreateYesNoProperty(const std::string& name,
-      typename BoolSetting<UConcreteDevice>::Ptr setting)
+CreateYesNoProperty(const std::string& name, BoolSetting::Ptr setting)
 {
    Super::CreateStringProperty(name.c_str(),
          setting->Get() ? "Yes" : "No", false,
-         setting->NewPropertyAction(BoolSetting<UConcreteDevice>::YES_NO));
+         setting->NewPropertyAction(BoolSetting::YES_NO));
    Super::AddAllowedValue(name.c_str(), "No");
    Super::AddAllowedValue(name.c_str(), "Yes");
 }
@@ -103,12 +101,11 @@ CreateYesNoProperty(const std::string& name,
 template <template <class> class TDeviceBase, class UConcreteDevice>
 void
 TesterBase<TDeviceBase, UConcreteDevice>::
-CreateOneZeroProperty(const std::string& name,
-      typename BoolSetting<UConcreteDevice>::Ptr setting)
+CreateOneZeroProperty(const std::string& name, BoolSetting::Ptr setting)
 {
    Super::CreateIntegerProperty(name.c_str(),
          setting->Get() ? 1 : 0, false,
-         setting->NewPropertyAction(BoolSetting<UConcreteDevice>::ONE_ZERO));
+         setting->NewPropertyAction(BoolSetting::ONE_ZERO));
    Super::SetPropertyLimits(name.c_str(), 0, 1);
 }
 
@@ -116,8 +113,7 @@ CreateOneZeroProperty(const std::string& name,
 template <template <class> class TDeviceBase, class UConcreteDevice>
 void
 TesterBase<TDeviceBase, UConcreteDevice>::
-CreateIntegerProperty(const std::string& name,
-      typename IntegerSetting<UConcreteDevice>::Ptr setting)
+CreateIntegerProperty(const std::string& name, IntegerSetting::Ptr setting)
 {
    Super::CreateIntegerProperty(name.c_str(), setting->Get(), false,
          setting->NewPropertyAction());
@@ -132,8 +128,7 @@ CreateIntegerProperty(const std::string& name,
 template <template <class> class TDeviceBase, class UConcreteDevice>
 void
 TesterBase<TDeviceBase, UConcreteDevice>::
-CreateFloatProperty(const std::string& name,
-      typename FloatSetting<UConcreteDevice>::Ptr setting)
+CreateFloatProperty(const std::string& name, FloatSetting::Ptr setting)
 {
    Super::CreateFloatProperty(name.c_str(), setting->Get(), false,
          setting->NewPropertyAction());
@@ -157,10 +152,9 @@ Tester1DStageBase<TConcreteStage, UStepsPerMicrometer>::Initialize()
 
    TesterHub::Guard g(Super::GetHub()->LockGlobalMutex());
 
-   zPositionUm_ = FloatSetting<TConcreteStage>::New(Super::GetLogger(), This(),
+   zPositionUm_ = FloatSetting::New(Super::GetLogger(), This(),
          "ZPositionUm", 0.0, false);
-   originSet_ = OneShotSetting<TConcreteStage>::New(Super::GetLogger(), This(),
-         "OriginSet");
+   originSet_ = OneShotSetting::New(Super::GetLogger(), This(), "OriginSet");
 
    return DEVICE_OK;
 }
