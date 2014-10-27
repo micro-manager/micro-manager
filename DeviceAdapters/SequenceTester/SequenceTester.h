@@ -205,6 +205,10 @@ private:
    void SendSequence(bool finite, long count, bool stopOnOverflow);
 
 private:
+   bool produceHumanReadableImages_;
+   long imageWidth_;
+   long imageHeight_;
+
    size_t snapCounter_;
    size_t cumulativeSequenceCounter_;
 

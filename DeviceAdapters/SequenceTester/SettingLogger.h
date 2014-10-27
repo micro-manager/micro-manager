@@ -25,6 +25,7 @@
 
 #include <msgpack.hpp>
 
+#include <boost/lexical_cast.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
@@ -47,7 +48,6 @@ public:
 class SettingValue : public Serializable
 {
 public:
-   // Use of correct method enforced by LoggedSetting subclasses
    virtual bool GetBool() const { return false; }
    virtual long GetInteger() const { return 0; }
    virtual double GetFloat() const { return 0.0; }
@@ -62,6 +62,7 @@ public:
    BoolSettingValue(bool value) : value_(value) {}
    virtual void Write(msgpack::sbuffer& sbuf) const;
    virtual bool GetBool() const { return value_; }
+   virtual std::string GetString() const { return value_ ? "true" : "false"; }
 };
 
 
@@ -72,6 +73,8 @@ public:
    IntegerSettingValue(long value) : value_(value) {}
    virtual void Write(msgpack::sbuffer& sbuf) const;
    virtual long GetInteger() const { return value_; }
+   virtual std::string GetString() const
+   { return boost::lexical_cast<std::string>(value_); }
 };
 
 
@@ -82,6 +85,8 @@ public:
    FloatSettingValue(double value) : value_(value) {}
    virtual void Write(msgpack::sbuffer& sbuf) const;
    virtual double GetFloat() const { return value_; }
+   virtual std::string GetString() const
+   { return boost::lexical_cast<std::string>(value_); }
 };
 
 
@@ -118,6 +123,8 @@ public:
       return (this->device_ < rhs.device_) ||
          (this->device_ == rhs.device_ && this->key_ < rhs.key_);
    }
+
+   std::string GetStringRep() const { return device_ + ',' + key_; }
 };
 
 
@@ -181,9 +188,18 @@ public:
          bool logEvent = true);
 
    // Log retrieval
-   bool PackAndReset(char* dest, size_t destSize,
+   bool DumpMsgPackToBuffer(char* dest, size_t destSize,
          const std::string& camera, bool isSequenceImage,
          size_t cameraSeqNum, size_t acquisitionSeqNum);
+   void DrawTextToBuffer(char* dest, size_t destWidth, size_t destHeight,
+         const std::string& camera, bool isSequenceImage,
+         size_t cameraSeqNum, size_t acquisitionSeqNum);
+   void Reset()
+   {
+      counterAtLastReset_ = counter_;
+      startingValues_ = settingValues_;
+      settingEvents_.clear();
+   }
 
 private:
    uint64_t counter_;
@@ -199,12 +215,6 @@ private:
    // Helper functions to be called with mutex_ held
    uint64_t GetNextCount() { return counter_++; }
    uint64_t GetNextGlobalImageCount() { return globalImageCount_++; }
-   void Reset()
-   {
-      counterAtLastReset_ = counter_;
-      startingValues_ = settingValues_;
-      settingEvents_.clear();
-   }
    void WriteSettingMap(msgpack::sbuffer& sbuf, const SettingMap& values) const;
    void WriteHistory(msgpack::sbuffer& sbuf) const;
 };

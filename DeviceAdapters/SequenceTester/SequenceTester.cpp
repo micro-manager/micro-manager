@@ -255,11 +255,25 @@ TesterHub::FindPeerDevice(const std::string& name)
 
 TesterCamera::TesterCamera(const std::string& name) :
    Super(name),
+   produceHumanReadableImages_(true),
+   imageWidth_(384),
+   imageHeight_(384),
    snapCounter_(0),
    cumulativeSequenceCounter_(0),
    snapImage_(0),
    stopSequence_(true)
 {
+   // For pre-init properties only, we use the traditional method to set up.
+   CCameraBase<Self>::CreateStringProperty("ImageMode", "HumanReadable",
+         false, 0, true);
+   AddAllowedValue("ImageMode", "HumanReadable");
+   AddAllowedValue("ImageMode", "MachineReadable");
+   CCameraBase<Self>::CreateIntegerProperty("ImageWidth", imageWidth_,
+         false, 0, true);
+   SetPropertyLimits("ImageWidth", 32, 4096);
+   CCameraBase<Self>::CreateIntegerProperty("ImageHeight", imageHeight_,
+         false, 0, true);
+   SetPropertyLimits("ImageHeight", 32, 4096);
 }
 
 
@@ -277,6 +291,12 @@ TesterCamera::Initialize()
    err = Super::Initialize();
    if (err != DEVICE_OK)
       return err;
+
+   char imageMode[MM::MaxStrLength];
+   GetProperty("ImageMode", imageMode);
+   produceHumanReadableImages_ = (imageMode == std::string("HumanReadable"));
+   GetProperty("ImageWidth", imageWidth_);
+   GetProperty("ImageHeight", imageHeight_);
 
    TesterHub::Guard g(GetHub()->LockGlobalMutex());
 
@@ -347,14 +367,14 @@ TesterCamera::GetImageBufferSize() const
 unsigned
 TesterCamera::GetImageWidth() const
 {
-   return 128; // TODO
+   return imageWidth_;
 }
 
 
 unsigned
 TesterCamera::GetImageHeight() const
 {
-   return 128; // TODO
+   return imageHeight_;
 }
 
 
@@ -491,8 +511,18 @@ TesterCamera::GenerateLogImage(bool isSequenceImage,
    size_t bufSize = GetImageBufferSize();
    char* bytes = new char[bufSize];
 
-   GetLogger()->PackAndReset(bytes, bufSize,
-         GetDeviceName(), isSequenceImage, cumulativeCount, localCount);
+   SettingLogger* logger = GetLogger();
+   if (produceHumanReadableImages_)
+   {
+      logger->DrawTextToBuffer(bytes, GetImageWidth(), GetImageHeight(),
+            GetDeviceName(), isSequenceImage, cumulativeCount, localCount);
+   }
+   else
+   {
+      logger->DumpMsgPackToBuffer(bytes, bufSize, GetDeviceName(),
+            isSequenceImage, cumulativeCount, localCount);
+   }
+   logger->Reset();
 
    exposureStopEdgeTrigger_();
 

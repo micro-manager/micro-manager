@@ -23,6 +23,8 @@
 
 #include "SettingLogger.h"
 
+#include "TextImage.h"
+
 #include <msgpack.hpp>
 
 #include <string>
@@ -274,7 +276,7 @@ SettingLogger::FireOneShot(const std::string& device, const std::string& key,
 
 
 bool
-SettingLogger::PackAndReset(char* dest, size_t destSize,
+SettingLogger::DumpMsgPackToBuffer(char* dest, size_t destSize,
       const std::string& camera, bool isSequenceImage,
       size_t cameraSeqNum, size_t acquisitionSeqNum)
 {
@@ -302,8 +304,6 @@ SettingLogger::PackAndReset(char* dest, size_t destSize,
    // history
    WriteHistory(sbuf);
 
-   Reset();
-
    if (sbuf.size() <= destSize)
    {
       memcpy(dest, sbuf.data(), sbuf.size());
@@ -315,6 +315,31 @@ SettingLogger::PackAndReset(char* dest, size_t destSize,
       memset(dest, 0, destSize);
       return false;
    }
+}
+
+
+void
+SettingLogger::DrawTextToBuffer(char* dest, size_t destWidth,
+      size_t destHeight, const std::string& camera, bool isSequenceImage,
+      size_t cameraSeqNum, size_t acquisitionSeqNum)
+{
+   std::ostringstream sstrm;
+
+   sstrm << "camera,name=" << camera << ' ' <<
+      "camera,isSequence=" << (isSequenceImage ? "true" : "false") << ' ' <<
+      "camera,serialNumber=" << cameraSeqNum << ' ' <<
+      "camera,frameNumber=" << acquisitionSeqNum << '\n';
+
+   for (SettingConstIterator it = settingValues_.begin(),
+         end = settingValues_.end(); it != end; ++it)
+   {
+      sstrm << it->first.GetStringRep() << '=' <<
+         it->second->GetString() << ' ';
+   }
+
+   memset(dest, 0, destWidth * destHeight);
+   WriteImage(reinterpret_cast<uint8_t*>(dest), destWidth, destHeight,
+         sstrm.str());
 }
 
 
