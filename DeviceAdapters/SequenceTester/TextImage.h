@@ -28,5 +28,65 @@
 #include <string>
 
 
-void WriteImage(uint8_t* buffer, size_t width, size_t height,
+class TextImageCursor
+{
+   int stride_;
+   int nRows_;
+
+   int baseline_;
+   int hPos_;
+
+public:
+   static const int GLYPH_HEIGHT = 5;
+   static const int BASELINE_SKIP = GLYPH_HEIGHT + 4;
+   static const int GLYPH_SPACING = 1;
+   static const int MARGIN = 4;
+
+public:
+   TextImageCursor(int bufferWidth, int bufferHeight) :
+      stride_(bufferWidth),
+      nRows_(bufferHeight),
+      baseline_(MARGIN + GLYPH_HEIGHT),
+      hPos_(MARGIN)
+   {}
+
+   bool IsBeyondBuffer() const { return baseline_ > nRows_; }
+   void NewLine() { baseline_ += BASELINE_SKIP; hPos_ = MARGIN; }
+   void Space() { if (HasRoom(5)) Advance(5); else NewLine(); }
+   bool HasRoom(int width) const
+   {
+      if (IsBeyondBuffer() || width > stride_ - 2 * MARGIN)
+         return false;
+      if (stride_ - hPos_ >= width + MARGIN)
+         return true;
+      return false;
+   }
+   bool MakeRoom(int width)
+   {
+      if (IsBeyondBuffer() || width > stride_ - 2 * MARGIN)
+         return false;
+      if (stride_ - hPos_ >= width + MARGIN)
+         return true;
+      NewLine();
+      return !IsBeyondBuffer();
+   }
+   int GetBaselineIndex() const { return baseline_ * stride_ + hPos_; }
+   int GetNorthStep() const { return -stride_; }
+   int GetEastStep() const { return 1; }
+   int GetWestStep() const { return -1; }
+   int GetSouthStep() const { return stride_; }
+   void Advance(int hDelta)
+   {
+      hPos_ += hDelta;
+      if (hPos_ + MARGIN > stride_)
+         NewLine();
+   }
+};
+
+
+void DrawStringOnImage(uint8_t* buffer, TextImageCursor& cursor,
+      const std::string& string, bool allowLineBreak);
+
+// Draw a whole text image (no word wrapping)
+void DrawTextImage(uint8_t* buffer, size_t width, size_t height,
       const std::string& text);

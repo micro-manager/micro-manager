@@ -30,59 +30,8 @@ namespace
 {
 
 typedef uint8_t Pixel;
-const int GLYPH_HEIGHT = 5;
-const int BASELINE_SKIP = GLYPH_HEIGHT + 4;
-const int GLYPH_SPACING = 1;
-const int MARGIN = 4;
-
-
-class TextImageCursor
-{
-   int stride_;
-   int nRows_;
-
-   int baseline_;
-   int hPos_;
-
-public:
-   TextImageCursor(int bufferWidth, int bufferHeight) :
-      stride_(bufferWidth),
-      nRows_(bufferHeight),
-      baseline_(MARGIN + GLYPH_HEIGHT),
-      hPos_(MARGIN)
-   {}
-
-   bool IsBeyondBuffer() const { return baseline_ > nRows_; }
-   void NewLine() { baseline_ += BASELINE_SKIP; hPos_ = MARGIN; }
-   bool HasRoom(int width) const
-   {
-      if (IsBeyondBuffer() || width > stride_ - 2 * MARGIN)
-         return false;
-      if (stride_ - hPos_ >= width + MARGIN)
-         return true;
-      return false;
-   }
-   bool MakeRoom(int width)
-   {
-      if (IsBeyondBuffer() || width > stride_ - 2 * MARGIN)
-         return false;
-      if (stride_ - hPos_ >= width + MARGIN)
-         return true;
-      NewLine();
-      return !IsBeyondBuffer();
-   }
-   int GetBaselineIndex() const { return baseline_ * stride_ + hPos_; }
-   int GetNorthStep() const { return -stride_; }
-   int GetEastStep() const { return 1; }
-   int GetWestStep() const { return -1; }
-   int GetSouthStep() const { return stride_; }
-   void Advance(int hDelta)
-   {
-      hPos_ += hDelta;
-      if (hPos_ + MARGIN > stride_)
-         NewLine();
-   }
-};
+const int GLYPH_HEIGHT = TextImageCursor::GLYPH_HEIGHT;
+const int GLYPH_SPACING = TextImageCursor::GLYPH_SPACING;
 
 
 inline Pixel
@@ -134,7 +83,7 @@ public:
 public:
    static int GetStringWidth(const std::string& s);
    static void DrawString(const std::string& s, TextImageCursor& cursor,
-         Pixel* buffer);
+         Pixel* buffer, bool allowLineBreak);
 };
 
 const Glyph* Glyph::map_[256];
@@ -187,10 +136,15 @@ Glyph::GetStringWidth(const std::string& s)
 
 void
 Glyph::DrawString(const std::string& s, TextImageCursor& cursor,
-      Pixel* buffer)
+      Pixel* buffer, bool allowLineBreak)
 {
    int width = GetStringWidth(s);
    bool allWillFitInCurrentLine = cursor.HasRoom(width);
+   if (!allWillFitInCurrentLine && !allowLineBreak)
+   {
+      cursor.NewLine();
+      allWillFitInCurrentLine = cursor.HasRoom(width);
+   }
    for (std::string::const_iterator it = s.begin(), end = s.end();
          it != end; ++it)
    {
@@ -202,13 +156,19 @@ Glyph::DrawString(const std::string& s, TextImageCursor& cursor,
 
 
 void
-WriteImage(uint8_t* buffer, size_t width, size_t height,
+DrawStringOnImage(uint8_t* buffer, TextImageCursor& cursor,
+      const std::string& string, bool allowLineBreak)
+{
+   Glyph::DrawString(string, cursor, buffer, allowLineBreak);
+}
+
+
+void
+DrawTextImage(uint8_t* buffer, size_t width, size_t height,
       const std::string& text)
 {
-   // TODO Word-wrapping would be nice. Newlines, at least, should be
-   // processed.
    TextImageCursor cursor(width, height);
-   Glyph::DrawString(text, cursor, buffer);
+   Glyph::DrawString(text, cursor, buffer, true);
 }
 
 

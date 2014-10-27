@@ -23,6 +23,8 @@
 
 #pragma once
 
+#include "TextImage.h"
+
 #include <msgpack.hpp>
 
 #include <boost/lexical_cast.hpp>
@@ -157,6 +159,7 @@ public:
       frameNum_(frameNum)
    {}
    virtual void Write(msgpack::sbuffer& sbuf) const;
+   virtual void Draw(uint8_t* buffer, TextImageCursor& cursor) const;
 };
 
 

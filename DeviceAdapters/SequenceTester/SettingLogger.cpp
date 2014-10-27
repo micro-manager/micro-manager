@@ -23,8 +23,6 @@
 
 #include "SettingLogger.h"
 
-#include "TextImage.h"
-
 #include <msgpack.hpp>
 
 #include <string>
@@ -134,6 +132,22 @@ CameraInfo::Write(msgpack::sbuffer& sbuf) const
    pk.pack(serialNum_);
    // frameNumber
    pk.pack(frameNum_);
+}
+
+
+void
+CameraInfo::Draw(uint8_t* buffer, TextImageCursor& cursor) const
+{
+   DrawStringOnImage(buffer, cursor, "camera,name=" + camera_, false);
+   cursor.Space();
+   DrawStringOnImage(buffer, cursor, "camera,isSequence=" +
+         std::string(isSequence_ ? "true" : "false"), false);
+   cursor.Space();
+   DrawStringOnImage(buffer, cursor, "camera,serialNumber=" +
+         boost::lexical_cast<std::string>(serialNum_), false);
+   cursor.Space();
+   DrawStringOnImage(buffer, cursor, "camera,frameNumber=" +
+         boost::lexical_cast<std::string>(frameNum_), false);
 }
 
 
@@ -323,23 +337,25 @@ SettingLogger::DrawTextToBuffer(char* dest, size_t destWidth,
       size_t destHeight, const std::string& camera, bool isSequenceImage,
       size_t cameraSeqNum, size_t acquisitionSeqNum)
 {
-   std::ostringstream sstrm;
+   uint8_t* buf = reinterpret_cast<uint8_t*>(dest);
+   memset(dest, 0, destWidth * destHeight);
+   TextImageCursor cursor(destWidth, destHeight);
 
-   sstrm << "camera,name=" << camera << ' ' <<
-      "camera,isSequence=" << (isSequenceImage ? "true" : "false") << ' ' <<
-      "camera,serialNumber=" << cameraSeqNum << ' ' <<
-      "camera,frameNumber=" << acquisitionSeqNum << '\n';
+   CameraInfo cameraInfo(camera, isSequenceImage,
+         cameraSeqNum, acquisitionSeqNum);
+   cameraInfo.Draw(buf, cursor);
 
-   for (SettingConstIterator it = settingValues_.begin(),
+   cursor.NewLine();
+   cursor.NewLine();
+
+   for (SettingConstIterator begin = settingValues_.begin(), it = begin,
          end = settingValues_.end(); it != end; ++it)
    {
-      sstrm << it->first.GetStringRep() << '=' <<
-         it->second->GetString() << ' ';
+      if (it != begin)
+         cursor.Space();
+      DrawStringOnImage(buf, cursor,
+            it->first.GetStringRep() + '=' + it->second->GetString(), false);
    }
-
-   memset(dest, 0, destWidth * destHeight);
-   WriteImage(reinterpret_cast<uint8_t*>(dest), destWidth, destHeight,
-         sstrm.str());
 }
 
 
