@@ -44,6 +44,10 @@ template <template <class> class TDeviceBase, class UConcreteDevice>
 int
 TesterBase<TDeviceBase, UConcreteDevice>::Initialize()
 {
+   // Guard against multiple calls
+   if (InterDevice::GetHub())
+      return DEVICE_OK;
+
    MM::Hub* pHub = Super::GetParentHub();
    if (pHub == 0)
    {
@@ -77,6 +81,13 @@ template <template <class> class TDeviceBase, class UConcreteDevice>
 int
 TesterBase<TDeviceBase, UConcreteDevice>::Shutdown()
 {
+   // Shutdown may be called more than once, in which case GetHub() may return
+   // a null pointer.
+   if (!GetHub())
+      return DEVICE_OK;
+
+   TesterHub::Guard g(GetHub()->LockGlobalMutex());
+
    CommonHubPeripheralShutdown();
    InterDevice::SetHub(boost::shared_ptr<TesterHub>());
    return DEVICE_OK;
@@ -182,9 +193,11 @@ template <class TConcreteStage, long UStepsPerMicrometer>
 int
 Tester1DStageBase<TConcreteStage, UStepsPerMicrometer>::Initialize()
 {
-   int err;
+   // Guard against multiple calls
+   if (Super::GetHub())
+      return DEVICE_OK;
 
-   err = Super::Initialize();
+   int err = Super::Initialize();
    if (err != DEVICE_OK)
       return err;
 

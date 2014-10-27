@@ -151,6 +151,10 @@ TesterHub::TesterHub(const std::string& name) :
 int
 TesterHub::Initialize()
 {
+   // Guard against multiple calls
+   if (GetHub())
+      return DEVICE_OK;
+
    // For hub only, do _not_ call Super::Initialize(). Instead, set itself to
    // be the hub.
    InterDevice::SetHub(GetSharedPtr());
@@ -162,6 +166,13 @@ TesterHub::Initialize()
 int
 TesterHub::Shutdown()
 {
+   // Shutdown may be called more than once, in which case GetHub() may return
+   // a null pointer.
+   if (!GetHub())
+      return DEVICE_OK;
+
+   TesterHub::Guard g(GetHub()->LockGlobalMutex());
+
    CommonHubPeripheralShutdown();
 
    // For hub only, do _not_ call Super::Shutdown(). Release the self-reference
@@ -198,8 +209,8 @@ TesterHub::DetectInstalledDevices()
 int
 TesterHub::RegisterDevice(const std::string& name, InterDevice::Ptr device)
 {
-   InterDevice::Ptr& ptr = devices_[name];
-   if (!ptr)
+   boost::weak_ptr<InterDevice>& ptr = devices_[name];
+   if (!ptr.lock())
    {
       ptr = device;
       return DEVICE_OK;
@@ -220,11 +231,11 @@ TesterHub::UnregisterDevice(const std::string& name)
 InterDevice::Ptr
 TesterHub::FindPeerDevice(const std::string& name)
 {
-   boost::unordered_map<std::string, InterDevice::Ptr>::iterator found =
-      devices_.find(name);
+   boost::unordered_map< std::string, boost::weak_ptr<InterDevice> >::iterator
+      found = devices_.find(name);
    if (found == devices_.end())
       return InterDevice::Ptr();
-   return found->second;
+   return found->second.lock();
 }
 
 
@@ -262,9 +273,11 @@ TesterCamera::~TesterCamera()
 int
 TesterCamera::Initialize()
 {
-   int err;
+   // Guard against multiple calls
+   if (GetHub())
+      return DEVICE_OK;
 
-   err = Super::Initialize();
+   int err = Super::Initialize();
    if (err != DEVICE_OK)
       return err;
 
@@ -583,9 +596,11 @@ TesterCamera::SendSequence(bool finite, long count, bool stopOnOverflow)
 int
 TesterShutter::Initialize()
 {
-   int err;
+   // Guard against multiple calls
+   if (GetHub())
+      return DEVICE_OK;
 
-   err = Super::Initialize();
+   int err = Super::Initialize();
    if (err != DEVICE_OK)
       return err;
 
@@ -621,9 +636,11 @@ TesterShutter::GetOpen(bool& open)
 int
 TesterXYStage::Initialize()
 {
-   int err;
+   // Guard against multiple calls
+   if (GetHub())
+      return DEVICE_OK;
 
-   err = Super::Initialize();
+   int err = Super::Initialize();
    if (err != DEVICE_OK)
       return err;
 
@@ -734,9 +751,11 @@ TesterXYStage::GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMa
 int
 TesterZStage::Initialize()
 {
-   int err;
+   // Guard against multiple calls
+   if (GetHub())
+      return DEVICE_OK;
 
-   err = Super::Initialize();
+   int err = Super::Initialize();
    if (err != DEVICE_OK)
       return err;
 
@@ -825,9 +844,11 @@ TesterZStage::StopStageSequence()
 int
 TesterAutofocus::Initialize()
 {
-   int err;
+   // Guard against multiple calls
+   if (GetHub())
+      return DEVICE_OK;
 
-   err = Super::Initialize();
+   int err = Super::Initialize();
    if (err != DEVICE_OK)
       return err;
 
@@ -989,9 +1010,11 @@ TesterAutofocus::HandleLinkedZStageSetPosition()
 int
 TesterSwitcher::Initialize()
 {
-   int err;
+   // Guard against multiple calls
+   if (GetHub())
+      return DEVICE_OK;
 
-   err = Super::Initialize();
+   int err = Super::Initialize();
    if (err != DEVICE_OK)
       return err;
 
