@@ -286,6 +286,74 @@ FloatSetting::NewPropertyAction()
 }
 
 
+StringSetting::StringSetting(SettingLogger* logger, InterDevice* device,
+      const std::string& name, const std::string& initialValue) :
+   LoggedSetting(logger, device, name)
+{
+   GetLogger()->SetString(GetDevice()->GetDeviceName(), GetName(),
+         initialValue, false);
+}
+
+
+int
+StringSetting::Set(const std::string& newValue)
+{
+   GetLogger()->SetString(GetDevice()->GetDeviceName(), GetName(), newValue);
+   return DEVICE_OK;
+}
+
+
+int
+StringSetting::Get(std::string& value) const
+{
+   value = Get();
+   return DEVICE_OK;
+}
+
+
+std::string
+StringSetting::Get() const
+{
+   return GetLogger()->GetString(GetDevice()->GetDeviceName(), GetName());
+}
+
+
+MM::ActionFunctor*
+StringSetting::NewPropertyAction()
+{
+   class Functor : public MM::ActionFunctor, boost::noncopyable
+   {
+      StringSetting& setting_;
+
+   public:
+      Functor(StringSetting& setting) : setting_(setting) {}
+
+      virtual int Execute(MM::PropertyBase* pProp, MM::ActionType eAct)
+      {
+         if (eAct == MM::BeforeGet)
+         {
+            std::string v;
+            int err = setting_.Get(v);
+            if (err != DEVICE_OK)
+               return err;
+            pProp->Set(v.c_str());
+            return DEVICE_OK;
+         }
+         else if (eAct == MM::AfterSet)
+         {
+            setting_.MarkBusy();
+            std::string v;
+            pProp->Get(v);
+            return setting_.Set(v);
+         }
+         return DEVICE_OK;
+      }
+   };
+
+   return new Functor(*this);
+}
+
+
 OneShotSetting::OneShotSetting(SettingLogger* logger,
       InterDevice* device, const std::string& name) :
    LoggedSetting(logger, device, name)

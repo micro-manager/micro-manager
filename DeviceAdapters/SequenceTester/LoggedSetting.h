@@ -159,6 +159,29 @@ public:
 };
 
 
+// This is only for free-form string settings. For "allowed values"-style
+// enumerated settings, use dedicated class.
+class StringSetting : public LoggedSetting
+{
+   typedef StringSetting Self;
+
+public:
+   typedef boost::shared_ptr<Self> Ptr;
+
+   StringSetting(SettingLogger* logger, InterDevice* device,
+         const std::string& name, const std::string& initialValue);
+
+   static Ptr New(SettingLogger* logger, InterDevice* device,
+         const std::string& name, const std::string& initialValue = "")
+   { return boost::make_shared<Self>(logger, device, name, initialValue); }
+
+   int Set(const std::string& newValue);
+   int Get(std::string& value) const;
+   std::string Get() const;
+   MM::ActionFunctor* NewPropertyAction();
+};
+
+
 class OneShotSetting : public LoggedSetting
 {
    typedef OneShotSetting Self;

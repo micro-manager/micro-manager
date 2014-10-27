@@ -95,6 +95,8 @@ protected:
          IntegerSetting::Ptr setting);
    void CreateFloatProperty(const std::string& name,
          FloatSetting::Ptr setting);
+   void CreateStringProperty(const std::string& name,
+         StringSetting::Ptr setting);
 
 private:
    CountDownSetting::Ptr busySetting_;

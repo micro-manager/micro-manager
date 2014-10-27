@@ -153,6 +153,16 @@ CreateFloatProperty(const std::string& name, FloatSetting::Ptr setting)
 }
 
 
+template <template <class> class TDeviceBase, class UConcreteDevice>
+void
+TesterBase<TDeviceBase, UConcreteDevice>::
+CreateStringProperty(const std::string& name, StringSetting::Ptr setting)
+{
+   Super::CreateStringProperty(name.c_str(), setting->Get().c_str(), false,
+         setting->NewPropertyAction());
+}
+
+
 template <class TConcreteStage, long UStepsPerMicrometer>
 int
 Tester1DStageBase<TConcreteStage, UStepsPerMicrometer>::Initialize()
