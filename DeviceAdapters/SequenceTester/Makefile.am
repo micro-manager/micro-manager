@@ -19,7 +19,9 @@ libmmgr_dal_SequenceTester_la_SOURCES = \
 					SettingLogger.cpp \
 					SettingLogger.h \
 					TextImage.cpp \
-					TextImage.h
+					TextImage.h \
+					TriggerInput.cpp \
+					TriggerInput.h
 
 libmmgr_dal_SequenceTester_la_LIBADD = $(MMDEVAPI_LIBADD) \
 				       $(BOOST_THREAD_LIB) \

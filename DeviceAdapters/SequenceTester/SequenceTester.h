@@ -27,6 +27,7 @@
 
 #include "InterDevice.h"
 #include "LoggedSetting.h"
+#include "TriggerInput.h"
 
 #include "DeviceBase.h"
 
@@ -346,10 +347,6 @@ public:
    virtual unsigned long GetNumberOfPositions() const;
 
 private:
+   TriggerInput triggerInput_;
    IntegerSetting::Ptr position_;
-   StringSetting::Ptr triggerSourceDevice_;
-   StringSetting::Ptr triggerSourcePort_;
-   IntegerSetting::Ptr sequenceMaxLength_;
-
-   void UpdateTriggerConnection();
 };

@@ -80,6 +80,8 @@ protected:
    void FirePostSetSignal() { postSetSignal_(); }
 
 public:
+   typedef boost::shared_ptr<Self> Ptr;
+
    LoggedSetting(SettingLogger* logger, InterDevice* device,
          const std::string& name);
    virtual ~LoggedSetting() {}
