@@ -55,6 +55,32 @@ public:
 
 
 template <class TDevice>
+class BoolSetting : private LoggedSetting<TDevice>
+{
+   typedef BoolSetting<TDevice> Self;
+   typedef LoggedSetting<TDevice> Super;
+
+public:
+   typedef boost::shared_ptr<Self> Ptr;
+
+   BoolSetting(SettingLogger* logger, TDevice* device,
+         const std::string& name, bool initialValue);
+
+   int Set(bool newValue);
+   int Get(bool& value) const;
+   bool Get() const;
+
+   enum PropertyDisplay
+   {
+      ON_OFF,
+      YES_NO,
+      ONE_ZERO, // Not nice, but used e.g. for shutter state
+   };
+   MM::ActionFunctor* NewPropertyAction(PropertyDisplay displayMode);
+};
+
+
+template <class TDevice>
 class IntegerSetting : private LoggedSetting<TDevice>
 {
    bool hasMinMax_;
@@ -152,6 +178,12 @@ protected:
    virtual TesterHub* GetHub();
    virtual SettingLogger* GetLogger() { return GetHub()->GetLogger(); }
 
+   void CreateOnOffProperty(const std::string& name,
+         typename BoolSetting<UConcreteDevice>::Ptr setting);
+   void CreateYesNoProperty(const std::string& name,
+         typename BoolSetting<UConcreteDevice>::Ptr setting);
+   void CreateOneZeroProperty(const std::string& name,
+         typename BoolSetting<UConcreteDevice>::Ptr setting);
    void CreateIntegerProperty(const std::string& name,
          typename IntegerSetting<UConcreteDevice>::Ptr setting);
    void CreateFloatProperty(const std::string& name,
@@ -268,7 +300,7 @@ public:
    virtual int Fire(double) { return DEVICE_UNSUPPORTED_COMMAND; }
 
 private:
-   IntegerSetting<Self>::Ptr shutterOpen_;
+   BoolSetting<Self>::Ptr shutterOpen_;
 };
 
 
@@ -346,7 +378,7 @@ public:
    virtual int SetOffset(double offset);
 
 private:
-   IntegerSetting<Self>::Ptr continuousFocusEnabled_;
+   BoolSetting<Self>::Ptr continuousFocusEnabled_;
    FloatSetting<Self>::Ptr offset_;
    OneShotSetting<Self>::Ptr fullFocus_;
    OneShotSetting<Self>::Ptr incrementalFocus_;

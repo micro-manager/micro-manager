@@ -442,10 +442,9 @@ TesterShutter::Initialize()
    if (err != DEVICE_OK)
       return err;
 
-   shutterOpen_ = boost::make_shared< IntegerSetting<Self> >(
-         GetLogger(), this, "ShutterState", 0, true, 0, 1);
-
-   CreateIntegerProperty("State", shutterOpen_);
+   shutterOpen_ = boost::make_shared< BoolSetting<Self> >(
+         GetLogger(), this, "ShutterState", false);
+   CreateOneZeroProperty("State", shutterOpen_);
 
    return DEVICE_OK;
 }
@@ -454,15 +453,14 @@ TesterShutter::Initialize()
 int
 TesterShutter::SetOpen(bool open)
 {
-   return shutterOpen_->Set(open ? 1 : 0);
+   return shutterOpen_->Set(open);
 }
 
 
 int
 TesterShutter::GetOpen(bool& open)
 {
-   open = (shutterOpen_->Get() != 0);
-   return DEVICE_OK;
+   return shutterOpen_->Get(open);
 }
 
 
@@ -475,8 +473,8 @@ TesterAutofocus::Initialize()
    if (err != DEVICE_OK)
       return err;
 
-   continuousFocusEnabled_ = boost::make_shared< IntegerSetting<Self> >(
-         GetLogger(), this, "ContinuousFocusEnabled", 0, true, 0, 1);
+   continuousFocusEnabled_ = boost::make_shared< BoolSetting<Self> >(
+         GetLogger(), this, "ContinuousFocusEnabled", false);
 
    offset_ = boost::make_shared< FloatSetting<Self> >(
          GetLogger(), this, "Offset", 0.0, false);
@@ -493,15 +491,14 @@ TesterAutofocus::Initialize()
 int
 TesterAutofocus::SetContinuousFocusing(bool state)
 {
-   return continuousFocusEnabled_->Set(state ? 1 : 0);
+   return continuousFocusEnabled_->Set(state);
 }
 
 
 int
 TesterAutofocus::GetContinuousFocusing(bool& state)
 {
-   state = (continuousFocusEnabled_->Get() != 0);
-   return DEVICE_OK;
+   return continuousFocusEnabled_->Get(state);
 }
 
 

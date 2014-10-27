@@ -34,6 +34,18 @@
 
 
 void
+BoolSettingValue::Write(msgpack::sbuffer& sbuf) const
+{
+   msgpack::packer<msgpack::sbuffer> pk(&sbuf);
+   pk.pack_array(2);
+   // type
+   pk.pack(std::string("bool"));
+   // value
+   pk.pack(value_);
+}
+
+
+void
 IntegerSettingValue::Write(msgpack::sbuffer& sbuf) const
 {
    msgpack::packer<msgpack::sbuffer> pk(&sbuf);
@@ -120,6 +132,40 @@ CameraInfo::Write(msgpack::sbuffer& sbuf) const
    pk.pack(serialNum_);
    // frameNumber
    pk.pack(frameNum_);
+}
+
+
+void
+SettingLogger::SetBool(const std::string& device, const std::string& key,
+      bool value, bool logEvent)
+{
+   GuardType g = Guard();
+
+   SettingKey keyRecord = SettingKey(device, key);
+   boost::shared_ptr<SettingValue> valueRecord =
+      boost::make_shared<BoolSettingValue>(value);
+   settingValues_[keyRecord] = valueRecord;
+
+   if (logEvent)
+   {
+      SettingEvent event =
+         SettingEvent(keyRecord, valueRecord, GetNextCount());
+      settingEvents_.push_back(event);
+   }
+}
+
+
+bool
+SettingLogger::GetBool(const std::string& device,
+      const std::string& key) const
+{
+   GuardType g = Guard();
+
+   SettingKey keyRecord = SettingKey(device, key);
+   SettingConstIterator found = settingValues_.find(keyRecord);
+   if (found == settingValues_.end())
+      return false;
+   return found->second->GetBool();
 }
 
 

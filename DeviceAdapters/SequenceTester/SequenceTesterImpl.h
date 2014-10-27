@@ -43,6 +43,107 @@ LoggedSetting<TDevice>::LoggedSetting(SettingLogger* logger,
 
 
 template <class TDevice>
+BoolSetting<TDevice>::BoolSetting(SettingLogger* logger,
+      TDevice* device, const std::string& name,
+      bool initialValue) :
+   LoggedSetting<TDevice>(logger, device, name)
+{
+   Super::GetLogger()->SetBool(Super::GetDevice()->GetName(),
+         Super::GetName(), initialValue, false);
+}
+
+
+template <class TDevice>
+int
+BoolSetting<TDevice>::Set(bool newValue)
+{
+   Super::GetLogger()->SetBool(Super::GetDevice()->GetName(),
+         Super::GetName(), newValue);
+   return DEVICE_OK;
+}
+
+
+template <class TDevice>
+int
+BoolSetting<TDevice>::Get(bool& value) const
+{
+   value = Get();
+   return DEVICE_OK;
+}
+
+
+template <class TDevice>
+bool
+BoolSetting<TDevice>::Get() const
+{
+   return Super::GetLogger()->GetBool(Super::GetDevice()->GetName(),
+         Super::GetName());
+}
+
+
+template <class TDevice>
+MM::ActionFunctor*
+BoolSetting<TDevice>::NewPropertyAction(PropertyDisplay displayMode)
+{
+   class Functor : public MM::ActionFunctor, boost::noncopyable
+   {
+      BoolSetting<TDevice>& setting_;
+      PropertyDisplay displayMode_;
+
+   public:
+      Functor(BoolSetting<TDevice>& setting, PropertyDisplay displayMode) :
+         setting_(setting),
+         displayMode_(displayMode)
+      {}
+
+      virtual int Execute(MM::PropertyBase* pProp, MM::ActionType eAct)
+      {
+         if (eAct == MM::BeforeGet)
+         {
+            bool v;
+            int err = setting_.Get(v);
+            if (err != DEVICE_OK)
+               return err;
+            switch (displayMode_)
+            {
+               case ON_OFF:
+                  pProp->Set(v ? "On" : "Off");
+                  break;
+               case YES_NO:
+                  pProp->Set(v ? "Yes" : "No");
+                  break;
+               case ONE_ZERO:
+                  pProp->Set(v ? 1L : 0L);
+                  break;
+            }
+            return DEVICE_OK;
+         }
+         else if (eAct == MM::AfterSet)
+         {
+            std::string strVal;
+            long intVal;
+            switch (displayMode_)
+            {
+               case ON_OFF:
+                  pProp->Get(strVal);
+                  return setting_.Set(strVal == "On");
+               case YES_NO:
+                  pProp->Get(strVal);
+                  return setting_.Set(strVal == "Yes");
+               case ONE_ZERO:
+                  pProp->Get(intVal);
+                  return setting_.Set(intVal != 0);
+            }
+         }
+         return DEVICE_OK;
+      }
+   };
+
+   return new Functor(*this, displayMode);
+}
+
+
+template <class TDevice>
 IntegerSetting<TDevice>::IntegerSetting(SettingLogger* logger,
       TDevice* device, const std::string& name,
       long initialValue, bool hasMinMax, long minimum, long maximum) :
@@ -99,7 +200,11 @@ IntegerSetting<TDevice>::NewPropertyAction()
       {
          if (eAct == MM::BeforeGet)
          {
-            pProp->Set(setting_.Get());
+            long v;
+            int err = setting_.Get(v);
+            if (err != DEVICE_OK)
+               return err;
+            pProp->Set(v);
             return DEVICE_OK;
          }
          else if (eAct == MM::AfterSet)
@@ -173,7 +278,11 @@ FloatSetting<TDevice>::NewPropertyAction()
       {
          if (eAct == MM::BeforeGet)
          {
-            pProp->Set(setting_.Get());
+            double v;
+            int err = setting_.Get(v);
+            if (err != DEVICE_OK)
+               return err;
+            pProp->Set(v);
             return DEVICE_OK;
          }
          else if (eAct == MM::AfterSet)
@@ -268,6 +377,47 @@ TesterBase<TDeviceBase, UConcreteDevice>::GetHub()
       Super::LogMessage("Hub is missing. Will crash!");
    }
    return static_cast<TesterHub*>(hub);
+}
+
+
+template <template <class> class TDeviceBase, class UConcreteDevice>
+void
+TesterBase<TDeviceBase, UConcreteDevice>::
+CreateOnOffProperty(const std::string& name,
+      typename BoolSetting<UConcreteDevice>::Ptr setting)
+{
+   Super::CreateStringProperty(name.c_str(),
+         setting->Get() ? "On" : "Off", false,
+         setting->NewPropertyAction(BoolSetting<UConcreteDevice>::ON_OFF));
+   Super::AddAllowedValue(name.c_str(), "Off");
+   Super::AddAllowedValue(name.c_str(), "On");
+}
+
+
+template <template <class> class TDeviceBase, class UConcreteDevice>
+void
+TesterBase<TDeviceBase, UConcreteDevice>::
+CreateYesNoProperty(const std::string& name,
+      typename BoolSetting<UConcreteDevice>::Ptr setting)
+{
+   Super::CreateStringProperty(name.c_str(),
+         setting->Get() ? "Yes" : "No", false,
+         setting->NewPropertyAction(BoolSetting<UConcreteDevice>::YES_NO));
+   Super::AddAllowedValue(name.c_str(), "No");
+   Super::AddAllowedValue(name.c_str(), "Yes");
+}
+
+
+template <template <class> class TDeviceBase, class UConcreteDevice>
+void
+TesterBase<TDeviceBase, UConcreteDevice>::
+CreateOneZeroProperty(const std::string& name,
+      typename BoolSetting<UConcreteDevice>::Ptr setting)
+{
+   Super::CreateIntegerProperty(name.c_str(),
+         setting->Get() ? 1 : 0, false,
+         setting->NewPropertyAction(BoolSetting<UConcreteDevice>::ONE_ZERO));
+   Super::SetPropertyLimits(name.c_str(), 0, 1);
 }
 
 

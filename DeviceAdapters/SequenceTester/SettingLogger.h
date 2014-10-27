@@ -49,9 +49,20 @@ class SettingValue : public Serializable
 {
 public:
    // Use of correct method enforced by LoggedSetting subclasses
+   virtual bool GetBool() const { return false; }
    virtual long GetInteger() const { return 0; }
    virtual double GetFloat() const { return 0.0; }
    virtual std::string GetString() const { return std::string(); }
+};
+
+
+class BoolSettingValue : public SettingValue
+{
+   const bool value_;
+public:
+   BoolSettingValue(bool value) : value_(value) {}
+   virtual void Write(msgpack::sbuffer& sbuf) const;
+   virtual bool GetBool() const { return value_; }
 };
 
 
@@ -160,6 +171,9 @@ public:
    // Recording and querying
 
    // Set/Fire methods do _not_ mark the device busy
+   void SetBool(const std::string& device, const std::string& key,
+         bool value, bool logEvent = true);
+   bool GetBool(const std::string& device, const std::string& key) const;
    void SetInteger(const std::string& device, const std::string& key,
          long value, bool logEvent = true);
    long GetInteger(const std::string& device, const std::string& key) const;
