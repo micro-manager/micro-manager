@@ -188,7 +188,7 @@ private:
 
 
 template <class TConcreteStage, long UMicronsPerStep = 1>
-class TesterStageBase : public TesterBase<CStageBase, TConcreteStage>
+class Tester1DStageBase : public TesterBase<CStageBase, TConcreteStage>
 {
    typedef TesterBase< ::CStageBase, TConcreteStage > Super;
    TConcreteStage* This() { return static_cast<TConcreteStage*>(this); }
@@ -196,7 +196,7 @@ class TesterStageBase : public TesterBase<CStageBase, TConcreteStage>
    static const long umPerStep = UMicronsPerStep;
 
 public:
-   TesterStageBase(const std::string& name) : Super(name) {}
+   Tester1DStageBase(const std::string& name) : Super(name) {}
 
    virtual int Initialize();
 
@@ -216,10 +216,10 @@ private:
 };
 
 
-class TesterZStage : public TesterStageBase<TesterZStage, 10>
+class TesterZStage : public Tester1DStageBase<TesterZStage, 10>
 {
    typedef TesterZStage Self;
-   typedef TesterStageBase<Self, 10> Super;
+   typedef Tester1DStageBase<Self, 10> Super;
 
 public:
    TesterZStage(const std::string& name) : Super(name) {}
@@ -228,10 +228,10 @@ public:
 };
 
 
-class TesterAFStage : public TesterStageBase<TesterAFStage>
+class TesterAFStage : public Tester1DStageBase<TesterAFStage>
 {
    typedef TesterAFStage Self;
-   typedef TesterStageBase<Self> Super;
+   typedef Tester1DStageBase<Self> Super;
 
 public:
    TesterAFStage(const std::string& name) : Super(name) {}
