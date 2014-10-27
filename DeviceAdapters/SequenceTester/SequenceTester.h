@@ -238,3 +238,22 @@ private:
    FloatSetting<Self>::Ptr exposureSetting_;
    IntegerSetting<Self>::Ptr binningSetting_;
 };
+
+
+class TesterShutter : public TesterBase<CShutterBase, TesterShutter>
+{
+   typedef TesterShutter Self;
+   typedef TesterBase< ::CShutterBase, TesterShutter > Super;
+
+public:
+   TesterShutter(const std::string& name) : Super(name) {}
+
+   virtual int Initialize();
+
+   virtual int SetOpen(bool open);
+   virtual int GetOpen(bool& open);
+   virtual int Fire(double) { return DEVICE_UNSUPPORTED_COMMAND; }
+
+private:
+   IntegerSetting<Self>::Ptr shutterOpen_;
+};

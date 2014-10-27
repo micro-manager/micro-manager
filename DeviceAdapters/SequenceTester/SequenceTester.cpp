@@ -68,6 +68,8 @@ CreateDevice(const char* deviceName)
       return new TesterHub(name);
    if (StartsWith("TCamera", name))
       return new TesterCamera(name);
+   if (StartsWith("TShutter", name))
+      return new TesterShutter(name);
    return 0;
 }
 
@@ -115,7 +117,10 @@ int
 TesterHub::DetectInstalledDevices()
 {
    ClearInstalledDevices();
-   AddInstalledDevice(new TesterCamera("TCamera"));
+   AddInstalledDevice(new TesterCamera("TCamera-0"));
+   AddInstalledDevice(new TesterCamera("TCamera-1"));
+   AddInstalledDevice(new TesterShutter("TShutter-0"));
+   AddInstalledDevice(new TesterShutter("TShutter-1"));
    return DEVICE_OK;
 }
 
@@ -410,4 +415,37 @@ TesterCamera::SendSequence(bool finite, long count, bool stopOnOverflow)
    }
 
    delete[] bytes;
+}
+
+
+int
+TesterShutter::Initialize()
+{
+   int err;
+
+   err = Super::Initialize();
+   if (err != DEVICE_OK)
+      return err;
+
+   shutterOpen_ = boost::make_shared< IntegerSetting<Self> >(
+         GetLogger(), this, "ShutterState", 0, true, 0, 1);
+
+   CreateIntegerProperty("State", shutterOpen_);
+
+   return DEVICE_OK;
+}
+
+
+int
+TesterShutter::SetOpen(bool open)
+{
+   return shutterOpen_->Set(open ? 1 : 0);
+}
+
+
+int
+TesterShutter::GetOpen(bool& open)
+{
+   open = (shutterOpen_->Get() != 0);
+   return DEVICE_OK;
 }
