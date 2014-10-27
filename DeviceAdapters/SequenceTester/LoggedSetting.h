@@ -61,6 +61,8 @@ class LoggedSetting : public boost::enable_shared_from_this<LoggedSetting>
 
    boost::shared_ptr<CountDownSetting> busySetting_;
 
+   boost::signals2::signal<void ()> postSetSignal_;
+
    // Zero is interpreted as triggering disabled
    boost::shared_ptr<IntegerSetting> sequenceMaxLengthSetting_;
 
@@ -75,6 +77,8 @@ protected:
    const InterDevice* GetDevice() const { return device_; }
    std::string GetName() const { return name_; }
 
+   void FirePostSetSignal() { postSetSignal_(); }
+
 public:
    LoggedSetting(SettingLogger* logger, InterDevice* device,
          const std::string& name);
@@ -83,6 +87,9 @@ public:
    void SetBusySetting(boost::shared_ptr<CountDownSetting> setting)
    { busySetting_ = setting; }
    void MarkBusy();
+
+   typedef boost::signals2::signal<void ()> PostSetSignal;
+   PostSetSignal& GetPostSetSignal() { return postSetSignal_; }
 
    void SetSequenceMaxLengthSetting(boost::shared_ptr<IntegerSetting> setting)
    { sequenceMaxLengthSetting_ = setting; }

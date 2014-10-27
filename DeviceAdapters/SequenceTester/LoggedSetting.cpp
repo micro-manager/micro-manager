@@ -98,6 +98,7 @@ int
 BoolSetting::Set(bool newValue)
 {
    GetLogger()->SetBool(GetDevice()->GetDeviceName(), GetName(), newValue);
+   FirePostSetSignal();
    return DEVICE_OK;
 }
 
@@ -158,6 +159,7 @@ BoolSetting::HandleEdgeTrigger()
 
    GetLogger()->SetBool(GetDevice()->GetDeviceName(), GetName(),
          static_cast<bool>(newValue));
+   FirePostSetSignal();
 }
 
 
@@ -297,6 +299,7 @@ int
 IntegerSetting::Set(long newValue)
 {
    GetLogger()->SetInteger(GetDevice()->GetDeviceName(), GetName(), newValue);
+   FirePostSetSignal();
    return DEVICE_OK;
 }
 
@@ -356,6 +359,7 @@ IntegerSetting::HandleEdgeTrigger()
       nextTriggerIndex_ = 0;
 
    GetLogger()->SetInteger(GetDevice()->GetDeviceName(), GetName(), newValue);
+   FirePostSetSignal();
 }
 
 
@@ -457,6 +461,7 @@ int
 FloatSetting::Set(double newValue)
 {
    GetLogger()->SetFloat(GetDevice()->GetDeviceName(), GetName(), newValue);
+   FirePostSetSignal();
    return DEVICE_OK;
 }
 
@@ -516,6 +521,7 @@ FloatSetting::HandleEdgeTrigger()
       nextTriggerIndex_ = 0;
 
    GetLogger()->SetFloat(GetDevice()->GetDeviceName(), GetName(), newValue);
+   FirePostSetSignal();
 }
 
 
@@ -611,6 +617,7 @@ int
 StringSetting::Set(const std::string& newValue)
 {
    GetLogger()->SetString(GetDevice()->GetDeviceName(), GetName(), newValue);
+   FirePostSetSignal();
    return DEVICE_OK;
 }
 
@@ -678,6 +685,7 @@ int
 OneShotSetting::Set()
 {
    GetLogger()->FireOneShot(GetDevice()->GetDeviceName(), GetName());
+   FirePostSetSignal();
    return DEVICE_OK;
 }
 
@@ -700,6 +708,7 @@ CountDownSetting::Set(long increment)
       GetLogger()->GetInteger(GetDevice()->GetDeviceName(), GetName());
    long newCount = oldCount + increment;
    GetLogger()->SetInteger(GetDevice()->GetDeviceName(), GetName(), newCount);
+   FirePostSetSignal();
    return DEVICE_OK;
 }
 
