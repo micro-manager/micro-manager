@@ -30,6 +30,8 @@
 
 class TextImageCursor
 {
+   uint8_t* buffer_;
+
    int stride_;
    int nRows_;
 
@@ -43,12 +45,15 @@ public:
    static const int MARGIN = 4;
 
 public:
-   TextImageCursor(int bufferWidth, int bufferHeight) :
+   TextImageCursor(uint8_t* buffer, int bufferWidth, int bufferHeight) :
+      buffer_(buffer),
       stride_(bufferWidth),
       nRows_(bufferHeight),
       baseline_(MARGIN + GLYPH_HEIGHT),
       hPos_(MARGIN)
    {}
+
+   uint8_t* GetBuffer() { return buffer_; }
 
    bool IsBeyondBuffer() const { return baseline_ > nRows_; }
    void NewLine() { baseline_ += BASELINE_SKIP; hPos_ = MARGIN; }
@@ -84,8 +89,8 @@ public:
 };
 
 
-void DrawStringOnImage(uint8_t* buffer, TextImageCursor& cursor,
-      const std::string& string, bool allowLineBreak);
+void DrawStringOnImage(TextImageCursor& cursor, const std::string& string,
+      bool allowLineBreak = false);
 
 // Draw a whole text image (no word wrapping)
 void DrawTextImage(uint8_t* buffer, size_t width, size_t height,

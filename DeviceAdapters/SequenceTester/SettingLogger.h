@@ -141,6 +141,7 @@ public:
       key_(key), value_(value), count_(counterValue)
    {}
    virtual void Write(msgpack::sbuffer& sbuf) const;
+   virtual void Draw(TextImageCursor& cursor) const;
 };
 
 
@@ -159,7 +160,7 @@ public:
       frameNum_(frameNum)
    {}
    virtual void Write(msgpack::sbuffer& sbuf) const;
-   virtual void Draw(uint8_t* buffer, TextImageCursor& cursor) const;
+   virtual void Draw(TextImageCursor& cursor) const;
 };
 
 
@@ -219,5 +220,8 @@ private:
    uint64_t GetNextCount() { return counter_++; }
    uint64_t GetNextGlobalImageCount() { return globalImageCount_++; }
    void WriteSettingMap(msgpack::sbuffer& sbuf, const SettingMap& values) const;
+   void DrawSettingMap(TextImageCursor& cursor,
+         const SettingMap& values) const;
    void WriteHistory(msgpack::sbuffer& sbuf) const;
+   void DrawHistory(TextImageCursor& cursor) const;
 };

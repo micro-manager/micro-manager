@@ -120,6 +120,15 @@ SettingEvent::Write(msgpack::sbuffer& sbuf) const
 
 
 void
+SettingEvent::Draw(TextImageCursor& cursor) const
+{
+   DrawStringOnImage(cursor,
+         "[" + boost::lexical_cast<std::string>(count_) + "]" +
+         key_.GetStringRep() + "=" + value_->GetString());
+}
+
+
+void
 CameraInfo::Write(msgpack::sbuffer& sbuf) const
 {
    msgpack::packer<msgpack::sbuffer> pk(&sbuf);
@@ -136,18 +145,18 @@ CameraInfo::Write(msgpack::sbuffer& sbuf) const
 
 
 void
-CameraInfo::Draw(uint8_t* buffer, TextImageCursor& cursor) const
+CameraInfo::Draw(TextImageCursor& cursor) const
 {
-   DrawStringOnImage(buffer, cursor, "camera,name=" + camera_, false);
+   DrawStringOnImage(cursor, "camera,name=" + camera_);
    cursor.Space();
-   DrawStringOnImage(buffer, cursor, "camera,isSequence=" +
-         std::string(isSequence_ ? "true" : "false"), false);
+   DrawStringOnImage(cursor, "camera,isSequence=" +
+         std::string(isSequence_ ? "true" : "false"));
    cursor.Space();
-   DrawStringOnImage(buffer, cursor, "camera,serialNumber=" +
-         boost::lexical_cast<std::string>(serialNum_), false);
+   DrawStringOnImage(cursor, "camera,serialNumber=" +
+         boost::lexical_cast<std::string>(serialNum_));
    cursor.Space();
-   DrawStringOnImage(buffer, cursor, "camera,frameNumber=" +
-         boost::lexical_cast<std::string>(frameNum_), false);
+   DrawStringOnImage(cursor, "camera,frameNumber=" +
+         boost::lexical_cast<std::string>(frameNum_));
 }
 
 
@@ -337,25 +346,29 @@ SettingLogger::DrawTextToBuffer(char* dest, size_t destWidth,
       size_t destHeight, const std::string& camera, bool isSequenceImage,
       size_t cameraSeqNum, size_t acquisitionSeqNum)
 {
-   uint8_t* buf = reinterpret_cast<uint8_t*>(dest);
    memset(dest, 0, destWidth * destHeight);
-   TextImageCursor cursor(destWidth, destHeight);
+   TextImageCursor cursor(reinterpret_cast<uint8_t*>(dest),
+         destWidth, destHeight);
+
+   DrawStringOnImage(cursor, "HubPacketNr=" +
+         boost::lexical_cast<std::string>(GetNextGlobalImageCount()));
+   cursor.NewLine();
 
    CameraInfo cameraInfo(camera, isSequenceImage,
          cameraSeqNum, acquisitionSeqNum);
-   cameraInfo.Draw(buf, cursor);
-
+   cameraInfo.Draw(cursor);
    cursor.NewLine();
    cursor.NewLine();
 
-   for (SettingConstIterator begin = settingValues_.begin(), it = begin,
-         end = settingValues_.end(); it != end; ++it)
-   {
-      if (it != begin)
-         cursor.Space();
-      DrawStringOnImage(buf, cursor,
-            it->first.GetStringRep() + '=' + it->second->GetString(), false);
-   }
+   DrawStringOnImage(cursor, "State");
+   cursor.NewLine();
+   DrawSettingMap(cursor, settingValues_);
+   cursor.NewLine();
+   cursor.NewLine();
+
+   DrawStringOnImage(cursor, "History");
+   cursor.NewLine();
+   DrawHistory(cursor);
 }
 
 
@@ -379,6 +392,21 @@ SettingLogger::WriteSettingMap(msgpack::sbuffer& sbuf,
 
 
 void
+SettingLogger::DrawSettingMap(TextImageCursor& cursor,
+      const SettingMap& values) const
+{
+   for (SettingConstIterator begin = values.begin(), it = begin,
+         end = values.end(); it != end; ++it)
+   {
+      if (it != begin)
+         cursor.Space();
+      DrawStringOnImage(cursor, it->first.GetStringRep() + '=' +
+            it->second->GetString());
+   }
+}
+
+
+void
 SettingLogger::WriteHistory(msgpack::sbuffer& sbuf) const
 {
    msgpack::packer<msgpack::sbuffer> pk(&sbuf);
@@ -388,5 +416,19 @@ SettingLogger::WriteHistory(msgpack::sbuffer& sbuf) const
          end = settingEvents_.end(); it != end; ++it)
    {
       it->Write(sbuf);
+   }
+}
+
+
+void
+SettingLogger::DrawHistory(TextImageCursor& cursor) const
+{
+   for (std::vector<SettingEvent>::const_iterator
+         begin = settingEvents_.begin(), it = begin,
+         end = settingEvents_.end(); it != end; ++it)
+   {
+      if (it != begin)
+         cursor.Space();
+      it->Draw(cursor);
    }
 }

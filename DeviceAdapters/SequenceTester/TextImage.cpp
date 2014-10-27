@@ -71,19 +71,19 @@ private:
    friend class GlyphDef;
 
 private:
-   void Draw(TextImageCursor& cursor, Pixel* buffer, bool knownToFit) const;
+   void Draw(TextImageCursor& cursor, bool knownToFit) const;
 
 public:
    ~Glyph() { delete[] pixmap_; }
 
    int GetWidth() const { return width_; }
-   void Draw(TextImageCursor& cursor, Pixel* buffer) const
-   { Draw(cursor, buffer, false); }
+   void Draw(TextImageCursor& cursor) const
+   { Draw(cursor, false); }
 
 public:
    static int GetStringWidth(const std::string& s);
    static void DrawString(const std::string& s, TextImageCursor& cursor,
-         Pixel* buffer, bool allowLineBreak);
+         bool allowLineBreak);
 };
 
 const Glyph* Glyph::map_[256];
@@ -98,7 +98,7 @@ public:
 
 
 void
-Glyph::Draw(TextImageCursor& cursor, Pixel* buffer, bool knownToFit) const
+Glyph::Draw(TextImageCursor& cursor, bool knownToFit) const
 {
    int glyphWidth = GetWidth();
    if (knownToFit || cursor.MakeRoom(glyphWidth))
@@ -112,7 +112,7 @@ Glyph::Draw(TextImageCursor& cursor, Pixel* buffer, bool knownToFit) const
          int rowEnd = rowStart + glyphWidth * cursor.GetEastStep();
          for (int pos = rowStart; pos < rowEnd; ++pos)
          {
-            buffer[pos] = pixmap_[pixelIndex++];
+            cursor.GetBuffer()[pos] = pixmap_[pixelIndex++];
          }
       }
       cursor.Advance(glyphWidth + GLYPH_SPACING);
@@ -136,7 +136,7 @@ Glyph::GetStringWidth(const std::string& s)
 
 void
 Glyph::DrawString(const std::string& s, TextImageCursor& cursor,
-      Pixel* buffer, bool allowLineBreak)
+      bool allowLineBreak)
 {
    int width = GetStringWidth(s);
    bool allWillFitInCurrentLine = cursor.HasRoom(width);
@@ -148,7 +148,7 @@ Glyph::DrawString(const std::string& s, TextImageCursor& cursor,
    for (std::string::const_iterator it = s.begin(), end = s.end();
          it != end; ++it)
    {
-      GetGlyph(*it)->Draw(cursor, buffer, allWillFitInCurrentLine);
+      GetGlyph(*it)->Draw(cursor, allWillFitInCurrentLine);
    }
 }
 
@@ -156,10 +156,10 @@ Glyph::DrawString(const std::string& s, TextImageCursor& cursor,
 
 
 void
-DrawStringOnImage(uint8_t* buffer, TextImageCursor& cursor,
+DrawStringOnImage(TextImageCursor& cursor,
       const std::string& string, bool allowLineBreak)
 {
-   Glyph::DrawString(string, cursor, buffer, allowLineBreak);
+   Glyph::DrawString(string, cursor, allowLineBreak);
 }
 
 
@@ -167,8 +167,8 @@ void
 DrawTextImage(uint8_t* buffer, size_t width, size_t height,
       const std::string& text)
 {
-   TextImageCursor cursor(width, height);
-   Glyph::DrawString(text, cursor, buffer, true);
+   TextImageCursor cursor(buffer, width, height);
+   Glyph::DrawString(text, cursor, true);
 }
 
 
@@ -356,6 +356,24 @@ const Pixel glyph_underscore[GLYPH_HEIGHT * 4] = {
    1,1,1,1,
 };
 GlyphDef def_underscore('_', glyph_underscore, sizeof(glyph_underscore));
+
+const Pixel glyph_leftbracket[GLYPH_HEIGHT * 3] = {
+   0,1,1,
+   0,1,0,
+   0,1,0,
+   0,1,0,
+   0,1,1,
+};
+GlyphDef def_leftbracket('[', glyph_leftbracket, sizeof(glyph_leftbracket));
+
+const Pixel glyph_rightbracket[GLYPH_HEIGHT * 3] = {
+   1,1,0,
+   0,1,0,
+   0,1,0,
+   0,1,0,
+   1,1,0,
+};
+GlyphDef def_rightbracket(']', glyph_rightbracket, sizeof(glyph_rightbracket));
 
 const Pixel glyph_A[GLYPH_HEIGHT * 4] = {
    0,1,1,0,
