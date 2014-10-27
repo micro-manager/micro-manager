@@ -112,7 +112,7 @@ CreateDevice(const char* deviceName)
       return 0;
    const std::string name(deviceName);
    if (name == "THub")
-      return new TesterHub(name);
+      return DeviceRetainer::CreateDevice<TesterHub>(name);
 
    // By using prefix matching, we can allow the creation of an arbitrary
    // number of each device for testing.
@@ -141,6 +141,13 @@ DeleteDevice(MM::Device* pDevice)
 }
 
 
+SettingLogger*
+InterDevice::GetLogger()
+{
+   return GetHub()->GetLogger();
+}
+
+
 TesterHub::TesterHub(const std::string& name) :
    Super(name)
 {
@@ -150,12 +157,9 @@ TesterHub::TesterHub(const std::string& name) :
 int
 TesterHub::Initialize()
 {
-   int err;
-
-   err = Super::Initialize();
-   if (err != DEVICE_OK)
-      return err;
-
+   // For hub only, do _not_ call Super::Initialize(). Instead, set itself to
+   // be the hub.
+   InterDevice::SetHub(GetSharedPtr());
    return DEVICE_OK;
 }
 
@@ -163,12 +167,9 @@ TesterHub::Initialize()
 int
 TesterHub::Shutdown()
 {
-   int err;
-
-   err = Super::Shutdown();
-   if (err != DEVICE_OK)
-      return err;
-
+   // For hub only, do _not_ call Super::Shutdown(). Release the self-reference
+   // created in Initialize().
+   InterDevice::SetHub(boost::shared_ptr<TesterHub>());
    return DEVICE_OK;
 }
 

@@ -44,6 +44,13 @@ template <template <class> class TDeviceBase, class UConcreteDevice>
 int
 TesterBase<TDeviceBase, UConcreteDevice>::Initialize()
 {
+   MM::Hub* pHub = Super::GetParentHub();
+   if (pHub == 0)
+   {
+      Super::LogMessage("Failing initialization due to missing hub");
+      return DEVICE_ERR;
+   }
+   InterDevice::SetHub(static_cast<TesterHub*>(pHub)->GetSharedPtr());
    return DEVICE_OK;
 }
 
@@ -61,22 +68,6 @@ bool
 TesterBase<TDeviceBase, UConcreteDevice>::Busy()
 {
    return GetLogger()->IsBusy(GetDeviceName());
-}
-
-
-template <template <class> class TDeviceBase, class UConcreteDevice>
-TesterHub*
-TesterBase<TDeviceBase, UConcreteDevice>::GetHub()
-{
-   MM::Hub* hub = Super::GetCoreCallback()->GetParentHub(this);
-   if (!hub)
-   {
-      // It is too much trouble to make this test adapter check for the
-      // presence of the hub (and hence the SettingLogger) on every operation.
-      // But leave a hint for debugging.
-      Super::LogMessage("Hub is missing. Will crash!");
-   }
-   return static_cast<TesterHub*>(hub);
 }
 
 

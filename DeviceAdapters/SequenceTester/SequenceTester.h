@@ -46,11 +46,16 @@ class InterDevice : public boost::enable_shared_from_this<InterDevice>
 public:
    InterDevice(const std::string& name) : name_(name) {}
    virtual ~InterDevice() {}
+   virtual void SetHub(boost::shared_ptr<TesterHub> hub) { hub_ = hub; }
 
    virtual std::string GetDeviceName() const { return name_; }
+   virtual boost::shared_ptr<TesterHub> GetHub() { return hub_; }
+   virtual SettingLogger* GetLogger();
+   void MarkBusy() { GetLogger()->MarkBusy(name_); }
 
 private:
    const std::string name_;
+   boost::shared_ptr<TesterHub> hub_;
 };
 
 
@@ -72,9 +77,6 @@ public:
    virtual bool Busy();
 
 protected:
-   virtual TesterHub* GetHub();
-   virtual SettingLogger* GetLogger() { return GetHub()->GetLogger(); }
-
    void CreateOnOffProperty(const std::string& name,
          typename BoolSetting<UConcreteDevice>::Ptr setting);
    void CreateYesNoProperty(const std::string& name,
@@ -85,8 +87,6 @@ protected:
          typename IntegerSetting<UConcreteDevice>::Ptr setting);
    void CreateFloatProperty(const std::string& name,
          typename FloatSetting<UConcreteDevice>::Ptr setting);
-
-   void MarkBusy() { GetLogger()->MarkBusy(GetDeviceName()); }
 };
 
 
@@ -110,7 +110,8 @@ public:
 
    virtual int DetectInstalledDevices();
 
-   virtual TesterHub* GetHub() { return this; }
+   boost::shared_ptr<TesterHub> GetSharedPtr()
+   { return boost::static_pointer_cast<TesterHub>(shared_from_this()); }
    virtual SettingLogger* GetLogger() { return &logger_; }
 };
 
