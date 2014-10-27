@@ -760,7 +760,7 @@ TesterZStage::IsStageSequenceable(bool& isSequenceable) const
    TesterHub::Guard g(GetHub()->LockGlobalMutex());
 
    long len;
-   int err = GetZPositionUmSetting()->GetSequenceMaxLength(len);
+   int err = Super::GetZPositionUmSetting()->GetSequenceMaxLength(len);
    isSequenceable = (len > 0);
    return err;
 }
@@ -771,7 +771,7 @@ TesterZStage::GetStageSequenceMaxLength(long& nrEvents) const
 {
    TesterHub::Guard g(GetHub()->LockGlobalMutex());
 
-   return GetZPositionUmSetting()->GetSequenceMaxLength(nrEvents);
+   return Super::GetZPositionUmSetting()->GetSequenceMaxLength(nrEvents);
 }
 
 
@@ -844,6 +844,16 @@ TesterAutofocus::Initialize()
    incrementalFocus_ = OneShotSetting::New(GetLogger(), this,
          "IncrementalFocus");
    incrementalFocus_->SetBusySetting(GetBusySetting());
+
+   linkedZStage_ = StringSetting::New(GetLogger(), this, "LinkedZStage");
+   linkedZStage_->GetPostSetSignal().connect(
+         boost::bind<void>(&Self::UpdateZStageLink, this));
+   CreateStringProperty("LinkedZStage", linkedZStage_);
+
+   setZDisablesContinuousFocus_ = BoolSetting::New(GetLogger(), this,
+         "SetZDisablesContinuousFocus", false);
+   CreateYesNoProperty("SetZDisablesContinuousFocus",
+         setZDisablesContinuousFocus_);
 
    return DEVICE_OK;
 }
@@ -939,6 +949,38 @@ TesterAutofocus::SetOffset(double offset)
 
    offset_->MarkBusy();
    return offset_->Set(offset);
+}
+
+
+void
+TesterAutofocus::UpdateZStageLink()
+{
+   zStageConnection_.disconnect();
+
+   const std::string zStageName = linkedZStage_->Get();
+   if (zStageName.empty())
+      return;
+
+   InterDevice::Ptr device = GetHub()->FindPeerDevice(zStageName);
+   boost::shared_ptr<TesterZStage> zStage =
+      boost::dynamic_pointer_cast<TesterZStage>(device);
+   if (!zStage)
+      return;
+
+   FloatSetting::Ptr zPosUm = zStage->GetZPositionUmSetting();
+   if (!zPosUm)
+      return;
+
+   zStageConnection_ = zPosUm->GetPostSetSignal().connect(
+         boost::bind<void>(&Self::HandleLinkedZStageSetPosition, this));
+}
+
+
+void
+TesterAutofocus::HandleLinkedZStageSetPosition()
+{
+   if (setZDisablesContinuousFocus_->Get())
+      continuousFocusEnabled_->Set(false);
 }
 
 

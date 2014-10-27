@@ -304,6 +304,9 @@ public:
 
    virtual bool IsContinuousFocusDrive() const { return false; }
 
+   FloatSetting::Ptr GetZPositionUmSetting()
+   { return Super::GetZPositionUmSetting(); }
+
 private:
    TriggerInput triggerInput_;
    std::vector<double> deviceInterfaceSequenceBuffer_;
@@ -347,6 +350,12 @@ private:
    FloatSetting::Ptr offset_;
    OneShotSetting::Ptr fullFocus_;
    OneShotSetting::Ptr incrementalFocus_;
+
+   StringSetting::Ptr linkedZStage_;
+   BoolSetting::Ptr setZDisablesContinuousFocus_;
+   boost::signals2::connection zStageConnection_;
+   void UpdateZStageLink();
+   void HandleLinkedZStageSetPosition();
 };
 
 
