@@ -9,6 +9,8 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 import javax.swing.JButton;
@@ -60,7 +62,8 @@ public class SnapLiveManager {
    private boolean shouldStopGrabberThread_ = false;
    private Thread grabberThread_;
    private int lastTimepoint_ = 0;
-   private DefaultImage lastImage_ = null;
+   // Maps channel to the last image we have received for that channel.
+   private HashMap<Integer, DefaultImage> channelToLastImage_;
 
    private JButton snapButton_;
    private JButton liveButton_;
@@ -68,6 +71,7 @@ public class SnapLiveManager {
 
    public SnapLiveManager(CMMCore core) {
       core_ = core;
+      channelToLastImage_ = new HashMap<Integer, DefaultImage>();
       listeners_ = new ArrayList<LiveModeListener>();
    }
 
@@ -313,11 +317,16 @@ public class SnapLiveManager {
    public void displayImage(Image image) {
       try {
          DefaultImage newImage = new DefaultImage(image, image.getCoords(), image.getMetadata());
-         if (lastImage_ == null ||
-               newImage.getWidth() != lastImage_.getWidth() ||
-               newImage.getHeight() != lastImage_.getHeight() ||
-               newImage.getNumComponents() != lastImage_.getNumComponents() ||
-               newImage.getBytesPerPixel() != lastImage_.getBytesPerPixel()) {
+         DefaultImage lastImage = null;
+         int channel = newImage.getCoords().getPositionAt("channel");
+         if (channelToLastImage_.containsKey(channel)) {
+            lastImage = channelToLastImage_.get(channel);
+         }
+         if (lastImage == null ||
+               newImage.getWidth() != lastImage.getWidth() ||
+               newImage.getHeight() != lastImage.getHeight() ||
+               newImage.getNumComponents() != lastImage.getNumComponents() ||
+               newImage.getBytesPerPixel() != lastImage.getBytesPerPixel()) {
             // Format changing and/or we have no display; we need to recreate
             // everything.
             if (display_ != null) {
@@ -325,14 +334,15 @@ public class SnapLiveManager {
             }
             createDatastore();
             createDisplay();
+            channelToLastImage_.clear();
          }
          else if (display_ == null || display_.getIsClosed()) {
             createDisplay();
          }
-         lastImage_ = newImage;
+         channelToLastImage_.put(channel, newImage);
          // This will put the images into the datastore, which in turn will
          // cause them to be displayed.
-         lastImage_.splitMultiComponentIntoStore(store_);
+         newImage.splitMultiComponentIntoStore(store_);
       }
       catch (DatastoreLockedException e) {
          ReportingUtils.showError(e, "Snap/Live display datastore locked.");
@@ -350,24 +360,33 @@ public class SnapLiveManager {
     * TODO: for multichannel images we are just returning the last channel's
     * image.
     */
-   public Image snap(boolean shouldDisplay) {
+   public List<Image> snap(boolean shouldDisplay) {
       if (isOn_) {
-         // Just return the most recent image.
-         return lastImage_;
+         // Just return the most recent images.
+         ArrayList<Image> result = new ArrayList<Image>();
+         ArrayList<Integer> keys = new ArrayList<Integer>(channelToLastImage_.keySet());
+         Collections.sort(keys);
+         for (Integer i : keys) {
+            result.add(channelToLastImage_.get(i));
+         }
+         return result;
       }
       try {
          core_.snapImage();
-         Image result = null;
+         ArrayList<Image> result = new ArrayList<Image>();
          for (int c = 0; c < core_.getNumberOfCameraChannels(); ++c) {
             TaggedImage tagged = core_.getTaggedImage(c);
-            result = new DefaultImage(tagged);
-            Coords newCoords = result.getCoords().copy()
+            Image temp = new DefaultImage(tagged);
+            Coords newCoords = temp.getCoords().copy()
                .position("channel", c).build();
-            result = result.copyAtCoords(newCoords);
-            if (shouldDisplay) {
-               displayImage(result);
-               display_.toFront();
+            temp = temp.copyAtCoords(newCoords);
+            result.add(temp);
+         }
+         if (shouldDisplay) {
+            for (Image image : result) {
+               displayImage(image);
             }
+            display_.toFront();
          }
          return result;
       }
