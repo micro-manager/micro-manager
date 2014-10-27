@@ -258,8 +258,9 @@ TesterCamera::TesterCamera(const std::string& name) :
    produceHumanReadableImages_(true),
    imageWidth_(384),
    imageHeight_(384),
-   snapCounter_(0),
-   cumulativeSequenceCounter_(0),
+   nextSerialNr_(0),
+   nextSnapImageNr_(0),
+   nextSequenceImageNr_(0),
    snapImage_(0),
    stopSequence_(true)
 {
@@ -323,7 +324,7 @@ TesterCamera::SnapImage()
    TesterHub::Guard g(GetHub()->LockGlobalMutex());
 
    delete[] snapImage_;
-   snapImage_ = GenerateLogImage(false, snapCounter_++);
+   snapImage_ = GenerateLogImage(false, nextSnapImageNr_++);
 
    return DEVICE_OK;
 }
@@ -503,8 +504,8 @@ TesterCamera::IsCapturing()
 
 
 const unsigned char*
-TesterCamera::GenerateLogImage(bool isSequenceImage,
-      size_t cumulativeCount, size_t localCount)
+TesterCamera::GenerateLogImage(bool isSequenceImage, size_t cumulativeNr,
+      size_t frameNr)
 {
    exposureStartEdgeTrigger_();
 
@@ -515,12 +516,14 @@ TesterCamera::GenerateLogImage(bool isSequenceImage,
    if (produceHumanReadableImages_)
    {
       logger->DrawTextToBuffer(bytes, GetImageWidth(), GetImageHeight(),
-            GetDeviceName(), isSequenceImage, cumulativeCount, localCount);
+            GetDeviceName(), isSequenceImage, nextSerialNr_++,
+            cumulativeNr, frameNr);
    }
    else
    {
       logger->DumpMsgPackToBuffer(bytes, bufSize, GetDeviceName(),
-            isSequenceImage, cumulativeCount, localCount);
+            isSequenceImage, nextSerialNr_++, cumulativeNr, frameNr);
+
    }
    logger->Reset();
 
@@ -560,7 +563,7 @@ TesterCamera::SendSequence(bool finite, long count, bool stopOnOverflow)
 
       {
          TesterHub::Guard g(GetHub()->LockGlobalMutex());
-         bytes = GenerateLogImage(true, cumulativeSequenceCounter_++, frame);
+         bytes = GenerateLogImage(true, nextSequenceImageNr_++, frame);
       }
 
       try

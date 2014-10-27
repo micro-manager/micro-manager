@@ -195,9 +195,10 @@ public:
    { f = false; return DEVICE_OK; }
 
 private:
-   // Returned pointer should be delete[]d by caller
+   // Must be called with hub global mutex held.
+   // Returned pointer should be delete[]d by caller.
    const unsigned char* GenerateLogImage(bool isSequenceImage,
-         size_t cumulativeCount, size_t localCount = 0);
+         size_t cumulativeNr, size_t frameNr = 0);
 
    int StartSequenceAcquisitionImpl(bool finite, long count,
          bool stopOnOverflow);
@@ -209,8 +210,9 @@ private:
    long imageWidth_;
    long imageHeight_;
 
-   size_t snapCounter_;
-   size_t cumulativeSequenceCounter_;
+   size_t nextSerialNr_;
+   size_t nextSnapImageNr_;
+   size_t nextSequenceImageNr_;
 
    const unsigned char* snapImage_;
 

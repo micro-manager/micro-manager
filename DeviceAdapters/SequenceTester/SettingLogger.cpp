@@ -132,15 +132,17 @@ void
 CameraInfo::Write(msgpack::sbuffer& sbuf) const
 {
    msgpack::packer<msgpack::sbuffer> pk(&sbuf);
-   pk.pack_array(4);
+   pk.pack_array(5);
    // name
    pk.pack(camera_);
+   // serialImageNr
+   pk.pack(serialNr_);
    // isSequence
    pk.pack(isSequence_);
-   // serialNumber
-   pk.pack(serialNum_);
-   // frameNumber
-   pk.pack(frameNum_);
+   // cumulativeImageNr
+   pk.pack(cumulativeNr_);
+   // frameNr
+   pk.pack(frameNr_);
 }
 
 
@@ -149,14 +151,21 @@ CameraInfo::Draw(TextImageCursor& cursor) const
 {
    DrawStringOnImage(cursor, "camera,name=" + camera_);
    cursor.Space();
+   DrawStringOnImage(cursor, "camera,serialImageNr=" +
+         boost::lexical_cast<std::string>(serialNr_));
+   cursor.Space();
    DrawStringOnImage(cursor, "camera,isSequence=" +
          std::string(isSequence_ ? "true" : "false"));
    cursor.Space();
-   DrawStringOnImage(cursor, "camera,serialNumber=" +
-         boost::lexical_cast<std::string>(serialNum_));
-   cursor.Space();
-   DrawStringOnImage(cursor, "camera,frameNumber=" +
-         boost::lexical_cast<std::string>(frameNum_));
+   DrawStringOnImage(cursor,
+         (isSequence_ ? "camera,sequenceImageNr=" : "camera,snapImageNr=") +
+         boost::lexical_cast<std::string>(cumulativeNr_));
+   if (isSequence_)
+   {
+      cursor.Space();
+      DrawStringOnImage(cursor, "camera,frameNr=" +
+            boost::lexical_cast<std::string>(frameNr_));
+   }
 }
 
 
@@ -301,10 +310,10 @@ SettingLogger::FireOneShot(const std::string& device, const std::string& key,
 bool
 SettingLogger::DumpMsgPackToBuffer(char* dest, size_t destSize,
       const std::string& camera, bool isSequenceImage,
-      size_t cameraSeqNum, size_t acquisitionSeqNum)
+      size_t serialImageNr, size_t cumulativeImageNr, size_t frameNr)
 {
    CameraInfo cameraInfo(camera, isSequenceImage,
-         cameraSeqNum, acquisitionSeqNum);
+         serialImageNr, cumulativeImageNr, frameNr);
 
    msgpack::sbuffer sbuf;
    msgpack::packer<msgpack::sbuffer> pk(&sbuf);
@@ -313,7 +322,7 @@ SettingLogger::DumpMsgPackToBuffer(char* dest, size_t destSize,
 
    pk.pack_array(7);
    // packetNumber
-   pk.pack(GetNextGlobalImageCount());
+   pk.pack(GetNextGlobalImageNr());
    // camera
    cameraInfo.Write(sbuf);
    // startCounter
@@ -344,18 +353,18 @@ SettingLogger::DumpMsgPackToBuffer(char* dest, size_t destSize,
 void
 SettingLogger::DrawTextToBuffer(char* dest, size_t destWidth,
       size_t destHeight, const std::string& camera, bool isSequenceImage,
-      size_t cameraSeqNum, size_t acquisitionSeqNum)
+      size_t serialImageNr, size_t cumulativeImageNr, size_t frameNr)
 {
    memset(dest, 0, destWidth * destHeight);
    TextImageCursor cursor(reinterpret_cast<uint8_t*>(dest),
          destWidth, destHeight);
 
-   DrawStringOnImage(cursor, "HubPacketNr=" +
-         boost::lexical_cast<std::string>(GetNextGlobalImageCount()));
+   DrawStringOnImage(cursor, "HubGlobalPacketNr=" +
+         boost::lexical_cast<std::string>(GetNextGlobalImageNr()));
    cursor.NewLine();
 
    CameraInfo cameraInfo(camera, isSequenceImage,
-         cameraSeqNum, acquisitionSeqNum);
+         serialImageNr, cumulativeImageNr, frameNr);
    cameraInfo.Draw(cursor);
    cursor.NewLine();
    cursor.NewLine();

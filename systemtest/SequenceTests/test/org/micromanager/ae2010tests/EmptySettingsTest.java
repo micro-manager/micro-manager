@@ -39,11 +39,11 @@ public class EmptySettingsTest {
       assertEquals(1, packets.size());
 
       InfoPacket packet = packets.get(0);
-      assertEquals(0, packet.packetNumber);
+      assertEquals(0, packet.hubGlobalPacketNr);
       assertEquals(camera, packet.camera.name);
+      assertEquals(0, packet.camera.serialImageNr);
       assertFalse(packet.camera.isSequence);
-      assertEquals(0, packet.camera.serialNumber);
-      assertEquals(0, packet.camera.frameNumber);
+      assertEquals(0, packet.camera.cumulativeImageNr);
       assertTrue(packet.startCounter < packet.currentCounter);
    }
 }

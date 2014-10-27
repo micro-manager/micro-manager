@@ -69,14 +69,15 @@ public class TestImageDecoder {
    @Message
    public static class CameraInfo {
       public String name;
+      public long serialImageNr;
       public boolean isSequence;
-      public long serialNumber;
-      public long frameNumber;
+      public long cumulativeImageNr;
+      public long frameNr;
    }
 
    @Message
    public static class InfoPacket {
-      public long packetNumber;
+      public long hubGlobalPacketNr;
       public CameraInfo camera;
       public long startCounter;
       public long currentCounter;

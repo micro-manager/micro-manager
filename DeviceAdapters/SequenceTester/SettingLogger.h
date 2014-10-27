@@ -149,15 +149,17 @@ class CameraInfo : public Serializable
 {
    std::string camera_;
    bool isSequence_;
-   size_t serialNum_;
-   size_t frameNum_;
+   size_t serialNr_;
+   size_t cumulativeNr_;
+   size_t frameNr_;
 public:
    CameraInfo(const std::string& camera, bool isSequence,
-         size_t serialNum, size_t frameNum) :
+         size_t serialNr, size_t cumulativeNr, size_t frameNr) :
       camera_(camera),
       isSequence_(isSequence),
-      serialNum_(serialNum),
-      frameNum_(frameNum)
+      serialNr_(serialNr),
+      cumulativeNr_(cumulativeNr),
+      frameNr_(frameNr)
    {}
    virtual void Write(msgpack::sbuffer& sbuf) const;
    virtual void Draw(TextImageCursor& cursor) const;
@@ -170,7 +172,7 @@ public:
    SettingLogger() :
       counter_(0),
       counterAtLastReset_(0),
-      globalImageCount_(0)
+      nextGlobalImageNr_(0)
    {}
 
    // Recording and querying
@@ -194,10 +196,12 @@ public:
    // Log retrieval
    bool DumpMsgPackToBuffer(char* dest, size_t destSize,
          const std::string& camera, bool isSequenceImage,
-         size_t cameraSeqNum, size_t acquisitionSeqNum);
+         size_t serialImageNr, size_t cumulativeImageNr, size_t frameNr);
    void DrawTextToBuffer(char* dest, size_t destWidth, size_t destHeight,
          const std::string& camera, bool isSequenceImage,
-         size_t cameraSeqNum, size_t acquisitionSeqNum);
+         size_t serialImageNr, size_t cumulativeImageNr, size_t frameNr);
+
+   // Clear history and save current state as previous
    void Reset()
    {
       counterAtLastReset_ = counter_;
@@ -208,7 +212,7 @@ public:
 private:
    uint64_t counter_;
    uint64_t counterAtLastReset_;
-   uint64_t globalImageCount_;
+   uint64_t nextGlobalImageNr_;
 
    typedef std::map< SettingKey, boost::shared_ptr<SettingValue> > SettingMap;
    typedef SettingMap::const_iterator SettingConstIterator;
@@ -218,7 +222,7 @@ private:
 
    // Helper functions to be called with mutex_ held
    uint64_t GetNextCount() { return counter_++; }
-   uint64_t GetNextGlobalImageCount() { return globalImageCount_++; }
+   uint64_t GetNextGlobalImageNr() { return nextGlobalImageNr_++; }
    void WriteSettingMap(msgpack::sbuffer& sbuf, const SettingMap& values) const;
    void DrawSettingMap(TextImageCursor& cursor,
          const SettingMap& values) const;
