@@ -317,9 +317,10 @@ public class SnapLiveManager {
    public void displayImage(Image image) {
       try {
          DefaultImage newImage = new DefaultImage(image, image.getCoords(), image.getMetadata());
+         // Find any image to compare against, at all.
          DefaultImage lastImage = null;
-         int channel = newImage.getCoords().getPositionAt("channel");
-         if (channelToLastImage_.containsKey(channel)) {
+         if (channelToLastImage_.keySet().size() > 0) {
+            int channel = new ArrayList<Integer>(channelToLastImage_.keySet()).get(0);
             lastImage = channelToLastImage_.get(channel);
          }
          if (lastImage == null ||
@@ -339,7 +340,8 @@ public class SnapLiveManager {
          else if (display_ == null || display_.getIsClosed()) {
             createDisplay();
          }
-         channelToLastImage_.put(channel, newImage);
+         channelToLastImage_.put(newImage.getCoords().getPositionAt("channel"),
+               newImage);
          // This will put the images into the datastore, which in turn will
          // cause them to be displayed.
          newImage.splitMultiComponentIntoStore(store_);
