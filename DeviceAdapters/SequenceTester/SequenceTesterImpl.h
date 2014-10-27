@@ -27,13 +27,17 @@
 
 #include "DeviceUtils.h"
 
-#include <boost/lexical_cast.hpp>
 #include <boost/utility.hpp>
+
+#include <string>
 
 
 template <class TDevice>
-LoggedSetting<TDevice>::LoggedSetting(TDevice* device) :
-   device_(device)
+LoggedSetting<TDevice>::LoggedSetting(SettingLogger* logger,
+      TDevice* device, const std::string& name) :
+   logger_(logger),
+   device_(device),
+   name_(name)
 {
 }
 
@@ -45,14 +49,16 @@ LoggedSetting<TDevice>::~LoggedSetting()
 
 
 template <class TDevice>
-LoggedIntegerSetting<TDevice>::LoggedIntegerSetting(TDevice* device,
+LoggedIntegerSetting<TDevice>::LoggedIntegerSetting(SettingLogger* logger,
+      TDevice* device, const std::string& name,
       long initialValue, bool hasMinMax, long minimum, long maximum) :
-   LoggedSetting<TDevice>(device),
+   LoggedSetting<TDevice>(logger, device, name),
    hasMinMax_(hasMinMax),
    min_(minimum),
-   max_(maximum),
-   setValue_(initialValue)
+   max_(maximum)
 {
+   Super::GetLogger()->SetInteger(Super::GetDevice()->GetName(),
+         Super::GetName(), initialValue, false);
 }
 
 
@@ -60,7 +66,8 @@ template <class TDevice>
 int
 LoggedIntegerSetting<TDevice>::Set(long newValue)
 {
-   setValue_ = newValue;
+   Super::GetLogger()->SetInteger(Super::GetDevice()->GetName(),
+         Super::GetName(), newValue);
    return DEVICE_OK;
 }
 
@@ -78,8 +85,8 @@ template <class TDevice>
 long
 LoggedIntegerSetting<TDevice>::Get() const
 {
-   // For now, value is stable (always matches last-set value)
-   return setValue_;
+   return Super::GetLogger()->GetInteger(Super::GetDevice()->GetName(),
+         Super::GetName());
 }
 
 
@@ -116,14 +123,16 @@ LoggedIntegerSetting<TDevice>::NewPropertyAction()
 
 
 template <class TDevice>
-LoggedFloatSetting<TDevice>::LoggedFloatSetting(TDevice* device,
+LoggedFloatSetting<TDevice>::LoggedFloatSetting(SettingLogger* logger,
+      TDevice* device, const std::string& name,
       double initialValue, bool hasMinMax, double minimum, double maximum) :
-   LoggedSetting<TDevice>(device),
+   LoggedSetting<TDevice>(logger, device, name),
    hasMinMax_(hasMinMax),
    min_(minimum),
-   max_(maximum),
-   setValue_(initialValue)
+   max_(maximum)
 {
+   Super::GetLogger()->SetFloat(Super::GetDevice()->GetName(),
+         Super::GetName(), initialValue, false);
 }
 
 
@@ -131,7 +140,8 @@ template <class TDevice>
 int
 LoggedFloatSetting<TDevice>::Set(double newValue)
 {
-   setValue_ = newValue;
+   Super::GetLogger()->SetFloat(Super::GetDevice()->GetName(),
+         Super::GetName(), newValue);
    return DEVICE_OK;
 }
 
@@ -149,8 +159,8 @@ template <class TDevice>
 double
 LoggedFloatSetting<TDevice>::Get() const
 {
-   // For now, value is stable (always matches last-set value)
-   return setValue_;
+   return Super::GetLogger()->GetFloat(Super::GetDevice()->GetName(),
+         Super::GetName());
 }
 
 
@@ -188,8 +198,7 @@ LoggedFloatSetting<TDevice>::NewPropertyAction()
 
 template <template <class> class TDeviceBase, class UConcreteDevice>
 TesterBase<TDeviceBase, UConcreteDevice>::TesterBase(const std::string& name) :
-   name_(name),
-   busyCount_(1)
+   name_(name)
 {
 }
 
@@ -228,21 +237,7 @@ template <template <class> class TDeviceBase, class UConcreteDevice>
 bool
 TesterBase<TDeviceBase, UConcreteDevice>::Busy()
 {
-   // For testing of sequencers, all we need to know is that the Busy status
-   // was appropriately checked. We increment a counter when "becoming busy",
-   // and decrement it for each check. With a large enough increment, we can be
-   // reasonably sure that the check is done correctly.
-   if (busyCount_ > 0)
-      --busyCount_;
-   return busyCount_;
-}
-
-
-template <template <class> class TDeviceBase, class UConcreteDevice>
-void
-TesterBase<TDeviceBase, UConcreteDevice>::MarkBusy()
-{
-   busyCount_ += 5;
+   return GetLogger()->IsBusy(GetName());
 }
 
 
@@ -259,14 +254,14 @@ template <template <class> class TDeviceBase, class UConcreteDevice>
 void
 TesterBase<TDeviceBase, UConcreteDevice>::
 CreateIntegerProperty(const std::string& name,
-      LoggedIntegerSetting<UConcreteDevice>& setting)
+      boost::shared_ptr< LoggedIntegerSetting<UConcreteDevice> > setting)
 {
-   Super::CreateIntegerProperty(name.c_str(), setting.Get(), false,
-         setting.NewPropertyAction());
-   if (setting.HasMinMax())
+   Super::CreateIntegerProperty(name.c_str(), setting->Get(), false,
+         setting->NewPropertyAction());
+   if (setting->HasMinMax())
    {
       Super::SetPropertyLimits(name.c_str(),
-            setting.GetMin(), setting.GetMax());
+            setting->GetMin(), setting->GetMax());
    }
 }
 
@@ -275,13 +270,13 @@ template <template <class> class TDeviceBase, class UConcreteDevice>
 void
 TesterBase<TDeviceBase, UConcreteDevice>::
 CreateFloatProperty(const std::string& name,
-      LoggedFloatSetting<UConcreteDevice>& setting)
+      boost::shared_ptr< LoggedFloatSetting<UConcreteDevice> > setting)
 {
-   Super::CreateFloatProperty(name.c_str(), setting.Get(), false,
-         setting.NewPropertyAction());
-   if (setting.HasMinMax())
+   Super::CreateFloatProperty(name.c_str(), setting->Get(), false,
+         setting->NewPropertyAction());
+   if (setting->HasMinMax())
    {
       Super::SetPropertyLimits(name.c_str(),
-            setting.GetMin(), setting.GetMax());
+            setting->GetMin(), setting->GetMax());
    }
 }

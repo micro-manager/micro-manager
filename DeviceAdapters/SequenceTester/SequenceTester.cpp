@@ -26,12 +26,12 @@
 
 #include "ModuleInterface.h"
 
-#include <msgpack.hpp>
-
 #include <boost/bind.hpp>
 #include <boost/move/move.hpp>
+#include <boost/thread.hpp>
 #include <exception>
 #include <sstream>
+#include <string>
 
 
 // Container for Micro-Manager error code
@@ -123,12 +123,9 @@ TesterHub::DetectInstalledDevices()
 TesterCamera::TesterCamera(const std::string& name) :
    Super(name),
    snapCounter_(0),
-   sequenceCounter_(0),
    cumulativeSequenceCounter_(0),
    snapImage_(0),
-   stopSequence_(true),
-   exposureSetting_(this, 100.0, true, 0.1, 1000.0),
-   binningSetting_(this, 1, true, 1, 1)
+   stopSequence_(true)
 {
 }
 
@@ -147,6 +144,11 @@ TesterCamera::Initialize()
    err = Super::Initialize();
    if (err != DEVICE_OK)
       return err;
+
+   exposureSetting_ = boost::make_shared< LoggedFloatSetting<Self> >(
+         GetLogger(), this, "Exposure", 100.0, true, 0.1, 1000.0);
+   binningSetting_ = boost::make_shared< LoggedIntegerSetting<Self> >(
+         GetLogger(), this, "Binning", 1, true, 1, 1);
 
    CreateFloatProperty("Exposure", exposureSetting_);
    CreateIntegerProperty("Binning", binningSetting_);
@@ -171,11 +173,8 @@ TesterCamera::Shutdown()
 int
 TesterCamera::SnapImage()
 {
-   boost::lock_guard<boost::mutex> lock(sequenceMutex_);
-
    delete[] snapImage_;
-   snapImage_ = GenerateLogImage(false);
-   ++snapCounter_;
+   snapImage_ = GenerateLogImage(false, snapCounter_++);
 
    return DEVICE_OK;
 }
@@ -184,7 +183,6 @@ TesterCamera::SnapImage()
 const unsigned char*
 TesterCamera::GetImageBuffer()
 {
-   boost::lock_guard<boost::mutex> lock(sequenceMutex_);
    return snapImage_;
 }
 
@@ -192,14 +190,14 @@ TesterCamera::GetImageBuffer()
 int
 TesterCamera::GetBinning() const
 {
-   return static_cast<int>(binningSetting_.Get());
+   return static_cast<int>(binningSetting_->Get());
 }
 
 
 int
 TesterCamera::SetBinning(int binSize)
 {
-   return binningSetting_.Set(binSize);
+   return binningSetting_->Set(binSize);
 }
 
 
@@ -213,28 +211,28 @@ TesterCamera::GetImageBufferSize() const
 unsigned
 TesterCamera::GetImageWidth() const
 {
-   return 512; // TODO
+   return 128; // TODO
 }
 
 
 unsigned
 TesterCamera::GetImageHeight() const
 {
-   return 512; // TODO
+   return 128; // TODO
 }
 
 
 void
 TesterCamera::SetExposure(double exposureMs)
 {
-   exposureSetting_.Set(exposureMs);
+   exposureSetting_->Set(exposureMs);
 }
 
 
 double
 TesterCamera::GetExposure() const
 {
-   return exposureSetting_.Get();
+   return exposureSetting_->Get();
 }
 
 
@@ -334,35 +332,16 @@ TesterCamera::IsCapturing()
 
 
 const unsigned char*
-TesterCamera::GenerateLogImage(bool isSequenceImage)
+TesterCamera::GenerateLogImage(bool isSequenceImage,
+      size_t cumulativeCount, size_t localCount)
 {
-   msgpack::sbuffer sbuf;
-
-   // Placeholder
-   msgpack::pack(sbuf, isSequenceImage);
-   if (isSequenceImage)
-   {
-      msgpack::pack(sbuf, cumulativeSequenceCounter_);
-      msgpack::pack(sbuf, sequenceCounter_);
-   }
-   else
-   {
-      msgpack::pack(sbuf, snapCounter_);
-   }
-   // End placeholder
-
    size_t bufSize = GetImageBufferSize();
-   unsigned char* bytes = new unsigned char[bufSize];
-   if (sbuf.size() <= bufSize)
-   {
-      memcpy(bytes, sbuf.data(), sbuf.size());
-      memset(bytes + sbuf.size(), 0, bufSize - sbuf.size());
-   }
-   else // Won't fit; return zeroed image
-   {
-      memset(bytes, 0, bufSize);
-   }
-   return bytes;
+   char* bytes = new char[bufSize];
+
+   GetLogger()->PackAndReset(bytes, bufSize,
+         GetName(), isSequenceImage, cumulativeCount, localCount);
+
+   return reinterpret_cast<unsigned char*>(bytes);
 }
 
 
@@ -379,23 +358,21 @@ TesterCamera::SendSequence(bool finite, long count, bool stopOnOverflow)
 
    const unsigned char* bytes = 0;
 
+   // Currently assumed to be constant over device lifetime
+   unsigned width = GetImageWidth();
+   unsigned height = GetImageHeight();
+   unsigned bytesPerPixel = GetImageBytesPerPixel();
+
    for (long frame = 0; !finite || frame < count; ++frame)
    {
-      unsigned width, height, bytesPerPixel;
       {
          boost::lock_guard<boost::mutex> lock(sequenceMutex_);
          if (stopSequence_)
             break;
-
-         width = GetImageWidth();
-         height = GetImageHeight();
-         bytesPerPixel = GetImageBytesPerPixel();
-
-         sequenceCounter_ = frame;
-         delete[] bytes;
-         bytes = GenerateLogImage(true);
-         ++cumulativeSequenceCounter_;
       }
+
+      delete[] bytes;
+      bytes = GenerateLogImage(true, cumulativeSequenceCounter_++, frame);
 
       try
       {

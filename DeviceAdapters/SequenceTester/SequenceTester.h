@@ -23,19 +23,34 @@
 
 #pragma once
 
+#include "SettingLogger.h"
+
 #include "DeviceBase.h"
 
+#include <boost/shared_ptr.hpp>
 #include <boost/thread.hpp>
 #include <string>
 
 
+// A "setting" in this device adapter is a property or a property-like entity
+// (e.g. camera exposure, stage position).
 template <class TDevice>
 class LoggedSetting
 {
+   SettingLogger* logger_;
    TDevice* device_;
+   const std::string name_;
+
+protected:
+   SettingLogger* GetLogger() { return logger_; }
+   const SettingLogger* GetLogger() const { return logger_; }
+   TDevice* GetDevice() { return device_; }
+   const TDevice* GetDevice() const { return device_; }
+   std::string GetName() const { return name_; }
 
 public:
-   LoggedSetting(TDevice* device);
+   LoggedSetting(SettingLogger* logger, TDevice* device,
+         const std::string& name);
    virtual ~LoggedSetting();
 
    virtual MM::ActionFunctor* NewPropertyAction() = 0;
@@ -49,10 +64,11 @@ class LoggedIntegerSetting : public LoggedSetting<TDevice>
    long min_;
    long max_;
 
-   long setValue_;
+   typedef LoggedSetting<TDevice> Super;
 
 public:
-   LoggedIntegerSetting(TDevice* device, long initialValue,
+   LoggedIntegerSetting(SettingLogger* logger, TDevice* device,
+         const std::string& name, long initialValue,
          bool hasMinMax, long minimum, long maximum);
 
    bool HasMinMax() const { return hasMinMax_; }
@@ -73,10 +89,11 @@ class LoggedFloatSetting : public LoggedSetting<TDevice>
    double min_;
    double max_;
 
-   double setValue_;
+   typedef LoggedSetting<TDevice> Super;
 
 public:
-   LoggedFloatSetting(TDevice* device, double initialValue,
+   LoggedFloatSetting(SettingLogger* logger, TDevice* device,
+         const std::string& name, double initialValue,
          bool hasMinMax, double minimum, double maximum);
 
    bool HasMinMax() const { return hasMinMax_; }
@@ -93,6 +110,8 @@ public:
 class TesterHub;
 
 
+// Common base class for all devices. Goes in between TDeviceBase and
+// UConcreteDevice in the inheritance graph.
 template <template <class> class TDeviceBase, class UConcreteDevice>
 class TesterBase : public TDeviceBase<UConcreteDevice>
 {
@@ -108,23 +127,31 @@ public:
    virtual int Shutdown();
    virtual bool Busy();
 
-   void MarkBusy();
+   virtual std::string GetName() const { return name_; }
 
 protected:
    virtual TesterHub* GetHub();
+   virtual SettingLogger* GetLogger() { return GetHub()->GetLogger(); }
+
    void CreateIntegerProperty(const std::string& name,
-         LoggedIntegerSetting<UConcreteDevice>& setting);
+         boost::shared_ptr< LoggedIntegerSetting<UConcreteDevice> > setting);
    void CreateFloatProperty(const std::string& name,
-         LoggedFloatSetting<UConcreteDevice>& setting);
+         boost::shared_ptr< LoggedFloatSetting<UConcreteDevice> > setting);
 
 private:
    const std::string name_;
-   unsigned busyCount_;
 };
 
 
+// This device adapter is specifically designed to be used in parallel testing
+// within the same process, using multiple MMCore instances. Since there will
+// be only one copy of the device adapter module (library), we must not use any
+// static data. All state (e.g. SettingLogger) shared between devices must be
+// owned by the hub instance.
 class TesterHub : public TesterBase<HubBase, TesterHub>
 {
+   SettingLogger logger_;
+
 public:
    typedef TesterHub Self;
    typedef TesterBase< ::HubBase, TesterHub > Super;
@@ -137,6 +164,7 @@ public:
    virtual int DetectInstalledDevices();
 
    virtual TesterHub* GetHub() { return this; }
+   virtual SettingLogger* GetLogger() { return &logger_; }
 };
 
 
@@ -180,7 +208,8 @@ public:
 
 private:
    // Returned pointer should be delete[]d by caller
-   const unsigned char* GenerateLogImage(bool isSequenceImage);
+   const unsigned char* GenerateLogImage(bool isSequenceImage,
+         size_t cumulativeCount, size_t localCount = 0);
 
    int StartSequenceAcquisitionImpl(bool finite, long count,
          bool stopOnOverflow);
@@ -188,18 +217,19 @@ private:
    void SendSequence(bool finite, long count, bool stopOnOverflow);
 
 private:
+   // TODO These could just be settings, but must not mark busy
    size_t snapCounter_;
-   size_t sequenceCounter_;
    size_t cumulativeSequenceCounter_;
 
    const unsigned char* snapImage_;
 
-   boost::mutex sequenceMutex_;
-   bool stopSequence_;
+   boost::mutex sequenceMutex_; // Guards stopSequence_ (only)
+   bool stopSequence_; // Guarded by sequenceMutex_
+
    // Note: boost::future in more recent versions
    boost::unique_future<void> sequenceFuture_;
    boost::thread sequenceThread_;
 
-   LoggedFloatSetting<Self> exposureSetting_;
-   LoggedIntegerSetting<Self> binningSetting_;
+   boost::shared_ptr< LoggedFloatSetting<Self> > exposureSetting_;
+   boost::shared_ptr< LoggedIntegerSetting<Self> > binningSetting_;
 };
