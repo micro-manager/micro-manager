@@ -60,6 +60,9 @@ template <template <class> class TDeviceBase, class UConcreteDevice>
 int
 TesterBase<TDeviceBase, UConcreteDevice>::CommonHubPeripheralInitialize()
 {
+   Super::CreateStringProperty(MM::g_Keyword_Name,
+         GetDeviceName().c_str(), true);
+
    int err = GetHub()->RegisterDevice(GetDeviceName(), shared_from_this());
    if (err != DEVICE_OK)
       return err;
