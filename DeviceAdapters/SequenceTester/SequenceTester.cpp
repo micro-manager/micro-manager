@@ -835,6 +835,7 @@ TesterAutofocus::Initialize()
    continuousFocusEnabled_ = BoolSetting::New(GetLogger(), this,
          "ContinuousFocusEnabled", false);
    continuousFocusEnabled_->SetBusySetting(GetBusySetting());
+   CreateOnOffProperty("ContinuousFocus", continuousFocusEnabled_);
 
    offset_ = FloatSetting::New(GetLogger(), this, "Offset", 0.0, false);
    offset_->SetBusySetting(GetBusySetting());
