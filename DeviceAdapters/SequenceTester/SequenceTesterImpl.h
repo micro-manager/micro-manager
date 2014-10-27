@@ -166,9 +166,9 @@ CreateFloatProperty(const std::string& name,
 }
 
 
-template <class TConcreteStage, long UMicronsPerStep>
+template <class TConcreteStage, long UStepsPerMicrometer>
 int
-Tester1DStageBase<TConcreteStage, UMicronsPerStep>::Initialize()
+Tester1DStageBase<TConcreteStage, UStepsPerMicrometer>::Initialize()
 {
    int err;
 
@@ -185,9 +185,9 @@ Tester1DStageBase<TConcreteStage, UMicronsPerStep>::Initialize()
 }
 
 
-template <class TConcreteStage, long UMicronsPerStep>
+template <class TConcreteStage, long UStepsPerMicrometer>
 int
-Tester1DStageBase<TConcreteStage, UMicronsPerStep>::SetPositionUm(double pos)
+Tester1DStageBase<TConcreteStage, UStepsPerMicrometer>::SetPositionUm(double pos)
 {
    SettingLogger::GuardType g = Super::GetLogger()->Guard();
    Super::MarkBusy();
@@ -195,17 +195,17 @@ Tester1DStageBase<TConcreteStage, UMicronsPerStep>::SetPositionUm(double pos)
 }
 
 
-template <class TConcreteStage, long UMicronsPerStep>
+template <class TConcreteStage, long UStepsPerMicrometer>
 int
-Tester1DStageBase<TConcreteStage, UMicronsPerStep>::GetPositionUm(double& pos)
+Tester1DStageBase<TConcreteStage, UStepsPerMicrometer>::GetPositionUm(double& pos)
 {
    return zPositionUm_->Get(pos);
 }
 
 
-template <class TConcreteStage, long UMicronsPerStep>
+template <class TConcreteStage, long UStepsPerMicrometer>
 int
-Tester1DStageBase<TConcreteStage, UMicronsPerStep>::SetPositionSteps(long steps)
+Tester1DStageBase<TConcreteStage, UStepsPerMicrometer>::SetPositionSteps(long steps)
 {
    SettingLogger::GuardType g = Super::GetLogger()->Guard();
    Super::MarkBusy();
@@ -213,9 +213,9 @@ Tester1DStageBase<TConcreteStage, UMicronsPerStep>::SetPositionSteps(long steps)
 }
 
 
-template <class TConcreteStage, long UMicronsPerStep>
+template <class TConcreteStage, long UStepsPerMicrometer>
 int
-Tester1DStageBase<TConcreteStage, UMicronsPerStep>::GetPositionSteps(long& steps)
+Tester1DStageBase<TConcreteStage, UStepsPerMicrometer>::GetPositionSteps(long& steps)
 {
    double um;
    int err = zPositionUm_->Get(um);
@@ -226,9 +226,9 @@ Tester1DStageBase<TConcreteStage, UMicronsPerStep>::GetPositionSteps(long& steps
 }
 
 
-template <class TConcreteStage, long UMicronsPerStep>
+template <class TConcreteStage, long UStepsPerMicrometer>
 int
-Tester1DStageBase<TConcreteStage, UMicronsPerStep>::SetOrigin()
+Tester1DStageBase<TConcreteStage, UStepsPerMicrometer>::SetOrigin()
 {
    SettingLogger::GuardType g = Super::GetLogger()->Guard();
    Super::MarkBusy();
@@ -236,9 +236,9 @@ Tester1DStageBase<TConcreteStage, UMicronsPerStep>::SetOrigin()
 }
 
 
-template <class TConcreteStage, long UMicronsPerStep>
+template <class TConcreteStage, long UStepsPerMicrometer>
 int
-Tester1DStageBase<TConcreteStage, UMicronsPerStep>::
+Tester1DStageBase<TConcreteStage, UStepsPerMicrometer>::
 GetLimits(double& lower, double& upper)
 {
    // Not (yet) designed for testing

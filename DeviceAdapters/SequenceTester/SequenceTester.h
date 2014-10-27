@@ -220,13 +220,11 @@ private:
 };
 
 
-template <class TConcreteStage, long UMicronsPerStep = 1>
+template <class TConcreteStage, long UStepsPerMicrometer = 1>
 class Tester1DStageBase : public TesterBase<CStageBase, TConcreteStage>
 {
    typedef TesterBase< ::CStageBase, TConcreteStage > Super;
    TConcreteStage* This() { return static_cast<TConcreteStage*>(this); }
-
-   static const long umPerStep = UMicronsPerStep;
 
 public:
    Tester1DStageBase(const std::string& name) : Super(name) {}
