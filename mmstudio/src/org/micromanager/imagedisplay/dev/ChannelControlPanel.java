@@ -328,6 +328,11 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    private void updateHistogram() {
+      if (histogram_ == null) {
+         // Don't actually have a histogram yet. This can happen in weird
+         // multi-channel situations.
+         return;
+      }
       histogram_.setCursorText(contrastMin_ + "", contrastMax_ + "");
       histogram_.setCursors(contrastMin_ / binSize_, (contrastMax_+1) / binSize_, gamma_);
       histogram_.repaint();
@@ -625,6 +630,10 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    public void calcAndDisplayHistAndStats(boolean shouldDrawHistogram) {
       if (plus_ == null || plus_.getProcessor() == null) {
          ReportingUtils.logError("Can't draw histogram: no image to work with");
+         return;
+      }
+      if (histogram_ == null) {
+         ReportingUtils.logError("Can't draw histogram: no histogram created yet");
          return;
       }
       ImageProcessor processor;
