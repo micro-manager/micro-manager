@@ -273,57 +273,6 @@ SettingLogger::FireOneShot(const std::string& device, const std::string& key,
 }
 
 
-void
-SettingLogger::MarkBusy(const std::string& device, bool logEvent)
-{
-   bool becameBusy = false;
-
-   std::map<std::string, unsigned>::iterator busy =
-      busyPoints_.find(device);
-   if (busy == busyPoints_.end())
-   {
-      busyPoints_[device] = 1;
-   }
-   else
-   {
-      if (busy->second == 0)
-         becameBusy = true;
-      ++(busy->second);
-   }
-
-   if (becameBusy)
-      SetInteger(device, "sys:Busy", 1, logEvent);
-}
-
-
-bool
-SettingLogger::IsBusy(const std::string& device, bool queryNonDestructively)
-{
-   std::map<std::string, unsigned>::iterator busy =
-      busyPoints_.find(device);
-
-   if (busy == busyPoints_.end())
-   {
-      // Devices that have never been queried are initially busy
-      if (!queryNonDestructively)
-      {
-         busyPoints_.insert(std::make_pair(device, 1U));
-      }
-      return true;
-   }
-
-   bool ret = busy->second > 0;
-   bool becameNonBusy = (busy->second == 1 && !queryNonDestructively);
-
-   if (busy->second > 0 && !queryNonDestructively)
-      --(busy->second);
-   if (becameNonBusy)
-      SetInteger(device, "sys:Busy", 0);
-
-   return ret;
-}
-
-
 bool
 SettingLogger::PackAndReset(char* dest, size_t destSize,
       const std::string& camera, bool isSequenceImage,
@@ -337,7 +286,7 @@ SettingLogger::PackAndReset(char* dest, size_t destSize,
 
    typedef std::string s;
 
-   pk.pack_array(8);
+   pk.pack_array(7);
    // packetNumber
    pk.pack(GetNextGlobalImageCount());
    // camera
@@ -346,8 +295,6 @@ SettingLogger::PackAndReset(char* dest, size_t destSize,
    pk.pack(counterAtLastReset_);
    // currentCounter
    pk.pack(counter_);
-   // busyDevices
-   WriteBusyDevices(sbuf);
    // startState
    WriteSettingMap(sbuf, startingValues_);
    // currentState
@@ -367,27 +314,6 @@ SettingLogger::PackAndReset(char* dest, size_t destSize,
    {
       memset(dest, 0, destSize);
       return false;
-   }
-}
-
-
-void
-SettingLogger::WriteBusyDevices(msgpack::sbuffer& sbuf) const
-{
-   msgpack::packer<msgpack::sbuffer> pk(&sbuf);
-
-   std::vector<std::string> busyDevices;
-   for (std::map<std::string, unsigned>::const_iterator
-         it = busyPoints_.begin(), end = busyPoints_.end(); it != end; ++it)
-   {
-      if (it->second > 0)
-         busyDevices.push_back(it->first);
-   }
-   pk.pack_array(busyDevices.size());
-   for (std::vector<std::string>::const_iterator it = busyDevices.begin(),
-         end = busyDevices.end(); it != end; ++it)
-   {
-      pk.pack(*it);
    }
 }
 

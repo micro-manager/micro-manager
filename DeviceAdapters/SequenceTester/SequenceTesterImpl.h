@@ -51,6 +51,17 @@ TesterBase<TDeviceBase, UConcreteDevice>::Initialize()
       return DEVICE_ERR;
    }
    InterDevice::SetHub(static_cast<TesterHub*>(pHub)->GetSharedPtr());
+
+   return CommonHubPeripheralInitialize();
+}
+
+
+template <template <class> class TDeviceBase, class UConcreteDevice>
+int
+TesterBase<TDeviceBase, UConcreteDevice>::CommonHubPeripheralInitialize()
+{
+   // Devices are initially "busy"
+   busySetting_ = CountDownSetting::New(GetLogger(), this, "Busy", 1);
    return DEVICE_OK;
 }
 
@@ -59,6 +70,8 @@ template <template <class> class TDeviceBase, class UConcreteDevice>
 int
 TesterBase<TDeviceBase, UConcreteDevice>::Shutdown()
 {
+   CommonHubPeripheralShutdown();
+   InterDevice::SetHub(boost::shared_ptr<TesterHub>());
    return DEVICE_OK;
 }
 
@@ -68,7 +81,7 @@ bool
 TesterBase<TDeviceBase, UConcreteDevice>::Busy()
 {
    TesterHub::Guard g(GetHub()->LockGlobalMutex());
-   return GetLogger()->IsBusy(GetDeviceName());
+   return GetBusySetting()->Get() > 0;
 }
 
 
@@ -154,7 +167,9 @@ Tester1DStageBase<TConcreteStage, UStepsPerMicrometer>::Initialize()
 
    zPositionUm_ = FloatSetting::New(Super::GetLogger(), This(),
          "ZPositionUm", 0.0, false);
+   zPositionUm_->SetBusySetting(Super::GetBusySetting());
    originSet_ = OneShotSetting::New(Super::GetLogger(), This(), "OriginSet");
+   originSet_->SetBusySetting(Super::GetBusySetting());
 
    return DEVICE_OK;
 }

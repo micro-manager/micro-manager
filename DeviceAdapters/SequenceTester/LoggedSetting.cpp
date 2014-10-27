@@ -26,6 +26,7 @@
 #include "SequenceTester.h" // For InterDevice; TODO make separate header
 
 #include <boost/utility.hpp>
+#include <algorithm>
 #include <string>
 
 
@@ -41,7 +42,8 @@ LoggedSetting::LoggedSetting(SettingLogger* logger,
 void
 LoggedSetting::MarkBusy()
 {
-   logger_->MarkBusy(device_->GetDeviceName());
+   if (busySetting_)
+      busySetting_->Set();
 }
 
 
@@ -50,16 +52,15 @@ BoolSetting::BoolSetting(SettingLogger* logger,
       bool initialValue) :
    LoggedSetting(logger, device, name)
 {
-   Super::GetLogger()->SetBool(Super::GetDevice()->GetDeviceName(),
-         Super::GetName(), initialValue, false);
+   GetLogger()->SetBool(GetDevice()->GetDeviceName(), GetName(),
+         initialValue, false);
 }
 
 
 int
 BoolSetting::Set(bool newValue)
 {
-   Super::GetLogger()->SetBool(Super::GetDevice()->GetDeviceName(),
-         Super::GetName(), newValue);
+   GetLogger()->SetBool(GetDevice()->GetDeviceName(), GetName(), newValue);
    return DEVICE_OK;
 }
 
@@ -75,8 +76,7 @@ BoolSetting::Get(bool& value) const
 bool
 BoolSetting::Get() const
 {
-   return Super::GetLogger()->GetBool(Super::GetDevice()->GetDeviceName(),
-         Super::GetName());
+   return GetLogger()->GetBool(GetDevice()->GetDeviceName(), GetName());
 }
 
 
@@ -150,16 +150,15 @@ IntegerSetting::IntegerSetting(SettingLogger* logger,
    min_(minimum),
    max_(maximum)
 {
-   Super::GetLogger()->SetInteger(Super::GetDevice()->GetDeviceName(),
-         Super::GetName(), initialValue, false);
+   GetLogger()->SetInteger(GetDevice()->GetDeviceName(), GetName(),
+         initialValue, false);
 }
 
 
 int
 IntegerSetting::Set(long newValue)
 {
-   Super::GetLogger()->SetInteger(Super::GetDevice()->GetDeviceName(),
-         Super::GetName(), newValue);
+   GetLogger()->SetInteger(GetDevice()->GetDeviceName(), GetName(), newValue);
    return DEVICE_OK;
 }
 
@@ -175,8 +174,7 @@ IntegerSetting::Get(long& value) const
 long
 IntegerSetting::Get() const
 {
-   return Super::GetLogger()->GetInteger(Super::GetDevice()->GetDeviceName(),
-         Super::GetName());
+   return GetLogger()->GetInteger(GetDevice()->GetDeviceName(), GetName());
 }
 
 
@@ -224,16 +222,15 @@ FloatSetting::FloatSetting(SettingLogger* logger,
    min_(minimum),
    max_(maximum)
 {
-   Super::GetLogger()->SetFloat(Super::GetDevice()->GetDeviceName(),
-         Super::GetName(), initialValue, false);
+   GetLogger()->SetFloat(GetDevice()->GetDeviceName(), GetName(),
+         initialValue, false);
 }
 
 
 int
 FloatSetting::Set(double newValue)
 {
-   Super::GetLogger()->SetFloat(Super::GetDevice()->GetDeviceName(),
-         Super::GetName(), newValue);
+   GetLogger()->SetFloat(GetDevice()->GetDeviceName(), GetName(), newValue);
    return DEVICE_OK;
 }
 
@@ -249,8 +246,7 @@ FloatSetting::Get(double& value) const
 double
 FloatSetting::Get() const
 {
-   return Super::GetLogger()->GetFloat(Super::GetDevice()->GetDeviceName(),
-         Super::GetName());
+   return GetLogger()->GetFloat(GetDevice()->GetDeviceName(), GetName());
 }
 
 
@@ -294,15 +290,58 @@ OneShotSetting::OneShotSetting(SettingLogger* logger,
       InterDevice* device, const std::string& name) :
    LoggedSetting(logger, device, name)
 {
-   Super::GetLogger()->FireOneShot(Super::GetDevice()->GetDeviceName(),
-         Super::GetName(), false);
+   GetLogger()->FireOneShot(GetDevice()->GetDeviceName(), GetName(), false);
 }
 
 
 int
 OneShotSetting::Set()
 {
-   Super::GetLogger()->FireOneShot(Super::GetDevice()->GetDeviceName(),
-         Super::GetName());
+   GetLogger()->FireOneShot(GetDevice()->GetDeviceName(), GetName());
    return DEVICE_OK;
+}
+
+
+CountDownSetting::CountDownSetting(SettingLogger* logger,
+      InterDevice* device, const std::string& name, long initialCount,
+      long defaultIncrement) :
+   LoggedSetting(logger, device, name),
+   defaultIncrement_(defaultIncrement)
+{
+   GetLogger()->SetInteger(GetDevice()->GetDeviceName(), GetName(),
+         initialCount, false);
+}
+
+
+int
+CountDownSetting::Set(long increment)
+{
+   long oldCount =
+      GetLogger()->GetInteger(GetDevice()->GetDeviceName(), GetName());
+   long newCount = oldCount + increment;
+   GetLogger()->SetInteger(GetDevice()->GetDeviceName(), GetName(), newCount);
+   return DEVICE_OK;
+}
+
+
+int
+CountDownSetting::Get(long& value)
+{
+   value = Get();
+   return DEVICE_OK;
+}
+
+
+long CountDownSetting::Get()
+{
+   long count =
+      GetLogger()->GetInteger(GetDevice()->GetDeviceName(), GetName());
+   if (count > 0)
+   {
+      GetLogger()->SetInteger(GetDevice()->GetDeviceName(), GetName(),
+            count - 1);
+   }
+   // Return the value _before_ the decrement. Otherwise a unit increment would
+   // have no effect.
+   return count;
 }

@@ -164,7 +164,7 @@ public:
 
    // Recording and querying
 
-   // Set/Fire methods do _not_ mark the device busy
+   // These methods should be called by setting objects only, not directly
    void SetBool(const std::string& device, const std::string& key,
          bool value, bool logEvent = true);
    bool GetBool(const std::string& device, const std::string& key) const;
@@ -179,9 +179,6 @@ public:
    std::string GetString(const std::string& device, const std::string& key) const;
    void FireOneShot(const std::string& device, const std::string& key,
          bool logEvent = true);
-
-   void MarkBusy(const std::string& device, bool logEvent = true);
-   bool IsBusy(const std::string& device, bool queryNonDestructively = false);
 
    // Log retrieval
    bool PackAndReset(char* dest, size_t destSize,
@@ -198,7 +195,6 @@ private:
    SettingMap settingValues_;
    SettingMap startingValues_;
    std::vector<SettingEvent> settingEvents_;
-   std::map<std::string, unsigned> busyPoints_;
 
    // Helper functions to be called with mutex_ held
    uint64_t GetNextCount() { return counter_++; }
@@ -209,7 +205,6 @@ private:
       startingValues_ = settingValues_;
       settingEvents_.clear();
    }
-   void WriteBusyDevices(msgpack::sbuffer& sbuf) const;
    void WriteSettingMap(msgpack::sbuffer& sbuf, const SettingMap& values) const;
    void WriteHistory(msgpack::sbuffer& sbuf) const;
 };

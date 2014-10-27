@@ -160,13 +160,16 @@ TesterHub::Initialize()
    // For hub only, do _not_ call Super::Initialize(). Instead, set itself to
    // be the hub.
    InterDevice::SetHub(GetSharedPtr());
-   return DEVICE_OK;
+
+   return CommonHubPeripheralInitialize();
 }
 
 
 int
 TesterHub::Shutdown()
 {
+   CommonHubPeripheralShutdown();
+
    // For hub only, do _not_ call Super::Shutdown(). Release the self-reference
    // created in Initialize().
    InterDevice::SetHub(boost::shared_ptr<TesterHub>());
@@ -227,8 +230,10 @@ TesterCamera::Initialize()
 
    exposureSetting_ = FloatSetting::New(GetLogger(), this, "Exposure",
          100.0, true, 0.1, 1000.0);
+   exposureSetting_->SetBusySetting(GetBusySetting());
    binningSetting_ = IntegerSetting::New(GetLogger(), this, "Binning",
          1, true, 1, 1);
+   binningSetting_->SetBusySetting(GetBusySetting());
 
    CreateFloatProperty("Exposure", exposureSetting_);
    CreateIntegerProperty("Binning", binningSetting_);
@@ -322,7 +327,7 @@ TesterCamera::SetROI(unsigned, unsigned, unsigned, unsigned)
 {
    TesterHub::Guard g(GetHub()->LockGlobalMutex());
 
-   MarkBusy();
+   GetBusySetting()->Set();
    return DEVICE_UNSUPPORTED_COMMAND;
 }
 
@@ -521,11 +526,16 @@ TesterXYStage::Initialize()
 
    xPositionSteps_ = IntegerSetting::New(GetLogger(), this,
          "XPositionSteps", 0, false);
+   xPositionSteps_->SetBusySetting(GetBusySetting());
    yPositionSteps_ = IntegerSetting::New(GetLogger(), this,
          "YPositionSteps", 0, false);
+   yPositionSteps_->SetBusySetting(GetBusySetting());
    home_ = OneShotSetting::New(GetLogger(), this, "Home");
+   home_->SetBusySetting(GetBusySetting());
    stop_ = OneShotSetting::New(GetLogger(), this, "Stop");
+   stop_->SetBusySetting(GetBusySetting());
    setOrigin_ = OneShotSetting::New(GetLogger(), this, "SetOrigin");
+   setOrigin_->SetBusySetting(GetBusySetting());
 
    return DEVICE_OK;
 }
@@ -628,6 +638,7 @@ TesterShutter::Initialize()
    TesterHub::Guard g(GetHub()->LockGlobalMutex());
 
    shutterOpen_ = BoolSetting::New(GetLogger(), this, "ShutterState", false);
+   shutterOpen_->SetBusySetting(GetBusySetting());
    CreateOneZeroProperty("State", shutterOpen_);
 
    return DEVICE_OK;
@@ -666,12 +677,16 @@ TesterAutofocus::Initialize()
 
    continuousFocusEnabled_ = BoolSetting::New(GetLogger(), this,
          "ContinuousFocusEnabled", false);
+   continuousFocusEnabled_->SetBusySetting(GetBusySetting());
 
    offset_ = FloatSetting::New(GetLogger(), this, "Offset", 0.0, false);
+   offset_->SetBusySetting(GetBusySetting());
 
    fullFocus_ = OneShotSetting::New(GetLogger(), this, "FullFocus");
+   fullFocus_->SetBusySetting(GetBusySetting());
    incrementalFocus_ = OneShotSetting::New(GetLogger(), this,
          "IncrementalFocus");
+   incrementalFocus_->SetBusySetting(GetBusySetting());
 
    return DEVICE_OK;
 }
@@ -783,6 +798,7 @@ TesterSwitcher::Initialize()
 
    position_ = IntegerSetting::New(GetLogger(), this, "Position",
          0, true, 0, nrPositions_);
+   position_->SetBusySetting(GetBusySetting());
    CreateIntegerProperty("State", position_);
 
    return DEVICE_OK;

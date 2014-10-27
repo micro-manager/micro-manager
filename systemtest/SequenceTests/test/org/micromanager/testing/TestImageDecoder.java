@@ -80,7 +80,6 @@ public class TestImageDecoder {
       public CameraInfo camera;
       public long startCounter;
       public long currentCounter;
-      public ArrayList<String> busyDevices;
       public ArrayList<SettingState> startState;
       public ArrayList<SettingState> currentState;
       public ArrayList<SettingEvent> history;

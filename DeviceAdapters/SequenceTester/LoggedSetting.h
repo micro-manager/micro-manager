@@ -32,6 +32,7 @@
 
 class InterDevice;
 class SettingLogger;
+class CountDownSetting;
 
 
 // A "setting" in this device adapter is a property or a property-like entity
@@ -41,6 +42,8 @@ class LoggedSetting
    SettingLogger* logger_;
    InterDevice* device_;
    const std::string name_;
+
+   boost::shared_ptr<CountDownSetting> busySetting_;
 
 protected:
    SettingLogger* GetLogger() { return logger_; }
@@ -53,6 +56,8 @@ public:
    LoggedSetting(SettingLogger* logger, InterDevice* device,
          const std::string& name);
 
+   void SetBusySetting(boost::shared_ptr<CountDownSetting> setting)
+   { busySetting_ = setting; }
    void MarkBusy();
 };
 
@@ -60,7 +65,6 @@ public:
 class BoolSetting : public LoggedSetting
 {
    typedef BoolSetting Self;
-   typedef LoggedSetting Super;
 
 public:
    typedef boost::shared_ptr<Self> Ptr;
@@ -93,7 +97,6 @@ class IntegerSetting : public LoggedSetting
    long max_;
 
    typedef IntegerSetting Self;
-   typedef LoggedSetting Super;
 
 public:
    typedef boost::shared_ptr<Self> Ptr;
@@ -128,7 +131,6 @@ class FloatSetting : public LoggedSetting
    double max_;
 
    typedef FloatSetting Self;
-   typedef LoggedSetting Super;
 
 public:
    typedef boost::shared_ptr<Self> Ptr;
@@ -160,7 +162,6 @@ public:
 class OneShotSetting : public LoggedSetting
 {
    typedef OneShotSetting Self;
-   typedef LoggedSetting Super;
 
 public:
    typedef boost::shared_ptr<Self> Ptr;
@@ -174,4 +175,34 @@ public:
 
 
    int Set();
+};
+
+
+// A setting that stays true until queried the second (or n-th) time.
+// Used to simulate Busy() and similar attributes.
+class CountDownSetting : public LoggedSetting
+{
+   typedef CountDownSetting Self;
+
+   long defaultIncrement_;
+
+public:
+   typedef boost::shared_ptr<Self> Ptr;
+
+   CountDownSetting(SettingLogger* logger, InterDevice* device,
+         const std::string& name, long initialCount,
+         long defaultIncrement);
+
+   static Ptr New(SettingLogger* logger, InterDevice* device,
+         const std::string& name, long initialCount,
+         long defaultIncrement = 1)
+   {
+      return boost::make_shared<Self>(logger, device, name,
+            initialCount, defaultIncrement);
+   }
+
+   int Set() { return Set(defaultIncrement_); }
+   int Set(long increment);
+   int Get(long& count);
+   long Get();
 };

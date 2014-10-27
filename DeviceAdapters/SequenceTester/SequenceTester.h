@@ -52,10 +52,7 @@ public:
    virtual boost::shared_ptr<TesterHub> GetHub() { return hub_; }
    virtual boost::shared_ptr<const TesterHub> GetHub() const { return hub_; }
    virtual SettingLogger* GetLogger();
-
-   // Directly mark the device busy. In most cases, the busy-marking should be
-   // done through the individual setting object.
-   void MarkBusy() { GetLogger()->MarkBusy(name_); }
+   virtual CountDownSetting::Ptr GetBusySetting() = 0;
 
 private:
    const std::string name_;
@@ -80,6 +77,13 @@ public:
    virtual int Shutdown();
    virtual bool Busy();
 
+   // Must be called after setting hub if overriding Initialize()
+   int CommonHubPeripheralInitialize();
+   // Must be called before hub becomes unavailable if overriding Shutdown()
+   void CommonHubPeripheralShutdown() {}
+
+   virtual CountDownSetting::Ptr GetBusySetting() { return busySetting_; }
+
 protected:
    void CreateOnOffProperty(const std::string& name,
          BoolSetting::Ptr setting);
@@ -91,6 +95,9 @@ protected:
          IntegerSetting::Ptr setting);
    void CreateFloatProperty(const std::string& name,
          FloatSetting::Ptr setting);
+
+private:
+   CountDownSetting::Ptr busySetting_;
 };
 
 
