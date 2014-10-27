@@ -323,3 +323,31 @@ public:
 
    virtual bool IsContinuousFocusDrive() const { return true; }
 };
+
+
+class TesterAutofocus : public TesterBase<CAutoFocusBase, TesterAutofocus>
+{
+   typedef TesterAutofocus Self;
+   typedef TesterBase< ::CAutoFocusBase, TesterAutofocus > Super;
+
+public:
+   TesterAutofocus(const std::string& name) : Super(name) {}
+
+   virtual int Initialize();
+
+   virtual int SetContinuousFocusing(bool state);
+   virtual int GetContinuousFocusing(bool& state);
+   virtual bool IsContinuousFocusLocked();
+   virtual int FullFocus();
+   virtual int IncrementalFocus();
+   virtual int GetLastFocusScore(double& score);
+   virtual int GetCurrentFocusScore(double& score);
+   virtual int GetOffset(double& offset);
+   virtual int SetOffset(double offset);
+
+private:
+   IntegerSetting<Self>::Ptr continuousFocusEnabled_;
+   FloatSetting<Self>::Ptr offset_;
+   OneShotSetting<Self>::Ptr fullFocus_;
+   OneShotSetting<Self>::Ptr incrementalFocus_;
+};

@@ -66,6 +66,9 @@ CreateDevice(const char* deviceName)
    const std::string name(deviceName);
    if (name == "THub")
       return new TesterHub(name);
+
+   // By using prefix matching, we can allow the creation of an arbitrary
+   // number of each device for testing.
    if (StartsWith("TCamera", name))
       return new TesterCamera(name);
    if (StartsWith("TShutter", name))
@@ -74,6 +77,8 @@ CreateDevice(const char* deviceName)
       return new TesterZStage(name);
    if (StartsWith("TAFStage", name))
       return new TesterAFStage(name);
+   if (StartsWith("TAutofocus", name))
+      return new TesterAutofocus(name);
    return 0;
 }
 
@@ -129,6 +134,8 @@ TesterHub::DetectInstalledDevices()
    AddInstalledDevice(new TesterZStage("TZStage-1"));
    AddInstalledDevice(new TesterAFStage("TAFStage-0"));
    AddInstalledDevice(new TesterAFStage("TAFStage-1"));
+   AddInstalledDevice(new TesterAutofocus("TAutofocus-0"));
+   AddInstalledDevice(new TesterAutofocus("TAutofocus-1"));
    return DEVICE_OK;
 }
 
@@ -456,4 +463,104 @@ TesterShutter::GetOpen(bool& open)
 {
    open = (shutterOpen_->Get() != 0);
    return DEVICE_OK;
+}
+
+
+int
+TesterAutofocus::Initialize()
+{
+   int err;
+
+   err = Super::Initialize();
+   if (err != DEVICE_OK)
+      return err;
+
+   continuousFocusEnabled_ = boost::make_shared< IntegerSetting<Self> >(
+         GetLogger(), this, "ContinuousFocusEnabled", 0, true, 0, 1);
+
+   offset_ = boost::make_shared< FloatSetting<Self> >(
+         GetLogger(), this, "Offset", 0.0, false);
+
+   fullFocus_ = boost::make_shared< OneShotSetting<Self> >(
+         GetLogger(), this, "FullFocus");
+   incrementalFocus_ = boost::make_shared< OneShotSetting<Self> >(
+         GetLogger(), this, "IncrementalFocus");
+
+   return DEVICE_OK;
+}
+
+
+int
+TesterAutofocus::SetContinuousFocusing(bool state)
+{
+   return continuousFocusEnabled_->Set(state ? 1 : 0);
+}
+
+
+int
+TesterAutofocus::GetContinuousFocusing(bool& state)
+{
+   state = (continuousFocusEnabled_->Get() != 0);
+   return DEVICE_OK;
+}
+
+
+bool
+TesterAutofocus::IsContinuousFocusLocked()
+{
+   bool enabled = (continuousFocusEnabled_->Get() != 0);
+   if (!enabled)
+      return false;
+
+   // TODO Use a busy-like mechanism to return true on the second call after
+   // enabling continuous focus. For now, always pretend we're locked.
+   return true;
+}
+
+
+int
+TesterAutofocus::FullFocus()
+{
+   return fullFocus_->Set();
+}
+
+
+int
+TesterAutofocus::IncrementalFocus()
+{
+   return incrementalFocus_->Set();
+}
+
+
+int
+TesterAutofocus::GetLastFocusScore(double& score)
+{
+   // I don't see any non-dead use of this function except for one mysterious
+   // case in acqEngine that might be a bug. For now, return a constant.
+   // Returning an error is not an option due to poor assumptions made by
+   // existing code.
+   score = 0.0;
+   return DEVICE_OK;
+}
+
+
+int
+TesterAutofocus::GetCurrentFocusScore(double& score)
+{
+   // This does not appear to be used by any of our non-dead code.
+   return DEVICE_UNSUPPORTED_COMMAND;
+}
+
+
+int
+TesterAutofocus::GetOffset(double& offset)
+{
+   return offset_->Get(offset);
+}
+
+
+int
+TesterAutofocus::SetOffset(double offset)
+{
+   return offset_->Set(offset);
 }
