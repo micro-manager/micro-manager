@@ -37,7 +37,7 @@
     [org.json JSONArray JSONObject]
     [org.micromanager.acquisition MMAcquisition TaggedImageQueue]
     [org.micromanager.api PositionList SequenceSettings]
-    [org.micromanager.utils MDUtils MMListenerAdapter ReportingUtils])
+    [org.micromanager.utils MDUtils ReportingUtils])
   (:gen-class
     :name org.micromanager.AcquisitionEngine2010
     :implements [org.micromanager.api.IAcquisitionEngine2010]
@@ -671,27 +671,6 @@
            :pixel-type (get-pixel-type)
            )))
 
-(defn subscribe-state-to-core-callbacks
-  "Subscribes the state to core callbacks."
-  [state]
-  (when gui
-    (let [mm-listener
-          (proxy [MMListenerAdapter] []
-            (stagePositionChangedAlert [z-stage z]
-              (swap! state assoc-in [:last-stage-positions z-stage] z))
-            (xyStagePositionChanged [xy-stage x y]
-              (swap! state assoc-in [:last-stage-positions xy-stage] [x y])))]
-      (.addMMListener gui mm-listener)
-      (alter-meta! state update-in [:mm-listeners] conj mm-listener))))
-
-(defn unsubscribe-state-from-core-callbacks
-  "Unsubscribes the state from any subscribed core callbacks."
-  [state]
-  (when gui
-    (let [listeners (get-in (meta state) [:mm-listeners])]
-      (doseq [listener listeners] (.removeMMListener gui listener)))
-    (alter-meta! state assoc-in [:mm-listeners] nil)))
-
 (defn cleanup []
   (try
     (attempt-all
@@ -710,8 +689,7 @@
       (when (and (@state :init-continuous-focus)
                  (not (core isContinuousFocusEnabled)))
         (enable-continuous-focus true))
-      (when gui (.enableRoiButtons gui true))
-      (unsubscribe-state-from-core-callbacks state))
+      (when gui (.enableRoiButtons gui true)))
     (catch Throwable t 
            (ReportingUtils/showError t "Acquisition cleanup failed."))))
 
@@ -794,7 +772,6 @@
           (.enableRoiButtons false)))
       (prepare-state state (when (:use-position-list settings) position-list) autofocus-device)
       (def last-state state) ; for debugging
-      (subscribe-state-to-core-callbacks state)
       (let [acq-seq (generate-acq-sequence settings @attached-runnables)]
         (def acq-sequence acq-seq) ; for debugging
         (execute (mapcat #(make-event-fns % out-queue) acq-seq)))
