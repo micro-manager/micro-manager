@@ -93,12 +93,16 @@ public class SnapLiveManager {
       // Update our buttons, if they exist yet.
       if (snapButton_ != null) {
          snapButton_.setEnabled(!isOn_);
-         String label = isOn_ ? "Stop Live" : "Live";
-         String iconPath = isOn_ ? "/org/micromanager/icons/cancel.png" : "/org/micromanager/icons/camera_go.png";
-         liveButton_.setIcon(
-               SwingResourceManager.getIcon(MMStudio.class, iconPath));
-         liveButton_.setText(label);
+         setLiveButtonMode();
       }
+   }
+
+   private void setLiveButtonMode() {
+      String label = isOn_ ? "Stop Live" : "Live";
+      String iconPath = isOn_ ? "/org/micromanager/icons/cancel.png" : "/org/micromanager/icons/camera_go.png";
+      liveButton_.setIcon(
+            SwingResourceManager.getIcon(MMStudio.class, iconPath));
+      liveButton_.setText(label);
    }
 
    /**
@@ -281,9 +285,8 @@ public class SnapLiveManager {
       });
       controlPanel.add(snapButton_);
 
-      liveButton_ = new JButton("Live",
-            SwingResourceManager.getIcon(MMStudio.class,
-               "/org/micromanager/icons/camera_go.png"));
+      liveButton_ = new JButton();
+      setLiveButtonMode();
       liveButton_.setPreferredSize(new Dimension(90, 28));
       liveButton_.addActionListener(new ActionListener() {
          @Override
