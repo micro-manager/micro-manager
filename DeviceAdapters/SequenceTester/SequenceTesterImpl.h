@@ -189,6 +189,8 @@ template <class TConcreteStage, long UMicronsPerStep>
 int
 TesterStageBase<TConcreteStage, UMicronsPerStep>::SetPositionUm(double pos)
 {
+   SettingLogger::GuardType g = Super::GetLogger()->Guard();
+   Super::MarkBusy();
    return zPositionUm_->Set(pos);
 }
 
@@ -205,6 +207,8 @@ template <class TConcreteStage, long UMicronsPerStep>
 int
 TesterStageBase<TConcreteStage, UMicronsPerStep>::SetPositionSteps(long steps)
 {
+   SettingLogger::GuardType g = Super::GetLogger()->Guard();
+   Super::MarkBusy();
    return zPositionUm_->Set(0.1 * steps);
 }
 
@@ -226,6 +230,8 @@ template <class TConcreteStage, long UMicronsPerStep>
 int
 TesterStageBase<TConcreteStage, UMicronsPerStep>::SetOrigin()
 {
+   SettingLogger::GuardType g = Super::GetLogger()->Guard();
+   Super::MarkBusy();
    return originSet_->Set();
 }
 

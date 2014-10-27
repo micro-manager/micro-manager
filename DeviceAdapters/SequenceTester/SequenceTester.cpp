@@ -217,6 +217,8 @@ TesterCamera::GetBinning() const
 int
 TesterCamera::SetBinning(int binSize)
 {
+   SettingLogger::GuardType g = GetLogger()->Guard();
+   MarkBusy();
    return binningSetting_->Set(binSize);
 }
 
@@ -245,6 +247,8 @@ TesterCamera::GetImageHeight() const
 void
 TesterCamera::SetExposure(double exposureMs)
 {
+   SettingLogger::GuardType g = GetLogger()->Guard();
+   MarkBusy();
    exposureSetting_->Set(exposureMs);
 }
 
@@ -259,6 +263,8 @@ TesterCamera::GetExposure() const
 int
 TesterCamera::SetROI(unsigned, unsigned, unsigned, unsigned)
 {
+   SettingLogger::GuardType g = GetLogger()->Guard();
+   MarkBusy();
    return DEVICE_UNSUPPORTED_COMMAND;
 }
 
@@ -453,6 +459,8 @@ TesterShutter::Initialize()
 int
 TesterShutter::SetOpen(bool open)
 {
+   SettingLogger::GuardType g = GetLogger()->Guard();
+   MarkBusy();
    return shutterOpen_->Set(open);
 }
 
@@ -489,6 +497,8 @@ TesterAutofocus::Initialize()
 int
 TesterAutofocus::SetContinuousFocusing(bool state)
 {
+   SettingLogger::GuardType g = GetLogger()->Guard();
+   MarkBusy();
    return continuousFocusEnabled_->Set(state);
 }
 
@@ -557,5 +567,7 @@ TesterAutofocus::GetOffset(double& offset)
 int
 TesterAutofocus::SetOffset(double offset)
 {
+   SettingLogger::GuardType g = GetLogger()->Guard();
+   MarkBusy();
    return offset_->Set(offset);
 }

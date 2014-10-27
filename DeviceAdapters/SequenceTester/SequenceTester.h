@@ -70,6 +70,8 @@ protected:
    void CreateFloatProperty(const std::string& name,
          typename FloatSetting<UConcreteDevice>::Ptr setting);
 
+   void MarkBusy() { GetLogger()->MarkBusy(name_); }
+
 private:
    const std::string name_;
 };
