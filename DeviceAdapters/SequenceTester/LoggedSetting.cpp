@@ -39,7 +39,7 @@ LoggedSetting::LoggedSetting(SettingLogger* logger,
 
 
 void
-LoggedSetting::MarkDeviceBusy()
+LoggedSetting::MarkBusy()
 {
    logger_->MarkBusy(device_->GetDeviceName());
 }
@@ -118,7 +118,7 @@ BoolSetting::NewPropertyAction(PropertyDisplay displayMode)
          }
          else if (eAct == MM::AfterSet)
          {
-            setting_.MarkDeviceBusy();
+            setting_.MarkBusy();
             std::string strVal;
             long intVal;
             switch (displayMode_)
@@ -203,7 +203,7 @@ IntegerSetting::NewPropertyAction()
          }
          else if (eAct == MM::AfterSet)
          {
-            setting_.MarkDeviceBusy();
+            setting_.MarkBusy();
             long v;
             pProp->Get(v);
             return setting_.Set(v);
@@ -277,7 +277,7 @@ FloatSetting::NewPropertyAction()
          }
          else if (eAct == MM::AfterSet)
          {
-            setting_.MarkDeviceBusy();
+            setting_.MarkBusy();
             double v;
             pProp->Get(v);
             return setting_.Set(v);

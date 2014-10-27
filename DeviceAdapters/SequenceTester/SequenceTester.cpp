@@ -272,7 +272,7 @@ TesterCamera::SetBinning(int binSize)
 {
    TesterHub::Guard g(GetHub()->LockGlobalMutex());
 
-   MarkBusy();
+   binningSetting_->MarkBusy();
    return binningSetting_->Set(binSize);
 }
 
@@ -303,7 +303,7 @@ TesterCamera::SetExposure(double exposureMs)
 {
    TesterHub::Guard g(GetHub()->LockGlobalMutex());
 
-   MarkBusy();
+   exposureSetting_->MarkBusy();
    exposureSetting_->Set(exposureMs);
 }
 
@@ -536,7 +536,8 @@ TesterXYStage::SetPositionSteps(long x, long y)
 {
    TesterHub::Guard g(GetHub()->LockGlobalMutex());
 
-   MarkBusy();
+   xPositionSteps_->MarkBusy();
+   yPositionSteps_->MarkBusy();
    int err1 = xPositionSteps_->Set(x);
    int err2 = yPositionSteps_->Set(y);
    if (err1 != DEVICE_OK)
@@ -567,7 +568,7 @@ TesterXYStage::Home()
 {
    TesterHub::Guard g(GetHub()->LockGlobalMutex());
 
-   MarkBusy();
+   home_->MarkBusy();
    return home_->Set();
 }
 
@@ -577,7 +578,7 @@ TesterXYStage::Stop()
 {
    TesterHub::Guard g(GetHub()->LockGlobalMutex());
 
-   MarkBusy();
+   stop_->MarkBusy();
    return stop_->Set();
 }
 
@@ -587,7 +588,7 @@ TesterXYStage::SetOrigin()
 {
    TesterHub::Guard g(GetHub()->LockGlobalMutex());
 
-   MarkBusy();
+   setOrigin_->MarkBusy();
    return setOrigin_->Set();
 }
 
@@ -638,7 +639,7 @@ TesterShutter::SetOpen(bool open)
 {
    TesterHub::Guard g(GetHub()->LockGlobalMutex());
 
-   MarkBusy();
+   shutterOpen_->MarkBusy();
    return shutterOpen_->Set(open);
 }
 
@@ -681,7 +682,7 @@ TesterAutofocus::SetContinuousFocusing(bool state)
 {
    TesterHub::Guard g(GetHub()->LockGlobalMutex());
 
-   MarkBusy();
+   continuousFocusEnabled_->MarkBusy();
    return continuousFocusEnabled_->Set(state);
 }
 
@@ -764,7 +765,7 @@ TesterAutofocus::SetOffset(double offset)
 {
    TesterHub::Guard g(GetHub()->LockGlobalMutex());
 
-   MarkBusy();
+   offset_->MarkBusy();
    return offset_->Set(offset);
 }
 

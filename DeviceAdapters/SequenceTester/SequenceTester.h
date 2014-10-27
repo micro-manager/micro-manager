@@ -52,6 +52,9 @@ public:
    virtual boost::shared_ptr<TesterHub> GetHub() { return hub_; }
    virtual boost::shared_ptr<const TesterHub> GetHub() const { return hub_; }
    virtual SettingLogger* GetLogger();
+
+   // Directly mark the device busy. In most cases, the busy-marking should be
+   // done through the individual setting object.
    void MarkBusy() { GetLogger()->MarkBusy(name_); }
 
 private:

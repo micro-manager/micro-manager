@@ -53,11 +53,11 @@ public:
    LoggedSetting(SettingLogger* logger, InterDevice* device,
          const std::string& name);
 
-   void MarkDeviceBusy();
+   void MarkBusy();
 };
 
 
-class BoolSetting : private LoggedSetting
+class BoolSetting : public LoggedSetting
 {
    typedef BoolSetting Self;
    typedef LoggedSetting Super;
@@ -86,7 +86,7 @@ public:
 };
 
 
-class IntegerSetting : private LoggedSetting
+class IntegerSetting : public LoggedSetting
 {
    bool hasMinMax_;
    long min_;
@@ -121,7 +121,7 @@ public:
 };
 
 
-class FloatSetting : private LoggedSetting
+class FloatSetting : public LoggedSetting
 {
    bool hasMinMax_;
    double min_;
@@ -157,7 +157,7 @@ public:
 };
 
 
-class OneShotSetting : private LoggedSetting
+class OneShotSetting : public LoggedSetting
 {
    typedef OneShotSetting Self;
    typedef LoggedSetting Super;

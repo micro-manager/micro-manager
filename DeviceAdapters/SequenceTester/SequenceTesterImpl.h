@@ -165,7 +165,7 @@ int
 Tester1DStageBase<TConcreteStage, UStepsPerMicrometer>::SetPositionUm(double pos)
 {
    TesterHub::Guard g(Super::GetHub()->LockGlobalMutex());
-   Super::MarkBusy();
+   zPositionUm_->MarkBusy();
    return zPositionUm_->Set(pos);
 }
 
@@ -184,7 +184,7 @@ int
 Tester1DStageBase<TConcreteStage, UStepsPerMicrometer>::SetPositionSteps(long steps)
 {
    TesterHub::Guard g(Super::GetHub()->LockGlobalMutex());
-   Super::MarkBusy();
+   zPositionUm_->MarkBusy();
    return zPositionUm_->Set(0.1 * steps);
 }
 
@@ -208,7 +208,7 @@ int
 Tester1DStageBase<TConcreteStage, UStepsPerMicrometer>::SetOrigin()
 {
    TesterHub::Guard g(Super::GetHub()->LockGlobalMutex());
-   Super::MarkBusy();
+   originSet_->MarkBusy();
    return originSet_->Set();
 }
 
