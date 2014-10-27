@@ -70,6 +70,8 @@ CreateDevice(const char* deviceName)
       return new TesterCamera(name);
    if (StartsWith("TShutter", name))
       return new TesterShutter(name);
+   if (StartsWith("TZStage", name))
+      return new TesterZStage(name);
    return 0;
 }
 
@@ -121,6 +123,8 @@ TesterHub::DetectInstalledDevices()
    AddInstalledDevice(new TesterCamera("TCamera-1"));
    AddInstalledDevice(new TesterShutter("TShutter-0"));
    AddInstalledDevice(new TesterShutter("TShutter-1"));
+   AddInstalledDevice(new TesterZStage("TZStage-0"));
+   AddInstalledDevice(new TesterZStage("TZStage-1"));
    return DEVICE_OK;
 }
 
@@ -447,5 +451,69 @@ int
 TesterShutter::GetOpen(bool& open)
 {
    open = (shutterOpen_->Get() != 0);
+   return DEVICE_OK;
+}
+
+
+int
+TesterZStage::Initialize()
+{
+   int err;
+
+   err = Super::Initialize();
+   if (err != DEVICE_OK)
+      return err;
+
+   zPositionUm_ = boost::make_shared< FloatSetting<Self> >(
+         GetLogger(), this, "ZPositionUm", 0.0, false);
+   originSet_ = boost::make_shared< OneShotSetting<Self> >(
+         GetLogger(), this, "OriginSet");
+
+   return DEVICE_OK;
+}
+
+
+int
+TesterZStage::SetPositionUm(double pos)
+{
+   return zPositionUm_->Set(pos);
+}
+
+
+int
+TesterZStage::GetPositionUm(double& pos)
+{
+   return zPositionUm_->Get(pos);
+}
+
+
+int
+TesterZStage::SetPositionSteps(long steps)
+{
+   return zPositionUm_->Set(0.1 * steps);
+}
+
+
+int
+TesterZStage::GetPositionSteps(long& steps)
+{
+   steps = static_cast<long>(10.0 * zPositionUm_->Get() + 0.5);
+   return DEVICE_OK;
+}
+
+
+int
+TesterZStage::SetOrigin()
+{
+   return originSet_->Set();
+}
+
+
+int
+TesterZStage::GetLimits(double& lower, double& upper)
+{
+   // Not (yet) designed for testing
+   lower = -100000.0;
+   upper = +100000.0;
    return DEVICE_OK;
 }

@@ -43,12 +43,6 @@ LoggedSetting<TDevice>::LoggedSetting(SettingLogger* logger,
 
 
 template <class TDevice>
-LoggedSetting<TDevice>::~LoggedSetting()
-{
-}
-
-
-template <class TDevice>
 IntegerSetting<TDevice>::IntegerSetting(SettingLogger* logger,
       TDevice* device, const std::string& name,
       long initialValue, bool hasMinMax, long minimum, long maximum) :
@@ -193,6 +187,26 @@ FloatSetting<TDevice>::NewPropertyAction()
    };
 
    return new Functor(*this);
+}
+
+
+template <class TDevice>
+OneShotSetting<TDevice>::OneShotSetting(SettingLogger* logger,
+      TDevice* device, const std::string& name) :
+   LoggedSetting<TDevice>(logger, device, name)
+{
+   Super::GetLogger()->FireOneShot(Super::GetDevice()->GetName(),
+         Super::GetName(), false);
+}
+
+
+template <class TDevice>
+int
+OneShotSetting<TDevice>::Set()
+{
+   Super::GetLogger()->FireOneShot(Super::GetDevice()->GetName(),
+         Super::GetName());
+   return DEVICE_OK;
 }
 
 

@@ -51,14 +51,11 @@ protected:
 public:
    LoggedSetting(SettingLogger* logger, TDevice* device,
          const std::string& name);
-   virtual ~LoggedSetting();
-
-   virtual MM::ActionFunctor* NewPropertyAction() = 0;
 };
 
 
 template <class TDevice>
-class IntegerSetting : public LoggedSetting<TDevice>
+class IntegerSetting : private LoggedSetting<TDevice>
 {
    bool hasMinMax_;
    long min_;
@@ -72,7 +69,7 @@ public:
 
    IntegerSetting(SettingLogger* logger, TDevice* device,
          const std::string& name, long initialValue,
-         bool hasMinMax, long minimum, long maximum);
+         bool hasMinMax, long minimum = 0, long maximum = 0);
 
    bool HasMinMax() const { return hasMinMax_; }
    long GetMin() const { return min_; }
@@ -81,12 +78,12 @@ public:
    int Set(long newValue);
    int Get(long& value) const;
    long Get() const;
-   virtual MM::ActionFunctor* NewPropertyAction();
+   MM::ActionFunctor* NewPropertyAction();
 };
 
 
 template <class TDevice>
-class FloatSetting : public LoggedSetting<TDevice>
+class FloatSetting : private LoggedSetting<TDevice>
 {
    bool hasMinMax_;
    double min_;
@@ -100,7 +97,7 @@ public:
 
    FloatSetting(SettingLogger* logger, TDevice* device,
          const std::string& name, double initialValue,
-         bool hasMinMax, double minimum, double maximum);
+         bool hasMinMax, double minimum = 0.0, double maximum = 0.0);
 
    bool HasMinMax() const { return hasMinMax_; }
    double GetMin() const { return min_; }
@@ -109,7 +106,23 @@ public:
    int Set(double newValue);
    int Get(double& value) const;
    double Get() const;
-   virtual MM::ActionFunctor* NewPropertyAction();
+   MM::ActionFunctor* NewPropertyAction();
+};
+
+
+template <class TDevice>
+class OneShotSetting : private LoggedSetting<TDevice>
+{
+   typedef OneShotSetting<TDevice> Self;
+   typedef LoggedSetting<TDevice> Super;
+
+public:
+   typedef boost::shared_ptr<Self> Ptr;
+
+   OneShotSetting(SettingLogger* logger, TDevice* device,
+         const std::string& name);
+
+   int Set();
 };
 
 
@@ -256,4 +269,32 @@ public:
 
 private:
    IntegerSetting<Self>::Ptr shutterOpen_;
+};
+
+
+class TesterZStage : public TesterBase<CStageBase, TesterZStage>
+{
+   typedef TesterZStage Self;
+   typedef TesterBase< ::CStageBase, TesterZStage > Super;
+
+   static const long umPerStep = 10;
+
+public:
+   TesterZStage(const std::string& name) : Super(name) {}
+
+   virtual int Initialize();
+
+   virtual int SetPositionUm(double pos);
+   virtual int GetPositionUm(double& pos);
+   virtual int SetPositionSteps(long steps);
+   virtual int GetPositionSteps(long& steps);
+   virtual int SetOrigin();
+   virtual int GetLimits(double& lower, double& upper);
+   virtual int IsStageSequenceable(bool& isSequenceable) const
+   { isSequenceable = false; return DEVICE_OK; }
+   virtual bool IsContinuousFocusDrive() const { return false; }
+
+private:
+   FloatSetting<Self>::Ptr zPositionUm_;
+   OneShotSetting<Self>::Ptr originSet_;
 };
