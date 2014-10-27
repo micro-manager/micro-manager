@@ -92,7 +92,21 @@ public class TestImageDecoder {
 
    public static InfoPacket decode(byte[] image) throws IOException {
       MessagePack msgpack = new MessagePack();
-      return msgpack.read(image, InfoPacket.class);
+      try {
+         return msgpack.read(image, InfoPacket.class);
+      }
+      catch (org.msgpack.MessageTypeException e) {
+         // This might be an indication that the image was all zeros, which is
+         // the case if the data didn't fit. Drop a hint in that case.
+         for (byte b : image) {
+            if (b != 0) {
+               throw e;
+            }
+         }
+         Assert.fail("SeqTester image is all-zero; make sure image size is "
+               + "sufficient to fit MessagePack data");
+         throw e; // Placate compiler
+      }
    }
 
    public static void dumpJSON(byte[] image, java.io.OutputStream out)
