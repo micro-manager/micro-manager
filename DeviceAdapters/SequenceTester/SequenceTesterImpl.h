@@ -246,6 +246,13 @@ TesterHub*
 TesterBase<TDeviceBase, UConcreteDevice>::GetHub()
 {
    MM::Hub* hub = Super::GetCoreCallback()->GetParentHub(this);
+   if (!hub)
+   {
+      // It is too much trouble to make this test adapter check for the
+      // presence of the hub (and hence the SettingLogger) on every operation.
+      // But leave a hint for debugging.
+      Super::LogMessage("Hub is missing. Will crash!");
+   }
    return static_cast<TesterHub*>(hub);
 }
 
