@@ -257,6 +257,9 @@ TesterCamera::Initialize()
    CreateFloatProperty("Exposure", exposureSetting_);
    CreateIntegerProperty("Binning", binningSetting_);
 
+   RegisterEdgeTriggerSource("ExposureStartEdge", exposureStartEdgeTrigger_);
+   RegisterEdgeTriggerSource("ExposureStopEdge", exposureStopEdgeTrigger_);
+
    return DEVICE_OK;
 }
 
@@ -450,11 +453,15 @@ const unsigned char*
 TesterCamera::GenerateLogImage(bool isSequenceImage,
       size_t cumulativeCount, size_t localCount)
 {
+   exposureStartEdgeTrigger_();
+
    size_t bufSize = GetImageBufferSize();
    char* bytes = new char[bufSize];
 
    GetLogger()->PackAndReset(bytes, bufSize,
          GetDeviceName(), isSequenceImage, cumulativeCount, localCount);
+
+   exposureStopEdgeTrigger_();
 
    return reinterpret_cast<unsigned char*>(bytes);
 }

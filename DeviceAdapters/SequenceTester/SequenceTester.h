@@ -214,6 +214,9 @@ private:
 
    FloatSetting::Ptr exposureSetting_;
    IntegerSetting::Ptr binningSetting_;
+
+   EdgeTriggerSignal exposureStartEdgeTrigger_;
+   EdgeTriggerSignal exposureStopEdgeTrigger_;
 };
 
 
