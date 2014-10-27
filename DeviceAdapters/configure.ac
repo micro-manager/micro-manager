@@ -272,6 +272,26 @@ else
 fi
 
 
+# MessagePack
+MM_ARG_WITH_OPTIONAL_LIB([MSGPACK], [msgpack], [MSGPACK])
+AS_IF([test "x$want_msgpack" != xno],
+[
+   MM_LIB_MSGPACK([$MSGPACK_PREFIX],
+   [
+      use_msgpack=yes
+   ],
+   [
+      use_msgpack=no
+      AS_IF([test "x$want_msgpack" = xyes],
+            [MM_MSG_OPTIONAL_LIB_FAILURE([MSGPACK], [msgpack])])
+   ])
+],
+[use_msgpack=no])
+
+
+AM_CONDITIONAL([BUILD_SEQUENCER_TEST], [test "x$use_msgpack" = xyes])
+
+
 # OpenCV
 MM_ARG_WITH_OPTIONAL_LIB([OpenCV], [opencv], [OPENCV])
 AS_IF([test "x$want_opencv" != xno],

@@ -41,6 +41,9 @@ endif
 if BUILD_SENSICAM
    SENSICAM = Sensicam
 endif
+if BUILD_SEQUENCER_TEST
+   SEQUENCE_TESTER = SequenceTester
+endif
 if BUILD_SIMPLECAM
    SIMPLECAM = SimpleCam
 endif
@@ -70,6 +73,7 @@ SUBDIRS = \
 	$(QCAM) \
 	$(SCION) \
 	$(SENSICAM) \
+	$(SEQUENCE_TESTER) \
 	$(SIMPLECAM) \
 	$(SPOT) \
 	$(USBMANAGER) \
@@ -131,7 +135,6 @@ SUBDIRS = \
 	PriorLegacy \
 	Sapphire \
 	Scientifica \
-	SequenceTester \
 	SerialManager \
 	SimpleAutofocus \
 	SpectralLMM5 \

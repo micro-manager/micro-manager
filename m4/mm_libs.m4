@@ -54,6 +54,18 @@ AC_DEFUN([MM_LIB_HIDAPI], [
 ])
 
 
+# MM_LIB_MSGPACK([msgpack-prefix], [action-if-found], [action-if-not-found])
+AC_DEFUN([MM_LIB_MSGPACK], [
+   AC_LANG_PUSH([C++])
+   MM_LIB_SIMPLE_CXX([MSGPACK], [MessagePack],
+   [$1], [-lmsgpack], [msgpack.hpp],
+   [AC_LANG_PROGRAM([[#include <msgpack.hpp>]],
+                    [[msgpack::sbuffer buf;]])],
+   [$2], [$3])
+   AC_LANG_POP([C++])
+])
+
+
 # Check for OpenCV video capture
 #
 # MM_LIB_OPENCV([OpenCV prefix], [action-if-found], [action-if-not-found])

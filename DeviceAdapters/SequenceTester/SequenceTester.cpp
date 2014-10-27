@@ -26,6 +26,8 @@
 
 #include "ModuleInterface.h"
 
+#include <msgpack.hpp>
+
 #include <boost/bind.hpp>
 #include <boost/move/move.hpp>
 #include <exception>
@@ -334,15 +336,32 @@ TesterCamera::IsCapturing()
 const unsigned char*
 TesterCamera::GenerateLogImage(bool isSequenceImage)
 {
-   std::ostringstream strm;
+   msgpack::sbuffer sbuf;
 
-   strm << cumulativeSequenceCounter_;
+   // Placeholder
+   msgpack::pack(sbuf, isSequenceImage);
+   if (isSequenceImage)
+   {
+      msgpack::pack(sbuf, cumulativeSequenceCounter_);
+      msgpack::pack(sbuf, sequenceCounter_);
+   }
+   else
+   {
+      msgpack::pack(sbuf, snapCounter_);
+   }
+   // End placeholder
 
-   std::string dataStr = strm.str();
-
-   unsigned char* bytes = new unsigned char[GetImageBufferSize()];
-   memset(bytes, 0, GetImageBufferSize());
-   dataStr.copy(reinterpret_cast<char*>(bytes), GetImageBufferSize() - 1);
+   size_t bufSize = GetImageBufferSize();
+   unsigned char* bytes = new unsigned char[bufSize];
+   if (sbuf.size() <= bufSize)
+   {
+      memcpy(bytes, sbuf.data(), sbuf.size());
+      memset(bytes + sbuf.size(), 0, bufSize - sbuf.size());
+   }
+   else // Won't fit; return zeroed image
+   {
+      memset(bytes, 0, bufSize);
+   }
    return bytes;
 }
 
