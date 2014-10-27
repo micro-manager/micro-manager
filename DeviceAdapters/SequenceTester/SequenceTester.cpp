@@ -731,6 +731,97 @@ TesterXYStage::GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMa
 
 
 int
+TesterZStage::Initialize()
+{
+   int err;
+
+   err = Super::Initialize();
+   if (err != DEVICE_OK)
+      return err;
+
+   TesterHub::Guard g(GetHub()->LockGlobalMutex());
+
+   triggerInput_.Initialize(shared_from_this(), GetZPositionUmSetting());
+
+   CreateStringProperty("TriggerSourceDevice",
+         triggerInput_.GetSourceDeviceSetting());
+   CreateStringProperty("TriggerSourcePort",
+         triggerInput_.GetSourcePortSetting());
+   CreateIntegerProperty("TriggerSequenceMaxLength",
+         triggerInput_.GetSequenceMaxLengthSetting());
+
+   return DEVICE_OK;
+}
+
+
+int
+TesterZStage::IsStageSequenceable(bool& isSequenceable) const
+{
+   TesterHub::Guard g(GetHub()->LockGlobalMutex());
+
+   long len;
+   int err = GetZPositionUmSetting()->GetSequenceMaxLength(len);
+   isSequenceable = (len > 0);
+   return err;
+}
+
+
+int
+TesterZStage::GetStageSequenceMaxLength(long& nrEvents) const
+{
+   TesterHub::Guard g(GetHub()->LockGlobalMutex());
+
+   return GetZPositionUmSetting()->GetSequenceMaxLength(nrEvents);
+}
+
+
+int
+TesterZStage::ClearStageSequence()
+{
+   // No locking needed for access to deviceInterfaceSequenceBuffer_
+   deviceInterfaceSequenceBuffer_.clear();
+   return DEVICE_OK;
+}
+
+
+int
+TesterZStage::AddToStageSequence(double positionUm)
+{
+   // No locking needed for access to deviceInterfaceSequenceBuffer_
+   deviceInterfaceSequenceBuffer_.push_back(positionUm);
+   return DEVICE_OK;
+}
+
+
+int
+TesterZStage::SendStageSequence()
+{
+   TesterHub::Guard g(GetHub()->LockGlobalMutex());
+
+   return GetZPositionUmSetting()->
+      SetTriggerSequence(deviceInterfaceSequenceBuffer_);
+}
+
+
+int
+TesterZStage::StartStageSequence()
+{
+   TesterHub::Guard g(GetHub()->LockGlobalMutex());
+
+   return GetZPositionUmSetting()->StartTriggerSequence();
+}
+
+
+int
+TesterZStage::StopStageSequence()
+{
+   TesterHub::Guard g(GetHub()->LockGlobalMutex());
+
+   return GetZPositionUmSetting()->StopTriggerSequence();
+}
+
+
+int
 TesterAutofocus::Initialize()
 {
    int err;

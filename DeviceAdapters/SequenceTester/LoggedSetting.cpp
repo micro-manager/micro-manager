@@ -49,6 +49,14 @@ LoggedSetting::MarkBusy()
 }
 
 
+int
+LoggedSetting::GetSequenceMaxLength(long& len) const
+{
+   len = GetSequenceMaxLength();
+   return DEVICE_OK;
+}
+
+
 long
 LoggedSetting::GetSequenceMaxLength() const
 {
@@ -244,7 +252,11 @@ BoolSetting::NewPropertyAction(PropertyDisplay displayMode)
          }
          else if (eAct == MM::IsSequenceable)
          {
-            pProp->SetSequenceable(setting_.GetSequenceMaxLength());
+            long len;
+            int err = setting_.GetSequenceMaxLength(len);
+            if (err != DEVICE_OK)
+               return err;
+            pProp->SetSequenceable(len);
             return DEVICE_OK;
          }
          else if (eAct == MM::AfterLoadSequence)
@@ -411,7 +423,11 @@ IntegerSetting::NewPropertyAction()
          }
          else if (eAct == MM::IsSequenceable)
          {
-            pProp->SetSequenceable(setting_.GetSequenceMaxLength());
+            long len;
+            int err = setting_.GetSequenceMaxLength(len);
+            if (err != DEVICE_OK)
+               return err;
+            pProp->SetSequenceable(len);
             return DEVICE_OK;
          }
          else if (eAct == MM::AfterLoadSequence)
@@ -573,7 +589,11 @@ FloatSetting::NewPropertyAction()
          }
          else if (eAct == MM::IsSequenceable)
          {
-            pProp->SetSequenceable(setting_.GetSequenceMaxLength());
+            long len;
+            int err = setting_.GetSequenceMaxLength(len);
+            if (err != DEVICE_OK)
+               return err;
+            pProp->SetSequenceable(len);
             return DEVICE_OK;
          }
          else if (eAct == MM::AfterLoadSequence)

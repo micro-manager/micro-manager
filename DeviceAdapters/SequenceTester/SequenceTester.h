@@ -273,6 +273,11 @@ public:
    { isSequenceable = false; return DEVICE_OK; }
    virtual bool IsContinuousFocusDrive() const { return false; }
 
+protected:
+   FloatSetting::Ptr GetZPositionUmSetting() { return zPositionUm_; }
+   FloatSetting::ConstPtr GetZPositionUmSetting() const
+   { return zPositionUm_; }
+
 private:
    FloatSetting::Ptr zPositionUm_;
    OneShotSetting::Ptr originSet_;
@@ -287,7 +292,21 @@ class TesterZStage : public Tester1DStageBase<TesterZStage, 10>
 public:
    TesterZStage(const std::string& name) : Super(name) {}
 
+   virtual int Initialize();
+
+   virtual int IsStageSequenceable(bool& isSequenceable) const;
+   virtual int GetStageSequenceMaxLength(long& nrEvents) const;
+   virtual int ClearStageSequence();
+   virtual int AddToStageSequence(double positionUm);
+   virtual int SendStageSequence();
+   virtual int StartStageSequence();
+   virtual int StopStageSequence();
+
    virtual bool IsContinuousFocusDrive() const { return false; }
+
+private:
+   TriggerInput triggerInput_;
+   std::vector<double> deviceInterfaceSequenceBuffer_;
 };
 
 
