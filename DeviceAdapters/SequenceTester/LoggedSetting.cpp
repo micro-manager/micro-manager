@@ -69,6 +69,7 @@ LoggedSetting::GetSequenceMaxLength() const
 void
 LoggedSetting::ReceiveEdgeTrigger()
 {
+   GetLogger()->FireOneShot(device_->GetDeviceName(), "trig-in:" + GetName());
    if (sequenceMaxLengthSetting_->Get() > 0)
       HandleEdgeTrigger();
 }
