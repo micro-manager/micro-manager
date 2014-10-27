@@ -301,3 +301,79 @@ CreateFloatProperty(const std::string& name,
             setting->GetMin(), setting->GetMax());
    }
 }
+
+
+template <class TConcreteStage, long UMicronsPerStep>
+int
+TesterStageBase<TConcreteStage, UMicronsPerStep>::Initialize()
+{
+   int err;
+
+   err = Super::Initialize();
+   if (err != DEVICE_OK)
+      return err;
+
+   zPositionUm_ = boost::make_shared< FloatSetting<TConcreteStage> >(
+         Super::GetLogger(), This(), "ZPositionUm", 0.0, false);
+   originSet_ = boost::make_shared< OneShotSetting<TConcreteStage> >(
+         Super::GetLogger(), This(), "OriginSet");
+
+   return DEVICE_OK;
+}
+
+
+template <class TConcreteStage, long UMicronsPerStep>
+int
+TesterStageBase<TConcreteStage, UMicronsPerStep>::SetPositionUm(double pos)
+{
+   return zPositionUm_->Set(pos);
+}
+
+
+template <class TConcreteStage, long UMicronsPerStep>
+int
+TesterStageBase<TConcreteStage, UMicronsPerStep>::GetPositionUm(double& pos)
+{
+   return zPositionUm_->Get(pos);
+}
+
+
+template <class TConcreteStage, long UMicronsPerStep>
+int
+TesterStageBase<TConcreteStage, UMicronsPerStep>::SetPositionSteps(long steps)
+{
+   return zPositionUm_->Set(0.1 * steps);
+}
+
+
+template <class TConcreteStage, long UMicronsPerStep>
+int
+TesterStageBase<TConcreteStage, UMicronsPerStep>::GetPositionSteps(long& steps)
+{
+   double um;
+   int err = zPositionUm_->Get(um);
+   if (err != DEVICE_OK)
+      return err;
+   steps = static_cast<long>(10.0 * um + 0.5);
+   return DEVICE_OK;
+}
+
+
+template <class TConcreteStage, long UMicronsPerStep>
+int
+TesterStageBase<TConcreteStage, UMicronsPerStep>::SetOrigin()
+{
+   return originSet_->Set();
+}
+
+
+template <class TConcreteStage, long UMicronsPerStep>
+int
+TesterStageBase<TConcreteStage, UMicronsPerStep>::
+GetLimits(double& lower, double& upper)
+{
+   // Not (yet) designed for testing
+   lower = -100000.0;
+   upper = +100000.0;
+   return DEVICE_OK;
+}

@@ -272,15 +272,16 @@ private:
 };
 
 
-class TesterZStage : public TesterBase<CStageBase, TesterZStage>
+template <class TConcreteStage, long UMicronsPerStep = 1>
+class TesterStageBase : public TesterBase<CStageBase, TConcreteStage>
 {
-   typedef TesterZStage Self;
-   typedef TesterBase< ::CStageBase, TesterZStage > Super;
+   typedef TesterBase< ::CStageBase, TConcreteStage > Super;
+   TConcreteStage* This() { return static_cast<TConcreteStage*>(this); }
 
-   static const long umPerStep = 10;
+   static const long umPerStep = UMicronsPerStep;
 
 public:
-   TesterZStage(const std::string& name) : Super(name) {}
+   TesterStageBase(const std::string& name) : Super(name) {}
 
    virtual int Initialize();
 
@@ -295,6 +296,30 @@ public:
    virtual bool IsContinuousFocusDrive() const { return false; }
 
 private:
-   FloatSetting<Self>::Ptr zPositionUm_;
-   OneShotSetting<Self>::Ptr originSet_;
+   typename FloatSetting<TConcreteStage>::Ptr zPositionUm_;
+   typename OneShotSetting<TConcreteStage>::Ptr originSet_;
+};
+
+
+class TesterZStage : public TesterStageBase<TesterZStage, 10>
+{
+   typedef TesterZStage Self;
+   typedef TesterStageBase<Self, 10> Super;
+
+public:
+   TesterZStage(const std::string& name) : Super(name) {}
+
+   virtual bool IsContinuousFocusDrive() const { return false; }
+};
+
+
+class TesterAFStage : public TesterStageBase<TesterAFStage>
+{
+   typedef TesterAFStage Self;
+   typedef TesterStageBase<Self> Super;
+
+public:
+   TesterAFStage(const std::string& name) : Super(name) {}
+
+   virtual bool IsContinuousFocusDrive() const { return true; }
 };
