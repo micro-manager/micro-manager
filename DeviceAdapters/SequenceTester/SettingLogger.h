@@ -28,9 +28,7 @@
 #include <msgpack.hpp>
 
 #include <boost/lexical_cast.hpp>
-#include <boost/make_shared.hpp>
 #include <boost/shared_ptr.hpp>
-#include <boost/weak_ptr.hpp>
 
 #include <map>
 #include <string>

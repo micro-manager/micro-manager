@@ -24,6 +24,9 @@
 #include "TriggerInput.h"
 #include "SequenceTester.h"
 
+#include <boost/bind.hpp>
+#include <string>
+
 
 void
 TriggerInput::Initialize(InterDevice::Ptr device,

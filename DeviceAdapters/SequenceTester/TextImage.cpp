@@ -24,6 +24,7 @@
 #include "TextImage.h"
 
 #include <algorithm>
+#include <string>
 
 
 namespace

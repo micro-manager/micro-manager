@@ -28,11 +28,12 @@
 
 #include <boost/bind.hpp>
 #include <boost/move/move.hpp>
+#include <boost/shared_ptr.hpp>
 #include <boost/thread.hpp>
 #include <boost/unordered_map.hpp>
 #include <exception>
-#include <sstream>
 #include <string>
+#include <utility>
 
 
 // Container for Micro-Manager error code

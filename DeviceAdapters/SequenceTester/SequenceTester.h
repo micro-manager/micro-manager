@@ -31,9 +31,12 @@
 
 #include "DeviceBase.h"
 
+#include <boost/shared_ptr.hpp>
+#include <boost/signals2.hpp>
 #include <boost/thread.hpp>
 #include <boost/unordered_map.hpp>
 #include <string>
+#include <vector>
 
 
 // Common base class for all devices. Goes in between TDeviceBase and

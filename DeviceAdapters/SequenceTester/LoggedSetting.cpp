@@ -25,11 +25,12 @@
 
 #include "SequenceTester.h" // For InterDevice; TODO make separate header
 
+#include <algorithm>
 #include <boost/lexical_cast.hpp>
 #include <boost/utility.hpp>
-#include <algorithm>
 #include <iterator>
 #include <string>
+#include <vector>
 
 
 LoggedSetting::LoggedSetting(SettingLogger* logger,
