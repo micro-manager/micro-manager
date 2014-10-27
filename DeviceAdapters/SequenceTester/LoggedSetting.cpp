@@ -25,8 +25,10 @@
 
 #include "SequenceTester.h" // For InterDevice; TODO make separate header
 
+#include <boost/lexical_cast.hpp>
 #include <boost/utility.hpp>
 #include <algorithm>
+#include <iterator>
 #include <string>
 
 
@@ -47,10 +49,45 @@ LoggedSetting::MarkBusy()
 }
 
 
+long
+LoggedSetting::GetSequenceMaxLength() const
+{
+   if (!sequenceMaxLengthSetting_)
+      return 0;
+   return sequenceMaxLengthSetting_->Get();
+}
+
+
+void
+LoggedSetting::ReceiveEdgeTrigger()
+{
+   if (sequenceMaxLengthSetting_->Get() > 0)
+      HandleEdgeTrigger();
+}
+
+
+void
+LoggedSetting::ConnectToEdgeTriggerSource(EdgeTriggerSignal& source)
+{
+   edgeTriggerConnection_ = source.connect(
+         EdgeTriggerSignal::slot_type(&Self::ReceiveEdgeTrigger, this).
+         track(shared_from_this()));
+}
+
+
+void
+LoggedSetting::DisconnectEdgeTriggerSource()
+{
+   edgeTriggerConnection_.disconnect();
+}
+
+
 BoolSetting::BoolSetting(SettingLogger* logger,
       InterDevice* device, const std::string& name,
       bool initialValue) :
-   LoggedSetting(logger, device, name)
+   LoggedSetting(logger, device, name),
+   sequenceRunning_(false),
+   nextTriggerIndex_(0)
 {
    GetLogger()->SetBool(GetDevice()->GetDeviceName(), GetName(),
          initialValue, false);
@@ -77,6 +114,75 @@ bool
 BoolSetting::Get() const
 {
    return GetLogger()->GetBool(GetDevice()->GetDeviceName(), GetName());
+}
+
+
+int
+BoolSetting::SetTriggerSequence(const std::vector<uint8_t>& sequence)
+{
+   if (sequence.size() > GetSequenceMaxLength())
+      return DEVICE_SEQUENCE_TOO_LARGE;
+   triggerSequence_ = sequence;
+   return DEVICE_OK;
+}
+
+
+int
+BoolSetting::StartTriggerSequence()
+{
+   if (GetSequenceMaxLength() == 0)
+      return DEVICE_ERR;
+   nextTriggerIndex_ = 0;
+   sequenceRunning_ = true;
+   return DEVICE_OK;
+}
+
+
+int
+BoolSetting::StopTriggerSequence()
+{
+   sequenceRunning_ = false;
+   return DEVICE_OK;
+}
+
+
+void
+BoolSetting::HandleEdgeTrigger()
+{
+   if (!sequenceRunning_)
+      return;
+
+   uint8_t newValue = triggerSequence_[nextTriggerIndex_++];
+   if (nextTriggerIndex_ >= triggerSequence_.size())
+      nextTriggerIndex_ = 0;
+
+   GetLogger()->SetBool(GetDevice()->GetDeviceName(), GetName(),
+         static_cast<bool>(newValue));
+}
+
+
+namespace
+{
+   struct BoolMapper
+   {
+      std::string onString_;
+      uint8_t operator()(const std::string& src)
+      { return static_cast<uint8_t>(src == onString_); }
+   };
+
+   std::vector<uint8_t>
+   MapBoolVector(const std::vector<std::string>& strVector,
+         const std::string& onString)
+   {
+      BoolMapper mapper;
+      mapper.onString_ = onString;
+
+      std::vector<uint8_t> ret;
+      ret.reserve(strVector.size());
+      std::transform(strVector.begin(), strVector.end(),
+            std::back_inserter(ret), mapper);
+      return ret;
+   }
 }
 
 
@@ -134,6 +240,36 @@ BoolSetting::NewPropertyAction(PropertyDisplay displayMode)
                   return setting_.Set(intVal != 0);
             }
          }
+         else if (eAct == MM::IsSequenceable)
+         {
+            pProp->SetSequenceable(setting_.GetSequenceMaxLength());
+            return DEVICE_OK;
+         }
+         else if (eAct == MM::AfterLoadSequence)
+         {
+            std::vector<std::string> strSeq = pProp->GetSequence();
+            switch (displayMode_)
+            {
+               case ON_OFF:
+                  return setting_.
+                     SetTriggerSequence(MapBoolVector(strSeq, "On"));
+               case YES_NO:
+                  return setting_.
+                     SetTriggerSequence(MapBoolVector(strSeq, "Yes"));
+               case ONE_ZERO:
+                  return setting_.
+                     SetTriggerSequence(MapBoolVector(strSeq, "1"));
+            }
+            return DEVICE_OK;
+         }
+         else if (eAct == MM::StartSequence)
+         {
+            return setting_.StartTriggerSequence();
+         }
+         else if (eAct == MM::StopSequence)
+         {
+            return setting_.StopTriggerSequence();
+         }
          return DEVICE_OK;
       }
    };
@@ -148,7 +284,9 @@ IntegerSetting::IntegerSetting(SettingLogger* logger,
    LoggedSetting(logger, device, name),
    hasMinMax_(hasMinMax),
    min_(minimum),
-   max_(maximum)
+   max_(maximum),
+   sequenceRunning_(false),
+   nextTriggerIndex_(0)
 {
    GetLogger()->SetInteger(GetDevice()->GetDeviceName(), GetName(),
          initialValue, false);
@@ -175,6 +313,67 @@ long
 IntegerSetting::Get() const
 {
    return GetLogger()->GetInteger(GetDevice()->GetDeviceName(), GetName());
+}
+
+
+int
+IntegerSetting::SetTriggerSequence(const std::vector<long>& sequence)
+{
+   if (sequence.size() > GetSequenceMaxLength())
+      return DEVICE_SEQUENCE_TOO_LARGE;
+   triggerSequence_ = sequence;
+   return DEVICE_OK;
+}
+
+
+int
+IntegerSetting::StartTriggerSequence()
+{
+   if (GetSequenceMaxLength() == 0)
+      return DEVICE_ERR;
+   nextTriggerIndex_ = 0;
+   sequenceRunning_ = true;
+   return DEVICE_OK;
+}
+
+
+int
+IntegerSetting::StopTriggerSequence()
+{
+   sequenceRunning_ = false;
+   return DEVICE_OK;
+}
+
+
+void
+IntegerSetting::HandleEdgeTrigger()
+{
+   if (!sequenceRunning_)
+      return;
+
+   long newValue = triggerSequence_[nextTriggerIndex_++];
+   if (nextTriggerIndex_ >= triggerSequence_.size())
+      nextTriggerIndex_ = 0;
+
+   GetLogger()->SetInteger(GetDevice()->GetDeviceName(), GetName(), newValue);
+}
+
+
+namespace
+{
+   long IntegerMapper(const std::string& src)
+   { return boost::lexical_cast<long>(src); }
+
+   // Throws boost::bad_lexical_cast
+   std::vector<long>
+   MapIntegerVector(const std::vector<std::string>& strVector)
+   {
+      std::vector<long> ret;
+      ret.reserve(strVector.size());
+      std::transform(strVector.begin(), strVector.end(),
+            std::back_inserter(ret), IntegerMapper);
+      return ret;
+   }
 }
 
 
@@ -206,6 +405,31 @@ IntegerSetting::NewPropertyAction()
             pProp->Get(v);
             return setting_.Set(v);
          }
+         else if (eAct == MM::IsSequenceable)
+         {
+            pProp->SetSequenceable(setting_.GetSequenceMaxLength());
+            return DEVICE_OK;
+         }
+         else if (eAct == MM::AfterLoadSequence)
+         {
+            try
+            {
+               return setting_.
+                  SetTriggerSequence(MapIntegerVector(pProp->GetSequence()));
+            }
+            catch (const boost::bad_lexical_cast&)
+            {
+               return DEVICE_ERR;
+            }
+         }
+         else if (eAct == MM::StartSequence)
+         {
+            return setting_.StartTriggerSequence();
+         }
+         else if (eAct == MM::StopSequence)
+         {
+            return setting_.StopTriggerSequence();
+         }
          return DEVICE_OK;
       }
    };
@@ -220,7 +444,9 @@ FloatSetting::FloatSetting(SettingLogger* logger,
    LoggedSetting(logger, device, name),
    hasMinMax_(hasMinMax),
    min_(minimum),
-   max_(maximum)
+   max_(maximum),
+   sequenceRunning_(false),
+   nextTriggerIndex_(0)
 {
    GetLogger()->SetFloat(GetDevice()->GetDeviceName(), GetName(),
          initialValue, false);
@@ -247,6 +473,67 @@ double
 FloatSetting::Get() const
 {
    return GetLogger()->GetFloat(GetDevice()->GetDeviceName(), GetName());
+}
+
+
+int
+FloatSetting::SetTriggerSequence(const std::vector<double>& sequence)
+{
+   if (sequence.size() > GetSequenceMaxLength())
+      return DEVICE_SEQUENCE_TOO_LARGE;
+   triggerSequence_ = sequence;
+   return DEVICE_OK;
+}
+
+
+int
+FloatSetting::StartTriggerSequence()
+{
+   if (GetSequenceMaxLength() == 0)
+      return DEVICE_ERR;
+   nextTriggerIndex_ = 0;
+   sequenceRunning_ = true;
+   return DEVICE_OK;
+}
+
+
+int
+FloatSetting::StopTriggerSequence()
+{
+   sequenceRunning_ = false;
+   return DEVICE_OK;
+}
+
+
+void
+FloatSetting::HandleEdgeTrigger()
+{
+   if (!sequenceRunning_)
+      return;
+
+   double newValue = triggerSequence_[nextTriggerIndex_++];
+   if (nextTriggerIndex_ >= triggerSequence_.size())
+      nextTriggerIndex_ = 0;
+
+   GetLogger()->SetFloat(GetDevice()->GetDeviceName(), GetName(), newValue);
+}
+
+
+namespace
+{
+   double FloatMapper(const std::string& src)
+   { return boost::lexical_cast<double>(src); }
+
+   // Throws boost::bad_lexical_cast
+   std::vector<double>
+   MapFloatVector(const std::vector<std::string>& strVector)
+   {
+      std::vector<double> ret;
+      ret.reserve(strVector.size());
+      std::transform(strVector.begin(), strVector.end(),
+            std::back_inserter(ret), FloatMapper);
+      return ret;
+   }
 }
 
 
@@ -277,6 +564,31 @@ FloatSetting::NewPropertyAction()
             double v;
             pProp->Get(v);
             return setting_.Set(v);
+         }
+         else if (eAct == MM::IsSequenceable)
+         {
+            pProp->SetSequenceable(setting_.GetSequenceMaxLength());
+            return DEVICE_OK;
+         }
+         else if (eAct == MM::AfterLoadSequence)
+         {
+            try
+            {
+               return setting_.
+                  SetTriggerSequence(MapFloatVector(pProp->GetSequence()));
+            }
+            catch (const boost::bad_lexical_cast&)
+            {
+               return DEVICE_ERR;
+            }
+         }
+         else if (eAct == MM::StartSequence)
+         {
+            return setting_.StartTriggerSequence();
+         }
+         else if (eAct == MM::StopSequence)
+         {
+            return setting_.StopTriggerSequence();
          }
          return DEVICE_OK;
       }
