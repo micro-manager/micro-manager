@@ -376,4 +376,9 @@ public:
 
 private:
    IntegerSetting::Ptr position_;
+   StringSetting::Ptr triggerSourceDevice_;
+   StringSetting::Ptr triggerSourcePort_;
+   IntegerSetting::Ptr sequenceMaxLength_;
+
+   void UpdateTriggerConnection();
 };

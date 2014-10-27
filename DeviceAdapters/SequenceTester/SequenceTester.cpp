@@ -860,6 +860,24 @@ TesterSwitcher::Initialize()
    position_->SetBusySetting(GetBusySetting());
    CreateIntegerProperty("State", position_);
 
+   triggerSourceDevice_ = StringSetting::New(GetLogger(), this,
+         "TriggerSourceDevice");
+   CreateStringProperty("TriggerSourceDevice", triggerSourceDevice_);
+   triggerSourceDevice_->GetPostSetSignal().connect(
+         boost::bind<void>(&TesterSwitcher::UpdateTriggerConnection, this));
+
+   triggerSourcePort_ = StringSetting::New(GetLogger(), this,
+         "TriggerSourcePort");
+   CreateStringProperty("TriggerSourcePort", triggerSourcePort_);
+   triggerSourcePort_->GetPostSetSignal().connect(
+         boost::bind<void>(&TesterSwitcher::UpdateTriggerConnection, this));
+
+   sequenceMaxLength_ = IntegerSetting::New(GetLogger(), this,
+         "TriggerSequenceMaxLength", 0, false);
+   CreateIntegerProperty("TriggerSequenceMaxLength", sequenceMaxLength_);
+
+   position_->SetSequenceMaxLengthSetting(sequenceMaxLength_);
+
    return DEVICE_OK;
 }
 
@@ -868,4 +886,26 @@ unsigned long
 TesterSwitcher::GetNumberOfPositions() const
 {
    return nrPositions_;
+}
+
+
+void
+TesterSwitcher::UpdateTriggerConnection()
+{
+   position_->DisconnectEdgeTriggerSource();
+
+   const std::string sourceDevice = triggerSourceDevice_->Get();
+   const std::string sourcePort = triggerSourcePort_->Get();
+   if (sourceDevice.empty() || sourcePort.empty())
+      return;
+
+   InterDevice::Ptr device = GetHub()->FindPeerDevice(sourceDevice);
+   if (!device)
+      return;
+
+   EdgeTriggerSignal* signal = device->GetEdgeTriggerSource(sourcePort);
+   if (!signal)
+      return;
+
+   position_->ConnectToEdgeTriggerSource(*signal);
 }
