@@ -404,10 +404,16 @@ void
 SettingLogger::DrawSettingMap(TextImageCursor& cursor,
       const SettingMap& values) const
 {
-   for (SettingConstIterator begin = values.begin(), it = begin,
-         end = values.end(); it != end; ++it)
+   bool first = true;
+   for (SettingConstIterator it = values.begin(), end = values.end();
+         it != end; ++it)
    {
-      if (it != begin)
+      if (boost::dynamic_pointer_cast<OneShotSettingValue>(it->second))
+         continue; // Skip one-shot settings
+
+      if (first)
+         first = false;
+      else
          cursor.Space();
       DrawStringOnImage(cursor, it->first.GetStringRep() + '=' +
             it->second->GetString());

@@ -107,6 +107,7 @@ class OneShotSettingValue : public SettingValue
 public:
    OneShotSettingValue() {}
    virtual void Write(msgpack::sbuffer& sbuf) const;
+   virtual std::string GetString() const { return "(one-shot)"; }
 };
 
 

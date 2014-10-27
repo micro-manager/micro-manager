@@ -285,6 +285,24 @@ const Pixel glyph_9[GLYPH_HEIGHT * 3] = {
 };
 GlyphDef def_9('9', glyph_9, sizeof(glyph_9));
 
+const Pixel glyph_leftparen[GLYPH_HEIGHT * 3] = {
+   0,0,1,
+   0,1,0,
+   0,1,0,
+   0,1,0,
+   0,0,1,
+};
+GlyphDef def_leftparen('(', glyph_leftparen, sizeof(glyph_leftparen));
+
+const Pixel glyph_rightparen[GLYPH_HEIGHT * 3] = {
+   1,0,0,
+   0,1,0,
+   0,1,0,
+   0,1,0,
+   1,0,0,
+};
+GlyphDef def_rightparen(')', glyph_rightparen, sizeof(glyph_rightparen));
+
 const Pixel glyph_plus[GLYPH_HEIGHT * 3] = {
    0,0,0,
    0,1,0,
