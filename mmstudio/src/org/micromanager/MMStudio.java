@@ -1187,9 +1187,11 @@ public class MMStudio implements ScriptInterface {
          ReportingUtils.showError("No camera configured");
          return;
       }
-      Image image = snapLiveManager_.snap(!shouldAddToAlbum);
+      List<Image> images = snapLiveManager_.snap(!shouldAddToAlbum);
       if (shouldAddToAlbum) {
-         dataManager_.addToAlbum(image);
+         for (Image image : images) {
+            dataManager_.addToAlbum(image);
+         }
       }
    }
 
