@@ -422,7 +422,10 @@
         slices-sequenceable (and (stage-sequenceable?)
                                  (sequence-fits-stage? (.getFocusDevice mmc) n-slices))
         no-channel-skips-frames (all-equal? 0 (map :skip-frames channels))
-        all-channels-do-z-stack (all-equal? true (map :use-z-stack channels))]
+        all-channels-do-z-stack (all-equal? true (map :use-z-stack channels))
+        channel-total-exposure (if channels
+                                 (reduce + (map :exposure channels))
+                                 (default-exposure))]
     (if
       (and
         (or
@@ -454,7 +457,8 @@
           (>= autofocus-skip (dec numFrames)))
         (zero? (count runnables))
         (not (first custom-intervals-ms))
-        (> default-exposure interval-ms))
+        ; Really we should sum the exposures for all positions and slices...
+        (< interval-ms channel-total-exposure))
       (let [triggers {:properties (select-triggerable-sequences property-sequences)}]
         (if have-multiple-positions
           (generate-multiposition-bursts
