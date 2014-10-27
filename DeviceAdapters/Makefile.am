@@ -131,6 +131,7 @@ SUBDIRS = \
 	PriorLegacy \
 	Sapphire \
 	Scientifica \
+	SequenceTester \
 	SerialManager \
 	SimpleAutofocus \
 	SpectralLMM5 \

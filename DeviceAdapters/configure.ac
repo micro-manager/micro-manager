@@ -435,6 +435,7 @@ m4_define([device_adapter_dirs], [m4_strip([
    Scientifica
    ScionCam
    Sensicam
+   SequenceTester
    SerialManager
    SimpleAutofocus
    SimpleCam
