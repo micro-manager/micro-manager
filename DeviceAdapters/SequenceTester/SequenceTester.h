@@ -58,16 +58,19 @@ public:
 
 
 template <class TDevice>
-class LoggedIntegerSetting : public LoggedSetting<TDevice>
+class IntegerSetting : public LoggedSetting<TDevice>
 {
    bool hasMinMax_;
    long min_;
    long max_;
 
+   typedef IntegerSetting<TDevice> Self;
    typedef LoggedSetting<TDevice> Super;
 
 public:
-   LoggedIntegerSetting(SettingLogger* logger, TDevice* device,
+   typedef boost::shared_ptr<Self> Ptr;
+
+   IntegerSetting(SettingLogger* logger, TDevice* device,
          const std::string& name, long initialValue,
          bool hasMinMax, long minimum, long maximum);
 
@@ -83,16 +86,19 @@ public:
 
 
 template <class TDevice>
-class LoggedFloatSetting : public LoggedSetting<TDevice>
+class FloatSetting : public LoggedSetting<TDevice>
 {
    bool hasMinMax_;
    double min_;
    double max_;
 
+   typedef FloatSetting<TDevice> Self;
    typedef LoggedSetting<TDevice> Super;
 
 public:
-   LoggedFloatSetting(SettingLogger* logger, TDevice* device,
+   typedef boost::shared_ptr<Self> Ptr;
+
+   FloatSetting(SettingLogger* logger, TDevice* device,
          const std::string& name, double initialValue,
          bool hasMinMax, double minimum, double maximum);
 
@@ -134,9 +140,9 @@ protected:
    virtual SettingLogger* GetLogger() { return GetHub()->GetLogger(); }
 
    void CreateIntegerProperty(const std::string& name,
-         boost::shared_ptr< LoggedIntegerSetting<UConcreteDevice> > setting);
+         typename IntegerSetting<UConcreteDevice>::Ptr setting);
    void CreateFloatProperty(const std::string& name,
-         boost::shared_ptr< LoggedFloatSetting<UConcreteDevice> > setting);
+         typename FloatSetting<UConcreteDevice>::Ptr setting);
 
 private:
    const std::string name_;
@@ -217,7 +223,6 @@ private:
    void SendSequence(bool finite, long count, bool stopOnOverflow);
 
 private:
-   // TODO These could just be settings, but must not mark busy
    size_t snapCounter_;
    size_t cumulativeSequenceCounter_;
 
@@ -230,6 +235,6 @@ private:
    boost::unique_future<void> sequenceFuture_;
    boost::thread sequenceThread_;
 
-   boost::shared_ptr< LoggedFloatSetting<Self> > exposureSetting_;
-   boost::shared_ptr< LoggedIntegerSetting<Self> > binningSetting_;
+   FloatSetting<Self>::Ptr exposureSetting_;
+   IntegerSetting<Self>::Ptr binningSetting_;
 };

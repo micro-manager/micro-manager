@@ -145,9 +145,9 @@ TesterCamera::Initialize()
    if (err != DEVICE_OK)
       return err;
 
-   exposureSetting_ = boost::make_shared< LoggedFloatSetting<Self> >(
+   exposureSetting_ = boost::make_shared< FloatSetting<Self> >(
          GetLogger(), this, "Exposure", 100.0, true, 0.1, 1000.0);
-   binningSetting_ = boost::make_shared< LoggedIntegerSetting<Self> >(
+   binningSetting_ = boost::make_shared< IntegerSetting<Self> >(
          GetLogger(), this, "Binning", 1, true, 1, 1);
 
    CreateFloatProperty("Exposure", exposureSetting_);

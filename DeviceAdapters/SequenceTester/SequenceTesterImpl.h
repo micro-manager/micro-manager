@@ -49,7 +49,7 @@ LoggedSetting<TDevice>::~LoggedSetting()
 
 
 template <class TDevice>
-LoggedIntegerSetting<TDevice>::LoggedIntegerSetting(SettingLogger* logger,
+IntegerSetting<TDevice>::IntegerSetting(SettingLogger* logger,
       TDevice* device, const std::string& name,
       long initialValue, bool hasMinMax, long minimum, long maximum) :
    LoggedSetting<TDevice>(logger, device, name),
@@ -64,7 +64,7 @@ LoggedIntegerSetting<TDevice>::LoggedIntegerSetting(SettingLogger* logger,
 
 template <class TDevice>
 int
-LoggedIntegerSetting<TDevice>::Set(long newValue)
+IntegerSetting<TDevice>::Set(long newValue)
 {
    Super::GetLogger()->SetInteger(Super::GetDevice()->GetName(),
          Super::GetName(), newValue);
@@ -74,7 +74,7 @@ LoggedIntegerSetting<TDevice>::Set(long newValue)
 
 template <class TDevice>
 int
-LoggedIntegerSetting<TDevice>::Get(long& value) const
+IntegerSetting<TDevice>::Get(long& value) const
 {
    value = Get();
    return DEVICE_OK;
@@ -83,7 +83,7 @@ LoggedIntegerSetting<TDevice>::Get(long& value) const
 
 template <class TDevice>
 long
-LoggedIntegerSetting<TDevice>::Get() const
+IntegerSetting<TDevice>::Get() const
 {
    return Super::GetLogger()->GetInteger(Super::GetDevice()->GetName(),
          Super::GetName());
@@ -92,14 +92,14 @@ LoggedIntegerSetting<TDevice>::Get() const
 
 template <class TDevice>
 MM::ActionFunctor*
-LoggedIntegerSetting<TDevice>::NewPropertyAction()
+IntegerSetting<TDevice>::NewPropertyAction()
 {
    class Functor : public MM::ActionFunctor, boost::noncopyable
    {
-      LoggedIntegerSetting<TDevice>& setting_;
+      IntegerSetting<TDevice>& setting_;
 
    public:
-      Functor(LoggedIntegerSetting<TDevice>& setting) : setting_(setting) {}
+      Functor(IntegerSetting<TDevice>& setting) : setting_(setting) {}
 
       virtual int Execute(MM::PropertyBase* pProp, MM::ActionType eAct)
       {
@@ -123,7 +123,7 @@ LoggedIntegerSetting<TDevice>::NewPropertyAction()
 
 
 template <class TDevice>
-LoggedFloatSetting<TDevice>::LoggedFloatSetting(SettingLogger* logger,
+FloatSetting<TDevice>::FloatSetting(SettingLogger* logger,
       TDevice* device, const std::string& name,
       double initialValue, bool hasMinMax, double minimum, double maximum) :
    LoggedSetting<TDevice>(logger, device, name),
@@ -138,7 +138,7 @@ LoggedFloatSetting<TDevice>::LoggedFloatSetting(SettingLogger* logger,
 
 template <class TDevice>
 int
-LoggedFloatSetting<TDevice>::Set(double newValue)
+FloatSetting<TDevice>::Set(double newValue)
 {
    Super::GetLogger()->SetFloat(Super::GetDevice()->GetName(),
          Super::GetName(), newValue);
@@ -148,7 +148,7 @@ LoggedFloatSetting<TDevice>::Set(double newValue)
 
 template <class TDevice>
 int
-LoggedFloatSetting<TDevice>::Get(double& value) const
+FloatSetting<TDevice>::Get(double& value) const
 {
    value = Get();
    return DEVICE_OK;
@@ -157,7 +157,7 @@ LoggedFloatSetting<TDevice>::Get(double& value) const
 
 template <class TDevice>
 double
-LoggedFloatSetting<TDevice>::Get() const
+FloatSetting<TDevice>::Get() const
 {
    return Super::GetLogger()->GetFloat(Super::GetDevice()->GetName(),
          Super::GetName());
@@ -166,14 +166,14 @@ LoggedFloatSetting<TDevice>::Get() const
 
 template <class TDevice>
 MM::ActionFunctor*
-LoggedFloatSetting<TDevice>::NewPropertyAction()
+FloatSetting<TDevice>::NewPropertyAction()
 {
    class Functor : public MM::ActionFunctor, boost::noncopyable
    {
-      LoggedFloatSetting<TDevice>& setting_;
+      FloatSetting<TDevice>& setting_;
 
    public:
-      Functor(LoggedFloatSetting<TDevice>& setting) : setting_(setting) {}
+      Functor(FloatSetting<TDevice>& setting) : setting_(setting) {}
 
       virtual int Execute(MM::PropertyBase* pProp, MM::ActionType eAct)
       {
@@ -261,7 +261,7 @@ template <template <class> class TDeviceBase, class UConcreteDevice>
 void
 TesterBase<TDeviceBase, UConcreteDevice>::
 CreateIntegerProperty(const std::string& name,
-      boost::shared_ptr< LoggedIntegerSetting<UConcreteDevice> > setting)
+      typename IntegerSetting<UConcreteDevice>::Ptr setting)
 {
    Super::CreateIntegerProperty(name.c_str(), setting->Get(), false,
          setting->NewPropertyAction());
@@ -277,7 +277,7 @@ template <template <class> class TDeviceBase, class UConcreteDevice>
 void
 TesterBase<TDeviceBase, UConcreteDevice>::
 CreateFloatProperty(const std::string& name,
-      boost::shared_ptr< LoggedFloatSetting<UConcreteDevice> > setting)
+      typename FloatSetting<UConcreteDevice>::Ptr setting)
 {
    Super::CreateFloatProperty(name.c_str(), setting->Get(), false,
          setting->NewPropertyAction());
