@@ -51,8 +51,6 @@ public class HyperstackControls extends JPanel {
    private int mouseX_ = 0;
    private int mouseY_ = 0;
 
-   // JPanel that holds all controls.
-   private JPanel subPanel_;
    // Controls common to both control sets
    private ScrollerPanel scrollerPanel_;
    private JLabel pixelInfoLabel_;
@@ -91,48 +89,35 @@ public class HyperstackControls extends JPanel {
 
    private void initComponents(final boolean shouldUseLiveControls) {
       // This layout minimizes space between components.
-      subPanel_ = new JPanel(new MigLayout("insets 0, fillx, align center"));
+      setLayout(new MigLayout("insets 0, fillx, align center"));
 
       java.awt.Font labelFont = new java.awt.Font("Lucida Grande", 0, 10);
-      String labelString = "                                            ";
-      Dimension labelDimension = new Dimension(150, 10);
+      Dimension labelDimension = new Dimension(10, 10);
       JPanel labelsPanel = new JPanel(new MigLayout("insets 0"));
-      pixelInfoLabel_ = new JLabel(labelString);
+      pixelInfoLabel_ = new JLabel();
       pixelInfoLabel_.setMinimumSize(labelDimension);
       pixelInfoLabel_.setFont(labelFont);
-      labelsPanel.add(pixelInfoLabel_);
+      labelsPanel.add(pixelInfoLabel_, "grow");
 
-      fpsLabel_ = new JLabel(labelString);
+      fpsLabel_ = new JLabel();
       fpsLabel_.setMinimumSize(labelDimension);
       fpsLabel_.setFont(labelFont);
-      labelsPanel.add(fpsLabel_);
+      labelsPanel.add(fpsLabel_, "grow");
       
-      countdownLabel_ = new JLabel(labelString);
+      countdownLabel_ = new JLabel();
       countdownLabel_.setMinimumSize(labelDimension);
       countdownLabel_.setFont(labelFont);
-      labelsPanel.add(countdownLabel_);
+      labelsPanel.add(countdownLabel_, "grow");
 
-      statusLabel_ = new JLabel(labelString);
+      statusLabel_ = new JLabel();
       statusLabel_.setMinimumSize(labelDimension);
       statusLabel_.setFont(labelFont);
-      labelsPanel.add(statusLabel_);
+      labelsPanel.add(statusLabel_, "grow");
 
-      subPanel_.add(labelsPanel, "span, growx, align center, wrap");
+      add(labelsPanel, "span, growx, align center, wrap");
 
-      scrollerPanel_ = new ScrollerPanel(store_, displayBus_, DEFAULT_FPS);
-      subPanel_.add(scrollerPanel_, "span, growx, wrap 0px");
-      add(subPanel_);
-
-      // Propagate resizing through to our JPanel, adjusting slightly the 
-      // amount of space we give them to create a border.
-      addComponentListener(new ComponentAdapter() {
-         public void componentResized(ComponentEvent e) {
-            Dimension curSize = getSize();
-            subPanel_.setPreferredSize(new Dimension(curSize.width - 10, curSize.height - 10));
-            invalidate();
-            validate();
-         }
-      });
+      scrollerPanel_ = new ScrollerPanel(store_, displayBus_);
+      add(scrollerPanel_, "span, growx, shrinkx, wrap 0px");
    }
 
    /**
