@@ -196,7 +196,7 @@ class ScrollerPanel extends JPanel {
     * One of our lock icons changed state; update lock statuses.
     */
    @Subscribe
-   private void onLockChanged(ScrollbarLockIcon.LockEvent event) {
+   public void onLockChanged(ScrollbarLockIcon.LockEvent event) {
       String axis = event.getAxis();
       ScrollbarLockIcon.LockedState lockState = event.getLockedState();
       axisToState_.get(axis).lockState_ = lockState;
@@ -272,17 +272,22 @@ class ScrollerPanel extends JPanel {
          boolean didAddScrollers = false;
          for (String axis : store_.getAxes()) {
             int newPos = coords.getPositionAt(axis);
-            if (!axisToState_.containsKey(axis) && newPos != 0) {
-               addScroller(axis);
-               didAddScrollers = true;
-            }
-            else if (newPos == 0) {
-               // Don't care about this axis as we have no scrollbar to
-               // manipulate.
-               continue;
+            if (!axisToState_.containsKey(axis)) {
+               if (newPos != 0) {
+                  // Now have at least two positions along this axis; add a
+                  // scroller.
+                  addScroller(axis);
+                  didAddScrollers = true;
+               }
+               else {
+                  // Don't care about this axis as we have no scrollbar to
+                  // manipulate.
+                  continue;
+               }
             }
             JScrollBar scrollbar = axisToState_.get(axis).scrollbar_;
             if (scrollbar.getMaximum() < coords.getPositionAt(axis)) {
+               // Expand the range on the scrollbar.
                scrollbar.setMaximum(coords.getPositionAt(axis));
             }
             int pos = scrollbar.getValue();
@@ -306,6 +311,7 @@ class ScrollerPanel extends JPanel {
             }
          }
          if (didAddScrollers) {
+            // Ensure new scrollers get displayed properly.
             displayBus_.post(new LayoutChangedEvent());
          }
          displayBus_.post(new DefaultRequestToDrawEvent(displayedBuilder.build()));
