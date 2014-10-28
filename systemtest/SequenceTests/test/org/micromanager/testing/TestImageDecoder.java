@@ -84,6 +84,18 @@ public class TestImageDecoder {
       public ArrayList<SettingState> startState;
       public ArrayList<SettingState> currentState;
       public ArrayList<SettingEvent> history;
+
+      public boolean hasBeenSetSincePreviousPacket(String device,
+            String settingName)
+      {
+         for (SettingEvent event : history) {
+            if (event.key.device.equals(device) &&
+                  event.key.key.equals(settingName)) {
+               return true;
+            }
+         }
+         return false;
+      }
    }
 
    public static InfoPacket decode(byte[] image) throws IOException {

@@ -304,7 +304,7 @@
     (swap! state assoc-in [:last-property-settings d p] (last vals))))
 
 (defn start-slice-sequence [slices]
-  (let [z-stage (core getFocusDevice)]
+  (let [z-stage (@state :default-z-drive)]
     (core startStageSequence z-stage)
     (swap! state assoc-in [:last-stage-positions z-stage] (last slices))))
 
@@ -346,9 +346,12 @@
     (start-property-sequences (:properties trigger-sequence))
     (when absolute-slices
       (start-slice-sequence (:slices trigger-sequence)))
-    (core startSequenceAcquisition (if (first-trigger-missing?) (inc length) length) 0 true)
-    (swap! state assoc-in [:last-stage-positions (core getFocusDevice)]
-           (last absolute-slices))))
+    (core startSequenceAcquisition
+          (if (first-trigger-missing?)
+            (inc length)
+            length)
+          0
+          true)))
 
 (defn pop-tagged-image []
   (try (. mmc popNextTaggedImage)
