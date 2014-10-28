@@ -66,15 +66,22 @@ public class FPSPopupMenu extends JPopupMenu {
          return this;
       }
 
+      /**
+       * Forward mouse motion events to our slider. Well actually we forward
+       * *all* mouse events to our slider, but it seems to work okay.
+       */
       @Override
       public void processMouseEvent(MouseEvent e, MenuElement[] path,
-            MenuSelectionManager manager) {}
+            MenuSelectionManager manager) {
+         super.processMouseMotionEvent(e);
+      }
       @Override
       public void processKeyEvent(KeyEvent e, MenuElement[] path,
             MenuSelectionManager manager) {}
       @Override
       public void menuSelectionChanged(boolean isIncluded) {}
    }
+
    private FPSSlider slider_;
 
    public FPSPopupMenu(final EventBus bus, int initialVal) {
