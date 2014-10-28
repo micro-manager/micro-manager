@@ -29,12 +29,21 @@ void CGigECamera::SnapImageCallback( J_tIMAGE_INFO* imageInfo )
 	
 	if( !( doContinuousAcquisition || snapOneImageOnly ) ) return; // no acquisition requested
 
-	size_t numBytes = J_BitsPerPixel( imageInfo->iPixelType ) * imageInfo->iSizeX * imageInfo->iSizeY / 8;
 
 	if( this->doContinuousAcquisition )
 	{
-		if( buffer == NULL ) return;
-		memcpy( buffer, imageInfo->pImageBuffer, min( numBytes, bufferSizeBytes ) );
+		if( buffer_ == NULL )
+		{
+			LogMessage( (std::string) "RingBuffer not initialized");
+			return;
+		}
+
+		// do the actual image aquisition: copy image buffer
+		if (DEVICE_OK != aquireImage(imageInfo,buffer_))
+		{
+			LogMessage( (std::string) "SnapImage encountared a problem, could not aquire image buffer from device");
+			return;
+		}
 
 		int nRet;
 
@@ -46,21 +55,29 @@ void CGigECamera::SnapImageCallback( J_tIMAGE_INFO* imageInfo )
 		mstStartTime.SetValue( boost::lexical_cast< std::string >( imageInfo->iTimeStamp ).c_str() );
 		md.SetTag( mstStartTime );
 
-		nRet = GetCoreCallback()->InsertMultiChannel( this, buffer, 1,
-			GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel(), &md );
+		nRet = GetCoreCallback()->InsertImage(this, buffer_,
+				GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel(), md.Serialize().c_str());
 
 		if( !stopOnOverflow_ && nRet == DEVICE_BUFFER_OVERFLOW )
 		{
 			// do not stop on overflow - just reset the buffer
 			GetCoreCallback()->ClearImageBuffer( this );
-			nRet = GetCoreCallback()->InsertMultiChannel( this, buffer, 1, 
-				GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel(), &md );
+			nRet = GetCoreCallback()->InsertImage(this, buffer_,
+				GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel(), md.Serialize().c_str());
 		}
 	} // end if doContinuousAcquisition
 	else if( this->snapOneImageOnly )
 	{
-		unsigned char* pixels = img_.GetPixelsRW();
-		memcpy( pixels, imageInfo->pImageBuffer, min( numBytes, img_.Width() * img_.Height() * img_.Depth() ) );
+		uint8_t* pixels = const_cast<uint8_t*>(img_.GetPixelsRW());
+
+		LogMessage( (std::string) "SnapImageCallback:  img_.bitDepth " + boost::lexical_cast<std::string>(img_.Depth() ) );
+
+		// do the actual image aquisition: copy image buffer
+		if (DEVICE_OK != aquireImage(imageInfo,pixels))
+		{
+			LogMessage( (std::string) "SnapImage encountared a problem");
+			return;
+		}
 	}
 	
 	// in the case of snapImage-style acquisition, stop
@@ -79,13 +96,87 @@ void CGigECamera::SnapImageCallback( J_tIMAGE_INFO* imageInfo )
 		continuousAcquisitionDone = true;
 	}
 }
+int CGigECamera::aquireImage(J_tIMAGE_INFO* imageInfo, uint8_t *buffer)
+{
+	J_tIMAGE_INFO BufferInfo;
+	uint32_t img_buffer_size = img_.Width() * img_.Height() * img_.Depth();
 
+	if ( color_ )
+	{
+		// Allocate the buffer to hold converted the image
+		if ( J_ST_SUCCESS == J_Image_MallocDIB(imageInfo, &BufferInfo) )
+		{
+			// Convert the raw image to image format
+			//if ( J_ST_SUCCESS == J_Image_FromRawToDIBEx(imageInfo, &BufferInfo, BAYER_EXTEND) )
+			if ( J_ST_SUCCESS == J_Image_FromRawToDIBEx(imageInfo, &BufferInfo, BAYER_EXTEND) )
+			{
+				LogMessage( (std::string) "aquireImage:  try to copy DIB RGB image, BufferInfo " + boost::lexical_cast<std::string>(BufferInfo.iImageSize) +
+					" mm img buffer size " +  boost::lexical_cast<std::string>(img_buffer_size) );
+
+				memcpy( buffer, BufferInfo.pImageBuffer, min( img_buffer_size,BufferInfo.iImageSize) ); //BufferInfo.iImageSize) );
+			}
+			else
+				return DEVICE_ERR;
+
+			J_Image_Free(&BufferInfo);
+		}
+		else
+			return DEVICE_ERR;
+	}
+	else
+	{
+		// Allocates buffer memory for RGB image.
+		if (J_ST_SUCCESS == J_Image_Malloc(imageInfo, &BufferInfo))
+		{
+			// Converts from RAW to full bit image.
+			if(J_ST_SUCCESS == J_Image_FromRawToImageEx(imageInfo,&BufferInfo,BAYER_EXTEND))
+			{
+				J_tIMAGE_INFO YBufferInfo;
+
+				// Allocates buffer memory for Y image.
+				if(J_ST_SUCCESS == J_Image_MallocEx(&BufferInfo,&YBufferInfo,PF_Y/*PF_16BIT_Y*//*PF_8BIT_Y*/) )
+				{
+					// Converts from RGB to Y.
+					if(J_ST_SUCCESS == J_Image_ConvertImage(&BufferInfo,&YBufferInfo,PF_Y/*PF_16BIT_Y*//*PF_8BIT_Y*/) )
+					{
+						LogMessage( (std::string) "aquireImage: try to copy Y image");
+						memcpy( buffer, YBufferInfo.pImageBuffer, min( img_buffer_size,YBufferInfo.iImageSize ) );
+					}
+					else
+					{
+						return DEVICE_ERR;
+					}
+
+					J_Image_Free(&YBufferInfo);
+				}
+				else
+					return DEVICE_ERR;
+			}
+			else
+			{
+				LogMessage( (std::string) "SnapImageCallback:  Could not convert FromRawToImageEx");
+				return DEVICE_ERR;
+			}
+			J_Image_Free(&BufferInfo);
+		}
+		else
+			return DEVICE_ERR;
+	}
+
+
+	return DEVICE_OK;
+}
 
 J_STATUS_TYPE CGigECamera::setupImaging( )
 {
 	J_STATUS_TYPE retval;
 
 	int64_t w, h;
+	// Get Width from the camera
+	//if (J_Camera_GetValueInt64(hCamera, reinterpret_cast<int8_t*>("Width"), &w) == J_ST_SUCCESS)
+	//{
+	//	LogMessage("setupImaging: got width of size " + boost::lexical_cast<std::string>(w),true);
+	//}
 	nodes->get( h, HEIGHT );
 	nodes->get( w, WIDTH );
 
@@ -115,7 +206,10 @@ int CGigECamera::StartSequenceAcquisition( long numImages, double interval_ms, b
 		return ret;
 
 	// make sure the circular buffer is properly sized
-	GetCoreCallback()->InitializeImageBuffer(GetNumberOfComponents(), 1, GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel());
+	//unsigned int channels = (color_) ? 4 : 1;
+	//GetCoreCallback()->InitializeImageBuffer(GetNumberOfComponents(), 1, GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel());
+	GetCoreCallback()->InitializeImageBuffer(1, 1, GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel());
+
 
 	stopContinuousAcquisition = false;
 	continuousAcquisitionDone = false;

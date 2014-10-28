@@ -16,9 +16,12 @@
 #include "../../MMDevice/DeviceBase.h"
 #include "../../MMDevice/ImgBuffer.h"
 #include "../../MMDevice/DeviceThreads.h"
+#include "../../MMDevice/Debayer.h"
+
 #include <string>
 #include <map>
 
+//#include "Jai_Factory.h"
 #include "JAISDK.h"
 
 #include "GigENodes.h"
@@ -40,18 +43,31 @@ const char* const g_Keyword_Sensor_Height		= "Sensor Height";
 const char* const g_Keyword_Image_Width_Max		= "Image Width Max";
 const char* const g_Keyword_Image_Height_Max	= "Image Height Max";
 const char* const g_Keyword_Pixel_Format		= "Pixel Format";
+const char* const g_Keyword_Pixel_Size			= "Pixel Size";
+const char* const g_Keyword_Pixel_Color_Filter	= "Pixel Color Filter";
 const char* const g_Keyword_Frame_Rate			= "Acquisition Frame Rate";
 const char* const g_Keyword_Acquisition_Mode	= "Acquisition Mode";
 
+#define NODE_NAME_WIDTH         (int8_t*)"Width"
+#define NODE_NAME_HEIGHT        (int8_t*)"Height"
+#define NODE_NAME_PIXELFORMAT   (int8_t*)"PixelFormat"
+#define NODE_NAME_GAIN          (int8_t*)"GainRaw"
+#define NODE_NAME_ACQSTART      (int8_t*)"AcquisitionStart"
+#define NODE_NAME_ACQSTOP       (int8_t*)"AcquisitionStop"
+#define NODE_NAME_EXPMODE		(int8_t*)"ExposureMode"
+#define NODE_NAME_SHUTTERMODE	(int8_t*)"ShutterMode"
+#define NODE_NAME_TIMED			(int8_t*)"Timed"
+#define NODE_NAME_EXPOSURETIMEABS (int8_t*)"ExposureTimeAbs"
+
 extern const char* g_CameraDeviceName;
-extern const char* g_PixelType_8bit;
-extern const char* g_PixelType_8bitSigned;
-extern const char* g_PixelType_10bit;
-extern const char* g_PixelType_10bitPacked;
-extern const char* g_PixelType_12bit;
-extern const char* g_PixelType_12bitPacked;
-extern const char* g_PixelType_14bit;
-extern const char* g_PixelType_16bit;
+//extern const char* g_PixelType_8bit;
+//extern const char* g_PixelType_8bitSigned;
+//extern const char* g_PixelType_10bit;
+//extern const char* g_PixelType_10bitPacked;
+//extern const char* g_PixelType_12bit;
+//extern const char* g_PixelType_12bitPacked;
+//extern const char* g_PixelType_14bit;
+//extern const char* g_PixelType_16bit;
 
 // the largest possible pixel in the GenICam spec is 6 bytes (16-bit rgb)
 #define LARGEST_PIXEL_IN_BYTES 6
@@ -81,7 +97,41 @@ public:
 	// MMCamera API
 	// ------------
 	int SnapImage();
+
+	/**
+	* Returns pixel data.
+	* Required by the MM::Camera API.
+	* GetImageBuffer will be called shortly after SnapImage returns.
+	* Use it to wait for camera read-out and transfer of data into memory
+	* Return a pointer to a buffer containing the image data
+	* The calling program will assume the size of the buffer based on the values
+	* obtained from GetImageBufferSize(), which in turn should be consistent with
+	* values returned by GetImageWidth(), GetImageHight() and GetImageBytesPerPixel().
+	* The calling program allso assumes that camera never changes the size of
+	* the pixel buffer on its own. In other words, the buffer can change only if
+	* appropriate properties are set (such as binning, pixel type, etc.)
+	* Multi-Channel cameras should return the content of the first channel in this call.
+	*
+	*/
 	const unsigned char* GetImageBuffer();
+
+	/**
+	* Returns the number of components in this image.  This is '1' for grayscale cameras,
+	* and '4' for RGB cameras.
+	*/
+	unsigned GetNumberOfComponents() const;
+
+	/**
+    * Returns the name for each component
+    */
+	int GetComponentName(unsigned comp, char* name);
+
+	/**
+	* Returns the size in bytes of the image buffer.
+	* Required by the MM::Camera API.
+	* For multi-channel cameras, return the size of a single channel
+	*/
+	long GetImageBufferSize() const {  return img_.Width() * img_.Height() * GetImageBytesPerPixel();  }
 
 	/**
 	* Returns image buffer X-size in pixels.
@@ -107,13 +157,8 @@ public:
 	* a guideline on how to interpret pixel values.
 	* Required by the MM::Camera API.
 	*/
-	unsigned GetBitDepth() const {  return bitDepth_;  }
-
-	/**
-	* Returns the size in bytes of the image buffer.
-	* Required by the MM::Camera API.
-	*/
-	long GetImageBufferSize() const {  return img_.Width() * img_.Height() * GetImageBytesPerPixel();  }
+	//unsigned GetBitDepth() const {  return 8 * GetImageBytesPerPixel();  }
+	unsigned GetBitDepth() const;
 
 	/**
 	* Returns the current exposure setting in milliseconds.
@@ -150,7 +195,7 @@ public:
 	int PrepareSequenceAcqusition() { return DEVICE_OK; }
 	int StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow);
 	int StopSequenceAcquisition();
-   bool IsCapturing();
+	bool IsCapturing();
 
 	// pixel-size-related functions
 	// the GenICam spec and the JAI sdk have no way to query sensor pixel size.
@@ -174,6 +219,7 @@ public:
 	int OnTemperature( MM::PropertyBase* pProp, MM::ActionType eAct );
 	int OnFrameRate( MM::PropertyBase* pProp, MM::ActionType eAct );
 	int onAcquisitionMode( MM::PropertyBase* pProp, MM::ActionType eAct );
+	/*int onPixelColorFilter( MM::PropertyBase* pProp, MM::ActionType eAct );*/
 
 protected:
 	int SetUpBinningProperties();
@@ -193,7 +239,8 @@ protected:
 	MM::MMTime readoutStartTime_;
 	bool stopOnOverflow_;
 	long scanMode_;
-	int bitDepth_;
+	unsigned int bitDepth_;
+	bool color_;
 	unsigned roiX_;
 	unsigned roiY_;
 
@@ -212,6 +259,7 @@ protected:
 	std::map< std::string, std::string > cameraNameMap;
 	std::map< std::string, std::string > frameRateMap;
 	std::map< std::string, std::string > pixelFormatMap;
+	/*std::map< std::string, std::string > pixelColorFilterMap;*/
 	std::map< std::string, std::string > acqModeMap;
 
 	// which node to use for Exposure property
@@ -221,11 +269,25 @@ protected:
 
 	// other members
 	GigENodes* nodes;
-	unsigned char* buffer;
+	unsigned char* buffer_;
 	size_t bufferSizeBytes;
 
 	void SnapImageCallback( J_tIMAGE_INFO* );
 	J_STATUS_TYPE setupImaging();
+
+	/**
+	* Sets color_, bitDepth_ and byteDepth parameters dependent of the pixel type format
+	* this routine can be used to handle special pixel type formats and decide how to convert them
+	* it is either called in ResizeImageBuffer
+	*/
+	int testIfPixelFormatResultsInColorImage(uint32_t &byteDepth);
+
+	/**
+	* aquires the image from GigEDevice
+	* does the conversion from Bayer image to color or grayscale image depending of the results of
+	* testIfPixelFormatResultsInColorImage
+	*/
+	int aquireImage(J_tIMAGE_INFO* imageBuffer, unsigned char* buffer);
 };
 
 #endif //_GigECAMERA_H_

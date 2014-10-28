@@ -11,6 +11,7 @@
 //
 
 #include "GigECamera.h"
+#include "GigENodes.h"
 #include <cstdio>
 #include <string>
 #include <math.h>
@@ -30,14 +31,19 @@ const char* g_CameraDeviceName = "GigE camera adapter";
 
 // constants for naming pixel types (allowed values of the "PixelType" property)
 // these are the names used in the umanager interface.  (from the GenICam spec)
-const char* g_PixelType_8bit = "Mono8";
-const char* g_PixelType_8bitSigned = "Mono8Signed";
-const char* g_PixelType_10bit = "Mono10";
-const char* g_PixelType_10bitPacked = "Mono10Packed";
-const char* g_PixelType_12bit = "Mono12";
-const char* g_PixelType_12bitPacked = "Mono12Packed";
-const char* g_PixelType_14bit = "Mono14";
-const char* g_PixelType_16bit = "Mono16";
+// NOTE: since we are no longer restricting any pixel types, we dont need to define types at all
+//		it would be better to define types not valid, then valid ones
+//		f.e: since we can't use 48bit (or 64bit) RGBA in mm we have should exclude them
+//		the function testIfPixelFormatResultsInColorMode decides wether the image gets grayscaled or not
+
+// constants for naming color modes
+//const char* g_ColorMode_Grayscale = "Grayscale";
+//const char* g_ColorMode_RGB = "RGB-32bit";
+//const char* g_PixelType_8bit = "8bit";
+//const char* g_PixelType_16bit = "16bit";
+//const char* g_PixelType_32bitRGB = "32bitRGB";
+//const char* g_PixelType_64bitRGB = "64bitRGB";
+//const char* g_PixelType_32bit = "32bit";  // floating point greyscale
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -92,6 +98,7 @@ CCameraBase<CGigECamera> (),
 readoutUs_(0.0),
 scanMode_(1),
 bitDepth_(8),
+color_(false),
 roiX_(0),
 roiY_(0),
 cameraOpened(false),
@@ -105,7 +112,7 @@ cameraNameMap( ),
 frameRateMap( ),
 pixelFormatMap( ),
 nodes( NULL ),
-buffer( NULL ),
+buffer_( NULL ),
 bufferSizeBytes( 0 )
 {
 	// call the base class method to set-up default error codes/messages
@@ -125,8 +132,8 @@ CGigECamera::~CGigECamera()
 {
 	if( nodes != NULL )
 		delete nodes;
-	if( buffer != NULL )
-		delete buffer;
+	if( buffer_ != NULL )
+		delete buffer_;
 }
 
 
@@ -147,10 +154,19 @@ int CGigECamera::Initialize()
 	J_STATUS_TYPE retval;
 	int nRet;
 
-	retval = J_Factory_Open(cstr2cjai("") , &hFactory);
+	retval = J_Factory_Open(cstr2cjai(""), &hFactory);
 	if( retval != J_ST_SUCCESS )
 	{
 		LogMessage( "JAI GigE factory failed", false );
+		return DEVICE_NATIVE_MODULE_FAILED;
+	}
+
+	//Update camera list
+	bool8_t bHasChange;
+	retval = J_Factory_UpdateCameraList(hFactory, &bHasChange);
+	if (retval != J_ST_SUCCESS)
+	{
+		LogMessage( "Could not update camera list!", false);
 		return DEVICE_NATIVE_MODULE_FAILED;
 	}
 
@@ -187,8 +203,8 @@ int CGigECamera::Initialize()
 		std::vector<std::string> availableCameras;
 		for( int index = 0; index <= (int) nCameras - 1; index++ )
 		{
-			size = sizeof(sCameraID);
-			retval = J_Factory_GetCameraIDByIndex(hFactory, index, str2jai(sCameraID), &size); 
+			size = (uint32_t) sizeof(sCameraID);
+			retval = J_Factory_GetCameraIDByIndex(hFactory, index, str2jai(sCameraID), &size);
 			if( retval != J_ST_SUCCESS )
 			{
 				LogMessage( (std::string) "camera ID failed (" + CDeviceUtils::ConvertToString( index ) + ")", false );
@@ -270,12 +286,12 @@ int CGigECamera::Initialize()
 	// make sure the exposure mode is set to "Timed", if possible.
 	// not an error if we can't set this, since it's only a recommended parameter.
 	LogMessage( "Setting exposure mode to Timed" );
-	retval = J_Camera_SetValueString( hCamera, cstr2jai("ExposureMode"), cstr2jai("Timed") );
+	retval = J_Camera_SetValueString( hCamera, NODE_NAME_EXPMODE,NODE_NAME_TIMED );
 	if( retval != J_ST_SUCCESS )
 	{
 		LogMessage( "Failed to set exposure mode; trying shutter mode instead" );
 		// some older cameras (from JAI?) use "ShutterMode" instead of "ExposureMode"
-		retval = J_Camera_SetValueString( hCamera, cstr2jai("ShutterMode"), cstr2jai("ExposureTimeAbs") );
+		retval = J_Camera_SetValueString( hCamera, NODE_NAME_SHUTTERMODE, NODE_NAME_EXPOSURETIMEABS );
 		if( retval != J_ST_SUCCESS )
 		{
 			LogMessage( "Failed to set ExposureMode to Timed and ShutterMode to ExposureTimeAbs" );
@@ -442,23 +458,20 @@ int CGigECamera::Initialize()
 
 	// pixel type
 	// note that, in the GenICam standard, pixel format and bit depth are rolled into one
+	// we do not obmit pixel types anymore but we should for 64bit RGB, since mm cant handle them
+	LogMessage( (std::string) "Getting all PixelTypeValues" );
 	std::vector<std::string> pixelTypeValues;
-	for( uint32_t i = 0; i <= nodes->getNumEnumEntries( PIXEL_FORMAT ) - 1; i++ )
+	for( uint32_t i = 0; i < nodes->getNumEnumEntries( PIXEL_FORMAT ); i++ )
 	{
 		std::string entry, displayName;
 		nodes->getEnumEntry( entry, i, PIXEL_FORMAT );
 		nodes->getEnumDisplayName( displayName, i, PIXEL_FORMAT );
 
-		// this excludes a number of formats that aren't yet handled
-		if( entry.find( "Packed" ) == std::string::npos 
-			&& entry.find( "Bayer" ) == std::string::npos
-			&& entry.find( "Planar" ) == std::string::npos
-			&& entry.find( "Device-specific" ) == std::string::npos )
-		{
-			pixelFormatMap.insert( std::pair<std::string, std::string>( entry, displayName ) );
-			pixelFormatMap.insert( std::pair<std::string, std::string>( displayName, entry ) );
-			pixelTypeValues.push_back( displayName );
-		}
+		LogMessage( (std::string) "PixelTypeValue:  " + entry + " diplayName: " + displayName);
+
+		pixelFormatMap.insert( std::pair<std::string, std::string>( entry, displayName ) );
+		pixelFormatMap.insert( std::pair<std::string, std::string>( displayName, entry ) );
+		pixelTypeValues.push_back( displayName );
 	}
 
 	pAct = new CPropertyAction (this, &CGigECamera::OnPixelType);
@@ -469,6 +482,7 @@ int CGigECamera::Initialize()
 		dn = px;
 	else
 		dn = it->second;
+	LogMessage( (std::string) "Setting PixelType to " + dn );
 	nRet = CreateProperty( MM::g_Keyword_PixelType, dn.c_str(), MM::String, !nodes->isWritable( PIXEL_FORMAT ), pAct );
 	if (nRet != DEVICE_OK)
 		return nRet;
@@ -611,7 +625,7 @@ int CGigECamera::Initialize()
 			return nRet;
 		SetPropertyLimits( g_Keyword_Frame_Rate, framerateLow, framerateHigh );
 	}
-	else if( nodes->isAvailable( ACQUISITION_FRAME_RATE_STR ) )
+	/*else if( nodes->isAvailable( ACQUISITION_FRAME_RATE_STR ) )
 	{
 		pAct = new CPropertyAction( this, &CGigECamera::OnFrameRate );
 		std::string d;
@@ -634,7 +648,41 @@ int CGigECamera::Initialize()
 		nRet = SetAllowedValues( g_Keyword_Frame_Rate, frameRateValues );
 		if( nRet != DEVICE_OK )
 			return nRet;
+	}*/
+
+	// say's if pix format is BayRG, BayGB, ... we dont need this, jai is doing the converstion implicitly
+	/*if( nodes->isAvailable( PIXEL_COLOR_FILTER ) )
+	{
+		std::vector<std::string> pixelColorFilterValues;
+		for( uint32_t i = 0; i < nodes->getNumEnumEntries( PIXEL_COLOR_FILTER ); i++ )
+		{
+			std::string entry, displayName;
+			nodes->getEnumEntry( entry, i, PIXEL_COLOR_FILTER );
+			nodes->getEnumDisplayName( displayName, i, PIXEL_COLOR_FILTER );
+			pixelColorFilterMap.insert( std::pair<std::string, std::string>( entry, displayName ) );
+			pixelColorFilterMap.insert( std::pair<std::string, std::string>( displayName, entry ) );
+			pixelColorFilterValues.push_back( displayName );
+
+			LogMessage( (std::string) "PixelColorFilter:  " + entry + " diplayName: " + displayName);
+		}
+		pAct = new CPropertyAction (this, &CGigECamera::onPixelColorFilter);
+		std::string px1, dn1;
+		nodes->get( px1, PIXEL_COLOR_FILTER );
+		it = pixelColorFilterMap.find( px1 );
+		if( it == pixelColorFilterMap.end() )
+			dn1 = px1;
+		else
+			dn1 = it->second;
+		nRet = CreateProperty( g_Keyword_Pixel_Color_Filter, dn1.c_str(), MM::String, !nodes->isWritable( PIXEL_COLOR_FILTER ), pAct );
+		if (nRet != DEVICE_OK)
+			return nRet;
+
+		nRet = SetAllowedValues( g_Keyword_Pixel_Color_Filter, pixelColorFilterValues );
+		if (nRet != DEVICE_OK)
+			return nRet;
 	}
+	*/
+
 
 	// camera offset
 	nRet = CreateProperty(MM::g_Keyword_Offset, "0", MM::Integer, false);
@@ -697,10 +745,33 @@ int CGigECamera::Shutdown()
 */
 const unsigned char* CGigECamera::GetImageBuffer()
 {
-	MM::MMTime readoutTime(readoutUs_);
-	while (readoutTime > (GetCurrentMMTime() - readoutStartTime_)) {}
+	while (GetCurrentMMTime() - readoutStartTime_ < MM::MMTime(readoutUs_)) {CDeviceUtils::SleepMs(5);}
 	return img_.GetPixels();
 }
+
+unsigned CGigECamera::GetBitDepth() const
+{
+	return color_ ? 8 : bitDepth_;
+}
+
+unsigned int CGigECamera::GetNumberOfComponents() const
+{
+	return color_ ? 4 : 1;
+}
+
+ int CGigECamera::GetComponentName(unsigned comp, char* name)
+ {
+	if ( comp > 4 )
+	{
+		name = "invalid comp";
+		return DEVICE_ERR;
+	}
+
+	std::string rgba ("RGBA");
+	CDeviceUtils::CopyLimitedString(name, &rgba.at(comp) );
+
+	return DEVICE_OK;
+ }
 
 
 /**
@@ -880,26 +951,100 @@ int CGigECamera::ResizeImageBuffer()
 	nodes->get( w, WIDTH );
 	nodes->get( h, HEIGHT );
 
-	char buf[MM::MaxStrLength];
-	int ret;
-	ret = GetProperty(MM::g_Keyword_PixelType, buf);
+	uint32_t byteDepth;
+	int ret = testIfPixelFormatResultsInColorImage(byteDepth);
 	if (ret != DEVICE_OK)
 		return ret;
 
-	int byteDepth = 1;
-	if (strcmp(buf, g_PixelType_16bit) == 0)
-		byteDepth = 2;
+	LogMessage("ResizeImageBuffer: bithDepth_: " + boost::lexical_cast<std::string>(bitDepth_)
+		+ " byteDepth: " + boost::lexical_cast<std::string>(byteDepth) +
+		" color mode: " + boost::lexical_cast<std::string>(color_) );
 
+	// why do we have a buffer and a img_ ?
 	img_.Resize( (unsigned int) w, (unsigned int) h, byteDepth);
 
-	if( buffer != NULL )
-		delete buffer;
-	bufferSizeBytes = (size_t) ( w * h * LARGEST_PIXEL_IN_BYTES );
-	buffer = new unsigned char[ bufferSizeBytes ];
+	if( buffer_ != NULL )
+		delete buffer_;
+	//bufferSizeBytes = (size_t) ( w * h * LARGEST_PIXEL_IN_BYTES ); //THis was done for safty reasons
+	bufferSizeBytes = (size_t) ( w * h * byteDepth);
+	buffer_ = new unsigned char[ bufferSizeBytes ];
+
+	LogMessage("ResizeImageBuffer: byteDepth " + boost::lexical_cast<std::string>(byteDepth) +
+		" w " + boost::lexical_cast<std::string>(w)  + " h " + boost::lexical_cast<std::string>(w)  + " bufferSizeBytes " +
+		boost::lexical_cast<std::string>(bufferSizeBytes) );
+
 	return DEVICE_OK;
 }
+int CGigECamera::testIfPixelFormatResultsInColorImage(uint32_t &byteDepth)
+{
+	J_STATUS_TYPE retval;
 
+	// Get pixelformat from the camera as string
+	char s[J_FACTORY_INFO_SIZE];
+	uint32_t size = sizeof(s);
+	retval = J_Camera_GetValueString(hCamera,NODE_NAME_PIXELFORMAT, str2jai(s) ,&size);
+	if( retval != J_ST_SUCCESS )
+	{
+		LogMessage("cant get pixel_format in string");
+		return DEVICE_ERR;
+	}
+	std::string pt(s);
 
+	// Get pixelformat from the camera to calculate bitdepth_
+	int64_t int64Val;
+	retval = J_Camera_GetValueInt64(hCamera, NODE_NAME_PIXELFORMAT, &int64Val);
+	if (retval != J_ST_SUCCESS)
+	{	LogMessage("cant get pixel_format in int");
+		return 	DEVICE_ERR;
+	}
+
+	// Calculate number of bits (not bytes) per pixel using macro
+	uint32_t bpp = J_BitsPerPixel(int64Val);
+	byteDepth = boost::lexical_cast<uint32_t,float>(std::ceil( (float) bpp / (float) 8  ) );
+	bitDepth_ = bpp;
+	color_ = false;
+
+	// If we find RGB in the pixel type string, we set byteDepth and bitDepth higher (not necessary correct fe RGB64bit)
+	if( pt.find( "RGB" ) != std::string::npos && bpp == 24)
+	{
+		LogMessage("We found RGB pixel type, setting color mode true");
+		color_ = true;
+		bitDepth_ = 8;
+		byteDepth = 4;
+	}
+	else if (pt.find( "RGB" ) != std::string::npos && bpp > 24)
+	{
+		LogMessage("We found RGB pixel type but with more than 24bit. Since mm cant handle this type, we just ship a grayscale image");
+		color_ = false;
+		bitDepth_ = boost::lexical_cast<uint32_t,float>(std::ceil( (float) bpp / (float) 3  ) );
+		byteDepth =  boost::lexical_cast<uint32_t,float>(std::ceil( (float) bitDepth_ / (float) 8  ) );;
+	}
+	//else if (bpp == 8)
+	//{
+	//	LogMessage("We found Bayer encoded pixel type with bitDepth 8, setting color mode true");
+	//	color_ = true;
+	//	bitDepth_ = 8;
+	//	byteDepth = 4;
+	//}
+	//else
+	//{
+	//	LogMessage("We found Bayer encoded pixel type with bitDepth > 8, setting color mode true");
+	//	color_ = true;
+	//	bitDepth_ = 16;
+	//	byteDepth = 8;
+	//}
+
+	//else if (pt.find( "BAY" ) != std::string::npos && bpp == 8)
+	//{
+	//	LogMessage("We found Bayer encoded pixel type with bitDepth 8, setting color mode true");
+	//	color_ = true;
+	//	bitDepth_ = 8;
+	//	byteDepth = 4;
+	//}
+	// .... this routine can be used to handle special pixel type formats and decide how to convert them
+
+	return DEVICE_OK;
+}
 void CGigECamera::EnumerateAllNodesToLog()
 {
 	uint32_t nNodes;

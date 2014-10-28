@@ -17,6 +17,7 @@
 #include <boost/assign/list_of.hpp>
 #include <boost/lexical_cast.hpp>
 
+
 namespace {
 
 const std::map< int, std::string > sfncNames 
@@ -46,6 +47,9 @@ const std::map< int, std::string > sfncNames
 							( EXPOSURE_TIME, "ExposureTime" )
 							( EXPOSURE_TIME_ABS, "ExposureTimeAbs" )
 							( EXPOSURE_TIME_ABS_INT, "ExposureTimeAbs" )
+
+							( PIXEL_COLOR_FILTER, "PixelColorFilter" )
+							//( PIXEL_SIZE, "PixelSize" )
 
 							( GAIN, "Gain" )
 							( GAIN_RAW, "GainRaw" )
@@ -114,6 +118,9 @@ GigENodes::GigENodes( CAM_HANDLE camera, boost::function<void(const std::string&
 	floatNodes.insert( std::make_pair( EXPOSURE_TIME_ABS, nf.FloatNode( EXPOSURE_TIME_ABS ) ) );
 	intNodes.insert( std::make_pair( EXPOSURE_TIME_ABS_INT, nf.IntNode( EXPOSURE_TIME_ABS_INT ) ) );
 	
+	stringNodes.insert( std::make_pair( PIXEL_COLOR_FILTER, nf.StringNode( PIXEL_COLOR_FILTER ) ) );
+	//stringNodes.insert( std::make_pair( PIXEL_SIZE, nf.StringNode( PIXEL_SIZE ) ) ); /// me
+
 	floatNodes.insert( std::make_pair( GAIN, nf.FloatNode( GAIN ) ) );
 	intNodes.insert( std::make_pair( GAIN_RAW, nf.IntNode( GAIN_RAW ) ) );
 
@@ -123,7 +130,7 @@ GigENodes::GigENodes( CAM_HANDLE camera, boost::function<void(const std::string&
 	intNodes.insert( std::make_pair( GEV_VERSION_MINOR, nf.IntNode( GEV_VERSION_MINOR ) ) );
 
 	floatNodes.insert( std::make_pair( ACQUISITION_FRAME_RATE, nf.FloatNode( ACQUISITION_FRAME_RATE ) ) );
-	stringNodes.insert( std::make_pair( ACQUISITION_FRAME_RATE_STR, nf.StringNode( ACQUISITION_FRAME_RATE_STR ) ) );
+	//stringNodes.insert( std::make_pair( ACQUISITION_FRAME_RATE_STR, nf.StringNode( ACQUISITION_FRAME_RATE_STR ) ) );
 }
 
 

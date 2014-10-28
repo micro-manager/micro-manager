@@ -17,6 +17,7 @@
 #include <map>
 #include <boost/function.hpp>
 
+//#include "Jai_Factory.h"
 #include "JAISDK.h"
 
 
@@ -78,6 +79,8 @@ enum InterestingNodeString
 	DEVICE_ID,
 
 	EXPOSURE_MODE,
+	//PIXEL_SIZE,				// IEnumeration
+	PIXEL_COLOR_FILTER,		// IEnumeration
 
 	ACQUISITION_FRAME_RATE_STR, // this is supposed to be a float, but our camera has it as a string enum
 };

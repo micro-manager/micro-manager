@@ -283,6 +283,8 @@ int CGigECamera::OnImageHeightMax( MM::PropertyBase* pProp, MM::ActionType eAct 
 */
 int CGigECamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
+	LogMessage("OnPixelType was called", true);
+
 	int ret = DEVICE_OK;
 	switch(eAct)
 	{
@@ -293,6 +295,7 @@ int CGigECamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 			std::string displayName, pixelType;
 			pProp->Get( displayName );
+
 			std::map<std::string, std::string>::iterator it = pixelFormatMap.find( displayName );
 			if( it == pixelFormatMap.end() )
 			{
@@ -300,80 +303,29 @@ int CGigECamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 				return DEVICE_INTERNAL_INCONSISTENCY;
 			}
 			pixelType = it->second;
-			if( pixelType.compare(g_PixelType_8bit) == 0 
-				// || pixelType.compare(g_PixelType_8bitSigned) == 0
-				)
+
+			if( nodes->set( pixelType, PIXEL_FORMAT ) )
 			{
-				if( nodes->set( pixelType, PIXEL_FORMAT ) )
-				{
-					img_.Resize(img_.Width(), img_.Height(), 1);
-					bitDepth_ = 8;
-					ret=DEVICE_OK;
-				}
-				else
-					ret = DEVICE_INVALID_PROPERTY_VALUE;
-			}
-			else if( pixelType.compare(g_PixelType_10bit) == 0 
-				// || pixelType.compare(g_PixelType_10bitPacked) == 0
-				)
-			{
-				if( nodes->set( pixelType, PIXEL_FORMAT ) )
-				{
-					img_.Resize(img_.Width(), img_.Height(), 2);
-					bitDepth_ = 10;
-					ret=DEVICE_OK;
-				}
-				else
-					ret = DEVICE_INVALID_PROPERTY_VALUE;
-			}
-			else if( pixelType.compare( g_PixelType_12bit ) == 0
-				// || pixelType.compare(g_PixelType_12bitPacked) == 0
-				)
-			{
-				if( nodes->set( pixelType, PIXEL_FORMAT ) )
-				{
-					img_.Resize(img_.Width(), img_.Height(), 2);
-					bitDepth_ = 12;
-					ret=DEVICE_OK;
-				}
-				else
-					ret = DEVICE_INVALID_PROPERTY_VALUE;
-			}
-			else if( pixelType.compare( g_PixelType_14bit ) == 0 )
-			{
-				if( nodes->set( pixelType, PIXEL_FORMAT ) )
-				{
-					img_.Resize(img_.Width(), img_.Height(), 2);
-					bitDepth_ = 14;
-					ret=DEVICE_OK;
-				}
-				else
-					ret = DEVICE_INVALID_PROPERTY_VALUE;
-			}
-			else if( pixelType.compare( g_PixelType_16bit ) == 0 )
-			{
-				if( nodes->set( pixelType, PIXEL_FORMAT ) )
-				{
-					img_.Resize(img_.Width(), img_.Height(), 2);
-					bitDepth_ = 16;
-					ret=DEVICE_OK;
-				}
-				else
-					ret = DEVICE_INVALID_PROPERTY_VALUE;
+				LogMessage("OnPixelType: Set pixel type to " + boost::lexical_cast<std::string>(pixelType),false);
+				ret=DEVICE_OK;
 			}
 			else
-			{
-				ret = ERR_UNKNOWN_MODE;
-			}
+				ret = DEVICE_INVALID_PROPERTY_VALUE;
 
+			// in here we check if color mode is present
+			ret = ResizeImageBuffer();
 			if( ret != DEVICE_OK )
 			{
+				LogMessage("OnPixelType: ERROR: somthing went wrong, we dont set default pixel type", true);
+
 				// on error switch to default pixel type
-				nodes->set( g_PixelType_8bit, PIXEL_FORMAT );
+				// since we dont restrict any pixel types we dont have a default format
+			/*	nodes->set( g_PixelType_8bit, PIXEL_FORMAT );
 				bitDepth_ = 8;
 				img_.Resize( img_.Width(), img_.Height(), 1 );
 				pProp->Set( g_PixelType_8bit );
-				OnPropertiesChanged();
+				OnPropertiesChanged();*/
+				return DEVICE_INTERNAL_INCONSISTENCY;
 			}
 		} 
 		break;
@@ -387,6 +339,7 @@ int CGigECamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 			else
 				pProp->Set( s.c_str() );
 			ret=DEVICE_OK;
+			LogMessage("OnPixelType: BeforeGet: try to set type to: " + it->second, true);
 		}
 		break;
 	}
@@ -725,5 +678,45 @@ int CGigECamera::OnFrameRate( MM::PropertyBase* pProp, MM::ActionType eAct )
 
 	return nRet;
 }
-
+//int CGigECamera::onPixelColorFilter( MM::PropertyBase* pProp, MM::ActionType eAct )
+//{
+//	int ret = DEVICE_OK;
+//	switch(eAct)
+//	{
+//	case MM::AfterSet:
+//		{
+//			if(IsCapturing())
+//				return DEVICE_CAMERA_BUSY_ACQUIRING;
+//
+//			std::string displayName, acqMode;
+//			pProp->Get( displayName );
+//			std::map<std::string, std::string>::iterator it = pixelColorFilterMap.find( displayName );
+//			if( it == pixelColorFilterMap.end() )
+//			{
+//				LogMessage( (std::string) "internal error:  inconsistency in pixel color filter map (" + acqMode + ")", false );
+//				return DEVICE_INTERNAL_INCONSISTENCY;
+//			}
+//			acqMode = it->second;
+//
+//			if (nodes->set( acqMode, PIXEL_COLOR_FILTER ))
+//			{
+//				ret = DEVICE_OK;
+//			}
+//		}
+//		break;
+//	case MM::BeforeGet:
+//		{
+//			std::string s;
+//			nodes->get( s, PIXEL_COLOR_FILTER );
+//			std::map<std::string, std::string>::iterator it = pixelColorFilterMap.find( s );
+//			if( it != pixelColorFilterMap.end() )
+//				pProp->Set( it->second.c_str() );
+//			else
+//				pProp->Set( s.c_str() );
+//			ret = DEVICE_OK;
+//		}
+//		break;
+//	}
+//	return ret;
+//}
 
