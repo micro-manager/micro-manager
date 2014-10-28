@@ -138,27 +138,39 @@ int CGigECamera::aquireImage(J_tIMAGE_INFO* imageInfo, uint8_t *buffer)
 			{
 				J_tIMAGE_INFO YBufferInfo;
 
-				// Allocates buffer memory for Y image.
-				if(J_ST_SUCCESS == J_Image_MallocEx(&BufferInfo, &YBufferInfo, PF_Y/*PF_16BIT_Y*//*PF_8BIT_Y*/) )
+				// If the image is already in 8-bit or 16-bit mono,
+				// J_Image_MallocEx will fail. In this case, we already have
+				// the desired image.
+				if (BufferInfo.iPixelType == J_GVSP_PIX_MONO8 ||
+						BufferInfo.iPixelType == J_GVSP_PIX_MONO16)
 				{
-					// Converts from RGB to Y.
-					if(J_ST_SUCCESS == J_Image_ConvertImage(&BufferInfo, &YBufferInfo, PF_Y/*PF_16BIT_Y*//*PF_8BIT_Y*/) )
-					{
-						LogMessage( "aquireImage: copying Y image", true );
-						memcpy( buffer, YBufferInfo.pImageBuffer, min( img_buffer_size, YBufferInfo.iImageSize ) );
-					}
-					else
-					{
-						LogMessage( "J_Image_ConvertImage() failed", true );
-						return DEVICE_ERR;
-					}
-
-					J_Image_Free(&YBufferInfo);
+					LogMessage( "aquireImage: copying Y image", true );
+					memcpy( buffer, BufferInfo.pImageBuffer, min( img_buffer_size, BufferInfo.iImageSize ) );
 				}
 				else
 				{
-					LogMessage( "J_Image_MallocEx() failed", true );
-					return DEVICE_ERR;
+					// Allocates buffer memory for Y image.
+					if (J_ST_SUCCESS == J_Image_MallocEx(&BufferInfo, &YBufferInfo, PF_Y))
+					{
+						// Converts from RGB to Y.
+						if (J_ST_SUCCESS == J_Image_ConvertImage(&BufferInfo, &YBufferInfo, PF_Y))
+						{
+							LogMessage( "aquireImage: copying converted Y image", true );
+							memcpy( buffer, YBufferInfo.pImageBuffer, min( img_buffer_size, YBufferInfo.iImageSize ) );
+						}
+						else
+						{
+							LogMessage( "J_Image_ConvertImage() failed", true );
+							return DEVICE_ERR;
+						}
+
+						J_Image_Free(&YBufferInfo);
+					}
+					else
+					{
+						LogMessage( "J_Image_MallocEx() failed", true );
+						return DEVICE_ERR;
+					}
 				}
 			}
 			else
