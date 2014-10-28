@@ -3,306 +3,319 @@ package org.micromanager.imagedisplay.dev;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
+import java.awt.Dimension;
+import java.awt.event.AdjustmentEvent;
+import java.awt.event.AdjustmentListener;
+import java.awt.event.MouseEvent;
+import java.util.Collections;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import net.miginfocom.swing.MigLayout;
+
+import javax.swing.event.MouseInputAdapter;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollBar;
 
 import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.Datastore;
+import org.micromanager.api.data.NewImageEvent;
 import org.micromanager.data.DefaultCoords;
-import org.micromanager.data.NewImageEvent;
-import org.micromanager.imagedisplay.AxisScroller;
+import org.micromanager.imagedisplay.ScrollbarAnimateIcon;
+import org.micromanager.imagedisplay.ScrollbarLockIcon;
 import org.micromanager.utils.ReportingUtils;
 
+
 /**
- * This class is responsible for containing and managing groups of 
- * AxisScrollers, and how they affect the display of a collection of images.
+ * This class displays a grid of scrollbars for selecting which images in a
+ * Datastore to show.
  */
-public class ScrollerPanel extends JPanel {
-
+class ScrollerPanel extends JPanel {
    private Datastore store_;
-   // We'll be communicating with our owner and with our AxisScrollers via
-   // this bus.
    private EventBus displayBus_;
-   // All AxisScrollers we manage. protected visibility to allow subclassing
-   // (c.f. Navigator plugin)
-   protected ArrayList<AxisScroller> scrollers_;
-   // The positions of all our scrollers the last time
-   // checkForImagePositionChanged() was called.
-   private DefaultCoords lastImagePosition_;
-   // This will get set to false in cleanup, in turn barring any more
-   // timers from getting created.
-   private boolean canMakeTimers_ = true;
-   // Timer for handling animation.
-   private Timer animationUpdateTimer_ = null;
-   // Timer for restoring scrollbars after forcing their positions.
-   private Timer snapBackTimer_ = null;
-   // Rate at which we update images when animating. Defaults to 10.
-   private double framesPerSec_;
 
    /**
-    * @param axisToLength Mapping of axis labels to the number of images along
-    *        that axis.
+    * This class tracks relevant state for a single axis' set of controls.
     */
-   public ScrollerPanel(Datastore store, EventBus displayBus,
-         double framesPerSec) {
-      // Minimize whitespace around our components.
-      super(new net.miginfocom.swing.MigLayout("insets 0, fillx"));
+   private class AxisState {
+      boolean isAnimated_;
+      JLabel label_;
+      JScrollBar scrollbar_;
+      ScrollbarLockIcon.LockedState lockState_;
+      int savedPosition_;
+      
+      public AxisState(JLabel label, JScrollBar scrollbar) {
+         isAnimated_ = false;
+         label_ = label;
+         scrollbar_ = scrollbar;
+         lockState_ = ScrollbarLockIcon.LockedState.UNLOCKED;
+      }
+   }
 
+   private HashMap<String, AxisState> axisToState_;
+   private HashMap<String, Integer> axisToSavedPosition_;
+   
+   private Timer snapbackTimer_;
+   private Timer animationTimer_;
+   // We turn this off when we want to update the position of several
+   // scrollbars in rapid succession, so that we don't post multiple spurious
+   // draw requests.
+   private boolean shouldPostEvents_;
+
+   public ScrollerPanel(Datastore store, EventBus displayBus) {
       store_ = store;
-      store.registerForEvents(this, 100);
       displayBus_ = displayBus;
+
+      axisToState_ = new HashMap<String, AxisState>();
+      axisToSavedPosition_ = new HashMap<String, Integer>();
+
+      // Only the scrollbar column is allowed to grow in width
+      setLayout(new MigLayout("insets 0", 
+               "[][][grow, shrink][]"));
+      // Don't prevent other components from shrinking
+      setMinimumSize(new Dimension(1, 1));
+
+      ArrayList<String> axes = new ArrayList<String>(store_.getAxes());
+      Collections.sort(axes);
+      for (String axis : axes) {
+         // Don't bother creating scrollers for axes with a length of 1.
+         if (store_.getMaxIndex(axis) > 0) {
+            addScroller(axis);
+         }
+      }
+
+      store_.registerForEvents(this, 100);
       displayBus_.register(this);
-      framesPerSec_ = framesPerSec;
-      scrollers_ = new ArrayList<AxisScroller>();
+   }
 
-      // Create all desired AxisScrollers. Use the first character of the 
-      // axis as the label. Default all scrollers to invisible unless they have
-      // at least 2, um, "ticks"; they'll be shown once there's more than one
-      // option along that axis.
-      for (String axis : store_.getAxes()) {
-         int max = store_.getMaxIndex(axis) + 1;
-         AxisScroller scroller = new AxisScroller(axis, max, displayBus, true);
-         if (max <= 1) {
-            scroller.setVisible(false);
+   /**
+    * Add a scroller for the specified axis. Scrollers are a row in our
+    * grid-based layout, and consist of:
+    * - a start/stop button for animating display of the axis
+    * - a label indicating the current displayed index
+    * - a scrollbar for moving through the axis
+    * - a lock icon for preventing the display from changing
+    */
+   private void addScroller(final String axis) {
+      final ScrollbarAnimateIcon animateIcon = new ScrollbarAnimateIcon(axis);
+      Dimension size = new Dimension(24, 14);
+      animateIcon.setPreferredSize(size);
+      animateIcon.setMaximumSize(size);
+      animateIcon.addMouseListener(new MouseInputAdapter() {
+         @Override
+         public void mousePressed(MouseEvent e) {
+            toggleAnimation(axis, animateIcon);
+            animateIcon.setIsAnimated(axisToState_.get(axis).isAnimated_);
          }
-         else {
-            add(scroller, "wrap 0px, align center, growx");
+      });
+      add(animateIcon, "grow 0");
+
+      JLabel positionLabel = new JLabel();
+      add(positionLabel, "grow 0");
+
+      final JScrollBar scrollbar = new JScrollBar(JScrollBar.HORIZONTAL, 0, 1,
+            0, store_.getMaxIndex(axis) + 1);
+      scrollbar.setMinimumSize(new Dimension(1, 1));
+      scrollbar.addAdjustmentListener(new AdjustmentListener() {
+         @Override
+         public void adjustmentValueChanged(AdjustmentEvent e) {
+            onScrollbarMoved(axis, scrollbar);
          }
-         scrollers_.add(scroller);
-      }
+      });
+      add(scrollbar, "shrinkx, growx");
+
+      ScrollbarLockIcon lock = new ScrollbarLockIcon(axis, displayBus_);
+      add(lock, "grow 0, wrap");
+
+      axisToState_.put(axis, new AxisState(positionLabel, scrollbar));
    }
 
    /**
-    * One of our AxisScrollers changed position; update the image.
+    * One of our animation icons has changed state; adjust animation for that
+    * icon.
     */
-   @Subscribe
-   public void onScrollPositionChanged(AxisScroller.ScrollPositionEvent event) {
-      checkForImagePositionChanged();
+   private void toggleAnimation(String axis, ScrollbarAnimateIcon icon) {
+      axisToState_.get(axis).isAnimated_ = !axisToState_.get(axis).isAnimated_;
+      resetAnimation();
    }
 
    /**
-    * Check to see if the image we are currently "pointing to" with the 
-    * scrollers is different from the image that we were last pointing to
-    * when this function was called. If so, then we need to post a
-    * RequestToDrawEvent to the displayBus so that the image display gets
-    * updated.
+    * One of our scrollbars has changed position; request drawing the
+    * appropriate image.
     */
-   private void checkForImagePositionChanged() {
-      boolean shouldPostEvent = false;
-      if (lastImagePosition_ == null) {
-         lastImagePosition_ = (new DefaultCoords.Builder()).build();
-      }
-      DefaultCoords.Builder newPositionBuilder = new DefaultCoords.Builder();
-      for (AxisScroller scroller : scrollers_) {
-         String axis = scroller.getAxis();
-         Integer position = scroller.getPosition();
-         newPositionBuilder.position(axis, position);
-         if (lastImagePosition_.getPositionAt(axis) != position) {
-            // Position along this axis has changed; we need to refresh.
-            shouldPostEvent = true;
-         }
-      }
-      lastImagePosition_ = newPositionBuilder.build();
-      if (shouldPostEvent) {
-         displayBus_.post(new DefaultRequestToDrawEvent(lastImagePosition_));
-      }
+   private void onScrollbarMoved(String axis, JScrollBar scrollbar) {
+      axisToState_.get(axis).label_.setText(String.valueOf(scrollbar.getValue()));
+      postDrawEvent();
    }
 
    /**
-    * One of our AxisScrollers toggled animation status; replace our
-    * animation timer.
+    * Post a draw event, if shouldPostEvents_ is set.
     */
-   @Subscribe
-   public void onAnimationToggle(AxisScroller.AnimationToggleEvent event) {
-      resetAnimationTimer();
-   }
-
-   /**
-    * The window we're in is closing; cancel animations and timers, and ensure
-    * that no new ones can get created.
-    */
-   public void cleanup() {
-      store_.unregisterForEvents(this);
-      canMakeTimers_ = false;
-      for (AxisScroller scroller : scrollers_) {
-         scroller.setIsAnimated(false);
-      }
-      if (animationUpdateTimer_ != null) {
-         animationUpdateTimer_.cancel();
-      }
-      if (snapBackTimer_ != null) {
-         snapBackTimer_.cancel();
-      }
-   }
-
-   /**
-    * Generate a new AnimationTimer that updates each active (i.e. animated)
-    * scroller according to our update rate (FPS). 
-    */
-   private void resetAnimationTimer() {
-      if (animationUpdateTimer_ != null) {
-         // Stop the previous timer.
-         animationUpdateTimer_.cancel();
-      }
-      if (!canMakeTimers_) {
-         // Not allowed to make new timers because we'll be closing soon.
+   private void postDrawEvent() {
+      if (!shouldPostEvents_) {
          return;
       }
-      // Enforce a maximum displayed framerate of 30FPS; for higher rates, we
-      // instead skip over images in animation.
-      int stepSize = 1;
-      long interval = (long) (1000.0 / framesPerSec_);
-      if (interval < 33) {
-         interval = 33; 
-         stepSize = (int) Math.round(framesPerSec_ * 33.0 / 1000.0);
+
+      DefaultCoords.Builder builder = new DefaultCoords.Builder();
+      // Fill in default positions for all axes, including those we don't have
+      // scrollbars for.
+      for (String axis : store_.getAxes()) {
+         builder.position(axis, 0);
       }
-      boolean isAnimated = false;
-      // This is going to be how much we adjust each scroller's position each
-      // tick of the animation.
-      final int[] offsets = new int[scrollers_.size()];
-      for (int i = 0; i < offsets.length; ++i) {
-         if (scrollers_.get(i).getIsAnimated()) {
-            isAnimated = true;
-            offsets[i] = stepSize;
-         }
-         else {
-            offsets[i] = 0;
-         }
+      for (String axis : axisToState_.keySet()) {
+         int pos = axisToState_.get(axis).scrollbar_.getValue();
+         builder.position(axis, pos);
       }
-      if (isAnimated) {
-         animationUpdateTimer_ = new Timer();
-         TimerTask task = new TimerTask() {
-            @Override
-            public void run() {
-               for (int i = 0; i < scrollers_.size(); ++i) {
-                  if (offsets[i] != 0) {
-                     // Note that the scroller handles wrapping around to the 
-                     // beginning, and also whether or not to move at all due to
-                     // being locked. 
-                     scrollers_.get(i).advancePosition(offsets[i], false);
-                  }
-               }
-               checkForImagePositionChanged();
-            }
-         };
-         animationUpdateTimer_.schedule(task, 0, interval);
-      }
+      displayBus_.post(new DefaultRequestToDrawEvent(builder.build()));
    }
 
    /**
-    * A new image has been made available; we need to adjust our scrollbars
-    * to suit. We only show the new image (i.e. update scrollbar positions)
-    * if none of our scrollers are superlocked.
+    * One of our lock icons changed state; update lock statuses.
     */
    @Subscribe
-   public void onNewImageEvent(NewImageEvent event) {
-      boolean didShowNewScrollers = false;
-      boolean canShowNewImage = true;
-      for (AxisScroller scroller : scrollers_) {
-         if (scroller.getIsSuperlocked()) {
-            canShowNewImage = false;
+   private void onLockChanged(ScrollbarLockIcon.LockEvent event) {
+      String axis = event.getAxis();
+      ScrollbarLockIcon.LockedState lockState = event.getLockedState();
+      axisToState_.get(axis).lockState_ = lockState;
+      resetAnimation();
+   }
+
+   /**
+    * Animation state or lock state has changed; reset our animation timers.
+    */
+   private void resetAnimation() {
+      if (animationTimer_ != null) {
+         animationTimer_.cancel();
+      }
+
+      boolean amAnimated = false;
+      for (String axis : axisToState_.keySet()) {
+         if (axisToState_.get(axis).isAnimated_) {
+            amAnimated = true;
             break;
          }
       }
+      if (!amAnimated) {
+         // No animation is currently running.
+         return;
+      }
 
-      Coords imageCoords = event.getCoords();
-      for (AxisScroller scroller : scrollers_) {
-         int imagePosition = imageCoords.getPositionAt(scroller.getAxis());
-         if (scroller.getMaximum() <= imagePosition) {
-            if (scroller.getMaximum() == 1) {
-               // This scroller was previously hidden and needs to be shown now.
-               scroller.setVisible(true);
-               add(scroller, "wrap 0px, align center, growx");
-               didShowNewScrollers = true;
-            }
-            // This image is further along the axis for this scrollbar than 
-            // the current maximum, so we need a new maximum.
-            scroller.setMaximum(imagePosition + 1);
-         }
-         if (canShowNewImage) {
-            scroller.forcePosition(imagePosition);
-         }
-      }
-      if (didShowNewScrollers) {
-         // Post an event informing our masters that our layout has changed.
-         displayBus_.post(new LayoutChangedEvent());
-      }
-      if (canShowNewImage && canMakeTimers_) {
-         // Start up a timer to restore the scrollers to their original
-         // positions, if applicable. 
-         if (snapBackTimer_ != null) {
-            snapBackTimer_.cancel();
-         }
-         snapBackTimer_ = new Timer();
-         TimerTask task = new TimerTask() {
-            @Override
-            public void run() {
-               for (AxisScroller scroller : scrollers_) {
-                  scroller.restorePosition();
+      animationTimer_ = new Timer();
+      TimerTask task = new TimerTask() {
+         @Override
+         public void run() {
+            shouldPostEvents_ = false;
+            for (String axis : axisToState_.keySet()) {
+               if (axisToState_.get(axis).isAnimated_ && 
+                     axisToState_.get(axis).lockState_ == ScrollbarLockIcon.LockedState.UNLOCKED) {
+                  advancePosition(axis);
                }
             }
-         };
-         snapBackTimer_.schedule(task, 500);
+            shouldPostEvents_ = true;
+            postDrawEvent();
+         }
+      };
+      // TODO: hardcoded framerate of 10FPS.
+      animationTimer_.schedule(task, 0, 100);
+   }
+
+   /**
+    * A new image has arrived; update our scrollbar maxima and positions. Add
+    * new scrollbars as needed.
+    */
+   @Subscribe
+   public void onNewImage(NewImageEvent event) {
+      try {
+         Coords coords = event.getImage().getCoords();
+         Coords.CoordsBuilder displayedBuilder = coords.copy();
+         boolean didAddScrollers = false;
+         for (String axis : store_.getAxes()) {
+            int newPos = coords.getPositionAt(axis);
+            if (!axisToState_.containsKey(axis) && newPos != 0) {
+               addScroller(axis);
+               didAddScrollers = true;
+            }
+            else if (newPos == 0) {
+               // Don't care about this axis as we have no scrollbar to
+               // manipulate.
+               continue;
+            }
+            JScrollBar scrollbar = axisToState_.get(axis).scrollbar_;
+            if (scrollbar.getMaximum() < coords.getPositionAt(axis)) {
+               scrollbar.setMaximum(coords.getPositionAt(axis));
+            }
+            int pos = scrollbar.getValue();
+            ScrollbarLockIcon.LockedState lockState = axisToState_.get(axis).lockState_;
+            if (lockState == ScrollbarLockIcon.LockedState.SUPERLOCKED) {
+               // This axis is not allowed to move.
+               displayedBuilder.position(axis, pos);
+            }
+            else if (lockState == ScrollbarLockIcon.LockedState.LOCKED) {
+               // This axis can change, but must be snapped back later. Only if
+               // we don't already have a saved position, though.
+               if (!axisToSavedPosition_.containsKey(axis)) {
+                  axisToSavedPosition_.put(axis, pos);
+               }
+               scrollbar.setValue(newPos);
+            }
+            else {
+               // This axis is allowed to move and we don't need to snap it
+               // back later.
+               scrollbar.setValue(newPos);
+            }
+         }
+         if (didAddScrollers) {
+            displayBus_.post(new LayoutChangedEvent());
+         }
+         displayBus_.post(new DefaultRequestToDrawEvent(displayedBuilder.build()));
+
+         // Set up snapping back to our current positions. 
+         if (axisToSavedPosition_.size() > 0) {
+            if (snapbackTimer_ != null) {
+               snapbackTimer_.cancel();
+            }
+            snapbackTimer_ = new Timer();
+            TimerTask task = new TimerTask() {
+               @Override
+               public void run() {
+                  shouldPostEvents_ = false;
+                  for (String axis : axisToSavedPosition_.keySet()) {
+                     int pos = axisToSavedPosition_.get(axis);
+                     axisToState_.get(axis).scrollbar_.setValue(pos);
+                  }
+                  shouldPostEvents_ = true;
+                  postDrawEvent();
+               }
+            };
+            snapbackTimer_.schedule(task, 500);
+         }
+      }
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Error in onNewImage for ScrollerPanel");
       }
    }
 
    /**
-    * Set a new animation rate.
+    * Push the relevant scrollbar forward, wrapping around when it hits the
+    * end.
     */
-   public void setFramesPerSecond(double newFPS) {
-      framesPerSec_ = newFPS;
-      resetAnimationTimer();
+   private void advancePosition(String axis) {
+      JScrollBar scrollbar = axisToState_.get(axis).scrollbar_;
+      int target = (scrollbar.getValue() + 1) % scrollbar.getMaximum();
+      scrollbar.setValue(target);
    }
 
-   /**
-    * Set the scroller with the given axis to the specified position.
-    */
-   public void setPosition(String axis, int position) {
-      for (AxisScroller scroller : scrollers_) {
-         if (scroller.getAxis().equals(axis)) {
-            scroller.setPosition(position);
-            break;
-         }
+   public void cleanup() {
+      store_.unregisterForEvents(this);
+      displayBus_.unregister(this);
+      if (animationTimer_ != null) {
+         animationTimer_.cancel();
       }
-   }
-
-   /**
-    * Return the position of the scroller for the specified axis, or 0 if 
-    * we have no scroller for that axis.
-    */
-   public int getPosition(String axis) {
-      for (AxisScroller scroller : scrollers_) {
-         if (scroller.getAxis().equals(axis)) {
-            return scroller.getPosition();
-         }
-      }
-      return 0;
-   }
-
-   /**
-    * Return the maximum position for the specified axis, or 0 if we have
-    * no scroller for that axis.
-    */
-   public int getMaxPosition(String axis) {
-      for (AxisScroller scroller : scrollers_) {
-         if (scroller.getAxis().equals(axis)) {
-            return scroller.getMaximum();
-         }
-      }
-      return 0;
-   }
-
-   /**
-    * Resize scroller to new maximum size
-    */
-   public void setMaxPosition(String axis, int max) {
-      for (AxisScroller scroller : scrollers_) {
-         if (scroller.getAxis().equals(axis)) {
-            scroller.setMaximum(max);
-         }
+      if (snapbackTimer_ != null) {
+         snapbackTimer_.cancel();
       }
    }
 }
