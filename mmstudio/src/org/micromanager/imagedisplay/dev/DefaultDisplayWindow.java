@@ -562,7 +562,6 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
             composite.setNChannelsUnverified(numChannels);
             composite.reset();
          }
-         canvasThread_.addCoords(image.getCoords());
       }
       catch (Exception e) {
          ReportingUtils.logError(e, "Couldn't display new image");
