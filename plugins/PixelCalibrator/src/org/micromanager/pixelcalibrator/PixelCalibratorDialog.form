@@ -17,7 +17,7 @@
   </NonVisualComponents>
   <Properties>
     <Property name="defaultCloseOperation" type="int" value="2"/>
-    <Property name="title" type="java.lang.String" value="Pixel Calibrator (BETA)"/>
+    <Property name="title" type="java.lang.String" value="Pixel Calibrator"/>
     <Property name="resizable" type="boolean" value="false"/>
   </Properties>
   <SyntheticProperties>

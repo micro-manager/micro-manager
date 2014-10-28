@@ -54,7 +54,7 @@ public class PixelCalibratorDialog extends javax.swing.JFrame {
       safeTravelRadiusComboBox = new javax.swing.JComboBox();
 
       setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-      setTitle("Pixel Calibrator (BETA)");
+      setTitle("Pixel Calibrator");
       setResizable(false);
       addWindowListener(new java.awt.event.WindowAdapter() {
          public void windowClosing(java.awt.event.WindowEvent evt) {

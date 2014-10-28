@@ -11,7 +11,6 @@ nobase_mmplugin_DATA = \
 	Acquisition_Tools/MMTracker.jar \
 	Acquisition_Tools/SlideExplorer.jar \
 	Beta/CRISPv2.jar \
-	Beta/PixelCalibrator.jar \
 	Beta/SlideExplorer2.jar \
 	Big.jar \
 	DataBrowser.jar \
@@ -27,6 +26,7 @@ nobase_mmplugin_DATA = \
 	Image_Processing/ImageFlipper.jar \
 	Image_Processing/MultiChannelShading.jar \
 	Image_Processing/SplitView.jar \
+	PixelCalibrator.jar \
 	Recall.jar
 
 .PHONY: plugins.stamp

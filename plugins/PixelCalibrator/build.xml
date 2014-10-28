@@ -1,4 +1,3 @@
 <project name="PixelCalibrator" default="jar">
-	<property name="plugin.path" value="Beta"/>
 	<import file="../javapluginbuild.xml"/>
 </project>

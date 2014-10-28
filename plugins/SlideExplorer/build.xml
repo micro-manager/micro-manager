@@ -3,7 +3,7 @@
 	<import file="../javapluginbuild.xml"/>
 
 	<path id="plugin.classpath">
-		<pathelement location="${plugin.outdir}/Beta/PixelCalibrator.jar"/>
+		<pathelement location="${plugin.outdir}/PixelCalibrator.jar"/>
 	</path>
 
 	<target name="prerequisites" depends="mm.javabuild.prerequisites">
