@@ -386,19 +386,32 @@ public class DisplayWindow extends StackWindow {
    public void pack() {
       super.pack();
       Dimension curSize = getSize();
-      setSize(curSize.width + 2, curSize.height + 2);
       Dimension canvasSize = ic.getSize();
-      // Ensure that neither dimension gets blown out (e.g. from a 2500x2000
-      // camera display, we could otherwise end up with a 2500x600 image
-      // window). Calculate the expected width/height based on the aspect
-      // ratio and the corresponding other dimension, and go with whichever
-      // is smaller.
-      if (plus_ != null) {
-         double aspect = ((double) plus_.getWidth()) / plus_.getHeight();
-         int targetWidth = (int) (aspect * canvasSize.height) + 2;
-         int targetHeight = (int) (canvasSize.width / aspect) + 2;
-         ic.setDrawingSize(Math.min(targetWidth, canvasSize.width + 2), 
-               Math.min(targetHeight, canvasSize.height + 2));
+      Dimension desiredCanvasSize = ic.getPreferredSize();
+      // Derive the delta between the canvas' current size and the size it
+      // wants to be, which dictates how much we need to grow (plus a fiddle
+      // factor).
+      int deltaWidth = desiredCanvasSize.width - canvasSize.width;
+      int deltaHeight = desiredCanvasSize.height - canvasSize.height;
+      // Honesty time here: I'm not entirely certain this logic is correct.
+      // However it seems to work, and this entire file will be going away
+      // in Micro-Manager 2.0.
+      if (deltaWidth > 0 || deltaHeight > 0) {
+         setSize(curSize.width + deltaWidth + 2, curSize.height + deltaHeight + 2);
+      }
+      else {
+         // Ensure that neither dimension gets blown out (e.g. from a 2500x2000
+         // camera display, we could otherwise end up with a 2500x600 image
+         // window). Calculate the expected width/height based on the aspect
+         // ratio and the corresponding other dimension, and go with whichever
+         // is smaller.
+         if (plus_ != null) {
+            double aspect = ((double) plus_.getWidth()) / plus_.getHeight();
+            int targetWidth = (int) (aspect * canvasSize.height) + 2;
+            int targetHeight = (int) (canvasSize.width / aspect) + 2;
+            ic.setDrawingSize(Math.min(targetWidth, canvasSize.width + 2),
+                  Math.min(targetHeight, canvasSize.height + 2));
+         }
       }
       super.pack();
    }
