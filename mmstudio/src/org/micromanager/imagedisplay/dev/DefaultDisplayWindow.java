@@ -613,6 +613,8 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
     * form), it doesn't take up *quite* enough space to draw itself, which
     * means we get the "zoom indicator" overlay and part of the canvas
     * isn't drawn.
+    *
+    * TODO: suspect this function has similar bugs as were fixed in r14511.
     */
    @Override
    public void pack() {
