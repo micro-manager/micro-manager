@@ -286,9 +286,9 @@ class ScrollerPanel extends JPanel {
                }
             }
             JScrollBar scrollbar = axisToState_.get(axis).scrollbar_;
-            if (scrollbar.getMaximum() < coords.getPositionAt(axis)) {
+            if (scrollbar.getMaximum() < coords.getPositionAt(axis) + 1) {
                // Expand the range on the scrollbar.
-               scrollbar.setMaximum(coords.getPositionAt(axis));
+               scrollbar.setMaximum(coords.getPositionAt(axis) + 1);
             }
             int pos = scrollbar.getValue();
             ScrollbarLockIcon.LockedState lockState = axisToState_.get(axis).lockState_;
