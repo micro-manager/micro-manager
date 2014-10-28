@@ -4,9 +4,9 @@
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
 // DESCRIPTION:   An adapter for Gigbit-Ethernet cameras using an
-//				  SDK from JAI, Inc.  Users and developers will 
-//				  need to download and install the JAI SDK and control tool.
-//                
+//                SDK from JAI, Inc.  Users and developers will
+//                need to download and install the JAI SDK and control tool.
+//
 // AUTHOR:        David Marshburn, UNC-CH, marshbur@cs.unc.edu, Jan. 2011
 //
 
@@ -107,13 +107,12 @@ int CGigECamera::aquireImage(J_tIMAGE_INFO* imageInfo, uint8_t *buffer)
 		if ( J_ST_SUCCESS == J_Image_MallocDIB(imageInfo, &BufferInfo) )
 		{
 			// Convert the raw image to image format
-			//if ( J_ST_SUCCESS == J_Image_FromRawToDIBEx(imageInfo, &BufferInfo, BAYER_EXTEND) )
 			if ( J_ST_SUCCESS == J_Image_FromRawToDIBEx(imageInfo, &BufferInfo, BAYER_EXTEND) )
 			{
 				LogMessage( (std::string) "aquireImage:  try to copy DIB RGB image, BufferInfo " + boost::lexical_cast<std::string>(BufferInfo.iImageSize) +
 					" mm img buffer size " +  boost::lexical_cast<std::string>(img_buffer_size) );
 
-				memcpy( buffer, BufferInfo.pImageBuffer, min( img_buffer_size,BufferInfo.iImageSize) ); //BufferInfo.iImageSize) );
+				memcpy( buffer, BufferInfo.pImageBuffer, min( img_buffer_size, BufferInfo.iImageSize ) );
 			}
 			else
 				return DEVICE_ERR;
@@ -172,11 +171,6 @@ J_STATUS_TYPE CGigECamera::setupImaging( )
 	J_STATUS_TYPE retval;
 
 	int64_t w, h;
-	// Get Width from the camera
-	//if (J_Camera_GetValueInt64(hCamera, reinterpret_cast<int8_t*>("Width"), &w) == J_ST_SUCCESS)
-	//{
-	//	LogMessage("setupImaging: got width of size " + boost::lexical_cast<std::string>(w),true);
-	//}
 	nodes->get( h, HEIGHT );
 	nodes->get( w, WIDTH );
 
@@ -206,8 +200,6 @@ int CGigECamera::StartSequenceAcquisition( long numImages, double interval_ms, b
 		return ret;
 
 	// make sure the circular buffer is properly sized
-	//unsigned int channels = (color_) ? 4 : 1;
-	//GetCoreCallback()->InitializeImageBuffer(GetNumberOfComponents(), 1, GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel());
 	GetCoreCallback()->InitializeImageBuffer(1, 1, GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel());
 
 

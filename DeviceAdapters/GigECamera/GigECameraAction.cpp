@@ -4,9 +4,9 @@
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
 // DESCRIPTION:   An adapter for Gigbit-Ethernet cameras using an
-//				  SDK from JAI, Inc.  Users and developers will 
-//				  need to download and install the JAI SDK and control tool.
-//                
+//                SDK from JAI, Inc.  Users and developers will
+//                need to download and install the JAI SDK and control tool.
+//
 // AUTHOR:        David Marshburn, UNC-CH, marshbur@cs.unc.edu, Jan. 2011
 //
 
@@ -317,14 +317,6 @@ int CGigECamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 			if( ret != DEVICE_OK )
 			{
 				LogMessage("OnPixelType: ERROR: somthing went wrong, we dont set default pixel type", true);
-
-				// on error switch to default pixel type
-				// since we dont restrict any pixel types we dont have a default format
-			/*	nodes->set( g_PixelType_8bit, PIXEL_FORMAT );
-				bitDepth_ = 8;
-				img_.Resize( img_.Width(), img_.Height(), 1 );
-				pProp->Set( g_PixelType_8bit );
-				OnPropertiesChanged();*/
 				return DEVICE_INTERNAL_INCONSISTENCY;
 			}
 		} 
@@ -678,45 +670,3 @@ int CGigECamera::OnFrameRate( MM::PropertyBase* pProp, MM::ActionType eAct )
 
 	return nRet;
 }
-//int CGigECamera::onPixelColorFilter( MM::PropertyBase* pProp, MM::ActionType eAct )
-//{
-//	int ret = DEVICE_OK;
-//	switch(eAct)
-//	{
-//	case MM::AfterSet:
-//		{
-//			if(IsCapturing())
-//				return DEVICE_CAMERA_BUSY_ACQUIRING;
-//
-//			std::string displayName, acqMode;
-//			pProp->Get( displayName );
-//			std::map<std::string, std::string>::iterator it = pixelColorFilterMap.find( displayName );
-//			if( it == pixelColorFilterMap.end() )
-//			{
-//				LogMessage( (std::string) "internal error:  inconsistency in pixel color filter map (" + acqMode + ")", false );
-//				return DEVICE_INTERNAL_INCONSISTENCY;
-//			}
-//			acqMode = it->second;
-//
-//			if (nodes->set( acqMode, PIXEL_COLOR_FILTER ))
-//			{
-//				ret = DEVICE_OK;
-//			}
-//		}
-//		break;
-//	case MM::BeforeGet:
-//		{
-//			std::string s;
-//			nodes->get( s, PIXEL_COLOR_FILTER );
-//			std::map<std::string, std::string>::iterator it = pixelColorFilterMap.find( s );
-//			if( it != pixelColorFilterMap.end() )
-//				pProp->Set( it->second.c_str() );
-//			else
-//				pProp->Set( s.c_str() );
-//			ret = DEVICE_OK;
-//		}
-//		break;
-//	}
-//	return ret;
-//}
-

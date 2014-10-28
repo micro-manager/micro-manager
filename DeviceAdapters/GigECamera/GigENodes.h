@@ -4,9 +4,9 @@
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
 // DESCRIPTION:   An adapter for Gigbit-Ethernet cameras using an
-//				  SDK from JAI, Inc.  Users and developers will 
-//				  need to download and install the JAI SDK and control tool.
-//                
+//                SDK from JAI, Inc.  Users and developers will
+//                need to download and install the JAI SDK and control tool.
+//
 // AUTHOR:        David Marshburn, UNC-CH, marshbur@cs.unc.edu, Jan. 2011
 //
 
@@ -17,7 +17,6 @@
 #include <map>
 #include <boost/function.hpp>
 
-//#include "Jai_Factory.h"
 #include "JAISDK.h"
 
 
@@ -79,7 +78,6 @@ enum InterestingNodeString
 	DEVICE_ID,
 
 	EXPOSURE_MODE,
-	//PIXEL_SIZE,				// IEnumeration
 	PIXEL_COLOR_FILTER,		// IEnumeration
 
 	ACQUISITION_FRAME_RATE_STR, // this is supposed to be a float, but our camera has it as a string enum
@@ -113,7 +111,6 @@ public:
 	J_STATUS_TYPE getNumEnumEntries( CAM_HANDLE camera, uint32_t& i );
 	J_STATUS_TYPE getEnumEntry( CAM_HANDLE camera, uint32_t index, std::string& entry );
 	J_STATUS_TYPE getEnumDisplayName( CAM_HANDLE camera, uint32_t index, std::string& name );
-	//J_STATUS_TYPE getEnumEntryFromDisplayName( CAM_HANDLE camera, const std::string name, std::string& entry );
 
 	typedef typename T value_type;
 
@@ -217,6 +214,4 @@ public:
 	bool getEnumEntry( std::string& entry, uint32_t indes, InterestingNodeString node );
 	bool getEnumDisplayName( std::string& name, uint32_t index, InterestingNodeInteger node );
 	bool getEnumDisplayName( std::string& name, uint32_t index, InterestingNodeString node );
-	//bool getEnumEntryFromDisplayName( std::string& entry, const std::string displayName, InterestingNodeInteger node );
-	//bool getEnumEntryFromDisplayName( std::string& entry, const std::string displayName, InterestingNodeString node );
 };

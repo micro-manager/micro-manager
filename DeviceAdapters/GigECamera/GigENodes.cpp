@@ -4,9 +4,9 @@
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
 // DESCRIPTION:   An adapter for Gigbit-Ethernet cameras using an
-//				  SDK from JAI, Inc.  Users and developers will 
-//				  need to download and install the JAI SDK and control tool.
-//                
+//                SDK from JAI, Inc.  Users and developers will
+//                need to download and install the JAI SDK and control tool.
+//
 // AUTHOR:        David Marshburn, UNC-CH, marshbur@cs.unc.edu, Jan. 2011
 //
 
@@ -49,7 +49,6 @@ const std::map< int, std::string > sfncNames
 							( EXPOSURE_TIME_ABS_INT, "ExposureTimeAbs" )
 
 							( PIXEL_COLOR_FILTER, "PixelColorFilter" )
-							//( PIXEL_SIZE, "PixelSize" )
 
 							( GAIN, "Gain" )
 							( GAIN_RAW, "GainRaw" )
@@ -119,7 +118,6 @@ GigENodes::GigENodes( CAM_HANDLE camera, boost::function<void(const std::string&
 	intNodes.insert( std::make_pair( EXPOSURE_TIME_ABS_INT, nf.IntNode( EXPOSURE_TIME_ABS_INT ) ) );
 	
 	stringNodes.insert( std::make_pair( PIXEL_COLOR_FILTER, nf.StringNode( PIXEL_COLOR_FILTER ) ) );
-	//stringNodes.insert( std::make_pair( PIXEL_SIZE, nf.StringNode( PIXEL_SIZE ) ) ); /// me
 
 	floatNodes.insert( std::make_pair( GAIN, nf.FloatNode( GAIN ) ) );
 	intNodes.insert( std::make_pair( GAIN_RAW, nf.IntNode( GAIN_RAW ) ) );
@@ -130,7 +128,6 @@ GigENodes::GigENodes( CAM_HANDLE camera, boost::function<void(const std::string&
 	intNodes.insert( std::make_pair( GEV_VERSION_MINOR, nf.IntNode( GEV_VERSION_MINOR ) ) );
 
 	floatNodes.insert( std::make_pair( ACQUISITION_FRAME_RATE, nf.FloatNode( ACQUISITION_FRAME_RATE ) ) );
-	//stringNodes.insert( std::make_pair( ACQUISITION_FRAME_RATE_STR, nf.StringNode( ACQUISITION_FRAME_RATE_STR ) ) );
 }
 
 
@@ -843,38 +840,3 @@ template<class T> J_STATUS_TYPE Node<T>::getEnumDisplayName( CAM_HANDLE camera, 
 	name = a;
 	return retval;
 }
-	
-/*
-template<class T> J_STATUS_TYPE Node<T>::getEnumEntryFromDisplayName( CAM_HANDLE camera, const std::string name, std::string& entry )
-{
-	NODE_HANDLE node;
-	J_STATUS_TYPE retval = J_Camera_GetNodeByName( camera, const_cast<char*>( this->sfncName.c_str() ), &node );
-	if( retval != J_ST_SUCCESS )
-		return retval;
-
-	uint32_t n;
-	retval = this->getNumEnumEntries( camera, n );
-	if( retval != J_ST_SUCCESS )
-		return retval;
-	NODE_HANDLE enumEntry;
-	for( uint32_t i = 0; i <= n - 1; i++ )
-	{
-		retval = J_Node_GetEnumEntryByIndex( node, index, &enumEntry );
-		if( retval != J_ST_SUCCESS )
-			return retval;
-		uint32_t len = 512;
-		char a[512];
-		retval = J_Node_GetDisplayName( enumEntry, a, &len );
-		if( retval != J_ST_SUCCESS )
-			return retval;
-		if( name.compare( a ) == 0 )
-		{
-			return this->getEnumEntry( camera, i, entry ) 
-		}
-	}
-
-	// if we get this far, we didn't find one
-	return J_ST_ERROR;
-}
-*/
-

@@ -4,9 +4,9 @@
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
 // DESCRIPTION:   An adapter for Gigbit-Ethernet cameras using an
-//				  SDK from JAI, Inc.  Users and developers will 
-//				  need to download and install the JAI SDK and control tool.
-//                
+//                SDK from JAI, Inc.  Users and developers will
+//                need to download and install the JAI SDK and control tool.
+//
 // AUTHOR:        David Marshburn, UNC-CH, marshbur@cs.unc.edu, Jan. 2011
 //
 
@@ -29,22 +29,6 @@ double g_IntensityFactor_ = 1.0;
 // to load particular device from the "GigECamera.dll" library
 const char* g_CameraDeviceName = "GigE camera adapter";
 
-// constants for naming pixel types (allowed values of the "PixelType" property)
-// these are the names used in the umanager interface.  (from the GenICam spec)
-// NOTE: since we are no longer restricting any pixel types, we dont need to define types at all
-//		it would be better to define types not valid, then valid ones
-//		f.e: since we can't use 48bit (or 64bit) RGBA in mm we have should exclude them
-//		the function testIfPixelFormatResultsInColorMode decides wether the image gets grayscaled or not
-
-// constants for naming color modes
-//const char* g_ColorMode_Grayscale = "Grayscale";
-//const char* g_ColorMode_RGB = "RGB-32bit";
-//const char* g_PixelType_8bit = "8bit";
-//const char* g_PixelType_16bit = "16bit";
-//const char* g_PixelType_32bitRGB = "32bitRGB";
-//const char* g_PixelType_64bitRGB = "64bitRGB";
-//const char* g_PixelType_32bit = "32bit";  // floating point greyscale
-
 
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API
@@ -53,7 +37,6 @@ const char* g_CameraDeviceName = "GigE camera adapter";
 MODULE_API void InitializeModuleData()
 {
 	RegisterDevice(g_CameraDeviceName, MM::CameraDevice, "GigE camera");
-
 }
 
 
@@ -625,63 +608,6 @@ int CGigECamera::Initialize()
 			return nRet;
 		SetPropertyLimits( g_Keyword_Frame_Rate, framerateLow, framerateHigh );
 	}
-	/*else if( nodes->isAvailable( ACQUISITION_FRAME_RATE_STR ) )
-	{
-		pAct = new CPropertyAction( this, &CGigECamera::OnFrameRate );
-		std::string d;
-		nodes->get( d, ACQUISITION_FRAME_RATE_STR );
-		nRet = CreateProperty( g_Keyword_Frame_Rate, d.c_str(), MM::String, 
-								!nodes->isWritable( ACQUISITION_FRAME_RATE_STR ), pAct );
-		if( nRet != DEVICE_OK )
-			return nRet;
-
-		std::vector<std::string> frameRateValues;
-		for( uint32_t i = 0; i <= nodes->getNumEnumEntries( ACQUISITION_FRAME_RATE_STR ) - 1; i++ )
-		{
-			std::string entry, displayName;
-			nodes->getEnumEntry( entry, i, ACQUISITION_FRAME_RATE_STR );
-			nodes->getEnumDisplayName( displayName, i, ACQUISITION_FRAME_RATE_STR );
-			frameRateMap.insert( std::pair<std::string, std::string>( entry, displayName ) );
-			frameRateMap.insert( std::pair<std::string, std::string>( displayName, entry ) );
-			frameRateValues.push_back( displayName );
-		}
-		nRet = SetAllowedValues( g_Keyword_Frame_Rate, frameRateValues );
-		if( nRet != DEVICE_OK )
-			return nRet;
-	}*/
-
-	// say's if pix format is BayRG, BayGB, ... we dont need this, jai is doing the converstion implicitly
-	/*if( nodes->isAvailable( PIXEL_COLOR_FILTER ) )
-	{
-		std::vector<std::string> pixelColorFilterValues;
-		for( uint32_t i = 0; i < nodes->getNumEnumEntries( PIXEL_COLOR_FILTER ); i++ )
-		{
-			std::string entry, displayName;
-			nodes->getEnumEntry( entry, i, PIXEL_COLOR_FILTER );
-			nodes->getEnumDisplayName( displayName, i, PIXEL_COLOR_FILTER );
-			pixelColorFilterMap.insert( std::pair<std::string, std::string>( entry, displayName ) );
-			pixelColorFilterMap.insert( std::pair<std::string, std::string>( displayName, entry ) );
-			pixelColorFilterValues.push_back( displayName );
-
-			LogMessage( (std::string) "PixelColorFilter:  " + entry + " diplayName: " + displayName);
-		}
-		pAct = new CPropertyAction (this, &CGigECamera::onPixelColorFilter);
-		std::string px1, dn1;
-		nodes->get( px1, PIXEL_COLOR_FILTER );
-		it = pixelColorFilterMap.find( px1 );
-		if( it == pixelColorFilterMap.end() )
-			dn1 = px1;
-		else
-			dn1 = it->second;
-		nRet = CreateProperty( g_Keyword_Pixel_Color_Filter, dn1.c_str(), MM::String, !nodes->isWritable( PIXEL_COLOR_FILTER ), pAct );
-		if (nRet != DEVICE_OK)
-			return nRet;
-
-		nRet = SetAllowedValues( g_Keyword_Pixel_Color_Filter, pixelColorFilterValues );
-		if (nRet != DEVICE_OK)
-			return nRet;
-	}
-	*/
 
 
 	// camera offset
@@ -965,7 +891,6 @@ int CGigECamera::ResizeImageBuffer()
 
 	if( buffer_ != NULL )
 		delete buffer_;
-	//bufferSizeBytes = (size_t) ( w * h * LARGEST_PIXEL_IN_BYTES ); //THis was done for safty reasons
 	bufferSizeBytes = (size_t) ( w * h * byteDepth);
 	buffer_ = new unsigned char[ bufferSizeBytes ];
 
@@ -1019,29 +944,6 @@ int CGigECamera::testIfPixelFormatResultsInColorImage(uint32_t &byteDepth)
 		bitDepth_ = boost::lexical_cast<uint32_t,float>(std::ceil( (float) bpp / (float) 3  ) );
 		byteDepth =  boost::lexical_cast<uint32_t,float>(std::ceil( (float) bitDepth_ / (float) 8  ) );;
 	}
-	//else if (bpp == 8)
-	//{
-	//	LogMessage("We found Bayer encoded pixel type with bitDepth 8, setting color mode true");
-	//	color_ = true;
-	//	bitDepth_ = 8;
-	//	byteDepth = 4;
-	//}
-	//else
-	//{
-	//	LogMessage("We found Bayer encoded pixel type with bitDepth > 8, setting color mode true");
-	//	color_ = true;
-	//	bitDepth_ = 16;
-	//	byteDepth = 8;
-	//}
-
-	//else if (pt.find( "BAY" ) != std::string::npos && bpp == 8)
-	//{
-	//	LogMessage("We found Bayer encoded pixel type with bitDepth 8, setting color mode true");
-	//	color_ = true;
-	//	bitDepth_ = 8;
-	//	byteDepth = 4;
-	//}
-	// .... this routine can be used to handle special pixel type formats and decide how to convert them
 
 	return DEVICE_OK;
 }

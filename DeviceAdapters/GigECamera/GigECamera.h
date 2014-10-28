@@ -4,9 +4,9 @@
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
 // DESCRIPTION:   An adapter for Gigbit-Ethernet cameras using an
-//				  SDK from JAI, Inc.  Users and developers will 
-//				  need to download and install the JAI SDK and control tool.
-//                
+//                SDK from JAI, Inc.  Users and developers will
+//                need to download and install the JAI SDK and control tool.
+//
 // AUTHOR:        David Marshburn, UNC-CH, marshbur@cs.unc.edu, Jan. 2011
 //
 
@@ -21,7 +21,6 @@
 #include <string>
 #include <map>
 
-//#include "Jai_Factory.h"
 #include "JAISDK.h"
 
 #include "GigENodes.h"
@@ -60,14 +59,6 @@ const char* const g_Keyword_Acquisition_Mode	= "Acquisition Mode";
 #define NODE_NAME_EXPOSURETIMEABS (int8_t*)"ExposureTimeAbs"
 
 extern const char* g_CameraDeviceName;
-//extern const char* g_PixelType_8bit;
-//extern const char* g_PixelType_8bitSigned;
-//extern const char* g_PixelType_10bit;
-//extern const char* g_PixelType_10bitPacked;
-//extern const char* g_PixelType_12bit;
-//extern const char* g_PixelType_12bitPacked;
-//extern const char* g_PixelType_14bit;
-//extern const char* g_PixelType_16bit;
 
 // the largest possible pixel in the GenICam spec is 6 bytes (16-bit rgb)
 #define LARGEST_PIXEL_IN_BYTES 6
@@ -157,7 +148,6 @@ public:
 	* a guideline on how to interpret pixel values.
 	* Required by the MM::Camera API.
 	*/
-	//unsigned GetBitDepth() const {  return 8 * GetImageBytesPerPixel();  }
 	unsigned GetBitDepth() const;
 
 	/**
@@ -219,7 +209,6 @@ public:
 	int OnTemperature( MM::PropertyBase* pProp, MM::ActionType eAct );
 	int OnFrameRate( MM::PropertyBase* pProp, MM::ActionType eAct );
 	int onAcquisitionMode( MM::PropertyBase* pProp, MM::ActionType eAct );
-	/*int onPixelColorFilter( MM::PropertyBase* pProp, MM::ActionType eAct );*/
 
 protected:
 	int SetUpBinningProperties();
@@ -259,7 +248,6 @@ protected:
 	std::map< std::string, std::string > cameraNameMap;
 	std::map< std::string, std::string > frameRateMap;
 	std::map< std::string, std::string > pixelFormatMap;
-	/*std::map< std::string, std::string > pixelColorFilterMap;*/
 	std::map< std::string, std::string > acqModeMap;
 
 	// which node to use for Exposure property
