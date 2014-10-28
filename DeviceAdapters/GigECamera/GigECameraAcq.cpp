@@ -21,7 +21,7 @@ void CGigECamera::SnapImageCallback( J_tIMAGE_INFO* imageInfo )
 	// Skip logging for sequence acquisition
 	if( snapOneImageOnly )
 	{
-		LogMessage( (std::string) "SnapImageCallback:  "
+		LogMessage( "SnapImageCallback:  "
 					+ boost::lexical_cast<std::string>( (int) J_BitsPerPixel( imageInfo->iPixelType ) ) + " bits/pixel, " 
 					+ boost::lexical_cast<std::string>( imageInfo->iSizeX ) + "w x "
 					+ boost::lexical_cast<std::string>( imageInfo->iSizeY ) + "h", true );
@@ -34,14 +34,14 @@ void CGigECamera::SnapImageCallback( J_tIMAGE_INFO* imageInfo )
 	{
 		if( buffer_ == NULL )
 		{
-			LogMessage( (std::string) "RingBuffer not initialized");
+			LogMessage( "RingBuffer not initialized");
 			return;
 		}
 
 		// do the actual image aquisition: copy image buffer
 		if (DEVICE_OK != aquireImage(imageInfo,buffer_))
 		{
-			LogMessage( (std::string) "SnapImage encountared a problem, could not aquire image buffer from device");
+			LogMessage( "SnapImageCallback encountered a problem, could not aquire image buffer from device");
 			return;
 		}
 
@@ -70,12 +70,12 @@ void CGigECamera::SnapImageCallback( J_tIMAGE_INFO* imageInfo )
 	{
 		uint8_t* pixels = const_cast<uint8_t*>(img_.GetPixelsRW());
 
-		LogMessage( (std::string) "SnapImageCallback:  img_.bitDepth " + boost::lexical_cast<std::string>(img_.Depth() ) );
+		LogMessage( "SnapImageCallback:  img_.bitDepth " + boost::lexical_cast<std::string>(img_.Depth() ) );
 
 		// do the actual image aquisition: copy image buffer
 		if (DEVICE_OK != aquireImage(imageInfo,pixels))
 		{
-			LogMessage( (std::string) "SnapImage encountared a problem");
+			LogMessage( "SnapImageCallback encountered a problem");
 			return;
 		}
 	}
@@ -86,7 +86,7 @@ void CGigECamera::SnapImageCallback( J_tIMAGE_INFO* imageInfo )
 		J_STATUS_TYPE retval = J_Camera_ExecuteCommand( hCamera, cstr2jai( "AcquisitionStop" ) ); 
 		if( retval != J_ST_SUCCESS )
 		{
-			LogMessage( (std::string) "SnapImageCallback:  failed to stop acquisition" );
+			LogMessage( "SnapImageCallback:  failed to stop acquisition" );
 		}
 		snapOneImageOnly = false;
 		snapImageDone = true;
@@ -109,18 +109,24 @@ int CGigECamera::aquireImage(J_tIMAGE_INFO* imageInfo, uint8_t *buffer)
 			// Convert the raw image to image format
 			if ( J_ST_SUCCESS == J_Image_FromRawToDIBEx(imageInfo, &BufferInfo, BAYER_EXTEND) )
 			{
-				LogMessage( (std::string) "aquireImage:  try to copy DIB RGB image, BufferInfo " + boost::lexical_cast<std::string>(BufferInfo.iImageSize) +
+				LogMessage( "aquireImage:  try to copy DIB RGB image, BufferInfo " + boost::lexical_cast<std::string>(BufferInfo.iImageSize) +
 					" mm img buffer size " +  boost::lexical_cast<std::string>(img_buffer_size) );
 
 				memcpy( buffer, BufferInfo.pImageBuffer, min( img_buffer_size, BufferInfo.iImageSize ) );
 			}
 			else
+			{
+				LogMessage( "J_Image_FromRawToImageEx() failed", true );
 				return DEVICE_ERR;
+			}
 
 			J_Image_Free(&BufferInfo);
 		}
 		else
+		{
+			LogMessage( "J_Image_MallocDIB() failed", true );
 			return DEVICE_ERR;
+		}
 	}
 	else
 	{
@@ -133,33 +139,40 @@ int CGigECamera::aquireImage(J_tIMAGE_INFO* imageInfo, uint8_t *buffer)
 				J_tIMAGE_INFO YBufferInfo;
 
 				// Allocates buffer memory for Y image.
-				if(J_ST_SUCCESS == J_Image_MallocEx(&BufferInfo,&YBufferInfo,PF_Y/*PF_16BIT_Y*//*PF_8BIT_Y*/) )
+				if(J_ST_SUCCESS == J_Image_MallocEx(&BufferInfo, &YBufferInfo, PF_Y/*PF_16BIT_Y*//*PF_8BIT_Y*/) )
 				{
 					// Converts from RGB to Y.
-					if(J_ST_SUCCESS == J_Image_ConvertImage(&BufferInfo,&YBufferInfo,PF_Y/*PF_16BIT_Y*//*PF_8BIT_Y*/) )
+					if(J_ST_SUCCESS == J_Image_ConvertImage(&BufferInfo, &YBufferInfo, PF_Y/*PF_16BIT_Y*//*PF_8BIT_Y*/) )
 					{
-						LogMessage( (std::string) "aquireImage: try to copy Y image");
-						memcpy( buffer, YBufferInfo.pImageBuffer, min( img_buffer_size,YBufferInfo.iImageSize ) );
+						LogMessage( "aquireImage: copying Y image", true );
+						memcpy( buffer, YBufferInfo.pImageBuffer, min( img_buffer_size, YBufferInfo.iImageSize ) );
 					}
 					else
 					{
+						LogMessage( "J_Image_ConvertImage() failed", true );
 						return DEVICE_ERR;
 					}
 
 					J_Image_Free(&YBufferInfo);
 				}
 				else
+				{
+					LogMessage( "J_Image_MallocEx() failed", true );
 					return DEVICE_ERR;
+				}
 			}
 			else
 			{
-				LogMessage( (std::string) "SnapImageCallback:  Could not convert FromRawToImageEx");
+				LogMessage( "J_Image_FromRawToImageEx() failed", true );
 				return DEVICE_ERR;
 			}
 			J_Image_Free(&BufferInfo);
 		}
 		else
+		{
+			LogMessage( "J_Image_Malloc() failed", true );
 			return DEVICE_ERR;
+		}
 	}
 
 
@@ -180,7 +193,7 @@ J_STATUS_TYPE CGigECamera::setupImaging( )
 								 &hThread, (uint32_t) ( w * h * LARGEST_PIXEL_IN_BYTES ) );  
 	if( retval != J_ST_SUCCESS )
 	{
-		LogMessage( (std::string) "setupImaging failed to open the image stream" );
+		LogMessage( "setupImaging failed to open the image stream" );
 		return DEVICE_ERR;
 	}
 	return DEVICE_OK;
@@ -189,7 +202,7 @@ J_STATUS_TYPE CGigECamera::setupImaging( )
 
 int CGigECamera::StartSequenceAcquisition( long numImages, double interval_ms, bool stopOnOverflow )
 {
-	LogMessage( (std::string) "Started camera streaming with an interval of " 
+	LogMessage( "Started camera streaming with an interval of "
 				+ boost::lexical_cast<std::string>( interval_ms ) + " ms, for " 
 				+ boost::lexical_cast<std::string>( numImages )  + " images." );
 	if( doContinuousAcquisition ) return DEVICE_OK;
@@ -212,7 +225,7 @@ int CGigECamera::StartSequenceAcquisition( long numImages, double interval_ms, b
 	J_STATUS_TYPE retval = J_Camera_ExecuteCommand( hCamera, cstr2jai( "AcquisitionStart" ) );
 	if( retval != J_ST_SUCCESS )
 	{
-		LogMessage( (std::string) "SnapImage failed to start acquisition" );
+		LogMessage( "Failed to start acquisition" );
 		J_Image_CloseStream( hThread );
 		return DEVICE_ERR;
 	}
@@ -237,18 +250,18 @@ int CGigECamera::StopSequenceAcquisition()
 	}
 	if( !continuousAcquisitionDone ) // didn't stop in time
 	{
-		LogMessage( (std::string) "StopSequenceAcquisition stopped the acquisition early because the JAI factory didn't stop soon enough" );
+		LogMessage( "StopSequenceAcquisition stopped the acquisition early because the JAI factory didn't stop soon enough" );
 		retval = J_Camera_ExecuteCommand( hCamera, cstr2jai( "AcquisitionStop" ) ); 
 		if( retval != J_ST_SUCCESS )
 		{
-			LogMessage( (std::string) "StopSequenceAcquisition failed to stop acquisition" );
+			LogMessage( "StopSequenceAcquisition failed to stop acquisition" );
 		}
 	}
 
 	retval = J_Image_CloseStream( hThread );
 	if( retval != J_ST_SUCCESS )
 	{
-		LogMessage( (std::string) "StopSequenceAcquisition failed to close the image stream" );
+		LogMessage( "StopSequenceAcquisition failed to close the image stream" );
 		return DEVICE_ERR;
 	}
 	snapOneImageOnly = false;
@@ -277,7 +290,7 @@ int CGigECamera::SnapImage()
 	J_STATUS_TYPE retval = J_Camera_ExecuteCommand( hCamera, cstr2jai( "AcquisitionStart" ) );
 	if( retval != J_ST_SUCCESS )
 	{
-		LogMessage( (std::string) "SnapImage failed to start acquisition" );
+		LogMessage( "SnapImage failed to start acquisition" );
 		J_Image_CloseStream( hThread );
 		return DEVICE_ERR;
 	}
@@ -301,11 +314,11 @@ int CGigECamera::SnapImage()
 		}
 		if( !snapImageDone ) // something happened and we didn't get an image
 		{
-			LogMessage( (std::string) "SnapImage stopped the acquisition because no image had been returned after " + boost::lexical_cast<std::string>(waitTimeMs) + " ms" );
+			LogMessage( "SnapImage stopped the acquisition because no image had been returned after " + boost::lexical_cast<std::string>(waitTimeMs) + " ms" );
 			retval = J_Camera_ExecuteCommand( hCamera, cstr2jai( "AcquisitionStop" ) ); 
 			if( retval != J_ST_SUCCESS )
 			{
-				LogMessage( (std::string) "SnapImage failed to stop acquisition" );
+				LogMessage( "SnapImage failed to stop acquisition" );
 			}
 			snapOneImageOnly = false;
 		}
@@ -314,7 +327,7 @@ int CGigECamera::SnapImage()
 	retval = J_Image_CloseStream( hThread );
 	if( retval != J_ST_SUCCESS )
 	{
-		LogMessage( (std::string) "SnapImage failed to close the image stream" );
+		LogMessage( "SnapImage failed to close the image stream" );
 		return DEVICE_ERR;
 	}
 	

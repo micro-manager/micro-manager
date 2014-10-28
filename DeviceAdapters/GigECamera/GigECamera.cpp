@@ -882,18 +882,17 @@ int CGigECamera::ResizeImageBuffer()
 	if (ret != DEVICE_OK)
 		return ret;
 
-	LogMessage("ResizeImageBuffer: bithDepth_: " + boost::lexical_cast<std::string>(bitDepth_)
-		+ " byteDepth: " + boost::lexical_cast<std::string>(byteDepth) +
-		" color mode: " + boost::lexical_cast<std::string>(color_) );
-
-	// why do we have a buffer and a img_ ?
+	// Resize the snap buffer
 	img_.Resize( (unsigned int) w, (unsigned int) h, byteDepth);
 
+	// Also resize the sequence acquisition temporary buffer
 	if( buffer_ != NULL )
 		delete buffer_;
 	bufferSizeBytes = (size_t) ( w * h * byteDepth);
 	buffer_ = new unsigned char[ bufferSizeBytes ];
 
+	LogMessage("ResizeImageBuffer: bitDepth: " + boost::lexical_cast<std::string>(bitDepth_) +
+		" color mode: " + boost::lexical_cast<std::string>(color_) );
 	LogMessage("ResizeImageBuffer: byteDepth " + boost::lexical_cast<std::string>(byteDepth) +
 		" w " + boost::lexical_cast<std::string>(w)  + " h " + boost::lexical_cast<std::string>(w)  + " bufferSizeBytes " +
 		boost::lexical_cast<std::string>(bufferSizeBytes) );
