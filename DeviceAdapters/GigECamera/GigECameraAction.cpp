@@ -310,7 +310,7 @@ int CGigECamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 				ret=DEVICE_OK;
 			}
 			else
-				ret = DEVICE_INVALID_PROPERTY_VALUE;
+				return DEVICE_INVALID_PROPERTY_VALUE;
 
 			// in here we check if color mode is present
 			ret = ResizeImageBuffer();
