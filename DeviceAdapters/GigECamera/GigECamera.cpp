@@ -924,9 +924,9 @@ int CGigECamera::testIfPixelFormatResultsInColorImage(uint32_t &byteDepth)
 
 	// Calculate number of bits (not bytes) per pixel using macro
 	uint32_t bpp = J_BitsPerPixel(int64Val);
-	byteDepth = boost::lexical_cast<uint32_t,float>(std::ceil( (float) bpp / (float) 8  ) );
-	bitDepth_ = bpp;
 	color_ = false;
+	bitDepth_ = bpp;
+	byteDepth = (bpp - 1) / 8 + 1;
 
 	// If we find RGB in the pixel type string, we set byteDepth and bitDepth higher (not necessary correct fe RGB64bit)
 	if( pt.find( "RGB" ) != std::string::npos && bpp == 24)
@@ -940,8 +940,8 @@ int CGigECamera::testIfPixelFormatResultsInColorImage(uint32_t &byteDepth)
 	{
 		LogMessage("We found RGB pixel type but with more than 24bit. Since mm cant handle this type, we just ship a grayscale image");
 		color_ = false;
-		bitDepth_ = boost::lexical_cast<uint32_t,float>(std::ceil( (float) bpp / (float) 3  ) );
-		byteDepth =  boost::lexical_cast<uint32_t,float>(std::ceil( (float) bitDepth_ / (float) 8  ) );;
+		bitDepth_ = (bpp - 1) / 3 + 1; // Just in case, take ceiling if not divisible by 3
+		byteDepth = (bitDepth_ - 1) / 8 + 1;
 	}
 
 	return DEVICE_OK;
