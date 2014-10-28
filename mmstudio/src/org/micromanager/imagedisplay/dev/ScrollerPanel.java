@@ -16,6 +16,7 @@ import java.util.TimerTask;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.event.MouseInputAdapter;
+import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
@@ -57,7 +58,10 @@ class ScrollerPanel extends JPanel {
 
    private HashMap<String, AxisState> axisToState_;
    private HashMap<String, Integer> axisToSavedPosition_;
-   
+   private JButton fpsButton_;
+   private FPSPopupMenu fpsMenu_;
+   private int fps_;
+
    private Timer snapbackTimer_;
    private Timer animationTimer_;
    // We turn this off when we want to update the position of several
@@ -74,7 +78,7 @@ class ScrollerPanel extends JPanel {
 
       // Only the scrollbar column is allowed to grow in width
       setLayout(new MigLayout("insets 0", 
-               "[][][grow, shrink][]"));
+               "[][][grow, shrink][][]"));
       // Don't prevent other components from shrinking
       setMinimumSize(new Dimension(1, 1));
 
@@ -86,6 +90,10 @@ class ScrollerPanel extends JPanel {
             addScroller(axis);
          }
       }
+
+      // TODO: hardcoded initial FPS for now.
+      fps_ = 10;
+      fpsMenu_ = new FPSPopupMenu(displayBus_, fps_);
 
       store_.registerForEvents(this, 100);
       displayBus_.register(this);
@@ -131,6 +139,18 @@ class ScrollerPanel extends JPanel {
       add(lock, "grow 0, wrap");
 
       axisToState_.put(axis, new AxisState(positionLabel, scrollbar));
+
+      if (fpsButton_ == null) {
+         // We have at least one scroller, so add our FPS control button.
+         fpsButton_ = new JButton("FPS: " + fps_);
+         fpsButton_.addMouseListener(new MouseInputAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+               fpsMenu_.show(fpsButton_, e.getX(), e.getY());
+            }
+         });
+         add(fpsButton_, "dock east, growy");
+      }
    }
 
    /**
@@ -203,6 +223,14 @@ class ScrollerPanel extends JPanel {
          return;
       }
 
+      // Calculate the update rate and the number of images to step forward
+      // by for each animation tick. We cap at an update rate of 30FPS;
+      // past that, we step forward by more than one image per step to
+      // compensate.
+      int updateRate = Math.min(30, fps_);
+      final int updateStep = (int) Math.max(1,
+            Math.round(updateRate * fps_ / 1000.0));
+
       animationTimer_ = new Timer();
       TimerTask task = new TimerTask() {
          @Override
@@ -211,15 +239,25 @@ class ScrollerPanel extends JPanel {
             for (String axis : axisToState_.keySet()) {
                if (axisToState_.get(axis).isAnimated_ && 
                      axisToState_.get(axis).lockState_ == ScrollbarLockIcon.LockedState.UNLOCKED) {
-                  advancePosition(axis);
+                  advancePosition(axis, updateStep);
                }
             }
             shouldPostEvents_ = true;
             postDrawEvent();
          }
       };
-      // TODO: hardcoded framerate of 10FPS.
-      animationTimer_.schedule(task, 0, 100);
+
+      animationTimer_.schedule(task, 0, (int) (1000.0 / updateRate));
+   }
+
+   /**
+    * Animation FPS has changed. Redo our button label and reset animations.
+    */
+   @Subscribe
+   public void onNewFPS(FPSPopupMenu.FPSEvent event) {
+      fps_ = event.getFPS();
+      fpsButton_.setText("FPS: " + fps_);
+      resetAnimation();
    }
 
    /**
@@ -302,9 +340,9 @@ class ScrollerPanel extends JPanel {
     * Push the relevant scrollbar forward, wrapping around when it hits the
     * end.
     */
-   private void advancePosition(String axis) {
+   private void advancePosition(String axis, int offset) {
       JScrollBar scrollbar = axisToState_.get(axis).scrollbar_;
-      int target = (scrollbar.getValue() + 1) % scrollbar.getMaximum();
+      int target = (scrollbar.getValue() + offset) % scrollbar.getMaximum();
       scrollbar.setValue(target);
    }
 
