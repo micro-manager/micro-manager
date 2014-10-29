@@ -53,24 +53,22 @@ public class ScaleBarOverlayPanel extends OverlayPanel {
       setBorder(new TitledBorder("Scale bar"));
       setLayout(new MigLayout("flowy"));
       DisplaySettings settings = store.getDisplaySettings();
+
+      ActionListener redrawListener = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent event) {
+               redraw();
+            }
+      };
+
       shouldDraw_ = new JCheckBox("Draw scale bar");
-      shouldDraw_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent event) {
-            redraw();
-         }
-      });
+      shouldDraw_.addActionListener(redrawListener);
       shouldDraw_.setSelected(settings.getShouldShowScaleBar());
       add(shouldDraw_);
       
       add(new JLabel("Color: "));
       color_ = new JComboBox(COLORNAMES);
-      color_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent event) {
-            redraw();
-         }
-      });
+      color_.addActionListener(redrawListener);
       color_.setSelectedIndex(settings.getScaleBarColorIndex());
       add(color_);
 
@@ -86,24 +84,14 @@ public class ScaleBarOverlayPanel extends OverlayPanel {
       add(xOffset_, "wrap");
 
       isBarFilled_ = new JCheckBox("Solid scale bar");
-      isBarFilled_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent event) {
-            redraw();
-         }
-      });
+      isBarFilled_.addActionListener(redrawListener);
       isBarFilled_.setSelected(settings.getScaleBarIsFilled());
       add(isBarFilled_);
 
       add(new JLabel("Position: "));
       position_ = new JComboBox(new String[] {
             "Upper left", "Upper right", "Lower right", "Lower left"});
-      position_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent event) {
-            redraw();
-         }
-      });
+      position_.addActionListener(redrawListener);
       position_.setSelectedIndex(settings.getScaleBarLocationIndex());
       add(position_);
 
