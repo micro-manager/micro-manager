@@ -262,12 +262,12 @@ const Pixel glyph_0[GLYPH_HEIGHT * 3] = {
 };
 GlyphDef def_0('0', glyph_0, sizeof(glyph_0));
 
-const Pixel glyph_1[GLYPH_HEIGHT * 2] = {
-   0,1,
-   1,1,
-   0,1,
-   0,1,
-   0,1,
+const Pixel glyph_1[GLYPH_HEIGHT * 3] = {
+   0,1,0,
+   1,1,0,
+   0,1,0,
+   0,1,0,
+   0,1,0,
 };
 GlyphDef def_1('1', glyph_1, sizeof(glyph_1));
 
