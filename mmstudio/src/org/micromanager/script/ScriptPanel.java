@@ -760,9 +760,8 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
           try {
              // Strange, but it seems to be our responsibility to keep the
              // number of lines in the scriptArea_ current
-             String change = e.getDocument().getText(e.getOffset(), e.getLength());
-             int nrNewLines = change.length() - change.replace("\n", "").length() + 1;
-             scriptArea_.setRows(scriptArea_.getRows() + nrNewLines);
+             scriptArea_.setRows(
+                   getNumLines(e.getDocument().getText(0, e.getDocument().getLength())));
              sp.revalidate();
           } catch (BadLocationException ble) {
              // TODO
@@ -773,17 +772,23 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
        public void removeUpdate(DocumentEvent e) {
           scriptPaneSaved_ = false;
            try {
-              // Expensive way to determine the current line number it would be
-              // cheaper to find out what was removed and see if that included
-              // new lines, but I don't know how to find out what was removed
-              String txt = e.getDocument().getText(0, e.getDocument().getLength());
-              int nrLines = txt.length() - txt.replace("\n", "").length() + 1;
-              scriptArea_.setRows(nrLines);
+              scriptArea_.setRows(
+                    getNumLines(e.getDocument().getText(0, e.getDocument().getLength())));
               sp.revalidate();
           } catch (BadLocationException ble) {
              // TODO
           }
        }
+
+       /**
+        * This expensive method counts the number of lines in the script, so
+        * we can determine the number of rows to allocate to scriptArea_.
+        * TODO: find a better method.
+        */
+       private int getNumLines(String text) {
+          return text.length() - text.replace("\n", "").length() + 1;
+       }
+
        @Override
        public void changedUpdate(DocumentEvent e) {
           scriptPaneSaved_ = false;
