@@ -105,9 +105,9 @@ public class MMVirtualStack extends ij.VirtualStack {
                " that exceeds total of " + plus_.getStackSize() + " images");
          return null;
       }
-      curCoords_ = mapFlatIndexToCoords(flatIndex);
-      Image result = store_.getImage(curCoords_);
-      int channel = curCoords_.getPositionAt("channel");
+      Coords coords = mapFlatIndexToCoords(flatIndex);
+      Image result = store_.getImage(coords);
+      int channel = coords.getPositionAt("channel");
       if (result == null) {
          // HACK: ImageJ may ask us for images that aren't available yet,
          // for example if a draw attempt happens in-between images for a
