@@ -46,13 +46,19 @@ class ScrollerPanel extends JPanel {
       JLabel label_;
       JScrollBar scrollbar_;
       ScrollbarLockIcon.LockedState lockState_;
+      // The saved position is the position we need to snap back to later.
       int savedPosition_;
+      // The cached position is the position we last recorded for the
+      // scrollbar.
+      int cachedPosition_;
       
       public AxisState(JLabel label, JScrollBar scrollbar) {
          isAnimated_ = false;
          label_ = label;
          scrollbar_ = scrollbar;
          lockState_ = ScrollbarLockIcon.LockedState.UNLOCKED;
+         savedPosition_ = 0;
+         cachedPosition_ = 0;
       }
    }
 
@@ -167,7 +173,15 @@ class ScrollerPanel extends JPanel {
     * appropriate image.
     */
    private void onScrollbarMoved(String axis, JScrollBar scrollbar) {
-      axisToState_.get(axis).label_.setText(String.valueOf(scrollbar.getValue()));
+      // TODO: for some reason we get events telling us the scrollbar has
+      // moved to a position it already has. Don't bother publishing redundant
+      // events.
+      int pos = scrollbar.getValue();
+      if (pos == axisToState_.get(axis).cachedPosition_) {
+         return;
+      }
+      axisToState_.get(axis).cachedPosition_ = pos;
+      axisToState_.get(axis).label_.setText(String.valueOf(pos));
       postDrawEvent();
    }
 
