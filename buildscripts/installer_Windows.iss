@@ -104,6 +104,8 @@ Type: files; Name: "{app}\mmplugins\SlideExplorer2.jar"
 Type: files; Name: "{app}\mmplugins\SplitView.jar"
 Type: files; Name: "{app}\mmplugins\StageControl.jar"
 Type: files; Name: "{app}\mmplugins\pgFocus.jar"
+; PixelCalibrator was moved to Beta, but now is back at toplevel.
+Type: files; Name: "{app}\mmplugins\Beta\PixelCalibrator.jar"
 
 ; Renamed to NewportCONEX
 Type: files; Name: "{app}\mmgr_dal_CONEX.dll"
