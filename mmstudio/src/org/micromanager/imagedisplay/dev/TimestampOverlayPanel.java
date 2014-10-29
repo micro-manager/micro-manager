@@ -86,7 +86,7 @@ public class TimestampOverlayPanel extends OverlayPanel {
       add(color_, "wrap");
 
       add(new JLabel("X offset: "), "split 2");
-      xOffset_ = new JTextField("0", 3);
+      xOffset_ = new JTextField("5", 3);
       xOffset_.addKeyListener(new KeyAdapter() {
          @Override
          public void keyPressed(KeyEvent event) {
@@ -96,7 +96,7 @@ public class TimestampOverlayPanel extends OverlayPanel {
       add(xOffset_);
 
       add(new JLabel("Y offset: "), "split 2");
-      yOffset_ = new JTextField("0", 3);
+      yOffset_ = new JTextField("15", 3);
       yOffset_.addKeyListener(new KeyAdapter() {
          @Override
          public void keyPressed(KeyEvent event) {
