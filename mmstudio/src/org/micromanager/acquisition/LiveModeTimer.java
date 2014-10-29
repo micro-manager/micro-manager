@@ -29,7 +29,7 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
+import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
@@ -60,13 +60,15 @@ public class LiveModeTimer {
    private final NumberFormat format_;
    private boolean running_ = false;
    private Timer timer_;
-   private TimerTask task_;
+   private Runnable task_;
    private final MMStudio.DisplayImageRoutine displayImageRoutine_;
    private LinkedBlockingQueue<TaggedImage> imageQueue_;
    private static int mCamImageCounter_ = 0;
    private boolean multiCam_ = false;
-   private AtomicBoolean timerLock_;
-   
+
+   private final Object timerLock_ = new Object();
+   private boolean timerTaskShouldStop_ = true; // Guarded by timerLock_
+   private boolean timerTaskIsBusy_ = false; // Guarded by timerLock_
    
    /**
     * The LivemodeTimer constructor defines a DisplayImageRoutine that 
@@ -80,7 +82,6 @@ public class LiveModeTimer {
     */
    
    public LiveModeTimer() {
-      timerLock_ = new AtomicBoolean(false);
       studio_ = MMStudio.getInstance();
       snapLiveManager_ = studio_.getSnapLiveManager();
       core_ = studio_.getCore();
@@ -165,12 +166,12 @@ public class LiveModeTimer {
             
          core_.startContinuousSequenceAcquisition(0);
          setType();
-         long delay = getInterval();
+         long period = getInterval();
 
          // Wait for first image to create ImageWindow, so that we can be sure about image size
          long start = System.currentTimeMillis();
          long now = start;
-         long timeout = Math.min(10000, delay * 150);
+         long timeout = Math.min(10000, period * 150);
          while (core_.getRemainingImageCount() == 0 && (now - start < timeout) ) {
             now = System.currentTimeMillis();
             Thread.sleep(5);
@@ -191,7 +192,31 @@ public class LiveModeTimer {
          oldImageNumber_ = imageNumber_;
 
          imageQueue_ = new LinkedBlockingQueue<TaggedImage>(10);
-         timer_.schedule(task_, 0, delay);
+
+         synchronized (timerLock_) {
+            timerTaskShouldStop_ = false;
+            TimerTask task = new TimerTask() {
+               @Override
+               public void run() {
+                  synchronized (timerLock_) {
+                     if (timerTaskShouldStop_) {
+                        return;
+                     }
+                     timerTaskIsBusy_ = true;
+                  }
+                  try {
+                     task_.run();
+                  }
+                  finally {
+                     synchronized (timerLock_) {
+                        timerTaskIsBusy_ = false;
+                        timerLock_.notifyAll();
+                     }
+                  }
+               }
+            };
+            timer_.schedule(task, 0, period);
+         }
          
          win_.getImagePlus().getWindow().toFront();
          running_ = true;
@@ -205,21 +230,34 @@ public class LiveModeTimer {
    
    private void stop(boolean firstAttempt) {
       ReportingUtils.logMessage("Stop called in LivemodeTimer, " + firstAttempt);
-      // Before putting the poison image in the queue, we have to be sure that 
-      // no new images will be inserted after the Poison
-      // doing so results in a very bad state with hanging image processors
+
       if (timer_ != null) {
-         timer_.cancel();
+         // Stop the timer task atomically, ensuring that any currently running
+         // cycle is finished and no further cycles will be run.
+         synchronized (timerLock_) {
+            timerTaskShouldStop_ = true;
+            timer_.cancel();
+            while (timerTaskIsBusy_) {
+               try {
+                  timerLock_.wait();
+               }
+               catch (InterruptedException e) {
+                  Thread.currentThread().interrupt();
+               }
+            }
+         }
+         timer_ = null;
       }
-      // wait for timer to exit
-      while (timerLock_.get()) {
-      }
+
       try {
-         if (imageQueue_ != null)
+         if (imageQueue_ != null) {
             imageQueue_.put(TaggedImageQueue.POISON);
+            imageQueue_ = null; // Prevent further attempts to send POISON
+         }
       } catch (InterruptedException ex) {
-           ReportingUtils.logError(ex); 
-      }      
+           Thread.currentThread().interrupt();
+      }
+
       try {
          if (core_.isSequenceRunning()) {
             core_.stopSequenceAcquisition();
@@ -297,10 +335,11 @@ public class LiveModeTimer {
             }
             if (win_.windowClosed()) //check is user closed window             
             {
-               snapLiveManager_.setLiveMode(false);
+               SwingUtilities.invokeLater(new Runnable() {
+                  @Override public void run() { snapLiveManager_.setLiveMode(false); }
+               });
             } else {
                try {
-                  timerLock_.set(true);
                   TaggedImage ti = core_.getLastTaggedImage();
                   // if we have already shown this image, do not do it again.
                   long imageNumber = MDUtils.getSequenceNumber(ti.tags);
@@ -308,12 +347,14 @@ public class LiveModeTimer {
                      setImageNumber(imageNumber);
                      imageQueue_.put(ti);
                   }
-               } catch (Exception ex) {
+               } catch (final Exception ex) {
                   ReportingUtils.logMessage("Stopping live mode because of error...");
-                  snapLiveManager_.setLiveMode(false);
-                  ReportingUtils.showError(ex);
-               } finally {
-                  timerLock_.set(false);
+                  SwingUtilities.invokeLater(new Runnable() {
+                     @Override public void run() {
+                        snapLiveManager_.setLiveMode(false);
+                        ReportingUtils.showError(ex);
+                     }
+                  });
                }
             }
          }
@@ -329,10 +370,11 @@ public class LiveModeTimer {
                return;
             }
             if (win_.windowClosed() || !studio_.acquisitionExists(SnapLiveManager.SIMPLE_ACQ)) {
-               snapLiveManager_.setLiveMode(false);  //disable live if user closed window
+               SwingUtilities.invokeLater(new Runnable() {
+                  @Override public void run() { snapLiveManager_.setLiveMode(false); }
+               });
             } else {
                try {
-                  timerLock_.set(true);
                   String camera = core_.getCameraDevice();
                   Set<String> cameraChannelsAcquired = new HashSet<String>();
                   for (int i = 0; i < 2 * multiChannelCameraNrCh_; ++i) {
@@ -355,12 +397,14 @@ public class LiveModeTimer {
                         }
                      }
                   }
-               } catch (Exception exc) {
+               } catch (final Exception exc) {
                   ReportingUtils.logMessage("Stopping live mode because of error...");
-                  snapLiveManager_.setLiveMode(false);
-                  ReportingUtils.showError(exc);
-               } finally {
-                  timerLock_.set(false);
+                  SwingUtilities.invokeLater(new Runnable() {
+                     @Override public void run() {
+                        snapLiveManager_.setLiveMode(false);
+                        ReportingUtils.showError(exc);
+                     }
+                  });
                }
             }
          }
