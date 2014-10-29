@@ -425,7 +425,8 @@ int
 TesterCamera::StartSequenceAcquisitionImpl(bool finite, long count,
       bool stopOnOverflow)
 {
-   TesterHub::Guard g(GetHub()->LockGlobalMutex());
+   // There is no need to acquire the hub-global mutex here; no data protected
+   // by it is accessed in this function.
 
    {
       boost::lock_guard<boost::mutex> lock(sequenceMutex_);
@@ -452,7 +453,8 @@ TesterCamera::StartSequenceAcquisitionImpl(bool finite, long count,
 int
 TesterCamera::StopSequenceAcquisition()
 {
-   TesterHub::Guard g(GetHub()->LockGlobalMutex());
+   // Do _not_ acquire the hub-global mutex here; it is not needed and will
+   // deadlock with the wait on sequenceFuture_.
 
    {
       boost::lock_guard<boost::mutex> lock(sequenceMutex_);
