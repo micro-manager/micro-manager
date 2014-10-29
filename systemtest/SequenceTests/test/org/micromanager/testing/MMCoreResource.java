@@ -18,7 +18,7 @@ public class MMCoreResource extends ExternalResource {
       // These environment variables must be defined by the build system or
       // test-running script
       String jniLibPath = System.getenv("MMCOREJ_LIBRARY_PATH");
-      String adapterPath = System.getenv("MMTEST_ADAPTER_PATH");
+      String adapterPaths = System.getenv("MMTEST_ADAPTER_PATH");
 
       System.setProperty("mmcorej.library.loading.stderr.log", "yes");
       if (jniLibPath != null) {
@@ -31,8 +31,12 @@ public class MMCoreResource extends ExternalResource {
       mmc_.enableDebugLog(true);
 
       StrVector paths = new StrVector();
-      if (adapterPath != null) {
-         paths.add(adapterPath);
+      String pathSep =
+         java.util.regex.Pattern.quote(java.io.File.pathSeparator);
+      if (adapterPaths != null) {
+         for (String path : adapterPaths.split(pathSep)) {
+            paths.add(path);
+         }
       }
       mmc_.setDeviceAdapterSearchPaths(paths);
    }
