@@ -10,7 +10,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyAdapter;
+import java.awt.Font;
+import java.awt.font.FontRenderContext;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Rectangle2D;
 import java.awt.Graphics;
+import java.util.ArrayList;
 
 import javax.swing.border.TitledBorder;
 import javax.swing.JCheckBox;
@@ -31,11 +36,13 @@ import org.micromanager.api.display.OverlayPanel;
  * This overlay draws the timestamps of the currently-displayed images.
  */
 public class TimestampOverlayPanel extends OverlayPanel {
+   private static int LINE_HEIGHT = 13;
    private Datastore store_;
    private EventBus displayBus_;
 
    private JCheckBox shouldDraw_;
    private JCheckBox amMultiChannel_;
+   private JCheckBox shouldDrawBackground_;
    private JTextField xOffset_;
    private JTextField yOffset_;
    private JComboBox position_;
@@ -62,6 +69,22 @@ public class TimestampOverlayPanel extends OverlayPanel {
       position_.addActionListener(redrawListener);
       add(position_, "wrap");
 
+      shouldDrawBackground_ = new JCheckBox("Draw background");
+      shouldDrawBackground_.setToolTipText("Draw a background (black, unless black text is selected) underneath the timestamp(s) to improve contrast");
+      shouldDrawBackground_.addActionListener(redrawListener);
+      add(shouldDrawBackground_, "wrap");
+
+      amMultiChannel_ = new JCheckBox("Per-channel");
+      amMultiChannel_.setToolTipText("Draw one timestamp per channel in the display.");
+      amMultiChannel_.addActionListener(redrawListener);
+      add(amMultiChannel_);
+
+      add(new JLabel("Text color: "), "split 2, flowy");
+      color_ = new JComboBox(new String[] {
+            "White", "Black", "Channel color"});
+      color_.addActionListener(redrawListener);
+      add(color_, "wrap");
+
       add(new JLabel("X offset: "), "split 2");
       xOffset_ = new JTextField("0", 3);
       xOffset_.addKeyListener(new KeyAdapter() {
@@ -81,17 +104,6 @@ public class TimestampOverlayPanel extends OverlayPanel {
          }
       });
       add(yOffset_, "wrap");
-
-      amMultiChannel_ = new JCheckBox("Per-channel");
-      amMultiChannel_.setToolTipText("Draw one timestamp per channel in the display.");
-      amMultiChannel_.addActionListener(redrawListener);
-      add(amMultiChannel_);
-
-      add(new JLabel("Text color: "), "split 2, flowy");
-      color_ = new JComboBox(new String[] {
-            "White", "Black", "Channel color"});
-      color_.addActionListener(redrawListener);
-      add(color_);
    }
 
    public void setBus(EventBus bus) {
@@ -114,25 +126,75 @@ public class TimestampOverlayPanel extends OverlayPanel {
       if (!shouldDraw_.isSelected()) {
          return;
       }
+      ArrayList<String> timestamps = new ArrayList<String>();
+      ArrayList<Color> colors = new ArrayList<Color>();
       if (amMultiChannel_.isSelected()) {
          for (int i = 0; i < store.getMaxIndex("channel") + 1; ++i) {
             Coords channelCoords = image.getCoords().copy().position("channel", i).build();
             Image channelImage = store.getImage(channelCoords);
             if (channelImage != null) {
-               drawImageTimestamp(g, store, canvas, channelImage, i);
+               addTimestamp(channelImage, store, timestamps, colors);
             }
          }
       }
       else {
-         drawImageTimestamp(g, store, canvas, image, 0);
+         addTimestamp(image, store, timestamps, colors);
+      }
+
+      // This code is copied from the ScaleBarOverlayPanel, and then
+      // slightly adapted to our different Y-positioning needs.
+      int xOffset = 0, yOffset = 0;
+      int yStep = 1;
+      try {
+         xOffset = Integer.parseInt(xOffset_.getText());
+         yOffset = Integer.parseInt(yOffset_.getText());
+      }
+      catch (NumberFormatException e) {} // Just use what we have.
+
+      String location = (String) position_.getSelectedItem();
+      Dimension canvasSize = canvas.getPreferredSize();
+      if (location.equals("Upper right") ||
+            location.equals("Lower right")) {
+         xOffset = canvasSize.width - xOffset - 80;
+      }
+      if (location.equals("Lower left") ||
+            location.equals("Lower right")) {
+         yOffset = canvasSize.height - yOffset - LINE_HEIGHT;
+         // Change our step direction.
+         yStep = -1;
+      }
+
+      if (shouldDrawBackground_.isSelected()) {
+         // Determine size and color of background based on our color settings
+         // and number/length of timestamps.
+         int width = 0;
+         int height = LINE_HEIGHT * (timestamps.size() - 1) + 4;
+         Color backgroundColor = Color.BLACK;
+         for (int i = 0; i < timestamps.size(); ++i) {
+            // TODO: find a better way to determine timestamp width than just
+            // multiplying number of characters by a constant.
+            width = Math.max(width, getStringWidth(timestamps.get(i), g));
+            if (colors.get(i) == Color.BLACK) {
+               // Can't use black, so use white instead.
+               backgroundColor = Color.WHITE;
+            }
+         }
+         g.setColor(backgroundColor);
+         g.fillRect(xOffset - 2, yOffset - LINE_HEIGHT,
+               xOffset + width + 2, yOffset + height * yStep - 2);
+      }
+
+      for (int i = 0; i < timestamps.size(); ++i) {
+         g.setColor(colors.get(i));
+         g.drawString(timestamps.get(i), xOffset, yOffset + yStep * i * LINE_HEIGHT);
       }
    }
 
    /**
-    * Draw a single image's timestamp.
+    * Add the timestamp string and appropriate color to the provided lists.
     */
-   private void drawImageTimestamp(Graphics g, Datastore store,
-         ImageCanvas canvas, Image image, int position) {
+   private void addTimestamp(Image image, Datastore store,
+         ArrayList<String> timestamps, ArrayList<Color> colors) {
       // Default to black.
       Color textColor = Color.BLACK;
       String textMode = (String) color_.getSelectedItem();
@@ -145,34 +207,13 @@ public class TimestampOverlayPanel extends OverlayPanel {
       }
       else if (textMode.equals("Channel color")) {
          DisplaySettings settings = store.getDisplaySettings();
-         Color[] colors = settings.getChannelColors();
+         Color[] channelColors = settings.getChannelColors();
          int channel = image.getCoords().getPositionAt("channel");
-         if (colors != null && colors.length >= channel) {
-            textColor = colors[channel];
+         if (channelColors != null && channelColors.length >= channel) {
+            textColor = channelColors[channel];
          }
       }
-      g.setColor(textColor);
-
-      // This code is copied from the ScaleBarOverlayPanel, and then slightly
-      // adapted to our different Y-positioning needs.
-      int xOffset = 0, yOffset = 0;
-      try {
-         xOffset = Integer.parseInt(xOffset_.getText());
-         yOffset = Integer.parseInt(yOffset_.getText());
-      }
-      catch (NumberFormatException e) {} // Just use what we have.
-      yOffset += (position + 1) * 13;
-
-      String location = (String) position_.getSelectedItem();
-      Dimension canvasSize = canvas.getPreferredSize();
-      if (location.equals("Upper right") || location.equals("Lower right")) {
-         xOffset = canvasSize.width - xOffset - 80;
-      }
-      if (location.equals("Lower left") || location.equals("Lower right")) {
-         yOffset = canvasSize.height - yOffset - 13;
-         // Invert the position-based offset from our default value.
-         yOffset -= (position + 1) * 26;
-      }
+      colors.add(textColor);
 
       Metadata metadata = image.getMetadata();
       // Try various fallback options for the timestamp.
@@ -186,6 +227,16 @@ public class TimestampOverlayPanel extends OverlayPanel {
             text = "No timestamp";
          }
       }
-      g.drawString(text, xOffset, yOffset);
+      timestamps.add(text);
+   }
+
+   /**
+    * Given a string, determine how many pixels wide it is.
+    */
+   private int getStringWidth(String text, Graphics g) {
+      Font font = getFont();
+      Rectangle2D textBounds = font.getStringBounds(text,
+            new FontRenderContext(new AffineTransform(), true, false));
+      return (int) Math.round(textBounds.getWidth());
    }
 }
