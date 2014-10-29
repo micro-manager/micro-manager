@@ -27,8 +27,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
