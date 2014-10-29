@@ -59,17 +59,73 @@ public class LiveModeTimer {
    private long fpsInterval_ = 5000;
    private final NumberFormat format_;
    private boolean running_ = false;
-   private Timer timer_;
    private Runnable task_;
    private final MMStudio.DisplayImageRoutine displayImageRoutine_;
    private LinkedBlockingQueue<TaggedImage> imageQueue_;
    private static int mCamImageCounter_ = 0;
    private boolean multiCam_ = false;
 
-   private final Object timerLock_ = new Object();
-   private boolean timerTaskShouldStop_ = true; // Guarded by timerLock_
-   private boolean timerTaskIsBusy_ = false; // Guarded by timerLock_
-   
+   // Helper class to start and stop timer task atomically.
+   private class TimerController {
+      private Timer timer_;
+      private final Object timerLock_ = new Object();
+      private boolean timerTaskShouldStop_ = true; // Guarded by timerLock_
+      private boolean timerTaskIsBusy_ = false; // Guarded by timerLock_
+      public void start(final Runnable task, long interval) {
+         synchronized (timerLock_) {
+            if (timer_ != null) {
+               return;
+            }
+            timer_ = new Timer("Live mode timer");
+            timerTaskShouldStop_ = false;
+            TimerTask timerTask = new TimerTask() {
+               @Override
+               public void run() {
+                  synchronized (timerLock_) {
+                     if (timerTaskShouldStop_) {
+                        return;
+                     }
+                     timerTaskIsBusy_ = true;
+                  }
+                  try {
+                     task.run();
+                  }
+                  finally {
+                     synchronized (timerLock_) {
+                        timerTaskIsBusy_ = false;
+                        timerLock_.notifyAll();
+                     }
+                  }
+               }
+            };
+            timer_.schedule(timerTask, 0, interval);
+         }
+      }
+
+      // Thread-safe, but will deadlock if called from within the task.
+      public void stopAndWaitForCompletion() {
+         synchronized (timerLock_) {
+            if (timer_ == null) {
+               return;
+            }
+            // Stop the timer task atomically, ensuring that any currently running
+            // cycle is finished and no further cycles will be run.
+            timerTaskShouldStop_ = true;
+            timer_.cancel();
+            while (timerTaskIsBusy_) {
+               try {
+                  timerLock_.wait();
+               }
+               catch (InterruptedException e) {
+                  Thread.currentThread().interrupt();
+               }
+            }
+            timer_ = null;
+         }
+      }
+   }
+   private final TimerController timerController_ = new TimerController();
+
    /**
     * The LivemodeTimer constructor defines a DisplayImageRoutine that 
     * synchronizes image display with the "paint" function (currently execute
@@ -160,8 +216,7 @@ public class LiveModeTimer {
          if(running_) {
             return;
          }
-         timer_ = new Timer("Live mode timer");
-         
+
          core_.clearCircularBuffer();
             
          core_.startContinuousSequenceAcquisition(0);
@@ -193,31 +248,8 @@ public class LiveModeTimer {
 
          imageQueue_ = new LinkedBlockingQueue<TaggedImage>(10);
 
-         synchronized (timerLock_) {
-            timerTaskShouldStop_ = false;
-            TimerTask task = new TimerTask() {
-               @Override
-               public void run() {
-                  synchronized (timerLock_) {
-                     if (timerTaskShouldStop_) {
-                        return;
-                     }
-                     timerTaskIsBusy_ = true;
-                  }
-                  try {
-                     task_.run();
-                  }
-                  finally {
-                     synchronized (timerLock_) {
-                        timerTaskIsBusy_ = false;
-                        timerLock_.notifyAll();
-                     }
-                  }
-               }
-            };
-            timer_.schedule(task, 0, period);
-         }
-         
+         timerController_.start(task_, period);
+
          win_.getImagePlus().getWindow().toFront();
          running_ = true;
          studio_.runDisplayThread(imageQueue_, displayImageRoutine_);
@@ -231,23 +263,7 @@ public class LiveModeTimer {
    private void stop(boolean firstAttempt) {
       ReportingUtils.logMessage("Stop called in LivemodeTimer, " + firstAttempt);
 
-      if (timer_ != null) {
-         // Stop the timer task atomically, ensuring that any currently running
-         // cycle is finished and no further cycles will be run.
-         synchronized (timerLock_) {
-            timerTaskShouldStop_ = true;
-            timer_.cancel();
-            while (timerTaskIsBusy_) {
-               try {
-                  timerLock_.wait();
-               }
-               catch (InterruptedException e) {
-                  Thread.currentThread().interrupt();
-               }
-            }
-         }
-         timer_ = null;
-      }
+      timerController_.stopAndWaitForCompletion();
 
       try {
          if (imageQueue_ != null) {
