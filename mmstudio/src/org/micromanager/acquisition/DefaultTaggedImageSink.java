@@ -74,21 +74,14 @@ public class DefaultTaggedImageSink  {
          sinkFullCallback.run();
       }
 
-      try {
-         SwingUtilities.invokeAndWait(new Runnable() {
-            @Override
-            public void run() {
-               JOptionPane.showMessageDialog(null,
-                     "Out of memory to store images: " + e.getMessage(),
-                     "Out of image storage memory", JOptionPane.ERROR_MESSAGE);
-            }
-         });
-      }
-      catch (InterruptedException ex) {
-         Thread.currentThread().interrupt();
-      }
-      catch (java.lang.reflect.InvocationTargetException ignore) {
-      }
+      SwingUtilities.invokeLater(new Runnable() {
+         @Override
+         public void run() {
+            JOptionPane.showMessageDialog(null,
+                  "Out of memory to store images: " + e.getMessage(),
+                  "Out of image storage memory", JOptionPane.ERROR_MESSAGE);
+         }
+      });
    }
 
    public ImageCache getImageCache() {

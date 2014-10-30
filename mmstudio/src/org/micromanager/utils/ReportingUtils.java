@@ -27,7 +27,6 @@ import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.Calendar;
 
 import javax.swing.JDialog;
@@ -72,23 +71,6 @@ public class ReportingUtils {
    }
 
    public static void showMessage(final String msg) {
-      if (!SwingUtilities.isEventDispatchThread()) {
-         try {
-            SwingUtilities.invokeAndWait(new Runnable() {
-               @Override
-               public void run() {
-                  ReportingUtils.showMessage(msg);
-               }
-            });
-         }
-         catch (InterruptedException unlikely) {
-            Thread.currentThread().interrupt();
-         }
-         catch (InvocationTargetException ignore) {
-         }
-         return;
-      }
-
       JOptionPane.showMessageDialog(null, msg);
    }
 
@@ -133,23 +115,6 @@ public class ReportingUtils {
    }
 
    private static void showErrorMessage(final String fullMsg, final Component parent) {
-      if (!SwingUtilities.isEventDispatchThread()) {
-         try {
-            SwingUtilities.invokeAndWait(new Runnable() {
-               @Override
-               public void run() {
-                  ReportingUtils.showErrorMessage(fullMsg, parent);
-               }
-            });
-         }
-         catch (InterruptedException unlikely) {
-            Thread.currentThread().interrupt();
-         }
-         catch (InvocationTargetException ignore) {
-         }
-         return;
-      }
-
       int maxNrLines = 30;
       String test[] = fullMsg.split("\n");
       if (test.length < maxNrLines) {
