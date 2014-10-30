@@ -157,8 +157,12 @@ public class HyperstackControls extends JPanel {
       }
       else {
          // Single-channel case; simple.
-         return store_.getImage(stack_.getCurrentImageCoords()).getIntensityStringAt(x, y);
+         Image image = store_.getImage(stack_.getCurrentImageCoords());
+         if (image != null) {
+            return image.getIntensityStringAt(x, y);
+         }
       }
+      return "";
    }
 
    /**
