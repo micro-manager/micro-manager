@@ -389,7 +389,6 @@ public class DisplayWindow extends StackWindow {
     */
    @Override
    public void pack() {
-      super.pack();
       // Reduce the canvas until it can fit into the display this
       // window is on, with some padding for our own controls of course.
       Rectangle displayBounds = GUIUtils.getMaxWindowSizeForPoint(getX(), getY());
@@ -404,8 +403,13 @@ public class DisplayWindow extends StackWindow {
          ic.zoomOut(displayWidth - 50, displayHeight - 150);
       }
       // Derive our own size based on the canvas size plus padding.
-      int deltaWidth = origWindowSize.width - origCanvasSize.width;
-      int deltaHeight = origWindowSize.height - origCanvasSize.height;
+      // The absolute value here is...well, it seems to handle cases where the
+      // canvas has grown (e.g. due to zooming in) and we're working on
+      // catching up. Honestly the resize logic of the ImageCanvas is pretty
+      // tangled, and thus anything that works *with* that logic gets tangled
+      // as well. I can't promise this isn't buggy.
+      int deltaWidth = Math.abs(origWindowSize.width - origCanvasSize.width);
+      int deltaHeight = Math.abs(origWindowSize.height - origCanvasSize.height);
       setSize(ic.getSize().width + deltaWidth,
             ic.getSize().height + deltaHeight);
       super.pack();
