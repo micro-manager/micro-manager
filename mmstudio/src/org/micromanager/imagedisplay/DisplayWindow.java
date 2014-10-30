@@ -4,6 +4,7 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
 import ij.CompositeImage;
+import ij.gui.GUI;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.ImageCanvas;
@@ -35,6 +36,7 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.MMStudio;
 import org.micromanager.internalinterfaces.DisplayControls;
 import org.micromanager.utils.CanvasPaintPending;
+import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.ReportingUtils;
 
 
@@ -169,6 +171,9 @@ public class DisplayWindow extends StackWindow {
       add(controls, "align center, wrap, growx");
 
       // Propagate resizing to the canvas, adjusting the view rectangle.
+      // Note that this occasionally results in the canvas being 2px too
+      // small to show everything, causing the "zoom indicator" overlay to
+      // be drawn semi-pointlessly.
       canvasPanel_.addComponentListener(new ComponentAdapter() {
          @Override
          public void componentResized(ComponentEvent e) {
@@ -369,50 +374,30 @@ public class DisplayWindow extends StackWindow {
 
    /**
     * HACK HACK HACK etc. you get the idea.
-    * For some reason, when our zoom level has a repeating decimal in it
-    * (e.g. 33.333..%, 16.666..%), our canvas will calculate the wrong size
-    * for display and leave it inadequate screen space to draw the entire
-    * image, causing it to draw the "zoom indicator". By overriding the pack()
-    * method and changing our size and our canvas's size to be 2px larger
-    * in X and Y, we can avoid this. We shouldn't accumulate error as long as
-    * nobody goes around doing "pack(); pack(); pack();" or the like, since
-    * we recalculate our size based on our components every time the canvas
-    * size changes.
-    * Is this the *right* fix? Probably not! But a proper fix would likely
-    * require being able to change ImageCanvas in extensive ways, and that's
-    * part of ImageJ.
+    * We have several goals to accomplish when repacking the window:
+    * - Constrain the canvas' size so that it fits
+    * - Constrain our window size so there isn't a lot of wasted space
     */
    @Override
    public void pack() {
       super.pack();
-      Dimension curSize = getSize();
-      Dimension canvasSize = ic.getSize();
+      // Reduce the canvas until it can fit into the display this
+      // window is on, with some padding for our own controls of course.
+      Rectangle displayBounds = GUIUtils.getMaxWindowSizeForPoint(getX(), getY());
+      int displayWidth = displayBounds.width;
+      int displayHeight = displayBounds.height;
+      Dimension origCanvasSize = ic.getSize();
+      Dimension origWindowSize = getSize();
       Dimension desiredCanvasSize = ic.getPreferredSize();
-      // Derive the delta between the canvas' current size and the size it
-      // wants to be, which dictates how much we need to grow (plus a fiddle
-      // factor).
-      int deltaWidth = desiredCanvasSize.width - canvasSize.width;
-      int deltaHeight = desiredCanvasSize.height - canvasSize.height;
-      // Honesty time here: I'm not entirely certain this logic is correct.
-      // However it seems to work, and this entire file will be going away
-      // in Micro-Manager 2.0.
-      if (deltaWidth > 0 || deltaHeight > 0) {
-         setSize(curSize.width + deltaWidth + 2, curSize.height + deltaHeight + 2);
+      if (desiredCanvasSize.width + 50 > displayWidth ||
+            desiredCanvasSize.height + 150 > displayHeight) {
+         ic.zoomOut(displayWidth - 50, displayHeight - 150);
       }
-      else {
-         // Ensure that neither dimension gets blown out (e.g. from a 2500x2000
-         // camera display, we could otherwise end up with a 2500x600 image
-         // window). Calculate the expected width/height based on the aspect
-         // ratio and the corresponding other dimension, and go with whichever
-         // is smaller.
-         if (plus_ != null) {
-            double aspect = ((double) plus_.getWidth()) / plus_.getHeight();
-            int targetWidth = (int) (aspect * canvasSize.height) + 2;
-            int targetHeight = (int) (canvasSize.width / aspect) + 2;
-            ic.setDrawingSize(Math.min(targetWidth, canvasSize.width + 2),
-                  Math.min(targetHeight, canvasSize.height + 2));
-         }
-      }
+      // Derive our own size based on the canvas size plus padding.
+      int deltaWidth = origWindowSize.width - origCanvasSize.width;
+      int deltaHeight = origWindowSize.height - origCanvasSize.height;
+      setSize(ic.getSize().width + deltaWidth,
+            ic.getSize().height + deltaHeight);
       super.pack();
    }
 }
