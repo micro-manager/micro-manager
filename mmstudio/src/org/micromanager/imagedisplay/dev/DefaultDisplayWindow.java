@@ -10,6 +10,7 @@ import ij.WindowManager;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
@@ -64,6 +65,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
    // This will be our intermediary with ImageJ.
    private DummyImageWindow dummyWindow_;
 
+   private JPanel contentsPanel_;
    private JPanel canvasPanel_;
    private MMImageCanvas canvas_;
    private HyperstackControls controls_;
@@ -165,27 +167,29 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
     * etc.
     */
    private void makeWindowControls() {
-      // NB calling removeAll() on a JFrame works weirdly.
-      getContentPane().removeAll();
+      if (contentsPanel_ == null) {
+         contentsPanel_ = new JPanel();
+      }
+      contentsPanel_.removeAll();
       // Override the default layout with our own, so we can do more
       // customized controls.
       // This layout is intended to minimize distances between elements.
-      setLayout(new MigLayout("insets 1, fillx, filly",
+      contentsPanel_.setLayout(new MigLayout("insets 1, fillx, filly",
          "[grow, fill]", "[grow, fill]related[]"));
 
       recreateCanvas();
       // We don't want the canvas to grow, because that results in weird
       // zoom levels that make for blurry images.
-      add(canvasPanel_, "align center, wrap, grow 0");
+      contentsPanel_.add(canvasPanel_, "align center, wrap, grow 0");
 
       if (controls_ == null) {
          controls_ = new HyperstackControls(store_, stack_, displayBus_,
                false);
       }
-      add(controls_, "align center, wrap, growx");
+      contentsPanel_.add(controls_, "align center, wrap, growx");
 
       if (customControls_ != null) {
-         add(customControls_, "align center, wrap, growx");
+         contentsPanel_.add(customControls_, "align center, wrap, growx");
       }
 
       if (modePanel_ == null) {
@@ -210,8 +214,14 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
          modePanel_.addMode("Overlays", overlays_);
       }
 
-      add(modePanel_, "dock east, growy");
+      contentsPanel_.add(modePanel_, "dock east, growy");
 
+      add(contentsPanel_);
+      Insets insets = getInsets();
+      Dimension size = contentsPanel_.getMinimumSize();
+      setMinimumSize(new Dimension(
+            insets.left + insets.right + size.width,
+            insets.top + insets.bottom + size.height));
       pack();
    }
 
