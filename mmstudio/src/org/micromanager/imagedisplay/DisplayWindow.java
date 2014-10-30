@@ -158,6 +158,15 @@ public class DisplayWindow extends StackWindow {
             g.clearRect(0, heightSlop + drawnHeight + 1,
                   size.width, heightSlop);
          }
+
+         /**
+          * This padding causes us to avoid erroneously showing the zoom
+          * indicator, and ensures there's enough space to draw the border.
+          */
+         @Override
+         public Dimension getPreferredSize() {
+            return new Dimension(dstWidth + 2, dstHeight + 2);
+         }
       };
       // HACK: set the minimum size. If we don't do this, then the canvas
       // doesn't shrink properly when the window size is reduced. Why?!
@@ -386,6 +395,7 @@ public class DisplayWindow extends StackWindow {
       Rectangle displayBounds = GUIUtils.getMaxWindowSizeForPoint(getX(), getY());
       int displayWidth = displayBounds.width;
       int displayHeight = displayBounds.height;
+
       Dimension origCanvasSize = ic.getSize();
       Dimension origWindowSize = getSize();
       Dimension desiredCanvasSize = ic.getPreferredSize();
