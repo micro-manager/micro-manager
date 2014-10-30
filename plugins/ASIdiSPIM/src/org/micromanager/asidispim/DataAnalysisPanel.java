@@ -25,6 +25,7 @@ import javax.swing.JProgressBar;
 import javax.swing.JTextField;
 import javax.swing.SwingWorker;
 
+import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.api.MMWindow;
@@ -50,7 +51,8 @@ import org.micromanager.utils.ReportingUtils;
 public class DataAnalysisPanel extends ListeningJPanel {
    private final JPanel mipavPanel_;
    private final JTextField saveDestinationField_;
-   private Prefs prefs_;
+   private final Prefs prefs_;
+   private final CMMCore core_;
    public static final String[] TRANSFORMOPTIONS = 
       {"None", "Rotate Right 90\u00B0", "Rotate Left 90\u00B0", "Rotate outward"};
    public static FileDialogs.FileType MIPAV_DATA_SET 
@@ -70,6 +72,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
               "[right]",
               "[]16[]"));
       prefs_ = prefs;
+      core_ = gui.getMMCore();
             
       int textFieldWidth = 35;
 
@@ -176,6 +179,85 @@ public class DataAnalysisPanel extends ListeningJPanel {
             
        
       this.add(mipavPanel_);
+      
+      
+      JButton imageJTest = new JButton("ImageJ action");
+      imageJTest.addActionListener(new ActionListener() {
+         
+         class tempThread extends Thread {
+            tempThread() {
+               super();
+            }
+            @Override
+            public void run() {
+
+               core_.logMessage("starting IJ.run in thread");
+               IJ.run("Reslice [/]...", "output=1.000 start=Top");
+               core_.logMessage("IJ.run ended in thread");
+               
+//               String origTitle = IJ.getImage().getTitle();
+//               
+//               IJ.run("Split Channels");
+//
+//               String c2Title = IJ.getImage().getTitle();
+//               String c1Title = c2Title.replaceFirst("2", "1");
+//               if (!c2Title.equals(origTitle.concat("C2"))) {
+//                  // have a problem, should warn user TODO
+//               }
+//
+//
+//               // reslice side B
+//               IJ.selectWindow(c2Title);
+//               IJ.run("Reslice [/]...", "output=1.000 start=Left");
+//               String c2ResliceTitle = IJ.getImage().getTitle();
+//               IJ.run("Z Project...", "projection=[Max Intensity]");
+//               IJ.run("Rotate 90 Degrees Right", "");
+//               String c2ResliceZProj = IJ.getImage().getTitle();
+//               IJ.selectWindow(c2ResliceTitle);
+//               IJ.run("Close");
+//
+//               // compare with side A max Z projection
+//               IJ.selectWindow(c1Title);
+//               IJ.run("Z Project...", "projection=[Max Intensity]");
+//               String c1ZProj = IJ.getImage().getTitle();
+//               
+//               // reslice side A
+//               IJ.selectWindow(c1Title);
+//               IJ.run("Reslice [/]...", "output=1.000 start=Left");
+//               String c1ResliceTitle = IJ.getImage().getTitle();
+//               IJ.run("Z Project...", "projection=[Max Intensity]");
+//               IJ.run("Rotate 90 Degrees Right", "");
+//               IJ.run("Flip Horizontally", "");
+//               String c1ResliceZProj = IJ.getImage().getTitle();
+//               IJ.selectWindow(c1ResliceTitle);
+//               IJ.run("Close");
+//               
+//               // compare with side B max Z projection
+//               IJ.selectWindow(c2Title);
+//               IJ.run("Z Project...", "projection=[Max Intensity]");
+//               String c2ZProj = IJ.getImage().getTitle();
+//               
+//               IJ.selectWindow(c2Title);
+//               IJ.run("Close");
+//               
+//               IJ.selectWindow(c1Title);
+//               IJ.run("Close");
+//               
+//               IJ.run("Tile");
+            }
+         }
+         
+         @Override
+         public void actionPerformed(ActionEvent e) {
+//            IJ.run("Reslice [/]...", "output=1.000 start=Top");
+            tempThread thread = new tempThread();
+            thread.run();
+         }
+      });
+      add(imageJTest);
+      
+      
+
    }
    
    /**
@@ -289,6 +371,23 @@ public class DataAnalysisPanel extends ListeningJPanel {
               MIPAV_DATA_SET);
       if (result != null) {
          rootField.setText(result.getAbsolutePath());
+      }
+   }
+   
+   /**
+    * Make it easy to execute an ImageJ command in its own thread (for speed).
+    * After creating this object with the command (menu item) then call its start() method. 
+    * @author Jon
+    */
+   class IJCommandThread extends Thread {
+      private final String command_;
+      IJCommandThread(String command) {
+         super(command);
+         command_ = command;
+      }
+      @Override
+      public void run() {
+         IJ.run(command_);
       }
    }
 
