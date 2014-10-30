@@ -42,6 +42,7 @@ import java.awt.event.WindowEvent;
 import java.awt.Font;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
+import java.awt.GraphicsConfiguration;
 import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -118,8 +119,8 @@ public class GUIUtils {
    }
 
    /* 
-    * This takes care of a Java bug that would throw several exceptions when a Projector device 
-    * is attached in Windows.
+    * This takes care of a Java bug that would throw several exceptions when a
+    * Projector device is attached in Windows.
     */
    public static void preventDisplayAdapterChangeExceptions() {
       try {
@@ -189,7 +190,27 @@ public class GUIUtils {
       return false;
 
    }
-   
+
+   /**
+    * Return the maximum size of a window that contains the specified XY
+    * screen location.
+    */
+   public static Rectangle getMaxWindowSizeForPoint(int x, int y) {
+      GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
+      GraphicsDevice[] devices = env.getScreenDevices();
+      for (GraphicsDevice device : devices) {
+         GraphicsConfiguration[] configs = device.getConfigurations();
+         for (GraphicsConfiguration config : configs) {
+            Rectangle bounds = config.getBounds();
+            if (bounds.contains(x, y)) {
+               return bounds;
+            }
+         }
+      }
+      ReportingUtils.logError("Couldn't find a display containing the point (" + x + ", " + y + ")");
+      return null;
+   }
+
    // ******* Utility methods for persisting windows *******
    
    private static HashSet<Class> windowsWithPersistedPositions = new HashSet<Class>();
