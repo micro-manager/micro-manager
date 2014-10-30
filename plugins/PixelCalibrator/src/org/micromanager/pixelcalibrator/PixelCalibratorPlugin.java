@@ -27,11 +27,7 @@ public class PixelCalibratorPlugin implements MMPlugin {
    private CalibrationThread calibrationThread_;
    private PixelCalibratorDialog dialog_;
 
-   public double safeTravelRadiusUm_ = 1000;
-   
-   public void configurationChanged() {
-      // TODO Auto-generated method stub
-   }
+   double safeTravelRadiusUm_ = 1000;
 
    public void dispose() {
       stopCalibration();
@@ -81,7 +77,7 @@ public class PixelCalibratorPlugin implements MMPlugin {
 
    }
 
-   double getPixelSize(AffineTransform cameraToStage) {
+   private double getPixelSize(AffineTransform cameraToStage) {
       return Math.sqrt(Math.abs(cameraToStage.getDeterminant()));
    }
 
@@ -115,56 +111,65 @@ public class PixelCalibratorPlugin implements MMPlugin {
       }
    }
 
-   void saveResult() {
+   void showFailureMessage() {
+      ReportingUtils.showMessage("Calibration failed. Please improve the contrast by adjusting the\n" +
+            "sample, focus and illumination. Also make sure the specimen is\n" +
+            "securely immobilized on the stage. When you are ready, press\n" +
+            "Start to try again.");
+   }
+
+   void promptToSaveResult() {
       AffineTransform result = calibrationThread_.getResult();
       if (result == null) {
-         ReportingUtils.showMessage("Calibration failed. Please improve the contrast by adjusting the\n" +
-                 "sample, focus and illumination. Also make sure the specimen is\n" +
-                 "securely immobilized on the stage. When you are ready, press\n" +
-                 "Start to try again.");
-      } else {
-         double pixelSize = MathUtils.round(getPixelSize(result), 4);
+         // (Shouldn't have gotten here)
+         showFailureMessage();
+         return;
+      }
 
-         CalibrationListDlg calDialog = app_.getCalibrationListDlg();
-         calDialog.updateCalibrations();
-         calDialog.setVisible(true);
+      double pixelSize = MathUtils.round(getPixelSize(result), 4);
+
+      CalibrationListDlg calDialog = app_.getCalibrationListDlg();
+      calDialog.updateCalibrations();
+      calDialog.setVisible(true);
 
 
-         Preferences prefs = Preferences.userNodeForPackage(MMStudio.class);
-         
+      Preferences prefs = Preferences.userNodeForPackage(MMStudio.class);
+
+      try {
+         JavaUtils.putObjectInPrefs(prefs, "affine_transform_" + core_.getCurrentPixelSizeConfig(), result);
+      }
+      catch (Exception ex) {
+         ReportingUtils.logError(ex);
+      }
+
+      int response = JOptionPane.showConfirmDialog(null,
+            String.format("Affine transform parameters: XScale=%.2f YScale=%.2f XShear=%.4f YShear=%.4f\n", result.getScaleX(), result.getScaleY(), result.getShearX(), result.getShearY()) + 
+            "<html>The Pixel Calibrator plugin has measured a pixel size of " + pixelSize + " &#956;m.<br>" + "Do you wish to store this value in your pixel calibration settings?</html>",
+            "Pixel calibration succeeded!",
+            JOptionPane.YES_NO_OPTION);
+
+      String reply;
+
+      if (response == JOptionPane.YES_OPTION) {
+         String pixelConfig;
          try {
-            JavaUtils.putObjectInPrefs(prefs, "affine_transform_" + core_.getCurrentPixelSizeConfig(), result);
-         } catch (Exception ex) {
-            ReportingUtils.logError(ex);
-         }
-         
-         int response = JOptionPane.showConfirmDialog(null,
-                 String.format("Affine transform parameters: XScale=%.2f YScale=%.2f XShear=%.4f YShear=%.4f\n", result.getScaleX(), result.getScaleY(), result.getShearX(), result.getShearY()) + 
-                 "<html>The Pixel Calibrator plugin has measured a pixel size of " + pixelSize + " &#956;m.<br>" + "Do you wish to store this value in your pixel calibration settings?</html>",
-                 "Pixel calibration succeeded!",
-                 JOptionPane.YES_NO_OPTION);
+            pixelConfig = core_.getCurrentPixelSizeConfig();
+            if (pixelConfig.length() > 0) {
+               core_.setPixelSizeUm(pixelConfig, pixelSize);
 
-         String reply;
-
-         if (response == JOptionPane.YES_OPTION) {
-            String pixelConfig;
-            try {
-               pixelConfig = core_.getCurrentPixelSizeConfig();
-               if (pixelConfig.length() > 0) {
-                  core_.setPixelSizeUm(pixelConfig, pixelSize);
-
-               } else {
-                  CalibrationEditor editor = new CalibrationEditor("Res", NumberUtils.doubleToDisplayString(pixelSize));
-                  editor.setCore(core_);
-                  editor.editNameOnly();
-                  editor.setVisible(true);
-               }
-
-               calDialog.updateCalibrations();
-               calDialog.setVisible(true);
-            } catch (Exception ex) {
-               ReportingUtils.logError(ex);
             }
+            else {
+               CalibrationEditor editor = new CalibrationEditor("Res", NumberUtils.doubleToDisplayString(pixelSize));
+               editor.setCore(core_);
+               editor.editNameOnly();
+               editor.setVisible(true);
+            }
+
+            calDialog.updateCalibrations();
+            calDialog.setVisible(true);
+         }
+         catch (Exception ex) {
+            ReportingUtils.logError(ex);
          }
       }
    }
@@ -173,7 +178,7 @@ public class PixelCalibratorPlugin implements MMPlugin {
       calibrationThread_.getProgress();
       final double progress = calibrationThread_.getProgress() / 24.;
       SwingUtilities.invokeLater(new Runnable() {
-
+         @Override
          public void run() {
             try {
             if (dialog_ != null)
@@ -188,6 +193,13 @@ public class PixelCalibratorPlugin implements MMPlugin {
 
    void calibrationDone() {
       dialog_.updateStatus(false, 1.);
-      saveResult();
+      promptToSaveResult();
+   }
+
+   void calibrationFailed(boolean canceled) {
+      dialog_.updateStatus(false, 0.);
+      if (!canceled) {
+         showFailureMessage();
+      }
    }
 }
