@@ -52,6 +52,7 @@ public class DisplayWindow extends StackWindow {
    private final EventBus bus_;
    private ImagePlus plus_;
    private JPanel canvasPanel_;
+   private Dimension canvasSizeLastPack_;
    
    // store window location in Java Preferences
    private static final int DEFAULTPOSX = 300;
@@ -400,23 +401,29 @@ public class DisplayWindow extends StackWindow {
       int displayWidth = displayBounds.width;
       int displayHeight = displayBounds.height;
 
-      Dimension origCanvasSize = ic.getSize();
+      if (canvasSizeLastPack_ == null) {
+         canvasSizeLastPack_ = ic.getSize();
+      }
       Dimension origWindowSize = getSize();
       Dimension desiredCanvasSize = ic.getPreferredSize();
       if (desiredCanvasSize.width + 50 > displayWidth ||
             desiredCanvasSize.height + 150 > displayHeight) {
+         // Can't fit the canvas into the available space, so zoom out.
          ic.zoomOut(displayWidth - 50, displayHeight - 150);
       }
-      // Derive our own size based on the canvas size plus padding.
-      // The absolute value here is...well, it seems to handle cases where the
-      // canvas has grown (e.g. due to zooming in) and we're working on
-      // catching up. Honestly the resize logic of the ImageCanvas is pretty
-      // tangled, and thus anything that works *with* that logic gets tangled
-      // as well. I can't promise this isn't buggy.
-      int deltaWidth = Math.abs(origWindowSize.width - origCanvasSize.width);
-      int deltaHeight = Math.abs(origWindowSize.height - origCanvasSize.height);
+      // Derive our own size based on the canvas size plus padding. We want
+      // to preserve the same difference in size between us and the canvas
+      // that we had before resizing.
+      int deltaWidth = origWindowSize.width - canvasSizeLastPack_.width;
+      int deltaHeight = origWindowSize.height - canvasSizeLastPack_.height;
+      if (canvasPanel_ != null) {
+         // Ensure the canvas panel changes size as the canvas does, so that
+         // it doesn't artificially constrain our own resizing.
+         canvasPanel_.setSize(ic.getSize());
+      }
       setSize(ic.getSize().width + deltaWidth,
             ic.getSize().height + deltaHeight);
+      canvasSizeLastPack_ = ic.getSize();
       super.pack();
    }
 }
