@@ -1903,7 +1903,10 @@ public class MMStudio implements ScriptInterface {
     
    /**
     * Lets JComponents register themselves so that their background can be
-    * manipulated
+    * manipulated.
+    * TODO: should we set the background color here as well? Currently there's
+    * a lot of duplicated code where, every time someone calls this method,
+    * they also have to manually set their background color for the first time.
     * @param comp
     */
    @Override
