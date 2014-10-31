@@ -180,7 +180,8 @@ public class DisplayWindow extends StackWindow {
       // resizes.
       canvasPanel_ = new JPanel();
       canvasPanel_.setLayout(new MigLayout("insets 0, fill"));
-      canvasPanel_.setOpaque(false);
+      MMStudio.getInstance().addMMBackgroundListener(canvasPanel_);
+      canvasPanel_.setBackground(MMStudio.getInstance().getBackgroundColor());
       canvasPanel_.add(ic);
       add(canvasPanel_, "align center, wrap");
       add(controls, "align center, wrap, growx");
