@@ -63,6 +63,14 @@ public class BFProcessor extends DataProcessor<TaggedImage> {
    public void setFlatFieldNormalize(int channel, boolean normalize){
        flatFieldImages.setFlatFieldNormalize(channel, normalize);
    }
+
+   @Override
+   public void setEnabled(boolean enabled) {
+      super.setEnabled(enabled);
+      if (myFrame_ != null) {
+         myFrame_.updateProcessorEnabled(enabled);
+      }
+   }
    
    /**
     * Polls for tagged images, and processes them if their size and type matches

@@ -86,19 +86,13 @@ public class MultiChannelShadingForm extends javax.swing.JFrame {
       processor_.setChannelGroup(groupName);
       populateFlatFieldComboBoxes();
 
-      if (useCheckBox_.isSelected()) {
-         attachProcessor();
-      }
+      processor_.setEnabled(useCheckBox_.isSelected());
+   }
+
+   void updateProcessorEnabled(boolean enabled) {
+      useCheckBox_.setSelected(enabled);
    }
    
-    private void attachProcessor() {
-       gui_.addImageProcessor(processor_);
-    }
-    
-    private void detachProcessor() {
-       gui_.removeImageProcessor(processor_);
-    }
-    
     private void processFlatFieldImage(int channel, String fileName) {
        ij.io.Opener opener = new ij.io.Opener();       
        ImagePlus ip = opener.openImage(fileName);
@@ -496,11 +490,7 @@ public class MultiChannelShadingForm extends javax.swing.JFrame {
     }//GEN-LAST:event_flatFieldTextField5_ActionPerformed
 
     private void useCheckBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_useCheckBox_ActionPerformed
-      if (useCheckBox_.isSelected()) {
-         attachProcessor();
-      } else {
-         detachProcessor();
-      }
+       processor_.setEnabled(useCheckBox_.isSelected());
       prefs_.putBoolean(USECHECKBOX, useCheckBox_.isSelected());
     }//GEN-LAST:event_useCheckBox_ActionPerformed
 
