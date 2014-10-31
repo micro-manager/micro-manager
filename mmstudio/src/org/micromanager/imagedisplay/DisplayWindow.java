@@ -86,6 +86,10 @@ public class DisplayWindow extends StackWindow {
          posY = displayPrefs_.getInt(WINDOWPOSY, DEFAULTPOSY);
       }
       setLocation(posX, posY);
+
+      MMStudio.getInstance().addMMBackgroundListener(this);
+      setBackground(MMStudio.getInstance().getBackgroundColor());
+      bus_.register(this);
       
       // HACK: hide ImageJ's native scrollbars; we provide our own.
       if (cSelector != null) {
@@ -175,6 +179,7 @@ public class DisplayWindow extends StackWindow {
       // resizes.
       canvasPanel_ = new JPanel();
       canvasPanel_.setLayout(new MigLayout("insets 0, fill"));
+      canvasPanel_.setOpaque(false);
       canvasPanel_.add(ic);
       add(canvasPanel_, "align center, wrap");
       add(controls, "align center, wrap, growx");

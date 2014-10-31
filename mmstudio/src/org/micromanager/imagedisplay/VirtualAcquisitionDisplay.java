@@ -1119,9 +1119,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    private void createWindow() {
       makeHistograms();
       DisplayWindow win = new DisplayWindow(hyperImage_, controls_, bus_);
-      win.setBackground(MMStudio.getInstance().getBackgroundColor());
-      MMStudio.getInstance().addMMBackgroundListener(win);
-      bus_.register(win);
 
       mdPanel_.displayChanged(win);
       imageChangedUpdate();
