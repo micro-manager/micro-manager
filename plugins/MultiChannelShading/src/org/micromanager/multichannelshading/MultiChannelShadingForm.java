@@ -37,6 +37,7 @@ public class MultiChannelShadingForm extends javax.swing.JFrame {
    private static final String FLATFIELDNORMALIZE3 = "FLATFIELDNORMALIZE3";
    private static final String FLATFIELDNORMALIZE4 = "FLATFIELDNORMALIZE4";
    private static final String FLATFIELDNORMALIZE5 = "FLATFIELDNORMALIZE5";
+   private static final String EMPTY_FILENAME_INDICATOR = "None";
    private final String[] IMAGESUFFIXES = {"tif", "tiff", "jpg", "png"};
    private String flatfieldFileName_;
    private String backgroundFileName_;
@@ -77,7 +78,8 @@ public class MultiChannelShadingForm extends javax.swing.JFrame {
       
       //populate darkFieldName from preferences and process it.
       String darkFieldFileName = prefs_.get(DARKFIELDFILENAME, "");   
-      darkFieldTextField_.setText(darkFieldFileName);
+      darkFieldTextField_.setText("".equals(darkFieldFileName) ?
+            EMPTY_FILENAME_INDICATOR : darkFieldFileName);
       processBackgroundImage(darkFieldTextField_.getText());
       
       //populate group ComboBox
@@ -93,26 +95,41 @@ public class MultiChannelShadingForm extends javax.swing.JFrame {
       useCheckBox_.setSelected(enabled);
    }
    
-    private void processFlatFieldImage(int channel, String fileName) {
-       ij.io.Opener opener = new ij.io.Opener();       
-       ImagePlus ip = opener.openImage(fileName);
-       
-       // set flat field even if the processor is null
-       // otherwise, the user has no way to only select baground subtraction
-       processor_.setFlatField(channel, ip);      
-    }
-    
-    private void processBackgroundImage(String fileName) {
-       ij.io.Opener opener = new ij.io.Opener();       
-       ImagePlus ip = opener.openImage(fileName);
-       
-       // set beckground even if the processor is null
-       // otherwise, the uses has no way to only select flatfielding
-       processor_.setBackground(ip);             
-       backgroundFileName_ = fileName;
-       darkFieldTextField_.setText(backgroundFileName_);
-       prefs_.put(DARKFIELDFILENAME, backgroundFileName_);
-    }
+   private void processFlatFieldImage(int channel, String fileName) {
+      if (EMPTY_FILENAME_INDICATOR.equals(fileName)) {
+         fileName = "";
+      }
+
+      // If we have a filename, try to open it and set the flatfield image.
+      // If not, set the flatfield image to null (no flatfielding for this
+      // channel).
+      // TODO User should be made aware if file is missing!
+      ImagePlus ip = null;
+      if (fileName != null && !fileName.isEmpty()) {
+         ij.io.Opener opener = new ij.io.Opener();
+         ip = opener.openImage(fileName);
+      }
+      processor_.setFlatField(channel, ip);
+   }
+
+   private void processBackgroundImage(String fileName) {
+      if (EMPTY_FILENAME_INDICATOR.equals(fileName)) {
+         fileName = "";
+      }
+
+      // If we have a filename, trt to open it and set the background image.
+      // If not, set the background image to null (no correction).
+      // TODO User should be made aware if file is missing!
+      ImagePlus ip = null;
+      if (fileName != null && !fileName.isEmpty()) {
+         ij.io.Opener opener = new ij.io.Opener();
+         ip = opener.openImage(fileName);
+      }
+      processor_.setBackground(ip);
+
+      backgroundFileName_ = fileName;
+      prefs_.put(DARKFIELDFILENAME, backgroundFileName_);
+   }
     
    private void populateFlatFieldComboBoxes() {
         StrVector configNames;
