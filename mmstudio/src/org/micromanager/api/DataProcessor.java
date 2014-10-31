@@ -34,7 +34,6 @@ import org.micromanager.utils.ReportingUtils;
  * Inherit from this class and use the AcquisitionEngine functions
  * addImageProcessor and removeImageProcessor to insert your code into the
  * acquisition pipeline
- *
  */
 public abstract class DataProcessor<E> extends Thread {
    private BlockingQueue<E> input_;
@@ -44,19 +43,26 @@ public abstract class DataProcessor<E> extends Thread {
    // This boolean controls whether or not this DataProcessor will receive
    // images.
    private boolean isEnabled_ = true;
+
+   /**
+    * The scripting interface (commonly known as the "gui" object).
+    */
    protected ScriptInterface gui_;
 
-   /*
+   /**
     * The process method should be overridden by classes implementing
     * DataProcessor, to provide a processing function.
     * 
     * For example, an "Identity" DataProcessor (where nothing is
     * done to the data) would override process() thus:
     *
+    * <pre><code>
     * @Override
     * public void process() {
     *    produce(poll());
     * }
+    * </code></pre>
+    *
     * TaggedImageQueue.POISON will be the last object
     * received by polling -- the process method should pass this
     * object on unchanged.
@@ -77,16 +83,21 @@ public abstract class DataProcessor<E> extends Thread {
 
    /**
     * Receive the ScriptInterface object.
+    *
+    * Normally, it is not necessary to override this method. If overriding,
+    * make sure to call super.setApp().
     */
    public void setApp(ScriptInterface gui) {
       gui_ = gui;
    }
 
 
-   /*
+   /**
     * The run method that causes images to be processed. As DataProcessor
-    * extends java's Thread class, this method will be executed whenever
-    * DataProcessor.start() is called.
+    * extends <code>java.lang.Thread</code>, this method will be executed
+    * whenever DataProcessor.start() is called.
+    *
+    * Do not override this method (it should have been final).
     */
    @Override
    public void run() {
@@ -96,9 +107,12 @@ public abstract class DataProcessor<E> extends Thread {
       }
    }
 
-   /*
+   /**
     * Request that the data processor stop processing. The current
     * processing event will continue, but no others will be started.
+    *
+    * Do not override this method (it should have been final). Do not call
+    * this method from DataProcessor subclasses.
     */
    public synchronized void requestStop() {
       stopRequested_ = true;
@@ -111,38 +125,46 @@ public abstract class DataProcessor<E> extends Thread {
       started_ = started;
    }
 
-   /*
+   /**
     * Returns true if the DataProcessor has started up and objects
     * are being processed as they arrive.
+    *
+    * Do not override this method (it should have been final).
     */
    public synchronized boolean isStarted() {
       return started_;
    }
 
-   /*
-    * The constructor.
-    */
-   public DataProcessor() {}
-
-   /*
+   /**
     * Sets the input queue where objects to be processed
     * are received by the DataProcessor.
+    *
+    * Do not override this method (it should have been final). This method is
+    * automatically called by the system to set up data processors.
     */
    public void setInput(BlockingQueue<E> input) {
       input_ = input;
    }
 
-   /*
+   /**
     * Sets the output queue where objects that have been processed
     * exit the DataProcessor.
+    *
+    * Do not override this method (it should have been final). This methods is
+    * automatically called by the system to set up data processors.
     */
    public void setOutput(BlockingQueue<E> output) {
       output_ = output;
    }
 
-   /*
+   /**
     * A protected method that reads the next object from the input
     * queue.
+    *
+    * This is the method that process() implementations should call to
+    * receive the image to process.
+    *
+    * Do not override this method (it should have been final).
     */
    protected E poll() {
       while (!stopRequested()) {
@@ -158,16 +180,23 @@ public abstract class DataProcessor<E> extends Thread {
       return null;
    }
 
-   /*
+   /**
     * A convenience method for draining all available data objects
     * on the input queue to a collection.
+    *
+    * Do not override this method (it should have been final).
     */
    protected void drainTo(Collection<E> data) {
       input_.drainTo(data);
    }
 
-   /*
+   /**
     * A convenience method for posting a data object to the output queue.
+    *
+    * This is the method that process() implementations should call to
+    * send out the processed image(s).
+    *
+    * Do not override this method (it should have been final).
     */
    protected void produce(E datum) {
       try {
@@ -177,8 +206,11 @@ public abstract class DataProcessor<E> extends Thread {
       }
    };
 
-   /*
+   /**
     * Returns true if stop has been requested.
+    *
+    * Usually, subclasses need not care about stop requests, as they are
+    * handled automatically.
     */
    protected synchronized boolean stopRequested() {
       return stopRequested_;
@@ -186,6 +218,12 @@ public abstract class DataProcessor<E> extends Thread {
 
    /**
     * Turn the Processor on or off.
+    *
+    * Enabling and disabling the processor is handled automatically by the
+    * system.
+    *
+    * It is usually not necessary to override this method. If overriding, make
+    * sure to call super.setEnabled(isEnabled).
     */
    public void setEnabled(boolean isEnabled) {
       isEnabled_ = isEnabled;
@@ -193,6 +231,8 @@ public abstract class DataProcessor<E> extends Thread {
 
    /**
     * Get whether or not this Processor is enabled.
+    *
+    * Do not override this method (it should have been final).
     */
    public boolean getIsEnabled() {
       return isEnabled_;
