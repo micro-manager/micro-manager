@@ -1,5 +1,6 @@
 package org.micromanager.pipelineinterface;
 
+import com.google.common.eventbus.Subscribe;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -14,10 +15,11 @@ import java.util.List;
 
 import mmcorej.TaggedImage;
 
-import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.api.DataProcessor;
 import org.micromanager.api.ScriptInterface;
+import org.micromanager.events.EventManager;
+import org.micromanager.events.ProcessorEnabledEvent;
 import org.micromanager.utils.ReportingUtils;
 
 public class ProcessorPanel extends JPanel {
@@ -93,6 +95,8 @@ public class ProcessorPanel extends JPanel {
          }
       });
       add(downButton);
+
+      EventManager.register(this);
    }
 
    // Overriding this method so that layout of these panels works properly.
@@ -103,6 +107,14 @@ public class ProcessorPanel extends JPanel {
    // Toggle whether or not this Processor belongs in the pipeline.
    private void toggleActive() {
       processor_.setEnabled(activeBox_.isSelected());
+   }
+
+   @Subscribe
+   public void processorEnabledChanged(ProcessorEnabledEvent e) {
+      DataProcessor<?> processor = e.getProcessor();
+      if (processor == processor_) {
+         activeBox_.setSelected(e.getEnabled());
+      }
    }
 
    // Adjust the processor's position in the pipeline by the given offset.

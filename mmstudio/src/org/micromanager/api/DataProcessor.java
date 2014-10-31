@@ -24,7 +24,8 @@ package org.micromanager.api;
 import java.util.Collection;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
-import org.micromanager.api.ScriptInterface;
+import org.micromanager.events.EventManager;
+import org.micromanager.events.ProcessorEnabledEvent;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -90,7 +91,6 @@ public abstract class DataProcessor<E> extends Thread {
    public void setApp(ScriptInterface gui) {
       gui_ = gui;
    }
-
 
    /**
     * The run method that causes images to be processed. As DataProcessor
@@ -227,6 +227,7 @@ public abstract class DataProcessor<E> extends Thread {
     */
    public void setEnabled(boolean isEnabled) {
       isEnabled_ = isEnabled;
+      EventManager.post(new ProcessorEnabledEvent(this, isEnabled));
    }
 
    /**
