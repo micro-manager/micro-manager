@@ -67,14 +67,6 @@ public class ToolsMenu {
               });
       
       toolsMenu_.addSeparator();
-      
-      GUIUtils.addMenuItem(toolsMenu_, "Image Processors...",
-            "Display the image processing pipeline",
-            new Runnable() {
-               public void run() {
-                  studio_.showPipelinePanel();
-               }
-            });
 
       GUIUtils.addMenuItem(toolsMenu_, "Script Panel...",
               "Open Micro-Manager script editor window",
@@ -92,8 +84,8 @@ public class ToolsMenu {
                  }
               });
 
-      GUIUtils.addMenuItem(toolsMenu_, "Device/Property Browser...",
-              "Open new window to view and edit property values in current configuration",
+      GUIUtils.addMenuItem(toolsMenu_, "Device Property Browser...",
+              "Open new window to view and edit device property values",
               new Runnable() {
                  public void run() {
                     studio_.createPropertyEditor();
@@ -102,8 +94,8 @@ public class ToolsMenu {
       
       toolsMenu_.addSeparator();
 
-      GUIUtils.addMenuItem(toolsMenu_, "XY List...",
-              "Open position list manager window",
+      GUIUtils.addMenuItem(toolsMenu_, "Stage Position List...",
+              "Open the stage position list window",
               new Runnable() {
                  public void run() {
                     studio_.showXYPositionList();
@@ -119,7 +111,15 @@ public class ToolsMenu {
                  }
               },
               "film.png");
-      
+
+      GUIUtils.addMenuItem(toolsMenu_, "Image Processors...",
+            "Display the image processing pipeline",
+            new Runnable() {
+               public void run() {
+                  studio_.showPipelinePanel();
+               }
+            });
+
       centerAndDragMenuItem_ = GUIUtils.addCheckBoxMenuItem(toolsMenu_,
               "Mouse Moves Stage (use Hand Tool)",
               "When enabled, double clicking or dragging in the snap/live\n"
