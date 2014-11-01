@@ -149,7 +149,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       opts_ = opts;
       acqControlDlg_ = acd;
       guiColors_ = new GUIColors();
-      setTitle("Stage-position List");
+      setTitle("Stage Position List");
       setLayout(new MigLayout("flowy, filly", "[grow][]"));
       setBounds(100, 100, 362, 595);
 

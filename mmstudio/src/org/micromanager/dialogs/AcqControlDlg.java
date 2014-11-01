@@ -379,7 +379,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
 
       getContentPane().setLayout(null);
       setResizable(false);
-      setTitle("Multi-dimensional Acquisition");
+      setTitle("Multi-Dimensional Acquisition");
       setBackground(guiColors_.background.get(studio_.getBackgroundStyle()));
 
       createEmptyPanels();

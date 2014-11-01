@@ -142,7 +142,7 @@ public class PropertyEditor extends MMFrame{
             data_.fireTableStructureChanged();
         }
       });
-      setTitle("Property Browser");
+      setTitle("Device Property Browser");
 
       loadPosition(100, 100, 400, 300);
       setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

@@ -121,7 +121,7 @@ public class ToolsMenu {
             });
 
       centerAndDragMenuItem_ = GUIUtils.addCheckBoxMenuItem(toolsMenu_,
-              "Mouse Moves Stage (use Hand Tool)",
+              "Mouse Moves Stage (Use Hand Tool)",
               "When enabled, double clicking or dragging in the snap/live\n"
               + "window moves the XY-stage. Requires the hand tool.",
               new Runnable() {
@@ -182,7 +182,7 @@ public class ToolsMenu {
       toolsMenu_.add(switchConfigurationMenu_);
       switchConfigurationMenu_.setToolTipText("Switch between recently used configurations");
 
-      GUIUtils.addMenuItem(toolsMenu_, "Save Configuration Settings as...",
+      GUIUtils.addMenuItem(toolsMenu_, "Save Configuration Settings As...",
               "Save current configuration settings as new configuration file",
               new Runnable() {
                  public void run() {

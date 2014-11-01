@@ -151,7 +151,7 @@ public class CalibrationListDlg extends MMDialog {
       core_ = core;
       //opts_ = opts;
       //guiColors_ = new GUIColors();
-      setTitle("Pixel Size calibration");
+      setTitle("Pixel Size Calibration");
       springLayout = new SpringLayout();
       getContentPane().setLayout(springLayout);
       setMinimumSize(new Dimension(263, 239));
