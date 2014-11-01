@@ -53,8 +53,7 @@ final public class PipelineFrame extends JFrame
 
       setLocationRelativeTo(null);
 
-      JPanel contentPanel = new JPanel();
-      contentPanel.setLayout(new MigLayout("fill, flowy, insets dialog",
+      setLayout(new MigLayout("fill, flowy, insets dialog",
             "[align center, grow]unrelated[align left]",
             "[][align top, grow][]"));
 
@@ -62,8 +61,8 @@ final public class PipelineFrame extends JFrame
       // First column of the layout
       //
       final String downwardsArrow = "<html><b>\u2193</b></html>";
-      contentPanel.add(new JLabel("<html><b>Camera</b></html>"), "split 2");
-      contentPanel.add(new JLabel(downwardsArrow));
+      add(new JLabel("<html><b>Camera</b></html>"), "split 2");
+      add(new JLabel(downwardsArrow));
 
       pipelineTable_ = new PipelineTable(gui_, engine_);
       pipelineTable_.setRowHeight(pipelineTable_.getRowHeight() * 2);
@@ -75,10 +74,10 @@ final public class PipelineFrame extends JFrame
       pipelineScrollPane_.setPreferredSize(new Dimension(320, 80));
       pipelineScrollPane_.setMinimumSize(new Dimension(320,
             pipelineTable_.getRowHeight()));
-      contentPanel.add(pipelineScrollPane_, "growx, growy");
+      add(pipelineScrollPane_, "growx, growy");
 
-      contentPanel.add(new JLabel(downwardsArrow), "split 2");
-      contentPanel.add(new JLabel("<html><b>Dataset</b></html>"), "wrap");
+      add(new JLabel(downwardsArrow), "split 2");
+      add(new JLabel("<html><b>Dataset</b></html>"), "wrap");
 
       //
       // Second column of the layout
@@ -94,7 +93,7 @@ final public class PipelineFrame extends JFrame
             addProcessorPopup_.show(button, 0, button.getHeight());
          }
       });
-      contentPanel.add(addButton, "sizegroup btns, skip 1, split 5");
+      add(addButton, "sizegroup btns, skip 1, split 5");
 
       removeButton_ = new JButton("Remove");
       removeButton_.setIcon(SwingResourceManager.getIcon(MMStudio.class,
@@ -105,7 +104,7 @@ final public class PipelineFrame extends JFrame
             removeSelectedProcessor();
          }
       });
-      contentPanel.add(removeButton_, "sizegroup btns");
+      add(removeButton_, "sizegroup btns");
 
       moveUpButton_ = new JButton("Move Up");
       moveUpButton_.setIcon(SwingResourceManager.getIcon(MMStudio.class,
@@ -116,7 +115,7 @@ final public class PipelineFrame extends JFrame
             moveSelectedProcessor(-1);
          }
       });
-      contentPanel.add(moveUpButton_, "sizegroup btns");
+      add(moveUpButton_, "sizegroup btns");
 
       moveDownButton_ = new JButton("Move Down");
       moveDownButton_.setIcon(SwingResourceManager.getIcon(MMStudio.class,
@@ -127,30 +126,24 @@ final public class PipelineFrame extends JFrame
             moveSelectedProcessor(+1);
          }
       });
-      contentPanel.add(moveDownButton_, "sizegroup btns, gapbottom push");
+      add(moveDownButton_, "sizegroup btns, gapbottom push");
 
       JLabel explanationLabel = new JLabel(
             "<html><div width=\"125\" style=\"font-size: small\">"
             + "The active image processors in the pipeline are applied to "
             + "acquired images in order."
             + "</div></html>");
-      contentPanel.add(explanationLabel);
+      add(explanationLabel);
 
       //
       // Overall constraints
       //
-      contentPanel.validate();
-      final Dimension contentSize = contentPanel.getPreferredSize();
-      final Dimension minSize = contentPanel.getMinimumSize();
-      minSize.width = contentSize.width;
-      contentPanel.setMinimumSize(minSize);
-
-      setLayout(new MigLayout("fill, insets 0, nogrid"));
-      add(contentPanel, "growx, growy");
+      pack();
+      final Dimension contentSize = getContentPane().getPreferredSize();
+      final Dimension minSize = getContentPane().getMinimumSize();
 
       // Compute the difference between the content pane's size and the
       // frame's size, so that we can constrain the frame's size.
-      pack();
       final int widthDelta = getSize().width - getContentPane().getSize().width;
       final int heightDelta = getSize().height - getContentPane().getSize().height;
 
@@ -161,10 +154,7 @@ final public class PipelineFrame extends JFrame
       setPreferredSize(frameSize);
       setMinimumSize(minFrameSize);
 
-      // Set up listening to the registration of new DataProcessors and
-      // modification of the image pipeline.
       EventManager.register(this);
-
       reloadProcessors();
       updateEditButtonStatus(pipelineTable_.getSelectionModel());
    }
