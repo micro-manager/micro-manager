@@ -30,7 +30,6 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.FocusEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -38,7 +37,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.util.prefs.Preferences;
-import java.util.Vector;
+import java.util.ArrayList;
 
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
@@ -49,12 +48,15 @@ import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.table.TableCellRenderer;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
 
 import net.miginfocom.swing.MigLayout;
+import com.swtdesigner.SwingResourceManager;
 
 import org.micromanager.api.events.StagePositionChangedEvent;
 import org.micromanager.api.events.XYStagePositionChangedEvent;
@@ -65,11 +67,6 @@ import org.micromanager.MMStudio;
 import org.micromanager.utils.GUIColors;
 import org.micromanager.utils.MMDialog;
 
-import com.swtdesigner.SwingResourceManager;
-
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-
 import org.micromanager.api.MultiStagePosition;
 import org.micromanager.api.PositionList;
 import org.micromanager.api.ScriptInterface;
@@ -77,7 +74,6 @@ import org.micromanager.api.StagePosition;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.FileDialogs.FileType;
 import org.micromanager.utils.GUIUtils;
-import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MMException;
 import org.micromanager.utils.ReportingUtils;
 
@@ -119,19 +115,15 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
 
    private void setTileButtonEnabled() {
       int n2DStages = 0;
-      int n1DStages = 0;
       for (int i = 0; i < axisList_.getNumberOfPositions(); i++) {
          AxisData ad = axisList_.get(i);
          if (ad.getUse()) {
-            if (ad.getType() == AxisData.AxisType.oneD) {
-               n1DStages++;
-            }
             if (ad.getType() == AxisData.AxisType.twoD) {
                n2DStages++;
             }
          }
       }
-      if (n2DStages == 1 && n1DStages <= 1) {
+      if (n2DStages == 1) {
          tileButton_.setEnabled(true);
       } else {
          tileButton_.setEnabled(false);
@@ -208,14 +200,10 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       axisTable_.setModel(axisModel_);
       axisPane.setViewportView(axisTable_);
 
-      int axisPaneLineOffset = 26;
-      if (JavaUtils.isMac()) {
-         axisPaneLineOffset = 22;
-      }
-
-      Dimension buttonSize = new Dimension(90, 27);
+      Dimension buttonSize = new Dimension(95, 27);
+      
       // mark / replace button:
-      JButton markButton_ = new JButton();
+      markButton_ = new JButton();
       markButton_.setMinimumSize(buttonSize);
       markButton_.setFont(arialSmallFont_);
       markButton_.addActionListener(new ActionListener() {
@@ -1131,7 +1119,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
     * of floats, apply the given offsets to all selected positions for that
     * particular device. 
     */
-   public void offsetSelectedSites(String deviceName, Vector<Float> offsets) {
+   public void offsetSelectedSites(String deviceName, ArrayList<Float> offsets) {
       PositionList positions = positionModel_.getPositionList();
       for (int rowIndex : posTable_.getSelectedRows()) {
          MultiStagePosition multiPos = positions.getPosition(rowIndex - 1);
