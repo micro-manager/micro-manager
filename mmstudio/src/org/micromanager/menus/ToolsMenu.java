@@ -68,7 +68,7 @@ public class ToolsMenu {
       
       toolsMenu_.addSeparator();
       
-      GUIUtils.addMenuItem(toolsMenu_, "Image Pipeline...",
+      GUIUtils.addMenuItem(toolsMenu_, "Image Processors...",
             "Display the image processing pipeline",
             new Runnable() {
                public void run() {

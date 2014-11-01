@@ -35,6 +35,15 @@ public class PluginManager {
 
    public Thread initializePlugins() {
       pluginMenu_ = GUIUtils.createMenuInMenuBar(menuBar_, "Plugins");
+      GUIUtils.addMenuItem(pluginMenu_, "Image Processors...",
+            "Display the image processing pipeline",
+            new Runnable() {
+               public void run() {
+                  studio_.showPipelinePanel();
+               }
+            });
+      pluginMenu_.addSeparator();
+
       Thread loadThread = new Thread(new ThreadGroup("Plugin loading"),
             new Runnable() {
                @Override
