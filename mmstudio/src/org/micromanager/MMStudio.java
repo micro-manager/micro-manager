@@ -100,7 +100,7 @@ import org.micromanager.navigation.CenterAndDragListener;
 import org.micromanager.navigation.XYZKeyListener;
 import org.micromanager.navigation.ZWheelListener;
 
-import org.micromanager.pipelineinterface.PipelinePanel;
+import org.micromanager.pipelineinterface.PipelineFrame;
 
 import org.micromanager.pluginmanagement.PluginManager;
 
@@ -200,7 +200,7 @@ public class MMStudio implements ScriptInterface {
    private StrVector shutters_ = null;
 
    private ScriptPanel scriptPanel_;
-   private PipelinePanel pipelinePanel_;
+   private PipelineFrame pipelineFrame_;
    private org.micromanager.utils.HotKeys hotKeys_;
    private CenterAndDragListener centerAndDragListener_;
    private ZWheelListener zWheelListener_;
@@ -521,7 +521,7 @@ public class MMStudio implements ScriptInterface {
    }
 
    public void showPipelinePanel() {
-      pipelinePanel_.setVisible(true);
+      pipelineFrame_.setVisible(true);
    }
 
    public void showScriptPanel() {
@@ -1076,10 +1076,10 @@ public class MMStudio implements ScriptInterface {
    }
 
    private void createPipelinePanel() {
-      if (pipelinePanel_ == null) {
-         pipelinePanel_ = new PipelinePanel(studio_, engine_);
-         pipelinePanel_.setBackground(getBackgroundColor());
-         addMMBackgroundListener(pipelinePanel_);
+      if (pipelineFrame_ == null) {
+         pipelineFrame_ = new PipelineFrame(studio_, engine_);
+         pipelineFrame_.setBackground(getBackgroundColor());
+         addMMBackgroundListener(pipelineFrame_);
       }
    }
 
@@ -1517,9 +1517,9 @@ public class MMStudio implements ScriptInterface {
          scriptPanel_.closePanel();
       }
 
-      if (pipelinePanel_ != null) {
-         removeMMBackgroundListener(pipelinePanel_);
-         pipelinePanel_.dispose();
+      if (pipelineFrame_ != null) {
+         removeMMBackgroundListener(pipelineFrame_);
+         pipelineFrame_.dispose();
       }
 
       if (propertyBrowser_ != null) {

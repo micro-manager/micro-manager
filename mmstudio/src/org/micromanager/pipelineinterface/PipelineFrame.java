@@ -23,12 +23,9 @@ import org.micromanager.events.EventManager;
 import org.micromanager.events.PipelineEvent;
 import org.micromanager.events.ProcessorEvent;
 
-public class PipelinePanel extends JFrame {
+public class PipelineFrame extends JFrame {
    ScriptInterface gui_;
    AcquisitionEngine engine_;
-   static PipelinePanel panelSingleton_;
-   // Panel that contains all of our UI elements.
-   JPanel subPanel_;
    // Listbox that holds all the DataProcessor types we know about.
    JList registeredProcessorsList_;
    // Name model for the above.
@@ -39,21 +36,20 @@ public class PipelinePanel extends JFrame {
    // Scrolling view of the above panel.
    JScrollPane processorsScroller_;
 
-   public PipelinePanel(ScriptInterface gui, AcquisitionEngine engine) {
-      super("Image pipeline");
+   public PipelineFrame(ScriptInterface gui, AcquisitionEngine engine) {
+      super("Image Processor Pipeline");
       gui_ = gui;
       engine_ = engine;
-      panelSingleton_ = this;
 
       setLocationRelativeTo(null);
 
       // Create a panel to hold all our contents (with a horizontal layout).
-      subPanel_ = new JPanel(new net.miginfocom.swing.MigLayout("", 
+      setLayout(new net.miginfocom.swing.MigLayout("", 
                "[left][left][left]", 
                "[top][top]"));
 
-      subPanel_.add(new javax.swing.JLabel("Current image pipeline:"));
-      subPanel_.add(new javax.swing.JLabel("Registered Processors:"), "wrap, span 2");
+      add(new javax.swing.JLabel("Image Processor Pipeline:"));
+      add(new javax.swing.JLabel("Available Processors:"), "wrap, span 2");
 
       // Set up the panel that holds the current active pipeline
       processorsPanel_ = new JPanel(new net.miginfocom.swing.MigLayout(
@@ -67,7 +63,7 @@ public class PipelinePanel extends JFrame {
       processorsScroller_.setPreferredSize(
             new java.awt.Dimension(ProcessorPanel.preferredWidth,
                ProcessorPanel.preferredHeight * 3));
-      subPanel_.add(processorsScroller_);
+      add(processorsScroller_);
 
       // Set up the listbox for available DataProcessor types.
       processorNameModel_ = new DefaultListModel();
@@ -76,7 +72,7 @@ public class PipelinePanel extends JFrame {
       registeredProcessorsList_.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       registeredProcessorsList_.setLayoutOrientation(JList.VERTICAL);
       JScrollPane registeredScroller = new JScrollPane(registeredProcessorsList_);
-      subPanel_.add(registeredScroller);
+      add(registeredScroller);
 
       // Add a button to let the user make new processors.
       JButton newButton = new JButton("New");
@@ -86,10 +82,8 @@ public class PipelinePanel extends JFrame {
             makeNewProcessor();
          }
       });
-      subPanel_.add(newButton);
+      add(newButton);
       
-      add(subPanel_);
-
       setMinimumSize(getPreferredSize());
 
       // Set up listening to the registration of new DataProcessors and
@@ -105,7 +99,7 @@ public class PipelinePanel extends JFrame {
     */
    @Subscribe
    public void newProcessorRegistered(ProcessorEvent event) {
-      panelSingleton_.reloadProcessors();
+      reloadProcessors();
    }
 
    /**
@@ -113,7 +107,7 @@ public class PipelinePanel extends JFrame {
     */
    @Subscribe
    public void pipelineChanged(PipelineEvent event) {
-      panelSingleton_.reloadPipeline(event.getPipeline());
+      reloadPipeline(event.getPipeline());
    }
 
    /**
@@ -147,7 +141,7 @@ public class PipelinePanel extends JFrame {
       }
       processorsPanel_.validate();
       processorsPanel_.repaint();
-      subPanel_.revalidate();
+      validate();
    }
 
    /**
