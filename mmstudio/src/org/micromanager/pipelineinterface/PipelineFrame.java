@@ -1,25 +1,30 @@
 package org.micromanager.pipelineinterface;
 
 import com.google.common.eventbus.Subscribe;
+import com.swtdesigner.SwingResourceManager;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.Rectangle;
-
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.List;
-
-import javax.swing.DefaultListModel;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
 import javax.swing.JButton;
 import javax.swing.JFrame;
-import javax.swing.JList;
+import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
-import javax.swing.ListSelectionModel;
-
 import mmcorej.TaggedImage;
-
+import net.miginfocom.swing.MigLayout;
+import org.micromanager.MMStudio;
 import org.micromanager.acquisition.AcquisitionEngine;
 import org.micromanager.api.DataProcessor;
 import org.micromanager.api.ScriptInterface;
@@ -27,18 +32,20 @@ import org.micromanager.events.EventManager;
 import org.micromanager.events.PipelineEvent;
 import org.micromanager.events.ProcessorEvent;
 
-public class PipelineFrame extends JFrame {
-   ScriptInterface gui_;
-   AcquisitionEngine engine_;
-   // Listbox that holds all the DataProcessor types we know about.
-   JList registeredProcessorsList_;
-   // Name model for the above.
-   DefaultListModel processorNameModel_;
+final public class PipelineFrame extends JFrame {
+
+   private final ScriptInterface gui_;
+   private final AcquisitionEngine engine_;
+
+   private final JPopupMenu addProcessorPopup_;
 
    // Panel that holds all the ProcessorPanels for instanced DataProcessors.
-   JPanel processorsPanel_;
+   private final JPanel processorsPanel_;
    // Scrolling view of the above panel.
-   JScrollPane processorsScroller_;
+   private final JScrollPane processorsScroller_;
+   private final JButton removeButton_;
+   private final JButton moveUpButton_;
+   private final JButton moveDownButton_;
 
    public PipelineFrame(ScriptInterface gui, AcquisitionEngine engine) {
       super("Image Processor Pipeline");
@@ -48,42 +55,20 @@ public class PipelineFrame extends JFrame {
       setLocationRelativeTo(null);
 
       JPanel contentPanel = new JPanel();
-      contentPanel.setLayout(new net.miginfocom.swing.MigLayout("fill, flowy, insets dialog",
-            "[align left]unrelated[align center]", "[align top, grow]"));
+      contentPanel.setLayout(new MigLayout("fill, flowy, insets dialog",
+            "[align center]unrelated[align left]",
+            "[][align top, grow][]"));
 
       //
       // First column of the layout
       //
-
-      contentPanel.add(new javax.swing.JLabel("Available Image Processors:"), "split 3, gapafter related");
-
-      // Set up the listbox for available DataProcessor types.
-      processorNameModel_ = new DefaultListModel();
-      registeredProcessorsList_ = new JList(processorNameModel_);
-      registeredProcessorsList_.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-      registeredProcessorsList_.setLayoutOrientation(JList.VERTICAL);
-      JScrollPane registeredScroller = new JScrollPane(registeredProcessorsList_);
-      contentPanel.add(registeredScroller, "growx, gapafter related");
-
-      // Add a button to let the user make new processors.
-      JButton newButton = new JButton("New");
-      newButton.setToolTipText("Create a new DataProcessor of the selected type, and add it to the end of the pipeline");
-      newButton.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent e) {
-            makeNewProcessor();
-         }
-      });
-      contentPanel.add(newButton, "gapafter push, wrap");
-
-      //
-      // Second column of the layout
-      //
-
-      contentPanel.add(new javax.swing.JLabel("Image Processor Pipeline:"), "align left, split 2");
+      final String downwardsArrow = "<html><b>\u2193</b></html>";
+      contentPanel.add(new JLabel("<html><b>Camera</b></html>"), "split 2");
+      contentPanel.add(new JLabel(downwardsArrow));
 
       // Set up the panel that holds the current active pipeline
-      processorsPanel_ = new JPanel(new net.miginfocom.swing.MigLayout(
-               "aligny top, fillx, insets 0, wrap 1"));
+      processorsPanel_ = new JPanel(new MigLayout(
+            "aligny top, fillx, insets 0, wrap 1"));
 
       processorsScroller_ = new JScrollPane(processorsPanel_,
             JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
@@ -92,18 +77,72 @@ public class PipelineFrame extends JFrame {
       // show 3 without scrolling.
       processorsScroller_.setPreferredSize(
             new Dimension(ProcessorPanel.preferredWidth,
-               ProcessorPanel.preferredHeight * 3));
+                  ProcessorPanel.preferredHeight * 3));
       processorsScroller_.setMinimumSize(
             new Dimension(ProcessorPanel.preferredWidth,
-               ProcessorPanel.preferredHeight));
+                  ProcessorPanel.preferredHeight));
       processorsScroller_.setMaximumSize(
             new Dimension(ProcessorPanel.preferredWidth, 8192));
       contentPanel.add(processorsScroller_, "growx, growy");
 
+      contentPanel.add(new JLabel(downwardsArrow), "split 2");
+      contentPanel.add(new JLabel("<html><b>Dataset</b></html>"), "wrap");
+
+      //
+      // Second column of the layout
+      //
+      addProcessorPopup_ = new JPopupMenu();
+      final JButton addButton = new JButton("Add...");
+      addButton.setIcon(SwingResourceManager.getIcon(MMStudio.class,
+            "/org/micromanager/icons/plus.png"));
+      addButton.addMouseListener(new MouseAdapter() {
+         @Override public void mousePressed(MouseEvent e) {
+            Component button = e.getComponent();
+            addProcessorPopup_.show(button, 0, button.getHeight());
+         }
+      });
+      contentPanel.add(addButton, "sizegroup btns, skip 1, split 5");
+
+      removeButton_ = new JButton("Remove");
+      removeButton_.setIcon(SwingResourceManager.getIcon(MMStudio.class,
+            "/org/micromanager/icons/minus.png"));
+      removeButton_.addActionListener(new ActionListener() {
+         @Override public void actionPerformed(ActionEvent e) {
+            // remove selected
+         }
+      });
+      contentPanel.add(removeButton_, "sizegroup btns");
+
+      moveUpButton_ = new JButton("Move Up");
+      moveUpButton_.setIcon(SwingResourceManager.getIcon(MMStudio.class,
+            "/org/micromanager/icons/arrow_up.png"));
+      moveUpButton_.addActionListener(new ActionListener() {
+         @Override public void actionPerformed(ActionEvent e) {
+            // move up selected
+         }
+      });
+      contentPanel.add(moveUpButton_, "sizegroup btns");
+
+      moveDownButton_ = new JButton("Move Down");
+      moveDownButton_.setIcon(SwingResourceManager.getIcon(MMStudio.class,
+            "/org/micromanager/icons/arrow_down.png"));
+      moveDownButton_.addActionListener(new ActionListener() {
+         @Override public void actionPerformed(ActionEvent e) {
+            // move down selected
+         }
+      });
+      contentPanel.add(moveDownButton_, "sizegroup btns, gapbottom push");
+
+      JLabel explanationLabel = new JLabel(
+            "<html><div width=\"125\" style=\"font-size: small\">"
+            + "The active image processors in the pipeline are applied to "
+            + "acquired images in order."
+            + "</div></html>");
+      contentPanel.add(explanationLabel);
+
       //
       // Overall constraints
       //
-
       contentPanel.validate();
       final Dimension contentSize = contentPanel.getPreferredSize();
       final Dimension minSize = contentPanel.getMinimumSize();
@@ -122,8 +161,7 @@ public class PipelineFrame extends JFrame {
       // while resizing the window, but the contents resize correctly and the
       // window snaps to the correct width when the mouse is released.
       // TODO Can we factor out this behavior into a separate class?
-      setLayout(new net.miginfocom.swing.MigLayout(
-            "align left, filly, insets 0"));
+      setLayout(new MigLayout("align left, filly, insets 0"));
       add(contentPanel, "align left, growy");
 
       // Compute the difference between the content pane's size and the
@@ -143,7 +181,8 @@ public class PipelineFrame extends JFrame {
       setMaximumSize(maxFrameSize); // broken
       setMaximizedBounds(new Rectangle(getX(), 0, maxFrameSize.width, 4096));
       addComponentListener(new ComponentAdapter() {
-         @Override public void componentResized(ComponentEvent e) {
+         @Override
+         public void componentResized(ComponentEvent e) {
             Dimension size = getSize();
             size.width = Math.max(size.width, minFrameSize.width);
             size.width = Math.min(size.width, maxFrameSize.width);
@@ -151,7 +190,9 @@ public class PipelineFrame extends JFrame {
             size.height = Math.min(size.height, maxFrameSize.height);
             setSize(size);
          }
-         @Override public void componentMoved(ComponentEvent e) {
+
+         @Override
+         public void componentMoved(ComponentEvent e) {
             if (getExtendedState() == Frame.NORMAL) {
                setMaximizedBounds(new Rectangle(getX(), 0, maxFrameSize.width, 4096));
             }
@@ -165,9 +206,9 @@ public class PipelineFrame extends JFrame {
       reloadProcessors();
    }
 
-   /** 
+   /**
     * A new ProcessorPlugin was registered; re-load our list of registered
-    * processors. 
+    * processors.
     */
    @Subscribe
    public void newProcessorRegistered(ProcessorEvent event) {
@@ -183,17 +224,26 @@ public class PipelineFrame extends JFrame {
    }
 
    /**
-    * Re-acquire the entire list of registered processors from the engine.
-    * We do things this way because we have no idea when we are
-    * created vs. when all the plugins are registered (they happen in 
-    * different threads), thus we have no idea currently how many processors
-    * are registered that we don't know about. 
+    * Re-acquire the entire list of registered processors from the engine. We do
+    * things this way because we have no idea when we are created vs. when all
+    * the plugins are registered (they happen in different threads), thus we
+    * have no idea currently how many processors are registered that we don't
+    * know about.
     */
    private void reloadProcessors() {
       List<String> names = engine_.getSortedDataProcessorNames();
-      processorNameModel_.clear();
-      for (String name : names) {
-         processorNameModel_.addElement(name);
+      addProcessorPopup_.removeAll();
+      for (final String name : names) {
+         Action addAction = new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+               // This will fire change events, so we need not directly update
+               // our pipeline display.
+               engine_.makeProcessor(name, gui_);
+            }
+         };
+         addAction.putValue(Action.NAME, name);
+         addProcessorPopup_.add(new JMenuItem(addAction));
       }
    }
 
@@ -204,8 +254,8 @@ public class PipelineFrame extends JFrame {
       processorsPanel_.removeAll();
       for (DataProcessor<TaggedImage> processor : pipeline) {
          @SuppressWarnings("unchecked")
-         Class<? extends DataProcessor<TaggedImage>> procCls =
-            (Class<? extends DataProcessor<TaggedImage>>) processor.getClass();
+         Class<? extends DataProcessor<TaggedImage>> procCls
+               = (Class<? extends DataProcessor<TaggedImage>>) processor.getClass();
 
          String name = engine_.getNameForProcessorClass(procCls);
          ProcessorPanel panel = new ProcessorPanel(name, processor, gui_);
@@ -214,21 +264,5 @@ public class PipelineFrame extends JFrame {
       processorsPanel_.validate();
       processorsPanel_.repaint();
       validate();
-   }
-
-   /**
-    * Generate a new Processor of the type currently selected in the list of
-    * registered processors.
-    */
-   void makeNewProcessor() {
-      int index = registeredProcessorsList_.getSelectedIndex();
-      if (index == -1) {
-         // No selected processor type.
-         return;
-      }
-      String name = (String) processorNameModel_.get(index);
-      // Note this will invoke our listener and make us recreate our pipeline
-      // display.
-      engine_.makeProcessor(name, gui_);
    }
 }
