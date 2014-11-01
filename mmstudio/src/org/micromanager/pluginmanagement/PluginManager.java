@@ -110,6 +110,8 @@ public class PluginManager {
             // Processor plugin; check for existing processor of 
             // this type and show its UI if applicable; otherwise
             // create a new one.
+            // First show the pipeline GUI.
+            studio_.showPipelinePanel();
             MMProcessorPlugin procPlugin = (MMProcessorPlugin) plugin.getPlugin();
             String procName = PluginLoader.getNameForPluginClass(procPlugin.getClass());
             DataProcessor<TaggedImage> pipelineProcessor = studio_.getAcquisitionEngine().getProcessorRegisteredAs(procName);
