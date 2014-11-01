@@ -4,12 +4,8 @@ import com.google.common.eventbus.Subscribe;
 import com.swtdesigner.SwingResourceManager;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.Frame;
-import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
@@ -22,6 +18,9 @@ import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
+import javax.swing.ListSelectionModel;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import mmcorej.TaggedImage;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.MMStudio;
@@ -29,20 +28,20 @@ import org.micromanager.acquisition.AcquisitionEngine;
 import org.micromanager.api.DataProcessor;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.events.EventManager;
-import org.micromanager.events.PipelineEvent;
 import org.micromanager.events.ProcessorEvent;
 
-final public class PipelineFrame extends JFrame {
+
+final public class PipelineFrame extends JFrame
+      implements ListSelectionListener {
 
    private final ScriptInterface gui_;
    private final AcquisitionEngine engine_;
 
    private final JPopupMenu addProcessorPopup_;
 
-   // Panel that holds all the ProcessorPanels for instanced DataProcessors.
-   private final JPanel processorsPanel_;
-   // Scrolling view of the above panel.
-   private final JScrollPane processorsScroller_;
+   private final PipelineTable pipelineTable_;
+   private final JScrollPane pipelineScrollPane_;
+
    private final JButton removeButton_;
    private final JButton moveUpButton_;
    private final JButton moveDownButton_;
@@ -56,7 +55,7 @@ final public class PipelineFrame extends JFrame {
 
       JPanel contentPanel = new JPanel();
       contentPanel.setLayout(new MigLayout("fill, flowy, insets dialog",
-            "[align center]unrelated[align left]",
+            "[align center, grow]unrelated[align left]",
             "[][align top, grow][]"));
 
       //
@@ -66,24 +65,17 @@ final public class PipelineFrame extends JFrame {
       contentPanel.add(new JLabel("<html><b>Camera</b></html>"), "split 2");
       contentPanel.add(new JLabel(downwardsArrow));
 
-      // Set up the panel that holds the current active pipeline
-      processorsPanel_ = new JPanel(new MigLayout(
-            "aligny top, fillx, insets 0, wrap 1"));
+      pipelineTable_ = new PipelineTable(gui_, engine_);
+      pipelineTable_.setRowHeight(pipelineTable_.getRowHeight() * 2);
+      pipelineTable_.getSelectionModel().addListSelectionListener(this);
 
-      processorsScroller_ = new JScrollPane(processorsPanel_,
+      pipelineScrollPane_ = new JScrollPane(pipelineTable_,
             JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
             JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-      // Make it wide enough to hold each ProcessorPanel, and tall enough to
-      // show 3 without scrolling.
-      processorsScroller_.setPreferredSize(
-            new Dimension(ProcessorPanel.preferredWidth,
-                  ProcessorPanel.preferredHeight * 3));
-      processorsScroller_.setMinimumSize(
-            new Dimension(ProcessorPanel.preferredWidth,
-                  ProcessorPanel.preferredHeight));
-      processorsScroller_.setMaximumSize(
-            new Dimension(ProcessorPanel.preferredWidth, 8192));
-      contentPanel.add(processorsScroller_, "growx, growy");
+      pipelineScrollPane_.setPreferredSize(new Dimension(320, 80));
+      pipelineScrollPane_.setMinimumSize(new Dimension(320,
+            pipelineTable_.getRowHeight()));
+      contentPanel.add(pipelineScrollPane_, "growx, growy");
 
       contentPanel.add(new JLabel(downwardsArrow), "split 2");
       contentPanel.add(new JLabel("<html><b>Dataset</b></html>"), "wrap");
@@ -96,7 +88,8 @@ final public class PipelineFrame extends JFrame {
       addButton.setIcon(SwingResourceManager.getIcon(MMStudio.class,
             "/org/micromanager/icons/plus.png"));
       addButton.addMouseListener(new MouseAdapter() {
-         @Override public void mousePressed(MouseEvent e) {
+         @Override
+         public void mousePressed(MouseEvent e) {
             Component button = e.getComponent();
             addProcessorPopup_.show(button, 0, button.getHeight());
          }
@@ -107,8 +100,9 @@ final public class PipelineFrame extends JFrame {
       removeButton_.setIcon(SwingResourceManager.getIcon(MMStudio.class,
             "/org/micromanager/icons/minus.png"));
       removeButton_.addActionListener(new ActionListener() {
-         @Override public void actionPerformed(ActionEvent e) {
-            // remove selected
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            removeSelectedProcessor();
          }
       });
       contentPanel.add(removeButton_, "sizegroup btns");
@@ -117,8 +111,9 @@ final public class PipelineFrame extends JFrame {
       moveUpButton_.setIcon(SwingResourceManager.getIcon(MMStudio.class,
             "/org/micromanager/icons/arrow_up.png"));
       moveUpButton_.addActionListener(new ActionListener() {
-         @Override public void actionPerformed(ActionEvent e) {
-            // move up selected
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            moveSelectedProcessor(-1);
          }
       });
       contentPanel.add(moveUpButton_, "sizegroup btns");
@@ -127,8 +122,9 @@ final public class PipelineFrame extends JFrame {
       moveDownButton_.setIcon(SwingResourceManager.getIcon(MMStudio.class,
             "/org/micromanager/icons/arrow_down.png"));
       moveDownButton_.addActionListener(new ActionListener() {
-         @Override public void actionPerformed(ActionEvent e) {
-            // move down selected
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            moveSelectedProcessor(+1);
          }
       });
       contentPanel.add(moveDownButton_, "sizegroup btns, gapbottom push");
@@ -147,22 +143,10 @@ final public class PipelineFrame extends JFrame {
       final Dimension contentSize = contentPanel.getPreferredSize();
       final Dimension minSize = contentPanel.getMinimumSize();
       minSize.width = contentSize.width;
-      final Dimension maxSize = new Dimension(contentSize.width, 8192);
       contentPanel.setMinimumSize(minSize);
-      contentPanel.setMaximumSize(maxSize);
 
-      // We want the window (frame) to be resizable, but we don't want its
-      // width to change.
-      // JFrame.setMaximumSize() is broken (a Swing bug). We work around this
-      // 1) by placing all components in a JPanel (contentPanel), whose size
-      // behaves exactly as we would like the frame's size to behave, and 2)
-      // by always snapping back to our preferred width using a
-      // ComponentListener. So the user sees extra blank space to the right
-      // while resizing the window, but the contents resize correctly and the
-      // window snaps to the correct width when the mouse is released.
-      // TODO Can we factor out this behavior into a separate class?
-      setLayout(new MigLayout("align left, filly, insets 0"));
-      add(contentPanel, "align left, growy");
+      setLayout(new MigLayout("fill, insets 0, nogrid"));
+      add(contentPanel, "growx, growy");
 
       // Compute the difference between the content pane's size and the
       // frame's size, so that we can constrain the frame's size.
@@ -174,36 +158,31 @@ final public class PipelineFrame extends JFrame {
             contentSize.height + heightDelta);
       final Dimension minFrameSize = new Dimension(minSize.width + widthDelta,
             minSize.height + heightDelta);
-      final Dimension maxFrameSize = new Dimension(maxSize.width + widthDelta,
-            maxSize.height + heightDelta);
       setPreferredSize(frameSize);
       setMinimumSize(minFrameSize);
-      setMaximumSize(maxFrameSize); // broken
-      setMaximizedBounds(new Rectangle(getX(), 0, maxFrameSize.width, 4096));
-      addComponentListener(new ComponentAdapter() {
-         @Override
-         public void componentResized(ComponentEvent e) {
-            Dimension size = getSize();
-            size.width = Math.max(size.width, minFrameSize.width);
-            size.width = Math.min(size.width, maxFrameSize.width);
-            size.height = Math.max(size.height, minFrameSize.height);
-            size.height = Math.min(size.height, maxFrameSize.height);
-            setSize(size);
-         }
-
-         @Override
-         public void componentMoved(ComponentEvent e) {
-            if (getExtendedState() == Frame.NORMAL) {
-               setMaximizedBounds(new Rectangle(getX(), 0, maxFrameSize.width, 4096));
-            }
-         }
-      });
 
       // Set up listening to the registration of new DataProcessors and
       // modification of the image pipeline.
       EventManager.register(this);
 
       reloadProcessors();
+      updateEditButtonStatus(pipelineTable_.getSelectionModel());
+   }
+
+   // Handle selection change in pipeline table
+   @Override
+   public void valueChanged(ListSelectionEvent e) {
+      ListSelectionModel model = (ListSelectionModel) e.getSource();
+      updateEditButtonStatus(model);
+   }
+
+   private void updateEditButtonStatus(ListSelectionModel model) {
+      boolean enableEditButtons = !model.isSelectionEmpty();
+      removeButton_.setEnabled(enableEditButtons);
+      moveUpButton_.setEnabled(enableEditButtons
+            && model.getMaxSelectionIndex() > 0);
+      moveDownButton_.setEnabled(enableEditButtons
+            && model.getMinSelectionIndex() < pipelineTable_.getRowCount() - 1);
    }
 
    /**
@@ -213,14 +192,6 @@ final public class PipelineFrame extends JFrame {
    @Subscribe
    public void newProcessorRegistered(ProcessorEvent event) {
       reloadProcessors();
-   }
-
-   /**
-    * The image pipeline was modified; reload our display of it.
-    */
-   @Subscribe
-   public void pipelineChanged(PipelineEvent event) {
-      reloadPipeline(event.getPipeline());
    }
 
    /**
@@ -247,22 +218,35 @@ final public class PipelineFrame extends JFrame {
       }
    }
 
-   /**
-    * Re-generate our list of active processors.
-    */
-   private void reloadPipeline(List<DataProcessor<TaggedImage>> pipeline) {
-      processorsPanel_.removeAll();
-      for (DataProcessor<TaggedImage> processor : pipeline) {
-         @SuppressWarnings("unchecked")
-         Class<? extends DataProcessor<TaggedImage>> procCls
-               = (Class<? extends DataProcessor<TaggedImage>>) processor.getClass();
+   private void removeSelectedProcessor() {
+      DataProcessor<TaggedImage> processor
+            = pipelineTable_.getSelectedProcessor();
+      gui_.removeImageProcessor(processor);
+   }
 
-         String name = engine_.getNameForProcessorClass(procCls);
-         ProcessorPanel panel = new ProcessorPanel(name, processor, gui_);
-         processorsPanel_.add(panel);
+   private void moveSelectedProcessor(int offset) {
+      int i = pipelineTable_.getSelectedRow();
+      moveProcessor(pipelineTable_.getSelectedProcessor(), offset);
+      // Retain the selection
+      pipelineTable_.getSelectionModel().
+            setSelectionInterval(i + offset, i + offset);
+   }
+
+   private void moveProcessor(DataProcessor<TaggedImage> processor,
+         int offset) {
+      List<DataProcessor<TaggedImage>> pipeline
+            = gui_.getImageProcessorPipeline();
+      int oldIndex = pipeline.indexOf(processor);
+      if (oldIndex < 0) {
+         return;
       }
-      processorsPanel_.validate();
-      processorsPanel_.repaint();
-      validate();
+
+      int newIndex = oldIndex + offset;
+      newIndex = Math.max(0, newIndex);
+      newIndex = Math.min(newIndex, pipeline.size() - 1);
+      pipeline.remove(oldIndex);
+      pipeline.add(newIndex, processor);
+
+      gui_.setImageProcessorPipeline(pipeline);
    }
 }
