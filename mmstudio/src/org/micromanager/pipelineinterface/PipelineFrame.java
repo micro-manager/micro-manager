@@ -1,8 +1,12 @@
 package org.micromanager.pipelineinterface;
 
 import com.google.common.eventbus.Subscribe;
-
 import java.awt.Dimension;
+import java.awt.Frame;
+import java.awt.Rectangle;
+
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 
 import java.util.List;
 
@@ -43,36 +47,23 @@ public class PipelineFrame extends JFrame {
 
       setLocationRelativeTo(null);
 
-      // Create a panel to hold all our contents (with a horizontal layout).
-      setLayout(new net.miginfocom.swing.MigLayout("", 
-               "[left][left][left]", 
-               "[top][top]"));
+      JPanel contentPanel = new JPanel();
+      contentPanel.setLayout(new net.miginfocom.swing.MigLayout("fill, flowy, insets dialog",
+            "[align left]unrelated[align center]", "[align top, grow]"));
 
-      add(new javax.swing.JLabel("Image Processor Pipeline:"));
-      add(new javax.swing.JLabel("Available Processors:"), "wrap, span 2");
+      //
+      // First column of the layout
+      //
 
-      // Set up the panel that holds the current active pipeline
-      processorsPanel_ = new JPanel(new net.miginfocom.swing.MigLayout(
-               "wrap 1", "0[]0", "0[]0"));
-
-      processorsScroller_ = new JScrollPane(processorsPanel_, 
-            JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, 
-            JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-      // Make it wide enough to hold each ProcessorPanel, and tall enough to
-      // show 3 without scrolling.
-      processorsScroller_.setPreferredSize(
-            new java.awt.Dimension(ProcessorPanel.preferredWidth,
-               ProcessorPanel.preferredHeight * 3));
-      add(processorsScroller_);
+      contentPanel.add(new javax.swing.JLabel("Available Image Processors:"), "split 3, gapafter related");
 
       // Set up the listbox for available DataProcessor types.
       processorNameModel_ = new DefaultListModel();
-
       registeredProcessorsList_ = new JList(processorNameModel_);
       registeredProcessorsList_.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       registeredProcessorsList_.setLayoutOrientation(JList.VERTICAL);
       JScrollPane registeredScroller = new JScrollPane(registeredProcessorsList_);
-      add(registeredScroller);
+      contentPanel.add(registeredScroller, "growx, gapafter related");
 
       // Add a button to let the user make new processors.
       JButton newButton = new JButton("New");
@@ -82,9 +73,90 @@ public class PipelineFrame extends JFrame {
             makeNewProcessor();
          }
       });
-      add(newButton);
-      
-      setMinimumSize(getPreferredSize());
+      contentPanel.add(newButton, "gapafter push, wrap");
+
+      //
+      // Second column of the layout
+      //
+
+      contentPanel.add(new javax.swing.JLabel("Image Processor Pipeline:"), "align left, split 2");
+
+      // Set up the panel that holds the current active pipeline
+      processorsPanel_ = new JPanel(new net.miginfocom.swing.MigLayout(
+               "aligny top, fillx, insets 0, wrap 1"));
+
+      processorsScroller_ = new JScrollPane(processorsPanel_,
+            JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+            JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+      // Make it wide enough to hold each ProcessorPanel, and tall enough to
+      // show 3 without scrolling.
+      processorsScroller_.setPreferredSize(
+            new Dimension(ProcessorPanel.preferredWidth,
+               ProcessorPanel.preferredHeight * 3));
+      processorsScroller_.setMinimumSize(
+            new Dimension(ProcessorPanel.preferredWidth,
+               ProcessorPanel.preferredHeight));
+      processorsScroller_.setMaximumSize(
+            new Dimension(ProcessorPanel.preferredWidth, 8192));
+      contentPanel.add(processorsScroller_, "growx, growy");
+
+      //
+      // Overall constraints
+      //
+
+      contentPanel.validate();
+      final Dimension contentSize = contentPanel.getPreferredSize();
+      final Dimension minSize = contentPanel.getMinimumSize();
+      minSize.width = contentSize.width;
+      final Dimension maxSize = new Dimension(contentSize.width, 8192);
+      contentPanel.setMinimumSize(minSize);
+      contentPanel.setMaximumSize(maxSize);
+
+      // We want the window (frame) to be resizable, but we don't want its
+      // width to change.
+      // JFrame.setMaximumSize() is broken (a Swing bug). We work around this
+      // 1) by placing all components in a JPanel (contentPanel), whose size
+      // behaves exactly as we would like the frame's size to behave, and 2)
+      // by always snapping back to our preferred width using a
+      // ComponentListener. So the user sees extra blank space to the right
+      // while resizing the window, but the contents resize correctly and the
+      // window snaps to the correct width when the mouse is released.
+      // TODO Can we factor out this behavior into a separate class?
+      setLayout(new net.miginfocom.swing.MigLayout(
+            "align left, filly, insets 0"));
+      add(contentPanel, "align left, growy");
+
+      // Compute the difference between the content pane's size and the
+      // frame's size, so that we can constrain the frame's size.
+      pack();
+      final int widthDelta = getSize().width - getContentPane().getSize().width;
+      final int heightDelta = getSize().height - getContentPane().getSize().height;
+
+      final Dimension frameSize = new Dimension(contentSize.width + widthDelta,
+            contentSize.height + heightDelta);
+      final Dimension minFrameSize = new Dimension(minSize.width + widthDelta,
+            minSize.height + heightDelta);
+      final Dimension maxFrameSize = new Dimension(maxSize.width + widthDelta,
+            maxSize.height + heightDelta);
+      setPreferredSize(frameSize);
+      setMinimumSize(minFrameSize);
+      setMaximumSize(maxFrameSize); // broken
+      setMaximizedBounds(new Rectangle(getX(), 0, maxFrameSize.width, 4096));
+      addComponentListener(new ComponentAdapter() {
+         @Override public void componentResized(ComponentEvent e) {
+            Dimension size = getSize();
+            size.width = Math.max(size.width, minFrameSize.width);
+            size.width = Math.min(size.width, maxFrameSize.width);
+            size.height = Math.max(size.height, minFrameSize.height);
+            size.height = Math.min(size.height, maxFrameSize.height);
+            setSize(size);
+         }
+         @Override public void componentMoved(ComponentEvent e) {
+            if (getExtendedState() == Frame.NORMAL) {
+               setMaximizedBounds(new Rectangle(getX(), 0, maxFrameSize.width, 4096));
+            }
+         }
+      });
 
       // Set up listening to the registration of new DataProcessors and
       // modification of the image pipeline.
