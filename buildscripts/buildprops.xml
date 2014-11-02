@@ -139,6 +139,13 @@
 							<clj-classpath/>
 						</classpath>
 					</java>
+					<!-- The clojure.core.cache library fails to load if
+						 AOT-compiled. But just removing it results in
+						 class-not-found errors. Removing all but the Java
+						 interop classes fixes the issue. -->
+					<delete>
+						<fileset dir="@{destdir}" includes="clojure/core/cache*.class"/>
+					</delete>
 				</sequential>
 			</outofdate>
 		</sequential>

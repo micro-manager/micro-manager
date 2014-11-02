@@ -1,11 +1,8 @@
 <project name="SlideExplorer2" default="jar">
 	<property name="plugin.path" value="Beta"/>
 
-	<!-- AOT compilation of this plugin appears to cause trouble when
-	     loading clojure.core.cache, so we package the Clojure source. -->
 	<property name="namespace" value="slide-explorer.plugin"/>
-	<property name="genclass" value="org.micromanager.SlideExplorer2"/>
-	<import file="../clojurepluginbuild_noaot.xml"/>
+	<import file="../clojurepluginbuild.xml"/>
 
 	<path id="plugin.classpath">
 		<pathelement location="${mm.java.lib.acq-engine}"/>
