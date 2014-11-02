@@ -6,7 +6,8 @@
            (javax.swing JOptionPane)
            (org.micromanager AcquisitionEngine2010 MMStudio)
            (org.micromanager.utils ImageUtils JavaUtils)
-           (org.micromanager.acquisition TaggedImageQueue))
+           (org.micromanager.acquisition TaggedImageQueue)
+           (org.micromanager.pixelcalibrator.PixelCalibratorPlugin))
   (:require [clojure.java.io :as io]
             [clojure.set]
             [org.micromanager.mm :as mm]
@@ -282,8 +283,8 @@ Would you like to run automatic pixel calibration?"
                   "Pixel calibration required."
                   JOptionPane/YES_NO_OPTION)]
     (when (= answer JOptionPane/YES_OPTION)
-      (doto (eval '(org.micromanager.pixelcalibrator.PixelCalibratorPlugin.))
-        (.setApp (MMStudio/getInstance));
+      (doto (org.micromanager.pixelcalibrator.PixelCalibratorPlugin.)
+        (.setApp (MMStudio/getInstance))
         .show))))
 
 (defn provide-constraints [screen-state-atom available-keys]
