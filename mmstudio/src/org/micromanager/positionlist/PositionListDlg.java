@@ -137,6 +137,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
     * @param acd - MDA window
     * @param opts - MicroManager Options
     */
+   @SuppressWarnings("LeakingThisInConstructor")
    public PositionListDlg(CMMCore core, ScriptInterface gui, 
                      PositionList posList, AcqControlDlg acd, MMOptions opts) {
       super();
@@ -1162,6 +1163,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
     * Generate a dialog that will call our offsetSelectedSites() function
     * with a set of X/Y/Z offsets to apply.
     */
+   @SuppressWarnings("ResultOfObjectAllocationIgnored")
    private void offsetPositions() {
       new OffsetPositionsDialog(this, core_);
    }
