@@ -28,10 +28,10 @@ import org.micromanager.utils.ReportingUtils;
 class OffsetPositionsDialog extends MMDialog {
    
    private PositionListDlg parent_;
-   private CMMCore core_;
+   private final CMMCore core_;
    // This panel holds dynamically-generated inputs appropriate to the 
    // device we want to set offsets for.
-   private JPanel axisPanel_;
+   private final JPanel axisPanel_;
    // Inputs used to set the offsets.
    private ArrayList<JTextField> axisInputs_;
    // Name of the device we're setting offsets for.

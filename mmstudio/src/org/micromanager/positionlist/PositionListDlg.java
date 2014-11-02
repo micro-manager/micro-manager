@@ -25,9 +25,10 @@ package org.micromanager.positionlist;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
-
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -36,9 +37,9 @@ import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
-import java.util.prefs.Preferences;
 import java.util.ArrayList;
-
+import java.util.prefs.Preferences;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -47,33 +48,28 @@ import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
-import javax.swing.table.TableCellRenderer;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-
+import javax.swing.table.TableCellRenderer;
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
-
 import net.miginfocom.swing.MigLayout;
-import com.swtdesigner.SwingResourceManager;
-
-import org.micromanager.api.events.StagePositionChangedEvent;
-import org.micromanager.api.events.XYStagePositionChangedEvent;
-import org.micromanager.dialogs.AcqControlDlg;
-import org.micromanager.events.EventManager;
 import org.micromanager.MMOptions;
 import org.micromanager.MMStudio;
-import org.micromanager.utils.GUIColors;
-import org.micromanager.utils.MMDialog;
-
 import org.micromanager.api.MultiStagePosition;
 import org.micromanager.api.PositionList;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.api.StagePosition;
+import org.micromanager.api.events.StagePositionChangedEvent;
+import org.micromanager.api.events.XYStagePositionChangedEvent;
+import org.micromanager.dialogs.AcqControlDlg;
+import org.micromanager.events.EventManager;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.FileDialogs.FileType;
+import org.micromanager.utils.GUIColors;
 import org.micromanager.utils.GUIUtils;
+import org.micromanager.utils.MMDialog;
 import org.micromanager.utils.MMException;
 import org.micromanager.utils.ReportingUtils;
 
@@ -83,16 +79,18 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
    private String posListDir_;
    private File curFile_;
    private static final String POS = "pos";
+   private static final String POS_COL0_WIDTH = "posCol0WIDTH";
+   private static final String AXIS_COL0_WIDTH = "axisCol0WIDTH";
    // @SuppressWarnings("unused")
-   private static FileType POSITION_LIST_FILE =
+   private static final FileType POSITION_LIST_FILE =
            new FileType("POSITION_LIST_FILE","Position list file",
                         System.getProperty("user.home") + "/PositionList.pos",
                         true, POS);
 
    private Font arialSmallFont_;
    private JTable posTable_;
-   private JTable axisTable_;
-   private AxisTableModel axisModel_;
+   private final JTable axisTable_;
+   private final AxisTableModel axisModel_;
    private CMMCore core_;
    private ScriptInterface studio_;
    private AcqControlDlg acqControlDlg_;
@@ -104,7 +102,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
 
    private MultiStagePosition curMsp_;
    public JButton markButton_;
-   private PositionTableModel positionModel_;
+   private final PositionTableModel positionModel_;
 
    private EventBus bus_;
 
@@ -132,6 +130,11 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
 
    /**
     * Create the dialog
+    * @param core -  MMCore
+    * @param gui - ScriptInterface
+    * @param posList - Position list to be displayed in this dialog
+    * @param acd - MDA window
+    * @param opts - MicroManager Options
     */
    public PositionListDlg(CMMCore core, ScriptInterface gui, 
                      PositionList posList, AcqControlDlg acd, MMOptions opts) {
@@ -140,6 +143,10 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
          @Override
          public void windowClosing(WindowEvent arg0) {
             savePosition();
+            int posCol0Width = posTable_.getColumnModel().getColumn(0).getWidth();
+            prefs_.putInt(POS_COL0_WIDTH, posCol0Width);
+            int axisCol0Width = axisTable_.getColumnModel().getColumn(0).getWidth();
+            prefs_.putInt(AXIS_COL0_WIDTH, axisCol0Width);
          }
       });
       core_ = core;
@@ -149,27 +156,37 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       opts_ = opts;
       acqControlDlg_ = acd;
       guiColors_ = new GUIColors();
+
+      prefs_ = getPrefsNode();
+      
       setTitle("Stage Position List");
       setLayout(new MigLayout("flowy, filly", "[grow][]"));
-      setBounds(100, 100, 362, 595);
-
-      Preferences root = Preferences.userNodeForPackage(this.getClass());
-      prefs_ = root.node(root.absolutePath() + "/XYPositionListDlg");
-      setPrefsNode(prefs_);
+      setMinimumSize(new Dimension(300, 450));
+      loadPosition(100, 100, 362, 595);
 
       arialSmallFont_ = new Font("Arial", Font.PLAIN, 10);
+      // getFontMetrics is  deprecated, however, to use the preferred 
+      // Font.getLineMetrics, we need an instance of the Graphics2D object,
+      // which is null until this window is visble...
+      FontMetrics smallArialMetrics = Toolkit.getDefaultToolkit().getFontMetrics(
+              arialSmallFont_);
 
       JSplitPane columnPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, true);
       // Favor allocating space to the list of stage positions, not the 
-      // list of positioners.
-      columnPane.setResizeWeight(.9);
+      // list of stages.
+      columnPane.setResizeWeight(1.0);
+      // we calculate the size needed for the axis pane, which should stay 
+      // visible.  A JSplitPane is no longer needed, but oh well, just disable
+      columnPane.setEnabled(false);
       
       final JScrollPane scrollPane = new JScrollPane();
       columnPane.add(scrollPane);
 
       final JScrollPane axisPane = new JScrollPane();
+      // axisPanel should always be visible
+      axisPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
       columnPane.add(axisPane);
-      add(columnPane, "growy, wrap");
+      add(columnPane, "growy, growx, wrap");
 
       final TableCellRenderer firstRowRenderer = new FirstRowRenderer(arialSmallFont_);
       posTable_ = new JTable() {
@@ -187,19 +204,34 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       positionModel_ = new PositionTableModel();
       positionModel_.setData(posList);
       posTable_.setModel(positionModel_);
+      scrollPane.setViewportView(posTable_);
       CellEditor cellEditor_ = new CellEditor();
       cellEditor_.addListener();
       posTable_.setDefaultEditor(Object.class, cellEditor_);
       posTable_.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-      scrollPane.setViewportView(posTable_);
-
+      // set column divider location
+      int posCol0Width = prefs_.getInt(POS_COL0_WIDTH, 75);
+      posTable_.getColumnModel().getColumn(0).setWidth(posCol0Width);
+      posTable_.getColumnModel().getColumn(0).setPreferredWidth(posCol0Width);
+      posTable_.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
+      
       axisTable_ = new JTable();
       axisTable_.setFont(arialSmallFont_);
       axisList_ = new AxisList(core_, prefs_);
       axisModel_ = new AxisTableModel(axisList_, axisTable_, bus_, prefs_);
       axisTable_.setModel(axisModel_);
       axisPane.setViewportView(axisTable_);
+      // make sure that the complete axis Table will always be visible
+      axisPane.setMinimumSize(new Dimension(50, 30 + axisList_.getNumberOfPositions() * 
+             smallArialMetrics.getHeight() ) );
+      // set divider location
+      int axisCol0Width = prefs_.getInt(AXIS_COL0_WIDTH, 75);
+      axisTable_.getColumnModel().getColumn(0).setWidth(axisCol0Width);
+      axisTable_.getColumnModel().getColumn(0).setPreferredWidth(axisCol0Width);
+      axisTable_.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
 
+      
+      // Create buttons on the right side of the window    
       Dimension buttonSize = new Dimension(95, 27);
       
       // mark / replace button:
@@ -213,7 +245,8 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
             posTable_.clearSelection();
          }
       });
-      markButton_.setIcon(SwingResourceManager.getIcon(MMStudio.class, "/org/micromanager/icons/flag_green.png"));
+      markButton_.setIcon(new ImageIcon(MMStudio.class.getResource(
+              "/org/micromanager/icons/flag_green.png")));
       markButton_.setText("Mark");
       markButton_.setToolTipText("Adds point with coordinates of current stage position");
       // Separate the layout of the buttons from the layout of the panels to 
@@ -248,7 +281,8 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
             incrementOrderOfSelectedPosition(-1);
          }
       });
-      upButton.setIcon(SwingResourceManager.getIcon(MMStudio.class, "/org/micromanager/icons/arrow_up.png"));
+      upButton.setIcon(new ImageIcon(MMStudio.class.getResource(
+                           "/org/micromanager/icons/arrow_up.png")));
       upButton.setText(""); // "Up"
       upButton.setToolTipText("Move currently selected position up list (positions higher on list are acquired earlier)");
       arrowPanel.add(upButton, "dock west");
@@ -263,7 +297,8 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
             incrementOrderOfSelectedPosition(1);
          }
       });
-      downButton.setIcon(SwingResourceManager.getIcon(MMStudio.class, "/org/micromanager/icons/arrow_down.png"));
+      downButton.setIcon(new ImageIcon(MMStudio.class.getResource(
+              "/org/micromanager/icons/arrow_down.png")));
       downButton.setText(""); // "Down"
       downButton.setToolTipText("Move currently selected position down list (lower positions on list are acquired later)");
       arrowPanel.add(downButton, "dock east");
@@ -281,7 +316,8 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
             mergePositions(event);
          }
       });
-      mergeButton.setIcon(SwingResourceManager.getIcon(MMStudio.class, "/org/micromanager/icons/asterisk_orange.png"));
+      mergeButton.setIcon(new ImageIcon(MMStudio.class.getResource(
+              "/org/micromanager/icons/asterisk_orange.png")));
       mergeButton.setText("Merge");
       mergeButton.setToolTipText("Select an axis, and set the selected positions' value along that axis to the current stage position.");
       add(mergeButton);
@@ -296,7 +332,8 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
             goToCurrentPosition();
          }
       });
-      gotoButton.setIcon(SwingResourceManager.getIcon(MMStudio.class, "/org/micromanager/icons/resultset_next.png"));
+      gotoButton.setIcon(new ImageIcon(MMStudio.class.getResource(
+              "/org/micromanager/icons/resultset_next.png")));
       gotoButton.setText("Go to");
       gotoButton.setToolTipText("Moves stage to currently selected position");
       add(gotoButton);
@@ -310,7 +347,8 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
             refreshCurrentPosition();
          }
       });
-      refreshButton.setIcon(SwingResourceManager.getIcon(MMStudio.class, "/org/micromanager/icons/arrow_refresh.png"));
+      refreshButton.setIcon(new ImageIcon(MMStudio.class.getResource(
+              "/org/micromanager/icons/arrow_refresh.png")));
       refreshButton.setText("Refresh");
       add(refreshButton);
 
@@ -323,7 +361,8 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
             removeSelectedPositions();
          }
       });
-      removeButton.setIcon(SwingResourceManager.getIcon(MMStudio.class, "/org/micromanager/icons/cross.png"));
+      removeButton.setIcon(new ImageIcon(MMStudio.class.getResource(
+              "/org/micromanager/icons/cross.png")));
       removeButton.setText("Remove");
       removeButton.setToolTipText("Removes currently selected position from list");
       add(removeButton);
@@ -338,7 +377,8 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
          }
       });
        
-      setOriginButton.setIcon(SwingResourceManager.getIcon(MMStudio.class, "/org/micromanager/icons/empty.png"));
+      setOriginButton.setIcon(new ImageIcon(MMStudio.class.getResource(
+              "/org/micromanager/icons/empty.png")));
       setOriginButton.setText("Set Origin");
       setOriginButton.setToolTipText("Drives X and Y stages back to their original positions and zeros their position values");
       add(setOriginButton);
@@ -353,7 +393,8 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
          }
       });
        
-      offsetButton.setIcon(SwingResourceManager.getIcon(MMStudio.class, "/org/micromanager/icons/empty.png"));
+      offsetButton.setIcon(new ImageIcon(MMStudio.class.getResource(
+              "/org/micromanager/icons/empty.png")));
       offsetButton.setText("Add Offset");
       offsetButton.setToolTipText("Add an offset to the selected positions.");
       add(offsetButton);
@@ -370,7 +411,8 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
             }
          }
       });
-      removeAllButton.setIcon(SwingResourceManager.getIcon(MMStudio.class, "/org/micromanager/icons/delete.png"));
+      removeAllButton.setIcon(new ImageIcon(MMStudio.class.getResource(
+              "/org/micromanager/icons/delete.png")));
       removeAllButton.setText("Clear All");
       removeAllButton.setToolTipText("Removes all positions from list");
       add(removeAllButton);
@@ -384,7 +426,8 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
             loadPositionList();
          }
       });
-      loadButton.setIcon(SwingResourceManager.getIcon(MMStudio.class, "/org/micromanager/icons/empty.png"));
+      loadButton.setIcon(new ImageIcon(MMStudio.class.getResource(
+              "/org/micromanager/icons/empty.png")));
       loadButton.setText("Load...");
       loadButton.setToolTipText("Load position list");
       add(loadButton, "gaptop 1:push");
@@ -398,7 +441,8 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
             savePositionListAs();
          }
       });
-      saveAsButton.setIcon(SwingResourceManager.getIcon(MMStudio.class, "/org/micromanager/icons/empty.png"));
+      saveAsButton.setIcon(new ImageIcon(MMStudio.class.getResource(
+              "/org/micromanager/icons/empty.png")));
       saveAsButton.setText("Save As...");
       saveAsButton.setToolTipText("Save position list as");
       add(saveAsButton);
@@ -412,7 +456,8 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
             showCreateTileDlg();
          }
       });
-      tileButton_.setIcon(SwingResourceManager.getIcon(MMStudio.class, "/org/micromanager/icons/empty.png"));
+      tileButton_.setIcon(new ImageIcon(MMStudio.class.getResource(
+              "/org/micromanager/icons/empty.png")));
       tileButton_.setText("Create Grid");
       tileButton_.setToolTipText("Open new window to create grid of equally spaced positions");
       add(tileButton_);
@@ -427,7 +472,8 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
             dispose();
          }
       });
-      closeButton.setIcon(SwingResourceManager.getIcon(MMStudio.class, "/org/micromanager/icons/empty.png"));
+      closeButton.setIcon(new ImageIcon(MMStudio.class.getResource(
+              "/org/micromanager/icons/empty.png")));
       closeButton.setText("Close");
       add(closeButton);
 
@@ -657,6 +703,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
    /**
     * Displays a popup menu to let the user select an axis, which will then
     * invoke mergePositionsAlongAxis, below.
+    * @param event - Mouse Event that gives X and Y coordinates
     */
    public void mergePositions(MouseEvent event) {
       MergeStageDevicePopupMenu menu = new MergeStageDevicePopupMenu(this, core_);
@@ -667,6 +714,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
     * Given a device name, change all currently-selected positions so that
     * their positions for that device match the current stage position for
     * that device.
+    * @param deviceName name of device name 
     */
    public void mergePositionsWithDevice(String deviceName) {
       int[] selectedRows = posTable_.getSelectedRows();
@@ -1118,6 +1166,8 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
     * Given a device (either a StageDevice or XYStageDevice) and a Vector
     * of floats, apply the given offsets to all selected positions for that
     * particular device. 
+    * @param deviceName
+    * @param offsets
     */
    public void offsetSelectedSites(String deviceName, ArrayList<Float> offsets) {
       PositionList positions = positionModel_.getPositionList();
