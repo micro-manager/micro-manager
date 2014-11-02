@@ -90,7 +90,6 @@ import org.fife.ui.rtextarea.SearchResult;
 import org.micromanager.MMStudio;
 import org.micromanager.PropertyEditor;
 import org.micromanager.api.ScriptInterface;
-import org.micromanager.script.BeanshellEngine;
 import org.micromanager.utils.FileDialogs.FileType;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.HotKeysDialog;
@@ -584,7 +583,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
       stopButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
-            stopScript(stopButton_.getText() == "Interrupt");
+            stopScript("Interrupt".equals(stopButton_.getText()));
          }
       });
       stopButton_.setText("Interrupt");
@@ -1193,7 +1192,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
          immediatePane_.setText("");
    }
 
-   public  void closePanel() {
+   public void closePanel() {
       if (!promptToSave(-1))
          return;
       savePosition();
