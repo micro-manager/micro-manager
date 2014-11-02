@@ -37,6 +37,7 @@ import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.prefs.Preferences;
 import javax.swing.ImageIcon;
@@ -168,6 +169,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       // getFontMetrics is  deprecated, however, to use the preferred 
       // Font.getLineMetrics, we need an instance of the Graphics2D object,
       // which is null until this window is visble...
+      @SuppressWarnings("deprecation")
       FontMetrics smallArialMetrics = Toolkit.getDefaultToolkit().getFontMetrics(
               arialSmallFont_);
 
@@ -499,9 +501,11 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
                     axisTable_.revalidate();
                 }
             });
-        } catch (Exception ex) {
+        } catch (InterruptedException ex) {
             ReportingUtils.logError(ex);
-        }
+        } catch (InvocationTargetException ex) {
+           ReportingUtils.logError(ex);
+      }
     }
 
    protected void updateMarkButtonText() {
