@@ -126,10 +126,9 @@
 					<fileset dir="@{destdir}"/>
 				</targetfiles>
 				<sequential>
-					<!-- See http://clojure.org/compilation -->
-					<java classname="clojure.main" fork="false" failonerror="true">
-						<arg value="--eval"/>
-						<arg value="(binding [*compile-path* &quot;@{destdir}&quot;] (compile &apos;@{namespace}))"/>
+					<java classname="clojure.lang.Compile" fork="true" failonerror="true">
+						<arg value="@{namespace}"/>
+						<sysproperty key="clojure.compile.path" value="@{destdir}"/>
 						<sysproperty key="java.library.path" value="${mm.build.java.library.path}"/>
 						<sysproperty key="java.awt.headless" value="true"/>
 						<classpath>
