@@ -18,32 +18,33 @@
 
 package org.micromanager;
 
+import bsh.EvalError;
+import bsh.Interpreter;
 import com.google.common.eventbus.Subscribe;
-
+import com.swtdesigner.SwingResourceManager;
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.WindowManager;
+import ij.gui.ImageWindow;
 import ij.gui.Line;
 import ij.gui.Roi;
 import ij.process.ImageProcessor;
-import ij.gui.ImageWindow;
-
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Rectangle;
+import java.awt.event.WindowEvent;
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.prefs.Preferences;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.lang.reflect.InvocationTargetException;
-import javax.swing.UnsupportedLookAndFeelException;
+import java.util.prefs.Preferences;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
 import javax.swing.JMenuBar;
@@ -51,88 +52,67 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
 import javax.swing.UIManager;
-
+import javax.swing.UnsupportedLookAndFeelException;
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
 import mmcorej.TaggedImage;
-
-import org.json.JSONObject;
 import org.json.JSONException;
+import org.json.JSONObject;
 
+import org.micromanager.acquisition.*;
 import org.micromanager.acquisition.AcquisitionManager;
-
 import org.micromanager.api.Autofocus;
 import org.micromanager.api.DataProcessor;
-import org.micromanager.api.events.ExposureChangedEvent;
-import org.micromanager.api.events.PropertiesChangedEvent;
+import org.micromanager.api.IAcquisitionEngine2010;
+import org.micromanager.api.ImageCache;
+import org.micromanager.api.MMListenerInterface;
 import org.micromanager.api.MMTags;
 import org.micromanager.api.PositionList;
 import org.micromanager.api.ScriptInterface;
-import org.micromanager.api.MMListenerInterface;
 import org.micromanager.api.SequenceSettings;
-
+import org.micromanager.api.events.ExposureChangedEvent;
+import org.micromanager.api.events.PropertiesChangedEvent;
 import org.micromanager.conf2.MMConfigFileException;
 import org.micromanager.conf2.MicroscopeModel;
-
 import org.micromanager.dialogs.AcqControlDlg;
 import org.micromanager.dialogs.CalibrationListDlg;
 import org.micromanager.dialogs.MMIntroDlg;
 import org.micromanager.dialogs.RegistrationDlg;
-
 import org.micromanager.events.EventManager;
-
 import org.micromanager.graph.GraphData;
 import org.micromanager.graph.GraphFrame;
-
+import org.micromanager.graph.HistogramSettings;
 import org.micromanager.imagedisplay.DisplayWindow;
 import org.micromanager.imagedisplay.MetadataPanel;
 import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
-
 import org.micromanager.logging.LogFileManager;
-
 import org.micromanager.menus.FileMenu;
 import org.micromanager.menus.HelpMenu;
 import org.micromanager.menus.ToolsMenu;
-
 import org.micromanager.navigation.CenterAndDragListener;
 import org.micromanager.navigation.XYZKeyListener;
 import org.micromanager.navigation.ZWheelListener;
-
 import org.micromanager.pipelineinterface.PipelineFrame;
-
 import org.micromanager.pluginmanagement.PluginManager;
-
 import org.micromanager.positionlist.PositionListDlg;
-
 import org.micromanager.script.ScriptPanel;
-
 import org.micromanager.utils.AutofocusManager;
 import org.micromanager.utils.ContrastSettings;
-import org.micromanager.utils.GUIColors;
-import org.micromanager.utils.GUIUtils;
-import org.micromanager.utils.JavaUtils;
-import org.micromanager.utils.MMException;
-import org.micromanager.utils.MMScriptException;
-import org.micromanager.utils.TextUtils;
-import org.micromanager.utils.WaitDialog;
-
-import org.micromanager.acquisition.*;
-import org.micromanager.api.ImageCache;
-import org.micromanager.api.IAcquisitionEngine2010;
-import org.micromanager.graph.HistogramSettings;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.FileDialogs.FileType;
+import org.micromanager.utils.GUIColors;
+import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.ImageUtils;
+import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MDUtils;
+import org.micromanager.utils.MMException;
+import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
+import org.micromanager.utils.TextUtils;
 import org.micromanager.utils.UIMonitor;
-
-import bsh.EvalError;
-import bsh.Interpreter;
-
-import com.swtdesigner.SwingResourceManager;
+import org.micromanager.utils.WaitDialog;
 
 
 
@@ -740,7 +720,8 @@ public class MMStudio implements ScriptInterface {
    }
 
    public void openLineProfileWindow() {
-      if (WindowManager.getCurrentWindow() == null || WindowManager.getCurrentWindow().isClosed()) {
+      if (WindowManager.getCurrentWindow() == null || 
+              WindowManager.getCurrentWindow().isClosed()) {
          return;
       }
       calculateLineProfileData(WindowManager.getCurrentImage());
@@ -1506,7 +1487,14 @@ public class MMStudio implements ScriptInterface {
             core_.logMessage("Failed to close some windows");
          }
       }
-
+  
+      if (posListDlg_ != null) {
+         removeMMBackgroundListener(posListDlg_);
+         posListDlg_.getToolkit().getSystemEventQueue().postEvent(
+                 new WindowEvent(posListDlg_, WindowEvent.WINDOW_CLOSING));
+         posListDlg_.dispose();
+      }
+      
       if (profileWin_ != null) {
          removeMMBackgroundListener(profileWin_);
          profileWin_.dispose();
@@ -1524,6 +1512,8 @@ public class MMStudio implements ScriptInterface {
 
       if (propertyBrowser_ != null) {
          removeMMBackgroundListener(propertyBrowser_);
+         propertyBrowser_.getToolkit().getSystemEventQueue().postEvent(
+                 new WindowEvent(propertyBrowser_, WindowEvent.WINDOW_CLOSING));
          propertyBrowser_.dispose();
       }
 
