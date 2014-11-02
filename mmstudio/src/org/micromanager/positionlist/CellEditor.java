@@ -1,12 +1,12 @@
 package org.micromanager.positionlist;
 
 import java.awt.Component;
+import java.awt.Font;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-
 import javax.swing.AbstractCellEditor;
-import javax.swing.JTextField;
 import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.table.TableCellEditor;
 
 /**
@@ -19,8 +19,9 @@ public class CellEditor extends AbstractCellEditor implements TableCellEditor,
    JTextField text_ = new JTextField();
    int editingCol_;
 
-   public CellEditor() {
-      super();       
+   public CellEditor(Font editingFont) {
+      super();
+      text_.setFont(editingFont);
    }
    
    public void addListener() {

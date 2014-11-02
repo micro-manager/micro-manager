@@ -207,7 +207,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       positionModel_.setData(posList);
       posTable_.setModel(positionModel_);
       scrollPane.setViewportView(posTable_);
-      CellEditor cellEditor_ = new CellEditor();
+      CellEditor cellEditor_ = new CellEditor(arialSmallFont_);
       cellEditor_.addListener();
       posTable_.setDefaultEditor(Object.class, cellEditor_);
       posTable_.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);

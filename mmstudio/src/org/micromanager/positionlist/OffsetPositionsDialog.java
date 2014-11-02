@@ -7,6 +7,8 @@ import mmcorej.StrVector;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 
 import javax.swing.JButton;
@@ -39,19 +41,28 @@ class OffsetPositionsDialog extends MMDialog {
 
    public OffsetPositionsDialog(PositionListDlg parent, CMMCore core) {
       super();
+      
       parent_ = parent;
       core_ = core;
       axisInputs_ = new ArrayList<JTextField>();
       
-      setSize(new Dimension(320, 300));
+      addWindowListener(new WindowAdapter() {
+         @Override
+         public void windowClosing(WindowEvent arg0) {
+            savePosition();          
+         }
+      });
+      this.loadPosition(100,100, 320, 300);
+      
       setTitle("Add offset to stage positions");
       setResizable(false);
       setModal(true);
-      setLayout(new MigLayout("flowy"));
+      setLayout(new MigLayout("flowx"));
 
-      JLabel label = new JLabel("<html><p>This dialog allows you to add offsets to the currently-selected stage positions.</p></html>");
+      JLabel label = new JLabel("<html><p>Add "
+              + "offsets to the currently-selected stage positions.</p></html>");
       label.setPreferredSize(new Dimension(300, 20));
-      add(label, "align center");
+      add(label, "span 4, align center, wrap");
 
       // Add a menu to select a positioner, and then a panel which will
       // dynamically get the text fields for the positioner as appropriate.
@@ -74,11 +85,11 @@ class OffsetPositionsDialog extends MMDialog {
             setControlsFor(stageName);
          }
       });
-      add(new JLabel("Select stage device: "), "split 2, flowx");
-      add(stageOptions);
+      add(new JLabel("Select stage device: "), "span 2");
+      add(stageOptions, "wrap");
 
       axisPanel_ = new JPanel(new MigLayout("flowy"));
-      add(axisPanel_);
+      add(axisPanel_, "span 4, align left, wrap");
       
       JButton okButton = new JButton("OK");
       okButton.addActionListener(new ActionListener() {
@@ -96,19 +107,23 @@ class OffsetPositionsDialog extends MMDialog {
                }
             }
             parent_.offsetSelectedSites(deviceName_, offsets);
+            savePosition();
             dispose();
          }
       });
-      add(okButton, "split 2, flowx");
+      
+
+      add(okButton, "span 2, center");
 
       JButton cancelButton = new JButton("Cancel");
       cancelButton.addActionListener(new ActionListener() {
          @Override
             public void actionPerformed(ActionEvent event) {
+               savePosition();
                dispose();
             }
       });
-      add(cancelButton);
+      add(cancelButton, "span 2, center, wrap");
 
       setControlsFor(deviceName_);
       setVisible(true);
