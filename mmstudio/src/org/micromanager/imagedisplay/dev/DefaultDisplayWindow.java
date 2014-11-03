@@ -5,6 +5,7 @@ import com.google.common.eventbus.Subscribe;
 
 import ij.ImagePlus;
 import ij.gui.ImageWindow;
+import ij.Menus;
 import ij.WindowManager;
 
 import java.awt.Component;
@@ -119,6 +120,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       if (store_.getNumImages() > 0) {
          makeWindowAndIJObjects();
       }
+      setMenuBar(Menus.getMenuBar());
    }
 
    /**
