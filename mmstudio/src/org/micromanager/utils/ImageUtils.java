@@ -87,6 +87,11 @@ public class ImageUtils {
             case ImagePlus.GRAY32:
                return new FloatProcessor(w,h, (float[]) imgArray, null);
             case ImagePlus.COLOR_RGB:
+               // Micro-Manager RGB32 images are generally composed of byte
+               // arrays, but ImageJ only takes int arrays.
+               if (imgArray instanceof byte[]) {
+                  imgArray = convertRGB32BytesToInt((byte[]) imgArray);
+               }
                return new ColorProcessor(w, h, (int[]) imgArray);
             default:
                return null;
