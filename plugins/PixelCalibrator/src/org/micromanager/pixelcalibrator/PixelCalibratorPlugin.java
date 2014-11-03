@@ -90,12 +90,6 @@ public class PixelCalibratorPlugin implements MMPlugin {
    }
 
    void startCalibration() {
-      // Verify that the camera is valid for calibration -- we don't support
-      // RGB cameras.
-      if (core_.getNumberOfComponents() != 1) {
-         ReportingUtils.showMessage("Sorry, pixel calibration does not support RGB or multi-channel cameras.");
-         return;
-      }
       calibrationThread_ = new CalibrationThread(app_, this);
       if (!calibrationThread_.isAlive()) {
          calibrationThread_.start();

@@ -14,6 +14,7 @@ import java.awt.geom.Point2D;
 import java.util.Hashtable;
 import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
+import mmcorej.TaggedImage;
 import org.micromanager.MMStudio;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.ImageUtils;
@@ -115,12 +116,12 @@ public class CalibrationThread extends Thread {
             app_.setXYStagePosition(x, y);
             core_.waitForDevice(core_.getXYStageDevice());
             core_.snapImage();
-            Object pix = core_.getTaggedImage().pix;
-            app_.displayImage(pix);
+            TaggedImage image = core_.getTaggedImage();
+            app_.displayImage(image);
             if (liveWin_ == null)
                liveWin_ = app_.getSnapLiveManager().getSnapLiveWindow();
             liveWin_.setTitle("Calibrating...");
-            return ImageUtils.makeProcessor(core_,pix);
+            return ImageUtils.makeProcessor(image);
          } catch (CalibrationFailedException e) {
             throw e;
          } catch (Exception ex) {
