@@ -112,8 +112,8 @@ class OffsetPositionsDialog extends MMDialog {
          }
       });
       
-
-      add(okButton, "span 2, center");
+      getRootPane().setDefaultButton(okButton);
+      add(okButton, "tag ok, span 4, split");
 
       JButton cancelButton = new JButton("Cancel");
       cancelButton.addActionListener(new ActionListener() {
@@ -123,7 +123,7 @@ class OffsetPositionsDialog extends MMDialog {
                dispose();
             }
       });
-      add(cancelButton, "span 2, center, wrap");
+      add(cancelButton, "tag cancel, wrap");
 
       setControlsFor(deviceName_);
       setVisible(true);
