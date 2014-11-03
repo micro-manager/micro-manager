@@ -164,13 +164,15 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       setTitle("Stage Position List");
       setLayout(new MigLayout("flowy, filly, insets 8", "[grow][]", 
               "[top]"));
-      setMinimumSize(new Dimension(275, 355));
+      setMinimumSize(new Dimension(275, 365));
       loadPosition(100, 100, 362, 595);
 
       arialSmallFont_ = new Font("Arial", Font.PLAIN, 10);
       // getFontMetrics is  deprecated, however, to use the preferred 
       // Font.getLineMetrics, we need an instance of the Graphics2D object,
-      // which is null until this window is visble...
+      // which is null until this window is visble. However, we would like to 
+      // set the minimum size of the Axis Panel, based on font height, before
+      // it is shown...
       @SuppressWarnings("deprecation")
       FontMetrics smallArialMetrics = Toolkit.getDefaultToolkit().getFontMetrics(
               arialSmallFont_);
@@ -217,9 +219,11 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       axisTable_.setModel(axisModel_);
       axisPane.setViewportView(axisTable_);
       // make sure that the complete axis Table will always be visible
-      axisPane.setMaximumSize(new Dimension(5000, 30 + axisList_.getNumberOfPositions() * 
-             smallArialMetrics.getHeight() ) );
-      axisPane.setMinimumSize(new Dimension(50, 30 + axisList_.getNumberOfPositions() * 
+      axisPane.setMaximumSize(new Dimension(5000, 30 + 
+              (1 + axisList_.getNumberOfPositions()) * 
+              smallArialMetrics.getHeight() ) );
+      axisPane.setMinimumSize(new Dimension(50, 30 + 
+              (1 + axisList_.getNumberOfPositions()) * 
              smallArialMetrics.getHeight() ) );
       // set divider location
       int axisCol0Width = prefs_.getInt(AXIS_COL0_WIDTH, 75);
