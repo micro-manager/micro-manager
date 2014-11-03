@@ -121,7 +121,7 @@ public class CalibrationThread extends Thread {
             if (liveWin_ == null)
                liveWin_ = app_.getSnapLiveManager().getSnapLiveWindow();
             liveWin_.setTitle("Calibrating...");
-            return ImageUtils.makeProcessor(image);
+            return ImageUtils.makeMonochromeProcessor(image);
          } catch (CalibrationFailedException e) {
             throw e;
          } catch (Exception ex) {
