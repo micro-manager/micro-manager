@@ -7,7 +7,7 @@
 //AUTHOR:       Nenad Amodaj, nenad@amodaj.com, March 8, 2007
 //              Nico Stuurman, nico@cmp.ucsf.edu June 23, 2009
 
-//COPYRIGHT:    University of California, San Francisco, 2007, 2008, 2009
+//COPYRIGHT:    University of California, San Francisco, 2007, 2008, 2009, 2014
 
 //LICENSE:      This file is distributed under the BSD license.
 //License text is included with the source distribution.
@@ -28,6 +28,7 @@ import com.google.common.eventbus.Subscribe;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
+import java.awt.Insets;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -45,7 +46,6 @@ import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
@@ -162,8 +162,9 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       prefs_ = getPrefsNode();
       
       setTitle("Stage Position List");
-      setLayout(new MigLayout("flowy, filly", "[grow][]"));
-      setMinimumSize(new Dimension(300, 450));
+      setLayout(new MigLayout("flowy, filly, insets 8", "[grow][]", 
+              "[top]"));
+      setMinimumSize(new Dimension(275, 355));
       loadPosition(100, 100, 362, 595);
 
       arialSmallFont_ = new Font("Arial", Font.PLAIN, 10);
@@ -173,33 +174,24 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       @SuppressWarnings("deprecation")
       FontMetrics smallArialMetrics = Toolkit.getDefaultToolkit().getFontMetrics(
               arialSmallFont_);
-
-      JSplitPane columnPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, true);
-      // Favor allocating space to the list of stage positions, not the 
-      // list of stages.
-      columnPane.setResizeWeight(1.0);
-      // we calculate the size needed for the axis pane, which should stay 
-      // visible.  A JSplitPane is no longer needed, but oh well, just disable
-      columnPane.setEnabled(false);
       
       final JScrollPane scrollPane = new JScrollPane();
-      columnPane.add(scrollPane);
+      add(scrollPane, "split, spany, growy, growx, bottom 1:push");
 
       final JScrollPane axisPane = new JScrollPane();
       // axisPanel should always be visible
       axisPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
-      columnPane.add(axisPane);
-      add(columnPane, "growy, growx, wrap");
+      add(axisPane, "growx, wrap");
 
       final TableCellRenderer firstRowRenderer = new FirstRowRenderer(arialSmallFont_);
       posTable_ = new JTable() {
-      private static final long serialVersionUID = -3873504142761785021L;
+         private static final long serialVersionUID = -3873504142761785021L;
 
-      @Override
-      public TableCellRenderer getCellRenderer(int row, int column) {
+         @Override
+         public TableCellRenderer getCellRenderer(int row, int column) {
             if (row == 0) {
-            return firstRowRenderer;
-         }
+               return firstRowRenderer;
+            }
             return super.getCellRenderer(row, column);
          }
       };
@@ -225,6 +217,8 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       axisTable_.setModel(axisModel_);
       axisPane.setViewportView(axisTable_);
       // make sure that the complete axis Table will always be visible
+      axisPane.setMaximumSize(new Dimension(5000, 30 + axisList_.getNumberOfPositions() * 
+             smallArialMetrics.getHeight() ) );
       axisPane.setMinimumSize(new Dimension(50, 30 + axisList_.getNumberOfPositions() * 
              smallArialMetrics.getHeight() ) );
       // set divider location
@@ -235,17 +229,16 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
 
       
       // Create buttons on the right side of the window    
-      Dimension buttonSize = new Dimension(95, 27);
+      Dimension buttonSize = new Dimension(88, 21);
       
       // mark / replace button:
-      markButton_ = new JButton();
-      markButton_.setMinimumSize(buttonSize);
-      markButton_.setFont(arialSmallFont_);
+      markButton_ =  posListButton(buttonSize, arialSmallFont_);
       markButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
             markPosition();
             posTable_.clearSelection();
+            updateMarkButtonText();
          }
       });
       markButton_.setIcon(new ImageIcon(MMStudio.class.getResource(
@@ -254,7 +247,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       markButton_.setToolTipText("Adds point with coordinates of current stage position");
       // Separate the layout of the buttons from the layout of the panels to 
       // their left.
-      add(markButton_, "split, spany");
+      add(markButton_, "split, spany, align left");
       
       posTable_.addFocusListener(
               new java.awt.event.FocusAdapter() {
@@ -262,6 +255,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
                  public void focusLost(java.awt.event.FocusEvent evt) {
                     updateMarkButtonText();
                  }
+
                  @Override
                  public void focusGained(java.awt.event.FocusEvent evt) {
                     updateMarkButtonText();
@@ -269,15 +263,12 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
               });
 
       // the re-ordering buttons:
-
       Dimension arrowSize = new Dimension(40, buttonSize.height);
       // There should be a way to do this without a secondary panel, but I
       // couldn't figure one out, so whatever.
       JPanel arrowPanel = new JPanel(new MigLayout("insets 0, fillx"));
       // move selected row up one row
-      final JButton upButton = new JButton();
-      upButton.setMinimumSize(arrowSize);
-      upButton.setFont(arialSmallFont_);
+      final JButton upButton = posListButton(arrowSize, arialSmallFont_);
       upButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
@@ -291,9 +282,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       arrowPanel.add(upButton, "dock west");
   
       // move selected row down one row
-      final JButton downButton = new JButton();
-      downButton.setMinimumSize(arrowSize);
-      downButton.setFont(arialSmallFont_);
+      final JButton downButton = posListButton(arrowSize, arialSmallFont_);
       downButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
@@ -308,9 +297,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       add(arrowPanel, "growx");
 
       // from this point on, the top right button's positions are computed
-      final JButton mergeButton = new JButton();
-      mergeButton.setMinimumSize(buttonSize);
-      mergeButton.setFont(arialSmallFont_);
+      final JButton mergeButton = posListButton(buttonSize, arialSmallFont_);
       // We need to use addMouseListener instead of addActionListener because
       // we'll need the mouse's position for generating a popup menu. 
       mergeButton.addMouseListener(new MouseAdapter() {
@@ -326,9 +313,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       add(mergeButton);
       
       // the Go To button:
-      final JButton gotoButton = new JButton();
-      gotoButton.setMinimumSize(buttonSize);
-      gotoButton.setFont(arialSmallFont_);
+      final JButton gotoButton = posListButton(buttonSize, arialSmallFont_);
       gotoButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
@@ -341,9 +326,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       gotoButton.setToolTipText("Moves stage to currently selected position");
       add(gotoButton);
 
-      final JButton refreshButton = new JButton();
-      refreshButton.setMinimumSize(buttonSize);
-      refreshButton.setFont(arialSmallFont_);
+      final JButton refreshButton = posListButton(buttonSize, arialSmallFont_);
       refreshButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
@@ -355,9 +338,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       refreshButton.setText("Refresh");
       add(refreshButton);
 
-      final JButton removeButton = new JButton();
-      removeButton.setMinimumSize(buttonSize);
-      removeButton.setFont(arialSmallFont_);
+      final JButton removeButton = posListButton(buttonSize, arialSmallFont_);
       removeButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
@@ -370,9 +351,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       removeButton.setToolTipText("Removes currently selected position from list");
       add(removeButton);
 
-      final JButton setOriginButton = new JButton();
-      setOriginButton.setMinimumSize(buttonSize);
-      setOriginButton.setFont(arialSmallFont_);
+      final JButton setOriginButton = posListButton(buttonSize, arialSmallFont_);
       setOriginButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
@@ -386,9 +365,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       setOriginButton.setToolTipText("Drives X and Y stages back to their original positions and zeros their position values");
       add(setOriginButton);
 
-      final JButton offsetButton = new JButton();
-      offsetButton.setMinimumSize(buttonSize);
-      offsetButton.setFont(arialSmallFont_);
+      final JButton offsetButton = posListButton(buttonSize, arialSmallFont_);
       offsetButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
@@ -402,9 +379,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       offsetButton.setToolTipText("Add an offset to the selected positions.");
       add(offsetButton);
       
-      final JButton removeAllButton = new JButton();
-      removeAllButton.setMinimumSize(buttonSize);
-      removeAllButton.setFont(arialSmallFont_);
+      final JButton removeAllButton = posListButton(buttonSize, arialSmallFont_);
       removeAllButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
@@ -420,9 +395,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       removeAllButton.setToolTipText("Removes all positions from list");
       add(removeAllButton);
 
-      final JButton loadButton = new JButton();
-      loadButton.setMinimumSize(buttonSize);
-      loadButton.setFont(arialSmallFont_);
+      final JButton loadButton = posListButton(buttonSize, arialSmallFont_);
       loadButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
@@ -433,11 +406,9 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
               "/org/micromanager/icons/empty.png")));
       loadButton.setText("Load...");
       loadButton.setToolTipText("Load position list");
-      add(loadButton, "gaptop 1:push");
+      add(loadButton, "gaptop 4:push");
 
-      final JButton saveAsButton = new JButton();
-      saveAsButton.setMinimumSize(buttonSize);
-      saveAsButton.setFont(arialSmallFont_);
+      final JButton saveAsButton = posListButton(buttonSize, arialSmallFont_);
       saveAsButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
@@ -450,9 +421,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       saveAsButton.setToolTipText("Save position list as");
       add(saveAsButton);
 
-      tileButton_ = new JButton();
-      tileButton_.setMinimumSize(buttonSize);
-      tileButton_.setFont(arialSmallFont_);
+      tileButton_ = posListButton(buttonSize, arialSmallFont_);
       tileButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
@@ -466,9 +435,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       add(tileButton_);
       setTileButtonEnabled();
 
-      final JButton closeButton = new JButton();
-      closeButton.setMinimumSize(buttonSize);
-      closeButton.setFont(arialSmallFont_);
+      final JButton closeButton = posListButton(buttonSize, arialSmallFont_);
       closeButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
@@ -478,11 +445,21 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       closeButton.setIcon(new ImageIcon(MMStudio.class.getResource(
               "/org/micromanager/icons/empty.png")));
       closeButton.setText("Close");
-      add(closeButton);
+      add(closeButton, "wrap");
 
       // Register to be informed when the current stage position changes.
       EventManager.register(this);
       refreshCurrentPosition();
+   }
+   
+   private JButton posListButton(Dimension buttonSize, Font font) {
+      JButton button = new JButton();
+      button.setPreferredSize(buttonSize);
+      button.setMinimumSize(buttonSize);
+      button.setFont(font);
+      button.setMargin(new Insets(0, 0, 0, 0));
+      
+      return button;
    }
    
    public void addListeners() {   
@@ -511,7 +488,8 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
 
    protected void updateMarkButtonText() {
       PositionTableModel tm = (PositionTableModel) posTable_.getModel();
-      MultiStagePosition msp = tm.getPositionList().getPosition(posTable_.getSelectedRow() - 1);
+      MultiStagePosition msp = tm.getPositionList().
+              getPosition(posTable_.getSelectedRow() - 1);
       if (markButton_ != null) {
          if (msp == null) {
             markButton_.setText("Mark");
