@@ -149,11 +149,13 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       canvasThread_.start();
 
       makeWindowControls();
+      // This needs to be done after the canvas is created, but before we
+      // call zoomToPreferredSize.
+      dummyWindow_ = DummyImageWindow.makeWindow(ijImage_, this, displayBus_);
       zoomToPreferredSize();
       setVisible(true);
       histograms_.calcAndDisplayHistAndStats();
 
-      dummyWindow_ = DummyImageWindow.makeWindow(ijImage_, this, displayBus_);
       addWindowListener(new WindowAdapter() {
          @Override
          public void windowClosing(WindowEvent event) {
