@@ -1,8 +1,10 @@
 package org.micromanager.data;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
+import java.nio.ShortBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,6 +28,7 @@ import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.DatastoreLockedException;
 import org.micromanager.api.data.Image;
 import org.micromanager.api.data.Metadata;
+import org.micromanager.utils.DirectBuffers;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
@@ -36,11 +39,18 @@ import org.micromanager.utils.ReportingUtils;
  * the image pixel data, metadata (in the form of a Metadata instance), and
  * the image's position as part of a larger dataset (in the form of an
  * Coords instance).
+ *
+ * For efficiency during high-speed acquisitions, we store the image data in
+ * a ByteBuffer or ShortBuffer. However, ImageJ wants to work with image data
+ * in the form of byte[], short[], or int[] arrays (depending on pixel type).
+ * getRawPixels(), the method exposed in the Image interface to access pixel
+ * data, returns an ImageJ-style array, while getPixelBuffer (which is not
+ * exposed in the API) returns the raw buffer.
  */
 public class DefaultImage implements Image {
    private Metadata metadata_;
    private Coords coords_;
-   private Object rawPixels_;
+   private Buffer rawPixels_;
    // Width of the image, in pixels
    int pixelWidth_;
    // Height of the image, in pixels
@@ -121,7 +131,7 @@ public class DefaultImage implements Image {
       catch (JSONException e) {}
       coords_ = cBuilder.build();
 
-      rawPixels_ = tagged.pix;
+      rawPixels_ = DirectBuffers.bufferFromArray(tagged.pix);
       pixelWidth_ = MDUtils.getWidth(tags);
       pixelHeight_ = MDUtils.getHeight(tags);
       bytesPerPixel_ = MDUtils.getBytesPerPixel(tags);
@@ -137,7 +147,7 @@ public class DefaultImage implements Image {
       metadata_ = metadata;
       coords_ = coords;
 
-      rawPixels_ = pixels;
+      rawPixels_ = DirectBuffers.bufferFromArray(pixels);
       pixelWidth_ = width;
       pixelHeight_ = height;
       bytesPerPixel_ = bytesPerPixel;
@@ -147,7 +157,13 @@ public class DefaultImage implements Image {
    public DefaultImage(Image source, Coords coords, Metadata metadata) {
       metadata_ = metadata;
       coords_ = coords;
-      rawPixels_ = source.getRawPixels();
+      if (source instanceof DefaultImage) {
+         // Just copy their Buffer over directly.
+         rawPixels_ = ((DefaultImage) source).getPixelBuffer();
+      }
+      else {
+         rawPixels_ = DirectBuffers.bufferFromArray(source.getRawPixels());
+      }
       pixelWidth_ = source.getWidth();
       pixelHeight_ = source.getHeight();
       bytesPerPixel_ = source.getBytesPerPixel();
@@ -161,8 +177,8 @@ public class DefaultImage implements Image {
    }
 
    /**
-    * Inspect our pixel array and bytes per pixel, and generate an ImgPlus
-    * based on what we find.
+    * Inspect the provided pixel array and bytes per pixel, and generate an
+    * ImgPlus based on what we find.
     * TODO: our handling of RGB images is imperfect.
     */
    private ImgPlus generateImgPlusFromPixels(Object pixels, int width, 
@@ -229,8 +245,16 @@ public class DefaultImage implements Image {
       return new DefaultImage(this, coords, metadata);
    }
 
+   /**
+    * Note this returns a byte[], short[], or int[] array, not a ByteBuffer,
+    * ShortBuffer, or IntBuffer. Use getPixelBuffer() for that.
+    */
    @Override
    public Object getRawPixels() {
+      return DirectBuffers.arrayFromBuffer(rawPixels_);
+   }
+
+   public Buffer getPixelBuffer() {
       return rawPixels_;
    }
 
@@ -240,12 +264,12 @@ public class DefaultImage implements Image {
    public Object getRawPixelsForComponent(int component) {
       Object result;
       int length;
-      if (rawPixels_ instanceof byte[]) {
-         length = ((byte[]) rawPixels_).length / bytesPerPixel_;
+      if (rawPixels_ instanceof ByteBuffer) {
+         length = ((ByteBuffer) rawPixels_).capacity() / bytesPerPixel_;
          result = (Object) new byte[length];
       }
-      else if (rawPixels_ instanceof short[]) {
-         length = ((short[]) rawPixels_).length / bytesPerPixel_;
+      else if (rawPixels_ instanceof ShortBuffer) {
+         length = ((ShortBuffer) rawPixels_).capacity() / bytesPerPixel_;
          result = (Object) new short[length];
       }
       else {
@@ -254,11 +278,11 @@ public class DefaultImage implements Image {
       }
       for (int i = 0; i < length; ++i) {
          int sourceIndex = i * bytesPerPixel_ + component;
-         if (rawPixels_ instanceof byte[]) {
-            ((byte[]) result)[i] = ((byte[]) rawPixels_)[sourceIndex];
+         if (rawPixels_ instanceof ByteBuffer) {
+            ((byte[]) result)[i] = ((ByteBuffer) rawPixels_).get(sourceIndex);
          }
-         else if (rawPixels_ instanceof short[]) {
-            ((short[]) result)[i] = ((short[]) rawPixels_)[sourceIndex];
+         else if (rawPixels_ instanceof ShortBuffer) {
+            ((short[]) result)[i] = ((ShortBuffer) rawPixels_).get(sourceIndex);
          }
       }
       return result;
@@ -274,7 +298,7 @@ public class DefaultImage implements Image {
       long result = 0;
       int divisor = numComponents_;
       int exponent = 8;
-      if (rawPixels_ instanceof short[]) {
+      if (rawPixels_ instanceof ShortBuffer) {
          divisor *= 2;
          exponent = 16;
       }
@@ -286,11 +310,13 @@ public class DefaultImage implements Image {
          // convert; otherwise large numbers will set the sign bit and show
          // as negative.
          int addend = 0;
-         if (rawPixels_ instanceof byte[]) {
-            addend = ImageUtils.unsignedValue(((byte[]) rawPixels_)[index]);
+         if (rawPixels_ instanceof ByteBuffer) {
+            addend = ImageUtils.unsignedValue(
+                  ((ByteBuffer) rawPixels_).get(index));
          }
-         else if (rawPixels_ instanceof short[]) {
-            addend = ImageUtils.unsignedValue(((short[]) rawPixels_)[index]);
+         else if (rawPixels_ instanceof ShortBuffer) {
+            addend = ImageUtils.unsignedValue(
+                  ((ShortBuffer) rawPixels_).get(index));
          }
          result += addend;
       }
