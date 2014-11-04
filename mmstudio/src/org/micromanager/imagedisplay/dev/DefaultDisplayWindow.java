@@ -82,6 +82,8 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
 
    private CanvasUpdateThread canvasThread_;
 
+   private boolean haveClosed_ = false;
+
    private static int titleID = 0;
    
    // store window location in Java Preferences
@@ -474,6 +476,10 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
 
    @Override
    public void forceClosed() {
+      if (haveClosed_) {
+         // Only ever call this method once.
+         return;
+      }
       canvasThread_.stopDisplayUpdates();
       // Note: we don't join the canvas thread here because this thread is
       // presumably the EDT, and the canvas thread also does actions in the
@@ -489,6 +495,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
          ReportingUtils.showError(ex, "Null pointer error in ImageJ code while closing window");
       }
       dispose();
+      haveClosed_ = true;
    }
 
    @Override
