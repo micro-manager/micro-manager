@@ -282,6 +282,13 @@ public class DisplaySettingsPanel extends JPanel {
    @Subscribe
    public void onNewImagePlus(NewImagePlusEvent event) {
       ijImage_ = event.getImagePlus();
-      displayMode_.setEnabled((ijImage_ instanceof CompositeImage));
+      if (ijImage_ instanceof CompositeImage) {
+         // Enable the display mode dropdown, and change its value if
+         // appropriate.
+         displayMode_.setEnabled(true);
+         if (((CompositeImage) ijImage_).getMode() == CompositeImage.COMPOSITE) {
+            displayMode_.setSelectedIndex(2);
+         }
+      }
    }
 }
