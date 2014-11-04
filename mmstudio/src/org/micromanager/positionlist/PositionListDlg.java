@@ -27,7 +27,6 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.FontMetrics;
 import java.awt.Insets;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
@@ -168,15 +167,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       loadPosition(100, 100, 362, 595);
 
       arialSmallFont_ = new Font("Arial", Font.PLAIN, 10);
-      // getFontMetrics is  deprecated, however, to use the preferred 
-      // Font.getLineMetrics, we need an instance of the Graphics2D object,
-      // which is null until this window is visble. However, we would like to 
-      // set the minimum size of the Axis Panel, based on font height, before
-      // it is shown...
-      @SuppressWarnings("deprecation")
-      FontMetrics smallArialMetrics = Toolkit.getDefaultToolkit().getFontMetrics(
-              arialSmallFont_);
-      
+
       final JScrollPane scrollPane = new JScrollPane();
       add(scrollPane, "split, spany, growy, growx, bottom 1:push");
 
@@ -219,12 +210,9 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       axisTable_.setModel(axisModel_);
       axisPane.setViewportView(axisTable_);
       // make sure that the complete axis Table will always be visible
-      axisPane.setMaximumSize(new Dimension(5000, 30 + 
-              (1 + axisList_.getNumberOfPositions()) * 
-              smallArialMetrics.getHeight() ) );
-      axisPane.setMinimumSize(new Dimension(50, 30 + 
-              (1 + axisList_.getNumberOfPositions()) * 
-             smallArialMetrics.getHeight() ) );
+      int tableHeight = axisList_.getNumberOfPositions() * axisTable_.getRowHeight();
+      axisPane.setMaximumSize(new Dimension(32767, 30 + tableHeight));
+      axisPane.setMinimumSize(new Dimension(50, 30 + tableHeight));
       // set divider location
       int axisCol0Width = prefs_.getInt(AXIS_COL0_WIDTH, 75);
       axisTable_.getColumnModel().getColumn(0).setWidth(axisCol0Width);
