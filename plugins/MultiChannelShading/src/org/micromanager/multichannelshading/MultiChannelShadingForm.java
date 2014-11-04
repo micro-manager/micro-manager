@@ -10,6 +10,8 @@ import ij.ImagePlus;
 import java.io.File;
 import java.util.prefs.Preferences;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.JComboBox;
+import javax.swing.JTextField;
 import mmcorej.StrVector;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.FileDialogs;
@@ -40,15 +42,15 @@ public class MultiChannelShadingForm extends javax.swing.JFrame {
    private static final String FLATFIELDNORMALIZE5 = "FLATFIELDNORMALIZE5";
    private static final String EMPTY_FILENAME_INDICATOR = "None";
    private final String[] IMAGESUFFIXES = {"tif", "tiff", "jpg", "png"};
+   private final String[] NUMBERS = {"1", "2", "3", "4", "5", "6"};
    private String flatfieldFileName_;
    private String backgroundFileName_;
    private String groupName_;
    private DefaultComboBoxModel configNameList;
-   private String item_;
    
     /**
      * Creates new form MultiChannelShadingForm
-    * @param processor
+     * @param processor
      * @param gui
      */
    public MultiChannelShadingForm(BFProcessor processor, ScriptInterface gui) {
@@ -77,8 +79,6 @@ public class MultiChannelShadingForm extends javax.swing.JFrame {
       processor_.setFlatFieldNormalize(2, flatFieldNormalize3_.isSelected());
       processor_.setFlatFieldNormalize(3, flatFieldNormalize4_.isSelected());
       processor_.setFlatFieldNormalize(4, flatFieldNormalize5_.isSelected());
-      String flatfieldFile1 = prefs_.get(groupName_ + "file1", "None");
-      flatFieldTextField1_.setText(flatfieldFile1);
       
       //populate darkFieldName from preferences and process it.
       String darkFieldFileName = prefs_.get(DARKFIELDFILENAME, "");   
@@ -95,6 +95,14 @@ public class MultiChannelShadingForm extends javax.swing.JFrame {
       groupName_ = (String) groupComboBox.getSelectedItem();
       processor_.setChannelGroup(groupName_);
       populateFlatFieldComboBoxes();
+      
+      String flatfieldFile = prefs_.get(groupName_ + "file1", "None");
+      flatFieldTextField1_.setText(flatfieldFile);
+      flatFieldTextField2_.setText(prefs_.get(groupName_ + "file2", "None"));
+      flatFieldTextField3_.setText(prefs_.get(groupName_ + "file3", "None"));
+      flatFieldTextField4_.setText(prefs_.get(groupName_ + "file4", "None"));
+      flatFieldTextField5_.setText(prefs_.get(groupName_ + "file5", "None"));
+
 
       processor_.setEnabled(useCheckBox_.isSelected());
    }
@@ -149,18 +157,25 @@ public class MultiChannelShadingForm extends javax.swing.JFrame {
             configNames = mmc_.getAvailableConfigs(groupName_);
         }
         configNames.add("None");
-        flatFieldComboBox1.setModel(new javax.swing.DefaultComboBoxModel(
+        helpFlatFieldComboBoxes(configNames, flatFieldComboBox1, "1");
+        helpFlatFieldComboBoxes(configNames, flatFieldComboBox2, "2");
+        helpFlatFieldComboBoxes(configNames, flatFieldComboBox3, "3");
+        helpFlatFieldComboBoxes(configNames, flatFieldComboBox4, "4");
+        helpFlatFieldComboBoxes(configNames, flatFieldComboBox5, "5");
+   }
+   
+   private void helpFlatFieldComboBoxes(StrVector configNames, JComboBox flatFieldComboBox, String number) {
+        flatFieldComboBox.setModel(new javax.swing.DefaultComboBoxModel(
                 configNames.toArray()));
-        flatFieldComboBox1.setSelectedItem(prefs_.get(groupName_ + "1", ""));
-        flatFieldComboBox2.setModel(new javax.swing.DefaultComboBoxModel(configNames.toArray()));
-        flatFieldComboBox2.setSelectedIndex(flatFieldComboBox2.getItemCount()-1);
-        flatFieldComboBox3.setModel(new javax.swing.DefaultComboBoxModel(configNames.toArray()));
-        flatFieldComboBox3.setSelectedIndex(flatFieldComboBox3.getItemCount()-1);
-        flatFieldComboBox4.setModel(new javax.swing.DefaultComboBoxModel(configNames.toArray()));
-        flatFieldComboBox4.setSelectedIndex(flatFieldComboBox4.getItemCount()-1);
-        flatFieldComboBox5.setModel(new javax.swing.DefaultComboBoxModel(configNames.toArray()));       
-        flatFieldComboBox5.setSelectedIndex(flatFieldComboBox5.getItemCount()-1);
-    }
+        String channel = prefs_.get(groupName_ + number, "");
+        if (channel.equals(""))
+           flatFieldComboBox.setSelectedIndex(flatFieldComboBox.getItemCount()-1);
+        else
+           flatFieldComboBox.setSelectedItem(prefs_.get(groupName_ + number, ""));
+   }
+   
+   
+   
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -498,7 +513,6 @@ public class MultiChannelShadingForm extends javax.swing.JFrame {
 
     private void flatFieldTextField1_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_flatFieldTextField1_ActionPerformed
         processFlatFieldImage(0, flatFieldTextField1_.getText());
-        
     }//GEN-LAST:event_flatFieldTextField1_ActionPerformed
 
     private void flatFieldTextField2_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_flatFieldTextField2_ActionPerformed
@@ -532,51 +546,52 @@ public class MultiChannelShadingForm extends javax.swing.JFrame {
     }//GEN-LAST:event_groupComboBoxActionPerformed
 
     private void flatFieldComboBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_flatFieldComboBox1ActionPerformed
-        item_ = (String) flatFieldComboBox1.getSelectedItem();
+        String item = (String) flatFieldComboBox1.getSelectedItem();
         //check to see if we've selected the last item_ in the combobox;
         //this avoids checking the item_ name in case there is a channel named None
         if (flatFieldComboBox1.getSelectedIndex() == flatFieldComboBox1.getItemCount()-1) {
             //None is selected
             processor_.setFlatFieldChannel(0, "");
         } else {
-            processor_.setFlatFieldChannel(0, item_);
-            prefs_.put(groupName_ + "1", item_);
+            processor_.setFlatFieldChannel(0, item);
+            prefs_.put(groupName_ + "1", item);
             //check other comboboxes, set them to "None" if they have the same item_ selected
-            if (item_.equals((String) flatFieldComboBox2.getSelectedItem())) {
+            if (item.equals((String) flatFieldComboBox2.getSelectedItem())) {
                 flatFieldComboBox2.setSelectedIndex(flatFieldComboBox2.getItemCount()-1);
             }
-            if (item_.equals((String) flatFieldComboBox3.getSelectedItem())) {
+            if (item.equals((String) flatFieldComboBox3.getSelectedItem())) {
                 flatFieldComboBox3.setSelectedIndex(flatFieldComboBox3.getItemCount()-1);
             }
-            if (item_.equals((String) flatFieldComboBox4.getSelectedItem())) {
+            if (item.equals((String) flatFieldComboBox4.getSelectedItem())) {
                 flatFieldComboBox4.setSelectedIndex(flatFieldComboBox4.getItemCount()-1);
             }
-            if (item_.equals((String) flatFieldComboBox5.getSelectedItem())) {
+            if (item.equals((String) flatFieldComboBox5.getSelectedItem())) {
                 flatFieldComboBox5.setSelectedIndex(flatFieldComboBox5.getItemCount()-1);
             }
         }           
     }//GEN-LAST:event_flatFieldComboBox1ActionPerformed
 
     private void flatFieldComboBox2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_flatFieldComboBox2ActionPerformed
-        //check to see if we've selected the last item_ in the combobox;
+        String item = (String) flatFieldComboBox2.getSelectedItem(); 
+       //check to see if we've selected the last item_ in the combobox;
         //this avoids checking the item_ name in case there is a channel named None
-        //this avoids checking the item name in case there is a channel named None
         if (flatFieldComboBox2.getSelectedIndex() == flatFieldComboBox2.getItemCount()-1) {
             //None is selected
             processor_.setFlatFieldChannel(1, "");
         } else {
-            processor_.setFlatFieldChannel(1, item_);
+            processor_.setFlatFieldChannel(1, item);
+            prefs_.put(groupName_ + "2", item);
             //check other comboboxes, set them to "None" if they have the same item_ selected
-            if (item_.equals((String) flatFieldComboBox1.getSelectedItem())) {
+            if (item.equals((String) flatFieldComboBox1.getSelectedItem())) {
                 flatFieldComboBox1.setSelectedIndex(flatFieldComboBox1.getItemCount()-1);
             }
-            if (item_.equals((String) flatFieldComboBox3.getSelectedItem())) {
+            if (item.equals((String) flatFieldComboBox3.getSelectedItem())) {
                 flatFieldComboBox3.setSelectedIndex(flatFieldComboBox3.getItemCount()-1);
             }
-            if (item_.equals((String) flatFieldComboBox4.getSelectedItem())) {
+            if (item.equals((String) flatFieldComboBox4.getSelectedItem())) {
                 flatFieldComboBox4.setSelectedIndex(flatFieldComboBox4.getItemCount()-1);
             }
-            if (item_.equals((String) flatFieldComboBox5.getSelectedItem())) {
+            if (item.equals((String) flatFieldComboBox5.getSelectedItem())) {
                 flatFieldComboBox5.setSelectedIndex(flatFieldComboBox5.getItemCount()-1);
             }
         }    
@@ -585,23 +600,24 @@ public class MultiChannelShadingForm extends javax.swing.JFrame {
     private void flatFieldComboBox3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_flatFieldComboBox3ActionPerformed
         //check to see if we've selected the last item_ in the combobox;
         //this avoids checking the item_ name in case there is a channel named None
-        //this avoids checking the item name in case there is a channel named None
+        String item = (String) flatFieldComboBox3.getSelectedItem();
         if (flatFieldComboBox3.getSelectedIndex() == flatFieldComboBox3.getItemCount()-1) {
             //None is selected
             processor_.setFlatFieldChannel(2, "");
         } else {
-            processor_.setFlatFieldChannel(2, item_);
+            processor_.setFlatFieldChannel(2, item);
+            prefs_.put(groupName_ + "3", item);
             //check other comboboxes, set them to "None" if they have the same item_ selected
-            if (item_.equals((String) flatFieldComboBox2.getSelectedItem())) {
+            if (item.equals((String) flatFieldComboBox2.getSelectedItem())) {
                 flatFieldComboBox2.setSelectedIndex(flatFieldComboBox2.getItemCount()-1);
             }
-            if (item_.equals((String) flatFieldComboBox1.getSelectedItem())) {
+            if (item.equals((String) flatFieldComboBox1.getSelectedItem())) {
                 flatFieldComboBox1.setSelectedIndex(flatFieldComboBox1.getItemCount()-1);
             }
-            if (item_.equals((String) flatFieldComboBox4.getSelectedItem())) {
+            if (item.equals((String) flatFieldComboBox4.getSelectedItem())) {
                 flatFieldComboBox4.setSelectedIndex(flatFieldComboBox4.getItemCount()-1);
             }
-            if (item_.equals((String) flatFieldComboBox5.getSelectedItem())) {
+            if (item.equals((String) flatFieldComboBox5.getSelectedItem())) {
                 flatFieldComboBox5.setSelectedIndex(flatFieldComboBox5.getItemCount()-1);
             }
         }     
@@ -610,23 +626,24 @@ public class MultiChannelShadingForm extends javax.swing.JFrame {
     private void flatFieldComboBox4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_flatFieldComboBox4ActionPerformed
         //check to see if we've selected the last item_ in the combobox;
         //this avoids checking the item_ name in case there is a channel named None
-        //this avoids checking the item name in case there is a channel named None
+        String item = (String) flatFieldComboBox4.getSelectedItem();
         if (flatFieldComboBox4.getSelectedIndex() == flatFieldComboBox4.getItemCount()-1) {
             //None is selected
             processor_.setFlatFieldChannel(3, "");
         } else {
-            processor_.setFlatFieldChannel(3, item_);
+            processor_.setFlatFieldChannel(3, item);
+            prefs_.put(groupName_ + "4", item);
             //check other comboboxes, set them to "None" if they have the same item_ selected
-            if (item_.equals((String) flatFieldComboBox2.getSelectedItem())) {
+            if (item.equals((String) flatFieldComboBox2.getSelectedItem())) {
                 flatFieldComboBox2.setSelectedIndex(flatFieldComboBox2.getItemCount()-1);
             }
-            if (item_.equals((String) flatFieldComboBox3.getSelectedItem())) {
+            if (item.equals((String) flatFieldComboBox3.getSelectedItem())) {
                 flatFieldComboBox3.setSelectedIndex(flatFieldComboBox3.getItemCount()-1);
             }
-            if (item_.equals((String) flatFieldComboBox1.getSelectedItem())) {
+            if (item.equals((String) flatFieldComboBox1.getSelectedItem())) {
                 flatFieldComboBox1.setSelectedIndex(flatFieldComboBox1.getItemCount()-1);
             }
-            if (item_.equals((String) flatFieldComboBox5.getSelectedItem())) {
+            if (item.equals((String) flatFieldComboBox5.getSelectedItem())) {
                 flatFieldComboBox5.setSelectedIndex(flatFieldComboBox5.getItemCount()-1);
             }
         }    
@@ -635,67 +652,42 @@ public class MultiChannelShadingForm extends javax.swing.JFrame {
     private void flatFieldComboBox5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_flatFieldComboBox5ActionPerformed
         //check to see if we've selected the last item_ in the combobox;
         //this avoids checking the item_ name in case there is a channel named None
-        //this avoids checking the item name in case there is a channel named None
+        String item = (String) flatFieldComboBox4.getSelectedItem();
         if (flatFieldComboBox5.getSelectedIndex() == flatFieldComboBox5.getItemCount()-1) {
             //None is selected
             processor_.setFlatFieldChannel(4, "");
         } else {
-            processor_.setFlatFieldChannel(4, item_);
+            processor_.setFlatFieldChannel(4, item);
             //check other comboboxes, set them to "None" if they have the same item_ selected
-            if (item_.equals((String) flatFieldComboBox2.getSelectedItem())) {
+            if (item.equals((String) flatFieldComboBox2.getSelectedItem())) {
                 flatFieldComboBox2.setSelectedIndex(flatFieldComboBox2.getItemCount()-1);
             }
-            if (item_.equals((String) flatFieldComboBox3.getSelectedItem())) {
+            if (item.equals((String) flatFieldComboBox3.getSelectedItem())) {
                 flatFieldComboBox3.setSelectedIndex(flatFieldComboBox3.getItemCount()-1);
             }
-            if (item_.equals((String) flatFieldComboBox4.getSelectedItem())) {
+            if (item.equals((String) flatFieldComboBox4.getSelectedItem())) {
                 flatFieldComboBox4.setSelectedIndex(flatFieldComboBox4.getItemCount()-1);
             }
-            if (item_.equals((String) flatFieldComboBox1.getSelectedItem())) {
+            if (item.equals((String) flatFieldComboBox1.getSelectedItem())) {
                 flatFieldComboBox1.setSelectedIndex(flatFieldComboBox1.getItemCount()-1);
             }
         }    
     }//GEN-LAST:event_flatFieldComboBox5ActionPerformed
 
     private void flatFieldButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_flatFieldButton1ActionPerformed
-      File f = FileDialogs.openFile(this, "Flatfield image",
-      new FileDialogs.FileType("MMAcq", "Flatfield image",
-          flatfieldFileName_, true, IMAGESUFFIXES));
-      if (f != null) {
-         processFlatFieldImage(0, f.getAbsolutePath());
-         flatFieldTextField1_.setText(f.getPath()); 
-         prefs_.put(groupName_ + "file1", f.getPath());
-      }
+       flatFieldButtonActionPerformed(1, flatFieldTextField1_);
     }//GEN-LAST:event_flatFieldButton1ActionPerformed
 
     private void flatFieldButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_flatFieldButton2ActionPerformed
-      File f = FileDialogs.openFile(this, "Flatfield image",
-      new FileDialogs.FileType("MMAcq", "Flatfield image",
-          flatfieldFileName_, true, IMAGESUFFIXES));
-      if (f != null) {
-         processFlatFieldImage(1, f.getAbsolutePath());
-         flatFieldTextField2_.setText(f.getPath()); 
-      }
+       flatFieldButtonActionPerformed(2, flatFieldTextField2_);
     }//GEN-LAST:event_flatFieldButton2ActionPerformed
 
     private void flatFieldButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_flatFieldButton3ActionPerformed
-      File f = FileDialogs.openFile(this, "Flatfield image",
-      new FileDialogs.FileType("MMAcq", "Flatfield image",
-          flatfieldFileName_, true, IMAGESUFFIXES));
-      if (f != null) {
-         processFlatFieldImage(2, f.getAbsolutePath());
-         flatFieldTextField3_.setText(f.getPath());
-      }
+       flatFieldButtonActionPerformed(3, flatFieldTextField3_);
     }//GEN-LAST:event_flatFieldButton3ActionPerformed
 
     private void flatFieldButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_flatFieldButton4ActionPerformed
-      File f = FileDialogs.openFile(this, "Flatfield image",
-      new FileDialogs.FileType("MMAcq", "Flatfield image",
-          flatfieldFileName_, true, IMAGESUFFIXES));
-      if (f != null) {
-         processFlatFieldImage(3, f.getAbsolutePath());
-         flatFieldTextField4_.setText(f.getPath());
-      }
+       flatFieldButtonActionPerformed(4, flatFieldTextField4_);
     }//GEN-LAST:event_flatFieldButton4ActionPerformed
 
     private void flatFieldButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_flatFieldButton5ActionPerformed
@@ -708,6 +700,25 @@ public class MultiChannelShadingForm extends javax.swing.JFrame {
       }
     }//GEN-LAST:event_flatFieldButton5ActionPerformed
 
+    /**
+     * Helper function for the individual buttons
+     * @param textFieldNumber number of button (starts with 1)
+     * @param flatFieldTextField - textfield associated with this action
+     */
+    private void flatFieldButtonActionPerformed(int textFieldNumber, 
+            JTextField flatFieldTextField) {
+       File f = FileDialogs.openFile(this, "Flatfield image",
+       new FileDialogs.FileType("MMAcq", "Flatfield image",
+                           flatfieldFileName_, true, IMAGESUFFIXES));
+       if (f != null) {
+          processFlatFieldImage(textFieldNumber - 1, f.getAbsolutePath());
+          flatFieldTextField.setText(f.getPath());
+          String key = groupName_ + "file" + textFieldNumber;
+          prefs_.put(key, f.getPath());
+      }
+    }
+    
+    
     private void darkFieldTextField_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_darkFieldTextField_ActionPerformed
         processBackgroundImage(darkFieldTextField_.getText());
     }//GEN-LAST:event_darkFieldTextField_ActionPerformed
