@@ -112,14 +112,6 @@ public class ToolsMenu {
               },
               "film.png");
 
-      GUIUtils.addMenuItem(toolsMenu_, "Image Processors...",
-            "Display the image processing pipeline",
-            new Runnable() {
-               public void run() {
-                  studio_.showPipelinePanel();
-               }
-            });
-
       centerAndDragMenuItem_ = GUIUtils.addCheckBoxMenuItem(toolsMenu_,
               "Mouse Moves Stage (Use Hand Tool)",
               "When enabled, double clicking or dragging in the snap/live\n"
