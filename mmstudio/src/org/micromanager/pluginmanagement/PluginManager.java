@@ -21,8 +21,8 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class PluginManager {
    private JMenu pluginMenu_;
-   private Map<String, JMenu> pluginSubMenus_;
-   private PluginLoader pluginLoader_;
+   private final Map<String, JMenu> pluginSubMenus_ = new HashMap<String, JMenu>();
+   private final PluginLoader pluginLoader_;
 
    private MMStudio studio_;
    private JMenuBar menuBar_;
@@ -35,14 +35,6 @@ public class PluginManager {
 
    public Thread initializePlugins() {
       pluginMenu_ = GUIUtils.createMenuInMenuBar(menuBar_, "Plugins");
-      GUIUtils.addMenuItem(pluginMenu_, "Image Processors...",
-            "Display the image processing pipeline",
-            new Runnable() {
-               public void run() {
-                  studio_.showPipelinePanel();
-               }
-            });
-      pluginMenu_.addSeparator();
 
       Thread loadThread = new Thread(new ThreadGroup("Plugin loading"),
             new Runnable() {
@@ -65,7 +57,7 @@ public class PluginManager {
    public void addPluginToMenu(final PluginItem plugin) {
       List<String> path = plugin.getMenuPath();
       final PluginManager thisInstance = this;
-      if (path.size() == 1) {
+      if (path.size() == 1) { // Add plugin to top-level menu
          GUIUtils.addMenuItem(pluginMenu_, plugin.getMenuItem(), plugin.getTooltip(),
                  new Runnable() {
             public void run() {
@@ -73,10 +65,7 @@ public class PluginManager {
             }
          });
       }
-      if (path.size() == 2) {
-         if (pluginSubMenus_ == null) {
-            pluginSubMenus_ = new HashMap<String, JMenu>();
-         }
+      else if (path.size() == 2) { // Add plugin to submenu
          String groupName = path.get(0);
          JMenu submenu = pluginSubMenus_.get(groupName);
          if (submenu == null) {
@@ -84,6 +73,11 @@ public class PluginManager {
             pluginSubMenus_.put(groupName, submenu);
             submenu.validate();
             pluginMenu_.add(submenu);
+            if (groupName.equals("Image Processing")) {
+               // Sorry for this hard-coded special behavior
+               addImageProcessorConfigureMenuItem(submenu);
+               submenu.addSeparator();
+            }
          }
          GUIUtils.addMenuItem(submenu, plugin.getMenuItem(), plugin.getTooltip(),
                  new Runnable() {
@@ -92,9 +86,22 @@ public class PluginManager {
             }
          });
       }
-      
+      else {
+         // Ignore plugins in deeper paths.
+      }
+
       pluginMenu_.validate();
       menuBar_.validate();
+   }
+
+   private void addImageProcessorConfigureMenuItem(JMenu menu) {
+      GUIUtils.addMenuItem(menu, "Configure Processors...",
+            "Set up the image processor pipeline",
+            new Runnable() {
+               public void run() {
+                  studio_.showPipelinePanel();
+               }
+            });
    }
 
    // Handle a plugin being selected from the Plugins menu.
