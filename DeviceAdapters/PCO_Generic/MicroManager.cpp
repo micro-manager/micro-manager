@@ -143,6 +143,7 @@ pictime_(0.0)
   m_iIRMode = 0;
   m_iNumImages = -1;
   dIntervall = 0.0;
+  m_iAcquireMode = 0;
 
   m_bSettingsChanged = TRUE;
   m_bDoAutoBalance = TRUE;
@@ -265,6 +266,45 @@ int CPCOCam::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
           m_pCamera->strCam.strTiming.dwFrameRate = (DWORD)(m_dFps * 1000.0);
         }
       }
+      nErr = SetupCamera();
+    }
+
+    if (nErr != 0)
+      return nErr;
+  }
+  return DEVICE_OK;
+}
+
+
+int CPCOCam::OnAcquireMode( MM::PropertyBase* pProp, MM::ActionType eAct )
+{
+  if (eAct == MM::BeforeGet)
+  {
+    if(m_pCamera->iCamClass == 3)
+    {
+      m_iAcquireMode =  m_pCamera->strCam.strRecording.wAcquMode;
+
+      if(m_iAcquireMode == 0)
+        pProp->Set("Internal");
+      else
+        pProp->Set("External");
+    }
+  }
+  else if (eAct == MM::AfterSet)
+  {
+    int nErr = 0;
+    long ihelp;
+    string tmp;
+    pProp->Get(tmp);
+    ((MM::Property *) pProp)->GetData(tmp.c_str(), ihelp);
+    //pProp->Get(ihelp);
+
+    if(ihelp != m_iAcquireMode)
+    {
+      m_iAcquireMode = ihelp;
+      if(m_pCamera->iCamClass == 3)
+        m_pCamera->strCam.strRecording.wAcquMode = (WORD)m_iAcquireMode;
+
       nErr = SetupCamera();
     }
 
@@ -1373,6 +1413,19 @@ int CPCOCam::Initialize()
       if (nRet != DEVICE_OK)
         return nRet;
       nRet = AddAllowedValue("IR Mode","On",1);
+      if (nRet != DEVICE_OK)
+        return nRet;
+    }
+    if((m_pCamera->strCam.strSensor.strDescription.dwGeneralCapsDESC1 & GENERALCAPS1_NO_ACQUIREMODE) == 0)
+    {// Bit 9: Acquire mode not available
+      pAct = new CPropertyAction (this, &CPCOCam::OnAcquireMode);
+      nRet = CreateProperty("Acquiremode", "Internal", MM::String, false, pAct);
+      if (nRet != DEVICE_OK)
+        return nRet;
+      nRet = AddAllowedValue("Acquiremode","Internal",0);
+      if (nRet != DEVICE_OK)
+        return nRet;
+      nRet = AddAllowedValue("Acquiremode","External",1);
       if (nRet != DEVICE_OK)
         return nRet;
     }

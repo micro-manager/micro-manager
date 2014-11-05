@@ -106,6 +106,7 @@ public:
   int OnCameraType(MM::PropertyBase* pProp, MM::ActionType eAct);
   int OnCCDType(MM::PropertyBase* pProp, MM::ActionType eAct);
   int OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct);
+  int OnAcquireMode(MM::PropertyBase* pProp, MM::ActionType eAct);
   int OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct);
   int OnFpsMode(MM::PropertyBase* pProp, MM::ActionType eAct);
   int OnNoiseFilterMode(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -228,6 +229,7 @@ private:
   int m_iNumImages;
   int m_iNumImagesInserted;
   double dIntervall;
+  int m_iAcquireMode;
 };
 
 #endif //_PCO_GENERIC_H_
