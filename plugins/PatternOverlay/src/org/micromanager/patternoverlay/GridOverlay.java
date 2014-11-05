@@ -33,13 +33,13 @@ public class GridOverlay extends GenericOverlay {
       for (int iii = 0; iii < numPanels; ++iii) { // draw vertical lines
          path.moveTo(xoff, 0f);
          path.lineTo(xoff, height);
-         xoff += dHeight;
+         xoff += dWidth;
       }
       float yoff = height/2 - (numPanels*dHeight/2);  // make sure we end up centered
       for (int iii = 0; iii < numPanels; ++iii) { // draw horizontal lines
          path.moveTo(0f, yoff);
          path.lineTo(width, yoff);
-         yoff += dWidth;
+         yoff += dHeight;
       }
       
       Roi roi = new ShapeRoi(path);
