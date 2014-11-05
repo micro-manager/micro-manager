@@ -106,6 +106,8 @@ Type: files; Name: "{app}\mmplugins\StageControl.jar"
 Type: files; Name: "{app}\mmplugins\pgFocus.jar"
 ; PixelCalibrator was moved to Beta, but now is back at toplevel.
 Type: files; Name: "{app}\mmplugins\Beta\PixelCalibrator.jar"
+; PatternOverlay was placed in Image Processing, but was moved to the toplevel.
+Type: files; Name: "{app}\mmplugins\Image_Processing\PatternOverlay.jar"
 
 ; Renamed to NewportCONEX
 Type: files; Name: "{app}\mmgr_dal_CONEX.dll"
