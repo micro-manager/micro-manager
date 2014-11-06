@@ -1,4 +1,8 @@
 <project name="MultiChannelShading" default="jar">
 	<property name="plugin.path" value="Image_Processing"/>
 	<import file="../javapluginbuild.xml"/>
+
+	<path id="plugin.classpath">
+		<pathelement location="${mm.java.lib.miglayout}"/>
+	</path>
 </project>
