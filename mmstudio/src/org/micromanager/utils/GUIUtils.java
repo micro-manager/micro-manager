@@ -196,6 +196,10 @@ public class GUIUtils {
     * screen location.
     */
    public static Rectangle getMaxWindowSizeForPoint(int x, int y) {
+      // HACK: treat negative indices (i.e. window is not actually on any
+      // display) as if they were zero.
+      x = Math.max(x, 0);
+      y = Math.max(y, 0);
       GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
       GraphicsDevice[] devices = env.getScreenDevices();
       for (GraphicsDevice device : devices) {
