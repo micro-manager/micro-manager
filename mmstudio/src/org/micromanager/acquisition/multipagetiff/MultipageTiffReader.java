@@ -19,7 +19,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package org.micromanager.acquisition;
+package org.micromanager.acquisition.multipagetiff;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -31,12 +31,16 @@ import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.util.HashMap;
 import java.util.Set;
+
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+
 import mmcorej.TaggedImage;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
 import org.micromanager.imagedisplay.DisplaySettings;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMException;
