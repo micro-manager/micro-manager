@@ -389,7 +389,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
     * For backwards compatibility, generate a DefaultDisplaySettings from
     * a JSONObject.
     */
-   public static DisplaySettings legacyFromJSON(JSONObject tags) {
+   public static DefaultDisplaySettings legacyFromJSON(JSONObject tags) {
       if (tags == null) {
          return new Builder().build();
       }
