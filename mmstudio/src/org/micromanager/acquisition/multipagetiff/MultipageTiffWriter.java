@@ -19,12 +19,13 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package org.micromanager.acquisition;
+package org.micromanager.acquisition.multipagetiff;
 
 
 import ij.ImageJ;
 import ij.io.TiffDecoder;
 import ij.process.LUT;
+
 import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
@@ -40,10 +41,13 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
 import mmcorej.TaggedImage;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
 import org.micromanager.MMStudio;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MDUtils;
@@ -89,9 +93,7 @@ public class MultipageTiffWriter {
          
    public static final ByteOrder BYTE_ORDER = ByteOrder.nativeOrder();
    
-   final private boolean omeTiff_;
-   
-   private TaggedImageStorageMultipageTiff masterMPTiffStorage_;
+   private StorageMultipageTiff masterMPTiffStorage_;
    private RandomAccessFile raFile_;
    private FileChannel fileChannel_; 
    private ThreadPoolExecutor writingExecutor_;
@@ -116,14 +118,11 @@ public class MultipageTiffWriter {
    private MultipageTiffReader reader_;
    private long blankPixelsOffset_ = -1;
    private String summaryMDString_;
-   private boolean fastStorageMode_;
    
    public MultipageTiffWriter(String directory, String filename, 
-           JSONObject summaryMD, TaggedImageStorageMultipageTiff mpTiffStorage,
-           boolean fastStorageMode, boolean splitByPositions) throws IOException {
-      fastStorageMode_ = fastStorageMode;
+           JSONObject summaryMD, StorageMultipageTiff mpTiffStorage,
+           boolean splitByPositions) throws IOException {
       masterMPTiffStorage_ = mpTiffStorage;
-      omeTiff_ = mpTiffStorage.omeTiff_;        
       reader_ = new MultipageTiffReader(summaryMD);
       File f = new File(directory + "/" + filename); 
       
@@ -187,11 +186,7 @@ public class MultipageTiffWriter {
    }
    
    private void executeWritingTask(Runnable writingTask) {
-      if (fastStorageMode_) {
-         writingExecutor_.execute(writingTask);
-      } else {
-         writingTask.run();
-      }
+      writingExecutor_.execute(writingTask);
    }
    
    private void fileChannelWrite(final ByteBuffer buffer, final long position) {
@@ -327,14 +322,13 @@ public class MultipageTiffWriter {
       }
       writeImageJMetadata( numChannels_, summaryComment);
 
-      if (omeTiff_) {
-         try {
-            writeImageDescription(omeXML, omeDescriptionTagPosition_);                 
-         } catch (Exception ex) {
-            ReportingUtils.showError("Error writing OME metadata");
-         }
+      try {
+         writeImageDescription(omeXML, omeDescriptionTagPosition_);
+      } catch (Exception ex) {
+         ReportingUtils.showError("Error writing OME metadata");
       }
-      writeImageDescription(getIJDescriptionString(), ijDescriptionTagPosition_); 
+      writeImageDescription(getIJDescriptionString(),
+            ijDescriptionTagPosition_); 
       
       writeDisplaySettings();
       writeComments();
@@ -373,9 +367,7 @@ public class MultipageTiffWriter {
       int extraPadding = 5000000; 
       long size = mdLength+IFDSize+bytesPerImagePixels_+SPACE_FOR_COMMENTS+
       numChannels_ * DISPLAY_SETTINGS_BYTES_PER_CHANNEL + extraPadding + filePosition_;
-      if (omeTiff_) {
-         size += omeMDLength;
-      }
+      size += omeMDLength;
       
       if ( size >= MAX_FILE_SIZE) {
          return false;
@@ -937,7 +929,7 @@ public class MultipageTiffWriter {
 //      boolean blankPixelsAlreadyWritten = blankPixelsOffset_ != -1;
       boolean blankPixelsAlreadyWritten = false;
 
-      char numEntries = (char) (((firstIFD_ && omeTiff_) ? ENTRIES_PER_IFD + 2 : ENTRIES_PER_IFD)
+      char numEntries = (char) ((firstIFD_ ? ENTRIES_PER_IFD + 2 : ENTRIES_PER_IFD)
               + (firstIFD_ ? 2 : 0));
      
       byte[] mdBytes = getBytesFromString("NULL ");
@@ -967,7 +959,7 @@ public class MultipageTiffWriter {
       writeIFDEntry(ifdBuffer,charView,COMPRESSION,(char)3,1,1);
       writeIFDEntry(ifdBuffer,charView,PHOTOMETRIC_INTERPRETATION,(char)3,1,rgb_?2:1);
       
-      if (firstIFD_ && omeTiff_) {
+      if (firstIFD_) {
                   omeDescriptionTagPosition_ = filePosition_ + bufferPosition_;
          writeIFDEntry(ifdBuffer, charView, IMAGE_DESCRIPTION, (char) 2, 0, 0);
       }     
