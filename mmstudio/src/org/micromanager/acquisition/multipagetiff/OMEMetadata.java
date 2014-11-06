@@ -19,7 +19,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package org.micromanager.acquisition;
+package org.micromanager.acquisition.multipagetiff;
 
 import java.nio.ByteOrder;
 import java.util.TreeMap;
@@ -39,7 +39,7 @@ import org.micromanager.utils.ReportingUtils;
 public class OMEMetadata {
 
    private IMetadata metadata_;
-   private TaggedImageStorageMultipageTiff mptStorage_;
+   private StorageMultipageTiff mptStorage_;
    private TreeMap<Integer, Indices> seriesIndices_ = new TreeMap<Integer, Indices>();
    private int numSlices_, numChannels_;
    private TreeMap<String, Integer> tiffDataIndexMap_;
@@ -51,7 +51,7 @@ public class OMEMetadata {
       int planeIndex_ = 0;
    }
    
-   public OMEMetadata(TaggedImageStorageMultipageTiff mpt) {
+   public OMEMetadata(StorageMultipageTiff mpt) {
       mptStorage_ = mpt;
       tiffDataIndexMap_ = new TreeMap<String,Integer>();
       metadata_ = MetadataTools.createOMEXMLMetadata();
