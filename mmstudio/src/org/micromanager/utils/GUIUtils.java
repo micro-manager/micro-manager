@@ -196,10 +196,22 @@ public class GUIUtils {
     * screen location.
     */
    public static Rectangle getMaxWindowSizeForPoint(int x, int y) {
-      // HACK: treat negative indices (i.e. window is not actually on any
-      // display) as if they were zero.
-      x = Math.max(x, 0);
-      y = Math.max(y, 0);
+      // First we try to accomplish this with the given coordinates. Then,
+      // if that fails, we try replacing negative coordinates with zero --
+      // this can happen if the coordinates are to the left of the primary
+      // display and there is no secondary display there.
+      GraphicsConfiguration config = getGraphicsConfigurationContaining(x, y);
+      if (config == null) {
+         x = Math.max(x, 0);
+         y = Math.max(y, 0);
+         // This should always succeed as the primary display contains (0, 0).
+         config = getGraphicsConfigurationContaining(x, y);
+      }
+      return config.getBounds();
+   }
+
+   public static GraphicsConfiguration getGraphicsConfigurationContaining(
+         int x, int y) {
       GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
       GraphicsDevice[] devices = env.getScreenDevices();
       for (GraphicsDevice device : devices) {
@@ -207,7 +219,7 @@ public class GUIUtils {
          for (GraphicsConfiguration config : configs) {
             Rectangle bounds = config.getBounds();
             if (bounds.contains(x, y)) {
-               return bounds;
+               return config;
             }
          }
       }
