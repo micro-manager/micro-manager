@@ -130,8 +130,8 @@ final public class PipelineFrame extends JFrame
 
       JLabel explanationLabel = new JLabel(
             "<html><div width=\"125\" style=\"font-size: small\">"
-            + "The active image processors in the pipeline are applied to "
-            + "acquired images in order."
+            + "Enabled processors in the pipeline are applied in order to "
+            + "images acquired by the camera."
             + "</div></html>");
       add(explanationLabel);
 
