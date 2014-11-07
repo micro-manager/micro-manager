@@ -29,6 +29,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -168,8 +170,11 @@ public final class StorageMultipageTiff implements Storage {
       MultipageTiffReader.fixIndexMapWithoutPrompt_ = false;
 
       if (reader != null) {
-         setSummaryMetadata(DefaultSummaryMetadata.legacyFromJSON(reader.getSummaryMetadata()), true);
-         displaySettings_ = DefaultDisplaySettings.legacyFromJSON(reader.getDisplayAndComments());
+         // TODO: coercing to DefaultSummaryMetadata here to match method
+         // signature; see our setSummaryMetadata methods for more info.
+         setSummaryMetadata((DefaultSummaryMetadata) reader.getSummaryMetadata(), true);
+         // TODO: is this coercion needed?
+         displaySettings_ = (DefaultDisplaySettings) reader.getDisplaySettings();
       }
 
       progressBar.setProgress(1);
@@ -229,6 +234,12 @@ public final class StorageMultipageTiff implements Storage {
       }
    }
 
+   /**
+    * TODO: subscribe to the Datastore to get notified of new DisplaySettings.
+    */
+   /**
+    * TODO: subscribe to the Datastore to get notified of new Images.
+    */
    public void putImage(TaggedImage taggedImage) throws MMException, IOException {
       if (!newDataSet_) {
          ReportingUtils.showError("Tried to write image to a finished data set");
@@ -294,7 +305,6 @@ public final class StorageMultipageTiff implements Storage {
     * Finishes writing the metadata file and closes it.
     * After calling this function, the imagestorage is read-only
     */
-   @Override
    public synchronized void finished() {
       if (finished_) {
          return;
@@ -386,7 +396,6 @@ public final class StorageMultipageTiff implements Storage {
    /**
     * Disposes of the tagged images in the imagestorage
     */
-   @Override
    public void close() {
       for (MultipageTiffReader r : new HashSet<MultipageTiffReader>(tiffReadersByLabel_.values())) {
          try {
@@ -397,17 +406,21 @@ public final class StorageMultipageTiff implements Storage {
       }
    }
 
-   @Override
    public boolean isFinished() {
       return !newDataSet_;
    }
 
-   @Override
+   /**
+    * TODO: disallowing non-DefaultSummaryMetadata instances here because
+    * we rely on DefaultSummaryMetadata's JSON conversion functions.
+    * TODO: subscribe to the Datastore to get notified of newly-created
+    * images.
+    */
    public void setSummaryMetadata(SummaryMetadata summary) {
-      setSummaryMetadata(summary, false);
+      setSummaryMetadata((DefaultSummaryMetadata) summary, false);
    }
    
-   private void setSummaryMetadata(SummaryMetadata summary,
+   private void setSummaryMetadata(DefaultSummaryMetadata summary,
          boolean showProgress) {
       summaryMetadata_ = summary;
       JSONObject summaryJSON = summary.legacyToJSON();
@@ -444,23 +457,19 @@ public final class StorageMultipageTiff implements Storage {
    public boolean getSplitByStagePosition() {
       return splitByXYPosition_;
    }
-   
-   @Override
-   public JSONObject getDisplayAndComments() {
-      return displaySettings_;
-   }
 
-   @Override
-   public void setDisplayAndComments(JSONObject settings) {
-      displaySettings_ = settings;
+   /**
+    * TODO: casting to DefaultDisplaySettings for now.
+    */
+   public void setDisplaySettings(DisplaySettings settings) {
+      displaySettings_ = (DefaultDisplaySettings) settings;
    }
           
-   @Override   
    public void writeDisplaySettings() {
       for (MultipageTiffReader r : new HashSet<MultipageTiffReader>(tiffReadersByLabel_.values())) {
          try {
-            r.rewriteDisplaySettings(displaySettings_.getJSONArray("Channels"));
-            r.rewriteComments(displaySettings_.getJSONObject("Comments"));
+            r.rewriteDisplaySettings(displaySettings_);
+            r.rewriteComments(summaryMetadata_.getComments());
          } catch (JSONException ex) {
             ReportingUtils.logError("Error writing display settings");
          } catch (IOException ex) {
@@ -469,12 +478,10 @@ public final class StorageMultipageTiff implements Storage {
       }
    }
 
-   @Override
    public String getDiskLocation() {
       return directory_;
    }
 
-   @Override
    public int lastAcquiredFrame() {
       if (newDataSet_) {
          return lastFrame_;
@@ -557,6 +564,12 @@ public final class StorageMultipageTiff implements Storage {
    @Override
    public Image getImage(Coords coords) {
       ReportingUtils.logError("TODO: implement getImage");
+      return null;
+   }
+
+   @Override
+   public Image getAnyImage() {
+      ReportingUtils.logError("TODO: implement getAnyImage");
       return null;
    }
 }
