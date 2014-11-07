@@ -40,6 +40,13 @@ public interface Datastore {
    public Image getImage(Coords coords);
 
    /**
+    * Retrieve an image of arbitrary coordinates, or null if there are no
+    * images (or if no Storage has been provided yet). No guarantees are made
+    * about the position of the provided image.
+    */
+   public Image getAnyImage();
+
+   /**
     * Retrieve a list of all images whose Coords match the given incomplete
     * Coords instance. For example, providing a Coords of <"z" = 9> would
     * return all Images whose position along the "z" axis is 9. May be empty.

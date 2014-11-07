@@ -9,12 +9,24 @@ import java.util.List;
  * In practice you are unlikely to need to implement your own Storage class,
  * and most of its methods are simply "backings" for similar methods in
  * Datastore.
+ *
+ * Note that the Storage interface does not expose any "setter" methods
+ * (e.g. putImage(), setSummaryMetadata(), etc.). It is expected that any
+ * read/write Storage listen for the relevant events published by the
+ * Datastore instead.
  */
 public interface Storage {
    /**
     * Retrieve the Image located at the specified coordinates.
     */
    public Image getImage(Coords coords);
+
+   /**
+    * Return any Image, or null if there are no images. Only really useful if
+    * you need a representative image to work with. No guarantees are made
+    * about which image will be provided.
+    */
+   public Image getAnyImage();
 
    /**
     * Retrieve a list of all images whose Coords match the given incomplete
