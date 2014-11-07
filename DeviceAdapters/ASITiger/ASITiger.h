@@ -105,6 +105,7 @@ const char* const g_MMirrorDeviceName = "MicroMirror";  // deprecated
 const char* const g_PiezoDeviceName = "PiezoStage";
 const char* const g_CRISPDeviceName = "CRISPAFocus";
 const char* const g_LEDDeviceName = "LED";
+const char* const g_PLogicDeviceName = "PLogic";
 
 // corresponding device descriptions
 const char* const g_TigerCommHubDescription = "ASI TigerComm Hub (TG-1000)";
@@ -117,6 +118,7 @@ const char* const g_ScannerDeviceDescription = "ASI 2-axis Scanner";
 const char* const g_PiezoDeviceDescription = "ASI Piezo Stage";
 const char* const g_CRISPDeviceDescription = "ASI CRISP AutoFocus";
 const char* const g_LEDDeviceDescription = "ASI LED Illuminator";
+const char* const g_PLogicDeviceDescription = "ASI Programmable Logic";
 
 // constant values
 const double g_StageMinStepSize = 0.001;   // in units of um
@@ -305,6 +307,36 @@ const char* const g_LaserSwitchTimePropertyName = "LaserSwitchTime(ms)";
 // LED property names
 const char* const g_LEDIntensityPropertyName = "LED Intensity(%)";
 const char* const g_ShutterState = "State";
+
+// clocked device property names
+const char* const g_NumPositionsPropertyName = "NumPositions";
+
+// programmable logic property names
+const char* const g_NumLogicCellsPropertyName = "NumLogicCells";
+const char* const g_PLogicOutputStatePropertyName = "PLogicOutputState";
+const char* const g_FrontpanelOutputStatePropertyName = "FrontpanelOutputState";
+const char* const g_BackplaneOutputStatePropertyName = "BackplaneOutputState";
+const char* const g_PointerPositionPropertyName = "PointerPosition";
+const char* const g_TriggerSourcePropertyName = "TriggerSource";
+const char* const g_CellGenericPropertyName = "Cell";
+const char* const g_TypeGenericPropertyName = "Type";
+
+// programmable logic enums
+const char* const g_TypeCode0 = "0 - constant";
+const char* const g_TypeCode1 = "1 - D flop";
+const char* const g_TypeCode2 = "2 - 2-input LUT";
+const char* const g_TypeCode3 = "3 - 3-input LUT";
+const char* const g_TypeCode4 = "4 - 4-input LUT";
+const char* const g_TypeCode5 = "5 - 2-input AND";
+const char* const g_TypeCode6 = "6 - 2-input OR";
+const char* const g_TypeCode7 = "7 - 2-input XOR";
+const char* const g_TypeCode8 = "8 - one shot";
+const char* const g_TypeCode9= "9 - delay";
+const char* const g_SourceCode0 = "0 - internal 4kHz";
+const char* const g_SourceCode1 = "1 - Micro-mirror card";
+const char* const g_SourceCode2 = "2 - backplane TTL5";
+const char* const g_SourceCode3 = "3 - backplane TTL7";
+const char* const g_SourceCode4 = "4 - frontpanel BNC 1";
 
 // SPIM enums
 // which side first

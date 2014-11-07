@@ -2048,7 +2048,7 @@ int CScanner::OnJoystickFastSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
-     char joystickMirror[MM::MaxStrLength];
+      char joystickMirror[MM::MaxStrLength];
       RETURN_ON_MM_ERROR ( GetProperty(g_JoystickMirrorPropertyName, joystickMirror) );
       if (strcmp(joystickMirror, g_YesState) == 0)
          command << addressChar_ << "JS X=-" << tmp;

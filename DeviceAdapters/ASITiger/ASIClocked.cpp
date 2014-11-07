@@ -72,7 +72,7 @@ int CClocked::Initialize()
    RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(numPositions_) );
    command.str("");
    command << numPositions_;
-   CreateProperty("NumPositions", command.str().c_str(), MM::Integer, true);
+   CreateProperty(g_NumPositionsPropertyName, command.str().c_str(), MM::Integer, true);
 
    // add allowed values to the special state/position property for state devices
    CPropertyAction* pAct = new CPropertyAction (this, &CClocked::OnState);

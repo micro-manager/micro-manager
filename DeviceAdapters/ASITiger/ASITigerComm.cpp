@@ -251,6 +251,9 @@ int CTigerCommHub::DetectInstalledDevices()
          case 'f': // filter slider, a clocked device
             name = g_FSliderDeviceName;
             break;
+         case 'g': // programmable logic
+            name = g_PLogicDeviceName;
+            break;
          default:
             return ERR_TIGER_DEV_NOT_SUPPORTED;
       }

@@ -40,6 +40,7 @@
 #include "ASIPiezo.h"
 #include "ASICRISP.h"
 #include "ASILED.h"
+#include "ASIPLogic.h"
 #include <cstdio>
 #include <string>
 #include "../../MMDevice/MMDevice.h"
@@ -93,6 +94,8 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
       return new CCRISP(deviceName);
    else if (deviceStr.compare(0, strlen(g_LEDDeviceName), (string)g_LEDDeviceName) == 0)
       return new CLED(deviceName);
+   else if (deviceStr.compare(0, strlen(g_PLogicDeviceName), (string)g_PLogicDeviceName) == 0)
+      return new CPLogic(deviceName);
    else
       return 0;
 }

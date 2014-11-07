@@ -84,10 +84,11 @@ public:
    string LastSerialCommand() const { return serialCommand_; }
    void SetLastSerialAnswer(string s) { serialAnswer_ = s; }  // used to parse subsets of full answer for commands like PZINFO using "Split" functions
 
-	// Interpreting serial response
-	int ParseAnswerAfterEquals(double &val);  // finds next number after equals sign and returns as float
-	int ParseAnswerAfterEquals(long &val);  // finds next number after equals sign and returns as long int
-	int ParseAnswerAfterEquals(unsigned int &val);  // finds next number after equals sign and returns as long int
+   // Interpreting serial response
+   int ParseAnswerAfterEquals(double &val);  // finds next number after equals sign and returns as float
+   int ParseAnswerAfterEquals(long &val);  // finds next number after equals sign and returns as long int
+   int ParseAnswerAfterEquals(unsigned int &val);  // finds next number after equals sign and returns as long int
+   int ParseAnswerAfterUnderscore(unsigned int &val);  // finds next number after underscore and returns as long int
    int ParseAnswerAfterColon(double &val);  // finds next number after colon and returns as float
    int ParseAnswerAfterColon(long &val);  // finds next number after colon and returns as long int
 	int ParseAnswerAfterPosition(unsigned int pos, double &val);  // finds next number after character position specified and returns as float

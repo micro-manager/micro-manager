@@ -169,6 +169,17 @@ int ASIHub::ParseAnswerAfterEquals(unsigned int &val)
    return DEVICE_OK;
 }
 
+int ASIHub::ParseAnswerAfterUnderscore(unsigned int &val)
+{
+   size_t pos = serialAnswer_.find("_");
+   if ((pos == string::npos) || ((pos+1) >= serialAnswer_.length()))
+   {
+      return ERR_UNRECOGNIZED_ANSWER;
+   }
+   val = atol(serialAnswer_.substr(serialAnswer_.find("_")+1).c_str());
+   return DEVICE_OK;
+}
+
 int ASIHub::ParseAnswerAfterColon(double &val)
 {
    size_t pos = serialAnswer_.find(":");

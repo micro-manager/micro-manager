@@ -166,6 +166,7 @@
     <ClCompile Include="ASIHub.cpp" />
     <ClCompile Include="ASILED.cpp" />
     <ClCompile Include="ASIPiezo.cpp" />
+	<ClCompile Include="ASIPLogic.cpp" />
     <ClCompile Include="ASIScanner.cpp" />
     <ClCompile Include="ASITiger.cpp" />
     <ClCompile Include="ASITigerComm.cpp" />
@@ -181,6 +182,7 @@
     <ClInclude Include="ASILED.h" />
     <ClInclude Include="ASIPeripheralBase.h" />
     <ClInclude Include="ASIPiezo.h" />
+	<ClInclude Include="ASIPLogic.h" />
     <ClInclude Include="ASIScanner.h" />
     <ClInclude Include="ASITiger.h" />
     <ClInclude Include="ASITigerComm.h" />
