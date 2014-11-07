@@ -32,6 +32,10 @@ import ome.xml.model.primitives.*;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.micromanager.api.data.DisplaySettings;
+import org.micromanager.api.data.Image;
+import org.micromanager.api.data.Metadata;
+import org.micromanager.api.data.SummaryMetadata;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
@@ -90,42 +94,49 @@ public class OMEMetadata {
       indices.planeIndex_ = 0;
       indices.tiffDataIndex_ = 0;
       seriesIndices_.put(seriesIndex, indices);  
+      // We need to know bytes per pixel, which requires having an Image handy.
+      // TODO: there's an implicit assumption here that all images in the
+      // file have the same bytes per pixel.
+      numSlices_ = mptStorage_.getMaxIndex("z") + 1;
+      numChannels_ = mptStorage_.getMaxIndex("channel") + 1;
+      Image repImage = mptStorage_.getAnyImage();
       //Last one is samples per pixel
-      JSONObject summaryMD = mptStorage_.getSummaryMetadata();
-      numSlices_ = MDUtils.getNumSlices(summaryMD);
-      numChannels_ = MDUtils.getNumChannels(summaryMD);
-      MetadataTools.populateMetadata(metadata_, seriesIndex, baseFileName, MultipageTiffWriter.BYTE_ORDER.equals(ByteOrder.LITTLE_ENDIAN),
-              mptStorage_.slicesFirst() ? "XYZCT" : "XYCZT", "uint" + (MDUtils.isGRAY8(summaryMD) ? "8" : "16"),
-              MDUtils.getWidth(summaryMD), MDUtils.getHeight(summaryMD),
-              numSlices_, MDUtils.getNumChannels(summaryMD), MDUtils.getNumFrames(summaryMD), 1);
+      MetadataTools.populateMetadata(metadata_, seriesIndex, baseFileName,
+            MultipageTiffWriter.BYTE_ORDER.equals(ByteOrder.LITTLE_ENDIAN),
+            mptStorage_.slicesFirst() ? "XYZCT" : "XYCZT",
+            "uint" + repImage.getBytesPerPixel() * 8,
+            repImage.getWidth(), repImage.getHeight(),
+            numSlices_, numChannels_, mptStorage_.getMaxIndex("time") + 1, 1);
 
-      if (MDUtils.hasPixelSizeUm(summaryMD)) {
-         double pixelSize = MDUtils.getPixelSizeUm(summaryMD);
+      Metadata repMetadata = repImage.getMetadata();
+      if (repMetadata.getPixelSizeUm() != null) {
+         double pixelSize = repMetadata.getPixelSizeUm();
          if (pixelSize > 0) {
-            metadata_.setPixelsPhysicalSizeX(new PositiveFloat(pixelSize), seriesIndex);
-            metadata_.setPixelsPhysicalSizeY(new PositiveFloat(pixelSize), seriesIndex);
+            metadata_.setPixelsPhysicalSizeX(
+                  new PositiveFloat(pixelSize), seriesIndex);
+            metadata_.setPixelsPhysicalSizeY(
+                  new PositiveFloat(pixelSize), seriesIndex);
          }
       }
-      if (MDUtils.hasZStepUm(summaryMD)) {
-         double zStep = MDUtils.getZStepUm(summaryMD);
+      if (repMetadata.getZStepUm() != null) {
+         double zStep = repMetadata.getZStepUm();
          if (zStep != 0) {
-            metadata_.setPixelsPhysicalSizeZ(new PositiveFloat(Math.abs(zStep)), seriesIndex);
+            metadata_.setPixelsPhysicalSizeZ(
+                  new PositiveFloat(Math.abs(zStep)), seriesIndex);
          }
       }
 
-      if (MDUtils.hasIntervalMs(summaryMD)) {
-         double interval = MDUtils.getIntervalMs(summaryMD);
+      SummaryMetadata summaryMD = mptStorage_.getSummaryMetadata();
+      if (summaryMD.getWaitInterval() != null) {
+         double interval = summaryMD.getWaitInterval();
          if (interval > 0) { //don't write it for burst mode because it won't be true
             metadata_.setPixelsTimeIncrement(interval / 1000.0, seriesIndex);
          }
       }
-      
-      String positionName;
-      try {
-         positionName = MDUtils.getPositionName(firstImageTags);
-      } catch (JSONException ex) {
-         ReportingUtils.logError("Couldn't find position name in image metadata");
-         positionName = "pos" + MDUtils.getPositionIndex(firstImageTags);
+
+      String positionName = "pos" + repImage.getCoords().getPositionAt("position");
+      if (repMetadata.getPositionName() != null) {
+         positionName = repMetadata.getPositionName();
       }
       metadata_.setStageLabelName(positionName, seriesIndex);
 
@@ -134,16 +145,20 @@ public class OMEMetadata {
       // link Instrument and Image
       metadata_.setImageInstrumentRef(instrumentID, seriesIndex);
 
-      JSONObject comments = mptStorage_.getDisplayAndComments().getJSONObject("Comments");
-      if (comments.has("Summary") && !comments.isNull("Summary")) {
-         metadata_.setImageDescription(comments.getString("Summary"), seriesIndex);
+      SummaryMetadata summary = mptStorage_.getSummaryMetadata();
+      if (summary.getComments() != null) {
+         metadata_.setImageDescription(summary.getComments(), seriesIndex);
       }
 
-      JSONArray channels = mptStorage_.getDisplayAndComments().getJSONArray("Channels");
-      for (int channelIndex = 0; channelIndex < channels.length(); channelIndex++) {
-         JSONObject channel = channels.getJSONObject(channelIndex);
-         metadata_.setChannelColor(new Color(channel.getInt("Color")), seriesIndex, channelIndex);
-         metadata_.setChannelName(channel.getString("Name"), seriesIndex, channelIndex);
+      DisplaySettings displaySettings = mptStorage_.getDisplaySettings();
+      for (int channel = 0; channel < mptStorage_.getMaxIndex("channel") + 1;
+            channel++) {
+         java.awt.Color color = displaySettings.getChannelColors()[channel];
+         metadata_.setChannelColor(new ome.xml.model.primitives.Color(
+                  color.getRed(), color.getGreen(), color.getBlue(), 1),
+               seriesIndex, channel);
+         metadata_.setChannelName(displaySettings.getChannelNames()[channel],
+               seriesIndex, channel);
       }
    }
    

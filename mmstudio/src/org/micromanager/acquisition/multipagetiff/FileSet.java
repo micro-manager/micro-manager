@@ -85,8 +85,8 @@ class FileSet {
       currentTiffUUID_ = "urn:uuid:" + UUID.randomUUID().toString();
       //make first writer
       tiffWriters_.add(new MultipageTiffWriter(mpTiff_.getDiskLocation(),
-            currentTiffFilename_, mpTiff_.getSummaryMetadata(), mpt,
-            splitByXYPosition_));
+            currentTiffFilename_, mpTiff_.getSummaryMetadata(),
+            mpt, splitByXYPosition_));
 
       try {
          if (separateMetadataFile_) {
@@ -242,7 +242,7 @@ class FileSet {
             mdWriter_ = new FileWriter(metadataFileFullPath_);
             mdWriter_.write("{" + "\n");
             mdWriter_.write("\"Summary\": ");
-            mdWriter_.write(mpTiff_.getSummaryMetadata().toString(2));
+            mdWriter_.write(mpTiff_.getSummaryMetadata().legacyToJSON().toString(2));
          } catch (IOException ex) {
             ReportingUtils.logError("Problem creating metadata.txt file");
          }
@@ -259,16 +259,11 @@ class FileSet {
 
    private String createBaseFilename(JSONObject firstImageTags) {
       String baseFilename;
-      try {
-         String prefix = mpTiff_.getSummaryMetadata().getString("Prefix");
-         if (prefix.length() == 0) {
-            baseFilename = "MMStack";
-         } else {
-            baseFilename = prefix + "_MMStack";
-         }
-      } catch (JSONException ex) {
-         ReportingUtils.logError("Can't find Prefix in summary metadata");
+      String prefix = mpTiff_.getSummaryMetadata().getPrefix();
+      if (prefix == null || prefix.length() == 0) {
          baseFilename = "MMStack";
+      } else {
+         baseFilename = prefix + "_MMStack";
       }
 
       if (splitByXYPosition_) {
@@ -288,11 +283,12 @@ class FileSet {
    }
 
    /**
-    * Generate all expected labels for the last frame, and write dummy images for ones 
-    * that weren't written. Modify ImageJ and OME max number of frames as appropriate.
-    * This method only works if xy positions are split across separate files
+    * Generate all expected labels for the last frame, and write dummy images
+    * for ones that weren't written. Modify ImageJ and OME max number of frames
+    * as appropriate.  This method only works if xy positions are split across
+    * separate files
     */
-   private void finishAbortedAcqIfNeeded() {
+   public void finishAbortedAcqIfNeeded() {
       if (expectedImageOrder_ && splitByXYPosition_ && !mpTiff_.timeFirst()) {
          try {
             //One position may be on the next frame compared to others. Complete each position
@@ -305,14 +301,14 @@ class FileSet {
    }
 
    /*
-    * Completes the current time point of an aborted acquisition with blank images, 
-    * so that it can be opened correctly by ImageJ/BioForamts
+    * Completes the current time point of an aborted acquisition with blank
+    * images, so that it can be opened correctly by ImageJ/BioForamts
     */
    private void completeFrameWithBlankImages(int frame) throws JSONException, MMScriptException {
       
-      int numFrames = MDUtils.getNumFrames(mpTiff_.getSummaryMetadata());
-      int numSlices = MDUtils.getNumSlices(mpTiff_.getSummaryMetadata());
-      int numChannels = MDUtils.getNumChannels(mpTiff_.getSummaryMetadata());
+      int numFrames = mpTiff_.getMaxIndex("time") + 1;
+      int numSlices = mpTiff_.getMaxIndex("z") + 1;
+      int numChannels = mpTiff_.getMaxIndex("channel") + 1;
       if (numFrames > frame + 1 ) {
          TreeSet<String> writtenImages = new TreeSet<String>();
          for (MultipageTiffWriter w : tiffWriters_) {

@@ -41,7 +41,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import org.micromanager.imagedisplay.DisplaySettings;
+import org.micromanager.api.data.DisplaySettings;
+import org.micromanager.api.data.SummaryMetadata;
+import org.micromanager.data.DefaultDisplaySettings;
+import org.micromanager.data.DefaultSummaryMetadata;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMException;
 import org.micromanager.utils.ProgressBar;
@@ -66,8 +69,8 @@ public class MultipageTiffReader {
    private RandomAccessFile raFile_;
    private FileChannel fileChannel_;
       
-   private JSONObject displayAndComments_;
-   private JSONObject summaryMetadata_;
+   private DisplaySettings displaySettings_;
+   private SummaryMetadata summaryMetadata_;
    private int byteDepth_ = 0;;
    private boolean rgb_;
    private boolean writingFinished_;
@@ -78,11 +81,10 @@ public class MultipageTiffReader {
    /**
     * This constructor is used for a file that is currently being written
     */
-   public MultipageTiffReader(JSONObject summaryMD) {
-      displayAndComments_ = new JSONObject();
+   public MultipageTiffReader(SummaryMetadata summaryMD) {
       summaryMetadata_ = summaryMD;
       byteOrder_ = MultipageTiffWriter.BYTE_ORDER;
-      getRGBAndByteDepth(summaryMD);
+      getRGBAndByteDepth(summaryMD.legacyToJSON());
       writingFinished_ = false;
    }
    
@@ -98,7 +100,7 @@ public class MultipageTiffReader {
     * This constructor is used for opening datasets that have already been saved
     */
    public MultipageTiffReader(File file) throws IOException {
-      displayAndComments_ = new JSONObject();
+      JSONObject displayAndComments = new JSONObject();
       file_ = file;
       try {
          createFileChannel();
@@ -107,7 +109,7 @@ public class MultipageTiffReader {
       }
       writingFinished_ = true;
       long firstIFD = readHeader();
-      summaryMetadata_ = readSummaryMD();
+      summaryMetadata_ = DefaultSummaryMetadata.legacyFromJSON(readSummaryMD());
       try {
          readIndexMap();
       } catch (Exception e) {
@@ -118,14 +120,20 @@ public class MultipageTiffReader {
          }
       }
       try {
-         displayAndComments_.put("Channels", readDisplaySettings());
-         displayAndComments_.put("Comments", readComments());
+         displayAndComments.put("Channels", readDisplaySettings());
+         if (summaryMetadata_ != null) {
+            summaryMetadata_ = summaryMetadata_.copy().comments(readComments()).build();
+         }
+         else {
+            ReportingUtils.logError("No SummaryMetadata available to copy comments into.");
+         }
       } catch (Exception ex) {
          ReportingUtils.logError("Problem with JSON Representation of DisplayAndComments");
       }
+      displaySettings_ = DefaultDisplaySettings.legacyFromJSON(displayAndComments);
 
       if (summaryMetadata_ != null) {
-         getRGBAndByteDepth(summaryMetadata_);
+         getRGBAndByteDepth(summaryMetadata_.legacyToJSON());
       }
    }
    
@@ -199,12 +207,12 @@ public class MultipageTiffReader {
       }
    }
 
-   public JSONObject getSummaryMetadata() {
+   public SummaryMetadata getSummaryMetadata() {
       return summaryMetadata_;
    }
    
-   public JSONObject getDisplayAndComments() {
-      return displayAndComments_;
+   public DisplaySettings getDisplaySettings() {
+      return displaySettings_;
    }
    
    public TaggedImage readImage(String label) {
@@ -251,12 +259,6 @@ public class MultipageTiffReader {
          fileChannel_.read(mdBuffer, 40);
          JSONObject summaryMD = new JSONObject(getString(mdBuffer));
 
-         //Summary MD written start of acquisition and never changed, this code makes sure acquisition comment
-         //field is current
-         if (displayAndComments_ != null && displayAndComments_.has("Comments") 
-                 && displayAndComments_.getJSONObject("Comments").has("Summary")) {
-            summaryMD.put("Comment", displayAndComments_.getJSONObject("Comments").getString("Summary"));
-         }
          return summaryMD;
       } catch (Exception ex) {
          ReportingUtils.showError("Couldn't read summary Metadata from file: " + file_.getName());
@@ -264,7 +266,7 @@ public class MultipageTiffReader {
       }
    }
    
-   private JSONObject readComments()  {
+   private String readComments()  {
       try {
          long offset = readOffsetHeaderAndOffset(MultipageTiffWriter.COMMENTS_OFFSET_HEADER, 24);
          ByteBuffer header = readIntoBuffer(offset, 8);
@@ -273,14 +275,14 @@ public class MultipageTiffReader {
             return null;
          }
          ByteBuffer buffer = readIntoBuffer(offset + 8, header.getInt(4));
-         return new JSONObject(getString(buffer));
+         return getString(buffer);
       } catch (Exception ex) {
          ReportingUtils.logError("Can't find image comments in file: " + file_.getName());
             return null;
       }
    }
    
-   public void rewriteComments(JSONObject comments) throws IOException, JSONException {
+   public void rewriteComments(String comments) throws IOException {
       if (writingFinished_) {
          byte[] bytes = getBytesFromString(comments.toString());
          ByteBuffer byteCount = ByteBuffer.wrap(new byte[4]).order(byteOrder_).putInt(0,bytes.length);
@@ -289,10 +291,10 @@ public class MultipageTiffReader {
          fileChannel_.write(byteCount,offset + 4);
          fileChannel_.write(buffer, offset +8);
       }
-      displayAndComments_.put("Comments", comments);
+      summaryMetadata_ = summaryMetadata_.copy().comments(comments).build();
    }
 
-   public void rewriteDisplaySettings(JSONArray settings) throws IOException, JSONException {
+   public void rewriteDisplaySettings(DisplaySettings settings) throws IOException, JSONException {
       if (writingFinished_) {
          long offset = readOffsetHeaderAndOffset(MultipageTiffWriter.DISPLAY_SETTINGS_OFFSET_HEADER, 16);        
          int numReservedBytes = readIntoBuffer(offset + 4, 4).getInt(0);
@@ -305,7 +307,7 @@ public class MultipageTiffReader {
          ByteBuffer buffer = ByteBuffer.wrap(bytes);
          fileChannel_.write(buffer, offset+8);
       }
-      displayAndComments_.put("Channels", settings);
+      displaySettings_ = settings;
    }
 
    private JSONArray readDisplaySettings() {
@@ -583,32 +585,24 @@ public class MultipageTiffReader {
       buffer.putInt(0, 0);
       fileChannel_.write(buffer, nextIFDOffsetLocation); 
       
-      JSONArray settings = null;
-      try {
-         settings = DisplaySettings.getDisplaySettingsFromSummary(
-               summaryMetadata_).getJSONArray("Channels");
-      } catch (Exception ex) {
-         ReportingUtils.showError(ex, "Problem saving file.  PLease test to make sure file can be opened");
-      }
-      filePosition += writeDisplaySettings(settings, filePosition);
-      
-      
-//      raFile_.setLength(filePosition + 8);
-      
+      filePosition += writeDisplaySettings(
+            DefaultDisplaySettings.getStandardSettings(), filePosition);
+
       fileChannel_.close();
       raFile_.close();
       //reopen
       createFileChannel();
    }
    
-   private int writeDisplaySettings(JSONArray settings, long filePosition) throws IOException {
-      int numReservedBytes = settings.length() * MultipageTiffWriter.DISPLAY_SETTINGS_BYTES_PER_CHANNEL;
+   private int writeDisplaySettings(DefaultDisplaySettings settings, long filePosition) throws IOException {
+      JSONObject settingsJSON = settings.legacyToJSON();
+      int numReservedBytes = settingsJSON.length() * MultipageTiffWriter.DISPLAY_SETTINGS_BYTES_PER_CHANNEL;
       ByteBuffer header = ByteBuffer.allocate(8).order(MultipageTiffWriter.BYTE_ORDER);
-      ByteBuffer buffer = ByteBuffer.wrap(getBytesFromString(settings.toString()));
+      ByteBuffer buffer = ByteBuffer.wrap(getBytesFromString(settingsJSON.toString()));
       header.putInt(0, MultipageTiffWriter.DISPLAY_SETTINGS_HEADER);
       header.putInt(4, numReservedBytes);
-       fileChannel_.write(header, filePosition);
-       fileChannel_.write(buffer, filePosition + 8);
+      fileChannel_.write(header, filePosition);
+      fileChannel_.write(buffer, filePosition + 8);
 
       ByteBuffer offsetHeader = ByteBuffer.allocate(8).order(MultipageTiffWriter.BYTE_ORDER);
       offsetHeader.putInt(0, MultipageTiffWriter.DISPLAY_SETTINGS_OFFSET_HEADER);
