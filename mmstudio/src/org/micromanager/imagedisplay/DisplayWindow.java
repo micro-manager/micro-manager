@@ -348,6 +348,7 @@ public class DisplayWindow extends StackWindow {
          ReportingUtils.showError(ex, "Null pointer error in ImageJ code while closing window");
       }
       MMStudio.getInstance().removeMMBackgroundListener(this);
+      MMStudio.getInstance().removeMMBackgroundListener(canvasPanel_);
       closed_ = true;
    }
 
