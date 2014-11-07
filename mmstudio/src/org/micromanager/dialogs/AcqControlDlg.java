@@ -1606,6 +1606,18 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
       // acquire-to-RAM. This means that the image (pixel and metadata) data do
       // not fill up the Java heap memory. The best we can do is to try to
       // estimate the available physical memory.
+      //
+      // In reality, there is a hard cap to the direct memory size in the
+      // HotSpot JVM, but there is no way to get that limit, much less how much
+      // of it is currently in use (there is the non-API
+      // sun.misc.VM.maxDirectMemory() method, which we could call via
+      // reflection where available, but we would need to estimate current
+      // usage on our own). The limit can be set from the JVM command line
+      // using e.g. -XX:MaxDirectMemorySize=16G.
+      //
+      // TODO There probably should be a way to set the -XX:MaxDirectMemroySize
+      // from the GUI, similar to ImageJ's method of setting -Xmx. However, it
+      // will be fragile.
       long freeRAM;
       java.lang.management.OperatingSystemMXBean osMXB =
          java.lang.management.ManagementFactory.getOperatingSystemMXBean();
