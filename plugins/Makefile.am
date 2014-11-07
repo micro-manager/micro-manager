@@ -24,9 +24,9 @@ nobase_mmplugin_DATA = \
 	Device_Control/Projector.jar \
 	Device_Control/StageControl.jar \
 	Device_Control/pgFocus.jar \
-	Image_Processing/ImageFlipper.jar \
-	Image_Processing/MultiChannelShading.jar \
-	Image_Processing/SplitView.jar \
+	On-The-Fly_Processors/ImageFlipper.jar \
+	On-The-Fly_Processors/MultiChannelShading.jar \
+	On-The-Fly_Processors/SplitView.jar \
 	PixelCalibrator.jar \
 	Recall.jar
 

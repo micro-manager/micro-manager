@@ -1,5 +1,5 @@
 <project name="MultiChannelShading" default="jar">
-	<property name="plugin.path" value="Image_Processing"/>
+	<property name="plugin.path" value="On-The-Fly_Processors"/>
 	<import file="../javapluginbuild.xml"/>
 
 	<path id="plugin.classpath">

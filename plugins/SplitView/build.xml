@@ -1,4 +1,4 @@
 <project name="SplitView" default="jar">
-	<property name="plugin.path" value="Image_Processing"/>
+	<property name="plugin.path" value="On-The-Fly_Processors"/>
 	<import file="../javapluginbuild.xml"/>
 </project>

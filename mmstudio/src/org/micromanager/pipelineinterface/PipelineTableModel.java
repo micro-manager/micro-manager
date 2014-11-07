@@ -72,7 +72,7 @@ public class PipelineTableModel extends AbstractTableModel {
          case ENABLED_COLUMN:
             return "Enabled";
          case NAME_COLUMN:
-            return "Image Processor";
+            return "Processor";
          case CONFIGURE_COLUMN:
             return "Settings";
       }

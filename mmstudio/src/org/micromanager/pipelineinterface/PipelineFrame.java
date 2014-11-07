@@ -47,7 +47,7 @@ final public class PipelineFrame extends JFrame
    private final JButton moveDownButton_;
 
    public PipelineFrame(ScriptInterface gui, AcquisitionEngine engine) {
-      super("Image Processor Pipeline");
+      super("On-The-Fly Processor Pipeline");
       gui_ = gui;
       engine_ = engine;
 

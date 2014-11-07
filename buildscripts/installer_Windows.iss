@@ -108,6 +108,10 @@ Type: files; Name: "{app}\mmplugins\pgFocus.jar"
 Type: files; Name: "{app}\mmplugins\Beta\PixelCalibrator.jar"
 ; PatternOverlay was placed in Image Processing, but was moved to the toplevel.
 Type: files; Name: "{app}\mmplugins\Image_Processing\PatternOverlay.jar"
+; Image Procssing was renamed to On-The-Fly Proccessors
+Type: files; Name: "{app}\mmplugins\Image_Processing\ImageFlipper.jar"
+Type: files; Name: "{app}\mmplugins\Image_Processing\MultiChannelShading.jar"
+Type: files; Name: "{app}\mmplugins\Image_Processing\SplitView.jar"
 
 ; Renamed to NewportCONEX
 Type: files; Name: "{app}\mmgr_dal_CONEX.dll"
