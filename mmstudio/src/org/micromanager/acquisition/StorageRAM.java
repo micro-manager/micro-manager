@@ -103,6 +103,15 @@ public class StorageRAM implements Storage {
    }
 
    @Override
+   public synchronized Image getAnyImage() {
+      if (coordsToImage_.size() > 0) {
+         Coords coords = new ArrayList<Coords>(coordsToImage_.keySet()).get(0);
+         return coordsToImage_.get(coords);
+      }
+      return null;
+   }
+
+   @Override
    public synchronized List<Image> getImagesMatching(Coords coords) {
       ArrayList<Image> results = new ArrayList<Image>();
       for (Image image : coordsToImage_.values()) {
