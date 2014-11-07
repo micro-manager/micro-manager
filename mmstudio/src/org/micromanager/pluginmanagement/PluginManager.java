@@ -73,7 +73,7 @@ public class PluginManager {
             pluginSubMenus_.put(groupName, submenu);
             submenu.validate();
             pluginMenu_.add(submenu);
-            if (groupName.equals("Image Processing")) {
+            if (groupName.equals("On-The-Fly Processors")) {
                // Sorry for this hard-coded special behavior
                addImageProcessorConfigureMenuItem(submenu);
                submenu.addSeparator();
