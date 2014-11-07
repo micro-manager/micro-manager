@@ -55,6 +55,14 @@ public class DefaultDatastore implements Datastore {
    }
 
    @Override
+   public Image getAnyImage() {
+      if (storage_ != null) {
+         return storage_.getAnyImage();
+      }
+      return null;
+   }
+
+   @Override
    public List<Image> getImagesMatching(Coords coords) {
       if (storage_ != null) {
          return storage_.getImagesMatching(coords);
