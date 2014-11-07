@@ -49,15 +49,18 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import org.micromanager.MMStudio;
+import org.micromanager.api.data.DisplaySettings;
+import org.micromanager.api.data.Image;
+import org.micromanager.api.data.Metadata;
+import org.micromanager.api.data.SummaryMetadata;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
+
 public class MultipageTiffWriter {
    
-//   private static final long BYTES_PER_MEG = 1048576;
-//   private static final long MAX_FILE_SIZE = 15*BYTES_PER_MEG;
    private static final long BYTES_PER_GIG = 1073741824;
    private static final long MAX_FILE_SIZE = 4 * BYTES_PER_GIG;
    public static final int DISPLAY_SETTINGS_BYTES_PER_CHANNEL = 256;
@@ -120,7 +123,7 @@ public class MultipageTiffWriter {
    private String summaryMDString_;
    
    public MultipageTiffWriter(String directory, String filename, 
-           JSONObject summaryMD, StorageMultipageTiff mpTiffStorage,
+           SummaryMetadata summaryMD, StorageMultipageTiff mpTiffStorage,
            boolean splitByPositions) throws IOException {
       masterMPTiffStorage_ = mpTiffStorage;
       reader_ = new MultipageTiffReader(summaryMD);
@@ -135,8 +138,9 @@ public class MultipageTiffWriter {
       }
       
       //This is an overestimate of file size because file gets truncated at end
-      long fileSize = Math.min(MAX_FILE_SIZE, summaryMD.toString().length() + 2000000
-              + numFrames_ * numChannels_ * numSlices_ * ((long) bytesPerImagePixels_ + 2000));
+      long fileSize = Math.min(MAX_FILE_SIZE,
+            summaryMD.legacyToJSON().toString().length() + 2000000 +
+            numFrames_ * numChannels_ * numSlices_ * ((long) bytesPerImagePixels_ + 2000));
       
       f.createNewFile();
       raFile_ = new RandomAccessFile(f, "rw");
@@ -160,9 +164,9 @@ public class MultipageTiffWriter {
       reader_.setIndexMap(indexMap_);
       buffers_ = new LinkedList<ByteBuffer>();
       
-      writeMMHeaderAndSummaryMD(summaryMD);
+      writeMMHeaderAndSummaryMD(summaryMD.legacyToJSON());
       try {
-         summaryMDString_ = summaryMD.toString(2);
+         summaryMDString_ = summaryMD.legacyToJSON().toString(2);
       } catch (JSONException ex) {
          summaryMDString_ = "";
       }
@@ -313,14 +317,14 @@ public class MultipageTiffWriter {
       String summaryComment = "";
       try 
       {
-         JSONObject comments = masterMPTiffStorage_.getDisplayAndComments().getJSONObject("Comments");
-         if (comments.has("Summary") && !comments.isNull("Summary")) {
-            summaryComment = comments.getString("Summary");
+         String comments = masterMPTiffStorage_.getSummaryMetadata().getComments();
+         if (comments != null) {
+            summaryComment = comments;
          }    
       } catch (Exception e) {
-         ReportingUtils.logError("Could't get acquisition summary comment from displayAndComments");
+         ReportingUtils.logError("Could't get acquisition summary comment");
       }
-      writeImageJMetadata( numChannels_, summaryComment);
+      writeImageJMetadata(numChannels_, summaryComment);
 
       try {
          writeImageDescription(omeXML, omeDescriptionTagPosition_);
@@ -633,36 +637,22 @@ public class MultipageTiffWriter {
       }
    }
 
-   private void processSummaryMD(JSONObject summaryMD, boolean splitByPosition) throws MMScriptException, JSONException {
-      rgb_ = MDUtils.isRGB(summaryMD);
-      numChannels_ = MDUtils.getNumChannels(summaryMD);
-      numFrames_ = MDUtils.getNumFrames(summaryMD);
-      numSlices_ = MDUtils.getNumSlices(summaryMD);
-      imageWidth_ = MDUtils.getWidth(summaryMD);
-      imageHeight_ = MDUtils.getHeight(summaryMD);
-      String pixelType = MDUtils.getPixelType(summaryMD);
-      if (pixelType.equals("GRAY8") || pixelType.equals("RGB32") || pixelType.equals("RGB24")) {
-         byteDepth_ = 1;
-      } else if (pixelType.equals("GRAY16") || pixelType.equals("RGB64")) {
-         byteDepth_ = 2;
-      } else if (pixelType.equals("GRAY32")) {
-         byteDepth_ = 3;
-      } else {
-         byteDepth_ = 2;
-      }
-      bytesPerImagePixels_ = imageHeight_ * imageWidth_ * byteDepth_ * (rgb_ ? 3 : 1);
+   private void processSummaryMD(SummaryMetadata summaryMD,
+         boolean splitByPosition) throws MMScriptException, JSONException {
+      Image repImage = masterMPTiffStorage_.getAnyImage();
+      Metadata repMetadata = repImage.getMetadata();
+      rgb_ = repImage.getNumComponents() > 1;
+      numChannels_ = masterMPTiffStorage_.getMaxIndex("channel") + 1;
+      numFrames_ = masterMPTiffStorage_.getMaxIndex("time") + 1;
+      numSlices_ = masterMPTiffStorage_.getMaxIndex("z") + 1;
+      imageWidth_ = repImage.getWidth();
+      imageHeight_ = repImage.getHeight();
+      byteDepth_ = repImage.getBytesPerPixel() / repImage.getNumComponents();
+      bytesPerImagePixels_ = imageHeight_ * imageWidth_ * byteDepth_ * repImage.getNumComponents();
       //Tiff resolution tag values
       double cmPerPixel = 0.0001;
-      if (summaryMD.has("PixelSizeUm")) {
-         try {
-            cmPerPixel = 0.0001 * summaryMD.getDouble("PixelSizeUm");
-         } catch (JSONException ex) {
-         }
-      } else if (summaryMD.has("PixelSize_um")) {
-         try {
-            cmPerPixel = 0.0001 * summaryMD.getDouble("PixelSize_um");
-         } catch (JSONException ex) {
-         }
+      if (repMetadata.getPixelSizeUm() != null) {
+         cmPerPixel = 0.0001 * repMetadata.getPixelSizeUm();
       }
       double log = Math.log10(cmPerPixel);
       if (log >= 0) {
@@ -673,9 +663,9 @@ public class MultipageTiffWriter {
          resDenomenator_ = 1;
       }
       
-       if (summaryMD.has("z-step_um") && !summaryMD.isNull("z-step_um")) {
-            zStepUm_ = summaryMD.getDouble("z-step_um");
-       }
+      if (repMetadata.getZStepUm() != null) {
+         zStepUm_ = repMetadata.getZStepUm();
+      }
    }
 
    /**
@@ -769,29 +759,26 @@ public class MultipageTiffWriter {
          mdBuffer.putChar(bufferPosition, c);
          bufferPosition += 2;
       }
-      try {
-         JSONArray channels = masterMPTiffStorage_.getDisplayAndComments().getJSONArray("Channels");
-         JSONObject channelSetting;
-         for (int i = 0; i < numChannels; i++) {
-            channelSetting = channels.getJSONObject(i);
-            //Display Ranges: For each channel, write min then max
-            mdBuffer.putDouble(bufferPosition, channelSetting.getInt("Min"));
-            bufferPosition += 8;
-            mdBuffer.putDouble(bufferPosition, channelSetting.getInt("Max"));
-            bufferPosition += 8;
-         }
 
-         //LUTs
-         for (int i = 0; i < numChannels; i++) {
-            channelSetting = channels.getJSONObject(i);
-            LUT lut = ImageUtils.makeLUT(new Color(channelSetting.getInt("Color")), channelSetting.getDouble("Gamma"));
-            for (byte b : lut.getBytes()) {
-               mdBuffer.put(bufferPosition, b);
-               bufferPosition++;
-            }
+      DisplaySettings settings = masterMPTiffStorage_.getDisplaySettings();
+      for (int i = 0; i < numChannels; i++) {
+         //Display Ranges: For each channel, write min then max
+         mdBuffer.putDouble(bufferPosition, 
+               settings.getChannelContrastMins()[i]);
+         bufferPosition += 8;
+         mdBuffer.putDouble(bufferPosition,
+               settings.getChannelContrastMaxes()[i]);
+         bufferPosition += 8;
+      }
+
+      //LUTs
+      for (int i = 0; i < numChannels; i++) {
+         LUT lut = ImageUtils.makeLUT(settings.getChannelColors()[i],
+               settings.getChannelGammas()[i]);
+         for (byte b : lut.getBytes()) {
+            mdBuffer.put(bufferPosition, b);
+            bufferPosition++;
          }
-      } catch (JSONException ex) {
-         ReportingUtils.logError("Problem with displayAndComments: Couldn't write ImageJ display settings as a result");
       }
 
       ifdCountAndValueBuffer = allocateByteBuffer(8);
@@ -828,26 +815,26 @@ public class MultipageTiffWriter {
          sb.append("spacing=").append(zStepUm_).append("\n");
       }
       //write single channel contrast settings or display mode if multi channel
-      try {             
-         JSONObject channel0setting = masterMPTiffStorage_.getDisplayAndComments().getJSONArray("Channels").getJSONObject(0);
-         if (numChannels_ == 1) {
-            double min = channel0setting.getInt("Min");
-            double max = channel0setting.getInt("Max");
-            sb.append("min=").append(min).append("\n");
-            sb.append("max=").append(max).append("\n");
-         } else {
-            int displayMode = channel0setting.getInt("DisplayMode");
-            //COMPOSITE=1, COLOR=2, GRAYSCALE=3
-            if (displayMode == 1) {
-               sb.append("mode=composite\n");
-            } else if (displayMode == 2) {
-               sb.append("mode=color\n");
-            } else if (displayMode==3) {
-               sb.append("mode=gray\n");
-            }    
-         }
-      } catch (JSONException ex) {}
-             
+      DisplaySettings settings = masterMPTiffStorage_.getDisplaySettings();
+      if (numChannels_ == 1) {
+         double min = settings.getChannelContrastMins()[0];
+         double max = settings.getChannelContrastMaxes()[0];
+         sb.append("min=").append(min).append("\n");
+         sb.append("max=").append(max).append("\n");
+      } else {
+         int displayMode = settings.getChannelDisplayModeIndex();
+         // TODO: the below interpretation is wrong.
+         //COMPOSITE=1, COLOR=2, GRAYSCALE=3
+         if (displayMode == 1) {
+            sb.append("mode=composite\n");
+         } else if (displayMode == 2) {
+            sb.append("mode=color\n");
+         } else if (displayMode==3) {
+            sb.append("mode=gray\n");
+         }    
+      }
+
+
       sb.append((char) 0);
       return new String(sb);
    }
@@ -882,13 +869,11 @@ public class MultipageTiffWriter {
 
    private void writeComments() throws IOException {
       //Write 4 byte header, 4 byte number of bytes
-      JSONObject comments;
-      try {
-         comments = masterMPTiffStorage_.getDisplayAndComments().getJSONObject("Comments");
-      } catch (JSONException ex) {
-         comments = new JSONObject();
+      String comments = masterMPTiffStorage_.getSummaryMetadata().getComments();
+      if (comments == null) {
+         comments = "";
       }
-      byte[] commentsBytes = getBytesFromString(comments.toString());
+      byte[] commentsBytes = getBytesFromString(comments);
       ByteBuffer header = allocateByteBuffer(8);
       header.putInt(0, COMMENTS_HEADER);
       header.putInt(4, commentsBytes.length);
@@ -903,16 +888,13 @@ public class MultipageTiffWriter {
       filePosition_ += 8 + commentsBytes.length;
    }
 
+   // TODO: is this identical to a similar function in the Reader?
    private void writeDisplaySettings() throws IOException {
-      JSONArray displaySettings;
-      try {
-         displaySettings = masterMPTiffStorage_.getDisplayAndComments().getJSONArray("Channels");
-      } catch (JSONException ex) {
-         displaySettings = new JSONArray();
-      }
+      DisplaySettings settings = masterMPTiffStorage_.getDisplaySettings();
       int numReservedBytes = numChannels_ * DISPLAY_SETTINGS_BYTES_PER_CHANNEL;
       ByteBuffer header = allocateByteBuffer(8);
-      ByteBuffer buffer = ByteBuffer.wrap(getBytesFromString(displaySettings.toString()));
+      ByteBuffer buffer = ByteBuffer.wrap(
+            getBytesFromString(settings.legacyToJSON().toString()));
       header.putInt(0, DISPLAY_SETTINGS_HEADER);
       header.putInt(4, numReservedBytes);
       fileChannelWrite(header, filePosition_);
