@@ -396,12 +396,15 @@ public class DefaultDisplaySettings implements DisplaySettings {
       try {
          Integer color = MDUtils.getChannelColor(tags);
          Color fakeColor = new Color(color, color, color);
-         return new Builder()
-            .channelNames(new String[] {MDUtils.getChannelName(tags)})
+         // Splitting this into multiple lines to avoid having our
+         // Builder get converted into an API DisplaySettings.Builder due to
+         // the return types of the channelNames, etc. methods.
+         Builder builder = new Builder();
+         builder.channelNames(new String[] {MDUtils.getChannelName(tags)})
             .channelColors(new Color[] {fakeColor})
             .channelContrastMins(new Integer[] {tags.getInt("ChContrastMin")})
-            .channelContrastMaxes(new Integer[] {tags.getInt("ChContrastMax")})
-            .build();
+            .channelContrastMaxes(new Integer[] {tags.getInt("ChContrastMax")});
+         return builder.build();
       }
       catch (JSONException e) {
          ReportingUtils.logError(e, "Couldn't convert JSON into DisplaySettings");
