@@ -27,6 +27,8 @@ import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.prefs.Preferences;
 import javax.swing.JDialog;
 import org.micromanager.MMStudio;
@@ -76,12 +78,29 @@ public class MMDialog extends JDialog {
       }
    }
 
+   protected void loadAndRestorePosition(int x, int y, int width, int height) {
+      loadPosition(x, y, width, height);
+      this.addWindowListener(new WindowAdapter() {
+         @Override
+         public void windowClosing(WindowEvent arg0) {
+            savePosition();
+         }
+      }
+      );
+   }
+   
    protected void loadPosition(int x, int y, int width, int height) {
       ensureSafeWindowPosition(x, y);
       setBounds(prefs_.getInt(WINDOW_X, x),
                 prefs_.getInt(WINDOW_Y, y),
                 prefs_.getInt(WINDOW_WIDTH, width),
-                prefs_.getInt(WINDOW_HEIGHT, height));      
+                prefs_.getInt(WINDOW_HEIGHT, height));
+   }
+   
+   @Override
+   public void dispose() {
+      this.dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+      super.dispose();
    }
    
    protected void loadPosition(int x, int y) {
