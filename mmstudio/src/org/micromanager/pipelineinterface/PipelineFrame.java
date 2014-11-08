@@ -1,7 +1,6 @@
 package org.micromanager.pipelineinterface;
 
 import com.google.common.eventbus.Subscribe;
-import com.swtdesigner.SwingResourceManager;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -11,11 +10,11 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
-import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
@@ -84,8 +83,8 @@ final public class PipelineFrame extends JFrame
       //
       addProcessorPopup_ = new JPopupMenu();
       final JButton addButton = new JButton("Add...");
-      addButton.setIcon(SwingResourceManager.getIcon(MMStudio.class,
-            "/org/micromanager/icons/plus.png"));
+      addButton.setIcon(new ImageIcon(MMStudio.class.getResource(
+            "/org/micromanager/icons/plus.png")));
       addButton.addMouseListener(new MouseAdapter() {
          @Override
          public void mousePressed(MouseEvent e) {
@@ -96,8 +95,8 @@ final public class PipelineFrame extends JFrame
       add(addButton, "sizegroup btns, skip 1, split 5");
 
       removeButton_ = new JButton("Remove");
-      removeButton_.setIcon(SwingResourceManager.getIcon(MMStudio.class,
-            "/org/micromanager/icons/minus.png"));
+      removeButton_.setIcon(new ImageIcon (MMStudio.class.getResource(
+            "/org/micromanager/icons/minus.png")));
       removeButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -107,8 +106,8 @@ final public class PipelineFrame extends JFrame
       add(removeButton_, "sizegroup btns");
 
       moveUpButton_ = new JButton("Move Up");
-      moveUpButton_.setIcon(SwingResourceManager.getIcon(MMStudio.class,
-            "/org/micromanager/icons/arrow_up.png"));
+      moveUpButton_.setIcon(new ImageIcon (MMStudio.class.getResource(
+            "/org/micromanager/icons/arrow_up.png")));
       moveUpButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -118,8 +117,8 @@ final public class PipelineFrame extends JFrame
       add(moveUpButton_, "sizegroup btns");
 
       moveDownButton_ = new JButton("Move Down");
-      moveDownButton_.setIcon(SwingResourceManager.getIcon(MMStudio.class,
-            "/org/micromanager/icons/arrow_down.png"));
+      moveDownButton_.setIcon(new ImageIcon (MMStudio.class.getResource(
+            "/org/micromanager/icons/arrow_down.png")));
       moveDownButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
