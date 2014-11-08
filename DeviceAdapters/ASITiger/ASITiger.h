@@ -322,21 +322,24 @@ const char* const g_CellGenericPropertyName = "Cell";
 const char* const g_TypeGenericPropertyName = "Type";
 
 // programmable logic enums
-const char* const g_TypeCode0 = "0 - constant";
-const char* const g_TypeCode1 = "1 - D flop";
-const char* const g_TypeCode2 = "2 - 2-input LUT";
-const char* const g_TypeCode3 = "3 - 3-input LUT";
-const char* const g_TypeCode4 = "4 - 4-input LUT";
-const char* const g_TypeCode5 = "5 - 2-input AND";
-const char* const g_TypeCode6 = "6 - 2-input OR";
-const char* const g_TypeCode7 = "7 - 2-input XOR";
-const char* const g_TypeCode8 = "8 - one shot";
-const char* const g_TypeCode9= "9 - delay";
-const char* const g_SourceCode0 = "0 - internal 4kHz";
-const char* const g_SourceCode1 = "1 - Micro-mirror card";
-const char* const g_SourceCode2 = "2 - backplane TTL5";
-const char* const g_SourceCode3 = "3 - backplane TTL7";
-const char* const g_SourceCode4 = "4 - frontpanel BNC 1";
+const char* const g_CellTypeCode0 = "0 - constant";
+const char* const g_CellTypeCode1 = "1 - D flop";
+const char* const g_CellTypeCode2 = "2 - 2-input LUT";
+const char* const g_CellTypeCode3 = "3 - 3-input LUT";
+const char* const g_CellTypeCode4 = "4 - 4-input LUT";
+const char* const g_CellTypeCode5 = "5 - 2-input AND";
+const char* const g_CellTypeCode6 = "6 - 2-input OR";
+const char* const g_CellTypeCode7 = "7 - 2-input XOR";
+const char* const g_CellTypeCode8 = "8 - one shot";
+const char* const g_CellTypeCode9 = "9 - delay";
+const char* const g_IOTypeCode0 = "0 - input";
+const char* const g_IOTypeCode1 = "1 - output (open-drain)";
+const char* const g_IOTypeCode2 = "2 - output (push-pull)";
+const char* const g_TriggerSourceCode0 = "0 - internal 4kHz";
+const char* const g_TriggerSourceCode1 = "1 - Micro-mirror card";
+const char* const g_TriggerSourceCode2 = "2 - backplane TTL5";
+const char* const g_TriggerSourceCode3 = "3 - backplane TTL7";
+const char* const g_TriggerSourceCode4 = "4 - frontpanel BNC 1";
 
 // SPIM enums
 // which side first

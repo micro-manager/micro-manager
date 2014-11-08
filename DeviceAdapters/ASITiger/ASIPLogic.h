@@ -56,6 +56,7 @@ public:
    int OnInputY               (MM::PropertyBase* pProp, MM::ActionType eAct, long index);
    int OnInputZ               (MM::PropertyBase* pProp, MM::ActionType eAct, long index);
    int OnInputF               (MM::PropertyBase* pProp, MM::ActionType eAct, long index);
+   int OnIOType               (MM::PropertyBase* pProp, MM::ActionType eAct, long index);
    int OnIOSourceAddress      (MM::PropertyBase* pProp, MM::ActionType eAct, long index);
 
 
@@ -67,8 +68,7 @@ private:
 
    int SetPosition(unsigned int position);
    int GetCellPropertyName(long index, string suffix, char* name);
-   int GetIOFrontpanelPropertyName(long index, char* name);
-   int GetIOBackplanePropertyName(long index, char* name);
+   int GetIOPropertyName(long index, string suffix, char* name);
    int RefreshCellPropertyValues(long index);
    int RefreshCurrentPosition();
 };

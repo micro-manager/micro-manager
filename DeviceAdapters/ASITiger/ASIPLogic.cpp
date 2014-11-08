@@ -54,8 +54,6 @@
 
 using namespace std;
 
-// TODO order property names such that Micro-Manager can use presets (e.g. type must come before config)
-
 ///////////////////////////////////////////////////////////////////////////////
 // CPLogic
 //
@@ -122,11 +120,11 @@ int CPLogic::Initialize()
    // sets the trigger source
    pAct = new CPropertyAction (this, &CPLogic::OnTriggerSource);
    CreateProperty(g_TriggerSourcePropertyName, "0", MM::String, false, pAct);
-   AddAllowedValue(g_TriggerSourcePropertyName, g_SourceCode0, 0);
-   AddAllowedValue(g_TriggerSourcePropertyName, g_SourceCode1, 1);
-   AddAllowedValue(g_TriggerSourcePropertyName, g_SourceCode2, 2);
-   AddAllowedValue(g_TriggerSourcePropertyName, g_SourceCode3, 3);
-   AddAllowedValue(g_TriggerSourcePropertyName, g_SourceCode4, 4);
+   AddAllowedValue(g_TriggerSourcePropertyName, g_TriggerSourceCode0, 0);
+   AddAllowedValue(g_TriggerSourcePropertyName, g_TriggerSourceCode1, 1);
+   AddAllowedValue(g_TriggerSourcePropertyName, g_TriggerSourceCode2, 2);
+   AddAllowedValue(g_TriggerSourcePropertyName, g_TriggerSourceCode3, 3);
+   AddAllowedValue(g_TriggerSourcePropertyName, g_TriggerSourceCode4, 4);
    UpdateProperty(g_TriggerSourcePropertyName);
 
    // refresh properties from controller every time; default is false = no refresh (speeds things up by not redoing so much serial comm)
@@ -222,11 +220,11 @@ int CPLogic::OnTriggerSource(MM::PropertyBase* pProp, MM::ActionType eAct)
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       bool success = 0;
       switch (tmp) {
-         case 0: success = pProp->Set(g_SourceCode0); break;
-         case 1: success = pProp->Set(g_SourceCode1); break;
-         case 2: success = pProp->Set(g_SourceCode2); break;
-         case 3: success = pProp->Set(g_SourceCode3); break;
-         case 4: success = pProp->Set(g_SourceCode4); break;
+         case 0: success = pProp->Set(g_TriggerSourceCode0); break;
+         case 1: success = pProp->Set(g_TriggerSourceCode1); break;
+         case 2: success = pProp->Set(g_TriggerSourceCode2); break;
+         case 3: success = pProp->Set(g_TriggerSourceCode3); break;
+         case 4: success = pProp->Set(g_TriggerSourceCode4); break;
          default: success=0;
       }
       if (!success)
@@ -303,27 +301,23 @@ int CPLogic::OnRefreshProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
 int CPLogic::GetCellPropertyName(long index, string suffix, char* name)
 {
    ostringstream os;
-   os << "Cell_" << setw(2) << setfill('0') << index << suffix;
+   os << "PCell_" << setw(2) << setfill('0') << index << suffix;
    CDeviceUtils::CopyLimitedString(name, os.str().c_str());
    return DEVICE_OK;
 }
 
-int CPLogic::GetIOFrontpanelPropertyName(long index, char* name)
+int CPLogic::GetIOPropertyName(long index, string suffix, char* name)
 {
    ostringstream os;
-   os << "SourceAddress_Frontpanel_" << index - PLOGIC_FRONTPANEL_START_ADDRESS + 1;
+   if (index < PLOGIC_BACKPLANE_START_ADDRESS) {  // front panel
+      os << "IOFrontpanel_" << index - PLOGIC_FRONTPANEL_START_ADDRESS + 1;
+   } else {  // backplane
+      os << "IOBackplane_" << index - PLOGIC_BACKPLANE_START_ADDRESS;
+   }
+   os << suffix;
    CDeviceUtils::CopyLimitedString(name, os.str().c_str());
    return DEVICE_OK;
 }
-
-int CPLogic::GetIOBackplanePropertyName(long index, char* name)
-{
-   ostringstream os;
-   os << "SourceAddress_Backplane_" << index - PLOGIC_BACKPLANE_START_ADDRESS;
-   CDeviceUtils::CopyLimitedString(name, os.str().c_str());
-   return DEVICE_OK;
-}
-
 
 int CPLogic::OnAdvancedProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
@@ -345,19 +339,19 @@ int CPLogic::OnAdvancedProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
          for (unsigned int i=1; i<=numCells_; i++) {
 
             // logic cell type
-            GetCellPropertyName(i, "_Type", propName);
+            GetCellPropertyName(i, "_CellType", propName);
             pActEx = new CPropertyActionEx (this, &CPLogic::OnCellType, (long) i);
-            CreateProperty(propName, g_TypeCode0, MM::String, false, pActEx);
-            AddAllowedValue(propName, g_TypeCode0, 0);
-            AddAllowedValue(propName, g_TypeCode1, 1);
-            AddAllowedValue(propName, g_TypeCode2, 2);
-            AddAllowedValue(propName, g_TypeCode3, 3);
-            AddAllowedValue(propName, g_TypeCode4, 4);
-            AddAllowedValue(propName, g_TypeCode5, 5);
-            AddAllowedValue(propName, g_TypeCode6, 6);
-            AddAllowedValue(propName, g_TypeCode7, 7);
-            AddAllowedValue(propName, g_TypeCode8, 8);
-            AddAllowedValue(propName, g_TypeCode9, 9);
+            CreateProperty(propName, g_CellTypeCode0, MM::String, false, pActEx);
+            AddAllowedValue(propName, g_CellTypeCode0, 0);
+            AddAllowedValue(propName, g_CellTypeCode1, 1);
+            AddAllowedValue(propName, g_CellTypeCode2, 2);
+            AddAllowedValue(propName, g_CellTypeCode3, 3);
+            AddAllowedValue(propName, g_CellTypeCode4, 4);
+            AddAllowedValue(propName, g_CellTypeCode5, 5);
+            AddAllowedValue(propName, g_CellTypeCode6, 6);
+            AddAllowedValue(propName, g_CellTypeCode7, 7);
+            AddAllowedValue(propName, g_CellTypeCode8, 8);
+            AddAllowedValue(propName, g_CellTypeCode9, 9);
             UpdateProperty(propName);
 
             // logic cell CCA Z code
@@ -367,40 +361,41 @@ int CPLogic::OnAdvancedProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
             UpdateProperty(propName);
 
             // logic cell input X code
-            GetCellPropertyName(i, "_InputX", propName);
+            GetCellPropertyName(i, "_Input1", propName);
             pActEx = new CPropertyActionEx (this, &CPLogic::OnInputX, (long) i);
             CreateProperty(propName, "0", MM::Integer, false, pActEx);
             UpdateProperty(propName);
 
             // logic cell input Y code
-            GetCellPropertyName(i, "_InputY", propName);
+            GetCellPropertyName(i, "_Input2", propName);
             pActEx = new CPropertyActionEx (this, &CPLogic::OnInputY, (long) i);
             CreateProperty(propName, "0", MM::Integer, false, pActEx);
             UpdateProperty(propName);
 
             // logic cell input Z code
-            GetCellPropertyName(i, "_InputZ", propName);
+            GetCellPropertyName(i, "_Input3", propName);
             pActEx = new CPropertyActionEx (this, &CPLogic::OnInputZ, (long) i);
             CreateProperty(propName, "0", MM::Integer, false, pActEx);
             UpdateProperty(propName);
 
             // logic cell input F code
-            GetCellPropertyName(i, "_InputF", propName);
+            GetCellPropertyName(i, "_Input4", propName);
             pActEx = new CPropertyActionEx (this, &CPLogic::OnInputF, (long) i);
             CreateProperty(propName, "0", MM::Integer, false, pActEx);
             UpdateProperty(propName);
 
          }
 
-         for (unsigned int i=PLOGIC_FRONTPANEL_START_ADDRESS; i<=PLOGIC_FRONTPANEL_END_ADDRESS; i++) {
-            GetIOFrontpanelPropertyName(i, propName);
-            pActEx = new CPropertyActionEx (this, &CPLogic::OnIOSourceAddress, (long) i);
-            CreateProperty(propName, "0", MM::Integer, false, pActEx);
+         for (unsigned int i=PLOGIC_FRONTPANEL_START_ADDRESS; i<=PLOGIC_BACKPLANE_END_ADDRESS; i++) {
+            GetIOPropertyName(i, "_IOType", propName);
+            pActEx = new CPropertyActionEx (this, &CPLogic::OnIOType, (long) i);
+            CreateProperty(propName, "0", MM::String, false, pActEx);
+            AddAllowedValue(propName, g_IOTypeCode0, 0);
+            AddAllowedValue(propName, g_IOTypeCode1, 1);
+            AddAllowedValue(propName, g_IOTypeCode2, 2);
             UpdateProperty(propName);
-         }
 
-         for (unsigned int i=PLOGIC_BACKPLANE_START_ADDRESS; i<=PLOGIC_BACKPLANE_END_ADDRESS; i++) {
-            GetIOBackplanePropertyName(i, propName);
+            GetIOPropertyName(i, "_SourceAddress", propName);
             pActEx = new CPropertyActionEx (this, &CPLogic::OnIOSourceAddress, (long) i);
             CreateProperty(propName, "0", MM::Integer, false, pActEx);
             UpdateProperty(propName);
@@ -472,16 +467,16 @@ int CPLogic::OnCellType(MM::PropertyBase* pProp, MM::ActionType eAct, long index
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       bool success = 0;
       switch (tmp) {
-         case 0: success = pProp->Set(g_TypeCode0); break;
-         case 1: success = pProp->Set(g_TypeCode1); break;
-         case 2: success = pProp->Set(g_TypeCode2); break;
-         case 3: success = pProp->Set(g_TypeCode3); break;
-         case 4: success = pProp->Set(g_TypeCode4); break;
-         case 5: success = pProp->Set(g_TypeCode5); break;
-         case 6: success = pProp->Set(g_TypeCode6); break;
-         case 7: success = pProp->Set(g_TypeCode7); break;
-         case 8: success = pProp->Set(g_TypeCode8); break;
-         case 9: success = pProp->Set(g_TypeCode9); break;
+         case 0: success = pProp->Set(g_CellTypeCode0); break;
+         case 1: success = pProp->Set(g_CellTypeCode1); break;
+         case 2: success = pProp->Set(g_CellTypeCode2); break;
+         case 3: success = pProp->Set(g_CellTypeCode3); break;
+         case 4: success = pProp->Set(g_CellTypeCode4); break;
+         case 5: success = pProp->Set(g_CellTypeCode5); break;
+         case 6: success = pProp->Set(g_CellTypeCode6); break;
+         case 7: success = pProp->Set(g_CellTypeCode7); break;
+         case 8: success = pProp->Set(g_CellTypeCode8); break;
+         case 9: success = pProp->Set(g_CellTypeCode9); break;
          default: success=0;
       }
       if (!success)
@@ -603,6 +598,37 @@ int CPLogic::OnInputF(MM::PropertyBase* pProp, MM::ActionType eAct, long index)
       pProp->Get(tmp);
       RETURN_ON_MM_ERROR ( SetPosition(index) );
       command << addressChar_ << "CCB F=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CPLogic::OnIOType(MM::PropertyBase* pProp, MM::ActionType eAct, long index)
+{
+   ostringstream command; command.str("");
+   long tmp;
+   if (eAct == MM::BeforeGet) {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      RETURN_ON_MM_ERROR ( SetPosition(index) );
+      command << addressChar_ << "CCA Y?";
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
+      bool success = 0;
+      switch (tmp) {
+         case 0: success = pProp->Set(g_IOTypeCode0); break;
+         case 1: success = pProp->Set(g_IOTypeCode1); break;
+         case 2: success = pProp->Set(g_IOTypeCode2); break;
+         default: success=0;
+      }
+      if (!success)
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   } else if (eAct == MM::AfterSet) {
+      char propName[MM::MaxStrLength];
+      GetIOPropertyName(index, "_IOType", propName);
+      RETURN_ON_MM_ERROR ( GetCurrentPropertyData(propName, tmp) );
+      RETURN_ON_MM_ERROR ( SetPosition(index) );
+      command << addressChar_ << "CCA Y=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
    }
    return DEVICE_OK;
