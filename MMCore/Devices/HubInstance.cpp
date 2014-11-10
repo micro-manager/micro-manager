@@ -96,10 +96,8 @@ void HubInstance::DetectInstalledDevices()
       detectInstalledDevicesStatus_ = GetImpl()->DetectInstalledDevices();
       hasDetectedInstalledDevices_ = true;
    }
-   if (detectInstalledDevicesStatus_ != DEVICE_OK) // TODO Retrieve error text
-      throw CMMError("Device " + ToQuotedString(GetLabel()) + " error: "
-            "DetectInstalledDevices() returned error code " +
-            ToString(detectInstalledDevicesStatus_));
+   ThrowIfError(detectInstalledDevicesStatus_,
+         "Failed to detect installed peripheral devices");
 }
 
 unsigned HubInstance::GetNumberOfInstalledDevices() { return GetImpl()->GetNumberOfInstalledDevices(); }
