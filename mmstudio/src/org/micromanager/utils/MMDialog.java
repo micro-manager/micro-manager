@@ -78,6 +78,12 @@ public class MMDialog extends JDialog {
       }
    }
 
+    /**
+    * Load window position and size from preferences
+    * Makes sure that the window can be displayed
+    * Attaches a listener to the window that will save the position when the
+    * window closing event is received
+    */
    protected void loadAndRestorePosition(int x, int y, int width, int height) {
       loadPosition(x, y, width, height);
       this.addWindowListener(new WindowAdapter() {
@@ -89,6 +95,10 @@ public class MMDialog extends JDialog {
       );
    }
    
+   /**
+    * Load window position and size from preferences
+    * Makes sure that the window can be displayed
+    */
    protected void loadPosition(int x, int y, int width, int height) {
       ensureSafeWindowPosition(x, y);
       setBounds(prefs_.getInt(WINDOW_X, x),
@@ -99,7 +109,7 @@ public class MMDialog extends JDialog {
    
    @Override
    public void dispose() {
-      //this.dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+      savePosition();
       super.dispose();
    }
    
@@ -109,14 +119,17 @@ public class MMDialog extends JDialog {
                 prefs_.getInt(WINDOW_Y, y));
    }
 
+   /**
+    * Writes window position and size to preferences
+    */
    protected void savePosition() {
       Rectangle r = getBounds();
-      
-      // save window position
-      prefs_.putInt(WINDOW_X, r.x);
-      prefs_.putInt(WINDOW_Y, r.y);
-      prefs_.putInt(WINDOW_WIDTH, r.width);
-      prefs_.putInt(WINDOW_HEIGHT, r.height);                  
+      if (r != null) {
+         prefs_.putInt(WINDOW_X, r.x);
+         prefs_.putInt(WINDOW_Y, r.y);
+         prefs_.putInt(WINDOW_WIDTH, r.width);
+         prefs_.putInt(WINDOW_HEIGHT, r.height);
+      }
    }
    
    public Preferences getPrefsNode() {
@@ -126,8 +139,6 @@ public class MMDialog extends JDialog {
    public void setPrefsNode(Preferences p) {
       prefs_ = p;
    }
-   
-   protected void setTopPosition() {
-   }
+
 
 }
