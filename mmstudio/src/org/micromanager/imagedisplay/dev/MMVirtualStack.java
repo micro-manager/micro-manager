@@ -70,13 +70,13 @@ public class MMVirtualStack extends ij.VirtualStack {
       }
       // Only augment a given axis if it's actually present in our datastore.
       Coords.CoordsBuilder builder = curCoords_.copy();
-      if (store_.getMaxIndex("channel") != -1) {
+      if (store_.getAxisLength("channel") != 0) {
          builder.position("channel", channel);
       }
-      if (store_.getMaxIndex("z") != -1) {
+      if (store_.getAxisLength("z") != 0) {
          builder.position("z", z);
       }
-      if (store_.getMaxIndex("time") != -1) {
+      if (store_.getAxisLength("time") != 0) {
          builder.position("time", frame);
       }
       // Augment all missing axes with zeros.
@@ -238,8 +238,8 @@ public class MMVirtualStack extends ij.VirtualStack {
       String[] axes = {"channel", "time", "z"};
       int result = 1;
       for (String axis : axes) {
-         if (store_.getMaxIndex(axis) != -1) {
-            result *= (store_.getMaxIndex(axis) + 1);
+         if (store_.getAxisLength(axis) != 0) {
+            result *= store_.getAxisLength(axis);
          }
       }
       return result;
@@ -257,9 +257,9 @@ public class MMVirtualStack extends ij.VirtualStack {
     */
    public void setCoords(Coords coords) {
       curCoords_ = coords;
-      int numChannels = Math.max(1, store_.getMaxIndex("channel") + 1);
-      int numFrames = Math.max(1, store_.getMaxIndex("time") + 1);
-      int numSlices = Math.max(1, store_.getMaxIndex("z") + 1);
+      int numChannels = Math.max(1, store_.getAxisLength("channel"));
+      int numFrames = Math.max(1, store_.getAxisLength("time"));
+      int numSlices = Math.max(1, store_.getAxisLength("z"));
       if (plus_ instanceof IMMImagePlus) {
          IMMImagePlus temp = (IMMImagePlus) plus_;
          temp.setNChannelsUnverified(numChannels);

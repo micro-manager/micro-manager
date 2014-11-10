@@ -181,7 +181,7 @@ public class DisplaySettingsPanel extends JPanel {
       String selection = (String) displayMode.getSelectedItem();
       DisplaySettings.DisplaySettingsBuilder builder = store_.getDisplaySettings().copy();
       if (selection.equals("Composite")) {
-         if (store_.getMaxIndex("channel") > 6) {
+         if (store_.getAxisLength("channel") > 7) {
             JOptionPane.showMessageDialog(null,
                "Images with more than 7 channels cannot be displayed in Composite mode.");
             // Send them back to Color mode.

@@ -49,7 +49,7 @@ public class DefaultDataManager implements DataManager {
       }
       // Adjust image coordinates to be at the N+1th timepoint.
       Coords newCoords = image.getCoords().copy()
-         .position("time", albumDatastore_.getMaxIndex("time") + 1)
+         .position("time", albumDatastore_.getAxisLength("time"))
          .build();
       try {
          DefaultImage temp = new DefaultImage(image, newCoords, image.getMetadata());
