@@ -131,11 +131,13 @@ public interface Datastore {
    public boolean getIsSaved();
 
    /**
-    * These are the valid inputs to the save() methods.
+    * These are the valid inputs to the save() methods. SEPARATE_TIFFS
+    * saves each individual 2D image plane as a separate file; MULTIPAGE_TIFF
+    * saves all images together in a single file (up to a limit of 4GB/file).
     */
    public enum SaveMode {
       SEPARATE_TIFFS,
-      MULTISTACK_TIFF
+      MULTIPAGE_TIFF
    }
 
    /**

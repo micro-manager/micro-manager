@@ -4,8 +4,9 @@ import com.google.common.eventbus.Subscribe;
 
 import java.awt.Color;
 
-import java.util.HashMap;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 
 import mmcorej.TaggedImage;
@@ -120,6 +121,11 @@ public class StorageRAM implements Storage {
          }
       }
       return results;
+   }
+
+   @Override
+   public synchronized Iterable<Image> getUnorderedImageView() {
+      return coordsToImage_.values();
    }
 
    @Override
