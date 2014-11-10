@@ -45,7 +45,7 @@ public class ShadingTable extends JTable {
    private final ScriptInterface gui_;
 
    private static final String buttonCellLayoutConstraints =
-         "fill, insets 0, align center, center";
+         "insets 0, align center, center";
 
    private class LoadFileButtonCellRenderer implements TableCellRenderer {
       private final JPanel panel_ = new JPanel();
@@ -56,7 +56,7 @@ public class ShadingTable extends JTable {
                  form.getButtonFont());
          button_.setText("...");
          panel_.setLayout(new MigLayout(buttonCellLayoutConstraints));
-         panel_.add(button_);
+         panel_.add(button_,"gapx push");
       }
 
       @Override
@@ -89,7 +89,7 @@ public class ShadingTable extends JTable {
          button_.setText("...");
          row_ = -1;
          panel_.setLayout(new MigLayout(buttonCellLayoutConstraints));
-         panel_.add(button_);
+         panel_.add(button_, "gapx push");
          button_.addActionListener(this);
       }
 
@@ -186,7 +186,7 @@ public class ShadingTable extends JTable {
       //Editor for column 0 (preset combobox)
       presetCellEditor_ = new PresetCellEditor(gui, model);
       getColumnModel().getColumn(0).setCellEditor(presetCellEditor_);
-            
+                  
       // Renderer and Editor for column 2 (button)
       LoadFileButtonCellRenderer loadFileButtonRenderer = 
               new LoadFileButtonCellRenderer(form);
