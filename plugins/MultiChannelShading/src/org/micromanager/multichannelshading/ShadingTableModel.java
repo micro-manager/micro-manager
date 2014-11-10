@@ -201,8 +201,8 @@ public class ShadingTableModel extends AbstractTableModel {
     * @param selectedRows - array containing selected row numbers
     */
    public void removeRow(int[] selectedRows) {
-      List presetList = new ArrayList<String>();
-      List fileList = new ArrayList<String>();
+      List<String> presetList = new ArrayList<String>();
+      List<String> fileList = new ArrayList<String>();
       for (int i = 0; i < presetList_.size(); i++ ) {
          boolean isSelected = false;
          for (int j = 0; j < selectedRows.length; j++) {
