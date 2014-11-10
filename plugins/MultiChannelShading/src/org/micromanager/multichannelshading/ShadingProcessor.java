@@ -1,7 +1,30 @@
+///////////////////////////////////////////////////////////////////////////////
+//FILE:          ShadingProcessor.java
+//PROJECT:       Micro-Manager  
+//SUBSYSTEM:     MultiChannelShading plugin
+//-----------------------------------------------------------------------------
+//
+// AUTHOR:       Kurt Thorn, Nico Stuurman
+//
+// COPYRIGHT:    University of California, San Francisco 2014
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+
 
 package org.micromanager.multichannelshading;
 
 import ij.ImagePlus;
+import ij.process.ImageProcessor;
+import java.util.Iterator;
 import mmcorej.Configuration;
 import mmcorej.PropertySetting;
 import mmcorej.TaggedImage;
@@ -9,6 +32,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.acquisition.TaggedImageQueue;
 import org.micromanager.api.DataProcessor;
+import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
@@ -18,19 +42,15 @@ import org.micromanager.utils.ReportingUtils;
  * @author nico
  */
 public class ShadingProcessor extends DataProcessor<TaggedImage> {
-   private final ShadingTableModel shadingTableModel_;
+   private ShadingTableModel shadingTableModel_;
    private ImagePlus background_;
    private MultiChannelShadingMigForm myFrame_;
-   
-   public ShadingProcessor(ShadingTableModel shadingTableModel) {
-      shadingTableModel_ = shadingTableModel;
-   }
    
    public void setBackground(ImagePlus background){
       background_ = background;
    }  
    
-      @Override
+   @Override
    public void setEnabled(boolean enabled) {
       super.setEnabled(enabled);
       if (myFrame_ != null) {
@@ -78,10 +98,7 @@ public class ShadingProcessor extends DataProcessor<TaggedImage> {
       int width = MDUtils.getWidth(nextImage.tags);
       int height = MDUtils.getHeight(nextImage.tags);
       TaggedImage newImage;
-      Float [] flatFieldImage_;
       String type = MDUtils.getPixelType(nextImage.tags);
-      String imageChannel;
-      String CHANNELNAME = "Channel"; //name of Channel tag
       
       int ijType = ImagePlus.GRAY8;
       if (type.equals("GRAY16")) {
@@ -94,24 +111,8 @@ public class ShadingProcessor extends DataProcessor<TaggedImage> {
          return nextImage;
       }
       JSONObject newTags = nextImage.tags;
-      
-      //check tags and identify appropriate flatfielding image
-      /*
-      if (newTags.has(CHANNELNAME)){
-        imageChannel = (String) newTags.get(CHANNELNAME);
-      } else {
-        //work out channel from core; get channel corresponding to selected group
-        imageChannel = gui_.getMMCore().getCurrentConfig(channelGroup_);
-      }      
-      //get flat field image; returns null if no image found
-      if (flatFieldImages.getFlatFieldNormalize(imageChannel)){
-          flatFieldImage_ = flatFieldImages.getNormalizedFlatField(imageChannel);
-      } else {
-          flatFieldImage_ = flatFieldImages.getFlatField(imageChannel); 
-      }
-      int flatFieldHeight = flatFieldImages.getImageHeight(imageChannel);
-      int flatFieldWidth = flatFieldImages.getImageWidth(imageChannel);
-     
+      SimpleFloatImage flatFieldImage = getMatchingFlatFieldImage(newTags);       
+
       // subtract background
       if (background_ != null) {
          ImageProcessor differenceProcessor =
@@ -121,11 +122,12 @@ public class ShadingProcessor extends DataProcessor<TaggedImage> {
       }
       
       //do not calculate flat field if we don't have a matching channel
-      if (flatFieldImage_ == null) {
+      if (flatFieldImage == null) {
          return nextImage;
       }      
       // do not calculate if image size differs
-      if (width != flatFieldWidth || height != flatFieldHeight) {
+      if (width != flatFieldImage.getWidth() || 
+              height != flatFieldImage.getHeight()) {
          ReportingUtils.logError
             ("FlatField dimensions do not match image dimensions");
          return nextImage;
@@ -137,7 +139,7 @@ public class ShadingProcessor extends DataProcessor<TaggedImage> {
          int length = oldPixels.length;
          for (int index = 0; index < length; index++){
             newPixels[index] = (byte) ( (float) oldPixels[index] 
-                * flatFieldImage_[index]);
+                * flatFieldImage.getNormalizedPixels()[index]);
          }
          newImage = new TaggedImage(newPixels, newTags);
          return newImage;
@@ -147,20 +149,26 @@ public class ShadingProcessor extends DataProcessor<TaggedImage> {
          short[] oldPixels = (short[]) nextImage.pix;
          int length = oldPixels.length;
          for (int index = 0; index < length; index++){
-            //shorts are signed in java so have to do this conversion to get the right value
+            // shorts are signed in java so have to do this conversion to get 
+            // the right value
             float oldPixel = (float)((int)(oldPixels[index]) & 0x0000ffff);
-            newPixels[index] = (short) ((oldPixel * flatFieldImage_[index]) + 0.5f);
+            newPixels[index] = (short) ((oldPixel * 
+                    flatFieldImage.getNormalizedPixels()[index]) + 0.5f);
          }
          newImage = new TaggedImage(newPixels, newTags);
          return newImage;         
          
-      } else {
-          return nextImage;
-      }
-               */
+      } 
+      
       return nextImage;
+     
    }
-   
+   /**
+    * Given the tags of the image currently being processed,
+    * find a matching preset from the channelgroup used by the tablemodel
+    * @param imgTags - image tags in JSON format
+    * @return matching flat field image
+    */
    SimpleFloatImage getMatchingFlatFieldImage(JSONObject imgTags) {
       String channelGroup = shadingTableModel_.getChannelGroup();
       String[] presets = shadingTableModel_.getUsedPresets();
@@ -168,10 +176,26 @@ public class ShadingProcessor extends DataProcessor<TaggedImage> {
          try {
             Configuration config = gui_.getMMCore().getConfigData(
                     channelGroup, preset);
-            for (int i = 0; i < config.size(); i++) {
+            boolean presetMatch = true;
+            for (int i = 0; i < config.size() && presetMatch; i++) {
+               boolean settingMatch = false;
                PropertySetting ps = config.getSetting(i);
-               //imgTags.
-               //ps.
+               String key = ps.getKey();
+               String value = ps.getPropertyValue();
+               Iterator<String> tagIterator = imgTags.keys();
+               while (tagIterator.hasNext() && !settingMatch) {
+                  String tagKey = tagIterator.next();
+                  String tagValue = imgTags.getString(tagKey);
+                  if (key.equals(tagKey) && value.equals(tagValue)) {
+                     settingMatch = true;
+                  }
+               }
+               // if we do not have a settingMatch, this config can not match
+               // so stop testing this config
+               presetMatch = settingMatch;
+            }
+            if (presetMatch) {
+               return shadingTableModel_.getFlatFieldImage(channelGroup, preset);
             }
          } catch (Exception ex) {
             //TODO
@@ -186,9 +210,14 @@ public class ShadingProcessor extends DataProcessor<TaggedImage> {
    public void makeConfigurationGUI() {
       if (myFrame_ == null) {
          myFrame_ = new MultiChannelShadingMigForm(this, gui_);
+         shadingTableModel_ = myFrame_.getShadingTableModel();
          gui_.addMMBackgroundListener(myFrame_);
       }
       myFrame_.setVisible(true);
+   }
+   
+   public void setMyFrameToNull() {
+      myFrame_ = null;
    }
 
    @Override

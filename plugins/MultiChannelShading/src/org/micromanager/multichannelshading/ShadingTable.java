@@ -1,4 +1,23 @@
-
+///////////////////////////////////////////////////////////////////////////////
+//FILE:          ShadingTable.java
+//PROJECT:       Micro-Manager  
+//SUBSYSTEM:     MultiChannelShading plugin
+//-----------------------------------------------------------------------------
+//
+// AUTHOR:       Kurt Thorn, Nico Stuurman
+//
+// COPYRIGHT:    University of California, San Francisco 2014
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 package org.micromanager.multichannelshading;
 
@@ -30,9 +49,12 @@ public class ShadingTable extends JTable {
 
    private class LoadFileButtonCellRenderer implements TableCellRenderer {
       private final JPanel panel_ = new JPanel();
-      private final JButton button_ = new JButton("...");
+      private final JButton button_;
 
-      public LoadFileButtonCellRenderer() {
+      public LoadFileButtonCellRenderer(MultiChannelShadingMigForm form) {         
+         button_ = form.mcsButton(form.getButtonDimension(), 
+                 form.getButtonFont());
+         button_.setText("...");
          panel_.setLayout(new MigLayout(buttonCellLayoutConstraints));
          panel_.add(button_);
       }
@@ -57,11 +79,15 @@ public class ShadingTable extends JTable {
       private int row_;
       private final MultiChannelShadingMigForm form_;
       private final JPanel panel_ = new JPanel();
-      private final JButton button_ = new JButton("...");
+      private final JButton button_ ;
 
-      public LoadFileButtonCellEditor(MultiChannelShadingMigForm form) {
-         row_ = -1;
+      @SuppressWarnings("LeakingThisInConstructor")
+      public LoadFileButtonCellEditor(MultiChannelShadingMigForm form) {     
          form_ = form;
+         button_ = form_.mcsButton(form_.getButtonDimension(), 
+                 form_.getButtonFont());
+         button_.setText("...");
+         row_ = -1;
          panel_.setLayout(new MigLayout(buttonCellLayoutConstraints));
          panel_.add(button_);
          button_.addActionListener(this);
@@ -95,12 +121,13 @@ public class ShadingTable extends JTable {
       private int row_;
       private String selectedPreset_;
       
+      @SuppressWarnings("LeakingThisInConstructor")
       public PresetCellEditor(ScriptInterface gui, ShadingTableModel model) {
          model_ = model;
          row_ = -1;
-         comboBox_.addActionListener(this);
          panel_.setLayout(new MigLayout("fill, insets 0, align center, center"));
          panel_.add(comboBox_);
+         comboBox_.addActionListener(this);
       }
       
       @Override
@@ -146,6 +173,9 @@ public class ShadingTable extends JTable {
       }
    }
 
+   private PresetCellEditor presetCellEditor_;
+   private LoadFileButtonCellEditor loadFileButtonCellEditor_;
+   
    ShadingTable(ScriptInterface gui, ShadingTableModel model, 
            MultiChannelShadingMigForm form) {
       super(model);
@@ -154,20 +184,25 @@ public class ShadingTable extends JTable {
       setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
       //Editor for column 0 (preset combobox)
-      PresetCellEditor presetCellEditor = new PresetCellEditor(gui, model);
-      getColumnModel().getColumn(0).setCellEditor(presetCellEditor);
+      presetCellEditor_ = new PresetCellEditor(gui, model);
+      getColumnModel().getColumn(0).setCellEditor(presetCellEditor_);
             
       // Renderer and Editor for column 2 (button)
       LoadFileButtonCellRenderer loadFileButtonRenderer = 
-              new LoadFileButtonCellRenderer();
+              new LoadFileButtonCellRenderer(form);
       getColumnModel().getColumn(2).setCellRenderer(loadFileButtonRenderer);
 
-      LoadFileButtonCellEditor loadFileButtonCellEditor = 
+      loadFileButtonCellEditor_ = 
               new LoadFileButtonCellEditor(form);
-      getColumnModel().getColumn(2).setCellEditor(loadFileButtonCellEditor);
+      getColumnModel().getColumn(2).setCellEditor(loadFileButtonCellEditor_);
       
       this.setRowHeight((int) (this.getRowHeight() * 1.5));
 
+   }
+   
+   public void stopCellEditing() {
+      presetCellEditor_.stopCellEditing();
+      loadFileButtonCellEditor_.stopCellEditing();
    }
 
 }

@@ -1,3 +1,24 @@
+///////////////////////////////////////////////////////////////////////////////
+//FILE:          ShadingTableModel.java
+//PROJECT:       Micro-Manager  
+//SUBSYSTEM:     MultiChannelShading plugin
+//-----------------------------------------------------------------------------
+//
+// AUTHOR:       Kurt Thorn, Nico Stuurman
+//
+// COPYRIGHT:    University of California, San Francisco 2014
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+
 
 package org.micromanager.multichannelshading;
 
@@ -85,7 +106,7 @@ public class ShadingTableModel extends AbstractTableModel {
       return true;
    }
    
-      @Override
+   @Override
    public void setValueAt(Object value, int row, int column) {
       switch (column) {
          case 0: 
@@ -195,22 +216,32 @@ public class ShadingTableModel extends AbstractTableModel {
       return getNumberOfPresetsInCurrentGroup() - getUsedPresets().length;
    }
    
+   public SimpleFloatImage getFlatFieldImage (String channelGroup, String preset) {
+      if (channelGroup.equals(channelGroup_)) {
+         return flatFieldImages_.get(preset);
+      }
+      return null;
+   }
+   
    /**
     * Removes selected rows from the tablemodel
     * calls fireTableDataChanged to update the UI
     * @param selectedRows - array containing selected row numbers
     */
    public void removeRow(int[] selectedRows) {
+      // Since we have ordered lists, rebuild them
       List<String> presetList = new ArrayList<String>();
       List<String> fileList = new ArrayList<String>();
       for (int i = 0; i < presetList_.size(); i++ ) {
-         boolean isSelected = false;
+         boolean removeRow = false;
          for (int j = 0; j < selectedRows.length; j++) {
             if (i == selectedRows[j]) {
-               isSelected = true;
+               removeRow = true;
+               channelPrefs_.remove(presetList_.get(i));
+               flatFieldImages_.remove(presetList_.get(i));
             }
          }
-         if (!isSelected) {
+         if (!removeRow) {
             presetList.add(presetList_.get(i));
             fileList.add(fileList_.get(i));
          }
@@ -226,8 +257,10 @@ public class ShadingTableModel extends AbstractTableModel {
          ij.io.Opener opener = new ij.io.Opener();
          ImagePlus ip = opener.openImage(fileList_.get(row));
          SimpleFloatImage flatFieldImage = new SimpleFloatImage(ip);
-         if (presetList_.get(row) != null) {
-            flatFieldImages_.put(presetList_.get(row), flatFieldImage);
+         String preset = presetList_.get(row);
+         if (preset != null) {
+            flatFieldImages_.put(preset, flatFieldImage);
+            channelPrefs_.put(preset, fileList_.get(row));
          }
       }
          

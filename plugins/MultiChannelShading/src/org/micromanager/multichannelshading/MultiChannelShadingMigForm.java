@@ -25,6 +25,8 @@ import ij.ImagePlus;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.io.File;
 import java.util.prefs.Preferences;
 import javax.swing.ImageIcon;
@@ -32,9 +34,10 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.WindowConstants;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.MMStudio;
 import org.micromanager.api.ScriptInterface;
@@ -63,6 +66,7 @@ public class MultiChannelShadingMigForm extends MMDialog {
    private final Font arialSmallFont_;
    private final ShadingTableModel shadingTableModel_;
    private final JCheckBox useCheckBox_;
+   private final Dimension buttonSize_;
    
   
    
@@ -71,27 +75,28 @@ public class MultiChannelShadingMigForm extends MMDialog {
      * @param processor
      * @param gui
      */
+   @SuppressWarnings("LeakingThisInConstructor")
    public MultiChannelShadingMigForm(ShadingProcessor processor, ScriptInterface gui) {
       processor_ = processor;
       gui_ = gui;
       mmc_ = gui_.getMMCore();
-      prefs_ = Preferences.userNodeForPackage(this.getClass());
+      prefs_ = this.getPrefsNode();
+      this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
       arialSmallFont_ = new Font("Arial", Font.PLAIN, 12);
+      buttonSize_ = new Dimension(70, 21);
       
-      final JButton addButton =  new JButton();
-      final JButton removeButton =  new JButton();
+      final JButton addButton =  mcsButton(buttonSize_, arialSmallFont_);
+      final JButton removeButton =  mcsButton(buttonSize_, arialSmallFont_);
       
       mcsPluginWindow = this;
       this.setBackground(gui_.getBackgroundColor());
-      this.setLayout(new MigLayout("flowx, fill, insets 8", "[]", 
-              "[][][][][]"));
+      this.setLayout(new MigLayout("flowx, fill, insets 8"));
       this.setTitle("MultiChannelShading");
 
       loadAndRestorePosition(100, 100, 350, 250);
+
       
-      Dimension buttonSize = new Dimension(88, 21);
-      
-      JLabel channelGroupLabel = new JLabel("Channel Group");
+      JLabel channelGroupLabel = new JLabel("Channel Group:");
       channelGroupLabel.setFont(arialSmallFont_);
       add(channelGroupLabel);
       
@@ -102,20 +107,18 @@ public class MultiChannelShadingMigForm extends MMDialog {
               channelGroups));
       groupName_ = prefs_.get(CHANNELGROUP, "");
       groupComboBox.setSelectedItem(groupName_);
-      //processor_.setChannelGroup(groupName_);
       groupComboBox.addActionListener(new java.awt.event.ActionListener() {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             groupName_ = (String) groupComboBox.getSelectedItem();
             shadingTableModel_.setChannelGroup(groupName_);
             updateAddRemoveButtons(addButton, removeButton);
-            //processor_.setChannelGroup(groupName_);
             prefs_.put(CHANNELGROUP, groupName_);
          }
       });
       add(groupComboBox, "wrap");
              
-      JLabel darkImageLabel = new JLabel("Dark Image (common)");
+      JLabel darkImageLabel = new JLabel("Dark Image (common):");
       darkImageLabel.setFont(arialSmallFont_);
       add (darkImageLabel, "wrap");
       
@@ -132,11 +135,20 @@ public class MultiChannelShadingMigForm extends MMDialog {
             processBackgroundImage(darkFieldTextField.getText());
          }
       });
+      darkFieldTextField.addFocusListener(new FocusListener() {
+         public void focusGained(FocusEvent fe) {
+            // great, so what?
+         }
+
+         public void focusLost(FocusEvent fe) {
+            processBackgroundImage(darkFieldTextField.getText());
+         }
+      });
       processBackgroundImage(darkFieldTextField.getText());
-      add(darkFieldTextField, "span 2, growx");
+      add(darkFieldTextField, "span 2, growx ");
 
 
-      final JButton darkFieldButton =  new JButton();
+      final JButton darkFieldButton =  mcsButton(buttonSize_, arialSmallFont_);
       darkFieldButton.setText("...");
       darkFieldButton.addActionListener(new java.awt.event.ActionListener() {
          @Override
@@ -154,16 +166,20 @@ public class MultiChannelShadingMigForm extends MMDialog {
       
       // Table with channel presets and files
       final JScrollPane scrollPane = new JScrollPane();
-      add(scrollPane, "span 4 3, grow");
+      add(scrollPane, "span 4 2, grow, push");
       shadingTableModel_ = new ShadingTableModel(gui_); 
       shadingTableModel_.setChannelGroup(groupName_);
-      final JTable shadingTable = 
+      final ShadingTable shadingTable = 
               new ShadingTable(gui_, shadingTableModel_, this);
       scrollPane.setViewportView(shadingTable);
       
       // Add and Remove buttons
+      // Place them inside their own JPanel
+      JPanel buttonPanel = new JPanel();
+      buttonPanel.setLayout(new MigLayout("filly, insets 0"));
+      
       addButton.setText("Add");
-      addButton.setMinimumSize(buttonSize);
+      addButton.setMinimumSize(buttonSize_);
       addButton.setFont(arialSmallFont_);
       addButton.setIcon(new ImageIcon(MMStudio.class.getResource(
             "/org/micromanager/icons/plus.png")));
@@ -174,22 +190,25 @@ public class MultiChannelShadingMigForm extends MMDialog {
             updateAddRemoveButtons(addButton, removeButton);
          }
       });
-      add(addButton, "wrap");
+      buttonPanel.add(addButton, "wrap");
       
       removeButton.setText("Remove");
-      removeButton.setMinimumSize(buttonSize);
+      removeButton.setMinimumSize(buttonSize_);
       removeButton.setFont(arialSmallFont_);
       removeButton.setIcon(new ImageIcon (MMStudio.class.getResource(
             "/org/micromanager/icons/minus.png")));
       removeButton.addActionListener(new java.awt.event.ActionListener() {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
+            shadingTable.stopCellEditing();
             shadingTableModel_.removeRow(shadingTable.getSelectedRows());
             updateAddRemoveButtons(addButton, removeButton);
          }
       });
-      add(removeButton, "wrap");
-      add(new JLabel(""), "wrap");
+      buttonPanel.add(removeButton);
+      
+      add(buttonPanel, "gap 5px, aligny top, wrap");
+      add(new JLabel(""), "growy, pushy, wrap");
       
       
       useCheckBox_ = new JCheckBox();
@@ -208,6 +227,12 @@ public class MultiChannelShadingMigForm extends MMDialog {
       processor_.setEnabled(useCheckBox_.isSelected());
       
    }
+   
+   @Override
+   public void dispose() {
+      super.dispose();
+      processor_.setMyFrameToNull();
+   }
 
    private void updateAddRemoveButtons(JButton addButton, JButton removeButton) {
       removeButton.setEnabled(shadingTableModel_.getRowCount() > 0);
@@ -216,7 +241,16 @@ public class MultiChannelShadingMigForm extends MMDialog {
       addButton.setEnabled(availablePresets > 0);
    }
    
-   private JButton mcsButton(Dimension buttonSize, Font font) {
+   public final Font getButtonFont() {
+      return arialSmallFont_;
+   }
+   
+   public final Dimension getButtonDimension() {
+      return buttonSize_;
+   }
+   
+   
+   public final JButton mcsButton(Dimension buttonSize, Font font) {
       JButton button = new JButton();
       button.setPreferredSize(buttonSize);
       button.setMinimumSize(buttonSize);
@@ -230,10 +264,8 @@ public class MultiChannelShadingMigForm extends MMDialog {
       if (EMPTY_FILENAME_INDICATOR.equals(fileName)) {
          fileName = "";
       }
-
       // If we have a filename, try to open it and set the background image.
       // If not, set the background image to null (no correction).
-      // TODO User should be made aware if file is missing!
       ImagePlus ip = null;
       if (fileName != null && !fileName.isEmpty()) {
          ij.io.Opener opener = new ij.io.Opener();
@@ -245,14 +277,18 @@ public class MultiChannelShadingMigForm extends MMDialog {
       prefs_.put(DARKFIELDFILENAME, backgroundFileName_);
    }
    
-    void updateProcessorEnabled(boolean enabled) {
+    public void updateProcessorEnabled(boolean enabled) {
       useCheckBox_.setSelected(enabled);
       // useCheckBox may already be doing the following:
-      processor_.setEnabled(enabled);
+      // processor_.setEnabled(enabled);
       prefs_.putBoolean(USECHECKBOX, enabled);
    }
+    
+   public ShadingTableModel getShadingTableModel() {
+      return shadingTableModel_;
+   }
    
-/**
+   /**
      * Helper function for the individual buttons
      * @param rowNumber Table row associated with action Event
      */
