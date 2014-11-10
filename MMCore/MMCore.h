@@ -584,10 +584,10 @@ public:
    void setParentLabel(const char* deviceLabel,
          const char* parentHubLabel) throw (CMMError);
 
-   std::vector<std::string> getInstalledDevices(const char* hubLabel);
+   std::vector<std::string> getInstalledDevices(const char* hubLabel) throw (CMMError);
    std::string getInstalledDeviceDescription(const char* hubLabel,
-         const char* peripheralLabel);
-   std::vector<std::string> getLoadedPeripheralDevices(const char* hubLabel);
+         const char* peripheralLabel) throw (CMMError);
+   std::vector<std::string> getLoadedPeripheralDevices(const char* hubLabel) throw (CMMError);
    ///@}
 
    /** \name Miscellaneous. */

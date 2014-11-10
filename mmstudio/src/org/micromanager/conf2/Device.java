@@ -195,7 +195,7 @@ import org.micromanager.utils.ReportingUtils;
       return devList;
    }
    
-   public void discoverPeripherals(CMMCore core) {
+   public void discoverPeripherals(CMMCore core) throws Exception {
       // check if there are any child devices installed
       if (isHub() && !getName().equals("Core") && childDevices_.length == 0) {
          

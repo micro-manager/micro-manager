@@ -103,8 +103,8 @@ using namespace std;
  * This applies to all classes exposed through the SWIG layer (i.e. the whole
  * of the public API of the Core), not just CMMCore.
  */
-const int MMCore_versionMajor = 6;
-const int MMCore_versionMinor = 2;
+const int MMCore_versionMajor = 7;
+const int MMCore_versionMinor = 0;
 const int MMCore_versionPatch = 0;
 
 
@@ -6608,7 +6608,7 @@ MM::DeviceDetectionStatus CMMCore::detectDevice(char* label)
  *
  * @param hubDeviceLabel    the label for the device of type Hub
  */
-std::vector<std::string> CMMCore::getInstalledDevices(const char* hubDeviceLabel)
+std::vector<std::string> CMMCore::getInstalledDevices(const char* hubDeviceLabel) throw (CMMError)
 {
    boost::shared_ptr<HubInstance> pHub =
       deviceManager_->GetDeviceOfType<HubInstance>(hubDeviceLabel);
@@ -6617,13 +6617,13 @@ std::vector<std::string> CMMCore::getInstalledDevices(const char* hubDeviceLabel
    return pHub->GetInstalledPeripheralNames();
 }
 
-std::vector<std::string> CMMCore::getLoadedPeripheralDevices(const char* hubLabel)
+std::vector<std::string> CMMCore::getLoadedPeripheralDevices(const char* hubLabel) throw (CMMError)
 {
    CheckDeviceLabel(hubLabel);
    return deviceManager_->GetLoadedPeripherals(hubLabel);
 }
 
-std::string CMMCore::getInstalledDeviceDescription(const char* hubLabel, const char* deviceLabel)
+std::string CMMCore::getInstalledDeviceDescription(const char* hubLabel, const char* deviceLabel) throw (CMMError)
 {
    boost::shared_ptr<HubInstance> pHub =
       deviceManager_->GetDeviceOfType<HubInstance>(hubLabel);
