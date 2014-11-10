@@ -74,8 +74,12 @@ public class PipelineTable extends JTable {
 
       @Override
       public Component getTableCellEditorComponent(JTable table,
-            Object dataProcessor, boolean isSelected, int row, int column) {
-         processor_ = (DataProcessor<TaggedImage>) dataProcessor;
+            Object cellValue, boolean isSelected, int row, int column) {
+
+         @SuppressWarnings("unchecked")
+         DataProcessor<TaggedImage> dataProcessor = (DataProcessor) cellValue;
+         processor_ = dataProcessor;
+
          if (isSelected) {
             panel_.setBackground(table.getSelectionBackground());
          }
@@ -105,8 +109,11 @@ public class PipelineTable extends JTable {
    DataProcessor<TaggedImage> getSelectedProcessor() {
       int i = getSelectedRow();
       if (i >= 0) {
-         return (DataProcessor) getModel().
-               getValueAt(i, PipelineTableModel.CONFIGURE_COLUMN);
+         Object cellValue = getModel().getValueAt(i,
+               PipelineTableModel.CONFIGURE_COLUMN);
+         @SuppressWarnings("unchecked")
+         DataProcessor<TaggedImage> processor = (DataProcessor) cellValue;
+         return processor;
       }
       return null;
    }
