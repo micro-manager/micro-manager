@@ -94,6 +94,11 @@ public class DefaultDatastore implements Datastore {
    }
 
    @Override
+   public Integer getAxisLength(String axis) {
+      return getMaxIndex(axis) + 1;
+   }
+
+   @Override
    public List<String> getAxes() {
       if (storage_ != null) {
          return storage_.getAxes();
@@ -185,7 +190,6 @@ public class DefaultDatastore implements Datastore {
 
    @Override
    public void save(Datastore.SaveMode mode, String path) {
-      ReportingUtils.logError("Saving to " + path + " with mode " + mode);
       // Downcast enum to boolean as StorageMultipageTiff only has two modes.
       // TODO: "false" is saying to not use separate files for each position.
       // Should have a better way to handle this.
