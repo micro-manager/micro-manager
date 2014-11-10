@@ -99,7 +99,7 @@ public class MMDialog extends JDialog {
    
    @Override
    public void dispose() {
-      this.dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+      //this.dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
       super.dispose();
    }
    
