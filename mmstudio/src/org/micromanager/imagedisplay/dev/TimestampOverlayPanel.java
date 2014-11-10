@@ -129,7 +129,7 @@ public class TimestampOverlayPanel extends OverlayPanel {
       ArrayList<String> timestamps = new ArrayList<String>();
       ArrayList<Color> colors = new ArrayList<Color>();
       if (amMultiChannel_.isSelected()) {
-         for (int i = 0; i < store.getMaxIndex("channel") + 1; ++i) {
+         for (int i = 0; i < store.getAxisLength("channel"); ++i) {
             Coords channelCoords = image.getCoords().copy().position("channel", i).build();
             Image channelImage = store.getImage(channelCoords);
             if (channelImage != null) {

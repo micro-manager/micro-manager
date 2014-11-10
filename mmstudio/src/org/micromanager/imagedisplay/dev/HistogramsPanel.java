@@ -58,7 +58,7 @@ public final class HistogramsPanel extends JPanel implements Histograms {
       }
 
       // TODO: ignoring the possibility of RGB images for now.
-      final int nChannels = store_.getMaxIndex("channel") + 1;
+      final int nChannels = store_.getAxisLength("channel");
       if (nChannels == 0) {
          ReportingUtils.logError("Have zero channels to work with.");
          return;
