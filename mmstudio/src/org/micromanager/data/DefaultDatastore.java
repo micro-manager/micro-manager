@@ -5,6 +5,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.micromanager.acquisition.multipagetiff.StorageMultipageTiff;
 import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.DatastoreLockedException;
@@ -15,6 +16,7 @@ import org.micromanager.api.data.SummaryMetadata;
 import org.micromanager.api.display.DisplayWindow;
 import org.micromanager.MMStudio;
 import org.micromanager.utils.FileDialogs;
+import org.micromanager.utils.MMException;
 import org.micromanager.utils.PrioritizedEventBus;
 import org.micromanager.utils.ReportingUtils;
 
@@ -183,13 +185,35 @@ public class DefaultDatastore implements Datastore {
 
    @Override
    public void save(Datastore.SaveMode mode, String path) {
-      // Test for writability
-      File file = new File(path);
-      if (!file.canWrite()) {
-         ReportingUtils.showError(String.format("Cannot write to the path:\n%s", path));
-         return;
-      }
       ReportingUtils.logError("Saving to " + path + " with mode " + mode);
+      // Downcast enum to boolean as StorageMultipageTiff only has two modes.
+      // TODO: "false" is saying to not use separate files for each position.
+      // Should have a better way to handle this.
+      // TODO: obey the mode parameter and allow saving across multiple files.
+      // TODO: we have some casts to Default* here; do we really need them?
+      boolean isMultipage = (mode == Datastore.SaveMode.MULTIPAGE_TIFF);
+      try {
+         StorageMultipageTiff saver = new StorageMultipageTiff(path, true,
+               (DefaultSummaryMetadata) getSummaryMetadata(), isMultipage, false);
+         for (Image image : storage_.getUnorderedImageView()) {
+            try {
+               saver.putImage(((DefaultImage) image).legacyToTaggedImage(),
+                     false);
+            }
+            catch (InterruptedException e) {
+               ReportingUtils.showError(e, "Interrupted while inserting image " + image);
+            }
+            catch (java.util.concurrent.ExecutionException e) {
+               ReportingUtils.showError(e, "Exception while inserting image " + image);
+            }
+         }
+      }
+      catch (java.io.IOException e) {
+         ReportingUtils.showError(e, "Failed to save image data");
+      }
+      catch (MMException e) {
+         ReportingUtils.showError(e, "Failed to save image data");
+      }
    }
 
    @Override

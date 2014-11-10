@@ -1,5 +1,6 @@
 package org.micromanager.api.data;
 
+import java.lang.Iterable;
 import java.util.List;
 
 /**
@@ -27,6 +28,12 @@ public interface Storage {
     * about which image will be provided.
     */
    public Image getAnyImage();
+
+   /**
+    * Return an Iterable that provides access to all images in the Storage,
+    * in arbitrary order.
+    */
+   public Iterable<Image> getUnorderedImageView();
 
    /**
     * Retrieve a list of all images whose Coords match the given incomplete
