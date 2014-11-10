@@ -139,7 +139,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       // the number of channels in the Datastore. However, we may not
       // have all of the channels available to us at the time this display is
       // created, so we may need to re-create things down the road.
-      if (store_.getMaxIndex("channel") > 0) {
+      if (store_.getAxisLength("channel") > 1) {
          // Have multiple channels.
          shiftToCompositeImage();
       }
@@ -395,7 +395,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
             displayBus_);
       ijImage_.setOpenAsHyperStack(true);
       MMCompositeImage composite = (MMCompositeImage) ijImage_;
-      int numChannels = store_.getMaxIndex("channel") + 1;
+      int numChannels = store_.getAxisLength("channel");
       composite.setNChannelsUnverified(numChannels);
       composite.reset();
       displayBus_.post(new DefaultNewImagePlusEvent(ijImage_));
@@ -458,7 +458,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
    public List<Image> getDisplayedImages() {
       ArrayList<Image> result = new ArrayList<Image>();
       Coords curCoords = stack_.getCurrentImageCoords();
-      for (int i = 0; i <= store_.getMaxIndex("channel"); ++i) {
+      for (int i = 0; i < store_.getAxisLength("channel"); ++i) {
          result.add(store_.getImage(curCoords.copy().position("channel", i).build()));
       }
       if (result.size() == 0) {
@@ -578,7 +578,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
          }
          if (ijImage_ instanceof MMCompositeImage) {
             // Verify that ImageJ has the right number of channels.
-            int numChannels = store_.getMaxIndex("channel") + 1;
+            int numChannels = store_.getAxisLength("channel");
             MMCompositeImage composite = (MMCompositeImage) ijImage_;
             composite.setNChannelsUnverified(numChannels);
             composite.reset();

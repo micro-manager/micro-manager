@@ -639,7 +639,7 @@ public class MMAcquisition {
    }
 
    public int getLastAcquiredFrame() {
-      return store_.getMaxIndex("channel") + 1;
+      return store_.getAxisLength("time");
    }
 
    public Datastore getDatastore() {

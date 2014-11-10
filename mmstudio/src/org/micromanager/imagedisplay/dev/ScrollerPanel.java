@@ -92,7 +92,7 @@ class ScrollerPanel extends JPanel {
       Collections.sort(axes);
       for (String axis : axes) {
          // Don't bother creating scrollers for axes with a length of 1.
-         if (store_.getMaxIndex(axis) > 0) {
+         if (store_.getAxisLength(axis) > 1) {
             addScroller(axis);
          }
       }
@@ -131,7 +131,7 @@ class ScrollerPanel extends JPanel {
       add(positionLabel, "grow 0");
 
       final JScrollBar scrollbar = new JScrollBar(JScrollBar.HORIZONTAL, 0, 1,
-            0, store_.getMaxIndex(axis) + 1);
+            0, store_.getAxisLength(axis));
       scrollbar.setMinimumSize(new Dimension(1, 1));
       scrollbar.addAdjustmentListener(new AdjustmentListener() {
          @Override

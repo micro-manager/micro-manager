@@ -136,7 +136,7 @@ public class HyperstackControls extends JPanel {
    }
 
    public String getIntensityString(int x, int y) {
-      int numChannels = store_.getMaxIndex("channel") + 1;
+      int numChannels = store_.getAxisLength("channel");
       if (numChannels > 1) {
          // Multi-channel case: display each channel with a "/" in-between.
          String intensity = "[";

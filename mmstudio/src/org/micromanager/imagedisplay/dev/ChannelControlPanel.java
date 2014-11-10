@@ -399,7 +399,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       String[] dataNames;
       String[] cameraNames = new String[numMultiCamChannels];
       try {
-         numDataChannels = store_.getMaxIndex("channel");
+         numDataChannels = store_.getAxisLength("channel");
          dataNames = settings_.getChannelNames();
          for (int i = 0; i < numMultiCamChannels; i++) {
             cameraNames[i] = core.getCameraChannelName(i);
@@ -531,7 +531,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       Color[] allColors = settings_.getChannelColors();
       // Coerce white when there's only one channel (i.e. ignore the chosen
       // color).
-      if (store_.getMaxIndex("channel") > 0 &&
+      if (store_.getAxisLength("channel") > 1 &&
             allColors != null && allColors.length > channelIndex_) {
          result = allColors[channelIndex_];
       }
