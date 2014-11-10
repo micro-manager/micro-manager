@@ -32,7 +32,7 @@ public class SaveButton extends JButton {
       multistack.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            store.save(Datastore.SaveMode.MULTISTACK_TIFF);
+            store.save(Datastore.SaveMode.MULTIPAGE_TIFF);
          }
       });
       menu_.add(multistack);

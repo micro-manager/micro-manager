@@ -572,4 +572,10 @@ public final class StorageMultipageTiff implements Storage {
       ReportingUtils.logError("TODO: implement getAnyImage");
       return null;
    }
+
+   @Override
+   public Iterable<Image> getUnorderedImageView() {
+      ReportingUtils.logError("TODO: implement getUnorderedImageView");
+      return null;
+   }
 }
