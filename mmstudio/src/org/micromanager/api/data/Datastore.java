@@ -69,6 +69,16 @@ public interface Datastore {
    public Integer getMaxIndex(String axis);
 
    /**
+    * Return the number of valid positions along the specified axis. There is
+    * no guarantee that this is equal to the number of occupied positions
+    * along that axis. For example, a "sparse timeseries" could have timepoints
+    * 0, 10, 20, and 30; this function would return 31.
+    * Is always equal to getMaxIndex(axis) + 1, and thus only exists as a
+    * convenience function.
+    */
+   public Integer getAxisLength(String axis);
+
+   /**
     * Return a List of all axis names for Images in the store. Will be null if
     * no Storage has been provided yet.
     */
