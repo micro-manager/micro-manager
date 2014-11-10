@@ -25,54 +25,44 @@ import ij.ImagePlus;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.io.File;
 import java.util.prefs.Preferences;
-import javax.swing.DefaultComboBoxModel;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JScrollPane;
+import javax.swing.JTable;
 import javax.swing.JTextField;
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.MMStudio;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.FileDialogs;
-import org.micromanager.utils.GUIUtils;
+import org.micromanager.utils.MMDialog;
 
 /**
  *
  * @author nico
  */
-public class MultiChannelShadingMigForm extends javax.swing.JFrame {
+public class MultiChannelShadingMigForm extends MMDialog {
+   private  MMDialog mcsPluginWindow;
    private final ScriptInterface gui_;
    private final mmcorej.CMMCore mmc_;
    private final Preferences prefs_;
-
-   private int frameXPos_ = 100;
-   private int frameYPos_ = 100;
    
-   private final BFProcessor processor_;
+   private final ShadingProcessor processor_;
 
-   private static final String FRAMEXPOS = "FRAMEXPOS";
-   private static final String FRAMEYPOS = "FRAMEYPOS";
    private static final String DARKFIELDFILENAME = "BackgroundFileName";
    private static final String CHANNELGROUP = "ChannelGroup";
    private static final String USECHECKBOX = "UseCheckBox";
-   private static final String FLATFIELDNORMALIZE1 = "FLATFIELDNORMALIZE1";
-   private static final String FLATFIELDNORMALIZE2 = "FLATFIELDNORMALIZE2";
-   private static final String FLATFIELDNORMALIZE3 = "FLATFIELDNORMALIZE3";
-   private static final String FLATFIELDNORMALIZE4 = "FLATFIELDNORMALIZE4";
-   private static final String FLATFIELDNORMALIZE5 = "FLATFIELDNORMALIZE5";
    private static final String EMPTY_FILENAME_INDICATOR = "None";
    private final String[] IMAGESUFFIXES = {"tif", "tiff", "jpg", "png"};
-   private final String[] NUMBERS = {"1", "2", "3", "4", "5", "6"};
-   private String flatfieldFileName_;
    private String backgroundFileName_;
    private String groupName_;
-   private DefaultComboBoxModel configNameList;
    private final Font arialSmallFont_;
+   private final ShadingTableModel shadingTableModel_;
+   private final JCheckBox useCheckBox_;
    
   
    
@@ -81,29 +71,23 @@ public class MultiChannelShadingMigForm extends javax.swing.JFrame {
      * @param processor
      * @param gui
      */
-   public MultiChannelShadingMigForm(BFProcessor processor, ScriptInterface gui) {
+   public MultiChannelShadingMigForm(ShadingProcessor processor, ScriptInterface gui) {
       processor_ = processor;
       gui_ = gui;
       mmc_ = gui_.getMMCore();
       prefs_ = Preferences.userNodeForPackage(this.getClass());
       arialSmallFont_ = new Font("Arial", Font.PLAIN, 12);
       
-      final javax.swing.JFrame mcsPluginWindow = this;
-      this.setBackground(gui_.getBackgroundColor());
-      this.setLayout(new MigLayout("flowx, filly, insets 8", "[]", "[][][][grow,fill][]"));
-      this.setTitle("MultiChannelShading");
-      this.addWindowListener(new WindowAdapter() {
-         @Override
-         public void windowClosing(WindowEvent arg0) {
-            mcsPluginWindow.dispose();
-         }
-      });
+      final JButton addButton =  new JButton();
+      final JButton removeButton =  new JButton();
       
-      // Read preferences and apply to the dialog
-      GUIUtils.recallPosition(this); // move this out of the class
-      frameXPos_ = prefs_.getInt(FRAMEXPOS, frameXPos_);
-      frameYPos_ = prefs_.getInt(FRAMEYPOS, frameYPos_);
-      setLocation(frameXPos_, frameYPos_);
+      mcsPluginWindow = this;
+      this.setBackground(gui_.getBackgroundColor());
+      this.setLayout(new MigLayout("flowx, fill, insets 8", "[]", 
+              "[][][][][]"));
+      this.setTitle("MultiChannelShading");
+
+      loadAndRestorePosition(100, 100, 350, 250);
       
       Dimension buttonSize = new Dimension(88, 21);
       
@@ -118,15 +102,15 @@ public class MultiChannelShadingMigForm extends javax.swing.JFrame {
               channelGroups));
       groupName_ = prefs_.get(CHANNELGROUP, "");
       groupComboBox.setSelectedItem(groupName_);
-      groupName_ = (String) groupComboBox.getSelectedItem();
-      processor_.setChannelGroup(groupName_);
+      //processor_.setChannelGroup(groupName_);
       groupComboBox.addActionListener(new java.awt.event.ActionListener() {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             groupName_ = (String) groupComboBox.getSelectedItem();
-            processor_.setChannelGroup(groupName_);
+            shadingTableModel_.setChannelGroup(groupName_);
+            updateAddRemoveButtons(addButton, removeButton);
+            //processor_.setChannelGroup(groupName_);
             prefs_.put(CHANNELGROUP, groupName_);
-            //populateFlatFieldComboBoxes();
          }
       });
       add(groupComboBox, "wrap");
@@ -149,7 +133,7 @@ public class MultiChannelShadingMigForm extends javax.swing.JFrame {
          }
       });
       processBackgroundImage(darkFieldTextField.getText());
-      add(darkFieldTextField, "span 2");
+      add(darkFieldTextField, "span 2, growx");
 
 
       final JButton darkFieldButton =  new JButton();
@@ -168,25 +152,70 @@ public class MultiChannelShadingMigForm extends javax.swing.JFrame {
       });
       add(darkFieldButton, "wrap");
       
+      // Table with channel presets and files
       final JScrollPane scrollPane = new JScrollPane();
-      add(scrollPane, "span 4, grow, wrap");
-
-      final JCheckBox useCheckBox = new JCheckBox();
-      useCheckBox.setText("Execute Flat Fielding on Image Acquisition?");
-      useCheckBox.addActionListener(new java.awt.event.ActionListener() {
+      add(scrollPane, "span 4 3, grow");
+      shadingTableModel_ = new ShadingTableModel(gui_); 
+      shadingTableModel_.setChannelGroup(groupName_);
+      final JTable shadingTable = 
+              new ShadingTable(gui_, shadingTableModel_, this);
+      scrollPane.setViewportView(shadingTable);
+      
+      // Add and Remove buttons
+      addButton.setText("Add");
+      addButton.setMinimumSize(buttonSize);
+      addButton.setFont(arialSmallFont_);
+      addButton.setIcon(new ImageIcon(MMStudio.class.getResource(
+            "/org/micromanager/icons/plus.png")));
+      addButton.addActionListener(new java.awt.event.ActionListener() {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            processor_.setEnabled(useCheckBox.isSelected());
-            prefs_.putBoolean(USECHECKBOX, useCheckBox.isSelected());
+            shadingTableModel_.addRow();
+            updateAddRemoveButtons(addButton, removeButton);
          }
       });
-      useCheckBox.setSelected(prefs_.getBoolean(USECHECKBOX, true));
-      add(useCheckBox, "span 3");
+      add(addButton, "wrap");
+      
+      removeButton.setText("Remove");
+      removeButton.setMinimumSize(buttonSize);
+      removeButton.setFont(arialSmallFont_);
+      removeButton.setIcon(new ImageIcon (MMStudio.class.getResource(
+            "/org/micromanager/icons/minus.png")));
+      removeButton.addActionListener(new java.awt.event.ActionListener() {
+         @Override
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            shadingTableModel_.removeRow(shadingTable.getSelectedRows());
+            updateAddRemoveButtons(addButton, removeButton);
+         }
+      });
+      add(removeButton, "wrap");
+      add(new JLabel(""), "wrap");
+      
+      
+      useCheckBox_ = new JCheckBox();
+      useCheckBox_.setText("Execute Flat Fielding on Image Acquisition?");
+      useCheckBox_.addActionListener(new java.awt.event.ActionListener() {
+         @Override
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            processor_.setEnabled(useCheckBox_.isSelected());
+            prefs_.putBoolean(USECHECKBOX, useCheckBox_.isSelected());
+         }
+      });
+      useCheckBox_.setSelected(prefs_.getBoolean(USECHECKBOX, true));
+      add(useCheckBox_, "span 3");
 
 
-      processor_.setEnabled(useCheckBox.isSelected());
+      processor_.setEnabled(useCheckBox_.isSelected());
+      
    }
 
+   private void updateAddRemoveButtons(JButton addButton, JButton removeButton) {
+      removeButton.setEnabled(shadingTableModel_.getRowCount() > 0);
+      int availablePresets = shadingTableModel_.
+              getUnusedNumberOfPresetsInCurrentGroup();
+      addButton.setEnabled(availablePresets > 0);
+   }
+   
    private JButton mcsButton(Dimension buttonSize, Font font) {
       JButton button = new JButton();
       button.setPreferredSize(buttonSize);
@@ -217,7 +246,27 @@ public class MultiChannelShadingMigForm extends javax.swing.JFrame {
    }
    
     void updateProcessorEnabled(boolean enabled) {
-      // TODO
+      useCheckBox_.setSelected(enabled);
+      // useCheckBox may already be doing the following:
+      processor_.setEnabled(enabled);
+      prefs_.putBoolean(USECHECKBOX, enabled);
    }
    
+/**
+     * Helper function for the individual buttons
+     * @param rowNumber Table row associated with action Event
+     */
+    public void flatFieldButtonActionPerformed(int rowNumber) {
+       File f = FileDialogs.openFile(this, "Flatfield image",
+            new FileDialogs.FileType("MMAcq", "Flatfield image",
+               (String) shadingTableModel_.getValueAt(rowNumber, 1), 
+               true, IMAGESUFFIXES)
+       );
+       if (f != null) {
+          shadingTableModel_.setValueAt(f.getAbsolutePath(), rowNumber, 1); 
+      }
+    }
+
+   
+    
 }
