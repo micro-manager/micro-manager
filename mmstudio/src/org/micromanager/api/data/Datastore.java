@@ -120,6 +120,8 @@ public interface Datastore {
 
    /**
     * Tell the Datastore whether or not its image data has been saved.
+    * It's unlikely that most users will ever need to call this; it is set
+    * automatically by the save() method, below.
     */
    public void setIsSaved(boolean isSaved);
 
@@ -127,6 +129,29 @@ public interface Datastore {
     * Retrieve whether or not the image data has been saved.
     */
    public boolean getIsSaved();
+
+   /**
+    * These are the valid inputs to the save() methods.
+    */
+   public enum SaveMode {
+      SEPARATE_TIFFS,
+      MULTISTACK_TIFF
+   }
+
+   /**
+    * Prompts the user for a directory and filename, then pulls image data
+    * from the Storage and saves it according to the mode. After this method,
+    * getIsSaved() will be true, unless the user cancels when prompted for
+    * directory/filename or there is an error while saving.
+    */
+   public void save(SaveMode mode);
+
+   /**
+    * As above, except uses the provided path (the last element of which is
+    * assumed to be a filename), instead of prompting the user. After this
+    * method, getIsSaved() will be true, unless there is an error while saving.
+    */
+   public void save(SaveMode mode, String path);
 
    /**
     * Returns the total number of Images in the Datastore. Returns -1 if no

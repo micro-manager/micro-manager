@@ -18,13 +18,13 @@ import org.micromanager.utils.ReportingUtils;
 public class SaveButton extends JButton {
    private JPopupMenu menu_;
 
-   public SaveButton(Datastore store) {
+   public SaveButton(final Datastore store) {
       menu_ = new JPopupMenu();
       JMenuItem separateImages = new JMenuItem("Save to separate image files");
       separateImages.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            store_.save(Datastore.SaveMode.SEPARATE_TIFFS);
+            store.save(Datastore.SaveMode.SEPARATE_TIFFS);
          }
       });
       menu_.add(separateImages);
@@ -32,7 +32,7 @@ public class SaveButton extends JButton {
       multistack.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            store_.save(Datastore.SaveMode.MULTISTACK_TIFF);
+            store.save(Datastore.SaveMode.MULTISTACK_TIFF);
          }
       });
       menu_.add(multistack);

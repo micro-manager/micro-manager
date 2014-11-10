@@ -1,5 +1,7 @@
 package org.micromanager.data;
 
+import java.awt.Window;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,8 +13,11 @@ import org.micromanager.api.data.Image;
 import org.micromanager.api.data.Storage;
 import org.micromanager.api.data.SummaryMetadata;
 import org.micromanager.api.display.DisplayWindow;
-
+import org.micromanager.MMStudio;
+import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.PrioritizedEventBus;
+import org.micromanager.utils.ReportingUtils;
+
 
 public class DefaultDatastore implements Datastore {
    private Storage storage_ = null;
@@ -153,6 +158,38 @@ public class DefaultDatastore implements Datastore {
    @Override
    public boolean getIsSaved() {
       return isSaved_;
+   }
+
+   @Override
+   public void save(Datastore.SaveMode mode) {
+      // Find a display to use, or use the MainFrame if none is available.
+      Window window = MMStudio.getInstance().getFrame();
+      if (displays_.size() > 0) {
+         DisplayWindow tmp = displays_.get(0);
+         if (tmp instanceof Window) { // This should always be true.
+            window = (Window) tmp;
+         }
+         else {
+            ReportingUtils.logError("Couldn't cast DisplayWindow to Window");
+         }
+      }
+      File file = FileDialogs.save(window,
+            "Please choose a location for the data set", MMStudio.MM_DATA_SET);
+      if (file == null) {
+         return;
+      }
+      save(mode, file.getAbsolutePath());
+   }
+
+   @Override
+   public void save(Datastore.SaveMode mode, String path) {
+      // Test for writability
+      File file = new File(path);
+      if (!file.canWrite()) {
+         ReportingUtils.showError(String.format("Cannot write to the path:\n%s", path));
+         return;
+      }
+      ReportingUtils.logError("Saving to " + path + " with mode " + mode);
    }
 
    @Override
