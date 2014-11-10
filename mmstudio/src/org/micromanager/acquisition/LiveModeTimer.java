@@ -218,8 +218,13 @@ public class LiveModeTimer {
          }
 
          core_.clearCircularBuffer();
-            
-         core_.startContinuousSequenceAcquisition(0);
+         try {
+            core_.startContinuousSequenceAcquisition(0);
+         }
+         catch (Exception e) {
+            ReportingUtils.showError("Unable to start the sequence acquisition: " + e);
+            return;
+         }
          setType();
          long period = getInterval();
 
