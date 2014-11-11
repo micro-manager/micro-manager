@@ -185,7 +185,7 @@ public final class StorageMultipageTiff implements Storage {
          return null;
       }
 
-      //DEbugging code for a strange exception found in core log
+      //Debugging code for a strange exception found in core log
       try {
          TaggedImage img = tiffReadersByLabel_.get(label).readImage(label);
          return img;     

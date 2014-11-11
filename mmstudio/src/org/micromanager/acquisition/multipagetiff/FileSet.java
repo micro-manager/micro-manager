@@ -64,17 +64,17 @@ class FileSet {
    private boolean splitByXYPosition_ = false;
    private boolean expectedImageOrder_ = true;
    private int ifdCount_ = 0;
-   private StorageMultipageTiff mpTiff_;
+   private StorageMultipageTiff masterStorage_;
    int nextExpectedChannel_ = 0, nextExpectedSlice_ = 0, nextExpectedFrame_ = 0;
    int currentFrame_ = 0;
 
    
-   public FileSet(JSONObject firstImageTags, StorageMultipageTiff mpt,
+   public FileSet(JSONObject firstImageTags, StorageMultipageTiff masterStorage,
          OMEMetadata omeMetadata,
          boolean splitByXYPosition, boolean separateMetadataFile)
       throws IOException {
       tiffWriters_ = new LinkedList<MultipageTiffWriter>();  
-      mpTiff_ = mpt;
+      masterStorage_ = masterStorage;
       omeMetadata_ = omeMetadata;
       splitByXYPosition_ = splitByXYPosition;
       separateMetadataFile_ = separateMetadataFile;
@@ -84,9 +84,9 @@ class FileSet {
       currentTiffFilename_ = baseFilename_ + ".ome.tif";
       currentTiffUUID_ = "urn:uuid:" + UUID.randomUUID().toString();
       //make first writer
-      tiffWriters_.add(new MultipageTiffWriter(mpTiff_.getDiskLocation(),
-            currentTiffFilename_, mpTiff_.getSummaryMetadata(),
-            mpt, splitByXYPosition_));
+      tiffWriters_.add(new MultipageTiffWriter(masterStorage_,
+            firstImageTags, currentTiffFilename_,
+            splitByXYPosition_));
 
       try {
          if (separateMetadataFile_) {
@@ -156,9 +156,8 @@ class FileSet {
          currentTiffFilename_ = baseFilename_ + "_" + tiffWriters_.size() + ".ome.tif";
          currentTiffUUID_ = "urn:uuid:" + UUID.randomUUID().toString();
          ifdCount_ = 0;
-         tiffWriters_.add(new MultipageTiffWriter(mpTiff_.getDiskLocation(),
-               currentTiffFilename_, mpTiff_.getSummaryMetadata(), mpTiff_,
-               splitByXYPosition_));
+         tiffWriters_.add(new MultipageTiffWriter(masterStorage_,
+               img.tags, currentTiffFilename_, splitByXYPosition_));
       }      
 
       //Add filename to image tags
@@ -203,13 +202,13 @@ class FileSet {
    
       try {
          int frame = MDUtils.getFrameIndex(img.tags);
-         mpTiff_.updateLastFrame(frame);
+         masterStorage_.updateLastFrame(frame);
       } catch (JSONException ex) {
          ReportingUtils.showError("Couldn't find frame index in image tags");
       }   
       try {
          int pos = MDUtils.getPositionIndex(img.tags);
-         mpTiff_.updateLastPosition(pos);
+         masterStorage_.updateLastPosition(pos);
       } catch (JSONException ex) {
          ReportingUtils.showError("Couldn't find position index in image tags");
       }  
@@ -236,13 +235,13 @@ class FileSet {
    }
 
    private void startMetadataFile() throws JSONException {
-         metadataFileFullPath_ = mpTiff_.getDiskLocation() + "/" +
+         metadataFileFullPath_ = masterStorage_.getDiskLocation() + "/" +
             baseFilename_ + "_metadata.txt";
          try {
             mdWriter_ = new FileWriter(metadataFileFullPath_);
             mdWriter_.write("{" + "\n");
             mdWriter_.write("\"Summary\": ");
-            mdWriter_.write(mpTiff_.getSummaryMetadata().legacyToJSON().toString(2));
+            mdWriter_.write(masterStorage_.getSummaryMetadata().legacyToJSON().toString(2));
          } catch (IOException ex) {
             ReportingUtils.logError("Problem creating metadata.txt file");
          }
@@ -259,7 +258,7 @@ class FileSet {
 
    private String createBaseFilename(JSONObject firstImageTags) {
       String baseFilename;
-      String prefix = mpTiff_.getSummaryMetadata().getPrefix();
+      String prefix = masterStorage_.getSummaryMetadata().getPrefix();
       if (prefix == null || prefix.length() == 0) {
          baseFilename = "MMStack";
       } else {
@@ -289,11 +288,11 @@ class FileSet {
     * separate files
     */
    public void finishAbortedAcqIfNeeded() {
-      if (expectedImageOrder_ && splitByXYPosition_ && !mpTiff_.timeFirst()) {
+      if (expectedImageOrder_ && splitByXYPosition_ && !masterStorage_.timeFirst()) {
          try {
             //One position may be on the next frame compared to others. Complete each position
             //with blank images to fill this frame
-            completeFrameWithBlankImages(mpTiff_.lastAcquiredFrame());
+            completeFrameWithBlankImages(masterStorage_.lastAcquiredFrame());
          } catch (Exception e) {
             ReportingUtils.logError("Problem finishing aborted acq with blank images");
          }
@@ -306,9 +305,9 @@ class FileSet {
     */
    private void completeFrameWithBlankImages(int frame) throws JSONException, MMScriptException {
       
-      int numFrames = mpTiff_.getIntendedSize("time");
-      int numSlices = mpTiff_.getIntendedSize("z");
-      int numChannels = mpTiff_.getIntendedSize("channel");
+      int numFrames = masterStorage_.getIntendedSize("time");
+      int numSlices = masterStorage_.getIntendedSize("z");
+      int numChannels = masterStorage_.getIntendedSize("channel");
       if (numFrames > frame + 1 ) {
          TreeSet<String> writtenImages = new TreeSet<String>();
          for (MultipageTiffWriter w : tiffWriters_) {
@@ -351,22 +350,22 @@ class FileSet {
             expectedImageOrder_ = false;
          }
          //Figure out next expected indices
-         if (mpTiff_.slicesFirst()) {
+         if (masterStorage_.slicesFirst()) {
             nextExpectedSlice_ = slice + 1;
-            if (nextExpectedSlice_ == mpTiff_.getNumSlices()) {
+            if (nextExpectedSlice_ == masterStorage_.getNumSlices()) {
                nextExpectedSlice_ = 0;
                nextExpectedChannel_ = channel + 1;
-               if (nextExpectedChannel_ == mpTiff_.getNumChannels()) {
+               if (nextExpectedChannel_ == masterStorage_.getNumChannels()) {
                   nextExpectedChannel_ = 0;
                   nextExpectedFrame_ = frame + 1;
                }
             }
          } else {
             nextExpectedChannel_ = channel + 1;
-            if (nextExpectedChannel_ == mpTiff_.getNumChannels()) {
+            if (nextExpectedChannel_ == masterStorage_.getNumChannels()) {
                nextExpectedChannel_ = 0;
                nextExpectedSlice_ = slice + 1;
-               if (nextExpectedSlice_ == mpTiff_.getNumSlices()) {
+               if (nextExpectedSlice_ == masterStorage_.getNumSlices()) {
                   nextExpectedSlice_ = 0;
                   nextExpectedFrame_ = frame + 1;
                }
