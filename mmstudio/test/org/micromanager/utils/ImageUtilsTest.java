@@ -3,9 +3,6 @@ package org.micromanager.utils;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
-/**
- * Confirm that the unit testing setup is working.
- */
 public class ImageUtilsTest {
    @Test
    public void unsignedByteValueIsCorrect() {
