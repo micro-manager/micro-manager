@@ -401,7 +401,7 @@ public class MultipageTiffReader {
       ByteBuffer mdBuffer = ByteBuffer.allocate((int) data.mdLength).order(byteOrder_);
       fileChannel_.read(pixelBuffer, data.pixelOffset);
       fileChannel_.read(mdBuffer, data.mdOffset);
-      JSONObject md = new JSONObject();
+      JSONObject md = null;
       try {
          md = new JSONObject(getString(mdBuffer));
       } catch (JSONException ex) {
@@ -517,10 +517,9 @@ public class MultipageTiffReader {
       return val;
    }
    
-   // This code is intended for use in the scenario in which a datset
-   // terminates before properly closing, thereby preventing the multipage tiff
-   // writer from putting in the index map, comments, channels, and OME XML in
-   // the ImageDescription tag location 
+     //This code is intended for use in the scenario in which a datset terminates before properly closing,
+   //thereby preventing the multipage tiff writer from putting in the index map, comments, channels, and OME
+   //XML in the ImageDescription tag location 
    private void fixIndexMap(long firstIFD, String fileName) throws IOException, JSONException {  
       if (!fixIndexMapWithoutPrompt_) {
          ReportingUtils.showError("Can't read index map in file: " + file_.getName());
@@ -548,7 +547,7 @@ public class MultipageTiffReader {
                break;
             }
             TaggedImage ti = readTaggedImage(data);
-            if (ti.tags == null || ti.tags.length() == 0) {  //Blank placeholder image, dont add to index map
+            if (ti.tags == null) {  //Blank placeholder image, dont add to index map
                filePosition = data.nextIFD;
                nextIFDOffsetLocation = data.nextIFDOffsetLocation;
                continue;
@@ -661,3 +660,4 @@ public class MultipageTiffReader {
  
    
 }
+
