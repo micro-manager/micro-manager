@@ -195,10 +195,19 @@ public class DefaultDatastore implements Datastore {
       // Should have a better way to handle this.
       // TODO: obey the mode parameter and allow saving across multiple files.
       // TODO: we have some casts to Default* here; do we really need them?
+      DefaultSummaryMetadata summary = (DefaultSummaryMetadata) getSummaryMetadata();
+      // Insert intended dimensions if they aren't already present.
+      if (summary.getIntendedDimensions() == null) {
+         DefaultCoords.Builder builder = new DefaultCoords.Builder();
+         for (String axis : getAxes()) {
+            builder.position(axis, getAxisLength(axis));
+         }
+         summary = (DefaultSummaryMetadata) summary.copy().intendedDimensions(builder.build()).build();
+      }
       boolean isMultipage = (mode == Datastore.SaveMode.MULTIPAGE_TIFF);
       try {
          StorageMultipageTiff saver = new StorageMultipageTiff(path, true,
-               (DefaultSummaryMetadata) getSummaryMetadata(), isMultipage, false);
+               summary, isMultipage, false);
          for (Image image : storage_.getUnorderedImageView()) {
             try {
                saver.putImage(((DefaultImage) image).legacyToTaggedImage(),
