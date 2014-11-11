@@ -1,5 +1,7 @@
 package org.micromanager.data;
 
+import ij.ImagePlus;
+
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -375,7 +377,41 @@ public class DefaultImage implements Image {
     */
    @Override
    public TaggedImage legacyToTaggedImage() {
-      return new TaggedImage(getRawPixels(), metadata_.legacyToJSON());
+      JSONObject tags = metadata_.legacyToJSON();
+      // Fill in fields that we know about and that our metadata doesn't.
+      try {
+         MDUtils.setFrameIndex(tags, coords_.getPositionAt("time"));
+         MDUtils.setSliceIndex(tags, coords_.getPositionAt("z"));
+         MDUtils.setChannelIndex(tags, coords_.getPositionAt("channel"));
+         MDUtils.setPositionIndex(tags, coords_.getPositionAt("position"));
+         int type = getImageJPixelType();
+         MDUtils.setPixelType(tags, type);
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError("Unable to set image position indices: " + e);
+      }
+      return new TaggedImage(getRawPixels(), tags);
+   }
+
+   private int getImageJPixelType() {
+      int bytesPerPixel = getBytesPerPixel();
+      int numComponents = getNumComponents();
+      if (bytesPerPixel == 4) {
+         if (numComponents == 3) {
+            return ImagePlus.COLOR_RGB;
+         }
+         else {
+            return ImagePlus.GRAY32;
+         }
+      }
+      else if (bytesPerPixel == 2) {
+         return ImagePlus.GRAY16;
+      }
+      else if (bytesPerPixel == 1) {
+         return ImagePlus.GRAY8;
+      }
+      ReportingUtils.logError(String.format("Unrecognized pixel type with %d bytes per pixel and %d components", bytesPerPixel, numComponents));
+      return -1;
    }
 
    @Override
