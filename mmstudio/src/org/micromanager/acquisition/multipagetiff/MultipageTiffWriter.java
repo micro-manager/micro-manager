@@ -642,9 +642,9 @@ public class MultipageTiffWriter {
       Image repImage = masterMPTiffStorage_.getAnyImage();
       Metadata repMetadata = repImage.getMetadata();
       rgb_ = repImage.getNumComponents() > 1;
-      numChannels_ = masterMPTiffStorage_.getMaxIndex("channel") + 1;
-      numFrames_ = masterMPTiffStorage_.getMaxIndex("time") + 1;
-      numSlices_ = masterMPTiffStorage_.getMaxIndex("z") + 1;
+      numChannels_ = masterMPTiffStorage_.getIntendedSize("channel");
+      numFrames_ = masterMPTiffStorage_.getIntendedSize("time");
+      numSlices_ = masterMPTiffStorage_.getIntendedSize("z");
       imageWidth_ = repImage.getWidth();
       imageHeight_ = repImage.getHeight();
       byteDepth_ = repImage.getBytesPerPixel() / repImage.getNumComponents();
