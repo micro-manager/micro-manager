@@ -196,12 +196,11 @@ public class MultipageTiffReader {
       try {
          String pixelType = MDUtils.getPixelType(md);
          rgb_ = pixelType.startsWith("RGB");
-         
-            if (pixelType.equals("RGB32") || pixelType.equals("GRAY8")) {
-               byteDepth_ = 1;
-            } else {
-               byteDepth_ = 2;
-            }
+         if (pixelType.equals("RGB32") || pixelType.equals("GRAY8")) {
+            byteDepth_ = 1;
+         } else {
+            byteDepth_ = 2;
+         }
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
       }

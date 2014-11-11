@@ -53,6 +53,7 @@ import org.micromanager.api.data.DisplaySettings;
 import org.micromanager.api.data.Image;
 import org.micromanager.api.data.Metadata;
 import org.micromanager.api.data.SummaryMetadata;
+import org.micromanager.data.DefaultSummaryMetadata;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
@@ -96,7 +97,7 @@ public class MultipageTiffWriter {
          
    public static final ByteOrder BYTE_ORDER = ByteOrder.nativeOrder();
    
-   private StorageMultipageTiff masterMPTiffStorage_;
+   private StorageMultipageTiff masterStorage_;
    private RandomAccessFile raFile_;
    private FileChannel fileChannel_; 
    private ThreadPoolExecutor writingExecutor_;
@@ -122,15 +123,17 @@ public class MultipageTiffWriter {
    private long blankPixelsOffset_ = -1;
    private String summaryMDString_;
    
-   public MultipageTiffWriter(String directory, String filename, 
-           SummaryMetadata summaryMD, StorageMultipageTiff mpTiffStorage,
+   public MultipageTiffWriter(StorageMultipageTiff masterStorage,
+         JSONObject firstImageTags, String filename,
            boolean splitByPositions) throws IOException {
-      masterMPTiffStorage_ = mpTiffStorage;
-      reader_ = new MultipageTiffReader(summaryMD);
-      File f = new File(directory + "/" + filename); 
+      masterStorage_ = masterStorage;
+      // TODO: casting to DefaultSummaryMetadata here.
+      DefaultSummaryMetadata summary = (DefaultSummaryMetadata) masterStorage.getSummaryMetadata();
+      reader_ = new MultipageTiffReader(summary);
+      File f = new File(masterStorage.getDiskLocation() + "/" + filename); 
       
       try {
-         processSummaryMD(summaryMD, splitByPositions);
+         processSummaryMD(summary, splitByPositions);
       } catch (MMScriptException ex1) {
          ReportingUtils.logError(ex1);
       } catch (JSONException ex) {
@@ -139,7 +142,7 @@ public class MultipageTiffWriter {
       
       //This is an overestimate of file size because file gets truncated at end
       long fileSize = Math.min(MAX_FILE_SIZE,
-            summaryMD.legacyToJSON().toString().length() + 2000000 +
+            summary.legacyToJSON().toString().length() + 2000000 +
             numFrames_ * numChannels_ * numSlices_ * ((long) bytesPerImagePixels_ + 2000));
       
       f.createNewFile();
@@ -158,20 +161,20 @@ public class MultipageTiffWriter {
              ReportingUtils.showError("Insufficent space on disk: no room to write data");
       }
       fileChannel_ = raFile_.getChannel();
-      writingExecutor_ = masterMPTiffStorage_.getWritingExecutor();
+      writingExecutor_ = masterStorage_.getWritingExecutor();
       indexMap_ = new HashMap<String, Long>();
       reader_.setFileChannel(fileChannel_);
       reader_.setIndexMap(indexMap_);
       buffers_ = new LinkedList<ByteBuffer>();
       
-      writeMMHeaderAndSummaryMD(summaryMD.legacyToJSON());
+      writeMMHeaderAndSummaryMD(summary.legacyToJSON());
       try {
-         summaryMDString_ = summaryMD.legacyToJSON().toString(2);
+         summaryMDString_ = summary.legacyToJSON().toString(2);
       } catch (JSONException ex) {
          summaryMDString_ = "";
       }
    }
-   
+
    private ByteBuffer allocateByteBuffer(int capacity) {
       return ByteBuffer.allocateDirect(capacity).order(BYTE_ORDER);
    }
@@ -317,7 +320,7 @@ public class MultipageTiffWriter {
       String summaryComment = "";
       try 
       {
-         String comments = masterMPTiffStorage_.getSummaryMetadata().getComments();
+         String comments = masterStorage_.getSummaryMetadata().getComments();
          if (comments != null) {
             summaryComment = comments;
          }    
@@ -639,12 +642,12 @@ public class MultipageTiffWriter {
 
    private void processSummaryMD(SummaryMetadata summaryMD,
          boolean splitByPosition) throws MMScriptException, JSONException {
-      Image repImage = masterMPTiffStorage_.getAnyImage();
+      Image repImage = masterStorage_.getAnyImage();
       Metadata repMetadata = repImage.getMetadata();
       rgb_ = repImage.getNumComponents() > 1;
-      numChannels_ = masterMPTiffStorage_.getIntendedSize("channel");
-      numFrames_ = masterMPTiffStorage_.getIntendedSize("time");
-      numSlices_ = masterMPTiffStorage_.getIntendedSize("z");
+      numChannels_ = masterStorage_.getIntendedSize("channel");
+      numFrames_ = masterStorage_.getIntendedSize("time");
+      numSlices_ = masterStorage_.getIntendedSize("z");
       imageWidth_ = repImage.getWidth();
       imageHeight_ = repImage.getHeight();
       byteDepth_ = repImage.getBytesPerPixel() / repImage.getNumComponents();
@@ -760,7 +763,7 @@ public class MultipageTiffWriter {
          bufferPosition += 2;
       }
 
-      DisplaySettings settings = masterMPTiffStorage_.getDisplaySettings();
+      DisplaySettings settings = masterStorage_.getDisplaySettings();
       for (int i = 0; i < numChannels; i++) {
          //Display Ranges: For each channel, write min then max
          mdBuffer.putDouble(bufferPosition, 
@@ -806,7 +809,7 @@ public class MultipageTiffWriter {
       if (numFrames_ > 1 || numSlices_ > 1 || numChannels_ > 1) {
          sb.append("hyperstack=true\n");
       }
-      if (numChannels_ > 1 && numSlices_ > 1 && masterMPTiffStorage_.slicesFirst()) {
+      if (numChannels_ > 1 && numSlices_ > 1 && masterStorage_.slicesFirst()) {
          sb.append("order=zct\n");
       }
       //cm so calibration unit is consistent with units used in Tiff tags
@@ -815,7 +818,7 @@ public class MultipageTiffWriter {
          sb.append("spacing=").append(zStepUm_).append("\n");
       }
       //write single channel contrast settings or display mode if multi channel
-      DisplaySettings settings = masterMPTiffStorage_.getDisplaySettings();
+      DisplaySettings settings = masterStorage_.getDisplaySettings();
       if (numChannels_ == 1) {
          double min = settings.getChannelContrastMins()[0];
          double max = settings.getChannelContrastMaxes()[0];
@@ -869,7 +872,7 @@ public class MultipageTiffWriter {
 
    private void writeComments() throws IOException {
       //Write 4 byte header, 4 byte number of bytes
-      String comments = masterMPTiffStorage_.getSummaryMetadata().getComments();
+      String comments = masterStorage_.getSummaryMetadata().getComments();
       if (comments == null) {
          comments = "";
       }
@@ -890,7 +893,7 @@ public class MultipageTiffWriter {
 
    // TODO: is this identical to a similar function in the Reader?
    private void writeDisplaySettings() throws IOException {
-      DisplaySettings settings = masterMPTiffStorage_.getDisplaySettings();
+      DisplaySettings settings = masterStorage_.getDisplaySettings();
       int numReservedBytes = numChannels_ * DISPLAY_SETTINGS_BYTES_PER_CHANNEL;
       ByteBuffer header = allocateByteBuffer(8);
       ByteBuffer buffer = ByteBuffer.wrap(
