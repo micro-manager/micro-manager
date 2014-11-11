@@ -22,6 +22,7 @@
 //
 package org.micromanager.utils;
 
+import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
@@ -35,11 +36,13 @@ public class NumberUtils {
 	static {
 		// The display is supposed to use local formating (e.g., switch commas with periods in Locale.GERMANY).
 		format_ = NumberFormat.getInstance();
+		format_.setRoundingMode(RoundingMode.HALF_UP);
       format_.setMaximumFractionDigits(4);
 
 		// The core always uses four decimal places in its double strings, and a dot for the decimal separator.
 		// This is equivalent to the US locale settings.
 		coreDoubleFormat_ = (DecimalFormat) DecimalFormat.getInstance(Locale.US);
+		coreDoubleFormat_.setRoundingMode(RoundingMode.HALF_UP);
 		coreDoubleFormat_.applyPattern("0.0000"); 
 		
 		coreIntegerFormat_ = (DecimalFormat) DecimalFormat.getInstance(Locale.US);
