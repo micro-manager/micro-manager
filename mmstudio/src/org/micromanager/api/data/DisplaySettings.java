@@ -26,7 +26,8 @@ public interface DisplaySettings {
       DisplaySettings build();
 
       // The following functions each set the relevant value for the 
-      // DisplaySettings.
+      // DisplaySettings. See the getters of the DisplaySettings, below,
+      // for information on the meaning of these fields.
       DisplaySettingsBuilder channelNames(String[] channelNames);
       DisplaySettingsBuilder channelColors(Color[] channelColors);
       DisplaySettingsBuilder channelContrastMins(Integer[] channelContrastMins);
@@ -52,23 +53,50 @@ public interface DisplaySettings {
     */
    DisplaySettingsBuilder copy();
 
+   /** The names associated with each channel (e.g. "DAPI" and "GFP") */
    public String[] getChannelNames();
+   /** The colors of each channel in the image display window */
    public Color[] getChannelColors();
+   /** The value that is treated as "black" in the display window */
    public Integer[] getChannelContrastMins();
+   /** The value that is treated as "white" (or equivalent max intensity for
+     * colored displays) in the display window */
    public Integer[] getChannelContrastMaxes();
+   /** The gamma curve modifier for each channel */
    public Double[] getChannelGammas();
+   /** The index into the "Display mode" control; 0 = Color, 1 = Grayscale,
+     * 2 = Composite */
    public Integer getChannelDisplayModeIndex();
+   /** How much time to allow to pass between updates to the histogram, in
+     * seconds (set to 0 for continuous update, or any negative value to
+     * disable updates altogether) */
    public Double getHistogramUpdateRate();
+   /** Whether histogram settings should be synced across channels */
    public Boolean getShouldSyncChannels();
+   /** Controls the color of the scale bar overlay as an index into its
+     * color dropdown menu */
    public Integer getScaleBarColorIndex();
+   /** Controls the position of the scale bar overlay as an index into its
+     * position dropdown menu */
    public Integer getScaleBarLocationIndex();
+   /** How many pixels away from the left/right edge of the display to draw the
+     * scale bar overlay */
    public Integer getScaleBarOffsetX();
+   /** How many pixels away from the top/bottom edge of the display to draw the
+     * scale bar overlay */
    public Integer getScaleBarOffsetY();
+   /** Whether to draw the scale bar overlay as hollow or filled */
    public Boolean getScaleBarIsFilled();
+   /** Whether to draw the scale bar overlay at all */
    public Boolean getShouldShowScaleBar();
+   /** Whether each newly-displayed image should be autostretched */
    public Boolean getShouldAutostretch();
+   /** The percentage of values off the top and bottom of the image's value
+     * range that get ignored when autostretching */
    public Double getTrimPercentage();
+   /** Whether to display the histograms using a logarithmic scale */
    public Boolean getShouldUseLogScale();
+
    /**
     * For legacy support only: convert to JSONObject.
     */
