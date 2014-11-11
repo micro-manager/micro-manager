@@ -91,7 +91,6 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       private Double waitInterval_ = null;
       private Double[] customIntervalsMs_ = null;
       private String startDate_ = null;
-      private Integer numComponents_ = null;
       private MultiStagePosition[] stagePositions_ = null;
 
       @Override
@@ -172,12 +171,6 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       }
 
       @Override
-      public SummaryMetadataBuilder numComponents(Integer numComponents) {
-         numComponents_ = numComponents;
-         return this;
-      }
-
-      @Override
       public SummaryMetadataBuilder stagePositions(MultiStagePosition[] stagePositions) {
          stagePositions_ = stagePositions;
          return this;
@@ -197,7 +190,6 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
    private Double waitInterval_ = null;
    private Double[] customIntervalsMs_ = null;
    private String startDate_ = null;
-   private Integer numComponents_ = null;
    private MultiStagePosition[] stagePositions_ = null;
 
    public DefaultSummaryMetadata(Builder builder) {
@@ -214,7 +206,6 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       waitInterval_ = builder.waitInterval_;
       customIntervalsMs_ = builder.customIntervalsMs_;
       startDate_ = builder.startDate_;
-      numComponents_ = builder.numComponents_;
       stagePositions_ = builder.stagePositions_;
    }
 
@@ -279,11 +270,6 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
    }
 
    @Override
-   public Integer getNumComponents() {
-      return numComponents_;
-   }
-
-   @Override
    public MultiStagePosition[] getStagePositions() {
       return stagePositions_.clone();
    }
@@ -303,7 +289,6 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
             .waitInterval(waitInterval_)
             .customIntervalsMs(customIntervalsMs_)
             .startDate(startDate_)
-            .numComponents(numComponents_)
             .stagePositions(stagePositions_);
    }
 
@@ -394,12 +379,6 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
          ReportingUtils.logError("SummaryMetadata failed to extract field startDate");
       }
 
-      try {
-         builder.numComponents(tags.getInt("NumComponents"));
-      }
-      catch (JSONException e) {
-         ReportingUtils.logError("SummaryMetadata failed to extract field numComponents");
-      }
       return builder.build();
    }
 
@@ -422,7 +401,6 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
          result.put("WaitInterval", waitInterval_);
          result.put("CustomIntervals_ms", customIntervalsMs_);
          result.put("StartTime", startDate_);
-         result.put("NumComponents", numComponents_);
          result.put("Positions", stagePositions_);
          return result;
       }
