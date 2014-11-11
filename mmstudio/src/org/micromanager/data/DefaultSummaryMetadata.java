@@ -8,11 +8,13 @@ import java.util.prefs.Preferences;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.SummaryMetadata;
 import org.micromanager.api.MultiStagePosition;
 
 import org.micromanager.MMStudio;
 
+import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
 
@@ -90,6 +92,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       
       private Double waitInterval_ = null;
       private Double[] customIntervalsMs_ = null;
+      private Coords intendedDimensions_ = null;
       private String startDate_ = null;
       private MultiStagePosition[] stagePositions_ = null;
 
@@ -165,6 +168,12 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       }
 
       @Override
+      public SummaryMetadataBuilder intendedDimensions(Coords intendedDimensions) {
+         intendedDimensions_ = intendedDimensions;
+         return this;
+      }
+
+      @Override
       public SummaryMetadataBuilder startDate(String startDate) {
          startDate_ = startDate;
          return this;
@@ -189,6 +198,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
    
    private Double waitInterval_ = null;
    private Double[] customIntervalsMs_ = null;
+   private Coords intendedDimensions_ = null;
    private String startDate_ = null;
    private MultiStagePosition[] stagePositions_ = null;
 
@@ -205,6 +215,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       
       waitInterval_ = builder.waitInterval_;
       customIntervalsMs_ = builder.customIntervalsMs_;
+      intendedDimensions_ = builder.intendedDimensions_;
       startDate_ = builder.startDate_;
       stagePositions_ = builder.stagePositions_;
    }
@@ -265,6 +276,11 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
    }
 
    @Override
+   public Coords getIntendedDimensions() {
+      return intendedDimensions_;
+   }
+
+   @Override
    public String getStartDate() {
       return startDate_;
    }
@@ -288,6 +304,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
             .comments(comments_)
             .waitInterval(waitInterval_)
             .customIntervalsMs(customIntervalsMs_)
+            .intendedDimensions(intendedDimensions_)
             .startDate(startDate_)
             .stagePositions(stagePositions_);
    }
@@ -373,6 +390,18 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       }
 
       try {
+         DefaultCoords.Builder dimsBuilder = new DefaultCoords.Builder();
+         dimsBuilder.position("time", MDUtils.getNumFrames(tags));
+         dimsBuilder.position("z", MDUtils.getNumSlices(tags));
+         dimsBuilder.position("positions", MDUtils.getNumPositions(tags));
+         dimsBuilder.position("channel", MDUtils.getNumChannels(tags));
+         builder.intendedDimensions(dimsBuilder.build());
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError("Failed to extract intended dimensions: " + e);
+      }
+
+      try {
          builder.startDate(tags.getString("StartTime"));
       }
       catch (JSONException e) {
@@ -389,7 +418,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
    public JSONObject legacyToJSON() {
       try {
          JSONObject result = new JSONObject();
-         result.put("FileName", fileName_);
+         MDUtils.setFileName(result, fileName_);
          result.put("Name", acquisitionName_);
          result.put("Prefix", prefix_);
          result.put("UserName", userName_);
@@ -397,9 +426,19 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
          result.put("MetadataVersion", metadataVersion_);
          result.put("ComputerName", computerName_);
          result.put("Directory", directory_);
-         result.put("Comments", comments_);
+         MDUtils.setComments(result, comments_);
          result.put("WaitInterval", waitInterval_);
          result.put("CustomIntervals_ms", customIntervalsMs_);
+         if (intendedDimensions_ != null) {
+            MDUtils.setNumChannels(result,
+                  intendedDimensions_.getPositionAt("channel"));
+            MDUtils.setNumFrames(result,
+                  intendedDimensions_.getPositionAt("time"));
+            MDUtils.setNumSlices(result,
+                  intendedDimensions_.getPositionAt("z"));
+            MDUtils.setNumPositions(result,
+                  intendedDimensions_.getPositionAt("position"));
+         }
          result.put("StartTime", startDate_);
          result.put("Positions", stagePositions_);
          return result;
