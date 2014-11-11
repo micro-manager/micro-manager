@@ -157,8 +157,11 @@ public class OMEMetadata {
          metadata_.setChannelColor(new ome.xml.model.primitives.Color(
                   color.getRed(), color.getGreen(), color.getBlue(), 1),
                seriesIndex, channel);
-         metadata_.setChannelName(displaySettings.getChannelNames()[channel],
-               seriesIndex, channel);
+         if (displaySettings.getChannelNames() != null &&
+               displaySettings.getChannelNames().length > channel) {
+            metadata_.setChannelName(displaySettings.getChannelNames()[channel],
+                  seriesIndex, channel);
+         }
       }
    }
    
