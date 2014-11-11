@@ -197,7 +197,7 @@ class FileSet {
          
          omeMetadata_.addImageTagsToOME(img.tags, ifdCount_, baseFilename_, currentTiffFilename_, currentTiffUUID_);
       } catch (Exception ex) {
-         ReportingUtils.logError("Problem writing OME metadata");
+         ReportingUtils.logError(ex, "Problem writing OME metadata");
       }
    
       try {
