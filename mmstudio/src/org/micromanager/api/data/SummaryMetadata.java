@@ -38,6 +38,7 @@ public interface SummaryMetadata {
       
       SummaryMetadataBuilder waitInterval(Double waitInterval);
       SummaryMetadataBuilder customIntervalsMs(Double[] customIntervalsMs);
+      SummaryMetadataBuilder intendedDimensions(Coords intendedDimensions);
       SummaryMetadataBuilder startDate(String startDate);
       SummaryMetadataBuilder stagePositions(MultiStagePosition[] stagePositions);
    }
@@ -59,6 +60,7 @@ public interface SummaryMetadata {
    public String getComments();
    public Double getWaitInterval();
    public Double[] getCustomIntervalsMs();
+   public Coords getIntendedDimensions();
    public String getStartDate();
    public MultiStagePosition[] getStagePositions();
 
