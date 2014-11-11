@@ -97,8 +97,8 @@ public class OMEMetadata {
       // We need to know bytes per pixel, which requires having an Image handy.
       // TODO: there's an implicit assumption here that all images in the
       // file have the same bytes per pixel.
-      numSlices_ = mptStorage_.getMaxIndex("z") + 1;
-      numChannels_ = mptStorage_.getMaxIndex("channel") + 1;
+      numSlices_ = mptStorage_.getIntendedSize("z");
+      numChannels_ = mptStorage_.getIntendedSize("channel");
       Image repImage = mptStorage_.getAnyImage();
       //Last one is samples per pixel
       MetadataTools.populateMetadata(metadata_, seriesIndex, baseFileName,
@@ -106,7 +106,7 @@ public class OMEMetadata {
             mptStorage_.slicesFirst() ? "XYZCT" : "XYCZT",
             "uint" + repImage.getBytesPerPixel() * 8,
             repImage.getWidth(), repImage.getHeight(),
-            numSlices_, numChannels_, mptStorage_.getMaxIndex("time") + 1, 1);
+            numSlices_, numChannels_, mptStorage_.getIntendedSize("time"), 1);
 
       Metadata repMetadata = repImage.getMetadata();
       if (repMetadata.getPixelSizeUm() != null) {
@@ -151,7 +151,7 @@ public class OMEMetadata {
       }
 
       DisplaySettings displaySettings = mptStorage_.getDisplaySettings();
-      for (int channel = 0; channel < mptStorage_.getMaxIndex("channel") + 1;
+      for (int channel = 0; channel < mptStorage_.getIntendedSize("channel");
             channel++) {
          java.awt.Color color = displaySettings.getChannelColors()[channel];
          metadata_.setChannelColor(new ome.xml.model.primitives.Color(
