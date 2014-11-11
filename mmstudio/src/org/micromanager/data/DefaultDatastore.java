@@ -209,22 +209,10 @@ public class DefaultDatastore implements Datastore {
          StorageMultipageTiff saver = new StorageMultipageTiff(path, true,
                summary, isMultipage, false);
          for (Image image : storage_.getUnorderedImageView()) {
-            try {
-               saver.putImage(((DefaultImage) image).legacyToTaggedImage(),
-                     false);
-            }
-            catch (InterruptedException e) {
-               ReportingUtils.showError(e, "Interrupted while inserting image " + image);
-            }
-            catch (java.util.concurrent.ExecutionException e) {
-               ReportingUtils.showError(e, "Exception while inserting image " + image);
-            }
+            saver.putImage(image);
          }
       }
       catch (java.io.IOException e) {
-         ReportingUtils.showError(e, "Failed to save image data");
-      }
-      catch (MMException e) {
          ReportingUtils.showError(e, "Failed to save image data");
       }
    }
