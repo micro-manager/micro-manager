@@ -141,13 +141,10 @@ bool MM::StringProperty::Get(std::string& strVal) const
 
 double MM::FloatProperty::Truncate(double dVal)
 {
-   char fmtStr[20];
-   char buf[BUFSIZE];
-   sprintf(fmtStr, "%%.%df", decimalPlaces_);
-   snprintf(buf, BUFSIZE, fmtStr, dVal);
-   return atof(buf);
-   // TODO Use, but test first on all platforms:
-   // return floor(dVal * reciprocalMinimalStep_ + 0.5) / reciprocalMinimalStep_;
+   if (dVal >= 0)
+      return floor(dVal * reciprocalMinimalStep_ + 0.5) / reciprocalMinimalStep_;
+   else
+      return ceil(dVal * reciprocalMinimalStep_ - 0.5) / reciprocalMinimalStep_;
 }
 
 double MM::FloatProperty::TruncateDown(double dVal)
