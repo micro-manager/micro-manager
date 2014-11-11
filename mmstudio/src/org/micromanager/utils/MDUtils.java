@@ -139,6 +139,10 @@ public class MDUtils {
       throw new JSONException("Positions tag not found in summary metadata");
    }
 
+   public static void setNumPositions(JSONObject map, int numPositions) throws JSONException {
+      map.put("Positions", numPositions);
+   }
+
    public static boolean hasPositionName(JSONObject map) {
       return isValid(map, "PositionName");
    }
@@ -530,7 +534,11 @@ public class MDUtils {
       if (tags.has("Frames"))
          return Math.max(1,tags.getInt("Frames"));
       return 1;
-   }  
+   }
+
+   public static void setNumFrames(JSONObject tags, int numFrames) throws JSONException {
+      tags.put("Frames", numFrames);
+   }
    
    public static int getNumSlices(JSONObject tags) throws JSONException {
       if (tags.has("Summary")) {
@@ -541,6 +549,10 @@ public class MDUtils {
       if (tags.has("Slices"))
          return Math.max(1, tags.getInt("Slices"));
       return 1;
+   }
+
+   public static void setNumSlices(JSONObject tags, int numSlices) throws JSONException {
+      tags.put("Slices", numSlices);
    }
    
    public static int getNumChannels(JSONObject tags) throws JSONException {
