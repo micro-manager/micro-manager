@@ -39,7 +39,6 @@ public interface SummaryMetadata {
       SummaryMetadataBuilder waitInterval(Double waitInterval);
       SummaryMetadataBuilder customIntervalsMs(Double[] customIntervalsMs);
       SummaryMetadataBuilder startDate(String startDate);
-      SummaryMetadataBuilder numComponents(Integer numComponents);
       SummaryMetadataBuilder stagePositions(MultiStagePosition[] stagePositions);
    }
 
@@ -61,7 +60,6 @@ public interface SummaryMetadata {
    public Double getWaitInterval();
    public Double[] getCustomIntervalsMs();
    public String getStartDate();
-   public Integer getNumComponents();
    public MultiStagePosition[] getStagePositions();
 
    /**
