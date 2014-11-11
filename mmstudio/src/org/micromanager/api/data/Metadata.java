@@ -30,6 +30,8 @@ public interface Metadata {
       Metadata build();
 
       // The following functions each set the relevant value for the Metadata.
+      // See the getter methods of Metadat, below, for information on these
+      // properties.
       MetadataBuilder binning(Integer binning);
       MetadataBuilder bitDepth(Integer bitDepth);
       MetadataBuilder camera(String camera);
@@ -73,36 +75,78 @@ public interface Metadata {
 
    Boolean getKeepShutterOpenChannels();
    Boolean getKeepShutterOpenSlices();
+   /** The time at which Micro-Manager received this image, in milliseconds.
+     * There can be substantial jitter in this value; as a rule of thumb it
+     * should not be assumed to be accurate to better than 20ms or so. */
    Double getElapsedTimeMs();
+   /** How long of an exposure was used to collect this image */
    Double getExposureMs();
+   /** The aspect ratio of the pixels in this image.
+     * TODO: is this X/Y or Y/X? */
    Double getPixelAspect();
+   /** How much of the sample, in microns, a single pixel of the camera sees */
    Double getPixelSizeUm();
+   /** TODO: what is this? */
    Double getStartTimeMs();
+   /** The X stage position of the sample for this image */
    Double getXPositionUm();
+   /** The Y stage position of the sample for this image */
    Double getYPositionUm();
+   /** The Z stage position of the sample for this image */
    Double getZPositionUm();
+   /** The amount of Z space between each slice in the stack this image is in */
    Double getZStepUm();
+   /** The binning mode of the camera for this image */
    Integer getBinning();
+   /** The number of bits used to represent each pixel (e.g. 12-bit means that
+     * pixel values range from 0 to 4095) */
    Integer getBitDepth();
+   /** The color of this image (TODO: now properly part of DisplaySettings) */
    Integer getColor();
+   /** When acquiring a grid of stage positions, the X position in the grid */
    Integer getGridColumn();
+   /** When acquiring a grid of stage positions, the Y position in the grid */
    Integer getGridRow();
+   /** The ImageJ pixel type, e.g. ImagePlus.GRAY8, ImagePlus.RGB32 */
    Integer getIjType();
+   /** The sequence number of this image, for sequence acquisitions */
    Integer getImageNumber();
+   /** How many sub-pixel components are in this image, for multi-component
+     * images (TODO: now properly part of Image class) */
    Integer getNumComponents();
+   /** Arbitrary additional metadata */
    JSONObject getUserMetadata();
+   /** List of stage positions at the start of the acquisition (e.g. not taking
+     * into account changes caused by autofocus). TODO: should be part of
+     * SummaryMetadata?
+     */
    MultiStagePosition getInitialPositionList();
+   /** The ROI of the camera when acquiring this image */
    Rectangle getROI();
+   /** The name of the camera for this image */
    String getCamera();
+   /** The name of the channel for this image (e.g. DAPI or GFP) */
    String getChannelName();
+   /** Any user-supplied comments for this specific image */
    String getComments();
+   /** The emission filter for this image */
    String getEmissionLabel();
+   /** The excitation filter for this image */
    String getExcitationLabel();
+   /** Seems to be a string version of the "IjType" field (TODO: remove?) */
    String getPixelType();
+   /** Any name attached to the stage position at which this image was
+     * acquired */
    String getPositionName();
+   /** The time at which this image was received by Micro-Manager (TODO:
+     * difference from ElapsedTimeMs?) */
    String getReceivedTime();
+   /** TODO: what is this? */
    String getSource();
+   /** A link to the SummaryMetadata instance for the acquisition this image
+     * was part of */
    SummaryMetadata getSummaryMetadata();
+   /** A unique identifier for this specific image */
    UUID getUUID();
 
    /**
