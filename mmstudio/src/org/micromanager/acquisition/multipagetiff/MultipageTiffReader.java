@@ -81,10 +81,11 @@ public class MultipageTiffReader {
    /**
     * This constructor is used for a file that is currently being written
     */
-   public MultipageTiffReader(SummaryMetadata summaryMD) {
+   public MultipageTiffReader(SummaryMetadata summaryMD,
+         JSONObject firstImageTags) {
       summaryMetadata_ = summaryMD;
       byteOrder_ = MultipageTiffWriter.BYTE_ORDER;
-      getRGBAndByteDepth(summaryMD.legacyToJSON());
+      getRGBAndByteDepth(firstImageTags);
       writingFinished_ = false;
    }
    

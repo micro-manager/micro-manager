@@ -129,7 +129,7 @@ public class MultipageTiffWriter {
       masterStorage_ = masterStorage;
       // TODO: casting to DefaultSummaryMetadata here.
       DefaultSummaryMetadata summary = (DefaultSummaryMetadata) masterStorage.getSummaryMetadata();
-      reader_ = new MultipageTiffReader(summary);
+      reader_ = new MultipageTiffReader(summary, firstImageTags);
       File f = new File(masterStorage.getDiskLocation() + "/" + filename); 
       
       try {
