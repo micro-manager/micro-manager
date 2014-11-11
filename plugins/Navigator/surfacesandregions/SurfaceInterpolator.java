@@ -5,7 +5,6 @@
 package surfacesandregions;
 
 import coordinates.XYStagePosition;
-import edu.mines.jtk.dsp.Sampling;
 import gui.SettingsDialog;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
@@ -13,7 +12,6 @@ import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import coordinates.AffineUtils;
-import edu.mines.jtk.interp.SibsonInterpolator2;
 import java.util.Comparator;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
@@ -22,8 +20,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.apache.commons.math3.geometry.euclidean.twod.Euclidean2D;
 import org.apache.commons.math3.geometry.euclidean.twod.PolygonsSet;
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
@@ -236,7 +232,12 @@ public abstract class SurfaceInterpolator {
       for (double x = 0; x <= pixelSpan.x; x += pixelSpan.x / (double) NUM_XY_TEST_POINTS) {
          for (double y = 0; y <= pixelSpan.y; y += pixelSpan.y / (double) NUM_XY_TEST_POINTS) {
             //convert these abritray pixel coordinates back to stage coordinates
-            transform.setToTranslation(corners[0].getX(), corners[0].getY());
+             double[] transformMaxtrix = new double[6];
+             transform.getMatrix(transformMaxtrix);
+             transformMaxtrix[4] = corners[0].getX();
+             transformMaxtrix[5] = corners[0].getY();
+             //create new transform with translation applied
+             transform = new AffineTransform(transformMaxtrix);
             Point2D.Double stageCoords = new Point2D.Double();
             transform.transform(new Point2D.Double(x, y), stageCoords);
             //test point for inclusion of position
@@ -387,7 +388,13 @@ public abstract class SurfaceInterpolator {
       gridCenterStageCoords.x += convexHullVertices_[0].getX();
       gridCenterStageCoords.y += convexHullVertices_[0].getY();
       //set affine transform translation relative to grid center
-      transform.setToTranslation(gridCenterStageCoords.x, gridCenterStageCoords.y);
+      double[] transformMaxtrix = new double[6];
+      transform.getMatrix(transformMaxtrix);
+      transformMaxtrix[4] = gridCenterStageCoords.x;
+      transformMaxtrix[5] = gridCenterStageCoords.y;
+      //create new transform with translation applied
+      transform = new AffineTransform(transformMaxtrix);
+      //add all positions of rectangle around convex hull
       for (int col = 0; col < numCols_; col++) {
          double xPixelOffset = (col - (numCols_ - 1) / 2.0) * (tileWidth);
          for (int row = 0; row < numRows_; row++) {

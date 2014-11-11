@@ -7,10 +7,7 @@ package surfacesandregions;
 import delaunay_triangulation.Delaunay_Triangulation;
 import delaunay_triangulation.Point_dt;
 import delaunay_triangulation.Triangle_dt;
-import edu.mines.jtk.dsp.Sampling;
-import edu.mines.jtk.interp.SibsonInterpolator2;
 import java.util.LinkedList;
-import org.apache.commons.math3.geometry.euclidean.threed.Euclidean3D;
 import org.apache.commons.math3.geometry.euclidean.threed.Line;
 import org.apache.commons.math3.geometry.euclidean.threed.Plane;
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
@@ -68,9 +65,9 @@ public class SurfaceInterpolatorSimple extends SurfaceInterpolator{
                      Vector3D v1 = new Vector3D(tri.p1().x(),tri.p1().y(),tri.p1().z());
                      Vector3D v2 = new Vector3D(tri.p2().x(),tri.p2().y(),tri.p2().z());
                      Vector3D v3 = new Vector3D(tri.p3().x(),tri.p3().y(),tri.p3().z());
-                     Plane plane = new Plane(v1,v2,v3,0.0001);
+                     Plane plane = new Plane(v1,v2,v3);
                      
-                     Vector3D pointInPlane = (Vector3D) plane.intersection(new Line(new Vector3D(xVal,yVal,0), new Vector3D(xVal,yVal,1),0.0001 ));             
+                     Vector3D pointInPlane = (Vector3D) plane.intersection(new Line(new Vector3D(xVal,yVal,0), new Vector3D(xVal,yVal,1)));             
                      float zVal = (float) pointInPlane.getZ();     
                      interpVals[yInd][xInd] = zVal;
                   } else {

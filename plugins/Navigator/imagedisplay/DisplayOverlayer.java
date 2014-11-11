@@ -344,6 +344,21 @@ public class DisplayOverlayer   {
             Point corner2 = display_.imageCoordsFromStageCoords(corners[1].x, corners[1].y);
             Point corner3 = display_.imageCoordsFromStageCoords(corners[2].x, corners[2].y);
             Point corner4 = display_.imageCoordsFromStageCoords(corners[3].x, corners[3].y);
+            //debugging:
+            
+//            System.out.println("Position corners (pixel): " + pos.getName());
+//            System.out.println(corner1.x + ", " + corner1.y);
+//            System.out.println(corner2.x + ", " + corner2.y);
+//            System.out.println(corner3.x + ", " + corner3.y);
+//            System.out.println(corner4.x + ", " + corner4.y);
+//            
+//            System.out.println("Position corners (stage): " + pos.getName());
+//            System.out.println(corners[0].x + ", " + corners[0].y);
+//            System.out.println(corners[1].x + ", " + corners[1].y);
+//            System.out.println(corners[2].x + ", " + corners[2].y);
+//            System.out.println(corners[3].x + ", " + corners[3].y);
+            
+            
             //add lines connecting 4 corners
             Line l1 = new Line(corner1.x, corner1.y, corner2.x, corner2.y);
             Line l2 = new Line(corner2.x, corner2.y, corner3.x, corner3.y);
@@ -361,6 +376,7 @@ public class DisplayOverlayer   {
                throw new InterruptedException();
             }
          }
+            System.out.println("\n\n");
 
       }
    }
