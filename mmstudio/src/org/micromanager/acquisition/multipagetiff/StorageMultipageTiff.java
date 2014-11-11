@@ -116,13 +116,11 @@ public final class StorageMultipageTiff implements Storage {
    }
    
    private void processSummaryMD() {
-      // TODO: get display settings from RAM storage? Or somewhere else...
+      // TODO: get display settings from RAM storage? Or from constructor?
       displaySettings_ = DefaultDisplaySettings.getStandardSettings();
       if (newDataSet_) {
-         // TODO: this is (going to be) the current maximum, not the projected
-         // maximum; is that a problem?
-         numChannels_ = getMaxIndex("channel") + 1;
-         numSlices_ = getMaxIndex("z") + 1;
+         numChannels_ = getIntendedSize("channel");
+         numSlices_ = getIntendedSize("z");
       }
    }
    
@@ -553,6 +551,14 @@ public final class StorageMultipageTiff implements Storage {
    @Override
    public Integer getMaxIndex(String axis) {
       return getMaxIndices().getPositionAt(axis);
+   }
+
+   public Integer getIntendedSize(String axis) {
+      if (summaryMetadata_.getIntendedDimensions() == null) {
+         ReportingUtils.logError("Can't get intended dimensions of dataset");
+         return null;
+      }
+      return summaryMetadata_.getIntendedDimensions().getPositionAt(axis);
    }
 
    @Override

@@ -306,9 +306,9 @@ class FileSet {
     */
    private void completeFrameWithBlankImages(int frame) throws JSONException, MMScriptException {
       
-      int numFrames = mpTiff_.getMaxIndex("time") + 1;
-      int numSlices = mpTiff_.getMaxIndex("z") + 1;
-      int numChannels = mpTiff_.getMaxIndex("channel") + 1;
+      int numFrames = mpTiff_.getIntendedSize("time");
+      int numSlices = mpTiff_.getIntendedSize("z");
+      int numChannels = mpTiff_.getIntendedSize("channel");
       if (numFrames > frame + 1 ) {
          TreeSet<String> writtenImages = new TreeSet<String>();
          for (MultipageTiffWriter w : tiffWriters_) {
