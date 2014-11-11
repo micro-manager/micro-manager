@@ -81,6 +81,7 @@ public final class StorageMultipageTiff implements Storage {
    private int lastFrame_ = 0;
    private int lastAcquiredPosition_ = 0;
    private ThreadPoolExecutor writingExecutor_;
+   private Image firstImage_;
 
    //map of position indices to objects associated with each
    private HashMap<Integer, FileSet> fileSets_;
@@ -219,7 +220,17 @@ public final class StorageMultipageTiff implements Storage {
       //asumes only one position
       fileSets_.get(position).overwritePixels(pix, channel, slice, frame, position); 
    }
-   
+
+   public void putImage(Image image) {
+      firstImage_ = image;
+      try {
+         putImage(image.legacyToTaggedImage(), false);
+      }
+      catch (Exception e) {
+         ReportingUtils.showError(e, "Failed to write image at " + image.getCoords());
+      }
+   }
+
    public void putImage(TaggedImage taggedImage, boolean waitForWritingToFinish) throws MMException, InterruptedException, ExecutionException, IOException {
       putImage(taggedImage);
       if (waitForWritingToFinish) {
@@ -575,8 +586,7 @@ public final class StorageMultipageTiff implements Storage {
 
    @Override
    public Image getAnyImage() {
-      ReportingUtils.logError("TODO: implement getAnyImage");
-      return null;
+      return firstImage_;
    }
 
    @Override
