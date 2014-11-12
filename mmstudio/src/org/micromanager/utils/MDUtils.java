@@ -48,6 +48,10 @@ public class MDUtils {
       }
    }
    
+   public static boolean hasPositionIndex(JSONObject map) {
+      return map.has("PositionIndex");
+   }
+
    public static int getPositionIndex(JSONObject map) throws JSONException {
       return map.getInt("PositionIndex");
    }
@@ -98,6 +102,10 @@ public class MDUtils {
       return map.getLong("ImageNumber");
    }
 
+   public static boolean hasSliceIndex(JSONObject map) {
+      return map.has("SliceIndex") || map.has("Slice");
+   }
+
    public static int getSliceIndex(JSONObject map) throws JSONException {
       if (map.has("SliceIndex")) {
          return map.getInt("SliceIndex");
@@ -111,6 +119,9 @@ public class MDUtils {
       map.put("Slice", sliceIndex);
    }
    
+   public static boolean hasChannelIndex(JSONObject map) {
+      return map.has("ChannelIndex");
+   }
 
    public static int getChannelIndex(JSONObject map) throws JSONException {
       return map.getInt("ChannelIndex");
@@ -118,6 +129,10 @@ public class MDUtils {
 
    public static void setChannelIndex(JSONObject map, int channelIndex) throws JSONException {
       map.put("ChannelIndex", channelIndex);
+   }
+
+   public static boolean hasFrameIndex(JSONObject map) {
+      return map.has("Frame") || map.has("FrameIndex");
    }
 
    public static int getFrameIndex(JSONObject map) throws JSONException {
