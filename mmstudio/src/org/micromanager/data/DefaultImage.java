@@ -393,7 +393,7 @@ public class DefaultImage implements Image {
       return new TaggedImage(getRawPixels(), tags);
    }
 
-   private int getImageJPixelType() {
+   public int getImageJPixelType() {
       int bytesPerPixel = getBytesPerPixel();
       int numComponents = getNumComponents();
       if (bytesPerPixel == 4) {
