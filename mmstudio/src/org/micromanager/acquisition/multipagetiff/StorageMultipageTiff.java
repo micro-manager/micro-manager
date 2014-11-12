@@ -192,47 +192,6 @@ public final class StorageMultipageTiff implements Storage {
       progressBar.setVisible(false);
    }
 
-//   public TaggedImage getImage(int channelIndex, int sliceIndex, int frameIndex
-//      String label = MDUtils.generateLabel(channelIndex, sliceIndex, frameIndex
-//      if (!tiffReadersByLabel_.containsKey(label)) {
-//         return null;
-//      }
-//
-//      //Debugging code for a strange exception found in core log
-//      try {
-//         TaggedImage img = tiffReadersByLabel_.get(label).readImage(label);
-//         return img;     
-//      } catch (NullPointerException e) {
-//         ReportingUtils.logError("Couldn't find image that TiffReader is supposed to contain");
-//         if (tiffReadersByLabel_ == null) {
-//            ReportingUtils.logError("Tiffreadersbylabel is null");
-//         }
-//         if (tiffReadersByLabel_.get(label) == null) {
-//            ReportingUtils.logError("Specific reader is null " + label);
-//         }
-//      }
-//      return null;
-//   }
-//
-//   public JSONObject getImageTags(int channelIndex, int sliceIndex, int frameIndex, int positionIndex) {
-//      String label = MDUtils.generateLabel(channelIndex, sliceIndex, frameIndex, positionIndex);
-//      if (!tiffReadersByLabel_.containsKey(label)) {
-//         return null;
-//      }
-//      return tiffReadersByLabel_.get(label).readImage(label).tags;   
-//   }
-
-   /*
-    * Method that allows overwrting of pixels but not MD or TIFF tags
-    * so that low res stitched images can be written tile by tile
-    * Not used by the Storage API, but can be useful for special applicaitons
-    * of this class (e.g. Navigator plugin)
-    */
-   public void overwritePixels(Object pix, int channel, int slice, int frame, int position) throws IOException {
-      //asumes only one position
-      fileSets_.get(position).overwritePixels(pix, channel, slice, frame, position); 
-   }
-
    @Subscribe
    public void onNewImage(NewImageEvent event) {
       Image image = event.getImage();
