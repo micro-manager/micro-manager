@@ -80,6 +80,7 @@ public class MultipageTiffReader {
 
    private DisplaySettings displaySettings_;
    private SummaryMetadata summaryMetadata_;
+   private JSONObject summaryJSON_;
    private int byteDepth_ = 0;;
    private boolean rgb_;
    private boolean writingFinished_;
@@ -112,7 +113,6 @@ public class MultipageTiffReader {
    public MultipageTiffReader(File file) throws IOException {
       JSONObject displayAndComments = new JSONObject();
       file_ = file;
-      JSONObject summaryJSON = null;
       try {
          createFileChannel();
       } catch (Exception ex) {
@@ -120,8 +120,8 @@ public class MultipageTiffReader {
       }
       writingFinished_ = true;
       long firstIFD = readHeader();
-      summaryJSON = readSummaryMD();
-      summaryMetadata_ = DefaultSummaryMetadata.legacyFromJSON(summaryJSON);
+      summaryJSON_ = readSummaryMD();
+      summaryMetadata_ = DefaultSummaryMetadata.legacyFromJSON(summaryJSON_);
       try {
          readIndexMap();
       } catch (Exception e) {
@@ -145,7 +145,7 @@ public class MultipageTiffReader {
       displaySettings_ = DefaultDisplaySettings.legacyFromJSON(displayAndComments);
 
       if (summaryMetadata_ != null) {
-         getRGBAndByteDepth(summaryJSON);
+         getRGBAndByteDepth(summaryJSON_);
       }
    }
 
@@ -236,7 +236,12 @@ public class MultipageTiffReader {
             long byteOffset = coordsToOffset_.get(coords);
 
             IFDData data = readIFD(byteOffset);
-            return new DefaultImage(readTaggedImage(data));
+            TaggedImage tagged = readTaggedImage(data);
+            // The metadata in the TaggedImage needs to be augmented with
+            // fields from the summary JSON, or else we won't be able to
+            // construct a DefaultImage from it.
+            augmentWithSummaryMetadata(tagged.tags);
+            return new DefaultImage(tagged);
          } catch (IOException ex) {
             ReportingUtils.logError(ex);
          }
@@ -252,7 +257,36 @@ public class MultipageTiffReader {
          // writing it?
          return null;
       }
-   }  
+   }
+
+   /**
+    * Given the metadata for a TaggedImage, augment it with fields from the
+    * summary JSON that are needed for our DefaultImage class to parse the
+    * metadata and image data properly.
+    */
+   private void augmentWithSummaryMetadata(JSONObject tags) {
+      try {
+         MDUtils.setWidth(tags, MDUtils.getWidth(summaryJSON_));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Failed to get image width from summary JSON");
+      }
+      try {
+         MDUtils.setHeight(tags, MDUtils.getHeight(summaryJSON_));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Failed to get image height from summary JSON");
+      }
+      try {
+         MDUtils.setPixelType(tags, MDUtils.getSingleChannelType(summaryJSON_));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Failed to get image pixel type from summary JSON");
+      }
+      catch (MMScriptException e) {
+         ReportingUtils.logError(e, "Failed to get image pixel type from summary JSON");
+      }
+   }
 
    public Set<Coords> getIndexKeys() {
       if (coordsToOffset_ == null)
