@@ -40,8 +40,8 @@ public class DefaultDatastore implements Datastore {
       try {
          setSummaryMetadata(alt.getSummaryMetadata());
          setDisplaySettings(alt.getDisplaySettings());
-         for (Image image : alt.getUnorderedImageView()) {
-            putImage(image);
+         for (Coords coords : alt.getUnorderedImageCoords()) {
+            putImage(alt.getImage(coords));
          }
       }
       catch (DatastoreLockedException e) {
@@ -94,9 +94,9 @@ public class DefaultDatastore implements Datastore {
    }
 
    @Override
-   public Iterable<Image> getUnorderedImageView() {
+   public Iterable<Coords> getUnorderedImageCoords() {
       if (storage_ != null) {
-         return storage_.getUnorderedImageView();
+         return storage_.getUnorderedImageCoords();
       }
       return null;
    }
@@ -236,8 +236,8 @@ public class DefaultDatastore implements Datastore {
                path, true, isMultipage, false);
          duplicate.setStorage(saver);
          duplicate.setSummaryMetadata(summary);
-         for (Image image : storage_.getUnorderedImageView()) {
-            duplicate.putImage(image);
+         for (Coords coords : getUnorderedImageCoords()) {
+            duplicate.putImage(getImage(coords));
          }
       }
       catch (java.io.IOException e) {
