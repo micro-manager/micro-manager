@@ -68,6 +68,9 @@ public class MultipageTiffReader {
 
    public static final char MM_METADATA = MultipageTiffWriter.MM_METADATA;
    // Note: ordering of axes here matches that in MDUtils.getLabel().
+   // If you change this, you will need to track down places where the size of
+   // the position list is implicitly kept (e.g. in the size of a single index
+   // map entry, 20 bytes) and update those locations.
    public static final ImmutableList<String> ALLOWED_AXES = ImmutableList.of("channel", "z", "time", "position");
 
    private ByteOrder byteOrder_;  
