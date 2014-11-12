@@ -124,8 +124,8 @@ public class StorageRAM implements Storage {
    }
 
    @Override
-   public synchronized Iterable<Image> getUnorderedImageView() {
-      return coordsToImage_.values();
+   public synchronized Iterable<Coords> getUnorderedImageCoords() {
+      return coordsToImage_.keySet();
    }
 
    @Override
