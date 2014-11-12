@@ -389,17 +389,34 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
          ReportingUtils.logError("Failed to parse input string for customIntervalsMs");
       }
 
+      // TODO: this is pretty horrible with all the try/catches, but we want
+      // the lack of one dimension to not stop us from getting the others.
+      DefaultCoords.Builder dimsBuilder = new DefaultCoords.Builder();
       try {
-         DefaultCoords.Builder dimsBuilder = new DefaultCoords.Builder();
          dimsBuilder.position("time", MDUtils.getNumFrames(tags));
-         dimsBuilder.position("z", MDUtils.getNumSlices(tags));
-         dimsBuilder.position("positions", MDUtils.getNumPositions(tags));
-         dimsBuilder.position("channel", MDUtils.getNumChannels(tags));
-         builder.intendedDimensions(dimsBuilder.build());
       }
       catch (JSONException e) {
          ReportingUtils.logError("Failed to extract intended dimensions: " + e);
       }
+      try {
+         dimsBuilder.position("z", MDUtils.getNumSlices(tags));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError("Failed to extract intended dimensions: " + e);
+      }
+      try {
+         dimsBuilder.position("channel", MDUtils.getNumChannels(tags));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError("Failed to extract intended dimensions: " + e);
+      }
+      try {
+         dimsBuilder.position("position", MDUtils.getNumPositions(tags));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError("Failed to extract intended dimensions: " + e);
+      }
+      builder.intendedDimensions(dimsBuilder.build());
 
       try {
          builder.startDate(tags.getString("StartTime"));
