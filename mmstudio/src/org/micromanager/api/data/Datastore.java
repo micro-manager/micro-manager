@@ -55,6 +55,13 @@ public interface Datastore {
    public List<Image> getImagesMatching(Coords coords);
 
    /**
+    * Provide a view into the images in the Datastore. Mostly useful if you
+    * want to iterate over every image. Will be null if no Storage has been
+    * provided yet.
+    */
+   public Iterable<Image> getUnorderedImageView();
+
+   /**
     * Insert an image into the Datastore. Posts a NewImageEvent to the event
     * bus.
     * @throws DatastoreLockedException if the lock() method has been called.
