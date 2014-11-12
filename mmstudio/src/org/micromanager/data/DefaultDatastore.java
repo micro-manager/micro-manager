@@ -190,10 +190,6 @@ public class DefaultDatastore implements Datastore {
 
    @Override
    public void save(Datastore.SaveMode mode, String path) {
-      // Downcast enum to boolean as StorageMultipageTiff only has two modes.
-      // TODO: "false" is saying to not use separate files for each position.
-      // Should have a better way to handle this.
-      // TODO: obey the mode parameter and allow saving across multiple files.
       // TODO: we have some casts to Default* here; do we really need them?
       DefaultSummaryMetadata summary = (DefaultSummaryMetadata) getSummaryMetadata();
       // Insert intended dimensions if they aren't already present.
@@ -204,16 +200,27 @@ public class DefaultDatastore implements Datastore {
          }
          summary = (DefaultSummaryMetadata) summary.copy().intendedDimensions(builder.build()).build();
       }
+      // Downcast enum to boolean as StorageMultipageTiff only has two modes.
       boolean isMultipage = (mode == Datastore.SaveMode.MULTIPAGE_TIFF);
       try {
-         StorageMultipageTiff saver = new StorageMultipageTiff(path, true,
-               summary, isMultipage, false);
+         // TODO: "false" is saying to not use separate files for each
+         // position.  Should have a better way to handle this.
+         // TODO: obey the mode parameter and allow saving across multiple
+         // files.
+         DefaultDatastore duplicate = new DefaultDatastore();
+         StorageMultipageTiff saver = new StorageMultipageTiff(duplicate,
+               path, true, isMultipage, false);
+         duplicate.setStorage(saver);
+         duplicate.setSummaryMetadata(summary);
          for (Image image : storage_.getUnorderedImageView()) {
-            saver.putImage(image);
+            duplicate.putImage(image);
          }
       }
       catch (java.io.IOException e) {
          ReportingUtils.showError(e, "Failed to save image data");
+      }
+      catch (DatastoreLockedException e) {
+         ReportingUtils.logError("Couldn't modify newly-created datastore; this should never happen!");
       }
    }
 

@@ -19,6 +19,8 @@
 //
 package org.micromanager.acquisition.multipagetiff;
 
+import com.google.common.eventbus.Subscribe;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -45,8 +47,10 @@ import org.json.JSONObject;
 
 import org.micromanager.MMStudio;
 import org.micromanager.api.data.Coords;
+import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.DisplaySettings;
 import org.micromanager.api.data.Image;
+import org.micromanager.api.data.NewSummaryMetadataEvent;
 import org.micromanager.api.data.Storage;
 import org.micromanager.api.data.SummaryMetadata;
 import org.micromanager.data.DefaultCoords;
@@ -89,31 +93,36 @@ public final class StorageMultipageTiff implements Storage {
    //Map of image labels to file 
    private TreeMap<String, MultipageTiffReader> tiffReadersByLabel_;
   
-   public StorageMultipageTiff(String dir, Boolean newDataSet,
-         DefaultSummaryMetadata summaryMetadata) throws IOException {
-      this(dir, newDataSet, summaryMetadata,
+   public StorageMultipageTiff(Datastore store, String dir, Boolean newDataSet)
+         throws IOException {
+      this(store, dir, newDataSet,
             MMStudio.getInstance().getMetadataFileWithMultipageTiff(),
             MMStudio.getInstance().getSeparateFilesForPositionsMPTiff());
    }
    
    /*
-    * Constructor that doesn't make reference to MMStudio so it can be used independently of MM GUI
+    * Constructor that doesn't make reference to MMStudio so it can be used
+    * independently of MM GUI
     */
-   public StorageMultipageTiff(String dir, boolean newDataSet,
-         DefaultSummaryMetadata summaryMetadata, 
+   public StorageMultipageTiff(Datastore store, String dir, boolean newDataSet,
          boolean separateMDFile, boolean separateFilesForPositions) throws IOException {
+      store.registerForEvents(this, 0);
       separateMetadataFile_ = separateMDFile;
       splitByXYPosition_ = separateFilesForPositions;
 
       newDataSet_ = newDataSet;
       directory_ = dir;
       tiffReadersByLabel_ = new TreeMap<String, MultipageTiffReader>(new ImageLabelComparator());
-      setSummaryMetadata(summaryMetadata);
 
       // TODO: throw error if no existing dataset
       if (!newDataSet_) {       
          openExistingDataSet();
       }
+   }
+
+   @Subscribe
+   public void onNewSummaryMetadata(NewSummaryMetadataEvent event) {
+      setSummaryMetadata(event.getSummaryMetadata());
    }
    
    private void processSummaryMD() {
