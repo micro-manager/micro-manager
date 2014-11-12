@@ -53,6 +53,7 @@ import org.micromanager.api.data.DisplaySettings;
 import org.micromanager.api.data.Image;
 import org.micromanager.api.data.Metadata;
 import org.micromanager.api.data.SummaryMetadata;
+import org.micromanager.data.DefaultImage;
 import org.micromanager.data.DefaultSummaryMetadata;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MDUtils;
@@ -140,11 +141,20 @@ public class MultipageTiffWriter {
          ReportingUtils.logError(ex);
       }
       
+      // We need to convert the summary metadata into an extended version that
+      // includes information that isn't in SummaryMetadata but that prior
+      // versions of MicroManager used to include (that information is either
+      // in per-image Metadata, part of the Image itself, or part of the
+      // DisplaySettings now).
+      JSONObject summaryJSON = summary.legacyToJSON();
+      augmentWithImageMetadata(summaryJSON,
+            (DefaultImage) masterStorage_.getAnyImage());
+
       //This is an overestimate of file size because file gets truncated at end
       long fileSize = Math.min(MAX_FILE_SIZE,
-            summary.legacyToJSON().toString().length() + 2000000 +
+            summaryJSON.toString().length() + 2000000 +
             numFrames_ * numChannels_ * numSlices_ * ((long) bytesPerImagePixels_ + 2000));
-      
+
       f.createNewFile();
       raFile_ = new RandomAccessFile(f, "rw");
       try {
@@ -167,11 +177,25 @@ public class MultipageTiffWriter {
       reader_.setIndexMap(indexMap_);
       buffers_ = new LinkedList<ByteBuffer>();
       
-      writeMMHeaderAndSummaryMD(summary.legacyToJSON());
+      writeMMHeaderAndSummaryMD(summaryJSON);
       try {
-         summaryMDString_ = summary.legacyToJSON().toString(2);
+         summaryMDString_ = summaryJSON.toString(2);
       } catch (JSONException ex) {
          summaryMDString_ = "";
+      }
+   }
+
+   /**
+    * Insert certain fields into the provided JSONObject that are stored in
+    * the Image or its Metadata.
+    */
+   private void augmentWithImageMetadata(JSONObject summary,
+         DefaultImage image) {
+      try {
+         MDUtils.setPixelType(summary, image.getImageJPixelType());
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Couldn't set pixel type");
       }
    }
 
