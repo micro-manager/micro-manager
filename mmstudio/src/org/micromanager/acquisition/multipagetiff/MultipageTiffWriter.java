@@ -49,10 +49,12 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import org.micromanager.MMStudio;
+import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.DisplaySettings;
 import org.micromanager.api.data.Image;
 import org.micromanager.api.data.Metadata;
 import org.micromanager.api.data.SummaryMetadata;
+import org.micromanager.data.DefaultCoords;
 import org.micromanager.data.DefaultImage;
 import org.micromanager.data.DefaultSummaryMetadata;
 import org.micromanager.utils.ImageUtils;
@@ -107,7 +109,7 @@ public class MultipageTiffWriter {
    private long indexMapFirstEntry_; // mark position of first entry so that number of entries can be written at end
    private int bufferPosition_;
    private int numChannels_ = 1, numFrames_ = 1, numSlices_ = 1;
-   private HashMap<String, Long> indexMap_;
+   private HashMap<Coords, Long> coordsToOffset_;
    private long nextIFDOffsetLocation_ = -1;
    private boolean rgb_ = false;
    private int byteDepth_, imageWidth_, imageHeight_, bytesPerImagePixels_;
@@ -172,9 +174,9 @@ public class MultipageTiffWriter {
       }
       fileChannel_ = raFile_.getChannel();
       writingExecutor_ = masterStorage_.getWritingExecutor();
-      indexMap_ = new HashMap<String, Long>();
+      coordsToOffset_ = new HashMap<Coords, Long>();
       reader_.setFileChannel(fileChannel_);
-      reader_.setIndexMap(indexMap_);
+      reader_.setIndexMap(coordsToOffset_);
       buffers_ = new LinkedList<ByteBuffer>();
       
       writeMMHeaderAndSummaryMD(summaryJSON);
@@ -195,7 +197,19 @@ public class MultipageTiffWriter {
          MDUtils.setPixelType(summary, image.getImageJPixelType());
       }
       catch (JSONException e) {
-         ReportingUtils.logError(e, "Couldn't set pixel type");
+         ReportingUtils.logError(e, "Couldn't set image pixel type");
+      }
+      try {
+         MDUtils.setWidth(summary, image.getWidth());
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Couldn't set image width");
+      }
+      try {
+         MDUtils.setHeight(summary, image.getHeight());
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Couldn't set image height");
       }
    }
 
@@ -265,8 +279,8 @@ public class MultipageTiffWriter {
       return fileChannel_;
    }
    
-   public HashMap<String, Long> getIndexMap() {
-      return indexMap_;
+   public HashMap<Coords, Long> getIndexMap() {
+      return coordsToOffset_;
    }
    
    private void writeMMHeaderAndSummaryMD(JSONObject summaryMD) throws IOException {      
@@ -434,7 +448,7 @@ public class MultipageTiffWriter {
       }
       long offset = filePosition_;
       writeIFD(img);
-      addToIndexMap(MDUtils.getLabel(img.tags), offset);
+      addToIndexMap(DefaultCoords.legacyFromJSON(img.tags), offset);
       writeBuffers();
       //wait until image has finished writing to return
 //      int size = writingExecutor_.getQueue().size();
@@ -443,15 +457,24 @@ public class MultipageTiffWriter {
 //      }
    }
    
-   private void addToIndexMap(String label, long offset) {
-      //If a duplicate label is received, forget about the previous one
+   private void addToIndexMap(Coords coords, long offset) {
+      //If a duplicate key is received, forget about the previous one
       //this allows overwriting of images without loss of data
-      indexMap_.put(label, offset);
-      ByteBuffer buffer = allocateByteBuffer( 20 );
-      String[] indices = label.split("_");
-      for (int i = 0; i < 4; i++) {
-         buffer.putInt( 4*i , Integer.parseInt(indices[i]));
+      coordsToOffset_.put(coords, offset);
+      ByteBuffer buffer = allocateByteBuffer(20);
+      int bufOffset = 0;
+      for (String axis : MultipageTiffReader.ALLOWED_AXES) {
+         buffer.putInt(4 * bufOffset, coords.getPositionAt(axis));
+         bufOffset++;
       }
+      // TODO: this probably doesn't help our performance any, but I want
+      // the extra logging just in case.
+      for (String axis : coords.getAxes()) {
+         if (!MultipageTiffReader.ALLOWED_AXES.contains(axis)) {
+            ReportingUtils.logError("Axis " + axis + " is ignored because it is not one of " + MultipageTiffReader.ALLOWED_AXES.toString());
+         }
+      }
+
       buffer.putInt(16, new Long(offset).intValue());
       fileChannelWrite(buffer,indexMapPosition_);
       indexMapPosition_ += 20;  
@@ -471,41 +494,6 @@ public class MultipageTiffWriter {
          val += (long) Math.pow(2, 31);
       }
       return val;
-   }
-   
-   public void overwritePixels(Object pixels, int channel, int slice, int frame, int position) throws IOException {
-      long byteOffset = indexMap_.get(MDUtils.generateLabel(channel, slice, frame, position));      
-      ByteBuffer buffer = ByteBuffer.allocate(2).order(BYTE_ORDER);
-      fileChannel_.read(buffer, byteOffset);
-      int numEntries = buffer.getChar(0);
-      ByteBuffer entries = ByteBuffer.allocate(numEntries*12 + 4).order(BYTE_ORDER);
-      fileChannel_.read(entries, byteOffset + 2);        
-
-      long pixelOffset = -1, bytesPerImage = -1;
-      //read Tiff tags to find pixel offset
-      for (int i = 0; i < numEntries; i++) {
-         char tag = entries.getChar(i*12);
-         char type = entries.getChar(i*12 + 2);
-         long count = unsignInt(entries.getInt(i*12 + 4));
-         long value;
-         if (type == 3 && count == 1) {
-            value = entries.getChar(i*12 + 8);
-         } else {
-            value = unsignInt(entries.getInt(i * 12 + 8));
-         }
-         if (tag == STRIP_OFFSETS) {
-            pixelOffset = value;
-         } else if (tag == STRIP_BYTE_COUNTS) {
-            bytesPerImage = value;
-         }
-      }
-      if (pixelOffset == -1 || bytesPerImage == -1) {
-         ReportingUtils.showError("Couldn't overwrite pixel data");
-         return;
-      }
-      
-      ByteBuffer pixBuff = getPixelBuffer(pixels);
-      fileChannelWrite(pixBuff, pixelOffset); 
    }
 
    private void writeIFD(TaggedImage img) throws IOException {
