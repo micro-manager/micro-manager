@@ -33,6 +33,22 @@ public class DefaultDatastore implements Datastore {
       displays_ = new ArrayList<DisplayWindow>();
    }
 
+   /**
+    * Copy all data from the provided other Datastore into ourselves.
+    */
+   public void copyFrom(Datastore alt) {
+      try {
+         setSummaryMetadata(alt.getSummaryMetadata());
+         setDisplaySettings(alt.getDisplaySettings());
+         for (Image image : alt.getUnorderedImageView()) {
+            putImage(image);
+         }
+      }
+      catch (DatastoreLockedException e) {
+         ReportingUtils.logError("Can't copy to datastore: we're locked");
+      }
+   }
+
    @Override
    public void setStorage(Storage storage) {
       storage_ = storage;
@@ -73,6 +89,14 @@ public class DefaultDatastore implements Datastore {
    public List<Image> getImagesMatching(Coords coords) {
       if (storage_ != null) {
          return storage_.getImagesMatching(coords);
+      }
+      return null;
+   }
+
+   @Override
+   public Iterable<Image> getUnorderedImageView() {
+      if (storage_ != null) {
+         return storage_.getUnorderedImageView();
       }
       return null;
    }

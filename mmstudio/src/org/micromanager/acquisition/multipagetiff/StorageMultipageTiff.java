@@ -550,8 +550,8 @@ public final class StorageMultipageTiff implements Storage {
 
    @Override
    public int getNumImages() {
-      ReportingUtils.logError("TODO: implement getNumImages");
-      return 0;
+      ReportingUtils.logError("There are " + tiffReadersByLabel_.keySet().size() + " images in this TIFF storage");
+      return tiffReadersByLabel_.keySet().size();
    }
 
    @Override
