@@ -391,6 +391,8 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
 
       // TODO: this is pretty horrible with all the try/catches, but we want
       // the lack of one dimension to not stop us from getting the others.
+      // Structurally it's very similar to DefaultCoords.legacyFromJSON, but
+      // accessing a slightly different set of tags.
       DefaultCoords.Builder dimsBuilder = new DefaultCoords.Builder();
       try {
          dimsBuilder.position("time", MDUtils.getNumFrames(tags));
