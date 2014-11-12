@@ -49,9 +49,11 @@ import org.micromanager.MMStudio;
 import org.micromanager.api.ImageCache;
 import org.micromanager.api.TaggedImageStorage;
 
+import org.micromanager.acquisition.multipagetiff.StorageMultipageTiff;
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.DatastoreLockedException;
 import org.micromanager.api.data.DisplaySettings;
+import org.micromanager.api.data.Storage;
 import org.micromanager.api.data.SummaryMetadata;
 import org.micromanager.api.display.DisplayWindow;
 
@@ -272,31 +274,31 @@ public class MMAcquisition {
          throw new MMScriptException("Acquisition is already initialized");
       }
 
-      TaggedImageStorage imageFileManager;
+      Storage imageFileManager = null;
       String name = name_;
       
+      store_ = new DefaultDatastore();
+
       if (virtual_ && existing_) {
          String dirName = rootDirectory_ + File.separator + name;
          try {
             boolean multipageTiff = MultipageTiffReader.isMMMultipageTiff(dirName);
             if (multipageTiff) {
-               imageFileManager = new TaggedImageStorageMultipageTiff(dirName, false, null);
+               imageFileManager = new StorageMultipageTiff(store_, dirName, false);
             } else {
-               imageFileManager = new TaggedImageStorageDiskDefault(dirName, false, null);
+               ReportingUtils.logError("TODO: implement loading multi-file TIFFs");
             }
          } catch (Exception ex) {
-            throw new MMScriptException(ex);
+            ReportingUtils.showError(ex, "Failed to open file");
          }
 
-         store_ = new DefaultDatastore();
-         store_.setStorage(new StorageRAM(store_));
+         store_.setStorage(imageFileManager);
          try {
             store_.setSummaryMetadata((new DefaultSummaryMetadata.Builder().build()));
          }
          catch (DatastoreLockedException e) {
             ReportingUtils.logError(e, "Couldn't set summary metadata");
          }
-//         imageCache_ = new MMImageCache(imageFileManager);
       }
 
       if (virtual_ && !existing_) {
@@ -314,22 +316,21 @@ public class MMAcquisition {
                throw new MMScriptException("Failed to figure out acq saving path.");
             }
          }
-         
-         imageFileManager = ImageUtils.newImageStorageInstance(dirName, true, summary_);
-         store_ = new DefaultDatastore();
-         store_.setStorage(new StorageRAM(store_));
+
+         SummaryMetadata summary = DefaultSummaryMetadata.legacyFromJSON(summary_);
          try {
-            store_.setSummaryMetadata(DefaultSummaryMetadata.legacyFromJSON(summary_));
+            store_.setStorage(new StorageMultipageTiff(store_, dirName, true));
+            store_.setSummaryMetadata(summary);
+         }
+         catch (java.io.IOException e) {
+            ReportingUtils.showError(e, "Unable to prepare saving");
          }
          catch (DatastoreLockedException e) {
-            ReportingUtils.logError(e, "Couldn't set summary metadata");
+            ReportingUtils.logError("Unable to set summary metadata; datastore pre-emptively locked. This should never happen!");
          }
-//         imageCache_ = new MMImageCache(imageFileManager);
       }
 
       if (!virtual_ && !existing_) {
-         imageFileManager = new TaggedImageStorageRamFast(null);
-         store_ = new DefaultDatastore();
          store_.setStorage(new StorageRAM(store_));
          try {
             store_.setSummaryMetadata((new DefaultSummaryMetadata.Builder().build()));
@@ -337,25 +338,25 @@ public class MMAcquisition {
          catch (DatastoreLockedException e) {
             ReportingUtils.logError(e, "Couldn't set summary metadata");
          }
-//         imageCache_ = new MMImageCache(imageFileManager);
       }
 
       if (!virtual_ && existing_) {
          String dirName = rootDirectory_ + File.separator + name;
-         TaggedImageStorage tempImageFileManager;
+         Storage tempImageFileManager = null;
          boolean multipageTiff;
          try {
             multipageTiff = MultipageTiffReader.isMMMultipageTiff(dirName);
             if (multipageTiff) {
-               tempImageFileManager = new TaggedImageStorageMultipageTiff(dirName, false, null);
+               tempImageFileManager = new StorageMultipageTiff(store_, dirName, false);
             } else {
-               tempImageFileManager = new TaggedImageStorageDiskDefault(dirName, false, null);
+               ReportingUtils.logError("TODO: implement loading non-multipage TIFFS");
             }
          } catch (Exception ex) {
-            throw new MMScriptException(ex);
+            ReportingUtils.showError(ex, "Failed to open file");
+            return;
          }
 
-         store_ = new DefaultDatastore();
+         // TODO: copy data from StorageMultipageTiff to StorageRAM.
          store_.setStorage(new StorageRAM(store_));
          try {
             store_.setSummaryMetadata((new DefaultSummaryMetadata.Builder().build()));
@@ -363,6 +364,7 @@ public class MMAcquisition {
          catch (DatastoreLockedException e) {
             ReportingUtils.logError(e, "Couldn't set summary metadata");
          }
+         // TODO: re-implement the check below before loading images into RAM
 //         imageCache_ = new MMImageCache(tempImageFileManager);
 //         if (tempImageFileManager.getDataSetSize() > 0.9 * JavaUtils.getAvailableUnusedMemory()) {
 //            throw new MMScriptException("Not enough room in memory for this data set.\nTry opening as a virtual data set instead.");
