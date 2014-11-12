@@ -21,6 +21,8 @@
 //
 package org.micromanager.acquisition.multipagetiff;
 
+import com.google.common.collect.ImmutableList;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -29,9 +31,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Set;
 
 import javax.swing.JOptionPane;
@@ -60,8 +60,6 @@ import org.micromanager.utils.ReportingUtils;
 public class MultipageTiffReader {
 
    private static final long BIGGEST_INT_BIT = (long) Math.pow(2, 31);
-
-
    public static final char BITS_PER_SAMPLE = MultipageTiffWriter.BITS_PER_SAMPLE;
    public static final char STRIP_OFFSETS = MultipageTiffWriter.STRIP_OFFSETS;    
    public static final char SAMPLES_PER_PIXEL = MultipageTiffWriter.SAMPLES_PER_PIXEL;
@@ -69,6 +67,8 @@ public class MultipageTiffReader {
    public static final char IMAGE_DESCRIPTION = MultipageTiffWriter.IMAGE_DESCRIPTION;
 
    public static final char MM_METADATA = MultipageTiffWriter.MM_METADATA;
+   // Note: ordering of axes here matches that in MDUtils.getLabel().
+   public static final ImmutableList<String> ALLOWED_AXES = ImmutableList.of("channel", "z", "time", "position");
 
    private ByteOrder byteOrder_;  
    private File file_;
@@ -634,19 +634,16 @@ public class MultipageTiffReader {
       buffer.putInt(0, MultipageTiffWriter.INDEX_MAP_HEADER);
       buffer.putInt(4, numMappings);
       int position = 2;
-      // Note: ordering of axes here matches that in MDUtils.getLabel().
-      String[] allowedAxes = {"channel", "z", "time", "position"};
-      HashSet<String> axisSet = new HashSet<String>(Arrays.asList(allowedAxes));
       for (Coords coords : coordsToOffset_.keySet()) {
-         for (String axis : allowedAxes) {
+         for (String axis : ALLOWED_AXES) {
             buffer.putInt(4 * position, coords.getPositionAt(axis));
             position++;
          }
          // TODO: this probably doesn't help our performance any, but I want
          // the extra logging just in case.
          for (String axis : coords.getAxes()) {
-            if (!axisSet.contains(axis)) {
-               ReportingUtils.logError("Axis " + axis + " is ignored because it is not one of " + allowedAxes.toString());
+            if (!ALLOWED_AXES.contains(axis)) {
+               ReportingUtils.logError("Axis " + axis + " is ignored because it is not one of " + ALLOWED_AXES.toString());
             }
          }
          buffer.putInt(4 * position, coordsToOffset_.get(coords).intValue());
