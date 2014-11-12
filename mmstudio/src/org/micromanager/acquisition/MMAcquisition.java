@@ -356,14 +356,11 @@ public class MMAcquisition {
             return;
          }
 
-         // TODO: copy data from StorageMultipageTiff to StorageRAM.
-         store_.setStorage(new StorageRAM(store_));
-         try {
-            store_.setSummaryMetadata((new DefaultSummaryMetadata.Builder().build()));
-         }
-         catch (DatastoreLockedException e) {
-            ReportingUtils.logError(e, "Couldn't set summary metadata");
-         }
+         // Copy from the TIFF storage to a RAM-backed storage.
+         DefaultDatastore duplicate = new DefaultDatastore();
+         duplicate.setStorage(new StorageRAM(store_));
+         duplicate.copyFrom(store_);
+         store_ = duplicate;
          // TODO: re-implement the check below before loading images into RAM
 //         imageCache_ = new MMImageCache(tempImageFileManager);
 //         if (tempImageFileManager.getDataSetSize() > 0.9 * JavaUtils.getAvailableUnusedMemory()) {
@@ -378,11 +375,16 @@ public class MMAcquisition {
          createDefaultAcqSettings();
       }
 
+      ReportingUtils.logError("Nearly done initializing");
       if (store_.getSummaryMetadata() != null) {
          if (show_) {
+            ReportingUtils.logError("Creating display");
             display_ = new DefaultDisplayWindow(store_, null);
          }
          initialized_ = true;
+      }
+      else {
+         ReportingUtils.logError("Null summary metadata");
       }
    }
    
