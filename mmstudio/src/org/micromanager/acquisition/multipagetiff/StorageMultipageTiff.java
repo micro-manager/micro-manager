@@ -50,6 +50,7 @@ import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.DisplaySettings;
 import org.micromanager.api.data.Image;
+import org.micromanager.api.data.NewImageEvent;
 import org.micromanager.api.data.NewSummaryMetadataEvent;
 import org.micromanager.api.data.Storage;
 import org.micromanager.api.data.SummaryMetadata;
@@ -230,8 +231,12 @@ public final class StorageMultipageTiff implements Storage {
       fileSets_.get(position).overwritePixels(pix, channel, slice, frame, position); 
    }
 
-   public void putImage(Image image) {
-      firstImage_ = image;
+   @Subscribe
+   public void onNewImage(NewImageEvent event) {
+      Image image = event.getImage();
+      if (firstImage_ == null) {
+         firstImage_ = image;
+      }
       try {
          putImage(image.legacyToTaggedImage(), false);
       }
