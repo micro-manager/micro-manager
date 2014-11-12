@@ -396,25 +396,25 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
          dimsBuilder.position("time", MDUtils.getNumFrames(tags));
       }
       catch (JSONException e) {
-         ReportingUtils.logError("Failed to extract intended dimensions: " + e);
+         ReportingUtils.logError("Failed to extract intended time axis length: " + e);
       }
       try {
          dimsBuilder.position("z", MDUtils.getNumSlices(tags));
       }
       catch (JSONException e) {
-         ReportingUtils.logError("Failed to extract intended dimensions: " + e);
+         ReportingUtils.logError("Failed to extract intended z axis length: " + e);
       }
       try {
          dimsBuilder.position("channel", MDUtils.getNumChannels(tags));
       }
       catch (JSONException e) {
-         ReportingUtils.logError("Failed to extract intended dimensions: " + e);
+         ReportingUtils.logError("Failed to extract intended channel axis length: " + e);
       }
       try {
          dimsBuilder.position("position", MDUtils.getNumPositions(tags));
       }
       catch (JSONException e) {
-         ReportingUtils.logError("Failed to extract intended dimensions: " + e);
+         ReportingUtils.logError("Failed to extract intended position axis length: " + e);
       }
       builder.intendedDimensions(dimsBuilder.build());
 
