@@ -30,10 +30,10 @@ public interface Storage {
    public Image getAnyImage();
 
    /**
-    * Return an Iterable that provides access to all images in the Storage,
-    * in arbitrary order.
+    * Return an Iterable that provides access to all image coordinates in the
+    * Storage, in arbitrary order.
     */
-   public Iterable<Image> getUnorderedImageView();
+   public Iterable<Coords> getUnorderedImageCoords();
 
    /**
     * Retrieve a list of all images whose Coords match the given incomplete
