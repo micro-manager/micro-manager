@@ -29,7 +29,9 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.swing.JOptionPane;
@@ -41,8 +43,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.DisplaySettings;
 import org.micromanager.api.data.SummaryMetadata;
+import org.micromanager.data.DefaultCoords;
 import org.micromanager.data.DefaultDisplaySettings;
 import org.micromanager.data.DefaultSummaryMetadata;
 import org.micromanager.utils.MDUtils;
@@ -76,7 +80,7 @@ public class MultipageTiffReader {
    private boolean writingFinished_;
    public static boolean fixIndexMapWithoutPrompt_ = false;
    
-   private HashMap<String,Long> indexMap_;
+   private HashMap<Coords, Long> coordsToOffset_;
    
    /**
     * This constructor is used for a file that is currently being written
@@ -89,8 +93,8 @@ public class MultipageTiffReader {
       writingFinished_ = false;
    }
    
-   public void setIndexMap(HashMap<String,Long> indexMap) {
-      indexMap_ = indexMap;
+   public void setIndexMap(HashMap<Coords, Long> indexMap) {
+      coordsToOffset_ = indexMap;
    }
    
    public void setFileChannel(FileChannel fc) {
@@ -217,14 +221,14 @@ public class MultipageTiffReader {
       return displaySettings_;
    }
    
-   public TaggedImage readImage(String label) {
-      if (indexMap_.containsKey(label)) {
+   public TaggedImage readImage(Coords coords) {
+      if (coordsToOffset_.containsKey(coords)) {
          if (fileChannel_ == null) {
             ReportingUtils.logError("Attempted to read image on FileChannel that is null");
             return null;
          }
          try {
-            long byteOffset = indexMap_.get(label);
+            long byteOffset = coordsToOffset_.get(coords);
             
             IFDData data = readIFD(byteOffset);
             return readTaggedImage(data);
@@ -239,10 +243,10 @@ public class MultipageTiffReader {
       }
    }  
    
-   public Set<String> getIndexKeys() {
-      if (indexMap_ == null)
+   public Set<Coords> getIndexKeys() {
+      if (coordsToOffset_ == null)
          return null;
-      return indexMap_.keySet();
+      return coordsToOffset_.keySet();
    }
 
    private JSONObject readSummaryMD() {
@@ -350,7 +354,7 @@ public class MultipageTiffReader {
          throw new MMException("Error reading index map header");
       }
       int numMappings = header.getInt(4);
-      indexMap_ = new HashMap<String, Long>();
+      coordsToOffset_ = new HashMap<Coords, Long>();
       ByteBuffer mapBuffer = readIntoBuffer(offset+8, 20*numMappings);     
       for (int i = 0; i < numMappings; i++) {
          int channel = mapBuffer.getInt(i*20);
@@ -363,7 +367,12 @@ public class MultipageTiffReader {
          }
          //If a duplicate label is read, forget about the previous one
          //if data has been intentionally overwritten, this gives the most current version
-         indexMap_.put(MDUtils.generateLabel(channel, slice, frame, position), imageOffset);
+         DefaultCoords.Builder builder = new DefaultCoords.Builder();
+         builder.position("channel", channel)
+               .position("z", slice)
+               .position("time", frame)
+               .position("position", position);
+         coordsToOffset_.put(builder.build(), imageOffset);
       }
    }
 
@@ -533,7 +542,7 @@ public class MultipageTiffReader {
       }
       fixIndexMapWithoutPrompt_ = true;
       long filePosition = firstIFD;
-      indexMap_ = new HashMap<String, Long>();
+      coordsToOffset_ = new HashMap<Coords, Long>();
       long progBarMax = (fileChannel_.size() / 2L);
       final ProgressBar progressBar = new ProgressBar("Fixing " + fileName, 0, 
               progBarMax >= Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) progBarMax);
@@ -554,12 +563,8 @@ public class MultipageTiffReader {
                nextIFDOffsetLocation = data.nextIFDOffsetLocation;
                continue;
             }
-            String label;
-            label = MDUtils.getLabel(ti.tags);
-            if (label == null ) {
-               break;
-            }          
-            indexMap_.put(label, filePosition);
+            coordsToOffset_.put(DefaultCoords.legacyFromJSON(ti.tags),
+                  filePosition);
             
             final int progress = (int) (filePosition/2L);
             SwingUtilities.invokeLater(new Runnable() {
@@ -613,19 +618,30 @@ public class MultipageTiffReader {
    }
    
    private int writeIndexMap(long filePosition) throws IOException {
-      //Write 4 byte header, 4 byte number of entries, and 20 bytes for each entry
-      int numMappings = indexMap_.size();
+      // TODO: this method presumes only four axes exist.
+      //Write 4 byte header, 4 byte number of entries, and 20 bytes for each
+      //entry
+      int numMappings = coordsToOffset_.size();
       ByteBuffer buffer = ByteBuffer.allocate(8 + 20 * numMappings).order(byteOrder_);
       buffer.putInt(0, MultipageTiffWriter.INDEX_MAP_HEADER);
       buffer.putInt(4, numMappings);
       int position = 2;
-      for (String label : indexMap_.keySet()) {
-         String[] indecies = label.split("_");
-         for (String index : indecies) {
-            buffer.putInt(4 * position, Integer.parseInt(index));
+      // Note: ordering of axes here matches that in MDUtils.getLabel().
+      String[] allowedAxes = {"channel", "z", "time", "position"};
+      HashSet<String> axisSet = new HashSet<String>(Arrays.asList(allowedAxes));
+      for (Coords coords : coordsToOffset_.keySet()) {
+         for (String axis : allowedAxes) {
+            buffer.putInt(4 * position, coords.getPositionAt(axis));
             position++;
          }
-         buffer.putInt(4 * position, indexMap_.get(label).intValue());
+         // TODO: this probably doesn't help our performance any, but I want
+         // the extra logging just in case.
+         for (String axis : coords.getAxes()) {
+            if (!axisSet.contains(axis)) {
+               ReportingUtils.logError("Axis " + axis + " is ignored because it is not one of " + allowedAxes.toString());
+            }
+         }
+         buffer.putInt(4 * position, coordsToOffset_.get(coords).intValue());
          position++;
       }
       fileChannel_.write(buffer, filePosition);
