@@ -48,40 +48,42 @@ import org.micromanager.api.data.DisplaySettings;
 import org.micromanager.api.data.SummaryMetadata;
 import org.micromanager.data.DefaultCoords;
 import org.micromanager.data.DefaultDisplaySettings;
+import org.micromanager.data.DefaultImage;
 import org.micromanager.data.DefaultSummaryMetadata;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMException;
+import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ProgressBar;
 import org.micromanager.utils.ReportingUtils;
 
 
 public class MultipageTiffReader {
-      
+
    private static final long BIGGEST_INT_BIT = (long) Math.pow(2, 31);
 
-   
+
    public static final char BITS_PER_SAMPLE = MultipageTiffWriter.BITS_PER_SAMPLE;
    public static final char STRIP_OFFSETS = MultipageTiffWriter.STRIP_OFFSETS;    
    public static final char SAMPLES_PER_PIXEL = MultipageTiffWriter.SAMPLES_PER_PIXEL;
    public static final char STRIP_BYTE_COUNTS = MultipageTiffWriter.STRIP_BYTE_COUNTS;
    public static final char IMAGE_DESCRIPTION = MultipageTiffWriter.IMAGE_DESCRIPTION;
-   
+
    public static final char MM_METADATA = MultipageTiffWriter.MM_METADATA;
-   
+
    private ByteOrder byteOrder_;  
    private File file_;
    private RandomAccessFile raFile_;
    private FileChannel fileChannel_;
-      
+
    private DisplaySettings displaySettings_;
    private SummaryMetadata summaryMetadata_;
    private int byteDepth_ = 0;;
    private boolean rgb_;
    private boolean writingFinished_;
    public static boolean fixIndexMapWithoutPrompt_ = false;
-   
+
    private HashMap<Coords, Long> coordsToOffset_;
-   
+
    /**
     * This constructor is used for a file that is currently being written
     */
@@ -92,15 +94,15 @@ public class MultipageTiffReader {
       getRGBAndByteDepth(firstImageTags);
       writingFinished_ = false;
    }
-   
+
    public void setIndexMap(HashMap<Coords, Long> indexMap) {
       coordsToOffset_ = indexMap;
    }
-   
+
    public void setFileChannel(FileChannel fc) {
       fileChannel_ = fc;
    }
-  
+
    /**
     * This constructor is used for opening datasets that have already been saved
     */
@@ -143,7 +145,7 @@ public class MultipageTiffReader {
          getRGBAndByteDepth(summaryJSON);
       }
    }
-   
+
    public static boolean isMMMultipageTiff(String directory) throws IOException {
       File dir = new File(directory);
       File[] children = dir.listFiles();
@@ -216,12 +218,12 @@ public class MultipageTiffReader {
    public SummaryMetadata getSummaryMetadata() {
       return summaryMetadata_;
    }
-   
+
    public DisplaySettings getDisplaySettings() {
       return displaySettings_;
    }
-   
-   public TaggedImage readImage(Coords coords) {
+
+   public DefaultImage readImage(Coords coords) {
       if (coordsToOffset_.containsKey(coords)) {
          if (fileChannel_ == null) {
             ReportingUtils.logError("Attempted to read image on FileChannel that is null");
@@ -229,20 +231,26 @@ public class MultipageTiffReader {
          }
          try {
             long byteOffset = coordsToOffset_.get(coords);
-            
+
             IFDData data = readIFD(byteOffset);
-            return readTaggedImage(data);
+            return new DefaultImage(readTaggedImage(data));
          } catch (IOException ex) {
             ReportingUtils.logError(ex);
-            return null;
          }
-         
+         catch (JSONException e) {
+            ReportingUtils.logError(e, "Couldn't convert TaggedImage to DefaultImage");
+         }
+         catch (MMScriptException e) {
+            ReportingUtils.logError(e, "Couldn't convert TaggedImage to DefaultImage");
+         }
+         return null;
       } else {
-         //label not in map--either writer hasnt finished writing it 
+         // Coordinates not in our map; maybe the writer hasn't finished
+         // writing it?
          return null;
       }
    }  
-   
+
    public Set<Coords> getIndexKeys() {
       if (coordsToOffset_ == null)
          return null;
@@ -255,7 +263,7 @@ public class MultipageTiffReader {
          fileChannel_.read(mdInfo, 32);
          int header = mdInfo.getInt(0);
          int length = mdInfo.getInt(4);
-         
+
          if (header != MultipageTiffWriter.SUMMARY_MD_HEADER) {
             ReportingUtils.logError("Summary Metadata Header Incorrect");
             return null;
@@ -271,7 +279,7 @@ public class MultipageTiffReader {
          return null;
       }
    }
-   
+
    private String readComments()  {
       try {
          long offset = readOffsetHeaderAndOffset(MultipageTiffWriter.COMMENTS_OFFSET_HEADER, 24);
@@ -287,7 +295,7 @@ public class MultipageTiffReader {
             return null;
       }
    }
-   
+
    public void rewriteComments(String comments) throws IOException {
       if (writingFinished_) {
          byte[] bytes = getBytesFromString(comments.toString());
@@ -331,13 +339,13 @@ public class MultipageTiffReader {
          return null;
       }
    }
-   
+
    private ByteBuffer readIntoBuffer(long position, int length) throws IOException {
       ByteBuffer buffer = ByteBuffer.allocate(length).order(byteOrder_);
       fileChannel_.read(buffer, position);
       return buffer;
    }
-   
+
    private long readOffsetHeaderAndOffset(int offsetHeaderVal, int startOffset) throws IOException  {
       ByteBuffer buffer1 = readIntoBuffer(startOffset,8);
       int offsetHeader = buffer1.getInt(0);
@@ -379,7 +387,7 @@ public class MultipageTiffReader {
    private IFDData readIFD(long byteOffset) throws IOException {
       ByteBuffer buff = readIntoBuffer(byteOffset,2);
       int numEntries = buff.getChar(0);
-     
+
       ByteBuffer entries = readIntoBuffer(byteOffset + 2, numEntries*12 + 4).order(byteOrder_);
       IFDData data = new IFDData();
       for (int i = 0; i < numEntries; i++) {
@@ -406,7 +414,7 @@ public class MultipageTiffReader {
          return "";
       }
    }
-   
+
    private TaggedImage readTaggedImage(IFDData data) throws IOException {
       ByteBuffer pixelBuffer = ByteBuffer.allocate( (int) data.bytesPerImage).order(byteOrder_);
       ByteBuffer mdBuffer = ByteBuffer.allocate((int) data.mdLength).order(byteOrder_);
@@ -418,11 +426,11 @@ public class MultipageTiffReader {
       } catch (JSONException ex) {
          ReportingUtils.logError("Error reading image metadata from file");
       }
-      
+
       if ( byteDepth_ == 0) {
          getRGBAndByteDepth(md);
       }
-      
+
       if (rgb_) {
          if (byteDepth_ == 1) {
             byte[] pixels = new byte[(int) (4 * data.bytesPerImage / 3)];
@@ -494,7 +502,7 @@ public class MultipageTiffReader {
       }
       return unsignInt(tiffHeader.getInt(4));
    }
-   
+
    private byte[] getBytesFromString(String s) {
       try {
          return s.getBytes("UTF-8");
@@ -503,12 +511,12 @@ public class MultipageTiffReader {
          return null;
       }
    }
-   
+
    private void createFileChannel() throws FileNotFoundException, IOException {      
       raFile_ = new RandomAccessFile(file_,"rw");
       fileChannel_ = raFile_.getChannel();
    }
-   
+
    public void close() throws IOException {
       if (fileChannel_ != null) {
          fileChannel_.close();
@@ -519,7 +527,7 @@ public class MultipageTiffReader {
          raFile_ = null;
       }
    }
-      
+
    private long unsignInt(int i) {
       long val = Integer.MAX_VALUE & i;
       if (i < 0) {
@@ -527,7 +535,7 @@ public class MultipageTiffReader {
       }
       return val;
    }
-   
+
      //This code is intended for use in the scenario in which a datset terminates before properly closing,
    //thereby preventing the multipage tiff writer from putting in the index map, comments, channels, and OME
    //XML in the ImageDescription tag location 
@@ -565,7 +573,7 @@ public class MultipageTiffReader {
             }
             coordsToOffset_.put(DefaultCoords.legacyFromJSON(ti.tags),
                   filePosition);
-            
+
             final int progress = (int) (filePosition/2L);
             SwingUtilities.invokeLater(new Runnable() {
                @Override
@@ -573,7 +581,7 @@ public class MultipageTiffReader {
                   progressBar.setProgress(progress);
                }
             });
-            
+
             if (data.nextIFD <= filePosition || data.nextIFDOffsetLocation <= nextIFDOffsetLocation ) {
                break; //so no recoverable data is ever lost
             }
@@ -584,13 +592,13 @@ public class MultipageTiffReader {
          }
       }
       progressBar.setVisible(false);
-     
+
       filePosition += writeIndexMap(filePosition);
-      
+
       ByteBuffer buffer = ByteBuffer.allocate(4).order(byteOrder_);
       buffer.putInt(0, 0);
       fileChannel_.write(buffer, nextIFDOffsetLocation); 
-      
+
       filePosition += writeDisplaySettings(
             DefaultDisplaySettings.getStandardSettings(), filePosition);
 
@@ -599,7 +607,7 @@ public class MultipageTiffReader {
       //reopen
       createFileChannel();
    }
-   
+
    private int writeDisplaySettings(DefaultDisplaySettings settings, long filePosition) throws IOException {
       JSONObject settingsJSON = settings.legacyToJSON();
       int numReservedBytes = settingsJSON.length() * MultipageTiffWriter.DISPLAY_SETTINGS_BYTES_PER_CHANNEL;
@@ -616,7 +624,7 @@ public class MultipageTiffReader {
       fileChannel_.write(offsetHeader, 16);
       return numReservedBytes + 8;
    }
-   
+
    private int writeIndexMap(long filePosition) throws IOException {
       // TODO: this method presumes only four axes exist.
       //Write 4 byte header, 4 byte number of entries, and 20 bytes for each
@@ -660,14 +668,14 @@ public class MultipageTiffReader {
       public long mdLength;
       public long nextIFD;
       public long nextIFDOffsetLocation;
-      
+
       public IFDData() {}
    }
-   
+
    private class IFDEntry {
       public char tag, type;
       public long count, value;
-      
+
       public IFDEntry(char tg, char typ, long cnt, long val) {
          tag = tg;
          type = typ;
@@ -675,7 +683,5 @@ public class MultipageTiffReader {
          value = val;
       }
    }
- 
-   
 }
 
