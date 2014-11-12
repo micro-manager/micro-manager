@@ -394,20 +394,21 @@ public class DefaultDisplaySettings implements DisplaySettings {
          return new Builder().build();
       }
       try {
-         Integer color = MDUtils.getChannelColor(tags);
+         Integer rgb = MDUtils.getChannelColor(tags);
          // Convert 32-bit RGB into separate components.
-         int red = color & 0xff;
-         int blue = (color >> 8) & 0xff;
-         int green = (color >> 16) & 0xff;
-         Color fakeColor = new Color(red, green, blue);
-         // Splitting this into multiple lines to avoid having our
-         // Builder get converted into an API DisplaySettings.Builder due to
-         // the return types of the channelNames, etc. methods.
+         int red = rgb & 0xff;
+         int blue = (rgb >> 8) & 0xff;
+         int green = (rgb >> 16) & 0xff;
+         Color color = new Color(red, green, blue);
          Builder builder = new Builder();
          builder.channelNames(new String[] {MDUtils.getChannelName(tags)})
-            .channelColors(new Color[] {fakeColor})
-            .channelContrastMins(new Integer[] {tags.getInt("ChContrastMin")})
-            .channelContrastMaxes(new Integer[] {tags.getInt("ChContrastMax")});
+            .channelColors(new Color[] {color});
+         if (tags.has("ChContrastMin")) {
+            builder.channelContrastMins(new Integer[] {tags.getInt("ChContrastMin")});
+         }
+         if (tags.has("ChContrastMax")) {
+            builder.channelContrastMaxes(new Integer[] {tags.getInt("ChContrastMax")});
+         }
          return builder.build();
       }
       catch (JSONException e) {
