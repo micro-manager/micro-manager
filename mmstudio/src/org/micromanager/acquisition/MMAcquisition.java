@@ -357,6 +357,7 @@ public class MMAcquisition {
          }
 
          // Copy from the TIFF storage to a RAM-backed storage.
+         store_.setStorage(tempImageFileManager);
          DefaultDatastore duplicate = new DefaultDatastore();
          duplicate.setStorage(new StorageRAM(store_));
          duplicate.copyFrom(store_);
