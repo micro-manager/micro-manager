@@ -395,7 +395,11 @@ public class DefaultDisplaySettings implements DisplaySettings {
       }
       try {
          Integer color = MDUtils.getChannelColor(tags);
-         Color fakeColor = new Color(color, color, color);
+         // Convert 32-bit RGB into separate components.
+         int red = color & 0xff;
+         int blue = (color >> 8) & 0xff;
+         int green = (color >> 16) & 0xff;
+         Color fakeColor = new Color(red, green, blue);
          // Splitting this into multiple lines to avoid having our
          // Builder get converted into an API DisplaySettings.Builder due to
          // the return types of the channelNames, etc. methods.
@@ -423,11 +427,12 @@ public class DefaultDisplaySettings implements DisplaySettings {
          if (channelNames_ != null) {
             MDUtils.setChannelName(result, channelNames_[0]);
          }
-         // TODO: no idea how we represent a color with an int in the current
-         // system, but at least using a hashCode() uniquely represents this
-         // RGBA color!
+         // Assemble a 32-bit RGB color from our Color.
          if (channelColors_ != null && channelColors_.length > 0) {
-            MDUtils.setChannelColor(result, channelColors_[0].hashCode());
+            int red = channelColors_[0].getRed();
+            int blue = channelColors_[0].getBlue() << 8;
+            int green = channelColors_[0].getGreen() << 16;
+            MDUtils.setChannelColor(result, red + blue + green);
          }
          if (channelContrastMins_ != null && channelContrastMins_.length > 0) {
             result.put("ChContrastMin", channelContrastMins_[0]);
