@@ -597,8 +597,11 @@ public final class StorageMultipageTiff implements Storage {
 
    @Override
    public Image getImage(Coords coords) {
-      ReportingUtils.logError("TODO: implement getImage");
-      return null;
+      if (!coordsToReader_.containsKey(coords)) {
+         ReportingUtils.logError("Asked for image at " + coords + " that doesn't exist");
+         return null;
+      }
+      return coordsToReader_.get(coords).readImage(coords);
    }
 
    @Override
@@ -608,7 +611,6 @@ public final class StorageMultipageTiff implements Storage {
 
    @Override
    public Iterable<Coords> getUnorderedImageCoords() {
-      ReportingUtils.logError("TODO: implement getUnorderedImageCoords");
-      return null;
+      return coordsToReader_.keySet();
    }
 }
