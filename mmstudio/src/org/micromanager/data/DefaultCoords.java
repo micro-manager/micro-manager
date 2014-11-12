@@ -7,7 +7,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import org.micromanager.api.data.Coords;
+import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -206,5 +210,48 @@ public class DefaultCoords implements Coords, Comparable<DefaultCoords> {
       }
       result += ">";
       return result;
+   }
+
+   /**
+    * Legacy method: convert from the position information in the JSONObject
+    * of a TaggedImage. This is pretty messy with all the try/catches, but we
+    * don't want to lose all the positions just because a single one is
+    * unavailable.
+    */
+   public static DefaultCoords legacyFromJSON(JSONObject tags) {
+      Builder builder = new Builder();
+      try {
+         if (MDUtils.hasChannelIndex(tags)) {
+            builder.position("channel", MDUtils.getChannelIndex(tags));
+         }
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError("Couldn't extract channel coordinate from tags");
+      }
+      try {
+         if (MDUtils.hasSliceIndex(tags)) {
+            builder.position("z", MDUtils.getSliceIndex(tags));
+         }
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError("Couldn't extract z coordinate from tags");
+      }
+      try {
+         if (MDUtils.hasFrameIndex(tags)) {
+            builder.position("time", MDUtils.getFrameIndex(tags));
+         }
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError("Couldn't extract time coordinate from tags");
+      }
+      try {
+         if (MDUtils.hasPositionIndex(tags)) {
+            builder.position("position", MDUtils.getPositionIndex(tags));
+         }
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError("Couldn't extract position coordinate from tags");
+      }
+      return builder.build();
    }
 }
