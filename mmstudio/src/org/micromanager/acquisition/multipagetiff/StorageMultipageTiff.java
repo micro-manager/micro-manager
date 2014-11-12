@@ -59,7 +59,6 @@ import org.micromanager.data.DefaultDisplaySettings;
 import org.micromanager.data.DefaultImage;
 import org.micromanager.data.DefaultMetadata;
 import org.micromanager.data.DefaultSummaryMetadata;
-import org.micromanager.utils.ImageLabelComparator;
 import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMException;
@@ -92,7 +91,7 @@ public final class StorageMultipageTiff implements Storage {
    private HashMap<Integer, FileSet> fileSets_;
    
    //Map of image labels to file 
-   private TreeMap<String, MultipageTiffReader> tiffReadersByLabel_;
+   private TreeMap<Coords, MultipageTiffReader> coordsToReader_;
   
    public StorageMultipageTiff(Datastore store, String dir, Boolean newDataSet)
          throws IOException {
@@ -113,7 +112,7 @@ public final class StorageMultipageTiff implements Storage {
 
       newDataSet_ = newDataSet;
       directory_ = dir;
-      tiffReadersByLabel_ = new TreeMap<String, MultipageTiffReader>(new ImageLabelComparator());
+      coordsToReader_ = new TreeMap<Coords, MultipageTiffReader>();
 
       // TODO: throw error if no existing dataset
       if (!newDataSet_) {       
@@ -140,11 +139,13 @@ public final class StorageMultipageTiff implements Storage {
    }
    
    boolean slicesFirst() {
-      return ((ImageLabelComparator) tiffReadersByLabel_.comparator()).getSlicesFirst();
+      ReportingUtils.logError("TODO: handle slicesFirst; returning false by default");
+      return false;
    }
    
    boolean timeFirst() {
-      return ((ImageLabelComparator) tiffReadersByLabel_.comparator()).getTimeFirst();
+      ReportingUtils.logError("TODO: handle timeFirst; returning false by default");
+      return false;
    }
    
    private void openExistingDataSet() {
@@ -161,11 +162,12 @@ public final class StorageMultipageTiff implements Storage {
             try {
                //this is where fixing dataset code occurs
                reader = new MultipageTiffReader(f);
-               Set<String> labels = reader.getIndexKeys();
-               for (String label : labels) {
-                  tiffReadersByLabel_.put(label, reader);
-                  int frameIndex = Integer.parseInt(label.split("_")[2]);
-                  lastFrameOpenedDataSet_ = Math.max(frameIndex, lastFrameOpenedDataSet_);
+               Set<Coords> readerCoords = reader.getIndexKeys();
+               for (Coords coords : readerCoords) {
+                  coordsToReader_.put(coords, reader);
+                  lastFrameOpenedDataSet_ = Math.max(
+                        coords.getPositionAt("time"),
+                        lastFrameOpenedDataSet_);
                }
             } catch (IOException ex) {
                ReportingUtils.showError("Couldn't open file: " + f.toString());
@@ -190,35 +192,35 @@ public final class StorageMultipageTiff implements Storage {
       progressBar.setVisible(false);
    }
 
-   public TaggedImage getImage(int channelIndex, int sliceIndex, int frameIndex, int positionIndex) {
-      String label = MDUtils.generateLabel(channelIndex, sliceIndex, frameIndex, positionIndex);
-      if (!tiffReadersByLabel_.containsKey(label)) {
-         return null;
-      }
-
-      //Debugging code for a strange exception found in core log
-      try {
-         TaggedImage img = tiffReadersByLabel_.get(label).readImage(label);
-         return img;     
-      } catch (NullPointerException e) {
-         ReportingUtils.logError("Couldn't find image that TiffReader is supposed to contain");
-         if (tiffReadersByLabel_ == null) {
-            ReportingUtils.logError("Tiffreadersbylabel is null");
-         }
-         if (tiffReadersByLabel_.get(label) == null) {
-            ReportingUtils.logError("Specific reader is null " + label);
-         }
-      }
-      return null;
-   }
-
-   public JSONObject getImageTags(int channelIndex, int sliceIndex, int frameIndex, int positionIndex) {
-      String label = MDUtils.generateLabel(channelIndex, sliceIndex, frameIndex, positionIndex);
-      if (!tiffReadersByLabel_.containsKey(label)) {
-         return null;
-      }
-      return tiffReadersByLabel_.get(label).readImage(label).tags;   
-   }
+//   public TaggedImage getImage(int channelIndex, int sliceIndex, int frameIndex
+//      String label = MDUtils.generateLabel(channelIndex, sliceIndex, frameIndex
+//      if (!tiffReadersByLabel_.containsKey(label)) {
+//         return null;
+//      }
+//
+//      //Debugging code for a strange exception found in core log
+//      try {
+//         TaggedImage img = tiffReadersByLabel_.get(label).readImage(label);
+//         return img;     
+//      } catch (NullPointerException e) {
+//         ReportingUtils.logError("Couldn't find image that TiffReader is supposed to contain");
+//         if (tiffReadersByLabel_ == null) {
+//            ReportingUtils.logError("Tiffreadersbylabel is null");
+//         }
+//         if (tiffReadersByLabel_.get(label) == null) {
+//            ReportingUtils.logError("Specific reader is null " + label);
+//         }
+//      }
+//      return null;
+//   }
+//
+//   public JSONObject getImageTags(int channelIndex, int sliceIndex, int frameIndex, int positionIndex) {
+//      String label = MDUtils.generateLabel(channelIndex, sliceIndex, frameIndex, positionIndex);
+//      if (!tiffReadersByLabel_.containsKey(label)) {
+//         return null;
+//      }
+//      return tiffReadersByLabel_.get(label).readImage(label).tags;   
+//   }
 
    /*
     * Method that allows overwrting of pixels but not MD or TIFF tags
@@ -282,7 +284,7 @@ public final class StorageMultipageTiff implements Storage {
             ReportingUtils.logError(ex);
          }
       }
-      String label = MDUtils.getLabel(taggedImage.tags);
+
       if (fileSets_ == null) {
          try {
             fileSets_ = new HashMap<Integer, FileSet>();
@@ -304,7 +306,8 @@ public final class StorageMultipageTiff implements Storage {
       FileSet set = fileSets_.get(fileSetIndex);
       try {
          set.writeImage(taggedImage);
-         tiffReadersByLabel_.put(label, set.getCurrentReader());
+         DefaultCoords coords = DefaultCoords.legacyFromJSON(taggedImage.tags);
+         coordsToReader_.put(coords, set.getCurrentReader());
       } catch (IOException ex) {
         ReportingUtils.showError("problem writing image to file");
       }
@@ -319,8 +322,8 @@ public final class StorageMultipageTiff implements Storage {
       lastFrameOpenedDataSet_ = Math.max(frame, lastFrameOpenedDataSet_);
    }
 
-   public Set<String> imageKeys() {
-      return tiffReadersByLabel_.keySet();
+   public Set<Coords> imageKeys() {
+      return coordsToReader_.keySet();
    }
 
    /**
@@ -420,7 +423,7 @@ public final class StorageMultipageTiff implements Storage {
     * Disposes of the tagged images in the imagestorage
     */
    public void close() {
-      for (MultipageTiffReader r : new HashSet<MultipageTiffReader>(tiffReadersByLabel_.values())) {
+      for (MultipageTiffReader r : new HashSet<MultipageTiffReader>(coordsToReader_.values())) {
          try {
             r.close();
          } catch (IOException ex) {
@@ -450,21 +453,21 @@ public final class StorageMultipageTiff implements Storage {
       if (summaryJSON != null) {
          boolean slicesFirst = summaryJSON.optBoolean("SlicesFirst", true);
          boolean timeFirst = summaryJSON.optBoolean("TimeFirst", false);
-         TreeMap<String, MultipageTiffReader> oldImageMap = tiffReadersByLabel_;
-         tiffReadersByLabel_ = new TreeMap<String, MultipageTiffReader>(new ImageLabelComparator(slicesFirst, timeFirst));
+         TreeMap<Coords, MultipageTiffReader> oldImageMap = coordsToReader_;
+         coordsToReader_ = new TreeMap<Coords, MultipageTiffReader>();
          if (showProgress) {
             ProgressBar progressBar = new ProgressBar("Building image location map", 0, oldImageMap.keySet().size());
             progressBar.setProgress(0);
             progressBar.setVisible(true);
             int i = 1;
-            for (String label : oldImageMap.keySet()) {
-               tiffReadersByLabel_.put(label, oldImageMap.get(label));
+            for (Coords coords : oldImageMap.keySet()) {
+               coordsToReader_.put(coords, oldImageMap.get(coords));
                progressBar.setProgress(i);
                i++;
             }
             progressBar.setVisible(false);
          } else {
-            tiffReadersByLabel_.putAll(oldImageMap);
+            coordsToReader_.putAll(oldImageMap);
          }
          if (summaryJSON != null && summaryJSON.length() > 0) {
             processSummaryMD();
@@ -489,7 +492,7 @@ public final class StorageMultipageTiff implements Storage {
    }
           
    public void writeDisplaySettings() {
-      for (MultipageTiffReader r : new HashSet<MultipageTiffReader>(tiffReadersByLabel_.values())) {
+      for (MultipageTiffReader r : new HashSet<MultipageTiffReader>(coordsToReader_.values())) {
          try {
             r.rewriteDisplaySettings(displaySettings_);
             r.rewriteComments(summaryMetadata_.getComments());
@@ -550,8 +553,8 @@ public final class StorageMultipageTiff implements Storage {
 
    @Override
    public int getNumImages() {
-      ReportingUtils.logError("There are " + tiffReadersByLabel_.keySet().size() + " images in this TIFF storage");
-      return tiffReadersByLabel_.keySet().size();
+      ReportingUtils.logError("There are " + coordsToReader_.keySet().size() + " images in this TIFF storage");
+      return coordsToReader_.keySet().size();
    }
 
    @Override
