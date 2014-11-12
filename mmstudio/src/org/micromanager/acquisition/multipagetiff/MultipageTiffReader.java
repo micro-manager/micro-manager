@@ -103,6 +103,7 @@ public class MultipageTiffReader {
    public MultipageTiffReader(File file) throws IOException {
       JSONObject displayAndComments = new JSONObject();
       file_ = file;
+      JSONObject summaryJSON = null;
       try {
          createFileChannel();
       } catch (Exception ex) {
@@ -110,7 +111,8 @@ public class MultipageTiffReader {
       }
       writingFinished_ = true;
       long firstIFD = readHeader();
-      summaryMetadata_ = DefaultSummaryMetadata.legacyFromJSON(readSummaryMD());
+      summaryJSON = readSummaryMD();
+      summaryMetadata_ = DefaultSummaryMetadata.legacyFromJSON(summaryJSON);
       try {
          readIndexMap();
       } catch (Exception e) {
@@ -134,7 +136,7 @@ public class MultipageTiffReader {
       displaySettings_ = DefaultDisplaySettings.legacyFromJSON(displayAndComments);
 
       if (summaryMetadata_ != null) {
-         getRGBAndByteDepth(summaryMetadata_.legacyToJSON());
+         getRGBAndByteDepth(summaryJSON);
       }
    }
    
