@@ -50,6 +50,7 @@ import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.DisplaySettings;
 import org.micromanager.api.data.Image;
+import org.micromanager.api.data.NewDisplaySettingsEvent;
 import org.micromanager.api.data.NewImageEvent;
 import org.micromanager.api.data.NewSummaryMetadataEvent;
 import org.micromanager.api.data.Storage;
@@ -107,6 +108,11 @@ public final class StorageMultipageTiff implements Storage {
    public StorageMultipageTiff(Datastore store, String dir, boolean newDataSet,
          boolean separateMDFile, boolean separateFilesForPositions) throws IOException {
       store.registerForEvents(this, 0);
+      displaySettings_ = (DefaultDisplaySettings) store.getDisplaySettings();
+      if (displaySettings_ == null) {
+         // By default load the user's saved preferences.
+         displaySettings_ = DefaultDisplaySettings.getStandardSettings();
+      }
       separateMetadataFile_ = separateMDFile;
       splitByXYPosition_ = separateFilesForPositions;
 
@@ -204,6 +210,12 @@ public final class StorageMultipageTiff implements Storage {
       catch (Exception e) {
          ReportingUtils.showError(e, "Failed to write image at " + image.getCoords());
       }
+   }
+
+   @Subscribe
+   public void onNewDisplaySettings(NewDisplaySettingsEvent event) {
+      ReportingUtils.logError("TODO: propagate changes to display settings");
+      displaySettings_ = (DefaultDisplaySettings) event.getDisplaySettings();
    }
 
    public void putImage(TaggedImage taggedImage, boolean waitForWritingToFinish) throws MMException, InterruptedException, ExecutionException, IOException {
