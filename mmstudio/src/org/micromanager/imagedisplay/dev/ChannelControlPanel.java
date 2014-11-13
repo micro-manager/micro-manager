@@ -838,8 +838,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
     * events when our drawing code calls this method.
     */
    private void applyLUT(boolean shouldRedisplay) {
-      // This looks silly, but the function can return null.
-      if (settings_.getShouldSyncChannels() == true) {
+      if (settings_.getShouldSyncChannels() != null &&
+            settings_.getShouldSyncChannels() == true) {
          parent_.applyContrastToAllChannels(contrastMin_, contrastMax_, gamma_);
       } else {
          parent_.applyLUTToImage();
@@ -865,7 +865,12 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    @Subscribe
    public void onNewDisplaySettings(NewDisplaySettingsEvent event) {
       settings_ = event.getDisplaySettings();
-      updateChannelNameAndColorFromCache();
+      try {
+         updateChannelNameAndColorFromCache();
+      }
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Failed to update histogram display settings");
+      }
    }
 
    /**
