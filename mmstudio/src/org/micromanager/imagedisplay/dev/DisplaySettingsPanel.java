@@ -78,7 +78,9 @@ public class DisplaySettingsPanel extends JPanel {
             setDisplayMode(displayMode_);
          }
       });
-      displayMode_.setSelectedIndex(settings.getChannelDisplayModeIndex());
+      if (settings.getChannelDisplayModeIndex() != null) {
+         displayMode_.setSelectedIndex(settings.getChannelDisplayModeIndex());
+      }
       displayMode_.setEnabled(ijImage_ instanceof CompositeImage);
       add(displayMode_, "wrap");
 
@@ -112,17 +114,23 @@ public class DisplaySettingsPanel extends JPanel {
             setHistogramUpdateRate(histogramUpdateRate);
          }
       });
-      double updateRate = settings.getHistogramUpdateRate();
-      if (updateRate < 0) {
-         histogramUpdateRate.setSelectedIndex(0);
-      }
-      else if (updateRate == 0) {
-         histogramUpdateRate.setSelectedIndex(1);
+      if (settings.getHistogramUpdateRate() != null) {
+         double updateRate = settings.getHistogramUpdateRate();
+         if (updateRate < 0) {
+            histogramUpdateRate.setSelectedIndex(0);
+         }
+         else if (updateRate == 0) {
+            histogramUpdateRate.setSelectedIndex(1);
+         }
+         else {
+            // TODO: this ignores the possibility that the actual update rate
+            // will be a value other than once per second.
+            histogramUpdateRate.setSelectedIndex(2);
+         }
       }
       else {
-         // TODO: this ignores the possibility that the actual update rate will
-         // be a value other than once per second.
-         histogramUpdateRate.setSelectedIndex(2);
+         // Default to "update every image"
+         histogramUpdateRate.setSelectedIndex(1);
       }
       add(histogramUpdateRate, "wrap");
       
@@ -134,7 +142,9 @@ public class DisplaySettingsPanel extends JPanel {
             setShouldAutostretch(shouldAutostretch);
          }
       });
-      shouldAutostretch.setSelected(settings.getShouldAutostretch());
+      if (settings.getShouldAutostretch() != null) {
+         shouldAutostretch.setSelected(settings.getShouldAutostretch());
+      }
       add(shouldAutostretch, "wrap");
 
       add(new JLabel("Truncate histograms: "), "split 2");
@@ -153,7 +163,9 @@ public class DisplaySettingsPanel extends JPanel {
             setTrimPercentage(trimPercentage);
          }
       });
-      trimPercentage.setValue(settings.getTrimPercentage());
+      if (settings.getTrimPercentage() != null) {
+         trimPercentage.setValue(settings.getTrimPercentage());
+      }
       add(trimPercentage, "wrap");
 
       JButton saveButton = new JButton("Set as default");
