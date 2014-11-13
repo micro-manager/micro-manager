@@ -41,6 +41,8 @@ import org.micromanager.api.data.SummaryMetadata;
 import org.micromanager.api.display.DisplayWindow;
 import org.micromanager.api.display.RequestToDrawEvent;
 
+import org.micromanager.data.DefaultCoords;
+
 import org.micromanager.imagedisplay.MMCompositeImage;
 import org.micromanager.imagedisplay.MMImagePlus;
 
@@ -166,6 +168,17 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
             requestToClose();
          }
       });
+
+      // Set us to draw the first image in the dataset.
+      // TODO: potentially there could be no image at these Coords, though
+      // that seems unlikely. Such an edge case isn't all that harmful anyway;
+      // we'll just display a blank image until the user adjusts the display
+      // to an image that does exist.
+      DefaultCoords.Builder builder = new DefaultCoords.Builder();
+      for (String axis : store_.getAxes()) {
+         builder.position(axis, 0);
+      }
+      setDisplayedImageTo(builder.build());
    }
 
    /**
