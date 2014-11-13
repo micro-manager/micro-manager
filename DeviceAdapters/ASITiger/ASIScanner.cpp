@@ -60,7 +60,8 @@ CScanner::CScanner(const char* name) :
    illuminationState_(true),
    polygonRepetitions_(0),
    ring_buffer_supported_(false),
-   laser_side_(0)   // will be set to 1 or 2 if used
+   laser_side_(0),   // will be set to 1 or 2 if used
+   laserTTLenabled_(false)
 {
    if (IsExtendedName(name))  // only set up these properties if we have the required information in the name
    {
