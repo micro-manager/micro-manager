@@ -28,7 +28,6 @@ import com.google.common.eventbus.Subscribe;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
-import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -788,11 +787,13 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       }
 
       curMsp_ = msp;
+      curMsp_.setLabel("Current");
       positionModel_.setCurrentMSP(curMsp_);
 
       PositionTableModel ptm = (PositionTableModel) posTable_.getModel();
       int selectedRow = posTable_.getSelectedRow();
       ptm.fireTableCellUpdated(0, 1);
+      ptm.fireTableCellUpdated(0, 0);
       if (selectedRow > 0)
          posTable_.setRowSelectionInterval(selectedRow, selectedRow);
       
