@@ -122,6 +122,16 @@ public class MultipageTiffReader {
       long firstIFD = readHeader();
       summaryJSON_ = readSummaryMD();
       summaryMetadata_ = DefaultSummaryMetadata.legacyFromJSON(summaryJSON_);
+      if (summaryJSON_.has("DisplaySettings")) {
+         try {
+            displaySettings_ = DefaultDisplaySettings.legacyFromJSON(
+                  summaryJSON_.getJSONObject("DisplaySettings"));
+         }
+         catch (JSONException e) {
+            ReportingUtils.logError("Couldn't extract display settings from summary JSON");
+         }
+      }
+      ReportingUtils.logError("Extract display settings " + displaySettings_);
       try {
          readIndexMap();
       } catch (Exception e) {
@@ -133,6 +143,7 @@ public class MultipageTiffReader {
       }
       try {
          displayAndComments.put("Channels", readDisplaySettings());
+         // Copy out the primary comment into the summary metadata.
          if (summaryMetadata_ != null) {
             summaryMetadata_ = summaryMetadata_.copy().comments(readComments()).build();
          }
@@ -142,7 +153,6 @@ public class MultipageTiffReader {
       } catch (Exception ex) {
          ReportingUtils.logError("Problem with JSON Representation of DisplayAndComments");
       }
-      displaySettings_ = DefaultDisplaySettings.legacyFromJSON(displayAndComments);
 
       if (summaryMetadata_ != null) {
          getRGBAndByteDepth(summaryJSON_);
