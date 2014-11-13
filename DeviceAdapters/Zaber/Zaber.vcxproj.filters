@@ -21,12 +21,18 @@
     <ClCompile Include="XYStage.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Stage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Zaber.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="XYStage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Stage.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

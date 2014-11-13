@@ -118,10 +118,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Stage.cpp" />
     <ClCompile Include="XYStage.cpp" />
     <ClCompile Include="Zaber.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Stage.h" />
     <ClInclude Include="XYStage.h" />
     <ClInclude Include="Zaber.h" />
   </ItemGroup>

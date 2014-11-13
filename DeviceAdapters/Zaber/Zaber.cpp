@@ -3,11 +3,11 @@
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   Zaber A-MCB2 Controller Driver
+// DESCRIPTION:   Zaber Controller Driver
 //                
-// AUTHOR:        David Goosen
+// AUTHOR:        David Goosen (david.goosen@zaber.com) & Athabasca Witschi (athabasca.witschi@zaber.com)
 //                
-// COPYRIGHT:     Zaber Technologies, 2013
+// COPYRIGHT:     Zaber Technologies, 2014
 //
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
@@ -22,17 +22,23 @@
 //
 
 #ifdef WIN32
-   #define snprintf _snprintf 
-   #pragma warning(disable: 4355)
+#define snprintf _snprintf 
+#pragma warning(disable: 4355)
 #endif
 
 #include "Zaber.h"
 #include "XYStage.h"
-#include <ModuleInterface.h>
-#include <sstream>
-#include <string>
+#include "Stage.h"
 
 using namespace std;
+
+const char* g_Msg_PORT_CHANGE_FORBIDDEN = "The port cannot be changed once the device is initialized.";
+const char* g_Msg_DRIVER_DISABLED = "The driver has disabled itself due to overheating.";
+const char* g_Msg_BUSY_TIMEOUT = "Timed out while waiting for device to finish executing a command.";
+const char* g_Msg_AXIS_COUNT = "Dual-axis controller required.";
+const char* g_Msg_COMMAND_REJECTED = "The device rejected the command.";
+const char* g_Msg_NO_REFERENCE_POS = "The device has not had a reference position established.";
+const char* g_Msg_SETTING_FAILED = "The property could not be set. Is the value in the valid range?";
 
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -40,149 +46,243 @@ using namespace std;
 //////////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   RegisterDevice(XYStageName, MM::XYStageDevice, "Zaber XY Stage");
+	RegisterDevice(g_XYStageName, MM::XYStageDevice, g_XYStageDescription);
+	RegisterDevice(g_StageName, MM::StageDevice, g_StageDescription);
 }                                                            
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)                  
 {
-   MM::Device* dev = NULL;
-
-   if ((deviceName != NULL) && (strcmp(deviceName, XYStageName) == 0))
-   {
-      dev = new XYStage();
-   }
-   return dev;
+	if (strcmp(deviceName, g_XYStageName) == 0)
+	{
+		return new XYStage();
+	}
+	else if (strcmp(deviceName, g_StageName) == 0)
+	{	
+		return new Stage();
+	}
+	else
+	{	
+		return 0;
+	}
 }
 
 MODULE_API void DeleteDevice(MM::Device* pDevice)
 {
-   delete pDevice;
+	delete pDevice;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 // ZaberBase (convenience parent class)
 ///////////////////////////////////////////////////////////////////////////////
 
-// CONSTRUCTOR
 ZaberBase::ZaberBase(MM::Device *device) :
-   initialized_(false),
-   peripheralID1_(0),
-   peripheralID2_(0),
-   port_("Undefined"),
-   device_(device),
-   core_(0)
+	initialized_(false),
+	port_("Undefined"),
+	device_(device),
+	core_(0),
+	cmdPrefix_("/")
 {
 }
 
-// DESTRUCTOR
 ZaberBase::~ZaberBase()
 {
 }
 
 // COMMUNICATION "clear buffer" utility function:
-int ZaberBase::ClearPort(void)
+int ZaberBase::ClearPort() const
 {
-   // Clear contents of serial port
-   const int bufSize = 255;
-   unsigned char clear[bufSize];
-   unsigned long read = bufSize;
-   int ret;
-   while ((int) read == bufSize)
-   {
-      ret = core_->ReadFromSerial(device_, port_.c_str(), clear, bufSize, read);
-      if (ret != DEVICE_OK)
-         return ret;
-   }
-   return DEVICE_OK;      
-} 
+	core_->LogMessage(device_, "ZaberBase::ClearPort\n", true);
+
+	const int bufSize = 255;
+	unsigned char clear[bufSize];
+	unsigned long read = bufSize;
+	int ret;
+	while ((int) read == bufSize)
+	{
+		ret = core_->ReadFromSerial(device_, port_.c_str(), clear, bufSize, read);
+		if (ret != DEVICE_OK) 
+		{
+			return ret;
+		}
+	}
+	return DEVICE_OK;      
+}
 
 // COMMUNICATION "send" utility function:
-int ZaberBase::SendCommand(const char *command) const
+int ZaberBase::SendCommand(const string command) const
 {
-   const char* g_TxTerm = "\r"; //Message footer. Required by Zaber ASCII protocol.
-   int ret;
+	core_->LogMessage(device_, "ZaberBase::SendCommand\n", true);
 
-   std::string base_command = "";
-   base_command += command;
-   // send command
-   ret = core_->SetSerialCommand(device_, port_.c_str(), base_command.c_str(), g_TxTerm);
-
-   return ret;
+	const char* msgFooter = "\n"; // required by Zaber ASCII protocol
+	string baseCommand = "";
+	baseCommand += command;
+	return core_->SetSerialCommand(device_, port_.c_str(), baseCommand.c_str(), msgFooter);
 }
 
 // COMMUNICATION "send & receive" utility function:
-int ZaberBase::QueryCommand(const char *command, std::string &answer) const
+int ZaberBase::QueryCommand(const string command, vector<string>& reply) const
 {
-   const char* g_RxTerm = "\r\n"; //Message footer. Required by Zaber ASCII protocol.
+	core_->LogMessage(device_, "ZaberBase::QueryCommand\n", true);
 
-   // send command
-   int ret;
-   if((ret = SendCommand(command)) == DEVICE_OK)
-   {
-      // block/wait for acknowledge (or until we time out)
-      const size_t BUFSIZE = 2048;
-      char buf[BUFSIZE] = {'\0'};
-      ret = core_->GetSerialAnswer(device_, port_.c_str(), BUFSIZE, buf, g_RxTerm);
-      answer = buf;
-   }
-   return ret;
+	const char* msgFooter = "\r\n"; // required by Zaber ASCII protocol
+
+	const size_t BUFSIZE = 2048;
+	char buf[BUFSIZE] = {'\0'};
+
+	int ret = SendCommand(command);
+	if (ret != DEVICE_OK) 
+	{
+		return ret;
+	}
+	ret = core_->GetSerialAnswer(device_, port_.c_str(), BUFSIZE, buf, msgFooter);
+	if (ret != DEVICE_OK) 
+	{
+		return ret;
+	}
+
+	string resp = buf;
+	if (resp.length() < 1)
+	{
+		return  DEVICE_SERIAL_INVALID_RESPONSE;
+	}
+	// remove checksum before parsing
+	int thirdLast = resp.length() - 3;
+	if (resp[thirdLast] == ':')
+	{
+		resp.erase(thirdLast, string::npos);
+	}
+	CDeviceUtils::Tokenize(resp, reply, " ");
+	/* reply[0] = message type and device address, reply[1] = axis number,
+	 * reply[2] = reply flags, reply[3] = device status, reply[4] = warning flags,
+	 * reply[5] (and possibly reply[6]) = response data, if there is data
+	 */
+	if (reply.size() < 5)
+	{
+		return DEVICE_SERIAL_INVALID_RESPONSE;
+	}
+
+	if (reply[4] == "FD")
+	{
+		return ERR_DRIVER_DISABLED;
+	}
+	if (reply[2] == "RJ")
+	{
+		return ERR_COMMAND_REJECTED;
+	}
+	return DEVICE_OK;
 }
-// Check Device Status
-int ZaberBase::CheckDeviceStatus(void)
-{
-   int ret;
-   if ((ret = ClearPort()) == DEVICE_OK)
-   {
-      //diasable alert messages
-      string resp;
-      if ((ret = QueryCommand("/set comm.alert 0",resp)) == DEVICE_OK)
-      {
-         if (resp.length() >= 1)
-         {  
-            // Get device ID
-            ret = QueryCommand("/get deviceid",resp);
-            if (ret == DEVICE_OK)
-            {
-               if (resp.length() >= 1)
-               {
-                  if (resp.find("30221") != string::npos)
-                  {
-                     // Get periperal IDs of device 1(y-axis) and device 2(x-axis)
-                     string respID;
-                     ret = QueryCommand("/get peripheralid",respID);
-                     if (ret == DEVICE_OK)
-                     {
-                        if (resp.length() >= 1)
-                        {
-                           string IDString1=respID.substr(17,respID.find(" ", 17)-17);
-                           string IDString2=respID.substr(respID.find(" ", 17)+1,string::npos);
-                           stringstream(IDString1) >> peripheralID1_;
-                           stringstream(IDString2) >> peripheralID2_;
 
-                           initialized_ = true;
-                        }
-                        else
-                        {
-                           ret = DEVICE_NOT_CONNECTED;   //Invalid response
-                        }
-                     }
-                  }
-                  else
-                  {
-                     ret = DEVICE_NOT_CONNECTED;      //Not a A-MCB2 controller
-                  }
-               }
-               else
-               {
-                  ret = DEVICE_NOT_CONNECTED;         //Invalid response
-               }
-            }
-         }
-         else
-         {
-            ret = DEVICE_NOT_CONNECTED;               //Invalid response
-         }
-      }
-   }
-   return ret;
+int ZaberBase::GetSetting(long device, long axis, string setting, long& data) const
+{
+	core_->LogMessage(device_, "ZaberBase::GetSetting\n", true);
+
+	ostringstream cmd;
+	cmd << cmdPrefix_ << device << " " << axis << " get " << setting;
+	vector<string> resp;
+	int ret = QueryCommand(cmd.str().c_str(), resp);
+	if (ret != DEVICE_OK) 
+	{
+		return ret;
+	}
+	// extract data
+	string dataString = resp[5];
+	stringstream(dataString) >> data;
+	return DEVICE_OK;
+}
+
+int ZaberBase::SetSetting(long device, long axis, string setting, long data) const
+{
+	core_->LogMessage(device_, "ZaberBase::SetSetting\n", true);
+
+	ostringstream cmd; 
+	cmd << cmdPrefix_ << device << " " << axis << " set " << setting << " " << data;
+	vector<string> resp;
+	int ret = QueryCommand(cmd.str().c_str(), resp);
+	if (ret != DEVICE_OK)
+	{
+		return ERR_SETTING_FAILED;
+	}
+	return DEVICE_OK;
+}
+
+bool ZaberBase::IsBusy(long device) const
+{
+	core_->LogMessage(device_, "ZaberBase::IsBusy\n", true);
+
+	ostringstream cmd;
+	cmd << cmdPrefix_ << device;
+	vector<string> resp;
+	int ret = QueryCommand(cmd.str().c_str(), resp);
+	if (ret != DEVICE_OK)
+	{
+		ostringstream os;
+		os << "SendSerialCommand failed in ZaberBase::IsBusy, error code: " << ret;
+		core_->LogMessage(device_, os.str().c_str(), false);
+		return true; // Better than segfaulting later.
+	}
+	return (resp[3] == ("BUSY"));
+}
+
+int ZaberBase::Stop(long device) const
+{
+	core_->LogMessage(device_, "ZaberBase::Stop\n", true);
+
+	ostringstream cmd;
+	cmd << cmdPrefix_ << device << " stop";
+	vector<string> resp;
+	return QueryCommand(cmd.str().c_str(), resp);
+}
+
+int ZaberBase::GetLimits(long device, long axis, long& min, long& max) const
+{
+	core_->LogMessage(device_, "ZaberBase::GetLimits\n", true);
+
+	int ret = GetSetting(device, axis, "limit.min", min);
+	if (ret != DEVICE_OK) 
+	{
+		return ret;
+	}
+	return GetSetting(device, axis, "limit.max", max);
+}
+
+int ZaberBase::SendMoveCommand(long device, long axis, std::string type, long data) const
+{
+	core_->LogMessage(device_, "ZaberBase::SendMoveCommand\n", true);
+
+	ostringstream cmd;
+	cmd << cmdPrefix_ << device << " " << axis << " move " << type << " " << data;
+	vector<string> resp;
+	return QueryCommand(cmd.str().c_str(), resp);
+}
+
+int ZaberBase::SendAndPollUntilIdle(long device, long axis, string command, int timeoutMs) const
+{
+	core_->LogMessage(device_, "ZaberBase::SendAndPollUntilIdle\n", true);
+
+	ostringstream cmd;
+	cmd << cmdPrefix_ << device << " " << axis << " " << command;
+	vector<string> resp;
+	int ret = QueryCommand(cmd.str().c_str(), resp);
+	if (ret != DEVICE_OK) 
+	{
+		return ret;
+	}
+
+	int numTries = 0, pollIntervalMs = 100;
+	do
+	{
+		numTries++;
+		CDeviceUtils::SleepMs(pollIntervalMs);
+	}
+	while (IsBusy(device) && (numTries*pollIntervalMs < timeoutMs));
+	
+	if (numTries*pollIntervalMs >= timeoutMs)
+	{
+		return ERR_BUSY_TIMEOUT;
+	}
+
+	ostringstream os;
+	os << "Completed after " << (numTries*pollIntervalMs/1000.0) << " seconds.";
+	core_->LogMessage(device_, os.str().c_str(), true);
+	return DEVICE_OK;
 }

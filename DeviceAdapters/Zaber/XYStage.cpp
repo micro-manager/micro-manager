@@ -3,11 +3,11 @@
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   ASR100B120B-T3 XY Stage
+// DESCRIPTION:   XYStage Device Adapter
 //                
-// AUTHOR:        David Goosen
+// AUTHOR:        David Goosen (david.goosen@zaber.com) & Athabasca Witschi (athabasca.witschi@zaber.com)
 //                
-// COPYRIGHT:     Zaber Technologies, 2013
+// COPYRIGHT:     Zaber Technologies, 2014
 //
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
@@ -22,474 +22,441 @@
 //
 
 #ifdef WIN32
-   #define snprintf _snprintf 
-   #pragma warning(disable: 4355)
+#define snprintf _snprintf 
+#pragma warning(disable: 4355)
 #endif
 
-#include "Zaber.h"
 #include "XYStage.h"
-#include <ModuleInterface.h>
-#include <sstream>
-#include <string>
+
+const char* g_XYStageName = "XYStage";
+const char* g_XYStageDescription = "Zaber XY Stage";
 
 using namespace std;
 
-const char *XYStageName = "XYStage";
-
-/*
-* XYStage - two axis stage device.
-* Note that this adapter uses two coordinate systems.  There is the adapters own coordinate
-* system with the X and Y axis going the 'Micro-Manager standard' direction
-* Then, there is the Zaber native system.  All functions using 'steps' use the Zaber system
-* All functions using um use the Micro-Manager coordinate system
-*/
-
-// CONSTRUCTOR
 XYStage::XYStage() :
-   ZaberBase(this),
-   range_measured_(false),
-   answerTimeoutMs_(2000),
-   stepSizeXUm_(0.15625), //=1000*pitch[mm]/(motorsteps*64)  (for ASR100B120B: pitch=2 mm, motorsteps=200)
-   stepSizeYUm_(0.15625),
-   speedX_(0.0), //[mm/s]
-   speedY_(0.0), //[mm/s]
-   accelX_(0.0), //[m/s²]
-   accelY_(0.0), //[m/s²]
-   originX_(0),
-   originY_(0)
-
+	ZaberBase(this),
+	deviceNum_(1),
+	rangeMeasured_(false),
+	homingTimeoutMs_(20000),
+	stepSizeXUm_(0.15625), //=1000*pitch[mm]/(motorsteps*64)  (for ASR100B120B: pitch=2 mm, motorsteps=200)
+	stepSizeYUm_(0.15625),
+	convFactor_(1.6384),
+	axisX_(2),
+	axisY_(1),
+	cmdPrefix_("/"),
+	resolutionX_(64),
+	resolutionY_(64),
+	motorStepsX_(200),
+	motorStepsY_(200),
+	linearMotionX_(2.0),
+	linearMotionY_(2.0)
 {
-   this->LogMessage("XYStage::XYStage\n", true);
-   InitializeDefaultErrorMessages();
+	this->LogMessage("XYStage::XYStage\n", true);
 
-   // create pre-initialization properties
-   // ------------------------------------
-   // NOTE: pre-initialization properties contain parameters which must be defined for
-   // proper startup
+	InitializeDefaultErrorMessages();
+	SetErrorText(ERR_PORT_CHANGE_FORBIDDEN, g_Msg_PORT_CHANGE_FORBIDDEN);
+	SetErrorText(ERR_DRIVER_DISABLED, g_Msg_DRIVER_DISABLED);
+	SetErrorText(ERR_BUSY_TIMEOUT, g_Msg_BUSY_TIMEOUT);
+	SetErrorText(ERR_AXIS_COUNT, g_Msg_AXIS_COUNT);
+	SetErrorText(ERR_COMMAND_REJECTED, g_Msg_COMMAND_REJECTED);
+	SetErrorText(ERR_NO_REFERENCE_POS, g_Msg_NO_REFERENCE_POS);
+	SetErrorText(ERR_SETTING_FAILED, g_Msg_SETTING_FAILED);
 
-   // Name, read-only (RO)
-   CreateProperty(MM::g_Keyword_Name, XYStageName, MM::String, true);
+	// Pre-initialization properties
+	CreateProperty(MM::g_Keyword_Name, g_XYStageName, MM::String, true);
 
-   // Description, RO
-   CreateProperty(MM::g_Keyword_Description, "Zaber XY stage driver adapter", MM::String, true);
+	CreateProperty(MM::g_Keyword_Description, "Zaber XY stage driver adapter", MM::String, true);
 
-   // Port
-   CPropertyAction* pAct = new CPropertyAction (this, &XYStage::OnPort);
-   CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
+	CPropertyAction* pAct = new CPropertyAction (this, &XYStage::OnPort);
+	CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
 
-   // Create device number property
-   pAct = new CPropertyAction (this, &XYStage::OnDeviceNum);
-   CreateProperty("Controller Device Number", "01", MM::Integer, false, pAct, true);
+	pAct = new CPropertyAction (this, &XYStage::OnDeviceNum);
+	CreateIntegerProperty("Device Number", deviceNum_, false, pAct, true);
+	SetPropertyLimits("Device Number", 1, 99);
 
-   //Transpose Properities
-   this->SetProperty(MM::g_Keyword_Transpose_MirrorX, "1");
-   this->SetProperty(MM::g_Keyword_Transpose_MirrorY, "1");
+	pAct = new CPropertyAction(this, &XYStage::OnAxisX);
+	CreateIntegerProperty("Axis Number (X Axis)", axisX_, false, pAct, true);
+	SetPropertyLimits("Axis Number (X Axis)", 1, 9);
+
+	pAct = new CPropertyAction(this, &XYStage::OnAxisY);
+	CreateIntegerProperty("Axis Number (Y Axis)", axisY_, false, pAct, true);
+	SetPropertyLimits("Axis Number (Y Axis)", 1, 9);
+
+	pAct = new CPropertyAction(this, &XYStage::OnMotorStepsX);
+	CreateIntegerProperty("Motor Steps Per Rev (X Axis)", motorStepsX_, false, pAct, true);
+
+	pAct = new CPropertyAction(this, &XYStage::OnMotorStepsY);
+	CreateIntegerProperty("Motor Steps Per Rev (Y Axis)", motorStepsY_, false, pAct, true);
+
+	pAct = new CPropertyAction(this, &XYStage::OnLinearMotionX);
+	CreateFloatProperty("Linear Motion Per Motor Rev (X Axis) [mm]", linearMotionX_, false, pAct, true);
+
+	pAct = new CPropertyAction(this, &XYStage::OnLinearMotionY);
+	CreateFloatProperty("Linear Motion Per Motor Rev (Y Axis) [mm]", linearMotionY_, false, pAct, true);
+
+	this->SetProperty(MM::g_Keyword_Transpose_MirrorX, "0");
+	this->SetProperty(MM::g_Keyword_Transpose_MirrorY, "0");
 }
 
-// DESTRUCTOR
 XYStage::~XYStage()
 {
-   this->LogMessage("XYStage::~XYStage\n", true);
-   Shutdown();
+	this->LogMessage("XYStage::~XYStage\n", true);
+	Shutdown();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// XYStage methods required by the API
+// XYStage & Device API methods
 ///////////////////////////////////////////////////////////////////////////////
 
-void XYStage::GetName(char* Name) const
+void XYStage::GetName(char* name) const
 {
-   CDeviceUtils::CopyLimitedString(Name, XYStageName);
+	CDeviceUtils::CopyLimitedString(name, g_XYStageName);
 }
-
 
 int XYStage::Initialize()
 {
-   core_ = GetCoreCallback();
+	if (initialized_) 
+	{
+		return DEVICE_OK;
+	}
 
-   CPropertyAction* pAct;
+	core_ = GetCoreCallback();
+	
+	this->LogMessage("XYStage::Initialize\n", true);
 
-   this->LogMessage("XYStage::Initialize\n", true);
-   int ret = CheckDeviceStatus();
-   if (ret != DEVICE_OK) 
-      return ret;
- 
-   // Initialize Speed (in mm/s)
-   pAct = new CPropertyAction (this, &XYStage::OnSpeedX);
-   ret = CreateProperty("SpeedX [mm/s]", "0.0", MM::Float, false, pAct); // mm/s
-   if (ret != DEVICE_OK) return ret;
-   SetPropertyLimits("SpeedX [mm/s]", 0.00, 100.0); // mm/s
+	int ret = ClearPort();
+	if (ret != DEVICE_OK) 
+	{
+		return ret;
+	}
 
-   pAct = new CPropertyAction (this, &XYStage::OnSpeedY);
-   ret = CreateProperty("SpeedY [mm/s]", "0.0", MM::Float, false, pAct); // mm/s
-   if (ret != DEVICE_OK) return ret;
-   SetPropertyLimits("SpeedY [mm/s]", 0.00, 100.0); // mm/s
+	// Disable alert messages.
+	ret = SetSetting(deviceNum_, 0, "comm.alert", 0);
+	if (ret != DEVICE_OK) 
+	{
+		return ret;
+	}
+	
+	// Ensure dual-axis controller.
+	long axisCount;
+	ret = GetSetting(deviceNum_, 0, "system.axiscount", axisCount);
+	if (ret != DEVICE_OK) 
+	{
+		return ret;
+	}
+	if (axisCount < 2)
+	{
+		return ERR_AXIS_COUNT;
+	}
 
-   // Initialize Acceleration (in m/s²)
-   pAct = new CPropertyAction (this, &XYStage::OnAccelX);
-   ret = CreateProperty("Acceleration X [m/s^2]", "0.0", MM::Float, false, pAct);
-   if (ret != DEVICE_OK) return ret;
-   SetPropertyLimits("Acceleration X [m/s^2]", 0.00, 2.0);
+	// Calculate step size.
+	ret = GetSetting(deviceNum_, axisX_, "resolution", resolutionX_);
+	if (ret != DEVICE_OK) 
+	{
+		return ret;
+	}
+	ret = GetSetting(deviceNum_, axisY_, "resolution", resolutionY_);
+	if (ret != DEVICE_OK) 
+	{
+		return ret;
+	}
+	stepSizeXUm_ = ((double)linearMotionX_/(double)motorStepsX_)*(1/(double)resolutionX_)*1000;
+	stepSizeYUm_ = ((double)linearMotionY_/(double)motorStepsY_)*(1/(double)resolutionY_)*1000;
 
-   pAct = new CPropertyAction (this, &XYStage::OnAccelY);
-   ret = CreateProperty("Acceleration Y [m/s^2]", "0.0", MM::Float, false, pAct);
-   if (ret != DEVICE_OK) return ret;
-   SetPropertyLimits("Acceleration Y [m/s^2]", 0.00, 2.0);
+	CPropertyAction* pAct;
+	// Initialize Speed (in mm/s)
+	pAct = new CPropertyAction (this, &XYStage::OnSpeedX);
+	ret = CreateFloatProperty("Speed X [mm/s]", 0.0, false, pAct);
+	if (ret != DEVICE_OK) 
+	{
+		return ret;
+	}
 
-   // for debugging
-   ostringstream os;
-   os << "Device 1 peripheral ID = "<< peripheralID1_ << "\n" << "Device 2 peripheral ID = " << peripheralID2_ <<"\n";
-   this->LogMessage(os.str().c_str());
+	pAct = new CPropertyAction (this, &XYStage::OnSpeedY);
+	ret = CreateFloatProperty("Speed Y [mm/s]", 0.0, false, pAct);
+	if (ret != DEVICE_OK) 
+	{
+		return ret;
+	}
 
-   ret = UpdateStatus();
-   if (ret != DEVICE_OK) return ret;
+	// Initialize Acceleration (in m/s²)
+	pAct = new CPropertyAction (this, &XYStage::OnAccelX);
+	ret = CreateFloatProperty("Acceleration X [m/s^2]", 0.0, false, pAct);
+	if (ret != DEVICE_OK) 
+	{
+		return ret;
+	}
 
-   initialized_ = true;
-   return DEVICE_OK;
+	pAct = new CPropertyAction (this, &XYStage::OnAccelY);
+	ret = CreateFloatProperty("Acceleration Y [m/s^2]", 0.0, false, pAct);
+	if (ret != DEVICE_OK) 
+	{
+		return ret;
+	}
+
+	ret = UpdateStatus();
+	if (ret != DEVICE_OK) 
+	{
+		return ret;
+	}
+
+	initialized_ = true;
+	return DEVICE_OK;
 }
 
 int XYStage::Shutdown()
 {
-   this->LogMessage("XYStage::Shutdown\n", true);
-
-   initialized_    = false;
-   range_measured_ = false;
-  
-   return DEVICE_OK;
+	this->LogMessage("XYStage::Shutdown\n", true);
+	if (initialized_)
+	{
+		initialized_ = false;
+		rangeMeasured_ = false;
+	}
+	return DEVICE_OK;
 }
 
 bool XYStage::Busy()
-// Returns true if any axis (X or Y) is still moving.
 {
-   this->LogMessage("XYStage::Busy\n", true);
-   
-   string resp;
-   int ret;
-
-   // format the command
-   ostringstream cmd;
-   cmd << cmdPrefix_<< "0";
-
-   // send command
-   ret = QueryCommand(cmd.str().c_str(), resp);
-   if (ret != DEVICE_OK)
-   {
-      ostringstream os;
-      os << "SendSerialCommand failed in XYStage::Busy, error code:" << ret;
-      this->LogMessage(os.str().c_str(), false);
-      // return false; // can't write, continue just so that we can read an answer in case write succeeded even though we received an error
-   }
-   if (resp.find("BUSY")!=string::npos) return true;
-   else return false;
-}
-
-
-int XYStage::SetPositionSteps(long x, long y)
-{
-   this->LogMessage("XYStage::SetPositionSteps\n", true);
-
-   //format the commands
-   ostringstream cmdX;
-   ostringstream cmdY;
-   cmdX << cmdPrefix_ << "2 move abs " << x;
-   cmdY << cmdPrefix_ << "1 move abs " << y;
-
-   //clear warning flags
-   string resp;
-   int ret;
-   ostringstream cmd;
-   cmd << cmdPrefix_ << "warnings clear";
-   ret = QueryCommand(cmd.str().c_str(),resp); 
-   if (ret != DEVICE_OK) return ret;
-   if (resp.length() < 1) return  DEVICE_NOT_CONNECTED;
-
-   //send the x command
-   ret = QueryCommand(cmdX.str().c_str(),resp);
-   if (ret != DEVICE_OK) return ret;
- 
-   //send the y command
-   ret = QueryCommand(cmdY.str().c_str(),resp);
-   if (ret != DEVICE_OK) return ret;
-
-   //get status
-   ret = QueryCommand(cmdPrefix_.c_str(), resp);
-   if (ret != DEVICE_OK) return ret;
-   if (resp.length() < 1) return DEVICE_SERIAL_INVALID_RESPONSE;
-
-   //check for errors
-   if (resp.substr(14,2)!= "--") return DEVICE_SERIAL_INVALID_RESPONSE;
-   return DEVICE_OK;
-}
-
-int XYStage::SetRelativePositionSteps(long x, long y)
-{   
-   this->LogMessage("XYStage::SetRelativePositionSteps\n", true);
- 
-   //format the commands
-   ostringstream cmdX;
-   ostringstream cmdY;
-   cmdX << cmdPrefix_ << "2 move rel " << x;
-   cmdY << cmdPrefix_ << "1 move rel " << y;
-
-   //clear warning flags
-   string resp;
-   int ret;
-   ostringstream cmd;
-   cmd << cmdPrefix_ << "warnings clear";
-   ret = QueryCommand(cmd.str().c_str(),resp); 
-   if (ret != DEVICE_OK) return ret;
-   if (resp.length() < 1) return  DEVICE_NOT_CONNECTED;
-
-   //send the x command
-   ret = QueryCommand(cmdX.str().c_str(),resp);
-   if (ret != DEVICE_OK) return ret;
-
-   //send the y command
-   ret = QueryCommand(cmdY.str().c_str(),resp);
-   if (ret != DEVICE_OK) return ret;
-
-   //get status
-   ret = QueryCommand(cmdPrefix_.c_str(), resp);
-   if (ret != DEVICE_OK) return ret;
-   if (resp.length() < 1) return DEVICE_SERIAL_INVALID_RESPONSE;
-
-   //check for errors
-   if (resp.substr(14,2)!= "--") return DEVICE_SERIAL_INVALID_RESPONSE;
-   return DEVICE_OK;
+	this->LogMessage("XYStage::Busy\n", true);
+	return IsBusy(deviceNum_);
 }
 
 int XYStage::GetPositionSteps(long& x, long& y)
 {
-   this->LogMessage("XYStage::GetPositionSteps\n", true);
+	this->LogMessage("XYStage::GetPositionSteps\n", true);
 
-   int ret;
-   string respPos;
-   string resp;
-
-   //clear warning flags  
-   /*
-   ostringstream cmdW;
-   cmdW << cmdPrefix_ << "warnings clear";
-   ret = QueryCommand(cmdW.str().c_str(),resp); 
-   if (ret != DEVICE_OK) return ret;
-   if (resp.length() < 1) return  DEVICE_NOT_CONNECTED;
-   */
-
-   //send command
-   ostringstream cmd;
-   cmd << cmdPrefix_ << "get pos";
-   ret = QueryCommand(cmd.str().c_str(), respPos);
-   if (ret != DEVICE_OK) return ret;
-   if (respPos.length() < 1) return DEVICE_SERIAL_INVALID_RESPONSE;
-
-   //parse response
-   string posStringX=respPos.substr(respPos.find(" ", 17)+1,string::npos);
-   string posStringY=respPos.substr(17,respPos.find(" ", 17)-17);
-   
-   //check for errors
-   /* if (respPos.substr(14,2)== "WR") return DEVICE_UNKNOWN_POSITION;
-   else if (respPos.substr(14,2)!= "--") return DEVICE_SERIAL_INVALID_RESPONSE;
-   */
-   
-   stringstream(posStringX) >> x;
-   stringstream(posStringY) >> y;
-
-   return DEVICE_OK;
+	int ret = GetSetting(deviceNum_, axisX_, "pos", x);
+	if (ret != DEVICE_OK) 
+	{
+		return ret;
+	}
+	return GetSetting(deviceNum_, axisY_, "pos", y);
 }
 
-int XYStage::SetOrigin()
-//Sets the Origin of the MM coordinate system using default implementation of SetAdapterOriginUm(x,y) (in DeviceBase.h)
-//The Zaber coordinate system is NOT zeroed. 
+int XYStage::SetPositionSteps(long x, long y)
 {
-   this->LogMessage("XYStage::SetOrigin\n", true); 
-   this->LogMessage("XYStage::SetOrigin Calling SetAdapterOriginUm(0,0)\n", true); 
- 
-   return SetAdapterOriginUm(0,0);
+	this->LogMessage("XYStage::SetPositionSteps\n", true);
+	return SendXYMoveCommand("abs", x, y);
 }
 
-
-int XYStage::Home()
-{
-   this->LogMessage("XYStage::Home\n", true);
-
-   range_measured_ = false;
-   string resp;
-
-   // clear warning flags  
-   int ret;
-   ostringstream cmdW;
-   cmdW << cmdPrefix_ << "warnings clear";
-   ret = QueryCommand(cmdW.str().c_str(),resp); 
-   if (ret != DEVICE_OK) return ret;
-   if (resp.length() < 1) return  DEVICE_NOT_CONNECTED;
-
-   // send the findrange command
-   ostringstream cmd;
-   cmd << cmdPrefix_ << "tools findrange";
-   ret = QueryCommand(cmd.str().c_str(),resp);
-   if (ret != DEVICE_OK) return ret;
-
-   bool status;
-   int numTries=0, maxTries=400;
-   long pollIntervalMs = 100;
-
-   this->LogMessage("Starting read in XY-Stage FINDRANGE\n", true);
-
-   do
-   {
-      status = Busy();
-      numTries++;
-      CDeviceUtils::SleepMs(pollIntervalMs);
-   }
-   while(status && (numTries < maxTries)); // keep trying up to maxTries * pollIntervalMs ( = 20 sec)
-
-   ostringstream os;
-   os << "Tried reading "<< numTries << " times, and finally read " << status;
-   this->LogMessage(os.str().c_str());
-
-   range_measured_ = true;
-
-   this->LogMessage("XYStage::Home COMPLETE!\n", true);
-
-   //get status
-   ret = QueryCommand(cmdPrefix_.c_str(), resp);
-   if (ret != DEVICE_OK) return ret;
-   if (resp.length() < 1) return DEVICE_SERIAL_INVALID_RESPONSE;
-
-   //check for errors
-   if (resp.substr(14,2)!= "--") return DEVICE_SERIAL_INVALID_RESPONSE;
-   return DEVICE_OK;
-}
-
-int XYStage::Stop()
-{
-   this->LogMessage("XYStage::Stop\n", true);
-   string resp;
-   ostringstream cmd;
-   cmd << cmdPrefix_ << "stop";
-   int ret = QueryCommand(cmd.str().c_str(),resp);
-   if (ret != DEVICE_OK) return ret;
-   return ret;
-}
-
-int XYStage::GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax)
-{
-   this->LogMessage("XYStage::GetLimitsUm\n", true); 
-  
-   if (!range_measured_) return DEVICE_UNKNOWN_POSITION;
-  
-   int ret;
-   string resp;
-
-   //get min limits  
-   ostringstream cmdMin;
-   cmdMin << cmdPrefix_ << "get limit.min";
-   ret = QueryCommand(cmdMin.str().c_str(),resp);
-   if (ret != DEVICE_OK) return ret;
-   if (resp.length() < 1) return DEVICE_SERIAL_INVALID_RESPONSE;
-   
-   string limStringXMin=resp.substr(resp.find(" ", 17)+1,string::npos);
-   string limStringYMin=resp.substr(17,resp.find(" ", 17)-17);
-   int limDataXMin, limDataYMin;
-   stringstream(limStringXMin) >> limDataXMin;
-   stringstream(limStringYMin) >> limDataYMin;
-   xMin=limDataXMin;
-   yMin=limDataYMin;
-
-   //get max limits
-   ostringstream cmdMax;
-   cmdMax << cmdPrefix_ << "get limit.max";
-   ret = QueryCommand(cmdMax.str().c_str(),resp);
-   if (ret != DEVICE_OK) return ret;
-   if (resp.length() < 1) return DEVICE_SERIAL_INVALID_RESPONSE;
-
-   string limStringXMax=resp.substr(resp.find(" ", 17)+1,string::npos);
-   string limStringYMax=resp.substr(17,resp.find(" ", 17)-17);
-   int limDataXMax, limDataYMax;
-   stringstream(limStringXMax) >> limDataXMax;
-   stringstream(limStringYMax) >> limDataYMax;
-   xMax=limDataXMax;
-   yMax=limDataYMax;
-
-   return DEVICE_OK;
+int XYStage::SetRelativePositionSteps(long x, long y)
+{   
+	this->LogMessage("XYStage::SetRelativePositionSteps\n", true);
+	return SendXYMoveCommand("rel", x, y);
 }
 
 int XYStage::Move(double vx, double vy)
 {
-   this->LogMessage("XYStage::Move\n", true);
-   // move command in mm/s
+	this->LogMessage("XYStage::Move\n", true);
 
-   // convert vx and vy into Zaber data values for ASR100B120B (.15625 um/u-step)
-   double vx_ = vx*10485.76;
-   double vy_ = vy*10485.76;
+	// convert vx and vy from mm/s to Zaber data values
+	long vxData = nint(vx*convFactor_*1000/stepSizeXUm_);
+	long vyData = nint(vy*convFactor_*1000/stepSizeXUm_);
+	return SendXYMoveCommand("vel", vxData, vyData);
+}
 
-   //format the commands
-   ostringstream cmdX;
-   ostringstream cmdY;
-   cmdX << cmdPrefix_ << "2 move vel " << vx_;
-   cmdY << cmdPrefix_ << "1 move vel " << vy_;
+int XYStage::Stop()
+{
+	this->LogMessage("XYStage::Stop\n", true);
+	return ZaberBase::Stop(deviceNum_);
+}
 
-   // clear warning flags  
-   int ret;
-   string resp;
-   ostringstream cmdW;
-   cmdW << cmdPrefix_ << "warnings clear";
-   ret = QueryCommand(cmdW.str().c_str(),resp); 
-   if (ret != DEVICE_OK) return ret;
-   if (resp.length() < 1) return  DEVICE_NOT_CONNECTED;
+/** Calibrates the stage then moves it to Micro-Manager's origin.
+ * 
+ * Assumes the stage is oriented with the long/X axis travelling left-right.
+ * "Default" orientation is with cable connectors at the top right,
+ * transposeMirrorX = 0, and transposeMirrorY = 0.
+ * Home will also go to the Micro-Manager origin if the connectors are
+ * at the bottom left, transposeMirrorX = 1, and transposeMirrorY = 1.
+ */
+int XYStage::Home()
+{
+	this->LogMessage("XYStage::Home\n", true);
 
-   //send x and y commands
-   ret = QueryCommand(cmdX.str().c_str(),resp);
-   if (ret != DEVICE_OK) return ret;
-   
-   ret = QueryCommand(cmdY.str().c_str(),resp);
-   if (ret != DEVICE_OK) return ret;
+	rangeMeasured_ = false;
 
-   //get status
-   ret = QueryCommand(cmdPrefix_.c_str(), resp);
-   if (ret != DEVICE_OK) return ret;
-   if (resp.length() < 1) return DEVICE_SERIAL_INVALID_RESPONSE;
+	// calibrate stage
+	int ret = SendAndPollUntilIdle(deviceNum_, 0, "tools findrange", homingTimeoutMs_);
+	if (ret != DEVICE_OK) 
+	{
+		return ret;
+	}
+	rangeMeasured_ = true;
+	
+	// go to origin
+	bool mirrorX, mirrorY;
+	GetOrientation(mirrorX, mirrorY);
 
-   //check for errors
-   if (resp.substr(14,2)!= "--") return DEVICE_SERIAL_INVALID_RESPONSE;
-   return DEVICE_OK;
+	string cmdX = (mirrorX ? "move max" : "move min");
+	ret = SendAndPollUntilIdle(deviceNum_, axisX_, cmdX, homingTimeoutMs_);
+	if (ret != DEVICE_OK) 
+	{
+		return ret;
+	}
+	string cmdY = (mirrorY ? "move max" : "move min");
+	ret = SendAndPollUntilIdle(deviceNum_, axisY_, cmdY, homingTimeoutMs_);
+	if (ret != DEVICE_OK) 
+	{
+		return ret;
+	}	
+
+	this->LogMessage("XYStage::Home COMPLETE!\n", true);
+	return DEVICE_OK;
+}
+
+int XYStage::SetOrigin()
+/* Sets the Origin of the MM coordinate system using default implementation of SetAdapterOriginUm(x,y) (in DeviceBase.h)
+ * The Zaber coordinate system is NOT zeroed.
+ */
+{
+	this->LogMessage("XYStage::SetOrigin\n", true); 
+	this->LogMessage("XYStage::SetOrigin calling SetAdapterOriginUm(0,0)\n", true); 
+	return SetAdapterOriginUm(0,0);
 }
 
 int XYStage::GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax)
 {
-   this->LogMessage("XYStage::GetStepLimits\n", true);
-   if (!range_measured_) return DEVICE_UNKNOWN_POSITION;
+	this->LogMessage("XYStage::GetStepLimits\n", true);
 
-   int ret;
-   string resp;
+	if (!rangeMeasured_)
+	{
+		return ERR_NO_REFERENCE_POS;
+	}
+  
+	int ret = GetLimits(deviceNum_, axisX_, xMin, xMax);
+	if (ret != DEVICE_OK) 
+	{
+		return ret;
+	}
+	return GetLimits(deviceNum_, axisY_, yMin, yMax);
+}
 
-   //get min limits  
-   ostringstream cmdMin;
-   cmdMin << cmdPrefix_ << "get limit.min";
-   ret = QueryCommand(cmdMin.str().c_str(),resp);
-   if (ret != DEVICE_OK) return ret;
-   if (resp.length() < 1) return DEVICE_SERIAL_INVALID_RESPONSE;
+int XYStage::GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax)
+{
+	this->LogMessage("XYStage::GetLimitsUm\n", true); 
 
-   string limStringXMin=resp.substr(resp.find(" ", 17)+1,string::npos);
-   string limStringYMin=resp.substr(17,resp.find(" ", 17)-17);
-   stringstream(limStringXMin) >> xMin;
-   stringstream(limStringYMin) >> yMin;
+	if (!rangeMeasured_) return ERR_NO_REFERENCE_POS;
 
+	long xMinSteps, xMaxSteps, yMinSteps, yMaxSteps;
+	int ret = GetStepLimits(xMinSteps, xMaxSteps, yMinSteps, yMaxSteps);
+	if (ret != DEVICE_OK) 
+	{
+		return ret;
+	}
 
-   //get max limits
-   ostringstream cmdMax;
-   cmdMax << cmdPrefix_ << "get limit.max";
-   ret = QueryCommand(cmdMax.str().c_str(),resp);
-   if (ret != DEVICE_OK) return ret;
-   if (resp.length() < 1) return DEVICE_SERIAL_INVALID_RESPONSE;
+	// convert to microns
+	xMin = xMinSteps * stepSizeXUm_;
+	xMax = xMaxSteps * stepSizeXUm_;
+	yMin = yMinSteps * stepSizeYUm_;
+	yMax = yMaxSteps * stepSizeYUm_;
 
-   string limStringXMax=resp.substr(resp.find(" ", 17)+1,string::npos);
-   string limStringYMax=resp.substr(17,resp.find(" ", 17)-17);
+	return DEVICE_OK;
+}
 
-   stringstream(limStringXMax) >> xMax;
-   stringstream(limStringYMax) >> yMax;
+///////////////////////////////////////////////////////////////////////////////
+// Private helper functions
+///////////////////////////////////////////////////////////////////////////////
 
-   return DEVICE_OK;
+int XYStage::SendXYMoveCommand(string type, long x, long y) const
+{
+	this->LogMessage("XYStage::SendXYMoveCommand\n", true);
+
+	int ret = SendMoveCommand(deviceNum_, axisX_, type, x);
+	if (ret != DEVICE_OK) 
+	{
+		return ret;
+	}
+	return SendMoveCommand(deviceNum_, axisY_, type, y);
+}
+
+int XYStage::OnSpeed(long axis, MM::PropertyBase* pProp, MM::ActionType eAct) const
+{
+	this->LogMessage("XYStage::OnSpeed\n", true);
+
+	double stepSize = (axis == axisX_) ? stepSizeXUm_ : stepSizeYUm_;
+
+	if (eAct == MM::BeforeGet)
+	{
+		long speedData;
+		int ret = GetSetting(deviceNum_, axis, "maxspeed", speedData);
+		if (ret != DEVICE_OK) 
+		{
+			return ret;
+		}
+
+		// convert to mm/s
+		double speed = (speedData/convFactor_)*stepSize/1000;
+		pProp->Set(speed);
+	}
+	else if (eAct == MM::AfterSet)
+	{
+		double speed;
+		pProp->Get(speed);
+
+		// convert to data
+		long speedData = nint(speed*convFactor_*1000/stepSize);
+		if (speedData == 0 && speed != 0) speedData = 1; // Avoid clipping to 0.
+
+		int ret = SetSetting(deviceNum_, axis, "maxspeed", speedData);
+		if (ret != DEVICE_OK) 
+		{
+			return ret;
+		}
+	}
+	return DEVICE_OK;
+}
+
+int XYStage::OnAccel(long axis, MM::PropertyBase* pProp, MM::ActionType eAct) const
+{
+	this->LogMessage("XYStage::OnAccel\n", true);
+
+	double stepSize = (axis == axisX_) ? stepSizeXUm_ : stepSizeYUm_;
+
+	if (eAct == MM::BeforeGet)
+	{
+		long accelData;
+		int ret = GetSetting(deviceNum_, axis, "accel", accelData);
+		if (ret != DEVICE_OK) 
+		{
+			return ret;
+		}
+
+		// convert to m/s²
+		double accel = (accelData*10/convFactor_)*stepSize/1000;
+		pProp->Set(accel);
+	}
+	else if (eAct == MM::AfterSet)
+	{
+		double accel;
+		pProp->Get(accel);
+
+		// convert to data
+		long accelData = nint(accel*convFactor_*100/(stepSize));
+		if (accelData == 0 && accel != 0) accelData = 1; // Only set accel to 0 if user intended it.
+
+		int ret = SetSetting(deviceNum_, axis, "accel", accelData);
+		if (ret != DEVICE_OK) 
+		{
+			return ret;
+		}
+	}
+	return DEVICE_OK;
+
+}
+
+void XYStage::GetOrientation(bool& mirrorX, bool& mirrorY) 
+{
+	// copied from DeviceBase.h
+	this->LogMessage("XYStage::GetOrientation\n", true);
+
+	char val[MM::MaxStrLength];
+	int ret = this->GetProperty(MM::g_Keyword_Transpose_MirrorX, val);
+	assert(ret == DEVICE_OK);
+	mirrorX = strcmp(val, "1") == 0 ? true : false;
+
+	ret = this->GetProperty(MM::g_Keyword_Transpose_MirrorY, val);
+	assert(ret == DEVICE_OK);
+	mirrorY = strcmp(val, "1") == 0 ? true : false;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -499,290 +466,161 @@ int XYStage::GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax)
 
 int XYStage::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
 {  
-   ostringstream os;
-   os << "XYStage::OnPort(" << pProp << ", " << eAct << ")\n";
-   this->LogMessage(os.str().c_str(), false);
+	ostringstream os;
+	os << "XYStage::OnPort(" << pProp << ", " << eAct << ")\n";
+	this->LogMessage(os.str().c_str(), false);
 
 
-   if (eAct == MM::BeforeGet)
-   {
-      pProp->Set(port_.c_str());
-   }
-   else if (eAct == MM::AfterSet)
-   {
-      if (initialized_)
-      {
-         // revert
-         pProp->Set(port_.c_str());
-         return ERR_PORT_CHANGE_FORBIDDEN;
-      }
-
-      pProp->Get(port_);
-   }
-
-   return DEVICE_OK;
+	if (eAct == MM::BeforeGet)
+	{
+		pProp->Set(port_.c_str());
+	}
+	else if (eAct == MM::AfterSet)
+	{
+		if (initialized_)
+		{
+			// revert
+			pProp->Set(port_.c_str());
+			return ERR_PORT_CHANGE_FORBIDDEN;
+		}
+		pProp->Get(port_);
+	}
+	return DEVICE_OK;
 }
 
 int XYStage::OnSpeedX(MM::PropertyBase* pProp, MM::ActionType eAct)
 { 
-   this->LogMessage("XYStage::OnSpeedX\n", true);
+	this->LogMessage("XYStage::OnSpeedX\n", true);
 
-   if (eAct == MM::BeforeGet)
-   {
-      // get maxspeed from controller
-      ostringstream cmd;
-      cmd << cmdPrefix_ << "2 get maxspeed";
-      string respSpeed;
-      int ret = QueryCommand(cmd.str().c_str(), respSpeed);
-      if (ret != DEVICE_OK) return ret;
-      if (respSpeed.length() < 1) return DEVICE_SERIAL_INVALID_RESPONSE;
-   
-      // convert to mm/s
-      string speedString=respSpeed.substr(17,respSpeed.length()-17);
-      int speedDataX;
-      stringstream(speedString) >> speedDataX;
-      double speedX_ = (speedDataX/1.6384)*stepSizeXUm_/1000;
-      pProp->Set(speedX_);
-   }
-   else if (eAct == MM::AfterSet)
-   {
-      // get maxspeed from MM property
-      double uiSpeed;
-      pProp->Get(uiSpeed);
-      double speed = uiSpeed;
-    
-      // convert to data
-      double speedData = (speed*1.6384*1000/stepSizeXUm_);
-   
-      //format the command
-      ostringstream cmd; 
-      cmd << cmdPrefix_ << "2 set maxspeed " << speedData;
-   
-      // clear warning flags 
-      string resp;
-      ostringstream cmdW;
-      cmdW << cmdPrefix_ << "warnings clear";
-      int ret = QueryCommand(cmdW.str().c_str(),resp); 
-      if (ret != DEVICE_OK) return ret;
-      if (resp.length() < 1) return  DEVICE_NOT_CONNECTED;
-
-      //send the command
-      ret = QueryCommand(cmd.str().c_str(),resp);
-      if (ret != DEVICE_OK) return ret;
-      if (resp.length() < 1) return DEVICE_SERIAL_INVALID_RESPONSE;
-      
-      //get status
-      ret = QueryCommand(cmdPrefix_.c_str(), resp);
-      if (ret != DEVICE_OK) return ret;
-      if (resp.length() < 1) return DEVICE_SERIAL_INVALID_RESPONSE;
-
-      //check for errors
-      if (resp.substr(14,2)!= "--") return DEVICE_SERIAL_INVALID_RESPONSE;
-
-      speedX_ = speed;
-   }
-   return DEVICE_OK;
+	return OnSpeed(axisX_, pProp, eAct);
 }
 
 int XYStage::OnSpeedY(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   this->LogMessage("XYStage::OnSpeedY\n", true);
+	this->LogMessage("XYStage::OnSpeedY\n", true);
 
-   if (eAct == MM::BeforeGet)
-   {
-      // get maxspeed from controller
-      ostringstream cmd;
-      cmd << cmdPrefix_ << "1 get maxspeed";
-      string respSpeed;
-      int ret = QueryCommand(cmd.str().c_str(), respSpeed);
-      if (ret != DEVICE_OK) return ret;
-      if (respSpeed.length() < 1) return DEVICE_SERIAL_INVALID_RESPONSE;
-
-
-      // convert to mm/s
-      string speedString=respSpeed.substr(17,respSpeed.length()-17);
-      double speedDataY;
-      stringstream(speedString) >> speedDataY;
-      double speedY_ = (speedDataY/1.6384)*stepSizeYUm_/1000;
-      pProp->Set(speedY_);
-   }
-   else if (eAct == MM::AfterSet)
-   {
-      // get maxspeed from MM property
-      double uiSpeed;
-      pProp->Get(uiSpeed);
-      double speed = uiSpeed;
-    
-      // convert to data
-      double speedData = (speed*1.6384*1000/stepSizeYUm_);
-         
-      //format the command
-      ostringstream cmd; 
-      cmd << cmdPrefix_ << "1 set maxspeed " << speedData;
-   
-      // clear warning flags 
-      string resp;
-      ostringstream cmdW;
-      cmdW << cmdPrefix_ << "warnings clear";
-      int ret = QueryCommand(cmdW.str().c_str(),resp); 
-      if (ret != DEVICE_OK) return ret;
-      if (resp.length() < 1) return  DEVICE_NOT_CONNECTED;
-
-      //send the command
-      ret = QueryCommand(cmd.str().c_str(),resp);
-      if (ret != DEVICE_OK) return ret;
-      if (resp.length() < 1) return DEVICE_SERIAL_INVALID_RESPONSE;
-      
-      //get status
-      ret = QueryCommand(cmdPrefix_.c_str(), resp);
-      if (ret != DEVICE_OK) return ret;
-      if (resp.length() < 1) return DEVICE_SERIAL_INVALID_RESPONSE;
-
-      //check for errors
-      if (resp.substr(14,2)!= "--") return DEVICE_SERIAL_INVALID_RESPONSE;
-      
-      speedY_ = speed;
-   }
-   return DEVICE_OK;
+	return OnSpeed(axisY_, pProp, eAct);
 }
 
 int XYStage::OnAccelX(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   this->LogMessage("XYStage::OnAccelX\n", true);
+	this->LogMessage("XYStage::OnAccelX\n", true);
 
-   if (eAct == MM::BeforeGet)
-   {
-      // get accel from controller
-      ostringstream cmd;
-      cmd << cmdPrefix_ << "2 get accel";
-      string respAccel;
-      int ret = QueryCommand(cmd.str().c_str(), respAccel);
-      if (ret != DEVICE_OK) return ret;
-      if (respAccel.length() < 1) return DEVICE_SERIAL_INVALID_RESPONSE;
-   
-      // convert to m/s²
-      string accelString=respAccel.substr(17,respAccel.length()-17);
-      double accelDataX;
-      stringstream(accelString) >> accelDataX;
-      double accelX_ = (accelDataX*10/1.6384)*stepSizeXUm_/1000;
-      pProp->Set(accelX_);
-   }
-   else if (eAct == MM::AfterSet)
-   {
-      // get accel from MM property
-      double accel;
-      pProp->Get(accel);
-      if (accel < 0.001)  accel = 0.001; //clipping to useful values
-      if (accel > 10.0 )  accel = 10.0;
-
-      // convert to data
-      double accelData = accel*1.6384*100/(stepSizeXUm_);
-      
-      //format the command
-      ostringstream cmd; 
-      cmd << cmdPrefix_ << "2 set accel " << accelData;
-   
-      //clear warning flags 
-      string resp;
-      ostringstream cmdW;
-      cmdW << cmdPrefix_ << "warnings clear";
-      int ret = QueryCommand(cmdW.str().c_str(),resp); 
-      if (ret != DEVICE_OK) return ret;
-      if (resp.length() < 1) return  DEVICE_NOT_CONNECTED;
-
-      //send the command
-      ret = QueryCommand(cmd.str().c_str(),resp);
-      if (ret != DEVICE_OK) return ret;
-    
-      //get status
-      ret = QueryCommand(cmdPrefix_.c_str(), resp);
-      if (ret != DEVICE_OK) return ret;
-      if (resp.length() < 1) return DEVICE_SERIAL_INVALID_RESPONSE;
-
-      //check for errors
-      if (resp.substr(14,2)!= "--") return DEVICE_SERIAL_INVALID_RESPONSE;
-
-      accelX_ = accel;
-   }
-   return DEVICE_OK;
+	return OnAccel(axisX_, pProp, eAct);
 }
 
 int XYStage::OnAccelY(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   this->LogMessage("XYStage::OnAccelY\n", true);
+	this->LogMessage("XYStage::OnAccelY\n", true);
 
-   if (eAct == MM::BeforeGet)
-   {
-      // get accel from controller
-   ostringstream cmd;
-      cmd << cmdPrefix_ << "1 get accel";
-      string respAccel;
-      int ret = QueryCommand(cmd.str().c_str(), respAccel);
-      if (ret != DEVICE_OK) return ret;
-      if (respAccel.length() < 1) return DEVICE_SERIAL_INVALID_RESPONSE;
-   
-      // convert to m/s²
-      string accelString=respAccel.substr(17,respAccel.length()-17);
-      double accelDataY;
-      stringstream(accelString) >> accelDataY;
-      double accelY_ = (accelDataY*10/1.6384)*stepSizeYUm_/1000;
-      pProp->Set(accelY_);
-   }
-   else if (eAct == MM::AfterSet)
-   {
-      // get accel from MM property
-      double accel;
-      pProp->Get(accel);
-      if (accel < 0.001)  accel =  0.001; //clipping to useful values
-      if (accel > 10.0 )  accel = 10.0;
-
-      // convert to data
-      double accelData = accel*1.6384*100/(stepSizeYUm_);
-      
-      //format the command
-      ostringstream cmd; 
-      cmd << cmdPrefix_ << "1 set accel " << accelData;
-   
-      //clear warning flags 
-      string resp;
-      ostringstream cmdW;
-      cmdW << cmdPrefix_ << "warnings clear";
-      int ret = QueryCommand(cmdW.str().c_str(),resp); 
-      if (ret != DEVICE_OK) return ret;
-      if (resp.length() < 1) return  DEVICE_NOT_CONNECTED;
-
-      //send the command
-      ret = QueryCommand(cmd.str().c_str(),resp);
-      if (ret != DEVICE_OK) return ret;
-    
-      //get status
-      ret = QueryCommand(cmdPrefix_.c_str(), resp);
-      if (ret != DEVICE_OK) return ret;
-      if (resp.length() < 1) return DEVICE_SERIAL_INVALID_RESPONSE;
-
-      //check for errors
-      if (resp.substr(14,2)!= "--") return DEVICE_SERIAL_INVALID_RESPONSE;
-
-      accelY_ = accel;
-   }
-   return DEVICE_OK;
+	return OnAccel(axisY_, pProp, eAct);
 }
 
 int XYStage::OnDeviceNum(MM::PropertyBase* pProp, MM::ActionType eAct)
-{ 
-   if (eAct == MM::AfterSet)
-   {
-      double deviceNum;
-      pProp->Get(deviceNum);
-      deviceNum_=(long) deviceNum;
-     
-      ostringstream dNumString;
-      dNumString << "/" << deviceNum_ <<" ";
-      cmdPrefix_=dNumString.str();
-   }
-   else if (eAct == MM::BeforeGet)
-   {
-      pProp->Set(deviceNum_);
-   }
-   return DEVICE_OK;
+{
+	this->LogMessage("XYStage::OnDeviceNum\n", true);
+
+	if (eAct == MM::AfterSet)
+	{
+		pProp->Get(deviceNum_);
+
+		ostringstream cmdPrefix;
+		cmdPrefix << "/" << deviceNum_ << " ";
+		cmdPrefix_ = cmdPrefix.str();
+	}
+	else if (eAct == MM::BeforeGet)
+	{
+		pProp->Set(deviceNum_);
+	}
+	return DEVICE_OK;
+}
+
+int XYStage::OnAxisX(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	this->LogMessage("XYStage::OnAxisX\n", true);
+
+	if (eAct == MM::BeforeGet)
+	{
+		pProp->Set(axisX_);
+	}
+	else if (eAct == MM::AfterSet)
+	{
+		pProp->Get(axisX_);
+	}
+	return DEVICE_OK;
+}
+
+int XYStage::OnAxisY(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	this->LogMessage("XYStage::OnAxisY\n", true);
+
+	if (eAct == MM::BeforeGet)
+	{
+		pProp->Set(axisY_);
+	}
+	else if (eAct == MM::AfterSet)
+	{
+		pProp->Get(axisY_);
+	}
+	return DEVICE_OK;
+}
+
+int XYStage::OnMotorStepsX(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	this->LogMessage("XYStage::OnMotorStepsX\n", true);
+
+	if (eAct == MM::BeforeGet)
+	{
+		pProp->Set(motorStepsX_);
+	}
+	else if (eAct == MM::AfterSet)
+	{
+		pProp->Get(motorStepsX_);
+	}
+	return DEVICE_OK;
+}
+
+int XYStage::OnMotorStepsY(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	this->LogMessage("XYStage::OnMotorStepsY\n", true);
+
+	if (eAct == MM::BeforeGet)
+	{
+		pProp->Set(motorStepsY_);
+	}
+	else if (eAct == MM::AfterSet)
+	{
+		pProp->Get(motorStepsY_);
+	}
+	return DEVICE_OK;
+}
+
+int XYStage::OnLinearMotionX(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	this->LogMessage("XYStage::LinearMotionX\n", true);
+
+	if (eAct == MM::BeforeGet)
+	{
+		pProp->Set(linearMotionX_);
+	}
+	else if (eAct == MM::AfterSet)
+	{
+		pProp->Get(linearMotionX_);
+	}
+	return DEVICE_OK;
+}
+
+int XYStage::OnLinearMotionY(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	this->LogMessage("XYStage::LinearMotionY\n", true);
+
+	if (eAct == MM::BeforeGet)
+	{
+		pProp->Set(linearMotionY_);
+	}
+	else if (eAct == MM::AfterSet)
+	{
+		pProp->Get(linearMotionY_);
+	}
+	return DEVICE_OK;
 }

@@ -5,7 +5,9 @@ libmmgr_dal_Zaber_la_SOURCES = \
 			       XYStage.cpp \
 			       XYStage.h \
 			       Zaber.cpp \
-			       Zaber.h
+			       Zaber.h \
+				   Stage.cpp \
+				   Stage.h
 libmmgr_dal_Zaber_la_LIBADD = $(MMDEVAPI_LIBADD)
 libmmgr_dal_Zaber_la_LDFLAGS = $(MMDEVAPI_LDFLAGS)
 
