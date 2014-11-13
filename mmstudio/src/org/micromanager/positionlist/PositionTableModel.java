@@ -4,7 +4,7 @@
 //SUBSYSTEM:     mmstudio
 //-----------------------------------------------------------------------------
 //
-// AUTHOR:       Chris WEisiger
+// AUTHOR:       Chris Weisiger
 //
 // COPYRIGHT:    University of California, San Francisco 2014
 //
