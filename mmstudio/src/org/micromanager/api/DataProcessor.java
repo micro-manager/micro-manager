@@ -35,6 +35,11 @@ import org.micromanager.utils.ReportingUtils;
  * Inherit from this class and use the AcquisitionEngine functions
  * addImageProcessor and removeImageProcessor to insert your code into the
  * acquisition pipeline
+ * 
+ * Note that this code will be invoked through its default (null) constructor
+ * If you use your own constructor, make sure that it accepts no arguments.
+ * If you need to initialize variables, do this in the makeConfigurationGUI 
+ * method instead.  That method is the first to be called.
  */
 public abstract class DataProcessor<E> extends Thread {
    private BlockingQueue<E> input_;
