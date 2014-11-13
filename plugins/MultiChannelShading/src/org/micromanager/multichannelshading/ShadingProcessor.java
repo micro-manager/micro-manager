@@ -115,14 +115,21 @@ public class ShadingProcessor extends DataProcessor<TaggedImage> {
 
       // subtract background
       if (background_ != null) {
-         ImageProcessor differenceProcessor =
-                 ImageUtils.subtractImageProcessors(ImageUtils.makeProcessor(nextImage),
-                 background_.getProcessor());        
-         nextImage = new TaggedImage(differenceProcessor.getPixels(), newTags);
+         if (background_.getType() != ijType) {
+            ReportingUtils.logError(
+                    "MultiShading Plugin: Background image is of different type than experimental image");
+         } else {
+            ImageProcessor differenceProcessor =
+                    ImageUtils.subtractImageProcessors(ImageUtils.makeProcessor(nextImage),
+                    background_.getProcessor());
+            nextImage = new TaggedImage(differenceProcessor.getPixels(), newTags);
+         }
       }
       
       //do not calculate flat field if we don't have a matching channel
       if (flatFieldImage == null) {
+         ReportingUtils.logMessage(
+                    "MultiShading Plugin: No matching flatfield image found");
          return nextImage;
       }      
       // do not calculate if image size differs
@@ -198,7 +205,7 @@ public class ShadingProcessor extends DataProcessor<TaggedImage> {
                return shadingTableModel_.getFlatFieldImage(channelGroup, preset);
             }
          } catch (Exception ex) {
-            //TODO
+            ReportingUtils.logError(ex, "Exception in tag matching");
          }
       }
       
