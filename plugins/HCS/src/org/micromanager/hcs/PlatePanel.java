@@ -74,7 +74,7 @@ public class PlatePanel extends JPanel {
       private PositionList sites_;
 
       public WellBox(PositionList pl) {
-         label = new String("undef");
+         label = "undef";
          color = LIGHT_GREEN;
          activeColor = LIGHT_YELLOW;
          wellBoundingRect = new Rectangle(0, 0, 100, 100);
@@ -96,8 +96,9 @@ public class PlatePanel extends JPanel {
          draw(g);
       }
 
+      @Override
       public String toString() {
-         return new String(label + ":" + wellBoundingRect.x + "," + wellBoundingRect.y);
+         return label + ":" + wellBoundingRect.x + "," + wellBoundingRect.y;
       }
 
       public void draw(Graphics2D g) {
@@ -148,8 +149,9 @@ public class PlatePanel extends JPanel {
       public int xTopLeft = 0;
       public int yTopLeft = 0;
 
+      @Override
       public String toString() {
-         return new String("XF=" + xFactor + ",YF=" + yFactor);
+         return "XF=" + xFactor + ",YF=" + yFactor;
       }
    }
 
@@ -170,6 +172,7 @@ public class PlatePanel extends JPanel {
       
 
       addMouseListener(new MouseAdapter() {
+         @Override
          public void mouseClicked(final MouseEvent e) {
             try {
                onMouseClicked(e);
@@ -177,24 +180,29 @@ public class PlatePanel extends JPanel {
                gui_.displayError(e1.getMessage());
             }
          }
+         @Override
          public void mousePressed(final MouseEvent e) {
             onMousePressed(e);
          }
+         @Override
          public void mouseReleased(final MouseEvent e) {
             onMouseReleased(e);
          }
       });
 
       addMouseMotionListener(new MouseMotionAdapter() {
+         @Override
          public void mouseMoved(final MouseEvent e) {
             onMouseMove(e);
          }
+         @Override
          public void mouseDragged(final MouseEvent e) {
             onMouseDragged(e);
          }
       });
       
       addComponentListener(new ComponentAdapter() {
+         @Override
          public void componentResized(final ComponentEvent e) {
             rescale();
          }
@@ -485,7 +493,7 @@ public class PlatePanel extends JPanel {
       Rectangle labelBoxX = new Rectangle();
       labelBoxX.width = (int)(wellX + 0.5);
       labelBoxX.height = yMargin_;
-      labelBoxX.y = yMargin_;;
+      labelBoxX.y = yMargin_;
 
       Rectangle labelBoxY = new Rectangle();
       labelBoxY.height = (int)(wellY + 0.5);

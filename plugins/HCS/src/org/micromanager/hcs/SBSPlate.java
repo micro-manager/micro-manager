@@ -25,13 +25,14 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Hashtable;
+import java.util.HashMap;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.api.MultiStagePosition;
 import org.micromanager.api.PositionList;
 import org.micromanager.api.StagePosition;
+import org.micromanager.utils.ReportingUtils;
 
 public class SBSPlate {
 
@@ -49,7 +50,7 @@ public class SBSPlate {
 
    private String id_;
    private String description_;
-   private Hashtable<String, Well> wellMap_;
+   private HashMap<String, Well> wellMap_;
 
    private static final String ROWS = "rows";
    private static final String COLS = "cols";
@@ -80,7 +81,7 @@ public class SBSPlate {
 
    public SBSPlate() {
       // initialize as 96-well plate
-      wellMap_ = new Hashtable<String, Well>();
+      wellMap_ = new HashMap<String, Well>();
       initialize(SBS_96_WELL);
    }
    
@@ -89,7 +90,7 @@ public class SBSPlate {
       return id_;
    }
 
-   public final boolean initialize(String id) {
+   public final void initialize(String id) {
       /* // SDS definition, does not seem to be adhered to
          // replaced with definition below
         if (id.equals(SBS_24_WELL)){
@@ -176,19 +177,17 @@ public class SBSPlate {
       try {
          generateWells();
       } catch (HCSException e) {
-         e.printStackTrace();
-         return false;
+         ReportingUtils.logError(e);
       }
 
-      return true;
    }
 
    public void load(String path) throws HCSException {
-      StringBuffer contents = new StringBuffer();
+      StringBuilder contents = new StringBuilder();
       try {
          // read metadata from file            
          BufferedReader input = new BufferedReader(new FileReader(path));
-         String line = null;
+         String line;
          while (( line = input.readLine()) != null){
             contents.append(line);
             contents.append(System.getProperty("line.separator"));
@@ -297,7 +296,7 @@ public class SBSPlate {
                posListArray[wellCount++] = wpl;
             } catch (HCSException e) {
                // TODO Auto-generated catch block
-               e.printStackTrace();
+               ReportingUtils.logError(e);
             }
          }
          direction = !direction; // reverse direction
@@ -399,7 +398,7 @@ public class SBSPlate {
          col = 0;
          x = 0.0;
          y = 0.0;
-         label = new String("Undefined");
+         label = "Undefined";
       }
    }
 
