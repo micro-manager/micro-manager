@@ -142,7 +142,7 @@ public abstract class DataProcessor<E> extends Thread {
     * Do not override this method (it should have been final). This method is
     * automatically called by the system to set up data processors.
     */
-   public void setInput(BlockingQueue<E> input) {
+   public synchronized void setInput(BlockingQueue<E> input) {
       input_ = input;
    }
 
@@ -169,9 +169,21 @@ public abstract class DataProcessor<E> extends Thread {
    protected E poll() {
       while (!stopRequested()) {
          try {
-            E datum = input_.poll(100, TimeUnit.MILLISECONDS);
-            if (datum != null) {
-               return datum;
+            // Ensure that input_ doesn't change between checking nullness
+            // and polling.
+            BlockingQueue<E> tmpQueue;
+            synchronized(this) {
+               tmpQueue = input_;
+            }
+            if (tmpQueue != null) {
+               E datum = tmpQueue.poll(100, TimeUnit.MILLISECONDS);
+               if (datum != null) {
+                  return datum;
+               }
+            }
+            if (tmpQueue == null) {
+               // Sleep to avoid busywaiting.
+               Thread.sleep(100);
             }
          } catch (InterruptedException ex) {
             ReportingUtils.logError(ex);
