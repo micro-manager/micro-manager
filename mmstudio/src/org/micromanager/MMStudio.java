@@ -70,6 +70,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.acquisition.*;
 import org.micromanager.acquisition.AcquisitionManager;
+import org.micromanager.acquisition.multipagetiff.StorageMultipageTiff;
 import org.micromanager.acquisition.StorageRAM;
 
 import org.micromanager.api.Autofocus;
@@ -2510,7 +2511,7 @@ public class MMStudio implements ScriptInterface {
    @Override
    public void setImageSavingFormat(Class imageSavingClass) throws MMScriptException {
       if (! (imageSavingClass.equals(TaggedImageStorageDiskDefault.class) || 
-              imageSavingClass.equals(TaggedImageStorageMultipageTiff.class))) {
+              imageSavingClass.equals(StorageMultipageTiff.class))) {
          throw new MMScriptException("Unrecognized saving class");
       }
       ImageUtils.setImageStorageClass(imageSavingClass);

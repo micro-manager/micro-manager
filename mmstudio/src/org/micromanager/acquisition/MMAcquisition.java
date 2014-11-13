@@ -49,6 +49,7 @@ import org.micromanager.MMStudio;
 import org.micromanager.api.ImageCache;
 import org.micromanager.api.TaggedImageStorage;
 
+import org.micromanager.acquisition.multipagetiff.MultipageTiffReader;
 import org.micromanager.acquisition.multipagetiff.StorageMultipageTiff;
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.DatastoreLockedException;
