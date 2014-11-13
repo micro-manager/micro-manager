@@ -35,7 +35,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import org.micromanager.MMStudio;
+import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.Storage;
+import org.micromanager.data.DefaultCoords;
 import org.micromanager.data.DefaultDisplaySettings;
 import org.micromanager.data.DefaultImage;
 import org.micromanager.data.DefaultMetadata;
@@ -134,15 +136,7 @@ class FileSet {
    public MultipageTiffReader getCurrentReader() {
       return tiffWriters_.getLast().getReader();
    }
-   
-   public void overwritePixels(Object pixels, int channel, int slice, int frame, int position) throws IOException {
-      for (MultipageTiffWriter w : tiffWriters_) {
-         if (w.getIndexMap().containsKey(MDUtils.generateLabel(channel, slice, frame, position))) {
-            w.overwritePixels(pixels, channel, slice, frame, position);
-         }
-      }
-   }
-   
+
    public int getCurrentFrame() {
       return currentFrame_;
    }
@@ -309,26 +303,31 @@ class FileSet {
       int numSlices = masterStorage_.getIntendedSize("z");
       int numChannels = masterStorage_.getIntendedSize("channel");
       if (numFrames > frame + 1 ) {
-         TreeSet<String> writtenImages = new TreeSet<String>();
+         TreeSet<Coords> writtenImages = new TreeSet<Coords>();
          for (MultipageTiffWriter w : tiffWriters_) {
             writtenImages.addAll(w.getIndexMap().keySet());
             w.setAbortedNumFrames(frame + 1);
          }
-         int positionIndex = MDUtils.getIndices(writtenImages.first())[3];
+         int positionIndex = writtenImages.first().getPositionAt("position");
          omeMetadata_.setNumFrames(positionIndex, frame + 1);
-         TreeSet<String> lastFrameLabels = new TreeSet<String>();
+         TreeSet<Coords> lastFrameCoords = new TreeSet<Coords>();
+         DefaultCoords.Builder builder = new DefaultCoords.Builder();
+         builder.position("time", frame);
+         builder.position("position", positionIndex);
          for (int c = 0; c < numChannels; c++) {
+            builder.position("channel", c);
             for (int z = 0; z < numSlices; z++) {
-               lastFrameLabels.add(MDUtils.generateLabel(c, z, frame, positionIndex));
+               builder.position("z", z);
+               lastFrameCoords.add(builder.build());
             }
          }
-         lastFrameLabels.removeAll(writtenImages);
+         lastFrameCoords.removeAll(writtenImages);
          try {
-            for (String label : lastFrameLabels) {
-               tiffWriters_.getLast().writeBlankImage(label);
+            for (Coords coords : lastFrameCoords) {
+               tiffWriters_.getLast().writeBlankImage();
                JSONObject dummyTags = new JSONObject();
-               int channel = Integer.parseInt(label.split("_")[0]);
-               int slice = Integer.parseInt(label.split("_")[1]);
+               int channel = coords.getPositionAt("channel");
+               int slice = coords.getPositionAt("slice");
                MDUtils.setChannelIndex(dummyTags, channel);
                MDUtils.setFrameIndex(dummyTags, frame);
                MDUtils.setSliceIndex(dummyTags, slice);
