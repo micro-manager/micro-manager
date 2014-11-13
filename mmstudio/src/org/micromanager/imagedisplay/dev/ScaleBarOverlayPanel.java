@@ -63,13 +63,17 @@ public class ScaleBarOverlayPanel extends OverlayPanel {
 
       shouldDraw_ = new JCheckBox("Draw scale bar");
       shouldDraw_.addActionListener(redrawListener);
-      shouldDraw_.setSelected(settings.getShouldShowScaleBar());
+      if (settings.getShouldShowScaleBar() != null) {
+         shouldDraw_.setSelected(settings.getShouldShowScaleBar());
+      }
       add(shouldDraw_);
       
       add(new JLabel("Color: "));
       color_ = new JComboBox(COLORNAMES);
       color_.addActionListener(redrawListener);
-      color_.setSelectedIndex(settings.getScaleBarColorIndex());
+      if (settings.getScaleBarColorIndex() != null) {
+         color_.setSelectedIndex(settings.getScaleBarColorIndex());
+      }
       add(color_);
 
       add(new JLabel("X offset: "), "split 2, flowx");
@@ -80,19 +84,25 @@ public class ScaleBarOverlayPanel extends OverlayPanel {
             redraw();
          }
       });
-      xOffset_.setText(String.valueOf(settings.getScaleBarOffsetX()));
+      if (settings.getScaleBarOffsetX() != null) {
+         xOffset_.setText(String.valueOf(settings.getScaleBarOffsetX()));
+      }
       add(xOffset_, "wrap");
 
       isBarFilled_ = new JCheckBox("Solid scale bar");
       isBarFilled_.addActionListener(redrawListener);
-      isBarFilled_.setSelected(settings.getScaleBarIsFilled());
+      if (settings.getScaleBarIsFilled() != null) {
+         isBarFilled_.setSelected(settings.getScaleBarIsFilled());
+      }
       add(isBarFilled_);
 
       add(new JLabel("Position: "));
       position_ = new JComboBox(new String[] {
             "Upper left", "Upper right", "Lower right", "Lower left"});
       position_.addActionListener(redrawListener);
-      position_.setSelectedIndex(settings.getScaleBarLocationIndex());
+      if (settings.getScaleBarLocationIndex() != null) {
+         position_.setSelectedIndex(settings.getScaleBarLocationIndex());
+      }
       add(position_);
 
       add(new JLabel("Y offset: "), "split 2, flowx");
@@ -103,7 +113,9 @@ public class ScaleBarOverlayPanel extends OverlayPanel {
             redraw();
          }
       });
-      yOffset_.setText(String.valueOf(settings.getScaleBarOffsetY()));
+      if (settings.getScaleBarOffsetY() != null) {
+         yOffset_.setText(String.valueOf(settings.getScaleBarOffsetY()));
+      }
       add(yOffset_);
    }
 
