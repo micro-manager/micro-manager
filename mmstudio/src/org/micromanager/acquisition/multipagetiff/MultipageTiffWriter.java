@@ -55,6 +55,7 @@ import org.micromanager.api.data.Image;
 import org.micromanager.api.data.Metadata;
 import org.micromanager.api.data.SummaryMetadata;
 import org.micromanager.data.DefaultCoords;
+import org.micromanager.data.DefaultDisplaySettings;
 import org.micromanager.data.DefaultImage;
 import org.micromanager.data.DefaultSummaryMetadata;
 import org.micromanager.utils.ImageUtils;
@@ -151,6 +152,8 @@ public class MultipageTiffWriter {
       JSONObject summaryJSON = summary.legacyToJSON();
       augmentWithImageMetadata(summaryJSON,
             (DefaultImage) masterStorage_.getAnyImage());
+      augmentWithDisplaySettings(summaryJSON,
+            (DefaultDisplaySettings) masterStorage_.getDisplaySettings());
 
       //This is an overestimate of file size because file gets truncated at end
       long fileSize = Math.min(MAX_FILE_SIZE,
@@ -210,6 +213,20 @@ public class MultipageTiffWriter {
       }
       catch (JSONException e) {
          ReportingUtils.logError(e, "Couldn't set image height");
+      }
+   }
+
+   /**
+    * Insert certain fields into the provided JSONObject that are stored
+    * in the given DisplaySettings.
+    */
+   private void augmentWithDisplaySettings(JSONObject summary,
+         DefaultDisplaySettings settings) {
+      try {
+         summary.put("DisplaySettings", settings.legacyToJSON());
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Couldn't add display settings to summary");
       }
    }
 
@@ -285,6 +302,7 @@ public class MultipageTiffWriter {
    
    private void writeMMHeaderAndSummaryMD(JSONObject summaryMD) throws IOException {      
       if (summaryMD.has("Comment")) {
+         ReportingUtils.logError("TODO: removing summary comment");
          summaryMD.remove("Comment");
       }
       byte[] summaryMDBytes = getBytesFromString(summaryMD.toString());
