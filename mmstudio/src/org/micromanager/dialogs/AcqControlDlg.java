@@ -48,7 +48,7 @@ import mmcorej.CMMCore;
 
 import org.micromanager.acquisition.AcquisitionEngine;
 import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
-import org.micromanager.acquisition.TaggedImageStorageMultipageTiff;
+import org.micromanager.acquisition.multipagetiff.StorageMultipageTiff;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.internalinterfaces.AcqSettingsListener;
 import org.micromanager.MMOptions;
@@ -929,7 +929,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       multiButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            ImageUtils.setImageStorageClass(TaggedImageStorageMultipageTiff.class);
+            ImageUtils.setImageStorageClass(StorageMultipageTiff.class);
          }});
       
       ButtonGroup buttonGroup = new ButtonGroup();
@@ -1164,7 +1164,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
    public final void updateSavingTypeButtons() {
       if (ImageUtils.getImageStorageClass().equals(TaggedImageStorageDiskDefault.class)) {
          singleButton_.setSelected(true);
-      } else if (ImageUtils.getImageStorageClass().equals(TaggedImageStorageMultipageTiff.class)) {
+      } else if (ImageUtils.getImageStorageClass().equals(StorageMultipageTiff.class)) {
          multiButton_.setSelected(true);
       }
    }
