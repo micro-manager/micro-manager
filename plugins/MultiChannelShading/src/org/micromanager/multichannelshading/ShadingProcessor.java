@@ -95,6 +95,7 @@ public class ShadingProcessor extends DataProcessor<TaggedImage> {
     * @throws MMScriptException 
     */
    public  TaggedImage processTaggedImage(TaggedImage nextImage) throws JSONException, MMScriptException, Exception {     
+      myFrame_.setStatus("Processing image...");
       int width = MDUtils.getWidth(nextImage.tags);
       int height = MDUtils.getHeight(nextImage.tags);
       TaggedImage newImage;
@@ -107,7 +108,9 @@ public class ShadingProcessor extends DataProcessor<TaggedImage> {
       
       // For now, this plugin only works with 8 or 16 bit grayscale images
       if (! (ijType == ImagePlus.GRAY8 || ijType == ImagePlus.GRAY16) ) {
-         ReportingUtils.logError("Cannot flatfield correct images other than 8 or 16 bit grayscale");
+         String msg = "Cannot flatfield correct images other than 8 or 16 bit grayscale";
+         myFrame_.setStatus(msg);
+         ReportingUtils.logError(msg);
          return nextImage;
       }
       JSONObject newTags = nextImage.tags;
@@ -116,8 +119,10 @@ public class ShadingProcessor extends DataProcessor<TaggedImage> {
       // subtract background
       if (background_ != null) {
          if (background_.getType() != ijType) {
-            ReportingUtils.logError(
-                    "MultiShading Plugin: Background image is of different type than experimental image");
+            String msg = 
+                    "Background image is of different type than experimental image";
+            myFrame_.setStatus(msg);
+            ReportingUtils.logError("MultiShading Plugin: " + msg);
          } else {
             ImageProcessor differenceProcessor =
                     ImageUtils.subtractImageProcessors(ImageUtils.makeProcessor(nextImage),
@@ -128,15 +133,17 @@ public class ShadingProcessor extends DataProcessor<TaggedImage> {
       
       //do not calculate flat field if we don't have a matching channel
       if (flatFieldImage == null) {
-         ReportingUtils.logMessage(
-                    "MultiShading Plugin: No matching flatfield image found");
+         String msg = "No matching flatfield image found";
+         myFrame_.setStatus(msg);
+         ReportingUtils.logMessage("MultiShading Plugin: " + msg);
          return nextImage;
       }      
       // do not calculate if image size differs
       if (width != flatFieldImage.getWidth() || 
               height != flatFieldImage.getHeight()) {
-         ReportingUtils.logError
-            ("FlatField dimensions do not match image dimensions");
+         String msg = "FlatField dimensions do not match image dimensions";
+         myFrame_.setStatus(msg);
+         ReportingUtils.logError(msg);
          return nextImage;
       }      
       
@@ -149,6 +156,7 @@ public class ShadingProcessor extends DataProcessor<TaggedImage> {
                 * flatFieldImage.getNormalizedPixels()[index]);
          }
          newImage = new TaggedImage(newPixels, newTags);
+         myFrame_.setStatus("Done");
          return newImage;
        
       } else if (ijType == ImagePlus.GRAY16) {
@@ -163,6 +171,7 @@ public class ShadingProcessor extends DataProcessor<TaggedImage> {
                     flatFieldImage.getNormalizedPixels()[index]) + 0.5f);
          }
          newImage = new TaggedImage(newPixels, newTags);
+         myFrame_.setStatus("Done");
          return newImage;         
          
       } 

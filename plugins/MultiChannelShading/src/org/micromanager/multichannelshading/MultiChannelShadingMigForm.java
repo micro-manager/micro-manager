@@ -37,6 +37,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.MMStudio;
@@ -63,10 +64,12 @@ public class MultiChannelShadingMigForm extends MMDialog {
    private final String[] IMAGESUFFIXES = {"tif", "tiff", "jpg", "png"};
    private String backgroundFileName_;
    private String groupName_;
+   private String statusMessage_;
    private final Font arialSmallFont_;
    private final ShadingTableModel shadingTableModel_;
    private final JCheckBox useCheckBox_;
    private final Dimension buttonSize_;
+   private final JLabel statusLabel_;
    
   
    
@@ -112,7 +115,7 @@ public class MultiChannelShadingMigForm extends MMDialog {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             groupName_ = (String) groupComboBox.getSelectedItem();
             shadingTableModel_.setChannelGroup(groupName_);
-            updateAddRemoveButtons(addButton, removeButton);
+            updateAddAndRemoveButtons(addButton, removeButton);
             prefs_.put(CHANNELGROUP, groupName_);
          }
       });
@@ -187,7 +190,7 @@ public class MultiChannelShadingMigForm extends MMDialog {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             shadingTableModel_.addRow();
-            updateAddRemoveButtons(addButton, removeButton);
+            updateAddAndRemoveButtons(addButton, removeButton);
          }
       });
       buttonPanel.add(addButton, "wrap");
@@ -202,7 +205,7 @@ public class MultiChannelShadingMigForm extends MMDialog {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             shadingTable.stopCellEditing();
             shadingTableModel_.removeRow(shadingTable.getSelectedRows());
-            updateAddRemoveButtons(addButton, removeButton);
+            updateAddAndRemoveButtons(addButton, removeButton);
          }
       });
       buttonPanel.add(removeButton);
@@ -210,7 +213,7 @@ public class MultiChannelShadingMigForm extends MMDialog {
       add(buttonPanel, "gap 5px, aligny top, wrap");
       add(new JLabel(""), "growy, pushy, wrap");
       
-      
+      statusLabel_ = new JLabel(" ");
       useCheckBox_ = new JCheckBox();
       useCheckBox_.setText("Execute Flat Fielding on Image Acquisition?");
       useCheckBox_.addActionListener(new java.awt.event.ActionListener() {
@@ -218,11 +221,15 @@ public class MultiChannelShadingMigForm extends MMDialog {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             processor_.setEnabled(useCheckBox_.isSelected());
             prefs_.putBoolean(USECHECKBOX, useCheckBox_.isSelected());
+            statusLabel_.setText(" ");
          }
       });
       useCheckBox_.setSelected(prefs_.getBoolean(USECHECKBOX, true));
-      add(useCheckBox_, "span 3");
-
+      add(useCheckBox_, "span 3, wrap");
+      
+      add(statusLabel_, "span 3, wrap");
+      
+     
 
       processor_.setEnabled(useCheckBox_.isSelected());
       
@@ -234,7 +241,7 @@ public class MultiChannelShadingMigForm extends MMDialog {
       processor_.setMyFrameToNull();
    }
 
-   private void updateAddRemoveButtons(JButton addButton, JButton removeButton) {
+   private void updateAddAndRemoveButtons(JButton addButton, JButton removeButton) {
       removeButton.setEnabled(shadingTableModel_.getRowCount() > 0);
       int availablePresets = shadingTableModel_.
               getUnusedNumberOfPresetsInCurrentGroup();
@@ -258,6 +265,24 @@ public class MultiChannelShadingMigForm extends MMDialog {
       button.setMargin(new Insets(0, 0, 0, 0));
       
       return button;
+   }
+   
+   public synchronized void setStatus(final String status) {
+      statusMessage_ = status;
+      SwingUtilities.invokeLater(new Runnable() {
+         public void run() {
+            // update the statusLabel from this thread
+            if (status != null) {
+               statusLabel_.setText(status);
+            }
+         }
+      });
+   }
+
+   public synchronized String getStatus() {
+      String status = statusMessage_;
+      statusMessage_ = null;
+      return status;
    }
    
    private void processBackgroundImage(String fileName) {
