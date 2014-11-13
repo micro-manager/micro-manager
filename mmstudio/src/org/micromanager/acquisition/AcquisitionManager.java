@@ -144,18 +144,6 @@ public class AcquisitionManager {
       return album_;
    }
 
-   private void copyDisplaySettings(MMAcquisition acq, JSONObject displaySettings) {
-      if (displaySettings == null) 
-         return;
-      Datastore store = acq.getDatastore();
-      try {
-         store.setDisplaySettings(DefaultDisplaySettings.legacyFromJSON(displaySettings));
-      }
-      catch (DatastoreLockedException e) {
-         ReportingUtils.logError(e, "Couldn't copy display settings");
-      }
-   }
- 
    public String[] getAcquisitionNames() {
       Set<String> keySet = acqs_.keySet();
       String keys[] = new String[keySet.size()];
