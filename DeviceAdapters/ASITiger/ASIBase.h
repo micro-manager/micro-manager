@@ -105,10 +105,11 @@ protected:
       this->SetErrorText(ERR_FILTER_WHEEL_SPINNING, g_Msg_ERR_FILTER_WHEEL_SPINNING);
       this->SetErrorText(ERR_NOT_ENOUGH_AXES, g_Msg_ERR_NOT_ENOUGH_AXES);
       this->SetErrorText(ERR_TOO_LARGE_ADDRESSES, g_Msg_ERR_TOO_LARGE_ADDRESSES);
+      this->SetErrorText(ERR_TIGER_PAIR_NOT_PRESENT, g_Msg_ERR_TIGER_PAIR_NOT_PRESENT);
+      this->SetErrorText(ERR_TIGER_DEV_NOT_SUPPORTED, g_Msg_ERR_TIGER_DEV_NOT_SUPPORTED);
       this->SetErrorText(ERR_CRISP_NOT_CALIBRATED, g_Msg_ERR_CRISP_NOT_CALIBRATED);
       this->SetErrorText(ERR_CRISP_NOT_LOCKED, g_Msg_ERR_CRISP_NOT_LOCKED);
    }
 };
-
 
 #endif // _ASIBase_H_

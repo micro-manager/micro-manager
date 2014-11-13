@@ -82,7 +82,7 @@ const char* const g_Msg_ERR_FILTER_WHEEL_NOT_READY = "Filter wheel doesn't appea
 #define ERR_FILTER_WHEEL_SPINNING    10031   // if filter wheel is spinning and try to do something with it
 const char* const g_Msg_ERR_FILTER_WHEEL_SPINNING = "Filter wheel cannot be set to position when spinning";
 #define ERR_TIGER_DEV_NOT_SUPPORTED  10040
-const char* const g_Msg_ERR_TIGER_DEV_NOT_SUPPORTED = "Device type not yet supported by Tiger";
+const char* const g_Msg_ERR_TIGER_DEV_NOT_SUPPORTED = "Device type not yet supported by Tiger device adapter";
 #define ERR_TIGER_PAIR_NOT_PRESENT   10041
 const char* const g_Msg_ERR_TIGER_PAIR_NOT_PRESENT = "Axis should be present in pair";
 #define ERR_CRISP_NOT_CALIBRATED     10050

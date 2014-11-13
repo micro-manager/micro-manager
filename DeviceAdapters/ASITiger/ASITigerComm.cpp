@@ -175,7 +175,7 @@ int CTigerCommHub::DetectInstalledDevices()
       twoaxis = 0;
       name = "";
       ostringstream command;
-      command << build.vAxesType[i];
+      command << "Adding axis " << build.vAxesLetter[i] << " with type " << build.vAxesType[i] << " at address " << build.vAxesAddrHex[i];
       LogMessage(command.str(), false);
       switch (build.vAxesType[i])
       {
@@ -255,7 +255,8 @@ int CTigerCommHub::DetectInstalledDevices()
             name = g_PLogicDeviceName;
             break;
          default:
-            return ERR_TIGER_DEV_NOT_SUPPORTED;
+            LogMessage("Device type not supported by Tiger device adapter, skipping",false);
+            continue; // go on to next axis (skips below code and goes to next for loop iteration)
       }
 
       // now form rest of extended name
