@@ -467,7 +467,11 @@ public class MMImageCache implements ImageCache {
          if (isRGB()) {
             return channelIndex == 0 ? "Red" : (channelIndex == 1 ? "Green" : "Blue");
          }
-         return getChannelSetting(channelIndex).getString("Name");
+         JSONObject channelSetting = getChannelSetting(channelIndex);
+         if (channelSetting.has("Name")) {
+            return channelSetting.getString("Name");
+         }
+         return "";
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
          return "";
