@@ -424,7 +424,7 @@ public class MultipageTiffWriter {
       return raFile_ == null;
    }
    
-   public void writeBlankImage(String label) throws IOException {
+   public void writeBlankImage() throws IOException {
       writeBlankIFD();
       writeBuffers();
    }
