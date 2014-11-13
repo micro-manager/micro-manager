@@ -685,7 +685,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       }
 
       // Autostretch, if necessary.
-      if (settings_.getShouldAutostretch()) {
+      // The "== true" is necessary because it could be null.
+      if (settings_.getShouldAutostretch() == true) {
          autostretch();
          applyLUT(false);
       }
@@ -725,8 +726,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             }
          }
          total += histogram[i];
-         if (settings_.getShouldUseLogScale() != null && 
-               settings_.getShouldUseLogScale()) {
+         // "== true" because it could be null
+         if (settings_.getShouldUseLogScale() == true) {
             histogram[i] = histogram[i] > 0 ? (int) (1000 * Math.log(histogram[i])) : 0;
          }
       }
