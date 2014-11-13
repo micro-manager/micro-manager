@@ -839,7 +839,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
     */
    private void applyLUT(boolean shouldRedisplay) {
       if (settings_.getShouldSyncChannels() != null &&
-            settings_.getShouldSyncChannels() == true) {
+            settings_.getShouldSyncChannels()) {
          parent_.applyContrastToAllChannels(contrastMin_, contrastMax_, gamma_);
       } else {
          parent_.applyLUTToImage();
