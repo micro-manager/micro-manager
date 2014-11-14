@@ -85,6 +85,7 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
    private final DataAnalysisPanel dataAnalysisPanel_;
    private final HelpPanel helpPanel_;
    private final StagePositionUpdater stagePosUpdater_;
+   private final ListeningJTabbedPane tabbedPane_;
    
    private static final String MAIN_PREF_NODE = "Main"; 
    
@@ -123,16 +124,16 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       // now add tabs to GUI
       // all added tabs must be of type ListeningJPanel
       // only use addLTab, not addTab to guarantee this
-      final ListeningJTabbedPane tabbedPane = new ListeningJTabbedPane();
-      tabbedPane.setTabPlacement(JTabbedPane.LEFT);
-      tabbedPane.addLTab(navigationPanel_);
-      tabbedPane.addLTab(setupPanelA_);
-      tabbedPane.addLTab(setupPanelB_);
-      tabbedPane.addLTab(acquisitionPanel_);
-      tabbedPane.addLTab(dataAnalysisPanel_);    
-      tabbedPane.addLTab(devicesPanel_);
-      tabbedPane.addLTab(settingsPanel_);
-      tabbedPane.addLTab(helpPanel_);
+      tabbedPane_ = new ListeningJTabbedPane();
+      tabbedPane_.setTabPlacement(JTabbedPane.LEFT);
+      tabbedPane_.addLTab(navigationPanel_);
+      tabbedPane_.addLTab(setupPanelA_);
+      tabbedPane_.addLTab(setupPanelB_);
+      tabbedPane_.addLTab(acquisitionPanel_);
+      tabbedPane_.addLTab(dataAnalysisPanel_);    
+      tabbedPane_.addLTab(devicesPanel_);
+      tabbedPane_.addLTab(settingsPanel_);
+      tabbedPane_.addLTab(helpPanel_);
 
       // attach position updaters
       stagePosUpdater_.addPanel(setupPanelA_);
@@ -145,13 +146,13 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) navigationPanel_);
       
       // make sure gotSelected() gets called whenever we switch tabs
-      tabbedPane.addChangeListener(new ChangeListener() {
-         int lastSelectedIndex_ = tabbedPane.getSelectedIndex();
+      tabbedPane_.addChangeListener(new ChangeListener() {
+         int lastSelectedIndex_ = tabbedPane_.getSelectedIndex();
          @Override
          public void stateChanged(ChangeEvent e) {
-            ((ListeningJPanel) tabbedPane.getComponentAt(lastSelectedIndex_)).gotDeSelected();
-            ((ListeningJPanel) tabbedPane.getSelectedComponent()).gotSelected();
-            lastSelectedIndex_ = tabbedPane.getSelectedIndex();
+            ((ListeningJPanel) tabbedPane_.getComponentAt(lastSelectedIndex_)).gotDeSelected();
+            ((ListeningJPanel) tabbedPane_.getSelectedComponent()).gotSelected();
+            lastSelectedIndex_ = tabbedPane_.getSelectedIndex();
          }
       });
       
@@ -167,10 +168,10 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       // put pane back where it was last time
       // gotSelected will be called because we put this after adding the ChangeListener
       setLocation(prefs_.getInt(MAIN_PREF_NODE, Prefs.Keys.WIN_LOC_X, 100), prefs_.getInt(MAIN_PREF_NODE, Prefs.Keys.WIN_LOC_Y, 100));
-      tabbedPane.setSelectedIndex(prefs_.getInt(MAIN_PREF_NODE, Prefs.Keys.TAB_INDEX, 5));  // default to devicesPanel_
+      tabbedPane_.setSelectedIndex(prefs_.getInt(MAIN_PREF_NODE, Prefs.Keys.TAB_INDEX, 5));  // default to devicesPanel_
 
       // set up the window
-      add(tabbedPane);  // add the pane to the GUI window
+      add(tabbedPane_);  // add the pane to the GUI window
       setTitle("ASI diSPIM Control"); 
       pack();           // shrinks the window as much as it can
       setResizable(false);
@@ -181,20 +182,9 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
          public void windowClosing(java.awt.event.WindowEvent evt) {
             // stop the timer for updating stages
             stagePosUpdater_.stop();
-
-            // save selections as needed
-            devices_.saveSettings();
-            setupPanelA_.saveSettings();
-            setupPanelB_.saveSettings();
-            navigationPanel_.saveSettings();
-            acquisitionPanel_.saveSettings();
-            settingsPanel_.saveSettings();
-
-            // save pane location in prefs
-            prefs_.putInt(MAIN_PREF_NODE, Prefs.Keys.WIN_LOC_X, evt.getWindow().getX());
-            prefs_.putInt(MAIN_PREF_NODE, Prefs.Keys.WIN_LOC_Y, evt.getWindow().getY());
-            prefs_.putInt(MAIN_PREF_NODE, Prefs.Keys.TAB_INDEX, tabbedPane.getSelectedIndex());
+            saveSettings();
          }
+
       });
       
    }
@@ -257,5 +247,29 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
    
    @Override
    public void slmExposureChanged(String cameraName, double newExposureTime) {
+   }
+   
+   private void saveSettings() {
+      // save selections as needed
+      devices_.saveSettings();
+      setupPanelA_.saveSettings();
+      setupPanelB_.saveSettings();
+      navigationPanel_.saveSettings();
+      acquisitionPanel_.saveSettings();
+      settingsPanel_.saveSettings();
+
+      // save pane location in prefs
+      prefs_.putInt(MAIN_PREF_NODE, Prefs.Keys.WIN_LOC_X, this.getX());
+      prefs_.putInt(MAIN_PREF_NODE, Prefs.Keys.WIN_LOC_Y, this.getY());
+      prefs_.putInt(MAIN_PREF_NODE, Prefs.Keys.TAB_INDEX, tabbedPane_.getSelectedIndex());
+   }
+   
+   @Override
+   public void dispose() {
+      if (stagePosUpdater_ != null) {
+         stagePosUpdater_.stop();
+      }
+      saveSettings();
+      super.dispose();
    }
 }
