@@ -1138,7 +1138,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       // get MM device names for first/second cameras to acquire
       String firstCamera, secondCamera;
-      if (isFirstSideA()) {
+      boolean firstSideA = isFirstSideA(); 
+      if (firstSideA) {
          firstCamera = devices_.getMMDevice(Devices.Keys.CAMERAA);
          secondCamera = devices_.getMMDevice(Devices.Keys.CAMERAB);
       } else {
@@ -1153,7 +1154,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          sideActiveB = true;
       } else {
          secondCamera = null;
-         if (isFirstSideA()) {
+         if (firstSideA) {
             sideActiveA = true;
             sideActiveB = false;
          } else {
@@ -1165,14 +1166,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // make sure we have cameras selected
       int nrSides = getNumSides();  // TODO: multi-channel in sense of excitation color, etc.
       if (firstCamera == null) {
-         gui_.showError("Please select a valid camera for the first " +
-               "imaging path on the Devices Panel",
+         gui_.showError("Please select a valid camera for the first side (Imaging Path " +
+               (firstSideA ? "A" : "B") + ") on the Devices Panel",
                ASIdiSPIM.getFrame());
          return false;
       }
       if (twoSided && secondCamera == null) {
-         gui_.showError("Please select a valid camera for the second " +
-               "imaging path on the Devices Panel.",
+         gui_.showError("Please select a valid camera for the second side (Imaging Path " +
+               (firstSideA ? "B" : "A") + ") on the Devices Panel.",
                ASIdiSPIM.getFrame());
          return false;
       }
@@ -1320,11 +1321,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             gui_.openAcquisition(acqName, rootDir, nrFrames, nrSides, nrSlices, nrPos,
                     show, save);
             core_.setExposure(firstCamera, exposureTime);
-            if (secondCamera != null) {
+            if (twoSided) {
                core_.setExposure(secondCamera, exposureTime);
             }
             gui_.setChannelName(acqName, 0, firstCamera);
-            if (twoSided && secondCamera != null) {
+            if (twoSided) {
                gui_.setChannelName(acqName, 1, secondCamera);
             }
             
@@ -1343,7 +1344,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             gui_.setAcquisitionProperty(acqName, "NumberOfSides", 
                     NumberUtils.doubleToDisplayString(getNumSides()) );
             String firstSide = "B";
-            if (isFirstSideA()) {
+            if (firstSideA) {
                firstSide = "A";
             }            
             gui_.setAcquisitionProperty(acqName, "FirstSide", firstSide);
@@ -1409,7 +1410,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                // trigger the Tiger controller
                // TODO generalize this for different ways of running SPIM
                // only matters which device we trigger if there are two micro-mirror cards
-               if (isFirstSideA()) {
+               if (firstSideA) {
                   props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SPIM_STATE,
                         Properties.Values.SPIM_RUNNING, true);
                } else {
@@ -1445,7 +1446,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                try {
                   while ((core_.getRemainingImageCount() > 0
                           || core_.isSequenceRunning(firstCamera)
-                          || (secondCamera != null && core_.isSequenceRunning(secondCamera)))
+                          || (twoSided && core_.isSequenceRunning(secondCamera)))
                           && !stop_.get() && !done) {
                      now = System.currentTimeMillis();
                      if (core_.getRemainingImageCount() > 0) {
@@ -1487,7 +1488,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                if (core_.isSequenceRunning(firstCamera)) {
                   core_.stopSequenceAcquisition(firstCamera);
                }
-               if (secondCamera != null && core_.isSequenceRunning(secondCamera)) {
+               if (twoSided && core_.isSequenceRunning(secondCamera)) {
                   core_.stopSequenceAcquisition(secondCamera);
                }
                if (autoShutter) {
