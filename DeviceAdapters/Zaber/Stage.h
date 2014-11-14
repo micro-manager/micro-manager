@@ -61,17 +61,17 @@ public:
 
 	// action interface
 	// ----------------
-	int OnPort         (MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnDeviceNum    (MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnAxisNum      (MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnMotorSteps   (MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnLinearMotion (MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnSpeed        (MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnAccel        (MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnPort          (MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnDeviceAddress (MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnAxisNumber       (MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnMotorSteps    (MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnLinearMotion  (MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnSpeed         (MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnAccel         (MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-	long deviceNum_;
-	long axisNum_;
+	long deviceAddress_;
+	long axisNumber_;
 	int homingTimeoutMs_;
 	double stepSizeUm_;
 	double convFactor_; // not very informative name

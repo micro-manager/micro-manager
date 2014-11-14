@@ -35,7 +35,7 @@ using namespace std;
 
 XYStage::XYStage() :
 	ZaberBase(this),
-	deviceNum_(1),
+	deviceAddress_(1),
 	rangeMeasured_(false),
 	homingTimeoutMs_(20000),
 	stepSizeXUm_(0.15625), //=1000*pitch[mm]/(motorsteps*64)  (for ASR100B120B: pitch=2 mm, motorsteps=200)
@@ -70,9 +70,9 @@ XYStage::XYStage() :
 	CPropertyAction* pAct = new CPropertyAction (this, &XYStage::OnPort);
 	CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
 
-	pAct = new CPropertyAction (this, &XYStage::OnDeviceNum);
-	CreateIntegerProperty("Device Number", deviceNum_, false, pAct, true);
-	SetPropertyLimits("Device Number", 1, 99);
+	pAct = new CPropertyAction (this, &XYStage::OnDeviceAddress);
+	CreateIntegerProperty("Device Address", deviceAddress_, false, pAct, true);
+	SetPropertyLimits("Device Address", 1, 99);
 
 	pAct = new CPropertyAction(this, &XYStage::OnAxisX);
 	CreateIntegerProperty("Axis Number (X Axis)", axisX_, false, pAct, true);
@@ -131,7 +131,7 @@ int XYStage::Initialize()
 	}
 
 	// Disable alert messages.
-	ret = SetSetting(deviceNum_, 0, "comm.alert", 0);
+	ret = SetSetting(deviceAddress_, 0, "comm.alert", 0);
 	if (ret != DEVICE_OK) 
 	{
 		return ret;
@@ -139,7 +139,7 @@ int XYStage::Initialize()
 	
 	// Ensure dual-axis controller.
 	long axisCount;
-	ret = GetSetting(deviceNum_, 0, "system.axiscount", axisCount);
+	ret = GetSetting(deviceAddress_, 0, "system.axiscount", axisCount);
 	if (ret != DEVICE_OK) 
 	{
 		return ret;
@@ -150,12 +150,12 @@ int XYStage::Initialize()
 	}
 
 	// Calculate step size.
-	ret = GetSetting(deviceNum_, axisX_, "resolution", resolutionX_);
+	ret = GetSetting(deviceAddress_, axisX_, "resolution", resolutionX_);
 	if (ret != DEVICE_OK) 
 	{
 		return ret;
 	}
-	ret = GetSetting(deviceNum_, axisY_, "resolution", resolutionY_);
+	ret = GetSetting(deviceAddress_, axisY_, "resolution", resolutionY_);
 	if (ret != DEVICE_OK) 
 	{
 		return ret;
@@ -218,19 +218,19 @@ int XYStage::Shutdown()
 bool XYStage::Busy()
 {
 	this->LogMessage("XYStage::Busy\n", true);
-	return IsBusy(deviceNum_);
+	return IsBusy(deviceAddress_);
 }
 
 int XYStage::GetPositionSteps(long& x, long& y)
 {
 	this->LogMessage("XYStage::GetPositionSteps\n", true);
 
-	int ret = GetSetting(deviceNum_, axisX_, "pos", x);
+	int ret = GetSetting(deviceAddress_, axisX_, "pos", x);
 	if (ret != DEVICE_OK) 
 	{
 		return ret;
 	}
-	return GetSetting(deviceNum_, axisY_, "pos", y);
+	return GetSetting(deviceAddress_, axisY_, "pos", y);
 }
 
 int XYStage::SetPositionSteps(long x, long y)
@@ -258,7 +258,7 @@ int XYStage::Move(double vx, double vy)
 int XYStage::Stop()
 {
 	this->LogMessage("XYStage::Stop\n", true);
-	return ZaberBase::Stop(deviceNum_);
+	return ZaberBase::Stop(deviceAddress_);
 }
 
 /** Calibrates the stage then moves it to Micro-Manager's origin.
@@ -276,7 +276,7 @@ int XYStage::Home()
 	rangeMeasured_ = false;
 
 	// calibrate stage
-	int ret = SendAndPollUntilIdle(deviceNum_, 0, "tools findrange", homingTimeoutMs_);
+	int ret = SendAndPollUntilIdle(deviceAddress_, 0, "tools findrange", homingTimeoutMs_);
 	if (ret != DEVICE_OK) 
 	{
 		return ret;
@@ -288,13 +288,13 @@ int XYStage::Home()
 	GetOrientation(mirrorX, mirrorY);
 
 	string cmdX = (mirrorX ? "move max" : "move min");
-	ret = SendAndPollUntilIdle(deviceNum_, axisX_, cmdX, homingTimeoutMs_);
+	ret = SendAndPollUntilIdle(deviceAddress_, axisX_, cmdX, homingTimeoutMs_);
 	if (ret != DEVICE_OK) 
 	{
 		return ret;
 	}
 	string cmdY = (mirrorY ? "move max" : "move min");
-	ret = SendAndPollUntilIdle(deviceNum_, axisY_, cmdY, homingTimeoutMs_);
+	ret = SendAndPollUntilIdle(deviceAddress_, axisY_, cmdY, homingTimeoutMs_);
 	if (ret != DEVICE_OK) 
 	{
 		return ret;
@@ -323,12 +323,12 @@ int XYStage::GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax)
 		return ERR_NO_REFERENCE_POS;
 	}
   
-	int ret = GetLimits(deviceNum_, axisX_, xMin, xMax);
+	int ret = GetLimits(deviceAddress_, axisX_, xMin, xMax);
 	if (ret != DEVICE_OK) 
 	{
 		return ret;
 	}
-	return GetLimits(deviceNum_, axisY_, yMin, yMax);
+	return GetLimits(deviceAddress_, axisY_, yMin, yMax);
 }
 
 int XYStage::GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax)
@@ -361,12 +361,12 @@ int XYStage::SendXYMoveCommand(string type, long x, long y) const
 {
 	this->LogMessage("XYStage::SendXYMoveCommand\n", true);
 
-	int ret = SendMoveCommand(deviceNum_, axisX_, type, x);
+	int ret = SendMoveCommand(deviceAddress_, axisX_, type, x);
 	if (ret != DEVICE_OK) 
 	{
 		return ret;
 	}
-	return SendMoveCommand(deviceNum_, axisY_, type, y);
+	return SendMoveCommand(deviceAddress_, axisY_, type, y);
 }
 
 int XYStage::OnSpeed(long axis, MM::PropertyBase* pProp, MM::ActionType eAct) const
@@ -378,7 +378,7 @@ int XYStage::OnSpeed(long axis, MM::PropertyBase* pProp, MM::ActionType eAct) co
 	if (eAct == MM::BeforeGet)
 	{
 		long speedData;
-		int ret = GetSetting(deviceNum_, axis, "maxspeed", speedData);
+		int ret = GetSetting(deviceAddress_, axis, "maxspeed", speedData);
 		if (ret != DEVICE_OK) 
 		{
 			return ret;
@@ -397,7 +397,7 @@ int XYStage::OnSpeed(long axis, MM::PropertyBase* pProp, MM::ActionType eAct) co
 		long speedData = nint(speed*convFactor_*1000/stepSize);
 		if (speedData == 0 && speed != 0) speedData = 1; // Avoid clipping to 0.
 
-		int ret = SetSetting(deviceNum_, axis, "maxspeed", speedData);
+		int ret = SetSetting(deviceAddress_, axis, "maxspeed", speedData);
 		if (ret != DEVICE_OK) 
 		{
 			return ret;
@@ -415,7 +415,7 @@ int XYStage::OnAccel(long axis, MM::PropertyBase* pProp, MM::ActionType eAct) co
 	if (eAct == MM::BeforeGet)
 	{
 		long accelData;
-		int ret = GetSetting(deviceNum_, axis, "accel", accelData);
+		int ret = GetSetting(deviceAddress_, axis, "accel", accelData);
 		if (ret != DEVICE_OK) 
 		{
 			return ret;
@@ -434,7 +434,7 @@ int XYStage::OnAccel(long axis, MM::PropertyBase* pProp, MM::ActionType eAct) co
 		long accelData = nint(accel*convFactor_*100/(stepSize));
 		if (accelData == 0 && accel != 0) accelData = 1; // Only set accel to 0 if user intended it.
 
-		int ret = SetSetting(deviceNum_, axis, "accel", accelData);
+		int ret = SetSetting(deviceAddress_, axis, "accel", accelData);
 		if (ret != DEVICE_OK) 
 		{
 			return ret;
@@ -516,21 +516,21 @@ int XYStage::OnAccelY(MM::PropertyBase* pProp, MM::ActionType eAct)
 	return OnAccel(axisY_, pProp, eAct);
 }
 
-int XYStage::OnDeviceNum(MM::PropertyBase* pProp, MM::ActionType eAct)
+int XYStage::OnDeviceAddress(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	this->LogMessage("XYStage::OnDeviceNum\n", true);
+	this->LogMessage("XYStage::OnDeviceAddress\n", true);
 
 	if (eAct == MM::AfterSet)
 	{
-		pProp->Get(deviceNum_);
+		pProp->Get(deviceAddress_);
 
 		ostringstream cmdPrefix;
-		cmdPrefix << "/" << deviceNum_ << " ";
+		cmdPrefix << "/" << deviceAddress_ << " ";
 		cmdPrefix_ = cmdPrefix.str();
 	}
 	else if (eAct == MM::BeforeGet)
 	{
-		pProp->Set(deviceNum_);
+		pProp->Set(deviceAddress_);
 	}
 	return DEVICE_OK;
 }

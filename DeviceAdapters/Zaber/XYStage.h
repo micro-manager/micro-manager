@@ -71,7 +71,7 @@ public:
 	int OnSpeedY        (MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnAccelX        (MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnAccelY        (MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnDeviceNum     (MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnDeviceAddress (MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
 	int SendXYMoveCommand(std::string type, long x, long y) const;
@@ -79,7 +79,7 @@ private:
 	int OnAccel(long axis, MM::PropertyBase* pProp, MM::ActionType eAct) const;
 	void GetOrientation(bool& mirrorX, bool& mirrorY);
 
-	long deviceNum_;
+	long deviceAddress_;
 	bool rangeMeasured_;
 	int homingTimeoutMs_;
 	double stepSizeXUm_;

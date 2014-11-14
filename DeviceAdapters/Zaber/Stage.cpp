@@ -34,8 +34,8 @@ using namespace std;
 
 Stage::Stage() :
 	ZaberBase(this),
-	deviceNum_(1),
-	axisNum_(1),
+	deviceAddress_(1),
+	axisNumber_(1),
 	homingTimeoutMs_(20000),
 	stepSizeUm_(0.15625),
 	convFactor_(1.6384), // not very informative name
@@ -61,12 +61,12 @@ Stage::Stage() :
 	CPropertyAction* pAct = new CPropertyAction (this, &Stage::OnPort);
 	CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
 
-	pAct = new CPropertyAction (this, &Stage::OnDeviceNum);
-	CreateIntegerProperty("Device Number", deviceNum_, false, pAct, true);
-	SetPropertyLimits("Device Number", 1, 99);
+	pAct = new CPropertyAction (this, &Stage::OnDeviceAddress);
+	CreateIntegerProperty("Device Address", deviceAddress_, false, pAct, true);
+	SetPropertyLimits("Device Address", 1, 99);
 
-	pAct = new CPropertyAction(this, &Stage::OnAxisNum);
-	CreateIntegerProperty("Axis Number", axisNum_, false, pAct, true);
+	pAct = new CPropertyAction(this, &Stage::OnAxisNumber);
+	CreateIntegerProperty("Axis Number", axisNumber_, false, pAct, true);
 	SetPropertyLimits("Axis Number", 1, 9);
 
 	pAct = new CPropertyAction(this, &Stage::OnMotorSteps);
@@ -106,14 +106,14 @@ int Stage::Initialize()
 	}
 
 	// Disable alert messages.
-	ret = SetSetting(deviceNum_, 0, "comm.alert", 0);
+	ret = SetSetting(deviceAddress_, 0, "comm.alert", 0);
 	if (ret != DEVICE_OK) 
 	{
 		return ret;
 	}
 
 	// Calculate step size.
-	ret = GetSetting(deviceNum_, axisNum_, "resolution", resolution_);
+	ret = GetSetting(deviceAddress_, axisNumber_, "resolution", resolution_);
 	if (ret != DEVICE_OK) 
 	{
 		return ret;
@@ -160,7 +160,7 @@ int Stage::Shutdown()
 bool Stage::Busy()
 {
 	this->LogMessage("Stage::Busy\n", true);
-	return IsBusy(deviceNum_);
+	return IsBusy(deviceAddress_);
 }
 
 int Stage::GetPositionUm(double& pos)
@@ -168,7 +168,7 @@ int Stage::GetPositionUm(double& pos)
 	this->LogMessage("Stage::GetPositionUm\n", true);
 	
 	long steps;
-	int ret =  GetSetting(deviceNum_, axisNum_, "pos", steps);
+	int ret =  GetSetting(deviceAddress_, axisNumber_, "pos", steps);
 	if (ret != DEVICE_OK) 
 	{
 		return ret;
@@ -180,7 +180,7 @@ int Stage::GetPositionUm(double& pos)
 int Stage::GetPositionSteps(long& steps)
 {
 	this->LogMessage("Stage::GetPositionSteps\n", true);
-	return GetSetting(deviceNum_, axisNum_, "pos", steps);
+	return GetSetting(deviceAddress_, axisNumber_, "pos", steps);
 }
 
 int Stage::SetPositionUm(double pos)
@@ -200,13 +200,13 @@ int Stage::SetRelativePositionUm(double d)
 int Stage::SetPositionSteps(long steps)
 {
 	this->LogMessage("Stage::SetPositionSteps\n", true);
-	return SendMoveCommand(deviceNum_, axisNum_, "abs", steps);
+	return SendMoveCommand(deviceAddress_, axisNumber_, "abs", steps);
 }
 
 int Stage::SetRelativePositionSteps(long steps)
 {
 	this->LogMessage("Stage::SetRelativePositionSteps\n", true);
-	return SendMoveCommand(deviceNum_, axisNum_, "rel", steps);
+	return SendMoveCommand(deviceAddress_, axisNumber_, "rel", steps);
 }
 
 int Stage::Move(double velocity)
@@ -214,13 +214,13 @@ int Stage::Move(double velocity)
 	this->LogMessage("Stage::Move\n", true);
 	// convert velocity from mm/s to Zaber data value
 	long velData = nint(velocity*convFactor_*1000/stepSizeUm_);
-	return SendMoveCommand(deviceNum_, axisNum_, "vel", velData);
+	return SendMoveCommand(deviceAddress_, axisNumber_, "vel", velData);
 }
 
 int Stage::Stop()
 {
 	this->LogMessage("Stage::Stop\n", true);
-	return ZaberBase::Stop(deviceNum_);
+	return ZaberBase::Stop(deviceAddress_);
 }
 
 int Stage::Home()
@@ -229,7 +229,7 @@ int Stage::Home()
 	//TODO try tools findrange first?
 	ostringstream cmd;
 	cmd << cmdPrefix_ << "home";
-	return SendAndPollUntilIdle(deviceNum_, axisNum_, cmd.str().c_str(), homingTimeoutMs_);
+	return SendAndPollUntilIdle(deviceAddress_, axisNumber_, cmd.str().c_str(), homingTimeoutMs_);
 }
 
 int Stage::SetAdapterOriginUm(double /*d*/)
@@ -249,7 +249,7 @@ int Stage::GetLimits(double& lower, double& upper)
 	this->LogMessage("Stage::GetLimits\n", true);
 
 	long min, max;
-	int ret = ZaberBase::GetLimits(deviceNum_, axisNum_, min, max);
+	int ret = ZaberBase::GetLimits(deviceAddress_, axisNumber_, min, max);
 	if (ret != DEVICE_OK)
 	{
 		return ret;
@@ -288,36 +288,36 @@ int Stage::OnPort (MM::PropertyBase* pProp, MM::ActionType eAct)
 	return DEVICE_OK;
 }
 
-int Stage::OnDeviceNum (MM::PropertyBase* pProp, MM::ActionType eAct)
+int Stage::OnDeviceAddress (MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	this->LogMessage("Stage::OnDeviceNum\n", true);
+	this->LogMessage("Stage::OnDeviceAddress\n", true);
 
 	if (eAct == MM::AfterSet)
 	{
-		pProp->Get(deviceNum_);
+		pProp->Get(deviceAddress_);
 
 		ostringstream cmdPrefix;
-		cmdPrefix << "/" << deviceNum_ << " ";
+		cmdPrefix << "/" << deviceAddress_ << " ";
 		cmdPrefix_ = cmdPrefix.str();
 	}
 	else if (eAct == MM::BeforeGet)
 	{
-		pProp->Set(deviceNum_);
+		pProp->Set(deviceAddress_);
 	}
 	return DEVICE_OK;
 }
 
-int Stage::OnAxisNum (MM::PropertyBase* pProp, MM::ActionType eAct)
+int Stage::OnAxisNumber (MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	this->LogMessage("Stage::OnAxisNum\n", true);
+	this->LogMessage("Stage::OnAxisNumber\n", true);
 
 	if (eAct == MM::BeforeGet)
 	{
-		pProp->Set(axisNum_);
+		pProp->Set(axisNumber_);
 	}
 	else if (eAct == MM::AfterSet)
 	{
-		pProp->Get(axisNum_);
+		pProp->Get(axisNumber_);
 	}
 	return DEVICE_OK;
 }
@@ -329,7 +329,7 @@ int Stage::OnSpeed (MM::PropertyBase* pProp, MM::ActionType eAct)
 	if (eAct == MM::BeforeGet)
 	{
 		long speedData;
-		int ret = GetSetting(deviceNum_, axisNum_, "maxspeed", speedData);
+		int ret = GetSetting(deviceAddress_, axisNumber_, "maxspeed", speedData);
 		if (ret != DEVICE_OK) 
 		{
 			return ret;
@@ -348,7 +348,7 @@ int Stage::OnSpeed (MM::PropertyBase* pProp, MM::ActionType eAct)
 		long speedData = nint(speed*convFactor_*1000/stepSizeUm_);
 		if (speedData == 0 && speed != 0) speedData = 1; // Avoid clipping to 0.
 
-		int ret = SetSetting(deviceNum_, axisNum_, "maxspeed", speedData);
+		int ret = SetSetting(deviceAddress_, axisNumber_, "maxspeed", speedData);
 		if (ret != DEVICE_OK) 
 		{
 			return ret;
@@ -364,7 +364,7 @@ int Stage::OnAccel (MM::PropertyBase* pProp, MM::ActionType eAct)
 	if (eAct == MM::BeforeGet)
 	{
 		long accelData;
-		int ret = GetSetting(deviceNum_, axisNum_, "accel", accelData);
+		int ret = GetSetting(deviceAddress_, axisNumber_, "accel", accelData);
 		if (ret != DEVICE_OK) 
 		{
 			return ret;
@@ -383,7 +383,7 @@ int Stage::OnAccel (MM::PropertyBase* pProp, MM::ActionType eAct)
 		long accelData = nint(accel*convFactor_*100/(stepSizeUm_));
 		if (accelData == 0 && accel != 0) accelData = 1; // Only set accel to 0 if user intended it.
 
-		int ret = SetSetting(deviceNum_, axisNum_, "accel", accelData);
+		int ret = SetSetting(deviceAddress_, axisNumber_, "accel", accelData);
 		if (ret != DEVICE_OK) 
 		{
 			return ret;
