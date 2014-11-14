@@ -39,6 +39,7 @@ import org.micromanager.asidispim.Utils.StagePositionUpdater;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Insets;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -1146,7 +1147,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
       
       boolean sideActiveA, sideActiveB;
-      if (isTwoSided()) {
+      boolean twoSided = isTwoSided();
+      if (twoSided) {
          sideActiveA = true;
          sideActiveB = true;
       } else {
@@ -1168,7 +1170,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                ASIdiSPIM.getFrame());
          return false;
       }
-      if (nrSides == 2 && secondCamera == null) {
+      if (twoSided && secondCamera == null) {
          gui_.showError("Please select a valid camera for the second " +
                "imaging path on the Devices Panel.",
                ASIdiSPIM.getFrame());
@@ -1248,6 +1250,22 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                ASIdiSPIM.getFrame());
          return false;
       }
+      
+      // it appears the circular buffer, which is used by both cameras, can only have one 
+      // image size setting => we require same image height and width for second camera if two-sided
+      if (twoSided) {
+         try {
+            Rectangle roi_1 = core_.getROI(firstCamera);
+            Rectangle roi_2 = core_.getROI(secondCamera);
+            if (roi_1.width != roi_2.width || roi_1.height != roi_2.height) {
+               gui_.showError("Camera ROI height and width must be equal because of Micro-Manager's circular buffer", 
+                     ASIdiSPIM.getFrame());
+               return false;
+            }
+         } catch (Exception ex) {
+            gui_.showError(ex, "Problem getting camera ROIs", ASIdiSPIM.getFrame());
+         }
+      }
 
       // empty out circular buffer
       try {
@@ -1306,7 +1324,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                core_.setExposure(secondCamera, exposureTime);
             }
             gui_.setChannelName(acqName, 0, firstCamera);
-            if (nrSides == 2 && secondCamera != null) {
+            if (twoSided && secondCamera != null) {
                gui_.setChannelName(acqName, 1, secondCamera);
             }
             
@@ -1339,6 +1357,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             gui_.setAcquisitionProperty(acqName, "SPIMmode", 
                     ((AcquisitionModes.Keys) spimMode_.getSelectedItem()).toString());
             
+            // get circular buffer ready
+            // do once here but not per-acquisition; need to ensure ROI changes registered
+            core_.initializeCircularBuffer();
+            
             // TODO: use new acquisition interface that goes through the pipeline
             //gui_.setAcquisitionAddImageAsynchronous(acqName); 
             MMAcquisition acq = gui_.getAcquisition(acqName);
@@ -1370,11 +1392,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                numTimePointsDone_++;
                updateAcquisitionStatus(AcquisitionStatus.ACQUIRING);
                
-               if (core_.getBufferTotalCapacity() == 0) {
-                  core_.initializeCircularBuffer();
-               }
                core_.startSequenceAcquisition(firstCamera, nrSlices, 0, true);
-               if (nrSides == 2) {
+               if (twoSided) {
                   core_.startSequenceAcquisition(secondCamera, nrSlices, 0, true);
                }
 
@@ -1399,16 +1418,18 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                }
                   
                // Wait for first image to create ImageWindow, so that we can be sure about image size
+               // Do not gather first image here
                long start = System.currentTimeMillis();
                long now = start;
-               long timeout = 10000;
+               long timeout;  // wait 5 seconds for first image to come
+               timeout = Math.max(5000, Math.round(1.2*computeActualVolumeDuration()));
                while (core_.getRemainingImageCount() == 0 && (now - start < timeout)
                      && !stop_.get()) {
                   now = System.currentTimeMillis();
                   Thread.sleep(5);
                }
                if (now - start >= timeout) {
-                  throw new Exception("Camera did not send image within a reasonable time");
+                  throw new Exception("Camera did not send first image within a reasonable time");
                }
                if (stop_.get()) {
                   throw new IllegalMonitorStateException("User stopped the acquisition");
@@ -1417,9 +1438,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                // gather all the images from the cameras, put them into the acquisition
                int[] frNumber = new int[2];
                boolean done = false;
-               long timeout2;
-               timeout2 = Math.max(10000, Math.round(1.2*computeActualVolumeDuration()));
+               long timeout2;  // how long to wait between images before timing out
+               timeout2 = Math.max(2000, Math.round(5*computeActualSlicePeriod()));
                start = System.currentTimeMillis();
+               long last = start;
                try {
                   while ((core_.getRemainingImageCount() > 0
                           || core_.isSequenceRunning(firstCamera)
@@ -1436,15 +1458,18 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         addImageToAcquisition(acqName, f, ch, frNumber[ch], 0,
                               now - acqStart, timg, bq);
                         frNumber[ch]++;
+                        last = now;  // keep track of last image time
                      } else {
                         Thread.sleep(1);
                      }
                      if (frNumber[0] == frNumber[1] && frNumber[0] == nrSlices) {
                         done = true;
+                        continue;
                      }
-                     if (now - start >= timeout2) {
-                        gui_.logError("No image arrived withing a reasonable period");
+                     if (now - last >= timeout2) {
+                        gui_.logError("Camera did not send all expected images within a reasonable period");
                         done = true;
+                        continue;
                      }
                   }
                } catch (InterruptedException iex) {
