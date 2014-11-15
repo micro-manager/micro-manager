@@ -56,13 +56,19 @@ import org.micromanager.utils.MMScriptException;
  */
 public interface ScriptInterface {
 	
-	/**
-	 * Pauses the script for the specified number of milliseconds
-	 */
+   /**
+    * Request a pause in script execution for the specified number of 
+    * milliseconds.  Most systems will guarantee a pause of at least 
+    * the desired duration, but may wait longer than requested before 
+    * continuing execution.
+    * @param ms Time in millisecond that the script should pause
+    * @throws org.micromanager.utils.MMScriptException
+    */
    public void sleep(long ms) throws MMScriptException;
          
    /**
     * Displays text in the scripting console output window.
+    * @param text 
     * @throws MMScriptException 
     */
    public void message(String text) throws MMScriptException;
@@ -115,12 +121,13 @@ public interface ScriptInterface {
     * @param summaryMetadata The metadata describing the acquisition parameters
     * @param diskCached True if images are cached on disk; false if they are kept in RAM only.
     * @param displayOff True if no display is to be created or shown.
-    * @throws MMScriptException
+    * @return 
     *
     * @deprecated Use openAcquisition() instead.
     */
    @Deprecated
-   public String createAcquisition(JSONObject summaryMetadata, boolean diskCached, boolean displayOff);
+   public String createAcquisition(JSONObject summaryMetadata, boolean diskCached, 
+           boolean displayOff);
 
    /**
     * Set up image physical dimensions for the data set that has already been opened.
@@ -141,15 +148,21 @@ public interface ScriptInterface {
    /**
     * Inserts image into the data set.
     * @param name - data set name
+    * @param frame - 0 based frame number
+    * @param channel - 0 based channel number
+    * @param slice - 0 based (z) slice number
+    * @param position - 0 based position number
     * @param taggedImg Tagged Image (image with associated metadata) 
     * @throws MMScriptException
     */
-   public void addImageToAcquisition(String name, int frame, int channel, int slice, int position, TaggedImage taggedImg) throws MMScriptException;   
+   public void addImageToAcquisition(String name, int frame, int channel, int slice, 
+           int position, TaggedImage taggedImg) throws MMScriptException;   
 
    /**
     * Change an acquisition so that adding images to it is done asynchronously.
     * All calls to e.g. addImageToAcquisition() and other similar functions
     * will return nearly-instantly.
+    * @param name of acquisition
     * @throws MMScriptException if the specified acquisition does not exist.
     */
    public void setAcquisitionAddImageAsynchronous(String name) throws MMScriptException;
