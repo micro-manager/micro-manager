@@ -39,7 +39,7 @@ import org.micromanager.MMStudio;
  */
 public class MMDialog extends JDialog {
    private static final long serialVersionUID = -3144618980027203294L;
-   private Preferences prefs_;
+   private Preferences mmDialogPrefs_;
    private static final String WINDOW_X = "mmdlg_y";
    private static final String WINDOW_Y = "mmdlg_x";
    private static final String WINDOW_WIDTH = "mmdlg_width";
@@ -59,10 +59,11 @@ public class MMDialog extends JDialog {
    }
 
    private void finishConstructor() {
-      prefs_ = Preferences.userNodeForPackage(this.getClass());
+      mmDialogPrefs_ = Preferences.userNodeForPackage(this.getClass());
       MMStudio mfr = MMStudio.getInstance();
       if (mfr != null) {
-    	  setBackground(mfr.getBackgroundColor());
+         mfr.addMMBackgroundListener(this);
+    	   setBackground(mfr.getBackgroundColor());
       }
    }
 
@@ -70,11 +71,11 @@ public class MMDialog extends JDialog {
       // if a saved position exists then make sure it falls on the screen
       // (useful when screen size changes between invocations)
       Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-      if (screenSize.width < prefs_.getInt(WINDOW_X, 0)) {
-         prefs_.putInt(WINDOW_X, x);
+      if (screenSize.width < mmDialogPrefs_.getInt(WINDOW_X, 0)) {
+         mmDialogPrefs_.putInt(WINDOW_X, x);
       }
-      if (screenSize.height < prefs_.getInt(WINDOW_Y, 0)) {
-         prefs_.putInt(WINDOW_Y, y);
+      if (screenSize.height < mmDialogPrefs_.getInt(WINDOW_Y, 0)) {
+         mmDialogPrefs_.putInt(WINDOW_Y, y);
       }
    }
 
@@ -83,6 +84,10 @@ public class MMDialog extends JDialog {
     * Makes sure that the window can be displayed
     * Attaches a listener to the window that will save the position when the
     * window closing event is received
+    * @param x - X position of this dialog
+    * @param y - y position of this dialog
+    * @param width - width of this dialog
+    * @param height - height of this dialog
     */
    protected void loadAndRestorePosition(int x, int y, int width, int height) {
       loadPosition(x, y, width, height);
@@ -95,16 +100,39 @@ public class MMDialog extends JDialog {
       );
    }
    
+    /**
+    * Load window position and size from preferences
+    * Makes sure that the window can be displayed
+    * Attaches a listener to the window that will save the position when the
+    * window closing event is received
+    * @param x - X position of this dialog
+    * @param y - y position of this dialog
+    */
+   protected void loadAndRestorePosition(int x, int y) {
+      loadPosition(x, y);
+      this.addWindowListener(new WindowAdapter() {
+         @Override
+         public void windowClosing(WindowEvent arg0) {
+            savePosition();
+         }
+      }
+      );
+   }
+   
    /**
     * Load window position and size from preferences
     * Makes sure that the window can be displayed
+    * @param x - X position of this dialog
+    * @param y - y position of this dialog
+    * @param width - width of this dialog
+    * @param height - height of this dialog
     */
    protected void loadPosition(int x, int y, int width, int height) {
       ensureSafeWindowPosition(x, y);
-      setBounds(prefs_.getInt(WINDOW_X, x),
-                prefs_.getInt(WINDOW_Y, y),
-                prefs_.getInt(WINDOW_WIDTH, width),
-                prefs_.getInt(WINDOW_HEIGHT, height));
+      setBounds(mmDialogPrefs_.getInt(WINDOW_X, x),
+                mmDialogPrefs_.getInt(WINDOW_Y, y),
+                mmDialogPrefs_.getInt(WINDOW_WIDTH, width),
+                mmDialogPrefs_.getInt(WINDOW_HEIGHT, height));
    }
    
    @Override
@@ -115,8 +143,8 @@ public class MMDialog extends JDialog {
    
    protected void loadPosition(int x, int y) {
       ensureSafeWindowPosition(x, y);
-      setLocation(prefs_.getInt(WINDOW_X, x),
-                prefs_.getInt(WINDOW_Y, y));
+      setLocation(mmDialogPrefs_.getInt(WINDOW_X, x),
+                mmDialogPrefs_.getInt(WINDOW_Y, y));
    }
 
    /**
@@ -125,19 +153,19 @@ public class MMDialog extends JDialog {
    protected void savePosition() {
       Rectangle r = getBounds();
       if (r != null) {
-         prefs_.putInt(WINDOW_X, r.x);
-         prefs_.putInt(WINDOW_Y, r.y);
-         prefs_.putInt(WINDOW_WIDTH, r.width);
-         prefs_.putInt(WINDOW_HEIGHT, r.height);
+         mmDialogPrefs_.putInt(WINDOW_X, r.x);
+         mmDialogPrefs_.putInt(WINDOW_Y, r.y);
+         mmDialogPrefs_.putInt(WINDOW_WIDTH, r.width);
+         mmDialogPrefs_.putInt(WINDOW_HEIGHT, r.height);
       }
    }
    
    public Preferences getPrefsNode() {
-      return prefs_;
+      return mmDialogPrefs_;
    }
    
    public void setPrefsNode(Preferences p) {
-      prefs_ = p;
+      mmDialogPrefs_ = p;
    }
 
 

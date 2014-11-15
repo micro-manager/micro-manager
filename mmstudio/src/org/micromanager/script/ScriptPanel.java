@@ -450,7 +450,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
       hotkeyButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
-            HotKeysDialog hk = new HotKeysDialog(getBackground());
+            HotKeysDialog hk = new HotKeysDialog();
          }
       });
       hotkeyButton.setText("ShortCuts");

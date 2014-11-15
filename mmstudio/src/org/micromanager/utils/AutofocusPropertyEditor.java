@@ -63,18 +63,18 @@ import java.text.ParseException;
  * device - property - value
  */
 public class AutofocusPropertyEditor extends MMDialog {
-   private SpringLayout springLayout;
+   private final SpringLayout springLayout;
    private static final long serialVersionUID = 1507097881635431043L;
    
    private JTable table_;
    private PropertyTableData data_;
-   private PropertyCellEditor cellEditor_;
+   private final PropertyCellEditor cellEditor_;
    private JCheckBox showReadonlyCheckBox_;
    
    private static final String PREF_SHOW_READONLY = "show_readonly";
-   private JScrollPane scrollPane_;
-   private AutofocusManager afMgr_;
-   private JButton btnClose;
+   private final JScrollPane scrollPane_;
+   private final AutofocusManager afMgr_;
+   private final JButton btnClose;
    private JComboBox methodCombo_;
    
    public AutofocusPropertyEditor(AutofocusManager afmgr) {
@@ -94,8 +94,8 @@ public class AutofocusPropertyEditor extends MMDialog {
          table_.addColumn(column);
       }
             
-      Preferences root = Preferences.userNodeForPackage(this.getClass());
-      setPrefsNode(root.node(root.absolutePath() + "/AutofocusPropertyEditor"));
+      //Preferences root = Preferences.userNodeForPackage(this.getClass());
+      //setPrefsNode(root.node(root.absolutePath() + "/AutofocusPropertyEditor"));
       
       springLayout = new SpringLayout();
       getContentPane().setLayout(springLayout);
@@ -117,7 +117,7 @@ public class AutofocusPropertyEditor extends MMDialog {
       });
       setTitle("Autofocus properties");
 
-      loadPosition(100, 100, 400, 300);
+      loadAndRestorePosition(100, 100, 400, 300);
 
       scrollPane_ = new JScrollPane();
       scrollPane_.setFont(new Font("Arial", Font.PLAIN, 10));
@@ -266,9 +266,8 @@ public class AutofocusPropertyEditor extends MMDialog {
          
 
    public void cleanup() {
-      savePosition();
-      Preferences prefs = getPrefsNode();
-      prefs.putBoolean(PREF_SHOW_READONLY, showReadonlyCheckBox_.isSelected());
+      getPrefsNode().putBoolean(PREF_SHOW_READONLY, 
+              showReadonlyCheckBox_.isSelected());
       if (afMgr_ != null)
          if (afMgr_.getDevice() != null)
             afMgr_.getDevice().saveSettings();
@@ -339,7 +338,9 @@ public class AutofocusPropertyEditor extends MMDialog {
                refresh();
 
                fireTableCellUpdated(row, col);
-            } catch (Exception e) {
+            } catch (ParseException e) {
+               handleException(e);
+            } catch (MMException e) {
                handleException(e);
             }
          }
@@ -370,7 +371,7 @@ public class AutofocusPropertyEditor extends MMDialog {
             }
         	
             this.fireTableDataChanged();
-         } catch (Exception e) {
+         } catch (MMException e) {
             handleException(e);
          }
       }
@@ -570,7 +571,7 @@ public class AutofocusPropertyEditor extends MMDialog {
             } else {
                JLabel lab = new JLabel();
                lab.setOpaque(true);
-               lab.setText(item_.value.toString());
+               lab.setText(item_.value);
                lab.setHorizontalAlignment(JLabel.LEFT);
                comp = lab;
             }
@@ -593,7 +594,6 @@ public class AutofocusPropertyEditor extends MMDialog {
       public void firePropertyChange(String propertyName, boolean oldValue, boolean newValue) {}
       public PropertyCellRenderer() {
          super();
-         //setFont(new Font("Arial", Font.PLAIN, 10));
       }
    }
 }

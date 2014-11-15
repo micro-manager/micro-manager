@@ -139,30 +139,23 @@ public class CalibrationListDlg extends MMDialog {
 
    /**
     * Create the dialog
+    * @param core - The Micro-Manager core object
     */
    public CalibrationListDlg(CMMCore core) {
       super();
-      addWindowListener(new WindowAdapter() {
-         @Override
-         public void windowClosing(WindowEvent arg0) {
-            savePosition();
-         }
-      });
       core_ = core;
-      //opts_ = opts;
-      //guiColors_ = new GUIColors();
       setTitle("Pixel Size Calibration");
       springLayout = new SpringLayout();
       getContentPane().setLayout(springLayout);
-      setMinimumSize(new Dimension(263, 239));
-      setBounds(100, 100, 365, 495);
 
       Preferences root = Preferences.userNodeForPackage(this.getClass());
       prefs_ = root.node(root.absolutePath() + "/CalibrationListDlg");
       setPrefsNode(prefs_);
-
-      Rectangle r = getBounds();
-      loadPosition(r.x, r.y, r.width, r.height);
+      
+      setMinimumSize(new Dimension(263, 239));
+      loadAndRestorePosition(100, 100, 365, 495);
+      Rectangle r = this.getBounds();
+      r.x +=1;
       
       final JScrollPane scrollPane = new JScrollPane();
       getContentPane().add(scrollPane);
@@ -270,7 +263,6 @@ public class CalibrationListDlg extends MMDialog {
       closeButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
-            savePosition();
             dispose();
          }
       });

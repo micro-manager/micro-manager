@@ -26,10 +26,10 @@ import org.micromanager.utils.MMDialog;
 public class AdvancedOptionsDialog extends MMDialog {
 
     private static final long serialVersionUID = 1L;
-    private AcquisitionEngine acqEng_;
-    private JTabbedPane tabbedPane_;
-    private JPanel closeButtonPanel_;
-    private CustomTimeIntervalsPanel customTimeIntervalsPanel_;
+    private final AcquisitionEngine acqEng_;
+    private final JTabbedPane tabbedPane_;
+    private final JPanel closeButtonPanel_;
+    private final CustomTimeIntervalsPanel customTimeIntervalsPanel_;
 
     public AdvancedOptionsDialog(AcquisitionEngine acqEng, ScriptInterface gui) {
         super();

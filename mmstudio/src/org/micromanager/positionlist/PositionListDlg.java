@@ -142,7 +142,6 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       addWindowListener(new WindowAdapter() {
          @Override
          public void windowClosing(WindowEvent arg0) {
-            savePosition();
             int posCol0Width = posTable_.getColumnModel().getColumn(0).getWidth();
             prefs_.putInt(POS_COL0_WIDTH, posCol0Width);
             int axisCol0Width = axisTable_.getColumnModel().getColumn(0).getWidth();
@@ -163,7 +162,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       setLayout(new MigLayout("flowy, filly, insets 8", "[grow][]", 
               "[top]"));
       setMinimumSize(new Dimension(275, 365));
-      loadPosition(100, 100, 362, 595);
+      loadAndRestorePosition(100, 100, 362, 595);
 
       arialSmallFont_ = new Font("Arial", Font.PLAIN, 10);
 
@@ -838,9 +837,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
 
    protected void showCreateTileDlg() {
       TileCreatorDlg tileCreatorDlg = new TileCreatorDlg(core_, opts_, this);
-      studio_.addMMBackgroundListener(tileCreatorDlg);
       studio_.addMMListener(tileCreatorDlg);
-      tileCreatorDlg.setBackground(guiColors_.background.get(opts_.displayBackground_));
       tileCreatorDlg.setVisible(true);
    }
 

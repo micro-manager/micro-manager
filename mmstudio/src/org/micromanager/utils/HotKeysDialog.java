@@ -50,16 +50,16 @@ import org.micromanager.utils.FileDialogs.FileType;
  * @author nico
  */
 public final class HotKeysDialog extends MMDialog {
-   private ShortCutTableModel sctModel_ = new ShortCutTableModel();
-   private JComboBox combo_ = new JComboBox();
+   private final ShortCutTableModel sctModel_ = new ShortCutTableModel();
+   private final JComboBox combo_ = new JComboBox();
    private Integer lastTypedKey_ = 0;
-   private KeyEvtHandler keh_;
-   private ArrayList<Integer> keys_ = new ArrayList<Integer>();
-   private ArrayList<HotKeyAction> actions_ = new ArrayList<HotKeyAction>();
-   private ArrayList<HotKeyAction> possibleActions_ = new ArrayList<HotKeyAction>();
+   private final KeyEvtHandler keh_;
+   private final ArrayList<Integer> keys_ = new ArrayList<Integer>();
+   private final ArrayList<HotKeyAction> actions_ = new ArrayList<HotKeyAction>();
+   private final ArrayList<HotKeyAction> possibleActions_ = new ArrayList<HotKeyAction>();
    private String[] possibleActionsAsString_;
-   private Font ourFont_ = new Font("Lucida Grande", java.awt.Font.PLAIN, 10);
-   private Preferences prefs_;
+   private final Font ourFont_ = new Font("Lucida Grande", java.awt.Font.PLAIN, 10);
+   private final Preferences prefs_;
 
    public static FileType MM_HOTKEYS
            = new FileType("MM_HOTKEYS",
@@ -139,16 +139,13 @@ public final class HotKeysDialog extends MMDialog {
    }
 
 
-    /** Creates new form HotKeys */
-    public  HotKeysDialog(Color backgroundColor) {
+    /** Creates new form HotKeys
+    */
+    public  HotKeysDialog() {
         initComponents();
 
-        this.setBackground(backgroundColor);
-
-        Preferences root = Preferences.userNodeForPackage(this.getClass());
-        prefs_ = root.node(root.absolutePath() + "/HotKeyFrame");
-        setPrefsNode(prefs_);
-        loadPosition(0, 0, 377, 378);
+        prefs_ = getPrefsNode();
+        loadAndRestorePosition(100, 100, 377, 378);
 
         readKeys();
 
@@ -162,7 +159,6 @@ public final class HotKeysDialog extends MMDialog {
               generateKeys();
 
               HotKeys.active_ = true;
-              savePosition();
             }
 
         });
@@ -274,7 +270,8 @@ public final class HotKeysDialog extends MMDialog {
        public void keyPressed(KeyEvent ke) {
           Integer value = ke.getKeyCode();
 
-          if (!keys_.contains(value) || value == keys_.get(hotKeyTable_.getSelectedRow())) {
+          if (!keys_.contains(value) || 
+                  value.intValue() == keys_.get(hotKeyTable_.getSelectedRow())) {
              lastTypedKey_ = value;
              if (label_ != null)
                label_.setText(KeyEvent.getKeyText(lastTypedKey_));

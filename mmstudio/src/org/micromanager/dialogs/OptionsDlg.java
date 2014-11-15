@@ -22,11 +22,11 @@
 
 package org.micromanager.dialogs;
 
-import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.text.ParseException;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
@@ -59,10 +59,10 @@ import org.micromanager.utils.UIMonitor;
 public class OptionsDlg extends MMDialog {
    private static final long serialVersionUID = 1L;
 
-   private JTextField startupScriptFile_;
-   private JTextField bufSizeField_;
+   private final JTextField startupScriptFile_;
+   private final JTextField bufSizeField_;
    private JTextField logDeleteDaysField_;
-   private JComboBox comboDisplayBackground_;
+   private final JComboBox comboDisplayBackground_;
 
    private MMOptions opts_;
    private CMMCore core_;
@@ -72,8 +72,13 @@ public class OptionsDlg extends MMDialog {
 
    /**
     * Create the dialog
+    * @param opts - Application wide preferences
+    * @param core - The Micro-Manager Core object
+    * @param mainPrefs - Preferences of the encapsulating app (i.e. MMStudio Prefs)
+    * @param parent - MMStudio api 
     */
-   public OptionsDlg(MMOptions opts, CMMCore core, Preferences mainPrefs, ScriptInterface parent) {
+   public OptionsDlg(MMOptions opts, CMMCore core, Preferences mainPrefs, 
+           ScriptInterface parent) {
       super();
       parent_ = parent;
       opts_ = opts;
@@ -84,17 +89,8 @@ public class OptionsDlg extends MMDialog {
       setResizable(false);
       setModal(true);
       setTitle("Micro-Manager Options");
-      if (opts_.displayBackground_.equals("Day")) {
-         setBackground(java.awt.SystemColor.control);
-      } else if (opts_.displayBackground_.equals("Night")) {
-         setBackground(java.awt.Color.gray);
-      }
-
-      Preferences root = Preferences.userNodeForPackage(this.getClass());
-      setPrefsNode(root.node(root.absolutePath() + "/OptionsDlg"));
-
-      Rectangle r = getBounds();
-      loadPosition(r.x, r.y);
+      
+      loadAndRestorePosition(100, 100);     
 
       setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
       addWindowListener(new WindowAdapter() {
@@ -440,7 +436,7 @@ public class OptionsDlg extends MMDialog {
          deleteLogDays =
             NumberUtils.displayStringToInt(logDeleteDaysField_.getText());
       }
-      catch (Exception ex) {
+      catch (ParseException ex) {
          ReportingUtils.showError(ex);
          return;
       }
@@ -450,7 +446,6 @@ public class OptionsDlg extends MMDialog {
       opts_.deleteCoreLogAfterDays_ = deleteLogDays;
       opts_.saveSettings();
 
-      savePosition();
       parent_.makeActive();
       dispose();
    }

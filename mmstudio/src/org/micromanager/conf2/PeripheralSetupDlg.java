@@ -49,10 +49,12 @@ public class PeripheralSetupDlg extends MMDialog {
          }
       }
 
+      @Override
       public int getRowCount() {
          return peripherals_.size();
       }
 
+      @Override
       public int getColumnCount() {
          return COLUMN_NAMES.length;
       }
@@ -71,6 +73,7 @@ public class PeripheralSetupDlg extends MMDialog {
          return ret;
       }
 
+      @Override
       public Object getValueAt(int rowIndex, int columnIndex) {
 
          if (columnIndex == NAMECOLUMN) {
@@ -184,6 +187,7 @@ public class PeripheralSetupDlg extends MMDialog {
          {
             JButton okButton = new JButton("OK");
             okButton.addActionListener(new ActionListener() {
+               @Override
                public void actionPerformed(ActionEvent e) {
                   onOK();
                }
@@ -195,6 +199,7 @@ public class PeripheralSetupDlg extends MMDialog {
          {
             JButton cancelButton = new JButton("Cancel");
             cancelButton.addActionListener(new ActionListener() {
+               @Override
                public void actionPerformed(ActionEvent e) {
                   onCancel();
                }
@@ -204,6 +209,7 @@ public class PeripheralSetupDlg extends MMDialog {
          }
       }
       addWindowListener(new WindowAdapter() {
+         @Override
          public void windowClosing(final WindowEvent e) {
             savePosition();
          }
@@ -232,7 +238,7 @@ public class PeripheralSetupDlg extends MMDialog {
       rebuildTable();
    }
 
-   public void rebuildTable() {
+   public final void rebuildTable() {
       DeviceTable_TableModel tmd = new DeviceTable_TableModel();
       deviceTable_.setModel(tmd);
       tmd.fireTableStructureChanged();

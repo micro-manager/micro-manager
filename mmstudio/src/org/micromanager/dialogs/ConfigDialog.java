@@ -52,7 +52,7 @@ public class ConfigDialog extends MMDialog {
    private ShowFlags flags_;
    private ShowFlagsPanel showFlagsPanel_;
 
-   private SpringLayout springLayout_;
+   private final SpringLayout springLayout_;
    private JTextArea textArea_;
    private JCheckBox showReadonlyCheckBox_;
    protected boolean showShowReadonlyCheckBox_ = false;
@@ -80,12 +80,6 @@ public class ConfigDialog extends MMDialog {
 
    public ConfigDialog(String groupName, String presetName, ScriptInterface gui, CMMCore core, boolean newItem) {
       super();
-      addWindowListener(new WindowAdapter() {
-         @Override
-         public void windowClosing(WindowEvent arg0) {
-            savePosition();
-         }
-      });
       groupName_ = groupName;
       presetName_ = presetName;
       newItem_ = newItem;
@@ -93,9 +87,7 @@ public class ConfigDialog extends MMDialog {
       core_ = core;
       springLayout_ = new SpringLayout();
       getContentPane().setLayout(springLayout_);
-      setBounds(100, 100, 550, 600);
-      Rectangle r = getBounds();
-      this.loadPosition(r.x, r.y);
+      loadAndRestorePosition(100, 100, 550, 600);
          
       setResizable(false);
    }

@@ -29,12 +29,12 @@ public class ToolsMenu {
    private static final String MOUSE_MOVES_STAGE = "mouse_moves_stage";
 
    private JMenu toolsMenu_;
-   private JMenu switchConfigurationMenu_;
+   private final JMenu switchConfigurationMenu_;
    private JCheckBoxMenuItem centerAndDragMenuItem_;
 
-   private MMStudio studio_;
-   private CMMCore core_;
-   private MMOptions options_;
+   private final MMStudio studio_;
+   private final CMMCore core_;
+   private final MMOptions options_;
    
    public ToolsMenu(MMStudio studio, CMMCore core, MMOptions options) {
       studio_ = studio;
@@ -50,6 +50,7 @@ public class ToolsMenu {
       GUIUtils.addMenuItem(toolsMenu_, "Refresh GUI",
               "Refresh all GUI controls directly from the hardware",
               new Runnable() {
+                 @Override
                  public void run() {
                     core_.updateSystemStateCache();
                     studio_.updateGUI(true);
@@ -60,6 +61,7 @@ public class ToolsMenu {
       GUIUtils.addMenuItem(toolsMenu_, "Rebuild GUI",
               "Regenerate Micro-Manager user interface",
               new Runnable() {
+                 @Override
                  public void run() {
                     studio_.initializeGUI();
                     core_.updateSystemStateCache();
@@ -71,6 +73,7 @@ public class ToolsMenu {
       GUIUtils.addMenuItem(toolsMenu_, "Script Panel...",
               "Open Micro-Manager script editor window",
               new Runnable() {
+                 @Override
                  public void run() {
                     studio_.showScriptPanel();
                  }
@@ -79,14 +82,16 @@ public class ToolsMenu {
       GUIUtils.addMenuItem(toolsMenu_, "Shortcuts...",
               "Create keyboard shortcuts to activate image acquisition, mark positions, or run custom scripts",
               new Runnable() {
+                 @Override
                  public void run() {
-                    new HotKeysDialog(studio_.getBackgroundColor());
+                    HotKeysDialog hk = new HotKeysDialog();
                  }
               });
 
       GUIUtils.addMenuItem(toolsMenu_, "Device Property Browser...",
               "Open new window to view and edit device property values",
               new Runnable() {
+                 @Override
                  public void run() {
                     studio_.createPropertyEditor();
                  }
@@ -97,6 +102,7 @@ public class ToolsMenu {
       GUIUtils.addMenuItem(toolsMenu_, "Stage Position List...",
               "Open the stage position list window",
               new Runnable() {
+                 @Override
                  public void run() {
                     studio_.showXYPositionList();
                  }
@@ -106,6 +112,7 @@ public class ToolsMenu {
       GUIUtils.addMenuItem(toolsMenu_, "Multi-Dimensional Acquisition...",
               "Open multi-dimensional acquisition setup window",
               new Runnable() {
+                 @Override
                  public void run() {
                     studio_.openAcqControlDialog();
                  }
@@ -117,6 +124,7 @@ public class ToolsMenu {
               "When enabled, double clicking or dragging in the snap/live\n"
               + "window moves the XY-stage. Requires the hand tool.",
               new Runnable() {
+                 @Override
                  public void run() {
                     studio_.updateCenterAndDragListener();
                     IJ.setTool(Toolbar.HAND);
@@ -131,6 +139,7 @@ public class ToolsMenu {
               + "micromanager will automatically use it when "
               + "calculating metadata",
               new Runnable() {
+                 @Override
                  public void run() {
                     studio_.createCalibrationListDlg();
                  }
@@ -140,6 +149,7 @@ public class ToolsMenu {
       GUIUtils.addMenuItem(toolsMenu_, "Hardware Configuration Wizard...",
               "Open wizard to create new hardware configuration",
               new Runnable() {
+                 @Override
                  public void run() {
                     runHardwareWizard(prefs);
                  }
@@ -148,6 +158,7 @@ public class ToolsMenu {
       GUIUtils.addMenuItem(toolsMenu_, "Load Hardware Configuration...",
               "Un-initialize current configuration and initialize new one",
               new Runnable() {
+                 @Override
                  public void run() {
                     loadConfiguration();
                     studio_.initializeGUI();
@@ -157,6 +168,7 @@ public class ToolsMenu {
       GUIUtils.addMenuItem(toolsMenu_, "Reload Hardware Configuration",
               "Shutdown current configuration and initialize most recently loaded configuration",
               new Runnable() {
+                 @Override
                  public void run() {
                     studio_.loadSystemConfiguration();
                     studio_.initializeGUI();
@@ -177,6 +189,7 @@ public class ToolsMenu {
       GUIUtils.addMenuItem(toolsMenu_, "Save Configuration Settings As...",
               "Save current configuration settings as new configuration file",
               new Runnable() {
+                 @Override
                  public void run() {
                     studio_.saveConfigPresets();
                     studio_.updateChannelCombos();
@@ -188,6 +201,7 @@ public class ToolsMenu {
       GUIUtils.addMenuItem(toolsMenu_, "Options...",
               "Set a variety of Micro-Manager configuration options",
               new Runnable() {
+         @Override
          public void run() {
             final int oldBufsize = options_.circularBufferSizeMB_;
 
@@ -207,7 +221,7 @@ public class ToolsMenu {
    }
 
    private void loadConfiguration() {
-      File configFile = FileDialogs.openFile(studio_.getFrame(), 
+      File configFile = FileDialogs.openFile(MMStudio.getFrame(), 
             "Load a config file", MMStudio.MM_CONFIG_FILE);
       if (configFile != null) {
          studio_.setSysConfigFile(configFile.getAbsolutePath());
@@ -242,7 +256,7 @@ public class ToolsMenu {
 
          // run Configurator
          ConfiguratorDlg2 cfg2 = null;
-         MainFrame frame = studio_.getFrame();
+         MainFrame frame = MMStudio.getFrame();
          try {
             frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             cfg2 = new ConfiguratorDlg2(core_, studio_.getSysConfigFile());
@@ -281,6 +295,7 @@ public class ToolsMenu {
             GUIUtils.addMenuItem(switchConfigurationMenu_,
                     configFile, null,
                     new Runnable() {
+               @Override
                public void run() {
                   studio_.setSysConfigFile(configFile);
                }

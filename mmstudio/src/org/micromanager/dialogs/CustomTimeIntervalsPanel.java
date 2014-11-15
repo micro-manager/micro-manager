@@ -45,7 +45,7 @@ import org.micromanager.utils.TooltipTextMaker;
 
 public class CustomTimeIntervalsPanel extends JPanel {
 
-    private AcquisitionEngine acqEng_;
+    private final AcquisitionEngine acqEng_;
     private JTable timeIntervalTable_;
     private TimeIntervalTableModel intervalTableModel_;
     private JPanel buttonsPanel_;
@@ -54,7 +54,7 @@ public class CustomTimeIntervalsPanel extends JPanel {
     private LinearTimeDialog linearTimeDialog_;
     private LogTimeDialog logTimeDialog_;
     private JCheckBox useIntervalsCheckBox_;
-    private JTabbedPane window_;
+    private final JTabbedPane window_;
 
     @SuppressWarnings("LeakingThisInConstructor")
     public CustomTimeIntervalsPanel(AcquisitionEngine acqEng, JTabbedPane window, ScriptInterface gui) {
@@ -411,7 +411,7 @@ public class CustomTimeIntervalsPanel extends JPanel {
             
             aValue_ = new JFormattedTextField(NumberFormat.getNumberInstance());
             aValue_.setFont(new Font("Arial", Font.PLAIN, 14));
-            aValue_.setValue(new Double(1.0));
+            aValue_.setValue(1.0);
             aValue_.setPreferredSize(new Dimension(80, 22));
             aCombo_ = new JComboBox();
             aCombo_.setModel(new DefaultComboBoxModel(new String[]{"ms", "s", "min"}));
@@ -420,12 +420,12 @@ public class CustomTimeIntervalsPanel extends JPanel {
             row1.add(aCombo_);
             rValue_ = new JFormattedTextField(NumberFormat.getNumberInstance());
             rValue_.setFont(new Font("Arial", Font.PLAIN, 14));
-            rValue_.setValue(new Double(2.0));           
+            rValue_.setValue(2.0);           
             rValue_.setPreferredSize(new Dimension(80, 22));        
             row2.add(rValue_);
             tValue_ = new JFormattedTextField(NumberFormat.getNumberInstance());
             tValue_.setFont(new Font("Arial", Font.PLAIN, 14));
-            tValue_.setValue(new Double(1000.0));
+            tValue_.setValue(1000.0);
             tValue_.setPreferredSize(new Dimension(80, 22));
             tCombo_ = new JComboBox();
             tCombo_.setModel(new DefaultComboBoxModel(new String[]{"ms", "s", "min"}));
@@ -641,7 +641,7 @@ public class CustomTimeIntervalsPanel extends JPanel {
 
             interval_ = new JFormattedTextField(NumberFormat.getNumberInstance());
             interval_.setFont(new Font("Arial", Font.PLAIN, 14));
-            interval_.setValue(new Double(1.0));
+            interval_.setValue(1.0);
             interval_.setPreferredSize(new Dimension(80, 22));
             row2.add(interval_);
 
@@ -760,7 +760,7 @@ public class CustomTimeIntervalsPanel extends JPanel {
 
         private static final long serialVersionUID = 1L;
         public final String[] COLUMN_NAMES = new String[]{"Frame Index", "Time interval (ms)", "Elapsed time(ms)"};
-        private ArrayList<Double> timeIntervals_;
+        private final ArrayList<Double> timeIntervals_;
 
         public TimeIntervalTableModel() {
             super();

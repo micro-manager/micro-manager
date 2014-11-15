@@ -1,3 +1,23 @@
+///////////////////////////////////////////////////////////////////////////////
+//FILE:          OffsetPositionsDialog.java
+//PROJECT:       Micro-Manager
+//SUBSYSTEM:     mmstudio
+//-----------------------------------------------------------------------------
+
+//AUTHOR:       ??
+
+//COPYRIGHT:    University of California, San Francisco, 2014
+
+//LICENSE:      This file is distributed under the BSD license.
+//License text is included with the source distribution.
+
+//This file is distributed in the hope that it will be useful,
+//but WITHOUT ANY WARRANTY; without even the implied warranty
+//of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+//IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+
 package org.micromanager.positionlist;
 
 import mmcorej.CMMCore;
@@ -7,8 +27,6 @@ import mmcorej.StrVector;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 
 import javax.swing.JButton;
@@ -46,13 +64,7 @@ class OffsetPositionsDialog extends MMDialog {
       core_ = core;
       axisInputs_ = new ArrayList<JTextField>();
       
-      addWindowListener(new WindowAdapter() {
-         @Override
-         public void windowClosing(WindowEvent arg0) {
-            savePosition();          
-         }
-      });
-      this.loadPosition(100,100, 320, 300);
+      this.loadAndRestorePosition(100,100, 320, 300);
       
       setTitle("Add offset to stage positions");
       setResizable(false);
@@ -107,7 +119,6 @@ class OffsetPositionsDialog extends MMDialog {
                }
             }
             parent_.offsetSelectedSites(deviceName_, offsets);
-            savePosition();
             dispose();
          }
       });
@@ -119,7 +130,6 @@ class OffsetPositionsDialog extends MMDialog {
       cancelButton.addActionListener(new ActionListener() {
          @Override
             public void actionPerformed(ActionEvent event) {
-               savePosition();
                dispose();
             }
       });

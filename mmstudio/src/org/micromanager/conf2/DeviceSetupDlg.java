@@ -48,7 +48,7 @@ public class DeviceSetupDlg extends MMDialog {
    private DetectorJDialog progressDialog;
    private DetectionTask dt;
    private final String DETECT_PORTS = "Scan";
-   private JTable comTable;
+   private final JTable comTable;
    private JTextField devLabel;
 
    /**
@@ -85,6 +85,7 @@ public class DeviceSetupDlg extends MMDialog {
          {
             JButton okButton = new JButton("OK");
             okButton.addActionListener(new ActionListener() {
+               @Override
                public void actionPerformed(ActionEvent e) {
                   onOK();
                }
@@ -96,6 +97,7 @@ public class DeviceSetupDlg extends MMDialog {
          {
             JButton cancelButton = new JButton("Cancel");
             cancelButton.addActionListener(new ActionListener() {
+               @Override
                public void actionPerformed(ActionEvent e) {
                   onCancel();
                }
@@ -127,6 +129,7 @@ public class DeviceSetupDlg extends MMDialog {
       detectButton.setEnabled(false);
       detectButton.addActionListener(new ActionListener() {
 
+         @Override
          public void actionPerformed(ActionEvent e) {
             if (dt != null && dt.isAlive())
                return;

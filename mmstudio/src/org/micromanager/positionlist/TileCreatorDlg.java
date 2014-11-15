@@ -6,7 +6,7 @@
 
 //AUTHOR:       Nico Stuurman, nico@cmp.ucsf.edu, January 10, 2008
 
-//COPYRIGHT:    University of California, San Francisco, 2008
+//COPYRIGHT:    University of California, San Francisco, 2008 - 2014
 
 //LICENSE:      This file is distributed under the BSD license.
 //License text is included with the source distribution.
@@ -23,13 +23,10 @@
 package org.micromanager.positionlist;
 
 import java.awt.Font;
-import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.text.DecimalFormat;
-import java.util.prefs.Preferences;
+import java.text.ParseException;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -74,18 +71,16 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
 
    /**
     * Create the dialog
+    * @param core - Micro-Manager Core object
+    * @param opts - App wide settings stored in singleton MMOptions object
+    * @param positionListDlg - The position list dialog
     */
-   public TileCreatorDlg(CMMCore core, MMOptions opts, PositionListDlg positionListDlg) {
+   public TileCreatorDlg(CMMCore core, MMOptions opts, 
+           PositionListDlg positionListDlg) {
       super();
       setResizable(false);
       setName("tileDialog");
       getContentPane().setLayout(null);
-      addWindowListener(new WindowAdapter() {
-         @Override
-         public void windowClosing(WindowEvent arg0) {
-            savePosition();
-         }
-      });
       
       core_ = core;
       positionListDlg_ = positionListDlg;   
@@ -94,14 +89,9 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
       endPositionSet_ = new boolean[4];
 
       setTitle("Tile Creator");
-      setBounds(300, 300, 344, 280);
 
-      Preferences root = Preferences.userNodeForPackage(this.getClass());
-      setPrefsNode(root.node(root.absolutePath() + "/TileCreatorDlg"));
-
-      Rectangle r = getBounds();
-      //loadPosition(r.x, r.y, r.width, r.height);
-      loadPosition(r.x, r.y);
+      loadAndRestorePosition(300, 300);
+      this.setSize(344, 280);
 
       final JButton goToLeftButton = new JButton();
       goToLeftButton.setFont(new Font("", Font.PLAIN, 10));
@@ -344,7 +334,6 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
       okButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
-            savePosition();
             addToPositionList();
          }
       });
@@ -358,7 +347,6 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
          @Override
          public void actionPerformed(ActionEvent arg0) { 
             positionListDlg_.activateAxisTable(true);
-            savePosition();
             dispose();
          }
       });
@@ -375,7 +363,8 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
          }
       });
       resetButton.setText("Reset");
-      getContentPane().add(resetButton);
+      getContentPane().add(resetButton); 
+
 
    }
 
@@ -611,7 +600,7 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
       double pixSizeUm = 0.0;
       try {
          pixSizeUm = NumberUtils.displayStringToDouble(pixelSizeField_.getText());
-      } catch (Exception e) {
+      } catch (ParseException e) {
          ReportingUtils.logError(e);
       }
       if (pixSizeUm <= 0.0) {
@@ -628,8 +617,8 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
       double overlap = 0.0;
       try {
          overlap = NumberUtils.displayStringToDouble(overlapField_.getText());
-      } catch (Exception e) {
-         //handleError(e.getMessage());
+      } catch (ParseException e) {
+         ReportingUtils.logError(e, "Number Parse error in Tile Creator Dialog");
       }
 
       double overlapUmX;

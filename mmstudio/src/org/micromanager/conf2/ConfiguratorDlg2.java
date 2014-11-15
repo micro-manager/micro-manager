@@ -82,12 +82,12 @@ public class ConfiguratorDlg2 extends MMDialog {
     private PagePanel pages_[];
     private int curPage_ = 0;
     private MicroscopeModel microModel_;
-    private CMMCore core_;
+    private final CMMCore core_;
     private Preferences prefs_;
     private static final String APP_NAME = "Configurator";
     private JLabel titleLabel_;
     private JEditorPane helpTextPane_;
-    private String defaultPath_;
+    private final String defaultPath_;
 
     private static final String CFG_OKAY_TO_SEND = "CFG_Okay_To_Send";
 
@@ -162,6 +162,7 @@ public class ConfiguratorDlg2 extends MMDialog {
 
         backButton_ = new JButton();
         backButton_.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent arg0) {
                 setPage(curPage_ - 1);
             }

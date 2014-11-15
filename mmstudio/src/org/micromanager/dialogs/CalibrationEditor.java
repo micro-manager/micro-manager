@@ -47,12 +47,12 @@ import org.micromanager.utils.*;
  */
 public class CalibrationEditor extends MMDialog {
    private static final long serialVersionUID = 1L;
-   private JTextArea textArea_;
-   private JTextField presetSizeField_;
-   private JTextField presetLabelField_;
-   private String label_;
-   private String pixelSize_;
-   private SpringLayout springLayout;
+   private final JTextArea textArea_;
+   private final JTextField presetSizeField_;
+   private final JTextField presetLabelField_;
+   private final String label_;
+   private final String pixelSize_;
+   private final SpringLayout springLayout;
    Boolean changed_;
    
    private JTable table_;
@@ -67,7 +67,7 @@ public class CalibrationEditor extends MMDialog {
    private JCheckBox showOtherCheckBox_;
    private JCheckBox showReadonlyCheckBox_;
    private Configuration initialCfg_;
-   private JScrollPane scrollPane_;
+   private final JScrollPane scrollPane_;
    private boolean tableEditable_ = true;
     
    public CalibrationEditor(String label, String pixelSize) {
