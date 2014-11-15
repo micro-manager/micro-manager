@@ -114,11 +114,26 @@ public class ReportingUtils {
       ReportingUtils.showErrorMessage(fullMsg, parent);
    }
 
+   private static String formatAlertMessage(String[] lines) {
+      com.google.common.escape.Escaper escaper =
+         com.google.common.html.HtmlEscapers.htmlEscaper();
+      StringBuilder sb = new StringBuilder();
+      sb.append("<html>");
+      for (String line : lines) {
+         sb.append("<div width='640'>");
+         sb.append(escaper.escape(line));
+         sb.append("</div>");
+      }
+      sb.append("</html>");
+      return sb.toString();
+   }
+
    private static void showErrorMessage(final String fullMsg, final Component parent) {
-      int maxNrLines = 30;
-      String test[] = fullMsg.split("\n");
-      if (test.length < maxNrLines) {
-         JOptionPane.showMessageDialog(parent, fullMsg,
+      int maxNrLines = 10;
+      String lines[] = fullMsg.split("\n");
+      if (lines.length < maxNrLines) {
+         String wrappedMsg = formatAlertMessage(lines);
+         JOptionPane.showMessageDialog(parent, wrappedMsg,
                  "Micro-Manager Error", JOptionPane.ERROR_MESSAGE);
       } else {
          JTextArea area = new JTextArea(fullMsg);
