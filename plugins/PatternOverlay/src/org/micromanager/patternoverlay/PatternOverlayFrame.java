@@ -26,8 +26,6 @@ package org.micromanager.patternoverlay;
 import ij.ImagePlus;
 import ij.gui.ImageWindow;
 
-import java.awt.Dimension;
-import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.prefs.Preferences;
@@ -43,6 +41,7 @@ import javax.swing.event.ChangeListener;
 import org.micromanager.MMStudio;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.ReportingUtils;
+import org.micromanager.utils.MMDialog;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -64,7 +63,7 @@ import net.miginfocom.swing.MigLayout;
  *  @author Jon
  */
 @SuppressWarnings("serial")
-public class PatternOverlayFrame extends javax.swing.JFrame {
+public class PatternOverlayFrame extends MMDialog {
    private final ScriptInterface gui_;
    private final Preferences prefs_;
    private final JComboBox overlayBox_;
@@ -81,6 +80,7 @@ public class PatternOverlayFrame extends javax.swing.JFrame {
             "[]8[]"));
       gui_ = gui;
       prefs_ = Preferences.userNodeForPackage(this.getClass());
+      this.loadAndRestorePosition(100, 100, WIDTH, WIDTH);
       
       lastOverlay_ = null;
       
@@ -166,26 +166,13 @@ public class PatternOverlayFrame extends javax.swing.JFrame {
       // and also color and size boxes because all are referenced by ActionListener
       overlayBox_.setSelectedIndex(prefs_.getInt(Constants.TYPE_BOX_IDX, 0));
       updateToggleButtonLabel();
-      
-      // make sure plugin window is on the screen (if screen size changes) and ideally in last location
-      Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-      if (screenSize.width < prefs_.getInt(Constants.WIN_LOC_X, 0)) {
-         prefs_.putInt(Constants.WIN_LOC_X, 100);
-      }
-      if (screenSize.height < prefs_.getInt(Constants.WIN_LOC_Y, 0)) {
-         prefs_.putInt(Constants.WIN_LOC_Y, 100);
-      }
-      setLocation(prefs_.getInt(Constants.WIN_LOC_X, 100), prefs_.getInt(Constants.WIN_LOC_Y, 100));
-      
+          
       pack();           // shrinks the window as much as it can
       setResizable(false);
 
       addWindowListener(new java.awt.event.WindowAdapter() {
          @Override
          public void windowClosing(java.awt.event.WindowEvent evt) {
-            // save position for next time
-            prefs_.putInt(Constants.WIN_LOC_X, evt.getWindow().getX());
-            prefs_.putInt(Constants.WIN_LOC_Y, evt.getWindow().getY());
             // turn overlay off before exiting
             if (toggleButton_.isSelected()) {
                toggleButton_.doClick();
