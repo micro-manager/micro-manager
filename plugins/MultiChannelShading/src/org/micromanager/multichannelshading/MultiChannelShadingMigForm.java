@@ -92,12 +92,10 @@ public class MultiChannelShadingMigForm extends MMDialog {
       final JButton removeButton =  mcsButton(buttonSize_, arialSmallFont_);
       
       mcsPluginWindow = this;
-      this.setBackground(gui_.getBackgroundColor());
       this.setLayout(new MigLayout("flowx, fill, insets 8"));
       this.setTitle("MultiChannelShading");
 
       loadAndRestorePosition(100, 100, 350, 250);
-
       
       JLabel channelGroupLabel = new JLabel("Channel Group:");
       channelGroupLabel.setFont(arialSmallFont_);
@@ -139,10 +137,12 @@ public class MultiChannelShadingMigForm extends MMDialog {
          }
       });
       darkFieldTextField.addFocusListener(new FocusListener() {
+         @Override
          public void focusGained(FocusEvent fe) {
             // great, so what?
          }
 
+         @Override
          public void focusLost(FocusEvent fe) {
             processBackgroundImage(darkFieldTextField.getText());
          }
@@ -225,12 +225,9 @@ public class MultiChannelShadingMigForm extends MMDialog {
          }
       });
       useCheckBox_.setSelected(prefs_.getBoolean(USECHECKBOX, true));
-      add(useCheckBox_, "span 3, wrap");
-      
+      add(useCheckBox_, "span 3, wrap");     
       add(statusLabel_, "span 3, wrap");
-      
      
-
       processor_.setEnabled(useCheckBox_.isSelected());
       
    }
@@ -270,6 +267,7 @@ public class MultiChannelShadingMigForm extends MMDialog {
    public synchronized void setStatus(final String status) {
       statusMessage_ = status;
       SwingUtilities.invokeLater(new Runnable() {
+         @Override
          public void run() {
             // update the statusLabel from this thread
             if (status != null) {

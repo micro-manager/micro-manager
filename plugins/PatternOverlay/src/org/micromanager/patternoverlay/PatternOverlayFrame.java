@@ -28,7 +28,6 @@ import ij.gui.ImageWindow;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.prefs.Preferences;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
@@ -65,7 +64,6 @@ import net.miginfocom.swing.MigLayout;
 @SuppressWarnings("serial")
 public class PatternOverlayFrame extends MMDialog {
    private final ScriptInterface gui_;
-   private final Preferences prefs_;
    private final JComboBox overlayBox_;
    private final JToggleButton toggleButton_;
    private final JSlider sizeSlider_;
@@ -79,8 +77,7 @@ public class PatternOverlayFrame extends MMDialog {
             "[right]10[center]",
             "[]8[]"));
       gui_ = gui;
-      prefs_ = Preferences.userNodeForPackage(this.getClass());
-      this.loadAndRestorePosition(100, 100, WIDTH, WIDTH);
+      loadAndRestorePosition(100, 100, WIDTH, WIDTH);
       
       lastOverlay_ = null;
       
@@ -89,18 +86,18 @@ public class PatternOverlayFrame extends MMDialog {
       add(overlayBox_, "wrap");
       DefaultComboBoxModel overlayModel = new DefaultComboBoxModel();
       overlayModel.addElement(new OverlayOption(OverlayOption.Keys.CROSSHAIR,
-            new CrosshairOverlay(prefs_, OverlayOption.Keys.CROSSHAIR.toString() + "_")));
+            new CrosshairOverlay(getPrefsNode(), OverlayOption.Keys.CROSSHAIR.toString() + "_")));
       overlayModel.addElement(new OverlayOption(OverlayOption.Keys.GRID,
-            new GridOverlay(prefs_, OverlayOption.Keys.GRID.toString() + "_")));
+            new GridOverlay(getPrefsNode(), OverlayOption.Keys.GRID.toString() + "_")));
       overlayModel.addElement(new OverlayOption(OverlayOption.Keys.CIRCLE,
-            new CircleOverlay(prefs_, OverlayOption.Keys.CIRCLE.toString() + "_")));
+            new CircleOverlay(getPrefsNode(), OverlayOption.Keys.CIRCLE.toString() + "_")));
       overlayModel.addElement(new OverlayOption(OverlayOption.Keys.TARGET,
-            new TargetOverlay(prefs_, OverlayOption.Keys.TARGET.toString() + "_")));
+            new TargetOverlay(getPrefsNode(), OverlayOption.Keys.TARGET.toString() + "_")));
       overlayBox_.setModel(overlayModel);
       overlayBox_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            prefs_.putInt(Constants.TYPE_BOX_IDX, overlayBox_.getSelectedIndex());
+            getPrefsNode().putInt(Constants.TYPE_BOX_IDX, overlayBox_.getSelectedIndex());
             updateToggleButtonLabel();
             GenericOverlay currentOverlay = ((OverlayOption) overlayBox_.getSelectedItem()).getOverlay();
             try {
@@ -164,7 +161,7 @@ public class PatternOverlayFrame extends MMDialog {
       
       // setting this from prefs needs to come after toggle button is created
       // and also color and size boxes because all are referenced by ActionListener
-      overlayBox_.setSelectedIndex(prefs_.getInt(Constants.TYPE_BOX_IDX, 0));
+      overlayBox_.setSelectedIndex(getPrefsNode().getInt(Constants.TYPE_BOX_IDX, 0));
       updateToggleButtonLabel();
           
       pack();           // shrinks the window as much as it can
