@@ -1,7 +1,5 @@
 package org.micromanager.api;
 
-import mmcorej.TaggedImage;
-
 /**
  * Implement this interface to create Micro-Manager DataProcessor plugins. 
  * Compiled jars may be dropped into Micro-Manager's mmplugin directory, and 
