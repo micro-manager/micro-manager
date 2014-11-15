@@ -1223,12 +1223,21 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          return false;
       }
       double volumeDuration = computeActualVolumeDuration();
-      if (getNumTimepoints() > 1 && 
-            volumeDuration > timepointsIntervalMs) {
-         gui_.showError("Time point interval shorter than" +
-                 " the time to collect a single volume.\n",
-                 ASIdiSPIM.getFrame());
-         return false;
+      if (getNumTimepoints() > 1) {
+         if (timepointsIntervalMs < volumeDuration) {
+            gui_.showError("Time point interval shorter than" +
+                  " the time to collect a single volume.\n",
+                  ASIdiSPIM.getFrame());
+            return false;
+         }
+         // TODO verify if 1 second is good value for overhead time
+         if (timepointsIntervalMs < volumeDuration + 1) {
+            gui_.showError("Micro-Manager requires > 1 second overhead time "
+                  + "to finish up volume before starting next one. "
+                  + "Pester the developers if you need faster.",
+                  ASIdiSPIM.getFrame());
+          return false;
+         }
       }
       if (nrRepeats > 10 && separateTimePointsCB_.isSelected()) {
          int dialogResult = JOptionPane.showConfirmDialog(null,
@@ -1306,10 +1315,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
 
       long acqStart = System.currentTimeMillis();
+      boolean nonfatalError = false;
 
       // do not want to return from within this loop
       // loop is executed once per acquisition (once if separate viewers isn't selected)
-      for (int tp = 0; tp < nrRepeats && !stop_.get(); tp++) {
+      for (int tp = 0; tp < nrRepeats; tp++) {
          BlockingQueue<TaggedImage> bq = new LinkedBlockingQueue<TaggedImage>(10);
          String acqName;
          if (singleTimePointViewers) {
@@ -1318,6 +1328,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             acqName = gui_.getUniqueAcquisitionName(nameField_.getText());
          }
          try {
+            // check for stop button before each acquisition
+            if (stop_.get()) {
+               throw new IllegalMonitorStateException("User stopped the acquisition");
+            }
+            
             gui_.openAcquisition(acqName, rootDir, nrFrames, nrSides, nrSlices, nrPos,
                     show, save);
             core_.setExposure(firstCamera, exposureTime);
@@ -1379,7 +1394,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             // If the interval between frames is shorter than the time to acquire
             // them, we can switch to hardware based solution.  Not sure how important 
             // that feature is, so leave it out for now.
-            for (int f = 0; f < nrFrames && !stop_.get(); f++) {
+            for (int f = 0; f < nrFrames; f++) {
                long acqNow = System.currentTimeMillis();
                long delay = acqStart + f * timepointsIntervalMs - acqNow;
                while (delay > 0 && !stop_.get()) {
@@ -1389,7 +1404,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   acqNow = System.currentTimeMillis();
                   delay = acqStart + f * timepointsIntervalMs - acqNow;
                }
-
+               
+               // check for stop button before each time point
+               if (stop_.get()) {
+                  throw new IllegalMonitorStateException("User stopped the acquisition");
+               }
+               
                numTimePointsDone_++;
                updateAcquisitionStatus(AcquisitionStatus.ACQUIRING);
                
@@ -1417,9 +1437,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.SPIM_STATE,
                         Properties.Values.SPIM_RUNNING, true);
                }
+               
+               core_.logMessage("Starting time point " + (f+1) + " of " + nrFrames, true);
                   
                // Wait for first image to create ImageWindow, so that we can be sure about image size
-               // Do not gather first image here
+               // Do not actually gather first image here, just make sure it is there
                long start = System.currentTimeMillis();
                long now = start;
                long timeout;  // wait 5 seconds for first image to come
@@ -1432,10 +1454,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                if (now - start >= timeout) {
                   throw new Exception("Camera did not send first image within a reasonable time");
                }
-               if (stop_.get()) {
-                  throw new IllegalMonitorStateException("User stopped the acquisition");
-               }
-
+               
                // gather all the images from the cameras, put them into the acquisition
                int[] frNumber = new int[2];
                boolean done = false;
@@ -1447,9 +1466,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   while ((core_.getRemainingImageCount() > 0
                           || core_.isSequenceRunning(firstCamera)
                           || (twoSided && core_.isSequenceRunning(secondCamera)))
-                          && !stop_.get() && !done) {
+                          && !done) {
                      now = System.currentTimeMillis();
-                     if (core_.getRemainingImageCount() > 0) {
+                     if (core_.getRemainingImageCount() > 0) {  // we have an image to grab
                         TaggedImage timg = core_.popNextTaggedImage();
                         String camera = (String) timg.tags.get("Camera");
                         int ch = 0;
@@ -1460,17 +1479,28 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                               now - acqStart, timg, bq);
                         frNumber[ch]++;
                         last = now;  // keep track of last image time
-                     } else {
+                        // check to see if we are finished
+                        if (frNumber[0] == frNumber[1] && frNumber[0] == nrSlices) {
+                           done = true;
+                        }
+                     } else {  // no image ready yet
+                        done = !stop_.get();
                         Thread.sleep(1);
-                     }
-                     if (frNumber[0] == frNumber[1] && frNumber[0] == nrSlices) {
-                        done = true;
-                        continue;
-                     }
-                     if (now - last >= timeout2) {
-                        gui_.logError("Camera did not send all expected images within a reasonable period");
-                        done = true;
-                        continue;
+                        if (now - last >= timeout2) {
+                           gui_.logError("Camera did not send all expected images within" +
+                                 " a reasonable period for timepoint " + (f+1) + ".  Continuing anyway.");
+                           // allow other time points to continue by stopping acquisition manually
+                           // (in normal case the sequence acquisition stops itself after
+                           // all the expected images are returned)
+                           if (core_.isSequenceRunning(firstCamera)) {
+                              core_.stopSequenceAcquisition(firstCamera);
+                           }
+                           if (twoSided && core_.isSequenceRunning(secondCamera)) {
+                              core_.stopSequenceAcquisition(secondCamera);
+                           }
+                           nonfatalError = true;
+                           done = true;
+                        }
                      }
                   }
                } catch (InterruptedException iex) {
@@ -1478,7 +1508,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                }
             }
          } catch (IllegalMonitorStateException ex) {
-            // do nothing, the acquisition was simply halted before the camera sent images 
+            // do nothing, the acquisition was simply halted during its operation
          } catch (MMScriptException mex) {
             gui_.showError(mex, (Component) ASIdiSPIM.getFrame());
          } catch (Exception ex) {
@@ -1541,6 +1571,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       cameras_.setSPIMCamerasForAcquisition(false);
       if (liveModeOriginally) {
          gui_.enableLiveMode(true);
+      }
+      
+      if (nonfatalError) {
+         gui_.showError("Non-fatal error occurred during acquisition, see core log for details", ASIdiSPIM.getFrame());
       }
 
       return true;
