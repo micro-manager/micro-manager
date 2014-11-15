@@ -1692,16 +1692,19 @@ public class MMStudio implements ScriptInterface {
             core_.loadSystemConfiguration(sysConfigFile_);
             coreCallback_.setIgnoring(false);
             GUIUtils.preventDisplayAdapterChangeExceptions();
-
          }
       } catch (final Exception err) {
          GUIUtils.preventDisplayAdapterChangeExceptions();
 
-         ReportingUtils.showError(err);
+         waitDlg.closeDialog(); // Prevent from obscuring error alert
+         ReportingUtils.showError(err,
+               "Failed to load hardware configuation",
+               null);
          result = false;
       } finally {
          waitDlg.closeDialog();
       }
+
       frame_.setEnabled(true);
       initializeGUI();
 

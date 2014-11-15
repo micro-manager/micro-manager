@@ -5710,9 +5710,6 @@ void CMMCore::loadSystemConfiguration(const char* fileName) throw (CMMError)
    char line[maxLineLength+1];
    vector<string> tokens;
 
-   const int errorLimit = 100; // errors allowed before aborting the load
-   ostringstream summaryErrorText;
-   int errorCount = 0;
    int lineCount = 0;
 
    while(is.getline(line, maxLineLength, '\n'))
@@ -5873,23 +5870,14 @@ void CMMCore::loadSystemConfiguration(const char* fileName) throw (CMMError)
          }
          catch (CMMError& err)
          {
-            summaryErrorText << "Line " << lineCount << ": " << line << endl;
-            summaryErrorText << err.getMsg() << endl << endl;
-            errorCount++;
-            if (errorCount >= errorLimit)
-            {
-               summaryErrorText << "Too many errors. Loading stopped.";
-               throw CMMError(summaryErrorText.str().c_str(), MMERR_InvalidConfigurationFile);
-            }
+            if (externalCallback_)
+               externalCallback_->onSystemConfigurationLoaded();
+            std::ostringstream errorText;
+            errorText << "Line " << lineCount << ": " << line << endl;
+            errorText << err.getFullMsg() << endl << endl;
+            throw CMMError(errorText.str().c_str(), MMERR_InvalidConfigurationFile);
          }
       }
-   }
-
-   if (errorCount > 0)
-   {
-      if (externalCallback_)
-         externalCallback_->onSystemConfigurationLoaded();
-      throw CMMError(summaryErrorText.str().c_str(), MMERR_InvalidConfigurationFile);
    }
 
    updateAllowedChannelGroups();
