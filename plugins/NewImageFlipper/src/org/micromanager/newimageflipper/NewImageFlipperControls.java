@@ -50,8 +50,6 @@ public class NewImageFlipperControls extends javax.swing.JFrame {
    private final String R180 = "180" + "\u00B0";
    private final String R270 = "270" + "\u00B0";
    private final String[] RS = {R0, R90, R180, R270};
-   private final String ROTATEBOX = "RotateBox";
-   private final String MIRRORCHECKBOX = "MirrorCheckBox";
    private final String ROTATE = "_Rotation";
    private final String MIRROR = "_Mirror";
    private final String SELECTEDCAMERA = "SelectedCamera";

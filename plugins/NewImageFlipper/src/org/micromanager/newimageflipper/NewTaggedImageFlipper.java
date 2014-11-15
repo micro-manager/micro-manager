@@ -44,18 +44,22 @@ public class NewTaggedImageFlipper implements MMProcessorPlugin {
       throw new UnsupportedOperationException("Not supported yet.");
    }
 
+   @Override
    public String getDescription() {
       return "Rotates and/or mirrors images coming from the selected camera";
    }
 
+   @Override
    public String getInfo() {
       return "Not supported yet.";
    }
 
+   @Override
    public String getVersion() {
       return "Version 0.2";
    }
 
+   @Override
    public String getCopyright() {
       return "Copyright University of California San Francisco, 2014";
    }

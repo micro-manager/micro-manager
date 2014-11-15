@@ -28,7 +28,6 @@ import org.json.JSONObject;
 import org.micromanager.MMStudio;
 import org.micromanager.acquisition.TaggedImageQueue;
 import org.micromanager.api.DataProcessor;
-import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
@@ -71,8 +70,11 @@ public class NewImageFlippingProcessor extends DataProcessor<TaggedImage> {
                produce(proccessTaggedImage(nextImage, isMirrored_,
                        rotation_));
 
-            } catch (Exception ex) {
-               produce(nextImage);
+            } catch (JSONException ex) {
+               produce(TaggedImageQueue.POISON);
+               ReportingUtils.logError(ex);
+            } catch (MMScriptException ex) {
+               produce(TaggedImageQueue.POISON);
                ReportingUtils.logError(ex);
             }
          } else {
