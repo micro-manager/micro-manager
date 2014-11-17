@@ -254,7 +254,7 @@ public class MMAcquisition {
          throw new MMScriptException("Acquisition is already initialized");
       }
 
-      TaggedImageStorage imageFileManager = new TaggedImageStorageRamFast(null);
+      TaggedImageStorage imageFileManager = new TaggedImageStorageLive();
       MMImageCache imageCache = new MMImageCache(imageFileManager);
 
       if (!existing_) {
