@@ -1484,7 +1484,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                            done = true;
                         }
                      } else {  // no image ready yet
-                        done = !stop_.get();
+                        done = stop_.get();
                         Thread.sleep(1);
                         if (now - last >= timeout2) {
                            gui_.logError("Camera did not send all expected images within" +
