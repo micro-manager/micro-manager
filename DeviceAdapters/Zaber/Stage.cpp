@@ -62,8 +62,8 @@ Stage::Stage() :
 	CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
 
 	pAct = new CPropertyAction (this, &Stage::OnDeviceAddress);
-	CreateIntegerProperty("Device Address", deviceAddress_, false, pAct, true);
-	SetPropertyLimits("Device Address", 1, 99);
+	CreateIntegerProperty("Controller Device Number", deviceAddress_, false, pAct, true);
+	SetPropertyLimits("Controller Device Number", 1, 99);
 
 	pAct = new CPropertyAction(this, &Stage::OnAxisNumber);
 	CreateIntegerProperty("Axis Number", axisNumber_, false, pAct, true);
