@@ -71,8 +71,8 @@ XYStage::XYStage() :
 	CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
 
 	pAct = new CPropertyAction (this, &XYStage::OnDeviceAddress);
-	CreateIntegerProperty("Device Address", deviceAddress_, false, pAct, true);
-	SetPropertyLimits("Device Address", 1, 99);
+	CreateIntegerProperty("Controller Device Number", deviceAddress_, false, pAct, true);
+	SetPropertyLimits("Controller Device Number", 1, 99);
 
 	pAct = new CPropertyAction(this, &XYStage::OnAxisX);
 	CreateIntegerProperty("Axis Number (X Axis)", axisX_, false, pAct, true);
