@@ -30,8 +30,6 @@ import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.ListeningJTabbedPane;
 
-import java.awt.Dimension;
-import java.awt.Toolkit;
 import java.util.prefs.Preferences;
 
 import javax.swing.JTabbedPane;
@@ -43,6 +41,7 @@ import org.micromanager.api.ScriptInterface;
 import org.micromanager.MMStudio;
 import org.micromanager.asidispim.Utils.StagePositionUpdater;
 import org.micromanager.internalinterfaces.LiveModeListener; 
+import org.micromanager.utils.MMDialog;
 
 // TODO easy mode that pulls most-used bits from all panels
 // TODO camera control ROI panel
@@ -66,7 +65,7 @@ import org.micromanager.internalinterfaces.LiveModeListener;
  * @author Jon
  */
 @SuppressWarnings("serial")
-public class ASIdiSPIMFrame extends javax.swing.JFrame  
+public class ASIdiSPIMFrame extends MMDialog  
       implements MMListenerInterface {
    
    private final Properties props_; 
@@ -156,18 +155,10 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
          }
       });
       
-      // make sure plugin window is on the screen (if screen size changes)
-      Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-      if (screenSize.width < prefs_.getInt(MAIN_PREF_NODE, Prefs.Keys.WIN_LOC_X, 0)) {
-         prefs_.putInt(MAIN_PREF_NODE, Prefs.Keys.WIN_LOC_X, 100);
-      }
-      if (screenSize.height < prefs_.getInt(MAIN_PREF_NODE, Prefs.Keys.WIN_LOC_Y, 0)) {
-         prefs_.putInt(MAIN_PREF_NODE, Prefs.Keys.WIN_LOC_Y, 100);
-      }
+      // put dialog back where it was last time
+      this.loadAndRestorePosition(100, 100, WIDTH, WIDTH);
     
-      // put pane back where it was last time
       // gotSelected will be called because we put this after adding the ChangeListener
-      setLocation(prefs_.getInt(MAIN_PREF_NODE, Prefs.Keys.WIN_LOC_X, 100), prefs_.getInt(MAIN_PREF_NODE, Prefs.Keys.WIN_LOC_Y, 100));
       tabbedPane_.setSelectedIndex(prefs_.getInt(MAIN_PREF_NODE, Prefs.Keys.TAB_INDEX, 5));  // default to devicesPanel_
 
       // set up the window
@@ -258,9 +249,7 @@ public class ASIdiSPIMFrame extends javax.swing.JFrame
       acquisitionPanel_.saveSettings();
       settingsPanel_.saveSettings();
 
-      // save pane location in prefs
-      prefs_.putInt(MAIN_PREF_NODE, Prefs.Keys.WIN_LOC_X, this.getX());
-      prefs_.putInt(MAIN_PREF_NODE, Prefs.Keys.WIN_LOC_Y, this.getY());
+      // save tab location in prefs (dialog location now handled by MMDialog)
       prefs_.putInt(MAIN_PREF_NODE, Prefs.Keys.TAB_INDEX, tabbedPane_.getSelectedIndex());
    }
    
