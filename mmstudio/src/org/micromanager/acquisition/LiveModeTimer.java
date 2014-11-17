@@ -223,7 +223,7 @@ public class LiveModeTimer {
          }
          catch (Exception e) {
             ReportingUtils.showError("Unable to start the sequence acquisition: " + e);
-            return;
+            throw(e);
          }
          setType();
          long period = getInterval();
