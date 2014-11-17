@@ -22,14 +22,16 @@
 
 package org.micromanager.multichannelshading;
 
-import ij.ImagePlus;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import javax.swing.table.AbstractTableModel;
 import org.micromanager.api.ScriptInterface;
+import org.micromanager.utils.MMException;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  *
@@ -50,11 +52,12 @@ public class ShadingTableModel extends AbstractTableModel {
    private Preferences channelPrefs_;
    private List<String> presetList_;
    private List<String> fileList_;
-   private final HashMap<String, SimpleFloatImage> flatFieldImages_ = new
-        HashMap<String, SimpleFloatImage>();
+   private final ImageCollection imageCollection_;
    
-   public ShadingTableModel(ScriptInterface gui) {
+   public ShadingTableModel(ScriptInterface gui, ImageCollection 
+           imageCollection) {
       gui_ = gui;
+      imageCollection_ = imageCollection;
       prefs_ = Preferences.userNodeForPackage(this.getClass());
       presetList_ = new ArrayList<String>();
       fileList_ = new ArrayList<String>();
@@ -129,7 +132,7 @@ public class ShadingTableModel extends AbstractTableModel {
                channelPrefs_.put(presetList_.get(i), fileList_.get(i));
             }
          }
-         flatFieldImages_.clear();
+         imageCollection_.clearFlatFields();
          channelGroup_ = newGroup;
          // restore mapping from preferences
          fileList_.clear();
@@ -137,18 +140,17 @@ public class ShadingTableModel extends AbstractTableModel {
          channelPrefs_ = prefs_.node(channelGroup_);
 
          for (String key : channelPrefs_.keys()) {
-            presetList_.add(key);
             String file = channelPrefs_.get(key, "");
-            fileList_.add(file);
             if (file.length() > 0) {
-               // TODO: handle exceptions
-               ij.io.Opener opener = new ij.io.Opener();
-               ImagePlus ip = opener.openImage(file);
-               flatFieldImages_.put(key, new SimpleFloatImage(ip));
+               imageCollection_.addFlatField(key, file);
+               
             }
          }
       } catch (BackingStoreException ex) {
          gui_.logError(ex);
+      } catch (MMException ex) {
+         // TODO:
+         Logger.getLogger(ShadingTableModel.class.getName()).log(Level.SEVERE, null, ex);
       }
       fireTableDataChanged();
    }
@@ -216,9 +218,9 @@ public class ShadingTableModel extends AbstractTableModel {
       return getNumberOfPresetsInCurrentGroup() - getUsedPresets().length;
    }
    
-   public SimpleFloatImage getFlatFieldImage (String channelGroup, String preset) {
+   public ImagePlusInfo getFlatFieldImage (String channelGroup, String preset) {
       if (channelGroup.equals(channelGroup_)) {
-         return flatFieldImages_.get(preset);
+         return imageCollection_.getFlatField(preset);
       }
       return null;
    }
@@ -238,7 +240,7 @@ public class ShadingTableModel extends AbstractTableModel {
             if (i == selectedRows[j]) {
                removeRow = true;
                channelPrefs_.remove(presetList_.get(i));
-               flatFieldImages_.remove(presetList_.get(i));
+               imageCollection_.removeFlatField(presetList_.get(i));
             }
          }
          if (!removeRow) {
@@ -254,12 +256,13 @@ public class ShadingTableModel extends AbstractTableModel {
 
    private void updateFlatFieldImage(int row) {   
       if (fileList_.get(row) != null && !fileList_.get(row).isEmpty()) {
-         ij.io.Opener opener = new ij.io.Opener();
-         ImagePlus ip = opener.openImage(fileList_.get(row));
-         SimpleFloatImage flatFieldImage = new SimpleFloatImage(ip);
          String preset = presetList_.get(row);
          if (preset != null) {
-            flatFieldImages_.put(preset, flatFieldImage);
+            try {
+               imageCollection_.addFlatField(preset, fileList_.get(row));
+            } catch (MMException ex) {
+               ReportingUtils.showError(ex);
+            }
             channelPrefs_.put(preset, fileList_.get(row));
          }
       }

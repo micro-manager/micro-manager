@@ -21,7 +21,6 @@
 
 package org.micromanager.multichannelshading;
 
-import ij.ImagePlus;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
@@ -44,6 +43,8 @@ import org.micromanager.MMStudio;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.MMDialog;
+import org.micromanager.utils.MMException;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  *
@@ -170,7 +171,8 @@ public class MultiChannelShadingMigForm extends MMDialog {
       // Table with channel presets and files
       final JScrollPane scrollPane = new JScrollPane();
       add(scrollPane, "span 4 2, grow, push");
-      shadingTableModel_ = new ShadingTableModel(gui_); 
+      shadingTableModel_ = new ShadingTableModel(gui_, 
+              processor_.getImageCollection()); 
       shadingTableModel_.setChannelGroup(groupName_);
       final ShadingTable shadingTable = 
               new ShadingTable(gui_, shadingTableModel_, this);
@@ -287,17 +289,14 @@ public class MultiChannelShadingMigForm extends MMDialog {
       if (EMPTY_FILENAME_INDICATOR.equals(fileName)) {
          fileName = "";
       }
-      // If we have a filename, try to open it and set the background image.
-      // If not, set the background image to null (no correction).
-      ImagePlus ip = null;
-      if (fileName != null && !fileName.isEmpty()) {
-         ij.io.Opener opener = new ij.io.Opener();
-         ip = opener.openImage(fileName);
+      try {
+         ImageCollection ic = processor_.getImageCollection();
+         ic.setBackground(fileName);
+         backgroundFileName_ = fileName;
+         prefs_.put(DARKFIELDFILENAME, backgroundFileName_);
+      } catch (MMException ex) {
+         ReportingUtils.showError(ex, "Failed to set background image");
       }
-      processor_.setBackground(ip);
-
-      backgroundFileName_ = fileName;
-      prefs_.put(DARKFIELDFILENAME, backgroundFileName_);
    }
    
     public void updateProcessorEnabled(boolean enabled) {

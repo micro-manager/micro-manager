@@ -43,12 +43,9 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class ShadingProcessor extends DataProcessor<TaggedImage> {
    private ShadingTableModel shadingTableModel_;
-   private ImagePlus background_;
    private MultiChannelShadingMigForm myFrame_;
-   
-   public void setBackground(ImagePlus background){
-      background_ = background;
-   }  
+   private ImageCollection imageCollection_;
+    
    
    @Override
    public void setEnabled(boolean enabled) {
@@ -114,10 +111,16 @@ public class ShadingProcessor extends DataProcessor<TaggedImage> {
          return nextImage;
       }
       JSONObject newTags = nextImage.tags;
-      SimpleFloatImage flatFieldImage = getMatchingFlatFieldImage(newTags);       
-
+      
       // subtract background
-      if (background_ != null) {
+      ImagePlusInfo background = imageCollection_.getBackground(1, null);
+      ImageProcessor imp = ImageUtils.makeProcessor(nextImage);
+      imp = ImageUtils.subtractImageProcessors(imp, background.getProcessor());
+      TaggedImage bgSubtracted = new TaggedImage(imp.getPixels(), newTags);
+
+      /*
+      SimpleFloatImage background = imageCollection_.getBackground();
+      if (background != null) {
          if (background_.getType() != ijType) {
             String msg = 
                     "Background image is of different type than experimental image";
@@ -130,13 +133,16 @@ public class ShadingProcessor extends DataProcessor<TaggedImage> {
             nextImage = new TaggedImage(differenceProcessor.getPixels(), newTags);
          }
       }
+      */
       
+      ImagePlusInfo flatFieldImage = getMatchingFlatFieldImage(newTags);       
+
       //do not calculate flat field if we don't have a matching channel
       if (flatFieldImage == null) {
          String msg = "No matching flatfield image found";
          myFrame_.setStatus(msg);
          ReportingUtils.logMessage("MultiShading Plugin: " + msg);
-         return nextImage;
+         return bgSubtracted;
       }      
       // do not calculate if image size differs
       if (width != flatFieldImage.getWidth() || 
@@ -144,16 +150,16 @@ public class ShadingProcessor extends DataProcessor<TaggedImage> {
          String msg = "FlatField dimensions do not match image dimensions";
          myFrame_.setStatus(msg);
          ReportingUtils.logError(msg);
-         return nextImage;
+         return bgSubtracted;
       }      
       
       if (ijType == ImagePlus.GRAY8) {
          byte[] newPixels = new byte[width * height];
-         byte[] oldPixels = (byte[]) nextImage.pix;
+         byte[] oldPixels = (byte[]) bgSubtracted.pix;
          int length = oldPixels.length;
          for (int index = 0; index < length; index++){
             newPixels[index] = (byte) ( (float) oldPixels[index] 
-                * flatFieldImage.getNormalizedPixels()[index]);
+                * flatFieldImage.getProcessor().getf(index) );
          }
          newImage = new TaggedImage(newPixels, newTags);
          myFrame_.setStatus("Done");
@@ -161,14 +167,14 @@ public class ShadingProcessor extends DataProcessor<TaggedImage> {
        
       } else if (ijType == ImagePlus.GRAY16) {
          short[] newPixels = new short[width * height];
-         short[] oldPixels = (short[]) nextImage.pix;
+         short[] oldPixels = (short[]) bgSubtracted.pix;
          int length = oldPixels.length;
          for (int index = 0; index < length; index++){
             // shorts are signed in java so have to do this conversion to get 
             // the right value
             float oldPixel = (float)((int)(oldPixels[index]) & 0x0000ffff);
             newPixels[index] = (short) ((oldPixel * 
-                    flatFieldImage.getNormalizedPixels()[index]) + 0.5f);
+                    flatFieldImage.getProcessor().getf(index)) + 0.5f);
          }
          newImage = new TaggedImage(newPixels, newTags);
          myFrame_.setStatus("Done");
@@ -185,7 +191,7 @@ public class ShadingProcessor extends DataProcessor<TaggedImage> {
     * @param imgTags - image tags in JSON format
     * @return matching flat field image
     */
-   SimpleFloatImage getMatchingFlatFieldImage(JSONObject imgTags) {
+   ImagePlusInfo getMatchingFlatFieldImage(JSONObject imgTags) {
       String channelGroup = shadingTableModel_.getChannelGroup();
       String[] presets = shadingTableModel_.getUsedPresets();
       for (String preset : presets) {
@@ -229,11 +235,16 @@ public class ShadingProcessor extends DataProcessor<TaggedImage> {
    @Override
    public void makeConfigurationGUI() {
       if (myFrame_ == null) {
+         imageCollection_ = new ImageCollection();
          myFrame_ = new MultiChannelShadingMigForm(this, gui_);
          shadingTableModel_ = myFrame_.getShadingTableModel();
          gui_.addMMBackgroundListener(myFrame_);
       }
       myFrame_.setVisible(true);
+   }
+   
+   public ImageCollection getImageCollection() {
+      return imageCollection_;
    }
    
    public void setMyFrameToNull() {
