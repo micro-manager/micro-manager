@@ -84,6 +84,8 @@ import org.micromanager.api.DataProcessor;
 import org.micromanager.api.display.DisplayWindow;
 import org.micromanager.api.events.ExposureChangedEvent;
 import org.micromanager.api.events.PropertiesChangedEvent;
+import org.micromanager.api.IAcquisitionEngine2010;
+import org.micromanager.api.MMListenerInterface;
 import org.micromanager.api.MMTags;
 import org.micromanager.api.display.OverlayPanel;
 import org.micromanager.api.PositionList;
@@ -650,41 +652,6 @@ public class MMStudio implements ScriptInterface {
       public void show(TaggedImage image);
    }
    
-   /**
-    * used to store contrast settings to be later used for initialization of contrast of new windows.
-    *  Shouldn't be called by loaded data sets, only
-    * ones that have been acquired
-    * @param channelGroup
-    * @param channel
-    * @param mda
-    * @param settings
-    */
-   public void saveChannelHistogramSettings(String channelGroup, String channel, boolean mda, 
-           HistogramSettings settings) {
-      String type = mda ? "MDA_" : "SnapLive_";
-      if (options_.syncExposureMainAndMDA_) {
-         type = "";  //only one group of contrast settings
-      }
-      contrastPrefs_.putInt("ContrastMin_" + channelGroup + "_" + type + channel, settings.min_);
-      contrastPrefs_.putInt("ContrastMax_" + channelGroup + "_" + type + channel, settings.max_);
-      contrastPrefs_.putDouble("ContrastGamma_" + channelGroup + "_" + type + channel, settings.gamma_);
-      contrastPrefs_.putInt("ContrastHistMax_" + channelGroup + "_" + type + channel, settings.histMax_);
-      contrastPrefs_.putInt("ContrastHistDisplayMode_" + channelGroup + "_" + type + channel, settings.displayMode_);
-   }
-
-   public HistogramSettings loadStoredChannelHistogramSettings(String channelGroup, String channel, boolean mda) {
-      String type = mda ? "MDA_" : "SnapLive_";
-      if (options_.syncExposureMainAndMDA_) {
-         type = "";  //only one group of contrast settings
-      }
-      return new HistogramSettings(
-      contrastPrefs_.getInt("ContrastMin_" + channelGroup + "_" + type + channel,0),
-      contrastPrefs_.getInt("ContrastMax_" + channelGroup + "_" + type + channel, 65536),
-      contrastPrefs_.getDouble("ContrastGamma_" + channelGroup + "_" + type + channel, 1.0),
-      contrastPrefs_.getInt("ContrastHistMax_" + channelGroup + "_" + type + channel, -1),
-      contrastPrefs_.getInt("ContrastHistDisplayMode_" + channelGroup + "_" + type + channel, 1) );
-   }
-
    public void setExposure(double exposureTime) {
       // This is synchronized with the shutdown lock primarily so that
       // the exposure-time field in MainFrame won't cause issues when it loses
@@ -1415,11 +1382,6 @@ public class MMStudio implements ScriptInterface {
          posListDlg_.dispose();
       }
       
-      if (profileWin_ != null) {
-         removeMMBackgroundListener(profileWin_);
-         profileWin_.dispose();
-      }
-
       LineProfile.cleanup();
 
       if (scriptPanel_ != null) {
