@@ -26,11 +26,11 @@ package org.micromanager.multichannelshading;
  * @author kthorn
  */
 public class MultiChannelShading implements org.micromanager.api.MMProcessorPlugin {
-   public static final String menuName = "Multi-Channel Shading";
+   public static final String menuName = "Flat-Field Correction";
    public static final String tooltipDescription =
       "Apply dark subtraction and flat-field correction";
 
-   public static String versionNumber = "0.1";
+   public static String versionNumber = "0.2";
 
    public static Class<?> getProcessorClass() {
       return ShadingProcessor.class;

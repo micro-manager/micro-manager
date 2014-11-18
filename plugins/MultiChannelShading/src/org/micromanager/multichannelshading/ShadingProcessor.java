@@ -24,6 +24,7 @@ package org.micromanager.multichannelshading;
 
 import ij.ImagePlus;
 import ij.process.ImageProcessor;
+import java.awt.Rectangle;
 import java.util.Iterator;
 import mmcorej.Configuration;
 import mmcorej.PropertySetting;
@@ -83,15 +84,14 @@ public class ShadingProcessor extends DataProcessor<TaggedImage> {
 
    /**
     * Executes flat-fielding
-    * 
-    * 
-    * 
-    * @param nextImage
+
+    * @param nextImage - image to be processed
     * @return - Transformed tagged image, otherwise a copy of the input
     * @throws JSONException
     * @throws MMScriptException 
     */
-   public  TaggedImage processTaggedImage(TaggedImage nextImage) throws JSONException, MMScriptException, Exception {     
+   public  TaggedImage processTaggedImage(TaggedImage nextImage) throws 
+           JSONException, MMScriptException, Exception {     
       myFrame_.setStatus("Processing image...");
       int width = MDUtils.getWidth(nextImage.tags);
       int height = MDUtils.getHeight(nextImage.tags);
@@ -111,29 +111,17 @@ public class ShadingProcessor extends DataProcessor<TaggedImage> {
          return nextImage;
       }
       JSONObject newTags = nextImage.tags;
+      TaggedImage bgSubtracted = nextImage;
       
       // subtract background
-      ImagePlusInfo background = imageCollection_.getBackground(1, null);
-      ImageProcessor imp = ImageUtils.makeProcessor(nextImage);
-      imp = ImageUtils.subtractImageProcessors(imp, background.getProcessor());
-      TaggedImage bgSubtracted = new TaggedImage(imp.getPixels(), newTags);
-
-      /*
-      SimpleFloatImage background = imageCollection_.getBackground();
+      int binning = newTags.getInt("Binning");
+      Rectangle rect = ImageCollection.TagToRectangle(newTags.getString("ROI"));
+      ImagePlusInfo background = imageCollection_.getBackground(binning, rect);
       if (background != null) {
-         if (background_.getType() != ijType) {
-            String msg = 
-                    "Background image is of different type than experimental image";
-            myFrame_.setStatus(msg);
-            ReportingUtils.logError("MultiShading Plugin: " + msg);
-         } else {
-            ImageProcessor differenceProcessor =
-                    ImageUtils.subtractImageProcessors(ImageUtils.makeProcessor(nextImage),
-                    background_.getProcessor());
-            nextImage = new TaggedImage(differenceProcessor.getPixels(), newTags);
-         }
+         ImageProcessor imp = ImageUtils.makeProcessor(nextImage);
+         imp = ImageUtils.subtractImageProcessors(imp, background.getProcessor());
+         bgSubtracted = new TaggedImage(imp.getPixels(), newTags);
       }
-      */
       
       ImagePlusInfo flatFieldImage = getMatchingFlatFieldImage(newTags);       
 
@@ -141,25 +129,21 @@ public class ShadingProcessor extends DataProcessor<TaggedImage> {
       if (flatFieldImage == null) {
          String msg = "No matching flatfield image found";
          myFrame_.setStatus(msg);
-         ReportingUtils.logMessage("MultiShading Plugin: " + msg);
          return bgSubtracted;
-      }      
-      // do not calculate if image size differs
-      if (width != flatFieldImage.getWidth() || 
-              height != flatFieldImage.getHeight()) {
-         String msg = "FlatField dimensions do not match image dimensions";
-         myFrame_.setStatus(msg);
-         ReportingUtils.logError(msg);
-         return bgSubtracted;
-      }      
+      }  
       
       if (ijType == ImagePlus.GRAY8) {
          byte[] newPixels = new byte[width * height];
          byte[] oldPixels = (byte[]) bgSubtracted.pix;
          int length = oldPixels.length;
+         float[] flatFieldPixels = (float[]) flatFieldImage.getProcessor().getPixels();
          for (int index = 0; index < length; index++){
-            newPixels[index] = (byte) ( (float) oldPixels[index] 
-                * flatFieldImage.getProcessor().getf(index) );
+            float oldPixel = (float)((int)(oldPixels[index]) & 0x000000ff);
+            float newValue = oldPixel * flatFieldPixels[index];
+            if (newValue > 2 * Byte.MAX_VALUE) {
+               newValue = 2 * Byte.MAX_VALUE;
+            }
+            newPixels[index] = (byte) (newValue);
          }
          newImage = new TaggedImage(newPixels, newTags);
          myFrame_.setStatus("Done");
@@ -173,8 +157,12 @@ public class ShadingProcessor extends DataProcessor<TaggedImage> {
             // shorts are signed in java so have to do this conversion to get 
             // the right value
             float oldPixel = (float)((int)(oldPixels[index]) & 0x0000ffff);
-            newPixels[index] = (short) ((oldPixel * 
-                    flatFieldImage.getProcessor().getf(index)) + 0.5f);
+            float newValue = (oldPixel * 
+                    flatFieldImage.getProcessor().getf(index)) + 0.5f;
+            if (newValue > 2 * Short.MAX_VALUE) {
+               newValue = 2 * Short.MAX_VALUE;
+            }
+            newPixels[index] = (short) newValue;
          }
          newImage = new TaggedImage(newPixels, newTags);
          myFrame_.setStatus("Done");
@@ -221,7 +209,9 @@ public class ShadingProcessor extends DataProcessor<TaggedImage> {
                presetMatch = settingMatch;
             }
             if (presetMatch) {
-               return shadingTableModel_.getFlatFieldImage(channelGroup, preset);
+               int binning = imgTags.getInt("Binning");
+               Rectangle rect = ImageCollection.TagToRectangle(imgTags.getString("ROI"));
+               return imageCollection_.getFlatField(preset, binning, rect);
             }
          } catch (Exception ex) {
             ReportingUtils.logError(ex, "Exception in tag matching");

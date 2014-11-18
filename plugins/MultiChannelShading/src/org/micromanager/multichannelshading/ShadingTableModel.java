@@ -24,8 +24,6 @@ package org.micromanager.multichannelshading;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import javax.swing.table.AbstractTableModel;
@@ -143,14 +141,14 @@ public class ShadingTableModel extends AbstractTableModel {
             String file = channelPrefs_.get(key, "");
             if (file.length() > 0) {
                imageCollection_.addFlatField(key, file);
-               
+               presetList_.add(key);
+               fileList_.add(file);
             }
          }
       } catch (BackingStoreException ex) {
          gui_.logError(ex);
       } catch (MMException ex) {
-         // TODO:
-         Logger.getLogger(ShadingTableModel.class.getName()).log(Level.SEVERE, null, ex);
+         gui_.showError(ex);
       }
       fireTableDataChanged();
    }

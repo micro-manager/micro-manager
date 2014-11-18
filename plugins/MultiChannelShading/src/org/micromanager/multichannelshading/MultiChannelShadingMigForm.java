@@ -26,6 +26,8 @@ import java.awt.Font;
 import java.awt.Insets;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.util.prefs.Preferences;
 import javax.swing.ImageIcon;
@@ -86,6 +88,13 @@ public class MultiChannelShadingMigForm extends MMDialog {
       mmc_ = gui_.getMMCore();
       prefs_ = this.getPrefsNode();
       this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+      this.addWindowListener(new WindowAdapter() {
+         @Override
+         public void windowClosing(WindowEvent arg0) {
+            dispose();
+         }
+      }
+      );
       arialSmallFont_ = new Font("Arial", Font.PLAIN, 12);
       buttonSize_ = new Dimension(70, 21);
       
@@ -127,9 +136,7 @@ public class MultiChannelShadingMigForm extends MMDialog {
       final JTextField darkFieldTextField = new JTextField();
       darkFieldTextField.setFont(arialSmallFont_);
       //populate darkFieldName from preferences and process it.
-      String darkFieldFileName = prefs_.get(DARKFIELDFILENAME, "");
-      darkFieldTextField.setText("".equals(darkFieldFileName)
-              ? EMPTY_FILENAME_INDICATOR : darkFieldFileName);
+      darkFieldTextField.setText(prefs_.get(DARKFIELDFILENAME, ""));
       darkFieldTextField.setHorizontalAlignment(JTextField.RIGHT);
       darkFieldTextField.addActionListener(new java.awt.event.ActionListener() {
          @Override
@@ -229,6 +236,7 @@ public class MultiChannelShadingMigForm extends MMDialog {
       useCheckBox_.setSelected(prefs_.getBoolean(USECHECKBOX, true));
       add(useCheckBox_, "span 3, wrap");     
       add(statusLabel_, "span 3, wrap");
+      updateAddAndRemoveButtons(addButton, removeButton);
      
       processor_.setEnabled(useCheckBox_.isSelected());
       
