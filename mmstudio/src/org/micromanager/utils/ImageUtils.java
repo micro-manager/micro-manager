@@ -141,13 +141,24 @@ public class ImageUtils {
    }
 
 
-   public static ImageProcessor subtractImageProcessors(ImageProcessor proc1, ImageProcessor proc2) {
-      if (proc1 instanceof ByteProcessor) {
-         return subtractByteProcessors((ByteProcessor) proc1, (ByteProcessor) proc2);
-      } else if (proc1 instanceof ShortProcessor) {
-         return subtractShortProcessors((ShortProcessor) proc1, (ShortProcessor) proc2);
-      } else if (proc1 instanceof FloatProcessor) {
-          return subtractFloatProcessors((FloatProcessor) proc1, (FloatProcessor) proc2);
+   public static ImageProcessor subtractImageProcessors(ImageProcessor proc1, ImageProcessor proc2)
+           throws MMException {
+      if ((proc1.getWidth() != proc2.getWidth())
+              || (proc1.getHeight() != proc2.getHeight())) {
+         throw new MMException("Images are unequal size");
+      }
+      try {
+         if (proc1 instanceof ByteProcessor && proc2 instanceof ByteProcessor) {
+            return subtractByteProcessors((ByteProcessor) proc1, (ByteProcessor) proc2);
+         } else if (proc1 instanceof ShortProcessor && proc2 instanceof ShortProcessor) {
+            return subtractShortProcessors((ShortProcessor) proc1, (ShortProcessor) proc2);
+         } else if (proc1 instanceof ShortProcessor && proc2 instanceof ByteProcessor) {
+            return subtractShortByteProcessors((ShortProcessor) proc1, (ByteProcessor) proc2);
+         } else if (proc1 instanceof FloatProcessor) {
+            return subtractFloatProcessors((FloatProcessor) proc1, (FloatProcessor) proc2);
+         }
+      } catch (ClassCastException ex) {
+         throw new MMException("Types of images to be subtracted were not compatible");
       }
       return null;
    }
@@ -164,6 +175,12 @@ public class ImageUtils {
               null);
    }
    
+   private static ShortProcessor subtractShortByteProcessors(ShortProcessor proc1, ByteProcessor proc2) {
+      return new ShortProcessor(proc1.getWidth(), proc1.getHeight(),
+              subtractPixelArrays((short []) proc1.getPixels(), (byte []) proc2.getPixels()),
+              null);
+   }
+   
    private static ShortProcessor subtractShortProcessors(ShortProcessor proc1, ShortProcessor proc2) {
       return new ShortProcessor(proc1.getWidth(), proc1.getHeight(),
               subtractPixelArrays((short []) proc1.getPixels(), (short []) proc2.getPixels()),
@@ -174,12 +191,22 @@ public class ImageUtils {
       int l = array1.length;
       byte[] result = new byte[l];
       for (int i=0;i<l;++i) {
-         result[i] = (byte) Math.max(0,array1[i] - array2[i]);
+         result[i] = (byte) Math.max(0, unsignedValue(array1[i]) - 
+                 unsignedValue(array2[i]) );
       }
       return result;
    }
    
    public static short[] subtractPixelArrays(short[] array1, short[] array2) {
+      int l = array1.length;
+      short[] result = new short[l];
+      for (int i=0;i<l;++i) {
+         result[i] = (short) Math.max(0, unsignedValue(array1[i]) - unsignedValue(array2[i]));
+      }
+      return result;
+   }
+   
+   public static short[] subtractPixelArrays(short[] array1, byte[] array2) {
       int l = array1.length;
       short[] result = new short[l];
       for (int i=0;i<l;++i) {
