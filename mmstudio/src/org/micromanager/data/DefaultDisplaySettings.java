@@ -409,6 +409,31 @@ public class DefaultDisplaySettings implements DisplaySettings {
          if (tags.has("ChContrastMax")) {
             builder.channelContrastMaxes(new Integer[] {tags.getInt("ChContrastMax")});
          }
+         if (tags.has("histogramUpdateRate")) {
+            builder.histogramUpdateRate(tags.getDouble("histogramUpdateRate"));
+         }
+         if (tags.has("shouldSyncChannels")) {
+            builder.shouldSyncChannels(tags.getBoolean("shouldSyncChannels"));
+         }
+         if (tags.has("scaleBarColorIndex")) {
+            builder.scaleBarColorIndex(tags.getInt("scaleBarColorIndex"));
+         }
+         if (tags.has("scaleBarLocationIndex")) {
+            builder.scaleBarLocationIndex(tags.getInt("scaleBarLocationIndex"));
+         }
+         if (tags.has("shouldShowScaleBar")) {
+            builder.shouldShowScaleBar(tags.getBoolean("shouldShowScaleBar"));
+         }
+         if (tags.has("shouldAutostretch")) {
+            builder.shouldAutostretch(tags.getBoolean("shouldAutostretch"));
+         }
+         if (tags.has("trimPercentage")) {
+            builder.trimPercentage(tags.getDouble("trimPercentage"));
+         }
+         if (tags.has("shouldUseLogScale")) {
+            builder.shouldUseLogScale(tags.getBoolean("shouldUseLogScale"));
+         }
+
          return builder.build();
       }
       catch (JSONException e) {
