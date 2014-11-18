@@ -423,9 +423,9 @@
                                  (sequence-fits-stage? (.getFocusDevice mmc) n-slices))
         no-channel-skips-frames (all-equal? 0 (map :skip-frames channels))
         all-channels-do-z-stack (all-equal? true (map :use-z-stack channels))
-        channel-total-exposure (if channels
+        channel-total-exposure (if have-multiple-channels
                                  (reduce + (map :exposure channels))
-                                 (default-exposure))]
+                                 default-exposure)]
     (if
       (and
         (or
@@ -468,4 +468,3 @@
             numFrames use-autofocus channels slices
             default-exposure triggers 0 relative-slices)))
       (generate-default-acq-sequence settings runnables))))
-
