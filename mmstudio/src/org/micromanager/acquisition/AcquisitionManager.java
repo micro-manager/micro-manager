@@ -183,8 +183,7 @@ public class AcquisitionManager {
          imageBitDepth = MDUtils.getBitDepth(tags);
          // need to check number of channels so that multi cam and single cam
          // acquistions of same size and depth are differentiated
-         numChannels = MDUtils.getNumChannels(tags);  
-         
+         numChannels = MDUtils.getNumChannels(tags);
       } catch (Exception e) {
          throw new MMScriptException("Something wrong with image tags.");
       }
@@ -199,6 +198,7 @@ public class AcquisitionManager {
                 ! acq.getImageCache().isFinished() )
              newNeeded = false;
          } catch (Exception e) {
+            ReportingUtils.logError(e, "Couldn't check if we need a new album");
          }
       }
 
@@ -243,7 +243,7 @@ public class AcquisitionManager {
 
       // This image goes, by default, into the next frame.
       int newImageFrame = acq.getLastAcquiredFrame() + 1;
-      
+
       // This makes sure that the second multicamera image has the correct
       // frame index.
       // Assumes that multi channel additions add channel 0 first.

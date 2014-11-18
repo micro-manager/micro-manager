@@ -147,6 +147,17 @@ public class LiveModeTimer {
       displayImageRoutine_ = new MMStudio.DisplayImageRoutine() {
          @Override
          public void show(final TaggedImage ti) {
+            // Ensure the image has summary metadata set properly, as
+            // AcquisitionManager relies on it (e.g. in addToAlbum(), when the
+            // "snap to album" button is clicked).
+            try {
+               MDUtils.setSummary(ti.tags,
+                     MMStudio.getInstance().getAcquisitionWithName(SnapLiveManager.SIMPLE_ACQ).getSummaryMetadata());
+            }
+            catch (Exception e) {
+               ReportingUtils.logError(e, "Error setting summary metadata");
+            }
+
             try {
                if (multiCam_) {
                   mCamImageCounter_++;
@@ -239,7 +250,7 @@ public class LiveModeTimer {
          if (now - start >= timeout) {
             throw new Exception("Camera did not send image within a reasonable time");
          }
-                    
+
          TaggedImage timg = core_.getLastTaggedImage();
 
          // With first image acquired, create the display
