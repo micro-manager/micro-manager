@@ -414,6 +414,26 @@ public class DisplayWindow extends StackWindow {
       if (desiredCanvasSize.width + 50 > displayWidth ||
             desiredCanvasSize.height + 150 > displayHeight) {
          // Can't fit the canvas into the available space, so zoom out.
+         // Irritatingly, ImageCanvas.zoomOut() will only zoom one "level"
+         // (e.g. going from 100% to 75%, not straight to 25% as we might
+         // need), so we need to manually calculate and set the desired
+         // zoom first.
+         double origMagnification = ic.getMagnification();
+         double curMag = origMagnification;
+         Dimension newSize = new Dimension(desiredCanvasSize);
+         while (newSize.width + 50 > displayWidth ||
+               newSize.height + 150 > displayHeight) {
+            double nextMag = ic.getLowerZoomLevel(curMag);
+            if (nextMag == curMag) {
+               // Hit the bottom of the zoom levels; give up.
+               break;
+            }
+            curMag = nextMag;
+            newSize = new Dimension(
+                  (int) (desiredCanvasSize.width * curMag / origMagnification),
+                  (int) (desiredCanvasSize.height * curMag / origMagnification));
+         }
+         ic.setMagnification(curMag);
          ic.zoomOut(displayWidth - 50, displayHeight - 150);
       }
       // Derive our own size based on the canvas size plus padding. We want
