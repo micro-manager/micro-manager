@@ -161,34 +161,9 @@ public class GUIUtils {
 
     */
    public static boolean isLocationInScreenBounds(Point location) {
-
-      // Check if the location is in the bounds of one of the graphics devices.
-      GraphicsEnvironment graphicsEnvironment = GraphicsEnvironment.getLocalGraphicsEnvironment();
-      GraphicsDevice[] graphicsDevices = graphicsEnvironment.getScreenDevices();
-      Rectangle graphicsConfigurationBounds = new Rectangle();
-
-      // Iterate over the graphics devices.
-      for (int j = 0; j < graphicsDevices.length; j++) {
-
-         // Get the bounds of the device.
-         GraphicsDevice graphicsDevice = graphicsDevices[j];
-         graphicsConfigurationBounds.setRect(graphicsDevice.getDefaultConfiguration().getBounds());
-
-         // Is the location in this bounds?
-         graphicsConfigurationBounds.setRect(graphicsConfigurationBounds.x, graphicsConfigurationBounds.y,
-                 graphicsConfigurationBounds.width, graphicsConfigurationBounds.height);
-         if (graphicsConfigurationBounds.contains(location.x, location.y)) {
-
-            // The location is in this screengraphics.
-            return true;
-
-         }
-
-      }
-
-      // We could not find a device that contains the given point.
-      return false;
-
+      GraphicsConfiguration config = getGraphicsConfigurationContaining(
+            location.x, location.y);
+      return (config != null);
    }
 
    /**
@@ -207,6 +182,10 @@ public class GUIUtils {
          // This should always succeed as the primary display contains (0, 0).
          config = getGraphicsConfigurationContaining(x, y);
       }
+      if (config == null) {
+         ReportingUtils.logError("Couldn't find a display containing the point (" + x + ", " + y + ")");
+         return null;
+      }
       return config.getBounds();
    }
 
@@ -223,7 +202,6 @@ public class GUIUtils {
             }
          }
       }
-      ReportingUtils.logError("Couldn't find a display containing the point (" + x + ", " + y + ")");
       return null;
    }
 
@@ -240,7 +218,8 @@ public class GUIUtils {
       if (!windowsWithPersistedPositions.contains(win.getClass())) {
          Preferences prefs = Preferences.userRoot().node(win.getClass().getName());
          Point dialogPosition = JavaUtils.getObjectFromPrefs(prefs, DIALOG_POSITION, (Point) null);
-         if (dialogPosition == null || !isLocationInScreenBounds(dialogPosition)) {
+         if (dialogPosition == null ||
+               !isLocationInScreenBounds(dialogPosition)) {
             Dimension screenDims = JavaUtils.getScreenDimensions();
             dialogPosition = new Point((screenDims.width - win.getWidth()) / 2, (screenDims.height - win.getHeight()) / 2);
          }
