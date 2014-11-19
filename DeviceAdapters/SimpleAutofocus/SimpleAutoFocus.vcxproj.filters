@@ -24,9 +24,6 @@
     <ClCompile Include="SimpleAutofocus.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ThreePointAF.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SimpleAutofocus.h">

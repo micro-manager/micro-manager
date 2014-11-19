@@ -157,7 +157,6 @@
     <ClCompile Include="FocusMonitor.cpp" />
     <ClCompile Include="score.cpp" />
     <ClCompile Include="SimpleAutofocus.cpp" />
-    <ClCompile Include="ThreePointAF.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SimpleAutofocus.h" />
