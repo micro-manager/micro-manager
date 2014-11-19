@@ -73,6 +73,10 @@ public class ReportingUtils {
    public static void showMessage(final String msg) {
       JOptionPane.showMessageDialog(null, msg);
    }
+   
+   public static void showMessage(final String msg, Component parent) {
+      JOptionPane.showMessageDialog(parent, msg);
+   }
 
    public static void logError(Throwable e, String msg) {
       if (e != null) {

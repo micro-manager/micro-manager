@@ -2834,6 +2834,11 @@ public class MMStudio implements ScriptInterface {
    public void showMessage(String msg) {
       ReportingUtils.showMessage(msg);
    }
+   
+   @Override
+   public void showMessage(String msg, Component parent) {
+      ReportingUtils.showMessage(msg, parent);
+   }
 
    @Override
    public void logError(Exception e, String msg) {

@@ -492,6 +492,13 @@ public interface ScriptInterface {
     * @param msg - message to be shown
     */
    public void showMessage(String msg);
+   
+   /**
+    * Shows a message in the UI.
+    * @param msg - message to be shown
+    * @param parent - parent component over which this message should be centered
+    */
+   public void showMessage(String msg, Component parent);
 
    /**
     * Writes the stacktrace and a message to the Micro-Manager log (Corelog.txt).
