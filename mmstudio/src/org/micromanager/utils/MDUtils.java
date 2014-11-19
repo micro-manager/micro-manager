@@ -187,6 +187,10 @@ public class MDUtils {
       map.put("Channel", channel);
    }
 
+   public static boolean hasChannelColor(JSONObject map) {
+      return map.has("ChColor");
+   }
+
    public static int getChannelColor(JSONObject map) throws JSONException {
       if (isValid(map, "ChColor")) {
          return map.getInt("ChColor");
