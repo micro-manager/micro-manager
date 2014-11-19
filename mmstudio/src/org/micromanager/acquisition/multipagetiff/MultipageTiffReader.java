@@ -162,6 +162,9 @@ public class MultipageTiffReader {
    public static boolean isMMMultipageTiff(String directory) throws IOException {
       File dir = new File(directory);
       File[] children = dir.listFiles();
+      if (children == null) {
+         throw new IOException("No subfiles within TIFF structure; is this an MM dataset?");
+      }
       File testFile = null;
       for (File child : children) {
          if (child.isDirectory()) {
