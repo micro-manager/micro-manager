@@ -145,7 +145,7 @@ public class ImageUtils {
            throws MMException {
       if ((proc1.getWidth() != proc2.getWidth())
               || (proc1.getHeight() != proc2.getHeight())) {
-         throw new MMException("Images are unequal size");
+         throw new MMException("Error: Images are of unequal size");
       }
       try {
          if (proc1 instanceof ByteProcessor && proc2 instanceof ByteProcessor) {
@@ -154,6 +154,10 @@ public class ImageUtils {
             return subtractShortProcessors((ShortProcessor) proc1, (ShortProcessor) proc2);
          } else if (proc1 instanceof ShortProcessor && proc2 instanceof ByteProcessor) {
             return subtractShortByteProcessors((ShortProcessor) proc1, (ByteProcessor) proc2);
+         } else if (proc1 instanceof FloatProcessor && proc2 instanceof ByteProcessor) {
+             return subtractFloatProcessors((FloatProcessor) proc1, (ByteProcessor) proc2);
+         } else if (proc1 instanceof FloatProcessor && proc2 instanceof ShortProcessor) {
+             return subtractFloatProcessors((FloatProcessor) proc1, (ShortProcessor) proc2);
          } else if (proc1 instanceof FloatProcessor) {
             return subtractFloatProcessors((FloatProcessor) proc1, (FloatProcessor) proc2);
          }
@@ -161,6 +165,22 @@ public class ImageUtils {
          throw new MMException("Types of images to be subtracted were not compatible");
       }
       return null;
+   }
+   
+      public static ImageProcessor subtractFloatProcessors(FloatProcessor proc1, 
+           ByteProcessor proc2) {
+       return new FloatProcessor(proc1.getWidth(), proc1.getHeight(),
+               subtractPixelArrays((float[]) proc1.getPixels(), 
+               (byte[]) proc2.getPixels() ),
+               null);
+   }
+   
+   public static ImageProcessor subtractFloatProcessors(FloatProcessor proc1, 
+           ShortProcessor proc2) {
+       return new FloatProcessor(proc1.getWidth(), proc1.getHeight(),
+               subtractPixelArrays((float[]) proc1.getPixels(), 
+               (short[]) proc2.getPixels() ),
+               null);
    }
    
    public static ImageProcessor subtractFloatProcessors(FloatProcessor proc1, FloatProcessor proc2) {
@@ -211,6 +231,24 @@ public class ImageUtils {
       short[] result = new short[l];
       for (int i=0;i<l;++i) {
          result[i] = (short) Math.max(0, unsignedValue(array1[i]) - unsignedValue(array2[i]));
+      }
+      return result;
+   }
+   
+   public static float[] subtractPixelArrays(float[] array1, byte[] array2) {
+      int l = array1.length;
+      float[] result = new float[l];
+      for (int i=0;i<l;++i) {
+         result[i] = array1[i] - unsignedValue(array2[i]);
+      }
+      return result;
+   }
+   
+   public static float[] subtractPixelArrays(float[] array1, short[] array2) {
+      int l = array1.length;
+      float[] result = new float[l];
+      for (int i=0;i<l;++i) {
+         result[i] = array1[i] - unsignedValue(array2[i]);
       }
       return result;
    }

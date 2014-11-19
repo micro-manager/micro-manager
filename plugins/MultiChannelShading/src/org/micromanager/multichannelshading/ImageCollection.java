@@ -28,6 +28,7 @@ import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import java.awt.Rectangle;
 import java.util.HashMap;
+
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MMException;
 import org.micromanager.utils.ReportingUtils;
@@ -102,7 +103,8 @@ public class ImageCollection {
    public void addFlatField(String preset, String file) throws MMException {
       ij.io.Opener opener = new ij.io.Opener();
       ImagePlus ip = opener.openImage(file);
-      if (ip.getType() != ImagePlus.GRAY8 && ip.getType() != ImagePlus.GRAY16) {
+      if (ip.getType() != ImagePlus.GRAY8 && ip.getType() != ImagePlus.GRAY16
+              && ip.getType() != ImagePlus.GRAY32 ) {
          throw new MMException(
                  "This plugin only works with gray scale flatfield images of 1 or 2 byte size");
       }
@@ -120,24 +122,36 @@ public class ImageCollection {
          int width = dp.getWidth();
          int height = dp.getHeight();
          int nrPixels = width * height;
-         for (int i = 0; i < nrPixels; i++) {
-            total += dp.get(i);
+         if (ip.getType() == ImagePlus.GRAY8 || ip.getType() == ImagePlus.GRAY16) {
+            for (int i = 0; i < nrPixels; i++) {
+               total += dp.get(i);
+            }
+         } else {
+            for (int i = 0; i < nrPixels; i++) {
+               total += dp.getf(i);
+            }
          }
          float mean = total / nrPixels;
          float[] fPixels = new float[nrPixels];
+          if (dp instanceof FloatProcessor) {
+             for (int i = 0; i < nrPixels; i++) {
+               fPixels[i] = mean / dp.getf(i);
+            }
+          } else 
          for (int i = 0; i < nrPixels; i++) {
+           
             int pValue = dp.get(i);
             if (dp instanceof ShortProcessor) {
-               pValue &= 0x0000ffff;
+               pValue &= (int) pValue & 0x0000ffff;
             } else if (dp instanceof ByteProcessor) {
-               pValue &= 0x000000ff;
+               pValue &= (int) pValue & 0x000000ff;
             }
             fPixels[i] = mean / (float) pValue;
          }
          FloatProcessor fp = new FloatProcessor(width, height, fPixels);
 
          flatField = new ImagePlusInfo(fp);
-         
+
          // flatField.show();
 
          HashMap<String, ImagePlusInfo> newFlatField =
@@ -146,23 +160,24 @@ public class ImageCollection {
          newFlatField.put(makeKey(1, fp.getRoi()), flatField);
          flatFields_.put(preset, newFlatField);
       } catch (MMException ex) {
-         ReportingUtils.logError("Shading plugin, addFlatField in ImageCollection: " + ex.getMessage());
+         ReportingUtils.logError("Shading plugin, addFlatField in ImageCollection: " + 
+                 ex.getMessage());
       }
    }
-   
+
    public ImagePlusInfo getFlatField(String preset) {
       return flatFields_.get(preset).get(BASEIMAGE);
    }
-   
+
    public void clearFlatFields() {
       flatFields_.clear();
    }
-   
+
    public void removeFlatField(String preset) {
       flatFields_.remove(preset);
    }
-   
-   public ImagePlusInfo getFlatField(String preset, int binning, Rectangle roi) 
+
+   public ImagePlusInfo getFlatField(String preset, int binning, Rectangle roi)
            throws MMException {
       String key = makeKey(binning, roi);
       if (flatFields_.get(preset).containsKey(key)) {
@@ -179,29 +194,29 @@ public class ImageCollection {
       tmp.put(makeKey(binning, roi), derivedIp);
       return derivedIp;
    }
-   
+
    private String makeKey(int binning, Rectangle roi) {
-      if (binning == 1 && (roi == null || roi.width == 0) ) {
+      if (binning == 1 && (roi == null || roi.width == 0)) {
          return BASEIMAGE;
       }
-      String key = binning + "-" + roi.x + "-" + roi.y + "-" + roi.width + "-" +
-              roi.height;
+      String key = binning + "-" + roi.x + "-" + roi.y + "-" + roi.width + "-"
+              + roi.height;
       return key;
    }
-   
-    /**
-    * Generates a new ImagePlus from this one by applying the 
-    * requested binning and setting the desired ROI.
-    * Should only be called on the original image (i.e. binning = 1, full field image)
-    * If the original image was normalized, this one will be as well (as it 
-    * is derived from the normalized image)
+
+   /**
+    * Generates a new ImagePlus from this one by applying the requested binning
+    * and setting the desired ROI. Should only be called on the original image
+    * (i.e. binning = 1, full field image) If the original image was normalized,
+    * this one will be as well (as it is derived from the normalized image)
+    *
     * @param ipi
     * @param binning
     * @param roi
-    * @return 
-    * @throws org.micromanager.utils.MMException 
+    * @return
+    * @throws org.micromanager.utils.MMException
     */
-   private ImagePlusInfo makeDerivedImage(ImagePlusInfo ipi, int binning, Rectangle roi) 
+   private ImagePlusInfo makeDerivedImage(ImagePlusInfo ipi, int binning, Rectangle roi)
            throws MMException {
       if (ipi.getBinning() != 1) {
          throw new MMException("This is not an unbinned image.  " +
@@ -223,7 +238,35 @@ public class ImageCollection {
    
    public static Rectangle TagToRectangle(String search) throws MMException {
       String[] parts = search.split("-");
-      if (parts.length != 4) {
+      // The Andor Zyla adds negative offsets to the ROI
+      // these need to be caught and corrected here, or we will not 
+      // generate the corect image.  
+      // Once this is fixed in the Zyla, this code can go away
+      if (parts.length > 4) {
+         String[] realParts = new String[4];
+         int counter = 0;
+         int lowest = 0;
+         for (int i = 0; i < parts.length; i++) {
+            if ("".equals(parts[i])) {
+               i++;
+               realParts[counter] = "-" + parts[i];
+               int val = Integer.valueOf(realParts[counter]);
+               if (val < lowest) {
+                  lowest = val;
+               }
+            } else {
+               realParts[counter] = parts[i];
+            }
+            counter++;
+         }
+         for (int i=0; i < realParts.length; i++) {
+            realParts[i] = Integer.toString( 
+                    Integer.valueOf(realParts[i]) - lowest);
+         }
+         parts = realParts;
+      }
+      
+      if (parts.length < 4) {
          throw new MMException("This String does not represent a Rectangle");
       }
       try {

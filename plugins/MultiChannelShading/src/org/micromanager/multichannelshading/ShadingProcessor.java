@@ -71,6 +71,7 @@ public class ShadingProcessor extends DataProcessor<TaggedImage> {
 
             } catch (Exception ex) {
                produce(nextImage);
+               myFrame_.setStatus(ex.getMessage());
                ReportingUtils.logError(ex);
             }
          } else {
@@ -114,16 +115,24 @@ public class ShadingProcessor extends DataProcessor<TaggedImage> {
       TaggedImage bgSubtracted = nextImage;
       
       // subtract background
-      int binning = newTags.getInt("Binning");
+      int binning;
+      try {
+        binning = newTags.getInt("Binning");
+      } catch (JSONException ex) {
+          // some cameras store binning as 1x1, etc..
+          String binString = newTags.getString("Binning");
+          binning = Integer.parseInt(binString.substring(0, 1));
+      }
       Rectangle rect = ImageCollection.TagToRectangle(newTags.getString("ROI"));
-      ImagePlusInfo background = imageCollection_.getBackground(binning, rect);
+      ImagePlusInfo background = imageCollection_.getBackground(binning, 
+              rect);
       if (background != null) {
          ImageProcessor imp = ImageUtils.makeProcessor(nextImage);
          imp = ImageUtils.subtractImageProcessors(imp, background.getProcessor());
          bgSubtracted = new TaggedImage(imp.getPixels(), newTags);
       }
       
-      ImagePlusInfo flatFieldImage = getMatchingFlatFieldImage(newTags);       
+      ImagePlusInfo flatFieldImage = getMatchingFlatFieldImage(newTags, binning, rect);       
 
       //do not calculate flat field if we don't have a matching channel
       if (flatFieldImage == null) {
@@ -179,7 +188,8 @@ public class ShadingProcessor extends DataProcessor<TaggedImage> {
     * @param imgTags - image tags in JSON format
     * @return matching flat field image
     */
-   ImagePlusInfo getMatchingFlatFieldImage(JSONObject imgTags) {
+   ImagePlusInfo getMatchingFlatFieldImage(JSONObject imgTags, int binning, 
+           Rectangle rect) {
       String channelGroup = shadingTableModel_.getChannelGroup();
       String[] presets = shadingTableModel_.getUsedPresets();
       for (String preset : presets) {
@@ -209,8 +219,6 @@ public class ShadingProcessor extends DataProcessor<TaggedImage> {
                presetMatch = settingMatch;
             }
             if (presetMatch) {
-               int binning = imgTags.getInt("Binning");
-               Rectangle rect = ImageCollection.TagToRectangle(imgTags.getString("ROI"));
                return imageCollection_.getFlatField(preset, binning, rect);
             }
          } catch (Exception ex) {
