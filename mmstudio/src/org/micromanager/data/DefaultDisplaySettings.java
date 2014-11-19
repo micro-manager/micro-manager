@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.lang.reflect.Field;
 import java.util.prefs.Preferences;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -394,15 +395,21 @@ public class DefaultDisplaySettings implements DisplaySettings {
          return new Builder().build();
       }
       try {
-         Integer rgb = MDUtils.getChannelColor(tags);
-         // Convert 32-bit RGB into separate components.
-         int red = rgb & 0xff;
-         int blue = (rgb >> 8) & 0xff;
-         int green = (rgb >> 16) & 0xff;
-         Color color = new Color(red, green, blue);
          Builder builder = new Builder();
-         builder.channelNames(new String[] {MDUtils.getChannelName(tags)})
-            .channelColors(new Color[] {color});
+         builder.channelNames(new String[] {MDUtils.getChannelName(tags)});
+         // Check for both methods of storing colors (see legacyToJSON, below)
+         if (MDUtils.hasChannelColor(tags)) {
+            builder.channelColors(new Color[] {rgbToColor(MDUtils.getChannelColor(tags))});
+         }
+         if (tags.has("channelColors")) {
+            JSONArray colorTags = tags.getJSONArray("channelColors");
+            Color[] colors = new Color[colorTags.length()];
+            for (int i = 0; i < colorTags.length(); ++i) {
+               colors[i] = rgbToColor(colorTags.getInt(i));
+            }
+            builder.channelColors(colors);
+         }
+
          if (tags.has("ChContrastMin")) {
             builder.channelContrastMins(new Integer[] {tags.getInt("ChContrastMin")});
          }
@@ -453,12 +460,16 @@ public class DefaultDisplaySettings implements DisplaySettings {
          if (channelNames_ != null) {
             MDUtils.setChannelName(result, channelNames_[0]);
          }
-         // Assemble a 32-bit RGB color from our Color.
+         // We store color in two ways: the backwards-compatible
+         // "ChColor" tag (via setChannelColor()), and a method that preserves
+         // all channel colors.
          if (channelColors_ != null && channelColors_.length > 0) {
-            int red = channelColors_[0].getRed();
-            int blue = channelColors_[0].getBlue() << 8;
-            int green = channelColors_[0].getGreen() << 16;
-            MDUtils.setChannelColor(result, red + blue + green);
+            MDUtils.setChannelColor(result, colorToRGB(channelColors_[0]));
+            JSONArray colors = new JSONArray();
+            for (Color color : channelColors_) {
+               colors.put(colorToRGB(color));
+            }
+            result.put("channelColors", colors);
          }
          if (channelContrastMins_ != null && channelContrastMins_.length > 0) {
             result.put("ChContrastMin", channelContrastMins_[0]);
@@ -480,6 +491,23 @@ public class DefaultDisplaySettings implements DisplaySettings {
          ReportingUtils.logError(e, "Couldn't convert DefaultDisplaySettings to JSON");
          return null;
       }
+   }
+
+   /**
+    * Given a java.awt.Color, convert it into a 24-bit RGB int.
+    */
+   private static int colorToRGB(Color color) {
+      return color.getRed() + (color.getBlue() << 8) + (color.getGreen() << 16);
+   }
+
+   /**
+    * Given a 24-bit RGB int, convert into a java.awt.Color.
+    */
+   private static Color rgbToColor(int rgb) {
+      int red = rgb & 0xff;
+      int blue = (rgb >> 8) & 0xff;
+      int green = (rgb >> 16) & 0xff;
+      return new Color(red, green, blue);
    }
 
    /**
