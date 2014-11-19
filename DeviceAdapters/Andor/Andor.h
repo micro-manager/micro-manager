@@ -68,7 +68,7 @@
 
 class AcqSequenceThread;
 class SpuriousNoiseFilterControl;
- 
+class ReadModeControl;
 //////////////////////////////////////////////////////////////////////////////
 // Implementation of the MMDevice and MMCamera interfaces
 //
@@ -77,6 +77,7 @@ class AndorCamera : public CCameraBase<AndorCamera>
 public:
    friend class AcqSequenceThread;
    friend class SpuriousNoiseFilterControl;
+   friend class ReadModeControl;
    static AndorCamera* GetInstance();
 
    ~AndorCamera();
@@ -304,6 +305,8 @@ private:
 
    bool biCamFeaturesSupported_;
    int  iCurrentTriggerMode_;
+   bool metaDataAvailable_;
+   void initialiseMetaData();
 
    enum {
       INTERNAL=0,
@@ -320,7 +323,10 @@ private:
       CLOSED=2
    };
 
-
+   enum {
+	   FVB=0,
+	   IMAGE=4
+   };
 
    int iInternalShutterMode_;
    int iShutterMode_;
@@ -351,7 +357,8 @@ private:
    float ActualInterval_ms_;
    std::string ActualInterval_ms_str_;
    std::string strCurrentTriggerMode_;
-   std::vector<std::string> vTriggerModes;
+   std::vector<std::string> triggerModesIMAGE_;
+   std::vector<std::string> triggerModesFVB_;
 
     std::string strCurrentAmp;
    std::vector<std::string> vAvailAmps;
@@ -373,6 +380,9 @@ private:
    unsigned int createGainProperty(AndorCapabilities * caps);
    unsigned int createROIProperties(AndorCapabilities * caps);
    unsigned int PopulateROIDropdown();
+   unsigned int PopulateROIDropdownFVB();
+   unsigned int PopulateBinningDropdown();
+   void PopulateTriggerDropdown();
    unsigned int ApplyROI(bool forSingleSnap);
    unsigned int createTriggerProperty(AndorCapabilities * caps);
    unsigned int createSnapTriggerMode();
@@ -387,6 +397,7 @@ private:
    bool sequencePaused_;
 
    SpuriousNoiseFilterControl* spuriousNoiseFilterControl_;
+   ReadModeControl* readModeControl_;
 };
 
 

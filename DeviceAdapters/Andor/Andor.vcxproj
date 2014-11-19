@@ -165,10 +165,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Andor.cpp" />
+    <ClCompile Include="ReadModeControl.cpp" />
     <ClCompile Include="SpuriousNoiseFilterControl.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Andor.h" />
+    <ClInclude Include="ReadModeControl.h" />
     <ClInclude Include="SpuriousNoiseFilterControl.h" />
   </ItemGroup>
   <ItemGroup>

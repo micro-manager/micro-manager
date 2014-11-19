@@ -57,6 +57,7 @@
 #include "../../MMDevice/ModuleInterface.h"
 #include "Andor.h"
 #include "SpuriousNoiseFilterControl.h"
+#include "ReadModeControl.h"
 
 #include <string>
 #include <sstream>
@@ -126,6 +127,7 @@ const char* g_cropMode = "Isolated Crop Mode";
 
 const char* g_ROIProperty = "Region of Interest";
 const char* g_ROIFullImage = "Full Image";
+const char* g_ROIFVB = "FVB";
 const char* g_ROICustom = "Custom ROI";
 
 const char* g_External = "External";
@@ -268,7 +270,8 @@ optAcquireModeStr_(""),
 optAcquireDescriptionStr_(""),
 iSnapImageDelay_(0),
 bSnapImageWaitForReadout_(false),
-stateBeforePause_(PREPAREDFORSINGLESNAP)
+stateBeforePause_(PREPAREDFORSINGLESNAP),
+metaDataAvailable_(false)
 { 
    InitializeDefaultErrorMessages();
 
@@ -311,7 +314,7 @@ AndorCamera::~AndorCamera()
    DriverGuard dg(this);
    delete seqThread_;
    delete spuriousNoiseFilterControl_;
-
+   delete readModeControl_;
    refCount_--;
    if (refCount_ == 0) {
       // release resources
@@ -625,6 +628,8 @@ int AndorCamera::GetListOfAvailableCameras()
       if (ret != DRV_SUCCESS)
          return ret;
 
+	  readModeControl_			  = new ReadModeControl(this);
+
       ret = createTriggerProperty(&caps);
       if(ret != DRV_SUCCESS) {
          return ret;
@@ -744,10 +749,6 @@ int AndorCamera::GetListOfAvailableCameras()
       if (ret != DRV_SUCCESS)
          return ret;
 
-      ret = SetReadMode(4); // image mode
-      if (ret != DRV_SUCCESS)
-         return ret;
-
       // binning
       if(!HasProperty(MM::g_Keyword_Binning))
       {
@@ -762,14 +763,7 @@ int AndorCamera::GetListOfAvailableCameras()
             return nRet;
       }
 
-      vector<string> binValues;
-      binValues.push_back("1");
-      binValues.push_back("2");
-      binValues.push_back("4");
-      binValues.push_back("8");
-      nRet = SetAllowedValues(MM::g_Keyword_Binning, binValues);
-      if (nRet != DEVICE_OK)
-         return nRet;
+	  PopulateBinningDropdown();
 
       // pixel type
       if(!HasProperty(MM::g_Keyword_PixelType))
@@ -1201,7 +1195,7 @@ int AndorCamera::GetListOfAvailableCameras()
       }
 
       spuriousNoiseFilterControl_ = new SpuriousNoiseFilterControl(this);
-
+	
       //OptAcquire
       if(caps.ulFeatures&AC_FEATURES_OPTACQUIRE) //some cameras might not support this
       {    
@@ -1375,9 +1369,27 @@ int AndorCamera::GetListOfAvailableCameras()
          UpdateSnapTriggerMode();
       }
 
+      initialiseMetaData();
+
       PrepareSnap();
 
       return DEVICE_OK;
+   }
+
+   void AndorCamera::initialiseMetaData()
+   {
+      AndorCapabilities caps;
+      caps.ulSize = sizeof(caps);
+      unsigned int ret = GetCapabilities(&caps);
+
+      if(ret==DRV_SUCCESS && caps.ulFeatures & AC_FEATURES_METADATA != 0)
+      {
+         ret = SetMetaData(1);
+         if(ret == DRV_SUCCESS)
+         {
+            metaDataAvailable_=true;
+         }
+      }
    }
 
    void AndorCamera::GetName(char* name) const 
@@ -1573,7 +1585,7 @@ int AndorCamera::GetListOfAvailableCameras()
       if(DRV_SUCCESS!=ret)
         return ret;
       fReadOutTime = fKinetic;
-      SetExposureTime(static_cast<float>(currentExpMS_ / 1000.0));
+      SetExposureTime(currentExpMS_/1000.0f);
 
       
       ret = GetAcquisitionTimings(&fExposure,&fAccumTime,&fKinetic);
@@ -1630,6 +1642,10 @@ int AndorCamera::GetListOfAvailableCameras()
 
          ActualInterval_ms_str_ += " (minimum)";
       }
+
+      OnPropertyChanged(MM::g_Keyword_ReadoutTime, CDeviceUtils::ConvertToString(ReadoutTime_));
+      OnPropertyChanged(g_Keyword_KeepCleanTime, CDeviceUtils::ConvertToString(KeepCleanTime_));
+      OnPropertyChanged(MM::g_Keyword_ActualInterval_ms,ActualInterval_ms_str_.c_str());
 
       return DRV_SUCCESS;
    }
@@ -1711,7 +1727,14 @@ int AndorCamera::GetListOfAvailableCameras()
 
    int AndorCamera::ClearROI()
    {
-      SetProperty(g_ROIProperty, g_ROIFullImage);
+      if(readModeControl_->getCurrentMode() == FVB)
+      {
+         SetProperty(g_ROIProperty, g_ROIFVB);
+      }
+      else
+      {
+         SetProperty(g_ROIProperty, g_ROIFullImage);
+      }
       return DEVICE_OK;
    }
 
@@ -1742,7 +1765,6 @@ int AndorCamera::GetListOfAvailableCameras()
    */
    int AndorCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
-     
       if (eAct == MM::AfterSet)
       {
          DriverGuard dg(this);
@@ -2086,18 +2108,19 @@ int AndorCamera::GetListOfAvailableCameras()
          
 
 
-         if (acquiring)
-            StartSequenceAcquisition(sequenceLength_ - imageCounter_, intervalMs_, stopOnOverflow_);
-         else
-         {
-            UpdateSnapTriggerMode();
-            PrepareSnap();
-         }
+
+	
+		  if (acquiring)
+			StartSequenceAcquisition(sequenceLength_ - imageCounter_, intervalMs_, stopOnOverflow_);
+	      else
+	      {
+			UpdateSnapTriggerMode();
+			PrepareSnap();
+	      }
 
       }
       else if (eAct == MM::BeforeGet)
       {
-         DriverGuard dg(this); 
          pProp->Set(strCurrentTriggerMode_.c_str());
       }
       return DEVICE_OK;
@@ -3135,26 +3158,33 @@ int AndorCamera::GetListOfAvailableCameras()
       }
       else if (eAct == MM::BeforeGet)
       {
-         //check if current ROI is on list
-         int roiPosition = -1;
-         for(unsigned int i=0; i<roiList.size(); i++)
+         if(readModeControl_->getCurrentMode() == FVB)
          {
-            ROI current = roiList[i];
-            if(current.x == roi_.x && current.y == roi_.y && current.xSize == roi_.xSize && current.ySize == roi_.ySize)
-            {
-               roiPosition=i;
-               break;
-            }
-         }
-         if(roiPosition !=-1)
-         {
-            char buffer[64];
-            GetROIPropertyName(roiPosition, roi_.xSize, roi_.ySize, buffer,cropModeSwitch_);
-            pProp->Set(buffer);
+            pProp->Set(g_ROIFVB);
          }
          else
          {
-            pProp->Set(g_ROICustom);
+            //check if current ROI is on list
+            int roiPosition = -1;
+            for(unsigned int i=0; i<roiList.size(); i++)
+            {
+               ROI current = roiList[i];
+               if(current.x == roi_.x && current.y == roi_.y && current.xSize == roi_.xSize && current.ySize == roi_.ySize)
+               {
+                  roiPosition=i;
+                  break;
+               }
+            }
+		      if(roiPosition !=-1)
+            {
+               char buffer[64];
+               GetROIPropertyName(roiPosition, roi_.xSize, roi_.ySize, buffer,cropModeSwitch_);
+               pProp->Set(buffer);
+            }
+            else
+            {
+               pProp->Set(g_ROICustom);
+            }
          }
       }
       return DEVICE_OK;
@@ -3917,11 +3947,6 @@ int AndorCamera::GetListOfAvailableCameras()
          return ret;
       LogMessage("Set acquisition mode to 5", true);
 
-      ret = SetReadMode(4); // image mode
-      if (ret != DRV_SUCCESS)
-         return ret;
-      LogMessage("Set Read Mode to 4", true);
-
       // set AD-channel to 14-bit
       //   ret = SetADChannel(0);
       //if (ret != DRV_SUCCESS)
@@ -4220,6 +4245,22 @@ int AndorCamera::GetListOfAvailableCameras()
          mst.SetValue(CDeviceUtils::ConvertToString(timestamp.getMsec()));
          md.SetTag(mst);
 
+
+         if(metaDataAvailable_)
+         {
+            SYSTEMTIME timeOfStart;
+            float timeFromStart=0.f;
+            unsigned int ret = GetMetaDataInfo(&timeOfStart ,&timeFromStart, imageCounter_);
+            if(ret == DRV_SUCCESS)
+            {
+               MetadataSingleTag mstHW("ElapsedTime-ms(HW)", label, true);
+               mstHW.SetValue(CDeviceUtils::ConvertToString(timeFromStart));
+               md.SetTag(mstHW);
+            }
+         }
+         
+
+
          MetadataSingleTag mstCount(MM::g_Keyword_Metadata_ImageNumber, label, true);
          mstCount.SetValue(CDeviceUtils::ConvertToString(imageCounter_));      
          md.SetTag(mstCount);
@@ -4478,11 +4519,35 @@ unsigned int AndorCamera::createROIProperties(AndorCapabilities * caps)
    return ret;
 }
 
+void AndorCamera::PopulateTriggerDropdown()
+{
+   if (readModeControl_->getCurrentMode() == FVB)
+   {
+	   SetAllowedValues("Trigger", triggerModesFVB_);
+   }
+   else
+   {
+	   SetAllowedValues("Trigger", triggerModesIMAGE_);
+   }
+}
+
+unsigned int AndorCamera::PopulateBinningDropdown()
+{
+	vector<string> binValues;
+    binValues.push_back("1");
+
+	if (readModeControl_->getCurrentMode() != FVB)
+	{
+		binValues.push_back("2");
+		binValues.push_back("4");
+		binValues.push_back("8");
+	}
+    
+    return SetAllowedValues(MM::g_Keyword_Binning, binValues);
+}
+
 unsigned int AndorCamera::PopulateROIDropdown()
 {
-    //create ROI dropdown list
-   //if doesnt exist
-
    if(!HasProperty(g_ROIProperty))
    {
       CPropertyAction *pAct = new CPropertyAction(this, &AndorCamera::OnROI);
@@ -4555,7 +4620,7 @@ unsigned int AndorCamera::PopulateROIDropdown()
       }
    }
    else
-   {//if centered add custom Ultra params
+   {  //if centered add custom Ultra params
       int numcroprois = NUMULTRA897CROPROIS;
       ROI* UltraCropROIs = g_Ultra897CropROIs;
 
@@ -4579,6 +4644,24 @@ unsigned int AndorCamera::PopulateROIDropdown()
    return DRV_SUCCESS;
 }
 
+unsigned int AndorCamera::PopulateROIDropdownFVB()
+{
+   ClearAllowedValues(g_ROIProperty);
+   roiList.clear();
+
+   ROI full;
+   full.x=0;
+   full.y=0;
+   full.xSize=fullFrameX_;
+   full.ySize=1;
+   roiList.push_back(full);
+
+
+   AddAllowedValue(g_ROIProperty, g_ROIFVB,0);
+
+	return DRV_SUCCESS;
+}
+
    unsigned int AndorCamera::AddTriggerProperty(int mode)
    {
       unsigned int retVal;
@@ -4595,7 +4678,9 @@ unsigned int AndorCamera::PopulateROIDropdown()
             }
             strCurrentTriggerMode_ = GetTriggerModeString(mode);
          }
-         vTriggerModes.push_back(GetTriggerModeString(mode));
+         triggerModesIMAGE_.push_back(GetTriggerModeString(mode));
+		 if(mode != GetTriggerModeInt(g_Software) && mode != GetTriggerModeInt(g_ExternalExposure)) 
+            triggerModesFVB_.push_back(GetTriggerModeString(mode));
          return DRV_SUCCESS;
    }
 
@@ -4773,7 +4858,8 @@ unsigned int AndorCamera::PopulateROIDropdown()
    unsigned int AndorCamera::createTriggerProperty(AndorCapabilities * caps) 
    {
       DriverGuard dg(this);
-      vTriggerModes.clear();  
+      triggerModesIMAGE_.clear();  
+	  triggerModesFVB_.clear();
       unsigned int retVal = DRV_SUCCESS;
       if(caps->ulTriggerModes & AC_TRIGGERMODE_INTERNAL)
       { 
@@ -4783,7 +4869,7 @@ unsigned int AndorCamera::PopulateROIDropdown()
             return retVal;
          }
       }
-      if(caps->ulTriggerModes & AC_TRIGGERMODE_CONTINUOUS)
+	  if(caps->ulTriggerModes & AC_TRIGGERMODE_CONTINUOUS)
       {
          retVal = AddTriggerProperty(SOFTWARE);
          if (retVal != DRV_SUCCESS)
@@ -4832,7 +4918,7 @@ unsigned int AndorCamera::PopulateROIDropdown()
             return nRet;
          }
       }
-      int nRet = SetAllowedValues("Trigger", vTriggerModes);
+      int nRet = SetAllowedValues("Trigger", triggerModesIMAGE_);
       assert(nRet == DEVICE_OK);
       nRet = SetProperty("Trigger", strCurrentTriggerMode_.c_str());
       assert(nRet == DEVICE_OK);
