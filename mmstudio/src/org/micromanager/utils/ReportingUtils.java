@@ -191,6 +191,15 @@ public class ReportingUtils {
       return result;
    }
 
+   /**
+    * As above, but only the caller is returned, not the entire trace.
+    */
+   public static String getCaller() {
+      // First is getStackTrace, second is us, third is whoever called us,
+      // fourth is whoever called *them*.
+      return java.lang.Thread.currentThread().getStackTrace()[3].toString();
+   }
+
    public static void showError(ActionEvent e) {
       throw new UnsupportedOperationException("Not yet implemented");
    }
