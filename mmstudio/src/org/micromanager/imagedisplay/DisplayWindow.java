@@ -304,17 +304,20 @@ public class DisplayWindow extends StackWindow {
          }
       }
 
-      //Make sure the window is fully on the screen
-      Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-      Point newLocation = new Point(location.x,location.y);
-      if (newLocation.x + getWidth() > screenSize.width && getWidth() < screenSize.width) {
-          newLocation.x = screenSize.width - getWidth();
+      // Make sure the window is fully on the screen
+      Rectangle rect = GUIUtils.getMaxWindowSizeForPoint(location.x, location.y);
+      if (location.x + getWidth() > rect.x + rect.width) {
+         // We're running off the right side of the screen, so pull back to
+         // the left.
+         location.x -= (location.x + getWidth() - rect.x - rect.width);
       }
-      if (newLocation.y + getHeight() > screenSize.height && getHeight() < screenSize.height) {
-          newLocation.y = screenSize.height - getHeight();
+      if (location.y + getHeight() > rect.y + rect.height) {
+         // We're running off the bottom of the screen, so pull back to the
+         // top.
+         location.y -= (location.y + getHeight() - rect.y - rect.height);
       }
 
-      setLocation(newLocation);
+      setLocation(location);
    }
 
    @Override
