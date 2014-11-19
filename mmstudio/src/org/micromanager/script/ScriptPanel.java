@@ -32,7 +32,6 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
-import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
@@ -318,18 +317,18 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
             tmpFile.deleteOnExit();
          }
       } catch (IOException e) {
-         ReportingUtils.showError("Failed to read Script Panel BeanShell startup script");
+         ReportingUtils.showError("Failed to read Script Panel BeanShell startup script", this);
       }
 
       if (tmpFile != null) {
          try {
             beanshellREPLint_.source(tmpFile.getAbsolutePath());
          } catch (FileNotFoundException e) {
-            ReportingUtils.showError(e);
+            ReportingUtils.showError(e, this);
          } catch (IOException e) {
-            ReportingUtils.showError(e);
+            ReportingUtils.showError(e, this);
          } catch (EvalError e) {
-            ReportingUtils.showError(e);
+            ReportingUtils.showError(e, this);
          }
       }
       
@@ -361,6 +360,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
    public ScriptPanel(CMMCore core, MMStudio gui) {
       super();
       gui_ = gui;
+      final MMFrame scriptPanelFrame = this;
 
       // Beanshell REPL Console
       createBeanshellREPL();
@@ -376,7 +376,6 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
             prefs_.putInt(RIGHT_DIVIDER_LOCATION, rightSplitPane_.getDividerLocation());
             prefs_.putInt(DIVIDER_LOCATION, splitPane_.getDividerLocation());
             saveScriptsToPrefs();
-            savePosition();
             setVisible(false);
          }
       });
@@ -388,17 +387,14 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
       
       setTitle("Script Panel");
       setIconImage(SwingResourceManager.getImage(PropertyEditor.class, "icons/microscope.gif"));
-      setBounds(100, 100, 550, 495);
+
       int buttonHeight = 15;
       Dimension buttonSize = new Dimension(80, buttonHeight);
       int gap = 5; // determines gap between buttons
 
-      Preferences root = Preferences.userNodeForPackage(this.getClass());
-      prefs_ = root.node(root.absolutePath() + "/ScriptPanel");
-      setPrefsNode(prefs_);
+      prefs_ = getPrefsNode();
 
-      Rectangle r = getBounds();
-      loadPosition(r.x, r.y, r.width, r.height);
+      loadAndRestorePosition(100, 100, 550, 495);
 
       final JPanel leftPanel = new JPanel();
       SpringLayout spLeft = new SpringLayout();
@@ -660,7 +656,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
             try {
                ij.plugin.BrowserLauncher.openURL("https://micro-manager.org/wiki/Script_Panel_GUI");
             } catch (IOException e1) {
-               ReportingUtils.showError(e1);
+               ReportingUtils.showError(e1, scriptPanelFrame);
             }
          }
       });
@@ -815,7 +811,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
 
       SearchResult found = SearchEngine.find(scriptArea_, context);
       if (!found.wasFound()) {
-         ReportingUtils.showMessage("\"" + text + "\" was not found");
+         gui_.showMessage("\"" + text + "\" was not found", this);
       }
       
    }
@@ -939,9 +935,9 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
          model_.setLastMod(cellAddress[0], 0, scriptFile_.lastModified());
          gui_.message("Saved file: " + scriptFile_.getName());
       } catch (IOException ioe){
-         ReportingUtils.showError(ioe);
+         ReportingUtils.showError(ioe, this);
       } catch (MMScriptException mex) {
-         // nothing to do
+         ReportingUtils.logError(mex);
       }
    }
 
@@ -967,7 +963,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
             scriptPaneSaved_ = true;
             this.setTitle(saveFile.getName());
          } catch (IOException ioe){
-            ReportingUtils.showError(ioe);
+            ReportingUtils.showError(ioe, this);
          }
       }
    }
@@ -1205,7 +1201,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
     * @param e
     */
    public void handleException (Exception e) {
-      ReportingUtils.showError(e);
+      ReportingUtils.showError(e, this);
    }
 
    /**
@@ -1265,14 +1261,14 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
          try {
             beanshellREPLint_.eval("setAccessibility(true);");
          } catch (EvalError e1) {
-               ReportingUtils.showError(e1);
+            ReportingUtils.showError(e1, this);
          }
       }
       try {
          beanshellREPLint_.eval("bsh.console.text.setText(\"\");"
                + "setAccessibility("+originalAccessibility+");");
       } catch (EvalError e) {
-           ReportingUtils.showError(e);
+           ReportingUtils.showError(e, this);
       }
    }
 
@@ -1328,6 +1324,22 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
 
       // Add one empty script, so as not to read in stale variables
       prefs_.put(SCRIPT_FILE + scriptFileArray.size(), "");
+   }
+   
+   private void finishUp() {
+      if (!promptToSave(-1)) {
+         return;
+      }
+      prefs_.putInt(RIGHT_DIVIDER_LOCATION, rightSplitPane_.getDividerLocation());
+      prefs_.putInt(DIVIDER_LOCATION, splitPane_.getDividerLocation());
+      saveScriptsToPrefs();
+      setVisible(false);
+   }
+   
+   @Override
+   public void dispose() {
+      finishUp();
+      super.dispose();
    }
 
    private String getExtension(File f) {
@@ -1410,7 +1422,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
    @Override
    public void displayMessage(String message) {
       SwingUtilities.invokeLater(new ExecuteDisplayMessage(message));
-      ReportingUtils.logMessage(message);
+      gui_.logMessage(message);
    }
 
    @Override

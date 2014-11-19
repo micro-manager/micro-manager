@@ -6,7 +6,7 @@
 //
 // AUTHOR:       Nenad Amodaj, nenad@amodaj.com, March 20, 2006
 //
-// COPYRIGHT:    University of California, San Francisco, 2006
+// COPYRIGHT:    University of California, San Francisco, 2006, 2014
 //
 // LICENSE:      This file is distributed under the BSD license.
 //               License text is included with the source distribution.
@@ -115,8 +115,6 @@ public class PropertyEditor extends MMFrame{
 
    public PropertyEditor() {
       super();
-      Preferences root = Preferences.userNodeForPackage(this.getClass());
-      setPrefsNode(root.node(root.absolutePath() + "/PropertyEditor"));
       
       flags_ = new ShowFlags();
       flags_.load(getPrefsNode());
@@ -128,7 +126,6 @@ public class PropertyEditor extends MMFrame{
       addWindowListener(new WindowAdapter() {
          @Override
          public void windowClosing(WindowEvent e) {
-            savePosition();
             Preferences prefs = getPrefsNode();
             prefs.putBoolean(PREF_SHOW_READONLY, showReadonlyCheckBox_.isSelected());
             flags_.save(getPrefsNode());
@@ -144,7 +141,7 @@ public class PropertyEditor extends MMFrame{
       });
       setTitle("Device Property Browser");
 
-      loadPosition(100, 100, 400, 300);
+      loadAndRestorePosition(100, 100, 400, 300);
       setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
       scrollPane_ = new JScrollPane();
@@ -325,7 +322,7 @@ public class PropertyEditor extends MMFrame{
       @Override
       public void setValueAt(Object value, int row, int col) {
          PropertyItem item = propListVisible_.get(row);
-         ReportingUtils.logMessage("Setting value " + value + " at row " + row);
+         gui_.logMessage("Setting value " + value + " at row " + row);
          if (col == PropertyValueColumn_) {
             setValueInCore(item,value);
          }
@@ -380,7 +377,7 @@ public class PropertyEditor extends MMFrame{
 
  
    private void handleException (Exception e) {
-      ReportingUtils.showError(e);
+      ReportingUtils.showError(e, this);
    }
    
 }

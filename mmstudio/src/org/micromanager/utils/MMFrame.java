@@ -26,9 +26,12 @@ package org.micromanager.utils;
 import java.awt.Dimension;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.prefs.Preferences;
 
 import javax.swing.JFrame;
+import org.micromanager.MMStudio;
 
 /**
  * Base class for Micro-Manager frame windows.
@@ -37,13 +40,23 @@ import javax.swing.JFrame;
 public class MMFrame extends JFrame {
    private static final long serialVersionUID = 1L;
    private Preferences prefs_;
-   private static final String WINDOW_X = "frame_y";
-   private static final String WINDOW_Y = "frame_x";
+   private static final String WINDOW_X = "frame_x";
+   private static final String WINDOW_Y = "frame_y";
    private static final String WINDOW_WIDTH = "frame_width";
    private static final String WINDOW_HEIGHT = "frame_height";
    
    public MMFrame() {
       super();
+      finishConstructor();
+   }
+   
+      private void finishConstructor() {
+      prefs_ = Preferences.userNodeForPackage(this.getClass());
+      MMStudio mfr = MMStudio.getInstance();
+      if (mfr != null) {
+         mfr.addMMBackgroundListener(this);
+    	   setBackground(mfr.getBackgroundColor());
+      }
    }
 
    private void ensureSafeWindowPosition(int x, int y) {
@@ -79,6 +92,48 @@ public class MMFrame extends JFrame {
                 getWidth(),
                 getHeight());      
    }
+   
+   
+    /**
+    * Load window position and size from preferences
+    * Makes sure that the window can be displayed
+    * Attaches a listener to the window that will save the position when the
+    * window closing event is received
+    * @param x - X position of this dialog
+    * @param y - y position of this dialog
+    * @param width - width of this dialog
+    * @param height - height of this dialog
+    */
+   protected void loadAndRestorePosition(int x, int y, int width, int height) {
+      loadPosition(x, y, width, height);
+      this.addWindowListener(new WindowAdapter() {
+         @Override
+         public void windowClosing(WindowEvent arg0) {
+            savePosition();
+         }
+      }
+      );
+   }
+   
+    /**
+    * Load window position and size from preferences
+    * Makes sure that the window can be displayed
+    * Attaches a listener to the window that will save the position when the
+    * window closing event is received
+    * @param x - X position of this dialog
+    * @param y - y position of this dialog
+    */
+   protected void loadAndRestorePosition(int x, int y) {
+      loadPosition(x, y);
+      this.addWindowListener(new WindowAdapter() {
+         @Override
+         public void windowClosing(WindowEvent arg0) {
+            savePosition();
+         }
+      }
+      );
+   }
+   
 
    public void savePosition() {
       if (prefs_ == null)
@@ -93,6 +148,14 @@ public class MMFrame extends JFrame {
       prefs_.putInt(WINDOW_HEIGHT, r.height);                  
    }
    
+         
+   @Override
+   public void dispose() {
+      savePosition();
+      super.dispose();
+   }
+   
+   
    public Preferences getPrefsNode() {
       return prefs_;
    }
@@ -100,7 +163,5 @@ public class MMFrame extends JFrame {
    public void setPrefsNode(Preferences prefs) {
       prefs_ = prefs;
    }
-   
-   
-   
+  
 }

@@ -14,7 +14,6 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import javax.swing.SpringLayout;
-import javax.swing.UIManager;
 
 import org.micromanager.api.MMPlugin;
 import org.micromanager.api.MultiStagePosition;
@@ -36,15 +35,12 @@ import javax.swing.JRadioButton;
 import javax.swing.ButtonGroup;
 
 import java.awt.Dimension;
-import org.micromanager.utils.ReportingUtils;
 
 /**
  * @author nenad
  *
  */
 public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
-   //private JTextField plateNameField_;
-   //private JTextField rootDirField_;
 
    private JTextField spacingField_;
    private JTextField columnsField_;
@@ -88,6 +84,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
    private JRadioButton rdbtnSelectWells_;
    private JRadioButton rdbtnMoveStage_;
 
+   /*
    public static void main(String args[]) {
       try {
          UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -95,9 +92,10 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
          dlg.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
          dlg.setVisible(true);
       } catch (Exception e) {
-         ReportingUtils.logError(e);
+         app_.logError(e);
       }
    }
+   */
 
    /**
     * Create the frame
@@ -111,12 +109,9 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       addWindowListener(new WindowAdapter() {
          @Override
          public void windowClosing(final WindowEvent e) {
-            savePosition();
             saveSettings();
          }
       });
-      Preferences root = Preferences.userNodeForPackage(this.getClass());
-      setPrefsNode(root.node(root.absolutePath() + "/SiteGenerator"));
 
       springLayout = new SpringLayout();
       getContentPane().setLayout(springLayout);
@@ -134,7 +129,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       focusPlane_ = null;
 
       setTitle("HCS Site Generator " + VERSION_INFO);
-      loadPosition(100, 100, 1000, 640);
+      loadAndRestorePosition(100, 100, 1000, 640);
 
       platePanel_ = new PlatePanel(plate_, null, this);
       springLayout.putConstraint(SpringLayout.NORTH, platePanel_, 5, SpringLayout.NORTH, getContentPane());
@@ -143,7 +138,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       try {
          platePanel_.setApp(app_);
       } catch (HCSException e1) {
-         ReportingUtils.logError(e1);
+         app_.logError(e1);
       }
 
       getContentPane().add(platePanel_);
@@ -169,7 +164,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
             try {
                platePanel_.refreshImagingSites(sites);
             } catch (HCSException e1) {
-               ReportingUtils.logError(e1);
+               app_.logError(e1);
             }
             platePanel_.repaint();
          }
@@ -445,7 +440,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       try {
          platePanel_.refreshImagingSites(sites);
       } catch (HCSException e1) {
-         ReportingUtils.logError(e1);
+         app_.logError(e1);
       }
 
    }
@@ -639,7 +634,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
     */
    @Override
    public void displayError(String txt) {
-      ReportingUtils.showError(txt);
+      app_.showError(txt, this);
    }
 
    protected void calibrateXY() {

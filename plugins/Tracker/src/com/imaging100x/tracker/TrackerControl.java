@@ -60,7 +60,6 @@ import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMFrame;
 import org.micromanager.utils.MMScriptException;
-import org.micromanager.utils.ReportingUtils;
 import org.micromanager.utils.TextUtils;
 
 public class TrackerControl extends MMFrame implements MMPlugin {
@@ -185,8 +184,7 @@ public class TrackerControl extends MMFrame implements MMPlugin {
       super();
       imageCounter_ = 0;
       limits_ = new MMRect();
-      prefs_ = Preferences.userNodeForPackage(this.getClass());
-      setPrefsNode(prefs_);
+      prefs_ = getPrefsNode();
       initialize();
 
       addWindowListener(new WindowAdapter() {
@@ -213,14 +211,13 @@ public class TrackerControl extends MMFrame implements MMPlugin {
             prefs_.putBoolean(DISK_RECORDING, diskRadioButton_.isSelected());
             prefs_.put(ROOT, rootField_.getText());
             prefs_.put(NAME, nameField_.getText());
-            savePosition();
          }
       });
 
       setTitle("Live Tracking");
       setResizable(false);
       getContentPane().setLayout(null);
-      loadPosition(100, 100, 412, 346);
+      loadAndRestorePosition(100, 100, 412, 346);
 
       final JLabel intervalmsLabel = new JLabel();
       intervalmsLabel.setText("Interval [ms]");
@@ -433,13 +430,13 @@ public class TrackerControl extends MMFrame implements MMPlugin {
          implus = win.getImagePlus();
       }
       if (implus == null) {
-         ReportingUtils.showMessage("First snap an image and select ROI to be tracked." );
+         app_.showMessage("First snap an image and select ROI to be tracked.", this);
          return;
       }
 
       roi_ = implus.getRoi();
       if (roi_ == null || roi_.getType() != Roi.RECTANGLE) {
-         ReportingUtils.showError("Rectangular roi required.");
+         app_.showError("Rectangular roi required.", this);
          return;
       }
 
@@ -451,9 +448,8 @@ public class TrackerControl extends MMFrame implements MMPlugin {
       corrStack_.addSlice(corrImproc);
       corrImplus_ = new ij.ImagePlus("Cross Correlation", corrStack_);
       corrImplus_.show();
-
-
-      ReportingUtils.logMessage("Tracking started at " + GregorianCalendar.getInstance().getTime());
+      
+      app_.logMessage("Tracking started at " + GregorianCalendar.getInstance().getTime());
 
       try {
          acqName_ = nameField_.getText();
@@ -465,7 +461,7 @@ public class TrackerControl extends MMFrame implements MMPlugin {
          app_.openAcquisition(acqName_, rootField_.getText(),
                  2, 1, 1, 1, true, diskRadioButton_.isSelected());
       } catch (MMScriptException ex) {
-         ReportingUtils.showError(ex, "Problem while tracking");
+         app_.showError(ex, "Problem while tracking", this);
       }
       xySeries_ = new XYSeries("Track",false);
       TrackerUtils.plotData("Cell Track: " + acqName_, xySeries_, "X (micron)", 
@@ -476,7 +472,7 @@ public class TrackerControl extends MMFrame implements MMPlugin {
    
    public void stopTracking() {
 
-      ReportingUtils.logMessage("Tracking stopped at " + GregorianCalendar.getInstance().getTime());
+      app_.logMessage("Tracking stopped at " + GregorianCalendar.getInstance().getTime());
       timer_.stop();
       roi_ = null;
    }
@@ -540,7 +536,7 @@ public class TrackerControl extends MMFrame implements MMPlugin {
          app_.getAcquisition(acqName_).getAcquisitionWindow().
                  getImagePlus().setRoi(roi_, true);
       } catch (MMScriptException mex) {
-         ReportingUtils.showError("Failed to set new ROI");
+         app_.showError("Failed to set new ROI", this);
       }
       //IJ.write("ROI pos: " + r.x + "," + r.y);
 
@@ -648,9 +644,9 @@ public class TrackerControl extends MMFrame implements MMPlugin {
                app_.getMMCore().setXYPosition(stage_, newX, newY);
                app_.getMMCore().waitForDevice(stage_);
                app_.getMMCore().getXYPosition(stage_, xCur, yCur);
-               ReportingUtils.logMessage(xCur[0] + "," + yCur[0]);
+               app_.logMessage(xCur[0] + "," + yCur[0]);
             } else {
-               ReportingUtils.logMessage("Skipped. Stage limits reached.");
+               app_.logMessage("Skipped. Stage limits reached.");
             }
          } catch (Exception e) {
             IJ.error(e.getMessage());
@@ -664,7 +660,7 @@ public class TrackerControl extends MMFrame implements MMPlugin {
             app_.getAcquisition(acqName_).getAcquisitionWindow().
                     getImagePlus().setRoi(roi_, true);
          } catch (MMScriptException mex) {
-            ReportingUtils.showError("Failed to set new ROI");
+            app_.showError("Failed to set new ROI", this);
          }
       }
 
@@ -678,7 +674,7 @@ public class TrackerControl extends MMFrame implements MMPlugin {
          img.tags.put(V, v);
          img.tags.put(L, distUm_);
       } catch (JSONException ex) {
-         ReportingUtils.showError(ex, "Problem adding tags to image");
+         app_.showError(ex, "Problem adding tags to image", this);
       }
 
       imageCounter_++;
@@ -704,7 +700,7 @@ public class TrackerControl extends MMFrame implements MMPlugin {
 
       } catch (Exception e1) {
          // TODO Auto-generated catch block
-         ReportingUtils.showError(e1, "Problem initializing Live Tracking plugin");
+         app_.showError(e1, "Problem initializing Live Tracking plugin", this);
       }
       
       topLeftButton_.addActionListener(new ActionListener() {
