@@ -41,7 +41,7 @@ import org.micromanager.api.ScriptInterface;
 import org.micromanager.MMStudio;
 import org.micromanager.asidispim.Utils.StagePositionUpdater;
 import org.micromanager.internalinterfaces.LiveModeListener; 
-import org.micromanager.utils.MMDialog;
+import org.micromanager.utils.MMFrame;
 
 // TODO easy mode that pulls most-used bits from all panels
 // TODO camera control ROI panel
@@ -65,7 +65,7 @@ import org.micromanager.utils.MMDialog;
  * @author Jon
  */
 @SuppressWarnings("serial")
-public class ASIdiSPIMFrame extends MMDialog  
+public class ASIdiSPIMFrame extends MMFrame  
       implements MMListenerInterface {
    
    private final Properties props_; 

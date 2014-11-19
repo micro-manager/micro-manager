@@ -39,8 +39,7 @@ import javax.swing.event.ChangeListener;
 
 import org.micromanager.MMStudio;
 import org.micromanager.api.ScriptInterface;
-import org.micromanager.utils.ReportingUtils;
-import org.micromanager.utils.MMDialog;
+import org.micromanager.utils.MMFrame;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -62,7 +61,7 @@ import net.miginfocom.swing.MigLayout;
  *  @author Jon
  */
 @SuppressWarnings("serial")
-public class PatternOverlayFrame extends MMDialog {
+public class PatternOverlayFrame extends MMFrame {
    private final ScriptInterface gui_;
    private final JComboBox overlayBox_;
    private final JToggleButton toggleButton_;
@@ -77,6 +76,7 @@ public class PatternOverlayFrame extends MMDialog {
             "[right]10[center]",
             "[]8[]"));
       gui_ = gui;
+      final MMFrame ourFrame = this;
       loadAndRestorePosition(100, 100, WIDTH, WIDTH);
       
       lastOverlay_ = null;
@@ -110,7 +110,7 @@ public class PatternOverlayFrame extends MMDialog {
                sizeSlider_.repaint();
                colorBox_.setSelectedIndex(currentOverlay.getColorCode());
             } catch (Exception e1) {
-               ReportingUtils.showError(e1);
+               gui_.showError(e1, ourFrame);
             }
             lastOverlay_ = currentOverlay;
          }
@@ -123,13 +123,17 @@ public class PatternOverlayFrame extends MMDialog {
          @Override
          public void actionPerformed(ActionEvent e) {
             try {
-               ((OverlayOption) overlayBox_.getSelectedItem()).getOverlay()
-               .setVisible(toggleButton_.isSelected());
+               boolean visible = toggleButton_.isSelected();
+               GenericOverlay selectedOverlay = ((OverlayOption) overlayBox_.getSelectedItem()).getOverlay();
+               selectedOverlay.setVisible(visible);
                updateToggleButtonLabel();
             } catch (Exception ex) {
-               ReportingUtils.logError("Could not enable overlay (" + 
-                     ((OverlayOption) overlayBox_.getSelectedItem()).toString() + ")");
-               gui_.showError(ex, "The overlay could not be shown. Is the live image window active?");
+               gui_.logError("Could not enable overlay (" + 
+                     ((OverlayOption) overlayBox_.getSelectedItem()).toString() + "). "
+                       + "Error Message: " + ex.getMessage() );
+               gui_.showMessage(
+                       "The overlay could not be shown. Is the live image window active?", 
+                       ourFrame);
                toggleButton_.setSelected(false);
             }
          }

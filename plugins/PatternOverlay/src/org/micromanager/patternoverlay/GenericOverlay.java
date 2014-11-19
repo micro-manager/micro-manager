@@ -124,9 +124,16 @@ public abstract class GenericOverlay {
     *  from the live image window. A call to show() is required to
     *  recreate the overlay.
     */
-   private void hide () {
-      if (overlay_ != null)
+   private void hide() throws Exception {
+      if (overlay_ != null) {
+         ImagePlus image = PatternOverlayFrame.getLiveWindowImage();
+         if (image == null) {
+            // fine, window disappeared so the overlay is already hidden
+            return;
+         }
          overlay_.clear();
+         image.setOverlay(null);
+      }
    }
 
    /**
