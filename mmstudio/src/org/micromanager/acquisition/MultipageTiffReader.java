@@ -395,7 +395,7 @@ public class MultipageTiffReader {
       ByteBuffer mdBuffer = ByteBuffer.allocate((int) data.mdLength).order(byteOrder_);
       fileChannel_.read(pixelBuffer, data.pixelOffset);
       fileChannel_.read(mdBuffer, data.mdOffset);
-      JSONObject md = null;
+      JSONObject md = new JSONObject();
       try {
          md = new JSONObject(getString(mdBuffer));
       } catch (JSONException ex) {
