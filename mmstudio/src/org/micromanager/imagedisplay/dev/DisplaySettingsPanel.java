@@ -176,7 +176,19 @@ public class DisplaySettingsPanel extends JPanel {
             saveAsDefaults();
          }
       });
-      add(saveButton, "wrap");
+      add(saveButton, "split 2, flowx");
+
+      JButton dupeButton = new JButton("Attach new display");
+      dupeButton.setToolTipText("Create an additional display window for this dataset.");
+      dupeButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            // TODO: ideally we would copy the custom controls from the
+            // existing DefaultDisplayWindow, but that's not available here.
+            new DefaultDisplayWindow(store_, null);
+         }
+      });
+      add(dupeButton, "wrap");
    }
 
    /**
