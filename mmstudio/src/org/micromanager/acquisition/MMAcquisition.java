@@ -137,12 +137,14 @@ public class MMAcquisition {
       store_ = new DefaultDatastore();
       try {
          if (summaryMetadata.has("Directory") && summaryMetadata.get("Directory").toString().length() > 0) {
+            // Set up saving to the target directory.
             try {
                String acqDirectory = createAcqDirectory(summaryMetadata.getString("Directory"), summaryMetadata.getString("Prefix"));
                summaryMetadata.put("Prefix", acqDirectory);
                String acqPath = summaryMetadata.getString("Directory") + File.separator + acqDirectory;
-               imageFileManager = ImageUtils.newImageStorageInstance(acqPath, true, (JSONObject) null);
-               store_.setStorage(new StorageRAM(store_));
+               // TODO: respect user selection of multi-file saving method.
+               store_.setStorage(new StorageMultipageTiff(store_,
+                        acqDirectory, true));
 //               if (!virtual_) {
 //                  imageCache_.saveAs(new TaggedImageStorageRamFast(null), true);
 //               }
@@ -151,8 +153,6 @@ public class MMAcquisition {
                eng.stop(true);
             }
          } else {
-//            imageFileManager = new TaggedImageStorageRamFast(null);
-//            imageCache_ = new MMImageCache(imageFileManager);
             store_.setStorage(new StorageRAM(store_));
          }
       }
