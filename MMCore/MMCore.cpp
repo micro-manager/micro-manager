@@ -4290,7 +4290,10 @@ void CMMCore::setConfig(const char* groupName, const char* configName) throw (CM
             " does not exist",
             MMERR_NoConfiguration);
    }
-   
+
+   LOG_DEBUG(coreLogger_) << "Config group " << groupName <<
+      ": will apply preset " << configName;
+
    try {
       applyConfiguration(*pCfg);
    } catch (CMMError&) {
@@ -4298,7 +4301,7 @@ void CMMCore::setConfig(const char* groupName, const char* configName) throw (CM
    }
 
    LOG_DEBUG(coreLogger_) << "Config group " << groupName <<
-      ": applied preset " << configName;
+      ": did apply preset " << configName;
 }
 
 /**
