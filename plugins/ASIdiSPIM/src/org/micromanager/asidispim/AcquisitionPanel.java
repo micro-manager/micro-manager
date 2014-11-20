@@ -75,6 +75,7 @@ import org.micromanager.api.ImageCache;
 import org.micromanager.api.MMTags;
 import org.micromanager.acquisition.ComponentTitledBorder;
 import org.micromanager.MMStudio;
+import org.micromanager.acquisition.AcquisitionEngine;
 import org.micromanager.acquisition.DefaultTaggedImageSink;
 import org.micromanager.acquisition.MMAcquisition;
 import org.micromanager.acquisition.TaggedImageQueue;
@@ -766,7 +767,17 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          elementToColor.setForeground(foregroundColorOK);
       }
       
-      s.scanDelay = cameraReadout_max + globalDelay + cameraReset_max;
+      // account for delay in scan position based on Bessel filter by starting the scan slightly earlier
+      // than we otherwise would; delay is (empirically) ~0.4/(freq in kHz)
+      // e.g. 0.4 sec for 0.8kHz filter and 0.75 sec for 0.4kHz filter
+      float scanFilterFreq = Math.max(props_.getPropValueFloat(Devices.Keys.GALVOA,  Properties.Keys.SCANNER_FILTER_X),
+            props_.getPropValueFloat(Devices.Keys.GALVOB,  Properties.Keys.SCANNER_FILTER_X));
+      float scanDelayFilter = 0;
+      if (scanFilterFreq != 0) {
+         scanDelayFilter = MyNumberUtils.roundToQuarterMs((float)0.4/scanFilterFreq);
+      }
+      
+      s.scanDelay = cameraReadout_max + globalDelay + cameraReset_max - scanDelayFilter;
       s.scanNum = 1;
       s.scanPeriod = scanPeriod;
       s.laserDelay = cameraReadout_max + globalDelay + cameraReset_max + scanLaserBufferTime;

@@ -44,11 +44,12 @@ import org.micromanager.internalinterfaces.LiveModeListener;
 import org.micromanager.utils.MMFrame;
 
 // TODO easy mode that pulls most-used bits from all panels
+// TODO "neutral position" indicator
+// TODO autofocus for finding calibration endpoints and also offset (slope doesn't change but offset can) 
 // TODO camera control ROI panel
 // TODO track Z/F for sample finding
 // TODO integrate with MDA acquisition?
 // TODO finish eliminating Prefs.Keys in favor of Properties.Keys with plugin values
-// TODO make sure acquisition works for single SPIM
 // TODO save/load plugin settings from file instead of from registry (nice to also include controller settings)
 // TODO handle camera binning
 // TODO add check for correct Hamamatsu model
