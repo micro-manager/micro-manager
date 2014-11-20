@@ -229,8 +229,23 @@ public class ConfigGroupPad extends JScrollPane{
                   
                   refreshStatus();
                   repaint();
-                  if (parentGUI_ != null)
-                     parentGUI_.refreshGUI();
+                  if (parentGUI_ != null) {
+                     // This is a little superfluous, but it is nice that we
+                     // are depending only on ScriptInterface, not MMStudio
+                     // directly, so keep it that way.
+                     if (parentGUI_ instanceof MMStudio) {
+                        // But it appears to be important for performance that
+                        // we use the non-config-pad-updating version of
+                        // MMStudio.refreshGUI(). Calling updateGUI(ture) or,
+                        // equivalently, refreshGUI(), results in a system
+                        // state cache update, which can be very slow.
+                        MMStudio parentGUI = (MMStudio) parentGUI_;
+                        parentGUI.updateGUI(false);
+                     }
+                     else {
+                        parentGUI_.refreshGUI();
+                     }
+                  }
                   
                   if (restartLive)
                        parentGUI_.enableLiveMode(true);
