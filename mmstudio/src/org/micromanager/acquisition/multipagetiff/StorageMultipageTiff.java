@@ -524,7 +524,6 @@ public final class StorageMultipageTiff implements Storage {
 
    @Override
    public int getNumImages() {
-      ReportingUtils.logError("There are " + coordsToReader_.keySet().size() + " images in this TIFF storage");
       return coordsToReader_.keySet().size();
    }
 

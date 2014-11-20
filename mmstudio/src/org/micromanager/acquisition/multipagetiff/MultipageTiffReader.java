@@ -89,11 +89,17 @@ public class MultipageTiffReader {
    private HashMap<Coords, Long> coordsToOffset_;
 
    /**
-    * This constructor is used for a file that is currently being written
+    * This constructor is used for a file that is currently being written.
+    * \param summaryJSON As per DefaultSummaryMetadat.legacyToJSON(), except
+    *        augmented with display settings and values that are normally
+    *        only stored in image metadata. See
+    *        MultipageTiffWriter.augmentWith[ImageMetadata|DisplaySettings]()
+    *        methods
     */
    public MultipageTiffReader(SummaryMetadata summaryMD,
-         JSONObject firstImageTags) {
+         JSONObject summaryJSON, JSONObject firstImageTags) {
       summaryMetadata_ = summaryMD;
+      summaryJSON_ = summaryJSON;
       byteOrder_ = MultipageTiffWriter.BYTE_ORDER;
       getRGBAndByteDepth(firstImageTags);
       writingFinished_ = false;

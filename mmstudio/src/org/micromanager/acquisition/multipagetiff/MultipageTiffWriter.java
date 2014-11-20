@@ -133,9 +133,8 @@ public class MultipageTiffWriter {
       masterStorage_ = masterStorage;
       // TODO: casting to DefaultSummaryMetadata here.
       DefaultSummaryMetadata summary = (DefaultSummaryMetadata) masterStorage.getSummaryMetadata();
-      reader_ = new MultipageTiffReader(summary, firstImageTags);
       File f = new File(masterStorage.getDiskLocation() + "/" + filename); 
-      
+
       try {
          processSummaryMD(summary, splitByPositions);
       } catch (MMScriptException ex1) {
@@ -154,6 +153,7 @@ public class MultipageTiffWriter {
             (DefaultImage) masterStorage_.getAnyImage());
       augmentWithDisplaySettings(summaryJSON,
             (DefaultDisplaySettings) masterStorage_.getDisplaySettings());
+      reader_ = new MultipageTiffReader(summary, summaryJSON, firstImageTags);
 
       //This is an overestimate of file size because file gets truncated at end
       long fileSize = Math.min(MAX_FILE_SIZE,
