@@ -27,8 +27,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-import javax.swing.JOptionPane;
-
 import mmcorej.CMMCore;
 
 import org.micromanager.api.ScriptInterface;
@@ -273,7 +271,7 @@ public class Cameras {
    }
    
    /**
-    * Utility: calculates the offset from centered on the vertical axis.
+    * Utility: calculates the ROI offset from centered on the vertical axis.
     * @param roi
     * @param sensor
     * @return
@@ -284,6 +282,7 @@ public class Cameras {
    
    /**
     * Utility: calculates the number of rows that need to be read out
+    * for camera sensor split horizontally across the middle
     * @param roi
     * @param sensor
     * @return
@@ -301,6 +300,14 @@ public class Cameras {
    }
    
    /**
+    * Returns true if the camera is a Edge 5.5
+    */
+   private boolean isEdge55(Devices.Keys camKey) {
+      return props_.getPropValueString(camKey, Properties.Keys.CAMERA_TYPE)
+            .contains(" 5.5");
+   }
+   
+   /**
     * Goes to properties and sees if this camera has slow readout enabled
     * (which affects row transfer speed and thus reset/readout time).
     * @param camKey
@@ -311,7 +318,7 @@ public class Cameras {
       case HAMCAM:
          return props_.getPropValueString(camKey, Properties.Keys.SCAN_MODE).equals("1");
       case PCOCAM:
-         break;
+         return props_.getPropValueString(camKey, Properties.Keys.PIXEL_RATE).equals("slow scan");
       case ANDORCAM:
          if (isZyla55(camKey)) {
             return props_.getPropValueString(camKey, Properties.Keys.PIXEL_READOUT_RATE)
@@ -333,7 +340,11 @@ public class Cameras {
       case HAMCAM:
          return new Rectangle(0, 0, 2048, 2048);
       case PCOCAM:
-         break;
+         if (isEdge55(camKey)) {
+            return new Rectangle(0, 0, 2560, 2160);
+         } else {
+            return new Rectangle(0, 0, 2060, 2048);
+         }
       case ANDORCAM:
          if (isZyla55(camKey)) {
             return new Rectangle(0, 0, 2560, 2160);
@@ -368,7 +379,13 @@ public class Cameras {
             return (2592 / 266e3);
          }
       case PCOCAM:
-         break;
+         // TODO replace these numbers with more exact calculations
+         // TODO see if 4.2 and 5.5 are different
+         if (isSlowReadout(camKey)) {
+            return 0.02752;
+         } else {
+            return 0.00917;
+         }
       case ANDORCAM:
          if (isZyla55(camKey)) {
             if (isSlowReadout(camKey)) {
@@ -419,9 +436,9 @@ public class Cameras {
          resetTimeMs = computeCameraReadoutTime(camKey) + (float) (numRowsOverhead * rowReadoutTime);
          break;
       case PCOCAM:
-         JOptionPane.showMessageDialog(null,
-               "Easy timing mode for PCO cameras not yet implemented in plugin.",
-               "Warning", JOptionPane.WARNING_MESSAGE);
+         // TODO get the actual numbers from PCO
+         numRowsOverhead = 10;  
+         resetTimeMs = computeCameraReadoutTime(camKey) + (float) (numRowsOverhead * rowReadoutTime);
          break;
       case ANDORCAM:
          numRowsOverhead = 1;  // TODO make sure this is accurate; don't have sufficient documentation yet
@@ -470,9 +487,8 @@ public class Cameras {
          readoutTimeMs = ((float) (numReadoutRows * rowReadoutTime));
          break;
       case PCOCAM:
-         JOptionPane.showMessageDialog(null,
-               "Easy timing mode for PCO cameras not yet implemented.",
-               "Warning", JOptionPane.WARNING_MESSAGE);
+         numReadoutRows = roiReadoutRowsSplitReadout(roi, getSensorSize(camKey));
+         readoutTimeMs = ((float) (numReadoutRows * rowReadoutTime));
          break;
       case ANDORCAM:
          numReadoutRows = roiReadoutRowsSplitReadout(roi, getSensorSize(camKey));

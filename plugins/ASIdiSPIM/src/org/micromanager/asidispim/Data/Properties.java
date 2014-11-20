@@ -111,6 +111,8 @@ public class Properties {
       SENSOR_MODE("SENSOR MODE"),         // for Hamamatsu
       SCAN_MODE("ScanMode"),              // for Hamamatsu, 1 = slow scan, 2 = fast scan
       TRIGGER_MODE_PCO("Triggermode"),        // for PCO
+      PIXEL_RATE("PixelRate"),                 // for PCO
+      CAMERA_TYPE("CameraType"),               // for PCO
       TRIGGER_MODE("TriggerMode"),             // for Andor Zyla
       CAMERA_NAME("CameraName"),               // for Andor Zyla
       PIXEL_READOUT_RATE("PixelReadoutRate"),  // for Andor Zyla
