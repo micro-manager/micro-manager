@@ -1357,6 +1357,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                throw new IllegalMonitorStateException("User stopped the acquisition");
             }
             
+            gui_.logMessage("diSPIM plugin starting acquisition " + acqName);
+            
             gui_.openAcquisition(acqName, rootDir, nrFrames, nrSides, nrSlices, nrPos,
                     show, save);
             core_.setExposure(firstCamera, exposureTime);
@@ -1554,8 +1556,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                
                bq.put(TaggedImageQueue.POISON);
                gui_.closeAcquisition(acqName);
-               gui_.logMessage("diSPIM plugin acquisition took: " + 
-                       (System.currentTimeMillis() - acqStart) + "ms");
+               gui_.logMessage("diSPIM plugin acquisition " + acqName + 
+                     " took: " + (System.currentTimeMillis() - acqStart) + "ms");
                
             } catch (Exception ex) {
                // exception while stopping sequence acquisition, not sure what to do...
