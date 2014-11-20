@@ -259,9 +259,7 @@ public class DeviceUtils {
       try {
          StrVector strvDevices = core_.getLoadedDevicesOfType(mmcorej.DeviceType.CameraDevice);
          for (int i = 0; i < strvDevices.size(); i++) {
-            // older method found all cameras with more than one channel
-            // instead we look for Multicamera instances now; we expect only one
-            // get the first one we find
+            // find all Multi-camera devices (usually just one)
             String test = strvDevices.get(i);
             if (core_.getDeviceLibrary(test).equals(Devices.Libraries.UTILITIES.toString()) &&
                   core_.getDeviceDescription(test).equals("Combine multiple physical cameras into a single logical camera")) {
@@ -313,12 +311,7 @@ public class DeviceUtils {
       
       JComboBox deviceBox = new JComboBox(singleCameras.toArray());
       deviceBox.addActionListener(new DeviceBoxListener(deviceName, deviceBox));
-      // if we have one and only one multi-camera then set box to it
-      if (singleCameras.size() == 2){  // recall we added empty string as the first entry
-         deviceBox.setSelectedIndex(1);
-      } else {
-         deviceBox.setSelectedItem(devices_.getMMDevice(deviceName));  // selects whatever device was read in by prefs
-      }
+      deviceBox.setSelectedItem(devices_.getMMDevice(deviceName));  // selects whatever device was read in by prefs
       return deviceBox;
    }
    
