@@ -93,6 +93,8 @@ public final class StorageMultipageTiff implements Storage {
    
    //Map of image labels to file 
    private TreeMap<Coords, MultipageTiffReader> coordsToReader_;
+   // Keeps track of our maximum extent along each axis.
+   private Coords maxIndices_;
   
    public StorageMultipageTiff(Datastore store, String dir, Boolean newDataSet)
          throws IOException {
@@ -203,6 +205,20 @@ public final class StorageMultipageTiff implements Storage {
       Image image = event.getImage();
       if (firstImage_ == null) {
          firstImage_ = image;
+      }
+      if (maxIndices_ == null) {
+         maxIndices_ = image.getCoords().copy().build();
+      }
+      else {
+         // Update maxIndices_ to take the new image into account.
+         // TODO: should we handle this logic in putImage() instead? But then
+         // how do we track coordinate axes that TaggedImages don't know about?
+         Coords imageCoords = image.getCoords();
+         for (String axis : imageCoords.getAxes()) {
+            if (imageCoords.getPositionAt(axis) > maxIndices_.getPositionAt(axis)) {
+               maxIndices_ = maxIndices_.copy().position(axis, imageCoords.getPositionAt(axis)).build();
+            }
+         }
       }
       try {
          putImage(image.legacyToTaggedImage(), false);
@@ -534,16 +550,20 @@ public final class StorageMultipageTiff implements Storage {
 
    @Override
    public Coords getMaxIndices() {
-      ReportingUtils.logError("TODO: getMaxIndices is poorly implemented");
-      DefaultCoords.Builder builder = new DefaultCoords.Builder();
-      for (Coords coords : coordsToReader_.keySet()) {
-         for (String axis : coords.getAxes()) {
-            if (coords.getPositionAt(axis) > builder.getPositionAt(axis)) {
-               builder.position(axis, coords.getPositionAt(axis));
+      // TODO: this method is pretty poorly-implemented at current.
+      if (maxIndices_ == null) {
+         // Calculate max indices by examining all registered Readers.
+         DefaultCoords.Builder builder = new DefaultCoords.Builder();
+         for (Coords coords : coordsToReader_.keySet()) {
+            for (String axis : coords.getAxes()) {
+               if (coords.getPositionAt(axis) > builder.getPositionAt(axis)) {
+                  builder.position(axis, coords.getPositionAt(axis));
+               }
             }
          }
+         maxIndices_ = builder.build();
       }
-      return builder.build();
+      return maxIndices_;
    }
 
    /**
