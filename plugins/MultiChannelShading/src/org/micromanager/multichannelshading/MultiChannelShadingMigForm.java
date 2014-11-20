@@ -103,7 +103,7 @@ public class MultiChannelShadingMigForm extends MMDialog {
       
       mcsPluginWindow = this;
       this.setLayout(new MigLayout("flowx, fill, insets 8"));
-      this.setTitle("MultiChannelShading");
+      this.setTitle(MultiChannelShading.menuName);
 
       loadAndRestorePosition(100, 100, 350, 250);
       
@@ -156,7 +156,7 @@ public class MultiChannelShadingMigForm extends MMDialog {
          }
       });
       processBackgroundImage(darkFieldTextField.getText());
-      add(darkFieldTextField, "span 2, growx ");
+      add(darkFieldTextField, "span 3, growx ");
 
 
       final JButton darkFieldButton =  mcsButton(buttonSize_, arialSmallFont_);
@@ -177,7 +177,7 @@ public class MultiChannelShadingMigForm extends MMDialog {
       
       // Table with channel presets and files
       final JScrollPane scrollPane = new JScrollPane();
-      add(scrollPane, "span 4 2, grow, push");
+      add(scrollPane, "span 5 2, grow, push");
       shadingTableModel_ = new ShadingTableModel(gui_, 
               processor_.getImageCollection()); 
       shadingTableModel_.setChannelGroup(groupName_);
