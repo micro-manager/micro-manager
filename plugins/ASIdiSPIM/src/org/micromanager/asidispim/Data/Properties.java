@@ -152,11 +152,7 @@ public class Properties {
       PLUGIN_CAMERA_MODE("CameraMode"),
       PLUGIN_ENABLE_POSITION_UPDATES("EnablePositionUpdates"),
       PLUGIN_ENABLE_ILLUM_PIEZO_HOME("EnableIllumPiezoHome"),
-      PLUGIN_SPIM_SOURCE_POSITION("SPIMLightSourcePosition"),
-      PLUGIN_SPIM_SOURCE_INTENSITY("SPIMLightSourceIntensity"),
-      PLUGIN_SPIM_SOURCE_ENABLED("SPIMLightSourceEnabled"),
-      TOPTICA_LASER_LEVEL("Laser <string>: 3. Level %", true),
-      TOPTICA_LASER_EMISSION("Laser <string>: 2. Emission", true),
+      PLUGIN_SCAN_OPPOSITE_DIRECTIONS("ScanOppositeDirections"),
       ;
       private final String text;
       private final boolean hasPattern;  // true if string has substitution pattern
@@ -196,6 +192,7 @@ public class Properties {
       SPIM_IDLE("Idle"),
       SAM_DISABLED("0 - Disabled"),
       SAM_ENABLED("1 - Enabled"),
+      SAM_RAMP("0 - Ramp"),
       SAM_TRIANGLE("1 - Triangle"),
       DO_IT("Do it"),
       DO_SSZ("Z - save settings to card (partial)"),

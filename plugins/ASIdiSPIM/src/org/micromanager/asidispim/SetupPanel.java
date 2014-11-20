@@ -484,10 +484,6 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       cameraPanel_.setBorder(BorderFactory.createLineBorder(ASIdiSPIM.borderColor));
       add(cameraPanel_, "center");
 
-      // set scan waveform to be triangle, just like SPIM is
-      props_.setPropValue(micromirrorDeviceKey_, Properties.Keys.SA_PATTERN_X, 
-              Properties.Values.SAM_TRIANGLE, true);
-
    }// end of SetupPanel constructor
 
    
@@ -601,10 +597,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       // TODO do this more elegantly (ideally MM API would add Home() function)
       String letter = "";
       updatePort();
-      if (port_ == null) {
-         return;
-      }
-      if (illumPiezoHomeEnable_.isSelected()) {
+      if (port_ != null && illumPiezoHomeEnable_.isSelected()) {
          try {
             letter = props_.getPropValueString(piezoIlluminationDeviceKey_,
                   Properties.Keys.AXIS_LETTER);
@@ -617,6 +610,11 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
                   ASIdiSPIM.getFrame());
          }
       }
+      
+      // set scan waveform to be triangle
+      // SPIM use can change, but for alignment avoid sharp edges
+      props_.setPropValue(micromirrorDeviceKey_, Properties.Keys.SA_PATTERN_X, 
+              Properties.Values.SAM_TRIANGLE, true);
 
    }
 }

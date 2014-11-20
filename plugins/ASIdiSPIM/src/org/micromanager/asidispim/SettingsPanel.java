@@ -142,17 +142,21 @@ public class SettingsPanel extends ListeningJPanel {
             "[]8[]"));
       scannerPanel_.setBorder(PanelUtils.makeTitledBorder("Scanner"));
 
-      scannerPanel_.add(new JLabel("Filter freq, sheet axis [kHz]:"), "cell 3 0");
+      scannerPanel_.add(new JLabel("Filter freq, sheet axis [kHz]:"));
       final JSpinner scannerFilterX = pu.makeSpinnerFloat(0.1, 5, 0.1,
             new Devices.Keys [] {Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SCANNER_FILTER_X, 0.8);
       scannerPanel_.add(scannerFilterX, "wrap");
       
-      scannerPanel_.add(new JLabel("Filter freq, slice axis [kHz]:"), "cell 3 1");
+      scannerPanel_.add(new JLabel("Filter freq, slice axis [kHz]:"));
       final JSpinner scannerFilterY = pu.makeSpinnerFloat(0.1, 5, 0.1,
             new Devices.Keys [] {Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SCANNER_FILTER_Y, 0.4);
       scannerPanel_.add(scannerFilterY, "wrap");
+      
+      final JCheckBox scanOppositeDirectionsCB = pu.makeCheckBox("Scan beam opposite directions each slice",
+            Properties.Keys.PLUGIN_SCAN_OPPOSITE_DIRECTIONS, panelName_, true);
+      scannerPanel_.add(scanOppositeDirectionsCB, "center, span 2, wrap");
       
       // end scanner panel
       

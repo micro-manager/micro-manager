@@ -1115,6 +1115,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
       // get the micro-mirror card ready
       // SA_AMPLITUDE_X_DEG and SA_OFFSET_X_DEG done by setup tabs
+      boolean triangleWave = prefs_.getBoolean(
+            MyStrings.PanelNames.SETTINGS.toString(),  
+            Properties.Keys.PLUGIN_SCAN_OPPOSITE_DIRECTIONS, true);
+      Properties.Values scanPattern = triangleWave ?
+            Properties.Values.SAM_TRIANGLE : Properties.Values.SAM_RAMP;
+      props_.setPropValue(galvoDevice, Properties.Keys.SA_PATTERN_X, 
+              scanPattern, true);
       props_.setPropValue(galvoDevice,
             Properties.Keys.SA_AMPLITUDE_Y_DEG, sliceAmplitude);
       props_.setPropValue(galvoDevice,
