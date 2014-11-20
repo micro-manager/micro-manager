@@ -752,11 +752,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          float extraTimeNeeded = MyNumberUtils.ceilToQuarterMs((float)-1*globalDelay);  // positive number
             globalDelay += extraTimeNeeded;
             if (showWarnings) {
-               JOptionPane.showMessageDialog(this,
+               gui_.showError(
                      "Increasing slice period to meet laser exposure constraint\n"
                            + "(time required for camera readout; readout time depends on ROI).\n",
-                           "Warning",
-                  JOptionPane.WARNING_MESSAGE);
+                           ASIdiSPIM.getFrame());
                elementToColor.setForeground(foregroundColorError);
                // considered actually changing the value, but decided against it because
                // maybe the user just needs to set the ROI appropriately and recalculate
@@ -803,6 +802,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * @return true if any change actually made  
     */
    private boolean recalculateSliceTiming(boolean showWarnings) {
+      if(!checkCamerasAssigned()) {
+         return false;
+      }
       if (!isSliceTimingUpToDate() || 
             ! MyNumberUtils.floatsEqual((float)computeActualSlicePeriod(),
                   PanelUtils.getSpinnerFloatValue(desiredSlicePeriod_))) {
@@ -958,6 +960,36 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
       }
       return readoutTime;
+   }
+   
+   /**
+    * Makes sure that cameras are assigned to the desired sides and display error message
+    * if not (e.g. if single-sided with side B first, then only checks camera for side B)
+    * @return true if cameras assigned, false if not
+    */
+   private boolean checkCamerasAssigned() {
+      String firstCamera, secondCamera;
+      boolean firstSideA = isFirstSideA(); 
+      if (firstSideA) {
+         firstCamera = devices_.getMMDevice(Devices.Keys.CAMERAA);
+         secondCamera = devices_.getMMDevice(Devices.Keys.CAMERAB);
+      } else {
+         firstCamera = devices_.getMMDevice(Devices.Keys.CAMERAB);
+         secondCamera = devices_.getMMDevice(Devices.Keys.CAMERAA);
+      }
+      if (firstCamera == null) {
+         gui_.showError("Please select a valid camera for the first side (Imaging Path " +
+               (firstSideA ? "A" : "B") + ") on the Devices Panel",
+               ASIdiSPIM.getFrame());
+         return false;
+      }
+      if (isTwoSided() && secondCamera == null) {
+         gui_.showError("Please select a valid camera for the second side (Imaging Path " +
+               (firstSideA ? "B" : "A") + ") on the Devices Panel.",
+               ASIdiSPIM.getFrame());
+         return false;
+      }
+      return true;
    }
    
    /**
@@ -1163,18 +1195,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
       }
       
-      // make sure we have cameras selected
       int nrSides = getNumSides();  // TODO: multi-channel in sense of excitation color, etc.
-      if (firstCamera == null) {
-         gui_.showError("Please select a valid camera for the first side (Imaging Path " +
-               (firstSideA ? "A" : "B") + ") on the Devices Panel",
-               ASIdiSPIM.getFrame());
-         return false;
-      }
-      if (twoSided && secondCamera == null) {
-         gui_.showError("Please select a valid camera for the second side (Imaging Path " +
-               (firstSideA ? "B" : "A") + ") on the Devices Panel.",
-               ASIdiSPIM.getFrame());
+      
+      // make sure we have cameras selected
+      if (!checkCamerasAssigned()) {
          return false;
       }
       
@@ -1231,8 +1255,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             return false;
          }
          // TODO verify if 1 second is good value for overhead time
-         if (timepointsIntervalMs < volumeDuration + 1) {
-            gui_.showError("Micro-Manager requires > 1 second overhead time "
+         if (timepointsIntervalMs < (volumeDuration + 500)) {
+            gui_.showError("Micro-Manager requires > 0.5 second overhead time "
                   + "to finish up volume before starting next one. "
                   + "Pester the developers if you need faster.",
                   ASIdiSPIM.getFrame());
