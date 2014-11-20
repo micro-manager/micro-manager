@@ -1385,11 +1385,6 @@ int CScanner::OnSAPatternX(MM::PropertyBase* pProp, MM::ActionType eAct)
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
    else if (eAct == MM::AfterSet) {
-      if (!illuminationState_)  // don't do anything if beam is turned off
-      {
-         pProp->Set(g_SAMode_0);
-         return DEVICE_OK;
-      }
       string tmpstr;
       pProp->Get(tmpstr);
       if (tmpstr.compare(g_SAPattern_0) == 0)
