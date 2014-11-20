@@ -127,6 +127,14 @@ int CPLogic::Initialize()
    AddAllowedValue(g_TriggerSourcePropertyName, g_TriggerSourceCode4, 4);
    UpdateProperty(g_TriggerSourcePropertyName);
 
+   // "do it" property to clear state
+   pAct = new CPropertyAction (this, &CPLogic::OnClearCellState);
+   CreateProperty(g_ClearCellStatePropertyName, g_IdleState, MM::String, false, pAct);
+   AddAllowedValue(g_ClearCellStatePropertyName, g_IdleState, 0);
+   AddAllowedValue(g_ClearCellStatePropertyName, g_DoItState, 1);
+   AddAllowedValue(g_ClearCellStatePropertyName, g_DoneState, 2);
+   UpdateProperty(g_ClearCellStatePropertyName);
+
    // refresh properties from controller every time; default is false = no refresh (speeds things up by not redoing so much serial comm)
    pAct = new CPropertyAction (this, &CPLogic::OnRefreshProperties);
    CreateProperty(g_RefreshPropValsPropertyName, g_NoState, MM::String, false, pAct);
@@ -656,4 +664,22 @@ int CPLogic::OnIOSourceAddress(MM::PropertyBase* pProp, MM::ActionType eAct, lon
    return DEVICE_OK;
 }
 
+int CPLogic::OnClearCellState(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   if (eAct == MM::BeforeGet) {
+      pProp->Set(g_IdleState);
+   }
+   else  if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_DoItState) == 0)
+      {
+         command << "! " << axisLetter_;
+         RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+         pProp->Set(g_DoneState);
+      }
+   }
+   return DEVICE_OK;
+}
 

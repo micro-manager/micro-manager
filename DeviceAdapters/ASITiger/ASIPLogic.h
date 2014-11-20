@@ -46,6 +46,7 @@ public:
    int OnFrontpanelOutputState(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBackplaneOutputState (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTriggerSource        (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnClearCellState       (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPointerPosition      (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSaveCardSettings     (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnRefreshProperties    (MM::PropertyBase* pProp, MM::ActionType eAct);

@@ -318,6 +318,7 @@ const char* const g_FrontpanelOutputStatePropertyName = "FrontpanelOutputState";
 const char* const g_BackplaneOutputStatePropertyName = "BackplaneOutputState";
 const char* const g_PointerPositionPropertyName = "PointerPosition";
 const char* const g_TriggerSourcePropertyName = "TriggerSource";
+const char* const g_ClearCellStatePropertyName = "ClearCellState";
 const char* const g_CellGenericPropertyName = "Cell";
 const char* const g_TypeGenericPropertyName = "Type";
 
