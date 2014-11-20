@@ -25,17 +25,30 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.imagedisplay.DisplaySettings;
 import org.micromanager.MMStudio;
 import org.micromanager.api.TaggedImageStorage;
-import org.micromanager.utils.*;
-
-
+import org.micromanager.imagedisplay.DisplaySettings;
+import org.micromanager.utils.ImageLabelComparator;
+import org.micromanager.utils.JavaUtils;
+import org.micromanager.utils.MDUtils;
+import org.micromanager.utils.MMException;
+import org.micromanager.utils.MMScriptException;
+import org.micromanager.utils.ProgressBar;
+import org.micromanager.utils.ReportingUtils;
 
 
 public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage {
@@ -59,6 +72,13 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
    private final boolean fastStorageMode_;
    private int lastAcquiredPosition_ = 0;
    private ThreadPoolExecutor writingExecutor_;
+
+   // Images currently being written (need to keep around so that they can be
+   // returned upon request via getImage()). The data structure must be
+   // synchronized because the write completion is detected on a background
+   // thread.
+   private ConcurrentHashMap<String, TaggedImage> writePendingImages_ =
+      new ConcurrentHashMap<String, TaggedImage>();
 
    //map of position indices to objects associated with each
    private HashMap<Integer, FileSet> fileSets_;
@@ -174,33 +194,26 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
    @Override
    public TaggedImage getImage(int channelIndex, int sliceIndex, int frameIndex, int positionIndex) {
       String label = MDUtils.generateLabel(channelIndex, sliceIndex, frameIndex, positionIndex);
-      if (!tiffReadersByLabel_.containsKey(label)) {
-         return null;
+
+      TaggedImage image = writePendingImages_.get(label);
+      if (image != null) {
+         return image;
       }
 
-      //DEbugging code for a strange exception found in core log
-      try {
-         TaggedImage img = tiffReadersByLabel_.get(label).readImage(label);
-         return img;     
-      } catch (NullPointerException e) {
-         ReportingUtils.logError("Couldn't find image that TiffReader is supposed to contain");
-         if (tiffReadersByLabel_ == null) {
-            ReportingUtils.logError("Tiffreadersbylabel is null");
-         }
-         if (tiffReadersByLabel_.get(label) == null) {
-            ReportingUtils.logError("Specific reader is null " + label);
-         }
+      MultipageTiffReader reader = tiffReadersByLabel_.get(label);
+      if (reader == null) {
+         return null;
       }
-      return null;
+      return reader.readImage(label);
    }
 
    @Override
    public JSONObject getImageTags(int channelIndex, int sliceIndex, int frameIndex, int positionIndex) {
-      String label = MDUtils.generateLabel(channelIndex, sliceIndex, frameIndex, positionIndex);
-      if (!tiffReadersByLabel_.containsKey(label)) {
+      TaggedImage image = getImage(channelIndex, sliceIndex, frameIndex, positionIndex);
+      if (image == null) {
          return null;
       }
-      return tiffReadersByLabel_.get(label).readImage(label).tags;   
+      return image.tags;
    }
 
    /*
@@ -213,27 +226,47 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
       //asumes only one position
       fileSets_.get(position).overwritePixels(pix, channel, slice, frame, position); 
    }
-   
-   public void putImage(TaggedImage taggedImage, boolean waitForWritingToFinish) throws MMException, InterruptedException, ExecutionException, IOException {
-      putImage(taggedImage);
-      if (waitForWritingToFinish) {
-         Future f = writingExecutor_.submit(new Runnable() {
-            @Override
-            public void run() {
-            }
-         });
-         f.get();
-      }
-   }
 
    @Override
    public void putImage(TaggedImage taggedImage) throws MMException, IOException {
+      final String label = MDUtils.getLabel(taggedImage.tags);
+      startWritingTask(label, taggedImage);
+
+      // Now, we must hold on to taggedImage, so that we can return it if
+      // somebody calls getImage() before the writing is finished.
+      // There is a data race if the taggedImage is modified by other code, but
+      // that would be a bad thing to do anyway (will break the writer) and is
+      // considered forbidden.
+
+      // We are here depending on the fact that writingExecutor_ is a
+      // single-thread ThreadPoolExecutor, and that submitted tasks are
+      // executed in order. A better implementation might use Guava's
+      // ListenableFuture.
+      // Also note that the image will be dropped if the writing fails due to
+      // any error. This is acceptable for disk-backed storage.
+      writePendingImages_.put(label, taggedImage);
+      writingExecutor_.submit(new Runnable() {
+         @Override public void run() {
+            writePendingImages_.remove(label);
+         }
+      });
+   }
+
+   /*
+    * Sets up and kicks off the writing of a new image. This, in an indirect
+    * way, ends up submitting the writing task to writingExecutor_.
+    */
+   private void startWritingTask(String label, TaggedImage taggedImage)
+      throws MMException, IOException
+   {
       if (!newDataSet_) {
          ReportingUtils.showError("Tried to write image to a finished data set");
          throw new MMException("This ImageFileManager is read-only.");
       }
       //initialize writing executor
       if (fastStorageMode_ && writingExecutor_ == null) {
+         // Note: Code elsewhere assumes that the writing task is performed on
+         // a _single_ background thread.
          writingExecutor_ = new ThreadPoolExecutor(1, 1, 0, TimeUnit.NANOSECONDS,
                  new LinkedBlockingQueue<java.lang.Runnable>());
       }
@@ -245,7 +278,6 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
             ReportingUtils.logError(ex);
          }
       }
-      String label = MDUtils.getLabel(taggedImage.tags);
       if (fileSets_ == null) {
          try {
             fileSets_ = new HashMap<Integer, FileSet>();
