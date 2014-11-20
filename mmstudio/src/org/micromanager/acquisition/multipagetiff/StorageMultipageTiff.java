@@ -535,8 +535,16 @@ public final class StorageMultipageTiff implements Storage {
 
    @Override
    public Coords getMaxIndices() {
-      ReportingUtils.logError("TODO: implement getMaxIndices");
-      return null;
+      ReportingUtils.logError("TODO: getMaxIndices is poorly implemented");
+      DefaultCoords.Builder builder = new DefaultCoords.Builder();
+      for (Coords coords : coordsToReader_.keySet()) {
+         for (String axis : coords.getAxes()) {
+            if (coords.getPositionAt(axis) > builder.getPositionAt(axis)) {
+               builder.position(axis, coords.getPositionAt(axis));
+            }
+         }
+      }
+      return builder.build();
    }
 
    /**
