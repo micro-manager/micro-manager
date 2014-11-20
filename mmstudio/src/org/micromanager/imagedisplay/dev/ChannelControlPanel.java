@@ -13,6 +13,7 @@ import ij.process.LUT;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.List;
 import java.util.prefs.Preferences;
 import javax.swing.DefaultComboBoxModel;
@@ -66,6 +67,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private ImagePlus plus_;
    private CompositeImage composite_;
    private EventBus displayBus_;
+
    private JButton autoButton_;
    private JButton zoomInButton_;
    private JButton zoomOutButton_;
@@ -74,6 +76,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private JButton fullButton_;
    private JLabel minMaxLabel_;
    private JComboBox histRangeComboBox_;
+
    private double binSize_;
    private String histMaxLabel_;
    private int histMax_;
@@ -89,10 +92,12 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private int bitDepth_;
    private Color color_;
    private String name_;
+   private AtomicBoolean haveInitialized_;
 
    public ChannelControlPanel(int channelIndex, HistogramsPanel parent,
          Datastore store, MMVirtualStack stack,
          ImagePlus plus, EventBus displayBus) {
+      haveInitialized_ = new AtomicBoolean(false);
       channelIndex_ = channelIndex;
       parent_ = parent;
       store_ = store;
@@ -138,6 +143,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       initComponents();
       loadDisplaySettings();
       updateHistogram();
+      haveInitialized_.set(true);
    }
 
    private void initComponents() {
@@ -865,6 +871,12 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    @Subscribe
    public void onNewDisplaySettings(NewDisplaySettingsEvent event) {
       settings_ = event.getDisplaySettings();
+      if (!haveInitialized_.get()) {
+         // TODO: there's a race condition here if we've already set the
+         // values that updateChannelNameAndColorFromCache() modify -- if
+         // they aren't yet available, though, then that method will fail.
+         return;
+      }
       try {
          updateChannelNameAndColorFromCache();
       }
