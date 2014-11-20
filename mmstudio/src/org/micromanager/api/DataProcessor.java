@@ -243,8 +243,21 @@ public abstract class DataProcessor<E> extends Thread {
     * sure to call super.setEnabled(isEnabled).
     */
    public void setEnabled(boolean isEnabled) {
+      if (isEnabled_ == isEnabled) {
+         return;
+      }
+
+      final boolean liveWasOn = gui_.isLiveModeOn();
+      if (liveWasOn) {
+         gui_.enableLiveMode(false);
+      }
+
       isEnabled_ = isEnabled;
       EventManager.post(new ProcessorEnabledEvent(this, isEnabled));
+
+      if (liveWasOn) {
+         gui_.enableLiveMode(true);
+      }
    }
 
    /**
