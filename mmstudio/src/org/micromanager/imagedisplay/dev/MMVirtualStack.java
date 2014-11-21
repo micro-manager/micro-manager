@@ -205,7 +205,7 @@ public class MMVirtualStack extends ij.VirtualStack {
       }
       int width = image.getWidth();
       int height = image.getHeight();
-      Object pixels = getPixels(flatIndex);
+      Object pixels = image.getRawPixels();
       int mode = -1;
       switch(image.getBytesPerPixel()) {
          case 1:
@@ -227,8 +227,21 @@ public class MMVirtualStack extends ij.VirtualStack {
          default:
             ReportingUtils.showError("Unrecognized image with " + image.getBytesPerPixel() + " bytes per pixel");
       }
-      ImageProcessor result = ImageUtils.makeProcessor(mode, width, height, pixels);
-      return result;
+      try {
+         ImageProcessor result = ImageUtils.makeProcessor(mode, width, height, pixels);
+         return result;
+      }
+      catch (IllegalArgumentException e) {
+         int numPixels = -1;
+         if (pixels instanceof byte[]) {
+            numPixels = ((byte[]) pixels).length;
+         }
+         else if (pixels instanceof short[]) {
+            numPixels = ((short[]) pixels).length;
+         }
+         ReportingUtils.logError(String.format("Inconsistent pixel data: dimensions (%dx%d) but pixel length is %d", width, height, numPixels));
+      }
+      return null;
    }
 
    @Override
