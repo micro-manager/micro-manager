@@ -297,6 +297,10 @@ public class DefaultImage implements Image {
 
    @Override
    public long getComponentIntensityAt(int x, int y, int component) {
+      if (y * pixelHeight_ + x + component >= rawPixels_.capacity()) {
+         throw new IllegalArgumentException(
+               String.format("Asked for pixel at (%d, %d) exceeding pixel array size of %d", x, y, rawPixels_.capacity()));
+      }
       long result = 0;
       int divisor = numComponents_;
       int exponent = 8;
