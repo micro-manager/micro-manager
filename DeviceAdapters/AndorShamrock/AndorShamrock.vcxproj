@@ -184,9 +184,6 @@
   <ItemGroup>
     <ClInclude Include="AndorShamrock.h" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="..\..\buildscripts\VisualStudio\MMDeviceAdapter.props" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
