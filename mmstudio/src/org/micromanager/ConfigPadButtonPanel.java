@@ -173,7 +173,7 @@ public final class ConfigPadButtonPanel extends JPanel {
    
    
    public void removeGroup() {
-      String groupName = configPad_.getGroup();
+      String groupName = configPad_.getSelectedGroup();
       if (groupName.length()>0) {
          int result = JOptionPane.showConfirmDialog(this, "Are you sure you want to remove group " + groupName + " and all associated presets?",
                "Remove the " + groupName + " group?",
@@ -193,17 +193,17 @@ public final class ConfigPadButtonPanel extends JPanel {
    
    @SuppressWarnings("ResultOfObjectAllocationIgnored")
    public void editGroup() {
-      String groupName = configPad_.getGroup();
+      String groupName = configPad_.getSelectedGroup();
       if (groupName.length() ==0)
          JOptionPane.showMessageDialog(this, "To edit a group, please select it first, then press the edit button.");         
       else
-         new GroupEditor(groupName, configPad_.getPreset(), studio_, core_, false);
+         new GroupEditor(groupName, configPad_.getPresetForSelectedGroup(), studio_, core_, false);
    }
    
    
    @SuppressWarnings("ResultOfObjectAllocationIgnored")
    public void addPreset() {
-      String groupName = configPad_.getGroup();
+      String groupName = configPad_.getSelectedGroup();
       if (groupName.length()==0)
          JOptionPane.showMessageDialog(this, "To add a preset to a group, please select the group first, then press the edit button.");
       else
@@ -211,8 +211,8 @@ public final class ConfigPadButtonPanel extends JPanel {
    }
    
    public void removePreset() {
-      String groupName = configPad_.getGroup();
-      String presetName = configPad_.getPreset();
+      String groupName = configPad_.getSelectedGroup();
+      String presetName = configPad_.getPresetForSelectedGroup();
       if (groupName.length()>0) {
          int result;
          if (core_.getAvailableConfigs(groupName).size()==1) {
@@ -257,8 +257,8 @@ public final class ConfigPadButtonPanel extends JPanel {
 
    @SuppressWarnings("ResultOfObjectAllocationIgnored")
    public void editPreset() {
-      final String presetName = configPad_.getPreset();
-      final String groupName = configPad_.getGroup();
+      final String presetName = configPad_.getPresetForSelectedGroup();
+      final String groupName = configPad_.getSelectedGroup();
       if (groupName.length() ==0) {
          JOptionPane.showMessageDialog(this, "To edit a preset, please select the preset first, then press the edit button.");
       } else if (presetName.length() == 0) {

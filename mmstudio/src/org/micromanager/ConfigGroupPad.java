@@ -116,7 +116,7 @@ public class ConfigGroupPad extends JScrollPane{
       }
    }
 
-   public String getGroup() {
+   public String getSelectedGroup() {
       int idx = table_.getSelectedRow();
       if (idx<0 || data_.getRowCount()<=0) {
          return "";
@@ -125,7 +125,7 @@ public class ConfigGroupPad extends JScrollPane{
       }
    }
 
-   public void setGroup(String groupName) {
+   public void setSelectedGroup(String groupName) {
       for (int i=0;i<data_.getRowCount();i++) {
          if(data_.getValueAt(i,0).toString().contentEquals(groupName)) {
             table_.setRowSelectionInterval(i,i);
@@ -133,7 +133,7 @@ public class ConfigGroupPad extends JScrollPane{
       }
    }
    
-   public String getPreset() {
+   public String getPresetForSelectedGroup() {
       int idx = table_.getSelectedRow();
       if (idx<0 || data_.getRowCount()<=0) {
          return "";
@@ -216,7 +216,6 @@ public class ConfigGroupPad extends JScrollPane{
                   } else {
                      core_.setConfig(item.group, value.toString());
                      core_.waitForConfig(item.group, value.toString());
-                     
                   }
                   
                   // Associate exposure time with presets in current channel group
