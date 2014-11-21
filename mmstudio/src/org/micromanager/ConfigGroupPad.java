@@ -330,8 +330,7 @@ public class ConfigGroupPad extends JScrollPane{
       // the list of config groups and presets.
       public void refreshStatus() {
          try {
-            for (int i = 0; i < groupList_.size(); i++) {
-               StateItem item = groupList_.get(i);
+            for (StateItem item : groupList_) {
                if (item.singleProp) {
                   item.config = core_.getProperty(item.device, item.name);
                } else {
@@ -352,8 +351,7 @@ public class ConfigGroupPad extends JScrollPane{
 
       public void refreshGroup(String groupName, String configName) {
          try {
-            for (int i = 0; i < groupList_.size(); i++) {
-               StateItem item = groupList_.get(i);
+            for (StateItem item : groupList_) {
                if (item.group.equals(groupName)) {
                   item.config = configName;
                }
