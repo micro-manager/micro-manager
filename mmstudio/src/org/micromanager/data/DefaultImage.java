@@ -134,6 +134,9 @@ public class DefaultImage implements Image {
       coords_ = cBuilder.build();
 
       rawPixels_ = DirectBuffers.bufferFromArray(tagged.pix);
+      if (rawPixels_.capacity() == 0) {
+         throw new IllegalArgumentException("Pixel data has length 0.");
+      }
       pixelWidth_ = MDUtils.getWidth(tags);
       pixelHeight_ = MDUtils.getHeight(tags);
       bytesPerPixel_ = MDUtils.getBytesPerPixel(tags);
@@ -150,6 +153,9 @@ public class DefaultImage implements Image {
       coords_ = coords;
 
       rawPixels_ = DirectBuffers.bufferFromArray(pixels);
+      if (rawPixels_.capacity() == 0) {
+         throw new IllegalArgumentException("Pixel data has length 0.");
+      }
       pixelWidth_ = width;
       pixelHeight_ = height;
       bytesPerPixel_ = bytesPerPixel;
@@ -165,6 +171,9 @@ public class DefaultImage implements Image {
       }
       else {
          rawPixels_ = DirectBuffers.bufferFromArray(source.getRawPixels());
+      }
+      if (rawPixels_.capacity() == 0) {
+         throw new IllegalArgumentException("Pixel data has length 0.");
       }
       pixelWidth_ = source.getWidth();
       pixelHeight_ = source.getHeight();
