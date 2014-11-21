@@ -118,6 +118,7 @@ SUBDIRS = \
 	NewportSMC \
 	Nikon \
 	NikonTE2000 \
+	OVP_ECS2 \
 	Omicron \
 	Oxxius \
 	PI \
