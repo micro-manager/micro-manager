@@ -25,6 +25,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -89,6 +90,13 @@ public final class StorageMultipageTiff implements Storage {
    private int lastAcquiredPosition_ = 0;
    private ThreadPoolExecutor writingExecutor_;
    private Image firstImage_;
+
+   // Images that are currently being written. We keep them around until
+   // writing completes, so that calls to getImage() mid-write can access
+   // complete data rather than risking a call to
+   // MultipageTiffReader.readImage().
+   private ConcurrentHashMap<Coords, Image> coordsToPendingImage_ =
+      new ConcurrentHashMap<Coords, Image>();
 
    //map of position indices to objects associated with each
    private HashMap<Integer, FileSet> positionToFileSet_;
@@ -209,7 +217,7 @@ public final class StorageMultipageTiff implements Storage {
          firstImage_ = image;
       }
       try {
-         putImage(image.legacyToTaggedImage(), false);
+         putImage(image, false);
       }
       catch (Exception e) {
          ReportingUtils.showError(e, "Failed to write image at " + image.getCoords());
@@ -227,8 +235,8 @@ public final class StorageMultipageTiff implements Storage {
       finished();
    }
 
-   public void putImage(TaggedImage taggedImage, boolean waitForWritingToFinish) throws MMException, InterruptedException, ExecutionException, IOException {
-      putImage(taggedImage);
+   private void putImage(Image image, boolean waitForWritingToFinish) throws MMException, InterruptedException, ExecutionException, IOException {
+      putImage(image);
       if (waitForWritingToFinish) {
          Future f = writingExecutor_.submit(new Runnable() {
             @Override
@@ -240,36 +248,50 @@ public final class StorageMultipageTiff implements Storage {
    }
 
    /**
-    * TODO: subscribe to the Datastore to get notified of new DisplaySettings.
+    * This method is a wrapper around startWritingTask, that primarily concerns
+    * itself with ensuring that coordsToPendingImage_ is kept up-to-date. That
+    * structure, in turn, ensures that we do not have to rely on
+    * MultipageTiffReader.readImage() returning a coherent (i.e.
+    * finished-writing) image if our getImage() method is called before writing
+    * is completed.
     */
-   /**
-    * TODO: subscribe to the Datastore to get notified of new Images.
-    */
-   public void putImage(TaggedImage taggedImage) throws MMException, IOException {
+   private void putImage(Image image) throws MMException, IOException {
       if (!amInWriteMode_) {
          ReportingUtils.showError("Tried to write image to a finished data set");
          throw new MMException("This ImageFileManager is read-only.");
       }
-      // Update maxIndices_
-      if (taggedImage.tags.has("completeCoords")) {
-         if (maxIndices_ == null) {
-            maxIndices_ = new DefaultCoords.Builder().build();
+
+      final Coords coords = image.getCoords();
+      coordsToPendingImage_.put(coords, image);
+
+      startWritingTask(image);
+
+      writingExecutor_.submit(new Runnable() {
+         @Override
+         public void run() {
+            coordsToPendingImage_.remove(coords);
          }
-         try {
-            JSONObject coordsJSON = taggedImage.tags.getJSONObject("completeCoords");
-            Iterator<String> keys = coordsJSON.keys();
-            while(keys.hasNext()) {
-               String axis = keys.next();
-               int pos = coordsJSON.getInt(axis);
-               if (pos > maxIndices_.getPositionAt(axis)) {
-                  maxIndices_ = maxIndices_.copy().position(axis, pos).build();
-               }
+      });
+   };
+
+   /**
+    * This method handles starting the process of writing images (which means
+    * that it ultimately submits a task to writingExecutor_).
+    */
+   private void startWritingTask(Image image) throws MMException, IOException {
+      // Update maxIndices_
+      if (maxIndices_ == null) {
+         maxIndices_ = image.getCoords().copy().build();
+      }
+      else {
+         for (String axis : image.getCoords().getAxes()) {
+            int pos = image.getCoords().getPositionAt(axis);
+            if (pos > maxIndices_.getPositionAt(axis)) {
+               maxIndices_ = maxIndices_.copy().position(axis, pos).build();
             }
          }
-         catch (JSONException e) {
-            ReportingUtils.logError(e, "Couldn't update max indices");
-         }
       }
+      TaggedImage taggedImage = image.legacyToTaggedImage();
 
       // initialize writing executor
       if (writingExecutor_ == null) {
@@ -610,6 +632,9 @@ public final class StorageMultipageTiff implements Storage {
 
    @Override
    public Image getImage(Coords coords) {
+      if (coordsToPendingImage_.containsKey(coords)) {
+         return coordsToPendingImage_.get(coords);
+      }
       if (!coordsToReader_.containsKey(coords)) {
          ReportingUtils.logError("Asked for image at " + coords + " that doesn't exist");
          return null;
