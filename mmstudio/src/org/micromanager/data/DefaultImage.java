@@ -386,6 +386,13 @@ public class DefaultImage implements Image {
          MDUtils.setPositionIndex(tags, coords_.getPositionAt("position"));
          int type = getImageJPixelType();
          MDUtils.setPixelType(tags, type);
+         // Create a redundant copy of position information in a format that
+         // lets us store all axis information.
+         JSONObject fullCoords = new JSONObject();
+         for (String axis : coords_.getAxes()) {
+            fullCoords.put(axis, coords_.getPositionAt(axis));
+         }
+         tags.put("completeCoords", fullCoords);
       }
       catch (JSONException e) {
          ReportingUtils.logError("Unable to set image position indices: " + e);
