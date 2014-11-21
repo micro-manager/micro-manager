@@ -102,7 +102,7 @@ public class ConfigGroupPad extends JScrollPane{
 
    public void refreshStructure(boolean fromCache) {
       if (data_ != null) {
-         data_.updateStatus(fromCache);
+         data_.rebuildModel(fromCache);
          data_.fireTableStructureChanged();
          table_.repaint();
       }
@@ -165,7 +165,7 @@ public class ConfigGroupPad extends JScrollPane{
 
       public StateTableData(CMMCore core) {
          core_ = core;
-         updateStatus(false);
+         rebuildModel(false);
       }
 
       @Override
@@ -268,7 +268,7 @@ public class ConfigGroupPad extends JScrollPane{
          return true;
       }
 
-      public void updateStatus(boolean fromCache) {
+      public void rebuildModel(boolean fromCache) {
          try {
             StrVector groups = core_.getAvailableConfigGroups();
             HashMap<String, String> oldGroupHash = new HashMap<String, String>();
