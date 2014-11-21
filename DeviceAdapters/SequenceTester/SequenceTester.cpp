@@ -1052,6 +1052,7 @@ TesterSwitcher::GetNumberOfPositions() const
 int
 TesterSwitcher::SetGateOpen(bool open)
 {
+   gateOpen_->MarkBusy();
    return gateOpen_->Set(open);
 }
 
