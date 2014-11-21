@@ -723,6 +723,12 @@ public class MultipageTiffReader {
       public long nextIFDOffsetLocation;
 
       public IFDData() {}
+
+      public String toString() {
+         return String.format("<IFDData offset %d, bytes %d, metadata offset %d, metadata length %d, next %d, next offset %d>",
+               pixelOffset, bytesPerImage, mdOffset, mdLength, nextIFD,
+               nextIFDOffsetLocation);
+      }
    }
 
    private class IFDEntry {
@@ -734,6 +740,12 @@ public class MultipageTiffReader {
          type = typ;
          count = cnt;
          value = val;
+      }
+
+      public String toString() {
+         return String.format("<IFDEntry tag 0x%s, type 0x%s, count %d, value %d>",
+               Integer.toHexString((int) tag),
+               Integer.toHexString((int) type), count, value);
       }
    }
 }
