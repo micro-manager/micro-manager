@@ -438,7 +438,7 @@ void AndorShamrock::SetSlitProperty()
          }
          else {
 
-            CPropertyAction *pAct;
+            CPropertyAction *pAct = 0;
 
             switch(i){
 
@@ -515,7 +515,7 @@ void AndorShamrock::SetFlipperProperty()
             SetProperty(gsz_Port[i-1],gsz_flipperMirror[port].c_str()); 
          }
          else {
-            CPropertyAction *pAct;
+            CPropertyAction *pAct = 0;
             switch(i){
             case(1):
                pAct = new CPropertyAction(this, &AndorShamrock::OnSetInputPort);
