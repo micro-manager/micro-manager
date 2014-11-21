@@ -162,13 +162,12 @@ public class ConfigGroupPad extends JScrollPane{
       };
       ArrayList<StateItem> groupList_ = new ArrayList<StateItem>();
       private CMMCore core_ = null;
-      private final boolean configDirty_;
 
       public StateTableData(CMMCore core) {
          core_ = core;
          updateStatus(false);
-         configDirty_ = false;
       }
+
       @Override
       public int getRowCount() {
          return groupList_.size();
@@ -361,10 +360,6 @@ public class ConfigGroupPad extends JScrollPane{
          } catch (Exception e) {
             handleException(e);
          }
-      }
-
-      public boolean isConfigDirty() {
-         return configDirty_;
       }
    }
 }
