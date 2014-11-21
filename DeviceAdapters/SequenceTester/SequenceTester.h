@@ -377,8 +377,11 @@ public:
    virtual int Initialize();
 
    virtual unsigned long GetNumberOfPositions() const;
+   virtual int SetGateOpen(bool open);
+   virtual int GetGateOpen(bool& open);
 
 private:
    TriggerInput triggerInput_;
    IntegerSetting::Ptr position_;
+   BoolSetting::Ptr gateOpen_;
 };

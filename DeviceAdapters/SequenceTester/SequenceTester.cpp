@@ -1027,6 +1027,8 @@ TesterSwitcher::Initialize()
    position_->SetBusySetting(GetBusySetting());
    CreateIntegerProperty("State", position_);
 
+   gateOpen_ = BoolSetting::New(GetLogger(), this, "GateOpen", true);
+
    triggerInput_.Initialize(shared_from_this(), position_);
 
    CreateStringProperty("TriggerSourceDevice",
@@ -1044,4 +1046,18 @@ unsigned long
 TesterSwitcher::GetNumberOfPositions() const
 {
    return nrPositions_;
+}
+
+
+int
+TesterSwitcher::SetGateOpen(bool open)
+{
+   return gateOpen_->Set(open);
+}
+
+
+int
+TesterSwitcher::GetGateOpen(bool& open)
+{
+   return gateOpen_->Get(open);
 }
