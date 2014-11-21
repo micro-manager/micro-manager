@@ -76,7 +76,7 @@ import org.micromanager.utils.ReportingUtils;
 public final class StorageMultipageTiff implements Storage {
    private DefaultSummaryMetadata summaryMetadata_;
    private DefaultDisplaySettings displaySettings_;
-   private boolean newDataSet_;
+   private boolean amInWriteMode_;
    private int lastFrameOpenedDataSet_ = -1;
    private String directory_;
    final private boolean separateMetadataFile_;
@@ -90,16 +90,16 @@ public final class StorageMultipageTiff implements Storage {
    private Image firstImage_;
 
    //map of position indices to objects associated with each
-   private HashMap<Integer, FileSet> fileSets_;
+   private HashMap<Integer, FileSet> positionToFileSet_;
    
    //Map of image labels to file 
    private TreeMap<Coords, MultipageTiffReader> coordsToReader_;
    // Keeps track of our maximum extent along each axis.
    private Coords maxIndices_;
   
-   public StorageMultipageTiff(Datastore store, String dir, Boolean newDataSet)
+   public StorageMultipageTiff(Datastore store, String dir, Boolean amInWriteMode)
          throws IOException {
-      this(store, dir, newDataSet,
+      this(store, dir, amInWriteMode,
             MMStudio.getInstance().getMetadataFileWithMultipageTiff(),
             MMStudio.getInstance().getSeparateFilesForPositionsMPTiff());
    }
@@ -108,7 +108,7 @@ public final class StorageMultipageTiff implements Storage {
     * Constructor that doesn't make reference to MMStudio so it can be used
     * independently of MM GUI
     */
-   public StorageMultipageTiff(Datastore store, String dir, boolean newDataSet,
+   public StorageMultipageTiff(Datastore store, String dir, boolean amInWriteMode,
          boolean separateMDFile, boolean separateFilesForPositions) throws IOException {
       store.registerForEvents(this, 0);
       displaySettings_ = (DefaultDisplaySettings) store.getDisplaySettings();
@@ -119,12 +119,12 @@ public final class StorageMultipageTiff implements Storage {
       separateMetadataFile_ = separateMDFile;
       splitByXYPosition_ = separateFilesForPositions;
 
-      newDataSet_ = newDataSet;
+      amInWriteMode_ = amInWriteMode;
       directory_ = dir;
       coordsToReader_ = new TreeMap<Coords, MultipageTiffReader>();
 
       // TODO: throw error if no existing dataset
-      if (!newDataSet_) {       
+      if (!amInWriteMode_) {       
          openExistingDataSet();
       }
    }
@@ -137,7 +137,7 @@ public final class StorageMultipageTiff implements Storage {
    private void processSummaryMD() {
       // TODO: get display settings from RAM storage? Or from constructor?
       displaySettings_ = DefaultDisplaySettings.getStandardSettings();
-      if (newDataSet_) {
+      if (amInWriteMode_) {
          numChannels_ = getIntendedSize("channel");
          numSlices_ = getIntendedSize("z");
       }
@@ -240,7 +240,7 @@ public final class StorageMultipageTiff implements Storage {
     * TODO: subscribe to the Datastore to get notified of new Images.
     */
    public void putImage(TaggedImage taggedImage) throws MMException, IOException {
-      if (!newDataSet_) {
+      if (!amInWriteMode_) {
          ReportingUtils.showError("Tried to write image to a finished data set");
          throw new MMException("This ImageFileManager is read-only.");
       }
@@ -264,6 +264,7 @@ public final class StorageMultipageTiff implements Storage {
             ReportingUtils.logError(e, "Couldn't update max indices");
          }
       }
+
       // initialize writing executor
       if (writingExecutor_ == null) {
          writingExecutor_ = new ThreadPoolExecutor(1, 1, 0,
@@ -279,9 +280,9 @@ public final class StorageMultipageTiff implements Storage {
          }
       }
 
-      if (fileSets_ == null) {
+      if (positionToFileSet_ == null) {
          try {
-            fileSets_ = new HashMap<Integer, FileSet>();
+            positionToFileSet_ = new HashMap<Integer, FileSet>();
             JavaUtils.createDirectory(directory_);
          } catch (Exception ex) {
             ReportingUtils.logError(ex);
@@ -292,12 +293,12 @@ public final class StorageMultipageTiff implements Storage {
          omeMetadata_ = new OMEMetadata(this);
       }
       
-      if (fileSets_.get(fileSetIndex) == null) {
-         fileSets_.put(fileSetIndex, new FileSet(taggedImage.tags, this,
+      if (positionToFileSet_.get(fileSetIndex) == null) {
+         positionToFileSet_.put(fileSetIndex, new FileSet(taggedImage.tags, this,
                   omeMetadata_,
                   splitByXYPosition_, separateMetadataFile_));
       }
-      FileSet set = fileSets_.get(fileSetIndex);
+      FileSet set = positionToFileSet_.get(fileSetIndex);
       try {
          set.writeImage(taggedImage);
          DefaultCoords coords = DefaultCoords.legacyFromJSON(taggedImage.tags);
@@ -329,18 +330,18 @@ public final class StorageMultipageTiff implements Storage {
       if (finished_) {
          return;
       }
-      newDataSet_ = false;
-      if (fileSets_ == null) {
+      amInWriteMode_ = false;
+      if (positionToFileSet_ == null) {
          // Nothing to be done.
          finished_ = true;
          return;
       }
-      ProgressBar progressBar = new ProgressBar("Finishing Files", 0, fileSets_.size());
+      ProgressBar progressBar = new ProgressBar("Finishing Files", 0, positionToFileSet_.size());
       try {
          int count = 0;
          progressBar.setProgress(count);
          progressBar.setVisible(true);
-         for (FileSet p : fileSets_.values()) {
+         for (FileSet p : positionToFileSet_.values()) {
             p.finishAbortedAcqIfNeeded();
          }
      
@@ -349,7 +350,7 @@ public final class StorageMultipageTiff implements Storage {
             //z and t arent the same for every channel
             for (int p = 0; p <= lastAcquiredPosition_; p++) {
                //set sizeT in case of aborted acq
-               int currentFrame =  fileSets_.get(splitByXYPosition_ ? p : 0).getCurrentFrame();
+               int currentFrame =  positionToFileSet_.get(splitByXYPosition_ ? p : 0).getCurrentFrame();
                omeMetadata_.setNumFrames(p, currentFrame + 1);
                omeMetadata_.fillInMissingTiffDatas(lastAcquiredFrame(), p);
             }
@@ -363,7 +364,7 @@ public final class StorageMultipageTiff implements Storage {
          int length = fullOMEXMLMetadata.length();
          String uuid = null, filename = null;
          FileSet master = null;
-         for (FileSet p : fileSets_.values()) {
+         for (FileSet p : positionToFileSet_.values()) {
             if (p.hasSpaceForFullOMEXML(length)) {
                uuid = p.getCurrentUUID();
                filename = p.getCurrentFilename();
@@ -389,7 +390,7 @@ public final class StorageMultipageTiff implements Storage {
          
          String partialOME = OMEMetadata.getOMEStringPointerToMasterFile(filename, uuid);
 
-         for (FileSet p : fileSets_.values()) {
+         for (FileSet p : positionToFileSet_.values()) {
             if (p == master) {
                continue;
             }
@@ -427,7 +428,7 @@ public final class StorageMultipageTiff implements Storage {
    }
 
    public boolean isFinished() {
-      return !newDataSet_;
+      return !amInWriteMode_;
    }
 
    /**
@@ -503,7 +504,7 @@ public final class StorageMultipageTiff implements Storage {
    }
 
    public int lastAcquiredFrame() {
-      if (newDataSet_) {
+      if (amInWriteMode_) {
          return lastFrame_;
       } else {
          return lastFrameOpenedDataSet_;
