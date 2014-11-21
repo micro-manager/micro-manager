@@ -141,7 +141,6 @@ public class ConfigGroupPad extends JScrollPane{
          try {
             return data_.core_.getCurrentConfig((String) data_.getValueAt(idx, 0));
          } catch (Exception e) {
-            // TODO Auto-generated catch block
             ReportingUtils.logError(e);
             return null;
          }
@@ -327,6 +326,8 @@ public class ConfigGroupPad extends JScrollPane{
          }
       }
 
+      // Update the current presets for each config group, without updating
+      // the list of config groups and presets.
       public void refreshStatus() {
          try {
             for (int i = 0; i < groupList_.size(); i++) {
