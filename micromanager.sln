@@ -344,6 +344,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HoribaEPIX", "SecretDeviceA
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OVP_ECS2", "DeviceAdapters\OVP_ECS2\OVP_ECS2.vcxproj", "{5A3274BE-645D-4EFC-B51E-621367E0F7D9}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AndorShamrock", "DeviceAdapters\AndorShamrock\AndorShamrock.vcxproj", "{1890CE4F-B07D-43F8-B78E-E3995E582A88}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -1693,6 +1695,14 @@ Global
 		{5A3274BE-645D-4EFC-B51E-621367E0F7D9}.Release|Win32.Build.0 = Release|Win32
 		{5A3274BE-645D-4EFC-B51E-621367E0F7D9}.Release|x64.ActiveCfg = Release|x64
 		{5A3274BE-645D-4EFC-B51E-621367E0F7D9}.Release|x64.Build.0 = Release|x64
+		{1890CE4F-B07D-43F8-B78E-E3995E582A88}.Debug|Win32.ActiveCfg = Debug|Win32
+		{1890CE4F-B07D-43F8-B78E-E3995E582A88}.Debug|Win32.Build.0 = Debug|Win32
+		{1890CE4F-B07D-43F8-B78E-E3995E582A88}.Debug|x64.ActiveCfg = Debug|x64
+		{1890CE4F-B07D-43F8-B78E-E3995E582A88}.Debug|x64.Build.0 = Debug|x64
+		{1890CE4F-B07D-43F8-B78E-E3995E582A88}.Release|Win32.ActiveCfg = Release|Win32
+		{1890CE4F-B07D-43F8-B78E-E3995E582A88}.Release|Win32.Build.0 = Release|Win32
+		{1890CE4F-B07D-43F8-B78E-E3995E582A88}.Release|x64.ActiveCfg = Release|x64
+		{1890CE4F-B07D-43F8-B78E-E3995E582A88}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
