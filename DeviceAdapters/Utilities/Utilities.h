@@ -502,6 +502,7 @@ private:
    std::string stateDeviceName_;
    MM::State* stateDevice_;
    bool initialized_;
+   MM::MMTime lastMoveStartTime_;
 };
 
 #endif //_UTILITIES_H_

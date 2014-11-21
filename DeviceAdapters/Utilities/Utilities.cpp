@@ -2477,7 +2477,8 @@ int AutoFocusStage::OnAutoFocusDevice(MM::PropertyBase* pProp, MM::ActionType eA
 StateDeviceShutter::StateDeviceShutter() :
    stateDeviceName_ (""),
    stateDevice_ (0),
-   initialized_ (false)
+   initialized_ (false),
+   lastMoveStartTime_(0, 0)
 {
    InitializeDefaultErrorMessages();
 
@@ -2492,6 +2493,7 @@ StateDeviceShutter::StateDeviceShutter() :
    // Description                                                            
    CreateProperty(MM::g_Keyword_Description, "State device that is used as a shutter", MM::String, true);
 
+   EnableDelay(true);
 }  
  
 StateDeviceShutter::~StateDeviceShutter()
@@ -2546,10 +2548,13 @@ int StateDeviceShutter::Initialize()
 
 bool StateDeviceShutter::Busy()
 {
-   if (stateDevice_ != 0)
-      return stateDevice_->Busy();
+   if (stateDevice_ != 0 && stateDevice_->Busy())
+      return true;
 
-   // If we are here, there is a problem.  No way to report it.
+   MM::MMTime delay(GetDelayMs() * 1000.0);
+   if (GetCoreCallback()->GetCurrentMMTime() < lastMoveStartTime_ + delay)
+      return true;
+
    return false;
 }
 
@@ -2565,6 +2570,7 @@ int StateDeviceShutter::SetOpen(bool open)
    if (ret != DEVICE_OK)
       return ret;
 
+   lastMoveStartTime_ = GetCoreCallback()->GetCurrentMMTime();
    return stateDevice_->SetGateOpen(open);
 }
 
