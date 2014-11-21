@@ -399,4 +399,40 @@ private:
 	int ChannelIntensity(long channel, double intensity);
 };
 
+
+class RGBLEDShutter : public CShutterBase<RGBLEDShutter>
+{
+public:
+	RGBLEDShutter();
+	virtual ~RGBLEDShutter();
+
+	virtual int Initialize();
+	virtual int Shutdown();
+
+	virtual void GetName(char* name) const;
+	virtual bool Busy();
+
+	virtual int GetOpen(bool& open);
+	virtual int SetOpen(bool open);
+	virtual int Fire(double) { return DEVICE_UNSUPPORTED_COMMAND; }
+
+private:
+	int OnCOMPort(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnChannelIntensity(MM::PropertyBase* pProp, MM::ActionType eAct,
+			long chan);
+
+private:
+	int ApplyIntensities(bool open);
+	int SetChannelIntensity(int chan, double intensity);
+
+private:
+	bool initialized_;
+	std::string port_;
+	bool open_;
+	static const unsigned nChannels_ = 4;
+	double channelIntensities_[nChannels_];
+	static const long delay_ = 20;
+};
+
 #endif //_TOFRA_H_

@@ -28,6 +28,7 @@
 #endif
 
 #include "Tofra.h"
+#include <boost/lexical_cast.hpp>
 #include <cstdio>
 #include <string>
 #include <math.h>
@@ -42,6 +43,7 @@ const char* g_ZStageDeviceName = "TOFRA Z-Drive";
 const char* g_XYStageDeviceName = "TOFRA XYStage";
 const char* g_SliderDeviceName = "TOFRA Cube Slider";
 const char* g_rgbLEDDeviceName = "TOFRA RGB LED";
+const char* g_RGBLEDShutterDeviceName = "TOFRA RGB LED Shutter";
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -55,6 +57,8 @@ MODULE_API void InitializeModuleData()
    RegisterDevice(g_XYStageDeviceName, MM::XYStageDevice, "TOFRA XYStage with Integrated Controller");
    RegisterDevice(g_SliderDeviceName, MM::StateDevice, "TOFRA Filter Cube Slider with Integrated Controller");
    RegisterDevice(g_rgbLEDDeviceName, MM::StateDevice, "TOFRA RGB LED Light Source");
+	RegisterDevice(g_RGBLEDShutterDeviceName, MM::ShutterDevice,
+			"TOFRA RGB LED as Shutter");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
@@ -80,6 +84,9 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
 	else if (strcmp(deviceName, g_rgbLEDDeviceName) == 0){
 		// create rgbLED
 		return new rgbLED();
+	}
+	else if (strcmp(deviceName, g_RGBLEDShutterDeviceName) == 0) {
+		return new RGBLEDShutter();
 	}
 	// ...supplied name not recognized
 	return 0;
@@ -3024,6 +3031,234 @@ int rgbLED::ChannelIntensity(long channel, double intensity)
 	ret = SendSerialCommand(port_.c_str(),cbuf,"\r");
 	if (ret != DEVICE_OK) return ret;
 	// Wait
+	CDeviceUtils::SleepMs(delay_);
+
+	return DEVICE_OK;
+}
+
+
+//
+// RGBLEDShutter Implementation
+//
+
+RGBLEDShutter::RGBLEDShutter() :
+	initialized_(false),
+	open_(false)
+{
+	for (unsigned i = 0; i < nChannels_; ++i) {
+		channelIntensities_[i] = 0.20;
+	}
+
+	InitializeDefaultErrorMessages();
+
+	CPropertyAction* pAct =
+		new CPropertyAction(this, &RGBLEDShutter::OnCOMPort);
+	CreateStringProperty(MM::g_Keyword_Port, "", false, pAct, true);
+}
+
+
+RGBLEDShutter::~RGBLEDShutter()
+{
+}
+
+
+int
+RGBLEDShutter::Initialize()
+{
+	int err;
+
+	err = SetOpen(false);
+	if (err != DEVICE_OK)
+		return err;
+
+	if (initialized_)
+		return DEVICE_OK;
+
+	err = CreateStringProperty(MM::g_Keyword_Name, g_RGBLEDShutterDeviceName, true);
+	if (err != DEVICE_OK)
+		return err;
+
+	err = CreateStringProperty(MM::g_Keyword_Description, "TOFRA RGB LED as Shutter", true);
+	if (err != DEVICE_OK)
+		return err;
+
+	err = CreateIntegerProperty(MM::g_Keyword_State, 0, false,
+			new CPropertyAction(this, &RGBLEDShutter::OnState));
+	if (err != DEVICE_OK)
+		return err;
+
+	for (unsigned i = 0; i < nChannels_; ++i)
+	{
+		const std::string propName = "Channel" +
+			boost::lexical_cast<std::string>(i + 1) + "Intensity";
+
+		err = CreateFloatProperty(propName.c_str(),
+				channelIntensities_[i], false,
+				new CPropertyActionEx(this,
+					&RGBLEDShutter::OnChannelIntensity, i));
+		if (err != DEVICE_OK)
+			return err;
+
+		err = SetPropertyLimits(propName.c_str(), 0.0, 1.0);
+		if (err != DEVICE_OK)
+			return err;
+	}
+
+	initialized_ = true;
+	return DEVICE_OK;
+}
+
+
+int
+RGBLEDShutter::Shutdown()
+{
+	if (!initialized_)
+		return DEVICE_OK;
+
+	int err = SetOpen(false);
+	if (err != DEVICE_OK)
+		return err;
+
+	initialized_ = false;
+	return DEVICE_OK;
+}
+
+
+void
+RGBLEDShutter::GetName(char* name) const
+{
+   CDeviceUtils::CopyLimitedString(name, g_RGBLEDShutterDeviceName);
+}
+
+
+bool
+RGBLEDShutter::Busy()
+{
+	return false;
+}
+
+
+int
+RGBLEDShutter::GetOpen(bool& open)
+{
+	open = open_;
+	return DEVICE_OK;
+}
+
+
+int
+RGBLEDShutter::SetOpen(bool open)
+{
+	int err = ApplyIntensities(open);
+	if (err != DEVICE_OK)
+		return err;
+	open_ = open;
+	return DEVICE_OK;
+}
+
+
+int
+RGBLEDShutter::OnCOMPort(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	if (eAct == MM::BeforeGet)
+	{
+		pProp->Set(port_.c_str());
+	}
+	else if (eAct == MM::AfterSet)
+	{
+		if (initialized_)
+		{
+			// Don't allow change after initialization
+			pProp->Set(port_.c_str());
+			return DEVICE_ERR;
+		}
+		pProp->Get(port_);
+	}
+	return DEVICE_OK;
+}
+
+
+int
+RGBLEDShutter::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	if (eAct == MM::BeforeGet)
+	{
+		pProp->Set(open_ ? 1L : 0L);
+	}
+	else if (eAct == MM::AfterSet)
+	{
+		long val;
+		pProp->Get(val);
+		int err = SetOpen(val != 0);
+		if (err != DEVICE_OK)
+			return err;
+	}
+	return DEVICE_OK;
+}
+
+
+int
+RGBLEDShutter::OnChannelIntensity(MM::PropertyBase* pProp,
+		MM::ActionType eAct, long chan)
+{
+	if (eAct == MM::BeforeGet)
+	{
+		pProp->Set(channelIntensities_[chan]);
+	}
+	else if (eAct == MM::AfterSet)
+	{
+		double val;
+		pProp->Get(val);
+		channelIntensities_[chan] = val;
+		if (open_)
+		{
+			int err = ApplyIntensities(true);
+			if (err != DEVICE_OK)
+				return err;
+		}
+	}
+	return DEVICE_OK;
+}
+
+
+int
+RGBLEDShutter::ApplyIntensities(bool open)
+{
+	int err;
+	for (unsigned i = 0; i < nChannels_; ++i)
+	{
+		err = SetChannelIntensity(i, open ? channelIntensities_[i] : 0.0);
+		if (err != DEVICE_OK)
+			return err;
+	}
+	return DEVICE_OK;
+}
+
+
+int
+RGBLEDShutter::SetChannelIntensity(int chan, double intensity)
+{
+	if (intensity > 1.0 || intensity < 0.0)
+		return DEVICE_INVALID_PROPERTY_VALUE;
+
+	int ret;
+	ret = PurgeComPort(port_.c_str());
+	if (ret != DEVICE_OK)
+		return ret;
+
+	int deviceIntensity = static_cast<int>(
+			500.0 * (1.0 - intensity));
+
+	char deviceChannel = 'A' + chan;
+
+	const int bufSize = 32;
+	char cbuf[bufSize];
+	snprintf(cbuf, bufSize, "AV%c%.3d", deviceChannel, deviceIntensity);
+
+	ret = SendSerialCommand(port_.c_str(), cbuf, "\r");
+	if (ret != DEVICE_OK)
+		return ret;
+
 	CDeviceUtils::SleepMs(delay_);
 
 	return DEVICE_OK;
