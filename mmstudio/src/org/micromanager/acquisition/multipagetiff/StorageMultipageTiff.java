@@ -32,6 +32,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
@@ -206,20 +207,6 @@ public final class StorageMultipageTiff implements Storage {
       if (firstImage_ == null) {
          firstImage_ = image;
       }
-      if (maxIndices_ == null) {
-         maxIndices_ = image.getCoords().copy().build();
-      }
-      else {
-         // Update maxIndices_ to take the new image into account.
-         // TODO: should we handle this logic in putImage() instead? But then
-         // how do we track coordinate axes that TaggedImages don't know about?
-         Coords imageCoords = image.getCoords();
-         for (String axis : imageCoords.getAxes()) {
-            if (imageCoords.getPositionAt(axis) > maxIndices_.getPositionAt(axis)) {
-               maxIndices_ = maxIndices_.copy().position(axis, imageCoords.getPositionAt(axis)).build();
-            }
-         }
-      }
       try {
          putImage(image.legacyToTaggedImage(), false);
       }
@@ -256,6 +243,26 @@ public final class StorageMultipageTiff implements Storage {
       if (!newDataSet_) {
          ReportingUtils.showError("Tried to write image to a finished data set");
          throw new MMException("This ImageFileManager is read-only.");
+      }
+      // Update maxIndices_
+      if (taggedImage.tags.has("completeCoords")) {
+         if (maxIndices_ == null) {
+            maxIndices_ = new DefaultCoords.Builder().build();
+         }
+         try {
+            JSONObject coordsJSON = taggedImage.tags.getJSONObject("completeCoords");
+            Iterator<String> keys = coordsJSON.keys();
+            while(keys.hasNext()) {
+               String axis = keys.next();
+               int pos = coordsJSON.getInt(axis);
+               if (pos > maxIndices_.getPositionAt(axis)) {
+                  maxIndices_ = maxIndices_.copy().position(axis, pos).build();
+               }
+            }
+         }
+         catch (JSONException e) {
+            ReportingUtils.logError(e, "Couldn't update max indices");
+         }
       }
       // initialize writing executor
       if (writingExecutor_ == null) {
