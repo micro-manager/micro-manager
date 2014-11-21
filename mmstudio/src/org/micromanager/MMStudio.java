@@ -1382,6 +1382,8 @@ public class MMStudio implements ScriptInterface {
    }
 
    public void updateGUI(boolean updateConfigPadStructure, boolean fromCache) {
+      ReportingUtils.logMessage("Updating GUI; config pad = " +
+            updateConfigPadStructure + "; from cache = " + fromCache);
       try {
          staticInfo_.refreshValues();
          afMgr_.refresh();
@@ -1440,6 +1442,7 @@ public class MMStudio implements ScriptInterface {
             propertyBrowser_.refresh();
          }
 
+         ReportingUtils.logMessage("Finished updating GUI");
       } catch (Exception e) {
          ReportingUtils.logError(e);
       }

@@ -269,6 +269,7 @@ public class ConfigGroupPad extends JScrollPane{
 
       public void rebuildModel(boolean fromCache) {
          try {
+            ReportingUtils.logMessage("Rebuilding config group table");
             StrVector groups = core_.getAvailableConfigGroups();
             HashMap<String, String> oldGroupHash = new HashMap<String, String>();
             for (StateItem group : groupList_) {
@@ -321,6 +322,7 @@ public class ConfigGroupPad extends JScrollPane{
 
                groupList_.add(item);
             }
+            ReportingUtils.logMessage("Finished rebuilding config group table");
          } catch (Exception e) {
             handleException(e);
          }
@@ -330,6 +332,7 @@ public class ConfigGroupPad extends JScrollPane{
       // the list of config groups and presets.
       public void refreshStatus() {
          try {
+            ReportingUtils.logMessage("Refreshing config group table");
             for (StateItem item : groupList_) {
                if (item.singleProp) {
                   item.config = core_.getProperty(item.device, item.name);
@@ -344,6 +347,7 @@ public class ConfigGroupPad extends JScrollPane{
                   }
                }
             }
+            ReportingUtils.logMessage("Finished refreshing config group table");
          } catch (Exception e) {
             handleException(e);
          }
