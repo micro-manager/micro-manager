@@ -226,7 +226,7 @@ public class ConfigGroupPad extends JScrollPane{
                   }
                   
                   refreshStatus();
-                  repaint();
+                  table_.repaint();
                   if (parentGUI_ != null) {
                      // This is a little superfluous, but it is nice that we
                      // are depending only on ScriptInterface, not MMStudio
