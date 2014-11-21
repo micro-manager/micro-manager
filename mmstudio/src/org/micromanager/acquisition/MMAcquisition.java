@@ -144,10 +144,7 @@ public class MMAcquisition {
                String acqPath = summaryMetadata.getString("Directory") + File.separator + acqDirectory;
                // TODO: respect user selection of multi-file saving method.
                store_.setStorage(new StorageMultipageTiff(store_,
-                        acqDirectory, true));
-//               if (!virtual_) {
-//                  imageCache_.saveAs(new TaggedImageStorageRamFast(null), true);
-//               }
+                        acqPath, true));
             } catch (Exception e) {
                ReportingUtils.showError(e, "Unable to create directory for saving images.");
                eng.stop(true);

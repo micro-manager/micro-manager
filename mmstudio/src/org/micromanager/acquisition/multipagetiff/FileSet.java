@@ -140,13 +140,13 @@ class FileSet {
    public int getCurrentFrame() {
       return currentFrame_;
    }
-   
+
    public void writeImage(TaggedImage img) throws IOException {
       //check if current writer is out of space, if so, make a new one
       if (!tiffWriters_.getLast().hasSpaceToWrite(img, SPACE_FOR_PARTIAL_OME_MD)) {
          //write index map here but still need to call close() at end of acq
          tiffWriters_.getLast().finish();          
-         
+
          currentTiffFilename_ = baseFilename_ + "_" + tiffWriters_.size() + ".ome.tif";
          currentTiffUUID_ = "urn:uuid:" + UUID.randomUUID().toString();
          ifdCount_ = 0;

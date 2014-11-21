@@ -133,7 +133,7 @@ public class MultipageTiffWriter {
       masterStorage_ = masterStorage;
       // TODO: casting to DefaultSummaryMetadata here.
       DefaultSummaryMetadata summary = (DefaultSummaryMetadata) masterStorage.getSummaryMetadata();
-      File f = new File(masterStorage.getDiskLocation() + "/" + filename); 
+      File f = new File(masterStorage.getDiskLocation() + "/" + filename);
 
       try {
          processSummaryMD(summary, splitByPositions);
@@ -349,18 +349,20 @@ public class MultipageTiffWriter {
    }
    
    /**
-    * Called when there is no more data to be written. Write null offset after last image in accordance with TIFF
-    * specification and set number of index map entries for backwards reading capability
-    * A file that has been finished should have everything it needs to be properly reopened in MM or
+    * Called when there is no more data to be written. Write null offset after
+    * last image in accordance with TIFF specification and set number of index
+    * map entries for backwards reading capability A file that has been
+    * finished should have everything it needs to be properly reopened in MM or
     * by a basic TIFF reader
     */
    public void finish() throws IOException {
       writeNullOffsetAfterLastImage();
-      //go back to the index map header and change the number of entries from the max
-      //value allotted early to the actual number written
-      //The MultipageTiffReader no longer needs this because it interperets 0's as the 
-      //the end of the index map. It is added here for backwards compatibility of reading
-      //using versions of MM before 6-6-2014. Without it, old versions wouldn't correctly read image 0_0_0_0
+      // go back to the index map header and change the number of entries from
+      // the max value allotted early to the actual number written The
+      // MultipageTiffReader no longer needs this because it interperets 0's as
+      // the the end of the index map. It is added here for backwards
+      // compatibility of reading using versions of MM before 6-6-2014. Without
+      // it, old versions wouldn't correctly read image 0_0_0_0
       int numImages = (int) ((indexMapPosition_ - indexMapFirstEntry_) / 20);
       ByteBuffer indexMapNumEntries = allocateByteBuffer(4);
       indexMapNumEntries.putInt(0, numImages);
@@ -368,9 +370,9 @@ public class MultipageTiffWriter {
    }
 
    /**
-    * Called when entire set of files (i.e. acquisition) is finished. Adds in all the extra
-    * (but nonessential) stuff--comments, display settings, OME/IJ metadata, and truncates the
-    * file to a reasonable length
+    * Called when entire set of files (i.e. acquisition) is finished. Adds in
+    * all the extra (but nonessential) stuff--comments, display settings,
+    * OME/IJ metadata, and truncates the file to a reasonable length
     */
    public void close(String omeXML) throws IOException {
       String summaryComment = "";
@@ -400,13 +402,14 @@ public class MultipageTiffWriter {
          @Override
          public void run() {
             try {
-               //extra byte of space, just to make sure nothing gets cut off
+               // extra byte of space, just to make sure nothing gets cut off
                raFile_.setLength(filePosition_ + 8);
             } catch (IOException ex) {
                ReportingUtils.logError(ex);
             }
             reader_.finishedWriting();
-            //Dont close file channel and random access file becase Tiff reader still using them
+            // Dont close file channel and random access file becase Tiff
+            // reader still using them
             fileChannel_ = null;
             raFile_ = null;
          }

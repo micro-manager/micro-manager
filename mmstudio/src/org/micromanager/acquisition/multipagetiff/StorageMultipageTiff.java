@@ -49,6 +49,7 @@ import org.json.JSONObject;
 import org.micromanager.MMStudio;
 import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.Datastore;
+import org.micromanager.api.data.DatastoreLockedEvent;
 import org.micromanager.api.data.DisplaySettings;
 import org.micromanager.api.data.Image;
 import org.micromanager.api.data.NewDisplaySettingsEvent;
@@ -221,6 +222,11 @@ public final class StorageMultipageTiff implements Storage {
       displaySettings_ = (DefaultDisplaySettings) event.getDisplaySettings();
    }
 
+   @Subscribe
+   public void onDatastoreLocked(DatastoreLockedEvent event) {
+      finished();
+   }
+
    public void putImage(TaggedImage taggedImage, boolean waitForWritingToFinish) throws MMException, InterruptedException, ExecutionException, IOException {
       putImage(taggedImage);
       if (waitForWritingToFinish) {
@@ -299,6 +305,7 @@ public final class StorageMultipageTiff implements Storage {
                   splitByXYPosition_, separateMetadataFile_));
       }
       FileSet set = positionToFileSet_.get(fileSetIndex);
+
       try {
          set.writeImage(taggedImage);
          DefaultCoords coords = DefaultCoords.legacyFromJSON(taggedImage.tags);
