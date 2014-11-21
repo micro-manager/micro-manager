@@ -155,6 +155,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CRCChecksum.cpp" />
     <ClCompile Include="OVP_ECS2.cpp" />
   </ItemGroup>
   <ItemGroup>

@@ -23,12 +23,9 @@
 
 #ifdef WIN32
 #define snprintf _snprintf 
-#pragma warning(disable: 4355)
 #endif
 
 #include "OVP_ECS2.h"
-#include <boost/crc.hpp>
-#include <boost/integer.hpp>
 #include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/DeviceBase.h"
 #include "../../MMDevice/DeviceUtils.h"
@@ -380,29 +377,12 @@ int ECS::OnCO2Deadband(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-
-
-
-
 int ECS::ClearComPort(void)
 {
    return PurgeComPort(port_.c_str());
 }
 
-Message ECS::GetCRCChecksum(Message msg)
-// returns a 2-element vector (16 bits)
-// relies on the header-only Boost CRC library (boost/crc.hpp)
-// when I compile I see 3 warnings related to type conversions
-{
-   Message crc_vector;
-   boost::uint16_t crc_uint;
-   boost::crc_optimal<16, 0x8005, 0xFFFF, 0, true, true> crc_modbus;
-   crc_modbus.process_bytes(&msg[0], msg.size());
-   crc_uint = crc_modbus.checksum();
-   crc_vector.push_back(crc_uint & 0xFF);
-   crc_vector.push_back((crc_uint & 0xFF00) >> 8);
-   return crc_vector;
-}
+// Note: definition for ECS::GetCRCChecksum is in separate file.
 
 Message ECS::HexString2Message(string str)
 {

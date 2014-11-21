@@ -2,6 +2,7 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="OVP_ECS2.cpp" />
+    <ClCompile Include="CRCChecksum.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="OVP_ECS2.h" />
