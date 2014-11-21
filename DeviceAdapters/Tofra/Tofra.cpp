@@ -3086,6 +3086,9 @@ RGBLEDShutter::Initialize()
 			new CPropertyAction(this, &RGBLEDShutter::OnState));
 	if (err != DEVICE_OK)
 		return err;
+	err = SetPropertyLimits(MM::g_Keyword_State, 0, 1);
+	if (err != DEVICE_OK)
+		return err;
 
 	for (unsigned i = 0; i < nChannels_; ++i)
 	{
