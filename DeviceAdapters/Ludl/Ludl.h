@@ -66,19 +66,13 @@
 #define ERR_WHEEL_USED               10026
 #define ERR_NO_CONTROLLER            10027
 
-// MMCore name of serial port
-std::string port_ = "";
-
 int clearPort(MM::Device& device, MM::Core& core, const char* port);
-int getResult(MM::Device& device, MM::Core& core, const char* port);
-int changeCommandLevel(MM::Device& device, MM::Core& core, const char* commandLevel);
+int changeCommandLevel(MM::Device& device, MM::Core& core, const char* commandLevel,
+      const char* port);
 const int nrShuttersPerDevice = 3;
 const int nrWheelsPerDevice = 2;
 const int nrDevicesPerController = 5;
 
-// Rely on zero initialization
-bool shuttersUsed [nrDevicesPerController][nrShuttersPerDevice];
-bool wheelsUsed [nrDevicesPerController][nrWheelsPerDevice];
 
 class Hub : public CGenericBase<Hub>
 {
@@ -104,12 +98,17 @@ class Hub : public CGenericBase<Hub>
       // device discovery
       MM::DeviceDetectionStatus DetectDevice(void);
 
-     int GetNumberOfDiscoverableDevices();
-     void GetDiscoverableDevice(int peripheralNum, char* peripheralName, unsigned int maxNameLen);
+      int GetNumberOfDiscoverableDevices();
+      void GetDiscoverableDevice(int peripheralNum, char* peripheralName, unsigned int maxNameLen);
 
-     int GetDiscoDeviceNumberOfProperties(int peripheralNum);
-     void GetDiscoDeviceProperty(int peripheralNum, short propertyNumber ,char* propertyName, char* propValue, unsigned int maxValueLen);
+      int GetDiscoDeviceNumberOfProperties(int peripheralNum);
+      void GetDiscoDeviceProperty(int peripheralNum, short propertyNumber ,char* propertyName, char* propValue, unsigned int maxValueLen);
 
+      std::string GetPort() const { return port_; }
+      bool IsShutterInUse(int deviceNumber, int shutterNumber) const;
+      bool IsWheelInUse(int deviceNumber, int wheelNumber) const;
+      void SetShutterInUse(int deviceNumber, int shutterNumber, bool inUse);
+      void SetWheelInUse(int deviceNumber, int wheelNumber, bool inUse);
 
    private:
       void QueryPeripheralInventory();
@@ -125,9 +124,56 @@ class Hub : public CGenericBase<Hub>
       std::string command_;
       int transmissionDelay_;
       bool initialized_;
+
+      std::string port_;
+
+      bool shuttersUsed_[nrDevicesPerController][nrShuttersPerDevice];
+      bool wheelsUsed_[nrDevicesPerController][nrWheelsPerDevice];
 };
 
-class Wheel : public CStateDeviceBase<Wheel>                         
+
+// Mixin class providing link to "hub". Since we are not (yet) using a real
+// MM::Hub, this provides a heuristic mechanism to link peripherals to the
+// appropriate hub.
+//
+// This device adapter currently uses a GenericDevice "hub", not MM::Hub.
+// Previously, only a single controller was supported, and there was only ever
+// one instance of Hub. To support multiple controllers (as an interim measure,
+// until we convert to using a proper MM::Hub), we automatically assign the
+// last created hub to newly created peripherals. Note that it was always
+// necessary to create the hub before initializing peripherals.
+//
+// This support for multiple controllers should be considered a temporary
+// measure. When converting to a true MM::Hub, the mechanism to attach to the
+// last-created hub should be removed.
+class Peripheral
+{
+   static Hub* lastCreatedHub_s;
+
+   Hub* hub_;
+
+public:
+   static void SetHubToUseForNewPeripherals(Hub* hub)
+   { lastCreatedHub_s = hub; }
+
+   static void UnsetHubToUseForNewPeripherals(MM::Device* potentialHub)
+   {
+      if (potentialHub == lastCreatedHub_s)
+         lastCreatedHub_s = 0;
+   }
+
+protected:
+   Peripheral() { hub_ = lastCreatedHub_s; }
+
+   std::string GetPort() const;
+   bool IsShutterInUse(int deviceNumber, int shutterNumber) const;
+   bool IsWheelInUse(int deviceNumber, int wheelNumber) const;
+   void SetShutterInUse(int deviceNumber, int shutterNumber, bool inUse);
+   void SetWheelInUse(int deviceNumber, int wheelNumber, bool inUse);
+};
+
+
+class Wheel : public CStateDeviceBase<Wheel>, Peripheral
 {
 public:
    Wheel();
@@ -167,7 +213,7 @@ private:
 };
 
 
-class Shutter : public CShutterBase<Shutter>
+class Shutter : public CShutterBase<Shutter>, Peripheral
 {
 public:
    Shutter();
@@ -203,7 +249,7 @@ private:
    MM::MMTime changedTime_;
 };
   
-class XYStage : public CXYStageBase<XYStage>
+class XYStage : public CXYStageBase<XYStage>, Peripheral
 {
 public:
    XYStage();
@@ -259,7 +305,7 @@ private:
    double originY_;
 };
 
-class Stage : public CStageBase<Stage>
+class Stage : public CStageBase<Stage>, Peripheral
 {
 public:
    Stage();

@@ -82,7 +82,9 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
 
    if (strcmp(deviceName, g_Controller) == 0)
    {
-      return new Hub();                           
+      Hub* hub = new Hub();
+      Peripheral::SetHubToUseForNewPeripherals(hub);
+      return hub;
    }
    else if (strcmp(deviceName, g_Shutter) == 0 )
    {
@@ -107,6 +109,7 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
 
 MODULE_API void DeleteDevice(MM::Device* pDevice)
 {
+   Peripheral::UnsetHubToUseForNewPeripherals(pDevice);
    delete pDevice;
 }
 
@@ -130,41 +133,12 @@ int clearPort(MM::Device& device, MM::Core& core, const char* port)
    }
    return DEVICE_OK;
 }
-      
-/*
- * Returns DEVICE_OK upon receiving ':A'
- * Returns Error Nr upon receiving ':N x'
- * Otherwise returns ERR_COMMAND_FAILED
- */
-int getResult(MM::Device& device, MM::Core& core, const char* /*port*/)
-{ 
-   const int bufSize = 255;
-   char rec[bufSize];
-   string result;
-   int ret = core.GetSerialAnswer(&device, port_.c_str(), bufSize, rec, "\n");
-   if (ret != DEVICE_OK) 
-      return ret;
-   result = rec;
-   if ( (result.length() < 1) || (result[0] != ':') )
-      return ERR_NO_ANSWER;
-   if (result[1] == 'A') 
-      return DEVICE_OK;
-   if (result[1] == 'N')
-   {
-      int errorNr = atoi(result.substr(2,64).c_str());
-      if (errorNr > 0)
-         return errorNr;
-      else
-         return ERR_COMMAND_FAILED;
-   }
-   // We should never get here
-   return ERR_UNRECOGNIZED_ANSWER;
-}
 
 /*
  * Change command level, 65 = high command set, 66 = low command set
  */
-int changeCommandLevel(MM::Device& device, MM::Core& core, const char* commandLevel)
+int changeCommandLevel(MM::Device& device, MM::Core& core, const char* commandLevel,
+      const char* port)
 {
    int level;
    if (strcmp(commandLevel, g_CommandLevelHigh) == 0)
@@ -174,14 +148,14 @@ int changeCommandLevel(MM::Device& device, MM::Core& core, const char* commandLe
    else 
       return ERR_INVALID_COMMAND_LEVEL;
    
-   if (port_ == "")
+   if (!port || strlen(port) == 0)
       return ERR_NO_CONTROLLER;
 
    const unsigned cmdLen = 2;
    unsigned char cmd[cmdLen];
    cmd[0] = (unsigned)255;
    cmd[1] = (unsigned char)level;
-   int ret = core.WriteToSerial(&device, port_.c_str(), cmd, cmdLen);
+   int ret = core.WriteToSerial(&device, port, cmd, cmdLen);
    if (ret !=DEVICE_OK)
       return ret;
 
@@ -196,6 +170,14 @@ Hub::Hub() :
    transmissionDelay_(10),
    initialized_(false)
 {
+   for (int i = 0; i < nrDevicesPerController; ++i)
+   {
+      for (int j = 0; j < nrShuttersPerDevice; ++j)
+         shuttersUsed_[i][j] = false;
+      for (int j = 0; j < nrWheelsPerDevice; ++j)
+         wheelsUsed_[i][j] = false;
+   }
+
    InitializeDefaultErrorMessages();
 
    // custom error messages:
@@ -290,7 +272,8 @@ int Hub::QueryVersion(std::string& version)
       // if we get no answer, try setting the controller to high command level and retry
       LogMessage("Attempt setting controller to 'high' command level",true);
 
-      returnStatus = changeCommandLevel(*this,  *GetCoreCallback(), g_CommandLevelHigh);
+      returnStatus = changeCommandLevel(*this, *GetCoreCallback(), g_CommandLevelHigh,
+            port_.c_str());
       if (returnStatus != DEVICE_OK)
          return returnStatus;
    }
@@ -338,7 +321,8 @@ int Hub::Initialize()
       return ret;
 
    // Make sure controller uses high level command set
-   ret = changeCommandLevel(*this,  *GetCoreCallback(), g_CommandLevelHigh);
+   ret = changeCommandLevel(*this,  *GetCoreCallback(), g_CommandLevelHigh,
+         GetPort().c_str());
    if (ret != DEVICE_OK)
       return ret;
 
@@ -790,6 +774,80 @@ int Hub::OnTransmissionDelay(MM::PropertyBase* pProp, MM::ActionType pAct)
    return DEVICE_OK;
 }
 
+
+bool
+Hub::IsShutterInUse(int deviceNumber, int shutterNumber) const
+{
+   return shuttersUsed_[deviceNumber - 1][shutterNumber - 1];
+}
+
+
+bool
+Hub::IsWheelInUse(int deviceNumber, int wheelNumber) const
+{
+   return wheelsUsed_[deviceNumber - 1][wheelNumber - 1];
+}
+
+
+void
+Hub::SetShutterInUse(int deviceNumber, int shutterNumber, bool inUse)
+{
+   shuttersUsed_[deviceNumber - 1][shutterNumber - 1] = inUse;
+}
+
+
+void
+Hub::SetWheelInUse(int deviceNumber, int wheelNumber, bool inUse)
+{
+   wheelsUsed_[deviceNumber - 1][wheelNumber - 1] = inUse;
+}
+
+
+//
+// Peripheral Mixin
+//
+
+std::string
+Peripheral::GetPort() const
+{
+   return hub_ ? hub_->GetPort() : std::string();
+}
+
+
+bool
+Peripheral::IsShutterInUse(int deviceNumber, int shutterNumber) const
+{
+   if (hub_)
+      return hub_->IsShutterInUse(deviceNumber, shutterNumber);
+   return false;
+}
+
+
+bool
+Peripheral::IsWheelInUse(int deviceNumber, int wheelNumber) const
+{
+   if (hub_)
+      return hub_->IsWheelInUse(deviceNumber, wheelNumber);
+   return false;
+}
+
+
+void
+Peripheral::SetShutterInUse(int deviceNumber, int shutterNumber, bool inUse)
+{
+   if (hub_)
+      hub_->SetShutterInUse(deviceNumber, shutterNumber, inUse);
+}
+
+
+void
+Peripheral::SetWheelInUse(int deviceNumber, int wheelNumber, bool inUse)
+{
+   if (hub_)
+      hub_->SetWheelInUse(deviceNumber, wheelNumber, inUse);
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////
 // Wheel 
 /////// 
@@ -863,7 +921,7 @@ Wheel::Wheel() :
 
 Wheel::~Wheel()
 {
-   wheelsUsed[deviceNumber_ - 1][wheelNumber_ - 1] = false;
+   SetWheelInUse(deviceNumber_, wheelNumber_, false);
    Shutdown();
 }
 
@@ -875,17 +933,18 @@ void Wheel::GetName(char* name) const
 int Wheel::Initialize()
 {
    // Make sure that the combination of Shutter# and Device# is unique
-   if (wheelsUsed[deviceNumber_ - 1][wheelNumber_ - 1])
+   if (IsWheelInUse(deviceNumber_, wheelNumber_))
       return ERR_WHEEL_USED;
    else
-      wheelsUsed[deviceNumber_ - 1][wheelNumber_ - 1] = true;
+      SetWheelInUse(deviceNumber_, wheelNumber_, true);
 
    // Make sure that a valid number was used in the constructor:
    if (wheelNumber_ < 1 || wheelNumber_ > 2)
       return ERR_INVALID_WHEEL_NUMBER;
 
    // Make sure controller uses high level command set
-   int ret = changeCommandLevel(*this,  *GetCoreCallback(), g_CommandLevelHigh);
+   int ret = changeCommandLevel(*this,  *GetCoreCallback(), g_CommandLevelHigh,
+         GetPort().c_str());
    if (ret != DEVICE_OK)
       return ret;
 
@@ -938,10 +997,10 @@ int Wheel::Shutdown()
 
 bool Wheel::Busy()
 {
-   clearPort(*this, *GetCoreCallback(), port_.c_str());
+   clearPort(*this, *GetCoreCallback(), GetPort().c_str());
    // This checks all device in the module, not only our Wheel
    const char* cmd = "STATUS S"; 
-   int ret = SendSerialCommand(port_.c_str(), cmd, "\r");
+   int ret = SendSerialCommand(GetPort().c_str(), cmd, "\r");
    if (ret != DEVICE_OK) // Bad, but what else can we do?
       return false;
 
@@ -949,7 +1008,7 @@ bool Wheel::Busy()
    unsigned char reply;
    unsigned long startTime = GetClockTicksUs();
    do {
-      if (DEVICE_OK != ReadFromComPort(port_.c_str(), &reply, 1, read))
+      if (DEVICE_OK != ReadFromComPort(GetPort().c_str(), &reply, 1, read))
          return false;
    }
    while(read==0 && (GetClockTicksUs() - startTime) / 1000.0 < answerTimeoutMs_);
@@ -978,13 +1037,13 @@ int Wheel::HomeWheel()
    else
       cmd << "A ";
    cmd << "H";
-   int ret = SendSerialCommand(port_.c_str(), cmd.str().c_str(), "\r");
+   int ret = SendSerialCommand(GetPort().c_str(), cmd.str().c_str(), "\r");
    if (ret !=DEVICE_OK)
       return ret;
 
    // Check that the command was valid
    string result;
-   ret = GetSerialAnswer(port_.c_str(), "\n", result);
+   ret = GetSerialAnswer(GetPort().c_str(), "\n", result);
    if (ret != DEVICE_OK) 
       return ret;
    if (result[1] != 'A') 
@@ -1023,13 +1082,13 @@ int Wheel::SetWheelPosition(int position)
    else
       cmd << "A ";
    cmd << pos;
-   int ret = SendSerialCommand(port_.c_str(), cmd.str().c_str(), "\r");
+   int ret = SendSerialCommand(GetPort().c_str(), cmd.str().c_str(), "\r");
    if (ret !=DEVICE_OK)
       return ret;
 
    // Check that the command was valid
    string result;
-   ret = GetSerialAnswer(port_.c_str(), "\n", result);
+   ret = GetSerialAnswer(GetPort().c_str(), "\n", result);
    if (ret != DEVICE_OK) 
       return ret;
    if (result[1] != 'A') 
@@ -1071,18 +1130,18 @@ int Wheel::OnID(MM::PropertyBase* pProp, MM::ActionType eAct)
 
       // To check that there is a controller with this ID, check whether the busy check works
       // Only do this check when we have an por
-      if (port_.length() > 0) {
-         clearPort(*this, *GetCoreCallback(), port_.c_str());
+      if (!GetPort().empty()) {
+         clearPort(*this, *GetCoreCallback(), GetPort().c_str());
          const int cmdLength = 2;
          char cmd[cmdLength];
          cmd[0] = (char)moduleId_;
          cmd[1] = (char)63;
-         int ret = SendSerialCommand(port_.c_str(), cmd, ":");
+         int ret = SendSerialCommand(GetPort().c_str(), cmd, ":");
          if (ret != DEVICE_OK)
             return ERR_MODULE_NOT_FOUND;
 
          string result;
-         ret = GetSerialAnswer(port_.c_str(), ":", result);
+         ret = GetSerialAnswer(GetPort().c_str(), ":", result);
          if (ret != DEVICE_OK) 
             return ERR_MODULE_NOT_FOUND;
 
@@ -1253,7 +1312,7 @@ Shutter::Shutter() :
 
 Shutter::~Shutter()
 {
-   shuttersUsed[deviceNumber_ - 1][shutterNumber_ - 1] = false;
+   SetShutterInUse(deviceNumber_, shutterNumber_, false);
    Shutdown();
 }
 
@@ -1265,17 +1324,18 @@ void Shutter::GetName(char* name) const
 int Shutter::Initialize()
 {
    // Make sure that the combination of Shutter# and Device# is unique
-   if (shuttersUsed[deviceNumber_ - 1][shutterNumber_ - 1])
+   if (IsShutterInUse(deviceNumber_, shutterNumber_))
       return ERR_SHUTTER_USED;
    else
-      shuttersUsed[deviceNumber_ - 1][shutterNumber_ - 1] = true;
+      SetShutterInUse(deviceNumber_, shutterNumber_, true);
 
    // Make sure that a valid number was used in the constructor:
    if (shutterNumber_ < 1 || shutterNumber_ > 3)
       return ERR_INVALID_SHUTTER_NUMBER;
 
    // Make sure controller uses high level command set
-   int ret = changeCommandLevel(*this,  *GetCoreCallback(), g_CommandLevelHigh);
+   int ret = changeCommandLevel(*this,  *GetCoreCallback(), g_CommandLevelHigh,
+         GetPort().c_str());
    if (ret != DEVICE_OK)
       return ret;
 
@@ -1340,10 +1400,10 @@ bool Shutter::Busy()
    if (interval < (1000.0 * GetDelayMs()))
          return true;
 
-   clearPort(*this, *GetCoreCallback(), port_.c_str());
+   clearPort(*this, *GetCoreCallback(), GetPort().c_str());
    // This checks all device in the module, not only our Shutter
    const char* cmd = "STATUS S"; 
-   int ret = SendSerialCommand(port_.c_str(), cmd, "\r");
+   int ret = SendSerialCommand(GetPort().c_str(), cmd, "\r");
    if (ret != DEVICE_OK) // This is bad, but what else can we do?
       return false;
 
@@ -1351,7 +1411,7 @@ bool Shutter::Busy()
    unsigned char reply;
    unsigned long startTime = GetClockTicksUs();
    do {
-      if (DEVICE_OK != ReadFromComPort(port_.c_str(), &reply, 1, read))
+      if (DEVICE_OK != ReadFromComPort(GetPort().c_str(), &reply, 1, read))
          return false;
    }
    while(read==0 && (GetClockTicksUs() - startTime) / 1000.0 < answerTimeoutMs_);
@@ -1406,13 +1466,13 @@ int Shutter::SetShutterPosition(bool state)
    else
       cmd << "CLOSE S";
    cmd << deviceNumber_ << ' ' << shutterNumber_;
-   int ret = SendSerialCommand(port_.c_str(), cmd.str().c_str(), "\r");
+   int ret = SendSerialCommand(GetPort().c_str(), cmd.str().c_str(), "\r");
    if (ret !=DEVICE_OK)
       return ret;
 
    // Check that the command was valid
    string result;
-   ret = GetSerialAnswer(port_.c_str(), "\n", result);
+   ret = GetSerialAnswer(GetPort().c_str(), "\n", result);
    if (ret != DEVICE_OK) 
       return ret;
    if (result[1] != 'A') 
@@ -1427,18 +1487,18 @@ int Shutter::SetShutterPosition(bool state)
  */
 int Shutter::GetShutterPosition(bool& state)
 {
-   clearPort(*this, *GetCoreCallback(), port_.c_str());
+   clearPort(*this, *GetCoreCallback(), GetPort().c_str());
    
    // request shutter status
    ostringstream  cmd;
    cmd << "RDSTAT S" << deviceNumber_ << ' ';
-   int ret = SendSerialCommand(port_.c_str(), cmd.str().c_str(), "\r");
+   int ret = SendSerialCommand(GetPort().c_str(), cmd.str().c_str(), "\r");
    if (ret !=DEVICE_OK)
       return ret;
 
    // get result and interpret
    string result;
-   ret = GetSerialAnswer(port_.c_str(), "\n", result);
+   ret = GetSerialAnswer(GetPort().c_str(), "\n", result);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -1472,35 +1532,6 @@ int Shutter::OnID(MM::PropertyBase* pProp, MM::ActionType eAct)
          moduleId_ = (unsigned) id;
       else 
          return ERR_INVALID_ID;
-
-      // To check that there is a controller with this ID, check whether the busy check works
-      // Only do this check when we have an port
-      /*
-      if (port_.length() > 0) {
-         ChangeCommandLevel(g_CommandLevelLow);
-         clearPort(*this, *GetCoreCallback(), port_.c_str());
-         const unsigned cmdLen = 3;
-         char cmd[cmdLen];
-         cmd[0] = moduleId_;
-         cmd[1] = 63; // status
-         cmd[2] = 58; // :
-         int ret = WriteToComPort(port_.c_str(), cmd, cmdLen);
-         //int ret = SendSerialCommand(port_.c_str(), reinterpret_cast<char*>(cmd), ":");
-         if (ret != DEVICE_OK)
-            return ret;
-
-         string result;
-         ret = GetSerialAnswer(port_.c_str(), ":", result);
-         if (ret != DEVICE_OK) 
-            return ret;
-
-         if (result.size() < 1) 
-            return ERR_MODULE_NOT_FOUND;
-
-         if (!(result.c_str()[0] == 66 || result.c_str()[0] == 98))
-            return ERR_MODULE_NOT_FOUND;
-      }
-      */
    }
 
    return DEVICE_OK;
@@ -1643,7 +1674,8 @@ void XYStage::GetName(char* Name) const
 int XYStage::Initialize()
 {
    // Make sure controller uses high level command set
-   int ret = changeCommandLevel(*this,  *GetCoreCallback(), g_CommandLevelHigh);
+   int ret = changeCommandLevel(*this,  *GetCoreCallback(), g_CommandLevelHigh,
+         GetPort().c_str());
    if (ret != DEVICE_OK)
       return ret;
 
@@ -1723,14 +1755,14 @@ bool XYStage::Busy()
  */
 bool XYStage::AxisBusy(const char* axis)
 {
-    clearPort(*this, *GetCoreCallback(), port_.c_str());
+    clearPort(*this, *GetCoreCallback(), GetPort().c_str());
    // format the command
    //const char* cmd = "STATUS X Y";
    ostringstream cmd;
    cmd << "STATUS " << axis;
    // send command
  
-   int ret = SendSerialCommand(port_.c_str(), cmd.str().c_str(), "\r");
+   int ret = SendSerialCommand(GetPort().c_str(), cmd.str().c_str(), "\r");
    if (ret != DEVICE_OK)
    {
       ostringstream os;
@@ -1746,7 +1778,7 @@ bool XYStage::AxisBusy(const char* axis)
    long pollIntervalMs = 5;
    this->LogMessage("Starting read in XY-Stage Busy", true);
    do {
-      ret = ReadFromComPort(port_.c_str(), &status, 1, read);
+      ret = ReadFromComPort(GetPort().c_str(), &status, 1, read);
       if (ret != DEVICE_OK)
       {
          ostringstream os;
@@ -1782,12 +1814,12 @@ int XYStage::SetPositionSteps(long x, long y)
 
    // TODO: what if we are busy???
 
-   int ret = SendSerialCommand(port_.c_str(), cmd.str().c_str(), "\r");
+   int ret = SendSerialCommand(GetPort().c_str(), cmd.str().c_str(), "\r");
    if (ret != DEVICE_OK)
       return ret;
   
    string resp;
-   ret = GetSerialAnswer(port_.c_str(), "\n", resp);
+   ret = GetSerialAnswer(GetPort().c_str(), "\n", resp);
    if (ret != DEVICE_OK) 
       return ret;
    if (resp.length() < 1)
@@ -1822,12 +1854,12 @@ int XYStage::SetRelativePositionSteps(long x, long y)
 
    // TODO: what if we are busy???
 
-   int ret = SendSerialCommand(port_.c_str(), cmd.str().c_str(), "\r");
+   int ret = SendSerialCommand(GetPort().c_str(), cmd.str().c_str(), "\r");
    if (ret != DEVICE_OK)
       return ret;
   
    string resp;
-   ret = GetSerialAnswer(port_.c_str(), "\n", resp);
+   ret = GetSerialAnswer(GetPort().c_str(), "\n", resp);
    if (ret != DEVICE_OK) 
       return ret;
    if (resp.length() < 1)
@@ -1854,18 +1886,18 @@ int XYStage::SetRelativePositionSteps(long x, long y)
  */
 int XYStage::GetPositionSteps(long& x, long& y)
 {
-   PurgeComPort(port_.c_str());
+   PurgeComPort(GetPort().c_str());
    
    // format the command
    const char* cmd = "WHERE X Y";
 
    // TODO: what if we are busy???
-   int ret = SendSerialCommand(port_.c_str(), cmd, "\r");
+   int ret = SendSerialCommand(GetPort().c_str(), cmd, "\r");
    if (ret != DEVICE_OK)
       return ret;
   
    string resp;
-   ret = GetSerialAnswer(port_.c_str(), "\n", resp);
+   ret = GetSerialAnswer(GetPort().c_str(), "\n", resp);
    if (ret != DEVICE_OK) 
       return ret;
    if (resp.length() < 1)
@@ -1896,19 +1928,19 @@ int XYStage::GetPositionSteps(long& x, long& y)
  */
 int XYStage::SetOrigin()
 {
-   PurgeComPort(port_.c_str());
+   PurgeComPort(GetPort().c_str());
 
    // format the command
    const char* cmd = "HERE X=0 Y=0";
 
    // TODO: what if we are busy???
-   int ret = SendSerialCommand(port_.c_str(), cmd, "\r");
+   int ret = SendSerialCommand(GetPort().c_str(), cmd, "\r");
    if (ret != DEVICE_OK)
       return ret;
   
    //TODO parse the answer and return error code
    string resp;
-   ret = GetSerialAnswer(port_.c_str(), "\n", resp);
+   ret = GetSerialAnswer(GetPort().c_str(), "\n", resp);
 
    return SetAdapterOrigin();
 }
@@ -1934,13 +1966,13 @@ int XYStage::SetAdapterOrigin()
 
 int XYStage::Home()
 {
-   PurgeComPort(port_.c_str());
+   PurgeComPort(GetPort().c_str());
 
    // format the command
    const char* cmd = "HOME X Y";
 
    // TODO: what if we are busy???
-   int ret = SendSerialCommand(port_.c_str(), cmd, "\r");
+   int ret = SendSerialCommand(GetPort().c_str(), cmd, "\r");
    if (ret != DEVICE_OK)
       return ret;
   
@@ -1951,7 +1983,7 @@ int XYStage::Home()
    long pollIntervalMs = 50;
    this->LogMessage("Starting read in XY-Stage HOME\n", true);
    do {
-      ret = ReadFromComPort(port_.c_str(), &status, 1, read);
+      ret = ReadFromComPort(GetPort().c_str(), &status, 1, read);
       if (ret != DEVICE_OK)
       {
          ostringstream os;
@@ -1969,7 +2001,7 @@ int XYStage::Home()
 
    //TODO parse the answer and return error code
    string resp;
-   ret = GetSerialAnswer(port_.c_str(), "\n", resp);
+   ret = GetSerialAnswer(GetPort().c_str(), "\n", resp);
    
    return DEVICE_OK;
 }
@@ -1977,18 +2009,18 @@ int XYStage::Home()
 
 int XYStage::Stop()
 {
-   PurgeComPort(port_.c_str());
+   PurgeComPort(GetPort().c_str());
    
    // format the command
    const char* cmd = "HALT";
 
    // TODO: what if we are busy???
-   int ret = SendSerialCommand(port_.c_str(), cmd, "\r");
+   int ret = SendSerialCommand(GetPort().c_str(), cmd, "\r");
    if (ret != DEVICE_OK)
       return ret;
   
    string resp;
-   ret = GetSerialAnswer(port_.c_str(), "\n", resp);
+   ret = GetSerialAnswer(GetPort().c_str(), "\n", resp);
    //TODO parse the answer and return error code
    
    return DEVICE_OK;
@@ -2019,44 +2051,16 @@ int XYStage::GetStepLimits(long& /*xMin*/, long& /*xMax*/, long& /*yMin*/, long&
 int XYStage::ExecuteCommand(const string& cmd, string& response)
 {
    // send command
-  // PurgeComPort(port_.c_str());
-   clearPort(*this, *GetCoreCallback(), port_.c_str());
-   if (DEVICE_OK != SendSerialCommand(port_.c_str(), cmd.c_str(), "\r"))
+   clearPort(*this, *GetCoreCallback(), GetPort().c_str());
+   if (DEVICE_OK != SendSerialCommand(GetPort().c_str(), cmd.c_str(), "\r"))
       return DEVICE_SERIAL_COMMAND_FAILED;
 
-   int ret = GetSerialAnswer(port_.c_str(), "\n", response);
+   int ret = GetSerialAnswer(GetPort().c_str(), "\n", response);
    if (ret != DEVICE_OK) 
       return ret;
    if (response.length() < 1)
       return ERR_NO_ANSWER;
-   /*
-   //
-   // block/wait for acknowledge, or until we time out;
-   const unsigned long bufLen = 80;
-   char answer[bufLen];
-   unsigned curIdx = 0;
-   memset(answer, 0, bufLen);
-   unsigned long read;
-   unsigned long startTime = GetClockTicksUs();
 
-   char* pLF = 0;
-   do {
-      if (DEVICE_OK != ReadFromComPort(port_.c_str(), answer + curIdx, bufLen - curIdx, read))
-         return DEVICE_SERIAL_COMMAND_FAILED;
-      curIdx += read;
-
-      // look for the LF
-      pLF = strstr(answer, "\n");
-      if (pLF)
-         *pLF = 0; // terminate the string
-   }
-   while(!pLF && (GetClockTicksUs() - startTime) / 1000.0 < answerTimeoutMs_);
-
-   if (!pLF)
-      return DEVICE_SERIAL_TIMEOUT;
-
-   response = answer;
-   */
    return DEVICE_OK;
 }
 
@@ -2317,7 +2321,6 @@ int XYStage::OnIDY(MM::PropertyBase* pProp, MM::ActionType eAct)
 Stage::Stage() :
    initialized_(false),
    stepSizeUm_(0.1),
-   //port_("Undefined"),
    answerTimeoutMs_(1000)
 {
    InitializeDefaultErrorMessages();
@@ -2364,7 +2367,8 @@ void Stage::GetName(char* Name) const
 int Stage::Initialize()
 {
    // Make sure controller uses high level command set
-   int ret = changeCommandLevel(*this,  *GetCoreCallback(), g_CommandLevelHigh);
+   int ret = changeCommandLevel(*this,  *GetCoreCallback(), g_CommandLevelHigh,
+         GetPort().c_str());
    if (ret != DEVICE_OK)
       return ret;
 
@@ -2411,7 +2415,7 @@ bool Stage::Busy()
    ostringstream os;
    os << "STATUS " << id_;
 
-   int ret = SendSerialCommand(port_.c_str(), os.str().c_str(), "\r");
+   int ret = SendSerialCommand(GetPort().c_str(), os.str().c_str(), "\r");
    if (ret != DEVICE_OK)
    {
       ostringstream os;
@@ -2427,7 +2431,7 @@ bool Stage::Busy()
    long pollIntervalMs = 5;
    this->LogMessage("Starting read in Stage Busy\n", true);
    do {
-      ret = ReadFromComPort(port_.c_str(), &status, 1, read);
+      ret = ReadFromComPort(GetPort().c_str(), &status, 1, read);
       if (ret != DEVICE_OK)
       {
          ostringstream os;
@@ -2482,12 +2486,12 @@ int Stage::SetPositionSteps(long pos)
    cmd << id_ << "=" << pos;
 
    // TODO: what if we are busy???
-   int ret = SendSerialCommand(port_.c_str(), cmd.str().c_str(), "\r");
+   int ret = SendSerialCommand(GetPort().c_str(), cmd.str().c_str(), "\r");
    if (ret != DEVICE_OK)
       return ret;
   
    string resp;
-   ret = GetSerialAnswer(port_.c_str(), "\n", resp);
+   ret = GetSerialAnswer(GetPort().c_str(), "\n", resp);
    if (ret != DEVICE_OK) 
       return ret;
    if (resp.length() < 1)
@@ -2518,12 +2522,12 @@ int Stage::GetPositionSteps(long& steps)
    cmd << "WHERE " << id_;
 
    // TODO: what if we are busy???
-   int ret = SendSerialCommand(port_.c_str(), cmd.str().c_str(), "\r");
+   int ret = SendSerialCommand(GetPort().c_str(), cmd.str().c_str(), "\r");
    if (ret != DEVICE_OK)
       return ret;
 
    string resp;
-   ret = GetSerialAnswer(port_.c_str(), "\n", resp);
+   ret = GetSerialAnswer(GetPort().c_str(), "\n", resp);
    if (ret != DEVICE_OK) 
       return ret;
 
@@ -2567,9 +2571,8 @@ int Stage::GetLimits(double& /*min*/, double& /*max*/)
 int Stage::ExecuteCommand(const string& cmd, string& response)
 {
    // send command
-   PurgeComPort(port_.c_str());
-   //if (DEVICE_OK != WriteToComPort(port_.c_str(), cmd.c_str(), (unsigned) cmd.length()))
-   if (DEVICE_OK != SendSerialCommand(port_.c_str(), cmd.c_str(), "\r"))
+   PurgeComPort(GetPort().c_str());
+   if (DEVICE_OK != SendSerialCommand(GetPort().c_str(), cmd.c_str(), "\r"))
       return DEVICE_SERIAL_COMMAND_FAILED;
 
    // block/wait for acknowledge, or until we time out;
@@ -2582,8 +2585,12 @@ int Stage::ExecuteCommand(const string& cmd, string& response)
 
    char* pLF = 0;
    do {
-      if (DEVICE_OK != ReadFromComPort(port_.c_str(), reinterpret_cast<unsigned char *> (answer + curIdx), bufLen - curIdx, read))
+      if (DEVICE_OK != ReadFromComPort(GetPort().c_str(),
+               reinterpret_cast<unsigned char*>(answer + curIdx),
+               bufLen - curIdx, read))
+      {
          return DEVICE_SERIAL_COMMAND_FAILED;
+      }
       curIdx += read;
 
       // look for the LF
