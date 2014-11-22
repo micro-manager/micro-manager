@@ -25,6 +25,7 @@ import ij.ImagePlus;
 
 import java.awt.Color;
 import java.io.File;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
@@ -33,6 +34,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.Iterator;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.prefs.Preferences;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -51,6 +53,7 @@ import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MDUtils;
+import org.micromanager.utils.MMException;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
@@ -81,7 +84,7 @@ public class MMAcquisition {
    protected int multiCamNumCh_ = 1;
    private boolean initialized_ = false;
    private long startTimeMs_;
-   private String comment_ = "";
+   private final String comment_ = "";
    private String rootDirectory_;
    private VirtualAcquisitionDisplay virtAcq_;
    private ImageCache imageCache_;
@@ -539,7 +542,7 @@ public class MMAcquisition {
             try {
                channelMaxes.put(Math.pow(2, md.getInt("BitDepth")) - 1);
                channelMins.put(0);
-            } catch (Exception e) {
+            } catch (JSONException e) {
                ReportingUtils.logError(e);
             }
          }
@@ -548,12 +551,17 @@ public class MMAcquisition {
          md.put("ChNames", channelNames_);
          md.put("ChContrastMax", channelMaxes);
          md.put("ChContrastMin", channelMins);
-      } catch (Exception e) {
+      } catch (JSONException e) {
          ReportingUtils.logError(e);
       }
    }
 
    /**
+    * @param pixels
+    * @param frame
+    * @param channel
+    * @param slice
+    * @throws org.micromanager.utils.MMScriptException
     * @Deprecated transition towards the use of TaggedImaged rather than raw pixel data
     */
    public void insertImage(Object pixels, int frame, int channel, int slice)
@@ -694,12 +702,24 @@ public class MMAcquisition {
                      outputQueue_, imageCache_);
                sink.start();
             }
-            outputQueue_.add(taggedImg);
+            if (!outputQueue_.offer(taggedImg, 1L, TimeUnit.SECONDS)) {
+               throw new IllegalStateException("Queue full");
+            }
          }
          else {
             imageCache_.putImage(taggedImg);
          }
-      } catch (Exception ex) {
+      } catch (IOException ex) {
+         throw new MMScriptException(ex);
+      } catch (IllegalStateException ex) {
+         throw new MMScriptException(ex);
+      } catch (InterruptedException ex) {
+         throw new MMScriptException(ex);
+      } catch (JSONException ex) {
+         throw new MMScriptException(ex);
+      } catch (MMException ex) {
+         throw new MMScriptException(ex);
+      } catch (MMScriptException ex) {
          throw new MMScriptException(ex);
       }
       
@@ -871,6 +891,9 @@ public class MMAcquisition {
 
    /**
     * Sets a property in summary metadata
+    * @param propertyName
+    * @param value
+    * @throws org.micromanager.utils.MMScriptException
     */
    public void setProperty(String propertyName, String value) throws MMScriptException {
       if (isInitialized()) {
@@ -921,7 +944,7 @@ public class MMAcquisition {
                String key = iState.next();
                tags.put(key, md.get(key));
             }
-         } catch (Exception ex) {
+         } catch (JSONException ex) {
             throw new MMScriptException(ex);
          }
       } else {
@@ -931,7 +954,7 @@ public class MMAcquisition {
                String key = iState.next();
                summary_.put(key, md.get(key));
             }
-         } catch (Exception ex) {
+         } catch (JSONException ex) {
             throw new MMScriptException(ex);
          }
       }
