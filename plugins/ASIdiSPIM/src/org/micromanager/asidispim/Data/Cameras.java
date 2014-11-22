@@ -379,12 +379,18 @@ public class Cameras {
             return (2592 / 266e3);
          }
       case PCOCAM:
-         // TODO replace these numbers with more exact calculations
-         // TODO see if 4.2 and 5.5 are different
-         if (isSlowReadout(camKey)) {
-            return 0.02752;
+         if (isEdge55(camKey)) {
+            if (isSlowReadout(camKey)) {
+               return 0.02752;
+            } else {
+               return 0.00965;
+            }       
          } else {
-            return 0.00917;
+            if (isSlowReadout(camKey)) {
+               return 0.0276;
+            } else {
+               return 0.00917;
+            }            
          }
       case ANDORCAM:
          if (isZyla55(camKey)) {
@@ -436,8 +442,7 @@ public class Cameras {
          resetTimeMs = computeCameraReadoutTime(camKey) + (float) (numRowsOverhead * rowReadoutTime);
          break;
       case PCOCAM:
-         // TODO get the actual numbers from PCO
-         numRowsOverhead = 10;  
+         numRowsOverhead = 0;
          resetTimeMs = computeCameraReadoutTime(camKey) + (float) (numRowsOverhead * rowReadoutTime);
          break;
       case ANDORCAM:
@@ -488,6 +493,9 @@ public class Cameras {
          break;
       case PCOCAM:
          numReadoutRows = roiReadoutRowsSplitReadout(roi, getSensorSize(camKey));
+         if (isEdge55(camKey)) {
+            numReadoutRows = numReadoutRows + 2; // 2 rows overhead for 5.5, none for 4.2
+         }
          readoutTimeMs = ((float) (numReadoutRows * rowReadoutTime));
          break;
       case ANDORCAM:
