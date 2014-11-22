@@ -807,6 +807,9 @@ Hub::SetWheelInUse(int deviceNumber, int wheelNumber, bool inUse)
 // Peripheral Mixin
 //
 
+Hub* Peripheral::lastCreatedHub_s = 0;
+
+
 std::string
 Peripheral::GetPort() const
 {
