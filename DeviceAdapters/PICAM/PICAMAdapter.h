@@ -207,7 +207,7 @@ class Universal : public CCameraBase<Universal>
 
 public:
    
-   Universal(short id);
+   Universal(short id, const char* name);
    ~Universal();
 
    // MMDevice API
@@ -347,6 +347,7 @@ private:
    unsigned        newBinXSize_;
    unsigned        newBinYSize_;
 
+   std::string     deviceName_;
    char            camName_[PicamStringSize_SensorName];
    char            camChipName_[PicamStringSize_SerialNumber];
    PvParam<piflt>* prmTemp_;              // CCD temperature

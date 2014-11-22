@@ -160,7 +160,7 @@ Universal *gUniversal;
 
 ///////////////////////////////////////////////////////////////////////////////
 // &Universal constructor/destructor
-Universal::Universal(short cameraId) :
+Universal::Universal(short cameraId, const char* name) :
 CCameraBase<Universal> (),
 initialized_(false),
 curImageCnt_(0),
@@ -183,6 +183,7 @@ binYSize_(1),
 newBinSize_(1),
 newBinXSize_(1),
 newBinYSize_(1),
+deviceName_(name),
 rgbaColor_(false)
 #ifdef PICAM_FRAME_INFO_SUPPORTED
 ,pFrameInfo_(0)
@@ -1418,7 +1419,7 @@ int Universal::OnUniversalProperty(MM::PropertyBase* pProp, MM::ActionType eAct,
 
 void Universal::GetName(char* name) const 
 {
-   CDeviceUtils::CopyLimitedString(name, camName_/*.c_str()*/);
+   CDeviceUtils::CopyLimitedString(name, deviceName_.c_str());
 }
 
 int Universal::initializeUniversalParams()
