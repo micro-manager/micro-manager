@@ -127,6 +127,21 @@ int CPLogic::Initialize()
    AddAllowedValue(g_TriggerSourcePropertyName, g_TriggerSourceCode4, 4);
    UpdateProperty(g_TriggerSourcePropertyName);
 
+   // preset selector
+   pAct = new CPropertyAction (this, &CPLogic::OnSetCardPreset);
+   CreateProperty(g_SetCardPresetPropertyName, g_PresetCodeNone, MM::String, false, pAct);
+   AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCodeNone, -1);
+   AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode0, 0);
+   AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode1, 1);
+   AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode4, 4);
+   AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode5, 5);
+   AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode6, 6);
+   AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode7, 7);
+   AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode8, 8);
+   AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode10, 10);
+   AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode11, 11);
+   UpdateProperty(g_SetCardPresetPropertyName);
+
    // "do it" property to clear state
    pAct = new CPropertyAction (this, &CPLogic::OnClearCellState);
    CreateProperty(g_ClearCellStatePropertyName, g_IdleState, MM::String, false, pAct);
@@ -679,6 +694,24 @@ int CPLogic::OnClearCellState(MM::PropertyBase* pProp, MM::ActionType eAct)
          RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
          pProp->Set(g_DoneState);
       }
+   }
+   return DEVICE_OK;
+}
+
+int CPLogic::OnSetCardPreset(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   long tmp;
+   string tmpstr;
+   if (eAct == MM::BeforeGet) {
+      // can't do anything of real value here
+      if (!initialized_)
+         pProp->Set(g_PresetCodeNone);
+   } else if (eAct == MM::AfterSet) {
+      RETURN_ON_MM_ERROR ( GetCurrentPropertyData(g_SetCardPresetPropertyName, tmp) );
+      if (tmp < 0) return DEVICE_OK;  // no preset and other "signaling" preset codes are negative
+      command << addressChar_ << "CCA X=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
    }
    return DEVICE_OK;
 }

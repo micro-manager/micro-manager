@@ -319,6 +319,7 @@ const char* const g_BackplaneOutputStatePropertyName = "BackplaneOutputState";
 const char* const g_PointerPositionPropertyName = "PointerPosition";
 const char* const g_TriggerSourcePropertyName = "TriggerSource";
 const char* const g_ClearCellStatePropertyName = "ClearCellState";
+const char* const g_SetCardPresetPropertyName = "SetCardPreset";
 const char* const g_CellGenericPropertyName = "Cell";
 const char* const g_TypeGenericPropertyName = "Type";
 
@@ -341,6 +342,16 @@ const char* const g_TriggerSourceCode1 = "1 - Micro-mirror card";
 const char* const g_TriggerSourceCode2 = "2 - backplane TTL5";
 const char* const g_TriggerSourceCode3 = "3 - backplane TTL7";
 const char* const g_TriggerSourceCode4 = "4 - frontpanel BNC 1";
+const char* const g_PresetCodeNone = "no preset";
+const char* const g_PresetCode0 = "0 - cells all 0";
+const char* const g_PresetCode1 = "1 - original SPIM TTL card";
+const char* const g_PresetCode4 = "4 - 16 bit counter";
+const char* const g_PresetCode5 = "5 - BNC5 high";
+const char* const g_PresetCode6 = "6 - BNC6 high";
+const char* const g_PresetCode7 = "7 - BNC7 high";
+const char* const g_PresetCode8 = "8 - BNC8 high";
+const char* const g_PresetCode10 = "10 - two lasers (switch after stack)";
+const char* const g_PresetCode11 = "11 - two lasers (switch after slice)";
 
 // SPIM enums
 // which side first
