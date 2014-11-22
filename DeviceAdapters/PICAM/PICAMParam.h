@@ -4,6 +4,9 @@
 #include "DeviceBase.h"
 #include "PICAMAdapter.h"
 
+#include <algorithm>
+#include <iterator>
+
 #ifndef WIN32
 typedef long long long64;
 #endif
@@ -295,62 +298,17 @@ public:
     }
 
     /***
-    * Overrided unction
-    */
-    int Apply()
-    {
-		PicamError err=PicamError_InvalidOperation;
-
-        // Write the current value to camera
-		switch(mType){
-		    case PicamValueType_Integer:
-		    case PicamValueType_Boolean:
-			case PicamValueType_LargeInteger:
-				err=Picam_SetParameterIntegerValue(
-					mCamera->Handle(), mId, 
-					(piint )mCurrent);
-				break;
-		    case PicamValueType_Enumeration:
-				err=Picam_SetParameterIntegerValue(
-					mCamera->Handle(), mId, 
-					(piint )mEnumValues[mCurrent]);
-				break;
-		    case PicamValueType_FloatingPoint:
-				err=Picam_SetParameterFloatingPointValue(
-					mCamera->Handle(), mId, 
-					(piflt )mCurrent );
-				break;
-		}
-        //if (plSetParam(mCamera->Handle(), mId, mCurrent) != PV_OK)
-		if (err!=PicamError_None)
-        {
-           Update(); // On failure we need to update the cache with actual camera value
-           mCamera->LogCamError(__LINE__, "Picam_SetParameter");
-           return DEVICE_CAN_NOT_SET_PROPERTY;
-        }
-        return DEVICE_OK;
-    }
-
-    /***
-    * Overrided function. Instead of returning the current enum index, we return the value.
-    */
-    piint Current()
-    {
-        if ( IsAvailable() )
-	        return mEnumValues[mCurrent];
-		else
-			return 0;
-	
-    }
-
-    /***
     * Overrided function. Return the enum string instead of the value only.
     */
     std::string ToString()
     {
         if ( IsAvailable() )
-	        return mEnumStrings[mCurrent];
-	    else
+        {
+           int index = std::distance(mEnumValues.begin(),
+              std::find(mEnumValues.begin(), mEnumValues.end(), mCurrent));
+           if (index < mEnumValues.size())
+               return mEnumStrings[index];
+        }
 	    	return "Invalid";
     }
 
@@ -379,8 +337,7 @@ public:
 	        {
 	            if ( mEnumStrings[i].compare( aValue ) == 0 )
 	            {
-					mCurrent = i;
-	                //mCurrent = mEnumValues[i]; // mCurrent contains an index of the current value
+	                mCurrent = mEnumValues[i];
 	                return DEVICE_OK;
 	            }
 	        }
@@ -396,15 +353,8 @@ public:
     int Set(const piint aValue)
     {
         if ( IsAvailable() ){
-	        for ( unsigned i = 0; i < mEnumValues.size(); ++i)
-	        {
-	            if ( mEnumValues[i] == aValue )
-	            {
-					mCurrent=i;
-	                //mCurrent = mEnumValues[i]; // mCurrent contains an index of the current value
-	                return DEVICE_OK;
-	            }
-	        }
+				mCurrent = aValue;
+				return DEVICE_OK;
 	    }
         mCamera->LogCamError(__LINE__, "PvEnumParam::Set() invalid argument");
         return DEVICE_CAN_NOT_SET_PROPERTY;
