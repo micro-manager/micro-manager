@@ -290,7 +290,7 @@ protected:
 private:
 
    Universal(Universal&) {}
-   int GetPvExposureSettings( piint& pvExposeOutMode, piflt& pvExposureValue );
+   int GetExposureValue(piflt& exposureValue);
    int ResizeImageBufferContinuous();
    int ResizeImageBufferSingle();
    bool WaitForExposureDone() throw();

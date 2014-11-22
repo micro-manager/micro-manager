@@ -1988,27 +1988,13 @@ int Universal::buildSpdTable()
 * This function returns the correct exposure mode and exposure value to be used in both
 * pl_exp_setup_seq and pl_exp_setup_cont
 */
-int Universal::GetPvExposureSettings( piint& pvExposeOutMode, piflt& pvExposureValue )
+int Universal::GetExposureValue(piflt& exposureValue)
 {
     int nRet = DEVICE_OK;
 
-    // Prepare the exposure mode
-    piint trigModeValue = (piint)prmTriggerMode_->Current();
-    // Some cameras like the OptiMos allow special expose-out modes.
-    piint eposeOutModeValue = 0;
-    if ( prmExposeOutMode_ && prmExposeOutMode_->IsAvailable() )
-    {
-        eposeOutModeValue = (piint)prmExposeOutMode_->Current();
-    }
-
-    pvExposeOutMode = (trigModeValue | eposeOutModeValue);
-
-    // Prepare the exposure value
-
-
     g_picamLock.Lock();
     // PICAM always use msec unit
-	pvExposureValue = (double)exposure_;
+    exposureValue = (double)exposure_;
     g_picamLock.Unlock();
 
     return nRet;
@@ -2028,7 +2014,7 @@ int Universal::ResizeImageBufferContinuous()
 		piint frameSize = 0;
 		piint pvExposureMode = 0;
 		piflt pvExposure = 0.0;
-		nRet = GetPvExposureSettings( pvExposureMode, pvExposure );
+		nRet = GetExposureValue(pvExposure);
 		if ( nRet != DEVICE_OK )
 			return nRet;
 
@@ -2116,7 +2102,7 @@ int Universal::ResizeImageBufferSingle()
 
 		piint pvExposureMode = 0;
 		piflt pvExposure = 0.0;
-		nRet = GetPvExposureSettings( pvExposureMode, pvExposure );
+		nRet = GetExposureValue(pvExposure);
 		if ( nRet != DEVICE_OK ){
         	return nRet;
         }
