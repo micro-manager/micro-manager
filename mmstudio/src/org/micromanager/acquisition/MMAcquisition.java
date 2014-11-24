@@ -754,7 +754,7 @@ public class MMAcquisition {
          outputQueue_.add(TaggedImageQueue.POISON);
          outputQueue_ = null;
       }
-      if (!imageCache_.isFinished()) {
+      if (imageCache_ != null && !imageCache_.isFinished()) {
          imageCache_.finished();
       }
    }
