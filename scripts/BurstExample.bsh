@@ -1,44 +1,40 @@
-  /*
-  * Script to show how to use Sequence acquisition
-  */
+/*
+ * Script to show how to use Sequence acquisition
+ */
 
 // file locations
-acqName = "test-Burst";
-rootDirName = "C:/acquisitionData";
+acqName = gui.getUniqueAcquisitionName("test-burst");
+rootDirName = "C:/AcquisitionData";
 
 // Number of timepoints
-nrFrames = 50;
+nrFrames = 500;
+nrChannels = nrSlices = nrPositions = 1;
 
 
-// clear all previous acquisitions
-gui.closeAllAcquisitions();
-gui.clearMessageWindow();
-gui.openAcquisition(acqName, rootDirName, nrFrames, 1, 1);
+gui.openAcquisition(acqName, rootDirName,
+   nrFrames, nrChannels, nrSlices, nrPositions,
+   /* show */ true,
+   /* save */ false);
 
-long width = mmc.getImageWidth();
-long height = mmc.getImageHeight();
-long depth = mmc.getBytesPerPixel();
-int bitDepth = 16;
+width = (int) mmc.getImageWidth();
+height = (int) mmc.getImageHeight();
+bytesPerPixel = (int) mmc.getBytesPerPixel();
+bitDepth = (int) mmc.getImageBitDepth();
 
-gui.initializeAcquisition(acqName, (int) width, (int) height, (int) depth, bitDepth);
+gui.initializeAcquisition(acqName, width, height, bytesPerPixel, bitDepth);
 
-exposure = mmc.getExposure();
-binning = mmc.getProperty(mmc.getCameraDevice(), "Binning");
-
-
-mmc.startSequenceAcquisition(nrFrames, 0, false);
+mmc.startSequenceAcquisition(nrFrames, 0, true);
 frame = 0;
-now = System.currentTimeMillis();
+exposureMs = mmc.getExposure();
 while (mmc.getRemainingImageCount() > 0 || mmc.isSequenceRunning(mmc.getCameraDevice())) {
    if (mmc.getRemainingImageCount() > 0) {
-      timg = mmc.popNextTaggedImage();
-      gui.addImageToAcquisition(acqName, frame, 0, 0, 0, timg);
+      img = mmc.popNextTaggedImage();
+      gui.addImageToAcquisition(acqName, frame, 0, 0, 0, img);
       frame++;
-   } 
+   }
+   else {
+      mmc.sleep(Math.min(0.5 * exposureMs, 20));
+   }
 }
 
-itTook = System.currentTimeMillis() - now;
-
 mmc.stopSequenceAcquisition();
-
-gui.message("Acquisition took: " + itTook + " milliseconds");
