@@ -1178,15 +1178,18 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       CanvasPaintPending.removeAllPaintPending(hyperImage_.getCanvas());
       bus_.unregister(this);
       imageCache_.finished();
-      imageCache_.close();
 
       removeFromAcquisitionManager(MMStudio.getInstance());
+
+      // Shut down our controls.
+      controls_.prepareForClose();
 
       //Call this because for some reason WindowManager doesnt always fire
       mdPanel_.displayChanged(null);
 
-      // Shut down our controls.
-      controls_.prepareForClose();
+      // Now that we have shut down everything that may access the images,
+      // we can close the dataset.
+      imageCache_.close();
 
       // Finally, tell the window to close now.
       DisplayWindow window = event.window_;
