@@ -155,7 +155,8 @@ public class MultiChannelShadingMigForm extends MMDialog {
             processBackgroundImage(darkFieldTextField.getText());
          }
       });
-      processBackgroundImage(darkFieldTextField.getText());
+      darkFieldTextField.setText(processBackgroundImage(
+              darkFieldTextField.getText()));
       add(darkFieldTextField, "span 3, growx ");
 
 
@@ -293,7 +294,13 @@ public class MultiChannelShadingMigForm extends MMDialog {
       return status;
    }
    
-   private void processBackgroundImage(String fileName) {
+   /**
+    * Processes background image
+    * Return filename if successful, empty string otherwise
+    * @param fileName
+    * @return fileName
+    */
+   private String processBackgroundImage(String fileName) {
       if (EMPTY_FILENAME_INDICATOR.equals(fileName)) {
          fileName = "";
       }
@@ -304,7 +311,9 @@ public class MultiChannelShadingMigForm extends MMDialog {
          prefs_.put(DARKFIELDFILENAME, backgroundFileName_);
       } catch (MMException ex) {
          ReportingUtils.showError(ex, "Failed to set background image");
+         return "";
       }
+      return fileName;
    }
    
     public void updateProcessorEnabled(boolean enabled) {

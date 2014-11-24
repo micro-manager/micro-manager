@@ -103,6 +103,10 @@ public class ImageCollection {
    public void addFlatField(String preset, String file) throws MMException {
       ij.io.Opener opener = new ij.io.Opener();
       ImagePlus ip = opener.openImage(file);
+      if (ip == null) {
+         throw new MMException(
+                 "Failed to open flatfield file: " + file);
+      }
       if (ip.getType() != ImagePlus.GRAY8 && ip.getType() != ImagePlus.GRAY16
               && ip.getType() != ImagePlus.GRAY32 ) {
          throw new MMException(
