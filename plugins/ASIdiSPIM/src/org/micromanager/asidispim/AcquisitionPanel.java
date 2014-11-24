@@ -75,7 +75,6 @@ import org.micromanager.api.ImageCache;
 import org.micromanager.api.MMTags;
 import org.micromanager.acquisition.ComponentTitledBorder;
 import org.micromanager.MMStudio;
-import org.micromanager.acquisition.AcquisitionEngine;
 import org.micromanager.acquisition.DefaultTaggedImageSink;
 import org.micromanager.acquisition.MMAcquisition;
 import org.micromanager.acquisition.TaggedImageQueue;
@@ -512,8 +511,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       nameField_.setColumns(textFieldWidth);
       savePanel_.add(nameField_, "span 2, wrap");
       
+      // since we use the name field even for acquisitions in RAM, 
+      // we only need to gray out the directory-related components
       final JComponent[] saveComponents = { browseRootButton, rootField_, 
-                                            dirRootLabel, namePrefixLabel, nameField_ };
+                                            dirRootLabel };
       setDataSavingComponents(saveComponents);
       
       saveCB_.addActionListener(new ActionListener() {
@@ -1573,7 +1574,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                }
                
                bq.put(TaggedImageQueue.POISON);
-               gui_.closeAcquisition(acqName);
+               // TODO: evaluate closeAcquisition call
+               // at the moment, the Micro-Manager api has a bug that causes 
+               // a closed acquisition not be really closed, causing problems
+               // when the user closes a window of the previoud acquisition
+               // gui_.closeAcquisition(acqName);
                gui_.logMessage("diSPIM plugin acquisition " + acqName + 
                      " took: " + (System.currentTimeMillis() - acqStart) + "ms");
                
