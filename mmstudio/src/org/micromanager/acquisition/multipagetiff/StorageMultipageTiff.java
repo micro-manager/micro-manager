@@ -25,6 +25,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -262,14 +263,18 @@ public final class StorageMultipageTiff implements Storage {
       }
 
       final Coords coords = image.getCoords();
-      coordsToPendingImage_.put(coords, image);
+      synchronized(coordsToPendingImage_) {
+         coordsToPendingImage_.put(coords, image);
+      }
 
       startWritingTask(image);
 
       writingExecutor_.submit(new Runnable() {
          @Override
          public void run() {
-            coordsToPendingImage_.remove(coords);
+            synchronized(coordsToPendingImage_) {
+               coordsToPendingImage_.remove(coords);
+            }
          }
       });
    };
@@ -626,14 +631,28 @@ public final class StorageMultipageTiff implements Storage {
 
    @Override
    public List<Image> getImagesMatching(Coords coords) {
-      ReportingUtils.logError("TODO: implement getImagesMatching");
-      return null;
+      HashSet<Image> result = new HashSet<Image>();
+      synchronized(coordsToPendingImage_) {
+         for (Coords imageCoords : coordsToPendingImage_.keySet()) {
+            if (imageCoords.matches(coords)) {
+               result.add(coordsToPendingImage_.get(imageCoords));
+            }
+         }
+      }
+      for (Coords imageCoords : coordsToReader_.keySet()) {
+         if (imageCoords.matches(coords)) {
+            result.add(coordsToReader_.get(imageCoords).readImage(imageCoords));
+         }
+      }
+      return new ArrayList<Image>(result);
    }
 
    @Override
    public Image getImage(Coords coords) {
-      if (coordsToPendingImage_.containsKey(coords)) {
-         return coordsToPendingImage_.get(coords);
+      synchronized(coordsToPendingImage_) {
+         if (coordsToPendingImage_.containsKey(coords)) {
+            return coordsToPendingImage_.get(coords);
+         }
       }
       if (!coordsToReader_.containsKey(coords)) {
          ReportingUtils.logError("Asked for image at " + coords + " that doesn't exist");
