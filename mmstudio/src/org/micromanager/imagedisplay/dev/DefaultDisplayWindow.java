@@ -534,11 +534,16 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
 
    @Subscribe
    public void onPixelsSet(CanvasUpdateThread.PixelsSetEvent event) {
-      histograms_.calcAndDisplayHistAndStats();
-      metadata_.imageChangedUpdate(event.getImage());
-      // TODO: I think this means we're on top, but I'm not certain.
-      if (isFocusableWindow()) {
-         LineProfile.updateLineProfile();
+      try {
+         histograms_.calcAndDisplayHistAndStats();
+         metadata_.imageChangedUpdate(event.getImage());
+         // TODO: I think this means we're on top, but I'm not certain.
+         if (isFocusableWindow()) {
+            LineProfile.updateLineProfile();
+         }
+      }
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Failed to respond properly to pixels-set event");
       }
    }
 
