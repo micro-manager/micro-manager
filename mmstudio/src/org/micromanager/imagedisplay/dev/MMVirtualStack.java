@@ -137,11 +137,11 @@ public class MMVirtualStack extends ij.VirtualStack {
     * bit depth of an existing image in the datastore.
     */
    private Image generateFakeImage(Coords pos) {
-      DefaultCoords.Builder builder = new DefaultCoords.Builder();
-      for (String axis : store_.getAxes()) {
-         builder.position(axis, store_.getMaxIndex(axis));
+      Image tmp = store_.getAnyImage();
+      if (tmp == null) {
+         ReportingUtils.logError("Unable to find any image whatsoever to base a new fake image on.");
+         return null;
       }
-      Image tmp = store_.getImage(builder.build());
       int width = tmp.getWidth();
       int height = tmp.getHeight();
       int bytesPerPixel = tmp.getBytesPerPixel();
