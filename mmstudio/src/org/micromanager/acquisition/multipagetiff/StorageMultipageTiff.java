@@ -232,9 +232,7 @@ public final class StorageMultipageTiff implements Storage {
 
    @Subscribe
    public void onDatastoreLocked(DatastoreLockedEvent event) {
-      ReportingUtils.logError("Locking datastore...");
       finished();
-      ReportingUtils.logError("Datastore locked");
    }
 
    private void putImage(Image image, boolean waitForWritingToFinish) throws MMException, InterruptedException, ExecutionException, IOException {
@@ -303,10 +301,10 @@ public final class StorageMultipageTiff implements Storage {
       }
       int fileSetIndex = 0;
       if (splitByXYPosition_) {
-         try {
-            fileSetIndex = MDUtils.getPositionIndex(taggedImage.tags);
-         } catch (JSONException ex) {
-            ReportingUtils.logError(ex);
+         fileSetIndex = image.getCoords().getPositionAt("position");
+         if (fileSetIndex == -1) {
+            // No position axis, so just default to 0.
+            fileSetIndex = 0;
          }
       }
 
@@ -322,10 +320,10 @@ public final class StorageMultipageTiff implements Storage {
       if (omeMetadata_ == null) {
          omeMetadata_ = new OMEMetadata(this);
       }
-      
-      if (positionToFileSet_.get(fileSetIndex) == null) {
-         positionToFileSet_.put(fileSetIndex, new FileSet(taggedImage.tags, this,
-                  omeMetadata_,
+
+      if (!positionToFileSet_.containsKey(fileSetIndex)) {
+         positionToFileSet_.put(fileSetIndex, 
+               new FileSet(taggedImage.tags, this, omeMetadata_,
                   splitByXYPosition_, separateMetadataFile_));
       }
       FileSet set = positionToFileSet_.get(fileSetIndex);
@@ -335,7 +333,7 @@ public final class StorageMultipageTiff implements Storage {
          DefaultCoords coords = DefaultCoords.legacyFromJSON(taggedImage.tags);
          coordsToReader_.put(coords, set.getCurrentReader());
       } catch (IOException ex) {
-        ReportingUtils.showError("problem writing image to file");
+        ReportingUtils.showError(ex, "Failed to write image to file.");
       }
 
          

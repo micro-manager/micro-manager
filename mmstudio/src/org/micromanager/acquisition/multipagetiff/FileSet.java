@@ -87,8 +87,7 @@ class FileSet {
       currentTiffUUID_ = "urn:uuid:" + UUID.randomUUID().toString();
       //make first writer
       tiffWriters_.add(new MultipageTiffWriter(masterStorage_,
-            firstImageTags, currentTiffFilename_,
-            splitByXYPosition_));
+            firstImageTags, currentTiffFilename_));
 
       try {
          if (separateMetadataFile_) {
@@ -151,7 +150,7 @@ class FileSet {
          currentTiffUUID_ = "urn:uuid:" + UUID.randomUUID().toString();
          ifdCount_ = 0;
          tiffWriters_.add(new MultipageTiffWriter(masterStorage_,
-               img.tags, currentTiffFilename_, splitByXYPosition_));
+               img.tags, currentTiffFilename_));
       }      
 
       //Add filename to image tags
@@ -264,12 +263,11 @@ class FileSet {
             if (MDUtils.hasPositionName(firstImageTags)) {
                baseFilename += "_" + MDUtils.getPositionName(firstImageTags);
             }
-         } catch (JSONException ex) {
-            try {
+            else {
                baseFilename += "_" + "Pos" + MDUtils.getPositionIndex(firstImageTags);
-            } catch (JSONException e) {
-               ReportingUtils.showError("No position name or index in metadata");
             }
+         } catch (JSONException ex) {
+            ReportingUtils.showError("No position name or index in metadata");
          }
       }
       return baseFilename;
