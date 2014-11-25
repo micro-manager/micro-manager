@@ -461,6 +461,8 @@ public class MultipageTiffReader {
       data.nextIFDOffsetLocation = byteOffset + 2 + numEntries*12;
       if (data.pixelOffset == 0 || data.bytesPerImage == 0 ||
             data.mdOffset == 0 || data.mdLength == 0) {
+         throw new IOException("Failed to read image from file at offset " +
+               byteOffset);
       }
       //ReportingUtils.logError("At " + byteOffset + " read data " + data);
       return data;
