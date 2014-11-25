@@ -322,7 +322,7 @@ public final class StorageMultipageTiff implements Storage {
       }
 
       if (!positionToFileSet_.containsKey(fileSetIndex)) {
-         positionToFileSet_.put(fileSetIndex, 
+         positionToFileSet_.put(fileSetIndex,
                new FileSet(taggedImage.tags, this, omeMetadata_,
                   splitByXYPosition_, separateMetadataFile_));
       }
