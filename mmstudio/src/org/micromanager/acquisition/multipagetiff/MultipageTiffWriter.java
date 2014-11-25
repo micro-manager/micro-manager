@@ -66,9 +66,6 @@ import org.micromanager.utils.ReportingUtils;
 
 public class MultipageTiffWriter {
 
-   private static int globalID = 0;
-   private int writerID_;
-
    private static final long BYTES_PER_GIG = 1073741824;
    private static final long MAX_FILE_SIZE = 4 * BYTES_PER_GIG;
    public static final int DISPLAY_SETTINGS_BYTES_PER_CHANNEL = 256;
@@ -131,17 +128,15 @@ public class MultipageTiffWriter {
    private String summaryMDString_;
    
    public MultipageTiffWriter(StorageMultipageTiff masterStorage,
-         JSONObject firstImageTags, String filename,
-           boolean splitByPositions) throws IOException {
-      writerID_ = globalID;
-      globalID++;
+         JSONObject firstImageTags, String filename)
+         throws IOException {
       masterStorage_ = masterStorage;
       // TODO: casting to DefaultSummaryMetadata here.
       DefaultSummaryMetadata summary = (DefaultSummaryMetadata) masterStorage.getSummaryMetadata();
       File f = new File(masterStorage.getDiskLocation() + "/" + filename);
 
       try {
-         processSummaryMD(summary, splitByPositions);
+         processSummaryMD(summary);
       } catch (MMScriptException ex1) {
          ReportingUtils.logError(ex1);
       } catch (JSONException ex) {
@@ -158,7 +153,7 @@ public class MultipageTiffWriter {
             (DefaultImage) masterStorage_.getAnyImage());
       augmentWithDisplaySettings(summaryJSON,
             (DefaultDisplaySettings) masterStorage_.getDisplaySettings());
-      reader_ = new MultipageTiffReader(writerID_, summary, summaryJSON, firstImageTags);
+      reader_ = new MultipageTiffReader(summary, summaryJSON, firstImageTags);
 
       //This is an overestimate of file size because file gets truncated at end
       long fileSize = Math.min(MAX_FILE_SIZE,
@@ -338,7 +333,7 @@ public class MultipageTiffWriter {
       indexMapPosition_ = headerBuffer.capacity() + mdLength + 8;
       indexMapFirstEntry_ = indexMapPosition_;
 
-      
+
       //1 byte for each byte of UTF-8-encoded summary md
       ByteBuffer[] buffers = new ByteBuffer[3];
       buffers[0] = headerBuffer;
@@ -347,7 +342,6 @@ public class MultipageTiffWriter {
       
       fileChannelWrite(buffers);
       filePosition_ += headerBuffer.capacity() + mdLength +indexMapSpace;
-      ReportingUtils.logError("After writing header/summary; file position is " + writerID_ + "-" + filePosition_);
    }
    
    /**
@@ -358,7 +352,6 @@ public class MultipageTiffWriter {
     * by a basic TIFF reader
     */
    public void finish() throws IOException {
-      ReportingUtils.logError("Finishing Writer...");
       writeNullOffsetAfterLastImage();
       // go back to the index map header and change the number of entries from
       // the max value allotted early to the actual number written The
@@ -370,7 +363,6 @@ public class MultipageTiffWriter {
       ByteBuffer indexMapNumEntries = allocateByteBuffer(4);
       indexMapNumEntries.putInt(0, numImages);
       fileChannelWrite(indexMapNumEntries, indexMapFirstEntry_ - 4);
-      ReportingUtils.logError("Writer finished");
    }
 
    /**
@@ -379,7 +371,6 @@ public class MultipageTiffWriter {
     * OME/IJ metadata, and truncates the file to a reasonable length
     */
    public void close(String omeXML) throws IOException {
-      ReportingUtils.logError("Writer close");
       String summaryComment = "";
       try 
       {
@@ -417,7 +408,6 @@ public class MultipageTiffWriter {
             // reader still using them
             fileChannel_ = null;
             raFile_ = null;
-            ReportingUtils.logError("Writer close complete");
          }
       });
    }
@@ -477,7 +467,6 @@ public class MultipageTiffWriter {
       writeIFD(img);
       addToIndexMap(DefaultCoords.legacyFromJSON(img.tags), offset);
       writeBuffers();
-      ReportingUtils.logError("Image at " + writerID_ + "-" + offset + " nominally done writing; file position now " + writerID_ + "-" + filePosition_);
       //wait until image has finished writing to return
 //      int size = writingExecutor_.getQueue().size();
 //      while (size > 0) {
@@ -525,7 +514,6 @@ public class MultipageTiffWriter {
    }
 
    private void writeIFD(TaggedImage img) throws IOException {
-      ReportingUtils.logError("Writing IFD at " + writerID_ + "-" + filePosition_);
       char numEntries = ((firstIFD_  ? ENTRIES_PER_IFD + 4 : ENTRIES_PER_IFD));
       if (img.tags.has("Summary")) {
          img.tags.remove("Summary");
@@ -596,7 +584,6 @@ public class MultipageTiffWriter {
       buffers_.add(ByteBuffer.wrap(mdBytes));
       
       filePosition_ += totalBytes;
-      ReportingUtils.logError("IFD written; advancing file position by " + totalBytes + " to " + writerID_ + "-" + filePosition_);
       firstIFD_ = false;
    }
 
@@ -682,8 +669,8 @@ public class MultipageTiffWriter {
       }
    }
 
-   private void processSummaryMD(SummaryMetadata summaryMD,
-         boolean splitByPosition) throws MMScriptException, JSONException {
+   private void processSummaryMD(SummaryMetadata summaryMD)
+         throws MMScriptException, JSONException {
       Image repImage = masterStorage_.getAnyImage();
       Metadata repMetadata = repImage.getMetadata();
       rgb_ = repImage.getNumComponents() > 1;
@@ -767,7 +754,6 @@ public class MultipageTiffWriter {
 
       fileChannelWrite(mdByteCountsBuffer, filePosition_);
       filePosition_ += mdByteCountsBufferSize;
-      ReportingUtils.logError("Mid-MD write, filePosition updated to " + writerID_ + "-" + filePosition_);
 
       //Write metadata types and counts
       ByteBuffer mdBuffer = allocateByteBuffer(mdBufferSize);
@@ -834,7 +820,6 @@ public class MultipageTiffWriter {
 
       fileChannelWrite(mdBuffer, filePosition_);
       filePosition_ += mdBufferSize;
-      ReportingUtils.logError("MD write buffer size " + mdBufferSize + " applied to filePosition which is now " + writerID_ + "-" + filePosition_);
    }
 
    private String getIJDescriptionString() {
@@ -896,7 +881,6 @@ public class MultipageTiffWriter {
       ByteBuffer buffer = ByteBuffer.wrap(getBytesFromString(value));
       fileChannelWrite(buffer, filePosition_);
       filePosition_ += buffer.capacity();
-      ReportingUtils.logError("Image description buffer of size " + buffer.capacity() + " written; filePosition now " + writerID_ + "-" + filePosition_);
    }
 
    private byte[] getBytesFromString(String s) {
@@ -933,7 +917,6 @@ public class MultipageTiffWriter {
       offsetHeader.putInt(4, (int) filePosition_);
       fileChannelWrite(offsetHeader, 24);
       filePosition_ += 8 + commentsBytes.length;
-      ReportingUtils.logError("Comments of size " + commentsBytes + " written; file position now " + writerID_ + "-" + filePosition_);
    }
 
    // TODO: is this identical to a similar function in the Reader?
@@ -953,7 +936,6 @@ public class MultipageTiffWriter {
       offsetHeader.putInt(4, (int) filePosition_);
       fileChannelWrite(offsetHeader, 16);
       filePosition_ += numReservedBytes + 8;
-      ReportingUtils.logError("Display settings " + numReservedBytes + " written; filePosition now " + writerID_ + "-" + filePosition_);
    }
   
    private void writeBlankIFD() throws IOException {
@@ -1040,7 +1022,6 @@ public class MultipageTiffWriter {
       buffers_.add(ByteBuffer.wrap(mdBytes));
       
       filePosition_ += totalBytes;
-      ReportingUtils.logError("Blank IFD of size " + totalBytes + " written to put filePosition at " + writerID_ + "-" + filePosition_);
       firstIFD_ = false;
    }
 }
