@@ -1292,11 +1292,17 @@ int Universal::OnMultiplierGain(MM::PropertyBase* pProp, MM::ActionType eAct)
 		pProp->Get(gain);
 		piint pvGain = (piint)gain;
 
-	//	if (IsCapturing())
-	//		StopSequenceAcquisition();
-
 		prmGainMultFactor_->Set(pvGain);
-		prmGainMultFactor_->OnLineApply();
+		// EM Gain can only be set in the device when an acquisition is
+		// in progress.
+		if (IsCapturing())
+		{
+			prmGainMultFactor_->OnLineApply();
+		}
+		else
+		{
+			prmGainMultFactor_->Apply();
+		}
 	}
 	else if (eAct == MM::BeforeGet)
 	{
