@@ -36,7 +36,7 @@ plugins.stamp:
 	@rm -f plugins.tmp
 	@touch plugins.tmp
 	$(ANT) -Dmm.javacflags="$(JAVACFLAGS)" $(ANTFLAGS) \
-		-Dplugin.intdir=`pwd`/build -Dplugin.outdir=`pwd` jar
+		-Dplugin.intdir="`pwd`/build" -Dplugin.outdir="`pwd`" jar
 	@mv -f plugins.tmp $@
 
 $(nobase_mmplugin_DATA): plugins.stamp
