@@ -437,7 +437,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
             // In particular, they want to display this image.
             drawCoords = event.getCoords();
          }
-         canvasThread_.addCoords(drawCoords);
+         setDisplayedImageTo(drawCoords);
       }
       catch (Exception e) {
          ReportingUtils.logError(e, "Couldn't process RequestToDrawEvent");
