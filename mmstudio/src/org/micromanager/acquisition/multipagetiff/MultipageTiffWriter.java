@@ -333,7 +333,6 @@ public class MultipageTiffWriter {
       indexMapPosition_ = headerBuffer.capacity() + mdLength + 8;
       indexMapFirstEntry_ = indexMapPosition_;
 
-
       //1 byte for each byte of UTF-8-encoded summary md
       ByteBuffer[] buffers = new ByteBuffer[3];
       buffers[0] = headerBuffer;
