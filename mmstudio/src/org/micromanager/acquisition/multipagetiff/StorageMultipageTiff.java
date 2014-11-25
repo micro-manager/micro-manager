@@ -232,7 +232,9 @@ public final class StorageMultipageTiff implements Storage {
 
    @Subscribe
    public void onDatastoreLocked(DatastoreLockedEvent event) {
+      ReportingUtils.logError("Locking datastore...");
       finished();
+      ReportingUtils.logError("Datastore locked");
    }
 
    private void putImage(Image image, boolean waitForWritingToFinish) throws MMException, InterruptedException, ExecutionException, IOException {

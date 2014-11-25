@@ -59,6 +59,7 @@ import org.micromanager.utils.ReportingUtils;
 
 public class MultipageTiffReader {
 
+   private int readerID_;
    private static final long BIGGEST_INT_BIT = (long) Math.pow(2, 31);
    public static final char BITS_PER_SAMPLE = MultipageTiffWriter.BITS_PER_SAMPLE;
    public static final char STRIP_OFFSETS = MultipageTiffWriter.STRIP_OFFSETS;    
@@ -96,8 +97,10 @@ public class MultipageTiffReader {
     *        MultipageTiffWriter.augmentWith[ImageMetadata|DisplaySettings]()
     *        methods
     */
-   public MultipageTiffReader(SummaryMetadata summaryMD,
+   public MultipageTiffReader(int id, SummaryMetadata summaryMD,
          JSONObject summaryJSON, JSONObject firstImageTags) {
+      readerID_ = id;
+      ReportingUtils.logError("New Reader-" + readerID_);
       summaryMetadata_ = summaryMD;
       summaryJSON_ = summaryJSON;
       byteOrder_ = MultipageTiffWriter.BYTE_ORDER;
@@ -106,10 +109,12 @@ public class MultipageTiffReader {
    }
 
    public void setIndexMap(HashMap<Coords, Long> indexMap) {
+      ReportingUtils.logError("Reader-" + readerID_ + " setIndexMap");
       coordsToOffset_ = indexMap;
    }
 
    public void setFileChannel(FileChannel fc) {
+      ReportingUtils.logError("Reader-" + readerID_ + " setFileChannel");
       fileChannel_ = fc;
    }
 
@@ -117,6 +122,7 @@ public class MultipageTiffReader {
     * This constructor is used for opening datasets that have already been saved
     */
    public MultipageTiffReader(File file) throws IOException {
+      ReportingUtils.logError("New Reader method 2");
       JSONObject displayAndComments = new JSONObject();
       file_ = file;
       try {
@@ -220,6 +226,7 @@ public class MultipageTiffReader {
 
 
    public void finishedWriting() {
+      ReportingUtils.logError("Reader-" + readerID_ + " finishedWriting");
       writingFinished_ = true;
    }
 
@@ -238,10 +245,12 @@ public class MultipageTiffReader {
    }
 
    public SummaryMetadata getSummaryMetadata() {
+      ReportingUtils.logError("Reader-" + readerID_ + " getSummaryMetadata");
       return summaryMetadata_;
    }
 
    public DisplaySettings getDisplaySettings() {
+      ReportingUtils.logError("Reader-" + readerID_ + " getDisplaySettings");
       return displaySettings_;
    }
 
@@ -260,6 +269,7 @@ public class MultipageTiffReader {
             // fields from the summary JSON, or else we won't be able to
             // construct a DefaultImage from it.
             augmentWithSummaryMetadata(tagged.tags);
+            ReportingUtils.logError("Reader-" + readerID_ + " successful readImage at " + byteOffset);
             return new DefaultImage(tagged);
          } catch (IOException ex) {
             ReportingUtils.logError(ex);
@@ -274,6 +284,7 @@ public class MultipageTiffReader {
       } else {
          // Coordinates not in our map; maybe the writer hasn't finished
          // writing it?
+         ReportingUtils.logError("Reader-" + readerID_ + " can't find image at " + coords);
          return null;
       }
    }
@@ -353,6 +364,7 @@ public class MultipageTiffReader {
    }
 
    public void rewriteComments(String comments) throws IOException {
+      ReportingUtils.logError("Reader-" + readerID_ + " rewriteComments");
       if (writingFinished_) {
          byte[] bytes = getBytesFromString(comments.toString());
          ByteBuffer byteCount = ByteBuffer.wrap(new byte[4]).order(byteOrder_).putInt(0,bytes.length);
@@ -365,6 +377,7 @@ public class MultipageTiffReader {
    }
 
    public void rewriteDisplaySettings(DisplaySettings settings) throws IOException, JSONException {
+      ReportingUtils.logError("Reader-" + readerID_ + " rewriteDisplaySettings");
       if (writingFinished_) {
          long offset = readOffsetHeaderAndOffset(MultipageTiffWriter.DISPLAY_SETTINGS_OFFSET_HEADER, 16);        
          int numReservedBytes = readIntoBuffer(offset + 4, 4).getInt(0);
@@ -459,6 +472,12 @@ public class MultipageTiffReader {
       }
       data.nextIFD = unsignInt(entries.getInt(numEntries*12));
       data.nextIFDOffsetLocation = byteOffset + 2 + numEntries*12;
+      if (data.pixelOffset == 0 || data.bytesPerImage == 0 ||
+            data.mdOffset == 0 || data.mdLength == 0) {
+         throw new IOException("Reader-" + readerID_ + " failed to read image from file at offset " +
+               byteOffset);
+      }
+      //ReportingUtils.logError("At " + byteOffset + " read data " + data);
       return data;
    }
 
@@ -480,7 +499,7 @@ public class MultipageTiffReader {
       try {
          md = new JSONObject(getString(mdBuffer));
       } catch (JSONException ex) {
-         ReportingUtils.logError("Error reading image metadata from file");
+         ReportingUtils.logError(ex, "Couldn't convert file image metadata to JSON");
       }
 
       if (byteDepth_ == 0) {
@@ -574,6 +593,7 @@ public class MultipageTiffReader {
    }
 
    public void close() throws IOException {
+      ReportingUtils.logError("Reader-" + readerID_ + " close");
       if (fileChannel_ != null) {
          fileChannel_.close();
          fileChannel_ = null;
