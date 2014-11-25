@@ -751,12 +751,11 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
                if (MDUtils.hasPositionName(firstImageTags)) {
                   baseFilename += "_" + MDUtils.getPositionName(firstImageTags);
                }
-            } catch (JSONException ex) {
-               try {
+               else {
                   baseFilename += "_" + "Pos" + MDUtils.getPositionIndex(firstImageTags);
-               } catch (JSONException e) {
-                  ReportingUtils.showError("No position name or index in metadata");
                }
+            } catch (JSONException ex) {
+               ReportingUtils.showError("No position name or index in metadata");
             }
          }
          return baseFilename;
