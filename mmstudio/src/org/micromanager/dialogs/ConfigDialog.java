@@ -24,8 +24,8 @@
 
 package org.micromanager.dialogs;
 
+import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.Rectangle;
 import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
@@ -88,8 +88,7 @@ public class ConfigDialog extends MMDialog {
       springLayout_ = new SpringLayout();
       getContentPane().setLayout(springLayout_);
       loadAndRestorePosition(100, 100, 550, 600);
-         
-      setResizable(false);
+      setMinimumSize(new Dimension(400, 200));
    }
 
    public void initialize() {
@@ -111,9 +110,8 @@ public class ConfigDialog extends MMDialog {
    @SuppressWarnings("serial")
    protected void setupKeys() {
       // Get the InputMap and ActionMap of the RootPane of this JDialog.
-      JRootPane rootPane = this.getRootPane();
-      InputMap inputMap = rootPane.getInputMap( JComponent.WHEN_IN_FOCUSED_WINDOW);
-      ActionMap actionMap = rootPane.getActionMap();
+      InputMap inputMap = getRootPane().getInputMap( JComponent.WHEN_IN_FOCUSED_WINDOW);
+      ActionMap actionMap = getRootPane().getActionMap();
       
       // Setup ENTER key.
       inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "enter");
@@ -272,9 +270,12 @@ public class ConfigDialog extends MMDialog {
         table_.setModel(data_);
 
         if (numColumns_ == 3) {
-            table_.addColumn(new TableColumn(0, 200, new PropertyNameCellRenderer(), null));
-            table_.addColumn(new TableColumn(1, 75, new PropertyUsageCellRenderer(), new PropertyUsageCellEditor()));
-            table_.addColumn(new TableColumn(2, 200, new PropertyValueCellRenderer(true), new PropertyValueCellEditor(true)));
+            table_.addColumn(new TableColumn(0, 200, 
+                    new PropertyNameCellRenderer(), null));
+            table_.addColumn(new TableColumn(1, 75, 
+                    new PropertyUsageCellRenderer(), new PropertyUsageCellEditor()));
+            table_.addColumn(new TableColumn(2, 200, 
+                    new PropertyValueCellRenderer(true), new PropertyValueCellEditor(true)));
         } else if (numColumns_ == 2) {
             table_.addColumn(new TableColumn(0, 200, new PropertyNameCellRenderer(), null));
             table_.addColumn(new TableColumn(1, 200, new PropertyValueCellRenderer(false), new PropertyValueCellEditor(false)));
