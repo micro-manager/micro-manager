@@ -305,14 +305,19 @@ public class DisplaySettingsPanel extends JPanel {
     */
    @Subscribe
    public void onNewImagePlus(NewImagePlusEvent event) {
-      ijImage_ = event.getImagePlus();
-      if (ijImage_ instanceof CompositeImage) {
-         // Enable the display mode dropdown, and change its value if
-         // appropriate.
-         displayMode_.setEnabled(true);
-         if (((CompositeImage) ijImage_).getMode() == CompositeImage.COMPOSITE) {
-            displayMode_.setSelectedIndex(2);
+      try {
+         ijImage_ = event.getImagePlus();
+         if (ijImage_ instanceof CompositeImage) {
+            // Enable the display mode dropdown, and change its value if
+            // appropriate.
+            displayMode_.setEnabled(true);
+            if (((CompositeImage) ijImage_).getMode() == CompositeImage.COMPOSITE) {
+               displayMode_.setSelectedIndex(2);
+            }
          }
+      }
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Failed to set new ImagePlus");
       }
    }
 }
