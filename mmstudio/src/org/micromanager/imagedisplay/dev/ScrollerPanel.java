@@ -73,7 +73,7 @@ class ScrollerPanel extends JPanel {
    // We turn this off when we want to update the position of several
    // scrollbars in rapid succession, so that we don't post multiple spurious
    // draw requests.
-   private boolean shouldPostEvents_;
+   private boolean shouldPostEvents_ = true;
 
    public ScrollerPanel(Datastore store, EventBus displayBus) {
       store_ = store;
@@ -251,7 +251,7 @@ class ScrollerPanel extends JPanel {
          public void run() {
             shouldPostEvents_ = false;
             for (String axis : axisToState_.keySet()) {
-               if (axisToState_.get(axis).isAnimated_ && 
+               if (axisToState_.get(axis).isAnimated_ &&
                      axisToState_.get(axis).lockState_ == ScrollbarLockIcon.LockedState.UNLOCKED) {
                   advancePosition(axis, updateStep);
                }
