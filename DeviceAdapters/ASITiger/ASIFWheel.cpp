@@ -64,6 +64,9 @@ int CFWheel::Initialize()
 
    ostringstream command;
 
+   // turn off prompts
+   RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify("VB 6", "VB 6", g_SerialTerminatorFW) );
+
    // activate the correct filterwheel (will receive all subsequent commands)
    // Tiger controller recognizes multiple cards installed and gives them increasing FW
    //   addresses (e.g. with 3 cards now there will be 0..5) => no need for using card address
@@ -77,9 +80,6 @@ int CFWheel::Initialize()
    command.str("");
    command << firmwareVersion_;
    CreateProperty(g_FirmwareVersionPropertyName, command.str().c_str(), MM::Float, true);
-
-   // turn off prompts
-   RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify("VB 6", "VB 6", g_SerialTerminatorFW) );
 
    // make sure it isn't spinning
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify("SF0", "SF0", g_SerialTerminatorFW) );
