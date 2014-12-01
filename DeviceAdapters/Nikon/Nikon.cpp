@@ -34,6 +34,7 @@
 
 const char* g_ZStageDeviceName = "ZStage";
 const char* g_TIRFShutterController = "TIRFShutter";
+const char* g_TiTIRFShutterController = "TiTIRFShutter";
 const char* g_IntensiLightShutter = "IntensiLightShutter";
 const char* g_Channel_1 = "1";
 const char* g_Channel_2 = "2";
@@ -55,6 +56,7 @@ MODULE_API void InitializeModuleData()
 {
    RegisterDevice(g_ZStageDeviceName, MM::StageDevice, "Remote accessory Z-stage");
    RegisterDevice(g_TIRFShutterController, MM::ShutterDevice, "TIRF Laser Shutter controller T-LUSU(2)");
+   // RegisterDevice(g_TiTIRFShutterController, MM::ShutterDevice, "Ti-TIRF Laser Shutter controller T-LUSU(2)");
    RegisterDevice(g_IntensiLightShutter, MM::ShutterDevice, "IntensiLight Shutter");
 }
 
@@ -71,6 +73,11 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    if (strcmp(deviceName, g_TIRFShutterController) == 0)
    {
       TIRFShutter* s = new TIRFShutter();
+      return s;
+   }
+   if (strcmp(deviceName, g_TiTIRFShutterController) == 0)
+   {
+      TiTIRFShutter* s = new TiTIRFShutter();
       return s;
    }
    if (strcmp(deviceName, g_IntensiLightShutter) == 0)
@@ -575,6 +582,336 @@ int TIRFShutter::OnVersion(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+// TiTIRFShutter
+
+TiTIRFShutter::TiTIRFShutter() :
+   port_("Undefined"),
+   state_(0),
+   initialized_(false),
+   activeChannel_(g_Channel_1),
+   mode_(0),
+   version_("Undefined")
+{
+   InitializeDefaultErrorMessages();
+                                                                             
+   // create pre-initialization properties                                   
+   // ------------------------------------                                   
+                                                                             
+   // Name                                                                   
+   CreateProperty(MM::g_Keyword_Name, g_TiTIRFShutterController, MM::String, true); 
+                                                                             
+   // Description                                                            
+   CreateProperty(MM::g_Keyword_Description, "Nikon Ti-TIRF Shutter Controller", MM::String, true);
+                                                                             
+   // Port                                                                   
+   CPropertyAction* pAct = new CPropertyAction (this, &TiTIRFShutter::OnPort);      
+   CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);         
+}                                                                            
+                                                                             
+TiTIRFShutter::~TiTIRFShutter()                                                            
+{                                                                            
+   Shutdown();                                                               
+} 
+
+void TiTIRFShutter::GetName(char* Name) const
+{
+   CDeviceUtils::CopyLimitedString(Name, g_TiTIRFShutterController);
+}  
+
+int TiTIRFShutter::Initialize()
+{
+   if (initialized_)
+      return DEVICE_OK;
+      
+   // If GetVersion fails we are not talking to the TIRFShutter
+   int ret = GetVersion();
+   if (ret != DEVICE_OK)                                                     
+      return ret;                                                            
+
+   // set property list
+   // -----------------
+
+   // State - on/off state
+   // -----
+   CPropertyAction* pAct = new CPropertyAction (this, &TiTIRFShutter::OnState);
+   ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
+   if (ret != DEVICE_OK)
+      return ret;                                                            
+                                                                             
+   AddAllowedValue(MM::g_Keyword_State, "0");                                
+   AddAllowedValue(MM::g_Keyword_State, "1");                                
+                                              
+   // find out if this unit is set to shutter independent control mode
+   ret = GetMode(mode_);
+   if (ret != DEVICE_OK) 
+      return ret;
+   std::ostringstream os;
+   os << "Ti-TIRF shutter operates in mode: " << mode_;
+   LogMessage(os.str(), false);
+
+   // The Channel we will act on
+   // ----
+   pAct = new CPropertyAction (this, &TiTIRFShutter::OnChannel);
+   ret=CreateProperty("Channel", g_Channel_1, MM::String, false, pAct);  
+
+   if (mode_ == 0) 
+   {
+      vector<string> commands;                                                  
+      commands.push_back(g_Channel_1);                                           
+      commands.push_back(g_Channel_2);                                            
+      commands.push_back(g_Channel_3);                                         
+      ret = SetAllowedValues("Channel", commands);        
+      if (ret != DEVICE_OK)                                                    
+         return ret;
+   }
+   else if (mode_ == 1) {
+      vector<string> commands;                                                  
+      commands.push_back(g_Channel_1);                                           
+      commands.push_back(g_Channel_2);                                            
+      commands.push_back(g_Channel_3);                                         
+      commands.push_back(std::string(g_Channel_1) + "+" + std::string(g_Channel_2));
+      commands.push_back(std::string(g_Channel_1) + "+" + std::string(g_Channel_3));
+      commands.push_back(std::string(g_Channel_2) + "+" + std::string(g_Channel_3));
+      commands.push_back(std::string(g_Channel_1) + "+" + std::string(g_Channel_2) + "+" + std::string(g_Channel_3) );
+      ret = SetAllowedValues("Channel", commands);        
+      if (ret != DEVICE_OK)                                                    
+         return ret;
+   }
+
+   // get the version number
+   pAct = new CPropertyAction(this,&TiTIRFShutter::OnVersion);
+   ret = CreateProperty("Version", version_.c_str(), MM::String,true,pAct); 
+
+   // switch all channels off on startup instead of querying which on is open
+   SetProperty(MM::g_Keyword_State, "0");
+
+   ret = UpdateStatus();                                                 
+   if (ret != DEVICE_OK)                                                     
+      return ret;                                                            
+                                                                             
+   initialized_ = true;                                                      
+   return DEVICE_OK;                                                         
+}  
+
+int TiTIRFShutter::SetOpen(bool open)
+{  
+   long pos;
+   if (open)
+      pos = 1;
+   else
+      pos = 0;
+   return SetProperty(MM::g_Keyword_State, CDeviceUtils::ConvertToString(pos));
+} 
+
+int TiTIRFShutter::GetOpen(bool& open)
+{     
+   char buf[MM::MaxStrLength];
+   int ret = GetProperty(MM::g_Keyword_State, buf);
+   if (ret != DEVICE_OK)                                                     
+      return ret;                                                            
+   long pos = atol(buf);                                                     
+   pos == 1 ? open = true : open = false;                                    
+   return DEVICE_OK;                                                         
+} 
+
+/**
+ * Here we set the shutter to open or close
+ */
+int TiTIRFShutter::SetShutterPosition(bool state)                              
+{                                                                            
+   std::string command;                                                    
+                                                                             
+   if (state == false)                                                       
+   {                                                                         
+      command = "cTSC"; // close                                                  
+   }                                                                         
+   else                                                                      
+   {                                                                         
+      if (mode_ == 0) 
+         command = "cTSO" + activeChannel_; // open                                       
+      else // mode_ == 1
+      {
+         command = "cTSD";
+         // TODO
+      }
+   }                                                                         
+   int ret = SendSerialCommand(port_.c_str(), command.c_str(), "\r");   
+   if (ret != DEVICE_OK)
+      return ret;
+                                                                             
+   // block/wait for acknowledge                     
+   std::string answer;                                                          
+   ret = GetSerialAnswer(port_.c_str(), "\n", answer); 
+   if (ret != DEVICE_OK) {
+      LogMessage("No answer from TIRF shutter");
+      return ret;
+   }
+   
+   // "oTSC" or "oTSO" signals success
+   if (answer[0]=='o')
+   {
+      state_ = state ? 1 : 0;
+      return DEVICE_OK;
+   }
+
+   if (answer[0]=='n') 
+   { 
+      int errNo = atoi(answer.substr(6).c_str());
+      return ERR_TIRFSHUTTER_OFFSET + errNo;
+   }
+
+   return DEVICE_SERIAL_INVALID_RESPONSE;
+}
+
+
+int TiTIRFShutter::GetVersion()
+{
+   std::string command = "rVER";
+   int ret = SendSerialCommand(port_.c_str(), command.c_str(), "\r");
+   if (ret != DEVICE_OK)
+      return ret;
+                                                                             
+   // block/wait for acknowledge                     
+   std::string answer;
+   ret = GetSerialAnswer(port_.c_str(), "\n", answer);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if (answer[0]== 'a') 
+   {
+      version_ = answer.substr(4,5);
+      return DEVICE_OK;
+   }
+   else if (answer[0] =='n') 
+   {
+      int errNo = atoi(answer.substr(4).c_str());
+      return ERR_TIRFSHUTTER_OFFSET + errNo;
+   }
+   return DEVICE_SERIAL_INVALID_RESPONSE;
+}
+
+
+int TiTIRFShutter::GetMode(int& mode)
+{
+   std::string command = "rTEX";
+   int ret = SendSerialCommand(port_.c_str(), command.c_str(), "\r");
+   if (ret != DEVICE_OK)
+      return ret;
+                                                                             
+   // block/wait for acknowledge                     
+   std::string answer;
+   ret = GetSerialAnswer(port_.c_str(), "\n", answer);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if (answer[0]== 'a') 
+   {
+      mode = atoi(answer.substr(4,5).c_str());
+      return DEVICE_OK;
+   }
+   else if (answer[0] =='n') 
+   {
+      int errNo = atoi(answer.substr(4).c_str());
+      return ERR_TIRFSHUTTER_OFFSET + errNo;
+   }
+   return DEVICE_SERIAL_INVALID_RESPONSE;
+}
+
+
+int TiTIRFShutter::Shutdown()                                                
+{                                                                            
+   if (initialized_)                                                         
+   {                                                                         
+      initialized_ = false;                                                  
+   }                                                                         
+   return DEVICE_OK;                                                         
+}                                                                            
+
+// Never busy because all commands block
+bool TiTIRFShutter::Busy()
+{
+   return false;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Action handlers
+///////////////////////////////////////////////////////////////////////////////
+/*
+ * Sets the Serial Port to be used.
+ * Should be called before initialization
+ */
+int TiTIRFShutter::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(port_.c_str());
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      if (initialized_)
+      {
+         // revert
+         pProp->Set(port_.c_str());
+         return ERR_PORT_CHANGE_FORBIDDEN;
+      }
+                                                                             
+      pProp->Get(port_);                                                     
+   }                                                                         
+   return DEVICE_OK;     
+}
+
+int TiTIRFShutter::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {                                                                         
+      // instead of relying on stored state we could actually query the device
+      pProp->Set((long)state_);                                                          
+   }                                                                         
+   else if (eAct == MM::AfterSet)
+   {
+      long pos;
+      pProp->Get(pos);
+
+      return SetShutterPosition(pos == 0 ? false : true);
+   }
+   return DEVICE_OK;
+}
+
+int TiTIRFShutter::OnChannel(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(activeChannel_.c_str());
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      // if there is a channel change and the shutter was open, re-open in the new position
+      std::string tmpChannel;
+      pProp->Get(tmpChannel);
+      if (tmpChannel != activeChannel_) {
+         activeChannel_ = tmpChannel;
+         if (state_ == 1)
+            SetShutterPosition(true);
+      }
+      // It might be a good idea to close the shutter at this point...
+   }
+   return DEVICE_OK;
+}
+
+ 
+int TiTIRFShutter::OnVersion(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet && version_ == "Undefined")
+   {
+      int ret = GetVersion();
+      if (ret != DEVICE_OK) 
+         return ret;
+      pProp->Set(version_.c_str());
+   }
+   return DEVICE_OK;
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////

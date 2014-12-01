@@ -139,6 +139,53 @@ private:
    
 };
 
+class TiTIRFShutter : public CShutterBase<TiTIRFShutter>
+{
+public:
+   TiTIRFShutter();
+   ~TiTIRFShutter();
+  
+   // Device API
+   // ----------
+   int Initialize();
+   int Shutdown();
+  
+   void GetName(char* pszName) const;
+   bool Busy();
+
+   // Shutter API
+   // ---------
+   int SetOpen(bool open = true);
+   int GetOpen(bool& open);
+   int Fire(double /*interval*/) {return DEVICE_UNSUPPORTED_COMMAND; }
+
+   // action interface
+   // ----------------
+   int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnChannel(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnVersion(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+   int SetShutterPosition(bool state);
+   int GetVersion();
+   int GetMode(int& mode);
+
+   // MMCore name of serial port
+   std::string port_;
+   // Command exchange with MMCore                                           
+   std::string command_;           
+   // close (0) or open (1)
+   int state_;
+   bool initialized_;
+   // channel that we are currently working on 
+   std::string activeChannel_;
+   // mode 0-one channel at a time, 1-multiple channels at a time
+   int mode_;
+   // version string returned by device
+   std::string version_;
+   
+};
 
 class IntensiLightShutter : public CShutterBase<IntensiLightShutter>
 {
