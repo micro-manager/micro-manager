@@ -931,7 +931,7 @@ std::vector<std::string> TiTIRFShutter::Explode(std::string const & s, char deli
 
     for (std::string token; std::getline(iss, token, delim); )
     {
-        result.push_back(std::move(token));
+        result.push_back(token);
     }
 
     return result;
