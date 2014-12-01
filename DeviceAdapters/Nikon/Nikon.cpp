@@ -56,7 +56,7 @@ MODULE_API void InitializeModuleData()
 {
    RegisterDevice(g_ZStageDeviceName, MM::StageDevice, "Remote accessory Z-stage");
    RegisterDevice(g_TIRFShutterController, MM::ShutterDevice, "TIRF Laser Shutter controller T-LUSU(2)");
-   // RegisterDevice(g_TiTIRFShutterController, MM::ShutterDevice, "Ti-TIRF Laser Shutter controller T-LUSU(2)");
+   RegisterDevice(g_TiTIRFShutterController, MM::ShutterDevice, "Ti-TIRF Laser Shutter controller T-LUSU(2)");
    RegisterDevice(g_IntensiLightShutter, MM::ShutterDevice, "IntensiLight Shutter");
 }
 
@@ -733,8 +733,19 @@ int TiTIRFShutter::SetShutterPosition(bool state)
          command = "cTSO" + activeChannel_; // open                                       
       else // mode_ == 1
       {
-         command = "cTSD";
-         // TODO
+         std::vector<std::string> chs = Explode(activeChannel_, '+');
+         int ch = 0;
+         for (int i=0; i < chs.size(); i++) {
+            if (chs[i] == g_Channel_1) 
+               ch+=1;
+            if (chs[i] == g_Channel_2)
+               ch+=2;
+            if (chs[i] == g_Channel_3)
+               ch+=4;
+         }
+         std::ostringstream os;
+         os << "cTSD" <<  ch;
+         command = os.str();
       }
    }                                                                         
    int ret = SendSerialCommand(port_.c_str(), command.c_str(), "\r");   
@@ -913,6 +924,18 @@ int TiTIRFShutter::OnVersion(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+std::vector<std::string> TiTIRFShutter::Explode(std::string const & s, char delim)
+{
+    std::vector<std::string> result;
+    std::istringstream iss(s);
+
+    for (std::string token; std::getline(iss, token, delim); )
+    {
+        result.push_back(std::move(token));
+    }
+
+    return result;
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // IntensiLightShutter

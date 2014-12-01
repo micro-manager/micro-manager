@@ -170,6 +170,7 @@ private:
    int SetShutterPosition(bool state);
    int GetVersion();
    int GetMode(int& mode);
+   std::vector<std::string> Explode(std::string const & s, char delim);
 
    // MMCore name of serial port
    std::string port_;
