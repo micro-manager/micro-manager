@@ -140,8 +140,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    private final Object imageReceivedObject_ = new Object();
 
    private EventBus bus_;
-   // Boolean that indicates if doShowImage is currently running.
-   private AtomicBoolean isDoShowImageRunning_ = new AtomicBoolean(false);
 
    @Subscribe
    public void onPixelSizeChanged(PixelSizeChangedEvent event) {
@@ -474,7 +472,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    /**
     * A new image has arrived; toss it onto our queue for display.
     */
-   private void updateDisplay(TaggedImage taggedImage) {
+   public void updateDisplay(TaggedImage taggedImage) {
       JSONObject tags;
       if (taggedImage == null || taggedImage.tags == null) {
          tags = imageCache_.getLastImageTags();
@@ -675,40 +673,14 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    /**
-    * Displays tagged image in the multi-D viewer
-    * Will wait for the screen update
-    *      
-    * @param taggedImg
-    */
-   public void showImage(TaggedImage taggedImg) {
-      showImage(taggedImg, true);
-   }
-
-   /**
-    * Displays tagged image in the multi-D viewer
-    * Optionally waits for the display to draw the image
-    * @param taggedImg 
-    * @param waitForDisplay 
-    */
-   public void showImage(TaggedImage taggedImg, boolean waitForDisplay) {
-      showImage(taggedImg.tags, waitForDisplay);
-   }
-   
-   /**
     * This is a wrapper around doShowImage() that sets and unsets 
     * isDoShowImageRunning_ to indicate when the display is complete.
     */
-   public void showImage(final JSONObject tags, final boolean waitForDisplay) {
-      isDoShowImageRunning_.set(true);
+   private void showImage(final JSONObject tags, final boolean waitForDisplay) {
       SwingUtilities.invokeLater(new Runnable() {
          @Override
          public void run() {
-            try {
-               doShowImage(tags, waitForDisplay);
-            }
-            finally {
-               isDoShowImageRunning_.set(false);
-            }
+            doShowImage(tags, waitForDisplay);
          }
       });
    }

@@ -733,7 +733,7 @@ public class MMAcquisition {
          if (updateDisplay) {
             try {
                if (virtAcq_ != null) {
-                  virtAcq_.showImage(taggedImg.tags, waitForDisplay);
+                  virtAcq_.updateDisplay(taggedImg);
                }
             } catch (Exception e) {
                ReportingUtils.logError(e);
