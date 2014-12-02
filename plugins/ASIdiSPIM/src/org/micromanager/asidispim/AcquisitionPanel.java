@@ -88,6 +88,7 @@ import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
 
 import com.swtdesigner.SwingResourceManager;
+import ij.ImagePlus;
 
 /**
  *
@@ -1426,6 +1427,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                     actualVolumeDurationLabel_.getText());
             gui_.setAcquisitionProperty(acqName, "SPIMmode", 
                     ((AcquisitionModes.Keys) spimMode_.getSelectedItem()).toString());
+            // Multi-page TIFF saving code wants this one:
+            // TODO: support other types than besides GRAY16
+            gui_.setAcquisitionProperty(acqName, "PixelType", "GRAY16");
             
             // get circular buffer ready
             // do once here but not per-acquisition; need to ensure ROI changes registered
@@ -1471,7 +1475,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                if (twoSided) {
                   core_.startSequenceAcquisition(secondCamera, nrSlices, 0, true);
                }
-
+               
                // deal with shutter
                if (autoShutter) {
                   core_.setAutoShutter(false);
