@@ -470,7 +470,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
       });
       
-      
       saveCB_ = pu.makeCheckBox("Save while acquiring",
             Properties.Keys.PLUGIN_SAVE_WHILE_ACQUIRING, panelName_, false);
       // init the save while acquiring CB; could also do two doClick() calls
@@ -627,6 +626,16 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       updateActualTimeLapseDurationLabel();
       
    }//end constructor
+   
+   
+   /**
+    * Sets the acquisition name prefix programmatically.
+    * Added so that name prefix can be changed from a script.
+    * @param acqName
+    */
+   public void setAcquisitionNamePrefix(String acqName) {
+      nameField_.setText(acqName);
+   }
    
    private void updateStartButton() {
       boolean started = buttonStart_.isSelected();

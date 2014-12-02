@@ -34,6 +34,7 @@ import org.micromanager.asidispim.AcquisitionPanel;
  * ASIdiSPIMInterface diSPIM = new ASIdiSPIMImplementation();
  * 
  * @author nico
+ * @author Jon
  */
 public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
 
@@ -41,6 +42,9 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
       getAcquisitionPanel().runAcquisition();
    }
    
+   public void setAcquisitionNamePrefix(String acqName) throws ASIdiSPIMException {
+      getAcquisitionPanel().setAcquisitionNamePrefix(acqName);
+   }
    
    //** Private methods.  Only for internal use **//
    
@@ -59,5 +63,5 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
       }
       return acquisitionPanel;
    }
-   
+
 }

@@ -30,6 +30,7 @@ package org.micromanager.asidispim.api;
 /**
  *
  * @author nico
+ * @author Jon
  */
 public interface ASIdiSPIMInterface {
    
@@ -40,5 +41,12 @@ public interface ASIdiSPIMInterface {
     * 
     */
    public void runAcquisition() throws ASIdiSPIMException;
+   
+   /**
+    * Changes the name (really the prefix) of the acquisition.
+    * @param acqName
+    * @throws ASIdiSPIMException
+    */
+   public void setAcquisitionNamePrefix(String acqName) throws ASIdiSPIMException;
    
 }
