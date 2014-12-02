@@ -67,6 +67,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
    private final ScriptInterface gui_;
    private final CMMCore core_;
    
+   private final NavigationPanel navigationPanel_ = this;
    private final JoystickSubPanel joystickPanel_;
    private final CameraSubPanel cameraPanel_;
    private final BeamSubPanel beamPanel_;
@@ -302,7 +303,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
          
          @Override
          public void actionPerformed(ActionEvent e) {
-            int dialogResult = JOptionPane.showConfirmDialog(null,
+            int dialogResult = JOptionPane.showConfirmDialog(navigationPanel_,
                   "This will change the coordinate system.  Are you sure you want to proceed?",
                   "Warning",
                   JOptionPane.OK_CANCEL_OPTION);
