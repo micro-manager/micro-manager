@@ -189,20 +189,4 @@ public interface Datastore extends Closeable {
     * Storage has been provided yet.
     */
    public int getNumImages();
-
-   /**
-    * Associate the specified DisplayWindow with the Datastore. This does
-    * nothing besides ensure that it will be returned by getDisplays().
-    */
-   public void associateDisplay(DisplayWindow window);
-
-   /**
-    * Remove the specified DisplayWindow from the list of associated displays.
-    */
-   public void removeDisplay(DisplayWindow window);
-
-   /**
-    * Return all associated DisplayWindows.
-    */
-   public List<DisplayWindow> getDisplays();
 }

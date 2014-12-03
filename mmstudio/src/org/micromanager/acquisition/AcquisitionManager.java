@@ -21,6 +21,7 @@ import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.DatastoreLockedException;
 import org.micromanager.api.display.DisplayWindow;
 import org.micromanager.api.ImageCache;
+import org.micromanager.MMStudio;
 import org.micromanager.data.DefaultDisplaySettings;
 import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.MDUtils;
@@ -160,7 +161,7 @@ public class AcquisitionManager {
       for (String name : getAcquisitionNames()) {
          MMAcquisition acq = acqs_.get(name);
          Datastore store = acq.getDatastore();
-         for (DisplayWindow display : store.getDisplays()) {
+         for (DisplayWindow display : MMStudio.getInstance().data().getDisplays(store)) {
             if (!display.requestToClose()) {
                return false;
             }
