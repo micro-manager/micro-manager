@@ -14,6 +14,7 @@ import org.micromanager.api.data.Image;
 import org.micromanager.api.data.Storage;
 import org.micromanager.api.data.SummaryMetadata;
 import org.micromanager.api.display.DisplayWindow;
+import org.micromanager.events.EventManager;
 import org.micromanager.MMStudio;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.MMException;
@@ -31,6 +32,7 @@ public class DefaultDatastore implements Datastore {
    public DefaultDatastore() {
       bus_ = new PrioritizedEventBus();
       displays_ = new ArrayList<DisplayWindow>();
+      EventManager.post(new DefaultNewDatastoreEvent(this));
    }
 
    /**

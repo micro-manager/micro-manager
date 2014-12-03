@@ -436,7 +436,7 @@ public class MMStudio implements ScriptInterface {
 
       engine_.setParentGUI(studio_);
 
-      dataManager_ = new DefaultDataManager();
+      dataManager_ = new DefaultDataManager(this);
 
       loadMRUConfigFiles();
       afMgr_ = new AutofocusManager(studio_);

@@ -1,5 +1,7 @@
 package org.micromanager.api.data;
 
+import java.util.List;
+
 /**
  * This class provides general utility functions for working with
  * Micro-Manager data. You can access it via ScriptInterface's data() method
@@ -23,6 +25,11 @@ public interface DataManager {
     * if there is no album.
     */
    public Datastore getAlbumDatastore();
+
+   /**
+    * Return a list of all Datastores that MicroManager knows about.
+    */
+   public List<Datastore> getDatastores();
 
    /**
     * Add the specified image to the current album datastore. If the current
