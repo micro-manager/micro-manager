@@ -4,6 +4,7 @@
 	<import file="../javapluginbuild.xml"/>
 	<path id="plugin.classpath">
 		<pathelement location="${mm.java.lib.miglayout}"/>
+		<pathelement location="${mm.java.lib.guava}"/>
 	</path>
 
 	<target name="copy-files" depends="mm.javabuild.copy-files">
