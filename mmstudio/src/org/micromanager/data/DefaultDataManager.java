@@ -3,6 +3,7 @@ package org.micromanager.data;
 import com.google.common.eventbus.Subscribe;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import org.micromanager.api.data.Coords;
@@ -13,6 +14,7 @@ import org.micromanager.api.data.DisplaySettings;
 import org.micromanager.api.data.Image;
 import org.micromanager.api.data.Metadata;
 import org.micromanager.api.data.SummaryMetadata;
+import org.micromanager.api.display.DisplayWindow;
 import org.micromanager.api.events.DatastoreClosingEvent;
 import org.micromanager.api.events.NewDatastoreEvent;
 
@@ -28,10 +30,10 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class DefaultDataManager implements DataManager {
    private Datastore albumDatastore_;
-   private ArrayList<Datastore> datastores_;
+   private HashMap<Datastore, ArrayList<DisplayWindow>> storeToDisplays_;
 
    public DefaultDataManager(MMStudio studio) {
-      datastores_ = new ArrayList<Datastore>();
+      storeToDisplays_ = new HashMap<Datastore, ArrayList<DisplayWindow>>();
       studio.registerForEvents(this);
    }
 
@@ -52,17 +54,18 @@ public class DefaultDataManager implements DataManager {
 
    @Override
    public List<Datastore> getDatastores() {
-      return datastores_;
+      return new ArrayList<Datastore>(storeToDisplays_.keySet());
    }
 
    @Subscribe
    public void onNewDatastore(NewDatastoreEvent event) {
-      datastores_.add(event.getDatastore());
+      storeToDisplays_.put(event.getDatastore(),
+            new ArrayList<DisplayWindow>());
    }
 
    @Subscribe
    public void onDatastoreClosed(DatastoreClosingEvent event) {
-      datastores_.remove(event.getDatastore());
+      storeToDisplays_.remove(event.getDatastore());
    }
 
    @Override
@@ -104,5 +107,20 @@ public class DefaultDataManager implements DataManager {
    @Override
    public SummaryMetadata.SummaryMetadataBuilder getSummaryMetadataBuilder() {
       return new DefaultSummaryMetadata.Builder();
+   }
+
+   @Override
+   public void associateDisplay(DisplayWindow window, Datastore store) {
+      storeToDisplays_.get(store).add(window);
+   }
+
+   @Override
+   public void removeDisplay(DisplayWindow window, Datastore store) {
+      storeToDisplays_.get(store).remove(window);
+   }
+
+   @Override
+   public List<DisplayWindow> getDisplays(Datastore store) {
+      return storeToDisplays_.get(store);
    }
 }

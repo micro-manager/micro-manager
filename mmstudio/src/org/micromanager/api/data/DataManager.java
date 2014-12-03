@@ -2,6 +2,8 @@ package org.micromanager.api.data;
 
 import java.util.List;
 
+import org.micromanager.api.display.DisplayWindow;
+
 /**
  * This class provides general utility functions for working with
  * Micro-Manager data. You can access it via ScriptInterface's data() method
@@ -60,4 +62,21 @@ public interface DataManager {
     * SummaryMetadata instances.
     */
    public SummaryMetadata.SummaryMetadataBuilder getSummaryMetadataBuilder();
+
+   /**
+    * Associate the specified DisplayWindow with the Datastore. This does
+    * nothing besides ensure that it will be returned by getDisplays().
+    */
+   public void associateDisplay(DisplayWindow window, Datastore store);
+
+   /**
+    * Remove the specified DisplayWindow from the list of associated displays
+    * for the Datastore.
+    */
+   public void removeDisplay(DisplayWindow window, Datastore store);
+
+   /**
+    * Return all associated DisplayWindows for the Datastore.
+    */
+   public List<DisplayWindow> getDisplays(Datastore store);
 }

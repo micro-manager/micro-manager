@@ -27,11 +27,9 @@ public class DefaultDatastore implements Datastore {
    private PrioritizedEventBus bus_;
    private boolean isLocked_ = false;
    private boolean isSaved_ = false;
-   private ArrayList<DisplayWindow> displays_;
 
    public DefaultDatastore() {
       bus_ = new PrioritizedEventBus();
-      displays_ = new ArrayList<DisplayWindow>();
       EventManager.post(new DefaultNewDatastoreEvent(this));
    }
 
@@ -202,8 +200,9 @@ public class DefaultDatastore implements Datastore {
    public void save(Datastore.SaveMode mode) {
       // Find a display to use, or use the MainFrame if none is available.
       Window window = MMStudio.getInstance().getFrame();
-      if (displays_.size() > 0) {
-         DisplayWindow tmp = displays_.get(0);
+      List<DisplayWindow> displays = MMStudio.getInstance().data().getDisplays(this);
+      if (displays.size() > 0) {
+         DisplayWindow tmp = displays.get(0);
          if (tmp instanceof Window) { // This should always be true.
             window = (Window) tmp;
          }
@@ -261,22 +260,5 @@ public class DefaultDatastore implements Datastore {
          return storage_.getNumImages();
       }
       return -1;
-   }
-
-   @Override
-   public void associateDisplay(DisplayWindow display) {
-      displays_.add(display);
-   }
-
-   @Override
-   public void removeDisplay(DisplayWindow display) {
-      if (displays_.contains(display)) {
-         displays_.remove(display);
-      }
-   }
-
-   @Override
-   public List<DisplayWindow> getDisplays() {
-      return displays_;
    }
 }
