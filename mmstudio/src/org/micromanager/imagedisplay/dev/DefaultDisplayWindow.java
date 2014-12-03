@@ -43,6 +43,8 @@ import org.micromanager.api.display.RequestToDrawEvent;
 
 import org.micromanager.data.DefaultCoords;
 
+import org.micromanager.events.EventManager;
+
 import org.micromanager.imagedisplay.MMCompositeImage;
 import org.micromanager.imagedisplay.MMImagePlus;
 
@@ -125,6 +127,8 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
          makeWindowAndIJObjects();
       }
       setMenuBar(Menus.getMenuBar());
+
+      EventManager.post(new DefaultNewDisplayEvent(this));
    }
 
    /**
