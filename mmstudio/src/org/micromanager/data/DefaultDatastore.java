@@ -184,6 +184,11 @@ public class DefaultDatastore implements Datastore {
    }
 
    @Override
+   public void close() {
+      EventManager.post(new DefaultDatastoreClosingEvent(this));
+   }
+
+   @Override
    public void setIsSaved(boolean isSaved) {
       isSaved_ = isSaved;
    }

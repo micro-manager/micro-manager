@@ -1,5 +1,6 @@
 package org.micromanager.api.data;
 
+import java.io.Closeable;
 import java.util.List;
 
 import org.micromanager.api.display.DisplayWindow;
@@ -9,7 +10,7 @@ import org.micromanager.api.display.DisplayWindow;
  * to implement this interface; it is here to describe how you can interact
  * with Datastores created by Micro-Manager itself.
  */
-public interface Datastore {
+public interface Datastore extends Closeable {
    /**
     * Sets the source for data for this Datastore.
     */
@@ -135,6 +136,16 @@ public interface Datastore {
     * Returns whether or not the Datastore has been locked.
     */
    public boolean getIsLocked();
+
+   /**
+    * Close the Datastore, removing all references to it from the Java layer.
+    * This will in turn cause the resources used by the Datastore (e.g. RAM
+    * storage) to be released, assuming that there are no references to the
+    * Datastore in other parts of the program (e.g. in plugins or Beanshell
+    * scripts). Displays attached to the Datastore will automatically be
+    * closed, with no prompt for data to be saved.
+    */
+   public void close();
 
    /**
     * Tell the Datastore whether or not its image data has been saved.
