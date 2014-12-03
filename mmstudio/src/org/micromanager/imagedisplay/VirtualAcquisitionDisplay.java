@@ -67,6 +67,7 @@ import org.micromanager.api.ImageCache;
 import org.micromanager.api.ImageCacheListener;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.api.TaggedImageStorage;
+import org.micromanager.events.DisplayCreatedEvent;
 import org.micromanager.events.EventManager;
 import org.micromanager.graph.HistogramControlsState;
 import org.micromanager.graph.HistogramSettings;
@@ -1094,6 +1095,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
 
       mdPanel_.displayChanged(win);
       imageChangedUpdate();
+      EventManager.post(new DisplayCreatedEvent(this, win));
    }
 
    // A window wants to close; check if it's okay. If it is, then we call its
