@@ -362,7 +362,9 @@ int Universal::Initialize()
 
    /// COLOR MODE
    bool isColorCcd = false;
-   prmColorMode_ = new PvEnumParam( g_Keyword_ColorMode, PARAM_COLOR_MODE, this );
+   // The PARAM_COLOR_MODE is an enum, unfortunately PVCAM does not return correct
+   // enumerable values for this parameter so we cannot use it as an enum atm.
+   prmColorMode_ = new PvParam<int32>( g_Keyword_ColorMode, PARAM_COLOR_MODE, this );
    if ( prmColorMode_->IsAvailable() )
    {
        if ( prmColorMode_->Current() == COLOR_RGGB )
@@ -2488,9 +2490,20 @@ int Universal::ResizeImageBufferContinuous()
 
       nRet = DEVICE_OK;
    }
+   catch( const std::bad_alloc& e )
+   {
+       nRet = DEVICE_OUT_OF_MEMORY;
+       LogMessage( e.what() );
+   }
    catch( const std::exception& e)
    {
-       LogCamError( __LINE__, e.what() );
+       nRet = DEVICE_ERR;
+       LogMessage( e.what() );
+   }
+   catch(...)
+   {
+       nRet = DEVICE_ERR;
+       LogMessage("Unknown exception in ResizeImageBufferContinuous", false);
    }
 
    singleFrameModeReady_ = false;
@@ -2554,8 +2567,19 @@ int Universal::ResizeImageBufferSingle()
       }
 
    }
+   catch (const std::bad_alloc& e)
+   {
+       nRet = DEVICE_OUT_OF_MEMORY;
+       LogMessage( e.what() );
+   }
+   catch (const std::exception& e)
+   {
+       nRet = DEVICE_ERR;
+       LogMessage( e.what() );
+   }
    catch(...)
    {
+      nRet = DEVICE_ERR;
       LogMessage("Caught error in ResizeImageBufferSingle", false);
    }
 
@@ -3021,6 +3045,7 @@ void Universal::LogMMMessage(int lineNr, std::string message, bool debug) const 
 int Universal::OnColorMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    START_ONPROPERTY("Universal::OnColorMode", eAct);
+   int nRet = DEVICE_OK;
    if (eAct == MM::AfterSet)
    {
       string val;
@@ -3030,13 +3055,13 @@ int Universal::OnColorMode(MM::PropertyBase* pProp, MM::ActionType eAct)
          StopSequenceAcquisition();
 
       val.compare(g_ON) == 0 ? rgbaColor_ = true : rgbaColor_ = false;
-      ResizeImageBufferSingle();
+      nRet = ResizeImageBufferSingle();
    }
    else if (eAct == MM::BeforeGet)
    {
       pProp->Set(rgbaColor_ ? g_ON : g_OFF);
    }
-   return DEVICE_OK;
+   return nRet;
 }
 
 #ifdef PVCAM_CALLBACKS_SUPPORTED

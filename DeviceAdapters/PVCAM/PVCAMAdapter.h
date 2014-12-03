@@ -395,7 +395,7 @@ private:
    PvEnumParam*    prmExposeOutMode_;
    PvParam<uns16>* prmClearCycles_;
    PvEnumParam*    prmReadoutPort_;
-   PvEnumParam*    prmColorMode_;
+   PvParam<int32>* prmColorMode_;
 
    // color mode
    bool rgbaColor_;
