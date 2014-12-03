@@ -40,6 +40,7 @@ import org.micromanager.api.data.NewImageEvent;
 import org.micromanager.api.data.SummaryMetadata;
 import org.micromanager.api.display.DisplayWindow;
 import org.micromanager.api.display.RequestToDrawEvent;
+import org.micromanager.api.events.DatastoreClosingEvent;
 
 import org.micromanager.data.DefaultCoords;
 
@@ -128,6 +129,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       }
       setMenuBar(Menus.getMenuBar());
 
+      EventManager.register(this);
       EventManager.post(new DefaultNewDisplayEvent(this));
    }
 
@@ -491,6 +493,9 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       return getIsClosed();
    }
 
+   // TODO: when the last display window is removed, we should really be
+   // calling the Datastore.close() method. How do we track that the last
+   // display window is really gone, though?
    @Override
    public void forceClosed() {
       if (haveClosed_) {
@@ -608,6 +613,13 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       }
       catch (Exception e) {
          ReportingUtils.logError(e, "Couldn't display new image");
+      }
+   }
+
+   @Subscribe
+   public void onDatastoreClosed(DatastoreClosingEvent event) {
+      if (event.getDatastore() == store_) {
+         forceClosed();
       }
    }
 

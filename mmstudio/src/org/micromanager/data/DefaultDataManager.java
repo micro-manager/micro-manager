@@ -13,6 +13,7 @@ import org.micromanager.api.data.DisplaySettings;
 import org.micromanager.api.data.Image;
 import org.micromanager.api.data.Metadata;
 import org.micromanager.api.data.SummaryMetadata;
+import org.micromanager.api.events.DatastoreClosingEvent;
 import org.micromanager.api.events.NewDatastoreEvent;
 
 import org.micromanager.acquisition.StorageRAM;
@@ -54,10 +55,14 @@ public class DefaultDataManager implements DataManager {
       return datastores_;
    }
 
-   // TODO: we need to remove entries from datastores_ at some point.
    @Subscribe
    public void onNewDatastore(NewDatastoreEvent event) {
       datastores_.add(event.getDatastore());
+   }
+
+   @Subscribe
+   public void onDatastoreClosed(DatastoreClosingEvent event) {
+      datastores_.remove(event.getDatastore());
    }
 
    @Override
