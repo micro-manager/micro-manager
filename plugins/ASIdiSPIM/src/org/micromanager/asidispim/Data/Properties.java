@@ -200,6 +200,7 @@ public class Properties {
       EXTERNAL("EXTERNAL"),
       INTERNAL_LC("Internal"),
       EXTERNAL_LC("External"),
+      LEVEL_PCO("External Exp. Ctrl."),
       INTERNAL_ANDOR("Internal (Recommended for fast acquisitions)"),
       LEVEL_ANDOR("External Exposure"),
       POSITIVE("POSITIVE"),

@@ -88,7 +88,6 @@ import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
 
 import com.swtdesigner.SwingResourceManager;
-import ij.ImagePlus;
 
 /**
  *
@@ -284,7 +283,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          public void stateChanged(ChangeEvent ce) {
             // make sure is 2.5, 2.5, 3.5, ... 
             float val = PanelUtils.getSpinnerFloatValue(desiredLightExposure_);
-            float nearestValid = (float) Math.round(val+(float)0.5) - (float)0.5; 
+            float nearestValid = (float) Math.round(val+0.5f) - 0.5f; 
             if (!MyNumberUtils.floatsEqual(val, nearestValid)) {
                PanelUtils.setSpinnerFloatValue(desiredLightExposure_, nearestValid);
             }
@@ -726,9 +725,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // 1. camera readout time
       // 2. any extra delay time
       // 3. camera reset
-      // 4. start scan and then turn on laser (the laser is off 0.25ms at the start and end of the scan)
+      // 4. start scan and then turn on laser (the laser is off 0.25ms at the start and end of each scan)
       
-      final float scanLaserBufferTime = (float) 0.25;
+      final float scanLaserBufferTime = 0.25f;
       final Color foregroundColorOK = Color.BLACK;
       final Color foregroundColorError = Color.RED;
       final Component elementToColor  = desiredSlicePeriod_.getEditor().getComponent(0);
@@ -736,15 +735,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       SliceTiming s = new SliceTiming();
       float cameraResetTime = computeCameraResetTime();      // recalculate for safety
       float cameraReadoutTime = computeCameraReadoutTime();  // recalculate for safety
-      
-      // for Hamamatsu's "synchronous" or Zyla's "overlap" mode (reset and readout
-      // occur simultaneously), set readout time to 0 for calculating timing
-      CameraModes.Keys cameraMode = CameraModes.getKeyFromPrefCode(
-            prefs_.getInt(MyStrings.PanelNames.SETTINGS.toString(),
-                  Properties.Keys.PLUGIN_CAMERA_MODE, 0));
-      if (cameraMode == CameraModes.Keys.OVERLAP) {
-         cameraReadoutTime = 0;
-      }
       
       float desiredPeriod = minSlicePeriodCB_.isSelected() ? 0 :
          PanelUtils.getSpinnerFloatValue(desiredSlicePeriod_);
@@ -761,7 +751,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       // if calculated delay is negative then we have to reduce exposure time in 1 sec increments
       if (globalDelay < 0) {
-         float extraTimeNeeded = MyNumberUtils.ceilToQuarterMs((float)-1*globalDelay);  // positive number
+         float extraTimeNeeded = MyNumberUtils.ceilToQuarterMs(-1f*globalDelay);  // positive number
             globalDelay += extraTimeNeeded;
             if (showWarnings) {
                gui_.showError(
@@ -779,13 +769,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
       
       // account for delay in scan position based on Bessel filter by starting the scan slightly earlier
-      // than we otherwise would; delay is (empirically) ~0.4/(freq in kHz)
-      // e.g. 0.4 sec for 0.8kHz filter and 0.75 sec for 0.4kHz filter
+      // than we otherwise would; delay is (empirically) ~0.4/(freq in kHz) (maybe change to 0.3 or 0.35?)
+      // e.g. 0.5 sec for 0.8kHz filter and 0.8 sec for 0.4kHz filter
       float scanFilterFreq = Math.max(props_.getPropValueFloat(Devices.Keys.GALVOA,  Properties.Keys.SCANNER_FILTER_X),
             props_.getPropValueFloat(Devices.Keys.GALVOB,  Properties.Keys.SCANNER_FILTER_X));
       float scanDelayFilter = 0;
       if (scanFilterFreq != 0) {
-         scanDelayFilter = MyNumberUtils.roundToQuarterMs((float)0.4/scanFilterFreq);
+         scanDelayFilter = MyNumberUtils.roundToQuarterMs(0.4f/scanFilterFreq);
       }
       
       s.scanDelay = cameraReadout_max + globalDelay + cameraReset_max - scanDelayFilter;
@@ -796,7 +786,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       s.cameraDelay = cameraReadout_max + globalDelay;
       s.cameraDuration = cameraReset_max + scanPeriod;  // approx. same as exposure, can be used in bulb mode
       
+      CameraModes.Keys cameraMode = CameraModes.getKeyFromPrefCode(
+            prefs_.getInt(MyStrings.PanelNames.SETTINGS.toString(),
+                  Properties.Keys.PLUGIN_CAMERA_MODE, 0));
       if (cameraMode == CameraModes.Keys.OVERLAP) {
+         // for Hamamatsu's "synchronous" or Zyla's "overlap" mode
+         // send single short trigger
          s.cameraDuration = 1;
       }
       
@@ -971,14 +966,19 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     */
    private float computeCameraReadoutTime() {
       float readoutTime;
+      CameraModes.Keys camMode = CameraModes.getKeyFromPrefCode(
+            prefs_.getInt(MyStrings.PanelNames.SETTINGS.toString(),
+                  Properties.Keys.PLUGIN_CAMERA_MODE, 0));
+      boolean isOverlap =  (camMode ==  CameraModes.Keys.OVERLAP ||
+            camMode == CameraModes.Keys.PSEUDO_OVERLAP);
       if (isTwoSided()) {
-         readoutTime = Math.max(cameras_.computeCameraReadoutTime(Devices.Keys.CAMERAA),
-               cameras_.computeCameraReadoutTime(Devices.Keys.CAMERAB));
+         readoutTime = Math.max(cameras_.computeCameraReadoutTime(Devices.Keys.CAMERAA, isOverlap),
+               cameras_.computeCameraReadoutTime(Devices.Keys.CAMERAB, isOverlap));
       } else {
          if (isFirstSideA()) {
-            readoutTime = cameras_.computeCameraReadoutTime(Devices.Keys.CAMERAA);
+            readoutTime = cameras_.computeCameraReadoutTime(Devices.Keys.CAMERAA, isOverlap);
          } else {
-            readoutTime = cameras_.computeCameraReadoutTime(Devices.Keys.CAMERAB);
+            readoutTime = cameras_.computeCameraReadoutTime(Devices.Keys.CAMERAB, isOverlap);
          }
       }
       return readoutTime;
@@ -1105,7 +1105,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       // if we set piezoAmplitude to 0 here then sliceAmplitude will also be 0
       if (spimMode.equals(AcquisitionModes.Keys.NO_SCAN)) {
-         piezoAmplitude = (float) 0.0;
+         piezoAmplitude = 0.0f;
       }
       
       // tweak the parameters if we are using synchronous/overlap mode
@@ -1123,7 +1123,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       float sliceRate = prefs_.getFloat(
             MyStrings.PanelNames.SETUP.toString() + side.toString(), 
             Properties.Keys.PLUGIN_RATE_PIEZO_SHEET, -80);
-      if (MyNumberUtils.floatsEqual(sliceRate, (float) 0.0)) {
+      if (MyNumberUtils.floatsEqual(sliceRate, 0.0f)) {
          gui_.showError("Rate for slice " + side.toString() + 
                " cannot be zero. Re-do calibration on Setup tab.",
                ASIdiSPIM.getFrame());
@@ -1160,7 +1160,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // get the piezo card ready; skip if no piezo specified
       if (devices_.isValidMMDevice(piezoDevice)) {
          if (spimMode.equals(AcquisitionModes.Keys.SLICE_SCAN_ONLY)) {
-            piezoAmplitude = (float) 0.0;
+            piezoAmplitude = 0.0f;
          }
          props_.setPropValue(piezoDevice,
                Properties.Keys.SA_AMPLITUDE, piezoAmplitude);
@@ -1430,7 +1430,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             // Multi-page TIFF saving code wants this one:
             // TODO: support other types than besides GRAY16
             gui_.setAcquisitionProperty(acqName, "PixelType", "GRAY16");
-            
+
             // get circular buffer ready
             // do once here but not per-acquisition; need to ensure ROI changes registered
             core_.initializeCircularBuffer();
@@ -1475,6 +1475,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                if (twoSided) {
                   core_.startSequenceAcquisition(secondCamera, nrSlices, 0, true);
                }
+               
+               Thread.sleep(10);
                
                // deal with shutter
                if (autoShutter) {

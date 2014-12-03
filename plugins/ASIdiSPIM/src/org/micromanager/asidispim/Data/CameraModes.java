@@ -40,7 +40,6 @@ import org.micromanager.asidispim.Utils.DevicesListenerInterface;
 public class CameraModes {
    
    private Devices devices_;   // object holding information about selected/available devices
-   @SuppressWarnings("unused") // will be used in future
    private Properties props_;  // object handling all property read/writes
    private Prefs prefs_;
    
@@ -53,6 +52,7 @@ public class CameraModes {
       EDGE("Edge trigger", 1),
       OVERLAP("Overlap/synchronous", 2),
       LEVEL("Level trigger (not yet implemented)", 3),
+      PSEUDO_OVERLAP("Pseudo Overlap", 4),
       INTERNAL("Internal", 0);
       private final String text;
       private final int prefCode;
@@ -160,6 +160,17 @@ public class CameraModes {
                devLib == Devices.Libraries.DEMOCAM);
       }
       
+      /**
+       * Does camera support pseudo overlap/synchronous mode?
+       * This is just PCO for the moment.
+       * @param devKey
+       * @return
+       */
+      private boolean cameraSupportsPseudoOverlap(Devices.Keys devKey) {
+         Devices.Libraries devLib = devices_.getMMDeviceLibrary(devKey);
+         return (devLib == Devices.Libraries.PCOCAM);
+      }
+      
       private boolean cameraInvalid(Devices.Keys devKey) {
          Devices.Libraries devLib = devices_.getMMDeviceLibrary(devKey);
          return (devLib == Devices.Libraries.UNKNOWN ||
@@ -173,9 +184,16 @@ public class CameraModes {
        * @return
        */
       private List<Keys> getValidModeKeys() {
+         // TODO add level ("bulb") triggering
          List<Keys> keyList = new ArrayList<Keys>();
-         boolean twoSided = true; // ASIdiSPIM.getFrame().getAcquisitionPanel().isTwoSided();
-         boolean sideAFirst = true; // ASIdiSPIM.getFrame().getAcquisitionPanel().isFirstSideA();
+         boolean twoSided = 
+               (props_.getPropValueInteger(Devices.Keys.PLUGIN,
+            Properties.Keys.PLUGIN_NUM_SIDES)) != 1;
+               //true; // ASIdiSPIM.getFrame().getAcquisitionPanel().isTwoSided();
+         boolean sideAFirst = 
+               (props_.getPropValueString(Devices.Keys.PLUGIN,
+                     Properties.Keys.PLUGIN_FIRST_SIDE).equals("A"));
+                     //true; // ASIdiSPIM.getFrame().getAcquisitionPanel().isFirstSideA();
          
          if (twoSided) {
             if (cameraInvalid(Devices.Keys.CAMERAA) ||
@@ -183,30 +201,25 @@ public class CameraModes {
                return keyList;
             }
             keyList.add(Keys.EDGE);
-//            keyList.add(Keys.LEVEL);
+//          keyList.add(Keys.LEVEL);
             if (cameraSupportsOverlap(Devices.Keys.CAMERAA) &&
                   cameraSupportsOverlap(Devices.Keys.CAMERAB)) {
                keyList.add(Keys.OVERLAP);
+            } else if (cameraSupportsPseudoOverlap(Devices.Keys.CAMERAA) &&
+                  cameraSupportsPseudoOverlap(Devices.Keys.CAMERAB)) {
+               keyList.add(Keys.PSEUDO_OVERLAP);
             }
          } else {
-            if (sideAFirst) {
-               if (cameraInvalid(Devices.Keys.CAMERAA)) {
-                  return keyList;
-               }
-               keyList.add(Keys.EDGE);
-//               keyList.add(Keys.LEVEL);
-               if(cameraSupportsOverlap(Devices.Keys.CAMERAA)) {
-                  keyList.add(Keys.OVERLAP);
-               }
-            } else { // side B is first
-               if (cameraInvalid(Devices.Keys.CAMERAB)) {
-                  return keyList;
-               }
-               keyList.add(Keys.EDGE);
-//               keyList.add(Keys.LEVEL);
-               if(cameraSupportsOverlap(Devices.Keys.CAMERAB)) {
-                  keyList.add(Keys.OVERLAP);
-               }
+            Devices.Keys camKey = sideAFirst ? Devices.Keys.CAMERAA : Devices.Keys.CAMERAB;
+            if (cameraInvalid(camKey)) {
+               return keyList;
+            }
+            keyList.add(Keys.EDGE);
+//          keyList.add(Keys.LEVEL);
+            if (cameraSupportsOverlap(camKey)) {
+               keyList.add(Keys.OVERLAP);
+            } else if (cameraSupportsPseudoOverlap(camKey)) {
+               keyList.add(Keys.PSEUDO_OVERLAP);
             }
          }
 

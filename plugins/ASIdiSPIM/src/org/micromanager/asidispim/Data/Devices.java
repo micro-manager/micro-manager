@@ -594,6 +594,7 @@ public class Devices {
          if (mmDevice == null) {
             mmDevice = "";
          }
+         // TODO make it so empty devices don't get saved, instead add "None" to the list which is saved
          if (deviceInfo_.get(key).saveInPref) {
             prefs_.putString(DEVICES_PREF_NODE, key.toString(), mmDevice);
          }

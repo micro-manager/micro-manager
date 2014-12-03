@@ -220,12 +220,22 @@ public class Cameras {
          }
          break;
       case PCOCAM:
-         // TODO add level-sensitive trigger
-         props_.setPropValue(devKey,
-               Properties.Keys.TRIGGER_MODE_PCO,
-               ((mode == CameraModes.Keys.EDGE) 
-                     ? Properties.Values.EXTERNAL_LC
-                     : Properties.Values.INTERNAL_LC), true);
+         switch (mode) {
+         case EDGE:
+         case PSEUDO_OVERLAP:
+         case LEVEL:
+            props_.setPropValue(devKey,
+                  Properties.Keys.TRIGGER_MODE_PCO,
+                  Properties.Values.EXTERNAL_LC, true);
+            break;
+         case INTERNAL:
+            props_.setPropValue(devKey,
+                  Properties.Keys.TRIGGER_MODE_PCO,
+                  Properties.Values.INTERNAL_LC, true);
+            break;
+         default:
+               break;
+         }
          break;
       case ANDORCAM:
          switch (mode) {
@@ -383,13 +393,13 @@ public class Cameras {
             if (isSlowReadout(camKey)) {
                return 0.02752;
             } else {
-               return 0.00965;
+               return 0.00917;
             }       
-         } else {
+         } else {  // 4.2
             if (isSlowReadout(camKey)) {
                return 0.0276;
             } else {
-               return 0.00917;
+               return 0.00965;
             }            
          }
       case ANDORCAM:
@@ -399,7 +409,7 @@ public class Cameras {
             } else {
                return (2624 * 2 / 568e3);
             }
-         } else {
+         } else {  // 4.2
             if (isSlowReadout(camKey)) {
                return (2592 * 2 / 216e3);
             } else {
@@ -428,7 +438,8 @@ public class Cameras {
    public float computeCameraResetTime(Devices.Keys camKey) {
       float resetTimeMs = 10;
       double rowReadoutTime = getRowReadoutTime(camKey);
-      int numRowsOverhead;      
+      float camReadoutTime = computeCameraReadoutTime(camKey, false);
+      int numRowsOverhead;
       switch (devices_.getMMDeviceLibrary(camKey)) {
       case HAMCAM:
          // global reset mode not yet exposed in Micro-manager
@@ -439,18 +450,18 @@ public class Cameras {
          } else { // for EDGE and LEVEL trigger modes
             numRowsOverhead = 10; // overhead of 9 rows plus jitter of 1 row
          }
-         resetTimeMs = computeCameraReadoutTime(camKey) + (float) (numRowsOverhead * rowReadoutTime);
+         resetTimeMs = camReadoutTime + (float) (numRowsOverhead * rowReadoutTime);
          break;
       case PCOCAM:
-         numRowsOverhead = 0;
-         resetTimeMs = computeCameraReadoutTime(camKey) + (float) (numRowsOverhead * rowReadoutTime);
+         numRowsOverhead = 1;
+         resetTimeMs = camReadoutTime + (float) (numRowsOverhead * rowReadoutTime);
          break;
       case ANDORCAM:
-         numRowsOverhead = 1;  // TODO make sure this is accurate; don't have sufficient documentation yet
-         resetTimeMs = computeCameraReadoutTime(camKey) + (float) (numRowsOverhead * rowReadoutTime);
+         numRowsOverhead = 1;
+         resetTimeMs = camReadoutTime + (float) (numRowsOverhead * rowReadoutTime);
          break;
       case DEMOCAM:
-         resetTimeMs = computeCameraReadoutTime(camKey);
+         resetTimeMs = camReadoutTime;
          break;
       default:
          break;
@@ -459,25 +470,35 @@ public class Cameras {
             " for camera " + devices_.getMMDevice(camKey), true);
       return resetTimeMs;  // assume 10ms readout if not otherwise possible to calculate
    }
-   
+
    /**
     * Gets an estimate of a specific camera's readout time based on ROI and 
-    * other settings.
+    * other settings.  If overlap mode is selected then readout time is 0
+    * (or very close).
     * 
     * @param camKey device key for camera in question
+    * @param isOverlap only return extra overhead time for overlap (usually 0)
     * @return readout time in ms
     */
-   public float computeCameraReadoutTime(Devices.Keys camKey) {
-      float readoutTimeMs = 10;
+   public float computeCameraReadoutTime(Devices.Keys camKey, boolean isOverlap) {
+      
+      if (isOverlap) {
+         return computeCameraReadoutTimeOverlap(camKey);
+      }
+      
+      // below code only applies to non-overlap
+      
+      float readoutTimeMs = 10f;
+      double rowReadoutTime = getRowReadoutTime(camKey);
+      int numReadoutRows;
+
       Rectangle roi = new Rectangle();
       try {
          roi = core_.getROI(devices_.getMMDevice(camKey));
       } catch (Exception e) {
          gui_.showError(e, (Component) ASIdiSPIM.getFrame());
       }
-     
-      double rowReadoutTime = getRowReadoutTime(camKey);
-      int numReadoutRows;
+
       switch (devices_.getMMDeviceLibrary(camKey)) {
       case HAMCAM:
          // device adapter provides readout time rounded to nearest 0.1ms; we
@@ -510,6 +531,25 @@ public class Cameras {
          break;
       }
       core_.logMessage("camera readout time computed as " + readoutTimeMs + 
+            " for camera " + devices_.getMMDevice(camKey), true);
+      return readoutTimeMs;  // assume 10ms readout if not otherwise possible to calculate
+   }
+   
+   /**
+    * Gets an estimate of the camera's readout time if in overlap mode
+    * (should be 0 or close to it)
+    * @param camKey
+    * @return
+    */
+   public float computeCameraReadoutTimeOverlap(Devices.Keys camKey) {
+      float readoutTimeMs = 0f;
+      
+      // special case of pseudo-overlap
+      if (devices_.getMMDeviceLibrary(camKey) == Devices.Libraries.PCOCAM) {
+         readoutTimeMs = 0.25f;
+      }
+      
+      core_.logMessage("camera readout time for overlap computed as " + readoutTimeMs + 
             " for camera " + devices_.getMMDevice(camKey), true);
       return readoutTimeMs;  // assume 10ms readout if not otherwise possible to calculate
    }
