@@ -105,7 +105,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
     */
    public DefaultDisplayWindow(Datastore store, Component customControls) {
       store_ = store;
-      store_.associateDisplay(this);
+      MMStudio.getInstance().data().associateDisplay(this, store_);
       store_.registerForEvents(this, 100);
       displayBus_ = new EventBus();
       displayBus_.register(this);
@@ -508,9 +508,10 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       // EDT, so there's some deadlock potential.
       controls_.cleanup();
       histograms_.cleanup();
-      store_.removeDisplay(this);
+      MMStudio studio = MMStudio.getInstance();
+      studio.data().removeDisplay(this, store_);
       store_.unregisterForEvents(this);
-      MMStudio.getInstance().removeMMBackgroundListener(this);
+      studio.removeMMBackgroundListener(this);
       try {
          dummyWindow_.dispose();
       } catch (NullPointerException ex) {
