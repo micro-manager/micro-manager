@@ -10,6 +10,7 @@ public class DefaultNewDisplayEvent implements NewDisplayEvent {
       window_ = window;
    }
 
+   @Override
    public DisplayWindow getDisplayWindow() {
       return window_;
    }
