@@ -23,6 +23,7 @@
 package org.micromanager.patternoverlay;
 
 
+import com.google.common.eventbus.Subscribe;
 import ij.ImagePlus;
 import ij.gui.ImageWindow;
 
@@ -42,6 +43,7 @@ import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.MMFrame;
 
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.events.DisplayCreatedEvent;
 
 
 /**
@@ -60,13 +62,14 @@ import net.miginfocom.swing.MigLayout;
  *  @author Matthijs
  *  @author Jon
  */
-@SuppressWarnings("serial")
+@SuppressWarnings("LeakingThisInConstructor")
 public class PatternOverlayFrame extends MMFrame {
    private final ScriptInterface gui_;
    private final JComboBox overlayBox_;
    private final JToggleButton toggleButton_;
    private final JSlider sizeSlider_;
    private final JComboBox colorBox_;
+   private final MMFrame ourFrame_ = this;
    
    private GenericOverlay lastOverlay_;
 
@@ -76,7 +79,6 @@ public class PatternOverlayFrame extends MMFrame {
             "[right]10[center]",
             "[]8[]"));
       gui_ = gui;
-      final MMFrame ourFrame = this;
       loadAndRestorePosition(100, 100, WIDTH, WIDTH);
       
       lastOverlay_ = null;
@@ -110,7 +112,7 @@ public class PatternOverlayFrame extends MMFrame {
                sizeSlider_.repaint();
                colorBox_.setSelectedIndex(currentOverlay.getColorCode());
             } catch (Exception e1) {
-               gui_.showError(e1, ourFrame);
+               gui_.showError(e1, ourFrame_);
             }
             lastOverlay_ = currentOverlay;
          }
@@ -122,20 +124,7 @@ public class PatternOverlayFrame extends MMFrame {
       toggleButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            try {
-               boolean visible = toggleButton_.isSelected();
-               GenericOverlay selectedOverlay = ((OverlayOption) overlayBox_.getSelectedItem()).getOverlay();
-               selectedOverlay.setVisible(visible);
-               updateToggleButtonLabel();
-            } catch (Exception ex) {
-               gui_.logError("Could not enable overlay (" + 
-                     ((OverlayOption) overlayBox_.getSelectedItem()).toString() + "). "
-                       + "Error Message: " + ex.getMessage() );
-               gui_.showMessage(
-                       "The overlay could not be shown. Is the live image window active?", 
-                       ourFrame);
-               toggleButton_.setSelected(false);
-            }
+            toggleOverlay(null);
          }
       });
       
@@ -180,6 +169,7 @@ public class PatternOverlayFrame extends MMFrame {
             }
          }
       });
+      gui_.registerForEvents(this);
 
    }//constructor
    
@@ -206,6 +196,27 @@ public class PatternOverlayFrame extends MMFrame {
          return null;
       } else {
          return window.getImagePlus();
+      }
+   }
+
+   /**
+    * Toggles overlay depending on the state of the Show/Hide button
+    * Also called when a new live/snap window opens
+    */
+   @Subscribe
+   public void toggleOverlay(DisplayCreatedEvent dce) {
+      try {
+         boolean visible = toggleButton_.isSelected();
+         GenericOverlay selectedOverlay = ((OverlayOption) overlayBox_.getSelectedItem()).getOverlay();
+         selectedOverlay.setVisible(visible);
+      } catch (Exception ex) {
+         gui_.logError("Could not enable overlay ("
+                 + ((OverlayOption) overlayBox_.getSelectedItem()).toString() + "). "
+                 + "Error Message: " + ex.getMessage());
+         gui_.showMessage(
+                 "The overlay could not be shown. Is the live image window active?",
+                 ourFrame_);
+         toggleButton_.setSelected(false);
       }
    }
 
