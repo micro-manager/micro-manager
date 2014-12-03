@@ -1,5 +1,10 @@
 package org.micromanager.data;
 
+import com.google.common.eventbus.Subscribe;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.DataManager;
 import org.micromanager.api.data.Datastore;
@@ -8,10 +13,12 @@ import org.micromanager.api.data.DisplaySettings;
 import org.micromanager.api.data.Image;
 import org.micromanager.api.data.Metadata;
 import org.micromanager.api.data.SummaryMetadata;
+import org.micromanager.api.events.NewDatastoreEvent;
 
 import org.micromanager.acquisition.StorageRAM;
 
 import org.micromanager.imagedisplay.dev.DefaultDisplayWindow;
+import org.micromanager.MMStudio;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -20,8 +27,11 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class DefaultDataManager implements DataManager {
    private Datastore albumDatastore_;
+   private ArrayList<Datastore> datastores_;
 
-   public DefaultDataManager() {
+   public DefaultDataManager(MMStudio studio) {
+      datastores_ = new ArrayList<Datastore>();
+      studio.registerForEvents(this);
    }
 
    @Override
@@ -37,6 +47,17 @@ public class DefaultDataManager implements DataManager {
    @Override
    public Datastore getAlbumDatastore() {
       return albumDatastore_;
+   }
+
+   @Override
+   public List<Datastore> getDatastores() {
+      return datastores_;
+   }
+
+   // TODO: we need to remove entries from datastores_ at some point.
+   @Subscribe
+   public void onNewDatastore(NewDatastoreEvent event) {
+      datastores_.add(event.getDatastore());
    }
 
    @Override
