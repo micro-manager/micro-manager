@@ -48,11 +48,14 @@ import org.micromanager.utils.ReportingUtils;
  */
 @SuppressWarnings("serial")
 public class DataAnalysisPanel extends ListeningJPanel {
-   private final JPanel mipavPanel_;
+   private final JPanel exportPanel_;
    private final JTextField saveDestinationField_;
+   private final JTextField baseNameField_;
    private Prefs prefs_;
    public static final String[] TRANSFORMOPTIONS = 
       {"None", "Rotate Right 90\u00B0", "Rotate Left 90\u00B0", "Rotate outward"};
+   public static final String[] EXPORTFORMATS = 
+      {"mipav GenerateFusion", "Multiview Reconstruction"};
    public static FileDialogs.FileType MIPAV_DATA_SET 
            = new FileDialogs.FileType("MIPAV_DATA_SET",
                  "Export to mipav Location",
@@ -74,18 +77,15 @@ public class DataAnalysisPanel extends ListeningJPanel {
       int textFieldWidth = 35;
 
       // start volume sub-panel
-      mipavPanel_ = new JPanel(new MigLayout(
+      exportPanel_ = new JPanel(new MigLayout(
               "",
               "[right]4[center]4[left]",
               "[]8[]"));
       
-      mipavPanel_.setBorder(PanelUtils.makeTitledBorder("Export to mipav"));
+      exportPanel_.setBorder(PanelUtils.makeTitledBorder("Export diSPIM data"));
+     
       
-      JLabel instructions = new JLabel("Exports data to a format \n"
-              + "compatible with the MIPAV GenerateFusion Plugin");
-      mipavPanel_.add(instructions, "span 3, wrap");
-      
-      mipavPanel_.add(new JLabel("Export directory:"), "");
+      exportPanel_.add(new JLabel("Export directory:"), "");
       
       saveDestinationField_ = new JTextField();
       saveDestinationField_.setText(prefs_.getString(panelName_,
@@ -98,7 +98,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
                     saveDestinationField_.getText());
          }
       });
-      mipavPanel_.add(saveDestinationField_);
+      exportPanel_.add(saveDestinationField_);
       
       JButton browseToSaveDestinationButton = new JButton();
       browseToSaveDestinationButton.addActionListener(new ActionListener() {
@@ -112,42 +112,72 @@ public class DataAnalysisPanel extends ListeningJPanel {
       
       browseToSaveDestinationButton.setMargin(new Insets(2, 5, 2, 5));
       browseToSaveDestinationButton.setText("...");
-      mipavPanel_.add(browseToSaveDestinationButton, "wrap");
+      exportPanel_.add(browseToSaveDestinationButton, "wrap");
+      
+      exportPanel_.add(new JLabel("Base Name:"), "");
+      baseNameField_ = new JTextField();
+      proposeBaseFieldText();
+      baseNameField_.setColumns(textFieldWidth);
+      exportPanel_.add(baseNameField_, "wrap");
+      
       
       // row with transform options
       JLabel transformLabel = new JLabel("Transform:");
-      mipavPanel_.add(transformLabel);
+      exportPanel_.add(transformLabel);
       final JComboBox transformSelect = new JComboBox();
       for (String item : TRANSFORMOPTIONS) {
          transformSelect.addItem(item);
       }
       String transformOption = prefs_.getString(
-              panelName_, Properties.Keys.PLUGIN_EXPORT_MIPAV_TRANSFORM_OPTION, 
+              panelName_, Properties.Keys.PLUGIN_EXPORT_TRANSFORM_OPTION, 
               TRANSFORMOPTIONS[1]);
       transformSelect.setSelectedItem(transformOption);
       transformSelect.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
             prefs_.putString(panelName_, 
-                    Properties.Keys.PLUGIN_EXPORT_MIPAV_TRANSFORM_OPTION, 
+                    Properties.Keys.PLUGIN_EXPORT_TRANSFORM_OPTION, 
                     (String)transformSelect.getSelectedItem());
          }
       });
-      mipavPanel_.add(transformSelect, "left, wrap");
+      exportPanel_.add(transformSelect, "left, wrap");
+      
+      // row with output optinos
+      JLabel exportFormatLabel = new JLabel("Export for:");
+      exportPanel_.add(exportFormatLabel);
+      final JComboBox exportFormatSelect = new JComboBox();
+      for (String item : EXPORTFORMATS) {
+         exportFormatSelect.addItem(item);
+      }
+      String exportFormatOption = prefs_.getString(
+              panelName_, Properties.Keys.PLUGIN_EXPORT_FORMAT, 
+              EXPORTFORMATS[1]);
+      exportFormatSelect.setSelectedItem(exportFormatOption);
+      exportFormatSelect.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            prefs_.putString(panelName_, 
+                    Properties.Keys.PLUGIN_EXPORT_FORMAT, 
+                    (String)exportFormatSelect.getSelectedItem());
+         }
+      });
+      exportPanel_.add(exportFormatSelect, "left, wrap");
+      
       
       final JProgressBar progBar = new JProgressBar();
       progBar.setStringPainted(true);
       progBar.setVisible(false);
       final JLabel infoLabel = new JLabel("");
-      
-      
+     
       JButton exportButton = new JButton("Export");
       exportButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
             setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            SaveTask task = new SaveTask(saveDestinationField_.getText(),
-                    transformSelect.getSelectedIndex());
+            ExportTask task = new ExportTask(saveDestinationField_.getText(),
+                    baseNameField_.getText(),
+                    transformSelect.getSelectedIndex(), 
+                    exportFormatSelect.getSelectedIndex() );
             task.addPropertyChangeListener(new PropertyChangeListener() {
 
                @Override
@@ -170,25 +200,45 @@ public class DataAnalysisPanel extends ListeningJPanel {
             task.execute();
          }
       });
-      mipavPanel_.add(exportButton, "span 3, center, wrap");
-      mipavPanel_.add(infoLabel,"");
-      mipavPanel_.add(progBar, "span3, center, wrap");    
+      exportPanel_.add(exportButton, "span 3, center, wrap");
+      exportPanel_.add(infoLabel,"");
+      exportPanel_.add(progBar, "span3, center, wrap");    
             
        
-      this.add(mipavPanel_);
+      this.add(exportPanel_);
    }
+   
+   @Override
+   public void gotSelected() {
+      proposeBaseFieldText();
+   }
+   
+   private void proposeBaseFieldText() {
+      ImagePlus ip = IJ.getImage();
+      if (ip != null) {
+         String baseName = ip.getShortTitle();
+         baseName = baseName.replaceAll("[^a-zA-Z0-9_\\.\\-]", "_");
+         baseNameField_.setText(baseName);
+      }
+   }
+   
    
    /**
     * Worker thread that executes file saving.  Updates the progress bar
     * using the setProgress method, which results in a PropertyChangedEvent
     * in attached listeners
     */
-   class SaveTask extends SwingWorker<Void, Void> {
+   class ExportTask extends SwingWorker<Void, Void> {
       final String targetDirectory_;
+      final String baseName_;
       final int transformIndex_;
-      SaveTask (String targetDirectory, int transformIndex) {
+      final int exportFormat_;
+      ExportTask (String targetDirectory, String baseName, 
+              int transformIndex, int exportFormat) {
          targetDirectory_ = targetDirectory;
+         baseName_ = baseName.replaceAll("[^a-zA-Z0-9_\\.\\-]", "_");
          transformIndex_ = transformIndex;
+         exportFormat_ = exportFormat;
       }
    
       @Override
@@ -201,65 +251,116 @@ public class DataAnalysisPanel extends ListeningJPanel {
             throw new SaveTaskException("Can only convert Micro-Manager data set ");
          }
 
-         String acqName = ip.getShortTitle();
-         acqName = acqName.replace("/", "-");
+         
+         if (exportFormat_ == 0) { // mipav
+            String spimADir = targetDirectory_ + File.separator + baseName_ + 
+                    File.separator + "SPIMA";
+            String spimBDir = targetDirectory_ + File.separator + baseName_ + 
+                    File.separator + "SPIMB";
 
-         String spimADir = targetDirectory_ + "\\" + acqName + "\\" + "SPIMA";
-         String spimBDir = targetDirectory_ + "\\" + acqName + "\\" + "SPIMB";
+            if (new File(spimADir).exists()
+                    || new File(spimBDir).exists()) {
+               throw new SaveTaskException("Output directory already exists");
+            }
 
-         if (new File(spimADir).exists()
-                 || new File(spimBDir).exists()) {
-            throw new SaveTaskException("Output directory already exists");
-         }
+            new File(spimADir).mkdirs();
+            new File(spimBDir).mkdir();
 
-         new File(spimADir).mkdirs();
-         new File(spimBDir).mkdir();
+            ImageProcessor iProc = ip.getProcessor();
+            int totalNr = 2 * mmW.getNumberOfFrames() * mmW.getNumberOfSlices();
+            int counter = 0;
 
-         ImageProcessor iProc = ip.getProcessor();
-         int totalNr = 2 * mmW.getNumberOfFrames() * mmW.getNumberOfSlices();
-         int counter = 0;
+            for (int c = 0; c < 2; c++) {
+               for (int t = 0; t < mmW.getNumberOfFrames(); t++) {
+                  ImageStack stack = new ImageStack(iProc.getWidth(), iProc.getHeight());
+                  for (int i = 0; i < mmW.getNumberOfSlices(); i++) {
+                     ImageProcessor iProc2;
 
-         for (int c = 0; c < 2; c++) {
-            for (int t = 0; t < mmW.getNumberOfFrames(); t++) {
-               ImageStack stack = new ImageStack(iProc.getWidth(), iProc.getHeight());
-               for (int i = 0; i < mmW.getNumberOfSlices(); i++) {
-                  ImageProcessor iProc2;
+                     iProc2 = mmW.getImageProcessor(c, i, t, 1);
 
-                  iProc2 = mmW.getImageProcessor(c, i, t, 1);
-
-                  // optional transformation
-                  switch (transformIndex_) {
-                     case 1: {
-                        iProc2.rotate(90);
-                        break;
+                     // optional transformation
+                     switch (transformIndex_) {
+                        case 1: {
+                           iProc2.rotate(90);
+                           break;
+                        }
+                        case 2: {
+                           iProc2.rotate(-90);
+                           break;
+                        }
+                        case 3: {
+                           iProc2.rotate((c == 1) ? 90 : -90);
+                           break;
+                        }
                      }
-                     case 2: {
-                        iProc2.rotate(-90);
-                        break;
-                     }
-                     case 3: {
-                        iProc2.rotate((c==1) ? 90 : -90);
-                        break;
-                     }
+
+                     stack.addSlice(iProc2);
+                     counter++;
+                     double rate = ((double) counter / (double) totalNr) * 100.0;
+                     setProgress((int) Math.round(rate));
                   }
-                  
-                  stack.addSlice(iProc2);
-                  counter++;
-                  double rate = ( (double) counter / (double) totalNr ) * 100.0;
-                  setProgress( (int) Math.round(rate));
+                  ImagePlus ipN = new ImagePlus("tmp", stack);
+                  ipN.setCalibration(ip.getCalibration());
+                  if (c == 0) {
+                     ij.IJ.save(ipN, spimADir + File.separator + baseName_ + "_" + 
+                             "SPIMA-" + t + ".tif");
+                  } else if (c == 1) {
+                     ij.IJ.save(ipN, spimBDir + File.separator + baseName_ + "_" + 
+                             "SPIMB-" + t + ".tif");
+                  }
                }
-               ImagePlus ipN = new ImagePlus("tmp", stack);
-               ipN.setCalibration(ip.getCalibration());
-               if (c == 0) {
-                  ij.IJ.save(ipN, spimADir + "\\" + acqName + "_" + "SPIMA-" + t + ".tif");
-               } else if (c == 1) {
-                  ij.IJ.save(ipN, spimBDir + "\\" + acqName + "_" + "SPIMB-" + t + ".tif");
-               }
+            }
+            
+         } else 
+         if (exportFormat_ == 1) { // Multiview reconstruction
+            ImageProcessor iProc = ip.getProcessor();
+            int totalNr = 2 * mmW.getNumberOfFrames() * mmW.getNumberOfSlices();
+            int counter = 0;
 
+            // one time point per file, one angle per file
+            for (int c = 0; c < 2; c++) {
+               for (int t = 0; t < mmW.getNumberOfFrames(); t++) {
+                  ImageStack stack = new ImageStack(iProc.getWidth(), iProc.getHeight());
+                  for (int i = 0; i < mmW.getNumberOfSlices(); i++) {
+                     ImageProcessor iProc2;
+                     iProc2 = mmW.getImageProcessor(c, i, t, 1);
+                     // optional transformation
+                     switch (transformIndex_) {
+                        case 1: {
+                           iProc2.rotate(90);
+                           break;
+                        }
+                        case 2: {
+                           iProc2.rotate(-90);
+                           break;
+                        }
+                        case 3: {
+                           iProc2.rotate((c == 1) ? 90 : -90);
+                           break;
+                        }
+                     }
+                     stack.addSlice(iProc2);
+                     counter++;
+                     double rate = ((double) counter / (double) totalNr) * 100.0;
+                     setProgress((int) Math.round(rate));
+
+                  }
+                  ImagePlus ipN = new ImagePlus("tmp", stack);
+                  ipN.setCalibration(ip.getCalibration());
+                  if (c == 0) {
+                     ij.IJ.save(ipN, targetDirectory_ + File.separator + baseName_ 
+                             + "_TL" + t + "_Angle0.tif");
+                  } else if (c == 1) {
+                     ij.IJ.save(ipN, targetDirectory_ + File.separator + baseName_ 
+                             + "_TL" + t + "_Angle90.tif");
+                  }
+               }
             }
          }
+
          return null;
       }
+      
 
       @Override
       public void done() {

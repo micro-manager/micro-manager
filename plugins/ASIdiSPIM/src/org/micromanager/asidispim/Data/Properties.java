@@ -141,8 +141,9 @@ public class Properties {
       PLUGIN_PIEZO_CENTER_POS ("PiezoCenterPosition"),  // Piezo center position for acquisition
       PLUGIN_EXPORT_MIPAV_DATA_DIR ("ExportMipavDataDirectory"), 
                                                       // Place data are saved in mipav format
-      PLUGIN_EXPORT_MIPAV_TRANSFORM_OPTION("ExportMipavTransformOption"),
-                                                      // Transform to be applied while saving in mipav format
+      PLUGIN_EXPORT_TRANSFORM_OPTION("ExportMipavTransformOption"),
+                                                  // Transform to be applied when exporting data
+      PLUGIN_EXPORT_FORMAT("ExportFormatOption"), // Output format of export pane
       PLUGIN_ADVANCED_SLICE_TIMING("AdvancedSliceTiming"),
       PLUGIN_SLICE_STEP_SIZE("SliceStepSize"),
       PLUGIN_DESIRED_EXPOSURE("DesiredExposure"),
