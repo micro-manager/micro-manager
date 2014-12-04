@@ -77,6 +77,10 @@ public:
     // ----------------
     int OnBaseT(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnShutterA(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnShutterB(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnShutterC(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnShutterD(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnPowerA(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnPowerB(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnPowerC(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -137,6 +141,10 @@ private:
     std::string port_;
     bool initialized_;
     bool busy_;
+    std::string  shutterA_;
+    std::string  shutterB_;
+    std::string  shutterC_;
+    std::string  shutterD_;
     double powerA_;
     double powerB_;
     double powerC_;
