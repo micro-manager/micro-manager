@@ -1256,17 +1256,12 @@ int CPCOCam::Initialize()
   if (nRet != DEVICE_OK)
     return nRet;
 
-  m_nRoiXMin = m_nRoiYMin = 1;
-  m_pCamera->GetMaximumROI(&m_nRoiXMax, &m_nRoiYMax);
+  m_pCamera->GetMaximumROI(&roiXMaxFull_, &roiYMaxFull_);
   if(m_bDemoMode)
   {
-    m_nRoiXMax = 1280;
-    m_nRoiYMax = 1024;
+    roiXMaxFull_ = 1280;
+    roiYMaxFull_ = 1024;
   }
-
-  // establish full frame limits
-  roiXMaxFull_ = m_nRoiXMax;
-  roiYMaxFull_ = m_nRoiYMax;
 
   // Pixel type
   pAct = new CPropertyAction (this, &CPCOCam::OnPixelType);
