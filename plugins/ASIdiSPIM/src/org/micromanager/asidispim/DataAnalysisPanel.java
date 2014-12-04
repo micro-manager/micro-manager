@@ -4,6 +4,7 @@ package org.micromanager.asidispim;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.WindowManager;
 import ij.process.ImageProcessor;
 
 import java.awt.Component;
@@ -43,7 +44,6 @@ import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.ReportingUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.Text;
 
 /**
  * Panel in ASIdiSPIM plugin specifically for data analysis/processing
@@ -223,7 +223,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
    }
    
    private void proposeBaseFieldText() {
-      ImagePlus ip = IJ.getImage();
+      ImagePlus ip = WindowManager.getCurrentImage();
       if (ip != null) {
          String baseName = ip.getShortTitle();
          baseName = baseName.replaceAll("[^a-zA-Z0-9_\\.\\-]", "_");
@@ -395,6 +395,43 @@ public class DataAnalysisPanel extends ListeningJPanel {
             imageDirectory.insertBefore(domTree.createTextNode("."),
                     imageDirectory.getLastChild());
             imageLoader.appendChild(imageDirectory);
+            
+            Element filePattern = domTree.createElement("filePattern");
+            String patternText = baseName_ + "_TL{t}_Angle{a}.tif";
+            filePattern.insertBefore(domTree.createTextNode(patternText), 
+                    filePattern.getLastChild());
+            imageLoader.appendChild(filePattern);
+            
+            String nrTimepoints = "" + mmW.getNumberOfFrames();
+            Element layoutTimepoints = domTree.createElement("layoutTimepoints");
+            layoutTimepoints.insertBefore(domTree.createTextNode
+                  (nrTimepoints), layoutTimepoints.getLastChild() );
+            imageLoader.appendChild(layoutTimepoints);
+            
+            // note, once we add channels, the file name pattern should also change
+            String nrChannels = "0";
+            Element layoutChannels = domTree.createElement("layoutChannels");
+            layoutChannels.insertBefore(domTree.createTextNode
+                  (nrChannels), layoutChannels.getLastChild() );
+            imageLoader.appendChild(layoutChannels);
+            
+            String nrIlls = "0";
+            Element layoutIlls = domTree.createElement("layoutIlluminations");
+            layoutIlls.insertBefore(domTree.createTextNode
+                  (nrIlls), layoutIlls.getLastChild() );
+            imageLoader.appendChild(layoutIlls);
+            
+            String nrAngles = "1";
+            Element layoutAngles = domTree.createElement("layoutAngles");
+            layoutAngles.insertBefore(domTree.createTextNode
+                  (nrAngles), layoutAngles.getLastChild() );
+            imageLoader.appendChild(layoutAngles);   
+            
+            String imglibContainer = "ArrayImgFactory";
+            Element imglib2Container = domTree.createElement("imglib2container");
+            imglib2Container.insertBefore(domTree.createTextNode(imglibContainer), 
+                    imglib2Container.getLastChild() );
+            imageLoader.appendChild(imglib2Container);
             
             // write out the DOM to an xml file
             TransformerFactory tFactory = TransformerFactory.newInstance();
