@@ -35,6 +35,7 @@
 
 const char* DEVICE_NAME = "VLT_VersaLase";
 int lasersPresent[MAX_LASERS];
+int shutterState[MAX_LASERS];
 
 
 //Required Micro-Manager API Functions&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
@@ -66,6 +67,10 @@ VersaLase::VersaLase() :
    port_("Undefined"),
    initialized_(false),
    busy_(false),
+   shutterA_("Undefined"),
+   shutterB_("Undefined"),
+   shutterC_("Undefined"),
+   shutterD_("Undefined"),
    powerA_(1.00),
    powerB_(1.00),
    powerC_(1.00),
@@ -142,6 +147,12 @@ int VersaLase::Initialize()
 	std::string gui1Delims="=*";
 	int ret;
 
+    //Disable Shutters
+	shutterState[LASER_A]=0;
+	shutterState[LASER_B]=0;
+	shutterState[LASER_C]=0;
+	shutterState[LASER_D]=0;
+
 	command << "?gui1"; //?GUI1=1*1*1*1*FV*PV => 7 tokens
 	ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
 	if (ret != DEVICE_OK) return ret;
@@ -162,6 +173,16 @@ int VersaLase::Initialize()
 
 	if(lasersPresent[LASER_A]==1)
 	{
+        //LASER A
+	    pAct = new CPropertyAction (this, &VersaLase::OnShutterA);
+		CreateProperty("LASER_A_Shutter", "OFF", MM::String, false, pAct);
+        if (DEVICE_OK != nRet)
+			return nRet;
+        std::vector<std::string> shutterStateA;
+		shutterStateA.push_back("OFF");
+		shutterStateA.push_back("ON");
+		SetAllowedValues("LASER_A_Shutter", shutterStateA);
+
 		pAct = new CPropertyAction (this, &VersaLase::OnPulPwrA);
 		nRet = CreateProperty("LASER_A_DigitalPeakPowerSetting", "0.00", MM::Float, false, pAct);
 		if (DEVICE_OK != nRet)
@@ -223,8 +244,16 @@ int VersaLase::Initialize()
 
 	if(lasersPresent[LASER_B]==1)
 	{
-
 		//LASER B
+		pAct = new CPropertyAction (this, &VersaLase::OnShutterB);
+		CreateProperty("LASER_B_Shutter", "OFF", MM::String, false, pAct);
+        if (DEVICE_OK != nRet)
+			return nRet;
+        std::vector<std::string> shutterStateB;
+		shutterStateB.push_back("OFF");
+		shutterStateB.push_back("ON");
+		SetAllowedValues("LASER_B_Shutter", shutterStateB);
+
 		pAct = new CPropertyAction (this, &VersaLase::OnPulPwrB);
 		nRet = CreateProperty("LASER_B_DigitalPeakPowerSetting", "0.00", MM::Float, false, pAct);
 		if (DEVICE_OK != nRet)
@@ -291,6 +320,15 @@ int VersaLase::Initialize()
 	if(lasersPresent[LASER_C]==1)
 	{
 		//Laser C
+		pAct = new CPropertyAction (this, &VersaLase::OnShutterC);
+		CreateProperty("LASER_C_Shutter", "OFF", MM::String, false, pAct);
+        if (DEVICE_OK != nRet)
+			return nRet;
+        std::vector<std::string> shutterStateC;
+		shutterStateC.push_back("OFF");
+		shutterStateC.push_back("ON");
+		SetAllowedValues("LASER_C_Shutter", shutterStateC);
+
 		pAct = new CPropertyAction (this, &VersaLase::OnPulPwrC);
 		nRet = CreateProperty("LASER_C_DigitalPeakPowerSetting", "0.00", MM::Float, false, pAct);
 		if (DEVICE_OK != nRet)
@@ -352,6 +390,15 @@ int VersaLase::Initialize()
 	if(lasersPresent[LASER_D]==1)
 	{
 		//Laser D
+		pAct = new CPropertyAction (this, &VersaLase::OnShutterD);
+		CreateProperty("LASER_D_Shutter", "OFF", MM::String, false, pAct);
+        if (DEVICE_OK != nRet)
+			return nRet;
+        std::vector<std::string> shutterStateD;
+		shutterStateD.push_back("OFF");
+		shutterStateD.push_back("ON");
+		SetAllowedValues("LASER_D_Shutter", shutterStateD);
+
 		pAct = new CPropertyAction (this, &VersaLase::OnPulPwrD);
 		nRet = CreateProperty("LASER_D_DigitalPeakPowerSetting", "0.00", MM::Float, false, pAct);
 		if (DEVICE_OK != nRet)
@@ -466,13 +513,17 @@ bool VersaLase::Busy()
 int VersaLase::SetOpen(bool open)
 {
 	if(lasersPresent[LASER_A]==1)
-		LaserOnOffA((long)open);
+        if(shutterState[LASER_A]==1)
+            LaserOnOffA((long)open);
 	if(lasersPresent[LASER_B]==1)
-		LaserOnOffB((long)open);
+        if(shutterState[LASER_B]==1)
+            LaserOnOffB((long)open);
 	if(lasersPresent[LASER_C]==1)
-		LaserOnOffC((long)open);
+        if(shutterState[LASER_C]==1)
+            LaserOnOffC((long)open);
 	if(lasersPresent[LASER_D]==1)
-		LaserOnOffD((long)open);
+        if(shutterState[LASER_D]==1)
+            LaserOnOffD((long)open);
 
 	return DEVICE_OK;
 }
@@ -894,6 +945,126 @@ int VersaLase::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
           pProp->Get(port_);
      }
 
+     return DEVICE_OK;
+}
+
+int VersaLase::OnShutterA(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+     std::string answer;
+
+     if (eAct == MM::BeforeGet)
+     {
+	      if (shutterState[LASER_A] == 0)
+               shutterA_ = "OFF";
+          else if (shutterState[LASER_A] == 1)
+               shutterA_ = "ON";
+
+          pProp->Set(shutterA_.c_str());
+     }
+     else
+        if (eAct == MM::AfterSet)
+        {
+          pProp->Get(answer);
+          if (answer == "OFF")
+          {
+               shutterState[LASER_A]=0;
+          }
+          else
+            if(answer == "ON")
+            {
+               shutterState[LASER_A]=1;
+            }
+        }
+     return DEVICE_OK;
+}
+
+int VersaLase::OnShutterB(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+     std::string answer;
+
+     if (eAct == MM::BeforeGet)
+     {
+	      if (shutterState[LASER_B] == 0)
+               shutterB_ = "OFF";
+          else if (shutterState[LASER_B] == 1)
+               shutterB_ = "ON";
+
+          pProp->Set(shutterB_.c_str());
+     }
+     else
+        if (eAct == MM::AfterSet)
+        {
+          pProp->Get(answer);
+          if (answer == "OFF")
+          {
+               shutterState[LASER_B]=0;
+          }
+          else
+            if(answer == "ON")
+            {
+               shutterState[LASER_B]=1;
+            }
+        }
+     return DEVICE_OK;
+}
+
+int VersaLase::OnShutterC(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+     std::string answer;
+
+     if (eAct == MM::BeforeGet)
+     {
+	      if (shutterState[LASER_C] == 0)
+               shutterC_ = "OFF";
+          else if (shutterState[LASER_C] == 1)
+               shutterC_ = "ON";
+
+          pProp->Set(shutterC_.c_str());
+     }
+     else
+        if (eAct == MM::AfterSet)
+        {
+          pProp->Get(answer);
+          if (answer == "OFF")
+          {
+               shutterState[LASER_C]=0;
+          }
+          else
+            if(answer == "ON")
+            {
+               shutterState[LASER_C]=1;
+            }
+        }
+     return DEVICE_OK;
+}
+
+int VersaLase::OnShutterD(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    std::string answer;
+
+     if (eAct == MM::BeforeGet)
+     {
+	      if (shutterState[LASER_D] == 0)
+               shutterD_ = "OFF";
+          else if (shutterState[LASER_D] == 1)
+               shutterD_ = "ON";
+
+          pProp->Set(shutterD_.c_str());
+     }
+     else
+        if (eAct == MM::AfterSet)
+        {
+          pProp->Get(answer);
+          if (answer == "OFF")
+          {
+               shutterState[LASER_D]=0;
+          }
+          else
+            if(answer == "ON")
+            {
+               shutterState[LASER_D]=1;
+            }
+        }
      return DEVICE_OK;
 }
 //Digital Modulation On/Off
@@ -3002,11 +3173,3 @@ void VersaLase::Tokenize(const std::string& str, std::vector<std::string>& token
         pos = str.find_first_of(delimiters, lastPos);
     }
 }
-
-
-
-
-
-
-
-
