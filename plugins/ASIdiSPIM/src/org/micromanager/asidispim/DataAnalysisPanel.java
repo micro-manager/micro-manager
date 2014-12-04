@@ -366,14 +366,14 @@ public class DataAnalysisPanel extends ListeningJPanel {
             }
             
             // the image files have been written to disk, now create the xml file
-            // in bigviewer format
+            // in bigviewer format, using w3c dom
             
             // first create the DOM in memory
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
             Document domTree = dbf.newDocumentBuilder().newDocument();
             Element spimData = domTree.createElement("SpimData");
             spimData.setAttribute("version", "0.2");
-            
+            domTree.appendChild(spimData);
             
             // write out the DOM to an xml file
             TransformerFactory tFactory = TransformerFactory.newInstance();
@@ -383,7 +383,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
                     File.separator + "dataset.xml"));
             transformer.transform(source, result);
          }
-         return null;
+      return null;
       }
       
 
