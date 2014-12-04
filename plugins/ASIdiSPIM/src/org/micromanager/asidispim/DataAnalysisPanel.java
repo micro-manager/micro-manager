@@ -43,6 +43,7 @@ import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.ReportingUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Text;
 
 /**
  * Panel in ASIdiSPIM plugin specifically for data analysis/processing
@@ -371,9 +372,29 @@ public class DataAnalysisPanel extends ListeningJPanel {
             // first create the DOM in memory
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
             Document domTree = dbf.newDocumentBuilder().newDocument();
+            
             Element spimData = domTree.createElement("SpimData");
             spimData.setAttribute("version", "0.2");
             domTree.appendChild(spimData);
+            
+            Element basePath = domTree.createElement("BasePath");
+            basePath.insertBefore(domTree.createTextNode("."), 
+                    basePath.getLastChild());
+            basePath.setAttribute("type", "relative");
+            spimData.appendChild(basePath);
+            
+            Element sequenceDescription = domTree.createElement("SequenceDescription");
+            spimData.appendChild(sequenceDescription);
+            
+            Element imageLoader = domTree.createElement("ImageLoader");
+            imageLoader.setAttribute("format", "spimreconstruction.stack.ij");
+            sequenceDescription.appendChild(imageLoader);
+            
+            Element imageDirectory = domTree.createElement("imagedirectory");
+            imageDirectory.setAttribute("type", "relative");
+            imageDirectory.insertBefore(domTree.createTextNode("."),
+                    imageDirectory.getLastChild());
+            imageLoader.appendChild(imageDirectory);
             
             // write out the DOM to an xml file
             TransformerFactory tFactory = TransformerFactory.newInstance();
