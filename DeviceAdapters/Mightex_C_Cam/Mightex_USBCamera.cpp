@@ -269,7 +269,7 @@ int CMightex_BUF_USBCCDCamera::InitCamera()
 	if(g_InstanceCount > 1)
 		return DEVICE_ERR;
 
-  HDll = LoadLibrary("BUF_USBCCDCamera_SDK_MM.dll");
+  HDll = LoadLibraryA("BUF_USBCCDCamera_SDK_MM.dll");
   if (HDll)
   {
 	BUFCCDUSB_InitDevice = (BUFCCDUSB_InitDevicePtr)GetProcAddress(HDll,"BUFCCDUSB_InitDevice");

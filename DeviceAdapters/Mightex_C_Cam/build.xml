@@ -1,0 +1,21 @@
+<project name="Mightex_C_Cam">
+	<import file="../../buildscripts/deviceadapter.xml"/>
+
+	<target name="install-Win32">
+		<copy todir="${mm.dll.installdir}">
+			<filelist dir="lib32">
+				<file name="BUF_USBCCDCamera_SDK_MM.dll"/>
+				<file name="BufferCameraUsbLib.dll"/>
+			</filelist>
+		</copy>
+	</target>
+
+	<target name="install-x64">
+		<copy todir="${mm.dll.installdir}">
+			<filelist dir="lib64">
+				<file name="BUF_USBCCDCamera_SDK_MM.dll"/>
+				<file name="BufferCameraUsbLib.dll"/>
+			</filelist>
+		</copy>
+	</target>
+</project>
