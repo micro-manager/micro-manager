@@ -138,6 +138,7 @@ int CPLogic::Initialize()
    AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode6, 6);
    AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode7, 7);
    AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode8, 8);
+   AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode9, 9);
    AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode10, 10);
    AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode11, 11);
    UpdateProperty(g_SetCardPresetPropertyName);

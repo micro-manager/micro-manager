@@ -350,6 +350,7 @@ const char* const g_PresetCode5 = "5 - BNC5 high";
 const char* const g_PresetCode6 = "6 - BNC6 high";
 const char* const g_PresetCode7 = "7 - BNC7 high";
 const char* const g_PresetCode8 = "8 - BNC8 high";
+const char* const g_PresetCode9 = "9 - BNC5-8 low";
 const char* const g_PresetCode10 = "10 - two lasers (switch after stack)";
 const char* const g_PresetCode11 = "11 - two lasers (switch after slice)";
 
