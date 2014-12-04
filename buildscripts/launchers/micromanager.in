@@ -34,6 +34,7 @@ fi
 echo "class path = $CLASSPATH" 1>&2
 
 @JAVA@ -Xmx1024M \
+   -XX:MaxDirectMemorySize=1000G \
    -classpath "$CLASSPATH" \
    -Dmmcorej.library.loading.stderr.log=yes \
    -Dmmcorej.library.path="@wrappermoduledir@" \

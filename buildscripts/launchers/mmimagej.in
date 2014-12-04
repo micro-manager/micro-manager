@@ -15,6 +15,7 @@
 cd "@imagejdir@"
 
 @JAVA@ -Xmx1024M \
+   -XX:MaxDirectMemorySize=1000G \
    -Dmmcorej.library.loading.stderr.log=yes \
    -Dorg.micromanager.corelog.dir=/tmp \
    -jar "@imagejjar@" \

@@ -1615,9 +1615,10 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
       // usage on our own). The limit can be set from the JVM command line
       // using e.g. -XX:MaxDirectMemorySize=16G.
       //
-      // TODO There probably should be a way to set the -XX:MaxDirectMemroySize
-      // from the GUI, similar to ImageJ's method of setting -Xmx. However, it
-      // will be fragile.
+      // As of this writing, we ship the 64-bit version with
+      // -XX:MaxDirectMemroySize=1000g, which essentially disables the limit,
+      // so the assumptions we make here are not completely off.
+
       long freeRAM;
       java.lang.management.OperatingSystemMXBean osMXB =
          java.lang.management.ManagementFactory.getOperatingSystemMXBean();

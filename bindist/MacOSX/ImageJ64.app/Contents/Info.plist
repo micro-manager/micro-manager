@@ -62,7 +62,7 @@
 		<key>MainClass</key>
 		<string>ij.ImageJ</string>
 		<key>VMOptions</key>
-		<string>-Xmx2048m</string>
+		<string>-Xmx2048m -XX:MaxDirectMemorySize=1000g</string>
 	</dict>
 </dict>
 </plist>
