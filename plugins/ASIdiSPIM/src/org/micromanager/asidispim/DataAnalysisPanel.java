@@ -24,6 +24,11 @@ import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JTextField;
 import javax.swing.SwingWorker;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -36,6 +41,8 @@ import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.PanelUtils;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.ReportingUtils;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 /**
  * Panel in ASIdiSPIM plugin specifically for data analysis/processing
@@ -64,6 +71,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
    
    /**
     * 
+    * @param gui
     * @param prefs - Plugin-wide preferences
     */
    public DataAnalysisPanel(ScriptInterface gui, Prefs prefs) {    
@@ -356,8 +364,25 @@ public class DataAnalysisPanel extends ListeningJPanel {
                   }
                }
             }
+            
+            // the image files have been written to disk, now create the xml file
+            // in bigviewer format
+            
+            // first create the DOM in memory
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            Document domTree = dbf.newDocumentBuilder().newDocument();
+            Element spimData = domTree.createElement("SpimData");
+            spimData.setAttribute("version", "0.2");
+            
+            
+            // write out the DOM to an xml file
+            TransformerFactory tFactory = TransformerFactory.newInstance();
+            Transformer transformer = tFactory.newTransformer();
+            DOMSource source = new DOMSource(domTree);
+            StreamResult result = new StreamResult(new File(targetDirectory_ +
+                    File.separator + "dataset.xml"));
+            transformer.transform(source, result);
          }
-
          return null;
       }
       
