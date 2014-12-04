@@ -7,7 +7,6 @@ import ij.ImageStack;
 import ij.WindowManager;
 import ij.process.ImageProcessor;
 
-import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
@@ -20,7 +19,6 @@ import java.util.concurrent.ExecutionException;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JTextField;
@@ -39,9 +37,9 @@ import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
+import org.micromanager.asidispim.Utils.MyDialogUtils;
 import org.micromanager.asidispim.Utils.PanelUtils;
 import org.micromanager.utils.FileDialogs;
-import org.micromanager.utils.ReportingUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -59,14 +57,14 @@ public class DataAnalysisPanel extends ListeningJPanel {
    private final JPanel exportPanel_;
    private final JTextField saveDestinationField_;
    private final JTextField baseNameField_;
-   private Prefs prefs_;
+   private final Prefs prefs_;
    public static final String[] TRANSFORMOPTIONS = 
       {"None", "Rotate Right 90\u00B0", "Rotate Left 90\u00B0", "Rotate outward"};
    public static final String[] EXPORTFORMATS = 
       {"mipav GenerateFusion", "Multiview Reconstruction"};
-   public static FileDialogs.FileType MIPAV_DATA_SET 
-           = new FileDialogs.FileType("MIPAV_DATA_SET",
-                 "Export to mipav Location",
+   public static FileDialogs.FileType EXPORT_DATA_SET 
+           = new FileDialogs.FileType("EXPORT_DATA_SET",
+                 "Export to Location",
                  System.getProperty("user.home") + "/Untitled",
                  false, (String[]) null);
    
@@ -98,12 +96,12 @@ public class DataAnalysisPanel extends ListeningJPanel {
       
       saveDestinationField_ = new JTextField();
       saveDestinationField_.setText(prefs_.getString(panelName_,
-              Properties.Keys.PLUGIN_EXPORT_MIPAV_DATA_DIR, ""));
+              Properties.Keys.PLUGIN_EXPORT_DATA_DIR, ""));
       saveDestinationField_.setColumns(textFieldWidth);
       saveDestinationField_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(final ActionEvent e) {
-             prefs_.putString(panelName_, Properties.Keys.PLUGIN_EXPORT_MIPAV_DATA_DIR,
+             prefs_.putString(panelName_, Properties.Keys.PLUGIN_EXPORT_DATA_DIR,
                     saveDestinationField_.getText());
          }
       });
@@ -114,7 +112,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
          @Override
          public void actionPerformed(final ActionEvent e) {
             setSaveDestinationDirectory(saveDestinationField_);
-            prefs_.putString(panelName_, Properties.Keys.PLUGIN_EXPORT_MIPAV_DATA_DIR,
+            prefs_.putString(panelName_, Properties.Keys.PLUGIN_EXPORT_DATA_DIR,
                     saveDestinationField_.getText());
          }
       });
@@ -151,7 +149,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
       });
       exportPanel_.add(transformSelect, "left, wrap");
       
-      // row with output optinos
+      // row with output options
       JLabel exportFormatLabel = new JLabel("Export for:");
       exportPanel_.add(exportFormatLabel);
       final JComboBox exportFormatSelect = new JComboBox();
@@ -455,14 +453,13 @@ public class DataAnalysisPanel extends ListeningJPanel {
             Throwable cause = ex.getCause();
             if (!cause.getMessage().equals("Macro canceled")) {
                if (cause instanceof SaveTaskException) {
-                  JOptionPane.showMessageDialog(null, cause.getMessage(), 
-                          "Data Export Error", JOptionPane.ERROR_MESSAGE);
+                  MyDialogUtils.showError(cause, "Data Export Error");
                } else {
-                  ReportingUtils.showError(ex, (Component) ASIdiSPIM.getFrame());
+                  MyDialogUtils.showError(ex);
                }
             }
          } catch (InterruptedException ex) {
-             ReportingUtils.showError(ex, "Interrupted while saving data", ASIdiSPIM.getFrame());
+            MyDialogUtils.showError(ex, "Interrupted while exporting data");
          }
       }
    }
@@ -470,7 +467,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
    private void setSaveDestinationDirectory(JTextField rootField) {
       File result = FileDialogs.openDir(null,
               "Please choose a directory root for image data",
-              MIPAV_DATA_SET);
+              EXPORT_DATA_SET);
       if (result != null) {
          rootField.setText(result.getAbsolutePath());
       }

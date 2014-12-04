@@ -21,7 +21,6 @@
 
 package org.micromanager.asidispim.Utils;
 
-import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -44,7 +43,6 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.ASIdiSPIM;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.Joystick;
@@ -58,13 +56,11 @@ import org.micromanager.asidispim.Data.Properties;
  * @author Jon
  */
 public class PanelUtils {
-   private final ScriptInterface gui_;
    private final Prefs prefs_;
    private final Properties props_;
    private final Devices devices_;
    
-   public PanelUtils(ScriptInterface gui, Prefs prefs, Properties props, Devices devices) {
-      gui_ = gui;
+   public PanelUtils(Prefs prefs, Properties props, Devices devices) {
       prefs_ = prefs;
       props_ = props;
       devices_ = devices;
@@ -627,7 +623,7 @@ public class PanelUtils {
             try {
                prefs_.putFloat(prefNode_, prefKey_, ((Double)tf_.getValue()).floatValue());
             } catch (Exception e) {
-               gui_.showError(e, (Component) null);
+               MyDialogUtils.showError(e);
             }
          }
          
@@ -666,7 +662,7 @@ public class PanelUtils {
             try {
                positions_.setPosition(key_, dir_, ((Number)evt.getNewValue()).doubleValue());
             } catch (Exception e) {
-               gui_.showError(e, (Component) null);
+               MyDialogUtils.showError(e);
             }
          }
 
@@ -692,7 +688,7 @@ public class PanelUtils {
             try {
                positions_.setPosition(key_, dir_, ((Number)tf_.getValue()).doubleValue());
             } catch (Exception e) {
-               gui_.showError(e, (Component) null);
+               MyDialogUtils.showError(e);
             }
          }
          

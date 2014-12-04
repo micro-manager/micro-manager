@@ -27,8 +27,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.asidispim.ASIdiSPIM;
+import org.micromanager.asidispim.Utils.MyDialogUtils;
 
 // TODO implement fast axis reverse checkbox (may need device adapter change and possibly even firmware-level change)
 
@@ -41,10 +40,8 @@ public class Joystick {
    
    private Devices devices_;   // object holding information about selected/available devices
    private Properties props_;  // object handling all property read/writes
-   private ScriptInterface gui_;
    
-   public Joystick(ScriptInterface gui, Devices devices, Properties props) {
-      gui_ = gui;
+   public Joystick(Devices devices, Properties props) {
       devices_ = devices;
       props_ = props;
    }
@@ -208,7 +205,7 @@ public class Joystick {
             }
          }
       } catch (Exception ex) {
-         gui_.showError("Problem clearing all joysticks", ASIdiSPIM.getFrame());
+         MyDialogUtils.showError("Problem clearing all joysticks");
       }
    }
    
@@ -237,7 +234,7 @@ public class Joystick {
             }
          }
       } catch (Exception ex) {
-         gui_.showError("Problem clearing joystick", ASIdiSPIM.getFrame());
+         MyDialogUtils.showError("Problem clearing joystick");
       }
    }
       
@@ -273,8 +270,8 @@ public class Joystick {
             props_.setPropValue(dev, prop, VALUES.get(Joystick.Keys.NONE));
          }
       } catch (Exception ex) {
-         gui_.showError("Problem unsetting joysticks for " + jkey.toString() +
-               " in device " + dev.toString(), ASIdiSPIM.getFrame());
+         MyDialogUtils.showError("Problem unsetting joysticks for " + jkey.toString() +
+               " in device " + dev.toString());
       }
    }
    
@@ -310,8 +307,8 @@ public class Joystick {
             props_.setPropValue(dev, prop, VALUES.get(jkey));
          }
       } catch (Exception ex) {
-         gui_.showError("Problem setting joysticks for " + jkey.toString() +
-               " in device " + dev.toString(), ASIdiSPIM.getFrame());
+         MyDialogUtils.showError("Problem setting joysticks for " + jkey.toString() +
+               " in device " + dev.toString());
       }
    }
   

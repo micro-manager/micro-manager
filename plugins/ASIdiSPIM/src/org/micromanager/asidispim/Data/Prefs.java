@@ -21,12 +21,10 @@
 
 package org.micromanager.asidispim.Data;
 
-import java.awt.Component;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
-import org.micromanager.asidispim.ASIdiSPIM;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.asidispim.Utils.MyDialogUtils;
 
 
 /**
@@ -196,7 +194,7 @@ public class Prefs {
          // not the same as Java nodes which would be a sub-folder within regedit
          allKeys = myPrefs_.keys();
       } catch (BackingStoreException e) {
-         ReportingUtils.showError(e, (Component) ASIdiSPIM.getFrame());
+         MyDialogUtils.showError(e);
       }
       String lookFor = getPrefKey(node, key);
       for (String cur : allKeys) {

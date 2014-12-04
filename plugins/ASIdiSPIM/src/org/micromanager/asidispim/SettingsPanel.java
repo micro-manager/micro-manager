@@ -43,8 +43,6 @@ import org.micromanager.asidispim.Utils.StagePositionUpdater;
 
 import net.miginfocom.swing.MigLayout;
 
-import org.micromanager.api.ScriptInterface;
-
 /**
  *
  * @author Jon
@@ -56,7 +54,6 @@ public class SettingsPanel extends ListeningJPanel {
    private final Properties props_;
    private final Prefs prefs_;
    private final StagePositionUpdater stagePosUpdater_;
-   private final ScriptInterface gui_;
    
    private final JPanel guiPanel_;
    private final JPanel scannerPanel_;
@@ -64,14 +61,13 @@ public class SettingsPanel extends ListeningJPanel {
      
    /**
     * 
-    * @param gui - implementation of Micro-Manager ScriptInterface api
     * @param devices the (single) instance of the Devices class
     * @param props 
     * @param prefs
     * @param stagePosUpdater
     */
-   public SettingsPanel(ScriptInterface gui, Devices devices, 
-           Properties props, Prefs prefs, StagePositionUpdater stagePosUpdater) {    
+   public SettingsPanel(Devices devices, Properties props, 
+         Prefs prefs, StagePositionUpdater stagePosUpdater) {    
       super (MyStrings.PanelNames.SETTINGS.toString(), 
             new MigLayout(
               "", 
@@ -81,10 +77,9 @@ public class SettingsPanel extends ListeningJPanel {
       devices_ = devices;
       props_ = props;
       prefs_ = prefs;
-      gui_ = gui;
       stagePosUpdater_ = stagePosUpdater;
       
-      PanelUtils pu = new PanelUtils(gui_, prefs_, props_, devices_);
+      PanelUtils pu = new PanelUtils(prefs_, props_, devices_);
 
       
       // start GUI panel

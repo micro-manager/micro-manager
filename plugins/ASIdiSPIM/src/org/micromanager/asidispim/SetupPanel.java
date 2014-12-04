@@ -23,7 +23,6 @@ package org.micromanager.asidispim;
 import com.swtdesigner.SwingResourceManager;
 
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -37,6 +36,7 @@ import org.micromanager.asidispim.Data.Positions;
 import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
+import org.micromanager.asidispim.Utils.MyDialogUtils;
 import org.micromanager.asidispim.Utils.PanelUtils;
 import org.micromanager.asidispim.Utils.StoredFloatLabel;
 
@@ -110,7 +110,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       prefs_ = prefs;
       gui_ = gui;
       core_ = gui_.getMMCore();
-      PanelUtils pu = new PanelUtils(gui_, prefs_, props_, devices);
+      PanelUtils pu = new PanelUtils(prefs_, props_, devices);
 
       piezoImagingDeviceKey_ = Devices.getSideSpecificKey(Devices.Keys.PIEZOA, side);
       piezoIlluminationDeviceKey_ = Devices.getSideSpecificKey(Devices.Keys.PIEZOA, Devices.getOppositeSide(side));
@@ -121,19 +121,19 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
 
       sheetStartPositionLabel_ = new StoredFloatLabel(panelName_, 
               Properties.Keys.PLUGIN_SHEET_START_POS.toString(), -1,
-              prefs_, gui_, " \u00B0");
+              prefs_, " \u00B0");
       sliceStartPos_ = sheetStartPositionLabel_.getFloat();
       sheetStopPositionLabel_ = new StoredFloatLabel(panelName_, 
               Properties.Keys.PLUGIN_SHEET_END_POS.toString(), 1,
-              prefs_, gui_, " \u00B0");
+              prefs_, " \u00B0");
       sliceStopPos_ = sheetStopPositionLabel_.getFloat();
       imagingPiezoStartPositionLabel_ = new StoredFloatLabel(panelName_, 
               Properties.Keys.PLUGIN_PIEZO_START_POS.toString(), -80,
-              prefs_, gui_, " \u00B5" + "m");
+              prefs_, " \u00B5" + "m");
       imagingPiezoStartPos_ = imagingPiezoStartPositionLabel_.getFloat();
       imagingPiezoStopPositionLabel_ = new StoredFloatLabel(panelName_, 
               Properties.Keys.PLUGIN_PIEZO_END_POS.toString(), 80,
-              prefs_, gui_, " \u00B5" + "m");
+              prefs_, " \u00B5" + "m");
       imagingPiezoStopPos_ = imagingPiezoStopPositionLabel_.getFloat();
       
       // Create sheet Panel with sheet and piezo controls
@@ -152,7 +152,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       sheetPanel.add(new JLabel("Imaging center: "));
       imagingCenterPosLabel_ = new StoredFloatLabel(panelName_, 
             Properties.Keys.PLUGIN_PIEZO_CENTER_POS.toString(), 0,
-            prefs_, gui_, " \u00B5" + "m");
+            prefs_, " \u00B5" + "m");
       sheetPanel.add(imagingCenterPosLabel_);
       
       JButton goToCenterButton = new JButton("Go to");
@@ -169,7 +169,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
                      devices_.getMMDeviceException(micromirrorDeviceKey_),
                      0, sliceCenterPos);
             } catch (Exception ex) {
-               gui_.showError(ex, (Component) ASIdiSPIM.getFrame());
+               MyDialogUtils.showError(ex);
             }
          }
       } );
@@ -186,7 +186,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
                     devices_.getMMDeviceException(piezoImagingDeviceKey_));
                imagingCenterPosLabel_.setFloat((float)imagingCenterPos_);
             } catch (Exception ex) {
-               gui_.showError(ex, (Component) ASIdiSPIM.getFrame());
+               MyDialogUtils.showError(ex);
             }
          }
       });
@@ -217,7 +217,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
                positions_.setPosition(micromirrorDeviceKey_, 
                      Joystick.Directions.Y, galvoPos);
             } catch (Exception ex) {
-               gui_.showError(ex, (Component) ASIdiSPIM.getFrame());
+               MyDialogUtils.showError(ex);
             }
             }
       });
@@ -239,7 +239,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
                positions_.setPosition(micromirrorDeviceKey_, 
                      Joystick.Directions.Y, galvoPos);
             } catch (Exception ex) {
-               gui_.showError(ex, (Component) ASIdiSPIM.getFrame());
+               MyDialogUtils.showError(ex);
             }
          }
       });
@@ -265,7 +265,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
                        (rate * ( (sliceStopPos_ + sliceStartPos_) / 2) );
                offsetField_.setValue((Double) offset);
             } catch (Exception ex) {
-               gui_.showError(ex, (Component) ASIdiSPIM.getFrame());
+               MyDialogUtils.showError(ex);
             }
          }
       });
@@ -295,7 +295,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
                positions_.setPosition(piezoImagingDeviceKey_, 
                        Joystick.Directions.NONE, imagingPiezoStartPos_);       
             } catch (Exception ex) {
-               gui_.showError(ex, (Component) ASIdiSPIM.getFrame());
+               MyDialogUtils.showError(ex);
             }
          }
       });
@@ -315,7 +315,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
                positions_.setPosition(piezoImagingDeviceKey_, 
                        Joystick.Directions.NONE, imagingPiezoStopPos_);
             } catch (Exception ex) {
-               gui_.showError(ex, (Component) ASIdiSPIM.getFrame());
+               MyDialogUtils.showError(ex);
             }
          }
       });
@@ -346,7 +346,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
                        devices_.getMMDeviceException(piezoImagingDeviceKey_));
                imagingPiezoStartPositionLabel_.setFloat((float)imagingPiezoStartPos_);
             } catch (Exception ex) {
-               gui_.showError(ex, (Component) null);
+               MyDialogUtils.showError(ex);
             }
          }
       });
@@ -370,7 +370,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
                        devices_.getMMDeviceException(piezoImagingDeviceKey_));
                imagingPiezoStopPositionLabel_.setFloat((float)imagingPiezoStopPos_);
             } catch (Exception ex) {
-               gui_.showError(ex, (Component) ASIdiSPIM.getFrame());
+               MyDialogUtils.showError(ex);
             }
          }
       });
@@ -401,8 +401,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
                      Properties.Keys.AXIS_LETTER);
                core_.setSerialPortCommand(port_, "HM " + letter + "+", "\r");
             } catch (Exception ex) {
-               gui_.showError("could not execute core function set home here for axis " + letter,
-                     ASIdiSPIM.getFrame());
+               MyDialogUtils.showError("could not execute core function set home here for axis " + letter);
             }
          }
       });
@@ -424,8 +423,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
                      Properties.Keys.AXIS_LETTER);
                core_.setSerialPortCommand(port_, "! " + letter, "\r");
             } catch (Exception ex) {
-               gui_.showError("could not execute core function move to home for axis " + letter,
-                     ASIdiSPIM.getFrame());
+               MyDialogUtils.showError("could not execute core function move to home for axis " + letter);
             }
          }
       });
@@ -513,7 +511,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
                props_.setPropValue(devKey_, propKey_, 
                      incrementAmount_ + props_.getPropValueFloat(devKey_, propKey_), true);
             } catch (Exception ex) {
-               gui_.showError(ex, (Component) ASIdiSPIM.getFrame());
+               MyDialogUtils.showError(ex);
             }
          }
 
@@ -551,8 +549,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
          String hubname = core_.getParentLabel(mmDevice);
          port_ = core_.getProperty(hubname, Properties.Keys.SERIAL_COM_PORT.toString());
       } catch (Exception ex) {
-         gui_.showError("Could not get COM port in SetupPanel constructor.",
-               ASIdiSPIM.getFrame());
+         MyDialogUtils.showError("Could not get COM port in SetupPanel constructor.");
       }
    }
 
@@ -606,8 +603,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
             // It would be nice to check the answer
             core_.getSerialPortAnswer(port_, "\r\n");
          } catch (Exception ex) {
-            gui_.showError("could not execute core function move to home for axis " + letter,
-                  ASIdiSPIM.getFrame());
+            MyDialogUtils.showError("could not execute core function move to home for axis " + letter);
          }
       }
       

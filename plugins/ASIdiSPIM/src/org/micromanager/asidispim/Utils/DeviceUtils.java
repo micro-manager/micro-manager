@@ -36,7 +36,6 @@ import mmcorej.StrVector;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.Properties;
-import org.micromanager.utils.ReportingUtils;
 
 /**
  * @author Jon
@@ -70,9 +69,9 @@ public class DeviceUtils {
             if (firmwareVersion == (float) 0) {
                // firmware version property wasn't found, maybe device hasn't been selected
             } else if (firmwareVersion < (float) 2.829) {
-               ReportingUtils.showError("Device " + devices_.getMMDevice(key)
+               MyDialogUtils.showError("Device " + devices_.getMMDevice(key)
                        + ": Piezo firmware is old; piezo may not move correctly in sync with sheet."
-                       + " Contact ASI for updated firmware.", null);
+                       + " Contact ASI for updated firmware.");
             }
             break;
          case GALVOA:
@@ -80,17 +79,17 @@ public class DeviceUtils {
             if (firmwareVersion == (float) 0) {
                // firmware version property wasn't found, maybe device hasn't been selected
             } else if (firmwareVersion < (float) 2.809) {
-               ReportingUtils.showError("Device " + devices_.getMMDevice(key)
+               MyDialogUtils.showError("Device " + devices_.getMMDevice(key)
                        + ": Micromirror firmware is old; wheel control of some scanner axes may not work."
-                       + " Contact ASI for updated firmware.", null);
+                       + " Contact ASI for updated firmware.");
             } else if (firmwareVersion < (float) 2.829) {
-               ReportingUtils.showError("Device " + devices_.getMMDevice(key)
+               MyDialogUtils.showError("Device " + devices_.getMMDevice(key)
                        + ": Micromirror firmware is old; imaging piezo not set correctly the first stack."
-                       + " Contact ASI for updated firmware.", null);
+                       + " Contact ASI for updated firmware.");
             } else if (firmwareVersion < (float) 2.859) {
-               ReportingUtils.showError("Device " + devices_.getMMDevice(key)
+               MyDialogUtils.showError("Device " + devices_.getMMDevice(key)
                        + ": Micromirror firmware is old; not all timing parameters are supported."
-                       + " Contact ASI for updated firmware.", null);
+                       + " Contact ASI for updated firmware.");
             }
             break;
          default:
@@ -102,13 +101,11 @@ public class DeviceUtils {
          Properties.Values expectedValue) {
       if (! (props_.getPropValueString(devKey, propKey)                  
             .equals(expectedValue.toString()))) {
-         int dialogResult = JOptionPane.showConfirmDialog(null,
+         if (MyDialogUtils.getConfirmDialogResult(
                "This plugin may not work if property \"" + propKey.toString() +
                "\" of device \"" + devices_.getMMDevice(devKey) + "\" is not set to \"" +
                expectedValue.toString() + "\".  Set it now?" ,
-               "Warning",
-               JOptionPane.YES_NO_OPTION);
-         if (dialogResult == JOptionPane.YES_OPTION) {
+               JOptionPane.YES_NO_OPTION)) {
             props_.setPropValue(devKey, propKey, expectedValue);
          }
       }
@@ -116,8 +113,8 @@ public class DeviceUtils {
    
    private void checkPropertyExists(Devices.Keys devKey, Properties.Keys propKey) {
       if (! devices_.hasProperty(devKey, propKey) ) {
-         ReportingUtils.showError("Device \"" + devices_.getMMDevice(devKey) + 
-               "\" doesn't have required property \"" + propKey.toString() + "\"", null);
+         MyDialogUtils.showError("Device \"" + devices_.getMMDevice(devKey) + 
+               "\" doesn't have required property \"" + propKey.toString() + "\"");
       }
    }
    
@@ -151,8 +148,8 @@ public class DeviceUtils {
             // no checks
             break;
          default:
-            ReportingUtils.showError("Plugin doesn't support your camera for SPIM yet;"
-                  + " contact the authors for support (camera must have hardware trigger)", null);
+            MyDialogUtils.showError("Plugin doesn't support your camera for SPIM yet;"
+                  + " contact the authors for support (camera must have hardware trigger)");
          } // CamA/B case
          break;
       case GALVOA:
@@ -160,7 +157,7 @@ public class DeviceUtils {
          if (deviceLibrary == Devices.Libraries.ASITIGER) {
             checkPropertyValueEquals(key, Properties.Keys.INPUT_MODE, Properties.Values.INTERNAL_INPUT);
          } else {
-            ReportingUtils.showError("Plugin doesn't support galvo devices other than ASITiger", null);
+            MyDialogUtils.showError("Plugin doesn't support galvo devices other than ASITiger");
          }
          break;
       case PIEZOA:
@@ -168,7 +165,7 @@ public class DeviceUtils {
          if (deviceLibrary == Devices.Libraries.ASITIGER) {
             checkPropertyValueEquals(key, Properties.Keys.PIEZO_MODE, Properties.Values.INTERNAL_CLOSEDLOOP_INPUT);
          } else {
-            ReportingUtils.showError("Plugin doesn't support piezo devices other than ASITiger", null);
+            MyDialogUtils.showError("Plugin doesn't support piezo devices other than ASITiger");
          }
          break;
       default:
@@ -267,7 +264,7 @@ public class DeviceUtils {
             }
          }
       } catch (Exception ex) {
-         ReportingUtils.showError("Error detecting multi camera devices", null);
+         MyDialogUtils.showError("Error detecting multi camera devices");
       }
       
       JComboBox deviceBox = new JComboBox(multiCameras.toArray());
@@ -300,12 +297,12 @@ public class DeviceUtils {
             }
          }
       } catch (Exception ex) {
-         ReportingUtils.showError("Error detecting single camera devices", null);
+         MyDialogUtils.showError("Error detecting single camera devices");
       } finally {
          try {
             core_.setCameraDevice(originalCamera);
          } catch (Exception e) {
-            ReportingUtils.showError(e);
+            MyDialogUtils.showError(e);
          }
       }
       

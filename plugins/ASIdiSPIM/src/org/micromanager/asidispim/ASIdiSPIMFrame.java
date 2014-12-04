@@ -100,7 +100,7 @@ public class ASIdiSPIMFrame extends MMFrame
       devices_ = new Devices(gui, prefs_);
       props_ = new Properties(gui, devices_, prefs_);
       positions_ = new Positions(gui, devices_);
-      joystick_ = new Joystick(gui, devices_, props_);
+      joystick_ = new Joystick(devices_, props_);
       cameras_ = new Cameras(gui, devices_, props_, prefs_);
       
       // create the panels themselves
@@ -117,9 +117,9 @@ public class ASIdiSPIMFrame extends MMFrame
       acquisitionPanel_ = new AcquisitionPanel(gui, devices_, props_, joystick_, 
             cameras_, prefs_, stagePosUpdater_);
       dataAnalysisPanel_ = new DataAnalysisPanel(gui, prefs_);
-      settingsPanel_ = new SettingsPanel(gui, devices_, props_, prefs_, stagePosUpdater_);
+      settingsPanel_ = new SettingsPanel(devices_, props_, prefs_, stagePosUpdater_);
       stagePosUpdater_.oneTimeUpdate();  // needed for NavigationPanel
-      helpPanel_ = new HelpPanel(gui);
+      helpPanel_ = new HelpPanel();
       
       // now add tabs to GUI
       // all added tabs must be of type ListeningJPanel

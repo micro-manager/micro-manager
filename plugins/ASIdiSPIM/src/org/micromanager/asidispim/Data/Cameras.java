@@ -21,7 +21,6 @@
 
 package org.micromanager.asidispim.Data;
 
-import java.awt.Component;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -30,8 +29,7 @@ import java.util.List;
 import mmcorej.CMMCore;
 
 import org.micromanager.api.ScriptInterface;
-import org.micromanager.asidispim.ASIdiSPIM;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.asidispim.Utils.MyDialogUtils;
 
 /**
  * Holds utility functions for cameras
@@ -155,7 +153,7 @@ public class Cameras {
                enableLiveMode(true);
             }
          } catch (Exception ex) {
-            gui_.showError("Failed to set Core Camera property", ASIdiSPIM.getFrame());
+            MyDialogUtils.showError("Failed to set Core Camera property");
          }
       }
    }
@@ -363,12 +361,13 @@ public class Cameras {
          }
       case DEMOCAM:
          return new Rectangle(0, 0, 512, 512);
+         // TODO get from properties
       default:
          break;
       }
-      ReportingUtils.showError(
+      MyDialogUtils.showError(
             "Was not able to get sensor size of camera " 
-            + devices_.getMMDevice(camKey), ASIdiSPIM.getFrame());
+            + devices_.getMMDevice(camKey));
       return new Rectangle(0, 0, 0, 0);
    }
    
@@ -421,9 +420,9 @@ public class Cameras {
       default:
          break;
       }
-      ReportingUtils.showError(
+      MyDialogUtils.showError(
             "Was not able to get per-row readout time of camera " 
-            + devices_.getMMDevice(camKey), ASIdiSPIM.getFrame());
+            + devices_.getMMDevice(camKey));
       return 1;
    }
    
@@ -496,7 +495,7 @@ public class Cameras {
       try {
          roi = core_.getROI(devices_.getMMDevice(camKey));
       } catch (Exception e) {
-         gui_.showError(e, (Component) ASIdiSPIM.getFrame());
+         MyDialogUtils.showError(e);
       }
 
       switch (devices_.getMMDeviceLibrary(camKey)) {

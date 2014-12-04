@@ -31,6 +31,7 @@ import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Utils.DevicesListenerInterface;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
+import org.micromanager.asidispim.Utils.MyDialogUtils;
 import org.micromanager.asidispim.Utils.MyNumberUtils;
 import org.micromanager.asidispim.Utils.PanelUtils;
 import org.micromanager.asidispim.Utils.SliceTiming;
@@ -172,7 +173,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       core_ = gui_.getMMCore();
       numTimePointsDone_ = 0;
       
-      PanelUtils pu = new PanelUtils(gui_, prefs_, props_, devices_);
+      PanelUtils pu = new PanelUtils(prefs_, props_, devices_);
       
       // added to spinner controls where we should re-calculate the displayed
       // slice period, volume duration, and time lapse duration
@@ -754,10 +755,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          float extraTimeNeeded = MyNumberUtils.ceilToQuarterMs(-1f*globalDelay);  // positive number
             globalDelay += extraTimeNeeded;
             if (showWarnings) {
-               gui_.showError(
+               MyDialogUtils.showError(
                      "Increasing slice period to meet laser exposure constraint\n"
-                           + "(time required for camera readout; readout time depends on ROI).\n",
-                           ASIdiSPIM.getFrame());
+                           + "(time required for camera readout; readout time depends on ROI).\n");
                elementToColor.setForeground(foregroundColorError);
                // considered actually changing the value, but decided against it because
                // maybe the user just needs to set the ROI appropriately and recalculate
@@ -769,8 +769,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
       
       // account for delay in scan position based on Bessel filter by starting the scan slightly earlier
-      // than we otherwise would; delay is (empirically) ~0.4/(freq in kHz) (maybe change to 0.3 or 0.35?)
-      // e.g. 0.5 sec for 0.8kHz filter and 0.8 sec for 0.4kHz filter
+      // than we otherwise would; delay is (empirically) ~0.33/(freq in kHz)
+      // find better results adding 0.4/(freq in kHz) though
+      // group delay for bessel filter approx 1/w or ~0.16/freq, or half/third the empirical value
       float scanFilterFreq = Math.max(props_.getPropValueFloat(Devices.Keys.GALVOA,  Properties.Keys.SCANNER_FILTER_X),
             props_.getPropValueFloat(Devices.Keys.GALVOB,  Properties.Keys.SCANNER_FILTER_X));
       float scanDelayFilter = 0;
@@ -1000,15 +1001,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          secondCamera = devices_.getMMDevice(Devices.Keys.CAMERAA);
       }
       if (firstCamera == null) {
-         gui_.showError("Please select a valid camera for the first side (Imaging Path " +
-               (firstSideA ? "A" : "B") + ") on the Devices Panel",
-               ASIdiSPIM.getFrame());
+         MyDialogUtils.showError("Please select a valid camera for the first side (Imaging Path " +
+               (firstSideA ? "A" : "B") + ") on the Devices Panel");
          return false;
       }
       if (isTwoSided() && secondCamera == null) {
-         gui_.showError("Please select a valid camera for the second side (Imaging Path " +
-               (firstSideA ? "B" : "A") + ") on the Devices Panel.",
-               ASIdiSPIM.getFrame());
+         MyDialogUtils.showError("Please select a valid camera for the second side (Imaging Path " +
+               (firstSideA ? "B" : "A") + ") on the Devices Panel.");
          return false;
       }
       return true;
@@ -1086,8 +1085,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       // checks to prevent hard-to-diagnose other errors
       if (!devices_.isValidMMDevice(galvoDevice)) {
-         gui_.showError("Scanner device required; please check Devices tab.",
-               ASIdiSPIM.getFrame());
+         MyDialogUtils.showError("Scanner device required; please check Devices tab.");
             return false;
       }
 
@@ -1124,9 +1122,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             MyStrings.PanelNames.SETUP.toString() + side.toString(), 
             Properties.Keys.PLUGIN_RATE_PIEZO_SHEET, -80);
       if (MyNumberUtils.floatsEqual(sliceRate, 0.0f)) {
-         gui_.showError("Rate for slice " + side.toString() + 
-               " cannot be zero. Re-do calibration on Setup tab.",
-               ASIdiSPIM.getFrame());
+         MyDialogUtils.showError("Rate for slice " + side.toString() + 
+               " cannot be zero. Re-do calibration on Setup tab.");
          return false;
       }
       float sliceOffset = prefs_.getFloat(
@@ -1187,8 +1184,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    public boolean runAcquisition() {
       
       if (gui_.isAcquisitionRunning()) {
-         gui_.showError("An acquisition is already running",
-               ASIdiSPIM.getFrame());
+         MyDialogUtils.showError("An acquisition is already running");
          return false;
       }
       
@@ -1234,8 +1230,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // make sure slice timings are up to date 
       if (!advancedSliceTimingCB_.isSelected()) {
          if(!isSliceTimingUpToDate()) {
-            gui_.showError("Slice timing is not up to date, please recalculate.", 
-                  ASIdiSPIM.getFrame());
+            MyDialogUtils.showError("Slice timing is not up to date, please recalculate.");
             return false;
          }
       }
@@ -1269,48 +1264,41 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // more sanity checks
       double lineScanTime = computeActualSlicePeriod();
       if (exposureTime + cameraReadoutTime > lineScanTime) {
-         gui_.showError("Exposure time is longer than time needed for a line scan.\n" +
+         MyDialogUtils.showError("Exposure time is longer than time needed for a line scan.\n" +
                  "This will result in dropped frames.\n" +
-                 "Please change input",
-                 ASIdiSPIM.getFrame());
+                 "Please change input");
          return false;
       }
       double volumeDuration = computeActualVolumeDuration();
       if (getNumTimepoints() > 1) {
          if (timepointsIntervalMs < volumeDuration) {
-            gui_.showError("Time point interval shorter than" +
-                  " the time to collect a single volume.\n",
-                  ASIdiSPIM.getFrame());
+            MyDialogUtils.showError("Time point interval shorter than" +
+                  " the time to collect a single volume.\n");
             return false;
          }
-         // TODO verify if 1 second is good value for overhead time
+         // TODO verify if 0.5 second is good value for overhead time
          if (timepointsIntervalMs < (volumeDuration + 500)) {
-            gui_.showError("Micro-Manager requires > 0.5 second overhead time "
+            MyDialogUtils.showError("Micro-Manager requires > 0.5 second overhead time "
                   + "to finish up volume before starting next one. "
-                  + "Pester the developers if you need faster.",
-                  ASIdiSPIM.getFrame());
+                  + "Pester the developers if you need faster.");
           return false;
          }
       }
       if (nrRepeats > 10 && separateTimePointsCB_.isSelected()) {
-         int dialogResult = JOptionPane.showConfirmDialog(null,
+         if (!MyDialogUtils.getConfirmDialogResult(
                "This will generate " + nrRepeats + " separate windows. "
                + "Do you really want to proceed?",
-               "Warning",
-               JOptionPane.OK_CANCEL_OPTION);
-         if (dialogResult == JOptionPane.CANCEL_OPTION) {
+               JOptionPane.OK_CANCEL_OPTION)) {
             return false;
          }
       }
       if (hideCB_.isSelected() && !saveCB_.isSelected()) {
-         gui_.showError("Must save data to disk if viewer is hidden",
-               ASIdiSPIM.getFrame());
+         MyDialogUtils.showError("Must save data to disk if viewer is hidden");
          return false;
       }
       if (hideCB_.isSelected() && separateTimePointsCB_.isSelected()) {
-         gui_.showError("Cannot have hidden viewer with separate viewers per time point." +
-               "Pester the developers if you really need this.",
-               ASIdiSPIM.getFrame());
+         MyDialogUtils.showError("Cannot have hidden viewer with separate viewers per time point." +
+               "Pester the developers if you really need this.");
          return false;
       }
       
@@ -1321,12 +1309,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             Rectangle roi_1 = core_.getROI(firstCamera);
             Rectangle roi_2 = core_.getROI(secondCamera);
             if (roi_1.width != roi_2.width || roi_1.height != roi_2.height) {
-               gui_.showError("Camera ROI height and width must be equal because of Micro-Manager's circular buffer", 
-                     ASIdiSPIM.getFrame());
+               MyDialogUtils.showError("Camera ROI height and width must be equal because of Micro-Manager's circular buffer");
                return false;
             }
          } catch (Exception ex) {
-            gui_.showError(ex, "Problem getting camera ROIs", ASIdiSPIM.getFrame());
+            MyDialogUtils.showError(ex, "Problem getting camera ROIs");
          }
       }
 
@@ -1334,8 +1321,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       try {
          core_.clearCircularBuffer();
       } catch (Exception ex) {
-         gui_.showError(ex, "Error emptying out the circular buffer",
-               ASIdiSPIM.getFrame());
+         MyDialogUtils.showError(ex, "Error emptying out the circular buffer");
          return false;
       }
       
@@ -1564,15 +1550,15 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      }
                   }
                } catch (InterruptedException iex) {
-                  gui_.showError(iex, (Component) ASIdiSPIM.getFrame());
+                  MyDialogUtils.showError(iex);
                }
             }
          } catch (IllegalMonitorStateException ex) {
             // do nothing, the acquisition was simply halted during its operation
          } catch (MMScriptException mex) {
-            gui_.showError(mex, (Component) ASIdiSPIM.getFrame());
+            MyDialogUtils.showError(mex);
          } catch (Exception ex) {
-            gui_.showError(ex, (Component) ASIdiSPIM.getFrame());
+            MyDialogUtils.showError(ex);
          } finally {  // end of this acquisition (could be about to restart if separate viewers)
             try {
                if (core_.isSequenceRunning(firstCamera)) {
@@ -1599,7 +1585,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                
             } catch (Exception ex) {
                // exception while stopping sequence acquisition, not sure what to do...
-               gui_.showError(ex, "Problem while finsihing acquisition", ASIdiSPIM.getFrame());
+               MyDialogUtils.showError(ex, "Problem while finsihing acquisition");
             }
          }
 
@@ -1638,7 +1624,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
       
       if (nonfatalError) {
-         gui_.showError("Non-fatal error occurred during acquisition, see core log for details", ASIdiSPIM.getFrame());
+         MyDialogUtils.showError("Non-fatal error occurred during acquisition, see core log for details");
       }
 
       return true;

@@ -20,12 +20,10 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 package org.micromanager.asidispim.Utils;
 
-import java.awt.Component;
 import java.text.ParseException;
 
 import javax.swing.JLabel;
 
-import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.utils.NumberUtils;
 
@@ -39,7 +37,6 @@ public class StoredFloatLabel extends JLabel {
    private final String prefNode_;
    private final String prefKey_;
    private final Prefs prefs_;
-   private final ScriptInterface gui_;
    private final String units_;
 
    /**
@@ -55,12 +52,11 @@ public class StoredFloatLabel extends JLabel {
     * @param units - string to be displayed after the float, usually containing units
     */
    public StoredFloatLabel(String prefNode, String prefKey, float defaultValue, 
-         Prefs prefs, ScriptInterface gui, String units) {               
+         Prefs prefs, String units) {
       super();
       prefNode_ = prefNode;
       prefKey_ = prefKey;
       prefs_ = prefs;
-      gui_ = gui;
       units_ = units;
       super.setText("" + (prefs_.getFloat(prefNode, prefKey, defaultValue)) + units);
    }
@@ -77,7 +73,7 @@ public class StoredFloatLabel extends JLabel {
             prefs_.putFloat(prefNode_, prefKey_,
                   ((Double) NumberUtils.displayStringToDouble(txt)).floatValue());
          } catch (ParseException e) {
-            gui_.showError(e, (Component) null);
+            MyDialogUtils.showError(e);
          }
       }
    }

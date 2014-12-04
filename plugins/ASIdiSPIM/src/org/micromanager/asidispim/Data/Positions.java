@@ -21,14 +21,13 @@
 
 package org.micromanager.asidispim.Data;
 
-import java.awt.Component;
 import java.awt.geom.Point2D;
 import java.util.HashMap;
 
 import mmcorej.CMMCore;
 
 import org.micromanager.api.ScriptInterface;
-import org.micromanager.asidispim.ASIdiSPIM;
+import org.micromanager.asidispim.Utils.MyDialogUtils;
 import org.micromanager.utils.NumberUtils;
 
 /**
@@ -143,7 +142,7 @@ public class Positions {
             return pt.y;
          }
       } catch (Exception ex) {
-         gui_.showError(ex, (Component) ASIdiSPIM.getFrame());
+         MyDialogUtils.showError(ex);
       }
       return 0;
    }
@@ -223,7 +222,7 @@ public class Positions {
             }
          }
       } catch (Exception ex) {
-         gui_.showError(ex, (Component) ASIdiSPIM.getFrame());
+         MyDialogUtils.showError(ex);
       }
    }
    
@@ -253,7 +252,7 @@ public class Positions {
             }
          }
       } catch (Exception ex) {
-         gui_.showError(ex, (Component) ASIdiSPIM.getFrame());
+         MyDialogUtils.showError(ex);
       }
    }
    
@@ -287,7 +286,7 @@ public class Positions {
             break;
          }
       } catch (Exception ex) {
-         gui_.showError(ex, (Component) ASIdiSPIM.getFrame());
+         MyDialogUtils.showError(ex);
       }
    }
 

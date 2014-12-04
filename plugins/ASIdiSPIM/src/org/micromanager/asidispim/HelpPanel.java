@@ -34,10 +34,9 @@ import javax.swing.event.HyperlinkListener;
 
 import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
+import org.micromanager.asidispim.Utils.MyDialogUtils;
 
 import net.miginfocom.swing.MigLayout;
-
-import org.micromanager.api.ScriptInterface;
 
 /**
  *
@@ -45,18 +44,15 @@ import org.micromanager.api.ScriptInterface;
  */
 @SuppressWarnings("serial")
 public class HelpPanel extends ListeningJPanel {
-   private final ScriptInterface gui_;
    /**
     * 
-    * @param gui -implementation of the Micro-Manager ScriptInterface api
     */
-   public HelpPanel(ScriptInterface gui) {    
+   public HelpPanel() {    
       super (MyStrings.PanelNames.HELP.toString(), 
             new MigLayout(
               "fill", 
               "[center]",
               "[]"));
-      gui_ = gui;
       final JTextPane textPane = new JTextPane();
       textPane.setEditable(false);
       textPane.setContentType("text/html");
@@ -73,9 +69,9 @@ public class HelpPanel extends ListeningJPanel {
                try {
                    Desktop.getDesktop().browse(new URI(hle.getURL().toString()));
                } catch (URISyntaxException ex) {
-                  gui_.showError("Could not open web browser.", ASIdiSPIM.getFrame()); 
+                  MyDialogUtils.showError("Could not open web browser."); 
                } catch (IOException ex) {
-                  gui_.showError("Could not open web browser.", ASIdiSPIM.getFrame());
+                  MyDialogUtils.showError("Could not open web browser.");
                }
 
            }

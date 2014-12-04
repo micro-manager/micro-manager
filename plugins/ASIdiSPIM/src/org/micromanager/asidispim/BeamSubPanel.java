@@ -76,7 +76,7 @@ public final class BeamSubPanel extends ListeningJPanel {
       props_ = props;
       instanceLabel_ = instanceLabel;
       
-      PanelUtils pu = new PanelUtils(gui, prefs_, props_, devices_);
+      PanelUtils pu = new PanelUtils(prefs_, props_, devices_);
       
       // check to see if we are on "neutral" side (NONE)
       // if so act like we are on side A but remember that so we can label accordingly

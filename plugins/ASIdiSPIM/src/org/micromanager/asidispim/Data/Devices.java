@@ -21,7 +21,6 @@
 
 package org.micromanager.asidispim.Data;
 
-import java.awt.Component;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -35,8 +34,8 @@ import mmcorej.DeviceType;
 import mmcorej.StrVector;
 
 import org.micromanager.api.ScriptInterface;
-import org.micromanager.asidispim.ASIdiSPIM;
 import org.micromanager.asidispim.Utils.DevicesListenerInterface;
+import org.micromanager.asidispim.Utils.MyDialogUtils;
 
 
 // TODO implement fast axis reverse checkbox (may need device adapter change and possibly even firmware-level change)
@@ -55,7 +54,6 @@ public class Devices {
 
    private List<String> loadedDevices_;
    private Prefs prefs_;
-   private ScriptInterface gui_;
    private CMMCore core_;
    private List<DevicesListenerInterface> listeners_;
    private boolean listenersEnabled_;
@@ -314,7 +312,7 @@ public class Devices {
                         + core_.getProperty(mmDevice, "AxisLetterY");
                }
             } catch (Exception ex) {
-               gui_.showError(ex, (Component) ASIdiSPIM.getFrame());
+               MyDialogUtils.showError(ex);
             }
          }
       }
@@ -700,7 +698,6 @@ public class Devices {
 
    public Devices(ScriptInterface gui, Prefs prefs) {
       prefs_ = prefs;
-      gui_ = gui;
       core_ = gui.getMMCore();
 
       // create synchronized version of data structure containing Device

@@ -22,7 +22,6 @@
 package org.micromanager.asidispim;
 
 
-import java.awt.Component;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -37,6 +36,7 @@ import org.micromanager.asidispim.Data.Positions;
 import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
+import org.micromanager.asidispim.Utils.MyDialogUtils;
 import org.micromanager.asidispim.Utils.PanelUtils;
 
 import javax.swing.JButton;
@@ -67,11 +67,9 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
    private final ScriptInterface gui_;
    private final CMMCore core_;
    
-   private final NavigationPanel navigationPanel_ = this;
    private final JoystickSubPanel joystickPanel_;
    private final CameraSubPanel cameraPanel_;
    private final BeamSubPanel beamPanel_;
-   
    
    private final JLabel xPositionLabel_;
    private final JLabel yPositionLabel_;
@@ -102,7 +100,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       cameras_ = cameras;
       gui_ = gui;
       core_ = gui_.getMMCore();
-      PanelUtils pu = new PanelUtils(gui_, prefs_, props_, devices_);
+      PanelUtils pu = new PanelUtils(prefs_, props_, devices_);
       
       joystickPanel_ = new JoystickSubPanel(joystick_, devices_, panelName_, Devices.Sides.NONE, prefs_);
       add(joystickPanel_, "span 2 4");  // make artificially tall to keep stage positions in line with each other
@@ -239,7 +237,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
                   core_.setSerialPortCommand(port, "\\",  "\r");
                }
             } catch (Exception ex) {
-               gui_.showError("could not halt motion", ASIdiSPIM.getFrame());
+               MyDialogUtils.showError("could not halt motion");
             }
          }
       });
@@ -268,7 +266,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
             try {
                positions_.setPosition(key_, dir_, 0.0);
             } catch (Exception ex) {
-               gui_.showError(ex, (Component) ASIdiSPIM.getFrame());
+               MyDialogUtils.showError(ex);
             }
          }
 
@@ -303,11 +301,9 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
          
          @Override
          public void actionPerformed(ActionEvent e) {
-            int dialogResult = JOptionPane.showConfirmDialog(navigationPanel_,
+            if (MyDialogUtils.getConfirmDialogResult(
                   "This will change the coordinate system.  Are you sure you want to proceed?",
-                  "Warning",
-                  JOptionPane.OK_CANCEL_OPTION);
-            if (dialogResult == JOptionPane.OK_OPTION) {
+                  JOptionPane.OK_CANCEL_OPTION)) {
                positions_.setOrigin(key_, dir_);
             }
          }
@@ -341,7 +337,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
                positions_.setPositionRelative(key_, dir_, 
                        ((Double)field_.getValue()) * scaleFactor_);
             } catch (Exception ex) {
-               gui_.showError(ex, (Component) ASIdiSPIM.getFrame());
+               MyDialogUtils.showError(ex);
             }
          }
 
