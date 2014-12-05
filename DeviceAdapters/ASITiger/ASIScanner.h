@@ -113,6 +113,7 @@ public:
    // SPIM properties
    int OnSPIMScansPerSlice    (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSPIMNumSlices        (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSPIMNumSlicesPerPiezo(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSPIMNumSides         (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSPIMFirstSide        (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSPIMScannerHomeEnable(MM::PropertyBase* pProp, MM::ActionType eAct);

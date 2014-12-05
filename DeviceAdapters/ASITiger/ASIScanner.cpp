@@ -442,6 +442,16 @@ int CScanner::Initialize()
          UpdateProperty(g_SPIMPiezoHomeEnable);
       }
 
+      if (firmwareVersion_ > 3.005)  // in 3.01 added setting to allow multiple slices per piezo movement
+      {
+         pAct = new CPropertyAction (this, &CScanner::OnSPIMNumSlicesPerPiezo);
+         CreateProperty(g_SPIMNumSlicesPerPiezoPropertyName, "1", MM::Integer, false, pAct);
+         UpdateProperty(g_SPIMNumSlicesPerPiezoPropertyName);
+      } else {
+         // create read-only property if version is too old
+         CreateProperty(g_SPIMNumSlicesPerPiezoPropertyName, "1", MM::Integer, true);
+      }
+
    }
 
    // add ring buffer properties if supported (starting 2.81)
@@ -2407,6 +2417,28 @@ int CScanner::OnSPIMNumSlices(MM::PropertyBase* pProp, MM::ActionType eAct)
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
       command << addressChar_ << "NR Y=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CScanner::OnSPIMNumSlicesPerPiezo(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   long tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "NR R?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A R="));
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << addressChar_ << "NR R=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;

@@ -282,7 +282,8 @@ const char* const g_RB_TriggerPropertyName = "RingBufferTrigger";
 const char* const g_RB_AutoplayRunningPropertyName = "RingBufferAutoplayRunning";
 
 // SPIM property names
-const char* const g_SPIMNumSlicesPropertyName = "SPIMNumSlices"; // used by both piezos and micromirror
+const char* const g_SPIMNumSlicesPropertyName = "SPIMNumSlices"; // used by both piezos and micromirror, would be more accurately named NumPiezoPositions because total number of slices is this times NumSlicesPerPiezo
+const char* const g_SPIMNumSlicesPerPiezoPropertyName = "SPIMNumSlicesPerPiezo";
 const char* const g_SPIMNumScansPerSlicePropertyName = "SPIMNumScansPerSlice";
 const char* const g_SPIMNumSidesPropertyName = "SPIMNumSides";
 const char* const g_SPIMFirstSidePropertyName = "SPIMFirstSide";
