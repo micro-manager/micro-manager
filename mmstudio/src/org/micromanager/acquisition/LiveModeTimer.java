@@ -224,58 +224,57 @@ public class LiveModeTimer {
 
    @SuppressWarnings("SleepWhileInLoop")
    public void begin() throws Exception {
-         if(running_) {
-            return;
-         }
+      if(running_) {
+         return;
+      }
 
-         core_.clearCircularBuffer();
-         try {
-            core_.startContinuousSequenceAcquisition(0);
-         }
-         catch (Exception e) {
-            ReportingUtils.showError("Unable to start the sequence acquisition: " + e);
-            throw(e);
-         }
-         setType();
-         long period = getInterval();
+      core_.clearCircularBuffer();
+      try {
+         core_.startContinuousSequenceAcquisition(0);
+      }
+      catch (Exception e) {
+         ReportingUtils.showError("Unable to start the sequence acquisition: " + e);
+         throw(e);
+      }
+      setType();
+      long period = getInterval();
 
-         // Wait for first image to create ImageWindow, so that we can be sure about image size
-         long start = System.currentTimeMillis();
-         long now = start;
-         long timeout = Math.min(10000, period * 150);
-         while (core_.getRemainingImageCount() == 0 && (now - start < timeout) ) {
-            now = System.currentTimeMillis();
-            Thread.sleep(5);
-         }
-         if (now - start >= timeout) {
-            throw new Exception("Camera did not send image within a reasonable time");
-         }
+      // Wait for first image to create ImageWindow, so that we can be sure about image size
+      long start = System.currentTimeMillis();
+      long now = start;
+      long timeout = Math.min(10000, period * 150);
+      while (core_.getRemainingImageCount() == 0 && (now - start < timeout) ) {
+         now = System.currentTimeMillis();
+         Thread.sleep(5);
+      }
+      if (now - start >= timeout) {
+         throw new Exception("Camera did not send image within a reasonable time");
+      }
 
-         TaggedImage timg = core_.getLastTaggedImage();
+      TaggedImage timg = core_.getLastTaggedImage();
 
-         // With first image acquired, create the display
-         snapLiveManager_.validateDisplayAndAcquisition(timg);
-         win_ = snapLiveManager_.getSnapLiveDisplay();
-         
-         fpsCounter_ = 0;
-         fpsTimer_ = System.currentTimeMillis();
-         imageNumber_ = MDUtils.getSequenceNumber(timg.tags);
-         oldImageNumber_ = imageNumber_;
+      // With first image acquired, create the display
+      snapLiveManager_.validateDisplayAndAcquisition(timg);
+      win_ = snapLiveManager_.getSnapLiveDisplay();
 
-         imageQueue_ = new LinkedBlockingQueue<TaggedImage>(10);
+      fpsCounter_ = 0;
+      fpsTimer_ = System.currentTimeMillis();
+      imageNumber_ = MDUtils.getSequenceNumber(timg.tags);
+      oldImageNumber_ = imageNumber_;
 
-         timerController_.start(task_, period);
+      imageQueue_ = new LinkedBlockingQueue<TaggedImage>(10);
 
-         win_.getImagePlus().getWindow().toFront();
-         running_ = true;
-         studio_.runDisplayThread(imageQueue_, displayImageRoutine_);
+      timerController_.start(task_, period);
+
+      win_.getImagePlus().getWindow().toFront();
+      running_ = true;
+      studio_.runDisplayThread(imageQueue_, displayImageRoutine_);
    }
 
-   
    public void stop() {
       stop(true);
    }
-   
+
    private void stop(boolean firstAttempt) {
       ReportingUtils.logMessage("Stop called in LivemodeTimer, " + firstAttempt);
 
