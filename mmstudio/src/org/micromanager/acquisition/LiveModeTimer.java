@@ -268,6 +268,14 @@ public class LiveModeTimer {
       }
 
       imageQueue_ = new LinkedBlockingQueue<TaggedImage>(10);
+      // XXX The logic here is very weird. We add this first image only if we
+      // are using a single camera, because the single camera timer code checks
+      // and eliminates duplicates of the same frame. For multi camera, we do
+      // not add the image, since no checks for duplicates are performed
+      // (which is a bug that needs to be fixed).
+      if (!multiCam_) {
+         imageQueue_.put(timg);
+      }
 
       timerController_.start(task_, period);
 
@@ -431,6 +439,9 @@ public class LiveModeTimer {
                               // XXX We do keep track of the image number, but
                               // we are currently ignoring the check for new
                               // images here (see the single camera version).
+                              // When fixing this, make sure to handle the
+                              // first frames correctly, even for very slow
+                              // acquisitions (see begin()).
                               setImageNumber(MDUtils.getSequenceNumber(ti.tags));
                            }
                            imageQueue_.put(ti);
