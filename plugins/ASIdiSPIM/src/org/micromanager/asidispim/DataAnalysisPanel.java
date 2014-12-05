@@ -30,6 +30,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import net.miginfocom.swing.MigLayout;
+import org.json.JSONObject;
 
 import org.micromanager.api.MMWindow;
 import org.micromanager.api.ScriptInterface;
@@ -40,6 +41,7 @@ import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.MyDialogUtils;
 import org.micromanager.asidispim.Utils.PanelUtils;
 import org.micromanager.utils.FileDialogs;
+import org.micromanager.utils.MDUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -431,6 +433,42 @@ public class DataAnalysisPanel extends ListeningJPanel {
                     imglib2Container.getLastChild() );
             imageLoader.appendChild(imglib2Container);
             
+            Element viewSetups = domTree.createElement("ViewSetups");
+            sequenceDescription.appendChild(viewSetups);
+            
+            JSONObject summary = mmW.getSummaryMetaData();
+            for (int angle = 0; angle < 2; angle++) {
+               Element viewSetup = createViewSetup (domTree, angle, 
+                       MDUtils.getPixelSizeUm(summary), 
+                       MDUtils.getPixelSizeUm(summary),
+                       MDUtils.getZStepUm(summary),
+                      "um");
+               viewSetups.appendChild(viewSetup);
+            }
+            
+            Element attrs = createAttributes(domTree, "illumination");
+            Element attr = createAttribute(domTree, "Illumination", "0", "0");
+            attrs.appendChild(attr);
+            viewSetups.appendChild(attrs);
+            attrs = createAttributes(domTree, "channel");
+            attr = createAttribute(domTree, "Channel", "0", "0");
+            attrs.appendChild(attr);
+            viewSetups.appendChild(attrs);
+            attrs = createAttributes(domTree, "angle");
+            attr = createAttribute(domTree, "Angle", "0", "0");
+            attrs.appendChild(attr);
+            attr = createAttribute(domTree, "Angle", "1", "90");
+            attrs.appendChild(attr);
+            viewSetups.appendChild(attrs);
+            
+            Element timePoints = domTree.createElement("TimePoints");
+            timePoints.setAttribute("type", "pattern");
+            Element intP = domTree.createElement("integerpattern");
+            intP.insertBefore(domTree.createTextNode("0-" + (mmW.getNumberOfFrames() -1) ), 
+                    intP.getLastChild() );
+            timePoints.appendChild(intP);
+            sequenceDescription.appendChild(timePoints);
+            
             // write out the DOM to an xml file
             TransformerFactory tFactory = TransformerFactory.newInstance();
             Transformer transformer = tFactory.newTransformer();
@@ -442,6 +480,60 @@ public class DataAnalysisPanel extends ListeningJPanel {
       return null;
       }
       
+      private Element createViewSetup(Document dom, int angle, double x, double y,
+                       double z, String unit) {
+         Element el = dom.createElement("ViewSetup");
+         
+         Element id = dom.createElement("id");
+         id.insertBefore(dom.createTextNode("" + angle), 
+            id.getLastChild() );
+         
+         Element voxelSize = dom.createElement("voxelSize");
+         el.appendChild(voxelSize);
+         
+         Element u = dom.createElement("unit");
+         u.insertBefore(dom.createTextNode("um"), 
+                    u.getLastChild() );
+         voxelSize.appendChild(u);
+         Element size = dom.createElement("size");
+         size.insertBefore(dom.createTextNode("" + Double.toString(x) + " " +
+                 Double.toString(y) + " " + Double.toString(z) ), 
+                 size.getLastChild() );
+         voxelSize.appendChild(size);
+         
+         Element attributes = dom.createElement("attributes");
+         el.appendChild(attributes);
+         Element ill = dom.createElement("illumination");
+         ill.insertBefore(dom.createTextNode("0"), ill.getLastChild() );
+         attributes.appendChild(ill);
+         Element ch = dom.createElement("channel");
+         ch.insertBefore(dom.createTextNode("0"), ch.getLastChild() );
+         attributes.appendChild(ch);
+         Element a = dom.createElement("angle");
+         a.insertBefore(dom.createTextNode("" + angle), a.getLastChild() );
+         attributes.appendChild(a);
+         
+         return el;
+      }
+      
+      private Element createAttribute (Document dom, String type, String id, 
+              String name) {
+         Element attr = dom.createElement(type);
+         Element idElement = dom.createElement("id");
+         idElement.insertBefore(dom.createTextNode(id), idElement.getLastChild() );
+         attr.appendChild(idElement);
+         Element nameElement = dom.createElement("name");
+         nameElement.insertBefore(dom.createTextNode(name), nameElement.getLastChild() );
+         attr.appendChild(nameElement);
+         
+         return attr;
+      }
+      
+      private Element createAttributes (Document dom, String name) {
+         Element attr = dom.createElement("Attributes");
+         attr.setAttribute("name", name);
+         return attr;
+      }
 
       @Override
       public void done() {
