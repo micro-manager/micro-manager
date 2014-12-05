@@ -27,6 +27,7 @@ import org.micromanager.asidispim.Data.Cameras;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.Joystick;
 import org.micromanager.asidispim.Data.MyStrings;
+import org.micromanager.asidispim.Data.Positions;
 import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Utils.DevicesListenerInterface;
@@ -103,6 +104,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final Joystick joystick_;
    private final Cameras cameras_;
    private final Prefs prefs_;
+   private final Positions positions_;
    private final CMMCore core_;
    private final ScriptInterface gui_;
    private final JCheckBox advancedSliceTimingCB_;
@@ -157,7 +159,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
            Joystick joystick,
            Cameras cameras, 
            Prefs prefs, 
-           StagePositionUpdater stagePosUpdater) {
+           StagePositionUpdater stagePosUpdater,
+           Positions positions) {
       super(MyStrings.PanelNames.ACQUSITION.toString(),
               new MigLayout(
               "",
@@ -170,6 +173,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       cameras_ = cameras;
       prefs_ = prefs;
       stagePosUpdater_ = stagePosUpdater;
+      positions_ = positions;
       core_ = gui_.getMMCore();
       numTimePointsDone_ = 0;
       
@@ -1603,6 +1607,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             Properties.Values.SAM_DISABLED, true);
       props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.SA_MODE_X,
             Properties.Values.SAM_DISABLED, true);
+
+      // move piezos back to center (neutral) position
+      if (devices_.isValidMMDevice(Devices.Keys.PIEZOA)) {
+         positions_.setPosition(Devices.Keys.PIEZOA, Joystick.Directions.NONE, 0.0);
+      }
+      if (devices_.isValidMMDevice(Devices.Keys.PIEZOB)) {
+         positions_.setPosition(Devices.Keys.PIEZOB, Joystick.Directions.NONE, 0.0);
+      }
       
       if (stop_.get()) {  // if user stopped us in middle
          numTimePointsDone_--;  
