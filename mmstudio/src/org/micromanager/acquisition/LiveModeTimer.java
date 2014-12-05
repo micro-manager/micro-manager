@@ -262,7 +262,7 @@ public class LiveModeTimer {
 
       synchronized (this) {
          fpsCounter_ = 0;
-         fpsTimer_ = System.currentTimeMillis();
+         fpsTimer_ = System.nanoTime();
          imageNumber_ = firstImageSequenceNumber;
          oldImageNumber_ = firstImageSequenceNumber;
       }
@@ -337,17 +337,19 @@ public class LiveModeTimer {
     * Updates the fps timer (how fast does the camera pump images into the 
     * circular buffer) and display fps (how fast do we display the images)
     * It is called from tasks that are doing the actual image drawing
-    * 
     */
-   public synchronized void updateFPS() {
+   private synchronized void updateFPS() {
       if (!running_)
          return;
+      if (imageNumber_ == oldImageNumber_) {
+         return;
+      }
       try {
          fpsCounter_++;
-         long now = System.currentTimeMillis();
-         long diff = now - fpsTimer_;
-         if (diff > fpsInterval_) {
-            double d = diff/ 1000.0;
+         long now = System.nanoTime();
+         long diffMs = (now - fpsTimer_) / 1000000;
+         if (diffMs > fpsInterval_) {
+            double d = diffMs / 1000.0;
             double fps = fpsCounter_ / d;
             double dfps = (imageNumber_ - oldImageNumber_) / d;
             win_.displayStatusLine("fps: " + format_.format(dfps) +
