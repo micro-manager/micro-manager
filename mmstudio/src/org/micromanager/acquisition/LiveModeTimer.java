@@ -52,10 +52,12 @@ public class LiveModeTimer {
    private MMStudio studio_;
    private SnapLiveManager snapLiveManager_;
    private int multiChannelCameraNrCh_;
-   private long fpsTimer_;
-   private long fpsCounter_;
-   private long imageNumber_;
-   private long oldImageNumber_;
+
+   private long fpsTimer_; // Guarded by this
+   private long fpsCounter_; // Guarded by this
+   private long imageNumber_; // Guarded by this
+   private long oldImageNumber_; // Guarded by this
+
    private long fpsInterval_ = 5000;
    private final NumberFormat format_;
    private boolean running_ = false;
@@ -256,11 +258,14 @@ public class LiveModeTimer {
       // With first image acquired, create the display
       snapLiveManager_.validateDisplayAndAcquisition(timg);
       win_ = snapLiveManager_.getSnapLiveDisplay();
+      long firstImageSequenceNumber = MDUtils.getSequenceNumber(timg.tags);
 
-      fpsCounter_ = 0;
-      fpsTimer_ = System.currentTimeMillis();
-      imageNumber_ = MDUtils.getSequenceNumber(timg.tags);
-      oldImageNumber_ = imageNumber_;
+      synchronized (this) {
+         fpsCounter_ = 0;
+         fpsTimer_ = System.currentTimeMillis();
+         imageNumber_ = firstImageSequenceNumber;
+         oldImageNumber_ = firstImageSequenceNumber;
+      }
 
       imageQueue_ = new LinkedBlockingQueue<TaggedImage>(10);
 
@@ -311,18 +316,22 @@ public class LiveModeTimer {
          }
       } 
    }
-   
+
    /**
     * Keep track of the last imagenumber, added by the circular buffer
     * that we have seen here
     * 
-    * @param imageNumber 
+    * @param imageNumber the new imagenumber
+    * @return true if imagenumber was incremented
     */
-   private synchronized void setImageNumber(long imageNumber) 
+   private synchronized boolean setImageNumber(long imageNumber)
    {
-      imageNumber_ = imageNumber;
+      if (imageNumber > imageNumber_) {
+         imageNumber_ = imageNumber;
+         return true;
+      }
+      return false;
    }
-           
 
    /**
     * Updates the fps timer (how fast does the camera pump images into the 
@@ -374,8 +383,7 @@ public class LiveModeTimer {
                   TaggedImage ti = core_.getLastTaggedImage();
                   // if we have already shown this image, do not do it again.
                   long imageNumber = MDUtils.getSequenceNumber(ti.tags);
-                  if (imageNumber > imageNumber_ ) {
-                     setImageNumber(imageNumber);
+                  if (setImageNumber(imageNumber)) {
                      imageQueue_.put(ti);
                   }
                } catch (final Exception ex) {
@@ -418,6 +426,9 @@ public class LiveModeTimer {
                            int ccIndex = ti.tags.getInt(camera + "-CameraChannelIndex");
                            MDUtils.setChannelIndex(ti.tags, ccIndex);
                            if (ccIndex == 0) {
+                              // XXX We do keep track of the image number, but
+                              // we are currently ignoring the check for new
+                              // images here (see the single camera version).
                               setImageNumber(MDUtils.getSequenceNumber(ti.tags));
                            }
                            imageQueue_.put(ti);
