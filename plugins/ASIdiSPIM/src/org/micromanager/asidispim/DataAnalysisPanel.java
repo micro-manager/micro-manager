@@ -405,7 +405,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
             String nrTimepoints = "" + mmW.getNumberOfFrames();
             Element layoutTimepoints = domTree.createElement("layoutTimepoints");
             layoutTimepoints.insertBefore(domTree.createTextNode
-                  (nrTimepoints), layoutTimepoints.getLastChild() );
+                  ("1"), layoutTimepoints.getLastChild() );
             imageLoader.appendChild(layoutTimepoints);
             
             // note, once we add channels, the file name pattern should also change
@@ -461,13 +461,28 @@ public class DataAnalysisPanel extends ListeningJPanel {
             attrs.appendChild(attr);
             viewSetups.appendChild(attrs);
             
-            Element timePoints = domTree.createElement("TimePoints");
+            Element timePoints = domTree.createElement("Timepoints");
             timePoints.setAttribute("type", "pattern");
             Element intP = domTree.createElement("integerpattern");
             intP.insertBefore(domTree.createTextNode("0-" + (mmW.getNumberOfFrames() -1) ), 
                     intP.getLastChild() );
             timePoints.appendChild(intP);
             sequenceDescription.appendChild(timePoints);
+            
+            Element viewRegistrations = domTree.createElement("ViewRegistrations");
+            for (int t=0; t < mmW.getNumberOfFrames(); t++) {
+               for (int angle=0; angle < 2; angle++) {
+                  Element viewRegistration = getViewRegistration(domTree, t, 
+                        angle, MDUtils.getPixelSizeUm(summary),
+                        MDUtils.getZStepUm(summary)
+                  );
+                  viewRegistrations.appendChild(viewRegistration);
+               }
+            }
+            spimData.appendChild(viewRegistrations);
+            
+            Element viewInterestPoints = domTree.createElement("ViewInterestPoints");
+            spimData.appendChild(viewInterestPoints);
             
             // write out the DOM to an xml file
             TransformerFactory tFactory = TransformerFactory.newInstance();
@@ -487,6 +502,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
          Element id = dom.createElement("id");
          id.insertBefore(dom.createTextNode("" + angle), 
             id.getLastChild() );
+         el.appendChild(id);
          
          Element voxelSize = dom.createElement("voxelSize");
          el.appendChild(voxelSize);
@@ -535,6 +551,26 @@ public class DataAnalysisPanel extends ListeningJPanel {
          return attr;
       }
 
+      private Element getViewRegistration(Document dom, int t, int angle, 
+              double xUm, double zUm) {
+         Element elvr = dom.createElement("ViewRegistration");
+         elvr.setAttribute("timepoint" , "" + t);
+         elvr.setAttribute("setup", "" + angle);
+         Element elvt = dom.createElement("ViewTransform");
+         elvt.setAttribute("type", "affine");
+         elvr.appendChild(elvt);
+         Element name = dom.createElement("Name");
+         name.insertBefore(dom.createTextNode("calibration"), name.getLastChild());
+         elvt.appendChild(name);
+         Element affine = dom.createElement("affine");
+         String transform = "1.0 0.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 0.0 " + 
+                 zUm/xUm + " 0.0";
+         affine.insertBefore(dom.createTextNode(transform), affine.getLastChild());
+         elvt.appendChild(affine);
+         
+         return elvr;
+      }
+      
       @Override
       public void done() {
          setCursor(null);
