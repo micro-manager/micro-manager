@@ -437,11 +437,13 @@ public class DataAnalysisPanel extends ListeningJPanel {
             sequenceDescription.appendChild(viewSetups);
             
             JSONObject summary = mmW.getSummaryMetaData();
+            // woraround bug: z step is sometimes only present in per image data
+            JSONObject imageTags = mmW.getImageMetadata(0,0,0,0);
             for (int angle = 0; angle < 2; angle++) {
                Element viewSetup = createViewSetup (domTree, angle, 
                        MDUtils.getPixelSizeUm(summary), 
                        MDUtils.getPixelSizeUm(summary),
-                       MDUtils.getZStepUm(summary),
+                       MDUtils.getZStepUm(imageTags),
                       "um");
                viewSetups.appendChild(viewSetup);
             }
@@ -474,7 +476,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
                for (int angle=0; angle < 2; angle++) {
                   Element viewRegistration = getViewRegistration(domTree, t, 
                         angle, MDUtils.getPixelSizeUm(summary),
-                        MDUtils.getZStepUm(summary)
+                        MDUtils.getZStepUm(imageTags)
                   );
                   viewRegistrations.appendChild(viewRegistration);
                }
