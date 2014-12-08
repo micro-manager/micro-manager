@@ -592,7 +592,7 @@ public class PanelUtils {
       }
       
       JCheckBox jc = new JCheckBox(label, 
-            prefs_.getBoolean(prefNode, propKey, false));
+            prefs_.getBoolean(prefNode, prefKey, false));
       checkBoxListener l = new checkBoxListener(jc, offValue, onValue, devKey, propKey, prefNode, prefKey);
       jc.addItemListener(l);
       devices_.addListener(l);

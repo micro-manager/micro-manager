@@ -169,8 +169,8 @@ public final class BeamSubPanel extends ListeningJPanel {
    
    
    /**
-   * Should be called when enclosing panel gets focus (need to call in gotSelected() function of enclosing frame).
-   * Includes first time if the frame is selected initially.
+   * Called when enclosing panel gets focus (need to call in gotSelected() function of enclosing frame).
+   * Includes on plugin open if that frame was open the last time the plugin was run. 
    */ 
    @Override
   public void gotSelected() {
@@ -225,7 +225,8 @@ public final class BeamSubPanel extends ListeningJPanel {
    
    @Override
    public void saveSettings() {
-
+      prefs_.putBoolean(instanceLabel_, Prefs.Keys.ENABLE_BEAM_SETTINGS, updateOnTab_.isSelected());
+      // other 4 settings are updated on checkbox click instead of here
    }
    
    

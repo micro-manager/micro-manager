@@ -64,7 +64,7 @@ public class Prefs {
       SHEET_BEAM_ENABLED("SheetBeamEnabled"),
       SHEET_SCAN_ENABLED("SheetScanEnabled"),
       EPI_BEAM_ENABLED("EpiBeamEnabled"),
-      EPI_SCAN_ENABLED("EpiBeamEnabled"),
+      EPI_SCAN_ENABLED("EpiScanEnabled"),
       ENABLE_BEAM_SETTINGS("EnableBeamSettings"),
       SPIM_EXPOSURE("AcquisitionExposure"),
       POSITION_REFRESH_INTERVAL("PositionRefreshInterval"),
