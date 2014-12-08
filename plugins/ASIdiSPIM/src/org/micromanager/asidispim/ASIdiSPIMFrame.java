@@ -126,14 +126,14 @@ public class ASIdiSPIMFrame extends MMFrame
       // only use addLTab, not addTab to guarantee this
       tabbedPane_ = new ListeningJTabbedPane();
       tabbedPane_.setTabPlacement(JTabbedPane.LEFT);
-      tabbedPane_.addLTab(navigationPanel_);
-      tabbedPane_.addLTab(setupPanelA_);
-      tabbedPane_.addLTab(setupPanelB_);
-      tabbedPane_.addLTab(acquisitionPanel_);
-      tabbedPane_.addLTab(dataAnalysisPanel_);    
-      tabbedPane_.addLTab(devicesPanel_);
-      tabbedPane_.addLTab(settingsPanel_);
-      tabbedPane_.addLTab(helpPanel_);
+      tabbedPane_.addLTab(navigationPanel_);  // tabIndex = 0
+      tabbedPane_.addLTab(setupPanelA_);      // tabIndex = 1
+      tabbedPane_.addLTab(setupPanelB_);      // tabIndex = 2
+      tabbedPane_.addLTab(acquisitionPanel_); // tabIndex = 3
+      tabbedPane_.addLTab(dataAnalysisPanel_);// tabIndex = 4
+      tabbedPane_.addLTab(devicesPanel_);     // tabIndex = 5
+      tabbedPane_.addLTab(settingsPanel_);    // tabIndex = 6
+      tabbedPane_.addLTab(helpPanel_);        // tabIndex = 7
 
       // attach position updaters
       stagePosUpdater_.addPanel(setupPanelA_);
@@ -160,6 +160,7 @@ public class ASIdiSPIMFrame extends MMFrame
       this.loadAndRestorePosition(100, 100, WIDTH, WIDTH);
     
       // gotSelected will be called because we put this after adding the ChangeListener
+      tabbedPane_.setSelectedIndex(7);  // setSelectedIndex(0) just after initialization doesn't fire ChangeListener, so switch to help panel first
       tabbedPane_.setSelectedIndex(prefs_.getInt(MAIN_PREF_NODE, Prefs.Keys.TAB_INDEX, 5));  // default to devicesPanel_
 
       // set up the window
