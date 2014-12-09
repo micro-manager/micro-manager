@@ -66,7 +66,6 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    private final Prefs prefs_;
    private final ScriptInterface gui_;
    private final CMMCore core_;
-   private String port_;  // needed to send serial commands directly
    private final JoystickSubPanel joystickPanel_;
    private final CameraSubPanel cameraPanel_;
    private final BeamSubPanel beamPanel_;
@@ -115,9 +114,6 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       piezoImagingDeviceKey_ = Devices.getSideSpecificKey(Devices.Keys.PIEZOA, side);
       piezoIlluminationDeviceKey_ = Devices.getSideSpecificKey(Devices.Keys.PIEZOA, Devices.getOppositeSide(side));
       micromirrorDeviceKey_ = Devices.getSideSpecificKey(Devices.Keys.GALVOA, side);
-
-      port_ = null;
-      updatePort();
 
       sheetStartPositionLabel_ = new StoredFloatLabel(panelName_, 
               Properties.Keys.PLUGIN_SHEET_START_POS.toString(), -1,
@@ -391,17 +387,9 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       tmp_but.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            String letter = "";
-            updatePort();
-            if (port_ == null) {
-               return;
-            }
-            try {
-               letter = props_.getPropValueString(piezoIlluminationDeviceKey_,
-                     Properties.Keys.AXIS_LETTER);
-               core_.setSerialPortCommand(port_, "HM " + letter + "+", "\r");
-            } catch (Exception ex) {
-               MyDialogUtils.showError("could not execute core function set home here for axis " + letter);
+            if (devices_.isValidMMDevice(piezoIlluminationDeviceKey_)) {
+               props_.setPropValue(piezoIlluminationDeviceKey_,
+                     Properties.Keys.SET_HOME_HERE, Properties.Values.DO_IT);
             }
          }
       });
@@ -413,17 +401,9 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       tmp_but.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            String letter = "";
-            updatePort();
-            if (port_ == null) {
-               return;
-            }
-            try {
-               letter = props_.getPropValueString(piezoIlluminationDeviceKey_,
-                     Properties.Keys.AXIS_LETTER);
-               core_.setSerialPortCommand(port_, "! " + letter, "\r");
-            } catch (Exception ex) {
-               MyDialogUtils.showError("could not execute core function move to home for axis " + letter);
+            if (devices_.isValidMMDevice(piezoIlluminationDeviceKey_)) {
+               props_.setPropValue(piezoIlluminationDeviceKey_,
+                     Properties.Keys.MOVE_TO_HOME, Properties.Values.DO_IT);
             }
          }
       });
@@ -530,29 +510,6 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       return jb;
    }
 
-   /**
-    * finds the appropriate COM port, because we have to send "home" (!) and
-    * "sethome" (HM) commands "manually" over serial since the right API calls
-    * don't yet exist // TODO pester Nico et al. for API
-    *
-    * @return true if port is valid, false if not
-    */
-   private void updatePort() {
-      if (port_ != null) {  // if we've already found it then skip
-         return;
-      }
-      try {
-         String mmDevice = devices_.getMMDevice(piezoIlluminationDeviceKey_);
-         if (mmDevice == null) {
-            return;
-         }
-         String hubname = core_.getParentLabel(mmDevice);
-         port_ = core_.getProperty(hubname, Properties.Keys.SERIAL_COM_PORT.toString());
-      } catch (Exception ex) {
-         MyDialogUtils.showError("Could not get COM port in SetupPanel constructor.");
-      }
-   }
-
    @Override
    public void saveSettings() {
       beamPanel_.saveSettings();
@@ -591,20 +548,10 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       props_.callListeners();
 
       // moves illumination piezo to home
-      // TODO do this more elegantly (ideally MM API would add Home() function)
-      String letter = "";
-      updatePort();
-      if (port_ != null && illumPiezoHomeEnable_.isSelected()) {
-         try {
-            letter = props_.getPropValueString(piezoIlluminationDeviceKey_,
-                  Properties.Keys.AXIS_LETTER);
-            core_.setSerialPortCommand(port_, "! " + letter, "\r");
-            // we need to read the answer or we can get in trouble later on
-            // It would be nice to check the answer
-            core_.getSerialPortAnswer(port_, "\r\n");
-         } catch (Exception ex) {
-            MyDialogUtils.showError("could not execute core function move to home for axis " + letter);
-         }
+      if (illumPiezoHomeEnable_.isSelected() && 
+            devices_.isValidMMDevice(piezoIlluminationDeviceKey_)) {
+         props_.setPropValue(piezoIlluminationDeviceKey_,
+               Properties.Keys.MOVE_TO_HOME, Properties.Values.DO_IT);
       }
       
       // set scan waveform to be triangle

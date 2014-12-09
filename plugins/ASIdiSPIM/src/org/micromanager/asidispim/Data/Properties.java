@@ -104,6 +104,8 @@ public class Properties {
       SAVE_CARD_SETTINGS("SaveCardSettings"),
       INPUT_MODE("InputMode"),
       PIEZO_MODE("PiezoMode"),
+      MOVE_TO_HOME("MoveToHome"),
+      SET_HOME_HERE("SetHomeToCurrentPosition"),
       TRIGGER_SOURCE("TRIGGER SOURCE"),   // for Hamamatsu
       TRIGGER_POLARITY("TriggerPolarity"),// for Hamamatsu
       TRIGGER_ACTIVE("TRIGGER ACTIVE"),   // for Hamamatsu
