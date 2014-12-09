@@ -21,6 +21,8 @@
 
 package org.micromanager.asidispim;
 
+import net.miginfocom.swing.MigLayout;
+
 import org.micromanager.asidispim.Data.Cameras;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.Joystick;
@@ -30,6 +32,7 @@ import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.ListeningJTabbedPane;
 
+import java.awt.Container;
 import java.util.prefs.Preferences;
 
 import javax.swing.JTabbedPane;
@@ -84,6 +87,7 @@ public class ASIdiSPIMFrame extends MMFrame
    private final SettingsPanel settingsPanel_;
    private final DataAnalysisPanel dataAnalysisPanel_;
    private final HelpPanel helpPanel_;
+   private final StatusSubPanel statusSubPanel_;
    private final StagePositionUpdater stagePosUpdater_;
    private final ListeningJTabbedPane tabbedPane_;
    
@@ -120,6 +124,7 @@ public class ASIdiSPIMFrame extends MMFrame
       settingsPanel_ = new SettingsPanel(devices_, props_, prefs_, stagePosUpdater_);
       stagePosUpdater_.oneTimeUpdate();  // needed for NavigationPanel
       helpPanel_ = new HelpPanel();
+      statusSubPanel_ = new StatusSubPanel(devices_, props_, positions_, stagePosUpdater_);
       
       // now add tabs to GUI
       // all added tabs must be of type ListeningJPanel
@@ -139,6 +144,7 @@ public class ASIdiSPIMFrame extends MMFrame
       stagePosUpdater_.addPanel(setupPanelA_);
       stagePosUpdater_.addPanel(setupPanelB_);
       stagePosUpdater_.addPanel(navigationPanel_);
+      stagePosUpdater_.addPanel(statusSubPanel_);
 
       // attach live mode listeners
       MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) setupPanelB_);
@@ -161,7 +167,7 @@ public class ASIdiSPIMFrame extends MMFrame
     
       // gotSelected will be called because we put this after adding the ChangeListener
       tabbedPane_.setSelectedIndex(7);  // setSelectedIndex(0) just after initialization doesn't fire ChangeListener, so switch to help panel first
-      tabbedPane_.setSelectedIndex(prefs_.getInt(MAIN_PREF_NODE, Prefs.Keys.TAB_INDEX, 5));  // default to devicesPanel_
+      tabbedPane_.setSelectedIndex(prefs_.getInt(MAIN_PREF_NODE, Prefs.Keys.TAB_INDEX, 5));  // default to devicesPanel_ on first run
 
       // set up the window
       add(tabbedPane_);  // add the pane to the GUI window
@@ -170,6 +176,7 @@ public class ASIdiSPIMFrame extends MMFrame
       setResizable(false);
       
       // take care of shutdown tasks when window is closed
+      // TODO figure out if we really need this with dispose method below
       addWindowListener(new java.awt.event.WindowAdapter() {
          @Override
          public void windowClosing(java.awt.event.WindowEvent evt) {
@@ -177,8 +184,17 @@ public class ASIdiSPIMFrame extends MMFrame
             stagePosUpdater_.stop();
             saveSettings();
          }
-
       });
+      
+      
+      // add status panel as an overlay that is visible from all tabs
+      Container glassPane = (Container) getGlassPane();
+      glassPane.setVisible(true);
+      glassPane.setLayout(new MigLayout(
+            "",
+            "[" + this.getWidth() + "]",
+            "[" + this.getHeight() + "]"));
+      glassPane.add(statusSubPanel_, "dock south");
       
    }
    

@@ -42,6 +42,7 @@ public class MyStrings {
      BEAM_SUBPANEL("Beam_"),
      CAMERA_SUBPANEL("Camera_"),
      JOYSTICK_SUBPANEL("Joystick_"),
+     STATUS_SUBPANEL("Status_")
       ;
       private final String text;
       PanelNames(String text) {
