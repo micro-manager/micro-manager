@@ -240,13 +240,13 @@ int CPiezo::Initialize()
 
    // overshoot and max time applicable to mode 4, which became available in firmware 2.8
    pAct = new CPropertyAction (this, &CPiezo::OnModeFourOvershoot);
-   CreateProperty(g_PiezoModeFourOvershoot, "100", MM::Integer, false, pAct);
-   UpdateProperty(g_PiezoModeFourOvershoot);
-   SetPropertyLimits(g_PiezoModeFourOvershoot, 0, 400);
+   CreateProperty(g_PiezoModeFourOvershootPropertyName, "100", MM::Integer, false, pAct);
+   UpdateProperty(g_PiezoModeFourOvershootPropertyName);
+   SetPropertyLimits(g_PiezoModeFourOvershootPropertyName, 0, 400);
    pAct = new CPropertyAction (this, &CPiezo::OnModeFourMaxTime);
-   CreateProperty(g_PiezoModeFourMaxTime, "10", MM::Integer, false, pAct);
-   UpdateProperty(g_PiezoModeFourMaxTime);
-   SetPropertyLimits(g_PiezoModeFourMaxTime, 0, 50);
+   CreateProperty(g_PiezoModeFourMaxTimePropertyName, "10", MM::Integer, false, pAct);
+   UpdateProperty(g_PiezoModeFourMaxTimePropertyName);
+   SetPropertyLimits(g_PiezoModeFourMaxTimePropertyName, 0, 50);
 
    // "do it" property to set home position
    pAct = new CPropertyAction (this, &CPiezo::OnSetHomeHere);
@@ -263,6 +263,14 @@ int CPiezo::Initialize()
    AddAllowedValue(g_MoveToHomePropertyName, g_IdleState, 0);
    AddAllowedValue(g_MoveToHomePropertyName, g_DoItState, 1);
    AddAllowedValue(g_MoveToHomePropertyName, g_DoneState, 2);
+
+   // "do it" property to run piezo calibration (not normally required)
+   pAct = new CPropertyAction (this, &CPiezo::OnRunPiezoCalibration);
+   CreateProperty(g_RunPiezoCalibrationPropertyName, g_IdleState, MM::String, false, pAct);
+   UpdateProperty(g_RunPiezoCalibrationPropertyName);
+   AddAllowedValue(g_RunPiezoCalibrationPropertyName, g_IdleState, 0);
+   AddAllowedValue(g_RunPiezoCalibrationPropertyName, g_DoItState, 1);
+   AddAllowedValue(g_RunPiezoCalibrationPropertyName, g_DoneState, 2);
 
    // get build info so we can add optional properties
    build_info_type build;
@@ -1400,6 +1408,25 @@ int CPiezo::OnMoveToHome(MM::PropertyBase* pProp, MM::ActionType eAct)
          pProp->Set(g_DoneState);
          // set single-axis property to not running because firmware will do that
          SetProperty(g_SAModePropertyName, g_SAMode_0);
+      }
+   }
+   return DEVICE_OK;
+}
+
+int CPiezo::OnRunPiezoCalibration(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   if (eAct == MM::BeforeGet) {
+      pProp->Set(g_IdleState);
+   }
+   else  if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_DoItState) == 0)
+      {
+         command << addressChar_ << "PZC";
+         RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+         pProp->Set(g_DoneState);
       }
    }
    return DEVICE_OK;

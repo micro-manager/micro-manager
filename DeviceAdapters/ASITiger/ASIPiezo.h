@@ -84,6 +84,7 @@ public:
    int OnAxisPolarity         (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnModeFourOvershoot    (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnModeFourMaxTime      (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnRunPiezoCalibration  (MM::PropertyBase* pProp, MM::ActionType eAct);
    // single axis properties
    int OnSAAmplitude          (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSAOffset             (MM::PropertyBase* pProp, MM::ActionType eAct);

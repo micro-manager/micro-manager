@@ -226,8 +226,9 @@ const char* const g_ScannerTravelRangePropertyName = "ScannerTravelRange(deg)";
 const char* const g_CardVoltagePropertyName = "CardVoltage(V)"; // also used for micromirror
 const char* const g_PiezoModePropertyName = "PiezoMode";
 const char* const g_PiezoTravelRangePropertyName = "PiezoTravelRange(um)";
-const char* const g_PiezoModeFourOvershoot = "PiezoModeFourOvershoot(percent)";
-const char* const g_PiezoModeFourMaxTime = "PiezoModeFourMaxTime(ms)";
+const char* const g_PiezoModeFourOvershootPropertyName = "PiezoModeFourOvershoot(percent)";
+const char* const g_PiezoModeFourMaxTimePropertyName = "PiezoModeFourMaxTime(ms)";
+const char* const g_RunPiezoCalibrationPropertyName = "RunPiezoCalibration";
 
 // single axis property names
 const char* const g_AdvancedSAPropertiesPropertyName = "SingleAxisAdvancedPropertiesEnable";
