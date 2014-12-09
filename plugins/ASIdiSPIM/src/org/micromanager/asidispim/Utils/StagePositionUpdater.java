@@ -106,6 +106,9 @@ public class StagePositionUpdater {
       if (timer_ != null) {
          timer_.stop();
       }
+      for (ListeningJPanel panel : panels_) {
+         panel.stoppedStagePositions();
+      }
    }
    
    public boolean isRunning() {
@@ -119,12 +122,16 @@ public class StagePositionUpdater {
       acqRunning_.set(r);
    }
    
+   public boolean isAcqRunning() {
+      return acqRunning_.get();
+   }
+   
    /**
     * Updates the stage positions.  Called whenever the timer "dings", or can be called separately.
     * If acquisition is running then does nothing.
     */
    public void oneTimeUpdate() {
-         if (!acqRunning_.get()) {  // 
+      if (!acqRunning_.get()) {
          // update stage positions in devices
          positions_.refreshStagePositions();
          // notify listeners that positions are updated

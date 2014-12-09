@@ -63,6 +63,11 @@ public class ListeningJPanel extends JPanel {
    public void updateStagePositions() {};
    
    /**
+    * Called when stage position updates have stopped
+    */
+   public void stoppedStagePositions() {};
+   
+   /**
     * returns the name of the panel 
     * @return - panelName
     */

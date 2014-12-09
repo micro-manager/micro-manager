@@ -384,6 +384,9 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
 //      props_.callListeners();  // not used yet, only for SPIM Params
    }
    
+   /**
+    * Called whenever position updater has refreshed positions
+    */
    @Override
    public final void updateStagePositions() {
       xPositionLabel_.setText(positions_.getPositionString(Devices.Keys.XYSTAGE, Joystick.Directions.X));   
@@ -396,6 +399,23 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       galvoAyPositionLabel_.setText(positions_.getPositionString(Devices.Keys.GALVOA, Joystick.Directions.Y));
       galvoBxPositionLabel_.setText(positions_.getPositionString(Devices.Keys.GALVOB, Joystick.Directions.X));
       galvoByPositionLabel_.setText(positions_.getPositionString(Devices.Keys.GALVOB, Joystick.Directions.Y)); 
+   }
+   
+   /**
+    * Called whenever position updater stops
+    */
+   @Override
+   public final void stoppedStagePositions() {
+      xPositionLabel_.setText("");   
+      yPositionLabel_.setText("");
+      lowerZPositionLabel_.setText("");
+      upperZPositionLabel_.setText("");
+      piezoAPositionLabel_.setText("");
+      piezoBPositionLabel_.setText("");
+      galvoAxPositionLabel_.setText("");
+      galvoAyPositionLabel_.setText("");
+      galvoBxPositionLabel_.setText("");
+      galvoByPositionLabel_.setText("");
    }
    
    /**

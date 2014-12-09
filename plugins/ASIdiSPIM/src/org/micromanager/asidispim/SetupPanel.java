@@ -516,6 +516,9 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       // all other prefs are updated on button press instead of here
    }
 
+   /**
+    * Called whenever position updater has refreshed positions
+    */
    @Override
    public void updateStagePositions() {
       imagingPiezoPositionLabel_.setText(
@@ -524,6 +527,16 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
             positions_.getPositionString(piezoIlluminationDeviceKey_));
       sheetPositionLabel_.setText(
             positions_.getPositionString(micromirrorDeviceKey_, Joystick.Directions.Y));
+   }
+   
+   /**
+    * Called whenever position updater stops
+    */
+   @Override
+   public final void stoppedStagePositions() {
+      imagingPiezoPositionLabel_.setText("");
+      illuminationPiezoPositionLabel_.setText("");
+      sheetPositionLabel_.setText("");
    }
 
    /**
