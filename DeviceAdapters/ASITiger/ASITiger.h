@@ -141,6 +141,7 @@ const char* const g_AxisLetterXPropertyName = "AxisLetterX";
 const char* const g_AxisLetterYPropertyName = "AxisLetterY";
 const char* const g_AxisLetterPropertyName = "AxisLetter";
 const char* const g_SetHomeHerePropertyName = "SetHomeToCurrentPosition";
+const char* const g_MoveToHomePropertyName = "MoveToHome";
 const char* const g_AxisPolarity = "AxisPolarity";
 const char* const g_AxisPolarityX = "AxisPolarityX";
 const char* const g_AxisPolarityY = "AxisPolarityY";

@@ -256,6 +256,14 @@ int CPiezo::Initialize()
    AddAllowedValue(g_SetHomeHerePropertyName, g_DoItState, 1);
    AddAllowedValue(g_SetHomeHerePropertyName, g_DoneState, 2);
 
+   // "do it" property to go home
+   pAct = new CPropertyAction (this, &CPiezo::OnMoveToHome);
+   CreateProperty(g_MoveToHomePropertyName, g_IdleState, MM::String, false, pAct);
+   UpdateProperty(g_MoveToHomePropertyName);
+   AddAllowedValue(g_MoveToHomePropertyName, g_IdleState, 0);
+   AddAllowedValue(g_MoveToHomePropertyName, g_DoItState, 1);
+   AddAllowedValue(g_MoveToHomePropertyName, g_DoneState, 2);
+
    // get build info so we can add optional properties
    build_info_type build;
    RETURN_ON_MM_ERROR( hub_->GetBuildInfo(addressChar_, build) );
@@ -1369,6 +1377,25 @@ int CPiezo::OnSetHomeHere(MM::PropertyBase* pProp, MM::ActionType eAct)
       if (tmpstr.compare(g_DoItState) == 0)
       {
          command << "HM " << axisLetter_ << "+";
+         RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+         pProp->Set(g_DoneState);
+      }
+   }
+   return DEVICE_OK;
+}
+
+int CPiezo::OnMoveToHome(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   if (eAct == MM::BeforeGet) {
+      pProp->Set(g_IdleState);
+   }
+   else  if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_DoItState) == 0)
+      {
+         command << "! " << axisLetter_;
          RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
          pProp->Set(g_DoneState);
          // set single-axis property to not running because firmware will do that
