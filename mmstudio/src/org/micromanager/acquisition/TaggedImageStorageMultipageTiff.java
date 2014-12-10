@@ -402,6 +402,15 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
          //mkae sure all images have finished writing if they are on seperate thread 
          if (writingExecutor_ != null && !writingExecutor_.isShutdown()) {
             writingExecutor_.shutdown();
+            try {
+               //now that shutdown has been called, need to wait for tasks to finish
+               while (!writingExecutor_.awaitTermination(4, TimeUnit.SECONDS)) {
+                  ReportingUtils.logMessage("Waiting for image stack file finishing to complete");
+               }
+            } catch (InterruptedException e) {
+               ReportingUtils.logError("File finishing thread interrupted");
+               Thread.interrupted();
+            }
          }
       } catch (IOException ex) {
          ReportingUtils.logError(ex);
