@@ -22,7 +22,6 @@
 package org.micromanager.asidispim;
 
 import java.awt.Color;
-import java.awt.Graphics;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -54,7 +53,7 @@ public final class StatusSubPanel extends ListeningJPanel {
    private final ColorSquare galvoB_;
    private final ColorSquare piezoA_;
    private final ColorSquare piezoB_;
-     
+   
    /**
     * 
     */
@@ -99,30 +98,20 @@ public final class StatusSubPanel extends ListeningJPanel {
      
    }// constructor
    
+   
    /**
     * Private class to draw colored indicator.  Call setColor(Color c) to update.
     * @author Jon
     *
     */
    public class ColorSquare extends JPanel {
-      private Color color;
       
       public ColorSquare() {
-         color = Color.LIGHT_GRAY;
+         this.setBackground(Color.LIGHT_GRAY);
       }
       
       public void setColor(Color c) {
-         if (c != color) {
-            color = c;
-            repaint();
-         }
-      }
-
-      @Override
-      public void paintComponent(Graphics g) {
-         g.setColor(color);
-         g.fillRect(0, 0, this.getHeight(), this.getHeight());
-         
+         this.setBackground(c);
       }
    }
    
@@ -140,10 +129,6 @@ public final class StatusSubPanel extends ListeningJPanel {
          square.setColor(Color.LIGHT_GRAY);
          return;
       }
-      if (stagePosUpdater_.isAcqRunning()) {
-         square.setColor(Color.WHITE);
-         return;
-      }
       if (props_.getPropValueString(devKey, Properties.Keys.BEAM_ENABLED)
             .equals(Properties.Values.NO.toString())) {
          square.setColor(Color.BLACK);
@@ -154,7 +139,9 @@ public final class StatusSubPanel extends ListeningJPanel {
          square.setColor(Color.PINK);
          return;
       }
-      double displacement = Math.abs(positions_.getPosition(devKey, Joystick.Directions.X));
+      double displacement = Math.max(
+            Math.abs(positions_.getPosition(devKey, Joystick.Directions.X)),
+            Math.abs(positions_.getPosition(devKey, Joystick.Directions.Y)));
       if ( displacement < GALVO_CONSIDERED_CENTER) {
          square.setColor(Color.GREEN);
       } else if (displacement < GALVO_CLOSE_TO_CENTER) {
@@ -176,10 +163,6 @@ public final class StatusSubPanel extends ListeningJPanel {
       
       if (!devices_.isValidMMDevice(devKey)) {
          square.setColor(Color.LIGHT_GRAY);
-         return;
-      }
-      if (stagePosUpdater_.isAcqRunning()) {
-         square.setColor(Color.WHITE);
          return;
       }
       double displacement = Math.abs(positions_.getPosition(devKey, Joystick.Directions.NONE));
@@ -210,10 +193,11 @@ public final class StatusSubPanel extends ListeningJPanel {
     */
    @Override
    public final void stoppedStagePositions() {
-      galvoA_.setColor(Color.LIGHT_GRAY);
-      galvoB_.setColor(Color.LIGHT_GRAY);
-      piezoA_.setColor(Color.LIGHT_GRAY);
-      piezoB_.setColor(Color.LIGHT_GRAY);
+      Color c = stagePosUpdater_.isAcqRunning() ? Color.WHITE : Color.LIGHT_GRAY;
+      galvoA_.setColor(c);
+      galvoB_.setColor(c);
+      piezoA_.setColor(c);
+      piezoB_.setColor(c);
    }
    
 }

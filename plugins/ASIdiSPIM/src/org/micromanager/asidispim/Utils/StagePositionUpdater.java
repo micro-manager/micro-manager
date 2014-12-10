@@ -120,6 +120,11 @@ public class StagePositionUpdater {
    
    public void setAcqRunning(boolean r) {
       acqRunning_.set(r);
+      if (r & isRunning()) {
+         for (ListeningJPanel panel : panels_) {
+            panel.stoppedStagePositions();
+         }
+      }
    }
    
    public boolean isAcqRunning() {
