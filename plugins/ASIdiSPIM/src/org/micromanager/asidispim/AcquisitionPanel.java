@@ -727,10 +727,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     */
    private SliceTiming getTimingFromPeriodAndLightExposure(boolean showWarnings) {
       // uses algorithm Jon worked out in Octave code; each slice period goes like this:
-      // 1. camera readout time
+      // 1. camera readout time (none if in overlap mode)
       // 2. any extra delay time
       // 3. camera reset
       // 4. start scan and then turn on laser (the laser is off 0.25ms at the start and end of each scan)
+      //     (scan is shifted up in time to account for delay introduced by Bessel filter)
       
       final float scanLaserBufferTime = 0.25f;
       final Color foregroundColorOK = Color.BLACK;
@@ -775,12 +776,22 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // account for delay in scan position based on Bessel filter by starting the scan slightly earlier
       // than we otherwise would; delay is (empirically) ~0.33/(freq in kHz)
       // find better results adding 0.4/(freq in kHz) though
-      // group delay for bessel filter approx 1/w or ~0.16/freq, or half/third the empirical value
+      // group delay for bessel filter approx 1/w or ~0.16/freq, or half/third the empirical value (not sure why discrepancy)
       float scanFilterFreq = Math.max(props_.getPropValueFloat(Devices.Keys.GALVOA,  Properties.Keys.SCANNER_FILTER_X),
             props_.getPropValueFloat(Devices.Keys.GALVOB,  Properties.Keys.SCANNER_FILTER_X));
       float scanDelayFilter = 0;
       if (scanFilterFreq != 0) {
          scanDelayFilter = MyNumberUtils.roundToQuarterMs(0.4f/scanFilterFreq);
+      }
+      
+      // add 0.25ms to globalDelay if it is 0 and we are on overlap mode and scan has been shifted forward
+      // basically the last 0.25ms of scan time that would have determined the slice period isn't
+      //   there any more because the scan time is moved up  => add in the 0.25ms at the start of the slice
+      // in edge or level trigger mode the camera trig falling edge marks the end of the slice period
+      // not sure if PCO pseudo-overlap needs this, probably not because adding 0.25ms overhead in that case
+      if (MyNumberUtils.floatsEqual(cameraReadout_max, 0f)  // true iff overlap being used
+            && (scanDelayFilter > 0.01f)) {
+         globalDelay += 0.25f;
       }
       
       s.scanDelay = cameraReadout_max + globalDelay + cameraReset_max - scanDelayFilter;
@@ -791,6 +802,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       s.cameraDelay = cameraReadout_max + globalDelay;
       s.cameraDuration = cameraReset_max + scanPeriod;  // approx. same as exposure, can be used in bulb mode
       
+      
+      // change camera duration for overlap mode to be short trigger
+      // needed because exposure time is set by difference between pulses in this mode
       CameraModes.Keys cameraMode = CameraModes.getKeyFromPrefCode(
             prefs_.getInt(MyStrings.PanelNames.SETTINGS.toString(),
                   Properties.Keys.PLUGIN_CAMERA_MODE, 0));
