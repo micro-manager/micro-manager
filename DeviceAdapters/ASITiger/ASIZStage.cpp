@@ -202,6 +202,13 @@ int CZStage::Initialize()
    AddAllowedValue(g_JoystickSelectPropertyName, g_JSCode_22);
    AddAllowedValue(g_JoystickSelectPropertyName, g_JSCode_23);
 
+   // Motor enable/disable (MC)
+   pAct = new CPropertyAction (this, &CZStage::OnMotorControl);
+   CreateProperty(g_MotorControlPropertyName, g_OnState, MM::String, false, pAct);
+   UpdateProperty(g_MotorControlPropertyName);
+   AddAllowedValue(g_MotorControlPropertyName, g_OnState);
+   AddAllowedValue(g_MotorControlPropertyName, g_OffState);
+
    if (firmwareVersion_ > 2.865)  // changed behavior of JS F and T as of v2.87
    {
       // fast wheel speed (JS F) (per-card, not per-axis)
@@ -429,13 +436,6 @@ int CZStage::OnAdvancedProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
          pAct = new CPropertyAction (this, &CZStage::OnAZero);
          CreateProperty(g_AZeroXPropertyName, "0", MM::String, false, pAct);
          UpdateProperty(g_AZeroXPropertyName);
-
-         // Motor enable/disable (MC)
-         pAct = new CPropertyAction (this, &CZStage::OnMotorControl);
-         CreateProperty(g_MotorControlPropertyName, g_OnState, MM::String, false, pAct);
-         UpdateProperty(g_MotorControlPropertyName);
-         AddAllowedValue(g_MotorControlPropertyName, g_OnState);
-         AddAllowedValue(g_MotorControlPropertyName, g_OffState);
       }
    }
    return DEVICE_OK;
