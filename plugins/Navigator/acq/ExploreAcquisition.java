@@ -9,6 +9,7 @@ import java.awt.geom.Point2D;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import mmcorej.CMMCore;
+import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.micromanager.MMStudio;
@@ -24,12 +25,25 @@ public class ExploreAcquisition extends Acquisition {
    private final double zOrigin_;   
    private int lowestSliceIndex_ = 0, highestSliceIndex_ = 0;
 
-   public ExploreAcquisition(CustomAcqEngine eng, ExploreAcqSettings settings) {
+   public ExploreAcquisition(ExploreAcqSettings settings) {
       super(settings.zStep_);
       zTop_ = settings.zTop_;
       zBottom_ = settings.zBottom_;
       zOrigin_ = zTop_;
       initialize(settings.dir_, settings.name_);
+   }
+   
+   public void abort() {
+      //abort all pending events
+      events_.clear();
+      engineOutputQueue_.clear();
+      engineOutputQueue_.add(new TaggedImage(null, null));
+      imageSink_.waitToDie();
+      //image sink will call finish when it completes
+   }
+
+   public void finish() {
+      finished_ = true;
    }
 
    public void acquireTiles(int row1, int col1, int row2, int col2) {

@@ -65,6 +65,11 @@ public class DisplayOverlayer   {
       createSingleThreadExecutor();
    }
    
+   public void shutdown() {
+      executor_.shutdown();
+      executor_ = null;
+   }
+   
    private void createSingleThreadExecutor() {
       executor_ = new ThreadPoolExecutor(1,1,0,TimeUnit.MILLISECONDS,new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
          @Override

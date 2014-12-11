@@ -7,6 +7,7 @@ import acq.Acquisition;
 import acq.ExploreAcquisition;
 import acq.FixedAreaAcquisition;
 import acq.MultiResMultipageTiffStorage;
+import com.google.common.eventbus.Subscribe;
 import coordinates.PositionManager;
 import ij.CompositeImage;
 import ij.IJ;
@@ -28,6 +29,7 @@ import org.json.JSONObject;
 
 import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
 import org.micromanager.api.ImageCache;
+import org.micromanager.imagedisplay.DisplayWindow;
 import org.micromanager.imagedisplay.MMCompositeImage;
 
 
@@ -128,7 +130,24 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
       canvas_.requestFocus();
       activeDisplays_.add(this);
    }
-   
+
+   @Subscribe
+   public void onWindowClose(DisplayWindow.RequestToCloseEvent event) {
+     //abort acquisition if needed then call super method
+      if (!acq_.isFinished()) {
+         int result = JOptionPane.showConfirmDialog(null, "Finish acquisition?", "Finish Current Acquisition",JOptionPane.OK_CANCEL_OPTION);
+         if (result == JOptionPane.OK_OPTION) {
+            acq_.abort();
+         } else {
+            return;
+         }
+      }
+      overlayer_.shutdown();
+      activeDisplays_.remove(this);
+      
+      super.onWindowClose(event);
+   }
+
    public void setSurfaceDisplaySettings(boolean convexHull, boolean stagePos, boolean surf) {
       overlayer_.setSurfaceDisplayParams(convexHull, stagePos, surf);
       overlayer_.renderOverlay(true);
@@ -247,21 +266,6 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
    public void setMode(int mode) {
       mode_ = mode;
       drawOverlay(true);
-   }
-
-   @Override
-   public void imageReceived(TaggedImage taggedImage) {
-      try {
-         //TODO: can scrollbars be maniiulated to avoid this?
-         //duplicate so image storage doesnt see incorrect tags
-         JSONObject newTags = new JSONObject(taggedImage.tags.toString());
-         MDUtils.setPositionIndex(newTags, 0);
-         taggedImage = new TaggedImage(taggedImage.pix, newTags);
-      } catch (JSONException ex) {
-         ReportingUtils.showError("Couldn't manipulate image tags for display");
-      }
-      super.imageReceived(taggedImage);
-
    }
 
    private void redrawPixels(final boolean forcePaint) {
@@ -438,7 +442,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
    }
    
    public boolean acquisitionFinished() {
-      return ((FixedAreaAcquisition) acq_).isFinsihed();
+      return acq_.isFinished();
    }
    
    @Override

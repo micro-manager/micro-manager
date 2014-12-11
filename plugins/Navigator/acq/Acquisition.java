@@ -16,6 +16,7 @@ import org.micromanager.MMStudio;
 import org.micromanager.acquisition.MMAcquisition;
 import org.micromanager.acquisition.MMImageCache;
 import org.micromanager.api.ImageCache;
+import org.micromanager.api.ImageCacheListener;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
 
@@ -33,6 +34,7 @@ public abstract class Acquisition {
    protected BlockingQueue<AcquisitionEvent> events_;
    protected TaggedImageSink imageSink_;
    protected String pixelSizeConfig_;
+   protected volatile boolean finished_ = false;
 
 
    public Acquisition(double zStep) {
@@ -58,6 +60,17 @@ public abstract class Acquisition {
 
    public abstract int getDisplaySliceIndexFromZCoordinate(double z, int displayFrameIndex);
 
+   public boolean isFinished() {
+      return finished_;
+   }
+   
+   public abstract void abort();
+   
+  
+   public void finish() {
+      finished_ = true;
+   }
+   
    protected void initialize(String dir, String name) {
       int xOverlap = SettingsDialog.getOverlapX();
       int yOverlap = SettingsDialog.getOverlapY();
@@ -68,26 +81,11 @@ public abstract class Acquisition {
       JSONObject summaryMetadata = makeSummaryMD(1, (int) core_.getNumberOfCameraChannels(), name);
 //         JSONObject summaryMetadata = makeSummaryMD(1,2);
       MultiResMultipageTiffStorage storage = new MultiResMultipageTiffStorage(dir, true, summaryMetadata, xOverlap, yOverlap, pixelSizeConfig_);
-      ImageCache imageCache = new MMImageCache(storage) {
-
-         @Override
-         //TODO: is this needed?
-         public JSONObject getLastImageTags() {
-            //So that display doesnt show a position scrollbar when imaging finished
-            JSONObject newTags = null;
-            try {
-               newTags = new JSONObject(super.getLastImageTags().toString());
-               MDUtils.setPositionIndex(newTags, 0);
-            } catch (JSONException ex) {
-               ReportingUtils.showError("Unexpected JSON Error");
-            }
-            return newTags;
-         }
-      };
+      ImageCache imageCache = new MMImageCache(storage);
       imageCache.setSummaryMetadata(summaryMetadata);
       posManager_ = storage.getPositionManager();
       new DisplayPlus(imageCache, this, summaryMetadata, storage);
-      imageSink_ = new TaggedImageSink(engineOutputQueue_, imageCache);
+      imageSink_ = new TaggedImageSink(engineOutputQueue_, imageCache, this);
       imageSink_.start();
    }
    
@@ -109,10 +107,6 @@ public abstract class Acquisition {
 
    public void addImage(TaggedImage img) {
       engineOutputQueue_.add(img);
-   }
-
-   public void finish() {
-      engineOutputQueue_.add(new TaggedImage(null, null));
    }
 
    protected abstract JSONArray createInitialPositionList();

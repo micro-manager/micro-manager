@@ -58,7 +58,6 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
          mouseLocation = new Point(displayImageWidth_ /2, displayImageHeight_/2);
       } 
       
-      //TODO: add ability to arbitraily zoom out
       //If we haven't already gotten to this low of a resolution, create it
       while (downsampleIndex_ + numLevels >= multiResStorage_.getNumResLevels()) {
          boolean success = multiResStorage_.addLowerResolution();

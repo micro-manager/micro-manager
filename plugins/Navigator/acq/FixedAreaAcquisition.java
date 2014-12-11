@@ -9,10 +9,12 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import mmcorej.CMMCore;
+import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.micromanager.MMStudio;
 import org.micromanager.utils.MDUtils;
+import org.micromanager.utils.ReportingUtils;
 import surfacesandregions.Point3d;
 
 /**
@@ -23,7 +25,7 @@ public class FixedAreaAcquisition extends Acquisition {
    
    private static final int ACQUISITION_EVENT_BUFFER_SIZE = 100;
    
-   private volatile boolean paused_ = false, finished_ = false;
+   private volatile boolean paused_ = false;
    private FixedAreaAcquisitionSettings settings_;
    private Thread eventGeneratingThread_;
    private ArrayList<XYStagePosition> positions_;
@@ -33,6 +35,9 @@ public class FixedAreaAcquisition extends Acquisition {
     * Acquisition with fixed XY positions (although they can potentially all be
     * translated between time points Supports time points Z stacks that can
     * change at positions between time points
+    * 
+    * Acquisition engine manages a thread that reads events, fixed area acquisition
+    * has another thread that generates events
     */
    public FixedAreaAcquisition(FixedAreaAcquisitionSettings settings) {
       super(settings.zStep_);
@@ -43,9 +48,25 @@ public class FixedAreaAcquisition extends Acquisition {
       initialize(settings.dir_, settings.name_);
       createEventGenerator();
    }
-   
-   public boolean isFinsihed() {
-      return finished_;
+
+   /**
+    * abort acquisition. Block until successfully finished
+    */
+   public void abort() {
+      eventGeneratingThread_.interrupt();
+      try {
+         eventGeneratingThread_.join();
+      } catch (InterruptedException ex) {
+         //shouldn't happen
+         throw new RuntimeException("Abort request interrupted");
+      }
+      eventGeneratingThread_ = null;
+      engineOutputQueue_.clear();
+      //signal image sink that it is done
+      engineOutputQueue_.add(new TaggedImage(null, null));
+      //wait for image sink to drain
+      imageSink_.waitToDie();
+      //when image sink dies it will call finish
    }
    
    public boolean isPaused() {
@@ -79,12 +100,11 @@ public class FixedAreaAcquisition extends Acquisition {
                   try {
                      Thread.sleep(5);
                   } catch (InterruptedException ex) {
-                     Thread.interrupted();
+                     //thread has been interrupted due to abort request, return;
+                     return;
                   }
                }
                nextTimePointStartTime_ms_ = (long) (System.currentTimeMillis() + settings_.timePointInterval_ms_);
-
-               //TODO: check for interrupts for aborted acquisition
 
                for (int positionIndex = 0; positionIndex < positions_.size(); positionIndex++) {             
     
@@ -103,7 +123,8 @@ public class FixedAreaAcquisition extends Acquisition {
                         try {
                            Thread.sleep(5);
                         } catch (InterruptedException ex) {
-                           Thread.interrupted();
+                           //thread has been interrupted due to abort request, return;
+                           return;
                         }
                      }
                      
@@ -119,7 +140,11 @@ public class FixedAreaAcquisition extends Acquisition {
                      }
                      AcquisitionEvent event = new AcquisitionEvent(FixedAreaAcquisition.this, timeIndex, channelIndex, sliceIndex,
                              positionIndex, zPos, position.getCenter().x, position.getCenter().y);
-//                     System.out.println("Adding event: " + event);
+                     if (Thread.interrupted()) {
+                        //Acquisition has been aborted, clear pending events and return
+                        events_.clear();
+                        return;
+                     }
                      addEvent(event);
                      imageLabel = MDUtils.generateLabel(channelIndex, sliceIndex, timeIndex, positionIndex);
                   }
@@ -130,12 +155,15 @@ public class FixedAreaAcquisition extends Acquisition {
                   try {
                      Thread.sleep(5);
                   } catch (InterruptedException ex) {
-                     Thread.interrupted();
+                     //thread has been interrupted due to abort request, return;
+                     return;
                   }
                }
                //do end of timepoint stuff
                endOfTimePoint(timeIndex);
             }
+            //acquisition now finished, add null so acquisition engine will mark acquisition as finished
+            events_.add(null); 
          }
       });
       eventGeneratingThread_.start();

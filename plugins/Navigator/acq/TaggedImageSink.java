@@ -2,6 +2,8 @@ package acq;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import mmcorej.TaggedImage;
 import org.micromanager.acquisition.TaggedImageQueue;
 import org.micromanager.api.ImageCache;
@@ -18,19 +20,30 @@ public class TaggedImageSink  {
    private final BlockingQueue<TaggedImage> imageProducingQueue_;
    private ImageCache imageCache_ = null;
    private volatile String lastImageLabel_;
-
+   private Thread savingThread_;
+   private Acquisition acq_;
+   
    public TaggedImageSink(BlockingQueue<TaggedImage> imageProducingQueue,
-           ImageCache imageCache) {
+           ImageCache imageCache, Acquisition acq) {
       imageProducingQueue_ = imageProducingQueue;
       imageCache_ = imageCache;
+      acq_ = acq;
    }
    
    public String getLastImageLabel() {
       return lastImageLabel_;
    }
    
+   public void waitToDie() {
+      try {
+         savingThread_.join();
+      } catch (InterruptedException ex) {
+         throw new RuntimeException("saving Thread interrupted");
+      }
+   }
+   
    public void start() {
-      Thread savingThread = new Thread("tagged image sink thread") {
+      savingThread_ = new Thread("tagged image sink thread") {
 
          @Override
          public void run() {
@@ -45,8 +58,6 @@ public class TaggedImageSink  {
                      }
                      ++imageCount;
                      imageCache_.putImage(image); 
-                     //since MultiRes storage waits for writing to finish before returning, lastImageLabel_
-                     //will reflect only indicate images that have been fully written to disk
                      lastImageLabel_ = MDUtils.getLabel(image.tags);
                      }
                }
@@ -54,11 +65,12 @@ public class TaggedImageSink  {
                ReportingUtils.logError(ex2);
             }
             long t2 = System.currentTimeMillis();
-            ReportingUtils.logMessage(imageCount + " images stored in " + (t2 - t1) + " ms.");
+            ReportingUtils.logMessage(imageCount + " images stored in " + (t2 - t1) + " ms.");          
+            acq_.finish();
             imageCache_.finished();
          }
       };
-      savingThread.start();
+      savingThread_.start();
    }
 
 }

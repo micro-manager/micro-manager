@@ -373,6 +373,8 @@ public class GUI extends javax.swing.JFrame {
 
         numTimePointsLabel_.setText("Number");
 
+        numTimePointsSpinner_.setModel(new javax.swing.SpinnerNumberModel(Integer.valueOf(1), Integer.valueOf(1), null, Integer.valueOf(1)));
+
         timeIntervalTextField_.setText("jFormattedTextField1");
 
         javax.swing.GroupLayout timePointsPanel_Layout = new javax.swing.GroupLayout(timePointsPanel_);

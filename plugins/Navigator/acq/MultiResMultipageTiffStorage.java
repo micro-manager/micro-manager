@@ -13,6 +13,8 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import mmcorej.TaggedImage;
@@ -43,8 +45,10 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
    private String directory_;
    private JSONObject summaryMD_;
    private int xOverlap_, yOverlap_;
+   private int fullResImageWidth_, fullResImageHeight_;
    private int tileWidth_, tileHeight_; //Indpendent of zoom level because tile sizes stay the same--which means overlap is cut off
    private PositionManager posManager_;
+   private boolean finished_ = false;
 
    public MultiResMultipageTiffStorage(String dir, boolean newDataSet, JSONObject summaryMetadata,
            int overlapX, int overlapY, String pixelSizeConfig) {
@@ -53,8 +57,10 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
          yOverlap_ = overlapY;
          if (summaryMetadata != null) {
             try {
-               tileWidth_ = MDUtils.getWidth(summaryMetadata) - xOverlap_;
-               tileHeight_ = MDUtils.getHeight(summaryMetadata) - yOverlap_;
+               fullResImageWidth_ = MDUtils.getWidth(summaryMetadata);
+               fullResImageHeight_ = MDUtils.getHeight(summaryMetadata);
+               tileWidth_ = fullResImageWidth_ - xOverlap_;
+               tileHeight_ = fullResImageHeight_ - yOverlap_;
             } catch (Exception e) {
                ReportingUtils.showError("Problem with Image tags");
             }
@@ -177,9 +183,8 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
       for (int col = colStart; col < colStart + lineWidths.size(); col++) {
          int yOffset = 0;
          for (int row = rowStart; row < rowStart + lineHeights.size(); row++) {
-            TaggedImage tile = null;
+            TaggedImage tile = null;          
             if (dsIndex == 0) {
-               //TODO: offset for overlap
                tile = fullResStorage_.getImage(channel, slice, frame, posManager_.getPositionIndexFromTilePosition(dsIndex, row, col));
             } else {
                tile = lowResStorages_.get(dsIndex).getImage(channel, slice, frame, posManager_.getPositionIndexFromTilePosition(dsIndex, row, col));
@@ -201,7 +206,6 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
             }
             //Copy pixels into the image to be returned
             //yOffset is how many rows from top of viewable area, y is top of image to top of area
-
             for (int line = yOffset; line < lineHeights.get(row - rowStart) + yOffset; line++) {
                int tileYPix = (y + line) % tileHeight_;
                int tileXPix = (x + xOffset) % tileWidth_;                   
@@ -213,7 +217,14 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
                   tileYPix += tileHeight_;
                }
                try {
-                  System.arraycopy(tile.pix, tileYPix * tileWidth_ + tileXPix, pixels, xOffset + width * line, lineWidths.get(col - colStart));
+                  if (dsIndex == 0) {
+                     //account for overlaps when viewing full resolution tiles
+                     tileYPix += yOverlap_ / 2;
+                     tileXPix += xOverlap_ / 2;
+                     System.arraycopy(tile.pix, tileYPix * fullResImageWidth_ + tileXPix, pixels, xOffset + width * line, lineWidths.get(col - colStart));                 
+                  } else {
+                     System.arraycopy(tile.pix, tileYPix * tileWidth_ + tileXPix, pixels, xOffset + width * line, lineWidths.get(col - colStart));
+                  }
                } catch (Exception e) {
                   e.printStackTrace();
                   ReportingUtils.showError("Problem copying pixels");
@@ -265,10 +276,6 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
          ReportingUtils.showError("Couldn't find tags");
       }
 
-      //add offsets to account for overlap pixels at resolution level 0
-      //TODO: actually make these functional
-      int xOffset = xOverlap_ / 2;
-      int yOffset = yOverlap_ / 2;
       byte[] previousLevelPix = (byte[]) img.pix;
       int resolutionIndex = imageResIndex + 1;
       
@@ -305,40 +312,65 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
          //Determine which position in 2x2 this tile sits in
          int xPos = (int) Math.abs((posManager_.getGridCol(fullResPositionIndex, resolutionIndex - 1) % 2));
          int yPos = (int) Math.abs((posManager_.getGridRow(fullResPositionIndex, resolutionIndex - 1) % 2));
-         //Add one if top or left so border pixels from and odd length image get added in
+         //Add one if top or left so border pixels from an odd length image gets added in
          for (int x = 0; x < tileWidth_; x += 2) { //iterate over previous res level pixels
             for (int y = 0; y < tileHeight_; y += 2) {
                //average a square of 4 pixels from previous level
                //edges: if odd number of pixels in tile, round to determine which
                //tiles pixels make it to next res level
                int count = 1; //count is number of pixels (out of 4)
-               //always take top left pxel, maybe take others depending on whether at image edge
+               int pixelX, pixelY;
+               if ( resolutionIndex == 1 ) {                  
+                  //add offsets to account for overlap pixels at resolution level 0
+                  pixelX = x + xOverlap_ / 2;
+                  pixelY = y + yOverlap_ /2;
+               } else {
+                  pixelX = x;
+                  pixelY = y;
+               }
+               
+               //always take top left pixel, maybe take others depending on whether at image edge
                int sum = previousLevelPix[y * tileWidth_ + x] & 0xff;
-               if (x != tileWidth_ && y != tileHeight_) {
+               //pixel index can be different from index in tile at resolution level 0 if there is nonzero overlap
+               int previousLevelWidth;
+               if (resolutionIndex == 1) {
+                  previousLevelWidth = fullResImageWidth_;
+               } else {
+                  previousLevelWidth = tileWidth_;
+               }
+               if (x < tileWidth_ - 1 && y < tileHeight_ - 1) {
                   count += 3;
-                  sum += (previousLevelPix[(y + 1) * tileWidth_ + x + 1] & 0xff) +
-                          (previousLevelPix[y * tileWidth_ + x + 1] & 0xff) +
-                          (previousLevelPix[(y + 1) * tileWidth_ + x] & 0xff);
-               } else if (x != tileWidth_) {
+                  try {
+                  sum += (previousLevelPix[(pixelY + 1) * previousLevelWidth + pixelX + 1] & 0xff) +
+                          (previousLevelPix[pixelY * previousLevelWidth + pixelX + 1] & 0xff) +
+                          (previousLevelPix[(pixelY + 1) * previousLevelWidth + pixelX] & 0xff);
+                  } catch (ArrayIndexOutOfBoundsException exc) {
+                     exc.printStackTrace();
+                     System.out.println();
+                  }
+               } else if (x < tileWidth_ - 1) {
                   count++;
-                  sum += previousLevelPix[y * tileWidth_ + x + 1] & 0xff;
-               } else if (y != tileHeight_) {
+                  sum += previousLevelPix[pixelY * previousLevelWidth + pixelX + 1] & 0xff;
+               } else if (y < tileHeight_ - 1) {
                   count++;
-                  sum += previousLevelPix[(y + 1) * tileWidth_ + x] & 0xff;
+                  sum += previousLevelPix[(pixelY + 1) * previousLevelWidth + pixelX] & 0xff;
                }
                //add pixels in to appropriate quadrant of current res level
                try {
                   currentLevelPix[((y + yPos * tileHeight_) * tileWidth_ + (x + xPos * tileWidth_)) / 2] = (byte) (sum / count);
                } catch (Exception e) {
                   ReportingUtils.showError("Couldn't copy pixels to lower resolution");
+                  e.printStackTrace();
+                  return;
                }
             }
          }
          
          //add in this tile
          try {
-            if (existingImage == null) {
-               //Image doesn't yet exist at this level, so add it
+            if (existingImage == null) {     //Image doesn't yet exist at this level, so add it
+               //create a copy of tags so tags from a different res level arent inadverntanly modified
+               // while waiting for being written to disk
                JSONObject tags = new JSONObject(img.tags.toString());
                //modify tags to reflect image size, and correct position index
                MDUtils.setWidth(tags, tileWidth_);
@@ -346,8 +378,8 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
                long gridRow = posManager_.getGridRow(fullResPositionIndex, resolutionIndex);
                long gridCol = posManager_.getGridCol(fullResPositionIndex, resolutionIndex);
                MDUtils.setPositionName(tags, "Grid_" + gridRow + "_" + gridCol);
-               MDUtils.setPositionIndex(tags, posManager_.getLowResPositionIndex(fullResPositionIndex, resolutionIndex));        
-               lowResStorages_.get(resolutionIndex).putImage(new TaggedImage(currentLevelPix, tags), true);
+               MDUtils.setPositionIndex(tags, posManager_.getLowResPositionIndex(fullResPositionIndex, resolutionIndex));  
+               lowResStorages_.get(resolutionIndex).putImage(new TaggedImage(currentLevelPix, tags));
             } else {
                //Image already exists, only overwrite pixels to include new tiles
                lowResStorages_.get(resolutionIndex).overwritePixels(currentLevelPix,
@@ -360,9 +392,6 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
          //go on to next level of downsampling
          previousLevelPix = currentLevelPix;
          resolutionIndex++;
-         //no offsets after first level
-         xOffset = 0;
-         yOffset = 0;
       }
    }
 
@@ -379,7 +408,7 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
          //reset dimensions so that overlap not included
          MDUtils.setWidth(smd, tileWidth_);
          MDUtils.setHeight(smd, tileHeight_);
-         TaggedImageStorageMultipageTiff storage = new TaggedImageStorageMultipageTiff(dsDir, true, summaryMD_);
+         TaggedImageStorageMultipageTiff storage = new TaggedImageStorageMultipageTiff(dsDir, true, smd);
          lowResStorages_.put(resIndex, storage);
       } catch (Exception ex) {
          ReportingUtils.showError("Couldnt create downsampled storage");
@@ -391,14 +420,10 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
       try {
          synchronized (this) {
             //write to full res storage as normal (i.e. with overlap pixels present)
-            fullResStorage_.putImage(taggedImage, true);
+            fullResStorage_.putImage(taggedImage);
             addToLowResStorage(taggedImage, 0, MDUtils.getPositionIndex(taggedImage.tags));
          }
-      } catch (InterruptedException ex) {
-         ReportingUtils.showError(ex.toString());
       } catch (IOException ex) {
-         ReportingUtils.showError(ex.toString());
-      } catch (ExecutionException ex) {    
          ReportingUtils.showError(ex.toString());
       } catch (JSONException ex) {
          ReportingUtils.showError("Position index missing from tags");
@@ -427,11 +452,12 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
       for (TaggedImageStorageMultipageTiff s : lowResStorages_.values()) {
          s.finished();
       }
+      finished_ = true;
    }
 
    @Override
    public boolean isFinished() {
-      return fullResStorage_.isFinished();
+      return finished_;
    }
 
    @Override
@@ -456,10 +482,24 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
 
    @Override
    public void close() {
-      fullResStorage_.close();
-      for (TaggedImageStorageMultipageTiff s : lowResStorages_.values()) {
-         s.close();
-      }
+      //put closing on differnt channel so as to not hang up EDT while waiting for finishing
+      new Thread(new Runnable() {
+         @Override
+         public void run() {
+            while (!finished_) {
+               System.out.print("waiting for files to finish");
+               try {
+                  Thread.sleep(5);
+               } catch (InterruptedException ex) {
+                  throw new RuntimeException("closing thread interrupted");
+               }
+            }
+            fullResStorage_.close();
+            for (TaggedImageStorageMultipageTiff s : lowResStorages_.values()) {
+               s.close();
+            }
+         } 
+      },"closing thread").start();
    }
 
    @Override

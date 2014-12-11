@@ -65,7 +65,7 @@ public class DisplayPlusControls extends DisplayControls {
    private static final DecimalFormat TWO_DECIMAL_FORMAT = new DecimalFormat("0.00");
    private static final DecimalFormat THREE_DECIMAL_FORMAT = new DecimalFormat("0.000");
    private final static String GRID_PANEL = "Grid controls", EXPLORE_PANEL = "Explore panel",
-           SURFACE_PANEL = "Create surface";
+           SURFACE_PANEL = "Create surface", DEFAULT_PANEL = "Default panel";
    
    
    private EventBus bus_;
@@ -75,6 +75,7 @@ public class DisplayPlusControls extends DisplayControls {
    private JButton pauseButton_, abortButton_, showFolderButton_;
    private JTextField fpsField_;
    private JLabel helpLabel_, nextFrameLabel_, zPosLabel_, timeStampLabel_;
+   private JPanel labelsPanel_;
    private JToggleButton gridButton_, surfaceButton_;
    private JButton zoomInButton_, zoomOutButton_;
    private JToggleButton exploreButton_, gotoButton_;
@@ -91,7 +92,6 @@ public class DisplayPlusControls extends DisplayControls {
    private JLabel pixelInfoLabel_, countdownLabel_, imageInfoLabel_;
    private JComboBox surfacesCombo_, regionsCombo_;
    
-
    public DisplayPlusControls(DisplayPlus disp, EventBus bus, Acquisition acq) {
       super(new FlowLayout(FlowLayout.LEADING));
       bus_ = bus;
@@ -102,6 +102,78 @@ public class DisplayPlusControls extends DisplayControls {
       surfaceManager_ = SurfaceManager.getInstance();
       regionManager_ = RegionManager.getInstance();
       initComponents();
+   }
+   
+   private void resizeLabels() {
+      labelsPanel_.invalidate();
+      labelsPanel_.validate();
+   }
+
+   private void newSurfaceButtonAction() {
+      if (surfaceButton_.isSelected()) { 
+         //deselect others
+         if (acq_ instanceof ExploreAcquisition) {
+            exploreButton_.setSelected(false);
+         }
+         gridButton_.setSelected(false);
+         //make a surface if none exists
+         if (surfaceManager_.getNumberOfSurfaces() == 0) {
+            surfaceManager_.addNewSurface();
+            surfacesCombo_.setSelectedIndex(0);
+         }
+         //show surface creation controls           
+         changingPanelLayout_.show(changingPanel_, SURFACE_PANEL);
+         helpLabel_.setText("Left click to add points, right click to remove points, right click and drag to pan");
+         display_.setMode(DisplayPlus.NEWSURFACE);
+      } else {
+         //return to none mode
+         display_.setMode(DisplayPlus.NONE);
+         changingPanelLayout_.show(changingPanel_, DEFAULT_PANEL);
+         helpLabel_.setText("Right click and drag to pan, use + and - keys to zoom");
+      }
+      resizeLabels();
+   }
+
+   private void newGridButtonAction() {
+      if (gridButton_.isSelected()) { 
+         //deselect others
+         if (acq_ instanceof ExploreAcquisition) {
+            exploreButton_.setSelected(false);
+         }
+         surfaceButton_.setSelected(false);
+         //make a grid if none exists"
+         if (regionManager_.getNumberOfRegions() == 0) {
+            regionManager_.addNewRegion(createNewGrid());
+            regionsCombo_.setSelectedIndex(0);
+         }
+
+         //show grid making controls           
+         changingPanelLayout_.show(changingPanel_, GRID_PANEL);
+         helpLabel_.setText("Left click and drag to move grid, right click and drag to pan");
+         display_.setMode(DisplayPlus.NEWGRID);
+      } else {
+         //return to none mode
+         display_.setMode(DisplayPlus.NONE);
+         changingPanelLayout_.show(changingPanel_, DEFAULT_PANEL);            
+         helpLabel_.setText("Right click and drag to pan, use + and - keys to zoom");
+      }
+      resizeLabels();
+   }
+
+   private void exploreButtonAction() {
+      if (exploreButton_.isSelected()) {
+         //deselect others
+         surfaceButton_.setSelected(false);
+         gridButton_.setSelected(false);
+         changingPanelLayout_.show(changingPanel_, EXPLORE_PANEL);
+         display_.setMode(exploreButton_.isSelected() ? DisplayPlus.EXPLORE : DisplayPlus.NONE);
+      } else {
+         //return to none mode
+         display_.setMode(DisplayPlus.NONE);
+         changingPanelLayout_.show(changingPanel_, DEFAULT_PANEL);
+         helpLabel_.setText("Right click and drag to pan, use + and - keys to zoom");
+      }
+      resizeLabels();
    }
 
    private void initComponents() {
@@ -193,17 +265,19 @@ public class DisplayPlusControls extends DisplayControls {
       }
 
 
-      JPanel labelsPanel = new JPanel(new MigLayout(""));
+      labelsPanel_ = new JPanel(new MigLayout(""));
+      helpLabel_ = new JLabel("Right click and drag to pan, use + and - keys to zoom");
+      labelsPanel_.add(helpLabel_, "growx");
       makeStatusLabels();
-      labelsPanel.add(zPosLabel_);
+      labelsPanel_.add(zPosLabel_);
       if (!(acq_ instanceof ExploreAcquisition))  {
-         labelsPanel.add(timeStampLabel_);
-         labelsPanel.add(zPosLabel_);
+         labelsPanel_.add(timeStampLabel_);
+         labelsPanel_.add(zPosLabel_);
       }
 
-      controlsPanel.add(labelsPanel, "span, growx, align center, wrap");
+      controlsPanel.add(labelsPanel_, "span, growx, align center, wrap");
       if (!(acq_ instanceof ExploreAcquisition))  {
-         labelsPanel.add(nextFrameLabel_);
+         labelsPanel_.add(nextFrameLabel_);
          nextFrameTimer_ = new Timer(1000, new ActionListener() {
 
             @Override
@@ -230,8 +304,6 @@ public class DisplayPlusControls extends DisplayControls {
          });
          nextFrameTimer_.start();
       }
-
-
 
       JPanel buttonPanel = new JPanel(new MigLayout("insets 0"));
 
@@ -299,23 +371,7 @@ public class DisplayPlusControls extends DisplayControls {
       gridButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            if (!gridButton_.isSelected()) { //keep button selected unless another one is pressed
-               gridButton_.setSelected(true);
-               return;
-            }
-
-            //make a grid if none exists"
-            if (regionManager_.getNumberOfRegions() == 0) {
-               regionManager_.addNewRegion(createNewGrid());
-               regionsCombo_.setSelectedIndex(0);
-            }            
-            
-            //show grid making controls           
-            changingPanelLayout_.show(changingPanel_, GRID_PANEL);
-            helpLabel_.setText("Left click and drag to move grid, right click and drag to pan");
-            display_.setMode(DisplayPlus.NEWGRID);
-            exploreButton_.setSelected(false);
-            surfaceButton_.setSelected(false);
+            newGridButtonAction();
          }
       });
 
@@ -326,15 +382,7 @@ public class DisplayPlusControls extends DisplayControls {
          exploreButton_.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-               if (!exploreButton_.isSelected()) { //keep button selected unless another one is pressed
-                  exploreButton_.setSelected(true);
-                  return;
-               }
-               changingPanelLayout_.show(changingPanel_, EXPLORE_PANEL);
-               helpLabel_.setText("Left click or click and drag to acquire tiles, right click to pan, +/- keys to zoom");
-               display_.setMode(exploreButton_.isSelected() ? DisplayPlus.EXPLORE : DisplayPlus.NONE );
-               surfaceButton_.setSelected(false);
-               gridButton_.setSelected(false);
+               exploreButtonAction();
             }
          });
       }
@@ -366,53 +414,34 @@ public class DisplayPlusControls extends DisplayControls {
       surfaceButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            if (!surfaceButton_.isSelected() ) { //keep button selected unless another one is pressed
-               surfaceButton_.setSelected(true);
-               return;
-            }
-            //make a surface if none exists
-            if (surfaceManager_.getNumberOfSurfaces() == 0) {
-               surfaceManager_.addNewSurface();    
-               surfacesCombo_.setSelectedIndex(0);
-            }
-            //show surface creation controls           
-            changingPanelLayout_.show(changingPanel_, SURFACE_PANEL);
-            helpLabel_.setText("Left click to add points, right click to remove points, right click and drag to pan");
-            display_.setMode(DisplayPlus.NEWSURFACE);
-            if (acq_ instanceof ExploreAcquisition) {
-               exploreButton_.setSelected(false);
-            }
-            gridButton_.setSelected(false);
+           newSurfaceButtonAction();
          }
       });
-      
-      helpLabel_ = new JLabel("Right click and drag to pan, use + and - keys to zoom");
-
       
       buttonPanel.add(showFolderButton_);
       buttonPanel.add(abortButton_);
       buttonPanel.add(pauseButton_);
-//      buttonPanel.add(zoomInButton_);
-//      buttonPanel.add(zoomOutButton_);
       if (acq_ instanceof ExploreAcquisition) {
          buttonPanel.add(exploreButton_);
       }
       buttonPanel.add(gridButton_);
       buttonPanel.add(surfaceButton_);
-      buttonPanel.add(helpLabel_);
-
       
       JPanel newGridControlPanel = makeNewGridControlPanel();
       JPanel newSurfaceControlPanel = makeSurfaceControlPanel();
-      
+      JPanel defaultPanel = new JPanel(new MigLayout());
+//      TODO: change
+      defaultPanel.add(new JLabel("Default"));
       JPanel explorePanel = new JPanel(new MigLayout());
-      explorePanel.add(new JLabel("Explore mode"));
+      explorePanel.add(new JLabel("Left click or click and drag to acquire tiles, right click to pan, +/- keys to zoom"));
+
       
       changingPanelLayout_ = new CardLayout();
       changingPanel_ = new JPanel(changingPanelLayout_);
       changingPanel_.add(newGridControlPanel, GRID_PANEL);
       changingPanel_.add(newSurfaceControlPanel, SURFACE_PANEL);
       changingPanel_.add(explorePanel, EXPLORE_PANEL);
+      changingPanel_.add(defaultPanel,DEFAULT_PANEL);
       changingPanelLayout_.show(changingPanel_, EXPLORE_PANEL);
       
       controlsPanel.add(buttonPanel, "wrap");
@@ -450,7 +479,6 @@ public class DisplayPlusControls extends DisplayControls {
             display_.setCurrentSurface(surfaceManager_.getSurface(surfacesCombo_.getSelectedIndex()));
          }
       });
-//      surfaceManager_.addListDataListener(surfacesCombo);      
       JToggleButton newSurfaceButton = new JToggleButton("New");
       newSurfaceButton.addActionListener(new ActionListener() {
          
@@ -553,16 +581,20 @@ public class DisplayPlusControls extends DisplayControls {
          //Override new image event to intercept these events and correct for negative slice indices 
 
          @Override
-         public void onNewImageEvent(NewImageEvent event) {
+         public void onNewImageEvent(NewImageEvent event) {                   
+            //duplicate new image event and edit as needed
+            HashMap<String, Integer> axisToPosition = new HashMap<String, Integer>();
+            axisToPosition.put("channel", event.getPositionForAxis("channel"));
+            axisToPosition.put("position", 0);
+            axisToPosition.put("time", event.getPositionForAxis("time"));
+            axisToPosition.put("z", event.getPositionForAxis("z"));
             if (acq_ instanceof ExploreAcquisition) {
                //intercept event and edit slice index
-               int channel = event.getPositionForAxis("channel");
-               int z = event.getPositionForAxis("z");
+               int z = event.getPositionForAxis("z");           
                //make slice index >= 0 for viewer   
                z -= ((ExploreAcquisition) acq_).getLowestSliceIndex();
                // show/expand z scroll bar if needed
-               if (((ExploreAcquisition) acq_).getHighestSliceIndex() - ((ExploreAcquisition) acq_).getLowestSliceIndex() + 1
-                       > scrollerPanel_.getMaxPosition("z")) {
+               if (((ExploreAcquisition) acq_).getHighestSliceIndex() - ((ExploreAcquisition) acq_).getLowestSliceIndex() + 1 > scrollerPanel_.getMaxPosition("z")) {
                   for (AxisScroller scroller : scrollers_) {
                      if (scroller.getAxis().equals("z") && scroller.getMaximum() == 1) {
                         scroller.setVisible(true);
@@ -574,12 +606,11 @@ public class DisplayPlusControls extends DisplayControls {
                   this.setMaxPosition("z", ((ExploreAcquisition) acq_).getHighestSliceIndex() - ((ExploreAcquisition) acq_).getLowestSliceIndex() + 1);
                   //tell the imageplus about new number of slices so everything works properly
                   ((IMMImagePlus) display_.getHyperImage()).setNSlicesUnverified(scrollerPanel_.getMaxPosition("z"));
-                  HashMap<String, Integer> axisToPosition = new HashMap<String, Integer>();
-                  axisToPosition.put("channel", channel);
-                  axisToPosition.put("z", z);
                }
+               axisToPosition.put("z", z);
             }
-            super.onNewImageEvent(event);
+            //pass along the edited new image event
+            super.onNewImageEvent(new NewImageEvent(axisToPosition));
          }
       };
    }

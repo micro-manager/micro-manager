@@ -328,6 +328,11 @@
                   </Properties>
                 </Component>
                 <Component class="javax.swing.JSpinner" name="numTimePointsSpinner_">
+                  <Properties>
+                    <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
+                      <SpinnerModel initial="1" minimum="1" numberType="java.lang.Integer" stepSize="1" type="number"/>
+                    </Property>
+                  </Properties>
                 </Component>
                 <Component class="javax.swing.JFormattedTextField" name="timeIntervalTextField_">
                   <Properties>

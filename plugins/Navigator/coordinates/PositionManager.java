@@ -4,6 +4,7 @@
  */
 package coordinates;
 
+import gui.SettingsDialog;
 import java.awt.Point;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
@@ -230,10 +231,9 @@ public class PositionManager {
 
    private JSONObject createPosition(int row, int col) {
       try {
-         JSONArray xy = new JSONArray();
-         //TODO: change if overlap added
-         int xOverlap = 0;
-         int yOverlap = 0;
+         JSONArray xy = new JSONArray();         
+         int xOverlap = SettingsDialog.getOverlapX();
+         int yOverlap = SettingsDialog.getOverlapY();
          Point2D.Double stageCoords = getStagePositionCoordinates(row, col, xOverlap, yOverlap);
 
          JSONObject coords = new JSONObject();

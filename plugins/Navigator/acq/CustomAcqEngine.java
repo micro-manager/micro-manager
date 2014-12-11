@@ -44,7 +44,7 @@ public class CustomAcqEngine {
             while (!Thread.interrupted()) {
                BlockingQueue<AcquisitionEvent> events;
                //Fixed acq take priority
-               if (currentFixedAcq_ != null && !currentFixedAcq_.isPaused() && !currentFixedAcq_.isFinsihed()) {
+               if (currentFixedAcq_ != null && !currentFixedAcq_.isPaused() && !currentFixedAcq_.isFinished()) {
                   events = currentFixedAcq_.getEventQueue();
                } else if (currentExploreAcq_ != null  ) {
                   events = currentExploreAcq_.getEventQueue();
@@ -72,11 +72,19 @@ public class CustomAcqEngine {
       zName_ = core_.getFocusDevice();
    }
 
-   //TODO: check last acqs so acquisitions dont interleave
    public void runFixedAreaAcquisition(final FixedAreaAcquisitionSettings settings) {
       new Thread(new Runnable() {
          @Override
          public void run() {
+            //check if current fixed acquisition is running
+            if (currentFixedAcq_ != null && !currentFixedAcq_.isFinished()) {
+               currentFixedAcq_.abort();
+            }
+            //clear explore acquisition events so that they dont unexpectedly restart after acquisition
+            if (currentExploreAcq_ != null && !currentExploreAcq_.isFinished()) {
+               currentExploreAcq_.getEventQueue().clear();
+            }
+            
             currentFixedAcq_ = new FixedAreaAcquisition(settings);
          }
       }).start();
@@ -87,14 +95,21 @@ public class CustomAcqEngine {
 
          @Override
          public void run() {
-            currentExploreAcq_ = new ExploreAcquisition(CustomAcqEngine.this, settings);
+            currentExploreAcq_ = new ExploreAcquisition(settings);
          }
       }).start();
    }
 
    private void runEvent(AcquisitionEvent event) {
-      updateHardware(event);
-      acquireImage(event);
+      if (event == null) {
+         //event will be null when fixed acquisitions run to compeletion in normal operation
+         //signal to TaggedImageSink to finish saving thread and mark acquisition as finished
+         currentFixedAcq_.addImage(new TaggedImage(null, null));
+         currentFixedAcq_ = null;
+      } else {
+         updateHardware(event);
+         acquireImage(event);
+      }
    }
 
    private void acquireImage(AcquisitionEvent event) {
