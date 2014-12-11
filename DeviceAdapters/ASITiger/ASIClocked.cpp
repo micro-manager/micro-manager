@@ -49,7 +49,8 @@ CClocked::CClocked(const char* name) :
    ASIPeripheralBase< ::CStateDeviceBase, CClocked >(name),
    numPositions_(0),  // will read actual number of positions
    curPosition_(0),   // will read actual position
-   axisLetter_(g_EmptyAxisLetterStr)
+   axisLetter_(g_EmptyAxisLetterStr),
+   addProps_(false)
 {
    if (IsExtendedName(name))  // only set up these properties if we have the required information in the name
    {
@@ -100,6 +101,18 @@ int CClocked::Initialize()
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterPosition2(curPosition_) );
    curPosition_--;  // make it 0-indexed
+
+   if (addProps_) {
+      // joystick disable and select which knob
+      pAct = new CPropertyAction (this, &CClocked::OnJoystickSelect);
+      CreateProperty(g_JoystickSelectPropertyName, g_JSCode_0, MM::String, false, pAct);
+      AddAllowedValue(g_JoystickSelectPropertyName, g_JSCode_0);
+      AddAllowedValue(g_JoystickSelectPropertyName, g_JSCode_2);
+      AddAllowedValue(g_JoystickSelectPropertyName, g_JSCode_3);
+      AddAllowedValue(g_JoystickSelectPropertyName, g_JSCode_22);
+      AddAllowedValue(g_JoystickSelectPropertyName, g_JSCode_23);
+      UpdateProperty(g_JoystickSelectPropertyName);
+   }
 
    // let calling class decide if initialized_ should be set
    return DEVICE_OK;
@@ -165,6 +178,55 @@ int CClocked::OnLabel(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int CClocked::OnJoystickSelect(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   long tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << "J " << axisLetter_ << "?";
+      response << ":A " << axisLetter_ << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
+      bool success = 0;
+      switch (tmp)
+      {
+         case 0: success = pProp->Set(g_JSCode_0); break;
+         case 1: success = pProp->Set(g_JSCode_1); break;
+         case 2: success = pProp->Set(g_JSCode_2); break;
+         case 3: success = pProp->Set(g_JSCode_3); break;
+         case 22: success = pProp->Set(g_JSCode_22); break;
+         case 23: success = pProp->Set(g_JSCode_23); break;
+         default: success=0;
+      }
+      // don't complain if value is unsupported, just leave as-is
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_JSCode_0) == 0)
+         tmp = 0;
+      else if (tmpstr.compare(g_JSCode_1) == 0)
+         tmp = 1;
+      else if (tmpstr.compare(g_JSCode_2) == 0)
+         tmp = 2;
+      else if (tmpstr.compare(g_JSCode_3) == 0)
+         tmp = 3;
+      else if (tmpstr.compare(g_JSCode_22) == 0)
+         tmp = 22;
+      else if (tmpstr.compare(g_JSCode_23) == 0)
+         tmp = 23;
+      else
+         return DEVICE_INVALID_PROPERTY_VALUE;
+      command << "J " << axisLetter_ << "=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // CFSlider
@@ -173,7 +235,7 @@ int CClocked::OnLabel(MM::PropertyBase* pProp, MM::ActionType eAct)
 CFSlider::CFSlider(const char* name) :
       CClocked(name)
 {
-
+   addProps_ = true;  // adds joystick property
 }
 
 int CFSlider::Initialize()
