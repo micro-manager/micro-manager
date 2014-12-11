@@ -69,14 +69,14 @@ int CLED::Initialize()
 
    pAct = new CPropertyAction (this, &CLED::OnIntensity);
    CreateProperty(g_LEDIntensityPropertyName, "50", MM::Integer, false, pAct);
-   UpdateProperty(g_LEDIntensityPropertyName);  // this takes care of initializing open_ and intensity_
    SetPropertyLimits(g_LEDIntensityPropertyName, 1, 100);
+   UpdateProperty(g_LEDIntensityPropertyName);  // this takes care of initializing open_ and intensity_
 
    pAct = new CPropertyAction (this, &CLED::OnState);
    CreateProperty(g_ShutterState, g_OpenState, MM::String, false, pAct);
-   UpdateProperty(g_ShutterState);
    AddAllowedValue(g_ShutterState, g_OpenState);
    AddAllowedValue(g_ShutterState, g_ClosedState);
+   UpdateProperty(g_ShutterState);
 
    // refresh properties from controller every time; default is false = no refresh (speeds things up by not redoing so much serial comm)
    pAct = new CPropertyAction (this, &CLED::OnRefreshProperties);

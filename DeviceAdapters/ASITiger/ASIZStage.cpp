@@ -133,8 +133,8 @@ int CZStage::Initialize()
    // Motor speed (S)
    pAct = new CPropertyAction (this, &CZStage::OnSpeed);
    CreateProperty(g_MotorSpeedPropertyName, "1", MM::Float, false, pAct);
-   UpdateProperty(g_MotorSpeedPropertyName);
    SetPropertyLimits(g_MotorSpeedPropertyName, 0, maxSpeed);
+   UpdateProperty(g_MotorSpeedPropertyName);
 
    // drift error (E)
    pAct = new CPropertyAction (this, &CZStage::OnDriftError);
@@ -162,11 +162,11 @@ int CZStage::Initialize()
    // maintain behavior (MA)
    pAct = new CPropertyAction (this, &CZStage::OnMaintainState);
    CreateProperty(g_MaintainStatePropertyName, g_StageMaintain_0, MM::String, false, pAct);
-   UpdateProperty(g_MaintainStatePropertyName);
    AddAllowedValue(g_MaintainStatePropertyName, g_StageMaintain_0);
    AddAllowedValue(g_MaintainStatePropertyName, g_StageMaintain_1);
    AddAllowedValue(g_MaintainStatePropertyName, g_StageMaintain_2);
    AddAllowedValue(g_MaintainStatePropertyName, g_StageMaintain_3);
+   UpdateProperty(g_MaintainStatePropertyName);
 
    // Wait time, default is 0 (WT)
    pAct = new CPropertyAction (this, &CZStage::OnWaitTime);
@@ -176,73 +176,74 @@ int CZStage::Initialize()
    // joystick fast speed (JS X=)
    pAct = new CPropertyAction (this, &CZStage::OnJoystickFastSpeed);
    CreateProperty(g_JoystickFastSpeedPropertyName, "100", MM::Float, false, pAct);
-   UpdateProperty(g_JoystickFastSpeedPropertyName);
    SetPropertyLimits(g_JoystickFastSpeedPropertyName, 0, 100);
+   UpdateProperty(g_JoystickFastSpeedPropertyName);
 
    // joystick slow speed (JS Y=)
    pAct = new CPropertyAction (this, &CZStage::OnJoystickSlowSpeed);
    CreateProperty(g_JoystickSlowSpeedPropertyName, "10", MM::Float, false, pAct);
-   UpdateProperty(g_JoystickSlowSpeedPropertyName);
    SetPropertyLimits(g_JoystickSlowSpeedPropertyName, 0, 100);
+   UpdateProperty(g_JoystickSlowSpeedPropertyName);
 
    // joystick mirror (changes joystick fast/slow speeds to negative)
    pAct = new CPropertyAction (this, &CZStage::OnJoystickMirror);
    CreateProperty(g_JoystickMirrorPropertyName, g_NoState, MM::String, false, pAct);
-   UpdateProperty(g_JoystickMirrorPropertyName);
    AddAllowedValue(g_JoystickMirrorPropertyName, g_NoState);
    AddAllowedValue(g_JoystickMirrorPropertyName, g_YesState);
+   UpdateProperty(g_JoystickMirrorPropertyName);
 
    // joystick disable and select which knob
    pAct = new CPropertyAction (this, &CZStage::OnJoystickSelect);
    CreateProperty(g_JoystickSelectPropertyName, g_JSCode_0, MM::String, false, pAct);
-   UpdateProperty(g_JoystickSelectPropertyName);
    AddAllowedValue(g_JoystickSelectPropertyName, g_JSCode_0);
    AddAllowedValue(g_JoystickSelectPropertyName, g_JSCode_2);
    AddAllowedValue(g_JoystickSelectPropertyName, g_JSCode_3);
    AddAllowedValue(g_JoystickSelectPropertyName, g_JSCode_22);
    AddAllowedValue(g_JoystickSelectPropertyName, g_JSCode_23);
+   UpdateProperty(g_JoystickSelectPropertyName);
 
    // Motor enable/disable (MC)
    pAct = new CPropertyAction (this, &CZStage::OnMotorControl);
    CreateProperty(g_MotorControlPropertyName, g_OnState, MM::String, false, pAct);
-   UpdateProperty(g_MotorControlPropertyName);
    AddAllowedValue(g_MotorControlPropertyName, g_OnState);
    AddAllowedValue(g_MotorControlPropertyName, g_OffState);
+   UpdateProperty(g_MotorControlPropertyName);
 
    if (firmwareVersion_ > 2.865)  // changed behavior of JS F and T as of v2.87
    {
       // fast wheel speed (JS F) (per-card, not per-axis)
       pAct = new CPropertyAction (this, &CZStage::OnWheelFastSpeed);
       CreateProperty(g_WheelFastSpeedPropertyName, "10", MM::Float, false, pAct);
-      UpdateProperty(g_WheelFastSpeedPropertyName);
       SetPropertyLimits(g_WheelFastSpeedPropertyName, 0, 100);
+      UpdateProperty(g_WheelFastSpeedPropertyName);
 
       // slow wheel speed (JS T) (per-card, not per-axis)
       pAct = new CPropertyAction (this, &CZStage::OnWheelSlowSpeed);
       CreateProperty(g_WheelSlowSpeedPropertyName, "5", MM::Float, false, pAct);
-      UpdateProperty(g_WheelSlowSpeedPropertyName);
       SetPropertyLimits(g_WheelSlowSpeedPropertyName, 0, 100);
+      UpdateProperty(g_WheelSlowSpeedPropertyName);
 
       // wheel mirror (changes wheel fast/slow speeds to negative) (per-card, not per-axis)
       pAct = new CPropertyAction (this, &CZStage::OnWheelMirror);
       CreateProperty(g_WheelMirrorPropertyName, g_NoState, MM::String, false, pAct);
-      UpdateProperty(g_WheelMirrorPropertyName);
       AddAllowedValue(g_WheelMirrorPropertyName, g_NoState);
       AddAllowedValue(g_WheelMirrorPropertyName, g_YesState);
+      UpdateProperty(g_WheelMirrorPropertyName);
    }
 
    // generates a set of additional advanced properties that are rarely used
    pAct = new CPropertyAction (this, &CZStage::OnAdvancedProperties);
    CreateProperty(g_AdvancedPropertiesPropertyName, g_NoState, MM::String, false, pAct);
-   UpdateProperty(g_AdvancedPropertiesPropertyName);
    AddAllowedValue(g_AdvancedPropertiesPropertyName, g_NoState);
    AddAllowedValue(g_AdvancedPropertiesPropertyName, g_YesState);
+   UpdateProperty(g_AdvancedPropertiesPropertyName);
 
    // is negative towards sample (ASI firmware convention) or away from sample (Micro-manager convention)
    pAct = new CPropertyAction (this, &CZStage::OnAxisPolarity);
    CreateProperty(g_AxisPolarity, g_FocusPolarityASIDefault, MM::String, false, pAct);
    AddAllowedValue(g_AxisPolarity, g_FocusPolarityASIDefault);
    AddAllowedValue(g_AxisPolarity, g_FocusPolarityMicroManagerDefault);
+   UpdateProperty(g_AxisPolarity);
 
    initialized_ = true;
    return DEVICE_OK;

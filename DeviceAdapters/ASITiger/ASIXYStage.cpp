@@ -149,8 +149,8 @@ int CXYStage::Initialize()
    // Motor speed (S)
    pAct = new CPropertyAction (this, &CXYStage::OnSpeed);
    CreateProperty(g_MotorSpeedPropertyName, "1", MM::Float, false, pAct);
-   UpdateProperty(g_MotorSpeedPropertyName);
    SetPropertyLimits(g_MotorSpeedPropertyName, 0, maxSpeed);
+   UpdateProperty(g_MotorSpeedPropertyName);
 
    // drift error (E)
    pAct = new CPropertyAction (this, &CXYStage::OnDriftError);
@@ -184,11 +184,11 @@ int CXYStage::Initialize()
    // maintain behavior (MA)
    pAct = new CPropertyAction (this, &CXYStage::OnMaintainState);
    CreateProperty(g_MaintainStatePropertyName, g_StageMaintain_0, MM::String, false, pAct);
-   UpdateProperty(g_MaintainStatePropertyName);
    AddAllowedValue(g_MaintainStatePropertyName, g_StageMaintain_0);
    AddAllowedValue(g_MaintainStatePropertyName, g_StageMaintain_1);
    AddAllowedValue(g_MaintainStatePropertyName, g_StageMaintain_2);
    AddAllowedValue(g_MaintainStatePropertyName, g_StageMaintain_3);
+   UpdateProperty(g_MaintainStatePropertyName);
 
    // Wait time, default is 0 (WT)
    pAct = new CPropertyAction (this, &CXYStage::OnWaitTime);
@@ -198,65 +198,65 @@ int CXYStage::Initialize()
    // joystick fast speed (JS X=)
    pAct = new CPropertyAction (this, &CXYStage::OnJoystickFastSpeed);
    CreateProperty(g_JoystickFastSpeedPropertyName, "100", MM::Float, false, pAct);
-   UpdateProperty(g_JoystickFastSpeedPropertyName);
    SetPropertyLimits(g_JoystickFastSpeedPropertyName, 0, 100);
+   UpdateProperty(g_JoystickFastSpeedPropertyName);
 
    // joystick slow speed (JS Y=)
    pAct = new CPropertyAction (this, &CXYStage::OnJoystickSlowSpeed);
    CreateProperty(g_JoystickSlowSpeedPropertyName, "10", MM::Float, false, pAct);
-   UpdateProperty(g_JoystickSlowSpeedPropertyName);
    SetPropertyLimits(g_JoystickSlowSpeedPropertyName, 0, 100);
+   UpdateProperty(g_JoystickSlowSpeedPropertyName);
 
    // joystick mirror (changes joystick fast/slow speeds to negative)
    pAct = new CPropertyAction (this, &CXYStage::OnJoystickMirror);
    CreateProperty(g_JoystickMirrorPropertyName, g_NoState, MM::String, false, pAct);
-   UpdateProperty(g_JoystickMirrorPropertyName);
    AddAllowedValue(g_JoystickMirrorPropertyName, g_NoState);
    AddAllowedValue(g_JoystickMirrorPropertyName, g_YesState);
+   UpdateProperty(g_JoystickMirrorPropertyName);
 
    // joystick rotate (interchanges X and Y axes, useful if camera is rotated
    pAct = new CPropertyAction (this, &CXYStage::OnJoystickRotate);
    CreateProperty(g_JoystickRotatePropertyName, g_NoState, MM::String, false, pAct);
-   UpdateProperty(g_JoystickRotatePropertyName);
    AddAllowedValue(g_JoystickRotatePropertyName, g_NoState);
    AddAllowedValue(g_JoystickRotatePropertyName, g_YesState);
+   UpdateProperty(g_JoystickRotatePropertyName);
 
    // joystick enable/disable
    pAct = new CPropertyAction (this, &CXYStage::OnJoystickEnableDisable);
    CreateProperty(g_JoystickEnabledPropertyName, g_YesState, MM::String, false, pAct);
-   UpdateProperty(g_JoystickEnabledPropertyName);
    AddAllowedValue(g_JoystickEnabledPropertyName, g_NoState);
    AddAllowedValue(g_JoystickEnabledPropertyName, g_YesState);
+   UpdateProperty(g_JoystickEnabledPropertyName);
 
    if (firmwareVersion_ > 2.865)  // changed behavior of JS F and T as of v2.87
    {
       // fast wheel speed (JS F) (per-card, not per-axis)
       pAct = new CPropertyAction (this, &CXYStage::OnWheelFastSpeed);
       CreateProperty(g_WheelFastSpeedPropertyName, "10", MM::Float, false, pAct);
-      UpdateProperty(g_WheelFastSpeedPropertyName);
       SetPropertyLimits(g_WheelFastSpeedPropertyName, 0, 100);
+      UpdateProperty(g_WheelFastSpeedPropertyName);
 
       // slow wheel speed (JS T) (per-card, not per-axis)
       pAct = new CPropertyAction (this, &CXYStage::OnWheelSlowSpeed);
       CreateProperty(g_WheelSlowSpeedPropertyName, "5", MM::Float, false, pAct);
-      UpdateProperty(g_WheelSlowSpeedPropertyName);
       SetPropertyLimits(g_WheelSlowSpeedPropertyName, 0, 100);
+      UpdateProperty(g_WheelSlowSpeedPropertyName);
 
       // wheel mirror (changes wheel fast/slow speeds to negative) (per-card, not per-axis)
       pAct = new CPropertyAction (this, &CXYStage::OnWheelMirror);
       CreateProperty(g_WheelMirrorPropertyName, g_NoState, MM::String, false, pAct);
-      UpdateProperty(g_WheelMirrorPropertyName);
       AddAllowedValue(g_WheelMirrorPropertyName, g_NoState);
       AddAllowedValue(g_WheelMirrorPropertyName, g_YesState);
+      UpdateProperty(g_WheelMirrorPropertyName);
    }
 
 
    // generates a set of additional advanced properties that are rarely used
    pAct = new CPropertyAction (this, &CXYStage::OnAdvancedProperties);
    CreateProperty(g_AdvancedPropertiesPropertyName, g_NoState, MM::String, false, pAct);
-   UpdateProperty(g_AdvancedPropertiesPropertyName);
    AddAllowedValue(g_AdvancedPropertiesPropertyName, g_NoState);
    AddAllowedValue(g_AdvancedPropertiesPropertyName, g_YesState);
+   UpdateProperty(g_AdvancedPropertiesPropertyName);
 
    // invert axis by changing unitMult in Micro-manager's eyes (not actually on controller)
    pAct = new CPropertyAction (this, &CXYStage::OnAxisPolarityX);
@@ -515,8 +515,8 @@ int CXYStage::OnAdvancedProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
          // number of extra move repetitions
          pAct = new CPropertyAction (this, &CXYStage::OnNrExtraMoveReps);
          CreateProperty(g_NrExtraMoveRepsPropertyName, "0", MM::Integer, false, pAct);
-         UpdateProperty(g_NrExtraMoveRepsPropertyName);
          SetPropertyLimits(g_NrExtraMoveRepsPropertyName, 0, 3);  // don't let the user set too high, though there is no actual limit
+         UpdateProperty(g_NrExtraMoveRepsPropertyName);
       }
    }
    return DEVICE_OK;

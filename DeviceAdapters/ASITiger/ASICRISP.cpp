@@ -100,8 +100,8 @@ int CCRISP::Initialize()
 
    pAct = new CPropertyAction(this, &CCRISP::OnNA);
    CreateProperty(g_CRISPObjectiveNAPropertyName, "0.8", MM::Float, false, pAct);
-   UpdateProperty(g_CRISPObjectiveNAPropertyName);
    SetPropertyLimits(g_CRISPObjectiveNAPropertyName, 0, 1.65);
+   UpdateProperty(g_CRISPObjectiveNAPropertyName);
 
    pAct = new CPropertyAction(this, &CCRISP::OnLockRange);
    CreateProperty(g_CRISPLockRangePropertyName, "0.05", MM::Float, false, pAct);
@@ -113,18 +113,18 @@ int CCRISP::Initialize()
 
    pAct = new CPropertyAction(this, &CCRISP::OnLEDIntensity);
    CreateProperty(g_CRISPLEDIntensityPropertyName, "50", MM::Integer, false, pAct);
-   UpdateProperty(g_CRISPLEDIntensityPropertyName);
    SetPropertyLimits(g_CRISPLEDIntensityPropertyName, 0, 100);
+   UpdateProperty(g_CRISPLEDIntensityPropertyName);
 
    pAct = new CPropertyAction(this, &CCRISP::OnLoopGainMultiplier);
    CreateProperty(g_CRISPLoopGainMultiplierPropertyName, "10", MM::Integer, false, pAct);
-   UpdateProperty(g_CRISPLoopGainMultiplierPropertyName);
    SetPropertyLimits(g_CRISPLoopGainMultiplierPropertyName, 0, 100);
+   UpdateProperty(g_CRISPLoopGainMultiplierPropertyName);
 
    pAct = new CPropertyAction(this, &CCRISP::OnNumAvg);
    CreateProperty(g_CRISPNumberAveragesPropertyName, "1", MM::Integer, false, pAct);
-   UpdateProperty(g_CRISPNumberAveragesPropertyName);
    SetPropertyLimits(g_CRISPNumberAveragesPropertyName, 0, 8);
+   UpdateProperty(g_CRISPNumberAveragesPropertyName);
 
    pAct = new CPropertyAction(this, &CCRISP::OnSNR);
    CreateProperty(g_CRISPSNRPropertyName, "", MM::Float, true, pAct);

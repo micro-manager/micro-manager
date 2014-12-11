@@ -138,28 +138,28 @@ int CFWheel::Initialize()
    // property for spinning or not
    pAct = new CPropertyAction (this, &CFWheel::OnSpin);
    CreateProperty(g_FWSpinStatePropertyName, g_OffState, MM::String, false, pAct);
-   UpdateProperty(g_FWSpinStatePropertyName);
    AddAllowedValue(g_FWSpinStatePropertyName, g_OffState);
    AddAllowedValue(g_FWSpinStatePropertyName, g_OnState);
+   UpdateProperty(g_FWSpinStatePropertyName);
 
    // max velocity
    pAct = new CPropertyAction (this, &CFWheel::OnVelocity);
    CreateProperty(g_FWVelocityRunPropertyName, "0", MM::Integer, false, pAct);
-   UpdateProperty(g_FWVelocityRunPropertyName);
    SetPropertyLimits(g_FWVelocityRunPropertyName, 0, 12500);
+   UpdateProperty(g_FWVelocityRunPropertyName);
 
    // preset speed settings from 0 to 9
    pAct = new CPropertyAction (this, &CFWheel::OnSpeedSetting);
    CreateProperty(g_FWSpeedSettingPropertyName, "0", MM::Integer, false, pAct);
-   UpdateProperty(g_FWSpeedSettingPropertyName);
    SetPropertyLimits(g_FWSpeedSettingPropertyName, 0, 9);
+   UpdateProperty(g_FWSpeedSettingPropertyName);
 
    // lock mode
    pAct = new CPropertyAction (this, &CFWheel::OnLockMode);
    CreateProperty(g_FWLockModePropertyName, g_OffState, MM::String, false, pAct);
-   UpdateProperty(g_FWLockModePropertyName);
    AddAllowedValue(g_FWLockModePropertyName, g_OffState);
    AddAllowedValue(g_FWLockModePropertyName, g_OnState);
+   UpdateProperty(g_FWLockModePropertyName);
 
    initialized_ = true;
    return DEVICE_OK;

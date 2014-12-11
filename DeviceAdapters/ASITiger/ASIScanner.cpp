@@ -155,42 +155,42 @@ int CScanner::Initialize()
    // mode, currently just changes between internal and external input
    pAct = new CPropertyAction (this, &CScanner::OnMode);
    CreateProperty(g_ScannerInputModePropertyName, "0", MM::String, false, pAct);
-   UpdateProperty(g_ScannerInputModePropertyName);
    AddAllowedValue(g_ScannerInputModePropertyName, g_ScannerMode_internal);
    AddAllowedValue(g_ScannerInputModePropertyName, g_ScannerMode_external);
+   UpdateProperty(g_ScannerInputModePropertyName);
 
    // filter cut-off frequency
    // decided to implement separately for X and Y axes so can have one fast and other slow
    pAct = new CPropertyAction (this, &CScanner::OnCutoffFreqX);
    CreateProperty(g_ScannerCutoffFilterXPropertyName, "0", MM::Float, false, pAct);
-   UpdateProperty(g_ScannerCutoffFilterXPropertyName);
    SetPropertyLimits(g_ScannerCutoffFilterXPropertyName, 0.1, 650);
+   UpdateProperty(g_ScannerCutoffFilterXPropertyName);
    pAct = new CPropertyAction (this, &CScanner::OnCutoffFreqY);
    CreateProperty(g_ScannerCutoffFilterYPropertyName, "0", MM::Float, false, pAct);
-   UpdateProperty(g_ScannerCutoffFilterYPropertyName);
    SetPropertyLimits(g_ScannerCutoffFilterYPropertyName, 0.1, 650);
+   UpdateProperty(g_ScannerCutoffFilterYPropertyName);
 
    // attenuation factor for movement
    pAct = new CPropertyAction (this, &CScanner::OnAttenuateTravelX);
    CreateProperty(g_ScannerAttenuateXPropertyName, "0", MM::Float, false, pAct);
-   UpdateProperty(g_ScannerAttenuateXPropertyName);
    SetPropertyLimits(g_ScannerAttenuateXPropertyName, 0, 1);
+   UpdateProperty(g_ScannerAttenuateXPropertyName);
    pAct = new CPropertyAction (this, &CScanner::OnAttenuateTravelY);
    CreateProperty(g_ScannerAttenuateYPropertyName, "0", MM::Float, false, pAct);
-   UpdateProperty(g_ScannerAttenuateYPropertyName);
    SetPropertyLimits(g_ScannerAttenuateYPropertyName, 0, 1);
+   UpdateProperty(g_ScannerAttenuateYPropertyName);
 
    // joystick fast speed (JS X=) (per-card, not per-axis)
    pAct = new CPropertyAction (this, &CScanner::OnJoystickFastSpeed);
    CreateProperty(g_JoystickFastSpeedPropertyName, "100", MM::Float, false, pAct);
-   UpdateProperty(g_JoystickFastSpeedPropertyName);
    SetPropertyLimits(g_JoystickFastSpeedPropertyName, 0, 100);
+   UpdateProperty(g_JoystickFastSpeedPropertyName);
 
    // joystick slow speed (JS Y=) (per-card, not per-axis)
    pAct = new CPropertyAction (this, &CScanner::OnJoystickSlowSpeed);
    CreateProperty(g_JoystickSlowSpeedPropertyName, "10", MM::Float, false, pAct);
-   UpdateProperty(g_JoystickSlowSpeedPropertyName);
    SetPropertyLimits(g_JoystickSlowSpeedPropertyName, 0, 100);
+   UpdateProperty(g_JoystickSlowSpeedPropertyName);
 
    // joystick mirror (changes joystick fast/slow speeds to negative) (per-card, not per-axis)
    pAct = new CPropertyAction (this, &CScanner::OnJoystickMirror);
@@ -222,21 +222,21 @@ int CScanner::Initialize()
       // fast wheel speed (JS F) (per-card, not per-axis)
       pAct = new CPropertyAction (this, &CScanner::OnWheelFastSpeed);
       CreateProperty(g_WheelFastSpeedPropertyName, "10", MM::Float, false, pAct);
-      UpdateProperty(g_WheelFastSpeedPropertyName);
       SetPropertyLimits(g_WheelFastSpeedPropertyName, 0, 100);
+      UpdateProperty(g_WheelFastSpeedPropertyName);
 
       // slow wheel speed (JS T) (per-card, not per-axis)
       pAct = new CPropertyAction (this, &CScanner::OnWheelSlowSpeed);
       CreateProperty(g_WheelSlowSpeedPropertyName, "5", MM::Float, false, pAct);
-      UpdateProperty(g_WheelSlowSpeedPropertyName);
       SetPropertyLimits(g_WheelSlowSpeedPropertyName, 0, 100);
+      UpdateProperty(g_WheelSlowSpeedPropertyName);
 
       // wheel mirror (changes wheel fast/slow speeds to negative) (per-card, not per-axis)
       pAct = new CPropertyAction (this, &CScanner::OnWheelMirror);
       CreateProperty(g_WheelMirrorPropertyName, g_NoState, MM::String, false, pAct);
-      UpdateProperty(g_WheelMirrorPropertyName);
       AddAllowedValue(g_WheelMirrorPropertyName, g_NoState);
       AddAllowedValue(g_WheelMirrorPropertyName, g_YesState);
+      UpdateProperty(g_WheelMirrorPropertyName);
    }
 
    if (firmwareVersion_ > 2.825)  // added in v2.83
@@ -365,8 +365,8 @@ int CScanner::Initialize()
 
       pAct = new CPropertyAction (this, &CScanner::OnSPIMNumSides);
       CreateProperty(g_SPIMNumSidesPropertyName, "1", MM::Integer, false, pAct);
-      UpdateProperty(g_SPIMNumSidesPropertyName);
       SetPropertyLimits(g_SPIMNumSidesPropertyName, 1, 2);
+      UpdateProperty(g_SPIMNumSidesPropertyName);
 
       pAct = new CPropertyAction (this, &CScanner::OnSPIMFirstSide);
       CreateProperty(g_SPIMFirstSidePropertyName, g_SPIMSideAFirst, MM::String, false, pAct);
@@ -1185,8 +1185,8 @@ int CScanner::OnSAAdvancedX(MM::PropertyBase* pProp, MM::ActionType eAct)
 
          pAct = new CPropertyAction (this, &CScanner::OnSAPatternByteX);
          CreateProperty(g_SAPatternModeXPropertyName, "0", MM::Integer, false, pAct);
-         UpdateProperty(g_SAPatternModeXPropertyName);
          SetPropertyLimits(g_SAPatternModeXPropertyName, 0, 255);
+         UpdateProperty(g_SAPatternModeXPropertyName);
       }
    }
    return DEVICE_OK;
@@ -1232,8 +1232,8 @@ int CScanner::OnSAAdvancedY(MM::PropertyBase* pProp, MM::ActionType eAct)
 
          pAct = new CPropertyAction (this, &CScanner::OnSAPatternByteY);
          CreateProperty(g_SAPatternModeYPropertyName, "0", MM::Integer, false, pAct);
-         UpdateProperty(g_SAPatternModeYPropertyName);
          SetPropertyLimits(g_SAPatternModeYPropertyName, 0, 255);
+         UpdateProperty(g_SAPatternModeYPropertyName);
       }
    }
    return DEVICE_OK;

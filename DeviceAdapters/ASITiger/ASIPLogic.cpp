@@ -170,9 +170,9 @@ int CPLogic::Initialize()
    // in this case they allow configuring all the logic cells and setting outputs
    pAct = new CPropertyAction (this, &CPLogic::OnAdvancedProperties);
    CreateProperty(g_AdvancedPropertiesPropertyName, g_NoState, MM::String, false, pAct);
-   UpdateProperty(g_AdvancedPropertiesPropertyName);
    AddAllowedValue(g_AdvancedPropertiesPropertyName, g_NoState);
    AddAllowedValue(g_AdvancedPropertiesPropertyName, g_YesState);
+   UpdateProperty(g_AdvancedPropertiesPropertyName);
 
    initialized_ = true;
    return DEVICE_OK;

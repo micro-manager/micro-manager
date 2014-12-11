@@ -156,69 +156,69 @@ int CPiezo::Initialize()
    // operational mode: closed vs. open loop, internal vs. external input
    pAct = new CPropertyAction (this, &CPiezo::OnPiezoMode);
    CreateProperty(g_PiezoModePropertyName, g_AdeptMode_0, MM::String, false, pAct);
-   UpdateProperty(g_PiezoModePropertyName);
    AddAllowedValue(g_PiezoModePropertyName, g_AdeptMode_0);
    AddAllowedValue(g_PiezoModePropertyName, g_AdeptMode_1);
    AddAllowedValue(g_PiezoModePropertyName, g_AdeptMode_2);
    AddAllowedValue(g_PiezoModePropertyName, g_AdeptMode_3);
    if (firmwareVersion_ > 2.7) AddAllowedValue(g_PiezoModePropertyName, g_AdeptMode_4);
+   UpdateProperty(g_PiezoModePropertyName);
 
    // Motor enable/disable (MC)
    pAct = new CPropertyAction (this, &CPiezo::OnMotorControl);
    CreateProperty(g_MotorControlPropertyName, g_OnState, MM::String, false, pAct);
-   UpdateProperty(g_MotorControlPropertyName);
    AddAllowedValue(g_MotorControlPropertyName, g_OnState);
    AddAllowedValue(g_MotorControlPropertyName, g_OffState);
+   UpdateProperty(g_MotorControlPropertyName);
 
    // joystick fast speed (JS X=) (per-card, not per-axis)
    pAct = new CPropertyAction (this, &CPiezo::OnJoystickFastSpeed);
    CreateProperty(g_JoystickFastSpeedPropertyName, "100", MM::Float, false, pAct);
-   UpdateProperty(g_JoystickFastSpeedPropertyName);
    SetPropertyLimits(g_JoystickFastSpeedPropertyName, 0.1, 100);
+   UpdateProperty(g_JoystickFastSpeedPropertyName);
 
    // joystick slow speed (JS Y=) (per-card, not per-axis)
    pAct = new CPropertyAction (this, &CPiezo::OnJoystickSlowSpeed);
    CreateProperty(g_JoystickSlowSpeedPropertyName, "10", MM::Float, false, pAct);
-   UpdateProperty(g_JoystickSlowSpeedPropertyName);
    SetPropertyLimits(g_JoystickSlowSpeedPropertyName, 0.1, 100);
+   UpdateProperty(g_JoystickSlowSpeedPropertyName);
 
    // joystick mirror (changes joystick fast/slow speeds to negative) (per-card, not per-axis)
    pAct = new CPropertyAction (this, &CPiezo::OnJoystickMirror);
    CreateProperty(g_JoystickMirrorPropertyName, g_NoState, MM::String, false, pAct);
-   UpdateProperty(g_JoystickMirrorPropertyName);
    AddAllowedValue(g_JoystickMirrorPropertyName, g_NoState);
    AddAllowedValue(g_JoystickMirrorPropertyName, g_YesState);
+   UpdateProperty(g_JoystickMirrorPropertyName);
 
    // select which joystick or wheel is attached
    pAct = new CPropertyAction (this, &CPiezo::OnJoystickSelect);
    CreateProperty(g_JoystickSelectPropertyName, g_JSCode_0, MM::String, false, pAct);
-   UpdateProperty(g_JoystickSelectPropertyName);
    AddAllowedValue(g_JoystickSelectPropertyName, g_JSCode_0);
    AddAllowedValue(g_JoystickSelectPropertyName, g_JSCode_2);
    AddAllowedValue(g_JoystickSelectPropertyName, g_JSCode_3);
    AddAllowedValue(g_JoystickSelectPropertyName, g_JSCode_22);
    AddAllowedValue(g_JoystickSelectPropertyName, g_JSCode_23);
+   UpdateProperty(g_JoystickSelectPropertyName);
 
    if (firmwareVersion_ > 2.865)  // changed behavior of JS F and T as of v2.87
    {
       // fast wheel speed (JS F) (per-card, not per-axis)
       pAct = new CPropertyAction (this, &CPiezo::OnWheelFastSpeed);
       CreateProperty(g_WheelFastSpeedPropertyName, "10", MM::Float, false, pAct);
-      UpdateProperty(g_WheelFastSpeedPropertyName);
       SetPropertyLimits(g_WheelFastSpeedPropertyName, 0, 1000);
+      UpdateProperty(g_WheelFastSpeedPropertyName);
 
       // slow wheel speed (JS T) (per-card, not per-axis)
       pAct = new CPropertyAction (this, &CPiezo::OnWheelSlowSpeed);
       CreateProperty(g_WheelSlowSpeedPropertyName, "5", MM::Float, false, pAct);
-      UpdateProperty(g_WheelSlowSpeedPropertyName);
       SetPropertyLimits(g_WheelSlowSpeedPropertyName, 0, 100);
+      UpdateProperty(g_WheelSlowSpeedPropertyName);
 
       // wheel mirror (changes wheel fast/slow speeds to negative) (per-card, not per-axis)
       pAct = new CPropertyAction (this, &CPiezo::OnWheelMirror);
       CreateProperty(g_WheelMirrorPropertyName, g_NoState, MM::String, false, pAct);
-      UpdateProperty(g_WheelMirrorPropertyName);
       AddAllowedValue(g_WheelMirrorPropertyName, g_NoState);
       AddAllowedValue(g_WheelMirrorPropertyName, g_YesState);
+      UpdateProperty(g_WheelMirrorPropertyName);
    }
 
    // is negative towards sample (ASI firmware convention) or away from sample (Micro-manager convention)
@@ -241,36 +241,36 @@ int CPiezo::Initialize()
    // overshoot and max time applicable to mode 4, which became available in firmware 2.8
    pAct = new CPropertyAction (this, &CPiezo::OnModeFourOvershoot);
    CreateProperty(g_PiezoModeFourOvershootPropertyName, "100", MM::Integer, false, pAct);
-   UpdateProperty(g_PiezoModeFourOvershootPropertyName);
    SetPropertyLimits(g_PiezoModeFourOvershootPropertyName, 0, 400);
+   UpdateProperty(g_PiezoModeFourOvershootPropertyName);
    pAct = new CPropertyAction (this, &CPiezo::OnModeFourMaxTime);
    CreateProperty(g_PiezoModeFourMaxTimePropertyName, "10", MM::Integer, false, pAct);
-   UpdateProperty(g_PiezoModeFourMaxTimePropertyName);
    SetPropertyLimits(g_PiezoModeFourMaxTimePropertyName, 0, 50);
+   UpdateProperty(g_PiezoModeFourMaxTimePropertyName);
 
    // "do it" property to set home position
    pAct = new CPropertyAction (this, &CPiezo::OnSetHomeHere);
    CreateProperty(g_SetHomeHerePropertyName, g_IdleState, MM::String, false, pAct);
-   UpdateProperty(g_SetHomeHerePropertyName);
    AddAllowedValue(g_SetHomeHerePropertyName, g_IdleState, 0);
    AddAllowedValue(g_SetHomeHerePropertyName, g_DoItState, 1);
    AddAllowedValue(g_SetHomeHerePropertyName, g_DoneState, 2);
+   UpdateProperty(g_SetHomeHerePropertyName);
 
    // "do it" property to go home
    pAct = new CPropertyAction (this, &CPiezo::OnMoveToHome);
    CreateProperty(g_MoveToHomePropertyName, g_IdleState, MM::String, false, pAct);
-   UpdateProperty(g_MoveToHomePropertyName);
    AddAllowedValue(g_MoveToHomePropertyName, g_IdleState, 0);
    AddAllowedValue(g_MoveToHomePropertyName, g_DoItState, 1);
    AddAllowedValue(g_MoveToHomePropertyName, g_DoneState, 2);
+   UpdateProperty(g_MoveToHomePropertyName);
 
    // "do it" property to run piezo calibration (not normally required)
    pAct = new CPropertyAction (this, &CPiezo::OnRunPiezoCalibration);
    CreateProperty(g_RunPiezoCalibrationPropertyName, g_IdleState, MM::String, false, pAct);
-   UpdateProperty(g_RunPiezoCalibrationPropertyName);
    AddAllowedValue(g_RunPiezoCalibrationPropertyName, g_IdleState, 0);
    AddAllowedValue(g_RunPiezoCalibrationPropertyName, g_DoItState, 1);
    AddAllowedValue(g_RunPiezoCalibrationPropertyName, g_DoneState, 2);
+   UpdateProperty(g_RunPiezoCalibrationPropertyName);
 
    // get build info so we can add optional properties
    build_info_type build;
@@ -285,9 +285,9 @@ int CPiezo::Initialize()
 
       pAct = new CPropertyAction (this, &CPiezo::OnSPIMState);
       CreateProperty(g_SPIMStatePropertyName, g_SPIMStateIdle, MM::String, false, pAct);
-      UpdateProperty(g_SPIMStatePropertyName);
       AddAllowedValue(g_SPIMStatePropertyName, g_SPIMStateIdle);
       AddAllowedValue(g_SPIMStatePropertyName, g_SPIMStateArmed);
+      UpdateProperty(g_SPIMStatePropertyName);
    }
 
 
@@ -322,9 +322,9 @@ int CPiezo::Initialize()
       // generates a set of additional advanced properties that are rarely used
       pAct = new CPropertyAction (this, &CPiezo::OnSAAdvanced);
       CreateProperty(g_AdvancedSAPropertiesPropertyName, g_NoState, MM::String, false, pAct);
-      UpdateProperty(g_AdvancedSAPropertiesPropertyName);
       AddAllowedValue(g_AdvancedSAPropertiesPropertyName, g_NoState);
       AddAllowedValue(g_AdvancedSAPropertiesPropertyName, g_YesState);
+      UpdateProperty(g_AdvancedSAPropertiesPropertyName);
    }
 
    // add ring buffer properties if supported (starting version 2.81)
@@ -977,8 +977,8 @@ int CPiezo::OnSAAdvanced(MM::PropertyBase* pProp, MM::ActionType eAct)
 
          pAct = new CPropertyAction (this, &CPiezo::OnSAPatternByte);
          CreateProperty(g_SAPatternModePropertyName, "0", MM::Integer, false, pAct);
-         UpdateProperty(g_SAPatternModePropertyName);
          SetPropertyLimits(g_SAPatternModePropertyName, 0, 255);
+         UpdateProperty(g_SAPatternModePropertyName);
       }
    }
    return DEVICE_OK;
