@@ -359,6 +359,16 @@ int XYStage::Initialize()
    if (ret != DEVICE_OK)
       return ret;
    SetPropertyLimits("Acceleration [m/s^2]", 0.01, 2.0);
+
+   // Joystick (toggle)
+   // -----
+   pAct = new CPropertyAction (this, &XYStage::OnJoystick);
+   ret = CreateProperty("Enable joystick?", "False", MM::String, false, pAct);
+   if (ret != DEVICE_OK)
+	   return ret;
+   AddAllowedValue("Enable joystick?", "False");
+   AddAllowedValue("Enable joystick?", "True");
+   joystickEnabled_ = false;
    
    ret = UpdateStatus();
    if (ret != DEVICE_OK)
@@ -370,6 +380,7 @@ int XYStage::Initialize()
 
 int XYStage::Shutdown()
 {
+   SetProperty("Enable joystick?", "True");
    initialized_    = false;
    range_measured_ = false;
 
@@ -831,6 +842,39 @@ int XYStage::OnAccel(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 
 
+int XYStage::OnJoystick(MM::PropertyBase* pProp, MM::ActionType eAct){
+	if (eAct == MM::BeforeGet)
+	{
+		if (joystickEnabled_)
+			pProp->Set("True");
+		else
+			pProp->Set("False");
+	}
+	else if (eAct == MM::AfterSet)
+	{
+		std::string state;
+		int ret = DEVICE_INVALID_PROPERTY_VALUE;
+		pProp->Get(state);
+		int toggle = 0;
+		if (state == "True"){
+			toggle = 1;
+			joystickEnabled_ = true;
+		}
+		else if (state == "False"){
+			toggle = 0;
+			joystickEnabled_ = false;
+		}
+		ostringstream cmd;
+		cmd << (toggle) << " j";
+		ret = SendSerialCommand(port_.c_str(), cmd.str().c_str(), g_TxTerm);
+		if (ret != DEVICE_OK)
+			return ret;
+
+		return ret;
+	}
+
+	return DEVICE_OK;
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////
