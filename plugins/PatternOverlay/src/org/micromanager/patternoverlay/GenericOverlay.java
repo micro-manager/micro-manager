@@ -60,7 +60,7 @@ public abstract class GenericOverlay {
    
    /**
     * Sets the color of the overlay.  Takes effect immediately.
-    * @param color
+    * @param colorCode  
     */
    public void setColorCode(int colorCode) {
       colorCode_ = colorCode;
@@ -80,9 +80,9 @@ public abstract class GenericOverlay {
    /**
     * 
     * @param visible
-    * @throws Exception
+    * @throws NoLiveWindowException
     */
-   public void setVisible(boolean visible) throws Exception {
+   public void setVisible(boolean visible) throws NoLiveWindowException {
       if (visible) {
          show();
       } else {
@@ -111,10 +111,10 @@ public abstract class GenericOverlay {
     *
     *  @throws Exception
     */
-   private void show () throws Exception {
+   private void show () throws NoLiveWindowException {
       ImagePlus image = PatternOverlayFrame.getLiveWindowImage();
       if (image == null)
-         throw new Exception("Live image window required.");
+         throw new NoLiveWindowException();
       overlay_ = new Overlay(getRoi(image.getWidth(), image.getHeight()));
       image.setOverlay(overlay_);
    }
@@ -124,7 +124,7 @@ public abstract class GenericOverlay {
     *  from the live image window. A call to show() is required to
     *  recreate the overlay.
     */
-   private void hide() throws Exception {
+   private void hide() throws NoLiveWindowException {
       if (overlay_ != null) {
          ImagePlus image = PatternOverlayFrame.getLiveWindowImage();
          if (image == null) {
@@ -145,7 +145,7 @@ public abstract class GenericOverlay {
          try {
             hide();
             show();
-         } catch (Exception e) {
+         } catch (NoLiveWindowException e) {
             ReportingUtils.logError("Could not show overlay after changing size.");
          }        
       }

@@ -71,6 +71,7 @@ public class PatternOverlayFrame extends MMFrame {
    private final JComboBox colorBox_;
    private final MMFrame ourFrame_ = this;
    
+   
    private GenericOverlay lastOverlay_;
 
    public PatternOverlayFrame(ScriptInterface gui) {
@@ -100,18 +101,19 @@ public class PatternOverlayFrame extends MMFrame {
          @Override
          public void actionPerformed(ActionEvent e) {
             getPrefsNode().putInt(Constants.TYPE_BOX_IDX, overlayBox_.getSelectedIndex());
-            updateToggleButtonLabel();
+            toggleOverlay(null);
             GenericOverlay currentOverlay = ((OverlayOption) overlayBox_.getSelectedItem()).getOverlay();
+            sizeSlider_.setValue(currentOverlay.getSize());
+            sizeSlider_.repaint();
+            colorBox_.setSelectedIndex(currentOverlay.getColorCode());
             try {
                // turn off the last-used overlay
                if (lastOverlay_ != null) {
                   lastOverlay_.setVisible(false);
                }
                currentOverlay.setVisible(toggleButton_.isSelected());
-               sizeSlider_.setValue(currentOverlay.getSize());
-               sizeSlider_.repaint();
-               colorBox_.setSelectedIndex(currentOverlay.getColorCode());
-            } catch (Exception e1) {
+               
+            } catch (NoLiveWindowException e1) {
                gui_.showError(e1, ourFrame_);
             }
             lastOverlay_ = currentOverlay;
@@ -173,6 +175,9 @@ public class PatternOverlayFrame extends MMFrame {
 
    }//constructor
    
+   /**
+    * Updates text of button with pattern and show/hide
+    */
    private void updateToggleButtonLabel() {
       String selectedOverlayStr = ((OverlayOption) overlayBox_.getSelectedItem()).toString();
       if (toggleButton_.isSelected()) {
@@ -202,21 +207,26 @@ public class PatternOverlayFrame extends MMFrame {
    /**
     * Toggles overlay depending on the state of the Show/Hide button
     * Also called when a new live/snap window opens
+    * @param dce Event indicating that a new window was created
     */
    @Subscribe
    public void toggleOverlay(DisplayCreatedEvent dce) {
       try {
          boolean visible = toggleButton_.isSelected();
-         GenericOverlay selectedOverlay = ((OverlayOption) overlayBox_.getSelectedItem()).getOverlay();
+         updateToggleButtonLabel();
+         GenericOverlay selectedOverlay = ((OverlayOption) 
+                 overlayBox_.getSelectedItem()).getOverlay();
          selectedOverlay.setVisible(visible);
-      } catch (Exception ex) {
-         gui_.logError("Could not enable overlay ("
-                 + ((OverlayOption) overlayBox_.getSelectedItem()).toString() + "). "
-                 + "Error Message: " + ex.getMessage());
-         gui_.showMessage(
-                 "The overlay could not be shown. Is the live image window active?",
-                 ourFrame_);
-         toggleButton_.setSelected(false);
+      } catch (NoLiveWindowException ex) {
+         if (dce != null) { // there is only a problem if there was a displayCreated Event
+            gui_.logError("Could not enable overlay ("
+                    + ((OverlayOption) overlayBox_.getSelectedItem()).toString() + "). "
+                    + "Error Message: " + ex.getMessage());
+            gui_.showMessage(
+                    "The overlay could not be shown. Is the live image window active?",
+                    ourFrame_);
+            toggleButton_.setSelected(false);
+         }
       }
    }
 
