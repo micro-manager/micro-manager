@@ -151,7 +151,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final JPanel leftColumnPanel_;
    private final JPanel centerColumnPanel_;
    private final JPanel rightColumnPanel_;
-   
+   private SliceTiming sliceTiming_;
    
    public AcquisitionPanel(ScriptInterface gui, 
            Devices devices, 
@@ -176,6 +176,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       positions_ = positions;
       core_ = gui_.getMMCore();
       numTimePointsDone_ = 0;
+      sliceTiming_ = new SliceTiming();
       
       PanelUtils pu = new PanelUtils(prefs_, props_, devices_);
       
@@ -729,9 +730,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // uses algorithm Jon worked out in Octave code; each slice period goes like this:
       // 1. camera readout time (none if in overlap mode)
       // 2. any extra delay time
-      // 3. camera reset
-      // 4. start scan and then turn on laser (the laser is off 0.25ms at the start and end of each scan)
-      //     (scan is shifted up in time to account for delay introduced by Bessel filter)
+      // 3. camera reset time
+      // 4. start scan 0.25ms before camera global exposure and shifted up in time to account for delay introduced by Bessel filter
+      // 5. turn on laser as soon as camera global exposure, leave laser on for desired light exposure time
+      // 7. end camera exposure in final 0.25ms, post-filter scan waveform also ends now
       
       final float scanLaserBufferTime = 0.25f;
       final Color foregroundColorOK = Color.BLACK;
@@ -741,6 +743,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       SliceTiming s = new SliceTiming();
       float cameraResetTime = computeCameraResetTime();      // recalculate for safety
       float cameraReadoutTime = computeCameraReadoutTime();  // recalculate for safety
+      
+      // get delay between trigger and when exposure timer starts so we can 
+      //   decrease camera exposure accordingly
+      // for now simply recover "overhead time" in computeCameraReasetTime()
+      // if readout/reset calculations change then this may need to be more sophisticated
+      float cameraExposureDelayTime = cameraResetTime - cameraReadoutTime;
       
       float desiredPeriod = minSlicePeriodCB_.isSelected() ? 0 :
          PanelUtils.getSpinnerFloatValue(desiredSlicePeriod_);
@@ -794,13 +802,17 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          globalDelay += 0.25f;
       }
       
-      s.scanDelay = cameraReadout_max + globalDelay + cameraReset_max - scanDelayFilter;
+      s.scanDelay = cameraReadout_max + globalDelay + cameraReset_max - scanDelayFilter - scanLaserBufferTime;  
       s.scanNum = 1;
       s.scanPeriod = scanPeriod;
-      s.laserDelay = cameraReadout_max + globalDelay + cameraReset_max + scanLaserBufferTime;
+      s.laserDelay = cameraReadout_max + globalDelay + cameraReset_max;
       s.laserDuration = laserDuration;
       s.cameraDelay = cameraReadout_max + globalDelay;
-      s.cameraDuration = cameraReset_max + scanPeriod;  // approx. same as exposure, can be used in bulb mode
+      s.cameraDuration = cameraReset_max + scanPeriod - scanLaserBufferTime;  // approx. same as exposure, can be used in bulb mode
+      s.cameraExposure = s.cameraDuration
+            - 0.01f  // give up 0.10ms of our 0.25ms overhead here because camera might round up
+                     //  from the set exposure time and thus exceeding total period
+            - cameraExposureDelayTime;
       
       
       // change camera duration for overlap mode to be short trigger
@@ -822,63 +834,28 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * @return true if the slice timing matches the current user parameters and ROI
     */
    private boolean isSliceTimingUpToDate() {
-      SliceTiming currentTiming = getCurrentSliceTiming();
       SliceTiming newTiming = getTimingFromPeriodAndLightExposure(false);
-      return currentTiming.equals(newTiming);
+      return sliceTiming_.equals(newTiming);
    }
-   
    
    /**
     * Re-calculate the controller's timing settings for "easy timing" mode.
     * If the values are the same nothing happens.  If they should be changed,
-    * then the controller's properties will be set.  Parameter sets whether or
-    * not user needs to give permission for change.
-    * @param promptBeforeChange true means user has to agree to change
+    * then the controller's properties will be set.
     * @param showWarnings will show warning if the user-specified slice period too short
-    * @return true if any change actually made  
     */
-   private boolean recalculateSliceTiming(boolean showWarnings) {
+   private void recalculateSliceTiming(boolean showWarnings) {
       if(!checkCamerasAssigned()) {
-         return false;
+         return;
       }
-      if (!isSliceTimingUpToDate() || 
-            ! MyNumberUtils.floatsEqual((float)computeActualSlicePeriod(),
-                  PanelUtils.getSpinnerFloatValue(desiredSlicePeriod_))) {
-         SliceTiming newTiming = getTimingFromPeriodAndLightExposure(showWarnings);
-         setCurrentSliceTiming(newTiming);
-         return true;
-      }
-      return false;
-   }
-   
-   /**
-    * Gets the slice timing from the controller's properties
-    * @return
-    */
-   private SliceTiming getCurrentSliceTiming() {
-      SliceTiming s = new SliceTiming();
-      s.scanDelay = PanelUtils.getSpinnerFloatValue(delayScan_);
-      s.scanNum = getNumScansPerSlice();
-      s.scanPeriod = getLineScanPeriod();
-      s.laserDelay = PanelUtils.getSpinnerFloatValue(delayLaser_);
-      s.laserDuration = PanelUtils.getSpinnerFloatValue(durationLaser_);
-      s.cameraDelay = PanelUtils.getSpinnerFloatValue(delayCamera_);
-      s.cameraDuration = PanelUtils.getSpinnerFloatValue(durationCamera_);
-      return s;
-   }
-   
-   /**
-    * Gets the slice timing from the controller's properties
-    * @return
-    */
-   private void setCurrentSliceTiming(SliceTiming s) {
-      PanelUtils.setSpinnerFloatValue(delayScan_, s.scanDelay);
-      numScansPerSlice_.setValue(s.scanNum);
-      lineScanPeriod_.setValue(s.scanPeriod);
-      PanelUtils.setSpinnerFloatValue(delayLaser_, s.laserDelay);
-      PanelUtils.setSpinnerFloatValue(durationLaser_, s.laserDuration);
-      PanelUtils.setSpinnerFloatValue(delayCamera_, s.cameraDelay);
-      PanelUtils.setSpinnerFloatValue(durationCamera_, s.cameraDuration );
+      sliceTiming_ = getTimingFromPeriodAndLightExposure(showWarnings);
+      PanelUtils.setSpinnerFloatValue(delayScan_, sliceTiming_.scanDelay);
+      numScansPerSlice_.setValue(sliceTiming_.scanNum);
+      lineScanPeriod_.setValue(sliceTiming_.scanPeriod);
+      PanelUtils.setSpinnerFloatValue(delayLaser_, sliceTiming_.laserDelay);
+      PanelUtils.setSpinnerFloatValue(durationLaser_, sliceTiming_.laserDuration);
+      PanelUtils.setSpinnerFloatValue(delayCamera_, sliceTiming_.cameraDelay);
+      PanelUtils.setSpinnerFloatValue(durationCamera_, sliceTiming_.cameraDuration );
    }
    
    /**
@@ -1254,7 +1231,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
       
       float cameraReadoutTime = computeCameraReadoutTime();
-      double exposureTime = PanelUtils.getSpinnerFloatValue(durationCamera_);
+      double exposureTime = sliceTiming_.cameraExposure;
       
       boolean show = !hideCB_.isSelected();
       boolean save = saveCB_.isSelected();
