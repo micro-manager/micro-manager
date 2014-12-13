@@ -127,6 +127,10 @@ public class SettingsPanel extends ListeningJPanel {
       pu.addListenerLast(positionRefreshInterval, listenerLast);
       guiPanel_.add(positionRefreshInterval, "wrap");
       
+      final JCheckBox ignoreScannerMissing = pu.makeCheckBox("Ignore missing scanner (for debug)",
+            Properties.Keys.PLUGIN_IGNORE_MISSING_SCANNER, panelName_, false);
+      guiPanel_.add(ignoreScannerMissing, "center, span 2, wrap");
+      
       // end GUI subpanel
       
       // start scanner panel
