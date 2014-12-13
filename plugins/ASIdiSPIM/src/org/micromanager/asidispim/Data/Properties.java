@@ -154,6 +154,7 @@ public class Properties {
       PLUGIN_ENABLE_POSITION_UPDATES("EnablePositionUpdates"),
       PLUGIN_ENABLE_ILLUM_PIEZO_HOME("EnableIllumPiezoHome"),
       PLUGIN_SCAN_OPPOSITE_DIRECTIONS("ScanOppositeDirections"),
+      PLUGIN_IGNORE_MISSING_SCANNER("IgnoreMissingScanner"),      
       ;
       private final String text;
       private final boolean hasPattern;  // true if string has substitution pattern

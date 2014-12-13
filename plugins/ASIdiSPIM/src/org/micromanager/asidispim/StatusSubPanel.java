@@ -58,7 +58,7 @@ public final class StatusSubPanel extends ListeningJPanel {
     * 
     */
    public StatusSubPanel(Devices devices, Properties props, Positions positions,
-         StagePositionUpdater stagePosUpdater) {    
+         StagePositionUpdater stagePosUpdater) {
       super (MyStrings.PanelNames.STATUS_SUBPANEL.toString(),
             new MigLayout(
               "", 
