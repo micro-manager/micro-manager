@@ -1409,9 +1409,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             gui_.setAcquisitionProperty(acqName, "z-step_um",  
                   NumberUtils.doubleToDisplayString(getStepSizeUm()) );
             
-            String s = NumberUtils.doubleToDisplayString(getStepSizeUm());
-            
-
             // get circular buffer ready
             // do once here but not per-acquisition; need to ensure ROI changes registered
             core_.initializeCircularBuffer();
