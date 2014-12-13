@@ -1380,11 +1380,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                gui_.setChannelName(acqName, 1, secondCamera);
             }
             
-            // This Property has to be set before initialization to be propagated 
-            // to the ImageJ metadata
-            gui_.setAcquisitionProperty(acqName, "z-step_um",  
-                    NumberUtils.doubleToDisplayString(getStepSizeUm()) );
-            
             // initialize acquisition
             gui_.initializeAcquisition(acqName, (int) core_.getImageWidth(),
                     (int) core_.getImageHeight(), (int) core_.getBytesPerPixel(),
@@ -1411,6 +1406,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             // Multi-page TIFF saving code wants this one:
             // TODO: support other types than besides GRAY16
             gui_.setAcquisitionProperty(acqName, "PixelType", "GRAY16");
+            gui_.setAcquisitionProperty(acqName, "z-step_um",  
+                  NumberUtils.doubleToDisplayString(getStepSizeUm()) );
+            
+            String s = NumberUtils.doubleToDisplayString(getStepSizeUm());
+            
 
             // get circular buffer ready
             // do once here but not per-acquisition; need to ensure ROI changes registered
