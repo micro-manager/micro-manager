@@ -1078,13 +1078,18 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       Devices.Keys galvoDevice = Devices.getSideSpecificKey(Devices.Keys.GALVOA, side);
       Devices.Keys piezoDevice = Devices.getSideSpecificKey(Devices.Keys.PIEZOA, side);
       
+      boolean ignoreMissingScanner = prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(),  
+            Properties.Keys.PLUGIN_IGNORE_MISSING_SCANNER, false);
+      boolean haveMissingScanner = !devices_.isValidMMDevice(galvoDevice);
+      boolean skipScannerWarnings = ignoreMissingScanner && haveMissingScanner;
+      
       // checks to prevent hard-to-diagnose other errors
-      if (!devices_.isValidMMDevice(galvoDevice)) {
+      if (!ignoreMissingScanner && haveMissingScanner) {
          MyDialogUtils.showError("Scanner device required; please check Devices tab.");
             return false;
       }
 
-      props_.setPropValue(galvoDevice, Properties.Keys.SPIM_NUM_REPEATS, 1);
+      props_.setPropValue(galvoDevice, Properties.Keys.SPIM_NUM_REPEATS, 1, skipScannerWarnings);
       
       AcquisitionModes.Keys spimMode = (AcquisitionModes.Keys) spimMode_.getSelectedItem();
       
@@ -1135,19 +1140,19 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       Properties.Values scanPattern = triangleWave ?
             Properties.Values.SAM_TRIANGLE : Properties.Values.SAM_RAMP;
       props_.setPropValue(galvoDevice, Properties.Keys.SA_PATTERN_X, 
-              scanPattern, true);
-      props_.setPropValue(galvoDevice,
-            Properties.Keys.SA_AMPLITUDE_Y_DEG, sliceAmplitude);
-      props_.setPropValue(galvoDevice,
-            Properties.Keys.SA_OFFSET_Y_DEG, sliceCenter);
-      props_.setPropValue(galvoDevice,
-            Properties.Keys.BEAM_ENABLED, Properties.Values.NO);
-      props_.setPropValue(galvoDevice,
-            Properties.Keys.SPIM_NUM_SLICES, numSlices);
-      props_.setPropValue(galvoDevice,
-            Properties.Keys.SPIM_NUM_SIDES, getNumSides());
-      props_.setPropValue(galvoDevice,
-            Properties.Keys.SPIM_FIRSTSIDE, getFirstSide());
+              scanPattern, skipScannerWarnings);
+      props_.setPropValue(galvoDevice, Properties.Keys.SA_AMPLITUDE_Y_DEG,
+            sliceAmplitude, skipScannerWarnings);
+      props_.setPropValue(galvoDevice, Properties.Keys.SA_OFFSET_Y_DEG,
+            sliceCenter, skipScannerWarnings);
+      props_.setPropValue(galvoDevice, Properties.Keys.BEAM_ENABLED,
+            Properties.Values.NO, skipScannerWarnings);
+      props_.setPropValue(galvoDevice, Properties.Keys.SPIM_NUM_SLICES,
+            numSlices, skipScannerWarnings);
+      props_.setPropValue(galvoDevice, Properties.Keys.SPIM_NUM_SIDES,
+            getNumSides(), skipScannerWarnings);
+      props_.setPropValue(galvoDevice, Properties.Keys.SPIM_FIRSTSIDE,
+            getFirstSide(), skipScannerWarnings);
       
       // get the piezo card ready; skip if no piezo specified
       if (devices_.isValidMMDevice(piezoDevice)) {
