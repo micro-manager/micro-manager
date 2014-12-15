@@ -64,7 +64,6 @@ public interface Metadata {
       MetadataBuilder xPositionUm(Double xPositionUm);
       MetadataBuilder yPositionUm(Double yPositionUm);
       MetadataBuilder zPositionUm(Double zPositionUm);
-      MetadataBuilder zStepUm(Double zStepUm);
    }
 
    /**
@@ -94,8 +93,6 @@ public interface Metadata {
    Double getYPositionUm();
    /** The Z stage position of the sample for this image */
    Double getZPositionUm();
-   /** The amount of Z space between each slice in the stack this image is in */
-   Double getZStepUm();
    /** The binning mode of the camera for this image */
    Integer getBinning();
    /** The number of bits used to represent each pixel (e.g. 12-bit means that
