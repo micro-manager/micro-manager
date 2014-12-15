@@ -90,6 +90,8 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
     * Given an ImagePlus, retrieve the associated VirtualAcquisitionDisplay.
     * This only works if the ImagePlus is actually an AcquisitionVirtualStack;
     * otherwise you just get null.
+    * @param imgp - Imageplus that we want the VAD for
+    * @return - VirtualAcquisitionDisplay associated with this ImagePLus
     */
    public static VirtualAcquisitionDisplay getDisplay(ImagePlus imgp) {
       ImageStack stack = imgp.getStack();
@@ -107,7 +109,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    private boolean promptToSave_ = true;
    private boolean amClosing_ = false;
    // Name of the acquisition we present.
-   private String name_;
+   private final String name_;
    // First component of text displayed in our title bar.
    private String title_;
    private int numComponents_;
@@ -116,7 +118,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    // This thread consumes images from the above queue.
    private Thread displayThread_;
    // This boolean is used to tell the display thread to stop what it's doing.
-   private AtomicBoolean shouldStopDisplayThread_ = new AtomicBoolean(false);
+   private final AtomicBoolean shouldStopDisplayThread_ = new AtomicBoolean(false);
    // We need to track how many images we've received and how many images we've
    // displayed, for FPS display purposes.
    private long lastImageIndex_ = 0;
@@ -136,8 +138,8 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    private HistogramControlsState histogramControlsState_;
    private boolean albumSaved_ = false;
    private JPopupMenu saveTypePopup_;
-   private AtomicBoolean updatePixelSize_ = new AtomicBoolean(false);
-   private AtomicLong newPixelSize_ = new AtomicLong();
+   private final AtomicBoolean updatePixelSize_ = new AtomicBoolean(false);
+   private final AtomicLong newPixelSize_ = new AtomicLong();
    private final Object imageReceivedObject_ = new Object();
 
    private EventBus bus_;
@@ -152,6 +154,10 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
 
    /**
     * Standard constructor.
+    * @param imageCache
+    * @param eng
+    * @param name
+    * @param shouldUseNameAsTitle
     */
    public VirtualAcquisitionDisplay(ImageCache imageCache,
          AcquisitionEngine eng, String name, boolean shouldUseNameAsTitle) {
@@ -472,6 +478,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
 
    /**
     * A new image has arrived; toss it onto our queue for display.
+    * @param taggedImage
     */
    public void updateDisplay(TaggedImage taggedImage) {
       JSONObject tags;
@@ -603,6 +610,10 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
    }
 
+   /**
+    *
+    * @param event
+    */
    @Subscribe
    public void onUpdateTitleEvent(UpdateTitleEvent event) {
       updateWindowTitleAndStatus();
@@ -1402,6 +1413,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          if (hyperImage_ != null) {
             Calibration cal = hyperImage_.getCalibration();
             double calPixSize = cal.pixelWidth;
+            double zStep = cal.pixelHeight;
             JSONObject tags = this.getCurrentMetadata();
             if (tags != null) {
                try {
@@ -1409,8 +1421,14 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
                   if (calPixSize != imgPixSize) {
                      applyPixelSizeCalibration(hyperImage_);
                   }
+                  double imgZStep = MDUtils.getZStepUm(tags);
+                  if (imgZStep != zStep) {
+                     applyPixelSizeCalibration(hyperImage_);
+                  }
                } catch (JSONException ex) {
-                  ReportingUtils.logError("Found Image without PixelSizeUm tag");
+                  // this is not strictly an error since it is OK not to have 
+                  // these tags. so just continue...
+                  //ReportingUtils.logError("Found Image without PixelSizeUm or zStep tag");
                }
             }
          }
