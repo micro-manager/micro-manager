@@ -37,6 +37,7 @@ public interface SummaryMetadata {
       SummaryMetadataBuilder directory(String directory);
       SummaryMetadataBuilder comments(String comments);
       
+      SummaryMetadataBuilder zStepUm(Double zStepUm);
       SummaryMetadataBuilder waitInterval(Double waitInterval);
       SummaryMetadataBuilder customIntervalsMs(Double[] customIntervalsMs);
       SummaryMetadataBuilder intendedDimensions(Coords intendedDimensions);
@@ -71,6 +72,8 @@ public interface SummaryMetadata {
    /** Any comments attached to the acquisition as a whole (not to
      * individual images within the acquisition) */
    public String getComments();
+   /** Distance between slices in a volume of data, in microns */
+   public Double getZStepUm();
    /** Amount of time to wait between timepoints */
    public Double getWaitInterval();
    /** When using a variable amount of time between timepoints, this array

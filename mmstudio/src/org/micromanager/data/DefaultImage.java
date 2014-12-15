@@ -97,10 +97,6 @@ public class DefaultImage implements Image {
       }
       catch (JSONException e) {}
       try {
-         builder.zStepUm(MDUtils.getZStepUm(tags));
-      }
-      catch (JSONException e) {}
-      try {
          builder.elapsedTimeMs(MDUtils.getElapsedTimeMs(tags));
       }
       catch (JSONException e) {}

@@ -32,7 +32,6 @@ public class DefaultMetadata implements Metadata {
       
       private MultiStagePosition initialPositionList_ = null;
 
-      private Double zStepUm_ = null;
       private Boolean keepShutterOpenSlices_ = null;
       private Boolean keepShutterOpenChannels_ = null;
 
@@ -88,12 +87,6 @@ public class DefaultMetadata implements Metadata {
       @Override
       public MetadataBuilder initialPositionList(MultiStagePosition initialPositionList) {
          initialPositionList_ = initialPositionList;
-         return this;
-      }
-
-      @Override
-      public MetadataBuilder zStepUm(Double zStepUm) {
-         zStepUm_ = zStepUm;
          return this;
       }
 
@@ -277,7 +270,6 @@ public class DefaultMetadata implements Metadata {
    
    private MultiStagePosition initialPositionList_ = null;
 
-   private Double zStepUm_ = null;
    private Boolean keepShutterOpenSlices_ = null;
    private Boolean keepShutterOpenChannels_ = null;
 
@@ -319,7 +311,6 @@ public class DefaultMetadata implements Metadata {
       
       initialPositionList_ = builder.initialPositionList_;
 
-      zStepUm_ = builder.zStepUm_;
       keepShutterOpenSlices_ = builder.keepShutterOpenSlices_;
       keepShutterOpenChannels_ = builder.keepShutterOpenChannels_;
 
@@ -362,7 +353,6 @@ public class DefaultMetadata implements Metadata {
             .uuid(uuid_)
             .source(source_)
             .initialPositionList(initialPositionList_)
-            .zStepUm(zStepUm_)
             .keepShutterOpenSlices(keepShutterOpenSlices_)
             .keepShutterOpenChannels(keepShutterOpenChannels_)
             .pixelType(pixelType_)
@@ -405,11 +395,6 @@ public class DefaultMetadata implements Metadata {
    @Override
    public MultiStagePosition getInitialPositionList() {
       return MultiStagePosition.newInstance(initialPositionList_);
-   }
-
-   @Override
-   public Double getZStepUm() {
-      return zStepUm_;
    }
 
    @Override
@@ -571,9 +556,8 @@ public class DefaultMetadata implements Metadata {
          MDUtils.setPixelSizeUm(result, getPixelSizeUm());
          MDUtils.setUUID(result, getUUID());
          // If we don't do these manual conversions, we get null pointer
-         // exceptions because the argument type for setZStepUm is double.
-         MDUtils.setZStepUm(result, 
-               (getZStepUm() == null) ? 0 : getZStepUm());
+         // exceptions because the argument type for MDUtils here is a
+         // lowercase-d double.
          MDUtils.setElapsedTimeMs(result, 
                (getElapsedTimeMs() == null) ? 0 : getElapsedTimeMs());
          MDUtils.setComments(result, getComments());

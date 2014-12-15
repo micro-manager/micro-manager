@@ -90,6 +90,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       private String directory_ = null;
       private String comments_ = null;
       
+      private Double zStepUm_ = null;
       private Double waitInterval_ = null;
       private Double[] customIntervalsMs_ = null;
       private Coords intendedDimensions_ = null;
@@ -156,6 +157,12 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       }
 
       @Override
+      public SummaryMetadataBuilder zStepUm(Double zStepUm) {
+         zStepUm_ = zStepUm;
+         return this;
+      }
+
+      @Override
       public SummaryMetadataBuilder waitInterval(Double waitInterval) {
          waitInterval_ = waitInterval;
          return this;
@@ -195,7 +202,8 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
    private String computerName_ = null;
    private String directory_ = null;
    private String comments_ = null;
-   
+
+   private Double zStepUm_ = null;
    private Double waitInterval_ = null;
    private Double[] customIntervalsMs_ = null;
    private Coords intendedDimensions_ = null;
@@ -212,7 +220,8 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       computerName_ = builder.computerName_;
       directory_ = builder.directory_;
       comments_ = builder.comments_;
-      
+
+      zStepUm_ = builder.zStepUm_;
       waitInterval_ = builder.waitInterval_;
       customIntervalsMs_ = builder.customIntervalsMs_;
       intendedDimensions_ = builder.intendedDimensions_;
@@ -266,6 +275,11 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
    }
 
    @Override
+   public Double getZStepUm() {
+      return zStepUm_;
+   }
+
+   @Override
    public Double getWaitInterval() {
       return waitInterval_;
    }
@@ -302,6 +316,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
             .computerName(computerName_)
             .directory(directory_)
             .comments(comments_)
+            .zStepUm(zStepUm_)
             .waitInterval(waitInterval_)
             .customIntervalsMs(customIntervalsMs_)
             .intendedDimensions(intendedDimensions_)
@@ -370,6 +385,13 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       }
       catch (JSONException e) {
          ReportingUtils.logError("SummaryMetadata failed to extract field directory");
+      }
+
+      try {
+         builder.zStepUm(MDUtils.getZStepUm(tags));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError("SummaryMetadata failed to extract field zStepUm");
       }
 
       try {
@@ -446,6 +468,10 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
          result.put("ComputerName", computerName_);
          result.put("Directory", directory_);
          MDUtils.setComments(result, comments_);
+         // Manually set 0 for null Z-step since the parameter for setZStepUm
+         // is a lowercase-d double.
+         MDUtils.setZStepUm(result,
+               (zStepUm_ == null) ? 0 : zStepUm_);
          result.put("WaitInterval", waitInterval_);
          result.put("CustomIntervals_ms", customIntervalsMs_);
          if (intendedDimensions_ != null) {
