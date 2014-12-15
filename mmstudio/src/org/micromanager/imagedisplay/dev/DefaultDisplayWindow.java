@@ -5,6 +5,7 @@ import com.google.common.eventbus.Subscribe;
 
 import ij.ImagePlus;
 import ij.gui.ImageWindow;
+import ij.measure.Calibration;
 import ij.Menus;
 import ij.WindowManager;
 
@@ -140,6 +141,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
    private void makeWindowAndIJObjects() {
       stack_ = new MMVirtualStack(store_, displayBus_);
       ijImage_ = new MMImagePlus(displayBus_);
+      calibrateImagePlus(ijImage_);
       stack_.setImagePlus(ijImage_);
       ijImage_.setStack(generateImagePlusName(), stack_);
       ijImage_.setOpenAsHyperStack(true);
@@ -417,7 +419,34 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       int numChannels = store_.getAxisLength("channel");
       composite.setNChannelsUnverified(numChannels);
       composite.reset();
+      calibrateImagePlus(ijImage_);
       displayBus_.post(new DefaultNewImagePlusEvent(ijImage_));
+   }
+
+   /**
+    * Tell the ImagePlus about certain properties of our data that it doesn't
+    * otherwise know how to access.
+    */
+   private void calibrateImagePlus(ImagePlus plus) {
+      Calibration cal = new Calibration(plus);
+      cal.setUnit("um");
+      // TODO: ImageJ only allows for one pixel size across all images, even
+      // if e.g. different channels actually vary.
+      // On the flipside, we only allow for square pixels, so we aren't
+      // exactly perfect either.
+      Double pixelSize = store_.getAnyImage().getMetadata().getPixelSizeUm();
+      if (pixelSize != null) {
+         cal.pixelWidth = pixelSize;
+         cal.pixelHeight = pixelSize;
+      }
+      SummaryMetadata summary = store_.getSummaryMetadata();
+      if (summary.getWaitInterval() != null) {
+         cal.frameInterval = summary.getWaitInterval() / 1000.0;
+      }
+      if (summary.getZStepUm() != null) {
+         cal.pixelDepth = summary.getZStepUm();
+      }
+      plus.setCalibration(cal);
    }
 
    /**   
