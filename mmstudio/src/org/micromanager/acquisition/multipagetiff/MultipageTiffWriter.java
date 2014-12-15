@@ -694,8 +694,8 @@ public class MultipageTiffWriter {
          resDenomenator_ = 1;
       }
       
-      if (repMetadata.getZStepUm() != null) {
-         zStepUm_ = repMetadata.getZStepUm();
+      if (summaryMD.getZStepUm() != null) {
+         zStepUm_ = summaryMD.getZStepUm();
       }
    }
 

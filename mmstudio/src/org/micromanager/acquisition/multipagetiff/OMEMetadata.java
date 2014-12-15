@@ -118,15 +118,16 @@ public class OMEMetadata {
                   new PositiveFloat(pixelSize), seriesIndex);
          }
       }
-      if (repMetadata.getZStepUm() != null) {
-         double zStep = repMetadata.getZStepUm();
+
+      SummaryMetadata summaryMD = mptStorage_.getSummaryMetadata();
+      if (summaryMD.getZStepUm() != null) {
+         double zStep = summaryMD.getZStepUm();
          if (zStep != 0) {
             metadata_.setPixelsPhysicalSizeZ(
                   new PositiveFloat(Math.abs(zStep)), seriesIndex);
          }
       }
 
-      SummaryMetadata summaryMD = mptStorage_.getSummaryMetadata();
       if (summaryMD.getWaitInterval() != null) {
          double interval = summaryMD.getWaitInterval();
          if (interval > 0) { //don't write it for burst mode because it won't be true
