@@ -256,11 +256,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          public void actionPerformed(ActionEvent e) {
             boolean doMin = minSlicePeriodCB_.isSelected();
             desiredSlicePeriod_.setEnabled(!doMin);
+            if (doMin) {
+               recalculateSliceTiming(false);
+            }
          }
       });
-      // initialize correctly
-      minSlicePeriodCB_.doClick();
-      minSlicePeriodCB_.doClick();
       volPanel_.add(minSlicePeriodCB_, "span 2, wrap");
       
       // special field that is enabled/disabled depending on whether advanced timing is enabled
@@ -631,6 +631,18 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       updateActualVolumeDurationLabel();
       updateActualTimeLapseDurationLabel();
       
+      // makes sure slice timings get initialized correctly
+      // needs to be done after everything else set up
+      minSlicePeriodCB_.doClick();
+      minSlicePeriodCB_.doClick();
+      
+      // for easy timing mode, calculate slice timing to start
+      if (!advancedSliceTimingCB_.isSelected()) {
+         calculateSliceTiming_.doClick();
+      }
+      
+      
+      
    }//end constructor
    
    
@@ -761,7 +773,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // scan will be longer than laser by 0.25ms at both start and end
       float laserDuration = scanPeriod - 2*scanLaserBufferTime;  // will be integer plus 0.5
       
-      float globalDelay = slicePeriod - cameraReadout_max - cameraReset_max - scanPeriod;
+      // computer "extra" per-slice time: period minus camera reset and readout times minus (scan time - 0.25ms)
+      // the last 0.25ms correction comes because we start the scan 0.25ms before camera global exposure
+      float globalDelay = slicePeriod - cameraReadout_max - cameraReset_max - scanPeriod + scanLaserBufferTime;
       
       // if calculated delay is negative then we have to reduce exposure time in 1 sec increments
       if (globalDelay < 0) {
