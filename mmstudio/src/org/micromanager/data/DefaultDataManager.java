@@ -178,34 +178,42 @@ public class DefaultDataManager implements DataManager {
          // This should also never happen.
          ReportingUtils.logError("Got notified of a request to close for a display that we didn't know was associated with datastore " + store);
       }
-      if (displays.size() == 1) {
-         // Last display; check for saving now.
-         if (store.getIsSaved()) {
-            // No problem with saving.
-            display.forceClosed();
-            return;
-         }
-         // Prompt the user to save their data.
-         String[] options = {"Save as Separate Files", "Save as Single File",
-            "Discard", "Cancel"};
-         int result = JOptionPane.showOptionDialog(display.getAsWindow(),
-               "Do you want to save this data set before closing?",
-               "MicroManager", JOptionPane.DEFAULT_OPTION,
-               JOptionPane.QUESTION_MESSAGE, null, options, options[1]);
-         if (result == 3) {
-            // User cancelled.
-            return;
-         }
-         Datastore.SaveMode mode = Datastore.SaveMode.MULTIPAGE_TIFF;
-         if (result == 0) {
-            mode = Datastore.SaveMode.SEPARATE_TIFFS;
-         }
-         if (result != 2) { // I.e. not the "discard" option
-            store.save(mode, display.getAsWindow());
-         }
-         store.lock();
-         // This will invoke our onDatastoreClosed() method.
-         store.close();
+      if (displays.size() > 1) {
+         // Not last display, so it's fine to remove it.
+         display.forceClosed();
+         return;
       }
+
+      // Last display; check for saving now.
+      if (store.getIsSaved()) {
+         // No problem with saving.
+         display.forceClosed();
+         return;
+      }
+
+      // Prompt the user to save their data.
+      String[] options = {"Save as Separate Files", "Save as Single File",
+         "Discard", "Cancel"};
+      int result = JOptionPane.showOptionDialog(display.getAsWindow(),
+            "Do you want to save this data set before closing?",
+            "MicroManager", JOptionPane.DEFAULT_OPTION,
+            JOptionPane.QUESTION_MESSAGE, null, options, options[1]);
+      if (result == 3) {
+         // User cancelled.
+         return;
+      }
+      Datastore.SaveMode mode = Datastore.SaveMode.MULTIPAGE_TIFF;
+      if (result == 0) {
+         mode = Datastore.SaveMode.SEPARATE_TIFFS;
+      }
+      if (result != 2) { // I.e. not the "discard" option
+         if (!store.save(mode, display.getAsWindow())) {
+            // Don't close the window, as saving failed.
+            return;
+         }
+      }
+      store.lock();
+      // This will invoke our onDatastoreClosed() method.
+      store.close();
    }
 }
