@@ -1,5 +1,6 @@
 package org.micromanager.api.data;
 
+import java.awt.Window;
 import java.io.Closeable;
 import java.util.List;
 
@@ -138,9 +139,9 @@ public interface Datastore extends Closeable {
    public boolean getIsLocked();
 
    /**
-    * Close the Datastore, removing all references to it from the Java layer.
-    * This will in turn cause the resources used by the Datastore (e.g. RAM
-    * storage) to be released, assuming that there are no references to the
+    * Close the Datastore, removing all references to it from MicroManager's
+    * code.  This will in turn cause the resources used by the Datastore (e.g.
+    * RAM storage) to be released, assuming that there are no references to the
     * Datastore in other parts of the program (e.g. in plugins or Beanshell
     * scripts). Displays attached to the Datastore will automatically be
     * closed, with no prompt for data to be saved.
@@ -174,8 +175,10 @@ public interface Datastore extends Closeable {
     * from the Storage and saves it according to the mode. After this method,
     * getIsSaved() will be true, unless the user cancels when prompted for
     * directory/filename or there is an error while saving.
+    * @param Window Window over which to display the dialog prompt; may be
+    *        null.
     */
-   public void save(SaveMode mode);
+   public void save(SaveMode mode, Window window);
 
    /**
     * As above, except uses the provided path (the last element of which is

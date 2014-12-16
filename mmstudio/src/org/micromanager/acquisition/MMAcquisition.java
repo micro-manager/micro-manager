@@ -135,6 +135,7 @@ public class MMAcquisition {
       existing_ = false;
       show_ = show;
       store_ = new DefaultDatastore();
+      MMStudio.getInstance().data().track(store_);
       try {
          if (summaryMetadata.has("Directory") && summaryMetadata.get("Directory").toString().length() > 0) {
             // Set up saving to the target directory.
@@ -276,6 +277,7 @@ public class MMAcquisition {
       String name = name_;
       
       store_ = new DefaultDatastore();
+      MMStudio.getInstance().data().track(store_);
 
       if (virtual_ && existing_) {
          String dirName = rootDirectory_ + File.separator + name;
