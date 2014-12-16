@@ -207,15 +207,14 @@ public class DefaultDatastore implements Datastore {
 
    @Override
    public void save(Datastore.SaveMode mode, String path) {
-      // TODO: we have some casts to Default* here; do we really need them?
-      DefaultSummaryMetadata summary = (DefaultSummaryMetadata) getSummaryMetadata();
+      SummaryMetadata summary = getSummaryMetadata();
       // Insert intended dimensions if they aren't already present.
       if (summary.getIntendedDimensions() == null) {
          DefaultCoords.Builder builder = new DefaultCoords.Builder();
          for (String axis : getAxes()) {
             builder.position(axis, getAxisLength(axis));
          }
-         summary = (DefaultSummaryMetadata) summary.copy().intendedDimensions(builder.build()).build();
+         summary = summary.copy().intendedDimensions(builder.build()).build();
       }
       // Downcast enum to boolean as StorageMultipageTiff only has two modes.
       boolean isMultipage = (mode == Datastore.SaveMode.MULTIPAGE_TIFF);
