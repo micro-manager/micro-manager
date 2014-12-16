@@ -3,6 +3,7 @@
  */
 package edu.valelab.GaussianFit;
 
+import edu.valelab.GaussianFit.utils.GaussianUtils;
 import edu.valelab.GaussianFit.utils.RowData;
 import ij.ImageStack;
 import ij.process.ColorProcessor;

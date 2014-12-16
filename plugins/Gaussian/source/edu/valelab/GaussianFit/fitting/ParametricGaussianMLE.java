@@ -1,5 +1,6 @@
-package edu.valelab.GaussianFit;
+package edu.valelab.GaussianFit.fitting;
 
+import edu.valelab.GaussianFit.utils.GaussianUtils;
 import org.apache.commons.math.FunctionEvaluationException;
 import org.apache.commons.math.optimization.fitting.ParametricRealFunction;
 
@@ -7,12 +8,12 @@ import org.apache.commons.math.optimization.fitting.ParametricRealFunction;
  *
  * @author nico
  */
-public class ParametricGaussianFunction implements ParametricRealFunction{
+public class ParametricGaussianMLE implements ParametricRealFunction{
    private int width_;
    private int height_;
    private int mode_;
 
-   public ParametricGaussianFunction(int mode, int width, int height) {
+   public ParametricGaussianMLE(int mode, int width, int height) {
       width_ = width;
       height_ = height;
       mode_ = mode;

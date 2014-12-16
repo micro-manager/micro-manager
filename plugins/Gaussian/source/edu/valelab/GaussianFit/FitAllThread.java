@@ -10,6 +10,7 @@
 
 package edu.valelab.GaussianFit;
 
+import edu.valelab.GaussianFit.fitting.ZCalibrator;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.Roi;

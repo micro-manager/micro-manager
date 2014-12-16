@@ -17,6 +17,8 @@
 
 package edu.valelab.GaussianFit;
 
+import edu.valelab.GaussianFit.utils.GaussianUtils;
+import edu.valelab.GaussianFit.fitting.ZCalibrator;
 import edu.ucsf.tsf.TaggedSpotsProtos.FitMode;
 import edu.ucsf.tsf.TaggedSpotsProtos.IntensityUnits;
 import edu.ucsf.tsf.TaggedSpotsProtos.LocationUnits;

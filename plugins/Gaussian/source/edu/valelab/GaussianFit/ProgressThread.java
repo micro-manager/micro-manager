@@ -30,6 +30,7 @@ public class ProgressThread  implements Runnable {
    }
 
    
+   @Override
    public void run() {
       int maxNr = sourceList_.size();
       int size = maxNr;

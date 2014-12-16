@@ -4,7 +4,7 @@
  * Includes the actual Gaussian functions
  */
 
-package edu.valelab.GaussianFit;
+package edu.valelab.GaussianFit.utils;
 
 
 import java.awt.BasicStroke;

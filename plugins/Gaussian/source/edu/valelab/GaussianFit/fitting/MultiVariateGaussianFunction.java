@@ -6,9 +6,10 @@
  * @author - Nico Stuurman, September 2010
  */
 
-package edu.valelab.GaussianFit;
+package edu.valelab.GaussianFit.fitting;
 
 
+import edu.valelab.GaussianFit.utils.GaussianUtils;
 import org.apache.commons.math.analysis.*;
 
 /**

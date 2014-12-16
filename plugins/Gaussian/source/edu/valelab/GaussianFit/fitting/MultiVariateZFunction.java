@@ -1,4 +1,4 @@
-package edu.valelab.GaussianFit;
+package edu.valelab.GaussianFit.fitting;
 
 import org.apache.commons.math.FunctionEvaluationException;
 import org.apache.commons.math.analysis.MultivariateRealFunction;

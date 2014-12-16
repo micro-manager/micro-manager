@@ -6,6 +6,10 @@
 
 package edu.valelab.GaussianFit;
 
+import edu.valelab.GaussianFit.utils.GaussianUtils;
+import edu.valelab.GaussianFit.fitting.MultiVariateGaussianFunction;
+import edu.valelab.GaussianFit.fitting.MultiVariateGaussianMLE;
+import edu.valelab.GaussianFit.fitting.ParametricGaussianFunction;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.commons.math.FunctionEvaluationException;
