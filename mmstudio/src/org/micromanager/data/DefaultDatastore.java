@@ -196,17 +196,17 @@ public class DefaultDatastore implements Datastore {
    }
 
    @Override
-   public void save(Datastore.SaveMode mode, Window window) {
+   public boolean save(Datastore.SaveMode mode, Window window) {
       File file = FileDialogs.save(window,
             "Please choose a location for the data set", MMStudio.MM_DATA_SET);
       if (file == null) {
-         return;
+         return false;
       }
-      save(mode, file.getAbsolutePath());
+      return save(mode, file.getAbsolutePath());
    }
 
    @Override
-   public void save(Datastore.SaveMode mode, String path) {
+   public boolean save(Datastore.SaveMode mode, String path) {
       SummaryMetadata summary = getSummaryMetadata();
       // Insert intended dimensions if they aren't already present.
       if (summary.getIntendedDimensions() == null) {
@@ -231,6 +231,7 @@ public class DefaultDatastore implements Datastore {
          for (Coords coords : getUnorderedImageCoords()) {
             duplicate.putImage(getImage(coords));
          }
+         return true;
       }
       catch (java.io.IOException e) {
          ReportingUtils.showError(e, "Failed to save image data");
@@ -238,6 +239,7 @@ public class DefaultDatastore implements Datastore {
       catch (DatastoreLockedException e) {
          ReportingUtils.logError("Couldn't modify newly-created datastore; this should never happen!");
       }
+      return false;
    }
 
    @Override

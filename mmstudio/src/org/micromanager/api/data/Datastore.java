@@ -177,15 +177,17 @@ public interface Datastore extends Closeable {
     * directory/filename or there is an error while saving.
     * @param Window Window over which to display the dialog prompt; may be
     *        null.
+    * @return true if saving succeeded, false otherwise.
     */
-   public void save(SaveMode mode, Window window);
+   public boolean save(SaveMode mode, Window window);
 
    /**
     * As above, except uses the provided path (the last element of which is
     * assumed to be a filename), instead of prompting the user. After this
     * method, getIsSaved() will be true, unless there is an error while saving.
+    * @return true if saving succeeded, false otherwise.
     */
-   public void save(SaveMode mode, String path);
+   public boolean save(SaveMode mode, String path);
 
    /**
     * Returns the total number of Images in the Datastore. Returns -1 if no
