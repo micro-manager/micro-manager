@@ -24,6 +24,8 @@ package org.micromanager.multichannelshading;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.WindowAdapter;
@@ -44,6 +46,7 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.MMStudio;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.FileDialogs;
+import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.MMDialog;
 import org.micromanager.utils.MMException;
 import org.micromanager.utils.ReportingUtils;
@@ -127,11 +130,22 @@ public class MultiChannelShadingMigForm extends MMDialog {
             prefs_.put(CHANNELGROUP, groupName_);
          }
       });
-      add(groupComboBox, "wrap");
+      add(groupComboBox);
+      
+      JButton helpButton = new JButton("Help");
+      helpButton.addActionListener(new ActionListener() {
+
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            new Thread(GUIUtils.makeURLRunnable(
+                    "https://micro-manager.org/wiki/Flat-Field_Correction")).start();
+        }
+      });
+      add (helpButton, "skip 3,  wrap");
              
       JLabel darkImageLabel = new JLabel("Dark Image (common):");
       darkImageLabel.setFont(arialSmallFont_);
-      add (darkImageLabel, "wrap");
+      add (darkImageLabel);
       
       final JTextField darkFieldTextField = new JTextField();
       darkFieldTextField.setFont(arialSmallFont_);
@@ -157,7 +171,7 @@ public class MultiChannelShadingMigForm extends MMDialog {
       });
       darkFieldTextField.setText(processBackgroundImage(
               darkFieldTextField.getText()));
-      add(darkFieldTextField, "span 3, growx ");
+      add(darkFieldTextField, "span 2, growx ");
 
 
       final JButton darkFieldButton =  mcsButton(buttonSize_, arialSmallFont_);
