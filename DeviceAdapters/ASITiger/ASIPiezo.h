@@ -114,6 +114,9 @@ private:
    double stepSizeUm_;
    string axisLetter_;
    bool ring_buffer_supported_;
+
+   // private helper functions
+   int OnSaveJoystickSettings();
 };
 
 #endif //_ASIPiezo_H_

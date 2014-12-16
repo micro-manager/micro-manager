@@ -159,6 +159,7 @@ private:
    bool laserTTLenabled_;      // whether it has MM_LASER_TTL module
 
    int SetIlluminationStateHelper(bool on);
+   int OnSaveJoystickSettings();
 };
 
 #endif //_ASIScanner_H_

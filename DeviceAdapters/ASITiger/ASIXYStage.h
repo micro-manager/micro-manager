@@ -114,6 +114,9 @@ private:
    double stepSizeYUm_;
    string axisLetterX_;
    string axisLetterY_;
+
+   // private helper functions
+   int OnSaveJoystickSettings();
 };
 
 #endif //_ASIXYStage_H_

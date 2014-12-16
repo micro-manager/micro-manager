@@ -143,6 +143,7 @@ int CXYStage::Initialize()
    AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsX);
    AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsY);
    AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsZ);
+   AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsZJoystick);
    AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsOrig);
    AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsDone);
 
@@ -412,6 +413,34 @@ int CXYStage::SetHome()
 ////////////////
 // action handlers
 
+int CXYStage::OnSaveJoystickSettings()
+// redoes the joystick settings so they can be saved using SS Z
+{
+   long tmp;
+   string tmpstr;
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   command << "J " << axisLetterX_ << "?";
+   response << ":A " << axisLetterX_ << "=";
+   RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+   RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+   tmp += 100;
+   command.str("");
+   command << "J " << axisLetterX_ << "=" << tmp;
+   RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+   command.str("");
+   response.str("");
+   command << "J " << axisLetterY_ << "?";
+   response << ":A " << axisLetterY_ << "=";
+   RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+   RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+   tmp += 100;
+   command.str("");
+   command << "J " << axisLetterY_ << "=" << tmp;
+   RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+   return DEVICE_OK;
+}
+
 int CXYStage::OnSaveCardSettings(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    string tmpstr;
@@ -432,6 +461,12 @@ int CXYStage::OnSaveCardSettings(MM::PropertyBase* pProp, MM::ActionType eAct)
             command << 'X';
          else if (tmpstr.compare(g_SaveSettingsZ) == 0)
             command << 'Z';
+         else if (tmpstr.compare(g_SaveSettingsZJoystick) == 0)
+         {
+            command << 'Z';
+            // do save joystick settings first
+            RETURN_ON_MM_ERROR (OnSaveJoystickSettings());
+         }
          RETURN_ON_MM_ERROR (hub_->QueryCommandVerify(command.str(), ":A", (long)200));  // note added 200ms delay
       }
       pProp->Set(g_SaveSettingsDone);

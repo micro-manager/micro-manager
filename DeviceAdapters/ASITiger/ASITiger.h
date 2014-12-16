@@ -450,6 +450,7 @@ const char* const g_AdeptMode_4 = "4 - internal input closed-loop, speedup";
 const char* const g_SaveSettingsX = "X - reload factory defaults on startup to card";
 const char* const g_SaveSettingsY = "Y - restore last saved settings from card";
 const char* const g_SaveSettingsZ = "Z - save settings to card (partial)";
+const char* const g_SaveSettingsZJoystick = "Z+ - save settings to card (with joystick)";
 const char* const g_SaveSettingsOrig = "no action";
 const char* const g_SaveSettingsDone = "save settings done";
 // command execute settings
