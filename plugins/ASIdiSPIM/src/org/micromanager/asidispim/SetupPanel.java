@@ -98,7 +98,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       super(MyStrings.PanelNames.SETUP.toString() + side.toString(),
               new MigLayout(
               "",
-              "[center]8[align center]",
+              "[center]8[center]",
               "[]16[]16[]"));
       
       devices_ = devices;
@@ -133,11 +133,11 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       imagingPiezoStopPos_ = imagingPiezoStopPositionLabel_.getFloat();
       
       // Create sheet Panel with sheet and piezo controls
-      MigLayout ml = new MigLayout(
-              "",
-              "[right]8[align center]8[right]8[]8[center]8[center]8[center]8[center]8[center]",
-              "[]8[]8[]8[]4[]8[]8[]8[]8[]8[]");
-      JPanel sheetPanel = new JPanel(ml);
+      JPanel sheetPanel = new JPanel(new MigLayout(
+            "",
+            "[right]8[align center]8[right]8[]8[center]8[center]8[center]8[center]8[center]",
+            "[]8[]8[]8[]4[]8[]8[]8[]8[]8[]"));
+      sheetPanel.setBorder(BorderFactory.createLineBorder(ASIdiSPIM.borderColor));
       
       offsetField_ = pu.makeFloatEntryField(panelName_, 
               Properties.Keys.PLUGIN_OFFSET_PIEZO_SHEET.toString(), 0, 6);  
@@ -449,17 +449,14 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
               prefs_);
       add(joystickPanel_, "center");
 
-      sheetPanel.setBorder(BorderFactory.createLineBorder(ASIdiSPIM.borderColor));
       add(sheetPanel, "center, aligny top, span 1 3, wrap");
 
       beamPanel_ = new BeamSubPanel(gui_, devices_, panelName_, side, prefs_, props_);
-      beamPanel_.setBorder(BorderFactory.createLineBorder(ASIdiSPIM.borderColor));
       add(beamPanel_, "center, wrap");
 
 
       cameraPanel_ = new CameraSubPanel(gui_, cameras_, devices_, panelName_, 
               side, prefs_, true);
-      cameraPanel_.setBorder(BorderFactory.createLineBorder(ASIdiSPIM.borderColor));
       add(cameraPanel_, "center");
 
    }// end of SetupPanel constructor

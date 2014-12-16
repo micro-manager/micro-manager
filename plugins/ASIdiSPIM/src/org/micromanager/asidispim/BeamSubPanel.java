@@ -24,6 +24,7 @@ package org.micromanager.asidispim;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
+import javax.swing.BorderFactory;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 
@@ -69,7 +70,7 @@ public final class BeamSubPanel extends ListeningJPanel {
               "", 
               "[right]8[left]",
               "[]4[]"));
-
+      setBorder(BorderFactory.createLineBorder(ASIdiSPIM.borderColor));
       
       devices_ = devices;
       prefs_ = prefs;
@@ -134,7 +135,6 @@ public final class BeamSubPanel extends ListeningJPanel {
       updateOnTab_ = new JCheckBox("Change settings on tab activate");
       updateOnTab_.setSelected(prefs_.getBoolean(instanceLabel_, Prefs.Keys.ENABLE_BEAM_SETTINGS, true));
       add(updateOnTab_, "center, span 3");
-
    }//constructor
    
    

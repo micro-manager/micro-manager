@@ -122,10 +122,10 @@ public class DevicesPanel extends ListeningJPanel {
       
       add(new JLabel("Note: plugin must be restarted for some changes to take full effect."), "span 3");
 
-      add(new JSeparator(JSeparator.VERTICAL), "growy, cell 3 0 1 12");
+      add(new JSeparator(JSeparator.VERTICAL), "growy, cell 3 0 1 10");
       
       JLabel imgLabel = new JLabel(new ImageIcon(getClass().getResource("/org/micromanager/asidispim/icons/diSPIM.png")));
-      add(imgLabel, "cell 4 0 1 12, growy");
+      add(imgLabel, "cell 4 0 1 10, growy");
       
       // turn on listeners again
       devices_.enableListeners(true);

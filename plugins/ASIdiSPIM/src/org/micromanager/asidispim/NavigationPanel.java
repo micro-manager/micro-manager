@@ -43,6 +43,7 @@ import javax.swing.JButton;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 
 import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
@@ -90,8 +91,8 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       super (MyStrings.PanelNames.NAVIGATION.toString(),
             new MigLayout(
               "", 
-              "[right]8[align center]16[right]8[60px,center]8[center]8[center]2[center]2[center]8[center]8[center]8[center]",
-              "[]6[]"));
+              "[center]8[center]",
+              "[]16[]16[]"));
       devices_ = devices;
       props_ = props;
       joystick_ = joystick;
@@ -102,121 +103,116 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       core_ = gui_.getMMCore();
       PanelUtils pu = new PanelUtils(prefs_, props_, devices_);
       
-      joystickPanel_ = new JoystickSubPanel(joystick_, devices_, panelName_, Devices.Sides.NONE, prefs_);
-      add(joystickPanel_, "span 2 4");  // make artificially tall to keep stage positions in line with each other
+      // panel for stage positions / virtual joysticks
+      JPanel navPanel = new JPanel(new MigLayout(
+            "",
+            "[right]8[60px,center]8[center]8[center]2[center]2[center]8[center]8[center]8[center]",
+            "[]4[]"));
+      navPanel.setBorder(BorderFactory.createLineBorder(ASIdiSPIM.borderColor));
       
-      add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.XYSTAGE, Joystick.Directions.X) + ":"));
+      navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.XYSTAGE, Joystick.Directions.X) + ":"));
       xPositionLabel_ = new JLabel("");
-      add(xPositionLabel_);
-      add(pu.makeSetPositionField(Devices.Keys.XYSTAGE, Joystick.Directions.X, positions_));
+      navPanel.add(xPositionLabel_);
+      navPanel.add(pu.makeSetPositionField(Devices.Keys.XYSTAGE, Joystick.Directions.X, positions_));
       JFormattedTextField deltaXField = pu.makeFloatEntryField(panelName_, "DeltaX", 10.0, 3);
-      add(makeIncrementButton(Devices.Keys.XYSTAGE, Joystick.Directions.X, deltaXField, "-", -1));
-      add(deltaXField);
-      add(makeIncrementButton(Devices.Keys.XYSTAGE, Joystick.Directions.X, deltaXField, "+", 1));
-      add(makeMoveToOriginButton(Devices.Keys.XYSTAGE, Joystick.Directions.X));
-      add(makeSetOriginHereButton(Devices.Keys.XYSTAGE, Joystick.Directions.X), "wrap");
+      navPanel.add(makeIncrementButton(Devices.Keys.XYSTAGE, Joystick.Directions.X, deltaXField, "-", -1));
+      navPanel.add(deltaXField);
+      navPanel.add(makeIncrementButton(Devices.Keys.XYSTAGE, Joystick.Directions.X, deltaXField, "+", 1));
+      navPanel.add(makeMoveToOriginButton(Devices.Keys.XYSTAGE, Joystick.Directions.X));
+      navPanel.add(makeSetOriginHereButton(Devices.Keys.XYSTAGE, Joystick.Directions.X), "wrap");
       
-      add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.XYSTAGE, Joystick.Directions.Y) + ":"));
+      navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.XYSTAGE, Joystick.Directions.Y) + ":"));
       yPositionLabel_ = new JLabel("");
-      add(yPositionLabel_);
-      add(pu.makeSetPositionField(Devices.Keys.XYSTAGE, Joystick.Directions.Y, positions_));
+      navPanel.add(yPositionLabel_);
+      navPanel.add(pu.makeSetPositionField(Devices.Keys.XYSTAGE, Joystick.Directions.Y, positions_));
       JFormattedTextField deltaYField = pu.makeFloatEntryField(panelName_, "DeltaY", 10.0, 3);
-      add(makeIncrementButton(Devices.Keys.XYSTAGE, Joystick.Directions.Y, deltaYField, "-", -1));
-      add(deltaYField);
-      add(makeIncrementButton(Devices.Keys.XYSTAGE, Joystick.Directions.Y, deltaYField, "+", 1));
-      add(makeMoveToOriginButton(Devices.Keys.XYSTAGE, Joystick.Directions.Y));
-      add(makeSetOriginHereButton(Devices.Keys.XYSTAGE, Joystick.Directions.Y), "wrap");
+      navPanel.add(makeIncrementButton(Devices.Keys.XYSTAGE, Joystick.Directions.Y, deltaYField, "-", -1));
+      navPanel.add(deltaYField);
+      navPanel.add(makeIncrementButton(Devices.Keys.XYSTAGE, Joystick.Directions.Y, deltaYField, "+", 1));
+      navPanel.add(makeMoveToOriginButton(Devices.Keys.XYSTAGE, Joystick.Directions.Y));
+      navPanel.add(makeSetOriginHereButton(Devices.Keys.XYSTAGE, Joystick.Directions.Y), "wrap");
       
-      add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.LOWERZDRIVE) + ":"));
+      navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.LOWERZDRIVE) + ":"));
       lowerZPositionLabel_ = new JLabel("");
-      add(lowerZPositionLabel_);
-      add(pu.makeSetPositionField(Devices.Keys.LOWERZDRIVE, Joystick.Directions.NONE, positions_));
+      navPanel.add(lowerZPositionLabel_);
+      navPanel.add(pu.makeSetPositionField(Devices.Keys.LOWERZDRIVE, Joystick.Directions.NONE, positions_));
       JFormattedTextField deltaZField = pu.makeFloatEntryField(panelName_, "DeltaZ", 10.0, 3);
-      add(makeIncrementButton(Devices.Keys.LOWERZDRIVE, Joystick.Directions.NONE, deltaZField, "-", -1));
-      add(deltaZField);
-      add(makeIncrementButton(Devices.Keys.LOWERZDRIVE, Joystick.Directions.NONE, deltaZField, "+", 1));
-      add(makeMoveToOriginButton(Devices.Keys.LOWERZDRIVE, Joystick.Directions.NONE));
-      add(makeSetOriginHereButton(Devices.Keys.LOWERZDRIVE, Joystick.Directions.NONE), "wrap");
+      navPanel.add(makeIncrementButton(Devices.Keys.LOWERZDRIVE, Joystick.Directions.NONE, deltaZField, "-", -1));
+      navPanel.add(deltaZField);
+      navPanel.add(makeIncrementButton(Devices.Keys.LOWERZDRIVE, Joystick.Directions.NONE, deltaZField, "+", 1));
+      navPanel.add(makeMoveToOriginButton(Devices.Keys.LOWERZDRIVE, Joystick.Directions.NONE));
+      navPanel.add(makeSetOriginHereButton(Devices.Keys.LOWERZDRIVE, Joystick.Directions.NONE), "wrap");
       
-      add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.UPPERZDRIVE) + ":"));
+      navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.UPPERZDRIVE) + ":"));
       upperZPositionLabel_ = new JLabel("");
-      add(upperZPositionLabel_);
-      add(pu.makeSetPositionField(Devices.Keys.UPPERZDRIVE, Joystick.Directions.NONE, positions_));
+      navPanel.add(upperZPositionLabel_);
+      navPanel.add(pu.makeSetPositionField(Devices.Keys.UPPERZDRIVE, Joystick.Directions.NONE, positions_));
       JFormattedTextField deltaFField = pu.makeFloatEntryField(panelName_, "DeltaF", 10.0, 3);
-      add(makeIncrementButton(Devices.Keys.UPPERZDRIVE, Joystick.Directions.NONE, deltaFField, "-", -1));
-      add(deltaFField);
-      add(makeIncrementButton(Devices.Keys.UPPERZDRIVE, Joystick.Directions.NONE, deltaFField, "+", 1));
-      add(makeMoveToOriginButton(Devices.Keys.UPPERZDRIVE, Joystick.Directions.NONE));
-      add(makeSetOriginHereButton(Devices.Keys.UPPERZDRIVE, Joystick.Directions.NONE), "wrap");   
+      navPanel.add(makeIncrementButton(Devices.Keys.UPPERZDRIVE, Joystick.Directions.NONE, deltaFField, "-", -1));
+      navPanel.add(deltaFField);
+      navPanel.add(makeIncrementButton(Devices.Keys.UPPERZDRIVE, Joystick.Directions.NONE, deltaFField, "+", 1));
+      navPanel.add(makeMoveToOriginButton(Devices.Keys.UPPERZDRIVE, Joystick.Directions.NONE));
+      navPanel.add(makeSetOriginHereButton(Devices.Keys.UPPERZDRIVE, Joystick.Directions.NONE), "wrap");   
       
-      beamPanel_ = new BeamSubPanel(gui_, devices_, panelName_, Devices.Sides.NONE, prefs_, props_);
-      beamPanel_.setBorder(BorderFactory.createLineBorder(ASIdiSPIM.borderColor));
-      add(beamPanel_, "center, span 2 3");
-      
-      add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.PIEZOA) + ":"));
+      navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.PIEZOA) + ":"));
       piezoAPositionLabel_ = new JLabel("");
-      add(piezoAPositionLabel_);
+      navPanel.add(piezoAPositionLabel_);
       JFormattedTextField deltaPField = pu.makeFloatEntryField(panelName_, "DeltaP", 5.0, 3);
-      add(pu.makeSetPositionField(Devices.Keys.PIEZOA, Joystick.Directions.NONE, positions_));
-      add(makeIncrementButton(Devices.Keys.PIEZOA, Joystick.Directions.NONE, deltaPField, "-", -1));
-      add(deltaPField);
-      add(makeIncrementButton(Devices.Keys.PIEZOA, Joystick.Directions.NONE, deltaPField, "+", 1));
-      add(makeMoveToOriginButton(Devices.Keys.PIEZOA, Joystick.Directions.NONE), "wrap");
+      navPanel.add(pu.makeSetPositionField(Devices.Keys.PIEZOA, Joystick.Directions.NONE, positions_));
+      navPanel.add(makeIncrementButton(Devices.Keys.PIEZOA, Joystick.Directions.NONE, deltaPField, "-", -1));
+      navPanel.add(deltaPField);
+      navPanel.add(makeIncrementButton(Devices.Keys.PIEZOA, Joystick.Directions.NONE, deltaPField, "+", 1));
+      navPanel.add(makeMoveToOriginButton(Devices.Keys.PIEZOA, Joystick.Directions.NONE), "wrap");
       
-      add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.PIEZOB) + ":"));
+      navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.PIEZOB) + ":"));
       piezoBPositionLabel_ = new JLabel("");
-      add(piezoBPositionLabel_);
-      add(pu.makeSetPositionField(Devices.Keys.PIEZOB, Joystick.Directions.NONE, positions_));
+      navPanel.add(piezoBPositionLabel_);
+      navPanel.add(pu.makeSetPositionField(Devices.Keys.PIEZOB, Joystick.Directions.NONE, positions_));
       JFormattedTextField deltaQField = pu.makeFloatEntryField(panelName_, "DeltaQ", 5.0, 3);
-      add(makeIncrementButton(Devices.Keys.PIEZOB, Joystick.Directions.NONE, deltaQField, "-", -1));
-      add(deltaQField);
-      add(makeIncrementButton(Devices.Keys.PIEZOB, Joystick.Directions.NONE, deltaQField, "+", 1));
-      add(makeMoveToOriginButton(Devices.Keys.PIEZOB, Joystick.Directions.NONE), "wrap");
+      navPanel.add(makeIncrementButton(Devices.Keys.PIEZOB, Joystick.Directions.NONE, deltaQField, "-", -1));
+      navPanel.add(deltaQField);
+      navPanel.add(makeIncrementButton(Devices.Keys.PIEZOB, Joystick.Directions.NONE, deltaQField, "+", 1));
+      navPanel.add(makeMoveToOriginButton(Devices.Keys.PIEZOB, Joystick.Directions.NONE), "wrap");
 
-      add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.GALVOA, Joystick.Directions.X) + ":"));
+      navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.GALVOA, Joystick.Directions.X) + ":"));
       galvoAxPositionLabel_ = new JLabel("");
-      add(galvoAxPositionLabel_);
-      add(pu.makeSetPositionField(Devices.Keys.GALVOA, Joystick.Directions.X, positions_));
+      navPanel.add(galvoAxPositionLabel_);
+      navPanel.add(pu.makeSetPositionField(Devices.Keys.GALVOA, Joystick.Directions.X, positions_));
       JFormattedTextField deltaAField = pu.makeFloatEntryField(panelName_, "DeltaA", 0.2, 3);
-      add(makeIncrementButton(Devices.Keys.GALVOA, Joystick.Directions.X, deltaAField, "-", -1));
-      add(deltaAField);
-      add(makeIncrementButton(Devices.Keys.GALVOA, Joystick.Directions.X, deltaAField, "+", 1));
-      add(makeMoveToOriginButton(Devices.Keys.GALVOA, Joystick.Directions.X), "wrap");
+      navPanel.add(makeIncrementButton(Devices.Keys.GALVOA, Joystick.Directions.X, deltaAField, "-", -1));
+      navPanel.add(deltaAField);
+      navPanel.add(makeIncrementButton(Devices.Keys.GALVOA, Joystick.Directions.X, deltaAField, "+", 1));
+      navPanel.add(makeMoveToOriginButton(Devices.Keys.GALVOA, Joystick.Directions.X), "wrap");
       
-      cameraPanel_ = new CameraSubPanel(gui_, cameras_, devices_, panelName_, 
-              Devices.Sides.NONE, prefs_, true);
-      cameraPanel_.setBorder(BorderFactory.createLineBorder(ASIdiSPIM.borderColor)); 
-      add(cameraPanel_, "center, span 2 2");
-      
-      add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.GALVOA, Joystick.Directions.Y) + ":"));
+      navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.GALVOA, Joystick.Directions.Y) + ":"));
       galvoAyPositionLabel_ = new JLabel("");
-      add(galvoAyPositionLabel_);
-      add(pu.makeSetPositionField(Devices.Keys.GALVOA, Joystick.Directions.Y, positions_));
+      navPanel.add(galvoAyPositionLabel_);
+      navPanel.add(pu.makeSetPositionField(Devices.Keys.GALVOA, Joystick.Directions.Y, positions_));
       JFormattedTextField deltaBField = pu.makeFloatEntryField(panelName_, "DeltaB", 0.2, 3);
-      add(makeIncrementButton(Devices.Keys.GALVOA, Joystick.Directions.Y, deltaBField, "-", -1));
-      add(deltaBField);
-      add(makeIncrementButton(Devices.Keys.GALVOA, Joystick.Directions.Y, deltaBField, "+", 1));
-      add(makeMoveToOriginButton(Devices.Keys.GALVOA, Joystick.Directions.Y), "wrap");
+      navPanel.add(makeIncrementButton(Devices.Keys.GALVOA, Joystick.Directions.Y, deltaBField, "-", -1));
+      navPanel.add(deltaBField);
+      navPanel.add(makeIncrementButton(Devices.Keys.GALVOA, Joystick.Directions.Y, deltaBField, "+", 1));
+      navPanel.add(makeMoveToOriginButton(Devices.Keys.GALVOA, Joystick.Directions.Y), "wrap");
       
-      add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.GALVOB, Joystick.Directions.X) + ":"));
+      navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.GALVOB, Joystick.Directions.X) + ":"));
       galvoBxPositionLabel_ = new JLabel("");
-      add(galvoBxPositionLabel_);
-      add(pu.makeSetPositionField(Devices.Keys.GALVOB, Joystick.Directions.X, positions_));
+      navPanel.add(galvoBxPositionLabel_);
+      navPanel.add(pu.makeSetPositionField(Devices.Keys.GALVOB, Joystick.Directions.X, positions_));
       JFormattedTextField deltaCField = pu.makeFloatEntryField(panelName_, "DeltaC", 0.2, 3);
-      add(makeIncrementButton(Devices.Keys.GALVOB, Joystick.Directions.X, deltaCField, "-", -1));
-      add(deltaCField);
-      add(makeIncrementButton(Devices.Keys.GALVOB, Joystick.Directions.X, deltaCField, "+", 1));
-      add(makeMoveToOriginButton(Devices.Keys.GALVOB, Joystick.Directions.X), "wrap");
+      navPanel.add(makeIncrementButton(Devices.Keys.GALVOB, Joystick.Directions.X, deltaCField, "-", -1));
+      navPanel.add(deltaCField);
+      navPanel.add(makeIncrementButton(Devices.Keys.GALVOB, Joystick.Directions.X, deltaCField, "+", 1));
+      navPanel.add(makeMoveToOriginButton(Devices.Keys.GALVOB, Joystick.Directions.X), "wrap");
       
-      add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.GALVOB, Joystick.Directions.Y) + ":"), "skip 2");
+      navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.GALVOB, Joystick.Directions.Y) + ":"));
       galvoByPositionLabel_ = new JLabel("");
-      add(galvoByPositionLabel_);
-      add(pu.makeSetPositionField(Devices.Keys.GALVOB, Joystick.Directions.Y, positions_));
+      navPanel.add(galvoByPositionLabel_);
+      navPanel.add(pu.makeSetPositionField(Devices.Keys.GALVOB, Joystick.Directions.Y, positions_));
       JFormattedTextField deltaDField = pu.makeFloatEntryField(panelName_, "DeltaD", 0.2, 3);
-      add(makeIncrementButton(Devices.Keys.GALVOB, Joystick.Directions.Y, deltaDField, "-", -1));
-      add(deltaDField);
-      add(makeIncrementButton(Devices.Keys.GALVOB, Joystick.Directions.Y, deltaDField, "+", 1));
-      add(makeMoveToOriginButton(Devices.Keys.GALVOB, Joystick.Directions.Y), "wrap");
+      navPanel.add(makeIncrementButton(Devices.Keys.GALVOB, Joystick.Directions.Y, deltaDField, "-", -1));
+      navPanel.add(deltaDField);
+      navPanel.add(makeIncrementButton(Devices.Keys.GALVOB, Joystick.Directions.Y, deltaDField, "+", 1));
+      navPanel.add(makeMoveToOriginButton(Devices.Keys.GALVOB, Joystick.Directions.Y), "wrap");
       
       JButton buttonHalt = new JButton("Halt!");
       buttonHalt.setMargin(new Insets(4,8,4,8));
@@ -241,8 +237,20 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
             }
          }
       });
-      add(buttonHalt, "cell 11 0, span 1 10, growy");
+      navPanel.add(buttonHalt, "cell 11 0, span 1 10, growy");
+
+      joystickPanel_ = new JoystickSubPanel(joystick_, devices_, panelName_, Devices.Sides.NONE, prefs_);
+      this.add(joystickPanel_);
       
+      this.add(navPanel, "aligny top, span 1 3, wrap");
+
+      beamPanel_ = new BeamSubPanel(gui_, devices_, panelName_, Devices.Sides.NONE, prefs_, props_);
+      this.add(beamPanel_, "wrap");
+
+      cameraPanel_ = new CameraSubPanel(gui_, cameras_, devices_, panelName_, 
+            Devices.Sides.NONE, prefs_, true);
+      this.add(cameraPanel_);
+
       // fill the labels with position values (the positions_ data structure
       //   has been filled via the main plugin frame's call to stagePosUpdater.oneTimeUpdate()
       updateStagePositions();

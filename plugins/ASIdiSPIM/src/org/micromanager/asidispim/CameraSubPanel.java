@@ -33,6 +33,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.HashMap;
 
+import javax.swing.BorderFactory;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JToggleButton;
@@ -80,6 +81,7 @@ public final class CameraSubPanel extends ListeningJPanel implements LiveModeLis
               "", 
               "[right]8[align center]",
               "[]8[]"));
+      setBorder(BorderFactory.createLineBorder(ASIdiSPIM.borderColor));
 
       cameras_ = cameras;
       devices_ = devices;
