@@ -72,6 +72,7 @@ public class Properties {
       SPIM_NUM_SLICES("SPIMNumSlices"),
       SPIM_NUM_REPEATS("SPIMNumRepeats"),
       SPIM_NUM_SCANSPERSLICE("SPIMNumScansPerSlice"),
+      SPIM_NUM_SLICES_PER_PIEZO("SPIMNumSlicesPerPiezo"),
       SPIM_LINESCAN_PERIOD("SingleAxisXPeriod(ms)"),
       SPIM_DELAY_SIDE("SPIMDelayBeforeSide(ms)"),
       SPIM_DELAY_SCAN("SPIMDelayBeforeScan(ms)"),
@@ -154,7 +155,9 @@ public class Properties {
       PLUGIN_ENABLE_POSITION_UPDATES("EnablePositionUpdates"),
       PLUGIN_ENABLE_ILLUM_PIEZO_HOME("EnableIllumPiezoHome"),
       PLUGIN_SCAN_OPPOSITE_DIRECTIONS("ScanOppositeDirections"),
-      PLUGIN_IGNORE_MISSING_SCANNER("IgnoreMissingScanner"),      
+      PLUGIN_IGNORE_MISSING_SCANNER("IgnoreMissingScanner"),
+      PLUGIN_NUM_COLORS("NumberOfColors"),
+      PLUGIN_MULTICOLOR_MODE("MultiColorMode"),
       ;
       private final String text;
       private final boolean hasPattern;  // true if string has substitution pattern

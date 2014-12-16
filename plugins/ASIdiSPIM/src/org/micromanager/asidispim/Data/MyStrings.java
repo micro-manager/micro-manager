@@ -38,11 +38,12 @@ public class MyStrings {
      LIGHTSOURCE("Light"),
      SETTINGS("Settings"),
      DATAANALYSIS("Data Analysis"),
+     MULTID("MultiD"),
      HELP("Help"),
      BEAM_SUBPANEL("Beam_"),
      CAMERA_SUBPANEL("Camera_"),
      JOYSTICK_SUBPANEL("Joystick_"),
-     STATUS_SUBPANEL("Status_")
+     STATUS_SUBPANEL("Status_"),
       ;
       private final String text;
       PanelNames(String text) {

@@ -47,20 +47,17 @@ import org.micromanager.internalinterfaces.LiveModeListener;
 import org.micromanager.utils.MMFrame;
 
 // TODO easy mode that pulls most-used bits from all panels
-// TODO "neutral position" indicator
-// TODO autofocus for finding calibration endpoints and also offset (slope doesn't change but offset can) 
+// TODO autofocus for finding calibration endpoints (http://dx.doi.org/10.1364/OE.16.008670)
+// TODO adjust calibration offset based on current position (avoid needing to do both calibration endpoints)
 // TODO camera control ROI panel
 // TODO track Z/F for sample finding
-// TODO integrate with MDA acquisition?
+// TODO factor out common code for JComboBoxes like MulticolorModes, CameraModes, AcquisitionModes, etc.
 // TODO finish eliminating Prefs.Keys in favor of Properties.Keys with plugin values
 // TODO save/load plugin settings from file instead of from registry (nice to also include controller settings)
 // TODO handle camera binning
 // TODO add check for correct Hamamatsu model
 // TODO support for laser shutters (update device panel too?)
 // TODO display certain properties like positions, e.g. scan amplitudes/offsets
-// TODO resolve whether Home/Stop should be added to 1axis stage API, use here if possible
-// TODO add sethome property to device adapter and use it here
-// TODO automatically find scanner/pizeo focus (http://dx.doi.org/10.1364/OE.16.008670)
 
 
 /**
@@ -84,6 +81,7 @@ public class ASIdiSPIMFrame extends MMFrame
    private final SetupPanel setupPanelA_;
    private final SetupPanel setupPanelB_;
    private final NavigationPanel navigationPanel_;
+   private final MultiDPanel multiDPanel_;
    private final SettingsPanel settingsPanel_;
    private final DataAnalysisPanel dataAnalysisPanel_;
    private final HelpPanel helpPanel_;
@@ -118,6 +116,7 @@ public class ASIdiSPIMFrame extends MMFrame
       stagePosUpdater_ = new StagePositionUpdater(positions_, props_);  // needed for setup and navigation
       navigationPanel_ = new NavigationPanel(gui, devices_, props_, joystick_,
             positions_, prefs_, cameras_);
+      multiDPanel_ = new MultiDPanel(devices_, props_, prefs_);
       acquisitionPanel_ = new AcquisitionPanel(gui, devices_, props_, joystick_, 
             cameras_, prefs_, stagePosUpdater_, positions_);
       dataAnalysisPanel_ = new DataAnalysisPanel(gui, prefs_);
@@ -136,9 +135,13 @@ public class ASIdiSPIMFrame extends MMFrame
       tabbedPane_.addLTab(setupPanelB_);      // tabIndex = 2
       tabbedPane_.addLTab(acquisitionPanel_); // tabIndex = 3
       tabbedPane_.addLTab(dataAnalysisPanel_);// tabIndex = 4
-      tabbedPane_.addLTab(devicesPanel_);     // tabIndex = 5
-      tabbedPane_.addLTab(settingsPanel_);    // tabIndex = 6
-      tabbedPane_.addLTab(helpPanel_);        // tabIndex = 7
+      tabbedPane_.addLTab(multiDPanel_);      // tabIndex = 5
+      tabbedPane_.addLTab(devicesPanel_);     // tabIndex = 6
+      final int deviceTabIndex = tabbedPane_.getTabCount() - 1;
+      tabbedPane_.addLTab(settingsPanel_);    // tabIndex = 7
+      tabbedPane_.addLTab(helpPanel_);        // tabIndex = 8
+      final int helpTabIndex = tabbedPane_.getTabCount() - 1;
+      
 
       // attach position updaters
       stagePosUpdater_.addPanel(setupPanelA_);
@@ -166,8 +169,8 @@ public class ASIdiSPIMFrame extends MMFrame
       this.loadAndRestorePosition(100, 100, WIDTH, WIDTH);
     
       // gotSelected will be called because we put this after adding the ChangeListener
-      tabbedPane_.setSelectedIndex(7);  // setSelectedIndex(0) just after initialization doesn't fire ChangeListener, so switch to help panel first
-      tabbedPane_.setSelectedIndex(prefs_.getInt(MAIN_PREF_NODE, Prefs.Keys.TAB_INDEX, 5));  // default to devicesPanel_ on first run
+      tabbedPane_.setSelectedIndex(helpTabIndex);  // setSelectedIndex(0) just after initialization doesn't fire ChangeListener, so switch to help panel first
+      tabbedPane_.setSelectedIndex(prefs_.getInt(MAIN_PREF_NODE, Prefs.Keys.TAB_INDEX, deviceTabIndex));  // default to devicesPanel_ on first run
 
       // set up the window
       add(tabbedPane_);  // add the pane to the GUI window

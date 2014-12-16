@@ -26,6 +26,7 @@ import org.micromanager.asidispim.Data.CameraModes;
 import org.micromanager.asidispim.Data.Cameras;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.Joystick;
+import org.micromanager.asidispim.Data.MulticolorModes;
 import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Positions;
 import org.micromanager.asidispim.Data.Prefs;
@@ -215,7 +216,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       volPanel_.add(new JLabel("Number of sides:"));
       String [] str12 = {"1", "2"};
       numSides_ = pu.makeDropDownBox(str12, Devices.Keys.PLUGIN,
-            Properties.Keys.PLUGIN_NUM_SIDES, "2");
+            Properties.Keys.PLUGIN_NUM_SIDES, str12[1]);
       numSides_.addActionListener(recalculateTimingDisplayAL);
       volPanel_.add(numSides_, "wrap");
 
@@ -1105,6 +1106,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
       props_.setPropValue(galvoDevice, Properties.Keys.SPIM_NUM_REPEATS, 1, skipScannerWarnings);
       
+      // if we are changing color slice by slice then set controller
+      //   to do multiple slices per piezo move
+      if (props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_MULTICOLOR_MODE)
+            == MulticolorModes.Keys.SLICE.getPrefCode()) {
+         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_NUM_SLICES_PER_PIEZO,
+            props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_NUM_COLORS), skipScannerWarnings);
+      }
+      
       AcquisitionModes.Keys spimMode = (AcquisitionModes.Keys) spimMode_.getSelectedItem();
       
       // figure out the piezo parameters
@@ -1190,8 +1199,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * Implementation of acquisition that orchestrates image
     * acquisition itself rather than using the acquisition engine
     * 
-    * This methods is public so that the scriptinterface can call it
-    * Please do not access this yourself directly
+    * This methods is public so that the ScriptInterface can call it
+    * Please do not access this yourself directly, instead use the API, e.g.
+    *   import org.micromanager.asidispim.api.*;
+    *   ASIdiSPIMInterface diSPIM = new ASIdiSPIMImplementation();
+    *   diSPIM.runAcquisition();
     *
     * @return
     */
@@ -1234,7 +1246,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
       }
       
-      int nrSides = getNumSides();      // TODO: multi-channel in sense of excitation color, etc.
+      int nrSides = getNumSides();
+      // TODO: multi-channel in sense of excitation color, etc.
+      int nrColors = props_.getPropValueInteger(Devices.Keys.PLUGIN,
+            Properties.Keys.PLUGIN_NUM_COLORS);
       
       // make sure we have cameras selected
       if (!checkCamerasAssigned()) {
@@ -1388,8 +1403,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             
             gui_.logMessage("diSPIM plugin starting acquisition " + acqName);
             
-            gui_.openAcquisition(acqName, rootDir, nrFrames, nrSides, nrSlices, nrPos,
-                  show, save);
+            gui_.openAcquisition(acqName, rootDir, nrFrames, nrSides * nrColors,
+                  nrSlices, nrPos, show, save);
             core_.setExposure(firstCamera, exposureTime);
             if (twoSided) {
                core_.setExposure(secondCamera, exposureTime);
