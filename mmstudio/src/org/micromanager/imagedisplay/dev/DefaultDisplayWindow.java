@@ -107,9 +107,6 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
     */
    public DefaultDisplayWindow(Datastore store, Component customControls) {
       store_ = store;
-      if (MMStudio.getInstance().data().getIsTracked(store_)) {
-         MMStudio.getInstance().data().associateDisplay(this, store_);
-      }
       store_.registerForEvents(this, 100);
       displayBus_ = new EventBus();
       displayBus_.register(this);
@@ -135,6 +132,9 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
 
       EventManager.register(this);
       EventManager.post(new DefaultNewDisplayEvent(this));
+      if (MMStudio.getInstance().data().getIsTracked(store_)) {
+         MMStudio.getInstance().data().associateDisplay(this, store_);
+      }
    }
 
    /**
@@ -675,6 +675,10 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
    public static List<DisplayWindow> getAllImageWindows() {
       ArrayList<DisplayWindow> result = new ArrayList<DisplayWindow>();
       int[] plusIDs = WindowManager.getIDList();
+      if (plusIDs == null) {
+         // Assume no displays have been created yet.
+         return result;
+      }
       for (int id : plusIDs) {
          ImagePlus plus = WindowManager.getImage(id);
          ImageWindow window = plus.getWindow();
