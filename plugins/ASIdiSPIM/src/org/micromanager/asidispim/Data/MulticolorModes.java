@@ -52,7 +52,7 @@ public class MulticolorModes {
     */
    public static enum Keys {
       VOLUME("Every volume", 1),
-      SIDE("Every side", 2),
+//      SIDE("Every side", 2),
       SLICE("Every slice", 3),
       NONE("None", 0);
       private final String text;
@@ -164,7 +164,7 @@ public class MulticolorModes {
       private List<Keys> getValidModeKeys() {
          List<Keys> keyList = new ArrayList<Keys>();
          keyList.add(Keys.VOLUME);
-         keyList.add(Keys.SIDE);
+//         keyList.add(Keys.SIDE);
          keyList.add(Keys.SLICE);
          return keyList;
       }
