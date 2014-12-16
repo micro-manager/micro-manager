@@ -16,6 +16,7 @@ import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
+import java.awt.Window;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
@@ -106,7 +107,9 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
     */
    public DefaultDisplayWindow(Datastore store, Component customControls) {
       store_ = store;
-      MMStudio.getInstance().data().associateDisplay(this, store_);
+      if (MMStudio.getInstance().data().getIsTracked(store_)) {
+         MMStudio.getInstance().data().associateDisplay(this, store_);
+      }
       store_.registerForEvents(this, 100);
       displayBus_ = new EventBus();
       displayBus_.register(this);
@@ -562,6 +565,11 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
    }
 
    @Override
+   public Window getAsWindow() {
+      return (Window) this;
+   }
+
+   @Override
    public void registerForEvents(Object obj) {
       displayBus_.register(obj);
    }
@@ -646,6 +654,9 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       }
    }
 
+   /**
+    * When our Datastore goes away, we automatically close ourselves.
+    */
    @Subscribe
    public void onDatastoreClosed(DatastoreClosingEvent event) {
       if (event.getDatastore() == store_) {

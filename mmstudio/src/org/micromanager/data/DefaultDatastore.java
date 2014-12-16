@@ -30,7 +30,6 @@ public class DefaultDatastore implements Datastore {
 
    public DefaultDatastore() {
       bus_ = new PrioritizedEventBus();
-      EventManager.post(new DefaultNewDatastoreEvent(this));
    }
 
    /**
@@ -197,19 +196,7 @@ public class DefaultDatastore implements Datastore {
    }
 
    @Override
-   public void save(Datastore.SaveMode mode) {
-      // Find a display to use, or use the MainFrame if none is available.
-      Window window = MMStudio.getInstance().getFrame();
-      List<DisplayWindow> displays = MMStudio.getInstance().data().getDisplays(this);
-      if (displays.size() > 0) {
-         DisplayWindow tmp = displays.get(0);
-         if (tmp instanceof Window) { // This should always be true.
-            window = (Window) tmp;
-         }
-         else {
-            ReportingUtils.logError("Couldn't cast DisplayWindow to Window");
-         }
-      }
+   public void save(Datastore.SaveMode mode, Window window) {
       File file = FileDialogs.save(window,
             "Please choose a location for the data set", MMStudio.MM_DATA_SET);
       if (file == null) {

@@ -254,6 +254,8 @@ public class SnapLiveManager {
       if (store_ != null) {
          store_.unregisterForEvents(this);
       }
+      // Note that unlike in most situations, we do *not* ask the DataManager
+      // to track this Datastore for us.
       store_ = new DefaultDatastore();
       store_.registerForEvents(this, 100);
       store_.setStorage(new StorageRAM(store_));
@@ -308,9 +310,11 @@ public class SnapLiveManager {
          }
       });
       controlPanel.add(toAlbumButton_);
-      controlPanel.add(new SaveButton(store_));
 
       display_ = new DefaultDisplayWindow(store_, controlPanel);
+      // We need to have the display before we can create the save button,
+      // leading to these shenanigans.
+      controlPanel.add(new SaveButton(store_, display_.getAsWindow()));
       display_.registerForEvents(this);
    }
 

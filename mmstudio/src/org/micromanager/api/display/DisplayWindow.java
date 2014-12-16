@@ -4,6 +4,7 @@ import ij.gui.ImageWindow;
 import ij.ImagePlus;
 
 import java.awt.Component;
+import java.awt.Window;
 import java.util.List;
 
 import org.micromanager.api.data.Coords;
@@ -74,9 +75,18 @@ public interface DisplayWindow {
 
    /**
     * If appropriate, return the ImageWindow that this display represents.
-    * Otherwise return null.
+    * Otherwise return null. This is not necessarily the same java.awt.Window
+    * that the DisplayWindow represents; MicroManager uses a dummy ImageWindow
+    * to simplify communications with ImageJ. You probably should not need
+    * to call this method.
     */
    public ImageWindow getImageWindow();
+
+   /**
+    * Provide a java.awt.Window representing this display; mostly useful for
+    * positioning dialogs and the like.
+    */
+   public Window getAsWindow();
 
    /**
     * Register for access to the EventBus that the window uses for propagating
