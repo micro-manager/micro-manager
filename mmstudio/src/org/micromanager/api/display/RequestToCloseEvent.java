@@ -6,5 +6,5 @@ package org.micromanager.api.display;
  * should call DisplayWindow.forceClosed().
  */
 public interface RequestToCloseEvent {
-   public DisplayWindow getWindow();
+   public DisplayWindow getDisplay();
 }
