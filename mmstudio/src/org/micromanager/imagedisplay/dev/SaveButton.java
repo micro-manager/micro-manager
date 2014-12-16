@@ -3,6 +3,7 @@ package org.micromanager.imagedisplay.dev;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
+import java.awt.Window;
 
 import javax.swing.event.MouseInputAdapter;
 import javax.swing.JButton;
@@ -18,13 +19,13 @@ import org.micromanager.utils.ReportingUtils;
 public class SaveButton extends JButton {
    private JPopupMenu menu_;
 
-   public SaveButton(final Datastore store) {
+   public SaveButton(final Datastore store, final Window window) {
       menu_ = new JPopupMenu();
       JMenuItem separateImages = new JMenuItem("Save to separate image files");
       separateImages.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            store.save(Datastore.SaveMode.SEPARATE_TIFFS);
+            store.save(Datastore.SaveMode.SEPARATE_TIFFS, window);
          }
       });
       menu_.add(separateImages);
@@ -32,7 +33,7 @@ public class SaveButton extends JButton {
       multistack.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            store.save(Datastore.SaveMode.MULTIPAGE_TIFF);
+            store.save(Datastore.SaveMode.MULTIPAGE_TIFF, window);
          }
       });
       menu_.add(multistack);
