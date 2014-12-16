@@ -213,16 +213,16 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       volPanel_.setBorder(PanelUtils.makeTitledBorder("Volume Settings"));
 
       volPanel_.add(new JLabel("Number of sides:"));
-      String [] sides21 = {"2", "1"};
-      numSides_ = pu.makeDropDownBox(sides21, Devices.Keys.PLUGIN,
-            Properties.Keys.PLUGIN_NUM_SIDES);
+      String [] str12 = {"1", "2"};
+      numSides_ = pu.makeDropDownBox(str12, Devices.Keys.PLUGIN,
+            Properties.Keys.PLUGIN_NUM_SIDES, "2");
       numSides_.addActionListener(recalculateTimingDisplayAL);
       volPanel_.add(numSides_, "wrap");
 
       volPanel_.add(new JLabel("First side:"));
       String[] ab = {Devices.Sides.A.toString(), Devices.Sides.B.toString()};
       firstSide_ = pu.makeDropDownBox(ab, Devices.Keys.PLUGIN,
-            Properties.Keys.PLUGIN_FIRST_SIDE);
+            Properties.Keys.PLUGIN_FIRST_SIDE, Devices.Sides.A.toString());
       volPanel_.add(firstSide_, "wrap");
       
       volPanel_.add(new JLabel("Delay before side [ms]:"));
@@ -1234,7 +1234,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
       }
       
-      int nrSides = getNumSides();  // TODO: multi-channel in sense of excitation color, etc.
+      int nrSides = getNumSides();      // TODO: multi-channel in sense of excitation color, etc.
       
       // make sure we have cameras selected
       if (!checkCamerasAssigned()) {
@@ -1389,7 +1389,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             gui_.logMessage("diSPIM plugin starting acquisition " + acqName);
             
             gui_.openAcquisition(acqName, rootDir, nrFrames, nrSides, nrSlices, nrPos,
-                    show, save);
+                  show, save);
             core_.setExposure(firstCamera, exposureTime);
             if (twoSided) {
                core_.setExposure(secondCamera, exposureTime);

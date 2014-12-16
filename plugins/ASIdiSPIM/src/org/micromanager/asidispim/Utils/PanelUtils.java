@@ -403,15 +403,15 @@ public class PanelUtils {
     * Constructs a DropDown box selecting between multiple strings.
     * Sets selection based on property value and attaches a Listener.
     * 
-    * @param propKey - property key as known in the params
-    * @param props
-    * @param devs
     * @param vals - array of strings, each one is a different option in the dropdown 
     * @param devKeys 
+    * @param propKey - property key as known in the params
+    * @param defaultVal - if no value exists in properties/preferences then this is added
     * @return constructed JComboBox
     */
    public JComboBox makeDropDownBox(String[] vals,
-         Devices.Keys [] devKeys, Properties.Keys propKey) {
+         Devices.Keys [] devKeys, Properties.Keys propKey,
+         String defaultVal) {
       /**
        * Listener for the string-based dropdown boxes
        * Updates the model in the params class with any GUI changes
@@ -458,6 +458,10 @@ public class PanelUtils {
          }
       }
       
+      if (!props_.hasProperty(devKeys[0], propKey)) {
+         props_.setPropValue(devKeys[0], propKey, defaultVal);
+      }
+      
       String origVal = props_.getPropValueString(devKeys[0], propKey);
       JComboBox jcb = new JComboBox(vals);
       jcb.setSelectedItem(origVal);
@@ -480,8 +484,9 @@ public class PanelUtils {
     * @return constructed JComboBox
     */
    public JComboBox makeDropDownBox(String[] vals,
-         Devices.Keys devKey, Properties.Keys propKey) {
-      return makeDropDownBox(vals, new Devices.Keys[]{devKey}, propKey);
+         Devices.Keys devKey, Properties.Keys propKey,
+         String defaultVal) {
+      return makeDropDownBox(vals, new Devices.Keys[]{devKey}, propKey, defaultVal);
    }
    
    
