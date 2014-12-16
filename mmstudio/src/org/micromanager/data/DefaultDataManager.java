@@ -178,16 +178,17 @@ public class DefaultDataManager implements DataManager {
          // This should also never happen.
          ReportingUtils.logError("Got notified of a request to close for a display that we didn't know was associated with datastore " + store);
       }
+
       if (displays.size() > 1) {
          // Not last display, so it's fine to remove it.
-         display.forceClosed();
+         removeDisplay(display);
          return;
       }
 
       // Last display; check for saving now.
       if (store.getIsSaved()) {
          // No problem with saving.
-         display.forceClosed();
+         removeDisplay(display);
          return;
       }
 
@@ -212,8 +213,16 @@ public class DefaultDataManager implements DataManager {
             return;
          }
       }
+      removeDisplay(display);
       store.lock();
       // This will invoke our onDatastoreClosed() method.
       store.close();
+   }
+
+   private void removeDisplay(DisplayWindow display) {
+      Datastore store = display.getDatastore();
+      ArrayList<DisplayWindow> displays = storeToDisplays_.get(store);
+      displays.remove(display);
+      display.forceClosed();
    }
 }
