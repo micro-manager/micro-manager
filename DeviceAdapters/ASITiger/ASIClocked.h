@@ -35,7 +35,6 @@ class CClocked : public ASIPeripheralBase<CStateDeviceBase, CClocked>
 {
 public:
    CClocked(const char* name);
-   CClocked(const char* name, bool addProps);
    ~CClocked() { Shutdown(); }
   
    // Generic device API
@@ -49,17 +48,21 @@ public:
 
    // action interface
    // ----------------
-   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnLabel(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnJoystickSelect(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnState                (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnLabel                (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSaveCardSettings     (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnRefreshProperties    (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnJoystickSelect       (MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    unsigned int numPositions_;
    unsigned int curPosition_;
 
+   // private helper functions
+   int OnSaveJoystickSettings();
+
 protected: // needs to be inherited
    string axisLetter_;
-   bool addProps_;
 };
 
 class CFSlider : public CClocked

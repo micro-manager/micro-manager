@@ -49,8 +49,7 @@ CClocked::CClocked(const char* name) :
    ASIPeripheralBase< ::CStateDeviceBase, CClocked >(name),
    numPositions_(0),  // will read actual number of positions
    curPosition_(0),   // will read actual position
-   axisLetter_(g_EmptyAxisLetterStr),
-   addProps_(false)
+   axisLetter_(g_EmptyAxisLetterStr)
 {
    if (IsExtendedName(name))  // only set up these properties if we have the required information in the name
    {
@@ -102,17 +101,33 @@ int CClocked::Initialize()
    RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterPosition2(curPosition_) );
    curPosition_--;  // make it 0-indexed
 
-   if (addProps_) {
-      // joystick disable and select which knob
-      pAct = new CPropertyAction (this, &CClocked::OnJoystickSelect);
-      CreateProperty(g_JoystickSelectPropertyName, g_JSCode_0, MM::String, false, pAct);
-      AddAllowedValue(g_JoystickSelectPropertyName, g_JSCode_0);
-      AddAllowedValue(g_JoystickSelectPropertyName, g_JSCode_2);
-      AddAllowedValue(g_JoystickSelectPropertyName, g_JSCode_3);
-      AddAllowedValue(g_JoystickSelectPropertyName, g_JSCode_22);
-      AddAllowedValue(g_JoystickSelectPropertyName, g_JSCode_23);
-      UpdateProperty(g_JoystickSelectPropertyName);
-   }
+   // refresh properties from controller every time - default is not to refresh (speeds things up by not redoing so much serial comm)
+   pAct = new CPropertyAction (this, &CClocked::OnRefreshProperties);
+   CreateProperty(g_RefreshPropValsPropertyName, g_NoState, MM::String, false, pAct);
+   AddAllowedValue(g_RefreshPropValsPropertyName, g_NoState);
+   AddAllowedValue(g_RefreshPropValsPropertyName, g_YesState);
+
+   // save settings to controller if requested
+   pAct = new CPropertyAction (this, &CClocked::OnSaveCardSettings);
+   CreateProperty(g_SaveSettingsPropertyName, g_SaveSettingsOrig, MM::String, false, pAct);
+   AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsX);
+   AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsY);
+   AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsZ);
+   AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsZJoystick);
+   AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsOrig);
+   AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsDone);
+
+   // joystick disable and select which knob
+   pAct = new CPropertyAction (this, &CClocked::OnJoystickSelect);
+   CreateProperty(g_JoystickSelectPropertyName, g_JSCode_0, MM::String, false, pAct);
+   AddAllowedValue(g_JoystickSelectPropertyName, g_JSCode_0);
+   AddAllowedValue(g_JoystickSelectPropertyName, g_JSCode_2);
+   AddAllowedValue(g_JoystickSelectPropertyName, g_JSCode_3);
+   AddAllowedValue(g_JoystickSelectPropertyName, g_JSCode_22);
+   AddAllowedValue(g_JoystickSelectPropertyName, g_JSCode_23);
+   UpdateProperty(g_JoystickSelectPropertyName);
+
+
 
    // let calling class decide if initialized_ should be set
    return DEVICE_OK;
@@ -178,6 +193,66 @@ int CClocked::OnLabel(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int CClocked::OnSaveJoystickSettings()
+// redoes the joystick settings so they can be saved using SS Z
+{
+   long tmp;
+   string tmpstr;
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   command << "J " << axisLetter_ << "?";
+   response << ":A " << axisLetter_ << "=";
+   RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+   RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+   tmp += 100;
+   command.str("");
+   command << "J " << axisLetter_ << "=" << tmp;
+   RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+   return DEVICE_OK;
+}
+
+int CClocked::OnRefreshProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   string tmpstr;
+   if (eAct == MM::AfterSet) {
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_YesState) == 0)
+         refreshProps_ = true;
+      else
+         refreshProps_ = false;
+   }
+   return DEVICE_OK;
+}
+
+int CClocked::OnSaveCardSettings(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   string tmpstr;
+   ostringstream command; command.str("");
+   if (eAct == MM::AfterSet) {
+      command << addressChar_ << "SS ";
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_SaveSettingsOrig) == 0)
+         return DEVICE_OK;
+      if (tmpstr.compare(g_SaveSettingsDone) == 0)
+         return DEVICE_OK;
+      if (tmpstr.compare(g_SaveSettingsX) == 0)
+         command << 'X';
+      else if (tmpstr.compare(g_SaveSettingsY) == 0)
+         command << 'X';
+      else if (tmpstr.compare(g_SaveSettingsZ) == 0)
+         command << 'Z';
+      else if (tmpstr.compare(g_SaveSettingsZJoystick) == 0)
+      {
+         command << 'Z';
+         // do save joystick settings first
+         RETURN_ON_MM_ERROR (OnSaveJoystickSettings());
+      }
+      RETURN_ON_MM_ERROR (hub_->QueryCommandVerify(command.str(), ":A", (long)200));  // note added 200ms delay
+      pProp->Set(g_SaveSettingsDone);
+   }
+   return DEVICE_OK;
+}
+
 int CClocked::OnJoystickSelect(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    ostringstream command; command.str("");
@@ -235,7 +310,7 @@ int CClocked::OnJoystickSelect(MM::PropertyBase* pProp, MM::ActionType eAct)
 CFSlider::CFSlider(const char* name) :
       CClocked(name)
 {
-   addProps_ = true;  // adds joystick property
+
 }
 
 int CFSlider::Initialize()
