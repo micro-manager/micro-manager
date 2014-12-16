@@ -702,14 +702,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     */
    private int getNumSides() {
       if (numSides_.getSelectedIndex() == 1) {
-         return 1;
-      } else {
          return 2;
+      } else {
+         return 1;
       }
    }
    
    private boolean isTwoSided() {
-      return (numSides_.getSelectedIndex() == 0);
+      return (numSides_.getSelectedIndex() == 1);
    }
    
    private int getNumTimepoints() {
