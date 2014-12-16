@@ -8,7 +8,7 @@ public class RequestToCloseEvent implements org.micromanager.api.display.Request
       window_ = window;
    }
 
-   public DisplayWindow getWindow() {
+   public DisplayWindow getDisplay() {
       return window_;
    }
 }
