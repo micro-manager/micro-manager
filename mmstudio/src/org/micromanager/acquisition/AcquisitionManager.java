@@ -206,13 +206,21 @@ public class AcquisitionManager {
          album = createNewAlbum();
          openAcquisition(album, "", true, false);
          acq = getAcquisition(album);
-         // HACK: adjust number of frames based on number of channels.  If we
-         // don't do this, then multi-channel images don't display properly (we
-         // just get repeat images), because the ImageJ object refuses to
-         // change which frame it displays. I have *no idea* why this happens,
-         // but instead of debugging and patching ImageJ itself, we're
-         // resorting to this workaround.
-         acq.setDimensions(numChannels > 1 ? 2 : 1, numChannels, 1, 1);
+         // HACK: adjust number of frames based on number of
+         // channels/components.  If we don't do this, then multi-channel
+         // images don't display properly (we just get repeat images), because
+         // the ImageJ object refuses to change which frame it displays. I have
+         // *no idea* why this happens, but instead of debugging and patching
+         // ImageJ itself, we're resorting to this workaround.
+         boolean mustHackDims = false;
+         try {
+            mustHackDims = (numChannels > 1 ||
+                  MDUtils.getNumberOfComponents(image.tags) > 1);
+         }
+         catch (JSONException ex) {
+            ReportingUtils.logError(ex, "Unable to determine number of components of image");
+         }
+         acq.setDimensions(mustHackDims ? 2 : 1, numChannels, 1, 1);
          acq.setImagePhysicalDimensions(imageWidth, imageHeight, imageDepth, imageBitDepth, numChannels);
 
          try {
