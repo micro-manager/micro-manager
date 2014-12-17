@@ -11,6 +11,7 @@
 
 package edu.valelab.GaussianFit;
 
+import edu.valelab.GaussianFit.utils.MMWindowAbstraction;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.Overlay;
@@ -85,7 +86,6 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
     /**
      * Creates new form MainForm
      * 
-     * @param gt - Gaussian Track plugin from which this form was invoked
      */
     public MainForm() {
        initComponents();
@@ -118,14 +118,17 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
              
        DocumentListener updateNoiseOverlay = new DocumentListener() {
 
+          @Override
           public void changedUpdate(DocumentEvent documentEvent) {
              updateDisplay();
           }
 
+          @Override
           public void insertUpdate(DocumentEvent documentEvent) {
              updateDisplay();
           }
 
+          @Override
           public void removeUpdate(DocumentEvent documentEvent) {
              updateDisplay();
           }
@@ -144,7 +147,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
        setTitle("Localization Microscopy");
        
        // wdith on Mac should be 250, Windows 270
-       setBounds(prefs_.getInt(FRAMEXPOS, 100), prefs_.getInt(FRAMEYPOS, 100), 270, 575);
+       setBounds(prefs_.getInt(FRAMEXPOS, 100), prefs_.getInt(FRAMEYPOS, 100), 270, 625);
        ImagePlus.addImageListener(this);
        setVisible(true);
     }
@@ -162,14 +165,17 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
          field_.setBackground(Color.white);
       }
 
+      @Override
       public void changedUpdate(DocumentEvent documentEvent) {
          updateBackground();
       }
 
+      @Override
       public void insertUpdate(DocumentEvent documentEvent) {
          updateBackground();
       }
 
+      @Override
       public void removeUpdate(DocumentEvent documentEvent) {
          updateBackground();
       }
@@ -240,6 +246,11 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
       jLabel21 = new javax.swing.JLabel();
       zStepTextField_ = new javax.swing.JTextField();
       labelNPoints_ = new javax.swing.JLabel();
+      jSeparator6 = new javax.swing.JSeparator();
+      positionsLabel_ = new javax.swing.JLabel();
+      allPosButton_ = new javax.swing.JButton();
+      currentPosButton_ = new javax.swing.JButton();
+      posTextField_ = new javax.swing.JTextField();
 
       jButton1.setText("jButton1");
 
@@ -267,7 +278,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
 
       jLabel4.setText("Filter Data...");
       getContentPane().add(jLabel4);
-      jLabel4.setBounds(30, 360, 87, 20);
+      jLabel4.setBounds(20, 360, 87, 20);
 
       filterDataCheckBoxWidth.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -337,7 +348,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
          }
       });
       getContentPane().add(trackButton);
-      trackButton.setBounds(90, 480, 75, 29);
+      trackButton.setBounds(90, 530, 75, 29);
       getContentPane().add(jSeparator1);
       jSeparator1.setBounds(20, 240, 220, 10);
       getContentPane().add(jSeparator2);
@@ -392,7 +403,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
          }
       });
       getContentPane().add(fitAllButton_);
-      fitAllButton_.setBounds(10, 480, 80, 30);
+      fitAllButton_.setBounds(10, 530, 80, 30);
 
       jLabel10.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
       jLabel10.setText("nm < Width <");
@@ -487,7 +498,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
          }
       });
       getContentPane().add(stopButton);
-      stopButton.setBounds(130, 510, 80, 30);
+      stopButton.setBounds(130, 560, 80, 30);
 
       filterDataCheckBoxNrPhotons.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -529,7 +540,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
          }
       });
       getContentPane().add(showButton);
-      showButton.setBounds(40, 510, 80, 30);
+      showButton.setBounds(40, 560, 80, 30);
 
       endTrackCheckBox_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
       endTrackCheckBox_.setText("End track when missing");
@@ -590,7 +601,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
          }
       });
       getContentPane().add(mTrackButton_);
-      mTrackButton_.setBounds(170, 480, 80, 29);
+      mTrackButton_.setBounds(170, 530, 80, 29);
 
       jLabel21.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
       jLabel21.setText("Z-step (nm)");
@@ -606,6 +617,38 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
       labelNPoints_.setText("n:");
       getContentPane().add(labelNPoints_);
       labelNPoints_.setBounds(20, 220, 70, 20);
+      getContentPane().add(jSeparator6);
+      jSeparator6.setBounds(20, 520, 220, 10);
+
+      positionsLabel_.setText("Positions...");
+      getContentPane().add(positionsLabel_);
+      positionsLabel_.setBounds(20, 480, 80, 16);
+
+      allPosButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+      allPosButton_.setText("All");
+      allPosButton_.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            allPosButton_ActionPerformed(evt);
+         }
+      });
+      getContentPane().add(allPosButton_);
+      allPosButton_.setBounds(30, 500, 60, 20);
+
+      currentPosButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+      currentPosButton_.setText("Current");
+      currentPosButton_.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            currentPosButton_ActionPerformed(evt);
+         }
+      });
+      getContentPane().add(currentPosButton_);
+      currentPosButton_.setBounds(100, 500, 70, 20);
+
+      posTextField_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+      posTextField_.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
+      posTextField_.setText("1");
+      getContentPane().add(posTextField_);
+      posTextField_.setBounds(170, 500, 80, 20);
 
       pack();
    }// </editor-fold>//GEN-END:initComponents
@@ -637,7 +680,8 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
     private void fitAllButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fitAllButton_ActionPerformed
        
        if (ft_ == null || !ft_.isRunning()) {
-          ft_ = new FitAllThread(shape_, fitMode_, preFilterType_);
+          ft_ = new FitAllThread(shape_, fitMode_, preFilterType_, 
+                  posTextField_.getText());
           updateValues(ft_);
           ft_.init();
        } else {
@@ -1024,6 +1068,34 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
 
    }//GEN-LAST:event_mTrackButton_ActionPerformed
 
+   private void allPosButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_allPosButton_ActionPerformed
+      ImagePlus siPlus;
+      try {
+          siPlus = IJ.getImage();
+      } catch (Exception e) {
+          return;
+      }
+      int nrPos = MMWindowAbstraction.getNumberOfPositions(siPlus);
+      if (nrPos > 1) {
+         posTextField_.setText("1-" + nrPos);
+      } else {
+         posTextField_.setText("1");
+      }
+      
+
+   }//GEN-LAST:event_allPosButton_ActionPerformed
+
+   private void currentPosButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_currentPosButton_ActionPerformed
+      ImagePlus siPlus;
+      try {
+          siPlus = IJ.getImage();
+      } catch (Exception e) {
+          return;
+      }
+      int pos = MMWindowAbstraction.getPosition(siPlus);
+      posTextField_.setText("" + pos);
+   }//GEN-LAST:event_currentPosButton_ActionPerformed
+
    public void updateValues(GaussianInfo tT) {
       try {
          tT.setNoiseTolerance(Integer.parseInt(noiseToleranceTextField_.getText()));
@@ -1050,8 +1122,10 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
       }
    }
    // Variables declaration - do not modify//GEN-BEGIN:variables
+   private javax.swing.JButton allPosButton_;
    private javax.swing.JTextField baseLevelTextField;
    private javax.swing.JTextField boxSizeTextField;
+   private javax.swing.JButton currentPosButton_;
    private javax.swing.JTextField emGainTextField_;
    private javax.swing.JCheckBox endTrackCheckBox_;
    private javax.swing.JSpinner endTrackSpinner_;
@@ -1087,6 +1161,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
    private javax.swing.JSeparator jSeparator3;
    private javax.swing.JSeparator jSeparator4;
    private javax.swing.JSeparator jSeparator5;
+   private javax.swing.JSeparator jSeparator6;
    private javax.swing.JLabel labelNPoints_;
    private javax.swing.JButton mTrackButton_;
    private javax.swing.JTextField maxIterationsTextField;
@@ -1097,6 +1172,8 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
    private javax.swing.JTextField noiseToleranceTextField_;
    private javax.swing.JTextField photonConversionTextField;
    private javax.swing.JTextField pixelSizeTextField_;
+   private javax.swing.JTextField posTextField_;
+   private javax.swing.JLabel positionsLabel_;
    private javax.swing.JComboBox preFilterComboBox_;
    private javax.swing.JToggleButton readParmsButton_;
    private javax.swing.JButton showButton;

@@ -37,11 +37,14 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
    private volatile Thread t_ = null;
    private static boolean running_ = false;
    private final FindLocalMaxima.FilterType preFilterType_;
+   private final String positionString_;
 
-   public FitAllThread(int shape, int fitMode, FindLocalMaxima.FilterType preFilterType) {
+   public FitAllThread(int shape, int fitMode, 
+           FindLocalMaxima.FilterType preFilterType, String positions) {
       shape_ = shape;
       fitMode_ = fitMode;
       preFilterType_ = preFilterType;
+      positionString_ = positions;
    }
 
    public synchronized void  init() {
@@ -100,9 +103,23 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
 
       boolean isMMWindow = MMWindowAbstraction.isMMWindow(siPlus);
 
-      if (isMMWindow) { 
+      if (isMMWindow) {
+         String[] parts = positionString_.split("-");
          nrPositions = MMWindowAbstraction.getNumberOfPositions(siPlus);
-         for (int p = 1; p <= nrPositions; p++) {
+         int startPos = 1; int endPos = 1;
+         if (parts.length > 0) {
+            startPos = Integer.parseInt(parts[0]);
+         }
+         if (parts.length > 1) {
+            endPos = Integer.parseInt(parts[1]);
+         }
+         if (endPos > nrPositions) {
+            endPos = nrPositions;
+         }
+         if (endPos < startPos) {
+            endPos = startPos;
+         }
+         for (int p = startPos; p <= endPos; p++) {
             MMWindowAbstraction.setPosition(siPlus, p);
 
             int nrSpots = analyzeImagePlus(siPlus, p, nrThreads, originalRoi);
