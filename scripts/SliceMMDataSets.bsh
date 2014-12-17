@@ -1,0 +1,38 @@
+/**
+ * Example script demonstrating how Micro-Manager datasets can be re-sliced
+ * This particular script creates a new datasets that contains all positions,
+ * channels, and slice of the currently shown dataset, but only the desired 
+ * timepoint
+ * 
+ * Nico Stuurman, Dec. 2014
+ */
+
+desiredFrame = 1;
+
+import ij.ImagePlus;
+import ij.IJ;
+import org.micromanager.api.MMWindow;
+
+ImagePlus siPlus = IJ.getImage();
+mw = new MMWindow(siPlus);
+if (mw.isMMWindow()) {
+	nrPos = mw.getNumberOfPositions();
+	nrFrames = siPlus.getNFrames();
+	nrChannels = siPlus.getNChannels();
+	nrSlices = siPlus.getNSlices();
+	if (desiredTimePoint <= nrFrames) {
+		acq = gui.getUniqueAcquisitionName(siPlus.getTitle() + "Frame"+desiredFrame);
+		gui.openAcquisition(acq, "", 1, nrChannels, nrSlices, nrPos, true, false);
+		for (p=0; p< nrPos; p++) {
+			mw.setPosition(p+1);
+			for (c=0; c<nrChannels; c++) {
+				for (s=0; s<nrSlices; s++) {
+					tImg = mw.getTaggedImage(c, s, desiredFrame, p);
+					gui.addImageToAcquisition(acq, 0, c, s, p, tImg);
+				}
+			}
+		}
+		gui.closeAcquisition(acq);
+	}
+	
+}
