@@ -51,7 +51,7 @@ public class DisplaySettings {
          String name = chNames != null ? chNames.getString(k) :"channel " + k;
          int color = (chColors != null && k < chColors.length()) ? 
                  chColors.getInt(k) : Color.white.getRGB();
-         int min = (chMins != null) ? chMins.getInt(k) : 0;
+         int min = (chMins != null && chMins.length() > k) ? chMins.getInt(k) : 0;
          int bitDepth = 16;
          if (summaryMetadata.has("BitDepth")) {
             bitDepth = MDUtils.getBitDepth(summaryMetadata);
@@ -60,7 +60,7 @@ public class DisplaySettings {
                bitDepth = 8;
             }
          }
-         int max = chMaxes != null ? chMaxes.getInt(k) : (int) (Math.pow(2, bitDepth) - 1);
+         int max = (chMaxes != null && chMaxes.length() > k) ? chMaxes.getInt(k) : (int) (Math.pow(2, bitDepth) - 1);
          JSONObject channelObject = new JSONObject();
          channelObject.put("Color", color);
          channelObject.put("Name", name);
