@@ -563,11 +563,13 @@ public interface ScriptInterface {
    /**
     * Allows MMListeners to register themselves so that they will receive
     * alerts as defined in the MMListenerInterface
+    * @param newL
     */
    public void addMMListener(MMListenerInterface newL);
 
    /**
     * Allows MMListeners to remove themselves
+    * @param oldL
     */
    public void removeMMListener(MMListenerInterface oldL);
 
@@ -581,7 +583,7 @@ public interface ScriptInterface {
    /**
     * Lets Components remove themselves from the list whose background gets
     * changed by the Micro-Manager UI.
-    * $param frame Component from which the listener should be removed.
+    * @param frame Component from which the listener should be removed.
     */
    public void removeMMBackgroundListener(Component frame);
 
@@ -613,12 +615,14 @@ public interface ScriptInterface {
 
    /**
     * Get the default camera's ROI -- a convenience function.
+    * @return default camera's ROI
     * @throws MMScriptException
     */
    public Rectangle getROI() throws MMScriptException;
 
    /**
     * Set the default camera's ROI -- a convenience function.
+    * @param r
     * @throws MMScriptException
     */
    public void setROI(Rectangle r) throws MMScriptException;
@@ -626,6 +630,8 @@ public interface ScriptInterface {
    /**
     * Get a reference to the ImageCache object associated with the acquisition.
     * @param acquisitionName Name of the acquisition
+    * @return ImageCache object associated with the acquisition
+    * @throws org.micromanager.utils.MMScriptException
     */
    public ImageCache getAcquisitionImageCache(String acquisitionName) throws MMScriptException;
 

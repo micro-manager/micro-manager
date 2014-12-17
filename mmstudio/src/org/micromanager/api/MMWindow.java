@@ -32,6 +32,7 @@ import org.micromanager.imagedisplay.AcquisitionVirtualStack;
 import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
+import mmcorej.TaggedImage;
 
 /*
  * The goal of this class is to give easy programmatic access to pixels and
@@ -179,5 +180,8 @@ public class MMWindow {
       return virtAcq_.getImageCache().getImageTags(channel, slice, frame, position);
    }
 
+   public TaggedImage getTaggedImage(int channel, int slice, int frame, int position) {
+      return virtAcq_.getImageCache().getImage(channel, slice, frame, position);
+   }
 
 }
