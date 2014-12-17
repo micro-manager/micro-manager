@@ -39,6 +39,7 @@ import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.Image;
 import org.micromanager.api.data.NewImageEvent;
+import org.micromanager.api.data.NewSummaryMetadataEvent;
 import org.micromanager.api.data.SummaryMetadata;
 import org.micromanager.api.display.DisplayWindow;
 import org.micromanager.api.display.RequestToDrawEvent;
@@ -652,6 +653,14 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       catch (Exception e) {
          ReportingUtils.logError(e, "Couldn't display new image");
       }
+   }
+
+   /**
+    * When the summary metadata changes, make certain that certain values
+    * get propagated to ImageJ.
+    */
+   public void onNewSummaryMetadata(NewSummaryMetadataEvent event) {
+      calibrateImagePlus(ijImage_);
    }
 
    /**
