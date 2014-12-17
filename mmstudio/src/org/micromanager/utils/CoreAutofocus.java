@@ -89,7 +89,7 @@ public class CoreAutofocus implements Autofocus {
       } catch (Exception e) {
          ReportingUtils.logError(e);
       }
-      return (String[]) propNames.toArray();
+      return propNames.toArray(new String[propNames.size()]);
    }
 
    @Override
