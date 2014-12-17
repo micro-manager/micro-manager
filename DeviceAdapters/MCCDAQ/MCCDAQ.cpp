@@ -187,15 +187,13 @@ int MCCDaqDA::Initialize()
    if (nRet != DEVICE_OK)
       return nRet;
 
-   double minV(0.0);
-   nRet = GetProperty(g_PropertyMin, minV);
+   nRet = GetProperty(g_PropertyMin, minV_);
    assert (nRet == DEVICE_OK);
 
-   double maxV(0.0);
-   nRet = GetProperty(g_PropertyMax, maxV);
+   nRet = GetProperty(g_PropertyMax, maxV_);
    assert (nRet == DEVICE_OK);
 
-   nRet = SetPropertyLimits(g_volts, minV, maxV);
+   nRet = SetPropertyLimits(g_volts, minV_, maxV_);
    if (nRet != DEVICE_OK)
       return nRet;
 
