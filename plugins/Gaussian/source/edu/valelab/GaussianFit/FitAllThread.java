@@ -11,6 +11,7 @@
 package edu.valelab.GaussianFit;
 
 import edu.valelab.GaussianFit.fitting.ZCalibrator;
+import edu.valelab.GaussianFit.utils.MMWindowAbstraction;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.Roi;
@@ -23,12 +24,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import edu.valelab.GaussianFit.utils.ReportingUtils;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 
 /**
  *
@@ -40,7 +36,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
    GaussianFitStackThread[] gfsThreads_;
    private volatile Thread t_ = null;
    private static boolean running_ = false;
-   private FindLocalMaxima.FilterType preFilterType_;
+   private final FindLocalMaxima.FilterType preFilterType_;
 
    public FitAllThread(int shape, int fitMode, FindLocalMaxima.FilterType preFilterType) {
       shape_ = shape;
@@ -58,9 +54,9 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
 
    public synchronized void stop() {
       if (gfsThreads_ != null) {
-         for (int i=0; i<gfsThreads_.length; i++) {
-            if (gfsThreads_[i] != null) {
-               gfsThreads_[i].stop();
+         for (GaussianFitStackThread gfsThread : gfsThreads_) {
+            if (gfsThread != null) {
+               gfsThread.stop();
             }
          }
       }
@@ -72,6 +68,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
       return running_;
    }
 
+   @Override
    public void run() {
 
       // List with spot positions found through the Find Maxima command
@@ -88,8 +85,9 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
       }
 
       int nrThreads = ij.Prefs.getThreads();
-         if (nrThreads > 8)
-            nrThreads = 8;
+      if (nrThreads > 8) {
+         nrThreads = 8;
+      }
 
       Roi originalRoi = siPlus.getRoi();
 
@@ -100,77 +98,26 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
       int nrSlices = siPlus.getNSlices();
       int maxNrSpots = 0;
 
-      boolean isMMWindow = false;
-     
-      try {
-         Class<?> mmWin = Class.forName("org.micromanager.api.MMWindow");
-         Constructor[] aCTors = mmWin.getDeclaredConstructors();
-         aCTors[0].setAccessible(true);
-         Object mw = aCTors[0].newInstance(siPlus);
-         Method[] allMethods = mmWin.getDeclaredMethods();
+      boolean isMMWindow = MMWindowAbstraction.isMMWindow(siPlus);
 
-         // assemble all methods we need
-         Method mIsMMWindow = null;
-         Method mGetNumberOfPositions = null;
-         Method mSetPosition = null;
-         for (Method m : allMethods) {
-            String mname = m.getName();
-            if (mname.startsWith("isMMWindow")
-                    && m.getGenericReturnType() == boolean.class) {
-               mIsMMWindow = m;
-               mIsMMWindow.setAccessible(true);
-            }
-            if (mname.startsWith("getNumberOfPositions")) {
-               mGetNumberOfPositions = m;
-               mGetNumberOfPositions.setAccessible(true);
-            }
-            if (mname.startsWith("setPosition")) {
-               mSetPosition = m;
-               mSetPosition.setAccessible(true);
-            }
+      if (isMMWindow) { 
+         nrPositions = MMWindowAbstraction.getNumberOfPositions(siPlus);
+         for (int p = 1; p <= nrPositions; p++) {
+            MMWindowAbstraction.setPosition(siPlus, p);
 
-         }
-
-         if (mIsMMWindow != null && (Boolean) mIsMMWindow.invoke(mw)) {
-            isMMWindow = true;
-         }
-
-         if (isMMWindow) { // MMImageWindow
-            if (mGetNumberOfPositions != null) {
-               nrPositions = (Integer) mGetNumberOfPositions.invoke(mw);
-
-               for (int p = 1; p <= nrPositions; p++) {
-                  if (mSetPosition != null) {
-                     mSetPosition.invoke(mw, p);
-
-                     int nrSpots = analyzeImagePlus(siPlus, p, nrThreads, originalRoi);
-                     if (nrSpots > maxNrSpots) {
-                        maxNrSpots = nrSpots;
-                     }
-                  }
-
-               }
+            int nrSpots = analyzeImagePlus(siPlus, p, nrThreads, originalRoi);
+            if (nrSpots > maxNrSpots) {
+               maxNrSpots = nrSpots;
             }
          }
-      } catch (IllegalAccessException ex) {
-         Logger.getLogger(FitAllThread.class.getName()).log(Level.SEVERE, null, ex);
-      } catch (IllegalArgumentException ex) {
-         Logger.getLogger(FitAllThread.class.getName()).log(Level.SEVERE, null, ex);
-      } catch (InvocationTargetException ex) {
-         Logger.getLogger(FitAllThread.class.getName()).log(Level.SEVERE, null, ex);
-      } catch (ClassNotFoundException ex) {
-         Logger.getLogger(FitAllThread.class.getName()).log(Level.SEVERE, null, ex);
-      } catch (InstantiationException ex) {
-         Logger.getLogger(FitAllThread.class.getName()).log(Level.SEVERE, null, ex);
-      } 
-   
-      
+      }
+
       if (!isMMWindow) {
          int nrSpots = analyzeImagePlus(siPlus, 1, nrThreads, originalRoi);
          if (nrSpots > maxNrSpots) {
             maxNrSpots = nrSpots;
          }
-      } 
+      }
 
       long endTime = System.nanoTime();
 
@@ -392,6 +339,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
    private class SpotSortComparator implements Comparator {
 
       // Return the result of comparing the two row arrays
+      @Override
       public int compare(Object o1, Object o2) {
          int[] p1 = (int[]) o1;
          int[] p2 = (int[]) o2;
