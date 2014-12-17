@@ -478,7 +478,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
 
    /**
     * A new image has arrived; toss it onto our queue for display.
-    * @param taggedImage
     */
    public void updateDisplay(TaggedImage taggedImage) {
       JSONObject tags;
@@ -610,10 +609,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
    }
 
-   /**
-    *
-    * @param event
-    */
    @Subscribe
    public void onUpdateTitleEvent(UpdateTitleEvent event) {
       updateWindowTitleAndStatus();
@@ -1216,8 +1211,8 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       return ((IMMImagePlus) hyperImage_).getNFramesUnverified();
    }
 
-   public int getNumPositions() {
-      return 1;
+   public int getNumPositions() throws JSONException {
+      return MDUtils.getNumPositions(imageCache_.getSummaryMetadata());
    }
 
    public ImagePlus getImagePlus() {

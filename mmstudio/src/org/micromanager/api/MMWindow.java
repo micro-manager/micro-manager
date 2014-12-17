@@ -26,10 +26,12 @@ package org.micromanager.api;
 
 import ij.ImagePlus;
 import ij.process.ImageProcessor;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.imagedisplay.AcquisitionVirtualStack;
 import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
 import org.micromanager.utils.MMScriptException;
+import org.micromanager.utils.ReportingUtils;
 
 /*
  * The goal of this class is to give easy programmatic access to pixels and
@@ -64,7 +66,13 @@ public class MMWindow {
    public int getNumberOfPositions() {
       if (virtAcq_ == null)
          return 0;
-      return virtAcq_.getNumPositions();
+      int nrPositions = 1;
+      try {
+         nrPositions = virtAcq_.getNumPositions();
+      } catch (JSONException jex) {
+         ReportingUtils.logError(jex, "Error in MMWindow.getNumberOfPositions");
+      }
+      return nrPositions;
    }
 
    /*

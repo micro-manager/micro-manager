@@ -5,10 +5,12 @@ import ij.ImagePlus;
 import ij.process.ImageProcessor;
 import java.awt.image.ColorModel;
 import mmcorej.TaggedImage;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MDUtils;
+import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -20,7 +22,7 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
    final private TaggedImageStorage imageCache_;
    final private VirtualAcquisitionDisplay acq_;
    final protected int width_, height_, type_;
-   private int nSlices_;
+   private final int nSlices_;
    private int positionIndex_ = 0;
 
    public AcquisitionVirtualStack(int width, int height, int type,
@@ -148,7 +150,9 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
          } else if (MDUtils.isRGB64(image)) {
             pixels = ImageUtils.singleChannelFromRGB64((short[]) image.pix, (flatIndex - 1) % 3);
          }
-      } catch (Exception ex) {
+      } catch (JSONException ex) {
+         ReportingUtils.logError(ex);
+      } catch (MMScriptException ex) {
          ReportingUtils.logError(ex);
       }
 
