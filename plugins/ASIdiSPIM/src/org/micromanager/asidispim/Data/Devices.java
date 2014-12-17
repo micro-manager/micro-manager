@@ -88,7 +88,8 @@ public class Devices {
       NONE, CORE, PLUGIN,
       CAMERAA, CAMERAB, MULTICAMERA, CAMERALOWER, CAMERAPREVIOUS, 
       PIEZOA, PIEZOB, GALVOA, GALVOB, XYSTAGE, LOWERZDRIVE, UPPERZDRIVE,
-      SOURCE_SPIM, SOURCE_LOWER,
+      // SOURCE_SPIM, SOURCE_LOWER,
+      PLOGIC,
       // ASGALVOA, ASGALVOB,
       // when adding new devices update Devices constructor, 
       // getDefaultDeviceData(), and Libraries enum
@@ -102,9 +103,9 @@ public class Devices {
    public final static Set<Devices.Keys> CAMERAS = EnumSet.of(
          Devices.Keys.CAMERAA, Devices.Keys.CAMERAB, Devices.Keys.MULTICAMERA,
          Devices.Keys.CAMERALOWER);
-   public final static Set<Devices.Keys> SOURCES = EnumSet.of(
-         Devices.Keys.SOURCE_SPIM, Devices.Keys.SOURCE_LOWER
-         );
+//   public final static Set<Devices.Keys> SOURCES = EnumSet.of(
+//         Devices.Keys.SOURCE_SPIM, Devices.Keys.SOURCE_LOWER
+//         );
 
    public static enum Libraries {
       NODEVICE("NoDevice"), // if the device doesn't exist in Micro-manager
@@ -115,7 +116,6 @@ public class Devices {
       ANDORCAM("AndorSDK3"),
       DEMOCAM("DemoCamera"),
       UTILITIES("Utilities"),
-      TOPTICA_MLE("Toptica_iChrome_MLE"),
       UNKNOWN("Unknown"), // if the device is valid but not one we know about
       ;
       private final String text;
@@ -495,6 +495,10 @@ public class Devices {
       return getDeviceDisplay(key) + getDeviceDisplayVerboseEnding(key, dir);
    }
    
+   /**
+    * returns device description with role for the particular side (used for joystick labels)
+    * camera labels use a different mechanicsm, ideally would merge the two
+    */
    public String getDeviceDisplayWithRole(Devices.Keys key, Joystick.Directions dir, Devices.Sides side) {
       String ret;
       DeviceData d = deviceInfo_.get(key);
@@ -643,59 +647,64 @@ public class Devices {
       DeviceData d_new;
       switch (key) {
       case CAMERAA:
-         return new DeviceData(Keys.CAMERAA, "Camera", Sides.A, true);
+         return new DeviceData(key, "Camera", Sides.A, true);
       case CAMERAB:
-         return new DeviceData(Keys.CAMERAB, "Camera", Sides.B, true);
+         return new DeviceData(key, "Camera", Sides.B, true);
       case CAMERALOWER:
-         return new DeviceData(Keys.CAMERALOWER, "Lower Camera", Sides.NONE,
+         return new DeviceData(key, "Lower Camera", Sides.NONE,
                true);
       case MULTICAMERA:
-         return new DeviceData(Keys.MULTICAMERA, "Multi Camera", Sides.NONE,
+         return new DeviceData(key, "Multi Camera", Sides.NONE,
                true);
       case PIEZOA:
-         return new DeviceData(Keys.PIEZOA, "Imaging Piezo", Sides.A, true);
+         return new DeviceData(key, "Imaging Piezo", Sides.A, true);
       case PIEZOB:
-         return new DeviceData(Keys.PIEZOB, "Imaging Piezo", Sides.B, true);
+         return new DeviceData(key, "Imaging Piezo", Sides.B, true);
       case GALVOA:
-         return new DeviceData(Keys.GALVOA, "Scanner", Sides.A, true);
+         return new DeviceData(key, "Scanner", Sides.A, true);
       case GALVOB:
-         return new DeviceData(Keys.GALVOB, "Scanner", Sides.B, true);
+         return new DeviceData(key, "Scanner", Sides.B, true);
       case XYSTAGE:
-         return new DeviceData(Keys.XYSTAGE, "XY Stage", Sides.NONE, true);
+         return new DeviceData(key, "XY Stage", Sides.NONE, true);
       case LOWERZDRIVE:
-         return new DeviceData(Keys.LOWERZDRIVE, "Lower Z Drive", Sides.NONE,
+         return new DeviceData(key, "Lower Z Drive", Sides.NONE,
                true);
       case UPPERZDRIVE:
-         return new DeviceData(Keys.UPPERZDRIVE, "Upper (SPIM) Z Drive",
+         return new DeviceData(key, "Upper (SPIM) Z Drive",
                Sides.NONE, true);
          // case ASGALVOA: return new DeviceData(Keys.ASGALVOA,
          // "Anti-striping Micromirror", Sides.A, true);
          // case ASGALVOB: return new DeviceData(Keys.ASGALVOB,
          // "Anti-striping Micromirror", Sides.B, true);
-      case SOURCE_SPIM:
-         return new DeviceData(Keys.SOURCE_SPIM, "SPIM Light Source",
-               Sides.NONE, true);
-      case SOURCE_LOWER:
-         return new DeviceData(Keys.SOURCE_SPIM, "Lower Light Source",
-               Sides.NONE, true);
+      // case SOURCE_SPIM:
+      //   return new DeviceData(key, "SPIM Light Source", Sides.NONE, true);
+      // case SOURCE_LOWER:
+      //   return new DeviceData(key, "Lower Light Source", Sides.NONE, true);
+      case PLOGIC:
+         return new DeviceData(key, "PLogic Card", Sides.NONE, true);
       case CORE: // special case
-         d_new = new DeviceData(Keys.CORE, "Core", Sides.NONE, false);
+         d_new = new DeviceData(key, "Core", Sides.NONE, false);
          d_new.mmDevice = "Core";
          d_new.type = mmcorej.DeviceType.CoreDevice;
          return d_new;
       case PLUGIN: // special case
-         d_new = new DeviceData(Keys.PLUGIN, "Plugin", Sides.NONE, false);
+         d_new = new DeviceData(key, "Plugin", Sides.NONE, false);
          return d_new;
       case CAMERAPREVIOUS: // special case
-         d_new = new DeviceData(Keys.CAMERAPREVIOUS, "No change", Sides.NONE, false);
+         d_new = new DeviceData(key, "No change", Sides.NONE, false);
          return d_new;
       case NONE:
       default:
-         return new DeviceData(Keys.NONE, "None", Sides.NONE, false);
+         return new DeviceData(key, "None", Sides.NONE, false);
       }
    }
 
 
+   /**
+    * constructor
+    * @param gui
+    * @param prefs
+    */
    public Devices(ScriptInterface gui, Prefs prefs) {
       prefs_ = prefs;
       core_ = gui.getMMCore();
@@ -720,8 +729,9 @@ public class Devices {
       deviceInfo_.put(Keys.XYSTAGE, getDefaultDeviceData(Keys.XYSTAGE));
       deviceInfo_.put(Keys.LOWERZDRIVE, getDefaultDeviceData(Keys.LOWERZDRIVE));
       deviceInfo_.put(Keys.UPPERZDRIVE, getDefaultDeviceData(Keys.UPPERZDRIVE));
-      deviceInfo_.put(Keys.SOURCE_SPIM,  getDefaultDeviceData(Keys.SOURCE_SPIM));
-      deviceInfo_.put(Keys.SOURCE_LOWER,  getDefaultDeviceData(Keys.SOURCE_LOWER));
+      deviceInfo_.put(Keys.PLOGIC, getDefaultDeviceData(Keys.PLOGIC));
+      // deviceInfo_.put(Keys.SOURCE_SPIM,  getDefaultDeviceData(Keys.SOURCE_SPIM));
+      // deviceInfo_.put(Keys.SOURCE_LOWER,  getDefaultDeviceData(Keys.SOURCE_LOWER));
       // deviceInfo_.put(Keys.ASGALVOA, getDefaultDeviceData(Keys.ASGALVOA));
       // deviceInfo_.put(Keys.ASGALVOB, getDefaultDeviceData(Keys.ASGALVOB));
 
@@ -739,7 +749,7 @@ public class Devices {
 
       loadedDevices_ = GetLoadedDevices();
       restoreSettings(); // look for settings from last time
-   }
+   }//constructor
 
    /**
     * Used to add classes implementing DeviceListenerInterface as listeners

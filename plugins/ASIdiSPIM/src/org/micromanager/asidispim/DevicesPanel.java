@@ -49,6 +49,7 @@ public class DevicesPanel extends ListeningJPanel {
    private final JComboBox boxXY_;
    private final JComboBox boxLowerZ_;
    private final JComboBox boxUpperZ_;
+   private final JComboBox boxPLogic_;
    private final JComboBox boxLowerCam_;
    private final JComboBox boxMultiCam_;
    private final JComboBox boxScannerA_;
@@ -68,8 +69,8 @@ public class DevicesPanel extends ListeningJPanel {
       super(MyStrings.PanelNames.DEVICES.toString(), 
             new MigLayout(
               "",
-              "[right]25[align center]16[align center]",
-              "[]16[]"));
+              "[right]15[align center]16[align center]",
+              "[]12[]"));
       devices_ = devices;
       
       DeviceUtils du = new DeviceUtils(gui, devices, props);
@@ -88,6 +89,10 @@ public class DevicesPanel extends ListeningJPanel {
       add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.UPPERZDRIVE) + ":"));
       boxUpperZ_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice, Devices.Keys.UPPERZDRIVE);
       add(boxUpperZ_, "span 2, center, wrap");
+      
+      add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.PLOGIC) + ":"));
+      boxPLogic_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.GenericDevice, Devices.Keys.PLOGIC);
+      add(boxPLogic_, "span 2, center, wrap");
       
       add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.CAMERALOWER) + ":"));
       boxLowerCam_ = du.makeSingleCameraDeviceBox(Devices.Keys.CAMERALOWER);
@@ -111,6 +116,7 @@ public class DevicesPanel extends ListeningJPanel {
       add(new JLabel(devices_.getDeviceDisplayGeneric(Devices.Keys.PIEZOA) + ":"));
       boxPiezoA_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice, Devices.Keys.PIEZOA);
       add(boxPiezoA_);
+      
       boxPiezoB_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice, Devices.Keys.PIEZOB);
       add(boxPiezoB_, "wrap");
 
@@ -122,10 +128,10 @@ public class DevicesPanel extends ListeningJPanel {
       
       add(new JLabel("Note: plugin must be restarted for some changes to take full effect."), "span 3");
 
-      add(new JSeparator(JSeparator.VERTICAL), "growy, cell 3 0 1 10");
+      add(new JSeparator(JSeparator.VERTICAL), "growy, cell 3 0 1 11");
       
       JLabel imgLabel = new JLabel(new ImageIcon(getClass().getResource("/org/micromanager/asidispim/icons/diSPIM.png")));
-      add(imgLabel, "cell 4 0 1 10, growy");
+      add(imgLabel, "cell 4 0 1 11, growy");
       
       // turn on listeners again
       devices_.enableListeners(true);
