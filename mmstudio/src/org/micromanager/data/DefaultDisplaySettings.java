@@ -139,31 +139,31 @@ public class DefaultDisplaySettings implements DisplaySettings {
       
       @Override
       public DisplaySettingsBuilder channelNames(String[] channelNames) {
-         channelNames_ = channelNames;
+         channelNames_ = (channelNames == null) ? null : channelNames.clone();
          return this;
       }
 
       @Override
       public DisplaySettingsBuilder channelColors(Color[] channelColors) {
-         channelColors_ = channelColors;
+         channelColors_ = (channelColors == null) ? null : channelColors.clone();
          return this;
       }
 
       @Override
       public DisplaySettingsBuilder channelContrastMins(Integer[] channelContrastMins) {
-         channelContrastMins_ = channelContrastMins;
+         channelContrastMins_ = (channelContrastMins == null) ? null : channelContrastMins.clone();
          return this;
       }
 
       @Override
       public DisplaySettingsBuilder channelContrastMaxes(Integer[] channelContrastMaxes) {
-         channelContrastMaxes_ = channelContrastMaxes;
+         channelContrastMaxes_ = (channelContrastMaxes == null) ? null : channelContrastMaxes.clone();
          return this;
       }
 
       @Override
       public DisplaySettingsBuilder channelGammas(Double[] channelGammas) {
-         channelGammas_ = channelGammas;
+         channelGammas_ = (channelGammas == null) ? null : channelGammas.clone();
          return this;
       }
 
