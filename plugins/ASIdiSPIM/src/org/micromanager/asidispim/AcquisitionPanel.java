@@ -632,13 +632,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       updateActualVolumeDurationLabel();
       updateActualTimeLapseDurationLabel();
       
-      // makes sure slice timings get initialized correctly
-      // needs to be done after everything else set up
-      minSlicePeriodCB_.doClick();
-      minSlicePeriodCB_.doClick();
-      
       // for easy timing mode, calculate slice timing to start
-      if (!advancedSliceTimingCB_.isSelected()) {
+      if (!advancedSliceTimingCB_.isSelected()
+            && checkCamerasAssigned(false)) {
          calculateSliceTiming_.doClick();
       }
       
@@ -860,7 +856,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * @param showWarnings will show warning if the user-specified slice period too short
     */
    private void recalculateSliceTiming(boolean showWarnings) {
-      if(!checkCamerasAssigned()) {
+      if(!checkCamerasAssigned(true)) {
          return;
       }
       sliceTiming_ = getTimingFromPeriodAndLightExposure(showWarnings);
@@ -1000,7 +996,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * if not (e.g. if single-sided with side B first, then only checks camera for side B)
     * @return true if cameras assigned, false if not
     */
-   private boolean checkCamerasAssigned() {
+   private boolean checkCamerasAssigned(boolean showWarnings) {
       String firstCamera, secondCamera;
       boolean firstSideA = isFirstSideA(); 
       if (firstSideA) {
@@ -1011,13 +1007,17 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          secondCamera = devices_.getMMDevice(Devices.Keys.CAMERAA);
       }
       if (firstCamera == null) {
-         MyDialogUtils.showError("Please select a valid camera for the first side (Imaging Path " +
-               (firstSideA ? "A" : "B") + ") on the Devices Panel");
+         if (showWarnings) {
+            MyDialogUtils.showError("Please select a valid camera for the first side (Imaging Path " +
+                  (firstSideA ? "A" : "B") + ") on the Devices Panel");
+         }
          return false;
       }
       if (isTwoSided() && secondCamera == null) {
-         MyDialogUtils.showError("Please select a valid camera for the second side (Imaging Path " +
-               (firstSideA ? "B" : "A") + ") on the Devices Panel.");
+         if (showWarnings) {
+            MyDialogUtils.showError("Please select a valid camera for the second side (Imaging Path " +
+                  (firstSideA ? "B" : "A") + ") on the Devices Panel.");
+         }
          return false;
       }
       return true;
@@ -1248,11 +1248,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       int nrSides = getNumSides();
       // TODO: multi-channel in sense of excitation color, etc.
+      // TODO fix this because it will stop working with new MultiD panel w/JTable
       int nrColors = props_.getPropValueInteger(Devices.Keys.PLUGIN,
             Properties.Keys.PLUGIN_NUM_COLORS);
       
       // make sure we have cameras selected
-      if (!checkCamerasAssigned()) {
+      if (!checkCamerasAssigned(true)) {
          return false;
       }
       
