@@ -756,12 +756,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          }
       }
 
-      if (frame == 0) {
-         initializeContrast();
-      }
-
-      updateAndDraw(true);
-
       //get channelgroup name for use in loading contrast setttings
       if (firstImage_) {
          try {
@@ -771,6 +765,13 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          }
          firstImage_ = false;
       }
+
+      if (frame == 0) {
+         initializeContrast();
+      }
+
+      updateAndDraw(true);
+
    }
 
    private void initializeContrast() {
