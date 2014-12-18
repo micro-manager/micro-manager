@@ -31,6 +31,7 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.DatastoreLockedException;
 import org.micromanager.api.data.DisplaySettings;
+import org.micromanager.api.data.NewDisplaySettingsEvent;
 import org.micromanager.api.display.NewImagePlusEvent;
 import org.micromanager.data.DefaultDisplaySettings;
 
@@ -44,7 +45,7 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class DisplaySettingsPanel extends JPanel {
    private static String[] COLOR_DESCRIPTORS = new String[] {
-      "RGBCMYW", "CMYRGBW"};
+      "RGBCMYW", "CMYRGBW", "Custom"};
    private static Color[][] DEFAULT_COLORS = new Color[][] {
       {Color.RED, Color.GREEN, Color.BLUE, Color.CYAN, Color.MAGENTA,
          Color.YELLOW, Color.WHITE},
@@ -56,12 +57,16 @@ public class DisplaySettingsPanel extends JPanel {
    private ImagePlus ijImage_;
    private EventBus displayBus_;
    private JComboBox displayMode_;
+   private JComboBox colorPresets_;
+   // Index of colorPresets_ last time its position was set.
+   private int prevPresetIndex_ = -1;
 
    public DisplaySettingsPanel(Datastore store, ImagePlus ijImage,
          EventBus displayBus) {
       super(new MigLayout());
 
       store_ = store;
+      store_.registerForEvents(this, 100);
       ijImage_ = ijImage;
       displayBus_ = displayBus;
       displayBus_.register(this);
@@ -85,24 +90,16 @@ public class DisplaySettingsPanel extends JPanel {
       add(displayMode_, "wrap");
 
       add(new JLabel("Channel colors: "), "split 2");
-      final JComboBox colorPresets = new JComboBox(COLOR_DESCRIPTORS);
-      colorPresets.setToolTipText("Select a preset color combination for multichannel setups");
-      // Select the appropriate index.
-      if (settings.getChannelColors() != null) {
-         for (int i = 0; i < COLOR_DESCRIPTORS.length; ++i) {
-            if (Arrays.deepEquals(DEFAULT_COLORS[i], settings.getChannelColors())) {
-               colorPresets.setSelectedIndex(i);
-               break;
-            }
-         }
-      }
-      colorPresets.addActionListener(new ActionListener() {
+      colorPresets_ = new JComboBox(COLOR_DESCRIPTORS);
+      colorPresets_.setToolTipText("Select a preset color combination for multichannel setups");
+      setColorPresetIndex(settings);
+      colorPresets_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent event) {
-            setColorPreset(colorPresets);
+            setColorPreset();
          }
       });
-      add(colorPresets, "wrap");
+      add(colorPresets_, "wrap");
 
       add(new JLabel("Histograms update "), "split 2");
       final JComboBox histogramUpdateRate = new JComboBox(
@@ -234,12 +231,51 @@ public class DisplaySettingsPanel extends JPanel {
    /**
     * The user wants to select one of our color presets.
     */
-   private void setColorPreset(JComboBox colorPresets) {
-      int i = colorPresets.getSelectedIndex();
+   private void setColorPreset() {
+      int i = colorPresets_.getSelectedIndex();
+      if (i == 2 || i == prevPresetIndex_) {
+         // Ignore the "custom" color scheme, and ignore no-ops.
+         return;
+      }
       DisplaySettings settings = store_.getDisplaySettings();
       settings = settings.copy().channelColors(DEFAULT_COLORS[i]).build();
       saveSettings(settings);
+      prevPresetIndex_ = i;
+
+      // This will end up triggering onNewDisplaySettings, so watch out for
+      // potential infinite loops!
       displayBus_.post(new DefaultRequestToDrawEvent());
+   }
+
+   /**
+    * We care when the channel colors change.
+    */
+   @Subscribe
+   public void onNewDisplaySettings(NewDisplaySettingsEvent event) {
+      setColorPresetIndex(event.getDisplaySettings());
+   }
+
+   /**
+    * Examine the current display settings and set the appropriate channel
+    * colors selector.
+    */
+   private void setColorPresetIndex(DisplaySettings settings) {
+      if (settings.getChannelColors() != null) {
+         int index = -1;
+         for (int i = 0; i < DEFAULT_COLORS.length; ++i) {
+            if (Arrays.deepEquals(DEFAULT_COLORS[i], settings.getChannelColors())) {
+               index = i;
+               break;
+            }
+         }
+         if (index != -1) {
+            colorPresets_.setSelectedIndex(index);
+         }
+         else {
+            // Assume user has a custom color scheme.
+            colorPresets_.setSelectedIndex(2);
+         }
+      }
    }
 
    private void saveSettings(DisplaySettings settings) {
