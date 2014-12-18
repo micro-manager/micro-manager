@@ -761,16 +761,16 @@ public class DataCollectionForm extends javax.swing.JFrame {
       jPanel1Layout.setHorizontalGroup(
          jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
          .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-            .addGap(18, 18, 18)
             .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                .addGroup(jPanel1Layout.createSequentialGroup()
-                  .addGap(50, 50, 50)
+                  .addGap(68, 68, 68)
                   .addComponent(jLabel7))
                .addGroup(jPanel1Layout.createSequentialGroup()
+                  .addContainerGap(33, Short.MAX_VALUE)
                   .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                     .addComponent(saveButton, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
-                     .addComponent(loadButton, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
-                     .addComponent(showButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE))
+                     .addComponent(saveButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
+                     .addComponent(loadButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
+                     .addComponent(showButton_, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE))
                   .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                      .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGap(4, 4, 4)
@@ -926,9 +926,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
                   .addComponent(removeButton, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)
                   .addGap(1, 1, 1)
                   .addComponent(infoButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 7, Short.MAX_VALUE)
                   .addComponent(combineButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)
-                  .addContainerGap())
+                  .addGap(8, 8, 8))
                .addGroup(jPanel1Layout.createSequentialGroup()
                   .addComponent(c2StandardButton, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)
                   .addGap(33, 33, 33)
@@ -1037,7 +1037,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
          .addGroup(layout.createSequentialGroup()
             .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, 407, Short.MAX_VALUE)
+            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, 404, Short.MAX_VALUE)
             .addGap(0, 0, 0))
       );
 
@@ -2633,78 +2633,77 @@ public class DataCollectionForm extends javax.swing.JFrame {
          rowData.index();
       }
 
-
       Runnable doWorkRunnable;
       doWorkRunnable = new Runnable() {
 
-@Override
-public void run() {
+         @Override
+         public void run() {
 
-   try {
-      ij.IJ.showStatus("Linking spotData...");
-      boolean useFrames = rowData.nrFrames_ > rowData.nrSlices_;
-      int nr = rowData.nrSlices_;
-      if (useFrames) {
-         nr = rowData.nrFrames_;
-      }
+            try {
+               ij.IJ.showStatus("Linking spotData...");
+               boolean useFrames = rowData.nrFrames_ > rowData.nrSlices_;
+               int nr = rowData.nrSlices_;
+               if (useFrames) {
+                  nr = rowData.nrFrames_;
+               }
 
-      // linked spots go here:
-      List<GaussianSpotData> destList = new ArrayList<GaussianSpotData>();
+               // linked spots go here:
+               List<GaussianSpotData> destList = new ArrayList<GaussianSpotData>();
 
-      // build a 2D array of lists with gaussian spots
-      @SuppressWarnings("unchecked")
-      List<GaussianSpotData>[][] spotImage = new ArrayList[rowData.width_][rowData.height_];
-      for (int i = 1; i < nr; i++) {
-         ij.IJ.showStatus("Linking spotData...");
-         ij.IJ.showProgress(i, nr);
-         List<GaussianSpotData> frameSpots = rowData.frameIndexSpotList_.get(i);
-         if (frameSpots != null) {
-            for (GaussianSpotData spot : frameSpots) {
-               if (spotImage[spot.getX()][spot.getY()] == null) {
-                  spotImage[spot.getX()][spot.getY()] = new ArrayList<GaussianSpotData>();
-               } else {
-                  List<GaussianSpotData> prevSpotList = spotImage[spot.getX()][spot.getY()];
-                  GaussianSpotData lastSpot = prevSpotList.get(prevSpotList.size() - 1);
-                  int lastFrame = lastSpot.getFrame();
-                  if (!useFrames) {
-                     lastFrame = lastSpot.getSlice();
-                  }
-                  if (lastFrame != i - 1) {
-                     linkSpots(prevSpotList, destList, useFrames);
-                     spotImage[spot.getX()][spot.getY()] = new ArrayList<GaussianSpotData>();
+               // build a 2D array of lists with gaussian spots
+               @SuppressWarnings("unchecked")
+               List<GaussianSpotData>[][] spotImage = new ArrayList[rowData.width_][rowData.height_];
+               for (int i = 1; i < nr; i++) {
+                  ij.IJ.showStatus("Linking spotData...");
+                  ij.IJ.showProgress(i, nr);
+                  List<GaussianSpotData> frameSpots = rowData.frameIndexSpotList_.get(i);
+                  if (frameSpots != null) {
+                     for (GaussianSpotData spot : frameSpots) {
+                        if (spotImage[spot.getX()][spot.getY()] == null) {
+                           spotImage[spot.getX()][spot.getY()] = new ArrayList<GaussianSpotData>();
+                        } else {
+                           List<GaussianSpotData> prevSpotList = spotImage[spot.getX()][spot.getY()];
+                           GaussianSpotData lastSpot = prevSpotList.get(prevSpotList.size() - 1);
+                           int lastFrame = lastSpot.getFrame();
+                           if (!useFrames) {
+                              lastFrame = lastSpot.getSlice();
+                           }
+                           if (lastFrame != i - 1) {
+                              linkSpots(prevSpotList, destList, useFrames);
+                              spotImage[spot.getX()][spot.getY()] = new ArrayList<GaussianSpotData>();
+                           }
+                        }
+                        spotImage[spot.getX()][spot.getY()].add(spot);
+                     }
+                  } else {
+                     System.out.println("Empty row: " + i);
                   }
                }
-               spotImage[spot.getX()][spot.getY()].add(spot);
+
+               // Finish links of all remaining spots
+               ij.IJ.showStatus("Finishing linking spotData...");
+               for (int w = 0; w < rowData.width_; w++) {
+                  for (int h = 0; h < rowData.height_; h++) {
+                     if (spotImage[w][h] != null) {
+                        linkSpots(spotImage[w][h], destList, useFrames);
+                     }
+                  }
+               }
+               ij.IJ.showStatus("");
+               ij.IJ.showProgress(1);
+
+               // Add destList to rowData
+               addSpotData(rowData.name_ + " Linked", rowData.title_, "", rowData.width_,
+                       rowData.height_, rowData.pixelSizeNm_, rowData.zStackStepSizeNm_,
+                       rowData.shape_, rowData.halfSize_, rowData.nrChannels_, 0,
+                       0, 1, rowData.maxNrSpots_, destList,
+                       rowData.timePoints_, false, Coordinates.NM, false, 0.0, 0.0);
+            } catch (OutOfMemoryError oome) {
+               JOptionPane.showMessageDialog(getInstance(), "Out of memory");
             }
-         } else {
-            System.out.println("Empty row: " + i);
+
          }
-      }
-
-      // Finish links of all remaining spots
-      ij.IJ.showStatus("Finishing linking spotData...");
-      for (int w = 0; w < rowData.width_; w++) {
-         for (int h = 0; h < rowData.height_; h++) {
-            if (spotImage[w][h] != null) {
-               linkSpots(spotImage[w][h], destList, useFrames);
-            }
-         }
-      }
-      ij.IJ.showStatus("");
-      ij.IJ.showProgress(1);
-
-      // Add destList to rowData
-      addSpotData(rowData.name_ + " Linked", rowData.title_, "", rowData.width_,
-              rowData.height_, rowData.pixelSizeNm_, rowData.zStackStepSizeNm_, 
-              rowData.shape_, rowData.halfSize_, rowData.nrChannels_, 0,
-              0, 1, rowData.maxNrSpots_, destList,
-              rowData.timePoints_, false, Coordinates.NM, false, 0.0, 0.0);
-   } catch (OutOfMemoryError oome) {
-      JOptionPane.showMessageDialog(getInstance(), "Out of memory");
-   }
-
-}
-};
+      };
 
       (new Thread(doWorkRunnable)).start();
    }//GEN-LAST:event_linkButton_ActionPerformed
@@ -2712,20 +2711,20 @@ public void run() {
    private void straightenTrackButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_straightenTrackButton_ActionPerformed
       int rows[] = jTable1_.getSelectedRows();
       if (rows.length < 1) {
-         JOptionPane.showMessageDialog(getInstance(), 
+         JOptionPane.showMessageDialog(getInstance(),
                  "Please select one or more datasets to straighten");
       } else {
          for (int row : rows) {
             RowData r = rowData_.get(row);
             if (evt.getModifiers() > 0) {
-               if (r.title_.equals(ij.IJ.getImage().getTitle()) ) {
+               if (r.title_.equals(ij.IJ.getImage().getTitle())) {
                   ImagePlus ip = ij.IJ.getImage();
                   Roi roi = ip.getRoi();
                   if (roi.isLine()) {
                      Polygon pol = roi.getPolygon();
-                    
+
                   }
-                  
+
                }
             }
             straightenTrack(r);
@@ -2736,7 +2735,7 @@ public void run() {
    private void centerTrackButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_centerTrackButton_ActionPerformed
       int rows[] = jTable1_.getSelectedRows();
       if (rows.length < 1) {
-         JOptionPane.showMessageDialog(getInstance(), 
+         JOptionPane.showMessageDialog(getInstance(),
                  "Please select one or more datasets to center");
       } else {
          for (int row : rows) {
@@ -2756,11 +2755,11 @@ public void run() {
    private void zCalibrateButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zCalibrateButton_ActionPerformed
       int rows[] = jTable1_.getSelectedRows();
       if (rows.length != 1) {
-         JOptionPane.showMessageDialog(getInstance(), 
+         JOptionPane.showMessageDialog(getInstance(),
                  "Please select one datasets for Z Calibration");
       } else {
          int result = zCalibrate(rows[0]);
-         if (result == OK ) {
+         if (result == OK) {
             zCalibrationLabel_.setText("Calibrated");
          } else if (result == FAILEDDOINFORM) {
             ReportingUtils.showError("Z-Calibration failed");
@@ -2777,19 +2776,19 @@ public void run() {
    }//GEN-LAST:event_method2CBox_ActionPerformed
 
    private String range_ = "";
-   
+
    private void SubRangeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SubRangeActionPerformed
-      
+
       final int[] rows = jTable1_.getSelectedRows();
-      
+
       if (rows == null || rows.length < 1) {
-         JOptionPane.showMessageDialog(getInstance(), 
+         JOptionPane.showMessageDialog(getInstance(),
                  "Please select one or more datasets for sub ranging");
          return;
       }
-      
-      range_ = (String) JOptionPane.showInputDialog(this, "Provide desired subrange\n" +
-              "e.g. \"7-50\"", "SubRange", JOptionPane.PLAIN_MESSAGE, null, null, range_);
+
+      range_ = (String) JOptionPane.showInputDialog(this, "Provide desired subrange\n"
+              + "e.g. \"7-50\"", "SubRange", JOptionPane.PLAIN_MESSAGE, null, null, range_);
       ArrayList<Integer> desiredFrameNumbers = new ArrayList<Integer>(
               rowData_.get(rows[0]).maxNrSpots_);
       String[] parts = range_.split(",");

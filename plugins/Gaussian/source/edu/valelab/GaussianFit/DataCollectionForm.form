@@ -40,7 +40,7 @@
           <Group type="102" attributes="0">
               <Component id="jPanel1" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="jPanel2" pref="407" max="32767" attributes="0"/>
+              <Component id="jPanel2" pref="404" max="32767" attributes="0"/>
               <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
           </Group>
       </Group>
@@ -53,17 +53,17 @@
         <DimensionLayout dim="0">
           <Group type="103" groupAlignment="0" attributes="0">
               <Group type="102" alignment="1" attributes="0">
-                  <EmptySpace min="-2" pref="18" max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" alignment="0" attributes="0">
-                          <EmptySpace min="-2" pref="50" max="-2" attributes="0"/>
+                          <EmptySpace min="-2" pref="68" max="-2" attributes="0"/>
                           <Component id="jLabel7" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <Group type="102" alignment="0" attributes="0">
+                          <EmptySpace pref="33" max="32767" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="saveButton" min="-2" pref="70" max="-2" attributes="0"/>
-                              <Component id="loadButton" min="-2" pref="70" max="-2" attributes="0"/>
-                              <Component id="showButton_" min="-2" pref="70" max="-2" attributes="0"/>
+                              <Component id="saveButton" alignment="1" min="-2" pref="70" max="-2" attributes="0"/>
+                              <Component id="loadButton" alignment="1" min="-2" pref="70" max="-2" attributes="0"/>
+                              <Component id="showButton_" alignment="1" min="-2" pref="70" max="-2" attributes="0"/>
                           </Group>
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Group type="102" attributes="0">
@@ -274,9 +274,9 @@
                           <Component id="removeButton" min="-2" pref="19" max="-2" attributes="0"/>
                           <EmptySpace min="1" pref="1" max="1" attributes="0"/>
                           <Component id="infoButton_" min="-2" pref="19" max="-2" attributes="0"/>
-                          <EmptySpace max="32767" attributes="0"/>
+                          <EmptySpace pref="7" max="32767" attributes="0"/>
                           <Component id="combineButton_" min="-2" pref="19" max="-2" attributes="0"/>
-                          <EmptySpace max="-2" attributes="0"/>
+                          <EmptySpace min="-2" pref="8" max="-2" attributes="0"/>
                       </Group>
                       <Group type="102" alignment="0" attributes="0">
                           <Component id="c2StandardButton" min="-2" pref="19" max="-2" attributes="0"/>
