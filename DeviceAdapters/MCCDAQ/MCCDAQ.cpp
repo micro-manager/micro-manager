@@ -67,8 +67,9 @@ using namespace std;
 
 /*
  * Initilize the global board handle
+ * voltMode should be e.g. UNI5VOLTS, UNI10VOLTS, etc.
  */
-int InitializeTheBoard()
+int InitializeTheBoard(int voltMode)
 {
    if (board.initialized == BOARDREADY)
       return DEVICE_OK;
@@ -76,7 +77,8 @@ int InitializeTheBoard()
    // initialize the board. Use board number 0
    // #TODO Load board number, voltage range as a parameter
    board.board_num = 0;
-   board.analog_range = UNI5VOLTS;
+   board.analog_range = voltMode;
+
    board.initialized = BOARDREADY;
 
    return DEVICE_OK;
@@ -159,10 +161,6 @@ void MCCDaqDA::GetName(char* name) const
 
 int MCCDaqDA::Initialize()
 {
-   int ret = InitializeTheBoard();
-   if (ret != DEVICE_OK)
-      return ret;
-
    // obtain scaling info
    minV_ = 0.0;
    maxV_ = 5.0;
@@ -196,6 +194,57 @@ int MCCDaqDA::Initialize()
    nRet = SetPropertyLimits(g_volts, minV_, maxV_);
    if (nRet != DEVICE_OK)
       return nRet;
+
+   // There are a ton of supported voltage modes, and we can't use a switch
+   // statement because of the floating point nature. This approach involves
+   // a lot of redundant assignments but is straightforward.
+   int voltMode = UNIPT01VOLTS;
+   if (maxV_ > .01) {
+      voltMode = UNIPT02VOLTS;
+   }
+   if (maxV_ > .02) {
+      voltMode = UNIPT05VOLTS;
+   }
+   if (maxV_ > .05) {
+      voltMode = UNIPT1VOLTS;
+   }
+   if (maxV_ > .1) {
+      voltMode = UNIPT2VOLTS;
+   }
+   if (maxV_ > .2) {
+      voltMode = UNIPT25VOLTS;
+   }
+   if (maxV_ > .25) {
+      voltMode = UNIPT5VOLTS;
+   }
+   if (maxV_ > .5) {
+      voltMode = UNI1VOLTS;
+   }
+   if (maxV_ > 1) {
+      voltMode = UNI1PT25VOLTS;
+   }
+   if (maxV_ > 1.25) {
+      voltMode = UNI1PT67VOLTS;
+   }
+   if (maxV_ > 1.67) {
+      voltMode = UNI2VOLTS;
+   }
+   if (maxV_ > 2) {
+      voltMode = UNI2PT5VOLTS;
+   }
+   if (maxV_ > 2.5) {
+      voltMode = UNI4VOLTS;
+   }
+   if (maxV_ > 4) {
+      voltMode = UNI5VOLTS;
+   }
+   if (maxV_ > 5) {
+      voltMode = UNI10VOLTS;
+   }
+
+   int ret = InitializeTheBoard(voltMode);
+   if (ret != DEVICE_OK)
+      return ret;
 
    nRet = UpdateStatus();
    if (nRet != DEVICE_OK)
@@ -322,7 +371,7 @@ bool MCCDaqShutter::Busy()
 
 int MCCDaqShutter::Initialize()
 {
-   int ret = InitializeTheBoard();
+   int ret = InitializeTheBoard(UNI5VOLTS);
    if (ret != DEVICE_OK)
       return ret;
 
