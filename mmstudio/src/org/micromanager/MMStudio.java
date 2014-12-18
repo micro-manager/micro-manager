@@ -155,7 +155,6 @@ public class MMStudio implements ScriptInterface {
    private static final String SCRIPT_GUI_OBJECT = "gui";
    private static final String AUTOFOCUS_DEVICE = "autofocus_device";
    private static final String EXPOSURE_SETTINGS_NODE = "MainExposureSettings";
-   private static final String CONTRAST_SETTINGS_NODE = "MainContrastSettings";
    private static final int TOOLTIP_DISPLAY_DURATION_MILLISECONDS = 15000;
    private static final int TOOLTIP_DISPLAY_INITIAL_DELAY_MILLISECONDS = 2000;
    private static final String DEFAULT_CONFIG_FILE_NAME = "MMConfig_demo.cfg";
@@ -192,7 +191,6 @@ public class MMStudio implements ScriptInterface {
    private Preferences systemPrefs_;
    private Preferences colorPrefs_;
    private Preferences exposurePrefs_;
-   private Preferences contrastPrefs_;
 
    // MMcore
    private CMMCore core_;
@@ -318,9 +316,7 @@ public class MMStudio implements ScriptInterface {
               AcqControlDlg.COLOR_SETTINGS_NODE);
       exposurePrefs_ = mainPrefs_.node(mainPrefs_.absolutePath() + "/" + 
               EXPOSURE_SETTINGS_NODE);
-      contrastPrefs_ = mainPrefs_.node(mainPrefs_.absolutePath() + "/" +
-              CONTRAST_SETTINGS_NODE);
-      
+
       // check system preferences
       try {
          Preferences p = Preferences.systemNodeForPackage(getClass());
