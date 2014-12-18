@@ -38,6 +38,7 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.Image;
+import org.micromanager.api.data.NewDisplaySettingsEvent;
 import org.micromanager.api.data.NewImageEvent;
 import org.micromanager.api.data.NewSummaryMetadataEvent;
 import org.micromanager.api.data.SummaryMetadata;
@@ -593,6 +594,15 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       catch (Exception e) {
          ReportingUtils.logError(e, "Failed to respond properly to pixels-set event");
       }
+   }
+
+   /**
+    * Assume that any change to our display settings will necessitate a
+    * redraw.
+    */
+   @Subscribe
+   public void onNewDisplaySettings(NewDisplaySettingsEvent event) {
+      displayBus_.post(new DefaultRequestToDrawEvent(null));
    }
 
    /**
