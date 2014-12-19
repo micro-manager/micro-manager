@@ -78,7 +78,7 @@ public class SpotLinker {
          // Add destList to rowData
          DataCollectionForm.getInstance().addSpotData(rowData.name_ + " Linked", rowData.title_, "", rowData.width_,
                  rowData.height_, rowData.pixelSizeNm_, rowData.zStackStepSizeNm_,
-                 rowData.shape_, rowData.halfSize_, rowData.nrChannels_, 0,
+                 rowData.shape_, rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
                  0, 1, rowData.maxNrSpots_, destList,
                  rowData.timePoints_, false, DataCollectionForm.Coordinates.NM, false, 0.0, 0.0);
       } catch (OutOfMemoryError oome) {

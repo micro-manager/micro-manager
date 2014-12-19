@@ -22,13 +22,13 @@ public class GaussianSpotData {
    public static final Object lockIP = new Object();
 
    private ImageProcessor ip_ = null;   // ImageProcessor for given spot
-   private int frame_;        // frame number in the original stack - 1-based
-   private int channel_;      // channel number in the original stack
-   private int slice_;        // slice number in the original stack - 1-based
-   private int position_;     // position number in the original stack
-   private int nr_;           // spot index in given image
-   private int x_;            // x as found by spotfinder
-   private int y_;            // y as found by spotfinder
+   private final int frame_;        // frame number in the original stack - 1-based
+   private final int channel_;      // channel number in the original stack
+   private final int slice_;        // slice number in the original stack - 1-based
+   private final int position_;     // position number in the original stack
+   private final int nr_;           // spot index in given image
+   private final int x_;            // x as found by spotfinder
+   private final int y_;            // y as found by spotfinder
    private double intensity_; // total intensity expressed in photons
    private double background_;// background expressed in photons (may or may not be corrected for baseline)
    private double xCenter_;      // center of gaussian in Coordinates (image coordinate system)
@@ -61,6 +61,7 @@ public class GaussianSpotData {
    /**
     * Copy constructor.  Copies frame, slice, channel, position ,  x,  y,
     * intensity, background, width, a, theta and sigma!
+    * @param spot
     */
    public GaussianSpotData(GaussianSpotData spot) {
       frame_ = spot.frame_;

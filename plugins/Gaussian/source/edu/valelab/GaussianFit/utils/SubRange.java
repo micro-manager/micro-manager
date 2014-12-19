@@ -31,7 +31,7 @@ public class SubRange {
    
    /**
     * 
-    * @param - input dataset to be subranged
+    * @param input dataset to be subranged
     * @param desiredFrames - list with desired frames
     * @return - subranged datase
     */
