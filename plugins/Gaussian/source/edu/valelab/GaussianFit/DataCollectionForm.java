@@ -24,6 +24,7 @@ import edu.ucsf.tsf.TaggedSpotsProtos.IntensityUnits;
 import edu.ucsf.tsf.TaggedSpotsProtos.LocationUnits;
 import edu.ucsf.tsf.TaggedSpotsProtos.Spot;
 import edu.ucsf.tsf.TaggedSpotsProtos.SpotList;
+import edu.valelab.GaussianFit.spotAssociations.SpotLinker;
 import edu.valelab.GaussianFit.utils.RowData;
 import edu.valelab.GaussianFit.utils.ListUtils;
 import edu.valelab.GaussianFit.utils.ReportingUtils;
@@ -66,6 +67,8 @@ import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
+import org.apache.commons.math.FunctionEvaluationException;
+import org.apache.commons.math.optimization.OptimizationException;
 import org.apache.commons.math.stat.StatUtils;
 import org.jfree.data.xy.XYSeries;
 
@@ -111,28 +114,17 @@ public class DataCollectionForm extends javax.swing.JFrame {
    private static final int FAILEDDOINFORM = 2;
    
    private Preferences prefs_;
-   private static FileType TSF_FILE = new FileType("TSF File",
+   private static final FileType TSF_FILE = new FileType("TSF File",
            "Tagged Spot Format file",
            "./data.tsf",
            false, new String[]{"txt", "tsf"});
  
-   /*
-    * Switch between clojure and Java code here
-    * LWM is Java, LocalWeightedMean is Clojure
-    * Currently, LocalWeightedMean gives great results, LWM does not
-    */
-   //private static LocalWeightedMean lwm_;
    private static CoordinateMapper c2t_;
-   private static String loadTSFDir_ = "";
-
-   // private static int rowDataID_ = 1;
-   
+   private static String loadTSFDir_ = "";   
    private int jitterMethod_ = 1;
    private int jitterMaxSpots_ = 40000; 
-   private int jitterMaxFrames_ = 500;
-   
-   private String dir_ = "";
-   
+   private int jitterMaxFrames_ = 500; 
+   private String dir_ = "";   
    public static ZCalibrator zc_ = new ZCalibrator();
       
    
@@ -167,6 +159,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
    /**
     * Method that lets a script gets the Affinetransform calculated by the
     * CoordinateMapper
+    * @return  Affine transform object calcualed by the Coordinate Mapper
     */
    public AffineTransform getAffineTransform() {
       if (c2t_ == null)
@@ -208,7 +201,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       myTableModel_ = new AbstractTableModel() {
              @Override
           public String getColumnName(int col) {
-              return columnNames_[col].toString();
+              return columnNames_[col];
           }
              @Override
           public int getRowCount() {
@@ -250,9 +243,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
           }
             @Override
           public boolean isCellEditable(int row, int col) {
-            if (col == 1)
-               return true;
-            return false;
+            return col == 1;
           }
              @Override
           public void setValueAt(Object value, int row, int col) {
@@ -267,10 +258,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
        plotComboBox_.setModel(new javax.swing.DefaultComboBoxModel(plotModes_));
        visualizationModel_.setModel(new javax.swing.DefaultComboBoxModel(renderModes_));
        visualizationMagnification_.setModel(new javax.swing.DefaultComboBoxModel(renderSizes_));
-       jScrollPane1_.setName("Gaussian Spot Fitting Data Sets");
-       
-       
-       
+       jScrollPane1_.setName("Gaussian Spot Fitting Data Sets");      
+              
        if (prefs_ == null)
           prefs_ = Preferences.userNodeForPackage(this.getClass());
        setBounds(prefs_.getInt(FRAMEXPOS, 50), prefs_.getInt(FRAMEYPOS, 100),
@@ -301,11 +290,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
          @Override
          public boolean canImport(TransferHandler.TransferSupport support) {
-            if (!support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
-               return false;
-            }
-
-            return true;
+            return support.isDataFlavorSupported(DataFlavor.javaFileListFlavor);
          }
 
          @Override
@@ -331,8 +316,6 @@ public class DataCollectionForm extends javax.swing.JFrame {
          }
       });
 
-      // setBackground(MMStudio.getInstance().getBackgroundColor());
-
       setVisible(true);
    }
 
@@ -343,9 +326,11 @@ public class DataCollectionForm extends javax.swing.JFrame {
     *
     * @param name
     * @param title
+    * @param colCorrRef
     * @param width
     * @param height
     * @param pixelSizeUm
+    * @param zStackStepSizeNm
     * @param shape
     * @param halfSize
     * @param nrChannels
@@ -354,7 +339,12 @@ public class DataCollectionForm extends javax.swing.JFrame {
     * @param nrPositions
     * @param maxNrSpots
     * @param spotList
+    * @param timePoints
     * @param isTrack
+    * @param coordinate
+    * @param hasZ
+    * @param minZ
+    * @param maxZ
     */
    public void addSpotData(
            String name,
@@ -390,6 +380,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       rowData_.add(newRow);
       myTableModel_.fireTableRowsInserted(rowData_.size()-1, rowData_.size());
       SwingUtilities.invokeLater(new Runnable() {
+         @Override
          public void run() {
               formComponentResized(null);
          }
@@ -397,7 +388,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
    }
 
    /**
-    * Return a dataset with requested ID.
+    * Return a dataset
+    * @param ID with requested ID.
+    * @return RowData with selected ID, or null if not found
     */
    public RowData getDataSet(int ID) {
       int i=0;
@@ -1055,9 +1048,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
     private void loadButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadButtonActionPerformed
 
        int modifiers = evt.getModifiers();
-       
-
-       
+              
        final File[] selectedFiles;
        if ((modifiers & java.awt.event.InputEvent.META_MASK) > 0) {
           // The Swing fileopener looks ugly but allows for selection of multiple files
@@ -1074,28 +1065,28 @@ public class DataCollectionForm extends javax.swing.JFrame {
           selectedFiles = new File[] {f};
        }
        
-       if (selectedFiles != null && selectedFiles.length > 0) {
+      if (selectedFiles != null && selectedFiles.length > 0) {
           
-          // Thread doing file import
-          Runnable loadFile = new Runnable() {
+         // Thread doing file import
+         Runnable loadFile = new Runnable() {
 
-                @Override
-             public void run() {
+            @Override
+            public void run() {
                 loadFiles(selectedFiles);
-             }
-          };
+            }
+         };
 
-          (new Thread(loadFile)).start();
+         (new Thread(loadFile)).start();
 
-       }
+      }
     }//GEN-LAST:event_loadButtonActionPerformed
 
     /**
      * Given an array of files, tries to import them all 
      * Uses .txt import for text files, and tsf importer for .tsf files.
      * @param selectedFiles - Array of files to be imported
-     */
-    private void loadFiles(File[] selectedFiles) {
+    */
+   private void loadFiles(File[] selectedFiles) {
       for (File selectedFile : selectedFiles) {
          loadTSFDir_ = selectedFile.getParent();
          if (selectedFile.getName().endsWith(".txt")) {
@@ -1229,11 +1220,11 @@ public class DataCollectionForm extends javax.swing.JFrame {
          String info = fr.readLine();
          String[] infos = info.split("\t");
          HashMap<String, String> infoMap = new HashMap<String, String>();
-         for (int i = 0; i < infos.length; i++) {
-            String[] keyValue = infos[i].split(": ");
-            if (keyValue.length == 2)
-               infoMap.put(keyValue[0], keyValue[1]);
-         }
+          for (String info1 : infos) {
+             String[] keyValue = info1.split(": ");
+             if (keyValue.length == 2)
+                infoMap.put(keyValue[0], keyValue[1]);
+          }
          String test = infoMap.get("has_Z");
          boolean hasZ = false;
          if (test != null && test.equals("true")) {
@@ -2244,6 +2235,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       final int row = jTable1_.getSelectedRow();
       if (row > -1) {
          Runnable doWorkRunnable = new Runnable() {
+            @Override
             public void run() {
                if (jitterMethod_ == 0)
                   unJitter(rowData_.get(row));
@@ -2638,70 +2630,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
          @Override
          public void run() {
-
-            try {
-               ij.IJ.showStatus("Linking spotData...");
-               boolean useFrames = rowData.nrFrames_ > rowData.nrSlices_;
-               int nr = rowData.nrSlices_;
-               if (useFrames) {
-                  nr = rowData.nrFrames_;
-               }
-
-               // linked spots go here:
-               List<GaussianSpotData> destList = new ArrayList<GaussianSpotData>();
-
-               // build a 2D array of lists with gaussian spots
-               @SuppressWarnings("unchecked")
-               List<GaussianSpotData>[][] spotImage = new ArrayList[rowData.width_][rowData.height_];
-               for (int i = 1; i < nr; i++) {
-                  ij.IJ.showStatus("Linking spotData...");
-                  ij.IJ.showProgress(i, nr);
-                  List<GaussianSpotData> frameSpots = rowData.frameIndexSpotList_.get(i);
-                  if (frameSpots != null) {
-                     for (GaussianSpotData spot : frameSpots) {
-                        if (spotImage[spot.getX()][spot.getY()] == null) {
-                           spotImage[spot.getX()][spot.getY()] = new ArrayList<GaussianSpotData>();
-                        } else {
-                           List<GaussianSpotData> prevSpotList = spotImage[spot.getX()][spot.getY()];
-                           GaussianSpotData lastSpot = prevSpotList.get(prevSpotList.size() - 1);
-                           int lastFrame = lastSpot.getFrame();
-                           if (!useFrames) {
-                              lastFrame = lastSpot.getSlice();
-                           }
-                           if (lastFrame != i - 1) {
-                              linkSpots(prevSpotList, destList, useFrames);
-                              spotImage[spot.getX()][spot.getY()] = new ArrayList<GaussianSpotData>();
-                           }
-                        }
-                        spotImage[spot.getX()][spot.getY()].add(spot);
-                     }
-                  } else {
-                     System.out.println("Empty row: " + i);
-                  }
-               }
-
-               // Finish links of all remaining spots
-               ij.IJ.showStatus("Finishing linking spotData...");
-               for (int w = 0; w < rowData.width_; w++) {
-                  for (int h = 0; h < rowData.height_; h++) {
-                     if (spotImage[w][h] != null) {
-                        linkSpots(spotImage[w][h], destList, useFrames);
-                     }
-                  }
-               }
-               ij.IJ.showStatus("");
-               ij.IJ.showProgress(1);
-
-               // Add destList to rowData
-               addSpotData(rowData.name_ + " Linked", rowData.title_, "", rowData.width_,
-                       rowData.height_, rowData.pixelSizeNm_, rowData.zStackStepSizeNm_,
-                       rowData.shape_, rowData.halfSize_, rowData.nrChannels_, 0,
-                       0, 1, rowData.maxNrSpots_, destList,
-                       rowData.timePoints_, false, Coordinates.NM, false, 0.0, 0.0);
-            } catch (OutOfMemoryError oome) {
-               JOptionPane.showMessageDialog(getInstance(), "Out of memory");
-            }
-
+            SpotLinker.link(rowData);
          }
       };
 
@@ -2872,65 +2801,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
          ReportingUtils.showError(ex, "Data set combiner got interupted");
       }
       
-      
    }//GEN-LAST:event_combineButton_ActionPerformed
 
-   /**
-    * Given a list of linked spots, create a single spot entry that will be added 
-    * to the destination list
-    * @param source - list of spots that all occur around the same pixel and in linked frames
-    * @param dest - list spots in which each entry represents multiple linked spots
-    */
-   
-   private void linkSpots(List<GaussianSpotData> source, List<GaussianSpotData> dest,
-           boolean useFrames) {
-      if (source == null)
-         return;
-      if (dest == null)
-         return;
-      
-      GaussianSpotData sp = new GaussianSpotData(source.get(0));
-      
-      double intensity = 0.0;
-      double background = 0.0;
-      double xCenter = 0.0;
-      double yCenter = 0.0;
-      double width = 0.0;
-      double a = 0.0;
-      double theta = 0.0;
-      double sigma = 0.0;
-      
-      for (GaussianSpotData spot : source) {
-         intensity += spot.getIntensity();
-         background += spot.getBackground();
-         xCenter += spot.getXCenter();
-         yCenter += spot.getYCenter();
-         width += spot.getWidth();
-         a += spot.getA();
-         theta += spot.getTheta();
-         sigma += spot.getSigma();
-      }
-      
-      background /= source.size();
-      xCenter /= source.size();
-      yCenter /= source.size();
-      width /= source.size();
-      a /= source.size();
-      theta /= source.size();
-      sigma /= source.size();
-      
-      // not sure if this is correct:
-      sigma /= Math.sqrt(source.size());
-         
-      sp.setData(intensity, background, xCenter, yCenter, 0.0, width, a, theta, sigma);
-      sp.originalFrame_ = source.get(0).getFrame();
-      if (!useFrames)
-         sp.originalFrame_ = source.get(0).getSlice();
-      sp.nrLinks_ = source.size();
-      
-      
-      dest.add(sp);   
-   }
    
    // Variables declaration - do not modify//GEN-BEGIN:variables
    private javax.swing.JLabel IntLabel2;
@@ -3259,10 +3131,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
          @Override
          public boolean accept(File file, String string) {
-            if (string.endsWith(".txt")) {
-               return true;
-            }
-            return false;
+            return string.endsWith(".txt");
          }
       };
       fd.setFilenameFilter(fnf);
@@ -3504,6 +3373,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       
       Runnable doWorkRunnable = new Runnable() {
          
+         @Override
          public void run() {
             
             int mag = (int) (rowData.pixelSizeNm_ / 40.0);
@@ -4239,7 +4109,10 @@ public class DataCollectionForm extends javax.swing.JFrame {
       
       try {
          zc_.fitFunction();
-      } catch (Exception ex) {
+      } catch (FunctionEvaluationException ex) {
+         ReportingUtils.showError("Error while fitting data");
+         return FAILEDDONOTINFORM;
+      } catch (OptimizationException ex) {
          ReportingUtils.showError("Error while fitting data");
          return FAILEDDONOTINFORM;
       }
