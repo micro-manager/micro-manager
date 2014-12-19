@@ -91,11 +91,12 @@ public class Prefs {
       return node + "_" + strKey;
    }
    
-   
+   // used by BeamSubPanel only
    public void putBoolean(String node, Prefs.Keys key, boolean value) {
       myPrefs_.putBoolean(getPrefKey(node, key), value);
    }
    
+   // used by BeamSubPanel only
    public boolean getBoolean(String node, Prefs.Keys key, boolean defaultValue) {
       return myPrefs_.getBoolean(getPrefKey(node, key), defaultValue);
    }

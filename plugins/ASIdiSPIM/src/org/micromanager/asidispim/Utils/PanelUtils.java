@@ -491,9 +491,9 @@ public class PanelUtils {
    
    
    /**
-    * Constructs JCheckBox tied to preference (but not property)
+    * Constructs JCheckBox with boolean preference store (used for plugin properties)
     * @param label the GUI label
-    * @param propKey
+    * @param propKey (needed for read/write to preferences now that preferences is based on properties)
     * @param prefNode
     * @param defaultValue
     * @return constructed JCheckBox
@@ -532,7 +532,9 @@ public class PanelUtils {
 
    
    /**
-    * Constructs JCheckBox tied to property
+    * Constructs JCheckBox tied to "usual" property and also stored in preferences.
+    * Uses a separate "prefKey" so that the same property name with different devices
+    * can be distinguished.  Specify property values for checked/unchecked state.
     * @param label the GUI label
     * @param offValue the value of the property when not checked
     * @param onValue the value of the property when checked
