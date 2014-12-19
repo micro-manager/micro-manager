@@ -352,6 +352,15 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          setFullScale();
          applyLUT(true);
       }
+      if (settings_.getShouldAutostretch()) {
+         // Disable autostretch now.
+         try {
+            store_.setDisplaySettings(settings_.copy().shouldAutostretch(false).build());
+         }
+         catch (DatastoreLockedException e) {
+            ReportingUtils.logError("Can't turn off autostretch; datastore is locked.");
+         }
+      }
    }
 
    public void autoButtonAction() {
