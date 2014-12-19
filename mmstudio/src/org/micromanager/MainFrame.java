@@ -398,7 +398,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
 
    private void createUtilityButtons(JPanel topPanel) {
       // ROI
-      createLabel("ROI", true, topPanel, 8, 140, 71, 154);
+      createLabel("ROI", true, topPanel, 29, 140, 79, 154);
       setRoiButton_ = GUIUtils.createButton(false, "setRoiButton", null,
          "Set Region Of Interest to selected rectangle",
          new Runnable() {
@@ -419,31 +419,8 @@ public class MainFrame extends MMFrame implements LiveModeListener {
          },
          "arrow_out.png", topPanel, 40, 154, 70, 174);
       
-      // Zoom
-      createLabel("Zoom", true, topPanel, 81, 140, 139, 154);
-
-      GUIUtils.createButton(false, "zoomInButton", null,
-         "Zoom in",
-         new Runnable() {
-            @Override
-            public void run() {
-               zoomIn();
-            }
-         },
-         "zoom_in.png", topPanel, 80, 154, 110, 174);
-
-      GUIUtils.createButton(false, "zoomOutButton", null,
-         "Zoom out",
-         new Runnable() {
-            @Override
-            public void run() {
-               zoomOut();
-            }
-         },
-         "zoom_out.png", topPanel, 113, 154, 143, 174);
-
       // Line profile.
-      createLabel("Profile", true, topPanel, 154, 140, 217, 154);
+      createLabel("Profile", true, topPanel, 91, 140, 149, 154);
 
       GUIUtils.createButton(false, "lineProfileButton", null,
          "Open line profile window (requires line selection)",
@@ -453,10 +430,10 @@ public class MainFrame extends MMFrame implements LiveModeListener {
                LineProfile.openLineProfileWindow();
             }
          },
-         "chart_curve.png", topPanel, 153, 154, 183, 174);
+         "chart_curve.png", topPanel, 94, 154, 124, 174);
 
       // Autofocus
-      createLabel("Autofocus", true, topPanel, 194, 140, 276, 154);
+      createLabel("Autofocus", true, topPanel, 172, 140, 254, 154);
       autofocusNowButton_ = (JButton) GUIUtils.createButton(false,
          "autofocusNowButton", null, "Autofocus now",
          new Runnable() {
@@ -465,7 +442,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
                studio_.autofocusNow();
             }
          }, 
-         "find.png", topPanel, 193, 154, 223, 174);
+         "find.png", topPanel, 169, 154, 199, 174);
 
       autofocusConfigureButton_ = (JButton) GUIUtils.createButton(false,
          "autofocusConfigureButton", null,
@@ -476,7 +453,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
                studio_.showAutofocusDialog();
             }
          },
-         "wrench_orange.png", topPanel, 226, 154, 256, 174);
+         "wrench_orange.png", topPanel, 202, 154, 232, 174);
    }
 
    public void updateTitle(String configFile) {
@@ -712,23 +689,5 @@ public class MainFrame extends MMFrame implements LiveModeListener {
                clearRoiButton_.setEnabled(enabled);
            }
        });
-   }
-
-   protected void zoomOut() {
-      ImageWindow curWin = WindowManager.getCurrentWindow();
-      if (curWin != null) {
-         ImageCanvas canvas = curWin.getCanvas();
-         Rectangle r = canvas.getBounds();
-         canvas.zoomOut(r.width / 2, r.height / 2);
-      }
-   }
-
-   protected void zoomIn() {
-      ImageWindow curWin = WindowManager.getCurrentWindow();
-      if (curWin != null) {
-         ImageCanvas canvas = curWin.getCanvas();
-         Rectangle r = canvas.getBounds();
-         canvas.zoomIn(r.width / 2, r.height / 2);
-      }
    }
 }
