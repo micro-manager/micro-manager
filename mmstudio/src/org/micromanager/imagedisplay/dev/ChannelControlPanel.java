@@ -350,8 +350,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          parent_.fullScaleChannels();
       } else {
          setFullScale();
-         parent_.applyLUTToImage();
-         repaint();
+         applyLUT(true);
       }
    }
 
