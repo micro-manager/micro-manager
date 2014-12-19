@@ -438,6 +438,18 @@ public final class StorageMultipageTiff implements Storage {
          //all images have finished writing if they are on seperate thread 
          if (writingExecutor_ != null && !writingExecutor_.isShutdown()) {
             writingExecutor_.shutdown();
+            try {
+               // Wait for tasks to finish.
+               int i = 0;
+               while (!writingExecutor_.awaitTermination(4, TimeUnit.SECONDS)) {
+                  ReportingUtils.logMessage("Waiting for image stack to finish writing (" + i + ")...");
+                  i++;
+               }
+            }
+            catch (InterruptedException e) {
+               ReportingUtils.logError("File finishing thread interrupted");
+               Thread.interrupted();
+            }
          }
       } catch (IOException ex) {
          ReportingUtils.logError(ex);
