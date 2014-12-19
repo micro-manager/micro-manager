@@ -287,8 +287,15 @@ public class DisplaySettingsPanel extends JPanel {
    @Subscribe
    public void onNewDisplaySettings(NewDisplaySettingsEvent event) {
       DisplaySettings settings = event.getDisplaySettings();
-      setColorPresetIndex(settings);
-      shouldAutostretch_.setSelected(settings.getShouldAutostretch());
+      try {
+         setColorPresetIndex(settings);
+         if (shouldAutostretch_ != null) {
+            shouldAutostretch_.setSelected(settings.getShouldAutostretch());
+         }
+      }
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Failed to handle new display settings");
+      }
    }
 
    /**
@@ -296,6 +303,10 @@ public class DisplaySettingsPanel extends JPanel {
     * colors selector.
     */
    private void setColorPresetIndex(DisplaySettings settings) {
+      if (colorPresets_ == null) {
+         // Not done setting up our UI yet.
+         return;
+      }
       if (settings.getChannelColors() != null) {
          int index = -1;
          for (int i = 0; i < DEFAULT_COLORS.length; ++i) {
