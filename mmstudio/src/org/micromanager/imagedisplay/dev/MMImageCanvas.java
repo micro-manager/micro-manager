@@ -95,6 +95,26 @@ class MMImageCanvas extends ImageCanvas {
    }
 
    /**
+    * Zoom the canvas in or out, accounting for the specified change in
+    * magnification.
+    */
+   public void zoomCanvas(double mag) {
+      if (mag == this.magnification) {
+         return;
+      }
+      Rectangle bounds = getBounds();
+      if (mag < this.magnification) {
+         zoomOut((int) (bounds.width * mag / magnification),
+               (int) (bounds.height * mag / magnification));
+      }
+      else {
+         zoomIn((int) (bounds.width * magnification / mag),
+               (int) (bounds.height * magnification / mag));
+      }
+      displayBus_.post(new DefaultRequestToDrawEvent());
+   }
+
+   /**
     * Post a MouseMovedEvent indicating the coordinates of the pixel underneath
     * the mouse. This is made unpleasant by the fact that we have two methods
     * of zooming the display available to us: first by using the zoom tool,

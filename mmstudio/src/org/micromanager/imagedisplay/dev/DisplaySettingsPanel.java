@@ -2,6 +2,7 @@ package org.micromanager.imagedisplay.dev;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
+import com.swtdesigner.SwingResourceManager;
 
 import ij.CompositeImage;
 import ij.ImagePlus;
@@ -32,6 +33,7 @@ import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.DatastoreLockedException;
 import org.micromanager.api.data.DisplaySettings;
 import org.micromanager.api.data.NewDisplaySettingsEvent;
+import org.micromanager.api.display.DisplayWindow;
 import org.micromanager.api.display.NewImagePlusEvent;
 import org.micromanager.data.DefaultDisplaySettings;
 
@@ -55,6 +57,7 @@ public class DisplaySettingsPanel extends JPanel {
 
    private Datastore store_;
    private ImagePlus ijImage_;
+   private DisplayWindow display_;
    private EventBus displayBus_;
    private JComboBox displayMode_;
    private JComboBox colorPresets_;
@@ -63,12 +66,13 @@ public class DisplaySettingsPanel extends JPanel {
    private JCheckBox shouldAutostretch_;
 
    public DisplaySettingsPanel(Datastore store, ImagePlus ijImage,
-         EventBus displayBus) {
+         DisplayWindow display, EventBus displayBus) {
       super(new MigLayout());
 
       store_ = store;
       store_.registerForEvents(this, 100);
       ijImage_ = ijImage;
+      display_ = display;
       displayBus_ = displayBus;
       displayBus_.register(this);
 
@@ -168,6 +172,31 @@ public class DisplaySettingsPanel extends JPanel {
          trimPercentage.setValue(settings.getTrimPercentage());
       }
       add(trimPercentage, "align right, wrap");
+
+      JButton zoomInButton = new JButton();
+      zoomInButton.setIcon(SwingResourceManager.getIcon(
+               DisplaySettingsPanel.class,
+               "/org/micromanager/icons/zoom_in.png"));
+      zoomInButton.setToolTipText("Zoom in");
+      zoomInButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            adjustZoom(2.0);
+         }
+      });
+      add(zoomInButton, "span 2");
+      JButton zoomOutButton = new JButton();
+      zoomOutButton.setIcon(SwingResourceManager.getIcon(
+               DisplaySettingsPanel.class,
+               "/org/micromanager/icons/zoom_out.png"));
+      zoomOutButton.setToolTipText("Zoom out");
+      zoomOutButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            adjustZoom(0.5);
+         }
+      });
+      add(zoomOutButton, "wrap");
 
       JButton saveButton = new JButton("Set as default");
       saveButton.setToolTipText("Save the current display settings as default for all new image windows.");
@@ -333,6 +362,13 @@ public class DisplaySettingsPanel extends JPanel {
       settings = settings.copy().trimPercentage(percentage).build();
       saveSettings(settings);
       displayBus_.post(new DefaultRequestToDrawEvent());
+   }
+
+   /**
+    * Adjust the magnification of the display by the given factor.
+    */
+   private void adjustZoom(double factor) {
+      display_.setMagnification(display_.getMagnification() * factor);
    }
 
    /**
