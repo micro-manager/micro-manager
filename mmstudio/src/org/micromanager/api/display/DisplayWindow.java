@@ -28,6 +28,18 @@ public interface DisplayWindow {
    public void displayStatusString(String status);
 
    /**
+    * Set the zoom level for this display. This may result in the canvas
+    * changing size, and there is no guarantee that you will get precisely
+    * the zoom level you request, as ImageJ quantizes magnification levels.
+    */
+   public void setMagnification(double magnification);
+
+   /**
+    * Retrieve the current zoom level for the display.
+    */
+   public double getMagnification();
+
+   /**
     * Add an additional "mode button" to the display window, to show/hide
     * the provided Component when clicked.
     */
