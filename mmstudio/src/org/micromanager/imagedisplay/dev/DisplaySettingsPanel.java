@@ -73,7 +73,10 @@ public class DisplaySettingsPanel extends JPanel {
 
       DisplaySettings settings = store_.getDisplaySettings();
 
-      add(new JLabel("Display mode: "), "split 2");
+      // We have several controls that consist of a label and a combobox;
+      // we want the label to be left-aligned, then a variable gap, then
+      // the right-aligned combobox.
+      add(new JLabel("Display mode: "), "split 2, align left, growx");
       displayMode_ = new JComboBox(
             new String[] {"Color", "Grayscale", "Composite"});
       displayMode_.setToolTipText("<html>Set the display mode for the image:<ul><li>Color: single channel, in color<li>Grayscale: single-channel grayscale<li>Composite: multi-channel color overlay</ul></html>");
@@ -87,9 +90,9 @@ public class DisplaySettingsPanel extends JPanel {
          displayMode_.setSelectedIndex(settings.getChannelDisplayModeIndex());
       }
       displayMode_.setEnabled(ijImage_ instanceof CompositeImage);
-      add(displayMode_, "wrap");
+      add(displayMode_, "align right, wrap");
 
-      add(new JLabel("Channel colors: "), "split 2");
+      add(new JLabel("Channel colors: "), "split 2, align left, growx");
       colorPresets_ = new JComboBox(COLOR_DESCRIPTORS);
       colorPresets_.setToolTipText("Select a preset color combination for multichannel setups");
       setColorPresetIndex(settings);
@@ -99,9 +102,9 @@ public class DisplaySettingsPanel extends JPanel {
             setColorPreset();
          }
       });
-      add(colorPresets_, "wrap");
+      add(colorPresets_, "align right, wrap");
 
-      add(new JLabel("Histograms update "), "split 2");
+      add(new JLabel("Histograms update "), "split 2, align left, growx");
       final JComboBox histogramUpdateRate = new JComboBox(
             new String[] {"Never", "Every image", "Once per second"});
       histogramUpdateRate.setToolTipText("Select how frequently to update histograms. Reduced histogram update rate may help reduce CPU load.");
@@ -129,7 +132,7 @@ public class DisplaySettingsPanel extends JPanel {
          // Default to "update every image"
          histogramUpdateRate.setSelectedIndex(1);
       }
-      add(histogramUpdateRate, "wrap");
+      add(histogramUpdateRate, "align right, wrap");
       
       final JCheckBox shouldAutostretch = new JCheckBox("Autostretch histograms");
       shouldAutostretch.setToolTipText("Automatically rescale the histograms every time a new image is displayed.");
@@ -142,9 +145,9 @@ public class DisplaySettingsPanel extends JPanel {
       if (settings.getShouldAutostretch() != null) {
          shouldAutostretch.setSelected(settings.getShouldAutostretch());
       }
-      add(shouldAutostretch, "wrap");
+      add(shouldAutostretch, "growx, align right, wrap");
 
-      add(new JLabel("Truncate histograms: "), "split 2");
+      add(new JLabel("Truncate histograms: "), "split 2, align left, growx");
       final JSpinner trimPercentage = new JSpinner();
       trimPercentage.setToolTipText("When autostretching histograms, the min and max will be moved inwards by the specified percentage (e.g. if this is set to 10, then the scaling will be from the 10th percentile to the 90th).");
       trimPercentage.setModel(new SpinnerNumberModel(0.0, 0.0, 100.0, 1.0));
@@ -163,7 +166,7 @@ public class DisplaySettingsPanel extends JPanel {
       if (settings.getTrimPercentage() != null) {
          trimPercentage.setValue(settings.getTrimPercentage());
       }
-      add(trimPercentage, "wrap");
+      add(trimPercentage, "align right, wrap");
 
       JButton saveButton = new JButton("Set as default");
       saveButton.setToolTipText("Save the current display settings as default for all new image windows.");
@@ -173,7 +176,7 @@ public class DisplaySettingsPanel extends JPanel {
             saveAsDefaults();
          }
       });
-      add(saveButton, "split 2, flowx");
+      add(saveButton, "split 2, flowx, growx, align left");
 
       JButton dupeButton = new JButton("Attach new display");
       dupeButton.setToolTipText("Create an additional display window for this dataset.");
@@ -185,7 +188,7 @@ public class DisplaySettingsPanel extends JPanel {
             new DefaultDisplayWindow(store_, null);
          }
       });
-      add(dupeButton, "wrap");
+      add(dupeButton, "align right, wrap");
    }
 
    /**
