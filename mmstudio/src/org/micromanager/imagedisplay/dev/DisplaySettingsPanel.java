@@ -60,6 +60,7 @@ public class DisplaySettingsPanel extends JPanel {
    private JComboBox colorPresets_;
    // Index of colorPresets_ last time its position was set.
    private int prevPresetIndex_ = -1;
+   private JCheckBox shouldAutostretch_;
 
    public DisplaySettingsPanel(Datastore store, ImagePlus ijImage,
          EventBus displayBus) {
@@ -134,18 +135,18 @@ public class DisplaySettingsPanel extends JPanel {
       }
       add(histogramUpdateRate, "align right, wrap");
       
-      final JCheckBox shouldAutostretch = new JCheckBox("Autostretch histograms");
-      shouldAutostretch.setToolTipText("Automatically rescale the histograms every time a new image is displayed.");
-      shouldAutostretch.addActionListener(new ActionListener() {
+      shouldAutostretch_ = new JCheckBox("Autostretch histograms");
+      shouldAutostretch_.setToolTipText("Automatically rescale the histograms every time a new image is displayed.");
+      shouldAutostretch_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent event) {
-            setShouldAutostretch(shouldAutostretch);
+            setShouldAutostretch();
          }
       });
       if (settings.getShouldAutostretch() != null) {
-         shouldAutostretch.setSelected(settings.getShouldAutostretch());
+         shouldAutostretch_.setSelected(settings.getShouldAutostretch());
       }
-      add(shouldAutostretch, "growx, align right, wrap");
+      add(shouldAutostretch_, "growx, align right, wrap");
 
       add(new JLabel("Truncate histograms: "), "split 2, align left, growx");
       final JSpinner trimPercentage = new JSpinner();
@@ -251,11 +252,14 @@ public class DisplaySettingsPanel extends JPanel {
    }
 
    /**
-    * We care when the channel colors change.
+    * We care when the channel colors change, and when autostretch is turned
+    * on/off.
     */
    @Subscribe
    public void onNewDisplaySettings(NewDisplaySettingsEvent event) {
-      setColorPresetIndex(event.getDisplaySettings());
+      DisplaySettings settings = event.getDisplaySettings();
+      setColorPresetIndex(settings);
+      shouldAutostretch_.setSelected(settings.getShouldAutostretch());
    }
 
    /**
@@ -313,9 +317,9 @@ public class DisplaySettingsPanel extends JPanel {
    /**
     * The user is toggling autostretch on/off.
     */
-   private void setShouldAutostretch(JCheckBox shouldAutostretch) {
+   private void setShouldAutostretch() {
       DisplaySettings settings = store_.getDisplaySettings();
-      settings = settings.copy().shouldAutostretch(shouldAutostretch.isSelected()).build();
+      settings = settings.copy().shouldAutostretch(shouldAutostretch_.isSelected()).build();
       saveSettings(settings);
       displayBus_.post(new DefaultRequestToDrawEvent());
    }
