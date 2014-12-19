@@ -228,7 +228,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
          modePanel_ = new MultiModePanel(displayBus_);
 
          DisplaySettingsPanel settings = new DisplaySettingsPanel(
-            store_, ijImage_, displayBus_);
+            store_, ijImage_, this, displayBus_);
          modePanel_.addMode("Settings", settings);
 
          histograms_ = new HistogramsPanel(store_, stack_, ijImage_,
@@ -495,6 +495,16 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
    @Override
    public void displayStatusString(String status) {
       displayBus_.post(new StatusEvent(status));
+   }
+
+   @Override
+   public void setMagnification(double magnification) {
+      canvas_.zoomCanvas(magnification);
+   }
+
+   @Override
+   public double getMagnification() {
+      return canvas_.getMagnification();
    }
       
    @Override
