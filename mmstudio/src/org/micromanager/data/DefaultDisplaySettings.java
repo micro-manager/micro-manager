@@ -504,11 +504,13 @@ public class DefaultDisplaySettings implements DisplaySettings {
             result.put("ChContrastMax", channelContrastMaxes_[0]);
          }
          result.put("histogramUpdateRate", histogramUpdateRate_);
-         JSONArray axes = new JSONArray();
-         for (String axis : linkedAxes_) {
-            axes.put(axis);
+         if (linkedAxes_ != null && linkedAxes_.length > 0) {
+            JSONArray axes = new JSONArray();
+            for (String axis : linkedAxes_) {
+               axes.put(axis);
+            }
+            result.put("linkedAxes", axes);
          }
-         result.put("linkedAxes", axes);
          result.put("shouldSyncChannels", shouldSyncChannels_);
          result.put("scaleBarColorIndex", scaleBarColorIndex_);
          result.put("scaleBarLocationIndex", scaleBarLocationIndex_);
