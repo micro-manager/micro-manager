@@ -21,7 +21,17 @@ public class SpotLinker {
    public SpotLinker() {
    }
 
-   public static void link(RowData rowData) {
+   /**
+    * Function that executes spot linkage.  Goes through a list of spots
+    * and looks in every consecutive frames for the closest by spot (at a 
+    * maximum distance of maxDistance.  If no spot is found, the link is added
+    * and the linked (averaged) spot is added to the destination list 
+    * through the function linkSpots.  This code could also be used for spot tracking
+    * 
+    * @param rowData
+    * @param maxDistance 
+    */
+   public static void link(RowData rowData, double maxDistance) {
       try {
          ij.IJ.showStatus("Linking spotData...");
          boolean useFrames = rowData.nrFrames_ > rowData.nrSlices_;
@@ -32,8 +42,29 @@ public class SpotLinker {
 
          // linked spots go here:
          List<GaussianSpotData> destList = new ArrayList<GaussianSpotData>();
-         
+         /*
          // create a list with spots from the first frame, 
+         for (int frame = 1; frame < nr; frame++) {
+            //List<GaussianSpotData> frameSpots = rowData.frameIndexSpotList_.get(i);
+            //List<GaussianSpotData> nextFrameSpots = rowData.frameIndexSpotList_.get(i+1);
+            //for (int frame = 1; frame <= rowData_.get(row).nrFrames_; frame++) {
+                  ij.IJ.showProgress(frame, rowData_.get(row).nrFrames_);
+
+                  // Get points from both channels in each frame as ArrayLists        
+                  ArrayList<GaussianSpotData> gsCh1 = new ArrayList<GaussianSpotData>();
+                  ArrayList<Point2D.Double> xyPointsCh2 = new ArrayList<Point2D.Double>();
+                  for (GaussianSpotData gs : rowData_.get(row).spotList_) {
+                     if (gs.getFrame() == frame) {
+                        if (gs.getChannel() == 1) {
+                           gsCh1.add(gs);
+                        } else if (gs.getChannel() == 2) {
+                           Point2D.Double point = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
+                           xyPointsCh2.add(point);
+                        }
+                     }
+                  } 
+         }
+         */
 
          // build a 2D array of lists with gaussian spots
          @SuppressWarnings("unchecked")
