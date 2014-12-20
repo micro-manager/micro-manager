@@ -248,8 +248,11 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       sheetPanel.add(new JLabel("\u00B5"+"m" + " + Slice *"), "span 2");
       sheetPanel.add(rateField_);
       
-      JButton tmp_but = new JButton("Compute piezo vs. slice calibration");
-      tmp_but.setToolTipText("Computes piezo vs. slice position from start and end positions");
+      sheetPanel.add(new JLabel("Set calibration:"), "span 2");
+      
+      JButton tmp_but = new JButton("2-point");
+      tmp_but.setMargin(new Insets(4,8,4,8));
+      tmp_but.setToolTipText("Computes piezo vs. slice slope and offset from start and end positions");
       tmp_but.setBackground(Color.green);
       tmp_but.addActionListener(new ActionListener() {
          @Override
@@ -265,7 +268,30 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
             }
          }
       });
-      sheetPanel.add(tmp_but, "span 4, center, wrap");
+      sheetPanel.add(tmp_but, "center");
+      
+      tmp_but = new JButton("Offset");
+      tmp_but.setMargin(new Insets(4,8,4,8));
+      tmp_but.setToolTipText("Adjusts piezo vs. slice offset from current position");
+      tmp_but.setBackground(Color.green);
+      tmp_but.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            try {
+               double rate = (Double) rateField_.getValue();
+               // bypass cached positions in positions_ in case they aren't current
+               double currentScanner = core_.getGalvoPosition(
+                     devices_.getMMDeviceException(micromirrorDeviceKey_)).y;
+               double currentPiezo = core_.getPosition(
+                     devices_.getMMDeviceException(piezoImagingDeviceKey_));
+               double newOffset = currentPiezo - rate * currentScanner;
+               offsetField_.setValue((Double) newOffset);
+            } catch (Exception ex) {
+               MyDialogUtils.showError(ex);
+            }
+         }
+      });
+      sheetPanel.add(tmp_but, "center, wrap");
       
       sheetPanel.add(new JSeparator(SwingConstants.HORIZONTAL), "span 9, growx, wrap");
       
@@ -375,7 +401,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       sheetPanel.add(new JSeparator(SwingConstants.HORIZONTAL), "span 9, growx, wrap");
 
 
-      sheetPanel.add(new JLabel("Illumination piezo:"));
+      sheetPanel.add(new JLabel("Illum. piezo:"));
       illuminationPiezoPositionLabel_ = new JLabel("");
       sheetPanel.add(illuminationPiezoPositionLabel_);
       sheetPanel.add(pu.makeSetPositionField(piezoIlluminationDeviceKey_,
