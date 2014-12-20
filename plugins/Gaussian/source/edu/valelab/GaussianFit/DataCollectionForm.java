@@ -2629,13 +2629,20 @@ public class DataCollectionForm extends javax.swing.JFrame {
       if (rowData.frameIndexSpotList_ == null) {
          rowData.index();
       }
+      final double maxDistance;
+      try {
+         maxDistance = NumberUtils.displayStringToDouble(pairsMaxDistanceField_.getText());
+      } catch (ParseException ex) {
+         ReportingUtils.logError("Error parsing pairs max distance field");
+         return;
+      }
 
       Runnable doWorkRunnable;
       doWorkRunnable = new Runnable() {
 
          @Override
          public void run() {
-            SpotLinker.link(rowData);
+            SpotLinker.link(rowData, maxDistance);
          }
       };
 
