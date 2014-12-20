@@ -6,7 +6,6 @@
  * @copyright UCSF, Dec. 2012
  */
 package edu.valelab.GaussianFit.spotAssociations;
-import edu.valelab.GaussianFit.spotAssociations.NearestPoint2D;
 import edu.valelab.GaussianFit.data.GsSpotPair;
 import ags.utils.KdTree;
 import ags.utils.KdTree.Entry;

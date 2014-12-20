@@ -1,7 +1,6 @@
 
 package edu.valelab.GaussianFit.data;
 
-import edu.valelab.GaussianFit.data.GaussianSpotData;
 import java.awt.geom.Point2D;
 
 /**
