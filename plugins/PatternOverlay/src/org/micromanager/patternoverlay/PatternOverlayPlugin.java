@@ -63,9 +63,18 @@ public class PatternOverlayPlugin implements MMPlugin {
 
     /**
      *  General purpose information members.
+    * @return 
      */
-    @Override public String getDescription() { return "Add an overlay shape to the image window."; }
-    @Override public String getInfo()        { return menuName;      }
-    @Override public String getVersion()     { return "2";               }
-    @Override public String getCopyright()   { return "Applied Scientific Instrumentation, 2014";  }
+    @Override public String getDescription() { 
+       return "Add an overlay shape to the image window."; 
+    }
+    @Override public String getInfo()        { 
+       return menuName;      
+    }
+    @Override public String getVersion()     { 
+       return "2";         
+    }
+    @Override public String getCopyright()   { 
+       return "Applied Scientific Instrumentation, 2014";  
+    }
 }

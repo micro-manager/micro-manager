@@ -9,8 +9,8 @@ import java.awt.Color;
  */
 public class ColorOption {
 
-   private Color   color_;      // Color object represented by this option.
-   private String  name_;       // Description of this option as it appears in drop-down.
+   private final Color   color_;      // Color object represented by this option.
+   private final String  name_;       // Description of this option as it appears in drop-down.
 
 
    /**

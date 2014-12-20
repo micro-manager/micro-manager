@@ -24,16 +24,16 @@ public class OverlayOption {
       }
    };
 
-   private Keys             key_;      // overlay enum represented by this option
-   private GenericOverlay   overlay_;  
+   private final Keys             key_;      // overlay enum represented by this option
+   private final GenericOverlay   overlay_;  
 
 
    /**
     *  OverlayOption constructor; expects a key and an associated object
     *  that implements the OverlayInterface.
     *  
-    *  @param color
-    *  @param name
+    *  @param key
+    *  @param overlay
     */
    public OverlayOption(Keys key, GenericOverlay overlay) {
       key_ = key;
