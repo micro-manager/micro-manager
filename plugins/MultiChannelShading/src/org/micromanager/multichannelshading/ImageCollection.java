@@ -141,22 +141,22 @@ public class ImageCollection {
              for (int i = 0; i < nrPixels; i++) {
                fPixels[i] = mean / dp.getf(i);
             }
-          } else 
-         for (int i = 0; i < nrPixels; i++) {
-           
-            int pValue = dp.get(i);
-            if (dp instanceof ShortProcessor) {
-               pValue &= (int) pValue & 0x0000ffff;
-            } else if (dp instanceof ByteProcessor) {
-               pValue &= (int) pValue & 0x000000ff;
+         } else {
+            for (int i = 0; i < nrPixels; i++) {
+
+               int pValue = dp.get(i);
+               if (dp instanceof ShortProcessor) {
+                  pValue &= (int) pValue & 0x0000ffff;
+               } else if (dp instanceof ByteProcessor) {
+                  pValue &= (int) pValue & 0x000000ff;
+               }
+               fPixels[i] = mean / (float) pValue;
             }
-            fPixels[i] = mean / (float) pValue;
          }
-         FloatProcessor fp = new FloatProcessor(width, height, fPixels);
+          
+         FloatProcessor fp = new FloatProcessor (width, height, fPixels);
 
          flatField = new ImagePlusInfo(fp);
-
-         // flatField.show();
 
          HashMap<String, ImagePlusInfo> newFlatField =
                  new HashMap<String, ImagePlusInfo>();

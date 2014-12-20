@@ -173,8 +173,8 @@ public class ShadingTable extends JTable {
       }
    }
 
-   private PresetCellEditor presetCellEditor_;
-   private LoadFileButtonCellEditor loadFileButtonCellEditor_;
+   private final PresetCellEditor presetCellEditor_;
+   private final LoadFileButtonCellEditor loadFileButtonCellEditor_;
    
    ShadingTable(ScriptInterface gui, ShadingTableModel model, 
            MultiChannelShadingMigForm form) {
