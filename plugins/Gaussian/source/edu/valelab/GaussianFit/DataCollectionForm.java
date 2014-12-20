@@ -17,6 +17,11 @@
 
 package edu.valelab.GaussianFit;
 
+import edu.valelab.GaussianFit.spotAssociations.NearestPointGsSpotPair;
+import edu.valelab.GaussianFit.spotAssociations.NearestPoint2D;
+import edu.valelab.GaussianFit.utils.DisplayUtils;
+import edu.valelab.GaussianFit.data.GsSpotPair;
+import edu.valelab.GaussianFit.data.GaussianSpotData;
 import edu.valelab.GaussianFit.utils.GaussianUtils;
 import edu.valelab.GaussianFit.fitting.ZCalibrator;
 import edu.ucsf.tsf.TaggedSpotsProtos.FitMode;

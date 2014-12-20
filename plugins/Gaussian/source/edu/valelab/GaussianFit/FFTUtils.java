@@ -3,6 +3,7 @@
  */
 package edu.valelab.GaussianFit;
 
+import edu.valelab.GaussianFit.data.GaussianSpotData;
 import edu.valelab.GaussianFit.utils.RowData;
 import org.apache.commons.math.complex.Complex;
 import org.apache.commons.math.transform.FastFourierTransformer;

@@ -13,7 +13,7 @@
 
 package edu.valelab.GaussianFit.utils;
 
-import edu.valelab.GaussianFit.GaussianSpotData;
+import edu.valelab.GaussianFit.data.GaussianSpotData;
 import java.util.ArrayList;
 import java.util.List;
 

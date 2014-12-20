@@ -65,7 +65,7 @@ public class GaussianFit {
     * as 1 (circle), 2 (width varies in x and y), or 3 (ellipse) parameters
     * 
     * @param mode - fit circle (1) ellipse(2), or ellipse with varying angle (3)
-    * @param fitmode - algorithm use: NelderMead (1), Levenberg Marquard (2), 
+    * @param fitMode - algorithm use: NelderMead (1), Levenberg Marquard (2), 
     *                   NelderMean MLE (3), LevenberMarquard MLE(4)
     */
    public GaussianFit(int mode, int fitMode) {
@@ -128,6 +128,7 @@ public class GaussianFit {
     * @param siProc - ImageJ ImageProcessor containing image to be fit
     * @param maxIterations - maximum number of iterations for the Nelder Mead
     *   optimization algorithm
+    * @return 
     */
    public double[] doGaussianFit (ImageProcessor siProc, int maxIterations) {
       estimateParameters(siProc);
@@ -144,7 +145,13 @@ public class GaussianFit {
             paramsOut = result.getPoint();
          } catch (java.lang.OutOfMemoryError e) {
             throw(e);
-         } catch (Exception e) {
+         } catch (FunctionEvaluationException e) {
+            ij.IJ.log(" " + e.toString());
+            //e.printStackTrace();
+         } catch (OptimizationException e) {
+            ij.IJ.log(" " + e.toString());
+            //e.printStackTrace();
+         } catch (IllegalArgumentException e) {
             ij.IJ.log(" " + e.toString());
             //e.printStackTrace();
          }
@@ -175,8 +182,6 @@ public class GaussianFit {
             // Logger.getLogger(GaussianFit.class.getName()).log(Level.SEVERE, null, ex);
          } catch (IllegalArgumentException ex) {
             Logger.getLogger(GaussianFit.class.getName()).log(Level.SEVERE, null, ex);
-         } catch(Exception ex) {
-            Logger.getLogger(GaussianFit.class.getName()).log(Level.INFO, "Exceeded max number of iterations", ex);
          }
       }
       
@@ -191,7 +196,13 @@ public class GaussianFit {
             paramsOut = result.getPoint();
          } catch (java.lang.OutOfMemoryError e) {
             throw(e);
-         } catch (Exception e) {
+         } catch (FunctionEvaluationException e) {
+            ij.IJ.log(" " + e.toString());
+            //e.printStackTrace();
+         } catch (OptimizationException e) {
+            ij.IJ.log(" " + e.toString());
+            //e.printStackTrace();
+         } catch (IllegalArgumentException e) {
             ij.IJ.log(" " + e.toString());
             //e.printStackTrace();
          }
@@ -288,6 +299,7 @@ public class GaussianFit {
    private class LMChecker implements VectorialConvergenceChecker {
       int iteration_ = 0;
       boolean lastResult_ = false;
+      @Override
       public boolean converged(int i, VectorialPointValuePair previous, VectorialPointValuePair current) {
          if (i == iteration_)
             return lastResult_;

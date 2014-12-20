@@ -12,6 +12,8 @@
 
 package edu.valelab.GaussianFit;
 
+import edu.valelab.GaussianFit.data.GaussianInfo;
+import edu.valelab.GaussianFit.data.GaussianSpotData;
 import edu.valelab.GaussianFit.utils.ReportingUtils;
 import java.awt.geom.Point2D;
 import java.awt.Rectangle;

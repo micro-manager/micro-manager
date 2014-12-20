@@ -1,6 +1,8 @@
 package edu.valelab.GaussianFit;
 
 
+import edu.valelab.GaussianFit.data.GaussianInfo;
+import edu.valelab.GaussianFit.data.GaussianSpotData;
 import edu.valelab.GaussianFit.fitting.ZCalibrator;
 import ij.ImagePlus;
 import ij.process.ImageProcessor;

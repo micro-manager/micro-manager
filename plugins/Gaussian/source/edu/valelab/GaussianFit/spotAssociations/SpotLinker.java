@@ -2,7 +2,7 @@ package edu.valelab.GaussianFit.spotAssociations;
 
 import edu.valelab.GaussianFit.DataCollectionForm;
 import static edu.valelab.GaussianFit.DataCollectionForm.getInstance;
-import edu.valelab.GaussianFit.GaussianSpotData;
+import edu.valelab.GaussianFit.data.GaussianSpotData;
 import edu.valelab.GaussianFit.utils.RowData;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +32,8 @@ public class SpotLinker {
 
          // linked spots go here:
          List<GaussianSpotData> destList = new ArrayList<GaussianSpotData>();
+         
+         // create a list with spots from the first frame, 
 
          // build a 2D array of lists with gaussian spots
          @SuppressWarnings("unchecked")

@@ -1,6 +1,8 @@
 
 package edu.valelab.GaussianFit;
 
+import edu.valelab.GaussianFit.data.GaussianSpotData;
+
 /**
  *
  * @author Nico Stuuman

@@ -11,6 +11,7 @@
 
 package edu.valelab.GaussianFit;
 
+import edu.valelab.GaussianFit.data.GaussianInfo;
 import edu.valelab.GaussianFit.utils.MMWindowAbstraction;
 import ij.IJ;
 import ij.ImagePlus;

@@ -3,6 +3,7 @@
  */
 package edu.valelab.GaussianFit;
 
+import edu.valelab.GaussianFit.data.GaussianSpotData;
 import edu.valelab.GaussianFit.utils.GaussianUtils;
 import edu.valelab.GaussianFit.utils.RowData;
 import ij.ImageStack;
@@ -21,7 +22,7 @@ import java.io.InputStreamReader;
  * @author Nico Stuurman
  */
 public class ImageRenderer {
-    private int[][] iceLut_ = new int[256][];
+    private final int[][] iceLut_ = new int[256][];
       
 
    
