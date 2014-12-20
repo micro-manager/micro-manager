@@ -61,25 +61,29 @@ public class RecallPlugin implements MMPlugin {
    
   
 
+   @Override
    public void setApp(ScriptInterface app) {
       gui_ = (MMStudio) app;                                        
       core_ = app.getMMCore(); 
       
       displayImageRoutine_ = new MMStudio.DisplayImageRoutine() {
+         @Override
          public void show(final TaggedImage ti) {
             try {
                gui_.addImage(ACQ_NAME, ti, true, true);
-            } catch (Exception e) {
+            } catch (MMScriptException e) {
                ReportingUtils.logError(e);
             }
          }
       };
    }
 
+   @Override
    public void dispose() {
       // nothing todo:
    }
 
+   @Override
    public void show() {
       try {
          if (gui_.acquisitionExists(ACQ_NAME))
@@ -176,18 +180,22 @@ public class RecallPlugin implements MMPlugin {
    public void configurationChanged() {
    }
 
+   @Override
    public String getInfo () {
       return "Recalls live images remaining in internal buffer.  Set size of the buffer in options (under Tools menu)";
    }
 
+   @Override
    public String getDescription() {
       return tooltipDescription;
    }
    
+   @Override
    public String getVersion() {
       return "First version";
    }
    
+   @Override
    public String getCopyright() {
       return "University of California, 2010";
    }
