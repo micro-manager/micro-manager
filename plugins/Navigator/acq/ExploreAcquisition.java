@@ -5,6 +5,7 @@
 package acq;
 
 import coordinates.XYStagePosition;
+import gui.SettingsDialog;
 import java.awt.geom.Point2D;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -180,8 +181,10 @@ public class ExploreAcquisition extends Acquisition {
          CMMCore core = MMStudio.getInstance().getCore();
          JSONArray pList = new JSONArray();
          //create first position based on current XYStage position
-         pList.put(new XYStagePosition("Grid_0_0", new Point2D.Double(core.getXPosition(core.getXYStageDevice()), core.getYPosition(core.getXYStageDevice())),
-                 0, 0, 0, 0, pixelSizeConfig_).getMMPosition());
+         int tileWidth = (int) MMStudio.getInstance().getCore().getImageWidth() - SettingsDialog.getOverlapX();
+         int tileHeight = (int) MMStudio.getInstance().getCore().getImageHeight() - SettingsDialog.getOverlapY();
+         pList.put(new XYStagePosition(new Point2D.Double(core.getXPosition(core.getXYStageDevice()), core.getYPosition(core.getXYStageDevice())),
+                 tileWidth, tileHeight, 0, 0, pixelSizeConfig_).getMMPosition());
          return pList;
       } catch (Exception e) {
          ReportingUtils.showError("Couldn't create initial position list");

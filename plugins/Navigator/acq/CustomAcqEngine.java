@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.TreeMap;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.micromanager.api.MMTags;
@@ -95,13 +96,21 @@ public class CustomAcqEngine {
 
          @Override
          public void run() {
+            if (currentExploreAcq_ != null && !currentExploreAcq_.isFinished()) {
+               int result = JOptionPane.showConfirmDialog(null, "Finish exisiting explore acquisition?", "Finish Current Explore Acquisition", JOptionPane.OK_CANCEL_OPTION);
+               if (result == JOptionPane.OK_OPTION) {
+                  currentExploreAcq_.abort();
+               } else {
+                  return;
+               }
+            }
             currentExploreAcq_ = new ExploreAcquisition(settings);
          }
       }).start();
    }
 
    private void runEvent(AcquisitionEvent event) {
-      if (event == null) {
+      if (event.acquisition_ == null) {
          //event will be null when fixed acquisitions run to compeletion in normal operation
          //signal to TaggedImageSink to finish saving thread and mark acquisition as finished
          currentFixedAcq_.addImage(new TaggedImage(null, null));

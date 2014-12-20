@@ -22,7 +22,7 @@ import javax.swing.SwingUtilities;
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
 import org.micromanager.utils.ReportingUtils;
 import surfacesandregions.SingleResolutionInterpolation;
-import surfacesandregions.MultiPosRegion;
+import surfacesandregions.MultiPosGrid;
 import surfacesandregions.Point3d;
 import surfacesandregions.SurfaceInterpolator;
 
@@ -391,7 +391,7 @@ public class DisplayOverlayer   {
 
       double dsTileWidth = tileWidth_ / (double) zoomableStack_.getDownsampleFactor();
       double dsTileHeight = tileHeight_ / (double) zoomableStack_.getDownsampleFactor();
-      MultiPosRegion newGrid = display_.getCurrentRegion();
+      MultiPosGrid newGrid = display_.getCurrentRegion();
       if (newGrid == null) {
          display_.getImagePlus().setOverlay(null);
          return null;
@@ -399,11 +399,27 @@ public class DisplayOverlayer   {
       int roiWidth = (int) ((newGrid.numCols() * dsTileWidth) - ((newGrid.numCols() - 1) * newGrid.overlapX()) / zoomableStack_.getDownsampleFactor());
       int roiHeight = (int) ((newGrid.numRows() * dsTileHeight) - ((newGrid.numRows() - 1) * newGrid.overlapY()) / zoomableStack_.getDownsampleFactor());
       
-      Point displayCenter = zoomableStack_.getDisplayImageCoordsFromFullImageCoords(new Point(newGrid.center()));
+      Point displayCenter = display_.imageCoordsFromStageCoords(newGrid.center().x, newGrid.center().y);
       
       Roi rectangle = new Roi(displayCenter.x - roiWidth / 2,displayCenter.y - roiHeight / 2, roiWidth, roiHeight);
-      rectangle.setStrokeWidth(10f);
+      rectangle.setStrokeWidth(5f);
       rectangle.setStrokeColor(NEW_GRID_COLOR);
+      
+      Point displayTopLeft = new Point(displayCenter.x - roiWidth / 2,displayCenter.y - roiHeight / 2);
+      //draw boundries of tiles
+      for (int row = 1; row < newGrid.numRows(); row++) {
+         int yPos = (int) ( displayTopLeft.y + row * dsTileWidth + (newGrid.overlapY() / 2)/ zoomableStack_.getDownsampleFactor());
+         Line l = new Line(displayTopLeft.x, yPos, displayTopLeft.x + roiWidth, yPos );
+         l.setStrokeColor(NEW_GRID_COLOR);
+         overlay.add(l);
+      }
+      for (int col = 1; col < newGrid.numCols(); col++) {
+         int xPos = (int) ( displayTopLeft.x + col * dsTileHeight + (newGrid.overlapX() / 2)/ zoomableStack_.getDownsampleFactor());
+         Line l = new Line(xPos, displayTopLeft.y, xPos, displayTopLeft.y + roiHeight);
+         l.setStrokeColor(NEW_GRID_COLOR);
+         overlay.add(l);
+      }
+
       overlay.add(rectangle);
       return overlay;
    }

@@ -186,8 +186,9 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
             TaggedImage tile = null;          
             if (dsIndex == 0) {
                tile = fullResStorage_.getImage(channel, slice, frame, posManager_.getPositionIndexFromTilePosition(dsIndex, row, col));
-            } else {
-               tile = lowResStorages_.get(dsIndex).getImage(channel, slice, frame, posManager_.getPositionIndexFromTilePosition(dsIndex, row, col));
+            } else {               
+               tile = lowResStorages_.get(dsIndex) == null ? null : 
+                       lowResStorages_.get(dsIndex).getImage(channel, slice, frame, posManager_.getPositionIndexFromTilePosition(dsIndex, row, col));
             }
             if (tile == null) {
                yOffset += lineHeights.get(row - rowStart); //increment y offset so new tiles appear in correct position
@@ -242,6 +243,18 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
       return new TaggedImage(pixels, topLeftMD);
    }
    
+   /**
+    * Called before any images have been added to initialize the resolution to the specifiec zoom level
+    * @param resIndex 
+    */
+   public void startAtResolution(int resIndex) {
+      //create a null pointer in lower res storages to signal addToLoResStorage function
+      //to continue downsampling to this level
+      for (int i = lowResStorages_.keySet().size() + 1; i <= resIndex; i++) {
+         lowResStorages_.put(i, null);
+      }
+   }
+
    /**
     * create an additional lower resolution level so that image can be zoomed out 
     */
@@ -386,6 +399,7 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
                        channel, slice, frame, posManager_.getLowResPositionIndex(fullResPositionIndex, resolutionIndex));
             }
          } catch (Exception e) {
+            e.printStackTrace();
             ReportingUtils.showError("Couldnt modify tags for lower resolution level");
          }
 

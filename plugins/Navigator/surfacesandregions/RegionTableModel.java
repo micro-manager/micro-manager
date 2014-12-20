@@ -7,7 +7,7 @@ package surfacesandregions;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import javax.swing.table.AbstractTableModel;
-import surfacesandregions.MultiPosRegion;
+import surfacesandregions.MultiPosGrid;
 import surfacesandregions.RegionManager;
 
 /**
@@ -55,7 +55,7 @@ class RegionTableModel extends AbstractTableModel implements ListDataListener {
    
    @Override
    public Object getValueAt(int rowIndex, int columnIndex) {
-      MultiPosRegion region = manager_.getRegion(rowIndex);
+      MultiPosGrid region = manager_.getRegion(rowIndex);
       if (columnIndex == 0) {
          return manager_.getRegion(rowIndex).getName();
       } else if (columnIndex == 1) {

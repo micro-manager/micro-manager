@@ -23,8 +23,8 @@ public class XYStagePosition {
    private final Point2D.Double[] corners_;
    private int gridRow_, gridCol_;
    
-   public XYStagePosition(String name, Point2D.Double stagePosCenter, int tileWidth, int tileHeight, int row, int col, String pixelSizeConfig) {
-      label_ = name;
+   public XYStagePosition(Point2D.Double stagePosCenter, int tileWidth, int tileHeight, int row, int col, String pixelSizeConfig) {
+      label_ = "Grid_" + col + "_" + row;
       center_ = stagePosCenter;
       AffineTransform transform = AffineUtils.getAffineTransform(pixelSizeConfig, center_.x, center_.y);
       corners_ = new Point2D.Double[4];
@@ -38,6 +38,14 @@ public class XYStagePosition {
       transform.transform(new Point2D.Double(tileWidth / 2, -tileHeight / 2), corners_[3]);
       gridCol_ = col;
       gridRow_ = row;
+   }
+   
+   public int getGridRow() {
+      return gridRow_;
+   }
+   
+   public int getGridCol() {
+      return gridCol_;
    }
    
    public Point2D.Double getCenter() {

@@ -9,9 +9,13 @@ import acq.FixedAreaAcquisition;
 import acq.MultiResMultipageTiffStorage;
 import com.google.common.eventbus.Subscribe;
 import coordinates.PositionManager;
+import gui.GUI;
+import gui.SettingsDialog;
 import ij.CompositeImage;
 import ij.IJ;
-import ij.gui.*;
+import ij.gui.ImageCanvas;
+import ij.gui.ImageWindow;
+import ij.gui.Toolbar;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Point2D;
@@ -34,14 +38,12 @@ import org.micromanager.imagedisplay.MMCompositeImage;
 
 
 import org.micromanager.utils.*;
-import surfacesandregions.MultiPosRegion;
+import surfacesandregions.MultiPosGrid;
 import surfacesandregions.RegionManager;
 import surfacesandregions.SurfaceInterpolator;
 import surfacesandregions.SurfaceManager;
 
 public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataListener {
-
-   private static final int EXPLORE_PIXEL_BUFFER = 96;
    
    private static final int DELETE_SURF_POINT_PIXEL_TOLERANCE = 10;
    
@@ -62,7 +64,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
    private boolean mouseDragging_ = false;
    private DisplayOverlayer overlayer_;
    private SurfaceInterpolator currentSurface_;
-   private MultiPosRegion currentRegion_;
+   private MultiPosGrid currentRegion_;
    private ThreadPoolExecutor redrawPixelsExecutor_;
    
 
@@ -98,19 +100,49 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
       try {
          //looks like nSlicess only really matters during display startup
          int nSlices = MDUtils.getNumChannels(summaryMD) * MDUtils.getNumFrames(summaryMD) * MDUtils.getNumSlices(summaryMD);
-         int width = MDUtils.getWidth(summaryMD);
-         int height = MDUtils.getHeight(summaryMD);
-         //25 pixel buffer for exploring
-         if (exploreAcq_) {
-            width += 2*EXPLORE_PIXEL_BUFFER;
-            height += 2*EXPLORE_PIXEL_BUFFER;
-            mode_ = EXPLORE;
+
+         //craete stack with appropriate image size
+         int height, width;
+         if (SettingsDialog.getAutoImageSize()) {           
+            Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+            height = screenSize.height - 250;
+            width = height;
          } else {
-            width += 100;
-            height += 100;
+            width = SettingsDialog.getImageWidth();
+            height = SettingsDialog.getImageHeight();            
          }
-         zoomableStack_ = new ZoomableVirtualStack(MDUtils.getIJType(summaryMD), width, height, stitchedCache, nSlices, 
-                 this, multiResStorage, exploreAcq_ ? EXPLORE_PIXEL_BUFFER : 0, acq_);
+         //use width and height for explore window as they are. scale to correct aspect ratio for fixed area acquisitions        
+         int displayWidth, displayHeight;
+         int maxZoomIndex = -1;
+         if (exploreAcq_) {
+            displayHeight = height;
+            displayWidth = width;
+            mode_ = EXPLORE; 
+         } else {
+            int fullWidth = ((FixedAreaAcquisition) acq).getNumColumns() * multiResStorage.getTileWidth();
+            int fullHeight = ((FixedAreaAcquisition) acq).getNumRows() * multiResStorage.getTileHeight();
+            double imageRatio = (double) fullWidth / (double) fullHeight;
+            double displayRatio = (double) width / (double) height;
+            //goal is to make image fit snuggly into display window when fully zoomed out
+            if (imageRatio > displayRatio) {
+               //wide image
+               displayWidth = fullWidth;
+               while (displayWidth > width) {
+                  displayWidth /= 2;
+               }               
+               displayHeight = (int) (displayWidth / imageRatio);
+            } else {               
+               displayHeight = fullHeight;
+               while (displayHeight > height) {
+                  displayHeight /= 2;
+               }               
+               displayWidth = (int) (displayHeight * imageRatio);
+            }
+            maxZoomIndex = (int) Math.round( Math.log(fullWidth / displayWidth) / Math.log(2));
+         }        
+         zoomableStack_ = new ZoomableVirtualStack(MDUtils.getIJType(summaryMD), displayWidth, displayHeight,
+                 stitchedCache, nSlices, this, multiResStorage, acq_, maxZoomIndex);
+         
          this.show(zoomableStack_);
       } catch (Exception e) {
          ReportingUtils.showError("Problem with initialization due to missing summary metadata tags");
@@ -157,7 +189,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
       return mode_;
    }
    
-   public static void redrawRegionOverlay(MultiPosRegion region) {
+   public static void redrawRegionOverlay(MultiPosGrid region) {
       for (DisplayPlus display : activeDisplays_) {
          if (display.getCurrentRegion() == region) {
             display.drawOverlay(true);
@@ -178,7 +210,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
       drawOverlay(true);
    }
    
-   public void setCurrentRegion(MultiPosRegion region) {
+   public void setCurrentRegion(MultiPosGrid region) {
       currentRegion_ = region;
       drawOverlay(false);
    }
@@ -187,7 +219,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
       return currentSurface_;
    }
    
-   public MultiPosRegion getCurrentRegion() {
+   public MultiPosGrid getCurrentRegion() {
       return currentRegion_;
    }
    
@@ -238,9 +270,12 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
       } else if (SwingUtilities.isLeftMouseButton(e)) {
          //only move grid
          if (mode_ == NEWGRID) {  
-            int dx = (currentPoint.x - mouseDragStartPointLeft_.x) * zoomableStack_.getDownsampleFactor();
-            int dy = (currentPoint.y - mouseDragStartPointLeft_.y) * zoomableStack_.getDownsampleFactor();
-            currentRegion_.translate(dx,dy);
+            int dx = (currentPoint.x - mouseDragStartPointLeft_.x);
+            int dy = (currentPoint.y - mouseDragStartPointLeft_.y);
+            //convert pixel dx dy to stage dx dy
+            Point2D.Double p0 =  stageCoordFromImageCoords(0, 0);
+            Point2D.Double p1 =  stageCoordFromImageCoords(dx, dy);
+            currentRegion_.translate(p1.x - p0.x, p1.y - p0.y);
             mouseDragStartPointLeft_ = currentPoint;
          }              
       }

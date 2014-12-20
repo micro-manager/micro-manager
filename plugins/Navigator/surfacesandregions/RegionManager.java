@@ -9,8 +9,8 @@ import java.util.ArrayList;
  */
 public class RegionManager {
 
-   private ArrayList<MultiPosRegion> regions_ = new ArrayList<MultiPosRegion>();
-   private ArrayList<RegionComboBoxModel> comboBoxModels_ = new ArrayList<RegionComboBoxModel>();
+   private ArrayList<MultiPosGrid> regions_ = new ArrayList<MultiPosGrid>();
+   private ArrayList<SurfaceRegionComboBoxModel> comboBoxModels_ = new ArrayList<SurfaceRegionComboBoxModel>();
    private RegionTableModel tableModel_;
    private static RegionManager singletonInstance_;
    
@@ -22,7 +22,7 @@ public class RegionManager {
       return singletonInstance_;
    }
    
-   public MultiPosRegion getRegion(int index) {
+   public MultiPosGrid getRegion(int index) {
       if (index < 0 || index >= regions_.size()) {
          return null;
       }
@@ -34,15 +34,17 @@ public class RegionManager {
       return tableModel_;
    }
 
-   public RegionComboBoxModel createGridComboBoxModel() {
-      RegionComboBoxModel model = new RegionComboBoxModel(this);
+   public void addToModelList(SurfaceRegionComboBoxModel model) {
       comboBoxModels_.add(model);
-      return model;
+   }
+   
+   public void removeFromModelList(SurfaceRegionComboBoxModel model) {
+      comboBoxModels_.remove(model);
    }
 
    public void deleteAll() {
       regions_.clear();
-      for (RegionComboBoxModel combo : comboBoxModels_) {
+      for (SurfaceRegionComboBoxModel combo : comboBoxModels_) {
          combo.setSelectedIndex(-1);
       }
       updateRegionTableAndCombos();
@@ -50,7 +52,7 @@ public class RegionManager {
    
    public void delete(int index) {
       regions_.remove(index);
-      for (RegionComboBoxModel combo : comboBoxModels_) {
+      for (SurfaceRegionComboBoxModel combo : comboBoxModels_) {
          if (index == 0 && regions_.isEmpty()) {
             combo.setSelectedIndex(-1); //set selectionto null cause no surfaces left
          } else if (combo.getSelectedIndex() == 0) {
@@ -62,7 +64,7 @@ public class RegionManager {
       updateRegionTableAndCombos();
    }
    
-   public void addNewRegion(MultiPosRegion region) {
+   public void addNewRegion(MultiPosGrid region) {
       regions_.add(region);
       updateRegionTableAndCombos();
    }
@@ -77,7 +79,7 @@ public class RegionManager {
       String potentialName = base + " " + index;
       while (true) {
          boolean uniqueName = true;
-         for (MultiPosRegion region : regions_) {
+         for (MultiPosGrid region : regions_) {
             if (region.getName().equals(potentialName)) {
                index++;
                potentialName = base + " " + index;
@@ -91,12 +93,12 @@ public class RegionManager {
       return potentialName;
    }
 
-   public void drawRegionOverlay(MultiPosRegion region) {
+   public void drawRegionOverlay(MultiPosGrid region) {
       DisplayPlus.redrawRegionOverlay(region); //redraw overlay for all displays showing this surface
    }
    
    public void updateRegionTableAndCombos() {
-      for (RegionComboBoxModel m : comboBoxModels_) {
+      for (SurfaceRegionComboBoxModel m : comboBoxModels_) {
          m.update();
       }
       tableModel_.fireTableDataChanged();

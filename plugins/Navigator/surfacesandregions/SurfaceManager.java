@@ -12,7 +12,7 @@ import java.util.LinkedList;
 public class SurfaceManager {
   
    private ArrayList<SurfaceInterpolator> surfaces_ = new ArrayList<SurfaceInterpolator>();
-   private ArrayList<SurfaceComboBoxModel> comboBoxModels_ = new ArrayList<SurfaceComboBoxModel>();
+   private ArrayList<SurfaceRegionComboBoxModel> comboBoxModels_ = new ArrayList<SurfaceRegionComboBoxModel>();
    private SurfaceTableModel tableModel_;
    private static SurfaceManager singletonInstance_;
    
@@ -36,18 +36,20 @@ public class SurfaceManager {
       return tableModel_;
    }
    
-   public SurfaceComboBoxModel createSurfaceComboBoxModel() {
-      SurfaceComboBoxModel model = new SurfaceComboBoxModel(this);
+   public void addToModelList(SurfaceRegionComboBoxModel model) {
       comboBoxModels_.add(model);
-      return model;
    }
-   
+
+   public void removeFromModelList(SurfaceRegionComboBoxModel model) {
+      comboBoxModels_.remove(model);
+   }
+
    public void deleteAll() {
       for (SurfaceInterpolator s: surfaces_) {
          s.shutdown();
       }
       surfaces_.clear();
-      for (SurfaceComboBoxModel combo : comboBoxModels_) {
+      for (SurfaceRegionComboBoxModel combo : comboBoxModels_) {
          combo.setSelectedIndex(-1);
       }
       updateSurfaceTableAndCombos();
@@ -56,7 +58,7 @@ public class SurfaceManager {
    public void delete(int index) {
       SurfaceInterpolator s = surfaces_.remove(index);
       s.shutdown();
-      for (SurfaceComboBoxModel combo : comboBoxModels_) {
+      for (SurfaceRegionComboBoxModel combo : comboBoxModels_) {
          if (index == 0 && surfaces_.isEmpty()) {
             combo.setSelectedIndex(-1); //set selectionto null cause no surfaces left
          } else if (combo.getSelectedIndex() == 0) {
@@ -103,7 +105,7 @@ public class SurfaceManager {
    }
    
    public void updateSurfaceTableAndCombos() {
-      for (SurfaceComboBoxModel m : comboBoxModels_) {
+      for (SurfaceRegionComboBoxModel m : comboBoxModels_) {
          m.update();
       }
       tableModel_.fireTableDataChanged();

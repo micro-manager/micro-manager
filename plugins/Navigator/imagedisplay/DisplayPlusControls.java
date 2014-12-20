@@ -9,6 +9,8 @@ import acq.Acquisition;
 import acq.ExploreAcquisition;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
+import coordinates.PositionManager;
+import gui.GUI;
 import gui.SettingsDialog;
 import ij.gui.StackWindow;
 import java.awt.BorderLayout;
@@ -51,9 +53,10 @@ import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
-import surfacesandregions.MultiPosRegion;
+import surfacesandregions.MultiPosGrid;
 import surfacesandregions.RegionManager;
 import surfacesandregions.SurfaceManager;
+import surfacesandregions.SurfaceRegionComboBoxModel;
 
 /**
  *
@@ -472,7 +475,7 @@ public class DisplayPlusControls extends DisplayControls {
       JPanel newSurfaceControlPanel = new JPanel(new MigLayout());
       
       JLabel currentSurfLabel = new JLabel("Surface: ");
-      surfacesCombo_ = new JComboBox(surfaceManager_.createSurfaceComboBoxModel());
+      surfacesCombo_ = new JComboBox(GUI.createSurfaceAndRegionComboBoxModel(true, false));
       surfacesCombo_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -523,7 +526,7 @@ public class DisplayPlusControls extends DisplayControls {
    private JPanel makeNewGridControlPanel() {
       JPanel newGridControlPanel = new JPanel(new MigLayout());
       
-      regionsCombo_ = new JComboBox(regionManager_.createGridComboBoxModel());
+      regionsCombo_ = new JComboBox(GUI.createSurfaceAndRegionComboBoxModel(false, true));
       regionsCombo_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -615,34 +618,12 @@ public class DisplayPlusControls extends DisplayControls {
       };
    }
   
-   private MultiPosRegion createNewGrid() {
+   private MultiPosGrid createNewGrid() {
       int imageWidth = display_.getImagePlus().getWidth();
       int imageHeight = display_.getImagePlus().getHeight();
-      ZoomableVirtualStack stack = (ZoomableVirtualStack) display_.getImagePlus().getStack();
-      Point center = stack.getAbsoluteFullResPixelCoordinate(imageWidth / 2, imageHeight / 2);
-      
-      return new MultiPosRegion(regionManager_,(Integer) gridRowSpinner_.getValue(), (Integer) gridColSpinner_.getValue(),center.x, center.y);
-   }
-   
-   private void createGrid() {
-//      try {
-//         //get displacements of center of rectangle from center of stitched image
-//         double rectCenterXDisp = this.getImagePlus().getOverlay().get(0).getFloatBounds().getCenterX()
-//                 - this.getImagePlus().getWidth() / 2;
-//         double rectCenterYDisp = this.getImagePlus().getOverlay().get(0).getFloatBounds().getCenterY()
-//                 - this.getImagePlus().getHeight() / 2;
-
-//         Point2D.Double stagePos = Util.stagePositionFromPixelPosition(rectCenterXDisp, rectCenterYDisp);
-//
-////         int xOverlap = SettingsDialog.getXOverlap(), yOverlap = SettingsDialog.getYOverlap();
-//         int xOverlap = 0, yOverlap = 0;
-//         Util.createGrid(stagePos.x, stagePos.y,
-//                 (Integer) gridXSpinner_.getValue(), (Integer) gridYSpinner_.getValue(),
-//                 xOverlap, yOverlap);
-//
-//      } catch (Exception e) {
-//         ReportingUtils.showError("Couldnt create grid");
-//      }
+      ZoomableVirtualStack stack = (ZoomableVirtualStack) display_.getImagePlus().getStack();      
+      return new MultiPosGrid(regionManager_,(Integer) gridRowSpinner_.getValue(), (Integer) gridColSpinner_.getValue(), 
+              display_.stageCoordFromImageCoords(imageWidth / 2, imageHeight / 2));
    }
 
    private void makeStatusLabels() {
@@ -789,6 +770,8 @@ public class DisplayPlusControls extends DisplayControls {
    public void prepareForClose() {
       scrollerPanel_.prepareForClose();
       bus_.unregister(this);
+      surfaceManager_.removeFromModelList( (SurfaceRegionComboBoxModel) surfacesCombo_.getModel());
+      regionManager_.removeFromModelList( (SurfaceRegionComboBoxModel) regionsCombo_.getModel());      
    }
 
    private void updateLabels(JSONObject tags) {

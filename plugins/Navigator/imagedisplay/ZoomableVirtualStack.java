@@ -6,6 +6,7 @@ package imagedisplay;
  */
 import acq.Acquisition;
 import acq.ExploreAcquisition;
+import acq.FixedAreaAcquisition;
 import acq.MultiResMultipageTiffStorage;
 import java.awt.Point;
 import mmcorej.TaggedImage;
@@ -28,10 +29,13 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
    private MultiResMultipageTiffStorage multiResStorage_;
    private final int tileWidth_, tileHeight_;
    private Acquisition acquisition_;
+   private final boolean constrainPanning_;
+   private int xViewMax_, yViewMax_;
+   private int maxZoomIndex_;
    
    public ZoomableVirtualStack(int type, int width, int height, TaggedImageStorage imageCache,
            int nSlices, VirtualAcquisitionDisplay vad, MultiResMultipageTiffStorage multiResStorage,
-           int outerPixelBuffer, Acquisition acq) {
+           Acquisition acq, int maxZoomIndex) {
       super(width, height,type, null, imageCache, nSlices, vad);
       multiResStorage_ = multiResStorage;
       //display image could conceivably be bigger than a single FOV, but not smaller
@@ -39,10 +43,20 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
       displayImageHeight_ = height;
       tileHeight_ = multiResStorage.getTileHeight();
       tileWidth_ = multiResStorage.getTileWidth();      
-      xView_ = -outerPixelBuffer;
-      yView_ = -outerPixelBuffer;
-      acquisition_ = acq;
-   }  
+      acquisition_ = acq;       
+      maxZoomIndex_ = maxZoomIndex;
+      if (acq instanceof FixedAreaAcquisition) {
+         constrainPanning_ = true;
+         xViewMax_ = ((FixedAreaAcquisition) acq).getNumColumns() * tileWidth_;
+         yViewMax_ = ((FixedAreaAcquisition) acq).getNumRows() * tileHeight_;
+         downsampleIndex_ = maxZoomIndex;
+         multiResStorage.startAtResolution(maxZoomIndex);
+      } else {
+         constrainPanning_ = false;
+         xView_ = (multiResStorage.getTileWidth() - displayImageWidth_) / 2;
+         yView_ = (multiResStorage.getTileHeight() - displayImageHeight_) / 2;
+      }
+   }
    
    public int getDownsampleIndex() {
       return downsampleIndex_;
@@ -53,6 +67,13 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
    }
    
    public void zoom(Point mouseLocation, int numLevels) {
+      if (maxZoomIndex_ != -1 && downsampleIndex_ + numLevels > maxZoomIndex_) {
+         numLevels = maxZoomIndex_ - downsampleIndex_;
+         if (numLevels == 0) {
+            return;
+         }
+      }
+      
       if (mouseLocation == null) {
          //if mouse not over image zoom to center
          mouseLocation = new Point(displayImageWidth_ /2, displayImageHeight_/2);
@@ -75,13 +96,23 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
          downsampleIndex_ += numLevels;
          dsFactor = (int) Math.pow(2, downsampleIndex_);         
          xView_ = (int) (fullResX / dsFactor - mouseLocation.x );
-         yView_ = (int) (fullResY / dsFactor - mouseLocation.y );;          
-      }    
+         yView_ = (int) (fullResY / dsFactor - mouseLocation.y );
+         //make sure view doesn't go outside image bounds
+         if (constrainPanning_) {
+            xView_ = (int) Math.max(0, Math.min(xView_, xViewMax_ / Math.pow(2, downsampleIndex_) - displayImageWidth_));
+            yView_ = (int) Math.max(0, Math.min(yView_, yViewMax_ / Math.pow(2, downsampleIndex_) - displayImageHeight_));
+         }
+      }
    }
    
    public void translateView(int dx, int dy) {
-      xView_ += dx;
-      yView_ += dy;
+      if (constrainPanning_) {
+         xView_ = (int) Math.max(0, Math.min(xView_ + dx, xViewMax_ / Math.pow(2, downsampleIndex_) - displayImageWidth_ ));
+         yView_ = (int) Math.max(0, Math.min(yView_ + dy, yViewMax_ / Math.pow(2, downsampleIndex_) - displayImageHeight_  ));
+      } else {
+         xView_ += dx;
+         yView_ += dy;
+      }
    }
    
    /**

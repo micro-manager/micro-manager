@@ -26,13 +26,15 @@ public class Navigator implements MMPlugin{
    public static final String menuName = "Navigator";
    public static final String tooltipDescription = "Navigator plugin";
 
-   private Preferences prefs_;
-   private ScriptInterface mmAPI_;
-   private GUI gui_;
+   private static Preferences prefs_;
+   private static ScriptInterface mmAPI_;
+   private static GUI gui_;
    
    public Navigator() {
-      prefs_ = Preferences.userNodeForPackage(Navigator.class);
-      gui_ = new GUI(prefs_, MMStudio.getInstance(),VERSION);
+      if (gui_ == null) {
+         prefs_ = Preferences.userNodeForPackage(Navigator.class);
+         gui_ = new GUI(prefs_, MMStudio.getInstance(), VERSION);
+      }
    }
    
    @Override

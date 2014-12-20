@@ -34,7 +34,7 @@ import org.micromanager.utils.ReportingUtils;
  *
  * @author Henry
  */
-public abstract class SurfaceInterpolator {
+public abstract class SurfaceInterpolator implements XYFootprint {
    
    public static final int MIN_PIXELS_PER_INTERP_POINT = 2;
    public static final int NUM_XY_TEST_POINTS = 8;
@@ -170,6 +170,7 @@ public abstract class SurfaceInterpolator {
       return convexHullVertices_;
    }
    
+   @Override
    public ArrayList<XYStagePosition> getXYPositions() {
       return xyPositions_;
    }
@@ -402,8 +403,7 @@ public abstract class SurfaceInterpolator {
             Point2D.Double pixelPos = new Point2D.Double(xPixelOffset, yPixelOffset);
             Point2D.Double stagePos = new Point2D.Double();
             transform.transform(pixelPos, stagePos);
-            String label = "Grid_" + col + "_" + row;
-            positions.add(new XYStagePosition(label, stagePos, tileWidth, tileHeight, row, col,pixelSizeConfig_));
+            positions.add(new XYStagePosition(stagePos, tileWidth, tileHeight, row, col,pixelSizeConfig_));
             if (Thread.interrupted()) {
                throw new InterruptedException();
             }
