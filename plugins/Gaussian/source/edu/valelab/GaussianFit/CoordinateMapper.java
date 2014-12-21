@@ -239,9 +239,11 @@ public class CoordinateMapper {
     * Creates an AffineTransform object that maps a source planar coordinate system to
     * a destination planar coordinate system. At least three point pairs are needed.
     * 
-    * @pointPairs is a Map of points measured in the two coordinates systems (srcPt->destPt)
+    * @param pointPairs - a Map of points measured in the two coordinates systems (srcPt->destPt)
+    * @return 
     */
-   public static AffineTransform generateAffineTransformFromPointPairs(Map<Point2D.Double, Point2D.Double> pointPairs) {
+   public static AffineTransform generateAffineTransformFromPointPairs
+        (Map<Point2D.Double, Point2D.Double> pointPairs) {
       RealMatrix u = new Array2DRowRealMatrix(pointPairs.size(), 3);
       RealMatrix v = new Array2DRowRealMatrix(pointPairs.size(), 3);
 
@@ -291,9 +293,11 @@ public class CoordinateMapper {
     /**
     * Creates an AffineTransform object that uses only rotation and translation
     * 
-    * @pointPairs is a Map of points measured in the two coordinates systems (srcPt->destPt)
+    * @param pointPairs - a Map of points measured in the two coordinates systems (srcPt->destPt)
+    * @return Affine transform object
     */
-   public static AffineTransform generateRigidBodyTransform(Map<Point2D.Double, Point2D.Double> pointPairs) {
+   public static AffineTransform generateRigidBodyTransform
+        (Map<Point2D.Double, Point2D.Double> pointPairs) {
       int number = pointPairs.size();
       
      
@@ -320,12 +324,18 @@ public class CoordinateMapper {
    }
    
    
-   /*** General methods ***/
+   // General methods 
    
+
+   /**
+    * @param srcTestPoint
+    * @return
+    */
    public Point2D.Double transform(Point2D.Double srcTestPoint) {
-      if (method_ == LWM)
+      if (method_ == LWM) {
          return computeTransformation(kdTree_, srcTestPoint, controlPoints_, exponentPairs_);
-      if (method_ == AFFINE ) {
+      }
+      if (method_ == AFFINE) {
          try {
             return (Point2D.Double) af_.transform(srcTestPoint, null);
          } catch (Exception ex) {

@@ -4,7 +4,7 @@
 package edu.valelab.GaussianFit;
 
 import edu.valelab.GaussianFit.data.GaussianSpotData;
-import edu.valelab.GaussianFit.utils.RowData;
+import edu.valelab.GaussianFit.data.RowData;
 import org.apache.commons.math.complex.Complex;
 import org.apache.commons.math.transform.FastFourierTransformer;
 import org.jfree.data.xy.XYSeries;
@@ -50,6 +50,7 @@ public class FFTUtils {
     * Need to add pWelch windowing and zero-padding to next highest power of two
     * @param rowDatas
     * @param datas 
+    * @param plotMode 
     */
    public static void calculatePSDs(RowData[] rowDatas, 
            XYSeries[] datas,

@@ -51,6 +51,12 @@ public class GaussianUtils {
 
    /**
     * Create a frame with a plot of the data given in XYSeries
+    * @param title
+    * @param data
+    * @param xTitle
+    * @param yTitle
+    * @param xLocation
+    * @param yLocation
     */
    public static void plotData(String title, XYSeries data, String xTitle,
            String yTitle, int xLocation, int yLocation) {

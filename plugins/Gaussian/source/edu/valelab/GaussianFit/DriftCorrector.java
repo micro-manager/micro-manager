@@ -6,7 +6,7 @@ package edu.valelab.GaussianFit;
 
 import edu.valelab.GaussianFit.data.GaussianSpotData;
 import edu.valelab.GaussianFit.DataCollectionForm.Coordinates;
-import edu.valelab.GaussianFit.utils.RowData;
+import edu.valelab.GaussianFit.data.RowData;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import java.awt.Point;
@@ -134,7 +134,7 @@ public class DriftCorrector {
       byte[] pixelsTest = new byte[width * height];
       ipTest.setPixels(pixelsTest);
 
-      int estimatedNrTests = 1;
+      int estimatedNrTests;
       int testNr = 1;
 
       while (frameNr < nrImages) {
@@ -222,11 +222,9 @@ public class DriftCorrector {
 
          testNr = 0;
          StageMovementData smd = stagePos.get(0);
-         int counter = 0;
          while (it.hasNext()) {
-            counter++;
             GaussianSpotData gs = (GaussianSpotData) it.next();
-            int test = 0;
+            int test;
             if (useSlices) {
                test = gs.getSlice();
             } else {

@@ -30,7 +30,7 @@ import edu.ucsf.tsf.TaggedSpotsProtos.LocationUnits;
 import edu.ucsf.tsf.TaggedSpotsProtos.Spot;
 import edu.ucsf.tsf.TaggedSpotsProtos.SpotList;
 import edu.valelab.GaussianFit.spotAssociations.SpotLinker;
-import edu.valelab.GaussianFit.utils.RowData;
+import edu.valelab.GaussianFit.data.RowData;
 import edu.valelab.GaussianFit.utils.ListUtils;
 import edu.valelab.GaussianFit.utils.ReportingUtils;
 import edu.valelab.GaussianFit.utils.NumberUtils;

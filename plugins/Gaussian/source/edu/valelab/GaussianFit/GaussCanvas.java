@@ -5,7 +5,7 @@
  */
 package edu.valelab.GaussianFit;
 
-import edu.valelab.GaussianFit.utils.RowData;
+import edu.valelab.GaussianFit.data.RowData;
 import ij.ImagePlus;
 import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;

@@ -8,10 +8,11 @@
  * Licensed under BSD license version 2.0
  * 
  */
-package edu.valelab.GaussianFit.utils;
+package edu.valelab.GaussianFit.data;
 
 import edu.valelab.GaussianFit.DataCollectionForm.Coordinates;
 import edu.valelab.GaussianFit.data.GaussianSpotData;
+import edu.valelab.GaussianFit.utils.ListUtils;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,6 +27,7 @@ import java.util.Map;
       
       public final List<GaussianSpotData> spotList_;
       public Map<Integer, List<GaussianSpotData>> frameIndexSpotList_;
+      private Map<ImageIndex, List<GaussianSpotData>> indexedSpotList_;
       public final ArrayList<Double> timePoints_;
       public String name_;
       public final String title_;
@@ -165,8 +167,6 @@ import java.util.Map;
       }
       
       
-         
-      
       
       /**
        * Populates the list frameIndexSpotList which gives access to spots by frame
@@ -176,15 +176,30 @@ import java.util.Map;
          int nr = nrSlices_;
          if (useFrames)
             nr = nrFrames_;
+         
          frameIndexSpotList_ = new HashMap<Integer, List<GaussianSpotData>>(nr);
+         indexedSpotList_ = new HashMap<ImageIndex, List<GaussianSpotData>>();
+         
          for (GaussianSpotData spot : spotList_) {
-            int index = spot.getSlice();
+            int frameIndex = spot.getSlice();
             if (useFrames)
-               index = spot.getFrame();
-            if (frameIndexSpotList_.get(index) == null)
-               frameIndexSpotList_.put(index, new ArrayList<GaussianSpotData>());
-            frameIndexSpotList_.get(index).add(spot);              
-         }    
+               frameIndex = spot.getFrame();
+            if (frameIndexSpotList_.get(frameIndex) == null)
+               frameIndexSpotList_.put(frameIndex, new ArrayList<GaussianSpotData>());
+            frameIndexSpotList_.get(frameIndex).add(spot);  
+            
+            ImageIndex ii = new ImageIndex (spot.getFrame(), spot.getSlice(), 
+                    spot.getChannel(), spot.getPosition() );
+            if (indexedSpotList_.get(ii) == null) {
+               indexedSpotList_.put(ii, new ArrayList<GaussianSpotData>());
+            }
+            indexedSpotList_.get(ii).add(spot);           
+         }  
+      }
+      
+      public List<GaussianSpotData> get(int frame, int slice, int channel, int position) {
+         ImageIndex ii = new ImageIndex(frame, slice, channel, position);
+         return indexedSpotList_.get(ii);
       }
 
    }

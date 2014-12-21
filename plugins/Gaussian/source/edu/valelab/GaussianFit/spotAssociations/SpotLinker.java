@@ -3,7 +3,9 @@ package edu.valelab.GaussianFit.spotAssociations;
 import edu.valelab.GaussianFit.DataCollectionForm;
 import static edu.valelab.GaussianFit.DataCollectionForm.getInstance;
 import edu.valelab.GaussianFit.data.GaussianSpotData;
-import edu.valelab.GaussianFit.utils.RowData;
+import edu.valelab.GaussianFit.data.GsSpotPair;
+import edu.valelab.GaussianFit.data.RowData;
+import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JOptionPane;
@@ -42,72 +44,70 @@ public class SpotLinker {
 
          // linked spots go here:
          List<GaussianSpotData> destList = new ArrayList<GaussianSpotData>();
-         /*
-         // create a list with spots from the first frame, 
-         for (int frame = 1; frame < nr; frame++) {
-            //List<GaussianSpotData> frameSpots = rowData.frameIndexSpotList_.get(i);
-            //List<GaussianSpotData> nextFrameSpots = rowData.frameIndexSpotList_.get(i+1);
-            //for (int frame = 1; frame <= rowData_.get(row).nrFrames_; frame++) {
-                  ij.IJ.showProgress(frame, rowData_.get(row).nrFrames_);
-
-                  // Get points from both channels in each frame as ArrayLists        
-                  ArrayList<GaussianSpotData> gsCh1 = new ArrayList<GaussianSpotData>();
-                  ArrayList<Point2D.Double> xyPointsCh2 = new ArrayList<Point2D.Double>();
-                  for (GaussianSpotData gs : rowData_.get(row).spotList_) {
-                     if (gs.getFrame() == frame) {
-                        if (gs.getChannel() == 1) {
-                           gsCh1.add(gs);
-                        } else if (gs.getChannel() == 2) {
-                           Point2D.Double point = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
-                           xyPointsCh2.add(point);
+         // maintain active tracks here
+         List< List<GaussianSpotData>> tracks = 
+                 new ArrayList<List<GaussianSpotData>>();
+         for (int pos = 1; pos <= rowData.nrPositions_; pos++) {
+            for (int ch = 1; ch <= rowData.nrChannels_; ch++) {
+               for (int s = 1; s <= rowData.nrSlices_; s++) {
+                  for (int f = 1; f <= rowData.nrFrames_; f++) {
+                     List<GaussianSpotData> spots = rowData.get(f, s, ch, pos);
+                     if (spots != null) {
+                        // keep track of spots in this frame added to tracks 
+                        List<GaussianSpotData> markedSpots = new ArrayList<GaussianSpotData>();
+                        // go through all tracks to see if they can be extended
+                        if (tracks.size() > 0) {
+                           ArrayList<GsSpotPair> gsSpots = new ArrayList<GsSpotPair>();
+                           for (GaussianSpotData spot : spots) {
+                              gsSpots.add(new GsSpotPair(spot,
+                                      new Point2D.Double(spot.getXCenter(), spot.getYCenter()),
+                                      new Point2D.Double(0.0, 0.0)));
+                           }
+                           NearestPointGsSpotPair nsp = new NearestPointGsSpotPair(gsSpots, maxDistance);
+                           List<List<GaussianSpotData>> removedTracks = 
+                                   new ArrayList<List<GaussianSpotData>>();
+                           for (List<GaussianSpotData> track : tracks) {
+                              GaussianSpotData tSpot = track.get(track.size() - 1);
+                              GsSpotPair newSpot = nsp.findKDWSE(new Point2D.Double(
+                                      tSpot.getXCenter(), tSpot.getYCenter()));
+                              if (newSpot == null) {
+                                 // track could not be extended, finalize it
+                                 linkSpots(track, destList, useFrames);
+                                 // and remove from the list of tracks
+                                 // to avoid a concurrent modification exception
+                                 // the removal needs to be a two step process
+                                 removedTracks.add(track);
+                              } else {
+                                 track.add(newSpot.getGSD());
+                                 markedSpots.add(newSpot.getGSD());
+                              }
+                           }
+                           // second part of removing tracks
+                           for (List<GaussianSpotData> track : removedTracks) {
+                              tracks.remove(track);
+                           }
+                        }
+                        // go through spots and start a new track with any spot 
+                        // that was not part of a track
+                        for (GaussianSpotData spot : spots) {
+                           if (!markedSpots.contains(spot)) {
+                              List<GaussianSpotData> track = new ArrayList<GaussianSpotData>();
+                              track.add(spot);
+                              tracks.add(track);
+                           }
                         }
                      }
-                  } 
-         }
-         */
-
-         // build a 2D array of lists with gaussian spots
-         @SuppressWarnings("unchecked")
-         List<GaussianSpotData>[][] spotImage = new ArrayList[rowData.width_][rowData.height_];
-         for (int i = 1; i < nr; i++) {
-            ij.IJ.showStatus("Linking spotData...");
-            ij.IJ.showProgress(i, nr);
-            List<GaussianSpotData> frameSpots = rowData.frameIndexSpotList_.get(i);
-            if (frameSpots != null) {
-               for (GaussianSpotData spot : frameSpots) {
-                  if (spotImage[spot.getX()][spot.getY()] == null) {
-                     spotImage[spot.getX()][spot.getY()] = new ArrayList<GaussianSpotData>();
-                  } else {
-                     List<GaussianSpotData> prevSpotList = spotImage[spot.getX()][spot.getY()];
-                     GaussianSpotData lastSpot = prevSpotList.get(prevSpotList.size() - 1);
-                     int lastFrame = lastSpot.getFrame();
-                     if (!useFrames) {
-                        lastFrame = lastSpot.getSlice();
-                     }
-                     if (lastFrame != i - 1) {
-                        linkSpots(prevSpotList, destList, useFrames);
-                        spotImage[spot.getX()][spot.getY()] = new ArrayList<GaussianSpotData>();
-                     }
                   }
-                  spotImage[spot.getX()][spot.getY()].add(spot);
-               }
-            } else {
-               System.out.println("Empty row: " + i);
-            }
-         }
-
-         // Finish links of all remaining spots
-         ij.IJ.showStatus("Finishing linking spotData...");
-         for (int w = 0; w < rowData.width_; w++) {
-            for (int h = 0; h < rowData.height_; h++) {
-               if (spotImage[w][h] != null) {
-                  linkSpots(spotImage[w][h], destList, useFrames);
+                  // add tracks that made it to the end to destination list
+                  for (List<GaussianSpotData> track : tracks) {
+                     linkSpots(track, destList, useFrames);
+                  }
+                  tracks.clear();
                }
             }
          }
-         ij.IJ.showStatus("");
-         ij.IJ.showProgress(1);
 
+      
          // Add destList to rowData
          DataCollectionForm.getInstance().addSpotData(rowData.name_ + " Linked", rowData.title_, "", rowData.width_,
                  rowData.height_, rowData.pixelSizeNm_, rowData.zStackStepSizeNm_,

@@ -25,6 +25,7 @@ public class LittleEndianDataInputStream extends InputStream implements DataInpu
 	}
  
  
+   @Override
 	public final short readShort() throws IOException
 	{
 		d.readFully(w, 0, 2);
@@ -36,6 +37,7 @@ public class LittleEndianDataInputStream extends InputStream implements DataInpu
 	/**
 	 * Note, returns int even though it reads a short.
 	 */
+   @Override
 	 public final int readUnsignedShort() throws IOException
 	 {
 		 d.readFully(w, 0, 2);
@@ -47,6 +49,7 @@ public class LittleEndianDataInputStream extends InputStream implements DataInpu
 	 /**
 	  * like DataInputStream.readChar except little endian.
 	  */
+   @Override
 	 public final char readChar() throws IOException
 	 {
 		 d.readFully(w, 0, 2);
@@ -58,6 +61,7 @@ public class LittleEndianDataInputStream extends InputStream implements DataInpu
 	 /**
 	  * like DataInputStream.readInt except little endian.
 	  */
+   @Override
 	 public final int readInt() throws IOException
 	 {
 		 d.readFully(w, 0, 4);
@@ -71,6 +75,7 @@ public class LittleEndianDataInputStream extends InputStream implements DataInpu
 	 /**
 	  * like DataInputStream.readLong except little endian.
 	  */
+   @Override
 	 public final long readLong() throws IOException
 	 {
 		 d.readFully(w, 0, 8);
@@ -85,51 +90,63 @@ public class LittleEndianDataInputStream extends InputStream implements DataInpu
 		 (long)(w[0]&0xff);
 	 }
  
+   @Override
 	 public final float readFloat() throws IOException {
 		 return Float.intBitsToFloat(readInt());
 	 }
  
+   @Override
 	 public final double readDouble() throws IOException {
 		 return Double.longBitsToDouble(readLong());
 	 }
  
+   @Override
 	 public final int read(byte b[], int off, int len) throws IOException {
 		 return in.read(b, off, len);
 	 }
  
+   @Override
 	 public final void readFully(byte b[]) throws IOException {
 		 d.readFully(b, 0, b.length);
 	 }
  
+   @Override
 	 public final void readFully(byte b[], int off, int len) throws IOException {
 		 d.readFully(b, off, len);
 	 }
  
+   @Override
 	 public final int skipBytes(int n) throws IOException {
 		 return d.skipBytes(n);
 	 }
  
+   @Override
 	 public final boolean readBoolean() throws IOException {
 		 return d.readBoolean();
 	 }
  
+   @Override
 	 public final byte readByte() throws IOException {
 		 return d.readByte();
 	 }
  
+   @Override
 	 public int read() throws IOException {
 		 return in.read();
 	 }
  
+   @Override
 	 public final int readUnsignedByte() throws IOException {
 		 return d.readUnsignedByte();
 	 }
  
 	 @Deprecated
+   @Override
 	 public final String readLine() throws IOException {
 		 return d.readLine();
 	 }
  
+   @Override
 	 public final String readUTF() throws IOException {
 		 return d.readUTF();
 	 }
@@ -139,9 +156,9 @@ public class LittleEndianDataInputStream extends InputStream implements DataInpu
 		 d.close();
 	 }
  
-	 private DataInputStream d; // to get at high level readFully methods of
+	 private final DataInputStream d; // to get at high level readFully methods of
 	 // DataInputStream
-	 private InputStream in; // to get at the low-level read methods of
+	 private final InputStream in; // to get at the low-level read methods of
 	 // InputStream
-	 private byte w[]; // work array for buffering input
+	 private final byte w[]; // work array for buffering input
 }

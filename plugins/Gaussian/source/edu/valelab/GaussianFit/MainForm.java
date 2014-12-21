@@ -32,6 +32,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import edu.valelab.GaussianFit.utils.NumberUtils;
 import edu.valelab.GaussianFit.utils.ReportingUtils;
+import java.text.ParseException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 
@@ -72,7 +73,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
 
    // Store values of dropdown menus:
    private int shape_ = 1;
-   private int fitMode_ = 2;
+   private final int fitMode_ = 2;
    private FindLocalMaxima.FilterType preFilterType_ = FindLocalMaxima.FilterType.NONE;
 
    private FitAllThread ft_;
@@ -715,7 +716,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
        prefs_.putBoolean(ENDTRACKBOOL, endTrackCheckBox_.isSelected() );
        prefs_.putInt(ENDTRACKINT, (Integer) endTrackSpinner_.getValue() );
        prefs_.putInt(FITMODE, fitMethodComboBox1.getSelectedIndex());
-       } catch (Exception ex) {
+       } catch (ParseException ex) {
           ReportingUtils.logError(ex, "Error while closing Localization Microscopy plugin");
        }
        
@@ -1024,6 +1025,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
       }
 
       Runnable mTracker = new Runnable() {
+         @Override
          public void run() {
             aStop_ .set(false);
             int val = Integer.parseInt(noiseToleranceTextField_.getText());
@@ -1118,7 +1120,9 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
          tT.setFitMode(fitMethodComboBox1.getSelectedIndex() + 1);
          tT.setEndTrackBool(endTrackCheckBox_.isSelected());
          tT.setEndTrackAfterNFrames((Integer) endTrackSpinner_.getValue());
-      } catch (Exception ex) {
+      } catch (NumberFormatException ex) {
+         JOptionPane.showMessageDialog(null, "Error interpreting input: " + ex.getMessage());
+      } catch (ParseException ex) {
          JOptionPane.showMessageDialog(null, "Error interpreting input: " + ex.getMessage());
       }
    }
@@ -1185,14 +1189,17 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
    private javax.swing.JTextField zStepTextField_;
    // End of variables declaration//GEN-END:variables
 
+   @Override
    public void imageOpened(ImagePlus ip) {
       imageUpdated(ip);
    }
 
+   @Override
    public void imageClosed(ImagePlus ip) {
          //   System.out.println("Closed");
    }
 
+   @Override
    public void imageUpdated(ImagePlus ip) {
       if (!WINDOWOPEN) {
          return;

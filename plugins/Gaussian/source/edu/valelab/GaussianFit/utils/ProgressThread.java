@@ -1,4 +1,4 @@
-package edu.valelab.GaussianFit;
+package edu.valelab.GaussianFit.utils;
 
 
 import edu.valelab.GaussianFit.data.GaussianSpotData;

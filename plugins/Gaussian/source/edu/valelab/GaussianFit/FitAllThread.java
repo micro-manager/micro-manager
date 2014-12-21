@@ -10,6 +10,7 @@
 
 package edu.valelab.GaussianFit;
 
+import edu.valelab.GaussianFit.utils.ProgressThread;
 import edu.valelab.GaussianFit.data.GaussianInfo;
 import edu.valelab.GaussianFit.data.GaussianSpotData;
 import edu.valelab.GaussianFit.fitting.ZCalibrator;
