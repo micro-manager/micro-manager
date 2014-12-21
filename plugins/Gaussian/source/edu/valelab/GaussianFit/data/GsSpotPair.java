@@ -8,18 +8,17 @@ import java.awt.geom.Point2D;
  * @author nico
  */
 public class GsSpotPair {
-   private final GaussianSpotData fgs_;
+   private final SpotData fgs_;
    private final Point2D.Double fp_;
    private final Point2D.Double sp_;
 
-   public GsSpotPair(GaussianSpotData fgs, Point2D.Double fp, 
-           Point2D.Double sp) {
+   public GsSpotPair(SpotData fgs, Point2D.Double fp, Point2D.Double sp) {
       fgs_ = fgs;
       fp_ = fp;
       sp_ = sp;
    }
 
-   public GaussianSpotData getGSD() {
+   public SpotData getGSD() {
       return fgs_;
    }
 

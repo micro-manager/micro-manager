@@ -3,7 +3,7 @@
  */
 package edu.valelab.GaussianFit;
 
-import edu.valelab.GaussianFit.data.GaussianSpotData;
+import edu.valelab.GaussianFit.data.SpotData;
 import edu.valelab.GaussianFit.utils.GaussianUtils;
 import edu.valelab.GaussianFit.data.RowData;
 import ij.ImageStack;
@@ -71,7 +71,7 @@ public class ImageRenderer {
                ip = new ShortProcessor(width, height);
                short pixels[] = new short[size];
                ip.setPixels(pixels);
-               for (GaussianSpotData spot : rowData.spotList_) {
+               for (SpotData spot : rowData.spotList_) {
                   if (sf.filter(spot)) {
                      int x = (int) (factor * spot.getXCenter());
                      int y = (int) (factor * spot.getYCenter());
@@ -95,7 +95,7 @@ public class ImageRenderer {
                   sp[i].setPixels(pixels[i]);
                }
                double spread = rowData.maxZ_ - rowData.minZ_;
-               for (GaussianSpotData spot : rowData.spotList_) {
+               for (SpotData spot : rowData.spotList_) {
                   if (sf.filter(spot)) {
                      int x = (int) (factor * spot.getXCenter());
                      int y = (int) (factor * spot.getYCenter());
@@ -158,7 +158,7 @@ public class ImageRenderer {
             int updateQuantum = rowData.spotList_.size() / 100;
             int counter = 0;
             int spotsUsed = 0;
-            for (GaussianSpotData spot : rowData.spotList_) {
+            for (SpotData spot : rowData.spotList_) {
                if (counter % updateQuantum == 0) {
                   ij.IJ.showProgress(counter, rowData.spotList_.size());
                }
@@ -313,7 +313,7 @@ public class ImageRenderer {
             is.addSlice(ip[i]);
          }
 
-         for (GaussianSpotData spot : rowData.spotList_) {
+         for (SpotData spot : rowData.spotList_) {
             if (sf.filter(spot)) {
                int x = (int) (factor * spot.getXCenter());
                int y = (int) (factor * spot.getYCenter());

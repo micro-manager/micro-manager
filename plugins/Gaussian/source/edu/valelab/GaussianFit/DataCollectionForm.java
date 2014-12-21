@@ -21,7 +21,7 @@ import edu.valelab.GaussianFit.spotAssociations.NearestPointGsSpotPair;
 import edu.valelab.GaussianFit.spotAssociations.NearestPoint2D;
 import edu.valelab.GaussianFit.utils.DisplayUtils;
 import edu.valelab.GaussianFit.data.GsSpotPair;
-import edu.valelab.GaussianFit.data.GaussianSpotData;
+import edu.valelab.GaussianFit.data.SpotData;
 import edu.valelab.GaussianFit.utils.GaussianUtils;
 import edu.valelab.GaussianFit.fitting.ZCalibrator;
 import edu.ucsf.tsf.TaggedSpotsProtos.FitMode;
@@ -366,7 +366,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
            int nrSlices,
            int nrPositions,
            int maxNrSpots, 
-           List<GaussianSpotData> spotList,
+           List<SpotData> spotList,
            ArrayList<Double> timePoints,
            boolean isTrack, 
            Coordinates coordinate, 
@@ -1112,7 +1112,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
           ij.IJ.showStatus ("Loading data..");
           setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
           
-          List<GaussianSpotData> spotList = new ArrayList<GaussianSpotData>();
+          List<SpotData> spotList = new ArrayList<SpotData>();
           
           float pixelSize = (float) 160.0; // how do we get this from the file?
           
@@ -1181,7 +1181,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                 if (zc < minZ)
                    minZ = zc;
                 
-                GaussianSpotData gsd = new GaussianSpotData(null, 0, 0, i,
+                SpotData gsd = new SpotData(null, 0, 0, i,
                         0, nr, (int) xc, (int) yc);
                 gsd.setData(intensity, b, pixelSize * xc, pixelSize * yc, 0.0, w, ax, phi, c);
                 gsd.setZCenter(zc);
@@ -1239,7 +1239,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
          String head = fr.readLine();
          String[] headers = head.split("\t");        
          String spot;
-         List<GaussianSpotData> spotList = new ArrayList<GaussianSpotData>();
+         List<SpotData> spotList = new ArrayList<SpotData>();
          double maxZ = Double.NEGATIVE_INFINITY;
          double minZ = Double.POSITIVE_INFINITY;
          
@@ -1250,7 +1250,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                k.put(headers[i], spotTags[i]);
             
             
-            GaussianSpotData gsd = new GaussianSpotData(null, 
+            SpotData gsd = new SpotData(null, 
                     Integer.parseInt(k.get("channel")), 
                     Integer.parseInt(k.get("slice")), 
                     Integer.parseInt(k.get("frame")),
@@ -1378,13 +1378,13 @@ public class DataCollectionForm extends javax.swing.JFrame {
          double minZ = Double.POSITIVE_INFINITY;
 
 
-         ArrayList<GaussianSpotData> spotList = new ArrayList<GaussianSpotData>();
+         ArrayList<SpotData> spotList = new ArrayList<SpotData>();
          Spot pSpot;
          while (fi.available() > 0 && (expectedSpots == 0 || maxNrSpots < expectedSpots)) {
 
             pSpot = Spot.parseDelimitedFrom(fi);
 
-            GaussianSpotData gSpot = new GaussianSpotData((ImageProcessor) null, pSpot.getChannel(),
+            SpotData gSpot = new SpotData((ImageProcessor) null, pSpot.getChannel(),
                     pSpot.getSlice(), pSpot.getFrame(), pSpot.getPos(),
                     pSpot.getMolecule(), pSpot.getXPosition(), pSpot.getYPosition());
             gSpot.setData(pSpot.getIntensity(), pSpot.getBackground(), pSpot.getX(),
@@ -1491,7 +1491,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             // Get points from both channels in first frame as ArrayLists        
             ArrayList<Point2D.Double> xyPointsCh1 = new ArrayList<Point2D.Double>();
             ArrayList<Point2D.Double> xyPointsCh2 = new ArrayList<Point2D.Double>();
-            for (GaussianSpotData gs : rowData_.get(row).spotList_) {
+            for (SpotData gs : rowData_.get(row).spotList_) {
                if (gs.getFrame() == 1) {
                   Point2D.Double point = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
                   if (gs.getChannel() == 1) {
@@ -1652,9 +1652,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
                   ip.setPixels(pixels);
 
                   // Get points from both channels in each frame as ArrayLists        
-                  ArrayList<GaussianSpotData> gsCh1 = new ArrayList<GaussianSpotData>();
+                  ArrayList<SpotData> gsCh1 = new ArrayList<SpotData>();
                   ArrayList<Point2D.Double> xyPointsCh2 = new ArrayList<Point2D.Double>();
-                  for (GaussianSpotData gs : rowData_.get(row).spotList_) {
+                  for (SpotData gs : rowData_.get(row).spotList_) {
                      if (gs.getFrame() == frame) {
                         if (gs.getChannel() == 1) {
                            gsCh1.add(gs);
@@ -1681,7 +1681,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                      ArrayList<Double> errorY = new ArrayList<Double>();
 
                      while (it2.hasNext()) {
-                        GaussianSpotData gs = (GaussianSpotData) it2.next();
+                        SpotData gs = (SpotData) it2.next();
                         Point2D.Double pCh1 = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
                         Point2D.Double pCh2 = np.findKDWSE(pCh1);
                         if (pCh2 != null) {
@@ -1930,15 +1930,15 @@ public class DataCollectionForm extends javax.swing.JFrame {
                   ij.IJ.showProgress(frame, rowData_.get(row).nrFrames_);
                   spotPairsByFrame.add(new ArrayList<GsSpotPair>());
 
-                  // Get points from both channels in each frame as ArrayLists        
-                  ArrayList<GaussianSpotData> gsCh1 = new ArrayList<GaussianSpotData>();
+                  // Get points from both channels in first frame as ArrayLists        
+                  ArrayList<Point2D.Double> xyPointsCh1 = new ArrayList<Point2D.Double>();
                   ArrayList<Point2D.Double> xyPointsCh2 = new ArrayList<Point2D.Double>();
-                  for (GaussianSpotData gs : rowData_.get(row).spotList_) {
-                     if (gs.getFrame() == frame) {
+                  for (SpotData gs : rowData_.get(row).spotList_) {
+                     if (gs.getFrame() == 1) {
+                        Point2D.Double point = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
                         if (gs.getChannel() == 1) {
-                           gsCh1.add(gs);
+                           xyPointsCh1.add(point);
                         } else if (gs.getChannel() == 2) {
-                           Point2D.Double point = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
                            xyPointsCh2.add(point);
                         }
                      }
@@ -1952,13 +1952,13 @@ public class DataCollectionForm extends javax.swing.JFrame {
                   }
 
                   // Find matching points in the two ArrayLists
-                  Iterator it2 = gsCh1.iterator();
+                  Iterator it2 = xyPointsCh1.iterator();
                   try {
                      NearestPoint2D np = new NearestPoint2D(xyPointsCh2,
                              NumberUtils.displayStringToDouble(pairsMaxDistanceField_.getText()));
 
                      while (it2.hasNext()) {
-                        GaussianSpotData gs = (GaussianSpotData) it2.next();
+                        SpotData gs = (SpotData) it2.next();
                         Point2D.Double pCh1 = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
                         Point2D.Double pCh2 = np.findKDWSE(pCh1);
                         if (pCh2 != null) {
@@ -2457,18 +2457,17 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
          // organize all spots in selected rows in a Hashmap keyed by frame number
          // while doing so, also subtract the average (i.e. center around 0)
-         HashMap<Integer, List<GaussianSpotData>> allData = 
-                 new HashMap<Integer, List<GaussianSpotData>>();
-  
+         HashMap<Integer, List<SpotData>> allData = 
+                 new HashMap<Integer, List<SpotData>>();
          
          for (int i=0; i < myRows.length; i++) {
-            for (GaussianSpotData spotData : myRows[i].spotList_) {
-               GaussianSpotData spotCopy = new GaussianSpotData(spotData);
+            for (SpotData spotData : myRows[i].spotList_) {
+               SpotData spotCopy = new SpotData(spotData);
                spotCopy.setXCenter(spotData.getXCenter() - listAvgs.get(i).x);
                spotCopy.setYCenter(spotData.getYCenter() - listAvgs.get(i).y);
                int frame = spotData.getFrame();
                if (!allData.containsKey(frame)) {
-                  List<GaussianSpotData> thisFrame = new ArrayList<GaussianSpotData>();
+                  List<SpotData> thisFrame = new ArrayList<SpotData>();
                   thisFrame.add(spotCopy);
                   allData.put(frame, thisFrame);
                } else {
@@ -2477,17 +2476,17 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
          }
                           
-         List<GaussianSpotData> transformedResultList =
-                 Collections.synchronizedList(new ArrayList<GaussianSpotData>());
+         List<SpotData> transformedResultList =
+                 Collections.synchronizedList(new ArrayList<SpotData>());
          //List<TrackAnalysisData> avgTrackData = new ArrayList<TrackAnalysisData>();
          
          // for each frame in the collection, calculate the average
          for (int i = 1; i <= allData.size(); i++) {
-            List<GaussianSpotData> frameList = allData.get(i);
+            List<SpotData> frameList = allData.get(i);
             TrackAnalysisData tad = new TrackAnalysisData();
             tad.frame = i;
             tad.n = frameList.size();
-            GaussianSpotData avgFrame = new GaussianSpotData(frameList.get(0));
+            SpotData avgFrame = new SpotData(frameList.get(0));
             
             ArrayList<Point2D.Double> xyPoints = ListUtils.spotListToPointList(frameList);
             Point2D.Double listAvg = ListUtils.avgXYList(xyPoints);
@@ -2534,18 +2533,18 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
    public void doMathOnRows(RowData source, RowData operand, int action) {
       // create a copy of the dataset and copy in the corrected data
-      List<GaussianSpotData> transformedResultList =
-              Collections.synchronizedList(new ArrayList<GaussianSpotData>());
+      List<SpotData> transformedResultList =
+              Collections.synchronizedList(new ArrayList<SpotData>());
 
       ij.IJ.showStatus("Doing math on spot data...");
       
       try {
          
          for (int i = 0; i < source.spotList_.size(); i++) {
-            GaussianSpotData spotSource = source.spotList_.get(i);
+            SpotData spotSource = source.spotList_.get(i);
             boolean found = false;
             int j = 0;
-            GaussianSpotData spotOperand = null;
+            SpotData spotOperand = null;
             while (!found && j < operand.spotList_.size()) {
                spotOperand = operand.spotList_.get(j);
                if (source.isTrack_) {
@@ -2573,7 +2572,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                   x = spotSource.getXCenter() - spotOperand.getXCenter();
                   y = spotSource.getYCenter() - spotOperand.getYCenter();
                }
-               GaussianSpotData newSpot = new GaussianSpotData(spotSource);
+               SpotData newSpot = new SpotData(spotSource);
                newSpot.setXCenter(x);
                newSpot.setYCenter(y);
                transformedResultList.add(newSpot);
@@ -2782,11 +2781,11 @@ public class DataCollectionForm extends javax.swing.JFrame {
             @Override
             public void run() {
 
-               List<GaussianSpotData> newData =
-                       Collections.synchronizedList(new ArrayList<GaussianSpotData>());
+               List<SpotData> newData =
+                       Collections.synchronizedList(new ArrayList<SpotData>());
                for (int i = 0; i < rows.length; i++) {
                   RowData rowData = rowData_.get(rows[i]);
-                  for (GaussianSpotData gs : rowData.spotList_) {
+                  for (SpotData gs : rowData.spotList_) {
                      newData.add(gs);
                   }
                }
@@ -2922,7 +2921,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       rt.reset();
       rt.setPrecision(1);
       int shape = rowData.shape_;
-      for (GaussianSpotData gd : rowData.spotList_) {
+      for (SpotData gd : rowData.spotList_) {
          if (gd != null) {
             rt.incrementCounter();
             rt.addValue(Terms.FRAME, gd.getFrame());
@@ -3065,7 +3064,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
 
                int counter = 0;
-               for (GaussianSpotData gd : rowData.spotList_) {
+               for (SpotData gd : rowData.spotList_) {
 
                   if ((counter % 1000) == 0) {
                      ij.IJ.showStatus("Saving spotData...");
@@ -3207,7 +3206,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                   fw.write("\n");
 
                   int counter = 0;
-                  for (GaussianSpotData gd : rowData.spotList_) {
+                  for (SpotData gd : rowData.spotList_) {
 
                      if ((counter % 1000) == 0) {
                         ij.IJ.showStatus("Saving spotData...");
@@ -3275,19 +3274,19 @@ public class DataCollectionForm extends javax.swing.JFrame {
       }
       
       ArrayList<Point2D.Double> xyPoints = new ArrayList<Point2D.Double>();
-      for (GaussianSpotData gs : rowData.spotList_) {
+      for (SpotData gs : rowData.spotList_) {
          Point2D.Double point = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
          xyPoints.add(point);
       }
 
       // Calculate direction of travel and transform data set along this axis
       ArrayList<Point2D.Double> xyCorrPoints = GaussianUtils.pcaRotate(xyPoints);
-      List<GaussianSpotData> transformedResultList =
-              Collections.synchronizedList(new ArrayList<GaussianSpotData>());
+      List<SpotData> transformedResultList =
+              Collections.synchronizedList(new ArrayList<SpotData>());
       
       for (int i = 0; i < xyPoints.size(); i++) {
-         GaussianSpotData oriSpot = rowData.spotList_.get(i);
-         GaussianSpotData spot = new GaussianSpotData(oriSpot);
+         SpotData oriSpot = rowData.spotList_.get(i);
+         SpotData spot = new SpotData(oriSpot);
          spot.setData(oriSpot.getIntensity(), oriSpot.getBackground(),
                  xyCorrPoints.get(i).getX(), xyCorrPoints.get(i).getY(), 0.0, oriSpot.getWidth(),
                  oriSpot.getA(), oriSpot.getTheta(), oriSpot.getSigma());
@@ -3323,7 +3322,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       double totalX = 0.0;
       double totalY = 0.0;
       while (it.hasNext()) {
-         GaussianSpotData gs = (GaussianSpotData) it.next();
+         SpotData gs = (SpotData) it.next();
          Point2D.Double point = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
          totalX += gs.getXCenter();
          totalY += gs.getYCenter();
@@ -3341,12 +3340,12 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
 
       // create a copy of the dataset and copy in the corrected data
-      List<GaussianSpotData> transformedResultList =
-              Collections.synchronizedList(new ArrayList<GaussianSpotData>());
+      List<SpotData> transformedResultList =
+              Collections.synchronizedList(new ArrayList<SpotData>());
       
       for (int i = 0; i < xyPoints.size(); i++) {
-         GaussianSpotData oriSpot = rowData.spotList_.get(i);
-         GaussianSpotData spot = new GaussianSpotData(oriSpot);
+         SpotData oriSpot = rowData.spotList_.get(i);
+         SpotData spot = new SpotData(oriSpot);
          spot.setData(oriSpot.getIntensity(), oriSpot.getBackground(),
                  xyPoints.get(i).getX(), xyPoints.get(i).getY(), 0.0, oriSpot.getWidth(),
                  oriSpot.getA(), oriSpot.getTheta(), oriSpot.getSigma());
@@ -3447,7 +3446,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                double factor = (double) mag / rowData.pixelSizeNm_;
 
                // make 2D scattergrams of all pixelData
-               for (GaussianSpotData spot : rowData.spotList_) {
+               for (SpotData spot : rowData.spotList_) {
                   int j;
                   if (useSlices) {
                      j = (spot.getSlice() - 1) / framesToCombine;
@@ -3502,7 +3501,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
 
                // take the first image as reference
-               for (GaussianSpotData spot : rowData.spotList_) {
+               for (SpotData spot : rowData.spotList_) {
                   int j;
                   if (useSlices) {
                      j = (spot.getSlice() - 1) / framesToCombine;
@@ -3538,7 +3537,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                      ipTest.set(p, 0);
                   }
                   
-                  for (GaussianSpotData spot : rowData.spotList_) {
+                  for (SpotData spot : rowData.spotList_) {
                      int j;
                      if (useSlices) {
                         j = (spot.getSlice() - 1) / framesToCombine;
@@ -3573,8 +3572,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
             
             try {
                // Assemble stage movement data into a track
-               List<GaussianSpotData> stageMovementData = new ArrayList<GaussianSpotData>();
-               GaussianSpotData sm = new GaussianSpotData(null, 1, 1, 1, 1, 1, 1, 1);
+               List<SpotData> stageMovementData = new ArrayList<SpotData>();
+               SpotData sm = new SpotData(null, 1, 1, 1, 1, 1, 1, 1);
                sm.setData(0, 0, 0, 0, 0.0, 0, 0, 0, 0);
                stageMovementData.add(sm);
                
@@ -3596,8 +3595,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
                
                for (int i = 0; i < stagePosMA.size(); i++) {
                   StageMovementData smd = stagePosMA.get(i);
-                  GaussianSpotData s =
-                          new GaussianSpotData(null, 1, 1, i + 2, 1, 1, 1, 1);
+                  SpotData s =
+                          new SpotData(null, 1, 1, i + 2, 1, 1, 1, 1);
                   s.setData(0, 0, smd.pos_.x, smd.pos_.y, 0.0, 0, 0, 0, 0);                  
                   stageMovementData.add(s);
                }
@@ -3630,7 +3629,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                ij.IJ.showStatus("Assembling jitter corrected dataset...");
                ij.IJ.showProgress(1);
                
-               List<GaussianSpotData> correctedData = new ArrayList<GaussianSpotData>();
+               List<SpotData> correctedData = new ArrayList<SpotData>();
                Iterator it = rowData.spotList_.iterator();
                
                int testNr = 0;
@@ -3638,7 +3637,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                int counter = 0;
                while (it.hasNext()) {
                   counter++;
-                  GaussianSpotData gs = (GaussianSpotData) it.next();
+                  SpotData gs = (SpotData) it.next();
                   int test;
                   if (useSlices) {
                      test = gs.getSlice();
@@ -3663,7 +3662,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                   if (found) {
                      Point2D.Double point = new Point2D.Double(gs.getXCenter() - smd.pos_.x,
                              gs.getYCenter() - smd.pos_.y);
-                     GaussianSpotData gsn = new GaussianSpotData(gs);
+                     SpotData gsn = new SpotData(gs);
                      gsn.setXCenter(point.x);
                      gsn.setYCenter(point.y);
                      correctedData.add(gsn);
@@ -3730,12 +3729,12 @@ public class DataCollectionForm extends javax.swing.JFrame {
          @Override
          public void run() {
 
-            List<GaussianSpotData> correctedData =
-                    Collections.synchronizedList(new ArrayList<GaussianSpotData>());
+            List<SpotData> correctedData =
+                    Collections.synchronizedList(new ArrayList<SpotData>());
             Iterator it = rowData.spotList_.iterator();
             int frameNr = 0;
             while (it.hasNext()) {
-               GaussianSpotData gs = (GaussianSpotData) it.next();
+               SpotData gs = (SpotData) it.next();
                if (gs.getFrame() != frameNr) {
                   frameNr = gs.getFrame();
                   ij.IJ.showStatus("Executing color correction...");
@@ -3745,7 +3744,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                   Point2D.Double point = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
                   try {
                      Point2D.Double corPoint = c2t_.transform(point);
-                     GaussianSpotData gsn = new GaussianSpotData(gs);
+                     SpotData gsn = new SpotData(gs);
                      gsn.setXCenter(corPoint.x);
                      gsn.setYCenter(corPoint.y);
                      correctedData.add(gsn);
@@ -3822,7 +3821,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
                for (int index = 0; index < rowDatas.length; index++) {
                   for (int i = 0; i < rowDatas[index].spotList_.size(); i++) {
-                     GaussianSpotData spot = rowDatas[index].spotList_.get(i);
+                     SpotData spot = rowDatas[index].spotList_.get(i);
                      if (hasTimeInfo) {
                         double timePoint = rowDatas[index].timePoints_.get(i);
                         if (useS) {
@@ -3859,7 +3858,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                for (int index = 0; index < rowDatas.length; index++) {
                   datas[index] = new XYSeries(rowDatas[index].ID_);
                   for (int i = 0; i < rowDatas[index].spotList_.size(); i++) {
-                     GaussianSpotData spot = rowDatas[index].spotList_.get(i);
+                     SpotData spot = rowDatas[index].spotList_.get(i);
                      if (hasTimeInfo) {
                         double timePoint = rowDatas[index].timePoints_.get(i);
                         if (useS) {
@@ -3898,9 +3897,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
                }
                for (int index = 0; index < rowDatas.length; index++) {
                   datas[index] = new XYSeries(rowDatas[index].ID_);
-                  GaussianSpotData sp = rowDatas[index].spotList_.get(0);
+                  SpotData sp = rowDatas[index].spotList_.get(0);
                   for (int i = 0; i < rowDatas[index].spotList_.size(); i++) {
-                     GaussianSpotData spot = rowDatas[index].spotList_.get(i);
+                     SpotData spot = rowDatas[index].spotList_.get(i);
                      double distX = (sp.getXCenter() - spot.getXCenter())
                              * (sp.getXCenter() - spot.getXCenter());
                      double distY = (sp.getYCenter() - spot.getYCenter())
@@ -3939,7 +3938,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                for (int index = 0; index < rowDatas.length; index++) {
                   datas[index] = new XYSeries(rowDatas[index].ID_);
                   for (int i = 0; i < rowDatas[index].spotList_.size(); i++) {
-                     GaussianSpotData spot = rowDatas[index].spotList_.get(i);
+                     SpotData spot = rowDatas[index].spotList_.get(i);
                      if (hasTimeInfo) {
                         double timePoint = rowDatas[index].timePoints_.get(i);
                         if (useS) {
@@ -3974,7 +3973,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                for (int index = 0; index < rowDatas.length; index++) {
                   datas[index] = new XYSeries(rowDatas[index].ID_, false, true);
                   for (int i = 0; i < rowDatas[index].spotList_.size(); i++) {
-                     GaussianSpotData spot = rowDatas[index].spotList_.get(i);
+                     SpotData spot = rowDatas[index].spotList_.get(i);
                      datas[index].add(spot.getXCenter(), spot.getYCenter());
                      minX = Math.min(minX, spot.getXCenter());
                      minY = Math.min(minY, spot.getYCenter());
@@ -3998,7 +3997,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                   for (int index = 0; index < rowDatas.length; index++) {
                      datas[index] = new XYSeries(rowDatas[index].ID_, false, true);
                      for (int i = 0; i < rowDatas[index].spotList_.size(); i++) {
-                        GaussianSpotData spot = rowDatas[index].spotList_.get(i);
+                        SpotData spot = rowDatas[index].spotList_.get(i);
                         datas[index].add(spot.getXCenter() / xDivisor, 
                                 spot.getYCenter() / yDivisor);
                      }
@@ -4058,9 +4057,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
       }
 
       
-      List<GaussianSpotData> sl = rd.spotList_;
+      List<SpotData> sl = rd.spotList_;
       
-      for (GaussianSpotData gsd : sl) {
+      for (SpotData gsd : sl) {
          double xw = gsd.getWidth();
          double xy = xw / gsd.getA();
          if (xw < widthCutoff && xy < widthCutoff && xw > 0 && xy > 0) {
@@ -4081,12 +4080,12 @@ public class DataCollectionForm extends javax.swing.JFrame {
      
       int frameNr = 0;
       while (frameNr < nrImages) {
-         List<GaussianSpotData> frameSpots = rd.frameIndexSpotList_.get(frameNr);
+         List<SpotData> frameSpots = rd.frameIndexSpotList_.get(frameNr);
          if (frameSpots != null) {
             double[] xws = new double[frameSpots.size()];
             double[] yws = new double[frameSpots.size()];
             int i = 0;
-            for (GaussianSpotData gsd : frameSpots) {
+            for (SpotData gsd : frameSpots) {
                xws[i] = gsd.getWidth();
                yws[i] = (gsd.getWidth() / gsd.getA());
                i++;

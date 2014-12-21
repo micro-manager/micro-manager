@@ -11,7 +11,7 @@
  */
 package edu.valelab.GaussianFit.utils;
 
-import edu.valelab.GaussianFit.data.GaussianSpotData;
+import edu.valelab.GaussianFit.data.SpotData;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,9 +22,9 @@ import java.util.List;
  */
 public class ListUtils {
    
-   public static ArrayList<Point2D.Double> spotListToPointList(List<GaussianSpotData> spotList){
+   public static ArrayList<Point2D.Double> spotListToPointList(List<SpotData> spotList){
       ArrayList<Point2D.Double> xyPoints = new ArrayList<Point2D.Double>();
-      for (GaussianSpotData gs : spotList) {
+      for (SpotData gs : spotList) {
          Point2D.Double point = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
          xyPoints.add(point);
       }

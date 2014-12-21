@@ -1,7 +1,7 @@
 
 package edu.valelab.GaussianFit;
 
-import edu.valelab.GaussianFit.data.GaussianSpotData;
+import edu.valelab.GaussianFit.data.SpotData;
 
 /**
  *
@@ -36,7 +36,7 @@ public class SpotDataFilter {
     * @param spot - spot Data
     * @return true if spot is acceptable
     */
-   public boolean filter (GaussianSpotData spot) {
+   public boolean filter (SpotData spot) {
       if (useSigma_) {
          if (spot.getSigma() < sigmaMin_ || spot.getSigma() > sigmaMax_)
             return false;

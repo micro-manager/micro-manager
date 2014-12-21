@@ -3,7 +3,7 @@
  */
 package edu.valelab.GaussianFit;
 
-import edu.valelab.GaussianFit.data.GaussianSpotData;
+import edu.valelab.GaussianFit.data.SpotData;
 import edu.valelab.GaussianFit.data.RowData;
 import org.apache.commons.math.complex.Complex;
 import org.apache.commons.math.transform.FastFourierTransformer;
@@ -65,7 +65,7 @@ public class FFTUtils {
          double[] d = new double[length];
 
          for (int i = 0; i < length; i++) {
-            GaussianSpotData spot = rowDatas[index].spotList_.get(i);
+            SpotData spot = rowDatas[index].spotList_.get(i);
             if (plotMode == DataCollectionForm.PlotMode.X)
                d[i] = spot.getXCenter();
             else if (plotMode == DataCollectionForm.PlotMode.Y)

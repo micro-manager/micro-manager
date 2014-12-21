@@ -14,7 +14,7 @@
 package edu.valelab.GaussianFit.utils;
 
 import edu.valelab.GaussianFit.data.RowData;
-import edu.valelab.GaussianFit.data.GaussianSpotData;
+import edu.valelab.GaussianFit.data.SpotData;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,7 +42,7 @@ public class SubRange {
       RowData output = new RowData(input);
       output.spotList_.clear();
       
-      List<GaussianSpotData> spots =  input.spotList_;
+      List<SpotData> spots =  input.spotList_;
 
       boolean endReached = false;
       int i = 0;
@@ -53,7 +53,7 @@ public class SubRange {
             j++;
          }
          if ( j < spots.size() && i < desiredFrames.size() ) {
-            output.spotList_.add(new GaussianSpotData(spots.get(j)) );
+            output.spotList_.add(new SpotData(spots.get(j)) );
             i++;
          } else {
             endReached = true;

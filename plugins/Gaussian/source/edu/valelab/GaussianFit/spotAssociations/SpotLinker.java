@@ -2,7 +2,7 @@ package edu.valelab.GaussianFit.spotAssociations;
 
 import edu.valelab.GaussianFit.DataCollectionForm;
 import static edu.valelab.GaussianFit.DataCollectionForm.getInstance;
-import edu.valelab.GaussianFit.data.GaussianSpotData;
+import edu.valelab.GaussianFit.data.SpotData;
 import edu.valelab.GaussianFit.data.GsSpotPair;
 import edu.valelab.GaussianFit.data.RowData;
 import java.awt.geom.Point2D;
@@ -43,31 +43,31 @@ public class SpotLinker {
          }
 
          // linked spots go here:
-         List<GaussianSpotData> destList = new ArrayList<GaussianSpotData>();
+         List<SpotData> destList = new ArrayList<SpotData>();
          // maintain active tracks here
-         List< List<GaussianSpotData>> tracks = 
-                 new ArrayList<List<GaussianSpotData>>();
+         List< List<SpotData>> tracks = 
+                 new ArrayList<List<SpotData>>();
          for (int pos = 1; pos <= rowData.nrPositions_; pos++) {
             for (int ch = 1; ch <= rowData.nrChannels_; ch++) {
                for (int s = 1; s <= rowData.nrSlices_; s++) {
                   for (int f = 1; f <= rowData.nrFrames_; f++) {
-                     List<GaussianSpotData> spots = rowData.get(f, s, ch, pos);
+                     List<SpotData> spots = rowData.get(f, s, ch, pos);
                      if (spots != null) {
                         // keep track of spots in this frame added to tracks 
-                        List<GaussianSpotData> markedSpots = new ArrayList<GaussianSpotData>();
+                        List<SpotData> markedSpots = new ArrayList<SpotData>();
                         // go through all tracks to see if they can be extended
                         if (tracks.size() > 0) {
                            ArrayList<GsSpotPair> gsSpots = new ArrayList<GsSpotPair>();
-                           for (GaussianSpotData spot : spots) {
+                           for (SpotData spot : spots) {
                               gsSpots.add(new GsSpotPair(spot,
                                       new Point2D.Double(spot.getXCenter(), spot.getYCenter()),
                                       new Point2D.Double(0.0, 0.0)));
                            }
                            NearestPointGsSpotPair nsp = new NearestPointGsSpotPair(gsSpots, maxDistance);
-                           List<List<GaussianSpotData>> removedTracks = 
-                                   new ArrayList<List<GaussianSpotData>>();
-                           for (List<GaussianSpotData> track : tracks) {
-                              GaussianSpotData tSpot = track.get(track.size() - 1);
+                           List<List<SpotData>> removedTracks = 
+                                   new ArrayList<List<SpotData>>();
+                           for (List<SpotData> track : tracks) {
+                              SpotData tSpot = track.get(track.size() - 1);
                               GsSpotPair newSpot = nsp.findKDWSE(new Point2D.Double(
                                       tSpot.getXCenter(), tSpot.getYCenter()));
                               if (newSpot == null) {
@@ -83,15 +83,15 @@ public class SpotLinker {
                               }
                            }
                            // second part of removing tracks
-                           for (List<GaussianSpotData> track : removedTracks) {
+                           for (List<SpotData> track : removedTracks) {
                               tracks.remove(track);
                            }
                         }
                         // go through spots and start a new track with any spot 
                         // that was not part of a track
-                        for (GaussianSpotData spot : spots) {
+                        for (SpotData spot : spots) {
                            if (!markedSpots.contains(spot)) {
-                              List<GaussianSpotData> track = new ArrayList<GaussianSpotData>();
+                              List<SpotData> track = new ArrayList<SpotData>();
                               track.add(spot);
                               tracks.add(track);
                            }
@@ -99,7 +99,7 @@ public class SpotLinker {
                      }
                   }
                   // add tracks that made it to the end to destination list
-                  for (List<GaussianSpotData> track : tracks) {
+                  for (List<SpotData> track : tracks) {
                      linkSpots(track, destList, useFrames);
                   }
                   tracks.clear();
@@ -124,11 +124,12 @@ public class SpotLinker {
     * added to the destination list
     *
     * @param source - list of spots that all occur around the same pixel and in
-    * linked frames
-    * @param dest - list spots in which each entry represents multiple linked
-    * spots
+    *                 linked frames
+    * @param dest - list of spots in which each entry represents multiple linked
+    *               spots
+    * @param useFrames - whether or not the single axis of the image stack lies about its identity
     */
-   private static void linkSpots(List<GaussianSpotData> source, List<GaussianSpotData> dest,
+   private static void linkSpots(List<SpotData> source, List<SpotData> dest,
            boolean useFrames) {
       if (source == null) {
          return;
@@ -137,7 +138,7 @@ public class SpotLinker {
          return;
       }
 
-      GaussianSpotData sp = new GaussianSpotData(source.get(0));
+      SpotData sp = new SpotData(source.get(0));
 
       double intensity = 0.0;
       double background = 0.0;
@@ -148,7 +149,7 @@ public class SpotLinker {
       double theta = 0.0;
       double sigma = 0.0;
 
-      for (GaussianSpotData spot : source) {
+      for (SpotData spot : source) {
          intensity += spot.getIntensity();
          background += spot.getBackground();
          xCenter += spot.getXCenter();

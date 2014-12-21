@@ -12,7 +12,7 @@ package edu.valelab.GaussianFit;
 
 import edu.valelab.GaussianFit.utils.ProgressThread;
 import edu.valelab.GaussianFit.data.GaussianInfo;
-import edu.valelab.GaussianFit.data.GaussianSpotData;
+import edu.valelab.GaussianFit.data.SpotData;
 import edu.valelab.GaussianFit.fitting.ZCalibrator;
 import edu.valelab.GaussianFit.utils.MMWindowAbstraction;
 import ij.IJ;
@@ -78,8 +78,8 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
    public void run() {
 
       // List with spot positions found through the Find Maxima command
-      sourceList_ = new LinkedBlockingQueue<GaussianSpotData>();
-      resultList_ = Collections.synchronizedList(new ArrayList<GaussianSpotData>());
+      sourceList_ = new LinkedBlockingQueue<SpotData>();
+      resultList_ = Collections.synchronizedList(new ArrayList<SpotData>());
 
       // take the active ImageJ image
       ImagePlus siPlus;
@@ -156,7 +156,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
       double zMin = zMax;
       ZCalibrator zc = DataCollectionForm.zc_;
       if (zc != null) {
-         for (GaussianSpotData spot : resultList_) {
+         for (SpotData spot : resultList_) {
             double zTmp = spot.getZCenter();
             if (zMax < zTmp) {
                zMax = zTmp;
@@ -260,7 +260,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
 
                   ImageProcessor siProc = null;
                   Polygon p = new Polygon();
-                  synchronized (GaussianSpotData.lockIP) {
+                  synchronized (SpotData.lockIP) {
                      siPlus.setPositionWithoutUpdate(c, z, f);
                      // If ROI manager is used, use RoiManager Rois
                      //  may be dangerous if the user is not aware
@@ -306,12 +306,12 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
                      // filter out spots too close to the edge
                      if (sC[j][0] > halfSize_ && sC[j][0] < siPlus.getWidth() - halfSize_
                              && sC[j][1] > halfSize_ && sC[j][1] < siPlus.getHeight() - halfSize_) {
-                        ImageProcessor sp = GaussianSpotData.getSpotProcessor(siProc,
+                        ImageProcessor sp = SpotData.getSpotProcessor(siProc,
                                 halfSize_, sC[j][0], sC[j][1]);
                         if (sp == null) {
                            continue;
                         }
-                        GaussianSpotData thisSpot = new GaussianSpotData(sp, c, z, f,
+                        SpotData thisSpot = new SpotData(sp, c, z, f,
                                 position, j, sC[j][0], sC[j][1]);
                         try {
                            sourceList_.put(thisSpot);
@@ -335,7 +335,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
       }
 
       // Send working threads signal that we are done:
-      GaussianSpotData lastSpot = new GaussianSpotData(null, -1, 1, -1, -1, -1, -1, -1);
+      SpotData lastSpot = new SpotData(null, -1, 1, -1, -1, -1, -1, -1);
       try {
          sourceList_.put(lastSpot);
       } catch (InterruptedException iex) {

@@ -13,7 +13,7 @@
 package edu.valelab.GaussianFit;
 
 import edu.valelab.GaussianFit.data.GaussianInfo;
-import edu.valelab.GaussianFit.data.GaussianSpotData;
+import edu.valelab.GaussianFit.data.SpotData;
 import edu.valelab.GaussianFit.utils.ReportingUtils;
 import java.awt.geom.Point2D;
 import java.awt.Rectangle;
@@ -77,7 +77,7 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
       silent_ = silent;
       ArrayList<Point2D.Double> xyPoints = new ArrayList<Point2D.Double>();
       ArrayList<Double> timePoints = new ArrayList<Double>();
-      resultList_ = Collections.synchronizedList(new ArrayList<GaussianSpotData>());
+      resultList_ = Collections.synchronizedList(new ArrayList<SpotData>());
      
       if (siPlusLocal_ == null) {
          ReportingUtils.showError("Empty ImagePlus");
@@ -156,7 +156,7 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
 
       
       for (int i = n; i <= nMax && !stop; i++) {
-         GaussianSpotData spot;
+         SpotData spot;
 
          // Give user feedback
          ij.IJ.showStatus("Tracking...");
@@ -207,7 +207,7 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
             ip = siPlus.getProcessor().crop();
          }
             
-         spot = new GaussianSpotData(ip, ch, 1, i, 1, i, xc,yc);
+         spot = new SpotData(ip, ch, 1, i, 1, i, xc,yc);
          double[] paramsOut = gs.doGaussianFit(ip, maxIterations_);
          double sx;
          double sy;
@@ -280,7 +280,7 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
       return true;
    }
 
-   private void addListToForm(String name, List<GaussianSpotData> resultList, ImagePlus siPlus, ArrayList<Double> timePoints) {
+   private void addListToForm(String name, List<SpotData> resultList, ImagePlus siPlus, ArrayList<Double> timePoints) {
       // Add data to data overview window
       DataCollectionForm dcForm = DataCollectionForm.getInstance();
       dcForm.addSpotData(name, siPlus.getTitle(), "", siPlus.getWidth(), 

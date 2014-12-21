@@ -11,7 +11,7 @@
 package edu.valelab.GaussianFit.data;
 
 import edu.valelab.GaussianFit.DataCollectionForm.Coordinates;
-import edu.valelab.GaussianFit.data.GaussianSpotData;
+import edu.valelab.GaussianFit.data.SpotData;
 import edu.valelab.GaussianFit.utils.ListUtils;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
@@ -25,9 +25,9 @@ import java.util.Map;
    public class RowData {
      
       
-      public final List<GaussianSpotData> spotList_;
-      public Map<Integer, List<GaussianSpotData>> frameIndexSpotList_;
-      private Map<ImageIndex, List<GaussianSpotData>> indexedSpotList_;
+      public final List<SpotData> spotList_;
+      public Map<Integer, List<SpotData>> frameIndexSpotList_;
+      private Map<ImageIndex, List<SpotData>> indexedSpotList_;
       public final ArrayList<Double> timePoints_;
       public String name_;
       public final String title_;
@@ -72,7 +72,7 @@ import java.util.Map;
          nrSlices_ = oldRow.nrSlices_;
          nrPositions_ = oldRow.nrPositions_;
          maxNrSpots_ = oldRow.maxNrSpots_;
-         spotList_ = new ArrayList<GaussianSpotData> (oldRow.spotList_);
+         spotList_ = new ArrayList<SpotData> (oldRow.spotList_);
          if (oldRow.timePoints_ != null)
             timePoints_ = new ArrayList<Double> (oldRow.timePoints_);
          else
@@ -92,7 +92,7 @@ import java.util.Map;
             Point2D.Double stdPoint = ListUtils.stdDevXYList(xyList, avgPoint);
             stdX = stdPoint.x;
             stdY = stdPoint.y;
-            for (GaussianSpotData spot : spotList_) {
+            for (SpotData spot : spotList_) {
                nrPhotons += spot.getIntensity();
             }
          }
@@ -118,7 +118,7 @@ import java.util.Map;
               int nrSlices,
               int nrPositions,
               int maxNrSpots, 
-              List<GaussianSpotData> spotList,
+              List<SpotData> spotList,
               ArrayList<Double> timePoints,
               boolean isTrack, 
               Coordinates coordinate, 
@@ -151,7 +151,7 @@ import java.util.Map;
             Point2D.Double stdPoint = ListUtils.stdDevXYList(xyList, avgPoint);
             stdX = stdPoint.x;
             stdY = stdPoint.y;
-            for (GaussianSpotData spot : spotList_) {
+            for (SpotData spot : spotList_) {
                nrPhotons += spot.getIntensity();
             }
          }
@@ -177,27 +177,27 @@ import java.util.Map;
          if (useFrames)
             nr = nrFrames_;
          
-         frameIndexSpotList_ = new HashMap<Integer, List<GaussianSpotData>>(nr);
-         indexedSpotList_ = new HashMap<ImageIndex, List<GaussianSpotData>>();
+         frameIndexSpotList_ = new HashMap<Integer, List<SpotData>>(nr);
+         indexedSpotList_ = new HashMap<ImageIndex, List<SpotData>>();
          
-         for (GaussianSpotData spot : spotList_) {
+         for (SpotData spot : spotList_) {
             int frameIndex = spot.getSlice();
             if (useFrames)
                frameIndex = spot.getFrame();
             if (frameIndexSpotList_.get(frameIndex) == null)
-               frameIndexSpotList_.put(frameIndex, new ArrayList<GaussianSpotData>());
+               frameIndexSpotList_.put(frameIndex, new ArrayList<SpotData>());
             frameIndexSpotList_.get(frameIndex).add(spot);  
             
             ImageIndex ii = new ImageIndex (spot.getFrame(), spot.getSlice(), 
                     spot.getChannel(), spot.getPosition() );
             if (indexedSpotList_.get(ii) == null) {
-               indexedSpotList_.put(ii, new ArrayList<GaussianSpotData>());
+               indexedSpotList_.put(ii, new ArrayList<SpotData>());
             }
             indexedSpotList_.get(ii).add(spot);           
          }  
       }
       
-      public List<GaussianSpotData> get(int frame, int slice, int channel, int position) {
+      public List<SpotData> get(int frame, int slice, int channel, int position) {
          ImageIndex ii = new ImageIndex(frame, slice, channel, position);
          return indexedSpotList_.get(ii);
       }

@@ -1,7 +1,7 @@
 package edu.valelab.GaussianFit.utils;
 
 
-import edu.valelab.GaussianFit.data.GaussianSpotData;
+import edu.valelab.GaussianFit.data.SpotData;
 import java.util.concurrent.BlockingQueue;
 
 
@@ -12,11 +12,11 @@ import java.util.concurrent.BlockingQueue;
 public class ProgressThread  implements Runnable {
 
    Thread t_;
-   BlockingQueue<GaussianSpotData> sourceList_;
+   BlockingQueue<SpotData> sourceList_;
 
 
 
-   public ProgressThread(BlockingQueue<GaussianSpotData> sourceList) {
+   public ProgressThread(BlockingQueue<SpotData> sourceList) {
       sourceList_ = sourceList;
    }
 

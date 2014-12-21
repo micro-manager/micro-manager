@@ -2,7 +2,7 @@ package edu.valelab.GaussianFit;
 
 
 import edu.valelab.GaussianFit.data.GaussianInfo;
-import edu.valelab.GaussianFit.data.GaussianSpotData;
+import edu.valelab.GaussianFit.data.SpotData;
 import edu.valelab.GaussianFit.fitting.ZCalibrator;
 import ij.ImagePlus;
 import ij.process.ImageProcessor;
@@ -20,8 +20,8 @@ public class GaussianFitStackThread extends GaussianInfo implements Runnable {
    boolean stopNow_ = false;
 
 
-   public GaussianFitStackThread(BlockingQueue<GaussianSpotData> sourceList,
-           List<GaussianSpotData> resultList, ImagePlus siPlus, int halfSize,
+   public GaussianFitStackThread(BlockingQueue<SpotData> sourceList,
+           List<SpotData> resultList, ImagePlus siPlus, int halfSize,
            int shape, int fitMode) {
       siPlus_ = siPlus;
       halfSize_ = halfSize;
@@ -56,7 +56,7 @@ public class GaussianFitStackThread extends GaussianInfo implements Runnable {
       ZCalibrator zc = DataCollectionForm.zc_;
 
       while (!stopNow_) {
-         GaussianSpotData spot;
+         SpotData spot;
          synchronized (gfsLock_) {
             try {
                spot = sourceList_.take();
@@ -76,7 +76,7 @@ public class GaussianFitStackThread extends GaussianInfo implements Runnable {
             ImageProcessor ip = spot.getSpotProcessor(siPlus_, halfSize_);
             double[] paramsOut = gs_.doGaussianFit(ip, maxIterations_);
             // Note that the copy constructor will not copy pixel data, so we loose those when spot goes out of scope
-            GaussianSpotData spotData = new GaussianSpotData(spot);
+            SpotData spotData = new SpotData(spot);
             double sx = 0;
             double sy = 0;
             double a = 1;

@@ -4,7 +4,7 @@
  */
 package edu.valelab.GaussianFit;
 
-import edu.valelab.GaussianFit.data.GaussianSpotData;
+import edu.valelab.GaussianFit.data.SpotData;
 import edu.valelab.GaussianFit.DataCollectionForm.Coordinates;
 import edu.valelab.GaussianFit.data.RowData;
 import ij.process.ByteProcessor;
@@ -105,9 +105,9 @@ public class DriftCorrector {
       int spotNr = 0;
       int frameNr = 0;
       while (spotNr < maxNrSpots && frameNr < maxNrFrames && frameNr < nrImages) {
-         List<GaussianSpotData> frameSpots = rowData.frameIndexSpotList_.get(frameNr);
+         List<SpotData> frameSpots = rowData.frameIndexSpotList_.get(frameNr);
          if (frameSpots != null) {
-            for (GaussianSpotData spot : frameSpots) {
+            for (SpotData spot: frameSpots) {
                int x = (int) (factor * spot.getXCenter());
                int y = (int) (factor * spot.getYCenter());
                int index = (y * width) + x;
@@ -150,9 +150,9 @@ public class DriftCorrector {
          spotNr = 0;
 
          while (spotNr < maxNrSpots && tmpFrameNr < maxNrFrames && frameNr < nrImages) {
-            List<GaussianSpotData> frameSpots = rowData.frameIndexSpotList_.get(frameNr);
+            List<SpotData> frameSpots = rowData.frameIndexSpotList_.get(frameNr); 
             if (frameSpots != null) {
-               for (GaussianSpotData spot : frameSpots) {
+               for (SpotData spot : frameSpots) {
                   int x = (int) (factor * spot.getXCenter());
                   int y = (int) (factor * spot.getYCenter());
                   int index = (y * width) + x;
@@ -183,8 +183,8 @@ public class DriftCorrector {
 
       // Assemble stage movement data into a track
       try {
-         List<GaussianSpotData> stageMovementData = new ArrayList<GaussianSpotData>();
-         GaussianSpotData sm = new GaussianSpotData(null, 1, 1, 1, 1, 1, 1, 1);
+         List<SpotData> stageMovementData = new ArrayList<SpotData>();
+         SpotData sm = new SpotData(null, 1, 1, 1, 1, 1, 1, 1);
          sm.setData(0, 0, 0, 0, 0.0, 0, 0, 0, 0);
          stageMovementData.add(sm);
 
@@ -192,8 +192,8 @@ public class DriftCorrector {
 
          for (int i = 0; i < stagePos.size(); i++) {
             StageMovementData smd = stagePos.get(i);
-            GaussianSpotData s =
-                    new GaussianSpotData(null, 1, 1, i + 2, 1, 1, 1, 1);
+            SpotData s =
+                    new SpotData(null, 1, 1, i + 2, 1, 1, 1, 1);
             s.setData(0, 0, smd.pos_.x, smd.pos_.y, 0.0, 0, 0, 0, 0);
             stageMovementData.add(s);
          }
@@ -217,13 +217,13 @@ public class DriftCorrector {
          ij.IJ.showStatus("Assembling jitter corrected dataset...");
          ij.IJ.showProgress(1);
 
-         List<GaussianSpotData> correctedData = new ArrayList<GaussianSpotData>();
+         List<SpotData> correctedData = new ArrayList<SpotData>();
          Iterator it = rowData.spotList_.iterator();
 
          testNr = 0;
          StageMovementData smd = stagePos.get(0);
          while (it.hasNext()) {
-            GaussianSpotData gs = (GaussianSpotData) it.next();
+            SpotData gs = (SpotData) it.next();
             int test;
             if (useSlices) {
                test = gs.getSlice();
@@ -248,15 +248,13 @@ public class DriftCorrector {
             if (found) {
                Point2D.Double point = new Point2D.Double(gs.getXCenter() - smd.pos_.x,
                        gs.getYCenter() - smd.pos_.y);
-               GaussianSpotData gsn = new GaussianSpotData(gs);
+               SpotData gsn = new SpotData(gs);
                gsn.setXCenter(point.x);
                gsn.setYCenter(point.y);
                correctedData.add(gsn);
             } else {
                correctedData.add(gs);
             }
-
-
          }
 
          // Add transformed data to data overview window

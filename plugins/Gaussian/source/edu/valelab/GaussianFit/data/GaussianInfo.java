@@ -19,8 +19,8 @@ public class GaussianInfo {
    protected static final Object gfsLock_ = new Object();
    protected ImagePlus siPlus_;
    protected ImageProcessor siProc_;
-   protected BlockingQueue<GaussianSpotData> sourceList_;
-   protected List<GaussianSpotData> resultList_;
+   protected BlockingQueue<SpotData> sourceList_;
+   protected List<SpotData> resultList_;
 
    // half the size (in pixels) of the square used for Gaussian fitting
    protected int halfSize_ = 8;
