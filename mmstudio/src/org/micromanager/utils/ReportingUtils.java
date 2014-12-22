@@ -70,6 +70,14 @@ public class ReportingUtils {
       }
    }
 
+   public static void logDebugMessage(String msg) {
+      if (core_ == null) {
+         System.out.println(msg);
+      } else {
+         core_.logMessage(msg, true);
+      }
+   }
+
    public static void showMessage(final String msg) {
       JOptionPane.showMessageDialog(null, msg);
    }
