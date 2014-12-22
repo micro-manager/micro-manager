@@ -1,10 +1,10 @@
-package edu.valelab.GaussianFit.spotOperations;
+package edu.valelab.gaussianfit.spotoperations;
 
-import edu.valelab.GaussianFit.DataCollectionForm;
-import static edu.valelab.GaussianFit.DataCollectionForm.getInstance;
-import edu.valelab.GaussianFit.data.SpotData;
-import edu.valelab.GaussianFit.data.GsSpotPair;
-import edu.valelab.GaussianFit.data.RowData;
+import edu.valelab.gaussianfit.DataCollectionForm;
+import static edu.valelab.gaussianfit.DataCollectionForm.getInstance;
+import edu.valelab.gaussianfit.data.SpotData;
+import edu.valelab.gaussianfit.data.GsSpotPair;
+import edu.valelab.gaussianfit.data.RowData;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;

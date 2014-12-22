@@ -12,9 +12,9 @@
  * Licensed under BSD version 2.0 
  * 
  */
-package edu.valelab.GaussianFit.fitting;
+package edu.valelab.gaussianfit.fitting;
 
-import edu.valelab.GaussianFit.utils.GaussianUtils;
+import edu.valelab.gaussianfit.utils.GaussianUtils;
 import java.util.ArrayList;
 import org.apache.commons.math.FunctionEvaluationException;
 import org.apache.commons.math.optimization.GoalType;

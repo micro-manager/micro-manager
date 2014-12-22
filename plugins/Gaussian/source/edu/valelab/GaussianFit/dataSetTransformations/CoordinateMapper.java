@@ -25,7 +25,7 @@
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
  
-package edu.valelab.GaussianFit.dataSetTransformations;
+package edu.valelab.gaussianfit.datasettransformations;
 
 import ags.utils.KdTree;
 import ags.utils.KdTree.Entry;

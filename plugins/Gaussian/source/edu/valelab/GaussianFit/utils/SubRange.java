@@ -11,10 +11,10 @@
  */
 
 
-package edu.valelab.GaussianFit.utils;
+package edu.valelab.gaussianfit.utils;
 
-import edu.valelab.GaussianFit.data.RowData;
-import edu.valelab.GaussianFit.data.SpotData;
+import edu.valelab.gaussianfit.data.RowData;
+import edu.valelab.gaussianfit.data.SpotData;
 import java.util.ArrayList;
 import java.util.List;
 

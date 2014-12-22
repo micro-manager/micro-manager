@@ -10,7 +10,7 @@
  *
  */
 
-package edu.valelab.GaussianFit;
+package edu.valelab.gaussianfit;
 
 import ij.ImagePlus;
 import ij.plugin.ImageCalculator;

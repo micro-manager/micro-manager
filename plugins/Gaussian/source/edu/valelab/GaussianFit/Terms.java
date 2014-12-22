@@ -1,6 +1,6 @@
 
 
-package edu.valelab.GaussianFit;
+package edu.valelab.gaussianfit;
 
 /**
  *

@@ -1,12 +1,12 @@
 /*
  * Utilities to render localization microscopy data
  */
-package edu.valelab.GaussianFit.datasetdisplay;
+package edu.valelab.gaussianfit.datasetdisplay;
 
-import edu.valelab.GaussianFit.dataSetTransformations.SpotDataFilter;
-import edu.valelab.GaussianFit.data.SpotData;
-import edu.valelab.GaussianFit.utils.GaussianUtils;
-import edu.valelab.GaussianFit.data.RowData;
+import edu.valelab.gaussianfit.datasettransformations.SpotDataFilter;
+import edu.valelab.gaussianfit.data.SpotData;
+import edu.valelab.gaussianfit.utils.GaussianUtils;
+import edu.valelab.gaussianfit.data.RowData;
 import ij.ImageStack;
 import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;

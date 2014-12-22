@@ -4,12 +4,13 @@
  * September 2010, Nico Stuurman
  */
 
-package edu.valelab.GaussianFit;
+package edu.valelab.gaussianfit;
 
-import edu.valelab.GaussianFit.utils.GaussianUtils;
-import edu.valelab.GaussianFit.fitting.MultiVariateGaussianFunction;
-import edu.valelab.GaussianFit.fitting.MultiVariateGaussianMLE;
-import edu.valelab.GaussianFit.fitting.ParametricGaussianFunction;
+import edu.valelab.gaussianfit.utils.GaussianUtils;
+import edu.valelab.gaussianfit.fitting.MultiVariateGaussianFunction;
+import edu.valelab.gaussianfit.fitting.MultiVariateGaussianMLE;
+import edu.valelab.gaussianfit.fitting.ParametricGaussianFunction;
+import edu.valelab.gaussianfit.utils.ReportingUtils;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.commons.math.FunctionEvaluationException;
@@ -130,7 +131,7 @@ public class GaussianFit {
     *   optimization algorithm
     * @return 
     */
-   public double[] doGaussianFit (ImageProcessor siProc, int maxIterations) {
+   public double[] dogaussianfit (ImageProcessor siProc, int maxIterations) {
       estimateParameters(siProc);
 
       double[] paramsOut = {0.0};
@@ -177,11 +178,11 @@ public class GaussianFit {
             paramsOut = cF.fit(new ParametricGaussianFunction( mode_, siProc.getWidth(), siProc.getHeight() ),
                     params0_);
          } catch (FunctionEvaluationException ex) {
-            Logger.getLogger(GaussianFit.class.getName()).log(Level.SEVERE, null, ex);
+            ReportingUtils.logError(ex);
          } catch (OptimizationException ex) {
-            // Logger.getLogger(GaussianFit.class.getName()).log(Level.SEVERE, null, ex);
+            // Logger.getLogger(gaussianfit.class.getName()).log(Level.SEVERE, null, ex);
          } catch (IllegalArgumentException ex) {
-            Logger.getLogger(GaussianFit.class.getName()).log(Level.SEVERE, null, ex);
+            ReportingUtils.logError(ex);
          }
       }
       

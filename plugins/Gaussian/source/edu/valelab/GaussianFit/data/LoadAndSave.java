@@ -1,11 +1,11 @@
 
-package edu.valelab.GaussianFit.data;
+package edu.valelab.gaussianfit.data;
 
 import edu.ucsf.tsf.TaggedSpotsProtos;
-import edu.valelab.GaussianFit.DataCollectionForm;
-import static edu.valelab.GaussianFit.DataCollectionForm.EXTENSION;
-import static edu.valelab.GaussianFit.DataCollectionForm.getInstance;
-import edu.valelab.GaussianFit.LittleEndianDataInputStream;
+import edu.valelab.gaussianfit.DataCollectionForm;
+import static edu.valelab.gaussianfit.DataCollectionForm.EXTENSION;
+import static edu.valelab.gaussianfit.DataCollectionForm.getInstance;
+import edu.valelab.gaussianfit.LittleEndianDataInputStream;
 import ij.gui.YesNoCancelDialog;
 import ij.process.ImageProcessor;
 import java.awt.Cursor;

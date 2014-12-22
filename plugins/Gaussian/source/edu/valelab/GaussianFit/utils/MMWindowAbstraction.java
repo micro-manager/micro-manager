@@ -1,7 +1,7 @@
 /*
  * 
  */
-package edu.valelab.GaussianFit.utils;
+package edu.valelab.gaussianfit.utils;
 
 import ij.ImagePlus;
 import java.lang.reflect.Constructor;

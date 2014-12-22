@@ -10,13 +10,12 @@
  *
  */
 
-package edu.valelab.GaussianFit;
+package edu.valelab.gaussianfit;
 
-import edu.valelab.GaussianFit.data.GaussianInfo;
-import edu.valelab.GaussianFit.data.SpotData;
-import edu.valelab.GaussianFit.utils.ReportingUtils;
+import edu.valelab.gaussianfit.data.GaussianInfo;
+import edu.valelab.gaussianfit.data.SpotData;
+import edu.valelab.gaussianfit.utils.ReportingUtils;
 import java.awt.geom.Point2D;
-import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.prefs.Preferences;
 
@@ -53,9 +52,9 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
   
    private Thread t;
    
-   private FindLocalMaxima.FilterType preFilterType_;
+   private final FindLocalMaxima.FilterType preFilterType_;
    private boolean silent_;
-   private ImagePlus siPlusLocal_;
+   private final ImagePlus siPlusLocal_;
    
 
    public void setWindowClosed() {
@@ -66,6 +65,8 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
    /**
     *
     * 
+    * @param siPlus
+    * @param preFilterType
     */
    public GaussianTrackThread(ImagePlus siPlus, FindLocalMaxima.FilterType preFilterType) {
       super();
@@ -208,7 +209,7 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
          }
             
          spot = new SpotData(ip, ch, 1, i, 1, i, xc,yc);
-         double[] paramsOut = gs.doGaussianFit(ip, maxIterations_);
+         double[] paramsOut = gs.dogaussianfit(ip, maxIterations_);
          double sx;
          double sy;
          double a = 1.0;

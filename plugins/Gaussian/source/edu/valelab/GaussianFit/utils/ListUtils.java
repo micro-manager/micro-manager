@@ -9,9 +9,9 @@
  *
  * 
  */
-package edu.valelab.GaussianFit.utils;
+package edu.valelab.gaussianfit.utils;
 
-import edu.valelab.GaussianFit.data.SpotData;
+import edu.valelab.gaussianfit.data.SpotData;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;

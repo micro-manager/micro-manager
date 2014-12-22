@@ -4,7 +4,7 @@
  * 
  */
 
-package edu.valelab.GaussianFit.data;
+package edu.valelab.gaussianfit.data;
 
 import ij.ImagePlus;
 import ij.process.ImageProcessor;

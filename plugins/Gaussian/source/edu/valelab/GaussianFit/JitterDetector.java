@@ -2,7 +2,7 @@
  * This class uses autocorrelation to detect the movement between a reference image
  * and the given image
  */
-package edu.valelab.GaussianFit;
+package edu.valelab.gaussianfit;
 
 import ij.process.FHT;
 import ij.process.ImageProcessor;
@@ -45,7 +45,7 @@ public class JitterDetector {
          ip.setRoi(brightPix.x - hs, brightPix.y - hs, 2 * hs, 2 * hs);
          ImageProcessor ipc = ip.crop();
 
-         double[] paramsOut = gs.doGaussianFit(ipc, 100);
+         double[] paramsOut = gs.dogaussianfit(ipc, 100);
          com.x = paramsOut[GaussianFit.XC] - hs + brightPix.x;
          com.y = paramsOut[GaussianFit.YC] - hs + brightPix.y;
 

@@ -5,8 +5,8 @@
  * @author Nico Stuurman
  * @copyright UCSF, Dec. 2012
  */
-package edu.valelab.GaussianFit.spotOperations;
-import edu.valelab.GaussianFit.data.GsSpotPair;
+package edu.valelab.gaussianfit.spotoperations;
+import edu.valelab.gaussianfit.data.GsSpotPair;
 import ags.utils.KdTree;
 import ags.utils.KdTree.Entry;
 import ags.utils.KdTree.SqrEuclid;

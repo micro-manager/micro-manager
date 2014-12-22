@@ -2,7 +2,7 @@
  * Utility class that transforms an image into a new image given a affine
  * transform
  */
-package edu.valelab.GaussianFit.utils;
+package edu.valelab.gaussianfit.utils;
 
 import ij.ImagePlus;
 import java.awt.geom.AffineTransform;
@@ -46,12 +46,12 @@ public class ImageAffineTransform {
    
 import java.awt.image.AffineTransformOp;
 
-dc = edu.valelab.GaussianFit.DataCollectionForm.getInstance();
+dc = edu.valelab.gaussianfit.DataCollectionForm.getInstance();
 af = dc.getAffineTransform().clone();
 af.invert();
 siPlus = ij.IJ.getImage();
 type = AffineTransformOp.TYPE_NEAREST_NEIGHBOR;
-edu.valelab.GaussianFit.utils.ImageAffineTransform.transformImagePlus(siPlus, af, type);
+edu.valelab.gaussianfit.utils.ImageAffineTransform.transformImagePlus(siPlus, af, type);
 
     */
    

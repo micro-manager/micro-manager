@@ -8,13 +8,13 @@
  * 
  */
 
-package edu.valelab.GaussianFit;
+package edu.valelab.gaussianfit;
 
-import edu.valelab.GaussianFit.utils.ProgressThread;
-import edu.valelab.GaussianFit.data.GaussianInfo;
-import edu.valelab.GaussianFit.data.SpotData;
-import edu.valelab.GaussianFit.fitting.ZCalibrator;
-import edu.valelab.GaussianFit.utils.MMWindowAbstraction;
+import edu.valelab.gaussianfit.utils.ProgressThread;
+import edu.valelab.gaussianfit.data.GaussianInfo;
+import edu.valelab.gaussianfit.data.SpotData;
+import edu.valelab.gaussianfit.fitting.ZCalibrator;
+import edu.valelab.gaussianfit.utils.MMWindowAbstraction;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.Roi;
@@ -27,7 +27,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.concurrent.LinkedBlockingQueue;
-import edu.valelab.GaussianFit.utils.ReportingUtils;
+import edu.valelab.gaussianfit.utils.ReportingUtils;
 
 /**
  *

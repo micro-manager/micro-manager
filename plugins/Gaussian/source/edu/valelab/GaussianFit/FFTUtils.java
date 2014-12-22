@@ -1,10 +1,10 @@
 /**
  * Utility function used in calculation of Power Spectra
  */
-package edu.valelab.GaussianFit;
+package edu.valelab.gaussianfit;
 
-import edu.valelab.GaussianFit.data.SpotData;
-import edu.valelab.GaussianFit.data.RowData;
+import edu.valelab.gaussianfit.data.SpotData;
+import edu.valelab.gaussianfit.data.RowData;
 import org.apache.commons.math.complex.Complex;
 import org.apache.commons.math.transform.FastFourierTransformer;
 import org.jfree.data.xy.XYSeries;

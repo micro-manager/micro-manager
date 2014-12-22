@@ -4,7 +4,7 @@
  * 
  * Copyright UCSF, 2012.  BSD license
  */
-package edu.valelab.GaussianFit.utils;
+package edu.valelab.gaussianfit.utils;
 
 import ij.ImagePlus;
 import ij.gui.Roi;

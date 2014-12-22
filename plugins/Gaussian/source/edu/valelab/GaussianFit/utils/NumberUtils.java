@@ -3,7 +3,7 @@
  * Goal is to avoid dependencies on MMJ_.jar
  * 
  */
-package edu.valelab.GaussianFit.utils;
+package edu.valelab.gaussianfit.utils;
 
 import java.text.NumberFormat;
 import java.text.ParseException;

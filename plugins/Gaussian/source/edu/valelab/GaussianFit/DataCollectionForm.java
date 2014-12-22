@@ -15,26 +15,26 @@
  * Created on Nov 20, 2010, 8:52:50 AM
  */
 
-package edu.valelab.GaussianFit;
+package edu.valelab.gaussianfit;
 
-import edu.valelab.GaussianFit.datasetdisplay.ImageRenderer;
-import edu.valelab.GaussianFit.dataSetTransformations.SpotDataFilter;
-import edu.valelab.GaussianFit.dataSetTransformations.DriftCorrector;
-import edu.valelab.GaussianFit.dataSetTransformations.CoordinateMapper;
-import edu.valelab.GaussianFit.spotOperations.NearestPoint2D;
-import edu.valelab.GaussianFit.utils.DisplayUtils;
-import edu.valelab.GaussianFit.data.SpotData;
-import edu.valelab.GaussianFit.utils.GaussianUtils;
-import edu.valelab.GaussianFit.fitting.ZCalibrator;
-import edu.valelab.GaussianFit.data.LoadAndSave;
-import edu.valelab.GaussianFit.spotOperations.SpotLinker;
-import edu.valelab.GaussianFit.data.RowData;
-import edu.valelab.GaussianFit.datasetdisplay.ParticlePairLister;
-import edu.valelab.GaussianFit.utils.ListUtils;
-import edu.valelab.GaussianFit.utils.ReportingUtils;
-import edu.valelab.GaussianFit.utils.NumberUtils;
-import edu.valelab.GaussianFit.utils.FileDialogs;
-import edu.valelab.GaussianFit.utils.FileDialogs.FileType;
+import edu.valelab.gaussianfit.datasetdisplay.ImageRenderer;
+import edu.valelab.gaussianfit.datasettransformations.SpotDataFilter;
+import edu.valelab.gaussianfit.datasettransformations.DriftCorrector;
+import edu.valelab.gaussianfit.datasettransformations.CoordinateMapper;
+import edu.valelab.gaussianfit.spotoperations.NearestPoint2D;
+import edu.valelab.gaussianfit.utils.DisplayUtils;
+import edu.valelab.gaussianfit.data.SpotData;
+import edu.valelab.gaussianfit.utils.GaussianUtils;
+import edu.valelab.gaussianfit.fitting.ZCalibrator;
+import edu.valelab.gaussianfit.data.LoadAndSave;
+import edu.valelab.gaussianfit.spotoperations.SpotLinker;
+import edu.valelab.gaussianfit.data.RowData;
+import edu.valelab.gaussianfit.datasetdisplay.ParticlePairLister;
+import edu.valelab.gaussianfit.utils.ListUtils;
+import edu.valelab.gaussianfit.utils.ReportingUtils;
+import edu.valelab.gaussianfit.utils.NumberUtils;
+import edu.valelab.gaussianfit.utils.FileDialogs;
+import edu.valelab.gaussianfit.utils.FileDialogs.FileType;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
@@ -1855,7 +1855,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             if (rows.length > 0) {
                for (int row : rows) {
                   RowData newRow =
-                          edu.valelab.GaussianFit.utils.SubRange.subRange(
+                          edu.valelab.gaussianfit.utils.SubRange.subRange(
                           rowData_.get(row), desiredFrameNumbersCopy);
                   addSpotData(newRow);
                }

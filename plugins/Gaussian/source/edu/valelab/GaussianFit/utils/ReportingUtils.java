@@ -1,7 +1,7 @@
 /*
  * 
  */
-package edu.valelab.GaussianFit.utils;
+package edu.valelab.gaussianfit.utils;
 
 import java.awt.event.ActionEvent;
 import javax.swing.JOptionPane;

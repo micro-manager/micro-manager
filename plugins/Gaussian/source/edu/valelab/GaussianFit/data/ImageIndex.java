@@ -1,6 +1,6 @@
 
 
-package edu.valelab.GaussianFit.data;
+package edu.valelab.gaussianfit.data;
 
 /**
  * Holds the frame, slice, channel, and position index

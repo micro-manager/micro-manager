@@ -1,7 +1,7 @@
-package edu.valelab.GaussianFit.utils;
+package edu.valelab.gaussianfit.utils;
 
 
-import edu.valelab.GaussianFit.data.SpotData;
+import edu.valelab.gaussianfit.data.SpotData;
 import java.util.concurrent.BlockingQueue;
 
 

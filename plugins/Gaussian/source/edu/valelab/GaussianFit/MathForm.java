@@ -3,9 +3,9 @@
  *
  * Created on Mar 20, 2012, 2:14:26 PM
  */
-package edu.valelab.GaussianFit;
+package edu.valelab.gaussianfit;
 
-import edu.valelab.GaussianFit.data.RowData;
+import edu.valelab.gaussianfit.data.RowData;
 import java.util.ArrayList;
 import java.util.prefs.Preferences;
 

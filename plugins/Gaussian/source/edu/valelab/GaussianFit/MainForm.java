@@ -9,10 +9,10 @@
  * Created on Sep 15, 2010, 9:29:05 PM
  */
 
-package edu.valelab.GaussianFit;
+package edu.valelab.gaussianfit;
 
-import edu.valelab.GaussianFit.data.GaussianInfo;
-import edu.valelab.GaussianFit.utils.MMWindowAbstraction;
+import edu.valelab.gaussianfit.data.GaussianInfo;
+import edu.valelab.gaussianfit.utils.MMWindowAbstraction;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.Overlay;
@@ -30,8 +30,8 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.json.JSONException;
 import org.json.JSONObject;
-import edu.valelab.GaussianFit.utils.NumberUtils;
-import edu.valelab.GaussianFit.utils.ReportingUtils;
+import edu.valelab.gaussianfit.utils.NumberUtils;
+import edu.valelab.gaussianfit.utils.ReportingUtils;
 import java.text.ParseException;
 import java.util.concurrent.atomic.AtomicBoolean;
 

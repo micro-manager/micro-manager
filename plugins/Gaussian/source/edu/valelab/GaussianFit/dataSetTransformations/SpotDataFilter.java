@@ -1,7 +1,7 @@
 
-package edu.valelab.GaussianFit.dataSetTransformations;
+package edu.valelab.gaussianfit.datasettransformations;
 
-import edu.valelab.GaussianFit.data.SpotData;
+import edu.valelab.gaussianfit.data.SpotData;
 
 /**
  * Simple filter for spot data.

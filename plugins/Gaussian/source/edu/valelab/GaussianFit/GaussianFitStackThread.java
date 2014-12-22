@@ -1,13 +1,14 @@
-package edu.valelab.GaussianFit;
+package edu.valelab.gaussianfit;
 
 
-import edu.valelab.GaussianFit.data.GaussianInfo;
-import edu.valelab.GaussianFit.data.SpotData;
-import edu.valelab.GaussianFit.fitting.ZCalibrator;
+import edu.valelab.gaussianfit.data.GaussianInfo;
+import edu.valelab.gaussianfit.data.SpotData;
+import edu.valelab.gaussianfit.fitting.ZCalibrator;
 import ij.ImagePlus;
 import ij.process.ImageProcessor;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import org.micromanager.utils.ReportingUtils;
 
 
 /**
@@ -50,6 +51,7 @@ public class GaussianFitStackThread extends GaussianInfo implements Runnable {
          t_.join();
    }
 
+   @Override
    public void run() {
       GaussianFit gs_ = new GaussianFit(shape_, fitMode_);
       double cPCF = photonConversionFactor_ / gain_;
@@ -74,7 +76,7 @@ public class GaussianFitStackThread extends GaussianInfo implements Runnable {
          try {
             // Note: the implementation will try to return a cached version of the ImageProcessor
             ImageProcessor ip = spot.getSpotProcessor(siPlus_, halfSize_);
-            double[] paramsOut = gs_.doGaussianFit(ip, maxIterations_);
+            double[] paramsOut = gs_.dogaussianfit(ip, maxIterations_);
             // Note that the copy constructor will not copy pixel data, so we loose those when spot goes out of scope
             SpotData spotData = new SpotData(spot);
             double sx = 0;
@@ -126,9 +128,11 @@ public class GaussianFitStackThread extends GaussianInfo implements Runnable {
 
             }
          } catch (Exception ex) {
-            ex.printStackTrace();
-            ij.IJ.log("Thread run out of memory  " + Thread.currentThread().getName());
-            ij.IJ.error("Fitter out of memory", "Out of memory error");
+            ReportingUtils.logError(ex);
+            ReportingUtils.logError("Thread run out of memory  " + 
+                    Thread.currentThread().getName());
+            ReportingUtils.showError("Fitter out of memory.\n" +
+                    "Out of memory error");
             return;
          }
       }

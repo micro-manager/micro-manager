@@ -8,10 +8,10 @@
  * Licensed under BSD license version 2.0
  * 
  */
-package edu.valelab.GaussianFit.data;
+package edu.valelab.gaussianfit.data;
 
-import edu.valelab.GaussianFit.DataCollectionForm.Coordinates;
-import edu.valelab.GaussianFit.utils.ListUtils;
+import edu.valelab.gaussianfit.DataCollectionForm.Coordinates;
+import edu.valelab.gaussianfit.utils.ListUtils;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.HashMap;

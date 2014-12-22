@@ -1,5 +1,5 @@
 
-package edu.valelab.GaussianFit;
+package edu.valelab.gaussianfit;
 
 import java.io.DataInput;
 import java.io.DataInputStream;

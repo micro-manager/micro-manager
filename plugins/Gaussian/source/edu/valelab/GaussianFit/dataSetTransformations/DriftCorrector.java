@@ -1,12 +1,12 @@
 
-package edu.valelab.GaussianFit.dataSetTransformations;
+package edu.valelab.gaussianfit.datasettransformations;
 
-import edu.valelab.GaussianFit.DataCollectionForm;
-import edu.valelab.GaussianFit.data.SpotData;
-import edu.valelab.GaussianFit.DataCollectionForm.Coordinates;
-import edu.valelab.GaussianFit.JitterDetector;
-import static edu.valelab.GaussianFit.DataCollectionForm.getInstance;
-import edu.valelab.GaussianFit.data.RowData;
+import edu.valelab.gaussianfit.DataCollectionForm;
+import edu.valelab.gaussianfit.data.SpotData;
+import edu.valelab.gaussianfit.DataCollectionForm.Coordinates;
+import edu.valelab.gaussianfit.JitterDetector;
+import static edu.valelab.gaussianfit.DataCollectionForm.getInstance;
+import edu.valelab.gaussianfit.data.RowData;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import java.awt.Point;

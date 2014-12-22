@@ -3,10 +3,10 @@
  * 
  * Copyright UCSF, 2012.  BSD license
  */
-package edu.valelab.GaussianFit;
+package edu.valelab.gaussianfit;
 
-import edu.valelab.GaussianFit.dataSetTransformations.SpotDataFilter;
-import edu.valelab.GaussianFit.data.RowData;
+import edu.valelab.gaussianfit.datasettransformations.SpotDataFilter;
+import edu.valelab.gaussianfit.data.RowData;
 import ij.ImagePlus;
 import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
