@@ -112,8 +112,7 @@ public class ZCalibrator {
       plotData[0] = new XYSeries("wx");
       plotData[1] = new XYSeries("wy");
             
-      for (int i = 0; i < data_.size(); i++) {
-         DataPoint d = data_.get(i);
+      for (DataPoint d : data_) {
          plotData[0].add(d.z_, d.wx_);
          plotData[1].add(d.z_, d.wy_);
       }
@@ -129,8 +128,7 @@ public class ZCalibrator {
       plotData[0] = new XYSeries("wx");
       plotData[1] = new XYSeries("wy");
             
-      for (int i = 0; i < data_.size(); i++) {
-         DataPoint d = data_.get(i);
+      for (DataPoint d : data_) {
          plotData[0].add(d.z_, MultiVariateZCalibrationFunction.funcval(fitFunctionWx_, d.z_));
          plotData[1].add(d.z_, MultiVariateZCalibrationFunction.funcval(fitFunctionWy_, d.z_));
       }
@@ -142,6 +140,8 @@ public class ZCalibrator {
     * Creates fitFunctionWx_ and fitFunctionWy_ based on data in data_
     * 
     * 
+    * @throws org.apache.commons.math.FunctionEvaluationException
+    * @throws org.apache.commons.math.optimization.OptimizationException
     */
    public void fitFunction() throws FunctionEvaluationException, OptimizationException {
       
@@ -162,7 +162,7 @@ public class ZCalibrator {
       nmx.setConvergenceChecker(convergedChecker_);
       nmx.setMaxIterations(maxIterations_);
       
-      double[] paramsOut = {0.0};
+      double[] paramsOut;
       
       RealPointValuePair result = nmx.optimize(mvcx, GoalType.MINIMIZE, params0_);
       paramsOut = result.getPoint();
@@ -212,6 +212,9 @@ public class ZCalibrator {
     * D = sqrt (  square (sqrt wx - sqrt wx, calib) + sqr(sqrt wy - sqrt w, calib) )
     * 
     * 
+    * @param wx - width in x
+    * @param wy - width in y
+    * @return - calculated z position
     */
    
    public double getZ(double wx, double wy) {  
@@ -239,10 +242,13 @@ public class ZCalibrator {
          paramsOut = result.getPoint();
       } catch (java.lang.OutOfMemoryError e) {
          throw (e);
-      } catch (Exception e) {
+      } catch (FunctionEvaluationException e) {
+         ij.IJ.log(" " + e.toString());
+      } catch (OptimizationException e) {
+         ij.IJ.log(" " + e.toString());
+      } catch (IllegalArgumentException e) {
          ij.IJ.log(" " + e.toString());
       }
-      
       
       
       return paramsOut[0]; 

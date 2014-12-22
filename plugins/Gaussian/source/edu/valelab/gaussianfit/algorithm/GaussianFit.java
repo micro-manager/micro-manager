@@ -4,15 +4,13 @@
  * September 2010, Nico Stuurman
  */
 
-package edu.valelab.gaussianfit;
+package edu.valelab.gaussianfit.algorithm;
 
 import edu.valelab.gaussianfit.utils.GaussianUtils;
 import edu.valelab.gaussianfit.fitting.MultiVariateGaussianFunction;
 import edu.valelab.gaussianfit.fitting.MultiVariateGaussianMLE;
 import edu.valelab.gaussianfit.fitting.ParametricGaussianFunction;
 import edu.valelab.gaussianfit.utils.ReportingUtils;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.apache.commons.math.FunctionEvaluationException;
 import org.apache.commons.math.optimization.OptimizationException;
 import org.apache.commons.math.optimization.direct.NelderMead;

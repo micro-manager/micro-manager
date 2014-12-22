@@ -17,9 +17,9 @@
 
 package edu.valelab.gaussianfit;
 
+import edu.valelab.gaussianfit.algorithm.FFTUtils;
 import edu.valelab.gaussianfit.datasetdisplay.ImageRenderer;
 import edu.valelab.gaussianfit.datasettransformations.SpotDataFilter;
-import edu.valelab.gaussianfit.datasettransformations.DriftCorrector;
 import edu.valelab.gaussianfit.datasettransformations.CoordinateMapper;
 import edu.valelab.gaussianfit.spotoperations.NearestPoint2D;
 import edu.valelab.gaussianfit.utils.DisplayUtils;
@@ -30,6 +30,7 @@ import edu.valelab.gaussianfit.data.LoadAndSave;
 import edu.valelab.gaussianfit.spotoperations.SpotLinker;
 import edu.valelab.gaussianfit.data.RowData;
 import edu.valelab.gaussianfit.datasetdisplay.ParticlePairLister;
+import edu.valelab.gaussianfit.datasettransformations.DriftCorrector;
 import edu.valelab.gaussianfit.utils.ListUtils;
 import edu.valelab.gaussianfit.utils.ReportingUtils;
 import edu.valelab.gaussianfit.utils.NumberUtils;
@@ -966,9 +967,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
                   .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                      .addComponent(zCalibrateButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
                      .addComponent(renderButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE))
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 7, Short.MAX_VALUE)
                   .addComponent(zCalibrationLabel_)
-                  .addGap(71, 71, 71))
+                  .addGap(80, 80, 80))
                .addGroup(jPanel1Layout.createSequentialGroup()
                   .addGap(1, 1, 1)
                   .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1257,6 +1258,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
                     avg + ", std. dev: " + stdDev);
                }
             }
+            
+            ij.IJ.log("Used " + points.size() + " spot pairs to calculate 2C Reference");
             
             //ij.IJ.showMessage("Corrected data have average of: " + avg + ",  std. dev. of: " + stdDev);
             

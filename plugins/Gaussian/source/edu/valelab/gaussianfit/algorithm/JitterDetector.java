@@ -2,7 +2,7 @@
  * This class uses autocorrelation to detect the movement between a reference image
  * and the given image
  */
-package edu.valelab.gaussianfit;
+package edu.valelab.gaussianfit.algorithm;
 
 import ij.process.FHT;
 import ij.process.ImageProcessor;

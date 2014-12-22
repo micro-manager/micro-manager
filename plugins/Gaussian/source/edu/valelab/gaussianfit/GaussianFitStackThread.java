@@ -1,6 +1,7 @@
 package edu.valelab.gaussianfit;
 
 
+import edu.valelab.gaussianfit.algorithm.GaussianFit;
 import edu.valelab.gaussianfit.data.GaussianInfo;
 import edu.valelab.gaussianfit.data.SpotData;
 import edu.valelab.gaussianfit.fitting.ZCalibrator;

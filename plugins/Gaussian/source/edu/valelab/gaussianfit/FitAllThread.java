@@ -10,6 +10,7 @@
 
 package edu.valelab.gaussianfit;
 
+import edu.valelab.gaussianfit.algorithm.FindLocalMaxima;
 import edu.valelab.gaussianfit.utils.ProgressThread;
 import edu.valelab.gaussianfit.data.GaussianInfo;
 import edu.valelab.gaussianfit.data.SpotData;

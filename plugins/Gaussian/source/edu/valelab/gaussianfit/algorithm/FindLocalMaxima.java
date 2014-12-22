@@ -10,7 +10,7 @@
  *
  */
 
-package edu.valelab.gaussianfit;
+package edu.valelab.gaussianfit.algorithm;
 
 import ij.ImagePlus;
 import ij.plugin.ImageCalculator;
@@ -25,8 +25,8 @@ import java.awt.Rectangle;
  * @author nico
  */
 public class FindLocalMaxima {
-   private static GaussianBlur filter_ = new GaussianBlur();
-   private static ImageCalculator ic_ = new ImageCalculator();
+   private static final GaussianBlur filter_ = new GaussianBlur();
+   private static final ImageCalculator ic_ = new ImageCalculator();
    
    public enum FilterType {
       NONE,
@@ -40,6 +40,7 @@ public class FindLocalMaxima {
     * @param iPlus - ImagePlus object in which to look for local maxima
     * @param n - minimum distance to other local maximum
     * @param threshold - value below which a maximum will be rejected
+    * @param filterType - Prefilter the image.  Either none or Gaussian1_5
     * @return Polygon with maxima 
     */
    public static Polygon FindMax(ImagePlus iPlus, int n, int threshold, FilterType filterType) {

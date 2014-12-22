@@ -1,8 +1,9 @@
 /**
  * Utility function used in calculation of Power Spectra
  */
-package edu.valelab.gaussianfit;
+package edu.valelab.gaussianfit.algorithm;
 
+import edu.valelab.gaussianfit.DataCollectionForm;
 import edu.valelab.gaussianfit.data.SpotData;
 import edu.valelab.gaussianfit.data.RowData;
 import org.apache.commons.math.complex.Complex;

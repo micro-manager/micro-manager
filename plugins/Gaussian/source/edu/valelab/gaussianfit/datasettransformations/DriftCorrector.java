@@ -4,7 +4,7 @@ package edu.valelab.gaussianfit.datasettransformations;
 import edu.valelab.gaussianfit.DataCollectionForm;
 import edu.valelab.gaussianfit.data.SpotData;
 import edu.valelab.gaussianfit.DataCollectionForm.Coordinates;
-import edu.valelab.gaussianfit.JitterDetector;
+import edu.valelab.gaussianfit.algorithm.JitterDetector;
 import static edu.valelab.gaussianfit.DataCollectionForm.getInstance;
 import edu.valelab.gaussianfit.data.RowData;
 import ij.process.ByteProcessor;
