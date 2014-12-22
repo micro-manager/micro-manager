@@ -75,11 +75,16 @@ public class ContrastPanel extends JPanel {
    private Color overlayColor_ = Color.white;
    private Histograms currentHistograms_;
    private VirtualAcquisitionDisplay currentDisplay_;
+   private HistogramControlsState histControlsState_;
 
    public ContrastPanel() {
       initializeGUI();
       prefs_ = Preferences.userNodeForPackage(this.getClass());
       initializeHistogramDisplayArea();
+   }
+   
+   public HistogramControlsState getHistogramControlsState() {
+      return histControlsState_;
    }
 
    private void initializeHistogramDisplayArea() {
@@ -159,24 +164,21 @@ public class ContrastPanel extends JPanel {
    }
 
    private void loadControlsStates() {
-      HistogramControlsState state;
-
-      if (currentDisplay_ != null) {
-         state = currentDisplay_.getHistogramControlsState();
-      } else {
-         state = createDefaultControlsState();
+      if (currentDisplay_ == null) {
+         histControlsState_ = createDefaultControlsState();
       }
 
-      logHistCheckBox_.setSelected(state.logHist);
-      rejectPercentSpinner_.setValue(state.percentToIgnore);
-      autostretchCheckBox_.setSelected(state.autostretch);
-      rejectOutliersCheckBox_.setSelected(state.ignoreOutliers);
-      syncChannelsCheckBox_.setSelected(state.syncChannels);
-      slowHistCheckBox_.setSelected(state.slowHist);
 
-      boolean bar = state.scaleBar;
-      int color = state.scaleBarColorIndex;
-      int location = state.scaleBarLocationIndex;
+      logHistCheckBox_.setSelected(histControlsState_.logHist);
+      rejectPercentSpinner_.setValue(histControlsState_.percentToIgnore);
+      autostretchCheckBox_.setSelected(histControlsState_.autostretch);
+      rejectOutliersCheckBox_.setSelected(histControlsState_.ignoreOutliers);
+      syncChannelsCheckBox_.setSelected(histControlsState_.syncChannels);
+      slowHistCheckBox_.setSelected(histControlsState_.slowHist);
+
+      boolean bar = histControlsState_.scaleBar;
+      int color = histControlsState_.scaleBarColorIndex;
+      int location = histControlsState_.scaleBarLocationIndex;
       sizeBarCheckBox_.setSelected(bar);
       sizeBarColorComboBox_.setSelectedIndex(color);
       sizeBarComboBox_.setSelectedIndex(location);
@@ -214,16 +216,15 @@ public class ContrastPanel extends JPanel {
       if (currentDisplay_ == null) {
          return;
       }
-      HistogramControlsState s = currentDisplay_.getHistogramControlsState();
-      s.autostretch = autostretchCheckBox_.isSelected();
-      s.ignoreOutliers = rejectOutliersCheckBox_.isSelected();
-      s.logHist = logHistCheckBox_.isSelected();
-      s.percentToIgnore = (Double) rejectPercentSpinner_.getValue();
-      s.slowHist = slowHistCheckBox_.isSelected();
-      s.syncChannels = syncChannelsCheckBox_.isSelected();
-      s.scaleBar = sizeBarCheckBox_.isSelected();
-      s.scaleBarColorIndex = sizeBarColorComboBox_.getSelectedIndex();
-      s.scaleBarLocationIndex = sizeBarComboBox_.getSelectedIndex();
+      histControlsState_.autostretch = autostretchCheckBox_.isSelected();
+      histControlsState_.ignoreOutliers = rejectOutliersCheckBox_.isSelected();
+      histControlsState_.logHist = logHistCheckBox_.isSelected();
+      histControlsState_.percentToIgnore = (Double) rejectPercentSpinner_.getValue();
+      histControlsState_.slowHist = slowHistCheckBox_.isSelected();
+      histControlsState_.syncChannels = syncChannelsCheckBox_.isSelected();
+      histControlsState_.scaleBar = sizeBarCheckBox_.isSelected();
+      histControlsState_.scaleBarColorIndex = sizeBarColorComboBox_.getSelectedIndex();
+      histControlsState_.scaleBarLocationIndex = sizeBarComboBox_.getSelectedIndex();
    }
 
    private void initializeGUI() {
@@ -512,7 +513,7 @@ public class ContrastPanel extends JPanel {
       currentDisplay_.updateAndDraw(true);
       saveCheckBoxStates();
    }
-
+  
    private void autostretchCheckBoxStateChanged() {
       rejectOutliersCheckBox_.setEnabled(autostretchCheckBox_.isSelected());
       boolean rejectem = rejectOutliersCheckBox_.isSelected() && autostretchCheckBox_.isSelected();
@@ -571,13 +572,14 @@ public class ContrastPanel extends JPanel {
 
    public void imageChanged() {
       if (currentHistograms_ != null) {
+         currentHistograms_.imageChanged();
          ((JPanel) currentHistograms_).repaint();
       }
    }
 
-   public synchronized void displayChanged(VirtualAcquisitionDisplay disp) {
+   public synchronized void displayChanged(VirtualAcquisitionDisplay disp, Histograms hist) {
       currentDisplay_ = disp;
-      currentHistograms_ = disp != null ? disp.getHistograms() : null;
+      currentHistograms_ = hist;
       configureControls();
       showCurrentHistograms();
    }

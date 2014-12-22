@@ -90,6 +90,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
    private VirtualAcquisitionDisplay display_;
    private ImagePlus img_;
    private MMImageCache cache_;
+   private ContrastPanel cp_;
    
    private static final byte[][] fireLUT_;
    static {
@@ -116,8 +117,9 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
       }
    }
 
-   public SingleChannelHistogram(VirtualAcquisitionDisplay disp) {
+   public SingleChannelHistogram(VirtualAcquisitionDisplay disp, ContrastPanel cp) {
       super();
+      cp_ = cp;
       display_ = disp;
       img_ = disp.getImagePlus();
       cache_ = disp.getImageCache();
@@ -635,7 +637,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
             contrastMax_++;
          }
       }
-      if (display_.getHistogramControlsState().ignoreOutliers) {
+      if (cp_.getHistogramControlsState().ignoreOutliers) {
          if (contrastMin_ < minAfterRejectingOutliers_) {
             if (0 < minAfterRejectingOutliers_) {
                contrastMin_ = (int) minAfterRejectingOutliers_;
@@ -656,7 +658,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
 
    private void setFullScale() {
       setHistMaxAndBinSize();
-      display_.disableAutoStretchCheckBox();
+      cp_.disableAutostretch();
       contrastMin_ = 0;
       contrastMax_ = histMax_;
    }
@@ -666,7 +668,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
         boolean update = true;
         if (display_.acquisitionIsRunning() ||
                 (MMStudio.getInstance().isLiveModeOn())) {
-            if (display_.getHistogramControlsState().slowHist) {
+            if (cp_.getHistogramControlsState().slowHist) {
                 long time = System.currentTimeMillis();
                 if (time - lastUpdateTime_ < SLOW_HIST_UPDATE_INTERVAL_MS) {
                     update = false;
@@ -677,8 +679,8 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
         }
 
         if (update) {
-            calcAndDisplayHistAndStats(display_.isActiveDisplay());
-            if (display_.getHistogramControlsState().autostretch) {
+            calcAndDisplayHistAndStats(true);
+            if (cp_.getHistogramControlsState().autostretch) {
                 autostretch();
             }
             applyLUTToImage();
@@ -694,12 +696,12 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
      
       int imgWidth = img_.getWidth();
       int imgHeight = img_.getHeight();
-      if (display_.getHistogramControlsState().ignoreOutliers) {
+      if (cp_.getHistogramControlsState().ignoreOutliers) {
          // todo handle negative values
          maxAfterRejectingOutliers_ = rawHistogram.length;
          // specified percent of pixels are ignored in the automatic contrast setting
          int totalPoints = imgHeight * imgWidth;
-         HistogramUtils hu = new HistogramUtils(rawHistogram, totalPoints, 0.01*display_.getHistogramControlsState().percentToIgnore);
+         HistogramUtils hu = new HistogramUtils(rawHistogram, totalPoints, 0.01*cp_.getHistogramControlsState().percentToIgnore);
          minAfterRejectingOutliers_ = hu.getMinAfterRejectingOutliers();
          maxAfterRejectingOutliers_ = hu.getMaxAfterRejectingOutliers();
       }
@@ -717,7 +719,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
             histogram[i] += rawHistVal;
          }
          total += histogram[i];
-         if (display_.getHistogramControlsState().logHist) {
+         if (cp_.getHistogramControlsState().logHist) {
             histogram[i] = histogram[i] > 0 ? (int) (1000 * Math.log(histogram[i])) : 0;
          }
       }
@@ -768,7 +770,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
    
    @Override
    public void contrastMinInput(int min) {     
-      display_.disableAutoStretchCheckBox();
+      cp_.disableAutostretch();
       
       contrastMin_ = min;
       if (contrastMin_ >= maxIntensity_) {
@@ -786,7 +788,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
    
    @Override
    public void contrastMaxInput(int max) {     
-      display_.disableAutoStretchCheckBox();
+      cp_.disableAutostretch();
       contrastMax_ = max;
       if (contrastMax_ > maxIntensity_) {
          contrastMax_ = maxIntensity_;
@@ -803,7 +805,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
 
    @Override
    public void onLeftCursor(double pos) {
-      display_.disableAutoStretchCheckBox();
+      cp_.disableAutostretch();
       
       contrastMin_ = (int) (Math.max(0, pos) * binSize_);
       if (contrastMin_ >= maxIntensity_) {
@@ -818,7 +820,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
 
    @Override
    public void onRightCursor(double pos) {
-      display_.disableAutoStretchCheckBox();
+      cp_.disableAutostretch();
 
       contrastMax_ = (int) (Math.min(255, pos) * binSize_);
       if (contrastMax_ < 1) {
@@ -858,7 +860,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
    }
 
    @Override
-   public void setupChannelControls(MMImageCache cache) {
+   public void setupChannelControls(MMImageCache cache, ContrastPanel cp) {
    }
 
 }

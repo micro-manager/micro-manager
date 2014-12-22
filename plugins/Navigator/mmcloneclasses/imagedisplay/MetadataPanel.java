@@ -21,6 +21,7 @@
 //
 package mmcloneclasses.imagedisplay;
 
+import edu.mines.jtk.dsp.Histogram;
 import ij.ImagePlus;
 import ij.gui.ImageWindow;
 import java.awt.Font;
@@ -39,6 +40,9 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableModel;
 import mmcloneclasses.acquisition.MMImageCache;
 import mmcloneclasses.graph.ContrastPanel;
+import mmcloneclasses.graph.MultiChannelHistograms;
+import mmcloneclasses.graph.SingleChannelHistogram;
+import mmcloneclasses.internalinterfaces.Histograms;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.utils.GUIUtils;
@@ -46,12 +50,8 @@ import org.micromanager.utils.ImageFocusListener;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
 
-/**
- *
- * @author arthur
- */
-public class MetadataPanel extends JPanel
-        implements ImageFocusListener {
+
+public class MetadataPanel extends JPanel  {
 
    private JSplitPane CommentsSplitPane;
    private JLabel imageCommentsLabel;
@@ -81,18 +81,34 @@ public class MetadataPanel extends JPanel
    private ImageWindow currentWindow_;
    private VirtualAcquisitionDisplay currentDisplay_;
    private Timer updateTimer_;
+   private Histograms histograms_;
 
    /** Creates new form MetadataPanel */
-   public MetadataPanel() {
+   public MetadataPanel(ImageWindow win) {
       imageMetadataModel_ = new MetadataTableModel();
       summaryMetadataModel_ = new MetadataTableModel();
       makeContrastPanel();
       initialize();
-      GUIUtils.registerImageFocusListener(this);
       imageMetadataTable.setModel(imageMetadataModel_);
       summaryMetadataTable.setModel(summaryMetadataModel_);
       addTextChangeListeners();
       addFocusListeners();
+      //setup for use with a single display
+      currentWindow_ = win;
+      currentDisplay_ = getVirtualAcquisitionDisplay(win.getImagePlus());
+      summaryCommentsTextArea.setText(currentDisplay_.getSummaryComment());
+      imageCommentsTextArea.setText(currentDisplay_.getImageComment());
+      if (currentDisplay_.getNumChannels() == 1) {
+         histograms_ = new SingleChannelHistogram(currentDisplay_, contrastPanel_);
+      } else {
+         histograms_ = new MultiChannelHistograms(currentDisplay_, contrastPanel_);
+      }
+      contrastPanel_.displayChanged(currentDisplay_, histograms_);
+      imageChangedUpdate(currentDisplay_);
+   }
+   
+   public void applyLUTToImage() {
+      histograms_.applyLUTToImage();
    }
 
    private void makeContrastPanel() {
@@ -462,34 +478,6 @@ public class MetadataPanel extends JPanel
    public ImageWindow getCurrentWindow() {
       return currentWindow_;
    }
-  
-   /**
-    * Adjust which window we are currently displaying metadata for.
-    */
-   public synchronized void displayChanged(ImageWindow win) {
-      if (win == currentWindow_) {
-         return;
-      }
-      currentWindow_ = win;
-      if (win == null || !(win instanceof DisplayWindow)) {
-         currentDisplay_ = null;
-         contrastPanel_.displayChanged(null);
-         imageChangedUpdate(currentDisplay_);
-         return;
-      }
-    
-      currentDisplay_ = getVirtualAcquisitionDisplay(win.getImagePlus()); 
-      summaryCommentsTextArea.setText(currentDisplay_.getSummaryComment());
-      imageCommentsTextArea.setText(currentDisplay_.getImageComment());
-      contrastPanel_.displayChanged(currentDisplay_);
-      
-      imageChangedUpdate(currentDisplay_);
-   }
-
-   @Override
-   public void focusReceived(ImageWindow focusedWindow) {
-      displayChanged(focusedWindow);
-   }
 
    private VirtualAcquisitionDisplay getVirtualAcquisitionDisplay(ImagePlus imgp) {
       if (imgp == null) {
@@ -510,7 +498,7 @@ public class MetadataPanel extends JPanel
     */
    public void imageChangedUpdate(final VirtualAcquisitionDisplay disp) { 
       int tabSelected = tabbedPane.getSelectedIndex();
-      if (disp == null || !disp.isActiveDisplay()) {
+      if (disp == null ) {
          imageMetadataModel_.setMetadata(null);
          summaryMetadataModel_.setMetadata(null);
          summaryCommentsTextArea.setText("");
@@ -562,8 +550,8 @@ public class MetadataPanel extends JPanel
       }
    }
    
-   public ContrastPanel getContrastPanel() {
-       return contrastPanel_;
+   public void setDisplayMode(int mode) {
+      contrastPanel_.setDisplayMode(mode);
    }
    
    public void redrawSizeBar() {

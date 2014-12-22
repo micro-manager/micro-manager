@@ -33,6 +33,7 @@ import javax.swing.*;
 import mmcloneclasses.acquisition.MMImageCache;
 import mmcloneclasses.graph.HistogramPanel.CursorListener;
 import mmcloneclasses.imagedisplay.MMCompositeImage;
+import mmcloneclasses.imagedisplay.MetadataPanel;
 import mmcloneclasses.imagedisplay.VirtualAcquisitionDisplay;
 import mmcorej.CMMCore;
 import org.json.JSONArray;
@@ -86,8 +87,13 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    final private int bitDepth_;
    private Color color_;
    private String name_;
+   private HistogramControlsState histControlState_;
+   private ContrastPanel contrastPanel_;
 
-   public ChannelControlPanel(int channelIndex, MultiChannelHistograms mcHistograms, VirtualAcquisitionDisplay disp) {
+   public ChannelControlPanel(int channelIndex, MultiChannelHistograms mcHistograms, VirtualAcquisitionDisplay disp,
+           ContrastPanel contrastPanel) {
+      histControlState_ = contrastPanel.getHistogramControlsState();
+      contrastPanel_ = contrastPanel;
       display_ = disp;
       img_ = (CompositeImage) disp.getHyperImage();
       cache_ = disp.getImageCache(); 
@@ -188,7 +194,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
          @Override
          public void actionPerformed(final ActionEvent e) {
-            if (display_.getHistogramControlsState().syncChannels) {
+            if (histControlState_.syncChannels) {
                mcHistograms_.updateOtherDisplayCombos(histRangeComboBox_.getSelectedIndex());
             }
             displayComboAction();
@@ -377,7 +383,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    private void fullButtonAction() {
-      if (display_.getHistogramControlsState().syncChannels) {
+      if (histControlState_.syncChannels) {
          mcHistograms_.fullScaleChannels();
       } else {
          setFullScale();
@@ -467,7 +473,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    public void setFullScale() {
-      display_.disableAutoStretchCheckBox();
+      contrastPanel_.disableAutostretch();
       contrastMin_ = 0;
       contrastMax_ = histMax_;
    }
@@ -482,7 +488,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
               contrastMax_++;
           }
       }
-      if (display_.getHistogramControlsState().ignoreOutliers) {
+      if (histControlState_.ignoreOutliers) {
          if (contrastMin_ < minAfterRejectingOutliers_) {
             if (0 < minAfterRejectingOutliers_) {
                contrastMin_ = minAfterRejectingOutliers_;
@@ -676,12 +682,12 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       if (rawHistogram[0] == imgWidth * imgHeight) {
          return;  //Blank pixels 
       }
-      if (display_.getHistogramControlsState().ignoreOutliers) {
+      if (histControlState_.ignoreOutliers) {
          // todo handle negative values
          maxAfterRejectingOutliers_ = rawHistogram.length;
          // specified percent of pixels are ignored in the automatic contrast setting
          int totalPoints = imgHeight * imgWidth;
-         HistogramUtils hu = new HistogramUtils(rawHistogram, totalPoints, 0.01*display_.getHistogramControlsState().percentToIgnore);
+         HistogramUtils hu = new HistogramUtils(rawHistogram, totalPoints, 0.01*histControlState_.percentToIgnore);
          minAfterRejectingOutliers_ = hu.getMinAfterRejectingOutliers();
          maxAfterRejectingOutliers_ = hu.getMaxAfterRejectingOutliers();
       }
@@ -707,7 +713,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             }
          }
          total += histogram[i];
-         if (display_.getHistogramControlsState().logHist) {
+         if (histControlState_.logHist) {
             histogram[i] = histogram[i] > 0 ? (int) (1000 * Math.log(histogram[i])) : 0;
          }
       }
@@ -751,7 +757,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
    
    public void contrastMaxInput(int max) {
-      display_.disableAutoStretchCheckBox();
+      contrastPanel_.disableAutostretch();
       contrastMax_ = max;
       if (contrastMax_ > maxIntensity_ ) {
          contrastMax_ = maxIntensity_;
@@ -767,7 +773,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    
    @Override
    public void contrastMinInput(int min) {    
-      display_.disableAutoStretchCheckBox();
+      contrastPanel_.disableAutostretch();
       contrastMin_ = min;
       if (contrastMin_ >= maxIntensity_)
           contrastMin_ = maxIntensity_ - 1;
@@ -781,7 +787,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    public void onLeftCursor(double pos) {
-      display_.disableAutoStretchCheckBox();
+      contrastPanel_.disableAutostretch();
       contrastMin_ = (int) (Math.max(0, pos) * binSize_);
       if (contrastMin_ >= maxIntensity_)
           contrastMin_ = maxIntensity_ - 1;
@@ -793,7 +799,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
    @Override
    public void onRightCursor(double pos) {
-      display_.disableAutoStretchCheckBox();
+      contrastPanel_.disableAutostretch();
       contrastMax_ = (int) (Math.min(NUM_BINS - 1, pos) * binSize_);
       if (contrastMax_ < 1) {
          contrastMax_ = 1;
@@ -817,7 +823,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    private void applyLUT() {
-      if (display_.getHistogramControlsState().syncChannels) {
+      if (histControlState_.syncChannels) {
          mcHistograms_.applyContrastToAllChannels(contrastMin_, contrastMax_, gamma_);
       } else {
          mcHistograms_.applyLUTToImage();

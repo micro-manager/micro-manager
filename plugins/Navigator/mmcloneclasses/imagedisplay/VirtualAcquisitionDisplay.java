@@ -46,10 +46,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPopupMenu;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
 import javax.swing.event.MouseInputAdapter;
 import mmcloneclasses.acquisition.MMImageCache;
 import mmcloneclasses.events.DisplayCreatedEvent;
@@ -124,13 +121,12 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    private boolean contrastInitialized_ = false; //used for autostretching on window opening
    private boolean firstImage_ = true;
    private String channelGroup_ = "none";
-   private Histograms histograms_;
-   private HistogramControlsState histogramControlsState_;
    private boolean albumSaved_ = false;
    private JPopupMenu saveTypePopup_;
    private final AtomicBoolean updatePixelSize_ = new AtomicBoolean(false);
    private final AtomicLong newPixelSize_ = new AtomicLong();
    private final Object imageReceivedObject_ = new Object();
+   private JFrame metadataWindow_;
 
    private EventBus bus_;
 
@@ -332,7 +328,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       //TODO: our own metadata panel
 //      mdPanel_ = MMStudio.getInstance().getMetadataPanel();
       
-      
+       
       JSONObject summaryMetadata = getSummaryMetadata();
       int numSlices = 1;
       int numFrames = 1;
@@ -417,8 +413,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
 
       applyPixelSizeCalibration(hyperImage_);
 
-      histogramControlsState_ =  mdPanel_.getContrastPanel().createDefaultControlsState();
-      createWindow();
+      createWindows();
       windowToFront();
 
       updateAndDraw(true);
@@ -432,7 +427,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
     * ij.CompositeImage.COLOR
     */
    public void setDisplayMode(int displayMode) {
-      mdPanel_.getContrastPanel().setDisplayMode(displayMode);
+      mdPanel_.setDisplayMode(displayMode);
    }
    
    /**
@@ -784,7 +779,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
 //            setDisplayMode(settings.displayMode_);
 //         }
       }
-      histograms_.applyLUTToImage();
+      mdPanel_.applyLUTToImage();
       contrastInitialized_ = true;
    }
 
@@ -1091,11 +1086,14 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       return hyperImage;
    }
 
-   private void createWindow() {
-      makeHistograms();
+   private void createWindows() {
       DisplayWindow win = new DisplayWindow(hyperImage_, controls_, bus_, new ImageCanvas(hyperImage_));
+      mdPanel_ = new MetadataPanel(win);
 
-      mdPanel_.displayChanged(win);
+      metadataWindow_ = new JFrame();
+      metadataWindow_.add(mdPanel_);
+      metadataWindow_.setVisible(true);
+      metadataWindow_.pack();
       imageChangedUpdate();
       EventManager.post(new DisplayCreatedEvent(this, win));
    }
@@ -1161,7 +1159,8 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       controls_.prepareForClose();
 
       //Call this because for some reason WindowManager doesnt always fire
-      mdPanel_.displayChanged(null);
+      metadataWindow_.setVisible(false);
+      metadataWindow_.dispose();
 
       // Now that we have shut down everything that may access the images,
       // we can close the dataset.
@@ -1344,22 +1343,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       controls_.setImageInfoLabel(status);
    }
 
-   public void setChannelContrast(int channelIndex, int min, int max, double gamma) {
-      histograms_.setChannelContrast(channelIndex, min, max, gamma);
-      histograms_.applyLUTToImage();
-      drawWithoutUpdate();
-   }
-   
-   public void updateChannelNamesAndColors() {
-      if (histograms_ != null && histograms_ instanceof MultiChannelHistograms) {
-         ((MultiChannelHistograms) histograms_).updateChannelNamesAndColors();
-      }
-   }
-   
-   public void setChannelHistogramDisplayMax(int channelIndex, int histMax) {
-      histograms_.setChannelHistogramDisplayMax(channelIndex, histMax);
-   }
-
    /*
     * Called just before image is drawn.  Notifies metadata panel to update
     * metadata or comments if this display is the active window.  Notifies histograms
@@ -1407,23 +1390,15 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
             }
          }
       }
-      if (histograms_ != null) {
-         histograms_.imageChanged();
-      }
-      if (isActiveDisplay()) {
+      if (mdPanel_ != null) {            
          mdPanel_.imageChangedUpdate(this);
          if (updatePixelSize) {
             mdPanel_.redrawSizeBar();
          }
-      }      
+      }
       imageChangedWindowUpdate(); //used to update status line
    }
-   
-   public boolean isActiveDisplay() {
-      if (hyperImage_ == null || hyperImage_.getWindow() == null)
-           return false;
-       return hyperImage_.getWindow() == mdPanel_.getCurrentWindow();
-   }
+
 
    /*
     * Called when contrast changes as a result of user or programmtic input, but underlying pixels 
@@ -1435,33 +1410,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
    }
    
-   private void makeHistograms() {
-      if (getNumChannels() == 1 )
-           histograms_ = new SingleChannelHistogram(this);
-       else
-           histograms_ = new MultiChannelHistograms(this);
-   }
-   
-   public Histograms getHistograms() {
-       return histograms_;
-   }
-   
-   public HistogramControlsState getHistogramControlsState() {
-       return histogramControlsState_;
-   }
-   
-   public void disableAutoStretchCheckBox() {
-       if (isActiveDisplay() ) {
-          mdPanel_.getContrastPanel().disableAutostretch();
-       } else {
-          histogramControlsState_.autostretch = false;
-       }
-   }
-   
-   public ContrastSettings getChannelContrastSettings(int channel) {
-      return histograms_.getChannelContrastSettings(channel);
-   }
-
    /**
     * Retrieve the displayed intensity at the specified coordinates.
     * TODO: for now only returning the value in the first channel.

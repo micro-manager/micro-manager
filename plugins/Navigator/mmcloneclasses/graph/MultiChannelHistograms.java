@@ -43,18 +43,20 @@ public final class MultiChannelHistograms extends JPanel implements Histograms {
    private MMImageCache cache_;
    private CompositeImage img_;
    private boolean updatingCombos_ = false;
+   private HistogramControlsState hcs_;
 
-   public MultiChannelHistograms(VirtualAcquisitionDisplay disp) {
+   public MultiChannelHistograms(VirtualAcquisitionDisplay disp, ContrastPanel contrastPanel) {
       super();
       display_ = disp;
       img_ = (CompositeImage) disp.getImagePlus();
       cache_ = disp.getImageCache();
+      hcs_ = contrastPanel.getHistogramControlsState();
 
-      setupChannelControls(cache_);
+      setupChannelControls(cache_, contrastPanel);
    }
 
    @Override
-   public synchronized void setupChannelControls(MMImageCache cache) {
+   public synchronized void setupChannelControls(MMImageCache cache, ContrastPanel cp) {
       this.removeAll();
       this.invalidate();
 
@@ -81,7 +83,7 @@ public final class MultiChannelHistograms extends JPanel implements Histograms {
       this.setSize(dim);
       ccpList_ = new ArrayList<ChannelControlPanel>();
       for (int i = 0; i < nChannels; ++i) {
-         ChannelControlPanel ccp = new ChannelControlPanel(i, this, display_);
+         ChannelControlPanel ccp = new ChannelControlPanel(i, this, display_, cp);
          this.add(ccp);
          ccpList_.add(ccp);
       }
@@ -187,7 +189,7 @@ public final class MultiChannelHistograms extends JPanel implements Histograms {
      boolean update = true;
         if (display_.acquisitionIsRunning() ||
                 (MMStudio.getInstance().isLiveModeOn())) {
-            if (display_.getHistogramControlsState().slowHist) {
+            if (hcs_.slowHist) {
                 long time = System.currentTimeMillis();
                 if (time - lastUpdateTime_ < SLOW_HIST_UPDATE_INTERVAL_MS) {
                     update = false;
@@ -201,9 +203,9 @@ public final class MultiChannelHistograms extends JPanel implements Histograms {
       
       if (update) {
          for (ChannelControlPanel c : ccpList_) {
-            c.calcAndDisplayHistAndStats(display_.isActiveDisplay());
+            c.calcAndDisplayHistAndStats(true);
             
-            if (display_.getHistogramControlsState().autostretch) {
+            if (hcs_.autostretch) {
                c.autostretch();
             }
             c.applyChannelLUTToImage();

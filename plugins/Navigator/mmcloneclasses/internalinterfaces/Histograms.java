@@ -22,6 +22,7 @@
 package mmcloneclasses.internalinterfaces;
 
 import mmcloneclasses.acquisition.MMImageCache;
+import mmcloneclasses.graph.ContrastPanel;
 import org.micromanager.utils.ContrastSettings;
 
 /**
@@ -95,7 +96,7 @@ public interface Histograms  {
    /*
     * Initializes all channel controls.
     */
-   public void setupChannelControls(MMImageCache cache);
+   public void setupChannelControls(MMImageCache cache, ContrastPanel cp);
 
    public int getNumberOfChannels();
 
