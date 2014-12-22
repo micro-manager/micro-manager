@@ -1,4 +1,4 @@
-package edu.valelab.GaussianFit.spotAssociations;
+package edu.valelab.GaussianFit.spotOperations;
 
 import edu.valelab.GaussianFit.DataCollectionForm;
 import static edu.valelab.GaussianFit.DataCollectionForm.getInstance;

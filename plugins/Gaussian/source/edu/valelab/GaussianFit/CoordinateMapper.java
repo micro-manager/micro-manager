@@ -44,7 +44,14 @@ import org.apache.commons.math.linear.LUDecompositionImpl;
 import org.apache.commons.math.linear.QRDecompositionImpl;
 import org.apache.commons.math.linear.RealMatrix;
 
-
+/**
+ * Provides facilities for mapping one coordinate system into another
+ * Currently implements LWM and affine transforms implementation of 
+ * Local Weighted Mean algorithm,as first described by Ardeshir Goshtasby. 
+ * (1988). Image registration by local approximation methods, 
+ * and used in Matlab by cp2tform
+ * @author Arthur
+ */
 
 public class CoordinateMapper {
    final private ExponentPairs exponentPairs_;

@@ -11,7 +11,6 @@
 package edu.valelab.GaussianFit.data;
 
 import edu.valelab.GaussianFit.DataCollectionForm.Coordinates;
-import edu.valelab.GaussianFit.data.SpotData;
 import edu.valelab.GaussianFit.utils.ListUtils;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
