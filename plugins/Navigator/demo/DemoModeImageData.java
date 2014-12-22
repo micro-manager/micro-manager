@@ -10,6 +10,7 @@ import ij.WindowManager;
 import ij.macro.Interpreter;
 import java.awt.Frame;
 import java.util.Arrays;
+import org.micromanager.utils.JavaUtils;
 
 /**
  *
@@ -20,9 +21,15 @@ public class DemoModeImageData {
    private static ImagePlus img_;
    
    public DemoModeImageData() {
-      //open image
-//      Interpreter.batchMode = true; //so window doesn't show
-      IJ.runMacro("run(\"TIFF Virtual Stack...\", \"open=[C:/Program Files/Micro-Manager-1.4/Navigator demo LN.tif]\");");
+//      Interpreter.batchMode = true; //batch mode makes everything ridiculously slow for some reason
+      
+      if (JavaUtils.isMac()) {
+         //Laptop         
+         IJ.runMacro("run(\"TIFF Virtual Stack...\", \"open=[/Applications/Micro-Manager1.4/Navigator demo LN.tif]\");");
+      } else {
+         //BIDC computer
+         IJ.runMacro("run(\"TIFF Virtual Stack...\", \"open=[C:/Program Files/Micro-Manager-1.4/Navigator demo LN.tif]\");");
+      }
       img_ = WindowManager.getImage("Navigator demo LN.tif");
       img_.getWindow().setState(Frame.ICONIFIED);
    }

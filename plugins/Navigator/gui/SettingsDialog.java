@@ -43,13 +43,14 @@ public class SettingsDialog extends javax.swing.JDialog {
       imageHeight_ = prefs_.getInt(PREF_HEIGHT, 512);
       imageWidth_ = prefs_.getInt(PREF_WIDTH, 512);
       autoButton_.setSelected(prefs_.getBoolean(PREF_AUTO_IMAGE_SIZE, true));
-      autoImageSize_ = prefs_.getBoolean(PREF_AUTO_IMAGE_SIZE, true);     
+      autoImageSize_ = prefs_.getBoolean(PREF_AUTO_IMAGE_SIZE, true); 
+      customButton_.setSelected(!prefs_.getBoolean(PREF_AUTO_IMAGE_SIZE, true));
    }
    
    private void savePrefs() {
       prefs_.putBoolean(PREF_AUTO_IMAGE_SIZE, autoButton_.isSelected());
-      prefs_.putInt(PREF_WIDTH, (Integer) imageWidthSpinner_.getValue());
-      prefs_.putInt(PREF_HEIGHT, (Integer) imageHeightSpinner_.getValue());
+      prefs_.putInt(PREF_WIDTH, imageWidth_);
+      prefs_.putInt(PREF_HEIGHT, imageHeight_);
    }
    
    public static boolean getAutoImageSize() {
@@ -240,26 +241,23 @@ public class SettingsDialog extends javax.swing.JDialog {
 
    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
       this.setVisible(false);
+      savePrefs();
    }//GEN-LAST:event_jButton2ActionPerformed
 
    private void customButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_customButton_ActionPerformed
       autoImageSize_ = !customButton_.isSelected();
-      savePrefs();
    }//GEN-LAST:event_customButton_ActionPerformed
 
    private void autoButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_autoButton_ActionPerformed
      autoImageSize_ = autoButton_.isSelected();
-     savePrefs();
    }//GEN-LAST:event_autoButton_ActionPerformed
 
    private void imageHeightSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_imageHeightSpinner_StateChanged
       imageHeight_ = (Integer) imageHeightSpinner_.getValue();
-      savePrefs();
    }//GEN-LAST:event_imageHeightSpinner_StateChanged
 
    private void imageWidthSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_imageWidthSpinner_StateChanged
       imageWidth_ = (Integer) imageWidthSpinner_.getValue();
-      savePrefs();
    }//GEN-LAST:event_imageWidthSpinner_StateChanged
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

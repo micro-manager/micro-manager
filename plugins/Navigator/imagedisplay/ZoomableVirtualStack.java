@@ -9,9 +9,9 @@ import acq.ExploreAcquisition;
 import acq.FixedAreaAcquisition;
 import acq.MultiResMultipageTiffStorage;
 import java.awt.Point;
+import mmcloneclasses.imagedisplay.AcquisitionVirtualStack;
+import mmcloneclasses.imagedisplay.VirtualAcquisitionDisplay;
 import mmcorej.TaggedImage;
-import org.micromanager.imagedisplay.AcquisitionVirtualStack;
-import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
 import org.micromanager.api.TaggedImageStorage;
 
 /**

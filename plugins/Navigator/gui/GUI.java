@@ -65,7 +65,7 @@ public class GUI extends javax.swing.JFrame {
       this.setTitle("5D Navigator " + version);
       try {
          String s = InetAddress.getLocalHost().getHostName();
-         if (s.equals("BIDC-Sebastian")) {
+         if (s.equals("BIDC-Sebastian") || s.startsWith("Henrys-MacBook-Pro")) {
             SettingsDialog.setDemoMode(true);
          }
       } catch (Exception e) {}
@@ -561,8 +561,8 @@ public class GUI extends javax.swing.JFrame {
                     .addGroup(timePointsPanel_Layout.createSequentialGroup()
                         .addComponent(timeIntervalTextField_, javax.swing.GroupLayout.PREFERRED_SIZE, 68, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(timeIntevalUnitCombo_, javax.swing.GroupLayout.PREFERRED_SIZE, 51, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(33, Short.MAX_VALUE))
+                        .addComponent(timeIntevalUnitCombo_, javax.swing.GroupLayout.PREFERRED_SIZE, 61, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(23, Short.MAX_VALUE))
         );
         timePointsPanel_Layout.setVerticalGroup(
             timePointsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -964,7 +964,7 @@ public class GUI extends javax.swing.JFrame {
                         .addComponent(newChannelButton_)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(removeChannelButton_)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 275, Short.MAX_VALUE)
                         .addComponent(jLabel3)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(jComboBox2, javax.swing.GroupLayout.PREFERRED_SIZE, 107, javax.swing.GroupLayout.PREFERRED_SIZE))

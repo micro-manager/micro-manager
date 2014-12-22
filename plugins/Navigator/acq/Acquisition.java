@@ -7,6 +7,7 @@ import java.awt.Color;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
+import mmcloneclasses.acquisition.MMImageCache;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
@@ -14,9 +15,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.MMStudio;
 import org.micromanager.acquisition.MMAcquisition;
-import org.micromanager.acquisition.MMImageCache;
-import org.micromanager.api.ImageCache;
-import org.micromanager.api.ImageCacheListener;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
 
@@ -81,7 +79,7 @@ public abstract class Acquisition {
       JSONObject summaryMetadata = makeSummaryMD(1, (int) core_.getNumberOfCameraChannels(), name);
 //         JSONObject summaryMetadata = makeSummaryMD(1,2);
       MultiResMultipageTiffStorage storage = new MultiResMultipageTiffStorage(dir, true, summaryMetadata, xOverlap, yOverlap, pixelSizeConfig_);
-      ImageCache imageCache = new MMImageCache(storage);
+      MMImageCache imageCache = new MMImageCache(storage);
       imageCache.setSummaryMetadata(summaryMetadata);
       posManager_ = storage.getPositionManager();
       new DisplayPlus(imageCache, this, summaryMetadata, storage);
