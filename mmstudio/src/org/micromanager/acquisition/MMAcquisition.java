@@ -364,6 +364,11 @@ public class MMAcquisition {
                }
             }
          }
+         // If we don't ensure that bit depth is initialized, then the
+         // histograms will have problems down the road.
+         if (bitDepth_ == 0) {
+            bitDepth_ = (int) core.getImageBitDepth();
+         }
          createDefaultAcqSettings(imageCache_);
       }
 
