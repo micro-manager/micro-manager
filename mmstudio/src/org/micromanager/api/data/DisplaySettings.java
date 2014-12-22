@@ -35,7 +35,6 @@ public interface DisplaySettings {
       DisplaySettingsBuilder channelGammas(Double[] channelGammas);
       DisplaySettingsBuilder channelDisplayModeIndex(Integer channelDisplayModeIndex);
       DisplaySettingsBuilder histogramUpdateRate(Double histogramUpdateRate);
-      DisplaySettingsBuilder linkedAxes(String[] linkedChannels);
       DisplaySettingsBuilder shouldSyncChannels(Boolean shouldSyncChannels);
       DisplaySettingsBuilder scaleBarColorIndex(Integer scaleBarColorIndex);
       DisplaySettingsBuilder scaleBarLocationIndex(Integer scaleBarLocationIndex);
@@ -72,11 +71,6 @@ public interface DisplaySettings {
      * seconds (set to 0 for continuous update, or any negative value to
      * disable updates altogether) */
    public Double getHistogramUpdateRate();
-   /** A list of axis names whose displays are linked (so for example, if the
-     * Z axis is linked, then all open displays will show the same position
-     * along the Z axis.
-     */
-   public String[] getLinkedAxes();
    /** Whether histogram settings should be synced across channels */
    public Boolean getShouldSyncChannels();
    /** Controls the color of the scale bar overlay as an index into its
