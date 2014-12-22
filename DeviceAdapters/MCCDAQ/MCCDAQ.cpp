@@ -32,7 +32,6 @@ const int BOARDREADY = 100;
 typedef struct tag_board {
    int initialized;		/* board has been initialized == BOARDREADY */
    int board_num;         /* board number            */
-   int analog_range;	/* voltage range for analog output */
    int status;       /* board error status       */
 } MCCBoard;
 
@@ -67,17 +66,15 @@ using namespace std;
 
 /*
  * Initilize the global board handle
- * voltMode should be e.g. UNI5VOLTS, UNI10VOLTS, etc.
  */
-int InitializeTheBoard(int voltMode)
+int InitializeTheBoard()
 {
    if (board.initialized == BOARDREADY)
       return DEVICE_OK;
 
    // initialize the board. Use board number 0
-   // #TODO Load board number, voltage range as a parameter
+   // #TODO Load board number as a parameter
    board.board_num = 0;
-   board.analog_range = voltMode;
 
    board.initialized = BOARDREADY;
 
@@ -161,10 +158,6 @@ void MCCDaqDA::GetName(char* name) const
 
 int MCCDaqDA::Initialize()
 {
-   // obtain scaling info
-   minV_ = 0.0;
-   maxV_ = 5.0;
-
    // set property list
    // -----------------
    
@@ -185,6 +178,10 @@ int MCCDaqDA::Initialize()
    if (nRet != DEVICE_OK)
       return nRet;
 
+   // obtain scaling info
+   minV_ = 0.0;
+   maxV_ = 5.0;
+
    nRet = GetProperty(g_PropertyMin, minV_);
    assert (nRet == DEVICE_OK);
 
@@ -198,51 +195,51 @@ int MCCDaqDA::Initialize()
    // There are a ton of supported voltage modes, and we can't use a switch
    // statement because of the floating point nature. This approach involves
    // a lot of redundant assignments but is straightforward.
-   int voltMode = UNIPT01VOLTS;
+   voltMode_ = UNIPT01VOLTS;
    if (maxV_ > .01) {
-      voltMode = UNIPT02VOLTS;
+      voltMode_ = UNIPT02VOLTS;
    }
    if (maxV_ > .02) {
-      voltMode = UNIPT05VOLTS;
+      voltMode_ = UNIPT05VOLTS;
    }
    if (maxV_ > .05) {
-      voltMode = UNIPT1VOLTS;
+      voltMode_ = UNIPT1VOLTS;
    }
    if (maxV_ > .1) {
-      voltMode = UNIPT2VOLTS;
+      voltMode_ = UNIPT2VOLTS;
    }
    if (maxV_ > .2) {
-      voltMode = UNIPT25VOLTS;
+      voltMode_ = UNIPT25VOLTS;
    }
    if (maxV_ > .25) {
-      voltMode = UNIPT5VOLTS;
+      voltMode_ = UNIPT5VOLTS;
    }
    if (maxV_ > .5) {
-      voltMode = UNI1VOLTS;
+      voltMode_ = UNI1VOLTS;
    }
    if (maxV_ > 1) {
-      voltMode = UNI1PT25VOLTS;
+      voltMode_ = UNI1PT25VOLTS;
    }
    if (maxV_ > 1.25) {
-      voltMode = UNI1PT67VOLTS;
+      voltMode_ = UNI1PT67VOLTS;
    }
    if (maxV_ > 1.67) {
-      voltMode = UNI2VOLTS;
+      voltMode_ = UNI2VOLTS;
    }
    if (maxV_ > 2) {
-      voltMode = UNI2PT5VOLTS;
+      voltMode_ = UNI2PT5VOLTS;
    }
    if (maxV_ > 2.5) {
-      voltMode = UNI4VOLTS;
+      voltMode_ = UNI4VOLTS;
    }
    if (maxV_ > 4) {
-      voltMode = UNI5VOLTS;
+      voltMode_ = UNI5VOLTS;
    }
    if (maxV_ > 5) {
-      voltMode = UNI10VOLTS;
+      voltMode_ = UNI10VOLTS;
    }
 
-   int ret = InitializeTheBoard(voltMode);
+   int ret = InitializeTheBoard();
    if (ret != DEVICE_OK)
       return ret;
 
@@ -275,7 +272,7 @@ int MCCDaqDA::SetSignal(double volts)
 
 int MCCDaqDA::WriteToPort(unsigned short value)
 {
-   int ret = cbAOut(board.board_num, channel_, board.analog_range, value);
+   int ret = cbAOut(board.board_num, channel_, voltMode_, value);
    if (ret != NOERRORS)
       return ret;
 
@@ -371,7 +368,7 @@ bool MCCDaqShutter::Busy()
 
 int MCCDaqShutter::Initialize()
 {
-   int ret = InitializeTheBoard(UNI5VOLTS);
+   int ret = InitializeTheBoard();
    if (ret != DEVICE_OK)
       return ret;
 

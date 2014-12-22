@@ -149,6 +149,7 @@ private:
    bool gateOpen_;
    double minV_;
    double maxV_;
+   int voltMode_;
 };
 
 #endif //_MCCDAQ_H_
