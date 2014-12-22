@@ -78,9 +78,10 @@ import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.DataManager;
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.DatastoreLockedException;
-import org.micromanager.api.data.DisplaySettings;
 import org.micromanager.api.data.Image;
 import org.micromanager.api.DataProcessor;
+import org.micromanager.api.display.DisplayManager;
+import org.micromanager.api.display.DisplaySettings;
 import org.micromanager.api.display.DisplayWindow;
 import org.micromanager.api.events.ExposureChangedEvent;
 import org.micromanager.api.events.PropertiesChangedEvent;
@@ -107,6 +108,7 @@ import org.micromanager.dialogs.MMIntroDlg;
 import org.micromanager.dialogs.RegistrationDlg;
 import org.micromanager.events.EventManager;
 
+import org.micromanager.imagedisplay.dev.DefaultDisplayManager;
 import org.micromanager.imagedisplay.dev.DefaultDisplayWindow;
 
 import org.micromanager.logging.LogFileManager;
@@ -170,6 +172,7 @@ public class MMStudio implements ScriptInterface {
    private CalibrationListDlg calibrationListDlg_;
    private AcqControlDlg acqControlWin_;
    private DataManager dataManager_;
+   private DisplayManager displayManager_;
    private PluginManager pluginManager_;
    private final SnapLiveManager snapLiveManager_;
    private final ToolsMenu toolsMenu_;
@@ -433,6 +436,7 @@ public class MMStudio implements ScriptInterface {
       engine_.setParentGUI(studio_);
 
       dataManager_ = new DefaultDataManager(this);
+      displayManager_ = new DefaultDisplayManager();
 
       loadMRUConfigFiles();
       afMgr_ = new AutofocusManager(studio_);
@@ -1499,28 +1503,6 @@ public class MMStudio implements ScriptInterface {
       return true;
    }
 
-   //TODO: Deprecated @Override
-   // Last I checked, this is only used by the SlideExplorer plugin.
-   public ContrastSettings getContrastSettings() {
-      DisplaySettings settings = getCurrentWindow().getDatastore().getDisplaySettings();
-      int min = 0;
-      int max = 0;
-      double gamma = 1;
-      Integer[] mins = settings.getChannelContrastMins();
-      if (mins != null && mins.length > 0) {
-         min = mins[0];
-      }
-      Integer[] maxes = settings.getChannelContrastMaxes();
-      if (maxes != null && maxes.length > 0) {
-         max = maxes[0];
-      }
-      Double[] gammas = settings.getChannelGammas();
-      if (gammas != null && gammas.length > 0) {
-         gamma = gammas[0];
-      }
-      return new ContrastSettings(min, max, gamma);
-   }
-   
    public boolean getIsProgramRunning() {
       return isProgramRunning_;
    }
@@ -2561,21 +2543,16 @@ public class MMStudio implements ScriptInterface {
 
    @Override
    public void autostretchCurrentWindow() {
-      Datastore store = getCurrentWindow().getDatastore();
-      DisplaySettings settings = store.getDisplaySettings();
+      DisplayWindow display = getCurrentWindow();
+      DisplaySettings settings = display.getDisplaySettings();
       if (settings.getShouldAutostretch() != true) {
          // Autostretch is not currently enabled; toggle it to perform the
          // autostretching.
          // TODO: this seems like a rather hacky way to do things.
-         try {
-            settings = settings.copy().shouldAutostretch(true).build();
-            store.setDisplaySettings(settings);
-            settings = settings.copy().shouldAutostretch(false).build();
-            store.setDisplaySettings(settings);
-         }
-         catch (DatastoreLockedException e) {
-            ReportingUtils.showError("Can't autostretch as the datastore is locked.");
-         }
+         settings = settings.copy().shouldAutostretch(true).build();
+         display.setDisplaySettings(settings);
+         settings = settings.copy().shouldAutostretch(false).build();
+         display.setDisplaySettings(settings);
       }
    }
    
@@ -2597,5 +2574,10 @@ public class MMStudio implements ScriptInterface {
    @Override
    public DataManager data() {
       return dataManager_;
+   }
+
+   @Override
+   public DisplayManager display() {
+      return displayManager_;
    }
 }

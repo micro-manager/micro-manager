@@ -1,4 +1,4 @@
-package org.micromanager.api.data;
+package org.micromanager.api.display;
 
 import java.awt.Color;
 
@@ -7,8 +7,8 @@ import org.json.JSONObject;
 import org.micromanager.api.MultiStagePosition;
 
 /**
- * This class defines the parameters that control how a given dataset is
- * displayed.
+ * This class defines the parameters that control how a given DisplayWindow
+ * displays data from the Datastore.
  * It is immutable; construct it with a DisplaySettingsBuilder.
  * You are not expected to implement this interface; it is here to describe how
  * you can interact with DisplaySettings created by Micro-Manager itself. If

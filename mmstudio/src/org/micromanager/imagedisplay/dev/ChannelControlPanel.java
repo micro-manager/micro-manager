@@ -31,10 +31,11 @@ import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.DatastoreLockedException;
-import org.micromanager.api.data.DisplaySettings;
 import org.micromanager.api.data.Image;
-import org.micromanager.api.data.NewDisplaySettingsEvent;
+import org.micromanager.api.display.NewDisplaySettingsEvent;
 import org.micromanager.api.data.NewImageEvent;
+import org.micromanager.api.display.DisplaySettings;
+import org.micromanager.api.display.DisplayWindow;
 
 import org.micromanager.data.DefaultCoords;
 import org.micromanager.dialogs.AcqControlDlg;
@@ -62,7 +63,9 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private HistogramPanel histogram_;
    private HistogramsPanel parent_;
    private Datastore store_;
+   private DisplayWindow display_;
    private MMVirtualStack stack_;
+   // TODO: this cached DisplaySettings could potentially get out of sync?
    private DisplaySettings settings_;
    private ImagePlus plus_;
    private CompositeImage composite_;
@@ -95,14 +98,15 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private AtomicBoolean haveInitialized_;
 
    public ChannelControlPanel(int channelIndex, HistogramsPanel parent,
-         Datastore store, MMVirtualStack stack,
+         Datastore store, DisplayWindow display, MMVirtualStack stack,
          ImagePlus plus, EventBus displayBus) {
       haveInitialized_ = new AtomicBoolean(false);
       channelIndex_ = channelIndex;
       parent_ = parent;
       store_ = store;
+      display_ = display;
       stack_ = stack;
-      settings_ = store.getDisplaySettings();
+      settings_ = display.getDisplaySettings();
       plus_ = plus;
       // We may be for a single-channel system or a multi-channel one; the two
       // require different backing objects (ImagePlus vs. CompositeImage).
@@ -133,6 +137,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          initialize();
       }
       store.registerForEvents(this, 100);
+      display.registerForEvents(this);
    }
 
    private void initialize() {
@@ -354,12 +359,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       }
       if (settings_.getShouldAutostretch()) {
          // Disable autostretch now.
-         try {
-            store_.setDisplaySettings(settings_.copy().shouldAutostretch(false).build());
-         }
-         catch (DatastoreLockedException e) {
-            ReportingUtils.logError("Can't turn off autostretch; datastore is locked.");
-         }
+         display_.setDisplaySettings(settings_.copy().shouldAutostretch(false).build());
       }
    }
 
@@ -382,13 +382,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       if (newColor != null) {
          // Update the display settings.
          channelColors[channelIndex_] = newColor;
-         try {
-            store_.setDisplaySettings(
-                  settings_.copy().channelColors(channelColors).build());
-         }
-         catch (DatastoreLockedException e) {
-            ReportingUtils.logError("Can't set new colors because the datastore is locked.");
-         }
+         display_.setDisplaySettings(
+               settings_.copy().channelColors(channelColors).build());
       }
       updateChannelNameAndColorFromCache();
 
@@ -865,12 +860,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    private void disableAutostretch() {
-      try {
-         store_.setDisplaySettings(store_.getDisplaySettings().copy().shouldAutostretch(false).build());
-      }
-      catch (DatastoreLockedException e) {
-         // Just ignore it.
-      }
+      display_.setDisplaySettings(display_.getDisplaySettings().copy().shouldAutostretch(false).build());
    }
 
    /**
@@ -908,5 +898,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
    public void cleanup() {
       store_.unregisterForEvents(this);
+      display_.unregisterForEvents(this);
    }
 }

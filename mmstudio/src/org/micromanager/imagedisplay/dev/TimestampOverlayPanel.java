@@ -27,9 +27,10 @@ import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.Datastore;
-import org.micromanager.api.data.DisplaySettings;
 import org.micromanager.api.data.Image;
 import org.micromanager.api.data.Metadata;
+import org.micromanager.api.display.DisplaySettings;
+import org.micromanager.api.display.DisplayWindow;
 import org.micromanager.api.display.OverlayPanel;
 
 /**
@@ -37,7 +38,6 @@ import org.micromanager.api.display.OverlayPanel;
  */
 public class TimestampOverlayPanel extends OverlayPanel {
    private static int LINE_HEIGHT = 13;
-   private Datastore store_;
    private EventBus displayBus_;
 
    private JCheckBox shouldDraw_;
@@ -48,7 +48,7 @@ public class TimestampOverlayPanel extends OverlayPanel {
    private JComboBox position_;
    private JComboBox color_;
 
-   public TimestampOverlayPanel(Datastore store) {
+   public TimestampOverlayPanel() {
       setBorder(new TitledBorder("Timestamp display"));
       setLayout(new MigLayout("flowx"));
 
@@ -121,24 +121,25 @@ public class TimestampOverlayPanel extends OverlayPanel {
     * provided image's timestamp in normal mode.
     */
    @Override
-   public void drawOverlay(Graphics g, Datastore store, Image image,
+   public void drawOverlay(Graphics g, DisplayWindow display, Image image,
          ImageCanvas canvas) {
       if (!shouldDraw_.isSelected()) {
          return;
       }
       ArrayList<String> timestamps = new ArrayList<String>();
       ArrayList<Color> colors = new ArrayList<Color>();
+      Datastore store = display.getDatastore();
       if (amMultiChannel_.isSelected()) {
          for (int i = 0; i < store.getAxisLength("channel"); ++i) {
             Coords channelCoords = image.getCoords().copy().position("channel", i).build();
             Image channelImage = store.getImage(channelCoords);
             if (channelImage != null) {
-               addTimestamp(channelImage, store, timestamps, colors);
+               addTimestamp(channelImage, display, timestamps, colors);
             }
          }
       }
       else {
-         addTimestamp(image, store, timestamps, colors);
+         addTimestamp(image, display, timestamps, colors);
       }
 
       // This code is copied from the ScaleBarOverlayPanel, and then
@@ -193,7 +194,7 @@ public class TimestampOverlayPanel extends OverlayPanel {
    /**
     * Add the timestamp string and appropriate color to the provided lists.
     */
-   private void addTimestamp(Image image, Datastore store,
+   private void addTimestamp(Image image, DisplayWindow display,
          ArrayList<String> timestamps, ArrayList<Color> colors) {
       // Default to black.
       Color textColor = Color.BLACK;
@@ -206,7 +207,7 @@ public class TimestampOverlayPanel extends OverlayPanel {
          textColor = Color.BLACK;
       }
       else if (textMode.equals("Channel color")) {
-         DisplaySettings settings = store.getDisplaySettings();
+         DisplaySettings settings = display.getDisplaySettings();
          Color[] channelColors = settings.getChannelColors();
          int channel = image.getCoords().getPositionAt("channel");
          if (channelColors != null && channelColors.length >= channel) {

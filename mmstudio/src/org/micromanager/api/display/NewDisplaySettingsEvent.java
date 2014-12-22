@@ -1,9 +1,10 @@
-package org.micromanager.api.data;
+package org.micromanager.api.display;
 
 /**
  * This class signifies that new display settings have been set for a 
- * Datastore.
+ * DisplayWindow.
  */
 public interface NewDisplaySettingsEvent {
    public DisplaySettings getDisplaySettings();
+   public DisplayWindow getDisplay();
 }

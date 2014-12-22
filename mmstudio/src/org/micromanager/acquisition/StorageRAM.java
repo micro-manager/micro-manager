@@ -13,17 +13,14 @@ import mmcorej.TaggedImage;
 
 import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.Datastore;
-import org.micromanager.api.data.DisplaySettings;
 import org.micromanager.api.data.Image;
 import org.micromanager.api.data.Metadata;
-import org.micromanager.api.data.NewDisplaySettingsEvent;
 import org.micromanager.api.data.NewImageEvent;
 import org.micromanager.api.data.NewSummaryMetadataEvent;
 import org.micromanager.api.data.Storage;
 import org.micromanager.api.data.SummaryMetadata;
 
 import org.micromanager.data.DefaultCoords;
-import org.micromanager.data.DefaultDisplaySettings;
 import org.micromanager.data.DefaultImage;
 import org.micromanager.data.DefaultMetadata;
 import org.micromanager.data.DefaultSummaryMetadata;
@@ -40,14 +37,12 @@ public class StorageRAM implements Storage {
    private HashMap<Coords, Image> coordsToImage_;
    private Coords maxIndex_;
    private SummaryMetadata summaryMetadata_;
-   private DisplaySettings displaySettings_;
    private boolean amInDebugMode_ = false;
 
    public StorageRAM(Datastore store) {
       coordsToImage_ = new HashMap<Coords, Image>();
       maxIndex_ = new DefaultCoords.Builder().build();
       summaryMetadata_ = (new DefaultSummaryMetadata.Builder()).build();
-      displaySettings_ = DefaultDisplaySettings.getStandardSettings();
       // It is imperative that we be notified of new images before anyone who
       // wants to retrieve the images from the store is notified.
       store.registerForEvents(this, 0);
@@ -148,19 +143,9 @@ public class StorageRAM implements Storage {
       return summaryMetadata_;
    }
 
-   @Override
-   public DisplaySettings getDisplaySettings() {
-      return displaySettings_;
-   }
-
    @Subscribe
    public void onNewSummary(NewSummaryMetadataEvent event) {
       summaryMetadata_ = event.getSummaryMetadata();
-   }
-
-   @Subscribe
-   public void onNewDisplaySettings(NewDisplaySettingsEvent event) {
-      displaySettings_ = event.getDisplaySettings();
    }
 
    @Subscribe

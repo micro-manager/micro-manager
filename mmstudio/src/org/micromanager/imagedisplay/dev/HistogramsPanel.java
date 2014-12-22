@@ -15,8 +15,9 @@ import javax.swing.JPanel;
 import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.api.data.Datastore;
-import org.micromanager.api.data.DisplaySettings;
 import org.micromanager.api.data.NewImageEvent;
+import org.micromanager.api.display.DisplaySettings;
+import org.micromanager.api.display.DisplayWindow;
 import org.micromanager.api.display.NewImagePlusEvent;
 
 import org.micromanager.internalinterfaces.Histograms;
@@ -26,6 +27,7 @@ import org.micromanager.utils.ReportingUtils;
 public final class HistogramsPanel extends JPanel implements Histograms {
    private ArrayList<ChannelControlPanel> channelPanels_;
    private Datastore store_;
+   private DisplayWindow display_;
    private MMVirtualStack stack_;
    private ImagePlus ijImage_;
    private EventBus displayBus_;
@@ -33,11 +35,12 @@ public final class HistogramsPanel extends JPanel implements Histograms {
    private long lastUpdateTime_ = 0;
    private boolean updatingCombos_ = false;
 
-   public HistogramsPanel(Datastore store, MMVirtualStack stack,
-         ImagePlus ijImage, EventBus displayBus) {
+   public HistogramsPanel(Datastore store, DisplayWindow display,
+         MMVirtualStack stack, ImagePlus ijImage, EventBus displayBus) {
       super();
       store_ = store;
       store_.registerForEvents(this, 100);
+      display_ = display;
       stack_ = stack;
       ijImage_ = ijImage;
       displayBus_ = displayBus;
@@ -68,7 +71,7 @@ public final class HistogramsPanel extends JPanel implements Histograms {
       channelPanels_ = new ArrayList<ChannelControlPanel>();
       for (int i = 0; i < nChannels; ++i) {
          ChannelControlPanel panel = new ChannelControlPanel(i, this, store_,
-               stack_, ijImage_, displayBus_);
+               display_, stack_, ijImage_, displayBus_);
          add(panel, "growy");
          channelPanels_.add(panel);
       }
@@ -210,7 +213,7 @@ public final class HistogramsPanel extends JPanel implements Histograms {
    }
 
    private double getHistogramUpdateRate() {
-      DisplaySettings settings = store_.getDisplaySettings();
+      DisplaySettings settings = display_.getDisplaySettings();
       if (settings == null || settings.getHistogramUpdateRate() == null) {
          // Assume we update every time.
          return 0;

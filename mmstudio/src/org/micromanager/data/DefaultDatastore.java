@@ -9,11 +9,10 @@ import org.micromanager.acquisition.multipagetiff.StorageMultipageTiff;
 import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.DatastoreLockedException;
-import org.micromanager.api.data.DisplaySettings;
 import org.micromanager.api.data.Image;
 import org.micromanager.api.data.Storage;
 import org.micromanager.api.data.SummaryMetadata;
-import org.micromanager.api.display.DisplayWindow;
+import org.micromanager.api.display.DisplaySettings;
 import org.micromanager.events.EventManager;
 import org.micromanager.MMStudio;
 import org.micromanager.utils.FileDialogs;
@@ -38,7 +37,6 @@ public class DefaultDatastore implements Datastore {
    public void copyFrom(Datastore alt) {
       try {
          setSummaryMetadata(alt.getSummaryMetadata());
-         setDisplaySettings(alt.getDisplaySettings());
          for (Coords coords : alt.getUnorderedImageCoords()) {
             putImage(alt.getImage(coords));
          }
@@ -151,22 +149,6 @@ public class DefaultDatastore implements Datastore {
          throw new DatastoreLockedException();
       }
       bus_.post(new NewSummaryMetadataEvent(metadata));
-   }
-
-   @Override
-   public DisplaySettings getDisplaySettings() {
-      if (storage_ != null) {
-         return storage_.getDisplaySettings();
-      }
-      return null;
-   }
-
-   @Override
-   public void setDisplaySettings(DisplaySettings settings) throws DatastoreLockedException {
-      if (isLocked_) {
-         throw new DatastoreLockedException();
-      }
-      bus_.post(new NewDisplaySettingsEvent(settings));
    }
 
    @Override

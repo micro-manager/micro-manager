@@ -43,6 +43,7 @@ import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.DataManager;
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.Image;
+import org.micromanager.api.display.DisplayManager;
 import org.micromanager.api.display.DisplayWindow;
 import org.micromanager.api.display.OverlayPanel;
 import org.micromanager.dialogs.AcqControlDlg;
@@ -781,4 +782,10 @@ public interface ScriptInterface {
     * data constructs.
     */
    public DataManager data();
+
+   /**
+    * Provides access to the DisplayManager instance for accessing
+    * Micro-Manager display constructs.
+    */
+   public DisplayManager display();
 }

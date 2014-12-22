@@ -8,7 +8,6 @@ import java.awt.Graphics;
 
 import javax.swing.JPanel;
 
-import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.Image;
 
 /**
@@ -28,5 +27,6 @@ public abstract class OverlayPanel extends JPanel {
     * Draw the overlay using the provided Graphics object. This is called
     * immediately after the canvas has been drawn.
     */
-   public abstract void drawOverlay(Graphics g, Datastore store, Image image, ImageCanvas canvas);
+   public abstract void drawOverlay(Graphics g, DisplayWindow display,
+         Image image, ImageCanvas canvas);
 }

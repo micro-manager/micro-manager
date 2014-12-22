@@ -1,4 +1,4 @@
-package org.micromanager.data;
+package org.micromanager.imagedisplay.dev;
 
 import java.awt.Color;
 import java.lang.reflect.Field;
@@ -8,7 +8,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import org.micromanager.api.data.DisplaySettings;
+import org.micromanager.api.display.DisplaySettings;
 import org.micromanager.api.MultiStagePosition;
 
 import org.micromanager.utils.ImageUtils;
