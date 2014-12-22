@@ -32,9 +32,6 @@ public class DefaultDisplaySettings implements DisplaySettings {
 
    /**
     * Retrieve the display settings that have been saved in the preferences.
-    * TODO: currently we don't save/restore the linkedAxes property, which is
-    * a String[], for lack of ideas on how to store that in a Preferences
-    * object.
     */
    public static DefaultDisplaySettings getStandardSettings() {
       Builder builder = new Builder();
@@ -124,7 +121,6 @@ public class DefaultDisplaySettings implements DisplaySettings {
       private Double[] channelGammas_ = null;
       private Integer channelDisplayModeIndex_ = null;
       private Double histogramUpdateRate_ = null;
-      private String[] linkedAxes_ = null;
       private Boolean shouldSyncChannels_ = null;
       private Integer scaleBarColorIndex_ = null;
       private Integer scaleBarLocationIndex_ = null;
@@ -180,12 +176,6 @@ public class DefaultDisplaySettings implements DisplaySettings {
       @Override
       public DisplaySettingsBuilder histogramUpdateRate(Double histogramUpdateRate) {
          histogramUpdateRate_ = histogramUpdateRate;
-         return this;
-      }
-
-      @Override
-      public DisplaySettingsBuilder linkedAxes(String[] linkedAxes) {
-         linkedAxes_ = (linkedAxes == null) ? null : linkedAxes.clone();
          return this;
       }
 
@@ -258,7 +248,6 @@ public class DefaultDisplaySettings implements DisplaySettings {
    private Double[] channelGammas_ = null;
    private Integer channelDisplayModeIndex_ = null;
    private Double histogramUpdateRate_ = null;
-   private String[] linkedAxes_ = null;
    private Boolean shouldSyncChannels_ = null;
    private Integer scaleBarColorIndex_ = null;
    private Integer scaleBarLocationIndex_ = null;
@@ -278,7 +267,6 @@ public class DefaultDisplaySettings implements DisplaySettings {
       channelGammas_ = builder.channelGammas_;
       channelDisplayModeIndex_ = builder.channelDisplayModeIndex_;
       histogramUpdateRate_ = builder.histogramUpdateRate_;
-      linkedAxes_ = builder.linkedAxes_;
       shouldSyncChannels_ = builder.shouldSyncChannels_;
       scaleBarColorIndex_ = builder.scaleBarColorIndex_;
       scaleBarLocationIndex_ = builder.scaleBarLocationIndex_;
@@ -324,11 +312,6 @@ public class DefaultDisplaySettings implements DisplaySettings {
    @Override
    public Double getHistogramUpdateRate() {
       return histogramUpdateRate_;
-   }
-
-   @Override
-   public String[] getLinkedAxes() {
-      return linkedAxes_;
    }
 
    @Override
@@ -391,7 +374,6 @@ public class DefaultDisplaySettings implements DisplaySettings {
             .channelGammas(channelGammas_)
             .channelDisplayModeIndex(channelDisplayModeIndex_)
             .histogramUpdateRate(histogramUpdateRate_)
-            .linkedAxes(linkedAxes_)
             .shouldSyncChannels(shouldSyncChannels_)
             .scaleBarColorIndex(scaleBarColorIndex_)
             .scaleBarLocationIndex(scaleBarLocationIndex_)
@@ -436,14 +418,6 @@ public class DefaultDisplaySettings implements DisplaySettings {
          }
          if (tags.has("histogramUpdateRate")) {
             builder.histogramUpdateRate(tags.getDouble("histogramUpdateRate"));
-         }
-         if (tags.has("linkedAxes")) {
-            JSONArray axes = tags.getJSONArray("linkedAxes");
-            String[] linkedAxes = new String[axes.length()];
-            for (int i = 0; i < axes.length(); ++i) {
-               linkedAxes[i] = axes.getString(i);
-            }
-            builder.linkedAxes(linkedAxes);
          }
          if (tags.has("shouldSyncChannels")) {
             builder.shouldSyncChannels(tags.getBoolean("shouldSyncChannels"));
@@ -504,13 +478,6 @@ public class DefaultDisplaySettings implements DisplaySettings {
             result.put("ChContrastMax", channelContrastMaxes_[0]);
          }
          result.put("histogramUpdateRate", histogramUpdateRate_);
-         if (linkedAxes_ != null && linkedAxes_.length > 0) {
-            JSONArray axes = new JSONArray();
-            for (String axis : linkedAxes_) {
-               axes.put(axis);
-            }
-            result.put("linkedAxes", axes);
-         }
          result.put("shouldSyncChannels", shouldSyncChannels_);
          result.put("scaleBarColorIndex", scaleBarColorIndex_);
          result.put("scaleBarLocationIndex", scaleBarLocationIndex_);
