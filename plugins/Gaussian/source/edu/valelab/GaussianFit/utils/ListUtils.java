@@ -58,7 +58,13 @@ public class ListUtils {
       return myStdDev;
    }
    
-   public static double avgList(ArrayList<Double> vals) {
+    /**
+    * Calculates the average of a list of doubles
+    * 
+    * @param vals
+    * @return average
+    */
+   public static double listAvg(List<Double> vals) {
       double result = 0;
       for (Double val : vals) {
          result += val;
@@ -67,8 +73,15 @@ public class ListUtils {
       return result / vals.size();
    }
    
-   
-   public static double stdDevList(ArrayList<Double> vals, double avg) {
+   /**
+    * Returns the Standard Deviation as sqrt( 1/(n-1) sum( square(value - avg)) )
+    * Feeding in parameter avg is just increase performance
+    * 
+    * @param vals - List of doubles
+    * @param avg - Pre-calculated average of this list
+    * @return stddev
+    */
+   public static double listStdDev(List<Double> vals, double avg) {
       double result = 0;
       for (Double val: vals) {
          result += (val - avg) * (val - avg);
@@ -81,5 +94,14 @@ public class ListUtils {
       return Math.sqrt(result);
    }
 
-   
+   /**
+    * Utility function to calculate Standard Deviation
+    * @param list - List of doubles 
+    * @return stdev
+    */
+   private static double listStdDev (List<Double> list) {
+      double avg = listAvg(list);
+      
+      return listStdDev(list, avg);
+   }
 }

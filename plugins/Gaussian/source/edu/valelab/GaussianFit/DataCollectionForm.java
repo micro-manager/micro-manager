@@ -39,12 +39,9 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
 import ij.gui.ImageWindow;
-import ij.gui.MessageDialog;
 import ij.gui.Roi;
-import ij.gui.StackWindow;
 import ij.measure.ResultsTable;
 import ij.process.ImageProcessor;
-import ij.process.ShortProcessor;
 import ij.text.TextPanel;
 import ij.text.TextWindow;
 import java.awt.*;
@@ -1246,8 +1243,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
                   }
                   distances.add(distance);
                }
-               Double avg = listAvg(distances);
-               Double stdDev = listStdDev(distances, avg);
+               Double avg = ListUtils.listAvg(distances);
+               Double stdDev = ListUtils.listStdDev(distances, avg);
 
                // Quality control check
                if (2 * stdDev > avg) {
@@ -1297,259 +1294,20 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
          return;
       }
-
+      
+      final double maxDistance;
+      try {
+         maxDistance = NumberUtils.displayStringToDouble(pairsMaxDistanceField_.getText());
+      } catch (ParseException ex) {
+         ReportingUtils.logError("Error parsing pairs max distance field");
+         return;
+      }
+      
       if (row > -1) {
-
-         Runnable doWorkRunnable = new Runnable() {
-
-            @Override
-            public void run() {
-               ResultsTable rt = new ResultsTable();
-               rt.reset();
-               rt.setPrecision(2);
-               ResultsTable rt2 = new ResultsTable();
-               rt2.reset();
-               rt2.setPrecision(2);
-               int width = rowData_.get(row).width_;
-               int height = rowData_.get(row).height_;
-               double factor = rowData_.get(row).pixelSizeNm_;
-               boolean useS = useSeconds(rowData_.get(row));
-               ij.ImageStack stack = new ij.ImageStack(width, height);
-
-               ImagePlus sp = new ImagePlus("Errors in pairs");
-
-               XYSeries xData = new XYSeries("XError");
-               XYSeries yData = new XYSeries("YError");
-
-
-               ij.IJ.showStatus("Creating Pairs...");
-
-
-               for (int frame = 1; frame <= rowData_.get(row).nrFrames_; frame++) {
-                  ij.IJ.showProgress(frame, rowData_.get(row).nrFrames_);
-                  ImageProcessor ip = new ShortProcessor(width, height);
-                  short pixels[] = new short[width * height];
-                  ip.setPixels(pixels);
-
-                  // Get points from both channels in each frame as ArrayLists        
-                  ArrayList<SpotData> gsCh1 = new ArrayList<SpotData>();
-                  ArrayList<Point2D.Double> xyPointsCh2 = new ArrayList<Point2D.Double>();
-                  for (SpotData gs : rowData_.get(row).spotList_) {
-                     if (gs.getFrame() == frame) {
-                        if (gs.getChannel() == 1) {
-                           gsCh1.add(gs);
-                        } else if (gs.getChannel() == 2) {
-                           Point2D.Double point = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
-                           xyPointsCh2.add(point);
-                        }
-                     }
-                  }
-
-                  if (xyPointsCh2.isEmpty()) {
-                     ReportingUtils.logError("Pairs function in Localization plugin: no points found in second channel in frame " + frame);
-                     continue;
-                  }
-
-                  // Find matching points in the two ArrayLists
-                  Iterator it2 = gsCh1.iterator();
-                  try {
-                     NearestPoint2D np = new NearestPoint2D(xyPointsCh2,
-                             NumberUtils.displayStringToDouble(pairsMaxDistanceField_.getText()));
-
-                     ArrayList<Double> distances = new ArrayList<Double>();
-                     ArrayList<Double> errorX = new ArrayList<Double>();
-                     ArrayList<Double> errorY = new ArrayList<Double>();
-
-                     while (it2.hasNext()) {
-                        SpotData gs = (SpotData) it2.next();
-                        Point2D.Double pCh1 = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
-                        Point2D.Double pCh2 = np.findKDWSE(pCh1);
-                        if (pCh2 != null) {
-                           rt.incrementCounter();
-                           rt.addValue(Terms.POSITION, gs.getPosition());
-                           rt.addValue(Terms.FRAME, gs.getFrame());
-                           rt.addValue(Terms.SLICE, gs.getSlice());
-                           rt.addValue(Terms.CHANNEL, gs.getSlice());
-                           rt.addValue(Terms.XPIX, gs.getX());
-                           rt.addValue(Terms.YPIX, gs.getY());
-                           rt.addValue("X1", pCh1.getX());
-                           rt.addValue("Y1", pCh1.getY());
-                           rt.addValue("X2", pCh2.getX());
-                           rt.addValue("Y2", pCh2.getY());
-                           double d2 = NearestPoint2D.distance2(pCh1, pCh2);
-                           double d = Math.sqrt(d2);
-                           rt.addValue("Distance", d);
-                           rt.addValue("Orientation (sine)",
-                                   NearestPoint2D.orientation(pCh1, pCh2));
-                           distances.add(d);
-
-                           ip.putPixel((int) (pCh1.x / factor), (int) (pCh1.y / factor), (int) d);
-
-                           double ex = pCh2.getX() - pCh1.getX();
-                           //double ex = (pCh1.getX() - pCh2.getX()) * (pCh1.getX() - pCh2.getX());
-                           //ex = Math.sqrt(ex);
-                           errorX.add(ex);
-                           //double ey = (pCh1.getY() - pCh2.getY()) * (pCh1.getY() - pCh2.getY());
-                           //ey = Math.sqrt(ey);
-                           double ey = pCh2.getY() - pCh1.getY();
-                           errorY.add(ey);
-
-                        }
-                     }
-
-                     Double avg = listAvg(distances);
-                     Double stdDev = listStdDev(distances, avg);
-
-                     Double avgX = listAvg(errorX);
-                     Double stdDevX = listStdDev(errorX, avgX);
-                     Double avgY = listAvg(errorY);
-                     Double stdDevY = listStdDev(errorY, avgY);
-
-                     rt2.incrementCounter();
-                     rt2.addValue("Frame Nr.", frame);
-                     rt2.addValue("Avg. distance", avg);
-                     rt2.addValue("StdDev distance", stdDev);
-                     rt2.addValue("X", avgX);
-                     rt2.addValue("StdDev X", stdDevX);
-                     rt2.addValue("Y", avgY);
-                     rt2.addValue("StdDevY", stdDevY);
-
-                     stack.addSlice("frame: " + frame, ip);
-
-                     double timePoint = frame;
-                     if (rowData_.get(row).timePoints_ != null) {
-                        timePoint = rowData_.get(row).timePoints_.get(frame);
-                        if (useS) {
-                           timePoint /= 1000;
-                        }
-                     }
-                     xData.add(timePoint, avgX);
-                     yData.add(timePoint, avgY);
-
-                  } catch (ParseException ex) {
-                     JOptionPane.showMessageDialog(getInstance(), "Error in Pairs input");
-                     return;
-                  }
-
-               }
-
-               if (rt.getCounter() == 0) {
-                  MessageDialog md = new MessageDialog(DataCollectionForm.getInstance(),
-                          "No Pairs found", "No Pairs found");
-                  return;
-               }
-
-               // show summary in resultstable
-               rt2.show("Summary of Pairs found in " + rowData_.get(row).name_);
-
-
-               //  show Pairs panel and attach listener
-               TextPanel tp;
-               TextWindow win;
-
-               String rtName = "Pairs found in " + rowData_.get(row).name_;
-               rt.show(rtName);
-               ImagePlus siPlus = ij.WindowManager.getImage(rowData_.get(row).title_);
-               Frame frame = WindowManager.getFrame(rtName);
-               if (frame != null && frame instanceof TextWindow && siPlus != null) {
-                  win = (TextWindow) frame;
-                  tp = win.getTextPanel();
-
-                  // TODO: the following does not work, there is some voodoo going on here
-                  for (MouseListener ms : tp.getMouseListeners()) {
-                     tp.removeMouseListener(ms);
-                  }
-                  for (KeyListener ks : tp.getKeyListeners()) {
-                     tp.removeKeyListener(ks);
-                  }
-
-                  ResultsTableListener myk = new ResultsTableListener(siPlus, rt, win, rowData_.get(row).halfSize_);
-                  tp.addKeyListener(myk);
-                  tp.addMouseListener(myk);
-                  frame.toFront();
-               }
-
-
-
-
-               String xAxis = "Time (frameNr)";
-               if (rowData_.get(row).timePoints_ != null) {
-                  xAxis = "Time (ms)";
-                  if (useS) {
-                     xAxis = "Time (s)";
-                  }
-               }
-               GaussianUtils.plotData2("Error in " + rowData_.get(row).name_, xData, yData, xAxis, "Error(nm)", 0, 400);
-
-               ij.IJ.showStatus("");
-
-               sp.setOpenAsHyperStack(true);
-               sp.setStack(stack, 1, 1, rowData_.get(row).nrFrames_);
-               sp.setDisplayRange(0, 20);
-               sp.setTitle(rowData_.get(row).title_);
-
-               ImageWindow w = new StackWindow(sp);
-               w.setTitle("Error in " + rowData_.get(row).name_);
-
-               w.setImage(sp);
-               w.setVisible(true);
-
-            }
-         };
-
-         (new Thread(doWorkRunnable)).start();
-
+         ParticlePairLister.ListParticlePairs(row, maxDistance);
       }
+         
    }//GEN-LAST:event_pairsButtonActionPerformed
-   
-   /**
-    * Calculates the average of a list of doubles
-    * 
-    * @param list
-    * @return average
-    */
-   private static double listAvg (List<Double> list) {
-      double total = 0.0;
-      Iterator it = list.iterator();
-      while (it.hasNext()) {
-         total += (Double) it.next();
-      }
-      
-      return total / list.size();      
-   }
-   
-   
-   /**
-    * Returns the Standard Deviation as sqrt( 1/(n-1) sum( square(value - avg)) )
-    * Feeding in parameter avg is just increase performance
-    * 
-    * @param list ArrayList<Double> 
-    * @param avg average of the list
-    * @return standard deviation as defined above
-    */
-   private static double listStdDev (List<Double> list, double avg) {
-      
-      double errorsSquared = 0;
-      Iterator it = list.iterator();
-      while (it.hasNext()) {
-         double error = (Double) it.next() - avg;
-         errorsSquared += (error * error);
-      }
-      return Math.sqrt(errorsSquared / (list.size() - 1) ) ;
-   }
-   
-   
-   /**
-    * Utility function to calculate Standard Deviation
-    * @param list
-    * @return 
-    */
-   private static double listStdDev (ArrayList<Double> list) {
-      double avg = listAvg(list);
-      
-      return listStdDev(list, avg);
-
-   }
    
    
    private void c2CorrectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_c2CorrectButtonActionPerformed
@@ -2051,7 +1809,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
          return;
       }
 
-      ParticlePairLister.listParticlePairs(rows, maxDistance);
+      ParticlePairLister.listParticlePairTracks(rows, maxDistance);
    }//GEN-LAST:event_listButton_ActionPerformed
 
    private void method2CBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_method2CBox_ActionPerformed
@@ -2745,12 +2503,10 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
          }
          break;
-
       }
-
    }
    
-   private boolean useSeconds(RowData row) {
+   public boolean useSeconds(RowData row) {
       boolean useS = false;
       if (row.timePoints_ != null) {
          if (row.timePoints_.get(row.timePoints_.size() - 1)
