@@ -8,7 +8,7 @@
  * @author nico
  */
 
-import edu.valelab.GaussianFit.MainForm;
+import edu.valelab.gaussianfit.MainForm;
 
 import ij.plugin.*;
 import org.micromanager.api.MMPlugin;
@@ -25,6 +25,7 @@ public class GaussianTrack_ implements PlugIn, MMPlugin {
 
     private MainForm theForm_;
 
+    @Override
     public void run(String arg) {
       if (!MainForm.WINDOWOPEN) {
          theForm_ = new MainForm();
@@ -42,16 +43,19 @@ public class GaussianTrack_ implements PlugIn, MMPlugin {
 
 
 
+    @Override
    public void setApp(ScriptInterface app) {
       
       run("");
    }
 
+    @Override
    public void dispose() {
       if (theForm_ != null)
          theForm_.dispose();
    }
 
+    @Override
    public void show() {
          String ig = "GaussianFit";
    }
@@ -59,20 +63,24 @@ public class GaussianTrack_ implements PlugIn, MMPlugin {
    public void configurationChanged() {
    }
 
+    @Override
    public String getInfo () {
       return "Gaussian Fitting Plugin";
    }
 
+    @Override
    public String getDescription() {
       return "";
    }
 
+    @Override
    public String getVersion() {
-      return "0.3";
+      return "0.32";
    }
 
+    @Override
    public String getCopyright() {
-      return "University of California, 2010-2013";
+      return "University of California, 2010-2014";
    }
 
 }
