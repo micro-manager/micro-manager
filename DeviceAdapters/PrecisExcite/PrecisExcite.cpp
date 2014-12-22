@@ -191,6 +191,14 @@ int Controller::ReadChannelLabels()
          channelLetters_.push_back(buf_tokens_[i][4]); // Read 4th character
          string label = buf_tokens_[i].substr(6);
          StripString(label);
+
+         // This is a temporary log entry to debug an issue with channel labels
+         // that appear to contain an invalid character at the end.
+         std::ostringstream ss;
+         ss << "debug: last char of stripped label is: \'" <<
+            static_cast<int>(label[label.size()]) << "\' (as decimal int)";
+         LogMessage(ss.str().c_str(), true);
+
          channelLabels_.push_back(label);
       }
    }
@@ -281,8 +289,9 @@ void Controller::StripString(string& StringToModify)
 {
    if(StringToModify.empty()) return;
 
-   size_t startIndex = StringToModify.find_first_not_of(" ");
-   size_t endIndex = StringToModify.find_last_not_of(" ");
+   const char* spaces = " \f\n\r\t\v";
+   size_t startIndex = StringToModify.find_first_not_of(spaces);
+   size_t endIndex = StringToModify.find_last_not_of(spaces);
    string tempString = StringToModify;
    StringToModify.erase();
 
