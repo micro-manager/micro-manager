@@ -1,10 +1,15 @@
 
-package edu.valelab.GaussianFit;
+package edu.valelab.GaussianFit.dataSetTransformations;
 
 import edu.valelab.GaussianFit.data.SpotData;
 
 /**
- *
+ * Simple filter for spot data.
+ * 
+ * Spots can be filtered based on intensity and sigma (width)
+ * Setup the filter using the setSigma and setIntensity functions,
+ * then use the filter class to test individual spots
+ * 
  * @author Nico Stuuman
  */
 public class SpotDataFilter {

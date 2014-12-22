@@ -6,6 +6,7 @@
 package edu.valelab.GaussianFit;
 
 import edu.valelab.GaussianFit.data.RowData;
+import java.util.ArrayList;
 import java.util.prefs.Preferences;
 
 /**
@@ -18,7 +19,11 @@ public class MathForm extends javax.swing.JFrame {
    private static final String FRAMEYPOS = "MathYPos";
    private final String SELECTED = "Selected";
 
-   /** Creates new form MathForm */
+   /** 
+    * Creates new form MathForm
+    * @param dataSets1 - dataSet to be shown in slot 1 of the dialog
+    * @param dataSets2 - dataSet to be shown in slot 2 of the dialog
+    */
    public MathForm(int[] dataSets1, int[] dataSets2) {
       initComponents();
       
@@ -168,7 +173,7 @@ public class MathForm extends javax.swing.JFrame {
 
       boolean usr = false;
       int i1 = 0;
-      int i2 = 0;
+      int i2;
       try {
          if (SELECTED.equals((String) dataSet1ComboBox_.getSelectedItem())) {
             usr = true;
@@ -188,30 +193,31 @@ public class MathForm extends javax.swing.JFrame {
          @Override
          public void run() {
             DataCollectionForm df = DataCollectionForm.getInstance();
+            ArrayList<RowData> rowData = df.getRowData();
             RowData rd1 = null;
             RowData rd2 = null;
             
             if (!useSelectedRows) {
-               for (int i = 0; i < df.rowData_.size(); i++) {
-                  if (id1 == df.rowData_.get(i).ID_) {
-                     rd1 = df.rowData_.get(i);
+               for (int i = 0; i < rowData.size(); i++) {
+                  if (id1 == rowData.get(i).ID_) {
+                     rd1 = rowData.get(i);
                   }
-                  if (id2 == df.rowData_.get(i).ID_) {
-                     rd2 = df.rowData_.get(i);
+                  if (id2 == rowData.get(i).ID_) {
+                     rd2 = rowData.get(i);
                   }
                }
                df.doMathOnRows(rd1, rd2, 0);
             } else {
-               for (int i = 0; i < df.rowData_.size(); i++) {
-                  if (id2 == df.rowData_.get(i).ID_) {
-                     rd2 = df.rowData_.get(i);
+               for (int i = 0; i < rowData.size(); i++) {
+                  if (id2 == rowData.get(i).ID_) {
+                     rd2 = rowData.get(i);
                   }
                }
             }
                int rows[] = df.getResultsTable().getSelectedRows();
                if (rows.length > 0) {
                   for (int i = 0; i < rows.length; i++) {
-                     df.doMathOnRows(df.rowData_.get(rows[i]), rd2, 0);
+                     df.doMathOnRows(rowData.get(rows[i]), rd2, 0);
                   }
                }
       

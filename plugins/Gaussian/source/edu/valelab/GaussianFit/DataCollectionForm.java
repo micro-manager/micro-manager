@@ -17,16 +17,19 @@
 
 package edu.valelab.GaussianFit;
 
-import edu.valelab.GaussianFit.spotOperations.NearestPointGsSpotPair;
+import edu.valelab.GaussianFit.datasetdisplay.ImageRenderer;
+import edu.valelab.GaussianFit.dataSetTransformations.SpotDataFilter;
+import edu.valelab.GaussianFit.dataSetTransformations.DriftCorrector;
+import edu.valelab.GaussianFit.dataSetTransformations.CoordinateMapper;
 import edu.valelab.GaussianFit.spotOperations.NearestPoint2D;
 import edu.valelab.GaussianFit.utils.DisplayUtils;
-import edu.valelab.GaussianFit.data.GsSpotPair;
 import edu.valelab.GaussianFit.data.SpotData;
 import edu.valelab.GaussianFit.utils.GaussianUtils;
 import edu.valelab.GaussianFit.fitting.ZCalibrator;
 import edu.valelab.GaussianFit.data.LoadAndSave;
 import edu.valelab.GaussianFit.spotOperations.SpotLinker;
 import edu.valelab.GaussianFit.data.RowData;
+import edu.valelab.GaussianFit.datasetdisplay.ParticlePairLister;
 import edu.valelab.GaussianFit.utils.ListUtils;
 import edu.valelab.GaussianFit.utils.ReportingUtils;
 import edu.valelab.GaussianFit.utils.NumberUtils;
@@ -35,13 +38,11 @@ import edu.valelab.GaussianFit.utils.FileDialogs.FileType;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
-import ij.gui.Arrow;
 import ij.gui.ImageWindow;
 import ij.gui.MessageDialog;
 import ij.gui.Roi;
 import ij.gui.StackWindow;
 import ij.measure.ResultsTable;
-import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import ij.text.TextPanel;
@@ -168,11 +169,14 @@ public class DataCollectionForm extends javax.swing.JFrame {
    public static DataCollectionForm instance_ = null;
    
    // public since it is used in MathForm.  
-   // TODO: make this private
-   public ArrayList<RowData> rowData_;
-   
+   private ArrayList<RowData> rowData_;
    public enum Coordinates {NM, PIXELS};
    public enum PlotMode {X, Y, INT};
+   
+   
+   public ArrayList<RowData> getRowData() {
+      return rowData_;
+   }
    
 
    /**
@@ -373,9 +377,13 @@ public class DataCollectionForm extends javax.swing.JFrame {
       addSpotData (newRow);
    }
    
+   public void fireRowAdded() {
+      myTableModel_.fireTableRowsInserted(rowData_.size()-1, rowData_.size());
+   }
+   
    public void addSpotData(RowData newRow) {
       rowData_.add(newRow);
-      myTableModel_.fireTableRowsInserted(rowData_.size()-1, rowData_.size());
+      fireRowAdded();
       SwingUtilities.invokeLater(new Runnable() {
          @Override
          public void run() {
@@ -1266,11 +1274,6 @@ public class DataCollectionForm extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(getInstance(), 
                "Error setting color reference.  Did you have enough input points?");
          }
-
-         
-      
-         
-         
          
       }
    }//GEN-LAST:event_c2StandardButtonActionPerformed
@@ -1498,356 +1501,6 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
       }
    }//GEN-LAST:event_pairsButtonActionPerformed
-
-   /**
-    * Helper function for function listParticels
-    * Finds a spot within MAXMatchDistance in the frame following the frame
-    * of the given spot.
-    * Only looks at Channel 1
-    * 
-    * @param input - look for a spot close to this one
-    * @param spotPairs - List with spotPairs
-    * @return spotPair found or null if none
-    */
-   private GsSpotPair findNextSpotPair(GsSpotPair input,
-           ArrayList<ArrayList<GsSpotPair>> spotPairsByFrame,
-           NearestPointGsSpotPair npsp, int frame) {
-      final double maxDistance;
-      try {
-         maxDistance = NumberUtils.displayStringToDouble(pairsMaxDistanceField_.getText());
-      } catch (ParseException ex) {
-         ReportingUtils.logError("Error parsing pairs max distance field");
-         return null;
-      }
-      final double maxDistance2 = maxDistance * maxDistance;
-
-      Iterator<GsSpotPair> it = (spotPairsByFrame.get(frame - 1)).iterator();
-
-      while (it.hasNext()) {
-         GsSpotPair nextSpot = it.next();
-         if (nextSpot.getGSD().getFrame() == frame) {
-            if (NearestPoint2D.distance2(input.getfp(), nextSpot.getfp())
-                    < maxDistance2) {
-               return nextSpot;
-            }
-         }
-         // optimization that is only valid if the ArrayList is properly sorted
-         if (nextSpot.getGSD().getFrame() > frame) {
-            return null;
-         }
-      }
-
-      return null;
-   }
-
-   /**
-    * Cycles through the spots of the selected data set and finds the most nearby 
-    * spot in channel 2.  It will list this as a pair if the two spots are within
-    * MAXMATCHDISTANCE nm of each other.  
-    * 
-    * Once all pairs are found, it will go through all frames and try to build up
-    * tracks.  If the spot is within MAXMATCHDISTANCE between frames, the code
-    * will consider the particle to be identical.
-    * 
-    * All "tracks" of particles will be listed
-    * 
-    * In addition, it will list the  average distance, and average distance
-    * in x and y for each frame.
-    * 
-    * spots in channel 2
-    * that are within MAXMATCHDISTANCE of 
-    * 
-    * @param evt 
-    */
-   public void listParticles(java.awt.event.ActionEvent evt) {
-
-      final int[] rows = jTable1_.getSelectedRows();
-      if (rows.length < 1) {
-         JOptionPane.showMessageDialog(getInstance(), 
-                 "Please select a dataset for the List Particles function");
-
-         return;
-      }
-
-      // if (row > -1) {
-
-      Runnable doWorkRunnable = new Runnable() {
-
-         @Override
-         public void run() {
-
-
-            // Show Particle List as linked Results Table
-            ResultsTable rt = new ResultsTable();
-            rt.reset();
-            rt.setPrecision(2);
-
-            // Show Particle Summary as Linked Results Table
-            ResultsTable rt2 = new ResultsTable();
-            rt2.reset();
-            rt2.setPrecision(1);
-
-            final double maxDistance;
-            try {
-               maxDistance = NumberUtils.displayStringToDouble(pairsMaxDistanceField_.getText());
-            } catch (ParseException ex) {
-               ReportingUtils.logError("Error parsing pairs max distance field");
-               return;
-            }
-
-            for (int row : rows) {
-               ArrayList<ArrayList<GsSpotPair>> spotPairsByFrame =
-                       new ArrayList<ArrayList<GsSpotPair>>();
-
-               ij.IJ.showStatus("Creating Pairs...");
-
-               // First go through all frames to find all pairs
-               int nrSpotPairsInFrame1 = 0;
-               for (int frame = 1; frame <= rowData_.get(row).nrFrames_; frame++) {
-                  ij.IJ.showProgress(frame, rowData_.get(row).nrFrames_);
-                  spotPairsByFrame.add(new ArrayList<GsSpotPair>());
-
-                  // Get points from both channels in first frame as ArrayLists        
-                  ArrayList<Point2D.Double> xyPointsCh1 = new ArrayList<Point2D.Double>();
-                  ArrayList<Point2D.Double> xyPointsCh2 = new ArrayList<Point2D.Double>();
-                  for (SpotData gs : rowData_.get(row).spotList_) {
-                     if (gs.getFrame() == 1) {
-                        Point2D.Double point = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
-                        if (gs.getChannel() == 1) {
-                           xyPointsCh1.add(point);
-                        } else if (gs.getChannel() == 2) {
-                           xyPointsCh2.add(point);
-                        }
-                     }
-                  }
-
-                  if (xyPointsCh2.isEmpty()) {
-                     ReportingUtils.logError(
-                             "Pairs function in Localization plugin: no points found in second channel in frame " 
-                             + frame);
-                     continue;
-                  }
-
-                  // Find matching points in the two ArrayLists
-                  Iterator it2 = xyPointsCh1.iterator();
-                  try {
-                     NearestPoint2D np = new NearestPoint2D(xyPointsCh2,
-                             NumberUtils.displayStringToDouble(pairsMaxDistanceField_.getText()));
-
-                     while (it2.hasNext()) {
-                        SpotData gs = (SpotData) it2.next();
-                        Point2D.Double pCh1 = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
-                        Point2D.Double pCh2 = np.findKDWSE(pCh1);
-                        if (pCh2 != null) {
-                           GsSpotPair pair = new GsSpotPair(gs, pCh1, pCh2);
-                           //spotPairs.add(pair);
-                           spotPairsByFrame.get(frame - 1).add(pair);
-                        }
-                     }
-
-                  } catch (ParseException ex) {
-                     JOptionPane.showMessageDialog(getInstance(), "Error in Pairs input");
-                     return;
-                  }
-               }
-
-
-               // We have all pairs, assemble in tracks
-               ij.IJ.showStatus("Assembling tracks...");
-
-               // prepare NearestPoint objects to speed up finding closest pair 
-               ArrayList<NearestPointGsSpotPair> npsp = new ArrayList<NearestPointGsSpotPair>();
-               for (int frame = 1; frame <= rowData_.get(row).nrFrames_; frame++) {
-                  npsp.add(new NearestPointGsSpotPair(spotPairsByFrame.get(frame - 1), maxDistance));
-               }
-
-               ArrayList<ArrayList<GsSpotPair>> tracks = new ArrayList<ArrayList<GsSpotPair>>();
-
-               Iterator<GsSpotPair> iSpotPairs = spotPairsByFrame.get(0).iterator();
-               int i = 0;
-               while (iSpotPairs.hasNext()) {
-                  ij.IJ.showProgress(i++, nrSpotPairsInFrame1);
-                  GsSpotPair spotPair = iSpotPairs.next();
-                  // for now, we only start tracks at frame number 1
-                  if (spotPair.getGSD().getFrame() == 1) {
-                     ArrayList<GsSpotPair> track = new ArrayList<GsSpotPair>();
-                     track.add(spotPair);
-                     int frame = 2;
-                     while (frame <= rowData_.get(row).nrFrames_) {
-
-                        GsSpotPair newSpotPair = npsp.get(frame - 1).findKDWSE(
-                                new Point2D.Double(spotPair.getfp().getX(), spotPair.getfp().getY()));
-                        if (newSpotPair != null) {
-                           spotPair = newSpotPair;
-                           track.add(spotPair);
-                        }
-                        frame++;
-                     }
-                     tracks.add(track);
-                  }
-               }
-
-               if (tracks.isEmpty()) {
-                  MessageDialog md = new MessageDialog(DataCollectionForm.getInstance(),
-                          "No Pairs found", "No Pairs found");
-                  continue;
-               } 
-
-               Iterator<ArrayList<GsSpotPair>> itTracks = tracks.iterator();
-               int spotId = 0;
-               while (itTracks.hasNext()) {
-                  ArrayList<GsSpotPair> track = itTracks.next();
-                  Iterator<GsSpotPair> itTrack = track.iterator();
-                  while (itTrack.hasNext()) {
-                     GsSpotPair spot = itTrack.next();
-                     rt.incrementCounter();
-                     rt.addValue("Spot ID", spotId);
-                     rt.addValue(Terms.FRAME, spot.getGSD().getFrame());
-                     rt.addValue(Terms.SLICE, spot.getGSD().getSlice());
-                     rt.addValue(Terms.CHANNEL, spot.getGSD().getSlice());
-                     rt.addValue(Terms.XPIX, spot.getGSD().getX());
-                     rt.addValue(Terms.YPIX, spot.getGSD().getY());
-                     rt.addValue("Distance", Math.sqrt(
-                             NearestPoint2D.distance2(spot.getfp(), spot.getsp())));
-                     rt.addValue("Orientation (sine)",
-                             NearestPoint2D.orientation(spot.getfp(), spot.getsp()));
-                  }
-                  spotId++;
-               }
-               TextPanel tp;
-               TextWindow win;
-
-               String rtName = rowData_.get(row).name_ + " Particle List";
-               rt.show(rtName);
-               ImagePlus siPlus = ij.WindowManager.getImage(rowData_.get(row).title_);
-               Frame frame = WindowManager.getFrame(rtName);
-               if (frame != null && frame instanceof TextWindow && siPlus != null) {
-                  win = (TextWindow) frame;
-                  tp = win.getTextPanel();
-
-                  // TODO: the following does not work, there is some voodoo going on here
-                  for (MouseListener ms : tp.getMouseListeners()) {
-                     tp.removeMouseListener(ms);
-                  }
-                  for (KeyListener ks : tp.getKeyListeners()) {
-                     tp.removeKeyListener(ks);
-                  }
-
-                  ResultsTableListener myk = new ResultsTableListener(siPlus, rt, win, rowData_.get(row).halfSize_);
-                  tp.addKeyListener(myk);
-                  tp.addMouseListener(myk);
-                  frame.toFront();
-               }
-
-               siPlus = ij.WindowManager.getImage(rowData_.get(row).title_);
-               if (siPlus != null && siPlus.getOverlay() != null) {
-                  siPlus.getOverlay().clear();
-               }
-               Arrow.setDefaultWidth(0.5);
-
-               itTracks = tracks.iterator();
-               spotId = 0;
-               while (itTracks.hasNext()) {
-                  ArrayList<GsSpotPair> track = itTracks.next();
-                  ArrayList<Double> distances = new ArrayList<Double>();
-                  ArrayList<Double> orientations = new ArrayList<Double>();
-                  ArrayList<Double> xDiff = new ArrayList<Double>();
-                  ArrayList<Double> yDiff = new ArrayList<Double>();
-                  for (GsSpotPair pair : track) {
-                     distances.add(Math.sqrt(
-                             NearestPoint2D.distance2(pair.getfp(), pair.getsp())));
-                     orientations.add(NearestPoint2D.orientation(pair.getfp(),
-                             pair.getsp()));
-                     xDiff.add(pair.getfp().getX() - pair.getsp().getX());
-                     yDiff.add(pair.getfp().getY() - pair.getsp().getY());
-                  }
-                  GsSpotPair pair = track.get(0);
-                  rt2.incrementCounter();
-                  rt2.addValue("Row ID", rowData_.get(row).ID_);
-                  rt2.addValue("Spot ID", spotId);
-                  rt2.addValue(Terms.FRAME, pair.getGSD().getFrame());
-                  rt2.addValue(Terms.SLICE, pair.getGSD().getSlice());
-                  rt2.addValue(Terms.CHANNEL, pair.getGSD().getSlice());
-                  rt2.addValue(Terms.XPIX, pair.getGSD().getX());
-                  rt2.addValue(Terms.YPIX, pair.getGSD().getY());
-                  rt2.addValue("n", track.size());
-
-                  double avg = ListUtils.avgList(distances);
-                  rt2.addValue("Distance-Avg", avg);
-                  rt2.addValue("Distance-StdDev", ListUtils.stdDevList(distances, avg));
-                  double oAvg = ListUtils.avgList(orientations);
-                  rt2.addValue("Orientation-Avg", oAvg);
-                  rt2.addValue("Orientation-StdDev",
-                          ListUtils.stdDevList(orientations, oAvg));
-
-                  double xDiffAvg = ListUtils.avgList(xDiff);
-                  double yDiffAvg = ListUtils.avgList(yDiff);
-                  double xDiffAvgStdDev = ListUtils.stdDevList(xDiff, xDiffAvg);
-                  double yDiffAvgStdDev = ListUtils.stdDevList(yDiff, yDiffAvg);
-                  rt2.addValue("Dist.Vect.Avg", Math.sqrt(
-                          (xDiffAvg * xDiffAvg) + (yDiffAvg * yDiffAvg)));
-                  rt2.addValue("Dist.Vect.StdDev", Math.sqrt(
-                          (xDiffAvgStdDev * xDiffAvgStdDev)
-                          + (yDiffAvgStdDev * yDiffAvgStdDev)));
-
-
-                  /* draw arrows in overlay */
-                  double mag = 100.0;  // factor that sets magnification of the arrow
-                  double factor = mag * 1 / rowData_.get(row).pixelSizeNm_;  // factor relating mad and pixelSize
-                  int xStart = track.get(0).getGSD().getX();
-                  int yStart = track.get(0).getGSD().getY();
-
-
-                  Arrow arrow = new Arrow(xStart, yStart,
-                          xStart + (factor * xDiffAvg),
-                          yStart + (factor * yDiffAvg));
-                  arrow.setHeadSize(3);
-                  arrow.setOutline(false);
-                  if (siPlus != null && siPlus.getOverlay() == null) {
-                     siPlus.setOverlay(arrow, Color.yellow, 1, Color.yellow);
-                  } else if (siPlus != null && siPlus.getOverlay() != null) {
-                     siPlus.getOverlay().add(arrow);
-                  }
-
-                  spotId++;
-               }
-               if (siPlus != null) {
-                  siPlus.setHideOverlay(false);
-               }
-
-               rtName = rowData_.get(row).name_ + " Particle Summary";
-               rt2.show(rtName);
-               siPlus = ij.WindowManager.getImage(rowData_.get(row).title_);
-               frame = WindowManager.getFrame(rtName);
-               if (frame != null && frame instanceof TextWindow && siPlus != null) {
-                  win = (TextWindow) frame;
-                  tp = win.getTextPanel();
-
-                  // TODO: the following does not work, there is some voodoo going on here
-                  for (MouseListener ms : tp.getMouseListeners()) {
-                     tp.removeMouseListener(ms);
-                  }
-                  for (KeyListener ks : tp.getKeyListeners()) {
-                     tp.removeKeyListener(ks);
-                  }
-
-                  ResultsTableListener myk = new ResultsTableListener(siPlus, rt2, win, rowData_.get(row).halfSize_);
-                  tp.addKeyListener(myk);
-                  tp.addMouseListener(myk);
-                  frame.toFront();
-               }
-
-               ij.IJ.showStatus("");
-
-            }
-         }
-      };
-
-      (new Thread(doWorkRunnable)).start();
-
-   }                                         
-
-   
    
    /**
     * Calculates the average of a list of doubles
@@ -1920,9 +1573,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
             @Override
             public void run() {
                if (jitterMethod_ == 0)
-                  unJitter(rowData_.get(row));
+                  DriftCorrector.unJitter(rowData_.get(row));
                else
-                  new DriftCorrector().unJitter(rowData_.get(row), jitterMaxFrames_, jitterMaxSpots_);
+                  new DriftCorrector().unJitter2(rowData_.get(row), jitterMaxFrames_, jitterMaxSpots_);
             }
          };
          (new Thread(doWorkRunnable)).start();
@@ -2284,9 +1937,6 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
       MathForm mf = new MathForm(rows, rows);
 
-      // mf.setBackground(MMStudio.getInstance().getBackgroundColor());
-      // MMStudio.getInstance().addMMBackgroundListener(mf);
-
       mf.setVisible(true);
    }//GEN-LAST:event_mathButton_ActionPerformed
 
@@ -2385,7 +2035,23 @@ public class DataCollectionForm extends javax.swing.JFrame {
    }//GEN-LAST:event_zCalibrateButton_ActionPerformed
 
    private void listButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_listButton_ActionPerformed
-      listParticles(evt);
+
+      final int[] rows = jTable1_.getSelectedRows();
+      if (rows.length < 1) {
+         JOptionPane.showMessageDialog(getInstance(),
+                 "Please select a dataset for the List Particles function");
+         return;
+      }
+
+      final double maxDistance;
+      try {
+         maxDistance = NumberUtils.displayStringToDouble(pairsMaxDistanceField_.getText());
+      } catch (ParseException ex) {
+         ReportingUtils.logError("Error parsing pairs max distance field");
+         return;
+      }
+
+      ParticlePairLister.listParticlePairs(rows, maxDistance);
    }//GEN-LAST:event_listButton_ActionPerformed
 
    private void method2CBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_method2CBox_ActionPerformed
@@ -2763,339 +2429,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
               transformedResultList, rowData.timePoints_, true, Coordinates.NM, 
               false, 0.0, 0.0);
    }
-
-   /**
-    * Creates a new data set that is corrected for motion blur
-    * Correction is performed by projecting a number of images onto a 
-    * 2D scattergram and using cross-correlation between them to find
-    * the displacement
-    * 
-    * @param rowData 
-    */
-   private void unJitter(final RowData rowData) {
-
-      // TODO: instead of a fixed number of frames, go for a certain number of spots
-      // Number of frames could be limited as well
-      final int framesToCombine = 200;
-      
-      if (rowData.spotList_.size() <= 1) {
-         return;
-      }
-      
-           
-      ij.IJ.showStatus("Executing jitter correction");
-      
-      Runnable doWorkRunnable = new Runnable() {
-         
-         @Override
-         public void run() {
-            
-            int mag = (int) (rowData.pixelSizeNm_ / 40.0);
-            while (mag % 2 != 0)
-               mag += 1;
-                        
-            int width = mag * rowData.width_;
-            int height = mag * rowData.height_;                        
-            
-            int size = width * height;
-            
-            
-             // TODO: add 0 padding to deal with aberrant image sizes
-            if ( (width != height) || ( (width & (width - 1)) != 0) ) {
-               JOptionPane.showMessageDialog(getInstance(), 
-                 "Magnified image is not a square with a size that is a power of 2");
-               ij.IJ.showStatus(" ");
-               return;
-            }
-
-            // TODO: what if we should go through nrSlices instead of nrFrames?
-            boolean useSlices = false;
-            int nrOfTests = rowData.nrFrames_ / framesToCombine;
-            if (nrOfTests == 0) {
-               useSlices = true;
-               nrOfTests = rowData.nrSlices_ / framesToCombine;
-               if (rowData.nrSlices_ % framesToCombine > 0) {
-                  nrOfTests++;
-               }
-            } else {
-               if (rowData.nrFrames_ % framesToCombine > 0) {
-                  nrOfTests++;
-               }
-            }
-
-            // storage of stage movement data
-            class StageMovementData {
-               
-               Point2D.Double pos_;
-               Point frameRange_;
-               
-               StageMovementData(Point2D.Double pos, Point frameRange) {
-                  pos_ = pos;
-                  frameRange_ = frameRange;
-               }
-            }
-            ArrayList<StageMovementData> stagePos = new ArrayList<StageMovementData>();
-            
-            try {
-               // make imageprocessors for all the images that we will generate
-               ImageProcessor[] ip = new ImageProcessor[nrOfTests];
-               byte[][] pixels = new byte[nrOfTests][width * height];
-               
-               for (int i = 0; i < nrOfTests; i++) {
-                  ip[i] = new ByteProcessor(width, height);
-                  ip[i].setPixels(pixels[i]);
-               }
-               
-               double factor = (double) mag / rowData.pixelSizeNm_;
-
-               // make 2D scattergrams of all pixelData
-               for (SpotData spot : rowData.spotList_) {
-                  int j;
-                  if (useSlices) {
-                     j = (spot.getSlice() - 1) / framesToCombine;
-                  } else {
-                     j = (spot.getFrame() - 1) / framesToCombine;
-                  }
-                  int x = (int) (factor * spot.getXCenter());
-                  int y = (int) (factor * spot.getYCenter());
-                  int index = (y * width) + x;
-                  if (index < size && index > 0) {
-                     if (pixels[j][index] != -1) {
-                        pixels[j][index] += 1;
-                     }
-                  }
-                  
-               }
-               
-               JitterDetector jd = new JitterDetector(ip[0]);
-               
-               Point2D.Double fp = new Point2D.Double(0.0, 0.0);
-               Point2D.Double com = new Point2D.Double(0.0, 0.0);
-               
-               jd.getJitter(ip[0], fp);
-               
-               for (int i = 1; i < ip.length; i++) {
-                  ij.IJ.showStatus("Executing jitter correction..." + i);
-                  ij.IJ.showProgress(i, ip.length);
-                  int spotCount = 0;
-                  for (int j=0; j < ip[i].getPixelCount(); j++) 
-                     spotCount += ip[i].get(j);
-                  
-                  jd.getJitter(ip[i], com);
-                  double x = (fp.x - com.x) / factor;
-                  double y = (fp.y - com.y) / factor;
-                  if (rowData.timePoints_ != null) {
-                     rowData.timePoints_.get(i);
-                  }
-                  stagePos.add(new StageMovementData(new Point2D.Double(x, y),
-                          new Point(i * framesToCombine, ((i + 1) * framesToCombine - 1))));
-                  System.out.println("i: " + i + " nSpots: " + spotCount + " X: " + x + " Y: " + y);
-               }
-               
-            } catch (OutOfMemoryError ex) {
-               // not enough memory to allocate all images in one go
-               // we need to cycle through all gaussian spots cycle by cycle
-
-               double factor = (double) mag / rowData.pixelSizeNm_;
-               
-               ImageProcessor ipRef = new ByteProcessor(width, height);
-               byte[] pixelsRef = new byte[width * height];
-               ipRef.setPixels(pixelsRef);
-
-
-               // take the first image as reference
-               for (SpotData spot : rowData.spotList_) {
-                  int j;
-                  if (useSlices) {
-                     j = (spot.getSlice() - 1) / framesToCombine;
-                  } else {
-                     j = (spot.getFrame() - 1) / framesToCombine;
-                  }
-                  if (j == 0) {
-                     int x = (int) (factor * spot.getXCenter());
-                     int y = (int) (factor * spot.getYCenter());
-                     int index = (y * width) + x;
-                     if (index < size && index > 0) {
-                        if (pixelsRef[index] != -1) {
-                           pixelsRef[index] += 1;
-                        }
-                     }
-                  }
-               }
-               
-               JitterDetector jd = new JitterDetector(ipRef);
-               
-               Point2D.Double fp = new Point2D.Double(0.0, 0.0);
-               jd.getJitter(ipRef, fp);
-               
-               Point2D.Double com = new Point2D.Double(0.0, 0.0);
-               ImageProcessor ipTest = new ByteProcessor(width, height);
-               byte[] pixelsTest = new byte[width * height];
-               ipTest.setPixels(pixelsTest);
-               
-               for (int i = 1; i < nrOfTests; i++) {
-                  ij.IJ.showStatus("Executing jitter correction..." + i);
-                  ij.IJ.showProgress(i, nrOfTests);
-                  for (int p = 0; p < size; p++) {
-                     ipTest.set(p, 0);
-                  }
-                  
-                  for (SpotData spot : rowData.spotList_) {
-                     int j;
-                     if (useSlices) {
-                        j = (spot.getSlice() - 1) / framesToCombine;
-                     } else {
-                        j = (spot.getFrame() - 1) / framesToCombine;
-                     }
-                     if (j == i) {
-                        int x = (int) (factor * spot.getXCenter());
-                        int y = (int) (factor * spot.getYCenter());
-                        int index = (y * width) + x;
-                        if (index < size && index > 0) {
-                           if (pixelsTest[index] != -1) {
-                              pixelsTest[index] += 1;
-                           }
-                        }
-                     }
-                  }
-                  
-                  jd.getJitter(ipTest, com);
-                  double x = (fp.x - com.x) / factor;
-                  double y = (fp.y - com.y) / factor;
-                  double timePoint = i;
-                  if (rowData.timePoints_ != null) {
-                     rowData.timePoints_.get(i);
-                  }
-                  stagePos.add(new StageMovementData(new Point2D.Double(x, y),
-                          new Point(i * framesToCombine, ((i + 1) * framesToCombine - 1))));
-                  System.out.println("X: " + x + " Y: " + y);
-               }
-               
-            }
-            
-            try {
-               // Assemble stage movement data into a track
-               List<SpotData> stageMovementData = new ArrayList<SpotData>();
-               SpotData sm = new SpotData(null, 1, 1, 1, 1, 1, 1, 1);
-               sm.setData(0, 0, 0, 0, 0.0, 0, 0, 0, 0);
-               stageMovementData.add(sm);
-               
-               // calculate moving average for stageposition
-               ArrayList<StageMovementData> stagePosMA = new ArrayList<StageMovementData>();
-               int windowSize = 5;
-               for (int i = 0; i < stagePos.size() - windowSize; i++) {
-                  Point2D.Double avg = new Point2D.Double(0.0, 0.0);
-                  for (int j = 0; j < windowSize; j++) {
-                     avg.x += stagePos.get(i + j).pos_.x;
-                     avg.y += stagePos.get(i + j).pos_.y;
-                  }
-                  avg.x /= windowSize;
-                  avg.y /= windowSize;
-                  
-                  stagePosMA.add(new StageMovementData(avg, stagePos.get(i).frameRange_));
-               }
-               
-               
-               for (int i = 0; i < stagePosMA.size(); i++) {
-                  StageMovementData smd = stagePosMA.get(i);
-                  SpotData s =
-                          new SpotData(null, 1, 1, i + 2, 1, 1, 1, 1);
-                  s.setData(0, 0, smd.pos_.x, smd.pos_.y, 0.0, 0, 0, 0, 0);                  
-                  stageMovementData.add(s);
-               }
-
-               // Add stage movement data to overview window
-               // First try to copy the time points
-               ArrayList<Double> timePoints = null;
-               if (rowData.timePoints_ != null) {
-                  timePoints = new ArrayList<Double>();
-                  int tp = framesToCombine;
-                  while (tp < rowData.timePoints_.size()) {
-                     timePoints.add(rowData.timePoints_.get(tp));
-                     tp += framesToCombine;
-                  }
-               }
-               
-               RowData newRow = new RowData(rowData.name_ + "-Jitter", 
-                       rowData.title_, "", rowData.width_,rowData.height_, 
-                       rowData.pixelSizeNm_, rowData.zStackStepSizeNm_, 
-                       rowData.shape_, rowData.halfSize_, rowData.nrChannels_, 
-                       stageMovementData.size(),1, 1, stageMovementData.size(), 
-                       stageMovementData, timePoints, true, Coordinates.NM, 
-                       false, 0.0, 0.0);
-               
-               rowData_.add(newRow);
-               
-               myTableModel_.fireTableRowsInserted(rowData_.size() - 1, rowData_.size());
-               
-                                           
-               ij.IJ.showStatus("Assembling jitter corrected dataset...");
-               ij.IJ.showProgress(1);
-               
-               List<SpotData> correctedData = new ArrayList<SpotData>();
-               Iterator it = rowData.spotList_.iterator();
-               
-               int testNr = 0;
-               StageMovementData smd = stagePosMA.get(0);
-               int counter = 0;
-               while (it.hasNext()) {
-                  counter++;
-                  SpotData gs = (SpotData) it.next();
-                  int test;
-                  if (useSlices) {
-                     test = gs.getSlice();
-                  } else {
-                     test = gs.getFrame();
-                  }
-                  if (test != testNr) {
-                     testNr = test - 1;
-                  }
-                  boolean found = false;
-                  if (testNr >= smd.frameRange_.x && testNr <= smd.frameRange_.y) {
-                     found = true;
-                  }
-                  if (!found) {
-                     for (int i = 0; i < stagePosMA.size() && !found; i++) {
-                        smd = stagePosMA.get(i);
-                        if (testNr >= smd.frameRange_.x && testNr <= smd.frameRange_.y) {
-                           found = true;
-                        }
-                     }
-                  }
-                  if (found) {
-                     Point2D.Double point = new Point2D.Double(gs.getXCenter() - smd.pos_.x,
-                             gs.getYCenter() - smd.pos_.y);
-                     SpotData gsn = new SpotData(gs);
-                     gsn.setXCenter(point.x);
-                     gsn.setYCenter(point.y);
-                     correctedData.add(gsn);
-                  } else {
-                     correctedData.add(gs);
-                  }
-                  
-                  
-               }
-
-               // Add transformed data to data overview window
-               addSpotData(rowData.name_ + "-Jitter-Correct", rowData.title_, "", 
-                       rowData.width_, rowData.height_, rowData.pixelSizeNm_, 
-                       rowData.zStackStepSizeNm_, rowData.shape_, 
-                       rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
-                       rowData.nrSlices_, 1, rowData.maxNrSpots_, correctedData,
-                       null, false, Coordinates.NM, false, 0.0, 0.0);
-               
-               ij.IJ.showStatus("Finished jitter correction");
-            } catch (OutOfMemoryError oom) {
-              System.gc();
-              ij.IJ.error("Out of Memory");
-            }
-         }
-      };
-
-      (new Thread(doWorkRunnable)).start();
-   }
-   
-   
+ 
    // Used to avoid multiple instances of correct2C at the same time
    private final Semaphore semaphore_ = new Semaphore(1, true);
    
@@ -3534,6 +2868,5 @@ public class DataCollectionForm extends javax.swing.JFrame {
       return OK;
       
    }
-
 
 }

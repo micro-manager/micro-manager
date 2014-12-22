@@ -1,8 +1,9 @@
 /*
  * Utilities to render localization microscopy data
  */
-package edu.valelab.GaussianFit;
+package edu.valelab.GaussianFit.datasetdisplay;
 
+import edu.valelab.GaussianFit.dataSetTransformations.SpotDataFilter;
 import edu.valelab.GaussianFit.data.SpotData;
 import edu.valelab.GaussianFit.utils.GaussianUtils;
 import edu.valelab.GaussianFit.data.RowData;
@@ -23,22 +24,21 @@ import java.io.InputStreamReader;
  */
 public class ImageRenderer {
     private final int[][] iceLut_ = new int[256][];
+    static int[][] zLut_ = new int[256][]; 
       
-
-   
-    static int[][] zLut_ = new int[256][];
-   
-      
-   /*
+   /**
     * Renders spotdata using various renderModes
     * 
     * @param rowData - MyRowData structure to be rendered
     * @param method - 0 = 2D scatter, 1 = Gaussians, 2 = Normalized Gaussian
     * @param magnification  - factor x original size
     * @param rect - roi in the magnified image that should be rendered
+    * @param sf
+    * @return 
     */
    public static ImageProcessor renderData(final RowData rowData,
-           final int method, final double magnification, Rectangle rect, final SpotDataFilter sf) {
+           final int method, final double magnification, Rectangle rect, 
+           final SpotDataFilter sf) {
 
       ImageProcessor ip = null;
 
@@ -271,16 +271,19 @@ public class ImageRenderer {
    }
    
    
-      /*
+   /**
     * Renders spotdata using various renderModes
     * 
     * @param rowData - MyRowData structure to be rendered
     * @param method - 0 = 2D scatter, 1 = Gaussians, 2 = Normalized Gaussian
     * @param magnification  - factor x original size
     * @param rect - roi in the magnified image that should be rendered
+    * @param sf
+    * @return 
     */
    public static ImageStack renderData3D(final RowData rowData,
-           final int method, final double magnification, Rectangle rect, final SpotDataFilter sf) {
+           final int method, final double magnification, Rectangle rect, 
+           final SpotDataFilter sf) {
    
       
       //int mag = 1 << renderSize;
