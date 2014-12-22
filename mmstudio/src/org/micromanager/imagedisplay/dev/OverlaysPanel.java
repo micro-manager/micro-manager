@@ -11,8 +11,8 @@ import javax.swing.JPanel;
 
 import net.miginfocom.swing.MigLayout;
 
-import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.Image;
+import org.micromanager.api.display.DisplayWindow;
 import org.micromanager.api.display.OverlayPanel;
 
 import org.micromanager.imagedisplay.CanvasDrawEvent;
@@ -22,15 +22,15 @@ import org.micromanager.imagedisplay.CanvasDrawEvent;
  */
 class OverlaysPanel extends JPanel {
    private ArrayList<OverlayPanel> panels_;
-   private Datastore store_;
+   private DisplayWindow display_;
    private MMVirtualStack stack_;
    private ImagePlus plus_;
    private EventBus displayBus_;
    
-   public OverlaysPanel(Datastore store, MMVirtualStack stack, ImagePlus plus,
+   public OverlaysPanel(DisplayWindow display, MMVirtualStack stack, ImagePlus plus,
          EventBus displayBus) {
       setLayout(new MigLayout("flowy"));
-      store_ = store;
+      display_ = display;
       stack_ = stack;
       plus_ = plus;
       displayBus_ = displayBus;
@@ -38,10 +38,10 @@ class OverlaysPanel extends JPanel {
       displayBus_.register(this);
 
       panels_ = new ArrayList<OverlayPanel>();
-      ScaleBarOverlayPanel scalebar = new ScaleBarOverlayPanel(store_);
+      ScaleBarOverlayPanel scalebar = new ScaleBarOverlayPanel(display_);
       scalebar.setBus(displayBus_);
       panels_.add(scalebar);
-      TimestampOverlayPanel timestamp = new TimestampOverlayPanel(store_);
+      TimestampOverlayPanel timestamp = new TimestampOverlayPanel();
       timestamp.setBus(displayBus_);
       panels_.add(timestamp);
 
@@ -58,9 +58,9 @@ class OverlaysPanel extends JPanel {
 
    @Subscribe
    public void onCanvasDraw(CanvasDrawEvent event) {
-      Image image = store_.getImage(stack_.getCurrentImageCoords());
+      Image image = display_.getDatastore().getImage(stack_.getCurrentImageCoords());
       for (OverlayPanel panel : panels_) {
-         panel.drawOverlay(event.getGraphics(), store_, image,
+         panel.drawOverlay(event.getGraphics(), display_, image,
                event.getCanvas());
       }
    }

@@ -52,18 +52,17 @@ import org.micromanager.MMStudio;
 import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.DatastoreLockedEvent;
-import org.micromanager.api.data.DisplaySettings;
 import org.micromanager.api.data.Image;
-import org.micromanager.api.data.NewDisplaySettingsEvent;
 import org.micromanager.api.data.NewImageEvent;
 import org.micromanager.api.data.NewSummaryMetadataEvent;
 import org.micromanager.api.data.Storage;
 import org.micromanager.api.data.SummaryMetadata;
+import org.micromanager.api.display.DisplaySettings;
 import org.micromanager.data.DefaultCoords;
-import org.micromanager.data.DefaultDisplaySettings;
 import org.micromanager.data.DefaultImage;
 import org.micromanager.data.DefaultMetadata;
 import org.micromanager.data.DefaultSummaryMetadata;
+import org.micromanager.imagedisplay.dev.DefaultDisplaySettings;
 import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMException;
@@ -75,6 +74,7 @@ import org.micromanager.utils.ReportingUtils;
  * This class provides image storage in the form of a single TIFF file that
  * contains all image data in the dataset.
  * Adapted from the TaggedImageStorageMultipageTiff module.
+ * TODO: extricate DisplaySettings from this code.
  */
 public final class StorageMultipageTiff implements Storage {
    private DefaultSummaryMetadata summaryMetadata_;
@@ -121,11 +121,8 @@ public final class StorageMultipageTiff implements Storage {
    public StorageMultipageTiff(Datastore store, String dir, boolean amInWriteMode,
          boolean separateMDFile, boolean separateFilesForPositions) throws IOException {
       store.registerForEvents(this, 0);
-      displaySettings_ = (DefaultDisplaySettings) store.getDisplaySettings();
-      if (displaySettings_ == null) {
-         // By default load the user's saved preferences.
-         displaySettings_ = DefaultDisplaySettings.getStandardSettings();
-      }
+      // By default load the user's saved preferences.
+      displaySettings_ = DefaultDisplaySettings.getStandardSettings();
       separateMetadataFile_ = separateMDFile;
       splitByXYPosition_ = separateFilesForPositions;
 
@@ -223,12 +220,6 @@ public final class StorageMultipageTiff implements Storage {
       catch (Exception e) {
          ReportingUtils.showError(e, "Failed to write image at " + image.getCoords());
       }
-   }
-
-   @Subscribe
-   public void onNewDisplaySettings(NewDisplaySettingsEvent event) {
-      ReportingUtils.logError("TODO: propagate changes to display settings");
-      displaySettings_ = (DefaultDisplaySettings) event.getDisplaySettings();
    }
 
    @Subscribe
@@ -597,7 +588,6 @@ public final class StorageMultipageTiff implements Storage {
       return coordsToReader_.keySet().size();
    }
 
-   @Override
    public DisplaySettings getDisplaySettings() {
       return displaySettings_;
    }

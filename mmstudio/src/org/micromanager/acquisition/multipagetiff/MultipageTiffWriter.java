@@ -50,14 +50,14 @@ import org.json.JSONObject;
 
 import org.micromanager.MMStudio;
 import org.micromanager.api.data.Coords;
-import org.micromanager.api.data.DisplaySettings;
 import org.micromanager.api.data.Image;
 import org.micromanager.api.data.Metadata;
 import org.micromanager.api.data.SummaryMetadata;
+import org.micromanager.api.display.DisplaySettings;
 import org.micromanager.data.DefaultCoords;
-import org.micromanager.data.DefaultDisplaySettings;
 import org.micromanager.data.DefaultImage;
 import org.micromanager.data.DefaultSummaryMetadata;
+import org.micromanager.imagedisplay.dev.DefaultDisplaySettings;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
