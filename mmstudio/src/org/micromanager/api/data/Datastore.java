@@ -114,19 +114,6 @@ public interface Datastore extends Closeable {
    public void setSummaryMetadata(SummaryMetadata metadata) throws DatastoreLockedException;
 
    /**
-    * Retrieve the DisplaySettings for the datastore. Will be null if no
-    * Storage has been provided yet.
-    */
-   public DisplaySettings getDisplaySettings();
-
-   /**
-    * Set the DisplaySettings. Posts a NewDisplaySettingsEvent to the event
-    * bus.
-    * @throws DatastoreLockedException if the lock() method has been called.
-    */
-   public void setDisplaySettings(DisplaySettings settings) throws DatastoreLockedException;
-
-   /**
     * Lock the Datastore. Methods that modify its contents will throw
     * DatastoreLockedExceptions, and a DatastoreLockedEvent() will be posted
     * to any subscribers.

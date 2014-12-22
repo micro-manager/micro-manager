@@ -38,10 +38,10 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.Image;
-import org.micromanager.api.data.NewDisplaySettingsEvent;
 import org.micromanager.api.data.NewImageEvent;
 import org.micromanager.api.data.NewSummaryMetadataEvent;
 import org.micromanager.api.data.SummaryMetadata;
+import org.micromanager.api.display.DisplaySettings;
 import org.micromanager.api.display.DisplayWindow;
 import org.micromanager.api.display.RequestToDrawEvent;
 import org.micromanager.api.events.DatastoreClosingEvent;
@@ -70,6 +70,7 @@ import org.micromanager.utils.ReportingUtils;
 public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
 
    private Datastore store_;
+   private DisplaySettings displaySettings_;
    private MMVirtualStack stack_;
    private ImagePlus ijImage_;
    // This will be our intermediary with ImageJ.
@@ -110,6 +111,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
    public DefaultDisplayWindow(Datastore store, Component customControls) {
       store_ = store;
       store_.registerForEvents(this, 100);
+      displaySettings_ = DefaultDisplaySettings.getStandardSettings();
       displayBus_ = new EventBus();
       displayBus_.register(this);
       customControls_ = customControls;
@@ -231,7 +233,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
             store_, ijImage_, this, displayBus_);
          modePanel_.addMode("Settings", settings);
 
-         histograms_ = new HistogramsPanel(store_, stack_, ijImage_,
+         histograms_ = new HistogramsPanel(store_, this, stack_, ijImage_,
                displayBus_);
          histograms_.setMinimumSize(new java.awt.Dimension(280, 0));
          modePanel_.addMode("Contrast", histograms_);
@@ -242,7 +244,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
          comments_ = new CommentsPanel(store_, stack_);
          modePanel_.addMode("Comments", comments_);
 
-         overlays_ = new OverlaysPanel(store_, stack_, ijImage_, displayBus_);
+         overlays_ = new OverlaysPanel(this, stack_, ijImage_, displayBus_);
          modePanel_.addMode("Overlays", overlays_);
       }
 
@@ -518,6 +520,19 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
    }
 
    @Override
+   public DisplaySettings getDisplaySettings() {
+      return displaySettings_;
+   }
+
+   @Override
+   public void setDisplaySettings(DisplaySettings settings) {
+      displaySettings_ = settings;
+      // Assume any change in display settings will necessitate a redraw.
+      displayBus_.post(new DefaultRequestToDrawEvent(null));
+      displayBus_.post(new NewDisplaySettingsEvent(settings, this));
+   }
+
+   @Override
    public List<Image> getDisplayedImages() {
       ArrayList<Image> result = new ArrayList<Image>();
       Coords curCoords = stack_.getCurrentImageCoords();
@@ -604,15 +619,6 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       catch (Exception e) {
          ReportingUtils.logError(e, "Failed to respond properly to pixels-set event");
       }
-   }
-
-   /**
-    * Assume that any change to our display settings will necessitate a
-    * redraw.
-    */
-   @Subscribe
-   public void onNewDisplaySettings(NewDisplaySettingsEvent event) {
-      displayBus_.post(new DefaultRequestToDrawEvent(null));
    }
 
    /**

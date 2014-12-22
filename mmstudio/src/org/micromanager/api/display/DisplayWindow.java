@@ -51,7 +51,18 @@ public interface DisplayWindow {
    public Datastore getDatastore();
 
    /**
-    * Retrieve the Images currently being displayed (all channels.
+    * Retrieve the DisplaySettings for this display.
+    */
+   public DisplaySettings getDisplaySettings();
+
+   /**
+    * Set new DisplaySettings for this display. This will post a
+    * NewDisplaySettingsEvent to the display's EventBus.
+    */
+   public void setDisplaySettings(DisplaySettings settings);
+
+   /**
+    * Retrieve the Images currently being displayed (all channels).
     */
    public List<Image> getDisplayedImages();
 
@@ -70,8 +81,8 @@ public interface DisplayWindow {
    public boolean requestToClose();
 
    /**
-    * Close the display and remove it from the Datastore, bypassing any logic
-    * that would normally occur when the window is closed.
+    * Close the display, bypassing any logic that would normally occur when the
+    * window is closed.
     */
    public void forceClosed();
 

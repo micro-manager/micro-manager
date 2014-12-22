@@ -12,7 +12,6 @@ import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.DataManager;
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.DatastoreLockedException;
-import org.micromanager.api.data.DisplaySettings;
 import org.micromanager.api.data.Image;
 import org.micromanager.api.data.Metadata;
 import org.micromanager.api.data.SummaryMetadata;
@@ -115,16 +114,6 @@ public class DefaultDataManager implements DataManager {
       catch (DatastoreLockedException e) {
          ReportingUtils.showError(e, "Album datastore is locked.");
       }
-   }
-
-   @Override
-   public DisplaySettings.DisplaySettingsBuilder getDisplaySettingsBuilder() {
-      return new DefaultDisplaySettings.Builder();
-   }
-
-   @Override
-   public DisplaySettings getStandardDisplaySettings() {
-      return DefaultDisplaySettings.getStandardSettings();
    }
 
    @Override

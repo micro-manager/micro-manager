@@ -21,8 +21,9 @@ import javax.swing.JTextField;
 import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.api.data.Datastore;
-import org.micromanager.api.data.DisplaySettings;
 import org.micromanager.api.data.Image;
+import org.micromanager.api.display.DisplaySettings;
+import org.micromanager.api.display.DisplayWindow;
 import org.micromanager.api.display.OverlayPanel;
 
 
@@ -49,10 +50,10 @@ public class ScaleBarOverlayPanel extends OverlayPanel {
    private JTextField yOffset_;
    private JComboBox position_;
    
-   public ScaleBarOverlayPanel(Datastore store) {
+   public ScaleBarOverlayPanel(DisplayWindow display) {
       setBorder(new TitledBorder("Scale bar"));
       setLayout(new MigLayout("flowy"));
-      DisplaySettings settings = store.getDisplaySettings();
+      DisplaySettings settings = display.getDisplaySettings();
 
       ActionListener redrawListener = new ActionListener() {
             @Override
@@ -129,7 +130,7 @@ public class ScaleBarOverlayPanel extends OverlayPanel {
       }
    }
 
-   public void drawOverlay(Graphics g, Datastore store, Image image, ImageCanvas canvas) {
+   public void drawOverlay(Graphics g, DisplayWindow display, Image image, ImageCanvas canvas) {
       if (!shouldDraw_.isSelected()) {
          return;
       }

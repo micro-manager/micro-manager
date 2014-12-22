@@ -67,18 +67,6 @@ public interface DataManager {
    public void addToAlbum(Image image);
 
    /**
-    * Generate a "blank" DisplaySettingsBuilder for use in constructing new
-    * DisplaySettings instances.
-    */
-   public DisplaySettings.DisplaySettingsBuilder getDisplaySettingsBuilder();
-
-   /**
-    * Retrieve the DisplaySettings that the user has saved as their default
-    * settings.
-    */
-   public DisplaySettings getStandardDisplaySettings();
-
-   /**
     * Generate a "blank" MetadataBuilder for use in constructing new
     * Metadata instances.
     */

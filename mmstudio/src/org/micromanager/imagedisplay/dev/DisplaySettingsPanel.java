@@ -31,11 +31,11 @@ import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.DatastoreLockedException;
-import org.micromanager.api.data.DisplaySettings;
-import org.micromanager.api.data.NewDisplaySettingsEvent;
+import org.micromanager.api.display.DisplaySettings;
 import org.micromanager.api.display.DisplayWindow;
+import org.micromanager.api.display.NewDisplaySettingsEvent;
 import org.micromanager.api.display.NewImagePlusEvent;
-import org.micromanager.data.DefaultDisplaySettings;
+import org.micromanager.imagedisplay.dev.DefaultDisplaySettings;
 
 import org.micromanager.utils.ReportingUtils;
 
@@ -76,7 +76,7 @@ public class DisplaySettingsPanel extends JPanel {
       displayBus_ = displayBus;
       displayBus_.register(this);
 
-      DisplaySettings settings = store_.getDisplaySettings();
+      DisplaySettings settings = display_.getDisplaySettings();
 
       // We have several controls that consist of a label and a combobox;
       // we want the label to be left-aligned, then a variable gap, then
@@ -233,7 +233,7 @@ public class DisplaySettingsPanel extends JPanel {
       
       CompositeImage composite = (CompositeImage) ijImage_;
       String selection = (String) displayMode.getSelectedItem();
-      DisplaySettings.DisplaySettingsBuilder builder = store_.getDisplaySettings().copy();
+      DisplaySettings.DisplaySettingsBuilder builder = display_.getDisplaySettings().copy();
       if (selection.equals("Composite")) {
          if (store_.getAxisLength("channel") > 7) {
             JOptionPane.showMessageDialog(null,
@@ -270,7 +270,7 @@ public class DisplaySettingsPanel extends JPanel {
          // Ignore the "custom" color scheme, and ignore no-ops.
          return;
       }
-      DisplaySettings settings = store_.getDisplaySettings();
+      DisplaySettings settings = display_.getDisplaySettings();
       settings = settings.copy().channelColors(DEFAULT_COLORS[i]).build();
       saveSettings(settings);
       prevPresetIndex_ = i;
@@ -325,13 +325,9 @@ public class DisplaySettingsPanel extends JPanel {
       }
    }
 
+   // TODO: this method isn't really needed any more, due to refactoring work.
    private void saveSettings(DisplaySettings settings) {
-      try {
-         store_.setDisplaySettings(settings);
-      }
-      catch (DatastoreLockedException e) {
-         ReportingUtils.showError(e, "The datastore is locked; settings cannot be changed.");
-      }
+      display_.setDisplaySettings(settings);
    }
 
    /** 
@@ -349,7 +345,7 @@ public class DisplaySettingsPanel extends JPanel {
       else if (selection.equals("Once per second")) {
          rate = 1;
       }
-      DisplaySettings settings = store_.getDisplaySettings();
+      DisplaySettings settings = display_.getDisplaySettings();
       settings = settings.copy().histogramUpdateRate(rate).build();
       saveSettings(settings);
    }
@@ -358,7 +354,7 @@ public class DisplaySettingsPanel extends JPanel {
     * The user is toggling autostretch on/off.
     */
    private void setShouldAutostretch() {
-      DisplaySettings settings = store_.getDisplaySettings();
+      DisplaySettings settings = display_.getDisplaySettings();
       settings = settings.copy().shouldAutostretch(shouldAutostretch_.isSelected()).build();
       saveSettings(settings);
       displayBus_.post(new DefaultRequestToDrawEvent());
@@ -368,7 +364,7 @@ public class DisplaySettingsPanel extends JPanel {
     * The user set a new trim percentage.
     */
    private void setTrimPercentage(JSpinner trimPercentage) {
-      DisplaySettings settings = store_.getDisplaySettings();
+      DisplaySettings settings = display_.getDisplaySettings();
       double percentage = (Double) trimPercentage.getValue();
       settings = settings.copy().trimPercentage(percentage).build();
       saveSettings(settings);
@@ -386,7 +382,7 @@ public class DisplaySettingsPanel extends JPanel {
     * Save the current display settings as default settings.
     */
    private void saveAsDefaults() {
-      DefaultDisplaySettings.setStandardSettings(store_.getDisplaySettings());
+      DefaultDisplaySettings.setStandardSettings(display_.getDisplaySettings());
    }
 
    /**
