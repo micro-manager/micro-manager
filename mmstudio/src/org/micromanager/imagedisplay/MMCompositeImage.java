@@ -18,13 +18,11 @@ import org.micromanager.utils.ReportingUtils;
 public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
    private ImagePlus hyperImage_;
    private String title_;
-   private EventBus bus_;
 
-   public MMCompositeImage(ImagePlus imgp, int type, String title, EventBus bus) {
+   public MMCompositeImage(ImagePlus imgp, int type, String title) {
       super(imgp, type);
       hyperImage_ = imgp;
       title_ = title;
-      bus_ = bus;
    }
    
    @Override
@@ -155,7 +153,6 @@ public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
    @Override
    public void updateAndDraw() {
       superUpdateImage(); 
-      bus_.post(new DrawEvent());
       try {
          GUIUtils.invokeLater(new Runnable() {
             @Override
@@ -189,7 +186,6 @@ public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
     */
    @Override
    public void draw() {
-      bus_.post(new DrawEvent());
       superDraw();
    }
 

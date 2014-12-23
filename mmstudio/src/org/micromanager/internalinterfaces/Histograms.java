@@ -21,7 +21,6 @@
 //
 package org.micromanager.internalinterfaces;
 
-import org.micromanager.api.ImageCache;
 import org.micromanager.utils.ContrastSettings;
 
 /**

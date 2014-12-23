@@ -46,8 +46,6 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONException;
 import org.micromanager.MMStudio;
-import org.micromanager.api.ImageCache;
-import org.micromanager.api.TaggedImageStorage;
 
 import org.micromanager.acquisition.multipagetiff.MultipageTiffReader;
 import org.micromanager.acquisition.multipagetiff.StorageMultipageTiff;
@@ -128,7 +126,6 @@ public class MMAcquisition {
 
    public MMAcquisition(String name, JSONObject summaryMetadata, boolean diskCached, 
            AcquisitionEngine eng, boolean show) {
-      TaggedImageStorage imageFileManager;
       name_ = name;
       virtual_ = diskCached;
       existing_ = false;
