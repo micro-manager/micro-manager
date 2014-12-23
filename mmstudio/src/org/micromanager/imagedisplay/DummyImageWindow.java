@@ -12,6 +12,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import org.micromanager.api.data.Coords;
 import org.micromanager.api.display.NewImagePlusEvent;
+import org.micromanager.imagedisplay.events.StackPositionChangedEvent;
 import org.micromanager.utils.CanvasPaintPending;
 import org.micromanager.utils.ReportingUtils;
 

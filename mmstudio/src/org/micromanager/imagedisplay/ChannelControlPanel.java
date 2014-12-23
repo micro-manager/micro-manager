@@ -44,6 +44,8 @@ import org.micromanager.graph.HistogramPanel;
 import org.micromanager.graph.HistogramPanel.CursorListener;
 import org.micromanager.MMStudio;
 
+import org.micromanager.imagedisplay.events.DefaultRequestToDrawEvent;
+
 import org.micromanager.utils.HistogramUtils;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.JavaUtils;

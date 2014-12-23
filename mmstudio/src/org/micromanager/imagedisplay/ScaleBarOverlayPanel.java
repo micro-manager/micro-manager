@@ -26,6 +26,7 @@ import org.micromanager.api.display.DisplaySettings;
 import org.micromanager.api.display.DisplayWindow;
 import org.micromanager.api.display.OverlayPanel;
 
+import org.micromanager.imagedisplay.events.DefaultRequestToDrawEvent;
 
 /**
  * This class provides a GUI for drawing a scale bar.

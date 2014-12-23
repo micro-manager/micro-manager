@@ -33,6 +33,8 @@ import org.micromanager.api.display.DisplaySettings;
 import org.micromanager.api.display.DisplayWindow;
 import org.micromanager.api.display.OverlayPanel;
 
+import org.micromanager.imagedisplay.events.DefaultRequestToDrawEvent;
+
 /**
  * This overlay draws the timestamps of the currently-displayed images.
  */

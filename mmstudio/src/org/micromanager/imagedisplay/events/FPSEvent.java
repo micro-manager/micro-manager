@@ -1,4 +1,4 @@
-package org.micromanager.imagedisplay;
+package org.micromanager.imagedisplay.events;
 
 /**
  * This class handles notifications of the current incoming image rate (data 

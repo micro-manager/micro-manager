@@ -25,6 +25,9 @@ import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.NewImageEvent;
 import org.micromanager.data.DefaultCoords;
+import org.micromanager.imagedisplay.events.DefaultRequestToDrawEvent;
+import org.micromanager.imagedisplay.events.FPSEvent;
+import org.micromanager.imagedisplay.events.LayoutChangedEvent;
 import org.micromanager.utils.ReportingUtils;
 
 

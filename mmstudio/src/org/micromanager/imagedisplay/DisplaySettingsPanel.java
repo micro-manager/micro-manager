@@ -36,6 +36,8 @@ import org.micromanager.api.display.DisplayWindow;
 import org.micromanager.api.display.NewDisplaySettingsEvent;
 import org.micromanager.api.display.NewImagePlusEvent;
 
+import org.micromanager.imagedisplay.events.DefaultRequestToDrawEvent;
+
 import org.micromanager.utils.ReportingUtils;
 
 /**

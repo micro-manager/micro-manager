@@ -16,6 +16,8 @@ import javax.swing.JScrollPane;
 
 import net.miginfocom.swing.MigLayout;
 
+import org.micromanager.imagedisplay.events.LayoutChangedEvent;
+
 import org.micromanager.utils.ReportingUtils;
 
 /**
