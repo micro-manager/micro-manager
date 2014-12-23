@@ -1,4 +1,4 @@
-package org.micromanager.imagedisplay.dev;
+package org.micromanager.imagedisplay;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;

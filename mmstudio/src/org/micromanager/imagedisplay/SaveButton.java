@@ -1,4 +1,4 @@
-package org.micromanager.imagedisplay.dev;
+package org.micromanager.imagedisplay;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;

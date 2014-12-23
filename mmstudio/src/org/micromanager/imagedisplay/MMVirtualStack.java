@@ -1,4 +1,4 @@
-package org.micromanager.imagedisplay.dev;
+package org.micromanager.imagedisplay;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
@@ -17,8 +17,6 @@ import org.micromanager.api.display.NewImagePlusEvent;
 import org.micromanager.data.DefaultCoords;
 import org.micromanager.data.DefaultImage;
 import org.micromanager.data.DefaultMetadata;
-
-import org.micromanager.imagedisplay.IMMImagePlus;
 
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.ReportingUtils;

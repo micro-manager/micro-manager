@@ -20,7 +20,7 @@ import org.json.JSONObject;
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.DatastoreLockedException;
 import org.micromanager.api.display.DisplayWindow;
-import org.micromanager.imagedisplay.dev.DefaultDisplaySettings;
+import org.micromanager.imagedisplay.DefaultDisplaySettings;
 import org.micromanager.MMStudio;
 import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.MDUtils;

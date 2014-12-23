@@ -1,4 +1,4 @@
-package org.micromanager.imagedisplay.dev;
+package org.micromanager.imagedisplay;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
@@ -25,8 +25,6 @@ import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.NewImageEvent;
 import org.micromanager.data.DefaultCoords;
-import org.micromanager.imagedisplay.ScrollbarAnimateIcon;
-import org.micromanager.imagedisplay.ScrollbarLockIcon;
 import org.micromanager.utils.ReportingUtils;
 
 

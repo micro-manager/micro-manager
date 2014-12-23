@@ -1,4 +1,4 @@
-package org.micromanager.imagedisplay.dev;
+package org.micromanager.imagedisplay;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
@@ -43,8 +43,6 @@ import org.micromanager.graph.GraphData;
 import org.micromanager.graph.HistogramPanel;
 import org.micromanager.graph.HistogramPanel.CursorListener;
 import org.micromanager.MMStudio;
-
-import org.micromanager.imagedisplay.MMCompositeImage;
 
 import org.micromanager.utils.HistogramUtils;
 import org.micromanager.utils.ImageUtils;

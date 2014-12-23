@@ -35,8 +35,8 @@ import org.micromanager.data.DefaultCoords;
 import org.micromanager.data.DefaultDatastore;
 import org.micromanager.data.DefaultImage;
 
-import org.micromanager.imagedisplay.dev.DefaultDisplayWindow;
-import org.micromanager.imagedisplay.dev.SaveButton;
+import org.micromanager.imagedisplay.DefaultDisplayWindow;
+import org.micromanager.imagedisplay.SaveButton;
 
 import org.micromanager.internalinterfaces.LiveModeListener;
 

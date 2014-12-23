@@ -1,4 +1,4 @@
-package org.micromanager.imagedisplay.dev;
+package org.micromanager.imagedisplay;
 
 import org.micromanager.api.display.DisplayWindow;
 import org.micromanager.api.events.NewDisplayEvent;

@@ -1,4 +1,4 @@
-package org.micromanager.imagedisplay.dev;
+package org.micromanager.imagedisplay;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
@@ -14,8 +14,6 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.api.data.Image;
 import org.micromanager.api.display.DisplayWindow;
 import org.micromanager.api.display.OverlayPanel;
-
-import org.micromanager.imagedisplay.CanvasDrawEvent;
 
 /**
  * This class contains panels used to draw overlays on the image canvas.
