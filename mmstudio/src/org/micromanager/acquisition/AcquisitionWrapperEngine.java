@@ -22,7 +22,6 @@ import mmcorej.TaggedImage;
 import org.json.JSONObject;
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.DataProcessor;
-import org.micromanager.api.ImageCache;
 import org.micromanager.api.IAcquisitionEngine2010;
 import org.micromanager.api.PositionList;
 import org.micromanager.api.ScriptInterface;

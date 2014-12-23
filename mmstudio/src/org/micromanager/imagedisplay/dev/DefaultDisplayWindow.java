@@ -147,7 +147,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
     */
    private void makeWindowAndIJObjects() {
       stack_ = new MMVirtualStack(store_, displayBus_);
-      ijImage_ = new MMImagePlus(displayBus_);
+      ijImage_ = new MMImagePlus();
       calibrateImagePlus(ijImage_);
       stack_.setImagePlus(ijImage_);
       ijImage_.setStack(generateImagePlusName(), stack_);
@@ -419,8 +419,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
     */
    private void shiftToCompositeImage() {
       // TODO: assuming mode 1 for now.
-      ijImage_ = new MMCompositeImage(ijImage_, 1, ijImage_.getTitle(),
-            displayBus_);
+      ijImage_ = new MMCompositeImage(ijImage_, 1, ijImage_.getTitle());
       ijImage_.setOpenAsHyperStack(true);
       MMCompositeImage composite = (MMCompositeImage) ijImage_;
       int numChannels = store_.getAxisLength("channel");
