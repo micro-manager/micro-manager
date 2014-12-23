@@ -21,11 +21,15 @@
 
 package org.micromanager.asidispim;
 
+import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
 
+import org.micromanager.acquisition.ComponentTitledBorder;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Data.ColorConfigEditor;
 import org.micromanager.asidispim.Data.ColorTableModel;
@@ -38,13 +42,17 @@ import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.PanelUtils;
 import org.micromanager.utils.ReportingUtils;
 
+import javax.swing.BorderFactory;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
 
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
@@ -63,12 +71,50 @@ public class MultiDPanel extends ListeningJPanel {
    private final Prefs prefs_;
    
    private final JPanel colorPanel_;
+   private final JCheckBox useMultiColorCB_;
    private final JComboBox colorGroup_;
    private final JComboBox colorMode_;
    private final ColorTableModel colorTableModel_;
    private final JTable colorTable_;
    private final JScrollPane colorTablePane_;
    
+   /**
+    * if table is disabled then cell will be set to disabled too
+    */
+   class DisplayDisabledTableCellRenderer extends DefaultTableCellRenderer {
+      public Component getTableCellRendererComponent(JTable table, Object value,
+            boolean selected, boolean focused, int rowIndex, int columnIndex)
+      {
+         setEnabled(table.isEnabled());
+         return super.getTableCellRendererComponent(table, value, selected, focused, rowIndex, columnIndex);
+      }
+   };
+   
+   class UseChannelTableCellRenderer extends JCheckBox implements TableCellRenderer {
+      public UseChannelTableCellRenderer() {
+         super();
+         setHorizontalAlignment(JLabel.CENTER);
+      }
+      
+      @Override
+      public Component getTableCellRendererComponent(JTable table, Object value,
+            boolean isSelected, boolean hasFocus, int rowIndex, int columnIndex) {
+         if (!(value instanceof Boolean)) {
+            return null;
+         }
+         JCheckBox check = new JCheckBox("", (Boolean) value);
+         check.setEnabled(table.isEnabled());
+         check.setOpaque(true);
+         if (isSelected) {
+            check.setBackground(table.getSelectionBackground());
+            check.setOpaque(true);
+         } else {
+            check.setOpaque(false);
+            check.setBackground(table.getBackground());
+         }
+         return check;
+      }
+   }
    
    /**
     * MultiD panel constructor.
@@ -93,7 +139,14 @@ public class MultiDPanel extends ListeningJPanel {
               "[right]4[left]",
               "[]8[]"));
       
-      colorPanel_.setBorder(PanelUtils.makeTitledBorder("Channels"));
+      useMultiColorCB_ = pu.makeCheckBox("Use Multiple Colors",
+            Properties.Keys.PLUGIN_USE_MULTICOLOR, panelName_, false);
+      useMultiColorCB_.setToolTipText("Contact ASI for details; advanced features require PLogic card");
+      useMultiColorCB_.setFocusPainted(false); 
+      ComponentTitledBorder componentBorder = 
+              new ComponentTitledBorder(useMultiColorCB_, colorPanel_ 
+              , BorderFactory.createLineBorder(ASIdiSPIM.borderColor)); 
+      colorPanel_.setBorder(componentBorder);
       
       colorPanel_.add(new JLabel("Color group:"));
 //      colorGroup_ = new JComboBox();
@@ -119,13 +172,19 @@ public class MultiDPanel extends ListeningJPanel {
       colorTableModel_ = new ColorTableModel(prefs_, panelName_);
       colorTable_ = new JTable(colorTableModel_);
       colorTable_.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-      colorTable_.getColumnModel().getColumn(ColorTableModel.columnIndex_useChannel).setPreferredWidth(50);
-      colorTable_.getColumnModel().getColumn(ColorTableModel.columnIndex_config).setPreferredWidth(150);
-      colorTable_.getColumnModel().getColumn(ColorTableModel.columnIndex_pLogicNum).setPreferredWidth(50);
-      DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+      TableColumn column_useChannel = colorTable_.getColumnModel().getColumn(ColorTableModel.columnIndex_useChannel);
+      TableColumn column_config = colorTable_.getColumnModel().getColumn(ColorTableModel.columnIndex_config);
+      TableColumn column_pLogicNum = colorTable_.getColumnModel().getColumn(ColorTableModel.columnIndex_pLogicNum);
+      column_useChannel.setPreferredWidth(50);
+      column_config.setPreferredWidth(150);
+      column_pLogicNum.setPreferredWidth(50);
+      column_useChannel.setCellRenderer(new UseChannelTableCellRenderer());
+//      TableCellRenderer cr = column_useChannel.getCellRenderer();
+      column_config.setCellRenderer(new DisplayDisabledTableCellRenderer());
+      DefaultTableCellRenderer centerRenderer = new DisplayDisabledTableCellRenderer();
       centerRenderer.setHorizontalAlignment(JLabel.CENTER);
-      colorTable_.getColumnModel().getColumn(ColorTableModel.columnIndex_pLogicNum).setCellRenderer(centerRenderer);
-      colorTable_.getColumnModel().getColumn(ColorTableModel.columnIndex_config).setCellEditor(new ColorConfigEditor(colorGroup_, core_));
+      column_pLogicNum.setCellRenderer(centerRenderer);
+      column_config.setCellEditor(new ColorConfigEditor(colorGroup_, core_));
       
       colorTablePane_ = new JScrollPane(colorTable_);
       colorTablePane_.setPreferredSize(new Dimension(300,100));
@@ -136,8 +195,21 @@ public class MultiDPanel extends ListeningJPanel {
       MulticolorModes colorModes = new MulticolorModes(devices_, props_,
             Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_MULTICOLOR_MODE,
             MulticolorModes.Keys.VOLUME);
-      colorMode_ = colorModes.getComboBox(); 
+      colorMode_ = colorModes.getComboBox();
       colorPanel_.add(colorMode_, "wrap");
+      
+      // enable/disable panel elements depending on checkbox state
+      useMultiColorCB_.addActionListener(new ActionListener(){ 
+         public void actionPerformed(ActionEvent e){ 
+            boolean enabled = useMultiColorCB_.isSelected();
+            colorGroup_.setEnabled(enabled);
+            colorTable_.setEnabled(enabled);
+            colorMode_.setEnabled(enabled);
+         } 
+      });
+      // initialize GUI for muli-color enabled checkbox
+      useMultiColorCB_.doClick();
+      useMultiColorCB_.doClick();
       
       // end channel sub-panel
       

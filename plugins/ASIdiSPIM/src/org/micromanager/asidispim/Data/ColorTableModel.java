@@ -60,19 +60,29 @@ public class ColorTableModel extends AbstractTableModel {
    }//constructor
 
    @Override
-   public int getColumnCount() { return columnNames.length; }
+   public int getColumnCount() {
+      return columnNames.length;
+   }
 
    @Override
-   public String getColumnName(int column) { return columnNames[column]; }
+   public String getColumnName(int columnIndex) {
+      return columnNames[columnIndex];
+   }
 
    @SuppressWarnings({ "unchecked", "rawtypes" })
-   public Class getColumnClass(int column) { return getValueAt(0, column).getClass(); }
+   public Class getColumnClass(int columnIndex) {
+      return getValueAt(0, columnIndex).getClass();
+   }
 
    @Override
-   public int getRowCount() { return (colors_ == null) ? 0 : colors_.size(); }
+   public int getRowCount() {
+      return (colors_ == null) ? 0 : colors_.size();
+   }
    
    @Override
-   public boolean isCellEditable(int rowIndex, int columnIndex) { return true; }
+   public boolean isCellEditable(int rowIndex, int columnIndex) {
+      return columnIndex != columnIndex_pLogicNum;
+   }
 
    @Override
    public void setValueAt(Object value, int rowIndex, int columnIndex) {

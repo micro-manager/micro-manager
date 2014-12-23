@@ -156,6 +156,7 @@ public class Properties {
       PLUGIN_ENABLE_ILLUM_PIEZO_HOME("EnableIllumPiezoHome"),
       PLUGIN_SCAN_OPPOSITE_DIRECTIONS("ScanOppositeDirections"),
       PLUGIN_IGNORE_MISSING_SCANNER("IgnoreMissingScanner"),
+      PLUGIN_USE_MULTICOLOR("UseMultiColor"),
       PLUGIN_MULTICOLOR_GROUP("ColorGroup"),
       PLUGIN_MULTICOLOR_MODE("MultiColorMode"),
       ;

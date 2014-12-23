@@ -319,7 +319,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
               "[]8[]"));
       
       // special checkbox in titled border to enable/disable sub-panel plus more
-      
       advancedSliceTimingCB_ = pu.makeCheckBox("Slice Timing Settings (Advanced)",
             Properties.Keys.PLUGIN_ADVANCED_SLICE_TIMING, panelName_, true);
       advancedSliceTimingCB_.setToolTipText("See ASI Tiger SPIM documentation for details");
@@ -330,12 +329,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
       // this action listener takes care of enabling/disabling inputs
       // we call this to get GUI looking right
-      ActionListener sliceTimingDisableGUIInputs = new ActionListener(){ 
-         public void actionPerformed(ActionEvent e){ 
-            boolean enabled = advancedSliceTimingCB_.isSelected(); 
-            Component comp[] = slicePanel_.getComponents(); 
-            for(int i = 0; i<comp.length; i++){ 
-               comp[i].setEnabled(enabled); 
+      ActionListener sliceTimingDisableGUIInputs = new ActionListener() {
+         public void actionPerformed(ActionEvent e) {
+            boolean enabled = advancedSliceTimingCB_.isSelected();
+            Component comp[] = slicePanel_.getComponents();
+            for(int i = 0; i<comp.length; i++) {
+               comp[i].setEnabled(enabled);
             }
             desiredSlicePeriod_.setEnabled(!enabled && !minSlicePeriodCB_.isSelected());
             desiredSlicePeriodLabel_.setEnabled(!enabled);

@@ -49,6 +49,9 @@ import org.micromanager.utils.MMFrame;
 // TODO easy mode that pulls most-used bits from all panels
 // TODO autofocus for finding calibration endpoints (http://dx.doi.org/10.1364/OE.16.008670)
 // TODO recalculate slice timing on changing assigned camera
+// TODO make it easy to discard a data set
+// TODO make it easy to look through series of data sets
+// TODO hardware Z-projection
 // TODO camera control ROI panel
 // TODO track Z/F for sample finding
 // TODO factor out common code for JComboBoxes like MulticolorModes, CameraModes, AcquisitionModes, etc.
