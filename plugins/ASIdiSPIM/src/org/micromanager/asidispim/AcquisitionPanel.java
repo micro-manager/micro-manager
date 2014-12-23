@@ -451,7 +451,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       savePanel_ = new JPanel(new MigLayout(
               "",
               "[right]10[center]8[left]",
-              "[]6[]"));
+              "[]4[]"));
       savePanel_.setBorder(PanelUtils.makeTitledBorder("Data Saving Settings"));
       
       separateTimePointsCB_ = pu.makeCheckBox("Separate viewer / file for each time point",
@@ -536,7 +536,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       durationPanel_ = new JPanel(new MigLayout(
             "",
             "[right]6[left, 40%!]",
-            "[]6[]"));
+            "[]5[]"));
       durationPanel_.setBorder(PanelUtils.makeTitledBorder("Durations"));
       
       durationPanel_.add(new JLabel("Slice:"));
@@ -588,7 +588,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       leftColumnPanel_ = new JPanel(new MigLayout(
             "",
             "[]",
-            "[]6[]"));
+            "[]6[]10[]10[]"));
       
       leftColumnPanel_.add(repeatPanel_, "split 2");
       leftColumnPanel_.add(durationPanel_, "wrap");

@@ -179,7 +179,6 @@ public class MultiDPanel extends ListeningJPanel {
       column_config.setPreferredWidth(150);
       column_pLogicNum.setPreferredWidth(50);
       column_useChannel.setCellRenderer(new UseChannelTableCellRenderer());
-//      TableCellRenderer cr = column_useChannel.getCellRenderer();
       column_config.setCellRenderer(new DisplayDisabledTableCellRenderer());
       DefaultTableCellRenderer centerRenderer = new DisplayDisabledTableCellRenderer();
       centerRenderer.setHorizontalAlignment(JLabel.CENTER);
