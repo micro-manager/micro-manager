@@ -62,7 +62,7 @@ import org.micromanager.data.DefaultCoords;
 import org.micromanager.data.DefaultImage;
 import org.micromanager.data.DefaultMetadata;
 import org.micromanager.data.DefaultSummaryMetadata;
-import org.micromanager.imagedisplay.dev.DefaultDisplaySettings;
+import org.micromanager.imagedisplay.DefaultDisplaySettings;
 import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMException;

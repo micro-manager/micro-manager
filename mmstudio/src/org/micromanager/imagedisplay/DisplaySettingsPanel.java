@@ -1,4 +1,4 @@
-package org.micromanager.imagedisplay.dev;
+package org.micromanager.imagedisplay;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
@@ -35,7 +35,6 @@ import org.micromanager.api.display.DisplaySettings;
 import org.micromanager.api.display.DisplayWindow;
 import org.micromanager.api.display.NewDisplaySettingsEvent;
 import org.micromanager.api.display.NewImagePlusEvent;
-import org.micromanager.imagedisplay.dev.DefaultDisplaySettings;
 
 import org.micromanager.utils.ReportingUtils;
 

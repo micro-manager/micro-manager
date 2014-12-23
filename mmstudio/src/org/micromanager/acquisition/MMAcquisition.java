@@ -61,7 +61,7 @@ import org.micromanager.data.DefaultSummaryMetadata;
 
 import org.micromanager.dialogs.AcqControlDlg;
 
-import org.micromanager.imagedisplay.dev.DefaultDisplayWindow;
+import org.micromanager.imagedisplay.DefaultDisplayWindow;
 
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.JavaUtils;

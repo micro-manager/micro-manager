@@ -21,7 +21,7 @@ import org.micromanager.api.events.DatastoreClosingEvent;
 
 import org.micromanager.acquisition.StorageRAM;
 
-import org.micromanager.imagedisplay.dev.DefaultDisplayWindow;
+import org.micromanager.imagedisplay.DefaultDisplayWindow;
 import org.micromanager.MMStudio;
 import org.micromanager.utils.ReportingUtils;
 

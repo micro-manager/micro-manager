@@ -107,8 +107,8 @@ import org.micromanager.dialogs.MMIntroDlg;
 import org.micromanager.dialogs.RegistrationDlg;
 import org.micromanager.events.EventManager;
 
-import org.micromanager.imagedisplay.dev.DefaultDisplayManager;
-import org.micromanager.imagedisplay.dev.DefaultDisplayWindow;
+import org.micromanager.imagedisplay.DefaultDisplayManager;
+import org.micromanager.imagedisplay.DefaultDisplayWindow;
 
 import org.micromanager.logging.LogFileManager;
 import org.micromanager.menus.FileMenu;

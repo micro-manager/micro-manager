@@ -1,4 +1,4 @@
-package org.micromanager.imagedisplay.dev;
+package org.micromanager.imagedisplay;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
@@ -49,9 +49,6 @@ import org.micromanager.api.events.DatastoreClosingEvent;
 import org.micromanager.data.DefaultCoords;
 
 import org.micromanager.events.EventManager;
-
-import org.micromanager.imagedisplay.MMCompositeImage;
-import org.micromanager.imagedisplay.MMImagePlus;
 
 import org.micromanager.LineProfile;
 import org.micromanager.MMStudio;

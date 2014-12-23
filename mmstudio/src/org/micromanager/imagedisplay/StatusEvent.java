@@ -1,4 +1,4 @@
-package org.micromanager.imagedisplay.dev;
+package org.micromanager.imagedisplay;
 
 /**
  * This class is used to signify that a status string has been changed and
