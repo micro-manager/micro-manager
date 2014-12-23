@@ -28,9 +28,9 @@ import java.util.Map;
       public Map<Integer, List<SpotData>> frameIndexSpotList_;
       private Map<ImageIndex, List<SpotData>> indexedSpotList_;
       public final ArrayList<Double> timePoints_;
-      public String name_;
-      public final String title_;
-      public final String colCorrRef_;
+      public String name_;             // name as it appears in the DataCollection table
+      public final String title_;      // ImagePlus title of the image
+      public final String colCorrRef_; // id of the dataset used for color correction
       public final int width_;
       public final int height_;
       public final float pixelSizeNm_;

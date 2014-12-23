@@ -66,6 +66,7 @@ public class ParticlePairLister {
          public void run() {
 
             ArrayList<RowData> rowData = DataCollectionForm.getInstance().getRowData();
+            
             // Show Particle List as linked Results Table
             ResultsTable rt = new ResultsTable();
             rt.reset();
@@ -89,14 +90,14 @@ public class ParticlePairLister {
                   spotPairsByFrame.add(new ArrayList<GsSpotPair>());
 
                   // Get points from both channels in first frame as ArrayLists        
-                  ArrayList<Point2D.Double> xyPointsCh1 = new ArrayList<Point2D.Double>();
+                  ArrayList<SpotData> gsCh1 = new ArrayList<SpotData>();
                   ArrayList<Point2D.Double> xyPointsCh2 = new ArrayList<Point2D.Double>();
                   for (SpotData gs : rowData.get(row).spotList_) {
-                     if (gs.getFrame() == 1) {
-                        Point2D.Double point = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
+                     if (gs.getFrame() == frame) {
                         if (gs.getChannel() == 1) {
-                           xyPointsCh1.add(point);
+                           gsCh1.add(gs);
                         } else if (gs.getChannel() == 2) {
+                           Point2D.Double point = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
                            xyPointsCh2.add(point);
                         }
                      }
@@ -110,7 +111,7 @@ public class ParticlePairLister {
                   }
 
                   // Find matching points in the two ArrayLists
-                  Iterator it2 = xyPointsCh1.iterator();
+                  Iterator it2 = gsCh1.iterator();
                   NearestPoint2D np = new NearestPoint2D(xyPointsCh2, maxDistanceNm);
                   while (it2.hasNext()) {
                      SpotData gs = (SpotData) it2.next();

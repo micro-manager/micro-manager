@@ -176,7 +176,11 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
          timePoints.add((i - 1) * timeIntervalMs_);
       }
 
-      dcForm.addSpotData(siPlus.getWindow().getTitle(), siPlus.getTitle(), "",
+      String title = siPlus.getTitle();
+      if (nrPositions > 1) {
+         title += "_Pos" + positionString_;
+      }
+      dcForm.addSpotData(title, siPlus.getTitle(), "",
               siPlus.getWidth(), siPlus.getHeight(), pixelSize_,
               zStackStepSize_, shape_, halfSize_,
               nrChannels, nrFrames, nrSlices, nrPositions, resultList_.size(),
