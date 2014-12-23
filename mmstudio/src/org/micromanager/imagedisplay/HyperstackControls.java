@@ -3,7 +3,7 @@
  *
  * Created on Jul 15, 2010, 2:54:37 PM
  */
-package org.micromanager.imagedisplay.dev;
+package org.micromanager.imagedisplay;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
@@ -29,8 +29,6 @@ import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.Image;
 
 import org.micromanager.data.NewImageEvent;
-import org.micromanager.imagedisplay.FPSEvent;
-import org.micromanager.imagedisplay.MouseMovedEvent;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;

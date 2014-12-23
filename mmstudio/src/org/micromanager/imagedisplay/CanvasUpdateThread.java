@@ -1,4 +1,4 @@
-package org.micromanager.imagedisplay.dev;
+package org.micromanager.imagedisplay;
 
 import com.google.common.eventbus.EventBus;
 
@@ -10,8 +10,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import javax.swing.SwingUtilities;
-
-import org.micromanager.imagedisplay.FPSEvent;
 
 import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.Datastore;

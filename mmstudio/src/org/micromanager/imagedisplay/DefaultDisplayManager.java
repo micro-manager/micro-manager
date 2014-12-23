@@ -1,4 +1,4 @@
-package org.micromanager.imagedisplay.dev;
+package org.micromanager.imagedisplay;
 
 import org.micromanager.api.display.DisplayManager;
 import org.micromanager.api.display.DisplaySettings;

@@ -43,7 +43,7 @@ import javax.swing.WindowConstants;
 import mmcorej.CMMCore;
 
 import org.micromanager.api.ScriptInterface;
-import org.micromanager.imagedisplay.dev.DefaultDisplaySettings;
+import org.micromanager.imagedisplay.DefaultDisplaySettings;
 import org.micromanager.logging.LogFileManager;
 import org.micromanager.MMOptions;
 import org.micromanager.MMStudio;
