@@ -126,8 +126,7 @@ public class MulticolorModes {
        */
       @Override
       public void devicesChangedAlert() {
-         // don't do anything for multicolor, but in general may want to do this
-//       updateSelections();
+       updateSelections();
       }
       
       /**
@@ -165,7 +164,10 @@ public class MulticolorModes {
          List<Keys> keyList = new ArrayList<Keys>();
          keyList.add(Keys.VOLUME);
 //         keyList.add(Keys.SIDE);
-         keyList.add(Keys.SLICE);
+         // PLogic required to change slice by slice
+         if (devices_.isValidMMDevice(Devices.Keys.PLOGIC)) {
+            keyList.add(Keys.SLICE);
+         }
          return keyList;
       }
 

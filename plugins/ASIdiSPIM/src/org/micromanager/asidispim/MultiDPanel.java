@@ -177,7 +177,6 @@ public class MultiDPanel extends ListeningJPanel {
       return strGroups.toArray(new String[0]);
    }
    
-   
    @Override
    public void saveSettings() {
    }
