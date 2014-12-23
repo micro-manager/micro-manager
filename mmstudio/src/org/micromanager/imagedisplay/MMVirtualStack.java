@@ -18,6 +18,8 @@ import org.micromanager.data.DefaultCoords;
 import org.micromanager.data.DefaultImage;
 import org.micromanager.data.DefaultMetadata;
 
+import org.micromanager.imagedisplay.events.StackPositionChangedEvent;
+
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.ReportingUtils;
 

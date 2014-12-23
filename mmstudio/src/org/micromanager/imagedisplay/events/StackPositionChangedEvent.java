@@ -1,4 +1,4 @@
-package org.micromanager.imagedisplay;
+package org.micromanager.imagedisplay.events;
 
 import org.micromanager.api.data.Coords;
 
@@ -6,7 +6,7 @@ import org.micromanager.api.data.Coords;
  * This event is published whenever the MMVirtualStack updates its "position"
  * in ImageJ coordinates. 
  */
-class StackPositionChangedEvent {
+public class StackPositionChangedEvent {
    private Coords coords_;
 
    public StackPositionChangedEvent(Coords coords) {

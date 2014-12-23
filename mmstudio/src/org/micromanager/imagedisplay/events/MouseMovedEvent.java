@@ -1,4 +1,4 @@
-package org.micromanager.imagedisplay;
+package org.micromanager.imagedisplay.events;
 
 // This class provides information when the mouse moves over an image.
 public class MouseMovedEvent {

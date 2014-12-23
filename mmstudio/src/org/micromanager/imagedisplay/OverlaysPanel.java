@@ -14,6 +14,8 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.api.data.Image;
 import org.micromanager.api.display.DisplayWindow;
 import org.micromanager.api.display.OverlayPanel;
+import org.micromanager.imagedisplay.events.CanvasDrawEvent;
+import org.micromanager.imagedisplay.events.LayoutChangedEvent;
 
 /**
  * This class contains panels used to draw overlays on the image canvas.
