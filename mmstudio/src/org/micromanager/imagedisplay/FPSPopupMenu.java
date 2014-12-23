@@ -16,6 +16,8 @@ import javax.swing.JSlider;
 import javax.swing.MenuElement;
 import javax.swing.MenuSelectionManager;
 
+import org.micromanager.imagedisplay.events.FPSEvent;
+
 /**
  * This class provides an interface for selecting the FPS at which to display
  * animations for the ScrollerPanel.

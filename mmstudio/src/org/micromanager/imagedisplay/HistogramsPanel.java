@@ -20,6 +20,8 @@ import org.micromanager.api.display.DisplaySettings;
 import org.micromanager.api.display.DisplayWindow;
 import org.micromanager.api.display.NewImagePlusEvent;
 
+import org.micromanager.imagedisplay.events.DefaultRequestToDrawEvent;
+
 import org.micromanager.internalinterfaces.Histograms;
 import org.micromanager.utils.ContrastSettings;
 import org.micromanager.utils.ReportingUtils;

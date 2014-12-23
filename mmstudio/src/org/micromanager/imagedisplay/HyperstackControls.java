@@ -29,6 +29,9 @@ import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.Image;
 
 import org.micromanager.data.NewImageEvent;
+import org.micromanager.imagedisplay.events.FPSEvent;
+import org.micromanager.imagedisplay.events.MouseMovedEvent;
+import org.micromanager.imagedisplay.events.StatusEvent;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;

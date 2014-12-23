@@ -1,4 +1,4 @@
-package org.micromanager.imagedisplay;
+package org.micromanager.imagedisplay.events;
 
 import ij.gui.ImageCanvas;
 

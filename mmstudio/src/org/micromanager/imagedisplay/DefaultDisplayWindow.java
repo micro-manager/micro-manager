@@ -50,6 +50,14 @@ import org.micromanager.data.DefaultCoords;
 
 import org.micromanager.events.EventManager;
 
+import org.micromanager.imagedisplay.events.DefaultNewDisplayEvent;
+import org.micromanager.imagedisplay.events.DefaultNewImagePlusEvent;
+import org.micromanager.imagedisplay.events.DefaultRequestToDrawEvent;
+import org.micromanager.imagedisplay.events.LayoutChangedEvent;
+import org.micromanager.imagedisplay.events.NewDisplaySettingsEvent;
+import org.micromanager.imagedisplay.events.RequestToCloseEvent;
+import org.micromanager.imagedisplay.events.StatusEvent;
+
 import org.micromanager.LineProfile;
 import org.micromanager.MMStudio;
 

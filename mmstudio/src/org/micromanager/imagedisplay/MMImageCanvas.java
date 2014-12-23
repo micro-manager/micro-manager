@@ -15,6 +15,10 @@ import java.awt.Rectangle;
 
 import java.lang.Math;
 
+import org.micromanager.imagedisplay.events.CanvasDrawEvent;
+import org.micromanager.imagedisplay.events.DefaultRequestToDrawEvent;
+import org.micromanager.imagedisplay.events.LayoutChangedEvent;
+import org.micromanager.imagedisplay.events.MouseMovedEvent;
 import org.micromanager.utils.ReportingUtils;
 
 /**
