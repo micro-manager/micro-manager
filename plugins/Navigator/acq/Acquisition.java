@@ -3,19 +3,21 @@ package acq;
 import coordinates.PositionManager;
 import gui.SettingsDialog;
 import imagedisplay.DisplayPlus;
+import imagedisplay.DisplayPlusControls;
+import imagedisplay.NonImagePanel;
+import imagedisplay.SubImageControls;
 import java.awt.Color;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
+import javax.swing.JFrame;
 import mmcloneclasses.acquisition.MMImageCache;
+import mmcloneclasses.imagedisplay.ContrastMetadataCommentsPanel;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.MMStudio;
 import org.micromanager.acquisition.MMAcquisition;
-import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -82,7 +84,21 @@ public abstract class Acquisition {
       MMImageCache imageCache = new MMImageCache(storage);
       imageCache.setSummaryMetadata(summaryMetadata);
       posManager_ = storage.getPositionManager();
-      new DisplayPlus(imageCache, this, summaryMetadata, storage);
+      
+      DisplayPlus disp = new DisplayPlus(imageCache, this, summaryMetadata, storage);
+      ContrastMetadataCommentsPanel cmcPanel = new ContrastMetadataCommentsPanel(disp);
+      disp.setCMCPanel(cmcPanel);
+      DisplayPlusControls controls = new DisplayPlusControls(disp, disp.getEventBus(), this);
+      NonImagePanel nip = new NonImagePanel(cmcPanel, controls);
+      
+      //TODO
+      ////////////////////////////////////////////////////////////////////
+      JFrame frame = new JFrame();
+      frame.add(nip);
+      frame.setVisible(true);
+      frame.pack();
+      ///////////////////////////////////////////////////
+      
       imageSink_ = new TaggedImageSink(engineOutputQueue_, imageCache, this);
       imageSink_.start();
    }

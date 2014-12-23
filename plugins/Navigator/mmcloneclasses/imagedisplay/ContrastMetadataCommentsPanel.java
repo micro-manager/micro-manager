@@ -51,7 +51,7 @@ import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
 
 
-public class MetadataPanel extends JPanel  {
+public class ContrastMetadataCommentsPanel extends JPanel  {
 
    private JSplitPane CommentsSplitPane;
    private JLabel imageCommentsLabel;
@@ -78,13 +78,12 @@ public class MetadataPanel extends JPanel  {
    private final MetadataTableModel summaryMetadataModel_;
    private final String[] columnNames_ = {"Property", "Value"};
    private boolean showUnchangingKeys_;
-   private ImageWindow currentWindow_;
    private VirtualAcquisitionDisplay currentDisplay_;
    private Timer updateTimer_;
    private Histograms histograms_;
 
    /** Creates new form MetadataPanel */
-   public MetadataPanel(ImageWindow win) {
+   public ContrastMetadataCommentsPanel(VirtualAcquisitionDisplay display) {
       imageMetadataModel_ = new MetadataTableModel();
       summaryMetadataModel_ = new MetadataTableModel();
       makeContrastPanel();
@@ -94,8 +93,7 @@ public class MetadataPanel extends JPanel  {
       addTextChangeListeners();
       addFocusListeners();
       //setup for use with a single display
-      currentWindow_ = win;
-      currentDisplay_ = getVirtualAcquisitionDisplay(win.getImagePlus());
+      currentDisplay_ = display;
       summaryCommentsTextArea.setText(currentDisplay_.getSummaryComment());
       imageCommentsTextArea.setText(currentDisplay_.getImageComment());
       if (currentDisplay_.getNumChannels() == 1) {
@@ -475,10 +473,6 @@ public class MetadataPanel extends JPanel  {
       }
    }
 
-   public ImageWindow getCurrentWindow() {
-      return currentWindow_;
-   }
-
    private VirtualAcquisitionDisplay getVirtualAcquisitionDisplay(ImagePlus imgp) {
       if (imgp == null) {
          return null;
@@ -550,9 +544,6 @@ public class MetadataPanel extends JPanel  {
       }
    }
    
-   public void setDisplayMode(int mode) {
-      contrastPanel_.setDisplayMode(mode);
-   }
    
    public void redrawSizeBar() {
       if (contrastPanel_ != null) {

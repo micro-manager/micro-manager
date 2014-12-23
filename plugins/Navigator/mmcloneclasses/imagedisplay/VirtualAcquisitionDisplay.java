@@ -113,11 +113,11 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    // Tracks when we last sent an FPS update.
    private long lastFPSUpdateTimestamp_ = -1;
    private ImagePlus hyperImage_;
-   protected DisplayControls controls_;
+   protected DisplayControls subImageControls_;
    private boolean shouldUseSimpleControls_ = false;
    public AcquisitionVirtualStack virtualStack_;
    private boolean isMDA_ = false; //flag if display corresponds to MD acquisition
-   private MetadataPanel mdPanel_;
+   private ContrastMetadataCommentsPanel mdPanel_;
    private boolean contrastInitialized_ = false; //used for autostretching on window opening
    private boolean firstImage_ = true;
    private String channelGroup_ = "none";
@@ -158,6 +158,10 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       this.albumSaved_ = imageCache.isFinished();
       setupEventBus();
       setupDisplayThread();
+   }
+   
+   public void setCMCPanel(ContrastMetadataCommentsPanel panel) {
+      mdPanel_ = panel;
    }
 
    /**
@@ -407,8 +411,8 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
 
       // Hack: allow controls_ to be already set, so that overriding classes
       // can implement their own custom controls.
-      if (controls_ == null) {
-         controls_ = new HyperstackControls(this, bus_,shouldUseSimpleControls_, isMDA_);
+      if (subImageControls_ == null) {
+         subImageControls_ = new HyperstackControls(this, bus_,shouldUseSimpleControls_, isMDA_);
       }
 
       applyPixelSizeCalibration(hyperImage_);
@@ -420,15 +424,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       updateWindowTitleAndStatus();
    }
 
-   /*
-    * Set display to one of three modes:
-    * ij.CompositeImage.COMPOSITE
-    * ij.CompositeImage.GRAYSCALE
-    * ij.CompositeImage.COLOR
-    */
-   public void setDisplayMode(int displayMode) {
-      mdPanel_.setDisplayMode(displayMode);
-   }
    
    /**
     * Allows bypassing the prompt to Save
@@ -580,7 +575,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       if (hyperImage_ != null && hyperImage_.isVisible()) {
          JSONObject md = getCurrentMetadata();
          if (md != null) {
-            controls_.newImageUpdate(md);
+            subImageControls_.newImageUpdate(md);
          }
       }
    }
@@ -602,7 +597,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    public void updateWindowTitleAndStatus() {
-      if (controls_ == null) {
+      if (subImageControls_ == null) {
          return;
       }
 
@@ -612,18 +607,18 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       if (eng != null) {
          if (acquisitionIsRunning()) {
             if (!abortRequested()) {
-               controls_.acquiringImagesUpdate(true);
+               subImageControls_.acquiringImagesUpdate(true);
                if (isPaused()) {
                   status = "paused";
                } else {
                   status = "running";
                }
             } else {
-               controls_.acquiringImagesUpdate(false);
+               subImageControls_.acquiringImagesUpdate(false);
                status = "interrupted";
             }
          } else {
-            controls_.acquiringImagesUpdate(false);
+            subImageControls_.acquiringImagesUpdate(false);
             if (!status.contentEquals("interrupted")) {
                if (eng.isFinished()) {
                   status = "finished";
@@ -640,7 +635,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          if (isAcquisitionFinished_ == true) {
             status = "finished, ";
          }
-         controls_.acquiringImagesUpdate(false);
+         subImageControls_.acquiringImagesUpdate(false);
       }
       if (isDiskCached() || albumSaved_) {
          status += "on disk";
@@ -648,7 +643,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          status += "not yet saved";
       }
 
-      controls_.imagesOnDiskUpdate(imageCache_.getDiskLocation() != null);
+      subImageControls_.imagesOnDiskUpdate(imageCache_.getDiskLocation() != null);
       String path = isDiskCached()
               ? new File(imageCache_.getDiskLocation()).getName() : title_;
 
@@ -837,15 +832,8 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       updateAndDraw(true);
    }
 
-   // TODO: remove this function and all others that adjust the image index 
-   // via the VirtualAcquisitionDisplay. It should not know or care about this
-   // kind of thing.
-   public void setPosition(int p) {
-      controls_.setPosition(p);
-   }
-
    public int getPosition() {
-      return controls_.getPosition();
+      return subImageControls_.getPosition();
    }
 
    public void setSliceIndex(int i) {
@@ -859,7 +847,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    public void setChannel(int c) {
-      controls_.setChannel(c);
+      subImageControls_.setChannel(c);
    }
 
    public boolean pause() {
@@ -1087,13 +1075,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    private void createWindows() {
-      DisplayWindow win = new DisplayWindow(hyperImage_, controls_, bus_, new ImageCanvas(hyperImage_));
-      mdPanel_ = new MetadataPanel(win);
-
-      metadataWindow_ = new JFrame();
-      metadataWindow_.add(mdPanel_);
-      metadataWindow_.setVisible(true);
-      metadataWindow_.pack();
+      DisplayWindow win = new DisplayWindow(hyperImage_, subImageControls_, bus_, new ImageCanvas(hyperImage_));        
       imageChangedUpdate();
       EventManager.post(new DisplayCreatedEvent(this, win));
    }
@@ -1156,7 +1138,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       removeFromAcquisitionManager(MMStudio.getInstance());
 
       // Shut down our controls.
-      controls_.prepareForClose();
+      subImageControls_.prepareForClose();
 
       //Call this because for some reason WindowManager doesnt always fire
       metadataWindow_.setVisible(false);
@@ -1340,7 +1322,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    public void displayStatusLine(String status) {
-      controls_.setImageInfoLabel(status);
+      subImageControls_.setImageInfoLabel(status);
    }
 
    /*

@@ -60,7 +60,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
    private ThreadPoolExecutor redrawPixelsExecutor_;
 
    public DisplayPlus(final MMImageCache stitchedCache, Acquisition acq, JSONObject summaryMD,
-           MultiResMultipageTiffStorage multiResStorage) {
+           MultiResMultipageTiffStorage multiResStorage ) {
       super(stitchedCache, null, "test", true);
       posManager_ = multiResStorage.getPositionManager();
       exploreAcq_ = acq instanceof ExploreAcquisition;
@@ -77,16 +77,10 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
       //Set parameters for tile dimensions, num rows and columns, overlap, and image dimensions
       acq_ = acq;
 
-      controls_ = new DisplayPlusControls(this, this.getEventBus(), acq);
-
       this.getEventBus().register(this);
 
       //Add in custom controls
-      try {
-         JavaUtils.setRestrictedFieldValue(this, VirtualAcquisitionDisplay.class, "controls_", controls_);
-      } catch (NoSuchFieldException ex) {
-         ReportingUtils.showError("Couldn't create display controls");
-      }
+      subImageControls_ = new SubImageControls(this, this.getEventBus(), acq);
 
       //add in customized zoomable acquisition virtual stack
       try {
@@ -441,11 +435,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
                zoom(true);
             } else if (ke.getKeyChar() == '-') {
                zoom(false);
-            } else if (ke.getKeyChar() == ' ') {
-               if (acq_ instanceof ExploreAcquisition) {
-                  ((DisplayPlusControls)controls_).toggleExploreMode();
-               }
-            }
+            } 
          }
 
          @Override

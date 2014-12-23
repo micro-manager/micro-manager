@@ -44,6 +44,7 @@ public final class MultiChannelHistograms extends JPanel implements Histograms {
    private CompositeImage img_;
    private boolean updatingCombos_ = false;
    private HistogramControlsState hcs_;
+   private ContrastPanel contrastPanel_;
 
    public MultiChannelHistograms(VirtualAcquisitionDisplay disp, ContrastPanel contrastPanel) {
       super();
@@ -60,6 +61,7 @@ public final class MultiChannelHistograms extends JPanel implements Histograms {
       this.removeAll();
       this.invalidate();
 
+      contrastPanel_ = cp;
 
       final int nChannels;
       boolean rgb;
@@ -232,7 +234,7 @@ public final class MultiChannelHistograms extends JPanel implements Histograms {
    }
    
    public void setDisplayMode(int mode) {
-      display_.setDisplayMode(mode);
+      contrastPanel_.setDisplayMode(mode);
    }
 
    @Override

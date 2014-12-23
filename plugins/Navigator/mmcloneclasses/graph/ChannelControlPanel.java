@@ -33,7 +33,7 @@ import javax.swing.*;
 import mmcloneclasses.acquisition.MMImageCache;
 import mmcloneclasses.graph.HistogramPanel.CursorListener;
 import mmcloneclasses.imagedisplay.MMCompositeImage;
-import mmcloneclasses.imagedisplay.MetadataPanel;
+import mmcloneclasses.imagedisplay.ContrastMetadataCommentsPanel;
 import mmcloneclasses.imagedisplay.VirtualAcquisitionDisplay;
 import mmcorej.CMMCore;
 import org.json.JSONArray;
