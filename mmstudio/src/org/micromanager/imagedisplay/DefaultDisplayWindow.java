@@ -141,8 +141,8 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
 
       EventManager.register(this);
       EventManager.post(new DefaultNewDisplayEvent(this));
-      if (MMStudio.getInstance().data().getIsTracked(store_)) {
-         MMStudio.getInstance().data().associateDisplay(this, store_);
+      if (MMStudio.getInstance().display().getIsTracked(store_)) {
+         MMStudio.getInstance().display().associateDisplay(this, store_);
       }
    }
 
@@ -572,7 +572,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       controls_.cleanup();
       histograms_.cleanup();
       MMStudio studio = MMStudio.getInstance();
-      studio.data().removeDisplay(this, store_);
+      studio.display().removeDisplay(this, store_);
       store_.unregisterForEvents(this);
       studio.removeMMBackgroundListener(this);
       try {
