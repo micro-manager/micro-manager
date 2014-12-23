@@ -33,8 +33,8 @@ public class MMTags {
       public static final String PIXEL_ASPECT = "PixelAspect";
       public static final String SOURCE = "Source";
       public static final String COLORS = "ChColors";
-      public static final String CHANNEL_MINS = "ChMins";
-      public static final String CHANNEL_MAXES = "ChMaxes";
+      public static final String CHANNEL_MINS = "ChContrastMin";
+      public static final String CHANNEL_MAXES = "ChContrastMax";
       public static final String NAMES = "ChNames";
       public static final String BIT_DEPTH = "BitDepth";
       public static final String OBJECTIVE_LABEL = "Objective-Label";
