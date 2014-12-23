@@ -364,12 +364,7 @@ public class MMStudio implements ScriptInterface {
       staticInfo_ = new StaticInfo(core_, frame_);
 
       openAcqDirectory_ = mainPrefs_.get(OPEN_ACQ_DIR, "");
-      try {
-         ImageUtils.setImageStorageClass(Class.forName (mainPrefs_.get(MAIN_SAVE_METHOD,
-                 ImageUtils.getImageStorageClass().getName()) ) );
-      } catch (ClassNotFoundException ex) {
-         ReportingUtils.logError(ex, "Class not found error.  Should never happen");
-      }
+      ReportingUtils.logError("TODO: restore previous default data saving method");
 
       ToolTipManager ttManager = ToolTipManager.sharedInstance();
       ttManager.setDismissDelay(TOOLTIP_DISPLAY_DURATION_MILLISECONDS);
@@ -1434,8 +1429,7 @@ public class MMStudio implements ScriptInterface {
       frame_.savePrefs(mainPrefs_);
       
       mainPrefs_.put(OPEN_ACQ_DIR, openAcqDirectory_);
-      mainPrefs_.put(MAIN_SAVE_METHOD, 
-              ImageUtils.getImageStorageClass().getName());
+      ReportingUtils.logError("TODO: record default data-saving method");
 
       // NOTE: do not save auto shutter state
       if (afMgr_ != null && afMgr_.getDevice() != null) {
@@ -2449,19 +2443,6 @@ public class MMStudio implements ScriptInterface {
       return afMgr_;
    }
 
-   @Override
-   public void setImageSavingFormat(Class imageSavingClass) throws MMScriptException {
-      if (! (imageSavingClass.equals(TaggedImageStorageDiskDefault.class) || 
-              imageSavingClass.equals(StorageMultipageTiff.class))) {
-         throw new MMScriptException("Unrecognized saving class");
-      }
-      ImageUtils.setImageStorageClass(imageSavingClass);
-      if (acqControlWin_ != null) {
-         acqControlWin_.updateSavingTypeButtons();
-      }
-   }
-   
-   
    /**
     * Allows MMListeners to register themselves
     * @param newL

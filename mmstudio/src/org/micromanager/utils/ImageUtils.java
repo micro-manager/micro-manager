@@ -18,11 +18,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
-import org.micromanager.api.TaggedImageStorage;
-
 public class ImageUtils {
-   private static Class<?> storageClass_ = TaggedImageStorageDiskDefault.class;
 
    public static int BppToImageType(long Bpp) {
       int BppInt = (int) Bpp;
@@ -530,26 +526,6 @@ public class ImageUtils {
          bs[x] = (byte) (yn * b);
       }
       return new LUT(8,size,rs,gs,bs);
-   }
-
-   public static void setImageStorageClass(Class storageClass) {
-      storageClass_ = storageClass;
-   }
-   
-   public static Class getImageStorageClass() {
-      return storageClass_;
-   }
-
-   public static TaggedImageStorage newImageStorageInstance
-           (String acqPath, boolean newDataSet, JSONObject summaryMetadata) {
-      try {
-        return (TaggedImageStorage) storageClass_
-                 .getConstructor(String.class, Boolean.class, JSONObject.class)
-                 .newInstance(acqPath, newDataSet, summaryMetadata);
-      } catch (Exception ex) {
-         ReportingUtils.logError(ex);
-      }
-      return null;
    }
 
    public class MinAndMax {

@@ -47,7 +47,6 @@ import javax.swing.table.*;
 import mmcorej.CMMCore;
 
 import org.micromanager.acquisition.AcquisitionEngine;
-import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
 import org.micromanager.acquisition.multipagetiff.StorageMultipageTiff;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.internalinterfaces.AcqSettingsListener;
@@ -919,7 +918,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       singleButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            ImageUtils.setImageStorageClass(TaggedImageStorageDiskDefault.class);
+            ReportingUtils.logError("TODO: allow saving as separate image files");
          }});
 
       multiButton_ = new JRadioButton("Image stack file");
@@ -929,7 +928,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       multiButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            ImageUtils.setImageStorageClass(StorageMultipageTiff.class);
+            ReportingUtils.logError("TODO: set saving mode to multi-image file");
          }});
       
       ButtonGroup buttonGroup = new ButtonGroup();
@@ -1162,11 +1161,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
    }
    
    public final void updateSavingTypeButtons() {
-      if (ImageUtils.getImageStorageClass().equals(TaggedImageStorageDiskDefault.class)) {
-         singleButton_.setSelected(true);
-      } else if (ImageUtils.getImageStorageClass().equals(StorageMultipageTiff.class)) {
-         multiButton_.setSelected(true);
-      }
+      ReportingUtils.logError("TODO: set saving mode button states");
    }
 
    public void close() {

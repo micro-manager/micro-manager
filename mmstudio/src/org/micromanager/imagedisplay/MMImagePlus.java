@@ -7,16 +7,12 @@ import ij.ImageStack;
 
 public class MMImagePlus extends ImagePlus implements IMMImagePlus {
 
-   private EventBus bus_;
-
-   public MMImagePlus(EventBus bus) {
+   public MMImagePlus() {
       super();
-      bus_ = bus;
    }
 
-   public MMImagePlus(String title, ImageStack stack, EventBus bus) {
+   public MMImagePlus(String title, ImageStack stack) {
       super(title, stack);
-      bus_ = bus;
    }
 
    @Override
@@ -62,7 +58,6 @@ public class MMImagePlus extends ImagePlus implements IMMImagePlus {
 
    @Override
    public void draw() {
-      bus_.post(new DrawEvent());
       getWindow().getCanvas().setImageUpdated();
       superDraw();
    }
