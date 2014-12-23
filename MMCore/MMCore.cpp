@@ -5696,6 +5696,39 @@ void CMMCore::saveSystemConfiguration(const char* fileName) throw (CMMError)
  */
 void CMMCore::loadSystemConfiguration(const char* fileName) throw (CMMError)
 {
+   try
+   {
+      loadSystemConfigurationImpl(fileName);
+   }
+   catch (const CMMError&)
+   {
+      // Unload all devices so as not to leave loaded but uninitialized devices
+      // (which are prone to cause a crash when accessed) hanging around.
+      LOG_INFO(coreLogger_) <<
+         "Unloading all devices after failure to load system configuration";
+
+      try
+      {
+         // XXX Ideally, we would try to unload all devices, skipping over any
+         // errors from Shutdown().
+         unloadAllDevices();
+      }
+      catch (const CMMError& err)
+      {
+         LOG_ERROR(coreLogger_) <<
+            "Error occurred while unloading all devices: " <<
+            err.getFullMsg();
+      }
+
+      LOG_INFO(coreLogger_) <<
+         "Now rethrowing original error from system configuration loading";
+      throw;
+   }
+}
+
+
+void CMMCore::loadSystemConfigurationImpl(const char* fileName) throw (CMMError)
+{
    if (!fileName)
       throw CMMError("Null filename");
 

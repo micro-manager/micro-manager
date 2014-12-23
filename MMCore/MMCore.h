@@ -671,6 +671,7 @@ private:
    void updateAllowedChannelGroups();
    void assignDefaultRole(boost::shared_ptr<DeviceInstance> pDev);
    void updateCoreProperty(const char* propName, MM::DeviceType devType) throw (CMMError);
+   void loadSystemConfigurationImpl(const char* fileName) throw (CMMError);
 };
 
 #endif //_MMCORE_H_
