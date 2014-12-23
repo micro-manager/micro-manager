@@ -1108,10 +1108,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       // if we are changing color slice by slice then set controller
       //   to do multiple slices per piezo move
+      // TODO fix this with new multicolor approach
       if (props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_MULTICOLOR_MODE)
             == MulticolorModes.Keys.SLICE.getPrefCode()) {
          props_.setPropValue(galvoDevice, Properties.Keys.SPIM_NUM_SLICES_PER_PIEZO,
-            props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_NUM_COLORS), skipScannerWarnings);
+            1, skipScannerWarnings);
       }
       
       AcquisitionModes.Keys spimMode = (AcquisitionModes.Keys) spimMode_.getSelectedItem();
@@ -1249,8 +1250,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       int nrSides = getNumSides();
       // TODO: multi-channel in sense of excitation color, etc.
       // TODO fix this because it will stop working with new MultiD panel w/JTable
-      int nrColors = props_.getPropValueInteger(Devices.Keys.PLUGIN,
-            Properties.Keys.PLUGIN_NUM_COLORS);
+      int nrColors = 1;
       
       // make sure we have cameras selected
       if (!checkCamerasAssigned(true)) {

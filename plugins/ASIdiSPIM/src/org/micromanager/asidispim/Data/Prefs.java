@@ -66,8 +66,8 @@ public class Prefs {
       EPI_BEAM_ENABLED("EpiBeamEnabled"),
       EPI_SCAN_ENABLED("EpiScanEnabled"),
       ENABLE_BEAM_SETTINGS("EnableBeamSettings"),
-      SPIM_EXPOSURE("AcquisitionExposure"),
-      POSITION_REFRESH_INTERVAL("PositionRefreshInterval"),
+      COLOR_USE_COLOR("ColorUse"),
+      COLOR_CONFIG("ColorConfig"),
       NONE("None");
       private final String text;
       Keys(String text) {
