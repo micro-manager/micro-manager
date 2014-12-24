@@ -84,7 +84,6 @@ public class ASIdiSPIMFrame extends MMFrame
    private final SetupPanel setupPanelA_;
    private final SetupPanel setupPanelB_;
    private final NavigationPanel navigationPanel_;
-   private final MultiDPanel multiDPanel_;
    private final SettingsPanel settingsPanel_;
    private final DataAnalysisPanel dataAnalysisPanel_;
    private final HelpPanel helpPanel_;
@@ -119,7 +118,6 @@ public class ASIdiSPIMFrame extends MMFrame
       stagePosUpdater_ = new StagePositionUpdater(positions_, props_);  // needed for setup and navigation
       navigationPanel_ = new NavigationPanel(gui, devices_, props_, joystick_,
             positions_, prefs_, cameras_);
-      multiDPanel_ = new MultiDPanel(gui, devices_, props_, prefs_);
       acquisitionPanel_ = new AcquisitionPanel(gui, devices_, props_, joystick_, 
             cameras_, prefs_, stagePosUpdater_, positions_);
       dataAnalysisPanel_ = new DataAnalysisPanel(gui, prefs_);
@@ -138,11 +136,10 @@ public class ASIdiSPIMFrame extends MMFrame
       tabbedPane_.addLTab(setupPanelB_);      // tabIndex = 2
       tabbedPane_.addLTab(acquisitionPanel_); // tabIndex = 3
       tabbedPane_.addLTab(dataAnalysisPanel_);// tabIndex = 4
-      tabbedPane_.addLTab(multiDPanel_);      // tabIndex = 5
-      tabbedPane_.addLTab(devicesPanel_);     // tabIndex = 6
+      tabbedPane_.addLTab(devicesPanel_);     // tabIndex = 5
       final int deviceTabIndex = tabbedPane_.getTabCount() - 1;
-      tabbedPane_.addLTab(settingsPanel_);    // tabIndex = 7
-      tabbedPane_.addLTab(helpPanel_);        // tabIndex = 8
+      tabbedPane_.addLTab(settingsPanel_);    // tabIndex = 6
+      tabbedPane_.addLTab(helpPanel_);        // tabIndex = 7
       final int helpTabIndex = tabbedPane_.getTabCount() - 1;
       
 

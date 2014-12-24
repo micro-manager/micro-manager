@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          MultiDPanel.java
+//FILE:          MultiColorSubPanel.java
 //PROJECT:       Micro-Manager 
 //SUBSYSTEM:     ASIdiSPIM plugin
 //-----------------------------------------------------------------------------
@@ -47,7 +47,6 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.SwingConstants;
@@ -65,13 +64,12 @@ import net.miginfocom.swing.MigLayout;
  * @author Jon
  */
 @SuppressWarnings("serial")
-public class MultiDPanel extends ListeningJPanel {
+public class MultiColorSubPanel extends ListeningJPanel {
    private final CMMCore core_;
    private final Devices devices_;
    private final Properties props_;
    private final Prefs prefs_;
    
-   private final JPanel colorPanel_;
    private final JCheckBox useMultiColorCB_;
    private final JComboBox colorGroup_;
    private final JComboBox colorMode_;
@@ -116,12 +114,12 @@ public class MultiDPanel extends ListeningJPanel {
    /**
     * MultiD panel constructor.
     */
-   public MultiDPanel(ScriptInterface gui, Devices devices, Properties props, Prefs prefs) {
+   public MultiColorSubPanel(ScriptInterface gui, Devices devices, Properties props, Prefs prefs) {
       super (MyStrings.PanelNames.MULTID.toString(),
             new MigLayout(
-              "", 
-              "[right]",
-              "[]6[]"));
+                  "",
+                  "[right]4[left]",
+                  "[]8[]"));
       core_ = gui.getMMCore();
       devices_ = devices;
       props_ = props;
@@ -130,23 +128,16 @@ public class MultiDPanel extends ListeningJPanel {
       
       PanelUtils pu = new PanelUtils(prefs_, props_, devices_);
       
-      // start channel sub-panel
-      colorPanel_ = new JPanel(new MigLayout(
-              "",
-              "[right]4[left]",
-              "[]8[]"));
-      
-      useMultiColorCB_ = pu.makeCheckBox("Use Multiple Colors",
+      useMultiColorCB_ = pu.makeCheckBox("Use multiple colors",
             Properties.Keys.PLUGIN_USE_MULTICOLOR, panelName_, false);
       useMultiColorCB_.setToolTipText("Contact ASI for details; advanced features require PLogic card");
       useMultiColorCB_.setFocusPainted(false); 
       ComponentTitledBorder componentBorder = 
-              new ComponentTitledBorder(useMultiColorCB_, colorPanel_ 
-              , BorderFactory.createLineBorder(ASIdiSPIM.borderColor)); 
-      colorPanel_.setBorder(componentBorder);
+            new ComponentTitledBorder(useMultiColorCB_, this, 
+                  BorderFactory.createLineBorder(ASIdiSPIM.borderColor)); 
+      this.setBorder(componentBorder);
       
-      colorPanel_.add(new JLabel("Color group:"));
-//      colorGroup_ = new JComboBox();
+      this.add(new JLabel("Color group:"));
       String groups[] = getAvailableGroups();
       colorGroup_  = pu.makeDropDownBox(groups, Devices.Keys.PLUGIN,
             Properties.Keys.PLUGIN_MULTICOLOR_GROUP, "");
@@ -163,7 +154,7 @@ public class MultiDPanel extends ListeningJPanel {
             }
          }
       });
-      colorPanel_.add(colorGroup_, "wrap");
+      this.add(colorGroup_, "wrap");
       
       
       colorTableModel_ = new ColorTableModel(prefs_, panelName_);
@@ -172,22 +163,22 @@ public class MultiDPanel extends ListeningJPanel {
       TableColumn column_useChannel = colorTable_.getColumnModel().getColumn(ColorTableModel.columnIndex_useChannel);
       TableColumn column_config = colorTable_.getColumnModel().getColumn(ColorTableModel.columnIndex_config);
       column_useChannel.setPreferredWidth(40);
-      column_config.setPreferredWidth(150);
+      column_config.setPreferredWidth(100);
       column_useChannel.setCellRenderer(new UseChannelTableCellRenderer());
       column_config.setCellRenderer(new DisplayDisabledTableCellRenderer());
       column_config.setCellEditor(new ColorConfigEditor(colorGroup_, core_));
       
       colorTablePane_ = new JScrollPane(colorTable_);
-      colorTablePane_.setPreferredSize(new Dimension(300,100));
+      colorTablePane_.setPreferredSize(new Dimension(220,100));
       colorTablePane_.setViewportView(colorTable_);
-      colorPanel_.add(colorTablePane_, "span 2, wrap");
+      this.add(colorTablePane_, "span 2, wrap");
       
-      colorPanel_.add(new JLabel("Change color:"));
+      this.add(new JLabel("Change color:"));
       MulticolorModes colorModes = new MulticolorModes(devices_, props_,
             Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_MULTICOLOR_MODE,
             MulticolorModes.Keys.VOLUME);
       colorMode_ = colorModes.getComboBox();
-      colorPanel_.add(colorMode_, "wrap");
+      this.add(colorMode_, "wrap");
       
       // enable/disable panel elements depending on checkbox state
       useMultiColorCB_.addActionListener(new ActionListener(){ 
@@ -201,10 +192,6 @@ public class MultiDPanel extends ListeningJPanel {
       // initialize GUI for muli-color enabled checkbox
       useMultiColorCB_.doClick();
       useMultiColorCB_.doClick();
-      
-      // end channel sub-panel
-      
-      this.add(colorPanel_);
       
    }// constructor
 
@@ -252,6 +239,4 @@ public class MultiDPanel extends ListeningJPanel {
    public void gotSelected() {
    }
 
-
-   
 }

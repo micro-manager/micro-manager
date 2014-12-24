@@ -89,8 +89,10 @@ import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
 
 import com.swtdesigner.SwingResourceManager;
+
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+
 import org.micromanager.utils.MMFrame;
 
 /**
@@ -154,6 +156,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final JPanel rightColumnPanel_;
    private final MMFrame sliceFrame_;
    private SliceTiming sliceTiming_;
+   private final MultiColorSubPanel multiChannelPanel_;
    
    public AcquisitionPanel(ScriptInterface gui, 
            Devices devices, 
@@ -210,7 +213,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       volPanel_ = new JPanel(new MigLayout(
               "",
               "[right]10[center]",
-              "[]8[]8[]8[]8[]8[]8[]8[]8[]8[]2[]"));
+              "[]8[]"));
 
       volPanel_.setBorder(PanelUtils.makeTitledBorder("Volume Settings"));
 
@@ -605,6 +608,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       acquisitionStatusLabel_ = new JLabel("");
       updateAcquisitionStatus(AcquisitionStatus.NONE);
       
+      multiChannelPanel_ = new MultiColorSubPanel(gui, devices_, props_, prefs_);
+      
+      
       // set up tabbed panel for GUI, 3 panels for columns of settings to
       // get vertical space right in each column
       
@@ -628,6 +634,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             "[]",
             "[]"));
       
+      rightColumnPanel_.add(multiChannelPanel_, "wrap");
       rightColumnPanel_.add(navigationJoysticksCB_);
       
       
