@@ -152,7 +152,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final JComboBox spimMode_;
    private final JCheckBox navigationJoysticksCB_;
    private final JPanel leftColumnPanel_;
-   private final JPanel centerColumnPanel_;
    private final JPanel rightColumnPanel_;
    private final MMFrame sliceFrame_;
    private SliceTiming sliceTiming_;
@@ -631,13 +630,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       leftColumnPanel_.add(buttonStart_, "split 2, left");
       leftColumnPanel_.add(acquisitionStatusLabel_);
       
-      centerColumnPanel_ = new JPanel(new MigLayout(
-            "",
-            "[]",
-            "[]6[]"));
-      
-      centerColumnPanel_.add(volPanel_, "wrap");
-      
       rightColumnPanel_ = new JPanel(new MigLayout(
             "",
             "[]",
@@ -648,7 +640,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       // add the column panels to the main panel
       add(leftColumnPanel_);
-      add(centerColumnPanel_);
+      add(volPanel_);
       add(rightColumnPanel_);
       
       // properly initialize the advanced slice timing
