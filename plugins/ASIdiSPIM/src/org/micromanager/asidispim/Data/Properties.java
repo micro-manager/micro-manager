@@ -146,7 +146,6 @@ public class Properties {
       PLUGIN_EXPORT_TRANSFORM_OPTION("ExportTransformOption"), // Transform to be applied when exporting data
       PLUGIN_EXPORT_FORMAT("ExportFormatOption"), // Output format of export pane
       PLUGIN_ADVANCED_SLICE_TIMING("AdvancedSliceTiming"),
-      PLUGIN_ADVANCED_SLICE_TIMING_VISIBLE("AdvancedSliceTimingVisible"),
       PLUGIN_SLICE_STEP_SIZE("SliceStepSize"),
       PLUGIN_DESIRED_EXPOSURE("DesiredExposure"),
       PLUGIN_DESIRED_SLICE_PERIOD("DesiredSlicePeriod"),
