@@ -31,7 +31,6 @@ public class ColorSpec {
    public static final double Version = 0.1;
 
    // fields that are used
-   public int pLogicNum = 0;
    public boolean useChannel = false;
    public String config = ""; // Configuration setting name
    
@@ -41,8 +40,7 @@ public class ColorSpec {
 //   public Color color = Color.gray;
 
    
-   public ColorSpec(int pLogicNum, boolean useChannel, String config){
-      this.pLogicNum = pLogicNum;
+   public ColorSpec(boolean useChannel, String config){
       this.useChannel = useChannel;
       this.config = config;
 //      color = Color.WHITE;

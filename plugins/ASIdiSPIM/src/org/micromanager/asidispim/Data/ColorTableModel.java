@@ -36,12 +36,11 @@ import org.micromanager.utils.ReportingUtils;
  */
 @SuppressWarnings("serial")
 public class ColorTableModel extends AbstractTableModel {
-   public static final String[] columnNames = {"Use?", "Preset", "PLC #"};
+   public static final String[] columnNames = {"Use?", "Preset"};
    public static final int NUM_COLORS = 4;
    public static final int PLOGIC_OFFSET = 5;
    public static final int columnIndex_useChannel = 0;
    public static final int columnIndex_config = 1;
-   public static final int columnIndex_pLogicNum = 2;
    private ArrayList<ColorSpec> colors_;
    private final Prefs prefs_;
    private final String prefNode_;
@@ -52,7 +51,7 @@ public class ColorTableModel extends AbstractTableModel {
       prefNode_ = prefNode;
       
       for (int i=0; i<NUM_COLORS; i++) {
-         addNewColor(new ColorSpec(i+PLOGIC_OFFSET,
+         addNewColor(new ColorSpec(
                prefs_.getBoolean(prefNode_ + "_" + i, Prefs.Keys.COLOR_USE_COLOR, false),
                prefs_.getString(prefNode_ + "_" + i, Prefs.Keys.COLOR_CONFIG, "")));
       }
@@ -81,7 +80,7 @@ public class ColorTableModel extends AbstractTableModel {
    
    @Override
    public boolean isCellEditable(int rowIndex, int columnIndex) {
-      return columnIndex != columnIndex_pLogicNum;
+      return true;
    }
 
    @Override
@@ -104,12 +103,6 @@ public class ColorTableModel extends AbstractTableModel {
                   Prefs.Keys.COLOR_CONFIG, val);
          }
          break;
-      case columnIndex_pLogicNum:
-         // no need to remember; is fixed for the rowIndex as implemented
-         if (value instanceof Integer) {
-            color.pLogicNum = (Integer) value;
-         }
-         break;
       }
       fireTableCellUpdated(rowIndex, columnIndex);
    }
@@ -122,8 +115,6 @@ public class ColorTableModel extends AbstractTableModel {
          return color.useChannel;
       case columnIndex_config:
          return color.config;
-      case columnIndex_pLogicNum:
-         return color.pLogicNum;
       default: 
          ReportingUtils.logError("ColorTableModel getValuAt() didn't match");
          return null;

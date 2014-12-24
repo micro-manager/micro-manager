@@ -50,6 +50,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.SwingConstants;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
@@ -91,11 +92,6 @@ public class MultiDPanel extends ListeningJPanel {
    };
    
    class UseChannelTableCellRenderer extends JCheckBox implements TableCellRenderer {
-      public UseChannelTableCellRenderer() {
-         super();
-         setHorizontalAlignment(JLabel.CENTER);
-      }
-      
       @Override
       public Component getTableCellRendererComponent(JTable table, Object value,
             boolean isSelected, boolean hasFocus, int rowIndex, int columnIndex) {
@@ -112,6 +108,7 @@ public class MultiDPanel extends ListeningJPanel {
             check.setOpaque(false);
             check.setBackground(table.getBackground());
          }
+         check.setHorizontalAlignment(SwingConstants.CENTER);
          return check;
       }
    }
@@ -174,15 +171,10 @@ public class MultiDPanel extends ListeningJPanel {
       colorTable_.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
       TableColumn column_useChannel = colorTable_.getColumnModel().getColumn(ColorTableModel.columnIndex_useChannel);
       TableColumn column_config = colorTable_.getColumnModel().getColumn(ColorTableModel.columnIndex_config);
-      TableColumn column_pLogicNum = colorTable_.getColumnModel().getColumn(ColorTableModel.columnIndex_pLogicNum);
-      column_useChannel.setPreferredWidth(50);
+      column_useChannel.setPreferredWidth(40);
       column_config.setPreferredWidth(150);
-      column_pLogicNum.setPreferredWidth(50);
       column_useChannel.setCellRenderer(new UseChannelTableCellRenderer());
       column_config.setCellRenderer(new DisplayDisabledTableCellRenderer());
-      DefaultTableCellRenderer centerRenderer = new DisplayDisabledTableCellRenderer();
-      centerRenderer.setHorizontalAlignment(JLabel.CENTER);
-      column_pLogicNum.setCellRenderer(centerRenderer);
       column_config.setCellEditor(new ColorConfigEditor(colorGroup_, core_));
       
       colorTablePane_ = new JScrollPane(colorTable_);
