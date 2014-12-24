@@ -345,21 +345,24 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       sliceFrame_.addWindowListener(new SliceFrameAdapter());
       
-      slicePanel_.add(new JLabel("Delay before scan [ms]:"));
+      JLabel scanDelayLabel =  new JLabel("Delay before scan [ms]:");
+      slicePanel_.add(scanDelayLabel);
       delayScan_ = pu.makeSpinnerFloat(0, 10000, 0.25,
             new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SPIM_DELAY_SCAN, 0);
       delayScan_.addChangeListener(recalculateTimingDisplayCL);
       slicePanel_.add(delayScan_, "wrap");
 
-      slicePanel_.add(new JLabel("Lines scans per slice:"));
+      JLabel lineScanLabel = new JLabel("Lines scans per slice:");
+      slicePanel_.add(lineScanLabel);
       numScansPerSlice_ = pu.makeSpinnerInteger(1, 1000,
               new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
               Properties.Keys.SPIM_NUM_SCANSPERSLICE, 1);
       numScansPerSlice_.addChangeListener(recalculateTimingDisplayCL);
       slicePanel_.add(numScansPerSlice_, "wrap");
 
-      slicePanel_.add(new JLabel("Line scan period [ms]:"));
+      JLabel lineScanPeriodLabel = new JLabel("Line scan period [ms]:");
+      slicePanel_.add(lineScanPeriodLabel);
       lineScanPeriod_ = pu.makeSpinnerInteger(1, 10000,
               new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
               Properties.Keys.SPIM_LINESCAN_PERIOD, 10);
@@ -368,14 +371,16 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       slicePanel_.add(new JSeparator(), "span 2, wrap");
       
-      slicePanel_.add(new JLabel("Delay before laser [ms]:"));
+      JLabel delayLaserLabel = new JLabel("Delay before laser [ms]:");
+      slicePanel_.add(delayLaserLabel);
       delayLaser_ = pu.makeSpinnerFloat(0, 10000, 0.25,
             new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SPIM_DELAY_LASER, 0);
       delayLaser_.addChangeListener(recalculateTimingDisplayCL);
       slicePanel_.add(delayLaser_, "wrap");
       
-      slicePanel_.add(new JLabel("Laser trig duration [ms]:"));
+      JLabel durationLabel = new JLabel("Laser trig duration [ms]:");
+      slicePanel_.add(durationLabel);
       durationLaser_ = pu.makeSpinnerFloat(0, 10000, 0.25,
             new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SPIM_DURATION_LASER, 1);
@@ -384,14 +389,16 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       slicePanel_.add(new JSeparator(), "wrap");
 
-      slicePanel_.add(new JLabel("Delay before camera [ms]:"));
+      JLabel delayLabel = new JLabel("Delay before camera [ms]:");
+      slicePanel_.add(delayLabel);
       delayCamera_ = pu.makeSpinnerFloat(0, 10000, 0.25,
             new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SPIM_DELAY_CAMERA, 0);
       delayCamera_.addChangeListener(recalculateTimingDisplayCL);
       slicePanel_.add(delayCamera_, "wrap");
       
-      slicePanel_.add(new JLabel("Camera trig duration [ms]:"));
+      JLabel cameraLabel = new JLabel("Camera trig duration [ms]:");
+      slicePanel_.add(cameraLabel);
       durationCamera_ = pu.makeSpinnerFloat(0, 1000, 0.25,
             new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SPIM_DURATION_CAMERA, 0);
@@ -400,9 +407,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       final JComponent[] advancedTimingComponents = { delayScan_,
             numScansPerSlice_, lineScanPeriod_, delayLaser_,
-            durationLaser_, delayCamera_, durationCamera_};
+            durationLaser_, delayCamera_, durationCamera_, cameraLabel,
+            delayLabel, durationLabel, delayLaserLabel, lineScanLabel,
+            lineScanPeriodLabel, scanDelayLabel};
       final JComponent[] simpleTimingComponents = { desiredLightExposure_,
-            calculateSliceTiming_, minSlicePeriodCB_};
+            calculateSliceTiming_, minSlicePeriodCB_, desiredSlicePeriodLabel_,
+            desiredLightExposureLabel_};
       componentsSetEnabled(advancedTimingComponents, advancedSliceTimingCB_.isSelected());
       componentsSetEnabled(simpleTimingComponents, !advancedSliceTimingCB_.isSelected());
       
