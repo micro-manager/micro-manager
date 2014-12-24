@@ -110,6 +110,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final CMMCore core_;
    private final ScriptInterface gui_;
    private final JCheckBox advancedSliceTimingCB_;
+   private final JCheckBox advancedSliceTimingVisibleCB_;
    private final JSpinner numSlices_;
    private final JComboBox numSides_;
    private final JComboBox firstSide_;
@@ -211,7 +212,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       volPanel_ = new JPanel(new MigLayout(
               "",
               "[right]10[center]",
-              "[]8[]"));
+              "[]8[]8[]8[]8[]8[]8[]8[]8[]8[]2[]"));
 
       volPanel_.setBorder(PanelUtils.makeTitledBorder("Volume Settings"));
 
@@ -310,16 +311,29 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       });
       volPanel_.add(calculateSliceTiming_, "center, span 2, wrap");
       
+      // special checkbox to use the advanced timing settings
+      // action handler added below after defining components it enables/disables
+      advancedSliceTimingCB_ = pu.makeCheckBox("Use advanced timing settings",
+            Properties.Keys.PLUGIN_ADVANCED_SLICE_TIMING, panelName_, false);
+      volPanel_.add(advancedSliceTimingCB_, "left, span 2, wrap");
+      
+      // special checkbox to show/hide advanced timing frame
+      // action handler added below after defining the frame that it controls
+      advancedSliceTimingVisibleCB_ = pu.makeCheckBox("Show advanced timing settings",
+            Properties.Keys.PLUGIN_ADVANCED_SLICE_TIMING_VISIBLE, panelName_, false);
+      advancedSliceTimingVisibleCB_.setFocusPainted(false);
+      volPanel_.add(advancedSliceTimingVisibleCB_, "left, span 2, wrap");
+      
       // end volume sub-panel
       
       
-      // start slice timing (advanced) frame
+      // start advanced slice timing frame
       // visibility of this frame is controlled from advancedTiming checkbox
+      // this frame is separate from main plugin window
       
       sliceFrame_ = new MMFrame();
+      sliceFrame_.setTitle("Advanced timing");
       sliceFrame_.loadPosition(100, 100);
-      sliceFrame_.setSize(290, 360);
-      sliceFrame_.setResizable(false);
 
       slicePanel_ = new JPanel(new MigLayout(
               "",
@@ -327,56 +341,27 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
               "[]8[]"));
       sliceFrame_.add(slicePanel_);
       
-      // special checkbox in titled border to enable/disable sub-panel plus more
-      advancedSliceTimingCB_ = pu.makeCheckBox("Slice Timing Settings (Advanced)",
-            Properties.Keys.PLUGIN_ADVANCED_SLICE_TIMING, panelName_, true);
-      advancedSliceTimingCB_.setToolTipText("See ASI Tiger SPIM documentation for details");
-      advancedSliceTimingCB_.setFocusPainted(false); 
+      advancedSliceTimingVisibleCB_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            boolean enabled = advancedSliceTimingVisibleCB_.isSelected();
+            if (!enabled) {
+               sliceFrame_.savePosition();
+            }
+            sliceFrame_.setVisible(enabled);
+         }
+      });
       
       class SliceFrameAdapter extends WindowAdapter {
          @Override
          public void windowClosing(WindowEvent e) {
-            advancedSliceTimingCB_.setSelected(false);
+            advancedSliceTimingVisibleCB_.setSelected(false);
             sliceFrame_.savePosition();
          }
       }
       
       sliceFrame_.addWindowListener(new SliceFrameAdapter());
-
-      // this action listener takes care of enabling/disabling inputs
-      // we call this to get GUI looking right
-      ActionListener sliceTimingDisableGUIInputs = new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            boolean enabled = advancedSliceTimingCB_.isSelected();
-            Component comp[] = slicePanel_.getComponents();
-            for(int i = 0; i<comp.length; i++) {
-               comp[i].setEnabled(enabled);
-            }
-            desiredSlicePeriod_.setEnabled(!enabled && !minSlicePeriodCB_.isSelected());
-            desiredSlicePeriodLabel_.setEnabled(!enabled);
-            desiredLightExposure_.setEnabled(!enabled);
-            desiredLightExposureLabel_.setEnabled(!enabled);
-            calculateSliceTiming_.setEnabled(!enabled);
-            minSlicePeriodCB_.setEnabled(!enabled);
-         } 
-      };
       
-      // this action listener actually recalculates the timings
-      // don't add this action listener until after GUI is set
-      ActionListener sliceTimingCalculate = new ActionListener(){
-        @Override
-        public void actionPerformed(ActionEvent e){
-           boolean enabled = advancedSliceTimingCB_.isSelected();
-           if (!enabled) {
-              sliceFrame_.savePosition();
-           }
-           sliceFrame_.setVisible(enabled);
-           prefs_.putBoolean(panelName_,
-                 Properties.Keys.PLUGIN_ADVANCED_SLICE_TIMING, enabled);
-        }
-      };
-
       slicePanel_.add(new JLabel("Delay before scan [ms]:"));
       delayScan_ = pu.makeSpinnerFloat(0, 10000, 0.25,
             new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
@@ -430,6 +415,31 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       durationCamera_.addChangeListener(recalculateTimingDisplayCL);
       slicePanel_.add(durationCamera_, "wrap");
       
+      final JComponent[] advancedTimingComponents = { delayScan_,
+            numScansPerSlice_, lineScanPeriod_, delayLaser_,
+            durationLaser_, delayCamera_, durationCamera_};
+      final JComponent[] simpleTimingComponents = { desiredLightExposure_,
+            calculateSliceTiming_, minSlicePeriodCB_};
+      componentsSetEnabled(advancedTimingComponents, advancedSliceTimingCB_.isSelected());
+      componentsSetEnabled(simpleTimingComponents, !advancedSliceTimingCB_.isSelected());
+      
+      // this action listener takes care of enabling/disabling inputs
+      // we call this to get GUI looking right
+      ActionListener sliceTimingDisableGUIInputs = new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            boolean enabled = advancedSliceTimingCB_.isSelected();
+            // set other components in this advanced timing frame
+            componentsSetEnabled(advancedTimingComponents, enabled);
+            // also control some components in main volume settings sub-panel
+            componentsSetEnabled(simpleTimingComponents, !enabled);
+            desiredSlicePeriod_.setEnabled(!enabled && !minSlicePeriodCB_.isSelected());
+         } 
+      };
+      
+      sliceFrame_.pack();
+      sliceFrame_.setResizable(false);
+      
       // end slice Frame
       
 
@@ -449,7 +459,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
       };
 
-      repeatPanel_.add(new JLabel("Num time points:"));
+      repeatPanel_.add(new JLabel("Time points:"));
       numTimepoints_ = pu.makeSpinnerInteger(1, 32000,
               Devices.Keys.PLUGIN,
               Properties.Keys.PLUGIN_NUM_ACQUISITIONS, 1);
@@ -468,7 +478,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       // start savePanel
       
-      final int textFieldWidth = 20;
+      final int textFieldWidth = 16;
       savePanel_ = new JPanel(new MigLayout(
               "",
               "[right]10[center]8[left]",
@@ -541,12 +551,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // we only need to gray out the directory-related components
       final JComponent[] saveComponents = { browseRootButton, rootField_, 
                                             dirRootLabel };
-      setDataSavingComponents(saveComponents);
+      componentsSetEnabled(saveComponents, saveCB_.isSelected());
       
       saveCB_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            setDataSavingComponents(saveComponents);
+            componentsSetEnabled(saveComponents, saveCB_.isSelected());
          }
       });
       
@@ -627,24 +637,24 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             "[]6[]"));
       
       centerColumnPanel_.add(volPanel_, "wrap");
-      centerColumnPanel_.add(advancedSliceTimingCB_, "wrap");
-      centerColumnPanel_.add(navigationJoysticksCB_);
       
       rightColumnPanel_ = new JPanel(new MigLayout(
             "",
             "[]",
             "[]"));
       
+      rightColumnPanel_.add(navigationJoysticksCB_);
+      
       
       // add the column panels to the main panel
       add(leftColumnPanel_);
       add(centerColumnPanel_);
+      add(rightColumnPanel_);
       
       // properly initialize the advanced slice timing
       advancedSliceTimingCB_.addActionListener(sliceTimingDisableGUIInputs);
       advancedSliceTimingCB_.doClick();
       advancedSliceTimingCB_.doClick();
-      advancedSliceTimingCB_.addActionListener(sliceTimingCalculate);
       
       updateActualSlicePeriodLabel();
       updateActualVolumeDurationLabel();
@@ -1087,8 +1097,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       acquisitionStatusLabel_.setText(text);
    }
 
-   private void setDataSavingComponents(JComponent[] saveComponents) {
-      if (saveCB_.isSelected()) {
+   private void componentsSetEnabled(JComponent[] saveComponents, boolean enabled) {
+      if (enabled) {
          for (JComponent c : saveComponents) {
             c.setEnabled(true);
          }
@@ -1715,7 +1725,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       } else {
          joystick_.unsetAllJoysticks();  // disable all joysticks on this tab
       }
-      sliceFrame_.setVisible(advancedSliceTimingCB_.isSelected());
+      sliceFrame_.setVisible(advancedSliceTimingVisibleCB_.isSelected());
    }
 
    /**
