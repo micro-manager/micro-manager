@@ -316,6 +316,7 @@ const char* const g_NumPositionsPropertyName = "NumPositions";
 
 // programmable logic property names
 const char* const g_NumLogicCellsPropertyName = "NumLogicCells";
+const char* const g_PLogicModePropertyName = "PLogicMode";
 const char* const g_PLogicOutputStatePropertyName = "PLogicOutputState";
 const char* const g_FrontpanelOutputStatePropertyName = "FrontpanelOutputState";
 const char* const g_BackplaneOutputStatePropertyName = "BackplaneOutputState";
@@ -323,6 +324,7 @@ const char* const g_PointerPositionPropertyName = "PointerPosition";
 const char* const g_TriggerSourcePropertyName = "TriggerSource";
 const char* const g_ClearCellStatePropertyName = "ClearCellState";
 const char* const g_SetCardPresetPropertyName = "SetCardPreset";
+const char* const g_SetChannelPropertyName = "OutputChannel";
 const char* const g_CellGenericPropertyName = "Cell";
 const char* const g_TypeGenericPropertyName = "Type";
 
@@ -356,6 +358,14 @@ const char* const g_PresetCode8 = "8 - BNC8 high";
 const char* const g_PresetCode9 = "9 - BNC5-8 low";
 const char* const g_PresetCode10 = "10 - two lasers (switch after stack)";
 const char* const g_PresetCode11 = "11 - two lasers (switch after slice)";
+const char* const g_PLogicModeNone = "None";
+const char* const g_PLogicModediSPIMShutter = "diSPIM Shutter";
+const char* const g_ChannelNone = "none of outputs 5-8";
+const char* const g_ChannelOnly5 = "output 5 only";
+const char* const g_ChannelOnly6 = "output 6 only";
+const char* const g_ChannelOnly7 = "output 7 only";
+const char* const g_ChannelOnly8 = "output 8 only";
+
 
 // SPIM enums
 // which side first

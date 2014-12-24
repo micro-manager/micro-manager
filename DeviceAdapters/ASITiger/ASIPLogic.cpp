@@ -58,16 +58,27 @@ using namespace std;
 // CPLogic
 //
 CPLogic::CPLogic(const char* name) :
-   ASIPeripheralBase< ::CGenericBase, CPLogic >(name),
+   ASIPeripheralBase< ::CShutterBase, CPLogic >(name),
    axisLetter_(g_EmptyAxisLetterStr),    // value determined by extended name
    numCells_(16),
-   currentPosition_(1)
+   currentPosition_(1),
+   useAsShutter_(false),
+   shutterOpen_(false)
 {
    if (IsExtendedName(name))  // only set up these properties if we have the required information in the name
    {
       axisLetter_ = GetAxisLetterFromExtName(name);
       CreateProperty(g_AxisLetterPropertyName, axisLetter_.c_str(), MM::String, true);
    }
+
+   CPropertyAction* pAct;
+
+   // pre-init property to say how PLogic card is used
+   // for now the only option is have shutter functionality for diSPIM (laser controls on BNCs 5-8)
+   pAct = new CPropertyAction (this, &CPLogic::OnPLogicMode);
+   CreateProperty(g_PLogicModePropertyName, g_PLogicModeNone, MM::String, false, pAct, true);
+   AddAllowedValue(g_PLogicModePropertyName, g_PLogicModeNone);
+   AddAllowedValue(g_PLogicModePropertyName, g_PLogicModediSPIMShutter);
 }
 
 int CPLogic::Initialize()
@@ -97,6 +108,20 @@ int CPLogic::Initialize()
    command << numCells_;
    CreateProperty(g_NumLogicCellsPropertyName, command.str().c_str(), MM::Integer, true);
 
+   if (useAsShutter_)
+   {
+      // special masked preset selector for shutter channel
+      pAct = new CPropertyAction (this, &CPLogic::OnSetShutterChannel);
+      CreateProperty(g_SetChannelPropertyName, g_ChannelNone, MM::String, false, pAct);
+      // use (CCA X) card presets here, just under a different name
+      AddAllowedValue(g_SetChannelPropertyName, g_ChannelNone, 9);
+      AddAllowedValue(g_SetChannelPropertyName, g_ChannelOnly5, 5);
+      AddAllowedValue(g_SetChannelPropertyName, g_ChannelOnly6, 6);
+      AddAllowedValue(g_SetChannelPropertyName, g_ChannelOnly7, 7);
+      AddAllowedValue(g_SetChannelPropertyName, g_ChannelOnly8, 8);
+      UpdateProperty(g_SetChannelPropertyName);
+   }
+
    // pointer position, this is where edits/queries are made in general
    pAct = new CPropertyAction (this, &CPLogic::OnPointerPosition);
    CreateProperty(g_PointerPositionPropertyName, "0", MM::Integer, false, pAct);
@@ -108,12 +133,12 @@ int CPLogic::Initialize()
    UpdateProperty(g_PLogicOutputStatePropertyName);
 
    // reports the output state of the BNCs as unsigned integer
-   pAct = new CPropertyAction (this, &CPLogic::OnPLogicOutputState);
+   pAct = new CPropertyAction (this, &CPLogic::OnFrontpanelOutputState);
    CreateProperty(g_FrontpanelOutputStatePropertyName, "0", MM::Integer, true, pAct);
    UpdateProperty(g_FrontpanelOutputStatePropertyName);
 
    // reports the output state of the backplane IO as unsigned integer
-   pAct = new CPropertyAction (this, &CPLogic::OnPLogicOutputState);
+   pAct = new CPropertyAction (this, &CPLogic::OnBackplaneOutputState);
    CreateProperty(g_BackplaneOutputStatePropertyName, "0", MM::Integer, true, pAct);
    UpdateProperty(g_BackplaneOutputStatePropertyName);
 
@@ -178,10 +203,71 @@ int CPLogic::Initialize()
    return DEVICE_OK;
 }
 
+int CPLogic::SetOpen(bool open)
+{
+   if (useAsShutter_)
+   {
+      shutterOpen_ = open;
+      if (open) {
+         SetShutterChannel();
+      } else {
+         ostringstream command; command.str("");
+         long tmp;
+         // inefficient but robust to get the preset code for the "off" state instead of hardcoding it to 9
+         RETURN_ON_MM_ERROR (GetPropertyData(g_SetChannelPropertyName, g_ChannelNone, tmp) );
+         command << addressChar_ << "CCA X=" << tmp;
+         RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
+      }
+   }
+   return DEVICE_OK;
+}
 
+int CPLogic::GetOpen(bool& open)
+{
+   open = useAsShutter_ && shutterOpen_;
+   return DEVICE_OK;
+}
+
+int CPLogic::SetShutterChannel()
+{
+   ostringstream command; command.str("");
+   long tmp;
+   RETURN_ON_MM_ERROR ( GetCurrentPropertyData(g_SetChannelPropertyName, tmp) );
+   if (tmp < 0) return DEVICE_OK;  // no preset and other "signaling" preset codes are negative
+   if (shutterOpen_) {
+      command << addressChar_ << "CCA X=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
+   }
+   return DEVICE_OK;
+}
 
 ////////////////
 // action handlers
+
+int CPLogic::OnPLogicMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet) {
+      // do nothing for now
+   } else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      useAsShutter_ = (tmpstr.compare(g_PLogicModediSPIMShutter) == 0);
+   }
+   return DEVICE_OK;
+}
+
+int CPLogic::OnSetShutterChannel(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      // can't do anything of real value here
+      if (!initialized_)
+         pProp->Set(g_ChannelNone);
+   } else if (eAct == MM::AfterSet) {
+      RETURN_ON_MM_ERROR ( SetShutterChannel() );
+   }
+   return DEVICE_OK;
+}
 
 int CPLogic::OnPLogicOutputState(MM::PropertyBase* pProp, MM::ActionType eAct)
 {

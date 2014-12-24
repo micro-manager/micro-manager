@@ -29,7 +29,7 @@
 #include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/DeviceBase.h"
 
-class CPLogic : public ASIPeripheralBase<CGenericBase, CPLogic>
+class CPLogic : public ASIPeripheralBase<CShutterBase, CPLogic>
 {
 public:
    CPLogic(const char* name);
@@ -40,8 +40,15 @@ public:
    int Initialize();
    bool Busy() { return false; }
 
+   // Shutter API
+   int SetOpen(bool open = true);
+   int GetOpen(bool& open);
+   int Fire(double /*deltaT*/) { return DEVICE_UNSUPPORTED_COMMAND; }
+
    // action interface
    // ----------------
+   int OnPLogicMode         (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSetShutterChannel    (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPLogicOutputState    (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFrontpanelOutputState(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBackplaneOutputState (MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -67,7 +74,10 @@ private:
    unsigned int numCells_;
    unsigned int currentPosition_;  // cached value of current position
 //   static const int NUM_CELLS = 16;
+   bool useAsShutter_;
+   bool shutterOpen_;
 
+   int SetShutterChannel();
    int SetPosition(unsigned int position);
    int GetCellPropertyName(long index, string suffix, char* name);
    int GetIOPropertyName(long index, string suffix, char* name);
