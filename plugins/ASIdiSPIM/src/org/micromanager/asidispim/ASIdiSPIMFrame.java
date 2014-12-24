@@ -73,8 +73,8 @@ public class ASIdiSPIMFrame extends MMFrame
       implements MMListenerInterface {
    
    private final Properties props_; 
-   private Prefs prefs_;
-   private Devices devices_;
+   private final Prefs prefs_;
+   private final Devices devices_;
    private final Joystick joystick_;
    private final Positions positions_;
    private final Cameras cameras_;
@@ -188,6 +188,7 @@ public class ASIdiSPIMFrame extends MMFrame
          public void windowClosing(java.awt.event.WindowEvent evt) {
             // stop the timer for updating stages
             stagePosUpdater_.stop();
+            acquisitionPanel_.windowClosing();
             saveSettings();
          }
       });

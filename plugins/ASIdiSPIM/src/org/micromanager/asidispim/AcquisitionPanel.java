@@ -50,7 +50,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.swing.BorderFactory;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JOptionPane;
@@ -76,7 +75,6 @@ import mmcorej.TaggedImage;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.api.ImageCache;
 import org.micromanager.api.MMTags;
-import org.micromanager.acquisition.ComponentTitledBorder;
 import org.micromanager.MMStudio;
 import org.micromanager.acquisition.DefaultTaggedImageSink;
 import org.micromanager.acquisition.MMAcquisition;
@@ -91,6 +89,9 @@ import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
 
 import com.swtdesigner.SwingResourceManager;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import org.micromanager.utils.MMFrame;
 
 /**
  *
@@ -120,9 +121,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final JSpinner durationCamera_;  // NB: not the same as camera exposure
    private final JSpinner durationLaser_;
    private final JSpinner delaySide_;
-   private JLabel actualSlicePeriodLabel_;
-   private JLabel actualVolumeDurationLabel_;
-   private JLabel actualTimeLapseDurationLabel_;
+   private final JLabel actualSlicePeriodLabel_;
+   private final JLabel actualVolumeDurationLabel_;
+   private final JLabel actualTimeLapseDurationLabel_;
    private final JSpinner numTimepoints_;
    private final JSpinner acquisitionInterval_;
    private final JToggleButton buttonStart_;
@@ -135,7 +136,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final JTextField nameField_;
    private final JLabel acquisitionStatusLabel_;
    private int numTimePointsDone_;
-   private AtomicBoolean stop_ = new AtomicBoolean(false);  // true if we should stop acquisition
+   private final AtomicBoolean stop_ = new AtomicBoolean(false);  // true if we should stop acquisition
    private final StagePositionUpdater stagePosUpdater_;
    private final JSpinner stepSize_;
    private final JLabel desiredSlicePeriodLabel_;
@@ -152,6 +153,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final JPanel leftColumnPanel_;
    private final JPanel centerColumnPanel_;
    private final JPanel rightColumnPanel_;
+   private final MMFrame sliceFrame_;
    private SliceTiming sliceTiming_;
    
    public AcquisitionPanel(ScriptInterface gui, 
@@ -311,25 +313,40 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // end volume sub-panel
       
       
-      // start slice timing (advanced) sub-panel
+      // start slice timing (advanced) frame
+      // visibility of this frame is controlled from advancedTiming checkbox
+      
+      sliceFrame_ = new MMFrame();
+      sliceFrame_.loadPosition(100, 100);
+      sliceFrame_.setSize(290, 360);
+      sliceFrame_.setResizable(false);
 
       slicePanel_ = new JPanel(new MigLayout(
               "",
               "[right]10[center]",
               "[]8[]"));
+      sliceFrame_.add(slicePanel_);
       
       // special checkbox in titled border to enable/disable sub-panel plus more
       advancedSliceTimingCB_ = pu.makeCheckBox("Slice Timing Settings (Advanced)",
             Properties.Keys.PLUGIN_ADVANCED_SLICE_TIMING, panelName_, true);
       advancedSliceTimingCB_.setToolTipText("See ASI Tiger SPIM documentation for details");
       advancedSliceTimingCB_.setFocusPainted(false); 
-      ComponentTitledBorder componentBorder = 
-              new ComponentTitledBorder(advancedSliceTimingCB_, slicePanel_ 
-              , BorderFactory.createLineBorder(ASIdiSPIM.borderColor)); 
+      
+      class SliceFrameAdapter extends WindowAdapter {
+         @Override
+         public void windowClosing(WindowEvent e) {
+            advancedSliceTimingCB_.setSelected(false);
+            sliceFrame_.savePosition();
+         }
+      }
+      
+      sliceFrame_.addWindowListener(new SliceFrameAdapter());
 
       // this action listener takes care of enabling/disabling inputs
       // we call this to get GUI looking right
       ActionListener sliceTimingDisableGUIInputs = new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent e) {
             boolean enabled = advancedSliceTimingCB_.isSelected();
             Component comp[] = slicePanel_.getComponents();
@@ -348,13 +365,17 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // this action listener actually recalculates the timings
       // don't add this action listener until after GUI is set
       ActionListener sliceTimingCalculate = new ActionListener(){
+        @Override
         public void actionPerformed(ActionEvent e){
-           boolean enabled = advancedSliceTimingCB_.isSelected(); 
+           boolean enabled = advancedSliceTimingCB_.isSelected();
+           if (!enabled) {
+              sliceFrame_.savePosition();
+           }
+           sliceFrame_.setVisible(enabled);
            prefs_.putBoolean(panelName_,
                  Properties.Keys.PLUGIN_ADVANCED_SLICE_TIMING, enabled);
         }
       };
-      slicePanel_.setBorder(componentBorder);
 
       slicePanel_.add(new JLabel("Delay before scan [ms]:"));
       delayScan_ = pu.makeSpinnerFloat(0, 10000, 0.25,
@@ -409,7 +430,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       durationCamera_.addChangeListener(recalculateTimingDisplayCL);
       slicePanel_.add(durationCamera_, "wrap");
       
-      // end slice sub-panel
+      // end slice Frame
       
 
       // start repeat (time lapse) sub-panel
@@ -603,23 +624,21 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       centerColumnPanel_ = new JPanel(new MigLayout(
             "",
             "[]",
-            "[]"));
+            "[]6[]"));
       
-      centerColumnPanel_.add(volPanel_);
+      centerColumnPanel_.add(volPanel_, "wrap");
+      centerColumnPanel_.add(advancedSliceTimingCB_, "wrap");
+      centerColumnPanel_.add(navigationJoysticksCB_);
       
       rightColumnPanel_ = new JPanel(new MigLayout(
             "",
             "[]",
-            "[]6[]"));
+            "[]"));
       
-      
-      rightColumnPanel_.add(slicePanel_, "wrap");
-      rightColumnPanel_.add(navigationJoysticksCB_);
       
       // add the column panels to the main panel
       add(leftColumnPanel_);
       add(centerColumnPanel_);
-      add(rightColumnPanel_);
       
       // properly initialize the advanced slice timing
       advancedSliceTimingCB_.addActionListener(sliceTimingDisableGUIInputs);
@@ -1696,6 +1715,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       } else {
          joystick_.unsetAllJoysticks();  // disable all joysticks on this tab
       }
+      sliceFrame_.setVisible(advancedSliceTimingCB_.isSelected());
    }
 
    /**
@@ -1703,12 +1723,21 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     */
    @Override
    public void gotDeSelected() {
+      sliceFrame_.setVisible(false);
       saveSettings();
    }
 
    @Override
    public void devicesChangedAlert() {
       devices_.callListeners();
+   }
+   
+   /**
+    * Gets called when enclosing window closes
+    */
+   public void windowClosing() {
+      sliceFrame_.savePosition();
+      sliceFrame_.dispose();
    }
 
    private void setRootDirectory(JTextField rootField) {
@@ -1736,6 +1765,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * @param taggedImg - image + metadata to be added
     * @param bq - Blocking queue to which the image should be added.  This queue
     * should be hooked up to the ImageCache belonging to this acquisitions
+    * @throws java.lang.InterruptedException
     * @throws org.micromanager.utils.MMScriptException
     */
    public void addImageToAcquisition(String name,
