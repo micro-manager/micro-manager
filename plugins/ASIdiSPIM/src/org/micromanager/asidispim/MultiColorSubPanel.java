@@ -32,9 +32,9 @@ import java.util.ArrayList;
 import org.micromanager.acquisition.ComponentTitledBorder;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Data.ColorConfigEditor;
-import org.micromanager.asidispim.Data.ColorTableModel;
+import org.micromanager.asidispim.Data.ChannelTableModel;
 import org.micromanager.asidispim.Data.Devices;
-import org.micromanager.asidispim.Data.MulticolorModes;
+import org.micromanager.asidispim.Data.MultichannelModes;
 import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
@@ -44,9 +44,11 @@ import org.micromanager.utils.ReportingUtils;
 
 import javax.swing.BorderFactory;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.SwingConstants;
@@ -70,22 +72,24 @@ public class MultiColorSubPanel extends ListeningJPanel {
    private final Properties props_;
    private final Prefs prefs_;
    
-   private final JCheckBox useMultiColorCB_;
-   private final JComboBox colorGroup_;
-   private final JComboBox colorMode_;
-   private final ColorTableModel colorTableModel_;
-   private final JTable colorTable_;
-   private final JScrollPane colorTablePane_;
+   private final JCheckBox useChannelsCB_;
+   private final JComboBox channelGroup_;
+   private final JComboBox channelMode_;
+   private final ChannelTableModel channelTableModel_;
+   private final JTable channelTable_;
+   private final JScrollPane channelTablePane_;
    
    /**
     * if table is disabled then cell will be set to disabled too
     */
    class DisplayDisabledTableCellRenderer extends DefaultTableCellRenderer {
+      @Override
       public Component getTableCellRendererComponent(JTable table, Object value,
             boolean selected, boolean focused, int rowIndex, int columnIndex)
       {
          setEnabled(table.isEnabled());
-         return super.getTableCellRendererComponent(table, value, selected, focused, rowIndex, columnIndex);
+         return super.getTableCellRendererComponent(table, value, selected, 
+                 focused, rowIndex, columnIndex);
       }
    };
    
@@ -113,8 +117,13 @@ public class MultiColorSubPanel extends ListeningJPanel {
    
    /**
     * MultiD panel constructor.
+    * @param gui - Micro-Manager api
+    * @param devices
+    * @param props
+    * @param prefs
     */
-   public MultiColorSubPanel(ScriptInterface gui, Devices devices, Properties props, Prefs prefs) {
+   public MultiColorSubPanel(ScriptInterface gui, Devices devices, 
+           Properties props, Prefs prefs) {
       super (MyStrings.PanelNames.MULTID.toString(),
             new MigLayout(
                   "",
@@ -128,86 +137,122 @@ public class MultiColorSubPanel extends ListeningJPanel {
       
       PanelUtils pu = new PanelUtils(prefs_, props_, devices_);
       
-      useMultiColorCB_ = pu.makeCheckBox("Use multiple colors",
+      useChannelsCB_ = pu.makeCheckBox("Use multiple channels",
             Properties.Keys.PLUGIN_USE_MULTICOLOR, panelName_, false);
-      useMultiColorCB_.setToolTipText("Contact ASI for details; advanced features require PLogic card");
-      useMultiColorCB_.setFocusPainted(false); 
+      useChannelsCB_.setToolTipText("Contact ASI for details; advanced features require PLogic card");
+      useChannelsCB_.setFocusPainted(false); 
       ComponentTitledBorder componentBorder = 
-            new ComponentTitledBorder(useMultiColorCB_, this, 
+            new ComponentTitledBorder(useChannelsCB_, this, 
                   BorderFactory.createLineBorder(ASIdiSPIM.borderColor)); 
       this.setBorder(componentBorder);
       
-      this.add(new JLabel("Color group:"));
+      this.add(new JLabel("Channel group:"));
       String groups[] = getAvailableGroups();
-      colorGroup_  = pu.makeDropDownBox(groups, Devices.Keys.PLUGIN,
+      channelGroup_  = pu.makeDropDownBox(groups, Devices.Keys.PLUGIN,
             Properties.Keys.PLUGIN_MULTICOLOR_GROUP, "");
             
       updateGroupsCombo();
-      colorGroup_.addItemListener(new ItemListener() {
+      channelGroup_.addItemListener(new ItemListener() {
          @Override
          public void itemStateChanged(ItemEvent e) {
-            // clear configs when changing the color group
+            // clear configs when changing the channel group
             if (e.getStateChange() == ItemEvent.SELECTED) {
-               for (int i=0; i<colorTable_.getRowCount(); i++) {
-                  colorTable_.setValueAt("", i, ColorTableModel.columnIndex_config);
+               for (int i=0; i<channelTable_.getRowCount(); i++) {
+                  channelTable_.setValueAt("", i, ChannelTableModel.columnIndex_config);
                }
             }
          }
       });
-      this.add(colorGroup_, "wrap");
+      this.add(channelGroup_, "wrap");
       
-      
-      colorTableModel_ = new ColorTableModel(prefs_, panelName_);
-      colorTable_ = new JTable(colorTableModel_);
-      colorTable_.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-      TableColumn column_useChannel = colorTable_.getColumnModel().getColumn(ColorTableModel.columnIndex_useChannel);
-      TableColumn column_config = colorTable_.getColumnModel().getColumn(ColorTableModel.columnIndex_config);
+      // put table and buttons in its own miglayout
+      JPanel tablePanel = new JPanel();
+      tablePanel.setLayout(new MigLayout (
+                  "flowy",
+                  "",
+                  "") );
+      channelTableModel_ = new ChannelTableModel(prefs_, panelName_);
+      channelTable_ = new JTable(channelTableModel_);
+      channelTable_.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+      TableColumn column_useChannel = channelTable_.getColumnModel().getColumn(ChannelTableModel.columnIndex_useChannel);
+      TableColumn column_config = channelTable_.getColumnModel().getColumn(ChannelTableModel.columnIndex_config);
       column_useChannel.setPreferredWidth(40);
       column_config.setPreferredWidth(100);
       column_useChannel.setCellRenderer(new UseChannelTableCellRenderer());
       column_config.setCellRenderer(new DisplayDisabledTableCellRenderer());
-      column_config.setCellEditor(new ColorConfigEditor(colorGroup_, core_));
+      column_config.setCellEditor(new ColorConfigEditor(channelGroup_, core_));
       
-      colorTablePane_ = new JScrollPane(colorTable_);
-      colorTablePane_.setPreferredSize(new Dimension(220,100));
-      colorTablePane_.setViewportView(colorTable_);
-      this.add(colorTablePane_, "span 2, wrap");
+      channelTablePane_ = new JScrollPane(channelTable_);
+      channelTablePane_.setPreferredSize(new Dimension(220,100));
+      channelTablePane_.setViewportView(channelTable_);
+      tablePanel.add(channelTablePane_, "wrap");
       
-      this.add(new JLabel("Change color:"));
-      MulticolorModes colorModes = new MulticolorModes(devices_, props_,
+      JButton plusButton = new JButton("+");
+      plusButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            channelTableModel_.addChannel();
+            channelTableModel_.fireTableDataChanged();
+         }
+      }
+      );
+      tablePanel.add(plusButton, "aligny top, split 2");
+      
+      JButton minusButton = new JButton("-");
+      minusButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            int selectedRows[] = channelTable_.getSelectedRows();
+            for (int row : selectedRows) {
+               channelTableModel_.removeChannel(row);
+            }
+            if (selectedRows.length > 0) {
+               channelTableModel_.fireTableDataChanged();
+            }
+         }
+      }
+      );
+      tablePanel.add(minusButton, "wrap");
+      
+      this.add(tablePanel, "span 3, wrap");
+      
+      this.add(new JLabel("Change channel:"));
+      MultichannelModes channelModes = new MultichannelModes(devices_, props_,
             Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_MULTICOLOR_MODE,
-            MulticolorModes.Keys.VOLUME);
-      colorMode_ = colorModes.getComboBox();
-      this.add(colorMode_, "wrap");
+            MultichannelModes.Keys.VOLUME);
+      channelMode_ = channelModes.getComboBox();
+      this.add(channelMode_, "wrap");
       
       // enable/disable panel elements depending on checkbox state
-      useMultiColorCB_.addActionListener(new ActionListener(){ 
+      useChannelsCB_.addActionListener(new ActionListener(){ 
+         @Override
          public void actionPerformed(ActionEvent e){ 
-            boolean enabled = useMultiColorCB_.isSelected();
-            colorGroup_.setEnabled(enabled);
-            colorTable_.setEnabled(enabled);
-            colorMode_.setEnabled(enabled);
+            boolean enabled = useChannelsCB_.isSelected();
+            channelGroup_.setEnabled(enabled);
+            channelTable_.setEnabled(enabled);
+            channelMode_.setEnabled(enabled);
          } 
       });
-      // initialize GUI for muli-color enabled checkbox
-      useMultiColorCB_.doClick();
-      useMultiColorCB_.doClick();
+      // initialize GUI for muli-channel enabled checkbox
+      useChannelsCB_.doClick();
+      useChannelsCB_.doClick();
       
    }// constructor
 
       
-   private final void updateGroupsCombo() {
-      Object selection = colorGroup_.getSelectedItem();
+   private void updateGroupsCombo() {
+      Object selection = channelGroup_.getSelectedItem();
       String groups[] = getAvailableGroups();
       if (groups.length != 0) {
-         colorGroup_.setModel(new DefaultComboBoxModel(groups));
+         channelGroup_.setModel(new DefaultComboBoxModel(groups));
       }
-      colorGroup_.setSelectedItem(selection);
+      channelGroup_.setSelectedItem(selection);
    }
 
 
    /**
-    * gets all valid groups from Core-ChannelGroup that have more than 1 preset ("config")
+    * gets all valid groups from Core-ChannelGroup that have more than 1 preset 
+    * ("config")
     */
    private String[] getAvailableGroups() {
       StrVector groups;

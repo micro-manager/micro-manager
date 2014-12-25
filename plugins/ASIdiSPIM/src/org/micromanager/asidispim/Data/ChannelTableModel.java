@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          ColorTableModel.java
+//FILE:          ChannelTableModel.java
 //PROJECT:       Micro-Manager 
 //SUBSYSTEM:     ASIdiSPIM plugin
 //-----------------------------------------------------------------------------
@@ -29,35 +29,44 @@ import org.micromanager.utils.ReportingUtils;
 
 
 /**
- * Representation of information in color table (akin to channel table) of 
+ * Representation of information in channel table of 
  * diSPIM plugin.  Based on org.micromanager.utils.ChannelSpec.java.
  * Handles saving preferences to registry assuming column/row don't change.
  * @author Jon
  */
 @SuppressWarnings("serial")
-public class ColorTableModel extends AbstractTableModel {
+public class ChannelTableModel extends AbstractTableModel {
    public static final String[] columnNames = {"Use?", "Preset"};
-   public static final int NUM_COLORS = 4;
    public static final int PLOGIC_OFFSET = 5;
    public static final int columnIndex_useChannel = 0;
    public static final int columnIndex_config = 1;
-   private ArrayList<ColorSpec> colors_;
+   private final ArrayList<ColorSpec> channels_;
    private final Prefs prefs_;
    private final String prefNode_;
 
-   public ColorTableModel(Prefs prefs, String prefNode) {
-      colors_ = new ArrayList<ColorSpec>();
+
+   public ChannelTableModel(Prefs prefs, String prefNode) {
+      channels_ = new ArrayList<ColorSpec>();
       prefs_ = prefs;
       prefNode_ = prefNode;
-      
-      for (int i=0; i<NUM_COLORS; i++) {
-         addNewColor(new ColorSpec(
-               prefs_.getBoolean(prefNode_ + "_" + i, Prefs.Keys.COLOR_USE_COLOR, false),
-               prefs_.getString(prefNode_ + "_" + i, Prefs.Keys.COLOR_CONFIG, "")));
-      }
-      
-   }//constructor
+   } //constructor
 
+   public void addChannel() {
+      addNewChannel(new ColorSpec(
+               prefs_.getBoolean(prefNode_ + "_" + channels_.size(), 
+                       Prefs.Keys.COLOR_USE_COLOR, false),
+               prefs_.getString(prefNode_ + "_" + channels_.size(), 
+                       Prefs.Keys.COLOR_CONFIG, "")));
+   }
+   
+   /**
+    *  Removes the specified row from the channel table 
+    * @param i - 0-based row number of channel to be removed
+   */
+   public void removeChannel(int i) {
+      channels_.remove(i);
+   }
+   
    @Override
    public int getColumnCount() {
       return columnNames.length;
@@ -69,13 +78,14 @@ public class ColorTableModel extends AbstractTableModel {
    }
 
    @SuppressWarnings({ "unchecked", "rawtypes" })
+   @Override
    public Class getColumnClass(int columnIndex) {
       return getValueAt(0, columnIndex).getClass();
    }
 
    @Override
    public int getRowCount() {
-      return (colors_ == null) ? 0 : colors_.size();
+      return (channels_ == null) ? 0 : channels_.size();
    }
    
    @Override
@@ -85,7 +95,7 @@ public class ColorTableModel extends AbstractTableModel {
 
    @Override
    public void setValueAt(Object value, int rowIndex, int columnIndex) {
-      ColorSpec color = colors_.get(rowIndex);
+      ColorSpec color = channels_.get(rowIndex);
       switch (columnIndex) {
       case columnIndex_useChannel:
          if (value instanceof Boolean) {
@@ -109,7 +119,7 @@ public class ColorTableModel extends AbstractTableModel {
 
    @Override
    public Object getValueAt(int rowIndex, int columnIndex) {
-      ColorSpec color = colors_.get(rowIndex);
+      ColorSpec color = channels_.get(rowIndex);
       switch (columnIndex) {
       case columnIndex_useChannel:
          return color.useChannel;
@@ -121,8 +131,8 @@ public class ColorTableModel extends AbstractTableModel {
       }
    }
    
-   public void addNewColor(ColorSpec color) {
-      colors_.add(color);
+   public final void addNewChannel(ColorSpec color) {
+      channels_.add(color);
    }
 
 }

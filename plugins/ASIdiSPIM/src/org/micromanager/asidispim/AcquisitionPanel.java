@@ -26,7 +26,7 @@ import org.micromanager.asidispim.Data.CameraModes;
 import org.micromanager.asidispim.Data.Cameras;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.Joystick;
-import org.micromanager.asidispim.Data.MulticolorModes;
+import org.micromanager.asidispim.Data.MultichannelModes;
 import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Positions;
 import org.micromanager.asidispim.Data.Prefs;
@@ -89,6 +89,8 @@ import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
 
 import com.swtdesigner.SwingResourceManager;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -419,9 +421,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // this action listener takes care of enabling/disabling inputs
       // of the advanced slice timing window
       // we call this to get GUI looking right
-      ActionListener sliceTimingDisableGUIInputs = new ActionListener() {
+      ItemListener sliceTimingDisableGUIInputs = new ItemListener() {
          @Override
-         public void actionPerformed(ActionEvent e) {
+         public void itemStateChanged(ItemEvent e) {
             boolean enabled = advancedSliceTimingCB_.isSelected();
             // set other components in this advanced timing frame
             componentsSetEnabled(advancedTimingComponents, enabled);
@@ -429,6 +431,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             componentsSetEnabled(simpleTimingComponents, !enabled);
             desiredSlicePeriod_.setEnabled(!enabled && !minSlicePeriodCB_.isSelected());
          } 
+
       };
       
       // this action listener shows/hides the advanced timing frame
@@ -654,7 +657,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       add(rightColumnPanel_);
       
       // properly initialize the advanced slice timing
-      advancedSliceTimingCB_.addActionListener(sliceTimingDisableGUIInputs);
+      advancedSliceTimingCB_.addItemListener(sliceTimingDisableGUIInputs);
       advancedSliceTimingCB_.doClick();
       advancedSliceTimingCB_.doClick();
       advancedSliceTimingCB_.addActionListener(showAdvancedTimingFrame);
@@ -1141,7 +1144,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       //   to do multiple slices per piezo move
       // TODO fix this with new multicolor approach
       if (props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_MULTICOLOR_MODE)
-            == MulticolorModes.Keys.SLICE.getPrefCode()) {
+            == MultichannelModes.Keys.SLICE.getPrefCode()) {
          props_.setPropValue(galvoDevice, Properties.Keys.SPIM_NUM_SLICES_PER_PIEZO,
             1, skipScannerWarnings);
       }

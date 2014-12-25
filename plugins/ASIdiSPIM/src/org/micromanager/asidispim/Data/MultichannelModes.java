@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          MulticolorModes.java
+//FILE:          MultichannelModes.java
 //PROJECT:       Micro-Manager 
 //SUBSYSTEM:     ASIdiSPIM plugin
 //-----------------------------------------------------------------------------
@@ -38,7 +38,7 @@ import org.micromanager.asidispim.Utils.DevicesListenerInterface;
  * 
  * @author Jon
  */
-public class MulticolorModes {
+public class MultichannelModes {
    
    private final Devices devices_;   // object holding information about selected/available devices
    private final Properties props_;  // object handling all property read/writes
@@ -70,7 +70,7 @@ public class MulticolorModes {
       }
    };
    
-   public MulticolorModes(Devices devices, Properties props,
+   public MultichannelModes(Devices devices, Properties props,
          Devices.Keys devKey, Properties.Keys propKey, Keys defaultKey) {
       devices_ = devices;
       props_ = props;
