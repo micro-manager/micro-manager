@@ -21,7 +21,6 @@
 //
 package mmcloneclasses.imagedisplay;
 
-import edu.mines.jtk.dsp.Histogram;
 import ij.ImagePlus;
 import ij.gui.ImageWindow;
 import java.awt.Font;
