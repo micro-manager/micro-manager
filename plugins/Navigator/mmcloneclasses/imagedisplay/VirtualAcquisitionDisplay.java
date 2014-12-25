@@ -91,7 +91,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
 
    private static final int ANIMATION_AND_LOCK_RESTART_DELAY = 800;
    final MMImageCache imageCache_;
-   private AcquisitionEngine eng_;
    private boolean isAcquisitionFinished_ = false;
    private boolean promptToSave_ = true;
    private boolean amClosing_ = false;
@@ -153,7 +152,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          title_ = WindowManager.getUniqueName("Untitled");
       }
       imageCache_ = imageCache;
-      eng_ = eng;
       isMDA_ = eng != null;
       this.albumSaved_ = imageCache.isFinished();
       setupEventBus();
@@ -409,12 +407,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       hyperImage_ = createHyperImage(createMMImagePlus(virtualStack_),
               numGrayChannels, numSlices, numFrames, virtualStack_);
 
-      // Hack: allow controls_ to be already set, so that overriding classes
-      // can implement their own custom controls.
-      if (subImageControls_ == null) {
-         subImageControls_ = new HyperstackControls(this, bus_,shouldUseSimpleControls_, isMDA_);
-      }
-
       applyPixelSizeCalibration(hyperImage_);
 
       createWindows();
@@ -453,9 +445,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          return;
       }
       updateDisplay(null);
-      if (!(eng_ != null && eng_.abortRequested())) {
-         updateWindowTitleAndStatus();
-      }
+      updateWindowTitleAndStatus();    
    }
 
    /**
@@ -597,61 +587,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    public void updateWindowTitleAndStatus() {
-      if (subImageControls_ == null) {
-         return;
-      }
-
-      String status = "";
-      final AcquisitionEngine eng = eng_;
-
-      if (eng != null) {
-         if (acquisitionIsRunning()) {
-            if (!abortRequested()) {
-               subImageControls_.acquiringImagesUpdate(true);
-               if (isPaused()) {
-                  status = "paused";
-               } else {
-                  status = "running";
-               }
-            } else {
-               subImageControls_.acquiringImagesUpdate(false);
-               status = "interrupted";
-            }
-         } else {
-            subImageControls_.acquiringImagesUpdate(false);
-            if (!status.contentEquals("interrupted")) {
-               if (eng.isFinished()) {
-                  status = "finished";
-                  eng_ = null;
-               }
-            }
-         }
-         status += ", ";
-         if (eng.isFinished()) {
-            eng_ = null;
-            isAcquisitionFinished_ = true;
-         }
-      } else {
-         if (isAcquisitionFinished_ == true) {
-            status = "finished, ";
-         }
-         subImageControls_.acquiringImagesUpdate(false);
-      }
-      if (isDiskCached() || albumSaved_) {
-         status += "on disk";
-      } else {
-         status += "not yet saved";
-      }
-
-      subImageControls_.imagesOnDiskUpdate(imageCache_.getDiskLocation() != null);
-      String path = isDiskCached()
-              ? new File(imageCache_.getDiskLocation()).getName() : title_;
-
-      if (hyperImage_.isVisible()) {
-         int mag = (int) (100 * hyperImage_.getCanvas().getMagnification());
-         hyperImage_.getWindow().setTitle(path + " (" + status + ") (" + mag + "%)" );
-      }
-
+      //TODO
    }
 
    private void windowToFront() {
@@ -851,54 +787,42 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    public boolean pause() {
-      if (eng_ != null) {
-         if (eng_.isPaused()) {
-            eng_.setPause(false);
-         } else {
-            eng_.setPause(true);
-         }
-         updateWindowTitleAndStatus();
-         return (eng_.isPaused());
-      }
+//      if (eng_ != null) {
+//         if (eng_.isPaused()) {
+//            eng_.setPause(false);
+//         } else {
+//            eng_.setPause(true);
+//         }
+//         updateWindowTitleAndStatus();
+//         return (eng_.isPaused());
+//      }
       return false;
    }
 
    public boolean abort() {
-      if (eng_ != null) {
-         if (eng_.abortRequest()) {
-            updateWindowTitleAndStatus();
-            return true;
-         }
-      }
+//      if (eng_ != null) {
+//         if (eng_.abortRequest()) {
+//            updateWindowTitleAndStatus();
+//            return true;
+//         }
+//      }
       return false;
    }
 
    public boolean acquisitionIsRunning() {
-      if (eng_ != null) {
-         return eng_.isAcquisitionRunning();
-      } else {
+//      if (eng_ != null) {
+//         return eng_.isAcquisitionRunning();
+//      } else {
          return false;
-      }
-   }
-
-   public long getNextWakeTime() {
-      return eng_.getNextWakeTime();
-   }
-
-   public boolean abortRequested() {
-      if (eng_ != null) {
-         return eng_.abortRequested();
-      } else {
-         return false;
-      }
+//      }
    }
 
    private boolean isPaused() {
-      if (eng_ != null) {
-         return eng_.isPaused();
-      } else {
+//      if (eng_ != null) {
+//         return eng_.isPaused();
+//      } else {
          return false;
-      }
+//      }
    }
 
    public void albumChanged() {
@@ -972,79 +896,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       }  
    }
 
-   boolean saveAs() {
-      return saveAs(null,true);
-   }
-
-   boolean saveAs(boolean pointToNewStorage) {
-      return saveAs(null, pointToNewStorage);
-   }
-
-   private boolean saveAs(Class<?> storageClass, boolean pointToNewStorage) {
-      if (eng_ != null && eng_.isAcquisitionRunning()) {
-         JOptionPane.showMessageDialog(null, 
-                 "Data can not be saved while acquisition is running.");
-         return false;
-      }
-      if (storageClass == null) {
-         storageClass = createSaveTypePopup();
-      }
-      if (storageClass == null) {
-         return false;
-      }
-      String prefix;
-      String root;
-      for (;;) {
-         File f = FileDialogs.save(hyperImage_.getWindow(),
-                 "Please choose a location for the data set",
-                 MMStudio.MM_DATA_SET);
-         if (f == null) // Canceled.
-         {
-            return false;
-         }
-         prefix = f.getName();
-         root = new File(f.getParent()).getAbsolutePath();
-         if (f.exists()) {
-            ReportingUtils.showMessage(prefix
-                    + " is write only! Please choose another name.");
-         } else {
-            break;
-         }
-      }
-
-      try {
-         if (getSummaryMetadata() != null) {
-            getSummaryMetadata().put("Prefix", prefix);
-         }
-         TaggedImageStorage newFileManager =
-                 (TaggedImageStorage) storageClass.getConstructor(
-                 String.class, Boolean.class, JSONObject.class).newInstance(
-                 root + "/" + prefix, true, getSummaryMetadata());
-         if (pointToNewStorage) {
-            albumSaved_ = true;
-         }
-
-         imageCache_.saveAs(newFileManager, pointToNewStorage);
-      } catch (IllegalAccessException ex) {
-         ReportingUtils.showError(ex, "Failed to save file");
-      } catch (IllegalArgumentException ex) {
-         ReportingUtils.showError(ex, "Failed to save file");
-      } catch (InstantiationException ex) {
-         ReportingUtils.showError(ex, "Failed to save file");
-      } catch (NoSuchMethodException ex) {
-         ReportingUtils.showError(ex, "Failed to save file");
-      } catch (SecurityException ex) {
-         ReportingUtils.showError(ex, "Failed to save file");
-      } catch (InvocationTargetException ex) {
-         ReportingUtils.showError(ex, "Failed to save file");
-      } catch (JSONException ex) {
-         ReportingUtils.showError(ex, "Failed to save file");
-      }
-      MMStudio.getInstance().setAcqDirectory(root);
-      updateWindowTitleAndStatus();
-      return true;
-   }
-
    final public MMImagePlus createMMImagePlus(AcquisitionVirtualStack virtualStack) {
       MMImagePlus img = new MMImagePlus(imageCache_.getDiskLocation(), 
             virtualStack, virtualStack.getVirtualAcquisitionDisplay().getEventBus());
@@ -1075,7 +926,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    private void createWindows() {
-      DisplayWindow win = new DisplayWindow(hyperImage_, subImageControls_, bus_, new ImageCanvas(hyperImage_));        
+      DisplayWindow win = new DisplayWindow(hyperImage_, subImageControls_, bus_);        
       imageChangedUpdate();
       EventManager.post(new DisplayCreatedEvent(this, win));
    }
@@ -1084,36 +935,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    // forceClosed() function.
    // TODO: for now, assuming we only have one window.
    @Subscribe
-   public void onWindowClose(DisplayWindow.RequestToCloseEvent event) {
-      if (eng_ != null && eng_.isAcquisitionRunning()) {
-         if (!abort()) {
-            // Can't close now; the acquisition is still running.
-            return;
-         }
-      }
-      // Ask if the user wants to save data.
-      if (imageCache_.getDiskLocation() == null && 
-            promptToSave_ && !albumSaved_) {
-         String[] options = { "Save Separate Files", "Save Stack File", "Discard", "Cancel" };
-         int result = JOptionPane.showOptionDialog(event.window_,
-               "Do you want to save this data set before closing?",
-               "Micro-Manager", 
-               JOptionPane.DEFAULT_OPTION,
-	       JOptionPane.QUESTION_MESSAGE, null,
-               options, options[1]);
-         if (result == 0) {
-            if (!saveAs(TaggedImageStorageDiskDefault.class, true)) {
-               return;
-            }
-         } else if (result == 1) {
-            if (!saveAs(TaggedImageStorageMultipageTiff.class, true)) {
-               return;
-            }
-         } else if (result == 3) {
-            return;
-         }
-      }
-
+   public void onWindowClose(DisplayWindow.RequestToCloseEvent event) {    
       // Go ahead with closing.
       amClosing_ = true;
       // Tell our display thread to stop what it's doing.
@@ -1141,8 +963,8 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       subImageControls_.prepareForClose();
 
       //Call this because for some reason WindowManager doesnt always fire
-      metadataWindow_.setVisible(false);
-      metadataWindow_.dispose();
+//      metadataWindow_.setVisible(false);
+//      metadataWindow_.dispose();
 
       // Now that we have shut down everything that may access the images,
       // we can close the dataset.

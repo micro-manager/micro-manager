@@ -60,8 +60,7 @@ public class DisplayWindow extends StackWindow {
 
   
    
-   public DisplayWindow(final ImagePlus plus, DisplayControls controls, final EventBus bus, final ImageCanvas canvas) {
-//      super(plus, canvas);
+   public DisplayWindow(final ImagePlus plus, DisplayControls controls, final EventBus bus) {
       super(plus);
       plus_ = plus;
       bus_ = bus;
@@ -90,8 +89,7 @@ public class DisplayWindow extends StackWindow {
       // Override the default layout with our own, so we can do more 
       // customized controls. 
       // This layout is intended to minimize distances between elements.
-      setLayout(new MigLayout("insets 1, fillx, filly",
-         "[grow, fill]", "[grow, fill]related[]"));
+      setLayout(new MigLayout("insets 1, fillx, filly", "[grow, fill]", "[grow, fill]related[]"));
       // Re-create the ImageJ canvas. We need it to manually draw its own
       // border (by comparison, in standard ImageJ the ImageWindow draws the
       // border), because we're changing the layout heirarchy so the 

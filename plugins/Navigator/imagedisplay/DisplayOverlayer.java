@@ -29,21 +29,18 @@ import surfacesandregions.SurfaceInterpolator;
 /**
  * Class that encapsulates calculation of overlays for DisplayPlus
  */
-public class DisplayOverlayer   {
+public class DisplayOverlayer {
 
    private final static int INTERP_POINT_DIAMETER = 4;
    private final static Color INTERP_POINT_COLOR = Color.orange;
    private final static Color CONVEX_HULL_COLOR = Color.GREEN;
    private static final Color NEW_GRID_COLOR = Color.red;
-   
-   private static final int[] ICE_RED = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,4,7,9,11,14,16,19,20,21,22,24,25,26,27,29,31,34,36,39,42,44,47,50,49,49,49,49,48,48,48,48,51,55,59,63,67,71,75,79,83,87,91,95,99,103,107,112,114,117,120,123,125,128,131,134,137,140,143,146,149,152,155,158,161,165,168,172,175,179,182,186,187,189,191,193,195,197,199,201,203,205,207,209,211,213,215,217,218,220,221,223,224,226,227,229,230,232,233,235,237,238,240,242,243,244,245,246,247,248,249,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,251,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,251,251,251,251,251,251,251,251,251,250,249,248,247,246,245,244,243,241,239,238,236,234,233,231,230,230,230,230,230,230,230,230};
-   private static final int[] ICE_GREEN = {156,157,158,159,160,161,162,163,165,166,167,169,170,171,173,174,176,177,178,179,180,181,182,183,184,184,185,186,187,187,188,189,190,190,191,192,193,193,194,195,196,195,195,194,194,194,193,193,193,191,190,189,188,187,186,185,184,182,180,179,177,175,174,172,171,169,168,167,166,165,164,163,162,160,158,156,154,152,150,148,146,143,140,138,135,132,130,127,125,122,120,118,116,113,111,109,107,105,103,101,100,98,96,94,93,91,90,88,87,85,84,82,81,81,82,83,84,84,85,86,87,87,88,88,89,90,90,91,92,92,93,93,94,95,95,96,97,96,96,96,96,95,95,95,95,94,94,94,94,93,93,93,93,93,93,93,93,93,93,93,93,92,92,91,91,91,90,90,90,89,88,88,87,86,86,85,85,83,81,79,77,75,73,71,69,68,67,67,66,65,65,64,64,62,61,60,59,57,56,55,54,53,52,51,50,49,48,47,47,45,44,42,41,39,38,36,35,33,31,29,27,25,23,21,19,16,14,11,9,7,4,2,0,0,1,1,2,2,3,3,4,3,3,2,2,1,1,0,0,0,0,0,0,0,0,0};
-   private static final int[] ICE_BLUE = {140,140,141,142,143,144,145,146,147,148,149,151,152,153,155,156,158,159,160,161,162,163,164,165,166,166,167,167,168,168,169,169,170,170,171,172,173,173,174,175,176,180,184,188,192,196,200,204,209,210,211,213,214,215,217,218,220,221,223,225,227,228,230,232,234,232,231,230,229,228,227,226,225,226,227,229,230,231,233,234,236,237,238,239,241,242,243,244,246,246,247,247,248,248,249,249,250,250,250,250,250,250,250,250,251,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,250,249,248,248,247,246,246,245,245,243,241,239,237,235,233,231,230,230,230,230,230,230,230,230,230,229,228,227,226,225,224,223,222,219,217,214,212,209,207,204,202,199,196,193,191,188,185,182,180,177,175,173,171,169,167,165,163,160,157,155,152,149,147,144,142,139,137,134,132,130,127,125,123,121,120,119,118,117,116,115,114,113,112,111,110,109,108,107,106,104,103,101,100,98,97,95,94,92,91,90,89,87,86,85,84,81,79,76,74,71,69,66,64,59,54,49,45,40,35,30,26,26,26,26,26,26,26,26,27,27,27,27,27,27,27,27};
-     
-   private static final Color TRANSPARENT_BLUE = new Color(0, 0, 255, 100);   
+   private static final int[] ICE_RED = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 4, 7, 9, 11, 14, 16, 19, 20, 21, 22, 24, 25, 26, 27, 29, 31, 34, 36, 39, 42, 44, 47, 50, 49, 49, 49, 49, 48, 48, 48, 48, 51, 55, 59, 63, 67, 71, 75, 79, 83, 87, 91, 95, 99, 103, 107, 112, 114, 117, 120, 123, 125, 128, 131, 134, 137, 140, 143, 146, 149, 152, 155, 158, 161, 165, 168, 172, 175, 179, 182, 186, 187, 189, 191, 193, 195, 197, 199, 201, 203, 205, 207, 209, 211, 213, 215, 217, 218, 220, 221, 223, 224, 226, 227, 229, 230, 232, 233, 235, 237, 238, 240, 242, 243, 244, 245, 246, 247, 248, 249, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 251, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 251, 251, 251, 251, 251, 251, 251, 251, 251, 250, 249, 248, 247, 246, 245, 244, 243, 241, 239, 238, 236, 234, 233, 231, 230, 230, 230, 230, 230, 230, 230, 230};
+   private static final int[] ICE_GREEN = {156, 157, 158, 159, 160, 161, 162, 163, 165, 166, 167, 169, 170, 171, 173, 174, 176, 177, 178, 179, 180, 181, 182, 183, 184, 184, 185, 186, 187, 187, 188, 189, 190, 190, 191, 192, 193, 193, 194, 195, 196, 195, 195, 194, 194, 194, 193, 193, 193, 191, 190, 189, 188, 187, 186, 185, 184, 182, 180, 179, 177, 175, 174, 172, 171, 169, 168, 167, 166, 165, 164, 163, 162, 160, 158, 156, 154, 152, 150, 148, 146, 143, 140, 138, 135, 132, 130, 127, 125, 122, 120, 118, 116, 113, 111, 109, 107, 105, 103, 101, 100, 98, 96, 94, 93, 91, 90, 88, 87, 85, 84, 82, 81, 81, 82, 83, 84, 84, 85, 86, 87, 87, 88, 88, 89, 90, 90, 91, 92, 92, 93, 93, 94, 95, 95, 96, 97, 96, 96, 96, 96, 95, 95, 95, 95, 94, 94, 94, 94, 93, 93, 93, 93, 93, 93, 93, 93, 93, 93, 93, 93, 92, 92, 91, 91, 91, 90, 90, 90, 89, 88, 88, 87, 86, 86, 85, 85, 83, 81, 79, 77, 75, 73, 71, 69, 68, 67, 67, 66, 65, 65, 64, 64, 62, 61, 60, 59, 57, 56, 55, 54, 53, 52, 51, 50, 49, 48, 47, 47, 45, 44, 42, 41, 39, 38, 36, 35, 33, 31, 29, 27, 25, 23, 21, 19, 16, 14, 11, 9, 7, 4, 2, 0, 0, 1, 1, 2, 2, 3, 3, 4, 3, 3, 2, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+   private static final int[] ICE_BLUE = {140, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 151, 152, 153, 155, 156, 158, 159, 160, 161, 162, 163, 164, 165, 166, 166, 167, 167, 168, 168, 169, 169, 170, 170, 171, 172, 173, 173, 174, 175, 176, 180, 184, 188, 192, 196, 200, 204, 209, 210, 211, 213, 214, 215, 217, 218, 220, 221, 223, 225, 227, 228, 230, 232, 234, 232, 231, 230, 229, 228, 227, 226, 225, 226, 227, 229, 230, 231, 233, 234, 236, 237, 238, 239, 241, 242, 243, 244, 246, 246, 247, 247, 248, 248, 249, 249, 250, 250, 250, 250, 250, 250, 250, 250, 251, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 249, 248, 248, 247, 246, 246, 245, 245, 243, 241, 239, 237, 235, 233, 231, 230, 230, 230, 230, 230, 230, 230, 230, 230, 229, 228, 227, 226, 225, 224, 223, 222, 219, 217, 214, 212, 209, 207, 204, 202, 199, 196, 193, 191, 188, 185, 182, 180, 177, 175, 173, 171, 169, 167, 165, 163, 160, 157, 155, 152, 149, 147, 144, 142, 139, 137, 134, 132, 130, 127, 125, 123, 121, 120, 119, 118, 117, 116, 115, 114, 113, 112, 111, 110, 109, 108, 107, 106, 104, 103, 101, 100, 98, 97, 95, 94, 92, 91, 90, 89, 87, 86, 85, 84, 81, 79, 76, 74, 71, 69, 66, 64, 59, 54, 49, 45, 40, 35, 30, 26, 26, 26, 26, 26, 26, 26, 26, 27, 27, 27, 27, 27, 27, 27, 27};
+   private static final Color TRANSPARENT_BLUE = new Color(0, 0, 255, 100);
    private static final Color TRANSPARENT_GREEN = new Color(0, 255, 0, 100);
    private static final Color TRANSPARENT_MAGENTA = new Color(255, 0, 255, 100);
-   
    private DisplayPlus display_;
    private Acquisition acq_;
    private boolean showSurface_ = true, showConvexHull_ = true, showStagePositions_ = true;
@@ -54,7 +51,6 @@ public class DisplayOverlayer   {
    private AtomicBoolean surfaceNeedsUpdate_ = new AtomicBoolean(false);
    private volatile Thread updatingThread_;
 
-   
    public DisplayOverlayer(DisplayPlus display, Acquisition acq, int tileWidth, int tileHeight) {
       display_ = display;
       tileWidth_ = tileWidth;
@@ -64,14 +60,15 @@ public class DisplayOverlayer   {
       zoomableStack_ = (ZoomableVirtualStack) display.virtualStack_;
       createSingleThreadExecutor();
    }
-   
+
    public void shutdown() {
       executor_.shutdown();
       executor_ = null;
    }
-   
+
    private void createSingleThreadExecutor() {
-      executor_ = new ThreadPoolExecutor(1,1,0,TimeUnit.MILLISECONDS,new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
+      executor_ = new ThreadPoolExecutor(1, 1, 0, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
+
          @Override
          public Thread newThread(Runnable r) {
             return new Thread(r, "Overlay update thread ");
@@ -89,7 +86,6 @@ public class DisplayOverlayer   {
             super.afterExecute(r, t);
             updatingThread_ = null;
          }
-
       };
    }
 
@@ -99,6 +95,7 @@ public class DisplayOverlayer   {
             throw new InterruptedException();
          }
          SwingUtilities.invokeAndWait(new Runnable() {
+
             @Override
             public void run() {
                canvas_.setOverlay(overlay);
@@ -119,14 +116,15 @@ public class DisplayOverlayer   {
    public synchronized void renderOverlay(final boolean surfaceUpdate) {
       if (surfaceUpdate) {
          //cancel surface update in progress
-         if (updatingThread_ != null) {  
+         if (updatingThread_ != null) {
             updatingThread_.interrupt();
          }
          //set flag so that next runnable will know to update
-         surfaceNeedsUpdate_.set(true);    
+         surfaceNeedsUpdate_.set(true);
       }
 
       executor_.execute(new Runnable() {
+
          @Override
          public void run() {
             try {
@@ -136,10 +134,9 @@ public class DisplayOverlayer   {
             }
          }
       });
-
    }
 
-   private void calcAndDrawOverlay() throws InterruptedException {   
+   private void calcAndDrawOverlay() throws InterruptedException {
       //determine appropriate overlay
       int mode = display_.getMode();
       if (mode == DisplayPlus.EXPLORE) {
@@ -150,7 +147,7 @@ public class DisplayOverlayer   {
             //highlight multiple tiles       
             Point p2Tiles = zoomableStack_.getTileIndicesFromDisplayedPixel(display_.getCurrentMouseLocation().x, display_.getCurrentMouseLocation().y),
                     p1Tiles = zoomableStack_.getTileIndicesFromDisplayedPixel(display_.getMouseDragStartPointLeft().x, display_.getMouseDragStartPointLeft().y);
-            
+
             setOverlay(highlightTileOverlay(Math.min(p1Tiles.y, p2Tiles.y), Math.max(p1Tiles.y, p2Tiles.y),
                     Math.min(p1Tiles.x, p2Tiles.x), Math.max(p1Tiles.x, p2Tiles.x), TRANSPARENT_GREEN));
          } else if (display_.cursorOverImage()) {
@@ -166,7 +163,7 @@ public class DisplayOverlayer   {
          setOverlay(null);
       } else if (mode == DisplayPlus.GOTO) {
          //nothing
-      } else if (mode == DisplayPlus.NEWSURFACE && surfaceNeedsUpdate_.get()) { 
+      } else if (mode == DisplayPlus.NEWSURFACE && surfaceNeedsUpdate_.get()) {
          //if a preceeding call has updated the surface, don't do it again
          createSurfaceOverlay();
       }
@@ -260,14 +257,14 @@ public class DisplayOverlayer   {
             interp = surf.getCurrentInterpolation();
          }
          //start out with 10 interpolation points across the whole image 
-         int pixPerInterpPoint =  Math.max(display_.getImagePlus().getWidth(), display_.getImagePlus().getHeight()) / 10;         
+         int pixPerInterpPoint = Math.max(display_.getImagePlus().getWidth(), display_.getImagePlus().getHeight()) / 10;
          //keep redrawing until surface full interpolated  
-         while (true) { 
+         while (true) {
             Overlay overlay = new Overlay();
             //add all object from base overlay so don't need to redraw them at each successive resolution
             for (int i = 0; i < baseOverlay.size(); i++) {
                overlay.add(baseOverlay.get(i));
-            }   
+            }
             //wait until sufficient resolution is available for drawing
             while (pixPerInterpPoint < interp.getPixelsPerInterpPoint()) {
                Thread.sleep(10);
@@ -276,7 +273,7 @@ public class DisplayOverlayer   {
             drawStagePositions(overlay, interp);  //draw outline of stage positions specific to slice     
             calculateAndAddSurfaceToOverlay(overlay, interp, pixPerInterpPoint); //draw surface overlay
             setOverlay(overlay);
-            
+
             if (pixPerInterpPoint == SurfaceInterpolator.MIN_PIXELS_PER_INTERP_POINT && !Thread.interrupted()) {
                //finished  
                surfaceNeedsUpdate_.set(false);
@@ -286,13 +283,13 @@ public class DisplayOverlayer   {
          }
       }
    }
-   
+
    //draw the surface itself by interpolating a grid over viewable area
-   private void calculateAndAddSurfaceToOverlay(Overlay overlay, SingleResolutionInterpolation interp, int pixPerInterpPoint) throws InterruptedException {        
+   private void calculateAndAddSurfaceToOverlay(Overlay overlay, SingleResolutionInterpolation interp, int pixPerInterpPoint) throws InterruptedException {
       if (!showSurface_ || display_.getCurrentSurface().getPoints().length <= 2) {
          return;
       }
-      
+
       int width = display_.getImagePlus().getWidth();
       int height = display_.getImagePlus().getHeight();
       ZoomableVirtualStack zStack = (ZoomableVirtualStack) display_.virtualStack_;
@@ -304,7 +301,7 @@ public class DisplayOverlayer   {
       int numTestPointsY = height / pixPerInterpPoint;
       double roiWidth = width / (double) numTestPointsX;
       double roiHeight = height / (double) numTestPointsY;
-      
+
       for (int x = 0; x < numTestPointsX; x++) {
          for (int y = 0; y < numTestPointsY; y++) {
             Point2D.Double stageCoord = display_.stageCoordFromImageCoords((int) ((x + 0.5) * roiWidth), (int) ((y + 0.5) * roiHeight));
@@ -331,7 +328,7 @@ public class DisplayOverlayer   {
          }
       }
    }
-   
+
    private void drawStagePositions(Overlay overlay, SingleResolutionInterpolation interp) throws InterruptedException {
       if (showStagePositions_) {
          //wait until XY positions areound footprint are calculated
@@ -350,7 +347,7 @@ public class DisplayOverlayer   {
             Point corner3 = display_.imageCoordsFromStageCoords(corners[2].x, corners[2].y);
             Point corner4 = display_.imageCoordsFromStageCoords(corners[3].x, corners[3].y);
             //debugging:
-            
+
 //            System.out.println("Position corners (pixel): " + pos.getName());
 //            System.out.println(corner1.x + ", " + corner1.y);
 //            System.out.println(corner2.x + ", " + corner2.y);
@@ -362,8 +359,8 @@ public class DisplayOverlayer   {
 //            System.out.println(corners[1].x + ", " + corners[1].y);
 //            System.out.println(corners[2].x + ", " + corners[2].y);
 //            System.out.println(corners[3].x + ", " + corners[3].y);
-            
-            
+
+
             //add lines connecting 4 corners
             Line l1 = new Line(corner1.x, corner1.y, corner2.x, corner2.y);
             Line l2 = new Line(corner2.x, corner2.y, corner3.x, corner3.y);
@@ -381,11 +378,11 @@ public class DisplayOverlayer   {
                throw new InterruptedException();
             }
          }
-            System.out.println("\n\n");
+         System.out.println("\n\n");
 
       }
    }
-   
+
    private Overlay newGridOverlay() {
       Overlay overlay = new Overlay();
 
@@ -398,23 +395,23 @@ public class DisplayOverlayer   {
       }
       int roiWidth = (int) ((newGrid.numCols() * dsTileWidth) - ((newGrid.numCols() - 1) * newGrid.overlapX()) / zoomableStack_.getDownsampleFactor());
       int roiHeight = (int) ((newGrid.numRows() * dsTileHeight) - ((newGrid.numRows() - 1) * newGrid.overlapY()) / zoomableStack_.getDownsampleFactor());
-      
+
       Point displayCenter = display_.imageCoordsFromStageCoords(newGrid.center().x, newGrid.center().y);
-      
-      Roi rectangle = new Roi(displayCenter.x - roiWidth / 2,displayCenter.y - roiHeight / 2, roiWidth, roiHeight);
+
+      Roi rectangle = new Roi(displayCenter.x - roiWidth / 2, displayCenter.y - roiHeight / 2, roiWidth, roiHeight);
       rectangle.setStrokeWidth(5f);
       rectangle.setStrokeColor(NEW_GRID_COLOR);
-      
-      Point displayTopLeft = new Point(displayCenter.x - roiWidth / 2,displayCenter.y - roiHeight / 2);
+
+      Point displayTopLeft = new Point(displayCenter.x - roiWidth / 2, displayCenter.y - roiHeight / 2);
       //draw boundries of tiles
       for (int row = 1; row < newGrid.numRows(); row++) {
-         int yPos = (int) ( displayTopLeft.y + row * dsTileWidth + (newGrid.overlapY() / 2)/ zoomableStack_.getDownsampleFactor());
-         Line l = new Line(displayTopLeft.x, yPos, displayTopLeft.x + roiWidth, yPos );
+         int yPos = (int) (displayTopLeft.y + row * dsTileWidth + (newGrid.overlapY() / 2) / zoomableStack_.getDownsampleFactor());
+         Line l = new Line(displayTopLeft.x, yPos, displayTopLeft.x + roiWidth, yPos);
          l.setStrokeColor(NEW_GRID_COLOR);
          overlay.add(l);
       }
       for (int col = 1; col < newGrid.numCols(); col++) {
-         int xPos = (int) ( displayTopLeft.x + col * dsTileHeight + (newGrid.overlapX() / 2)/ zoomableStack_.getDownsampleFactor());
+         int xPos = (int) (displayTopLeft.x + col * dsTileHeight + (newGrid.overlapX() / 2) / zoomableStack_.getDownsampleFactor());
          Line l = new Line(xPos, displayTopLeft.y, xPos, displayTopLeft.y + roiHeight);
          l.setStrokeColor(NEW_GRID_COLOR);
          overlay.add(l);
@@ -434,7 +431,7 @@ public class DisplayOverlayer   {
       overlay.add(rect);
       return overlay;
    }
-   
+
    private void drawZoomIndicatorOverlay() {
 //      //draw zoom indicator
 //      Overlay overlay = new Overlay();

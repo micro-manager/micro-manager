@@ -340,16 +340,15 @@ public class DisplayPlusControls extends DisplayControls {
       this.add(controlsPanel,BorderLayout.CENTER);
      
       
-
       // Propagate resizing through to our JPanel
-      this.addComponentListener(new ComponentAdapter() {
-         public void componentResized(ComponentEvent e) {
-            Dimension curSize = getSize();
-            controlsPanel.setPreferredSize(new Dimension(curSize.width, curSize.height));
-            invalidate();
-            validate();
-         }
-      });
+//      this.addComponentListener(new ComponentAdapter() {
+//         public void componentResized(ComponentEvent e) {
+//            Dimension curSize = getSize();
+//            controlsPanel.setPreferredSize(new Dimension(curSize.width, curSize.height));
+//            invalidate();
+//            validate();
+//         }
+//      });
    }
 
    private JPanel makeSurfaceControlPanel() {

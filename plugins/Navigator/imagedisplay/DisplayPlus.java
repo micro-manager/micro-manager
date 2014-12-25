@@ -465,7 +465,6 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
       return acq_.isFinished();
    }
 
-   @Override
    public long getNextWakeTime() {
       return ((FixedAreaAcquisition) acq_).getNextWakeTime_ms();
    }
