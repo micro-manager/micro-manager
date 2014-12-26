@@ -41,6 +41,7 @@ public class Prefs {
    
    /**
     * Constructor
+    * @param prefs
     */
    public Prefs(Preferences prefs) {
       myPrefs_ = prefs;
@@ -66,8 +67,9 @@ public class Prefs {
       EPI_BEAM_ENABLED("EpiBeamEnabled"),
       EPI_SCAN_ENABLED("EpiScanEnabled"),
       ENABLE_BEAM_SETTINGS("EnableBeamSettings"),
-      COLOR_USE_COLOR("ColorUse"),
-      COLOR_CONFIG("ColorConfig"),
+      CHANNEL_USE_CHANNEL("ColorUse"),
+      CHANNEL_CONFIG("ColorConfig"),
+      NRCHANNELROWS("nrChannels"),
       NONE("None");
       private final String text;
       Keys(String text) {

@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          MultiColorSubPanel.java
+//FILE:          MultiChannelSubPanel.java
 //PROJECT:       Micro-Manager 
 //SUBSYSTEM:     ASIdiSPIM plugin
 //-----------------------------------------------------------------------------
@@ -31,7 +31,7 @@ import java.util.ArrayList;
 
 import org.micromanager.acquisition.ComponentTitledBorder;
 import org.micromanager.api.ScriptInterface;
-import org.micromanager.asidispim.Data.ColorConfigEditor;
+import org.micromanager.asidispim.Data.ChannelConfigEditor;
 import org.micromanager.asidispim.Data.ChannelTableModel;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.MultichannelModes;
@@ -59,25 +59,23 @@ import javax.swing.table.TableColumn;
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.asidispim.Data.ChannelSpec;
 
 
 /**
- *
+ * Creates panel for channel selection
+ * 
  * @author Jon
  */
 @SuppressWarnings("serial")
-public class MultiColorSubPanel extends ListeningJPanel {
+public class MultiChannelSubPanel extends ListeningJPanel {
    private final CMMCore core_;
    private final Devices devices_;
    private final Properties props_;
    private final Prefs prefs_;
-   
    private final JCheckBox useChannelsCB_;
-   private final JComboBox channelGroup_;
-   private final JComboBox channelMode_;
    private final ChannelTableModel channelTableModel_;
-   private final JTable channelTable_;
-   private final JScrollPane channelTablePane_;
+   private final JComboBox channelGroup_;
    
    /**
     * if table is disabled then cell will be set to disabled too
@@ -122,11 +120,11 @@ public class MultiColorSubPanel extends ListeningJPanel {
     * @param props
     * @param prefs
     */
-   public MultiColorSubPanel(ScriptInterface gui, Devices devices, 
+   public MultiChannelSubPanel(ScriptInterface gui, Devices devices, 
            Properties props, Prefs prefs) {
       super (MyStrings.PanelNames.MULTID.toString(),
             new MigLayout(
-                  "",
+                  "flowx, ins 12",
                   "[right]4[left]",
                   "[]8[]"));
       core_ = gui.getMMCore();
@@ -135,10 +133,16 @@ public class MultiColorSubPanel extends ListeningJPanel {
       prefs_ = prefs;
       
       
+
+      final JComboBox channelMode;
+      final JTable channelTable;
+      final JScrollPane channelTablePane;
+
+      
       PanelUtils pu = new PanelUtils(prefs_, props_, devices_);
       
-      useChannelsCB_ = pu.makeCheckBox("Use multiple channels",
-            Properties.Keys.PLUGIN_USE_MULTICOLOR, panelName_, false);
+      useChannelsCB_ = pu.makeCheckBox("Channels",
+            Properties.Keys.PLUGIN_USE_MULTICHANNEL, panelName_, false);
       useChannelsCB_.setToolTipText("Contact ASI for details; advanced features require PLogic card");
       useChannelsCB_.setFocusPainted(false); 
       ComponentTitledBorder componentBorder = 
@@ -149,49 +153,56 @@ public class MultiColorSubPanel extends ListeningJPanel {
       this.add(new JLabel("Channel group:"));
       String groups[] = getAvailableGroups();
       channelGroup_  = pu.makeDropDownBox(groups, Devices.Keys.PLUGIN,
-            Properties.Keys.PLUGIN_MULTICOLOR_GROUP, "");
+            Properties.Keys.PLUGIN_MULTICHANNEL_GROUP, "");
             
-      updateGroupsCombo();
+      updateGroupsCombo(); 
+            
+      channelTableModel_ = new ChannelTableModel(prefs_, panelName_,
+              (String) channelGroup_.getSelectedItem() );
+      channelTable = new JTable(channelTableModel_);
+
       channelGroup_.addItemListener(new ItemListener() {
          @Override
          public void itemStateChanged(ItemEvent e) {
             // clear configs when changing the channel group
             if (e.getStateChange() == ItemEvent.SELECTED) {
-               for (int i=0; i<channelTable_.getRowCount(); i++) {
-                  channelTable_.setValueAt("", i, ChannelTableModel.columnIndex_config);
-               }
+               channelTableModel_.setChannelGroup((String) 
+                       channelGroup_.getSelectedItem());
+               channelTableModel_.fireTableDataChanged();
             }
          }
       });
       this.add(channelGroup_, "wrap");
       
       // put table and buttons in its own miglayout
-      JPanel tablePanel = new JPanel();
+      final JPanel tablePanel = new JPanel();
       tablePanel.setLayout(new MigLayout (
-                  "flowy",
+                  "flowy, ins 0",
                   "",
                   "") );
-      channelTableModel_ = new ChannelTableModel(prefs_, panelName_);
-      channelTable_ = new JTable(channelTableModel_);
-      channelTable_.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-      TableColumn column_useChannel = channelTable_.getColumnModel().getColumn(ChannelTableModel.columnIndex_useChannel);
-      TableColumn column_config = channelTable_.getColumnModel().getColumn(ChannelTableModel.columnIndex_config);
+      channelTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+      TableColumn column_useChannel = channelTable.getColumnModel().getColumn(
+              ChannelTableModel.columnIndex_useChannel);
+      TableColumn column_config = channelTable.getColumnModel().getColumn(
+              ChannelTableModel.columnIndex_config);
       column_useChannel.setPreferredWidth(40);
-      column_config.setPreferredWidth(100);
+      column_config.setPreferredWidth(155);
       column_useChannel.setCellRenderer(new UseChannelTableCellRenderer());
       column_config.setCellRenderer(new DisplayDisabledTableCellRenderer());
-      column_config.setCellEditor(new ColorConfigEditor(channelGroup_, core_));
+      column_config.setCellEditor(new ChannelConfigEditor(channelGroup_, core_));
       
-      channelTablePane_ = new JScrollPane(channelTable_);
-      channelTablePane_.setPreferredSize(new Dimension(220,100));
-      channelTablePane_.setViewportView(channelTable_);
-      tablePanel.add(channelTablePane_, "wrap");
+      channelTablePane = new JScrollPane(channelTable);
+      channelTablePane.setPreferredSize(new Dimension(200,75));
+      channelTablePane.setViewportView(channelTable);
+      tablePanel.add(channelTablePane, "wrap");
       
+      Dimension buttonSize = new Dimension(40, 18);
       JButton plusButton = new JButton("+");
+      plusButton.setMaximumSize(buttonSize);
       plusButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            channelTableModel_.addChannel();
+            channelTableModel_.addChannel((String) channelGroup_.getSelectedItem());
             channelTableModel_.fireTableDataChanged();
          }
       }
@@ -199,10 +210,11 @@ public class MultiColorSubPanel extends ListeningJPanel {
       tablePanel.add(plusButton, "aligny top, split 2");
       
       JButton minusButton = new JButton("-");
+      minusButton.setMaximumSize(buttonSize);
       minusButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            int selectedRows[] = channelTable_.getSelectedRows();
+            int selectedRows[] = channelTable.getSelectedRows();
             for (int row : selectedRows) {
                channelTableModel_.removeChannel(row);
             }
@@ -214,23 +226,30 @@ public class MultiColorSubPanel extends ListeningJPanel {
       );
       tablePanel.add(minusButton, "wrap");
       
-      this.add(tablePanel, "span 3, wrap");
+      this.add(tablePanel, "span 2, align left, wrap");
       
       this.add(new JLabel("Change channel:"));
       MultichannelModes channelModes = new MultichannelModes(devices_, props_,
-            Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_MULTICOLOR_MODE,
+            Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_MULTICHANNEL_MODE,
             MultichannelModes.Keys.VOLUME);
-      channelMode_ = channelModes.getComboBox();
-      this.add(channelMode_, "wrap");
+      channelMode = channelModes.getComboBox();
+      this.add(channelMode, "wrap");
       
       // enable/disable panel elements depending on checkbox state
+      final Component[] channelPaneComponents = this.getComponents();
       useChannelsCB_.addActionListener(new ActionListener(){ 
          @Override
          public void actionPerformed(ActionEvent e){ 
             boolean enabled = useChannelsCB_.isSelected();
+            for (Component comp : channelPaneComponents) {
+               comp.setEnabled(enabled);
+            }
+            for (Component comp : tablePanel.getComponents()) {
+               comp.setEnabled(enabled);
+            }
             channelGroup_.setEnabled(enabled);
-            channelTable_.setEnabled(enabled);
-            channelMode_.setEnabled(enabled);
+            channelTable.setEnabled(enabled);
+            channelMode.setEnabled(enabled);
          } 
       });
       // initialize GUI for muli-channel enabled checkbox
@@ -272,8 +291,13 @@ public class MultiColorSubPanel extends ListeningJPanel {
       return strGroups.toArray(new String[0]);
    }
    
+   public ChannelSpec[] getUsedChannels() {
+      return channelTableModel_.getUsedChannels();     
+   }
+   
    @Override
    public void saveSettings() {
+      
    }
    
    /**

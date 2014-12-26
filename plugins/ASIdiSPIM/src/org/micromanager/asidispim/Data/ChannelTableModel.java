@@ -22,6 +22,7 @@
 package org.micromanager.asidispim.Data;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.table.AbstractTableModel;
 
@@ -37,26 +38,39 @@ import org.micromanager.utils.ReportingUtils;
 @SuppressWarnings("serial")
 public class ChannelTableModel extends AbstractTableModel {
    public static final String[] columnNames = {"Use?", "Preset"};
-   public static final int PLOGIC_OFFSET = 5;
    public static final int columnIndex_useChannel = 0;
    public static final int columnIndex_config = 1;
-   private final ArrayList<ColorSpec> channels_;
+   private final ArrayList<ChannelSpec> channels_;
    private final Prefs prefs_;
    private final String prefNode_;
 
 
-   public ChannelTableModel(Prefs prefs, String prefNode) {
-      channels_ = new ArrayList<ColorSpec>();
+   public ChannelTableModel(Prefs prefs, String prefNode, String channelGroup) {
+      channels_ = new ArrayList<ChannelSpec>();
       prefs_ = prefs;
       prefNode_ = prefNode;
+      setChannelGroup(channelGroup);
    } //constructor
+   
+   public final void setChannelGroup(String channelGroup) {
+      channels_.clear();
+      int nrChannels = prefs_.getInt(prefNode_ + "_" + channelGroup, 
+              Prefs.Keys.NRCHANNELROWS, 1);
+      for (int i=0; i < nrChannels; i++) {
+         addChannel(channelGroup);
+      }
+   }
 
-   public void addChannel() {
-      addNewChannel(new ColorSpec(
-               prefs_.getBoolean(prefNode_ + "_" + channels_.size(), 
-                       Prefs.Keys.COLOR_USE_COLOR, false),
-               prefs_.getString(prefNode_ + "_" + channels_.size(), 
-                       Prefs.Keys.COLOR_CONFIG, "")));
+   public final void addChannel(String channelGroup) {
+      String prefKey = prefNode_ + "_" + channelGroup + "_" + channels_.size();
+      addNewChannel(new ChannelSpec(
+               prefs_.getBoolean(prefKey, 
+                       Prefs.Keys.CHANNEL_USE_CHANNEL, false),
+               channelGroup,
+               prefs_.getString(prefKey, 
+                       Prefs.Keys.CHANNEL_CONFIG, "") )) ;
+      prefs_.putInt(prefNode_ + "_" + channelGroup, Prefs.Keys.NRCHANNELROWS, 
+              channels_.size());
    }
    
    /**
@@ -64,7 +78,9 @@ public class ChannelTableModel extends AbstractTableModel {
     * @param i - 0-based row number of channel to be removed
    */
    public void removeChannel(int i) {
+      String prefKey = prefNode_ + "_" + channels_.get(i).group_;
       channels_.remove(i);
+      prefs_.putInt(prefKey, Prefs.Keys.NRCHANNELROWS, channels_.size());
    }
    
    @Override
@@ -95,22 +111,21 @@ public class ChannelTableModel extends AbstractTableModel {
 
    @Override
    public void setValueAt(Object value, int rowIndex, int columnIndex) {
-      ColorSpec color = channels_.get(rowIndex);
+      ChannelSpec channel = channels_.get(rowIndex);
+      String prefNode = prefNode_ + "_" + channel.group_ + "_" + rowIndex;
       switch (columnIndex) {
       case columnIndex_useChannel:
          if (value instanceof Boolean) {
             boolean val = (Boolean) value;
-            color.useChannel = val;
-            prefs_.putBoolean(prefNode_ + "_" + rowIndex, 
-                  Prefs.Keys.COLOR_USE_COLOR, (Boolean) val);
+            channel.useChannel_ = val;
+            prefs_.putBoolean(prefNode, Prefs.Keys.CHANNEL_USE_CHANNEL, (Boolean) val);
          }
          break;
       case columnIndex_config:
          if (value instanceof String) {
             String val = (String) value;
-            color.config = val;
-            prefs_.putString(prefNode_+ "_" + rowIndex, 
-                  Prefs.Keys.COLOR_CONFIG, val);
+            channel.config_ = val;
+            prefs_.putString(prefNode, Prefs.Keys.CHANNEL_CONFIG, val);
          }
          break;
       }
@@ -119,20 +134,40 @@ public class ChannelTableModel extends AbstractTableModel {
 
    @Override
    public Object getValueAt(int rowIndex, int columnIndex) {
-      ColorSpec color = channels_.get(rowIndex);
+      ChannelSpec channel = channels_.get(rowIndex);
       switch (columnIndex) {
       case columnIndex_useChannel:
-         return color.useChannel;
+         return channel.useChannel_;
       case columnIndex_config:
-         return color.config;
+         return channel.config_;
       default: 
          ReportingUtils.logError("ColorTableModel getValuAt() didn't match");
          return null;
       }
    }
    
-   public final void addNewChannel(ColorSpec color) {
-      channels_.add(color);
+   public final void addNewChannel(ChannelSpec channel) {
+      String prefNode = prefNode_ + "_" + channel.group_ + "_" + channels_.size();
+      prefs_.putBoolean(prefNode, Prefs.Keys.CHANNEL_USE_CHANNEL, channel.useChannel_);
+      prefs_.putString(prefNode, Prefs.Keys.CHANNEL_CONFIG, channel.config_);
+      prefs_.putInt(prefNode_ + "_" + channel.group_, Prefs.Keys.NRCHANNELROWS, 
+              channels_.size());
+      channels_.add(channel);
+   }
+   
+   /**
+    * Returns channels that are currently set be "Used".
+    * If no channels are selected, returns null
+    * @return 
+    */
+   public ChannelSpec[] getUsedChannels() {
+      List<ChannelSpec> result = new ArrayList<ChannelSpec>();
+      for (ChannelSpec ch : channels_) {
+         if (ch.useChannel_) {
+            result.add(ch);
+         }
+      }
+      return (ChannelSpec[]) result.toArray();
    }
 
 }

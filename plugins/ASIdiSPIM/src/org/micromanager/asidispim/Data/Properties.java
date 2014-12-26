@@ -156,9 +156,11 @@ public class Properties {
       PLUGIN_ENABLE_ILLUM_PIEZO_HOME("EnableIllumPiezoHome"),
       PLUGIN_SCAN_OPPOSITE_DIRECTIONS("ScanOppositeDirections"),
       PLUGIN_IGNORE_MISSING_SCANNER("IgnoreMissingScanner"),
-      PLUGIN_USE_MULTICOLOR("UseMultiColor"),
-      PLUGIN_MULTICOLOR_GROUP("ColorGroup"),
-      PLUGIN_MULTICOLOR_MODE("MultiColorMode"),
+      PLUGIN_USE_MULTICHANNEL("UseMultiChannel"),
+      PLUGIN_MULTICHANNEL_GROUP("ChannelGroup"),
+      PLUGIN_MULTICHANNEL_MODE("MultiChannelMode"),
+      PLUGIN_USE_MULTIPOSITION("MultiPositionMode"),
+      PLUGIN_USE_TIMEPOINTS("UseTimePoints")
       ;
       private final String text;
       private final boolean hasPattern;  // true if string has substitution pattern
@@ -235,8 +237,10 @@ public class Properties {
    
    /**
     * Constructor.
+    * @param gui
     * @param devices
     * @author Jon
+    * @param prefs
     */
    public Properties (ScriptInterface gui, Devices devices, Prefs prefs) {
       gui_ = gui;
@@ -520,7 +524,7 @@ public class Properties {
     * writes float property value to the device adapter using a core call
     * @param device enum key for device 
     * @param name enum key for property 
-    * @param intVal value in integer form, sent to core using setProperty()
+    * @param floatVal value in float form, sent to core using setProperty()
     * @param ignoreError false (default) will do error checking, true means ignores non-existing property
     * @param propNameSubstitute string to substitute for pattern in property name, or null if not used
     */
@@ -561,7 +565,7 @@ public class Properties {
     * writes float property value to the device adapter using a core call, with error checking
     * @param device enum key for device 
     * @param name enum key for property 
-    * @param intVal value in integer form, sent to core using setProperty()
+    * @param floatVal value in float form, sent to core using setProperty()
     */
    public void setPropValue(Devices.Keys device, Properties.Keys name, float floatVal) {
       setPropValue(device, name, floatVal, false, null);
@@ -571,7 +575,7 @@ public class Properties {
     * writes float property value to several device adapters using a core call, with error checking
     * @param devices array of enum key for device 
     * @param name enum key for property 
-    * @param intVal value in integer form, sent to core using setProperty()
+    * @param floatVal value in float form, sent to core using setProperty()
     */
    public void setPropValue(Devices.Keys [] devices, Properties.Keys name, float floatVal) {
       for (Devices.Keys device : devices) {
@@ -770,6 +774,7 @@ public class Properties {
   
   /**
    * Used to add classes implementing DeviceListenerInterface as listeners
+    * @param listener
    */
   public void addListener(UpdateFromPropertyListenerInterface listener) {
      listeners_.add(listener);

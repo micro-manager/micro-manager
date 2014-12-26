@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          ColorConfigRenderer.java
+//FILE:          ChannelConfigRenderer.java
 //PROJECT:       Micro-Manager 
 //SUBSYSTEM:     ASIdiSPIM plugin
 //-----------------------------------------------------------------------------
@@ -38,15 +38,17 @@ import mmcorej.StrVector;
  * @author Jon
  */
 @SuppressWarnings("serial")
-public class ColorConfigEditor extends AbstractCellEditor implements TableCellEditor {
-   private final JComboBox colorGroup_;  // this is the combo box selecting the group, NOT the combo box selecting which preset of the group
-   private JComboBox configPreset_;  // this is the combo box used by the table to select the appropriate preset
+public class ChannelConfigEditor extends AbstractCellEditor implements TableCellEditor {
+   private final JComboBox channelGroup_;  // this is the combo box selecting 
+            //the group, NOT the combo box selecting which preset of the group
+   private final JComboBox channelPreset_;  // this is the combo box used by the table 
+            // to select the appropriate preset
    private final CMMCore core_;
    
-   public ColorConfigEditor(JComboBox cb, CMMCore core) {
-      colorGroup_ = cb;
-      configPreset_ = new JComboBox();
-      configPreset_.addActionListener(new ConfigActionListener());
+   public ChannelConfigEditor(JComboBox cb, CMMCore core) {
+      channelGroup_ = cb;
+      channelPreset_ = new JComboBox();
+      channelPreset_.addActionListener(new ConfigActionListener());
       core_ = core;
   }
    
@@ -59,16 +61,18 @@ public class ColorConfigEditor extends AbstractCellEditor implements TableCellEd
    
    /** 
     * Called when cell value is edited by user.
+    * @param rowIndex
+    * @param colIndex
     */
    @Override
    public Component getTableCellEditorComponent(JTable table, Object value,
            boolean isSelected, int rowIndex, int colIndex) {
-      configPreset_.removeAllItems();
-      StrVector configs = core_.getAvailableConfigs(colorGroup_.getSelectedItem().toString());
+      channelPreset_.removeAllItems();
+      StrVector configs = core_.getAvailableConfigs(channelGroup_.getSelectedItem().toString());
       for (String config : configs) {
-         configPreset_.addItem(config);
+         channelPreset_.addItem(config);
       }
-      return configPreset_;
+      return channelPreset_;
    }
    
    /** 
@@ -76,7 +80,7 @@ public class ColorConfigEditor extends AbstractCellEditor implements TableCellEd
     */
    @Override
    public Object getCellEditorValue() {
-      return configPreset_.getSelectedItem();
+      return channelPreset_.getSelectedItem();
    }
 
 }

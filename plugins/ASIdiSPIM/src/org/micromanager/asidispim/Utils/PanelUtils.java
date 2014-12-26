@@ -479,6 +479,7 @@ public class PanelUtils {
     * @param propKey - property key as known in the params
     * @param props
     * @param devs
+    * @param defaultVal
     * @param vals - array of strings, each one is a different option in the dropdown 
     * @param devKey
     * @return constructed JComboBox
@@ -494,7 +495,7 @@ public class PanelUtils {
     * Constructs JCheckBox with boolean preference store (used for plugin properties)
     * @param label the GUI label
     * @param propKey (needed for read/write to preferences now that preferences is based on properties)
-    * @param prefNode
+    * @param prefNode 
     * @param defaultValue
     * @return constructed JCheckBox
     */

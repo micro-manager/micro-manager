@@ -94,6 +94,9 @@ import java.awt.event.ItemListener;
 
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import javax.swing.BorderFactory;
+import org.micromanager.acquisition.ComponentTitledBorder;
+import org.micromanager.asidispim.Data.ChannelSpec;
 
 import org.micromanager.utils.MMFrame;
 
@@ -154,11 +157,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final JCheckBox hideCB_;
    private final JComboBox spimMode_;
    private final JCheckBox navigationJoysticksCB_;
+   private final JCheckBox usePositionsCB_;
+   private final JCheckBox useTimePointsCB_;
    private final JPanel leftColumnPanel_;
    private final JPanel rightColumnPanel_;
    private final MMFrame sliceFrame_;
    private SliceTiming sliceTiming_;
-   private final MultiColorSubPanel multiChannelPanel_;
+   private final MultiChannelSubPanel multiChannelPanel_;
    
    public AcquisitionPanel(ScriptInterface gui, 
            Devices devices, 
@@ -454,11 +459,19 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // start repeat (time lapse) sub-panel
 
       repeatPanel_ = new JPanel(new MigLayout(
-              "",
+              "ins 12",
               "[right]12[center]",
               "[]8[]"));
 
-      repeatPanel_.setBorder(PanelUtils.makeTitledBorder("Time Lapse Settings"));
+      useTimePointsCB_ = pu.makeCheckBox("Time points",
+            Properties.Keys.PLUGIN_USE_TIMEPOINTS, panelName_, false);
+      useTimePointsCB_.setToolTipText("Perform a time-lapse acquisition");
+      useTimePointsCB_.setEnabled(true);
+      useTimePointsCB_.setFocusPainted(false); 
+      ComponentTitledBorder componentBorder = 
+            new ComponentTitledBorder(useTimePointsCB_, repeatPanel_, 
+                  BorderFactory.createLineBorder(ASIdiSPIM.borderColor)); 
+      repeatPanel_.setBorder(componentBorder);
       
       ChangeListener recalculateTimeLapseDisplay = new ChangeListener() {
          @Override
@@ -467,7 +480,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
       };
 
-      repeatPanel_.add(new JLabel("Time points:"));
+      repeatPanel_.add(new JLabel("Number:"));
       numTimepoints_ = pu.makeSpinnerInteger(1, 32000,
               Devices.Keys.PLUGIN,
               Properties.Keys.PLUGIN_NUM_ACQUISITIONS, 1);
@@ -480,6 +493,19 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
               Properties.Keys.PLUGIN_ACQUISITION_INTERVAL, 60);
       acquisitionInterval_.addChangeListener(recalculateTimeLapseDisplay);
       repeatPanel_.add(acquisitionInterval_, "wrap");
+      
+      // enable/disable panel elements depending on checkbox state
+      ActionListener al = new ActionListener(){ 
+         @Override
+         public void actionPerformed(ActionEvent e){ 
+            boolean enabled = useTimePointsCB_.isSelected();
+            for (Component comp : repeatPanel_.getComponents()) {
+               comp.setEnabled(enabled);
+            }
+         } 
+      };
+      useTimePointsCB_.addActionListener(al);
+      al.actionPerformed(null);
       
       // end repeat sub-panel
       
@@ -621,7 +647,40 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       acquisitionStatusLabel_ = new JLabel("");
       updateAcquisitionStatus(AcquisitionStatus.NONE);
       
-      multiChannelPanel_ = new MultiColorSubPanel(gui, devices_, props_, prefs_);
+      // Channel Panel
+      multiChannelPanel_ = new MultiChannelSubPanel(gui, devices_, props_, prefs_);
+      
+      // Position Panel
+      final JPanel positionPanel = new JPanel();
+      positionPanel.setLayout(new MigLayout("flowx, fillx, ins 12","[center]","[]"));
+      usePositionsCB_ = pu.makeCheckBox("Multiple positions(xy)",
+            Properties.Keys.PLUGIN_USE_MULTIPOSITION, panelName_, false);
+      usePositionsCB_.setToolTipText("Acquire datasest at multiple postions");
+      usePositionsCB_.setEnabled(true);
+      usePositionsCB_.setFocusPainted(false); 
+      componentBorder = 
+            new ComponentTitledBorder(usePositionsCB_, positionPanel, 
+                  BorderFactory.createLineBorder(ASIdiSPIM.borderColor)); 
+      positionPanel.setBorder(componentBorder);
+      final JButton editPositionListButton = new JButton("Edit position list...");
+      editPositionListButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            gui_.showXYPositionList();
+         }
+      });
+      // enable/disable panel elements depending on checkbox state
+      usePositionsCB_.addActionListener(new ActionListener(){ 
+         @Override
+         public void actionPerformed(ActionEvent e){ 
+            boolean enabled = usePositionsCB_.isSelected();
+            editPositionListButton.setEnabled(enabled);
+            positionPanel.setEnabled(enabled);
+         } 
+      });
+      positionPanel.add(editPositionListButton);
+      // end of Position panel
+      
       
       
       // set up tabbed panel for GUI, 3 panels for columns of settings to
@@ -632,8 +691,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             "[]",
             "[]6[]10[]10[]"));
       
-      leftColumnPanel_.add(repeatPanel_, "split 2");
-      leftColumnPanel_.add(durationPanel_, "wrap");
+      leftColumnPanel_.add(durationPanel_, "split 2");
+      leftColumnPanel_.add(navigationJoysticksCB_, "wrap");
       leftColumnPanel_.add(savePanel_, "wrap");
       leftColumnPanel_.add(new JLabel("SPIM mode: "), "split 2, left");
       AcquisitionModes acqModes = new AcquisitionModes(devices_, props_, prefs_);
@@ -647,8 +706,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             "[]",
             "[]"));
       
+      rightColumnPanel_.add(repeatPanel_, "growx, gapy 0, wrap");
       rightColumnPanel_.add(multiChannelPanel_, "wrap");
-      rightColumnPanel_.add(navigationJoysticksCB_);
+      rightColumnPanel_.add(positionPanel, "growx, wrap");
       
       
       // add the column panels to the main panel
@@ -658,8 +718,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       // properly initialize the advanced slice timing
       advancedSliceTimingCB_.addItemListener(sliceTimingDisableGUIInputs);
-      advancedSliceTimingCB_.doClick();
-      advancedSliceTimingCB_.doClick();
+      sliceTimingDisableGUIInputs.itemStateChanged(null);
+      //advancedSliceTimingCB_.doClick();
+      //advancedSliceTimingCB_.doClick();
       advancedSliceTimingCB_.addActionListener(showAdvancedTimingFrame);
       
       updateActualSlicePeriodLabel();
@@ -671,7 +732,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             && checkCamerasAssigned(false)) {
          calculateSliceTiming_.doClick();
       }
-      
       
       
    }//end constructor
@@ -743,6 +803,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    }
    
    private int getNumTimepoints() {
+      if (!useTimePointsCB_.isSelected()) {
+         return 1;
+      }
       return (Integer) numTimepoints_.getValue();
    }
    
@@ -1104,14 +1167,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    }
 
    private void componentsSetEnabled(JComponent[] saveComponents, boolean enabled) {
-      if (enabled) {
-         for (JComponent c : saveComponents) {
-            c.setEnabled(true);
-         }
-      } else {
-         for (JComponent c : saveComponents) {
-            c.setEnabled(false);
-         }
+      for (JComponent c : saveComponents) {
+         c.setEnabled(enabled);
       }
    }
    
@@ -1143,7 +1200,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // if we are changing color slice by slice then set controller
       //   to do multiple slices per piezo move
       // TODO fix this with new multicolor approach
-      if (props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_MULTICOLOR_MODE)
+      if (props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_MULTICHANNEL_MODE)
             == MultichannelModes.Keys.SLICE.getPrefCode()) {
          props_.setPropValue(galvoDevice, Properties.Keys.SPIM_NUM_SLICES_PER_PIEZO,
             1, skipScannerWarnings);
@@ -1282,9 +1339,33 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
       
       int nrSides = getNumSides();
-      // TODO: multi-channel in sense of excitation color, etc.
-      // TODO fix this because it will stop working with new MultiD panel w/JTable
-      int nrColors = 1;
+      
+      // Channels
+      int nrChannels = 1;
+      ChannelSpec[] channels = multiChannelPanel_.getUsedChannels();
+      boolean useChannels = multiChannelPanel_.isEnabled();
+      if (useChannels) {
+         nrChannels = channels.length;
+         if (nrChannels < 1) {
+            MyDialogUtils.showError("\"Channels\" is checked, but no channels are selected");
+            return false;
+         }
+      }
+      
+      // XY positions
+      int nrPositions = 1;
+      boolean usePositions = usePositionsCB_.isSelected();
+      if (usePositions) {
+         try {
+            nrPositions = gui_.getPositionList().getNumberOfPositions();
+         } catch (MMScriptException ex) {
+            MyDialogUtils.showError(ex, "Error getting positionlist");
+         }
+         if (nrPositions < 1) {
+            MyDialogUtils.showError("\"Positions\" is checked, but no positions are selected");
+            return false;
+         }
+      }
       
       // make sure we have cameras selected
       if (!checkCamerasAssigned(true)) {
@@ -1320,7 +1401,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       long timepointsIntervalMs = Math.round(
               PanelUtils.getSpinnerFloatValue(acquisitionInterval_) * 1000d);
       int nrSlices = getNumSlices();
-      int nrPos = 1;  // TODO: multi XY points
       
       boolean autoShutter = core_.getAutoShutter();
       boolean shutterOpen = false;
@@ -1438,15 +1518,25 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             
             gui_.logMessage("diSPIM plugin starting acquisition " + acqName);
             
-            gui_.openAcquisition(acqName, rootDir, nrFrames, nrSides * nrColors,
-                  nrSlices, nrPos, show, save);
+            gui_.openAcquisition(acqName, rootDir, nrFrames, nrSides * nrChannels,
+                  nrSlices, nrPositions, show, save);
             core_.setExposure(firstCamera, exposureTime);
             if (twoSided) {
                core_.setExposure(secondCamera, exposureTime);
             }
-            gui_.setChannelName(acqName, 0, firstCamera);
-            if (twoSided) {
-               gui_.setChannelName(acqName, 1, secondCamera);
+            if (useChannels) {
+               for (int i = 0; i < channels.length; i++) {
+                  String chName = "-" + channels[i].config_;
+                  gui_.setChannelName(acqName, i * 2, firstCamera + chName);
+                  if (twoSided) {
+                     gui_.setChannelName(acqName, i * 2 + 1, secondCamera + chName);
+                  }
+               }
+            } else {
+               gui_.setChannelName(acqName, 0, firstCamera);
+               if (twoSided) {
+                  gui_.setChannelName(acqName, 1, secondCamera);
+               }
             }
             
             // initialize acquisition
