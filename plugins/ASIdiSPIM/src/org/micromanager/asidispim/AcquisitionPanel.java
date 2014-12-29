@@ -162,7 +162,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final JCheckBox usePositionsCB_;
    private final JCheckBox useTimePointsCB_;
    private final JPanel leftColumnPanel_;
-   private final JPanel rightColumnPanel_;
+   private final JPanel centerColumnPanel_;
    private final MMFrame sliceFrame_;
    private SliceTiming sliceTiming_;
    private final MultiChannelSubPanel multiChannelPanel_;
@@ -658,7 +658,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // Position Panel
       final JPanel positionPanel = new JPanel();
       positionPanel.setLayout(new MigLayout("flowx, fillx","[center]","[]"));
-      usePositionsCB_ = pu.makeCheckBox("Multiple positions(xy)",
+      usePositionsCB_ = pu.makeCheckBox("Multiple positions (XY)",
             Properties.Keys.PLUGIN_USE_MULTIPOSITION, panelName_, false);
       usePositionsCB_.setToolTipText("Acquire datasest at multiple postions");
       usePositionsCB_.setEnabled(true);
@@ -688,8 +688,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       
       
-      // set up tabbed panel for GUI, 3 panels for columns of settings to
-      // get vertical space right in each column
+      // set up tabbed panels for GUI
+      // make 3 columns as own JPanels to get vertical space right
+      // in each column without dependencies on other columns
       
       leftColumnPanel_ = new JPanel(new MigLayout(
             "",
@@ -706,19 +707,19 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       leftColumnPanel_.add(buttonStart_, "split 2, left");
       leftColumnPanel_.add(acquisitionStatusLabel_);
       
-      rightColumnPanel_ = new JPanel(new MigLayout(
+      centerColumnPanel_ = new JPanel(new MigLayout(
             "",
             "[]",
             "[]"));
       
-      rightColumnPanel_.add(multiChannelPanel_, "wrap");
-      rightColumnPanel_.add(positionPanel, "growx, wrap");
-      rightColumnPanel_.add(navigationJoysticksCB_, "wrap");
+      centerColumnPanel_.add(positionPanel, "growx, wrap");
+      centerColumnPanel_.add(multiChannelPanel_, "wrap");
+      centerColumnPanel_.add(navigationJoysticksCB_, "wrap");
       
       // add the column panels to the main panel
-      add(leftColumnPanel_);
-      add(rightColumnPanel_);
-      add(volPanel_);
+      this.add(leftColumnPanel_);
+      this.add(centerColumnPanel_);
+      this.add(volPanel_);
       
       // properly initialize the advanced slice timing
       advancedSliceTimingCB_.addItemListener(sliceTimingDisableGUIInputs);
