@@ -49,6 +49,8 @@ import org.micromanager.utils.MMFrame;
 // TODO easy mode that pulls most-used bits from all panels
 // TODO autofocus for finding calibration endpoints (http://dx.doi.org/10.1364/OE.16.008670)
 // TODO recalculate slice timing on changing assigned camera
+// TODO add status bar to bottom of window (would include acquisition status, could show other messages too)
+// TODO move acquisition start/stop to shared area below tabs
 // TODO make it easy to discard a data set
 // TODO make it easy to look through series of data sets
 // TODO hardware Z-projection

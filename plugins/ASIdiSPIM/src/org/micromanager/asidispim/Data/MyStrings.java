@@ -38,7 +38,7 @@ public class MyStrings {
      LIGHTSOURCE("Light"),
      SETTINGS("Settings"),
      DATAANALYSIS("Data Analysis"),
-     MULTID("MultiD"),
+     CHANNELS_SUBPANEL("Channels_"),
      HELP("Help"),
      BEAM_SUBPANEL("Beam_"),
      CAMERA_SUBPANEL("Camera_"),

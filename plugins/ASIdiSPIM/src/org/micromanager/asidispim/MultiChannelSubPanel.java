@@ -23,6 +23,7 @@ package org.micromanager.asidispim;
 
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -59,6 +60,7 @@ import javax.swing.table.TableColumn;
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
+
 import org.micromanager.asidispim.Data.ChannelSpec;
 
 
@@ -122,16 +124,15 @@ public class MultiChannelSubPanel extends ListeningJPanel {
     */
    public MultiChannelSubPanel(ScriptInterface gui, Devices devices, 
            Properties props, Prefs prefs) {
-      super (MyStrings.PanelNames.MULTID.toString(),
+      super (MyStrings.PanelNames.CHANNELS_SUBPANEL.toString(),
             new MigLayout(
-                  "flowx, ins 12",
-                  "[right]4[left]",
+                  "",
+                  "[right]10[left]",
                   "[]8[]"));
       core_ = gui.getMMCore();
       devices_ = devices;
       props_ = props;
       prefs_ = prefs;
-      
       
 
       final JComboBox channelMode;
@@ -196,8 +197,10 @@ public class MultiChannelSubPanel extends ListeningJPanel {
       channelTablePane.setViewportView(channelTable);
       tablePanel.add(channelTablePane, "wrap");
       
-      Dimension buttonSize = new Dimension(40, 18);
+      Dimension buttonSize = new Dimension(30, 20);
       JButton plusButton = new JButton("+");
+      plusButton.setMargin(new Insets(0,0,0,0));
+      plusButton.setPreferredSize(buttonSize);
       plusButton.setMaximumSize(buttonSize);
       plusButton.addActionListener(new ActionListener() {
          @Override
@@ -210,6 +213,8 @@ public class MultiChannelSubPanel extends ListeningJPanel {
       tablePanel.add(plusButton, "aligny top, split 2");
       
       JButton minusButton = new JButton("-");
+      minusButton.setMargin(new Insets(0,0,0,0));
+      minusButton.setPreferredSize(buttonSize);
       minusButton.setMaximumSize(buttonSize);
       minusButton.addActionListener(new ActionListener() {
          @Override
@@ -258,7 +263,10 @@ public class MultiChannelSubPanel extends ListeningJPanel {
       
    }// constructor
 
-      
+   /**
+    * Sets up the combo box for channel group.
+    */
+   // TODO add listener to update whenever group is added or other triggering event
    private void updateGroupsCombo() {
       Object selection = channelGroup_.getSelectedItem();
       String groups[] = getAvailableGroups();
@@ -271,7 +279,7 @@ public class MultiChannelSubPanel extends ListeningJPanel {
 
    /**
     * gets all valid groups from Core-ChannelGroup that have more than 1 preset 
-    * ("config")
+    * ("config").  Different from the MDA method of getting valid groups.
     */
    private String[] getAvailableGroups() {
       StrVector groups;
@@ -297,12 +305,10 @@ public class MultiChannelSubPanel extends ListeningJPanel {
    
    @Override
    public void saveSettings() {
-      
    }
    
    /**
-    * Gets called when this tab gets focus.  Sets the physical UI in the Tiger
-    * controller to what was selected in this pane
+    * Gets called when this tab gets focus.
     */
    @Override
    public void gotSelected() {

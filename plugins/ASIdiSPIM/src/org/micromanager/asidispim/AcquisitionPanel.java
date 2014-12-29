@@ -41,6 +41,7 @@ import org.micromanager.asidispim.Utils.StagePositionUpdater;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
@@ -89,15 +90,16 @@ import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
 
 import com.swtdesigner.SwingResourceManager;
+
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+
 import javax.swing.BorderFactory;
+
 import org.micromanager.acquisition.ComponentTitledBorder;
 import org.micromanager.asidispim.Data.ChannelSpec;
-
 import org.micromanager.utils.MMFrame;
 
 /**
@@ -459,8 +461,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // start repeat (time lapse) sub-panel
 
       repeatPanel_ = new JPanel(new MigLayout(
-              "ins 12",
-              "[right]12[center]",
+              "",
+              "[right]10[center]",
               "[]8[]"));
 
       useTimePointsCB_ = pu.makeCheckBox("Time points",
@@ -605,6 +607,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             "[right]6[left, 40%!]",
             "[]5[]"));
       durationPanel_.setBorder(PanelUtils.makeTitledBorder("Durations"));
+      durationPanel_.setPreferredSize(new Dimension(125, 0));  // fix width so it doesn't constantly change depending on text
       
       durationPanel_.add(new JLabel("Slice:"));
       actualSlicePeriodLabel_ = new JLabel();
@@ -654,7 +657,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       // Position Panel
       final JPanel positionPanel = new JPanel();
-      positionPanel.setLayout(new MigLayout("flowx, fillx, ins 12","[center]","[]"));
+      positionPanel.setLayout(new MigLayout("flowx, fillx","[center]","[]"));
       usePositionsCB_ = pu.makeCheckBox("Multiple positions(xy)",
             Properties.Keys.PLUGIN_USE_MULTIPOSITION, panelName_, false);
       usePositionsCB_.setToolTipText("Acquire datasest at multiple postions");
@@ -694,7 +697,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             "[]6[]10[]10[]"));
       
       leftColumnPanel_.add(durationPanel_, "split 2");
-      leftColumnPanel_.add(navigationJoysticksCB_, "wrap");
+      leftColumnPanel_.add(repeatPanel_, "wrap");
       leftColumnPanel_.add(savePanel_, "wrap");
       leftColumnPanel_.add(new JLabel("SPIM mode: "), "split 2, left");
       AcquisitionModes acqModes = new AcquisitionModes(devices_, props_, prefs_);
@@ -708,15 +711,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             "[]",
             "[]"));
       
-      rightColumnPanel_.add(repeatPanel_, "growx, gapy 0, wrap");
       rightColumnPanel_.add(multiChannelPanel_, "wrap");
       rightColumnPanel_.add(positionPanel, "growx, wrap");
-      
+      rightColumnPanel_.add(navigationJoysticksCB_, "wrap");
       
       // add the column panels to the main panel
       add(leftColumnPanel_);
-      add(volPanel_);
       add(rightColumnPanel_);
+      add(volPanel_);
       
       // properly initialize the advanced slice timing
       advancedSliceTimingCB_.addItemListener(sliceTimingDisableGUIInputs);
