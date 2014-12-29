@@ -479,6 +479,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             updateActualTimeLapseDurationLabel();
          }
       };
+      
+      useTimePointsCB_.addChangeListener(recalculateTimeLapseDisplay);
 
       repeatPanel_.add(new JLabel("Number:"));
       numTimepoints_ = pu.makeSpinnerInteger(1, 32000,
@@ -612,7 +614,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       actualVolumeDurationLabel_ = new JLabel();
       durationPanel_.add(actualVolumeDurationLabel_, "wrap");
       
-      durationPanel_.add(new JLabel("Time lapse:"));
+      durationPanel_.add(new JLabel("Total:"));
       actualTimeLapseDurationLabel_ = new JLabel();
       durationPanel_.add(actualTimeLapseDurationLabel_, "wrap");
       
