@@ -107,6 +107,7 @@ public final class StatusSubPanel extends ListeningJPanel {
    public class ColorSquare extends JPanel {
       
       public ColorSquare() {
+         this.setOpaque(true);
          this.setBackground(Color.LIGHT_GRAY);
       }
       

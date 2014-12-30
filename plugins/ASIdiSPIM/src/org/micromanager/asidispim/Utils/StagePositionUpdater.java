@@ -21,13 +21,11 @@
 
 package org.micromanager.asidispim.Utils;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import javax.swing.Timer;
 
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.Positions;
@@ -39,12 +37,12 @@ import org.micromanager.asidispim.Data.Properties;
  * @author Jon
  */
 public class StagePositionUpdater {
-   private int interval_;
    private final List<ListeningJPanel> panels_;
    private Timer timer_;
    private final Positions positions_;
    private final Properties props_;
-   private final AtomicBoolean acqRunning_ = new AtomicBoolean(false);
+   private final AtomicBoolean acqRunning_ = new AtomicBoolean(false);  // flag set externally to indicate that acquisition is happening (and so we should disable updates)
+   private final AtomicBoolean updatingPositions_ = new AtomicBoolean(false);  // whether we are actually updating positions currently
    
    /**
     * Utility class for stage position timer.
@@ -61,16 +59,19 @@ public class StagePositionUpdater {
       props_ = props;
       panels_ = new ArrayList<ListeningJPanel>();
       acqRunning_.set(false);
+      updatingPositions_.set(false);
+      timer_ = null;
    }
    
-   private void updateInterval() {
-      // get interval from properties (note this is special plugin property
-      //   which gets stored as preference)
-      interval_ =  (int) (1000*props_.getPropValueFloat(Devices.Keys.PLUGIN, 
+   private int getPositionUpdateInterval() {
+      // get interval from plugin property stored as preference
+      // property/pref value has units of seconds, interval_ has units of milliseconds
+      int interval =  (int) (1000*props_.getPropValueFloat(Devices.Keys.PLUGIN, 
             Properties.Keys.PLUGIN_POSITION_REFRESH_INTERVAL));
-      if (interval_ == 0) {
-         interval_ = 1000;
+      if (interval == 0) {
+         interval = 1000;
       }
+      return interval;
    }
    
    /**
@@ -83,20 +84,19 @@ public class StagePositionUpdater {
    }
    
    /**
-    * Start the updater at whatever interval is
+    * Start the updater at whatever interval is.  Uses its own thread
+    * via java.util.Timer.scheduleAtFixedRate()
     */
    public void start() {
+      // end any existing updater before starting (anew)
       if (timer_ != null) {
-         timer_.stop();
+         timer_.cancel();
       }
-      updateInterval();
-      timer_ = new Timer(interval_, new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent ae) {
-            oneTimeUpdate();
-         }
-      });
-      timer_.start();
+      timer_ = new Timer(true);
+      timer_.scheduleAtFixedRate(new TimerTask() {
+            public void run() { oneTimeUpdate(); }
+          }, 0, getPositionUpdateInterval());
+      updatingPositions_.set(true);
    }
    
    /**
@@ -104,29 +104,37 @@ public class StagePositionUpdater {
     */
    public void stop() {
       if (timer_ != null) {
-         timer_.stop();
+         timer_.cancel();
       }
       for (ListeningJPanel panel : panels_) {
          panel.stoppedStagePositions();
       }
+      updatingPositions_.set(false);
    }
    
-   public boolean isRunning() {
-      if (timer_ != null) {
-         return timer_.isRunning();
-      }
-      return false;
+   /**
+    * check whether position updater is running 
+    */
+   public boolean isUpdateRunning() {
+      return updatingPositions_.get();
    }
    
-   public void setAcqRunning(boolean r) {
-      acqRunning_.set(r);
-      if (r & isRunning()) {
+   /**
+    * sets the "acquisition running" flag that disables position updates
+    * @param running true if starting acquisition, false if ended
+    */
+   public void setAcqRunning(boolean running) {
+      acqRunning_.set(running);
+      if (running & isUpdateRunning()) {
          for (ListeningJPanel panel : panels_) {
             panel.stoppedStagePositions();
          }
       }
    }
    
+   /**
+    * checks whether "acquisition running" flag is set 
+    */
    public boolean isAcqRunning() {
       return acqRunning_.get();
    }
