@@ -137,7 +137,7 @@ public class DeviceUtils {
             checkPropertyValueEquals(key, Properties.Keys.TRIGGER_POLARITY, Properties.Values.POSITIVE);
             break;
          case PCOCAM:
-            // TODO check trigger polarity
+            // trigger polarity not accessible in Micro-Manager, so we have to trust it is correct
             checkPropertyExists(key, Properties.Keys.TRIGGER_MODE_PCO);
             break;
          case ANDORCAM:
@@ -311,19 +311,5 @@ public class DeviceUtils {
       deviceBox.setSelectedItem(devices_.getMMDevice(deviceName));  // selects whatever device was read in by prefs
       return deviceBox;
    }
-   
-//   JComboBox deviceBox = new JComboBox();
-//   ArrayList<String> devices = new ArrayList<String>();
-//   StrVector strvDevices = core_.getLoadedDevicesOfType(deviceType);
-//   devices.addAll(Arrays.asList(strvDevices.toArray()));
-//   devices.add(0, "");
-//   deviceBox.removeAllItems();
-//   for (String device : devices) {
-//      deviceBox.addItem(device);
-//   }
-//   deviceBox.addActionListener(new DeviceBoxListener(deviceKey, deviceBox));
-//   deviceBox.setSelectedItem(devices_.getMMDevice(deviceKey));  // selects whatever device was read in by prefs
-//   return deviceBox;
-   
    
 }
