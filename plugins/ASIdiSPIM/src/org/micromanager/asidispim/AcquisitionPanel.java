@@ -1364,7 +1364,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          try {
             nrPositions = gui_.getPositionList().getNumberOfPositions();
          } catch (MMScriptException ex) {
-            MyDialogUtils.showError(ex, "Error getting positionlist");
+            MyDialogUtils.showError(ex, "Error getting position list for multiple XY posiitions");
          }
          if (nrPositions < 1) {
             MyDialogUtils.showError("\"Positions\" is checked, but no positions are selected");

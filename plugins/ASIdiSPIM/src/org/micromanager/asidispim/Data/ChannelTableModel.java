@@ -156,8 +156,7 @@ public class ChannelTableModel extends AbstractTableModel {
    }
    
    /**
-    * Returns channels that are currently set be "Used".
-    * If no channels are selected, returns null
+    * Returns array of channels that are currently set be "Used".
     * @return 
     */
    public ChannelSpec[] getUsedChannels() {
@@ -167,7 +166,7 @@ public class ChannelTableModel extends AbstractTableModel {
             result.add(ch);
          }
       }
-      return (ChannelSpec[]) result.toArray();
+      return result.toArray(new ChannelSpec[0]);
    }
 
 }

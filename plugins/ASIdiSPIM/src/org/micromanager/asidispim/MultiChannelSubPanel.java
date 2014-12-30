@@ -299,6 +299,9 @@ public class MultiChannelSubPanel extends ListeningJPanel {
       return strGroups.toArray(new String[0]);
    }
    
+   /**
+    * Returns array of channels that are currently set be "Used".
+    */
    public ChannelSpec[] getUsedChannels() {
       return channelTableModel_.getUsedChannels();     
    }
