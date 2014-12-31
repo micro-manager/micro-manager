@@ -1358,6 +1358,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
       
       // XY positions
+      // TODO actually use multiple positions, right now not working
       int nrPositions = 1;
       boolean usePositions = usePositionsCB_.isSelected();
       if (usePositions) {
@@ -1427,9 +1428,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
          // TODO verify if 0.5 second is good value for overhead time
          if (timepointsIntervalMs < (volumeDuration + 500)) {
-            MyDialogUtils.showError("Micro-Manager requires > 0.5 second overhead time "
-                  + "to finish up volume before starting next one. "
-                  + "Pester the developers if you need faster.");
+            MyDialogUtils.showError("Micro-Manager requires ~0.5 second overhead time "
+                  + "to finish up a volume before starting next one. "
+                  + "Pester the developers if you need faster, it is probably possible.");
           return false;
          }
       }

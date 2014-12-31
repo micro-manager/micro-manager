@@ -34,6 +34,7 @@ import org.micromanager.utils.ReportingUtils;
  * diSPIM plugin.  Based on org.micromanager.utils.ChannelSpec.java.
  * Handles saving preferences to registry assuming column/row don't change.
  * @author Jon
+ * @author Nico
  */
 @SuppressWarnings("serial")
 public class ChannelTableModel extends AbstractTableModel {
