@@ -436,7 +436,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       sheetPanel.add(tmp_but);
 
       illumPiezoHomeEnable_ = pu.makeCheckBox("Go home on tab activate",
-            Properties.Keys.PLUGIN_ENABLE_ILLUM_PIEZO_HOME, panelName_, false); 
+            Properties.Keys.PREFS_ENABLE_ILLUM_PIEZO_HOME, panelName_, false); 
       sheetPanel.add(illumPiezoHomeEnable_, "span 3, wrap");
 
 

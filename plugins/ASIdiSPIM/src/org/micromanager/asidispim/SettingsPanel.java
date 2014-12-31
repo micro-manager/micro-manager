@@ -91,7 +91,7 @@ public class SettingsPanel extends ListeningJPanel {
       guiPanel_.setBorder(PanelUtils.makeTitledBorder("GUI"));
       
       final JCheckBox activeTimerCheckBox = pu.makeCheckBox("Update axis positions continually",
-            Properties.Keys.PLUGIN_ENABLE_POSITION_UPDATES, panelName_, true); 
+            Properties.Keys.PREFS_ENABLE_POSITION_UPDATES, panelName_, true); 
       ActionListener ae = new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) { 
@@ -128,7 +128,7 @@ public class SettingsPanel extends ListeningJPanel {
       guiPanel_.add(positionRefreshInterval, "wrap");
       
       final JCheckBox ignoreScannerMissing = pu.makeCheckBox("Ignore missing scanner (for debug)",
-            Properties.Keys.PLUGIN_IGNORE_MISSING_SCANNER, panelName_, false);
+            Properties.Keys.PREFS_IGNORE_MISSING_SCANNER, panelName_, false);
       guiPanel_.add(ignoreScannerMissing, "center, span 2, wrap");
       
       // end GUI subpanel
@@ -154,7 +154,7 @@ public class SettingsPanel extends ListeningJPanel {
       scannerPanel_.add(scannerFilterY, "wrap");
       
       final JCheckBox scanOppositeDirectionsCB = pu.makeCheckBox("Scan beam opposite directions each slice",
-            Properties.Keys.PLUGIN_SCAN_OPPOSITE_DIRECTIONS, panelName_, true);
+            Properties.Keys.PREFS_SCAN_OPPOSITE_DIRECTIONS, panelName_, true);
       scannerPanel_.add(scanOppositeDirectionsCB, "center, span 2, wrap");
       
       // end scanner panel

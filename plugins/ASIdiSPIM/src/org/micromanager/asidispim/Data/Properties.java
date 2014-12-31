@@ -130,9 +130,9 @@ public class Properties {
       PLUGIN_ACQUISITION_INTERVAL("AcquisitionPeriod"),
       PLUGIN_DIRECTORY_ROOT("DirectoryRoot"),
       PLUGIN_NAME_PREFIX("NamePrefix"),
-      PLUGIN_SAVE_WHILE_ACQUIRING("SaveWhileAcquiring"),
-      PLUGIN_HIDE_WHILE_ACQUIRING("HideWhileAcquiring"),
-      PLUGIN_SEPARATE_VIEWERS_FOR_TIMEPOINTS("SeparateViewersForTimePoints"),
+      PREFS_SAVE_WHILE_ACQUIRING("SaveWhileAcquiring"),
+      PREFS_HIDE_WHILE_ACQUIRING("HideWhileAcquiring"),
+      PREFS_SEPARATE_VIEWERS_FOR_TIMEPOINTS("SeparateViewersForTimePoints"),
       PLUGIN_USE_NAVIGATION_JOYSTICKS("UseNavigationJoysticks"),
       PLUGIN_PIEZO_SHEET_INCREMENT("PiezoSheetIncrement"),  // piezo increment for moving piezo and galvo together
       PLUGIN_OFFSET_PIEZO_SHEET("OffsetPiezoSheet"),  // Offset in piezo/sheet relation
@@ -145,22 +145,22 @@ public class Properties {
       PLUGIN_EXPORT_DATA_DIR ("ExportDataDirectory"),  // Place data are saved in mipav/multiview format 
       PLUGIN_EXPORT_TRANSFORM_OPTION("ExportTransformOption"), // Transform to be applied when exporting data
       PLUGIN_EXPORT_FORMAT("ExportFormatOption"), // Output format of export pane
-      PLUGIN_ADVANCED_SLICE_TIMING("AdvancedSliceTiming"),
+      PREFS_ADVANCED_SLICE_TIMING("AdvancedSliceTiming"),
       PLUGIN_SLICE_STEP_SIZE("SliceStepSize"),
       PLUGIN_DESIRED_EXPOSURE("DesiredExposure"),
       PLUGIN_DESIRED_SLICE_PERIOD("DesiredSlicePeriod"),
-      PLUGIN_MINIMIZE_SLICE_PERIOD("MinimizeSlicePeriod"),
+      PREFS_MINIMIZE_SLICE_PERIOD("MinimizeSlicePeriod"),
       PLUGIN_ACQUSITION_MODE("AcquisitionMode"),
       PLUGIN_CAMERA_MODE("CameraMode"),
-      PLUGIN_ENABLE_POSITION_UPDATES("EnablePositionUpdates"),
-      PLUGIN_ENABLE_ILLUM_PIEZO_HOME("EnableIllumPiezoHome"),
-      PLUGIN_SCAN_OPPOSITE_DIRECTIONS("ScanOppositeDirections"),
-      PLUGIN_IGNORE_MISSING_SCANNER("IgnoreMissingScanner"),
-      PLUGIN_USE_MULTICHANNEL("UseMultiChannel"),
+      PREFS_ENABLE_POSITION_UPDATES("EnablePositionUpdates"),
+      PREFS_ENABLE_ILLUM_PIEZO_HOME("EnableIllumPiezoHome"),
+      PREFS_SCAN_OPPOSITE_DIRECTIONS("ScanOppositeDirections"),
+      PREFS_IGNORE_MISSING_SCANNER("IgnoreMissingScanner"),
+      PREFS_USE_MULTICHANNEL("UseMultiChannel"),
       PLUGIN_MULTICHANNEL_GROUP("ChannelGroup"),
       PLUGIN_MULTICHANNEL_MODE("MultiChannelMode"),
-      PLUGIN_USE_MULTIPOSITION("MultiPositionMode"),
-      PLUGIN_USE_TIMEPOINTS("UseTimePoints")
+      PREFS_USE_MULTIPOSITION("MultiPositionMode"),
+      PREFS_USE_TIMEPOINTS("UseTimePoints")
       ;
       private final String text;
       private final boolean hasPattern;  // true if string has substitution pattern

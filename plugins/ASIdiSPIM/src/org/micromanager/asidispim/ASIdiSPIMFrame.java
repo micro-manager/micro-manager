@@ -57,6 +57,7 @@ import org.micromanager.utils.MMFrame;
 // TODO camera control ROI panel
 // TODO track Z/F for sample finding
 // TODO factor out common code for JComboBoxes like MulticolorModes, CameraModes, AcquisitionModes, etc.
+// TODO cleanup prefs vs. props... maybe add boolean support for plugin device use only?
 // TODO finish eliminating Prefs.Keys in favor of Properties.Keys with plugin values
 // TODO save/load plugin settings from file instead of from registry (nice to also include controller settings)
 // TODO handle camera binning

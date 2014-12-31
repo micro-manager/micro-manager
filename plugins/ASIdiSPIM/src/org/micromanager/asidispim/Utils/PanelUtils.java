@@ -492,7 +492,9 @@ public class PanelUtils {
    
    
    /**
-    * Constructs JCheckBox with boolean preference store (used for plugin properties)
+    * Constructs JCheckBox with boolean preference store.
+    * The boolean value is read using prefs_.getBoolean(), NOT props_.get...
+    * Stored in the prefNode indicated, usually the panel name.
     * @param label the GUI label
     * @param propKey (needed for read/write to preferences now that preferences is based on properties)
     * @param prefNode 
