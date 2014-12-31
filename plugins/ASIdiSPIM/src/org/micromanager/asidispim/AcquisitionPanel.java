@@ -199,9 +199,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       ChangeListener recalculateTimingDisplayCL = new ChangeListener() {
          @Override
          public void stateChanged(ChangeEvent e) {
-            updateActualSlicePeriodLabel();
-            updateActualVolumeDurationLabel();
-            updateActualTimeLapseDurationLabel();
+            updateDurationLabels();
          }
       };
       
@@ -210,12 +208,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       ActionListener recalculateTimingDisplayAL = new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            updateActualSlicePeriodLabel();
-            updateActualVolumeDurationLabel();
-            updateActualTimeLapseDurationLabel();
+            updateDurationLabels();
          }
       };
-      
       
       // start volume (main) sub-panel
 
@@ -264,7 +259,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_DESIRED_SLICE_PERIOD, 30);
       
       minSlicePeriodCB_ = pu.makeCheckBox("Minimize slice period",
-            Properties.Keys.PLUGIN_MINIMIZE_SLICE_PERIOD, panelName_, false); 
+            Properties.Keys.PREFS_MINIMIZE_SLICE_PERIOD, panelName_, false); 
       minSlicePeriodCB_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -324,7 +319,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // special checkbox to use the advanced timing settings
       // action handler added below after defining components it enables/disables
       advancedSliceTimingCB_ = pu.makeCheckBox("Use advanced timing settings",
-            Properties.Keys.PLUGIN_ADVANCED_SLICE_TIMING, panelName_, false);
+            Properties.Keys.PREFS_ADVANCED_SLICE_TIMING, panelName_, false);
       volPanel_.add(advancedSliceTimingCB_, "left, span 2, wrap");
       
       // end volume sub-panel
@@ -466,7 +461,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
               "[]8[]"));
 
       useTimePointsCB_ = pu.makeCheckBox("Time points",
-            Properties.Keys.PLUGIN_USE_TIMEPOINTS, panelName_, false);
+            Properties.Keys.PREFS_USE_TIMEPOINTS, panelName_, false);
       useTimePointsCB_.setToolTipText("Perform a time-lapse acquisition");
       useTimePointsCB_.setEnabled(true);
       useTimePointsCB_.setFocusPainted(false); 
@@ -524,11 +519,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       savePanel_.setBorder(PanelUtils.makeTitledBorder("Data Saving Settings"));
       
       separateTimePointsCB_ = pu.makeCheckBox("Separate viewer / file for each time point",
-            Properties.Keys.PLUGIN_SEPARATE_VIEWERS_FOR_TIMEPOINTS, panelName_, false); 
+            Properties.Keys.PREFS_SEPARATE_VIEWERS_FOR_TIMEPOINTS, panelName_, false); 
       savePanel_.add(separateTimePointsCB_, "span 3, left, wrap");
       
       hideCB_ = pu.makeCheckBox("Hide viewer",
-            Properties.Keys.PLUGIN_HIDE_WHILE_ACQUIRING, panelName_, false); 
+            Properties.Keys.PREFS_HIDE_WHILE_ACQUIRING, panelName_, false); 
       savePanel_.add(hideCB_, "left");
       hideCB_.addActionListener(new ActionListener() {
          @Override
@@ -546,7 +541,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       });
       
       saveCB_ = pu.makeCheckBox("Save while acquiring",
-            Properties.Keys.PLUGIN_SAVE_WHILE_ACQUIRING, panelName_, false);
+            Properties.Keys.PREFS_SAVE_WHILE_ACQUIRING, panelName_, false);
       // init the save while acquiring CB; could also do two doClick() calls
       if (hideCB_.isSelected()) {
          saveCB_.setEnabled(false);
@@ -659,7 +654,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       final JPanel positionPanel = new JPanel();
       positionPanel.setLayout(new MigLayout("flowx, fillx","[center]","[]"));
       usePositionsCB_ = pu.makeCheckBox("Multiple positions (XY)",
-            Properties.Keys.PLUGIN_USE_MULTIPOSITION, panelName_, false);
+            Properties.Keys.PREFS_USE_MULTIPOSITION, panelName_, false);
       usePositionsCB_.setToolTipText("Acquire datasest at multiple postions");
       usePositionsCB_.setEnabled(true);
       usePositionsCB_.setFocusPainted(false); 
@@ -728,9 +723,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       //advancedSliceTimingCB_.doClick();
       advancedSliceTimingCB_.addActionListener(showAdvancedTimingFrame);
       
-      updateActualSlicePeriodLabel();
-      updateActualVolumeDurationLabel();
-      updateActualTimeLapseDurationLabel();
+      updateDurationLabels();
       
       // for easy timing mode, calculate slice timing to start
       if (!advancedSliceTimingCB_.isSelected()
@@ -741,6 +734,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
    }//end constructor
    
+   public void updateDurationLabels() {
+      updateActualSlicePeriodLabel();
+      updateActualVolumeDurationLabel();
+      updateActualTimeLapseDurationLabel();
+   }
    
    /**
     * Sets the acquisition name prefix programmatically.
@@ -812,6 +810,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          return 1;
       }
       return (Integer) numTimepoints_.getValue();
+   }
+   
+   private int getNumChannels() {
+      if (!multiChannelPanel_.isPanelEnabled()) {
+         return 1;
+      }
+      return multiChannelPanel_.getUsedChannels().length;
    }
    
    private int getLineScanPeriod() {
@@ -1002,7 +1007,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * @return duration in ms
     */
    private double computeActualVolumeDuration() {
-      double duration = getNumSides() * 
+      double duration = getNumSides() * getNumChannels() * 
             (PanelUtils.getSpinnerFloatValue(delaySide_) +
                   getNumSlices() * computeActualSlicePeriod());
       return duration;
@@ -1190,7 +1195,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       Devices.Keys piezoDevice = Devices.getSideSpecificKey(Devices.Keys.PIEZOA, side);
       
       boolean ignoreMissingScanner = prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(),  
-            Properties.Keys.PLUGIN_IGNORE_MISSING_SCANNER, false);
+            Properties.Keys.PREFS_IGNORE_MISSING_SCANNER, false);
       boolean haveMissingScanner = !devices_.isValidMMDevice(galvoDevice);
       boolean skipScannerWarnings = ignoreMissingScanner && haveMissingScanner;
       
@@ -1256,7 +1261,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // SA_AMPLITUDE_X_DEG and SA_OFFSET_X_DEG done by setup tabs
       boolean triangleWave = prefs_.getBoolean(
             MyStrings.PanelNames.SETTINGS.toString(),  
-            Properties.Keys.PLUGIN_SCAN_OPPOSITE_DIRECTIONS, true);
+            Properties.Keys.PREFS_SCAN_OPPOSITE_DIRECTIONS, true);
       Properties.Values scanPattern = triangleWave ?
             Properties.Values.SAM_TRIANGLE : Properties.Values.SAM_RAMP;
       props_.setPropValue(galvoDevice, Properties.Keys.SA_PATTERN_X, 
@@ -1346,15 +1351,17 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       int nrSides = getNumSides();
       
       // Channels
-      int nrChannels = 1;
-      ChannelSpec[] channels = multiChannelPanel_.getUsedChannels();
-      boolean useChannels = multiChannelPanel_.isEnabled();
+      int nrChannels = getNumChannels();
+      boolean useChannels =  multiChannelPanel_.isPanelEnabled();
+      boolean changeChannelPerVolume = MultichannelModes.getKeyFromPrefCode(
+            props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_MULTICHANNEL_MODE))
+            .equals(MultichannelModes.Keys.VOLUME);
       if (useChannels) {
-         nrChannels = channels.length;
          if (nrChannels < 1) {
             MyDialogUtils.showError("\"Channels\" is checked, but no channels are selected");
             return false;
          }
+         multiChannelPanel_.initializeChannelCycle();
       }
       
       // XY positions
@@ -1531,6 +1538,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                core_.setExposure(secondCamera, exposureTime);
             }
             if (useChannels) {
+               ChannelSpec[] channels = multiChannelPanel_.getUsedChannels();
                for (int i = 0; i < channels.length; i++) {
                   String chName = "-" + channels[i].config_;
                   gui_.setChannelName(acqName, i * 2, firstCamera + chName);
@@ -1591,123 +1599,136 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             DefaultTaggedImageSink sink = new DefaultTaggedImageSink(bq, imageCache);
             sink.start();
 
-            // Loop over all the time points
+            // Loop over all the times we trigger the controller's acquisition
             // If the interval between frames is shorter than the time to acquire
             // them, we can switch to hardware based solution.  Not sure how important 
             // that feature is, so leave it out for now.
-            for (int f = 0; f < nrFrames; f++) {
+            for (int timePoint = 0; timePoint < nrFrames; timePoint++) {
+
+               // handle intervals between time points
                long acqNow = System.currentTimeMillis();
-               long delay = acqStart + f * timepointsIntervalMs - acqNow;
+               long delay = acqStart + timePoint * timepointsIntervalMs - acqNow;
                while (delay > 0 && !stop_.get()) {
                   updateAcquisitionStatus(AcquisitionStatus.WAITING, (int) (delay / 1000));
                   long sleepTime = Math.min(1000, delay);
                   Thread.sleep(sleepTime);
                   acqNow = System.currentTimeMillis();
-                  delay = acqStart + f * timepointsIntervalMs - acqNow;
+                  delay = acqStart + timePoint * timepointsIntervalMs - acqNow;
                }
-               
+
                // check for stop button before each time point
                if (stop_.get()) {
                   throw new IllegalMonitorStateException("User stopped the acquisition");
                }
-               
+
                numTimePointsDone_++;
                updateAcquisitionStatus(AcquisitionStatus.ACQUIRING);
-               
-               core_.startSequenceAcquisition(firstCamera, nrSlices, 0, true);
-               if (twoSided) {
-                  core_.startSequenceAcquisition(secondCamera, nrSlices, 0, true);
-               }
-               
-               Thread.sleep(10);
-               
-               // deal with shutter
-               if (autoShutter) {
-                  core_.setAutoShutter(false);
-                  shutterOpen = core_.getShutterOpen();
-                  if (!shutterOpen) {
-                     core_.setShutterOpen(true);
-                  }
-               }
 
-               // trigger the Tiger controller
-               // TODO generalize this for different ways of running SPIM
-               // only matters which device we trigger if there are two micro-mirror cards
-               if (firstSideA) {
-                  props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SPIM_STATE,
-                        Properties.Values.SPIM_RUNNING, true);
-               } else {
-                  props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.SPIM_STATE,
-                        Properties.Values.SPIM_RUNNING, true);
-               }
-               
-               core_.logMessage("Starting time point " + (f+1) + " of " + nrFrames, true);
+               for (int channelNum = 0; channelNum < nrChannels; channelNum++) {
                   
-               // Wait for first image to create ImageWindow, so that we can be sure about image size
-               // Do not actually gather first image here, just make sure it is there
-               long start = System.currentTimeMillis();
-               long now = start;
-               long timeout;  // wait 5 seconds for first image to come
-               timeout = Math.max(5000, Math.round(1.2*computeActualVolumeDuration()));
-               while (core_.getRemainingImageCount() == 0 && (now - start < timeout)
-                     && !stop_.get()) {
-                  now = System.currentTimeMillis();
-                  Thread.sleep(5);
-               }
-               if (now - start >= timeout) {
-                  throw new Exception("Camera did not send first image within a reasonable time");
-               }
-               
-               // gather all the images from the cameras, put them into the acquisition
-               int[] frNumber = new int[2];
-               boolean done = false;
-               long timeout2;  // how long to wait between images before timing out
-               timeout2 = Math.max(2000, Math.round(5*computeActualSlicePeriod()));
-               start = System.currentTimeMillis();
-               long last = start;
-               try {
-                  while ((core_.getRemainingImageCount() > 0
-                          || core_.isSequenceRunning(firstCamera)
-                          || (twoSided && core_.isSequenceRunning(secondCamera)))
-                          && !done) {
-                     now = System.currentTimeMillis();
-                     if (core_.getRemainingImageCount() > 0) {  // we have an image to grab
-                        TaggedImage timg = core_.popNextTaggedImage();
-                        String camera = (String) timg.tags.get("Camera");
-                        int ch = 0;
-                        if (camera.equals(secondCamera)) {
-                           ch = 1;
-                        }
-                        addImageToAcquisition(acqName, f, ch, frNumber[ch], 0,
-                              now - acqStart, timg, bq);
-                        frNumber[ch]++;
-                        last = now;  // keep track of last image time
-                        // check to see if we are finished
-                        if (frNumber[0] == frNumber[1] && frNumber[0] == nrSlices) {
-                           done = true;
-                        }
-                     } else {  // no image ready yet
-                        done = stop_.get();
-                        Thread.sleep(1);
-                        if (now - last >= timeout2) {
-                           gui_.logError("Camera did not send all expected images within" +
-                                 " a reasonable period for timepoint " + (f+1) + ".  Continuing anyway.");
-                           // allow other time points to continue by stopping acquisition manually
-                           // (in normal case the sequence acquisition stops itself after
-                           // all the expected images are returned)
-                           if (core_.isSequenceRunning(firstCamera)) {
-                              core_.stopSequenceAcquisition(firstCamera);
-                           }
-                           if (twoSided && core_.isSequenceRunning(secondCamera)) {
-                              core_.stopSequenceAcquisition(secondCamera);
-                           }
-                           nonfatalError = true;
-                           done = true;
-                        }
+                  // start the cameras
+                  core_.startSequenceAcquisition(firstCamera, nrSlices, 0, true);
+                  if (twoSided) {
+                     core_.startSequenceAcquisition(secondCamera, nrSlices, 0, true);
+                  }
+
+                  // can we remove this explicit delay?
+                  Thread.sleep(10);
+
+                  // deal with shutter
+                  if (autoShutter) {
+                     core_.setAutoShutter(false);
+                     shutterOpen = core_.getShutterOpen();
+                     if (!shutterOpen) {
+                        core_.setShutterOpen(true);
                      }
                   }
-               } catch (InterruptedException iex) {
-                  MyDialogUtils.showError(iex);
+
+                  // deal with channel
+                  if (useChannels && changeChannelPerVolume) {
+                     multiChannelPanel_.selectNextChannel();
+                  }
+
+                  // trigger the Tiger controller
+                  // TODO generalize this for different ways of running SPIM
+                  // only matters which device we trigger if there are two micro-mirror cards
+                  if (firstSideA) {
+                     props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SPIM_STATE,
+                           Properties.Values.SPIM_RUNNING, true);
+                  } else {
+                     props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.SPIM_STATE,
+                           Properties.Values.SPIM_RUNNING, true);
+                  }
+
+                  core_.logMessage("Starting time point " + (timePoint+1) + " of " + nrFrames
+                        + " with channel number " + channelNum, true);
+
+                  // Wait for first image to create ImageWindow, so that we can be sure about image size
+                  // Do not actually grab first image here, just make sure it is there
+                  long start = System.currentTimeMillis();
+                  long now = start;
+                  long timeout;  // wait 5 seconds for first image to come
+                  timeout = Math.max(5000, Math.round(1.2*computeActualVolumeDuration()));
+                  while (core_.getRemainingImageCount() == 0 && (now - start < timeout)
+                        && !stop_.get()) {
+                     now = System.currentTimeMillis();
+                     Thread.sleep(5);
+                  }
+                  if (now - start >= timeout) {
+                     throw new Exception("Camera did not send first image within a reasonable time");
+                  }
+
+                  // grab all the images from the cameras, put them into the acquisition
+                  int[] frNumber = new int[2];
+                  boolean done = false;
+                  long timeout2;  // how long to wait between images before timing out
+                  timeout2 = Math.max(2000, Math.round(5*computeActualSlicePeriod()));
+                  start = System.currentTimeMillis();
+                  long last = start;
+                  try {
+                     while ((core_.getRemainingImageCount() > 0
+                           || core_.isSequenceRunning(firstCamera)
+                           || (twoSided && core_.isSequenceRunning(secondCamera)))
+                           && !done) {
+                        now = System.currentTimeMillis();
+                        if (core_.getRemainingImageCount() > 0) {  // we have an image to grab
+                           TaggedImage timg = core_.popNextTaggedImage();
+                           String camera = (String) timg.tags.get("Camera");
+                           int ch = 0;
+                           if (camera.equals(secondCamera)) {
+                              ch = 1;
+                           }
+                           addImageToAcquisition(acqName, timePoint, ch, frNumber[ch], 0,
+                                 now - acqStart, timg, bq);
+                           frNumber[ch]++;
+                           last = now;  // keep track of last image time
+                           // check to see if we are finished
+                           if (frNumber[0] == frNumber[1] && frNumber[0] == nrSlices) {
+                              done = true;
+                           }
+                        } else {  // no image ready yet
+                           done = stop_.get();
+                           Thread.sleep(1);
+                           if (now - last >= timeout2) {
+                              gui_.logError("Camera did not send all expected images within" +
+                                    " a reasonable period for timepoint " + (timePoint+1) + ".  Continuing anyway.");
+                              // allow other time points to continue by stopping acquisition manually
+                              // (in normal case the sequence acquisition stops itself after
+                              // all the expected images are returned)
+                              if (core_.isSequenceRunning(firstCamera)) {
+                                 core_.stopSequenceAcquisition(firstCamera);
+                              }
+                              if (twoSided && core_.isSequenceRunning(secondCamera)) {
+                                 core_.stopSequenceAcquisition(secondCamera);
+                              }
+                              nonfatalError = true;
+                              done = true;
+                           }
+                        }
+                     }
+                  } catch (InterruptedException iex) {
+                     MyDialogUtils.showError(iex);
+                  }
                }
             }
          } catch (IllegalMonitorStateException ex) {

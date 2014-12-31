@@ -40,6 +40,7 @@ import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
+import org.micromanager.asidispim.Utils.MyDialogUtils;
 import org.micromanager.asidispim.Utils.PanelUtils;
 import org.micromanager.utils.ReportingUtils;
 
@@ -78,6 +79,8 @@ public class MultiChannelSubPanel extends ListeningJPanel {
    private final JCheckBox useChannelsCB_;
    private final ChannelTableModel channelTableModel_;
    private final JComboBox channelGroup_;
+   private ChannelSpec[] usedChannels_ = new ChannelSpec[0];
+   private int nextChannelIndex_ = 0;
    
    /**
     * if table is disabled then cell will be set to disabled too
@@ -134,7 +137,18 @@ public class MultiChannelSubPanel extends ListeningJPanel {
       props_ = props;
       prefs_ = prefs;
       
-
+//      // added listener where we should re-calculate the displayed durations
+//      ChangeListener recalculateTimingDisplayCL = new ChangeListener() {
+//         @Override
+//         public void stateChanged(ChangeEvent e) {
+//            AcquisitionPanel acqPanel = ASIdiSPIM.getFrame().getAcquisitionPanel();
+//            // needed to prevent problem during initialization when acquisition panel doesn't fully exist
+//            if (acqPanel != null) {
+//               acqPanel.updateDurationLabels();
+//            }
+//         }
+//      };
+      
       final JComboBox channelMode;
       final JTable channelTable;
       final JScrollPane channelTablePane;
@@ -143,9 +157,11 @@ public class MultiChannelSubPanel extends ListeningJPanel {
       PanelUtils pu = new PanelUtils(prefs_, props_, devices_);
       
       useChannelsCB_ = pu.makeCheckBox("Channels",
-            Properties.Keys.PLUGIN_USE_MULTICHANNEL, panelName_, false);
+            Properties.Keys.PREFS_USE_MULTICHANNEL, panelName_, false);
       useChannelsCB_.setToolTipText("Contact ASI for details; advanced features require PLogic card");
-      useChannelsCB_.setFocusPainted(false); 
+      useChannelsCB_.setFocusPainted(false);
+      // TODO figure out how to update durations when channels turned on and off
+//      useChannelsCB_.addChangeListener(recalculateTimingDisplayCL);
       ComponentTitledBorder componentBorder = 
             new ComponentTitledBorder(useChannelsCB_, this, 
                   BorderFactory.createLineBorder(ASIdiSPIM.borderColor)); 
@@ -189,6 +205,20 @@ public class MultiChannelSubPanel extends ListeningJPanel {
       column_useChannel.setPreferredWidth(40);
       column_config.setPreferredWidth(155);
       column_useChannel.setCellRenderer(new UseChannelTableCellRenderer());
+      // TODO update durations when channel is used or stops being used
+//      column_useChannel.getCellEditor().addCellEditorListener(new CellEditorListener() {
+//         @Override
+//         public void editingCanceled(ChangeEvent arg0) {
+//         }
+//         @Override
+//         public void editingStopped(ChangeEvent arg0) {
+//            AcquisitionPanel acqPanel = ASIdiSPIM.getFrame().getAcquisitionPanel();
+//            // needed to prevent problem during initialization when acquisition panel doesn't fully exist
+//            if (acqPanel != null) {
+//               acqPanel.updateDurationLabels();
+//            }
+//         }
+//      });
       column_config.setCellRenderer(new DisplayDisabledTableCellRenderer());
       column_config.setCellEditor(new ChannelConfigEditor(channelGroup_, core_));
       
@@ -262,6 +292,13 @@ public class MultiChannelSubPanel extends ListeningJPanel {
       useChannelsCB_.doClick();
       
    }// constructor
+   
+   /**
+    * gets the state of the enable/disable checkbox
+    */
+   public boolean isPanelEnabled() {
+      return useChannelsCB_.isSelected();
+   }
 
    /**
     * Sets up the combo box for channel group.
@@ -275,7 +312,6 @@ public class MultiChannelSubPanel extends ListeningJPanel {
       }
       channelGroup_.setSelectedItem(selection);
    }
-
 
    /**
     * gets all valid groups from Core-ChannelGroup that have more than 1 preset 
@@ -300,10 +336,36 @@ public class MultiChannelSubPanel extends ListeningJPanel {
    }
    
    /**
-    * Returns array of channels that are currently set be "Used".
+    * Returns array of channels that are currently set be "used".
     */
    public ChannelSpec[] getUsedChannels() {
-      return channelTableModel_.getUsedChannels();     
+      return channelTableModel_.getUsedChannels();
+   }
+   
+   /**
+    * call before starting to cycle through channels using selectNextChannel()
+    */
+   public void initializeChannelCycle() {
+      usedChannels_  = channelTableModel_.getUsedChannels();
+      nextChannelIndex_  = 0;
+   }
+   
+   /*
+    * Takes care of actually selecting next channel in table.
+    * Called by acquisition code.
+    */
+   public void selectNextChannel() {
+      ChannelSpec channel = usedChannels_[nextChannelIndex_];
+      try {
+         core_.setConfig(channelGroup_.getSelectedItem().toString(), channel.config_.toString());
+      } catch (Exception e) {
+         MyDialogUtils.showError(e, "Couldn't select preset " + channel.config_.toString() +
+               "of channel group " + channelGroup_.getSelectedItem().toString());
+      }
+      nextChannelIndex_++;
+      if (nextChannelIndex_ == usedChannels_.length) {
+         nextChannelIndex_ = 0;
+      }
    }
    
    @Override
