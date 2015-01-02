@@ -29,6 +29,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
+import java.util.List;
 
 import org.micromanager.acquisition.ComponentTitledBorder;
 import org.micromanager.api.ScriptInterface;
@@ -54,6 +55,8 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.SwingConstants;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
@@ -81,6 +84,7 @@ public class MultiChannelSubPanel extends ListeningJPanel {
    private final JComboBox channelGroup_;
    private ChannelSpec[] usedChannels_ = new ChannelSpec[0];
    private int nextChannelIndex_ = 0;
+   private final List<ListeningJPanel> panels_;
    
    /**
     * if table is disabled then cell will be set to disabled too
@@ -136,18 +140,15 @@ public class MultiChannelSubPanel extends ListeningJPanel {
       devices_ = devices;
       props_ = props;
       prefs_ = prefs;
+      panels_ = new ArrayList<ListeningJPanel>();
       
-//      // added listener where we should re-calculate the displayed durations
-//      ChangeListener recalculateTimingDisplayCL = new ChangeListener() {
-//         @Override
-//         public void stateChanged(ChangeEvent e) {
-//            AcquisitionPanel acqPanel = ASIdiSPIM.getFrame().getAcquisitionPanel();
-//            // needed to prevent problem during initialization when acquisition panel doesn't fully exist
-//            if (acqPanel != null) {
-//               acqPanel.updateDurationLabels();
-//            }
-//         }
-//      };
+      // added listener where we should re-calculate the displayed durations
+      ChangeListener recalculateTimingDisplayCL = new ChangeListener() {
+         @Override
+         public void stateChanged(ChangeEvent e) {
+            updateDurationLabels();
+         }
+      };
       
       final JComboBox channelMode;
       final JTable channelTable;
@@ -160,8 +161,7 @@ public class MultiChannelSubPanel extends ListeningJPanel {
             Properties.Keys.PREFS_USE_MULTICHANNEL, panelName_, false);
       useChannelsCB_.setToolTipText("Contact ASI for details; advanced features require PLogic card");
       useChannelsCB_.setFocusPainted(false);
-      // TODO figure out how to update durations when channels turned on and off
-//      useChannelsCB_.addChangeListener(recalculateTimingDisplayCL);
+      useChannelsCB_.addChangeListener(recalculateTimingDisplayCL);
       ComponentTitledBorder componentBorder = 
             new ComponentTitledBorder(useChannelsCB_, this, 
                   BorderFactory.createLineBorder(ASIdiSPIM.borderColor)); 
@@ -175,7 +175,7 @@ public class MultiChannelSubPanel extends ListeningJPanel {
       updateGroupsCombo(); 
             
       channelTableModel_ = new ChannelTableModel(prefs_, panelName_,
-              (String) channelGroup_.getSelectedItem() );
+              (String) channelGroup_.getSelectedItem(), this);
       channelTable = new JTable(channelTableModel_);
 
       channelGroup_.addItemListener(new ItemListener() {
@@ -205,20 +205,6 @@ public class MultiChannelSubPanel extends ListeningJPanel {
       column_useChannel.setPreferredWidth(40);
       column_config.setPreferredWidth(155);
       column_useChannel.setCellRenderer(new UseChannelTableCellRenderer());
-      // TODO update durations when channel is used or stops being used
-//      column_useChannel.getCellEditor().addCellEditorListener(new CellEditorListener() {
-//         @Override
-//         public void editingCanceled(ChangeEvent arg0) {
-//         }
-//         @Override
-//         public void editingStopped(ChangeEvent arg0) {
-//            AcquisitionPanel acqPanel = ASIdiSPIM.getFrame().getAcquisitionPanel();
-//            // needed to prevent problem during initialization when acquisition panel doesn't fully exist
-//            if (acqPanel != null) {
-//               acqPanel.updateDurationLabels();
-//            }
-//         }
-//      });
       column_config.setCellRenderer(new DisplayDisabledTableCellRenderer());
       column_config.setCellEditor(new ChannelConfigEditor(channelGroup_, core_));
       
@@ -377,6 +363,16 @@ public class MultiChannelSubPanel extends ListeningJPanel {
     */
    @Override
    public void gotSelected() {
+   }
+
+   public void addDurationLabelListener(ListeningJPanel panel) {
+      panels_.add(panel);      
+   }
+   
+   public void updateDurationLabels() {
+      for (ListeningJPanel panel : panels_) {
+         panel.refreshDisplay();
+      }
    }
 
 }

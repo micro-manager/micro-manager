@@ -73,4 +73,10 @@ public class ListeningJPanel extends JPanel {
     */
    public String getPanelName() { return panelName_; }
    
+   /**
+    * Called when the display should be refreshed, sort of like
+    * user-defined version of repaint().  Used to refresh duration
+    * labels in Acquisition tab when channels change.
+    */
+   public void refreshDisplay() {};
 }

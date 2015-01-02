@@ -649,6 +649,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       // Channel Panel
       multiChannelPanel_ = new MultiChannelSubPanel(gui, devices_, props_, prefs_);
+      multiChannelPanel_.addDurationLabelListener(this);
       
       // Position Panel
       final JPanel positionPanel = new JPanel();
@@ -1871,6 +1872,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    public void windowClosing() {
       sliceFrame_.savePosition();
       sliceFrame_.dispose();
+   }
+   
+   @Override
+   public void refreshDisplay() {
+      updateDurationLabels();
    }
 
    private void setRootDirectory(JTextField rootField) {

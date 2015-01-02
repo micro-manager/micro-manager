@@ -24,8 +24,11 @@ package org.micromanager.asidispim.Data;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
 
+import org.micromanager.asidispim.MultiChannelSubPanel;
 import org.micromanager.utils.ReportingUtils;
 
 
@@ -44,13 +47,22 @@ public class ChannelTableModel extends AbstractTableModel {
    private final ArrayList<ChannelSpec> channels_;
    private final Prefs prefs_;
    private final String prefNode_;
+   private final MultiChannelSubPanel multiChannelSubPanel_;  // needed for update duration callback
 
 
-   public ChannelTableModel(Prefs prefs, String prefNode, String channelGroup) {
+   public ChannelTableModel(Prefs prefs, String prefNode, String channelGroup,
+         MultiChannelSubPanel multiChannelSubPanel) {
       channels_ = new ArrayList<ChannelSpec>();
       prefs_ = prefs;
       prefNode_ = prefNode;
       setChannelGroup(channelGroup);
+      multiChannelSubPanel_ = multiChannelSubPanel;
+      this.addTableModelListener(new TableModelListener() {
+         @Override
+         public void tableChanged(TableModelEvent arg0) {
+            multiChannelSubPanel_.updateDurationLabels();
+         }
+      });
    } //constructor
    
    public final void setChannelGroup(String channelGroup) {
