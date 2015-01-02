@@ -469,8 +469,8 @@ public class Devices {
       case GALVOA:
       case GALVOB:
          switch (dir) {
-         case X: ret += ", sheet axis"; break;
-         case Y: ret += ", slice position"; break;
+         case X: ret += ", sheet (X)"; break;
+         case Y: ret += ", slice (Y)"; break;
          default: break;
          }
          break;

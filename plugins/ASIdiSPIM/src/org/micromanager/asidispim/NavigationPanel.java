@@ -22,6 +22,7 @@
 package org.micromanager.asidispim;
 
 
+import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -103,10 +104,12 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       core_ = gui_.getMMCore();
       PanelUtils pu = new PanelUtils(prefs_, props_, devices_);
       
+      final int positionWidth = 60;
+      
       // panel for stage positions / virtual joysticks
       JPanel navPanel = new JPanel(new MigLayout(
             "",
-            "[right]8[60px,center]8[center]8[center]2[center]2[center]8[center]8[center]8[center]",
+            "[right]8[" + positionWidth + "px!,left]8[center]8[center]2[center]2[center]8[center]8[center]8[center]",
             "[]4[]"));
       navPanel.setBorder(BorderFactory.createLineBorder(ASIdiSPIM.borderColor));
       
@@ -250,10 +253,17 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       cameraPanel_ = new CameraSubPanel(gui_, cameras_, devices_, panelName_, 
             Devices.Sides.NONE, prefs_, true);
       this.add(cameraPanel_);
-
-      // fill the labels with position values (the positions_ data structure
-      //   has been filled via the main plugin frame's call to stagePosUpdater.oneTimeUpdate()
-      updateStagePositions();
+      
+      xPositionLabel_.setMaximumSize(new Dimension(positionWidth, 20));
+      yPositionLabel_.setMaximumSize(new Dimension(positionWidth, 20));
+      lowerZPositionLabel_.setMaximumSize(new Dimension(positionWidth, 20));
+      upperZPositionLabel_.setMaximumSize(new Dimension(positionWidth, 20));
+      piezoAPositionLabel_.setMaximumSize(new Dimension(positionWidth, 20));
+      piezoBPositionLabel_.setMaximumSize(new Dimension(positionWidth, 20));
+      galvoAxPositionLabel_.setMaximumSize(new Dimension(positionWidth, 20));
+      galvoAyPositionLabel_.setMaximumSize(new Dimension(positionWidth, 20));
+      galvoBxPositionLabel_.setMaximumSize(new Dimension(positionWidth, 20));
+      galvoByPositionLabel_.setMaximumSize(new Dimension(positionWidth, 20));
       
    }// constructor
 
@@ -370,7 +380,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
     * @param enable
     */
    @Override
-   public void liveModeEnabled(boolean enable) { 
+   public void liveModeEnabled(boolean enable) {
       cameraPanel_.liveModeEnabled(enable);
    } 
    
@@ -406,7 +416,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       galvoAxPositionLabel_.setText(positions_.getPositionString(Devices.Keys.GALVOA, Joystick.Directions.X));
       galvoAyPositionLabel_.setText(positions_.getPositionString(Devices.Keys.GALVOA, Joystick.Directions.Y));
       galvoBxPositionLabel_.setText(positions_.getPositionString(Devices.Keys.GALVOB, Joystick.Directions.X));
-      galvoByPositionLabel_.setText(positions_.getPositionString(Devices.Keys.GALVOB, Joystick.Directions.Y)); 
+      galvoByPositionLabel_.setText(positions_.getPositionString(Devices.Keys.GALVOB, Joystick.Directions.Y));
    }
    
    /**
@@ -414,7 +424,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
     */
    @Override
    public final void stoppedStagePositions() {
-      xPositionLabel_.setText("");   
+      xPositionLabel_.setText("");
       yPositionLabel_.setText("");
       lowerZPositionLabel_.setText("");
       upperZPositionLabel_.setText("");

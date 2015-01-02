@@ -117,7 +117,6 @@ public class ASIdiSPIMFrame extends MMFrame
             Devices.Sides.A, positions_, cameras_, prefs_);
       setupPanelB_ = new SetupPanel(gui, devices_, props_, joystick_,
             Devices.Sides.B, positions_, cameras_, prefs_);
-      // get initial positions, even if user doesn't want continual refresh
       stagePosUpdater_ = new StagePositionUpdater(positions_, props_);  // needed for setup and navigation
       navigationPanel_ = new NavigationPanel(gui, devices_, props_, joystick_,
             positions_, prefs_, cameras_);
