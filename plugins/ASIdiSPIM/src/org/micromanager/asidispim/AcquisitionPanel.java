@@ -73,6 +73,8 @@ import org.json.JSONObject;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 
+import org.micromanager.api.MultiStagePosition;
+import org.micromanager.api.PositionList;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.api.ImageCache;
 import org.micromanager.api.MMTags;
@@ -1366,17 +1368,18 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
       
       // XY positions
-      // TODO actually use multiple positions, right now not working
       int nrPositions = 1;
       boolean usePositions = usePositionsCB_.isSelected();
+      PositionList positionList = new PositionList();
       if (usePositions) {
          try {
-            nrPositions = gui_.getPositionList().getNumberOfPositions();
+            positionList = gui_.getPositionList();
+            nrPositions = positionList.getNumberOfPositions();
          } catch (MMScriptException ex) {
             MyDialogUtils.showError(ex, "Error getting position list for multiple XY posiitions");
          }
          if (nrPositions < 1) {
-            MyDialogUtils.showError("\"Positions\" is checked, but no positions are selected");
+            MyDialogUtils.showError("\"Positions\" is checked, but no positions are in position list");
             return false;
          }
       }
@@ -1515,7 +1518,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       boolean nonfatalError = false;
 
       // do not want to return from within this loop
-      // loop is executed once per acquisition (once if separate viewers isn't selected)
+      // loop is executed once per acquisition (i.e. once if separate viewers isn't selected)
       for (int tp = 0; tp < nrRepeats; tp++) {
          BlockingQueue<TaggedImage> bq = new LinkedBlockingQueue<TaggedImage>(10);
          String acqName;
@@ -1538,6 +1541,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             if (twoSided) {
                core_.setExposure(secondCamera, exposureTime);
             }
+            
+            // set up channels (side A/B is treated as channel too)
             if (useChannels) {
                ChannelSpec[] channels = multiChannelPanel_.getUsedChannels();
                for (int i = 0; i < channels.length; i++) {
@@ -1625,110 +1630,119 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                numTimePointsDone_++;
                updateAcquisitionStatus(AcquisitionStatus.ACQUIRING);
 
-               for (int channelNum = 0; channelNum < nrChannels; channelNum++) {
-                  
-                  // start the cameras
-                  core_.startSequenceAcquisition(firstCamera, nrSlices, 0, true);
-                  if (twoSided) {
-                     core_.startSequenceAcquisition(secondCamera, nrSlices, 0, true);
+               // loop over all positions
+               for (int positionNum = 0; positionNum < nrPositions; positionNum++) {
+                  if (usePositions) {
+                     // blocking call; will wait for stages to move
+                     MultiStagePosition.goToPosition(positionList.getPosition(positionNum), core_);
                   }
 
-                  // can we remove this explicit delay?
-                  Thread.sleep(10);
+                  // loop over all channels
+                  for (int channelNum = 0; channelNum < nrChannels; channelNum++) {
 
-                  // deal with shutter
-                  if (autoShutter) {
-                     core_.setAutoShutter(false);
-                     shutterOpen = core_.getShutterOpen();
-                     if (!shutterOpen) {
-                        core_.setShutterOpen(true);
+                     // start the cameras
+                     core_.startSequenceAcquisition(firstCamera, nrSlices, 0, true);
+                     if (twoSided) {
+                        core_.startSequenceAcquisition(secondCamera, nrSlices, 0, true);
                      }
-                  }
 
-                  // deal with channel
-                  if (useChannels && changeChannelPerVolume) {
-                     multiChannelPanel_.selectNextChannel();
-                  }
+                     // can we remove this explicit delay?
+                     Thread.sleep(10);
 
-                  // trigger the Tiger controller
-                  // TODO generalize this for different ways of running SPIM
-                  // only matters which device we trigger if there are two micro-mirror cards
-                  if (firstSideA) {
-                     props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SPIM_STATE,
-                           Properties.Values.SPIM_RUNNING, true);
-                  } else {
-                     props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.SPIM_STATE,
-                           Properties.Values.SPIM_RUNNING, true);
-                  }
-
-                  core_.logMessage("Starting time point " + (timePoint+1) + " of " + nrFrames
-                        + " with channel number " + channelNum, true);
-
-                  // Wait for first image to create ImageWindow, so that we can be sure about image size
-                  // Do not actually grab first image here, just make sure it is there
-                  long start = System.currentTimeMillis();
-                  long now = start;
-                  long timeout;  // wait 5 seconds for first image to come
-                  timeout = Math.max(5000, Math.round(1.2*computeActualVolumeDuration()));
-                  while (core_.getRemainingImageCount() == 0 && (now - start < timeout)
-                        && !stop_.get()) {
-                     now = System.currentTimeMillis();
-                     Thread.sleep(5);
-                  }
-                  if (now - start >= timeout) {
-                     throw new Exception("Camera did not send first image within a reasonable time");
-                  }
-
-                  // grab all the images from the cameras, put them into the acquisition
-                  int[] frNumber = new int[2];
-                  boolean done = false;
-                  long timeout2;  // how long to wait between images before timing out
-                  timeout2 = Math.max(2000, Math.round(5*computeActualSlicePeriod()));
-                  start = System.currentTimeMillis();
-                  long last = start;
-                  try {
-                     while ((core_.getRemainingImageCount() > 0
-                           || core_.isSequenceRunning(firstCamera)
-                           || (twoSided && core_.isSequenceRunning(secondCamera)))
-                           && !done) {
-                        now = System.currentTimeMillis();
-                        if (core_.getRemainingImageCount() > 0) {  // we have an image to grab
-                           TaggedImage timg = core_.popNextTaggedImage();
-                           String camera = (String) timg.tags.get("Camera");
-                           int ch = 0;
-                           if (camera.equals(secondCamera)) {
-                              ch = 1;
-                           }
-                           addImageToAcquisition(acqName, timePoint, ch, frNumber[ch], 0,
-                                 now - acqStart, timg, bq);
-                           frNumber[ch]++;
-                           last = now;  // keep track of last image time
-                           // check to see if we are finished
-                           if (frNumber[0] == frNumber[1] && frNumber[0] == nrSlices) {
-                              done = true;
-                           }
-                        } else {  // no image ready yet
-                           done = stop_.get();
-                           Thread.sleep(1);
-                           if (now - last >= timeout2) {
-                              gui_.logError("Camera did not send all expected images within" +
-                                    " a reasonable period for timepoint " + (timePoint+1) + ".  Continuing anyway.");
-                              // allow other time points to continue by stopping acquisition manually
-                              // (in normal case the sequence acquisition stops itself after
-                              // all the expected images are returned)
-                              if (core_.isSequenceRunning(firstCamera)) {
-                                 core_.stopSequenceAcquisition(firstCamera);
-                              }
-                              if (twoSided && core_.isSequenceRunning(secondCamera)) {
-                                 core_.stopSequenceAcquisition(secondCamera);
-                              }
-                              nonfatalError = true;
-                              done = true;
-                           }
+                     // deal with shutter
+                     if (autoShutter) {
+                        core_.setAutoShutter(false);
+                        shutterOpen = core_.getShutterOpen();
+                        if (!shutterOpen) {
+                           core_.setShutterOpen(true);
                         }
                      }
-                  } catch (InterruptedException iex) {
-                     MyDialogUtils.showError(iex);
+
+                     // deal with channel
+                     if (useChannels && changeChannelPerVolume) {
+                        multiChannelPanel_.selectNextChannel();
+                     }
+
+                     // trigger the Tiger controller
+                     // TODO generalize this for different ways of running SPIM
+                     // only matters which device we trigger if there are two micro-mirror cards
+                     if (firstSideA) {
+                        props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SPIM_STATE,
+                              Properties.Values.SPIM_RUNNING, true);
+                     } else {
+                        props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.SPIM_STATE,
+                              Properties.Values.SPIM_RUNNING, true);
+                     }
+
+                     core_.logMessage("Starting time point " + (timePoint+1) + " of " + nrFrames
+                           + " with channel number " + channelNum, true);
+
+                     // Wait for first image to create ImageWindow, so that we can be sure about image size
+                     // Do not actually grab first image here, just make sure it is there
+                     long start = System.currentTimeMillis();
+                     long now = start;
+                     long timeout;  // wait 5 seconds for first image to come
+                     timeout = Math.max(5000, Math.round(1.2*computeActualVolumeDuration()));
+                     while (core_.getRemainingImageCount() == 0 && (now - start < timeout)
+                           && !stop_.get()) {
+                        now = System.currentTimeMillis();
+                        Thread.sleep(5);
+                     }
+                     if (now - start >= timeout) {
+                        throw new Exception("Camera did not send first image within a reasonable time");
+                     }
+
+                     // grab all the images from the cameras, put them into the acquisition
+                     int[] frNumber = new int[2];
+                     boolean done = false;
+                     long timeout2;  // how long to wait between images before timing out
+                     timeout2 = Math.max(2000, Math.round(5*computeActualSlicePeriod()));
+                     start = System.currentTimeMillis();
+                     long last = start;
+                     try {
+                        while ((core_.getRemainingImageCount() > 0
+                              || core_.isSequenceRunning(firstCamera)
+                              || (twoSided && core_.isSequenceRunning(secondCamera)))
+                              && !done) {
+                           now = System.currentTimeMillis();
+                           if (core_.getRemainingImageCount() > 0) {  // we have an image to grab
+                              TaggedImage timg = core_.popNextTaggedImage();
+                              String camera = (String) timg.tags.get("Camera");
+                              int ch = 0;
+                              if (camera.equals(secondCamera)) {
+                                 ch = 1;
+                              }
+                              addImageToAcquisition(acqName, timePoint, ch, frNumber[ch], positionNum,
+                                    now - acqStart, timg, bq);
+                              frNumber[ch]++;
+                              last = now;  // keep track of last image time
+                              // check to see if we are finished
+                              if (frNumber[0] == frNumber[1] && frNumber[0] == nrSlices) {
+                                 done = true;
+                              }
+                           } else {  // no image ready yet
+                              done = stop_.get();
+                              Thread.sleep(1);
+                              if (now - last >= timeout2) {
+                                 gui_.logError("Camera did not send all expected images within" +
+                                       " a reasonable period for timepoint " + (timePoint+1) + ".  Continuing anyway.");
+                                 // allow other time points to continue by stopping acquisition manually
+                                 // (in normal case the sequence acquisition stops itself after
+                                 // all the expected images are returned)
+                                 if (core_.isSequenceRunning(firstCamera)) {
+                                    core_.stopSequenceAcquisition(firstCamera);
+                                 }
+                                 if (twoSided && core_.isSequenceRunning(secondCamera)) {
+                                    core_.stopSequenceAcquisition(secondCamera);
+                                 }
+                                 nonfatalError = true;
+                                 done = true;
+                              }
+                           }
+                        }
+                     } catch (InterruptedException iex) {
+                        MyDialogUtils.showError(iex);
+                     }
                   }
                }
             }
@@ -1918,18 +1932,16 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
       MMAcquisition acq = gui_.getAcquisition(name);
 
-      // check position, for multi-position data set the number of declared 
-      // positions should be at least 2
-      if (acq.getPositions() <= 1 && position > 0) {
-         throw new MMScriptException("The acquisition was opened as a single position data set.\n"
-                 + "Open acqusition with two or more positions in order to crate a multi-position data set.");
+      // verify position number is allowed 
+      if (acq.getPositions() <= position) {
+         throw new MMScriptException("The position number must not exceed declared"
+               + " number of positions (" + acq.getPositions() + ")");
       }
 
-      // check position, for multi-position data set the number of declared 
-      // positions should be at least 2
+      // verify that channel number is allowed 
       if (acq.getChannels() <= channel) {
-         throw new MMScriptException("This acquisition was opened with " + acq.getChannels() + " channels.\n"
-                 + "The channel number must not exceed declared number of positions.");
+         throw new MMScriptException("The channel number must not exceed declared"
+               + " number of channels (" + + acq.getChannels() + ")");
       }
 
       JSONObject tags = taggedImg.tags;

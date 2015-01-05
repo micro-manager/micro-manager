@@ -207,10 +207,12 @@ public class Positions {
             core_.setPosition(mmDevice, pos);
          } else  if (devices_.isXYStage(devKey)) {
             if (dir == Joystick.Directions.X) {
+               // would prefer setXPosition but it doesn't exist so we stop any Y motion
                double ypos = core_.getYPosition(mmDevice);
                core_.setXYPosition(mmDevice, pos, ypos);
             } else if (dir == Joystick.Directions.Y) {
                double xpos = core_.getXPosition(mmDevice);
+               // would prefer setYPosition but it doesn't exist so we stop any X motion
                core_.setXYPosition(mmDevice, xpos, pos);
             }
          } else if (devices_.isGalvo(devKey)) {
