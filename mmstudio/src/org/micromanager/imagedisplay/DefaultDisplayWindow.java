@@ -141,9 +141,6 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
 
       EventManager.register(this);
       EventManager.post(new DefaultNewDisplayEvent(this));
-      if (MMStudio.getInstance().display().getIsTracked(store_)) {
-         MMStudio.getInstance().display().associateDisplay(this, store_);
-      }
    }
 
    /**
