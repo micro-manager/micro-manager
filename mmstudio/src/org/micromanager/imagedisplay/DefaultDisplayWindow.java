@@ -607,6 +607,11 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       displayBus_.unregister(obj);
    }
 
+   @Override
+   public void postEvent(Object obj) {
+      displayBus_.post(obj);
+   }
+
    @Subscribe
    public void onPixelsSet(CanvasUpdateThread.PixelsSetEvent event) {
       try {
