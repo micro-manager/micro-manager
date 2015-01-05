@@ -14,6 +14,7 @@ import org.micromanager.api.display.DisplayWindow;
 import org.micromanager.api.display.DisplaySettings;
 import org.micromanager.api.display.RequestToCloseEvent;
 import org.micromanager.api.events.DatastoreClosingEvent;
+import org.micromanager.api.events.NewDisplayEvent;
 import org.micromanager.MMStudio;
 import org.micromanager.utils.ReportingUtils;
 
@@ -162,5 +163,17 @@ public class DefaultDisplayManager implements DisplayManager {
       ArrayList<DisplayWindow> displays = storeToDisplays_.get(store);
       displays.remove(display);
       display.forceClosed();
+   }
+
+   /**
+    * Newly-created DisplayWindows should be associated with their Datastores
+    * if the Datastore is being tracked.
+    */
+   @Subscribe
+   public void onNewDisplayEvent(NewDisplayEvent event) {
+      DisplayWindow display = event.getDisplayWindow();
+      if (getIsTracked(display.getDatastore())) {
+         associateDisplay(display, display.getDatastore());
+      }
    }
 }
