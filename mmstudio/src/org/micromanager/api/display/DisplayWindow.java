@@ -123,4 +123,10 @@ public interface DisplayWindow {
     * registerForEvents().
     */
    public void unregisterForEvents(Object obj);
+
+   /**
+    * Post the provided event object on the display's EventBus, so that objects
+    * that have called registerForEvents(), above, can receive it.
+    */
+   public void postEvent(Object obj);
 }
