@@ -23,14 +23,13 @@
 //
 package org.micromanager.utils;
 
-import java.awt.Dimension;
 import java.awt.Rectangle;
-import java.awt.Toolkit;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.prefs.Preferences;
 
 import javax.swing.JFrame;
+
 import org.micromanager.MMStudio;
 
 /**
@@ -59,14 +58,21 @@ public class MMFrame extends JFrame {
       }
    }
 
+   /**
+    * Checks whether WINDOW_X and WINDOW_Y coordinates are on the screen(s).
+    * If not then it sets the prefs to the values specified.
+    * Accounts for screen size changes between invocations or if screen
+    * is removed (e.g. had 2 monitors and go to 1).
+    * TODO: this code is duplicated between here and MMDialog.
+    * @param x new WINDOW_X position if current value isn't valid
+    * @param y new WINDOW_Y position if current value isn't valid
+    */
    private void ensureSafeWindowPosition(int x, int y) {
-      // if a saved position exists then make sure it falls on the screen
-      // (useful when screen size changes between invocations)
-      Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-      if (screenSize.width < prefs_.getInt(WINDOW_X, 0)) {
+      int prefX = prefs_.getInt(WINDOW_X, 0);
+      int prefY = prefs_.getInt(WINDOW_Y, 0);
+      if (GUIUtils.getGraphicsConfigurationContaining(prefX, prefY) == null) {
+         // only reach this code if the pref coordinates are off screen
          prefs_.putInt(WINDOW_X, x);
-      }
-      if (screenSize.height < prefs_.getInt(WINDOW_Y, 0)) {
          prefs_.putInt(WINDOW_Y, y);
       }
    }
