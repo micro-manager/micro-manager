@@ -1,5 +1,8 @@
 package org.micromanager.imagedisplay.link;
 
+import java.util.Arrays;
+import java.util.List;
+
 import org.micromanager.api.data.Coords;
 import org.micromanager.api.display.DisplaySettings;
 import org.micromanager.api.display.DisplayWindow;
@@ -12,10 +15,17 @@ import org.micromanager.data.DefaultCoords;
 public class ImageCoordsLinker implements SettingsLinker {
    private String axis_;
    private DisplayWindow parent_;
+   private static final List<Class<?>> relevantEvents_ = Arrays.asList(
+         new Class<?>[] {ImageCoordsEvent.class});
 
    public ImageCoordsLinker(String axis, DisplayWindow parent) {
       axis_ = axis;
       parent_ = parent;
+   }
+
+   @Override
+   public List<Class<?>> getRelevantEventClasses() {
+      return relevantEvents_;
    }
 
    /**
@@ -23,8 +33,7 @@ public class ImageCoordsLinker implements SettingsLinker {
     * we are linked for is different.
     */
    @Override
-   public boolean getShouldApplyChanges(DisplayWindow sourceWindow,
-         DisplaySettingsEvent changeEvent) {
+   public boolean getShouldApplyChanges(DisplaySettingsEvent changeEvent) {
       if (changeEvent instanceof ImageCoordsEvent) {
          ImageCoordsEvent event = (ImageCoordsEvent) changeEvent;
          return event.getImageCoords().getPositionAt(axis_) != parent_.getDisplaySettings().getImageCoords().getPositionAt(axis_);

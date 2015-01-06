@@ -24,13 +24,19 @@ import javax.swing.JScrollBar;
 import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.NewImageEvent;
+import org.micromanager.api.display.DisplaySettings;
 import org.micromanager.api.display.DisplayWindow;
+import org.micromanager.api.display.NewDisplaySettingsEvent;
+
 import org.micromanager.data.DefaultCoords;
+
 import org.micromanager.imagedisplay.events.DefaultRequestToDrawEvent;
 import org.micromanager.imagedisplay.events.FPSEvent;
 import org.micromanager.imagedisplay.events.LayoutChangedEvent;
+import org.micromanager.imagedisplay.link.ImageCoordsEvent;
 import org.micromanager.imagedisplay.link.ImageCoordsLinker;
 import org.micromanager.imagedisplay.link.LinkButton;
+
 import org.micromanager.utils.ReportingUtils;
 
 
@@ -196,6 +202,8 @@ class ScrollerPanel extends JPanel {
 
    /**
     * Post a draw event, if shouldPostEvents_ is set.
+    * TODO: this seems to randomly interfere with animations, when the
+    * animated axis is linked.
     */
    private void postDrawEvent() {
       if (!shouldPostEvents_) {
@@ -212,6 +220,11 @@ class ScrollerPanel extends JPanel {
          int pos = axisToState_.get(axis).scrollbar_.getValue();
          builder.position(axis, pos);
       }
+      Coords target = builder.build();
+      DisplaySettings settings = parent_.getDisplaySettings();
+      settings = settings.copy().imageCoords(target).build();
+      parent_.setDisplaySettings(settings);
+      parent_.postEvent(new ImageCoordsEvent(target));
       parent_.postEvent(new DefaultRequestToDrawEvent(builder.build()));
    }
 
@@ -224,6 +237,21 @@ class ScrollerPanel extends JPanel {
       ScrollbarLockIcon.LockedState lockState = event.getLockedState();
       axisToState_.get(axis).lockState_ = lockState;
       resetAnimation();
+   }
+
+   /**
+    * Display settings have changed; check for new drawing coordinates.
+    */
+   @Subscribe
+   public void onNewDisplaySettings(NewDisplaySettingsEvent event) {
+      Coords coords = event.getDisplaySettings().getImageCoords();
+      if (coords == null) {
+         ReportingUtils.logError("Received new DisplaySettings with null image coords");
+         return;
+      }
+      for (String axis : axisToState_.keySet()) {
+         axisToState_.get(axis).scrollbar_.setValue(coords.getPositionAt(axis));
+      }
    }
 
    /**

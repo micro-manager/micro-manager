@@ -26,6 +26,7 @@ public class LinkButton extends JToggleButton {
          LinkButton.class, "/org/micromanager/icons/linkflat.png");
 
    private SettingsLinker linker_;
+   private DisplayWindow display_;
 
    public LinkButton(final SettingsLinker linker,
          final DisplayWindow display) {
@@ -34,6 +35,7 @@ public class LinkButton extends JToggleButton {
       setMargin(new Insets(0, 0, 0, 0));
 
       linker_ = linker;
+      display_ = display;
 
       final LinkButton finalThis = this;
       addActionListener(new ActionListener() {
@@ -45,6 +47,7 @@ public class LinkButton extends JToggleButton {
       });
       setToolTipText("Toggle linking of this control across all image windows for this dataset");
       display.registerForEvents(this);
+      display.postEvent(new LinkButtonCreatedEvent(this, linker));
    }
 
    /**
@@ -53,6 +56,10 @@ public class LinkButton extends JToggleButton {
    public Dimension getPreferredSize() {
       return new Dimension(LINK_ICON.getIconWidth() + 6,
             LINK_ICON.getIconHeight() + 2);
+   }
+
+   public DisplayWindow getDisplay() {
+      return display_;
    }
 
    /**
