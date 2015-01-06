@@ -37,6 +37,7 @@ public class LinkButton extends JToggleButton {
                   finalThis.isSelected()));
          }
       });
+      setToolTipText("Toggle linking of this control across all image windows for this dataset");
    }
 
    /**
