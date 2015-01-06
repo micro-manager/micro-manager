@@ -24,10 +24,13 @@ import javax.swing.JScrollBar;
 import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.NewImageEvent;
+import org.micromanager.api.display.DisplayWindow;
 import org.micromanager.data.DefaultCoords;
 import org.micromanager.imagedisplay.events.DefaultRequestToDrawEvent;
 import org.micromanager.imagedisplay.events.FPSEvent;
 import org.micromanager.imagedisplay.events.LayoutChangedEvent;
+import org.micromanager.imagedisplay.link.ImageCoordsLinker;
+import org.micromanager.imagedisplay.link.LinkButton;
 import org.micromanager.utils.ReportingUtils;
 
 
@@ -36,9 +39,6 @@ import org.micromanager.utils.ReportingUtils;
  * Datastore to show.
  */
 class ScrollerPanel extends JPanel {
-   private Datastore store_;
-   private EventBus displayBus_;
-
    /**
     * This class tracks relevant state for a single axis' set of controls.
     */
@@ -63,6 +63,9 @@ class ScrollerPanel extends JPanel {
       }
    }
 
+   private Datastore store_;
+   private DisplayWindow parent_;
+
    private HashMap<String, AxisState> axisToState_;
    private HashMap<String, Integer> axisToSavedPosition_;
    private JButton fpsButton_;
@@ -76,16 +79,16 @@ class ScrollerPanel extends JPanel {
    // draw requests.
    private boolean shouldPostEvents_ = true;
 
-   public ScrollerPanel(Datastore store, EventBus displayBus) {
+   public ScrollerPanel(Datastore store, DisplayWindow parent) {
       store_ = store;
-      displayBus_ = displayBus;
+      parent_ = parent;
 
       axisToState_ = new HashMap<String, AxisState>();
       axisToSavedPosition_ = new HashMap<String, Integer>();
 
       // Only the scrollbar column is allowed to grow in width
       setLayout(new MigLayout("insets 0", 
-               "[][][grow, shrink][][]"));
+               "[][][grow, shrink][][][]"));
       // Don't prevent other components from shrinking
       setMinimumSize(new Dimension(1, 1));
 
@@ -100,10 +103,10 @@ class ScrollerPanel extends JPanel {
 
       // TODO: hardcoded initial FPS for now.
       fps_ = 10;
-      fpsMenu_ = new FPSPopupMenu(displayBus_, fps_);
+      fpsMenu_ = new FPSPopupMenu(parent_.getDisplayBus(), fps_);
 
       store_.registerForEvents(this, 100);
-      displayBus_.register(this);
+      parent_.registerForEvents(this);
    }
 
    /**
@@ -142,8 +145,12 @@ class ScrollerPanel extends JPanel {
       });
       add(scrollbar, "shrinkx, growx");
 
-      ScrollbarLockIcon lock = new ScrollbarLockIcon(axis, displayBus_);
+      ScrollbarLockIcon lock = new ScrollbarLockIcon(axis,
+            parent_.getDisplayBus());
       add(lock, "grow 0, wrap");
+
+      LinkButton linker = new LinkButton(new ImageCoordsLinker(axis, parent_),
+            parent_);
 
       axisToState_.put(axis, new AxisState(positionLabel, scrollbar));
 
@@ -204,7 +211,7 @@ class ScrollerPanel extends JPanel {
          int pos = axisToState_.get(axis).scrollbar_.getValue();
          builder.position(axis, pos);
       }
-      displayBus_.post(new DefaultRequestToDrawEvent(builder.build()));
+      parent_.postEvent(new DefaultRequestToDrawEvent(builder.build()));
    }
 
    /**
@@ -327,9 +334,9 @@ class ScrollerPanel extends JPanel {
          }
          if (didAddScrollers) {
             // Ensure new scrollers get displayed properly.
-            displayBus_.post(new LayoutChangedEvent());
+            parent_.postEvent(new LayoutChangedEvent());
          }
-         displayBus_.post(new DefaultRequestToDrawEvent(displayedBuilder.build()));
+         parent_.postEvent(new DefaultRequestToDrawEvent(displayedBuilder.build()));
 
          // Set up snapping back to our current positions. 
          if (axisToSavedPosition_.size() > 0) {
@@ -369,7 +376,7 @@ class ScrollerPanel extends JPanel {
 
    public void cleanup() {
       store_.unregisterForEvents(this);
-      displayBus_.unregister(this);
+      parent_.unregisterForEvents(this);
       if (animationTimer_ != null) {
          animationTimer_.cancel();
       }

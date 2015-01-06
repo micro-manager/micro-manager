@@ -3,6 +3,8 @@ package org.micromanager.imagedisplay.link;
 import com.google.common.eventbus.EventBus;
 import com.swtdesigner.SwingResourceManager;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.Dimension;
 import java.awt.Insets;
 
@@ -27,13 +29,12 @@ public class LinkButton extends JToggleButton {
       setMinimumSize(new Dimension(1, 1));
       setMargin(new Insets(0, 0, 0, 0));
 
-      linker.setButton(this);
       final LinkButton finalThis = this;
       addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
             display.postEvent(new LinkButtonEvent(linker, display,
-                  finalThis));
+                  finalThis.isSelected()));
          }
       });
    }
