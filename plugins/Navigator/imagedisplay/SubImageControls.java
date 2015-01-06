@@ -174,7 +174,7 @@ public class SubImageControls extends DisplayControls {
    }
 
    private void makeScrollerPanel() {
-      scrollerPanel_ = new ScrollerPanel(bus_, new String[]{"channel", "position", "time", "z"}, new Integer[]{1, 1, 1, 1}, DEFAULT_FPS) {
+      scrollerPanel_ = new ScrollerPanel(bus_, new String[]{"channel", "time", "z"}, new Integer[]{1, 1, 1}, DEFAULT_FPS) {
          //Override new image event to intercept these events and correct for negative slice indices 
 
          @Override
@@ -182,7 +182,6 @@ public class SubImageControls extends DisplayControls {
             //duplicate new image event and edit as needed
             HashMap<String, Integer> axisToPosition = new HashMap<String, Integer>();
             axisToPosition.put("channel", event.getPositionForAxis("channel"));
-            axisToPosition.put("position", 0);
             axisToPosition.put("time", event.getPositionForAxis("time"));
             axisToPosition.put("z", event.getPositionForAxis("z"));
             if (acq_ instanceof ExploreAcquisition) {

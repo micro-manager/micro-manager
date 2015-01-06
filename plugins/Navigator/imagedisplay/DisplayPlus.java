@@ -26,7 +26,11 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
@@ -43,7 +47,6 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
    private static final int DELETE_SURF_POINT_PIXEL_TOLERANCE = 10;
    public static final int NONE = 0, EXPLORE = 1, GOTO = 2, NEWGRID = 3, NEWSURFACE = 4;
    private static ArrayList<DisplayPlus> activeDisplays_ = new ArrayList<DisplayPlus>();
-   private ImageCanvas canvas_;
    private Acquisition acq_;
    private Point mouseDragStartPointLeft_, mouseDragStartPointRight_, currentMouseLocation_;
    private ArrayList<Point> selectedPositions_ = new ArrayList<Point>();
@@ -57,7 +60,6 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
    private SurfaceInterpolator currentSurface_;
    private MultiPosGrid currentRegion_;
    private ThreadPoolExecutor redrawPixelsExecutor_;
-   private NonImagePanel nip_;
 
    public DisplayPlus(final MMImageCache stitchedCache, Acquisition acq, JSONObject summaryMD,
            MultiResMultipageTiffStorage multiResStorage ) {
@@ -132,26 +134,12 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
          e.printStackTrace();
          ReportingUtils.showError("Problem with initialization due to missing summary metadata tags");
          return;
-      }
+      }   
       
-
-      //Add in custom controls
-      subImageControls_ = new SubImageControls(this, this.getEventBus(), acq);
-      //create contrast, metadata, and other controls
-      ContrastMetadataCommentsPanel cmcPanel = new ContrastMetadataCommentsPanel(this);
-      super.setCMCPanel(cmcPanel);
-      DisplayPlusControls controls = new DisplayPlusControls(this, this.getEventBus(), acq);
-      nip_ = new NonImagePanel(cmcPanel, controls);
-
+      
       this.show(zoomableStack_);
       canvas_ = this.getImagePlus().getCanvas();
       overlayer_ = new DisplayOverlayer(this, acq, multiResStorage.getTileWidth(), multiResStorage.getTileHeight(), zoomableStack_);
-
-      cmcPanel.initialize(this);
-
-
-
-
 
       setupKeyListeners();
       setupMouseListeners();
@@ -159,12 +147,13 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
       stitchedCache.addImageCacheListener(this);
       canvas_.requestFocus();
       activeDisplays_.add(this);
+      ((DisplayWindow) this.getHyperImage().getWindow()).resizeCanvas();
    }
    
-   public NonImagePanel getNonImagePanel() {
-      return nip_;
+   public Acquisition getAcquisition() {
+      return acq_;
    }
-
+   
    /**
     * Change the stack so that the resolution of the imageplus can change for window resizing
     * @param newStack 
@@ -394,8 +383,6 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
               this.getImagePlus().getWindow().getMouseWheelListeners()[0]);
       //remove canvas mouse listener and virtualacquisitiondisplay as mouse listener
       canvas_.removeMouseListener(canvas_.getMouseListeners()[0]);
-      canvas_.removeMouseListener(canvas_.getMouseListeners()[0]);
-
       canvas_.addMouseWheelListener(new MouseWheelListener() {
 
          @Override

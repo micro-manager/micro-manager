@@ -3,18 +3,25 @@ package imagedisplay;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import ij.ImagePlus;
+import ij.gui.ImageCanvas;
 import ij.gui.StackWindow;
-import ij.gui.Toolbar;
-import imagedisplay.CanvasPlus;
-import imagedisplay.DisplayPlus;
-import imagedisplay.ZoomableVirtualStack;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Panel;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.WindowEvent;
 import java.util.prefs.Preferences;
 import javax.swing.BorderFactory;
+import javax.swing.JButton;
 import javax.swing.JPanel;
+import javax.swing.JToggleButton;
 import javax.swing.Timer;
-import javax.swing.event.MouseInputAdapter;
 import mmcloneclasses.internalinterfaces.DisplayControls;
 import org.micromanager.MMStudio;
 import org.micromanager.utils.CanvasPaintPending;
@@ -30,12 +37,15 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class DisplayWindow extends StackWindow {
    public static int CANVAS_PIXEL_BORDER = 4;
+   private static int RESIZE_WINDOW_DELAY = 100;
 
    private boolean closed_ = false;
    private final EventBus bus_;
    private ImagePlus plus_;
    private JPanel canvasPanel_;
    private Timer windowResizeTimer_;
+   private DisplayControls subImageControls_;
+   private JToggleButton arrowButton_;
    
    // store window location in Java Preferences
    private static final int DEFAULTPOSX = 300;
@@ -59,9 +69,9 @@ public class DisplayWindow extends StackWindow {
       }
    };
 
-     public DisplayWindow(final ImagePlus plus, DisplayControls controls, final EventBus bus, NonImagePanel nip) {
+     public DisplayWindow(final ImagePlus plus, final EventBus bus, DisplayPlus disp) {
       super(plus);
-      windowResizeTimer_ = new Timer(500, new ActionListener() {
+      windowResizeTimer_ = new Timer(RESIZE_WINDOW_DELAY, new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent ae) {
             resizeCanvas();
@@ -102,10 +112,53 @@ public class DisplayWindow extends StackWindow {
       remove(ic);
       // Ensure that all references to this canvas are removed.
       CanvasPaintPending.removeAllPaintPending(ic);
-      ic = new CanvasPlus(plus_);
+//      ic = new CanvasPlus(plus_);
+      ic = new ImageCanvas(plus_);
       // HACK: set the minimum size. If we don't do this, then the canvas
       // doesn't shrink properly when the window size is reduced. Why?!
       ic.setMinimumSize(new Dimension(16, 16));
+      
+      
+            
+      //create contrast, metadata, and other controls
+      ContrastMetadataCommentsPanel cmcPanel = new ContrastMetadataCommentsPanel(disp);
+      disp.setCMCPanel(cmcPanel);
+     
+      //create non image panel
+      final JPanel nip = new JPanel(new BorderLayout());
+      final JPanel controlsAndContrastPanel = new JPanel(new BorderLayout());
+      controlsAndContrastPanel.add(new DisplayPlusControls(disp, bus, disp.getAcquisition()), BorderLayout.PAGE_START);
+      controlsAndContrastPanel.add(cmcPanel, BorderLayout.CENTER);      
+      nip.add(controlsAndContrastPanel, BorderLayout.CENTER);
+      
+          
+      arrowButton_ = new JToggleButton("\u25ba");
+      arrowButton_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            if (arrowButton_.isSelected()) {               
+               arrowButton_.setText("\u25c4");                 
+               nip.remove(controlsAndContrastPanel);
+            } else {            
+               arrowButton_.setText("\u25ba");               
+               nip.add(controlsAndContrastPanel, BorderLayout.CENTER);
+            }
+            DisplayWindow.this.invalidate();
+            DisplayWindow.this.validate();
+            DisplayWindow.this.repaint();
+         }
+      });
+      //for some reason this needs to be on a panel, not a jpanel, or it disappears
+      Panel arrowPanel = new Panel(new BorderLayout());
+      
+      arrowButton_.setFont(arrowButton_.getFont().deriveFont(20f));
+      arrowPanel.add(arrowButton_, BorderLayout.CENTER);
+      nip.add(arrowPanel, BorderLayout.LINE_END);
+      
+        
+      
+      //create sub image controls
+      subImageControls_ = new SubImageControls(disp, bus, disp.getAcquisition());
       // Wrap the canvas in a subpanel so that we can get events when it
       // resizes.
       canvasPanel_ = new JPanel();
@@ -117,29 +170,19 @@ public class DisplayWindow extends StackWindow {
       canvasPanel_.add(ic, BorderLayout.CENTER);
       JPanel leftPanel = new JPanel(new BorderLayout());
       leftPanel.add(canvasPanel_, BorderLayout.CENTER);
-      leftPanel.add(controls, BorderLayout.PAGE_END);
+      leftPanel.add(subImageControls_, BorderLayout.PAGE_END);
       this.add(leftPanel, BorderLayout.CENTER);      
       
       JPanel rightPanel = new JPanel(new BorderLayout());
       rightPanel.add(nip, BorderLayout.CENTER);
       this.add(rightPanel, BorderLayout.LINE_END);
-   
-
-      // Add a listener so we can update the histogram when an ROI is drawn
-      ic.addMouseListener(new MouseInputAdapter() {
-         @Override
-         public void mouseReleased(MouseEvent me) {
-            if (plus_ instanceof MMCompositeImage) {
-               ((MMCompositeImage) plus_).updateAndDraw(true);
-            } else {
-               plus_.updateAndDraw();
-            }
-         }
-      });
 
       positionWindow();
       this.setSize(new Dimension(displayPrefs_.getInt(WINDOWSIZEX, 600), displayPrefs_.getInt(WINDOWSIZEY, 600)));
+      cmcPanel.initialize(disp);
+      doLayout(); 
 
+     
         // Propagate window resizing to the canvas
         canvasPanel_.addComponentListener(new ComponentAdapter() {
 
@@ -155,10 +198,14 @@ public class DisplayWindow extends StackWindow {
               displayPrefs_.putInt(WINDOWSIZEY, DisplayWindow.this.getSize().height);
            }
         });
-        doLayout();
+        
    }
 
-   private void resizeCanvas() {
+   public DisplayControls getSubImageControls() {
+      return subImageControls_;
+   }
+     
+   public void resizeCanvas() {
       synchronized (canvasPanel_) {
          Dimension size = canvasPanel_.getSize();
          ((DisplayPlus) VirtualAcquisitionDisplay.getDisplay(plus_)).changeStack(
@@ -262,28 +309,6 @@ public class DisplayWindow extends StackWindow {
          super.windowActivated(e);
       }
    }
-
-   /**
-    * HACK HACK HACK HACK HACK HACK ACK HACK HACK HACK HACK HACK ACK HACK
-    * We override this function to "fix" the Orthogonal Views plugin, which
-    * assumes that item #2 in the array returned by getComponents() is the 
-    * cSelector object of an ImageJ StackWindow. Of course, actually changing
-    * this behavior for everyone else causes *them* to break horribly, hence
-    * why we have to examine the stack trace to determine our caller. Ugh!
-    * HACK HACK HACK HACK HACK HACK ACK HACK HACK HACK HACK HACK ACK HACK
-    * @return 
-    */
-   @Override
-   public Component[] getComponents() {
-      StackTraceElement[] stack = Thread.currentThread().getStackTrace();
-      for (StackTraceElement element : stack) {
-         if (element.getClassName().contains("Orthogonal_Views")) {
-            return new Component[] {ic, cSelector};
-         }
-      }
-      return super.getComponents();
-   }
-
 
    @Override
    public void pack() {

@@ -4,7 +4,6 @@ import coordinates.PositionManager;
 import gui.SettingsDialog;
 import imagedisplay.DisplayPlus;
 import imagedisplay.DisplayPlusControls;
-import imagedisplay.NonImagePanel;
 import imagedisplay.SubImageControls;
 import java.awt.Color;
 import java.util.concurrent.BlockingQueue;

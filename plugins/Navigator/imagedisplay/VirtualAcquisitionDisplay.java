@@ -114,21 +114,19 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    // Tracks when we last sent an FPS update.
    private long lastFPSUpdateTimestamp_ = -1;
    private ImagePlus hyperImage_;
-   protected DisplayControls subImageControls_;
-   private boolean shouldUseSimpleControls_ = false;
+   private DisplayControls subImageControls_;
    public AcquisitionVirtualStack virtualStack_;
    private boolean isMDA_ = false; //flag if display corresponds to MD acquisition
    private ContrastMetadataCommentsPanel cmcPanel_;
    private boolean contrastInitialized_ = false; //used for autostretching on window opening
    private boolean firstImage_ = true;
    private String channelGroup_ = "none";
-   private boolean albumSaved_ = false;
    private JPopupMenu saveTypePopup_;
    private final AtomicBoolean updatePixelSize_ = new AtomicBoolean(false);
    private final AtomicLong newPixelSize_ = new AtomicLong();
    private final Object imageReceivedObject_ = new Object();
-   private JFrame metadataWindow_;
    private int numGrayChannels_;
+   protected ImageCanvas canvas_;
 
    private EventBus bus_;
 
@@ -163,7 +161,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
       imageCache_ = imageCache;
       isMDA_ = eng != null;
-      this.albumSaved_ = imageCache.isFinished();
       setupEventBus();
       setupDisplayThread();
    }
@@ -374,7 +371,8 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       virtualStack_ = virtualStack;
 
       hyperImage_ = createHyperImage(createMMImagePlus(virtualStack_),numGrayChannels, numSlices, numFrames);
-
+      canvas_ = hyperImage_.getCanvas();
+      
       applyPixelSizeCalibration(hyperImage_);
 
       createWindows();
@@ -703,10 +701,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
    }
 
-   public int getPosition() {
-      return subImageControls_.getPosition();
-   }
-
    public void setSliceIndex(int i) {
       final int f = hyperImage_.getFrame();
       final int c = hyperImage_.getChannel();
@@ -758,10 +752,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
 //      } else {
          return false;
 //      }
-   }
-
-   public void albumChanged() {
-      albumSaved_ = false;
    }
    
    private Class createSaveTypePopup() {
@@ -860,7 +850,8 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    private void createWindows() {
-      DisplayWindow win = new DisplayWindow(hyperImage_, subImageControls_, bus_, ((DisplayPlus)this).getNonImagePanel() );        
+      DisplayWindow win = new DisplayWindow(hyperImage_, bus_, (DisplayPlus) this );   
+      subImageControls_ = win.getSubImageControls();
       imageChangedUpdate();
       EventManager.post(new DisplayCreatedEvent(this, win));
    }
@@ -1063,10 +1054,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    public void setWindowTitle(String title) {
       title_ = title;
       updateWindowTitleAndStatus();
-   }
-
-   public void displayStatusLine(String status) {
-      subImageControls_.setImageInfoLabel(status);
    }
 
    /*
