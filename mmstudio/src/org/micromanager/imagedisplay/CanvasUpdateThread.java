@@ -1,6 +1,7 @@
 package org.micromanager.imagedisplay;
 
 import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
 
 import ij.ImagePlus;
 
@@ -216,5 +217,10 @@ public class CanvasUpdateThread extends Thread {
       // Ignore being interrupted, since this is not happening in our primary
       // display thread.
       catch (InterruptedException e) {}
+   }
+
+   @Subscribe
+   public void onDisplayDestroyed(DisplayDestroyedEvent event) {
+      stopDisplayUpdates();
    }
 }

@@ -153,4 +153,14 @@ public class DummyImageWindow extends StackWindow {
       ic = new ImageCanvas(imp);
       WindowManager.addWindow(this);
    }
+
+   @Subscribe
+   public void onDisplayDestroyed(DisplayDestroyedEvent event) {
+      try {
+         dispose();
+      }
+      catch (NullPointerException e) {
+         ReportingUtils.logError(e, "NullPointerException in ImageJ code while disposing of dummy image window");
+      }
+   }
 }
