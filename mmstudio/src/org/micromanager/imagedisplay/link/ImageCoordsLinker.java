@@ -4,6 +4,8 @@ import org.micromanager.api.data.Coords;
 import org.micromanager.api.display.DisplaySettings;
 import org.micromanager.api.display.DisplayWindow;
 
+import org.micromanager.data.DefaultCoords;
+
 /**
  * The ImageCoordsLinker links a specific axis of the ImageCoords attribute.
  */
@@ -42,5 +44,13 @@ public class ImageCoordsLinker implements SettingsLinker {
       curCoords = curCoords.copy().position(axis_, newCoords.getPositionAt(axis_)).build();
       settings = settings.copy().imageCoords(curCoords).build();
       parent_.setDisplaySettings(settings);
+   }
+
+   /**
+    * We care about the imageCoords, and specifically our axis for them.
+    */
+   @Override
+   public int getID() {
+      return DefaultCoords.class.hashCode() + axis_.hashCode();
    }
 }
