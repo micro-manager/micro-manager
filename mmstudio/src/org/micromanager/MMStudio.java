@@ -105,10 +105,12 @@ import org.micromanager.dialogs.AcqControlDlg;
 import org.micromanager.dialogs.CalibrationListDlg;
 import org.micromanager.dialogs.MMIntroDlg;
 import org.micromanager.dialogs.RegistrationDlg;
+
 import org.micromanager.events.EventManager;
 
 import org.micromanager.imagedisplay.DefaultDisplayManager;
 import org.micromanager.imagedisplay.DefaultDisplayWindow;
+import org.micromanager.imagedisplay.link.DisplayGroupManager;
 
 import org.micromanager.logging.LogFileManager;
 import org.micromanager.menus.FileMenu;
@@ -387,6 +389,8 @@ public class MMStudio implements ScriptInterface {
       initializationSequence();
            
       helpMenu.initializeHelpMenu(menuBar_, systemPrefs_);
+
+      new DisplayGroupManager(studio_);
    }
 
    /**
