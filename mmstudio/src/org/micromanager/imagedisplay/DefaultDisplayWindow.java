@@ -561,21 +561,11 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
          // Only ever call this method once.
          return;
       }
-      canvasThread_.stopDisplayUpdates();
-      // Note: we don't join the canvas thread here because this thread is
-      // presumably the EDT, and the canvas thread also does actions in the
-      // EDT, so there's some deadlock potential.
-      controls_.cleanup();
-      histograms_.cleanup();
+      displayBus_.post(new DisplayDestroyedEvent(this));
       MMStudio studio = MMStudio.getInstance();
       studio.display().removeDisplay(this, store_);
       store_.unregisterForEvents(this);
       studio.removeMMBackgroundListener(this);
-      try {
-         dummyWindow_.dispose();
-      } catch (NullPointerException ex) {
-         ReportingUtils.showError(ex, "Null pointer error in ImageJ code while closing window");
-      }
       dispose();
       haveClosed_ = true;
    }

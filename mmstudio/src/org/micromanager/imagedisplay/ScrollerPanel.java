@@ -147,10 +147,11 @@ class ScrollerPanel extends JPanel {
 
       ScrollbarLockIcon lock = new ScrollbarLockIcon(axis,
             parent_.getDisplayBus());
-      add(lock, "grow 0, wrap");
+      add(lock, "grow 0");
 
       LinkButton linker = new LinkButton(new ImageCoordsLinker(axis, parent_),
             parent_);
+      add(linker, "grow 0, wrap");
 
       axisToState_.put(axis, new AxisState(positionLabel, scrollbar));
 
@@ -374,7 +375,7 @@ class ScrollerPanel extends JPanel {
       scrollbar.setValue(target);
    }
 
-   public void cleanup() {
+   public void onDisplayDestroyed(DisplayDestroyedEvent event) {
       store_.unregisterForEvents(this);
       parent_.unregisterForEvents(this);
       if (animationTimer_ != null) {

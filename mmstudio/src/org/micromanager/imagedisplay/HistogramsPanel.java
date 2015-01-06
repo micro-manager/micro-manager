@@ -302,4 +302,9 @@ public final class HistogramsPanel extends JPanel implements Histograms {
    public void onNewImagePlus(NewImagePlusEvent event) {
       setImagePlus(event.getImagePlus());
    }
+
+   @Subscribe
+   public void onDisplayDestroyed(DisplayDestroyedEvent event) {
+      cleanup();
+   }
 }

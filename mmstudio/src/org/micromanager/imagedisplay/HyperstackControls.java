@@ -250,8 +250,8 @@ public class HyperstackControls extends JPanel {
       return hoursString + minutesString + secondsString;
    }
 
-   public void cleanup() {
-      scrollerPanel_.cleanup();
+   @Subscribe
+   public void onDisplayDestroyed(DisplayDestroyedEvent event) {
       parent_.unregisterForEvents(this);
       store_.unregisterForEvents(this);
    }
