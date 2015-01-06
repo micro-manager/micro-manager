@@ -279,12 +279,6 @@ public final class HistogramsPanel extends JPanel implements Histograms {
       return channelPanels_.size();
    }
 
-   public void cleanup() {
-      for (ChannelControlPanel panel : channelPanels_) {
-         panel.cleanup();
-      }
-   }
-
    public void setImagePlus(ImagePlus ijImage) {
       ijImage_ = ijImage;
       setupChannelControls();
@@ -305,6 +299,8 @@ public final class HistogramsPanel extends JPanel implements Histograms {
 
    @Subscribe
    public void onDisplayDestroyed(DisplayDestroyedEvent event) {
-      cleanup();
+      for (ChannelControlPanel panel : channelPanels_) {
+         panel.cleanup();
+      }
    }
 }
