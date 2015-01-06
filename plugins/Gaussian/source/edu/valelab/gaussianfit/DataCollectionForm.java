@@ -31,6 +31,7 @@ import edu.valelab.gaussianfit.spotoperations.SpotLinker;
 import edu.valelab.gaussianfit.data.RowData;
 import edu.valelab.gaussianfit.datasetdisplay.ParticlePairLister;
 import edu.valelab.gaussianfit.datasettransformations.DriftCorrector;
+import edu.valelab.gaussianfit.datasettransformations.PairFilter;
 import edu.valelab.gaussianfit.datasettransformations.TrackOperator;
 import edu.valelab.gaussianfit.utils.ListUtils;
 import edu.valelab.gaussianfit.utils.ReportingUtils;
@@ -156,7 +157,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
    /**
     * Method that lets a script gets the Affinetransform calculated by the
     * CoordinateMapper
-    * @return  Affine transform object calcualed by the Coordinate Mapper
+    * @return  Affine transform object calculated by the Coordinate Mapper
     */
    public AffineTransform getAffineTransform() {
       if (c2t_ == null)
@@ -1252,7 +1253,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                if (2 * stdDev > avg) {
                   nrOfRemovedSpots+=1;
                   points.remove(maxPairKey);
-                  c2t_ = new CoordinateMapper(points, 2, 1);
+                  c2t_ = new CoordinateMapper(points, 4, 1);
                } else {
                   continueQualityCheck = false;
                   ij.IJ.log("Removed " + nrOfRemovedSpots + " pairs, " + ", avg. distance: " +
@@ -2530,6 +2531,27 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
       return OK;
       
+   }
+   
+   public void filterPairs(final double maxDistance, final double deviationMax,
+           final int nrQuadrants) {
+      final int[] rows = jTable1_.getSelectedRows();
+      
+      if (rows == null || rows.length > 1) {
+         JOptionPane.showMessageDialog(getInstance(),
+                 "Please one dataset to filter");
+         return;
+      }
+      
+      for (int i = 0; i < rows.length; i++) {
+         RowData rowData = rowData_.get(rows[i]);
+         PairFilter.filter(rowData, maxDistance, deviationMax, nrQuadrants);
+      }
+   }
+   
+   public void piecewiseAffine(final int nrQuadrants) {
+      
+   
    }
 
 }

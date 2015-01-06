@@ -11,7 +11,6 @@ import ags.utils.KdTree;
 import ags.utils.KdTree.Entry;
 import ags.utils.KdTree.SqrEuclid;
 import java.awt.geom.Point2D;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -23,7 +22,7 @@ import java.util.List;
  * @author nico
  */
 public class NearestPoint2D {
-   private final ArrayList<Point2D.Double> theList_;
+   private final List<Point2D.Double> theList_;
    private final double maxDistance_;
    private final double maxDistanceSquared_;
    private KdTree<Integer> we_;
@@ -31,7 +30,7 @@ public class NearestPoint2D {
    //private final ArrayList<Point2D.Double> sortedByX_;
    //private final ArrayList<Point2D.Double> sortedByY_;
    
-   public NearestPoint2D(ArrayList<Point2D.Double> unsorted, double maxDistance) {
+   public NearestPoint2D(List<Point2D.Double> unsorted, double maxDistance) {
       theList_ = unsorted;
       maxDistance_ = maxDistance;
       maxDistanceSquared_ = maxDistance * maxDistance;
