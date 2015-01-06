@@ -6,7 +6,7 @@ import java.awt.GridLayout;
 import java.util.ArrayList;
 import javax.swing.JPanel;
 import mmcloneclasses.acquisition.MMImageCache;
-import mmcloneclasses.imagedisplay.VirtualAcquisitionDisplay;
+import imagedisplay.VirtualAcquisitionDisplay;
 import mmcloneclasses.internalinterfaces.Histograms;
 import org.micromanager.MMStudio;
 import org.micromanager.utils.ContrastSettings;

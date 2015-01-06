@@ -20,7 +20,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package mmcloneclasses.imagedisplay;
+package imagedisplay;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
@@ -46,6 +46,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.*;
 import javax.swing.event.MouseInputAdapter;
 import mmcloneclasses.acquisition.MMImageCache;
@@ -116,7 +118,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    private boolean shouldUseSimpleControls_ = false;
    public AcquisitionVirtualStack virtualStack_;
    private boolean isMDA_ = false; //flag if display corresponds to MD acquisition
-   private ContrastMetadataCommentsPanel mdPanel_;
+   private ContrastMetadataCommentsPanel cmcPanel_;
    private boolean contrastInitialized_ = false; //used for autostretching on window opening
    private boolean firstImage_ = true;
    private String channelGroup_ = "none";
@@ -126,6 +128,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    private final AtomicLong newPixelSize_ = new AtomicLong();
    private final Object imageReceivedObject_ = new Object();
    private JFrame metadataWindow_;
+   private int numGrayChannels_;
 
    private EventBus bus_;
 
@@ -145,7 +148,14 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
     * @param shouldUseNameAsTitle
     */
    public VirtualAcquisitionDisplay(MMImageCache imageCache,
-         AcquisitionEngine eng, String name, boolean shouldUseNameAsTitle) {
+           AcquisitionEngine eng, String name, boolean shouldUseNameAsTitle, JSONObject summaryMD) {
+      try {
+         numComponents_ = Math.max(MDUtils.getNumberOfComponents(summaryMD), 1);
+         int numChannels = Math.max(summaryMD.getInt("Channels"), 1);
+         numGrayChannels_ = numComponents_ * numChannels;
+      } catch (Exception ex) {
+         ReportingUtils.showError("Couldn't read summary md");
+      }
       name_ = name;
       title_ = name;
       if (!shouldUseNameAsTitle) {
@@ -159,7 +169,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
    
    public void setCMCPanel(ContrastMetadataCommentsPanel panel) {
-      mdPanel_ = panel;
+      cmcPanel_ = panel;
    }
 
    /**
@@ -301,36 +311,11 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    /**
-    * This constructor is used for the Snap and Live views. The main
-    * differences:
-    * - eng_ is null
-    * - We subscribe to the "pixel size changed" event. 
-    * - Later, when we create controls_, it will be told to use the 
-    *   Snap/Live buttons (because shouldUseSimpleControls_ is true).
-    */
-   @SuppressWarnings("LeakingThisInConstructor")
-   public VirtualAcquisitionDisplay(MMImageCache imageCache, String name) throws MMScriptException {
-      imageCache_ = imageCache;
-      name_ = name;
-      title_ = name;
-      isMDA_ = false;
-      shouldUseSimpleControls_ = true;
-      this.albumSaved_ = imageCache.isFinished();
-      setupEventBus();
-      setupDisplayThread();
-      // Also register us for pixel size change events on the global EventBus.
-      EventManager.register(this);
-   }
-  
-   /**
     * Extract a lot of fields from the provided metadata (or, failing that, 
     * from getSummaryMetadata()), and set up our controls and view window.
     */
    private void startup(JSONObject firstImageMetadata, AcquisitionVirtualStack virtualStack) {
-      //TODO: our own metadata panel
-//      mdPanel_ = MMStudio.getInstance().getMetadataPanel();
-      
-       
+         
       JSONObject summaryMetadata = getSummaryMetadata();
       int numSlices = 1;
       int numFrames = 1;
@@ -359,13 +344,9 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
 
          numChannels = Math.max(1 + imageChannelIndex,
                  Math.max(summaryMetadata.getInt("Channels"), 1));
-         numComponents = Math.max(MDUtils.getNumberOfComponents(summaryMetadata), 1);
       } catch (JSONException e) {
          ReportingUtils.showError(e);
-      } catch (MMScriptException e) {
-         ReportingUtils.showError(e);
-      }
-      numComponents_ = numComponents;
+      } 
       numGrayChannels = numComponents_ * numChannels;
 
       if (imageCache_.getDisplayAndComments() == null || 
@@ -389,23 +370,10 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       } catch (MMScriptException ex) {
          ReportingUtils.showError(ex, "Unable to determine acquisition type.");
       }
-      if (virtualStack != null) {
-         virtualStack_ = virtualStack;
-      } else {
-         virtualStack_ = new AcquisitionVirtualStack(width, height, type, null,
-                 imageCache_, numGrayChannels * numSlices * numFrames, this);
-      }
-      if (summaryMetadata.has("PositionIndex")) {
-         try {
-            virtualStack_.setPositionIndex(
-                  MDUtils.getPositionIndex(summaryMetadata));
-         } catch (JSONException ex) {
-            ReportingUtils.logError(ex);
-         }
-      }
+         
+      virtualStack_ = virtualStack;
 
-      hyperImage_ = createHyperImage(createMMImagePlus(virtualStack_),
-              numGrayChannels, numSlices, numFrames, virtualStack_);
+      hyperImage_ = createHyperImage(createMMImagePlus(virtualStack_),numGrayChannels, numSlices, numFrames);
 
       applyPixelSizeCalibration(hyperImage_);
 
@@ -710,7 +678,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
 //            setDisplayMode(settings.displayMode_);
 //         }
       }
-      mdPanel_.applyLUTToImage();
+      cmcPanel_.applyLUTToImage();
       contrastInitialized_ = true;
    }
 
@@ -733,39 +701,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
 //                    new HistogramSettings(min,max, gamma, histMax, displayMode));    
          }
       }
-   }
-
-   public void updatePosition(int p) {
-      if (virtualStack_.getPositionIndex() == p) {
-         // Already on this position; skip doing anything. This minor 
-         // optimization makes a display bug (some kind of corruption of the
-         // CompositeImage) sufficiently rare as to be nigh-impossible to 
-         // reproduce.
-         // TODO: That doesn't mean the bug is *gone*. Removing this return
-         // statement and running a multi-channel, multi-timepoint, multi-Z
-         // acquisition while playing with the scrollbars and locks should 
-         // eventually reproduce the bug (wherein the display will stop 
-         // updating).
-         return;
-      }
-      virtualStack_.setPositionIndex(p);
-      if (!hyperImage_.isComposite()) {
-         Object pixels = virtualStack_.getPixels(hyperImage_.getCurrentSlice());
-         hyperImage_.getProcessor().setPixels(pixels);
-      } else {
-         CompositeImage ci = (CompositeImage) hyperImage_;
-         if (ci.getMode() == CompositeImage.COMPOSITE) {
-            for (int i = 0; i < ((MMCompositeImage) ci).getNChannelsUnverified(); i++) {
-               //Dont need to set pixels if processor is null because it will get them from stack automatically  
-               if (ci.getProcessor(i + 1) != null)                
-                  ci.getProcessor(i + 1).setPixels(virtualStack_.getPixels(ci.getCurrentSlice() - ci.getChannel() + i + 1));
-            }
-         }
-         ci.getProcessor().setPixels(virtualStack_.getPixels(hyperImage_.getCurrentSlice()));
-      }
-      //need to call this even though updateAndDraw also calls it to get autostretch to work properly
-      imageChangedUpdate();
-      updateAndDraw(true);
    }
 
    public int getPosition() {
@@ -908,8 +843,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       return img;
    }
 
-   final public ImagePlus createHyperImage(MMImagePlus mmIP, int channels, int slices,
-           int frames, final AcquisitionVirtualStack virtualStack) {
+   final public ImagePlus createHyperImage(MMImagePlus mmIP, int channels, int slices, int frames) {
       final ImagePlus hyperImage;
       mmIP.setNChannelsUnverified(channels);
       mmIP.setNFramesUnverified(frames);
@@ -926,7 +860,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    private void createWindows() {
-      DisplayWindow win = new DisplayWindow(hyperImage_, subImageControls_, bus_);        
+      DisplayWindow win = new DisplayWindow(hyperImage_, subImageControls_, bus_, ((DisplayPlus)this).getNonImagePanel() );        
       imageChangedUpdate();
       EventManager.post(new DisplayCreatedEvent(this, win));
    }
@@ -998,10 +932,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
    }
 
-   public int getCurrentPosition() {
-      return virtualStack_.getPositionIndex();
-   }
-
    public int getNumSlices() {
       return hyperImage_ == null ? 1 : ((IMMImagePlus) hyperImage_).getNSlicesUnverified();
    }
@@ -1020,14 +950,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
 
    public MMImageCache getImageCache() {
       return imageCache_;
-   }
-
-   public ImagePlus getImagePlus(int position) {
-      ImagePlus iP = new ImagePlus();
-      iP.setStack(virtualStack_);
-      iP.setDimensions(numComponents_ * getNumChannels(), getNumSlices(), getNumFrames());
-      iP.setFileInfo(hyperImage_.getFileInfo());
-      return iP;
    }
 
    public void setComment(String comment) throws MMScriptException {
@@ -1131,7 +1053,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    public int getNumChannels() {
-      return hyperImage_ == null ? 1 : ((IMMImagePlus) hyperImage_).getNChannelsUnverified();
+      return hyperImage_ == null ? numGrayChannels_ : ((IMMImagePlus) hyperImage_).getNChannelsUnverified();
    }
 
    public int getNumGrayChannels() {
@@ -1194,10 +1116,10 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
             }
          }
       }
-      if (mdPanel_ != null) {            
-         mdPanel_.imageChangedUpdate(this);
+      if (cmcPanel_ != null) {            
+         cmcPanel_.imageChangedUpdate(this);
          if (updatePixelSize) {
-            mdPanel_.redrawSizeBar();
+            cmcPanel_.redrawSizeBar();
          }
       }
       imageChangedWindowUpdate(); //used to update status line

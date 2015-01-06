@@ -1,7 +1,8 @@
-package mmcloneclasses.imagedisplay;
+package imagedisplay;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
+import java.awt.Panel;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Timer;
@@ -12,7 +13,7 @@ import javax.swing.JPanel;
  * This class is responsible for containing and managing groups of 
  * AxisScrollers, and how they affect the display of a collection of images.
  */
-public class ScrollerPanel extends JPanel {
+public class ScrollerPanel extends Panel {
    
    /**
     * This class signifies that the currently-displayed image needs to be 

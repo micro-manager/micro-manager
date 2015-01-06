@@ -40,7 +40,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.GroupLayout;
 import javax.swing.LayoutStyle;
-import mmcloneclasses.imagedisplay.VirtualAcquisitionDisplay;
+import imagedisplay.VirtualAcquisitionDisplay;
 import mmcloneclasses.internalinterfaces.Histograms;
 import org.micromanager.utils.MMScaleBar;
 

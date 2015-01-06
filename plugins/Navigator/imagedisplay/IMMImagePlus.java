@@ -1,4 +1,4 @@
-package mmcloneclasses.imagedisplay;
+package imagedisplay;
 
 /**
  * This interface allows us to manipulate the dimensions

@@ -1,5 +1,5 @@
 
-package mmcloneclasses.imagedisplay;
+package imagedisplay;
 
 import ij.ImagePlus;
 import ij.process.ImageProcessor;

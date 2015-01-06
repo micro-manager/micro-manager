@@ -1,5 +1,5 @@
 
-package mmcloneclasses.imagedisplay;
+package imagedisplay;
 
 import java.awt.BasicStroke;
 import java.awt.Canvas;

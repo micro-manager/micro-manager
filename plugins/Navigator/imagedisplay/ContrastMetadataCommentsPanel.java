@@ -19,11 +19,13 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package mmcloneclasses.imagedisplay;
+package imagedisplay;
 
+import edu.mines.jtk.dsp.Histogram;
 import ij.ImagePlus;
 import ij.gui.ImageWindow;
 import java.awt.Font;
+import java.awt.Panel;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.Arrays;
@@ -50,7 +52,7 @@ import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
 
 
-public class ContrastMetadataCommentsPanel extends JPanel  {
+public class ContrastMetadataCommentsPanel extends Panel  {
 
    private JSplitPane CommentsSplitPane;
    private JLabel imageCommentsLabel;
@@ -91,6 +93,9 @@ public class ContrastMetadataCommentsPanel extends JPanel  {
       summaryMetadataTable.setModel(summaryMetadataModel_);
       addTextChangeListeners();
       addFocusListeners();
+   }
+   
+   public void initialize(DisplayPlus display) {
       //setup for use with a single display
       currentDisplay_ = display;
       summaryCommentsTextArea.setText(currentDisplay_.getSummaryComment());
@@ -100,6 +105,7 @@ public class ContrastMetadataCommentsPanel extends JPanel  {
       } else {
          histograms_ = new MultiChannelHistograms(currentDisplay_, contrastPanel_);
       }
+
       contrastPanel_.displayChanged(currentDisplay_, histograms_);
       imageChangedUpdate(currentDisplay_);
    }
@@ -285,7 +291,7 @@ public class ContrastMetadataCommentsPanel extends JPanel  {
 
       tabbedPane.addTab("Comments", CommentsSplitPane);
 
-      javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+      GroupLayout layout = new GroupLayout(this);
       this.setLayout(layout);
       layout.setHorizontalGroup(
               layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING).addGroup(layout.createSequentialGroup().addContainerGap().addComponent(tabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 625, Short.MAX_VALUE).addContainerGap()));

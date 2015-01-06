@@ -6,7 +6,6 @@ package imagedisplay;
 
 import java.awt.BorderLayout;
 import javax.swing.JPanel;
-import mmcloneclasses.imagedisplay.ContrastMetadataCommentsPanel;
 
 /**
  *

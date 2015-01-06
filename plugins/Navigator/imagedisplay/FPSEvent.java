@@ -1,4 +1,4 @@
-package mmcloneclasses.imagedisplay;
+package imagedisplay;
 
 /**
  * This class handles notifications of the current incoming image rate (data 

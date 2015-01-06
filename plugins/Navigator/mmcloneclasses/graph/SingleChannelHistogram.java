@@ -45,7 +45,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import mmcloneclasses.acquisition.MMImageCache;
 import mmcloneclasses.graph.HistogramPanel.CursorListener;
-import mmcloneclasses.imagedisplay.VirtualAcquisitionDisplay;
+import imagedisplay.VirtualAcquisitionDisplay;
 import mmcloneclasses.internalinterfaces.Histograms;
 import org.micromanager.MMStudio;
 import org.micromanager.api.ImageCache;

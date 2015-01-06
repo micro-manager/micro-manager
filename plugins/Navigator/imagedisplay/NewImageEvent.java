@@ -1,4 +1,4 @@
-package mmcloneclasses.imagedisplay;
+package imagedisplay;
 
 import java.util.HashMap;
 

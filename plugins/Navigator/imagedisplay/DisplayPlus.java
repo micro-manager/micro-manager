@@ -24,14 +24,13 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import mmcloneclasses.acquisition.MMImageCache;
-import mmcloneclasses.imagedisplay.DisplayWindow;
-import mmcloneclasses.imagedisplay.MMCompositeImage;
-import mmcloneclasses.imagedisplay.VirtualAcquisitionDisplay;
 import org.json.JSONObject;
 import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MDUtils;
@@ -58,16 +57,18 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
    private SurfaceInterpolator currentSurface_;
    private MultiPosGrid currentRegion_;
    private ThreadPoolExecutor redrawPixelsExecutor_;
+   private NonImagePanel nip_;
 
    public DisplayPlus(final MMImageCache stitchedCache, Acquisition acq, JSONObject summaryMD,
            MultiResMultipageTiffStorage multiResStorage ) {
-      super(stitchedCache, null, "test", true);
+      super(stitchedCache, null, "test", true, summaryMD);
+      
+      
       posManager_ = multiResStorage.getPositionManager();
       exploreAcq_ = acq instanceof ExploreAcquisition;
 
       //create redraw pixels executor
       redrawPixelsExecutor_ = new ThreadPoolExecutor(1, 1, 0, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
-
          @Override
          public Thread newThread(Runnable r) {
             return new Thread(r, "Pixel update thread ");
@@ -79,9 +80,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
 
       this.getEventBus().register(this);
 
-      //Add in custom controls
-      subImageControls_ = new SubImageControls(this, this.getEventBus(), acq);
-
+      
       //add in customized zoomable acquisition virtual stack
       try {
          //looks like nSlicess only really matters during display startup
@@ -129,18 +128,30 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
          zoomableStack_ = new ZoomableVirtualStack(MDUtils.getIJType(summaryMD), displayWidth, displayHeight,
                  stitchedCache, nSlices, this, multiResStorage, acq_, maxZoomIndex);
 
-         this.show(zoomableStack_);
       } catch (Exception e) {
          e.printStackTrace();
          ReportingUtils.showError("Problem with initialization due to missing summary metadata tags");
          return;
       }
-      overlayer_ = new DisplayOverlayer(this, acq, multiResStorage.getTileWidth(), multiResStorage.getTileHeight());
+      
 
+      //Add in custom controls
+      subImageControls_ = new SubImageControls(this, this.getEventBus(), acq);
+      //create contrast, metadata, and other controls
+      ContrastMetadataCommentsPanel cmcPanel = new ContrastMetadataCommentsPanel(this);
+      super.setCMCPanel(cmcPanel);
+      DisplayPlusControls controls = new DisplayPlusControls(this, this.getEventBus(), acq);
+      nip_ = new NonImagePanel(cmcPanel, controls);
+
+      this.show(zoomableStack_);
       canvas_ = this.getImagePlus().getCanvas();
+      overlayer_ = new DisplayOverlayer(this, acq, multiResStorage.getTileWidth(), multiResStorage.getTileHeight(), zoomableStack_);
 
-      //Zoom to 100%
-      canvas_.unzoom();
+      cmcPanel.initialize(this);
+
+
+
+
 
       setupKeyListeners();
       setupMouseListeners();
@@ -149,7 +160,36 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
       canvas_.requestFocus();
       activeDisplays_.add(this);
    }
+   
+   public NonImagePanel getNonImagePanel() {
+      return nip_;
+   }
 
+   /**
+    * Change the stack so that the resolution of the imageplus can change for window resizing
+    * @param newStack 
+    */
+   public void changeStack(ZoomableVirtualStack newStack) {
+      zoomableStack_ = newStack;
+      super.virtualStack_ = newStack;
+      super.getHyperImage().setStack(newStack);
+      //account for border in image drawing
+      try {
+         JavaUtils.setRestrictedFieldValue(canvas_, ImageCanvas.class, "imageWidth",
+                 canvas_.getWidth() - 2*DisplayWindow.CANVAS_PIXEL_BORDER);
+         
+         JavaUtils.setRestrictedFieldValue(canvas_, ImageCanvas.class, "imageHeight",
+                 canvas_.getHeight() - 2*DisplayWindow.CANVAS_PIXEL_BORDER);
+      } catch (NoSuchFieldException ex) {
+         ReportingUtils.showError("Couldn't change ImageCanvas width");
+      } catch (NullPointerException exc) {
+         exc.printStackTrace();
+      }
+
+      overlayer_.setStack(newStack);
+   }
+   
+   
    @Subscribe
    public void onWindowClose(DisplayWindow.RequestToCloseEvent event) {
       //abort acquisition if needed then call super method

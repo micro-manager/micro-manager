@@ -1,4 +1,4 @@
-package mmcloneclasses.imagedisplay;
+package imagedisplay;
 
 import com.google.common.eventbus.EventBus;
 import ij.CompositeImage;

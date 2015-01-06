@@ -20,7 +20,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
 import javax.swing.JTextField;
-import mmcloneclasses.imagedisplay.*;
 import mmcloneclasses.internalinterfaces.DisplayControls;
 import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
@@ -40,6 +39,7 @@ public class SubImageControls extends DisplayControls {
    private EventBus bus_;
    private DisplayPlus display_;
    private ScrollerPanel scrollerPanel_;
+   private JPanel sliderPanel_;
    private JScrollBar zTopSlider_, zBottomSlider_;
    private JTextField zTopTextField_, zBottomTextField_;
    private Acquisition acq_;
@@ -63,7 +63,7 @@ public class SubImageControls extends DisplayControls {
       controlsPanel.add(scrollerPanel_, "span, growx, wrap");
 
       if (acq_ instanceof ExploreAcquisition) {
-         JPanel sliderPanel = new JPanel(new MigLayout("insets 0", "[][][grow]", ""));
+         sliderPanel_ = new JPanel(new MigLayout("insets 0", "[][][grow]", ""));
          //get slider min and max
          //TODO: what if no z device enabled?
          try {
@@ -137,20 +137,20 @@ public class SubImageControls extends DisplayControls {
             zBottomTextField_.getActionListeners()[0].actionPerformed(null);
 
 
-            sliderPanel.add(new JLabel("Z limits"), "span 1 2");
+            sliderPanel_.add(new JLabel("Z limits"), "span 1 2");
             if (JavaUtils.isMac()) {
-               sliderPanel.add(zTopTextField_, "w 80!");
-               sliderPanel.add(zTopSlider_, "growx, wrap");
-               sliderPanel.add(zBottomTextField_, "w 80!");
-               sliderPanel.add(zBottomSlider_, "growx");
+               sliderPanel_.add(zTopTextField_, "w 80!");
+               sliderPanel_.add(zTopSlider_, "growx, wrap");
+               sliderPanel_.add(zBottomTextField_, "w 80!");
+               sliderPanel_.add(zBottomSlider_, "growx");
             } else {
-               sliderPanel.add(zTopTextField_, "w 50!");
-               sliderPanel.add(zTopSlider_, "growx, wrap");
-               sliderPanel.add(zBottomTextField_, "w 50!");
-               sliderPanel.add(zBottomSlider_, "growx");
+               sliderPanel_.add(zTopTextField_, "w 50!");
+               sliderPanel_.add(zTopSlider_, "growx, wrap");
+               sliderPanel_.add(zBottomTextField_, "w 50!");
+               sliderPanel_.add(zBottomSlider_, "growx");
 
             }
-            controlsPanel.add(sliderPanel, "span, growx, align center, wrap");
+            controlsPanel.add(sliderPanel_, "span, growx, align center, wrap");
          } catch (Exception e) {
             ReportingUtils.showError("Couldn't create z sliders");
          }
@@ -230,10 +230,6 @@ public class SubImageControls extends DisplayControls {
     */
    @Subscribe
    public void onSetImage(ScrollerPanel.SetImageEvent event) {
-      int position = event.getPositionForAxis("position");
-      display_.updatePosition(position); //TODO: get rid of this because no positions???
-      // Positions for ImageJ are 1-indexed but positions from the event are 
-      // 0-indexed.
       int channel = event.getPositionForAxis("channel") + 1;
       int frame = event.getPositionForAxis("time") + 1;
       int slice = event.getPositionForAxis("z") + 1;
@@ -267,12 +263,11 @@ public class SubImageControls extends DisplayControls {
 
    @Subscribe
    public void onLayoutChange(ScrollerPanel.LayoutChangedEvent event) {
-      int width = ((DisplayWindow) this.getParent()).getWidth();
-//      scrollerPanel_.setPreferredSize(new Dimension(width,scrollerPanel_.getPreferredSize().height));
-//      this.setPreferredSize( new Dimension(width, CONTROLS_HEIGHT + event.getPreferredSize().height));
-      invalidate();
-      validate();
-//      ((DisplayWindow) this.getParent()).pack();
+      this.setPreferredSize(new Dimension(this.getPreferredSize().width,
+              scrollerPanel_.getPreferredSize().height + (sliderPanel_ != null ? sliderPanel_.getPreferredSize().height : 0)));
+      this.invalidate();
+      this.validate();
+      this.getParent().doLayout();
    }
 
    @Override

@@ -51,14 +51,18 @@ public class DisplayOverlayer {
    private AtomicBoolean surfaceNeedsUpdate_ = new AtomicBoolean(false);
    private volatile Thread updatingThread_;
 
-   public DisplayOverlayer(DisplayPlus display, Acquisition acq, int tileWidth, int tileHeight) {
+   public DisplayOverlayer(DisplayPlus display, Acquisition acq, int tileWidth, int tileHeight, ZoomableVirtualStack stack) {
       display_ = display;
       tileWidth_ = tileWidth;
       tileHeight_ = tileHeight;
       acq_ = acq;
       canvas_ = display.getImagePlus().getCanvas();
-      zoomableStack_ = (ZoomableVirtualStack) display.virtualStack_;
+      zoomableStack_ = stack;
       createSingleThreadExecutor();
+   }
+   
+   public void setStack(ZoomableVirtualStack stack) {
+      zoomableStack_ = stack;
    }
 
    public void shutdown() {

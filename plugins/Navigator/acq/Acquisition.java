@@ -11,7 +11,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import javax.swing.JFrame;
 import mmcloneclasses.acquisition.MMImageCache;
-import mmcloneclasses.imagedisplay.ContrastMetadataCommentsPanel;
+import imagedisplay.ContrastMetadataCommentsPanel;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
@@ -86,19 +86,7 @@ public abstract class Acquisition {
       posManager_ = storage.getPositionManager();
       
       DisplayPlus disp = new DisplayPlus(imageCache, this, summaryMetadata, storage);
-      ContrastMetadataCommentsPanel cmcPanel = new ContrastMetadataCommentsPanel(disp);
-      disp.setCMCPanel(cmcPanel);
-      DisplayPlusControls controls = new DisplayPlusControls(disp, disp.getEventBus(), this);
-      NonImagePanel nip = new NonImagePanel(cmcPanel, controls);
-      
-      //TODO
-      ////////////////////////////////////////////////////////////////////
-      JFrame frame = new JFrame();
-      frame.add(nip);
-      frame.setVisible(true);
-      frame.pack();
-      ///////////////////////////////////////////////////
-      
+         
       imageSink_ = new TaggedImageSink(engineOutputQueue_, imageCache, this);
       imageSink_.start();
    }

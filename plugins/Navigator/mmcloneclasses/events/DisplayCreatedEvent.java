@@ -1,7 +1,7 @@
 package mmcloneclasses.events;
 
-import mmcloneclasses.imagedisplay.DisplayWindow;
-import mmcloneclasses.imagedisplay.VirtualAcquisitionDisplay;
+import imagedisplay.DisplayWindow;
+import imagedisplay.VirtualAcquisitionDisplay;
 
 
 /**

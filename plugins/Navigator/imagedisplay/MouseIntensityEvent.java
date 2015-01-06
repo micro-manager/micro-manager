@@ -1,4 +1,4 @@
-package mmcloneclasses.imagedisplay;
+package imagedisplay;
 
 // This class provides information when the mouse moves over an image.
 public class MouseIntensityEvent {
