@@ -47,7 +47,7 @@ public:
 
    // action interface
    // ----------------
-   int OnPLogicMode         (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnPLogicMode           (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSetShutterChannel    (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPLogicOutputState    (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFrontpanelOutputState(MM::PropertyBase* pProp, MM::ActionType eAct);

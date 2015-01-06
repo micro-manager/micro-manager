@@ -119,7 +119,11 @@ int CPLogic::Initialize()
       AddAllowedValue(g_SetChannelPropertyName, g_ChannelOnly6, 6);
       AddAllowedValue(g_SetChannelPropertyName, g_ChannelOnly7, 7);
       AddAllowedValue(g_SetChannelPropertyName, g_ChannelOnly8, 8);
-      UpdateProperty(g_SetChannelPropertyName);
+      UpdateProperty(g_SetChannelPropertyName); // doesn't do anything right now
+      // makes sure card actually gets initialized
+      shutterOpen_ = true;
+      SetProperty(g_SetChannelPropertyName, g_ChannelNone);
+      shutterOpen_ = false;
    }
 
    // pointer position, this is where edits/queries are made in general
