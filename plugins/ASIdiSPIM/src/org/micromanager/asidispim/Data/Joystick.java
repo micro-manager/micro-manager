@@ -148,21 +148,18 @@ public class Joystick {
       List<JSAxisData> list = new ArrayList<JSAxisData>();
       list.add(new JSAxisData(devices_.getDeviceDisplayVerbose(Devices.Keys.NONE), Devices.Keys.NONE, Directions.NONE));  // adds "None" to top of list
       for (Devices.Keys devKey : Devices.STAGES1D) {
-         if (devices_.isValidMMDevice(devKey)) {
+         if (devices_.isTigerDevice(devKey)) {
             String dispKey = devices_.getDeviceDisplayWithRole(devKey, Directions.NONE, side); 
             list.add(new JSAxisData(dispKey, devKey, Directions.NONE));
          }
       }
-      for (Devices.Keys devKey : Devices.STAGES2D) {
-         if (devKey == Devices.Keys.XYSTAGE) { 
-            continue;  // don't include the XY stage on wheel list since the device adapter doesn't support that
-         }
-         if (devices_.isValidMMDevice(devKey)) {
-            Directions[] dirs = {Directions.X, Directions.Y};
-            for (Directions dir : dirs) {  // gets for X and Y for now
-               String dispKey = devices_.getDeviceDisplayWithRole(devKey, dir, side);
-               list.add(new JSAxisData(dispKey, devKey, dir));
-            }
+      // don't include the XY stage on wheel list since the device adapter doesn't support that
+      for (Devices.Keys devKey : Devices.GALVOS) {
+         // must be Tiger devices
+         Directions[] dirs = {Directions.X, Directions.Y};
+         for (Directions dir : dirs) {  // gets for X and Y for now
+            String dispKey = devices_.getDeviceDisplayWithRole(devKey, dir, side);
+            list.add(new JSAxisData(dispKey, devKey, dir));
          }
       }
       List<JSAxisData> noduplicates = new ArrayList<JSAxisData>(new LinkedHashSet<JSAxisData>(list));
@@ -177,7 +174,7 @@ public class Joystick {
       List<JSAxisData> list = new ArrayList<JSAxisData>();
       list.add(new JSAxisData(devices_.getDeviceDisplayVerbose(Devices.Keys.NONE), Devices.Keys.NONE, Directions.NONE));
       for (Devices.Keys devKey : Devices.STAGES2D) {
-         if (devices_.isValidMMDevice(devKey)) {
+         if (devices_.isTigerDevice(devKey)) {
             String dispKey = devices_.getDeviceDisplayVerbose(devKey);
             list.add(new JSAxisData(dispKey, devKey, Directions.NONE));
          }
@@ -193,16 +190,17 @@ public class Joystick {
    public void unsetAllJoysticks() {
       try {
          for (Devices.Keys dev : Devices.STAGES1D) {
-            props_.setPropValue(dev, Properties.Keys.JOYSTICK_INPUT, VALUES.get(Joystick.Keys.NONE), true);
+            if (devices_.isTigerDevice(dev)) {
+               props_.setPropValue(dev, Properties.Keys.JOYSTICK_INPUT, VALUES.get(Joystick.Keys.NONE), true);
+            }
          }
-         for (Devices.Keys dev : Devices.STAGES2D) {
-            if (props_.hasProperty(dev, Properties.Keys.JOYSTICK_ENABLED)) { // if XY stage
-               props_.setPropValue(dev, Properties.Keys.JOYSTICK_ENABLED, Properties.Values.NO, true);
-            }
-            else {  // must be micro-mirror
-               props_.setPropValue(dev, Properties.Keys.JOYSTICK_INPUT_X, VALUES.get(Joystick.Keys.NONE), true);
-               props_.setPropValue(dev, Properties.Keys.JOYSTICK_INPUT_Y, VALUES.get(Joystick.Keys.NONE), true);
-            }
+         if (devices_.isTigerDevice(Devices.Keys.XYSTAGE)) {
+            props_.setPropValue(Devices.Keys.XYSTAGE, Properties.Keys.JOYSTICK_ENABLED, Properties.Values.NO, true);
+         }
+         for (Devices.Keys dev : Devices.GALVOS) {
+            // must be Tiger devices
+            props_.setPropValue(dev, Properties.Keys.JOYSTICK_INPUT_X, VALUES.get(Joystick.Keys.NONE), true);
+            props_.setPropValue(dev, Properties.Keys.JOYSTICK_INPUT_Y, VALUES.get(Joystick.Keys.NONE), true);
          }
       } catch (Exception ex) {
          MyDialogUtils.showError("Problem clearing all joysticks");
@@ -212,25 +210,25 @@ public class Joystick {
    /**
     * If any device is attached to the specified joystick then it clears that association.
     * Loops over all devices that could be associated with joysticks and sets appropriate property.
+    * TODO revisit, may not need this at all
     */
    public void unsetJoystick(Joystick.Keys jkey) {
       try {
          for (Devices.Keys dev : Devices.STAGES1D) {
-            if (props_.getPropValueString(dev, Properties.Keys.JOYSTICK_INPUT).equals(VALUES.get(jkey))) {
-               props_.setPropValue(dev, Properties.Keys.JOYSTICK_INPUT, VALUES.get(Joystick.Keys.NONE));
+            if (devices_.isTigerDevice(dev)) {
+               if (props_.getPropValueString(dev, Properties.Keys.JOYSTICK_INPUT).equals(VALUES.get(jkey))) {
+                  props_.setPropValue(dev, Properties.Keys.JOYSTICK_INPUT, VALUES.get(Joystick.Keys.NONE));
+               }
             }
          }
-         for (Devices.Keys dev : Devices.STAGES2D) {
-            if (props_.hasProperty(dev, Properties.Keys.JOYSTICK_ENABLED)) { // if XY stage
-               // don't do anything at the moment for XY stages
+         // don't do anything at the moment for XY stages
+         for (Devices.Keys dev : Devices.GALVOS) {
+            // must be Tiger devices
+            if (props_.getPropValueString(dev, Properties.Keys.JOYSTICK_INPUT_X).equals(VALUES.get(jkey))) {
+               props_.setPropValue(dev, Properties.Keys.JOYSTICK_INPUT_X, VALUES.get(Joystick.Keys.NONE));
             }
-            else {  // must be micro-mirror
-               if (props_.getPropValueString(dev, Properties.Keys.JOYSTICK_INPUT_X).equals(VALUES.get(jkey))) {
-                  props_.setPropValue(dev, Properties.Keys.JOYSTICK_INPUT_X, VALUES.get(Joystick.Keys.NONE));
-               }
-               if (props_.getPropValueString(dev, Properties.Keys.JOYSTICK_INPUT_Y).equals(VALUES.get(jkey))) {
-                  props_.setPropValue(dev, Properties.Keys.JOYSTICK_INPUT_Y, VALUES.get(Joystick.Keys.NONE));
-               }
+            if (props_.getPropValueString(dev, Properties.Keys.JOYSTICK_INPUT_Y).equals(VALUES.get(jkey))) {
+               props_.setPropValue(dev, Properties.Keys.JOYSTICK_INPUT_Y, VALUES.get(Joystick.Keys.NONE));
             }
          }
       } catch (Exception ex) {
@@ -241,12 +239,13 @@ public class Joystick {
    /**
     * De-selects the joystick input according to the specified device and JSAxisData.
     * If this code is modified then probably also need to modify setJoystick too.
+    * TODO revisit, may not need this at all
     * @param jkey
     * @param JSAxisData
     */
    public void unsetJoystick(Joystick.Keys jkey, JSAxisData JSAxisData) {
       Devices.Keys dev = JSAxisData.deviceKey;
-      if (dev == Devices.Keys.NONE) {
+      if (!devices_.isTigerDevice(dev)) {
          return;
       }
       try {

@@ -100,6 +100,8 @@ public class Devices {
          Devices.Keys.PIEZOA, Devices.Keys.PIEZOB);
    public final static Set<Devices.Keys> STAGES2D = EnumSet.of(
          Devices.Keys.XYSTAGE, Devices.Keys.GALVOA, Devices.Keys.GALVOB);
+   public final static Set<Devices.Keys> GALVOS = EnumSet.of(
+         Devices.Keys.GALVOA, Devices.Keys.GALVOB);
    public final static Set<Devices.Keys> CAMERAS = EnumSet.of(
          Devices.Keys.CAMERAA, Devices.Keys.CAMERAB, Devices.Keys.MULTICAMERA,
          Devices.Keys.CAMERALOWER);
@@ -414,6 +416,15 @@ public class Devices {
       } catch (Exception e) {
          return false;
       }
+   }
+   
+   /**
+    * returns true iff the device is from ASI Tiger
+    * @param devKey
+    * @return
+    */
+   public boolean isTigerDevice(Devices.Keys devKey) {
+      return (deviceInfo_.get(devKey).deviceLibrary == Devices.Libraries.ASITIGER);
    }
 
    /**

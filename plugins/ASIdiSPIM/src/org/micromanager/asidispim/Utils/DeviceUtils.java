@@ -59,8 +59,7 @@ public class DeviceUtils {
     */
    private void checkFirmwareVersion(Devices.Keys key) {
       // firmware version check only for ASI devices
-      Devices.Libraries deviceLibrary = devices_.getMMDeviceLibrary(key);
-      if (deviceLibrary != Devices.Libraries.ASITIGER) {
+      if (!devices_.isTigerDevice(key)) {
          return;
       }
       float firmwareVersion = props_.getPropValueFloat(key, Properties.Keys.FIRMWARE_VERSION);
