@@ -21,6 +21,7 @@
 
 package org.micromanager.asidispim.Utils;
 
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -200,7 +201,8 @@ public class DeviceUtils {
     * @param deviceName - ASi diSPIM device type (see Devices class)
     * @return final JComboBox
     */
-   public JComboBox makeDeviceSelectionBox(mmcorej.DeviceType deviceType, Devices.Keys deviceKey) {
+   public JComboBox makeDeviceSelectionBox(mmcorej.DeviceType deviceType,
+         Devices.Keys deviceKey, int maximumWidth) {
       // when editing this method do the same to the one with array argument too
       JComboBox deviceBox = new JComboBox();
       ArrayList<String> devices = new ArrayList<String>();
@@ -213,6 +215,7 @@ public class DeviceUtils {
       }
       deviceBox.addActionListener(new DeviceBoxListener(deviceKey, deviceBox));
       deviceBox.setSelectedItem(devices_.getMMDevice(deviceKey));  // selects whatever device was read in by prefs
+      deviceBox.setMaximumSize(new Dimension(maximumWidth, 30));
       return deviceBox;
    }
    
@@ -225,7 +228,8 @@ public class DeviceUtils {
     * @param deviceName - ASi diSPIM device type (see Devices class)
     * @return final JComboBox
     */
-   public JComboBox makeDeviceSelectionBox(mmcorej.DeviceType [] deviceTypes, Devices.Keys deviceKey) {
+   public JComboBox makeDeviceSelectionBox(mmcorej.DeviceType [] deviceTypes,
+         Devices.Keys deviceKey, int maximumWidth) {
       // when editing this method do the same to the one with non-array argument too
       assert deviceTypes.length >= 1;
       JComboBox deviceBox = new JComboBox();
@@ -241,6 +245,7 @@ public class DeviceUtils {
       }
       deviceBox.addActionListener(new DeviceBoxListener(deviceKey, deviceBox));
       deviceBox.setSelectedItem(devices_.getMMDevice(deviceKey));  // selects whatever device was read in by prefs
+      deviceBox.setMaximumSize(new Dimension(maximumWidth, 30));
       return deviceBox;
    }
    
@@ -250,7 +255,7 @@ public class DeviceUtils {
     * @param deviceName
     * @return
     */
-   public JComboBox makeMultiCameraDeviceBox(Devices.Keys deviceName) {
+   public JComboBox makeMultiCameraDeviceBox(Devices.Keys deviceName, int maximumWidth) {
       List<String> multiCameras = new ArrayList<String>();
       multiCameras.add(0, "");
       try {
@@ -275,6 +280,7 @@ public class DeviceUtils {
       } else {
          deviceBox.setSelectedItem(devices_.getMMDevice(deviceName));  // selects whatever device was read in by prefs
       }
+      deviceBox.setMaximumSize(new Dimension(maximumWidth, 30));
       return deviceBox;
    }
    
@@ -283,7 +289,7 @@ public class DeviceUtils {
     * @param deviceName
     * @return
     */
-   public JComboBox makeSingleCameraDeviceBox(Devices.Keys deviceName) {
+   public JComboBox makeSingleCameraDeviceBox(Devices.Keys deviceName, int maximumWidth) {
       List<String> singleCameras = new ArrayList<String>();
       singleCameras.add(0, "");
       String originalCamera = core_.getCameraDevice();
@@ -309,6 +315,7 @@ public class DeviceUtils {
       JComboBox deviceBox = new JComboBox(singleCameras.toArray());
       deviceBox.addActionListener(new DeviceBoxListener(deviceName, deviceBox));
       deviceBox.setSelectedItem(devices_.getMMDevice(deviceName));  // selects whatever device was read in by prefs
+      deviceBox.setMaximumSize(new Dimension(maximumWidth, 30));
       return deviceBox;
    }
    

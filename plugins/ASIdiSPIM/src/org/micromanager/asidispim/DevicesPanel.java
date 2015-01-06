@@ -59,6 +59,8 @@ public class DevicesPanel extends ListeningJPanel {
    private final JComboBox boxCameraA_;
    private final JComboBox boxCameraB_;
    
+   private final static int maxSelectorWidth = 110;
+   
    
    /**
     * Constructs the GUI Panel that lets the user specify which device to use
@@ -69,7 +71,8 @@ public class DevicesPanel extends ListeningJPanel {
       super(MyStrings.PanelNames.DEVICES.toString(), 
             new MigLayout(
               "",
-              "[right]15[align center]16[align center]",
+              "[right]15[center, " + maxSelectorWidth + "!]16[center, "
+              + maxSelectorWidth + "!]8[]8[]",
               "[]12[]"));
       devices_ = devices;
       
@@ -79,27 +82,33 @@ public class DevicesPanel extends ListeningJPanel {
       devices_.enableListeners(false);
 
       add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.XYSTAGE) + ":"));
-      boxXY_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.XYStageDevice, Devices.Keys.XYSTAGE); 
+      boxXY_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.XYStageDevice,
+            Devices.Keys.XYSTAGE, maxSelectorWidth*2); 
       add(boxXY_, "span 2, center, wrap");
       
       add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.LOWERZDRIVE) + ":"));
-      boxLowerZ_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice, Devices.Keys.LOWERZDRIVE);
+      boxLowerZ_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice,
+            Devices.Keys.LOWERZDRIVE, maxSelectorWidth*2);
       add(boxLowerZ_, "span 2, center, wrap");
       
       add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.UPPERZDRIVE) + ":"));
-      boxUpperZ_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice, Devices.Keys.UPPERZDRIVE);
+      boxUpperZ_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice,
+            Devices.Keys.UPPERZDRIVE, maxSelectorWidth*2);
       add(boxUpperZ_, "span 2, center, wrap");
       
       add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.PLOGIC) + ":"));
-      boxPLogic_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.GenericDevice, Devices.Keys.PLOGIC);
+      boxPLogic_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.GenericDevice,
+            Devices.Keys.PLOGIC, maxSelectorWidth*2);
       add(boxPLogic_, "span 2, center, wrap");
       
       add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.CAMERALOWER) + ":"));
-      boxLowerCam_ = du.makeSingleCameraDeviceBox(Devices.Keys.CAMERALOWER);
+      boxLowerCam_ = du.makeSingleCameraDeviceBox(Devices.Keys.CAMERALOWER,
+            maxSelectorWidth*2);
       add(boxLowerCam_, "span 2, center, wrap");
             
       add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.MULTICAMERA) + ":"));
-      boxMultiCam_ = du.makeMultiCameraDeviceBox(Devices.Keys.MULTICAMERA);
+      boxMultiCam_ = du.makeMultiCameraDeviceBox(Devices.Keys.MULTICAMERA,
+            maxSelectorWidth*2);
       add(boxMultiCam_, "span 2, center, wrap");
 
       add(new JLabel("Imaging Path A"), "skip 1");
@@ -108,22 +117,26 @@ public class DevicesPanel extends ListeningJPanel {
       JLabel label = new JLabel(devices_.getDeviceDisplayGeneric(Devices.Keys.GALVOA) + ":");
       label.setToolTipText("Should be the first two axes on the MicroMirror card, usually AB");
       add (label);
-      boxScannerA_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.GalvoDevice, Devices.Keys.GALVOA);
+      boxScannerA_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.GalvoDevice,
+            Devices.Keys.GALVOA, maxSelectorWidth);
       add(boxScannerA_);
-      boxScannerB_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.GalvoDevice, Devices.Keys.GALVOB);
+      boxScannerB_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.GalvoDevice,
+            Devices.Keys.GALVOB, maxSelectorWidth);
       add(boxScannerB_, "wrap");
       
       add(new JLabel(devices_.getDeviceDisplayGeneric(Devices.Keys.PIEZOA) + ":"));
-      boxPiezoA_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice, Devices.Keys.PIEZOA);
-      add(boxPiezoA_);
+      boxPiezoA_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice,
+            Devices.Keys.PIEZOA, maxSelectorWidth);
       
-      boxPiezoB_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice, Devices.Keys.PIEZOB);
+      add(boxPiezoA_);
+      boxPiezoB_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice,
+            Devices.Keys.PIEZOB, maxSelectorWidth);
       add(boxPiezoB_, "wrap");
 
       add(new JLabel("Camera:"));
-      boxCameraA_ = du.makeSingleCameraDeviceBox(Devices.Keys.CAMERAA);
+      boxCameraA_ = du.makeSingleCameraDeviceBox(Devices.Keys.CAMERAA, maxSelectorWidth);
       add(boxCameraA_);
-      boxCameraB_ = du.makeSingleCameraDeviceBox(Devices.Keys.CAMERAB);
+      boxCameraB_ = du.makeSingleCameraDeviceBox(Devices.Keys.CAMERAB, maxSelectorWidth);
       add(boxCameraB_, "wrap");
       
       add(new JLabel("Note: plugin must be restarted for some changes to take full effect."), "span 3");
