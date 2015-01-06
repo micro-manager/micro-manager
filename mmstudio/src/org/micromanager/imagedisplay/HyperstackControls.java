@@ -5,7 +5,6 @@
  */
 package org.micromanager.imagedisplay;
 
-import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
 import java.awt.Dimension;
@@ -27,6 +26,7 @@ import org.json.JSONObject;
 import org.micromanager.api.data.Coords;
 import org.micromanager.api.data.Datastore;
 import org.micromanager.api.data.Image;
+import org.micromanager.api.display.DisplayWindow;
 
 import org.micromanager.data.NewImageEvent;
 import org.micromanager.imagedisplay.events.FPSEvent;
@@ -44,7 +44,7 @@ public class HyperstackControls extends JPanel {
    // Height in pixels of our controls, not counting scrollbars.
    private final static int CONTROLS_HEIGHT = 65;
 
-   private EventBus displayBus_;
+   private DisplayWindow parent_;
    private Datastore store_;
    private MMVirtualStack stack_;
 
@@ -78,14 +78,14 @@ public class HyperstackControls extends JPanel {
     *        the "Snap/Live" window or the buttons for normal displays.
     */
    public HyperstackControls(Datastore store, MMVirtualStack stack,
-         EventBus displayBus, boolean shouldUseLiveControls) {
+         DisplayWindow parent, boolean shouldUseLiveControls) {
       super(new FlowLayout(FlowLayout.LEADING));
-      displayBus_ = displayBus;
+      parent_ = parent;
       store_ = store;
       store_.registerForEvents(this, 100);
       stack_ = stack;
       initComponents(shouldUseLiveControls);
-      displayBus_.register(this);
+      parent_.registerForEvents(this);
    }
 
    private void initComponents(final boolean shouldUseLiveControls) {
@@ -117,7 +117,7 @@ public class HyperstackControls extends JPanel {
 
       add(labelsPanel, "span, growx, align center, wrap");
 
-      scrollerPanel_ = new ScrollerPanel(store_, displayBus_);
+      scrollerPanel_ = new ScrollerPanel(store_, parent_);
       add(scrollerPanel_, "span, growx, shrinkx, wrap 0px");
    }
 
@@ -252,7 +252,7 @@ public class HyperstackControls extends JPanel {
 
    public void cleanup() {
       scrollerPanel_.cleanup();
-      displayBus_.unregister(this);
+      parent_.unregisterForEvents(this);
       store_.unregisterForEvents(this);
    }
 }

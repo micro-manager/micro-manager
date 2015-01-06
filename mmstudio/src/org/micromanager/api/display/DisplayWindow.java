@@ -1,5 +1,7 @@
 package org.micromanager.api.display;
 
+import com.google.common.eventbus.EventBus;
+
 import ij.gui.ImageWindow;
 import ij.ImagePlus;
 
@@ -129,4 +131,9 @@ public interface DisplayWindow {
     * that have called registerForEvents(), above, can receive it.
     */
    public void postEvent(Object obj);
+
+   /**
+    * Return a reference to the display's EventBus.
+    */
+   public EventBus getDisplayBus();
 }
