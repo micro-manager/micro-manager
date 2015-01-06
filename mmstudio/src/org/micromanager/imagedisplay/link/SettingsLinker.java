@@ -1,5 +1,7 @@
 package org.micromanager.imagedisplay.link;
 
+import java.util.List;
+
 import org.micromanager.api.display.DisplayWindow;
 
 /**
@@ -9,12 +11,15 @@ import org.micromanager.api.display.DisplayWindow;
  */
 public interface SettingsLinker {
    /**
-    * Return true iff the given DisplaySettingsEvent, sourced from the
-    * specified DisplayWindow, represents a change that we need to apply
-    * to our own DisplayWindow.
+    * Return a list of DisplaySettingsEvent classes that this particular
+    * linker cares about. There must be at least one element in the list.
     */
-   public boolean getShouldApplyChanges(DisplayWindow sourceWindow,
-         DisplaySettingsEvent changeEvent);
+   public List<Class<?>> getRelevantEventClasses();
+   /**
+    * Return true iff the given DisplaySettingsEvent represents a change that
+    * we need to apply to our own DisplayWindow.
+    */
+   public boolean getShouldApplyChanges(DisplaySettingsEvent changeEvent);
 
    /**
     * Apply the change indicated by the provided DisplaySettingsEvent to
