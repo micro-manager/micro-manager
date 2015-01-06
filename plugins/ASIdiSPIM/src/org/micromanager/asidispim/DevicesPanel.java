@@ -97,7 +97,7 @@ public class DevicesPanel extends ListeningJPanel {
       add(boxUpperZ_, "span 2, center, wrap");
       
       add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.PLOGIC) + ":"));
-      boxPLogic_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.GenericDevice,
+      boxPLogic_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.ShutterDevice,
             Devices.Keys.PLOGIC, maxSelectorWidth*2);
       add(boxPLogic_, "span 2, center, wrap");
       

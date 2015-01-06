@@ -169,6 +169,22 @@ public class DeviceUtils {
             MyDialogUtils.showError("Plugin doesn't support piezo devices other than ASITiger");
          }
          break;
+      case PLOGIC:
+         if (deviceLibrary == Devices.Libraries.ASITIGER) {
+            // would like to do below line but we need to change pre-init value and reload config
+            // checkPropertyValueEquals(key, Properties.Keys.PLOGIC_MODE, Properties.Values.DISPIM_SHUTTER);
+            if (!props_.getPropValueString(key, Properties.Keys.PLOGIC_MODE)
+                  .equals(Properties.Values.DISPIM_SHUTTER.toString())) {
+               MyDialogUtils.showError("Device " + devices_.getMMDevice(key)
+                     + ": need to set pre-initialization property PLogicMode to "
+                     + "diSPIM Shutter (use Hardware Config Wizard, then edit device "
+                     + devices_.getMMDevice(key) + " on Step 2). Then reload the "
+                     + " changed configuration and restart the diSPIM plugin.");
+            }
+         } else {
+            MyDialogUtils.showError("Plugin doesn't support galvo devices other than ASITiger");
+         }
+         break;
       default:
          break;
       }

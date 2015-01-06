@@ -107,6 +107,7 @@ public class Properties {
       PIEZO_MODE("PiezoMode"),
       MOVE_TO_HOME("MoveToHome"),
       SET_HOME_HERE("SetHomeToCurrentPosition"),
+      PLOGIC_MODE("PLogicMode"),
       TRIGGER_SOURCE("TRIGGER SOURCE"),   // for Hamamatsu
       TRIGGER_POLARITY("TriggerPolarity"),// for Hamamatsu
       TRIGGER_ACTIVE("TRIGGER ACTIVE"),   // for Hamamatsu
@@ -204,6 +205,7 @@ public class Properties {
       SAM_TRIANGLE("1 - Triangle"),
       DO_IT("Do it"),
       DO_SSZ("Z - save settings to card (partial)"),
+      DISPIM_SHUTTER("diSPIM Shutter"),
       INTERNAL("INTERNAL"),
       EXTERNAL("EXTERNAL"),
       INTERNAL_LC("Internal"),
