@@ -8,6 +8,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import org.micromanager.api.data.Coords;
 import org.micromanager.api.display.DisplaySettings;
 import org.micromanager.api.MultiStagePosition;
 
@@ -120,6 +121,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
       private Integer[] channelContrastMaxes_ = null;
       private Double[] channelGammas_ = null;
       private Integer channelDisplayModeIndex_ = null;
+      private Coords imageCoords_ = null;
       private Double histogramUpdateRate_ = null;
       private Boolean shouldSyncChannels_ = null;
       private Integer scaleBarColorIndex_ = null;
@@ -170,6 +172,12 @@ public class DefaultDisplaySettings implements DisplaySettings {
       @Override
       public DisplaySettingsBuilder channelDisplayModeIndex(Integer channelDisplayModeIndex) {
          channelDisplayModeIndex_ = channelDisplayModeIndex;
+         return this;
+      }
+
+      @Override
+      public DisplaySettingsBuilder imageCoords(Coords imageCoords) {
+         imageCoords_ = imageCoords;
          return this;
       }
 
@@ -247,6 +255,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
    private Integer[] channelContrastMaxes_ = null;
    private Double[] channelGammas_ = null;
    private Integer channelDisplayModeIndex_ = null;
+   private Coords imageCoords_ = null;
    private Double histogramUpdateRate_ = null;
    private Boolean shouldSyncChannels_ = null;
    private Integer scaleBarColorIndex_ = null;
@@ -266,6 +275,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
       channelContrastMaxes_ = builder.channelContrastMaxes_;
       channelGammas_ = builder.channelGammas_;
       channelDisplayModeIndex_ = builder.channelDisplayModeIndex_;
+      imageCoords_ = builder.imageCoords_;
       histogramUpdateRate_ = builder.histogramUpdateRate_;
       shouldSyncChannels_ = builder.shouldSyncChannels_;
       scaleBarColorIndex_ = builder.scaleBarColorIndex_;
@@ -307,6 +317,11 @@ public class DefaultDisplaySettings implements DisplaySettings {
    @Override
    public Integer getChannelDisplayModeIndex() {
       return channelDisplayModeIndex_;
+   }
+
+   @Override
+   public Coords getImageCoords() {
+      return imageCoords_;
    }
 
    @Override
@@ -373,6 +388,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
             .channelContrastMaxes(channelContrastMaxes_)
             .channelGammas(channelGammas_)
             .channelDisplayModeIndex(channelDisplayModeIndex_)
+            .imageCoords(imageCoords_)
             .histogramUpdateRate(histogramUpdateRate_)
             .shouldSyncChannels(shouldSyncChannels_)
             .scaleBarColorIndex(scaleBarColorIndex_)
