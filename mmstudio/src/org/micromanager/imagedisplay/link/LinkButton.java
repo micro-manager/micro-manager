@@ -1,6 +1,6 @@
 package org.micromanager.imagedisplay.link;
 
-import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
 import com.swtdesigner.SwingResourceManager;
 
 import java.awt.event.ActionEvent;
@@ -13,6 +13,8 @@ import javax.swing.JToggleButton;
 
 import org.micromanager.api.display.DisplayWindow;
 
+import org.micromanager.utils.ReportingUtils;
+
 /**
  * This class provides the GUI for a button that links DisplaySettings
  * attributes across multiple DisplayWindows.
@@ -23,11 +25,15 @@ public class LinkButton extends JToggleButton {
    private static final ImageIcon LINK_ICON = SwingResourceManager.getIcon(
          LinkButton.class, "/org/micromanager/icons/linkflat.png");
 
+   private SettingsLinker linker_;
+
    public LinkButton(final SettingsLinker linker,
          final DisplayWindow display) {
       super(LINK_ICON);
       setMinimumSize(new Dimension(1, 1));
       setMargin(new Insets(0, 0, 0, 0));
+
+      linker_ = linker;
 
       final LinkButton finalThis = this;
       addActionListener(new ActionListener() {
@@ -38,6 +44,7 @@ public class LinkButton extends JToggleButton {
          }
       });
       setToolTipText("Toggle linking of this control across all image windows for this dataset");
+      display.registerForEvents(this);
    }
 
    /**
@@ -46,5 +53,21 @@ public class LinkButton extends JToggleButton {
    public Dimension getPreferredSize() {
       return new Dimension(LINK_ICON.getIconWidth() + 6,
             LINK_ICON.getIconHeight() + 2);
+   }
+
+   /**
+    * When a LinkButton on another display toggles, we need to also toggle
+    * if their linker matches our own.
+    */
+   @Subscribe
+   public void onRemoteLinkEvent(RemoteLinkEvent event) {
+      try {
+         if (event.getLinker().getID() == linker_.getID()) {
+            setSelected(event.getIsLinked());
+         }
+      }
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Unable to respond to remote link event");
+      }
    }
 }

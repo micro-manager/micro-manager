@@ -17,7 +17,7 @@ public class LinkButtonEvent {
       isLinked_ = isLinked;
    }
 
-   public SettingsLinker getSettingsLinker() {
+   public SettingsLinker getLinker() {
       return linker_;
    }
 

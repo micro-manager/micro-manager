@@ -21,4 +21,11 @@ public interface SettingsLinker {
     * our own DisplayWindow.
     */
    public void applyChange(DisplaySettingsEvent changeEvent);
+
+   /**
+    * Generate a semi-unique ID for this linker; it should indicate the
+    * specific property, sub-property, or group of properties that this linker
+    * handles synchronization for.
+    */
+   public int getID();
 }
