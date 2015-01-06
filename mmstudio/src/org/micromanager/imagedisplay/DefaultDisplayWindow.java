@@ -219,8 +219,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       contentsPanel_.add(canvasPanel_, "align center, wrap, grow 0");
 
       if (controls_ == null) {
-         controls_ = new HyperstackControls(store_, stack_, displayBus_,
-               false);
+         controls_ = new HyperstackControls(store_, stack_, this, false);
       }
       contentsPanel_.add(controls_, "align center, wrap, growx");
 
@@ -610,6 +609,11 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
    @Override
    public void postEvent(Object obj) {
       displayBus_.post(obj);
+   }
+
+   @Override
+   public EventBus getDisplayBus() {
+      return displayBus_;
    }
 
    @Subscribe
