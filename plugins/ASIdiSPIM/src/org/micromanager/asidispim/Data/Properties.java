@@ -38,9 +38,12 @@ import org.micromanager.utils.NumberUtils;
  * Ideally this is the only place where MM properties are read and set.
  * One instance of this class exists in the top-level class.
  * 
- * Currently the property "reads" default to ignoring errors due to missing
- *  device or property, but property "writes" default to reporting errors
- *  due to missing device or property
+ * Property "reads" ignore errors due to missing device or property (instead
+ * they return empty string or zero); original functionality to catch those 
+ * errors was unused and removed Jan 2015.
+ * 
+ * Property "writes" default to reporting errors due to missing device or property,
+ * but can be called (and occasionally are) such as to ignore errors.
  *  
  *  For the special case of the "PLUGIN" device which doesn't have properties
  *   we store the values using preferences.
@@ -594,33 +597,19 @@ public class Properties {
     * @return value in string form, returned from core call to getProperty()
     */
    private String getPropValue(Devices.Keys device, Properties.Keys name,
-         boolean ignoreError, String propNameSubstitute) {
+         String propNameSubstitute) {
       String val = "";
       if (device == Devices.Keys.PLUGIN) {
-         if (!ignoreError & !prefs_.keyExists(PLUGIN_PREF_NODE, name)) {
-            MyDialogUtils.showError("Could not get property " + 
-                  name.toString(propNameSubstitute) + " from special plugin \"device\"");
-         }
          val = prefs_.getString(PLUGIN_PREF_NODE, name, "");
       } else {
          String mmDevice = null;
-         if (ignoreError) {
-            mmDevice = devices_.getMMDevice(device);
-            val = "";  // set to be empty string to avoid null pointer exceptions
-            if (mmDevice != null) {
-               try {
-                  val = core_.getProperty(mmDevice, name.toString(propNameSubstitute));
-               } catch (Exception ex) {
-                  // do nothing, just let empty string stay
-               }
-            }
-         } else {
+         mmDevice = devices_.getMMDevice(device);
+         val = "";  // set to be empty string to avoid null pointer exceptions
+         if (mmDevice != null) {
             try {
-               mmDevice = devices_.getMMDeviceException(device);
                val = core_.getProperty(mmDevice, name.toString(propNameSubstitute));
             } catch (Exception ex) {
-               MyDialogUtils.showError(ex, "Could not get property " + 
-                     name.toString(propNameSubstitute) + " from device " + mmDevice);
+               // do nothing, just let empty string stay
             }
          }
       }
@@ -635,7 +624,7 @@ public class Properties {
     * @return
     */
    public String getPropValueString(Devices.Keys device, Properties.Keys name) {
-      return getPropValue(device, name, true, null);
+      return getPropValue(device, name, null);
    }
    
    /**
@@ -646,33 +635,28 @@ public class Properties {
     * @return
     */
    public int getPropValueInteger(Devices.Keys device, Properties.Keys name) {
-      return getPropValueInteger(device, name, true, null);
+      return getPropValueInteger(device, name, null);
    }
    
    /**
     * returns an integer value for the specified property (assumes the caller knows the property contains an integer).
-    * If property isn't found, returns 0.  If ignoreError then user is warned too. 
+    * If property isn't found, returns 0.
     * @param device enum key for device 
     * @param name enum key for property 
-    * @param ignoreError false (default) will do error checking, true means ignores non-existing property
     * @param propNameSubstitute string to substitute for pattern in property name, or null if not used
     * @return
     */
    public int getPropValueInteger(Devices.Keys device, Properties.Keys name,
-         boolean ignoreError, String propNameSubstitute) {
+         String propNameSubstitute) {
       int val = 0;
       if (device == Devices.Keys.PLUGIN) {
-         if (!ignoreError & !prefs_.keyExists(PLUGIN_PREF_NODE, name)) {
-            MyDialogUtils.showError("Could not get property " + 
-                  name.toString(propNameSubstitute) + " from special plugin \"device\"");
-         }
          val = prefs_.getInt(PLUGIN_PREF_NODE, name, 0);
       }
       else {
          String strVal = null;
          try {
-            strVal = getPropValue(device, name, ignoreError, propNameSubstitute);
-            if (!ignoreError || !strVal.equals("")) {
+            strVal = getPropValue(device, name, propNameSubstitute);
+            if (!strVal.equals("")) {
                val = NumberUtils.coreStringToInt(strVal);
             }
          } catch (ParseException ex) {
@@ -694,33 +678,28 @@ public class Properties {
     * @return
     */
    public float getPropValueFloat(Devices.Keys device, Properties.Keys name) {
-      return getPropValueFloat(device, name, true, null);
+      return getPropValueFloat(device, name, null);
    }
    
    /**
    * returns an float value for the specified property (assumes the caller knows the property contains a float).
-   * If property isn't found, returns 0.  If ignoreError then user is warned too.
+   * If property isn't found, returns 0.
    * @param device enum key for device 
    * @param name enum key for property
-   * @param ignoreError true to ignore error (usually unassigned device) 
    * @param propNameSubstitute string to substitute for pattern in property name, or null if not used
    * @return
    */
   public float getPropValueFloat(Devices.Keys device, Properties.Keys name,
-        boolean ignoreError, String propNameSubstitute) {
+        String propNameSubstitute) {
      float val = 0;
      if (device == Devices.Keys.PLUGIN) {
-        if (!ignoreError & !prefs_.keyExists(PLUGIN_PREF_NODE, name)) {
-           MyDialogUtils.showError("Could not get property " + 
-                 name.toString(propNameSubstitute) + " from special plugin \"device\"");
-        }
         val = prefs_.getFloat(PLUGIN_PREF_NODE, name, 0);
      }
      else {
         String strVal = null;
         try {
-           strVal = getPropValue(device, name, ignoreError, propNameSubstitute);
-           if (!ignoreError || !strVal.equals("")) {
+           strVal = getPropValue(device, name, propNameSubstitute);
+           if (!strVal.equals("")) {
               val = (float)NumberUtils.coreStringToDouble(strVal);
            }
         } catch (ParseException ex) {
