@@ -75,6 +75,7 @@ import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
 import org.micromanager.internalinterfaces.LiveModeListener;
 import org.micromanager.utils.DragDropUtil;
 import org.micromanager.utils.GUIUtils;
+import org.micromanager.utils.MMFrame;
 import org.micromanager.utils.MMKeyDispatcher;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
@@ -82,13 +83,9 @@ import org.micromanager.utils.ReportingUtils;
 /**
  * GUI code for the primary window of the program. And nothing else.
  */
-public class MainFrame extends JFrame implements LiveModeListener {
+public class MainFrame extends MMFrame implements LiveModeListener {
 
    private static final String MICRO_MANAGER_TITLE = "Micro-Manager";
-   private static final String MAIN_FRAME_X = "x";
-   private static final String MAIN_FRAME_Y = "y";
-   private static final String MAIN_FRAME_WIDTH = "width";
-   private static final String MAIN_FRAME_HEIGHT = "height";
    private static final String MAIN_FRAME_DIVIDER_POS = "divider_pos";
    private static final String MAIN_EXPOSURE = "exposure";
 
@@ -166,12 +163,8 @@ public class MainFrame extends JFrame implements LiveModeListener {
 
    public void loadApplicationPrefs(Preferences prefs, 
          boolean shouldCloseOnExit) {
-      int x = prefs.getInt(MAIN_FRAME_X, 100);
-      int y = prefs.getInt(MAIN_FRAME_Y, 100);
-      int width = prefs.getInt(MAIN_FRAME_WIDTH, 644);
-      int height = prefs.getInt(MAIN_FRAME_HEIGHT, 570);
-
-      setBounds(x, y, width, height);
+      // put frame back where it was last time if possible
+      this.loadAndRestorePosition(100, 100, 644, 570);
       setExitStrategy(shouldCloseOnExit);
    }
    
@@ -704,13 +697,7 @@ public class MainFrame extends JFrame implements LiveModeListener {
     * @param prefs local preferences to be saved
     */
    public void savePrefs(Preferences prefs) {
-      Rectangle r = getBounds();
-
-      prefs.putInt(MAIN_FRAME_X, r.x);
-      prefs.putInt(MAIN_FRAME_Y, r.y);
-      prefs.putInt(MAIN_FRAME_WIDTH, r.width);
-      prefs.putInt(MAIN_FRAME_HEIGHT, r.height);
-      
+      this.savePosition();
       prefs.putInt(MAIN_FRAME_DIVIDER_POS, splitPane_.getDividerLocation());
       prefs.put(MAIN_EXPOSURE, textFieldExp_.getText());
    }

@@ -66,6 +66,7 @@ import org.micromanager.utils.GUIColors;
 import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MMException;
+import org.micromanager.utils.MMFrame;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
@@ -76,7 +77,7 @@ import org.micromanager.utils.TooltipTextMaker;
  * This dialog specifies all parameters for the MDA acquisition. 
  *
  */
-public class AcqControlDlg extends JFrame implements PropertyChangeListener, 
+public class AcqControlDlg extends MMFrame implements PropertyChangeListener, 
         AcqSettingsListener { 
 
    private static final long serialVersionUID = 1L;
@@ -131,8 +132,6 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
    private final AcqOrderMode[] acqOrderModes_;
    private AdvancedOptionsDialog advancedOptionsWindow_;
    // persistent properties (app settings)
-   private static final String ACQ_CONTROL_X = "acq_x";
-   private static final String ACQ_CONTROL_Y = "acq_y";
    private static final String ACQ_FILE_DIR = "dir";
    private static final String ACQ_INTERVAL = "acqInterval";
    private static final String ACQ_TIME_UNIT = "acqTimeInit";
@@ -1049,23 +1048,11 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
       advancedButton.setBounds(432, 170, 80, 22);
       getContentPane().add(advancedButton);
 
-      // update GUI contentss
+      // update GUI contents
       // -------------------
 
-      // load window settings
-      int x = 100;
-      int y = 100;
-      this.setBounds(x, y, 521, 690);
-
-      if (prefs_ != null) {
-         x = prefs_.getInt(ACQ_CONTROL_X, x);
-         y = prefs_.getInt(ACQ_CONTROL_Y, y);
-         setLocation(x, y);
-
-         // load override settings
-         // enable/disable dependent controls
-      }
-
+      // load window position from prefs
+      this.loadAndRestorePosition(100, 100, 521, 690);
 
       // add update event listeners
       positionsPanel_.addActionListener(new ActionListener() {
@@ -1908,13 +1895,7 @@ public class AcqControlDlg extends JFrame implements PropertyChangeListener,
     *
     */
    private void saveSettings() {
-      Rectangle r = getBounds();
-
-      if (prefs_ != null) {
-         // save window position
-         prefs_.putInt(ACQ_CONTROL_X, r.x);
-         prefs_.putInt(ACQ_CONTROL_Y, r.y);
-      }
+      this.savePosition();
    }
 
    private double convertTimeToMs(double interval, int units) {

@@ -101,14 +101,14 @@ public class MMFrame extends JFrame {
    
    
     /**
-    * Load window position and size from preferences
-    * Makes sure that the window can be displayed
+    * Load window position and size from preferences if possible.
+    * If not possible then sets them from arguments
     * Attaches a listener to the window that will save the position when the
     * window closing event is received
-    * @param x - X position of this dialog
-    * @param y - y position of this dialog
-    * @param width - width of this dialog
-    * @param height - height of this dialog
+    * @param x - X position of this dialog if preference value invalid
+    * @param y - y position of this dialog if preference value invalid
+    * @param width - width of this dialog if preference value invalid
+    * @param height - height of this dialog if preference value invalid
     */
    protected void loadAndRestorePosition(int x, int y, int width, int height) {
       loadPosition(x, y, width, height);
@@ -122,12 +122,12 @@ public class MMFrame extends JFrame {
    }
    
     /**
-    * Load window position and size from preferences
-    * Makes sure that the window can be displayed
+    * Load window position and size from preferences if possible.
+    * If not possible then sets it from arguments
     * Attaches a listener to the window that will save the position when the
     * window closing event is received
-    * @param x - X position of this dialog
-    * @param y - y position of this dialog
+    * @param x - X position of this dialog if preference value invalid
+    * @param y - y position of this dialog if preference value invalid
     */
    protected void loadAndRestorePosition(int x, int y) {
       loadPosition(x, y);

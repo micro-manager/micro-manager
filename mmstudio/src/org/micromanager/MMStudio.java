@@ -20,8 +20,10 @@ package org.micromanager;
 
 import bsh.EvalError;
 import bsh.Interpreter;
+
 import com.google.common.eventbus.Subscribe;
 import com.swtdesigner.SwingResourceManager;
+
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
@@ -30,9 +32,11 @@ import ij.gui.ImageWindow;
 import ij.gui.Line;
 import ij.gui.Roi;
 import ij.process.ImageProcessor;
+
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.WindowEvent;
 import java.awt.geom.Point2D;
@@ -45,6 +49,7 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.prefs.Preferences;
+
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
 import javax.swing.JMenuBar;
@@ -53,16 +58,16 @@ import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
+
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
 import mmcorej.TaggedImage;
+
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import org.micromanager.acquisition.*;
-import org.micromanager.acquisition.AcquisitionManager;
 import org.micromanager.api.Autofocus;
 import org.micromanager.api.DataProcessor;
 import org.micromanager.api.IAcquisitionEngine2010;
@@ -138,7 +143,6 @@ public class MMStudio implements ScriptInterface {
    private static final int TOOLTIP_DISPLAY_INITIAL_DELAY_MILLISECONDS = 2000;
    private static final String DEFAULT_CONFIG_FILE_NAME = "MMConfig_demo.cfg";
    private static final String DEFAULT_CONFIG_FILE_PROPERTY = "org.micromanager.default.config.file";
-
 
    // cfg file saving
    private static final String CFGFILE_ENTRY_BASE = "CFGFileEntry";
@@ -328,6 +332,14 @@ public class MMStudio implements ScriptInterface {
             "icons/microscope.gif"));
       frame_.loadApplicationPrefs(mainPrefs_, options_.closeOnExit_);
       ReportingUtils.SetContainingFrame(frame_);
+
+      // move ImageJ window to place where it last was if possible
+      // or else (150,150) if not
+      Point ijWinLoc = IJ.getInstance().getLocation();
+      if (GUIUtils.getGraphicsConfigurationContaining(ijWinLoc.x, ijWinLoc.y) == null) {
+         // only reach this code if the pref coordinates are off screen
+         IJ.getInstance().setLocation(150, 150);
+      }
 
       staticInfo_ = new StaticInfo(core_, frame_);
 
