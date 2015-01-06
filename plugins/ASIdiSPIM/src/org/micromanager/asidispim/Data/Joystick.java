@@ -196,7 +196,7 @@ public class Joystick {
             props_.setPropValue(dev, Properties.Keys.JOYSTICK_INPUT, VALUES.get(Joystick.Keys.NONE), true);
          }
          for (Devices.Keys dev : Devices.STAGES2D) {
-            if (props_.hasProperty(dev, Properties.Keys.JOYSTICK_ENABLED, true)) { // if XY stage
+            if (props_.hasProperty(dev, Properties.Keys.JOYSTICK_ENABLED)) { // if XY stage
                props_.setPropValue(dev, Properties.Keys.JOYSTICK_ENABLED, Properties.Values.NO, true);
             }
             else {  // must be micro-mirror
@@ -221,7 +221,7 @@ public class Joystick {
             }
          }
          for (Devices.Keys dev : Devices.STAGES2D) {
-            if (props_.hasProperty(dev, Properties.Keys.JOYSTICK_ENABLED, true)) { // if XY stage
+            if (props_.hasProperty(dev, Properties.Keys.JOYSTICK_ENABLED)) { // if XY stage
                // don't do anything at the moment for XY stages
             }
             else {  // must be micro-mirror

@@ -264,26 +264,17 @@ public class Properties {
     * @return
     */
    public boolean hasProperty(Devices.Keys device, Properties.Keys name,
-         boolean ignoreError, String propNameSubstitute) {
+         String propNameSubstitute) {
       if (device == Devices.Keys.PLUGIN) {
          return prefs_.keyExists(PLUGIN_PREF_NODE, name);
       } else {
          String mmDevice = null;
-         if (ignoreError) {
-            try {
-               mmDevice = devices_.getMMDevice(device);
-               return ((mmDevice!=null) &&  core_.hasProperty(mmDevice, name.toString(propNameSubstitute)));
-            } catch (Exception ex){
-               // do nothing
-            }
-         } else {
-            try {
-               mmDevice = devices_.getMMDeviceException(device);
-               return core_.hasProperty(mmDevice, name.toString(propNameSubstitute));
-            } catch (Exception ex) {
-               MyDialogUtils.showError(ex, "Couldn't find property " + 
-                     name.toString(propNameSubstitute) + " in device " + mmDevice);
-            }
+         try {
+            mmDevice = devices_.getMMDeviceException(device);
+            return core_.hasProperty(mmDevice, name.toString(propNameSubstitute));
+         } catch (Exception ex) {
+            MyDialogUtils.showError(ex, "Couldn't find property " + 
+                  name.toString(propNameSubstitute) + " in device " + mmDevice);
          }
       }
       return false;
@@ -296,19 +287,7 @@ public class Properties {
     * @return
     */
    public boolean hasProperty(Devices.Keys device, Properties.Keys name) {
-      return hasProperty(device, name, false, null);
-   }
-   
-   /**
-    * sees if property exists in given device
-    * @param device enum key for device 
-    * @param name enum key for property 
-    * @param ignoreError false (default) will do error checking, true means ignores non-existing property
-    * @return
-    */
-   public boolean hasProperty(Devices.Keys device, Properties.Keys name,
-         boolean ignoreError) {
-      return hasProperty(device, name, ignoreError, null);
+      return hasProperty(device, name, null);
    }
    
    /**
