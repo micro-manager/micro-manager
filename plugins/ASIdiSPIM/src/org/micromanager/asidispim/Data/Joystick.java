@@ -216,7 +216,7 @@ public class Joystick {
    public void unsetJoystick(Joystick.Keys jkey) {
       try {
          for (Devices.Keys dev : Devices.STAGES1D) {
-            if (props_.getPropValueString(dev, Properties.Keys.JOYSTICK_INPUT, true).equals(VALUES.get(jkey))) {
+            if (props_.getPropValueString(dev, Properties.Keys.JOYSTICK_INPUT).equals(VALUES.get(jkey))) {
                props_.setPropValue(dev, Properties.Keys.JOYSTICK_INPUT, VALUES.get(Joystick.Keys.NONE));
             }
          }
@@ -225,10 +225,10 @@ public class Joystick {
                // don't do anything at the moment for XY stages
             }
             else {  // must be micro-mirror
-               if (props_.getPropValueString(dev, Properties.Keys.JOYSTICK_INPUT_X, true).equals(VALUES.get(jkey))) {
+               if (props_.getPropValueString(dev, Properties.Keys.JOYSTICK_INPUT_X).equals(VALUES.get(jkey))) {
                   props_.setPropValue(dev, Properties.Keys.JOYSTICK_INPUT_X, VALUES.get(Joystick.Keys.NONE));
                }
-               if (props_.getPropValueString(dev, Properties.Keys.JOYSTICK_INPUT_Y, true).equals(VALUES.get(jkey))) {
+               if (props_.getPropValueString(dev, Properties.Keys.JOYSTICK_INPUT_Y).equals(VALUES.get(jkey))) {
                   props_.setPropValue(dev, Properties.Keys.JOYSTICK_INPUT_Y, VALUES.get(Joystick.Keys.NONE));
                }
             }

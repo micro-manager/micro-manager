@@ -639,19 +639,6 @@ public class Properties {
    }
    
    /**
-    * returns a string value for the specified property (assumes the caller knows the property contains an string)
-    * If device property isn't found, returns empty string.  If ignoreError then user is warned too.
-    * @param device enum key for device 
-    * @param name enum key for property 
-    * @param ignoreError false (default) will do error checking, true means ignores non-existing device property
-    * @return
-    */
-   public String getPropValueString(Devices.Keys device, Properties.Keys name, 
-           boolean ignoreError) {
-      return getPropValue(device, name, ignoreError, null);
-   }
-   
-   /**
     * returns an integer value for the specified property (assumes the caller knows the property contains an integer).
     * Ignores missing device or property, returning 0.
     * @param device enum key for device 
@@ -662,20 +649,6 @@ public class Properties {
       return getPropValueInteger(device, name, true, null);
    }
    
-   /**
-    * returns an integer value for the specified property (assumes the caller knows the property contains an integer).
-    * If property isn't found, returns 0.  If ignoreError then user is warned too. 
-    * @param device enum key for device 
-    * @param name enum key for property 
-    * @param ignoreError false (default) will do error checking, true means ignores non-existing property
-    * @return
-    */
-   public int getPropValueInteger(Devices.Keys device, Properties.Keys name,
-         boolean ignoreError) {
-      return getPropValueInteger(device, name, ignoreError, null);
-   }
-
-
    /**
     * returns an integer value for the specified property (assumes the caller knows the property contains an integer).
     * If property isn't found, returns 0.  If ignoreError then user is warned too. 
@@ -723,19 +696,6 @@ public class Properties {
    public float getPropValueFloat(Devices.Keys device, Properties.Keys name) {
       return getPropValueFloat(device, name, true, null);
    }
-   
-   /**
-    * returns an float value for the specified property (assumes the caller knows the property contains a float).
-    * If property isn't found, returns 0.  If ignoreError then user is warned too.
-    * @param device enum key for device 
-    * @param name enum key for property
-    * @param ignoreError true to ignore error (usually unassigned device) 
-    * @return
-    */
-    public float getPropValueFloat(Devices.Keys device, Properties.Keys name,
-          boolean ignoreError) {
-       return getPropValueFloat(device, name, ignoreError, null);
-    }
    
    /**
    * returns an float value for the specified property (assumes the caller knows the property contains a float).

@@ -217,7 +217,7 @@ public final class BeamSubPanel extends ListeningJPanel {
                props_.setPropValue(devKey, propKey, (boxVal ? onValue : offValue), true);
             }
          } else {
-            box.setSelected(props_.getPropValueString(devKey, propKey, true).equals(onValue.toString()));
+            box.setSelected(props_.getPropValueString(devKey, propKey).equals(onValue.toString()));
          }
       }
    }

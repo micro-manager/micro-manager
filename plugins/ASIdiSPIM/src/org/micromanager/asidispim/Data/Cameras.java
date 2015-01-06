@@ -443,8 +443,8 @@ public class Cameras {
       case HAMCAM:
          // global reset mode not yet exposed in Micro-manager
          // it will be 17+1 rows of overhead but nothing else
-         if (props_.getPropValueString(camKey, Properties.Keys.TRIGGER_ACTIVE,
-               true).equals(Properties.Values.SYNCREADOUT.toString())) {
+         if (props_.getPropValueString(camKey, Properties.Keys.TRIGGER_ACTIVE)
+               .equals(Properties.Values.SYNCREADOUT.toString())) {
             numRowsOverhead = 18; // overhead of 17 rows plus jitter of 1 row
          } else { // for EDGE and LEVEL trigger modes
             numRowsOverhead = 10; // overhead of 9 rows plus jitter of 1 row
@@ -503,8 +503,8 @@ public class Cameras {
          // device adapter provides readout time rounded to nearest 0.1ms; we
          // calculate it ourselves instead
          // note that Flash4's ROI is always set in increments of 4 pixels
-         if (props_.getPropValueString(camKey, Properties.Keys.SENSOR_MODE,
-               true).equals(Properties.Values.PROGRESSIVE.toString())) {
+         if (props_.getPropValueString(camKey, Properties.Keys.SENSOR_MODE)
+               .equals(Properties.Values.PROGRESSIVE.toString())) {
             numReadoutRows = roi.height;
          } else {
             numReadoutRows = roiReadoutRowsSplitReadout(roi, getSensorSize(camKey));

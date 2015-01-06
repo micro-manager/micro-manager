@@ -97,7 +97,7 @@ public class PanelUtils {
          
          @Override
          public void updateFromProperty() {
-            js_.setValue((int)(scalefactor_*props_.getPropValueFloat(devKey_, propKey_, true)));
+            js_.setValue((int)(scalefactor_*props_.getPropValueFloat(devKey_, propKey_)));
          }
          
          @Override
@@ -183,7 +183,7 @@ public class PanelUtils {
 
          @Override
          public void updateFromProperty() {
-            sp_.setValue(props_.getPropValueInteger(devKeys_[0], propKey_, true));
+            sp_.setValue(props_.getPropValueInteger(devKeys_[0], propKey_));
             stateChanged(new ChangeEvent(sp_));  // fire manually to set all the devices is devKeys
          }
          
@@ -194,7 +194,7 @@ public class PanelUtils {
       }
       
       // read the existing value of 1st device and make sure it is within our min/max limits
-      int origVal = props_.getPropValueInteger(devKeys[0], propKey, true);
+      int origVal = props_.getPropValueInteger(devKeys[0], propKey);
       if (origVal == 0) {
       // if getPropValue returned 0 (sign no value existed) then use default
          origVal = defaultVal;
@@ -338,7 +338,7 @@ public class PanelUtils {
 
          @Override
          public void updateFromProperty() {
-            sp_.setValue(props_.getPropValueFloat(devKeys_[0], propKey_, true));
+            sp_.setValue(props_.getPropValueFloat(devKeys_[0], propKey_));
             stateChanged(new ChangeEvent(sp_));  // fire manually to set all the devices is devKeys
          }
          
@@ -349,7 +349,7 @@ public class PanelUtils {
       }
       
       // read the existing value of 1st device and make sure it is within our min/max limits
-      double origVal = (double)props_.getPropValueFloat(devKeys[0], propKey, true);
+      double origVal = (double)props_.getPropValueFloat(devKeys[0], propKey);
       if (MyNumberUtils.floatsEqual((float) origVal, (float) 0)) {
          // if getPropValue returned 0 (sign no value existed) then use default
          origVal = defaultVal;
@@ -449,7 +449,7 @@ public class PanelUtils {
          
          @Override
          public void updateFromProperty() {
-            box_.setSelectedItem(props_.getPropValueString(devKeys_[0], propKey_, true));
+            box_.setSelectedItem(props_.getPropValueString(devKeys_[0], propKey_));
          }
          
          @Override
@@ -592,7 +592,7 @@ public class PanelUtils {
          
          @Override
          public void updateFromProperty() {
-            jc_.setSelected(props_.getPropValueString(devKey_, propKey_, true).equals(onValue_.toString()));
+            jc_.setSelected(props_.getPropValueString(devKey_, propKey_).equals(onValue_.toString()));
          }
          
          @Override
