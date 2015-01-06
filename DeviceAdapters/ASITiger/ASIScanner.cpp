@@ -761,16 +761,8 @@ int CScanner::LoadPolygons()
 
 int CScanner::SetPolygonRepetitions(int repetitions)
 {
-   if (ring_buffer_supported_)
-   {
-      // ring buffer HW does not support having multiple repetitions
-      return DEVICE_UNSUPPORTED_COMMAND;
-   }
-   else
-   {
-      polygonRepetitions_ = repetitions;
-      return DEVICE_OK;
-   }
+   polygonRepetitions_ = repetitions;
+   return DEVICE_OK;
 }
 
 int CScanner::RunPolygons()
