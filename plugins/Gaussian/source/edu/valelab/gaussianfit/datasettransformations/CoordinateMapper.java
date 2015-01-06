@@ -82,8 +82,8 @@ public class CoordinateMapper {
       public double[] polyY;
    }
 
-   public static double weightFunction(double R) {
-      return (R < 1) ? (1 + (-3 * R * R) + (2 * R * R * R)) : 0;
+   public static double weightFunction(double r) {
+      return (r < 1) ? (1 + (-3 * r * r) + (2 * r * r * r)) : 0;
    }
 
    public static ExponentPairs polynomialExponents(int order) {
@@ -99,6 +99,10 @@ public class CoordinateMapper {
       return exponents;
    }
 
+   /**
+    * Utility class that functions as a bridge between KdTree implementation
+    * and the data structures used in our code
+    */
    public static class EnhancedKDTree extends KdTree.SqrEuclid {
       final Point2D.Double[] points_;
 
@@ -127,6 +131,13 @@ public class CoordinateMapper {
       
    }
 
+   /**
+    * Selects a subset of points in the input PointMap, which is a:
+    *    HashMap<Point2D.Double, Point2D.Double> 
+    * @param points - Input pointMap
+    * @param srcPoints - List with keys that we want to select in the input
+    * @return PointMap (selected subset of the input)
+    */
    public static PointMap selectPoints(PointMap points, List<Point2D.Double> srcPoints) {
       PointMap selectPointMap = new PointMap();
       for (Point2D.Double srcPoint:srcPoints) {
@@ -136,11 +147,27 @@ public class CoordinateMapper {
    }
    
 
+   /**
+    * ControlPoint as used in LWM 
+    */
    public static class ControlPoint {
       final public Point2D.Double point;
       final public double Rnormalized;
       final public PolynomialCoefficients polynomialCoefficients;
 
+      /**
+       * Generates a Controlpoint for the given srcPoint.
+       * First finds n (order!) control points around scrPoint
+       * Then fits a polynomial to minimize the error between points in the 
+       * two channels
+       * @param kdTree - kdTree used to find the nearest neighbor in the input
+       *                   channel
+       * @param srcPoint - point in the input channel used to generate a control 
+       *                   point.
+       * @param order - desired order of the polynomial
+       * @param pointMap - input map with channel 1 points as keys and channel 2 
+       *                   points as values
+       */
       public ControlPoint(EnhancedKDTree kdTree, Point2D.Double srcPoint,
               int order, PointMap pointMap) {
          point = srcPoint;
@@ -195,6 +222,16 @@ public class CoordinateMapper {
       return result;
    }
 
+   /**
+    * For each point in the input pointMap, calculates a control-point, which
+    * contains polynomial coefficients in x and y, as well as a normalization factor
+    * the polynomial coefficients are calculated by fitting a polynomial to minimize
+    * the error in the nearest neighbor pairs
+    * @param kdTree - 
+    * @param order
+    * @param pointMap
+    * @return 
+    */
    public static ControlPoints createControlPoints(EnhancedKDTree kdTree, int order,
            PointMap pointMap) {
       final ControlPoints controlPointMap = new ControlPoints();
@@ -204,16 +241,27 @@ public class CoordinateMapper {
       return controlPointMap;
    }
 
-   public static Point2D.Double computeTransformation(EnhancedKDTree kdTree, Point2D.Double testPoint, ControlPoints controlPoints, ExponentPairs exponentPairs) {
+   /**
+    * Computes the trasnform of Ch1 into Ch2 coordinates using the LWM
+    * @param kdTree
+    * @param testPoint
+    * @param controlPoints
+    * @param exponentPairs
+    * @return 
+    */
+   public static Point2D.Double computeTransformation(EnhancedKDTree kdTree, 
+           Point2D.Double testPoint, ControlPoints controlPoints, ExponentPairs exponentPairs) {
       final List<Point2D.Double> neighbors = kdTree.nearestNeighbor(testPoint, 20, false);
       double sumWeights = 0;
       double sumWeightedPolyX = 0;
       double sumWeightedPolyY = 0;
+      int count = 0;
       for (Point2D.Double srcPoint:neighbors) {
          final ControlPoint controlPoint = controlPoints.get(srcPoint);
          final double r = testPoint.distance(controlPoint.point) / controlPoint.Rnormalized;
          final double weight = weightFunction(r);
          if (weight > 0) {
+            count++;
             sumWeights += weight;
             sumWeightedPolyX += weight * evaluatePolynomial(testPoint.x, testPoint.y,
                     controlPoint.polynomialCoefficients.polyX, exponentPairs);
@@ -221,6 +269,7 @@ public class CoordinateMapper {
                     controlPoint.polynomialCoefficients.polyY, exponentPairs);
          }
       }
+      System.out.println("Used " + count + "  controlpoints in computeTransform");
       return new Point2D.Double(sumWeightedPolyX / sumWeights,
                                 sumWeightedPolyY / sumWeights);
    }
