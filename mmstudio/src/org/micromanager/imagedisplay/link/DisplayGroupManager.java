@@ -22,10 +22,11 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class DisplayGroupManager {
    private MMStudio studio_;
-   private ArrayList<DisplayWindow> displays_;
+   private ArrayList<SettingsLinker> linkers_;
+   private HashMap<DisplayWindow, ArrayList<SettingsLinker>> displayToLinkers_;
 
    public DisplayGroupManager(MMStudio studio) {
-      displays_ = new ArrayList<DisplayWindow>();
+      displayToLinkers_ = new HashMap<DisplayWindow, ArrayList<SettingsLinker>>();
       studio_ = studio;
       // So we can be notified of newly-created displays.
       studio_.registerForEvents(this);
@@ -37,12 +38,21 @@ public class DisplayGroupManager {
    @Subscribe
    public void onNewDisplayEvent(NewDisplayEvent event) {
       event.getDisplayWindow().registerForEvents(this);
-      displays_.add(event.getDisplayWindow());
+      displayToLinkers_.put(event.getDisplayWindow(),
+            new ArrayList<SettingsLinker>());
    }
 
    @Subscribe
    public void onDisplayDestroyed(DisplayDestroyedEvent event) {
-      displays_.remove(event.getDisplay());
+      displayToLinkers_.remove(event.getDisplay());
+   }
+
+   /**
+    * A new LinkButton has been created; we need to start tracking its linker.
+    */
+   @Subscribe
+   public void onNewLinkButton(LinkButtonCreatedEvent event) {
+      displayToLinkers_.get(event.getButton().getDisplay()).add(event.getLinker());
    }
 
    /**
@@ -57,7 +67,7 @@ public class DisplayGroupManager {
          DisplayWindow sourceDisplay = event.getDisplay();
          RemoteLinkEvent notifyEvent = new RemoteLinkEvent(event.getLinker(),
                event.getIsLinked());
-         for (DisplayWindow display : displays_) {
+         for (DisplayWindow display : displayToLinkers_.keySet()) {
             if (display == sourceDisplay ||
                   display.getDatastore() != sourceDisplay.getDatastore()) {
                // No need to notify this one.
@@ -68,6 +78,26 @@ public class DisplayGroupManager {
       }
       catch (Exception e) {
          ReportingUtils.logError(e, "Couldn't redistribute LinkButtonEvent");
+      }
+   }
+
+   /**
+    * One DisplayWindow has changed settings; check if others care.
+    * TODO: it'd be nice if we didn't notify linkers for the DisplayWindow
+    * that sourced the event, but currently we have no way of knowing.
+    */
+   @Subscribe
+   public void onDisplaySettingsChange(DisplaySettingsEvent event) {
+      for (DisplayWindow display : displayToLinkers_.keySet()) {
+         for (SettingsLinker linker : displayToLinkers_.get(display)) {
+            List<Class<?>> classes = linker.getRelevantEventClasses();
+            for (Class<?> eventClass : classes) {
+               if (eventClass.isInstance(event) &&
+                     linker.getShouldApplyChanges(event)) {
+                  linker.applyChange(event);
+               }
+            }
+         }
       }
    }
 }
