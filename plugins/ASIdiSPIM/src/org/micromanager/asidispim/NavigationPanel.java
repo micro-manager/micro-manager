@@ -39,6 +39,7 @@ import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.MyDialogUtils;
 import org.micromanager.asidispim.Utils.PanelUtils;
+import org.micromanager.asidispim.Utils.StagePositionUpdater;
 
 import javax.swing.JButton;
 import javax.swing.JFormattedTextField;
@@ -66,6 +67,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
    private final Positions positions_;
    private final Prefs prefs_;
    private final Cameras cameras_;
+   private final StagePositionUpdater posUpdater_;
    private final ScriptInterface gui_;
    private final CMMCore core_;
    
@@ -88,7 +90,8 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
     * Navigation panel constructor.
     */
    public NavigationPanel(ScriptInterface gui, Devices devices, Properties props, 
-           Joystick joystick, Positions positions, Prefs prefs, Cameras cameras) {    
+           Joystick joystick, Positions positions, Prefs prefs, Cameras cameras,
+           StagePositionUpdater posUpdater) {    
       super (MyStrings.PanelNames.NAVIGATION.toString(),
             new MigLayout(
               "", 
@@ -100,6 +103,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       positions_ = positions;
       prefs_ = prefs;
       cameras_ = cameras;
+      posUpdater_ = posUpdater;
       gui_ = gui;
       core_ = gui_.getMMCore();
       PanelUtils pu = new PanelUtils(prefs_, props_, devices_);
@@ -396,10 +400,12 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
     */
    @Override
    public void gotSelected() {
+      posUpdater_.pauseUpdates(true);
       joystickPanel_.gotSelected();
       cameraPanel_.gotSelected();
       beamPanel_.gotSelected();
 //      props_.callListeners();  // not used yet, only for SPIM Params
+      posUpdater_.pauseUpdates(false);
    }
    
    /**

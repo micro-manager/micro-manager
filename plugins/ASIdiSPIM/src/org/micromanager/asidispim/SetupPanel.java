@@ -38,6 +38,7 @@ import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.MyDialogUtils;
 import org.micromanager.asidispim.Utils.PanelUtils;
+import org.micromanager.asidispim.Utils.StagePositionUpdater;
 import org.micromanager.asidispim.Utils.StoredFloatLabel;
 
 import mmcorej.CMMCore;
@@ -64,6 +65,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    private final Positions positions_;
    private final Cameras cameras_;
    private final Prefs prefs_;
+   private final StagePositionUpdater posUpdater_;
    private final ScriptInterface gui_;
    private final CMMCore core_;
    private final JoystickSubPanel joystickPanel_;
@@ -94,7 +96,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
 
    public SetupPanel(ScriptInterface gui, Devices devices, Properties props, 
            Joystick joystick, Devices.Sides side, Positions positions, 
-           Cameras cameras, Prefs prefs) {
+           Cameras cameras, Prefs prefs, StagePositionUpdater posUpdater) {
       super(MyStrings.PanelNames.SETUP.toString() + side.toString(),
               new MigLayout(
               "",
@@ -107,6 +109,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       positions_ = positions;
       cameras_ = cameras;
       prefs_ = prefs;
+      posUpdater_ = posUpdater;
       gui_ = gui;
       core_ = gui_.getMMCore();
       PanelUtils pu = new PanelUtils(prefs_, props_, devices);
@@ -578,6 +581,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
     */
    @Override
    public void gotSelected() {
+      posUpdater_.pauseUpdates(true);
       joystickPanel_.gotSelected();
       cameraPanel_.gotSelected();
       beamPanel_.gotSelected();
@@ -594,6 +598,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       // SPIM use can change, but for alignment avoid sharp edges
       props_.setPropValue(micromirrorDeviceKey_, Properties.Keys.SA_PATTERN_X, 
               Properties.Values.SAM_TRIANGLE, true);
-
+      
+      posUpdater_.pauseUpdates(false);
    }
 }

@@ -148,7 +148,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final JLabel acquisitionStatusLabel_;
    private int numTimePointsDone_;
    private final AtomicBoolean stop_ = new AtomicBoolean(false);  // true if we should stop acquisition
-   private final StagePositionUpdater stagePosUpdater_;
+   private final StagePositionUpdater posUpdater_;
    private final JSpinner stepSize_;
    private final JLabel desiredSlicePeriodLabel_;
    private final JSpinner desiredSlicePeriod_;
@@ -175,7 +175,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
            Joystick joystick,
            Cameras cameras, 
            Prefs prefs, 
-           StagePositionUpdater stagePosUpdater,
+           StagePositionUpdater posUpdater,
            Positions positions) {
       super(MyStrings.PanelNames.ACQUSITION.toString(),
               new MigLayout(
@@ -188,7 +188,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       joystick_ = joystick;
       cameras_ = cameras;
       prefs_ = prefs;
-      stagePosUpdater_ = stagePosUpdater;
+      posUpdater_ = posUpdater;
       positions_ = positions;
       core_ = gui_.getMMCore();
       numTimePointsDone_ = 0;
@@ -1489,7 +1489,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       cameras_.setSPIMCamerasForAcquisition(true);
 
       // stop the serial traffic for position updates during acquisition
-      stagePosUpdater_.setAcqRunning(true);
+      posUpdater_.setAcqRunning(true);
       
       numTimePointsDone_ = 0;
       
@@ -1814,7 +1814,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                Properties.Values.SPIM_IDLE, true);
       }
       updateAcquisitionStatus(AcquisitionStatus.DONE);
-      stagePosUpdater_.setAcqRunning(false);
+      posUpdater_.setAcqRunning(false);
       
       if (separateImageFilesOriginally) {
          ImageUtils.setImageStorageClass(TaggedImageStorageDiskDefault.class);
@@ -1855,6 +1855,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     */
    @Override
    public void gotSelected() {
+      posUpdater_.pauseUpdates(true);
       props_.callListeners();
       if (navigationJoysticksCB_.isSelected()) {
          if (ASIdiSPIM.getFrame() != null) {
@@ -1864,6 +1865,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          joystick_.unsetAllJoysticks();  // disable all joysticks on this tab
       }
       sliceFrame_.setVisible(advancedSliceTimingCB_.isSelected());
+      posUpdater_.pauseUpdates(false);
    }
 
    /**

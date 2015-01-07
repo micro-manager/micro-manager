@@ -113,13 +113,13 @@ public class ASIdiSPIMFrame extends MMFrame
       // create the panels themselves
       // in some cases dependencies create required ordering
       devicesPanel_ = new DevicesPanel(gui, devices_, props_);
-      setupPanelA_ = new SetupPanel(gui, devices_, props_, joystick_, 
-            Devices.Sides.A, positions_, cameras_, prefs_);
-      setupPanelB_ = new SetupPanel(gui, devices_, props_, joystick_,
-            Devices.Sides.B, positions_, cameras_, prefs_);
       stagePosUpdater_ = new StagePositionUpdater(positions_, props_);  // needed for setup and navigation
+      setupPanelA_ = new SetupPanel(gui, devices_, props_, joystick_, 
+            Devices.Sides.A, positions_, cameras_, prefs_, stagePosUpdater_);
+      setupPanelB_ = new SetupPanel(gui, devices_, props_, joystick_,
+            Devices.Sides.B, positions_, cameras_, prefs_, stagePosUpdater_);
       navigationPanel_ = new NavigationPanel(gui, devices_, props_, joystick_,
-            positions_, prefs_, cameras_);
+            positions_, prefs_, cameras_, stagePosUpdater_);
       acquisitionPanel_ = new AcquisitionPanel(gui, devices_, props_, joystick_, 
             cameras_, prefs_, stagePosUpdater_, positions_);
       dataAnalysisPanel_ = new DataAnalysisPanel(gui, prefs_);
@@ -167,8 +167,8 @@ public class ASIdiSPIMFrame extends MMFrame
          }
       });
       
-      // put dialog back where it was last time
-      this.loadAndRestorePosition(100, 100, WIDTH, WIDTH);
+      // put frame back where it was last time
+      this.loadAndRestorePosition(100, 100);
     
       // gotSelected will be called because we put this after adding the ChangeListener
       tabbedPane_.setSelectedIndex(helpTabIndex);  // setSelectedIndex(0) just after initialization doesn't fire ChangeListener, so switch to help panel first

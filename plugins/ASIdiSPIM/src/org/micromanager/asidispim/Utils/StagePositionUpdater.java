@@ -43,6 +43,7 @@ public class StagePositionUpdater {
    private final Properties props_;
    private final AtomicBoolean acqRunning_ = new AtomicBoolean(false);  // flag set externally to indicate that acquisition is happening (and so we should disable updates)
    private final AtomicBoolean updatingNow_ = new AtomicBoolean(false);  // true iff in middle of update right now, use to skip updates if last one is running instead of letting them pile up
+   private final AtomicBoolean pauseUpdates_ = new AtomicBoolean(false);  // true iff updates temporarily disabled
    private boolean timerRunning; // whether we are set to update positions currently
    
    /**
@@ -61,6 +62,7 @@ public class StagePositionUpdater {
       panels_ = new ArrayList<ListeningJPanel>();
       acqRunning_.set(false);
       updatingNow_.set(false);
+      pauseUpdates_.set(false);
       timerRunning = false;
       timer_ = null;
    }
@@ -97,8 +99,9 @@ public class StagePositionUpdater {
       timer_ = new Timer(true);
       timer_.scheduleAtFixedRate(new TimerTask() {
             public void run() {
-               // skip any missed executions
-               if (!updatingNow_.get()) {
+               // update positions if we aren't already doing it or paused
+               // this prevents building up task queue if something slows down
+               if (!updatingNow_.get() && !pauseUpdates_.get()) {
                   updatingNow_.set(true);
                   oneTimeUpdate();
                   updatingNow_.set(false);
@@ -145,6 +148,15 @@ public class StagePositionUpdater {
     */
    public boolean isAcqRunning() {
       return acqRunning_.get();
+   }
+   
+   /**
+    * Call this with true to temporarily turn off updates.
+    * Be sure to call it again with false
+    * @param pause true disables updates temporarily, false goes back to normal
+    */
+   public void pauseUpdates(boolean pause) {
+      pauseUpdates_.set(pause);
    }
    
    /**
