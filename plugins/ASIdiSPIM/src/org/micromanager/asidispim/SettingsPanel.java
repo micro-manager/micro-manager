@@ -116,10 +116,7 @@ public class SettingsPanel extends ListeningJPanel {
       ChangeListener listenerLast = new ChangeListener() {
          @Override
          public void stateChanged(ChangeEvent e) {
-            if (stagePosUpdater_.isUpdateRunning()) {
-               // restart updater with new interval (read from the plugin property)
-               stagePosUpdater_.start();
-            }
+            stagePosUpdater_.restartIfRunning();
             prefs_.putFloat(panelName_, Properties.Keys.PLUGIN_POSITION_REFRESH_INTERVAL,
                   PanelUtils.getSpinnerFloatValue(positionRefreshInterval));
          }

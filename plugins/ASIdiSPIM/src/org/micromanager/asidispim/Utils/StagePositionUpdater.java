@@ -42,7 +42,8 @@ public class StagePositionUpdater {
    private final Positions positions_;
    private final Properties props_;
    private final AtomicBoolean acqRunning_ = new AtomicBoolean(false);  // flag set externally to indicate that acquisition is happening (and so we should disable updates)
-   private final AtomicBoolean updatingPositions_ = new AtomicBoolean(false);  // whether we are actually updating positions currently
+   private final AtomicBoolean updatingNow_ = new AtomicBoolean(false);  // true iff in middle of update right now, use to skip updates if last one is running instead of letting them pile up
+   private boolean timerRunning; // whether we are set to update positions currently
    
    /**
     * Utility class for stage position timer.
@@ -59,7 +60,8 @@ public class StagePositionUpdater {
       props_ = props;
       panels_ = new ArrayList<ListeningJPanel>();
       acqRunning_.set(false);
-      updatingPositions_.set(false);
+      updatingNow_.set(false);
+      timerRunning = false;
       timer_ = null;
    }
    
@@ -94,9 +96,22 @@ public class StagePositionUpdater {
       }
       timer_ = new Timer(true);
       timer_.scheduleAtFixedRate(new TimerTask() {
-            public void run() { oneTimeUpdate(); }
+            public void run() {
+               // skip any missed executions
+               if (!updatingNow_.get()) {
+                  updatingNow_.set(true);
+                  oneTimeUpdate();
+                  updatingNow_.set(false);
+               }
+            }
           }, 0, getPositionUpdateInterval());
-      updatingPositions_.set(true);
+      timerRunning = true;
+   }
+   
+   public void restartIfRunning() {
+      if (timerRunning) {
+         start();
+      }
    }
    
    /**
@@ -109,14 +124,7 @@ public class StagePositionUpdater {
       for (ListeningJPanel panel : panels_) {
          panel.stoppedStagePositions();
       }
-      updatingPositions_.set(false);
-   }
-   
-   /**
-    * check whether position updater is running 
-    */
-   public boolean isUpdateRunning() {
-      return updatingPositions_.get();
+      timerRunning = false;
    }
    
    /**
@@ -125,7 +133,7 @@ public class StagePositionUpdater {
     */
    public void setAcqRunning(boolean running) {
       acqRunning_.set(running);
-      if (running & isUpdateRunning()) {
+      if (running & timerRunning) {
          for (ListeningJPanel panel : panels_) {
             panel.stoppedStagePositions();
          }
