@@ -249,9 +249,11 @@ class ScrollerPanel extends JPanel {
          ReportingUtils.logError("Received new DisplaySettings with null image coords");
          return;
       }
+      shouldPostEvents_ = false;
       for (String axis : axisToState_.keySet()) {
          axisToState_.get(axis).scrollbar_.setValue(coords.getPositionAt(axis));
       }
+      shouldPostEvents_ = true;
    }
 
    /**
