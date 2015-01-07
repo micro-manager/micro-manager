@@ -677,7 +677,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       });
 
       method2CBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-      method2CBox_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "NR-Similarity", "Affine", "LWM" }));
+      method2CBox_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "NR-Similarity", "Affine", "Piecewise-Affine", "LWM" }));
       method2CBox_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             method2CBox_ActionPerformed(evt);
@@ -1253,7 +1253,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                if (2 * stdDev > avg) {
                   nrOfRemovedSpots+=1;
                   points.remove(maxPairKey);
-                  c2t_ = new CoordinateMapper(points, 4, 1);
+                  c2t_ = new CoordinateMapper(points, 2, 1);
                } else {
                   continueQualityCheck = false;
                   ij.IJ.log("Removed " + nrOfRemovedSpots + " pairs, " + ", avg. distance: " +
@@ -2057,6 +2057,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
             rt.addValue(Terms.XPIX, gd.getX());
             rt.addValue(Terms.YPIX, gd.getY());
+            for (String key : gd.getKeys()) {
+               rt.addValue(key, gd.getValue(key));
+            }
          }
       }
       
@@ -2122,6 +2125,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
       if (method2CBox_.getSelectedItem().equals("NR-Similarity")) {
          method = CoordinateMapper.NONRFEFLECTIVESIMILARITY;
       }
+      if (method2CBox_.getSelectedItem().equals("Piecewise-Affine")) {
+         method = CoordinateMapper.PIECEWISEAFFINE;
+      }
       c2t_.setMethod(method);
 
       ij.IJ.showStatus("Executing color correction");
@@ -2146,9 +2152,17 @@ public class DataCollectionForm extends javax.swing.JFrame {
                   try {
                      Point2D.Double corPoint = c2t_.transform(point);
                      SpotData gsn = new SpotData(gs);
-                     gsn.setXCenter(corPoint.x);
-                     gsn.setYCenter(corPoint.y);
-                     correctedData.add(gsn);
+                     if (corPoint != null) {
+                        gsn.setXCenter(corPoint.x);
+                        gsn.setYCenter(corPoint.y);
+                        correctedData.add(gsn);
+                     } else {
+                        ReportingUtils.logError(
+                                "Failed to match spot in channel 1, at " + 
+                                gs.getX() + "-" + gs.getY() + ", micron: " +
+                                gs.getXCenter() + "-" + gs.getYCenter() );
+                     }
+                     
                   } catch (Exception ex) {
                      ReportingUtils.logError(ex);
                   }
@@ -2549,9 +2563,37 @@ public class DataCollectionForm extends javax.swing.JFrame {
       }
    }
    
-   public void piecewiseAffine(final int nrQuadrants) {
-      
-   
+   /**
+    * Utility function that runs the selected rows through a SpotDataFilter
+    * @param sf SpotDataFilter used to filter the selected dataset
+    */
+   public void filterSpots(SpotDataFilter sf) {
+      final int[] rows = jTable1_.getSelectedRows();
+      for (int i = 0; i < rows.length; i++) {
+         RowData rowData = rowData_.get(rows[i]);
+         List<SpotData> filteredData = new ArrayList<SpotData>();
+         for (SpotData spot : rowData.spotList_) {
+            if (sf.filter(spot)) {
+               filteredData.add(new SpotData(spot));
+            }
+         }
+         // Add transformed data to data overview window
+         addSpotData(rowData.name_ + "-Filtered", rowData.title_, "", rowData.width_,
+                 rowData.height_, rowData.pixelSizeNm_, rowData.zStackStepSizeNm_,
+                 rowData.shape_, rowData.halfSize_, rowData.nrChannels_,
+                 rowData.nrFrames_, rowData.nrSlices_, 1, filteredData.size(),
+                 filteredData, null, false, DataCollectionForm.Coordinates.NM, rowData.hasZ_,
+                 rowData.minZ_, rowData.maxZ_);
+
+      }
    }
+
+   public void setPieceWiseAffineParameters(int maxControlPoints, double maxDistance) {
+      if (c2t_ != null) {
+         c2t_.setPieceWiseAffineMaxControlPoints(maxControlPoints);
+         c2t_.setPieceWiseAffineMaxDistance(maxDistance);
+      }
+   }
+   
 
 }

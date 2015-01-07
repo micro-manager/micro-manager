@@ -29,12 +29,14 @@ package edu.valelab.gaussianfit.datasettransformations;
 
 import ags.utils.KdTree;
 import ags.utils.KdTree.Entry;
+import edu.valelab.gaussianfit.spotoperations.NearestPoint2D;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -43,6 +45,7 @@ import org.apache.commons.math.linear.DecompositionSolver;
 import org.apache.commons.math.linear.LUDecompositionImpl;
 import org.apache.commons.math.linear.QRDecompositionImpl;
 import org.apache.commons.math.linear.RealMatrix;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  * Provides facilities for mapping one coordinate system into another
@@ -64,28 +67,56 @@ public class CoordinateMapper {
    final public static int LWM = 1;
    final public static int AFFINE = 2;
    final public static int NONRFEFLECTIVESIMILARITY = 3;
+   final public static int PIECEWISEAFFINE = 4;
    
    private int method_ = LWM;
+   private int pieceWiseAffineMaxControlPoints_ = 100;
+   private double pieceWiseAffineMaxDistance_ = 500.0;
 
-   public static class PointMap extends HashMap<Point2D.Double, Point2D.Double> {}
+   /**
+    * Shorthand name
+    */
+   public static class PointMap extends 
+           HashMap<Point2D.Double, Point2D.Double> {}
 
+   /**
+    * Utility class
+    */
    public static class ExponentPair
    {
       public int xExponent;
       public int yExponent;
    }
 
+   /**
+    * Shorthand name
+    */
    public static class ExponentPairs extends ArrayList<ExponentPair> {}
 
+   /**
+    * Utility class
+    */
    public static class PolynomialCoefficients {
       public double[] polyX;
       public double[] polyY;
    }
 
+   /**
+    * Weightfunction as defined in Ardeshir Goshtasby. (1988).  
+    * Used for LWM only
+    * @param r distance of given control point to experimental point
+    * @return weight for this control point
+    */
    public static double weightFunction(double r) {
       return (r < 1) ? (1 + (-3 * r * r) + (2 * r * r * r)) : 0;
    }
 
+   /**
+    * Generates exponents for given order, see Ardeshir Goshtasby (1988).
+    * Only used in LWM
+    * @param order
+    * @return ArrayList of double[], double[]
+    */
    public static ExponentPairs polynomialExponents(int order) {
       final ExponentPairs exponents = new ExponentPairs();
       for (int j=0; j<=order; ++j) {
@@ -129,6 +160,33 @@ public class CoordinateMapper {
          return neighborList;
       }
       
+      /**
+       * Variant of nearestNeighbor that returns up to size points closest to
+       * testPoint at a maximum distance of maxDistance
+       * @param testPoint - point for which we want nearest neighbors
+       * @param size - max number of neighbors to be returned
+       * @param maxDistance - maximum distance of the neighbors to the testpoint
+       * @return list with found neighbors that fulfill the criteria
+       */
+      public List<Point2D.Double> nearestNeighbor(Point2D.Double testPoint,
+              int size, double maxDistance) {
+         List<Point2D.Double> nearestNeighbors = nearestNeighbor(testPoint, size, true);
+         // reverse thought the list and remove items until distance is smaller than 
+         // maxDistance
+         final double maxDistanceSquare = maxDistance * maxDistance;
+         ListIterator li = nearestNeighbors.listIterator(nearestNeighbors.size());
+         boolean goOn = true;
+         while (li.hasPrevious() && goOn) {
+            Point2D.Double controlPoint = (Point2D.Double) li.previous();
+            if (NearestPoint2D.distance2(testPoint, controlPoint) > maxDistanceSquare) {
+               li.remove();
+            } else {
+               goOn = false;
+            }
+         }
+         return nearestNeighbors;
+      }
+
    }
 
    /**
@@ -179,7 +237,11 @@ public class CoordinateMapper {
       }
    }
 
-   public static class ControlPoints extends HashMap<Point2D.Double, ControlPoint> {}
+   /**
+    * Shorthand notation
+    */
+   public static class ControlPoints extends 
+           HashMap<Point2D.Double, ControlPoint> {}
 
    public static double[] powerTerms(double x, double y,
            final ExponentPairs exponentPairs) {
@@ -242,7 +304,7 @@ public class CoordinateMapper {
    }
 
    /**
-    * Computes the trasnform of Ch1 into Ch2 coordinates using the LWM
+    * Computes the transform of Ch1 into Ch2 coordinates using the LWM
     * @param kdTree
     * @param testPoint
     * @param controlPoints
@@ -379,7 +441,28 @@ public class CoordinateMapper {
       return new AffineTransform(m[0][0], m[1][0], - m[1][0], m[0][0], m[2][0], m[3][0]);
    }
    
-   
+   /**
+    * Generates an affine transform using only control points that are close by
+    * The code finds the closest by maxNrControlPoints and then removes any points
+    * that are more than maxDinstance away from the testPoint
+    * It uses the resulting set of control points to generate an affine transform
+    * @param srcTestPoint Input test point
+    * @param maxNrControlPoints - Number of desired neighboring control points
+    * @param maxDistance - Distance above which a control point will be rejected
+    * @return Affine transform calculated from the neighboring control points
+    */     
+   public AffineTransform generateLocalAffineTransform(
+           Point2D.Double srcTestPoint, int maxNrControlPoints, double maxDistance) {
+
+      List<Point2D.Double> nearestNeighbors
+              = kdTree_.nearestNeighbor(srcTestPoint, maxNrControlPoints, maxDistance);
+      if (nearestNeighbors.size() > 10) {
+      PointMap localMap = selectPoints(pointMap_, nearestNeighbors);
+      return generateAffineTransformFromPointPairs(localMap);
+      } 
+      return null;
+   }
+
    // General methods 
    
 
@@ -405,11 +488,31 @@ public class CoordinateMapper {
             return null;
          }
       }
+      if (method_ == PIECEWISEAFFINE) {
+         try {
+            AffineTransform piecewiseAf = generateLocalAffineTransform(srcTestPoint,
+                    pieceWiseAffineMaxControlPoints_, pieceWiseAffineMaxDistance_);
+            if (piecewiseAf != null) {
+               Point2D result = piecewiseAf.transform(srcTestPoint, null);
+               return (Point2D.Double) result;
+            }
+         } catch (Exception ex) {
+            return null;
+         }
+      }
       return null;
    }
    
    public void setMethod(int method) {
       method_ = method;
+   }
+   
+   public void setPieceWiseAffineMaxControlPoints(int max) {
+      pieceWiseAffineMaxControlPoints_ = max;
+   }
+   
+   public void setPieceWiseAffineMaxDistance(double max) {
+      pieceWiseAffineMaxDistance_ = max;
    }
    
 

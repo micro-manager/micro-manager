@@ -4,6 +4,9 @@ package edu.valelab.gaussianfit.data;
 import ij.ImagePlus;
 import ij.gui.Roi;
 import ij.process.ImageProcessor;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Data structure to internally store fit data
@@ -44,6 +47,7 @@ public class SpotData {
                               // that uses # of photons, background and width of gaussian
    public int nrLinks_;       // number of frames/slices in which this spot was found
    public int originalFrame_; // original first frame/slice in which this spot was found
+   private final Map<String, Double> keyValue_; // Map of keys/values taht can be used to extend what we store in the SpotData
 
    public SpotData(ImageProcessor ip, int channel, int slice, int frame, 
            int position, int nr, int x, int y) {
@@ -55,6 +59,7 @@ public class SpotData {
       nr_ = nr;
       x_ = x;
       y_ = y;
+      keyValue_ = new HashMap<String, Double>();
    }
    
    
@@ -82,7 +87,8 @@ public class SpotData {
       width_ = spot.width_;
       a_ = spot.a_;
       theta_ = spot.theta_;
-      sigma_ = spot.sigma_;         
+      sigma_ = spot.sigma_;  
+      keyValue_ = new HashMap<String, Double>(spot.keyValue_);
    }
 
    public void setData(double intensity, 
@@ -102,6 +108,23 @@ public class SpotData {
       a_ = a;
       theta_ = theta;
       sigma_ = sigma;
+   }
+   
+   public void addKeyValue(String key, double value) {
+      keyValue_.put(key, value);
+   }
+   
+   public Double getValue(String key) {
+      return keyValue_.get(key);
+   }
+   
+   public String[] getKeys() {
+      Set<String> keys = keyValue_.keySet();
+      return  keys.toArray(new String[keys.size()]);
+   }
+   
+   public boolean hasKey(String key) {
+      return keyValue_.containsKey(key);
    }
    
    public void setOriginalPosition(double xPos, double yPos, double zPos) {

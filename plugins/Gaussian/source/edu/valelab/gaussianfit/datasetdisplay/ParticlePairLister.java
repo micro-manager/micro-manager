@@ -179,6 +179,7 @@ public class ParticlePairLister {
                      rt.addValue(Terms.FRAME, spot.getGSD().getFrame());
                      rt.addValue(Terms.SLICE, spot.getGSD().getSlice());
                      rt.addValue(Terms.CHANNEL, spot.getGSD().getSlice());
+                     rt.addValue(Terms.POSITION, spot.getGSD().getPosition());
                      rt.addValue(Terms.XPIX, spot.getGSD().getX());
                      rt.addValue(Terms.YPIX, spot.getGSD().getY());
                      rt.addValue("Distance", Math.sqrt(
@@ -243,6 +244,7 @@ public class ParticlePairLister {
                   rt2.addValue(Terms.FRAME, pair.getGSD().getFrame());
                   rt2.addValue(Terms.SLICE, pair.getGSD().getSlice());
                   rt2.addValue(Terms.CHANNEL, pair.getGSD().getSlice());
+                  rt2.addValue(Terms.POSITION, pair.getGSD().getPosition());
                   rt2.addValue(Terms.XPIX, pair.getGSD().getX());
                   rt2.addValue(Terms.YPIX, pair.getGSD().getY());
                   rt2.addValue("n", track.size());
@@ -397,10 +399,10 @@ public class ParticlePairLister {
                   Point2D.Double pCh2 = np.findKDWSE(pCh1);
                   if (pCh2 != null) {
                      rt.incrementCounter();
-                     rt.addValue(Terms.POSITION, gs.getPosition());
                      rt.addValue(Terms.FRAME, gs.getFrame());
                      rt.addValue(Terms.SLICE, gs.getSlice());
                      rt.addValue(Terms.CHANNEL, gs.getSlice());
+                     rt.addValue(Terms.POSITION, gs.getPosition());
                      rt.addValue(Terms.XPIX, gs.getX());
                      rt.addValue(Terms.YPIX, gs.getY());
                      rt.addValue("X1", pCh1.getX());

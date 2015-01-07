@@ -2,12 +2,15 @@
 package edu.valelab.gaussianfit.datasettransformations;
 
 import edu.valelab.gaussianfit.data.SpotData;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Simple filter for spot data.
  * 
  * Spots can be filtered based on intensity and sigma (width)
- * Setup the filter using the setSigma and setIntensity functions,
+ * Setup the filter using the setSigma, setIntensity, and setItemFilter functions,
  * then use the filter class to test individual spots
  * 
  * @author Nico Stuuman
@@ -19,6 +22,15 @@ public class SpotDataFilter {
    private boolean useIntensity_ = false;
    private double intensityMin_ = 0;
    private double intensityMax_ = 0;
+   private static class Extremes {
+      double minimum_;
+      double maximum_;
+      public Extremes(double min, double max) {
+         minimum_ = min;
+         maximum_ = max;
+      }
+   }
+   private final Map<String, Extremes> itemFilter_ = new HashMap<String, Extremes>();
    
    public SpotDataFilter() {
    }
@@ -35,6 +47,10 @@ public class SpotDataFilter {
       intensityMax_ = max;
    }
    
+   public void setItemFilter(String item, double min, double max) {
+      itemFilter_.put(item, new Extremes(min, max));
+   }
+   
    /**
     * Indicates whether or not the spot is acceptable 
     * 
@@ -49,6 +65,15 @@ public class SpotDataFilter {
       if (useIntensity_) {
          if (spot.getIntensity() < intensityMin_ || spot.getIntensity() > intensityMax_)
             return false;
+      }
+      Set<String> itemFilterKeySet = itemFilter_.keySet();
+      for (String key : itemFilterKeySet) {
+         if (spot.hasKey(key)) {
+            Extremes ex = itemFilter_.get(key);
+            if (spot.getValue(key) < ex.minimum_ || spot.getValue(key) > ex.maximum_) {
+               return false;
+            }
+         } // TODO: what do we do when the spot does not have the key???
       }
       
       return true;

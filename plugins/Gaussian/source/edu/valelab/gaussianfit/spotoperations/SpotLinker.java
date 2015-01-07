@@ -148,6 +148,7 @@ public class SpotLinker {
       double a = 0.0;
       double theta = 0.0;
       double sigma = 0.0;
+      final int n = source.size();
 
       for (SpotData spot : source) {
          intensity += spot.getIntensity();
@@ -170,13 +171,27 @@ public class SpotLinker {
 
       // not sure if this is correct:
       sigma /= Math.sqrt(source.size());
+      
+      // calculate the root mean square of the distribution:
+      // rms = sqrt (1/n Sum(i-n) ( sqr(xi - xCenter) + sqr(yi - yCenter) )
+      double sum = 0.0;
+      for (SpotData spot : source) {
+         sum += (spot.getXCenter() - xCenter) * (spot.getXCenter() - xCenter);
+         sum += (spot.getYCenter() - yCenter) * (spot.getYCenter() - yCenter);
+      }
+      double weightedsum = 1.0/n * sum;
+      double rms = Math.sqrt(weightedsum);
+
 
       sp.setData(intensity, background, xCenter, yCenter, 0.0, width, a, theta, sigma);
       sp.originalFrame_ = source.get(0).getFrame();
       if (!useFrames) {
          sp.originalFrame_ = source.get(0).getSlice();
       }
-      sp.nrLinks_ = source.size();
+      sp.nrLinks_ = n;
+      
+      sp.addKeyValue("rms", rms);
+      sp.addKeyValue("n", n);
 
       dest.add(sp);
    }
