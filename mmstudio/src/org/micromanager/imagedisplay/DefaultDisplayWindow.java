@@ -119,6 +119,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       displaySettings_ = DefaultDisplaySettings.getStandardSettings();
       displayBus_ = new EventBus();
       displayBus_.register(this);
+      EventManager.post(new DefaultNewDisplayEvent(this));
       customControls_ = customControls;
 
       initializePrefs();
@@ -140,7 +141,6 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       setMenuBar(Menus.getMenuBar());
 
       EventManager.register(this);
-      EventManager.post(new DefaultNewDisplayEvent(this));
    }
 
    /**
@@ -474,7 +474,10 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
    @Subscribe
    public void onDrawEvent(RequestToDrawEvent event) {
       try {
-         Coords drawCoords = stack_.getCurrentImageCoords();
+         Coords drawCoords = displaySettings_.getImageCoords();
+         if (drawCoords == null) {
+            drawCoords = stack_.getCurrentImageCoords();
+         }
          if (event.getCoords() != null) {
             // In particular, they want to display this image.
             drawCoords = event.getCoords();
@@ -527,9 +530,9 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
    @Override
    public void setDisplaySettings(DisplaySettings settings) {
       displaySettings_ = settings;
+      displayBus_.post(new NewDisplaySettingsEvent(settings, this));
       // Assume any change in display settings will necessitate a redraw.
       displayBus_.post(new DefaultRequestToDrawEvent(null));
-      displayBus_.post(new NewDisplaySettingsEvent(settings, this));
    }
 
    @Override
@@ -707,6 +710,10 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       return null;
    }
 
+   /**
+    * TODO: this doesn't actually work ever since the addition of
+    * DummyImageWindow (?).
+    */
    public static List<DisplayWindow> getAllImageWindows() {
       ArrayList<DisplayWindow> result = new ArrayList<DisplayWindow>();
       int[] plusIDs = WindowManager.getIDList();
