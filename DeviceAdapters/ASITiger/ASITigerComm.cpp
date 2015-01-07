@@ -255,7 +255,9 @@ int CTigerCommHub::DetectInstalledDevices()
             name = g_PLogicDeviceName;
             break;
          default:
-            LogMessage("Device type not supported by Tiger device adapter, skipping",false);
+            command.str("");
+            command << "Device type " <<  build.vAxesType[i] << " not supported by Tiger device adapter, skipping it";
+            LogMessage(command.str());
             continue; // go on to next axis (skips below code and goes to next for loop iteration)
       }
 
