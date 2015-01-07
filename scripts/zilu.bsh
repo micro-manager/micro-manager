@@ -73,17 +73,12 @@ public class MyListener implements MouseListener,
 	      isRunning_ = true;
 
 	      // Get a handle to the AcqWindow
-	      if (WindowManager.getFrame("Snap") != null) {
-	         ImagePlus img = WindowManager.getImage("Snap");
+	      win = gui.getSnapLiveWin();
+	      if (win != null) {
+	         ImagePlus img = win.getImagePlus();
 	         attach(img.getWindow());
-	      } else 
-	      if (WindowManager.getFrame("Live (running)") != null) {
-	         ImagePlus img = WindowManager.getImage("Live (running)");
-	         attach(img.getWindow());
-			} else 
-	      if (WindowManager.getFrame("Live (stopped)") != null) {
-	         ImagePlus img = WindowManager.getImage("Live (stopped)");
-	         attach(img.getWindow());
+	      } else {
+				gui.message("Failed to attach Mouse Listener");
 			}
 	      getOrientation();
 	   }
@@ -106,9 +101,11 @@ public class MyListener implements MouseListener,
 	      canvas_ = win.getCanvas();
 	      canvas_.addMouseListener(this);
 	      canvas_.addMouseMotionListener(this);
-	      if (Toolbar.getInstance() != null)
+	      if (Toolbar.getInstance() != null) {
 	    	  //TO DO: Set appropriate tool
 	         Toolbar.getInstance().setTool(Toolbar.HAND);
+	      }
+	      gui.message("Attached MouseListener");
 	   }
 
 	   public void getOrientation() {
@@ -276,9 +273,5 @@ public class MyListener implements MouseListener,
 
 mL_ = new MyListener(mmc);
 mL_.start();
-gui.message("Attached MouseListener");
-//mmc.sleep(60000);
-//          myListener_.stop();
-//gui.message("Detached MouseListener");
 
 
