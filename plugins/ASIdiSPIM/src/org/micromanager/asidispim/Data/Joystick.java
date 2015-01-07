@@ -210,9 +210,8 @@ public class Joystick {
    /**
     * If any device is attached to the specified joystick then it clears that association.
     * Loops over all devices that could be associated with joysticks and sets appropriate property.
-    * TODO revisit, may not need this at all
     */
-   public void unsetJoystick(Joystick.Keys jkey) {
+   public void unsetAllDevicesFromJoystick(Joystick.Keys jkey) {
       try {
          for (Devices.Keys dev : Devices.STAGES1D) {
             if (devices_.isTigerDevice(dev)) {
@@ -239,7 +238,6 @@ public class Joystick {
    /**
     * De-selects the joystick input according to the specified device and JSAxisData.
     * If this code is modified then probably also need to modify setJoystick too.
-    * TODO revisit, may not need this at all
     * @param jkey
     * @param JSAxisData
     */
@@ -250,7 +248,7 @@ public class Joystick {
       }
       try {
          if (jkey==Joystick.Keys.JOYSTICK) {  // setting the joystick, not a wheel
-            if (props_.hasProperty(dev, Properties.Keys.JOYSTICK_ENABLED)) { // if XY stage
+            if (dev == Devices.Keys.XYSTAGE) {
                props_.setPropValue(dev, Properties.Keys.JOYSTICK_ENABLED, "No");
             }
             else {  // must be micro-mirror
@@ -282,12 +280,12 @@ public class Joystick {
     */
    public void setJoystick(Joystick.Keys jkey, JSAxisData JSAxisData) {
       Devices.Keys dev = JSAxisData.deviceKey;
-      if (dev == Devices.Keys.NONE) {
+      if (!devices_.isTigerDevice(dev)) {
          return;
       }
       try {
          if (jkey==Joystick.Keys.JOYSTICK) {  // setting the joystick, not a wheel
-            if (props_.hasProperty(dev, Properties.Keys.JOYSTICK_ENABLED)) { // if XY stage
+            if (dev == Devices.Keys.XYSTAGE) {
                props_.setPropValue(dev, Properties.Keys.JOYSTICK_ENABLED, "Yes");
             }
             else {  // must be micro-mirror

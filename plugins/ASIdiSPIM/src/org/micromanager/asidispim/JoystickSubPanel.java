@@ -178,7 +178,7 @@ public final class JoystickSubPanel extends ListeningJPanel {
       private void updateStageSelections() {
          // save the existing selection if it exists
          String itemOrig = (String) jc_.getSelectedItem();
-         joystick_.unsetJoystick(jkey_);
+         joystick_.unsetAllDevicesFromJoystick(jkey_);
          
          // get the appropriate list of strings (in form of JSAxisData array) depending on joystick device type
          Joystick.JSAxisData[] JSAxisDataItems = null;
