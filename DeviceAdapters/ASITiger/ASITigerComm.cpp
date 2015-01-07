@@ -132,7 +132,7 @@ MM::DeviceDetectionStatus CTigerCommHub::DetectDevice()   // looks for hub, not 
    }
    catch(...)
    {
-      LogMessage("Exception in DetectDevice!",false);
+      LogMessage("Exception in DetectDevice!");
    }
 
    return result;
@@ -176,7 +176,7 @@ int CTigerCommHub::DetectInstalledDevices()
       name = "";
       ostringstream command;
       command << "Adding axis " << build.vAxesLetter[i] << " with type " << build.vAxesType[i] << " at address " << build.vAxesAddrHex[i];
-      LogMessage(command.str(), false);
+      LogMessage(command.str());
       switch (build.vAxesType[i])
       {
          case 'x': // XYMotor type
