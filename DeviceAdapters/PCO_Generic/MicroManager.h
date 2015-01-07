@@ -39,7 +39,7 @@
 #error Missing current pco library (in camera.h). Please copy pco lib into correct library/include folder.
 #endif
 
-#define KAMLIBVERSION_MM 239  // Will be incremented by pco when a new Kamlib is present (do not change)
+#define KAMLIBVERSION_MM 240  // Will be incremented by pco when a new Kamlib is present (do not change)
 #if KAMLIBVERSION != KAMLIBVERSION_MM
 #define STRING2(x) #x
 #define STRING(x) STRING2(x)
