@@ -45,6 +45,9 @@ import org.micromanager.graph.HistogramPanel.CursorListener;
 import org.micromanager.MMStudio;
 
 import org.micromanager.imagedisplay.events.DefaultRequestToDrawEvent;
+import org.micromanager.imagedisplay.link.ContrastEvent;
+import org.micromanager.imagedisplay.link.ContrastLinker;
+import org.micromanager.imagedisplay.link.LinkButton;
 
 import org.micromanager.utils.HistogramUtils;
 import org.micromanager.utils.ImageUtils;
@@ -65,8 +68,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private Datastore store_;
    private DisplayWindow display_;
    private MMVirtualStack stack_;
-   // TODO: this cached DisplaySettings could potentially get out of sync?
-   private DisplaySettings settings_;
    private ImagePlus plus_;
    private CompositeImage composite_;
    private EventBus displayBus_;
@@ -106,8 +107,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       store_ = store;
       display_ = display;
       stack_ = stack;
-      settings_ = display.getDisplaySettings();
       plus_ = plus;
+
       // We may be for a single-channel system or a multi-channel one; the two
       // require different backing objects (ImagePlus vs. CompositeImage).
       // Hence why we have both the plus_ and composite_ objects, and use the
@@ -119,8 +120,9 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       // Default to white; select a better color if available.
       color_ = getColorFromSettings();
 
+      DisplaySettings settings = display.getDisplaySettings();
       name_ = String.format("channel %d", channelIndex_);
-      String[] allNames = settings_.getChannelNames();
+      String[] allNames = settings.getChannelNames();
       if (allNames != null && allNames.length > channelIndex_) {
          name_ = allNames[channelIndex_];
       }
@@ -216,8 +218,9 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
          @Override
          public void actionPerformed(final ActionEvent e) {
-            if (settings_.getShouldSyncChannels() != null && 
-                  settings_.getShouldSyncChannels()) {
+            DisplaySettings settings = display_.getDisplaySettings();
+            if (settings.getShouldSyncChannels() != null &&
+                  settings.getShouldSyncChannels()) {
                parent_.updateOtherDisplayCombos(histRangeComboBox_.getSelectedIndex());
             }
             displayComboAction();
@@ -262,6 +265,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       firstRow.add(colorPickerLabel_);
 
       fullButton_.setPreferredSize(new Dimension(35, 20));
+      firstRow.add(new LinkButton(new ContrastLinker(channelIndex_, display_),
+               display_));
       firstRow.add(fullButton_);
 
       autoButton_.setPreferredSize(new Dimension(35, 20));
@@ -350,17 +355,15 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    private void fullButtonAction() {
-      if (settings_.getShouldSyncChannels() != null &&
-            settings_.getShouldSyncChannels()) {
+      DisplaySettings settings = display_.getDisplaySettings();
+      if (settings.getShouldSyncChannels() != null &&
+            settings.getShouldSyncChannels()) {
          parent_.fullScaleChannels();
       } else {
          setFullScale();
          applyLUT(true);
       }
-      if (settings_.getShouldAutostretch()) {
-         // Disable autostretch now.
-         display_.setDisplaySettings(settings_.copy().shouldAutostretch(false).build());
-      }
+      disableAutostretch();
    }
 
    public void autoButtonAction() {
@@ -369,23 +372,23 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    private void colorPickerLabelMouseClicked() {
-      //Can only edit color in this way if there is an active window
-      //so it is ok to get image cache in this way
+      DisplaySettings settings = display_.getDisplaySettings();
+      String[] channelNames = settings.getChannelNames();
       String name = "selected";
-      String[] channelNames = settings_.getChannelNames();
       if (channelNames != null && channelNames.length > channelIndex_) {
          name = channelNames[channelIndex_];
       }
-      Color[] channelColors = settings_.getChannelColors();
+      Color[] channelColors = settings.getChannelColors();
       Color newColor = JColorChooser.showDialog(this, "Choose a color for the "
               + name + " channel", channelColors[channelIndex_]);
       if (newColor != null) {
          // Update the display settings.
          channelColors[channelIndex_] = newColor;
-         display_.setDisplaySettings(
-               settings_.copy().channelColors(channelColors).build());
+         DisplaySettings newSettings = settings.copy().channelColors(channelColors).build();
+         display_.setDisplaySettings(newSettings);
+         display_.postEvent(new ContrastEvent(channelIndex_, newSettings));
       }
-      updateChannelNameAndColorFromCache();
+      updateChannelSettings();
 
       //if multicamera, save color
       if (newColor != null) {
@@ -407,9 +410,10 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       int numDataChannels;
       String[] dataNames;
       String[] cameraNames = new String[numMultiCamChannels];
+      DisplaySettings settings = display_.getDisplaySettings();
       try {
          numDataChannels = store_.getAxisLength("channel");
-         dataNames = settings_.getChannelNames();
+         dataNames = settings.getChannelNames();
          for (int i = 0; i < numMultiCamChannels; i++) {
             cameraNames[i] = core.getCameraChannelName(i);
          }
@@ -479,18 +483,19 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    private void loadDisplaySettings() {
-      Integer[] contrastMaxes = settings_.getChannelContrastMaxes();
+      DisplaySettings settings = display_.getDisplaySettings();
+      Integer[] contrastMaxes = settings.getChannelContrastMaxes();
       if (contrastMaxes != null && contrastMaxes.length > channelIndex_) {
          contrastMax_ =  contrastMaxes[channelIndex_];
       }
       if (contrastMax_ < 0 || contrastMax_ > maxIntensity_) {
          contrastMax_ = maxIntensity_;
       }
-      Integer[] contrastMins = settings_.getChannelContrastMins();
+      Integer[] contrastMins = settings.getChannelContrastMins();
       if (contrastMins != null && contrastMins.length > channelIndex_) {
          contrastMin_ = contrastMins[channelIndex_];
       }
-      Double[] gammas = settings_.getChannelGammas();
+      Double[] gammas = settings.getChannelGammas();
       if (gammas != null && gammas.length > channelIndex_) {
          gamma_ = gammas[channelIndex_];
       }
@@ -518,11 +523,15 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       return hp;
    }
 
-   public void updateChannelNameAndColorFromCache() {
+   /**
+    * Pull new contrast settings from the provided DisplaySettings.
+    */
+   public void updateChannelSettings() {
       color_ = getColorFromSettings();
       colorPickerLabel_.setBackground(color_);
       histogram_.setTraceStyle(true, color_);
-      String[] allNames = settings_.getChannelNames();
+      DisplaySettings settings = display_.getDisplaySettings();
+      String[] allNames = settings.getChannelNames();
       if (allNames != null && allNames.length > channelIndex_) {
          String name = allNames[channelIndex_];
          if (name.length() > 11) {
@@ -530,14 +539,28 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
          channelNameCheckbox_.setText(name);
       }
+      Integer[] mins = settings.getChannelContrastMins();
+      if (mins != null && mins.length > channelIndex_) {
+         contrastMin_ = mins[channelIndex_];
+      }
+      Integer[] maxes = settings.getChannelContrastMaxes();
+      if (maxes != null && maxes.length > channelIndex_) {
+         contrastMax_ = maxes[channelIndex_];
+      }
+      Double[] gammas = settings.getChannelGammas();
+      if (gammas != null && gammas.length > channelIndex_) {
+         gamma_ = gammas[channelIndex_];
+      }
+
+      updateHistogram();
       calcAndDisplayHistAndStats(true);
-      parent_.applyLUTToImage();
-      repaint();
+      applyLUT(true);
    }
 
    private Color getColorFromSettings() {
       Color result = Color.WHITE;
-      Color[] allColors = settings_.getChannelColors();
+      DisplaySettings settings = display_.getDisplaySettings();
+      Color[] allColors = settings.getChannelColors();
       // Coerce white when there's only one channel (i.e. ignore the chosen
       // color).
       if (store_.getAxisLength("channel") > 1 &&
@@ -694,8 +717,9 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       }
 
       // Autostretch, if necessary.
-      if (settings_.getShouldAutostretch() != null &&
-            settings_.getShouldAutostretch()) {
+      DisplaySettings settings = display_.getDisplaySettings();
+      if (settings.getShouldAutostretch() != null &&
+            settings.getShouldAutostretch()) {
          autostretch();
          applyLUT(false);
       }
@@ -703,7 +727,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       // Determine what percentage of the histogram range to autotrim.
       maxAfterRejectingOutliers_ = rawHistogram.length;
       int totalPoints = imgHeight * imgWidth;
-      Double trimPercentage = settings_.getTrimPercentage();
+      Double trimPercentage = settings.getTrimPercentage();
       if (trimPercentage == null) {
          trimPercentage = 0.0;
       }
@@ -735,8 +759,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             }
          }
          total += histogram[i];
-         if (settings_.getShouldUseLogScale() != null &&
-               settings_.getShouldUseLogScale()) {
+         if (settings.getShouldUseLogScale() != null &&
+               settings.getShouldUseLogScale()) {
             histogram[i] = histogram[i] > 0 ? (int) (1000 * Math.log(histogram[i])) : 0;
          }
       }
@@ -789,6 +813,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          contrastMin_ = contrastMax_;
       }
       applyLUT(true);
+      postNewSettings();
    }
    
    @Override
@@ -804,6 +829,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          contrastMax_ = contrastMin_ + 1;
       }
       applyLUT(true);
+      postNewSettings();
    }
 
    public void onLeftCursor(double pos) {
@@ -815,6 +841,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          contrastMax_ = contrastMin_ + 1;
       }
       applyLUT(true);
+      postNewSettings();
    }
 
    @Override
@@ -828,6 +855,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          contrastMin_ = contrastMax_;
       }
       applyLUT(true);
+      postNewSettings();
    }
 
    @Override
@@ -839,7 +867,34 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             gamma_ = gamma;
          }
          applyLUT(true);
+         postNewSettings();
       }
+   }
+
+   /**
+    * Update our parent's DisplaySettings, and post a ContrastEvent.
+    */
+   private void postNewSettings() {
+      DisplaySettings settings = display_.getDisplaySettings();
+      DisplaySettings.DisplaySettingsBuilder builder = settings.copy();
+
+      Object[] channelSettings = DefaultDisplaySettings.getPerChannelArrays(settings);
+      // TODO: ordering of these values is closely tied to the above function!
+      Object[] ourParams = new Object[] {name_, color_,
+         new Integer(contrastMin_), new Integer(contrastMax_),
+         new Double(gamma_)};
+      // For each of the above parameters, ensure that there's an array in
+      // the display settings that's at least long enough to hold our channel,
+      // and that our values are represented in that array.
+      for (int i = 0; i < channelSettings.length; ++i) {
+         Object[] oldVals = DefaultDisplaySettings.makePerChannelArray(i,
+               (Object[]) channelSettings[i], channelIndex_ + 1);
+         oldVals[channelIndex_] = ourParams[i];
+         DefaultDisplaySettings.updateChannelArray(i, oldVals, builder);
+      }
+      settings = builder.build();
+      display_.setDisplaySettings(settings);
+      display_.postEvent(new ContrastEvent(channelIndex_, settings));
    }
 
    /**
@@ -847,8 +902,9 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
     * events when our drawing code calls this method.
     */
    private void applyLUT(boolean shouldRedisplay) {
-      if (settings_.getShouldSyncChannels() != null &&
-            settings_.getShouldSyncChannels()) {
+      DisplaySettings settings = display_.getDisplaySettings();
+      if (settings.getShouldSyncChannels() != null &&
+            settings.getShouldSyncChannels()) {
          parent_.applyContrastToAllChannels(contrastMin_, contrastMax_, gamma_);
       } else {
          parent_.applyLUTToImage();
@@ -860,7 +916,11 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    private void disableAutostretch() {
-      display_.setDisplaySettings(display_.getDisplaySettings().copy().shouldAutostretch(false).build());
+      DisplaySettings settings = display_.getDisplaySettings();
+      if (settings.getShouldAutostretch() != null &&
+            settings.getShouldAutostretch()) {
+         display_.setDisplaySettings(display_.getDisplaySettings().copy().shouldAutostretch(false).build());
+      }
    }
 
    /**
@@ -868,15 +928,14 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
     */
    @Subscribe
    public void onNewDisplaySettings(NewDisplaySettingsEvent event) {
-      settings_ = event.getDisplaySettings();
       if (!haveInitialized_.get()) {
          // TODO: there's a race condition here if we've already set the
-         // values that updateChannelNameAndColorFromCache() modify -- if
+         // values that updateChannelSettings() modify -- if
          // they aren't yet available, though, then that method will fail.
          return;
       }
       try {
-         updateChannelNameAndColorFromCache();
+         updateChannelSettings();
       }
       catch (Exception e) {
          ReportingUtils.logError(e, "Failed to update histogram display settings");
