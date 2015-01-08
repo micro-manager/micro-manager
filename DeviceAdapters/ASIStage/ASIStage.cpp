@@ -438,9 +438,9 @@ int XYStage::Initialize()
       pAct = new CPropertyAction (this, &XYStage::OnSpeed);
       CreateProperty("Speed-S", "1", MM::Float, false, pAct);
       // Maximum Speed that can be set in Speed-S property
-      pAct = new CPropertyAction(this, &XYStage::OnMaxSpeed);
-      CreateProperty("Maximum Speed (Do Not Change)", "7.5", MM::Float, false, pAct);
-      SetPropertyLimits("Maximum Speed (Do Not Change)", 0.1, 25.0);
+      char max_speed[MM::MaxStrLength];
+      GetMaxSpeed(max_speed);
+      CreateProperty("Maximum Speed (Do Not Change)", max_speed, MM::Float, true);
    }
 
    // Backlash (sets both x and y)
@@ -1380,16 +1380,22 @@ int XYStage::OnError(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-int XYStage::OnMaxSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
+int XYStage::GetMaxSpeed(char * maxSpeedStr)
 {
-   if (eAct == MM::BeforeGet)
-   {
-      pProp->Set(maxSpeed_);
-   }
-   else if (eAct == MM::AfterSet)
-   {
-      pProp->Get(maxSpeed_);
-   }
+   double origMaxSpeed = maxSpeed_;
+   char orig_speed[MM::MaxStrLength];
+   int ret = GetProperty("Speed-S", orig_speed);
+   if ( ret != DEVICE_OK)
+      return ret;
+   maxSpeed_ = 10001;
+   SetProperty("Speed-S", "10000");
+   ret = GetProperty("Speed-S", maxSpeedStr);
+   maxSpeed_ = origMaxSpeed;  // restore in case we return early
+   if (ret != DEVICE_OK)
+      return ret;
+   ret = SetProperty("Speed-S", orig_speed);
+   if (ret != DEVICE_OK)
+      return ret;
    return DEVICE_OK;
 }
 
@@ -1910,9 +1916,9 @@ int ZStage::Initialize()
       pAct = new CPropertyAction (this, &ZStage::OnSpeed);
       CreateProperty("Speed-S", "1", MM::Float, false, pAct);
       // Maximum Speed that can be set in Speed-S property
-      pAct = new CPropertyAction(this, &ZStage::OnMaxSpeed);
-      CreateProperty("Maximum Speed (Do Not Change)", "7.5", MM::Float, false, pAct);
-      SetPropertyLimits("Maximum Speed (Do Not Change)", 0.1, 25.0);
+      char max_speed[MM::MaxStrLength];
+      GetMaxSpeed(max_speed);
+      CreateProperty("Maximum Speed (Do Not Change)", max_speed, MM::Float, true);
    }
 
    // Backlash (sets both x and y)
@@ -2833,16 +2839,22 @@ int ZStage::OnError(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-int ZStage::OnMaxSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
+int ZStage::GetMaxSpeed(char * maxSpeedStr)
 {
-   if (eAct == MM::BeforeGet)
-   {
-      pProp->Set(maxSpeed_);
-   }
-   else if (eAct == MM::AfterSet)
-   {
-      pProp->Get(maxSpeed_);
-   }
+   double origMaxSpeed = maxSpeed_;
+   char orig_speed[MM::MaxStrLength];
+   int ret = GetProperty("Speed-S", orig_speed);
+   if ( ret != DEVICE_OK)
+      return ret;
+   maxSpeed_ = 10001;
+   SetProperty("Speed-S", "10000");
+   ret = GetProperty("Speed-S", maxSpeedStr);
+   maxSpeed_ = origMaxSpeed;  // restore in case we return early
+   if (ret != DEVICE_OK)
+      return ret;
+   ret = SetProperty("Speed-S", orig_speed);
+   if (ret != DEVICE_OK)
+      return ret;
    return DEVICE_OK;
 }
 

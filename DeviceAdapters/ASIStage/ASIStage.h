@@ -127,7 +127,7 @@ private:
    int OnOverShoot(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnWait(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnMaxSpeed(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int GetMaxSpeed(char * maxSpeedStr);
    int OnMotorCtrl(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnVersion(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnCompileDate(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -215,7 +215,7 @@ private:
    int OnOverShoot(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnWait(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnMaxSpeed(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int GetMaxSpeed(char * maxSpeedStr);
    int OnMotorCtrl(MM::PropertyBase* pProp, MM::ActionType eAct);
    bool HasRingBuffer();
    int GetControllerInfo();
