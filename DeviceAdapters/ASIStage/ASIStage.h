@@ -208,11 +208,21 @@ public:
    int SendStageSequence();
 
 private:
+   int OnAcceleration(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnBacklash(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnFinishError(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnError(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnOverShoot(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnWait(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnMaxSpeed(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnMotorCtrl(MM::PropertyBase* pProp, MM::ActionType eAct);
    bool HasRingBuffer();
    int GetControllerInfo();
    int ExecuteCommand(const std::string& cmd, std::string& response);
    int Autofocus(long param);
    //int GetResolution(double& res);
+   bool hasCommand(std::string commnand);
 
    std::vector<double> sequence_;
    std::string axis_;
@@ -224,6 +234,8 @@ private:
    bool hasRingBuffer_;
    long nrEvents_;
    long curSteps_;
+   double maxSpeed_;
+   bool motorOn_;
 };
 
 

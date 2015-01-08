@@ -1250,12 +1250,12 @@ int XYStage::OnAcceleration(MM::PropertyBase* pProp, MM::ActionType eAct)
       return ERR_UNRECOGNIZED_ANSWER;
    }
    else if (eAct == MM::AfterSet) {
-      double backlash;
-      pProp->Get(backlash);
-      if (backlash < 0.0)
-         backlash = 0.0;
+      double accel;
+      pProp->Get(accel);
+      if (accel < 0.0)
+         accel = 0.0;
       ostringstream command;
-      command << "AC X=" << backlash << " Y=" << backlash;
+      command << "AC X=" << accel << " Y=" << accel;
       string answer;
       // query command
       int ret = QueryCommand(command.str().c_str(), answer);
@@ -1816,7 +1816,9 @@ ZStage::ZStage() :
    sequenceable_(false),
    runningFastSequence_(false),
    hasRingBuffer_(false),
-   nrEvents_(50)
+   nrEvents_(50),
+   maxSpeed_(7.5),
+   motorOn_(true)
 {
    InitializeDefaultErrorMessages();
 
@@ -1886,9 +1888,11 @@ int ZStage::Initialize()
    if (ret != DEVICE_OK) 
       ret = GetPositionSteps(curSteps_);
 
+   CPropertyAction* pAct;
+
    if (HasRingBuffer())
    {
-      CPropertyAction* pAct = new CPropertyAction (this, &ZStage::OnSequence);
+      pAct = new CPropertyAction (this, &ZStage::OnSequence);
       const char* spn = "Use Sequence";
       CreateProperty(spn, "No", MM::String, false, pAct);
       AddAllowedValue(spn, "No");
@@ -1900,7 +1904,60 @@ int ZStage::Initialize()
       AddAllowedValue(spn, "No");
       AddAllowedValue(spn, "Armed");
    }
-      
+
+   // Speed (sets both x and y)
+   if (hasCommand("S " + axis_ + "?")) {
+      pAct = new CPropertyAction (this, &ZStage::OnSpeed);
+      CreateProperty("Speed-S", "1", MM::Float, false, pAct);
+      // Maximum Speed that can be set in Speed-S property
+      pAct = new CPropertyAction(this, &ZStage::OnMaxSpeed);
+      CreateProperty("Maximum Speed (Do Not Change)", "7.5", MM::Float, false, pAct);
+      SetPropertyLimits("Maximum Speed (Do Not Change)", 0.1, 25.0);
+   }
+
+   // Backlash (sets both x and y)
+   if (hasCommand("B " + axis_ + "?")) {
+      pAct = new CPropertyAction (this, &ZStage::OnBacklash);
+      CreateProperty("Backlash-B", "0", MM::Float, false, pAct);
+   }
+
+   // Error (sets both x and y)
+   if (hasCommand("E " + axis_ + "?")) {
+      pAct = new CPropertyAction (this, &ZStage::OnError);
+      CreateProperty("Error-E(nm)", "0", MM::Float, false, pAct);
+   }
+
+   // acceleration (sets both x and y)
+   if (hasCommand("AC " + axis_ + "?")) {
+      pAct = new CPropertyAction (this, &ZStage::OnAcceleration);
+      CreateProperty("Acceleration-AC(ms)", "0", MM::Integer, false, pAct);
+   }
+
+   // Finish Error (sets both x and y)
+   if (hasCommand("PC " + axis_ + "?")) {
+      pAct = new CPropertyAction (this, &ZStage::OnFinishError);
+      CreateProperty("FinishError-PCROS(nm)", "0", MM::Float, false, pAct);
+   }
+
+   // OverShoot (sets both x and y)
+   if (hasCommand("OS " + axis_ + "?")) {
+      pAct = new CPropertyAction (this, &ZStage::OnOverShoot);
+      CreateProperty("OverShoot(um)", "0", MM::Float, false, pAct);
+   }
+
+   // MotorCtrl, (works on both x and y)
+   pAct = new CPropertyAction (this, &ZStage::OnMotorCtrl);
+   CreateProperty("MotorOnOff", "On", MM::String, false, pAct);
+   AddAllowedValue("MotorOnOff", "On");
+   AddAllowedValue("MotorOnOff", "Off");
+
+   // Wait cycles
+   if (hasCommand("WT " + axis_ + "?")) {
+      pAct = new CPropertyAction (this, &ZStage::OnWait);
+      CreateProperty("Wait_Cycles", "5", MM::Integer, false, pAct);
+      //      SetPropertyLimits("Wait_Cycles", 0, 255);  // don't artificially restrict range
+   }
+
    initialized_ = true;
    return DEVICE_OK;
 }
@@ -2299,6 +2356,22 @@ int ZStage::GetControllerInfo()
    return DEVICE_OK;
 }
 
+bool ZStage::hasCommand(std::string command) {
+   string answer;
+   // query the device
+   int ret = QueryCommand(command.c_str(), answer);
+   if (ret != DEVICE_OK)
+      return false;
+
+   if (answer.substr(0,2).compare(":A") == 0)
+      return true;
+   if (answer.substr(0,4).compare(":N-1") == 0)
+      return false;
+
+   // if we do not get an answer, or any other answer, this is probably OK
+   return true;
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Action handlers
@@ -2414,6 +2487,460 @@ int ZStage::OnRingBufferSize(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(nrEvents_);
    }
 
+   return DEVICE_OK;
+}
+
+// This sets the number of waitcycles
+int ZStage::OnWait(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      // To simplify our life we only read out waitcycles for the X axis, but set for both
+      ostringstream command;
+      command << "WT " << axis_ << "?";
+      string answer;
+      // query command
+      int ret = QueryCommand(command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      if (answer.substr(0,2).compare(":" + axis_) == 0)
+      {
+         long waitCycles = atol(answer.substr(3).c_str());
+         pProp->Set(waitCycles);
+         return DEVICE_OK;
+      }
+      // deal with error later
+      else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
+      {
+         int errNo = atoi(answer.substr(3).c_str());
+         return ERR_OFFSET + errNo;
+      }
+      return ERR_UNRECOGNIZED_ANSWER;
+   }
+   else if (eAct == MM::AfterSet) {
+      long waitCycles;
+      pProp->Get(waitCycles);
+
+      // enforce positive
+      if (waitCycles < 0)
+         waitCycles = 0;
+
+      // if firmware date is 201x  then use msec/int definition of WaitCycles
+      // would be better to parse firmware (8.4 and earlier used unsigned char)
+      // and that transition occurred ~2008 but this is easier than trying to
+      // parse version strings
+      char compile_date[MM::MaxStrLength];
+      if (GetProperty("CompileDate", compile_date) == DEVICE_OK
+            && compile_date[9]=='1')  // i.e. between 2010 and 2019
+      {
+         // don't enforce upper limit
+      }
+      else  // enforce limit for 2009 and earlier firmware or
+      {     // if getting compile date wasn't successful
+         if (waitCycles > 255)
+            waitCycles = 255;
+      }
+
+      ostringstream command;
+      command << "WT " << axis_ << "=" << waitCycles;
+      string answer;
+      // query command
+      int ret = QueryCommand(command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      if (answer.substr(0,2).compare(":A") == 0)
+         return DEVICE_OK;
+      else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
+      {
+         int errNo = atoi(answer.substr(3).c_str());
+         return ERR_OFFSET + errNo;
+      }
+      return ERR_UNRECOGNIZED_ANSWER;
+   }
+   return DEVICE_OK;
+}
+
+
+int ZStage::OnBacklash(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      // To simplify our life we only read out waitcycles for the X axis, but set for both
+      ostringstream command;
+      command << "B " << axis_ << "?";
+      string answer;
+      // query command
+      int ret = QueryCommand(command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      if (answer.substr(0,2).compare(":" + axis_) == 0)
+      {
+         double speed = atof(answer.substr(3, 8).c_str());
+         pProp->Set(speed);
+         return DEVICE_OK;
+      }
+      // deal with error later
+      else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
+      {
+         int errNo = atoi(answer.substr(3).c_str());
+         return ERR_OFFSET + errNo;
+      }
+      return ERR_UNRECOGNIZED_ANSWER;
+   }
+   else if (eAct == MM::AfterSet) {
+      double backlash;
+      pProp->Get(backlash);
+      if (backlash < 0.0)
+         backlash = 0.0;
+      ostringstream command;
+      command << "B " << axis_ << "=" << backlash;
+      string answer;
+      // query command
+      int ret = QueryCommand(command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      if (answer.substr(0,2).compare(":A") == 0)
+         return DEVICE_OK;
+      else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
+      {
+         int errNo = atoi(answer.substr(3).c_str());
+         return ERR_OFFSET + errNo;
+      }
+      return ERR_UNRECOGNIZED_ANSWER;
+   }
+   return DEVICE_OK;
+}
+
+int ZStage::OnFinishError(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      // To simplify our life we only read out waitcycles for the X axis, but set for both
+      ostringstream command;
+      command << "PC " << axis_ << "?";
+      string answer;
+      // query command
+      int ret = QueryCommand(command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      if (answer.substr(0,2).compare(":" + axis_) == 0)
+      {
+         double fError = atof(answer.substr(3, 8).c_str());
+         pProp->Set(1000000* fError);
+         return DEVICE_OK;
+      }
+      if (answer.substr(0,2).compare(":A") == 0)
+      {
+         // Answer is of the form :A X=0.00003
+         double fError = atof(answer.substr(5, 8).c_str());
+         pProp->Set(1000000* fError);
+         return DEVICE_OK;
+      }
+      // deal with error later
+      else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
+      {
+         int errNo = atoi(answer.substr(3).c_str());
+         return ERR_OFFSET + errNo;
+      }
+      return ERR_UNRECOGNIZED_ANSWER;
+   }
+   else if (eAct == MM::AfterSet) {
+      double error;
+      pProp->Get(error);
+      if (error < 0.0)
+         error = 0.0;
+      error = error/1000000;
+      ostringstream command;
+      command << "PC " << axis_ << "=" << error;
+      string answer;
+      // query command
+      int ret = QueryCommand(command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      if (answer.substr(0,2).compare(":A") == 0)
+         return DEVICE_OK;
+      else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
+      {
+         int errNo = atoi(answer.substr(3).c_str());
+         return ERR_OFFSET + errNo;
+      }
+      return ERR_UNRECOGNIZED_ANSWER;
+   }
+   return DEVICE_OK;
+}
+
+int ZStage::OnAcceleration(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      // To simplify our life we only read out acceleration for the X axis, but set for both
+      ostringstream command;
+      command << "AC " + axis_ + "?";
+      string answer;
+      // query command
+      int ret = QueryCommand(command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      if (answer.substr(0,2).compare(":" + axis_) == 0)
+      {
+         double speed = atof(answer.substr(3, 8).c_str());
+         pProp->Set(speed);
+         return DEVICE_OK;
+      }
+      // deal with error later
+      else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
+      {
+         int errNo = atoi(answer.substr(3).c_str());
+         return ERR_OFFSET + errNo;
+      }
+      return ERR_UNRECOGNIZED_ANSWER;
+   }
+   else if (eAct == MM::AfterSet) {
+      double accel;
+      pProp->Get(accel);
+      if (accel < 0.0)
+         accel = 0.0;
+      ostringstream command;
+      command << "AC " << axis_ << "=" << accel;
+      string answer;
+      // query command
+      int ret = QueryCommand(command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      if (answer.substr(0,2).compare(":A") == 0)
+         return DEVICE_OK;
+      else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
+      {
+         int errNo = atoi(answer.substr(3).c_str());
+         return ERR_OFFSET + errNo;
+      }
+      return ERR_UNRECOGNIZED_ANSWER;
+   }
+   return DEVICE_OK;
+}
+
+int ZStage::OnOverShoot(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      // To simplify our life we only read out waitcycles for the X axis, but set for both
+      ostringstream command;
+      command << "OS " + axis_ + "?";
+      string answer;
+      // query command
+      int ret = QueryCommand(command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      if (answer.substr(0,2).compare(":A") == 0)
+      {
+         double overShoot = atof(answer.substr(5, 8).c_str());
+         pProp->Set(overShoot * 1000.0);
+         return DEVICE_OK;
+      }
+      // deal with error later
+      else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
+      {
+         int errNo = atoi(answer.substr(3).c_str());
+         return ERR_OFFSET + errNo;
+      }
+      return ERR_UNRECOGNIZED_ANSWER;
+   }
+   else if (eAct == MM::AfterSet) {
+      double overShoot;
+      pProp->Get(overShoot);
+      if (overShoot < 0.0)
+         overShoot = 0.0;
+      overShoot = overShoot / 1000.0;
+      ostringstream command;
+      command << fixed << "OS " << axis_ << "=" << overShoot;
+      string answer;
+      // query the device
+      int ret = QueryCommand(command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      if (answer.substr(0,2).compare(":A") == 0)
+         return DEVICE_OK;
+      else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
+      {
+         int errNo = atoi(answer.substr(3).c_str());
+         return ERR_OFFSET + errNo;
+      }
+      return ERR_UNRECOGNIZED_ANSWER;
+   }
+   return DEVICE_OK;
+}
+
+int ZStage::OnError(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      // To simplify our life we only read out waitcycles for the X axis, but set for both
+      ostringstream command;
+      command << "E " + axis_ + "?";
+      string answer;
+      // query command
+      int ret = QueryCommand(command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      if (answer.substr(0,2).compare(":" + axis_) == 0)
+      {
+         double fError = atof(answer.substr(3, 8).c_str());
+         pProp->Set(fError * 1000000.0);
+         return DEVICE_OK;
+      }
+      // deal with error later
+      else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
+      {
+         int errNo = atoi(answer.substr(3).c_str());
+         return ERR_OFFSET + errNo;
+      }
+      return ERR_UNRECOGNIZED_ANSWER;
+   }
+   else if (eAct == MM::AfterSet) {
+      double error;
+      pProp->Get(error);
+      if (error < 0.0)
+         error = 0.0;
+      error = error / 1000000.0;
+      ostringstream command;
+      command << fixed << "E " << axis_ << "=" << error;
+      string answer;
+      // query the device
+      int ret = QueryCommand(command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      if (answer.substr(0,2).compare(":A") == 0)
+         return DEVICE_OK;
+      else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
+      {
+         int errNo = atoi(answer.substr(3).c_str());
+         return ERR_OFFSET + errNo;
+      }
+      return ERR_UNRECOGNIZED_ANSWER;
+   }
+   return DEVICE_OK;
+}
+
+int ZStage::OnMaxSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(maxSpeed_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(maxSpeed_);
+   }
+   return DEVICE_OK;
+}
+
+int ZStage::OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      // To simplify our life we only read out waitcycles for the X axis, but set for both
+      ostringstream command;
+      command << "S " + axis_ + "?";
+      string answer;
+      // query command
+      int ret = QueryCommand(command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      if (answer.substr(0,2).compare(":A") == 0)
+      {
+         double speed = atof(answer.substr(5).c_str());
+         pProp->Set(speed);
+         return DEVICE_OK;
+      }
+      // deal with error later
+      else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
+      {
+         int errNo = atoi(answer.substr(3).c_str());
+         return ERR_OFFSET + errNo;
+      }
+      return ERR_UNRECOGNIZED_ANSWER;
+   }
+   else if (eAct == MM::AfterSet) {
+      double speed;
+      pProp->Get(speed);
+      if (speed < 0.0)
+         speed = 0.0;
+      // Note, max speed may differ depending on pitch screw
+      else if (speed > maxSpeed_)
+         speed = maxSpeed_;
+      ostringstream command;
+      command << fixed << "S " << axis_ << "=" << speed;
+      string answer;
+      // query the device
+      int ret = QueryCommand(command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      if (answer.substr(0,2).compare(":A") == 0)
+         return DEVICE_OK;
+      else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
+      {
+         int errNo = atoi(answer.substr(3).c_str());
+         return ERR_OFFSET + errNo;
+      }
+      return ERR_UNRECOGNIZED_ANSWER;
+   }
+   return DEVICE_OK;
+}
+
+int ZStage::OnMotorCtrl(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      // The controller can not report whether or not the motors are on.  Cache the value
+      if (motorOn_)
+         pProp->Set("On");
+      else
+         pProp->Set("Off");
+
+      return DEVICE_OK;
+   }
+   else if (eAct == MM::AfterSet) {
+      string motorOn;
+      string value;
+      pProp->Get(motorOn);
+      if (motorOn == "On") {
+         motorOn_ = true;
+         value = "+";
+      } else {
+         motorOn_ = false;
+         value = "-";
+      }
+      ostringstream command;
+      command << "MC " << axis_ << "X" << value;
+      string answer;
+      // query command
+      int ret = QueryCommand(command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      if (answer.substr(0,2).compare(":A") == 0)
+         return DEVICE_OK;
+      else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
+      {
+         int errNo = atoi(answer.substr(3).c_str());
+         return ERR_OFFSET + errNo;
+      }
+      return ERR_UNRECOGNIZED_ANSWER;
+   }
    return DEVICE_OK;
 }
 
