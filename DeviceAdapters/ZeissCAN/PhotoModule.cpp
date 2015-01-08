@@ -1,6 +1,6 @@
 
 #ifdef WIN32
-#include <window.h>
+#include <windows.h>
 #define snprintf _snprintf
 #endif
 
