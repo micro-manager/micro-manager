@@ -660,4 +660,36 @@ private:
    } ZmStatFlags;
 
 };
+
+// Axiophot2 Photomodule
+
+class PhotoModule : public CStateDeviceBase<PhotoModule>
+{
+public:
+   PhotoModule();
+   ~PhotoModule();
+
+   // MMDevice API
+   // ------------
+   int Initialize();
+   int Shutdown();
+    
+   void GetName(char* pszName) const;
+   bool Busy();
+   unsigned long GetNumberOfPositions()const {return numPos_;};
+
+   // action interface
+   // ---------------
+   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+   int SetTurretPosition(int position);
+   int GetTurretPosition(int &position);
+   //bool GetPresence(bool& present);
+   bool initialized_;
+   std::string name_;
+   long pos_;
+   int numPos_;
+};
+      
 #endif // _ZeissCAN_H_

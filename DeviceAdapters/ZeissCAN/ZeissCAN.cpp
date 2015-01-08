@@ -71,6 +71,7 @@ const char* g_ZeissFilterWheel1 = "ZeissFilterWheel1";
 const char* g_ZeissFilterWheel2 = "ZeissFilterWheel2";
 const char* g_ZeissXYStage = "XYStage";
 const char* g_ZStage = "ZStage";
+const char* g_PhotoModule = "PhotoModule";
 
 // List of Turret numbers (from Zeiss documentation)
 int g_ReflectorTurret = 1;
@@ -111,6 +112,7 @@ MODULE_API void InitializeModuleData()
    RegisterDevice(g_ZeissFilterWheel2, MM::StateDevice, "FilterWheel 2");
    RegisterDevice(g_ZeissXYStage, MM::XYStageDevice, "XY Stage (MCU 28)");
    RegisterDevice(g_ZStage, MM::StageDevice, "Z Stage on Axioskop 2");
+   RegisterDevice(g_PhotoModule, MM::StateDevice, "AxioPhot 2 Photo Module");
 }
 
 using namespace std;
@@ -160,6 +162,8 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
       return new XYStage();
    else if (strcmp(deviceName, g_ZStage) == 0)
       return new ZStage();
+   else if (strcmp(deviceName, g_PhotoModule) == 0)
+      return new PhotoModule();
 
    return 0;
 }
