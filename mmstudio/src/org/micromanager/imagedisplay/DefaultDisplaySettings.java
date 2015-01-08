@@ -533,7 +533,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
    @Override
    public String toString() {
       Field[] fields = getClass().getDeclaredFields();
-      String result = "<DisplaySettings: ";
+      String result = "<DisplaySettings " + hashCode() + ": ";
       for (Field field : fields) {
          try {
             Object val = field.get(this);
@@ -548,5 +548,102 @@ public class DefaultDisplaySettings implements DisplaySettings {
       }
       result += ">";
       return result;
+   }
+
+   // There are a number of attributes in the DisplaySettings that apply on a
+   // per-channel basis (e.g. channelColors, channelContrastMins). Some code
+   // needs to work with these attributes in a generic fashion. The below
+   // functions handle abstracting out these arrays into a group and then
+   // de-abstracting them as appropriate.
+   //
+   // HACK: all of this is rather closely-tied to
+   // org.micromanager.imagedisplay.link.ContrastLinker.getID().
+   // But it's also needed by
+   // org.micromanager.imagedisplay.ChannelControlPanel, and could be useful
+   // elsewhere, which is why it's here.
+
+   /**
+    * Down-convert our per-channel properties into an array of Object[]s.
+    * If you update this method, also update makePerChannelArray() and
+    * updateChannelArray(), which make assumptions about the ordering of
+    * types and methods of the objects in this method's output. Also scan
+    * the code for anyone calling this method, since they may have similar
+    * assumptions!
+    */
+   public static Object[] getPerChannelArrays(DisplaySettings settings) {
+      return new Object[] {settings.getChannelNames(),
+         settings.getChannelColors(), settings.getChannelContrastMins(),
+         settings.getChannelContrastMaxes(), settings.getChannelGammas()};
+   }
+
+   /**
+    * Generate a new array of the appropriate type, having a length that is
+    * the maximum of the length of the input array, or the provided minLength
+    * parameter (e.g. if the input array is null).
+    * If you change this method, also update updateChannelArray() and
+    * getPerChannelArrays().
+    */
+   public static Object[] makePerChannelArray(int attrIndex, Object[] oldVals,
+         int minLength) {
+      int oldLen = -1;
+      if (oldVals != null) {
+         oldLen = oldVals.length;
+      }
+      int len = Math.max(oldLen, minLength);
+      // Create the array of the appropriate type.
+      Object[] result;
+      switch(attrIndex) {
+         case 0: // channelNames
+            result = new String[len];
+            break;
+         case 1: // channelColors;
+            result = new Color[len];
+            break;
+         case 2: // channelContrastMins
+         case 3: // channelContrastMaxes
+            result = new Integer[len];
+            break;
+         case 4: // channelGammas
+            result = new Double[len];
+            break;
+         default:
+            throw new IllegalArgumentException("Invalid attribute index value " + attrIndex);
+      }
+      // Copy values into the new array if possible.
+      if (oldVals != null) {
+         for (int i = 0; i < oldLen; ++i) {
+            result[i] = oldVals[i];
+         }
+      }
+      return result;
+   }
+
+   /**
+    * Insert the given array, whose identity is determined by attrIndex, into
+    * the provided builder.
+    * If you change this method, also update makePerChannelArray() and
+    * getPerChannelArrays.
+    */
+   public static void updateChannelArray(int attrIndex, Object[] newVals,
+         DisplaySettings.DisplaySettingsBuilder builder) {
+      switch (attrIndex) {
+         case 0: // channelNames
+            builder.channelNames((String[]) newVals);
+            break;
+         case 1: // channelColors
+            builder.channelColors((Color[]) newVals);
+            break;
+         case 2: // channelContrastMins
+            builder.channelContrastMins((Integer[]) newVals);
+            break;
+         case 3: // channelContrastMaxes
+            builder.channelContrastMaxes((Integer[]) newVals);
+            break;
+         case 4: // channelGammas
+            builder.channelGammas((Double[]) newVals);
+            break;
+         default:
+            throw new IllegalArgumentException("Invalid attribute index " + attrIndex);
+      }
    }
 }
