@@ -81,15 +81,6 @@ public final class HistogramsPanel extends JPanel implements Histograms {
       validate();
    }
    
-   public void updateChannelNamesAndColors() {
-      if (channelPanels_ == null) {
-         return;
-      }
-      for (ChannelControlPanel panel : channelPanels_) {
-         panel.updateChannelNameAndColorFromCache();
-      }
-   }
-
    public void fullScaleChannels() {
       if (channelPanels_ == null) {
          return;
@@ -102,7 +93,6 @@ public final class HistogramsPanel extends JPanel implements Histograms {
    }
 
    public void applyContrastToAllChannels(int min, int max, double gamma) {
-      ReportingUtils.logError("Applying " + min + " " + max + " " + gamma + " to all channels");
       if (channelPanels_ == null) {
          ReportingUtils.logError("Oops no channel panels");
          return;
