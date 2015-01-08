@@ -246,7 +246,6 @@ class ScrollerPanel extends JPanel {
    public void onNewDisplaySettings(NewDisplaySettingsEvent event) {
       Coords coords = event.getDisplaySettings().getImageCoords();
       if (coords == null) {
-         ReportingUtils.logError("Received new DisplaySettings with null image coords");
          return;
       }
       shouldPostEvents_ = false;
