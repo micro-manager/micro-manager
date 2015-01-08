@@ -711,8 +711,9 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
    }
 
    /**
-    * TODO: this doesn't actually work ever since the addition of
-    * DummyImageWindow (?).
+    * Retrieve a list of all open DisplayWindows. We do this by iterating over
+    * all ImageJ windows, checking to see if they are DummyImageWindows, and if
+    * so, retrieving the master window for that DummyImageWindow.
     */
    public static List<DisplayWindow> getAllImageWindows() {
       ArrayList<DisplayWindow> result = new ArrayList<DisplayWindow>();
@@ -724,8 +725,8 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       for (int id : plusIDs) {
          ImagePlus plus = WindowManager.getImage(id);
          ImageWindow window = plus.getWindow();
-         if (window instanceof DisplayWindow) {
-            result.add((DisplayWindow) window);
+         if (window instanceof DummyImageWindow) {
+            result.add(((DummyImageWindow) window).getMaster());
          }
       }
       return result;
