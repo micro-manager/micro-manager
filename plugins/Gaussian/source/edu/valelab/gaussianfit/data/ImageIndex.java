@@ -27,11 +27,8 @@ public class ImageIndex {
          return false;
       }
       ImageIndex t = (ImageIndex) test;
-      if (t.frame_ == frame_ && t.slice_ == slice_ &&
-          t.channel_ == channel_ && t.position_ == position_) {
-         return true;
-      }
-      return false;
+      return t.frame_ == frame_ && t.slice_ == slice_ &&
+              t.channel_ == channel_ && t.position_ == position_;
    }
    
     

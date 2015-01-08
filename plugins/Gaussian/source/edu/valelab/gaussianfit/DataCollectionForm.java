@@ -1712,12 +1712,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
     * @param evt - ignored...
     */
    private void linkButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_linkButton_ActionPerformed
-      final int row = jTable1_.getSelectedRow();
+      final int rows[] = jTable1_.getSelectedRows();
 
-      final RowData rowData = rowData_.get(row);
-      if (rowData.frameIndexSpotList_ == null) {
-         rowData.index();
-      }
       final double maxDistance;
       try {
          maxDistance = NumberUtils.displayStringToDouble(pairsMaxDistanceField_.getText());
@@ -1731,7 +1727,13 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
          @Override
          public void run() {
-            SpotLinker.link(rowData, maxDistance);
+            for (int row : rows) {
+               final RowData rowData = rowData_.get(row);
+               if (rowData.frameIndexSpotList_ == null) {
+                  rowData.index();
+               }
+               SpotLinker.link(rowData, maxDistance);
+            }
          }
       };
 

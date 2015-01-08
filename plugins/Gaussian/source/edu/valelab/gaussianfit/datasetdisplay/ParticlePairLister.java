@@ -8,6 +8,7 @@ import edu.valelab.gaussianfit.data.RowData;
 import edu.valelab.gaussianfit.data.SpotData;
 import edu.valelab.gaussianfit.spotoperations.NearestPoint2D;
 import edu.valelab.gaussianfit.spotoperations.NearestPointGsSpotPair;
+import edu.valelab.gaussianfit.utils.CalcUtils;
 import edu.valelab.gaussianfit.utils.GaussianUtils;
 import edu.valelab.gaussianfit.utils.ListUtils;
 import edu.valelab.gaussianfit.utils.ReportingUtils;
@@ -178,12 +179,31 @@ public class ParticlePairLister {
                      rt.addValue("Spot ID", spotId);
                      rt.addValue(Terms.FRAME, spot.getGSD().getFrame());
                      rt.addValue(Terms.SLICE, spot.getGSD().getSlice());
-                     rt.addValue(Terms.CHANNEL, spot.getGSD().getSlice());
+                     rt.addValue(Terms.CHANNEL, spot.getGSD().getChannel());
                      rt.addValue(Terms.POSITION, spot.getGSD().getPosition());
                      rt.addValue(Terms.XPIX, spot.getGSD().getX());
                      rt.addValue(Terms.YPIX, spot.getGSD().getY());
                      rt.addValue("Distance", Math.sqrt(
                              NearestPoint2D.distance2(spot.getfp(), spot.getsp())));
+                     if (spot.getGSD().hasKey("stdDev")) {
+                        double stdDev = spot.getGSD().getValue("stdDev");
+                        rt.addValue("stdDev1", stdDev);
+                        SpotData spot2 = rowData.get(row).get(
+                                spot.getGSD().getFrame(), 
+                                2, spot.getsp().x, spot.getsp().y);
+                        if (spot2 != null && spot2.hasKey("stdDev")) {
+                           double stdDev2 = spot2.getValue("stdDev");
+                           rt.addValue("stdDev2", stdDev2);
+                           double distanceStdDev = CalcUtils.stdDev(
+                                   spot.getfp().x, spot.getsp().x, 
+                                   spot.getfp().y, spot.getsp().y,
+                                   spot.getGSD().getValue("stdDevX"),
+                                   spot2.getValue("stdDevX"),
+                                   spot.getGSD().getValue("stdDevY"),
+                                   spot2.getValue("stdDevY") );
+                           rt.addValue("stdDev-distance", distanceStdDev);
+                        }
+                     }
                      rt.addValue("Orientation (sine)",
                              NearestPoint2D.orientation(spot.getfp(), spot.getsp()));
                   }

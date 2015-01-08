@@ -172,26 +172,32 @@ public class SpotLinker {
       // not sure if this is correct:
       sigma /= Math.sqrt(source.size());
       
-      // calculate the root mean square of the distribution:
-      // rms = sqrt (1/n Sum(i-n) ( sqr(xi - xCenter) + sqr(yi - yCenter) )
-      double sum = 0.0;
+      // calculate the sample standard deviation (for x, y, and both)
+      double sumx = 0.0;
+      double sumy = 0.0;
       for (SpotData spot : source) {
-         sum += (spot.getXCenter() - xCenter) * (spot.getXCenter() - xCenter);
-         sum += (spot.getYCenter() - yCenter) * (spot.getYCenter() - yCenter);
+         sumx += (spot.getXCenter() - xCenter) * (spot.getXCenter() - xCenter);
+         sumy += (spot.getYCenter() - yCenter) * (spot.getYCenter() - yCenter);
       }
-      double weightedsum = 1.0/n * sum;
-      double rms = Math.sqrt(weightedsum);
+      double sum = sumx + sumy;
 
+      // sample standard deviation
+      double sampleWeightedSum = 1.0 / (n-1) * sum;
+      double stdDev = Math.sqrt(sampleWeightedSum);
+      double stdDevX = Math.sqrt(1.0 / (n-1) * sumx);
+      double stdDevY = Math.sqrt(1.0 / (n-1) * sumy);    
 
       sp.setData(intensity, background, xCenter, yCenter, 0.0, width, a, theta, sigma);
       sp.originalFrame_ = source.get(0).getFrame();
       if (!useFrames) {
          sp.originalFrame_ = source.get(0).getSlice();
       }
-      sp.nrLinks_ = n;
+      sp.nrLinks_ = n;     
       
-      sp.addKeyValue("rms", rms);
       sp.addKeyValue("n", n);
+      sp.addKeyValue("stdDev", stdDev);
+      sp.addKeyValue("stdDevX", stdDevX);
+      sp.addKeyValue("stdDevY", stdDevY);
 
       dest.add(sp);
    }

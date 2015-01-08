@@ -200,5 +200,26 @@ import java.util.Map;
          ImageIndex ii = new ImageIndex(frame, slice, channel, position);
          return indexedSpotList_.get(ii);
       }
+      
+      /**
+       * Return the first spot with desired properties or null if not found
+       * Uses brute force method (because I got null pointer exceptions using
+       * the indexes
+       * @param frame in which the desired spot is located
+       * @param channel in which the desired spot is located
+       * @param xPos of the desired spot
+       * @param yPos of the desired spot
+       * @return desired spot or null if not found
+       */
+      public SpotData get(int frame, int channel, double xPos, double yPos) {
+         for (SpotData spot : spotList_) {
+            if (spot.getFrame() == frame && spot.getChannel() == channel &&
+                    spot.getXCenter() == xPos && spot.getYCenter() == yPos) {
+               return spot;
+            }
+         }
+ 
+         return null;
+      }
 
    }
