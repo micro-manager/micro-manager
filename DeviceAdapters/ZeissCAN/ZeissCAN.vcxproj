@@ -159,6 +159,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="mcu28.cpp" />
+    <ClCompile Include="PhotoModule.cpp" />
     <ClCompile Include="ZeissCAN.cpp" />
     <ClCompile Include="ZStage.cpp" />
   </ItemGroup>
