@@ -40,6 +40,7 @@ import org.micromanager.MMStudio;
 public class MMDialog extends JDialog {
    private static final long serialVersionUID = -3144618980027203294L;
    private Preferences mmDialogPrefs_;
+   private final String prefPrefix_;
    private static final String WINDOW_X = "mmdlg_y";
    private static final String WINDOW_Y = "mmdlg_x";
    private static final String WINDOW_WIDTH = "mmdlg_width";
@@ -48,14 +49,22 @@ public class MMDialog extends JDialog {
    public MMDialog() {
       super();
       finishConstructor();
+      prefPrefix_ = "";
+   }
+   public MMDialog(String prefPrefix) {
+      super();
+      finishConstructor();
+      prefPrefix_ = prefPrefix;
    }
    public MMDialog(Frame owner) {
       super(owner);
       finishConstructor();
+      prefPrefix_ = "";
    }
    public MMDialog(Frame owner, boolean isModal) {
       super(owner, isModal);
       finishConstructor();
+      prefPrefix_ = "";
    }
 
    private void finishConstructor() {
@@ -76,12 +85,12 @@ public class MMDialog extends JDialog {
     * @param y new WINDOW_Y position if current value isn't valid
     */
    private void ensureSafeWindowPosition(int x, int y) {
-      int prefX = mmDialogPrefs_.getInt(WINDOW_X, 0);
-      int prefY = mmDialogPrefs_.getInt(WINDOW_Y, 0);
+      int prefX = mmDialogPrefs_.getInt(prefPrefix_ + WINDOW_X, 0);
+      int prefY = mmDialogPrefs_.getInt(prefPrefix_ + WINDOW_Y, 0);
       if (GUIUtils.getGraphicsConfigurationContaining(prefX, prefY) == null) {
          // only reach this code if the pref coordinates are off screen
-         mmDialogPrefs_.putInt(WINDOW_X, x);
-         mmDialogPrefs_.putInt(WINDOW_Y, y);
+         mmDialogPrefs_.putInt(prefPrefix_ + WINDOW_X, x);
+         mmDialogPrefs_.putInt(prefPrefix_ + WINDOW_Y, y);
       }
    }
 
@@ -135,10 +144,10 @@ public class MMDialog extends JDialog {
     */
    protected void loadPosition(int x, int y, int width, int height) {
       ensureSafeWindowPosition(x, y);
-      setBounds(mmDialogPrefs_.getInt(WINDOW_X, x),
-                mmDialogPrefs_.getInt(WINDOW_Y, y),
-                mmDialogPrefs_.getInt(WINDOW_WIDTH, width),
-                mmDialogPrefs_.getInt(WINDOW_HEIGHT, height));
+      setBounds(mmDialogPrefs_.getInt(prefPrefix_ + WINDOW_X, x),
+                mmDialogPrefs_.getInt(prefPrefix_ + WINDOW_Y, y),
+                mmDialogPrefs_.getInt(prefPrefix_ + WINDOW_WIDTH, width),
+                mmDialogPrefs_.getInt(prefPrefix_ + WINDOW_HEIGHT, height));
    }
    
    @Override
@@ -159,10 +168,10 @@ public class MMDialog extends JDialog {
    protected void savePosition() {
       Rectangle r = getBounds();
       if (r != null) {
-         mmDialogPrefs_.putInt(WINDOW_X, r.x);
-         mmDialogPrefs_.putInt(WINDOW_Y, r.y);
-         mmDialogPrefs_.putInt(WINDOW_WIDTH, r.width);
-         mmDialogPrefs_.putInt(WINDOW_HEIGHT, r.height);
+         mmDialogPrefs_.putInt(prefPrefix_ + WINDOW_X, r.x);
+         mmDialogPrefs_.putInt(prefPrefix_ + WINDOW_Y, r.y);
+         mmDialogPrefs_.putInt(prefPrefix_ + WINDOW_WIDTH, r.width);
+         mmDialogPrefs_.putInt(prefPrefix_ + WINDOW_HEIGHT, r.height);
       }
    }
    

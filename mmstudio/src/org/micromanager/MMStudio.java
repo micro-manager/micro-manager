@@ -335,10 +335,12 @@ public class MMStudio implements ScriptInterface {
 
       // move ImageJ window to place where it last was if possible
       // or else (150,150) if not
-      Point ijWinLoc = IJ.getInstance().getLocation();
-      if (GUIUtils.getGraphicsConfigurationContaining(ijWinLoc.x, ijWinLoc.y) == null) {
-         // only reach this code if the pref coordinates are off screen
-         IJ.getInstance().setLocation(150, 150);
+      if (IJ.getInstance() != null) {
+         Point ijWinLoc = IJ.getInstance().getLocation();
+         if (GUIUtils.getGraphicsConfigurationContaining(ijWinLoc.x, ijWinLoc.y) == null) {
+            // only reach this code if the pref coordinates are off screen
+            IJ.getInstance().setLocation(150, 150);
+         }
       }
 
       staticInfo_ = new StaticInfo(core_, frame_);

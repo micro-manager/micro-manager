@@ -39,6 +39,7 @@ import org.micromanager.MMStudio;
 public class MMFrame extends JFrame {
    private static final long serialVersionUID = 1L;
    private Preferences prefs_;
+   private final String prefPrefix_;
    private static final String WINDOW_X = "frame_x";
    private static final String WINDOW_Y = "frame_y";
    private static final String WINDOW_WIDTH = "frame_width";
@@ -47,6 +48,13 @@ public class MMFrame extends JFrame {
    public MMFrame() {
       super();
       finishConstructor();
+      prefPrefix_ = "";
+   }
+
+   public MMFrame(String prefPrefix) {
+      super();
+      finishConstructor();
+      prefPrefix_ = prefPrefix;
    }
    
       private void finishConstructor() {
@@ -68,12 +76,12 @@ public class MMFrame extends JFrame {
     * @param y new WINDOW_Y position if current value isn't valid
     */
    private void ensureSafeWindowPosition(int x, int y) {
-      int prefX = prefs_.getInt(WINDOW_X, 0);
-      int prefY = prefs_.getInt(WINDOW_Y, 0);
+      int prefX = prefs_.getInt(prefPrefix_ + WINDOW_X, 0);
+      int prefY = prefs_.getInt(prefPrefix_ + WINDOW_Y, 0);
       if (GUIUtils.getGraphicsConfigurationContaining(prefX, prefY) == null) {
          // only reach this code if the pref coordinates are off screen
-         prefs_.putInt(WINDOW_X, x);
-         prefs_.putInt(WINDOW_Y, y);
+         prefs_.putInt(prefPrefix_ + WINDOW_X, x);
+         prefs_.putInt(prefPrefix_ + WINDOW_Y, y);
       }
    }
 
@@ -82,10 +90,10 @@ public class MMFrame extends JFrame {
          return;
 
       ensureSafeWindowPosition(x, y);
-      setBounds(prefs_.getInt(WINDOW_X, x),
-                prefs_.getInt(WINDOW_Y, y),
-                prefs_.getInt(WINDOW_WIDTH, width),
-                prefs_.getInt(WINDOW_HEIGHT, height));      
+      setBounds(prefs_.getInt(prefPrefix_ + WINDOW_X, x),
+                prefs_.getInt(prefPrefix_ + WINDOW_Y, y),
+                prefs_.getInt(prefPrefix_ + WINDOW_WIDTH, width),
+                prefs_.getInt(prefPrefix_ + WINDOW_HEIGHT, height));
    }
 
    public void loadPosition(int x, int y) {
@@ -93,10 +101,10 @@ public class MMFrame extends JFrame {
          return;
       
       ensureSafeWindowPosition(x, y);
-      setBounds(prefs_.getInt(WINDOW_X, x),
-                prefs_.getInt(WINDOW_Y, y),
+      setBounds(prefs_.getInt(prefPrefix_ + WINDOW_X, x),
+                prefs_.getInt(prefPrefix_ + WINDOW_Y, y),
                 getWidth(),
-                getHeight());      
+                getHeight());
    }
    
    
@@ -148,10 +156,10 @@ public class MMFrame extends JFrame {
       Rectangle r = getBounds();
       
       // save window position
-      prefs_.putInt(WINDOW_X, r.x);
-      prefs_.putInt(WINDOW_Y, r.y);
-      prefs_.putInt(WINDOW_WIDTH, r.width);
-      prefs_.putInt(WINDOW_HEIGHT, r.height);                  
+      prefs_.putInt(prefPrefix_ + WINDOW_X, r.x);
+      prefs_.putInt(prefPrefix_ + WINDOW_Y, r.y);
+      prefs_.putInt(prefPrefix_ + WINDOW_WIDTH, r.width);
+      prefs_.putInt(prefPrefix_ + WINDOW_HEIGHT, r.height);
    }
    
          

@@ -120,6 +120,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
    @SuppressWarnings("LeakingThisInConstructor")
    public MainFrame(MMStudio studio, CMMCore core, SnapLiveManager manager, 
          Preferences prefs) {
+      super("main_");
       org.micromanager.diagnostics.ThreadExceptionLogger.setUp();
 
       studio_ = studio;

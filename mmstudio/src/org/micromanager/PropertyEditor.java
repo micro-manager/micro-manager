@@ -70,7 +70,7 @@ import org.micromanager.utils.ReportingUtils;
  *
  * aka the "Device/Property Browser"
  */
-public class PropertyEditor extends MMFrame{
+public class PropertyEditor extends MMFrame {
    private final SpringLayout springLayout;
    private static final long serialVersionUID = 1507097881635431043L;
    
