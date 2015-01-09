@@ -41,8 +41,13 @@ import javax.swing.event.ChangeListener;
 import javax.swing.GroupLayout;
 import javax.swing.LayoutStyle;
 import imagedisplay.VirtualAcquisitionDisplay;
+import java.lang.reflect.InvocationTargetException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.*;
 import mmcloneclasses.internalinterfaces.Histograms;
 import org.micromanager.utils.MMScaleBar;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  *
@@ -487,31 +492,48 @@ public class ContrastPanel extends JPanel {
    }
    
    public void displayModeComboActionPerformed() {
-      if (currentDisplay_ == null || !(currentDisplay_.getHyperImage() instanceof CompositeImage)) {
-         return;
-      }
-      int mode;
-      int state = displayModeCombo_.getSelectedIndex();
-      if (state == 0) {
-         mode = CompositeImage.COLOR;
-      } else if (state == 1) {
-         mode = CompositeImage.GRAYSCALE;
-      } else {
-         mode = CompositeImage.COMPOSITE;
-      }
-      CompositeImage ci = (CompositeImage) currentDisplay_.getHyperImage();
-      
+      Runnable runnable = new Runnable() {
 
-      if (state == 2 && currentDisplay_.getImageCache().getNumDisplayChannels() > 7) {
-         JOptionPane.showMessageDialog(this, "Images with more than 7 channels cannot be displayed in Composite mode");
-         displayModeCombo_.setSelectedIndex(ci.getMode()-2);
-         return;
+         @Override
+         public void run() {
+
+            if (currentDisplay_ == null || !(currentDisplay_.getHyperImage() instanceof CompositeImage)) {
+               return;
+            }
+            int mode;
+            int state = displayModeCombo_.getSelectedIndex();
+            if (state == 0) {
+               mode = CompositeImage.COLOR;
+            } else if (state == 1) {
+               mode = CompositeImage.GRAYSCALE;
+            } else {
+               mode = CompositeImage.COMPOSITE;
+            }
+            CompositeImage ci = (CompositeImage) currentDisplay_.getHyperImage();
+
+
+            if (state == 2 && currentDisplay_.getImageCache().getNumDisplayChannels() > 7) {
+               JOptionPane.showMessageDialog(ContrastPanel.this, "Images with more than 7 channels cannot be displayed in Composite mode");
+               displayModeCombo_.setSelectedIndex(ci.getMode() - 2);
+               return;
+            } else {
+               ci.setMode(mode);
+               ci.updateAndDraw();
+            }
+            currentDisplay_.updateAndDraw(true);
+            saveCheckBoxStates();
+
+         }
+      };
+      if (SwingUtilities.isEventDispatchThread()) {
+         runnable.run();
       } else {
-         ci.setMode(mode);
-         ci.updateAndDraw();
-      }
-      currentDisplay_.updateAndDraw(true);
-      saveCheckBoxStates();
+         try {
+            SwingUtilities.invokeAndWait(runnable);
+         } catch (Exception ex) {
+            ReportingUtils.showError("Couldn't initialize display mode");
+         } 
+      }     
    }
   
    private void autostretchCheckBoxStateChanged() {

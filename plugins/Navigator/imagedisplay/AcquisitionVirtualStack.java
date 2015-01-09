@@ -20,7 +20,7 @@ import org.micromanager.utils.ReportingUtils;
 public class AcquisitionVirtualStack extends ij.VirtualStack {
 
    final private TaggedImageStorage imageCache_;
-   final private VirtualAcquisitionDisplay acq_;
+   final protected VirtualAcquisitionDisplay vad_;
    final protected int width_, height_, type_;
    private final int nSlices_;
    private int positionIndex_ = 0;
@@ -34,7 +34,7 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
       height_ = height;
       nSlices_ = nSlices;
 
-      acq_ = acq;
+      vad_ = acq;
       type_ = type;
    }
 
@@ -47,7 +47,7 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
    }
 
    public VirtualAcquisitionDisplay getVirtualAcquisitionDisplay() {
-      return acq_;
+      return vad_;
    }
 
    
@@ -55,13 +55,13 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
       int[] pos;
       // If we don't have the ImagePlus yet, then we need to assume
       // we are on the very first image.
-      ImagePlus imagePlus = acq_.getImagePlus();
+      ImagePlus imagePlus = vad_.getImagePlus();
       if (imagePlus == null) {
          return getTaggedImage(0,0,0);
       } else {
          pos = imagePlus.convertIndexToPosition(flatIndex);
       }
-      int chanIndex = acq_.grayToRGBChannel(pos[0] - 1);
+      int chanIndex = vad_.grayToRGBChannel(pos[0] - 1);
       int frame = pos[2] - 1;
       int slice = pos[1] - 1;
 
@@ -73,7 +73,7 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
    //used for display compared to the the underlying data
    protected TaggedImage getTaggedImage(int chanIndex, int slice, int frame) {
       int nSlices;
-      ImagePlus imagePlus = acq_.getImagePlus();
+      ImagePlus imagePlus = vad_.getImagePlus();
       if (imagePlus == null) {
          nSlices = 1;
       } else {
@@ -169,7 +169,7 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
       // returns the stack size of VirtualAcquisitionDisplay unless this size is -1
       // which occurs in constructor while hyperImage_ is still null. In this case
       // returns the number of slices speciefiec in AcquisitionVirtualStack constructor
-      int size = acq_.getStackSize();
+      int size = vad_.getStackSize();
       if (size == -1) {
          return nSlices_;
       }

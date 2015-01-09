@@ -242,12 +242,14 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
     * Called before any images have been added to initialize the resolution to the specifiec zoom level
     * @param resIndex 
     */
-   public void startAtResolution(int resIndex) {
+   public void initializeToLevel(int resIndex) {
       //create a null pointer in lower res storages to signal addToLoResStorage function
       //to continue downsampling to this level
       for (int i = lowResStorages_.keySet().size() + 1; i <= resIndex; i++) {
          lowResStorages_.put(i, null);
       }
+      //Make sure position nodes for lower resolutions are created if they weren't automatically
+      posManager_.updateLowerResolutionNodes(lowResStorages_.keySet().size());
    }
 
    /**

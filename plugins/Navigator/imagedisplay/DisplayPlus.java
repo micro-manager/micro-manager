@@ -10,7 +10,6 @@ import acq.FixedAreaAcquisition;
 import acq.MultiResMultipageTiffStorage;
 import com.google.common.eventbus.Subscribe;
 import coordinates.PositionManager;
-import gui.SettingsDialog;
 import ij.CompositeImage;
 import ij.IJ;
 import ij.gui.ImageCanvas;
@@ -24,13 +23,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
@@ -60,11 +53,15 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
    private SurfaceInterpolator currentSurface_;
    private MultiPosGrid currentRegion_;
    private ThreadPoolExecutor redrawPixelsExecutor_;
-
+   private int fullResPixelWidth_ = -1, fullResPixelHeight_ = -1; //used for scaling in fixed area acqs
+   private int tileWidth_, tileHeight_;
+   
+   
    public DisplayPlus(final MMImageCache stitchedCache, Acquisition acq, JSONObject summaryMD,
            MultiResMultipageTiffStorage multiResStorage ) {
       super(stitchedCache, null, "test", true, summaryMD);
-      
+      tileWidth_ = multiResStorage.getTileWidth();
+      tileHeight_ = multiResStorage.getTileHeight();
       
       posManager_ = multiResStorage.getPositionManager();
       exploreAcq_ = acq instanceof ExploreAcquisition;
@@ -88,66 +85,46 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
          //looks like nSlicess only really matters during display startup
          int nSlices = MDUtils.getNumChannels(summaryMD) * MDUtils.getNumFrames(summaryMD) * MDUtils.getNumSlices(summaryMD);
 
-         //craete stack with appropriate image size
-         int height, width;
-         if (SettingsDialog.getAutoImageSize()) {
-            Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-            height = screenSize.height - 250;
-            width = height;
-         } else {
-            width = SettingsDialog.getImageWidth();
-            height = SettingsDialog.getImageHeight();
-         }
-         //use width and height for explore window as they are. scale to correct aspect ratio for fixed area acquisitions        
-         int displayWidth, displayHeight;
-         int maxZoomIndex = -1;
+
          if (exploreAcq_) {
-            displayHeight = height;
-            displayWidth = width;
             mode_ = EXPLORE;
          } else {
-            int fullWidth = ((FixedAreaAcquisition) acq).getNumColumns() * multiResStorage.getTileWidth();
-            int fullHeight = ((FixedAreaAcquisition) acq).getNumRows() * multiResStorage.getTileHeight();
-            double imageRatio = (double) fullWidth / (double) fullHeight;
-            double displayRatio = (double) width / (double) height;
-            //goal is to make image fit snuggly into display window when fully zoomed out
-            if (imageRatio > displayRatio) {
-               //wide image
-               displayWidth = fullWidth;
-               while (displayWidth > width) {
-                  displayWidth /= 2;
-               }
-               displayHeight = (int) (displayWidth / imageRatio);
-            } else {
-               displayHeight = fullHeight;
-               while (displayHeight > height) {
-                  displayHeight /= 2;
-               }
-               displayWidth = (int) (displayHeight * imageRatio);
-            }
-            maxZoomIndex = (int) Math.round(Math.log(fullWidth / displayWidth) / Math.log(2));
+            fullResPixelWidth_ = ((FixedAreaAcquisition) acq_).getNumColumns() * multiResStorage.getTileWidth();
+            fullResPixelHeight_ = ((FixedAreaAcquisition) acq_).getNumRows() * multiResStorage.getTileHeight();
          }
-         zoomableStack_ = new ZoomableVirtualStack(MDUtils.getIJType(summaryMD), displayWidth, displayHeight,
-                 stitchedCache, nSlices, this, multiResStorage, acq_, maxZoomIndex);
+                  
+         //zoomable stack dimensions don't matter because they get changed on window startup
+         zoomableStack_ = new ZoomableVirtualStack(MDUtils.getIJType(summaryMD), 100, 100,
+                 stitchedCache, nSlices, this, multiResStorage, acq_);
 
+      
       } catch (Exception e) {
          e.printStackTrace();
          ReportingUtils.showError("Problem with initialization due to missing summary metadata tags");
          return;
       }   
       
-      
       this.show(zoomableStack_);
-      canvas_ = this.getImagePlus().getCanvas();
-      overlayer_ = new DisplayOverlayer(this, acq, multiResStorage.getTileWidth(), multiResStorage.getTileHeight(), zoomableStack_);
 
       setupKeyListeners();
       setupMouseListeners();
       IJ.setTool(Toolbar.SPARE6);
       stitchedCache.addImageCacheListener(this);
       canvas_.requestFocus();
-      activeDisplays_.add(this);
-      ((DisplayWindow) this.getHyperImage().getWindow()).resizeCanvas();
+      activeDisplays_.add(this);   
+   }
+   
+   public void windowAndCanvasReady() {
+      canvas_ = this.getImagePlus().getCanvas();
+      overlayer_ = new DisplayOverlayer(this, acq_, tileWidth_, tileHeight_, zoomableStack_);
+   }
+   
+   public int getFullResWidth() {
+      return fullResPixelWidth_;
+   }
+   
+   public int getFullResHeight() {
+      return fullResPixelHeight_;
    }
    
    public Acquisition getAcquisition() {
@@ -185,7 +162,12 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
       if (!acq_.isFinished()) {
          int result = JOptionPane.showConfirmDialog(null, "Finish acquisition?", "Finish Current Acquisition", JOptionPane.OK_CANCEL_OPTION);
          if (result == JOptionPane.OK_OPTION) {
-            acq_.abort();
+            try {
+               acq_.abort();
+            } catch (Exception e) {
+               ReportingUtils.showError("Couldn't successfully abort acq");
+               e.printStackTrace();
+            }
          } else {
             return;
          }
@@ -223,12 +205,15 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
 
    public void setCurrentSurface(SurfaceInterpolator surf) {
       currentSurface_ = surf;
-      drawOverlay(true);
+      if (surf != null)
+         drawOverlay(true);
    }
 
    public void setCurrentRegion(MultiPosGrid region) {
       currentRegion_ = region;
-      drawOverlay(false);
+      if (currentRegion_ != null) {
+         drawOverlay(false);
+      }
    }
 
    public SurfaceInterpolator getCurrentSurface() {
@@ -310,8 +295,9 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
    }
 
    public void zoom(boolean in) {
-      zoomableStack_.zoom(cursorOverImage_ ? canvas_.getCursorLoc() : null, in ? -1 : 1);
-      redrawPixels(true);
+      if (!zoomableStack_.zoom(cursorOverImage_ ? canvas_.getCursorLoc() : null, in ? -1 : 1)) {
+         redrawPixels(true);
+      }
    }
 
    public void setMode(int mode) {

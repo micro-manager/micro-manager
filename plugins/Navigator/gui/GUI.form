@@ -103,7 +103,7 @@
                       <Component id="newExploreWindowButton_" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
-                  <Component id="acqTabbedPane_" min="-2" pref="258" max="-2" attributes="0"/>
+                  <Component id="acqTabbedPane_" min="-2" pref="306" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="runAcqButton_" min="-2" max="-2" attributes="0"/>
                   <EmptySpace min="-2" pref="41" max="-2" attributes="0"/>
@@ -111,7 +111,7 @@
                       <Component id="configPropsButton_" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="SettingsButton" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <EmptySpace min="0" pref="10" max="32767" attributes="0"/>
+                  <EmptySpace min="0" pref="162" max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -182,7 +182,7 @@
                 </DimensionLayout>
                 <DimensionLayout dim="1">
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <EmptySpace min="0" pref="136" max="32767" attributes="0"/>
+                      <EmptySpace min="0" pref="118" max="32767" attributes="0"/>
                   </Group>
                 </DimensionLayout>
               </Layout>
@@ -371,7 +371,7 @@
                                       </Group>
                                       <Component id="savingNameLabel_" alignment="0" min="-2" max="-2" attributes="0"/>
                                   </Group>
-                                  <EmptySpace min="0" pref="509" max="32767" attributes="0"/>
+                                  <EmptySpace min="0" pref="581" max="32767" attributes="0"/>
                               </Group>
                               <Component id="savingDirTextField_" max="32767" attributes="0"/>
                           </Group>
@@ -393,7 +393,7 @@
                           <Component id="savingNameLabel_" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="savingNameTextField_" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace pref="119" max="32767" attributes="0"/>
+                          <EmptySpace pref="129" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -447,7 +447,7 @@
                               <Component id="timePointsCheckBox_" min="-2" max="-2" attributes="0"/>
                               <Component id="timePointsPanel_" min="-2" max="-2" attributes="0"/>
                           </Group>
-                          <EmptySpace pref="467" max="32767" attributes="0"/>
+                          <EmptySpace pref="558" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -458,7 +458,7 @@
                           <Component id="timePointsCheckBox_" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="timePointsPanel_" min="-2" pref="74" max="-2" attributes="0"/>
-                          <EmptySpace pref="125" max="32767" attributes="0"/>
+                          <EmptySpace pref="151" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -997,7 +997,7 @@
                     <Component class="javax.swing.JSpinner" name="distanceBelowSurfaceSpinner_">
                       <Properties>
                         <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
-                          <SpinnerModel initial="0.0" minimum="0.0" numberType="java.lang.Double" stepSize="0.001" type="number"/>
+                          <SpinnerModel initial="0.0" minimum="0.0" numberType="java.lang.Double" stepSize="0.0010" type="number"/>
                         </Property>
                       </Properties>
                     </Component>
@@ -1009,7 +1009,7 @@
                     <Component class="javax.swing.JSpinner" name="distanceAboveSurfaceSpinner_">
                       <Properties>
                         <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
-                          <SpinnerModel initial="0.0" minimum="0.0" numberType="java.lang.Double" stepSize="0.001" type="number"/>
+                          <SpinnerModel initial="0.0" minimum="0.0" numberType="java.lang.Double" stepSize="0.0010" type="number"/>
                         </Property>
                       </Properties>
                     </Component>
@@ -1114,7 +1114,7 @@
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" alignment="0" attributes="0">
                           <Component id="jPanel3" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace min="0" pref="98" max="32767" attributes="0"/>
+                          <EmptySpace min="0" pref="115" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -1140,7 +1140,7 @@
                                       <Component id="newChannelButton_" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Component id="removeChannelButton_" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace max="32767" attributes="0"/>
+                                      <EmptySpace pref="299" max="32767" attributes="0"/>
                                       <Component id="jLabel3" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                                       <Component id="jComboBox2" min="-2" pref="107" max="-2" attributes="0"/>
@@ -1237,7 +1237,7 @@
                           <Component id="jLabel7" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="jComboBox4" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace pref="513" max="32767" attributes="0"/>
+                          <EmptySpace pref="549" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -1249,7 +1249,7 @@
                               <Component id="jLabel7" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="jComboBox4" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
-                          <EmptySpace pref="199" max="32767" attributes="0"/>
+                          <EmptySpace pref="227" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -1286,12 +1286,12 @@
               <Layout>
                 <DimensionLayout dim="0">
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <EmptySpace min="0" pref="691" max="32767" attributes="0"/>
+                      <EmptySpace min="0" pref="802" max="32767" attributes="0"/>
                   </Group>
                 </DimensionLayout>
                 <DimensionLayout dim="1">
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <EmptySpace min="0" pref="230" max="32767" attributes="0"/>
+                      <EmptySpace min="0" pref="260" max="32767" attributes="0"/>
                   </Group>
                 </DimensionLayout>
               </Layout>

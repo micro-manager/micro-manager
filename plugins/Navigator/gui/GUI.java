@@ -23,6 +23,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import mmcorej.CMMCore;
+import org.micromanager.MMStudio;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.PropertyValueCellEditor;
 import org.micromanager.utils.PropertyValueCellRenderer;
@@ -63,9 +64,10 @@ public class GUI extends javax.swing.JFrame {
       mmAPI_ = mmapi;
       core_ = mmapi.getMMCore();
       this.setTitle("5D Navigator " + version);
+      
       try {
-         String s = InetAddress.getLocalHost().getHostName();
-         if (s.equals("BIDC-Sebastian") || s.startsWith("Henrys-MacBook-Pro")) {
+         String s = ((MMStudio) mmAPI_).getSysConfigFile();
+         if (s.endsWith("NavDemo.cfg")) {
             SettingsDialog.setDemoMode(true);
          }
       } catch (Exception e) {}
@@ -387,7 +389,7 @@ public class GUI extends javax.swing.JFrame {
         );
         multipleAcquisitionsPanelLayout.setVerticalGroup(
             multipleAcquisitionsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 136, Short.MAX_VALUE)
+            .addGap(0, 118, Short.MAX_VALUE)
         );
 
         jTabbedPane1.addTab("Setup multiple acquisitions", multipleAcquisitionsPanel);
@@ -511,7 +513,7 @@ public class GUI extends javax.swing.JFrame {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addComponent(browseButton_))
                             .addComponent(savingNameLabel_))
-                        .addGap(0, 509, Short.MAX_VALUE))
+                        .addGap(0, 581, Short.MAX_VALUE))
                     .addComponent(savingDirTextField_))
                 .addContainerGap())
         );
@@ -528,7 +530,7 @@ public class GUI extends javax.swing.JFrame {
                 .addComponent(savingNameLabel_)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(savingNameTextField_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(119, Short.MAX_VALUE))
+                .addContainerGap(129, Short.MAX_VALUE))
         );
 
         acqTabbedPane_.addTab("Saving", savingTab_);
@@ -561,8 +563,8 @@ public class GUI extends javax.swing.JFrame {
                     .addGroup(timePointsPanel_Layout.createSequentialGroup()
                         .addComponent(timeIntervalTextField_, javax.swing.GroupLayout.PREFERRED_SIZE, 68, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(timeIntevalUnitCombo_, javax.swing.GroupLayout.PREFERRED_SIZE, 61, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(23, Short.MAX_VALUE))
+                        .addComponent(timeIntevalUnitCombo_, javax.swing.GroupLayout.PREFERRED_SIZE, 51, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(33, Short.MAX_VALUE))
         );
         timePointsPanel_Layout.setVerticalGroup(
             timePointsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -604,7 +606,7 @@ public class GUI extends javax.swing.JFrame {
                 .addGroup(timePointsTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(timePointsCheckBox_)
                     .addComponent(timePointsPanel_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(467, Short.MAX_VALUE))
+                .addContainerGap(558, Short.MAX_VALUE))
         );
         timePointsTab_Layout.setVerticalGroup(
             timePointsTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -613,7 +615,7 @@ public class GUI extends javax.swing.JFrame {
                 .addComponent(timePointsCheckBox_)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(timePointsPanel_, javax.swing.GroupLayout.PREFERRED_SIZE, 74, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(125, Short.MAX_VALUE))
+                .addContainerGap(151, Short.MAX_VALUE))
         );
 
         for (Component c : timePointsPanel_.getComponents()) {
@@ -772,11 +774,11 @@ public class GUI extends javax.swing.JFrame {
 
         distanceBelowSurfaceLabel_.setText("Distance below (µm):");
 
-        distanceBelowSurfaceSpinner_.setModel(new javax.swing.SpinnerNumberModel(Double.valueOf(0.0d), Double.valueOf(0.0d), null, Double.valueOf(0.001d)));
+        distanceBelowSurfaceSpinner_.setModel(new javax.swing.SpinnerNumberModel(Double.valueOf(0.0d), Double.valueOf(0.0d), null, Double.valueOf(0.0010d)));
 
         distanceAboveSurfaceLabel_.setText("Distance above (µm):");
 
-        distanceAboveSurfaceSpinner_.setModel(new javax.swing.SpinnerNumberModel(Double.valueOf(0.0d), Double.valueOf(0.0d), null, Double.valueOf(0.001d)));
+        distanceAboveSurfaceSpinner_.setModel(new javax.swing.SpinnerNumberModel(Double.valueOf(0.0d), Double.valueOf(0.0d), null, Double.valueOf(0.0010d)));
 
         javax.swing.GroupLayout fixedDistanceZPanel_Layout = new javax.swing.GroupLayout(fixedDistanceZPanel_);
         fixedDistanceZPanel_.setLayout(fixedDistanceZPanel_Layout);
@@ -964,7 +966,7 @@ public class GUI extends javax.swing.JFrame {
                         .addComponent(newChannelButton_)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(removeChannelButton_)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 275, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 299, Short.MAX_VALUE)
                         .addComponent(jLabel3)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(jComboBox2, javax.swing.GroupLayout.PREFERRED_SIZE, 107, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -994,7 +996,7 @@ public class GUI extends javax.swing.JFrame {
             ChannelsTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(ChannelsTab_Layout.createSequentialGroup()
                 .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 98, Short.MAX_VALUE))
+                .addGap(0, 115, Short.MAX_VALUE))
         );
 
         acqTabbedPane_.addTab("Channels", ChannelsTab_);
@@ -1012,7 +1014,7 @@ public class GUI extends javax.swing.JFrame {
                 .addComponent(jLabel7)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jComboBox4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(513, Short.MAX_VALUE))
+                .addContainerGap(549, Short.MAX_VALUE))
         );
         autofocusTab_lLayout.setVerticalGroup(
             autofocusTab_lLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1021,7 +1023,7 @@ public class GUI extends javax.swing.JFrame {
                 .addGroup(autofocusTab_lLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel7)
                     .addComponent(jComboBox4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(199, Short.MAX_VALUE))
+                .addContainerGap(227, Short.MAX_VALUE))
         );
 
         acqTabbedPane_.addTab("Autofocus", autofocusTab_l);
@@ -1030,11 +1032,11 @@ public class GUI extends javax.swing.JFrame {
         jPanel7.setLayout(jPanel7Layout);
         jPanel7Layout.setHorizontalGroup(
             jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 691, Short.MAX_VALUE)
+            .addGap(0, 802, Short.MAX_VALUE)
         );
         jPanel7Layout.setVerticalGroup(
             jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 230, Short.MAX_VALUE)
+            .addGap(0, 260, Short.MAX_VALUE)
         );
 
         acqTabbedPane_.addTab("Focus varying properties", jPanel7);
@@ -1119,14 +1121,14 @@ public class GUI extends javax.swing.JFrame {
                     .addComponent(jLabel1)
                     .addComponent(newExploreWindowButton_))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(acqTabbedPane_, javax.swing.GroupLayout.PREFERRED_SIZE, 258, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(acqTabbedPane_, javax.swing.GroupLayout.PREFERRED_SIZE, 306, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(runAcqButton_)
                 .addGap(41, 41, 41)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(configPropsButton_)
                     .addComponent(SettingsButton))
-                .addGap(0, 10, Short.MAX_VALUE))
+                .addGap(0, 162, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());

@@ -13,19 +13,12 @@ import java.util.prefs.Preferences;
  * @author Henry
  */
 public class SettingsDialog extends javax.swing.JDialog {
-
-   private static final String PREF_AUTO_IMAGE_SIZE = "Auto image size";
-   private static final String PREF_WIDTH = "Image width";
-   private static final String PREF_HEIGHT = "Image height";
-   
    
    Preferences prefs_;
    private GUI gui_;
    private static int overlapX_ = 0;
    private static int overlapY_ = 0;
    private static boolean demoMode_ = false;
-   private static boolean autoImageSize_;
-   private static int imageWidth_, imageHeight_;
    
    
    public SettingsDialog(Preferences prefs, GUI gui) {
@@ -38,33 +31,11 @@ public class SettingsDialog extends javax.swing.JDialog {
    }
    
    private void loadPrefs() {
-      imageHeightSpinner_.setValue(prefs_.getInt(PREF_HEIGHT, 512));
-      imageWidthSpinner_.setValue(prefs_.getInt(PREF_WIDTH, 512));
-      imageHeight_ = prefs_.getInt(PREF_HEIGHT, 512);
-      imageWidth_ = prefs_.getInt(PREF_WIDTH, 512);
-      autoButton_.setSelected(prefs_.getBoolean(PREF_AUTO_IMAGE_SIZE, true));
-      autoImageSize_ = prefs_.getBoolean(PREF_AUTO_IMAGE_SIZE, true); 
-      customButton_.setSelected(!prefs_.getBoolean(PREF_AUTO_IMAGE_SIZE, true));
    }
    
    private void savePrefs() {
-      prefs_.putBoolean(PREF_AUTO_IMAGE_SIZE, autoButton_.isSelected());
-      prefs_.putInt(PREF_WIDTH, imageWidth_);
-      prefs_.putInt(PREF_HEIGHT, imageHeight_);
-   }
-   
-   public static boolean getAutoImageSize() {
-      return autoImageSize_;
    }
 
-   public static int getImageWidth() {
-      return imageWidth_;
-   }
-   
-   public static int getImageHeight() {
-      return imageHeight_;
-   }
-   
    public static int getOverlapX() {
       return overlapX_;
    }
@@ -101,12 +72,6 @@ public class SettingsDialog extends javax.swing.JDialog {
         jLabel2 = new javax.swing.JLabel();
         yOverlapSpinner_ = new javax.swing.JSpinner();
         jButton2 = new javax.swing.JButton();
-        jLabel3 = new javax.swing.JLabel();
-        autoButton_ = new javax.swing.JRadioButton();
-        customButton_ = new javax.swing.JRadioButton();
-        imageWidthSpinner_ = new javax.swing.JSpinner();
-        jLabel4 = new javax.swing.JLabel();
-        imageHeightSpinner_ = new javax.swing.JSpinner();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("5D Navigator settings");
@@ -137,40 +102,6 @@ public class SettingsDialog extends javax.swing.JDialog {
             }
         });
 
-        jLabel3.setText("Image window size: ");
-
-        windowSizeButtonGroup_.add(autoButton_);
-        autoButton_.setText("Auto");
-        autoButton_.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                autoButton_ActionPerformed(evt);
-            }
-        });
-
-        windowSizeButtonGroup_.add(customButton_);
-        customButton_.setText("Custom:");
-        customButton_.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                customButton_ActionPerformed(evt);
-            }
-        });
-
-        imageWidthSpinner_.setModel(new javax.swing.SpinnerNumberModel(Integer.valueOf(512), Integer.valueOf(2), null, Integer.valueOf(1)));
-        imageWidthSpinner_.addChangeListener(new javax.swing.event.ChangeListener() {
-            public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                imageWidthSpinner_StateChanged(evt);
-            }
-        });
-
-        jLabel4.setText("by");
-
-        imageHeightSpinner_.setModel(new javax.swing.SpinnerNumberModel(Integer.valueOf(512), Integer.valueOf(2), null, Integer.valueOf(1)));
-        imageHeightSpinner_.addChangeListener(new javax.swing.event.ChangeListener() {
-            public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                imageHeightSpinner_StateChanged(evt);
-            }
-        });
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -182,28 +113,14 @@ public class SettingsDialog extends javax.swing.JDialog {
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(jButton2))
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jLabel1)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(xOverlapSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(jLabel2)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(yOverlapSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jLabel3)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(autoButton_)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(customButton_)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(imageWidthSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 51, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jLabel4)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(imageHeightSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 53, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addGap(0, 40, Short.MAX_VALUE)))
+                        .addComponent(jLabel1)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(xOverlapSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jLabel2)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(yOverlapSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 210, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -215,15 +132,7 @@ public class SettingsDialog extends javax.swing.JDialog {
                     .addComponent(xOverlapSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel2)
                     .addComponent(yOverlapSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel3)
-                    .addComponent(autoButton_)
-                    .addComponent(customButton_)
-                    .addComponent(imageWidthSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel4)
-                    .addComponent(imageHeightSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 142, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 182, Short.MAX_VALUE)
                 .addComponent(jButton2)
                 .addContainerGap())
         );
@@ -244,32 +153,10 @@ public class SettingsDialog extends javax.swing.JDialog {
       savePrefs();
    }//GEN-LAST:event_jButton2ActionPerformed
 
-   private void customButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_customButton_ActionPerformed
-      autoImageSize_ = !customButton_.isSelected();
-   }//GEN-LAST:event_customButton_ActionPerformed
-
-   private void autoButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_autoButton_ActionPerformed
-     autoImageSize_ = autoButton_.isSelected();
-   }//GEN-LAST:event_autoButton_ActionPerformed
-
-   private void imageHeightSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_imageHeightSpinner_StateChanged
-      imageHeight_ = (Integer) imageHeightSpinner_.getValue();
-   }//GEN-LAST:event_imageHeightSpinner_StateChanged
-
-   private void imageWidthSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_imageWidthSpinner_StateChanged
-      imageWidth_ = (Integer) imageWidthSpinner_.getValue();
-   }//GEN-LAST:event_imageWidthSpinner_StateChanged
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JRadioButton autoButton_;
-    private javax.swing.JRadioButton customButton_;
-    private javax.swing.JSpinner imageHeightSpinner_;
-    private javax.swing.JSpinner imageWidthSpinner_;
     private javax.swing.JButton jButton2;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
     private javax.swing.ButtonGroup windowSizeButtonGroup_;
     private javax.swing.JSpinner xOverlapSpinner_;
     private javax.swing.JSpinner yOverlapSpinner_;

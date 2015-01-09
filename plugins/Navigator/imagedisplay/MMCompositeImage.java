@@ -119,31 +119,42 @@ public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
    }
 
    private void superUpdateImage() {
-      // Need to set this field to null, or else an infinite loop can be 
-      // entered when the imageJ contrast adjuster is open
-      Object curVal = null;
-      try {
-         curVal = JavaUtils.getRestrictedFieldValue(null,
-               ContrastAdjuster.class, "instance");
-         JavaUtils.setRestrictedFieldValue(null, ContrastAdjuster.class, "instance", null);
-      } catch (NoSuchFieldException e) {
-         ReportingUtils.logError(e, "ImageJ ContrastAdjuster doesn't have field named instance");
-      }
-      super.updateImage();
+      Runnable runnable = new Runnable() {
 
-      // Restore the value we had previously set. Bizarrely, not doing this
-      // creates significant memory leaks (several MB per file we open/close).
-      // I have no idea why.
-      try {
-         JavaUtils.setRestrictedFieldValue(null, ContrastAdjuster.class,
-               "instance", curVal);
-      }
-      catch (NoSuchFieldException e) {
-         ReportingUtils.logError(e, "Couldn't restore ImageJ ContrastAdjuster instance.");
+         @Override
+         public void run() {
+            // Need to set this field to null, or else an infinite loop can be 
+            // entered when the imageJ contrast adjuster is open
+            Object curVal = null;
+            try {
+               curVal = JavaUtils.getRestrictedFieldValue(null,
+                       ContrastAdjuster.class, "instance");
+               JavaUtils.setRestrictedFieldValue(null, ContrastAdjuster.class, "instance", null);
+            } catch (NoSuchFieldException e) {
+               ReportingUtils.logError(e, "ImageJ ContrastAdjuster doesn't have field named instance");
+            }
+            MMCompositeImage.super.updateImage();
 
+            // Restore the value we had previously set. Bizarrely, not doing this
+            // creates significant memory leaks (several MB per file we open/close).
+            // I have no idea why.
+            try {
+               JavaUtils.setRestrictedFieldValue(null, ContrastAdjuster.class,
+                       "instance", curVal);
+            } catch (NoSuchFieldException e) {
+               ReportingUtils.logError(e, "Couldn't restore ImageJ ContrastAdjuster instance.");
+
+            }
+         }
+      };
+
+      if (SwingUtilities.isEventDispatchThread()) {
+         runnable.run();
+      } else {
+         SwingUtilities.invokeLater(runnable);
       }
    }
-   
+
    public void updateAndDraw(boolean forceUpdateAndPaint) {
       if (forceUpdateAndPaint) {
          // there may be a paint pending, but we want to make sure this update

@@ -13,6 +13,7 @@ import ij.gui.StackWindow;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Graphics;
 import java.awt.event.*;
 import java.text.DecimalFormat;
 import java.util.HashMap;
@@ -55,7 +56,7 @@ public class SubImageControls extends DisplayControls {
       zStep_ = acq_.getZStep();
       initComponents();
    }
-
+  
    private void initComponents() {
       final JPanel controlsPanel = new JPanel(new MigLayout("insets 0, fillx, align center", "", "[]0[]0[]"));
 

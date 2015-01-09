@@ -244,8 +244,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
                         }
                      }
                   }
-                  CanvasPaintPending.setPaintPending(
-                        hyperImage_.getCanvas(), imageReceivedObject_);
+                  CanvasPaintPending.setPaintPending(hyperImage_.getCanvas(), imageReceivedObject_);
                }
                showImage(tags, true);
                imagesDisplayed_++;
@@ -577,6 +576,11 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
    
    private void doShowImage(final JSONObject tags, boolean waitForDisplay) {
+      if (shouldStopDisplayThread_.get()) {
+         // Time to stop.
+         return;
+      }
+      
       updateWindowTitleAndStatus();
 
       if (tags == null) {
