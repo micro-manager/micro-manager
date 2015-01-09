@@ -7,19 +7,23 @@ import org.micromanager.api.display.DisplaySettings;
  * have been changed.
  */
 public class ContrastEvent implements DisplaySettingsEvent {
-   private int channelIndex;
+   private int channelIndex_;
    private DisplaySettings newSettings_;
    
    public ContrastEvent(int channelIndex, DisplaySettings newSettings) {
-      channelIndex = channelIndex;
+      channelIndex_ = channelIndex;
       newSettings_ = newSettings;
    }
 
    public int getIndex() {
-      return channelIndex;
+      return channelIndex_;
    }
 
    public DisplaySettings getDisplaySettings() {
       return newSettings_;
+   }
+
+   public String toString() {
+      return "<ContrastEvent for channel " + channelIndex_ + ">";
    }
 }
