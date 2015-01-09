@@ -294,7 +294,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       validate();
    }
 
-   
    public void setDisplayComboIndex(int index) {
       histRangeComboBox_.setSelectedIndex(index);
    }
@@ -456,11 +455,21 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    public void setFullScale() {
+      int origMin = contrastMin_;
+      int origMax = contrastMax_;
       contrastMin_ = 0;
       contrastMax_ = histMax_;
+      // Only send an event if we actually changed anything; otherwise we get
+      // into an infinite loop.
+      if (origMin != contrastMin_ || origMax != contrastMax_) {
+         postNewSettings();
+      }
    }
 
    public void autostretch() {
+      int origMin = contrastMin_;
+      int origMax = contrastMax_;
+
       contrastMin_ = pixelMin_;
       contrastMax_ = pixelMax_;
       if (pixelMin_ == pixelMax_) {
@@ -479,6 +488,11 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
           } else {
               contrastMax_ = contrastMin_ + 1;
           }
+      }
+      // Only send an event if we actually changed anything; otherwise we get
+      // into an infinite loop.
+      if (origMin != contrastMin_ || origMax != contrastMax_) {
+         postNewSettings();
       }
    }
 
@@ -500,7 +514,12 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          gamma_ = gammas[channelIndex_];
       }
       int histMax = contrastMax_;
-      int index = (int) (Math.ceil(Math.log(histMax)/Math.log(2)) - 3);
+      // HACK: Default to "camera depth" mode; only do the below math if it'll
+      // get us a value greater than 0.
+      int index = 0;
+      if (contrastMax_ > 8) {
+         index = (int) (Math.ceil(Math.log(histMax)/Math.log(2)) - 3);
+      }
       histRangeComboBox_.setSelectedIndex(index);
    }
 
@@ -524,7 +543,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    /**
-    * Pull new contrast settings from the provided DisplaySettings.
+    * Pull new contrast settings from our DisplayWindow's DisplaySettings.
     */
    public void updateChannelSettings() {
       color_ = getColorFromSettings();
@@ -875,6 +894,11 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
     * Update our parent's DisplaySettings, and post a ContrastEvent.
     */
    private void postNewSettings() {
+      if (!haveInitialized_.get()) {
+         // Don't send out anything until after we're done initializing, since
+         // our settings are probably in an inconsistent state right now.
+         return;
+      }
       DisplaySettings settings = display_.getDisplaySettings();
       DisplaySettings.DisplaySettingsBuilder builder = settings.copy();
 
@@ -889,7 +913,14 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       for (int i = 0; i < channelSettings.length; ++i) {
          Object[] oldVals = DefaultDisplaySettings.makePerChannelArray(i,
                (Object[]) channelSettings[i], channelIndex_ + 1);
-         oldVals[channelIndex_] = ourParams[i];
+         // HACK: for the specific case of a single-channel setup, our nominal
+         // color is white -- but we should not force this into the
+         // DisplaySettings as our color should change if a new channel is
+         // added.
+         if (!(oldVals instanceof Color[]) ||
+               store_.getAxisLength("channel") > 1) {
+            oldVals[channelIndex_] = ourParams[i];
+         }
          DefaultDisplaySettings.updateChannelArray(i, oldVals, builder);
       }
       settings = builder.build();
