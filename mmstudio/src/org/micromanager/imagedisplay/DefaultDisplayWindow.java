@@ -156,6 +156,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
          GraphicsConfiguration screenConfig = getScreenConfig();
          setBounds(screenConfig.getBounds());
          setExtendedState(JFrame.MAXIMIZED_BOTH);
+         setResizable(false);
          displayBus_.post(new FullScreenEvent(this, screenConfig, true));
       }
 
