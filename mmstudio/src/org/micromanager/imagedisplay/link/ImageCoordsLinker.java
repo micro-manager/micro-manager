@@ -9,6 +9,8 @@ import org.micromanager.api.display.DisplayWindow;
 
 import org.micromanager.data.DefaultCoords;
 
+import org.micromanager.utils.ReportingUtils;
+
 /**
  * The ImageCoordsLinker links a specific axis of the ImageCoords attribute.
  */
@@ -34,11 +36,14 @@ public class ImageCoordsLinker implements SettingsLinker {
     */
    @Override
    public boolean getShouldApplyChanges(DisplaySettingsEvent changeEvent) {
-      if (changeEvent instanceof ImageCoordsEvent) {
-         ImageCoordsEvent event = (ImageCoordsEvent) changeEvent;
-         return event.getImageCoords().getPositionAt(axis_) != parent_.getDisplaySettings().getImageCoords().getPositionAt(axis_);
+      ImageCoordsEvent event = (ImageCoordsEvent) changeEvent;
+      if (parent_.getDisplaySettings().getImageCoords() == null) {
+         // We don't have image coordinates, so we must de facto differ.
+         return true;
       }
-      return false;
+      int newPos = event.getImageCoords().getPositionAt(axis_);
+      int oldPos = parent_.getDisplaySettings().getImageCoords().getPositionAt(axis_);
+      return oldPos != newPos;
    }
 
    /**
@@ -50,6 +55,10 @@ public class ImageCoordsLinker implements SettingsLinker {
       DisplaySettings settings = parent_.getDisplaySettings();
       Coords curCoords = settings.getImageCoords();
       Coords newCoords = event.getImageCoords();
+      if (curCoords == null) {
+         // Gotta have some valid coords to start; just copy the new ones.
+         curCoords = newCoords;
+      }
       curCoords = curCoords.copy().position(axis_, newCoords.getPositionAt(axis_)).build();
       settings = settings.copy().imageCoords(curCoords).build();
       parent_.setDisplaySettings(settings);
