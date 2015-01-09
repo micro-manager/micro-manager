@@ -171,24 +171,29 @@ public class DisplayGroupManager {
     */
    public void onDisplaySettingsChanged(DisplayWindow source,
          DisplaySettingsEvent event) {
-      for (DisplayWindow display : displayToLinkers_.keySet()) {
-         if (display == source) {
-            continue;
-         }
-         for (SettingsLinker linker : displayToLinkers_.get(display)) {
-            if (!linkerToIsLinked_.get(linker)) {
-               // This linker isn't active.
+      try {
+         for (DisplayWindow display : displayToLinkers_.keySet()) {
+            if (display == source) {
                continue;
             }
-            List<Class<?>> classes = linker.getRelevantEventClasses();
-            for (Class<?> eventClass : classes) {
-               if (eventClass.isInstance(event) &&
-                     linker.getShouldApplyChanges(event)) {
-                  linker.applyChange(event);
-                  break;
+            for (SettingsLinker linker : displayToLinkers_.get(display)) {
+               if (!linkerToIsLinked_.get(linker)) {
+                  // This linker isn't active.
+                  continue;
+               }
+               List<Class<?>> classes = linker.getRelevantEventClasses();
+               for (Class<?> eventClass : classes) {
+                  if (eventClass.isInstance(event) &&
+                        linker.getShouldApplyChanges(event)) {
+                     linker.applyChange(event);
+                     break;
+                  }
                }
             }
          }
+      }
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Error dispatching settings change event");
       }
    }
 }
