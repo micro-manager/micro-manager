@@ -344,7 +344,9 @@ public class MMAcquisition {
          if (tempImageFileManager.getDataSetSize() > 0.9 * JavaUtils.getAvailableUnusedMemory()) {
             throw new MMScriptException("Not enough room in memory for this data set.\nTry opening as a virtual data set instead.");
          }
-         imageFileManager = new TaggedImageStorageRamFast(null);
+         TaggedImageStorageRamFast ramStore = new TaggedImageStorageRamFast(null);
+         ramStore.setDiskLocation(tempImageFileManager.getDiskLocation());
+         imageFileManager = ramStore;
          imageCache_.saveAs(imageFileManager);
       }
 

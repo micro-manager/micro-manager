@@ -52,6 +52,8 @@ public class TaggedImageStorageRamFast implements TaggedImageStorage {
    private JSONObject summaryMetadata_;
    private JSONObject displaySettings_;
    private int lastFrame_ = -1;
+
+   private String diskLocation_;
    
    public TaggedImageStorageRamFast(JSONObject summaryMetadata) {
       imageMap_ = new TreeMap<String, DirectTaggedImage>(new ImageLabelComparator());
@@ -180,9 +182,17 @@ public class TaggedImageStorageRamFast implements TaggedImageStorage {
       // do nothing for now.
    }
 
+   /**
+    * We allow outsiders to tell us that we represent data at a specific
+    * location, even though all of our data is actually in RAM now.
+    */
+   public void setDiskLocation(String diskLocation) {
+      diskLocation_ = diskLocation;
+   }
+
    @Override
    public String getDiskLocation() {
-      return null;
+      return diskLocation_;
    }
 
    @Override
