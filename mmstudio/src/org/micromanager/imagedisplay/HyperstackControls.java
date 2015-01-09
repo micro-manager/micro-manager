@@ -17,6 +17,7 @@ import java.util.concurrent.TimeUnit;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JToggleButton;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -61,12 +62,11 @@ public class HyperstackControls extends JPanel {
    // Displays general status information.
    private JLabel statusLabel_;
    private JButton showFolderButton_;
-   private JButton saveButton_;
 
    // Standard control set
    private javax.swing.JTextField fpsField_;
    private JButton abortButton_;
-   private javax.swing.JToggleButton pauseAndResumeToggleButton_;
+   private JToggleButton pauseAndResumeToggleButton_;
 
    // Snap/live control set
    private JButton snapButton_;
