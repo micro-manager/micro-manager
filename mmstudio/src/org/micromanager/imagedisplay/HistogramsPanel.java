@@ -284,7 +284,12 @@ public final class HistogramsPanel extends JPanel implements Histograms {
 
    @Subscribe
    public void onNewImagePlus(NewImagePlusEvent event) {
-      setImagePlus(event.getImagePlus());
+      try {
+         setImagePlus(event.getImagePlus());
+      }
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Failed to set new ImagePlus");
+      }
    }
 
    @Subscribe
