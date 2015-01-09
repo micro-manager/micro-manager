@@ -12,6 +12,7 @@ import org.micromanager.api.display.DisplayWindow;
 import org.micromanager.api.events.NewDisplayEvent;
 
 import org.micromanager.imagedisplay.DisplayDestroyedEvent;
+import org.micromanager.imagedisplay.events.FullScreenEvent;
 
 import org.micromanager.MMStudio;
 
@@ -19,7 +20,9 @@ import org.micromanager.utils.ReportingUtils;
 
 /**
  * This class is responsible for tracking groupings of DisplayWindows and
- * handling synchronization of linked DisplaySettings across them.
+ * handling synchronization of linked DisplaySettings across them. It also
+ * handles any other logic that requires DisplayWindows to work together
+ * (e.g. toggling fullscreen mode).
  */
 public class DisplayGroupManager {
    /**
@@ -47,8 +50,13 @@ public class DisplayGroupManager {
       }
 
       @Subscribe
-      public void onLinkButtonEvent(LinkButtonEvent event) {
-         master_.onLinkButtonEvent(display_, event);
+      public void onLinkButton(LinkButtonEvent event) {
+         master_.onLinkButton(display_, event);
+      }
+
+      @Subscribe
+      public void onFullScreen(FullScreenEvent event) {
+         master_.onFullScreen(display_, event);
       }
 
       public DisplayWindow getDisplay() {
@@ -74,7 +82,7 @@ public class DisplayGroupManager {
     * A new display has arrived; register for its events.
     */
    @Subscribe
-   public void onNewDisplayEvent(NewDisplayEvent event) {
+   public void onNewDisplay(NewDisplayEvent event) {
       DisplayWindow display = event.getDisplayWindow();
       listeners_.add(new WindowListener(display, this));
       displayToLinkers_.put(display, new HashSet<SettingsLinker>());
@@ -108,7 +116,7 @@ public class DisplayGroupManager {
     * A LinkButton has been clicked. Ensure other DisplayWindows get their
     * corresponding LinkButtons updated, and update our linker tracking.
     */
-   public void onLinkButtonEvent(DisplayWindow source, LinkButtonEvent event) {
+   public void onLinkButton(DisplayWindow source, LinkButtonEvent event) {
       try {
          // Find other displays for this datastore and update their
          // corresponding link buttons.
@@ -134,6 +142,27 @@ public class DisplayGroupManager {
       }
       catch (Exception e) {
          ReportingUtils.logError(e, "Couldn't redistribute LinkButtonEvent");
+      }
+   }
+
+   /**
+    * One display has gone fullscreen, or fullscreen mode has ended; show/hide
+    * the other displays as appropriate.
+    * TODO: we directly hide the DisplayWindows instead of letting them do it
+    * themselves because the latter would require exposing show/hide logic in
+    * the API, which seemed unnecessary, but is there a better way?
+    * TODO: we don't currently handle multiple fullscreen windows (on
+    * different monitors) properly.
+    */
+   public void onFullScreen(DisplayWindow source, FullScreenEvent event) {
+      for (DisplayWindow display : displayToLinkers_.keySet()) {
+         if (display != source) {
+            // Show windows that aren't on the same display as a fullscreen
+            // window, or everything if we're leaving fullscreen mode.
+            display.getAsWindow().setVisible(
+                  event.getConfig() != display.getScreenConfig() ||
+                  !event.getIsFullScreen());
+         }
       }
    }
 

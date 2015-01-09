@@ -12,6 +12,7 @@ import ij.WindowManager;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.GraphicsConfiguration;
 import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -53,6 +54,7 @@ import org.micromanager.events.EventManager;
 import org.micromanager.imagedisplay.events.DefaultNewDisplayEvent;
 import org.micromanager.imagedisplay.events.DefaultNewImagePlusEvent;
 import org.micromanager.imagedisplay.events.DefaultRequestToDrawEvent;
+import org.micromanager.imagedisplay.events.FullScreenEvent;
 import org.micromanager.imagedisplay.events.LayoutChangedEvent;
 import org.micromanager.imagedisplay.events.NewDisplaySettingsEvent;
 import org.micromanager.imagedisplay.events.RequestToCloseEvent;
@@ -81,6 +83,10 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
    // This will be our intermediary with ImageJ.
    private DummyImageWindow dummyWindow_;
 
+   // Properties related to fullscreen mode.
+   private DefaultDisplayWindow fullFrame_;
+   private boolean isFullScreen_;
+
    private JPanel contentsPanel_;
    private JPanel canvasPanel_;
    private MMImageCanvas canvas_;
@@ -107,20 +113,35 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
    private static Preferences displayPrefs_;
    private static final String WINDOWPOSX = "WindowPosX";
    private static final String WINDOWPOSY = "WindowPosY";
-  
+
+   /**
+    * Convenience constructor that defaults to non-fullscreen mode and default
+    * DisplaySettings.
+    */
+   public DefaultDisplayWindow(Datastore store, Component customControls) {
+      this(store, customControls, null, false);
+   }
+
    /**
     * customControls is a Component that will be displayed immediately beneath
     * the HyperstackControls (the scrollbars). The creator is responsible for
     * the logic implemented by these controls. They may be null.
     */
-   public DefaultDisplayWindow(Datastore store, Component customControls) {
+   public DefaultDisplayWindow(Datastore store, Component customControls,
+         DisplaySettings settings, boolean isFullScreen) {
       store_ = store;
       store_.registerForEvents(this, 100);
-      displaySettings_ = DefaultDisplaySettings.getStandardSettings();
+      if (settings == null) {
+         displaySettings_ = DefaultDisplaySettings.getStandardSettings();
+      }
+      else {
+         displaySettings_ = settings;
+      }
       displayBus_ = new EventBus();
       displayBus_.register(this);
       EventManager.post(new DefaultNewDisplayEvent(this));
       customControls_ = customControls;
+      isFullScreen_ = isFullScreen;
 
       initializePrefs();
       int posX = DEFAULTPOSX, posY = DEFAULTPOSY;
@@ -129,6 +150,14 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
          posY = displayPrefs_.getInt(WINDOWPOSY, DEFAULTPOSY);
       }
       setLocation(posX, posY);
+
+      if (isFullScreen_) {
+         setUndecorated(true);
+         GraphicsConfiguration screenConfig = getScreenConfig();
+         setBounds(screenConfig.getBounds());
+         screenConfig.getDevice().setFullScreenWindow(this);
+         displayBus_.post(new FullScreenEvent(this, screenConfig, true));
+      }
 
       setBackground(MMStudio.getInstance().getBackgroundColor());
       MMStudio.getInstance().addMMBackgroundListener(this);
@@ -579,6 +608,32 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       return !isVisible();
    }
 
+   /**
+    * Turn fullscreen mode on or off. Fullscreen is actually a separate
+    * frame due to how Java handles the GUI.
+    * TODO: should this really be exposed in the API?
+    */
+   @Override
+   public void toggleFullScreen() {
+      if (isFullScreen_) {
+         // We're currently fullscreen and need to go away now.
+         forceClosed();
+         displayBus_.post(new FullScreenEvent(this, getScreenConfig(), false));
+      }
+      else {
+         // Hide ourselves and make a new frame for fullscreen mode.
+         setVisible(false);
+         DisplayWindow fullFrame = new DefaultDisplayWindow(
+               store_, customControls_, displaySettings_, true);
+      }
+   }
+
+   @Override
+   public GraphicsConfiguration getScreenConfig() {
+      Point p = getLocation();
+      return GUIUtils.getGraphicsConfigurationContaining(p.x, p.y);
+   }
+
    @Override
    public ImageWindow getImageWindow() {
       return dummyWindow_;
@@ -743,6 +798,13 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
    // Implemented to help out DummyImageWindow.
    public MMImageCanvas getCanvas() {
       return canvas_;
+   }
+
+   public Dimension getPreferredSize() {
+      if (isFullScreen_) {
+         return getScreenConfig().getBounds().getSize();
+      }
+      return super.getPreferredSize();
    }
 
    /**

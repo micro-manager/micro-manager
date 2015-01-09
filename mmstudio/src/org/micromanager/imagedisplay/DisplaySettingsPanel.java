@@ -210,7 +210,8 @@ public class DisplaySettingsPanel extends JPanel {
       });
       add(saveButton, "split 2, flowx, growx, align left");
 
-      JButton dupeButton = new JButton("Attach new display");
+      add(new FullScreenButton(display_));
+      JButton dupeButton = new JButton("Duplicate");
       dupeButton.setToolTipText("Create an additional display window for this dataset.");
       dupeButton.addActionListener(new ActionListener() {
          @Override
