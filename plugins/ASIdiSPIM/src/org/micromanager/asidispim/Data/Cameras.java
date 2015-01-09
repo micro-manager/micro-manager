@@ -30,6 +30,7 @@ import mmcorej.CMMCore;
 
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Utils.MyDialogUtils;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  * Holds utility functions for cameras
@@ -465,8 +466,8 @@ public class Cameras {
       default:
          break;
       }
-      core_.logMessage("camera reset time computed as " + resetTimeMs + 
-            " for camera " + devices_.getMMDevice(camKey), true);
+      ReportingUtils.logDebugMessage("camera reset time computed as " + resetTimeMs + 
+            " for camera " + devices_.getMMDevice(camKey));
       return resetTimeMs;  // assume 10ms readout if not otherwise possible to calculate
    }
 
@@ -529,8 +530,8 @@ public class Cameras {
       default:
          break;
       }
-      core_.logMessage("camera readout time computed as " + readoutTimeMs + 
-            " for camera " + devices_.getMMDevice(camKey), true);
+      ReportingUtils.logDebugMessage("camera readout time computed as " + readoutTimeMs + 
+            " for camera " + devices_.getMMDevice(camKey));
       return readoutTimeMs;  // assume 10ms readout if not otherwise possible to calculate
    }
    
@@ -548,8 +549,8 @@ public class Cameras {
          readoutTimeMs = 0.25f;
       }
       
-      core_.logMessage("camera readout time for overlap computed as " + readoutTimeMs + 
-            " for camera " + devices_.getMMDevice(camKey), true);
+      ReportingUtils.logDebugMessage("camera readout time for overlap computed as " + readoutTimeMs + 
+            " for camera " + devices_.getMMDevice(camKey));
       return readoutTimeMs;  // assume 10ms readout if not otherwise possible to calculate
    }
    

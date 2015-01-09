@@ -27,10 +27,10 @@ import java.util.List;
 
 import mmcorej.CMMCore;
 
-import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Utils.MyDialogUtils;
 import org.micromanager.asidispim.Utils.UpdateFromPropertyListenerInterface;
 import org.micromanager.utils.NumberUtils;
+import org.micromanager.utils.ReportingUtils;
 
 
 /**
@@ -53,7 +53,6 @@ import org.micromanager.utils.NumberUtils;
  */
 public class Properties {
    
-   private ScriptInterface gui_;
    private Devices devices_;
    private CMMCore core_;
    private List<UpdateFromPropertyListenerInterface> listeners_;
@@ -247,9 +246,7 @@ public class Properties {
     * @author Jon
     * @param prefs
     */
-   public Properties (ScriptInterface gui, Devices devices, Prefs prefs) {
-      gui_ = gui;
-      core_ = gui_.getMMCore();
+   public Properties (Devices devices, Prefs prefs) {
       devices_ = devices;
       prefs_ = prefs;
       listeners_ = new ArrayList<UpdateFromPropertyListenerInterface>();
@@ -312,7 +309,7 @@ public class Properties {
                   core_.setProperty(mmDevice, name.toString(propNameSubstitute), strVal);
                } catch (Exception ex) {
                   // log to file but nothing else
-                  gui_.logMessage("Device " + mmDevice + 
+                  ReportingUtils.logMessage("Device " + mmDevice + 
                         " does not have property: " + name.toString(propNameSubstitute));
                }
             }

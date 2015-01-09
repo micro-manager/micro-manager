@@ -42,6 +42,7 @@ public class MyDialogUtils {
     * Centers over the plugin frame
     * @param prompt the string to display
     * @param optionType one of JOptionPane.YES_NO_OPTION or JOptionPane.OK_CANCEL_OPTION
+    * @return true if user said "Yes" or "OK", false otherwise
     */
    public static boolean getConfirmDialogResult(String prompt, int optionType) {
       int dialogResult = JOptionPane.showConfirmDialog(ASIdiSPIM.getFrame(),

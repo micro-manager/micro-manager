@@ -90,6 +90,7 @@ import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
+import org.micromanager.utils.ReportingUtils;
 
 import com.swtdesigner.SwingResourceManager;
 
@@ -1533,7 +1534,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                throw new IllegalMonitorStateException("User stopped the acquisition");
             }
             
-            gui_.logMessage("diSPIM plugin starting acquisition " + acqName);
+            ReportingUtils.logMessage("diSPIM plugin starting acquisition " + acqName);
             
             gui_.openAcquisition(acqName, rootDir, nrFrames, nrSides * nrChannels,
                   nrSlices, nrPositions, show, save);
@@ -1674,8 +1675,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                               Properties.Values.SPIM_RUNNING, true);
                      }
 
-                     core_.logMessage("Starting time point " + (timePoint+1) + " of " + nrFrames
-                           + " with channel number " + channelNum, true);
+                     ReportingUtils.logDebugMessage("Starting time point " + (timePoint+1) + " of " + nrFrames
+                           + " with channel number " + channelNum);
 
                      // Wait for first image to create ImageWindow, so that we can be sure about image size
                      // Do not actually grab first image here, just make sure it is there
@@ -1773,7 +1774,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                // a closed acquisition not be really closed, causing problems
                // when the user closes a window of the previoud acquisition
                // gui_.closeAcquisition(acqName);
-               gui_.logMessage("diSPIM plugin acquisition " + acqName + 
+               ReportingUtils.logMessage("diSPIM plugin acquisition " + acqName + 
                      " took: " + (System.currentTimeMillis() - acqStart) + "ms");
                
             } catch (Exception ex) {
