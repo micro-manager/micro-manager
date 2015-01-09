@@ -185,6 +185,14 @@ private:
    TFloatProperty* frameRate_property;
    TFloatStringProperty* frameRateLimits_property;
    TEnumProperty* auxOutSignal_property;
+   
+   // LightScanPlus properties
+   TEnumProperty* LSPSensorReadoutMode_property;
+   TBooleanProperty* LSPSequentialPortReadoutMode_property;
+   TIntegerProperty* LSPExposedPixelHeight_property;
+   TBooleanProperty* LSPScanSpeedControlEnable_property;
+   TFloatProperty* LSPLineScanSpeed_property;
+   TFloatProperty* LSPRowReadTime_property;
 
 
    // atcore++ objects

@@ -587,6 +587,30 @@ int CAndorSDK3Camera::Initialize()
                                              cameraDevice->GetEnum(L"AuxiliaryOutSource"), 
                                              this, thd_, snapShotController_, false, false);
 
+   LSPSensorReadoutMode_property = new TEnumProperty("LightScanPlus-SensorReadoutMode", 
+                                            cameraDevice->GetEnum(L"SensorReadoutMode"), 
+                                            this, thd_, snapShotController_, false, false);
+
+   LSPSequentialPortReadoutMode_property = new TBooleanProperty("LightScanPlus-AlternatingReadoutDirection", 
+                                             cameraDevice->GetBool(L"AlternatingReadoutDirection"), 
+                                             callbackManager_, false);
+
+   LSPExposedPixelHeight_property = new TIntegerProperty("LightScanPlus-ExposedPixelHeight",
+                                             cameraDevice->GetInteger(L"ExposedPixelHeight"), this, thd_, 
+                                             snapShotController_, false, false);
+
+   LSPScanSpeedControlEnable_property = new TBooleanProperty("LightScanPlus-ScanSpeedControlEnable", 
+                                             cameraDevice->GetBool(L"ScanSpeedControlEnable"),
+                                             callbackManager_, false);
+
+   LSPLineScanSpeed_property =  new TFloatProperty("LightScanPlus-LineScanSpeed [lines/sec]", 
+                                             cameraDevice->GetFloat(L"LineScanSpeed"),  
+                                             callbackManager_, false, false);
+
+   LSPRowReadTime_property = new TFloatProperty("LightScanPlus-RowReadTime", 
+                                             cameraDevice->GetFloat(L"RowReadTime"),  
+                                             callbackManager_, false, false);
+
    char errorStr[MM::MaxStrLength];
    if (false == eventsManager_->Initialise(errorStr) )
    {
@@ -661,6 +685,13 @@ int CAndorSDK3Camera::Shutdown()
       delete triggerMode_property;
       delete exposureTime_property;
       delete auxOutSignal_property;
+      delete LSPSensorReadoutMode_property;
+      delete LSPSequentialPortReadoutMode_property;
+      delete LSPExposedPixelHeight_property;
+      delete LSPScanSpeedControlEnable_property;
+      delete LSPLineScanSpeed_property;
+      delete LSPRowReadTime_property;
+
 
       delete callbackManager_;
       delete snapShotController_;
