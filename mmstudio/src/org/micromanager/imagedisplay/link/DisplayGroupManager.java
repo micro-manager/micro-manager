@@ -112,8 +112,13 @@ public class DisplayGroupManager {
     */
    public void onNewLinkButton(DisplayWindow source,
          LinkButtonCreatedEvent event) {
-      displayToLinkers_.get(source).add(event.getLinker());
-      linkerToIsLinked_.put(event.getLinker(), false);
+      try {
+         displayToLinkers_.get(source).add(event.getLinker());
+         linkerToIsLinked_.put(event.getLinker(), false);
+      }
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Couldn't handle new link button for display " + source.hashCode() + " linker " + event.getLinker().getID());
+      }
    }
 
    /**
