@@ -30,8 +30,8 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import net.miginfocom.swing.MigLayout;
-import org.json.JSONObject;
 
+import org.json.JSONObject;
 import org.micromanager.api.MMWindow;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Data.MyStrings;
@@ -56,10 +56,12 @@ import org.w3c.dom.Element;
  */
 @SuppressWarnings("serial")
 public class DataAnalysisPanel extends ListeningJPanel {
+   private final Prefs prefs_;
    private final JPanel exportPanel_;
+   private final JPanel imageJPanel_;
    private final JTextField saveDestinationField_;
    private final JTextField baseNameField_;
-   private final Prefs prefs_;
+   
    public static final String[] TRANSFORMOPTIONS = 
       {"None", "Rotate Right 90\u00B0", "Rotate Left 90\u00B0", "Rotate outward"};
    public static final String[] EXPORTFORMATS = 
@@ -85,7 +87,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
             
       int textFieldWidth = 35;
 
-      // start volume sub-panel
+      // start export sub-panel
       exportPanel_ = new JPanel(new MigLayout(
               "",
               "[right]4[center]4[left]",
@@ -212,9 +214,52 @@ public class DataAnalysisPanel extends ListeningJPanel {
       exportPanel_.add(exportButton, "span 3, center, wrap");
       exportPanel_.add(infoLabel,"");
       exportPanel_.add(progBar, "span3, center, wrap");    
+      
+      // end export sub-panel
+      
+      // start ImageJ sub-panel
+      imageJPanel_ = new JPanel(new MigLayout(
+              "",
+              "[center]",
+              "[]8[]"));
+      
+      imageJPanel_.setBorder(PanelUtils.makeTitledBorder("ImageJ"));
+      
+      JButton adjustBC = new JButton("Brightness/Contrast");
+      adjustBC.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            IJCommandThread t = new IJCommandThread("Brightness/Contrast...");
+            t.start();
+         }
+      });
+      imageJPanel_.add(adjustBC, "wrap");
+      
+      JButton splitChannels = new JButton("Split Channels");
+      splitChannels.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            IJCommandThread t = new IJCommandThread("Split Channels");
+            t.start();
+         }
+      });
+      imageJPanel_.add(splitChannels, "wrap");
+      
+      JButton zProjection = new JButton("Z Projection");
+      zProjection.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            IJCommandThread t = new IJCommandThread("Z Project...", "projection=[Max Intensity]");
+            t.start();
+         }
+      });
+      imageJPanel_.add(zProjection, "wrap");
+      
+      // end ImageJ sub-panel
             
        
       this.add(exportPanel_);
+      this.add(imageJPanel_);
    }
    
    @Override
@@ -437,7 +482,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
             sequenceDescription.appendChild(viewSetups);
             
             JSONObject summary = mmW.getSummaryMetaData();
-            // woraround bug: z step is sometimes only present in per image data
+            // workaround bug: z step is sometimes only present in per image data
             JSONObject imageTags = mmW.getImageMetadata(0,0,0,0);
             for (int angle = 0; angle < 2; angle++) {
                Element viewSetup = createViewSetup (domTree, angle, 
@@ -620,6 +665,31 @@ public class DataAnalysisPanel extends ListeningJPanel {
       @Override
       public Throwable getCause() {
          return this.cause;
+      }
+   }
+   
+   /**
+    * Make it easy to execute an ImageJ command in its own thread (for speed).
+    * After creating this object with the command (menu item) then call its start() method.
+    * TODO: see if this would be faster using ImageJ's Executer class (http://rsb.info.nih.gov/ij/developer/api/ij/Executer.html)
+    * @author Jon
+    */
+   class IJCommandThread extends Thread {
+      private final String command_;
+      private final String args_;
+      IJCommandThread(String command) {
+         super(command);
+         command_ = command;
+         args_ = "";
+      }
+      IJCommandThread(String command, String args) {
+         super(command);
+         command_ = command;
+         args_ = args;
+      }
+      @Override
+      public void run() {
+         IJ.run(command_, args_);
       }
    }
   
