@@ -88,8 +88,8 @@ public class DefaultDisplayManager implements DisplayManager {
 
    @Override
    public void removeDisplay(DisplayWindow window, Datastore store) {
-      if (!storeToDisplays_.containsKey(store) ||
-            !storeToDisplays_.get(store).contains(window)) {
+      if (storeToDisplays_.containsKey(store) &&
+            storeToDisplays_.get(store).contains(window)) {
          storeToDisplays_.get(store).remove(window);
       }
    }
