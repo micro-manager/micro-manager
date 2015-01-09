@@ -6,6 +6,7 @@ import ij.gui.ImageWindow;
 import ij.ImagePlus;
 
 import java.awt.Component;
+import java.awt.GraphicsConfiguration;
 import java.awt.Window;
 import java.util.List;
 
@@ -92,6 +93,21 @@ public interface DisplayWindow {
     * Return true iff the window has been closed.
     */
    public boolean getIsClosed();
+
+   /**
+    * Turn fullscreen mode on or off. Note that, because of how Java's GUI
+    * systems work, turning on fullscreen mode actually creates a new
+    * DisplayWindow that takes over the monitor that this DisplayWindow is in,
+    * and turning off fullscreen mode dismisses the new DisplayWindow.
+    * TODO: effects of calling this on the wrong DisplayWindow are uncertain.
+    */
+   public void toggleFullScreen();
+
+   /**
+    * Return the GraphicsConfiguration for the monitor the DisplayWindow's
+    * upper-left corner is in.
+    */
+   public GraphicsConfiguration getScreenConfig();
 
    /**
     * Raise the display to the front.
