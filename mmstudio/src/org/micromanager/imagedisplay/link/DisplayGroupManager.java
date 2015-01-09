@@ -59,6 +59,11 @@ public class DisplayGroupManager {
          master_.onFullScreen(display_, event);
       }
 
+      @Subscribe
+      public void onDisplayDestroyed(DisplayDestroyedEvent event) {
+         master_.onDisplayDestroyed(display_, event);
+      }
+
       public DisplayWindow getDisplay() {
          return display_;
       }
@@ -88,15 +93,14 @@ public class DisplayGroupManager {
       displayToLinkers_.put(display, new HashSet<SettingsLinker>());
    }
 
-   @Subscribe
-   public void onDisplayDestroyed(DisplayDestroyedEvent event) {
-      DisplayWindow display = event.getDisplay();
-      for (SettingsLinker linker : displayToLinkers_.get(display)) {
+   public void onDisplayDestroyed(DisplayWindow source,
+         DisplayDestroyedEvent event) {
+      for (SettingsLinker linker : displayToLinkers_.get(source)) {
          linkerToIsLinked_.remove(linker);
       }
-      displayToLinkers_.remove(display);
+      displayToLinkers_.remove(source);
       for (WindowListener listener : listeners_) {
-         if (listener.getDisplay() == display) {
+         if (listener.getDisplay() == source) {
             listeners_.remove(listener);
             break;
          }
@@ -159,9 +163,9 @@ public class DisplayGroupManager {
          if (display != source) {
             // Show windows that aren't on the same display as a fullscreen
             // window, or everything if we're leaving fullscreen mode.
-            display.getAsWindow().setVisible(
-                  event.getConfig() != display.getScreenConfig() ||
-                  !event.getIsFullScreen());
+            boolean shouldShow = event.getConfig() != display.getScreenConfig() ||
+                  !event.getIsFullScreen();
+            display.getAsWindow().setVisible(shouldShow);
          }
       }
    }
