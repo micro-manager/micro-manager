@@ -66,7 +66,7 @@ public class DeviceUtils {
       switch (key) {
          case PIEZOA:
          case PIEZOB:
-            if (firmwareVersion == (float) 0) {
+            if (firmwareVersion == 0f) {
                // firmware version property wasn't found, maybe device hasn't been selected
             } else if (firmwareVersion < (float) 2.829) {
                MyDialogUtils.showError("Device " + devices_.getMMDevice(key)
@@ -76,7 +76,7 @@ public class DeviceUtils {
             break;
          case GALVOA:
          case GALVOB:
-            if (firmwareVersion == (float) 0) {
+            if (firmwareVersion == 0f) {
                // firmware version property wasn't found, maybe device hasn't been selected
             } else if (firmwareVersion < (float) 2.809) {
                MyDialogUtils.showError("Device " + devices_.getMMDevice(key)
@@ -90,6 +90,13 @@ public class DeviceUtils {
                MyDialogUtils.showError("Device " + devices_.getMMDevice(key)
                        + ": Micromirror firmware is old; not all timing parameters are supported."
                        + " Contact ASI for updated firmware.");
+            }
+            break;
+         case PLOGIC:
+            if (firmwareVersion < 3.029) {
+               MyDialogUtils.showError("Device " + devices_.getMMDevice(key)
+                     + ": PLogic firmware is old; some features may not work."
+                     + " Contact ASI for updated firmware.");
             }
             break;
          default:
@@ -180,8 +187,10 @@ public class DeviceUtils {
                      + devices_.getMMDevice(key) + " on Step 2). Then reload the "
                      + " changed configuration and restart the diSPIM plugin.");
             }
+            props_.setPropValue(key, Properties.Keys.PLOGIC_PRESET, Properties.Values.PLOGIC_PRESET_1);
+            checkPropertyValueEquals(key, Properties.Keys.PLOGIC_TRIGGER_SOURCE, Properties.Values.PLOGIC_TRIGGER_MMIRROR);
          } else {
-            MyDialogUtils.showError("Plugin doesn't support galvo devices other than ASITiger");
+            MyDialogUtils.showError("Plugin doesn't support shutter devices other than ASITiger");
          }
          break;
       default:

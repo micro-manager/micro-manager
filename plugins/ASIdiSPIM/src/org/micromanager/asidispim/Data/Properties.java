@@ -110,6 +110,8 @@ public class Properties {
       MOVE_TO_HOME("MoveToHome"),
       SET_HOME_HERE("SetHomeToCurrentPosition"),
       PLOGIC_MODE("PLogicMode"),
+      PLOGIC_PRESET("SetCardPreset"),
+      PLOGIC_TRIGGER_SOURCE("TriggerSource"),
       TRIGGER_SOURCE("TRIGGER SOURCE"),   // for Hamamatsu
       TRIGGER_POLARITY("TriggerPolarity"),// for Hamamatsu
       TRIGGER_ACTIVE("TRIGGER ACTIVE"),   // for Hamamatsu
@@ -208,6 +210,8 @@ public class Properties {
       DO_IT("Do it"),
       DO_SSZ("Z - save settings to card (partial)"),
       DISPIM_SHUTTER("diSPIM Shutter"),
+      PLOGIC_PRESET_1("1 - original SPIM TTL card"),
+      PLOGIC_TRIGGER_MMIRROR("1 - Micro-mirror card"),
       INTERNAL("INTERNAL"),
       EXTERNAL("EXTERNAL"),
       INTERNAL_LC("Internal"),
