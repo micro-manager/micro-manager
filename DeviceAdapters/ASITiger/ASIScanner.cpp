@@ -266,6 +266,7 @@ int CScanner::Initialize()
    CreateProperty(g_ScannerBeamEnabledPropertyName, g_YesState, MM::String, false, pAct);
    AddAllowedValue(g_ScannerBeamEnabledPropertyName, g_NoState);
    AddAllowedValue(g_ScannerBeamEnabledPropertyName, g_YesState);
+   UpdateProperty(g_ScannerBeamEnabledPropertyName);  // calls UpdateIlluminationState()
 
    // single-axis mode settings
    // todo fix firmware TTL initialization problem where SAM p=2 triggers by itself 1st time
@@ -602,19 +603,6 @@ int CScanner::GetPosition(double& x, double& y)
    RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterPosition2(y) );
    y = y/unitMultY_;
    return DEVICE_OK;
-//   ostringstream command; command.str("");
-//   hub_->QueryCommand("VB F=1");
-//   command << "W " << axisLetterX_;
-//   RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),axisLetterX_) );
-//   RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(x) );
-//   x = x/unitMultX_;
-//   command.str("");
-//   command << "W " << axisLetterY_;
-//   RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),axisLetterY_) );
-//   RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(y) );
-//   y = y/unitMultY_;
-//   hub_->QueryCommand("VB F=0");
-//   return DEVICE_OK;
 }
 
 void CScanner::UpdateIlluminationState()
@@ -656,9 +644,16 @@ int CScanner::SetIlluminationStateHelper(bool on)
       return DEVICE_OK;
    if(!laserTTLenabled_)
       return DEVICE_OK;
-   command << addressChar_ << "LED X?";
-   RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),"X=") );
-   RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
+   // avoid unnecessary serial traffic
+   // assume value is only changed using this function
+   static long lastModeNum = -1;
+   if (lastModeNum == -1) {
+      command << addressChar_ << "LED X?";
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),"X=") );
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
+   } else {
+      tmp = lastModeNum;
+   }
    tmp &= 0x03;  // strip all but the two LSBs
    if (laser_side_ == 1)
    {
@@ -690,13 +685,16 @@ int CScanner::SetIlluminationStateHelper(bool on)
    command.str("");
    command << addressChar_ << "LED X=" << tmp;
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
+   lastModeNum = tmp;
    return DEVICE_OK;
 }
 
 int CScanner::SetIlluminationState(bool on)
 // we can't turn off beam but we can steer beam to corner where hopefully it is blocked internally
 {
-   UpdateIlluminationState();
+   // to reduce serial traffic we count on illuminationState_ being up to date
+   // if user manually moves to home position then we won't know it
+   // UpdateIlluminationState();  // don't do to reduce traffic
    if (on && !illuminationState_)  // was off, turning on
    {
       illuminationState_ = true;
@@ -1162,7 +1160,6 @@ int CScanner::OnBeamEnabled(MM::PropertyBase* pProp, MM::ActionType eAct)
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
    else if (eAct == MM::AfterSet) {
-//      UpdateIlluminationState();  // not needed, done in SetIlluminationState() now
       pProp->Get(tmpstr);
       if (tmpstr.compare(g_YesState) == 0)
          SetIlluminationState(true);
@@ -1368,6 +1365,7 @@ int CScanner::OnSAModeX(MM::PropertyBase* pProp, MM::ActionType eAct)
       justSet = false;
    }
    else if (eAct == MM::AfterSet) {
+      static long lastModeNum = -1;
       if (!illuminationState_)  // don't do anything if beam is turned off
       {
          pProp->Set(g_SAMode_0);
@@ -1385,11 +1383,16 @@ int CScanner::OnSAModeX(MM::PropertyBase* pProp, MM::ActionType eAct)
          tmp = 3;
       else
          return DEVICE_INVALID_PROPERTY_VALUE;
-      command << "SAM " << axisLetterX_ << "=" << tmp;
-      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
-      // get the updated value right away
-      justSet = true;
-      return OnSAModeX(pProp, MM::BeforeGet);
+      // avoid unnecessary serial traffic
+      // requires assuming that value is only changed using this function
+      if (lastModeNum != tmp) {
+         command << "SAM " << axisLetterX_ << "=" << tmp;
+         RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+         lastModeNum = tmp;
+         // get the updated value right away
+         justSet = true;
+         return OnSAModeX(pProp, MM::BeforeGet);
+      }
    }
    return DEVICE_OK;
 }
@@ -1422,6 +1425,7 @@ int CScanner::OnSAPatternX(MM::PropertyBase* pProp, MM::ActionType eAct)
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
    else if (eAct == MM::AfterSet) {
+      static long lastModeNum = -1;
       string tmpstr;
       pProp->Get(tmpstr);
       if (tmpstr.compare(g_SAPattern_0) == 0)
@@ -1432,17 +1436,22 @@ int CScanner::OnSAPatternX(MM::PropertyBase* pProp, MM::ActionType eAct)
          tmp = 2;
       else
          return DEVICE_INVALID_PROPERTY_VALUE;
-      // have to get current settings and then modify bits 0-2 from there
-      command << "SAP " << axisLetterX_ << "?";
-      response << ":A " << axisLetterX_ << "=";
-      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      long current;
-      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(current) );
-      current = current & (~(long)(BIT2|BIT1|BIT0));  // set lowest 3 bits to zero
-      tmp += current;
-      command.str("");
-      command << "SAP " << axisLetterX_ << "=" << tmp;
-      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+      // avoid unnecessary serial traffic
+      // requires assuming that value is only changed using this function
+      if (lastModeNum != tmp) {
+         // have to get current settings and then modify bits 0-2 from there
+         command << "SAP " << axisLetterX_ << "?";
+         response << ":A " << axisLetterX_ << "=";
+         RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+         long current;
+         RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(current) );
+         current = current & (~(long)(BIT2|BIT1|BIT0));  // set lowest 3 bits to zero
+         tmp += current;
+         command.str("");
+         command << "SAP " << axisLetterX_ << "=" << tmp;
+         RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+         lastModeNum = tmp;
+      }
    }
    return DEVICE_OK;
 }
@@ -1549,6 +1558,7 @@ int CScanner::OnSAModeY(MM::PropertyBase* pProp, MM::ActionType eAct)
       justSet = false;
    }
    else if (eAct == MM::AfterSet) {
+      static long lastModeNum = -1;
       if (!illuminationState_)  // don't do anything if beam is turned off
       {
          pProp->Set(g_SAMode_0);
@@ -1566,11 +1576,16 @@ int CScanner::OnSAModeY(MM::PropertyBase* pProp, MM::ActionType eAct)
          tmp = 3;
       else
          return DEVICE_INVALID_PROPERTY_VALUE;
-      command << "SAM " << axisLetterY_ << "=" << tmp;
-      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
-      // get the updated value right away
-      justSet = true;
-      return OnSAModeY(pProp, MM::BeforeGet);
+      // avoid unnecessary serial traffic
+      // requires assuming that value is only changed using this function
+      if (lastModeNum != tmp) {
+         command << "SAM " << axisLetterY_ << "=" << tmp;
+         RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+         lastModeNum = tmp;
+         // get the updated value right away
+         justSet = true;
+         return OnSAModeY(pProp, MM::BeforeGet);
+      }
    }
    return DEVICE_OK;
 }
@@ -1601,6 +1616,7 @@ int CScanner::OnSAPatternY(MM::PropertyBase* pProp, MM::ActionType eAct)
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
    else if (eAct == MM::AfterSet) {
+      static long lastModeNum = -1;
       string tmpstr;
       pProp->Get(tmpstr);
       if (tmpstr.compare(g_SAPattern_0) == 0)
@@ -1611,17 +1627,22 @@ int CScanner::OnSAPatternY(MM::PropertyBase* pProp, MM::ActionType eAct)
          tmp = 2;
       else
          return DEVICE_INVALID_PROPERTY_VALUE;
-      // have to get current settings and then modify bits 0-2 from there
-      command << "SAP " << axisLetterY_ << "?";
-      response << ":A " << axisLetterY_ << "=";
-      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      long current;
-      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(current) );
-      current = current & (~(long)(BIT2|BIT1|BIT0));  // set lowest 3 bits to zero
-      tmp += current;
-      command.str("");
-      command << "SAP " << axisLetterY_ << "=" << tmp;
-      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+      // avoid unnecessary serial traffic
+      // requires assuming that value is only changed using this function
+      if (lastModeNum != tmp) {
+         // have to get current settings and then modify bits 0-2 from there
+         command << "SAP " << axisLetterY_ << "?";
+         response << ":A " << axisLetterY_ << "=";
+         RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+         long current;
+         RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(current) );
+         current = current & (~(long)(BIT2|BIT1|BIT0));  // set lowest 3 bits to zero
+         tmp += current;
+         command.str("");
+         command << "SAP " << axisLetterY_ << "=" << tmp;
+         RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+         lastModeNum = tmp;
+      }
    }
    return DEVICE_OK;
 }
