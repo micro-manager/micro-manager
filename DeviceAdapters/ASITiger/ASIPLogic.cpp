@@ -121,9 +121,10 @@ int CPLogic::Initialize()
       AddAllowedValue(g_SetChannelPropertyName, g_ChannelOnly8, 8);
       UpdateProperty(g_SetChannelPropertyName); // doesn't do anything right now
       // makes sure card actually gets initialized
-      shutterOpen_ = true;
       SetProperty(g_SetChannelPropertyName, g_ChannelNone);
-      shutterOpen_ = false;
+
+      // set up trigger for BNC outputs to TTL1 (Laser0) OR the shutter (CCA X=2 or 3 for off/on)
+      SetProperty(g_SetCardPresetPropertyName, g_PresetCode12);
    }
 
    // pointer position, this is where edits/queries are made in general
@@ -162,6 +163,8 @@ int CPLogic::Initialize()
    AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCodeNone, -1);
    AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode0, 0);
    AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode1, 1);
+   AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode2, 2);
+   AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode3, 3);
    AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode4, 4);
    AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode5, 5);
    AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode6, 6);
@@ -170,6 +173,7 @@ int CPLogic::Initialize()
    AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode9, 9);
    AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode10, 10);
    AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode11, 11);
+   AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode12, 12);
    UpdateProperty(g_SetCardPresetPropertyName);
 
    // "do it" property to clear state
@@ -211,16 +215,12 @@ int CPLogic::SetOpen(bool open)
 {
    if (useAsShutter_)
    {
+      ostringstream command; command.str("");
       shutterOpen_ = open;
       if (open) {
-         SetShutterChannel();
+         SetProperty(g_SetCardPresetPropertyName, g_PresetCode3);
       } else {
-         ostringstream command; command.str("");
-         long tmp;
-         // inefficient but robust to get the preset code for the "off" state instead of hardcoding it to 9
-         RETURN_ON_MM_ERROR (GetPropertyData(g_SetChannelPropertyName, g_ChannelNone, tmp) );
-         command << addressChar_ << "CCA X=" << tmp;
-         RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
+         SetProperty(g_SetCardPresetPropertyName, g_PresetCode2);
       }
    }
    return DEVICE_OK;
@@ -229,19 +229,6 @@ int CPLogic::SetOpen(bool open)
 int CPLogic::GetOpen(bool& open)
 {
    open = useAsShutter_ && shutterOpen_;
-   return DEVICE_OK;
-}
-
-int CPLogic::SetShutterChannel()
-{
-   ostringstream command; command.str("");
-   long tmp;
-   RETURN_ON_MM_ERROR ( GetCurrentPropertyData(g_SetChannelPropertyName, tmp) );
-   if (tmp < 0) return DEVICE_OK;  // no preset and other "signaling" preset codes are negative
-   if (shutterOpen_) {
-      command << addressChar_ << "CCA X=" << tmp;
-      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
-   }
    return DEVICE_OK;
 }
 
@@ -268,7 +255,13 @@ int CPLogic::OnSetShutterChannel(MM::PropertyBase* pProp, MM::ActionType eAct)
       if (!initialized_)
          pProp->Set(g_ChannelNone);
    } else if (eAct == MM::AfterSet) {
-      RETURN_ON_MM_ERROR ( SetShutterChannel() );
+      ostringstream command; command.str("");
+      long tmp;
+      RETURN_ON_MM_ERROR ( GetCurrentPropertyData(g_SetChannelPropertyName, tmp) );
+      if (tmp < 0) return DEVICE_OK;  // no preset and other "signaling" preset codes are negative
+      command << addressChar_ << "CCA X=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
+      return DEVICE_OK;
    }
    return DEVICE_OK;
 }
@@ -800,7 +793,7 @@ int CPLogic::OnSetCardPreset(MM::PropertyBase* pProp, MM::ActionType eAct)
          pProp->Set(g_PresetCodeNone);
    } else if (eAct == MM::AfterSet) {
       RETURN_ON_MM_ERROR ( GetCurrentPropertyData(g_SetCardPresetPropertyName, tmp) );
-      if (tmp < 0) return DEVICE_OK;  // no preset and other "signaling" preset codes are negative
+      if (tmp < 0) return DEVICE_OK;  // g_PresetCodeNone and other "signaling" preset codes are negative
       command << addressChar_ << "CCA X=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
    }
