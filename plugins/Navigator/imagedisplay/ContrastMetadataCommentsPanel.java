@@ -21,9 +21,7 @@
 //
 package imagedisplay;
 
-import edu.mines.jtk.dsp.Histogram;
 import ij.ImagePlus;
-import ij.gui.ImageWindow;
 import java.awt.Font;
 import java.awt.Panel;
 import java.awt.event.FocusEvent;
@@ -46,8 +44,6 @@ import mmcloneclasses.graph.SingleChannelHistogram;
 import mmcloneclasses.internalinterfaces.Histograms;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.utils.GUIUtils;
-import org.micromanager.utils.ImageFocusListener;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
 
@@ -110,8 +106,8 @@ public class ContrastMetadataCommentsPanel extends Panel  {
       imageChangedUpdate(currentDisplay_);
    }
    
-   public void applyLUTToImage() {
-      histograms_.applyLUTToImage();
+   public Histograms getHistograms() {
+      return histograms_;
    }
 
    private void makeContrastPanel() {

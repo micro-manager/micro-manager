@@ -18,11 +18,14 @@ import ij.gui.Toolbar;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Point2D;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListDataEvent;
@@ -42,7 +45,6 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
    private static ArrayList<DisplayPlus> activeDisplays_ = new ArrayList<DisplayPlus>();
    private Acquisition acq_;
    private Point mouseDragStartPointLeft_, mouseDragStartPointRight_, currentMouseLocation_;
-   private ArrayList<Point> selectedPositions_ = new ArrayList<Point>();
    private ZoomableVirtualStack zoomableStack_;
    private final boolean exploreAcq_;
    private PositionManager posManager_;
@@ -55,19 +57,19 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
    private ThreadPoolExecutor redrawPixelsExecutor_;
    private int fullResPixelWidth_ = -1, fullResPixelHeight_ = -1; //used for scaling in fixed area acqs
    private int tileWidth_, tileHeight_;
-   
-   
+
    public DisplayPlus(final MMImageCache stitchedCache, Acquisition acq, JSONObject summaryMD,
-           MultiResMultipageTiffStorage multiResStorage ) {
+           MultiResMultipageTiffStorage multiResStorage) {
       super(stitchedCache, null, "test", true, summaryMD);
       tileWidth_ = multiResStorage.getTileWidth();
       tileHeight_ = multiResStorage.getTileHeight();
-      
+
       posManager_ = multiResStorage.getPositionManager();
       exploreAcq_ = acq instanceof ExploreAcquisition;
 
       //create redraw pixels executor
       redrawPixelsExecutor_ = new ThreadPoolExecutor(1, 1, 0, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
+
          @Override
          public Thread newThread(Runnable r) {
             return new Thread(r, "Pixel update thread ");
@@ -79,7 +81,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
 
       this.getEventBus().register(this);
 
-      
+
       //add in customized zoomable acquisition virtual stack
       try {
          //looks like nSlicess only really matters during display startup
@@ -92,18 +94,20 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
             fullResPixelWidth_ = ((FixedAreaAcquisition) acq_).getNumColumns() * multiResStorage.getTileWidth();
             fullResPixelHeight_ = ((FixedAreaAcquisition) acq_).getNumRows() * multiResStorage.getTileHeight();
          }
-                  
+
          //zoomable stack dimensions don't matter because they get changed on window startup
-         zoomableStack_ = new ZoomableVirtualStack(MDUtils.getIJType(summaryMD), 100, 100,
+         //But making it at least 200 is good, because smaller than this causes a weird smaller canvas 
+         //panel that screws up the autolayout
+         zoomableStack_ = new ZoomableVirtualStack(MDUtils.getIJType(summaryMD), 200, 200,
                  stitchedCache, nSlices, this, multiResStorage, acq_);
 
-      
+
       } catch (Exception e) {
          e.printStackTrace();
          ReportingUtils.showError("Problem with initialization due to missing summary metadata tags");
          return;
-      }   
-      
+      }
+
       this.show(zoomableStack_);
 
       setupKeyListeners();
@@ -111,51 +115,53 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
       IJ.setTool(Toolbar.SPARE6);
       stitchedCache.addImageCacheListener(this);
       canvas_.requestFocus();
-      activeDisplays_.add(this);   
+      activeDisplays_.add(this);
    }
-   
+
    public void windowAndCanvasReady() {
       canvas_ = this.getImagePlus().getCanvas();
       overlayer_ = new DisplayOverlayer(this, acq_, tileWidth_, tileHeight_, zoomableStack_);
    }
-   
+
    public int getFullResWidth() {
       return fullResPixelWidth_;
    }
-   
+
    public int getFullResHeight() {
       return fullResPixelHeight_;
    }
-   
+
    public Acquisition getAcquisition() {
       return acq_;
    }
-   
+
    /**
-    * Change the stack so that the resolution of the imageplus can change for window resizing
-    * @param newStack 
+    * Change the stack so that the resolution of the imageplus can change for
+    * window resizing
+    *
+    * @param newStack
     */
    public void changeStack(ZoomableVirtualStack newStack) {
       zoomableStack_ = newStack;
       super.virtualStack_ = newStack;
-      super.getHyperImage().setStack(newStack);
-      //account for border in image drawing
       try {
+         if (this.getHyperImage() instanceof MMCompositeImage) {
+            JavaUtils.setRestrictedFieldValue(super.getHyperImage(), CompositeImage.class, "rgbPixels", null);
+         }
+         super.getHyperImage().setStack(newStack);
+         //account for border in image drawing
          JavaUtils.setRestrictedFieldValue(canvas_, ImageCanvas.class, "imageWidth",
-                 canvas_.getWidth() - 2*DisplayWindow.CANVAS_PIXEL_BORDER);
-         
+                 canvas_.getWidth() - 2 * DisplayWindow.CANVAS_PIXEL_BORDER);
          JavaUtils.setRestrictedFieldValue(canvas_, ImageCanvas.class, "imageHeight",
-                 canvas_.getHeight() - 2*DisplayWindow.CANVAS_PIXEL_BORDER);
+                 canvas_.getHeight() - 2 * DisplayWindow.CANVAS_PIXEL_BORDER);
       } catch (NoSuchFieldException ex) {
          ReportingUtils.showError("Couldn't change ImageCanvas width");
       } catch (NullPointerException exc) {
          exc.printStackTrace();
       }
-
       overlayer_.setStack(newStack);
    }
-   
-   
+
    @Subscribe
    public void onWindowClose(DisplayWindow.RequestToCloseEvent event) {
       //abort acquisition if needed then call super method
@@ -205,8 +211,9 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
 
    public void setCurrentSurface(SurfaceInterpolator surf) {
       currentSurface_ = surf;
-      if (surf != null)
+      if (surf != null) {
          drawOverlay(true);
+      }
    }
 
    public void setCurrentRegion(MultiPosGrid region) {
@@ -294,10 +301,14 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
       return posManager_.getStageCoordsFromPixelCoords(fullResPix.x, fullResPix.y);
    }
 
-   public void zoom(boolean in) {
-      if (!zoomableStack_.zoom(cursorOverImage_ ? canvas_.getCursorLoc() : null, in ? -1 : 1)) {
-         redrawPixels(true);
-      }
+   /**
+    * zoom and redraw the given number of levels - is zoom in, + is zoom out
+    *
+    * @param numLevels
+    */
+   public void zoom(int numLevels) {
+      zoomableStack_.zoom(cursorOverImage_ ? canvas_.getCursorLoc() : null, numLevels);
+      redrawPixels(true);
    }
 
    public void setMode(int mode) {
@@ -310,35 +321,40 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
 
          @Override
          public void run() {
-            //Set pixels, do this every time
-            if (!DisplayPlus.this.getHyperImage().isComposite()) {
-               int index = DisplayPlus.this.getHyperImage().getCurrentSlice();
-               Object pixels = zoomableStack_.getPixels(index);
-               DisplayPlus.this.getHyperImage().getProcessor().setPixels(pixels);
-            } else {
-               CompositeImage ci = (CompositeImage) DisplayPlus.this.getHyperImage();
-               if (ci.getMode() == CompositeImage.COMPOSITE) {
-                  for (int i = 0; i < ((MMCompositeImage) ci).getNChannelsUnverified(); i++) {
-                     //Dont need to set pixels if processor is null because it will get them from stack automatically  
-                     Object pixels = zoomableStack_.getPixels(ci.getCurrentSlice() - ci.getChannel() + i + 1);
-                     if (ci.getProcessor(i + 1) != null && pixels != null) {
-                        ci.getProcessor(i + 1).setPixels(pixels);
-                     }
-                  }
-               }
-               Object pixels = zoomableStack_.getPixels(DisplayPlus.this.getHyperImage().getCurrentSlice());
-               if (pixels != null) {
-                  ci.getProcessor().setPixels(pixels);
-               }
-            }
-            //always draw overlay when pixels need to be updated, because this call will interrupt itself if need be     
-            drawOverlay(true);
-
-            //send back to EDT
+            //put all this stuff on EDT because stuff that interacts with CompositeImage
+            //should occur a single threaded, orderly fashion
             SwingUtilities.invokeLater(new Runnable() {
-
                @Override
                public void run() {
+                  //Make sure correct pixels are set...think this is redundant when showing acquired 
+                  //images, but needed for zooming and panning
+                  if (!DisplayPlus.this.getHyperImage().isComposite()) {
+                     //monochrome images
+                     int index = DisplayPlus.this.getHyperImage().getCurrentSlice();
+                     Object pixels = zoomableStack_.getPixels(index);
+                     DisplayPlus.this.getHyperImage().getProcessor().setPixels(pixels);
+                  } else {
+                     CompositeImage ci = (CompositeImage) DisplayPlus.this.getHyperImage();
+                     if (ci.getMode() == CompositeImage.COMPOSITE) {
+                        //in case number of pixels has changed, update channel processors wih this call
+                        ((MMCompositeImage) DisplayPlus.this.getHyperImage()).updateImage();
+                        //now make sure each channel processor has pixels correctly
+                        for (int i = 0; i < ((MMCompositeImage) ci).getNChannelsUnverified(); i++) {
+                           //Dont need to set pixels if processor is null because it will get them from stack automatically  
+                           Object pixels = zoomableStack_.getPixels(ci.getCurrentSlice() - ci.getChannel() + i + 1);
+                           if (ci.getProcessor(i + 1) != null && pixels != null) {
+                              ci.getProcessor(i + 1).setPixels(pixels);
+                           }
+                        }
+                     }
+                     Object pixels = zoomableStack_.getPixels(DisplayPlus.this.getHyperImage().getCurrentSlice());
+                     if (pixels != null) {
+                        ci.getProcessor().setPixels(pixels);
+                     }
+                  }
+                  //always draw overlay when pixels need to be updated, because this call will interrupt itself if need be     
+                  drawOverlay(true);
+
                   DisplayPlus.this.updateAndDraw(forcePaint);
                }
             });
@@ -374,9 +390,9 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
          @Override
          public void mouseWheelMoved(MouseWheelEvent mwe) {
             if (mwe.getWheelRotation() < 0) {
-               zoom(true);
+               zoom(-1); //zoom in
             } else if (mwe.getWheelRotation() > 0) {
-               zoom(false);
+               zoom(1); //zoom out
             }
          }
       });
@@ -445,10 +461,10 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
          @Override
          public void keyTyped(KeyEvent ke) {
             if (ke.getKeyChar() == '=') {
-               zoom(true);
+               zoom(-1); //zoom in
             } else if (ke.getKeyChar() == '-') {
-               zoom(false);
-            } 
+               zoom(1); // zoom out
+            }
          }
 
          @Override

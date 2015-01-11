@@ -119,16 +119,15 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
     * 
     * @param mouseLocation
     * @param numLevels
-    * @return true if zooming includes a redraw
     */
-   public boolean zoom(Point mouseLocation, int numLevels) {
+   public void zoom(Point mouseLocation, int numLevels) {
       //don't let fixed area acquisitions zoom out past the point where the area is too small
       if (!(acquisition_ instanceof ExploreAcquisition)) {
          int maxZoomIndex = multiResStorage_.getNumResLevels() - 1;
          if (maxZoomIndex != -1 && resolutionIndex + numLevels > maxZoomIndex) {
             numLevels = maxZoomIndex - resolutionIndex;
             if (numLevels == 0) {
-               return true;
+               return;
             }
          }
       }
@@ -141,9 +140,10 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
 
       //If we haven't already gotten to this low of a resolution, create it
       while (resolutionIndex + numLevels >= multiResStorage_.getNumResLevels()) {
+         //returns false when no images to downsample so no zooming takes place
          boolean success = multiResStorage_.addLowerResolution();
          if (!success) {
-            return true;
+            return;
          }
       }
 
@@ -165,10 +165,10 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
       }
       
       
-      if (!(acquisition_ instanceof ExploreAcquisition)) {
-         return ((DisplayWindow) vad_.getHyperImage().getWindow()).resizeCanvas();
+      if (acquisition_ instanceof FixedAreaAcquisition) {
+         //change the canvas size, and shrink canvas only if moving out
+         ((DisplayWindow) vad_.getHyperImage().getWindow()).resizeCanvas(numLevels > 0);
       }
-      return false;
    }
 
    public void translateView(int dx, int dy) {

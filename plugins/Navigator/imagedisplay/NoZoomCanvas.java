@@ -28,7 +28,16 @@ public class NoZoomCanvas extends ImageCanvas {
       super.hideZoomIndicator(true);
    }
    
+   @Override
+   public void setSize(Dimension d) {
+      super.setSize(d);
+   }
 
+   @Override
+   public void setPreferredSize(Dimension d) {
+      super.setPreferredSize(d);
+   }
+   
 //   /**
 //    * This padding causes us to avoid erroneously showing the zoom indicator,
 //    * and ensures there's enough space to draw the border.

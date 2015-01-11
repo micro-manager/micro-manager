@@ -6,14 +6,12 @@ package imagedisplay;
 
 import acq.Acquisition;
 import acq.ExploreAcquisition;
+import acq.FixedAreaAcquisition;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import gui.SettingsDialog;
 import ij.gui.StackWindow;
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Graphics;
+import java.awt.*;
 import java.awt.event.*;
 import java.text.DecimalFormat;
 import java.util.HashMap;
@@ -46,6 +44,7 @@ public class SubImageControls extends DisplayControls {
    private Acquisition acq_;
    private double zMin_, zMax_, zStep_;
    private int numZSteps_;
+   private int displayHeight_ = -1;
 
    public SubImageControls(DisplayPlus disp, EventBus bus, Acquisition acq) {
       super(new FlowLayout(FlowLayout.LEADING));
@@ -56,7 +55,7 @@ public class SubImageControls extends DisplayControls {
       zStep_ = acq_.getZStep();
       initComponents();
    }
-  
+
    private void initComponents() {
       final JPanel controlsPanel = new JPanel(new MigLayout("insets 0, fillx, align center", "", "[]0[]0[]"));
 
@@ -166,10 +165,21 @@ public class SubImageControls extends DisplayControls {
       this.addComponentListener(new ComponentAdapter() {
 
          public void componentResized(ComponentEvent e) {
-            Dimension curSize = getSize();
-            controlsPanel.setPreferredSize(new Dimension(curSize.width, curSize.height));
-            invalidate();
-            validate();
+            Dimension curSize = getSize(); //size of subimage controls
+            //expand window when new scrollbars shown for fixed acq
+            if (display_.getAcquisition() instanceof FixedAreaAcquisition) {
+               if (displayHeight_ == -1) {
+                  displayHeight_ = curSize.height;
+               } else if (curSize.height != displayHeight_) {
+                  //don't expand window bigger that max viewable area on scren
+                  int maxHeight = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds().height;
+                  display_.getHyperImage().getWindow().setSize(new Dimension(display_.getHyperImage().getWindow().getWidth(),
+                          Math.min(maxHeight, display_.getHyperImage().getWindow().getHeight() + (curSize.height - displayHeight_))));
+                  displayHeight_ = curSize.height;
+               }
+            }
+            SubImageControls.this.getParent().invalidate();
+            SubImageControls.this.getParent().validate();
          }
       });
    }
@@ -268,6 +278,7 @@ public class SubImageControls extends DisplayControls {
       this.invalidate();
       this.validate();
       this.getParent().doLayout();
+//      ((DisplayWindow) display_.getHyperImage().getWindow()).resizeCanvas();
    }
 
    @Override

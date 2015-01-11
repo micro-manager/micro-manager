@@ -6,6 +6,8 @@ import ij.ImagePlus;
 import ij.plugin.frame.ContrastAdjuster;
 import ij.process.LUT;
 import java.lang.reflect.InvocationTargetException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import org.micromanager.utils.CanvasPaintPending;
 import org.micromanager.utils.GUIUtils;
@@ -133,6 +135,7 @@ public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
             } catch (NoSuchFieldException e) {
                ReportingUtils.logError(e, "ImageJ ContrastAdjuster doesn't have field named instance");
             }
+          
             MMCompositeImage.super.updateImage();
 
             // Restore the value we had previously set. Bizarrely, not doing this

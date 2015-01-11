@@ -127,6 +127,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    private final Object imageReceivedObject_ = new Object();
    private int numGrayChannels_;
    protected ImageCanvas canvas_;
+   private static HashMap<String, HistogramSettings> contrastSettings_ = new HashMap<String, HistogramSettings>();
 
    private EventBus bus_;
 
@@ -667,20 +668,19 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          return;
       }
       int numChannels = imageCache_.getNumDisplayChannels();
-      
+      Histograms histograms = cmcPanel_.getHistograms();
       for (int channel = 0; channel < numChannels; channel++) {
-         String channelName = imageCache_.getChannelName(channel);
-         //TODO: intial contrast settings
-         
-//         HistogramSettings settings = MMStudio.getInstance().loadStoredChannelHistogramSettings(
-//                 channelGroup_, channelName, isMDA_);
-//         histograms_.setChannelContrast(channel, settings.min_, settings.max_, settings.gamma_);
-//         histograms_.setChannelHistogramDisplayMax(channel, settings.histMax_);
-//         if (imageCache_.getNumDisplayChannels() > 1) {
-//            setDisplayMode(settings.displayMode_);
-//         }
+         String id = channelGroup_ + "-" + imageCache_.getChannelName(channel);
+         HistogramSettings settings = contrastSettings_.get(id);
+         if (settings != null) {
+            histograms.setChannelContrast(channel, settings.min_, settings.max_, settings.gamma_);
+            histograms.setChannelHistogramDisplayMax(channel, settings.histMax_);
+            if (histograms instanceof MultiChannelHistograms) {
+               ((MultiChannelHistograms) histograms).setDisplayMode(settings.displayMode_);
+            }
+         }
       }
-      cmcPanel_.applyLUTToImage();
+      histograms.applyLUTToImage();
       contrastInitialized_ = true;
    }
 
@@ -690,18 +690,11 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
          return; //don't erroneously initialize contrast
       }
       // store for this dataset
-      // TODO: why is this necessary? We get NullPointerExceptions if we don't
-      // do this check. 
       if (imageCache_.getDisplayAndComments() != null) {
          imageCache_.storeChannelDisplaySettings(channelIndex, min, max, gamma, histMax, displayMode);
          //store global preference for channel contrast settings
-         if (isMDA_) {
-            //only store for datasets that were just acquired or snap/live (i.e. no loaded datasets)
-            //TODO: load/save contrast settings;
-//            MMStudio.getInstance().saveChannelHistogramSettings(channelGroup_, 
-//                    imageCache_.getChannelName(channelIndex), isMDA_,
-//                    new HistogramSettings(min,max, gamma, histMax, displayMode));    
-         }
+         String channelID = channelGroup_ +"-" + imageCache_.getChannelName(channelIndex);
+         contrastSettings_.put(channelID, new HistogramSettings(min,max, gamma, histMax, displayMode));          
       }
    }
 
@@ -886,8 +879,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       bus_.unregister(this);
       imageCache_.finished();
 
-      removeFromAcquisitionManager(MMStudio.getInstance());
-
       // Shut down our controls.
       subImageControls_.prepareForClose();
 
@@ -902,19 +893,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       // Finally, tell the window to close now.
       DisplayWindow window = event.window_;
       window.forceClosed();
-   }
-
-   /*
-    * Removes the VirtualAcquisitionDisplay from the Acquisition Manager.
-    */
-   private void removeFromAcquisitionManager(ScriptInterface gui) {
-      if (gui.acquisitionExists(name_)) {
-         try {
-            gui.closeAcquisition(name_);
-         } catch (MMScriptException ex) {
-            ReportingUtils.logError(ex);
-         }
-      }
    }
 
    //Return metadata associated with image currently shown in the viewer
