@@ -24,7 +24,6 @@ package imagedisplay;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
-import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
@@ -39,36 +38,29 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.swing.*;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
+import javax.swing.SwingUtilities;
 import javax.swing.event.MouseInputAdapter;
 import mmcloneclasses.acquisition.MMImageCache;
 import mmcloneclasses.events.DisplayCreatedEvent;
-import mmcloneclasses.graph.HistogramControlsState;
 import mmcloneclasses.graph.HistogramSettings;
 import mmcloneclasses.graph.MultiChannelHistograms;
-import mmcloneclasses.graph.SingleChannelHistogram;
-import mmcloneclasses.internalinterfaces.DisplayControls;
 import mmcloneclasses.internalinterfaces.Histograms;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.MMStudio;
 import org.micromanager.acquisition.AcquisitionEngine;
 import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
 import org.micromanager.acquisition.TaggedImageStorageMultipageTiff;
 import org.micromanager.api.ImageCache;
 import org.micromanager.api.ImageCacheListener;
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.api.events.PixelSizeChangedEvent;
 import org.micromanager.events.EventManager;
 import org.micromanager.utils.*;
@@ -114,7 +106,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    // Tracks when we last sent an FPS update.
    private long lastFPSUpdateTimestamp_ = -1;
    private ImagePlus hyperImage_;
-   private DisplayControls subImageControls_;
+   private SubImageControls subImageControls_;
    public AcquisitionVirtualStack virtualStack_;
    private boolean isMDA_ = false; //flag if display corresponds to MD acquisition
    private ContrastMetadataCommentsPanel cmcPanel_;
@@ -529,10 +521,10 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
 
    private void imageChangedWindowUpdate() {
       if (hyperImage_ != null && hyperImage_.isVisible()) {
-         JSONObject md = getCurrentMetadata();
-         if (md != null) {
-            subImageControls_.newImageUpdate(md);
-         }
+//         JSONObject md = getCurrentMetadata();
+//         if (md != null) {
+//            subImageControls_.newImageUpdate(md);
+//         }
       }
    }
    
@@ -708,8 +700,19 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       return hyperImage_.getSlice() - 1;
    }
 
+   /**
+    * used by checkboxes on contrast panel when in color mode
+    * @param c 
+    */
    public void setChannel(int c) {
-      subImageControls_.setChannel(c);
+      //TODO: make this respond to checkboxes in channel control panels
+//      for (AxisScroller scroller : scrollers_) {
+//         String axis = scroller.getAxis();
+//         Integer position = scroller.getPosition();
+//    
+//         lastImagePosition_.put(axis, position);
+//      }
+//      bus_.post(new Scroll);
    }
 
    public boolean pause() {
@@ -853,9 +856,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       EventManager.post(new DisplayCreatedEvent(this, win));
    }
 
-   // A window wants to close; check if it's okay. If it is, then we call its
-   // forceClosed() function.
-   // TODO: for now, assuming we only have one window.
    @Subscribe
    public void onWindowClose(DisplayWindow.RequestToCloseEvent event) {    
       // Go ahead with closing.
@@ -881,10 +881,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
 
       // Shut down our controls.
       subImageControls_.prepareForClose();
-
-      //Call this because for some reason WindowManager doesnt always fire
-//      metadataWindow_.setVisible(false);
-//      metadataWindow_.dispose();
 
       // Now that we have shut down everything that may access the images,
       // we can close the dataset.

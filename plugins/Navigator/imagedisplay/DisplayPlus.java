@@ -164,7 +164,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
 
    @Subscribe
    public void onWindowClose(DisplayWindow.RequestToCloseEvent event) {
-      //abort acquisition if needed then call super method
+      //make sure user wants to close if it involves aborting acq
       if (!acq_.isFinished()) {
          int result = JOptionPane.showConfirmDialog(null, "Finish acquisition?", "Finish Current Acquisition", JOptionPane.OK_CANCEL_OPTION);
          if (result == JOptionPane.OK_OPTION) {
@@ -180,6 +180,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
       }
       overlayer_.shutdown();
       activeDisplays_.remove(this);
+      
 
       super.onWindowClose(event);
    }

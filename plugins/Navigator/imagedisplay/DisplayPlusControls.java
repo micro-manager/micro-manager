@@ -8,17 +8,13 @@ import acq.Acquisition;
 import acq.ExploreAcquisition;
 import com.google.common.eventbus.EventBus;
 import gui.GUI;
-import java.awt.BorderLayout;
-import java.awt.CardLayout;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.DecimalFormat;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import mmcloneclasses.internalinterfaces.DisplayControls;
 import net.miginfocom.swing.MigLayout;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -33,7 +29,7 @@ import surfacesandregions.SurfaceRegionComboBoxModel;
  *
  * @author Henry
  */
-public class DisplayPlusControls extends DisplayControls {
+public class DisplayPlusControls extends Panel {
 
    private final static int DEFAULT_FPS = 10;
    private static final DecimalFormat TWO_DECIMAL_FORMAT = new DecimalFormat("0.00");
@@ -44,7 +40,6 @@ public class DisplayPlusControls extends DisplayControls {
    
    private EventBus bus_;
    private DisplayPlus display_;
-   private ScrollerPanel scrollerPanel_;
    private Timer nextFrameTimer_;
    private JButton pauseButton_, abortButton_, showFolderButton_;
    private JTextField fpsField_;
@@ -521,18 +516,15 @@ public class DisplayPlusControls extends DisplayControls {
       display_.showFolder();
    }
 
-   @Override
    public void imagesOnDiskUpdate(boolean enabled) {
       showFolderButton_.setEnabled(enabled);
    }
 
-   @Override
    public void acquiringImagesUpdate(boolean acquiring) {
       abortButton_.setEnabled(acquiring);
       pauseButton_.setEnabled(acquiring);
    }
 
-   @Override
    public void newImageUpdate(JSONObject tags) {
       if (tags == null) {
          return;
@@ -540,9 +532,7 @@ public class DisplayPlusControls extends DisplayControls {
       updateLabels(tags);
    }
 
-   @Override
    public void prepareForClose() {
-      scrollerPanel_.prepareForClose();
       bus_.unregister(this);
       surfaceManager_.removeFromModelList( (SurfaceRegionComboBoxModel) surfacesCombo_.getModel());
       regionManager_.removeFromModelList( (SurfaceRegionComboBoxModel) regionsCombo_.getModel());      
@@ -571,11 +561,6 @@ public class DisplayPlusControls extends DisplayControls {
       } catch (JSONException ex) {
 //            ReportingUtils.logError("MetaData did not contain ElapsedTime-ms field");
       }
-   }
-
-   @Override
-   public void setImageInfoLabel(String text) {
-      //Don't have one of these...
    }
 
 }

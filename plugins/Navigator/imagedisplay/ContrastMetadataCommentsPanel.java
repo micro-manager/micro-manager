@@ -91,6 +91,11 @@ public class ContrastMetadataCommentsPanel extends Panel  {
       addFocusListeners();
    }
    
+   public void prepareForClose() {
+      updateTimer_.cancel();
+      updateTimer_ = null;
+   }
+   
    public void initialize(DisplayPlus display) {
       //setup for use with a single display
       currentDisplay_ = display;

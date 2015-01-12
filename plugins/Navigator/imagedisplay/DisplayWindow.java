@@ -12,7 +12,6 @@ import java.awt.event.*;
 import java.util.Comparator;
 import java.util.prefs.Preferences;
 import javax.swing.*;
-import mmcloneclasses.internalinterfaces.DisplayControls;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.MMStudio;
 import org.micromanager.utils.CanvasPaintPending;
@@ -35,12 +34,15 @@ public class DisplayWindow extends StackWindow {
    private ImagePlus plus_;
    private JPanel canvasPanel_;
    private Timer windowResizeTimer_;
-   private DisplayControls subImageControls_;
+   private SubImageControls subImageControls_;
    private JToggleButton arrowButton_;
    private Acquisition acq_;
    private DisplayPlus disp_;
    private JPanel nonImagePanel_, controlsAndContrastPanel_;
    private volatile boolean saveWindowResize_ = false;
+   private ContrastMetadataCommentsPanel cmcPanel_;
+   private DisplayPlusControls dpControls_;
+   
    // store window location in Java Preferences
    private static final int DEFAULTPOSX = 300;
    private static final int DEFAULTPOSY = 100;
@@ -116,14 +118,15 @@ public class DisplayWindow extends StackWindow {
 
 
       //create contrast, metadata, and other controls
-      ContrastMetadataCommentsPanel cmcPanel = new ContrastMetadataCommentsPanel(disp);
-      disp.setCMCPanel(cmcPanel);
+      cmcPanel_ = new ContrastMetadataCommentsPanel(disp);
+      disp.setCMCPanel(cmcPanel_);
+      dpControls_ = new DisplayPlusControls(disp, bus, disp.getAcquisition());
 
       //create non image panel
       nonImagePanel_ = new JPanel(new BorderLayout());
       controlsAndContrastPanel_ = new JPanel(new BorderLayout());
-      controlsAndContrastPanel_.add(new DisplayPlusControls(disp, bus, disp.getAcquisition()), BorderLayout.PAGE_START);
-      controlsAndContrastPanel_.add(cmcPanel, BorderLayout.CENTER);
+      controlsAndContrastPanel_.add(dpControls_, BorderLayout.PAGE_START);
+      controlsAndContrastPanel_.add(cmcPanel_, BorderLayout.CENTER);
 
       //show stuff on explore acquisitions, collapse for fixed area cqs
       arrowButton_ = new JToggleButton(disp_.getAcquisition() instanceof ExploreAcquisition ? "\u25c4" : "\u25ba");
@@ -188,7 +191,7 @@ public class DisplayWindow extends StackWindow {
          this.setSize(new Dimension(displayPrefs_.getInt(WINDOWSIZEX_FIXED, 1000),
                  displayPrefs_.getInt(WINDOWSIZEY_FIXED, 1000)));
       }
-      cmcPanel.initialize(disp);
+      cmcPanel_.initialize(disp);
       doLayout();
 
       initWindow();
@@ -427,7 +430,7 @@ public class DisplayWindow extends StackWindow {
       }
    }
 
-   public DisplayControls getSubImageControls() {
+   public SubImageControls getSubImageControls() {
       return subImageControls_;
    }
 
@@ -458,6 +461,10 @@ public class DisplayWindow extends StackWindow {
       }
       MMStudio.getInstance().removeMMBackgroundListener(this);
       MMStudio.getInstance().removeMMBackgroundListener(canvasPanel_);
+      bus_.unregister(this); 
+      cmcPanel_.prepareForClose();        
+      dpControls_.prepareForClose();
+      
       closed_ = true;
    }
 

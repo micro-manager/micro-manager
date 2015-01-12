@@ -19,7 +19,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
 import javax.swing.JTextField;
-import mmcloneclasses.internalinterfaces.DisplayControls;
 import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
 import org.json.JSONObject;
@@ -31,7 +30,7 @@ import org.micromanager.utils.ReportingUtils;
  *
  * @author Henry
  */
-public class SubImageControls extends DisplayControls {
+public class SubImageControls extends Panel {
 
    private final static int DEFAULT_FPS = 10;
    private static final DecimalFormat TWO_DECIMAL_FORMAT = new DecimalFormat("0.00");
@@ -281,26 +280,8 @@ public class SubImageControls extends DisplayControls {
 //      ((DisplayWindow) display_.getHyperImage().getWindow()).resizeCanvas();
    }
 
-   @Override
    public void prepareForClose() {
       scrollerPanel_.prepareForClose();
       bus_.unregister(this);
-   }
-
-   //Don't need these for now
-   @Override
-   public void imagesOnDiskUpdate(boolean onDisk) {
-   }
-
-   @Override
-   public void acquiringImagesUpdate(boolean acquiring) {
-   }
-
-   @Override
-   public void setImageInfoLabel(String text) {
-   }
-
-   @Override
-   public void newImageUpdate(JSONObject tags) {
    }
 }

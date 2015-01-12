@@ -66,7 +66,7 @@ public class DisplayOverlayer {
    }
 
    public void shutdown() {
-      executor_.shutdown();
+      executor_.shutdownNow();
       executor_ = null;
    }
 

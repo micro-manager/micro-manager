@@ -53,13 +53,13 @@ public class TaggedImageSink  {
                while (true) {
                   TaggedImage image = imageProducingQueue_.poll(1, TimeUnit.SECONDS);
                   if (image != null) {
-                     if (TaggedImageQueue.isPoison(image)) {
+                     if (((image.pix == null) && (image.tags == null))) { //check for Poison final image
                         break;
                      }
                      ++imageCount;
-                     imageCache_.putImage(image); 
+                     imageCache_.putImage(image);
                      lastImageLabel_ = MDUtils.getLabel(image.tags);
-                     }
+                  }
                }
             } catch (Exception ex2) {
                ReportingUtils.logError(ex2);
