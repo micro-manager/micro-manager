@@ -114,14 +114,14 @@ public class PairDisplayForm extends GUFrame{
       final JButton dirButton = new JButton("...");
       final JComponent[] fileComps = {filePathLabel, filePath, dirButton};
       setEnabled(savePairTextFile.isSelected(), fileComps);
-      savePairTextFile.addActionListener(new ActionListener() {
+      ActionListener fileSavingActionListener = new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
             setEnabled (savePairTextFile.isSelected() || 
                     saveTrackSummaryFile.isSelected() , fileComps);
-            prefs_.putBoolean(SAVEPAIRTEXTFILEPREF, savePairTextFile.isSelected());
          }
-      });
+      };
+      savePairTextFile.addActionListener(fileSavingActionListener);
       panel.add(savePairTextFile, "wrap");
       
       // summary per frame
@@ -140,6 +140,7 @@ public class PairDisplayForm extends GUFrame{
       panel.add(showTracks, "wrap");
       
       panel.add(saveTrackSummaryFile, "wrap");
+      saveTrackSummaryFile.addActionListener(fileSavingActionListener);
      
       final JCheckBox showTrackSummary =
               makeCheckBox("Show Pair Track Summary", SHOWTRACKSUMMARYPREF);
@@ -226,7 +227,7 @@ public class PairDisplayForm extends GUFrame{
    
    private void setSaveDestinationDirectory(JTextField rootField) {
       File result = FileDialogs.openDir(null,
-              "Please choose a directory root to save pair data",
+              "Please choose a directory to save pair data",
               PAIR_DATA);
       if (result != null) {
          rootField.setText(result.getAbsolutePath());
