@@ -145,8 +145,9 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
 
        noiseToleranceTextField_.getDocument().addDocumentListener(updateNoiseOverlay);
        boxSizeTextField.getDocument().addDocumentListener(updateNoiseOverlay);
+       
+       this.getRootPane().setDefaultButton(fitAllButton_);
           
-
        setTitle("Localization Microscopy");
        
        // wdith on Mac should be 250, Windows 270

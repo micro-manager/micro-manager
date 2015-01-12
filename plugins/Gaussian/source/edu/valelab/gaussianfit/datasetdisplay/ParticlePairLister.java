@@ -28,6 +28,8 @@ import java.awt.Frame;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseListener;
 import java.awt.geom.Point2D;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import org.jfree.data.xy.XYSeries;
@@ -58,8 +60,16 @@ public class ParticlePairLister {
     * @param rows int array indicating rows selected in table
     * @param maxDistanceNm maximum distance in nm for two spots in different
     * channels to be considered a pair
+    * @param showTrack
+    * @param showSummary
+    * @param showOverlay
+    * @param saveFile
+    * @param filePath
     */
-   public static void listParticlePairTracks(final int[] rows, final double maxDistanceNm) {
+   public static void listParticlePairTracks(final int[] rows,
+           final double maxDistanceNm, final boolean showTrack,
+           final boolean showSummary, final boolean showOverlay,
+           final boolean saveFile, final String filePath) {
 
       Runnable doWorkRunnable = new Runnable() {
 
@@ -67,7 +77,7 @@ public class ParticlePairLister {
          public void run() {
 
             ArrayList<RowData> rowData = DataCollectionForm.getInstance().getRowData();
-            
+
             // Show Particle List as linked Results Table
             ResultsTable rt = new ResultsTable();
             rt.reset();
@@ -189,18 +199,18 @@ public class ParticlePairLister {
                         double stdDev = spot.getGSD().getValue("stdDev");
                         rt.addValue("stdDev1", stdDev);
                         SpotData spot2 = rowData.get(row).get(
-                                spot.getGSD().getFrame(), 
+                                spot.getGSD().getFrame(),
                                 2, spot.getsp().x, spot.getsp().y);
                         if (spot2 != null && spot2.hasKey("stdDev")) {
                            double stdDev2 = spot2.getValue("stdDev");
                            rt.addValue("stdDev2", stdDev2);
                            double distanceStdDev = CalcUtils.stdDev(
-                                   spot.getfp().x, spot.getsp().x, 
+                                   spot.getfp().x, spot.getsp().x,
                                    spot.getfp().y, spot.getsp().y,
                                    spot.getGSD().getValue("stdDevX"),
                                    spot2.getValue("stdDevX"),
                                    spot.getGSD().getValue("stdDevY"),
-                                   spot2.getValue("stdDevY") );
+                                   spot2.getValue("stdDevY"));
                            rt.addValue("stdDev-distance", distanceStdDev);
                         }
                      }
@@ -209,37 +219,52 @@ public class ParticlePairLister {
                   }
                   spotId++;
                }
+               
                TextPanel tp;
                TextWindow win;
-
                String rtName = rowData.get(row).name_ + " Particle List";
-               rt.show(rtName);
+               if (showTrack) {
+                  rt.show(rtName);
+                  ImagePlus siPlus = ij.WindowManager.getImage(rowData.get(row).title_);
+                  Frame frame = WindowManager.getFrame(rtName);
+                  if (frame != null && frame instanceof TextWindow && siPlus != null) {
+                     win = (TextWindow) frame;
+                     tp = win.getTextPanel();
+
+                     // TODO: the following does not work, there is some voodoo going on here
+                     for (MouseListener ms : tp.getMouseListeners()) {
+                        tp.removeMouseListener(ms);
+                     }
+                     for (KeyListener ks : tp.getKeyListeners()) {
+                        tp.removeKeyListener(ks);
+                     }
+
+                     ResultsTableListener myk = new ResultsTableListener(siPlus,
+                             rt, win, rowData.get(row).halfSize_);
+                     tp.addKeyListener(myk);
+                     tp.addMouseListener(myk);
+                     frame.toFront();
+                  }
+               }
+ 
+               if (saveFile) {
+                  try {
+                     String fileName = filePath + File.separator
+                             + rowData.get(row).name_ + "_PairTracks.cvs";
+                     rt.saveAs(fileName);
+                     ij.IJ.log("Saved file: " + fileName);
+                  } catch (IOException ex) {
+                     ReportingUtils.showError(ex, "Failed to save file");
+                  }
+               }
+
                ImagePlus siPlus = ij.WindowManager.getImage(rowData.get(row).title_);
-               Frame frame = WindowManager.getFrame(rtName);
-               if (frame != null && frame instanceof TextWindow && siPlus != null) {
-                  win = (TextWindow) frame;
-                  tp = win.getTextPanel();
-
-                  // TODO: the following does not work, there is some voodoo going on here
-                  for (MouseListener ms : tp.getMouseListeners()) {
-                     tp.removeMouseListener(ms);
+               if (showOverlay) {
+                  if (siPlus != null && siPlus.getOverlay() != null) {
+                     siPlus.getOverlay().clear();
                   }
-                  for (KeyListener ks : tp.getKeyListeners()) {
-                     tp.removeKeyListener(ks);
-                  }
-
-                  ResultsTableListener myk = new ResultsTableListener(siPlus,
-                          rt, win, rowData.get(row).halfSize_);
-                  tp.addKeyListener(myk);
-                  tp.addMouseListener(myk);
-                  frame.toFront();
+                  Arrow.setDefaultWidth(0.5);
                }
-
-               siPlus = ij.WindowManager.getImage(rowData.get(row).title_);
-               if (siPlus != null && siPlus.getOverlay() != null) {
-                  siPlus.getOverlay().clear();
-               }
-               Arrow.setDefaultWidth(0.5);
 
                itTracks = tracks.iterator();
                spotId = 0;
@@ -287,51 +312,56 @@ public class ParticlePairLister {
                           (xDiffAvgStdDev * xDiffAvgStdDev)
                           + (yDiffAvgStdDev * yDiffAvgStdDev)));
 
+                  if (showOverlay) {
+                     /* draw arrows in overlay */
+                     double mag = 100.0;  // factor that sets magnification of the arrow
+                     double factor = mag * 1 / rowData.get(row).pixelSizeNm_;  // factor relating mad and pixelSize
+                     int xStart = track.get(0).getGSD().getX();
+                     int yStart = track.get(0).getGSD().getY();
 
-                  /* draw arrows in overlay */
-                  double mag = 100.0;  // factor that sets magnification of the arrow
-                  double factor = mag * 1 / rowData.get(row).pixelSizeNm_;  // factor relating mad and pixelSize
-                  int xStart = track.get(0).getGSD().getX();
-                  int yStart = track.get(0).getGSD().getY();
-
-                  Arrow arrow = new Arrow(xStart, yStart,
-                          xStart + (factor * xDiffAvg),
-                          yStart + (factor * yDiffAvg));
-                  arrow.setHeadSize(3);
-                  arrow.setOutline(false);
-                  if (siPlus != null && siPlus.getOverlay() == null) {
-                     siPlus.setOverlay(arrow, Color.yellow, 1, Color.yellow);
-                  } else if (siPlus != null && siPlus.getOverlay() != null) {
-                     siPlus.getOverlay().add(arrow);
+                     Arrow arrow = new Arrow(xStart, yStart,
+                             xStart + (factor * xDiffAvg),
+                             yStart + (factor * yDiffAvg));
+                     arrow.setHeadSize(3);
+                     arrow.setOutline(false);
+                     if (siPlus != null && siPlus.getOverlay() == null) {
+                        siPlus.setOverlay(arrow, Color.yellow, 1, Color.yellow);
+                     } else if (siPlus != null && siPlus.getOverlay() != null) {
+                        siPlus.getOverlay().add(arrow);
+                     }
                   }
 
                   spotId++;
                }
-               if (siPlus != null) {
-                  siPlus.setHideOverlay(false);
+               if (showOverlay) {
+                  if (siPlus != null) {
+                     siPlus.setHideOverlay(false);
+                  }
                }
 
-               rtName = rowData.get(row).name_ + " Particle Summary";
-               rt2.show(rtName);
-               siPlus = ij.WindowManager.getImage(rowData.get(row).title_);
-               frame = WindowManager.getFrame(rtName);
-               if (frame != null && frame instanceof TextWindow && siPlus != null) {
-                  win = (TextWindow) frame;
-                  tp = win.getTextPanel();
+               if (showSummary) {
+                  rtName = rowData.get(row).name_ + " Particle Summary";
+                  rt2.show(rtName);
+                  siPlus = ij.WindowManager.getImage(rowData.get(row).title_);
+                  Frame frame = WindowManager.getFrame(rtName);
+                  if (frame != null && frame instanceof TextWindow && siPlus != null) {
+                     win = (TextWindow) frame;
+                     tp = win.getTextPanel();
 
-                  // TODO: the following does not work, there is some voodoo going on here
-                  for (MouseListener ms : tp.getMouseListeners()) {
-                     tp.removeMouseListener(ms);
-                  }
-                  for (KeyListener ks : tp.getKeyListeners()) {
-                     tp.removeKeyListener(ks);
-                  }
+                     // TODO: the following does not work, there is some voodoo going on here
+                     for (MouseListener ms : tp.getMouseListeners()) {
+                        tp.removeMouseListener(ms);
+                     }
+                     for (KeyListener ks : tp.getKeyListeners()) {
+                        tp.removeKeyListener(ks);
+                     }
 
-                  ResultsTableListener myk = new ResultsTableListener(siPlus,
-                          rt2, win, rowData.get(row).halfSize_);
-                  tp.addKeyListener(myk);
-                  tp.addMouseListener(myk);
-                  frame.toFront();
+                     ResultsTableListener myk = new ResultsTableListener(siPlus,
+                             rt2, win, rowData.get(row).halfSize_);
+                     tp.addKeyListener(myk);
+                     tp.addMouseListener(myk);
+                     frame.toFront();
+                  }
                }
 
                ij.IJ.showStatus("");
@@ -354,27 +384,37 @@ public class ParticlePairLister {
     *
     * @param row
     * @param maxDistance
+    * @param showPairs
+    * @param showImage
+    * @param savePairs
+    * @param filePath
+    * @param showSummary
+    * @param showGraph
     */
-   public static void ListParticlePairs(final int row, final double maxDistance) {
+   public static void ListParticlePairs(final int row, final double maxDistance,
+           final boolean showPairs, final boolean showImage,
+           final boolean savePairs, final String filePath,
+           final boolean showSummary, final boolean showGraph) {
 
       Runnable doWorkRunnable = new Runnable() {
 
          @Override
          public void run() {
             ArrayList<RowData> rowData = DataCollectionForm.getInstance().getRowData();
+
             ResultsTable rt = new ResultsTable();
             rt.reset();
             rt.setPrecision(2);
+
             ResultsTable rt2 = new ResultsTable();
             rt2.reset();
             rt2.setPrecision(2);
+
             int width = rowData.get(row).width_;
             int height = rowData.get(row).height_;
             double factor = rowData.get(row).pixelSizeNm_;
             boolean useS = DataCollectionForm.getInstance().useSeconds(rowData.get(row));
             ij.ImageStack stack = new ij.ImageStack(width, height);
-
-            ImagePlus sp = new ImagePlus("Errors in pairs");
 
             XYSeries xData = new XYSeries("XError");
             XYSeries yData = new XYSeries("YError");
@@ -386,6 +426,7 @@ public class ParticlePairLister {
                ImageProcessor ip = new ShortProcessor(width, height);
                short pixels[] = new short[width * height];
                ip.setPixels(pixels);
+               stack.addSlice("frame: " + frame, ip);
 
                // Get points from both channels in each frame as ArrayLists        
                ArrayList<SpotData> gsCh1 = new ArrayList<SpotData>();
@@ -435,9 +476,9 @@ public class ParticlePairLister {
                      rt.addValue("Orientation (sine)",
                              NearestPoint2D.orientation(pCh1, pCh2));
                      distances.add(d);
-                     
+
                      ip.putPixel((int) (pCh1.x / factor), (int) (pCh1.y / factor), (int) d);
-                     
+
                      double ex = pCh2.getX() - pCh1.getX();
                      //double ex = (pCh1.getX() - pCh2.getX()) * (pCh1.getX() - pCh2.getX());
                      //ex = Math.sqrt(ex);
@@ -446,7 +487,6 @@ public class ParticlePairLister {
                      //ey = Math.sqrt(ey);
                      double ey = pCh2.getY() - pCh1.getY();
                      errorY.add(ey);
-                     
                   }
                }
                Double avg = ListUtils.listAvg(distances);
@@ -463,7 +503,6 @@ public class ParticlePairLister {
                rt2.addValue("StdDev X", stdDevX);
                rt2.addValue("Y", avgY);
                rt2.addValue("StdDevY", stdDevY);
-               stack.addSlice("frame: " + frame, ip);
                double timePoint = frame;
                if (rowData.get(row).timePoints_ != null) {
                   timePoint = rowData.get(row).timePoints_.get(frame);
@@ -481,58 +520,78 @@ public class ParticlePairLister {
                return;
             }
 
-            // show summary in resultstable
-            rt2.show("Summary of Pairs found in " + rowData.get(row).name_);
-
-            //  show Pairs panel and attach listener
-            TextPanel tp;
-            TextWindow win;
-
-            String rtName = "Pairs found in " + rowData.get(row).name_;
-            rt.show(rtName);
-            ImagePlus siPlus = ij.WindowManager.getImage(rowData.get(row).title_);
-            Frame frame = WindowManager.getFrame(rtName);
-            if (frame != null && frame instanceof TextWindow && siPlus != null) {
-               win = (TextWindow) frame;
-               tp = win.getTextPanel();
-
-               // TODO: the following does not work, there is some voodoo going on here
-               for (MouseListener ms : tp.getMouseListeners()) {
-                  tp.removeMouseListener(ms);
-               }
-               for (KeyListener ks : tp.getKeyListeners()) {
-                  tp.removeKeyListener(ks);
-               }
-
-               ResultsTableListener myk = new ResultsTableListener(siPlus,
-                       rt, win, rowData.get(row).halfSize_);
-               tp.addKeyListener(myk);
-               tp.addMouseListener(myk);
-               frame.toFront();
+            if (showSummary) {
+               // show summary in resultstable
+               rt2.show("Summary of Pairs found in " + rowData.get(row).name_);
             }
 
-            String xAxis = "Time (frameNr)";
-            if (rowData.get(row).timePoints_ != null) {
-               xAxis = "Time (ms)";
-               if (useS) {
-                  xAxis = "Time (s)";
+            if (showGraph) {
+               String xAxis = "Time (frameNr)";
+               if (rowData.get(row).timePoints_ != null) {
+                  xAxis = "Time (ms)";
+                  if (useS) {
+                     xAxis = "Time (s)";
+                  }
+               }
+               GaussianUtils.plotData2("Error in " + rowData.get(row).name_,
+                       xData, yData, xAxis, "Error(nm)", 0, 400);
+
+               ij.IJ.showStatus("");
+            }
+
+            if (showPairs) {
+               //  show Pairs panel and attach listener
+               TextPanel tp;
+               TextWindow win;
+
+               String rtName = "Pairs found in " + rowData.get(row).name_;
+               rt.show(rtName);
+               ImagePlus siPlus = ij.WindowManager.getImage(rowData.get(row).title_);
+               Frame frame = WindowManager.getFrame(rtName);
+               if (frame != null && frame instanceof TextWindow && siPlus != null) {
+                  win = (TextWindow) frame;
+                  tp = win.getTextPanel();
+
+                  // TODO: the following does not work, there is some voodoo going on here
+                  for (MouseListener ms : tp.getMouseListeners()) {
+                     tp.removeMouseListener(ms);
+                  }
+                  for (KeyListener ks : tp.getKeyListeners()) {
+                     tp.removeKeyListener(ks);
+                  }
+
+                  ResultsTableListener myk = new ResultsTableListener(siPlus,
+                          rt, win, rowData.get(row).halfSize_);
+                  tp.addKeyListener(myk);
+                  tp.addMouseListener(myk);
+                  frame.toFront();
                }
             }
-            GaussianUtils.plotData2("Error in " + rowData.get(row).name_,
-                    xData, yData, xAxis, "Error(nm)", 0, 400);
 
-            ij.IJ.showStatus("");
+            if (showImage) {
+               ImagePlus sp = new ImagePlus("Errors in pairs");
+               sp.setOpenAsHyperStack(true);
+               sp.setStack(stack, 1, 1, stack.getSize());
+               sp.setDisplayRange(0, 20);
+               sp.setTitle(rowData.get(row).title_);
 
-            sp.setOpenAsHyperStack(true);
-            sp.setStack(stack, 1, 1, rowData.get(row).nrFrames_);
-            sp.setDisplayRange(0, 20);
-            sp.setTitle(rowData.get(row).title_);
+               ImageWindow w = new StackWindow(sp);
+               w.setTitle("Error in " + rowData.get(row).name_);
 
-            ImageWindow w = new StackWindow(sp);
-            w.setTitle("Error in " + rowData.get(row).name_);
+               w.setImage(sp);
+               w.setVisible(true);
+            }
 
-            w.setImage(sp);
-            w.setVisible(true);
+            if (savePairs) {
+               try {
+                  String fileName = filePath + File.separator
+                          + rowData.get(row).name_ + "_Pairs.cvs";
+                  rt.saveAs(fileName);
+                  ij.IJ.log("Saved file: " + fileName);
+               } catch (IOException ex) {
+                  ReportingUtils.showError(ex, "Failed to save file");
+               }
+            }
 
          }
       };

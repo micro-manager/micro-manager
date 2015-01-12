@@ -74,6 +74,8 @@ public class SpotDataFilter {
                return false;
             }
          } // TODO: what do we do when the spot does not have the key???
+         // we may need to throw an exception
+         // currently, data will simply not be filtered
       }
       
       return true;

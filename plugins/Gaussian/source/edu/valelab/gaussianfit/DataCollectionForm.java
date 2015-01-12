@@ -451,8 +451,6 @@ public class DataCollectionForm extends javax.swing.JFrame {
       SigmaLabel2 = new javax.swing.JLabel();
       pairsMaxDistanceField_ = new javax.swing.JTextField();
       referenceName_ = new javax.swing.JLabel();
-      pairsButton = new javax.swing.JButton();
-      listButton_ = new javax.swing.JButton();
       c2CorrectButton = new javax.swing.JButton();
       method2CBox_ = new javax.swing.JComboBox();
       c2StandardButton = new javax.swing.JButton();
@@ -467,6 +465,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       jLabel2 = new javax.swing.JLabel();
       jLabel3 = new javax.swing.JLabel();
       combineButton_ = new javax.swing.JButton();
+      listButton_1 = new javax.swing.JButton();
       jPanel2 = new javax.swing.JPanel();
       jScrollPane1_ = new javax.swing.JScrollPane();
       jTable1_ = new javax.swing.JTable();
@@ -652,22 +651,6 @@ public class DataCollectionForm extends javax.swing.JFrame {
       referenceName_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
       referenceName_.setText("JLabel1");
 
-      pairsButton.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
-      pairsButton.setText("Pairs");
-      pairsButton.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            pairsButtonActionPerformed(evt);
-         }
-      });
-
-      listButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
-      listButton_.setText("List");
-      listButton_.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            listButton_ActionPerformed(evt);
-         }
-      });
-
       c2CorrectButton.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
       c2CorrectButton.setText("2C Correct");
       c2CorrectButton.addActionListener(new java.awt.event.ActionListener() {
@@ -754,6 +737,14 @@ public class DataCollectionForm extends javax.swing.JFrame {
          }
       });
 
+      listButton_1.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+      listButton_1.setText("List Pairs");
+      listButton_1.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            listButton_1ActionPerformed(evt);
+         }
+      });
+
       javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
       jPanel1.setLayout(jPanel1Layout);
       jPanel1Layout.setHorizontalGroup(
@@ -761,16 +752,16 @@ public class DataCollectionForm extends javax.swing.JFrame {
          .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
             .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                .addGroup(jPanel1Layout.createSequentialGroup()
-                  .addGap(68, 68, 68)
-                  .addComponent(jLabel7))
-               .addGroup(jPanel1Layout.createSequentialGroup()
-                  .addContainerGap(33, Short.MAX_VALUE)
-                  .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                     .addComponent(saveButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
-                     .addComponent(loadButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
-                     .addComponent(showButton_, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE))
                   .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                      .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGap(68, 68, 68)
+                        .addComponent(jLabel7))
+                     .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addContainerGap(33, Short.MAX_VALUE)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                           .addComponent(saveButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
+                           .addComponent(loadButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
+                           .addComponent(showButton_, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(4, 4, 4)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                            .addComponent(saveFormatBox_, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -778,11 +769,12 @@ public class DataCollectionForm extends javax.swing.JFrame {
                               .addGap(6, 6, 6)
                               .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                  .addComponent(removeButton, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                 .addComponent(infoButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE)))))
-                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(combineButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE)))))
-            .addGap(7, 7, 7)
+                                 .addComponent(infoButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE))))))
+                  .addGap(7, 7, 7))
+               .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                  .addGap(0, 0, Short.MAX_VALUE)
+                  .addComponent(combineButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE)
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)))
             .addComponent(jSeparator3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
             .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                .addGroup(jPanel1Layout.createSequentialGroup()
@@ -796,22 +788,18 @@ public class DataCollectionForm extends javax.swing.JFrame {
                      .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGap(16, 16, 16)
                         .addComponent(c2CorrectButton, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                  .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(18, 18, 18)
-                        .addComponent(referenceName_, javax.swing.GroupLayout.PREFERRED_SIZE, 60, javax.swing.GroupLayout.PREFERRED_SIZE))
-                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                           .addComponent(pairsButton, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
-                           .addComponent(listButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)))))
+                  .addGap(18, 18, 18)
+                  .addComponent(referenceName_, javax.swing.GroupLayout.PREFERRED_SIZE, 60, javax.swing.GroupLayout.PREFERRED_SIZE))
                .addGroup(jPanel1Layout.createSequentialGroup()
                   .addGap(11, 11, 11)
                   .addComponent(method2CBox_, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
                   .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                   .addComponent(pairsMaxDistanceField_, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
                   .addGap(8, 8, 8)
-                  .addComponent(SigmaLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                  .addComponent(SigmaLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
+               .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                  .addComponent(listButton_1, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)))
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
             .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -909,7 +897,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                      .addComponent(jLabel6, javax.swing.GroupLayout.Alignment.TRAILING)
                      .addComponent(jLabel4, javax.swing.GroupLayout.Alignment.TRAILING))
                   .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)))
-            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                .addGroup(jPanel1Layout.createSequentialGroup()
                   .addGap(3, 3, 3)
                   .addComponent(saveButton, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -924,9 +912,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
                   .addComponent(removeButton, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)
                   .addGap(1, 1, 1)
                   .addComponent(infoButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 7, Short.MAX_VALUE)
-                  .addComponent(combineButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)
-                  .addGap(8, 8, 8))
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                  .addComponent(combineButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE))
                .addGroup(jPanel1Layout.createSequentialGroup()
                   .addComponent(c2StandardButton, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)
                   .addGap(33, 33, 33)
@@ -939,10 +926,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
                         .addComponent(pairsMaxDistanceField_, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addComponent(method2CBox_, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
                      .addComponent(SigmaLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
-                  .addGap(3, 3, 3)
-                  .addComponent(pairsButton, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)
-                  .addGap(2, 2, 2)
-                  .addComponent(listButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 18, javax.swing.GroupLayout.PREFERRED_SIZE))
+                  .addGap(28, 28, 28)
+                  .addComponent(listButton_1, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
                .addGroup(jPanel1Layout.createSequentialGroup()
                   .addGap(1, 1, 1)
                   .addComponent(plotButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 18, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -969,9 +954,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
                   .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                      .addComponent(zCalibrateButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
                      .addComponent(renderButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE))
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 7, Short.MAX_VALUE)
-                  .addComponent(zCalibrationLabel_)
-                  .addGap(80, 80, 80))
+                  .addGap(7, 7, 7)
+                  .addComponent(zCalibrationLabel_))
                .addGroup(jPanel1Layout.createSequentialGroup()
                   .addGap(1, 1, 1)
                   .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1006,7 +990,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
                   .addGap(41, 41, 41)
                   .addComponent(SigmaLabel3)
                   .addGap(7, 7, 7)
-                  .addComponent(IntLabel2))))
+                  .addComponent(IntLabel2)))
+            .addContainerGap())
          .addComponent(jSeparator3)
          .addComponent(jSeparator2)
          .addComponent(jSeparator4)
@@ -1280,40 +1265,38 @@ public class DataCollectionForm extends javax.swing.JFrame {
       }
    }//GEN-LAST:event_c2StandardButtonActionPerformed
 
-   /**
-    * Cycles through the spots of the selected data set and finds the most nearby 
-    * spot in channel 2.  It will list this as a pair if the two spots are within
-    * MAXMATCHDISTANCE nm of each other.  
-    * In addition, it will list the  average distance, and average distance
-    * in x and y for each frame.
-    * 
-    * spots in channel 2
-    * that are within MAXMATCHDISTANCE of 
-    * 
-    * @param evt 
-    */
-   private void pairsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pairsButtonActionPerformed
-      final int row = jTable1_.getSelectedRow();
-      if (row < 0) {
-         JOptionPane.showMessageDialog(getInstance(), "Please select a dataset for the Pair function");
-
+  
+   public void listPairs(double maxDistance, boolean showPairs, 
+           boolean showImage, boolean savePairs, String filePath, 
+           boolean showSummary, boolean showGraph) {
+      final int[] rows = jTable1_.getSelectedRows();
+      if (rows.length < 1) {
+         JOptionPane.showMessageDialog(getInstance(), 
+                 "Please select a dataset");
          return;
       }
-      
-      final double maxDistance;
-      try {
-         maxDistance = NumberUtils.displayStringToDouble(pairsMaxDistanceField_.getText());
-      } catch (ParseException ex) {
-         ReportingUtils.logError("Error parsing pairs max distance field");
-         return;
+      if (showPairs || showImage || savePairs || showSummary || showGraph) {
+         for (int row : rows) {
+            ParticlePairLister.ListParticlePairs(row, maxDistance, showPairs, 
+                   showImage, savePairs, filePath, showSummary, showGraph);
+         }
       }
-      
-      if (row > -1) {
-         ParticlePairLister.ListParticlePairs(row, maxDistance);
-      }
-         
-   }//GEN-LAST:event_pairsButtonActionPerformed
+   }
    
+   public void listPairTracks(double maxDistance, boolean showTrack, 
+           boolean showSummary, boolean showOverlay, boolean saveFile, 
+           String filePath) {
+      final int[] rows = jTable1_.getSelectedRows();
+      if (rows.length < 1) {
+         JOptionPane.showMessageDialog(getInstance(), 
+                 "Please select a dataset");
+         return;
+      }
+      if (showTrack || showSummary || showOverlay || saveFile) {
+         ParticlePairLister.listParticlePairTracks(rows, maxDistance, showTrack, 
+                 showSummary, showOverlay, saveFile, filePath);
+      }
+   }
    
    private void c2CorrectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_c2CorrectButtonActionPerformed
       int[] rows = jTable1_.getSelectedRows();
@@ -1799,26 +1782,6 @@ public class DataCollectionForm extends javax.swing.JFrame {
       }
    }//GEN-LAST:event_zCalibrateButton_ActionPerformed
 
-   private void listButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_listButton_ActionPerformed
-
-      final int[] rows = jTable1_.getSelectedRows();
-      if (rows.length < 1) {
-         JOptionPane.showMessageDialog(getInstance(),
-                 "Please select a dataset for the List Particles function");
-         return;
-      }
-
-      final double maxDistance;
-      try {
-         maxDistance = NumberUtils.displayStringToDouble(pairsMaxDistanceField_.getText());
-      } catch (ParseException ex) {
-         ReportingUtils.logError("Error parsing pairs max distance field");
-         return;
-      }
-
-      ParticlePairLister.listParticlePairTracks(rows, maxDistance);
-   }//GEN-LAST:event_listButton_ActionPerformed
-
    private void method2CBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_method2CBox_ActionPerformed
       prefs_.put(METHOD2C, (String) method2CBox_.getSelectedItem());
    }//GEN-LAST:event_method2CBox_ActionPerformed
@@ -1922,6 +1885,11 @@ public class DataCollectionForm extends javax.swing.JFrame {
       
    }//GEN-LAST:event_combineButton_ActionPerformed
 
+   private void listButton_1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_listButton_1ActionPerformed
+      PairDisplayForm pdf = new PairDisplayForm();
+      pdf.setVisible(true);
+   }//GEN-LAST:event_listButton_1ActionPerformed
+
    
    // Variables declaration - do not modify//GEN-BEGIN:variables
    private javax.swing.JLabel IntLabel2;
@@ -1953,12 +1921,11 @@ public class DataCollectionForm extends javax.swing.JFrame {
    private javax.swing.JSeparator jSeparator4;
    private javax.swing.JTable jTable1_;
    private javax.swing.JButton linkButton_;
-   private javax.swing.JButton listButton_;
+   private javax.swing.JButton listButton_1;
    private javax.swing.JButton loadButton;
    private javax.swing.JCheckBox logLogCheckBox_;
    private javax.swing.JButton mathButton_;
    private javax.swing.JComboBox method2CBox_;
-   private javax.swing.JButton pairsButton;
    private javax.swing.JTextField pairsMaxDistanceField_;
    private javax.swing.JButton plotButton_;
    private javax.swing.JComboBox plotComboBox_;
@@ -2595,7 +2562,6 @@ public class DataCollectionForm extends javax.swing.JFrame {
          c2t_.setPieceWiseAffineMaxControlPoints(maxControlPoints);
          c2t_.setPieceWiseAffineMaxDistance(maxDistance);
       }
-   }
-   
+   }   
 
 }

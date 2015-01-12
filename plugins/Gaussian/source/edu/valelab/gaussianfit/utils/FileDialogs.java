@@ -81,6 +81,7 @@ public class FileDialogs {
          return fileDescription_;
       }
 
+      @Override
       public boolean accept(File dir, String name) {
          return accept(new File(dir, name));
       }
@@ -201,7 +202,7 @@ public class FileDialogs {
    
    public static boolean isMac() {
       String os = System.getProperty("os.name").toLowerCase();
-      return (os.indexOf("mac") >= 0);
+      return (os.contains("mac"));
    }
    
 }

@@ -76,7 +76,9 @@ public class PairFilter {
                            int yOffset = (int) Math.floor(gs.getYCenter() / qSize);
                            int xOffset = (int) Math.floor(gs.getXCenter() / qSize);
                            int q = yOffset * sqrtNrQuadrants + xOffset;
-                           gsCh1.get(q).add(gs);
+                           if (q >= 0 && q < nrQuadrants) {
+                              gsCh1.get(q).add(gs);
+                           }
                         } else if (gs.getChannel() == 2) {
                            Point2D.Double point = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
                            xyPointsCh2.add(point);
