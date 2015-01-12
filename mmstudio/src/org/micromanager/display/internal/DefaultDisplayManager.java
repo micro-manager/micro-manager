@@ -77,6 +77,11 @@ public class DefaultDisplayManager implements DisplayManager {
    }
 
    @Override
+   public DisplayWindow createDisplay(Datastore store) {
+      return new DefaultDisplayWindow(store, null);
+   }
+
+   @Override
    public void associateDisplay(DisplayWindow window, Datastore store)
          throws IllegalArgumentException {
       if (!storeToDisplays_.containsKey(store)) {
