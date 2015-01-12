@@ -2168,6 +2168,11 @@ public class MMStudio implements ScriptInterface {
    public MMAcquisition getAcquisitionWithName(String name) throws MMScriptException {
       return acqMgr_.getAcquisition(name);
    }
+
+   @Override
+   public Datastore getAcquisitionDatastore(String name) throws MMScriptException {
+      return acqMgr_.getAcquisition(name).getDatastore();
+   }
    
    @Override
    public void message(final String text) throws MMScriptException {
