@@ -17,7 +17,6 @@ nobase_mmplugin_DATA = \
 	DataBrowser.jar \
 	Developer_Tools/ClojureEditor.jar \
 	Developer_Tools/SequenceBufferMonitor.jar \
-	Device_Control/ASIdiSPIM.jar \
 	Device_Control/AutoLase.jar \
 	Device_Control/CRISP.jar \
 	Device_Control/MultiCamera.jar \
