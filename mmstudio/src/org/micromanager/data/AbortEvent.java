@@ -1,3 +1,8 @@
 package org.micromanager.data;
 
-public class AbortEvent implements org.micromanager.api.data.AbortEvent {}
+/**
+ * This event indicates that whatever process is feeding data into the
+ * Datastore ought to be stopped. The Datastore itself does not perform any
+ * action when this event is received.
+ */
+public interface AbortEvent {}
