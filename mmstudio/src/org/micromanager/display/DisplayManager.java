@@ -21,6 +21,11 @@ public interface DisplayManager {
    public DisplaySettings.DisplaySettingsBuilder getDisplaySettingsBuilder();
 
    /**
+    * Create a new DisplayWindow for the specified Datastore and return it.
+    */
+   public DisplayWindow createDisplay(Datastore store);
+
+   /**
     * Request that MicroManager track the specified Datastore for you.
     * Tracking does the following things:
     * - Add the Datastore to the list returned by getDatastores().
