@@ -43,6 +43,7 @@ public interface SummaryMetadata {
       SummaryMetadataBuilder intendedDimensions(Coords intendedDimensions);
       SummaryMetadataBuilder startDate(String startDate);
       SummaryMetadataBuilder stagePositions(MultiStagePosition[] stagePositions);
+      SummaryMetadataBuilder userData(JSONObject userData);
    }
 
    /**
@@ -88,6 +89,8 @@ public interface SummaryMetadata {
    public String getStartDate();
    /** The stage positions that were to be visited in the acquisition */
    public MultiStagePosition[] getStagePositions();
+   /** Any general-purpose user metadata */
+   public JSONObject getUserData();
 
    /**
     * For legacy support only: convert to JSONObject.
