@@ -128,7 +128,8 @@ public class ShadingProcessor extends DataProcessor<TaggedImage> {
               rect);
       if (background != null) {
          ImageProcessor imp = ImageUtils.makeProcessor(nextImage);
-         imp = ImageUtils.subtractImageProcessors(imp, background.getProcessor());
+         ImageProcessor impBackground = background.getProcessor();
+         imp = ImageUtils.subtractImageProcessors(imp, impBackground);
          bgSubtracted = new TaggedImage(imp.getPixels(), newTags);
       }
       

@@ -154,17 +154,20 @@ public class ImageUtils {
             return subtractShortProcessors((ShortProcessor) proc1, (ShortProcessor) proc2);
          } else if (proc1 instanceof ShortProcessor && proc2 instanceof ByteProcessor) {
             return subtractShortByteProcessors((ShortProcessor) proc1, (ByteProcessor) proc2);
+         } else if (proc1 instanceof ShortProcessor && proc2 instanceof FloatProcessor) {
+            return subtractShortFloatProcessors((ShortProcessor) proc1, (FloatProcessor) proc2);
          } else if (proc1 instanceof FloatProcessor && proc2 instanceof ByteProcessor) {
              return subtractFloatProcessors((FloatProcessor) proc1, (ByteProcessor) proc2);
          } else if (proc1 instanceof FloatProcessor && proc2 instanceof ShortProcessor) {
              return subtractFloatProcessors((FloatProcessor) proc1, (ShortProcessor) proc2);
          } else if (proc1 instanceof FloatProcessor) {
             return subtractFloatProcessors((FloatProcessor) proc1, (FloatProcessor) proc2);
+         } else {
+             throw new MMException("Types of images to be subtracted were not compatible");
          }
       } catch (ClassCastException ex) {
          throw new MMException("Types of images to be subtracted were not compatible");
       }
-      return null;
    }
    
       public static ImageProcessor subtractFloatProcessors(FloatProcessor proc1, 
@@ -207,6 +210,13 @@ public class ImageUtils {
               null);
    }
    
+   private static ShortProcessor subtractShortFloatProcessors(ShortProcessor proc1, FloatProcessor proc2) {
+       return new ShortProcessor(proc1.getWidth(), proc1.getHeight(),
+               subtractPixelArrays( (short[]) proc1.getPixels(), (float []) proc2.getPixels() ),
+                null);
+       
+   };
+   
    public static byte[] subtractPixelArrays(byte[] array1, byte[] array2) {
       int l = array1.length;
       byte[] result = new byte[l];
@@ -235,6 +245,14 @@ public class ImageUtils {
       return result;
    }
    
+   public static short[] subtractPixelArrays(short[] array1, float[] array2) {
+      int l = array1.length;
+      short[] result = new short[l];
+      for (int i=0; i < l; i++) {
+         result[i] = (short) Math.max (0, unsignedValue(array1[i]) - unsignedValue( (short) array2[i]));
+      }
+      return result;
+   }
    public static float[] subtractPixelArrays(float[] array1, byte[] array2) {
       int l = array1.length;
       float[] result = new float[l];

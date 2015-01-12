@@ -62,7 +62,7 @@ public class ImageCollection {
          }
          ImagePlusInfo bg = new ImagePlusInfo(ip); 
          background_.put(BASEIMAGE, bg);
-         background_.put(makeKey(1, bg.getOriginalRoi()), null);
+         background_.put(makeKey(1, bg.getOriginalRoi()), bg);
       }
    }
    
