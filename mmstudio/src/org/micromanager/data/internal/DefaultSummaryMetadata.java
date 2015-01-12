@@ -97,6 +97,8 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       private String startDate_ = null;
       private MultiStagePosition[] stagePositions_ = null;
 
+      private JSONObject userData_ = null;
+
       @Override
       public DefaultSummaryMetadata build() {
          return new DefaultSummaryMetadata(this);
@@ -191,6 +193,12 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
          stagePositions_ = stagePositions;
          return this;
       }
+
+      @Override
+      public SummaryMetadataBuilder userData(JSONObject userData) {
+         userData_ = userData;
+         return this;
+      }
    }
    
    private String acquisitionName_ = null;
@@ -210,6 +218,8 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
    private String startDate_ = null;
    private MultiStagePosition[] stagePositions_ = null;
 
+   private JSONObject userData_ = null;
+
    public DefaultSummaryMetadata(Builder builder) {
       acquisitionName_ = builder.acquisitionName_;
       fileName_ = builder.fileName_;
@@ -227,6 +237,8 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       intendedDimensions_ = builder.intendedDimensions_;
       startDate_ = builder.startDate_;
       stagePositions_ = builder.stagePositions_;
+
+      userData_ = builder.userData_;
    }
 
    @Override
@@ -302,6 +314,15 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
    @Override
    public MultiStagePosition[] getStagePositions() {
       return stagePositions_.clone();
+   }
+
+   @Override
+   public JSONObject getUserData() {
+      // TODO: we aren't copying the JSONObject here, leading to potential
+      // aliasing, because JSONObject doesn't have a way to clone itself and
+      // the recommended constructor requires a String[] input, which we
+      // can't conveniently generate. Solvable, but I'm putting it off for now.
+      return userData_;
    }
 
    @Override
