@@ -6,13 +6,13 @@ import imagedisplay.DisplayPlus;
 import java.awt.Color;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import mmcloneclasses.acquisition.MMImageCache;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.micromanager.MMStudio;
 import org.micromanager.acquisition.MMAcquisition;
+import org.micromanager.api.MMTags;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -30,6 +30,7 @@ public abstract class Acquisition {
    protected TaggedImageSink imageSink_;
    protected String pixelSizeConfig_;
    protected volatile boolean finished_ = false;
+   private String name_;
 
 
    public Acquisition(double zStep) {
@@ -69,13 +70,15 @@ public abstract class Acquisition {
    protected void initialize(String dir, String name) {
       int xOverlap = SettingsDialog.getOverlapX();
       int yOverlap = SettingsDialog.getOverlapY();
-
+      
       //TODO: add limit to this queue in case saving and display goes much slower than acquisition?
       engineOutputQueue_ = new LinkedBlockingQueue<TaggedImage>();
 
       JSONObject summaryMetadata = makeSummaryMD(1, (int) core_.getNumberOfCameraChannels(), name);
 //         JSONObject summaryMetadata = makeSummaryMD(1,2);
       MultiResMultipageTiffStorage storage = new MultiResMultipageTiffStorage(dir, true, summaryMetadata, xOverlap, yOverlap, pixelSizeConfig_);
+      //storage class has determined unique acq name, so it can now be stored
+      name_ = storage.getUniqueAcqName();
       MMImageCache imageCache = new MMImageCache(storage);
       imageCache.setSummaryMetadata(summaryMetadata);
       posManager_ = storage.getPositionManager();
@@ -84,6 +87,10 @@ public abstract class Acquisition {
          
       imageSink_ = new TaggedImageSink(engineOutputQueue_, imageCache, this);
       imageSink_.start();
+   }
+   
+   public String getName() {
+      return name_;
    }
    
    public BlockingQueue<AcquisitionEvent> getEventQueue() {
@@ -110,7 +117,7 @@ public abstract class Acquisition {
 
    //to be removed if this is factored out of acq engine in micromanager
    //TODO: mkae sure Prefix is in new summary MD
-   private JSONObject makeSummaryMD(int numSlices, int numChannels, String prefix) {
+   private JSONObject makeSummaryMD (int numSlices, int numChannels, String prefix) {
       try {
          if (SettingsDialog.getDemoMode()) {
             numChannels = SettingsDialog.getDemoNumChannels();
@@ -132,6 +139,8 @@ public abstract class Acquisition {
          JSONArray initialPosList = createInitialPositionList();
          summary.put("InitialPositionList", initialPosList);
          summary.put("Positions", initialPosList);
+         summary.put(MMTags.Summary.PIXSIZE, core.getPixelSizeUm());
+         
 
 
          JSONArray chNames = new JSONArray();

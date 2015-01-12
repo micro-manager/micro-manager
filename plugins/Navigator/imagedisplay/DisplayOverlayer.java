@@ -2,6 +2,7 @@ package imagedisplay;
 
 import acq.Acquisition;
 import coordinates.XYStagePosition;
+import ij.ImagePlus;
 import ij.gui.ImageCanvas;
 import ij.gui.Line;
 import ij.gui.OvalRoi;
@@ -19,6 +20,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.SwingUtilities;
+import mmcloneclasses.graph.ContrastPanel;
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
 import org.micromanager.utils.ReportingUtils;
 import surfacesandregions.SingleResolutionInterpolation;
@@ -93,6 +95,24 @@ public class DisplayOverlayer {
       };
    }
 
+   /**
+    * creates base overlay that other modes should build upon
+    * Includes scale bar and zoom indicator
+    */
+   private Overlay createBaseOverlay() {
+      Overlay overlay = new Overlay();
+      ContrastPanel cp = ((DisplayWindow) display_.getHyperImage().getWindow()).getContrastPanel();
+      boolean showScaleBar = cp.showScaleBar();
+      Color color = cp.getScaleBarColor();
+
+      if (showScaleBar) {
+         MMScaleBar sizeBar = new MMScaleBar(display_.getHyperImage(), color); 
+         sizeBar.setPosition(cp.getScaleBarPosition());
+         sizeBar.addToOverlay(overlay);
+      }
+      return overlay;
+   }
+   
    private void setOverlay(final Overlay overlay) throws InterruptedException {
       try {
          if (Thread.interrupted()) {
@@ -146,7 +166,7 @@ public class DisplayOverlayer {
       if (mode == DisplayPlus.EXPLORE) {
          //highlight tiles as appropriate
          if (display_.getCurrentMouseLocation() == null) {
-            setOverlay(null);
+            setOverlay(createBaseOverlay());
          } else if (display_.getMouseDragStartPointLeft() != null) {
             //highlight multiple tiles       
             Point p2Tiles = zoomableStack_.getTileIndicesFromDisplayedPixel(display_.getCurrentMouseLocation().x, display_.getCurrentMouseLocation().y),
@@ -158,15 +178,13 @@ public class DisplayOverlayer {
             Point coords = zoomableStack_.getTileIndicesFromDisplayedPixel(display_.getCurrentMouseLocation().x, display_.getCurrentMouseLocation().y);
             setOverlay(highlightTileOverlay(coords.y, coords.y, coords.x, coords.x, TRANSPARENT_GREEN)); //highligh single tile
          } else {
-            setOverlay(null);
+            setOverlay(createBaseOverlay());
          }
       } else if (mode == DisplayPlus.NEWGRID) {
          setOverlay(newGridOverlay());
       } else if (mode == DisplayPlus.NONE) {
          //draw nothing (or maybe zoom indicator?) 
-         setOverlay(null);
-      } else if (mode == DisplayPlus.GOTO) {
-         //nothing
+         setOverlay(createBaseOverlay());
       } else if (mode == DisplayPlus.NEWSURFACE && surfaceNeedsUpdate_.get()) {
          //if a preceeding call has updated the surface, don't do it again
          createSurfaceOverlay();
@@ -224,7 +242,7 @@ public class DisplayOverlayer {
    }
 
    private Overlay createPointsConvexHullOverlay() throws InterruptedException {
-      Overlay overlay = new Overlay();
+      Overlay overlay = createBaseOverlay();
       SurfaceInterpolator newSurface = display_.getCurrentSurface();
       if (newSurface != null) {
          drawInterpPoints(newSurface, overlay);
@@ -264,7 +282,7 @@ public class DisplayOverlayer {
          int pixPerInterpPoint = Math.max(display_.getImagePlus().getWidth(), display_.getImagePlus().getHeight()) / 10;
          //keep redrawing until surface full interpolated  
          while (true) {
-            Overlay overlay = new Overlay();
+            Overlay overlay = createBaseOverlay();
             //add all object from base overlay so don't need to redraw them at each successive resolution
             for (int i = 0; i < baseOverlay.size(); i++) {
                overlay.add(baseOverlay.get(i));
@@ -388,7 +406,7 @@ public class DisplayOverlayer {
    }
 
    private Overlay newGridOverlay() {
-      Overlay overlay = new Overlay();
+      Overlay overlay = createBaseOverlay();
 
       double dsTileWidth = tileWidth_ / (double) zoomableStack_.getDownsampleFactor();
       double dsTileHeight = tileHeight_ / (double) zoomableStack_.getDownsampleFactor();
@@ -431,14 +449,14 @@ public class DisplayOverlayer {
       int height = (int) Math.round(tileHeight_ / (double) zoomableStack_.getDownsampleFactor() * (row2 - row1 + 1));
       Roi rect = new Roi(topLeft.x, topLeft.y, width, height);
       rect.setFillColor(color);
-      Overlay overlay = new Overlay();
+      Overlay overlay = createBaseOverlay();
       overlay.add(rect);
       return overlay;
    }
 
    private void drawZoomIndicatorOverlay() {
 //      //draw zoom indicator
-//      Overlay overlay = new Overlay();
+//      Overlay overlay = createBaseOverlay();
 //      Point zoomPos = zoomableStack_.getZoomPosition();      
 //      int outerWidth = 100;
 //      int outerHeight = (int) ((double) storage_.getFullResHeight() / (double) storage_.getFullResWidth() * outerWidth);

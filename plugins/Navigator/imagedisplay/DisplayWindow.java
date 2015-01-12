@@ -12,6 +12,7 @@ import java.awt.event.*;
 import java.util.Comparator;
 import java.util.prefs.Preferences;
 import javax.swing.*;
+import mmcloneclasses.graph.ContrastPanel;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.MMStudio;
 import org.micromanager.utils.CanvasPaintPending;
@@ -447,6 +448,10 @@ public class DisplayWindow extends StackWindow {
       }
    }
 
+   public ContrastPanel getContrastPanel() {
+      return cmcPanel_.getContrastPanel();
+   }
+   
    @Subscribe
    public void onLayoutChange(ScrollerPanel.LayoutChangedEvent event) {
 //      System.out.println();

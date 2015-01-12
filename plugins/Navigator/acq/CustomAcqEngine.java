@@ -7,18 +7,13 @@ package acq;
 import demo.DemoModeImageData;
 import gui.SettingsDialog;
 import ij.IJ;
-import java.util.HashMap;
-import java.util.TreeMap;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.micromanager.api.MMTags;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
-import surfacesandregions.RegionManager;
-import surfacesandregions.SurfaceManager;
 
 /**
  *

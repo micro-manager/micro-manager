@@ -18,7 +18,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package mmcloneclasses.acquisition;
+package acq;
 
 import ij.CompositeImage;
 import java.awt.Color;

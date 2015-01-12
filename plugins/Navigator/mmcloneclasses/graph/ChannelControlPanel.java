@@ -30,7 +30,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.prefs.Preferences;
 import javax.swing.*;
-import mmcloneclasses.acquisition.MMImageCache;
+import acq.MMImageCache;
 import mmcloneclasses.graph.HistogramPanel.CursorListener;
 import imagedisplay.MMCompositeImage;
 import imagedisplay.ContrastMetadataCommentsPanel;

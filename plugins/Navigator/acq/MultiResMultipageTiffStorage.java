@@ -44,6 +44,7 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
    private int tileWidth_, tileHeight_; //Indpendent of zoom level because tile sizes stay the same--which means overlap is cut off
    private PositionManager posManager_;
    private boolean finished_ = false;
+   private String uniqueAcqName_;
 
    public MultiResMultipageTiffStorage(String dir, boolean newDataSet, JSONObject summaryMetadata,
            int overlapX, int overlapY, String pixelSizeConfig) {
@@ -68,9 +69,10 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
             if (!summaryMetadata.has("Prefix")) {
                ReportingUtils.showError("Acquisition name prefix not found in summary MD");
             }
-            String name = summaryMetadata.getString("Prefix");
+            String baseName = summaryMetadata.getString("Prefix");
+            uniqueAcqName_ = getUniqueAcqDirName(dir, baseName);
             //create acqusition directory for actual data
-            directory_ = dir + (dir.endsWith(File.separator) ? "" : File.separator) + getUniqueAcqDirName(dir, name);
+            directory_ = dir + (dir.endsWith(File.separator) ? "" : File.separator) + uniqueAcqName_;
          } catch (Exception e) {
             ReportingUtils.showError("Couldn't make acquisition directory");
          }
@@ -94,6 +96,10 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
       } catch (IOException e) {
          ReportingUtils.showError(e.toString());
       }
+   }
+   
+   public String getUniqueAcqName() {
+      return uniqueAcqName_;
    }
 
    public int getNumResLevels() {

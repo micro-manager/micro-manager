@@ -30,8 +30,11 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
-import mmcloneclasses.acquisition.MMImageCache;
+import acq.MMImageCache;
+import ij.measure.Calibration;
+import org.json.JSONException;
 import org.json.JSONObject;
+import org.micromanager.api.MMTags;
 import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
@@ -41,7 +44,7 @@ import surfacesandregions.SurfaceInterpolator;
 public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataListener {
 
    private static final int DELETE_SURF_POINT_PIXEL_TOLERANCE = 10;
-   public static final int NONE = 0, EXPLORE = 1, GOTO = 2, NEWGRID = 3, NEWSURFACE = 4;
+   public static final int NONE = 0, EXPLORE = 1, NEWGRID = 2, NEWSURFACE = 3;
    private static ArrayList<DisplayPlus> activeDisplays_ = new ArrayList<DisplayPlus>();
    private Acquisition acq_;
    private Point mouseDragStartPointLeft_, mouseDragStartPointRight_, currentMouseLocation_;
@@ -60,7 +63,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
 
    public DisplayPlus(final MMImageCache stitchedCache, Acquisition acq, JSONObject summaryMD,
            MultiResMultipageTiffStorage multiResStorage) {
-      super(stitchedCache, null, "test", true, summaryMD);
+      super(stitchedCache, acq.getName(), summaryMD);
       tileWidth_ = multiResStorage.getTileWidth();
       tileHeight_ = multiResStorage.getTileHeight();
 
@@ -118,9 +121,58 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
       activeDisplays_.add(this);
    }
 
+   protected void applyPixelSizeCalibration() {
+      try {
+         JSONObject summary = getSummaryMetadata();
+         double pixSizeUm;
+         if (summary != null && summary.has(MMTags.Summary.PIXSIZE)) {
+            pixSizeUm = summary.getDouble(MMTags.Summary.PIXSIZE);
+         } else {
+            ReportingUtils.showError("pixel size tag missing from summary metadata");
+            return;
+         }
+         //multiply by zoom factor
+         pixSizeUm *= zoomableStack_.getDownsampleFactor();
+                
+         if (pixSizeUm > 0) {
+            Calibration cal = new Calibration();
+            if (pixSizeUm < 10) {
+               cal.setUnit("um");
+               cal.pixelWidth = pixSizeUm;
+               cal.pixelHeight = pixSizeUm;
+            } else if (pixSizeUm < 1000) {               
+               cal.setUnit("mm");
+               cal.pixelWidth = pixSizeUm / 1000;
+               cal.pixelHeight = pixSizeUm / 1000;
+            } else {
+                cal.setUnit("cm");
+               cal.pixelWidth = pixSizeUm / 10000;
+               cal.pixelHeight = pixSizeUm / 10000;
+            }
+            String intMs = "Interval_ms";
+            if (summary.has(intMs))
+               cal.frameInterval = summary.getDouble(intMs) / 1000.0;
+            String zStepUm = "z-step_um";
+            if (summary.has(zStepUm))
+               cal.pixelDepth = summary.getDouble(zStepUm);
+            this.getHyperImage().setCalibration(cal);
+         }
+      } catch (JSONException ex) {
+         // no pixelsize defined.  Nothing to do
+      }
+   }
+   
+   protected void updateWindowTitleAndStatus() {
+      String name = title_ + " ";
+      name += acq_.isFinished() ? "(Finished)" : "(Running)";
+      this.getHyperImage().getWindow().setTitle(name);
+   }
+   
    public void windowAndCanvasReady() {
       canvas_ = this.getImagePlus().getCanvas();
       overlayer_ = new DisplayOverlayer(this, acq_, tileWidth_, tileHeight_, zoomableStack_);
+      //so that contrast panel can signal to redraw overlay
+      ((DisplayWindow) this.getHyperImage().getWindow()).getContrastPanel().setOverlayer(overlayer_);
    }
 
    public int getFullResWidth() {
@@ -258,7 +310,11 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
             //Click point --> full res pixel point --> stage coordinate
             Point2D.Double stagePos = stageCoordFromImageCoords(e.getPoint().x, e.getPoint().y);
             double z = zoomableStack_.getZCoordinateOfDisplayedSlice(this.getHyperImage().getSlice(), this.getHyperImage().getFrame());
-            currentSurface_.addPoint(stagePos.x, stagePos.y, z);
+            if (currentSurface_ == null) {
+               ReportingUtils.showError("Can't add point--No surface selected");
+            } else {
+               currentSurface_.addPoint(stagePos.x, stagePos.y, z);
+            }
          }
       }
       if (mouseDragging_ && SwingUtilities.isRightMouseButton(e)) {

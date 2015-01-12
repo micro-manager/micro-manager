@@ -177,14 +177,9 @@ public class ExploreAcquisition extends Acquisition {
    @Override
    protected JSONArray createInitialPositionList() {
       try {
-         //make intitial position list, with current position and 0,0 as coordinates
+         //create empty position list that gets filled in as tiles are explored
          CMMCore core = MMStudio.getInstance().getCore();
-         JSONArray pList = new JSONArray();
-         //create first position based on current XYStage position
-         int tileWidth = (int) MMStudio.getInstance().getCore().getImageWidth() - SettingsDialog.getOverlapX();
-         int tileHeight = (int) MMStudio.getInstance().getCore().getImageHeight() - SettingsDialog.getOverlapY();
-         pList.put(new XYStagePosition(new Point2D.Double(core.getXPosition(core.getXYStageDevice()), core.getYPosition(core.getXYStageDevice())),
-                 tileWidth, tileHeight, 0, 0, pixelSizeConfig_).getMMPosition());
+         JSONArray pList = new JSONArray();        
          return pList;
       } catch (Exception e) {
          ReportingUtils.showError("Couldn't create initial position list");

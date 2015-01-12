@@ -1,4 +1,4 @@
-package mmcloneclasses.events;
+package imagedisplay;
 
 import imagedisplay.DisplayWindow;
 import imagedisplay.VirtualAcquisitionDisplay;

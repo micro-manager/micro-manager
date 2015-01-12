@@ -14,6 +14,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import mmcorej.CMMCore;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -415,23 +416,34 @@ public class PositionManager {
    private Point2D.Double getStagePositionCoordinates(int row, int col, int pixelOverlapX, int pixelOverlapY) {
       try {
          ScriptInterface app = MMStudio.getInstance();
-
-         JSONObject existingPosition = positionList_.getJSONObject(0);
-
-         double exisitngX = existingPosition.getJSONObject(COORDINATES_KEY).getJSONArray(xyStageName_).getDouble(0);
-         double exisitngY = existingPosition.getJSONObject(COORDINATES_KEY).getJSONArray(xyStageName_).getDouble(1);
-         int existingRow = existingPosition.getInt(ROW_KEY);
-         int existingColumn = existingPosition.getInt(COL_KEY);
+         CMMCore core = app.getMMCore();
          long height = app.getMMCore().getImageHeight();
          long width = app.getMMCore().getImageWidth();
+         if ( positionList_.length() == 0) {
+            try {
+               //create position 0 based on current XY stage position
+               return new Point2D.Double(core.getXPosition(core.getXYStageDevice()), core.getYPosition(core.getXYStageDevice()));
+            } catch (Exception ex) {
+               ReportingUtils.showError("Couldn't create position 0");
+               return null;
+            }
+         } else {
+            JSONObject existingPosition = positionList_.getJSONObject(0);
 
-         double xPixelOffset = (col - existingColumn) * (width - pixelOverlapX);
-         double yPixelOffset = (row - existingRow) * (height - pixelOverlapY);
+            double exisitngX = existingPosition.getJSONObject(COORDINATES_KEY).getJSONArray(xyStageName_).getDouble(0);
+            double exisitngY = existingPosition.getJSONObject(COORDINATES_KEY).getJSONArray(xyStageName_).getDouble(1);
+            int existingRow = existingPosition.getInt(ROW_KEY);
+            int existingColumn = existingPosition.getInt(COL_KEY);
 
-         AffineTransform transform = AffineUtils.getAffineTransform(pixelSizeConfig_,exisitngX, exisitngY);
-         Point2D.Double stagePos = new Point2D.Double();
-         transform.transform(new Point2D.Double(xPixelOffset, yPixelOffset), stagePos);
-         return stagePos;
+            double xPixelOffset = (col - existingColumn) * (width - pixelOverlapX);
+            double yPixelOffset = (row - existingRow) * (height - pixelOverlapY);
+
+            AffineTransform transform = AffineUtils.getAffineTransform(pixelSizeConfig_, exisitngX, exisitngY);
+            Point2D.Double stagePos = new Point2D.Double();
+            transform.transform(new Point2D.Double(xPixelOffset, yPixelOffset), stagePos);
+            return stagePos;
+         }
+
       } catch (JSONException ex) {
          ReportingUtils.showError("Problem with current position metadata");
          return null;

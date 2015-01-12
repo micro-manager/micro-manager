@@ -202,7 +202,7 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
     * @param y y pixel coordinate at current res level
     * @return
     */
-   public Point getTileIndicesFromDisplayedPixel(int x, int y) {
+   public Point getTileIndicesFromDisplayedPixel(int x, int y) {   
       //add view offsets and convert to full resolution to get pixel location in full res image
       int fullResX = (int) ((x + xView_) * Math.pow(2, resolutionIndex));
       int fullResY = (int) ((y + yView_) * Math.pow(2, resolutionIndex));

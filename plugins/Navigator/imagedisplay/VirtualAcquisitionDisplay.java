@@ -48,11 +48,10 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 import javax.swing.event.MouseInputAdapter;
-import mmcloneclasses.acquisition.MMImageCache;
-import mmcloneclasses.events.DisplayCreatedEvent;
+import acq.MMImageCache;
 import mmcloneclasses.graph.HistogramSettings;
 import mmcloneclasses.graph.MultiChannelHistograms;
-import mmcloneclasses.internalinterfaces.Histograms;
+import mmcloneclasses.graph.Histograms;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -65,7 +64,7 @@ import org.micromanager.api.events.PixelSizeChangedEvent;
 import org.micromanager.events.EventManager;
 import org.micromanager.utils.*;
 
-public class VirtualAcquisitionDisplay implements ImageCacheListener {
+public abstract class VirtualAcquisitionDisplay implements ImageCacheListener {
 
    /**
     * Given an ImagePlus, retrieve the associated VirtualAcquisitionDisplay.
@@ -88,10 +87,8 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    private boolean isAcquisitionFinished_ = false;
    private boolean promptToSave_ = true;
    private boolean amClosing_ = false;
-   // Name of the acquisition we present.
-   private final String name_;
    // First component of text displayed in our title bar.
-   private String title_;
+   protected String title_;
    private int numComponents_;
    // This queue holds images waiting to be displayed.
    private LinkedBlockingQueue<JSONObject> imageTagsQueue_;
@@ -108,14 +105,11 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    private ImagePlus hyperImage_;
    private SubImageControls subImageControls_;
    public AcquisitionVirtualStack virtualStack_;
-   private boolean isMDA_ = false; //flag if display corresponds to MD acquisition
    private ContrastMetadataCommentsPanel cmcPanel_;
    private boolean contrastInitialized_ = false; //used for autostretching on window opening
    private boolean firstImage_ = true;
    private String channelGroup_ = "none";
    private JPopupMenu saveTypePopup_;
-   private final AtomicBoolean updatePixelSize_ = new AtomicBoolean(false);
-   private final AtomicLong newPixelSize_ = new AtomicLong();
    private final Object imageReceivedObject_ = new Object();
    private int numGrayChannels_;
    protected ImageCanvas canvas_;
@@ -123,13 +117,13 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
 
    private EventBus bus_;
 
-   @Subscribe
-   public void onPixelSizeChanged(PixelSizeChangedEvent event) {
-      // Signal that pixel size has changed so that the next image will update
-      // metadata and scale bar
-      newPixelSize_.set(Double.doubleToLongBits(event.getNewPixelSizeUm()));
-      updatePixelSize_.set(true);
-   }
+//   @Subscribe
+//   public void onPixelSizeChanged(PixelSizeChangedEvent event) {
+//      // Signal that pixel size has changed so that the next image will update
+//      // metadata and scale bar
+//      newPixelSize_.set(Double.doubleToLongBits(event.getNewPixelSizeUm()));
+//      updatePixelSize_.set(true);
+//   }
 
    /**
     * Standard constructor.
@@ -138,8 +132,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
     * @param name
     * @param shouldUseNameAsTitle
     */
-   public VirtualAcquisitionDisplay(MMImageCache imageCache,
-           AcquisitionEngine eng, String name, boolean shouldUseNameAsTitle, JSONObject summaryMD) {
+   public VirtualAcquisitionDisplay(MMImageCache imageCache, String name, JSONObject summaryMD) {
       try {
          numComponents_ = Math.max(MDUtils.getNumberOfComponents(summaryMD), 1);
          int numChannels = Math.max(summaryMD.getInt("Channels"), 1);
@@ -147,13 +140,8 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       } catch (Exception ex) {
          ReportingUtils.showError("Couldn't read summary md");
       }
-      name_ = name;
       title_ = name;
-      if (!shouldUseNameAsTitle) {
-         title_ = WindowManager.getUniqueName("Untitled");
-      }
       imageCache_ = imageCache;
-      isMDA_ = eng != null;
       setupEventBus();
       setupDisplayThread();
    }
@@ -365,7 +353,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       hyperImage_ = createHyperImage(createMMImagePlus(virtualStack_),numGrayChannels, numSlices, numFrames);
       canvas_ = hyperImage_.getCanvas();
       
-      applyPixelSizeCalibration(hyperImage_);
+      applyPixelSizeCalibration();
 
       createWindows();
       windowToFront();
@@ -464,44 +452,8 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
    }
 
-   /**
-    * Sets ImageJ pixel size calibration
-    * @param hyperImage
-    */
-   private void applyPixelSizeCalibration(final ImagePlus hyperImage) {
-      final String pixSizeTag = "PixelSizeUm";
-      try {
-         JSONObject tags = this.getCurrentMetadata();
-         JSONObject summary = getSummaryMetadata();
-         double pixSizeUm;
-         if (tags != null && tags.has(pixSizeTag)) {
-            pixSizeUm = tags.getDouble(pixSizeTag);
-         } else {
-            pixSizeUm = MDUtils.getPixelSizeUm(summary);
-         }
-         if (pixSizeUm > 0) {
-            Calibration cal = new Calibration();
-            cal.setUnit("um");
-            cal.pixelWidth = pixSizeUm;
-            cal.pixelHeight = pixSizeUm;
-            String intMs = "Interval_ms";
-            if (summary.has(intMs))
-               cal.frameInterval = summary.getDouble(intMs) / 1000.0;
-            String zStepUm = "z-step_um";
-            if (summary.has(zStepUm))
-               cal.pixelDepth = summary.getDouble(zStepUm);
-            hyperImage.setCalibration(cal);
-            // this call is needed to update the top status line with image size
-            ImageWindow win = hyperImage.getWindow();
-            if (win != null) {
-               win.repaint();
-            }
-         }
-      } catch (JSONException ex) {
-         // no pixelsize defined.  Nothing to do
-      }
-   }
-
+   protected abstract void applyPixelSizeCalibration();
+   
    public ImagePlus getHyperImage() {
       return hyperImage_;
    }
@@ -544,9 +496,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       updateWindowTitleAndStatus();
    }
 
-   public void updateWindowTitleAndStatus() {
-      //TODO
-   }
+   protected abstract void updateWindowTitleAndStatus();
 
    private void windowToFront() {
       if (hyperImage_ == null || hyperImage_.getWindow() == null) {
@@ -839,8 +789,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       mmIP.setNFramesUnverified(frames);
       mmIP.setNSlicesUnverified(slices);
       if (channels > 1) {        
-         hyperImage = new MMCompositeImage(mmIP, imageCache_.getDisplayMode(), 
-               title_, bus_);
+         hyperImage = new MMCompositeImage(mmIP, imageCache_.getDisplayMode(), title_, bus_);
          hyperImage.setOpenAsHyperStack(true);
       } else {
          hyperImage = mmIP;
@@ -1025,67 +974,18 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       return hyperImage_ == null ? numGrayChannels_ : ((IMMImagePlus) hyperImage_).getNChannelsUnverified();
    }
 
-   public int getNumGrayChannels() {
-      return getNumChannels();
-   }
-
-   public void setWindowTitle(String title) {
-      title_ = title;
-      updateWindowTitleAndStatus();
-   }
-
    /*
     * Called just before image is drawn.  Notifies metadata panel to update
     * metadata or comments if this display is the active window.  Notifies histograms
     * that image is change to create appropriate LUTs and to draw themselves if this
-    * is the active window
+     is the active window
     */
    private void imageChangedUpdate() {
-      boolean updatePixelSize = updatePixelSize_.get();
-
-      if (updatePixelSize) {
-         try {
-            JSONObject summary = getSummaryMetadata();
-            if (summary != null) {
-               summary.put("PixelSize_um", Double.longBitsToDouble(newPixelSize_.get()));
-            }
-            if (hyperImage_ != null) {
-               applyPixelSizeCalibration(hyperImage_);
-            }
-            
-         } catch (JSONException ex) {
-            ReportingUtils.logError("Error in imageChangedUpdate in VirtualAcquisitionDisplay.java");
-         } 
-         updatePixelSize_.set(false);
-      } else {
-         if (hyperImage_ != null) {
-            Calibration cal = hyperImage_.getCalibration();
-            double calPixSize = cal.pixelWidth;
-            double zStep = cal.pixelHeight;
-            JSONObject tags = this.getCurrentMetadata();
-            if (tags != null) {
-               try {
-                  double imgPixSize = MDUtils.getPixelSizeUm(tags);
-                  if (calPixSize != imgPixSize) {
-                     applyPixelSizeCalibration(hyperImage_);
-                  }
-                  double imgZStep = MDUtils.getZStepUm(tags);
-                  if (imgZStep != zStep) {
-                     applyPixelSizeCalibration(hyperImage_);
-                  }
-               } catch (JSONException ex) {
-                  // this is not strictly an error since it is OK not to have 
-                  // these tags. so just continue...
-                  //ReportingUtils.logError("Found Image without PixelSizeUm or zStep tag");
-               }
-            }
-         }
+      if (hyperImage_ != null) {
+         applyPixelSizeCalibration();
       }
-      if (cmcPanel_ != null) {            
+      if (cmcPanel_ != null) {
          cmcPanel_.imageChangedUpdate(this);
-         if (updatePixelSize) {
-            cmcPanel_.redrawSizeBar();
-         }
       }
       imageChangedWindowUpdate(); //used to update status line
    }

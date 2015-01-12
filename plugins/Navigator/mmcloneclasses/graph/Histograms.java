@@ -19,9 +19,9 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package mmcloneclasses.internalinterfaces;
+package mmcloneclasses.graph;
 
-import mmcloneclasses.acquisition.MMImageCache;
+import acq.MMImageCache;
 import mmcloneclasses.graph.ContrastPanel;
 import org.micromanager.utils.ContrastSettings;
 

@@ -37,11 +37,11 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableModel;
-import mmcloneclasses.acquisition.MMImageCache;
+import acq.MMImageCache;
 import mmcloneclasses.graph.ContrastPanel;
 import mmcloneclasses.graph.MultiChannelHistograms;
 import mmcloneclasses.graph.SingleChannelHistogram;
-import mmcloneclasses.internalinterfaces.Histograms;
+import mmcloneclasses.graph.Histograms;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.utils.MDUtils;
@@ -83,12 +83,17 @@ public class ContrastMetadataCommentsPanel extends Panel  {
    public ContrastMetadataCommentsPanel(VirtualAcquisitionDisplay display) {
       imageMetadataModel_ = new MetadataTableModel();
       summaryMetadataModel_ = new MetadataTableModel();
-      makeContrastPanel();
+      contrastPanel_ = new ContrastPanel();
+      contrastPanel_.setFont(new Font("", Font.PLAIN, 10));
       initialize();
       imageMetadataTable.setModel(imageMetadataModel_);
       summaryMetadataTable.setModel(summaryMetadataModel_);
       addTextChangeListeners();
       addFocusListeners();
+   }
+   
+   public ContrastPanel getContrastPanel() {
+      return contrastPanel_;
    }
    
    public void prepareForClose() {
@@ -113,11 +118,6 @@ public class ContrastMetadataCommentsPanel extends Panel  {
    
    public Histograms getHistograms() {
       return histograms_;
-   }
-
-   private void makeContrastPanel() {
-      contrastPanel_ = new ContrastPanel();
-      contrastPanel_.setFont(new Font("", Font.PLAIN, 10));
    }
 
    private void initialize() {
@@ -551,9 +551,4 @@ public class ContrastMetadataCommentsPanel extends Panel  {
    }
    
    
-   public void redrawSizeBar() {
-      if (contrastPanel_ != null) {
-         contrastPanel_.redrawSizeBar();
-      }
-   }
 }
