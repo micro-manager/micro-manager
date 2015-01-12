@@ -24,7 +24,7 @@
       <DisableSpecificWarnings>4127;4290;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <ExceptionHandling>Sync</ExceptionHandling>
       <AdditionalIncludeDirectories>$(MM_BOOST_INCLUDEDIR);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
