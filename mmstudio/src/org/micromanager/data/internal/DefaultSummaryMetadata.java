@@ -342,7 +342,8 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
             .customIntervalsMs(customIntervalsMs_)
             .intendedDimensions(intendedDimensions_)
             .startDate(startDate_)
-            .stagePositions(stagePositions_);
+            .stagePositions(stagePositions_)
+            .userData(userData_);
    }
 
    /**
@@ -507,6 +508,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
          }
          result.put("StartTime", startDate_);
          result.put("Positions", stagePositions_);
+         result.put("UserData", userData_);
          return result;
       }
       catch (JSONException e) {
