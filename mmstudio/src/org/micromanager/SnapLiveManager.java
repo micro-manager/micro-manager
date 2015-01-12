@@ -11,6 +11,7 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 import javax.swing.JButton;
@@ -20,6 +21,8 @@ import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 
 import net.miginfocom.swing.MigLayout;
+
+import org.json.JSONObject;
 
 import org.micromanager.acquisition.StorageRAM;
 
@@ -47,10 +50,6 @@ import org.micromanager.utils.ReportingUtils;
  * "snap image" display (which is the same display as that used for live mode).
  */
 public class SnapLiveManager {
-   // Maximum number of timepoints to keep in the Datastore at a time before
-   // we start overwriting images.
-   private static final int MAX_TIMEPOINTS = 50;
-   
    private CMMCore core_;
    private DisplayWindow display_;
    private DefaultDatastore store_;
@@ -62,7 +61,6 @@ public class SnapLiveManager {
    private boolean isSuspended_ = false;
    private boolean shouldStopGrabberThread_ = false;
    private Thread grabberThread_;
-   private int lastTimepoint_ = 0;
    // Maps channel to the last image we have received for that channel.
    private HashMap<Integer, DefaultImage> channelToLastImage_;
 
@@ -195,9 +193,15 @@ public class SnapLiveManager {
          ReportingUtils.logError(e, "Couldn't get exposure time for live mode.");
       }
       long numChannels = core_.getNumberOfCameraChannels();
+      String camName = core_.getCameraDevice();
       while (!shouldStopGrabberThread_) {
          try {
-            for (int c = 0; c < numChannels; ++c) {
+            // We scan over 2*numChannels here because, in multi-camera
+            // setups, one camera could be generating images faster than the
+            // other(s). Of course, 2x isn't guaranteed to be enough here,
+            // either, but it's what we've historically used.
+            HashSet<Integer> channelsSet = new HashSet<Integer>();
+            for (int c = 0; c < 2 * numChannels; ++c) {
                TaggedImage tagged;
                try {
                   tagged = core_.getNBeforeLastTaggedImage(c);
@@ -206,13 +210,26 @@ public class SnapLiveManager {
                   // No image in the sequence buffer.
                   continue;
                }
+               JSONObject tags = tagged.tags;
+               int imageChannel = c;
+               if (tags.has(camName + "-CameraChannelIndex")) {
+                  imageChannel = tags.getInt(camName + "-CameraChannelIndex");
+               }
+               if (channelsSet.contains(imageChannel)) {
+                  // Already provided a more recent version of this channel.
+                  continue;
+               }
                DefaultImage image = new DefaultImage(tagged);
                Coords newCoords = image.getCoords().copy()
-                  .position("time", lastTimepoint_ % MAX_TIMEPOINTS)
-                  .position("channel", c).build();
+                  .position("time", 0)
+                  .position("channel", imageChannel).build();
                displayImage(image.copyAtCoords(newCoords));
+               channelsSet.add(imageChannel);
+               if (channelsSet.size() == numChannels) {
+                  // Got every channel.
+                  break;
+               }
             }
-            lastTimepoint_++;
             try {
                Thread.sleep(interval);
             }
