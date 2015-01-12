@@ -176,7 +176,13 @@ public interface ScriptInterface {
     */
    @Deprecated
    public MMAcquisition getAcquisition(String name) throws MMScriptException;
-   
+
+   /**
+    * Return the Datastore for the named acquisition.
+    * @throws MMScriptException if the acquisition name is invalid.
+    */
+   public Datastore getAcquisitionDatastore(String name) throws MMScriptException;
+
    /**
     * Returns a name beginning with stem that is not yet used.
     * @param stem Base name from which a unique name will be constructed
