@@ -489,10 +489,6 @@ int CScanner::Initialize()
 
    if (firmwareVersion_ > 2.875)  // 2.88+
    {
-      // get build info so we can add optional properties
-      build_info_type build;
-      RETURN_ON_MM_ERROR( hub_->GetBuildInfo(addressChar_, build) );
-
       laserTTLenabled_ = hub_->IsDefinePresent(build, "MM_LASER_TTL");
       if (laserTTLenabled_)
       {
