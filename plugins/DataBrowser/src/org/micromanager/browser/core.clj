@@ -28,7 +28,7 @@
            [java.awt.event ItemEvent ItemListener KeyAdapter MouseAdapter
                            WindowAdapter WindowListener]
            [com.swtdesigner SwingResourceManager]
-           [org.micromanager.api ImageCacheListener]
+           [org.micromanager ImageCacheListener]
            [org.micromanager.acquisition MMImageCache]
            [org.micromanager.utils GUIUpdater JavaUtils ReportingUtils])
   (:use [org.micromanager.browser.utils
