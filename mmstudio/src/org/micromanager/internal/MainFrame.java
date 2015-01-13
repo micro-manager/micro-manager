@@ -530,9 +530,9 @@ public class MainFrame extends MMFrame implements LiveModeListener {
       }
       snapButton_.setEnabled(!isEnabled);
       liveButton_.setIcon(isEnabled ? SwingResourceManager.getIcon(MainFrame.class,
-              "/org/micromanager/icons/cancel.png")
+              "/org/micromanager/internal/icons/cancel.png")
               : SwingResourceManager.getIcon(MainFrame.class,
-              "/org/micromanager/icons/camera_go.png"));
+              "/org/micromanager/internal/icons/camera_go.png"));
       liveButton_.setSelected(false);
       liveButton_.setText(isEnabled ? "Stop Live" : "Live");
    }

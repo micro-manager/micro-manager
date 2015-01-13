@@ -303,7 +303,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       positionsPanel_.setToolTipText("Acquire images from a series of positions in the XY plane");
       slicesPanel_.setToolTipText("Acquire images from a series of Z positions");
 
-      String imageName = getClass().getResource("/org/micromanager/icons/acq_order_figure.png").toString();
+      String imageName = getClass().getResource("/org/micromanager/internal/icons/acq_order_figure.png").toString();
 
       String acqOrderToolTip =
               "<html>Lets you select the order of image acquisition when some combination of multiple dimensions<br>"

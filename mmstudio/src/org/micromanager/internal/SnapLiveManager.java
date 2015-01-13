@@ -98,7 +98,7 @@ public class SnapLiveManager {
 
    private void setLiveButtonMode() {
       String label = isOn_ ? "Stop Live" : "Live";
-      String iconPath = isOn_ ? "/org/micromanager/icons/cancel.png" : "/org/micromanager/icons/camera_go.png";
+      String iconPath = isOn_ ? "/org/micromanager/internal/icons/cancel.png" : "/org/micromanager/internal/icons/camera_go.png";
       liveButton_.setIcon(
             SwingResourceManager.getIcon(MMStudio.class, iconPath));
       liveButton_.setText(label);
@@ -295,7 +295,7 @@ public class SnapLiveManager {
       JPanel controlPanel = new JPanel(new MigLayout());
       snapButton_ = new JButton("Snap",
             SwingResourceManager.getIcon(MMStudio.class,
-               "/org/micromanager/icons/camera.png"));
+               "/org/micromanager/internal/icons/camera.png"));
       snapButton_.setPreferredSize(new Dimension(90, 28));
       snapButton_.addActionListener(new ActionListener() {
          @Override
@@ -318,7 +318,7 @@ public class SnapLiveManager {
 
       toAlbumButton_ = new JButton("Album",
             SwingResourceManager.getIcon(MMStudio.class,
-               "/org/micromanager/icons/arrow_right.png"));
+               "/org/micromanager/internal/icons/arrow_right.png"));
       toAlbumButton_.setPreferredSize(new Dimension(90, 28));
       toAlbumButton_.addActionListener(new ActionListener() {
          @Override

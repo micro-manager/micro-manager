@@ -47,6 +47,6 @@ public class SaveButton extends JButton {
       });
 
       setIcon(new javax.swing.ImageIcon(
-               getClass().getResource("/org/micromanager/icons/disk.png")));
+               getClass().getResource("/org/micromanager/internal/icons/disk.png")));
    }
 }

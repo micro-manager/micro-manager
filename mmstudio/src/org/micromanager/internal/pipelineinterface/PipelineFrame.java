@@ -84,7 +84,7 @@ final public class PipelineFrame extends JFrame
       addProcessorPopup_ = new JPopupMenu();
       final JButton addButton = new JButton("Add...");
       addButton.setIcon(new ImageIcon(MMStudio.class.getResource(
-            "/org/micromanager/icons/plus.png")));
+            "/org/micromanager/internal/icons/plus.png")));
       addButton.addMouseListener(new MouseAdapter() {
          @Override
          public void mousePressed(MouseEvent e) {
@@ -96,7 +96,7 @@ final public class PipelineFrame extends JFrame
 
       removeButton_ = new JButton("Remove");
       removeButton_.setIcon(new ImageIcon (MMStudio.class.getResource(
-            "/org/micromanager/icons/minus.png")));
+            "/org/micromanager/internal/icons/minus.png")));
       removeButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -107,7 +107,7 @@ final public class PipelineFrame extends JFrame
 
       moveUpButton_ = new JButton("Move Up");
       moveUpButton_.setIcon(new ImageIcon (MMStudio.class.getResource(
-            "/org/micromanager/icons/arrow_up.png")));
+            "/org/micromanager/internal/icons/arrow_up.png")));
       moveUpButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -118,7 +118,7 @@ final public class PipelineFrame extends JFrame
 
       moveDownButton_ = new JButton("Move Down");
       moveDownButton_.setIcon(new ImageIcon (MMStudio.class.getResource(
-            "/org/micromanager/icons/arrow_down.png")));
+            "/org/micromanager/internal/icons/arrow_down.png")));
       moveDownButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {

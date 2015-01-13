@@ -100,7 +100,7 @@ public class MMIntroDlg extends JDialog {
       setLocation(screenSize.width/2 - (winSize.width/2), screenSize.height/2 - (winSize.height/2));
 
       JLabel introImage = new JLabel();
-      introImage.setIcon(SwingResourceManager.getIcon(MMIntroDlg.class, "/org/micromanager/icons/splash.gif"));
+      introImage.setIcon(SwingResourceManager.getIcon(MMIntroDlg.class, "/org/micromanager/internal/icons/splash.gif"));
       introImage.setLayout(null);
       introImage.setBounds(0, 0, 392, 197);
       introImage.setFocusable(false);

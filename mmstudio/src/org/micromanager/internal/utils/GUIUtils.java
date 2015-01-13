@@ -301,13 +301,13 @@ public class GUIUtils {
     }
     
    /*
-    * Add an icon from the "org/micromanager/icons/ folder with
+    * Add an icon from the "org/micromanager/internal/icons/ folder with
     * given file name, to specified the button or menu.
     */
    public static void setIcon(AbstractButton component, String iconFileName) {
       component.setIcon(SwingResourceManager.getIcon(
               org.micromanager.internal.MMStudio.class,
-              "/org/micromanager/icons/" + iconFileName));
+              "/org/micromanager/internal/icons/" + iconFileName));
    }
    
       
