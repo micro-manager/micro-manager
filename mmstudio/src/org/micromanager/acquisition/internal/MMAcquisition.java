@@ -557,15 +557,9 @@ public class MMAcquisition {
          long elapsedTimeMillis = System.currentTimeMillis() - startTimeMs_;
          MDUtils.setElapsedTimeMs(tags, elapsedTimeMillis);
          MDUtils.setImageTime(tags, MDUtils.getCurrentTime());
-      } catch (Exception ex) {
-         throw new MMScriptException(ex);
       } catch (IllegalStateException ex) {
          throw new MMScriptException(ex);
-      } catch (InterruptedException ex) {
-         throw new MMScriptException(ex);
       } catch (JSONException ex) {
-         throw new MMScriptException(ex);
-      } catch (MMException ex) {
          throw new MMScriptException(ex);
       } catch (MMScriptException ex) {
          throw new MMScriptException(ex);

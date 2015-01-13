@@ -64,6 +64,7 @@ import org.micromanager.internal.utils.GUIColors;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.internal.utils.MMException;
+import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
