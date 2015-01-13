@@ -1370,7 +1370,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       int nrSides = getNumSides();
       
       // Channels
+      
       int nrChannels = getNumChannels();
+      String originalConfig = "";
       boolean useChannels =  multiChannelPanel_.isPanelEnabled();
       boolean changeChannelPerVolume = MultichannelModes.getKeyFromPrefCode(
             props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_MULTICHANNEL_MODE))
@@ -1381,6 +1383,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             return false;
          }
          multiChannelPanel_.initializeChannelCycle();
+         // get current channel so that we can restore it
+         // I tried core_.get/setSystemStateCache, but that made the Tiger controller very confused and I had to re-apply the firmware
+         originalConfig = multiChannelPanel_.getCurrentConfig();
       }
       
       // XY positions
@@ -1810,7 +1815,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
       
       // cleanup after end of all acquisitions
-      
+      if (useChannels && changeChannelPerVolume) {
+         multiChannelPanel_.setConfig(originalConfig);
+      }
       // the controller will end with both beams disabled and scan off so reflect
       // that in device properties
       props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.BEAM_ENABLED,
