@@ -1073,7 +1073,9 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       FileInfo fi = new FileInfo();
       fi.width = virtualStack.getWidth();
       fi.height = virtualStack.getHeight();
-      fi.fileName = imageCache_.getDiskLocation();
+      File tmp = new File(imageCache_.getDiskLocation());
+      fi.fileName = tmp.getName();
+      fi.directory = tmp.getParent();
       fi.url = null;
       img.setFileInfo(fi);
       return img;
