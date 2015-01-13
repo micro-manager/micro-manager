@@ -38,6 +38,26 @@ public class DefaultCoords implements Coords, Comparable<DefaultCoords> {
       public DefaultCoords build() {
          return new DefaultCoords(this);
       }
+
+      @Override
+      public CoordsBuilder time(int time) {
+         return position(Coords.TIME, time);
+      }
+
+      @Override
+      public CoordsBuilder channel(int channel) {
+         return position(Coords.CHANNEL, channel);
+      }
+
+      @Override
+      public CoordsBuilder stagePosition(int stagePosition) {
+         return position(Coords.STAGE_POSITION, stagePosition);
+      }
+
+      @Override
+      public CoordsBuilder z(int z) {
+         return position(Coords.Z, z);
+      }
       
       @Override
       public CoordsBuilder position(String axis, int position) {
@@ -101,6 +121,26 @@ public class DefaultCoords implements Coords, Comparable<DefaultCoords> {
          return axisToPos_.get(axis);
       }
       return -1;
+   }
+
+   @Override
+   public int getChannel() {
+      return getPositionAt(Coords.CHANNEL);
+   }
+   
+   @Override
+   public int getTime() {
+      return getPositionAt(Coords.TIME);
+   }
+
+   @Override
+   public int getZ() {
+      return getPositionAt(Coords.Z);
+   }
+
+   @Override
+   public int getStagePosition() {
+      return getPositionAt(Coords.STAGE_POSITION);
    }
    
    @Override
