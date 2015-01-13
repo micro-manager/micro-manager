@@ -54,8 +54,8 @@ import org.jfree.data.xy.XYSeriesCollection;
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.ScriptInterface;
+import org.micromanager.internal.utils.ReportingUtils;
 
 import javax.swing.JTextField;
 import javax.swing.JLabel;

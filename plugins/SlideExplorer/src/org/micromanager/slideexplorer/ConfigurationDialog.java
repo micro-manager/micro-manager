@@ -16,8 +16,8 @@ import javax.swing.JTextField;
 import javax.swing.table.AbstractTableModel;
 import mmcorej.CMMCore;
 import org.micromanager.slideexplorer.Hub.OffsetsRow;
-import org.micromanager.utils.NumberUtils;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.internal.utils.NumberUtils;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  *

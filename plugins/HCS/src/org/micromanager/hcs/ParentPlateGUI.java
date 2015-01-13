@@ -1,6 +1,6 @@
 package org.micromanager.hcs;
 
-import org.micromanager.api.PositionList;
+import org.micromanager.PositionList;
 
 
 public interface ParentPlateGUI {

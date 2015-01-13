@@ -8,7 +8,7 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.io.FileSaver;
 import ij.process.ImageProcessor;
-import org.micromanager.utils.ImageUtils;
+import org.micromanager.internal.utils.ImageUtils;
 
 public class MultiTile {
 

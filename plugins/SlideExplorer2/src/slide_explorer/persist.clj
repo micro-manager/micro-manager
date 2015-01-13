@@ -1,5 +1,5 @@
 (ns slide-explorer.persist
-  (:import (org.micromanager.utils FileDialogs FileDialogs$FileType))
+  (:import (org.micromanager.internal.utils FileDialogs FileDialogs$FileType))
   (:require [clojure.java.io :as io]))
 
 ;; file dialogs

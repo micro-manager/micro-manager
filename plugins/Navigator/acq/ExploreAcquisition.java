@@ -13,8 +13,8 @@ import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.micromanager.MMStudio;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * A single time point acquisition that can dynamically expand in X,Y, and Z

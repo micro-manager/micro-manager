@@ -10,10 +10,12 @@ import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.micromanager.MMStudio;
-import org.micromanager.acquisition.MMAcquisition;
-import org.micromanager.api.MMTags;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.internal.MMStudio;
+import org.micromanager.acquisition.internal.MMAcquisition;
+import org.micromanager.acquisition.internal.MMImageCache;
+import org.micromanager.ImageCache;
+import org.micromanager.internal.utils.MDUtils;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * Abstract class that manages a generic acquisition. Subclassed into specific

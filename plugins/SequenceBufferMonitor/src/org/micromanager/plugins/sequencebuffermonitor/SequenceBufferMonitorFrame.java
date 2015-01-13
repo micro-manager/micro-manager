@@ -25,14 +25,14 @@ import javax.swing.Timer;
 
 
 class SequenceBufferMonitorFrame extends javax.swing.JFrame {
-   org.micromanager.api.ScriptInterface app_;
+   org.micromanager.ScriptInterface app_;
    JProgressBar usageBar_;
    Timer timer_;
 
    int previousTotalCapacity_ = -1;
    int updateIntervalMs_ = 100;
 
-   SequenceBufferMonitorFrame(org.micromanager.api.ScriptInterface app) {
+   SequenceBufferMonitorFrame(org.micromanager.ScriptInterface app) {
       super("Sequence Buffer Monitor");
       setLocationRelativeTo(null);
 

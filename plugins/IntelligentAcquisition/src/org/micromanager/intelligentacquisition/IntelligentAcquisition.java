@@ -19,8 +19,8 @@
 package org.micromanager.intelligentacquisition;
 
 import mmcorej.CMMCore;
-import org.micromanager.api.MMPlugin;
-import org.micromanager.api.ScriptInterface;
+import org.micromanager.MMPlugin;
+import org.micromanager.ScriptInterface;
 
 
 public class IntelligentAcquisition implements MMPlugin {

@@ -7,7 +7,7 @@ import ij.gui.Roi;
 import java.awt.Color;
 import java.util.prefs.Preferences;
 
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * Parent class that implements most functionality of overlays.

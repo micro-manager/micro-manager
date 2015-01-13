@@ -3,9 +3,9 @@ package org.micromanager.patternoverlay;
 import java.awt.Color;
 import java.awt.event.WindowEvent;
 
-import org.micromanager.MMStudio;
-import org.micromanager.api.MMPlugin;
-import org.micromanager.api.ScriptInterface;
+import org.micromanager.internal.MMStudio;
+import org.micromanager.MMPlugin;
+import org.micromanager.ScriptInterface;
 
 /**
  * Add a overlay to the live view image.

@@ -9,15 +9,15 @@
 package com.asiimaging.CRISPv2;
 
 import mmcorej.CMMCore;
-import org.micromanager.api.MMPlugin;
-import org.micromanager.api.ScriptInterface;
+import org.micromanager.MMPlugin;
+import org.micromanager.ScriptInterface;
 import java.awt.event.WindowEvent;
 /**
  *
  * @author Vik
  */
 
-public class ASI_CRISP_V2 implements org.micromanager.api.MMPlugin {
+public class ASI_CRISP_V2 implements org.micromanager.MMPlugin {
 
    public static String menuName = "ASI CRISP V2[Beta]";
    public static String tooltipDescription = "Interface for ASIs CRISP Autofocus ";

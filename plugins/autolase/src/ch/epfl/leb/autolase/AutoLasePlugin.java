@@ -1,6 +1,6 @@
 package ch.epfl.leb.autolase;
 
-import org.micromanager.api.ScriptInterface;
+import org.micromanager.ScriptInterface;
 
 /**
  * The plugin class for MicroManager which works as a bridge between AutoLase
@@ -10,7 +10,7 @@ import org.micromanager.api.ScriptInterface;
  * 
  * @see AutoLase
  */
-public class AutoLasePlugin implements org.micromanager.api.MMPlugin {
+public class AutoLasePlugin implements org.micromanager.MMPlugin {
    public static final String menuName = "AutoLase";
    public static final String tooltipDescription =
       "Closed-loop imaged-based photoactivation control for PALM";

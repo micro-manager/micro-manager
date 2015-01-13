@@ -29,11 +29,11 @@ import javax.swing.ImageIcon;
 import mmcorej.StrVector;
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
-import org.micromanager.MMStudio;
-import org.micromanager.api.DataProcessor;
-import org.micromanager.utils.ImageUtils;
-import org.micromanager.utils.MDUtils;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.internal.MMStudio;
+import org.micromanager.DataProcessor;
+import org.micromanager.internal.utils.ImageUtils;
+import org.micromanager.internal.utils.MDUtils;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  *

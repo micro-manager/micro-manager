@@ -15,14 +15,14 @@ import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import javax.swing.SpringLayout;
 
-import org.micromanager.api.MMPlugin;
-import org.micromanager.api.MultiStagePosition;
-import org.micromanager.api.PositionList;
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.api.StagePosition;
-import org.micromanager.utils.MMFrame;
-import org.micromanager.utils.MMScriptException;
-import org.micromanager.utils.TextUtils;
+import org.micromanager.MMPlugin;
+import org.micromanager.MultiStagePosition;
+import org.micromanager.PositionList;
+import org.micromanager.ScriptInterface;
+import org.micromanager.StagePosition;
+import org.micromanager.internal.utils.MMFrame;
+import org.micromanager.internal.utils.MMScriptException;
+import org.micromanager.internal.utils.TextUtils;
 
 import com.swtdesigner.SwingResourceManager;
 
@@ -35,6 +35,7 @@ import javax.swing.JRadioButton;
 import javax.swing.ButtonGroup;
 
 import java.awt.Dimension;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * @author nenad

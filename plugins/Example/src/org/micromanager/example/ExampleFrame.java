@@ -34,7 +34,7 @@ import java.text.NumberFormat;
 
 import java.util.prefs.Preferences;
 
-import org.micromanager.api.ScriptInterface;
+import org.micromanager.ScriptInterface;
 
 /**
  *

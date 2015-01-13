@@ -15,8 +15,8 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import main.Navigator;
 import mmcorej.CMMCore;
-import org.micromanager.MMStudio;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.utils.ReportingUtils;
 /**
  *
  * @author Henry

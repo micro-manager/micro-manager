@@ -22,10 +22,10 @@ import java.awt.Checkbox;
 import java.awt.Panel;
 import java.awt.event.ItemEvent;
 import mmcorej.CMMCore;
-import org.micromanager.api.MMPlugin;
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.utils.GUIUtils;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.MMPlugin;
+import org.micromanager.ScriptInterface;
+import org.micromanager.internal.utils.GUIUtils;
+import org.micromanager.internal.utils.ReportingUtils;
 
 
 // The Projector plugin provides a user interface for calibration and control

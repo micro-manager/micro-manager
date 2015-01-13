@@ -14,7 +14,6 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Point2D;
-import org.micromanager.api.MMWindow;
 
 
 /**
@@ -90,14 +89,15 @@ public class ResultsListener implements KeyListener, MouseListener{
             return;
          }
 
-         MMWindow mw = new MMWindow(siPlus_);
-         if (mw.isMMWindow()) {
-            try {
-               int position = (int) res_.getValue(Terms.POSITION, row);
-               mw.setPosition(position);
-            } catch (Exception ex) {
-            }
-         }
+         // TODO: this code was rendered obsolete/broken by the MM2.0 refactor.
+//         MMWindow mw = new MMWindow(siPlus_);
+//         if (mw.isMMWindow()) {
+//            try {
+//               int position = (int) res_.getValue(Terms.POSITION, row);
+//               mw.setPosition(position);
+//            } catch (Exception ex) {
+//            }
+//         }
 
          double x = (int) res_.getValue(Terms.X, row);
          double y = (int) res_.getValue(Terms.Y, row);

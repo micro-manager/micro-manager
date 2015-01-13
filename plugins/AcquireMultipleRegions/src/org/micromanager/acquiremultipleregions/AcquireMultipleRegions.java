@@ -6,13 +6,13 @@
 
 package org.micromanager.acquiremultipleregions;
 
-import org.micromanager.api.ScriptInterface;
+import org.micromanager.ScriptInterface;
 
 /**
  *
  * @author kthorn
  */
-public class AcquireMultipleRegions  implements org.micromanager.api.MMPlugin {
+public class AcquireMultipleRegions  implements org.micromanager.MMPlugin {
    public static final String menuName = "Acquire Multiple Regions";
    public static final String tooltipDescription =
       "Automatically acquire multiple regions of a sample";

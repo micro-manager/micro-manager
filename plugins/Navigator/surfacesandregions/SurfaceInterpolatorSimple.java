@@ -13,7 +13,7 @@ import org.apache.commons.math3.geometry.euclidean.threed.Plane;
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
 import org.apache.commons.math3.geometry.partitioning.Region;
-import org.micromanager.MMStudio;
+import org.micromanager.internal.MMStudio;
 
 /**
  *

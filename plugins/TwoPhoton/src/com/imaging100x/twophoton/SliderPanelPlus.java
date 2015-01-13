@@ -41,7 +41,7 @@ import javax.swing.SpringLayout;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import org.micromanager.utils.NumberUtils;
+import org.micromanager.internal.utils.NumberUtils;
 
 
 public class SliderPanelPlus extends JPanel {

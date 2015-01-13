@@ -14,10 +14,10 @@ import javax.swing.table.AbstractTableModel;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.StrVector;
-import org.micromanager.MMStudio;
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.utils.PropertyItem;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.internal.MMStudio;
+import org.micromanager.ScriptInterface;
+import org.micromanager.internal.utils.PropertyItem;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * Model for table that allows selection of properties

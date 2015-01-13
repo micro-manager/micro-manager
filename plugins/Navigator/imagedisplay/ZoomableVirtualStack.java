@@ -10,7 +10,9 @@ import acq.FixedAreaAcquisition;
 import acq.MultiResMultipageTiffStorage;
 import java.awt.Point;
 import mmcorej.TaggedImage;
-import org.micromanager.api.TaggedImageStorage;
+import org.micromanager.imagedisplay.AcquisitionVirtualStack;
+import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
+import org.micromanager.TaggedImageStorage;
 
 /**
  * This class acts as an intermediary between display and multiresolution

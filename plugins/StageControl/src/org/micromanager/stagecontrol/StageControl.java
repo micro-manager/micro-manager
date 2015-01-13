@@ -21,8 +21,8 @@
 
 package org.micromanager.stagecontrol;
 
-import org.micromanager.api.MMPlugin;
-import org.micromanager.api.ScriptInterface;
+import org.micromanager.MMPlugin;
+import org.micromanager.ScriptInterface;
 
 
 public class StageControl implements MMPlugin {

@@ -54,19 +54,26 @@ import mmcorej.TaggedImage;
 import org.jfree.data.xy.XYSeries;
 import org.json.JSONException;
 
-import org.micromanager.api.MMPlugin;
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.utils.FileDialogs;
-import org.micromanager.utils.MDUtils;
-import org.micromanager.utils.MMFrame;
-import org.micromanager.utils.MMScriptException;
-import org.micromanager.utils.TextUtils;
+import org.micromanager.data.Coords;
+import org.micromanager.data.Datastore;
+import org.micromanager.data.Image;
+import org.micromanager.display.DisplayWindow;
+import org.micromanager.MMPlugin;
+import org.micromanager.ScriptInterface;
+import org.micromanager.internal.utils.FileDialogs;
+import org.micromanager.internal.utils.MDUtils;
+import org.micromanager.internal.utils.MMFrame;
+import org.micromanager.internal.utils.MMScriptException;
+import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.TextUtils;
 
 public class TrackerControl extends MMFrame implements MMPlugin {
    public static final String menuName = "Live Tracking";
    public static final String tooltipDescription =
       "Use image correlation based tracking to countersteer the XY stage";
 
+   private Datastore store_;
+   private DisplayWindow display_;
    private JTextField nameField_;
    private JTextField rootField_;
    private final ButtonGroup buttonGroup = new ButtonGroup();
@@ -388,9 +395,9 @@ public class TrackerControl extends MMFrame implements MMPlugin {
             Runnable doTrack = new Runnable() {
                @Override
                public void run() {
-                  TaggedImage img = snapSingleImage();
-                  if (img != null) {
-                     processOneFrame(img, true);
+                  TaggedImage tagged = snapSingleImage();
+                  if (tagged != null) {
+                     processOneFrame(tagged, true);
                   }
                   taskRunning.set(false);
                }
@@ -460,6 +467,8 @@ public class TrackerControl extends MMFrame implements MMPlugin {
          nameField_.setText(acqName_);
          app_.openAcquisition(acqName_, rootField_.getText(),
                  2, 1, 1, 1, true, diskRadioButton_.isSelected());
+         store_ = app_.getAcquisitionDatastore(acqName_);
+         display_ = app_.display().getDisplays(store_).get(0);
       } catch (MMScriptException ex) {
          app_.showError(ex, "Problem while tracking", this);
       }
@@ -480,32 +489,33 @@ public class TrackerControl extends MMFrame implements MMPlugin {
    private TaggedImage snapSingleImage() {
       try {
          app_.getMMCore().snapImage();
-         TaggedImage img = app_.getMMCore().getTaggedImage();
+         TaggedImage tagged = app_.getMMCore().getTaggedImage();
         
          if (acqName_ != null) {
-            MDUtils.setFrameIndex(img.tags, imageCounter_);
-            app_.addImageToAcquisition(acqName_, imageCounter_, 0, 0, 0, img);
-            ImageProcessor ip = app_.getAcquisition(acqName_).getAcquisitionWindow().
-                    getImagePlus().getProcessor();
-            int size = ip.getWidth() * ip.getHeight();
-            if (ip instanceof ij.process.ByteProcessor) {
+            MDUtils.setFrameIndex(tagged.tags, imageCounter_);
+            Image image = app_.convertTaggedImage(tagged);
+            image = image.copyAtCoords(app_.data().getCoordsBuilder()
+                  .position("time", imageCounter_).build());
+            store_.putImage(image);
+            int size = image.getWidth() * image.getHeight();
+            if (tagged.pix instanceof byte[]) {
                pixelsCur_ = new float[size];
-               byte[] pixels = (byte[])img.pix;
+               byte[] pixels = (byte[])tagged.pix;
                for (int i = 0; i < size; i++)
                   pixelsCur_[i] = pixels[i];
             }
-            if (ip instanceof ij.process.ShortProcessor) {
+            if (tagged.pix instanceof short[]) {
                pixelsCur_ = new float[size];
-               short[] pixels = (short[])img.pix;
+               short[] pixels = (short[])tagged.pix;
                for (int i = 0; i < size; i++)
                   pixelsCur_[i] = pixels[i];
             }
-            if (ip instanceof ij.process.FloatProcessor) {
-               pixelsCur_ = java.util.Arrays.copyOf((float[])img.pix, size);
+            if (tagged.pix instanceof float[]) {
+               pixelsCur_ = java.util.Arrays.copyOf((float[])tagged.pix, size);
             }
-            imWidth_ = ip.getWidth();
+            imWidth_ = image.getWidth();
          }
-         return img;
+         return tagged;
       } catch (Exception e) {
          IJ.error(e.getMessage());
          timer_.stop();
@@ -514,7 +524,7 @@ public class TrackerControl extends MMFrame implements MMPlugin {
    }
    
 
-   private void processOneFrame(TaggedImage img, boolean moveStage) {
+   private void processOneFrame(TaggedImage tagged, boolean moveStage) {
       if (pixelsPrev_ == null) {
          pixelsPrev_ = pixelsCur_;
          dxUmPrev_ = 0.0;
@@ -532,12 +542,7 @@ public class TrackerControl extends MMFrame implements MMPlugin {
       int lMax = 0;
 
       Rectangle r = roi_.getBounds();
-      try {
-         app_.getAcquisition(acqName_).getAcquisitionWindow().
-                 getImagePlus().setRoi(roi_, true);
-      } catch (MMScriptException mex) {
-         app_.showError("Failed to set new ROI", this);
-      }
+      display_.getImagePlus().setRoi(roi_, true);
       //IJ.write("ROI pos: " + r.x + "," + r.y);
 
       int width = r.width, height = r.height;
@@ -620,14 +625,14 @@ public class TrackerControl extends MMFrame implements MMPlugin {
             double[] xCur = new double[1];
             double[] yCur = new double[1];            
             app_.getMMCore().getXYPosition(stage_, xCur, yCur);
-            img.tags.put(TRACK_X, xCur[0]);
-            img.tags.put(TRACK_Y, yCur[0]);
-            img.tags.put(TRACK_DX, lMax);
-            img.tags.put(TRACK_DY, kMax);
-            img.tags.put(RECT_X, r.x);
-            img.tags.put(RECT_Y, r.y);
-            img.tags.put(RECT_W, r.width);
-            img.tags.put(RECT_H, r.height);                   
+            tagged.tags.put(TRACK_X, xCur[0]);
+            tagged.tags.put(TRACK_Y, yCur[0]);
+            tagged.tags.put(TRACK_DX, lMax);
+            tagged.tags.put(TRACK_DY, kMax);
+            tagged.tags.put(RECT_X, r.x);
+            tagged.tags.put(RECT_Y, r.y);
+            tagged.tags.put(RECT_W, r.width);
+            tagged.tags.put(RECT_H, r.height);                   
 
             // update the XY position based on the offset
             double newX = xCur[0] + dxUm;
@@ -656,12 +661,7 @@ public class TrackerControl extends MMFrame implements MMPlugin {
          // move the roi
          roi_.setLocation(r.x + lMax, r.y + kMax);
 
-         try {
-            app_.getAcquisition(acqName_).getAcquisitionWindow().
-                    getImagePlus().setRoi(roi_, true);
-         } catch (MMScriptException mex) {
-            app_.showError("Failed to set new ROI", this);
-         }
+         display_.getImagePlus().setRoi(roi_, true);
       }
 
       double d = Math.sqrt(dxUm * dxUm + dyUm * dyUm);
@@ -670,9 +670,9 @@ public class TrackerControl extends MMFrame implements MMPlugin {
       speedLabel_.setText("n=" + imageCounter_ + ", t=" + TextUtils.FMT2.format(((double) imageCounter_ * intervalMs_) / 1000.0)
               +     " s, d=" + TextUtils.FMT2.format(d) + " um, l=" + TextUtils.FMT2.format(distUm_) + " um, v=" + TextUtils.FMT2.format(v) + " um/s");
       try {
-         img.tags.put(D, d);
-         img.tags.put(V, v);
-         img.tags.put(L, distUm_);
+         tagged.tags.put(D, d);
+         tagged.tags.put(V, v);
+         tagged.tags.put(L, distUm_);
       } catch (JSONException ex) {
          app_.showError(ex, "Problem adding tags to image", this);
       }

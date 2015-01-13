@@ -27,8 +27,8 @@ import org.apache.commons.math3.geometry.euclidean.twod.hull.ConvexHull2D;
 import org.apache.commons.math3.geometry.euclidean.twod.hull.MonotoneChain;
 import org.apache.commons.math3.geometry.partitioning.Region;
 import org.apache.commons.math3.geometry.partitioning.RegionFactory;
-import org.micromanager.MMStudio;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  *

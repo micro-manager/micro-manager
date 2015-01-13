@@ -30,13 +30,13 @@ import java.text.NumberFormat;
 
 import java.util.prefs.Preferences;
 
-import org.micromanager.api.ScriptInterface;
+import org.micromanager.ScriptInterface;
 
-import org.micromanager.utils.FileDialogs;
-import org.micromanager.utils.FileDialogs.FileType;
-import org.micromanager.utils.MMScriptException;
-import org.micromanager.utils.NumberUtils;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.internal.utils.FileDialogs;
+import org.micromanager.internal.utils.FileDialogs.FileType;
+import org.micromanager.internal.utils.MMScriptException;
+import org.micromanager.internal.utils.NumberUtils;
+import org.micromanager.internal.utils.ReportingUtils;
 
 import ij.measure.ResultsTable;
 import ij.text.TextPanel;
@@ -48,9 +48,8 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.micromanager.MMStudio;
-import org.micromanager.api.MMWindow;
-import org.micromanager.utils.JavaUtils;
+import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.utils.JavaUtils;
 
 /**
  *
@@ -693,12 +692,12 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
 
                      gui_.loadAcquisition(acqFileNameB_);
                      String goodStuff = gui_.runAcquisition();
-                     gui_.closeAcquisitionWindow(goodStuff);
+                     gui_.closeAcquisitionDisplays(goodStuff);
                      if (af != null) {
                         core_.setRelativeXYPosition(xyStage_, -xPos * pixelWidthMicron_, -yPos * pixelWidthMicron_);
                         core_.clearROI();
                      }
-                     // org.micromanager.utils.JavaUtils.sleep(200);
+                     // org.micromanager.internal.utils.JavaUtils.sleep(200);
                   } catch (Exception ex) {
                      ReportingUtils.showError(ex, "Imaging acquisition failed...");
                   }
@@ -706,7 +705,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
                try {
                   // need sleep to ensure that data have been written to disk
                   //gui_.sleep(100);
-                  gui_.closeAcquisitionWindow(expAcq);
+                  gui_.closeAcquisitionDisplays(expAcq);
                } catch (MMScriptException ex) {
                   ReportingUtils.showError(ex, "Failed to close acquisition window");
                }
@@ -767,63 +766,63 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
             } catch (Exception ex) {
                return;
             }
-            MMWindow mw = new MMWindow(siPlus);
-
-            
-            ResultsTable outTable = new ResultsTable();
-            String outTableName = Terms.RESULTTABLENAME;
-
-            if (!mw.isMMWindow()) {
-               // run the script on the current window
-               ij.IJ.runMacroFile(scriptFileName_);
-               // results should be in results window
-            } else { // MMImageWindow
-               int nrPositions = mw.getNumberOfPositions();
-
-               for (int p = 1; p <= nrPositions && !stop_.get(); p++) {
-                  try {
-                     mw.setPosition(p);
-                  } catch (MMScriptException ms) {
-                     ReportingUtils.showError(ms, "Error setting position in MMWindow");
-                  }
-                  ij.IJ.runMacroFile(scriptFileName_);
-                  ResultsTable res = ij.measure.ResultsTable.getResultsTable();
-                  // get results out, stick them in new window that has listeners coupling to image window 
-                  if (res.getCounter() > 0) {
-                     for (int i = 0; i < res.getCounter(); i++) {
-                        double xPos = res.getValue(Terms.X, i);
-                        double yPos = res.getValue(Terms.Y, i);
-                        outTable.incrementCounter();
-                        outTable.addValue(Terms.POSITION, p);
-                        outTable.addValue(Terms.X, xPos);
-                        outTable.addValue(Terms.Y, yPos);
-                     }
-                  }
-                  outTable.show(outTableName);
-               }
-            }
-            
-            // add listeners to our ResultsTable that let user click on row and go to cell that was found
-            TextPanel tp;
-            TextWindow win;
-            Frame frame = WindowManager.getFrame(outTableName);
-            if (frame != null && frame instanceof TextWindow && siPlus != null) {
-               win = (TextWindow) frame;
-               tp = win.getTextPanel();
-
-               // TODO: the following does not work, there is some voodoo going on here
-               for (MouseListener ms : tp.getMouseListeners()) {
-                  tp.removeMouseListener(ms);
-               }
-               for (KeyListener ks : tp.getKeyListeners()) {
-                  tp.removeKeyListener(ks);
-               }
-
-               ResultsListener myk = new ResultsListener(siPlus, outTable, win);
-               tp.addKeyListener(myk);
-               tp.addMouseListener(myk);
-               frame.toFront();
-            }
+            // TODO: the below code was broken by the MM2.0 refactor.
+//            MMWindow mw = new MMWindow(siPlus);
+//            
+//            ResultsTable outTable = new ResultsTable();
+//            String outTableName = Terms.RESULTTABLENAME;
+//
+//            if (!mw.isMMWindow()) {
+//               // run the script on the current window
+//               ij.IJ.runMacroFile(scriptFileName_);
+//               // results should be in results window
+//            } else { // MMImageWindow
+//               int nrPositions = mw.getNumberOfPositions();
+//
+//               for (int p = 1; p <= nrPositions && !stop_.get(); p++) {
+//                  try {
+//                     mw.setPosition(p);
+//                  } catch (MMScriptException ms) {
+//                     ReportingUtils.showError(ms, "Error setting position in MMWindow");
+//                  }
+//                  ij.IJ.runMacroFile(scriptFileName_);
+//                  ResultsTable res = ij.measure.ResultsTable.getResultsTable();
+//                  // get results out, stick them in new window that has listeners coupling to image window 
+//                  if (res.getCounter() > 0) {
+//                     for (int i = 0; i < res.getCounter(); i++) {
+//                        double xPos = res.getValue(Terms.X, i);
+//                        double yPos = res.getValue(Terms.Y, i);
+//                        outTable.incrementCounter();
+//                        outTable.addValue(Terms.POSITION, p);
+//                        outTable.addValue(Terms.X, xPos);
+//                        outTable.addValue(Terms.Y, yPos);
+//                     }
+//                  }
+//                  outTable.show(outTableName);
+//               }
+//            }
+//            
+//            // add listeners to our ResultsTable that let user click on row and go to cell that was found
+//            TextPanel tp;
+//            TextWindow win;
+//            Frame frame = WindowManager.getFrame(outTableName);
+//            if (frame != null && frame instanceof TextWindow && siPlus != null) {
+//               win = (TextWindow) frame;
+//               tp = win.getTextPanel();
+//
+//               // TODO: the following does not work, there is some voodoo going on here
+//               for (MouseListener ms : tp.getMouseListeners()) {
+//                  tp.removeMouseListener(ms);
+//               }
+//               for (KeyListener ks : tp.getKeyListeners()) {
+//                  tp.removeKeyListener(ks);
+//               }
+//
+//               ResultsListener myk = new ResultsListener(siPlus, outTable, win);
+//               tp.addKeyListener(myk);
+//               tp.addMouseListener(myk);
+//               frame.toFront();
+//            }
 
          }
       };

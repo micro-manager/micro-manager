@@ -21,7 +21,7 @@
 
 package org.micromanager.newimageflipper;
 
-import org.micromanager.api.MMProcessorPlugin;
+import org.micromanager.MMProcessorPlugin;
 
 /**
  * Example demonstrating the use of DataProcessors.  DataProcessors can 
