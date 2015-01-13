@@ -70,6 +70,12 @@ public interface DisplayWindow {
    public List<Image> getDisplayedImages();
 
    /**
+    * Return the ImagePlus used to handle image display logic in ImageJ. This
+    * may be a CompositeImage.
+    */
+   public ImagePlus getImagePlus();
+
+   /**
     * Publish a RequestToCloseEvent, which may cause any relevant subscribers
     * to call forceClosed(), below. This is the recommended way to close
     * DisplayWindows, so that cleanup logic can be performed (e.g. saving of
