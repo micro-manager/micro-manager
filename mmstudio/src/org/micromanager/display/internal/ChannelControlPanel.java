@@ -234,7 +234,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
       zoomInButton_ = new JButton();
       zoomInButton_.setIcon(SwingResourceManager.getIcon(MMStudio.class,
-            "/org/micromanager/icons/zoom_in.png"));
+            "/org/micromanager/internal/icons/zoom_in.png"));
       zoomInButton_.setMinimumSize(new Dimension(20, 20));
       zoomInButton_.addActionListener(new ActionListener() {
          @Override
@@ -245,7 +245,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       
       zoomOutButton_ = new JButton();
       zoomOutButton_.setIcon(SwingResourceManager.getIcon(MMStudio.class,
-            "/org/micromanager/icons/zoom_out.png"));   
+            "/org/micromanager/internal/icons/zoom_out.png"));   
       zoomOutButton_.setMinimumSize(new Dimension(20, 20));
       zoomOutButton_.addActionListener(new ActionListener() {
          @Override

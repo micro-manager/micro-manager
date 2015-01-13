@@ -178,7 +178,7 @@ public class DisplaySettingsPanel extends JPanel {
       JButton zoomInButton = new JButton();
       zoomInButton.setIcon(SwingResourceManager.getIcon(
                DisplaySettingsPanel.class,
-               "/org/micromanager/icons/zoom_in.png"));
+               "/org/micromanager/internal/icons/zoom_in.png"));
       zoomInButton.setToolTipText("Zoom in");
       zoomInButton.addActionListener(new ActionListener() {
          @Override
@@ -190,7 +190,7 @@ public class DisplaySettingsPanel extends JPanel {
       JButton zoomOutButton = new JButton();
       zoomOutButton.setIcon(SwingResourceManager.getIcon(
                DisplaySettingsPanel.class,
-               "/org/micromanager/icons/zoom_out.png"));
+               "/org/micromanager/internal/icons/zoom_out.png"));
       zoomOutButton.setToolTipText("Zoom out");
       zoomOutButton.addActionListener(new ActionListener() {
          @Override

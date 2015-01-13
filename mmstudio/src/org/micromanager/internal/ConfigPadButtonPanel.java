@@ -77,10 +77,10 @@ public final class ConfigPadButtonPanel extends JPanel {
    public void initializeWidgets() {
 
       createLabel("Group:");
-      addGroupButton_ = createButton("","/org/micromanager/icons/plus.png");
+      addGroupButton_ = createButton("","/org/micromanager/internal/icons/plus.png");
       addGroupButton_.setName("Add group");
       addGroupButton_.setToolTipText("Create new group of properties");
-      removeGroupButton_ = createButton("","/org/micromanager/icons/minus.png");
+      removeGroupButton_ = createButton("","/org/micromanager/internal/icons/minus.png");
       removeGroupButton_.setName("Remove group");
       removeGroupButton_.setToolTipText("Delete currently selected group");
       editGroupButton_ = createButton("Edit","");
@@ -88,10 +88,10 @@ public final class ConfigPadButtonPanel extends JPanel {
       editGroupButton_.setToolTipText("Edit currently selected group");
 
       createLabel("Preset:");
-      addPresetButton_ = createButton("","/org/micromanager/icons/plus.png");
+      addPresetButton_ = createButton("","/org/micromanager/internal/icons/plus.png");
       addPresetButton_.setName("Add preset");
       addPresetButton_.setToolTipText("Create new preset (set of values for each property in group)");
-      removePresetButton_ = createButton("","/org/micromanager/icons/minus.png");
+      removePresetButton_ = createButton("","/org/micromanager/internal/icons/minus.png");
       removePresetButton_.setName("Remove preset");
       removePresetButton_.setToolTipText("Delete currently selected preset");
       editPresetButton_ = createButton("Edit","");
