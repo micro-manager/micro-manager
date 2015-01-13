@@ -5,6 +5,7 @@ import com.google.common.eventbus.Subscribe;
 
 import ij.ImagePlus;
 import ij.gui.ImageWindow;
+import ij.io.FileInfo;
 import ij.measure.Calibration;
 import ij.Menus;
 import ij.WindowManager;
@@ -180,7 +181,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
    private void makeWindowAndIJObjects() {
       stack_ = new MMVirtualStack(store_, displayBus_);
       ijImage_ = new MMImagePlus();
-      calibrateImagePlus(ijImage_);
+      setImagePlusMetadata(ijImage_);
       stack_.setImagePlus(ijImage_);
       ijImage_.setStack(generateImagePlusName(), stack_);
       ijImage_.setOpenAsHyperStack(true);
@@ -456,7 +457,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       int numChannels = store_.getAxisLength("channel");
       composite.setNChannelsUnverified(numChannels);
       composite.reset();
-      calibrateImagePlus(ijImage_);
+      setImagePlusMetadata(ijImage_);
       displayBus_.post(new DefaultNewImagePlusEvent(ijImage_));
    }
 
@@ -464,14 +465,15 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
     * Tell the ImagePlus about certain properties of our data that it doesn't
     * otherwise know how to access.
     */
-   private void calibrateImagePlus(ImagePlus plus) {
+   private void setImagePlusMetadata(ImagePlus plus) {
       Calibration cal = new Calibration(plus);
       cal.setUnit("um");
       // TODO: ImageJ only allows for one pixel size across all images, even
       // if e.g. different channels actually vary.
       // On the flipside, we only allow for square pixels, so we aren't
       // exactly perfect either.
-      Double pixelSize = store_.getAnyImage().getMetadata().getPixelSizeUm();
+      Image sample = store_.getAnyImage();
+      Double pixelSize = sample.getMetadata().getPixelSizeUm();
       if (pixelSize != null) {
          cal.pixelWidth = pixelSize;
          cal.pixelHeight = pixelSize;
@@ -484,6 +486,13 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
          cal.pixelDepth = summary.getZStepUm();
       }
       plus.setCalibration(cal);
+
+      FileInfo info = new FileInfo();
+      info.directory = summary.getDirectory();
+      info.fileName = summary.getFileName();
+      info.width = sample.getWidth();
+      info.height = sample.getHeight();
+      ijImage_.setFileInfo(info);
    }
 
    /**   
@@ -749,8 +758,9 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
     * When the summary metadata changes, make certain that certain values
     * get propagated to ImageJ.
     */
+   @Subscribe
    public void onNewSummaryMetadata(NewSummaryMetadataEvent event) {
-      calibrateImagePlus(ijImage_);
+      setImagePlusMetadata(ijImage_);
    }
 
    /**
