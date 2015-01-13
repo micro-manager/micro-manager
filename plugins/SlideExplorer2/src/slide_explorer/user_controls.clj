@@ -4,7 +4,7 @@
                            ActionListener)
            (java.awt Toolkit Window)
            (javax.swing SwingUtilities)
-           (org.micromanager.utils JavaUtils))
+           (org.micromanager.internal.utils JavaUtils))
   (:require [slide-explorer.reactive :as reactive]
             [slide-explorer.widgets :as widgets]))
 

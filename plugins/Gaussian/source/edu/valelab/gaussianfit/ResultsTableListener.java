@@ -87,7 +87,7 @@ public class ResultsTableListener implements KeyListener, MouseListener{
          }
          try {
             Boolean isMMWindow = false;
-            Class<?> mmWin = Class.forName("org.micromanager.api.MMWindow");
+            Class<?> mmWin = Class.forName("org.micromanager.MMWindow");
             Constructor[] aCTors = mmWin.getDeclaredConstructors();
             aCTors[0].setAccessible(true);
             Object mw = aCTors[0].newInstance(siPlus_);

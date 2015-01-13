@@ -8,8 +8,8 @@ import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
-import org.micromanager.utils.JavaUtils;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.internal.utils.JavaUtils;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /*
  * The Coordinates class is a centralized location for most SlideExplorer coordinate

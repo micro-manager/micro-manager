@@ -11,8 +11,8 @@ import java.awt.geom.Point2D;
 
 
 import mmcorej.CMMCore;
-import org.micromanager.utils.MathFunctions;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.internal.utils.MathFunctions;
+import org.micromanager.internal.utils.ReportingUtils;
 
 public class Controller {
 

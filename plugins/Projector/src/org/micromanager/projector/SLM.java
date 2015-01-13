@@ -25,7 +25,7 @@ import java.awt.Polygon;
 import java.util.HashSet;
 import java.util.List;
 import mmcorej.CMMCore;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.internal.utils.ReportingUtils;
 
 public class SLM implements ProjectionDevice {
 

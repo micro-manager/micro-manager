@@ -11,8 +11,8 @@
 import edu.valelab.gaussianfit.MainForm;
 
 import ij.plugin.*;
-import org.micromanager.api.MMPlugin;
-import org.micromanager.api.ScriptInterface;
+import org.micromanager.MMPlugin;
+import org.micromanager.ScriptInterface;
 
 /**
  *

@@ -36,8 +36,8 @@ import javax.swing.BorderFactory;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
 
-import org.micromanager.api.MMListenerInterface;
-import org.micromanager.api.ScriptInterface;
+import org.micromanager.MMListenerInterface;
+import org.micromanager.ScriptInterface;
 
 /**
  *

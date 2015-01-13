@@ -9,9 +9,9 @@ package org.micromanager.acquiremultipleregions;
 import java.io.File;
 import org.micromanager.acquiremultipleregions.AcquireMultipleRegionsForm.AxisList;
 import org.micromanager.acquiremultipleregions.ZGenerator.ZGeneratorType;
-import org.micromanager.api.MultiStagePosition;
-import org.micromanager.api.PositionList;
-import org.micromanager.api.StagePosition;
+import org.micromanager.MultiStagePosition;
+import org.micromanager.PositionList;
+import org.micromanager.StagePosition;
 
 /**
  *

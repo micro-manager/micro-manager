@@ -1,6 +1,6 @@
 (ns slide-explorer.paint
   (:import (java.awt Graphics Graphics2D RenderingHints)
-           (org.micromanager.utils GUIUpdater))
+           (org.micromanager.internal.utils GUIUpdater))
   (:require [slide-explorer.reactive :as reactive]))
 
 (defn enable-anti-aliasing

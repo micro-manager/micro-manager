@@ -11,7 +11,7 @@
            (java.awt Color)
            (java.io File)
            (javax.imageio ImageIO)
-           (org.micromanager.utils ImageUtils))
+           (org.micromanager.internal.utils ImageUtils))
   (:require [slide-explorer.canvas :as canvas]
             [clojure.java.io :as io]))
 

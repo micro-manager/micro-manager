@@ -6,10 +6,10 @@ import java.util.concurrent.locks.Lock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import mmcorej.TaggedImage;
-import org.micromanager.acquisition.TaggedImageQueue;
-import org.micromanager.api.ImageCache;
-import org.micromanager.utils.MDUtils;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.acquisition.internal.TaggedImageQueue;
+import org.micromanager.ImageCache;
+import org.micromanager.internal.utils.MDUtils;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * Dequeue tagged images and append to image cache

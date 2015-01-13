@@ -37,14 +37,14 @@ import java.util.concurrent.LinkedBlockingQueue;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
-import org.micromanager.api.MMPlugin;
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.MMStudio;
-import org.micromanager.acquisition.TaggedImageQueue;
-import org.micromanager.api.MMTags;
-import org.micromanager.utils.MDUtils;
-import org.micromanager.utils.MMScriptException;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.MMPlugin;
+import org.micromanager.ScriptInterface;
+import org.micromanager.internal.MMStudio;
+import org.micromanager.acquisition.internal.TaggedImageQueue;
+import org.micromanager.MMTags;
+import org.micromanager.internal.utils.MDUtils;
+import org.micromanager.internal.utils.MMScriptException;
+import org.micromanager.internal.utils.ReportingUtils;
 
 
 

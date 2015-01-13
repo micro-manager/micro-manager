@@ -29,9 +29,9 @@ import ij.process.ShortProcessor;
 import java.awt.Rectangle;
 import java.util.HashMap;
 
-import org.micromanager.utils.ImageUtils;
-import org.micromanager.utils.MMException;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.internal.utils.ImageUtils;
+import org.micromanager.internal.utils.MMException;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * Utility class for Shading plugin that holds the background and flatfield
@@ -217,8 +217,8 @@ public class ImageCollection {
     * @param ipi
     * @param binning
     * @param roi
-    * @return
-    * @throws org.micromanager.utils.MMException
+    * @return 
+    * @throws org.micromanager.internal.utils.MMException 
     */
    private ImagePlusInfo makeDerivedImage(ImagePlusInfo ipi, int binning, Rectangle roi)
            throws MMException {

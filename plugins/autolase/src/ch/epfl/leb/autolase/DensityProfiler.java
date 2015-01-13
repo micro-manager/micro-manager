@@ -1,8 +1,8 @@
 package ch.epfl.leb.autolase;
 
 import javax.swing.JFrame;
-import org.micromanager.graph.GraphData;
-import org.micromanager.graph.GraphFrame;
+import org.micromanager.internal.graph.GraphData;
+import org.micromanager.internal.graph.GraphFrame;
 
 /**
  * A DensityProfiler displays a live graph of the density.

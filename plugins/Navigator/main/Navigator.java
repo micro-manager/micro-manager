@@ -11,9 +11,9 @@ import java.awt.Toolkit;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.prefs.Preferences;
-import org.micromanager.MMStudio;
-import org.micromanager.api.MMPlugin;
-import org.micromanager.api.ScriptInterface;
+import org.micromanager.internal.MMStudio;
+import org.micromanager.MMPlugin;
+import org.micromanager.ScriptInterface;
 
 /**
  *

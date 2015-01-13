@@ -12,9 +12,9 @@
 package org.micromanager.pixelcalibrator;
 
 import java.lang.reflect.InvocationTargetException;
-import org.micromanager.MMStudio;
-import org.micromanager.utils.GUIUtils;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.utils.GUIUtils;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  *

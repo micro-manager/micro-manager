@@ -2,9 +2,9 @@ package org.micromanager.slideexplorer;
 
 import mmcorej.CMMCore;
 
-import org.micromanager.api.MMPlugin;
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.MMPlugin;
+import org.micromanager.ScriptInterface;
+import org.micromanager.internal.utils.ReportingUtils;
 
 public class SlideExplorerPlugin implements MMPlugin {
 	public static final String menuName = "Slide Explorer";

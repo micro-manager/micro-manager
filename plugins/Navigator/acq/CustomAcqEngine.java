@@ -18,11 +18,13 @@ import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.MMStudio;
-import org.micromanager.acquisition.MMAcquisition;
-import org.micromanager.api.MMTags;
-import org.micromanager.utils.MDUtils;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.MMTags;
+import org.micromanager.acquisition.internal.MMAcquisition;
+import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.utils.MDUtils;
+import org.micromanager.internal.utils.ReportingUtils;
+import surfacesandregions.RegionManager;
+import surfacesandregions.SurfaceManager;
 
 /**
  *

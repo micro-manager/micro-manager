@@ -77,14 +77,16 @@ import mmcorej.Configuration;
 import mmcorej.DeviceType;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
-import org.micromanager.utils.GUIUtils;
-import org.micromanager.utils.ImageUtils;
-import org.micromanager.utils.JavaUtils;
-import org.micromanager.utils.MMListenerAdapter;
-import org.micromanager.utils.MathFunctions;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.data.Datastore;
+import org.micromanager.ScriptInterface;
+// TODO should not depend on this module.
+import org.micromanager.display.internal.MMVirtualStack;
+import org.micromanager.internal.utils.GUIUtils;
+import org.micromanager.internal.utils.ImageUtils;
+import org.micromanager.internal.utils.JavaUtils;
+import org.micromanager.internal.utils.MMListenerAdapter;
+import org.micromanager.internal.utils.MathFunctions;
+import org.micromanager.internal.utils.ReportingUtils;
 
 // The main window for the Projector plugin. Contains logic for calibration,
 // and control for SLMs and Galvos.
@@ -590,10 +592,13 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       
    // Returns true if a particular image is mirrored.
    private static boolean isImageMirrored(ImagePlus imgp) {
+      if (!(imgp.getStack() instanceof MMVirtualStack)) {
+         return false;
+      }
       try {
-         String mirrorString = VirtualAcquisitionDisplay.getDisplay(imgp)
-               .getCurrentMetadata().getString("ImageFlipper-Mirror");
-         return (mirrorString.contentEquals("On"));
+         Datastore store = ((MMVirtualStack) imgp.getStack()).getDatastore();
+         String mirrorString = store.getSummaryMetadata().getUserData().getString("ImageFlipper-Mirror");
+         return mirrorString.contentEquals("On");
       } catch (JSONException e) {
          return false;
       }
@@ -861,17 +866,19 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
    // Save ROIs in the acquisition path, if it exists.
    private void recordPolygons() {
       if (app_.isAcquisitionRunning()) {
-         String location = app_.getAcquisitionPath();
-         if (location != null) {
-            try {
-               File f = new File(location, "ProjectorROIs.zip");
-               if (!f.exists()) {
-                  saveROIs(f, individualRois_);
-               }
-            } catch (Exception ex) {
-               ReportingUtils.logError(ex);
-            }
-         }
+         // TODO: The MM2.0 refactor broke this code by removing the below
+         // method.
+//         String location = app_.getAcquisitionPath();
+//         if (location != null) {
+//            try {
+//               File f = new File(location, "ProjectorROIs.zip");
+//               if (!f.exists()) {
+//                  saveROIs(f, individualRois_);
+//               }
+//            } catch (Exception ex) {
+//               ReportingUtils.logError(ex);
+//            }
+//         }
       }
    }
    

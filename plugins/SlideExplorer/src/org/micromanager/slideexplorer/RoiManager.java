@@ -35,12 +35,12 @@ import java.util.logging.Logger;
 
 import mmcorej.CMMCore;
 
-import org.micromanager.api.MultiStagePosition;
-import org.micromanager.api.PositionList;
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.api.StagePosition;
+import org.micromanager.MultiStagePosition;
+import org.micromanager.PositionList;
+import org.micromanager.ScriptInterface;
+import org.micromanager.StagePosition;
 //import org.micromanager.slideexplorer.SlideExplorer.CoordinateMap;
-import org.micromanager.utils.MMScriptException;
+import org.micromanager.internal.utils.MMScriptException;
 
 import ij.gui.Roi;
 import ij.gui.ShapeRoi;
@@ -48,8 +48,8 @@ import ij.gui.ShapeRoi;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 
-import org.micromanager.utils.JavaUtils;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.internal.utils.JavaUtils;
+import org.micromanager.internal.utils.ReportingUtils;
 
 
 

@@ -25,13 +25,13 @@ import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.MMStudio;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
-import org.micromanager.api.ImageCache;
-import org.micromanager.utils.GUIUtils;
-import org.micromanager.utils.MDUtils;
-import org.micromanager.utils.MMScriptException;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.ImageCache;
+import org.micromanager.internal.utils.GUIUtils;
+import org.micromanager.internal.utils.MDUtils;
+import org.micromanager.internal.utils.MMScriptException;
+import org.micromanager.internal.utils.ReportingUtils;
 
 
 

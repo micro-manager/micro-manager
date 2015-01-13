@@ -7,14 +7,14 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
 
-import org.micromanager.dialogs.CalibrationEditor;
-import org.micromanager.dialogs.CalibrationListDlg;
-import org.micromanager.MMStudio;
-import org.micromanager.api.MMPlugin;
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.utils.JavaUtils;
-import org.micromanager.utils.NumberUtils;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.internal.dialogs.CalibrationEditor;
+import org.micromanager.internal.dialogs.CalibrationListDlg;
+import org.micromanager.internal.MMStudio;
+import org.micromanager.MMPlugin;
+import org.micromanager.ScriptInterface;
+import org.micromanager.internal.utils.JavaUtils;
+import org.micromanager.internal.utils.NumberUtils;
+import org.micromanager.internal.utils.ReportingUtils;
 
 public class PixelCalibratorPlugin implements MMPlugin {
    public static final String menuName = "Pixel Calibrator";

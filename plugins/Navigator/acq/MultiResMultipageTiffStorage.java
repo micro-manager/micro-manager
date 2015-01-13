@@ -16,11 +16,11 @@ import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.acquisition.TaggedImageStorageMultipageTiff;
-import org.micromanager.api.TaggedImageStorage;
-import org.micromanager.utils.JavaUtils;
-import org.micromanager.utils.MDUtils;
-import org.micromanager.utils.MMException;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.TaggedImageStorage;
+import org.micromanager.internal.utils.JavaUtils;
+import org.micromanager.internal.utils.MDUtils;
+import org.micromanager.internal.utils.MMException;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * This class manages multiple multipage Tiff datasets, averaging multiple 2x2

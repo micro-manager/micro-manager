@@ -22,19 +22,19 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.AcqControlDlg;
 import org.micromanager.AcquisitionEngine2010;
-import org.micromanager.MMStudio;
-import org.micromanager.acquisition.AcquisitionManager;
-import org.micromanager.acquisition.AcquisitionWrapperEngine;
-import org.micromanager.acquisition.DefaultTaggedImageSink;
-import org.micromanager.acquisition.MMImageCache;
-import org.micromanager.api.IAcquisitionEngine2010;
-import org.micromanager.api.ImageCache;
-import org.micromanager.api.SequenceSettings;
-import org.micromanager.api.TaggedImageStorage;
-import org.micromanager.utils.JavaUtils;
-import org.micromanager.utils.MDUtils;
-import org.micromanager.utils.MMScriptException;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.internal.MMStudio;
+import org.micromanager.acquisition.internal.AcquisitionManager;
+import org.micromanager.acquisition.internal.AcquisitionWrapperEngine;
+import org.micromanager.acquisition.internal.DefaultTaggedImageSink;
+import org.micromanager.acquisition.internal.MMImageCache;
+import org.micromanager.IAcquisitionEngine2010;
+import org.micromanager.ImageCache;
+import org.micromanager.SequenceSettings;
+import org.micromanager.TaggedImageStorage;
+import org.micromanager.internal.utils.JavaUtils;
+import org.micromanager.internal.utils.MDUtils;
+import org.micromanager.internal.utils.MMScriptException;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * Adapter class that sends commands in MM from acqWrapperEngine interface to

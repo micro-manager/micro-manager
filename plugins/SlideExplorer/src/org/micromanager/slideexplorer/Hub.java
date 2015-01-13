@@ -16,13 +16,13 @@ import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
 
 import mmcorej.StrVector;
-import org.micromanager.MMStudio;
-import org.micromanager.api.ScriptInterface;
+import org.micromanager.internal.MMStudio;
+import org.micromanager.ScriptInterface;
 import org.micromanager.pixelcalibrator.PixelCalibratorPlugin;
-import org.micromanager.utils.ImageUtils;
-import org.micromanager.utils.JavaUtils;
-import org.micromanager.utils.MMScriptException;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.internal.utils.ImageUtils;
+import org.micromanager.internal.utils.JavaUtils;
+import org.micromanager.internal.utils.MMScriptException;
+import org.micromanager.internal.utils.ReportingUtils;
 
 public class Hub {
    public static ScriptInterface appRef_;

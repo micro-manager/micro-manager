@@ -23,8 +23,8 @@ import javax.swing.SpinnerModel;
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.ScriptInterface;
+import org.micromanager.internal.utils.ReportingUtils;
 //import java.util.Timer;
 /**
  *

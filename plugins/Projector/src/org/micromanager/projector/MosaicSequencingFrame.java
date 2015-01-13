@@ -63,11 +63,11 @@ import mmcorej.StrVector;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.utils.FileDialogs;
-import org.micromanager.utils.GUIUtils;
-import org.micromanager.utils.ReportingUtils;
-import org.micromanager.utils.TextUtils;
+import org.micromanager.ScriptInterface;
+import org.micromanager.internal.utils.FileDialogs;
+import org.micromanager.internal.utils.GUIUtils;
+import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.TextUtils;
 
 // The Mosaic Sequencing Window is for use with Andor's Mosaic3 device adapter.
 // It allows the creation of complex phototargeting sequences, for use with
