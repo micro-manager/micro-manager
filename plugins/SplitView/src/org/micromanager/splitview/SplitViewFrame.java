@@ -49,11 +49,16 @@ import mmcorej.TaggedImage;
 
 import org.json.JSONArray;
 import org.json.JSONException;
-import org.micromanager.MMStudio;
-import org.micromanager.api.MMTags;
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.utils.MMScriptException;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.data.Coords;
+import org.micromanager.data.Datastore;
+import org.micromanager.data.Image;
+import org.micromanager.display.DisplaySettings;
+import org.micromanager.display.DisplayWindow;
+import org.micromanager.internal.MMStudio;
+import org.micromanager.MMTags;
+import org.micromanager.ScriptInterface;
+import org.micromanager.internal.utils.MMScriptException;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /** 
  * Micro-Manager plugin that can split the acquired image top-down or left-right
@@ -247,18 +252,14 @@ public class SplitViewFrame extends javax.swing.JFrame {
    
    private void openAcq() throws MMScriptException {
 
-      gui_.openAcquisition(ACQNAME, "", 1, 2, 1, 1, true, false);
+      gui_.openAcquisition(ACQNAME, "", 1, 2, 1, 1, false, false);
       gui_.initializeAcquisition(ACQNAME, newWidth_, newHeight_, (int) imgDepth_, 8 * (int)imgDepth_);
       gui_.promptToSaveAcquisition(ACQNAME, false);
-      gui_.setChannelColor(ACQNAME, 0, col1_);
-      gui_.setChannelColor(ACQNAME, 1, col2_);
-      if (orientation_.equals(LR)) {
-         gui_.setChannelName(ACQNAME, 0, "Left");
-         gui_.setChannelName(ACQNAME, 1, "Right");
-      } else {
-         gui_.setChannelName(ACQNAME, 0, "Top");
-         gui_.setChannelName(ACQNAME, 1, "Bottom");
-      }
+
+      Datastore store = gui_.getAcquisitionDatastore(ACQNAME);
+      gui_.display().track(store);
+      DisplayWindow display = gui_.display().createDisplay(store);
+      updateDisplaySettings();
    }
 
    private void addSnapToImage() {
@@ -283,7 +284,10 @@ public class SplitViewFrame extends javax.swing.JFrame {
          } else if (gui_.getAcquisitionImageHeight(ACQNAME) != newHeight_
                  || gui_.getAcquisitionImageWidth(ACQNAME) != newWidth_
                  || gui_.getAcquisitionImageByteDepth(ACQNAME) != imgDepth_) {
-            gui_.closeAcquisitionWindow(ACQNAME);
+            Datastore store = gui_.getAcquisitionDatastore(ACQNAME);
+            for (DisplayWindow display : gui_.display().getDisplays(store)) {
+               display.forceClosed();
+            }
             gui_.closeAcquisition(ACQNAME);
             openAcq();
          }
@@ -293,7 +297,10 @@ public class SplitViewFrame extends javax.swing.JFrame {
          TaggedImage firstChannel = new TaggedImage(tmpImg.crop().getPixels(), img.tags);
          firstChannel.tags.put(MMTags.Image.WIDTH, newWidth_);
          firstChannel.tags.put(MMTags.Image.HEIGHT, newHeight_);
-         gui_.addImageToAcquisition(ACQNAME, 0, 0, 0, 0, firstChannel);
+         Image image = gui_.convertTaggedImage(firstChannel);
+         Coords.CoordsBuilder builder = gui_.data().getCoordsBuilder();
+         image = image.copyAtCoords(builder.position("channel", 0).build());
+         gui_.getAcquisitionDatastore(ACQNAME).putImage(image);
          
          // second channel
          if (orientation_.equals(LR)) {
@@ -304,7 +311,9 @@ public class SplitViewFrame extends javax.swing.JFrame {
          TaggedImage secondChannel = new TaggedImage(tmpImg.crop().getPixels(), img.tags);
          secondChannel.tags.put(MMTags.Image.WIDTH, newWidth_);
          secondChannel.tags.put(MMTags.Image.HEIGHT, newHeight_);
-         gui_.addImageToAcquisition(ACQNAME, 0, 1, 0, 0, secondChannel);
+         image = gui_.convertTaggedImage(secondChannel);
+         image = image.copyAtCoords(builder.position("channel", 1).build());
+         gui_.getAcquisitionDatastore(ACQNAME).putImage(image);
 
       } catch (Exception e) {
          if (gui_.isLiveModeOn())
@@ -474,30 +483,38 @@ public class SplitViewFrame extends javax.swing.JFrame {
        }
     }//GEN-LAST:event_liveButtonActionPerformed
 
+   private void updateDisplaySettings() {
+      try {
+         Datastore store = gui_.getAcquisitionDatastore(ACQNAME);
+         for (DisplayWindow display : gui_.display().getDisplays(store)) {
+            DisplaySettings settings = display.getDisplaySettings();
+            Color[] newColors = new Color[] {col1_, col2_};
+            String[] newNames = new String[] {"Left", "Right"};
+            if (orientation_.equals(TB)) {
+               newNames[0] = "Top";
+               newNames[1] = "Bottom";
+            }
+            settings = settings.copy().channelColors(newColors).channelNames(newNames).build();
+            display.setDisplaySettings(settings);
+         }
+      }
+      catch (MMScriptException e) {
+         gui_.logError(e, "Unable to update display settings");
+      }
+   }
+
     private void topLeftColorButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_topLeftColorButtonActionPerformed
        col1_ = JColorChooser.showDialog(getContentPane(), "Choose left/top color", col1_);
        topLeftColorButton.setForeground(col1_);
        prefs_.putInt(TOPLEFTCOLOR, col1_.getRGB());
-       try {
-          if (gui_.acquisitionExists(ACQNAME)) {
-             gui_.setChannelColor(ACQNAME, 0, col1_);
-          }
-       } catch (MMScriptException ex) {
-          ReportingUtils.logError(ex);
-       }
+       updateDisplaySettings();
     }//GEN-LAST:event_topLeftColorButtonActionPerformed
 
     private void bottomRightColorButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bottomRightColorButtonActionPerformed
        col2_ = JColorChooser.showDialog(getContentPane(), "Choose right/bottom color", col2_);
        bottomRightColorButton.setForeground(col2_);
        prefs_.putInt(BOTTOMRIGHTCOLOR, col2_.getRGB());
-       try {
-          if (gui_.acquisitionExists(ACQNAME)) {
-             gui_.setChannelColor(ACQNAME, 0, col2_);
-          }
-       } catch (MMScriptException ex) {
-          ReportingUtils.logError(ex);
-       }
+       updateDisplaySettings();
     }//GEN-LAST:event_bottomRightColorButtonActionPerformed
 
     public JSONArray getColors() throws JSONException {

@@ -23,7 +23,7 @@
 
 package org.micromanager.hcs;
 
-import org.micromanager.api.MultiStagePosition;
+import org.micromanager.MultiStagePosition;
 
 public class TestSBSPlate {
 

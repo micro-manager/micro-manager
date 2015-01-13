@@ -25,17 +25,17 @@ import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.MMStudio;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.acquisition.AcquisitionEngine;
 
 import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
-import org.micromanager.api.ImageCache;
-import org.micromanager.api.ImageCacheListener;
+import org.micromanager.ImageCache;
+import org.micromanager.ImageCacheListener;
 import org.micromanager.imagedisplay.IMMImagePlus;
 
 
-import org.micromanager.internalinterfaces.DisplayControls;
-import org.micromanager.utils.*;
+import org.micromanager.internal.interfaces.DisplayControls;
+import org.micromanager.internal.utils.*;
 
 public class DisplayPlus implements ImageCacheListener {
 

@@ -3,8 +3,8 @@ package ch.epfl.leb.autolase;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import mmcorej.CMMCore;
-import org.micromanager.MMStudio;
-import org.micromanager.api.ScriptInterface;
+import org.micromanager.internal.MMStudio;
+import org.micromanager.ScriptInterface;
 
 /**
  * Main class for Autolase, an automatic activation control plugin for Micro-Manager

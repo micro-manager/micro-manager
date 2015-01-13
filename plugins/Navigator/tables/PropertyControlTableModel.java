@@ -10,12 +10,12 @@ import java.util.TreeMap;
 import java.util.prefs.Preferences;
 import javax.swing.table.AbstractTableModel;
 import mmcorej.CMMCore;
-import org.micromanager.MMStudio;
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.utils.MMPropertyTableModel;
-import org.micromanager.utils.NumberUtils;
-import org.micromanager.utils.PropertyItem;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.internal.MMStudio;
+import org.micromanager.ScriptInterface;
+import org.micromanager.internal.utils.MMPropertyTableModel;
+import org.micromanager.internal.utils.NumberUtils;
+import org.micromanager.internal.utils.PropertyItem;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  *

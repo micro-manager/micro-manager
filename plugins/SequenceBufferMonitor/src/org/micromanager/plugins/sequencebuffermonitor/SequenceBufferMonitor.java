@@ -19,8 +19,8 @@
 
 package org.micromanager.plugins.sequencebuffermonitor;
 
-import org.micromanager.api.MMPlugin;
-import org.micromanager.api.ScriptInterface;
+import org.micromanager.MMPlugin;
+import org.micromanager.ScriptInterface;
 
 
 public class SequenceBufferMonitor implements MMPlugin {

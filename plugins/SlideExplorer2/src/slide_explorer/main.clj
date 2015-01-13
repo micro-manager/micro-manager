@@ -4,9 +4,9 @@
            (java.util.prefs Preferences)
            (java.util.concurrent Executors)
            (javax.swing JOptionPane)
-           (org.micromanager AcquisitionEngine2010 MMStudio)
-           (org.micromanager.utils ImageUtils JavaUtils)
-           (org.micromanager.acquisition TaggedImageQueue)
+           (org.micromanager.internal AcquisitionEngine2010 MMStudio)
+           (org.micromanager.internal.utils ImageUtils JavaUtils)
+           (org.micromanager.acquisition.internal TaggedImageQueue)
            (org.micromanager.pixelcalibrator.PixelCalibratorPlugin))
   (:require [clojure.java.io :as io]
             [clojure.set]

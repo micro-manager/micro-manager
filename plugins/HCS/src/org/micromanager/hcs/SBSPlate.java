@@ -29,10 +29,10 @@ import java.util.HashMap;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.api.MultiStagePosition;
-import org.micromanager.api.PositionList;
-import org.micromanager.api.StagePosition;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.MultiStagePosition;
+import org.micromanager.PositionList;
+import org.micromanager.StagePosition;
+import org.micromanager.internal.utils.ReportingUtils;
 
 public class SBSPlate {
 

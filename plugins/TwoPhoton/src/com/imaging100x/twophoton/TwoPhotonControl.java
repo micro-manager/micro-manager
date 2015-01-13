@@ -61,15 +61,15 @@ import javax.swing.table.TableColumn;
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
-import org.micromanager.MMStudio;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.acquisition.ComponentTitledBorder;
 import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
-import org.micromanager.api.MMPlugin;
-import org.micromanager.api.MultiStagePosition;
-import org.micromanager.api.PositionList;
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.api.StagePosition;
-import org.micromanager.utils.*;
+import org.micromanager.MMPlugin;
+import org.micromanager.MultiStagePosition;
+import org.micromanager.PositionList;
+import org.micromanager.ScriptInterface;
+import org.micromanager.StagePosition;
+import org.micromanager.internal.utils.*;
 
 
 

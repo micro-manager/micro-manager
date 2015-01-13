@@ -15,7 +15,7 @@ import ij.IJ;
 import ij.gui.Toolbar;
 import java.awt.Color;
 import org.micromanager.slideexplorer.Hub.ModeManager;
-import org.micromanager.utils.JavaUtils;
+import org.micromanager.internal.utils.JavaUtils;
 
 /**
  *

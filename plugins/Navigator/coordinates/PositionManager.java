@@ -18,9 +18,9 @@ import mmcorej.CMMCore;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.MMStudio;
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.internal.MMStudio;
+import org.micromanager.ScriptInterface;
+import org.micromanager.internal.utils.ReportingUtils;
 
 
 /*

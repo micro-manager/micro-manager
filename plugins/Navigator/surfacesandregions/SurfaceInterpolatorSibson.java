@@ -7,7 +7,7 @@
 //import edu.mines.jtk.dsp.Sampling;
 //import edu.mines.jtk.interp.SibsonInterpolator2;
 //import java.util.LinkedList;
-//import org.micromanager.MMStudio;
+//import org.micromanager.internal.MMStudio;
 //
 ///**
 // *

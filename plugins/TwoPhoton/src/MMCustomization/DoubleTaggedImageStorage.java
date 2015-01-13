@@ -19,10 +19,10 @@ import java.util.prefs.Preferences;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.api.TaggedImageStorage;
-import org.micromanager.utils.MDUtils;
-import org.micromanager.utils.MMException;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.TaggedImageStorage;
+import org.micromanager.internal.utils.MDUtils;
+import org.micromanager.internal.utils.MMException;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * A class that holds a tagged image storage which dynamically stitches images,

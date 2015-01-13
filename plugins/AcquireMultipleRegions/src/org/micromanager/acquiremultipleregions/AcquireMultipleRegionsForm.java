@@ -18,14 +18,14 @@ import javax.swing.SpringLayout;
 import javax.swing.table.AbstractTableModel;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
-import org.micromanager.api.MultiStagePosition;
-import org.micromanager.api.PositionList;
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.api.SequenceSettings;
-import org.micromanager.api.StagePosition;
-import org.micromanager.utils.FileDialogs;
-import org.micromanager.utils.MMScriptException;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.MultiStagePosition;
+import org.micromanager.PositionList;
+import org.micromanager.ScriptInterface;
+import org.micromanager.SequenceSettings;
+import org.micromanager.StagePosition;
+import org.micromanager.internal.utils.FileDialogs;
+import org.micromanager.internal.utils.MMScriptException;
+import org.micromanager.internal.utils.ReportingUtils;
 
 
 
@@ -231,13 +231,14 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
                 currSettings.usePositionList = true;
                 currSettings.numFrames = 1;
                 gui_.setAcquisitionSettings(currSettings);
-                //save as multipage tiff file
-                gui_.setImageSavingFormat(org.micromanager.acquisition.TaggedImageStorageMultipageTiff.class);
+                // TODO: ensure saving chooses the correct format. This logic
+                // became lost in the MM2.0 refactoring.
+//                gui_.setImageSavingFormat(org.micromanager.acquisition.internal.TaggedImageStorageMultipageTiff.class);
                 //update positionlist with grid
                 gui_.setPositionList(currRegion.tileGrid(getXFieldSize(), getYFieldSize(), axisList_));               
                 gui_.refreshGUI();
                 String acqName = gui_.runAcquisition(currRegion.filename, currRegion.directory);
-                gui_.closeAcquisitionWindow(acqName);
+                gui_.closeAcquisitionDisplays(acqName);
             } catch (MMScriptException ex) {
                 handleError(ex);
             }

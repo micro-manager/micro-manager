@@ -33,8 +33,8 @@
 package org.micromanager.example;
 
 import mmcorej.CMMCore;
-import org.micromanager.api.MMPlugin;
-import org.micromanager.api.ScriptInterface;
+import org.micromanager.MMPlugin;
+import org.micromanager.ScriptInterface;
 
 
 public class Example implements MMPlugin {

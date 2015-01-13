@@ -38,9 +38,10 @@ import javax.swing.JSlider;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import org.micromanager.MMStudio;
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.utils.MMFrame;
+import org.micromanager.internal.MMStudio;
+import org.micromanager.ScriptInterface;
+import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.MMDialog;
 
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.events.DisplayCreatedEvent;

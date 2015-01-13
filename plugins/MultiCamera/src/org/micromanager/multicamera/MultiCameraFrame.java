@@ -22,10 +22,10 @@ import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
 
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.api.MMListenerInterface;
-import org.micromanager.utils.NumberUtils;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.ScriptInterface;
+import org.micromanager.MMListenerInterface;
+import org.micromanager.internal.utils.NumberUtils;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  *

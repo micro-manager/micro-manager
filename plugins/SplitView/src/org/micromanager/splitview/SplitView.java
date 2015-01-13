@@ -21,7 +21,7 @@
 
 package org.micromanager.splitview;
 
-import org.micromanager.api.MMProcessorPlugin;
+import org.micromanager.MMProcessorPlugin;
 
 /** 
  * Micro-Manager plugin that can split the acquired image top-down or left-right

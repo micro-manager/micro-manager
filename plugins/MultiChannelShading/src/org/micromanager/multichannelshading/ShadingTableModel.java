@@ -27,9 +27,9 @@ import java.util.List;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import javax.swing.table.AbstractTableModel;
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.utils.MMException;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.ScriptInterface;
+import org.micromanager.internal.utils.MMException;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  *

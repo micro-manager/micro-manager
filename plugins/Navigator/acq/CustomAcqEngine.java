@@ -11,9 +11,11 @@ import java.util.concurrent.BlockingQueue;
 import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
-import org.micromanager.api.MMTags;
-import org.micromanager.utils.MDUtils;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.MMTags;
+import org.micromanager.internal.utils.MDUtils;
+import org.micromanager.internal.utils.ReportingUtils;
+import surfacesandregions.RegionManager;
+import surfacesandregions.SurfaceManager;
 
 /**
  *

@@ -1,9 +1,9 @@
 package org.micromanager.multicamera;
 
 import mmcorej.CMMCore;
-import org.micromanager.api.MMPlugin;
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.MMPlugin;
+import org.micromanager.ScriptInterface;
+import org.micromanager.internal.utils.ReportingUtils;
 
 
 public class MultiCamera implements MMPlugin {

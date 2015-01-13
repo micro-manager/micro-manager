@@ -38,8 +38,8 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.ScriptInterface;
+import org.micromanager.internal.utils.ReportingUtils;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 

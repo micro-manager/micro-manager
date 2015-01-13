@@ -15,12 +15,12 @@ import java.util.Hashtable;
 import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
-import org.micromanager.MMStudio;
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.utils.ImageUtils;
-import org.micromanager.utils.MMScriptException;
-import org.micromanager.utils.MathFunctions;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.internal.MMStudio;
+import org.micromanager.ScriptInterface;
+import org.micromanager.internal.utils.ImageUtils;
+import org.micromanager.internal.utils.MMScriptException;
+import org.micromanager.internal.utils.MathFunctions;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  *

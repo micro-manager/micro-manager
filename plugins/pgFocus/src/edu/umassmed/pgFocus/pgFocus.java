@@ -1,8 +1,8 @@
 package edu.umassmed.pgfocus;
 
 import mmcorej.CMMCore;
-import org.micromanager.api.MMPlugin;
-import org.micromanager.api.ScriptInterface;
+import org.micromanager.MMPlugin;
+import org.micromanager.ScriptInterface;
 
 import org.jfree.ui.RefineryUtilities;
 

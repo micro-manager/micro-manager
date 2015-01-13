@@ -4,8 +4,8 @@
 
 package org.micromanager.clojureeditor;
 
-import org.micromanager.api.MMPlugin;
-import org.micromanager.api.ScriptInterface;
+import org.micromanager.MMPlugin;
+import org.micromanager.ScriptInterface;
 
 public class ClojureEditorPlugin implements MMPlugin {
    public static final String menuName = "Clojure editor";

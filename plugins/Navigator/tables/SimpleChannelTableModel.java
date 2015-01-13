@@ -14,12 +14,12 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 import mmcorej.CMMCore;
 import org.micromanager.MMOptions;
-import org.micromanager.MMStudio;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.acquisition.AcquisitionEngine;
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.utils.ChannelSpec;
-import org.micromanager.utils.ReportingUtils;
-import org.micromanager.utils.TooltipTextMaker;
+import org.micromanager.ScriptInterface;
+import org.micromanager.internal.utils.ChannelSpec;
+import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.TooltipTextMaker;
 
 /**
  *

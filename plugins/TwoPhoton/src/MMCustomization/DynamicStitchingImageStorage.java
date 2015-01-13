@@ -12,12 +12,12 @@ import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.acquisition.TaggedImageStorageMultipageTiff;
-import org.micromanager.acquisition.TaggedImageStorageRam;
-import org.micromanager.api.TaggedImageStorage;
-import org.micromanager.utils.MDUtils;
-import org.micromanager.utils.MMException;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.acquisition.internal.TaggedImageStorageMultipageTiff;
+import org.micromanager.acquisition.internal.TaggedImageStorageRam;
+import org.micromanager.TaggedImageStorage;
+import org.micromanager.internal.utils.MDUtils;
+import org.micromanager.internal.utils.MMException;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  *

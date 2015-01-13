@@ -853,7 +853,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
          ip_ = siPlus;
       }
       try {
-         Class<?> mmWin = Class.forName("org.micromanager.api.MMWindow");
+         Class<?> mmWin = Class.forName("org.micromanager.MMWindow");
          Constructor[] aCTors = mmWin.getDeclaredConstructors();
          aCTors[0].setAccessible(true);
          Object mw = aCTors[0].newInstance(siPlus);

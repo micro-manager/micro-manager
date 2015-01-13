@@ -25,9 +25,9 @@ import java.util.Hashtable;
 
 import javax.swing.JPanel;
 
-import org.micromanager.api.PositionList;
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.utils.MMScriptException;
+import org.micromanager.PositionList;
+import org.micromanager.ScriptInterface;
+import org.micromanager.internal.utils.MMScriptException;
 
 
 public class PlatePanel extends JPanel {
