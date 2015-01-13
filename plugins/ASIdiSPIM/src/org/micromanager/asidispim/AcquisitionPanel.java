@@ -1725,7 +1725,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                               done = stop_.get();
                               Thread.sleep(1);
                               if (now - last >= timeout2) {
-                                 gui_.logError("Camera did not send all expected images within" +
+                                 ReportingUtils.logError("Camera did not send all expected images within" +
                                        " a reasonable period for timepoint " + (timePoint+1) + ".  Continuing anyway.");
                                  // allow other time points to continue by stopping acquisition manually
                                  // (in normal case the sequence acquisition stops itself after

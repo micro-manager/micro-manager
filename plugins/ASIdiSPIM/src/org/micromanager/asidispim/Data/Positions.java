@@ -29,6 +29,7 @@ import mmcorej.CMMCore;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Utils.MyDialogUtils;
 import org.micromanager.utils.NumberUtils;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  * Holds information about device positions
@@ -38,17 +39,15 @@ import org.micromanager.utils.NumberUtils;
 public class Positions {
    private HashMap<Devices.Keys, Double> oneAxisDrivePositions_;
    private HashMap<Devices.Keys, Point2D.Double> twoAxisDrivePositions_;
-   Devices devices_;
-   private ScriptInterface gui_;
-   private CMMCore core_;
+   private final Devices devices_;
+   private final CMMCore core_;
    
    /**
     * Constructor
     */
    public Positions(ScriptInterface gui, Devices devices) {
       devices_ = devices;
-      gui_ = gui;
-      core_ = gui_.getMMCore();
+      core_ = gui.getMMCore();
       
       // fill the hashmaps with correct keys, leave values blank for now
       oneAxisDrivePositions_ = new HashMap<Devices.Keys, Double>();
@@ -320,7 +319,7 @@ public class Positions {
             }
             twoAxisDrivePositions_.put(devKey, pt);
          } catch (Exception ex) {
-            gui_.logError("Problem getting position of " + mmDevice);
+            ReportingUtils.logMessage("Problem getting position of " + mmDevice);
          }
       }
    }
@@ -338,7 +337,7 @@ public class Positions {
                oneAxisDrivePositions_.put(devKey, pt);
             }
          } catch (Exception ex) {
-            gui_.logError("Problem getting position of " + mmDevice);
+            ReportingUtils.logMessage("Problem getting position of " + mmDevice);
          }
       }
    }

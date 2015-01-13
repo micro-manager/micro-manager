@@ -105,7 +105,7 @@ public class ASIdiSPIMFrame extends MMFrame
       // create interface objects used by panels
       prefs_ = new Prefs(Preferences.userNodeForPackage(this.getClass()));
       devices_ = new Devices(gui, prefs_);
-      props_ = new Properties(devices_, prefs_);
+      props_ = new Properties(gui, devices_, prefs_);
       positions_ = new Positions(gui, devices_);
       joystick_ = new Joystick(devices_, props_);
       cameras_ = new Cameras(gui, devices_, props_, prefs_);

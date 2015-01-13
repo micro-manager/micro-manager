@@ -27,6 +27,7 @@ import java.util.List;
 
 import mmcorej.CMMCore;
 
+import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Utils.MyDialogUtils;
 import org.micromanager.asidispim.Utils.UpdateFromPropertyListenerInterface;
 import org.micromanager.utils.NumberUtils;
@@ -53,8 +54,8 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class Properties {
    
-   private Devices devices_;
-   private CMMCore core_;
+   private final Devices devices_;
+   private final CMMCore core_;
    private List<UpdateFromPropertyListenerInterface> listeners_;
    private final Prefs prefs_;
    
@@ -250,7 +251,8 @@ public class Properties {
     * @author Jon
     * @param prefs
     */
-   public Properties (Devices devices, Prefs prefs) {
+   public Properties (ScriptInterface gui, Devices devices, Prefs prefs) {
+      core_ = gui.getMMCore();
       devices_ = devices;
       prefs_ = prefs;
       listeners_ = new ArrayList<UpdateFromPropertyListenerInterface>();
