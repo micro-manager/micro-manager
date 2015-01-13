@@ -28,7 +28,7 @@ public interface Image {
     * As getRawPixels(), but will split out the specified component for
     * multi-component images. This could potentially impair performance as
     * the image data must be manually de-interleaved. Calling this with an
-    * argument of 0 should be equivalent to calling getRawPixels() for
+    * argument of 0 is equivalent to calling getRawPixels() for
     * single-component images, except that a copy of the pixels will be made.
     */
    public Object getRawPixelsForComponent(int component);
@@ -102,12 +102,12 @@ public interface Image {
 
    /**
     * Get the number of components (e.g. for RGB images) in each pixel in the
-    * raw pixel data.
+    * raw pixel data. Will be 1 for single-component images.
     */
    public int getNumComponents();
 
    /**
-    * For legacy support only: convert to TaggedImage;
+    * For legacy support only: convert to TaggedImage.
     */
    public TaggedImage legacyToTaggedImage();
 }
