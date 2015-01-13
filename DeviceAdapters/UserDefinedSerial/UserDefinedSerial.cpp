@@ -297,6 +297,11 @@ UserDefSerialStateDevice::CreatePostInitProperties()
    if (err != DEVICE_OK)
       return err;
 
+   err = CreateStringProperty(MM::g_Keyword_Label, "", false,
+         new CPropertyAction(this, &CStateBase::OnLabel));
+   if (err != DEVICE_OK)
+      return err;
+
    err = CreateByteStringProperty(g_PropName_QueryPositionCommand,
          queryCommand_);
    if (err != DEVICE_OK)
