@@ -34,6 +34,7 @@ import org.micromanager.internal.utils.PropertyUsageCellEditor;
 import org.micromanager.internal.utils.ShowFlagsPanel;
 import org.micromanager.internal.utils.PropertyTableData;
 import org.micromanager.internal.utils.PropertyValueCellRenderer;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.*;
 import javax.swing.*;
