@@ -244,6 +244,25 @@ UserDefSerialStateDevice::GetNumberOfPositions() const
 }
 
 
+int
+UserDefSerialStateDevice::Initialize()
+{
+   int err;
+   err = Super::Initialize();
+   if (err != DEVICE_OK)
+      return err;
+
+   // Provide default label names
+   for (size_t i = 0; i < numPositions_; ++i)
+   {
+      SetPositionLabel(static_cast<long>(i),
+            ("State-" + boost::lexical_cast<std::string>(i)).c_str());
+   }
+
+   return DEVICE_OK;
+}
+
+
 void
 UserDefSerialStateDevice::CreatePreInitProperties()
 {

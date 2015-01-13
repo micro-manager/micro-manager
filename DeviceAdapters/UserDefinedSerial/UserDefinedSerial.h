@@ -188,6 +188,9 @@ public:
    // based on the State property)
    virtual unsigned long GetNumberOfPositions() const;
 
+   // Override
+   virtual int Initialize();
+
 private:
    void CreatePreInitProperties();
 
