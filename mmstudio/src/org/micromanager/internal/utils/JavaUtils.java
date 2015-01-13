@@ -112,7 +112,12 @@ public class JavaUtils {
                      } catch (ClassNotFoundException e) {
                         ReportingUtils.logError(e, "Failed to load class: " +
                               className + " (expected in " +
-                              file.getAbsolutePath() + " based on JAR entry");
+                              file.getAbsolutePath() + " based on JAR entry)");
+                     } catch (NoClassDefFoundError e) {
+                        ReportingUtils.logError(e, "Failed to load class: " +
+                              className + " (expected in " +
+                              file.getAbsolutePath() +
+                              " ) because no class definition was found");
                      }
                   }
                }
