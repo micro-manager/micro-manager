@@ -580,6 +580,11 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
    }
 
    @Override
+   public ImagePlus getImagePlus() {
+      return ijImage_;
+   }
+
+   @Override
    public boolean requestToClose() {
       displayBus_.post(new RequestToCloseEvent(this));
       return getIsClosed();
