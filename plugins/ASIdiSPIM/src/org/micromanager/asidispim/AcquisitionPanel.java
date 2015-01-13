@@ -41,6 +41,7 @@ import org.micromanager.asidispim.Utils.StagePositionUpdater;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.Rectangle;
@@ -59,7 +60,6 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
-import javax.swing.JSeparator;
 import javax.swing.JSpinner;
 import javax.swing.JToggleButton;
 import javax.swing.event.ChangeEvent;
@@ -141,7 +141,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final JToggleButton buttonStart_;
    private final JPanel volPanel_;
    private final JPanel slicePanel_;
-   private final JPanel repeatPanel_;
+   private final JPanel timepointPanel_;
    private final JPanel savePanel_;
    private final JPanel durationPanel_;
    private final JTextField rootField_;
@@ -163,10 +163,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final JComboBox spimMode_;
    private final JCheckBox navigationJoysticksCB_;
    private final JCheckBox usePositionsCB_;
-   private final JCheckBox useTimePointsCB_;
+   private final JSpinner positionDelay_;
+   private final JCheckBox useTimepointsCB_;
    private final JPanel leftColumnPanel_;
    private final JPanel centerColumnPanel_;
-   private final MMFrame sliceFrame_;
+   private final MMFrame sliceFrameAdvanced_;
    private SliceTiming sliceTiming_;
    private final MultiChannelSubPanel multiChannelPanel_;
    
@@ -332,25 +333,25 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // visibility of this frame is controlled from advancedTiming checkbox
       // this frame is separate from main plugin window
       
-      sliceFrame_ = new MMFrame();
-      sliceFrame_.setTitle("Advanced timing");
-      sliceFrame_.loadPosition(100, 100);
+      sliceFrameAdvanced_ = new MMFrame();
+      sliceFrameAdvanced_.setTitle("Advanced timing");
+      sliceFrameAdvanced_.loadPosition(100, 100);
 
       slicePanel_ = new JPanel(new MigLayout(
               "",
               "[right]10[center]",
               "[]8[]"));
-      sliceFrame_.add(slicePanel_);
+      sliceFrameAdvanced_.add(slicePanel_);
       
       class SliceFrameAdapter extends WindowAdapter {
          @Override
          public void windowClosing(WindowEvent e) {
             advancedSliceTimingCB_.setSelected(false);
-            sliceFrame_.savePosition();
+            sliceFrameAdvanced_.savePosition();
          }
       }
       
-      sliceFrame_.addWindowListener(new SliceFrameAdapter());
+      sliceFrameAdvanced_.addWindowListener(new SliceFrameAdapter());
       
       JLabel scanDelayLabel =  new JLabel("Delay before scan [ms]:");
       slicePanel_.add(scanDelayLabel);
@@ -376,8 +377,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       lineScanPeriod_.addChangeListener(recalculateTimingDisplayCL);
       slicePanel_.add(lineScanPeriod_, "wrap");
       
-      slicePanel_.add(new JSeparator(), "span 2, wrap");
-      
       JLabel delayLaserLabel = new JLabel("Delay before laser [ms]:");
       slicePanel_.add(delayLaserLabel);
       delayLaser_ = pu.makeSpinnerFloat(0, 10000, 0.25,
@@ -394,8 +393,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       durationLaser_.addChangeListener(recalculateTimingDisplayCL);
       slicePanel_.add(durationLaser_, "span 2, wrap");
       
-      slicePanel_.add(new JSeparator(), "wrap");
-
       JLabel delayLabel = new JLabel("Delay before camera [ms]:");
       slicePanel_.add(delayLabel);
       delayCamera_ = pu.makeSpinnerFloat(0, 10000, 0.25,
@@ -412,15 +409,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       durationCamera_.addChangeListener(recalculateTimingDisplayCL);
       slicePanel_.add(durationCamera_, "wrap");
       
-      final JComponent[] advancedTimingComponents = { delayScan_,
-            numScansPerSlice_, lineScanPeriod_, delayLaser_,
-            durationLaser_, delayCamera_, durationCamera_, cameraLabel,
-            delayLabel, durationLabel, delayLaserLabel, lineScanLabel,
-            lineScanPeriodLabel, scanDelayLabel};
       final JComponent[] simpleTimingComponents = { desiredLightExposure_,
             calculateSliceTiming_, minSlicePeriodCB_, desiredSlicePeriodLabel_,
             desiredLightExposureLabel_};
-      componentsSetEnabled(advancedTimingComponents, advancedSliceTimingCB_.isSelected());
+      componentsSetEnabled(sliceFrameAdvanced_, advancedSliceTimingCB_.isSelected());
       componentsSetEnabled(simpleTimingComponents, !advancedSliceTimingCB_.isSelected());
       
       // this action listener takes care of enabling/disabling inputs
@@ -431,7 +423,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          public void itemStateChanged(ItemEvent e) {
             boolean enabled = advancedSliceTimingCB_.isSelected();
             // set other components in this advanced timing frame
-            componentsSetEnabled(advancedTimingComponents, enabled);
+            componentsSetEnabled(sliceFrameAdvanced_, enabled);
             // also control some components in main volume settings sub-panel
             componentsSetEnabled(simpleTimingComponents, !enabled);
             desiredSlicePeriod_.setEnabled(!enabled && !minSlicePeriodCB_.isSelected());
@@ -445,33 +437,33 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          public void actionPerformed(ActionEvent e) {
             boolean enabled = advancedSliceTimingCB_.isSelected();
             if (enabled) {
-               sliceFrame_.setVisible(enabled);
+               sliceFrameAdvanced_.setVisible(enabled);
             }
          }
       };
       
-      sliceFrame_.pack();
-      sliceFrame_.setResizable(false);
+      sliceFrameAdvanced_.pack();
+      sliceFrameAdvanced_.setResizable(false);
       
       // end slice Frame
       
 
       // start repeat (time lapse) sub-panel
 
-      repeatPanel_ = new JPanel(new MigLayout(
+      timepointPanel_ = new JPanel(new MigLayout(
               "",
               "[right]10[center]",
               "[]8[]"));
 
-      useTimePointsCB_ = pu.makeCheckBox("Time points",
+      useTimepointsCB_ = pu.makeCheckBox("Time points",
             Properties.Keys.PREFS_USE_TIMEPOINTS, panelName_, false);
-      useTimePointsCB_.setToolTipText("Perform a time-lapse acquisition");
-      useTimePointsCB_.setEnabled(true);
-      useTimePointsCB_.setFocusPainted(false); 
+      useTimepointsCB_.setToolTipText("Perform a time-lapse acquisition");
+      useTimepointsCB_.setEnabled(true);
+      useTimepointsCB_.setFocusPainted(false); 
       ComponentTitledBorder componentBorder = 
-            new ComponentTitledBorder(useTimePointsCB_, repeatPanel_, 
+            new ComponentTitledBorder(useTimepointsCB_, timepointPanel_, 
                   BorderFactory.createLineBorder(ASIdiSPIM.borderColor)); 
-      repeatPanel_.setBorder(componentBorder);
+      timepointPanel_.setBorder(componentBorder);
       
       ChangeListener recalculateTimeLapseDisplay = new ChangeListener() {
          @Override
@@ -480,34 +472,30 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
       };
       
-      useTimePointsCB_.addChangeListener(recalculateTimeLapseDisplay);
+      useTimepointsCB_.addChangeListener(recalculateTimeLapseDisplay);
 
-      repeatPanel_.add(new JLabel("Number:"));
+      timepointPanel_.add(new JLabel("Number:"));
       numTimepoints_ = pu.makeSpinnerInteger(1, 32000,
               Devices.Keys.PLUGIN,
               Properties.Keys.PLUGIN_NUM_ACQUISITIONS, 1);
       numTimepoints_.addChangeListener(recalculateTimeLapseDisplay);
-      repeatPanel_.add(numTimepoints_, "wrap");
+      timepointPanel_.add(numTimepoints_, "wrap");
 
-      repeatPanel_.add(new JLabel("Interval [s]:"));
+      timepointPanel_.add(new JLabel("Interval [s]:"));
       acquisitionInterval_ = pu.makeSpinnerFloat(1, 32000, 0.1,
               Devices.Keys.PLUGIN,
               Properties.Keys.PLUGIN_ACQUISITION_INTERVAL, 60);
       acquisitionInterval_.addChangeListener(recalculateTimeLapseDisplay);
-      repeatPanel_.add(acquisitionInterval_, "wrap");
+      timepointPanel_.add(acquisitionInterval_, "wrap");
       
       // enable/disable panel elements depending on checkbox state
-      ActionListener al = new ActionListener(){ 
+      useTimepointsCB_.addActionListener(new ActionListener() {
          @Override
-         public void actionPerformed(ActionEvent e){ 
-            boolean enabled = useTimePointsCB_.isSelected();
-            for (Component comp : repeatPanel_.getComponents()) {
-               comp.setEnabled(enabled);
-            }
-         } 
-      };
-      useTimePointsCB_.addActionListener(al);
-      al.actionPerformed(null);
+         public void actionPerformed(ActionEvent e) { 
+            componentsSetEnabled(timepointPanel_, useTimepointsCB_.isSelected());
+         }
+      });
+      componentsSetEnabled(timepointPanel_, useTimepointsCB_.isSelected());  // initialize
       
       // end repeat sub-panel
       
@@ -621,22 +609,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       // end duration report panel
       
-      navigationJoysticksCB_ = new JCheckBox("Use Navigation joystick settings");
-      navigationJoysticksCB_.setSelected(prefs_.getBoolean(panelName_,
-            Properties.Keys.PLUGIN_USE_NAVIGATION_JOYSTICKS, false));
-      navigationJoysticksCB_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) { 
-            if (navigationJoysticksCB_.isSelected()) {
-               ASIdiSPIM.getFrame().getNavigationPanel().doJoystickSettings();
-            } else {
-               joystick_.unsetAllJoysticks();
-            }
-            prefs_.putBoolean(panelName_, Properties.Keys.PLUGIN_USE_NAVIGATION_JOYSTICKS,
-                  navigationJoysticksCB_.isSelected());
-         }
-      });
-      
       buttonStart_ = new JToggleButton();
       buttonStart_.setIconTextGap(6);
       buttonStart_.addActionListener(new ActionListener() {
@@ -650,13 +622,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       acquisitionStatusLabel_ = new JLabel("");
       updateAcquisitionStatus(AcquisitionStatus.NONE);
       
-      // Channel Panel
+      // Channel Panel (separate file for code)
       multiChannelPanel_ = new MultiChannelSubPanel(gui, devices_, props_, prefs_);
       multiChannelPanel_.addDurationLabelListener(this);
       
       // Position Panel
       final JPanel positionPanel = new JPanel();
-      positionPanel.setLayout(new MigLayout("flowx, fillx","[center]","[]"));
+      positionPanel.setLayout(new MigLayout("flowx, fillx","[right]10[left][10][]","[]8[]"));
       usePositionsCB_ = pu.makeCheckBox("Multiple positions (XY)",
             Properties.Keys.PREFS_USE_MULTIPOSITION, panelName_, false);
       usePositionsCB_.setToolTipText("Acquire datasest at multiple postions");
@@ -673,18 +645,45 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             gui_.showXYPositionList();
          }
       });
+      positionPanel.add(editPositionListButton, "span 2, center");
+      
+      // add empty fill space on right side of panel
+      positionPanel.add(new JLabel(""), "wrap, growx");
+      
+      positionPanel.add(new JLabel("Post-move delay [ms]:"));
+      positionDelay_ = pu.makeSpinnerFloat(0.0, 10000.0, 100.0,
+            Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_POSITION_DELAY,
+            0.0);
+      positionPanel.add(positionDelay_, "wrap");
+      
       // enable/disable panel elements depending on checkbox state
-      usePositionsCB_.addActionListener(new ActionListener(){ 
+      usePositionsCB_.addActionListener(new ActionListener() {
          @Override
-         public void actionPerformed(ActionEvent e){ 
-            boolean enabled = usePositionsCB_.isSelected();
-            editPositionListButton.setEnabled(enabled);
-            positionPanel.setEnabled(enabled);
-         } 
+         public void actionPerformed(ActionEvent e) { 
+            componentsSetEnabled(positionPanel, usePositionsCB_.isSelected());
+         }
       });
-      positionPanel.add(editPositionListButton);
+      componentsSetEnabled(positionPanel, usePositionsCB_.isSelected());  // initialize
+      
       // end of Position panel
       
+      // checkbox to use navigation joystick settings or not
+      // an "orphan" UI element
+      navigationJoysticksCB_ = new JCheckBox("Use Navigation joystick settings");
+      navigationJoysticksCB_.setSelected(prefs_.getBoolean(panelName_,
+            Properties.Keys.PLUGIN_USE_NAVIGATION_JOYSTICKS, false));
+      navigationJoysticksCB_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) { 
+            if (navigationJoysticksCB_.isSelected()) {
+               ASIdiSPIM.getFrame().getNavigationPanel().doJoystickSettings();
+            } else {
+               joystick_.unsetAllJoysticks();
+            }
+            prefs_.putBoolean(panelName_, Properties.Keys.PLUGIN_USE_NAVIGATION_JOYSTICKS,
+                  navigationJoysticksCB_.isSelected());
+         }
+      });
       
       
       // set up tabbed panels for GUI
@@ -697,7 +696,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             "[]6[]10[]10[]"));
       
       leftColumnPanel_.add(durationPanel_, "split 2");
-      leftColumnPanel_.add(repeatPanel_, "wrap");
+      leftColumnPanel_.add(timepointPanel_, "wrap, growx");
       leftColumnPanel_.add(savePanel_, "wrap");
       leftColumnPanel_.add(new JLabel("SPIM mode: "), "split 2, left");
       AcquisitionModes acqModes = new AcquisitionModes(devices_, props_, prefs_);
@@ -810,7 +809,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    }
    
    private int getNumTimepoints() {
-      if (!useTimePointsCB_.isSelected()) {
+      if (!useTimepointsCB_.isSelected()) {
          return 1;
       }
       return (Integer) numTimepoints_.getValue();
@@ -1180,9 +1179,25 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       acquisitionStatusLabel_.setText(text);
    }
 
-   private void componentsSetEnabled(JComponent[] saveComponents, boolean enabled) {
-      for (JComponent c : saveComponents) {
+   /**
+    * call setEnabled(boolean) on all components in list
+    * @param components
+    * @param enabled
+    */
+   private static void componentsSetEnabled(JComponent[] components, boolean enabled) {
+      for (JComponent c : components) {
          c.setEnabled(enabled);
+      }
+   }
+   
+   /**
+   * call setEnabled(boolean) on all components in frame/panel
+    * @param panel
+    * @param enabled
+    */
+   private static void componentsSetEnabled(Container container, boolean enabled) {
+      for (Component comp : container.getComponents()) {
+         comp.setEnabled(enabled);
       }
    }
    
@@ -1636,6 +1651,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   if (usePositions) {
                      // blocking call; will wait for stages to move
                      MultiStagePosition.goToPosition(positionList.getPosition(positionNum), core_);
+                     
+                     // wait any extra time the user requests
+                     Thread.sleep(Math.round(PanelUtils.getSpinnerFloatValue(positionDelay_)));
                   }
 
                   // loop over all channels
@@ -1867,7 +1885,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       } else {
          joystick_.unsetAllJoysticks();  // disable all joysticks on this tab
       }
-      sliceFrame_.setVisible(advancedSliceTimingCB_.isSelected());
+      sliceFrameAdvanced_.setVisible(advancedSliceTimingCB_.isSelected());
       posUpdater_.pauseUpdates(false);
    }
 
@@ -1876,7 +1894,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     */
    @Override
    public void gotDeSelected() {
-      sliceFrame_.setVisible(false);
+      sliceFrameAdvanced_.setVisible(false);
       saveSettings();
    }
 
@@ -1889,8 +1907,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * Gets called when enclosing window closes
     */
    public void windowClosing() {
-      sliceFrame_.savePosition();
-      sliceFrame_.dispose();
+      sliceFrameAdvanced_.savePosition();
+      sliceFrameAdvanced_.dispose();
    }
    
    @Override
