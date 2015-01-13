@@ -32,12 +32,12 @@ import javax.swing.UIManager;
 
 import mmcorej.CMMCore;
 
-import org.micromanager.MMStudio;
-import org.micromanager.imagedisplay.MMVirtualStack;
-import org.micromanager.utils.AutofocusManager;
-import org.micromanager.utils.GUIUtils;
-import org.micromanager.utils.JavaUtils;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.internal.MMStudio;
+import org.micromanager.display.internal.MMVirtualStack;
+import org.micromanager.internal.utils.AutofocusManager;
+import org.micromanager.internal.utils.GUIUtils;
+import org.micromanager.internal.utils.JavaUtils;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * ImageJ plugin wrapper for Micro-Manager.

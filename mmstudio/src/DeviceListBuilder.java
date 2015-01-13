@@ -21,8 +21,8 @@
 //
 // CVS:           $Id$
 
-import org.micromanager.conf2.MicroscopeModel;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.internal.conf2.MicroscopeModel;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * Utility to generate a list of available devices for use with
