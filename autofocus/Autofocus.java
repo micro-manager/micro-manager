@@ -39,10 +39,10 @@ import java.util.prefs.Preferences;
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
 
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.utils.AutofocusBase;
-import org.micromanager.utils.MMException;
-import org.micromanager.utils.PropertyItem;
+import org.micromanager.ScriptInterface;
+import org.micromanager.internal.utils.AutofocusBase;
+import org.micromanager.internal.utils.MMException;
+import org.micromanager.internal.utils.PropertyItem;
 
 /*
  * Created on June 2nd 2007
@@ -56,7 +56,7 @@ import org.micromanager.utils.PropertyItem;
 /* This plugin take a stack of snapshots and computes their sharpness
 
  */
-public class Autofocus extends AutofocusBase implements org.micromanager.api.Autofocus  {
+public class Autofocus extends AutofocusBase implements org.micromanager.Autofocus  {
 
    private static final String KEY_SIZE_FIRST = "1st step size";
    private static final String KEY_NUM_FIRST = "1st step number";

@@ -25,11 +25,11 @@ import java.util.prefs.Preferences;
 
 import mmcorej.CMMCore;
 
-import org.micromanager.api.Autofocus;
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.utils.AutofocusBase;
-import org.micromanager.utils.MMException;
-import org.micromanager.utils.PropertyItem;
+import org.micromanager.Autofocus;
+import org.micromanager.ScriptInterface;
+import org.micromanager.internal.utils.AutofocusBase;
+import org.micromanager.internal.utils.MMException;
+import org.micromanager.internal.utils.PropertyItem;
 
 /**
  * ImageJ plugin wrapper for uManager.
