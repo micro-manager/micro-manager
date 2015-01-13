@@ -14,12 +14,12 @@
 ;               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 (ns org.micromanager.mm
-  (:import [org.micromanager.api MultiStagePosition]
+  (:import [org.micromanager MultiStagePosition]
            [mmcorej Configuration DoubleVector Metadata StrVector] ;; load mmcorej.DeviceType at runtime only
            [org.json JSONArray JSONObject]
            [java.text SimpleDateFormat]
-           [org.micromanager.api MultiStagePosition StagePosition]
-           [org.micromanager.utils ChannelSpec]
+           [org.micromanager MultiStagePosition StagePosition]
+           [org.micromanager.internal.utils ChannelSpec]
            [java.util Date]
            [ij IJ]
            [javax.swing SwingUtilities])
@@ -48,7 +48,7 @@
     (def gui gui)
     (def mmc (.getMMCore gui)))
   ([]
-    (org.micromanager.MMStudio/getInstance)))
+    (org.micromanager.internal.MMStudio/getInstance)))
 
 (defn rekey
   "Change the name of key kold to knew."
