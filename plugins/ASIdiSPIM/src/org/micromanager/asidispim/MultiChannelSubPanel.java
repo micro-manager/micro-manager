@@ -336,7 +336,7 @@ public class MultiChannelSubPanel extends ListeningJPanel {
       nextChannelIndex_  = 0;
    }
    
-   /*
+   /**
     * Takes care of actually selecting next channel in table.
     * Called by acquisition code.
     */
@@ -353,6 +353,24 @@ public class MultiChannelSubPanel extends ListeningJPanel {
          nextChannelIndex_ = 0;
       }
    }
+   
+   public String getCurrentConfig() {
+      try {
+         return core_.getCurrentConfigFromCache(channelGroup_.getSelectedItem().toString());
+      } catch (Exception e) {
+         ReportingUtils.logError("Failed to get current configuration");
+      }
+      return null;
+   }
+   
+   public void setConfig(String config) {
+      try {
+         core_.setConfig(channelGroup_.getSelectedItem().toString(), config);
+      } catch (Exception e) {
+         ReportingUtils.logError(e, "Failed to set config.");
+      }
+   }
+
    
    @Override
    public void saveSettings() {
