@@ -35,14 +35,14 @@
     [java.util.concurrent CountDownLatch LinkedBlockingQueue TimeUnit]
     [mmcorej Configuration Metadata TaggedImage]
     [org.json JSONArray JSONObject]
-    [org.micromanager.acquisition MMAcquisition TaggedImageQueue]
-    [org.micromanager.api PositionList SequenceSettings]
-    [org.micromanager.utils MDUtils ReportingUtils])
+    [org.micromanager.acquisition.internal MMAcquisition TaggedImageQueue]
+    [org.micromanager PositionList SequenceSettings]
+    [org.micromanager.internal.utils MDUtils ReportingUtils])
   (:gen-class
-    :name org.micromanager.AcquisitionEngine2010
-    :implements [org.micromanager.api.IAcquisitionEngine2010]
+    :name org.micromanager.internal.AcquisitionEngine2010
+    :implements [org.micromanager.IAcquisitionEngine2010]
     :init init
-    :constructors {[org.micromanager.api.ScriptInterface] [] [mmcorej.CMMCore] []}
+    :constructors {[org.micromanager.ScriptInterface] [] [mmcorej.CMMCore] []}
     :state state))
 
 ;; test utils
@@ -954,11 +954,11 @@
         (.start acq-thread)
         out-queue)))
 
-;; java interop -- implements org.micromanager.api.IAcquisitionEngine2010
+;; java interop -- implements org.micromanager.IAcquisitionEngine2010
 
 (defn -init
   ([one-arg]
-    [[] (do (if (isa? (type one-arg) org.micromanager.api.ScriptInterface)
+    [[] (do (if (isa? (type one-arg) org.micromanager.ScriptInterface)
               (load-mm one-arg)
               (store-mmcore one-arg))
             (atom {:stop false}))]))
