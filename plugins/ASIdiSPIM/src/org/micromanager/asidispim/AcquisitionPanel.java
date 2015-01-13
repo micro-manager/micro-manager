@@ -1599,7 +1599,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             gui_.setAcquisitionProperty(acqName, "SPIMmode", 
                     ((AcquisitionModes.Keys) spimMode_.getSelectedItem()).toString());
             // Multi-page TIFF saving code wants this one:
-            // TODO: support other types than besides GRAY16
+            // TODO: support other types than GRAY16
             gui_.setAcquisitionProperty(acqName, "PixelType", "GRAY16");
             gui_.setAcquisitionProperty(acqName, "z-step_um",  
                   NumberUtils.doubleToDisplayString(getStepSizeUm()) );
@@ -1727,13 +1727,19 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                            if (core_.getRemainingImageCount() > 0) {  // we have an image to grab
                               TaggedImage timg = core_.popNextTaggedImage();
                               String camera = (String) timg.tags.get("Camera");
-                              int ch = 0;
-                              if (camera.equals(secondCamera)) {
-                                 ch = 1;
+                              int frBufferIndex = 0;
+                              int ch = channelNum;
+                              if (twoSided) {
+                                 ch = ch * 2;
                               }
-                              addImageToAcquisition(acqName, timePoint, ch, frNumber[ch], positionNum,
+                              if (camera.equals(secondCamera)) {
+                                 ch += 1;
+                                 frBufferIndex = 1;
+                              }
+                              addImageToAcquisition(acqName, timePoint, ch, 
+                                      frNumber[frBufferIndex], positionNum,
                                     now - acqStart, timg, bq);
-                              frNumber[ch]++;
+                              frNumber[frBufferIndex]++;
                               last = now;  // keep track of last image time
                               // check to see if we are finished
                               if (frNumber[0] == frNumber[1] && frNumber[0] == nrSlices) {
