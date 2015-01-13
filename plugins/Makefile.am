@@ -14,7 +14,6 @@ nobase_mmplugin_DATA = \
 	Beta/CRISPv2.jar \
 	Beta/SlideExplorer2.jar \
 	Big.jar \
-	DataBrowser.jar \
 	Developer_Tools/ClojureEditor.jar \
 	Developer_Tools/SequenceBufferMonitor.jar \
 	Device_Control/AutoLase.jar \
