@@ -42,18 +42,18 @@ import org.apache.commons.math.analysis.UnivariateRealFunction;
 import org.apache.commons.math.optimization.GoalType;
 import org.apache.commons.math.optimization.univariate.BrentOptimizer;
 import org.json.JSONException;
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.utils.AutofocusBase;
-import org.micromanager.utils.ImageUtils;
-import org.micromanager.utils.MDUtils;
-import org.micromanager.utils.MMException;
-import org.micromanager.utils.MMScriptException;
-import org.micromanager.utils.MathFunctions;
-import org.micromanager.utils.NumberUtils;
-import org.micromanager.utils.ReportingUtils;
-import org.micromanager.utils.TextUtils;
+import org.micromanager.ScriptInterface;
+import org.micromanager.internal.utils.AutofocusBase;
+import org.micromanager.internal.utils.ImageUtils;
+import org.micromanager.internal.utils.MDUtils;
+import org.micromanager.internal.utils.MMException;
+import org.micromanager.internal.utils.MMScriptException;
+import org.micromanager.internal.utils.MathFunctions;
+import org.micromanager.internal.utils.NumberUtils;
+import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.TextUtils;
 
-public class OughtaFocus extends AutofocusBase implements org.micromanager.api.Autofocus {
+public class OughtaFocus extends AutofocusBase implements org.micromanager.Autofocus {
 
    private ScriptInterface app_;
    private static final String AF_DEVICE_NAME = "OughtaFocus";
