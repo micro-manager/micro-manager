@@ -30,7 +30,7 @@ import java.util.prefs.Preferences;
 
 import javax.swing.JFrame;
 
-import org.micromanager.MMStudio;
+import org.micromanager.internal.MMStudio;
 
 /**
  * Base class for Micro-Manager frame windows.
