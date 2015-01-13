@@ -330,7 +330,8 @@ int MicroDriveXYStage::SetPositionMm(double x, double y)
 	}
 	else 
 	{
-		err = MCL_MicroDriveMoveProfileXYZ(velocity_, x, rounding_, velocity_, y, rounding_,0,0, 0,MCLhandle_);
+		double twoAxisVelocity = min(maxVelocityTwoAxis_, velocity_);
+		err = MCL_MicroDriveMoveProfileXYZ(twoAxisVelocity, x, rounding_, twoAxisVelocity, y, rounding_,0,0, 0,MCLhandle_);
 		if (err != MCL_SUCCESS)
 			return err;
       lastX_ += x;
@@ -383,7 +384,8 @@ int MicroDriveXYStage::SetRelativePositionMm(double x, double y){
    }
 	else 
 	{
-		err = MCL_MicroDriveMoveProfileXYZ(velocity_, x, rounding_, velocity_, y, rounding_,0,0,0, MCLhandle_);
+		double twoAxisVelocity = min(maxVelocityTwoAxis_, velocity_);
+		err = MCL_MicroDriveMoveProfileXYZ(twoAxisVelocity, x, rounding_, twoAxisVelocity, y, rounding_,0,0,0, MCLhandle_);
 		
       if (err != MCL_SUCCESS)
 			return err;
