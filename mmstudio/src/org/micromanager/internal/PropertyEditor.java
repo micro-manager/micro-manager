@@ -154,7 +154,7 @@ public class PropertyEditor extends MMFrame {
       table_.setAutoCreateColumnsFromModel(false);
       
       final JButton refreshButton = new JButton();
-      refreshButton.setIcon(SwingResourceManager.getIcon(PropertyEditor.class, "/org/micromanager/icons/arrow_refresh.png"));
+      refreshButton.setIcon(SwingResourceManager.getIcon(PropertyEditor.class, "/org/micromanager/internal/icons/arrow_refresh.png"));
       refreshButton.setFont(new Font("Arial", Font.PLAIN, 10));
       getContentPane().add(refreshButton);
       springLayout.putConstraint(SpringLayout.EAST, refreshButton, 285, SpringLayout.WEST, getContentPane());

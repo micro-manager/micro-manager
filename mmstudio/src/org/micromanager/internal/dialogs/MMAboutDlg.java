@@ -128,7 +128,7 @@ public class MMAboutDlg extends JDialog {
       getContentPane().add(homeHttphcs100ximagingcomBugTextArea);
 
       final JLabel label = new JLabel();
-      label.setIcon(SwingResourceManager.getIcon(MMAboutDlg.class, "/org/micromanager/icons/microscope.gif"));
+      label.setIcon(SwingResourceManager.getIcon(MMAboutDlg.class, "/org/micromanager/internal/icons/microscope.gif"));
       label.setBounds(6, 14, 32, 32);
       getContentPane().add(label);
 

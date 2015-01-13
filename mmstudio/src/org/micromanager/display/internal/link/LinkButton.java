@@ -23,7 +23,7 @@ public class LinkButton extends JToggleButton {
    // This icon is a modified version of
    // http://icon-park.com/icon/black-link-icon-vector-data/
    private static final ImageIcon LINK_ICON = SwingResourceManager.getIcon(
-         LinkButton.class, "/org/micromanager/icons/linkflat.png");
+         LinkButton.class, "/org/micromanager/internal/icons/linkflat.png");
 
    private SettingsLinker linker_;
    private DisplayWindow display_;
