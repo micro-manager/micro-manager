@@ -13,12 +13,27 @@ import java.util.Set;
  */
 public interface Coords {
    
+   public static final String CHANNEL = "channel";
+   public static final String TIME = "time";
+   public static final String STAGE_POSITION = "stagePosition";
+   public static final String Z = "z";
    interface CoordsBuilder {
       /**
        * Construct a Coords from the CoordsBuilder. Call this once you have
        * set all properties for the Coords.
        */
       Coords build();
+
+      /** Convenience function, equivalent to
+        * position(Coords.CHANNEL, channel) */
+      CoordsBuilder channel(int channel);
+      /** Convenience function, equivalent to position(Coords.TIME, time) */
+      CoordsBuilder time(int time);
+      /** Convenience function, equivalent to position(Coords.Z, z) */
+      CoordsBuilder z(int z);
+      /** Convenience function, equivalent to
+        * position(Coords.STAGE_POSITION, stagePosition) */
+      CoordsBuilder stagePosition(int stagePosition);
 
       /**
        * Set the position of the Coords along the provided axis to the 
@@ -55,6 +70,19 @@ public interface Coords {
     * to be non-negative integers. 
     */
    public int getPositionAt(String axis);
+
+   /** Convenience function, equivalent to getPositionAt(Coords.CHANNEL) */
+   public int getChannel();
+
+   /** Convenience function, equivalent to getPositionAt(Coords.TIME) */
+   public int getTime();
+
+   /** Convenience function, equivalent to getPositionAt(Coords.Z) */
+   public int getZ();
+
+   /** Convenience function, equivalent to
+     * getPositionAt(Coords.STAGE_POSITION) */
+   public int getStagePosition();
 
    /**
     * Returns true if this Coords marks the end of an axis of iteration in the
