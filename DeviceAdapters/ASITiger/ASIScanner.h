@@ -150,6 +150,14 @@ private:
    double lastY_;   // used to cache position
    bool illuminationState_;  // true if on, false if beam is turned off
 
+   struct saStateType {
+      long mode;
+      long pattern;
+   };
+
+   saStateType saStateX_;
+   saStateType saStateY_;
+
    // for polygons
    vector< pair<double,double> > polygons_;
    long polygonRepetitions_;

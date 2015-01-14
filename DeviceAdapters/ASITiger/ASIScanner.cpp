@@ -58,11 +58,19 @@ CScanner::CScanner(const char* name) :
    lastX_(0),    // cached position before blanking, used for SetIlluminationState
    lastY_(0),    // cached position before blanking, used for SetIlluminationState
    illuminationState_(true),
+   saStateX_(),
+   saStateY_(),
    polygonRepetitions_(0),
    ring_buffer_supported_(false),
    laser_side_(0),   // will be set to 1 or 2 if used
    laserTTLenabled_(false)
 {
+
+   saStateX_.mode = -1;
+   saStateX_.pattern = -1;
+   saStateY_.mode = -1;
+   saStateY_.pattern = -1;
+
    if (IsExtendedName(name))  // only set up these properties if we have the required information in the name
    {
       axisLetterX_ = GetAxisLetterFromExtName(name);
@@ -267,6 +275,7 @@ int CScanner::Initialize()
    AddAllowedValue(g_ScannerBeamEnabledPropertyName, g_NoState);
    AddAllowedValue(g_ScannerBeamEnabledPropertyName, g_YesState);
    UpdateProperty(g_ScannerBeamEnabledPropertyName);  // calls UpdateIlluminationState()
+   UpdateIlluminationState();
 
    // single-axis mode settings
    // todo fix firmware TTL initialization problem where SAM p=2 triggers by itself 1st time
@@ -281,16 +290,16 @@ int CScanner::Initialize()
    UpdateProperty(g_SAPeriodXPropertyName);
    pAct = new CPropertyAction (this, &CScanner::OnSAModeX);
    CreateProperty(g_SAModeXPropertyName, g_SAMode_0, MM::String, false, pAct);
-   AddAllowedValue(g_SAModeXPropertyName, g_SAMode_0);
-   AddAllowedValue(g_SAModeXPropertyName, g_SAMode_1);
-   AddAllowedValue(g_SAModeXPropertyName, g_SAMode_2);
-   AddAllowedValue(g_SAModeXPropertyName, g_SAMode_3);
+   AddAllowedValue(g_SAModeXPropertyName, g_SAMode_0, 0);
+   AddAllowedValue(g_SAModeXPropertyName, g_SAMode_1, 1);
+   AddAllowedValue(g_SAModeXPropertyName, g_SAMode_2, 2);
+   AddAllowedValue(g_SAModeXPropertyName, g_SAMode_3, 3);
    UpdateProperty(g_SAModeXPropertyName);
    pAct = new CPropertyAction (this, &CScanner::OnSAPatternX);
    CreateProperty(g_SAPatternXPropertyName, g_SAPattern_0, MM::String, false, pAct);
-   AddAllowedValue(g_SAPatternXPropertyName, g_SAPattern_0);
-   AddAllowedValue(g_SAPatternXPropertyName, g_SAPattern_1);
-   AddAllowedValue(g_SAPatternXPropertyName, g_SAPattern_2);
+   AddAllowedValue(g_SAPatternXPropertyName, g_SAPattern_0, 0);
+   AddAllowedValue(g_SAPatternXPropertyName, g_SAPattern_1, 1);
+   AddAllowedValue(g_SAPatternXPropertyName, g_SAPattern_2, 2);
    UpdateProperty(g_SAPatternXPropertyName);
    pAct = new CPropertyAction (this, &CScanner::OnSAAmplitudeY);
    CreateProperty(g_ScannerSAAmplitudeYPropertyName, "0", MM::Float, false, pAct);
@@ -303,16 +312,16 @@ int CScanner::Initialize()
    UpdateProperty(g_SAPeriodYPropertyName);
    pAct = new CPropertyAction (this, &CScanner::OnSAModeY);
    CreateProperty(g_SAModeYPropertyName, g_SAMode_0, MM::String, false, pAct);
-   AddAllowedValue(g_SAModeYPropertyName, g_SAMode_0);
-   AddAllowedValue(g_SAModeYPropertyName, g_SAMode_1);
-   AddAllowedValue(g_SAModeYPropertyName, g_SAMode_2);
-   AddAllowedValue(g_SAModeYPropertyName, g_SAMode_3);
+   AddAllowedValue(g_SAModeYPropertyName, g_SAMode_0, 0);
+   AddAllowedValue(g_SAModeYPropertyName, g_SAMode_1, 1);
+   AddAllowedValue(g_SAModeYPropertyName, g_SAMode_2, 2);
+   AddAllowedValue(g_SAModeYPropertyName, g_SAMode_3, 3);
    UpdateProperty(g_SAModeYPropertyName);
    pAct = new CPropertyAction (this, &CScanner::OnSAPatternY);
    CreateProperty(g_SAPatternYPropertyName, g_SAPattern_0, MM::String, false, pAct);
-   AddAllowedValue(g_SAPatternYPropertyName, g_SAPattern_0);
-   AddAllowedValue(g_SAPatternYPropertyName, g_SAPattern_1);
-   AddAllowedValue(g_SAPatternYPropertyName, g_SAPattern_2);
+   AddAllowedValue(g_SAPatternYPropertyName, g_SAPattern_0, 0);
+   AddAllowedValue(g_SAPatternYPropertyName, g_SAPattern_1, 1);
+   AddAllowedValue(g_SAPatternYPropertyName, g_SAPattern_2, 2);
    UpdateProperty(g_SAPatternYPropertyName);
 
    // generates a set of additional advanced properties that are rarely used
@@ -1145,9 +1154,8 @@ int CScanner::OnBeamEnabled(MM::PropertyBase* pProp, MM::ActionType eAct)
    string tmpstr;
    if (eAct == MM::BeforeGet)
    {
-      // do this one even if refreshProps is turned off
-      UpdateIlluminationState();
       bool success;
+      // we assume our state variable is up to date
       if (illuminationState_)
          success = pProp->Set(g_YesState);
       else
@@ -1359,35 +1367,26 @@ int CScanner::OnSAModeX(MM::PropertyBase* pProp, MM::ActionType eAct)
       if (!success)
          return DEVICE_INVALID_PROPERTY_VALUE;
       justSet = false;
+      saStateX_.mode = tmp;
    }
    else if (eAct == MM::AfterSet) {
-      static long lastModeNum = -1;
       if (!illuminationState_)  // don't do anything if beam is turned off
       {
          pProp->Set(g_SAMode_0);
          return DEVICE_OK;
       }
-      string tmpstr;
-      pProp->Get(tmpstr);
-      if (tmpstr.compare(g_SAMode_0) == 0)
-         tmp = 0;
-      else if (tmpstr.compare(g_SAMode_1) == 0)
-         tmp = 1;
-      else if (tmpstr.compare(g_SAMode_2) == 0)
-         tmp = 2;
-      else if (tmpstr.compare(g_SAMode_3) == 0)
-         tmp = 3;
-      else
-         return DEVICE_INVALID_PROPERTY_VALUE;
-      // avoid unnecessary serial traffic
-      // requires assuming that value is only changed using this function
-      if (lastModeNum != tmp) {
+      RETURN_ON_MM_ERROR ( GetCurrentPropertyData(g_SAModeXPropertyName, tmp) );
+      if (saStateX_.mode != tmp) {
+         // avoid unnecessary serial traffic
+         // requires assuming that value is only changed using this function
          command << "SAM " << axisLetterX_ << "=" << tmp;
          RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
-         lastModeNum = tmp;
-         // get the updated value right away
-         justSet = true;
-         return OnSAModeX(pProp, MM::BeforeGet);
+         saStateX_.mode = tmp;
+         // get the updated value right away if it isn't just turning on/off
+         if (tmp > 1) {
+            justSet = true;
+            return OnSAModeX(pProp, MM::BeforeGet);
+         }
       }
    }
    return DEVICE_OK;
@@ -1419,22 +1418,13 @@ int CScanner::OnSAPatternX(MM::PropertyBase* pProp, MM::ActionType eAct)
       }
       if (!success)
          return DEVICE_INVALID_PROPERTY_VALUE;
+      saStateX_.pattern = tmp;
    }
    else if (eAct == MM::AfterSet) {
-      static long lastModeNum = -1;
-      string tmpstr;
-      pProp->Get(tmpstr);
-      if (tmpstr.compare(g_SAPattern_0) == 0)
-         tmp = 0;
-      else if (tmpstr.compare(g_SAPattern_1) == 0)
-         tmp = 1;
-      else if (tmpstr.compare(g_SAPattern_2) == 0)
-         tmp = 2;
-      else
-         return DEVICE_INVALID_PROPERTY_VALUE;
+      RETURN_ON_MM_ERROR ( GetCurrentPropertyData(g_SAPatternXPropertyName, tmp) );
       // avoid unnecessary serial traffic
       // requires assuming that value is only changed using this function
-      if (lastModeNum != tmp) {
+      if (saStateX_.pattern != tmp) {
          // have to get current settings and then modify bits 0-2 from there
          command << "SAP " << axisLetterX_ << "?";
          response << ":A " << axisLetterX_ << "=";
@@ -1446,7 +1436,7 @@ int CScanner::OnSAPatternX(MM::PropertyBase* pProp, MM::ActionType eAct)
          command.str("");
          command << "SAP " << axisLetterX_ << "=" << tmp;
          RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
-         lastModeNum = tmp;
+         saStateX_.pattern = tmp;
       }
    }
    return DEVICE_OK;
@@ -1552,35 +1542,26 @@ int CScanner::OnSAModeY(MM::PropertyBase* pProp, MM::ActionType eAct)
       if (!success)
          return DEVICE_INVALID_PROPERTY_VALUE;
       justSet = false;
+      saStateY_.mode = tmp;
    }
    else if (eAct == MM::AfterSet) {
-      static long lastModeNum = -1;
       if (!illuminationState_)  // don't do anything if beam is turned off
       {
          pProp->Set(g_SAMode_0);
          return DEVICE_OK;
       }
-      string tmpstr;
-      pProp->Get(tmpstr);
-      if (tmpstr.compare(g_SAMode_0) == 0)
-         tmp = 0;
-      else if (tmpstr.compare(g_SAMode_1) == 0)
-         tmp = 1;
-      else if (tmpstr.compare(g_SAMode_2) == 0)
-         tmp = 2;
-      else if (tmpstr.compare(g_SAMode_3) == 0)
-         tmp = 3;
-      else
-         return DEVICE_INVALID_PROPERTY_VALUE;
-      // avoid unnecessary serial traffic
-      // requires assuming that value is only changed using this function
-      if (lastModeNum != tmp) {
+      RETURN_ON_MM_ERROR ( GetCurrentPropertyData(g_SAModeYPropertyName, tmp) );
+      if (saStateY_.mode != tmp) {
+         // avoid unnecessary serial traffic
+         // requires assuming that value is only changed using this function
          command << "SAM " << axisLetterY_ << "=" << tmp;
          RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
-         lastModeNum = tmp;
-         // get the updated value right away
-         justSet = true;
-         return OnSAModeY(pProp, MM::BeforeGet);
+         saStateY_.mode = tmp;
+         // get the updated value right away if it isn't just turning on/off
+         if (tmp > 1) {
+            justSet = true;
+            return OnSAModeY(pProp, MM::BeforeGet);
+         }
       }
    }
    return DEVICE_OK;
@@ -1610,22 +1591,13 @@ int CScanner::OnSAPatternY(MM::PropertyBase* pProp, MM::ActionType eAct)
       }
       if (!success)
          return DEVICE_INVALID_PROPERTY_VALUE;
+      saStateY_.pattern = tmp;
    }
    else if (eAct == MM::AfterSet) {
-      static long lastModeNum = -1;
-      string tmpstr;
-      pProp->Get(tmpstr);
-      if (tmpstr.compare(g_SAPattern_0) == 0)
-         tmp = 0;
-      else if (tmpstr.compare(g_SAPattern_1) == 0)
-         tmp = 1;
-      else if (tmpstr.compare(g_SAPattern_2) == 0)
-         tmp = 2;
-      else
-         return DEVICE_INVALID_PROPERTY_VALUE;
+      RETURN_ON_MM_ERROR ( GetCurrentPropertyData(g_SAPatternYPropertyName, tmp) );
       // avoid unnecessary serial traffic
       // requires assuming that value is only changed using this function
-      if (lastModeNum != tmp) {
+      if (saStateY_.pattern != tmp) {
          // have to get current settings and then modify bits 0-2 from there
          command << "SAP " << axisLetterY_ << "?";
          response << ":A " << axisLetterY_ << "=";
@@ -1637,7 +1609,7 @@ int CScanner::OnSAPatternY(MM::PropertyBase* pProp, MM::ActionType eAct)
          command.str("");
          command << "SAP " << axisLetterY_ << "=" << tmp;
          RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
-         lastModeNum = tmp;
+         saStateY_.pattern = tmp;
       }
    }
    return DEVICE_OK;
