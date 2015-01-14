@@ -68,7 +68,7 @@ public interface ScriptInterface {
     * the desired duration, but may wait longer than requested before 
     * continuing execution.
     * @param ms Time in millisecond that the script should pause
-    * @throws org.micromanager.utils.MMScriptException
+    * @throws org.micromanager.internal.utils.MMScriptException
     */
    public void sleep(long ms) throws MMScriptException;
          
@@ -95,11 +95,6 @@ public interface ScriptInterface {
     * Does not communicate with hardware, only checks Cache
     */
    public void refreshGUIFromCache();
-
-   /**
-    * Given a TaggedImage input, output an Image.
-    */
-   public Image convertTaggedImage(TaggedImage tagged) throws JSONException, MMScriptException;
 
    /**
     * Snaps image and displays in AcqWindow.

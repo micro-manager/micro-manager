@@ -1055,10 +1055,6 @@ public class MMStudio implements ScriptInterface {
    // //////////////////////////////////////////////////////////////////////////
    // public interface available for scripting access
    // //////////////////////////////////////////////////////////////////////////
-   @Override
-   public Image convertTaggedImage(TaggedImage tagged) throws JSONException, MMScriptException {
-      return new DefaultImage(tagged);
-   }
 
    @Override
    public void snapSingleImage() {
