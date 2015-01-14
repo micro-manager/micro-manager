@@ -570,9 +570,6 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       return getIsClosed();
    }
 
-   // TODO: when the last display window is removed, we should really be
-   // calling the Datastore.close() method. How do we track that the last
-   // display window is really gone, though?
    @Override
    public void forceClosed() {
       if (haveClosed_) {
