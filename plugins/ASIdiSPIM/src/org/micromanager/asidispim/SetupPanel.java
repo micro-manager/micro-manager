@@ -50,6 +50,7 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.MMStudio;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.internalinterfaces.LiveModeListener;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  *
@@ -160,13 +161,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
          @Override
          public void actionPerformed(ActionEvent e) {
             try {
-               imagingCenterPos_ = imagingCenterPosLabel_.getFloat();
-               core_.setPosition(devices_.getMMDeviceException(piezoImagingDeviceKey_), 
-                       imagingCenterPos_);
-               double sliceCenterPos = computeGalvoFromPiezo(imagingCenterPos_);
-               core_.setGalvoPosition(
-                     devices_.getMMDeviceException(micromirrorDeviceKey_),
-                     0, sliceCenterPos);
+               center();
             } catch (Exception ex) {
                MyDialogUtils.showError(ex);
             }
@@ -501,7 +496,20 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       double offset = (Double) offsetField_.getValue();
       double rate = (Double) rateField_.getValue();
       return ((piezoPos - offset)/rate);
-      
+   }
+   
+  /**
+   * Centers the piezo and micro-mirror
+   * @throws Exception 
+   */
+   private void center() throws Exception {
+      imagingCenterPos_ = imagingCenterPosLabel_.getFloat();
+      core_.setPosition(devices_.getMMDeviceException(piezoImagingDeviceKey_),
+              imagingCenterPos_);
+      double sliceCenterPos = computeGalvoFromPiezo(imagingCenterPos_);
+      core_.setGalvoPosition(
+              devices_.getMMDeviceException(micromirrorDeviceKey_),
+              0, sliceCenterPos);
    }
    
    private JButton makeIncrementButton(Devices.Keys devKey, Properties.Keys propKey, 
@@ -598,6 +606,13 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       // SPIM use can change, but for alignment avoid sharp edges
       props_.setPropValue(micromirrorDeviceKey_, Properties.Keys.SA_PATTERN_X, 
               Properties.Values.SAM_TRIANGLE, true);
+      
+      // move piezo and scanner to "center" position
+      try {
+         center();
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+      }
       
       posUpdater_.pauseUpdates(false);
    }
