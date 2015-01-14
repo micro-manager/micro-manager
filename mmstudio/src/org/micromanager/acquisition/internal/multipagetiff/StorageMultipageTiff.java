@@ -57,11 +57,12 @@ import org.micromanager.data.NewImageEvent;
 import org.micromanager.data.NewSummaryMetadataEvent;
 import org.micromanager.data.Storage;
 import org.micromanager.data.SummaryMetadata;
-import org.micromanager.display.DisplaySettings;
 import org.micromanager.data.internal.DefaultCoords;
+import org.micromanager.data.internal.DefaultDatastore;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultMetadata;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
+import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.MDUtils;
@@ -120,7 +121,9 @@ public final class StorageMultipageTiff implements Storage {
     */
    public StorageMultipageTiff(Datastore store, String dir, boolean amInWriteMode,
          boolean separateMDFile, boolean separateFilesForPositions) throws IOException {
-      store.registerForEvents(this, 0);
+      // We must be notified of changes in the Datastore before everyone else,
+      // so that others can read those changes out of the Datastore later.
+      ((DefaultDatastore) store).registerForEvents(this, 0);
       // By default load the user's saved preferences.
       displaySettings_ = DefaultDisplaySettings.getStandardSettings();
       separateMetadataFile_ = separateMDFile;

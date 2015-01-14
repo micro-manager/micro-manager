@@ -41,7 +41,7 @@ public final class HistogramsPanel extends JPanel implements Histograms {
          MMVirtualStack stack, ImagePlus ijImage, EventBus displayBus) {
       super();
       store_ = store;
-      store_.registerForEvents(this, 100);
+      store_.registerForEvents(this);
       display_ = display;
       stack_ = stack;
       ijImage_ = ijImage;

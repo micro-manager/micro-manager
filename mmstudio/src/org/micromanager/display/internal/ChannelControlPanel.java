@@ -138,7 +138,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          bitDepth_ = images.get(0).getMetadata().getBitDepth();
          initialize();
       }
-      store.registerForEvents(this, 100);
+      store.registerForEvents(this);
       display.registerForEvents(this);
    }
 

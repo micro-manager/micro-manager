@@ -274,7 +274,7 @@ public class SnapLiveManager {
       // Note that unlike in most situations, we do *not* ask the DataManager
       // to track this Datastore for us.
       store_ = new DefaultDatastore();
-      store_.registerForEvents(this, 100);
+      store_.registerForEvents(this);
       store_.setStorage(new StorageRAM(store_));
       // Update the summary metadata so that the "filename" field is used to
       // generate an appropriate display window title.

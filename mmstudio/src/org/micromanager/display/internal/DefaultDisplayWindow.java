@@ -131,7 +131,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
    public DefaultDisplayWindow(Datastore store, Component customControls,
          DisplaySettings settings, boolean isFullScreen) {
       store_ = store;
-      store_.registerForEvents(this, 100);
+      store_.registerForEvents(this);
       if (settings == null) {
          displaySettings_ = DefaultDisplaySettings.getStandardSettings();
       }

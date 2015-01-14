@@ -111,7 +111,7 @@ class ScrollerPanel extends JPanel {
       fps_ = 10;
       fpsMenu_ = new FPSPopupMenu(parent_.getDisplayBus(), fps_);
 
-      store_.registerForEvents(this, 100);
+      store_.registerForEvents(this);
       parent_.registerForEvents(this);
    }
 
