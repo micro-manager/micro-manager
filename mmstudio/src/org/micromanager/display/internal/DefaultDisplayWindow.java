@@ -161,9 +161,6 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
          displayBus_.post(new FullScreenEvent(this, screenConfig, true));
       }
 
-      setBackground(MMStudio.getInstance().getBackgroundColor());
-      MMStudio.getInstance().addMMBackgroundListener(this);
-
       resetTitle();
 
       if (store_.getNumImages() > 0) {
@@ -612,7 +609,6 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       MMStudio studio = MMStudio.getInstance();
       studio.display().removeDisplay(this, store_);
       store_.unregisterForEvents(this);
-      studio.removeMMBackgroundListener(this);
       dispose();
       haveClosed_ = true;
    }

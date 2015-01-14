@@ -503,27 +503,6 @@ public interface ScriptInterface {
    public void removeMMListener(MMListenerInterface oldL);
 
    /**
-    * Lets Components register themselves so that their background can be
-    * manipulated by the Micro-Manager UI.
-    * @param frame Component to which the listener should be added.
-    */
-   public void addMMBackgroundListener(Component frame);
-
-   /**
-    * Lets Components remove themselves from the list whose background gets
-    * changed by the Micro-Manager UI.
-    * @param frame Component from which the listener should be removed.
-    */
-   public void removeMMBackgroundListener(Component frame);
-
-   /**
-    * Returns the current color of the main window so that it can be used in
-    * derived windows/plugins as well
-    * @return Current backgroundColor
-    */
-   public Color getBackgroundColor();
-
-     /**
     * Show a TaggedImage in the snap/live window (uses current camera settings
     * to figure out the shape of the image)
     * @param image TaggedImage (pixel data and metadata tags) to be displayed
@@ -623,21 +602,29 @@ public interface ScriptInterface {
    public AutofocusManager getAutofocusManager();
 
    /**
-    * @return the current Micro-Manager background style--"Day" or "Night"
-    */ 
-   public String getBackgroundStyle();
-
-   /**
     * @return the currently running Micro-Manager version
     */
    public String getVersion();
 
    /**
+    * These strings are the only valid inputs to setBackgroundStyle, below.
+    */
+   public static final String DAY = "Day";
+   public static final String NIGHT = "Night";
+
+   /**
     * Sets the background color of the GUI and all its registered components to 
     * the selected backGroundType
-    * @param backgroundType either "Day" or "Night"
+    * @param backgroundType either ScriptInterface.DAY or
+    * ScriptInterface.NIGHT.
     */
    public void setBackgroundStyle(String backgroundType);
+
+   /**
+    * @return the current Micro-Manager background style, which will be one
+    * of ScriptInterface.DAY or ScriptInterface.NIGHT.
+    */
+   public String getBackgroundStyle();
 
    /**
     * lets the GUI know that the current configuration has been changed.  Activates

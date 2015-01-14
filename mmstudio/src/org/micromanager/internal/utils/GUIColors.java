@@ -26,9 +26,13 @@ package org.micromanager.internal.utils;
 import java.awt.Color;
 import java.util.HashMap;
 
+import javax.swing.plaf.ColorUIResource;
+
 /*
  * This class controls the colors of the user interface
- * Changes/additions here should manifest themselves in the UI
+ * Note we use ColorUIResources instead of Colors because Colors don't
+ * interact well with Look and Feel; see
+ * http://stackoverflow.com/questions/27933017/cant-update-look-and-feel-on-the-fly
  */
 public class GUIColors {
    final public String STYLE_DAY = "Day";
@@ -37,20 +41,20 @@ public class GUIColors {
    final public String[] styleOptions = {STYLE_DAY, STYLE_NIGHT};
 
    // background color of the UI
-   public HashMap<String, Color> background;
+   public HashMap<String, ColorUIResource> background;
    // background color of pads in the UI
-   public HashMap<String, Color> padBackground;
+   public HashMap<String, ColorUIResource> padBackground;
    // TODO: implement font color
 
    public GUIColors() {
       // Possible: make UI to let user set these colors
-      background = new HashMap<String, Color>();
-      background.put(STYLE_DAY, java.awt.SystemColor.control);
-      background.put(STYLE_NIGHT, java.awt.Color.gray);
+      background = new HashMap<String, ColorUIResource>();
+      background.put(STYLE_DAY, new ColorUIResource(java.awt.SystemColor.control));
+      background.put(STYLE_NIGHT, new ColorUIResource(Color.gray));
 
-      padBackground = new HashMap<String, Color>();
-      padBackground.put(STYLE_DAY, java.awt.Color.white);
-      padBackground.put(STYLE_NIGHT, java.awt.SystemColor.control);
+      padBackground = new HashMap<String, ColorUIResource>();
+      padBackground.put(STYLE_DAY, new ColorUIResource(Color.white));
+      padBackground.put(STYLE_NIGHT, new ColorUIResource(java.awt.SystemColor.control));
    }
 
 }

@@ -68,11 +68,6 @@ public class MMDialog extends JDialog {
 
    private void finishConstructor() {
       mmDialogPrefs_ = Preferences.userNodeForPackage(this.getClass());
-      MMStudio mfr = MMStudio.getInstance();
-      if (mfr != null) {
-         mfr.addMMBackgroundListener(this);
-    	   setBackground(mfr.getBackgroundColor());
-      }
    }
 
    /**
