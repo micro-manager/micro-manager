@@ -747,19 +747,6 @@ public interface ScriptInterface {
    public void registerOverlay(OverlayPanel panel);
 
    /**
-    * Return the DisplayWindow for the top-level window. Will be null if there
-    * is no such window or that window is not a DisplayWindow (e.g. it is an
-    * ImageJ window instead).
-    */
-   public DisplayWindow getCurrentWindow();
-
-   /**
-    * Return all active DisplayWindows. Note this is limited to windows created
-    * by Micro-Manager (e.g. not windows created by ImageJ).
-    */
-   public List<DisplayWindow> getAllImageWindows();
-
-   /**
     * Provide access to the DataManager instance for accessing Micro-Manager
     * data constructs.
     */
