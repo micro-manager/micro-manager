@@ -366,32 +366,6 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
    }
 
    /**
-    * HACK: Override painting of the ImageWindow, because we need it to *not*
-    * draw the canvas border, but still need it to draw the info text at the
-    * top of the window. It can't draw the border properly anyway, since the
-    * canvas is now contained in a JPanel and the canvas's size is such that
-    * if any other entity draws the border, the canvas will "shadow" the 
-    * border and make it largely invisible. Instead, the canvas draws the
-    * border itself.
-    */
-   @Override
-   public void paint(Graphics g) {
-      // Manually blank the background of the info text. Normally this would
-      // be done for us by Component.update(), but we're overriding that
-      // behavior (see below).
-      // HACK: the height of the rect to clear here is basically empirically-
-      // derived, which is of course an incredibly brittle way to run things.
-      g.clearRect(0, 0, getWidth(), 35);
-      // This is kind of a dumb way to get the text we need, but hey, it works.
-      // TODO: how can dummyWindow_ be null here? I started getting
-      // NullPointerExceptions once I integrated the MDA into the new system.
-      if (dummyWindow_ != null) {
-         dummyWindow_.drawInfo(g);
-      }
-      super.paint(g);
-   }
-
-   /**
     * Keep class specific preferences to store window location
     */
    private void initializePrefs() {
