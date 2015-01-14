@@ -59,7 +59,7 @@ public interface Metadata {
       MetadataBuilder source(String source);
       MetadataBuilder startTimeMs(Double startTimeMs);
       MetadataBuilder summaryMetadata(SummaryMetadata summaryMetadata);
-      MetadataBuilder userMetadata(JSONObject userMetadata);
+      MetadataBuilder userData(JSONObject userData);
       MetadataBuilder uuid(UUID uuid);
       MetadataBuilder xPositionUm(Double xPositionUm);
       MetadataBuilder yPositionUm(Double yPositionUm);
@@ -112,7 +112,7 @@ public interface Metadata {
      * images (TODO: now properly part of Image class) */
    Integer getNumComponents();
    /** Arbitrary additional metadata */
-   JSONObject getUserMetadata();
+   JSONObject getUserData();
    /** List of stage positions at the start of the acquisition (e.g. not taking
      * into account changes caused by autofocus). TODO: should be part of
      * SummaryMetadata?

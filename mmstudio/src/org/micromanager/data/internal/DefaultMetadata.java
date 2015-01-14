@@ -64,7 +64,7 @@ public class DefaultMetadata implements Metadata {
       private Integer color_ = null;
       private Double pixelAspect_ = null;
 
-      private JSONObject userMetadata_ = null;
+      private JSONObject userData_ = null;
       private SummaryMetadata summaryMetadata_ = null;
 
       @Override
@@ -253,8 +253,8 @@ public class DefaultMetadata implements Metadata {
       }
 
       @Override
-      public MetadataBuilder userMetadata(JSONObject userMetadata) {
-         userMetadata_ = userMetadata;
+      public MetadataBuilder userData(JSONObject userData) {
+         userData_ = userData;
          return this;
       }
 
@@ -302,7 +302,7 @@ public class DefaultMetadata implements Metadata {
    private Integer color_ = null;
    private Double pixelAspect_ = null;
 
-   private JSONObject userMetadata_ = null;
+   private JSONObject userData_ = null;
    private SummaryMetadata summaryMetadata_ = null;
 
    public DefaultMetadata(Builder builder) {
@@ -343,7 +343,7 @@ public class DefaultMetadata implements Metadata {
       color_ = builder.color_;
       pixelAspect_ = builder.pixelAspect_;
 
-      userMetadata_ = builder.userMetadata_;
+      userData_ = builder.userData_;
       summaryMetadata_ = builder.summaryMetadata_;
    }
    
@@ -533,8 +533,8 @@ public class DefaultMetadata implements Metadata {
    }
 
    @Override
-   public JSONObject getUserMetadata() {
-      return userMetadata_;
+   public JSONObject getUserData() {
+      return userData_;
    }
 
    @Override
