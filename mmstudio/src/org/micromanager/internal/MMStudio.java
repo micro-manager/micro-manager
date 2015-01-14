@@ -781,7 +781,7 @@ public class MMStudio implements ScriptInterface {
          // necessary).
          Rectangle originalROI = null;
 
-         DisplayWindow curWindow = getCurrentWindow();
+         DisplayWindow curWindow = display().getCurrentWindow();
          if (curWindow != null) {
             List<Image> images = curWindow.getDisplayedImages();
             // Just take the first one.
@@ -2513,7 +2513,7 @@ public class MMStudio implements ScriptInterface {
 
    @Override
    public void autostretchCurrentWindow() {
-      DisplayWindow display = getCurrentWindow();
+      DisplayWindow display = display().getCurrentWindow();
       DisplaySettings settings = display.getDisplaySettings();
       if (settings.getShouldAutostretch() != true) {
          // Autostretch is not currently enabled; toggle it to perform the
@@ -2529,16 +2529,6 @@ public class MMStudio implements ScriptInterface {
    @Override
    public void registerOverlay(OverlayPanel panel) {
       ReportingUtils.logError("TODO: Implement this");
-   }
-
-   @Override
-   public DisplayWindow getCurrentWindow() {
-      return DefaultDisplayWindow.getCurrentWindow();
-   }
-
-   @Override
-   public List<DisplayWindow> getAllImageWindows() {
-      return DefaultDisplayWindow.getAllImageWindows();
    }
 
    @Override
