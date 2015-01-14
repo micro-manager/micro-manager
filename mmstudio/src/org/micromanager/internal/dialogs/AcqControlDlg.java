@@ -1982,6 +1982,22 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
          return compTitledBorder;
       }
 
+      /**
+       * HACK: when the look and feel changes, the background colors of all
+       * components are supposed to get updated. For some reason, our custom
+       * titled components don't receive this update, so we have to propagate
+       * it manually.
+       */
+      @Override
+      public void setBackground(Color c) {
+         super.setBackground(c);
+         // This can get called from the super constructor, at which point
+         // titleComponent won't be defined yet.
+         if (titleComponent != null) {
+            titleComponent.setBackground(c);
+         }
+      }
+
       public void setTitleFont(Font font) {
          titleComponent.setFont(font);
       }
@@ -1991,11 +2007,12 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
    public class LabelPanel extends ComponentTitledPanel {
       LabelPanel(String title) {
          super();
-         titleComponent = new JLabel(title);
-         JLabel label = (JLabel) titleComponent;
+         JLabel label = new JLabel(title);
+         titleComponent = label;
          label.setOpaque(true);
          label.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-         compTitledBorder = new ComponentTitledBorder(label, this, BorderFactory.createEtchedBorder());
+         compTitledBorder = new ComponentTitledBorder(label, this,
+               BorderFactory.createEtchedBorder());
          this.setBorder(compTitledBorder);
          borderSet_ = true;
       }
