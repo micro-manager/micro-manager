@@ -72,7 +72,7 @@ public class DisplaySettingsPanel extends JPanel {
       super(new MigLayout());
 
       store_ = store;
-      store_.registerForEvents(this, 100);
+      store_.registerForEvents(this);
       ijImage_ = ijImage;
       display_ = display;
       displayBus_ = displayBus;

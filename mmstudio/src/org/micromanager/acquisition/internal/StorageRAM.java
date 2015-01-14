@@ -21,6 +21,7 @@ import org.micromanager.data.Storage;
 import org.micromanager.data.SummaryMetadata;
 
 import org.micromanager.data.internal.DefaultCoords;
+import org.micromanager.data.internal.DefaultDatastore;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultMetadata;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
@@ -45,7 +46,7 @@ public class StorageRAM implements Storage {
       summaryMetadata_ = (new DefaultSummaryMetadata.Builder()).build();
       // It is imperative that we be notified of new images before anyone who
       // wants to retrieve the images from the store is notified.
-      store.registerForEvents(this, 0);
+      ((DefaultDatastore) store).registerForEvents(this, 0);
    }
 
    /**

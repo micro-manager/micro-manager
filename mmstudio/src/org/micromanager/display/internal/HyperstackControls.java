@@ -82,7 +82,7 @@ public class HyperstackControls extends JPanel {
       super(new FlowLayout(FlowLayout.LEADING));
       parent_ = parent;
       store_ = store;
-      store_.registerForEvents(this, 100);
+      store_.registerForEvents(this);
       stack_ = stack;
       initComponents(shouldUseLiveControls);
       parent_.registerForEvents(this);

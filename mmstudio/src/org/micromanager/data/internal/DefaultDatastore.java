@@ -51,7 +51,14 @@ public class DefaultDatastore implements Datastore {
       storage_ = storage;
    }
 
+   /**
+    * Registers objects at default priority levels.
+    */
    @Override
+   public void registerForEvents(Object obj) {
+      registerForEvents(obj, 100);
+   }
+
    public void registerForEvents(Object obj, int priority) {
       bus_.register(obj, priority);
    }
