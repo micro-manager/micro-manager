@@ -66,6 +66,7 @@ public class DevicesPanel extends ListeningJPanel {
     * Constructs the GUI Panel that lets the user specify which device to use
     * @param gui - hook to MMstudioMainFrame script interface
     * @param devices - instance of class that holds information about devices
+    * @param props
     */
    public DevicesPanel(ScriptInterface gui, Devices devices, Properties props) {
       super(MyStrings.PanelNames.DEVICES.toString(), 

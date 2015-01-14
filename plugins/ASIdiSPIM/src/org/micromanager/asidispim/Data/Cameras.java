@@ -68,6 +68,7 @@ public class Cameras {
       /**
        * @param displayString string used in camera drop-down
        * @param deviceKey enum from Devices.Keys for the device
+       * @param side A, B, or none
        */
       public CameraData(String displayString, Devices.Keys deviceKey,
             Devices.Sides side) {
@@ -103,10 +104,7 @@ public class Cameras {
          if (this.deviceKey != other.deviceKey) {
             return false;
          }
-         if (this.side != other.side) {
-            return false;
-         }
-         return true;
+         return this.side == other.side;
       }
    }
 
@@ -134,6 +132,7 @@ public class Cameras {
    /**
     * Switches the active camera to the desired one. Takes care of possible side
     * effects.
+    * @param key camera device to switch to
     */
    public void setCamera(Devices.Keys key) {
       if (!Devices.CAMERAS.contains(key) ||
@@ -176,6 +175,7 @@ public class Cameras {
 
    /**
     * Turns live mode on or off via core call
+    * @param enable true: switch on live mode, false: switch it off
     */
    public void enableLiveMode(boolean enable) {
       if (enable) {

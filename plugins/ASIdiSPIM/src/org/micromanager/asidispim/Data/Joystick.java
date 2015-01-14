@@ -38,8 +38,8 @@ import org.micromanager.asidispim.Utils.MyDialogUtils;
  */
 public class Joystick {
    
-   private Devices devices_;   // object holding information about selected/available devices
-   private Properties props_;  // object handling all property read/writes
+   private final Devices devices_;   // object holding information about selected/available devices
+   private final Properties props_;  // object handling all property read/writes
    
    public Joystick(Devices devices, Properties props) {
       devices_ = devices;
@@ -132,16 +132,14 @@ public class Joystick {
          if (this.deviceKey != other.deviceKey) {
             return false;
          }
-         if (this.direction != other.direction) {
-            return false;
-         }
-         return true;
+         return this.direction == other.direction;
       }
    }
    
    /**
     * used to generate selection list for joypod wheel combo list
     * order: none, devices in JOYSTICK1DSET, then individual axes of devices in JOYSTICK2DSET
+    * @param side A, B, or none
     * @return array with representative strings of 1 axis stages plus individual axes of 2-axis stages/galvos
     */
    public JSAxisData[] getWheelJSAxisData(Devices.Sides side) {
@@ -168,6 +166,7 @@ public class Joystick {
    
    /**
     * used to generate selection list for joystick stick combo list
+    * @param side A, B, or none
     * @return array with representative strings of 2 axis stages
     */
    public JSAxisData[] getStickJSAxisData(Devices.Sides side) {
@@ -210,6 +209,7 @@ public class Joystick {
    /**
     * If any device is attached to the specified joystick then it clears that association.
     * Loops over all devices that could be associated with joysticks and sets appropriate property.
+    * @param jkey
     */
    public void unsetAllDevicesFromJoystick(Joystick.Keys jkey) {
       try {

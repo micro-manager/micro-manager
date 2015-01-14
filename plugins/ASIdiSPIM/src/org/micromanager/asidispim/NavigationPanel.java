@@ -88,6 +88,14 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
    
    /**
     * Navigation panel constructor.
+    * @param gui Micro-Manager script interface
+    * @param devices our  Devices object
+    * @param props
+    * @param joystick
+    * @param positions
+    * @param prefs
+    * @param cameras
+    * @param posUpdater Class that will continuously update the stage positions
     */
    public NavigationPanel(ScriptInterface gui, Devices devices, Properties props, 
            Joystick joystick, Positions positions, Prefs prefs, Cameras cameras,

@@ -61,7 +61,12 @@ public final class BeamSubPanel extends ListeningJPanel {
    
    /**
     * 
+    * @param gui Micro-Manager script interface
     * @param devices the (single) instance of the Devices class
+    * @param instanceLabel name of the panel calling this class
+    * @param side A, B, or None
+    * @param prefs 
+    * @param props
     */
    public BeamSubPanel(ScriptInterface gui, Devices devices, String instanceLabel, 
          Devices.Sides side, Prefs prefs, Properties props) {    

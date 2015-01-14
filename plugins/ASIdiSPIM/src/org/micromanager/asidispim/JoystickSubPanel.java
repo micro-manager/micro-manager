@@ -62,7 +62,11 @@ public final class JoystickSubPanel extends ListeningJPanel {
      
    /**
     * 
+    * @param joystick instance of Joystick object
     * @param devices the (single) instance of the Devices class
+    * @param instanceLabel name of calling panel
+    * @param side A, B, or none
+    * @param prefs
     */
    public JoystickSubPanel(Joystick joystick, Devices devices, String instanceLabel,
          Devices.Sides side, Prefs prefs) {    

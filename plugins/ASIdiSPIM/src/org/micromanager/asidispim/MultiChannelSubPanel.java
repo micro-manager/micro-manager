@@ -281,6 +281,7 @@ public class MultiChannelSubPanel extends ListeningJPanel {
    
    /**
     * gets the state of the enable/disable checkbox
+    * @return state of the enable/disable checkbox
     */
    public boolean isPanelEnabled() {
       return useChannelsCB_.isSelected();
@@ -322,7 +323,7 @@ public class MultiChannelSubPanel extends ListeningJPanel {
    }
    
    /**
-    * Returns array of channels that are currently set be "used".
+    * @return array of channels that are currently set be "used"
     */
    public ChannelSpec[] getUsedChannels() {
       return channelTableModel_.getUsedChannels();
@@ -343,9 +344,9 @@ public class MultiChannelSubPanel extends ListeningJPanel {
    public void selectNextChannel() {
       ChannelSpec channel = usedChannels_[nextChannelIndex_];
       try {
-         core_.setConfig(channelGroup_.getSelectedItem().toString(), channel.config_.toString());
+         core_.setConfig(channelGroup_.getSelectedItem().toString(), channel.config_);
       } catch (Exception e) {
-         MyDialogUtils.showError(e, "Couldn't select preset " + channel.config_.toString() +
+         MyDialogUtils.showError(e, "Couldn't select preset " + channel.config_ +
                "of channel group " + channelGroup_.getSelectedItem().toString());
       }
       nextChannelIndex_++;
