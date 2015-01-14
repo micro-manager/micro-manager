@@ -165,7 +165,6 @@ public final class BeamSubPanel extends ListeningJPanel {
             }
          } else {
             sheetBox_.setEnabled(false);
-            //sheetBox_.setSelected(false);  // turn off sheet too, since that's what firmware does
          }
       }
    } // end of BeamBoxListener
@@ -182,19 +181,21 @@ public final class BeamSubPanel extends ListeningJPanel {
       syncPropertyAndCheckBox(beamABox_, Devices.getSideSpecificKey(Devices.Keys.GALVOA, side_), 
             Properties.Keys.BEAM_ENABLED, Properties.Values.YES, Properties.Values.NO,
             updateOnTab_.isSelected());
-      syncPropertyAndCheckBox(sheetABox_, Devices.getSideSpecificKey(Devices.Keys.GALVOA, side_),
-            Properties.Keys.SA_MODE_X, Properties.Values.SAM_ENABLED, Properties.Values.SAM_DISABLED,
-            updateOnTab_.isSelected());
       syncPropertyAndCheckBox(beamBBox_, Devices.getSideSpecificKey(Devices.Keys.GALVOA, otherSide_),
             Properties.Keys.BEAM_ENABLED, Properties.Values.YES, Properties.Values.NO,
             updateOnTab_.isSelected());
-      syncPropertyAndCheckBox(sheetBBox_, Devices.getSideSpecificKey(Devices.Keys.GALVOA, otherSide_), 
-            Properties.Keys.SA_MODE_X, Properties.Values.SAM_ENABLED, Properties.Values.SAM_DISABLED,
-            updateOnTab_.isSelected());
+      
       // make sure the sheet enables get set properly; this is handled on user input by 
       //   listeners based on makeDisableSheetListener
       sheetABox_.setEnabled(beamABox_.isSelected());
       sheetBBox_.setEnabled(beamBBox_.isSelected());
+      
+      syncPropertyAndCheckBox(sheetABox_, Devices.getSideSpecificKey(Devices.Keys.GALVOA, side_),
+            Properties.Keys.SA_MODE_X, Properties.Values.SAM_ENABLED, Properties.Values.SAM_DISABLED,
+            updateOnTab_.isSelected());
+      syncPropertyAndCheckBox(sheetBBox_, Devices.getSideSpecificKey(Devices.Keys.GALVOA, otherSide_), 
+            Properties.Keys.SA_MODE_X, Properties.Values.SAM_ENABLED, Properties.Values.SAM_DISABLED,
+            updateOnTab_.isSelected());
   }
    
    
@@ -212,9 +213,8 @@ public final class BeamSubPanel extends ListeningJPanel {
          box.setEnabled(false);
          box.setSelected(false);
       } else {
-         box.setEnabled(true);
          if (checkBoxWins) {
-            boolean boxVal = box.isSelected();
+            boolean boxVal = (box.isSelected() && box.isEnabled());  // disabled box <=> sheet box with beam disabled
             boolean propVal = props_.getPropValueString(devKey, propKey).equals(onValue.toString());
             if (boxVal != propVal) {  // if property value is "wrong" then change it
                props_.setPropValue(devKey, propKey, (boxVal ? onValue : offValue), true);
