@@ -16,7 +16,6 @@ import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.MMTags;
 
 /**
  * This class is intended to standardize interactions with the tags in 
