@@ -339,7 +339,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       histMaxLabel_ = histMax_ + "";
       updateHistogram();
       calcAndDisplayHistAndStats(true);
-      storeDisplaySettings();
    }
 
    private void updateHistogram() {
@@ -652,7 +651,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
                   }
                }
             } // End multi-channel case.
-            storeDisplaySettings();
             updateHistogram();
          }
       };
@@ -663,13 +661,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       }
    }
 
-   // TODO: implement.
-   private void storeDisplaySettings() {
-//      int histMax = histRangeComboBox_.getSelectedIndex() == 0 ? -1 : histMax_;
-//      display_.storeChannelHistogramSettings(channelIndex_, contrastMin_, contrastMax_,
-//              gamma_, histMax,((MMCompositeImage) composite_).getMode());
-   }
-   
    public int getChannelIndex() {
       return channelIndex_;
    }
