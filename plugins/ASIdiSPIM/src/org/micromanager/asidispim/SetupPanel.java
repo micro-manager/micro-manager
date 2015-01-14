@@ -160,11 +160,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       goToCenterButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            try {
-               center();
-            } catch (Exception ex) {
-               MyDialogUtils.showError(ex);
-            }
+            center();
          }
       } );
       sheetPanel.add(goToCenterButton, "span 2, center");
@@ -499,17 +495,27 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    }
    
   /**
-   * Centers the piezo and micro-mirror
+   * Centers the piezo and micro-mirror.  Doesn't do anything if the devices
+   * aren't assigned to prevent spurious exceptions.
    * @throws Exception 
    */
-   private void center() throws Exception {
-      imagingCenterPos_ = imagingCenterPosLabel_.getFloat();
-      core_.setPosition(devices_.getMMDeviceException(piezoImagingDeviceKey_),
-              imagingCenterPos_);
-      double sliceCenterPos = computeGalvoFromPiezo(imagingCenterPos_);
-      core_.setGalvoPosition(
-              devices_.getMMDeviceException(micromirrorDeviceKey_),
-              0, sliceCenterPos);
+   private void center() {
+      if (!devices_.isValidMMDevice(piezoImagingDeviceKey_) ||
+            !devices_.isValidMMDevice(micromirrorDeviceKey_)) {
+         return;  // don't do anything if devices aren't assigned
+         //
+      }
+      try {
+         imagingCenterPos_ = imagingCenterPosLabel_.getFloat();
+         core_.setPosition(devices_.getMMDeviceException(piezoImagingDeviceKey_),
+               imagingCenterPos_);
+         double sliceCenterPos = computeGalvoFromPiezo(imagingCenterPos_);
+         core_.setGalvoPosition(
+               devices_.getMMDeviceException(micromirrorDeviceKey_),
+               0, sliceCenterPos);
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+      }
    }
    
    private JButton makeIncrementButton(Devices.Keys devKey, Properties.Keys propKey, 
@@ -608,11 +614,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
               Properties.Values.SAM_TRIANGLE, true);
       
       // move piezo and scanner to "center" position
-      try {
-         center();
-      } catch (Exception ex) {
-         ReportingUtils.logError(ex);
-      }
+      center();
       
       posUpdater_.pauseUpdates(false);
    }
