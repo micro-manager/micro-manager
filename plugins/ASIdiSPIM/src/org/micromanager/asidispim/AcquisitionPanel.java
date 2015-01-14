@@ -913,7 +913,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          scanDelayFilter = MyNumberUtils.roundToQuarterMs(0.4f/scanFilterFreq);
       }
       
-      // add 0.25ms to globalDelay if it is 0 and we are on overlap mode and scan has been shifted forward
+      // Add 0.25ms to globalDelay if it is 0 and we are on overlap mode and scan has been shifted forward
       // basically the last 0.25ms of scan time that would have determined the slice period isn't
       //   there any more because the scan time is moved up  => add in the 0.25ms at the start of the slice
       // in edge or level trigger mode the camera trig falling edge marks the end of the slice period
@@ -923,6 +923,15 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          globalDelay += 0.25f;
       }
       
+      // If the PLogic card is used, account for 0.25ms delay it introduces
+      // to the camera and laser trigger signals => subtract 0.25ms to the scanner delay
+      // (start scanner 0.25ms later than it would be otherwise)
+      // (really it is 0.25ms minus the evaluation time to generate the signals)
+      // this time-shift opposes the Bessel filter delay
+      if (devices_.isValidMMDevice(Devices.Keys.PLOGIC)) {
+         scanDelayFilter -= 0.25f;
+      }
+
       s.scanDelay = cameraReadout_max + globalDelay + cameraReset_max - scanDelayFilter - scanLaserBufferTime;  
       s.scanNum = 1;
       s.scanPeriod = scanPeriod;
