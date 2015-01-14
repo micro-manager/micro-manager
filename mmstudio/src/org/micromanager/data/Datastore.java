@@ -18,12 +18,9 @@ public interface Datastore extends Closeable {
    public void setStorage(Storage storage);
 
    /**
-    * Subscribe the provided object to the Datastore's event bus. Lower
-    * priority numbers are notified of events before higher priority numbers.
-    * Do not set a priority of 0 or lower as this will cause unpredictable
-    * behaviors.
+    * Subscribe the provided object to the Datastore's event bus.
     */
-   public void registerForEvents(Object obj, int priority);
+   public void registerForEvents(Object obj);
 
    /**
     * Unsubscribe the provided object from the Datastore's event bus.
