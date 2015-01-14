@@ -330,7 +330,7 @@ public class JavaUtils {
       File dir = new File(dirPath);
       if (!dir.exists()) {
          if (!dir.mkdirs()) {
-            throw new Exception("Unable to create directory.");
+            throw new Exception("Unable to create directory " + dirPath);
          }
       }
       return dir;
