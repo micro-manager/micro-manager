@@ -2,7 +2,12 @@ package org.micromanager.data;
 
 import java.util.List;
 
+import mmcorej.TaggedImage;
+
+import org.json.JSONException;
+
 import org.micromanager.display.DisplayWindow;
+import org.micromanager.internal.utils.MMScriptException;
 
 /**
  * This class provides general utility functions for working with
@@ -29,6 +34,11 @@ public interface DataManager {
     * if there is no album.
     */
    public Datastore getAlbumDatastore();
+
+   /**
+    * Given a TaggedImage input, output an Image.
+    */
+   public Image convertTaggedImage(TaggedImage tagged) throws JSONException, MMScriptException;
 
    /**
     * Add the specified image to the current album datastore. If the current
