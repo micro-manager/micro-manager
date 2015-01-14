@@ -59,11 +59,6 @@ public class MMFrame extends JFrame {
    
       private void finishConstructor() {
       prefs_ = Preferences.userNodeForPackage(this.getClass());
-      MMStudio mfr = MMStudio.getInstance();
-      if (mfr != null) {
-         mfr.addMMBackgroundListener(this);
-    	   setBackground(mfr.getBackgroundColor());
-      }
    }
 
    /**

@@ -53,9 +53,6 @@ public abstract class PagePanel extends JPanel{
    public PagePanel() {
       super();
       title_ = new String();
-      MMStudio mmf = MMStudio.getInstance();
-      if (mmf != null)
-    	  setBackground(MMStudio.getInstance().getBackgroundColor());
    }
 
    public void setModel(MicroscopeModel model, CMMCore core) {

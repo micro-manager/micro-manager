@@ -423,14 +423,9 @@ public class OptionsDlg extends MMDialog {
 
    private void changeBackground() {
       String background = (String) comboDisplayBackground_.getSelectedItem();
-      opts_.displayBackground_ = background;
-      setBackground(guiColors_.background.get(background));
 
-      if (parent_ != null) // test for null just to avoid crashes (should never be null)
-      {
-         // set background and trigger redraw of parent and its descendant windows
-         MMStudio.getInstance().setBackgroundStyle(background);
-      }
+      opts_.displayBackground_ = background;
+      parent_.setBackgroundStyle(background);
    }
 
    private void closeRequested() {
