@@ -65,11 +65,6 @@ public class CustomTimeIntervalsPanel extends JPanel {
         createButtons();
         createInfoPanel();
         configureLayout();
-        if (gui != null) {
-        	  setBackground(gui.getBackgroundColor());
-        	  gui.addMMBackgroundListener(this);
-        }
-
     }
 
     private void createInfoPanel() {

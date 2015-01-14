@@ -35,8 +35,6 @@ public class LineProfile {
       profileWin_.setAutoScale();
       profileWin_.setTitle("Live line profile");
       MMStudio studio = MMStudio.getInstance();
-      profileWin_.setBackground(studio.getBackgroundColor());
-      studio.addMMBackgroundListener(profileWin_);
       profileWin_.setVisible(true);
    }
 
@@ -82,7 +80,6 @@ public class LineProfile {
 
    public static void cleanup() {
       if (profileWin_ != null) {
-         MMStudio.getInstance().removeMMBackgroundListener(profileWin_);
          profileWin_.dispose();
       }
    }

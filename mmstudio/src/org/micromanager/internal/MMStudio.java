@@ -43,6 +43,7 @@ import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.Window;
 import java.awt.event.WindowEvent;
 import java.awt.geom.Point2D;
 import java.io.File;
@@ -166,6 +167,21 @@ public class MMStudio implements ScriptInterface {
    private static final int TOOLTIP_DISPLAY_INITIAL_DELAY_MILLISECONDS = 2000;
    private static final String DEFAULT_CONFIG_FILE_NAME = "MMConfig_demo.cfg";
    private static final String DEFAULT_CONFIG_FILE_PROPERTY = "org.micromanager.default.config.file";
+
+   // List of keys to UIManager.put() method for setting the background color
+   // look and feel. Selected from this page:
+   // http://alvinalexander.com/java/java-uimanager-color-keys-list
+   // Each of these keys will have ".background" appended to it later.
+   public static final String[] BACKGROUND_COLOR_KEYS = new String[] {
+         "Button", "CheckBox", "CheckBoxMenuItem", "ColorChooser",
+         "ComboBox", "EditorPane", "FormattedTextField", "InternalFrame",
+         "Label", "List", "Menu", "MenuBar", "MenuItem", "OptionPane",
+         "Panel", "PasswordField", "PopupMenu", "ProgressBar", "RadioButton",
+         "RadioButtonMenuItem", "ScrollBar", "ScrollPane", "Slider", "Spinner",
+         "SplitPane", "TabbedPane", "Table", "TableHeader", "TextArea",
+         "TextField", "TextPane", "ToggleButton", "TollBar", "Tree",
+         "Viewport"
+   };
 
    // cfg file saving
    private static final String CFGFILE_ENTRY_BASE = "CFGFileEntry";
@@ -337,7 +353,9 @@ public class MMStudio implements ScriptInterface {
       } catch (Exception e) {
          ReportingUtils.logError(e);
       }
-      
+
+      setBackgroundStyle(options_.displayBackground_);
+
       showRegistrationDialogMaybe();
 
       try {
@@ -376,7 +394,6 @@ public class MMStudio implements ScriptInterface {
       ttManager.setDismissDelay(TOOLTIP_DISPLAY_DURATION_MILLISECONDS);
       ttManager.setInitialDelay(TOOLTIP_DISPLAY_INITIAL_DELAY_MILLISECONDS);
       
-      frame_.setBackground(getBackgroundColor());
       
       menuBar_ = new JMenuBar();
 
@@ -464,7 +481,6 @@ public class MMStudio implements ScriptInterface {
          MMIntroDlg introDlg = new MMIntroDlg(
                MMVersion.VERSION_STRING, MRUConfigFiles_);
          introDlg.setConfigFile(sysConfigFile_);
-         introDlg.setBackground(getBackgroundColor());
          introDlg.setVisible(true);
          introDlg.toFront();
          if (!introDlg.okChosen()) {
@@ -512,7 +528,6 @@ public class MMStudio implements ScriptInterface {
       // "ChannelGroup" based on the Multi-D parameters
       acqControlWin_ = new AcqControlDlg(engine_, mainPrefs_, 
             studio_, options_);
-      addMMBackgroundListener(acqControlWin_);
 
       frame_.initializeConfigPad();
 
@@ -987,16 +1002,12 @@ public class MMStudio implements ScriptInterface {
          scriptPanel_.insertScriptingObject(SCRIPT_CORE_OBJECT, core_);
          scriptPanel_.insertScriptingObject(SCRIPT_ACQENG_OBJECT, engine_);
          scriptPanel_.setParentGUI(studio_);
-         scriptPanel_.setBackground(getBackgroundColor());
-         addMMBackgroundListener(scriptPanel_);
       }
    }
 
    private void createPipelinePanel() {
       if (pipelineFrame_ == null) {
          pipelineFrame_ = new PipelineFrame(studio_, engine_);
-         pipelineFrame_.setBackground(getBackgroundColor());
-         addMMBackgroundListener(pipelineFrame_);
       }
    }
 
@@ -1036,8 +1047,6 @@ public class MMStudio implements ScriptInterface {
          posListDlg_ = new PositionListDlg(core_, studio_, posList_, 
                  acqControlWin_,options_);
          GUIUtils.recallPosition(posListDlg_);
-         posListDlg_.setBackground(getBackgroundColor());
-         studio_.addMMBackgroundListener(posListDlg_);
          posListDlg_.addListeners();
       }
    }
@@ -1194,7 +1203,6 @@ public class MMStudio implements ScriptInterface {
       try {
          frame_.setCursor(new Cursor(Cursor.WAIT_CURSOR));
          // Ensure that the acquisition is ready before we add the image.
-         // TODO: set summary metadata for the image? We used to do this.
          staticInfo_.addStagePositionToTags(ti);
          snapLiveManager_.displayImage(new DefaultImage(ti));
       } catch (JSONException ex) {
@@ -1378,7 +1386,6 @@ public class MMStudio implements ScriptInterface {
       }
   
       if (posListDlg_ != null) {
-         removeMMBackgroundListener(posListDlg_);
          posListDlg_.getToolkit().getSystemEventQueue().postEvent(
                  new WindowEvent(posListDlg_, WindowEvent.WINDOW_CLOSING));
          posListDlg_.dispose();
@@ -1387,24 +1394,20 @@ public class MMStudio implements ScriptInterface {
       LineProfile.cleanup();
 
       if (scriptPanel_ != null) {
-         removeMMBackgroundListener(scriptPanel_);
          scriptPanel_.closePanel();
       }
 
       if (pipelineFrame_ != null) {
-         removeMMBackgroundListener(pipelineFrame_);
          pipelineFrame_.dispose();
       }
 
       if (propertyBrowser_ != null) {
-         removeMMBackgroundListener(propertyBrowser_);
          propertyBrowser_.getToolkit().getSystemEventQueue().postEvent(
                  new WindowEvent(propertyBrowser_, WindowEvent.WINDOW_CLOSING));
          propertyBrowser_.dispose();
       }
 
       if (acqControlWin_ != null) {
-         removeMMBackgroundListener(acqControlWin_);
          acqControlWin_.close();
       }
 
@@ -1765,34 +1768,6 @@ public class MMStudio implements ScriptInterface {
    public boolean getIsConfigChanged() {
       return configChanged_;
    }
-    
-   /**
-    * Lets JComponents register themselves so that their background can be
-    * manipulated.
-    * TODO: should we set the background color here as well? Currently there's
-    * a lot of duplicated code where, every time someone calls this method,
-    * they also have to manually set their background color for the first time.
-    * @param comp
-    */
-   @Override
-   public void addMMBackgroundListener(Component comp) {
-      if (MMFrames_.contains(comp))
-         return;
-      MMFrames_.add(comp);
-   }
-
-   /**
-    * Lets JComponents remove themselves from the list whose background gets
-    * changes
-    * @param comp
-    */
-   @Override
-   public void removeMMBackgroundListener(Component comp) {
-      if (!MMFrames_.contains(comp))
-         return;
-      MMFrames_.remove(comp);
-   }
-
 
     /**
     * Returns exposure time for the desired preset in the given channelgroup
@@ -1844,28 +1819,26 @@ public class MMStudio implements ScriptInterface {
       frame_.enableRoiButtons(enabled);
    }
 
-   /**
-    * Returns the current background color
-    * @return current background color
-    */
-   @Override
-   public final Color getBackgroundColor() {
-      return guiColors_.background.get((options_.displayBackground_));
-   }
-
    /*
     * Changes background color of this window and all other MM windows
     */
    @Override
    public void setBackgroundStyle(String backgroundType) {
-      frame_.setBackground(guiColors_.background.get((backgroundType)));
-      frame_.paint(frame_.getGraphics());
-      
-      // sets background of all registered Components
-      for (Component comp:MMFrames_) {
-         if (comp != null)
-            comp.setBackground(guiColors_.background.get(backgroundType));
-       }
+      if (!(backgroundType.contentEquals(ScriptInterface.DAY) ||
+            backgroundType.contentEquals(ScriptInterface.NIGHT))) {
+         throw new IllegalArgumentException("Invalid background style \"" +
+               backgroundType + "\"");
+      }
+      options_.displayBackground_ = backgroundType;
+      // Ensure every GUI object type gets the right background color.
+      for (String key : BACKGROUND_COLOR_KEYS) {
+         UIManager.put(key + ".background",
+               guiColors_.background.get(backgroundType));
+      }
+      // Update existing components.
+      for (Window w : Window.getWindows()) {
+         SwingUtilities.updateComponentTreeUI(w);
+      }
    }
 
    @Override

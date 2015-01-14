@@ -377,7 +377,6 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       getContentPane().setLayout(null);
       setResizable(false);
       setTitle("Multi-Dimensional Acquisition");
-      setBackground(guiColors_.background.get(studio_.getBackgroundStyle()));
 
       createEmptyPanels();
 
@@ -1954,14 +1953,6 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       zBottom_.setText(NumberUtils.doubleToDisplayString(newBottom));
       zTop_.setText(NumberUtils.doubleToDisplayString(newTop));
       applySettings();
-   }
-
-   /**
-    * This method is called from the Options dialog, to set the background style
-    */
-   public void setBackgroundStyle(String style) {
-      setBackground(guiColors_.background.get(style));
-      repaint();
    }
 
    private void showAdvancedDialog() {

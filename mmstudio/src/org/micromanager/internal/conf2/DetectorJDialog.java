@@ -37,7 +37,6 @@ public class DetectorJDialog extends javax.swing.JDialog {
         super(parent, modal);
         initComponents();
         cancelRequest_ = false;
-        setBackground(MMStudio.getInstance().getBackgroundColor());
     }
 
     /** This method is called from within the constructor to
