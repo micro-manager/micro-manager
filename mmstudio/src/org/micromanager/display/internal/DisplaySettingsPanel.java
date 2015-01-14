@@ -269,7 +269,7 @@ public class DisplaySettingsPanel extends JPanel {
          builder.channelDisplayModeIndex(1);
       }
       composite.updateAndDraw();
-      saveSettings(builder.build());
+      display_.setDisplaySettings(builder.build());
       displayBus_.post(new DefaultRequestToDrawEvent());
    }
 
@@ -284,7 +284,7 @@ public class DisplaySettingsPanel extends JPanel {
       }
       DisplaySettings settings = display_.getDisplaySettings();
       settings = settings.copy().channelColors(DEFAULT_COLORS[i]).build();
-      saveSettings(settings);
+      display_.setDisplaySettings(settings);
       prevPresetIndex_ = i;
 
       // This will end up triggering onNewDisplaySettings, so watch out for
@@ -337,11 +337,6 @@ public class DisplaySettingsPanel extends JPanel {
       }
    }
 
-   // TODO: this method isn't really needed any more, due to refactoring work.
-   private void saveSettings(DisplaySettings settings) {
-      display_.setDisplaySettings(settings);
-   }
-
    /** 
     * The user is setting a new update rate for the histograms.
     */
@@ -359,7 +354,7 @@ public class DisplaySettingsPanel extends JPanel {
       }
       DisplaySettings settings = display_.getDisplaySettings();
       settings = settings.copy().histogramUpdateRate(rate).build();
-      saveSettings(settings);
+      display_.setDisplaySettings(settings);
    }
 
    /**
@@ -368,7 +363,7 @@ public class DisplaySettingsPanel extends JPanel {
    private void setShouldAutostretch() {
       DisplaySettings settings = display_.getDisplaySettings();
       settings = settings.copy().shouldAutostretch(shouldAutostretch_.isSelected()).build();
-      saveSettings(settings);
+      display_.setDisplaySettings(settings);
       displayBus_.post(new DefaultRequestToDrawEvent());
       // Autostretch changes apply to all channels.
       displayBus_.post(new ContrastEvent(-1, settings));
@@ -381,7 +376,7 @@ public class DisplaySettingsPanel extends JPanel {
       DisplaySettings settings = display_.getDisplaySettings();
       double percentage = (Double) trimPercentage.getValue();
       settings = settings.copy().trimPercentage(percentage).build();
-      saveSettings(settings);
+      display_.setDisplaySettings(settings);
       displayBus_.post(new DefaultRequestToDrawEvent());
    }
 
