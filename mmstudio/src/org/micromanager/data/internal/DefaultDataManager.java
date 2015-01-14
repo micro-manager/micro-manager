@@ -8,6 +8,10 @@ import java.util.List;
 
 import javax.swing.JOptionPane;
 
+import mmcorej.TaggedImage;
+
+import org.json.JSONException;
+
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataManager;
 import org.micromanager.data.Datastore;
@@ -23,6 +27,8 @@ import org.micromanager.acquisition.internal.StorageRAM;
 
 import org.micromanager.display.internal.DefaultDisplayWindow;
 import org.micromanager.internal.MMStudio;
+// TODO: this should be moved into the API.
+import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
@@ -73,6 +79,11 @@ public class DefaultDataManager implements DataManager {
       catch (DatastoreLockedException e) {
          ReportingUtils.showError(e, "Album datastore is locked.");
       }
+   }
+
+   @Override
+   public Image convertTaggedImage(TaggedImage tagged) throws JSONException, MMScriptException {
+      return new DefaultImage(tagged);
    }
 
    @Override
