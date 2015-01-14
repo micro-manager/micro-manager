@@ -36,6 +36,21 @@ public interface DataManager {
    public Datastore getAlbumDatastore();
 
    /**
+    * Generate a new Image with the provided pixel data, rules for interpreting
+    * that pixel data, coordinates, and metadata.
+    * @param width Width of the image, in pixels
+    * @param height Height of the image, in pixels
+    * @param bytesPerPixel How many bytes are allocated to each pixel in the
+    *        image. Currently only 1, 2, and 4-byte images are supported.
+    * @param numComponents How many colors are encoded into each pixel.
+    *        Currently only 1-component (grayscale) and 3-component (RGB)
+    *        images are supported.
+    */
+   public Image createImage(Object pixels, int width, int height,
+         int bytesPerPixel, int numComponents, Coords coords,
+         Metadata metadata);
+
+   /**
     * Given a TaggedImage input, output an Image.
     */
    public Image convertTaggedImage(TaggedImage tagged) throws JSONException, MMScriptException;

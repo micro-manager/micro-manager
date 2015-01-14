@@ -60,6 +60,14 @@ public class DefaultDataManager implements DataManager {
    }
 
    @Override
+   public Image createImage(Object pixels, int width, int height,
+         int bytesPerPixel, int numComponents, Coords coords,
+         Metadata metadata) {
+      return new DefaultImage(pixels, width, height, bytesPerPixel,
+            numComponents, coords, metadata);
+   }
+
+   @Override
    public void addToAlbum(Image image) {
       if (albumDatastore_ == null || albumDatastore_.getIsLocked()) {
          // Need to create a new album.
