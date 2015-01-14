@@ -1,4 +1,4 @@
-package org.micromanager;
+package org.micromanager.internal.utils;
 
 /**
  * The list of tags used by the Micro-manager
