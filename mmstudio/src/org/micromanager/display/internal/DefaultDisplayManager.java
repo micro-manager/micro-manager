@@ -37,7 +37,7 @@ public class DefaultDisplayManager implements DisplayManager {
       // Iterate over all display windows, find those associated with this
       // datastore, and manually associate them now.
       ArrayList<DisplayWindow> displays = new ArrayList<DisplayWindow>();
-      for (DisplayWindow display : studio_.getAllImageWindows()) {
+      for (DisplayWindow display : getAllImageWindows()) {
          if (display.getDatastore() == store) {
             displays.add(display);
          }
@@ -102,6 +102,16 @@ public class DefaultDisplayManager implements DisplayManager {
    @Override
    public List<DisplayWindow> getDisplays(Datastore store) {
       return storeToDisplays_.get(store);
+   }
+
+   @Override
+   public DisplayWindow getCurrentWindow() {
+      return DefaultDisplayWindow.getCurrentWindow();
+   }
+
+   @Override
+   public List<DisplayWindow> getAllImageWindows() {
+      return DefaultDisplayWindow.getAllImageWindows();
    }
 
    /**
