@@ -125,6 +125,9 @@ int CPLogic::Initialize()
 
       // set up trigger for BNC outputs to TTL1 (Laser0) OR the shutter (CCA X=2 or 3 for off/on)
       SetProperty(g_SetCardPresetPropertyName, g_PresetCode12);
+
+      // always start with shutter closed
+      RETURN_ON_MM_ERROR ( SetOpen(false) );
    }
 
    // pointer position, this is where edits/queries are made in general
