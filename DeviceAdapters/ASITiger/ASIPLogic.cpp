@@ -443,7 +443,7 @@ int CPLogic::OnAdvancedProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
          bool refreshPropsOriginal = refreshProps_;
          refreshProps_ = true;
 
-         for (long i=1; i<=numCells_; i++) {
+         for (long i=1; i<=(long)numCells_; i++) {
 
             // logic cell type
             GetCellPropertyName(i, "_CellType", propName);
@@ -493,7 +493,7 @@ int CPLogic::OnAdvancedProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
 
          }
 
-         for (unsigned int i=PLOGIC_FRONTPANEL_START_ADDRESS; i<=PLOGIC_BACKPLANE_END_ADDRESS; i++) {
+         for (long i=PLOGIC_FRONTPANEL_START_ADDRESS; i<=PLOGIC_BACKPLANE_END_ADDRESS; i++) {
             GetIOPropertyName(i, "_IOType", propName);
             pActEx = new CPropertyActionEx (this, &CPLogic::OnIOType, i);
             CreateProperty(propName, "0", MM::String, false, pActEx);
@@ -540,13 +540,14 @@ int CPLogic::SetPosition(unsigned int position)
    ostringstream command; command.str("");
    if (position == currentPosition_)
       return DEVICE_OK;
-   command << "M " << axisLetter_ << "=" << position;
-   RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
-   currentPosition_ = position;
-   command.str("");
    command << position;
+   // update via OnPointerPosition function, which will refresh currentPosition_
    SetProperty(g_PointerPositionPropertyName, command.str().c_str());
-   return DEVICE_OK;
+   // double-check that we were able to set the position as intended
+   if (position != currentPosition_)
+      return DEVICE_INVALID_PROPERTY_VALUE;
+   else
+      return DEVICE_OK;
 }
 
 int CPLogic::RefreshCurrentPosition()
