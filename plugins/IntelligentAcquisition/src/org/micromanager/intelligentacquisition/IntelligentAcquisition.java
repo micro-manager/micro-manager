@@ -38,11 +38,6 @@ public class IntelligentAcquisition implements MMPlugin {
       if (myFrame_ == null)
          myFrame_ = new IntelligentAcquisitionFrame(gui_);
       myFrame_.setVisible(true);
-      
-      myFrame_.setBackground(gui_.getBackgroundColor());
-      
-      // Used to change the background layout of the form.  Does not work on Windows
-      gui_.addMMBackgroundListener(myFrame_);
    }
 
    public void dispose() {

@@ -51,7 +51,6 @@ public class SplitViewProcessor extends DataProcessor<TaggedImage> {
       if (myFrame_ == null) {
          try {
             myFrame_ = new SplitViewFrame(this, gui_);
-            gui_.addMMBackgroundListener(myFrame_);
          }
          catch (Exception ex) {
             ReportingUtils.logError("Failed to make GUI for SplitViewProcessor: " + ex);

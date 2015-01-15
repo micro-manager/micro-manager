@@ -55,9 +55,9 @@ import org.micromanager.data.Image;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.MMTags;
 import org.micromanager.ScriptInterface;
 import org.micromanager.internal.utils.MMScriptException;
+import org.micromanager.internal.utils.MMTags;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /** 
@@ -134,8 +134,6 @@ public class SplitViewFrame extends javax.swing.JFrame {
       initComponents();
 
       setLocation(frameXPos_, frameYPos_);
-
-      setBackground(gui_.getBackgroundColor());
 
       Dimension buttonSize = new Dimension(120, 20);
 
@@ -297,7 +295,7 @@ public class SplitViewFrame extends javax.swing.JFrame {
          TaggedImage firstChannel = new TaggedImage(tmpImg.crop().getPixels(), img.tags);
          firstChannel.tags.put(MMTags.Image.WIDTH, newWidth_);
          firstChannel.tags.put(MMTags.Image.HEIGHT, newHeight_);
-         Image image = gui_.convertTaggedImage(firstChannel);
+         Image image = gui_.data().convertTaggedImage(firstChannel);
          Coords.CoordsBuilder builder = gui_.data().getCoordsBuilder();
          image = image.copyAtCoords(builder.position("channel", 0).build());
          gui_.getAcquisitionDatastore(ACQNAME).putImage(image);
@@ -311,7 +309,7 @@ public class SplitViewFrame extends javax.swing.JFrame {
          TaggedImage secondChannel = new TaggedImage(tmpImg.crop().getPixels(), img.tags);
          secondChannel.tags.put(MMTags.Image.WIDTH, newWidth_);
          secondChannel.tags.put(MMTags.Image.HEIGHT, newHeight_);
-         image = gui_.convertTaggedImage(secondChannel);
+         image = gui_.data().convertTaggedImage(secondChannel);
          image = image.copyAtCoords(builder.position("channel", 1).build());
          gui_.getAcquisitionDatastore(ACQNAME).putImage(image);
 

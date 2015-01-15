@@ -136,7 +136,7 @@ public class MultiChannelShadingMigForm extends MMDialog {
 
          @Override
          public void actionPerformed(ActionEvent e) {
-            new Thread(GUIUtils.makeURLRunnable(
+            new Thread(org.micromanager.internal.utils.GUIUtils.makeURLRunnable(
                     "https://micro-manager.org/wiki/Flat-Field_Correction")).start();
         }
       });

@@ -43,7 +43,6 @@ public class ASI_CRISP_V2 implements org.micromanager.MMPlugin {
             if (myFrame_ == null) {
          try {
             myFrame_ = new ASI_CRISP_Frame(gui_);
-            gui_.addMMBackgroundListener(myFrame_);
          } catch (Exception e) {
             e.printStackTrace();
             return;

@@ -42,9 +42,10 @@ import org.micromanager.internal.MMStudio;
 import org.micromanager.ScriptInterface;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.MMDialog;
+import org.micromanager.internal.utils.MMFrame;
 
 import net.miginfocom.swing.MigLayout;
-import org.micromanager.events.DisplayCreatedEvent;
+import org.micromanager.events.NewDisplayEvent;
 
 
 /**
@@ -208,10 +209,10 @@ public class PatternOverlayFrame extends MMFrame {
    /**
     * Toggles overlay depending on the state of the Show/Hide button
     * Also called when a new live/snap window opens
-    * @param dce Event indicating that a new window was created
+    * @param event Event indicating that a new window was created
     */
    @Subscribe
-   public void toggleOverlay(DisplayCreatedEvent dce) {
+   public void toggleOverlay(NewDisplayEvent event) {
       try {
          boolean visible = toggleButton_.isSelected();
          updateToggleButtonLabel();
@@ -219,7 +220,7 @@ public class PatternOverlayFrame extends MMFrame {
                  overlayBox_.getSelectedItem()).getOverlay();
          selectedOverlay.setVisible(visible);
       } catch (NoLiveWindowException ex) {
-         if (dce != null) { // there is only a problem if there was a displayCreated Event
+         if (event != null) { // there is only a problem if there was a displayCreated Event
             gui_.logError("Could not enable overlay ("
                     + ((OverlayOption) overlayBox_.getSelectedItem()).toString() + "). "
                     + "Error Message: " + ex.getMessage());
