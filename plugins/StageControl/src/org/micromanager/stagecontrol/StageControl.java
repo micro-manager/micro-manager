@@ -38,8 +38,6 @@ public class StageControl implements MMPlugin {
       gui_ = app;       
       if (myFrame_ == null) {
          myFrame_ = new StageControlFrame(gui_);
-         myFrame_.setBackground(gui_.getBackgroundColor());
-         gui_.addMMBackgroundListener(myFrame_);
          gui_.addMMListener(myFrame_);
       }
       myFrame_.initialize();

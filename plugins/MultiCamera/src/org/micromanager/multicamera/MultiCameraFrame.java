@@ -112,8 +112,6 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
 
       setLocation(frameXPos_, frameYPos_);
 
-      setBackground(gui_.getBackgroundColor());
-
       cameraSelectComboBox.removeAllItems();
 
       for (String camera : cameras_) {

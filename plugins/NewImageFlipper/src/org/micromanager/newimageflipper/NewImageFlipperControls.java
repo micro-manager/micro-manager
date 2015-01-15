@@ -83,8 +83,6 @@ public class NewImageFlipperControls extends MMFrame {
        
       updateCameras();
       
-      setBackground(MMStudio.getInstance().getBackgroundColor());
-
       // Update the processor with our current settings.
       processor_.setRotation(getRotate());
       processor_.setIsMirrored(getMirror());

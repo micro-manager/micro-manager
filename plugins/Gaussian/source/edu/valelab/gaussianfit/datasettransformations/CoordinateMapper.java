@@ -46,6 +46,7 @@ import org.apache.commons.math.linear.DecompositionSolver;
 import org.apache.commons.math.linear.LUDecompositionImpl;
 import org.apache.commons.math.linear.QRDecompositionImpl;
 import org.apache.commons.math.linear.RealMatrix;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * Provides facilities for mapping one coordinate system into another

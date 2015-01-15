@@ -32,7 +32,6 @@ public class pgFocus implements MMPlugin {
       if (myFrame_ == null) {
          try {
             myFrame_ = new pgFocusFrame(gui_);
-            gui_.addMMBackgroundListener(myFrame_);
          } catch (Exception e) {
             e.printStackTrace();
             return;

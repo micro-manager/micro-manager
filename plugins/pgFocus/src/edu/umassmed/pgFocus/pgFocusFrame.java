@@ -486,9 +486,6 @@ public class pgFocusFrame extends JFrame {
     void initGUI() {
 	   
     	setTitle("pgFocus");
-	    setBackground(gui_.getBackgroundColor());
-	    gui_.addMMBackgroundListener(this);
-	 	    	
 	    
     	JTabbedPane tabbedPane = new JTabbedPane();
 	    

@@ -185,7 +185,6 @@ public class NewImageFlippingProcessor extends DataProcessor<TaggedImage> {
    public void makeConfigurationGUI() {
       if (controls_ == null) {
          controls_ = new NewImageFlipperControls(this);
-         MMStudio.getInstance().addMMBackgroundListener(controls_);
       }
       else {
          controls_.updateCameras();

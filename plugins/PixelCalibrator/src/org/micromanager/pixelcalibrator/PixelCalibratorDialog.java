@@ -29,9 +29,6 @@ public class PixelCalibratorDialog extends javax.swing.JFrame {
       plugin_ = plugin;
       initComponents();
       GUIUtils.recallPosition(this);
-             
-      setBackground(MMStudio.getInstance().getBackgroundColor());
-      MMStudio.getInstance().addMMBackgroundListener(this);
    }
 
 

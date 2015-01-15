@@ -109,9 +109,6 @@ public class CRISPFrame extends javax.swing.JFrame {
 
       setLocation(frameXPos_, frameYPos_);
 
-      setBackground(gui_.getBackgroundColor());
-      gui_.addMMBackgroundListener(this);
-
       updateValues();
     }
 
