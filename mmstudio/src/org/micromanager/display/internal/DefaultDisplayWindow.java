@@ -347,7 +347,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
          @Override
          public void mouseReleased(MouseEvent me) {
             if (ijImage_ instanceof MMCompositeImage) {
-               ((MMCompositeImage) ijImage_).updateAndDraw(true);
+               ((MMCompositeImage) ijImage_).updateAndDraw();
             } else {
                ijImage_.updateAndDraw();
             }
