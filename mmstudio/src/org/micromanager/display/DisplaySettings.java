@@ -106,6 +106,11 @@ public interface DisplaySettings {
    /** Any additional user-supplied data */
    public UserData getUserData();
 
+   public static final String FILENAME = "displaySettings.txt";
+   /** Save the DisplaySettings to a file in the specified folder. If the file
+    * already exists, then the settings will be appended to it. */
+   public void save(String path);
+
    /**
     * For legacy support only: convert to JSONObject.
     */
