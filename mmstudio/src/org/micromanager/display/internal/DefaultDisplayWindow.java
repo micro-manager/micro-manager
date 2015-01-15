@@ -43,6 +43,7 @@ import org.micromanager.data.Image;
 import org.micromanager.data.NewImageEvent;
 import org.micromanager.data.NewSummaryMetadataEvent;
 import org.micromanager.data.SummaryMetadata;
+import org.micromanager.data.internal.DatastoreSavedEvent;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.RequestToDrawEvent;
@@ -746,6 +747,15 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       if (event.getDatastore() == store_) {
          forceClosed();
       }
+   }
+
+   /**
+    * When our Datastore saves, we save our display settings.
+    */
+   @Subscribe
+   public void onDatastoreSaved(DatastoreSavedEvent event) {
+      String path = event.getPath();
+      displaySettings_.save(path);
    }
 
    public static DisplayWindow getCurrentWindow() {

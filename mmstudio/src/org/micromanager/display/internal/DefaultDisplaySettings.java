@@ -1,7 +1,15 @@
 package org.micromanager.display.internal;
 
 import java.awt.Color;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.prefs.Preferences;
 
 import org.json.JSONArray;
@@ -481,6 +489,61 @@ public class DefaultDisplaySettings implements DisplaySettings {
          ReportingUtils.logError(e, "Couldn't convert JSON into DisplaySettings");
          return null;
       }
+   }
+
+   private static final String RECORD_DELIMETER = "==============END OF RECORD==============";
+
+   @Override
+   public void save(String path) {
+      File file = new File(path, DisplaySettings.FILENAME);
+      try {
+         FileWriter writer = new FileWriter(file, true);
+         writer.write(legacyToJSON().toString(1));
+         writer.write("\n" + RECORD_DELIMETER + "\n");
+         writer.close();
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Unable to convert DisplaySettings into JSON for saving");
+      }
+      catch (IOException e) {
+         ReportingUtils.logError(e, "Error while saving DisplaySettings");
+      }
+   }
+
+   /**
+    * Load the displaySettings.txt file and create a DefaultDisplaySettings
+    * for each record in the file.
+    * TODO: our mechanism for splitting apart JSON records is rather hacky.
+    */
+   public static List<DisplaySettings> load(String path) {
+      ArrayList<DisplaySettings> result = new ArrayList<DisplaySettings>();
+      File file = new File(path, DisplaySettings.FILENAME);
+      try {
+         BufferedReader reader = new BufferedReader(new FileReader(file));
+         String curSettings = "";
+         String curLine = reader.readLine();
+         while (curLine != null) {
+            if (curLine.contentEquals(RECORD_DELIMETER)) {
+               // Ending a record; create a DisplaySettings from it.
+               result.add(legacyFromJSON(new JSONObject(curSettings)));
+               curSettings = "";
+            }
+            else {
+               curSettings += curLine;
+            }
+            curLine = reader.readLine();
+         }
+      }
+      catch (FileNotFoundException e) {
+         ReportingUtils.logError("No display settings found at " + path);
+      }
+      catch (IOException e) {
+         ReportingUtils.logError(e, "Error while reading display settings file");
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Error while converting saved settings into JSON");
+      }
+      return result;
    }
 
    /**

@@ -220,6 +220,7 @@ public class DefaultDatastore implements Datastore {
          for (Coords coords : getUnorderedImageCoords()) {
             duplicate.putImage(getImage(coords));
          }
+         bus_.post(new DatastoreSavedEvent(path));
          return true;
       }
       catch (java.io.IOException e) {

@@ -79,6 +79,16 @@ public class DefaultDisplayManager implements DisplayManager {
    }
 
    @Override
+   public List<DisplayWindow> loadDisplaySettings(Datastore store, String path) {
+      List<DisplaySettings> allSettings = DefaultDisplaySettings.load(path);
+      ArrayList<DisplayWindow> result = new ArrayList<DisplayWindow>();
+      for (DisplaySettings settings : allSettings) {
+         result.add(new DefaultDisplayWindow(store, null, settings, null));
+      }
+      return result;
+   }
+
+   @Override
    public UserData.UserDataBuilder getUserDataBuilder() {
       return new DefaultUserData.Builder();
    }

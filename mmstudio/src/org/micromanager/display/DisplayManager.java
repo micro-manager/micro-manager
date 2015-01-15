@@ -22,6 +22,13 @@ public interface DisplayManager {
    public DisplaySettings.DisplaySettingsBuilder getDisplaySettingsBuilder();
 
    /**
+    * Load the contents of the display settings file in the specified
+    * path, and create a new DisplayWindow for each distinct set of settings,
+    * attached to the provided Datastore.
+    */
+   public List<DisplayWindow> loadDisplaySettings(Datastore store, String path);
+
+   /**
     * Generate a "blank" UserData.UserDataBuilder with empty mappings.
     */
    public UserData.UserDataBuilder getUserDataBuilder();
