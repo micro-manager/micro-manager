@@ -30,6 +30,7 @@ import org.micromanager.internal.MMStudio;
 // TODO: this should be moved into the API.
 import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.UserData;
 
 /**
  * This implementation of the DataManager interface provides general utility
@@ -102,5 +103,10 @@ public class DefaultDataManager implements DataManager {
    @Override
    public SummaryMetadata.SummaryMetadataBuilder getSummaryMetadataBuilder() {
       return new DefaultSummaryMetadata.Builder();
+   }
+
+   @Override
+   public UserData.UserDataBuilder getUserDataBuilder() {
+      return new DefaultUserData.Builder();
    }
 }

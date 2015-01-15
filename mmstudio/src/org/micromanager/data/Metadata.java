@@ -1,12 +1,13 @@
 package org.micromanager.data;
 
-import org.json.JSONObject;
-
 import java.awt.Color;
 import java.awt.Rectangle;
 import java.util.UUID;
 
+import org.json.JSONObject;
+
 import org.micromanager.MultiStagePosition;
+import org.micromanager.UserData;
 
 
 /**
@@ -59,7 +60,7 @@ public interface Metadata {
       MetadataBuilder source(String source);
       MetadataBuilder startTimeMs(Double startTimeMs);
       MetadataBuilder summaryMetadata(SummaryMetadata summaryMetadata);
-      MetadataBuilder userData(JSONObject userData);
+      MetadataBuilder userData(UserData userData);
       MetadataBuilder uuid(UUID uuid);
       MetadataBuilder xPositionUm(Double xPositionUm);
       MetadataBuilder yPositionUm(Double yPositionUm);
@@ -112,7 +113,7 @@ public interface Metadata {
      * images (TODO: now properly part of Image class) */
    Integer getNumComponents();
    /** Arbitrary additional metadata */
-   JSONObject getUserData();
+   UserData getUserData();
    /** List of stage positions at the start of the acquisition (e.g. not taking
      * into account changes caused by autofocus). TODO: should be part of
      * SummaryMetadata?
