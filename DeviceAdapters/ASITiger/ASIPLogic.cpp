@@ -123,11 +123,15 @@ int CPLogic::Initialize()
       // makes sure card actually gets initialized
       SetProperty(g_SetChannelPropertyName, g_ChannelNone);
 
-      // set up trigger for BNC outputs to TTL1 (Laser0) OR the shutter (CCA X=2 or 3 for off/on)
+      // set up trigger for BNC outputs to TTL1 (Laser0) OR the shutter via cell 1 (CCA X=2 or 3 for off/on)
       SetProperty(g_SetCardPresetPropertyName, g_PresetCode12);
 
-      // always start with shutter closed
-      RETURN_ON_MM_ERROR ( SetOpen(false) );
+      // make sure cell 1 is initialized and is a constant (will be tweaked by CCA X=2 or 3 in SetOpen())
+      // this will also set cell 1's value to 0 which matches shutterOpen_'s initialization to false
+      ostringstream command; command.str("");
+      RETURN_ON_MM_ERROR ( SetPosition(1) );
+      command << addressChar_ << "CCA Y=0";
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
    }
 
    // pointer position, this is where edits/queries are made in general
