@@ -174,7 +174,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
 
       @Override
       public SummaryMetadataBuilder customIntervalsMs(Double[] customIntervalsMs) {
-         customIntervalsMs_ = customIntervalsMs;
+         customIntervalsMs_ = (customIntervalsMs == null) ? null : customIntervalsMs.clone();
          return this;
       }
 
@@ -192,7 +192,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
 
       @Override
       public SummaryMetadataBuilder stagePositions(MultiStagePosition[] stagePositions) {
-         stagePositions_ = stagePositions;
+         stagePositions_ = (stagePositions == null) ? null : stagePositions.clone();
          return this;
       }
 
@@ -300,7 +300,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
 
    @Override
    public Double[] getCustomIntervalsMs() {
-      return customIntervalsMs_.clone();
+      return customIntervalsMs_;
    }
 
    @Override
@@ -315,7 +315,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
 
    @Override
    public MultiStagePosition[] getStagePositions() {
-      return stagePositions_.clone();
+      return stagePositions_;
    }
 
    @Override
