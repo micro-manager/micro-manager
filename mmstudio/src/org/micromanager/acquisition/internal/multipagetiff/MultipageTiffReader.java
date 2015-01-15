@@ -45,10 +45,10 @@ import org.json.JSONObject;
 
 import org.micromanager.data.Coords;
 import org.micromanager.data.SummaryMetadata;
-import org.micromanager.display.DisplaySettings;
 import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
+import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.MMException;
@@ -78,7 +78,6 @@ public class MultipageTiffReader {
    private RandomAccessFile raFile_;
    private FileChannel fileChannel_;
 
-   private DisplaySettings displaySettings_;
    private SummaryMetadata summaryMetadata_;
    private JSONObject summaryJSON_;
    private int byteDepth_ = 0;;
@@ -92,9 +91,8 @@ public class MultipageTiffReader {
     * This constructor is used for a file that is currently being written.
     * \param summaryJSON As per DefaultSummaryMetadat.legacyToJSON(), except
     *        augmented with display settings and values that are normally
-    *        only stored in image metadata. See
-    *        MultipageTiffWriter.augmentWith[ImageMetadata|DisplaySettings]()
-    *        methods
+    *        only stored in image metadata. See the
+    *        MultipageTiffWriter.augmentWithImageMetadata() method.
     */
    public MultipageTiffReader(SummaryMetadata summaryMD,
          JSONObject summaryJSON, JSONObject firstImageTags) {
@@ -128,15 +126,6 @@ public class MultipageTiffReader {
       long firstIFD = readHeader();
       summaryJSON_ = readSummaryMD();
       summaryMetadata_ = DefaultSummaryMetadata.legacyFromJSON(summaryJSON_);
-      if (summaryJSON_.has("DisplaySettings")) {
-         try {
-            displaySettings_ = DefaultDisplaySettings.legacyFromJSON(
-                  summaryJSON_.getJSONObject("DisplaySettings"));
-         }
-         catch (JSONException e) {
-            ReportingUtils.logError("Couldn't extract display settings from summary JSON");
-         }
-      }
 
       try {
          readIndexMap();
@@ -148,7 +137,6 @@ public class MultipageTiffReader {
          }
       }
       try {
-         displayAndComments.put("Channels", readDisplaySettings());
          // Copy out the primary comment into the summary metadata.
          if (summaryMetadata_ != null) {
             summaryMetadata_ = summaryMetadata_.copy().comments(readComments()).build();
@@ -239,10 +227,6 @@ public class MultipageTiffReader {
 
    public SummaryMetadata getSummaryMetadata() {
       return summaryMetadata_;
-   }
-
-   public DisplaySettings getDisplaySettings() {
-      return displaySettings_;
    }
 
    public DefaultImage readImage(Coords coords) {
@@ -366,7 +350,7 @@ public class MultipageTiffReader {
 
    public void rewriteDisplaySettings(DisplaySettings settings) throws IOException, JSONException {
       if (writingFinished_) {
-         long offset = readOffsetHeaderAndOffset(MultipageTiffWriter.DISPLAY_SETTINGS_OFFSET_HEADER, 16);        
+         long offset = readOffsetHeaderAndOffset(MultipageTiffWriter.DISPLAY_SETTINGS_OFFSET_HEADER, 16);
          int numReservedBytes = readIntoBuffer(offset + 4, 4).getInt(0);
          byte[] blank = new byte[numReservedBytes];
          for (int i = 0; i < blank.length; i++) {
@@ -376,23 +360,6 @@ public class MultipageTiffReader {
          byte[] bytes = getBytesFromString(settings.toString());
          ByteBuffer buffer = ByteBuffer.wrap(bytes);
          fileChannel_.write(buffer, offset+8);
-      }
-      displaySettings_ = settings;
-   }
-
-   private JSONArray readDisplaySettings() {
-      try {
-         long offset = readOffsetHeaderAndOffset(MultipageTiffWriter.DISPLAY_SETTINGS_OFFSET_HEADER,16);
-          ByteBuffer header = readIntoBuffer(offset, 8);
-          if (header.getInt(0) != MultipageTiffWriter.DISPLAY_SETTINGS_HEADER) {
-             ReportingUtils.logError("Can't find display settings in file: " + file_.getName());
-             return null;
-          }
-          ByteBuffer buffer = readIntoBuffer(offset + 8, header.getInt(4));
-         return new JSONArray(getString(buffer));
-      } catch (Exception ex) {
-         ReportingUtils.logError("Can't find display settings in file: " + file_.getName());
-         return null;
       }
    }
 

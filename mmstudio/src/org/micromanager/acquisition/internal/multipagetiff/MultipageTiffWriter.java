@@ -148,11 +148,14 @@ public class MultipageTiffWriter {
       // versions of MicroManager used to include (that information is either
       // in per-image Metadata, part of the Image itself, or part of the
       // DisplaySettings now).
+      // Additionally, in MM2.0 we store display settings in a separate file;
+      // the settings we save here are solely to preserve backwards
+      // compatibility with MM1.x.
       JSONObject summaryJSON = summary.legacyToJSON();
       augmentWithImageMetadata(summaryJSON,
             (DefaultImage) masterStorage_.getAnyImage());
       augmentWithDisplaySettings(summaryJSON,
-            (DefaultDisplaySettings) masterStorage_.getDisplaySettings());
+            DefaultDisplaySettings.getStandardSettings());
       reader_ = new MultipageTiffReader(summary, summaryJSON, firstImageTags);
 
       //This is an overestimate of file size because file gets truncated at end
@@ -790,7 +793,7 @@ public class MultipageTiffWriter {
          bufferPosition += 2;
       }
 
-      DisplaySettings settings = masterStorage_.getDisplaySettings();
+      DisplaySettings settings = DefaultDisplaySettings.getStandardSettings();
       for (int i = 0; i < numChannels; i++) {
          //Display Ranges: For each channel, write min then max
          mdBuffer.putDouble(bufferPosition, 
@@ -845,7 +848,7 @@ public class MultipageTiffWriter {
          sb.append("spacing=").append(zStepUm_).append("\n");
       }
       //write single channel contrast settings or display mode if multi channel
-      DisplaySettings settings = masterStorage_.getDisplaySettings();
+      DisplaySettings settings = DefaultDisplaySettings.getStandardSettings();
       if (numChannels_ == 1) {
          double min = settings.getChannelContrastMins()[0];
          double max = settings.getChannelContrastMaxes()[0];
@@ -920,7 +923,7 @@ public class MultipageTiffWriter {
 
    // TODO: is this identical to a similar function in the Reader?
    private void writeDisplaySettings() throws IOException {
-      DisplaySettings settings = masterStorage_.getDisplaySettings();
+      DisplaySettings settings = DefaultDisplaySettings.getStandardSettings();
       int numReservedBytes = numChannels_ * DISPLAY_SETTINGS_BYTES_PER_CHANNEL;
       ByteBuffer header = allocateByteBuffer(8);
       ByteBuffer buffer = ByteBuffer.wrap(
