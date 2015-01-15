@@ -29,15 +29,15 @@ public interface UserData {
     * modified version of this UserData instance. */
    public UserDataBuilder copy();
 
-   /** Retrieve a String value from the mapping. Will return null if the key
-    * is not found. */
+   /** Retrieve a String value from the mapping. Will return null if the key is
+    * not found, or if the mapped value is not a String. */
    public String getString(String key);
 
    /** Retrieve an Integer value from the mapping. Will return null if the key
-    * is not found. */
+    * is not found, or if the mapped value is not an Integer. */
    public Integer getInt(String key);
 
    /** Retrieve an Double value from the mapping. Will return null if the key
-    * is not found. */
+    * is not found, or if the mapped value is not a Double. */
    public Double getDouble(String key);
 }
