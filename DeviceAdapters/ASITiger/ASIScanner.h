@@ -149,6 +149,7 @@ private:
    double lastX_;   // used to cache position
    double lastY_;   // used to cache position
    bool illuminationState_;  // true if on, false if beam is turned off
+   long LEDXMode_;
 
    struct saStateType {
       long mode;

@@ -58,6 +58,7 @@ CScanner::CScanner(const char* name) :
    lastX_(0),    // cached position before blanking, used for SetIlluminationState
    lastY_(0),    // cached position before blanking, used for SetIlluminationState
    illuminationState_(true),
+   LEDXMode_(0),
    saStateX_(),
    saStateY_(),
    polygonRepetitions_(0),
@@ -66,6 +67,7 @@ CScanner::CScanner(const char* name) :
    laserTTLenabled_(false)
 {
 
+   // initialize these structs
    saStateX_.mode = -1;
    saStateX_.pattern = -1;
    saStateY_.mode = -1;
@@ -117,6 +119,7 @@ int CScanner::Initialize()
    command << g_ScannerDeviceDescription << " Xaxis=" << axisLetterX_ << " Yaxis=" << axisLetterY_ << " HexAddr=" << addressString_;
    CreateProperty(MM::g_Keyword_Description, command.str().c_str(), MM::String, true);
 
+   // TODO put this HV info back in
    // remove for now because of bug in PZINFO, will replace by RDADC command later (Jon 23-Oct-13)
 //   // high voltage reading for diagnostics
 //   command.str("");
@@ -435,6 +438,10 @@ int CScanner::Initialize()
             AddAllowedValue(g_LaserOutputModePropertyName, g_SPIMLaserOutputMode_1);
             AddAllowedValue(g_LaserOutputModePropertyName, g_SPIMLaserOutputMode_2);
             UpdateProperty(g_LaserOutputModePropertyName);
+
+            command << addressChar_ << "LED X?";
+            RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),"X=") );
+            RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(LEDXMode_) );
          }
       }
 
@@ -651,14 +658,7 @@ int CScanner::SetIlluminationStateHelper(bool on)
       return DEVICE_OK;
    // avoid unnecessary serial traffic
    // assume value is only changed using this function
-   static long lastModeNum = -1;
-   if (lastModeNum == -1) {
-      command << addressChar_ << "LED X?";
-      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),"X=") );
-      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
-   } else {
-      tmp = lastModeNum;
-   }
+   tmp = LEDXMode_;
    tmp &= 0x03;  // strip all but the two LSBs
    if (laser_side_ == 1)
    {
@@ -690,7 +690,7 @@ int CScanner::SetIlluminationStateHelper(bool on)
    command.str("");
    command << addressChar_ << "LED X=" << tmp;
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
-   lastModeNum = tmp;
+   LEDXMode_ = tmp;
    return DEVICE_OK;
 }
 
