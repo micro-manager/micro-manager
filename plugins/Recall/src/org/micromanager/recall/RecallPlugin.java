@@ -41,7 +41,7 @@ import org.micromanager.MMPlugin;
 import org.micromanager.ScriptInterface;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.acquisition.internal.TaggedImageQueue;
-import org.micromanager.MMTags;
+import org.micromanager.internal.utils.MMTags;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.ReportingUtils;

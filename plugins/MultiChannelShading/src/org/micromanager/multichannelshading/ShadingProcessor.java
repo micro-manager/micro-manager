@@ -237,7 +237,6 @@ public class ShadingProcessor extends DataProcessor<TaggedImage> {
          imageCollection_ = new ImageCollection();
          myFrame_ = new MultiChannelShadingMigForm(this, gui_);
          shadingTableModel_ = myFrame_.getShadingTableModel();
-         gui_.addMMBackgroundListener(myFrame_);
       }
       myFrame_.setVisible(true);
    }

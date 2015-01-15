@@ -9,7 +9,7 @@ import ij.ImagePlus;
 import ij.process.ImageProcessor;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.internal.utils.ReportingUtils;
 
 
 /**

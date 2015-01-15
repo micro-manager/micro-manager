@@ -30,9 +30,6 @@ public class AcquireMultipleRegions  implements org.micromanager.MMPlugin {
       if (myFrame_ == null)
          myFrame_ = new AcquireMultipleRegionsForm(gui_);
       myFrame_.setVisible(true);
-      
-      // Used to change the background layout of the form.  Does not work on Windows
-      gui_.addMMBackgroundListener(myFrame_);    
     }
 
     @Override

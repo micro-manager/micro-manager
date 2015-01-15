@@ -55,7 +55,6 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
         mmc_ = gui_.getMMCore();
         initComponents();        
         currentRegion_ = new Region(new PositionList(), DirectoryText.getText(), FilenameText.getText());
-        setBackground(gui_.getBackgroundColor());   
       
         //From PositionListDlg
         axisTable_ = new JTable();
