@@ -443,11 +443,11 @@ int CPLogic::OnAdvancedProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
          bool refreshPropsOriginal = refreshProps_;
          refreshProps_ = true;
 
-         for (unsigned int i=1; i<=numCells_; i++) {
+         for (long i=1; i<=numCells_; i++) {
 
             // logic cell type
             GetCellPropertyName(i, "_CellType", propName);
-            pActEx = new CPropertyActionEx (this, &CPLogic::OnCellType, (long) i);
+            pActEx = new CPropertyActionEx (this, &CPLogic::OnCellType, i);
             CreateProperty(propName, g_CellTypeCode0, MM::String, false, pActEx);
             AddAllowedValue(propName, g_CellTypeCode0, 0);
             AddAllowedValue(propName, g_CellTypeCode1, 1);
@@ -463,31 +463,31 @@ int CPLogic::OnAdvancedProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
 
             // logic cell CCA Z code
             GetCellPropertyName(i, "_Config", propName);
-            pActEx = new CPropertyActionEx (this, &CPLogic::OnCellConfig, (long) i);
+            pActEx = new CPropertyActionEx (this, &CPLogic::OnCellConfig, i);
             CreateProperty(propName, "0", MM::Integer, false, pActEx);
             UpdateProperty(propName);
 
             // logic cell input X code
             GetCellPropertyName(i, "_Input1", propName);
-            pActEx = new CPropertyActionEx (this, &CPLogic::OnInputX, (long) i);
+            pActEx = new CPropertyActionEx (this, &CPLogic::OnInputX, i);
             CreateProperty(propName, "0", MM::Integer, false, pActEx);
             UpdateProperty(propName);
 
             // logic cell input Y code
             GetCellPropertyName(i, "_Input2", propName);
-            pActEx = new CPropertyActionEx (this, &CPLogic::OnInputY, (long) i);
+            pActEx = new CPropertyActionEx (this, &CPLogic::OnInputY, i);
             CreateProperty(propName, "0", MM::Integer, false, pActEx);
             UpdateProperty(propName);
 
             // logic cell input Z code
             GetCellPropertyName(i, "_Input3", propName);
-            pActEx = new CPropertyActionEx (this, &CPLogic::OnInputZ, (long) i);
+            pActEx = new CPropertyActionEx (this, &CPLogic::OnInputZ, i);
             CreateProperty(propName, "0", MM::Integer, false, pActEx);
             UpdateProperty(propName);
 
             // logic cell input F code
             GetCellPropertyName(i, "_Input4", propName);
-            pActEx = new CPropertyActionEx (this, &CPLogic::OnInputF, (long) i);
+            pActEx = new CPropertyActionEx (this, &CPLogic::OnInputF, i);
             CreateProperty(propName, "0", MM::Integer, false, pActEx);
             UpdateProperty(propName);
 
@@ -495,7 +495,7 @@ int CPLogic::OnAdvancedProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
 
          for (unsigned int i=PLOGIC_FRONTPANEL_START_ADDRESS; i<=PLOGIC_BACKPLANE_END_ADDRESS; i++) {
             GetIOPropertyName(i, "_IOType", propName);
-            pActEx = new CPropertyActionEx (this, &CPLogic::OnIOType, (long) i);
+            pActEx = new CPropertyActionEx (this, &CPLogic::OnIOType, i);
             CreateProperty(propName, "0", MM::String, false, pActEx);
             AddAllowedValue(propName, g_IOTypeCode0, 0);
             AddAllowedValue(propName, g_IOTypeCode1, 1);
@@ -503,7 +503,7 @@ int CPLogic::OnAdvancedProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
             UpdateProperty(propName);
 
             GetIOPropertyName(i, "_SourceAddress", propName);
-            pActEx = new CPropertyActionEx (this, &CPLogic::OnIOSourceAddress, (long) i);
+            pActEx = new CPropertyActionEx (this, &CPLogic::OnIOSourceAddress, i);
             CreateProperty(propName, "0", MM::Integer, false, pActEx);
             UpdateProperty(propName);
          }
@@ -590,7 +590,7 @@ int CPLogic::OnCellType(MM::PropertyBase* pProp, MM::ActionType eAct, long index
          return DEVICE_INVALID_PROPERTY_VALUE;
    } else if (eAct == MM::AfterSet) {
       char propName[MM::MaxStrLength];
-      GetCellPropertyName(index, "_Type", propName);
+      GetCellPropertyName(index, "_CellType", propName);
       RETURN_ON_MM_ERROR ( GetCurrentPropertyData(propName, tmp) );
       RETURN_ON_MM_ERROR ( SetPosition(index) );
       command << addressChar_ << "CCA Y=" << tmp;
