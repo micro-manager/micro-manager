@@ -17,6 +17,8 @@ import org.micromanager.events.DatastoreClosingEvent;
 import org.micromanager.events.NewDisplayEvent;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.data.internal.DefaultUserData;
+import org.micromanager.UserData;
 
 public class DefaultDisplayManager implements DisplayManager {
    private MMStudio studio_;
@@ -74,6 +76,11 @@ public class DefaultDisplayManager implements DisplayManager {
    @Override
    public DisplaySettings.DisplaySettingsBuilder getDisplaySettingsBuilder() {
       return new DefaultDisplaySettings.Builder();
+   }
+
+   @Override
+   public UserData.UserDataBuilder getUserDataBuilder() {
+      return new DefaultUserData.Builder();
    }
 
    @Override

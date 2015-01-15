@@ -6,6 +6,7 @@ import org.json.JSONObject;
 
 import org.micromanager.data.Coords;
 import org.micromanager.MultiStagePosition;
+import org.micromanager.UserData;
 
 /**
  * This class defines the parameters that control how a given DisplayWindow
@@ -47,6 +48,8 @@ public interface DisplaySettings {
       DisplaySettingsBuilder shouldAutostretch(Boolean shouldAutostretch);
       DisplaySettingsBuilder trimPercentage(Double trimPercentage);
       DisplaySettingsBuilder shouldUseLogScale(Boolean shouldUseLogScale);
+
+      DisplaySettingsBuilder userData(UserData userData);
    }
 
    /**
@@ -100,6 +103,8 @@ public interface DisplaySettings {
    public Double getTrimPercentage();
    /** Whether to display the histograms using a logarithmic scale */
    public Boolean getShouldUseLogScale();
+   /** Any additional user-supplied data */
+   public UserData getUserData();
 
    /**
     * For legacy support only: convert to JSONObject.

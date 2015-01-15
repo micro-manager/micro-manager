@@ -14,6 +14,8 @@ import org.micromanager.MultiStagePosition;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
+import org.micromanager.UserData;
+
 /**
  * This class holds the metadata for ImagePlanes. It is intended to be 
  * immutable; construct new Metadatas using a MetadataBuilder, or by using
@@ -64,7 +66,7 @@ public class DefaultMetadata implements Metadata {
       private Integer color_ = null;
       private Double pixelAspect_ = null;
 
-      private JSONObject userData_ = null;
+      private UserData userData_ = null;
       private SummaryMetadata summaryMetadata_ = null;
 
       @Override
@@ -253,7 +255,7 @@ public class DefaultMetadata implements Metadata {
       }
 
       @Override
-      public MetadataBuilder userData(JSONObject userData) {
+      public MetadataBuilder userData(UserData userData) {
          userData_ = userData;
          return this;
       }
@@ -302,7 +304,7 @@ public class DefaultMetadata implements Metadata {
    private Integer color_ = null;
    private Double pixelAspect_ = null;
 
-   private JSONObject userData_ = null;
+   private UserData userData_ = null;
    private SummaryMetadata summaryMetadata_ = null;
 
    public DefaultMetadata(Builder builder) {
@@ -533,7 +535,7 @@ public class DefaultMetadata implements Metadata {
    }
 
    @Override
-   public JSONObject getUserData() {
+   public UserData getUserData() {
       return userData_;
    }
 
