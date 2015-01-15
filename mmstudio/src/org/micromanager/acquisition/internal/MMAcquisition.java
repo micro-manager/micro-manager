@@ -33,6 +33,7 @@ import java.util.Calendar;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.Iterator;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.prefs.Preferences;
@@ -60,6 +61,7 @@ import org.micromanager.data.internal.DefaultSummaryMetadata;
 
 import org.micromanager.internal.dialogs.AcqControlDlg;
 
+import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.DefaultDisplayWindow;
 
 import org.micromanager.internal.utils.ImageUtils;
@@ -279,6 +281,14 @@ public class MMAcquisition {
             boolean multipageTiff = MultipageTiffReader.isMMMultipageTiff(dirName);
             if (multipageTiff) {
                imageFileManager = new StorageMultipageTiff(store_, dirName, false);
+               if (show_) {
+                  List<DisplayWindow> displays = MMStudio.getInstance().display().loadDisplaySettings(
+                        store_, dirName);
+                  if (displays.size() == 0) {
+                     // Just create a new default display.
+                     new DefaultDisplayWindow(store_, null);
+                  }
+               }
             } else {
                ReportingUtils.logError("TODO: implement loading multi-file TIFFs");
             }
@@ -356,6 +366,14 @@ public class MMAcquisition {
          duplicate.setStorage(new StorageRAM(duplicate));
          duplicate.copyFrom(store_);
          store_ = duplicate;
+         if (show_) {
+            List<DisplayWindow> displays = MMStudio.getInstance().display().loadDisplaySettings(
+                  store_, dirName);
+            if (displays.size() == 0) {
+               // Just create a new default display.
+               new DefaultDisplayWindow(store_, null);
+            }
+         }
          // TODO: re-implement the check below before loading images into RAM
 //         imageCache_ = new MMImageCache(tempImageFileManager);
 //         if (tempImageFileManager.getDataSetSize() > 0.9 * JavaUtils.getAvailableUnusedMemory()) {
@@ -370,10 +388,9 @@ public class MMAcquisition {
          createDefaultAcqSettings();
       }
 
-      ReportingUtils.logError("Nearly done initializing");
       if (store_.getSummaryMetadata() != null) {
-         if (show_) {
-            ReportingUtils.logError("Creating display");
+         if (show_ && !existing_) {
+            // NB pre-existing setups will have loaded saved display settings.
             display_ = new DefaultDisplayWindow(store_, null);
          }
          initialized_ = true;
