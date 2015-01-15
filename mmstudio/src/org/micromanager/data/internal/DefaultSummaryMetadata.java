@@ -18,6 +18,8 @@ import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
+import org.micromanager.UserData;
+
 public class DefaultSummaryMetadata implements SummaryMetadata {
 
    /**
@@ -97,7 +99,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       private String startDate_ = null;
       private MultiStagePosition[] stagePositions_ = null;
 
-      private JSONObject userData_ = null;
+      private UserData userData_ = null;
 
       @Override
       public DefaultSummaryMetadata build() {
@@ -195,7 +197,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       }
 
       @Override
-      public SummaryMetadataBuilder userData(JSONObject userData) {
+      public SummaryMetadataBuilder userData(UserData userData) {
          userData_ = userData;
          return this;
       }
@@ -218,7 +220,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
    private String startDate_ = null;
    private MultiStagePosition[] stagePositions_ = null;
 
-   private JSONObject userData_ = null;
+   private UserData userData_ = null;
 
    public DefaultSummaryMetadata(Builder builder) {
       acquisitionName_ = builder.acquisitionName_;
@@ -317,11 +319,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
    }
 
    @Override
-   public JSONObject getUserData() {
-      // TODO: we aren't copying the JSONObject here, leading to potential
-      // aliasing, because JSONObject doesn't have a way to clone itself and
-      // the recommended constructor requires a String[] input, which we
-      // can't conveniently generate. Solvable, but I'm putting it off for now.
+   public UserData getUserData() {
       return userData_;
    }
 

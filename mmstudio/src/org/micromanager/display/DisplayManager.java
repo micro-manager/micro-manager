@@ -3,6 +3,7 @@ package org.micromanager.display;
 import java.util.List;
 
 import org.micromanager.data.Datastore;
+import org.micromanager.UserData;
 
 /**
  * This interface declares generic display-related methods. You can access
@@ -19,6 +20,11 @@ public interface DisplayManager {
     * Generate a "blank" DisplaySettings.Builder with all null values.
     */
    public DisplaySettings.DisplaySettingsBuilder getDisplaySettingsBuilder();
+
+   /**
+    * Generate a "blank" UserData.UserDataBuilder with empty mappings.
+    */
+   public UserData.UserDataBuilder getUserDataBuilder();
 
    /**
     * Create a new DisplayWindow for the specified Datastore and return it.

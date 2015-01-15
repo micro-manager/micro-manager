@@ -8,6 +8,7 @@ import org.json.JSONException;
 
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.internal.utils.MMScriptException;
+import org.micromanager.UserData;
 
 /**
  * This class provides general utility functions for working with
@@ -72,4 +73,9 @@ public interface DataManager {
     * SummaryMetadata instances.
     */
    public SummaryMetadata.SummaryMetadataBuilder getSummaryMetadataBuilder();
+
+   /**
+    * Generate a "blank" DisplaySettings.Builder with all null values.
+    */
+   public UserData.UserDataBuilder getUserDataBuilder();
 }

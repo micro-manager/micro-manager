@@ -16,6 +16,8 @@ import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
+import org.micromanager.UserData;
+
 public class DefaultDisplaySettings implements DisplaySettings {
 
    /**
@@ -64,6 +66,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
       builder.shouldAutostretch(prefs.getBoolean("shouldAutostretch", false));
       builder.trimPercentage(prefs.getDouble("trimPercentage", 0));
       builder.shouldUseLogScale(prefs.getBoolean("shouldUseLogScale", false));
+      // TODO: should we store user data in the display prefs?
       return builder.build();
    }
 
@@ -133,6 +136,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
       private Boolean shouldAutostretch_ = null;
       private Double trimPercentage_ = null;
       private Boolean shouldUseLogScale_ = null;
+      private UserData userData_ = null;
 
       @Override
       public DefaultDisplaySettings build() {
@@ -247,6 +251,11 @@ public class DefaultDisplaySettings implements DisplaySettings {
          return this;
       }
 
+      @Override
+      public DisplaySettingsBuilder userData(UserData userData) {
+         userData_ = userData;
+         return this;
+      }
    }
 
    private String[] channelNames_ = null;
@@ -267,6 +276,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
    private Boolean shouldAutostretch_ = null;
    private Double trimPercentage_ = null;
    private Boolean shouldUseLogScale_ = null;
+   private UserData userData_ = null;
 
    public DefaultDisplaySettings(Builder builder) {
       channelNames_ = builder.channelNames_;
@@ -287,6 +297,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
       shouldAutostretch_ = builder.shouldAutostretch_;
       trimPercentage_ = builder.trimPercentage_;
       shouldUseLogScale_ = builder.shouldUseLogScale_;
+      userData_ = builder.userData_;
    }
 
    @Override
@@ -380,6 +391,11 @@ public class DefaultDisplaySettings implements DisplaySettings {
    }
 
    @Override
+   public UserData getUserData() {
+      return userData_;
+   }
+
+   @Override
    public DisplaySettingsBuilder copy() {
       return new Builder()
             .channelNames(channelNames_)
@@ -399,7 +415,8 @@ public class DefaultDisplaySettings implements DisplaySettings {
             .shouldShowScaleBar(shouldShowScaleBar_)
             .shouldAutostretch(shouldAutostretch_)
             .trimPercentage(trimPercentage_)
-            .shouldUseLogScale(shouldUseLogScale_);
+            .shouldUseLogScale(shouldUseLogScale_)
+            .userData(userData_);
    }
 
    /**
@@ -456,6 +473,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
          if (tags.has("shouldUseLogScale")) {
             builder.shouldUseLogScale(tags.getBoolean("shouldUseLogScale"));
          }
+         // TODO: not restoring user data at this time.
 
          return builder.build();
       }
@@ -501,6 +519,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
          result.put("shouldAutostretch", shouldAutostretch_);
          result.put("trimPercentage", trimPercentage_);
          result.put("shouldUseLogScale", shouldUseLogScale_);
+         // TODO: not storing user data at this time.
          return result;
       }
       catch (JSONException e) {
