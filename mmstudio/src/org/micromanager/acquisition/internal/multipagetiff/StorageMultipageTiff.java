@@ -62,7 +62,6 @@ import org.micromanager.data.internal.DefaultDatastore;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultMetadata;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
-import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.MDUtils;
@@ -79,7 +78,6 @@ import org.micromanager.internal.utils.ReportingUtils;
  */
 public final class StorageMultipageTiff implements Storage {
    private DefaultSummaryMetadata summaryMetadata_;
-   private DefaultDisplaySettings displaySettings_;
    private boolean amInWriteMode_;
    private int lastFrameOpenedDataSet_ = -1;
    private String directory_;
@@ -124,8 +122,6 @@ public final class StorageMultipageTiff implements Storage {
       // We must be notified of changes in the Datastore before everyone else,
       // so that others can read those changes out of the Datastore later.
       ((DefaultDatastore) store).registerForEvents(this, 0);
-      // By default load the user's saved preferences.
-      displaySettings_ = DefaultDisplaySettings.getStandardSettings();
       separateMetadataFile_ = separateMDFile;
       splitByXYPosition_ = separateFilesForPositions;
 
@@ -145,28 +141,26 @@ public final class StorageMultipageTiff implements Storage {
    }
    
    private void processSummaryMD() {
-      // TODO: get display settings from RAM storage? Or from constructor?
-      displaySettings_ = DefaultDisplaySettings.getStandardSettings();
       if (amInWriteMode_) {
          numChannels_ = getIntendedSize("channel");
          numSlices_ = getIntendedSize("z");
       }
    }
-   
+
    public ThreadPoolExecutor getWritingExecutor() {
       return writingExecutor_;
    }
-   
+
    boolean slicesFirst() {
       ReportingUtils.logError("TODO: handle slicesFirst; returning false by default");
       return false;
    }
-   
+
    boolean timeFirst() {
       ReportingUtils.logError("TODO: handle timeFirst; returning false by default");
       return false;
    }
-   
+
    private void openExistingDataSet() {
       //Need to throw error if file not found
       MultipageTiffReader reader = null;
@@ -203,8 +197,6 @@ public final class StorageMultipageTiff implements Storage {
          // TODO: coercing to DefaultSummaryMetadata here to match method
          // signature; see our setSummaryMetadata methods for more info.
          setSummaryMetadata((DefaultSummaryMetadata) reader.getSummaryMetadata(), true);
-         // TODO: is this coercion needed?
-         displaySettings_ = (DefaultDisplaySettings) reader.getDisplaySettings();
       }
 
       progressBar.setProgress(1);
@@ -519,17 +511,10 @@ public final class StorageMultipageTiff implements Storage {
       return splitByXYPosition_;
    }
 
-   /**
-    * TODO: casting to DefaultDisplaySettings for now.
-    */
-   public void setDisplaySettings(DisplaySettings settings) {
-      displaySettings_ = (DefaultDisplaySettings) settings;
-   }
-          
    public void writeDisplaySettings() {
       for (MultipageTiffReader r : new HashSet<MultipageTiffReader>(coordsToReader_.values())) {
          try {
-            r.rewriteDisplaySettings(displaySettings_);
+            r.rewriteDisplaySettings(DefaultDisplaySettings.getStandardSettings());
             r.rewriteComments(summaryMetadata_.getComments());
          } catch (JSONException ex) {
             ReportingUtils.logError("Error writing display settings");
@@ -589,10 +574,6 @@ public final class StorageMultipageTiff implements Storage {
    @Override
    public int getNumImages() {
       return coordsToReader_.keySet().size();
-   }
-
-   public DisplaySettings getDisplaySettings() {
-      return displaySettings_;
    }
 
    @Override
