@@ -166,7 +166,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       if (store_.getNumImages() > 0) {
          makeWindowAndIJObjects();
       }
-      setMenuBar(Menus.getMenuBar());
+      setIJMenus();
 
       EventManager.register(this);
    }
@@ -353,6 +353,13 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
             }
          }
       });
+   }
+
+   /**
+    * Ensure that the ImageJ menubars are visible.
+    */
+   private void setIJMenus() {
+      setMenuBar(Menus.getMenuBar());
    }
 
    private void resetTitle() {
@@ -830,5 +837,34 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       Dimension ourSize = getSize();
       setSize(ourSize.width + 2, ourSize.height + 2);
       super.pack();
+   }
+
+   /**
+    * HACK: for some reason, when ImageJ raises us to the front, our menubar
+    * disappears, so manually re-set it.
+    */
+   @Override
+   public void toFront() {
+      super.toFront();
+      setIJMenus();
+   }
+
+   /**
+    * As with toFront.
+    */
+   @Override
+   @SuppressWarnings("deprecation")
+   public void show() {
+      super.show();
+      setIJMenus();
+   }
+
+   /**
+    * As with toFront.
+    */
+   @Override
+   public void setVisible(boolean isVisible) {
+      super.setVisible(isVisible);
+      setIJMenus();
    }
 }
