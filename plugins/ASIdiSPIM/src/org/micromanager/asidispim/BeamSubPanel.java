@@ -140,7 +140,14 @@ public final class BeamSubPanel extends ListeningJPanel {
       add(updateOnTab_, "center, span 3");
    }//constructor
    
-   
+   /**
+    * Listens to changes in state of the beam-enabled checkbox
+    * Enables/disables the sheet checkbox accordingly
+    * When beam is re-enabled and sheet checkbox is checked, re-enables sheet 
+    * This is implemented as an actionlistener, so that it gets called after the 
+    * itemlisteners have been called.  This also means that it is not called after
+    * programmatic changes to the Beam-enabled checkbox
+    */
    class BeamBoxListener implements ActionListener {
 
       private final JCheckBox sheetBox_;
@@ -156,7 +163,7 @@ public final class BeamSubPanel extends ListeningJPanel {
          if (beamBox_.isSelected()) {
             sheetBox_.setEnabled(true);
             if (sheetBox_.isSelected()) {
-               // how to get the sheet back on?  Toggle the checkbox?
+               // Fake a sheet selected event to get the sheet back on  
                ItemListener[] ils = sheetBox_.getItemListeners();
                for (ItemListener il : ils) {
                   ItemEvent ie = new ItemEvent(sheetBox_, 0, sheetBox_, ItemEvent.SELECTED);
