@@ -120,16 +120,18 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
     * DisplaySettings.
     */
    public DefaultDisplayWindow(Datastore store, Component customControls) {
-      this(store, customControls, null, false);
+      this(store, customControls, null, null);
    }
 
    /**
     * customControls is a Component that will be displayed immediately beneath
     * the HyperstackControls (the scrollbars). The creator is responsible for
     * the logic implemented by these controls. They may be null.
+    * @param settings DisplaySettings to use as initial state for this display
+    * @param targetScreen For fullscreen mode only, which screen to take over.
     */
    public DefaultDisplayWindow(Datastore store, Component customControls,
-         DisplaySettings settings, boolean isFullScreen) {
+         DisplaySettings settings, GraphicsConfiguration targetScreen) {
       store_ = store;
       store_.registerForEvents(this);
       if (settings == null) {
@@ -142,7 +144,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       displayBus_.register(this);
       EventManager.post(new DefaultNewDisplayEvent(this));
       customControls_ = customControls;
-      isFullScreen_ = isFullScreen;
+      isFullScreen_ = (targetScreen != null);
 
       initializePrefs();
       int posX = DEFAULTPOSX, posY = DEFAULTPOSY;
@@ -154,11 +156,10 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
 
       if (isFullScreen_) {
          setUndecorated(true);
-         GraphicsConfiguration screenConfig = getScreenConfig();
-         setBounds(screenConfig.getBounds());
+         setBounds(targetScreen.getBounds());
          setExtendedState(JFrame.MAXIMIZED_BOTH);
          setResizable(false);
-         displayBus_.post(new FullScreenEvent(this, screenConfig, true));
+         displayBus_.post(new FullScreenEvent(this, targetScreen, true));
       }
 
       resetTitle();
@@ -613,7 +614,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
          // Hide ourselves and make a new frame for fullscreen mode.
          setVisible(false);
          DisplayWindow fullFrame = new DefaultDisplayWindow(
-               store_, customControls_, displaySettings_, true);
+               store_, customControls_, displaySettings_, getScreenConfig());
       }
    }
 
