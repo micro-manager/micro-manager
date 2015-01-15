@@ -35,6 +35,7 @@ import org.micromanager.asidispim.Utils.ListeningJTabbedPane;
 import java.awt.Container;
 import java.util.prefs.Preferences;
 
+import javax.swing.JFrame;
 import javax.swing.JTabbedPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -181,17 +182,7 @@ public class ASIdiSPIMFrame extends MMFrame
       setResizable(false);
       
       // take care of shutdown tasks when window is closed
-      // TODO figure out if we really need this with dispose method below
-      addWindowListener(new java.awt.event.WindowAdapter() {
-         @Override
-         public void windowClosing(java.awt.event.WindowEvent evt) {
-            // stop the timer for updating stages
-            stagePosUpdater_.stop();
-            acquisitionPanel_.windowClosing();
-            saveSettings();
-         }
-      });
-      
+      setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
       
       // add status panel as an overlay that is visible from all tabs
       Container glassPane = (Container) getGlassPane();
@@ -279,10 +270,9 @@ public class ASIdiSPIMFrame extends MMFrame
    
    @Override
    public void dispose() {
-      if (stagePosUpdater_ != null) {
-         stagePosUpdater_.stop();
-      }
+      stagePosUpdater_.stop();
       saveSettings();
+      acquisitionPanel_.windowClosing();
       super.dispose();
    }
 }

@@ -39,20 +39,20 @@ public class ASIdiSPIM implements MMPlugin {
    @Override
    public void setApp(ScriptInterface app) {
       gui_ = app;
-      if (myFrame_ != null) {
+      // close frame before re-load if already open
+      // if frame has been opened and then closed (myFrame != null) but it won't be displayable 
+      if (myFrame_ != null && myFrame_.isDisplayable()) {
          WindowEvent wev = new WindowEvent(myFrame_, WindowEvent.WINDOW_CLOSING);
          myFrame_.dispatchEvent(wev);
-         myFrame_ = null;
       }
-      if (myFrame_ == null) {
-         try {
-            myFrame_ = new ASIdiSPIMFrame(gui_);
-            myFrame_.setBackground(gui_.getBackgroundColor());
-            gui_.addMMListener(myFrame_);
-            gui_.addMMBackgroundListener(myFrame_);
-         } catch (Exception e) {
-            gui_.showError(e);
-         }
+      // create brand new instance of plugin frame every time
+      try {
+         myFrame_ = new ASIdiSPIMFrame(gui_);
+         myFrame_.setBackground(gui_.getBackgroundColor());
+         gui_.addMMListener(myFrame_);
+         gui_.addMMBackgroundListener(myFrame_);
+      } catch (Exception e) {
+         gui_.showError(e);
       }
       myFrame_.setVisible(true);
    }
