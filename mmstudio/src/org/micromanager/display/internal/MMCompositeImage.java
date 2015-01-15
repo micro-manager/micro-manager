@@ -140,13 +140,6 @@ public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
       }
    }
   
-   /**
-    * TODO: remove useless parameter.
-    */
-   public void updateAndDraw(boolean forceUpdateAndPaint) {
-      updateAndDraw();
-   }
-
    /*
     * called when image pixels change
     */
