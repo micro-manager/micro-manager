@@ -18,7 +18,7 @@
   (:gen-class
     :init init
     :name org.micromanager.DLLAutoReloader
-    :implements [org.micromanager.api.MMPlugin]
+    :implements [org.micromanager.MMPlugin]
     :state state))
 
 (defn -init [] [[] (atom nil)])
