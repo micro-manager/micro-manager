@@ -85,13 +85,22 @@ public interface DisplayWindow {
     * - "Owner" of the DisplayWindow determines if window can be closed
     * - Owner calls forceClosed(), below, if appropriate
     *
+    * If you are the owner (e.g. you called DisplayManager.createDisplay()),
+    * then you should have a class that is subscribed to the display's EventBus
+    * and that is listening for the RequestToCloseEvent; otherwise, the
+    * display cannot be closed. If you do not want this responsibility, you can
+    * request that Micro-Manager track a Datastore and its associated displays
+    * for you via DisplayManager.track().
+    *
     * @return True if the window is closed, false if it remains open.
     */
    public boolean requestToClose();
 
    /**
     * Close the display, bypassing any logic that would normally occur when the
-    * window is closed.
+    * window is closed. Typically this is called by the "owner" of the display
+    * after a RequestToCloseEvent has been posted and the owner has determined
+    * that it is okay to remove the display.
     */
    public void forceClosed();
 
@@ -121,17 +130,17 @@ public interface DisplayWindow {
    public void toFront();
 
    /**
-    * If appropriate, return the ImageWindow that this display represents.
-    * Otherwise return null. This is not necessarily the same java.awt.Window
-    * that the DisplayWindow represents; MicroManager uses a dummy ImageWindow
-    * to simplify communications with ImageJ. You probably should not need
-    * to call this method.
+    * If appropriate, return the ImageJ ImageWindow that this display
+    * represents.  Otherwise return null. This is not necessarily the same
+    * java.awt.Window that the DisplayWindow represents; MicroManager uses a
+    * dummy ImageWindow to simplify communications with ImageJ. You probably
+    * should not need to call this method.
     */
    public ImageWindow getImageWindow();
 
    /**
     * Provide a java.awt.Window representing this display; mostly useful for
-    * positioning dialogs and the like.
+    * positioning dialogs or if you need to move a display window around.
     */
    public Window getAsWindow();
 
