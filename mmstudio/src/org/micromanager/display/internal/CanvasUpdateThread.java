@@ -141,7 +141,7 @@ public class CanvasUpdateThread extends Thread {
             });
          }
          else {
-            ReportingUtils.logError("Attempted to draw null image at " + coords);
+            // TODO: is this an error situation?
             // Manually clear the paint pending; otherwise the display breaks.
             CanvasPaintPending.removePaintPending(plus_.getCanvas(), plus_);
          }
