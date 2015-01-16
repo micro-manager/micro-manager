@@ -75,6 +75,7 @@ class MultiModePanel extends JPanel {
             modePanel_.add(widget);
          }
       }
+      validate();
       bus_.post(new LayoutChangedEvent());
    }
 
