@@ -58,7 +58,6 @@ CScanner::CScanner(const char* name) :
    lastX_(0),    // cached position before blanking, used for SetIlluminationState
    lastY_(0),    // cached position before blanking, used for SetIlluminationState
    illuminationState_(true),
-   LEDXMode_(0),
    saStateX_(),
    saStateY_(),
    polygonRepetitions_(0),
@@ -438,10 +437,6 @@ int CScanner::Initialize()
             AddAllowedValue(g_LaserOutputModePropertyName, g_SPIMLaserOutputMode_1);
             AddAllowedValue(g_LaserOutputModePropertyName, g_SPIMLaserOutputMode_2);
             UpdateProperty(g_LaserOutputModePropertyName);
-
-            command << addressChar_ << "LED X?";
-            RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),"X=") );
-            RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(LEDXMode_) );
          }
       }
 
@@ -656,31 +651,24 @@ int CScanner::SetIlluminationStateHelper(bool on)
       return DEVICE_OK;
    if(!laserTTLenabled_)
       return DEVICE_OK;
-   // avoid unnecessary serial traffic
-   // assume value is only changed using this function
-   tmp = LEDXMode_;
+   // need to know whether other scanner device is turned on => must query it anyway
+   command << addressChar_ << "LED X?";
+   RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),"X=") );
+   RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
    tmp &= 0x03;  // strip all but the two LSBs
    if (laser_side_ == 1)
    {
       if(on)
-      {
          tmp |= 0x01;
-      }
       else
-      {
          tmp &= ~0x01;
-      }
    }
    else if (laser_side_ == 2)
    {
       if(on)
-      {
          tmp |= 0x02;
-      }
       else
-      {
          tmp &= ~0x02;
-      }
    }
    else
    {
@@ -690,7 +678,6 @@ int CScanner::SetIlluminationStateHelper(bool on)
    command.str("");
    command << addressChar_ << "LED X=" << tmp;
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
-   LEDXMode_ = tmp;
    return DEVICE_OK;
 }
 
