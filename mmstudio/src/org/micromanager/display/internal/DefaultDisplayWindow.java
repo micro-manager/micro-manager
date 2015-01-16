@@ -246,14 +246,14 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
          contentsPanel_ = new JPanel();
       }
       contentsPanel_.removeAll();
-      contentsPanel_.setLayout(new MigLayout("debug, insets 1, fillx, filly",
+      contentsPanel_.setLayout(new MigLayout("insets 1, fillx, filly",
          "[grow, fill]", "[grow, fill]related[]"));
 
       recreateCanvas();
       contentsPanel_.add(canvasPanel_, "align center, wrap, grow");
 
       if (controlsPanel_ == null) {
-         controlsPanel_ = new JPanel(new MigLayout("insets 0, fillx, debug"));
+         controlsPanel_ = new JPanel(new MigLayout("insets 0, fillx"));
          controlsPanel_.add(
                new HyperstackControls(store_, stack_, this, false),
                "align center, span, growx, wrap");
@@ -803,39 +803,26 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       Dimension modeSize = modePanel_.getPreferredSize();
       Dimension controlsSize = controlsPanel_.getPreferredSize();
       Dimension ourSize = contentsPanel_.getSize();
-      ReportingUtils.logError("Going in, we are " + ourSize + " with controls " + controlsSize + " and mode " + modeSize);
       // Determine if a given component is growing (we need to increase our
       // own size) or shrinking (we need to shrink).
       int widthDelta = 0;
       int heightDelta = 0;
       if (prevModeSize_ != null) {
          widthDelta += modeSize.width - prevModeSize_.width;
-         ReportingUtils.logError("Mode has changed width by " + widthDelta);
       }
       if (prevControlsSize_ != null) {
          heightDelta += controlsSize.height - prevControlsSize_.height;
-         ReportingUtils.logError("Controls have changed height by " + heightDelta);
       }
       prevModeSize_ = modeSize;
       prevControlsSize_ = controlsSize;
 
-      ReportingUtils.logError(String.format("Target size is (%d, %d)", ourSize.width + widthDelta, ourSize.height + heightDelta));
+      // Resize the canvas to use available spare space.
+      // HACK: for some reason, we're off by 2 in width and 10 in height.
+      int spareWidth = ourSize.width + widthDelta - modeSize.width - 2;
+      int spareHeight = ourSize.height + heightDelta - controlsSize.height - 10;
+      canvas_.setDrawingSize(spareWidth, spareHeight);
       setSize(ourSize.width + widthDelta,
             ourSize.height + heightDelta);
-      super.pack();
-      // Resize the canvas to fill available space.
-      ourSize = contentsPanel_.getSize();
-      ReportingUtils.logError("New contents panel size is " + ourSize);
-      // HACK: for some reason, we're off by 2 here.
-      int spareWidth = ourSize.width - modeSize.width - 2;
-      int spareHeight = ourSize.height - controlsSize.height - 2;
-      ReportingUtils.logError(String.format("Spare space for canvas is (%d, %d)", spareWidth, spareHeight));
-      canvas_.setDrawingSize(spareWidth, spareHeight);
-//      // Ensure all components have the right sizes.
-//      for (Component c : getComponents()) {
-//         c.setSize(c.getPreferredSize());
-//      }
-//      setSize(getPreferredSize());
       super.pack();
    }
 
