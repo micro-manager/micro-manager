@@ -93,7 +93,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
    private JPanel canvasPanel_;
    private MMImageCanvas canvas_;
    private HyperstackControls controls_;
-   private Component customControls_;
+   private List<Component> customControls_;
    private MultiModePanel modePanel_;
    private HistogramsPanel histograms_;
    private MetadataPanel metadata_;
@@ -120,18 +120,21 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
     * Convenience constructor that defaults to non-fullscreen mode and default
     * DisplaySettings.
     */
-   public DefaultDisplayWindow(Datastore store, Component customControls) {
+   public DefaultDisplayWindow(Datastore store,
+         List<Component> customControls) {
       this(store, customControls, null, null);
    }
 
    /**
-    * customControls is a Component that will be displayed immediately beneath
-    * the HyperstackControls (the scrollbars). The creator is responsible for
-    * the logic implemented by these controls. They may be null.
+    * customControls are Components that will be displayed immediately beneath
+    * the HyperstackControls (the scrollbars), alongside the save button and
+    * any other buttons that we provide by default. The creator is responsible
+    * for the logic implemented by these controls. They may be null or an
+    * empty list.
     * @param settings DisplaySettings to use as initial state for this display
     * @param targetScreen For fullscreen mode only, which screen to take over.
     */
-   public DefaultDisplayWindow(Datastore store, Component customControls,
+   public DefaultDisplayWindow(Datastore store, List<Component> customControls,
          DisplaySettings settings, GraphicsConfiguration targetScreen) {
       store_ = store;
       store_.registerForEvents(this);
@@ -253,9 +256,14 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       }
       contentsPanel_.add(controls_, "align center, wrap, growx");
 
+      JPanel controlsPanel = new JPanel(new MigLayout());
       if (customControls_ != null) {
-         contentsPanel_.add(customControls_, "align center, wrap, growx");
+         for (Component c : customControls_) {
+            controlsPanel.add(c);
+         }
       }
+      controlsPanel.add(new SaveButton(store_, this));
+      contentsPanel_.add(controlsPanel, "align center, wrap, growx");
 
       if (modePanel_ == null) {
          modePanel_ = new MultiModePanel(displayBus_);
