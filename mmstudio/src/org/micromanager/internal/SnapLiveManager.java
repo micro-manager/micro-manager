@@ -5,6 +5,7 @@ import com.swtdesigner.SwingResourceManager;
 
 import ij.gui.ImageWindow;
 
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -39,7 +40,6 @@ import org.micromanager.data.internal.DefaultDatastore;
 import org.micromanager.data.internal.DefaultImage;
 
 import org.micromanager.display.internal.DefaultDisplayWindow;
-import org.micromanager.display.internal.SaveButton;
 
 import org.micromanager.internal.interfaces.LiveModeListener;
 
@@ -66,7 +66,6 @@ public class SnapLiveManager {
 
    private JButton snapButton_;
    private JButton liveButton_;
-   private JButton toAlbumButton_;
 
    public SnapLiveManager(CMMCore core) {
       core_ = core;
@@ -292,7 +291,7 @@ public class SnapLiveManager {
     * We need to [re]create the display and its associated custom controls.
     */
    private void createDisplay() {
-      JPanel controlPanel = new JPanel(new MigLayout());
+      ArrayList<Component> controls = new ArrayList<Component>();
       snapButton_ = new JButton("Snap",
             SwingResourceManager.getIcon(MMStudio.class,
                "/org/micromanager/internal/icons/camera.png"));
@@ -303,7 +302,7 @@ public class SnapLiveManager {
             snap(true);
          }
       });
-      controlPanel.add(snapButton_);
+      controls.add(snapButton_);
 
       liveButton_ = new JButton();
       setLiveButtonMode();
@@ -314,24 +313,21 @@ public class SnapLiveManager {
             setLiveMode(!isOn_);
          }
       });
-      controlPanel.add(liveButton_);
+      controls.add(liveButton_);
 
-      toAlbumButton_ = new JButton("Album",
+      JButton toAlbumButton = new JButton("Album",
             SwingResourceManager.getIcon(MMStudio.class,
                "/org/micromanager/internal/icons/arrow_right.png"));
-      toAlbumButton_.setPreferredSize(new Dimension(90, 28));
-      toAlbumButton_.addActionListener(new ActionListener() {
+      toAlbumButton.setPreferredSize(new Dimension(90, 28));
+      toAlbumButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent event) {
             MMStudio.getInstance().doSnap(true);
          }
       });
-      controlPanel.add(toAlbumButton_);
+      controls.add(toAlbumButton);
 
-      display_ = new DefaultDisplayWindow(store_, controlPanel);
-      // We need to have the display before we can create the save button,
-      // leading to these shenanigans.
-      controlPanel.add(new SaveButton(store_, display_.getAsWindow()));
+      display_ = new DefaultDisplayWindow(store_, controls);
       display_.registerForEvents(this);
    }
 
