@@ -1,7 +1,5 @@
 package org.micromanager.data;
 
-import net.imglib2.meta.ImgPlus;
-
 import mmcorej.TaggedImage;
 
 /**
@@ -27,14 +25,6 @@ public interface Image {
     * single-component images, except that a copy of the pixels will be made.
     */
    public Object getRawPixelsForComponent(int component);
-
-   /**
-    * Return an ImgPlus that allows for manipulation of the pixels in the image.
-    * Note this is an ImgPlus (an ImageJ2 construct for doing type-agnostic
-    * image manipulations), not an ImagePlus -- the ImagePlus is only
-    * accessible via a DisplayWindow.
-    */
-   public ImgPlus getImgPlus();
 
    /**
     * Generate a copy of this Image, except that its Coords object is at a

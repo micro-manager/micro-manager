@@ -12,16 +12,6 @@ import java.util.List;
 
 import mmcorej.TaggedImage;
 
-import net.imglib2.img.array.ArrayImg;
-import net.imglib2.img.array.ArrayImgs;
-import net.imglib2.img.basictypeaccess.array.ArrayDataAccess;
-import net.imglib2.meta.ImgPlus;
-import net.imglib2.RandomAccess;
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.ARGBType;
-import net.imglib2.type.numeric.integer.UnsignedByteType;
-import net.imglib2.type.numeric.integer.UnsignedShortType;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -175,56 +165,6 @@ public class DefaultImage implements Image {
       pixelHeight_ = source.getHeight();
       bytesPerPixel_ = source.getBytesPerPixel();
       numComponents_ = source.getNumComponents();
-   }
-
-   @Override
-   public ImgPlus getImgPlus() {
-      return generateImgPlusFromPixels(rawPixels_, pixelWidth_, pixelHeight_,
-            bytesPerPixel_);
-   }
-
-   /**
-    * Inspect the provided pixel array and bytes per pixel, and generate an
-    * ImgPlus based on what we find.
-    * TODO: our handling of RGB images is imperfect.
-    */
-   private ImgPlus generateImgPlusFromPixels(Object pixels, int width, 
-         int height, int bytesPerPixel)
-         throws IllegalArgumentException {
-      long[] dimensions = new long[] {width, height};
-      if (pixels instanceof byte[]) {
-         if (bytesPerPixel == 4) {
-            // RGB type. The argbs() method only takes int[] or long[] though,
-            // so we have to do some type conversion. Adapted from
-            // http://stackoverflow.com/questions/11437203/byte-array-to-int-array
-            // Additionally, imglib2 uses ARGB, not RGBA, so our pixels may be
-            // in the wrong order.
-            // TODO: fix pixel order.
-            IntBuffer intBuf = ByteBuffer.wrap((byte[]) pixels).order(ByteOrder.BIG_ENDIAN).asIntBuffer();
-            int[] temp = new int[intBuf.remaining()];
-            intBuf.get(temp);
-            ReportingUtils.logMessage("Casting RGBA to ARGB; pixels may be misleading!");
-            return new ImgPlus<ARGBType>(ArrayImgs.argbs(temp, dimensions));
-         }
-         // Otherwise assume grayscale.
-         return new ImgPlus<UnsignedByteType>(
-               ArrayImgs.unsignedBytes((byte[]) pixels, dimensions));
-      }
-      else if (pixels instanceof short[]) {
-         // Assume grayscale.
-         return new ImgPlus<UnsignedShortType>(
-               ArrayImgs.unsignedShorts((short[]) pixels, dimensions));
-      }
-      else if (pixels instanceof int[]) {
-         // TODO: assuming RGBA type as no MM cameras currently support 32-bit
-         // grayscale. This branch will execute when cloning an existing
-         // DefaultImage.
-         return new ImgPlus<ARGBType>(
-               ArrayImgs.argbs((int[]) pixels, dimensions));
-      }
-      else {
-         throw new IllegalArgumentException("Unsupported image array type.");
-      }
    }
 
    @Override
