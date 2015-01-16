@@ -141,7 +141,7 @@ public class CanvasUpdateThread extends Thread {
             });
          }
          else {
-            // TODO: is this an error situation?
+            // TODO: is this an error situation? I.e. that the image is null?
             // Manually clear the paint pending; otherwise the display breaks.
             CanvasPaintPending.removePaintPending(plus_.getCanvas(), plus_);
          }
