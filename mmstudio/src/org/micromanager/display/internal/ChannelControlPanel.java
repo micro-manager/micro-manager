@@ -550,7 +550,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       histogram_.setTraceStyle(true, color_);
       DisplaySettings settings = display_.getDisplaySettings();
       String[] allNames = settings.getChannelNames();
-      if (allNames != null && allNames.length > channelIndex_) {
+      if (allNames != null && allNames.length > channelIndex_ &&
+            allNames[channelIndex_] != null) {
          String name = allNames[channelIndex_];
          if (name.length() > 11) {
             name = name.substring(0, 9) + "...";
@@ -558,15 +559,18 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          channelNameCheckbox_.setText(name);
       }
       Integer[] mins = settings.getChannelContrastMins();
-      if (mins != null && mins.length > channelIndex_) {
+      if (mins != null && mins.length > channelIndex_ &&
+            mins[channelIndex_] != null) {
          contrastMin_ = mins[channelIndex_];
       }
       Integer[] maxes = settings.getChannelContrastMaxes();
-      if (maxes != null && maxes.length > channelIndex_) {
+      if (maxes != null && maxes.length > channelIndex_ &&
+            maxes[channelIndex_] != null) {
          contrastMax_ = maxes[channelIndex_];
       }
       Double[] gammas = settings.getChannelGammas();
-      if (gammas != null && gammas.length > channelIndex_) {
+      if (gammas != null && gammas.length > channelIndex_ &&
+            gammas[channelIndex_] != null) {
          gamma_ = gammas[channelIndex_];
       }
 
@@ -671,11 +675,11 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
     */
    public void calcAndDisplayHistAndStats(boolean shouldDrawHistogram) {
       if (plus_ == null || plus_.getProcessor() == null) {
-         ReportingUtils.logError("Can't draw histogram: no image to work with");
+         // No image to work with.
          return;
       }
       if (histogram_ == null) {
-         ReportingUtils.logError("Can't draw histogram: no histogram created yet");
+         // No histogram to control.
          return;
       }
       ImageProcessor processor;
@@ -699,7 +703,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
       }
       if (processor == null ) {
-         ReportingUtils.logError("Can't draw histogram: no processor for " + channelIndex_);
+         // Tried to get an image that doesn't exist.
          return;
       }
 
@@ -722,8 +726,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       int imgHeight = plus_.getHeight();
 
       if (rawHistogram[0] == imgWidth * imgHeight) {
-         ReportingUtils.logError("Can't draw histogram: no pixels");
-         return;  //Blank pixels 
+         // Image data is invalid/blank.
+         return;
       }
 
       // Autostretch, if necessary.
