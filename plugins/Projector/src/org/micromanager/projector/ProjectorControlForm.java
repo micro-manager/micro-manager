@@ -595,13 +595,9 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       if (!(imgp.getStack() instanceof MMVirtualStack)) {
          return false;
       }
-      try {
-         Datastore store = ((MMVirtualStack) imgp.getStack()).getDatastore();
-         String mirrorString = store.getSummaryMetadata().getUserData().getString("ImageFlipper-Mirror");
-         return mirrorString.contentEquals("On");
-      } catch (JSONException e) {
-         return false;
-      }
+      Datastore store = ((MMVirtualStack) imgp.getStack()).getDatastore();
+      String mirrorString = store.getSummaryMetadata().getUserData().getString("ImageFlipper-Mirror");
+      return mirrorString.contentEquals("On");
    }
 
    // Flips a point if it has been mirrored.
