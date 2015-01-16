@@ -85,6 +85,7 @@
 		</if>
 
 		<!-- XXX Remaining files to copy; should put elsewhere -->
+
 		<if>
 			<istrue value="${mm.build.for.imagej2updater}"/>
 			<then></then>
@@ -137,6 +138,19 @@
 	</target>
 
 	<target name="package" description="Create installer from staged files (will NOT trigger build or stage)">
+		<!-- Hack to allow the 'package' target to work in absence of
+		     closed-source device adapters -->
+		<if>
+			<resourceexists>
+				<file file="${mm.installdir}/OlympusIX3Control/OlympusIX3Control.exe"/>
+			</resourceexists>
+			<then></then>
+			<else>
+				<mkdir dir="${mm.installdir}/OlympusIX3Control"/>
+				<touch file="${mm.installdir}/OlympusIX3Control/placeholder.txt"/>
+			</else>
+		</if>
+
 		<!-- Default name, if not set -->
 		<property name="mm.installer.basename" value="MMSetup_${mm.architecture.bits}bit"/>
 		<property name="mm.installer" value="${mm.installer.basename}.exe"/>
