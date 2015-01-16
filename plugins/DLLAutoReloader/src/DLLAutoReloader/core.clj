@@ -21,7 +21,7 @@
            (java.awt Color)
            (java.awt.event ActionListener)
            (java.util.prefs Preferences)
-           (org.micromanager.utils FileDialogs FileDialogs$FileType
+           (org.micromanager.internal.utils FileDialogs FileDialogs$FileType
                                    GUIUtils JavaUtils)))
 
 (defn devices-in-each-module
@@ -324,7 +324,7 @@
 (defn plugin-test
   "Test the plugin."
   []
-  (show-plugin (org.micromanager.MMStudio/getInstance)))
+  (show-plugin (org.micromanager.internal.MMStudio/getInstance)))
 
 (defn test-lib
   "Get the first module with loaded devices."
