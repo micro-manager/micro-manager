@@ -186,7 +186,7 @@ public class DisplaySettingsPanel extends JPanel {
             adjustZoom(2.0);
          }
       });
-      add(zoomInButton, "span 2");
+      add(zoomInButton, "split 2");
       JButton zoomOutButton = new JButton();
       zoomOutButton.setIcon(SwingResourceManager.getIcon(
                DisplaySettingsPanel.class,
@@ -198,7 +198,7 @@ public class DisplaySettingsPanel extends JPanel {
             adjustZoom(0.5);
          }
       });
-      add(zoomOutButton, "wrap");
+      add(zoomOutButton, "wrap, gapright push");
 
       JButton saveButton = new JButton("Set as default");
       saveButton.setToolTipText("Save the current display settings as default for all new image windows.");
