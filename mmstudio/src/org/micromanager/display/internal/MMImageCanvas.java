@@ -8,6 +8,7 @@ import ij.ImagePlus;
 import ij.Prefs;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.Graphics;
@@ -40,6 +41,50 @@ class MMImageCanvas extends ImageCanvas {
             publishMouseInfo(event.getX(), event.getY());
          }
       });
+   }
+
+   /**
+    * The container that holds us wants us to resize to fill the specified
+    * size, keeping in mind the provided aspect ratio of our data, and the
+    * limitations we place on our zoom factor.
+    */
+   public void updateSize(Dimension size) {
+      double dataAspect = ((double) ijImage_.getWidth()) / ijImage_.getHeight();
+      double viewAspect = ((double) size.width) / size.height;
+      // Derive canvas view width/height based on maximum available space
+      // along the appropriate axis, for an aspect-ratio-constrained resize.
+      int viewWidth = size.width;
+      int viewHeight = size.height;
+      if (viewAspect > dataAspect) { // Wide view; Y constrains growth
+         viewWidth = (int) (viewHeight * dataAspect);
+      }
+      else { // Tall view; X constrains growth
+         viewHeight = (int) (viewWidth / dataAspect);
+      }
+      // Check the maximum size we allow ourselves to have at our current
+      // zoom level. If we exceed this size, then our pixels get fuzzy and
+      // irregular, which is no good.
+      double maxWidth = ijImage_.getWidth() * getMagnification();
+      double maxHeight = ijImage_.getHeight() * getMagnification();
+      int targetWidth = (int) Math.ceil(Math.min(maxWidth, viewWidth));
+      int targetHeight = (int) Math.ceil(Math.min(maxHeight, viewHeight));
+      setDrawingSize(targetWidth, targetHeight);
+      // Reset the "source rect", i.e. the sub-area being viewed when
+      // the image won't fit into the window. Try to maintain the same
+      // center as the current rect has.
+      // Fun fact: there's setSourceRect and setSrcRect, but no
+      // getSourceRect.
+      Rectangle curRect = getSrcRect();
+      int xCenter = curRect.x + (curRect.width / 2);
+      int yCenter = curRect.y + (curRect.height / 2);
+      double curMag = getMagnification();
+      int newWidth = (int) Math.ceil(viewWidth / curMag);
+      int newHeight = (int) Math.ceil(viewHeight / curMag);
+      int xCorner = xCenter - newWidth / 2;
+      int yCorner = yCenter - newHeight / 2;
+      Rectangle viewRect = new Rectangle(xCorner, yCorner,
+            newWidth, newHeight);
+      setSourceRect(viewRect);
    }
 
    /**
