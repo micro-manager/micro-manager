@@ -92,7 +92,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
    private JPanel contentsPanel_;
    private JPanel canvasPanel_;
    private MMImageCanvas canvas_;
-   private HyperstackControls controls_;
+   private JPanel controlsPanel_;
    private List<Component> customControls_;
    private MultiModePanel modePanel_;
    private HistogramsPanel histograms_;
@@ -101,7 +101,9 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
    private OverlaysPanel overlays_;
 
    private final EventBus displayBus_;
-   private Dimension paddedCanvasSize_;
+
+   private Dimension prevModeSize_;
+   private Dimension prevControlsSize_;
 
    private CanvasUpdateThread canvasThread_;
 
@@ -148,6 +150,10 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       displayBus_.register(this);
       EventManager.post(new DefaultNewDisplayEvent(this));
       customControls_ = customControls;
+      if (customControls_ == null) {
+         customControls_ = new ArrayList<Component>();
+      }
+      customControls_.add(new SaveButton(store_, this));
       isFullScreen_ = (targetScreen != null);
 
       initializePrefs();
@@ -240,30 +246,23 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
          contentsPanel_ = new JPanel();
       }
       contentsPanel_.removeAll();
-      // Override the default layout with our own, so we can do more
-      // customized controls.
-      // This layout is intended to minimize distances between elements.
-      contentsPanel_.setLayout(new MigLayout("insets 1, fillx, filly",
+      contentsPanel_.setLayout(new MigLayout("debug, insets 1, fillx, filly",
          "[grow, fill]", "[grow, fill]related[]"));
 
       recreateCanvas();
-      // We don't want the canvas to grow, because that results in weird
-      // zoom levels that make for blurry images.
-      contentsPanel_.add(canvasPanel_, "align center, wrap, grow 0");
+      contentsPanel_.add(canvasPanel_, "align center, wrap, grow");
 
-      if (controls_ == null) {
-         controls_ = new HyperstackControls(store_, stack_, this, false);
+      if (controlsPanel_ == null) {
+         controlsPanel_ = new JPanel(new MigLayout("insets 0, fillx, debug"));
+         controlsPanel_.add(
+               new HyperstackControls(store_, stack_, this, false),
+               "align center, span, growx, wrap");
       }
-      contentsPanel_.add(controls_, "align center, wrap, growx");
 
-      JPanel controlsPanel = new JPanel(new MigLayout());
-      if (customControls_ != null) {
-         for (Component c : customControls_) {
-            controlsPanel.add(c);
-         }
+      for (Component c : customControls_) {
+         controlsPanel_.add(c);
       }
-      controlsPanel.add(new SaveButton(store_, this));
-      contentsPanel_.add(controlsPanel, "align center, wrap, growx");
+      contentsPanel_.add(controlsPanel_, "align center, wrap, growx, growy 0");
 
       if (modePanel_ == null) {
          modePanel_ = new MultiModePanel(displayBus_);
@@ -309,45 +308,14 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       canvas_.setMinimumSize(new Dimension(16, 16));
       // Wrap the canvas in a subpanel so that we can get events when it
       // resizes.
-      canvasPanel_ = new JPanel();
-      canvasPanel_.setLayout(new MigLayout("insets 0, fill"));
+      canvasPanel_ = new JPanel(new MigLayout("insets 0, fill"));
       canvasPanel_.add(canvas_);
 
       // Propagate resizing to the canvas, adjusting the view rectangle.
       canvasPanel_.addComponentListener(new ComponentAdapter() {
          @Override
          public void componentResized(ComponentEvent e) {
-            Dimension size = canvasPanel_.getSize();
-            double dataAspect = ((double) ijImage_.getWidth()) / ijImage_.getHeight();
-            double viewAspect = ((double) size.width) / size.height;
-            // Derive canvas view width/height based on maximum available space
-            // along the appropriate axis.
-            int viewWidth = size.width;
-            int viewHeight = size.height;
-            if (viewAspect > dataAspect) { // Wide view; Y constrains growth
-               viewWidth = (int) (viewHeight * dataAspect);
-            }
-            else { // Tall view; X constrains growth
-               viewHeight = (int) (viewWidth / dataAspect);
-            }
-            canvas_.setDrawingSize((int) Math.ceil(viewWidth),
-               (int) Math.ceil(viewHeight));
-            // Reset the "source rect", i.e. the sub-area being viewed when
-            // the image won't fit into the window. Try to maintain the same
-            // center as the current rect has.
-            // Fun fact: there's setSourceRect and setSrcRect, but no
-            // getSourceRect.
-            Rectangle curRect = canvas_.getSrcRect();
-            int xCenter = curRect.x + (curRect.width / 2);
-            int yCenter = curRect.y + (curRect.height / 2);
-            double curMag = canvas_.getMagnification();
-            int newWidth = (int) Math.ceil(viewWidth / curMag);
-            int newHeight = (int) Math.ceil(viewHeight / curMag);
-            int xCorner = xCenter - newWidth / 2;
-            int yCorner = yCenter - newHeight / 2;
-            Rectangle viewRect = new Rectangle(xCorner, yCorner, 
-                  newWidth, newHeight);
-            canvas_.setSourceRect(viewRect);
+            canvas_.updateSize(canvasPanel_.getSize());
             doLayout();
          }
       });
@@ -356,11 +324,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       canvas_.addMouseListener(new MouseInputAdapter() {
          @Override
          public void mouseReleased(MouseEvent me) {
-            if (ijImage_ instanceof MMCompositeImage) {
-               ((MMCompositeImage) ijImage_).updateAndDraw();
-            } else {
-               ijImage_.updateAndDraw();
-            }
+            ijImage_.updateAndDraw();
          }
       });
    }
@@ -488,8 +452,6 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
     */         
    @Subscribe
    public void onLayoutChanged(LayoutChangedEvent event) {
-      // This is necessary to get the window to notice changes to components
-      // contained within it (due to AWT/Swing mixing?).
       validate();
       pack();
    }
@@ -818,43 +780,62 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
 
    /**
     * HACK HACK HACK etc you get the idea.
-    * Manually re-size components, and set our own size. Otherwise, changes in
-    * the sizes of components we contain end up not affecting our own size
-    * properly.
-    * Additionally, we need to pad out the canvas object's size by 2px;
-    * otherwise, at certain zoom levels (33.333% and divisors of same,
-    * basically any zoom level that can't be precisely expressed in decimal
-    * form), it doesn't take up *quite* enough space to draw itself, which
-    * means we get the "zoom indicator" overlay and part of the canvas
-    * isn't drawn.
-    *
-    * TODO: suspect this function has similar bugs as were fixed in r14511.
+    * Manually derive the size of components based on our own size. We have
+    * a layout that looks roughly like this:
+    * +---------+----+
+    * |         | m  |
+    * |  canvas | o  |
+    * |         | d  |
+    * |         | e  |
+    * |         |    |
+    * +---------+----|
+    * |              |
+    * |   controls   |
+    * +---------+----+
+    * The sizes of the modePanel and controls can only grow vertically and
+    * horizontally, respectively; the canvas can grow in both dimensions, and
+    * should absorb all remaining extra space. Unfortunately, canvas sizing is
+    * complicated by the fact that the canvas has a "zoom mode" for when there
+    * isn't enough room to display the entire image at the current zoom level.
     */
    @Override
    public void pack() {
-      // Ensure all components have the right sizes.
-      for (Component c : getComponents()) {
-         c.setSize(c.getPreferredSize());
+      Dimension modeSize = modePanel_.getPreferredSize();
+      Dimension controlsSize = controlsPanel_.getPreferredSize();
+      Dimension ourSize = contentsPanel_.getSize();
+      ReportingUtils.logError("Going in, we are " + ourSize + " with controls " + controlsSize + " and mode " + modeSize);
+      // Determine if a given component is growing (we need to increase our
+      // own size) or shrinking (we need to shrink).
+      int widthDelta = 0;
+      int heightDelta = 0;
+      if (prevModeSize_ != null) {
+         widthDelta += modeSize.width - prevModeSize_.width;
+         ReportingUtils.logError("Mode has changed width by " + widthDelta);
       }
-      setSize(getPreferredSize());
+      if (prevControlsSize_ != null) {
+         heightDelta += controlsSize.height - prevControlsSize_.height;
+         ReportingUtils.logError("Controls have changed height by " + heightDelta);
+      }
+      prevModeSize_ = modeSize;
+      prevControlsSize_ = controlsSize;
+
+      ReportingUtils.logError(String.format("Target size is (%d, %d)", ourSize.width + widthDelta, ourSize.height + heightDelta));
+      setSize(ourSize.width + widthDelta,
+            ourSize.height + heightDelta);
       super.pack();
-
-      // Ensure the canvas is padded properly.
-      Dimension canvasSize = canvas_.getSize();
-      if (paddedCanvasSize_ != null &&
-            paddedCanvasSize_.width == canvasSize.width &&
-            paddedCanvasSize_.height == canvasSize.height) {
-         // Canvas is already padded, so we're done here.
-         return;
-      }
-
-      // Pad the canvas, and then pad ourselves so there's room for it.
-      canvas_.setDrawingSize(canvasSize.width + 2, canvasSize.height + 2);
-      // ImageJ hacks getPreferredSize to return the "drawing size"
-      // (there's no getDrawingSize() method).
-      paddedCanvasSize_ = canvas_.getPreferredSize();
-      Dimension ourSize = getSize();
-      setSize(ourSize.width + 2, ourSize.height + 2);
+      // Resize the canvas to fill available space.
+      ourSize = contentsPanel_.getSize();
+      ReportingUtils.logError("New contents panel size is " + ourSize);
+      // HACK: for some reason, we're off by 2 here.
+      int spareWidth = ourSize.width - modeSize.width - 2;
+      int spareHeight = ourSize.height - controlsSize.height - 2;
+      ReportingUtils.logError(String.format("Spare space for canvas is (%d, %d)", spareWidth, spareHeight));
+      canvas_.setDrawingSize(spareWidth, spareHeight);
+//      // Ensure all components have the right sizes.
+//      for (Component c : getComponents()) {
+//         c.setSize(c.getPreferredSize());
+//      }
+//      setSize(getPreferredSize());
       super.pack();
    }
 
