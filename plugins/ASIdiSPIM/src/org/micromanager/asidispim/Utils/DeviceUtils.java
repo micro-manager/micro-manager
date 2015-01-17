@@ -93,7 +93,7 @@ public class DeviceUtils {
             }
             break;
          case PLOGIC:
-            if (firmwareVersion < 3.029) {
+            if (firmwareVersion < 3.039) {
                MyDialogUtils.showError("Device " + devices_.getMMDevice(key)
                      + ": PLogic firmware is old; some features may not work."
                      + " Contact ASI for updated firmware.");
@@ -187,7 +187,8 @@ public class DeviceUtils {
                      + devices_.getMMDevice(key) + " on Step 2). Then reload the "
                      + " changed configuration and restart the diSPIM plugin.");
             }
-            props_.setPropValue(key, Properties.Keys.PLOGIC_PRESET, Properties.Values.PLOGIC_PRESET_1);
+            // execute the preset to put in diSPIM mode
+            props_.setPropValue(key, Properties.Keys.PLOGIC_PRESET, Properties.Values.PLOGIC_PRESET_14);
             checkPropertyValueEquals(key, Properties.Keys.PLOGIC_TRIGGER_SOURCE, Properties.Values.PLOGIC_TRIGGER_MMIRROR);
          } else {
             MyDialogUtils.showError("Plugin doesn't support shutter devices other than ASITiger");

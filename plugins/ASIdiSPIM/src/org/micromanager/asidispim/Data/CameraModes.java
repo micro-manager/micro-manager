@@ -128,6 +128,7 @@ public class CameraModes {
        */
       private void updateSelections() {
          // save the existing selection if it exists
+         // could use props_ with PLUGIN device too
          int origCode = prefs_.getInt(MyStrings.PanelNames.SETTINGS.toString(),
                Properties.Keys.PLUGIN_CAMERA_MODE, 0);
          

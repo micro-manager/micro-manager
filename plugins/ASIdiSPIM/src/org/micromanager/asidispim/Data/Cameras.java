@@ -572,6 +572,7 @@ public class Cameras {
    public void setSPIMCamerasForAcquisition(boolean acq) {
       if (acq) {
          CameraModes.Keys cameraMode = CameraModes.getKeyFromPrefCode(
+               // could also get from props_ with PLUGIN device
                prefs_.getInt(MyStrings.PanelNames.SETTINGS.toString(),
                      Properties.Keys.PLUGIN_CAMERA_MODE, 0));
          setSPIMTriggerMode(cameraMode);

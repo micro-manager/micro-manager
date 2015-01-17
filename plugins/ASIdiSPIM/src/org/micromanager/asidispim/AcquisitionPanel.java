@@ -1543,6 +1543,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             return false;
          }
       }
+      
+      // sets PLogic BNC3 output high to indicate acquisition is going on
+      props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_PRESET, 
+            Properties.Values.PLOGIC_PRESET_3, true);
 
       long acqStart = System.currentTimeMillis();
       boolean nonfatalError = false;
@@ -1837,6 +1841,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             Properties.Values.SAM_DISABLED, true);
       props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.SA_MODE_X,
             Properties.Values.SAM_DISABLED, true);
+      
+      // sets BNC3 output low again
+      props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_PRESET, 
+            Properties.Values.PLOGIC_PRESET_2, true);
 
       // move piezos back to center (neutral) position
       if (devices_.isValidMMDevice(Devices.Keys.PIEZOA)) {
