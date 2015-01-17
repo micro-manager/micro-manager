@@ -108,32 +108,6 @@ int CPLogic::Initialize()
    command << numCells_;
    CreateProperty(g_NumLogicCellsPropertyName, command.str().c_str(), MM::Integer, true);
 
-   if (useAsShutter_)
-   {
-      // special masked preset selector for shutter channel
-      pAct = new CPropertyAction (this, &CPLogic::OnSetShutterChannel);
-      CreateProperty(g_SetChannelPropertyName, g_ChannelNone, MM::String, false, pAct);
-      // use (CCA X) card presets here, just under a different name
-      AddAllowedValue(g_SetChannelPropertyName, g_ChannelNone, 9);
-      AddAllowedValue(g_SetChannelPropertyName, g_ChannelOnly5, 5);
-      AddAllowedValue(g_SetChannelPropertyName, g_ChannelOnly6, 6);
-      AddAllowedValue(g_SetChannelPropertyName, g_ChannelOnly7, 7);
-      AddAllowedValue(g_SetChannelPropertyName, g_ChannelOnly8, 8);
-      UpdateProperty(g_SetChannelPropertyName); // doesn't do anything right now
-      // makes sure card actually gets initialized
-      SetProperty(g_SetChannelPropertyName, g_ChannelNone);
-
-      // set up trigger for BNC outputs to TTL1 (Laser0) OR the shutter via cell 1 (CCA X=2 or 3 for off/on)
-      SetProperty(g_SetCardPresetPropertyName, g_PresetCode12);
-
-      // make sure cell 1 is initialized and is a constant (will be tweaked by CCA X=2 or 3 in SetOpen())
-      // this will also set cell 1's value to 0 which matches shutterOpen_'s initialization to false
-      ostringstream command; command.str("");
-      RETURN_ON_MM_ERROR ( SetPosition(1) );
-      command << addressChar_ << "CCA Y=0";
-      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
-   }
-
    // pointer position, this is where edits/queries are made in general
    pAct = new CPropertyAction (this, &CPLogic::OnPointerPosition);
    CreateProperty(g_PointerPositionPropertyName, "0", MM::Integer, false, pAct);
@@ -181,6 +155,8 @@ int CPLogic::Initialize()
    AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode10, 10);
    AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode11, 11);
    AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode12, 12);
+   AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode13, 13);
+   AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode14, 14);
    UpdateProperty(g_SetCardPresetPropertyName);
 
    // "do it" property to clear state
@@ -214,6 +190,30 @@ int CPLogic::Initialize()
    AddAllowedValue(g_AdvancedPropertiesPropertyName, g_YesState);
    UpdateProperty(g_AdvancedPropertiesPropertyName);
 
+   if (useAsShutter_)
+   {
+      // special masked preset selector for shutter channel
+      pAct = new CPropertyAction (this, &CPLogic::OnSetShutterChannel);
+      CreateProperty(g_SetChannelPropertyName, g_ChannelNone, MM::String, false, pAct);
+      // use (CCA X) card presets here, just under a different name
+      AddAllowedValue(g_SetChannelPropertyName, g_ChannelNone, 9);
+      AddAllowedValue(g_SetChannelPropertyName, g_ChannelOnly5, 5);
+      AddAllowedValue(g_SetChannelPropertyName, g_ChannelOnly6, 6);
+      AddAllowedValue(g_SetChannelPropertyName, g_ChannelOnly7, 7);
+      AddAllowedValue(g_SetChannelPropertyName, g_ChannelOnly8, 8);
+      UpdateProperty(g_SetChannelPropertyName); // doesn't do anything right now
+      // makes sure card actually gets initialized
+      // SetProperty(g_SetChannelPropertyName, g_ChannelNone);  // done via SetProperty(g_SetCardPresetPropertyName, g_PresetCode14)
+
+      // set up card up for diSPIM shutter
+      // this sets up all 8 BNC outputs
+      // also it sets the card to be set to shutter channel "none"
+      SetProperty(g_SetCardPresetPropertyName, g_PresetCode14);
+
+      // always start shutter in closed state
+      SetOpen(false);
+   }
+
    initialized_ = true;
    return DEVICE_OK;
 }
@@ -225,9 +225,9 @@ int CPLogic::SetOpen(bool open)
       ostringstream command; command.str("");
       shutterOpen_ = open;
       if (open) {
-         SetProperty(g_SetCardPresetPropertyName, g_PresetCode3);
+         SetProperty(g_SetCardPresetPropertyName, g_PresetCode11);
       } else {
-         SetProperty(g_SetCardPresetPropertyName, g_PresetCode2);
+         SetProperty(g_SetCardPresetPropertyName, g_PresetCode10);
       }
    }
    return DEVICE_OK;
