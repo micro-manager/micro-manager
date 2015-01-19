@@ -52,10 +52,10 @@ import org.micromanager.asidispim.Utils.MyDialogUtils;
  */
 public class Devices {
 
-   private List<String> loadedDevices_;
-   private Prefs prefs_;
-   private CMMCore core_;
-   private List<DevicesListenerInterface> listeners_;
+   private final List<String> loadedDevices_;
+   private final Prefs prefs_;
+   private final CMMCore core_;
+   private final List<DevicesListenerInterface> listeners_;
    private boolean listenersEnabled_;
    
    /**

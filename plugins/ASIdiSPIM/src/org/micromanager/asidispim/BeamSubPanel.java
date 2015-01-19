@@ -193,7 +193,7 @@ public final class BeamSubPanel extends ListeningJPanel {
             updateOnTab_.isSelected());
       
       // make sure the sheet enables get set properly; this is handled on user input by 
-      //   listeners based on makeDisableSheetListener
+      //   listeners based on beamListener
       sheetABox_.setEnabled(beamABox_.isSelected());
       sheetBBox_.setEnabled(beamBBox_.isSelected());
       

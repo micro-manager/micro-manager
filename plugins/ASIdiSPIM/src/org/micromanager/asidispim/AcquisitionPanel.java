@@ -737,7 +737,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
    }//end constructor
    
-   public void updateDurationLabels() {
+   public final void updateDurationLabels() {
       updateActualSlicePeriodLabel();
       updateActualVolumeDurationLabel();
       updateActualTimeLapseDurationLabel();
@@ -1444,10 +1444,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          nrFrames = getNumTimepoints();
          nrRepeats = 1;
       }
-
       long timepointsIntervalMs = Math.round(
               PanelUtils.getSpinnerFloatValue(acquisitionInterval_) * 1000d);
       int nrSlices = getNumSlices();
+      
+      AcquisitionModes.Keys spimMode = (AcquisitionModes.Keys) spimMode_.getSelectedItem();
       
       boolean autoShutter = core_.getAutoShutter();
       boolean shutterOpen = false;
@@ -1569,8 +1570,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             
             ReportingUtils.logMessage("diSPIM plugin starting acquisition " + acqName);
             
-            gui_.openAcquisition(acqName, rootDir, nrFrames, nrSides * nrChannels,
+            if (spimMode.equals(AcquisitionModes.Keys.NO_SCAN) && ! singleTimePointViewers) {
+               // swap nrFrames and nrSlices
+               gui_.openAcquisition(acqName, rootDir, nrSlices, nrSides * nrChannels,
+                  nrFrames, nrPositions, show, save);
+            } else {
+               gui_.openAcquisition(acqName, rootDir, nrFrames, nrSides * nrChannels,
                   nrSlices, nrPositions, show, save);
+            }
             core_.setExposure(firstCamera, exposureTime);
             if (twoSided) {
                core_.setExposure(secondCamera, exposureTime);
@@ -1754,9 +1761,15 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                  ch += 1;
                                  frBufferIndex = 1;
                               }
-                              addImageToAcquisition(acqName, timePoint, ch, 
-                                      frNumber[frBufferIndex], positionNum,
-                                    now - acqStart, timg, bq);
+                              if (spimMode.equals(AcquisitionModes.Keys.NO_SCAN) && ! singleTimePointViewers) {
+                                 addImageToAcquisition(acqName, 
+                                         frNumber[frBufferIndex], ch, timePoint, 
+                                         positionNum, now - acqStart, timg, bq);
+                              } else { // standard
+                                 addImageToAcquisition(acqName, timePoint, ch, 
+                                       frNumber[frBufferIndex], positionNum,
+                                       now - acqStart, timg, bq);
+                              }
                               frNumber[frBufferIndex]++;
                               last = now;  // keep track of last image time
                               // check to see if we are finished

@@ -98,6 +98,7 @@ public class StagePositionUpdater {
       }
       timer_ = new Timer(true);
       timer_.scheduleAtFixedRate(new TimerTask() {
+            @Override
             public void run() {
                // update positions if we aren't already doing it or paused
                // this prevents building up task queue if something slows down
@@ -145,6 +146,7 @@ public class StagePositionUpdater {
    
    /**
     * checks whether "acquisition running" flag is set 
+    * @return 
     */
    public boolean isAcqRunning() {
       return acqRunning_.get();
