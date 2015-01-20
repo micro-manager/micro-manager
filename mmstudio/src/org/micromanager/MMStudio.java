@@ -65,6 +65,7 @@ import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
 import mmcorej.TaggedImage;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.acquisition.*;
@@ -545,7 +546,17 @@ public class MMStudio implements ScriptInterface {
       ImageCache ic = display.getImageCache();
       int channels = ic.getSummaryMetadata().getInt("Channels");
       for (int i = 0; i < channels; i++) {
-         addToAlbum(ic.getImage(i, 0, 0, 0), ic.getDisplayAndComments());
+         // Make a copy of the image we get, so we don't interfere with
+         // the Live mode version.
+         TaggedImage image = ic.getImage(i, 0, 0, 0);
+         JSONArray names = image.tags.names();
+         String[] keys = new String[names.length()];
+         for (int j = 0; j < names.length(); ++j) {
+            keys[j] = names.getString(j);
+         }
+         TaggedImage newImage = new TaggedImage(image.pix,
+               new JSONObject(image.tags, keys));
+         addToAlbum(newImage, ic.getDisplayAndComments());
       }
    }
 
