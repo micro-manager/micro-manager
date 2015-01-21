@@ -205,14 +205,10 @@ public class ShadingProcessor extends DataProcessor<TaggedImage> {
                String value = ps.getPropertyValue();
                Iterator<String> tagIterator = imgTags.keys();
                while (tagIterator.hasNext() && !settingMatch) {
-                  try {
-                     String tagKey = tagIterator.next();
-                     String tagValue = imgTags.getString(tagKey);
-                     if (key.equals(tagKey) && value.equals(tagValue)) {
-                        settingMatch = true;
-                     }
-                  } catch (JSONException jex) {
-                     ReportingUtils.logError(jex);
+                  String tagKey = tagIterator.next();
+                  String tagValue = imgTags.optString(tagKey);
+                  if (key.equals(tagKey) && value.equals(tagValue)) {
+                     settingMatch = true;
                   }
                }
                // if we do not have a settingMatch, this config can not match
