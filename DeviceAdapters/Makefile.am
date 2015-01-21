@@ -146,6 +146,7 @@ SUBDIRS = \
 	ThorlabsFilterWheel \
 	ThorlabsSC10 \
 	Tofra \
+	TriggerScope \
 	UserDefinedSerial \
 	Utilities \
 	VariLC \

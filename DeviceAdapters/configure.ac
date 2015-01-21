@@ -469,6 +469,7 @@ m4_define([device_adapter_dirs], [m4_strip([
    ThorlabsFilterWheel
    ThorlabsSC10
    Tofra
+   TriggerScope
    USBManager
    UserDefinedSerial
    UserDefinedSerial/unittest
