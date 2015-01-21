@@ -44,7 +44,6 @@ using namespace std;
 // to load particular device from the "TriggerScope.dll" library
 const char* g_TriggerScopeDeviceName = "TriggerScope";
 const char* serial_terminator = "\n";
-const unsigned char uc_serial_terminator = 10;
 const char* line_feed = "\n";
 const char * g_TriggerScope_Version = "v1.0.2, 28/9/2014";
 
@@ -106,8 +105,8 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 
 CTriggerScope::CTriggerScope(void)  :
    busy_(false),
-   error_(0),
    timeOutTimer_(0),
+   error_(0),
    firmwareVer_(0.0),
    cmdInProgress_(0),
    initialized_(0)
@@ -439,7 +438,7 @@ void CTriggerScope::ReceiveSerialBytes(unsigned char* buf, unsigned long buflen,
    int nLoop=0, nRet=0;
    unsigned long bytesRead=0;
    totalBytes=0;
-   buf[0] = NULL;
+   buf[0] = '\0';
 
    MM::MMTime timeStart, timeNow;
    timeStart = GetCurrentMMTime();
@@ -461,7 +460,7 @@ void CTriggerScope::FlushSerialBytes(unsigned char* buf, unsigned long buflen)
    buf_string_ = "";
    int nRet=0;
    unsigned long bytesRead=0;
-   buf[0] = NULL;
+   buf[0] = '\0';
 
    nRet = ReadFromComPort(port_.c_str(), buf, buflen, bytesRead);
 }
