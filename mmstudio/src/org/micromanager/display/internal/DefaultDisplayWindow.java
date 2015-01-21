@@ -69,6 +69,7 @@ import org.micromanager.internal.LineProfile;
 import org.micromanager.internal.MMStudio;
 
 import org.micromanager.internal.utils.GUIUtils;
+import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
 
@@ -181,27 +182,30 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
          makeWindowAndIJObjects();
       }
 
-      // HACK: we want to show the ImageJ menubar for our windows. However,
-      // if we simply do setMenuBar(Menus.getMenuBar()), then somehow ImageJ
-      // *loses* the menubar. So we have to put it back when we lose focus.
-      addWindowListener(new WindowAdapter() {
-         @Override
-         public void windowActivated(WindowEvent e) {
-            // Steal the menubar from ImageJ.
-            setMenuBar(Menus.getMenuBar());
-         }
+      // HACK: on OSX, we want to show the ImageJ menubar for our windows.
+      // However, if we simply do setMenuBar(Menus.getMenuBar()), then somehow
+      // ImageJ *loses* the menubar. So we have to put it back when we lose
+      // focus.
+      if (JavaUtils.isMac()) {
+         addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowActivated(WindowEvent e) {
+               // Steal the menubar from ImageJ.
+               setMenuBar(Menus.getMenuBar());
+            }
 
-         @Override
-         public void windowDeactivated(WindowEvent e) {
-            // Find the primary ImageJ window and give it its menubar back.
-            for (Frame f : Frame.getFrames()) {
-               if (f instanceof ij.ImageJ) {
-                  f.setMenuBar(getMenuBar());
-                  break;
+            @Override
+            public void windowDeactivated(WindowEvent e) {
+               // Find the primary ImageJ window and give it its menubar back.
+               for (Frame f : Frame.getFrames()) {
+                  if (f instanceof ij.ImageJ) {
+                     f.setMenuBar(getMenuBar());
+                     break;
+                  }
                }
             }
-         }
-      });
+         });
+      }
 
       EventManager.register(this);
    }
