@@ -4,6 +4,8 @@ import com.google.common.eventbus.EventBus;
 
 import java.awt.Component;
 import java.awt.event.KeyEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.Hashtable;
 
@@ -13,6 +15,7 @@ import javax.swing.event.ChangeListener;
 import javax.swing.JLabel;
 import javax.swing.JPopupMenu;
 import javax.swing.JSlider;
+import javax.swing.JTextField;
 import javax.swing.MenuElement;
 import javax.swing.MenuSelectionManager;
 
@@ -84,17 +87,33 @@ public class FPSPopupMenu extends JPopupMenu {
       public void menuSelectionChanged(boolean isIncluded) {}
    }
 
-   private FPSSlider slider_;
-
    public FPSPopupMenu(final EventBus bus, int initialVal) {
-      slider_ = new FPSSlider();
-      slider_.setValue(initialVal);
-      slider_.addChangeListener(new ChangeListener() {
+      final FPSSlider slider = new FPSSlider();
+      final JTextField field = new JTextField(3);
+      slider.setValue(initialVal);
+      slider.addChangeListener(new ChangeListener() {
          @Override
-         public void stateChanged(ChangeEvent e) {
-            bus.post(new FPSEvent(slider_.getValue()));
+         public void stateChanged(ChangeEvent event) {
+            field.setText(Integer.toString(slider.getValue()));
+            bus.post(new FPSEvent(slider.getValue()));
          }
       });
-      add(slider_);
+      add(slider);
+
+      field.addKeyListener(new KeyAdapter() {
+         @Override
+         public void keyReleased(KeyEvent event) {
+            try {
+               int newVal = Integer.parseInt(field.getText());
+               slider.setValue(newVal);
+               slider.repaint();
+               bus.post(new FPSEvent(newVal));
+            }
+            catch (NumberFormatException e) {
+               // Ignore it
+            }
+         }
+      });
+      add(field);
    }
 }
