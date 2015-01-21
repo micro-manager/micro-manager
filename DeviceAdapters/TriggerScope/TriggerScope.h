@@ -102,7 +102,6 @@ private:
    string buf_string_;
    string port_;
    int error_;
-   FILE* fidSerialLog_;
    double firmwareVer_;
    int cmdInProgress_;
    int initialized_;
@@ -112,10 +111,8 @@ private:
    double dac_;
 
    MMThreadLock* pResourceLock_;
-   long nUseSerialLog_;
 
    MM::MMTime zeroTime_, currentTime_;
-
 };
 
 #endif //_TriggerScope_H_

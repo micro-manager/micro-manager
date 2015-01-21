@@ -111,11 +111,9 @@ CTriggerScope::CTriggerScope(void)  :
    busy_(false),
    error_(0),
    timeOutTimer_(0),
-   fidSerialLog_(NULL),
    firmwareVer_(0.0),
    cmdInProgress_(0),
-   initialized_(0),
-   nUseSerialLog_(1)
+   initialized_(0)
 {
    // call the base class method to set-up default error codes/messages
    InitializeDefaultErrorMessages();
@@ -152,30 +150,7 @@ int CTriggerScope::Initialize()
    if (initialized_)
       return DEVICE_OK;
 
-   char profilepath[1000];
-#ifdef _WIN32
-   ExpandEnvironmentStrings(TEXT("%userprofile%"),profilepath,1000);
-
-#else
-   //strcpy_s(profilepath,1000,"/tmp");
-#endif
-   char strLog[1024];
-
-   time_t rawtime;
-   time ( &rawtime );
-
-#ifdef _WIN32
-   sprintf_s(strLog,1024,"%s\\TriggerScope_SerialLog.txt",profilepath);
-#else
-   sprintf_s(strLog,1024,"/tmp/TriggerScope_Serial_Log_%s_%d.txt",buffer,getpid());
-#endif
-   fidSerialLog_ = fopen(strLog,"w");
-
-   nUseSerialLog_ = 1;
-   if(fidSerialLog_)
-      fprintf(fidSerialLog_, "Version: %s, Time: %s\n", g_TriggerScope_Version, ctime (&rawtime) );
-   else
-      nUseSerialLog_ = 0;
+   LogMessage("Version: " + std::string(g_TriggerScope_Version));
 
    zeroTime_ = GetCurrentMMTime();
 
@@ -430,13 +405,6 @@ void CTriggerScope::Send(string cmd)
    int ret = SendSerialCommand(port_.c_str(), cmd.c_str(), serial_terminator);
    if (ret!=DEVICE_OK)
       error_ = DEVICE_SERIAL_COMMAND_FAILED;
-   currentTime_ = GetCurrentMMTime();
-   if(strlen(cmd.c_str()) && fidSerialLog_ && nUseSerialLog_)
-   {
-      fprintf(fidSerialLog_, "%.3f > ",(currentTime_-zeroTime_).getMsec()/1000.0 );
-
-      fprintf(fidSerialLog_, "%s\n", cmd.c_str());
-   }
 }
 
 void CTriggerScope::SendSerialBytes(unsigned char* cmd, unsigned long len)
@@ -444,17 +412,6 @@ void CTriggerScope::SendSerialBytes(unsigned char* cmd, unsigned long len)
    int ret = WriteToComPort(port_.c_str(), cmd, len);
    if (ret!=DEVICE_OK)
       error_ = DEVICE_SERIAL_COMMAND_FAILED;
-
-   currentTime_ = GetCurrentMMTime();
-   if(nUseSerialLog_ && fidSerialLog_)
-   {
-      fprintf(fidSerialLog_, "%.3f > ",(currentTime_-zeroTime_).getMsec()/1000.0 );
-
-      for(unsigned long ii=0; ii<len; ii++)
-         fprintf(fidSerialLog_, "%02X ",cmd[ii]);
-
-      fprintf(fidSerialLog_, "\n");
-   }
 }
 
 
@@ -474,13 +431,6 @@ void CTriggerScope::ReceiveOneLine(int nLoopMax)
    }
    if(nLoop>1)
       nLoop += 0;
-   currentTime_ = GetCurrentMMTime();
-   if(strlen(buf_string_.c_str()) && fidSerialLog_ && nUseSerialLog_ )
-   {
-      fprintf(fidSerialLog_, "%.3f < ",(currentTime_-zeroTime_).getMsec()/1000.0 );
-
-      fprintf(fidSerialLog_, "%s\n", buf_string_.c_str());
-   }
 }
 
 void CTriggerScope::ReceiveSerialBytes(unsigned char* buf, unsigned long buflen, unsigned long bytesToRead, unsigned long &totalBytes)
@@ -504,22 +454,6 @@ void CTriggerScope::ReceiveSerialBytes(unsigned char* buf, unsigned long buflen,
    }
    if(nLoop>1)
       nLoop += 0;
-
-   if(nUseSerialLog_ && fidSerialLog_)
-   {
-      if(totalBytes>0)
-      {
-         currentTime_ = GetCurrentMMTime();
-         fprintf(fidSerialLog_, "%.3f < ",(currentTime_-zeroTime_).getMsec()/1000.0 );
-         for(unsigned long ii=0; ii<totalBytes; ii++)
-            fprintf(fidSerialLog_, "%02X ",buf[ii]);
-
-         fprintf(fidSerialLog_, "\n");
-      }
-
-      if(timeNow.getMsec()-timeStart.getMsec() > 5000)
-         fprintf(fidSerialLog_, "$ Timeout\n");
-   }
 }
 
 void CTriggerScope::FlushSerialBytes(unsigned char* buf, unsigned long buflen)
@@ -530,18 +464,6 @@ void CTriggerScope::FlushSerialBytes(unsigned char* buf, unsigned long buflen)
    buf[0] = NULL;
 
    nRet = ReadFromComPort(port_.c_str(), buf, buflen, bytesRead);
-
-   if(nUseSerialLog_ && fidSerialLog_)
-   {
-      if(bytesRead>0)
-      {
-         fprintf(fidSerialLog_, "* ");
-         for(unsigned long ii=0; ii<bytesRead; ii++)
-            fprintf(fidSerialLog_, "%02X ",buf[ii]);
-
-         fprintf(fidSerialLog_, "\n");
-      }
-   }
 }
 
 
