@@ -12,6 +12,7 @@ import ij.WindowManager;
 
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.GraphicsConfiguration;
 import java.awt.Insets;
@@ -21,6 +22,8 @@ import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -177,7 +180,28 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       if (store_.getNumImages() > 0) {
          makeWindowAndIJObjects();
       }
-      setIJMenus();
+
+      // HACK: we want to show the ImageJ menubar for our windows. However,
+      // if we simply do setMenuBar(Menus.getMenuBar()), then somehow ImageJ
+      // *loses* the menubar. So we have to put it back when we lose focus.
+      addWindowListener(new WindowAdapter() {
+         @Override
+         public void windowActivated(WindowEvent e) {
+            // Steal the menubar from ImageJ.
+            setMenuBar(Menus.getMenuBar());
+         }
+
+         @Override
+         public void windowDeactivated(WindowEvent e) {
+            // Find the primary ImageJ window and give it its menubar back.
+            for (Frame f : Frame.getFrames()) {
+               if (f instanceof ij.ImageJ) {
+                  f.setMenuBar(getMenuBar());
+                  break;
+               }
+            }
+         }
+      });
 
       EventManager.register(this);
    }
@@ -327,13 +351,6 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
             ijImage_.updateAndDraw();
          }
       });
-   }
-
-   /**
-    * Ensure that the ImageJ menubars are visible.
-    */
-   private void setIJMenus() {
-      setMenuBar(Menus.getMenuBar());
    }
 
    private void resetTitle() {
@@ -824,34 +841,5 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       setSize(ourSize.width + widthDelta,
             ourSize.height + heightDelta);
       super.pack();
-   }
-
-   /**
-    * HACK: for some reason, when ImageJ raises us to the front, our menubar
-    * disappears, so manually re-set it.
-    */
-   @Override
-   public void toFront() {
-      super.toFront();
-      setIJMenus();
-   }
-
-   /**
-    * As with toFront.
-    */
-   @Override
-   @SuppressWarnings("deprecation")
-   public void show() {
-      super.show();
-      setIJMenus();
-   }
-
-   /**
-    * As with toFront.
-    */
-   @Override
-   public void setVisible(boolean isVisible) {
-      super.setVisible(isVisible);
-      setIJMenus();
    }
 }
