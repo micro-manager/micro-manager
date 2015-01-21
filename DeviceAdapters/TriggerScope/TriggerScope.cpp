@@ -30,16 +30,13 @@
 //                Floor, Boston, MA 02110-1301 USA.
 
 #include "TriggerScope.h"
-#include <cstdio>
-#include <string>
-#include <math.h>
-#include "..\..\MMDevice\ModuleInterface.h"
-#include "..\..\MMCore\Error.h"
-#include <sstream>
+#include "ModuleInterface.h"
 #include <algorithm>
+#include <cstdio>
 #include <iostream>
-
-#include "TriggerScope.h"
+#include <cmath>
+#include <sstream>
+#include <string>
 
 using namespace std;
 
@@ -172,17 +169,13 @@ int CTriggerScope::Initialize()
       return ret;
 
    // Version
-   char str[256];
 
    cmdInProgress_ = 1;
-
-   CPropertyAction* pAct = NULL;
-
 
    firmwareVer_  = 0.0;
    for(int ii=0;ii<10;ii++)
    {
-      Sleep(1000);
+      CDeviceUtils::SleepMs(1000);
       Purge();
       Send("*");
       ReceiveOneLine(1);
@@ -200,13 +193,16 @@ int CTriggerScope::Initialize()
    if(firmwareVer_==0.0)
       return DEVICE_SERIAL_TIMEOUT;
 
+   std::string versionString;
    if(buf_string_.length()>0)
-      sprintf_s(str, 256, "%s", buf_string_.c_str());
+   {
+      versionString = buf_string_.substr(0, 255);
+   }
    else
    {
       return DEVICE_SERIAL_TIMEOUT;
    }
-   ret = CreateProperty("Firmware Version", str, MM::String, true);
+   ret = CreateProperty("Firmware Version", versionString.c_str(), MM::String, true);
    if (DEVICE_OK != ret)
       return ret;
 
@@ -222,6 +218,7 @@ int CTriggerScope::Initialize()
 
    CreateProperty("COM Port", port_.c_str(), MM::String, true);
 
+   CPropertyAction* pAct = NULL;
    pAct = new CPropertyAction (this, &CTriggerScope::OnTTL1);
    ret = CreateProperty("TTL 1", "0", MM::Integer, false, pAct);
    assert(ret == DEVICE_OK);
@@ -327,15 +324,16 @@ int CTriggerScope::OnTTL1(MM::PropertyBase* pProp, MM::ActionType eAct)
    else if (eAct == MM::AfterSet)
    {
       pProp->Get(ttl1_);
-      char str[16];
-      sprintf_s(str, "TTL1,%d",ttl1_);
+      std::ostringstream oss;
+      oss << "TTL1," << ttl1_;
+      std::string command = oss.str();
       Purge();
-      Send(str);
+      Send(command);
       ReceiveOneLine();
       if(buf_string_.length()==0)
       {
          Purge();
-         Send(str);
+         Send(command);
          ReceiveOneLine();
       }
    }
@@ -352,15 +350,16 @@ int CTriggerScope::OnTTL2(MM::PropertyBase* pProp, MM::ActionType eAct)
    else if (eAct == MM::AfterSet)
    {
       pProp->Get(ttl2_);
-      char str[16];
-      sprintf_s(str, "TTL2,%d",ttl2_);
+      std::ostringstream oss;
+      oss << "TTL2," << ttl2_;
+      std::string command = oss.str();
       Purge();
-      Send(str);
+      Send(command);
       ReceiveOneLine();
       if(buf_string_.length()==0)
       {
          Purge();
-         Send(str);
+         Send(command);
          ReceiveOneLine();
       }
    }
@@ -377,17 +376,18 @@ int CTriggerScope::OnDAC(MM::PropertyBase* pProp, MM::ActionType eAct)
    else if (eAct == MM::AfterSet)
    {
       pProp->Get(dac_);
-      char str[16];
       // 12 bit DAC, 5V max
-      sprintf_s(str, "DAC,%d",int(4095.0*dac_/5.0));
+      std::ostringstream oss;
+      oss << "DAC," << int(4095.0*dac_/5.0);
+      std::string command = oss.str();
       Purge();
-      Send(str);
+      Send(command);
       ReceiveOneLine();
 
       if(buf_string_.length()==0)
       {
          Purge();
-         Send(str);
+         Send(command);
          ReceiveOneLine();
       }
    }
@@ -450,7 +450,7 @@ void CTriggerScope::ReceiveSerialBytes(unsigned char* buf, unsigned long buflen,
       nLoop++;
       totalBytes += bytesRead;
       timeNow = GetCurrentMMTime();
-      Sleep(1);
+      CDeviceUtils::SleepMs(1);
    }
    if(nLoop>1)
       nLoop += 0;
