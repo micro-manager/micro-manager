@@ -4,8 +4,8 @@
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
 // DESCRIPTION:   Implements the ARC TriggerScope device adapter.
-//				  See http://www.trggerscope.com
-//                
+//                See http://www.trggerscope.com
+//
 // AUTHOR:        Austin Blanco, 5 Oct 2014
 //
 // COPYRIGHT:     Advanced Research Consulting. (2014)
@@ -60,15 +60,15 @@ using namespace std;
 class CTriggerScope : public CGenericBase<CTriggerScope>
 {
 public:
-	CTriggerScope(void);
-	~CTriggerScope(void);
+   CTriggerScope(void);
+   ~CTriggerScope(void);
 
    bool Busy();
    void GetName(char* pszName) const;
 
    int Initialize();
    int Shutdown();
-     
+
 
    void TestResourceLocking(const bool recurse);
 
@@ -85,15 +85,15 @@ public:
 /////////////////////////////////////
 
 
-	void Send(string cmd);
-	void ReceiveOneLine(int nLoopMax=5);
-	void Purge();
-	int HandleErrors();
+   void Send(string cmd);
+   void ReceiveOneLine(int nLoopMax=5);
+   void Purge();
+   int HandleErrors();
 
-	void ReceiveSerialBytes(unsigned char* buf, unsigned long buflen, unsigned long bytesToRead, unsigned long &totalBytes);
-	void SendSerialBytes(unsigned char* cmd, unsigned long len);
-	void ConvertSerialData(unsigned char *cmd, unsigned char *buf, unsigned long buflen, unsigned long *data, unsigned long datalen );
-	void FlushSerialBytes(unsigned char* buf, unsigned long buflen);
+   void ReceiveSerialBytes(unsigned char* buf, unsigned long buflen, unsigned long bytesToRead, unsigned long &totalBytes);
+   void SendSerialBytes(unsigned char* cmd, unsigned long len);
+   void ConvertSerialData(unsigned char *cmd, unsigned char *buf, unsigned long buflen, unsigned long *data, unsigned long datalen );
+   void FlushSerialBytes(unsigned char* buf, unsigned long buflen);
 
 private:
    bool busy_;
