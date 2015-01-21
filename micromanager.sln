@@ -348,6 +348,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AndorShamrock", "DeviceAdap
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Mightex_C_Cam", "DeviceAdapters\Mightex_C_Cam\Mightex_C_Cam.vcxproj", "{B2C75B14-27EA-4729-91D4-1C907CDDC8B1}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TriggerScope", "DeviceAdapters\TriggerScope\TriggerScope.vcxproj", "{8F3B9231-0B58-49F4-9FB0-BCAF8F24771D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -1713,6 +1715,14 @@ Global
 		{B2C75B14-27EA-4729-91D4-1C907CDDC8B1}.Release|Win32.Build.0 = Release|Win32
 		{B2C75B14-27EA-4729-91D4-1C907CDDC8B1}.Release|x64.ActiveCfg = Release|x64
 		{B2C75B14-27EA-4729-91D4-1C907CDDC8B1}.Release|x64.Build.0 = Release|x64
+		{8F3B9231-0B58-49F4-9FB0-BCAF8F24771D}.Debug|Win32.ActiveCfg = Debug|Win32
+		{8F3B9231-0B58-49F4-9FB0-BCAF8F24771D}.Debug|Win32.Build.0 = Debug|Win32
+		{8F3B9231-0B58-49F4-9FB0-BCAF8F24771D}.Debug|x64.ActiveCfg = Debug|x64
+		{8F3B9231-0B58-49F4-9FB0-BCAF8F24771D}.Debug|x64.Build.0 = Debug|x64
+		{8F3B9231-0B58-49F4-9FB0-BCAF8F24771D}.Release|Win32.ActiveCfg = Release|Win32
+		{8F3B9231-0B58-49F4-9FB0-BCAF8F24771D}.Release|Win32.Build.0 = Release|Win32
+		{8F3B9231-0B58-49F4-9FB0-BCAF8F24771D}.Release|x64.ActiveCfg = Release|x64
+		{8F3B9231-0B58-49F4-9FB0-BCAF8F24771D}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
