@@ -43,7 +43,7 @@
 
 	<target name="build" depends="set-version,build-cpp,build-java" description="Build all components"/>
 
-	<target name="stage-deviceadapters">
+	<target name="stage-deviceadapters" unless="mm.build.stage.demo.only">
 		<copy todir="${mm.dll.installdir}">
 			<fileset dir="${mm.cpp.outdir}" includes="mmgr_dal_*.dll"/>
 		</copy>
@@ -53,8 +53,15 @@
 		</ant>
 	</target>
 
+	<target name="stage-deviceadapters-demo-only" if="mm.build.stage.demo.only">
+		<copy todir="${mm.dll.installdir}">
+			<fileset file="${mm.cpp.outdir}/mmgr_dal_DemoCamera.dll"/>
+		</copy>
+	</target>
+
 	<target name="stage-only" description="Gather files to be installed (will NOT trigger build)">
 		<antcall target="stage-deviceadapters"/>
+		<antcall target="stage-deviceadapters-demo-only"/>
 
 		<run-all-java-projects target="install-only"/>
 
