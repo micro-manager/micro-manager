@@ -4640,22 +4640,28 @@ double CMMCore::getPixelSizeUm()
  */
 double CMMCore::getPixelSizeUm(bool cached)
 {
-	 string resolutionID = getCurrentPixelSizeConfig(cached);
+   std::string resolutionID = getCurrentPixelSizeConfig(cached);
+   if (resolutionID.length() > 0)
+   {
+      // check which one matches the current state
+      PixelSizeConfiguration* pCfg = pixelSizeGroup_->Find(resolutionID.c_str());
+      double pixSize = pCfg->getPixelSizeUm();
 
-	 if (resolutionID.length()>0) {
-       // check which one matches the current state
-       PixelSizeConfiguration* pCfg = pixelSizeGroup_->Find(resolutionID.c_str());
-       double pixSize = pCfg->getPixelSizeUm();
+      boost::shared_ptr<CameraInstance> camera = currentCameraDevice_.lock();
+      if (camera)
+      {
+         mm::DeviceModuleLockGuard guard(camera);
+         pixSize *= camera->GetBinning();
+      }
 
-       boost::shared_ptr<CameraInstance> camera = currentCameraDevice_.lock();
-       if (camera)
-       {
-          pixSize *= camera->GetBinning() / getMagnificationFactor();
-       }
-       return pixSize;
-	 } else {
-		return 0.0;
-	 }
+      pixSize /= getMagnificationFactor();
+
+      return pixSize;
+   }
+   else
+   {
+      return 0.0;
+   }
 }
 
 /**
@@ -4689,6 +4695,8 @@ double CMMCore::getMagnificationFactor() const
       {
          boost::shared_ptr<MagnifierInstance> magnifier =
             deviceManager_->GetDeviceOfType<MagnifierInstance>(magnifiers[i]);
+
+         mm::DeviceModuleLockGuard guard(magnifier);
          magnification *= magnifier->GetMagnification();
       }
       catch (CMMError e)
