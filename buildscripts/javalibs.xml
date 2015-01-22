@@ -9,7 +9,7 @@
 	<property name="mm.java.lib.beanshell" location="${mm.java.libs}/bsh-2.0b4.jar"/>
 	<property name="mm.java.lib.clojure" location="${mm.java.libs}/clojure.jar"/>
 	<property name="mm.java.lib.commons-math" location="${mm.java.libs}/commons-math-2.0.jar"/>
-	<property name="mm.java.lib.commons-math3" location="${mm.java.libs}/commons-math3-3.2.jar"/>
+	<property name="mm.java.lib.commons-math3" location="${mm.java.libs}/commons-math3-3.4.1.jar"/>
 	<property name="mm.java.lib.gson" location="${mm.java.libs}/gson-2.2.4.jar"/>
 	<property name="mm.java.lib.guava" location="${mm.java.libs}/guava-17.0.jar"/>
 	<property name="mm.java.lib.imagej" location="${mm.java.libs}/ij.jar"/>
