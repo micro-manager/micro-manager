@@ -325,6 +325,7 @@ public:
    int OnFocusCurveData(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
    int OnSNR(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnDitherError(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnLogAmpAGC(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    int GetFocusState(std::string& focusState);

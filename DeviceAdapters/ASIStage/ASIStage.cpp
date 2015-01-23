@@ -3592,6 +3592,9 @@ int CRISP::Initialize()
    pAct = new CPropertyAction(this, &CRISP::OnDitherError);
    CreateProperty("Dither Error", "", MM::Integer, true, pAct);
 
+   pAct = new CPropertyAction(this, &CRISP::OnLogAmpAGC);
+   CreateProperty("LogAmpAGC", "", MM::Integer, true, pAct);
+
 
    // Values that only we can change should be cached and enquired here:
 
@@ -4229,6 +4232,19 @@ int CRISP::OnDitherError(MM::PropertyBase* pProp, MM::ActionType eAct)
          is >> tok;
       std::istringstream s(tok);
       s >> val;
+      pProp->Set(val);
+   }
+   return DEVICE_OK;
+}
+
+int CRISP::OnLogAmpAGC(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      float val;
+      int ret = GetValue("AFLIM X?", val);
+      if (ret != DEVICE_OK)
+         return ret;
       pProp->Set(val);
    }
    return DEVICE_OK;
