@@ -199,6 +199,12 @@ mv $MM_JARDIR/ij.jar $MM_STAGEDIR
 # Ensure no SVN data gets into the installer (e.g. when copying from bindist/)
 find $MM_STAGEDIR -name .svn -prune -exec rm -rf {} +
 
+if [ -n $MM_PREPACKAGE_HOOK ]; then
+   pushd $MM_STAGEDIR
+   $MM_PREPACKAGE_HOOK
+   popd
+fi
+
 # Apply ad-hoc signature to the launchers, to prevent "damaged" messages on
 # Mountain Lion and later.
 codesign -s - -f $MM_STAGEDIR/ImageJ.app/Contents/MacOS/JavaApplicationStub
