@@ -186,8 +186,24 @@ public class GUIUtils {
          ReportingUtils.logError("Couldn't find a display containing the point (" + x + ", " + y + ")");
          return null;
       }
-      return config.getBounds();
+      return getFullScreenBounds(config);
    }
+
+   /**
+    * Get the usable screen area (minus taskbars, etc.) for the specified
+    * monitor.
+    * Adapted from http://stackoverflow.com/questions/10123735/get-effective-screen-size-from-java
+    */
+   public static Rectangle getFullScreenBounds(GraphicsConfiguration config) {
+      Rectangle bounds = config.getBounds();
+      Insets insets = Toolkit.getDefaultToolkit().getScreenInsets(config);
+      bounds.x += insets.left;
+      bounds.y += insets.top;
+      bounds.width -= (insets.left + insets.right);
+      bounds.height -= (insets.top + insets.bottom);
+      return bounds;
+   }
+
 
    public static GraphicsConfiguration getGraphicsConfigurationContaining(
          int x, int y) {
