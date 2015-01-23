@@ -50,7 +50,8 @@ class ScrollerPanel extends JPanel {
     */
    private class AxisState {
       boolean isAnimated_;
-      JLabel label_;
+      JLabel posLabel_;
+      JLabel maxLabel_;
       JScrollBar scrollbar_;
       ScrollbarLockIcon.LockedState lockState_;
       // The saved position is the position we need to snap back to later.
@@ -59,10 +60,11 @@ class ScrollerPanel extends JPanel {
       // scrollbar.
       int cachedPosition_;
       
-      public AxisState(JLabel label, JScrollBar scrollbar) {
+      public AxisState(JLabel posLabel, JScrollBar scrollbar, JLabel maxLabel) {
          isAnimated_ = false;
-         label_ = label;
+         posLabel_ = posLabel;
          scrollbar_ = scrollbar;
+         maxLabel_ = maxLabel;
          lockState_ = ScrollbarLockIcon.LockedState.UNLOCKED;
          savedPosition_ = 0;
          cachedPosition_ = 0;
@@ -94,7 +96,7 @@ class ScrollerPanel extends JPanel {
 
       // Only the scrollbar column is allowed to grow in width
       setLayout(new MigLayout("insets 0", 
-               "[][][grow, shrink][][][]"));
+               "[][][grow, shrink][][][][]"));
       // Don't prevent other components from shrinking
       setMinimumSize(new Dimension(1, 1));
 
@@ -157,9 +159,12 @@ class ScrollerPanel extends JPanel {
 
       LinkButton linker = new LinkButton(new ImageCoordsLinker(axis, parent_),
             parent_);
-      add(linker, "grow 0, wrap");
+      add(linker, "grow 0");
 
-      axisToState_.put(axis, new AxisState(positionLabel, scrollbar));
+      JLabel maxLabel = new JLabel();
+      add(maxLabel, "grow 0, wrap");
+
+      axisToState_.put(axis, new AxisState(positionLabel, scrollbar, maxLabel));
 
       if (fpsButton_ == null) {
          // We have at least one scroller, so add our FPS control button.
@@ -196,7 +201,7 @@ class ScrollerPanel extends JPanel {
          return;
       }
       axisToState_.get(axis).cachedPosition_ = pos;
-      axisToState_.get(axis).label_.setText(String.valueOf(pos));
+      axisToState_.get(axis).posLabel_.setText(String.valueOf(pos));
       postDrawEvent();
    }
 
@@ -338,9 +343,11 @@ class ScrollerPanel extends JPanel {
                }
             }
             JScrollBar scrollbar = axisToState_.get(axis).scrollbar_;
-            if (scrollbar.getMaximum() < coords.getPositionAt(axis) + 1) {
+            int axisLen = coords.getPositionAt(axis) + 1;
+            if (scrollbar.getMaximum() < axisLen) {
                // Expand the range on the scrollbar.
-               scrollbar.setMaximum(coords.getPositionAt(axis) + 1);
+               scrollbar.setMaximum(axisLen);
+               axisToState_.get(axis).maxLabel_.setText(String.valueOf(axisLen));
             }
             int pos = scrollbar.getValue();
             ScrollbarLockIcon.LockedState lockState = axisToState_.get(axis).lockState_;
