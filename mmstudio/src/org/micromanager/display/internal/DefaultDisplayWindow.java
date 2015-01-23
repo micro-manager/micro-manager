@@ -184,7 +184,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
 
       if (isFullScreen_) {
          setUndecorated(true);
-         setBounds(targetScreen.getBounds());
+         setBounds(GUIUtils.getFullScreenBounds(targetScreen));
          setExtendedState(JFrame.MAXIMIZED_BOTH);
          setResizable(false);
          displayBus_.post(new FullScreenEvent(this, targetScreen, true));
@@ -841,7 +841,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       if (ourSize.width == 0 && ourSize.height == 0 && isFullScreen_) {
          // HACK: when in fullscreen mode, for some reason our initial
          // nominal size is 0x0, so fix that.
-         ourSize = getScreenConfig().getBounds().getSize();
+         ourSize = GUIUtils.getFullScreenBounds(getScreenConfig()).getSize();
       }
       // Determine if a given component is growing (we need to increase our
       // own size) or shrinking (we need to shrink).
@@ -867,5 +867,10 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
                ourSize.height + heightDelta);
       }
       super.pack();
+      // HACK: for some reason, the super.pack() call screws up window size
+      // in fullscreen mode.
+      if (isFullScreen_) {
+         setBounds(GUIUtils.getFullScreenBounds(getScreenConfig()));
+      }
    }
 }
