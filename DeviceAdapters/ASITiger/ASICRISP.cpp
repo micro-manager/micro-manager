@@ -134,6 +134,10 @@ int CCRISP::Initialize()
    CreateProperty(g_CRISPDitherErrorPropertyName, "", MM::Integer, true, pAct);
    UpdateProperty(g_CRISPDitherErrorPropertyName);
 
+   pAct = new CPropertyAction(this, &CCRISP::OnLogAmpAGC);
+      CreateProperty(g_CRISPLogAmpAGCPropertyName, "", MM::Integer, true, pAct);
+      UpdateProperty(g_CRISPLogAmpAGCPropertyName);
+
    initialized_ = true;
    return DEVICE_OK;
 }
@@ -492,8 +496,7 @@ int CCRISP::OnSNR(MM::PropertyBase* pProp, MM::ActionType eAct)
    double tmp = 0;
    if (eAct == MM::BeforeGet)
    {
-      if (!refreshProps_ && initialized_)
-         return DEVICE_OK;
+      // always read
       command << addressChar_ << "EXTRA Y?";
       RETURN_ON_MM_ERROR( hub_->QueryCommand(command.str()) );
       RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterPosition(0, tmp));
@@ -508,14 +511,29 @@ int CCRISP::OnDitherError(MM::PropertyBase* pProp, MM::ActionType eAct)
    ostringstream command; command.str("");
    if (eAct == MM::BeforeGet)
    {
-      if (!refreshProps_ && initialized_)
-         return DEVICE_OK;
+      // always read
       command << addressChar_ << "EXTRA X?";
       RETURN_ON_MM_ERROR( hub_->QueryCommand(command.str()) );
       vector<string> vReply = hub_->SplitAnswerOnSpace();
       if (vReply.size() <= 2)
          return DEVICE_INVALID_PROPERTY_VALUE;
       if (!pProp->Set(vReply[2].c_str()))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   return DEVICE_OK;
+}
+
+int CCRISP::OnLogAmpAGC(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   long tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      // always read
+      command << addressChar_ << "AFLIM X?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A X="));
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
+      if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
    return DEVICE_OK;

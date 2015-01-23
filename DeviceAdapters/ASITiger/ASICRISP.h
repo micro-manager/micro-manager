@@ -65,6 +65,7 @@ public:
    int OnNumAvg            (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSNR               (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnDitherError       (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnLogAmpAGC         (MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    string axisLetter_;
