@@ -62,7 +62,7 @@ CPLogic::CPLogic(const char* name) :
    axisLetter_(g_EmptyAxisLetterStr),    // value determined by extended name
    numCells_(16),
    currentPosition_(1),
-   useAsShutter_(false),
+   useAsdiSPIMShutter_(false),
    shutterOpen_(false)
 {
    if (IsExtendedName(name))  // only set up these properties if we have the required information in the name
@@ -190,7 +190,7 @@ int CPLogic::Initialize()
    AddAllowedValue(g_AdvancedPropertiesPropertyName, g_YesState);
    UpdateProperty(g_AdvancedPropertiesPropertyName);
 
-   if (useAsShutter_)
+   if (useAsdiSPIMShutter_)
    {
       // special masked preset selector for shutter channel
       pAct = new CPropertyAction (this, &CPLogic::OnSetShutterChannel);
@@ -212,6 +212,9 @@ int CPLogic::Initialize()
 
       // always start shutter in closed state
       SetOpen(false);
+
+      // set to be triggered by micro-mirror card
+      SetProperty(g_TriggerSourcePropertyName, g_TriggerSourceCode1);
    }
 
    initialized_ = true;
@@ -220,7 +223,7 @@ int CPLogic::Initialize()
 
 int CPLogic::SetOpen(bool open)
 {
-   if (useAsShutter_)
+   if (useAsdiSPIMShutter_)
    {
       ostringstream command; command.str("");
       shutterOpen_ = open;
@@ -235,7 +238,7 @@ int CPLogic::SetOpen(bool open)
 
 int CPLogic::GetOpen(bool& open)
 {
-   open = useAsShutter_ && shutterOpen_;
+   open = useAsdiSPIMShutter_ && shutterOpen_;
    return DEVICE_OK;
 }
 
@@ -249,7 +252,7 @@ int CPLogic::OnPLogicMode(MM::PropertyBase* pProp, MM::ActionType eAct)
    } else if (eAct == MM::AfterSet) {
       string tmpstr;
       pProp->Get(tmpstr);
-      useAsShutter_ = (tmpstr.compare(g_PLogicModediSPIMShutter) == 0);
+      useAsdiSPIMShutter_ = (tmpstr.compare(g_PLogicModediSPIMShutter) == 0);
    }
    return DEVICE_OK;
 }

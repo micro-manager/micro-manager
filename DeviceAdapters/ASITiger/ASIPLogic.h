@@ -74,7 +74,7 @@ private:
    unsigned int numCells_;
    unsigned int currentPosition_;  // cached value of current position
 //   static const int NUM_CELLS = 16;
-   bool useAsShutter_;
+   bool useAsdiSPIMShutter_;
    bool shutterOpen_;
 
    int SetShutterChannel();
