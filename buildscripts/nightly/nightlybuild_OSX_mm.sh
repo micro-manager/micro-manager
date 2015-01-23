@@ -222,13 +222,14 @@ fi
 cd $MM_BUILDDIR
 rm -f Micro-Manager.dmg Micro-Manager.sparseimage
 
-hdiutil convert $MM_SRCDIR/MacInstaller/Micro-Manager1.4.dmg -format UDSP -o Micro-Manager.sparseimage
+hdiutil convert $MM_SRCDIR/MacInstaller/Micro-Manager.dmg -format UDSP -o Micro-Manager.sparseimage
 mkdir -p mm-mnt
 hdiutil attach Micro-Manager.sparseimage -mountpoint mm-mnt
-cp -R $MM_STAGEDIR/* mm-mnt/Micro-Manager1.4
+cp -R $MM_STAGEDIR/* mm-mnt/Micro-Manager
+mv mm-mnt/Micro-Manager mm-mnt/Micro-Manager-$MM_VERSION
 hdiutil detach mm-mnt
 rmdir mm-mnt
-hdiutil convert Micro-Manager.sparseimage -format UDBZ -o Micro-Manager$MM_VERSION.dmg
+hdiutil convert Micro-Manager.sparseimage -format UDBZ -o Micro-Manager-$MM_VERSION.dmg
 
 
 ##
