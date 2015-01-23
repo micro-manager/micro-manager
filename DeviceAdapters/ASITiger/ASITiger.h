@@ -275,6 +275,7 @@ const char* const g_CRISPLoopGainMultiplierPropertyName = "GainMultiplier";
 const char* const g_CRISPNumberAveragesPropertyName = "Number of Averages";
 const char* const g_CRISPSNRPropertyName = "Signal Noise Ratio";
 const char* const g_CRISPDitherErrorPropertyName = "Dither Error";
+const char* const g_CRISPLogAmpAGCPropertyName = "LogAmpAGC";
 
 // ring buffer property names
 const char* const g_RB_DelayPropertyName = "RingBufferDelayBetweenPoints(ms)";
