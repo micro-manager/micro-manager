@@ -838,6 +838,11 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       Dimension modeSize = modePanel_.getPreferredSize();
       Dimension controlsSize = controlsPanel_.getPreferredSize();
       Dimension ourSize = contentsPanel_.getSize();
+      if (ourSize.width == 0 && ourSize.height == 0 && isFullScreen_) {
+         // HACK: when in fullscreen mode, for some reason our initial
+         // nominal size is 0x0, so fix that.
+         ourSize = getScreenConfig().getBounds().getSize();
+      }
       // Determine if a given component is growing (we need to increase our
       // own size) or shrinking (we need to shrink).
       int widthDelta = 0;
@@ -856,8 +861,11 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       int spareWidth = ourSize.width + widthDelta - modeSize.width - 2;
       int spareHeight = ourSize.height + heightDelta - controlsSize.height - 10;
       canvas_.setDrawingSize(spareWidth, spareHeight);
-      setSize(ourSize.width + widthDelta,
-            ourSize.height + heightDelta);
+      // Don't adjust the window size when in fullscreen mode.
+      if (!isFullScreen_) {
+         setSize(ourSize.width + widthDelta,
+               ourSize.height + heightDelta);
+      }
       super.pack();
    }
 }
