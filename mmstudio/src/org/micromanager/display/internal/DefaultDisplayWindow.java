@@ -20,6 +20,8 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.Window;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.WindowAdapter;
@@ -35,6 +37,7 @@ import java.util.List;
 import java.util.prefs.Preferences;
 
 import javax.swing.event.MouseInputAdapter;
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
@@ -157,7 +160,18 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       if (customControls_ == null) {
          customControls_ = new ArrayList<Component>();
       }
+
+      JButton fullButton = new JButton("Fullscreen");
+      fullButton.setToolTipText("Turn fullscreen mode on or off.");
+      fullButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent event) {
+            toggleFullScreen();
+         }
+      });
+      customControls_.add(fullButton);
       customControls_.add(new SaveButton(store_, this));
+
       isFullScreen_ = (targetScreen != null);
 
       initializePrefs();
