@@ -411,15 +411,27 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
          ImagePlus plus = display_.getHyperImage();
          if (plus instanceof IMMImagePlus) {
             IMMImagePlus tmp = (IMMImagePlus) plus;
-            tmp.setNFramesUnverified(frame);
-            tmp.setNChannelsUnverified(channel);
-            tmp.setNSlicesUnverified(slice);
+            if (plus.getNFrames() < frame) {
+               tmp.setNFramesUnverified(frame);
+            }
+            if (plus.getNChannels() < channel) {
+               tmp.setNChannelsUnverified(channel);
+            }
+            if (plus.getNSlices() < slice) {
+               tmp.setNSlicesUnverified(slice);
+            }
          }
          else { // Must be MMComposite Image
             MMCompositeImage tmp = (MMCompositeImage) plus;
-            tmp.setNFramesUnverified(frame);
-            tmp.setNChannelsUnverified(channel);
-            tmp.setNSlicesUnverified(slice);
+            if (plus.getNFrames() < frame) {
+               tmp.setNFramesUnverified(frame);
+            }
+            if (plus.getNChannels() < channel) {
+               tmp.setNChannelsUnverified(channel);
+            }
+            if (plus.getNSlices() < slice) {
+               tmp.setNSlicesUnverified(slice);
+            }
          }
          plus.setPosition(channel, slice, frame);
          display_.updateAndDraw(true);
