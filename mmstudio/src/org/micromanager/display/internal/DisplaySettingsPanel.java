@@ -210,16 +210,6 @@ public class DisplaySettingsPanel extends JPanel {
       });
       add(saveButton, "split 2, flowx, growx, align left");
 
-      JButton fullScreenButton = new JButton("Fullscreen");
-      fullScreenButton.setToolTipText("Turn fullscreen mode on or off.");
-      fullScreenButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent event) {
-            display_.toggleFullScreen();
-         }
-      });
-      add(fullScreenButton);
-
       JButton dupeButton = new JButton("Duplicate");
       dupeButton.setToolTipText("Create an additional display window for this dataset.");
       dupeButton.addActionListener(new ActionListener() {
