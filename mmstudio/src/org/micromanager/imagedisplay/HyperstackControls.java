@@ -11,6 +11,8 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.swtdesigner.SwingResourceManager;
 
+import ij.ImagePlus;
+
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -404,7 +406,23 @@ public class HyperstackControls extends DisplayControls implements LiveModeListe
          channel = event.getPositionForAxis("channel") + 1;
          frame = event.getPositionForAxis("time") + 1;
          slice = event.getPositionForAxis("z") + 1;
-         display_.getHyperImage().setPosition(channel, slice, frame);
+         // Ensure that the ImagePlus thinks it is big enough for us to set
+         // its position correctly.
+         ImagePlus plus = display_.getHyperImage();
+         if (plus instanceof IMMImagePlus) {
+            IMMImagePlus tmp = (IMMImagePlus) plus;
+            tmp.setNFramesUnverified(frame);
+            tmp.setNChannelsUnverified(channel);
+            tmp.setNSlicesUnverified(slice);
+         }
+         else { // Must be MMComposite Image
+            MMCompositeImage tmp = (MMCompositeImage) plus;
+            tmp.setNFramesUnverified(frame);
+            tmp.setNChannelsUnverified(channel);
+            tmp.setNSlicesUnverified(slice);
+         }
+         plus.setPosition(channel, slice, frame);
+         display_.updateAndDraw(true);
       }
       catch (Exception e) {
          // This can happen, rarely, with an ArrayIndexOutOfBoundsException

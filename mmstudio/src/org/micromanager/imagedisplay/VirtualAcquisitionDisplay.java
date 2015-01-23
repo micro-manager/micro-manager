@@ -771,7 +771,6 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       }
 
       updateAndDraw(true);
-
    }
 
    private void initializeContrast() {
