@@ -7,13 +7,17 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
 import ij.process.ShortProcessor;
-import java.awt.Color;
 
+import java.awt.Color;
 import java.awt.Point;
 
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
+
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
+
 import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
 import org.micromanager.api.TaggedImageStorage;
 
@@ -664,6 +668,25 @@ public class ImageUtils {
          return null;
       }
       return new TaggedImage(pixels, tags);
+   }
+
+   /**
+    * Generate a new TaggedImage off of the provided one, with copied metadata
+    * so that changes elsewhere in the program won't affect this one.
+    */
+   public static TaggedImage copyMetadata(TaggedImage image) {
+      JSONArray names = image.tags.names();
+      String[] keys = new String[names.length()];
+      try {
+         for (int j = 0; j < names.length(); ++j) {
+            keys[j] = names.getString(j);
+         }
+         return new TaggedImage(image.pix, new JSONObject(image.tags, keys));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Unable to duplicate image metadata");
+         return null;
+      }
    }
    
    /*

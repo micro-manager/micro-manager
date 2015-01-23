@@ -549,14 +549,8 @@ public class MMStudio implements ScriptInterface {
          // Make a copy of the image we get, so we don't interfere with
          // the Live mode version.
          TaggedImage image = ic.getImage(i, 0, 0, 0);
-         JSONArray names = image.tags.names();
-         String[] keys = new String[names.length()];
-         for (int j = 0; j < names.length(); ++j) {
-            keys[j] = names.getString(j);
-         }
-         TaggedImage newImage = new TaggedImage(image.pix,
-               new JSONObject(image.tags, keys));
-         addToAlbum(newImage, ic.getDisplayAndComments());
+         addToAlbum(ImageUtils.copyMetadata(image),
+               ic.getDisplayAndComments());
       }
    }
 
