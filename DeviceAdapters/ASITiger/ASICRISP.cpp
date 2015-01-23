@@ -135,8 +135,8 @@ int CCRISP::Initialize()
    UpdateProperty(g_CRISPDitherErrorPropertyName);
 
    pAct = new CPropertyAction(this, &CCRISP::OnLogAmpAGC);
-      CreateProperty(g_CRISPLogAmpAGCPropertyName, "", MM::Integer, true, pAct);
-      UpdateProperty(g_CRISPLogAmpAGCPropertyName);
+   CreateProperty(g_CRISPLogAmpAGCPropertyName, "", MM::Integer, true, pAct);
+   UpdateProperty(g_CRISPLogAmpAGCPropertyName);
 
    initialized_ = true;
    return DEVICE_OK;
