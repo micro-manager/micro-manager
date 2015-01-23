@@ -199,7 +199,7 @@ mv $MM_JARDIR/ij.jar $MM_STAGEDIR
 # Ensure no SVN data gets into the installer (e.g. when copying from bindist/)
 find $MM_STAGEDIR -name .svn -prune -exec rm -rf {} +
 
-if [ -n $MM_PREPACKAGE_HOOK ]; then
+if [ -n "$MM_PREPACKAGE_HOOK" ]; then
    pushd $MM_STAGEDIR
    $MM_PREPACKAGE_HOOK
    popd
