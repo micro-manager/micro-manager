@@ -131,6 +131,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
       private Integer[] channelContrastMins_ = null;
       private Integer[] channelContrastMaxes_ = null;
       private Double[] channelGammas_ = null;
+      private Double magnification_ = null;
       private Integer channelDisplayModeIndex_ = null;
       private Coords imageCoords_ = null;
       private Double histogramUpdateRate_ = null;
@@ -178,6 +179,12 @@ public class DefaultDisplaySettings implements DisplaySettings {
       @Override
       public DisplaySettingsBuilder channelGammas(Double[] channelGammas) {
          channelGammas_ = (channelGammas == null) ? null : channelGammas.clone();
+         return this;
+      }
+
+      @Override
+      public DisplaySettingsBuilder magnification(Double magnification) {
+         magnification_ = magnification;
          return this;
       }
 
@@ -271,6 +278,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
    private Integer[] channelContrastMins_ = null;
    private Integer[] channelContrastMaxes_ = null;
    private Double[] channelGammas_ = null;
+   private Double magnification_ = null;
    private Integer channelDisplayModeIndex_ = null;
    private Coords imageCoords_ = null;
    private Double histogramUpdateRate_ = null;
@@ -292,6 +300,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
       channelContrastMins_ = builder.channelContrastMins_;
       channelContrastMaxes_ = builder.channelContrastMaxes_;
       channelGammas_ = builder.channelGammas_;
+      magnification_ = builder.magnification_;
       channelDisplayModeIndex_ = builder.channelDisplayModeIndex_;
       imageCoords_ = builder.imageCoords_;
       histogramUpdateRate_ = builder.histogramUpdateRate_;
@@ -331,6 +340,11 @@ public class DefaultDisplaySettings implements DisplaySettings {
    @Override
    public Double[] getChannelGammas() {
       return channelGammas_;
+   }
+
+   @Override
+   public Double getMagnification() {
+      return magnification_;
    }
 
    @Override
@@ -411,6 +425,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
             .channelContrastMins(channelContrastMins_)
             .channelContrastMaxes(channelContrastMaxes_)
             .channelGammas(channelGammas_)
+            .magnification(magnification_)
             .channelDisplayModeIndex(channelDisplayModeIndex_)
             .imageCoords(imageCoords_)
             .histogramUpdateRate(histogramUpdateRate_)
@@ -456,6 +471,9 @@ public class DefaultDisplaySettings implements DisplaySettings {
          }
          if (tags.has("ChContrastMax")) {
             builder.channelContrastMaxes(new Integer[] {tags.getInt("ChContrastMax")});
+         }
+         if (tags.has("magnification")) {
+            builder.magnification(tags.getDouble("magnification"));
          }
          if (tags.has("histogramUpdateRate")) {
             builder.histogramUpdateRate(tags.getDouble("histogramUpdateRate"));
@@ -574,6 +592,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
          if (channelContrastMaxes_ != null && channelContrastMaxes_.length > 0) {
             result.put("ChContrastMax", channelContrastMaxes_[0]);
          }
+         result.put("magnification", magnification_);
          result.put("histogramUpdateRate", histogramUpdateRate_);
          result.put("shouldSyncChannels", shouldSyncChannels_);
          result.put("scaleBarColorIndex", scaleBarColorIndex_);

@@ -55,6 +55,7 @@ import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.RequestToDrawEvent;
 import org.micromanager.events.DatastoreClosingEvent;
 
+import org.micromanager.data.internal.DatastoreSavedEvent;
 import org.micromanager.data.internal.DefaultCoords;
 
 import org.micromanager.events.internal.EventManager;
@@ -190,16 +191,17 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
          displayBus_.post(new FullScreenEvent(this, targetScreen, true));
       }
 
-      resetTitle();
-
+      // Wait to actually create our GUI until there's at least one image
+      // to display.
       if (store_.getNumImages() > 0) {
          makeWindowAndIJObjects();
       }
 
       // HACK: on OSX, we want to show the ImageJ menubar for our windows.
       // However, if we simply do setMenuBar(Menus.getMenuBar()), then somehow
-      // ImageJ *loses* the menubar. So we have to put it back when we lose
-      // focus.
+      // ImageJ *loses* the menubar: it, and the items in it, can only be
+      // attached to one window at a time, apparently. So we have to put it
+      // back when we lose focus.
       if (JavaUtils.isMac()) {
          addWindowListener(new WindowAdapter() {
             @Override
@@ -277,6 +279,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
          builder.position(axis, 0);
       }
       setDisplayedImageTo(builder.build());
+      resetTitle();
    }
 
    /**
@@ -343,7 +346,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
     * Re-generate our image canvas and canvas panel, along with resize logic.
     */
    private void recreateCanvas() {
-      canvas_ = new MMImageCanvas(ijImage_, displayBus_);
+      canvas_ = new MMImageCanvas(ijImage_, this);
       
       // HACK: set the minimum size. If we don't do this, then the canvas
       // doesn't shrink properly when the window size is reduced. Why?!
@@ -369,6 +372,14 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
             ijImage_.updateAndDraw();
          }
       });
+
+      if (displaySettings_.getMagnification() == null) {
+         // Grab the canvas's magnification.
+         displaySettings_ = displaySettings_.copy()
+            .magnification(canvas_.getMagnification())
+            .build();
+         displayBus_.post(new NewDisplaySettingsEvent(displaySettings_, this));
+      }
    }
 
    private void resetTitle() {
@@ -376,7 +387,18 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       String filename = summary.getFileName();
       String title = "MM image display";
       if (filename != null) {
-         title += " (" + filename + ")";
+         title = filename;
+      }
+      title += String.format(" (%d%%)",
+            (int) (canvas_.getMagnification() * 100));
+      // HACK: don't display save status for the snap/live view.
+      if (!title.contains("Snap/Live")) {
+         if (!store_.getIsSaved()) {
+            title += " (Not yet saved)";
+         }
+         else {
+            title += " (Saved)";
+         }
       }
       setTitle(title);
    }
@@ -557,6 +579,8 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       displayBus_.post(new NewDisplaySettingsEvent(settings, this));
       // Assume any change in display settings will necessitate a redraw.
       displayBus_.post(new DefaultRequestToDrawEvent(null));
+      // And the magnification may have changed.
+      resetTitle();
    }
 
    @Override
@@ -755,12 +779,14 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
    }
 
    /**
-    * When our Datastore saves, we save our display settings.
+    * When our Datastore saves, we save our display settings, and update our
+    * title.
     */
    @Subscribe
    public void onDatastoreSaved(DatastoreSavedEvent event) {
       String path = event.getPath();
       displaySettings_.save(path);
+      resetTitle();
    }
 
    public static DisplayWindow getCurrentWindow() {

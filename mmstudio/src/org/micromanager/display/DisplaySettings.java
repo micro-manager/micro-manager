@@ -35,6 +35,7 @@ public interface DisplaySettings {
       DisplaySettingsBuilder channelContrastMins(Integer[] channelContrastMins);
       DisplaySettingsBuilder channelContrastMaxes(Integer[] channelContrastMaxes);
       DisplaySettingsBuilder channelGammas(Double[] channelGammas);
+      DisplaySettingsBuilder magnification(Double magnification);
       DisplaySettingsBuilder channelDisplayModeIndex(Integer channelDisplayModeIndex);
       DisplaySettingsBuilder imageCoords(Coords imageCoords);
       DisplaySettingsBuilder histogramUpdateRate(Double histogramUpdateRate);
@@ -69,6 +70,8 @@ public interface DisplaySettings {
    public Integer[] getChannelContrastMaxes();
    /** The gamma curve modifier for each channel */
    public Double[] getChannelGammas();
+   /** The magnification level of the canvas */
+   public Double getMagnification();
    /** The index into the "Display mode" control; 0 = Color, 1 = Grayscale,
      * 2 = Composite */
    public Integer getChannelDisplayModeIndex();
