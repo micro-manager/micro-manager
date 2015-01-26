@@ -1,6 +1,7 @@
 package org.micromanager.display.internal;
 
 import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
 
 import ij.gui.ImageCanvas;
 import ij.IJ;
@@ -16,6 +17,9 @@ import java.awt.Rectangle;
 
 import java.lang.Math;
 
+import org.micromanager.display.DisplaySettings;
+import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.NewDisplaySettingsEvent;
 import org.micromanager.display.internal.events.CanvasDrawEvent;
 import org.micromanager.display.internal.events.DefaultRequestToDrawEvent;
 import org.micromanager.display.internal.events.LayoutChangedEvent;
@@ -28,12 +32,13 @@ import org.micromanager.internal.utils.ReportingUtils;
  */
 class MMImageCanvas extends ImageCanvas {
    ImagePlus ijImage_;
-   EventBus displayBus_;
+   DisplayWindow display_;
    
-   public MMImageCanvas(ImagePlus ijImage, EventBus displayBus) {
+   public MMImageCanvas(ImagePlus ijImage, DisplayWindow display) {
       super(ijImage);
       ijImage_ = ijImage;
-      displayBus_ = displayBus;
+      display_ = display;
+      display_.registerForEvents(this);
       // Publish information on the mouse position.
       addMouseMotionListener(new MouseAdapter() {
          @Override
@@ -125,7 +130,7 @@ class MMImageCanvas extends ImageCanvas {
                rect.width + 1, rect.height + 1);
       }
 
-      displayBus_.post(new CanvasDrawEvent(g, this));
+      display_.postEvent(new CanvasDrawEvent(g, this));
    }
 
    /**
@@ -137,7 +142,12 @@ class MMImageCanvas extends ImageCanvas {
       // Apply the same range clamping that ImageJ does.
       mag = Math.max(Math.min(32.0, mag), .03125);
       this.magnification = mag;
-      displayBus_.post(new LayoutChangedEvent());
+      // Propagate change to the display.
+      DisplaySettings settings = display_.getDisplaySettings().copy()
+         .magnification(this.magnification)
+         .build();
+      display_.setDisplaySettings(settings);
+      display_.postEvent(new LayoutChangedEvent());
    }
 
    /**
@@ -157,7 +167,7 @@ class MMImageCanvas extends ImageCanvas {
          zoomIn((int) (bounds.width * magnification / mag),
                (int) (bounds.height * magnification / mag));
       }
-      displayBus_.post(new DefaultRequestToDrawEvent());
+      display_.postEvent(new DefaultRequestToDrawEvent());
    }
 
    /**
@@ -175,6 +185,17 @@ class MMImageCanvas extends ImageCanvas {
       double effectiveZoom = ((double) displayedWidth) / pixelWidth;
       int pixelX = (int) (x / magnification / effectiveZoom);
       int pixelY = (int) (y / magnification / effectiveZoom);
-      displayBus_.post(new MouseMovedEvent(pixelX, pixelY));
+      display_.postEvent(new MouseMovedEvent(pixelX, pixelY));
+   }
+
+   /**
+    * Our magnification may change when the display settings do
+    */
+   @Subscribe
+   public void onNewDisplaySettings(NewDisplaySettingsEvent event) {
+      Double newMag = event.getDisplaySettings().getMagnification();
+      if (newMag != null) {
+         this.magnification = newMag;
+      }
    }
 }
