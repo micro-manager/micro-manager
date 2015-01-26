@@ -24,7 +24,7 @@ javadoc:
 		-classpath ../MMCoreJ_wrap/MMCoreJ.jar:MMJ_.jar:$(IJJARPATH):$(CLASSEXT)/"*" \
 		-d doc \
 		-sourcepath $(srcdir)/src \
-		-subpackages org.micromanager.api
+		-subpackages org.micromanager
 
 
 clean-local:
