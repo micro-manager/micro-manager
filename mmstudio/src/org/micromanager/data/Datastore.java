@@ -47,9 +47,9 @@ public interface Datastore extends Closeable {
 
    /**
     * Retrieve a list of all images whose Coords match the given incomplete
-    * Coords instance. For example, providing a Coords of <"z" = 9> would
-    * return all Images whose position along the "z" axis is 9. May be empty.
-    * Will be null if no Storage has been provided yet.
+    * Coords instance. For example, providing a Coords of {@code <"z" = 9>}
+    * would return all Images whose position along the "z" axis is 9. May be
+    * empty. Will be null if no Storage has been provided yet.
     */
    public List<Image> getImagesMatching(Coords coords);
 
@@ -159,7 +159,7 @@ public interface Datastore extends Closeable {
     * from the Storage and saves it according to the mode. After this method,
     * getIsSaved() will be true, unless the user cancels when prompted for
     * directory/filename or there is an error while saving.
-    * @param Window Window over which to display the dialog prompt; may be
+    * @param window Window over which to display the dialog prompt; may be
     *        null.
     * @return true if saving succeeded, false otherwise.
     */

@@ -932,7 +932,7 @@ public class MMStudio implements ScriptInterface {
     * @param dir location of data set
     * @param inRam whether not to open completely in RAM
     * @return The acquisition object.
-    * @throws org.micromanager.utils.MMScriptException
+    * @throws MMScriptException
     */
    @Override
    public String openAcquisitionData(String dir, boolean inRam) throws MMScriptException {

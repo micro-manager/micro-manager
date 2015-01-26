@@ -391,7 +391,6 @@ public class MicroscopeModel {
     * setup data.
     * 
     * @throws MMConfigFileException
-    * @throws Exception
     */
    public void createSetupConfigsFromHardware(CMMCore core)
          throws MMConfigFileException {
@@ -454,7 +453,6 @@ public class MicroscopeModel {
     * setup data.
     * 
     * @throws MMConfigFileException
-    * @throws Exception
     */
    public void createResolutionsFromHardware(CMMCore core)
          throws MMConfigFileException {
