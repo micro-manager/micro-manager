@@ -43,6 +43,7 @@
 
 #include "VariLC.h"
 #include <cstdio>
+#include <cctype>
 #include <string>
 #include <math.h>
 #include "../../MMDevice/ModuleInterface.h"
@@ -841,8 +842,13 @@ std::vector<double> VariLC::getNumbersFromMessage(std::string variLCmessage, boo
 	return values;
 }
 
+static inline bool IsSpace(char ch)
+{
+   return std::isspace(ch);
+}
+
 std::string VariLC::removeSpaces(std::string input)
 {
-  input.erase(std::remove_if(input.begin(), input.end(), isspace), input.end());
-  return input;
+   input.erase(std::remove_if(input.begin(), input.end(), IsSpace), input.end());
+   return input;
 }
