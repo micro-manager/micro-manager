@@ -126,7 +126,6 @@ public class DefaultDisplaySettings implements DisplaySettings {
    }
 
    public static class Builder implements DisplaySettings.DisplaySettingsBuilder {
-      private String[] channelNames_ = null;
       private Color[] channelColors_ = null;
       private Integer[] channelContrastMins_ = null;
       private Integer[] channelContrastMaxes_ = null;
@@ -152,12 +151,6 @@ public class DefaultDisplaySettings implements DisplaySettings {
          return new DefaultDisplaySettings(this);
       }
       
-      @Override
-      public DisplaySettingsBuilder channelNames(String[] channelNames) {
-         channelNames_ = (channelNames == null) ? null : channelNames.clone();
-         return this;
-      }
-
       @Override
       public DisplaySettingsBuilder channelColors(Color[] channelColors) {
          channelColors_ = (channelColors == null) ? null : channelColors.clone();
@@ -273,7 +266,6 @@ public class DefaultDisplaySettings implements DisplaySettings {
       }
    }
 
-   private String[] channelNames_ = null;
    private Color[] channelColors_ = null;
    private Integer[] channelContrastMins_ = null;
    private Integer[] channelContrastMaxes_ = null;
@@ -295,7 +287,6 @@ public class DefaultDisplaySettings implements DisplaySettings {
    private UserData userData_ = null;
 
    public DefaultDisplaySettings(Builder builder) {
-      channelNames_ = builder.channelNames_;
       channelColors_ = builder.channelColors_;
       channelContrastMins_ = builder.channelContrastMins_;
       channelContrastMaxes_ = builder.channelContrastMaxes_;
@@ -315,11 +306,6 @@ public class DefaultDisplaySettings implements DisplaySettings {
       trimPercentage_ = builder.trimPercentage_;
       shouldUseLogScale_ = builder.shouldUseLogScale_;
       userData_ = builder.userData_;
-   }
-
-   @Override
-   public String[] getChannelNames() {
-      return channelNames_;
    }
 
    @Override
@@ -420,7 +406,6 @@ public class DefaultDisplaySettings implements DisplaySettings {
    @Override
    public DisplaySettingsBuilder copy() {
       return new Builder()
-            .channelNames(channelNames_)
             .channelColors(channelColors_)
             .channelContrastMins(channelContrastMins_)
             .channelContrastMaxes(channelContrastMaxes_)
@@ -452,7 +437,6 @@ public class DefaultDisplaySettings implements DisplaySettings {
       }
       try {
          Builder builder = new Builder();
-         builder.channelNames(new String[] {MDUtils.getChannelName(tags)});
          // Check for both methods of storing colors (see legacyToJSON, below)
          if (MDUtils.hasChannelColor(tags)) {
             builder.channelColors(new Color[] {rgbToColor(MDUtils.getChannelColor(tags))});
@@ -572,9 +556,6 @@ public class DefaultDisplaySettings implements DisplaySettings {
    public JSONObject legacyToJSON() {
       try {
          JSONObject result = new JSONObject();
-         if (channelNames_ != null) {
-            MDUtils.setChannelName(result, channelNames_[0]);
-         }
          // We store color in two ways: the backwards-compatible
          // "ChColor" tag (via setChannelColor()), and a method that preserves
          // all channel colors.
@@ -672,7 +653,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
     * assumptions!
     */
    public static Object[] getPerChannelArrays(DisplaySettings settings) {
-      return new Object[] {settings.getChannelNames(),
+      return new Object[] {
          settings.getChannelColors(), settings.getChannelContrastMins(),
          settings.getChannelContrastMaxes(), settings.getChannelGammas()};
    }
@@ -694,17 +675,14 @@ public class DefaultDisplaySettings implements DisplaySettings {
       // Create the array of the appropriate type.
       Object[] result;
       switch(attrIndex) {
-         case 0: // channelNames
-            result = new String[len];
-            break;
-         case 1: // channelColors;
+         case 0: // channelColors;
             result = new Color[len];
             break;
-         case 2: // channelContrastMins
-         case 3: // channelContrastMaxes
+         case 1: // channelContrastMins
+         case 2: // channelContrastMaxes
             result = new Integer[len];
             break;
-         case 4: // channelGammas
+         case 3: // channelGammas
             result = new Double[len];
             break;
          default:
@@ -728,19 +706,16 @@ public class DefaultDisplaySettings implements DisplaySettings {
    public static void updateChannelArray(int attrIndex, Object[] newVals,
          DisplaySettings.DisplaySettingsBuilder builder) {
       switch (attrIndex) {
-         case 0: // channelNames
-            builder.channelNames((String[]) newVals);
-            break;
-         case 1: // channelColors
+         case 0: // channelColors
             builder.channelColors((Color[]) newVals);
             break;
-         case 2: // channelContrastMins
+         case 1: // channelContrastMins
             builder.channelContrastMins((Integer[]) newVals);
             break;
-         case 3: // channelContrastMaxes
+         case 2: // channelContrastMaxes
             builder.channelContrastMaxes((Integer[]) newVals);
             break;
-         case 4: // channelGammas
+         case 3: // channelGammas
             builder.channelGammas((Double[]) newVals);
             break;
          default:

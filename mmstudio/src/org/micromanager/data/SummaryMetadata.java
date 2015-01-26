@@ -37,7 +37,8 @@ public interface SummaryMetadata {
       SummaryMetadataBuilder computerName(String computerName);
       SummaryMetadataBuilder directory(String directory);
       SummaryMetadataBuilder comments(String comments);
-      
+
+      SummaryMetadataBuilder channelNames(String[] channelNames);
       SummaryMetadataBuilder zStepUm(Double zStepUm);
       SummaryMetadataBuilder waitInterval(Double waitInterval);
       SummaryMetadataBuilder customIntervalsMs(Double[] customIntervalsMs);
@@ -74,6 +75,8 @@ public interface SummaryMetadata {
    /** Any comments attached to the acquisition as a whole (not to
      * individual images within the acquisition) */
    public String getComments();
+   /** Array of names of channels */
+   public String[] getChannelNames();
    /** Distance between slices in a volume of data, in microns */
    public Double getZStepUm();
    /** Amount of time to wait between timepoints */
