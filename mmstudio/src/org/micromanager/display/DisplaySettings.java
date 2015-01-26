@@ -30,7 +30,6 @@ public interface DisplaySettings {
       // The following functions each set the relevant value for the 
       // DisplaySettings. See the getters of the DisplaySettings, below,
       // for information on the meaning of these fields.
-      DisplaySettingsBuilder channelNames(String[] channelNames);
       DisplaySettingsBuilder channelColors(Color[] channelColors);
       DisplaySettingsBuilder channelContrastMins(Integer[] channelContrastMins);
       DisplaySettingsBuilder channelContrastMaxes(Integer[] channelContrastMaxes);
@@ -59,8 +58,6 @@ public interface DisplaySettings {
     */
    DisplaySettingsBuilder copy();
 
-   /** The names associated with each channel (e.g. "DAPI" and "GFP") */
-   public String[] getChannelNames();
    /** The colors of each channel in the image display window */
    public Color[] getChannelColors();
    /** The value that is treated as "black" in the display window */

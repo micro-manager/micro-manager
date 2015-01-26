@@ -15,9 +15,9 @@ import org.micromanager.internal.utils.ReportingUtils;
  * The ContrastLinker links the contrast settings for a specific channel.
  * We have some rather hacky code here that operates on generic arrays, to
  * limit the amount of code duplication -- since we care about the
- * channelNames (String), channelColors (Color), channelContrastMins/Maxes
- * (Integer), and channelGammas(Double), but we don't actually care what the
- * specific values are, just if they've changed.
+ * channelColors (Color), channelContrastMins/Maxes (Integer), and
+ * channelGammas(Double), but we don't actually care what the specific values
+ * are, just if they've changed.
  */
 public class ContrastLinker implements SettingsLinker {
    private int channelIndex_;
@@ -117,6 +117,6 @@ public class ContrastLinker implements SettingsLinker {
     */
    @Override
    public int getID() {
-      return ("shouldAutostretch_channelNames_channelColors_channelContrastMins_channelContrastMaxes_channelGammas_" + channelIndex_).hashCode();
+      return ("shouldAutostretch_channelColors_channelContrastMins_channelContrastMaxes_channelGammas_" + channelIndex_).hashCode();
    }
 }
