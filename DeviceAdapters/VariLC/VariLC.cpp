@@ -742,7 +742,7 @@ int VariLC::OnSendToVariLC(MM::PropertyBase* pProp, MM::ActionType eAct)
 			 if (ret!=DEVICE_OK)return DEVICE_SERIAL_COMMAND_FAILED;
 		 GetSerialAnswer (port_.c_str(), "\r", getFromVariLC_);
 		 GetSerialAnswer (port_.c_str(), "\r", getFromVariLC_);
-		 getFromVariLC_ = removeSpaces(getFromVariLC_);
+		 removeSpaces(getFromVariLC_);
 		 return DEVICE_OK;
 	  }
 	  else if (sendToVariLC_=="B ?" || sendToVariLC_=="B?") {
@@ -847,7 +847,7 @@ static inline bool IsSpace(char ch)
    return std::isspace(ch);
 }
 
-std::string VariLC::removeSpaces(std::string input)
+void VariLC::removeSpaces(std::string input)
 {
    input.erase(std::remove_if(input.begin(), input.end(), IsSpace), input.end());
    return input;
