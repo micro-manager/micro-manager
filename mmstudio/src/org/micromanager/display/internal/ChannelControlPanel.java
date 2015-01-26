@@ -15,7 +15,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.List;
-import java.util.prefs.Preferences;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -32,10 +31,12 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreLockedException;
 import org.micromanager.data.Image;
-import org.micromanager.display.NewDisplaySettingsEvent;
 import org.micromanager.data.NewImageEvent;
+import org.micromanager.data.NewSummaryMetadataEvent;
+import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.NewDisplaySettingsEvent;
 
 import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.internal.dialogs.AcqControlDlg;
@@ -122,7 +123,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
       DisplaySettings settings = display.getDisplaySettings();
       name_ = String.format("channel %d", channelIndex_);
-      String[] allNames = settings.getChannelNames();
+      String[] allNames = store_.getSummaryMetadata().getChannelNames();
       if (allNames != null && allNames.length > channelIndex_) {
          name_ = allNames[channelIndex_];
       }
@@ -370,12 +371,12 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    private void colorPickerLabelMouseClicked() {
-      DisplaySettings settings = display_.getDisplaySettings();
-      String[] channelNames = settings.getChannelNames();
+      String[] channelNames = store_.getSummaryMetadata().getChannelNames();
       String name = "selected";
       if (channelNames != null && channelNames.length > channelIndex_) {
          name = channelNames[channelIndex_];
       }
+      DisplaySettings settings = display_.getDisplaySettings();
       Color[] channelColors = settings.getChannelColors();
       Color newColor = JColorChooser.showDialog(this, "Choose a color for the "
               + name + " channel", channelColors[channelIndex_]);
@@ -387,49 +388,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          display_.postEvent(new ContrastEvent(channelIndex_, newSettings));
       }
       updateChannelSettings();
-
-      //if multicamera, save color
-      if (newColor != null) {
-         saveColorPreference(newColor.getRGB());
-      }
-   }
-
-   /*
-    * save color to preferences, but only if this is multicamera.  Since
-    * we cannot check for this directly from metadata,this performs a series of
-    * checks to error on the side of not saving the preference
-    */
-   private void saveColorPreference(int color) {
-      CMMCore core = MMStudio.getInstance().getCore();
-      if (core == null) {
-         return;
-      }
-      int numMultiCamChannels = (int) core.getNumberOfCameraChannels();
-      int numDataChannels;
-      String[] dataNames;
-      String[] cameraNames = new String[numMultiCamChannels];
-      DisplaySettings settings = display_.getDisplaySettings();
-      try {
-         numDataChannels = store_.getAxisLength("channel");
-         dataNames = settings.getChannelNames();
-         for (int i = 0; i < numMultiCamChannels; i++) {
-            cameraNames[i] = core.getCameraChannelName(i);
-         }
-
-         if (numMultiCamChannels > 1 && numDataChannels == numMultiCamChannels
-                 && cameraNames.length == dataNames.length) {
-            for (int i = 0; i < cameraNames.length; i++) {
-               if (!cameraNames[i].equals(dataNames[i])) {
-                  return;
-               }
-            }
-            Preferences root = Preferences.userNodeForPackage(AcqControlDlg.class);
-            Preferences colorPrefs = root.node(root.absolutePath() + "/" + AcqControlDlg.COLOR_SETTINGS_NODE);
-            colorPrefs.putInt("Color_Camera_" + cameraNames[channelIndex_], color);
-         }
-      } catch (Exception ex) {
-         
-      }
    }
 
    private void channelNameCheckboxAction() {
@@ -549,15 +507,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       colorPickerLabel_.setBackground(color_);
       histogram_.setTraceStyle(true, color_);
       DisplaySettings settings = display_.getDisplaySettings();
-      String[] allNames = settings.getChannelNames();
-      if (allNames != null && allNames.length > channelIndex_ &&
-            allNames[channelIndex_] != null) {
-         String name = allNames[channelIndex_];
-         if (name.length() > 11) {
-            name = name.substring(0, 9) + "...";
-         }
-         channelNameCheckbox_.setText(name);
-      }
       Integer[] mins = settings.getChannelContrastMins();
       if (mins != null && mins.length > channelIndex_ &&
             mins[channelIndex_] != null) {
@@ -899,7 +848,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
       Object[] channelSettings = DefaultDisplaySettings.getPerChannelArrays(settings);
       // TODO: ordering of these values is closely tied to the above function!
-      Object[] ourParams = new Object[] {name_, color_,
+      Object[] ourParams = new Object[] {color_,
          new Integer(contrastMin_), new Integer(contrastMax_),
          new Double(gamma_)};
       // For each of the above parameters, ensure that there's an array in
@@ -965,6 +914,22 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       }
       catch (Exception e) {
          ReportingUtils.logError(e, "Failed to update histogram display settings");
+      }
+   }
+
+   /**
+    * Summary metadata has changed; check for change in channel name.
+    */
+   @Subscribe
+   public void onNewSummaryMetadata(NewSummaryMetadataEvent event) {
+      if (!haveInitialized_.get()) {
+         // See TODO note in onNewDisplaySettings.
+         return;
+      }
+      String[] names = event.getSummaryMetadata().getChannelNames();
+      if (names != null && names.length > channelIndex_) {
+         name_ = names[channelIndex_];
+         channelNameCheckbox_.setText(name_);
       }
    }
 

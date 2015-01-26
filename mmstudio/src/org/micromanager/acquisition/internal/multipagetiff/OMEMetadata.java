@@ -155,16 +155,15 @@ public class OMEMetadata {
       // TODO these don't necessarily have anything to do with how the user is
       // viewing data in Micro-Manager.
       DisplaySettings displaySettings = DefaultDisplaySettings.getStandardSettings();
+      String[] names = mptStorage_.getSummaryMetadata().getChannelNames();
       for (int channel = 0; channel < mptStorage_.getIntendedSize("channel");
             channel++) {
          java.awt.Color color = displaySettings.getChannelColors()[channel];
          metadata_.setChannelColor(new ome.xml.model.primitives.Color(
                   color.getRed(), color.getGreen(), color.getBlue(), 1),
                seriesIndex, channel);
-         if (displaySettings.getChannelNames() != null &&
-               displaySettings.getChannelNames().length > channel) {
-            metadata_.setChannelName(displaySettings.getChannelNames()[channel],
-                  seriesIndex, channel);
+         if (names != null && names.length > channel) {
+            metadata_.setChannelName(names[channel], seriesIndex, channel);
          }
       }
    }
