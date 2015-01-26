@@ -51,7 +51,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
+import org.micromanager.data.DatastoreLockedException;
 import org.micromanager.data.Image;
+import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.internal.MMStudio;
@@ -484,15 +486,23 @@ public class SplitViewFrame extends javax.swing.JFrame {
    private void updateDisplaySettings() {
       try {
          Datastore store = gui_.getAcquisitionDatastore(ACQNAME);
+         String[] newNames = new String[] {"Left", "Right"};
+         if (orientation_.equals(TB)) {
+            newNames[0] = "Top";
+            newNames[1] = "Bottom";
+         }
+         SummaryMetadata summary = store.getSummaryMetadata();
+         summary = summary.copy().channelNames(newNames).build();
+         try {
+            store.setSummaryMetadata(summary);
+         }
+         catch (DatastoreLockedException e) {
+            ReportingUtils.logError("Can't set channel names as datastore is locked");
+         }
          for (DisplayWindow display : gui_.display().getDisplays(store)) {
             DisplaySettings settings = display.getDisplaySettings();
             Color[] newColors = new Color[] {col1_, col2_};
-            String[] newNames = new String[] {"Left", "Right"};
-            if (orientation_.equals(TB)) {
-               newNames[0] = "Top";
-               newNames[1] = "Bottom";
-            }
-            settings = settings.copy().channelColors(newColors).channelNames(newNames).build();
+            settings = settings.copy().channelColors(newColors).build();
             display.setDisplaySettings(settings);
          }
       }
