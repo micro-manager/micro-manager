@@ -9,6 +9,9 @@
 // COPYRIGHT:     
 // LICENSE:       
 
+// Change Log - Amitabh Verma - Jan. 26, 2015
+// 1. Error response retrieval using 'R?' fixed
+
 // Change Log - Amitabh Verma - July. 23, 2014
 // 1. Replaced ',' comma with ';' semi-colon  in property names due to Micro-Manager warning during HW Config Wizard 'Contains reserved chars'
 // Note: This will break Pol-Acquisition (OpenPolScope) and requires compatible version which uses same name for Property
@@ -44,6 +47,7 @@
 #include <math.h>
 #include "../../MMDevice/ModuleInterface.h"
 #include <sstream>
+#include <algorithm>    // std::remove_if
 
 
 const char* g_ControllerName    = "VariLC";
@@ -732,6 +736,14 @@ int VariLC::OnSendToVariLC(MM::PropertyBase* pProp, MM::ActionType eAct)
 			 if (ret!=DEVICE_OK)return DEVICE_SERIAL_COMMAND_FAILED;
 		 GetSerialAnswer (port_.c_str(), "\r", getFromVariLC_);		 
 	  }
+	  else if (sendToVariLC_=="R ?" || sendToVariLC_=="R?") {
+		  int ret = SendSerialCommand(port_.c_str(), "R?", "\r");
+			 if (ret!=DEVICE_OK)return DEVICE_SERIAL_COMMAND_FAILED;
+		 GetSerialAnswer (port_.c_str(), "\r", getFromVariLC_);
+		 GetSerialAnswer (port_.c_str(), "\r", getFromVariLC_);
+		 getFromVariLC_ = removeSpaces(getFromVariLC_);
+		 return DEVICE_OK;
+	  }
 	  else if (sendToVariLC_=="B ?" || sendToVariLC_=="B?") {
 		  int ret = SendSerialCommand(port_.c_str(), "B?", "\r");
 			 if (ret!=DEVICE_OK)return DEVICE_SERIAL_COMMAND_FAILED;
@@ -827,4 +839,10 @@ std::vector<double> VariLC::getNumbersFromMessage(std::string variLCmessage, boo
 	 }
 
 	return values;
+}
+
+std::string VariLC::removeSpaces(std::string input)
+{
+  input.erase(std::remove_if(input.begin(), input.end(), isspace), input.end());
+  return input;
 }
