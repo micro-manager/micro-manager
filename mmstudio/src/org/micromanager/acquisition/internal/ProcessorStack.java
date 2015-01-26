@@ -80,7 +80,8 @@ public class ProcessorStack<E> {
    }
 
    /**
-    * Sets up the DataProcessor<TaggedImage> sequence
+    * Sets up the {@code DataProcessor<TaggedImage>} sequence.
+    *
     * @param inputTaggedImageQueue
     * @param imageProcessors
     * @return 

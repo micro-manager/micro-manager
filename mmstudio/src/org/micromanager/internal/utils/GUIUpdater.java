@@ -30,7 +30,7 @@ import javax.swing.SwingUtilities;
  * DO NOT USE.  This code is only here so that the DataBrowser plugin can still 
  * compile.  Remove after this dependency in the DataBrowser has been removed.
  * 
- * @Deprecated
+ * @deprecated
  */
 public class GUIUpdater {
 

@@ -57,7 +57,7 @@ public class DefaultImage implements Image {
    int numComponents_;
 
    /**
-    * @param taggedImage A TaggedImage to base the Image on.
+    * @param tagged A TaggedImage to base the Image on.
     */
    public DefaultImage(TaggedImage tagged) throws JSONException, MMScriptException {
       JSONObject tags = tagged.tags;
