@@ -85,7 +85,6 @@ public interface AcquisitionEngine {
     * Starts acquisition as defined in the Multi-Dimensional Acquistion Window.
     * Returns the acquisition name.
     * @throws MMException
-    * @throws MMAcqDataException
     */
    public String acquire() throws MMException;
 
@@ -215,7 +214,7 @@ public interface AcquisitionEngine {
 
    /*
     * This value is not used.
-    * @Deprecated
+    * @deprecated
     */
    public double getMinZStepUm();
 
@@ -333,7 +332,7 @@ public interface AcquisitionEngine {
 
 
    /**
-    * @Deprecated
+    * @deprecated
     */
    public void setCameraConfig(String config);
 
@@ -352,7 +351,7 @@ public interface AcquisitionEngine {
 
    
    /**
-    * @Deprecated
+    * @deprecated
     */
    public boolean addChannel(String name, double exp, double offset, 
            ContrastSettings s8, ContrastSettings s16, int skip, Color c);
@@ -404,12 +403,12 @@ public interface AcquisitionEngine {
    public boolean getSaveFiles();
 
    /**
-    * @Deprecated
+    * @deprecated
     */
    public int getDisplayMode();
 
    /**
-    * @Deprecated
+    * @deprecated
     */
    public void setDisplayMode(int mode);
 
@@ -450,17 +449,17 @@ public interface AcquisitionEngine {
    public void setAfSkipInterval (int interval);
 
    /*
-    * @Deprecated
+    * @deprecated
     */
    public void setSingleFrame(boolean selected);
 
    /*
-    * @Deprecated
+    * @deprecated
     */
    public void setSingleWindow(boolean selected);
 
    /*
-    * @Deprecated
+    * @deprecated
     */
    public String installAutofocusPlugin(String className);
    
@@ -471,7 +470,7 @@ public interface AcquisitionEngine {
    public boolean isConfigAvailable(String config_);
 
    /*
-    * @Deprecated
+    * @deprecated
     * Returns available configurations for the camera group.
     */
    public String[] getCameraConfigs();

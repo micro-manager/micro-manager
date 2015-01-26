@@ -885,7 +885,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
     * @param c16
     * @param c
     * @return - true if successful
-    * @Deprecated
+    * @deprecated
     */
    @Override
    public boolean addChannel(String config, double exp, double zOffset, ContrastSettings c8, ContrastSettings c16, int skip, Color c) {

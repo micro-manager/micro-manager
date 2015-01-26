@@ -52,7 +52,6 @@ public abstract class AutofocusBase implements Autofocus{
    /**
     * Get all property names (keys)
     * @return - an array of property names
-    * @throws MMException
     */
    @Override
    public String[] getPropertyNames() {

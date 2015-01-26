@@ -37,8 +37,9 @@ public interface Storage {
 
    /**
     * Retrieve a list of all images whose Coords match the given incomplete
-    * Coords instance. For example, providing a Coords of <"z" = 9> would
-    * return all Images whose position along the "z" axis is 9. May be empty.
+    * Coords instance. For example, providing a Coords of {@code <"z" = 9>}
+    * would return all Images whose position along the "z" axis is 9. May be
+    * empty.
     */
    public List<Image> getImagesMatching(Coords coords);
 
