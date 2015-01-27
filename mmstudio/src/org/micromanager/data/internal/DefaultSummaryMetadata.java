@@ -18,7 +18,7 @@ import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
-import org.micromanager.UserData;
+import org.micromanager.PropertyMap;
 
 public class DefaultSummaryMetadata implements SummaryMetadata {
 
@@ -100,7 +100,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       private String startDate_ = null;
       private MultiStagePosition[] stagePositions_ = null;
 
-      private UserData userData_ = null;
+      private PropertyMap userData_ = null;
 
       @Override
       public DefaultSummaryMetadata build() {
@@ -204,7 +204,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       }
 
       @Override
-      public SummaryMetadataBuilder userData(UserData userData) {
+      public SummaryMetadataBuilder userData(PropertyMap userData) {
          userData_ = userData;
          return this;
       }
@@ -228,7 +228,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
    private String startDate_ = null;
    private MultiStagePosition[] stagePositions_ = null;
 
-   private UserData userData_ = null;
+   private PropertyMap userData_ = null;
 
    public DefaultSummaryMetadata(Builder builder) {
       acquisitionName_ = builder.acquisitionName_;
@@ -333,7 +333,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
    }
 
    @Override
-   public UserData getUserData() {
+   public PropertyMap getUserData() {
       return userData_;
    }
 
@@ -530,7 +530,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
          }
          result.put("StartTime", startDate_);
          result.put("Positions", stagePositions_);
-         result.put("UserData", userData_);
+         result.put("PropertyMap", userData_);
          return result;
       }
       catch (JSONException e) {

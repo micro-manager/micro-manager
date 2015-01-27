@@ -6,7 +6,7 @@ import org.json.JSONObject;
 
 import org.micromanager.data.Coords;
 import org.micromanager.MultiStagePosition;
-import org.micromanager.UserData;
+import org.micromanager.PropertyMap;
 
 /**
  * This class defines the parameters that control how a given DisplayWindow
@@ -49,7 +49,7 @@ public interface DisplaySettings {
       DisplaySettingsBuilder trimPercentage(Double trimPercentage);
       DisplaySettingsBuilder shouldUseLogScale(Boolean shouldUseLogScale);
 
-      DisplaySettingsBuilder userData(UserData userData);
+      DisplaySettingsBuilder userData(PropertyMap userData);
    }
 
    /**
@@ -104,7 +104,7 @@ public interface DisplaySettings {
    /** Whether to display the histograms using a logarithmic scale */
    public Boolean getShouldUseLogScale();
    /** Any additional user-supplied data */
-   public UserData getUserData();
+   public PropertyMap getUserData();
 
    public static final String FILENAME = "displaySettings.txt";
    /** Save the DisplaySettings to a file in the specified folder. If the file

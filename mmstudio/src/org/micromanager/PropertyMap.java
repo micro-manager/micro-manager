@@ -9,25 +9,25 @@ package org.micromanager;
  * org.micromanager.data.DataManager or
  * org.micromanager.display.DisplayManager.
  */
-public interface UserData {
-   interface UserDataBuilder {
-      /** Construct a UserData from the Builder. Call this once the builder's
-       * values are all set. */
-      UserData build();
+public interface PropertyMap {
+   interface PropertyMapBuilder {
+      /** Construct a PropertyMap from the Builder. Call this once the
+       * builder's values are all set. */
+      PropertyMap build();
 
       /** Put a new String value into the mapping. */
-      UserDataBuilder putString(String key, String value);
+      PropertyMapBuilder putString(String key, String value);
       
       /** Put a new Integer value into the mapping. */
-      UserDataBuilder putInt(String key, Integer value);
+      PropertyMapBuilder putInt(String key, Integer value);
 
       /** Put a new Double value into the mapping. */
-      UserDataBuilder putDouble(String key, Double value);
+      PropertyMapBuilder putDouble(String key, Double value);
    }
 
-   /** Construct a UserData.UserDataBuilder that can be used to create a
-    * modified version of this UserData instance. */
-   public UserDataBuilder copy();
+   /** Construct a PropertyMap.PropertyMapBuilder that can be used to create a
+    * modified version of this PropertyMap instance. */
+   public PropertyMapBuilder copy();
 
    /** Retrieve a String value from the mapping. Will return null if the key is
     * not found, or if the mapped value is not a String. */
