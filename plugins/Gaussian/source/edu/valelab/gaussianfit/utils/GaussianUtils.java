@@ -93,6 +93,13 @@ public class GaussianUtils {
 
    /**
     * Create a frame with a plot of the data given in XYSeries
+    * @param title
+    * @param data1
+    * @param data2
+    * @param xTitle
+    * @param yTitle
+    * @param xLocation
+    * @param yLocation
     */
    public static void plotData2(String title, XYSeries data1, XYSeries data2, String xTitle,
            String yTitle, int xLocation, int yLocation) {
@@ -135,6 +142,14 @@ public class GaussianUtils {
 
    /**
     * Create a frame with a plot of the data given in XYSeries
+    * @param title
+    * @param data
+    * @param xTitle
+    * @param yTitle
+    * @param xLocation
+    * @param yLocation
+    * @param showShapes
+    * @param logLog
     */
    public static void plotDataN(String title, XYSeries[] data, String xTitle,
                  String yTitle, int xLocation, int yLocation, boolean showShapes, Boolean logLog) {
@@ -249,6 +264,8 @@ public class GaussianUtils {
    * Rotates a set of XY data points such that the direction of largest
    * variance is a line around the X-axis.  Equivalent to total least square
    * analysis - which finds the best fit line perpendicular to the data points
+    * @param xyPoints
+    * @return 
    */
    public static ArrayList<Point2D.Double> pcaRotate(ArrayList<Point2D.Double> xyPoints) {
       double[][] data = new double[2][xyPoints.size()];
@@ -292,6 +309,10 @@ public class GaussianUtils {
     * xc = params[XC]
     * yc = params[YC]
     * sig = params[S]
+    * @param params - Parameters to be optimized
+    * @param x - x position in the image
+    * @param y - y position in the image
+    * @return - array
     */
    public static double gaussian(double[] params, int x, int y) {
       if (params.length < 5) {
@@ -337,6 +358,11 @@ public class GaussianUtils {
     * yc = params[YC]
     * sig_x = params[S1]
     * sig_y = params[S2]
+    * 
+    * @param params - Parameters to be optimized
+    * @param x - x position in the image
+    * @param y - y position in the image
+    * @return - array
     */
    public static double gaussian2DXY(double[] params, int x, int y) {
       if (params.length < 6) {
@@ -395,6 +421,10 @@ public class GaussianUtils {
     * a = params[S1]
     * b = params[S2]
     * c = params[S3]
+    * @param params - Parameters to be optimized
+    * @param x - x position in the image
+    * @param y - y position in the image
+    * @return - array
     */
    public static double gaussian2DEllips(double[] params, int x, int y) {
       if (params.length < 7) {

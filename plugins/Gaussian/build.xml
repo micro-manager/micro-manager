@@ -11,5 +11,7 @@
 		<pathelement location="${mm.java.lib.miglayout}"/>
 		<pathelement location="${mm.java.lib.protobuf}"/>
 		<pathelement location="${mm.java.lib.tsfproto}"/>
+		<pathelement location="${mm.java.lib.commons-math}"/>
+		<pathelement location="${mm.java.lib.commons-math3}"/>
 	</path>
 </project>
