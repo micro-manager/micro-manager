@@ -24,7 +24,7 @@ import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
-import org.micromanager.UserData;
+import org.micromanager.PropertyMap;
 
 public class DefaultDisplaySettings implements DisplaySettings {
 
@@ -144,7 +144,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
       private Boolean shouldAutostretch_ = null;
       private Double trimPercentage_ = null;
       private Boolean shouldUseLogScale_ = null;
-      private UserData userData_ = null;
+      private PropertyMap userData_ = null;
 
       @Override
       public DefaultDisplaySettings build() {
@@ -260,7 +260,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
       }
 
       @Override
-      public DisplaySettingsBuilder userData(UserData userData) {
+      public DisplaySettingsBuilder userData(PropertyMap userData) {
          userData_ = userData;
          return this;
       }
@@ -284,7 +284,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
    private Boolean shouldAutostretch_ = null;
    private Double trimPercentage_ = null;
    private Boolean shouldUseLogScale_ = null;
-   private UserData userData_ = null;
+   private PropertyMap userData_ = null;
 
    public DefaultDisplaySettings(Builder builder) {
       channelColors_ = builder.channelColors_;
@@ -399,7 +399,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
    }
 
    @Override
-   public UserData getUserData() {
+   public PropertyMap getUserData() {
       return userData_;
    }
 

@@ -17,8 +17,8 @@ import org.micromanager.events.DatastoreClosingEvent;
 import org.micromanager.events.NewDisplayEvent;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
-import org.micromanager.data.internal.DefaultUserData;
-import org.micromanager.UserData;
+import org.micromanager.data.internal.DefaultPropertyMap;
+import org.micromanager.PropertyMap;
 
 public class DefaultDisplayManager implements DisplayManager {
    private MMStudio studio_;
@@ -89,8 +89,8 @@ public class DefaultDisplayManager implements DisplayManager {
    }
 
    @Override
-   public UserData.UserDataBuilder getUserDataBuilder() {
-      return new DefaultUserData.Builder();
+   public PropertyMap.PropertyMapBuilder getPropertyMapBuilder() {
+      return new DefaultPropertyMap.Builder();
    }
 
    @Override

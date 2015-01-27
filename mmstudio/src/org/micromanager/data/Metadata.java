@@ -7,7 +7,7 @@ import java.util.UUID;
 import org.json.JSONObject;
 
 import org.micromanager.MultiStagePosition;
-import org.micromanager.UserData;
+import org.micromanager.PropertyMap;
 
 
 /**
@@ -60,7 +60,7 @@ public interface Metadata {
       MetadataBuilder source(String source);
       MetadataBuilder startTimeMs(Double startTimeMs);
       MetadataBuilder summaryMetadata(SummaryMetadata summaryMetadata);
-      MetadataBuilder userData(UserData userData);
+      MetadataBuilder userData(PropertyMap userData);
       MetadataBuilder uuid(UUID uuid);
       MetadataBuilder xPositionUm(Double xPositionUm);
       MetadataBuilder yPositionUm(Double yPositionUm);
@@ -113,7 +113,7 @@ public interface Metadata {
      * images (TODO: now properly part of Image class) */
    Integer getNumComponents();
    /** Arbitrary additional metadata */
-   UserData getUserData();
+   PropertyMap getUserData();
    /** List of stage positions at the start of the acquisition (e.g. not taking
      * into account changes caused by autofocus). TODO: should be part of
      * SummaryMetadata?

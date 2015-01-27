@@ -14,7 +14,7 @@ import org.micromanager.MultiStagePosition;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
-import org.micromanager.UserData;
+import org.micromanager.PropertyMap;
 
 /**
  * This class holds the metadata for ImagePlanes. It is intended to be 
@@ -66,7 +66,7 @@ public class DefaultMetadata implements Metadata {
       private Integer color_ = null;
       private Double pixelAspect_ = null;
 
-      private UserData userData_ = null;
+      private PropertyMap userData_ = null;
       private SummaryMetadata summaryMetadata_ = null;
 
       @Override
@@ -255,7 +255,7 @@ public class DefaultMetadata implements Metadata {
       }
 
       @Override
-      public MetadataBuilder userData(UserData userData) {
+      public MetadataBuilder userData(PropertyMap userData) {
          userData_ = userData;
          return this;
       }
@@ -304,7 +304,7 @@ public class DefaultMetadata implements Metadata {
    private Integer color_ = null;
    private Double pixelAspect_ = null;
 
-   private UserData userData_ = null;
+   private PropertyMap userData_ = null;
    private SummaryMetadata summaryMetadata_ = null;
 
    public DefaultMetadata(Builder builder) {
@@ -535,7 +535,7 @@ public class DefaultMetadata implements Metadata {
    }
 
    @Override
-   public UserData getUserData() {
+   public PropertyMap getUserData() {
       return userData_;
    }
 

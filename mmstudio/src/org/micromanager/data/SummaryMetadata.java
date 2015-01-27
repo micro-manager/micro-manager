@@ -3,7 +3,7 @@ package org.micromanager.data;
 import org.json.JSONObject;
 
 import org.micromanager.MultiStagePosition;
-import org.micromanager.UserData;
+import org.micromanager.PropertyMap;
 
 /**
  * This class defines the summary metadata that applies to all images in a 
@@ -45,7 +45,7 @@ public interface SummaryMetadata {
       SummaryMetadataBuilder intendedDimensions(Coords intendedDimensions);
       SummaryMetadataBuilder startDate(String startDate);
       SummaryMetadataBuilder stagePositions(MultiStagePosition[] stagePositions);
-      SummaryMetadataBuilder userData(UserData userData);
+      SummaryMetadataBuilder userData(PropertyMap userData);
    }
 
    /**
@@ -94,7 +94,7 @@ public interface SummaryMetadata {
    /** The stage positions that were to be visited in the acquisition */
    public MultiStagePosition[] getStagePositions();
    /** Any general-purpose user metadata */
-   public UserData getUserData();
+   public PropertyMap getUserData();
 
    /**
     * For legacy support only: convert to JSONObject.

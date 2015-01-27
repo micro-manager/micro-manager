@@ -2,9 +2,9 @@ package org.micromanager.data.internal;
 
 import java.util.HashMap;
 
-import org.micromanager.UserData;
+import org.micromanager.PropertyMap;
 
-public class DefaultUserData implements UserData {
+public class DefaultPropertyMap implements PropertyMap {
    // This class stores one value in the mapping.
    private static class PropertyValue {
       private Object val_;
@@ -46,7 +46,7 @@ public class DefaultUserData implements UserData {
          return (Double) val_;
       }
    }
-   public static class Builder implements UserData.UserDataBuilder {
+   public static class Builder implements PropertyMap.PropertyMapBuilder {
       private HashMap<String, PropertyValue> propMap_;
 
       public Builder() {
@@ -54,30 +54,30 @@ public class DefaultUserData implements UserData {
       }
 
       @Override
-      public UserData build() {
-         return new DefaultUserData(this);
+      public PropertyMap build() {
+         return new DefaultPropertyMap(this);
       }
 
       @Override
-      public UserData.UserDataBuilder putString(String key, String value) {
+      public PropertyMap.PropertyMapBuilder putString(String key, String value) {
          propMap_.put(key, new PropertyValue(value));
          return this;
       }
       
       @Override
-      public UserData.UserDataBuilder putInt(String key, Integer value) {
+      public PropertyMap.PropertyMapBuilder putInt(String key, Integer value) {
          propMap_.put(key, new PropertyValue(value));
          return this;
       }
 
       @Override
-      public UserData.UserDataBuilder putDouble(String key, Double value) {
+      public PropertyMap.PropertyMapBuilder putDouble(String key, Double value) {
          propMap_.put(key, new PropertyValue(value));
          return this;
       }
 
       /**
-       * This method is used by UserData.copy(), below.
+       * This method is used by PropertyMap.copy(), below.
        */
       public void putProperty(String key, PropertyValue val) {
          propMap_.put(key, val);
@@ -86,12 +86,12 @@ public class DefaultUserData implements UserData {
 
    private HashMap<String, PropertyValue> propMap_;
 
-   public DefaultUserData(Builder builder) {
+   public DefaultPropertyMap(Builder builder) {
       propMap_ = new HashMap<String, PropertyValue>(builder.propMap_);
    }
 
    @Override
-   public UserData.UserDataBuilder copy() {
+   public PropertyMap.PropertyMapBuilder copy() {
       Builder builder = new Builder();
       for (String key : propMap_.keySet()) {
          builder.putProperty(key, propMap_.get(key));
