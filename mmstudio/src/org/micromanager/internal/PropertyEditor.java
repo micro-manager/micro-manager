@@ -52,7 +52,7 @@ import mmcorej.CMMCore;
 import mmcorej.StrVector;
 
 import org.micromanager.ScriptInterface;
-import org.micromanager.internal.utils.MMListenerAdapter;
+import org.micromanager.MMListenerAdapter;
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.PropertyValueCellEditor;
 import org.micromanager.internal.utils.PropertyValueCellRenderer;

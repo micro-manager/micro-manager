@@ -84,7 +84,7 @@ import org.micromanager.display.internal.MMVirtualStack;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.internal.utils.JavaUtils;
-import org.micromanager.internal.utils.MMListenerAdapter;
+import org.micromanager.MMListenerAdapter;
 import org.micromanager.internal.utils.MathFunctions;
 import org.micromanager.internal.utils.ReportingUtils;
 
