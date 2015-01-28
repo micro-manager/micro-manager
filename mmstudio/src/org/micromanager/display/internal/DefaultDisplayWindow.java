@@ -90,6 +90,8 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
    private DisplaySettings displaySettings_;
    private MMVirtualStack stack_;
    private ImagePlus ijImage_;
+   private final EventBus displayBus_;
+
    // This will be our intermediary with ImageJ.
    private DummyImageWindow dummyWindow_;
 
@@ -97,6 +99,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
    private DefaultDisplayWindow fullFrame_;
    private boolean isFullScreen_;
 
+   // GUI components
    private JPanel contentsPanel_;
    private JPanel canvasPanel_;
    private MMImageCanvas canvas_;
@@ -108,8 +111,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
    private CommentsPanel comments_;
    private OverlaysPanel overlays_;
 
-   private final EventBus displayBus_;
-
+   // Used by the pack() method to track changes in our size.
    private Dimension prevModeSize_;
    private Dimension prevControlsSize_;
 
@@ -119,13 +121,6 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
 
    private static int titleID = 0;
    
-   // store window location in Java Preferences
-   private static final int DEFAULTPOSX = 300;
-   private static final int DEFAULTPOSY = 100;
-   private static Preferences displayPrefs_;
-   private static final String WINDOWPOSX = "WindowPosX";
-   private static final String WINDOWPOSY = "WindowPosY";
-
    /**
     * Convenience constructor that defaults to non-fullscreen mode and default
     * DisplaySettings.
@@ -174,14 +169,6 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       customControls_.add(new SaveButton(store_, this));
 
       isFullScreen_ = (targetScreen != null);
-
-      initializePrefs();
-      int posX = DEFAULTPOSX, posY = DEFAULTPOSY;
-      if (displayPrefs_ != null) {
-         posX = displayPrefs_.getInt(WINDOWPOSX, DEFAULTPOSX); 
-         posY = displayPrefs_.getInt(WINDOWPOSY, DEFAULTPOSY);
-      }
-      setLocation(posX, posY);
 
       if (isFullScreen_) {
          setUndecorated(true);
@@ -404,23 +391,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
    }
 
    /**
-    * Keep class specific preferences to store window location
-    */
-   private void initializePrefs() {
-      if (displayPrefs_ == null) {
-         try {
-            displayPrefs_ = Preferences.userNodeForPackage(getClass());
-         } catch (Exception e) {
-            ReportingUtils.logError(e);
-         }
-      }
-   }
-   
-   /**
     * Set our canvas' magnification based on the preferred window magnification.
-    * Also sets the position of the window, based on the position of the last
-    * closed window.
-    * 
     */
    public void zoomToPreferredSize() {
       Point location = getLocation();
@@ -583,6 +554,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       resetTitle();
    }
 
+   // TODO: this method assumes we're in Composite view mode.
    @Override
    public List<Image> getDisplayedImages() {
       ArrayList<Image> result = new ArrayList<Image>();
@@ -821,6 +793,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
 
    /**
     * Generate a unique name for our ImagePlus object.
+    * TODO: we should use the filename where available.
     */
    private static String generateImagePlusName() {
       titleID++;
@@ -845,13 +818,13 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
     * a layout that looks roughly like this:
     * +---------+----+
     * |         | m  |
-    * |  canvas | o  |
-    * |         | d  |
-    * |         | e  |
+    * |  canvas | o p|
+    * |         | d a|
+    * |         | e n|
+    * |         |   e|
+    * +---------+   l|
     * |         |    |
-    * +---------+----|
-    * |              |
-    * |   controls   |
+    * | controls|    |
     * +---------+----+
     * The sizes of the modePanel and controls can only grow vertically and
     * horizontally, respectively; the canvas can grow in both dimensions, and
