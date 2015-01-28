@@ -109,9 +109,15 @@ class ScrollerPanel extends JPanel {
          }
       }
 
-      // TODO: hardcoded initial FPS for now.
-      fps_ = 10;
-      fpsMenu_ = new FPSPopupMenu(parent_.getDisplayBus(), fps_);
+      Integer fps = parent.getDisplaySettings().getAnimationFPS();
+      // Default to 10 if it's not set.
+      fps_ = (fps == null) ? 10 : fps;
+      fpsMenu_ = new FPSPopupMenu(parent_, fps_);
+      if (fps == null) {
+         // Update the DisplaySettings to reflect our default.
+         parent.setDisplaySettings(parent.getDisplaySettings().copy()
+               .animationFPS(fps_).build());
+      }
 
       store_.registerForEvents(this);
       parent_.registerForEvents(this);
@@ -245,11 +251,18 @@ class ScrollerPanel extends JPanel {
    }
 
    /**
-    * Display settings have changed; check for new drawing coordinates.
+    * Display settings have changed; check for new drawing coordinates and FPS.
     */
    @Subscribe
    public void onNewDisplaySettings(NewDisplaySettingsEvent event) {
-      Coords coords = event.getDisplaySettings().getImageCoords();
+      DisplaySettings settings = event.getDisplaySettings();
+      if (settings.getAnimationFPS() != null &&
+            settings.getAnimationFPS() != fps_) {
+         fps_ = settings.getAnimationFPS();
+         fpsButton_.setText("FPS: " + fps_);
+         resetAnimation();
+      }
+      Coords coords = settings.getImageCoords();
       if (coords == null) {
          return;
       }
@@ -305,16 +318,6 @@ class ScrollerPanel extends JPanel {
       };
 
       animationTimer_.schedule(task, 0, (int) (1000.0 / updateRate));
-   }
-
-   /**
-    * Animation FPS has changed. Redo our button label and reset animations.
-    */
-   @Subscribe
-   public void onNewFPS(FPSPopupMenu.FPSEvent event) {
-      fps_ = event.getFPS();
-      fpsButton_.setText("FPS: " + fps_);
-      resetAnimation();
    }
 
    /**

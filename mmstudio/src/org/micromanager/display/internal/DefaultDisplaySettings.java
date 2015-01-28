@@ -131,6 +131,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
       private Integer[] channelContrastMaxes_ = null;
       private Double[] channelGammas_ = null;
       private Double magnification_ = null;
+      private Integer animationFPS_ = null;
       private Integer channelDisplayModeIndex_ = null;
       private Coords imageCoords_ = null;
       private Double histogramUpdateRate_ = null;
@@ -178,6 +179,12 @@ public class DefaultDisplaySettings implements DisplaySettings {
       @Override
       public DisplaySettingsBuilder magnification(Double magnification) {
          magnification_ = magnification;
+         return this;
+      }
+
+      @Override
+      public DisplaySettingsBuilder animationFPS(Integer animationFPS) {
+         animationFPS_ = animationFPS;
          return this;
       }
 
@@ -271,6 +278,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
    private Integer[] channelContrastMaxes_ = null;
    private Double[] channelGammas_ = null;
    private Double magnification_ = null;
+   private Integer animationFPS_ = null;
    private Integer channelDisplayModeIndex_ = null;
    private Coords imageCoords_ = null;
    private Double histogramUpdateRate_ = null;
@@ -292,6 +300,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
       channelContrastMaxes_ = builder.channelContrastMaxes_;
       channelGammas_ = builder.channelGammas_;
       magnification_ = builder.magnification_;
+      animationFPS_ = builder.animationFPS_;
       channelDisplayModeIndex_ = builder.channelDisplayModeIndex_;
       imageCoords_ = builder.imageCoords_;
       histogramUpdateRate_ = builder.histogramUpdateRate_;
@@ -331,6 +340,11 @@ public class DefaultDisplaySettings implements DisplaySettings {
    @Override
    public Double getMagnification() {
       return magnification_;
+   }
+
+   @Override
+   public Integer getAnimationFPS() {
+      return animationFPS_;
    }
 
    @Override
@@ -411,6 +425,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
             .channelContrastMaxes(channelContrastMaxes_)
             .channelGammas(channelGammas_)
             .magnification(magnification_)
+            .animationFPS(animationFPS_)
             .channelDisplayModeIndex(channelDisplayModeIndex_)
             .imageCoords(imageCoords_)
             .histogramUpdateRate(histogramUpdateRate_)
@@ -458,6 +473,9 @@ public class DefaultDisplaySettings implements DisplaySettings {
          }
          if (tags.has("magnification")) {
             builder.magnification(tags.getDouble("magnification"));
+         }
+         if (tags.has("animationFPS")) {
+            builder.animationFPS(tags.getInt("animationFPS"));
          }
          if (tags.has("histogramUpdateRate")) {
             builder.histogramUpdateRate(tags.getDouble("histogramUpdateRate"));
@@ -574,6 +592,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
             result.put("ChContrastMax", channelContrastMaxes_[0]);
          }
          result.put("magnification", magnification_);
+         result.put("animationFPS", animationFPS_);
          result.put("histogramUpdateRate", histogramUpdateRate_);
          result.put("shouldSyncChannels", shouldSyncChannels_);
          result.put("scaleBarColorIndex", scaleBarColorIndex_);
