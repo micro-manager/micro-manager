@@ -19,6 +19,8 @@ import javax.swing.JTextField;
 import javax.swing.MenuElement;
 import javax.swing.MenuSelectionManager;
 
+import org.micromanager.display.DisplaySettings;
+import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.events.FPSEvent;
 
 /**
@@ -26,21 +28,6 @@ import org.micromanager.display.internal.events.FPSEvent;
  * animations for the ScrollerPanel.
  */
 public class FPSPopupMenu extends JPopupMenu {
-   /**
-    * Signifies a change in the current FPS.
-    */
-   public class FPSEvent {
-      private int fps_;
-
-      public FPSEvent(int fps) {
-         fps_ = fps;
-      }
-
-      public int getFPS() {
-         return fps_;
-      }
-   }
-
    /**
     * Implementation adapted from
     * http://www.onjava.com/pub/a/onjava/excerpt/swing_14/index6.html?page=2
@@ -87,7 +74,7 @@ public class FPSPopupMenu extends JPopupMenu {
       public void menuSelectionChanged(boolean isIncluded) {}
    }
 
-   public FPSPopupMenu(final EventBus bus, int initialVal) {
+   public FPSPopupMenu(final DisplayWindow display, int initialVal) {
       final FPSSlider slider = new FPSSlider();
       final JTextField field = new JTextField(3);
       slider.setValue(initialVal);
@@ -95,7 +82,9 @@ public class FPSPopupMenu extends JPopupMenu {
          @Override
          public void stateChanged(ChangeEvent event) {
             field.setText(Integer.toString(slider.getValue()));
-            bus.post(new FPSEvent(slider.getValue()));
+            DisplaySettings settings = display.getDisplaySettings();
+            settings = settings.copy().animationFPS(slider.getValue()).build();
+            display.setDisplaySettings(settings);
          }
       });
       add(slider);
@@ -107,7 +96,9 @@ public class FPSPopupMenu extends JPopupMenu {
                int newVal = Integer.parseInt(field.getText());
                slider.setValue(newVal);
                slider.repaint();
-               bus.post(new FPSEvent(newVal));
+               DisplaySettings settings = display.getDisplaySettings();
+               settings = settings.copy().animationFPS(newVal).build();
+               display.setDisplaySettings(settings);
             }
             catch (NumberFormatException e) {
                // Ignore it
