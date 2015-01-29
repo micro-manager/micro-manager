@@ -39,7 +39,6 @@ import javax.swing.SwingUtilities;
 
 import mmcorej.TaggedImage;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 

@@ -1,29 +1,17 @@
 package org.micromanager.acquisition.internal;
 
-import ij.CompositeImage;
 import ij.gui.ImageWindow;
 
-import java.awt.Point;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Set;
-import java.util.prefs.Preferences;
 
-import mmcorej.TaggedImage;
-
-import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import org.micromanager.data.Datastore;
-import org.micromanager.data.DatastoreLockedException;
 import org.micromanager.display.DisplayWindow;
-import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.GUIUtils;
-import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.ReportingUtils;
 

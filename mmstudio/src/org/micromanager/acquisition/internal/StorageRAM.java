@@ -2,11 +2,8 @@ package org.micromanager.acquisition.internal;
 
 import com.google.common.eventbus.Subscribe;
 
-import java.awt.Color;
-
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 
 import mmcorej.TaggedImage;
@@ -23,7 +20,6 @@ import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.data.internal.DefaultDatastore;
 import org.micromanager.data.internal.DefaultImage;
-import org.micromanager.data.internal.DefaultMetadata;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
 
 import org.micromanager.internal.MMStudio;

@@ -31,11 +31,9 @@ import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import java.util.prefs.Preferences;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -43,7 +41,6 @@ import java.util.regex.Pattern;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONException;
 import org.micromanager.internal.MMStudio;
@@ -64,7 +61,6 @@ import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.DefaultDisplayWindow;
 
-import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.MMScriptException;
