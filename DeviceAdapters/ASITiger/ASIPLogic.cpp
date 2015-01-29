@@ -469,6 +469,10 @@ int CPLogic::OnAdvancedProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
             AddAllowedValue(propName, g_CellTypeCode7, 7);
             AddAllowedValue(propName, g_CellTypeCode8, 8);
             AddAllowedValue(propName, g_CellTypeCode9, 9);
+            if (firmwareVersion_ > 3.049) {
+               AddAllowedValue(propName, g_CellTypeCode10, 10);
+               AddAllowedValue(propName, g_CellTypeCode11, 11);
+            }
             UpdateProperty(propName);
 
             // logic cell CCA Z code
@@ -595,6 +599,8 @@ int CPLogic::OnCellType(MM::PropertyBase* pProp, MM::ActionType eAct, long index
          case 7: success = pProp->Set(g_CellTypeCode7); break;
          case 8: success = pProp->Set(g_CellTypeCode8); break;
          case 9: success = pProp->Set(g_CellTypeCode9); break;
+         case 10:success = pProp->Set(g_CellTypeCode10); break;
+         case 11:success = pProp->Set(g_CellTypeCode11); break;
          default: success=0;
       }
       if (!success)
