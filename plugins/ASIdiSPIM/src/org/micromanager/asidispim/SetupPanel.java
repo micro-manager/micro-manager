@@ -456,12 +456,22 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
             "skip 1, split 2");
       sheetPanel.add(makeIncrementButton(micromirrorDeviceKey_,
             Properties.Keys.SA_OFFSET_X_DEG, "+", (float)0.01));
+      tmp_but = new JButton("Center");
+      tmp_but.setMargin(new Insets(4,8,4,8));
+      tmp_but.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            props_.setPropValue(micromirrorDeviceKey_, Properties.Keys.SA_OFFSET_X_DEG, 0f, true);
+            props_.callListeners();  // update plot
+         }
+      });
+      sheetPanel.add(tmp_but);
       tmp_sl = pu.makeSlider(
-              props.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.MIN_DEFLECTION_X), // min value
-              props.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.MAX_DEFLECTION_X), // max value
+              props.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.MIN_DEFLECTION_X)/4, // min value
+              props.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.MAX_DEFLECTION_X)/4, // max value
               1000, // the scale factor between internal integer representation and float representation
               micromirrorDeviceKey_, Properties.Keys.SA_OFFSET_X_DEG);
-      sheetPanel.add(tmp_sl, "span 5, growx, center, wrap");
+      sheetPanel.add(tmp_sl, "span 4, growx, center, wrap");
 
 
       // Layout of the SetupPanel
@@ -530,6 +540,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
             try {
                props_.setPropValue(devKey_, propKey_, 
                      incrementAmount_ + props_.getPropValueFloat(devKey_, propKey_), true);
+               props_.callListeners();  // update GUI
             } catch (Exception ex) {
                MyDialogUtils.showError(ex);
             }
