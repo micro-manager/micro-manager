@@ -22,10 +22,7 @@ package org.micromanager.acquisition.internal.multipagetiff;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.LinkedList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.TreeSet;
 import java.util.UUID;
 
@@ -34,13 +31,9 @@ import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import org.micromanager.internal.MMStudio;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Storage;
 import org.micromanager.data.internal.DefaultCoords;
-import org.micromanager.data.internal.DefaultImage;
-import org.micromanager.data.internal.DefaultMetadata;
-import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.ReportingUtils;
