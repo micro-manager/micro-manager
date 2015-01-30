@@ -517,7 +517,7 @@ public class Devices {
       case GALVOA:
       case GALVOB:
         if (side == d.side) {
-           ret = "Sheet Beam";
+           ret = "Imaging Beam";
         } else if (side == Devices.getOppositeSide(d.side)) {
            ret = "Epi Beam";
         } else {
