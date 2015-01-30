@@ -41,6 +41,9 @@ const char* g_PropertyWaitForResponse = "WaitForResponse";
 const char* g_Yes = "Yes";
 const char* g_No = "No";
 
+const char* g_LocalControl = "Local: Frontpanel control";
+const char* g_RemoteControl = "Remote: Interface commands mode";
+
 using namespace std;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -153,8 +156,8 @@ int PIZStage::Initialize()
    // Remote/Local
    pAct = new CPropertyAction (this, &PIZStage::OnInterface);
    CreateProperty("Interface", "Computer", MM::String, false, pAct);
-   AddAllowedValue("Interface", "Remote: Interface commands mode");
-   AddAllowedValue("Interface", "Local: Frontpanel control");
+   AddAllowedValue("Interface", g_RemoteControl);
+   AddAllowedValue("Interface", g_LocalControl);
 
    pAct = new CPropertyAction (this, &PIZStage::OnPosition);
    CreateProperty(MM::g_Keyword_Position, "0.0", MM::Float, false, pAct);
@@ -335,7 +338,17 @@ int PIZStage::OnInterface(MM::PropertyBase* pProp, MM::ActionType eAct)
          if (ret != DEVICE_OK)
             return ret;
          LogMessage(answer.c_str(), false);
-         pProp->Set(answer.c_str());
+         // NOTE: there are conflicting answers for what strings a device can
+         // return as its control mode (e.g. "Remote interface command control"
+         // vs. "Remote: Interface commands mode"). We should only set values
+         // that match the ones we allow.
+         string match = "Remote";
+         if (answer.compare(match) == 0) {
+             pProp->Set(g_RemoteControl);
+         }
+         else {
+             pProp->Set(g_LocalControl);
+         }
       }
    }
    else if (eAct == MM::AfterSet)
@@ -344,7 +357,7 @@ int PIZStage::OnInterface(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(mode);
       ostringstream command;
       command << "DEV:CONT ";
-      if (mode.compare("Local: Frontpanel control") == 0)
+      if (mode.compare(g_LocalControl) == 0)
          command << "LOC";
       else
          command << "REM";
