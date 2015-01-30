@@ -342,12 +342,16 @@ int PIZStage::OnInterface(MM::PropertyBase* pProp, MM::ActionType eAct)
          // return as its control mode (e.g. "Remote interface command control"
          // vs. "Remote: Interface commands mode"). We should only set values
          // that match the ones we allow.
-         string match = "Remote";
-         if (answer.compare(match) == 0) {
+         const string remoteMatch = "Remote";
+         const string localMatch = "Local";
+         if (answer.substr(0, remoteMatch.size()) == remoteMatch) {
              pProp->Set(g_RemoteControl);
          }
-         else {
+         else if (answer.substr(0, localMatch.size()) == localMatch) {
              pProp->Set(g_LocalControl);
+         }
+         else {
+             LogMessage("Unrecognized control mode [" + answer + "]");
          }
       }
    }
