@@ -26,7 +26,6 @@
 package edu.valelab.gaussianfit.utils;
 
 import org.apache.commons.math3.analysis.function.Exp;
-import org.apache.commons.math3.special.BesselJ;
 
 /**
  * Utility functions to calculate and fit the Probability density function
@@ -54,8 +53,7 @@ public class P2D {
       double first = r / (sigma * sigma);
       Exp exp = new Exp();
       double second = exp.value(- (mu * mu + r * r)/ (2 * sigma * sigma));
-      BesselJ besselJ = new BesselJ(0);
-      double third = besselJ.value(mu / sigma * sigma);
+      double third = Besseli.bessi(0, (r * mu) / (sigma * sigma) );
       
       return first * second * third;
    }
