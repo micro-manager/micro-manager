@@ -165,9 +165,10 @@ public class MultichannelModes {
          keyList.add(Keys.VOLUME);
 //         keyList.add(Keys.SIDE);
          // PLogic required to change slice by slice
-         if (devices_.isValidMMDevice(Devices.Keys.PLOGIC)) {
-            keyList.add(Keys.SLICE);
-         }
+         // TODO add support of slice by slice switching
+//         if (devices_.isValidMMDevice(Devices.Keys.PLOGIC)) {
+//            keyList.add(Keys.SLICE);
+//         }
          return keyList;
       }
 
