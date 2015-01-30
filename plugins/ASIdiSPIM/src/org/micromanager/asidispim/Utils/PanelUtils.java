@@ -21,6 +21,7 @@
 
 package org.micromanager.asidispim.Utils;
 
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -111,7 +112,7 @@ public class PanelUtils {
       int intmin = (int)(min*scalefactor);
       int intmax = (int)(max*scalefactor);
       
-      JSlider js = new JSlider(JSlider.HORIZONTAL, intmin, intmax, intmin);  // initialize with min value, will set to current value shortly 
+      JSlider js = new JSlider(intmin, intmax, intmin);  // initialize with min value, will set to current value shortly 
       ChangeListener l = new sliderListener(js, scalefactor, devKey, propKey);
       ((UpdateFromPropertyListenerInterface) l).updateFromProperty();  // set to value of property at present
       js.addChangeListener(l);
@@ -120,6 +121,12 @@ public class PanelUtils {
 
       js.setMajorTickSpacing(intmax-intmin);
       js.setMinorTickSpacing(scalefactor);
+      
+      // resolve issue where slider is too long/wide
+      // half preferred width, then use growx in MigLayout to stretch again 
+      Dimension size = js.getPreferredSize();
+      size.width = size.width/2;
+      js.setPreferredSize(size);
       
       //Create the label table
       Hashtable<Integer, JLabel> labelTable = new Hashtable<Integer, JLabel>();
