@@ -31,6 +31,7 @@ public abstract class Acquisition {
    protected String pixelSizeConfig_;
    protected volatile boolean finished_ = false;
    private String name_;
+   private long startTime_ms_ = -1;
 
 
    public Acquisition(double zStep) {
@@ -56,6 +57,11 @@ public abstract class Acquisition {
 
    public abstract int getDisplaySliceIndexFromZCoordinate(double z, int displayFrameIndex);
 
+   //TODO: change this when number of channels acutally implemented
+   public int getNumChannels() {
+      return (int) MMStudio.getInstance().getCore().getNumberOfCameraChannels();
+   }
+   
    public boolean isFinished() {
       return finished_;
    }
@@ -67,6 +73,14 @@ public abstract class Acquisition {
       finished_ = true;
    }
    
+   public long getStartTime_ms() {
+      return startTime_ms_;
+   }
+   
+   public void setStartTime_ms(long time) {
+      startTime_ms_ = time;
+   }
+   
    protected void initialize(String dir, String name) {
       int xOverlap = SettingsDialog.getOverlapX();
       int yOverlap = SettingsDialog.getOverlapY();
@@ -74,7 +88,7 @@ public abstract class Acquisition {
       //TODO: add limit to this queue in case saving and display goes much slower than acquisition?
       engineOutputQueue_ = new LinkedBlockingQueue<TaggedImage>();
 
-      JSONObject summaryMetadata = makeSummaryMD(1, (int) core_.getNumberOfCameraChannels(), name);
+      JSONObject summaryMetadata = CustomAcqEngine.makeSummaryMD(this, name);
 //         JSONObject summaryMetadata = makeSummaryMD(1,2);
       MultiResMultipageTiffStorage storage = new MultiResMultipageTiffStorage(dir, true, summaryMetadata, xOverlap, yOverlap, pixelSizeConfig_);
       //storage class has determined unique acq name, so it can now be stored
@@ -115,59 +129,4 @@ public abstract class Acquisition {
 
    protected abstract JSONArray createInitialPositionList();
 
-   //to be removed if this is factored out of acq engine in micromanager
-   //TODO: mkae sure Prefix is in new summary MD
-   private JSONObject makeSummaryMD (int numSlices, int numChannels, String prefix) {
-      try {
-         if (SettingsDialog.getDemoMode()) {
-            numChannels = SettingsDialog.getDemoNumChannels();
-         }
-         
-         CMMCore core = MMStudio.getInstance().getCore();
-         JSONObject summary = new JSONObject();
-         summary.put("Slices", numSlices);
-         //TODO: set slices to maximum number given the z device so that file size is overestimated
-         summary.put("Channels", numChannels);
-         summary.put("Frames", 1);
-         summary.put("SlicesFirst", true);
-         summary.put("TimeFirst", false);
-         summary.put("PixelType", "GRAY8");
-         summary.put("BitDepth", 8);
-         summary.put("Width", core.getImageWidth());
-         summary.put("Height", core.getImageHeight());
-         summary.put("Prefix", prefix);
-         JSONArray initialPosList = createInitialPositionList();
-         summary.put("InitialPositionList", initialPosList);
-         summary.put("Positions", initialPosList);
-         summary.put(MMTags.Summary.PIXSIZE, core.getPixelSizeUm());
-         
-
-
-         JSONArray chNames = new JSONArray();
-         JSONArray chColors = new JSONArray();
-         for (int i = 0; i < numChannels; i++) {
-            if (SettingsDialog.getDemoMode()) {
-               String[] names = {"Violet", "Blue", "Green", "Yellow", "Red", "Far red"};
-               int[] colors = {new Color(127,0,255).getRGB(), Color.blue.getRGB(), Color.green.getRGB(), 
-                  Color.yellow.getRGB(), Color.red.getRGB(), Color.pink.getRGB()};
-               chNames.put(names[i]);
-               chColors.put(colors[i]);
-            } else {
-               chNames.put(core.getCameraChannelName(i));
-               chColors.put(MMAcquisition.getMultiCamDefaultChannelColor(i, core.getCameraChannelName(i)));
-            }
-         }
-         summary.put("ChNames", chNames);
-         summary.put("ChColors", chColors);
-
-
-         //write pixel overlap into metadata
-//         summary.put("GridPixelOverlapX", SettingsDialog.getXOverlap());
-//         summary.put("GridPixelOverlapY", SettingsDialog.getYOverlap());
-         return summary;
-      } catch (Exception ex) {
-         ReportingUtils.showError("couldnt make summary metadata");
-      }
-      return null;
-   }
 }

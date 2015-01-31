@@ -42,13 +42,9 @@
         <DimensionLayout dim="0">
           <Group type="103" groupAlignment="0" attributes="0">
               <Group type="102" attributes="0">
-                  <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Group type="102" alignment="1" attributes="0">
-                          <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                          <Component id="acqTabbedPane_" min="-2" max="-2" attributes="0"/>
-                      </Group>
-                      <Group type="102" alignment="0" attributes="0">
+                      <Group type="102" attributes="0">
+                          <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="1" max="-2" attributes="0">
                               <Group type="102" attributes="0">
                                   <EmptySpace min="10" pref="10" max="-2" attributes="0"/>
@@ -67,21 +63,29 @@
                                   <Component id="jTabbedPane1" alignment="0" min="-2" max="-2" attributes="0"/>
                               </Group>
                           </Group>
-                          <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                      </Group>
+                      <Group type="102" alignment="0" attributes="0">
+                          <EmptySpace min="-2" pref="30" max="-2" attributes="0"/>
+                          <Component id="runAcqButton_" min="-2" max="-2" attributes="0"/>
                       </Group>
                   </Group>
-              </Group>
-              <Group type="102" alignment="0" attributes="0">
-                  <EmptySpace min="-2" pref="30" max="-2" attributes="0"/>
-                  <Component id="runAcqButton_" min="-2" max="-2" attributes="0"/>
                   <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
               </Group>
-              <Group type="102" alignment="1" attributes="0">
-                  <EmptySpace max="32767" attributes="0"/>
-                  <Component id="configPropsButton_" min="-2" max="-2" attributes="0"/>
+              <Group type="102" attributes="0">
                   <EmptySpace max="-2" attributes="0"/>
-                  <Component id="SettingsButton" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace min="-2" pref="38" max="-2" attributes="0"/>
+                  <Group type="103" groupAlignment="0" attributes="0">
+                      <Group type="102" alignment="1" attributes="0">
+                          <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                          <Component id="configPropsButton_" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="SettingsButton" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace min="-2" pref="38" max="-2" attributes="0"/>
+                      </Group>
+                      <Group type="102" alignment="0" attributes="0">
+                          <Component id="acqTabbedPane_" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace pref="18" max="32767" attributes="0"/>
+                      </Group>
+                  </Group>
               </Group>
           </Group>
         </DimensionLayout>
@@ -177,15 +181,100 @@
               <Layout>
                 <DimensionLayout dim="0">
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <EmptySpace min="0" pref="660" max="32767" attributes="0"/>
+                      <Component id="multipleAcqScrollPane_" pref="660" max="32767" attributes="0"/>
+                      <Group type="102" attributes="0">
+                          <Component id="jCheckBox1" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="addAcqButton_" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="removeAcqButton_" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="moveAcqUpButton_" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="moveAcqDownButton_" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                      </Group>
                   </Group>
                 </DimensionLayout>
                 <DimensionLayout dim="1">
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <EmptySpace min="0" pref="118" max="32767" attributes="0"/>
+                      <Group type="102" alignment="1" attributes="0">
+                          <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                          <Component id="multipleAcqScrollPane_" min="-2" pref="100" max="-2" attributes="0"/>
+                          <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="3" attributes="0">
+                              <Component id="jCheckBox1" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="addAcqButton_" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="removeAcqButton_" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="moveAcqDownButton_" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="moveAcqUpButton_" alignment="3" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <EmptySpace min="-2" pref="48" max="-2" attributes="0"/>
+                      </Group>
                   </Group>
                 </DimensionLayout>
               </Layout>
+              <SubComponents>
+                <Container class="javax.swing.JScrollPane" name="multipleAcqScrollPane_">
+
+                  <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
+                  <SubComponents>
+                    <Component class="javax.swing.JTable" name="multipleAcqTable_">
+                      <Properties>
+                        <Property name="model" type="javax.swing.table.TableModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
+                          <Connection code="new MultipleAcquisitionTableModel(multiAcqManager_)" type="code"/>
+                        </Property>
+                        <Property name="selectionModel" type="javax.swing.ListSelectionModel" editor="org.netbeans.modules.form.editors2.JTableSelectionModelEditor">
+                          <JTableSelectionModel selectionMode="0"/>
+                        </Property>
+                      </Properties>
+                      <Events>
+                        <EventHandler event="focusGained" listener="java.awt.event.FocusListener" parameters="java.awt.event.FocusEvent" handler="multipleAcqTable_FocusGained"/>
+                      </Events>
+                    </Component>
+                  </SubComponents>
+                </Container>
+                <Component class="javax.swing.JCheckBox" name="jCheckBox1">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="Enable"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jCheckBox1ActionPerformed"/>
+                  </Events>
+                </Component>
+                <Component class="javax.swing.JButton" name="addAcqButton_">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="Add"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="addAcqButton_ActionPerformed"/>
+                  </Events>
+                </Component>
+                <Component class="javax.swing.JButton" name="removeAcqButton_">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="Remove selected"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="removeAcqButton_ActionPerformed"/>
+                  </Events>
+                </Component>
+                <Component class="javax.swing.JButton" name="moveAcqDownButton_">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="&#x2193;"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="moveAcqDownButton_ActionPerformed"/>
+                  </Events>
+                </Component>
+                <Component class="javax.swing.JButton" name="moveAcqUpButton_">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="&#x2191;"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="moveAcqUpButton_ActionPerformed"/>
+                  </Events>
+                </Component>
+              </SubComponents>
             </Container>
             <Container class="javax.swing.JPanel" name="gridsPanel_">
               <Constraints>
@@ -371,7 +460,7 @@
                                       </Group>
                                       <Component id="savingNameLabel_" alignment="0" min="-2" max="-2" attributes="0"/>
                                   </Group>
-                                  <EmptySpace min="0" pref="581" max="32767" attributes="0"/>
+                                  <EmptySpace min="0" pref="620" max="32767" attributes="0"/>
                               </Group>
                               <Component id="savingDirTextField_" max="32767" attributes="0"/>
                           </Group>
@@ -393,7 +482,7 @@
                           <Component id="savingNameLabel_" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="savingNameTextField_" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace pref="129" max="32767" attributes="0"/>
+                          <EmptySpace pref="167" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -447,7 +536,7 @@
                               <Component id="timePointsCheckBox_" min="-2" max="-2" attributes="0"/>
                               <Component id="timePointsPanel_" min="-2" max="-2" attributes="0"/>
                           </Group>
-                          <EmptySpace pref="558" max="32767" attributes="0"/>
+                          <EmptySpace pref="578" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -457,8 +546,8 @@
                           <EmptySpace min="-2" pref="6" max="-2" attributes="0"/>
                           <Component id="timePointsCheckBox_" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
-                          <Component id="timePointsPanel_" min="-2" pref="74" max="-2" attributes="0"/>
-                          <EmptySpace pref="151" max="32767" attributes="0"/>
+                          <Component id="timePointsPanel_" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace pref="167" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -489,8 +578,8 @@
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Component id="numTimePointsSpinner_" min="-2" pref="49" max="-2" attributes="0"/>
                                   <Group type="102" attributes="0">
-                                      <Component id="timeIntervalTextField_" min="-2" pref="68" max="-2" attributes="0"/>
-                                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                                      <Component id="timeIntervalSpinner_" min="-2" pref="72" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
                                       <Component id="timeIntevalUnitCombo_" min="-2" pref="51" max="-2" attributes="0"/>
                                   </Group>
                               </Group>
@@ -509,17 +598,11 @@
                                           <Component id="numTimePointsSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
                                       </Group>
                                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                      <Group type="103" groupAlignment="0" attributes="0">
-                                          <Group type="102" attributes="0">
-                                              <Component id="timeIntervalLabel_" min="-2" max="-2" attributes="0"/>
-                                              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                                          </Group>
-                                          <Group type="102" alignment="1" attributes="0">
-                                              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                                              <Component id="timeIntervalTextField_" min="-2" max="-2" attributes="0"/>
-                                              <EmptySpace max="-2" attributes="0"/>
-                                          </Group>
+                                      <Group type="103" groupAlignment="3" attributes="0">
+                                          <Component id="timeIntervalLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="timeIntervalSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
                                       </Group>
+                                      <EmptySpace min="0" pref="13" max="32767" attributes="0"/>
                                   </Group>
                                   <Group type="102" alignment="1" attributes="0">
                                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
@@ -538,6 +621,9 @@
                           <Connection code="new DefaultComboBoxModel(new String[]{&quot;ms&quot;, &quot;s&quot;, &quot;min&quot;})" type="code"/>
                         </Property>
                       </Properties>
+                      <Events>
+                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="timeIntevalUnitCombo_ActionPerformed"/>
+                      </Events>
                     </Component>
                     <Component class="javax.swing.JLabel" name="timeIntervalLabel_">
                       <Properties>
@@ -555,16 +641,24 @@
                           <SpinnerModel initial="1" minimum="1" numberType="java.lang.Integer" stepSize="1" type="number"/>
                         </Property>
                       </Properties>
+                      <Events>
+                        <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="numTimePointsSpinner_StateChanged"/>
+                      </Events>
+                      <AuxValues>
+                        <AuxValue name="JavaCodeGenerator_allCodePost" type="java.lang.String" value="addTextEditListener(numTimePointsSpinner_);"/>
+                      </AuxValues>
                     </Component>
-                    <Component class="javax.swing.JFormattedTextField" name="timeIntervalTextField_">
+                    <Component class="javax.swing.JSpinner" name="timeIntervalSpinner_">
                       <Properties>
-                        <Property name="text" type="java.lang.String" value="jFormattedTextField1"/>
-                        <Property name="value" type="java.lang.Object" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
-                          <Connection code="0" type="code"/>
+                        <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
+                          <SpinnerModel initial="0.0" minimum="0.0" numberType="java.lang.Double" stepSize="1.0" type="number"/>
                         </Property>
                       </Properties>
+                      <Events>
+                        <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="timeIntervalSpinner_StateChanged"/>
+                      </Events>
                       <AuxValues>
-                        <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new javax.swing.JFormattedTextField(DecimalFormat.getInstance())"/>
+                        <AuxValue name="JavaCodeGenerator_allCodePost" type="java.lang.String" value="addTextEditListener(timeIntervalSpinner_);"/>
                       </AuxValues>
                     </Component>
                   </SubComponents>
@@ -599,7 +693,7 @@
                                   <EmptySpace min="-2" pref="40" max="-2" attributes="0"/>
                                   <Component id="zStepLabel" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="zStepField_" min="-2" pref="84" max="-2" attributes="0"/>
+                                  <Component id="zStepSpinner_" min="-2" pref="77" max="-2" attributes="0"/>
                               </Group>
                               <Group type="102" attributes="0">
                                   <Component id="simpleZPanel_" min="-2" max="-2" attributes="0"/>
@@ -618,7 +712,7 @@
                                   </Group>
                               </Group>
                           </Group>
-                          <EmptySpace pref="53" max="32767" attributes="0"/>
+                          <EmptySpace pref="164" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -626,17 +720,17 @@
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" alignment="0" attributes="0">
                           <EmptySpace max="-2" attributes="0"/>
-                          <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="checkBox3D_" min="-2" max="-2" attributes="0"/>
-                              <Group type="103" alignment="1" groupAlignment="3" attributes="0">
-                                  <Component id="zStepField_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                  <Component id="zStepLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="1" attributes="0">
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Component id="checkBox3D_" min="-2" max="-2" attributes="0"/>
+                                  <Component id="zStepLabel" alignment="1" min="-2" max="-2" attributes="0"/>
                               </Group>
+                              <Component id="zStepSpinner_" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Group type="102" alignment="0" attributes="0">
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="simpleZPanel_" min="-2" max="-2" attributes="0"/>
+                                  <Component id="simpleZPanel_" min="-2" pref="143" max="-2" attributes="0"/>
                                   <EmptySpace max="32767" attributes="0"/>
                               </Group>
                               <Group type="102" alignment="0" attributes="0">
@@ -682,23 +776,27 @@
                           <Group type="102" attributes="0">
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
-                                  <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                                      <Group type="102" attributes="0">
-                                          <Component id="zEndLabel" min="-2" max="-2" attributes="0"/>
-                                          <EmptySpace type="separate" max="-2" attributes="0"/>
-                                          <Component id="zEndField_" pref="0" max="32767" attributes="0"/>
+                                  <Group type="102" attributes="0">
+                                      <Group type="103" groupAlignment="0" attributes="0">
+                                          <Component id="simpleZStackRadioButton_" alignment="0" min="-2" max="-2" attributes="0"/>
+                                          <Component id="jLabel2" alignment="0" min="-2" max="-2" attributes="0"/>
+                                          <Component id="simpleZStackFootprintCombo_" alignment="0" min="-2" pref="139" max="-2" attributes="0"/>
                                       </Group>
-                                      <Group type="102" attributes="0">
-                                          <Component id="zStartLabel" min="-2" max="-2" attributes="0"/>
-                                          <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                          <Component id="zStartField_" min="-2" pref="79" max="-2" attributes="0"/>
+                                      <EmptySpace min="0" pref="8" max="32767" attributes="0"/>
+                                  </Group>
+                                  <Group type="102" alignment="0" attributes="0">
+                                      <Group type="103" groupAlignment="0" attributes="0">
+                                          <Component id="zStartLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                                          <Component id="zEndLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                                      </Group>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Group type="103" groupAlignment="0" attributes="0">
+                                          <Component id="zEndSpinner_" max="32767" attributes="0"/>
+                                          <Component id="zStartSpinner_" max="32767" attributes="0"/>
                                       </Group>
                                   </Group>
-                                  <Component id="simpleZStackRadioButton_" alignment="0" min="-2" max="-2" attributes="0"/>
-                                  <Component id="jLabel2" alignment="0" min="-2" max="-2" attributes="0"/>
-                                  <Component id="simpleZStackFootprintCombo_" alignment="0" min="-2" pref="139" max="-2" attributes="0"/>
                               </Group>
-                              <EmptySpace max="32767" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -707,15 +805,15 @@
                           <Group type="102" alignment="0" attributes="0">
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="simpleZStackRadioButton_" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace min="-2" pref="8" max="-2" attributes="0"/>
+                              <EmptySpace min="-2" pref="5" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="3" attributes="0">
                                   <Component id="zStartLabel" alignment="3" min="-2" max="-2" attributes="0"/>
-                                  <Component id="zStartField_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="zStartSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace type="unrelated" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="3" attributes="0">
                                   <Component id="zEndLabel" alignment="3" min="-2" max="-2" attributes="0"/>
-                                  <Component id="zEndField_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="zEndSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace type="unrelated" max="-2" attributes="0"/>
                               <Component id="jLabel2" min="-2" max="-2" attributes="0"/>
@@ -748,22 +846,6 @@
                         <Property name="text" type="java.lang.String" value="Z-end (&#xb5;m)"/>
                       </Properties>
                     </Component>
-                    <Component class="javax.swing.JFormattedTextField" name="zStartField_">
-                      <Properties>
-                        <Property name="text" type="java.lang.String" value="jFormattedTextField1"/>
-                      </Properties>
-                      <AuxValues>
-                        <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new javax.swing.JFormattedTextField(DecimalFormat.getInstance())"/>
-                      </AuxValues>
-                    </Component>
-                    <Component class="javax.swing.JFormattedTextField" name="zEndField_">
-                      <Properties>
-                        <Property name="text" type="java.lang.String" value="jFormattedTextField2"/>
-                      </Properties>
-                      <AuxValues>
-                        <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new javax.swing.JFormattedTextField(DecimalFormat.getInstance())"/>
-                      </AuxValues>
-                    </Component>
                     <Component class="javax.swing.JLabel" name="jLabel2">
                       <Properties>
                         <Property name="text" type="java.lang.String" value="Surface/Grid XY footprint:"/>
@@ -775,6 +857,35 @@
                           <Connection code="createSurfaceAndRegionComboBoxModel(true,true)" type="code"/>
                         </Property>
                       </Properties>
+                      <Events>
+                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="simpleZStackFootprintCombo_ActionPerformed"/>
+                      </Events>
+                    </Component>
+                    <Component class="javax.swing.JSpinner" name="zStartSpinner_">
+                      <Properties>
+                        <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
+                          <SpinnerModel initial="0.0" numberType="java.lang.Double" stepSize="1.0" type="number"/>
+                        </Property>
+                      </Properties>
+                      <Events>
+                        <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="zStartSpinner_StateChanged"/>
+                      </Events>
+                      <AuxValues>
+                        <AuxValue name="JavaCodeGenerator_allCodePost" type="java.lang.String" value="addTextEditListener(zStartSpinner_);"/>
+                      </AuxValues>
+                    </Component>
+                    <Component class="javax.swing.JSpinner" name="zEndSpinner_">
+                      <Properties>
+                        <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
+                          <SpinnerModel initial="0.0" numberType="java.lang.Double" stepSize="1.0" type="number"/>
+                        </Property>
+                      </Properties>
+                      <Events>
+                        <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="zEndSpinner_StateChanged"/>
+                      </Events>
+                      <AuxValues>
+                        <AuxValue name="JavaCodeGenerator_allCodePost" type="java.lang.String" value="addTextEditListener(zEndSpinner_);"/>
+                      </AuxValues>
                     </Component>
                   </SubComponents>
                 </Container>
@@ -814,7 +925,7 @@
                                   <Group type="102" alignment="0" attributes="0">
                                       <Component id="jLabel5" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
-                                      <Component id="jComboBox1" max="32767" attributes="0"/>
+                                      <Component id="footprint3DCombo_" max="32767" attributes="0"/>
                                   </Group>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
@@ -839,7 +950,7 @@
                               <EmptySpace type="unrelated" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="3" attributes="0">
                                   <Component id="jLabel5" alignment="3" min="-2" max="-2" attributes="0"/>
-                                  <Component id="jComboBox1" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="footprint3DCombo_" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace max="32767" attributes="0"/>
                           </Group>
@@ -874,6 +985,9 @@
                           <Connection code="createSurfaceAndRegionComboBoxModel(true,false)" type="code"/>
                         </Property>
                       </Properties>
+                      <Events>
+                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="topSurfaceCombo_ActionPerformed"/>
+                      </Events>
                     </Component>
                     <Component class="javax.swing.JComboBox" name="bottomSurfaceCombo_">
                       <Properties>
@@ -881,13 +995,16 @@
                           <Connection code="createSurfaceAndRegionComboBoxModel(true,false)" type="code"/>
                         </Property>
                       </Properties>
+                      <Events>
+                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="bottomSurfaceCombo_ActionPerformed"/>
+                      </Events>
                     </Component>
                     <Component class="javax.swing.JLabel" name="jLabel5">
                       <Properties>
                         <Property name="text" type="java.lang.String" value="XY foorprint from:"/>
                       </Properties>
                     </Component>
-                    <Component class="javax.swing.JComboBox" name="jComboBox1">
+                    <Component class="javax.swing.JComboBox" name="footprint3DCombo_">
                       <Properties>
                         <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
                           <StringArray count="2">
@@ -896,6 +1013,9 @@
                           </StringArray>
                         </Property>
                       </Properties>
+                      <Events>
+                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="footprint3DCombo_ActionPerformed"/>
+                      </Events>
                     </Component>
                   </SubComponents>
                 </Container>
@@ -997,9 +1117,15 @@
                     <Component class="javax.swing.JSpinner" name="distanceBelowSurfaceSpinner_">
                       <Properties>
                         <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
-                          <SpinnerModel initial="0.0" minimum="0.0" numberType="java.lang.Double" stepSize="0.0010" type="number"/>
+                          <SpinnerModel initial="0.0" minimum="0.0" numberType="java.lang.Double" stepSize="0.001" type="number"/>
                         </Property>
                       </Properties>
+                      <Events>
+                        <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="distanceBelowSurfaceSpinner_StateChanged"/>
+                      </Events>
+                      <AuxValues>
+                        <AuxValue name="JavaCodeGenerator_allCodePost" type="java.lang.String" value="addTextEditListener(distanceBelowSurfaceSpinner_);"/>
+                      </AuxValues>
                     </Component>
                     <Component class="javax.swing.JLabel" name="distanceAboveSurfaceLabel_">
                       <Properties>
@@ -1009,9 +1135,15 @@
                     <Component class="javax.swing.JSpinner" name="distanceAboveSurfaceSpinner_">
                       <Properties>
                         <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
-                          <SpinnerModel initial="0.0" minimum="0.0" numberType="java.lang.Double" stepSize="0.0010" type="number"/>
+                          <SpinnerModel initial="0.0" minimum="0.0" numberType="java.lang.Double" stepSize="0.001" type="number"/>
                         </Property>
                       </Properties>
+                      <Events>
+                        <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="distanceAboveSurfaceSpinner_StateChanged"/>
+                      </Events>
+                      <AuxValues>
+                        <AuxValue name="JavaCodeGenerator_allCodePost" type="java.lang.String" value="addTextEditListener(distanceAboveSurfaceSpinner_);"/>
+                      </AuxValues>
                     </Component>
                   </SubComponents>
                 </Container>
@@ -1019,14 +1151,6 @@
                   <Properties>
                     <Property name="text" type="java.lang.String" value="Z-step (&#xb5;m):"/>
                   </Properties>
-                </Component>
-                <Component class="javax.swing.JFormattedTextField" name="zStepField_">
-                  <Properties>
-                    <Property name="text" type="java.lang.String" value="jFormattedTextField3"/>
-                  </Properties>
-                  <AuxValues>
-                    <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new javax.swing.JFormattedTextField(NumberFormat.getInstance())"/>
-                  </AuxValues>
                 </Component>
                 <Container class="javax.swing.JPanel" name="panel2D_">
                   <Properties>
@@ -1042,7 +1166,7 @@
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" alignment="0" attributes="0">
                               <EmptySpace max="-2" attributes="0"/>
-                              <Component id="jLabel4" min="-2" max="-2" attributes="0"/>
+                              <Component id="footprin2DLabel_" min="-2" max="-2" attributes="0"/>
                               <EmptySpace type="unrelated" max="-2" attributes="0"/>
                               <Component id="footprint2DComboBox_" min="-2" pref="139" max="-2" attributes="0"/>
                               <EmptySpace max="32767" attributes="0"/>
@@ -1054,16 +1178,16 @@
                           <Group type="102" alignment="0" attributes="0">
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="3" attributes="0">
-                                  <Component id="jLabel4" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="footprin2DLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="footprint2DComboBox_" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
-                              <EmptySpace max="32767" attributes="0"/>
+                              <EmptySpace pref="27" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
                   </Layout>
                   <SubComponents>
-                    <Component class="javax.swing.JLabel" name="jLabel4">
+                    <Component class="javax.swing.JLabel" name="footprin2DLabel_">
                       <Properties>
                         <Property name="text" type="java.lang.String" value="Surface/Grid footprint:"/>
                       </Properties>
@@ -1074,6 +1198,9 @@
                           <Connection code="createSurfaceAndRegionComboBoxModel(true,true)" type="code"/>
                         </Property>
                       </Properties>
+                      <Events>
+                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="footprint2DComboBox_ActionPerformed"/>
+                      </Events>
                     </Component>
                   </SubComponents>
                 </Container>
@@ -1093,6 +1220,19 @@
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="checkBox2D_ActionPerformed"/>
                   </Events>
                 </Component>
+                <Component class="javax.swing.JSpinner" name="zStepSpinner_">
+                  <Properties>
+                    <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
+                      <SpinnerModel initial="1.0" numberType="java.lang.Double" stepSize="1.0" type="number"/>
+                    </Property>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="zStepSpinner_StateChanged"/>
+                  </Events>
+                  <AuxValues>
+                    <AuxValue name="JavaCodeGenerator_allCodePost" type="java.lang.String" value="addTextEditListener(zStepSpinner_);"/>
+                  </AuxValues>
+                </Component>
               </SubComponents>
             </Container>
             <Container class="javax.swing.JPanel" name="ChannelsTab_">
@@ -1107,20 +1247,20 @@
               <Layout>
                 <DimensionLayout dim="0">
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="jPanel3" alignment="0" max="32767" attributes="0"/>
+                      <Component id="channelsPanel_" alignment="0" max="32767" attributes="0"/>
                   </Group>
                 </DimensionLayout>
                 <DimensionLayout dim="1">
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" alignment="0" attributes="0">
-                          <Component id="jPanel3" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace min="0" pref="115" max="32767" attributes="0"/>
+                          <Component id="channelsPanel_" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace min="0" pref="146" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
               </Layout>
               <SubComponents>
-                <Container class="javax.swing.JPanel" name="jPanel3">
+                <Container class="javax.swing.JPanel" name="channelsPanel_">
                   <Properties>
                     <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
                       <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
@@ -1145,7 +1285,7 @@
                                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                                       <Component id="jComboBox2" min="-2" pref="107" max="-2" attributes="0"/>
                                   </Group>
-                                  <Component id="jScrollPane1" pref="677" max="32767" attributes="0"/>
+                                  <Component id="jScrollPane1" pref="788" max="32767" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
                           </Group>
@@ -1172,6 +1312,9 @@
                       <Properties>
                         <Property name="text" type="java.lang.String" value="Channels"/>
                       </Properties>
+                      <Events>
+                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="channelsCheckBox_ActionPerformed"/>
+                      </Events>
                     </Component>
                     <Container class="javax.swing.JScrollPane" name="jScrollPane1">
 
@@ -1198,6 +1341,9 @@
                       <Properties>
                         <Property name="text" type="java.lang.String" value="Remove"/>
                       </Properties>
+                      <Events>
+                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="removeChannelButton_ActionPerformed"/>
+                      </Events>
                     </Component>
                     <Component class="javax.swing.JComboBox" name="jComboBox2">
                       <Properties>
@@ -1210,6 +1356,9 @@
                           </StringArray>
                         </Property>
                       </Properties>
+                      <Events>
+                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jComboBox2ActionPerformed"/>
+                      </Events>
                     </Component>
                     <Component class="javax.swing.JLabel" name="jLabel3">
                       <Properties>
@@ -1236,8 +1385,8 @@
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="jLabel7" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
-                          <Component id="jComboBox4" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace pref="549" max="32767" attributes="0"/>
+                          <Component id="autofocusFiducialCombo_" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace pref="624" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -1247,9 +1396,9 @@
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="jLabel7" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="jComboBox4" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="autofocusFiducialCombo_" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
-                          <EmptySpace pref="227" max="32767" attributes="0"/>
+                          <EmptySpace pref="247" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -1260,7 +1409,7 @@
                     <Property name="text" type="java.lang.String" value="Fiducial channel index:"/>
                   </Properties>
                 </Component>
-                <Component class="javax.swing.JComboBox" name="jComboBox4">
+                <Component class="javax.swing.JComboBox" name="autofocusFiducialCombo_">
                   <Properties>
                     <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
                       <StringArray count="4">
@@ -1271,6 +1420,9 @@
                       </StringArray>
                     </Property>
                   </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="autofocusFiducialCombo_ActionPerformed"/>
+                  </Events>
                 </Component>
               </SubComponents>
             </Container>
@@ -1291,7 +1443,7 @@
                 </DimensionLayout>
                 <DimensionLayout dim="1">
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <EmptySpace min="0" pref="260" max="32767" attributes="0"/>
+                      <EmptySpace min="0" pref="278" max="32767" attributes="0"/>
                   </Group>
                 </DimensionLayout>
               </Layout>

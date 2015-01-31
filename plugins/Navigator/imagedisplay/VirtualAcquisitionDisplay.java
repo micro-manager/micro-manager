@@ -294,29 +294,21 @@ public abstract class VirtualAcquisitionDisplay implements ImageCacheListener {
    private void startup(JSONObject firstImageMetadata, AcquisitionVirtualStack virtualStack) {
          
       JSONObject summaryMetadata = getSummaryMetadata();
-      int numSlices = 1;
       int numFrames = 1;
       int numChannels = 1;
       int numGrayChannels;
-      int width = 0;
-      int height = 0;
-      int numComponents = 1;
+ 
       try {
          int imageChannelIndex;
          if (firstImageMetadata != null) {
-            width = MDUtils.getWidth(firstImageMetadata);
-            height = MDUtils.getHeight(firstImageMetadata);
             try {
                imageChannelIndex = MDUtils.getChannelIndex(firstImageMetadata);
             } catch (JSONException e) {
                imageChannelIndex = -1;
             }
          } else {
-            width = MDUtils.getWidth(summaryMetadata);
-            height = MDUtils.getHeight(summaryMetadata);
             imageChannelIndex = -1;
          }
-         numSlices = Math.max(summaryMetadata.getInt("Slices"), 1);
          numFrames = Math.max(summaryMetadata.getInt("Frames"), 1);
 
          numChannels = Math.max(1 + imageChannelIndex,
@@ -350,7 +342,8 @@ public abstract class VirtualAcquisitionDisplay implements ImageCacheListener {
          
       virtualStack_ = virtualStack;
 
-      hyperImage_ = createHyperImage(createMMImagePlus(virtualStack_),numGrayChannels, numSlices, numFrames);
+      //always say numslices is 1...it inevitably gets changed anyway
+      hyperImage_ = createHyperImage(createMMImagePlus(virtualStack_),numGrayChannels, 1, numFrames);
       canvas_ = hyperImage_.getCanvas();
       
       applyPixelSizeCalibration();

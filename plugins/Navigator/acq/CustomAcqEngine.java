@@ -7,10 +7,19 @@ package acq;
 import demo.DemoModeImageData;
 import gui.SettingsDialog;
 import ij.IJ;
+import java.awt.Color;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.concurrent.BlockingQueue;
 import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.micromanager.MMStudio;
+import org.micromanager.acquisition.MMAcquisition;
 import org.micromanager.api.MMTags;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
@@ -28,7 +37,6 @@ public class CustomAcqEngine {
    private ExploreAcquisition currentExploreAcq_;
    private FixedAreaAcquisition currentFixedAcq_;
 
-
    public CustomAcqEngine(CMMCore core) {
       core_ = core;
       updateDeviceNamesForAcquisition();
@@ -42,11 +50,11 @@ public class CustomAcqEngine {
                //Fixed acq take priority
                if (currentFixedAcq_ != null && !currentFixedAcq_.isPaused() && !currentFixedAcq_.isFinished()) {
                   events = currentFixedAcq_.getEventQueue();
-               } else if (currentExploreAcq_ != null  ) {
+               } else if (currentExploreAcq_ != null) {
                   events = currentExploreAcq_.getEventQueue();
                } else {
                   events = null;
-               }                       
+               }
                if (events != null && events.size() > 0) {
                   runEvent(events.poll());
                } else {
@@ -70,6 +78,7 @@ public class CustomAcqEngine {
 
    public void runFixedAreaAcquisition(final FixedAreaAcquisitionSettings settings) {
       new Thread(new Runnable() {
+
          @Override
          public void run() {
             //check if current fixed acquisition is running
@@ -80,7 +89,7 @@ public class CustomAcqEngine {
             if (currentExploreAcq_ != null && !currentExploreAcq_.isFinished()) {
                currentExploreAcq_.getEventQueue().clear();
             }
-            
+
             currentFixedAcq_ = new FixedAreaAcquisition(settings);
          }
       }).start();
@@ -118,10 +127,13 @@ public class CustomAcqEngine {
 
    private void acquireImage(AcquisitionEvent event) {
       try {
-         //TODO: openShutter? or autoshutter
          core_.snapImage();
-         //TODO: close shutter?
-
+         //get elapsed time
+         long currentTime = System.currentTimeMillis();
+         if (event.acquisition_.getStartTime_ms() == -1) {
+            //first image, initialize
+            event.acquisition_.setStartTime_ms(currentTime);
+         }
 
          int numCamChannels = (int) core_.getNumberOfCameraChannels();
          if (SettingsDialog.getDemoMode()) {
@@ -130,26 +142,16 @@ public class CustomAcqEngine {
          for (int c = 0; c < numCamChannels; c++) {
             //send to storage
             TaggedImage img = core_.getTaggedImage(c);
-            
+
             //substitute in dummy pixel data for demo mode
             if (SettingsDialog.getDemoMode()) {
-               byte[] demoPix = DemoModeImageData.getPixelData(c, (int) event.xPosition_, (int)event.yPosition_,
-                       (int) event.zPosition_, MDUtils.getWidth(img.tags), MDUtils.getHeight(img.tags));               
-               img = new TaggedImage(demoPix,img.tags);
-            }           
-            //add tags
-            long gridRow = event.acquisition_.getPositionManager().getGridRow(event.positionIndex_, 0);
-            long gridCol = event.acquisition_.getPositionManager().getGridCol(event.positionIndex_, 0);
-            img.tags.put(MMTags.Image.POS_NAME, "Grid_" + gridRow + "_" + gridCol);
-            img.tags.put(MMTags.Image.POS_INDEX, event.positionIndex_);
-            img.tags.put(MMTags.Image.SLICE_INDEX, event.sliceIndex_);
-            img.tags.put(MMTags.Image.SLICE, event.sliceIndex_);
-            img.tags.put(MMTags.Image.FRAME_INDEX, event.timeIndex_);
-            img.tags.put(MMTags.Image.FRAME, event.timeIndex_);
-            img.tags.put(MMTags.Image.CHANNEL_INDEX, event.channelIndex_ * numCamChannels + c);
-            img.tags.put(MMTags.Image.ZUM, event.zPosition_);
+               byte[] demoPix = DemoModeImageData.getPixelData(c, (int) event.xPosition_, (int) event.yPosition_,
+                       (int) event.zPosition_, MDUtils.getWidth(img.tags), MDUtils.getHeight(img.tags));
+               img = new TaggedImage(demoPix, img.tags);
+            }
+            //add metadata
+            addImageMetadata(img, event, numCamChannels, c, currentTime - event.acquisition_.getStartTime_ms());
 
-            //TODO: add elapsed time tag
             event.acquisition_.addImage(img);
          }
 
@@ -203,5 +205,88 @@ public class CustomAcqEngine {
             ReportingUtils.showError("Couldn't change channel group");
          }
       }
+   }
+
+   private void addImageMetadata(TaggedImage img, AcquisitionEvent event,
+           int numCamChannels, int camChannel, long elapsed_ms) throws JSONException {
+
+      //add tags
+      long gridRow = event.acquisition_.getPositionManager().getGridRow(event.positionIndex_, 0);
+      long gridCol = event.acquisition_.getPositionManager().getGridCol(event.positionIndex_, 0);
+      img.tags.put(MMTags.Image.POS_NAME, "Grid_" + gridRow + "_" + gridCol);
+      img.tags.put(MMTags.Image.POS_INDEX, event.positionIndex_);
+      img.tags.put(MMTags.Image.SLICE_INDEX, event.sliceIndex_);
+      img.tags.put(MMTags.Image.SLICE, event.sliceIndex_);
+      img.tags.put(MMTags.Image.FRAME_INDEX, event.timeIndex_);
+      img.tags.put(MMTags.Image.FRAME, event.timeIndex_);
+      img.tags.put(MMTags.Image.CHANNEL_INDEX, event.channelIndex_ * numCamChannels + camChannel);
+      img.tags.put(MMTags.Image.ZUM, event.zPosition_);
+      img.tags.put(MMTags.Image.ELAPSED_TIME_MS, elapsed_ms);
+      img.tags.put(MMTags.Image.TIME, (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss -")).format(Calendar.getInstance().getTime()));
+      //Navigator specific tags
+      img.tags.put("GridColumnIndex", gridCol);
+      img.tags.put("GridRowIndex", gridRow);
+   }
+
+   public static JSONObject makeSummaryMD(Acquisition acq, String prefix) {
+      try {
+
+         //num channels is camera channels * acquisitionChannels
+         int numChannels = SettingsDialog.getDemoMode() ? SettingsDialog.getDemoNumChannels() : acq.getNumChannels();
+
+         /////////////////////////////////////////////////////////////////
+         ////Summary metadata equivalent to normal MM metadata////////////
+         /////////////////////////////////////////////////////////////////
+         CMMCore core = MMStudio.getInstance().getCore();
+         JSONObject summary = new JSONObject();
+         summary.put("Channels", numChannels);
+         summary.put("Frames", 1);
+         summary.put("SlicesFirst", true);
+         summary.put("TimeFirst", false);
+         summary.put("PixelType", "GRAY8");
+         summary.put("BitDepth", 8);
+         summary.put("Width", core.getImageWidth());
+         summary.put("Height", core.getImageHeight());
+         summary.put("Prefix", prefix);
+         JSONArray initialPosList = acq.createInitialPositionList();
+         summary.put("InitialPositionList", initialPosList);
+         summary.put("Positions", initialPosList.length());
+         summary.put(MMTags.Summary.PIXSIZE, core.getPixelSizeUm());
+         summary.put("z-step_um", acq.getZStep());
+         summary.put("Interval_ms", acq instanceof FixedAreaAcquisition ? ((FixedAreaAcquisition) acq).getTimeInterval_ms() : 0);
+
+         /////////////////////////////////////////////////////////////////
+         ////Summary metadata specific to Navigator///////////////////////
+         /////////////////////////////////////////////////////////////////
+
+         //write pixel overlap into metadata
+         summary.put("GridPixelOverlapX", SettingsDialog.getOverlapX());
+         summary.put("GridPixelOverlapY", SettingsDialog.getOverlapY());
+         summary.put("NavigatorExploreAcquisition", acq instanceof ExploreAcquisition);
+
+
+         JSONArray chNames = new JSONArray();
+         JSONArray chColors = new JSONArray();
+         for (int i = 0; i < numChannels; i++) {
+            if (SettingsDialog.getDemoMode()) {
+               String[] names = {"Violet", "Blue", "Green", "Yellow", "Red", "Far red"};
+               int[] colors = {new Color(127, 0, 255).getRGB(), Color.blue.getRGB(), Color.green.getRGB(),
+                  Color.yellow.getRGB(), Color.red.getRGB(), Color.pink.getRGB()};
+               chNames.put(names[i]);
+               chColors.put(colors[i]);
+            } else {
+               chNames.put(core.getCameraChannelName(i));
+               chColors.put(MMAcquisition.getMultiCamDefaultChannelColor(i, core.getCameraChannelName(i)));
+            }
+         }
+         summary.put("ChNames", chNames);
+         summary.put("ChColors", chColors);
+
+         return summary;
+      } catch (Exception ex) {
+         ReportingUtils.showError("couldnt make summary metadata");
+         ex.printStackTrace();
+      }
+      return null;
    }
 }

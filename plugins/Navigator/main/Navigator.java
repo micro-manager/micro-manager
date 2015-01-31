@@ -37,6 +37,10 @@ public class Navigator implements MMPlugin{
       }
    }
    
+   public static Preferences getPrefs() {
+      return prefs_;
+   }
+   
    @Override
    public void dispose() {
    }

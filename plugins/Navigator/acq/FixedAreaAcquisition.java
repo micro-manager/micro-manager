@@ -5,6 +5,7 @@
 package acq;
 
 import coordinates.XYStagePosition;
+import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -72,6 +73,10 @@ public class FixedAreaAcquisition extends Acquisition {
       return paused_;
    }
    
+   public double getTimeInterval_ms() {
+      return settings_.timePointInterval_ * (settings_.timeIntervalUnit_ == 1 ? 1000 : (settings_.timeIntervalUnit_ == 2 ? 60000 : 1));
+   }
+   
    public int getNumRows() {
       int maxIndex = 0;
       for (XYStagePosition p : positions_) {
@@ -100,7 +105,13 @@ public class FixedAreaAcquisition extends Acquisition {
          positions_ = settings_.footprint_.getXYPositions();
       } else {
          //no space mode, use current stage positon
-         //TODO
+         positions_ = new ArrayList<XYStagePosition>();
+         try {
+            positions_.add(new XYStagePosition(MMStudio.getInstance().getCore().getXYStagePosition(MMStudio.getInstance().getCore().getXYStageDevice()),
+                    0,0,0,0,null));
+         } catch (Exception ex) {
+            ReportingUtils.showError("Couldn't get XY stage position");
+         }
       }
    }
 
@@ -254,17 +265,16 @@ public class FixedAreaAcquisition extends Acquisition {
 //         return interpPoints[0].z - settings_.surface_.getZPadding();
       } else if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.SIMPLE_Z_STACK) {
          return settings_.zStart_;
-      } else if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.REGION_2D) {
+      } else {
+         //region2D or no region
          try {
             return core_.getPosition(zStage_);
          } catch (Exception ex) {
             ReportingUtils.showError("Couldn't read z position from core");
             throw new RuntimeException();
          }
-      } else {
-         throw new RuntimeException();
-      }
-   }
+      } 
+   }  
 
    //TODO account for autofocusing via frame on both of these
    @Override

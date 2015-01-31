@@ -5,19 +5,10 @@ package coordinates;
  * and open the template in the editor.
  */
 import java.awt.geom.AffineTransform;
-import java.awt.geom.NoninvertibleTransformException;
-import java.awt.geom.Point2D;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.TreeMap;
 import java.util.prefs.Preferences;
 import org.micromanager.MMStudio;
-import org.micromanager.api.MultiStagePosition;
-import org.micromanager.api.PositionList;
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.api.StagePosition;
 import org.micromanager.utils.JavaUtils;
-import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
 /**

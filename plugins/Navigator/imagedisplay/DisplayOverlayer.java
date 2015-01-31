@@ -399,9 +399,7 @@ public class DisplayOverlayer {
             if (Thread.interrupted()) {
                throw new InterruptedException();
             }
-         }
-         System.out.println("\n\n");
-
+         } 
       }
    }
 
