@@ -9,9 +9,9 @@ import org.apache.commons.math.optimization.fitting.ParametricRealFunction;
  * @author nico
  */
 public class ParametricGaussianMLE implements ParametricRealFunction{
-   private int width_;
-   private int height_;
-   private int mode_;
+   private final int width_;
+   private final int height_;
+   private final int mode_;
 
    public ParametricGaussianMLE(int mode, int width, int height) {
       width_ = width;
@@ -19,6 +19,7 @@ public class ParametricGaussianMLE implements ParametricRealFunction{
       mode_ = mode;
    }
 
+   @Override
    public double value(double d, double[] doubles) throws FunctionEvaluationException {
       double value = 0;
       if (mode_ == 1)
@@ -30,6 +31,7 @@ public class ParametricGaussianMLE implements ParametricRealFunction{
       return value;
    }
 
+   @Override
    public double[] gradient(double d, double[] doubles) throws FunctionEvaluationException {
       double[] value = {0.0};
       if (mode_ == 1)
