@@ -2520,9 +2520,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
            final int nrQuadrants) {
       final int[] rows = jTable1_.getSelectedRows();
       
-      if (rows == null || rows.length > 1) {
+      if (rows == null || rows.length < 1) {
          JOptionPane.showMessageDialog(getInstance(),
-                 "Please one dataset to filter");
+                 "Please select a dataset to filter");
          return;
       }
       
