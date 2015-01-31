@@ -20,7 +20,7 @@ if (mw.isMMWindow()) {
 	nrFrames = siPlus.getNFrames();
 	nrChannels = siPlus.getNChannels();
 	nrSlices = siPlus.getNSlices();
-	if (desiredTimePoint <= nrFrames) {
+	if (desiredFrame <= nrFrames) {
 		acq = gui.getUniqueAcquisitionName(siPlus.getTitle() + "Frame"+desiredFrame);
 		gui.openAcquisition(acq, "", 1, nrChannels, nrSlices, nrPos, true, false);
 		for (p=0; p< nrPos; p++) {
