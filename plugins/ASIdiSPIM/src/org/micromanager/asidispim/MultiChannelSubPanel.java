@@ -339,12 +339,13 @@ public class MultiChannelSubPanel extends ListeningJPanel {
    
    /**
     * Takes care of actually selecting next channel in table.
-    * Called by acquisition code.
+    * Called by acquisition code.  Blocks until devices ready.
     */
    public void selectNextChannel() {
       ChannelSpec channel = usedChannels_[nextChannelIndex_];
       try {
          core_.setConfig(channelGroup_.getSelectedItem().toString(), channel.config_);
+         core_.waitForConfig(channelGroup_.getSelectedItem().toString(), channel.config_);
       } catch (Exception e) {
          MyDialogUtils.showError(e, "Couldn't select preset " + channel.config_ +
                "of channel group " + channelGroup_.getSelectedItem().toString());
