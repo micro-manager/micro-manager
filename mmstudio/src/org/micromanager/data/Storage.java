@@ -38,13 +38,15 @@ public interface Storage {
    /**
     * Retrieve a list of all images whose Coords match the given incomplete
     * Coords instance. For example, providing a Coords of {@code <"z" = 9>}
-    * would return all Images whose position along the "z" axis is 9. May be
-    * empty.
+    * would return all Images whose position along the "z" axis is 9 (note that
+    * this means that Images with no defined position along that axis will
+    * not be returned). The result may be empty.
     */
    public List<Image> getImagesMatching(Coords coords);
 
    /**
-    * Return the largest stored position along the specified axis.
+    * Return the largest stored position along the specified axis. Will be -1
+    * if no images have a position along that axis.
     */
    public Integer getMaxIndex(String axis);
 
