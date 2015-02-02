@@ -5,6 +5,7 @@ import org.micromanager.data.SummaryMetadata;
 /**
  * This class signifies that new summary metadata has been set for a 
  * Datastore.
+ * TODO: should be renamed to DefaultNewSummaryMetadataEvent.
  */
 public class NewSummaryMetadataEvent implements org.micromanager.data.NewSummaryMetadataEvent {
    private SummaryMetadata metadata_;

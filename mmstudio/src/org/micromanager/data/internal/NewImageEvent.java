@@ -5,6 +5,7 @@ import org.micromanager.data.Image;
 
 /**
  * This class signifies that an image has been added to a Datastore.
+ * TODO: should be renamed to DefaultNewImageEvent.
  */
 public class NewImageEvent implements org.micromanager.data.NewImageEvent {
    public Image image_;
