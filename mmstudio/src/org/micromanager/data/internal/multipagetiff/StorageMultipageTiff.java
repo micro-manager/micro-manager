@@ -17,7 +17,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package org.micromanager.acquisition.internal.multipagetiff;
+package org.micromanager.data.internal.multipagetiff;
 
 import com.google.common.eventbus.Subscribe;
 

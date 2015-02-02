@@ -23,7 +23,7 @@ import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.RequestToCloseEvent;
 import org.micromanager.events.DatastoreClosingEvent;
 
-import org.micromanager.acquisition.internal.StorageRAM;
+import org.micromanager.data.internal.StorageRAM;
 
 import org.micromanager.display.internal.DefaultDisplayWindow;
 import org.micromanager.internal.MMStudio;

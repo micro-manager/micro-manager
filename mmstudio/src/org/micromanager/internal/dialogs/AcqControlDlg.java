@@ -47,7 +47,7 @@ import javax.swing.table.*;
 import mmcorej.CMMCore;
 
 import org.micromanager.acquisition.internal.AcquisitionEngine;
-import org.micromanager.acquisition.internal.multipagetiff.StorageMultipageTiff;
+import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
 import org.micromanager.ScriptInterface;
 import org.micromanager.internal.interfaces.AcqSettingsListener;
 import org.micromanager.internal.MMOptions;

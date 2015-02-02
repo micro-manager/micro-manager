@@ -45,8 +45,9 @@ import org.json.JSONObject;
 import org.json.JSONException;
 import org.micromanager.internal.MMStudio;
 
-import org.micromanager.acquisition.internal.multipagetiff.MultipageTiffReader;
-import org.micromanager.acquisition.internal.multipagetiff.StorageMultipageTiff;
+import org.micromanager.data.internal.multipagetiff.MultipageTiffReader;
+import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
+import org.micromanager.data.internal.StorageRAM;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreLockedException;
 import org.micromanager.data.Storage;
