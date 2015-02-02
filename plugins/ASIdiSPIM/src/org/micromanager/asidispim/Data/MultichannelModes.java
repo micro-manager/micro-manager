@@ -30,6 +30,7 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
 
 import org.micromanager.asidispim.Utils.DevicesListenerInterface;
+import org.micromanager.asidispim.Utils.MyDialogUtils;
 
 
 /**
@@ -132,7 +133,7 @@ public class MultichannelModes {
       /**
        * Resets the items in the combo box based on devices available.
        * Besides being called on original combo box creation, it is called 
-       * whenever something in the devices tab is changed
+       * whenever something in the devices tab is changed.
        */
       private void updateSelections() {
          // save the existing selection if it exists
@@ -151,6 +152,11 @@ public class MultichannelModes {
          jcb_.setModel(cbModel);
          if (origItem != null) {
             jcb_.setSelectedItem(origItem);
+         } else {
+            // if existing selection isn't valid now then write new selection to prefs
+            MyDialogUtils.showError("For preference " + propKey_.toString() + " the previous selection \""
+                  + getKeyFromPrefCode(origCode) + "\" is not valid.  Changing to default.");
+            props_.setPropValue(devKey_, propKey_, ((Keys)jcb_.getSelectedItem()).getPrefCode());
          }
       }//updateSelections
 
