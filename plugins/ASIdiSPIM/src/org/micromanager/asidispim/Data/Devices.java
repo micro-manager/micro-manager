@@ -38,8 +38,6 @@ import org.micromanager.asidispim.Utils.DevicesListenerInterface;
 import org.micromanager.asidispim.Utils.MyDialogUtils;
 
 
-// TODO implement fast axis reverse checkbox (may need device adapter change and possibly even firmware-level change)
-
 /**
  * Class that holds information about the selected devices. This should always
  * be the only source of device information. The GUI should update this class

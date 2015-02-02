@@ -126,6 +126,7 @@ public class Properties {
       CAMERA_NAME("CameraName"),               // for Andor Zyla
       PIXEL_READOUT_RATE("PixelReadoutRate"),  // for Andor Zyla
       ANDOR_OVERLAP("Overlap"),                // for Andor Zyla
+      PIXEL_TYPE("PixelType"),            // for DemoCam
       FIRMWARE_VERSION("FirmwareVersion"),
       CAMERA("Camera"),
       PLUGIN_POSITION_REFRESH_INTERVAL("PositionRefreshInterval(s)"),
@@ -225,6 +226,7 @@ public class Properties {
       LEVEL_ANDOR("External Exposure"),
       POSITIVE("POSITIVE"),
       NEGATIVE("NEGATIVE"),
+      SIXTEENBIT("16bit"),
       AREA("AREA"),                // for Hamamatsu's SENSOR MODE
       PROGRESSIVE("PROGRESSIVE"),  // for Hamamatsu's SENSOR MODE, the "lightsheet" mode
       SYNCREADOUT("SYNCREADOUT"),  // for Hamamatsu's TRIGGER ACTIVE

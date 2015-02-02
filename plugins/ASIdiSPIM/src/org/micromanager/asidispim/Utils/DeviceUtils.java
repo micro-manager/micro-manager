@@ -152,7 +152,7 @@ public class DeviceUtils {
             checkPropertyExists(key, Properties.Keys.TRIGGER_MODE);
             break;
          case DEMOCAM:
-            // no checks
+            checkPropertyValueEquals(key, Properties.Keys.PIXEL_TYPE, Properties.Values.SIXTEENBIT);
             break;
          default:
             MyDialogUtils.showError("Plugin doesn't support your camera for SPIM yet;"
@@ -223,7 +223,8 @@ public class DeviceUtils {
     * class.
     * 
     * @param deviceType - Micro-Manager device type (mmcorej.DeviceType)
-    * @param deviceName - ASi diSPIM device type (see Devices class)
+    * @param deviceKey - ASi diSPIM device key (see Devices class)
+    * @param maximumWidth -
     * @return final JComboBox
     */
    public JComboBox makeDeviceSelectionBox(mmcorej.DeviceType deviceType,
