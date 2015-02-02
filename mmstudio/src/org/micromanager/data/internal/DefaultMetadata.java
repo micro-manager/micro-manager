@@ -563,11 +563,222 @@ public class DefaultMetadata implements Metadata {
          MDUtils.setElapsedTimeMs(result, 
                (getElapsedTimeMs() == null) ? 0 : getElapsedTimeMs());
          MDUtils.setComments(result, getComments());
+         if (userData_ != null) {
+            result.put("userData", userData_.legacyToJSON());
+         }
+         if (summaryMetadata_ != null) {
+            result.put("summaryMetadata", summaryMetadata_.legacyToJSON());
+         }
          return result;
       }
       catch (JSONException e) {
          ReportingUtils.logError(e, "Couldn't convert DefaultMetadata to JSON.");
          return null;
       }
+   }
+
+   /**
+    * For backwards compatibility and save/loading, generate a new Metadata
+    * from JSON.
+    */
+   public static Metadata legacyFromJSON(JSONObject tags) {
+      Builder builder = new Builder();
+      try {
+         builder.uuid(UUID.fromString(tags.getString("uuid")));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Metadata failed to extract field uuid");
+      }
+      try {
+         builder.source(tags.getString("source"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Metadata failed to extract field source");
+      }
+
+      // TODO: we don't try to preserve/restore the MultiStagePosition property.
+
+      try {
+         builder.keepShutterOpenSlices(tags.getBoolean("keepShutterOpenSlices"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Metadata failed to extract field keepShutterOpenSlices");
+      }
+      try {
+         builder.keepShutterOpenChannels(tags.getBoolean("keepShutterOpenChannels"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Metadata failed to extract field keepShutterOpenChannels");
+      }
+
+      try {
+         builder.pixelType(tags.getString("pixelType"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Metadata failed to extract field pixelType");
+      }
+      try {
+         builder.bitDepth(tags.getInt("bitDepth"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Metadata failed to extract field bitDepth");
+      }
+      try {
+         builder.numComponents(tags.getInt("numComponents"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Metadata failed to extract field numComponents");
+      }
+      try {
+         builder.ijType(tags.getInt("ijType"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Metadata failed to extract field ijType");
+      }
+      try {
+         builder.channelName(tags.getString("channelName"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Metadata failed to extract field channelName");
+      }
+      try {
+         builder.exposureMs(tags.getDouble("exposureMs"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Metadata failed to extract field exposureMs");
+      }
+      try {
+         builder.elapsedTimeMs(tags.getDouble("elapsedTimeMs"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Metadata failed to extract field elapsedTimeMs");
+      }
+      try {
+         builder.startTimeMs(tags.getDouble("startTimeMs"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Metadata failed to extract field startTimeMs");
+      }
+      try {
+         builder.binning(tags.getInt("binning"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Metadata failed to extract field binning");
+      }
+
+      try {
+         builder.imageNumber(tags.getInt("imageNumber"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Metadata failed to extract field imageNumber");
+      }
+      try {
+         builder.gridRow(tags.getInt("gridRow"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Metadata failed to extract field gridRow");
+      }
+      try {
+         builder.gridColumn(tags.getInt("gridColumn"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Metadata failed to extract field gridColumn");
+      }
+      try {
+         builder.positionName(tags.getString("positionName"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Metadata failed to extract field positionName");
+      }
+      try {
+         builder.xPositionUm(tags.getDouble("xPositionUm"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Metadata failed to extract field xPositionUm");
+      }
+      try {
+         builder.yPositionUm(tags.getDouble("yPositionUm"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Metadata failed to extract field yPositionUm");
+      }
+      try {
+         builder.zPositionUm(tags.getDouble("zPositionUm"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Metadata failed to extract field zPositionUm");
+      }
+
+      try {
+         builder.pixelSizeUm(tags.getDouble("pixelSizeUm"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Metadata failed to extract field pixelSizeUm");
+      }
+      try {
+         builder.camera(tags.getString("camera"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Metadata failed to extract field camera");
+      }
+      try {
+         builder.receivedTime(tags.getString("receivedTime"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Metadata failed to extract field receivedTime");
+      }
+      try {
+         builder.excitationLabel(tags.getString("excitationLabel"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Metadata failed to extract field excitationLabel");
+      }
+      try {
+         builder.emissionLabel(tags.getString("emissionLabel"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Metadata failed to extract field emissionLabel");
+      }
+      try {
+         builder.ROI(MDUtils.getROI(tags));
+      }
+      catch (Exception e) { // JSONException or MMScriptException
+         ReportingUtils.logError(e, "Metadata failed to extract field ROI");
+      }
+      try {
+         builder.comments(tags.getString("comments"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Metadata failed to extract field comments");
+      }
+
+      try {
+         builder.color(tags.getInt("color"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Metadata failed to extract field color");
+      }
+      try {
+         builder.pixelAspect(tags.getDouble("pixelAspect"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Metadata failed to extract field pixelAspect");
+      }
+
+      try {
+         builder.userData(DefaultPropertyMap.legacyFromJSON(
+                  tags.getJSONObject("userData")));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Metadata failed to extract field userData");
+      }
+      try {
+         builder.summaryMetadata(DefaultSummaryMetadata.legacyFromJSON(
+               tags.getJSONObject("summaryMetadata")));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Metadata failed to extract field summaryMetadata");
+      }
+      return builder.build();
    }
 }
