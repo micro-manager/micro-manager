@@ -47,6 +47,7 @@ import org.micromanager.internal.MMStudio;
 
 import org.micromanager.data.internal.multipagetiff.MultipageTiffReader;
 import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
+import org.micromanager.data.internal.StorageSinglePlaneTiffSeries;
 import org.micromanager.data.internal.StorageRAM;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreLockedException;
@@ -96,7 +97,7 @@ public class MMAcquisition {
    private long startTimeMs_;
    private final String comment_ = "";
    private String rootDirectory_;
-   private Datastore store_;
+   private DefaultDatastore store_;
    private DefaultDisplayWindow display_;
    private final boolean existing_;
    private final boolean virtual_;
@@ -287,7 +288,8 @@ public class MMAcquisition {
                   }
                }
             } else {
-               ReportingUtils.logError("TODO: implement loading multi-file TIFFs");
+               imageFileManager = new StorageSinglePlaneTiffSeries(
+                     store_, dirName, false);
             }
          } catch (Exception ex) {
             ReportingUtils.showError(ex, "Failed to open file");
@@ -320,6 +322,8 @@ public class MMAcquisition {
 
          SummaryMetadata summary = DefaultSummaryMetadata.legacyFromJSON(summary_);
          try {
+            // TODO: allow users to save in the StorageSinglePlaneTiffSeries
+            // format.
             store_.setStorage(new StorageMultipageTiff(store_, dirName, true));
             store_.setSummaryMetadata(summary);
          }
@@ -350,7 +354,8 @@ public class MMAcquisition {
             if (multipageTiff) {
                tempImageFileManager = new StorageMultipageTiff(store_, dirName, false);
             } else {
-               ReportingUtils.logError("TODO: implement loading non-multipage TIFFS");
+               tempImageFileManager = new StorageSinglePlaneTiffSeries(
+                     store_, dirName, false);
             }
          } catch (Exception ex) {
             ReportingUtils.showError(ex, "Failed to open file");

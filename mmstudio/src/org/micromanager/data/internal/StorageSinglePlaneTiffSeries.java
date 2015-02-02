@@ -67,11 +67,9 @@ public class StorageSinglePlaneTiffSeries implements Storage {
    private Coords maxIndices_;
 
    public StorageSinglePlaneTiffSeries(DefaultDatastore store,
-         String directory, Boolean newDataSet,
-         SummaryMetadata summaryMetadata) {
+         String directory, boolean newDataSet) {
       dir_ = directory;
       isDatasetWritable_ = newDataSet;
-      summaryMetadata_ = summaryMetadata;
       // Must be informed of events before traditional consumers, so that we
       // can provide images on request.
       store.registerForEvents(this, 0);
@@ -270,7 +268,7 @@ public class StorageSinglePlaneTiffSeries implements Storage {
          filename += String.format("_%s" + precision, axis,
                coords.getPositionAt(axis));
       }
-      return filename;
+      return filename + ".tif";
    }
 
    private void writeFrameMetadata(Image image) {
