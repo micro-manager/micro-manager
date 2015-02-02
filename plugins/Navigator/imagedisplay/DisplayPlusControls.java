@@ -7,6 +7,7 @@ package imagedisplay;
 import acq.Acquisition;
 import acq.ExploreAcquisition;
 import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
 import gui.GUI;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -20,7 +21,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.NumberUtils;
-import surfacesandregions.MultiPosGrid;
+import surfacesandregions.MultiPosRegion;
 import surfacesandregions.RegionManager;
 import surfacesandregions.SurfaceManager;
 import surfacesandregions.SurfaceRegionComboBoxModel;
@@ -294,6 +295,13 @@ public class DisplayPlusControls extends Panel {
          }
       });
       
+      if (acq_ instanceof ExploreAcquisition) {
+         //disable until some positions explored, so there is some refernece
+         //position to base coordinates off of
+         gridButton_.setEnabled(false);
+         surfaceButton_.setEnabled(false);
+      }
+      
       buttonPanel.add(showFolderButton_);
       buttonPanel.add(abortButton_);
       buttonPanel.add(pauseButton_);
@@ -451,10 +459,10 @@ public class DisplayPlusControls extends Panel {
       return newGridControlPanel;
    }
  
-   private MultiPosGrid createNewGrid() {
+   private MultiPosRegion createNewGrid() {
       int imageWidth = display_.getImagePlus().getWidth();
       int imageHeight = display_.getImagePlus().getHeight();
-      return new MultiPosGrid(regionManager_,(Integer) gridRowSpinner_.getValue(), (Integer) gridColSpinner_.getValue(), 
+      return new MultiPosRegion(regionManager_,(Integer) gridRowSpinner_.getValue(), (Integer) gridColSpinner_.getValue(), 
               display_.stageCoordFromImageCoords(imageWidth / 2, imageHeight / 2));
    }
 
@@ -525,10 +533,15 @@ public class DisplayPlusControls extends Panel {
       pauseButton_.setEnabled(acquiring);
    }
 
-   public void newImageUpdate(JSONObject tags) {
+   @Subscribe
+   public void onNewImageEvent(NewImageEvent event) {
+      JSONObject tags = display_.getCurrentMetadata();
       if (tags == null) {
          return;
       }
+      //now that there's an image, surfaces and grids can be made
+      gridButton_.setEnabled(true);
+      surfaceButton_.setEnabled(true);
       updateLabels(tags);
    }
 

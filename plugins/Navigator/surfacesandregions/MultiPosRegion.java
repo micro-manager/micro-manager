@@ -19,7 +19,7 @@ import org.micromanager.utils.ReportingUtils;
  *
  * @author Henry
  */
-public class MultiPosGrid implements XYFootprint{
+public class MultiPosRegion implements XYFootprint{
 
    private Point2D.Double center_; //stored in stage space
    private int overlapX_, overlapY_, rows_, cols_;
@@ -27,7 +27,7 @@ public class MultiPosGrid implements XYFootprint{
    private String name_;
    private String pixelSizeConfig_;
 
-   public MultiPosGrid(RegionManager manager, int r, int c, Point2D.Double center)  {
+   public MultiPosRegion(RegionManager manager, int r, int c, Point2D.Double center)  {
       manager_ = manager;
       name_ = manager.getNewName();
       center_ = center;
@@ -37,6 +37,11 @@ public class MultiPosGrid implements XYFootprint{
          ReportingUtils.showError("couldnt get pixel size config");
       }
       updateParams(r, c);
+   }
+
+   @Override
+   public String toString() {
+      return name_;
    }
 
    public String getName() {

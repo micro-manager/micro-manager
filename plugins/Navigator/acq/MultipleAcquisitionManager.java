@@ -20,7 +20,7 @@ public class MultipleAcquisitionManager {
       gui_ = gui;
       acquisitions_.add(new FixedAreaAcquisitionSettings());
    }
-   
+      
    public FixedAreaAcquisitionSettings getAcquisition(int index) {
       return acquisitions_.get(index);
    }

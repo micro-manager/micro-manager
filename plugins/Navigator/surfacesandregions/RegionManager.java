@@ -9,7 +9,7 @@ import java.util.ArrayList;
  */
 public class RegionManager {
 
-   private ArrayList<MultiPosGrid> regions_ = new ArrayList<MultiPosGrid>();
+   private ArrayList<MultiPosRegion> regions_ = new ArrayList<MultiPosRegion>();
    private ArrayList<SurfaceRegionComboBoxModel> comboBoxModels_ = new ArrayList<SurfaceRegionComboBoxModel>();
    private RegionTableModel tableModel_;
    private static RegionManager singletonInstance_;
@@ -22,7 +22,11 @@ public class RegionManager {
       return singletonInstance_;
    }
    
-   public MultiPosGrid getRegion(int index) {
+   public int getIndex(SurfaceInterpolator surface) {
+      return regions_.indexOf(surface);
+   }
+   
+   public MultiPosRegion getRegion(int index) {
       if (index < 0 || index >= regions_.size()) {
          return null;
       }
@@ -64,7 +68,7 @@ public class RegionManager {
       updateRegionTableAndCombos();
    }
    
-   public void addNewRegion(MultiPosGrid region) {
+   public void addNewRegion(MultiPosRegion region) {
       regions_.add(region);
       updateRegionTableAndCombos();
    }
@@ -79,7 +83,7 @@ public class RegionManager {
       String potentialName = base + " " + index;
       while (true) {
          boolean uniqueName = true;
-         for (MultiPosGrid region : regions_) {
+         for (MultiPosRegion region : regions_) {
             if (region.getName().equals(potentialName)) {
                index++;
                potentialName = base + " " + index;
@@ -93,7 +97,7 @@ public class RegionManager {
       return potentialName;
    }
 
-   public void drawRegionOverlay(MultiPosGrid region) {
+   public void drawRegionOverlay(MultiPosRegion region) {
       DisplayPlus.redrawRegionOverlay(region); //redraw overlay for all displays showing this surface
    }
    

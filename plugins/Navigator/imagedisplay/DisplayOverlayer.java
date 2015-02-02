@@ -24,7 +24,7 @@ import mmcloneclasses.graph.ContrastPanel;
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
 import org.micromanager.utils.ReportingUtils;
 import surfacesandregions.SingleResolutionInterpolation;
-import surfacesandregions.MultiPosGrid;
+import surfacesandregions.MultiPosRegion;
 import surfacesandregions.Point3d;
 import surfacesandregions.SurfaceInterpolator;
 
@@ -408,7 +408,7 @@ public class DisplayOverlayer {
 
       double dsTileWidth = tileWidth_ / (double) zoomableStack_.getDownsampleFactor();
       double dsTileHeight = tileHeight_ / (double) zoomableStack_.getDownsampleFactor();
-      MultiPosGrid newGrid = display_.getCurrentRegion();
+      MultiPosRegion newGrid = display_.getCurrentRegion();
       if (newGrid == null) {
          display_.getImagePlus().setOverlay(null);
          return null;

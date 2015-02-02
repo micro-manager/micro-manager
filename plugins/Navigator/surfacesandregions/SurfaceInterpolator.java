@@ -102,6 +102,11 @@ public abstract class SurfaceInterpolator implements XYFootprint {
       executor_.shutdownNow();
    }
    
+   @Override
+   public String toString() {
+      return name_;
+   }
+   
    public String getName() {
       return name_;
    }

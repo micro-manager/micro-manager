@@ -2,7 +2,7 @@ package acq;
 
 import java.util.prefs.Preferences;
 import main.Navigator;
-import surfacesandregions.MultiPosGrid;
+import surfacesandregions.MultiPosRegion;
 import surfacesandregions.SurfaceInterpolator;
 import surfacesandregions.XYFootprint;
 
@@ -22,6 +22,7 @@ public class FixedAreaAcquisitionSettings  {
    public static final int TIME_MS = 0;
    public static final int TIME_S = 1;
    public static final int TIME_MIN = 2;
+   public static int FOOTPRINT_FROM_TOP = 0, FOOTPRINT_FROM_BOTTOM = 1;
    
    //saving
    public String dir_, name_;
@@ -36,11 +37,12 @@ public class FixedAreaAcquisitionSettings  {
    public int spaceMode_;
    public SurfaceInterpolator topSurface_, bottomSurface_, fixedSurface_;
    public XYFootprint footprint_;
+   public int useTopOrBottomFootprint_;
    
    public FixedAreaAcquisitionSettings() {
       Preferences prefs = Navigator.getPrefs();
       dir_ =  prefs.get(PREF_PREFIX + "DIR", "");
-      name_ = prefs.get(PREF_PREFIX + "NAME", "");
+      name_ = prefs.get(PREF_PREFIX + "NAME", "Untitled");
       timeEnabled_ = prefs.getBoolean(PREF_PREFIX + "TE", false);
       timePointInterval_ = prefs.getDouble(PREF_PREFIX + "TPI", 0);
       numTimePoints_ = prefs.getInt(PREF_PREFIX + "NTP", 1);

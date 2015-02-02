@@ -24,6 +24,10 @@ public class SurfaceManager {
       return singletonInstance_;
    }
    
+   public int getIndex(SurfaceInterpolator surface) {
+      return surfaces_.indexOf(surface);
+   }
+   
    public SurfaceInterpolator getSurface(int index) {
       if (index < 0 || index>= surfaces_.size() ) {
          return null;

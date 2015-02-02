@@ -7,7 +7,7 @@ package surfacesandregions;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import javax.swing.table.AbstractTableModel;
-import surfacesandregions.MultiPosGrid;
+import surfacesandregions.MultiPosRegion;
 import surfacesandregions.RegionManager;
 import surfacesandregions.SurfaceInterpolator;
 import surfacesandregions.SurfaceManager;

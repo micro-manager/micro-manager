@@ -36,7 +36,7 @@ public class SurfaceRegionComboBoxModel extends DefaultComboBoxModel {
       if (rManager_ != null) {
          offset = rManager_.getNumberOfRegions();
          for (int i = 0; i < rManager_.getNumberOfRegions(); i++) {
-            if (rManager_.getRegion(i).getName().equals(anItem)) {
+            if (rManager_.getRegion(i).equals(anItem)) {
                selectedIndex_ = i;
                return;
             }
@@ -44,7 +44,7 @@ public class SurfaceRegionComboBoxModel extends DefaultComboBoxModel {
       }
       if (sManager_ != null) {
          for (int i = 0; i < sManager_.getNumberOfSurfaces(); i++) {
-            if (sManager_.getSurface(i).getName().equals(anItem)) {
+            if (sManager_.getSurface(i).equals(anItem)) {
                selectedIndex_ = i + offset;
                return;
             }
@@ -63,21 +63,21 @@ public class SurfaceRegionComboBoxModel extends DefaultComboBoxModel {
    }
 
    @Override
-   public String getElementAt(int index) {
+   public Object getElementAt(int index) {
       if (index == -1) {
          return null;
       }
       if (rManager_ == null) {
          //surfaces only
-         return sManager_.getSurface(index).getName();
+         return sManager_.getSurface(index);
       } else if (sManager_ == null) {
-         return rManager_.getRegion(index).getName();
+         return rManager_.getRegion(index);
       } else {
          //regions first, then surfaces
          if (index >= rManager_.getNumberOfRegions()) {
-            return sManager_.getSurface(index - rManager_.getNumberOfRegions()).getName();
+            return sManager_.getSurface(index - rManager_.getNumberOfRegions());
          } else {
-            return rManager_.getRegion(index).getName();
+            return rManager_.getRegion(index);
          }
       }
    }
