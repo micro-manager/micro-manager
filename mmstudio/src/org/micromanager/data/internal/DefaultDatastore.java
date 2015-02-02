@@ -219,8 +219,7 @@ public class DefaultDatastore implements Datastore {
                path, true, true, false);
          }
          else if (mode == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES) {
-            saver = new StorageSinglePlaneTiffSeries(duplicate, path, true,
-                  summary);
+            saver = new StorageSinglePlaneTiffSeries(duplicate, path, true);
          }
          else {
             throw new IllegalArgumentException("Unrecognized mode parameter " + mode);
