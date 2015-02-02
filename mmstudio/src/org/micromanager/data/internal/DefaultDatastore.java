@@ -5,13 +5,13 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.micromanager.acquisition.internal.multipagetiff.StorageMultipageTiff;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreLockedException;
 import org.micromanager.data.Image;
 import org.micromanager.data.Storage;
 import org.micromanager.data.SummaryMetadata;
+import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.events.internal.EventManager;
 import org.micromanager.internal.MMStudio;

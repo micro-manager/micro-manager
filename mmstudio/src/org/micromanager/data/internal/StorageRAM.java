@@ -1,4 +1,4 @@
-package org.micromanager.acquisition.internal;
+package org.micromanager.data.internal;
 
 import com.google.common.eventbus.Subscribe;
 
@@ -16,11 +16,6 @@ import org.micromanager.data.NewImageEvent;
 import org.micromanager.data.NewSummaryMetadataEvent;
 import org.micromanager.data.Storage;
 import org.micromanager.data.SummaryMetadata;
-
-import org.micromanager.data.internal.DefaultCoords;
-import org.micromanager.data.internal.DefaultDatastore;
-import org.micromanager.data.internal.DefaultImage;
-import org.micromanager.data.internal.DefaultSummaryMetadata;
 
 import org.micromanager.internal.MMStudio;
 

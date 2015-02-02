@@ -25,7 +25,7 @@ import net.miginfocom.swing.MigLayout;
 
 import org.json.JSONObject;
 
-import org.micromanager.acquisition.internal.StorageRAM;
+import org.micromanager.data.internal.StorageRAM;
 
 import org.micromanager.data.AbortEvent;
 import org.micromanager.data.Coords;

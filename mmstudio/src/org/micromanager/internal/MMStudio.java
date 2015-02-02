@@ -75,8 +75,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import org.micromanager.acquisition.internal.AcquisitionManager;
-import org.micromanager.acquisition.internal.multipagetiff.StorageMultipageTiff;
-import org.micromanager.acquisition.internal.StorageRAM;
 
 import org.micromanager.Autofocus;
 import org.micromanager.data.Coords;
@@ -84,6 +82,8 @@ import org.micromanager.data.DataManager;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreLockedException;
 import org.micromanager.data.Image;
+import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
+import org.micromanager.data.internal.StorageRAM;
 import org.micromanager.DataProcessor;
 import org.micromanager.display.DisplayManager;
 import org.micromanager.display.DisplaySettings;
