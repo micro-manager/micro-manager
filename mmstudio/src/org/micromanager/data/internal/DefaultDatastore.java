@@ -212,6 +212,7 @@ public class DefaultDatastore implements Datastore {
          // position.  Should have a better way to handle this.
          // TODO: obey the mode parameter and allow saving across multiple
          // files.
+         // TODO: re-use existing file-based storage if possible/relevant.
          DefaultDatastore duplicate = new DefaultDatastore();
          StorageMultipageTiff saver = new StorageMultipageTiff(duplicate,
                path, true, isMultipage, false);
