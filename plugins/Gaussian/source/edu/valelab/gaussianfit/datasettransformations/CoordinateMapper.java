@@ -30,6 +30,7 @@ package edu.valelab.gaussianfit.datasettransformations;
 import ags.utils.KdTree;
 import ags.utils.KdTree.Entry;
 import edu.valelab.gaussianfit.spotoperations.NearestPoint2D;
+import edu.valelab.gaussianfit.utils.ListUtils;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
@@ -45,7 +46,6 @@ import org.apache.commons.math.linear.DecompositionSolver;
 import org.apache.commons.math.linear.LUDecompositionImpl;
 import org.apache.commons.math.linear.QRDecompositionImpl;
 import org.apache.commons.math.linear.RealMatrix;
-import org.micromanager.utils.ReportingUtils;
 
 /**
  * Provides facilities for mapping one coordinate system into another
@@ -59,6 +59,7 @@ import org.micromanager.utils.ReportingUtils;
 public class CoordinateMapper {
    final private ExponentPairs exponentPairs_;
    final private ControlPoints controlPoints_;
+   private ControlPoints cleanedControlPoints_;
    final private EnhancedKDTree kdTree_;
    final private int order_;
    final private PointMap pointMap_;
@@ -457,9 +458,9 @@ public class CoordinateMapper {
       List<Point2D.Double> nearestNeighbors
               = kdTree_.nearestNeighbor(srcTestPoint, maxNrControlPoints, maxDistance);
       if (nearestNeighbors.size() > 10) {
-      PointMap localMap = selectPoints(pointMap_, nearestNeighbors);
-      return generateAffineTransformFromPointPairs(localMap);
-      } 
+         PointMap localMap = selectPoints(pointMap_, nearestNeighbors);
+         return generateAffineTransformFromPointPairs(localMap);
+      }
       return null;
    }
 
@@ -515,6 +516,47 @@ public class CoordinateMapper {
       pieceWiseAffineMaxDistance_ = max;
    }
    
+   private void makeCleanedControlPoints() {
+      cleanedControlPoints_ = new ControlPoints();
+      // TODO: copy controlPOints to cleanedControlPoints
+      boolean continueQualityCheck = true;
+      int nrOfRemovedSpots = 0;
+
+      while (continueQualityCheck && cleanedControlPoints_.size() > 4) {
+         // quality control on our new coordinate mapper.  
+         // Apply an affine transform on our data and check distribution 
+         int method = CoordinateMapper.AFFINE;
+         setMethod(method);
+         CoordinateMapper.PointMap corPoints = new CoordinateMapper.PointMap();
+         List<Double> distances = new ArrayList<Double>();
+         double maxDistance = 0.0;
+         Point2D.Double maxPairKey = null;
+         for (Map.Entry pair : cleanedControlPoints_.entrySet()) {
+            Point2D.Double uPt = (Point2D.Double) pair.getValue();
+            Point2D.Double otherPt = (Point2D.Double) pair.getKey();
+            Point2D.Double corPt = transform(otherPt);
+            corPoints.put(uPt, corPt);
+            double distance = Math.sqrt(NearestPoint2D.distance2(uPt, corPt));
+            if (distance > maxDistance) {
+               maxDistance = distance;
+               maxPairKey = otherPt;
+            }
+            distances.add(distance);
+         }
+         Double avg = ListUtils.listAvg(distances);
+         Double stdDev = ListUtils.listStdDev(distances, avg);
+
+         // Quality control check
+         if (2 * stdDev > avg) {
+            nrOfRemovedSpots += 1;
+            cleanedControlPoints_.remove(maxPairKey);
+         } else {
+            continueQualityCheck = false;
+            ij.IJ.log("Removed " + nrOfRemovedSpots + " pairs, " + ", avg. distance: "
+                    + avg + ", std. dev: " + stdDev);
+         }
+      }
+   }
 
 
    /**
