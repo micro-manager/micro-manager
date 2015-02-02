@@ -1,5 +1,6 @@
 package org.micromanager;
 
+import org.json.JSONObject;
 
 /**
  * This interface is used for storing custom information in the Metadata,
@@ -40,4 +41,7 @@ public interface PropertyMap {
    /** Retrieve an Double value from the mapping. Will return null if the key
     * is not found, or if the mapped value is not a Double. */
    public Double getDouble(String key);
+
+   /** Convert the PropertyMap into a JSON representation for storage. */
+   public JSONObject legacyToJSON();
 }
