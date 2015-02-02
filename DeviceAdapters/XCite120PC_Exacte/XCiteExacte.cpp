@@ -225,7 +225,12 @@ int XCiteExacte::Initialize()
 
    // Power factor ("field")
    pAct = new CPropertyAction(this, &XCiteExacte::OnGetPowerFactor);
-   CreateProperty("Power-Factor", "Unknown", MM::String, false, pAct);
+   CreateProperty("Power-Factor", "Unknown", MM::String, true, pAct);
+
+   // Ensure that the power factor is read from the device before we determine
+   // the limits for the Output-Power property.
+   char tmp[MM::MaxStrLength];
+   GetProperty("Power-Factor", tmp);
 
    // Output power ("slider")
    pAct = new CPropertyAction(this, &XCiteExacte::OnOutputPower);
