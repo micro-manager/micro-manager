@@ -145,12 +145,13 @@ public interface Datastore extends Closeable {
    public boolean getIsSaved();
 
    /**
-    * These are the valid inputs to the save() methods. SEPARATE_TIFFS
+    * These are the valid inputs to the save() methods. SINGLEPLANE_TIFF_SERIES
     * saves each individual 2D image plane as a separate file; MULTIPAGE_TIFF
-    * saves all images together in a single file (up to a limit of 4GB/file).
+    * saves all images together in a single file (up to a limit of 4GB/file,
+    * after which point the images will be split into a second file).
     */
    public enum SaveMode {
-      SEPARATE_TIFFS,
+      SINGLEPLANE_TIFF_SERIES,
       MULTIPAGE_TIFF
    }
 

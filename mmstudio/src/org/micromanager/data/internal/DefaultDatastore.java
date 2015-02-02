@@ -194,6 +194,8 @@ public class DefaultDatastore implements Datastore {
       return save(mode, file.getAbsolutePath());
    }
 
+   // TODO: re-use existing file-based storage if possible/relevant (i.e.
+   // if our current Storage is a file-based Storage).
    @Override
    public boolean save(Datastore.SaveMode mode, String path) {
       SummaryMetadata summary = getSummaryMetadata();
@@ -205,17 +207,24 @@ public class DefaultDatastore implements Datastore {
          }
          summary = summary.copy().intendedDimensions(builder.build()).build();
       }
-      // Downcast enum to boolean as StorageMultipageTiff only has two modes.
-      boolean isMultipage = (mode == Datastore.SaveMode.MULTIPAGE_TIFF);
       try {
-         // TODO: "false" is saying to not use separate files for each
-         // position.  Should have a better way to handle this.
-         // TODO: obey the mode parameter and allow saving across multiple
-         // files.
-         // TODO: re-use existing file-based storage if possible/relevant.
          DefaultDatastore duplicate = new DefaultDatastore();
-         StorageMultipageTiff saver = new StorageMultipageTiff(duplicate,
-               path, true, isMultipage, false);
+
+         Storage saver;
+         if (mode == Datastore.SaveMode.MULTIPAGE_TIFF) {
+            // TODO: "false" is saying to not use separate files for each
+            // position.  Should have a better way to handle this.
+            // Should also respect the user's options here.
+            saver = new StorageMultipageTiff(duplicate,
+               path, true, true, false);
+         }
+         else if (mode == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES) {
+            saver = new StorageSinglePlaneTiffSeries(duplicate, path, true,
+                  summary);
+         }
+         else {
+            throw new IllegalArgumentException("Unrecognized mode parameter " + mode);
+         }
          duplicate.setStorage(saver);
          duplicate.setSummaryMetadata(summary);
          for (Coords coords : getUnorderedImageCoords()) {

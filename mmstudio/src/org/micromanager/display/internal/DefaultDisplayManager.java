@@ -176,7 +176,7 @@ public class DefaultDisplayManager implements DisplayManager {
       }
       Datastore.SaveMode mode = Datastore.SaveMode.MULTIPAGE_TIFF;
       if (result == 0) {
-         mode = Datastore.SaveMode.SEPARATE_TIFFS;
+         mode = Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES;
       }
       if (result != 2) { // I.e. not the "discard" option
          if (!store.save(mode, display.getAsWindow())) {

@@ -25,7 +25,7 @@ public class SaveButton extends JButton {
       separateImages.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            store.save(Datastore.SaveMode.SEPARATE_TIFFS, window);
+            store.save(Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES, window);
          }
       });
       menu_.add(separateImages);
