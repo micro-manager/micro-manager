@@ -276,7 +276,8 @@ public class StorageSinglePlaneTiffSeries implements Storage {
    private void writeFrameMetadata(Image image) {
       try {
          String title = "Coords-" + createFileName(image.getCoords());
-         int pos = image.getCoords().getStagePosition();
+         // Use 0 for situations where there's no position information.
+         int pos = Math.max(0, image.getCoords().getStagePosition());
          JSONObject coords = new JSONObject();
          for (String axis : image.getCoords().getAxes()) {
             coords.put(axis, image.getCoords().getPositionAt(axis));
@@ -290,6 +291,9 @@ public class StorageSinglePlaneTiffSeries implements Storage {
    private void writeJSONMetadata(int pos, JSONObject metadata, String title) {
       try {
          Writer metadataStream = metadataStreams_.get(pos);
+         if (metadataStream == null) {
+            ReportingUtils.logError("Failed to make a stream for location " + pos);
+         }
          if (!firstElement_) {
             metadataStream.write(",\n");
          }
@@ -386,7 +390,6 @@ public class StorageSinglePlaneTiffSeries implements Storage {
    }
 
    private void openNewDataSet(Image image) throws IOException, Exception {
-      String time = image.getMetadata().getReceivedTime();
       String posName = image.getMetadata().getPositionName();
 
       int pos = image.getCoords().getStagePosition();
@@ -410,8 +413,12 @@ public class StorageSinglePlaneTiffSeries implements Storage {
       metadataStream.write("{" + "\n");
       // TODO: this method of extracting the date is extremely hacky and
       // potentially locale-dependent.
-      SummaryMetadata summary = summaryMetadata_.copy()
-            .startDate(time.split(" ")[0]).build();
+      String time = image.getMetadata().getReceivedTime();
+      // TODO: should we log if the date isn't available?
+      SummaryMetadata summary = summaryMetadata_;
+      if (time != null) {
+         summary = summary.copy().startDate(time.split(" ")[0]).build();
+      }
       writeJSONMetadata(pos, summary.legacyToJSON(), "Summary");
    }
 
