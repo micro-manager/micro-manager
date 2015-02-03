@@ -58,6 +58,7 @@ public class StorageSinglePlaneTiffSeries implements Storage {
    private DefaultDatastore store_;
    private final String dir_;
    private boolean firstElement_;
+   private boolean amLoading_;
    private HashMap<Integer, Writer> metadataStreams_;
    private boolean isDatasetWritable_;
    private SummaryMetadata summaryMetadata_;
@@ -79,6 +80,7 @@ public class StorageSinglePlaneTiffSeries implements Storage {
       coordsToImageDims_ = new HashMap<Coords, Dimension>();
       positionIndexToName_ = new HashMap<Integer, String>();
       maxIndices_ = new DefaultCoords.Builder().build();
+      amLoading_ = false;
 
       // Note: this will throw an error if there is no existing data set
       if (!isDatasetWritable_) {
@@ -88,19 +90,25 @@ public class StorageSinglePlaneTiffSeries implements Storage {
 
    @Subscribe
    public void onNewImage(NewImageEvent event) {
-      // This event also fires when loading an existing dataset, as a way to
-      // notify other entities about the images in the dataset, hence why we
-      // have this check here.
-      if (isDatasetWritable_) {
+      try {
          addImage(event.getImage());
+      }
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Failed to add image to storage");
       }
    }
 
    private void addImage(Image image) {
-      if (!isDatasetWritable_) {
+      if (!isDatasetWritable_ && !amLoading_) {
+         // This should never happen!
+         ReportingUtils.logError("Attempted to add an image to a read-only fileset");
          return;
       }
-      try {
+      // If we're in the middle of loading a file, then the code that writes
+      // stuff to disk should not run; we only need to update our internal
+      // records.
+      String fileName = createFileName(image.getCoords());
+      if (!amLoading_) {
          int imagePos = image.getCoords().getPositionAt(Coords.STAGE_POSITION);
          if (!metadataStreams_.containsKey(imagePos)) {
             // No metadata for image at this location, means we haven't
@@ -111,34 +119,41 @@ public class StorageSinglePlaneTiffSeries implements Storage {
                ReportingUtils.logError(ex);
             }
          }
-         String fileName = createFileName(image.getCoords());
          String posName = image.getMetadata().getPositionName();
          if (posName != null && posName.length() > 0 && 
                !posName.contentEquals("null")) {
             // Create a directory to hold images for this stage position.
-            JavaUtils.createDirectory(dir_ + "/" + posName);
+            String dirName = dir_ + "/" + posName;
+            try {
+               JavaUtils.createDirectory(dirName);
+            }
+            catch (Exception e) {
+               ReportingUtils.showError("Unable to create save directory " + dirName);
+            }
             fileName = posName + "/" + fileName;
          }
 
          File saveFile = new File(dir_, fileName);
          if (saveFile.exists()) {
             MMStudio.getInstance().stopAllActivity();
-            throw new IOException("Image saving failed: file already exists: " +
+            ReportingUtils.showError(
+                  "Image saving failed: file already exists: " +
                   saveFile.getAbsolutePath());
          }
 
          saveImageFile(image, dir_, fileName);
          writeFrameMetadata(image);
-         Coords coords = image.getCoords();
-         coordsToFilename_.put(coords, fileName);
-         // Update our tracking of the max position along each axis.
-         for (String axis : coords.getAxes()) {
-            if (coords.getPositionAt(axis) > maxIndices_.getPositionAt(axis)) {
-               maxIndices_ = maxIndices_.copy().position(axis, coords.getPositionAt(axis)).build();
-            }
+      }
+
+      Coords coords = image.getCoords();
+      // TODO: is this in fact always the correct fileName? What if it isn't?
+      // See the above code that branches based on amLoading_.
+      coordsToFilename_.put(coords, fileName);
+      // Update our tracking of the max position along each axis.
+      for (String axis : coords.getAxes()) {
+         if (coords.getPositionAt(axis) > maxIndices_.getPositionAt(axis)) {
+            maxIndices_ = maxIndices_.copy().position(axis, coords.getPositionAt(axis)).build();
          }
-      } catch (Exception ex) {
-         ReportingUtils.showError(ex);
       }
    }
 
@@ -171,6 +186,7 @@ public class StorageSinglePlaneTiffSeries implements Storage {
             }
             catch (Exception e) {
                ReportingUtils.logError(e, "Unable to extract image dimensions from JSON metadata");
+               return null;
             }
          }
          else {
@@ -453,6 +469,7 @@ public class StorageSinglePlaneTiffSeries implements Storage {
    }
 
    private void openExistingDataSet() {
+      amLoading_ = true;
       File metadataFile = new File(dir_ + "/metadata.txt");
       ArrayList<String> positions = new ArrayList<String>();
       if (metadataFile.exists()) {
@@ -497,6 +514,8 @@ public class StorageSinglePlaneTiffSeries implements Storage {
                      // File is in a subdirectory.
                      fileName = position + "/" + fileName;
                   }
+                  // This will update our internal records without touching
+                  // the disk, as amLoading_ is true.
                   coordsToFilename_.put(coords, fileName);
                   store_.putImage(getImage(coords));
                } catch (Exception ex) {
@@ -507,6 +526,7 @@ public class StorageSinglePlaneTiffSeries implements Storage {
             ReportingUtils.showError(ex);
          }
       }
+      amLoading_ = false;
    }
 
    private int getChannelIndex(String channelName) {
