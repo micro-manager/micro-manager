@@ -28,7 +28,6 @@ public interface SummaryMetadata {
       // The following functions each set the relevant value for the 
       // SummaryMetadata. See the corresponding getter methods of
       // SummaryMetadata, below, for the meaning of these properties.
-      SummaryMetadataBuilder acquisitionName(String acquisitionName);
       SummaryMetadataBuilder fileName(String fileName);
       SummaryMetadataBuilder prefix(String prefix);
       SummaryMetadataBuilder userName(String userName);
@@ -54,8 +53,6 @@ public interface SummaryMetadata {
     */
    SummaryMetadataBuilder copy();
 
-   /** The name of the acquisition. TODO: are we deprecating this? */
-   public String getAcquisitionName();
    /** The complete filename for this file, including any suffix attached
     * by Micro-Manager */
    public String getFileName();
