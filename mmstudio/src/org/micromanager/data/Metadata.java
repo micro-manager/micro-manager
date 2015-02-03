@@ -1,6 +1,5 @@
 package org.micromanager.data;
 
-import java.awt.Color;
 import java.awt.Rectangle;
 import java.util.UUID;
 
@@ -37,7 +36,6 @@ public interface Metadata {
       MetadataBuilder bitDepth(Integer bitDepth);
       MetadataBuilder camera(String camera);
       MetadataBuilder channelName(String channelName);
-      MetadataBuilder color(Integer color);
       MetadataBuilder comments(String comments);
       MetadataBuilder elapsedTimeMs(Double elapsedTimeMs);
       MetadataBuilder emissionLabel(String emissionLabel);
@@ -50,7 +48,6 @@ public interface Metadata {
       MetadataBuilder initialPositionList(MultiStagePosition initialPositionList);
       MetadataBuilder keepShutterOpenChannels(Boolean keepShutterOpenChannels);
       MetadataBuilder keepShutterOpenSlices(Boolean keepShutterOpenSlices);
-      MetadataBuilder numComponents(Integer numComponents);
       MetadataBuilder pixelAspect(Double pixelAspect);
       MetadataBuilder pixelSizeUm(Double pixelSizeUm);
       MetadataBuilder pixelType(String pixelType);
@@ -99,8 +96,6 @@ public interface Metadata {
    /** The number of bits used to represent each pixel (e.g. 12-bit means that
      * pixel values range from 0 to 4095) */
    Integer getBitDepth();
-   /** The color of this image (TODO: now properly part of DisplaySettings) */
-   Integer getColor();
    /** When acquiring a grid of stage positions, the X position in the grid */
    Integer getGridColumn();
    /** When acquiring a grid of stage positions, the Y position in the grid */
@@ -109,9 +104,6 @@ public interface Metadata {
    Integer getIjType();
    /** The sequence number of this image, for sequence acquisitions */
    Long getImageNumber();
-   /** How many sub-pixel components are in this image, for multi-component
-     * images (TODO: now properly part of Image class) */
-   Integer getNumComponents();
    /** Arbitrary additional metadata */
    PropertyMap getUserData();
    /** List of stage positions at the start of the acquisition (e.g. not taking

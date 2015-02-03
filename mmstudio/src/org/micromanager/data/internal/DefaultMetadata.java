@@ -1,6 +1,5 @@
 package org.micromanager.data.internal;
 
-import java.awt.Color;
 import java.awt.Rectangle;
 import java.util.UUID;
 
@@ -39,7 +38,6 @@ public class DefaultMetadata implements Metadata {
 
       private String pixelType_ = null;
       private Integer bitDepth_ = null;
-      private Integer numComponents_ = null;
       private Integer ijType_ = null;
       private String channelName_ = null;
       private Double exposureMs_ = null;
@@ -63,7 +61,6 @@ public class DefaultMetadata implements Metadata {
       private Rectangle ROI_ = null;
       private String comments_ = null;
 
-      private Integer color_ = null;
       private Double pixelAspect_ = null;
 
       private PropertyMap userData_ = null;
@@ -113,12 +110,6 @@ public class DefaultMetadata implements Metadata {
       @Override
       public MetadataBuilder bitDepth(Integer bitDepth) {
          bitDepth_ = bitDepth;
-         return this;
-      }
-
-      @Override
-      public MetadataBuilder numComponents(Integer numComponents) {
-         numComponents_ = numComponents;
          return this;
       }
 
@@ -243,12 +234,6 @@ public class DefaultMetadata implements Metadata {
       }
 
       @Override
-      public MetadataBuilder color(Integer color) {
-         color_ = color;
-         return this;
-      }
-
-      @Override
       public MetadataBuilder pixelAspect(Double pixelAspect) {
          pixelAspect_ = pixelAspect;
          return this;
@@ -277,7 +262,6 @@ public class DefaultMetadata implements Metadata {
 
    private String pixelType_ = null;
    private Integer bitDepth_ = null;
-   private Integer numComponents_ = null;
    private Integer ijType_ = null;
    private String channelName_ = null;
    private Double exposureMs_ = null;
@@ -301,7 +285,6 @@ public class DefaultMetadata implements Metadata {
    private Rectangle ROI_ = null;
    private String comments_ = null;
 
-   private Integer color_ = null;
    private Double pixelAspect_ = null;
 
    private PropertyMap userData_ = null;
@@ -318,7 +301,6 @@ public class DefaultMetadata implements Metadata {
 
       pixelType_ = builder.pixelType_;
       bitDepth_ = builder.bitDepth_;
-      numComponents_ = builder.numComponents_;
       ijType_ = builder.ijType_;
       channelName_ = builder.channelName_;
       exposureMs_ = builder.exposureMs_;
@@ -342,7 +324,6 @@ public class DefaultMetadata implements Metadata {
       ROI_ = builder.ROI_;
       comments_ = builder.comments_;
 
-      color_ = builder.color_;
       pixelAspect_ = builder.pixelAspect_;
 
       userData_ = builder.userData_;
@@ -359,7 +340,6 @@ public class DefaultMetadata implements Metadata {
             .keepShutterOpenChannels(keepShutterOpenChannels_)
             .pixelType(pixelType_)
             .bitDepth(bitDepth_)
-            .numComponents(numComponents_)
             .ijType(ijType_)
             .channelName(channelName_)
             .exposureMs(exposureMs_)
@@ -380,7 +360,6 @@ public class DefaultMetadata implements Metadata {
             .emissionLabel(emissionLabel_)
             .ROI(ROI_)
             .comments(comments_)
-            .color(color_)
             .pixelAspect(pixelAspect_);
    }
 
@@ -417,11 +396,6 @@ public class DefaultMetadata implements Metadata {
    @Override
    public Integer getBitDepth() {
       return bitDepth_;
-   }
-
-   @Override
-   public Integer getNumComponents() {
-      return numComponents_;
    }
 
    @Override
@@ -522,11 +496,6 @@ public class DefaultMetadata implements Metadata {
    @Override
    public String getComments() {
       return comments_;
-   }
-
-   @Override
-   public Integer getColor() {
-      return color_;
    }
 
    @Override
@@ -637,12 +606,6 @@ public class DefaultMetadata implements Metadata {
       }
       catch (JSONException e) {
          ReportingUtils.logError("Metadata failed to extract field bitDepth");
-      }
-      try {
-         builder.numComponents(MDUtils.getNumberOfComponents(tags));
-      }
-      catch (Exception e) { // JSONException and MMScriptException
-         ReportingUtils.logError("Metadata failed to extract field numComponents");
       }
       try {
          builder.ijType(tags.getInt("ijType"));
@@ -767,12 +730,6 @@ public class DefaultMetadata implements Metadata {
          ReportingUtils.logError("Metadata failed to extract field comments");
       }
 
-      try {
-         builder.color(tags.getInt("color"));
-      }
-      catch (JSONException e) {
-         ReportingUtils.logError("Metadata failed to extract field color");
-      }
       try {
          builder.pixelAspect(tags.getDouble("pixelAspect"));
       }
