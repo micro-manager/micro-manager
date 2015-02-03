@@ -55,27 +55,27 @@ import org.micromanager.internal.utils.TextUtils;
  * TaggedImageStorageDiskDefault class.
  */
 public class StorageSinglePlaneTiffSeries implements Storage {
+   private DefaultDatastore store_;
    private final String dir_;
    private boolean firstElement_;
    private HashMap<Integer, Writer> metadataStreams_;
    private boolean isDatasetWritable_;
    private SummaryMetadata summaryMetadata_;
    private HashMap<Coords, String> coordsToFilename_;
-   private HashMap<Coords, Metadata> coordsToMetadata_;
    private HashMap<Coords, Dimension> coordsToImageDims_;
    private HashMap<Integer, String> positionIndexToName_;
    private Coords maxIndices_;
 
    public StorageSinglePlaneTiffSeries(DefaultDatastore store,
          String directory, boolean newDataSet) {
+      store_ = store;
       dir_ = directory;
       isDatasetWritable_ = newDataSet;
       // Must be informed of events before traditional consumers, so that we
       // can provide images on request.
-      store.registerForEvents(this, 0);
+      store_.registerForEvents(this, 0);
       coordsToFilename_ = new HashMap<Coords, String>();
       metadataStreams_ = new HashMap<Integer, Writer>();
-      coordsToMetadata_ = new HashMap<Coords, Metadata>();
       coordsToImageDims_ = new HashMap<Coords, Dimension>();
       positionIndexToName_ = new HashMap<Integer, String>();
       maxIndices_ = new DefaultCoords.Builder().build();
@@ -88,14 +88,19 @@ public class StorageSinglePlaneTiffSeries implements Storage {
 
    @Subscribe
    public void onNewImage(NewImageEvent event) {
-      addImage(event.getImage());
+      // This event also fires when loading an existing dataset, as a way to
+      // notify other entities about the images in the dataset, hence why we
+      // have this check here.
+      if (isDatasetWritable_) {
+         addImage(event.getImage());
+      }
    }
 
    private void addImage(Image image) {
+      if (!isDatasetWritable_) {
+         return;
+      }
       try {
-         if (!isDatasetWritable_) {
-            throw new DatastoreLockedException();
-         }
          int imagePos = image.getCoords().getPositionAt(Coords.STAGE_POSITION);
          if (!metadataStreams_.containsKey(imagePos)) {
             // No metadata for image at this location, means we haven't
@@ -159,6 +164,7 @@ public class StorageSinglePlaneTiffSeries implements Storage {
          if (imp.getProperty("Info") != null) {
             try {
                JSONObject jsonMeta = new JSONObject((String) imp.getProperty("Info"));
+               ReportingUtils.logError("Loaded metadata\n" + jsonMeta.toString(2));
                metadata = DefaultMetadata.legacyFromJSON(jsonMeta);
                width = MDUtils.getWidth(jsonMeta);
                height = MDUtils.getHeight(jsonMeta);
@@ -166,10 +172,9 @@ public class StorageSinglePlaneTiffSeries implements Storage {
             catch (Exception e) {
                ReportingUtils.logError(e, "Unable to extract image dimensions from JSON metadata");
             }
-         } else if (coordsToMetadata_.containsKey(coords)) {
-           metadata = coordsToMetadata_.get(coords);
-           width = coordsToImageDims_.get(coords).width;
-           height = coordsToImageDims_.get(coords).height;
+         }
+         else {
+            ReportingUtils.logError("Unable to reconstruct metadata for image at " + coords);
          }
 
          Object pixels = proc.getPixels();
@@ -202,22 +207,22 @@ public class StorageSinglePlaneTiffSeries implements Storage {
 
    @Override
    public Image getAnyImage() {
-      if (coordsToMetadata_.size() == 0) {
+      if (coordsToFilename_.size() == 0) {
          return null;
       }
-      Coords coords = new ArrayList<Coords>(coordsToMetadata_.keySet()).get(0);
+      Coords coords = new ArrayList<Coords>(coordsToFilename_.keySet()).get(0);
       return getImage(coords);
    }
 
    @Override
    public Iterable<Coords> getUnorderedImageCoords() {
-      return coordsToMetadata_.keySet();
+      return coordsToFilename_.keySet();
    }
 
    @Override
    public List<Image> getImagesMatching(Coords coords) {
       ArrayList<Image> result = new ArrayList<Image>();
-      for (Coords altCoords : coordsToMetadata_.keySet()) {
+      for (Coords altCoords : coordsToFilename_.keySet()) {
          boolean canUse = true;
          for (String axis : coords.getAxes()) {
             if (coords.getPositionAt(axis) != altCoords.getPositionAt(axis)) {
@@ -249,7 +254,7 @@ public class StorageSinglePlaneTiffSeries implements Storage {
 
    @Override
    public int getNumImages() {
-      return coordsToMetadata_.size();
+      return coordsToFilename_.size();
    }
 
    /**
@@ -378,8 +383,12 @@ public class StorageSinglePlaneTiffSeries implements Storage {
    public void saveImagePlus(ImagePlus imp, Image image,
          String path, String tiffFileName) {
       try {
-         imp.setProperty("Info",
-               image.getMetadata().legacyToJSON().toString(2));
+         JSONObject imageJSON = image.getMetadata().legacyToJSON();
+         // Augment the JSON with image property info.
+         imageJSON.put("Width", image.getWidth());
+         imageJSON.put("Height", image.getHeight());
+         imp.setProperty("Info", imageJSON.toString(2));
+         ReportingUtils.logError("Setting metadata\n" + imageJSON.toString(2));
       } catch (JSONException ex) {
          ReportingUtils.logError(ex);
       }
@@ -457,6 +466,7 @@ public class StorageSinglePlaneTiffSeries implements Storage {
       }
 
       for (int positionIndex = 0; positionIndex < positions.size(); ++positionIndex) {
+         ReportingUtils.logError("Loading files for position " + positionIndex);
          String position = positions.get(positionIndex);
          JSONObject data = readJSONMetadata(position);
          if (data == null) {
@@ -466,6 +476,7 @@ public class StorageSinglePlaneTiffSeries implements Storage {
          try {
             summaryMetadata_ = DefaultSummaryMetadata.legacyFromJSON(
                   data.getJSONObject("Summary"));
+            ReportingUtils.logError("Made summary metadata " + summaryMetadata_);
             for (String key : makeJsonIterableKeys(data)) {
                if (!key.contains("Coords-")) {
                   continue;
@@ -480,12 +491,14 @@ public class StorageSinglePlaneTiffSeries implements Storage {
 
                   // Reconstruct the filename from the coordinates.
                   DefaultCoords coords = builder.build();
+                  ReportingUtils.logError("Should be an image at " + coords);
                   String fileName = createFileName(coords);
                   if (position.length() > 0) {
                      // File is in a subdirectory.
                      fileName = position + "/" + fileName;
                   }
                   coordsToFilename_.put(coords, fileName);
+                  store_.putImage(getImage(coords));
                } catch (Exception ex) {
                   ReportingUtils.showError(ex);
                }

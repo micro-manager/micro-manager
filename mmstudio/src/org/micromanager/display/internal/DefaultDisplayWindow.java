@@ -157,17 +157,6 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
          customControls_ = new ArrayList<Component>();
       }
 
-      JButton fullButton = new JButton("Fullscreen");
-      fullButton.setToolTipText("Turn fullscreen mode on or off.");
-      fullButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent event) {
-            toggleFullScreen();
-         }
-      });
-      customControls_.add(fullButton);
-      customControls_.add(new SaveButton(store_, this));
-
       isFullScreen_ = (targetScreen != null);
 
       if (isFullScreen_) {
@@ -294,6 +283,16 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       for (Component c : customControls_) {
          controlsPanel_.add(c);
       }
+      JButton fullButton = new JButton("Fullscreen");
+      fullButton.setToolTipText("Turn fullscreen mode on or off.");
+      fullButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent event) {
+            toggleFullScreen();
+         }
+      });
+      controlsPanel_.add(fullButton);
+      controlsPanel_.add(new SaveButton(store_, this));
       contentsPanel_.add(controlsPanel_, "align center, wrap, growx, growy 0");
 
       if (modePanel_ == null) {
@@ -446,33 +445,39 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
     * otherwise know how to access.
     */
    private void setImagePlusMetadata(ImagePlus plus) {
-      Calibration cal = new Calibration(plus);
-      cal.setUnit("um");
-      // TODO: ImageJ only allows for one pixel size across all images, even
-      // if e.g. different channels actually vary.
-      // On the flipside, we only allow for square pixels, so we aren't
-      // exactly perfect either.
-      Image sample = store_.getAnyImage();
-      Double pixelSize = sample.getMetadata().getPixelSizeUm();
-      if (pixelSize != null) {
-         cal.pixelWidth = pixelSize;
-         cal.pixelHeight = pixelSize;
-      }
-      SummaryMetadata summary = store_.getSummaryMetadata();
-      if (summary.getWaitInterval() != null) {
-         cal.frameInterval = summary.getWaitInterval() / 1000.0;
-      }
-      if (summary.getZStepUm() != null) {
-         cal.pixelDepth = summary.getZStepUm();
-      }
-      plus.setCalibration(cal);
+      try {
+         Calibration cal = new Calibration(plus);
+         cal.setUnit("um");
+         // TODO: ImageJ only allows for one pixel size across all images, even
+         // if e.g. different channels actually vary.
+         // On the flipside, we only allow for square pixels, so we aren't
+         // exactly perfect either.
+         Image sample = store_.getAnyImage();
+         Double pixelSize = sample.getMetadata().getPixelSizeUm();
+         if (pixelSize != null) {
+            cal.pixelWidth = pixelSize;
+            cal.pixelHeight = pixelSize;
+         }
+         SummaryMetadata summary = store_.getSummaryMetadata();
+         if (summary.getWaitInterval() != null) {
+            cal.frameInterval = summary.getWaitInterval() / 1000.0;
+         }
+         if (summary.getZStepUm() != null) {
+            cal.pixelDepth = summary.getZStepUm();
+         }
+         ReportingUtils.logError("Setting calibration " + cal + " on plus " + plus);
+         plus.setCalibration(cal);
 
-      FileInfo info = new FileInfo();
-      info.directory = summary.getDirectory();
-      info.fileName = summary.getFileName();
-      info.width = sample.getWidth();
-      info.height = sample.getHeight();
-      ijImage_.setFileInfo(info);
+         FileInfo info = new FileInfo();
+         info.directory = summary.getDirectory();
+         info.fileName = summary.getFileName();
+         info.width = sample.getWidth();
+         info.height = sample.getHeight();
+         ijImage_.setFileInfo(info);
+      }
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Error setting metadata");
+      }
    }
 
    /**   
@@ -615,8 +620,12 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       else {
          // Hide ourselves and make a new frame for fullscreen mode.
          setVisible(false);
+         // TODO: can't hand our controls to the new frame, because then they
+         // get lost from our frame; either we need to coordinate the handoff
+         // when the fullscreen frame goes away, or we need to duplicate
+         // the controls somehow.
          DisplayWindow fullFrame = new DefaultDisplayWindow(
-               store_, customControls_, displaySettings_, getScreenConfig());
+               store_, null, displaySettings_, getScreenConfig());
       }
    }
 
@@ -737,7 +746,9 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
     */
    @Subscribe
    public void onNewSummaryMetadata(NewSummaryMetadataEvent event) {
-      setImagePlusMetadata(ijImage_);
+      if (ijImage_ != null) { // I.e. we've finished initializing
+         setImagePlusMetadata(ijImage_);
+      }
    }
 
    /**

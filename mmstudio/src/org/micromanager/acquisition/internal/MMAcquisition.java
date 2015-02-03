@@ -278,18 +278,19 @@ public class MMAcquisition {
          try {
             boolean multipageTiff = MultipageTiffReader.isMMMultipageTiff(dirName);
             if (multipageTiff) {
-               imageFileManager = new StorageMultipageTiff(store_, dirName, false);
-               if (show_) {
-                  List<DisplayWindow> displays = MMStudio.getInstance().display().loadDisplaySettings(
-                        store_, dirName);
-                  if (displays.size() == 0) {
-                     // Just create a new default display.
-                     new DefaultDisplayWindow(store_, null);
-                  }
-               }
+               imageFileManager = new StorageMultipageTiff(store_, dirName,
+                     false);
             } else {
                imageFileManager = new StorageSinglePlaneTiffSeries(
                      store_, dirName, false);
+            }
+            if (show_) {
+               List<DisplayWindow> displays = MMStudio.getInstance().display().loadDisplaySettings(
+                     store_, dirName);
+               if (displays.size() == 0) {
+                  // Just create a new default display.
+                  new DefaultDisplayWindow(store_, null);
+               }
             }
          } catch (Exception ex) {
             ReportingUtils.showError(ex, "Failed to open file");
