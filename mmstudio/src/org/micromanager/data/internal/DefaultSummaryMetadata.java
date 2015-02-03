@@ -82,7 +82,6 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
 
    public static class Builder implements SummaryMetadata.SummaryMetadataBuilder {
 
-      private String acquisitionName_ = null;
       private String fileName_ = null;
       private String prefix_ = null;
       private String userName_ = null;
@@ -107,12 +106,6 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
          return new DefaultSummaryMetadata(this);
       }
       
-      @Override
-      public SummaryMetadataBuilder acquisitionName(String name) {
-         acquisitionName_ = name;
-         return this;
-      }
-
       @Override
       public SummaryMetadataBuilder fileName(String fileName) {
          fileName_ = fileName;
@@ -210,7 +203,6 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       }
    }
    
-   private String acquisitionName_ = null;
    private String fileName_ = null;
    private String prefix_ = null;
    private String userName_ = null;
@@ -231,7 +223,6 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
    private PropertyMap userData_ = null;
 
    public DefaultSummaryMetadata(Builder builder) {
-      acquisitionName_ = builder.acquisitionName_;
       fileName_ = builder.fileName_;
       prefix_ = builder.prefix_;
       userName_ = builder.userName_;
@@ -250,11 +241,6 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       stagePositions_ = builder.stagePositions_;
 
       userData_ = builder.userData_;
-   }
-
-   @Override
-   public String getAcquisitionName() {
-      return acquisitionName_;
    }
 
    @Override
@@ -340,7 +326,6 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
    @Override
    public SummaryMetadataBuilder copy() {
       return new Builder()
-            .acquisitionName(acquisitionName_)
             .fileName(fileName_)
             .prefix(prefix_)
             .userName(userName_)
@@ -373,12 +358,6 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       // in the first place).
       // TODO: not preserving the position-related metadata.
       Builder builder = new Builder();
-      try {
-         builder.acquisitionName(tags.getString("Name"));
-      }
-      catch (JSONException e) {
-         ReportingUtils.logError("SummaryMetadata failed to extract field acquisitionName");
-      }
 
       try {
          builder.prefix(tags.getString("Prefix"));
@@ -502,7 +481,6 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       try {
          JSONObject result = new JSONObject();
          MDUtils.setFileName(result, fileName_);
-         result.put("Name", acquisitionName_);
          result.put("Prefix", prefix_);
          result.put("UserName", userName_);
          result.put("MicroManagerVersion", microManagerVersion_);
