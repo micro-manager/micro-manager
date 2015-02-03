@@ -46,7 +46,7 @@ public interface Metadata {
       MetadataBuilder gridColumn(Integer gridColumn);
       MetadataBuilder gridRow(Integer gridRow);
       MetadataBuilder ijType(Integer ijType);
-      MetadataBuilder imageNumber(Integer imageNumber);
+      MetadataBuilder imageNumber(Long imageNumber);
       MetadataBuilder initialPositionList(MultiStagePosition initialPositionList);
       MetadataBuilder keepShutterOpenChannels(Boolean keepShutterOpenChannels);
       MetadataBuilder keepShutterOpenSlices(Boolean keepShutterOpenSlices);
@@ -108,7 +108,7 @@ public interface Metadata {
    /** The ImageJ pixel type, e.g. ImagePlus.GRAY8, ImagePlus.RGB32 */
    Integer getIjType();
    /** The sequence number of this image, for sequence acquisitions */
-   Integer getImageNumber();
+   Long getImageNumber();
    /** How many sub-pixel components are in this image, for multi-component
      * images (TODO: now properly part of Image class) */
    Integer getNumComponents();
