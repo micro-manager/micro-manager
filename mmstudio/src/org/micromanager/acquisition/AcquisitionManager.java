@@ -148,9 +148,16 @@ public class AcquisitionManager {
          if (lastSeparator == -1)
             name += separator + "1";
          else {
-            Integer i = Integer.parseInt(name.substring(lastSeparator + 1));
-            i++;
-            name = name.substring(0, lastSeparator) + separator + i;
+            try {
+               Integer i = Integer.parseInt(name.substring(lastSeparator + 1));
+               i++;
+               name = name.substring(0, lastSeparator) + separator + i;
+            }
+            catch (NumberFormatException e) {
+               // Some part of the name has an underscore and then a
+               // non-number; we can't just increment that.
+               name += separator + "1";
+            }
          }
       }
       return name;
