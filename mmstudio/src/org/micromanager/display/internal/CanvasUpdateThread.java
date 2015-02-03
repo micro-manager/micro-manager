@@ -181,7 +181,7 @@ public class CanvasUpdateThread extends Thread {
          // More than 500ms since last update.
          double elapsedTime = (curTimestamp - lastFPSUpdateTimestamp_) / 1000.0;
          try {
-            Integer imageIndex = image.getMetadata().getImageNumber();
+            Long imageIndex = image.getMetadata().getImageNumber();
             if (imageIndex != null) {
                // HACK: Ignore the first FPS display event, to prevent us from
                // showing FPS for the Snap window.
