@@ -101,6 +101,10 @@ public class MDUtils {
       return map.getLong("ImageNumber");
    }
 
+   public static void setSequenceNumber(JSONObject map, long num) throws JSONException {
+      map.put("ImageNumber", num);
+   }
+
    public static boolean hasSliceIndex(JSONObject map) {
       return map.has("SliceIndex") || map.has("Slice");
    }
