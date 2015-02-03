@@ -2,6 +2,7 @@ package acq;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import mmcorej.TaggedImage;
@@ -22,6 +23,8 @@ public class TaggedImageSink  {
    private volatile String lastImageLabel_;
    private Thread savingThread_;
    private Acquisition acq_;
+   private volatile boolean idle_;
+   private Object idleLock_ = new Object();
    
    public TaggedImageSink(BlockingQueue<TaggedImage> imageProducingQueue,
            ImageCache imageCache, Acquisition acq) {
@@ -42,6 +45,12 @@ public class TaggedImageSink  {
       }
    }
    
+   public boolean isIdle() {    
+      synchronized (idleLock_) {
+         return imageProducingQueue_.size() == 0 && idle_;
+      }
+   }
+   
    public void start() {
       savingThread_ = new Thread("tagged image sink thread") {
 
@@ -51,7 +60,11 @@ public class TaggedImageSink  {
             int imageCount = 0;
             try {
                while (true) {
-                  TaggedImage image = imageProducingQueue_.poll(1, TimeUnit.SECONDS);
+                  TaggedImage image;
+                  synchronized (idleLock_) {
+                     image = imageProducingQueue_.poll(1, TimeUnit.SECONDS);
+                     idle_ = image == null;
+                  }
                   if (image != null) {
                      if (((image.pix == null) && (image.tags == null))) { //check for Poison final image
                         break;

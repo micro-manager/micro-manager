@@ -36,10 +36,16 @@ public class CustomAcqEngine {
    private Thread acquisitionThread_;
    private ExploreAcquisition currentExploreAcq_;
    private FixedAreaAcquisition currentFixedAcq_;
+   private MultipleAcquisitionManager multiAcqManager_;
+   private volatile boolean idle_ = true;
 
    public CustomAcqEngine(CMMCore core) {
       core_ = core;
-      updateDeviceNamesForAcquisition();
+      updateDeviceNamesForAcquisition();   
+      createAndStartAcquisitionThread();
+   }
+   
+   private void createAndStartAcquisitionThread() {
       //create and start acquisition thread
       acquisitionThread_ = new Thread(new Runnable() {
 
@@ -48,6 +54,8 @@ public class CustomAcqEngine {
             while (!Thread.interrupted()) {
                BlockingQueue<AcquisitionEvent> events;
                //Fixed acq take priority
+               //TODO: might be an alternative way of doing this since the explore event queue is cleared when starting a 
+               //fixed acqusiition anyway
                if (currentFixedAcq_ != null && !currentFixedAcq_.isPaused() && !currentFixedAcq_.isFinished()) {
                   events = currentFixedAcq_.getEventQueue();
                } else if (currentExploreAcq_ != null) {
@@ -56,8 +64,10 @@ public class CustomAcqEngine {
                   events = null;
                }
                if (events != null && events.size() > 0) {
+                  idle_ = false;
                   runEvent(events.poll());
                } else {
+                  idle_ = true;
                   try {
                      //wait for more events to acquire
                      Thread.sleep(2);
@@ -71,28 +81,32 @@ public class CustomAcqEngine {
       acquisitionThread_.start();
    }
 
+   public void setMultiAcqManager(MultipleAcquisitionManager multiAcqManager) {
+      multiAcqManager_ = multiAcqManager;
+   }
+   
    private void updateDeviceNamesForAcquisition() {
       xyStageName_ = core_.getXYStageDevice();
       zName_ = core_.getFocusDevice();
    }
 
-   public void runFixedAreaAcquisition(final FixedAreaAcquisitionSettings settings) {
-      new Thread(new Runnable() {
+   public boolean isIdle() {
+      return idle_;
+   }
+   
+   public FixedAreaAcquisition runFixedAreaAcquisition(final FixedAreaAcquisitionSettings settings) {
+      //check if current fixed acquisition is running
+      if (currentFixedAcq_ != null && !currentFixedAcq_.isFinished()) {
+         currentFixedAcq_.abort();
+      }
+      //clear explore acquisition events so that they dont unexpectedly restart after acquisition
+      if (currentExploreAcq_ != null && !currentExploreAcq_.isFinished()) {
+         currentExploreAcq_.getEventQueue().clear();
+      }
 
-         @Override
-         public void run() {
-            //check if current fixed acquisition is running
-            if (currentFixedAcq_ != null && !currentFixedAcq_.isFinished()) {
-               currentFixedAcq_.abort();
-            }
-            //clear explore acquisition events so that they dont unexpectedly restart after acquisition
-            if (currentExploreAcq_ != null && !currentExploreAcq_.isFinished()) {
-               currentExploreAcq_.getEventQueue().clear();
-            }
-
-            currentFixedAcq_ = new FixedAreaAcquisition(settings);
-         }
-      }).start();
+      updateDeviceNamesForAcquisition();
+      currentFixedAcq_ = new FixedAreaAcquisition(settings, multiAcqManager_, this);
+      return currentFixedAcq_;
    }
 
    public void newExploreAcquisition(final ExploreAcqSettings settings) {
@@ -108,6 +122,7 @@ public class CustomAcqEngine {
                   return;
                }
             }
+            updateDeviceNamesForAcquisition();
             currentExploreAcq_ = new ExploreAcquisition(settings);
          }
       }).start();
@@ -119,6 +134,7 @@ public class CustomAcqEngine {
          //signal to TaggedImageSink to finish saving thread and mark acquisition as finished
          currentFixedAcq_.addImage(new TaggedImage(null, null));
          currentFixedAcq_ = null;
+         
       } else {
          updateHardware(event);
          acquireImage(event);

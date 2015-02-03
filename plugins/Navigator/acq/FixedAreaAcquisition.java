@@ -27,10 +27,13 @@ public class FixedAreaAcquisition extends Acquisition {
    private static final int ACQUISITION_EVENT_BUFFER_SIZE = 100;
    private volatile boolean paused_ = false;
    private FixedAreaAcquisitionSettings settings_;
+   private int numTimePoints_;
    private Thread eventGeneratingThread_;
    private ArrayList<XYStagePosition> positions_;
    private long nextTimePointStartTime_ms_;
-
+   private MultipleAcquisitionManager multiAcqManager_;
+   private CustomAcqEngine eng_;
+   
    /**
     * Acquisition with fixed XY positions (although they can potentially all be
     * translated between time points Supports time points Z stacks that can
@@ -39,14 +42,33 @@ public class FixedAreaAcquisition extends Acquisition {
     * Acquisition engine manages a thread that reads events, fixed area
     * acquisition has another thread that generates events
     */
-   public FixedAreaAcquisition(FixedAreaAcquisitionSettings settings) {
+   public FixedAreaAcquisition(FixedAreaAcquisitionSettings settings, MultipleAcquisitionManager multiAcqManager,
+           CustomAcqEngine eng){
       super(settings.zStep_);
+      eng_ = eng;
       settings_ = settings;
+      readSettings();
       //get positions to be imaged
       //z slices to be dynamically calculated at the start of each time point?
-      storeXYPositions();
+      try {
+         storeXYPositions();
+      } catch (Exception e) {
+         ReportingUtils.showError("Problem with Acquisition's XY positions. Check acquisition settings");
+         throw new RuntimeException();
+      }
       initialize(settings.dir_, settings.name_);
       createEventGenerator();
+      multiAcqManager_ = multiAcqManager;
+   }
+   
+   private void readSettings() {
+      numTimePoints_ = settings_.timeEnabled_ ? settings_.numTimePoints_ : 1;
+   }
+   
+   @Override
+   public void finish() {
+      super.finish();
+      multiAcqManager_.acquisitionFinished();
    }
 
    /**
@@ -125,8 +147,7 @@ public class FixedAreaAcquisition extends Acquisition {
          @Override
          public void run() {
             nextTimePointStartTime_ms_ = 0;
-            for (int timeIndex = 0; timeIndex < settings_.numTimePoints_; timeIndex++) {
-               String imageLabel = null;
+            for (int timeIndex = 0; timeIndex < numTimePoints_; timeIndex++) {
                //wait enough time to pass to start new time point
                while (System.currentTimeMillis() < nextTimePointStartTime_ms_) {
                   try {
@@ -187,31 +208,29 @@ public class FixedAreaAcquisition extends Acquisition {
                         return;
                      }
                      addEvent(event);
-                     imageLabel = MDUtils.generateLabel(channelIndex, sliceIndex, timeIndex, positionIndex);
                   }
                }
 
-               while (imageSink_.getLastImageLabel() != null && !imageSink_.getLastImageLabel().equals(imageLabel)) {
-                  //wait for final image of timepoint to be written before beginning end of timepoint stuff
+               //wait for final image of timepoint to be written before beginning end of timepoint stuff
+               while (!( eng_.isIdle() && events_.isEmpty() && imageSink_.isIdle())) {
                   try {
                      Thread.sleep(5);
-                  } catch (InterruptedException ex) {
-                     //thread has been interrupted due to abort request, return;
-                     return;
+                  } catch (InterruptedException ex) {                   
+                     return; //thread has been interrupted due to abort request, return;
                   }
                }
-               //do end of timepoint stuff
+               //do end of timepoint stuff (autofocus, swap to another acq, etc)
                endOfTimePoint(timeIndex);
             }
             //acquisition now finished, add event with null ac w field so engine will mark acquisition as finished
             events_.add(new AcquisitionEvent(null, 0, 0, 0, 0, 0, 0, 0));
          }
-      });
+      }, "Fixed Area Acquisition Event generating thread");
       eventGeneratingThread_.start();
    }
 
    private void endOfTimePoint(int timeIndex) {
-      //run autofocus
+      //TODO: run autofocus
    }
 
    /**

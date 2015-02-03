@@ -230,7 +230,6 @@ public class DisplayWindow extends StackWindow {
       } else {
          //set initial zoom so that full acq area fits within window, which has already been set
          //to stored prefferred size
-         //TODO: adjust somehow so fixed acqs dont keep zooming down....'
          double widthRatio = disp_.getFullResWidth() / (double) canvasPanel_.getSize().width;
          double heightRatio = disp_.getFullResHeight() / (double) canvasPanel_.getSize().height;
          int viewResIndex = (int) Math.ceil(Math.log(Math.max(widthRatio, heightRatio)) / Math.log(2));
@@ -244,7 +243,8 @@ public class DisplayWindow extends StackWindow {
                  disp_.getFullResWidth() / dsFactor, disp_.getFullResHeight() / dsFactor);
          disp_.changeStack(newStack);
          this.validate();
-         //fit window around correctly sized canvas
+         //fit window around correctly sized canvas, but don't save the window size
+         saveWindowResize_ = false;
          shrinkWindowToFitCanvas();
       }
    }
@@ -474,6 +474,12 @@ public class DisplayWindow extends StackWindow {
       dpControls_.prepareForClose();
       
       closed_ = true;
+   }
+   
+   @Override
+   public boolean validDimensions() {
+      //override this so that code that replaces imagej stack to resize the canvas works
+      return true;
    }
 
    @Override

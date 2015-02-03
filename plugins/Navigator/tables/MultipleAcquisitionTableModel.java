@@ -14,7 +14,7 @@ import javax.swing.table.AbstractTableModel;
  */
 public class MultipleAcquisitionTableModel extends AbstractTableModel {
 
-   private static final String[] COLUMNS = {"Order","Name"};
+   private static final String[] COLUMNS = {"Order","Name","Status"};
    private MultipleAcquisitionManager manager_;
    private GUI gui_;
    
@@ -42,9 +42,12 @@ public class MultipleAcquisitionTableModel extends AbstractTableModel {
    @Override
    public Object getValueAt(int rowIndex, int columnIndex) {
       if (columnIndex == 0) {
+         return 0; //TODO: acq order
+      } else if (columnIndex == 1) {
          return manager_.getAcquisitionName(rowIndex);
+      } else {
+         return manager_.getAcqStatus(rowIndex);
       }
-      return 0;
    }
 
    @Override

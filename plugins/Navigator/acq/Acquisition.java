@@ -21,6 +21,9 @@ import org.micromanager.utils.ReportingUtils;
  */
 public abstract class Acquisition {
 
+   //max numberof images that are held in queue to be saved
+   private static final int OUTPUT_QUEUE_SIZE = 40;
+   
    protected volatile double zStep_ = 1;
    protected BlockingQueue<TaggedImage> engineOutputQueue_;
    protected CMMCore core_ = MMStudio.getInstance().getCore();
@@ -85,20 +88,16 @@ public abstract class Acquisition {
       int xOverlap = SettingsDialog.getOverlapX();
       int yOverlap = SettingsDialog.getOverlapY();
       
-      //TODO: add limit to this queue in case saving and display goes much slower than acquisition?
-      engineOutputQueue_ = new LinkedBlockingQueue<TaggedImage>();
+      engineOutputQueue_ = new LinkedBlockingQueue<TaggedImage>(OUTPUT_QUEUE_SIZE);
 
       JSONObject summaryMetadata = CustomAcqEngine.makeSummaryMD(this, name);
-//         JSONObject summaryMetadata = makeSummaryMD(1,2);
       MultiResMultipageTiffStorage storage = new MultiResMultipageTiffStorage(dir, true, summaryMetadata, xOverlap, yOverlap, pixelSizeConfig_);
       //storage class has determined unique acq name, so it can now be stored
       name_ = storage.getUniqueAcqName();
       MMImageCache imageCache = new MMImageCache(storage);
       imageCache.setSummaryMetadata(summaryMetadata);
-      posManager_ = storage.getPositionManager();
-      
-      DisplayPlus disp = new DisplayPlus(imageCache, this, summaryMetadata, storage);
-         
+      posManager_ = storage.getPositionManager();      
+      new DisplayPlus(imageCache, this, summaryMetadata, storage);         
       imageSink_ = new TaggedImageSink(engineOutputQueue_, imageCache, this);
       imageSink_.start();
    }
