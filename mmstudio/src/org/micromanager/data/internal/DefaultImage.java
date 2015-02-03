@@ -136,6 +136,10 @@ public class DefaultImage implements Image {
          int numComponents, Coords coords, Metadata metadata) 
          throws IllegalArgumentException {
       metadata_ = metadata;
+      if (metadata_ == null) {
+         // Don't allow images with null metadata.
+         metadata_ = new DefaultMetadata.Builder().build();
+      }
       coords_ = coords;
 
       rawPixels_ = DirectBuffers.bufferFromArray(pixels);
