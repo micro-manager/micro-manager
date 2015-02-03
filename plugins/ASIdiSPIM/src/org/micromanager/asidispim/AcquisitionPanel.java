@@ -1690,9 +1690,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         core_.startSequenceAcquisition(secondCamera, nrSlices, 0, true);
                      }
 
-                     // can we remove this explicit delay?
-                     Thread.sleep(10);
-
                      // deal with shutter
                      if (autoShutter) {
                         core_.setAutoShutter(false);
@@ -1827,7 +1824,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                // TODO: evaluate closeAcquisition call
                // at the moment, the Micro-Manager api has a bug that causes 
                // a closed acquisition not be really closed, causing problems
-               // when the user closes a window of the previoud acquisition
+               // when the user closes a window of the previous acquisition
+               // changed r14705 (2014-11-24)
                // gui_.closeAcquisition(acqName);
                ReportingUtils.logMessage("diSPIM plugin acquisition " + acqName + 
                      " took: " + (System.currentTimeMillis() - acqStart) + "ms");
