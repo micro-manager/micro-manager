@@ -95,7 +95,7 @@ public class DefaultImage implements Image {
       }
       catch (JSONException e) {}
       try {
-         builder.imageNumber((int) MDUtils.getSequenceNumber(tags));
+         builder.imageNumber(MDUtils.getSequenceNumber(tags));
       }
       catch (JSONException e) {}
       metadata_ = builder.build();
