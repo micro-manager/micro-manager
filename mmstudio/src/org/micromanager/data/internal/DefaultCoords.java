@@ -23,14 +23,11 @@ public class DefaultCoords implements Coords, Comparable<DefaultCoords> {
    public static class Builder implements Coords.CoordsBuilder {
       // Maps axis labels to our position along those axes.
       private HashMap<String, Integer> axisToPos_;
-      // Axes for which we are the last image along that axis.
-      private Set<String> terminalAxes_;
       // Convenience/optimization: we maintain a sorted list of our axes.
       private ArrayList<String> sortedAxes_;
 
       public Builder() {
          axisToPos_ = new HashMap<String, Integer>();
-         terminalAxes_ = new HashSet<String>();
          sortedAxes_ = new ArrayList<String>();
       }
 
@@ -100,12 +97,6 @@ public class DefaultCoords implements Coords, Comparable<DefaultCoords> {
       }
       
       @Override
-      public CoordsBuilder isAxisEndFor(String axis) {
-         terminalAxes_.add(axis);
-         return this;
-      }
-
-      @Override
       public int getPositionAt(String axis) {
          if (axisToPos_.containsKey(axis)) {
             return axisToPos_.get(axis);
@@ -116,14 +107,11 @@ public class DefaultCoords implements Coords, Comparable<DefaultCoords> {
 
    // Maps axis labels to our position along those axes.
    private HashMap<String, Integer> axisToPos_;
-   // Axes for which we are the last image along that axis.
-   private Set<String> terminalAxes_;
    // Convenience/optimization: we maintain a sorted list of our axes.
    private ArrayList<String> sortedAxes_;
 
    public DefaultCoords(Builder builder) {
       axisToPos_ = new HashMap<String, Integer>(builder.axisToPos_);
-      terminalAxes_ = new HashSet<String>(builder.terminalAxes_);
       sortedAxes_ = new ArrayList<String>(builder.sortedAxes_);
    }
    
@@ -156,16 +144,6 @@ public class DefaultCoords implements Coords, Comparable<DefaultCoords> {
    }
    
    @Override
-   public boolean getIsAxisEndFor(String axis) {
-      return terminalAxes_.contains(axis);
-   }
-
-   @Override
-   public Set<String> getTerminalAxes() {
-      return new HashSet<String>(terminalAxes_);
-   }
-
-   @Override
    public List<String> getAxes() {
       return new ArrayList<String>(sortedAxes_);
    }
@@ -185,9 +163,6 @@ public class DefaultCoords implements Coords, Comparable<DefaultCoords> {
       Builder result = new Builder();
       for (String axis : axisToPos_.keySet()) {
          result.position(axis, axisToPos_.get(axis));
-      }
-      for (String axis : terminalAxes_) {
-         result.isAxisEndFor(axis);
       }
       return result;
    }
