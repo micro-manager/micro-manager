@@ -12,7 +12,6 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
@@ -28,9 +27,10 @@ import org.micromanager.api.DataProcessor;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.events.EventManager;
 import org.micromanager.events.ProcessorEvent;
+import org.micromanager.utils.MMFrame;
 
 
-final public class PipelineFrame extends JFrame
+final public class PipelineFrame extends MMFrame
       implements ListSelectionListener {
 
    private final ScriptInterface gui_;
@@ -49,8 +49,6 @@ final public class PipelineFrame extends JFrame
       super("On-The-Fly Processor Pipeline");
       gui_ = gui;
       engine_ = engine;
-
-      setLocationRelativeTo(null);
 
       setLayout(new MigLayout("fill, flowy, insets dialog",
             "[align center, grow]unrelated[align left]",
@@ -152,6 +150,8 @@ final public class PipelineFrame extends JFrame
             minSize.height + heightDelta);
       setPreferredSize(frameSize);
       setMinimumSize(minFrameSize);
+      
+      this.loadAndRestorePosition(200, 200);
 
       EventManager.register(this);
       reloadProcessors();
@@ -177,6 +177,7 @@ final public class PipelineFrame extends JFrame
    /**
     * A new ProcessorPlugin was registered; re-load our list of registered
     * processors.
+    * @param event
     */
    @Subscribe
    public void newProcessorRegistered(ProcessorEvent event) {
