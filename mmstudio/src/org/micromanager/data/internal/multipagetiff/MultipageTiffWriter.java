@@ -149,7 +149,7 @@ public class MultipageTiffWriter {
       // Additionally, in MM2.0 we store display settings in a separate file;
       // the settings we save here are solely to preserve backwards
       // compatibility with MM1.x.
-      JSONObject summaryJSON = summary.legacyToJSON();
+      JSONObject summaryJSON = summary.toJSON();
       augmentWithImageMetadata(summaryJSON,
             (DefaultImage) masterStorage_.getAnyImage());
       augmentWithDisplaySettings(summaryJSON,
@@ -224,7 +224,7 @@ public class MultipageTiffWriter {
    private void augmentWithDisplaySettings(JSONObject summary,
          DefaultDisplaySettings settings) {
       try {
-         summary.put("DisplaySettings", settings.legacyToJSON());
+         summary.put("DisplaySettings", settings.toJSON());
       }
       catch (JSONException e) {
          ReportingUtils.logError(e, "Couldn't add display settings to summary");
@@ -921,11 +921,11 @@ public class MultipageTiffWriter {
 
    // TODO: is this identical to a similar function in the Reader?
    private void writeDisplaySettings() throws IOException {
-      DisplaySettings settings = DefaultDisplaySettings.getStandardSettings();
+      DefaultDisplaySettings settings = DefaultDisplaySettings.getStandardSettings();
       int numReservedBytes = numChannels_ * DISPLAY_SETTINGS_BYTES_PER_CHANNEL;
       ByteBuffer header = allocateByteBuffer(8);
       ByteBuffer buffer = ByteBuffer.wrap(
-            getBytesFromString(settings.legacyToJSON().toString()));
+            getBytesFromString(settings.toJSON().toString()));
       header.putInt(0, DISPLAY_SETTINGS_HEADER);
       header.putInt(4, numReservedBytes);
       fileChannelWrite(header, filePosition_);

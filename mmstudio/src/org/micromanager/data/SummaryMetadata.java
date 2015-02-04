@@ -1,7 +1,5 @@
 package org.micromanager.data;
 
-import org.json.JSONObject;
-
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PropertyMap;
 
@@ -92,9 +90,4 @@ public interface SummaryMetadata {
    public MultiStagePosition[] getStagePositions();
    /** Any general-purpose user metadata */
    public PropertyMap getUserData();
-
-   /**
-    * For legacy support only: convert to JSONObject.
-    */
-   public JSONObject legacyToJSON();
 }

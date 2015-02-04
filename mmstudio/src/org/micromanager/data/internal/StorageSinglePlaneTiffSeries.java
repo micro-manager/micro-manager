@@ -398,7 +398,7 @@ public class StorageSinglePlaneTiffSeries implements Storage {
    public void saveImagePlus(ImagePlus imp, Image image,
          String path, String tiffFileName) {
       try {
-         JSONObject imageJSON = image.getMetadata().legacyToJSON();
+         JSONObject imageJSON = ((DefaultMetadata) image.getMetadata()).toJSON();
          // Augment the JSON with image property info.
          imageJSON.put("Width", image.getWidth());
          imageJSON.put("Height", image.getHeight());
@@ -444,7 +444,8 @@ public class StorageSinglePlaneTiffSeries implements Storage {
       if (time != null) {
          summary = summary.copy().startDate(time.split(" ")[0]).build();
       }
-      writeJSONMetadata(pos, summary.legacyToJSON(), "Summary");
+      writeJSONMetadata(pos, ((DefaultSummaryMetadata) summary).toJSON(),
+            "Summary");
    }
 
    @Subscribe

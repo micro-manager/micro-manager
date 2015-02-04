@@ -143,8 +143,7 @@ public class DefaultPropertyMap implements PropertyMap {
       return null;
    }
 
-   @Override
-   public JSONObject legacyToJSON() {
+   public JSONObject toJSON() {
       JSONObject result = new JSONObject();
       for (String key : propMap_.keySet()) {
          try {

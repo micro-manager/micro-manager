@@ -88,7 +88,7 @@ public class MultipageTiffReader {
 
    /**
     * This constructor is used for a file that is currently being written.
-    * \param summaryJSON As per DefaultSummaryMetadat.legacyToJSON(), except
+    * \param summaryJSON As per DefaultSummaryMetadat.toJSON(), except
     *        augmented with display settings and values that are normally
     *        only stored in image metadata. See the
     *        MultipageTiffWriter.augmentWithImageMetadata() method.
@@ -638,7 +638,7 @@ public class MultipageTiffReader {
    }
 
    private int writeDisplaySettings(DefaultDisplaySettings settings, long filePosition) throws IOException {
-      JSONObject settingsJSON = settings.legacyToJSON();
+      JSONObject settingsJSON = settings.toJSON();
       int numReservedBytes = settingsJSON.length() * MultipageTiffWriter.DISPLAY_SETTINGS_BYTES_PER_CHANNEL;
       ByteBuffer header = ByteBuffer.allocate(8).order(MultipageTiffWriter.BYTE_ORDER);
       ByteBuffer buffer = ByteBuffer.wrap(getBytesFromString(settingsJSON.toString()));

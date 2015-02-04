@@ -3,8 +3,6 @@ package org.micromanager.data;
 import java.awt.Rectangle;
 import java.util.UUID;
 
-import org.json.JSONObject;
-
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PropertyMap;
 
@@ -138,9 +136,4 @@ public interface Metadata {
    SummaryMetadata getSummaryMetadata();
    /** A unique identifier for this specific image */
    UUID getUUID();
-
-   /**
-    * For legacy support only: convert to JSONObject.
-    */
-   public JSONObject legacyToJSON();
 }

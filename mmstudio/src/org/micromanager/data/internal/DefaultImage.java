@@ -40,7 +40,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * exposed in the API) returns the raw buffer.
  */
 public class DefaultImage implements Image {
-   private Metadata metadata_;
+   private DefaultMetadata metadata_;
    private Coords coords_;
    private Buffer rawPixels_;
    // Width of the image, in pixels
@@ -135,7 +135,7 @@ public class DefaultImage implements Image {
    public DefaultImage(Object pixels, int width, int height, int bytesPerPixel,
          int numComponents, Coords coords, Metadata metadata) 
          throws IllegalArgumentException {
-      metadata_ = metadata;
+      metadata_ = (DefaultMetadata) metadata;
       if (metadata_ == null) {
          // Don't allow images with null metadata.
          metadata_ = new DefaultMetadata.Builder().build();
@@ -153,7 +153,7 @@ public class DefaultImage implements Image {
    }
 
    public DefaultImage(Image source, Coords coords, Metadata metadata) {
-      metadata_ = metadata;
+      metadata_ = (DefaultMetadata) metadata;
       coords_ = coords;
       if (source instanceof DefaultImage) {
          // Just copy their Buffer over directly.
@@ -328,9 +328,8 @@ public class DefaultImage implements Image {
    /**
     * For backwards compatibility, convert to TaggedImage.
     */
-   @Override
    public TaggedImage legacyToTaggedImage() {
-      JSONObject tags = metadata_.legacyToJSON();
+      JSONObject tags = metadata_.toJSON();
       // Fill in fields that we know about and that our metadata doesn't.
       try {
          MDUtils.setFrameIndex(tags, coords_.getPositionAt("time"));
