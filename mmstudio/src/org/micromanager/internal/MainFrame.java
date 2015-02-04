@@ -109,7 +109,6 @@ public class MainFrame extends MMFrame implements LiveModeListener {
    private final SnapLiveManager snapLiveManager_;
 
    private ConfigPadButtonPanel configPadButtonPanel_;
-   private final JSplitPane splitPane_;
 
    private AbstractButton setRoiButton_;
    private AbstractButton clearRoiButton_;
@@ -126,13 +125,13 @@ public class MainFrame extends MMFrame implements LiveModeListener {
       snapLiveManager_.addLiveModeListener(this);
 
       setTitle(MICRO_MANAGER_TITLE + " " + MMVersion.VERSION_STRING);
-      setMinimumSize(new Dimension(605,480));
-      
-      splitPane_ = createSplitPane(
-            prefs.getInt(MAIN_FRAME_DIVIDER_POS, 200));
-      getContentPane().add(splitPane_);
+      setMinimumSize(new Dimension(605, 220));
 
-      createTopPanelWidgets((JPanel) splitPane_.getComponent(0));
+      JPanel contents = new JPanel();
+      contents.setLayout(new SpringLayout());
+      getContentPane().add(contents);
+
+      createTopPanelWidgets(contents);
       
       setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
       setupWindowHandlers();
@@ -160,7 +159,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
    public void loadApplicationPrefs(Preferences prefs, 
          boolean shouldCloseOnExit) {
       // put frame back where it was last time if possible
-      this.loadAndRestorePosition(100, 100, 644, 570);
+      this.loadAndRestorePosition(100, 100, 644, 220);
       setExitStrategy(shouldCloseOnExit);
    }
    
@@ -664,7 +663,6 @@ public class MainFrame extends MMFrame implements LiveModeListener {
     */
    public void savePrefs(Preferences prefs) {
       this.savePosition();
-      prefs.putInt(MAIN_FRAME_DIVIDER_POS, splitPane_.getDividerLocation());
       prefs.put(MAIN_EXPOSURE, textFieldExp_.getText());
    }
 
