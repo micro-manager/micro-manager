@@ -109,7 +109,7 @@ public class StorageSinglePlaneTiffSeries implements Storage {
       // records.
       String fileName = createFileName(image.getCoords());
       if (!amLoading_) {
-         int imagePos = image.getCoords().getPositionAt(Coords.STAGE_POSITION);
+         int imagePos = Math.max(0, image.getCoords().getStagePosition());
          if (!metadataStreams_.containsKey(imagePos)) {
             // No metadata for image at this location, means we haven't
             // written to its location before.
@@ -179,7 +179,6 @@ public class StorageSinglePlaneTiffSeries implements Storage {
          if (imp.getProperty("Info") != null) {
             try {
                JSONObject jsonMeta = new JSONObject((String) imp.getProperty("Info"));
-               ReportingUtils.logError("Loaded metadata\n" + jsonMeta.toString(2));
                metadata = DefaultMetadata.legacyFromJSON(jsonMeta);
                width = MDUtils.getWidth(jsonMeta);
                height = MDUtils.getHeight(jsonMeta);
@@ -414,6 +413,9 @@ public class StorageSinglePlaneTiffSeries implements Storage {
 
    private void openNewDataSet(Image image) throws IOException, Exception {
       String posName = image.getMetadata().getPositionName();
+      if (posName == null || posName.contentEquals("null")) {
+         posName = "";
+      }
 
       int pos = image.getCoords().getStagePosition();
       if (pos == -1) {
