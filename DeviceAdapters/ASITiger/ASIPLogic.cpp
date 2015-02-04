@@ -536,13 +536,13 @@ int CPLogic::RefreshCellPropertyValues(long index)
 
    GetCellPropertyName(index, "_Config", propName);
    UpdateProperty(propName);
-   GetCellPropertyName(index, "_InputX", propName);
+   GetCellPropertyName(index, "_Input1", propName);
    UpdateProperty(propName);
-   GetCellPropertyName(index, "_InputY", propName);
+   GetCellPropertyName(index, "_Input2", propName);
    UpdateProperty(propName);
-   GetCellPropertyName(index, "_InputZ", propName);
+   GetCellPropertyName(index, "_Input3", propName);
    UpdateProperty(propName);
-   GetCellPropertyName(index, "_InputF", propName);
+   GetCellPropertyName(index, "_Input4", propName);
    UpdateProperty(propName);
 
    refreshProps_ = refreshPropsOriginal;
