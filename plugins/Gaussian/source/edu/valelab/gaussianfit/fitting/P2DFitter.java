@@ -28,8 +28,6 @@ package edu.valelab.gaussianfit.fitting;
 import edu.valelab.gaussianfit.utils.Besseli;
 import org.apache.commons.math3.analysis.MultivariateFunction;
 import org.apache.commons.math3.analysis.function.Exp;
-import org.apache.commons.math3.fitting.WeightedObservedPoint;
-import org.apache.commons.math3.fitting.WeightedObservedPoints;
 import org.apache.commons.math3.optim.InitialGuess;
 import org.apache.commons.math3.optim.MaxEval;
 import org.apache.commons.math3.optim.PointValuePair;
@@ -38,31 +36,32 @@ import org.apache.commons.math3.optim.nonlinear.scalar.ObjectiveFunction;
 import org.apache.commons.math3.optim.nonlinear.scalar.noderiv.NelderMeadSimplex;
 import org.apache.commons.math3.optim.nonlinear.scalar.noderiv.SimplexOptimizer;
 import org.apache.commons.math3.optim.nonlinear.scalar.GoalType;
+import org.apache.commons.math3.optim.nonlinear.scalar.MultivariateFunctionMappingAdapter;
 
 
 class P2DFunc implements MultivariateFunction {
-   private final WeightedObservedPoints points_;
+   private final double[] points_;
    
-   public P2DFunc(WeightedObservedPoints points) {
+   public P2DFunc(double[] points) {
       points_ = points;
    }
    
    /**
-    * Calculate the sum of the root mean square of the errors
-    * @param doubles
-    * @return 
+    * Calculate the sum of the likelihood function
+    * @param doubles array with parameters, here doubles[0] == mu, 
+    * doubles [1] == sigma
+    * @return -sum(logP2D(points, mu, sigma));
     */
    @Override
    public double value(double[] doubles) {
       double sum = 0;
-      for (WeightedObservedPoint point : points_.toList()) {
-         double predictedValue = p2d(point.getX(), doubles[0], doubles[1]);
-         double error = point.getY() - predictedValue;
-         sum += Math.sqrt(error * error);
+      for (double point : points_) {
+         double predictedValue = p2d(point, doubles[0], doubles[1]);
+         sum += Math.log(predictedValue);
       }
-      return sum;
+      return -sum;
    }
-   
+    
     /**
     * Calculates the probability density function:
     * p2D(r) = (r / sigma2) exp(-(mu2 + r2)/2sigma2) I0(rmu/sigma2)
@@ -83,37 +82,48 @@ class P2DFunc implements MultivariateFunction {
    
 }
 
-
+/**
+ * Class that uses the apache commons math3 library to fit a maximum likelihood
+ * function for the probability density function of the distrubtion of measured
+ * distances.
+ * @author nico
+ */
 
 public class P2DFitter {
-   private final WeightedObservedPoints points_;
-   
-   public P2DFitter() {
-      points_ = new WeightedObservedPoints();
+   private final double[] points_;
+   private double muGuess_ = 0.0;
+   private double sigmaGuess_ = 10.0;
+   public P2DFitter(double[] points) {
+      points_ = points;
    }
    
-   public void addPoint(double x, double y) {
-      points_.add(x, y);
+   /**
+    * Lets caller provide start parameters for fit of mu and sigma
+    * @param mu
+    * @param sigma 
+    */
+   public void setStartParams(double mu, double sigma) {
+      muGuess_ = mu;
+      sigmaGuess_ = sigma;
    }
-   
-   public void clearpoints() {
-      points_.clear();
-   };
-   
-   public PointValuePair solve() {
-      SimplexOptimizer optimizer = new SimplexOptimizer(1e-3, 1e-6);
+      
+   public double[] solve() {
+      SimplexOptimizer optimizer = new SimplexOptimizer(1e-9, 1e-12);
       P2DFunc myP2DFunc = new P2DFunc(points_);
+      double[] lowerBounds = {0.0, 0.0};
+      double[] upperBounds = {50.0, 50.0};
+      MultivariateFunctionMappingAdapter mfma = new MultivariateFunctionMappingAdapter(
+              myP2DFunc, lowerBounds, upperBounds);
       
       PointValuePair solution = optimizer.optimize(
-              new MaxEval(100),
-              new ObjectiveFunction(myP2DFunc),
+              new ObjectiveFunction(mfma),
+              new MaxEval(500),
               GoalType.MINIMIZE,
-              new InitialGuess(new double[]{-3, 0}),
-              new NelderMeadSimplex(new double[]{0.2, 0.2}),
-              new SimpleBounds(new double[]{-5, -1},
-              new double[]{5, 1})
+              new InitialGuess(new double[]{muGuess_, sigmaGuess_}),
+              new NelderMeadSimplex(new double[]{0.2, 0.2})//,
       );
-      return solution;
+      
+      return mfma.unboundedToBounded( solution.getPoint() );
    }
     
         
