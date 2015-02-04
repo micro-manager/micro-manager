@@ -67,7 +67,7 @@ import javax.swing.text.JTextComponent;
 
 
 public class GUIUtils {
-   private static String DIALOG_POSITION = "dialogPosition";
+   private static final String DIALOG_POSITION = "dialogPosition";
 
    public static void setComboSelection(JComboBox cb, String sel){
       ActionListener[] listeners = cb.getActionListeners();
@@ -313,8 +313,11 @@ public class GUIUtils {
       
    /////////////////////// MENU ITEM UTILITY METHODS ///////////
    
-   /*
-    * Add a menu to the specified menu bar.
+   /**
+    * Adds a menu to the specified menu bar.
+    * @param menuBar
+    * @param menuName
+    * @return 
     */
    public static JMenu createMenuInMenuBar(final JMenuBar menuBar, final String menuName) {
       final JMenu menu = new JMenu();
@@ -324,7 +327,12 @@ public class GUIUtils {
    }
    
     /**
-     * Add a menu item to the specified parent menu.
+     * Adds a menu item to the specified parent menu.
+    * @param parentMenu - "top level" menu
+    * @param menuItem - prepared menuitem
+    * @param menuItemToolTip 
+    * @param menuActionRunnable - code that will be executed on selection of this menu
+    * @return 
      */
    public static JMenuItem addMenuItem(final JMenu parentMenu,
             JMenuItem menuItem,
@@ -335,6 +343,7 @@ public class GUIUtils {
       }
       if (menuActionRunnable != null) {
          menuItem.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent ignoreEvent) {
                menuActionRunnable.run();
             }
@@ -345,7 +354,12 @@ public class GUIUtils {
    }
    
    /**
-    * Add a menu item with given text to the specified parent menu.
+    * Adds a menu item with given text to the specified parent menu.
+    * @param parentMenu - "top level" menu
+    * @param menuItemText - name as it appears in the menu
+    * @param menuItemToolTip 
+    * @param menuActionRunnable - code that will be executed on selection of this menu
+    * @return menuitem
     */
    public static JMenuItem addMenuItem(final JMenu parentMenu,
            final String menuItemText,
@@ -355,6 +369,15 @@ public class GUIUtils {
               menuItemToolTip, menuActionRunnable);      
    }
    
+      /**
+    * Adds a menu item with given text and icon to the specified parent menu.
+    * @param parentMenu - "top level" menu
+    * @param menuItemText - name as it appears in the menu
+    * @param menuItemToolTip 
+    * @param menuActionRunnable - code that will be executed on selection of this menu
+    * @param iconFileName
+    * @return menuitem
+    */
    public static JMenuItem addMenuItem(final JMenu parentMenu,
            final String menuItemText,
            final String menuItemToolTip,
@@ -404,7 +427,8 @@ public class GUIUtils {
               (north >= 0) ? SpringLayout.NORTH : SpringLayout.SOUTH, parentContainer);
    }
       
-   /** Add a component to the parent panel, set positions of the edges of
+   /** 
+    * Adds a component to the parent panel, set positions of the edges of
     * component relative to panel. If edges are positive, then they are
     * positioned relative to north and west edges of parent container. If edges
     * are negative, then they are positioned relative to south and east
