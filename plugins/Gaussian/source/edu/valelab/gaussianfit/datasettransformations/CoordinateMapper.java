@@ -59,11 +59,11 @@ import org.apache.commons.math.linear.RealMatrix;
 public class CoordinateMapper {
    final private ExponentPairs exponentPairs_;
    final private ControlPoints controlPoints_;
-   private ControlPoints cleanedControlPoints_;
    final private EnhancedKDTree kdTree_;
    final private int order_;
    final private PointMap pointMap_;
-   final private AffineTransform af_;
+   private PointMap cleanedPointMap_ = null;
+   private AffineTransform af_;
    final private AffineTransform rbAf_;
    final public static int LWM = 1;
    final public static int AFFINE = 2;
@@ -78,7 +78,17 @@ public class CoordinateMapper {
     * Shorthand name
     */
    public static class PointMap extends 
-           HashMap<Point2D.Double, Point2D.Double> {}
+           HashMap<Point2D.Double, Point2D.Double> {
+   
+      public PointMap copy() {
+         PointMap myCopy = new PointMap();
+         for (Point2D.Double key : this.keySet()) {
+            myCopy.put(key, this.get(key));
+         }
+         return myCopy;
+      }
+      
+   }
 
    /**
     * Utility class
@@ -242,7 +252,16 @@ public class CoordinateMapper {
     * Shorthand notation
     */
    public static class ControlPoints extends 
-           HashMap<Point2D.Double, ControlPoint> {}
+           HashMap<Point2D.Double, ControlPoint> {
+   
+      public ControlPoints copy() {
+         ControlPoints clone = new ControlPoints();
+         for (Point2D.Double key : this.keySet()) {
+            clone.put(key, this.get(key));
+         }
+         return clone;
+      }
+   }
 
    public static double[] powerTerms(double x, double y,
            final ExponentPairs exponentPairs) {
@@ -391,25 +410,15 @@ public class CoordinateMapper {
       } catch (NoninvertibleTransformException ex) {
          Logger.getLogger(CoordinateMapper.class.getName()).log(Level.SEVERE, null, ex);
       }
-      /*
-      double pxSize = 1.0;
-      ij.IJ.log("Affine matrix: " + "\n\r" +
-              m[0][0]/pxSize + "\t" + m[0][1] + "\t0.0\t" + m[0][2] + "\n" + 
-              m[1][0] + "\t" + m[1][1]/pxSize + "\t0.0\t" + m[1][2] + "\n" +
-              0.0 + "\t" + 0.0 + "\t" + 1.0 + "\t" + 0.0 + "\n" +
-              0.0 + "\t" + 0.0 + "\t" + 0.0 + "\t" + 1.0);
-       */
 
       // Create an AffineTransform object from the elements of m
       // (the last row is omitted as specified in AffineTransform class):
       return new AffineTransform(m[0][0], m[1][0], m[0][1], m[1][1], m[0][2], m[1][2]);
    }
    
-
-   /*** Rigid body transform (rotation and translation only)
-   
    
     /**
+    * Rigid body transform (rotation and translation only)
     * Creates an AffineTransform object that uses only rotation and translation
     * 
     * @param pointPairs - a Map of points measured in the two coordinates systems (srcPt->destPt)
@@ -477,6 +486,10 @@ public class CoordinateMapper {
       }
       if (method_ == AFFINE) {
          try {
+            if (cleanedPointMap_ == null) {
+               cleanedPointMap_ = makeCleanedPointMap();
+               af_ = generateAffineTransformFromPointPairs(cleanedPointMap_);
+            }
             return (Point2D.Double) af_.transform(srcTestPoint, null);
          } catch (Exception ex) {
             return null;
@@ -516,24 +529,24 @@ public class CoordinateMapper {
       pieceWiseAffineMaxDistance_ = max;
    }
    
-   private void makeCleanedControlPoints() {
-      cleanedControlPoints_ = new ControlPoints();
+   private PointMap makeCleanedPointMap() {
+      PointMap cleanedPointMap = pointMap_.copy();
       // TODO: copy controlPOints to cleanedControlPoints
       boolean continueQualityCheck = true;
       int nrOfRemovedSpots = 0;
 
-      while (continueQualityCheck && cleanedControlPoints_.size() > 4) {
+      while (continueQualityCheck && cleanedPointMap.size() > 4) {
          // quality control on our new coordinate mapper.  
          // Apply an affine transform on our data and check distribution 
-         int method = CoordinateMapper.AFFINE;
-         setMethod(method);
+        
          CoordinateMapper.PointMap corPoints = new CoordinateMapper.PointMap();
          List<Double> distances = new ArrayList<Double>();
          double maxDistance = 0.0;
          Point2D.Double maxPairKey = null;
-         for (Map.Entry pair : cleanedControlPoints_.entrySet()) {
+         for (Map.Entry pair : cleanedPointMap.entrySet()) {
             Point2D.Double uPt = (Point2D.Double) pair.getValue();
             Point2D.Double otherPt = (Point2D.Double) pair.getKey();
+            af_ = generateAffineTransformFromPointPairs(cleanedPointMap_);
             Point2D.Double corPt = transform(otherPt);
             corPoints.put(uPt, corPt);
             double distance = Math.sqrt(NearestPoint2D.distance2(uPt, corPt));
@@ -549,13 +562,14 @@ public class CoordinateMapper {
          // Quality control check
          if (2 * stdDev > avg) {
             nrOfRemovedSpots += 1;
-            cleanedControlPoints_.remove(maxPairKey);
+            cleanedPointMap.remove(maxPairKey);
          } else {
             continueQualityCheck = false;
             ij.IJ.log("Removed " + nrOfRemovedSpots + " pairs, " + ", avg. distance: "
                     + avg + ", std. dev: " + stdDev);
          }
       }
+      return cleanedPointMap;
    }
 
 

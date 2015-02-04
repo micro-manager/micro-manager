@@ -1207,6 +1207,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
          // we have pairs from all images, construct the coordinate mapper
          try {
             c2t_ = new CoordinateMapper(points, 2, 1);
+            
+            /*
             boolean continueQualityCheck = true;
             int nrOfRemovedSpots = 0;
 
@@ -1245,7 +1247,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                     avg + ", std. dev: " + stdDev);
                }
             }
-            
+            */
             ij.IJ.log("Used " + points.size() + " spot pairs to calculate 2C Reference");
             
             //ij.IJ.showMessage("Corrected data have average of: " + avg + ",  std. dev. of: " + stdDev);
