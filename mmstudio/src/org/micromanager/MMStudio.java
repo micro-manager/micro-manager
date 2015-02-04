@@ -65,7 +65,6 @@ import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
 import mmcorej.TaggedImage;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.acquisition.*;
@@ -961,12 +960,13 @@ public class MMStudio implements ScriptInterface {
    /**
     * Open an existing acquisition directory and build viewer window.
     * @param inRAM whether or not to keep data in RAM 
+    * @return selected File object 
     */
-   public void promptForAcquisitionToOpen(boolean inRAM) {
+   public File promptForAcquisitionToOpen(boolean inRAM) {
       File f = FileDialogs.openDir(frame_,
             "Please select an image data set", MM_DATA_SET);
       if (f == null) {
-         return;
+         return null;
       }
       String path = f.getParent();
       if (f.isDirectory()) {
@@ -978,6 +978,7 @@ public class MMStudio implements ScriptInterface {
       } catch (MMScriptException ex) {
          ReportingUtils.showError(ex);
       }
+      return f;
    }
 
    @Override
