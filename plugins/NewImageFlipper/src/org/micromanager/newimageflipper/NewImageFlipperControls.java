@@ -28,21 +28,24 @@ import java.util.prefs.Preferences;
 import javax.swing.ImageIcon;
 import mmcorej.StrVector;
 import mmcorej.TaggedImage;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.MMStudio;
 import org.micromanager.api.DataProcessor;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MDUtils;
+import org.micromanager.utils.MMFrame;
+import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
 /**
  *
  * @author arthur
  */
-public class NewImageFlipperControls extends javax.swing.JFrame {
+public class NewImageFlipperControls extends MMFrame {
 
    private final NewImageFlippingProcessor processor_;
-   private String selectedCamera_;
+   private final String selectedCamera_;
    private final String FRAMEXPOS = "NewImageFlipperXPos";
    private final String FRAMEYPOS = "NewImageFlipperYPos";
    private final String R0 = "0" + "\u00B0";
@@ -53,20 +56,18 @@ public class NewImageFlipperControls extends javax.swing.JFrame {
    private final String ROTATE = "_Rotation";
    private final String MIRROR = "_Mirror";
    private final String SELECTEDCAMERA = "SelectedCamera";
-   private Preferences prefs_;
-   private int frameXPos_ = 300;
-   private int frameYPos_ = 300;   
+   private final Preferences prefs_;
+   private final int frameXPos_ = 300;
+   private final int frameYPos_ = 300;   
 
    /** 
     * Creates form NewImageFlipperControls 
+    * @param processor
     */
    public NewImageFlipperControls(NewImageFlippingProcessor processor) {
       processor_ = processor;
 
-      prefs_ = Preferences.userNodeForPackage(this.getClass());
-
-      frameXPos_ = prefs_.getInt(FRAMEXPOS, frameXPos_);
-      frameYPos_ = prefs_.getInt(FRAMEYPOS, frameYPos_);
+      prefs_ = getPrefsNode();
 
       initComponents();
       
@@ -80,7 +81,7 @@ public class NewImageFlipperControls extends javax.swing.JFrame {
          rotateComboBox_.addItem(item);
       rotateComboBox_.setSelectedItem(prefs_.get(selectedCamera_ + ROTATE, R0));
 
-      setLocation(frameXPos_, frameYPos_);
+      this.loadAndRestorePosition(frameXPos_, frameYPos_);
        
       updateCameras();
       
@@ -94,11 +95,6 @@ public class NewImageFlipperControls extends javax.swing.JFrame {
 
    public DataProcessor<TaggedImage> getProcessor() {
       return processor_;
-   }
-
-   public void safePrefs() {
-      prefs_.putInt(FRAMEXPOS, this.getX());
-      prefs_.putInt(FRAMEYPOS, this.getY());
    }
 
    /**
@@ -255,7 +251,7 @@ public class NewImageFlipperControls extends javax.swing.JFrame {
    private javax.swing.JComboBox rotateComboBox_;
    // End of variables declaration//GEN-END:variables
 
-   public boolean getMirror() {
+   public final boolean getMirror() {
       return mirrorCheckBox_.isSelected();
    }
 
@@ -269,7 +265,7 @@ public class NewImageFlipperControls extends javax.swing.JFrame {
     * 
     * @return coded rotation
     */
-   public NewImageFlippingProcessor.Rotation getRotate() {
+   public final NewImageFlippingProcessor.Rotation getRotate() {
       if (R90.equals((String) rotateComboBox_.getSelectedItem())) {
          return NewImageFlippingProcessor.Rotation.R90;
       }
@@ -302,7 +298,9 @@ public class NewImageFlipperControls extends javax.swing.JFrame {
                  new TaggedImage(proc.getPixels(), newTags), getMirror(), getRotate() );
          exampleImageTarget_.setIcon(
                  new ImageIcon(ImageUtils.makeProcessor(result).createImage()));
-      } catch (Exception ex) {
+      } catch (JSONException ex) {
+         ReportingUtils.logError(ex);
+      } catch (MMScriptException ex) {
          ReportingUtils.logError(ex);
       }
    }
