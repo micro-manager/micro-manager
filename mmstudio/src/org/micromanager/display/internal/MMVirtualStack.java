@@ -157,7 +157,6 @@ public class MMVirtualStack extends ij.VirtualStack {
          }
       }
       else if (rawPixels instanceof short[]) {
-         size /= 2; // Because shorts are 2 bytes each.
          rawPixels = new short[size];
          for (int i = 0; i < size; ++i) {
             ((short[]) rawPixels)[i] = 0;
