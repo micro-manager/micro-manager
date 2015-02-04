@@ -6,7 +6,7 @@
 //
 // AUTHOR:       Arthur Edelstein, Nico Stuurman
 //
-// COPYRIGHT:    University of California, San Francisco, 2011, 2012, 2013
+// COPYRIGHT:    University of California, San Francisco, 2011, 2012, 2013, 2015
 //
 // LICENSE:      This file is distributed under the BSD license.
 //               License text is included with the source distribution.
@@ -46,8 +46,6 @@ public class NewImageFlipperControls extends MMFrame {
 
    private final NewImageFlippingProcessor processor_;
    private final String selectedCamera_;
-   private final String FRAMEXPOS = "NewImageFlipperXPos";
-   private final String FRAMEYPOS = "NewImageFlipperYPos";
    private final String R0 = "0" + "\u00B0";
    private final String R90 = "90" + "\u00B0";
    private final String R180 = "180" + "\u00B0";
