@@ -98,9 +98,4 @@ public interface Image {
     * raw pixel data. Will be 1 for single-component images.
     */
    public int getNumComponents();
-
-   /**
-    * For legacy support only: convert to TaggedImage.
-    */
-   public TaggedImage legacyToTaggedImage();
 }

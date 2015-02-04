@@ -63,8 +63,8 @@ public class DefaultMetadata implements Metadata {
 
       private Double pixelAspect_ = null;
 
-      private PropertyMap userData_ = null;
-      private SummaryMetadata summaryMetadata_ = null;
+      private DefaultPropertyMap userData_ = null;
+      private DefaultSummaryMetadata summaryMetadata_ = null;
 
       @Override
       public DefaultMetadata build() {
@@ -241,13 +241,13 @@ public class DefaultMetadata implements Metadata {
 
       @Override
       public MetadataBuilder userData(PropertyMap userData) {
-         userData_ = userData;
+         userData_ = (DefaultPropertyMap) userData;
          return this;
       }
 
       @Override
       public MetadataBuilder summaryMetadata(SummaryMetadata summaryMetadata) {
-         summaryMetadata_ = summaryMetadata;
+         summaryMetadata_ = (DefaultSummaryMetadata) summaryMetadata;
          return this;
       }
    }
@@ -287,8 +287,8 @@ public class DefaultMetadata implements Metadata {
 
    private Double pixelAspect_ = null;
 
-   private PropertyMap userData_ = null;
-   private SummaryMetadata summaryMetadata_ = null;
+   private DefaultPropertyMap userData_ = null;
+   private DefaultSummaryMetadata summaryMetadata_ = null;
 
    public DefaultMetadata(Builder builder) {
       uuid_ = builder.uuid_;
@@ -516,8 +516,7 @@ public class DefaultMetadata implements Metadata {
    /**
     * For backwards compatibility, convert our data into a JSONObject.
     */
-   @Override
-   public JSONObject legacyToJSON() {
+   public JSONObject toJSON() {
       try {
          JSONObject result = new JSONObject();
          MDUtils.setChannelName(result, getCamera());
@@ -548,10 +547,10 @@ public class DefaultMetadata implements Metadata {
          MDUtils.setPositionName(result, getPositionName());
          MDUtils.setComments(result, getComments());
          if (userData_ != null) {
-            result.put("userData", userData_.legacyToJSON());
+            result.put("userData", userData_.toJSON());
          }
          if (summaryMetadata_ != null) {
-            result.put("summaryMetadata", summaryMetadata_.legacyToJSON());
+            result.put("summaryMetadata", summaryMetadata_.toJSON());
          }
          return result;
       }

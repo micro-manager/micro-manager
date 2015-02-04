@@ -2,8 +2,6 @@ package org.micromanager.display;
 
 import java.awt.Color;
 
-import org.json.JSONObject;
-
 import org.micromanager.data.Coords;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PropertyMap;
@@ -113,9 +111,4 @@ public interface DisplaySettings {
    /** Save the DisplaySettings to a file in the specified folder. If the file
     * already exists, then the settings will be appended to it. */
    public void save(String path);
-
-   /**
-    * For legacy support only: convert to JSONObject.
-    */
-   public JSONObject legacyToJSON();
 }

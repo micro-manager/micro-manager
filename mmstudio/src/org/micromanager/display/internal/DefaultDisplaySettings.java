@@ -452,7 +452,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
       }
       try {
          Builder builder = new Builder();
-         // Check for both methods of storing colors (see legacyToJSON, below)
+         // Check for both methods of storing colors (see toJSON, below)
          if (MDUtils.hasChannelColor(tags)) {
             builder.channelColors(new Color[] {rgbToColor(MDUtils.getChannelColor(tags))});
          }
@@ -518,7 +518,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
       File file = new File(path, DisplaySettings.FILENAME);
       try {
          FileWriter writer = new FileWriter(file, true);
-         writer.write(legacyToJSON().toString(1));
+         writer.write(toJSON().toString(1));
          writer.write("\n" + RECORD_DELIMETER + "\n");
          writer.close();
       }
@@ -570,8 +570,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
     * For backwards compatibility, generate a JSONObject representing this
     * DefaultDisplaySettings.
     */
-   @Override
-   public JSONObject legacyToJSON() {
+   public JSONObject toJSON() {
       try {
          JSONObject result = new JSONObject();
          // We store color in two ways: the backwards-compatible

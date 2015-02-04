@@ -34,6 +34,7 @@ import org.json.JSONObject;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Storage;
 import org.micromanager.data.internal.DefaultCoords;
+import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -226,7 +227,7 @@ class FileSet {
             mdWriter_ = new FileWriter(metadataFileFullPath_);
             mdWriter_.write("{" + "\n");
             mdWriter_.write("\"Summary\": ");
-            mdWriter_.write(masterStorage_.getSummaryMetadata().legacyToJSON().toString(2));
+            mdWriter_.write(((DefaultSummaryMetadata) masterStorage_.getSummaryMetadata()).toJSON().toString(2));
          } catch (IOException ex) {
             ReportingUtils.logError("Problem creating metadata.txt file");
          }

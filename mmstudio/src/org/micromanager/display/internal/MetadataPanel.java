@@ -39,6 +39,8 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
+import org.micromanager.data.internal.DefaultMetadata;
+import org.micromanager.data.internal.DefaultSummaryMetadata;
 
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -165,9 +167,10 @@ public class MetadataPanel extends JPanel {
          @Override
          public void run() {
             Metadata data = image.getMetadata();
-            imageMetadataModel_.setMetadata(data.legacyToJSON(),
+            imageMetadataModel_.setMetadata(((DefaultMetadata) data).toJSON(),
                   showUnchangingPropertiesCheckbox_.isSelected());
-            summaryMetadataModel_.setMetadata(store_.getSummaryMetadata().legacyToJSON(),
+            summaryMetadataModel_.setMetadata(
+                  ((DefaultSummaryMetadata) store_.getSummaryMetadata()).toJSON(),
                   true);
          }
       };

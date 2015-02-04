@@ -476,8 +476,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
    /**
     * For backwards compatibility, convert to a JSON representation.
     */
-   @Override
-   public JSONObject legacyToJSON() {
+   public JSONObject toJSON() {
       try {
          JSONObject result = new JSONObject();
          MDUtils.setFileName(result, fileName_);

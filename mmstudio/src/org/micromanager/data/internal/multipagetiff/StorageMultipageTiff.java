@@ -55,6 +55,7 @@ import org.micromanager.data.Storage;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.data.internal.DefaultDatastore;
+import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.internal.utils.JavaUtils;
@@ -199,7 +200,7 @@ public final class StorageMultipageTiff implements Storage {
 
    @Subscribe
    public void onNewImage(NewImageEvent event) {
-      Image image = event.getImage();
+      DefaultImage image = (DefaultImage) event.getImage();
       if (firstImage_ == null) {
          firstImage_ = image;
       }
@@ -216,7 +217,7 @@ public final class StorageMultipageTiff implements Storage {
       finished();
    }
 
-   private void putImage(Image image, boolean waitForWritingToFinish) throws MMException, InterruptedException, ExecutionException, IOException {
+   private void putImage(DefaultImage image, boolean waitForWritingToFinish) throws MMException, InterruptedException, ExecutionException, IOException {
       putImage(image);
       if (waitForWritingToFinish) {
          Future f = writingExecutor_.submit(new Runnable() {
@@ -236,7 +237,7 @@ public final class StorageMultipageTiff implements Storage {
     * finished-writing) image if our getImage() method is called before writing
     * is completed.
     */
-   private void putImage(Image image) throws MMException, IOException {
+   private void putImage(DefaultImage image) throws MMException, IOException {
       if (!amInWriteMode_) {
          ReportingUtils.showError("Tried to write image to a finished data set");
          throw new MMException("This ImageFileManager is read-only.");
@@ -263,7 +264,7 @@ public final class StorageMultipageTiff implements Storage {
     * This method handles starting the process of writing images (which means
     * that it ultimately submits a task to writingExecutor_).
     */
-   private void startWritingTask(Image image) throws MMException, IOException {
+   private void startWritingTask(DefaultImage image) throws MMException, IOException {
       // Update maxIndices_
       if (maxIndices_ == null) {
          maxIndices_ = image.getCoords().copy().build();
@@ -470,7 +471,7 @@ public final class StorageMultipageTiff implements Storage {
    private void setSummaryMetadata(DefaultSummaryMetadata summary,
          boolean showProgress) {
       summaryMetadata_ = summary;
-      JSONObject summaryJSON = summary.legacyToJSON();
+      JSONObject summaryJSON = summary.toJSON();
       if (summaryJSON != null) {
          boolean slicesFirst = summaryJSON.optBoolean("SlicesFirst", true);
          boolean timeFirst = summaryJSON.optBoolean("TimeFirst", false);
