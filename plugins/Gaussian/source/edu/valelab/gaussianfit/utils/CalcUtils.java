@@ -36,4 +36,32 @@ public class CalcUtils {
       return tr / d;
    }
    
+   /**
+    * Utility function that calculates the mean from a array of doubles
+    * @param data - input array of doubles
+    * @return - mean
+    */
+   public static double mean(double[] data) {
+      double sum = 0.0;
+      for (double d : data) {
+         sum += d;
+      }
+      return sum / data.length;
+   }
+   
+   /**
+    * Utility function that calculates the standard deviation of an array of 
+    * doubles
+    * @param data - input array of doubles
+    * @param mean - mean of the input array (provided for performance reasons)
+    * @return stddev (as sqrt of sum of errors squared / (n-1) )
+    */
+   public static double stdDev(double[] data, double mean) {
+      double ersq = 0.0;
+      for (double d : data) {
+         ersq += (d - mean) * (d - mean);
+      }
+      return Math.sqrt( ersq / (data.length - 1));
+   }
+   
 }
