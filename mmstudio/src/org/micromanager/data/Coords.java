@@ -5,11 +5,12 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * The Coords class tracks the position of an image in the dataset. They are
- * immutable; construct a Coords using a CoordsBuilder.
- * You are not expected to implement your own Coords class. If you need to
- * generate a new Coords, use the getCoordsBuilder() method of the
- * DataManager class, or call the copy() method of an existing Coords instance.
+ * The Coords class tracks the position of an image in the dataset. This
+ * position is represented as a mapping of Strings to non-negative ints.
+ * Coords are immutable; construct a Coords using a CoordsBuilder.  You are not
+ * expected to implement your own Coords class. If you need to generate a new
+ * Coords, use the getCoordsBuilder() method of the DataManager class, or call
+ * the copy() method of an existing Coords instance.
  */
 public interface Coords {
    
@@ -57,13 +58,6 @@ public interface Coords {
       CoordsBuilder offset(String axis, int offset) throws IllegalArgumentException;
 
       /**
-       * Indicate that this image is at the end of an axis of the dataset.
-       * For example, if you were collecting a Z-stack with 10 slices per
-       * stack, then the 10th image would have this set for the "Z" axis.
-       */
-      CoordsBuilder isAxisEndFor(String axis);
-
-      /**
        * Return the position for the Builder at the specified axis, as per
        * Coords.getPositionAt(), below.
        */
@@ -90,22 +84,6 @@ public interface Coords {
    /** Convenience function, equivalent to
      * getPositionAt(Coords.STAGE_POSITION) */
    public int getStagePosition();
-
-   /**
-    * Returns true if this Coords marks the end of an axis of iteration in the
-    * experiment, false otherwise. For example, if the experiment is collecting
-    * Z-stacks with 10 images per stack, then any image with a value of Z=9
-    * would return true when called with getIsAxisEndFor("z").
-    * Note that a Coords being at the *beginning* of an axis is simply 
-    * indicated by the position being 0 for that axis.
-    */
-   public boolean getIsAxisEndFor(String axis);
-
-   /**
-    * Returns a (possibly empty) set of all axes that this Coords is at the
-    * end of.
-    */
-   public Set<String> getTerminalAxes();
 
    /**
     * Returns a list of all axes that this Coords has a position for.
