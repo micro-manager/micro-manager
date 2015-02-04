@@ -15,7 +15,7 @@ public interface Coords {
    
    public static final String CHANNEL = "channel";
    public static final String TIME = "time";
-   public static final String STAGE_POSITION = "stagePosition";
+   public static final String STAGE_POSITION = "position";
    public static final String Z = "z";
    interface CoordsBuilder {
       /**
@@ -37,9 +37,16 @@ public interface Coords {
 
       /**
        * Set the position of the Coords along the provided axis to the 
-       * specified value.
+       * specified value. If you set a negative value, then the axis will be
+       * removed from the Coords.
        */
       CoordsBuilder position(String axis, int position);
+
+      /**
+       * Remove the specified axis from the Coords. Equivalent to calling
+       * position(axis, -1).
+       */
+      CoordsBuilder removeAxis(String axis);
 
       /**
        * Apply an offset to a pre-existing position.

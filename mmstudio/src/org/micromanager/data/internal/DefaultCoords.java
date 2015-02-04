@@ -61,6 +61,13 @@ public class DefaultCoords implements Coords, Comparable<DefaultCoords> {
       
       @Override
       public CoordsBuilder position(String axis, int position) {
+         if (position < 0 && axisToPos_.containsKey(axis)) {
+            // Delete the axis instead.
+            axisToPos_.remove(axis);
+            sortedAxes_.remove(axis);
+            return this;
+         }
+
          axisToPos_.put(axis, new Integer(position));
          if (!sortedAxes_.contains(axis)) {
             sortedAxes_.add(axis);
@@ -72,6 +79,11 @@ public class DefaultCoords implements Coords, Comparable<DefaultCoords> {
             }
          }
          return this;
+      }
+
+      @Override
+      public CoordsBuilder removeAxis(String axis) {
+         return position(axis, -1);
       }
 
       @Override
