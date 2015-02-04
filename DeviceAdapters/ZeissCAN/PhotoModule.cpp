@@ -4,7 +4,7 @@
 #define snprintf _snprintf
 #endif
 
-#include "ZeissCan.h"
+#include "ZeissCAN.h"
 using namespace std;
 
 extern ZeissHub g_hub;
