@@ -269,6 +269,13 @@ public class GaussianUtils {
    }
 
 
+   /**
+    * Plots a histogram of distance data and calculates the P2D function
+    * and plots it
+    * @param title - of the plot
+    * @param data - distance measurements (in nm)
+    * @param fitResult - double[0] is mu, double[1] is sigma
+    */
    public static void plotP2D(String title, double[] data, double[] fitResult) {
       int nrBins = 25;
       double min =0.0;
@@ -277,11 +284,6 @@ public class GaussianUtils {
       hds.addSeries("Distances", data, nrBins, min, max);
       
       XYSeriesCollection p2dDataSet = new XYSeriesCollection();
-      if (fitResult.length == 2) {
-         Function2D p1 = new P2D(fitResult[0], fitResult[1]);
-         XYSeries s1 = DatasetUtilities.sampleFunction2DToSeries(p1, min, max, 4 * nrBins, "p2d");
-         p2dDataSet.addSeries(s1);
-      }
       
       NumberAxis xAxis = new NumberAxis("distance(nm)");
       xAxis.setAutoRangeIncludesZero(true);
@@ -294,28 +296,44 @@ public class GaussianUtils {
       renderer1.setDrawBarOutline(false);
       renderer1.setBarPainter(new StandardXYBarPainter());
       renderer1.setShadowVisible(false);
-      renderer1.setSeriesFillPaint(0, Color.blue);
+      Color color1 = new Color(79, 129, 189);
+      renderer1.setSeriesPaint(0, color1);
 
       XYPlot plot = new XYPlot(hds, xAxis, yAxis, renderer1);
       plot.setDomainPannable(true);
       plot.setRangePannable(true);
       plot.setForegroundAlpha(0.85f);
       plot.setBackgroundPaint(Color.lightGray);
+      plot.setRangeAxis(0, yAxis);
 
       if (fitResult.length == 2) {
+         Function2D p1 = new P2D(fitResult[0], fitResult[1]);
+         XYSeries s1 = DatasetUtilities.sampleFunction2DToSeries(p1, min, 
+                 max, 4 * nrBins, "p2d");
+         double xAtMaxY = 0.0;
+         double maxY = s1.getMaxY();
+         for (int i=0; i < s1.getItemCount(); i++) {
+            if (s1.getY(i).doubleValue() == maxY) {
+               xAtMaxY = s1.getX(i).doubleValue();
+            }
+         }
+         p2dDataSet.addSeries(s1);
          XYItemRenderer renderer2 = new StandardXYItemRenderer();
+         Color color2 = new Color(160, 80, 40);
+         renderer2.setSeriesPaint(0, color2);
          plot.setDataset(1, p2dDataSet);
          plot.setRenderer(1, renderer2);
          plot.setRangeAxis(1, yAxis2);
          plot.mapDatasetToRangeAxis(1, 1);
+         double xAnPos = xAtMaxY + 0.5 * fitResult[1];
          XYPointerAnnotation xypa = new XYPointerAnnotation( 
                  "\u03BC = " + NumberUtils.doubleToDisplayString(fitResult[0])  +
                  " \u03C3 = " + NumberUtils.doubleToDisplayString(fitResult[1]),
-                        0.75, 0.3, 7 * Math.PI / 4 );
+                        xAnPos, p1.getValue(xAnPos), 15 * Math.PI / 8 );
          xypa.setLabelOffset(4.0);
          xypa.setTextAnchor(TextAnchor.HALF_ASCENT_LEFT);
-         xypa.setBackgroundPaint(new Color(0, 0, 255, 63));
-         plot.addAnnotation(xypa);
+         xypa.setBackgroundPaint(color2);
+         renderer2.addAnnotation(xypa);
       }
 
       plot.setDatasetRenderingOrder(DatasetRenderingOrder.FORWARD);
