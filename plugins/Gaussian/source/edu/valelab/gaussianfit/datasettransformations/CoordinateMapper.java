@@ -39,13 +39,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.apache.commons.math.linear.Array2DRowRealMatrix;
 import org.apache.commons.math.linear.DecompositionSolver;
 import org.apache.commons.math.linear.LUDecompositionImpl;
 import org.apache.commons.math.linear.QRDecompositionImpl;
 import org.apache.commons.math.linear.RealMatrix;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  * Provides facilities for mapping one coordinate system into another
@@ -401,22 +400,25 @@ public class CoordinateMapper {
       // Find the 3x3 linear least squares solution to u*m'=v
       // (the last row should be [0,0,1]):
       DecompositionSolver solver = (new QRDecompositionImpl(u)).getSolver();
-      double[][] m = solver.solve(v).transpose().getData();
-      
-      AffineTransform tmp = new AffineTransform(m[0][0], m[1][0], m[0][1], m[1][1], m[0][2], m[1][2]);
-      try {
-         AffineTransform inv = tmp.createInverse();
-         ij.IJ.log (inv.toString());
-      } catch (NoninvertibleTransformException ex) {
-         Logger.getLogger(CoordinateMapper.class.getName()).log(Level.SEVERE, null, ex);
-      }
-
+      double[][] m = solver.solve(v).transpose().getData();      
+     
       // Create an AffineTransform object from the elements of m
       // (the last row is omitted as specified in AffineTransform class):
       return new AffineTransform(m[0][0], m[1][0], m[0][1], m[1][1], m[0][2], m[1][2]);
    }
    
-   
+        
+   public static void logAffineTransform(AffineTransform af) {
+      AffineTransform tmp = new AffineTransform(af);
+      try {
+         AffineTransform inv = tmp.createInverse();
+         ij.IJ.log(inv.toString());
+      } catch (NoninvertibleTransformException ex) {
+         ReportingUtils.logError(ex, "Problem while printing affine transform");
+      }
+   }
+
+ 
     /**
     * Rigid body transform (rotation and translation only)
     * Creates an AffineTransform object that uses only rotation and translation
@@ -489,6 +491,9 @@ public class CoordinateMapper {
             if (cleanedPointMap_ == null) {
                cleanedPointMap_ = makeCleanedPointMap();
                af_ = generateAffineTransformFromPointPairs(cleanedPointMap_);
+               logAffineTransform(af_);
+               ij.IJ.log("Used " + cleanedPointMap_.size() + 
+                       " spot pairs to calculate 2C reference");
             }
             return (Point2D.Double) af_.transform(srcTestPoint, null);
          } catch (Exception ex) {
@@ -542,12 +547,12 @@ public class CoordinateMapper {
          CoordinateMapper.PointMap corPoints = new CoordinateMapper.PointMap();
          List<Double> distances = new ArrayList<Double>();
          double maxDistance = 0.0;
+         AffineTransform af = generateAffineTransformFromPointPairs(cleanedPointMap);
          Point2D.Double maxPairKey = null;
          for (Map.Entry pair : cleanedPointMap.entrySet()) {
             Point2D.Double uPt = (Point2D.Double) pair.getValue();
             Point2D.Double otherPt = (Point2D.Double) pair.getKey();
-            af_ = generateAffineTransformFromPointPairs(cleanedPointMap_);
-            Point2D.Double corPt = transform(otherPt);
+            Point2D.Double corPt = (Point2D.Double) af.transform(otherPt, null);
             corPoints.put(uPt, corPt);
             double distance = Math.sqrt(NearestPoint2D.distance2(uPt, corPt));
             if (distance > maxDistance) {
@@ -565,7 +570,7 @@ public class CoordinateMapper {
             cleanedPointMap.remove(maxPairKey);
          } else {
             continueQualityCheck = false;
-            ij.IJ.log("Removed " + nrOfRemovedSpots + " pairs, " + ", avg. distance: "
+            ij.IJ.log("Removed " + nrOfRemovedSpots + " pairs, " + " avg. distance: "
                     + avg + ", std. dev: " + stdDev);
          }
       }
@@ -596,6 +601,7 @@ public class CoordinateMapper {
       
       // Set up Affine transform
       af_ = generateAffineTransformFromPointPairs(pointMap);
+      logAffineTransform(af_);
       
       // set up Rigid Body
       rbAf_ = generateRigidBodyTransform(pointMap);      

@@ -1,16 +1,19 @@
 package edu.valelab.gaussianfit.datasetdisplay;
 
+
 import edu.valelab.gaussianfit.DataCollectionForm;
 import edu.valelab.gaussianfit.ResultsTableListener;
 import edu.valelab.gaussianfit.Terms;
 import edu.valelab.gaussianfit.data.GsSpotPair;
 import edu.valelab.gaussianfit.data.RowData;
 import edu.valelab.gaussianfit.data.SpotData;
+import edu.valelab.gaussianfit.fitting.P2DFitter;
 import edu.valelab.gaussianfit.spotoperations.NearestPoint2D;
 import edu.valelab.gaussianfit.spotoperations.NearestPointGsSpotPair;
 import edu.valelab.gaussianfit.utils.CalcUtils;
 import edu.valelab.gaussianfit.utils.GaussianUtils;
 import edu.valelab.gaussianfit.utils.ListUtils;
+import edu.valelab.gaussianfit.utils.NumberUtils;
 import edu.valelab.gaussianfit.utils.ReportingUtils;
 import ij.ImagePlus;
 import ij.WindowManager;
@@ -32,6 +35,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import org.jfree.data.xy.XYSeries;
 
 /**
@@ -64,12 +68,13 @@ public class ParticlePairLister {
     * @param showSummary
     * @param showOverlay
     * @param saveFile
+    * @param p2d
     * @param filePath
     */
    public static void listParticlePairTracks(final int[] rows,
            final double maxDistanceNm, final boolean showTrack,
            final boolean showSummary, final boolean showOverlay,
-           final boolean saveFile, final String filePath) {
+           final boolean saveFile, final boolean p2d, final String filePath) {
 
       Runnable doWorkRunnable = new Runnable() {
 
@@ -193,8 +198,9 @@ public class ParticlePairLister {
                      rt.addValue(Terms.POSITION, spot.getGSD().getPosition());
                      rt.addValue(Terms.XPIX, spot.getGSD().getX());
                      rt.addValue(Terms.YPIX, spot.getGSD().getY());
-                     rt.addValue("Distance", Math.sqrt(
-                             NearestPoint2D.distance2(spot.getfp(), spot.getsp())));
+                     double distance = Math.sqrt(
+                             NearestPoint2D.distance2(spot.getfp(), spot.getsp()));
+                     rt.addValue("Distance", distance);
                      if (spot.getGSD().hasKey("stdDev")) {
                         double stdDev = spot.getGSD().getValue("stdDev");
                         rt.addValue("stdDev1", stdDev);
@@ -268,6 +274,8 @@ public class ParticlePairLister {
 
                itTracks = tracks.iterator();
                spotId = 0;
+               List<Double> avgDistances = new ArrayList<Double>(tracks.size());
+               List<Double> stdDevs = new ArrayList<Double>(tracks.size());
                while (itTracks.hasNext()) {
                   ArrayList<GsSpotPair> track = itTracks.next();
                   ArrayList<Double> distances = new ArrayList<Double>();
@@ -295,8 +303,11 @@ public class ParticlePairLister {
                   rt2.addValue("n", track.size());
 
                   double avg = ListUtils.listAvg(distances);
+                  avgDistances.add(avg);
                   rt2.addValue("Distance-Avg", avg);
-                  rt2.addValue("Distance-StdDev", ListUtils.listStdDev(distances, avg));
+                  double std = ListUtils.listStdDev(distances, avg);
+                  stdDevs.add(std);
+                  rt2.addValue("Distance-StdDev", std);
                   double oAvg = ListUtils.listAvg(orientations);
                   rt2.addValue("Orientation-Avg", oAvg);
                   rt2.addValue("Orientation-StdDev",
@@ -362,6 +373,35 @@ public class ParticlePairLister {
                      tp.addMouseListener(myk);
                      frame.toFront();
                   }
+               }
+               
+               if (p2d) {
+                  double[] d = new double[avgDistances.size()];
+                  for (int j=0; j < avgDistances.size(); j++) {
+                     d[j] = avgDistances.get(j);
+                  }
+                  P2DFitter p2df = new P2DFitter(d);
+                  double distMean = ListUtils.listAvg(avgDistances);
+                  double distStd = ListUtils.listStdDev(avgDistances, distMean);
+                  p2df.setStartParams(distMean, distStd);
+                  double[] p2dfResult = p2df.solve();
+                  if (p2dfResult.length == 2) {
+                     ij.IJ.log("p2d fit: n = " + avgDistances.size() + ", mu = " + 
+                             NumberUtils.doubleToDisplayString(p2dfResult[0]) + 
+                             " nm, sigma = " + 
+                             NumberUtils.doubleToDisplayString(p2dfResult[1]) + 
+                             " nm");
+                  } else {
+                     ij.IJ.log("Error during p2d fit");
+                  } 
+                  ij.IJ.log("Gaussian distribution: n = " + avgDistances.size() + 
+                          ", avg = " + 
+                          NumberUtils.doubleToDisplayString(distMean) +  
+                          " nm, std = " + 
+                          NumberUtils.doubleToDisplayString(distStd) + " nm"); 
+                  GaussianUtils.plotP2D(rowData.get(row).title_ + " distances", 
+                          d, p2dfResult);
+                  // TODO: plot function and histogram
                }
 
                ij.IJ.showStatus("");

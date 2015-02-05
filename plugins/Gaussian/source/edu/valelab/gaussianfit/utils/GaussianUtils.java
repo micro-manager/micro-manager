@@ -26,12 +26,22 @@ import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartFrame;
+import org.jfree.chart.annotations.XYPointerAnnotation;
 import org.jfree.chart.axis.LogAxis;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.axis.NumberTickUnit;
 import org.jfree.chart.axis.ValueAxis;
+import org.jfree.chart.plot.DatasetRenderingOrder;
+import org.jfree.chart.renderer.xy.StandardXYBarPainter;
+import org.jfree.chart.renderer.xy.StandardXYItemRenderer;
+import org.jfree.chart.renderer.xy.XYBarRenderer;
+import org.jfree.chart.renderer.xy.XYItemRenderer;
+import org.jfree.data.function.Function2D;
+import org.jfree.data.general.DatasetUtilities;
+import org.jfree.data.statistics.HistogramDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
+import org.jfree.ui.TextAnchor;
 
 
 /**
@@ -259,6 +269,67 @@ public class GaussianUtils {
    }
 
 
+   public static void plotP2D(String title, double[] data, double[] fitResult) {
+      int nrBins = 25;
+      double min =0.0;
+      double max = 50.0;
+      HistogramDataset hds = new HistogramDataset();
+      hds.addSeries("Distances", data, nrBins, min, max);
+      
+      XYSeriesCollection p2dDataSet = new XYSeriesCollection();
+      if (fitResult.length == 2) {
+         Function2D p1 = new P2D(fitResult[0], fitResult[1]);
+         XYSeries s1 = DatasetUtilities.sampleFunction2DToSeries(p1, min, max, 4 * nrBins, "p2d");
+         p2dDataSet.addSeries(s1);
+      }
+      
+      NumberAxis xAxis = new NumberAxis("distance(nm)");
+      xAxis.setAutoRangeIncludesZero(true);
+      NumberAxis yAxis = new NumberAxis("n");
+      yAxis.setAutoRangeIncludesZero(true);
+      NumberAxis yAxis2 = new NumberAxis("p2d");
+      yAxis2.setAutoRangeIncludesZero(true);
+
+      XYBarRenderer renderer1 = new XYBarRenderer(0);
+      renderer1.setDrawBarOutline(false);
+      renderer1.setBarPainter(new StandardXYBarPainter());
+      renderer1.setShadowVisible(false);
+      renderer1.setSeriesFillPaint(0, Color.blue);
+
+      XYPlot plot = new XYPlot(hds, xAxis, yAxis, renderer1);
+      plot.setDomainPannable(true);
+      plot.setRangePannable(true);
+      plot.setForegroundAlpha(0.85f);
+      plot.setBackgroundPaint(Color.lightGray);
+
+      if (fitResult.length == 2) {
+         XYItemRenderer renderer2 = new StandardXYItemRenderer();
+         plot.setDataset(1, p2dDataSet);
+         plot.setRenderer(1, renderer2);
+         plot.setRangeAxis(1, yAxis2);
+         plot.mapDatasetToRangeAxis(1, 1);
+         XYPointerAnnotation xypa = new XYPointerAnnotation( 
+                 "\u03BC = " + NumberUtils.doubleToDisplayString(fitResult[0])  +
+                 " \u03C3 = " + NumberUtils.doubleToDisplayString(fitResult[1]),
+                        0.75, 0.3, 7 * Math.PI / 4 );
+         xypa.setLabelOffset(4.0);
+         xypa.setTextAnchor(TextAnchor.HALF_ASCENT_LEFT);
+         xypa.setBackgroundPaint(new Color(0, 0, 255, 63));
+         plot.addAnnotation(xypa);
+      }
+
+      plot.setDatasetRenderingOrder(DatasetRenderingOrder.FORWARD);
+
+      JFreeChart chart = new JFreeChart(title,
+            JFreeChart.DEFAULT_TITLE_FONT, plot, true);
+           
+      ChartFrame graphFrame = new ChartFrame(title, chart);
+      graphFrame.getChartPanel().setMouseWheelEnabled(true);
+      graphFrame.pack();
+      graphFrame.setLocation(300, 300);
+      graphFrame.setVisible(true);
+      
+   }
    
    /**
    * Rotates a set of XY data points such that the direction of largest
