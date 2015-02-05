@@ -146,6 +146,9 @@ public class DisplayGroupManager {
          SettingsLinker linker = event.getLinker();
          boolean isLinked = event.getIsLinked();
          RemoteLinkEvent notifyEvent = new RemoteLinkEvent(linker, isLinked);
+         // Not just this linker, but all others with the same ID and datastore
+         // need to be updated.
+         linkerToIsLinked_.put(linker, isLinked);
          for (DisplayWindow display : displayToLinkers_.keySet()) {
             if (display == source ||
                   display.getDatastore() != source.getDatastore()) {
@@ -153,13 +156,11 @@ public class DisplayGroupManager {
                continue;
             }
             display.postEvent(notifyEvent);
-         }
-         // Not just this linker, but all others with the same ID need to be
-         // updated.
-         linkerToIsLinked_.put(linker, isLinked);
-         for (SettingsLinker alt : linkerToIsLinked_.keySet()) {
-            if (linker.getID() == alt.getID()) {
-               linkerToIsLinked_.put(alt, isLinked);
+
+            for (SettingsLinker alt : displayToLinkers_.get(display)) {
+               if (alt.getID() == linker.getID() && display != source) {
+                  linkerToIsLinked_.put(alt, isLinked);
+               }
             }
          }
       }
