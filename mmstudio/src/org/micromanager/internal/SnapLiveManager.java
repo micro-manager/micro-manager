@@ -295,6 +295,7 @@ public class SnapLiveManager {
       snapButton_ = new JButton("Snap",
             SwingResourceManager.getIcon(MMStudio.class,
                "/org/micromanager/internal/icons/camera.png"));
+      snapButton_.setToolTipText("Take a new image");
       snapButton_.setPreferredSize(new Dimension(90, 28));
       snapButton_.addActionListener(new ActionListener() {
          @Override
@@ -305,6 +306,7 @@ public class SnapLiveManager {
       controls.add(snapButton_);
 
       liveButton_ = new JButton();
+      liveButton_.setToolTipText("Continuously acquire new images");
       setLiveButtonMode();
       liveButton_.setPreferredSize(new Dimension(90, 28));
       liveButton_.addActionListener(new ActionListener() {
@@ -318,6 +320,7 @@ public class SnapLiveManager {
       JButton toAlbumButton = new JButton("Album",
             SwingResourceManager.getIcon(MMStudio.class,
                "/org/micromanager/internal/icons/arrow_right.png"));
+      toAlbumButton.setToolTipText("Add the current image to the Album collection");
       toAlbumButton.setPreferredSize(new Dimension(90, 28));
       toAlbumButton.addActionListener(new ActionListener() {
          @Override

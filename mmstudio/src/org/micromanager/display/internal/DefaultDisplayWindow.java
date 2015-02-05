@@ -465,7 +465,6 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
          if (summary.getZStepUm() != null) {
             cal.pixelDepth = summary.getZStepUm();
          }
-         ReportingUtils.logError("Setting calibration " + cal + " on plus " + plus);
          plus.setCalibration(cal);
 
          FileInfo info = new FileInfo();
