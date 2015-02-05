@@ -157,6 +157,8 @@ int CPLogic::Initialize()
    AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode12, 12);
    AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode13, 13);
    AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode14, 14);
+   AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode15, 15);
+   AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode16, 16);
    UpdateProperty(g_SetCardPresetPropertyName);
 
    // "do it" property to clear state
@@ -473,6 +475,10 @@ int CPLogic::OnAdvancedProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
                AddAllowedValue(propName, g_CellTypeCode10, 10);
                AddAllowedValue(propName, g_CellTypeCode11, 11);
             }
+            if (firmwareVersion_ > 3.059) {
+               AddAllowedValue(propName, g_CellTypeCode12, 12);
+               AddAllowedValue(propName, g_CellTypeCode13, 13);
+            }
             UpdateProperty(propName);
 
             // logic cell CCA Z code
@@ -601,6 +607,8 @@ int CPLogic::OnCellType(MM::PropertyBase* pProp, MM::ActionType eAct, long index
          case 9: success = pProp->Set(g_CellTypeCode9); break;
          case 10:success = pProp->Set(g_CellTypeCode10); break;
          case 11:success = pProp->Set(g_CellTypeCode11); break;
+         case 12:success = pProp->Set(g_CellTypeCode12); break;
+         case 13:success = pProp->Set(g_CellTypeCode13); break;
          default: success=0;
       }
       if (!success)
