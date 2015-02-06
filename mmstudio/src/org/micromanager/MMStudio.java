@@ -2193,9 +2193,21 @@ public class MMStudio implements ScriptInterface {
    public void openAcquisition(String name, String rootDir, int nrFrames,
          int nrChannels, int nrSlices, int nrPositions, boolean show, boolean save)
          throws MMScriptException {
-      if (nrFrames <= 0 || nrChannels <= 0 ||
-            nrSlices <= 0 || nrPositions <= 0) {
-         throw new MMScriptException("Acquisition size must be at least 1 along all axes.");
+      if (nrFrames <= 0) {
+         nrFrames = 1;
+         ReportingUtils.logError("Coercing frame count to 1");
+      }
+      if (nrChannels <= 0) {
+         nrChannels = 1;
+         ReportingUtils.logError("Coercing channel count to 1");
+      }
+      if (nrSlices <= 0) {
+         nrSlices = 1;
+         ReportingUtils.logError("Coercing slice count to 1");
+      }
+      if (nrPositions <= 0) {
+         nrPositions = 1;
+         ReportingUtils.logError("Coercing position count to 1");
       }
       acqMgr_.openAcquisition(name, rootDir, show, save);
       MMAcquisition acq = acqMgr_.getAcquisition(name);
