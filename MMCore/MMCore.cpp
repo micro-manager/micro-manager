@@ -105,7 +105,7 @@ using namespace std;
  */
 const int MMCore_versionMajor = 7;
 const int MMCore_versionMinor = 0;
-const int MMCore_versionPatch = 0;
+const int MMCore_versionPatch = 1;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2989,7 +2989,8 @@ string CMMCore::getChannelGroup()
  */
 void CMMCore::setShutterDevice(const char* shutterLabel) throw (CMMError)
 {
-   CheckDeviceLabel(shutterLabel);
+   if (!shutterLabel || strlen(shutterLabel) > 0) // Allow empty label
+      CheckDeviceLabel(shutterLabel);
 
    // Nothing to do if this is the current shutter device:
    if (getShutterDevice().compare(shutterLabel) == 0)
