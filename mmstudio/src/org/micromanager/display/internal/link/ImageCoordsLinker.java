@@ -14,20 +14,16 @@ import org.micromanager.internal.utils.ReportingUtils;
 /**
  * The ImageCoordsLinker links a specific axis of the ImageCoords attribute.
  */
-public class ImageCoordsLinker implements SettingsLinker {
+public class ImageCoordsLinker extends SettingsLinker {
    private String axis_;
    private DisplayWindow parent_;
-   private static final List<Class<?>> relevantEvents_ = Arrays.asList(
+   private static final List<Class<?>> RELEVANT_EVENTS = Arrays.asList(
          new Class<?>[] {ImageCoordsEvent.class});
 
    public ImageCoordsLinker(String axis, DisplayWindow parent) {
+      super(RELEVANT_EVENTS);
       axis_ = axis;
       parent_ = parent;
-   }
-
-   @Override
-   public List<Class<?>> getRelevantEventClasses() {
-      return relevantEvents_;
    }
 
    /**

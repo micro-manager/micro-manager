@@ -19,20 +19,16 @@ import org.micromanager.internal.utils.ReportingUtils;
  * channelGammas(Double), but we don't actually care what the specific values
  * are, just if they've changed.
  */
-public class ContrastLinker implements SettingsLinker {
+public class ContrastLinker extends SettingsLinker {
    private int channelIndex_;
    private DisplayWindow parent_;
-   private static final List<Class<?>> relevantEvents_ = Arrays.asList(
+   private static final List<Class<?>> RELEVANT_EVENTS = Arrays.asList(
          new Class<?>[] {ContrastEvent.class});
 
    public ContrastLinker(int channelIndex, DisplayWindow parent) {
+      super(RELEVANT_EVENTS);
       channelIndex_ = channelIndex;
       parent_ = parent;
-   }
-
-   @Override
-   public List<Class<?>> getRelevantEventClasses() {
-      return relevantEvents_;
    }
 
    /**
