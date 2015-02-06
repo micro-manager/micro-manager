@@ -431,6 +431,7 @@ vector<string> QIDriver::AvailableCameras()
          err = QCam_OpenCamera(cameras[i].cameraId, &camera);
          if (err == qerrSuccess) {
             char model[512];
+            memset(model, 0, sizeof(model));
             err = QCam_GetCameraModelString(camera, model, sizeof(model) - 1); // not sure if -1 is necessary
             if (err == qerrSuccess) {
                displayString += " ";
@@ -442,6 +443,7 @@ vector<string> QIDriver::AvailableCameras()
             }
 
             char serial[512];
+            memset(serial, 0, sizeof(serial));
             err = QCam_GetSerialString(camera, serial, sizeof(serial) - 1);
             if (err == qerrSuccess) {
                if (strlen(serial) == 0) {
