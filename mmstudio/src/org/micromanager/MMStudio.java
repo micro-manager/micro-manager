@@ -2193,6 +2193,10 @@ public class MMStudio implements ScriptInterface {
    public void openAcquisition(String name, String rootDir, int nrFrames,
          int nrChannels, int nrSlices, int nrPositions, boolean show, boolean save)
          throws MMScriptException {
+      if (nrFrames <= 0 || nrChannels <= 0 ||
+            nrSlices <= 0 || nrPositions <= 0) {
+         throw new MMScriptException("Acquisition size must be at least 1 along all axes.");
+      }
       acqMgr_.openAcquisition(name, rootDir, show, save);
       MMAcquisition acq = acqMgr_.getAcquisition(name);
       acq.setDimensions(nrFrames, nrChannels, nrSlices, nrPositions);
