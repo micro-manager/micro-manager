@@ -370,6 +370,9 @@ const char* const g_PresetCode13 = "13 - BNC4 source = (TTL3 AND (cell 10 OR cel
 const char* const g_PresetCode14 = "14 - diSPIM TTL";
 const char* const g_PresetCode15 = "15 - mod4 counter";
 const char* const g_PresetCode16 = "16 - mod3 counter";
+const char* const g_PresetCode17 = "17 - counter clock = falling TTL1";
+const char* const g_PresetCode18 = "18 - counter clock = falling TTL3";
+const char* const g_PresetCode19 = "19 - cells 9-16 on BNC1-8";
 const char* const g_PLogicModeNone = "None";
 const char* const g_PLogicModediSPIMShutter = "diSPIM Shutter";
 const char* const g_ChannelNone = "none of outputs 5-8";

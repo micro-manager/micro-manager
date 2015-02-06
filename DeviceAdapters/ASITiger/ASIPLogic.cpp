@@ -159,6 +159,9 @@ int CPLogic::Initialize()
    AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode14, 14);
    AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode15, 15);
    AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode16, 16);
+   AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode17, 17);
+   AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode18, 18);
+   AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode19, 19);
    UpdateProperty(g_SetCardPresetPropertyName);
 
    // "do it" property to clear state
