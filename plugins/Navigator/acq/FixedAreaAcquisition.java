@@ -7,6 +7,7 @@ package acq;
 import coordinates.XYStagePosition;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import mmcorej.CMMCore;
@@ -33,6 +34,8 @@ public class FixedAreaAcquisition extends Acquisition {
    private long nextTimePointStartTime_ms_;
    private MultipleAcquisitionManager multiAcqManager_;
    private CustomAcqEngine eng_;
+   private ParallelAcquisitionGroup acqGroup_;
+   private AtomicInteger readyForTP_ = new AtomicInteger(-1);
    
    /**
     * Acquisition with fixed XY positions (although they can potentially all be
@@ -43,9 +46,10 @@ public class FixedAreaAcquisition extends Acquisition {
     * acquisition has another thread that generates events
     */
    public FixedAreaAcquisition(FixedAreaAcquisitionSettings settings, MultipleAcquisitionManager multiAcqManager,
-           CustomAcqEngine eng){
+           CustomAcqEngine eng, ParallelAcquisitionGroup acqGroup){
       super(settings.zStep_);
       eng_ = eng;
+      acqGroup_ = acqGroup;
       settings_ = settings;
       readSettings();
       //get positions to be imaged
@@ -140,6 +144,12 @@ public class FixedAreaAcquisition extends Acquisition {
    public long getNextWakeTime_ms() {
       return nextTimePointStartTime_ms_;
    }
+   
+   
+   
+   public void readyForNextTimePoint() {
+       readyForTP_.getAndIncrement();
+   }
 
    private void createEventGenerator() {
       eventGeneratingThread_ = new Thread(new Runnable() {
@@ -147,9 +157,10 @@ public class FixedAreaAcquisition extends Acquisition {
          @Override
          public void run() {
             nextTimePointStartTime_ms_ = 0;
-            for (int timeIndex = 0; timeIndex < numTimePoints_; timeIndex++) {
+            for (int timeIndex = 0; timeIndex < numTimePoints_; timeIndex++) {               
                //wait enough time to pass to start new time point
-               while (System.currentTimeMillis() < nextTimePointStartTime_ms_) {
+               while (System.currentTimeMillis() < nextTimePointStartTime_ms_  && 
+                       timeIndex > readyForTP_.get()) {
                   try {
                      Thread.sleep(5);
                   } catch (InterruptedException ex) {
@@ -210,6 +221,11 @@ public class FixedAreaAcquisition extends Acquisition {
                      addEvent(event);
                   }
                }
+               
+               if (timeIndex == numTimePoints_ - 1) {
+                  //acquisition now finished, add event with null ac w field so engine will mark acquisition as finished
+                  events_.add(new AcquisitionEvent(null, 0, 0, 0, 0, 0, 0, 0));
+               }
 
                //wait for final image of timepoint to be written before beginning end of timepoint stuff
                while (!( eng_.isIdle() && events_.isEmpty() && imageSink_.isIdle())) {
@@ -220,10 +236,9 @@ public class FixedAreaAcquisition extends Acquisition {
                   }
                }
                //do end of timepoint stuff (autofocus, swap to another acq, etc)
+              acqGroup_.finishedTimePoint(FixedAreaAcquisition.this);
                endOfTimePoint(timeIndex);
             }
-            //acquisition now finished, add event with null ac w field so engine will mark acquisition as finished
-            events_.add(new AcquisitionEvent(null, 0, 0, 0, 0, 0, 0, 0));
          }
       }, "Fixed Area Acquisition Event generating thread");
       eventGeneratingThread_.start();

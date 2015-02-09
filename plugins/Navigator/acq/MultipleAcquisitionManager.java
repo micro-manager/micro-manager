@@ -20,18 +20,20 @@ import org.micromanager.utils.ReportingUtils;
 public class MultipleAcquisitionManager {
    
    private ArrayList<FixedAreaAcquisitionSettings> acquisitions_ = new ArrayList<FixedAreaAcquisitionSettings>();
+   private ArrayList<Integer> numberInGroup_ = new ArrayList<Integer>();
    private String[] acqStatus_;
    private GUI gui_;
    private CustomAcqEngine eng_;
    private volatile boolean running_ = false;
    private Thread managerThread_;
-   private volatile FixedAreaAcquisition currentAcq_;
+   private volatile ParallelAcquisitionGroup currentAcqs_;
    
    public MultipleAcquisitionManager(GUI gui, CustomAcqEngine eng ) {
       gui_ = gui;
       acquisitions_.add(new FixedAreaAcquisitionSettings());
       eng_ = eng;
       eng_.setMultiAcqManager(this);
+      numberInGroup_.add(1);
    }
       
    public FixedAreaAcquisitionSettings getAcquisition(int index) {
@@ -46,33 +48,150 @@ public class MultipleAcquisitionManager {
       return acquisitions_.get(index).name_;
    }
    
-   public boolean moveUp(int index) {
-      if (index > 0) {
-         acquisitions_.add(index-1, acquisitions_.remove(index));
-         return true;
+   /**
+    * @return change in position of selected acq
+    */
+   public int moveUp(int index) {
+      if (index == 0) {
+         //nothing to do
+         return 0;
+      } else if (getIndexInGroup(index) != 0) {
+         //if its within group, move up within group      
+         acquisitions_.add(index - 1, acquisitions_.remove(index));
+         return -1;
+      } else {
+         //move this group above entire group above
+         int groupIndex = getGroupIndex(index);
+         int insertIndex = getFirstIndexOfGroup(groupIndex - 1);
+         //extract index should be last one in this group
+         int extractIndex = getFirstIndexOfGroup(groupIndex) + getGroupSize(index) - 1;
+         //remove in reverse order and readd to new position
+         int groupSize = getGroupSize(index);
+         for (int i = 0; i < groupSize; i++) {
+            acquisitions_.add(insertIndex, acquisitions_.remove(extractIndex));
+         }
+         //swap num in group with one above
+         numberInGroup_.add(groupIndex - 1, numberInGroup_.remove(groupIndex));
+         return insertIndex - index;
       }
-      return false;
    }
    
-   public boolean moveDown(int index) {      
-      if (index < acquisitions_.size() - 1) {
-         acquisitions_.add(index+1, acquisitions_.remove(index));
-         return true;
+   public int moveDown(int index) {
+      if (index == acquisitions_.size() - 1) {
+         //nothing to do
+         return 0;
+      } else if (getIndexInGroup(index) != getGroupSize(index) - 1) {
+         //if its within group, move down within group      
+         acquisitions_.add(index + 1, acquisitions_.remove(index));
+         return 1;
+      } else {
+         //move group below above this group   
+         int groupIndex = getGroupIndex(index);
+         int insertIndex = getFirstIndexOfGroup(getGroupIndex(index) );
+         int extractIndex = getFirstIndexOfGroup(getGroupIndex(index) + 1) + numberInGroup_.get(getGroupIndex(index) + 1) - 1;
+         //remove in reverse order and readd to new position
+         int groupSize = numberInGroup_.get(getGroupIndex(index) + 1);
+         for (int i = 0; i < groupSize; i++) {
+            acquisitions_.add(insertIndex, acquisitions_.remove(extractIndex));
+         }     
+         //swap num in group below with this one 
+         numberInGroup_.add(groupIndex, numberInGroup_.remove(groupIndex + 1));
+         return - index + extractIndex;
       }
-      return false;
    }
    
    public void addNew() {
       acquisitions_.add(new FixedAreaAcquisitionSettings());
+            numberInGroup_.add(1);
    }
    
    public void remove(int index) {
+      //must always have at least one acquisition
       if (index != -1 && acquisitions_.size() > 1) {
          acquisitions_.remove(index);
-         if (index == acquisitions_.size()) {
-            index--;
+         int groupIndex = getGroupIndex(index);
+         if (numberInGroup_.get(groupIndex) == 1) {
+            numberInGroup_.remove(groupIndex);
+         } else {
+            numberInGroup_.add(groupIndex,numberInGroup_.remove(groupIndex) - 1);
          }
       }
+   }
+   
+   public int getGroupIndex(int acqIndex) {
+      int groupIndex = 0;
+      int sum = -1;
+      for (Integer i : numberInGroup_) {
+         sum += i;
+         if (acqIndex <= sum) {
+            return groupIndex;
+         }
+         groupIndex++;
+      }
+      //shouldn't ever happen
+      throw new RuntimeException();
+   }
+   
+   public int getIndexInGroup(int index) {
+      if (getGroupIndex(index) == 0) {
+         return index;
+      } else {
+         int groupIndex = getGroupIndex(index);
+         int firstInGroup = index;
+         while (getGroupIndex(firstInGroup - 1) == groupIndex) {
+            firstInGroup--;
+         }
+         return index - firstInGroup;
+      }
+   }
+   
+   public int getFirstIndexOfGroup(int groupIndex) {
+      for (int i = 0; i < acquisitions_.size(); i++) {
+         if (getGroupIndex(i) == groupIndex) {
+            return i;
+         }
+      }
+      return numberInGroup_.size();
+   }
+   
+   public int getGroupSize(int index) {
+      return numberInGroup_.get(getGroupIndex(index));
+   }
+   
+   public void addToParallelGrouping(int index) {
+      //make sure there is one below 
+      if (index != acquisitions_.size() - 1) {
+         //if one below is in same group, try again with one below that
+         if (getGroupIndex(index) == getGroupIndex(index+1)) {
+            addToParallelGrouping(index + 1);
+            return;
+         }
+         //group em
+         int gIndex = getGroupIndex(index);
+         numberInGroup_.add(gIndex,numberInGroup_.remove(gIndex) + numberInGroup_.remove(gIndex));      
+      }
+   }
+
+   public void removeFromParallelGrouping(int index) {
+      int groupIndex = getGroupIndex(index);
+      int groupSize = getGroupSize(index);
+      if (groupSize != 1) {
+         //if theyre actually grouped to begin with, remove this one from group
+         //move higher or lower depending on position in group
+         //find position in group and see if its on top or bottom half
+
+         if (getIndexInGroup(index) > groupSize / 2.0) {
+            //move down
+            numberInGroup_.add(groupIndex, numberInGroup_.remove(groupIndex) - 1);
+            numberInGroup_.add(groupIndex+1,1);
+            acquisitions_.add(getFirstIndexOfGroup(groupIndex+1), acquisitions_.remove(index));
+         } else {
+            //move up
+            numberInGroup_.add(groupIndex, numberInGroup_.remove(groupIndex) - 1);
+            numberInGroup_.add(groupIndex,1);
+            acquisitions_.add(getFirstIndexOfGroup(groupIndex), acquisitions_.remove(index));
+         }
+      } 
    }
    
    public String getAcqStatus(int index) {
@@ -95,8 +214,8 @@ public class MultipleAcquisitionManager {
       //stop future acquisitions
       managerThread_.interrupt();
       //abort current acquisition
-      if (currentAcq_ != null) {
-         currentAcq_.abort();
+      if (currentAcqs_ != null) {
+         currentAcqs_.abort();
       }      
    }
 
@@ -109,21 +228,29 @@ public class MultipleAcquisitionManager {
             acqStatus_ = new String[acquisitions_.size()];
             Arrays.fill(acqStatus_, "Waiting");
             gui_.repaint();
-            for (FixedAreaAcquisitionSettings settings : acquisitions_) {               
-               if(managerThread_.isInterrupted()) {
+            //run acquisitions
+            for (int groupIndex = 0; groupIndex < numberInGroup_.size(); groupIndex++) {
+               if (managerThread_.isInterrupted()) {
                   break; //user aborted
                }
-               acqStatus_[acquisitions_.indexOf(settings)] = "Running";
-               gui_.repaint();
-               currentAcq_ = eng_.runFixedAreaAcquisition(settings);
-               while (currentAcq_ != null) {
-                  try {
-                     Thread.sleep(50);
-                  } catch (InterruptedException ex) {
-                     managerThread_.interrupt();
+               for (int i = 0; i < numberInGroup_.get(groupIndex); i++) {
+                  acqStatus_[getFirstIndexOfGroup(groupIndex) + i] = "Running";
+                  gui_.repaint();
+                
+               currentAcqs_ = eng_.runInterleavedAcquisitions(acquisitions_.subList(
+                       getFirstIndexOfGroup(groupIndex), getFirstIndexOfGroup(groupIndex) + getGroupSize(groupIndex)));
+                  
+                  while (currentAcqs_ != null) {
+                     try {
+                        Thread.sleep(50);
+                     } catch (InterruptedException ex) {
+                        managerThread_.interrupt();
+                     }
                   }
                }
-               acqStatus_[acquisitions_.indexOf(settings)] = "Finished";
+               for (int i = 0; i < numberInGroup_.get(groupIndex); i++) {
+                  acqStatus_[getFirstIndexOfGroup(groupIndex) + i] = "Finished";
+               }
                gui_.repaint();
             } 
             running_ = false;
@@ -139,7 +266,7 @@ public class MultipleAcquisitionManager {
     */
    public void acquisitionFinished() {
       System.out.println("Acquisition finished");
-      currentAcq_ = null;
+      currentAcqs_ = null;
    }
    
 }

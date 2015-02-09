@@ -10,7 +10,9 @@ import ij.IJ;
 import java.awt.Color;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
@@ -35,7 +37,7 @@ public class CustomAcqEngine {
    private String xyStageName_, zName_;
    private Thread acquisitionThread_;
    private ExploreAcquisition currentExploreAcq_;
-   private FixedAreaAcquisition currentFixedAcq_;
+   private ParallelAcquisitionGroup currentFixedAcqs_;
    private MultipleAcquisitionManager multiAcqManager_;
    private volatile boolean idle_ = true;
 
@@ -56,8 +58,8 @@ public class CustomAcqEngine {
                //Fixed acq take priority
                //TODO: might be an alternative way of doing this since the explore event queue is cleared when starting a 
                //fixed acqusiition anyway
-               if (currentFixedAcq_ != null && !currentFixedAcq_.isPaused() && !currentFixedAcq_.isFinished()) {
-                  events = currentFixedAcq_.getEventQueue();
+               if (currentFixedAcqs_ != null && !currentFixedAcqs_.isPaused() && !currentFixedAcqs_.isFinished()) {
+                  events = currentFixedAcqs_.getEventQueue();
                } else if (currentExploreAcq_ != null) {
                   events = currentExploreAcq_.getEventQueue();
                } else {
@@ -94,10 +96,11 @@ public class CustomAcqEngine {
       return idle_;
    }
    
-   public FixedAreaAcquisition runFixedAreaAcquisition(final FixedAreaAcquisitionSettings settings) {
-      //check if current fixed acquisition is running
-      if (currentFixedAcq_ != null && !currentFixedAcq_.isFinished()) {
-         currentFixedAcq_.abort();
+   public ParallelAcquisitionGroup runInterleavedAcquisitions(List<FixedAreaAcquisitionSettings> acqs) {
+           //check if current fixed acquisition is running
+      if (currentFixedAcqs_ != null && !currentFixedAcqs_.isFinished()) {
+         //TODO: is there a check if user tries to start acq when acq in progress
+         currentFixedAcqs_.abort();
       }
       //clear explore acquisition events so that they dont unexpectedly restart after acquisition
       if (currentExploreAcq_ != null && !currentExploreAcq_.isFinished()) {
@@ -105,8 +108,14 @@ public class CustomAcqEngine {
       }
 
       updateDeviceNamesForAcquisition();
-      currentFixedAcq_ = new FixedAreaAcquisition(settings, multiAcqManager_, this);
-      return currentFixedAcq_;
+      currentFixedAcqs_ = new ParallelAcquisitionGroup(acqs, multiAcqManager_, this);
+      return currentFixedAcqs_;
+   }
+   
+   public void runFixedAreaAcquisition(final FixedAreaAcquisitionSettings settings) {
+      ArrayList<FixedAreaAcquisitionSettings> list = new ArrayList<FixedAreaAcquisitionSettings>();
+      list.add(settings);
+      runInterleavedAcquisitions(list);
    }
 
    public void newExploreAcquisition(final ExploreAcqSettings settings) {
@@ -132,9 +141,7 @@ public class CustomAcqEngine {
       if (event.acquisition_ == null) {
          //event will be null when fixed acquisitions run to compeletion in normal operation
          //signal to TaggedImageSink to finish saving thread and mark acquisition as finished
-         currentFixedAcq_.addImage(new TaggedImage(null, null));
-         currentFixedAcq_ = null;
-         
+         event.acquisition_.finish();
       } else {
          updateHardware(event);
          acquireImage(event);

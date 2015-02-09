@@ -7,6 +7,7 @@
   </NonVisualComponents>
   <SyntheticProperties>
     <SyntheticProperty name="formSizePolicy" type="int" value="1"/>
+    <SyntheticProperty name="generateCenter" type="boolean" value="false"/>
   </SyntheticProperties>
   <AuxValues>
     <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="0"/>
@@ -39,10 +40,11 @@
         <DimensionLayout dim="0">
           <Group type="103" groupAlignment="0" attributes="0">
               <Group type="102" attributes="0">
-                  <EmptySpace min="-2" pref="16" max="-2" attributes="0"/>
-                  <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="32767" attributes="0"/>
-                  <Component id="newExploreWindowButton_" min="-2" max="-2" attributes="0"/>
+                  <Component id="configPropsButton_" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace max="-2" attributes="0"/>
+                  <Component id="SettingsButton" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace min="-2" pref="76" max="-2" attributes="0"/>
               </Group>
               <Group type="102" attributes="0">
                   <Group type="103" groupAlignment="0" attributes="0">
@@ -50,22 +52,17 @@
                           <EmptySpace min="-2" pref="30" max="-2" attributes="0"/>
                           <Component id="runAcqButton_" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <Component id="acqTabbedPane_" alignment="0" min="-2" pref="799" max="-2" attributes="0"/>
+                      <Component id="jTabbedPane1" alignment="0" min="-2" pref="801" max="-2" attributes="0"/>
+                      <Group type="103" alignment="0" groupAlignment="1" attributes="0">
+                          <Group type="102" attributes="0">
+                              <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace min="-2" pref="475" max="-2" attributes="0"/>
+                              <Component id="newExploreWindowButton_" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <Component id="acqTabbedPane_" min="-2" pref="799" max="-2" attributes="0"/>
+                      </Group>
                   </Group>
                   <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-              </Group>
-              <Group type="102" attributes="0">
-                  <EmptySpace max="-2" attributes="0"/>
-                  <Group type="103" groupAlignment="0" attributes="0">
-                      <Group type="102" attributes="0">
-                          <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                          <Component id="configPropsButton_" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace max="-2" attributes="0"/>
-                          <Component id="SettingsButton" min="-2" max="-2" attributes="0"/>
-                      </Group>
-                      <Component id="jTabbedPane1" alignment="0" max="32767" attributes="0"/>
-                  </Group>
-                  <EmptySpace max="-2" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -135,7 +132,7 @@
               <Layout>
                 <DimensionLayout dim="0">
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="multipleAcqScrollPane_" pref="774" max="32767" attributes="0"/>
+                      <Component id="multipleAcqScrollPane_" max="32767" attributes="0"/>
                       <Group type="102" alignment="0" attributes="0">
                           <Component id="jPanel1" max="32767" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
@@ -182,12 +179,16 @@
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="removeAcqButton_" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
-                              <Component id="moveAcqUpButton_" min="-2" max="-2" attributes="0"/>
+                              <Component id="moveAcqUpButton_" min="-2" pref="45" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
-                              <Component id="moveAcqDownButton_" min="-2" max="-2" attributes="0"/>
+                              <Component id="moveAcqDownButton_" min="-2" pref="45" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="intereaveButton_" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="32767" attributes="0"/>
+                              <Component id="deinterleaveButton_" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="runMultipleAcquisitionsButton_" min="-2" pref="132" max="-2" attributes="0"/>
-                              <EmptySpace max="32767" attributes="0"/>
+                              <EmptySpace min="-2" pref="146" max="-2" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -201,6 +202,8 @@
                                   <Component id="moveAcqUpButton_" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="moveAcqDownButton_" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="runMultipleAcquisitionsButton_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="intereaveButton_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="deinterleaveButton_" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
                           </Group>
                       </Group>
@@ -217,7 +220,7 @@
                     </Component>
                     <Component class="javax.swing.JButton" name="removeAcqButton_">
                       <Properties>
-                        <Property name="text" type="java.lang.String" value="Remove selected"/>
+                        <Property name="text" type="java.lang.String" value="Remove"/>
                       </Properties>
                       <Events>
                         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="removeAcqButton_ActionPerformed"/>
@@ -241,10 +244,26 @@
                     </Component>
                     <Component class="javax.swing.JButton" name="runMultipleAcquisitionsButton_">
                       <Properties>
-                        <Property name="text" type="java.lang.String" value="Run all acquisitions"/>
+                        <Property name="text" type="java.lang.String" value="Run all"/>
                       </Properties>
                       <Events>
                         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="runMultipleAcquisitionsButton_ActionPerformed"/>
+                      </Events>
+                    </Component>
+                    <Component class="javax.swing.JButton" name="intereaveButton_">
+                      <Properties>
+                        <Property name="text" type="java.lang.String" value="Interleave"/>
+                      </Properties>
+                      <Events>
+                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="intereaveButton_ActionPerformed"/>
+                      </Events>
+                    </Component>
+                    <Component class="javax.swing.JButton" name="deinterleaveButton_">
+                      <Properties>
+                        <Property name="text" type="java.lang.String" value="Deinterleave"/>
+                      </Properties>
+                      <Events>
+                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="deinterleaveButton_ActionPerformed"/>
                       </Events>
                     </Component>
                   </SubComponents>
@@ -263,7 +282,7 @@
               <Layout>
                 <DimensionLayout dim="0">
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="jScrollPane2" pref="774" max="32767" attributes="0"/>
+                      <Component id="jScrollPane2" pref="780" max="32767" attributes="0"/>
                       <Group type="102" attributes="0">
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="deleteSelectedRegionButton_" min="-2" max="-2" attributes="0"/>
@@ -341,7 +360,7 @@
                           <Component id="deleteAllSurfacesButton_" min="-2" max="-2" attributes="0"/>
                           <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                       </Group>
-                      <Component id="jScrollPane3" alignment="0" pref="774" max="32767" attributes="0"/>
+                      <Component id="jScrollPane3" alignment="0" pref="780" max="32767" attributes="0"/>
                   </Group>
                 </DimensionLayout>
                 <DimensionLayout dim="1">
@@ -1148,7 +1167,7 @@
                                   <Component id="footprin2DLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="footprint2DComboBox_" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
-                              <EmptySpace pref="27" max="32767" attributes="0"/>
+                              <EmptySpace max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
