@@ -58,6 +58,23 @@ public class ImageCoordsLinker extends SettingsLinker {
       parent_.setDisplaySettings(settings);
    }
 
+   @Override
+   public DisplaySettings copySettings(DisplaySettings source,
+         DisplaySettings dest) {
+      Coords sourceCoords = source.getImageCoords();
+      Coords destCoords = dest.getImageCoords();
+      if (destCoords == null) {
+         destCoords = sourceCoords;
+      }
+      if (sourceCoords == null ||
+            sourceCoords.getPositionAt(axis_) == destCoords.getPositionAt(axis_)) {
+         // Nothing can/should be done.
+         return dest;
+      }
+      destCoords = destCoords.copy().position(axis_, sourceCoords.getPositionAt(axis_)).build();
+      return dest.copy().imageCoords(destCoords).build();
+   }
+
    /**
     * We care about the imageCoords, and specifically our axis for them.
     */

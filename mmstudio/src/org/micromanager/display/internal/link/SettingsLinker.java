@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
+import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 
 import org.micromanager.internal.utils.ReportingUtils;
@@ -93,7 +94,7 @@ public abstract class SettingsLinker {
     * currently linked. Note that the event is assumed to originate from our
     * parent, so we don't apply it to ourselves.
     */
-   public void pushChanges(DisplaySettingsEvent event) {
+   public void pushEvent(DisplaySettingsEvent event) {
       if (!isActive_) {
          return;
       }
@@ -114,6 +115,26 @@ public abstract class SettingsLinker {
          }
       }
    }
+
+   /**
+    * Apply the relevant parts of our DisplaySettings to the provided display.
+    */
+   public void pushState(DisplayWindow display) {
+      DisplaySettings newSettings = copySettings(parent_.getDisplaySettings(),
+            display.getDisplaySettings());
+      if (newSettings != display.getDisplaySettings()) {
+         // I.e. copySettings() actually made a change.
+         display.setDisplaySettings(newSettings);
+      }
+   }
+
+   /**
+    * Copy from source to dest the portion of the DisplaySettings that we care
+    * about. Should return the dest parameter unmodified if no change needs
+    * to occur.
+    */
+   public abstract DisplaySettings copySettings(DisplaySettings source,
+         DisplaySettings dest);
 
    /**
     * Return true iff the given DisplaySettingsEvent represents a change that

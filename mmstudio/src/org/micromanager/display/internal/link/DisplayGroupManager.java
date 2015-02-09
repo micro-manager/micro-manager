@@ -186,7 +186,7 @@ public class DisplayGroupManager {
          DisplaySettingsEvent event) {
       try {
          for (SettingsLinker linker : displayToLinkers_.get(source)) {
-            linker.pushChanges(event);
+            linker.pushEvent(event);
          }
       }
       catch (Exception e) {

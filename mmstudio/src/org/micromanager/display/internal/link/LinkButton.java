@@ -84,8 +84,6 @@ public class LinkButton extends JToggleButton {
       List<DisplayWindow> displays = MMStudio.getInstance().display().getAllImageWindows();
       int numItems = 0;
       for (final DisplayWindow display : displays) {
-         // TODO: make this a JCheckBoxMenuItem to reflect if the display
-         // is already linked.
          String title = display.getDatastore().getSummaryMetadata().getFileName();
          if (title == null) {
             title = display.getImageWindow().getTitle();
@@ -94,8 +92,7 @@ public class LinkButton extends JToggleButton {
          item.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-//             display_.postEvent(new PushLinkEvent(display,
-//                   linker_, true));
+               linker_.pushState(display);
             }
          });
          menu.add(item);

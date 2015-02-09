@@ -80,27 +80,40 @@ public class ContrastLinker extends SettingsLinker {
       ContrastEvent event = (ContrastEvent) changeEvent;
       DisplaySettings oldSettings = parent_.getDisplaySettings();
       DisplaySettings newSettings = event.getDisplaySettings();
-      DisplaySettings.DisplaySettingsBuilder builder = oldSettings.copy();
+      newSettings = copySettings(newSettings, oldSettings);
+      if (newSettings != oldSettings) { // I.e. the copy actually did something
+         parent_.setDisplaySettings(newSettings);
+      }
+   }
 
-      Object[] oldChannelSettings = DefaultDisplaySettings.getPerChannelArrays(oldSettings);
-      Object[] newChannelSettings = DefaultDisplaySettings.getPerChannelArrays(newSettings);
-      boolean shouldChangeSettings = oldSettings.getShouldAutostretch() != newSettings.getShouldAutostretch();
+   @Override
+   public DisplaySettings copySettings(DisplaySettings source,
+         DisplaySettings dest) {
+      DisplaySettings.DisplaySettingsBuilder builder = dest.copy();
 
-      for (int i = 0; i < oldChannelSettings.length; ++i) {
-         Object[] oldVals = DefaultDisplaySettings.makePerChannelArray(
-               i, (Object[]) (oldChannelSettings[i]), channelIndex_ + 1);
-         Object[] newVals = DefaultDisplaySettings.makePerChannelArray(
-               i, (Object[]) (newChannelSettings[i]), channelIndex_ + 1);
-         if (oldVals[channelIndex_] != newVals[channelIndex_]) {
-            // Something changed, so apply the array.
+      Object[] destSettings = DefaultDisplaySettings.getPerChannelArrays(dest);
+      Object[] sourceSettings = DefaultDisplaySettings.getPerChannelArrays(source);
+      boolean shouldChangeSettings = dest.getShouldAutostretch() != source.getShouldAutostretch();
+
+      for (int i = 0; i < destSettings.length; ++i) {
+         Object[] destVals = DefaultDisplaySettings.makePerChannelArray(
+               i, (Object[]) (destSettings[i]), channelIndex_ + 1);
+         Object[] sourceVals = DefaultDisplaySettings.makePerChannelArray(
+               i, (Object[]) (sourceSettings[i]), channelIndex_ + 1);
+         if (destVals[channelIndex_] != sourceVals[channelIndex_]) {
+            // Something changed for our channel, so apply the array.
             shouldChangeSettings = true;
-            oldVals[channelIndex_] = newVals[channelIndex_];
-            DefaultDisplaySettings.updateChannelArray(i, oldVals, builder);
+            destVals[channelIndex_] = sourceVals[channelIndex_];
+            DefaultDisplaySettings.updateChannelArray(i, destVals, builder);
          }
       }
-      builder.shouldAutostretch(newSettings.getShouldAutostretch());
       if (shouldChangeSettings) {
-         parent_.setDisplaySettings(builder.build());
+         builder.shouldAutostretch(source.getShouldAutostretch());
+         return builder.build();
+      }
+      else {
+         // No change; don't generate a new DisplaySettings.
+         return dest;
       }
    }
 
