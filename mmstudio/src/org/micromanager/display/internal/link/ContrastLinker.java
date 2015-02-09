@@ -21,19 +21,17 @@ import org.micromanager.internal.utils.ReportingUtils;
  */
 public class ContrastLinker extends SettingsLinker {
    private int channelIndex_;
-   private DisplayWindow parent_;
    private static final List<Class<?>> RELEVANT_EVENTS = Arrays.asList(
          new Class<?>[] {ContrastEvent.class});
 
    public ContrastLinker(int channelIndex, DisplayWindow parent) {
-      super(RELEVANT_EVENTS);
+      super(parent, RELEVANT_EVENTS);
       channelIndex_ = channelIndex;
-      parent_ = parent;
    }
 
    /**
     * We care about changes if the change is a ContrastEvent and the index
-    * we are linked for is different.
+    * we are linked for has changed for one of the channel settings.
     */
    @Override
    public boolean getShouldApplyChanges(DisplaySettingsEvent changeEvent) {

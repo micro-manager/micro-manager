@@ -624,7 +624,8 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
          // when the fullscreen frame goes away, or we need to duplicate
          // the controls somehow.
          DisplayWindow fullFrame = new DefaultDisplayWindow(
-               store_, null, displaySettings_, getScreenConfig());
+               store_, null, displaySettings_.copy().build(),
+               getScreenConfig());
       }
    }
 

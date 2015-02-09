@@ -43,6 +43,8 @@ public class DefaultDisplaySettings implements DisplaySettings {
 
    /**
     * Retrieve the display settings that have been saved in the preferences.
+    * Note: we explicitly don't cache these settings, to ensure that
+    * displays don't end up with copies of the same settings.
     */
    public static DefaultDisplaySettings getStandardSettings() {
       Builder builder = new Builder();

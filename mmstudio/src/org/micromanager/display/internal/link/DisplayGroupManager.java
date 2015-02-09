@@ -51,11 +51,6 @@ public class DisplayGroupManager {
       }
 
       @Subscribe
-      public void onLinkButton(LinkButtonEvent event) {
-         master_.onLinkButton(display_, event);
-      }
-
-      @Subscribe
       public void onFullScreen(FullScreenEvent event) {
          master_.onFullScreen(display_, event);
       }
@@ -72,13 +67,11 @@ public class DisplayGroupManager {
 
    private MMStudio studio_;
    private HashMap<DisplayWindow, HashSet<SettingsLinker>> displayToLinkers_;
-   private HashMap<SettingsLinker, Boolean> linkerToIsLinked_;
    private HashMap<GraphicsConfiguration, DisplayWindow> screenToDisplay_;
    private ArrayList<WindowListener> listeners_;
 
    public DisplayGroupManager(MMStudio studio) {
       displayToLinkers_ = new HashMap<DisplayWindow, HashSet<SettingsLinker>>();
-      linkerToIsLinked_ = new HashMap<SettingsLinker, Boolean>();
       screenToDisplay_ = new HashMap<GraphicsConfiguration, DisplayWindow>();
       listeners_ = new ArrayList<WindowListener>();
       studio_ = studio;
@@ -101,9 +94,6 @@ public class DisplayGroupManager {
     */
    public void onDisplayDestroyed(DisplayWindow source,
          DisplayDestroyedEvent event) {
-      for (SettingsLinker linker : displayToLinkers_.get(source)) {
-         linkerToIsLinked_.remove(linker);
-      }
       displayToLinkers_.remove(source);
       for (WindowListener listener : listeners_) {
          if (listener.getDisplay() == source) {
@@ -122,50 +112,21 @@ public class DisplayGroupManager {
    }
 
    /**
-    * A new LinkButton has been created; we need to start tracking its linker.
+    * A new LinkButton has been created; we need to start tracking its linker,
+    * and all related linkers need to be linked to it.
     */
    public void onNewLinkButton(DisplayWindow source,
          LinkButtonCreatedEvent event) {
-      try {
-         displayToLinkers_.get(source).add(event.getLinker());
-         linkerToIsLinked_.put(event.getLinker(), false);
-      }
-      catch (Exception e) {
-         ReportingUtils.logError(e, "Couldn't handle new link button for display " + source.hashCode() + " linker " + event.getLinker().getID());
-      }
-   }
-
-   /**
-    * A LinkButton has been clicked. Ensure other DisplayWindows get their
-    * corresponding LinkButtons updated, and update our linker tracking.
-    */
-   public void onLinkButton(DisplayWindow source, LinkButtonEvent event) {
-      try {
-         // Find other displays for this datastore and update their
-         // corresponding link buttons.
-         SettingsLinker linker = event.getLinker();
-         boolean isLinked = event.getIsLinked();
-         RemoteLinkEvent notifyEvent = new RemoteLinkEvent(linker, isLinked);
-         // Not just this linker, but all others with the same ID and datastore
-         // need to be updated.
-         linkerToIsLinked_.put(linker, isLinked);
-         for (DisplayWindow display : displayToLinkers_.keySet()) {
-            if (display == source ||
-                  display.getDatastore() != source.getDatastore()) {
-               // No need to notify this one.
-               continue;
-            }
-            display.postEvent(notifyEvent);
-
-            for (SettingsLinker alt : displayToLinkers_.get(display)) {
-               if (alt.getID() == linker.getID() && display != source) {
-                  linkerToIsLinked_.put(alt, isLinked);
-               }
+      SettingsLinker newLinker = event.getLinker();
+      displayToLinkers_.get(source).add(newLinker);
+      for (DisplayWindow display : displayToLinkers_.keySet()) {
+         for (SettingsLinker linker : displayToLinkers_.get(display)) {
+            if (linker.getID() == newLinker.getID() &&
+                  linker != newLinker) {
+               // This also creates the reciprocal link.
+               linker.link(newLinker);
             }
          }
-      }
-      catch (Exception e) {
-         ReportingUtils.logError(e, "Couldn't redistribute LinkButtonEvent");
       }
    }
 
@@ -218,29 +179,14 @@ public class DisplayGroupManager {
    }
 
    /**
-    * One DisplayWindow has changed settings; check if others care.
+    * A DisplayWindow's DisplaySettings have changed; push those changes out
+    * to linked displays via the SettingsLinkers.
     */
    public void onDisplaySettingsChanged(DisplayWindow source,
          DisplaySettingsEvent event) {
       try {
-         for (DisplayWindow display : displayToLinkers_.keySet()) {
-            if (display == source) {
-               continue;
-            }
-            for (SettingsLinker linker : displayToLinkers_.get(display)) {
-               if (!linkerToIsLinked_.get(linker)) {
-                  // This linker isn't active.
-                  continue;
-               }
-               List<Class<?>> classes = linker.getRelevantEventClasses();
-               for (Class<?> eventClass : classes) {
-                  if (eventClass.isInstance(event) &&
-                        linker.getShouldApplyChanges(event)) {
-                     linker.applyChange(event);
-                     break;
-                  }
-               }
-            }
+         for (SettingsLinker linker : displayToLinkers_.get(source)) {
+            linker.pushChanges(event);
          }
       }
       catch (Exception e) {
