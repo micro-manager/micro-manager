@@ -145,6 +145,13 @@ public interface DisplayWindow {
    public Window getAsWindow();
 
    /**
+    * Return the unique name of this display. Typically this will include the
+    * display number and the filename of the dataset; if no filename is
+    * available, then "MM image display" will be used instead.
+    */
+   public String getName();
+
+   /**
     * Register for access to the EventBus that the window uses for propagating
     * events. Note that this is different from the EventBus that the Datastore
     * uses; this EventBus is specifically for events related to the display.

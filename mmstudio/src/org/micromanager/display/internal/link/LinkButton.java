@@ -84,11 +84,10 @@ public class LinkButton extends JToggleButton {
       List<DisplayWindow> displays = MMStudio.getInstance().display().getAllImageWindows();
       int numItems = 0;
       for (final DisplayWindow display : displays) {
-         String title = display.getDatastore().getSummaryMetadata().getFileName();
-         if (title == null) {
-            title = display.getImageWindow().getTitle();
+         if (display == display_) {
+            continue;
          }
-         JMenuItem item = new JMenuItem(title);
+         JMenuItem item = new JMenuItem(display.getName());
          item.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {

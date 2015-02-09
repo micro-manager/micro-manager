@@ -120,6 +120,10 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
    private boolean haveClosed_ = false;
 
    private static int titleID = 0;
+   // We give a unique ID to each window, which will show up in the title,
+   // since just the filename isn't enough to identify each window if there
+   // are multiple displays for the same dataset.
+   private int displayNum_;
    
    /**
     * Convenience constructor that defaults to non-fullscreen mode and default
@@ -156,6 +160,9 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       if (customControls_ == null) {
          customControls_ = new ArrayList<Component>();
       }
+
+      titleID++;
+      displayNum_ = titleID;
 
       isFullScreen_ = (targetScreen != null);
 
@@ -211,7 +218,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       ijImage_ = new MMImagePlus();
       setImagePlusMetadata(ijImage_);
       stack_.setImagePlus(ijImage_);
-      ijImage_.setStack(generateImagePlusName(), stack_);
+      ijImage_.setStack(getName(), stack_);
       ijImage_.setOpenAsHyperStack(true);
       // The ImagePlus object needs to be pseudo-polymorphic, depending on
       // the number of channels in the Datastore. However, we may not
@@ -369,12 +376,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
    }
 
    private void resetTitle() {
-      SummaryMetadata summary = store_.getSummaryMetadata();
-      String filename = summary.getFileName();
-      String title = "MM image display";
-      if (filename != null) {
-         title = filename;
-      }
+      String title = getName();
       title += String.format(" (%d%%)",
             (int) (canvas_.getMagnification() * 100));
       // HACK: don't display save status for the snap/live view.
@@ -802,13 +804,16 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       return result;
    }
 
-   /**
-    * Generate a unique name for our ImagePlus object.
-    * TODO: we should use the filename where available.
-    */
-   private static String generateImagePlusName() {
-      titleID++;
-      return String.format("MM dataset %d", titleID);
+   @Override
+   public String getName() {
+      String filename = store_.getSummaryMetadata().getFileName();
+      String result = "MM image display";
+      if (filename != null && !filename.contentEquals("") &&
+            !filename.contentEquals("null")) {
+         result = filename;
+      }
+      result = String.format("#%d: %s", displayNum_, result);
+      return result;
    }
 
    // Implemented to help out DummyImageWindow.
