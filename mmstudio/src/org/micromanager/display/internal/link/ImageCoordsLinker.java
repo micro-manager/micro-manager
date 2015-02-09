@@ -29,7 +29,8 @@ public class ImageCoordsLinker extends SettingsLinker {
     * we are linked for is different.
     */
    @Override
-   public boolean getShouldApplyChanges(DisplaySettingsEvent changeEvent) {
+   public boolean getShouldApplyChanges(DisplayWindow source,
+         DisplaySettingsEvent changeEvent) {
       ImageCoordsEvent event = (ImageCoordsEvent) changeEvent;
       if (parent_.getDisplaySettings().getImageCoords() == null) {
          // We don't have image coordinates, so we must de facto differ.
@@ -44,7 +45,8 @@ public class ImageCoordsLinker extends SettingsLinker {
     * Copy over just the position we are linked for.
     */
    @Override
-   public void applyChange(DisplaySettingsEvent changeEvent) {
+   public void applyChange(DisplayWindow source,
+         DisplaySettingsEvent changeEvent) {
       ImageCoordsEvent event = (ImageCoordsEvent) changeEvent;
       DisplaySettings settings = parent_.getDisplaySettings();
       Coords curCoords = settings.getImageCoords();
@@ -59,8 +61,8 @@ public class ImageCoordsLinker extends SettingsLinker {
    }
 
    @Override
-   public DisplaySettings copySettings(DisplaySettings source,
-         DisplaySettings dest) {
+   public DisplaySettings copySettings(DisplayWindow sourceDisplay,
+         DisplaySettings source, DisplaySettings dest) {
       Coords sourceCoords = source.getImageCoords();
       Coords destCoords = dest.getImageCoords();
       if (destCoords == null) {

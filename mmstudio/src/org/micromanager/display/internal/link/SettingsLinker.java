@@ -94,7 +94,7 @@ public abstract class SettingsLinker {
     * currently linked. Note that the event is assumed to originate from our
     * parent, so we don't apply it to ourselves.
     */
-   public void pushEvent(DisplaySettingsEvent event) {
+   public void pushEvent(DisplayWindow source, DisplaySettingsEvent event) {
       if (!isActive_) {
          return;
       }
@@ -110,8 +110,8 @@ public abstract class SettingsLinker {
       }
 
       for (SettingsLinker linker : linkedLinkers_) {
-         if (linker.getShouldApplyChanges(event)) {
-            linker.applyChange(event);
+         if (linker.getShouldApplyChanges(source, event)) {
+            linker.applyChange(source, event);
          }
       }
    }
@@ -120,8 +120,8 @@ public abstract class SettingsLinker {
     * Apply the relevant parts of our DisplaySettings to the provided display.
     */
    public void pushState(DisplayWindow display) {
-      DisplaySettings newSettings = copySettings(parent_.getDisplaySettings(),
-            display.getDisplaySettings());
+      DisplaySettings newSettings = copySettings(parent_,
+            parent_.getDisplaySettings(), display.getDisplaySettings());
       if (newSettings != display.getDisplaySettings()) {
          // I.e. copySettings() actually made a change.
          display.setDisplaySettings(newSettings);
@@ -129,24 +129,34 @@ public abstract class SettingsLinker {
    }
 
    /**
+    * Return our DisplayWindow, which may be needed e.g. to provide access to
+    * the Datastore for another SettingsLinker.
+    */
+   public DisplayWindow getDisplay() {
+      return parent_;
+   }
+
+   /**
     * Copy from source to dest the portion of the DisplaySettings that we care
     * about. Should return the dest parameter unmodified if no change needs
     * to occur.
     */
-   public abstract DisplaySettings copySettings(DisplaySettings source,
-         DisplaySettings dest);
+   public abstract DisplaySettings copySettings(DisplayWindow sourceDisplay,
+         DisplaySettings source, DisplaySettings dest);
 
    /**
     * Return true iff the given DisplaySettingsEvent represents a change that
     * we need to apply to our own DisplayWindow.
     */
-   public abstract boolean getShouldApplyChanges(DisplaySettingsEvent changeEvent);
+   public abstract boolean getShouldApplyChanges(DisplayWindow source,
+         DisplaySettingsEvent changeEvent);
 
    /**
     * Apply the change indicated by the provided DisplaySettingsEvent to
     * our own DisplayWindow.
     */
-   public abstract void applyChange(DisplaySettingsEvent changeEvent);
+   public abstract void applyChange(DisplayWindow source,
+         DisplaySettingsEvent changeEvent);
 
    /**
     * Generate a semi-unique ID for this linker; it should indicate the

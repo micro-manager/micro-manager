@@ -385,9 +385,17 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          channelColors[channelIndex_] = newColor;
          DisplaySettings newSettings = settings.copy().channelColors(channelColors).build();
          display_.setDisplaySettings(newSettings);
-         display_.postEvent(new ContrastEvent(channelIndex_, newSettings));
       }
       updateChannelSettings();
+   }
+
+   private void postContrastEvent(DisplaySettings newSettings) {
+      String[] channelNames = display_.getDatastore().getSummaryMetadata().getChannelNames();
+      String name = null;
+      if (channelNames != null && channelNames.length > channelIndex_) {
+         name = channelNames[channelIndex_];
+      }
+      display_.postEvent(new ContrastEvent(channelIndex_, name, newSettings));
    }
 
    private void channelNameCheckboxAction() {
@@ -869,7 +877,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       }
       settings = builder.build();
       display_.setDisplaySettings(settings);
-      display_.postEvent(new ContrastEvent(channelIndex_, settings));
+      postContrastEvent(settings);
    }
 
    /**

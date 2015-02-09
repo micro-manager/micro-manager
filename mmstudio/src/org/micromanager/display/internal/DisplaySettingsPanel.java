@@ -37,7 +37,6 @@ import org.micromanager.display.NewDisplaySettingsEvent;
 import org.micromanager.display.NewImagePlusEvent;
 
 import org.micromanager.display.internal.events.DefaultRequestToDrawEvent;
-import org.micromanager.display.internal.link.ContrastEvent;
 
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -355,8 +354,6 @@ public class DisplaySettingsPanel extends JPanel {
       settings = settings.copy().shouldAutostretch(shouldAutostretch_.isSelected()).build();
       display_.setDisplaySettings(settings);
       displayBus_.post(new DefaultRequestToDrawEvent());
-      // Autostretch changes apply to all channels.
-      displayBus_.post(new ContrastEvent(-1, settings));
    }
 
    /**
