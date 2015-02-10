@@ -148,7 +148,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final JTextField nameField_;
    private final JLabel acquisitionStatusLabel_;
    private int numTimePointsDone_;
-   private final AtomicBoolean stop_ = new AtomicBoolean(false);  // true if we should stop acquisition
+   private final AtomicBoolean cancelAcquisition_ = new AtomicBoolean(false);  // true if we should stop acquisition
+   private final AtomicBoolean acquisitionRunning_ = new AtomicBoolean(false);  // true if acquisition is in progress
    private final StagePositionUpdater posUpdater_;
    private final JSpinner stepSize_;
    private final JLabel desiredSlicePeriodLabel_;
@@ -614,10 +615,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       buttonStart_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            updateStartButton();
+            if (acquisitionRunning_.get()) {
+               cancelAcquisition_.set(true);
+            } else {
+               runAcquisition();
+            }
          }
       });
-      updateStartButton();  // do once to start, isSelected() will be false
+      updateStartButton();  // call once to initialize, isSelected() will be false
 
       acquisitionStatusLabel_ = new JLabel("");
       updateAcquisitionStatus(AcquisitionStatus.NONE);
@@ -753,25 +758,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    }
    
    private void updateStartButton() {
-      boolean started = buttonStart_.isSelected();
-      stop_.set(!started);
-      if (started) {
-         class acqThread extends Thread {
-            acqThread(String threadName) {
-               super(threadName);
-            }
-
-            @Override
-            public void run() {
-               runAcquisition();
-               if (buttonStart_.isSelected()) {
-                  buttonStart_.doClick();
-               }
-            }
-         }            
-         acqThread acqt = new acqThread("diSPIM Acquisition");
-         acqt.start(); 
-      }
+      boolean started = acquisitionRunning_.get();
+      buttonStart_.setSelected(started);
       buttonStart_.setText(started ? "Stop!" : "Start!");
       buttonStart_.setBackground(started ? Color.red : Color.green);
       buttonStart_.setIcon(started ?
@@ -1334,10 +1322,38 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     *   import org.micromanager.asidispim.api.*;
     *   ASIdiSPIMInterface diSPIM = new ASIdiSPIMImplementation();
     *   diSPIM.runAcquisition();
-    *
-    * @return
     */
-   public boolean runAcquisition() {
+   public void runAcquisition() {
+      class acqThread extends Thread {
+         acqThread(String threadName) {
+            super(threadName);
+         }
+
+         @Override
+         public void run() {
+            ReportingUtils.logMessage("User requested start of diSPIM acquisition.");
+            cancelAcquisition_.set(false);
+            acquisitionRunning_.set(true);
+            updateStartButton();
+            boolean success = runAcquisitionInternal();
+            if (!success) {
+               ReportingUtils.logError("Fatal error running diSPIM acquisition.");
+            }
+            acquisitionRunning_.set(false);
+            updateStartButton();
+         }
+      }            
+      acqThread acqt = new acqThread("diSPIM Acquisition");
+      acqt.start(); 
+   }
+   
+   /**
+    * Actually runs the acquisition; does the dirty work of setting
+    * up the controller, the circular buffer, starting the cameras,
+    * grabbing the images and putting them into the acquisition, etc.
+    * @return true if ran without any fatal errors.
+    */
+   private boolean runAcquisitionInternal() {
       
       if (gui_.isAcquisitionRunning()) {
          MyDialogUtils.showError("An acquisition is already running");
@@ -1564,7 +1580,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
          try {
             // check for stop button before each acquisition
-            if (stop_.get()) {
+            if (cancelAcquisition_.get()) {
                throw new IllegalMonitorStateException("User stopped the acquisition");
             }
             
@@ -1655,7 +1671,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                // handle intervals between time points
                long acqNow = System.currentTimeMillis();
                long delay = acqStart + timePoint * timepointsIntervalMs - acqNow;
-               while (delay > 0 && !stop_.get()) {
+               while (delay > 0 && !cancelAcquisition_.get()) {
                   updateAcquisitionStatus(AcquisitionStatus.WAITING, (int) (delay / 1000));
                   long sleepTime = Math.min(1000, delay);
                   Thread.sleep(sleepTime);
@@ -1664,7 +1680,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                }
 
                // check for stop button before each time point
-               if (stop_.get()) {
+               if (cancelAcquisition_.get()) {
                   throw new IllegalMonitorStateException("User stopped the acquisition");
                }
 
@@ -1725,7 +1741,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      long timeout;  // wait 5 seconds for first image to come
                      timeout = Math.max(5000, Math.round(1.2*computeActualVolumeDuration()));
                      while (core_.getRemainingImageCount() == 0 && (now - start < timeout)
-                           && !stop_.get()) {
+                           && !cancelAcquisition_.get()) {
                         now = System.currentTimeMillis();
                         Thread.sleep(5);
                      }
@@ -1774,7 +1790,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                  done = true;
                               }
                            } else {  // no image ready yet
-                              done = stop_.get();
+                              done = cancelAcquisition_.get();
                               Thread.sleep(1);
                               if (now - last >= timeout2) {
                                  ReportingUtils.logError("Camera did not send all expected images within" +
@@ -1793,6 +1809,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                               }
                            }
                         }
+                        
+                        // update count if we stopped in the middle
+                        if (cancelAcquisition_.get()) {
+                           numTimePointsDone_--;
+                        }
+                        
                      } catch (InterruptedException iex) {
                         MyDialogUtils.showError(iex);
                      }
@@ -1865,8 +1887,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          positions_.setPosition(Devices.Keys.PIEZOB, Joystick.Directions.NONE, 0.0);
       }
       
-      if (stop_.get()) {  // if user stopped us in middle
-         numTimePointsDone_--;  
+      if (cancelAcquisition_.get()) {  // if user stopped us in middle
          // make sure to stop the SPIM state machine in case the acquisition was cancelled
          props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SPIM_STATE,
                Properties.Values.SPIM_IDLE, true);
