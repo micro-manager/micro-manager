@@ -461,6 +461,10 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
          // On the flipside, we only allow for square pixels, so we aren't
          // exactly perfect either.
          Image sample = store_.getAnyImage();
+         if (sample == null) {
+            ReportingUtils.logError("Unable to get an image for setting ImageJ metadata properties");
+            return;
+         }
          Double pixelSize = sample.getMetadata().getPixelSizeUm();
          if (pixelSize != null) {
             cal.pixelWidth = pixelSize;
@@ -848,6 +852,11 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       Dimension modeSize = modePanel_.getPreferredSize();
       Dimension controlsSize = controlsPanel_.getPreferredSize();
       Image image = store_.getAnyImage();
+      if (image == null || canvas_ == null) {
+         // Nothing we can do here.
+         ReportingUtils.logError("No image/canvas available with which to set window size (" + image + " and " + canvas_ + ")");
+         return;
+      }
       Dimension imageSize = new Dimension(
             (int) Math.ceil(image.getWidth() * canvas_.getMagnification()),
             (int) Math.ceil(image.getHeight() * canvas_.getMagnification()));
