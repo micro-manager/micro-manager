@@ -23,6 +23,8 @@ package org.micromanager.display.internal;
 import ij.gui.ImageWindow;
 
 import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -41,6 +43,7 @@ import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.internal.DefaultMetadata;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
+import org.micromanager.display.DisplayWindow;
 
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -53,11 +56,13 @@ public class MetadataPanel extends JPanel {
    private final MetadataTableModel summaryMetadataModel_;
    private ImageWindow currentWindow_;
    private Datastore store_;
+   private DisplayWindow display_;
    private Timer updateTimer_;
 
    /** Creates new form MetadataPanel */
-   public MetadataPanel(Datastore store) {
-      store_ = store;
+   public MetadataPanel(DisplayWindow display) {
+      display_ = display;
+      store_ = display.getDatastore();
       imageMetadataModel_ = new MetadataTableModel();
       summaryMetadataModel_ = new MetadataTableModel();
       initialize();
@@ -138,6 +143,13 @@ public class MetadataPanel extends JPanel {
 
       showUnchangingPropertiesCheckbox_.setText("Show unchanging properties");
       showUnchangingPropertiesCheckbox_.setToolTipText("Show/hide properties that are the same for all images in the dataset");
+      showUnchangingPropertiesCheckbox_.addActionListener(
+            new ActionListener() {
+               @Override
+               public void actionPerformed(ActionEvent e) {
+                  imageChangedUpdate(display_.getDisplayedImages().get(0));
+               }
+      });
 
       jLabel2.setText("Image metadata");
 

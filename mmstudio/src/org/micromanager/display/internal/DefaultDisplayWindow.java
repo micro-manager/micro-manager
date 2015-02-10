@@ -320,7 +320,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
          histograms_.setMinimumSize(new java.awt.Dimension(280, 0));
          modePanel_.addMode("Contrast", histograms_);
 
-         metadata_ = new MetadataPanel(store_);
+         metadata_ = new MetadataPanel(this);
          modePanel_.addMode("Metadata", metadata_);
 
          comments_ = new CommentsPanel(store_, stack_);
