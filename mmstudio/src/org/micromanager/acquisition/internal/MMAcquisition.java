@@ -289,6 +289,7 @@ public class MMAcquisition {
          }
 
          store_.setStorage(imageFileManager);
+         store_.setIsSaved(true);
          try {
             store_.setSummaryMetadata((new DefaultSummaryMetadata.Builder().build()));
          }
@@ -368,6 +369,7 @@ public class MMAcquisition {
          store_.setStorage(tempImageFileManager);
          DefaultDatastore duplicate = new DefaultDatastore();
          duplicate.setStorage(new StorageRAM(duplicate));
+         duplicate.setIsSaved(true);
          duplicate.copyFrom(store_);
          store_ = duplicate;
          if (show_) {
