@@ -264,6 +264,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       }
       setDisplayedImageTo(builder.build());
       resetTitle();
+      setWindowSize();
    }
 
    /**
@@ -831,6 +832,36 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
          return getScreenConfig().getBounds().getSize();
       }
       return super.getPreferredSize();
+   }
+
+   /**
+    * Set our window size so that it precisely holds all components, or, if
+    * there's not enough room to hold the entire canvas, expand to as large as
+    * possible. This is conceptually similar to the override of the pack()
+    * method, below, but in the opposite direction.
+    */
+   private void setWindowSize() {
+      if (isFullScreen_) {
+         // Fullscreen displays are fixed-size.
+         return;
+      }
+      Dimension modeSize = modePanel_.getPreferredSize();
+      Dimension controlsSize = controlsPanel_.getPreferredSize();
+      Image image = store_.getAnyImage();
+      Dimension imageSize = new Dimension(
+            (int) Math.ceil(image.getWidth() * canvas_.getMagnification()),
+            (int) Math.ceil(image.getHeight() * canvas_.getMagnification()));
+      Insets insets = contentsPanel_.getInsets();
+      Dimension screenSize = getScreenConfig().getBounds().getSize();
+      // TODO: if we don't apply some padding here then we end up with the
+      // canvas being a bit too small; no idea why.
+      // The extra size ought to go away when we pack, anyway.
+      int maxWidth = Math.min(screenSize.width,
+            imageSize.width + modeSize.width + insets.left + insets.right + 10);
+      int maxHeight = Math.min(screenSize.height,
+            imageSize.height + controlsSize.height + insets.top + insets.bottom + 10);
+      contentsPanel_.setSize(new Dimension(maxWidth, maxHeight));
+      pack();
    }
 
    /**
