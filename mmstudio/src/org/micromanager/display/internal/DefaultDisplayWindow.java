@@ -104,6 +104,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
    private JPanel canvasPanel_;
    private MMImageCanvas canvas_;
    private JPanel controlsPanel_;
+   private HyperstackControls hyperstackControls_;
    private List<Component> customControls_;
    private MultiModePanel modePanel_;
    private HistogramsPanel histograms_;
@@ -282,10 +283,14 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
 
       if (controlsPanel_ == null) {
          controlsPanel_ = new JPanel(new MigLayout("insets 0, fillx"));
-         controlsPanel_.add(
-               new HyperstackControls(store_, stack_, this, false),
-               "align center, span, growx, wrap");
       }
+      controlsPanel_.removeAll();
+      if (hyperstackControls_ == null) {
+         hyperstackControls_ = new HyperstackControls(store_, stack_, this,
+               false);
+      }
+      controlsPanel_.add(hyperstackControls_,
+            "align center, span, growx, wrap");
 
       for (Component c : customControls_) {
          controlsPanel_.add(c);
