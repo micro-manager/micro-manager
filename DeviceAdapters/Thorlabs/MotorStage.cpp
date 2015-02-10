@@ -267,6 +267,7 @@ int MotorStage::ParseStatus(const unsigned char* buf, int bufLen, DCMOTSTATUS& s
    bufPtr += sizeof(unsigned short);
 
    memcpy(&stat.lPosition, buf + bufPtr, sizeof(long));
+   currentPos_ = stat.lPosition;
    bufPtr += sizeof(long);
 
    memcpy(&stat.wVelocity, buf + bufPtr, sizeof(unsigned short));
@@ -338,6 +339,7 @@ int MotorStage::MoveBlocking(long pos, bool relative)
 {
    unsigned char sendPacket[6];
    const unsigned short channel = 1;
+   long gotoPos = pos < 0 ? 0 : pos;
 
    ClearPort();
    SendCommand(serverAliveCmd);
@@ -346,7 +348,7 @@ int MotorStage::MoveBlocking(long pos, bool relative)
       return ret;
 
    memcpy(sendPacket, &channel, 2);
-   memcpy(sendPacket + 2, &pos, 4);
+   memcpy(sendPacket + 2, &gotoPos, 4);
 
    ret = SetCommand(sendPacket, 6);
    if (ret != DEVICE_OK)
@@ -444,8 +446,9 @@ int MotorStage::GetPositionSteps(long& p)
    int ret;
    bool receivedEndOfMove = false;
 
-   if (blockPolling_)
+   if (blockPolling_ || pollingPositionStep_)
    {
+	  p = currentPos_;
       return DEVICE_OK;
    }
 
@@ -492,14 +495,13 @@ int MotorStage::GetPositionSteps(long& p)
 
    unsigned char packet[packetLength];
    ret = GetCommandAnswer(packet, packetLength);
-   pollingPositionStep_ = false;
    blockPolling_ = receivedEndOfMove;
+   pollingPositionStep_ = false;
    if (ret != DEVICE_OK)
       return ret;
 
-   long pos = 0;
-   memcpy(&pos, packet+2, 4);
-   p = pos;
+   memcpy(&currentPos_, packet+2, 4);
+   p = currentPos_;
    return DEVICE_OK;
 }
 

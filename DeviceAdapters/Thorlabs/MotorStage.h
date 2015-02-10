@@ -97,6 +97,7 @@ private:
    MOTTYPE type_;                // type of stage (servo, stepper)
    MM::Device *parent_;  // parent device (XYStage, MotorXStage)
    MM::Core *core_;
+   long currentPos_; 
    bool pollingPositionStep_;
    bool blockPolling_;   
 };

@@ -393,6 +393,14 @@ int XYStage::Home()
    os << "Status X axis (hex): " << hex << stat.dwStatusBits;
    LogMessage(os.str(), true);
 
+   // check status
+   ret = GetStatus(stat, Y);
+   if (ret != DEVICE_OK)
+      return ret;
+   
+   os << "Status Y axis (hex): " << hex << stat.dwStatusBits;
+   LogMessage(os.str(), true);
+
    return DEVICE_OK;
 }
 
