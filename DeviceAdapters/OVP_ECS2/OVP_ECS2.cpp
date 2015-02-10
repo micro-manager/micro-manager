@@ -529,7 +529,7 @@ int ECS::QueryCommandVerify(Message command, Message responsePrefix, size_t expe
    return DEVICE_OK;
 }
 
-MM::DeviceDetectionStatus ECS::DetectDevice()   // looks for hub, not child devices
+MM::DeviceDetectionStatus ECS::DetectDevice()
 {
    if (initialized_)
       return MM::CanCommunicate;
