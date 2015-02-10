@@ -42,24 +42,23 @@ public class ContrastLinker extends SettingsLinker {
    }
 
    // Look up our channel name in the specified display's datastore and return
-   // the corresponding index, or channelIndex_ if all names are null, or
-   // -1 if our name isn't available in the other display's list.
+   // the corresponding index, or channelIndex_ if a match was not found.
    private int getIndex(DisplayWindow display, DisplaySettings settings) {
       String[] names = display.getDatastore().getSummaryMetadata().getChannelNames();
       String ourName = getName();
-      if (ourName == null && (names == null || names[channelIndex_] == null)) {
-         // No names to work with.
-         return channelIndex_;
+      if (names != null) {
+         for (int i = 0; i < names.length; ++i) {
+            // Search for string equality and also for both being null.
+            if ((names[i] != null &&
+                     ourName != null &&
+                     names[i].contentEquals(ourName)) ||
+                  names[i] == ourName) {
+               return i;
+            }
+         }
       }
-      if (names == null) {
-         // We have names but they don't; automatic not-found.
-         return -1;
-      }
-      int result = java.util.Arrays.binarySearch(names, ourName);
-      if (result < 0) { // i.e. not found.
-         return -1;
-      }
-      return result;
+      // Can't find it.
+      return channelIndex_;
    }
 
    /**
@@ -71,8 +70,10 @@ public class ContrastLinker extends SettingsLinker {
          DisplaySettingsEvent changeEvent) {
       ContrastEvent event = (ContrastEvent) changeEvent;
       String name = event.getChannelName();
-      // The first check here handles the case where both names are null.
-      if (name != getName() && !name.contentEquals(getName())) {
+      String ourName = getName();
+      // The first check handles the case where one is null but the other
+      // isn't.
+      if (name != ourName || (name != null && ourName != null && !name.contentEquals(getName()))) {
          // Change is for the wrong channel, so we don't care.
          return false;
       }
