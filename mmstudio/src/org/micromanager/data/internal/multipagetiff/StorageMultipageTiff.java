@@ -176,6 +176,9 @@ public final class StorageMultipageTiff implements Storage {
                   lastFrameOpenedDataSet_ = Math.max(
                         coords.getPositionAt("time"),
                         lastFrameOpenedDataSet_);
+                  if (firstImage_ == null) {
+                     firstImage_ = reader.readImage(coords);
+                  }
                }
             } catch (IOException ex) {
                ReportingUtils.showError("Couldn't open file: " + f.toString());
