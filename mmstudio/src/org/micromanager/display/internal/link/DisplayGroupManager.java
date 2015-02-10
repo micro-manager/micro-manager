@@ -184,6 +184,11 @@ public class DisplayGroupManager {
     */
    public void onDisplaySettingsChanged(DisplayWindow source,
          DisplaySettingsEvent event) {
+      if (!displayToLinkers_.containsKey(source)) {
+         // Unlikely, but could happen when a display is cleared during Live
+         // mode.
+         return;
+      }
       try {
          for (SettingsLinker linker : displayToLinkers_.get(source)) {
             linker.pushEvent(source, event);
