@@ -103,7 +103,7 @@ public class MetadataPanel extends JPanel {
       summaryMetadataTable_.setToolTipText("Metadata tags for the whole acquisition");
       summaryMetadataScrollPane.setViewportView(summaryMetadataTable_);
 
-      jLabel3.setText("Acquisition properties");
+      jLabel3.setText("Summary metadata");
 
       summaryMetadataPanel.setLayout(new MigLayout("flowy"));
       summaryMetadataPanel.add(jLabel3);
@@ -132,14 +132,14 @@ public class MetadataPanel extends JPanel {
             return canEdit[columnIndex];
          }
       });
-      imageMetadataTable_.setToolTipText("Metadata tags for each individual image");
+      imageMetadataTable_.setToolTipText("Individual image metadata");
       imageMetadataTable_.setDoubleBuffered(true);
       imageMetadataTableScrollPane.setViewportView(imageMetadataTable_);
 
       showUnchangingPropertiesCheckbox_.setText("Show unchanging properties");
-      showUnchangingPropertiesCheckbox_.setToolTipText("Show/hide properties that are the same for all images in the acquisition");
+      showUnchangingPropertiesCheckbox_.setToolTipText("Show/hide properties that are the same for all images in the dataset");
 
-      jLabel2.setText("Per-image properties");
+      jLabel2.setText("Image metadata");
 
       imageMetadataScrollPane.setLayout(new MigLayout("flowy"));
       imageMetadataScrollPane.add(jLabel2);
