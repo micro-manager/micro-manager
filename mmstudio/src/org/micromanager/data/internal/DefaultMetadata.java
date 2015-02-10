@@ -752,4 +752,107 @@ public class DefaultMetadata implements Metadata {
       }
       return builder.build();
    }
+
+   @Override
+   public String toString() {
+      String result = "<Metadata:";
+      if (uuid_ != null) {
+         result += "\n  uuid: " + uuid_.toString();
+      }
+      if (source_ != null) {
+         result += "\n  source: " + source_.toString();
+      }
+
+      if (initialPositionList_ != null) {
+         result += "\n  initialPositionList: " + initialPositionList_.toString();
+      }
+
+      if (keepShutterOpenSlices_ != null) {
+         result += "\n  keepShutterOpenSlices: " + keepShutterOpenSlices_.toString();
+      }
+      if (keepShutterOpenChannels_ != null) {
+         result += "\n  keepShutterOpenChannels: " + keepShutterOpenChannels_.toString();
+      }
+
+      if (pixelType_ != null) {
+         result += "\n  pixelType: " + pixelType_.toString();
+      }
+      if (bitDepth_ != null) {
+         result += "\n  bitDepth: " + bitDepth_.toString();
+      }
+      if (ijType_ != null) {
+         result += "\n  ijType: " + ijType_.toString();
+      }
+      if (channelName_ != null) {
+         result += "\n  channelName: " + channelName_.toString();
+      }
+      if (exposureMs_ != null) {
+         result += "\n  exposureMs: " + exposureMs_.toString();
+      }
+      if (elapsedTimeMs_ != null) {
+         result += "\n  elapsedTimeMs: " + elapsedTimeMs_.toString();
+      }
+      if (startTimeMs_ != null) {
+         result += "\n  startTimeMs: " + startTimeMs_.toString();
+      }
+      if (binning_ != null) {
+         result += "\n  binning: " + binning_.toString();
+      }
+
+      if (imageNumber_ != null) {
+         result += "\n  imageNumber: " + imageNumber_.toString();
+      }
+      if (gridRow_ != null) {
+         result += "\n  gridRow: " + gridRow_.toString();
+      }
+      if (gridColumn_ != null) {
+         result += "\n  gridColumn: " + gridColumn_.toString();
+      }
+      if (positionName_ != null) {
+         result += "\n  positionName: " + positionName_.toString();
+      }
+      if (xPositionUm_ != null) {
+         result += "\n  xPositionUm: " + xPositionUm_.toString();
+      }
+      if (yPositionUm_ != null) {
+         result += "\n  yPositionUm: " + yPositionUm_.toString();
+      }
+      if (zPositionUm_ != null) {
+         result += "\n  zPositionUm: " + zPositionUm_.toString();
+      }
+
+      if (pixelSizeUm_ != null) {
+         result += "\n  pixelSizeUm: " + pixelSizeUm_.toString();
+      }
+      if (camera_ != null) {
+         result += "\n  camera: " + camera_.toString();
+      }
+      if (receivedTime_ != null) {
+         result += "\n  receivedTime: " + receivedTime_.toString();
+      }
+      if (excitationLabel_ != null) {
+         result += "\n  excitationLabel: " + excitationLabel_.toString();
+      }
+      if (emissionLabel_ != null) {
+         result += "\n  emissionLabel: " + emissionLabel_.toString();
+      }
+      if (ROI_ != null) {
+         result += "\n  ROI: " + ROI_.toString();
+      }
+      if (comments_ != null) {
+         result += "\n  comments: " + comments_.toString();
+      }
+
+      if (pixelAspect_ != null) {
+         result += "\n  pixelAspect: " + pixelAspect_.toString();
+      }
+
+      if (userData_ != null) {
+         result += "\n  userData: " + userData_.toString();
+      }
+      if (summaryMetadata_ != null) {
+         result += "\n  summaryMetadata: " + summaryMetadata_.toString();
+      }
+      return result + ">";
+   }
 }
