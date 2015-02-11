@@ -63,7 +63,9 @@ CPLogic::CPLogic(const char* name) :
    numCells_(16),
    currentPosition_(1),
    useAsdiSPIMShutter_(false),
-   shutterOpen_(false)
+   shutterOpen_(false),
+   advancedPropsEnabled_(false),
+   cellEditingEnabled_(false)
 {
    if (IsExtendedName(name))  // only set up these properties if we have the required information in the name
    {
@@ -165,12 +167,12 @@ int CPLogic::Initialize()
    UpdateProperty(g_SetCardPresetPropertyName);
 
    // "do it" property to clear state
-   pAct = new CPropertyAction (this, &CPLogic::OnClearCellState);
-   CreateProperty(g_ClearCellStatePropertyName, g_IdleState, MM::String, false, pAct);
-   AddAllowedValue(g_ClearCellStatePropertyName, g_IdleState, 0);
-   AddAllowedValue(g_ClearCellStatePropertyName, g_DoItState, 1);
-   AddAllowedValue(g_ClearCellStatePropertyName, g_DoneState, 2);
-   UpdateProperty(g_ClearCellStatePropertyName);
+   pAct = new CPropertyAction (this, &CPLogic::OnClearAllCellStates);
+   CreateProperty(g_ClearAllCellStatesPropertyName, g_IdleState, MM::String, false, pAct);
+   AddAllowedValue(g_ClearAllCellStatesPropertyName, g_IdleState, 0);
+   AddAllowedValue(g_ClearAllCellStatesPropertyName, g_DoItState, 1);
+   AddAllowedValue(g_ClearAllCellStatesPropertyName, g_DoneState, 2);
+   UpdateProperty(g_ClearAllCellStatesPropertyName);
 
    // refresh properties from controller every time; default is false = no refresh (speeds things up by not redoing so much serial comm)
    pAct = new CPropertyAction (this, &CPLogic::OnRefreshProperties);
@@ -186,6 +188,13 @@ int CPLogic::Initialize()
    AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsZ);
    AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsOrig);
    AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsDone);
+
+   // generates set of additional properties for editing cells
+   pAct = new CPropertyAction (this, &CPLogic::OnCellEditing);
+   CreateProperty(g_CellEditingPropertyName, g_NoState, MM::String, false, pAct);
+   AddAllowedValue(g_CellEditingPropertyName, g_NoState);
+   AddAllowedValue(g_CellEditingPropertyName, g_YesState);
+   UpdateProperty(g_CellEditingPropertyName);
 
    // generates a set of additional advanced properties that are used only rarely
    // in this case they allow configuring all the logic cells and setting outputs
@@ -370,6 +379,7 @@ int CPLogic::OnPointerPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
       RefreshCurrentPosition();
       if (!pProp->Set((long)currentPosition_))
          return DEVICE_INVALID_PROPERTY_VALUE;
+      RETURN_ON_MM_ERROR ( RefreshEditCellPropertyValues() );
       justSet = false;
    } else  if (eAct == MM::AfterSet)
    {
@@ -420,6 +430,143 @@ int CPLogic::OnRefreshProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int CPLogic::RefreshEditCellPropertyValues()
+{
+   if (cellEditingEnabled_ && currentPosition_<=numCells_) {
+      bool refreshPropsOriginal = refreshProps_;
+      refreshProps_ = true;
+      UpdateProperty(g_EditCellTypePropertyName);
+      UpdateProperty(g_EditCellConfigPropertyName);
+      UpdateProperty(g_EditCellInput1PropertyName);
+      UpdateProperty(g_EditCellInput2PropertyName);
+      UpdateProperty(g_EditCellInput3PropertyName);
+      UpdateProperty(g_EditCellInput4PropertyName);
+      refreshProps_ = refreshPropsOriginal;
+   }
+   return DEVICE_OK;
+}
+
+int CPLogic::OnEditCellType(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   if(currentPosition_ <= numCells_) {
+      if (eAct == MM::BeforeGet) {
+         return OnCellType(pProp, eAct, (long)currentPosition_);
+      } else if (eAct == MM::AfterSet) {
+         long tmp;
+         RETURN_ON_MM_ERROR ( GetCurrentPropertyData(g_EditCellTypePropertyName, tmp) );
+         command << addressChar_ << "CCA Y=" << tmp;
+         RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
+         RETURN_ON_MM_ERROR ( RefreshEditCellPropertyValues() );
+      }
+
+   }
+   return DEVICE_OK;
+}
+
+int CPLogic::OnEditCellConfig(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if(currentPosition_ <= numCells_) {
+      RETURN_ON_MM_ERROR ( OnCellConfig(pProp, eAct, (long)currentPosition_) );
+   }
+   return DEVICE_OK;
+}
+
+int CPLogic::OnEditCellInput1(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if(currentPosition_ <= numCells_) {
+      RETURN_ON_MM_ERROR ( OnInput1(pProp, eAct, (long)currentPosition_) );
+   }
+   return DEVICE_OK;
+}
+
+int CPLogic::OnEditCellInput2(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if(currentPosition_ <= numCells_) {
+      RETURN_ON_MM_ERROR ( OnInput2(pProp, eAct, (long)currentPosition_) );
+   }
+   return DEVICE_OK;
+}
+
+int CPLogic::OnEditCellInput3(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if(currentPosition_ <= numCells_) {
+      RETURN_ON_MM_ERROR ( OnInput3(pProp, eAct, (long)currentPosition_) );
+   }
+   return DEVICE_OK;
+}
+
+int CPLogic::OnEditCellInput4(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if(currentPosition_ <= numCells_) {
+      RETURN_ON_MM_ERROR ( OnInput4(pProp, eAct, (long)currentPosition_) );
+   }
+   return DEVICE_OK;
+}
+
+int CPLogic::OnCellEditing(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      return DEVICE_OK; // do nothing
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      if ((tmpstr.compare(g_YesState) == 0) && !cellEditingEnabled_)  // after creating these extra properties once no need to repeat
+      {
+         CPropertyAction* pAct;
+         cellEditingEnabled_ = true;
+         bool refreshPropsOriginal = refreshProps_;
+         refreshProps_ = true;
+
+         // type at current pointer
+         pAct = new CPropertyAction (this, &CPLogic::OnEditCellType);
+         CreateProperty(g_EditCellTypePropertyName, g_CellTypeCode0, MM::String, false, pAct);
+         AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode0, 0);
+         AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode1, 1);
+         AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode2, 2);
+         AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode3, 3);
+         AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode4, 4);
+         AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode5, 5);
+         AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode6, 6);
+         AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode7, 7);
+         AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode8, 8);
+         AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode9, 9);
+         AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode10, 10);
+         AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode11, 11);
+         AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode12, 12);
+         AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode13, 13);
+         UpdateProperty(g_EditCellTypePropertyName);
+
+         // config at current pointer
+         pAct = new CPropertyAction (this, &CPLogic::OnEditCellConfig);
+         CreateProperty(g_EditCellConfigPropertyName, "0", MM::Integer, false, pAct);
+         UpdateProperty(g_EditCellConfigPropertyName);
+
+         // logic cell inputs
+         pAct = new CPropertyAction (this, &CPLogic::OnEditCellInput1);
+         CreateProperty(g_EditCellInput1PropertyName, "0", MM::Integer, false, pAct);
+         UpdateProperty(g_EditCellInput1PropertyName);
+
+         pAct = new CPropertyAction (this, &CPLogic::OnEditCellInput2);
+         CreateProperty(g_EditCellInput2PropertyName, "0", MM::Integer, false, pAct);
+         UpdateProperty(g_EditCellInput2PropertyName);
+
+         pAct = new CPropertyAction (this, &CPLogic::OnEditCellInput3);
+         CreateProperty(g_EditCellInput3PropertyName, "0", MM::Integer, false, pAct);
+         UpdateProperty(g_EditCellInput3PropertyName);
+
+         pAct = new CPropertyAction (this, &CPLogic::OnEditCellInput4);
+         CreateProperty(g_EditCellInput4PropertyName, "0", MM::Integer, false, pAct);
+         UpdateProperty(g_EditCellInput4PropertyName);
+
+         refreshProps_ = refreshPropsOriginal;
+      }
+   }
+   return DEVICE_OK;
+}
+
 int CPLogic::GetCellPropertyName(long index, string suffix, char* name)
 {
    ostringstream os;
@@ -450,10 +597,12 @@ int CPLogic::OnAdvancedProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
    else if (eAct == MM::AfterSet) {
       string tmpstr;
       pProp->Get(tmpstr);
-      if (tmpstr.compare(g_YesState) == 0)
+      if ((tmpstr.compare(g_YesState) == 0) && !advancedPropsEnabled_)  // after creating advanced properties once no need to repeat
       {
          CPropertyActionEx* pActEx;
          char propName[MM::MaxStrLength];
+
+         advancedPropsEnabled_ = true;
 
          bool refreshPropsOriginal = refreshProps_;
          refreshProps_ = true;
@@ -474,14 +623,10 @@ int CPLogic::OnAdvancedProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
             AddAllowedValue(propName, g_CellTypeCode7, 7);
             AddAllowedValue(propName, g_CellTypeCode8, 8);
             AddAllowedValue(propName, g_CellTypeCode9, 9);
-            if (firmwareVersion_ > 3.049) {
-               AddAllowedValue(propName, g_CellTypeCode10, 10);
-               AddAllowedValue(propName, g_CellTypeCode11, 11);
-            }
-            if (firmwareVersion_ > 3.059) {
-               AddAllowedValue(propName, g_CellTypeCode12, 12);
-               AddAllowedValue(propName, g_CellTypeCode13, 13);
-            }
+            AddAllowedValue(propName, g_CellTypeCode10, 10);
+            AddAllowedValue(propName, g_CellTypeCode11, 11);
+            AddAllowedValue(propName, g_CellTypeCode12, 12);
+            AddAllowedValue(propName, g_CellTypeCode13, 13);
             UpdateProperty(propName);
 
             // logic cell CCA Z code
@@ -492,25 +637,25 @@ int CPLogic::OnAdvancedProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
 
             // logic cell input X code
             GetCellPropertyName(i, "_Input1", propName);
-            pActEx = new CPropertyActionEx (this, &CPLogic::OnInputX, i);
+            pActEx = new CPropertyActionEx (this, &CPLogic::OnInput1, i);
             CreateProperty(propName, "0", MM::Integer, false, pActEx);
             UpdateProperty(propName);
 
             // logic cell input Y code
             GetCellPropertyName(i, "_Input2", propName);
-            pActEx = new CPropertyActionEx (this, &CPLogic::OnInputY, i);
+            pActEx = new CPropertyActionEx (this, &CPLogic::OnInput2, i);
             CreateProperty(propName, "0", MM::Integer, false, pActEx);
             UpdateProperty(propName);
 
             // logic cell input Z code
             GetCellPropertyName(i, "_Input3", propName);
-            pActEx = new CPropertyActionEx (this, &CPLogic::OnInputZ, i);
+            pActEx = new CPropertyActionEx (this, &CPLogic::OnInput3, i);
             CreateProperty(propName, "0", MM::Integer, false, pActEx);
             UpdateProperty(propName);
 
             // logic cell input F code
             GetCellPropertyName(i, "_Input4", propName);
-            pActEx = new CPropertyActionEx (this, &CPLogic::OnInputF, i);
+            pActEx = new CPropertyActionEx (this, &CPLogic::OnInput4, i);
             CreateProperty(propName, "0", MM::Integer, false, pActEx);
             UpdateProperty(propName);
 
@@ -537,7 +682,7 @@ int CPLogic::OnAdvancedProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-int CPLogic::RefreshCellPropertyValues(long index)
+int CPLogic::RefreshAdvancedCellPropertyValues(long index)
 {
    char propName[MM::MaxStrLength];
    bool refreshPropsOriginal = refreshProps_;
@@ -558,19 +703,17 @@ int CPLogic::RefreshCellPropertyValues(long index)
    return DEVICE_OK;
 }
 
-int CPLogic::SetPosition(unsigned int position)
+// does no error checking!  make sure that the position is valid beforehand
+// don't bother updating things like if the user changes position from the property
+int CPLogic::SetPositionDirectly(unsigned int position)
 {
    ostringstream command; command.str("");
    if (position == currentPosition_)
       return DEVICE_OK;
-   command << position;
-   // update via OnPointerPosition function, which will refresh currentPosition_
-   SetProperty(g_PointerPositionPropertyName, command.str().c_str());
-   // double-check that we were able to set the position as intended
-   if (position != currentPosition_)
-      return DEVICE_INVALID_PROPERTY_VALUE;
-   else
-      return DEVICE_OK;
+   command << "M " << axisLetter_ << "=" << position;
+   RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
+   currentPosition_ = position;
+   return DEVICE_OK;
 }
 
 int CPLogic::RefreshCurrentPosition()
@@ -592,7 +735,7 @@ int CPLogic::OnCellType(MM::PropertyBase* pProp, MM::ActionType eAct, long index
    if (eAct == MM::BeforeGet) {
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
-      RETURN_ON_MM_ERROR ( SetPosition(index) );
+      RETURN_ON_MM_ERROR ( SetPositionDirectly(index) );
       command << addressChar_ << "CCA Y?";
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
@@ -620,10 +763,10 @@ int CPLogic::OnCellType(MM::PropertyBase* pProp, MM::ActionType eAct, long index
       char propName[MM::MaxStrLength];
       GetCellPropertyName(index, "_CellType", propName);
       RETURN_ON_MM_ERROR ( GetCurrentPropertyData(propName, tmp) );
-      RETURN_ON_MM_ERROR ( SetPosition(index) );
+      RETURN_ON_MM_ERROR ( SetPositionDirectly(index) );
       command << addressChar_ << "CCA Y=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
-      RETURN_ON_MM_ERROR ( RefreshCellPropertyValues(index) );
+      RETURN_ON_MM_ERROR ( RefreshAdvancedCellPropertyValues(index) );
    }
    return DEVICE_OK;
 }
@@ -635,7 +778,7 @@ int CPLogic::OnCellConfig(MM::PropertyBase* pProp, MM::ActionType eAct, long ind
    if (eAct == MM::BeforeGet) {
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
-      RETURN_ON_MM_ERROR ( SetPosition(index) );
+      RETURN_ON_MM_ERROR ( SetPositionDirectly(index) );
       command << addressChar_ << "CCA Z?";
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
@@ -643,21 +786,21 @@ int CPLogic::OnCellConfig(MM::PropertyBase* pProp, MM::ActionType eAct, long ind
          return DEVICE_INVALID_PROPERTY_VALUE;
    } else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
-      RETURN_ON_MM_ERROR ( SetPosition(index) );
+      RETURN_ON_MM_ERROR ( SetPositionDirectly(index) );
       command << addressChar_ << "CCA Z=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
    }
    return DEVICE_OK;
 }
 
-int CPLogic::OnInputX(MM::PropertyBase* pProp, MM::ActionType eAct, long index)
+int CPLogic::OnInput1(MM::PropertyBase* pProp, MM::ActionType eAct, long index)
 {
    ostringstream command; command.str("");
    long tmp;
    if (eAct == MM::BeforeGet) {
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
-      RETURN_ON_MM_ERROR ( SetPosition(index) );
+      RETURN_ON_MM_ERROR ( SetPositionDirectly(index) );
       command << addressChar_ << "CCB X?";
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
@@ -665,21 +808,21 @@ int CPLogic::OnInputX(MM::PropertyBase* pProp, MM::ActionType eAct, long index)
          return DEVICE_INVALID_PROPERTY_VALUE;
    } else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
-      RETURN_ON_MM_ERROR ( SetPosition(index) );
+      RETURN_ON_MM_ERROR ( SetPositionDirectly(index) );
       command << addressChar_ << "CCB X=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
    }
    return DEVICE_OK;
 }
 
-int CPLogic::OnInputY(MM::PropertyBase* pProp, MM::ActionType eAct, long index)
+int CPLogic::OnInput2(MM::PropertyBase* pProp, MM::ActionType eAct, long index)
 {
    ostringstream command; command.str("");
    long tmp;
    if (eAct == MM::BeforeGet) {
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
-      RETURN_ON_MM_ERROR ( SetPosition(index) );
+      RETURN_ON_MM_ERROR ( SetPositionDirectly(index) );
       command << addressChar_ << "CCB Y?";
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
@@ -687,21 +830,21 @@ int CPLogic::OnInputY(MM::PropertyBase* pProp, MM::ActionType eAct, long index)
          return DEVICE_INVALID_PROPERTY_VALUE;
    } else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
-      RETURN_ON_MM_ERROR ( SetPosition(index) );
+      RETURN_ON_MM_ERROR ( SetPositionDirectly(index) );
       command << addressChar_ << "CCB Y=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
    }
    return DEVICE_OK;
 }
 
-int CPLogic::OnInputZ(MM::PropertyBase* pProp, MM::ActionType eAct, long index)
+int CPLogic::OnInput3(MM::PropertyBase* pProp, MM::ActionType eAct, long index)
 {
    ostringstream command; command.str("");
    long tmp;
    if (eAct == MM::BeforeGet) {
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
-      RETURN_ON_MM_ERROR ( SetPosition(index) );
+      RETURN_ON_MM_ERROR ( SetPositionDirectly(index) );
       command << addressChar_ << "CCB Z?";
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
@@ -709,21 +852,21 @@ int CPLogic::OnInputZ(MM::PropertyBase* pProp, MM::ActionType eAct, long index)
          return DEVICE_INVALID_PROPERTY_VALUE;
    } else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
-      RETURN_ON_MM_ERROR ( SetPosition(index) );
+      RETURN_ON_MM_ERROR ( SetPositionDirectly(index) );
       command << addressChar_ << "CCB Z=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
    }
    return DEVICE_OK;
 }
 
-int CPLogic::OnInputF(MM::PropertyBase* pProp, MM::ActionType eAct, long index)
+int CPLogic::OnInput4(MM::PropertyBase* pProp, MM::ActionType eAct, long index)
 {
    ostringstream command; command.str("");
    long tmp;
    if (eAct == MM::BeforeGet) {
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
-      RETURN_ON_MM_ERROR ( SetPosition(index) );
+      RETURN_ON_MM_ERROR ( SetPositionDirectly(index) );
       command << addressChar_ << "CCB F?";
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
@@ -731,7 +874,7 @@ int CPLogic::OnInputF(MM::PropertyBase* pProp, MM::ActionType eAct, long index)
          return DEVICE_INVALID_PROPERTY_VALUE;
    } else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
-      RETURN_ON_MM_ERROR ( SetPosition(index) );
+      RETURN_ON_MM_ERROR ( SetPositionDirectly(index) );
       command << addressChar_ << "CCB F=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
    }
@@ -745,7 +888,7 @@ int CPLogic::OnIOType(MM::PropertyBase* pProp, MM::ActionType eAct, long index)
    if (eAct == MM::BeforeGet) {
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
-      RETURN_ON_MM_ERROR ( SetPosition(index) );
+      RETURN_ON_MM_ERROR ( SetPositionDirectly(index) );
       command << addressChar_ << "CCA Y?";
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
@@ -762,7 +905,7 @@ int CPLogic::OnIOType(MM::PropertyBase* pProp, MM::ActionType eAct, long index)
       char propName[MM::MaxStrLength];
       GetIOPropertyName(index, "_IOType", propName);
       RETURN_ON_MM_ERROR ( GetCurrentPropertyData(propName, tmp) );
-      RETURN_ON_MM_ERROR ( SetPosition(index) );
+      RETURN_ON_MM_ERROR ( SetPositionDirectly(index) );
       command << addressChar_ << "CCA Y=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
    }
@@ -776,7 +919,7 @@ int CPLogic::OnIOSourceAddress(MM::PropertyBase* pProp, MM::ActionType eAct, lon
    if (eAct == MM::BeforeGet) {
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
-      RETURN_ON_MM_ERROR ( SetPosition(index) );
+      RETURN_ON_MM_ERROR ( SetPositionDirectly(index) );
       command << addressChar_ << "CCA Z?";
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
@@ -784,14 +927,14 @@ int CPLogic::OnIOSourceAddress(MM::PropertyBase* pProp, MM::ActionType eAct, lon
          return DEVICE_INVALID_PROPERTY_VALUE;
    } else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
-      RETURN_ON_MM_ERROR ( SetPosition(index) );
+      RETURN_ON_MM_ERROR ( SetPositionDirectly(index) );
       command << addressChar_ << "CCA Z=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
    }
    return DEVICE_OK;
 }
 
-int CPLogic::OnClearCellState(MM::PropertyBase* pProp, MM::ActionType eAct)
+int CPLogic::OnClearAllCellStates(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    ostringstream command; command.str("");
    if (eAct == MM::BeforeGet) {

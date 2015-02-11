@@ -53,18 +53,25 @@ public:
    int OnFrontpanelOutputState(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBackplaneOutputState (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTriggerSource        (MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnClearCellState       (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnClearAllCellStates   (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSetCardPreset        (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPointerPosition      (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnEditCellType         (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnEditCellConfig       (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnEditCellInput1       (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnEditCellInput2       (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnEditCellInput3       (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnEditCellInput4       (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSaveCardSettings     (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnRefreshProperties    (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnCellEditing          (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnAdvancedProperties   (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnCellType             (MM::PropertyBase* pProp, MM::ActionType eAct, long index);
    int OnCellConfig           (MM::PropertyBase* pProp, MM::ActionType eAct, long index);
-   int OnInputX               (MM::PropertyBase* pProp, MM::ActionType eAct, long index);
-   int OnInputY               (MM::PropertyBase* pProp, MM::ActionType eAct, long index);
-   int OnInputZ               (MM::PropertyBase* pProp, MM::ActionType eAct, long index);
-   int OnInputF               (MM::PropertyBase* pProp, MM::ActionType eAct, long index);
+   int OnInput1               (MM::PropertyBase* pProp, MM::ActionType eAct, long index);
+   int OnInput2               (MM::PropertyBase* pProp, MM::ActionType eAct, long index);
+   int OnInput3               (MM::PropertyBase* pProp, MM::ActionType eAct, long index);
+   int OnInput4               (MM::PropertyBase* pProp, MM::ActionType eAct, long index);
    int OnIOType               (MM::PropertyBase* pProp, MM::ActionType eAct, long index);
    int OnIOSourceAddress      (MM::PropertyBase* pProp, MM::ActionType eAct, long index);
 
@@ -76,13 +83,16 @@ private:
 //   static const int NUM_CELLS = 16;
    bool useAsdiSPIMShutter_;
    bool shutterOpen_;
+   bool advancedPropsEnabled_;
+   bool cellEditingEnabled_;
 
    int SetShutterChannel();
-   int SetPosition(unsigned int position);
+   int SetPositionDirectly(unsigned int position);
    int GetCellPropertyName(long index, string suffix, char* name);
    int GetIOPropertyName(long index, string suffix, char* name);
-   int RefreshCellPropertyValues(long index);
+   int RefreshAdvancedCellPropertyValues(long index);
    int RefreshCurrentPosition();
+   int RefreshEditCellPropertyValues();
 };
 
 #endif //_ASIPLOGIC_H_
