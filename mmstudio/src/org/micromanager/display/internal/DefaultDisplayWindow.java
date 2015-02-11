@@ -538,6 +538,9 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
    @Override
    public void setMagnification(double magnification) {
       canvas_.zoomCanvas(magnification);
+      // Ensure that any changes in the canvas size (and thus in our window
+      // size) properly adjust other elements.
+      setWindowSize();
    }
 
    @Override
