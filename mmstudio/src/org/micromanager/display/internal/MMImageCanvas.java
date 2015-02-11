@@ -172,20 +172,16 @@ class MMImageCanvas extends ImageCanvas {
 
    /**
     * Post a MouseMovedEvent indicating the coordinates of the pixel underneath
-    * the mouse. This is made unpleasant by the fact that we have two methods
-    * of zooming the display available to us: first by using the zoom tool,
-    * and second by simply resizing the window the canvas is in. The canvas'
-    * "magnification" field only accounts for the first of these.
+    * the mouse. This requires us to account for the zoom level and how much
+    * of the canvas is actually in-view (which may apply an offset into the
+    * image coordinates).
     */
    private void publishMouseInfo(int x, int y) {
-      // Derive an effective zoom level by comparing the size we take up in
-      // the window to the size of the image we are displaying.
-      int pixelWidth = ijImage_.getWidth();
-      int displayedWidth = getSize().width;
-      double effectiveZoom = ((double) displayedWidth) / pixelWidth;
-      int pixelX = (int) (x / magnification / effectiveZoom);
-      int pixelY = (int) (y / magnification / effectiveZoom);
-      display_.postEvent(new MouseMovedEvent(pixelX, pixelY));
+      x /= magnification;
+      y /= magnification;
+      x += getSrcRect().x;
+      y += getSrcRect().y;
+      display_.postEvent(new MouseMovedEvent(x, y));
    }
 
    /**
