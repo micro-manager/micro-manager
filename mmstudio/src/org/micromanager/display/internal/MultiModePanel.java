@@ -41,7 +41,7 @@ class MultiModePanel extends JPanel {
       // I *can* specify gaps when adding components, if I use the "wrap"
       // command...which means the button panel technically has a horizontal
       // layout, but every single button added to it is added via "wrap 0px".
-      buttonPanel_ = new JPanel(new MigLayout("insets 0"));
+      buttonPanel_ = new JPanel(new MigLayout("insets 0, flowy"));
       modePanel_ = new JPanel(new MigLayout("insets 0, flowy"));
       setLayout(new MigLayout("insets 0"));
       add(buttonPanel_, "growy");
@@ -54,7 +54,7 @@ class MultiModePanel extends JPanel {
       final VerticalButton button = new VerticalButton(label);
       widgetToButton_.put(widget, button);
       orderedWidgets_.add(widget);
-      buttonPanel_.add(button, "wrap 0px");
+      buttonPanel_.add(button);
       // Add an event to show/hide the appropriate widget.
       button.addActionListener(new ActionListener() {
          @Override
