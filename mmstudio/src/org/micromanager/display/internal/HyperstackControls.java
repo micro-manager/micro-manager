@@ -160,7 +160,13 @@ public class HyperstackControls extends JPanel {
          // Single-channel case; simple.
          Image image = store_.getImage(stack_.getCurrentImageCoords());
          if (image != null) {
-            return image.getIntensityStringAt(x, y);
+            try {
+               return image.getIntensityStringAt(x, y);
+            }
+            catch (IllegalArgumentException e) {
+               // Our x/y values were out-of-bounds; this should never happen.
+               ReportingUtils.logError("Invalid pixel coordinates " + x + ", " + y);
+            }
          }
       }
       return "";
