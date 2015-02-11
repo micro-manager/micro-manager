@@ -1335,7 +1335,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             cancelAcquisition_.set(false);
             acquisitionRunning_.set(true);
             updateStartButton();
-            boolean success = runAcquisitionInternal();
+            boolean success = runAcquisitionPrivate();
             if (!success) {
                ReportingUtils.logError("Fatal error running diSPIM acquisition.");
             }
@@ -1353,7 +1353,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * grabbing the images and putting them into the acquisition, etc.
     * @return true if ran without any fatal errors.
     */
-   private boolean runAcquisitionInternal() {
+   private boolean runAcquisitionPrivate() {
       
       if (gui_.isAcquisitionRunning()) {
          MyDialogUtils.showError("An acquisition is already running");
@@ -1876,6 +1876,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             Properties.Values.SAM_DISABLED, true);
       
       // sets BNC3 output low again
+      // this only happens after images have all been received (or timeout occurred)
+      // but if using DemoCam devices then it happens too early
+      // at least part of the problem is that both DemoCam devices "acquire" at the same time
+      // instead of actually obeying the controller's triggers
+      // as a result with DemoCam the side select (BNC4) isn't correct
       props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_PRESET, 
             Properties.Values.PLOGIC_PRESET_2, true);
 
