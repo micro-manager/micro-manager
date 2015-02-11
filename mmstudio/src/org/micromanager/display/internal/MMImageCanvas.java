@@ -83,10 +83,12 @@ class MMImageCanvas extends ImageCanvas {
       int xCenter = curRect.x + (curRect.width / 2);
       int yCenter = curRect.y + (curRect.height / 2);
       double curMag = getMagnification();
-      int newWidth = (int) Math.ceil(viewWidth / curMag);
-      int newHeight = (int) Math.ceil(viewHeight / curMag);
-      int xCorner = xCenter - newWidth / 2;
-      int yCorner = yCenter - newHeight / 2;
+      int newWidth = Math.min(ijImage_.getWidth(),
+            (int) Math.ceil(viewWidth / curMag));
+      int newHeight = Math.min(ijImage_.getHeight(),
+            (int) Math.ceil(viewHeight / curMag));
+      int xCorner = Math.max(0, xCenter - newWidth / 2);
+      int yCorner = Math.max(0, yCenter - newHeight / 2);
       Rectangle viewRect = new Rectangle(xCorner, yCorner,
             newWidth, newHeight);
       setSourceRect(viewRect);
@@ -115,16 +117,15 @@ class MMImageCanvas extends ImageCanvas {
          g.setColor(Color.BLACK);
       }
 
+      // This rectangle is relative to the panel we're in, but we're drawing
+      // relative to ourselves, so its corner needs to be reset.  Also, shrink
+      // it slightly -- if we draw the bounds directly then we end up drawing
+      // exactly out of bounds and the border ends up invisible.
       Rectangle rect = getBounds();
-      // Shrink it slightly -- if we draw the bounds directly then we end up
-      // drawing exactly out of bounds and the border ends up invisible.
-      rect.x += 1;
-      rect.y += 1;
+      rect.x = 1;
+      rect.y = 1;
       rect.width -= 2;
       rect.height -= 2;
-      // Not sure why we need to do this exactly, except that if we don't
-      // the rectangle draws in the wrong place on narrow windows.
-      rect.y -= getBounds().y;
       if (!Prefs.noBorder && !IJ.isLinux()) {
          g.drawRect(rect.x - 1, rect.y - 1,
                rect.width + 1, rect.height + 1);

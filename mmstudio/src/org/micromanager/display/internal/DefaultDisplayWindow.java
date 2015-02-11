@@ -353,7 +353,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       // Wrap the canvas in a subpanel so that we can get events when it
       // resizes.
       canvasPanel_ = new JPanel(new MigLayout("insets 0, fill"));
-      canvasPanel_.add(canvas_);
+      canvasPanel_.add(canvas_, "align center");
 
       // Propagate resizing to the canvas, adjusting the view rectangle.
       canvasPanel_.addComponentListener(new ComponentAdapter() {
@@ -869,7 +869,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       // canvas being a bit too small; no idea why.
       // The extra size ought to go away when we pack, anyway.
       int maxWidth = Math.min(screenSize.width,
-            imageSize.width + modeSize.width + insets.left + insets.right + 10);
+            imageSize.width + modeSize.width + insets.left + insets.right);
       int maxHeight = Math.min(screenSize.height,
             imageSize.height + controlsSize.height + insets.top + insets.bottom + 10);
       contentsPanel_.setSize(new Dimension(maxWidth, maxHeight));
@@ -923,7 +923,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       // HACK: for some reason, we're off by 2 in width and 10 in height.
       int spareWidth = ourSize.width + widthDelta - modeSize.width - 2;
       int spareHeight = ourSize.height + heightDelta - controlsSize.height - 10;
-      canvas_.setDrawingSize(spareWidth, spareHeight);
+      canvasPanel_.setSize(spareWidth, spareHeight);
       // Don't adjust the window size when in fullscreen mode.
       if (!isFullScreen_) {
          setSize(ourSize.width + widthDelta,
