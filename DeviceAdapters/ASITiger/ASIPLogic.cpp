@@ -537,6 +537,8 @@ int CPLogic::OnCellEditing(MM::PropertyBase* pProp, MM::ActionType eAct)
          AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode11, 11);
          AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode12, 12);
          AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode13, 13);
+         AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode14, 14);
+         AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode15, 15);
          UpdateProperty(g_EditCellTypePropertyName);
 
          // config at current pointer
@@ -627,6 +629,8 @@ int CPLogic::OnAdvancedProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
             AddAllowedValue(propName, g_CellTypeCode11, 11);
             AddAllowedValue(propName, g_CellTypeCode12, 12);
             AddAllowedValue(propName, g_CellTypeCode13, 13);
+            AddAllowedValue(propName, g_CellTypeCode14, 14);
+            AddAllowedValue(propName, g_CellTypeCode15, 15);
             UpdateProperty(propName);
 
             // logic cell CCA Z code
@@ -755,6 +759,8 @@ int CPLogic::OnCellType(MM::PropertyBase* pProp, MM::ActionType eAct, long index
          case 11:success = pProp->Set(g_CellTypeCode11); break;
          case 12:success = pProp->Set(g_CellTypeCode12); break;
          case 13:success = pProp->Set(g_CellTypeCode13); break;
+         case 14:success = pProp->Set(g_CellTypeCode14); break;
+         case 15:success = pProp->Set(g_CellTypeCode15); break;
          default: success=0;
       }
       if (!success)
