@@ -69,6 +69,8 @@ public class DefaultDisplaySettings implements DisplaySettings {
       builder.shouldSyncChannels(prefs.getBoolean("shouldSyncChannels", false));
       builder.scaleBarColorIndex(prefs.getInt("scaleBarColorIndex", 0));
       builder.scaleBarLocationIndex(prefs.getInt("scaleBarLocationIndex", 0));
+      builder.scaleBarShouldDrawText(prefs.getBoolean("scaleBarShouldDrawText", true));
+      builder.scaleBarSize(prefs.getDouble("scaleBarSize", 80));
       builder.scaleBarOffsetX(prefs.getInt("scaleBarOffsetX", 15));
       builder.scaleBarOffsetY(prefs.getInt("scaleBarOffsetY", 15));
       builder.scaleBarIsFilled(prefs.getBoolean("scaleBarIsFilled", true));
@@ -91,6 +93,8 @@ public class DefaultDisplaySettings implements DisplaySettings {
       prefs.putBoolean("shouldSyncChannels", settings.getShouldSyncChannels());
       prefs.putInt("scaleBarColorIndex", settings.getScaleBarColorIndex());
       prefs.putInt("scaleBarLocationIndex", settings.getScaleBarLocationIndex());
+      prefs.putBoolean("scaleBarShouldDrawText", settings.getScaleBarShouldDrawText());
+      prefs.putDouble("scaleBarSize", settings.getScaleBarSize());
       prefs.putInt("scaleBarOffsetX", settings.getScaleBarOffsetX());
       prefs.putInt("scaleBarOffsetY", settings.getScaleBarOffsetY());
       prefs.putBoolean("scaleBarIsFilled", settings.getScaleBarIsFilled());
@@ -140,6 +144,8 @@ public class DefaultDisplaySettings implements DisplaySettings {
       private Boolean shouldSyncChannels_ = null;
       private Integer scaleBarColorIndex_ = null;
       private Integer scaleBarLocationIndex_ = null;
+      private Boolean scaleBarShouldDrawText_ = null;
+      private Double scaleBarSize_ = null;
       private Integer scaleBarOffsetX_ = null;
       private Integer scaleBarOffsetY_ = null;
       private Boolean scaleBarIsFilled_ = null;
@@ -227,6 +233,18 @@ public class DefaultDisplaySettings implements DisplaySettings {
       }
 
       @Override
+      public DisplaySettingsBuilder scaleBarShouldDrawText(Boolean scaleBarShouldDrawText) {
+         scaleBarShouldDrawText_ = scaleBarShouldDrawText;
+         return this;
+      }
+
+      @Override
+      public DisplaySettingsBuilder scaleBarSize(Double scaleBarSize) {
+         scaleBarSize_ = scaleBarSize;
+         return this;
+      }
+
+      @Override
       public DisplaySettingsBuilder scaleBarOffsetX(Integer scaleBarOffsetX) {
          scaleBarOffsetX_ = scaleBarOffsetX;
          return this;
@@ -287,6 +305,8 @@ public class DefaultDisplaySettings implements DisplaySettings {
    private Boolean shouldSyncChannels_ = null;
    private Integer scaleBarColorIndex_ = null;
    private Integer scaleBarLocationIndex_ = null;
+   private Boolean scaleBarShouldDrawText_ = null;
+   private Double scaleBarSize_ = null;
    private Integer scaleBarOffsetX_ = null;
    private Integer scaleBarOffsetY_ = null;
    private Boolean scaleBarIsFilled_ = null;
@@ -309,6 +329,8 @@ public class DefaultDisplaySettings implements DisplaySettings {
       shouldSyncChannels_ = builder.shouldSyncChannels_;
       scaleBarColorIndex_ = builder.scaleBarColorIndex_;
       scaleBarLocationIndex_ = builder.scaleBarLocationIndex_;
+      scaleBarShouldDrawText_ = builder.scaleBarShouldDrawText_;
+      scaleBarSize_ = builder.scaleBarSize_;
       scaleBarOffsetX_ = builder.scaleBarOffsetX_;
       scaleBarOffsetY_ = builder.scaleBarOffsetY_;
       scaleBarIsFilled_ = builder.scaleBarIsFilled_;
@@ -380,6 +402,16 @@ public class DefaultDisplaySettings implements DisplaySettings {
    }
 
    @Override
+   public Boolean getScaleBarShouldDrawText() {
+      return scaleBarShouldDrawText_;
+   }
+
+   @Override
+   public Double getScaleBarSize() {
+      return scaleBarSize_;
+   }
+
+   @Override
    public Integer getScaleBarOffsetX() {
       return scaleBarOffsetX_;
    }
@@ -434,6 +466,8 @@ public class DefaultDisplaySettings implements DisplaySettings {
             .shouldSyncChannels(shouldSyncChannels_)
             .scaleBarColorIndex(scaleBarColorIndex_)
             .scaleBarLocationIndex(scaleBarLocationIndex_)
+            .scaleBarShouldDrawText(scaleBarShouldDrawText_)
+            .scaleBarSize(scaleBarSize_)
             .scaleBarOffsetX(scaleBarOffsetX_)
             .scaleBarOffsetY(scaleBarOffsetY_)
             .scaleBarIsFilled(scaleBarIsFilled_)
@@ -490,6 +524,12 @@ public class DefaultDisplaySettings implements DisplaySettings {
          }
          if (tags.has("scaleBarLocationIndex")) {
             builder.scaleBarLocationIndex(tags.getInt("scaleBarLocationIndex"));
+         }
+         if (tags.has("scaleBarShouldDrawText")) {
+            builder.scaleBarShouldDrawText(tags.getBoolean("scaleBarShouldDrawText"));
+         }
+         if (tags.has("scaleBarSize")) {
+            builder.scaleBarSize(tags.getDouble("scaleBarSize"));
          }
          if (tags.has("shouldShowScaleBar")) {
             builder.shouldShowScaleBar(tags.getBoolean("shouldShowScaleBar"));
@@ -598,6 +638,8 @@ public class DefaultDisplaySettings implements DisplaySettings {
          result.put("shouldSyncChannels", shouldSyncChannels_);
          result.put("scaleBarColorIndex", scaleBarColorIndex_);
          result.put("scaleBarLocationIndex", scaleBarLocationIndex_);
+         result.put("scaleBarShouldDrawText", scaleBarShouldDrawText_);
+         result.put("scaleBarSize", scaleBarSize_);
          result.put("shouldShowScaleBar", shouldShowScaleBar_);
          result.put("shouldAutostretch", shouldAutostretch_);
          result.put("trimPercentage", trimPercentage_);

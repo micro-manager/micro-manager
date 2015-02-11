@@ -40,6 +40,8 @@ public interface DisplaySettings {
       DisplaySettingsBuilder shouldSyncChannels(Boolean shouldSyncChannels);
       DisplaySettingsBuilder scaleBarColorIndex(Integer scaleBarColorIndex);
       DisplaySettingsBuilder scaleBarLocationIndex(Integer scaleBarLocationIndex);
+      DisplaySettingsBuilder scaleBarShouldDrawText(Boolean shouldDrawText);
+      DisplaySettingsBuilder scaleBarSize(Double size);
       DisplaySettingsBuilder scaleBarOffsetX(Integer scaleBarOffsetX);
       DisplaySettingsBuilder scaleBarOffsetY(Integer scaleBarOffsetY);
       DisplaySettingsBuilder scaleBarIsFilled(Boolean scaleBarIsFilled);
@@ -87,6 +89,11 @@ public interface DisplaySettings {
    /** Controls the position of the scale bar overlay as an index into its
      * position dropdown menu */
    public Integer getScaleBarLocationIndex();
+   /** If true, a text label indicating the size of the scale bar will be
+     * drawn (assuming the scale bar overlay is displayed) */
+   public Boolean getScaleBarShouldDrawText();
+   /** Size of the scale bar, in microns */
+   public Double getScaleBarSize();
    /** How many pixels away from the left/right edge of the display to draw the
      * scale bar overlay */
    public Integer getScaleBarOffsetX();

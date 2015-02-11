@@ -45,10 +45,12 @@ public class ScaleBarOverlayPanel extends OverlayPanel {
    private EventBus displayBus_;
 
    private JCheckBox shouldDraw_;
+   private JCheckBox shouldDrawText_;
    private JCheckBox isBarFilled_;
    private JComboBox color_;
    private JTextField xOffset_;
    private JTextField yOffset_;
+   private JTextField scaleSize_;
    private JComboBox position_;
    
    public ScaleBarOverlayPanel(DisplayWindow display) {
@@ -78,6 +80,13 @@ public class ScaleBarOverlayPanel extends OverlayPanel {
       }
       add(color_);
 
+      shouldDrawText_ = new JCheckBox("Show scale text");
+      shouldDrawText_.addActionListener(redrawListener);
+      if (settings.getScaleBarShouldDrawText() != null) {
+         shouldDrawText_.setSelected(settings.getScaleBarShouldDrawText());
+      }
+      add(shouldDrawText_);
+
       add(new JLabel("X offset: "), "split 2, flowx");
       xOffset_ = new JTextField("0", 3);
       xOffset_.addKeyListener(new KeyAdapter() {
@@ -106,6 +115,14 @@ public class ScaleBarOverlayPanel extends OverlayPanel {
          position_.setSelectedIndex(settings.getScaleBarLocationIndex());
       }
       add(position_);
+
+      add(new JLabel("Size (\u00B5m):"), "split 2, flowx");
+      scaleSize_ = new JTextField("80", 3);
+      scaleSize_.addActionListener(redrawListener);
+      if (settings.getScaleBarSize() != null) {
+         scaleSize_.setText(settings.getScaleBarSize().toString());
+      }
+      add(scaleSize_);
 
       add(new JLabel("Y offset: "), "split 2, flowx");
       yOffset_ = new JTextField("0", 3);
@@ -140,7 +157,13 @@ public class ScaleBarOverlayPanel extends OverlayPanel {
          return;
       }
 
-      double width = pixelSize * 80 / canvas.getMagnification();
+      double scaleSize = 0;
+      try {
+         scaleSize = Double.parseDouble(scaleSize_.getText());
+      }
+      catch (NumberFormatException e) {} // Ignore it.
+
+      int width = (int) (pixelSize * scaleSize * canvas.getMagnification());
       g.setColor(COLORS[color_.getSelectedIndex()]);
       int xOffset = 0, yOffset = 0;
       try {
@@ -158,12 +181,14 @@ public class ScaleBarOverlayPanel extends OverlayPanel {
          yOffset = canvasSize.height - yOffset - 13;
       }
 
-      g.drawString(String.format("Scale: %.2fum", width), xOffset, yOffset);
+      if (shouldDrawText_.isSelected()) {
+         g.drawString(String.format("%.2fum", scaleSize), xOffset, yOffset);
+      }
       if (isBarFilled_.isSelected()) {
-         g.fillRect(xOffset, yOffset + 6, 80, 5);
+         g.fillRect(xOffset, yOffset + 6, width, 5);
       }
       else {
-         g.drawRect(xOffset, yOffset + 6, 80, 5);
+         g.drawRect(xOffset, yOffset + 6, width, 5);
       }
    }
 }
