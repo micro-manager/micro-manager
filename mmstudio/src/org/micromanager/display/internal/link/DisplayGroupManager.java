@@ -162,20 +162,6 @@ public class DisplayGroupManager {
    public void onFullScreen(DisplayWindow source, FullScreenEvent event) {
       boolean isFullScreen = event.getIsFullScreen();
       GraphicsConfiguration sourceConfig = event.getConfig();
-      if (screenToDisplay_.containsKey(sourceConfig)) {
-         if (isFullScreen) {
-            // Enabling fullscreen mode for a monitor that already has a
-            // fullscreen DisplayWindow; remove that one first.
-            screenToDisplay_.get(sourceConfig).forceClosed();
-         }
-         else if (source == screenToDisplay_.get(sourceConfig)) {
-            // Disabling fullscreen mode; stop tracking this display.
-            screenToDisplay_.remove(sourceConfig);
-         }
-         else {
-            ReportingUtils.logError("Disabling fullscreen mode for a display we didn't realize was in fullscreen mode; this should never happen!");
-         }
-      }
 
       // Show all displays that aren't on the same screen as a fullscreen
       // display.

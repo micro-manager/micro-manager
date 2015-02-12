@@ -98,8 +98,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
    private DummyImageWindow dummyWindow_;
 
    // Properties related to fullscreen mode.
-   private DefaultDisplayWindow fullFrame_;
-   private boolean isFullScreen_;
+   private JFrame fullScreenFrame_;
 
    // GUI components
    private JPanel contentsPanel_;
@@ -129,12 +128,11 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
    private int displayNum_;
    
    /**
-    * Convenience constructor that defaults to non-fullscreen mode and default
-    * DisplaySettings.
+    * Convenience constructor that uses default DisplaySettings.
     */
    public DefaultDisplayWindow(Datastore store,
          List<Component> customControls) {
-      this(store, customControls, null, null);
+      this(store, customControls, null);
    }
 
    /**
@@ -144,10 +142,9 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
     * for the logic implemented by these controls. They may be null or an
     * empty list.
     * @param settings DisplaySettings to use as initial state for this display
-    * @param targetScreen For fullscreen mode only, which screen to take over.
     */
    public DefaultDisplayWindow(Datastore store, List<Component> customControls,
-         DisplaySettings settings, GraphicsConfiguration targetScreen) {
+         DisplaySettings settings) {
       store_ = store;
       store_.registerForEvents(this);
       if (settings == null) {
@@ -166,16 +163,6 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
 
       titleID++;
       displayNum_ = titleID;
-
-      isFullScreen_ = (targetScreen != null);
-
-      if (isFullScreen_) {
-         setUndecorated(true);
-         setBounds(GUIUtils.getFullScreenBounds(targetScreen));
-         setExtendedState(JFrame.MAXIMIZED_BOTH);
-         setResizable(false);
-         displayBus_.post(new FullScreenEvent(this, targetScreen, true));
-      }
 
       // Wait to actually create our GUI until there's at least one image
       // to display.
@@ -641,22 +628,28 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
     */
    @Override
    public void toggleFullScreen() {
-      if (isFullScreen_) {
+      if (fullScreenFrame_ != null) {
          // We're currently fullscreen and need to go away now.
-         forceClosed();
-         displayBus_.post(new FullScreenEvent(this, getScreenConfig(), false));
+         // Retrieve our contents that had been in the fullscreen frame.
+         add(contentsPanel_);
+         fullScreenFrame_.dispose();
+         fullScreenFrame_ = null;
+         setVisible(true);
       }
       else {
-         // Hide ourselves and make a new frame for fullscreen mode.
+         // Transfer our contents to a new JFrame for the fullscreen mode.
          setVisible(false);
-         // TODO: can't hand our controls to the new frame, because then they
-         // get lost from our frame; either we need to coordinate the handoff
-         // when the fullscreen frame goes away, or we need to duplicate
-         // the controls somehow.
-         DisplayWindow fullFrame = new DefaultDisplayWindow(
-               store_, null, displaySettings_.copy().build(),
-               getScreenConfig());
+         fullScreenFrame_ = new JFrame();
+         fullScreenFrame_.setUndecorated(true);
+         fullScreenFrame_.setBounds(
+               GUIUtils.getFullScreenBounds(getScreenConfig()));
+         fullScreenFrame_.setExtendedState(JFrame.MAXIMIZED_BOTH);
+         fullScreenFrame_.setResizable(false);
+         fullScreenFrame_.add(contentsPanel_);
+         fullScreenFrame_.setVisible(true);
       }
+      displayBus_.post(
+            new FullScreenEvent(getScreenConfig(), fullScreenFrame_ != null));
    }
 
    @Override
@@ -849,13 +842,6 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       return canvas_;
    }
 
-   public Dimension getPreferredSize() {
-      if (isFullScreen_) {
-         return getScreenConfig().getBounds().getSize();
-      }
-      return super.getPreferredSize();
-   }
-
    /**
     * Set our window size so that it precisely holds all components, or, if
     * there's not enough room to hold the entire canvas, expand to as large as
@@ -863,8 +849,8 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
     * method, below, but in the opposite direction.
     */
    private void setWindowSize() {
-      if (isFullScreen_) {
-         // Fullscreen displays are fixed-size.
+      if (fullScreenFrame_ != null) {
+         // Do nothing for now since we aren't visible anyway.
          return;
       }
       Dimension modeSize = modePanel_.getPreferredSize();
@@ -916,9 +902,9 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       Dimension modeSize = modePanel_.getPreferredSize();
       Dimension controlsSize = controlsPanel_.getPreferredSize();
       Dimension ourSize = contentsPanel_.getSize();
-      if (ourSize.width == 0 && ourSize.height == 0 && isFullScreen_) {
-         // HACK: when in fullscreen mode, for some reason our initial
-         // nominal size is 0x0, so fix that.
+      boolean isFullScreen = (fullScreenFrame_ != null);
+      if (ourSize.width == 0 && ourSize.height == 0 && isFullScreen) {
+         // Substitute the size of the display we're in.
          ourSize = GUIUtils.getFullScreenBounds(getScreenConfig()).getSize();
       }
       // Determine if a given component is growing (we need to increase our
@@ -940,15 +926,18 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       int spareHeight = ourSize.height + heightDelta - controlsSize.height - 10;
       canvasPanel_.setSize(spareWidth, spareHeight);
       // Don't adjust the window size when in fullscreen mode.
-      if (!isFullScreen_) {
+      if (isFullScreen) {
+         // HACK: override preferred size of contents panel so that
+         // frame doesn't shrink when we repack it.
+         contentsPanel_.setPreferredSize(ourSize);
+         fullScreenFrame_.pack();
+      }
+      else {
+         // Undo damage to contentsPanel_'s preferred size in the other branch.
+         contentsPanel_.setPreferredSize(null);
          setSize(ourSize.width + widthDelta,
                ourSize.height + heightDelta);
-      }
-      super.pack();
-      // HACK: for some reason, the super.pack() call screws up window size
-      // in fullscreen mode.
-      if (isFullScreen_) {
-         setBounds(GUIUtils.getFullScreenBounds(getScreenConfig()));
+         super.pack();
       }
    }
 }
