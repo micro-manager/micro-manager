@@ -163,6 +163,14 @@ public class ContrastLinker extends SettingsLinker {
     */
    @Override
    public int getID() {
-      return ("shouldAutostretch_channelColors_channelContrastMins_channelContrastMaxes_channelGammas_" + getName()).hashCode();
+      String tmp = "shouldAutostretch_channelColors_channelContrastMins_channelContrastMaxes_channelGammas_";
+      String name = getName();
+      if (name != null) {
+         tmp += name;
+      }
+      else {
+         tmp += Integer.toString(channelIndex_);
+      }
+      return tmp.hashCode();
    }
 }
