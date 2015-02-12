@@ -82,6 +82,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private JButton fullButton_;
    private JLabel minMaxLabel_;
    private JComboBox histRangeComboBox_;
+   private LinkButton linkButton_;
 
    private double binSize_;
    private String histMaxLabel_;
@@ -276,8 +277,9 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       firstRow.add(colorPickerLabel_);
 
       fullButton_.setPreferredSize(new Dimension(35, 20));
-      firstRow.add(new LinkButton(new ContrastLinker(channelIndex_, display_),
-               display_));
+      linkButton_ = new LinkButton(
+            new ContrastLinker(channelIndex_, display_), display_);
+      firstRow.add(linkButton_);
       firstRow.add(fullButton_);
 
       autoButton_.setPreferredSize(new Dimension(35, 20));
@@ -950,5 +952,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    public void cleanup() {
       store_.unregisterForEvents(this);
       display_.unregisterForEvents(this);
+      linkButton_.cleanup();
    }
 }
