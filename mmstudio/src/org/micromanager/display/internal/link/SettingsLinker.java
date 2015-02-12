@@ -62,8 +62,10 @@ public abstract class SettingsLinker {
          linkedLinkers_.remove(linker);
          linker.unlink(this);
          if (linkedLinkers_.size() == 0) {
-            // No more links; hide our button.
+            // No more links; hide our button and turn off our linkedness.
             button_.setVisible(false);
+            button_.setSelected(false);
+            setIsActive(false);
          }
       }
    }
