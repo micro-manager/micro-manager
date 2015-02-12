@@ -115,6 +115,13 @@ public class LinkButton extends JToggleButton {
    }
 
    /**
+    * We're about to go away, so make certain no trace of us remains.
+    */
+   public void cleanup() {
+      display_.postEvent(new LinkerRemovedEvent(linker_));
+   }
+
+   /**
     * When a LinkButton on another display toggles, we need to also toggle
     * if their linker matches our own.
     */

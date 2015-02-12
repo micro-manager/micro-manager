@@ -60,6 +60,11 @@ public class DisplayGroupManager {
          master_.onDisplayDestroyed(display_, event);
       }
 
+      @Subscribe
+      public void onLinkerRemoved(LinkerRemovedEvent event) {
+         master_.onLinkerRemoved(display_, event);
+      }
+
       public DisplayWindow getDisplay() {
          return display_;
       }
@@ -131,6 +136,20 @@ public class DisplayGroupManager {
             }
          }
       }
+   }
+
+   /**
+    * A SettingsLinker is being removed.
+    */
+   public void onLinkerRemoved(DisplayWindow source,
+         LinkerRemovedEvent event) {
+      SettingsLinker linker = event.getLinker();
+      // We might not have the display around any more if this was called
+      // as a side-effect of the display being removed.
+      if (displayToLinkers_.containsKey(source)) {
+         displayToLinkers_.get(source).remove(linker);
+      }
+      linker.unlinkAll();
    }
 
    /**
