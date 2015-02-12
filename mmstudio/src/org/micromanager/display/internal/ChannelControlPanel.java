@@ -46,6 +46,7 @@ import org.micromanager.internal.graph.HistogramPanel.CursorListener;
 import org.micromanager.internal.MMStudio;
 
 import org.micromanager.display.internal.events.DefaultRequestToDrawEvent;
+import org.micromanager.display.internal.events.LUTUpdateEvent;
 import org.micromanager.display.internal.link.ContrastEvent;
 import org.micromanager.display.internal.link.ContrastLinker;
 import org.micromanager.display.internal.link.LinkButton;
@@ -128,6 +129,10 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          name_ = allNames[channelIndex_];
       }
 
+      // Must be registered for events before we start modifying images, since
+      // that relies on LUTUpdateEvent.
+      store.registerForEvents(this);
+      display.registerForEvents(this);
       // This won't be available until there's at least one image in the 
       // Datastore for our channel.
       bitDepth_ = -1;
@@ -139,8 +144,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          bitDepth_ = images.get(0).getMetadata().getBitDepth();
          initialize();
       }
-      store.registerForEvents(this);
-      display.registerForEvents(this);
    }
 
    private void initialize() {
@@ -149,8 +152,15 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       binSize_ = histMax_ / NUM_BINS;
       histMaxLabel_ = "" + histMax_;
       initComponents();
-      loadDisplaySettings();
-      updateHistogram();
+      reloadDisplaySettings();
+      // HACK: Default to "camera depth" mode; only do the below math if it'll
+      // get us a value greater than 0.
+      int index = 0;
+      if (contrastMax_ > 8) {
+         index = (int) (Math.ceil(Math.log(contrastMax_) / Math.log(2)) - 3);
+      }
+      histRangeComboBox_.setSelectedIndex(index);
+
       haveInitialized_.set(true);
    }
 
@@ -386,7 +396,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          DisplaySettings newSettings = settings.copy().channelColors(channelColors).build();
          display_.setDisplaySettings(newSettings);
       }
-      updateChannelSettings();
+      reloadDisplaySettings();
    }
 
    private void postContrastEvent(DisplaySettings newSettings) {
@@ -461,33 +471,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       }
    }
 
-   private void loadDisplaySettings() {
-      DisplaySettings settings = display_.getDisplaySettings();
-      Integer[] contrastMaxes = settings.getChannelContrastMaxes();
-      if (contrastMaxes != null && contrastMaxes.length > channelIndex_) {
-         contrastMax_ =  contrastMaxes[channelIndex_];
-      }
-      if (contrastMax_ < 0 || contrastMax_ > maxIntensity_) {
-         contrastMax_ = maxIntensity_;
-      }
-      Integer[] contrastMins = settings.getChannelContrastMins();
-      if (contrastMins != null && contrastMins.length > channelIndex_) {
-         contrastMin_ = contrastMins[channelIndex_];
-      }
-      Double[] gammas = settings.getChannelGammas();
-      if (gammas != null && gammas.length > channelIndex_) {
-         gamma_ = gammas[channelIndex_];
-      }
-      int histMax = contrastMax_;
-      // HACK: Default to "camera depth" mode; only do the below math if it'll
-      // get us a value greater than 0.
-      int index = 0;
-      if (contrastMax_ > 8) {
-         index = (int) (Math.ceil(Math.log(histMax)/Math.log(2)) - 3);
-      }
-      histRangeComboBox_.setSelectedIndex(index);
-   }
-
    private HistogramPanel makeHistogramPanel() {
       HistogramPanel hp = new HistogramPanel() {
          @Override
@@ -510,7 +493,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    /**
     * Pull new contrast settings from our DisplayWindow's DisplaySettings.
     */
-   public void updateChannelSettings() {
+   public void reloadDisplaySettings() {
       color_ = getColorFromSettings();
       colorPickerLabel_.setBackground(color_);
       histogram_.setTraceStyle(true, color_);
@@ -567,7 +550,17 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       gamma_ = gamma;
    }
 
-   public void applyChannelLUTToImage() {
+   @Subscribe
+   public void onLUTUpdate(LUTUpdateEvent event) {
+      if (event.getMin() != null) {
+         contrastMin_ = event.getMin();
+      }
+      if (event.getMax() != null) {
+         contrastMax_ = event.getMax();
+      }
+      if (event.getGamma() != null) {
+         gamma_ = event.getGamma();
+      }
       // Need to put this on EDT to avoid index out of bounds because of
       // setting currentChannel to -1
       Runnable run = new Runnable() {
@@ -888,10 +881,10 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       DisplaySettings settings = display_.getDisplaySettings();
       if (settings.getShouldSyncChannels() != null &&
             settings.getShouldSyncChannels()) {
-         parent_.applyContrastToAllChannels(contrastMin_, contrastMax_, gamma_);
+         display_.postEvent(
+               new LUTUpdateEvent(contrastMin_, contrastMax_, gamma_));
       } else {
-         parent_.applyLUTToImage();
-         repaint();
+         display_.postEvent(new LUTUpdateEvent(null, null, null));
       }
       if (shouldRedisplay) {
          displayBus_.post(new DefaultRequestToDrawEvent());
@@ -913,12 +906,12 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    public void onNewDisplaySettings(NewDisplaySettingsEvent event) {
       if (!haveInitialized_.get()) {
          // TODO: there's a race condition here if we've already set the
-         // values that updateChannelSettings() modify -- if
+         // values that reloadDisplaySettings() modify -- if
          // they aren't yet available, though, then that method will fail.
          return;
       }
       try {
-         updateChannelSettings();
+         reloadDisplaySettings();
       }
       catch (Exception e) {
          ReportingUtils.logError(e, "Failed to update histogram display settings");

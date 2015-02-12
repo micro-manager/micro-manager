@@ -30,13 +30,6 @@ import org.micromanager.internal.utils.ContrastSettings;
  */
 public interface Histograms  {
 
-    /**
-     * Creates and applies a look up table to the image based on the previously
-     * set values of contrast min, max and gamma.  Also stores min max and gamma
-     * in the image cache and redraws the histogram contrast cursors
-     */
-   public void applyLUTToImage();
-
    /**
     * Manually set the contrast min, max and gamma values for this channel (channel = 0)
     * for single channel contrast panel).  Does not redraw image or histogram

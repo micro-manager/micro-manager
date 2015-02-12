@@ -21,6 +21,7 @@ import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.NewImagePlusEvent;
 
 import org.micromanager.display.internal.events.DefaultRequestToDrawEvent;
+import org.micromanager.display.internal.events.LUTUpdateEvent;
 
 import org.micromanager.internal.interfaces.Histograms;
 import org.micromanager.internal.utils.ContrastSettings;
@@ -88,19 +89,7 @@ public final class HistogramsPanel extends JPanel implements Histograms {
       for (ChannelControlPanel panel : channelPanels_) {
          panel.setFullScale();
       }
-      applyLUTToImage();
-      displayBus_.post(new DefaultRequestToDrawEvent());
-   }
-
-   public void applyContrastToAllChannels(int min, int max, double gamma) {
-      if (channelPanels_ == null) {
-         ReportingUtils.logError("Oops no channel panels");
-         return;
-      }
-      for (ChannelControlPanel panel : channelPanels_) {
-         panel.setContrast(min, max, gamma);
-      }
-      applyLUTToImage();
+      display_.postEvent(new LUTUpdateEvent(null, null, null));
       displayBus_.post(new DefaultRequestToDrawEvent());
    }
 
@@ -141,10 +130,7 @@ public final class HistogramsPanel extends JPanel implements Histograms {
       int min = channelPanels_.get(0).getContrastMin();
       int max = channelPanels_.get(0).getContrastMax();
       double gamma = channelPanels_.get(0).getContrastGamma();
-      for (int i = 1; i < channelPanels_.size(); i++) {
-         channelPanels_.get(i).setContrast(min, max, gamma);
-      }
-      applyLUTToImage();
+      display_.postEvent(new LUTUpdateEvent(min, max, gamma));
       displayBus_.post(new DefaultRequestToDrawEvent());
    }
 
@@ -155,17 +141,6 @@ public final class HistogramsPanel extends JPanel implements Histograms {
       }
       int index = (int) (histMax == -1 ? 0 : Math.ceil(Math.log(histMax) / Math.log(2)) - 3);
       channelPanels_.get(channelIndex).setDisplayComboIndex(index);
-   }
-
-   @Override
-   public void applyLUTToImage() {
-      if (channelPanels_ == null) {
-         ReportingUtils.logError("Oops, no channel panels");
-         return;
-      }
-      for (ChannelControlPanel panel : channelPanels_) {
-         panel.applyChannelLUTToImage();
-      }
    }
 
    public boolean amInCompositeMode() {
