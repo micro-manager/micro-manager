@@ -40,16 +40,30 @@ public abstract class SettingsLinker {
 
    /**
     * Establish a connection with another SettingsLinker. The connection
-    * is reciprocal (i.e. we will call linker.link() in this method).
+    * is reciprocal. This method just calls our extra link() method below.
     */
    public void link(SettingsLinker linker) {
+      link(linker, true);
+   }
+
+   /**
+    * Establish a link with another SettingsLinker. If we're enabled, then we
+    * also push our state across to the new linker. Either way, we also tell
+    * them to link to us. The isSource boolean prevents redundant calls to
+    * pushState().
+    */
+   public void link(SettingsLinker linker, boolean isSource) {
       // Don't link ourselves; just avoids some redundant pushing in
       // pushChanges().
       if (linker != this && !linkedLinkers_.contains(linker)) {
          // Ensure that their link state matches our own.
-         linker.setIsActive(getIsActive());
+         linker.setIsActive(isActive_);
+         if (isActive_ && isSource) {
+            // Take this opportunity to push our state across to them.
+            pushState(linker.getDisplay());
+         }
          linkedLinkers_.add(linker);
-         linker.link(this);
+         linker.link(this, false);
          // Now that we can link to someone, show our button.
          button_.setVisible(true);
       }
@@ -76,7 +90,9 @@ public abstract class SettingsLinker {
     * Remove all links for this linker.
     */
    public void unlinkAll() {
-      for (SettingsLinker linker : linkedLinkers_) {
+      // Make a separate container since unlinking modifies linkedListers_.
+      HashSet<SettingsLinker> linkers = new HashSet<SettingsLinker>(linkedLinkers_);
+      for (SettingsLinker linker : linkers) {
          unlink(linker);
       }
    }
