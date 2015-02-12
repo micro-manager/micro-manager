@@ -46,6 +46,8 @@ public abstract class SettingsLinker {
       // Don't link ourselves; just avoids some redundant pushing in
       // pushChanges().
       if (linker != this && !linkedLinkers_.contains(linker)) {
+         // Ensure that their link state matches our own.
+         linker.setIsActive(getIsActive());
          linkedLinkers_.add(linker);
          linker.link(this);
          // Now that we can link to someone, show our button.
