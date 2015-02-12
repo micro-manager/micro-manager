@@ -35,6 +35,7 @@ public abstract class SettingsLinker {
     */
    public void setButton(LinkButton button) {
       button_ = button;
+      button_.setVisible(linkedLinkers_.size() > 0);
    }
 
    /**
@@ -47,6 +48,8 @@ public abstract class SettingsLinker {
       if (linker != this && !linkedLinkers_.contains(linker)) {
          linkedLinkers_.add(linker);
          linker.link(this);
+         // Now that we can link to someone, show our button.
+         button_.setVisible(true);
       }
    }
 
@@ -58,6 +61,19 @@ public abstract class SettingsLinker {
       if (linkedLinkers_.contains(linker)) {
          linkedLinkers_.remove(linker);
          linker.unlink(this);
+         if (linkedLinkers_.size() == 0) {
+            // No more links; hide our button.
+            button_.setVisible(false);
+         }
+      }
+   }
+
+   /**
+    * Remove all links for this linker.
+    */
+   public void unlinkAll() {
+      for (SettingsLinker linker : linkedLinkers_) {
+         unlink(linker);
       }
    }
 

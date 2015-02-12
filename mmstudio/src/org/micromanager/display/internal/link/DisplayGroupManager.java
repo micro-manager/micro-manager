@@ -90,10 +90,13 @@ public class DisplayGroupManager {
    }
 
    /**
-    * A display was destroyed; stop tracking it.
+    * A display was destroyed; stop tracking it, and unlink linkers.
     */
    public void onDisplayDestroyed(DisplayWindow source,
          DisplayDestroyedEvent event) {
+      for (SettingsLinker linker : displayToLinkers_.get(source)) {
+         linker.unlinkAll();
+      }
       displayToLinkers_.remove(source);
       for (WindowListener listener : listeners_) {
          if (listener.getDisplay() == source) {
