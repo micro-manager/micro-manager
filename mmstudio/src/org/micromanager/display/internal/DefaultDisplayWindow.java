@@ -1,5 +1,6 @@
 package org.micromanager.display.internal;
 
+import com.google.common.eventbus.DeadEvent;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
@@ -40,6 +41,7 @@ import javax.swing.event.MouseInputAdapter;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.WindowConstants;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -252,6 +254,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
             requestToClose();
          }
       });
+      setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
       // Set us to draw the first image in the dataset.
       // TODO: potentially there could be no image at these Coords, though
@@ -597,6 +600,18 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
    public boolean requestToClose() {
       displayBus_.post(new RequestToCloseEvent(this));
       return getIsClosed();
+   }
+
+   /**
+    * This exists to catch RequestToCloseEvents that nobody is listening for,
+    * which can happen when displays are duplicated. If we didn't do this, then
+    * our display would be impossible to get rid of.
+    */
+   @Subscribe
+   public void onDeadEvent(DeadEvent event) {
+      if (event.getEvent() instanceof RequestToCloseEvent) {
+         forceClosed();
+      }
    }
 
    @Override
