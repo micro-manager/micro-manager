@@ -55,7 +55,8 @@ public abstract class SettingsLinker {
    public void link(SettingsLinker linker, boolean isSource) {
       // Don't link ourselves; just avoids some redundant pushing in
       // pushChanges().
-      if (linker != this && !linkedLinkers_.contains(linker)) {
+      if (linker != this && !linkedLinkers_.contains(linker) &&
+            linker.getID() == getID()) {
          // Ensure that their link state matches our own.
          linker.setIsActive(isActive_);
          if (isActive_ && isSource) {
