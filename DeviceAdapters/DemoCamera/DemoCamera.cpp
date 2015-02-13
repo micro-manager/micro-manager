@@ -1106,8 +1106,12 @@ int CDemoCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
          pProp->Get(binFactor);
 			if(binFactor > 0 && binFactor < 10)
 			{
-				img_.Resize(cameraCCDXSize_/binFactor, cameraCCDYSize_/binFactor);
-				binSize_ = binFactor;
+            // calculate ROI using the previous bin settings
+            double factor = (double) binFactor / (double) binSize_;
+            roiX_ /= factor;
+            roiY_ /= factor;
+            img_.Resize(img_.Width()/factor, img_.Height()/factor);
+            binSize_ = binFactor;
             std::ostringstream os;
             os << binSize_;
             OnPropertyChanged("Binning", os.str().c_str());
