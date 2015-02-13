@@ -71,6 +71,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import mmcorej.CMMCore;
+import mmcorej.Configuration;
 import mmcorej.TaggedImage;
 
 import org.micromanager.api.MultiStagePosition;
@@ -1221,16 +1222,24 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             return false;
       }
 
-      props_.setPropValue(galvoDevice, Properties.Keys.SPIM_NUM_REPEATS, 1, skipScannerWarnings);
-      
-      // if we are changing color slice by slice then set controller
-      //   to do multiple slices per piezo move
-      // TODO fix this with new multicolor approach
+      // if we are changing color slice by slice then set controller to do multiple slices per piezo move
+      // otherwise just set to 1 slice per piezo move
+      int numSlicesPerPiezo = 1;
       if (props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_MULTICHANNEL_MODE)
-            == MultichannelModes.Keys.SLICE.getPrefCode()) {
-         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_NUM_SLICES_PER_PIEZO,
-            1, skipScannerWarnings);
+            == MultichannelModes.Keys.SLICE_HW.getPrefCode()) {
+         numSlicesPerPiezo = getNumChannels();
       }
+      props_.setPropValue(galvoDevice, Properties.Keys.SPIM_NUM_SLICES_PER_PIEZO,
+            numSlicesPerPiezo, skipScannerWarnings);
+      
+      // if we are changing color volume by volume then set controller to do multiple volumes per start trigger
+      // otherwise just set to 1 volume per start trigger
+      int numVolumesPerTrigger = 1;
+      if (props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_MULTICHANNEL_MODE)
+            == MultichannelModes.Keys.VOLUME_HW.getPrefCode()) {
+         numVolumesPerTrigger = getNumChannels();
+      }
+      props_.setPropValue(galvoDevice, Properties.Keys.SPIM_NUM_REPEATS, numVolumesPerTrigger, skipScannerWarnings);
       
       AcquisitionModes.Keys spimMode = (AcquisitionModes.Keys) spimMode_.getSelectedItem();
       
@@ -1309,6 +1318,133 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          props_.setPropValue(piezoDevice,
                Properties.Keys.SPIM_STATE, Properties.Values.SPIM_ARMED);
       }
+      
+      return true;
+   }
+   
+   /**
+    * From the channel (containing preset name) gets the associated PLogic BNC
+    * @param channel
+    * @return value 5, 6, 7, or 8; returns 0 if there is an error
+    */
+   private int getPLogicOutputFromChannel(ChannelSpec channel) {
+      try {
+         Configuration configData = core_.getConfigData(multiChannelPanel_.getChannelGroup(), channel.config_);
+         if (!configData.isPropertyIncluded(devices_.getMMDevice(Devices.Keys.PLOGIC), Properties.Keys.PLOGIC_OUTPUT_CHANNEL.toString())) {
+            MyDialogUtils.showError("Must include PLogic \"OutputChannel\" in preset for hardware switching");
+            return 0;
+         }
+         String setting = configData.getSetting(devices_.getMMDevice(Devices.Keys.PLOGIC), Properties.Keys.PLOGIC_OUTPUT_CHANNEL.toString()).getPropertyValue();
+         if (setting.equals(Properties.Values.PLOGIC_CHANNEL_BNC5.toString())) {
+            return 5;
+         } else if (setting.equals(Properties.Values.PLOGIC_CHANNEL_BNC6.toString())) {
+            return 6;
+         } else if (setting.equals(Properties.Values.PLOGIC_CHANNEL_BNC7.toString())) {
+            return 7;
+         } else if (setting.equals(Properties.Values.PLOGIC_CHANNEL_BNC8.toString())) {
+            return 8;
+         } else {
+            MyDialogUtils.showError("Channel preset setting must use PLogic \"OutputChannel\" and be set to one of outputs 5-8 only");
+            return 0;
+         }
+      } catch (Exception e) {
+         MyDialogUtils.showError(e, "Could not get PLogic output from channel");
+         return 0;
+      }
+   }
+   
+   private boolean setupHardwareChannelSwitching() {
+      
+      final int counterLSBAddress = 3;
+      final int counterMSBAddress = 4;
+      final int laserTTLAddress = 42;
+      final int invertAddress = 64;
+      final int BNC1Address = 33; 
+      
+      if (!devices_.isValidMMDevice(Devices.Keys.PLOGIC)) {
+         MyDialogUtils.showError("PLogic card required for hardware switching");
+         return false;
+      }
+      
+      // set up clock for counters
+      MultichannelModes.Keys prefCode = MultichannelModes.getKeyFromPrefCode(
+            props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_MULTICHANNEL_MODE));
+      switch (prefCode) {
+      case SLICE_HW:
+         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_PRESET,
+               Properties.Values.PLOGIC_PRESET_CLOCK_LASER);
+         break;
+      case VOLUME_HW:
+         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_PRESET,
+               Properties.Values.PLOGIC_PRESET_CLOCK_SIDE);
+         break;
+      default:
+         MyDialogUtils.showError("Unknown multichannel mode for hardware switching");
+         return false;
+      }
+      
+      // set up hardware counter
+      switch (getNumChannels()) {
+      case 1:
+         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_PRESET,
+               Properties.Values.PLOGIC_PRESET_COUNT_1);
+      break;
+      case 2:
+         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_PRESET,
+               Properties.Values.PLOGIC_PRESET_COUNT_2);
+         break;
+      case 3:
+         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_PRESET,
+               Properties.Values.PLOGIC_PRESET_COUNT_3);
+         break;
+      case 4:
+         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_PRESET,
+               Properties.Values.PLOGIC_PRESET_COUNT_4);
+         break;
+      default:
+         MyDialogUtils.showError("Hardware channel switching only supports 1-4 channels");
+         return false;
+      }
+      
+      // speed things up by turning off updates, will restore value later
+      String editCellUpdates = props_.getPropValueString(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_UPDATES);
+      props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_UPDATES, Properties.Values.NO);
+      
+      // make sure cells 13-16 are controlling BNCs 5-8
+      props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_PRESET,
+            Properties.Values.PLOGIC_PRESET_BNC5_8_ON_13_16);
+      
+      // initialize cells 13-16 which control BNCs 5-8
+      for (int cellNum=13; cellNum<=16; cellNum++) {
+         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_POINTER_POSITION, cellNum);
+         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_TYPE, Properties.Values.PLOGIC_AND4);
+         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_2, laserTTLAddress);  // 42 is TTL1 which is laser on/off
+         // note that PLC diSPIM assumes "laser + side" output mode is selected for micro-mirror card
+      }
+      
+      // identify from the presets 
+      ChannelSpec[] channels = multiChannelPanel_.getUsedChannels();
+      for (int channelNum = 0; channelNum < channels.length; channelNum++) {
+         // we already now there are between 1 and 4 channels
+         int outputNum = getPLogicOutputFromChannel(channels[channelNum]);
+         if (outputNum<5) {
+            // restore update setting
+            props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_UPDATES, editCellUpdates);
+            return false;  // already displayed error
+         }
+         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_POINTER_POSITION, outputNum + 8);
+         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_1, invertAddress);  // enable this AND4
+         // map the channel number to the equivalent addresses for the AND4
+         // inputs should be either 3 (for LSB high) or 67 (for LSB low)
+         //                     and 4 (for MSB high) or 68 (for MSB low)
+         int in3 = (channelNum & 0x01) > 0 ? counterLSBAddress : counterLSBAddress + invertAddress;
+         int in4 = (channelNum & 0x10) > 0 ? counterMSBAddress : counterMSBAddress + invertAddress; 
+         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_3, in3);
+         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_4, in4);
+      }
+      
+      // restore update setting
+      props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_UPDATES, editCellUpdates);
       
       return true;
    }
@@ -1401,16 +1537,23 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       boolean useChannels =  multiChannelPanel_.isPanelEnabled();
       boolean changeChannelPerVolume = MultichannelModes.getKeyFromPrefCode(
             props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_MULTICHANNEL_MODE))
-            .equals(MultichannelModes.Keys.VOLUME);
+            .equals(MultichannelModes.Keys.VOLUME);  // this is the Micro-Manager switching of channels, not hardware-only
       if (useChannels) {
          if (nrChannels < 1) {
             MyDialogUtils.showError("\"Channels\" is checked, but no channels are selected");
             return false;
          }
-         multiChannelPanel_.initializeChannelCycle();
-         // get current channel so that we can restore it
-         // I tried core_.get/setSystemStateCache, but that made the Tiger controller very confused and I had to re-apply the firmware
-         originalConfig = multiChannelPanel_.getCurrentConfig();
+         if (changeChannelPerVolume) {
+            multiChannelPanel_.initializeChannelCycle();
+            // get current channel so that we can restore it
+            // I tried core_.get/setSystemStateCache, but that made the Tiger controller very confused and I had to re-apply the firmware
+            originalConfig = multiChannelPanel_.getCurrentConfig();
+         } else { // hardware channel switching
+            if (!setupHardwareChannelSwitching()) {
+               return false;
+            }
+         }
+         
       }
       
       // XY positions
@@ -1422,7 +1565,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             positionList = gui_.getPositionList();
             nrPositions = positionList.getNumberOfPositions();
          } catch (MMScriptException ex) {
-            MyDialogUtils.showError(ex, "Error getting position list for multiple XY posiitions");
+            MyDialogUtils.showError(ex, "Error getting position list for multiple XY positions");
          }
          if (nrPositions < 1) {
             MyDialogUtils.showError("\"Positions\" is checked, but no positions are in position list");
@@ -1715,7 +1858,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         }
                      }
 
-                     // deal with channel
+                     // deal with channel if needed (hardware channel switching doesn't happen here)
                      if (useChannels && changeChannelPerVolume) {
                         multiChannelPanel_.selectNextChannel();
                      }

@@ -170,6 +170,7 @@ public class ChannelTableModel extends AbstractTableModel {
    
    /**
     * Returns array of channels that are currently set be "used".
+    * Returns them in order that they are in the table, omitting unused ones.
     * @return 
     */
    public ChannelSpec[] getUsedChannels() {

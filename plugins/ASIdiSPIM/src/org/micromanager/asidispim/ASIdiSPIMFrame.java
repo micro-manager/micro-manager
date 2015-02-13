@@ -47,24 +47,28 @@ import org.micromanager.asidispim.Utils.StagePositionUpdater;
 import org.micromanager.internalinterfaces.LiveModeListener; 
 import org.micromanager.utils.MMFrame;
 
-// TODO easy mode that pulls most-used bits from all panels
-// TODO autofocus for finding calibration endpoints (http://dx.doi.org/10.1364/OE.16.008670)
-// TODO recalculate slice timing on changing assigned camera
-// TODO add status bar to bottom of window (would include acquisition status, could show other messages too)
-// TODO move acquisition start/stop to shared area below tabs
-// TODO make it easy to discard a data set
-// TODO make it easy to look through series of data sets
-// TODO hardware Z-projection
-// TODO camera control ROI panel
-// TODO track Z/F for sample finding
-// TODO factor out common code for JComboBoxes like MulticolorModes, CameraModes, AcquisitionModes, etc.
-// TODO cleanup prefs vs. props... maybe add boolean support for plugin device use only?
-// TODO finish eliminating Prefs.Keys in favor of Properties.Keys with plugin values
-// TODO save/load plugin settings from file instead of from registry (nice to also include controller settings)
-// TODO handle camera binning
-// TODO add check for correct Hamamatsu model
-// TODO support for laser shutters (update device panel too?)
-// TODO display certain properties like positions, e.g. scan amplitudes/offsets
+//TODO devices tab automatically recognize default device names
+//TODO "swap sides" button (during alignment)
+//TODO setup tab have piezo/scanner go to 0 (eliminate calibration position display)
+//TODO alignment wizard that would guide through all steps
+//TODO easy mode that pulls most-used bits from all panels
+//TODO autofocus for finding calibration endpoints (http://dx.doi.org/10.1364/OE.16.008670, FFT method, or other)
+//TODO calibration for sheet width/offset (automatic based on image analysis?) and then optimize based on ROI
+//TODO recalculate slice timing automatically changing assigned camera
+//TODO add status bar to bottom of window (would include acquisition status, could show other messages too)
+//TODO move acquisition start/stop to shared area below tabs
+//TODO make it easy to discard a data set
+//TODO make it easy to look through series of data sets
+//TODO hardware Z-projection
+//TODO camera control ROI panel
+//TODO track Z/F for sample finding
+//TODO Z/F position list
+//TODO factor out common code for JComboBoxes like MulticolorModes, CameraModes, AcquisitionModes, etc.
+//TODO cleanup prefs vs. props... maybe add boolean support for plugin device use only?
+//TODO finish eliminating Prefs.Keys in favor of Properties.Keys with plugin values
+//TODO save/load plugin settings from file instead of from registry (nice to also include controller settings)
+//TODO handle camera binning
+//TODO add check for correct Hamamatsu model
 
 
 /**

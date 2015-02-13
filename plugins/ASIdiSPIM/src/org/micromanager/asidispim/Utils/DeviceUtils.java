@@ -163,6 +163,10 @@ public class DeviceUtils {
       case GALVOB:
          if (deviceLibrary == Devices.Libraries.ASITIGER) {
             checkPropertyValueEquals(key, Properties.Keys.INPUT_MODE, Properties.Values.INTERNAL_INPUT);
+            // PLogic use in the plugin assumes "laser + side" output mode
+            if (devices_.isValidMMDevice(Devices.Keys.PLOGIC)) {
+               checkPropertyValueEquals(key, Properties.Keys.LASER_OUTPUT_MODE, Properties.Values.LASER_SHUTTER_SIDE);
+            }
          } else {
             MyDialogUtils.showError("Plugin doesn't support galvo devices other than ASITiger");
          }
@@ -190,6 +194,12 @@ public class DeviceUtils {
             // execute the preset to put in diSPIM mode
             props_.setPropValue(key, Properties.Keys.PLOGIC_PRESET, Properties.Values.PLOGIC_PRESET_14);
             checkPropertyValueEquals(key, Properties.Keys.PLOGIC_TRIGGER_SOURCE, Properties.Values.PLOGIC_TRIGGER_MMIRROR);
+            // PLogic use in the plugin assumes "laser + side" output mode
+            for (Devices.Keys galvoKey : Devices.GALVOS) {
+               if (devices_.isValidMMDevice(galvoKey)) {
+                  checkPropertyValueEquals(galvoKey, Properties.Keys.LASER_OUTPUT_MODE, Properties.Values.LASER_SHUTTER_SIDE);   
+               }
+            }
          } else {
             MyDialogUtils.showError("Plugin doesn't support shutter devices other than ASITiger");
          }
