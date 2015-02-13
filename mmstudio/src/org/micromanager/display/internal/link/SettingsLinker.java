@@ -55,19 +55,21 @@ public abstract class SettingsLinker {
    public void link(SettingsLinker linker, boolean isSource) {
       // Don't link ourselves; just avoids some redundant pushing in
       // pushChanges().
-      if (linker != this && !linkedLinkers_.contains(linker) &&
-            linker.getID() == getID()) {
-         // Ensure that their link state matches our own.
-         linker.setIsActive(isActive_);
-         if (isActive_ && isSource) {
-            // Take this opportunity to push our state across to them.
-            pushState(linker.getDisplay());
-         }
-         linkedLinkers_.add(linker);
-         linker.link(this, false);
-         // Now that we can link to someone, show our button.
-         button_.setVisible(true);
+      if (linker == this || linkedLinkers_.contains(linker) ||
+            linker.getID() != getID() ||
+            linker.getDisplay().getDatastore() != parent_.getDatastore()) {
+         return;
       }
+      // Ensure that their link state matches our own.
+      linker.setIsActive(isActive_);
+      if (isActive_ && isSource) {
+         // Take this opportunity to push our state across to them.
+         pushState(linker.getDisplay());
+      }
+      linkedLinkers_.add(linker);
+      linker.link(this, false);
+      // Now that we can link to someone, show our button.
+      button_.setVisible(true);
    }
 
    /**
