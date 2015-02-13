@@ -86,8 +86,19 @@ public class LinkButton extends JToggleButton {
     */
    public void showLinkMenu(Point p) {
       JPopupMenu menu = new JPopupMenu();
-      List<DisplayWindow> displays = MMStudio.getInstance().display().getAllImageWindows();
-      int numItems = 0;
+      final List<DisplayWindow> displays = MMStudio.getInstance().display().getAllImageWindows();
+      if (displays.size() > 2) { // i.e. at least two potential candidates
+         JMenuItem allItem = new JMenuItem("All");
+         allItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+               for (DisplayWindow display : displays) {
+                  linker_.pushState(display);
+               }
+            }
+         });
+         menu.add(allItem);
+      }
       for (final DisplayWindow display : displays) {
          if (display == display_) {
             continue;
@@ -100,9 +111,8 @@ public class LinkButton extends JToggleButton {
             }
          });
          menu.add(item);
-         numItems++;
       }
-      if (numItems > 0) {
+      if (displays.size() > 1) { // i.e. more than just our own display
          menu.show(this, p.x, p.y);
       }
    }
