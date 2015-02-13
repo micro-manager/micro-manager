@@ -1,6 +1,7 @@
 package org.micromanager.display.internal;
 
 import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -11,12 +12,10 @@ import java.awt.event.MouseEvent;
 
 import javax.swing.event.MouseInputAdapter;
 import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
+
 import org.micromanager.internal.utils.TooltipTextMaker;
 
-/**
- *
- * @author Henry
- */
 public class ScrollbarLockIcon extends JComponent   {
 
    /**
@@ -46,6 +45,20 @@ public class ScrollbarLockIcon extends JComponent   {
       }
    }
 
+   /**
+    * This event causes other lock icons to be updated to match our state.
+    */
+   public static class ForceLockEvent {
+      private LockedState state_;
+      public ForceLockEvent(LockedState state) {
+         state_ = state;
+      }
+
+      public LockedState getState() {
+         return state_;
+      }
+   }
+
    private static final int WIDTH = 17, HEIGHT = 14;
    private LockedState lockedState_;
    private String axis_;
@@ -61,16 +74,17 @@ public class ScrollbarLockIcon extends JComponent   {
       bus_ = bus;
       setSize(WIDTH, HEIGHT);
       this.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip(
-              "Lock the scrollbar to its current postion"));
+              "Lock the scrollbar to its current postion. Click twice to superlock; right-click to update all axes."));
       this.addMouseListener(new MouseInputAdapter() {
          @Override
          public void mouseClicked(MouseEvent e) {
-            advanceLockedState();
+            advanceLockedState(SwingUtilities.isRightMouseButton(e));
          }
       });
+      bus_.register(this);
    }
 
-   private void advanceLockedState() {
+   private void advanceLockedState(boolean shouldBroadcast) {
       switch (lockedState_) {
          case UNLOCKED:
             setLockedState(LockedState.LOCKED);
@@ -82,6 +96,9 @@ public class ScrollbarLockIcon extends JComponent   {
             setLockedState(LockedState.UNLOCKED);
             break;
       }
+      if (shouldBroadcast) {
+         bus_.post(new ForceLockEvent(lockedState_));
+      }
    }
 
    public void setLockedState(LockedState state) {
@@ -89,6 +106,11 @@ public class ScrollbarLockIcon extends JComponent   {
       foreground_ = (lockedState_ == LockedState.SUPERLOCKED) ? SUPERLOCK_COLOR : LOCK_COLOR;
       bus_.post(new LockEvent(axis_, lockedState_));
       repaint();
+   }
+
+   @Subscribe
+   public void onForceLock(ForceLockEvent event) {
+      setLockedState(event.getState());
    }
 
    public LockedState getLockedState() {
