@@ -634,6 +634,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
          add(contentsPanel_);
          fullScreenFrame_.dispose();
          fullScreenFrame_ = null;
+         setWindowSize();
          setVisible(true);
       }
       else {
