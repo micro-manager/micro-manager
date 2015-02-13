@@ -1323,7 +1323,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    }
    
    /**
-    * From the channel (containing preset name) gets the associated PLogic BNC
+    * Gets the associated PLogic BNC from the channel (containing preset name) 
     * @param channel
     * @return value 5, 6, 7, or 8; returns 0 if there is an error
     */
@@ -1352,14 +1352,18 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          return 0;
       }
    }
-   
+
+   /**
+    * Programs the PLogic card for hardware channel switching
+    * according to the selections in the Multichannel subpanel
+    * @return false if there is a fatal error, true if successful
+    */
    private boolean setupHardwareChannelSwitching() {
       
       final int counterLSBAddress = 3;
       final int counterMSBAddress = 4;
       final int laserTTLAddress = 42;
       final int invertAddress = 64;
-      final int BNC1Address = 33; 
       
       if (!devices_.isValidMMDevice(Devices.Keys.PLOGIC)) {
          MyDialogUtils.showError("PLogic card required for hardware switching");
@@ -1418,14 +1422,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       for (int cellNum=13; cellNum<=16; cellNum++) {
          props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_POINTER_POSITION, cellNum);
          props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_TYPE, Properties.Values.PLOGIC_AND4);
-         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_2, laserTTLAddress);  // 42 is TTL1 which is laser on/off
+         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_2, laserTTLAddress);
          // note that PLC diSPIM assumes "laser + side" output mode is selected for micro-mirror card
       }
       
       // identify from the presets 
       ChannelSpec[] channels = multiChannelPanel_.getUsedChannels();
       for (int channelNum = 0; channelNum < channels.length; channelNum++) {
-         // we already now there are between 1 and 4 channels
+         // we already know there are between 1 and 4 channels
          int outputNum = getPLogicOutputFromChannel(channels[channelNum]);
          if (outputNum<5) {
             // restore update setting
@@ -1451,7 +1455,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
    /**
     * Implementation of acquisition that orchestrates image
-    * acquisition itself rather than using the acquisition engine
+    * acquisition itself rather than using the acquisition engine.
     * 
     * This methods is public so that the ScriptInterface can call it
     * Please do not access this yourself directly, instead use the API, e.g.
@@ -1530,33 +1534,39 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       int nrSides = getNumSides();
       
-      // Channels
-      
+      // set up channels
       int nrChannels = getNumChannels();
       String originalConfig = "";
+      boolean changeChannelPerVolumeSoftware = false;
       boolean useChannels =  multiChannelPanel_.isPanelEnabled();
-      boolean changeChannelPerVolume = MultichannelModes.getKeyFromPrefCode(
-            props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_MULTICHANNEL_MODE))
-            .equals(MultichannelModes.Keys.VOLUME);  // this is the Micro-Manager switching of channels, not hardware-only
       if (useChannels) {
          if (nrChannels < 1) {
             MyDialogUtils.showError("\"Channels\" is checked, but no channels are selected");
             return false;
          }
-         if (changeChannelPerVolume) {
+         MultichannelModes.Keys multichannelMode = MultichannelModes.getKeyFromPrefCode(
+               props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_MULTICHANNEL_MODE));
+         switch (multichannelMode) {
+         case VOLUME:
+            changeChannelPerVolumeSoftware = true;
             multiChannelPanel_.initializeChannelCycle();
             // get current channel so that we can restore it
             // I tried core_.get/setSystemStateCache, but that made the Tiger controller very confused and I had to re-apply the firmware
             originalConfig = multiChannelPanel_.getCurrentConfig();
-         } else { // hardware channel switching
+            break;
+         case VOLUME_HW:
+         case SLICE_HW:
             if (!setupHardwareChannelSwitching()) {
                return false;
             }
+            break;
+         default:
+            MyDialogUtils.showError("Unsupported multichannel mode \"" + multichannelMode.toString() + "\"");
+            return false;
          }
-         
       }
       
-      // XY positions
+      // set up XY positions
       int nrPositions = 1;
       boolean usePositions = usePositionsCB_.isSelected();
       PositionList positionList = new PositionList();
@@ -1859,7 +1869,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      }
 
                      // deal with channel if needed (hardware channel switching doesn't happen here)
-                     if (useChannels && changeChannelPerVolume) {
+                     if (changeChannelPerVolumeSoftware) {
                         multiChannelPanel_.selectNextChannel();
                      }
 
@@ -2004,7 +2014,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
       
       // cleanup after end of all acquisitions
-      if (useChannels && changeChannelPerVolume) {
+      
+      // reset channel to original
+      if (changeChannelPerVolumeSoftware) {
          multiChannelPanel_.setConfig(originalConfig);
       }
       // the controller will end with both beams disabled and scan off so reflect
