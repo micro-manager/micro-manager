@@ -515,7 +515,7 @@ public class PanelUtils {
        * nested inner class 
        * @author Jon
        */
-      class checkBoxListener implements ActionListener {
+      class checkBoxListener implements ItemListener {
          final JCheckBox jc_;
          final Properties.Keys propKey_;
          final String prefNode_;
@@ -528,7 +528,7 @@ public class PanelUtils {
          }
 
          @Override
-         public void actionPerformed(ActionEvent e) {
+         public void itemStateChanged(ItemEvent e) {
             prefs_.putBoolean(prefNode_, propKey_, jc_.isSelected());
          }
          
@@ -536,7 +536,7 @@ public class PanelUtils {
       
       final JCheckBox jc = new JCheckBox(label, 
             prefs_.getBoolean(prefNode, propKey, defaultValue));
-      jc.addActionListener(new checkBoxListener(jc, propKey, prefNode));
+      jc.addItemListener(new checkBoxListener(jc, propKey, prefNode));
       return jc;
    }
 
