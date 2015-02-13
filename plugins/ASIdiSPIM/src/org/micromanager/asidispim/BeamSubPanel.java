@@ -185,10 +185,34 @@ public final class BeamSubPanel extends ListeningJPanel {
   public void gotSelected() {
       // have to do this the "hard way" because itemStateChanged only responds to _changes_ in value
       //  and changing the beam setting (to refresh it) erases the state of the sheet setting in firmware
-      syncPropertyAndCheckBox(beamABox_, Devices.getSideSpecificKey(Devices.Keys.GALVOA, side_), 
+      
+      Devices.Keys deviceA = Devices.getSideSpecificKey(Devices.Keys.GALVOA, side_);
+      Devices.Keys deviceB = Devices.getSideSpecificKey(Devices.Keys.GALVOA, otherSide_);
+      
+      // during transition would have both beams on => exercising switch galvo unnecessarily
+      // => do any on -> off transitions first      
+      if (updateOnTab_.isSelected() &&
+            props_.getPropValueString(deviceA, Properties.Keys.BEAM_ENABLED)
+            .equals(Properties.Values.YES.toString()) &&
+            !beamABox_.isSelected()) {
+         syncPropertyAndCheckBox(beamABox_, deviceA, 
+               Properties.Keys.BEAM_ENABLED, Properties.Values.YES, Properties.Values.NO,
+               updateOnTab_.isSelected());
+      }
+      if (updateOnTab_.isSelected() &&
+            props_.getPropValueString(deviceB, Properties.Keys.BEAM_ENABLED)
+            .equals(Properties.Values.YES.toString()) &&
+            !beamBBox_.isSelected()) {
+         syncPropertyAndCheckBox(beamBBox_, deviceB, 
+               Properties.Keys.BEAM_ENABLED, Properties.Values.YES, Properties.Values.NO,
+               updateOnTab_.isSelected());
+      }
+      
+      // do whatever other adjustments are needed
+      syncPropertyAndCheckBox(beamABox_, deviceA, 
             Properties.Keys.BEAM_ENABLED, Properties.Values.YES, Properties.Values.NO,
             updateOnTab_.isSelected());
-      syncPropertyAndCheckBox(beamBBox_, Devices.getSideSpecificKey(Devices.Keys.GALVOA, otherSide_),
+      syncPropertyAndCheckBox(beamBBox_, deviceB,
             Properties.Keys.BEAM_ENABLED, Properties.Values.YES, Properties.Values.NO,
             updateOnTab_.isSelected());
       
@@ -197,10 +221,10 @@ public final class BeamSubPanel extends ListeningJPanel {
       sheetABox_.setEnabled(beamABox_.isSelected());
       sheetBBox_.setEnabled(beamBBox_.isSelected());
       
-      syncPropertyAndCheckBox(sheetABox_, Devices.getSideSpecificKey(Devices.Keys.GALVOA, side_),
+      syncPropertyAndCheckBox(sheetABox_, deviceA,
             Properties.Keys.SA_MODE_X, Properties.Values.SAM_ENABLED, Properties.Values.SAM_DISABLED,
             updateOnTab_.isSelected());
-      syncPropertyAndCheckBox(sheetBBox_, Devices.getSideSpecificKey(Devices.Keys.GALVOA, otherSide_), 
+      syncPropertyAndCheckBox(sheetBBox_, deviceB, 
             Properties.Keys.SA_MODE_X, Properties.Values.SAM_ENABLED, Properties.Values.SAM_DISABLED,
             updateOnTab_.isSelected());
   }
