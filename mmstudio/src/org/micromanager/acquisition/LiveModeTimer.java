@@ -244,13 +244,14 @@ public class LiveModeTimer {
       // Wait for first image to create ImageWindow, so that we can be sure about image size
       long start = System.currentTimeMillis();
       long now = start;
-      long timeout = Math.min(10000, period * 150);
+      // Give 10s extra for the camera to transfer the image to us.
+      long timeout = period + 10000;
       while (core_.getRemainingImageCount() == 0 && (now - start < timeout) ) {
          now = System.currentTimeMillis();
          Thread.sleep(5);
       }
       if (now - start >= timeout) {
-         throw new Exception("Camera did not send image within a reasonable time");
+         throw new Exception("Camera did not send image within " + timeout + "ms");
       }
 
       TaggedImage timg = core_.getLastTaggedImage();
