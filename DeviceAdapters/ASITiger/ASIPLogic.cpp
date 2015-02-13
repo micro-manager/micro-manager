@@ -65,7 +65,7 @@ CPLogic::CPLogic(const char* name) :
    useAsdiSPIMShutter_(false),
    shutterOpen_(false),
    advancedPropsEnabled_(false),
-   cellEditingEnabled_(false)
+   editCellUpdates_(true)
 {
    if (IsExtendedName(name))  // only set up these properties if we have the required information in the name
    {
@@ -164,6 +164,9 @@ int CPLogic::Initialize()
    AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode17, 17);
    AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode18, 18);
    AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode19, 19);
+   AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode20, 20);
+   AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode21, 21);
+   AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode22, 22);
    UpdateProperty(g_SetCardPresetPropertyName);
 
    // "do it" property to clear state
@@ -189,12 +192,51 @@ int CPLogic::Initialize()
    AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsOrig);
    AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsDone);
 
-   // generates set of additional properties for editing cells
-   pAct = new CPropertyAction (this, &CPLogic::OnCellEditing);
-   CreateProperty(g_CellEditingPropertyName, g_NoState, MM::String, false, pAct);
-   AddAllowedValue(g_CellEditingPropertyName, g_NoState);
-   AddAllowedValue(g_CellEditingPropertyName, g_YesState);
-   UpdateProperty(g_CellEditingPropertyName);
+   // edits cell wherever current pointer position is
+   pAct = new CPropertyAction (this, &CPLogic::OnEditCellType);
+   CreateProperty(g_EditCellTypePropertyName, g_CellTypeCode0, MM::String, false, pAct);
+   AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode0, 0);
+   AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode1, 1);
+   AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode2, 2);
+   AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode3, 3);
+   AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode4, 4);
+   AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode5, 5);
+   AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode6, 6);
+   AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode7, 7);
+   AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode8, 8);
+   AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode9, 9);
+   AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode10, 10);
+   AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode11, 11);
+   AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode12, 12);
+   AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode13, 13);
+   AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode14, 14);
+   AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode15, 15);
+   UpdateProperty(g_EditCellTypePropertyName);
+
+   // edit config at current pointer
+   pAct = new CPropertyAction (this, &CPLogic::OnEditCellConfig);
+   CreateProperty(g_EditCellConfigPropertyName, "0", MM::Integer, false, pAct);
+   UpdateProperty(g_EditCellConfigPropertyName);
+
+   // edit logic cell inputs at current pointer
+   pAct = new CPropertyAction (this, &CPLogic::OnEditCellInput1);
+   CreateProperty(g_EditCellInput1PropertyName, "0", MM::Integer, false, pAct);
+   UpdateProperty(g_EditCellInput1PropertyName);
+   pAct = new CPropertyAction (this, &CPLogic::OnEditCellInput2);
+   CreateProperty(g_EditCellInput2PropertyName, "0", MM::Integer, false, pAct);
+   UpdateProperty(g_EditCellInput2PropertyName);
+   pAct = new CPropertyAction (this, &CPLogic::OnEditCellInput3);
+   CreateProperty(g_EditCellInput3PropertyName, "0", MM::Integer, false, pAct);
+   UpdateProperty(g_EditCellInput3PropertyName);
+   pAct = new CPropertyAction (this, &CPLogic::OnEditCellInput4);
+   CreateProperty(g_EditCellInput4PropertyName, "0", MM::Integer, false, pAct);
+   UpdateProperty(g_EditCellInput4PropertyName);
+
+   // refresh properties from controller every time; default is false = no refresh (speeds things up by not redoing so much serial comm)
+   pAct = new CPropertyAction (this, &CPLogic::OnEditCellUpdates);
+   CreateProperty(g_EditCellUpdateAutomaticallyPropertyName, g_YesState, MM::String, false, pAct);
+   AddAllowedValue(g_EditCellUpdateAutomaticallyPropertyName, g_NoState);
+   AddAllowedValue(g_EditCellUpdateAutomaticallyPropertyName, g_YesState);
 
    // generates a set of additional advanced properties that are used only rarely
    // in this case they allow configuring all the logic cells and setting outputs
@@ -432,7 +474,7 @@ int CPLogic::OnRefreshProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int CPLogic::RefreshEditCellPropertyValues()
 {
-   if (cellEditingEnabled_ && currentPosition_<=numCells_) {
+   if (editCellUpdates_ && currentPosition_<=numCells_) {
       bool refreshPropsOriginal = refreshProps_;
       refreshProps_ = true;
       UpdateProperty(g_EditCellTypePropertyName);
@@ -466,7 +508,8 @@ int CPLogic::OnEditCellType(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int CPLogic::OnEditCellConfig(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   if(currentPosition_ <= numCells_) {
+   if((currentPosition_ <= numCells_) ||  // editing "config" of I/O is possible too
+         ((currentPosition_ >= PLOGIC_PHYSICAL_IO_START_ADDRESS) && (currentPosition_ <= PLOGIC_PHYSICAL_IO_END_ADDRESS))) {
       RETURN_ON_MM_ERROR ( OnCellConfig(pProp, eAct, (long)currentPosition_) );
    }
    return DEVICE_OK;
@@ -504,67 +547,15 @@ int CPLogic::OnEditCellInput4(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-int CPLogic::OnCellEditing(MM::PropertyBase* pProp, MM::ActionType eAct)
+int CPLogic::OnEditCellUpdates(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   if (eAct == MM::BeforeGet)
-   {
-      return DEVICE_OK; // do nothing
-   }
-   else if (eAct == MM::AfterSet) {
-      string tmpstr;
+   string tmpstr;
+   if (eAct == MM::AfterSet) {
       pProp->Get(tmpstr);
-      if ((tmpstr.compare(g_YesState) == 0) && !cellEditingEnabled_)  // after creating these extra properties once no need to repeat
-      {
-         CPropertyAction* pAct;
-         cellEditingEnabled_ = true;
-         bool refreshPropsOriginal = refreshProps_;
-         refreshProps_ = true;
-
-         // type at current pointer
-         pAct = new CPropertyAction (this, &CPLogic::OnEditCellType);
-         CreateProperty(g_EditCellTypePropertyName, g_CellTypeCode0, MM::String, false, pAct);
-         AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode0, 0);
-         AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode1, 1);
-         AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode2, 2);
-         AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode3, 3);
-         AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode4, 4);
-         AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode5, 5);
-         AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode6, 6);
-         AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode7, 7);
-         AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode8, 8);
-         AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode9, 9);
-         AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode10, 10);
-         AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode11, 11);
-         AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode12, 12);
-         AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode13, 13);
-         AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode14, 14);
-         AddAllowedValue(g_EditCellTypePropertyName, g_CellTypeCode15, 15);
-         UpdateProperty(g_EditCellTypePropertyName);
-
-         // config at current pointer
-         pAct = new CPropertyAction (this, &CPLogic::OnEditCellConfig);
-         CreateProperty(g_EditCellConfigPropertyName, "0", MM::Integer, false, pAct);
-         UpdateProperty(g_EditCellConfigPropertyName);
-
-         // logic cell inputs
-         pAct = new CPropertyAction (this, &CPLogic::OnEditCellInput1);
-         CreateProperty(g_EditCellInput1PropertyName, "0", MM::Integer, false, pAct);
-         UpdateProperty(g_EditCellInput1PropertyName);
-
-         pAct = new CPropertyAction (this, &CPLogic::OnEditCellInput2);
-         CreateProperty(g_EditCellInput2PropertyName, "0", MM::Integer, false, pAct);
-         UpdateProperty(g_EditCellInput2PropertyName);
-
-         pAct = new CPropertyAction (this, &CPLogic::OnEditCellInput3);
-         CreateProperty(g_EditCellInput3PropertyName, "0", MM::Integer, false, pAct);
-         UpdateProperty(g_EditCellInput3PropertyName);
-
-         pAct = new CPropertyAction (this, &CPLogic::OnEditCellInput4);
-         CreateProperty(g_EditCellInput4PropertyName, "0", MM::Integer, false, pAct);
-         UpdateProperty(g_EditCellInput4PropertyName);
-
-         refreshProps_ = refreshPropsOriginal;
-      }
+      if (tmpstr.compare(g_YesState) == 0)
+         editCellUpdates_ = true;
+      else
+         editCellUpdates_ = false;
    }
    return DEVICE_OK;
 }

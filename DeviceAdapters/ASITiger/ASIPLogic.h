@@ -62,9 +62,9 @@ public:
    int OnEditCellInput2       (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnEditCellInput3       (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnEditCellInput4       (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnEditCellUpdates      (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSaveCardSettings     (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnRefreshProperties    (MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnCellEditing          (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnAdvancedProperties   (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnCellType             (MM::PropertyBase* pProp, MM::ActionType eAct, long index);
    int OnCellConfig           (MM::PropertyBase* pProp, MM::ActionType eAct, long index);
@@ -84,7 +84,7 @@ private:
    bool useAsdiSPIMShutter_;
    bool shutterOpen_;
    bool advancedPropsEnabled_;
-   bool cellEditingEnabled_;
+   bool editCellUpdates_;
 
    int SetShutterChannel();
    int SetPositionDirectly(unsigned int position);
