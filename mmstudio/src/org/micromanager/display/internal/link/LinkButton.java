@@ -60,6 +60,7 @@ public class LinkButton extends JToggleButton {
       // platforms set isPopupTrigger() = true on different events. As for
       // SwingUtilities, it allows us to detect e.g. control-click on OSX
       // with single-button mice.
+      // TODO: control-clicking still toggles the state of the button.
       addMouseListener(new MouseAdapter() {
          @Override
          public void mousePressed(MouseEvent event) {
