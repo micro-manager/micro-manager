@@ -17,6 +17,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.JToggleButton;
+import javax.swing.SwingUtilities;
 
 import org.micromanager.display.DisplayWindow;
 
@@ -56,17 +57,21 @@ public class LinkButton extends JToggleButton {
 
       // On right-click, show a popup menu to manually link this to another
       // display. Note we track both pressed and released because different
-      // platforms set isPopupTrigger() = true on different events.
+      // platforms set isPopupTrigger() = true on different events. As for
+      // SwingUtilities, it allows us to detect e.g. control-click on OSX
+      // with single-button mice.
       addMouseListener(new MouseAdapter() {
          @Override
          public void mousePressed(MouseEvent event) {
-            if (event.isPopupTrigger()) {
+            if (event.isPopupTrigger() ||
+               SwingUtilities.isRightMouseButton(event)) {
                finalThis.showLinkMenu(event.getPoint());
             }
          }
          @Override
          public void mouseReleased(MouseEvent event) {
-            if (event.isPopupTrigger()) {
+            if (event.isPopupTrigger() ||
+               SwingUtilities.isRightMouseButton(event)) {
                finalThis.showLinkMenu(event.getPoint());
             }
          }
