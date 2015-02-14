@@ -50,6 +50,7 @@ const char* g_XYStageDeviceName = "DXYStage";
 const char* g_AutoFocusDeviceName = "DAutoFocus";
 const char* g_ShutterDeviceName = "DShutter";
 const char* g_DADeviceName = "D-DA";
+const char* g_GalvoDeviceName = "DGalvo";
 const char* g_MagnifierDeviceName = "DOptovar";
 const char* g_HubDeviceName = "DHub";
 
@@ -78,6 +79,7 @@ MODULE_API void InitializeModuleData()
    RegisterDevice(g_ShutterDeviceName, MM::ShutterDevice, "Demo shutter");
    RegisterDevice(g_DADeviceName, MM::SignalIODevice, "Demo DA");
    RegisterDevice(g_MagnifierDeviceName, MM::MagnifierDevice, "Demo Optovar");
+   RegisterDevice(g_GalvoDeviceName, MM::GalvoDevice, "Demo Galvo");
    RegisterDevice("TransposeProcessor", MM::ImageProcessorDevice, "TransposeProcessor");
    RegisterDevice("ImageFlipX", MM::ImageProcessorDevice, "ImageFlipX");
    RegisterDevice("ImageFlipY", MM::ImageProcessorDevice, "ImageFlipY");
@@ -145,6 +147,11 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    {
       // create Optovar 
       return new DemoMagnifier();
+   }
+   else if (strcmp(deviceName, g_GalvoDeviceName) == 0)
+   {
+      // create Galvo 
+      return new DemoGalvo();
    }
 
    else if(strcmp(deviceName, "TransposeProcessor") == 0)
@@ -3369,6 +3376,123 @@ int DemoAutoFocus::Initialize()
    return DEVICE_OK;
 }
 
+// End of CDemoAutofocus
+//
+
+
+///////////////////////////////////////////////////////////
+// DemoGalvo
+DemoGalvo::DemoGalvo() :
+   initialized_(false),
+   busy_(false),
+   illuminationState_(false),
+   xRange_(10.0),
+   yRange_(10.0),
+   currentX_(0.0),
+   currentY_(0.0)
+{
+}
+
+DemoGalvo::~DemoGalvo() 
+{
+   Shutdown();
+}
+
+void DemoGalvo::GetName(char* pName) const
+{
+   CDeviceUtils::CopyLimitedString(pName, g_GalvoDeviceName);
+}
+int DemoGalvo::Initialize() 
+{
+   return DEVICE_OK;
+}
+
+int DemoGalvo::PointAndFire(double x, double y, double pulseTime_us) 
+{
+   return DEVICE_OK;
+}
+
+int DemoGalvo::SetSpotInterval(double pulseInterval_us) 
+{
+   return DEVICE_OK;
+}
+
+int DemoGalvo::SetPosition(double x, double y) 
+{
+   currentX_ = x;
+   currentY_ = y;
+   return DEVICE_OK;
+}
+
+int DemoGalvo::GetPosition(double& x, double& y) 
+{
+   x = currentX_;
+   y = currentY_;
+   return DEVICE_OK;
+}
+
+int DemoGalvo::SetIlluminationState(bool on) 
+{
+   illuminationState_ = on;
+   return DEVICE_OK;
+}
+
+int DemoGalvo::AddPolygonVertex(int polygonIndex, double x, double y) 
+{
+   return DEVICE_OK;
+}
+
+int DemoGalvo::DeletePolygons()
+{
+   return DEVICE_OK;
+}
+
+int DemoGalvo::LoadPolygons()
+{
+   return DEVICE_OK;
+}
+
+int DemoGalvo::SetPolygonRepetitions(int repetitions) 
+{
+   return DEVICE_OK;
+}
+
+int DemoGalvo::RunPolygons()
+{
+   return DEVICE_OK;
+}
+
+int DemoGalvo::RunSequence()
+{
+   return DEVICE_OK;
+}
+
+int DemoGalvo::StopSequence() 
+{
+   return DEVICE_OK;
+}
+
+// What can this function be doing?
+// A channel is never set, so how come we can return one????
+// Documentation of the Galvo interface is severely lacking!!!!
+int DemoGalvo::GetChannel (char* channelName) 
+{
+   return DEVICE_OK;
+}
+
+double DemoGalvo::GetXRange()
+{
+   return xRange_;
+}
+
+double DemoGalvo::GetYRange()
+{
+   return yRange_;
+}
+
+
+////////// BEGINNING OF POORLY ORGANIZED CODE //////////////
+//////////  CLEANUP NEEDED ////////////////////////////
 
 int TransposeProcessor::Initialize()
 {

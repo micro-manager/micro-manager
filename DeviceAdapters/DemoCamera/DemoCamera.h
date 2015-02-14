@@ -1047,6 +1047,50 @@ private:
 };
 
 
+//////////////////////////////////////////////////////////////////////////////
+// DemoGalvo class
+// Simulation of Galvo device
+//////////////////////////////////////////////////////////////////////////////
+class DemoGalvo : public CGalvoBase<DemoGalvo>
+{
+public:
+   DemoGalvo();
+   ~DemoGalvo();
+      
+   // MMDevice API
+   bool Busy() {return busy_;}
+   void GetName(char* pszName) const;
+
+   int Initialize();
+   int Shutdown(){initialized_ = false; return DEVICE_OK;}
+
+   // Galvo API
+   int PointAndFire(double x, double y, double pulseTime_us); 
+   int SetSpotInterval(double pulseTime_us);
+   int SetPosition(double x, double y);
+   int GetPosition(double& x, double& y);
+   int SetIlluminationState(bool on);
+   int AddPolygonVertex(int polygonIndex, double x, double y);
+   int DeletePolygons();
+   int LoadPolygons();
+   int SetPolygonRepetitions(int repetitions);
+   int RunPolygons();
+   int RunSequence();
+   int StopSequence();
+   int GetChannel(char* channelName);                         
+
+   double GetXRange();                         
+   double GetYRange(); 
+
+private:
+   bool initialized_;
+   bool busy_;
+   bool illuminationState_;
+   double xRange_;
+   double yRange_;
+   double currentX_;
+   double currentY_;
+};
 
 
 
