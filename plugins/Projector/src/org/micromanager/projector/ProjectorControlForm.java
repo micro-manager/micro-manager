@@ -62,8 +62,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -82,13 +80,14 @@ import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
 import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.JavaUtils;
+import org.micromanager.utils.MMFrame;
 import org.micromanager.utils.MMListenerAdapter;
 import org.micromanager.utils.MathFunctions;
 import org.micromanager.utils.ReportingUtils;
 
 // The main window for the Projector plugin. Contains logic for calibration,
 // and control for SLMs and Galvos.
-public class ProjectorControlForm extends javax.swing.JFrame implements OnStateListener {
+public class ProjectorControlForm extends MMFrame implements OnStateListener {
    private static ProjectorControlForm formSingleton_;
    private final ProjectionDevice dev_;
    private final MouseListener pointAndShootMouseListener;
@@ -969,8 +968,10 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
    // Converts a Runnable to one that runs asynchronously.
    public static Runnable makeRunnableAsync(final Runnable runnable) { 
       return new Runnable() {
+         @Override
          public void run() {
             new Thread() {
+               @Override
                public void run() {
                   runnable.run();            
                }
@@ -997,6 +998,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
    private Runnable runAtIntervals(final long firstTimeMs, final boolean repeat,
       final long intervalTimeMs, final Runnable runnable, final Callable<Boolean> shouldContinue) {
       return new Runnable() {
+         @Override
          public void run() {
             try {
                final long startTime = System.currentTimeMillis() + firstTimeMs;
@@ -1018,7 +1020,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
    
    // Update the GUI's roi settings so they reflect the user's current choices.
    public final void updateROISettings() {
-      boolean roisSubmitted = false;
+      boolean roisSubmitted;
       int numROIs = individualRois_.length;
       if (numROIs == 0) {
          roiStatusLabel.setText("No ROIs submitted");
@@ -1066,6 +1068,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
                   phototargetROIsRunnable("Synchronous phototargeting of ROIs"));
          } else {
             final Callable<Boolean> mdaRunning = new Callable<Boolean>() {
+               @Override
                public Boolean call() throws Exception {
                   return app_.isAcquisitionRunning();
                }
@@ -1091,8 +1094,10 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
    }
    
    // Method called if the phototargeting device has turned on or off.
+   @Override
    public void stateChanged(final boolean onState) {
       SwingUtilities.invokeLater(new Runnable() {
+         @Override
          public void run() {
             onButton.setSelected(onState);
             offButton.setSelected(!onState);
@@ -1169,6 +1174,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
          }
       });
 
+      this.loadAndRestorePosition(500, 300);
       updateROISettings();
    }
    
