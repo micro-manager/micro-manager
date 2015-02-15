@@ -24,26 +24,31 @@ public class ParallelAcquisitionGroup {
       multiAcqManager_ = acqManager;
       eng_ = eng;
       acqs_ = new ArrayList<FixedAreaAcquisition>();
-      new Thread(new Runnable() {
-         @Override
-         public void run() {
-            //create all
-            for (int i = 0; i < settingsList.size(); i++) {
-               acqs_.add( new FixedAreaAcquisition(settingsList.get(i), multiAcqManager_, eng_, ParallelAcquisitionGroup.this));
-            }
-            //start first
-            acqs_.get(0).readyForNextTimePoint();
-         }
-      }, "ParallelAcquisition startup thread").start();
+      //create all
+      for (int i = 0; i < settingsList.size(); i++) {
+         acqs_.add(new FixedAreaAcquisition(settingsList.get(i), multiAcqManager_, eng_, ParallelAcquisitionGroup.this));
+      }
+      //start first
+      acqs_.get(0).readyForNextTimePoint();
    }
 
+   /**
+    * Called by acquisition when it is aborted so group doesn't get stuck
+    * @param acq 
+    */
+   public void acqAborted(FixedAreaAcquisition acq) {
+      if (activeIndex_ == acqs_.indexOf(acq)) {
+         //if this one was active, move on to next
+         finishedTimePoint(acq);
+      }
+   }
    
    /**
     * Called by acquisition to signal that it has completed its time point
     * @param acq 
     */
    public void finishedTimePoint(FixedAreaAcquisition acq) {
-      int currentIndex = Arrays.asList(acqs_).indexOf(acq);   
+      int currentIndex = acqs_.indexOf(acq);   
       int nextIndex = (currentIndex + 1) % acqs_.size();
       //skip over finished acquisitions when determining which to run next
       for (int i = nextIndex; i < nextIndex + acqs_.size(); i++) {

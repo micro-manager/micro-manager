@@ -32,7 +32,6 @@ public class FixedAreaAcquisition extends Acquisition {
    private Thread eventGeneratingThread_;
    private ArrayList<XYStagePosition> positions_;
    private long nextTimePointStartTime_ms_;
-   private MultipleAcquisitionManager multiAcqManager_;
    private CustomAcqEngine eng_;
    private ParallelAcquisitionGroup acqGroup_;
    private AtomicInteger readyForTP_ = new AtomicInteger(-1);
@@ -62,17 +61,10 @@ public class FixedAreaAcquisition extends Acquisition {
       }
       initialize(settings.dir_, settings.name_);
       createEventGenerator();
-      multiAcqManager_ = multiAcqManager;
    }
    
    private void readSettings() {
       numTimePoints_ = settings_.timeEnabled_ ? settings_.numTimePoints_ : 1;
-   }
-   
-   @Override
-   public void finish() {
-      super.finish();
-      multiAcqManager_.acquisitionFinished();
    }
 
    /**
@@ -93,6 +85,7 @@ public class FixedAreaAcquisition extends Acquisition {
       //wait for image sink to drain
       imageSink_.waitToDie();
       //when image sink dies it will call finish
+      acqGroup_.acqAborted(this);
    }
 
    public boolean isPaused() {
@@ -159,7 +152,7 @@ public class FixedAreaAcquisition extends Acquisition {
             nextTimePointStartTime_ms_ = 0;
             for (int timeIndex = 0; timeIndex < numTimePoints_; timeIndex++) {               
                //wait enough time to pass to start new time point
-               while (System.currentTimeMillis() < nextTimePointStartTime_ms_  && 
+               while (System.currentTimeMillis() < nextTimePointStartTime_ms_  || 
                        timeIndex > readyForTP_.get()) {
                   try {
                      Thread.sleep(5);
@@ -224,7 +217,7 @@ public class FixedAreaAcquisition extends Acquisition {
                
                if (timeIndex == numTimePoints_ - 1) {
                   //acquisition now finished, add event with null ac w field so engine will mark acquisition as finished
-                  events_.add(new AcquisitionEvent(null, 0, 0, 0, 0, 0, 0, 0));
+                  events_.add(AcquisitionEvent.createAcquisitionFinishedEvent(FixedAreaAcquisition.this));
                }
 
                //wait for final image of timepoint to be written before beginning end of timepoint stuff

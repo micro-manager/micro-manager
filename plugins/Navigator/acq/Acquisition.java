@@ -71,11 +71,9 @@ public abstract class Acquisition {
    
    public abstract void abort();
    
-  
-   public void finish() {
+   public void markAsFinished() {
       finished_ = true;
    }
-   
    public long getStartTime_ms() {
       return startTime_ms_;
    }

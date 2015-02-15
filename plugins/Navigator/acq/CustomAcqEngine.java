@@ -138,10 +138,10 @@ public class CustomAcqEngine {
    }
 
    private void runEvent(AcquisitionEvent event) {
-      if (event.acquisition_ == null) {
+      if (event.isFinishingEvent()) {
          //event will be null when fixed acquisitions run to compeletion in normal operation
          //signal to TaggedImageSink to finish saving thread and mark acquisition as finished
-         event.acquisition_.finish();
+         event.acquisition_.engineOutputQueue_.add(new TaggedImage(null, null));
       } else {
          updateHardware(event);
          acquireImage(event);

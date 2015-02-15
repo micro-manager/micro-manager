@@ -179,16 +179,16 @@
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="removeAcqButton_" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
-                              <Component id="moveAcqUpButton_" min="-2" pref="45" max="-2" attributes="0"/>
+                              <Component id="moveAcqUpButton_" min="-2" pref="67" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
-                              <Component id="moveAcqDownButton_" min="-2" pref="45" max="-2" attributes="0"/>
-                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="moveAcqDownButton_" min="-2" pref="75" max="-2" attributes="0"/>
+                              <EmptySpace type="unrelated" max="-2" attributes="0"/>
                               <Component id="intereaveButton_" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace max="32767" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
                               <Component id="deinterleaveButton_" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="runMultipleAcquisitionsButton_" min="-2" pref="132" max="-2" attributes="0"/>
-                              <EmptySpace min="-2" pref="146" max="-2" attributes="0"/>
+                              <EmptySpace min="-2" pref="58" max="-2" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -228,7 +228,7 @@
                     </Component>
                     <Component class="javax.swing.JButton" name="moveAcqUpButton_">
                       <Properties>
-                        <Property name="text" type="java.lang.String" value="&#x2191;"/>
+                        <Property name="text" type="java.lang.String" value="Move&#x2191;"/>
                       </Properties>
                       <Events>
                         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="moveAcqUpButton_ActionPerformed"/>
@@ -236,7 +236,7 @@
                     </Component>
                     <Component class="javax.swing.JButton" name="moveAcqDownButton_">
                       <Properties>
-                        <Property name="text" type="java.lang.String" value="&#x2193;"/>
+                        <Property name="text" type="java.lang.String" value="Move&#x2193;"/>
                       </Properties>
                       <Events>
                         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="moveAcqDownButton_ActionPerformed"/>

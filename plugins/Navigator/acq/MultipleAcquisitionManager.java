@@ -7,11 +7,7 @@ package acq;
 import gui.GUI;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JOptionPane;
-import javax.swing.JTable;
-import org.micromanager.utils.ReportingUtils;
 
 /**
  *
@@ -233,26 +229,27 @@ public class MultipleAcquisitionManager {
                if (managerThread_.isInterrupted()) {
                   break; //user aborted
                }
+               //mark as running
                for (int i = 0; i < numberInGroup_.get(groupIndex); i++) {
                   acqStatus_[getFirstIndexOfGroup(groupIndex) + i] = "Running";
                   gui_.repaint();
-                
+               }
+               //run one or more acquisitions in parallel group 
                currentAcqs_ = eng_.runInterleavedAcquisitions(acquisitions_.subList(
                        getFirstIndexOfGroup(groupIndex), getFirstIndexOfGroup(groupIndex) + getGroupSize(groupIndex)));
-                  
-                  while (currentAcqs_ != null) {
-                     try {
-                        Thread.sleep(50);
-                     } catch (InterruptedException ex) {
-                        managerThread_.interrupt();
-                     }
+               while (currentAcqs_ != null) {
+                  try {
+                     Thread.sleep(50);
+                  } catch (InterruptedException ex) {
+                     managerThread_.interrupt();
                   }
                }
+               //mark as finished
                for (int i = 0; i < numberInGroup_.get(groupIndex); i++) {
                   acqStatus_[getFirstIndexOfGroup(groupIndex) + i] = "Finished";
                }
                gui_.repaint();
-            } 
+            }
             running_ = false;
             acqStatus_ = null;            
             gui_.enableMultiAcquisitionControls(true);            
@@ -261,11 +258,19 @@ public class MultipleAcquisitionManager {
      managerThread_.start();
    }
    
+   public void updateAcquisitionStatuses() {
+      if (managerThread_ != null && managerThread_.isAlive()) {
+         //LEFT OFF HERE
+         //Make sure when aborting single acq in parallel group statuses update appropriately
+      } else {
+         acqStatus_ = null;
+      }
+   }
+   
    /**
-    * Called by fixed area acquisition when it is finished so that manager knows to move onto next one
+    * Called by parallel acquisition group when it is finished so that manager knows to move onto next one
     */
    public void acquisitionFinished() {
-      System.out.println("Acquisition finished");
       currentAcqs_ = null;
    }
    

@@ -43,10 +43,6 @@ public class ExploreAcquisition extends Acquisition {
       //image sink will call finish when it completes
    }
 
-   public void finish() {
-      finished_ = true;
-   }
-
    public void acquireTiles(int row1, int col1, int row2, int col2) {
       try {
          //update positionList and get index
