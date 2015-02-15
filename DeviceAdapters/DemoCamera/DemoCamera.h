@@ -178,6 +178,14 @@ public:
    int OnStripeWidth(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnCCDTemp(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnIsSequenceable(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+   // Special public DemoCamera methods
+   void AddBackgroundAndNoise(ImgBuffer& img, double mean, double stdDev);
+   // this function replace normal_distribution in C++11
+   double GaussDistributedValue(double mean, double std);
+
+
 
 private:
    int SetAllowedBinning();
@@ -229,6 +237,7 @@ private:
    friend class MySequenceThread;
    int nComponents_;
    MySequenceThread * thd_;
+   int mode_;
 };
 
 class MySequenceThread : public MMDeviceThreadBase
@@ -1083,6 +1092,11 @@ public:
    double GetYRange(); 
 
 private:
+   void GetCamera();
+   void GenerateImage(double pulseTime_us);
+
+   std::string cameraName_;
+   MM::Camera* camera_;
    bool initialized_;
    bool busy_;
    bool illuminationState_;

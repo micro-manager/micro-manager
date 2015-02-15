@@ -61,6 +61,9 @@ const char* g_PixelType_32bitRGB = "32bitRGB";
 const char* g_PixelType_64bitRGB = "64bitRGB";
 const char* g_PixelType_32bit = "32bit";  // floating point greyscale
 
+// constants for naming camera modes
+const char* g_Sine_Wave = "Artificial Waves";
+const char* g_Norm_Noise = "Noise";
 
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API
@@ -223,10 +226,11 @@ CDemoCamera::CDemoCamera() :
    fastImage_(false),
    saturatePixels_(false),
 	fractionOfPixelsToDropOrSaturate_(0.002),
-    shouldRotateImages_(false),
-    shouldDisplayImageNumber_(false),
-    stripeWidth_(1.0),
-   nComponents_(1)
+   shouldRotateImages_(false),
+   shouldDisplayImageNumber_(false),
+   stripeWidth_(1.0),
+   nComponents_(1),
+   mode_(0)
 {
    memset(testProperty_,0,sizeof(testProperty_));
 
@@ -463,6 +467,13 @@ int CDemoCamera::Initialize()
    CreateStringProperty(propName.c_str(), "No", false, pAct);
    AddAllowedValue(propName.c_str(), "Yes");
    AddAllowedValue(propName.c_str(), "No");
+
+   // Camera mode: 
+   pAct = new CPropertyAction (this, &CDemoCamera::OnMode);
+   propName = "Mode";
+   CreateStringProperty(propName.c_str(), g_Sine_Wave, false, pAct);
+   AddAllowedValue(propName.c_str(), g_Sine_Wave);
+   AddAllowedValue(propName.c_str(), g_Norm_Noise);
 
    // synchronize all properties
    // --------------------------
@@ -1596,6 +1607,33 @@ int CDemoCamera::OnIsSequenceable(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
 
+int CDemoCamera::OnMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   std::string val;
+   if (eAct == MM::BeforeGet)
+   {
+      if (mode_ == 0)
+      {
+         val = g_Sine_Wave;
+      } else 
+      {
+         val = g_Norm_Noise;
+      }
+      pProp->Set(val.c_str());
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(val);
+      if (val == g_Sine_Wave) 
+      {
+         mode_ = 0;
+      } else
+      {
+         mode_ = 1;
+      }
+   }
+   return DEVICE_OK;
+}
 ///////////////////////////////////////////////////////////////////////////////
 // Private CDemoCamera methods
 ///////////////////////////////////////////////////////////////////////////////
@@ -1655,12 +1693,23 @@ void CDemoCamera::GenerateEmptyImage(ImgBuffer& img)
 
 
 /**
-* Generate a spatial sine wave.
+* Generates an image.
+*
+* Options:
+* 1. a spatial sine wave.
+* 2. Gaussian noise
 */
 void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
 { 
   
    MMThreadGuard g(imgPixelsLock_);
+
+   if (mode_ == 1)
+   {
+      double max = 1 << GetBitDepth();
+      AddBackgroundAndNoise(img, max / 100, 1.0);
+      return;
+   }
 
 	//std::string pixelType;
 	char buf[MM::MaxStrLength];
@@ -1986,6 +2035,78 @@ void CDemoCamera::TestResourceLocking(const bool recurse)
    if(recurse)
       TestResourceLocking(false);
 }
+
+/**
+* Generate an image with offsetplus noise
+*/
+void CDemoCamera::AddBackgroundAndNoise(ImgBuffer& img, double mean, double stdDev)
+{ 
+	char buf[MM::MaxStrLength];
+   GetProperty(MM::g_Keyword_PixelType, buf);
+	std::string pixelType(buf);
+
+   int maxValue = 1 << GetBitDepth();
+   long nrPixels = img.Width() * img.Height();
+   if (pixelType.compare(g_PixelType_8bit) == 0)
+   {
+      unsigned char* pBuf = (unsigned char*) const_cast<unsigned char*>(img.GetPixels());
+      for (long i = 0; i < nrPixels; i++) 
+      {
+         double value = GaussDistributedValue(mean, stdDev);
+         if (value < 0) 
+         {
+            value = 0;
+         }
+         else if (value > maxValue)
+         {
+            value = maxValue;
+         }
+         *(pBuf + i) = (unsigned char) value;
+      }
+   }
+   else if (pixelType.compare(g_PixelType_16bit) == 0)
+   {
+      unsigned short* pBuf = (unsigned short*) const_cast<unsigned char*>(img.GetPixels());
+      for (long i = 0; i < nrPixels; i++) 
+      {
+         double value = GaussDistributedValue(mean, stdDev);
+         if (value < 0) 
+         {
+            value = 0;
+         }
+         else if (value > maxValue)
+         {
+            value = maxValue;
+         }
+         *(pBuf + i) = (unsigned short) value;
+      }
+   }
+}
+
+/**
+ * Uses Marsaglia polar method to generate Gaussian distributed value.  
+ * Then distributes this around mean with the desired std
+ */
+double CDemoCamera::GaussDistributedValue(double mean, double std)
+{
+   double s = 2;
+   double u;
+   double v;
+   double halfRandMax = RAND_MAX / 2;
+   while (s >= 1 || s <= 0) 
+   {
+      // get random values between -1 and 1
+      u = rand() / halfRandMax - 1.0;
+      v = rand() / halfRandMax - 1.0;
+      s = u * u + v * v;
+   }
+   double tmp = sqrt( -2 * log(s) / s);
+   double x = u * tmp;
+
+   return mean + std * x;
+}
+
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // CDemoFilterWheel implementation
@@ -3383,6 +3504,8 @@ int DemoAutoFocus::Initialize()
 ///////////////////////////////////////////////////////////
 // DemoGalvo
 DemoGalvo::DemoGalvo() :
+   camera_(0),
+   cameraName_(""),
    initialized_(false),
    busy_(false),
    illuminationState_(false),
@@ -3407,8 +3530,11 @@ int DemoGalvo::Initialize()
    return DEVICE_OK;
 }
 
+
 int DemoGalvo::PointAndFire(double x, double y, double pulseTime_us) 
 {
+   SetPosition(x, y);
+   GenerateImage(pulseTime_us);
    return DEVICE_OK;
 }
 
@@ -3490,6 +3616,71 @@ double DemoGalvo::GetYRange()
    return yRange_;
 }
 
+/**
+ * Figure out which camera is associated with our own Hub device
+ */
+void DemoGalvo::GetCamera()
+{
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
+   if (!pHub)
+   {
+      LogMessage(NoHubError);
+      return;
+   }
+
+   char deviceName[MM::MaxStrLength];
+   unsigned int deviceIterator = 0;
+   for (;;)
+   {
+      GetLoadedDeviceOfType(MM::CameraDevice, deviceName, deviceIterator);
+      if (0 < strlen(deviceName)) 
+      {
+         MM::Camera* camera = (MM::Camera*) GetDevice(deviceName);
+         MM::Hub* cHub = GetCoreCallback()->GetParentHub(camera);
+         if (cHub == pHub)
+         {
+            camera_ = camera;
+            cameraName_ = deviceName;
+            break;
+         }
+      }
+      else
+         break;
+   }
+}
+
+/**
+ * Generates a synthetic image ready to be used by the democamera
+ * associated with our own parenthub
+ * The image has a background, and a burned in image of a Gaussian spot 
+ * at a position defined by the position of our Galvo.
+ * The position is defined as:
+ *
+ */
+void DemoGalvo::GenerateImage(double pulseTime_us) 
+{
+   if (cameraName_.length() < 1) 
+   {
+      GetCamera();
+      if (cameraName_.length() < 1) 
+      {
+         LogMessage("The demo galvo device did not find a camera associated with the same hub");
+      }
+   }
+
+   int width = camera_->GetImageWidth();
+   int height = camera_->GetImageHeight();
+   int binning = camera_->GetBinning();
+   int bitdepth = camera_->GetBitDepth();
+   int bytesPerPixel = camera_->GetImageBytesPerPixel();
+
+
+   
+
+
+
+
+}
 
 ////////// BEGINNING OF POORLY ORGANIZED CODE //////////////
 //////////  CLEANUP NEEDED ////////////////////////////
