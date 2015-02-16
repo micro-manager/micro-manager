@@ -1948,10 +1948,9 @@ bool Universal::WaitForExposureDone()throw()
       int16 status;
       uns32 not_needed;
 
-      double maxReadTimeSec = (double)(camCurrentSpeed_.pixTime * GetImageHeight() * GetImageWidth()) / 1000000000.0f;
-      // make the time out 2 seconds plus twice the exposure
-      // Added readout time, this caused troubles on very low readout speeds and large buffers, this code timeouted before the image was read out
-      MM::MMTime timeout((long)(triggerTimeout_ + maxReadTimeSec + 2*GetExposure() * 0.001), (long)(2*GetExposure() * 1000));
+      const double estReadTimeSec = EstimateMaxReadoutTimeMs() / 1000.0f;
+      // make the time out 2 seconds (default trigger timeout) plus twice the exposure
+      MM::MMTime timeout((long)(triggerTimeout_ + estReadTimeSec + 2*GetExposure() * 0.001), (long)(2*GetExposure() * 1000));
       MM::MMTime startTime = GetCurrentMMTime();
       MM::MMTime elapsed(0,0);
 
@@ -2367,6 +2366,22 @@ int Universal::GetPvExposureSettings( int16& pvExposeOutMode, uns32& pvExposureV
     return nRet;
 }
 
+/**
+* This method is used to estimate how long it might take to read out one frame.
+* The calculation is very inaccurate, it is only used when calculating acquisition timeout.
+*/
+unsigned int Universal::EstimateMaxReadoutTimeMs() const
+{
+    const unsigned int pixCount = GetImageHeight() * GetImageWidth();
+    // Sensor read time rough estimation, pixTime = nano-seconds/pixel
+    const unsigned int readTimeEstMs = ((camCurrentSpeed_.pixTime * (unsigned long long)pixCount) / 1000000);
+    // Transfer over the wire. Let's just assume the slowest interface does 4MB/s
+    const unsigned int transferSpeedKBs = 4000; 
+    const unsigned int transferTimeMaxMs = (pixCount*GetImageBytesPerPixel()) / transferSpeedKBs;
+    return readTimeEstMs + transferTimeMaxMs;
+}
+
+
 #ifdef PVCAM_SMART_STREAMING_SUPPORTED
 int Universal::SendSmartStreamingToCamera()
 {
@@ -2613,11 +2628,9 @@ int Universal::ThreadRun(void)
    {
       do
       {
-         // wait until image is ready
-         double maxReadTimeSec = (double)(camCurrentSpeed_.pixTime * GetImageHeight() * GetImageWidth()) / 1000000000.0f;
-         // make the time out 2 seconds plus twice the exposure
-         // Added readout time, this caused troubles on very low readout speeds and large buffers, this code timeouted before the image was read out
-         MM::MMTime timeout((long)(triggerTimeout_ + maxReadTimeSec + 2*GetExposure() * 0.001), (long)(2*GetExposure() * 1000));
+         const double estReadTimeSec = EstimateMaxReadoutTimeMs() / 1000.0f;
+         // make the time out 2 seconds (default trigger timeout) plus twice the exposure
+         MM::MMTime timeout((long)(triggerTimeout_ + estReadTimeSec + 2*GetExposure() * 0.001), (long)(2*GetExposure() * 1000));
          MM::MMTime startTime = GetCurrentMMTime();
          MM::MMTime elapsed(0,0);
 
