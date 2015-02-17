@@ -757,4 +757,10 @@ public interface ScriptInterface {
     * Micro-Manager display constructs.
     */
    public DisplayManager display();
+
+   /**
+    * Provides access to the UserSettings instance for accessing per-user
+    * saved settings.
+    */
+   public UserSettings settings();
 }

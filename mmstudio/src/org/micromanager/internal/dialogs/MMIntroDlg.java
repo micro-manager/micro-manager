@@ -36,6 +36,11 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.prefs.BackingStoreException;
+import java.util.prefs.Preferences;
 
 import java.util.ArrayList;
 
@@ -45,6 +50,7 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.border.LineBorder;
@@ -52,6 +58,7 @@ import javax.swing.border.LineBorder;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.JavaUtils;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * Splash screen and introduction dialog. 
@@ -59,12 +66,16 @@ import org.micromanager.internal.utils.JavaUtils;
  */
 public class MMIntroDlg extends JDialog {
    private static final long serialVersionUID = 1L;
+   private static final String PREFS_USERNAMES = "Usernames";
+   public static final String USERNAME_DEFAULT = "Default user";
+   private static final String USERNAME_NEW = "Create new user";
    private JTextArea welcomeTextArea_;
    private boolean okFlag_ = true;
    
    ArrayList<String> mruCFGFileList_;
 
    private JComboBox cfgFileDropperDown_;
+   private JComboBox userSelect_;
    
    public static String DISCLAIMER_TEXT = 
       
@@ -94,7 +105,7 @@ public class MMIntroDlg extends JDialog {
       setUndecorated(true);
       if (! IJ.isMacOSX())
         ((JPanel) getContentPane()).setBorder(BorderFactory.createLineBorder(Color.GRAY));
-      setSize(new Dimension(392, 533));
+      setSize(new Dimension(392, 573));
       Dimension winSize = getSize();
       Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
       setLocation(screenSize.width/2 - (winSize.width/2), screenSize.height/2 - (winSize.height/2));
@@ -118,7 +129,7 @@ public class MMIntroDlg extends JDialog {
          }
       });
       okButton.setText("OK");
-      okButton.setBounds(JavaUtils.isMac() ? 200 : 100, 497, 81, 24);
+      okButton.setBounds(JavaUtils.isMac() ? 200 : 100, 537, 81, 24);
       getContentPane().add(okButton);
       getRootPane().setDefaultButton(okButton);
       okButton.requestFocusInWindow();
@@ -133,7 +144,7 @@ public class MMIntroDlg extends JDialog {
          }
       });
       cancelButton.setText("Cancel");
-      cancelButton.setBounds(JavaUtils.isMac() ? 100 : 200, 497, 81, 24);
+      cancelButton.setBounds(JavaUtils.isMac() ? 100 : 200, 537, 81, 24);
       getContentPane().add(cancelButton);     
 
       final JLabel microscopeManagerLabel = new JLabel();
@@ -170,6 +181,58 @@ public class MMIntroDlg extends JDialog {
       cfgFileDropperDown_.setBounds(5, 245, 342, 26);
       getContentPane().add(cfgFileDropperDown_);
 
+      JLabel userProfileLabel = new JLabel("User profile:");
+      userProfileLabel.setFont(new Font("Arial", Font.PLAIN, 10));
+      userProfileLabel.setBounds(5, 268, 319, 19);
+      getContentPane().add(userProfileLabel);
+
+      final Preferences prefs = Preferences.userNodeForPackage(MMIntroDlg.class);
+      String[] users = new String[0];
+      try {
+         if (!prefs.nodeExists(PREFS_USERNAMES)) {
+            // Create the list of user names, with two default options.
+            Preferences node = prefs.node(PREFS_USERNAMES);
+            node.put(USERNAME_DEFAULT, "");
+            node.put(USERNAME_NEW, "");
+         }
+         users = prefs.node(PREFS_USERNAMES).keys();
+      }
+      catch (BackingStoreException e) {
+         ReportingUtils.logError(e, "Couldn't recover list of user names");
+      }
+      final ArrayList<String> usersAsList = new ArrayList<String>(Arrays.asList(users));
+      // HACK: put the "new" and "default" options first in the list.
+      usersAsList.remove(USERNAME_DEFAULT);
+      usersAsList.remove(USERNAME_NEW);
+      usersAsList.add(0, USERNAME_DEFAULT);
+      usersAsList.add(0, USERNAME_NEW);
+      userSelect_ = new JComboBox();
+      for (String userName : usersAsList) {
+         userSelect_.addItem(userName);
+      }
+      userSelect_.setSelectedItem(USERNAME_DEFAULT);
+      userSelect_.setBounds(5, 285, 342, 26);
+      userSelect_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            String userName = (String) userSelect_.getSelectedItem();
+            if (!userName.contentEquals(USERNAME_NEW)) {
+               return;
+            }
+            // Prompt the user for the new user name.
+            userName = JOptionPane.showInputDialog("Please input the new user name:");
+            if (usersAsList.contains(userName)) {
+               ReportingUtils.showError("That user name is already in use.");
+               return;
+            }
+            usersAsList.add(userName);
+            userSelect_.addItem(userName);
+            userSelect_.setSelectedItem(userName);
+            prefs.node(PREFS_USERNAMES).put(userName, "");
+         }
+      });
+      getContentPane().add(userSelect_);
+
       welcomeTextArea_ = new JTextArea() {
          @Override
          public Insets getInsets() {
@@ -185,7 +248,7 @@ public class MMIntroDlg extends JDialog {
       welcomeTextArea_.setFocusable(false);
       welcomeTextArea_.setEditable(false);
       welcomeTextArea_.setBackground(Color.WHITE);
-      welcomeTextArea_.setBounds(10, 284, 356, 205);
+      welcomeTextArea_.setBounds(10, 324, 356, 205);
       getContentPane().add(welcomeTextArea_);
 
    }
@@ -239,6 +302,10 @@ public class MMIntroDlg extends JDialog {
            tvalue = "";
 
       return tvalue;
+   }
+
+   public String getUserName() {
+      return (String) userSelect_.getSelectedItem();
    }
    
    public String getScriptFile() {

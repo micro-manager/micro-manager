@@ -96,6 +96,7 @@ import org.micromanager.display.OverlayPanel;
 import org.micromanager.PositionList;
 import org.micromanager.ScriptInterface;
 import org.micromanager.SequenceSettings;
+import org.micromanager.UserSettings;
 import org.micromanager.events.ExposureChangedEvent;
 import org.micromanager.events.PropertiesChangedEvent;
 import org.micromanager.internal.conf2.MMConfigFileException;
@@ -130,6 +131,7 @@ import org.micromanager.internal.positionlist.PositionListDlg;
 import org.micromanager.internal.script.ScriptPanel;
 import org.micromanager.internal.utils.AutofocusManager;
 import org.micromanager.internal.utils.ContrastSettings;
+import org.micromanager.internal.utils.DefaultUserSettings;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.FileDialogs.FileType;
 import org.micromanager.internal.utils.GUIColors;
@@ -194,6 +196,7 @@ public class MMStudio implements ScriptInterface {
    private AcqControlDlg acqControlWin_;
    private DataManager dataManager_;
    private DisplayManager displayManager_;
+   private UserSettings settingsManager_;
    private PluginManager pluginManager_;
    private final SnapLiveManager snapLiveManager_;
    private final ToolsMenu toolsMenu_;
@@ -475,7 +478,8 @@ public class MMStudio implements ScriptInterface {
       // Create an instance of HotKeys so that they can be read in from prefs
       hotKeys_ = new org.micromanager.internal.utils.HotKeys();
       hotKeys_.loadSettings();
-      
+
+      String userName = MMIntroDlg.USERNAME_DEFAULT;
       if (!options_.doNotAskForConfigFile_) {
          // Ask the user for a configuration file.
          MMIntroDlg introDlg = new MMIntroDlg(
@@ -489,7 +493,9 @@ public class MMStudio implements ScriptInterface {
             return;
          }
          sysConfigFile_ = introDlg.getConfigFile();
+         userName = introDlg.getUserName();
       }
+      settingsManager_ = new DefaultUserSettings(userName);
       saveMRUConfigFiles();
 
       mainPrefs_.put(SYSTEM_CONFIG_FILE, sysConfigFile_);
@@ -2539,5 +2545,10 @@ public class MMStudio implements ScriptInterface {
    @Override
    public DisplayManager display() {
       return displayManager_;
+   }
+
+   @Override
+   public UserSettings settings() {
+      return settingsManager_;
    }
 }
