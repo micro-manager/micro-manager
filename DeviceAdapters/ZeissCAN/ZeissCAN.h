@@ -681,14 +681,17 @@ public:
    // action interface
    // ---------------
    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnUpperPrism(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    int SetTurretPosition(int position);
    int GetTurretPosition(int &position);
-   //bool GetPresence(bool& present);
+   int SetUpperPrism(int position);
+   int GetUpperPrism(int& position);
    bool initialized_;
    std::string name_;
    long pos_;
+   long upperPrismPos_;
    int numPos_;
 };
       
