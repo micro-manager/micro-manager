@@ -1424,13 +1424,23 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       // identify BNC from the preset and set counter inputs for 13-16 appropriately 
       ChannelSpec[] channels = multiChannelPanel_.getUsedChannels();
+      boolean[] hardwareChannelUsed = new boolean[4]; // initialized to all false
       for (int channelNum = 0; channelNum < channels.length; channelNum++) {
          // we already know there are between 1 and 4 channels
          int outputNum = getPLogicOutputFromChannel(channels[channelNum]);
-         if (outputNum<5) {
+         if (outputNum<5) {  // check for error in getPLogicOutputFromChannel()
             // restore update setting
             props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_UPDATES, editCellUpdates);
             return false;  // already displayed error
+         }
+         // make sure we don't have multiple Micro-Manager channels using same hardware channel
+         if (hardwareChannelUsed[outputNum-5]) {
+            // restore update setting
+            props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_UPDATES, editCellUpdates);
+            MyDialogUtils.showError("Multiple channels cannot use same laser for PLogic triggering");
+            return false;
+         } else {
+            hardwareChannelUsed[outputNum-5] = true;
          }
          props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_POINTER_POSITION, outputNum + 8);
          props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_1, invertAddress);  // enable this AND4
