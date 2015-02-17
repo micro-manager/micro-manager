@@ -13,7 +13,7 @@
 //                Karl Hoover (stuff such as programmable CCD size  & the various image processors)
 //                Arther Edelstein ( equipment error simulation)
 //
-// COPYRIGHT:     University of California, San Francisco, 2006
+// COPYRIGHT:     University of California, San Francisco, 2006-2015
 //                100X Imaging Inc, 2008
 //
 // LICENSE:       This file is distributed under the BSD license.
@@ -66,6 +66,12 @@ const int SEVEN_SEGMENT_HORIZONTALITY[] = {1, 0, 0, 1, 0, 0, 1};
 const int SEVEN_SEGMENT_X_OFFSET[] = {0, 0, 1, 0, 0, 1, 0};
 // Y offset for this segment.
 const int SEVEN_SEGMENT_Y_OFFSET[] = {0, 0, 0, 1, 1, 1, 2};
+
+class ImgManipulator 
+{
+   public:
+      virtual int ChangePixels(ImgBuffer& img) = 0;
+};
 
 ////////////////////////
 // DemoHub
@@ -185,6 +191,7 @@ public:
    // this function replace normal_distribution in C++11
    double GaussDistributedValue(double mean, double std);
 
+   int RegisterImgManipulatorCallBack(ImgManipulator* imgManpl);
 
 
 private:
@@ -238,6 +245,7 @@ private:
    int nComponents_;
    MySequenceThread * thd_;
    int mode_;
+   ImgManipulator* imgManpl_;
 };
 
 class MySequenceThread : public MMDeviceThreadBase
@@ -1060,7 +1068,7 @@ private:
 // DemoGalvo class
 // Simulation of Galvo device
 //////////////////////////////////////////////////////////////////////////////
-class DemoGalvo : public CGalvoBase<DemoGalvo>
+class DemoGalvo : public CGalvoBase<DemoGalvo>, ImgManipulator
 {
 public:
    DemoGalvo();
@@ -1091,15 +1099,17 @@ public:
    double GetXRange();                         
    double GetYRange(); 
 
-private:
-   void GetCamera();
-   void GenerateImage(double pulseTime_us);
+   int ChangePixels(ImgBuffer& img);
 
-   std::string cameraName_;
-   MM::Camera* camera_;
+private:
+
+   unsigned short gaussianMask_[5][5];
+
+   MM::MMTime pfExpirationTime_;
    bool initialized_;
    bool busy_;
    bool illuminationState_;
+   bool pointAndFire_;
    double xRange_;
    double yRange_;
    double currentX_;

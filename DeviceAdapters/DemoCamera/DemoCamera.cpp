@@ -230,7 +230,8 @@ CDemoCamera::CDemoCamera() :
    shouldDisplayImageNumber_(false),
    stripeWidth_(1.0),
    nComponents_(1),
-   mode_(0)
+   mode_(0),
+   imgManpl_(0)
 {
    memset(testProperty_,0,sizeof(testProperty_));
 
@@ -1707,7 +1708,16 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
    if (mode_ == 1)
    {
       double max = 1 << GetBitDepth();
-      AddBackgroundAndNoise(img, max / 100, 1.0);
+      int mean = 10;
+      if (max > 256)
+      {
+         mean = 100;
+      }
+      AddBackgroundAndNoise(img, mean, 3.0);
+      if (imgManpl_ != 0)
+      {
+         imgManpl_->ChangePixels(img);
+      }
       return;
    }
 
@@ -2106,7 +2116,11 @@ double CDemoCamera::GaussDistributedValue(double mean, double std)
    return mean + std * x;
 }
 
-
+int CDemoCamera::RegisterImgManipulatorCallBack(ImgManipulator* imgManpl)
+{
+   imgManpl_ = imgManpl;
+   return DEVICE_OK;
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // CDemoFilterWheel implementation
@@ -3504,16 +3518,31 @@ int DemoAutoFocus::Initialize()
 ///////////////////////////////////////////////////////////
 // DemoGalvo
 DemoGalvo::DemoGalvo() :
-   camera_(0),
-   cameraName_(""),
+   pfExpirationTime_(0),
    initialized_(false),
    busy_(false),
    illuminationState_(false),
+   pointAndFire_(false),
    xRange_(10.0),
    yRange_(10.0),
    currentX_(0.0),
    currentY_(0.0)
 {
+   unsigned short gaussianMask[5][5] = {
+      {1, 4, 7, 4, 1},
+      {4, 16, 26, 16, 4},
+      {7, 26, 41, 26, 7},
+      {4, 16, 26, 16, 4},
+      {1, 4, 7, 4, 1}
+   };
+   for (int x = 0; x < 5; x++)
+   { 
+      for (int y =0; y < 5; y++) 
+      {
+         gaussianMask_[x][y] = gaussianMask[x][y];
+      }
+   }
+
 }
 
 DemoGalvo::~DemoGalvo() 
@@ -3527,14 +3556,52 @@ void DemoGalvo::GetName(char* pName) const
 }
 int DemoGalvo::Initialize() 
 {
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
+   if (!pHub)
+   {
+      LogMessage(NoHubError);
+   }
+   else {
+      char deviceName[MM::MaxStrLength];
+      unsigned int deviceIterator = 0;
+      for (;;)
+      {
+         GetLoadedDeviceOfType(MM::CameraDevice, deviceName, deviceIterator);
+         if (0 < strlen(deviceName)) 
+         {
+            std::ostringstream os;
+            os << "Galvo detected: " << deviceName;
+            LogMessage(os.str().c_str());
+            MM::Camera* camera = (MM::Camera*) GetDevice(deviceName);
+            MM::Hub* cHub = GetCoreCallback()->GetParentHub(camera);
+            if (cHub == pHub)
+            {
+               CDemoCamera* demoCamera = (CDemoCamera*) camera;
+               demoCamera->RegisterImgManipulatorCallBack(this);
+               LogMessage("DemoGalvo registered as callback");
+               break;
+            }
+         }
+         else
+         {
+            LogMessage("Galvo detected no camera devices");
+            break;
+         }
+         deviceIterator++;
+      }
+   }
    return DEVICE_OK;
 }
-
 
 int DemoGalvo::PointAndFire(double x, double y, double pulseTime_us) 
 {
    SetPosition(x, y);
-   GenerateImage(pulseTime_us);
+   MM::MMTime offset(pulseTime_us);
+   pfExpirationTime_ = GetCurrentMMTime() + offset;
+   pointAndFire_ = true;
+   std::ostringstream os;
+   os << "PointAndFire set galvo to : " << x << " - " << y;
+   LogMessage(os.str().c_str());
    return DEVICE_OK;
 }
 
@@ -3616,70 +3683,68 @@ double DemoGalvo::GetYRange()
    return yRange_;
 }
 
-/**
- * Figure out which camera is associated with our own Hub device
- */
-void DemoGalvo::GetCamera()
-{
-   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
-   if (!pHub)
-   {
-      LogMessage(NoHubError);
-      return;
-   }
-
-   char deviceName[MM::MaxStrLength];
-   unsigned int deviceIterator = 0;
-   for (;;)
-   {
-      GetLoadedDeviceOfType(MM::CameraDevice, deviceName, deviceIterator);
-      if (0 < strlen(deviceName)) 
-      {
-         MM::Camera* camera = (MM::Camera*) GetDevice(deviceName);
-         MM::Hub* cHub = GetCoreCallback()->GetParentHub(camera);
-         if (cHub == pHub)
-         {
-            camera_ = camera;
-            cameraName_ = deviceName;
-            break;
-         }
-      }
-      else
-         break;
-   }
-}
 
 /**
- * Generates a synthetic image ready to be used by the democamera
- * associated with our own parenthub
- * The image has a background, and a burned in image of a Gaussian spot 
- * at a position defined by the position of our Galvo.
- * The position is defined as:
+ * Callback function that will be called by DemoCamera everytime
+ * a new image is generated.
+ * We insert a Gaussian spot if the state of our device suggests to do so
+ * The position of the spot is set by the relation:
+ *
  *
  */
-void DemoGalvo::GenerateImage(double pulseTime_us) 
+int DemoGalvo::ChangePixels(ImgBuffer& img) 
 {
-   if (cameraName_.length() < 1) 
+   if (!illuminationState_ && !pointAndFire_)
    {
-      GetCamera();
-      if (cameraName_.length() < 1) 
+      std::ostringstream os;
+      os << "state: " << illuminationState_ << ", pointAndFire: " << pointAndFire_;
+      LogMessage(os.str().c_str());
+      return DEVICE_OK;
+   }
+   int offsetX = -100;
+   double vMaxX = 7.5;
+   int offsetY = -150;
+   double vMaxY = 8.0;
+
+   int xPos = offsetX + (currentX_ / vMaxX) * ((double) img.Width() - (double) offsetX);
+   int yPos = offsetY + (currentY_ / vMaxY) * ((double) img.Height() - (double) offsetY);
+
+   std::ostringstream os;
+   os << "XPos: " << xPos << ", YPos: " << yPos;
+   LogMessage(os.str().c_str());
+
+   if (xPos > 5 && xPos < img.Width() - 6  && yPos > 5 && yPos < img.Height() - 6)
+   {
+      if (img.Depth() == 1)
       {
-         LogMessage("The demo galvo device did not find a camera associated with the same hub");
+         unsigned char* pBuf = (unsigned char*) const_cast<unsigned char*>(img.GetPixels());
+         img.SetPixels(pBuf);
+      }
+      else if (img.Depth() == 2)
+      {
+         unsigned short* pBuf = (unsigned short*) const_cast<unsigned char*>(img.GetPixels());
+         for (int x = 0; x < 5; x++) 
+         {
+            for (int y = 0; y < 5; y++) 
+            {
+               int w = xPos + x;
+               int h = yPos + y;
+               long count = h * img.Width() + w;
+               *(pBuf + count) = *(pBuf + count) + 3 * (unsigned short) gaussianMask_[x][y];
+            }
+         }
+         img.SetPixels(pBuf);
+      }
+   }
+   if (pointAndFire_)
+   {
+      if (GetCurrentMMTime() > pfExpirationTime_)
+      {
+         pointAndFire_ = false;
       }
    }
 
-   int width = camera_->GetImageWidth();
-   int height = camera_->GetImageHeight();
-   int binning = camera_->GetBinning();
-   int bitdepth = camera_->GetBitDepth();
-   int bytesPerPixel = camera_->GetImageBytesPerPixel();
-
-
-   
-
-
-
-
+   return DEVICE_OK;
 }
 
 ////////// BEGINNING OF POORLY ORGANIZED CODE //////////////
