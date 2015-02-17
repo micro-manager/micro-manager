@@ -687,7 +687,6 @@ private:
    int SetTurretPosition(int position);
    int GetTurretPosition(int &position);
    int SetUpperPrism(int position);
-   int GetUpperPrism(int& position);
    bool initialized_;
    std::string name_;
    long pos_;
