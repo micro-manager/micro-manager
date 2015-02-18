@@ -223,7 +223,8 @@ XIMEACamera::XIMEACamera(const char* name) :
 	readoutStartTime_(0),
 	sequenceStartTime_(0),
 	imageCounter_(0),
-   stopOnOverflow_(false)
+	stopOnOverflow_(false),
+	isAcqRunning(false)
 {
 	// call the base class method to set-up default error codes/messages
 	InitializeDefaultErrorMessages();
@@ -271,6 +272,13 @@ int XIMEACamera::Initialize()
 	int ret = xiOpenDevice( numOpenDevs, &handle);
 	if(ret != XI_OK) 
 		return DEVICE_ERR;
+
+	// reset camera timestamp
+	ret = xiSetParamInt(handle, XI_PRM_TS_RST_SOURCE, XI_TS_RST_SRC_SW);
+	if (ret != XI_OK) return DEVICE_ERR;
+
+	ret = xiSetParamInt(handle, XI_PRM_TS_RST_MODE, XI_TS_RST_ARM_ONCE);
+	if (ret != XI_OK) return DEVICE_ERR;
 	
 	// -------------------------------------------------------------------------------------
 	// Set property list
@@ -732,11 +740,6 @@ int XIMEACamera::Initialize()
 	}
 
 	//-------------------------------------------------------------------------------------
-	// start image acquisition
-	ret = xiStartAcquisition(handle);
-	if(ret != XI_OK) return ret;
-
-	//-------------------------------------------------------------------------------------
 	// synchronize all properties
 	ret = UpdateStatus();
 	if (ret != DEVICE_OK)
@@ -790,11 +793,31 @@ int XIMEACamera::Shutdown()
 */
 int XIMEACamera::SnapImage()
 {
-	MM::MMTime startTime = GetCurrentMMTime();
 	image.size = sizeof(XI_IMG);
 	int ret = DEVICE_OK;
+	if (!isAcqRunning)
+	{
+		if (xiStartAcquisition(handle) != XI_OK)
+			return DEVICE_ERR;		
+	}
+	
 	ret = xiGetImage( handle, (DWORD)acqTout_, &image);
-	readoutStartTime_ = GetCurrentMMTime();
+
+	if (!isAcqRunning)
+	{
+		if (xiStopAcquisition(handle) != XI_OK)
+			return DEVICE_ERR;
+	}	
+
+	readoutStartTime_.sec_ = image.tsSec;
+	readoutStartTime_.uSec_ = image.tsUSec;
+
+	// use time of first successfully captured frame for sequence start
+	if (sequenceStartTime_.sec_ == 0 && sequenceStartTime_.uSec_ == 0)
+	{
+		sequenceStartTime_ = readoutStartTime_;
+	}
+
 	return ret;
 }
 
@@ -1036,7 +1059,12 @@ int XIMEACamera::StartSequenceAcquisition(double interval)
 * Stop and wait for the Sequence thread finished                                   
 */                                                                        
 int XIMEACamera::StopSequenceAcquisition()                                     
-{                
+{
+	isAcqRunning = false;
+	// stop image acquisition
+	XI_RETURN ret = xiStopAcquisition(handle);
+	if (ret != XI_OK) return DEVICE_ERR;
+
 	if (!thd_->IsStopped()) {
 		thd_->Stop();                                                       
 		thd_->wait();                                                       
@@ -1057,7 +1085,22 @@ int XIMEACamera::StartSequenceAcquisition(long numImages, double interval_ms, bo
 	int ret = GetCoreCallback()->PrepareForAcq(this);
 	if (ret != DEVICE_OK)
 		return ret;
-	sequenceStartTime_ = GetCurrentMMTime();
+
+	// reset camera timestamp
+	ret = xiSetParamInt(handle, XI_PRM_TS_RST_SOURCE, XI_TS_RST_SRC_SW);
+	if (ret != XI_OK) return DEVICE_ERR;
+
+	ret = xiSetParamInt(handle, XI_PRM_TS_RST_MODE, XI_TS_RST_ARM_ONCE);
+	if (ret != XI_OK) return DEVICE_ERR;
+
+	// start image acquisition	
+	ret = xiStartAcquisition(handle);
+	if (ret != XI_OK) return DEVICE_ERR;
+	isAcqRunning = true;
+
+	sequenceStartTime_.sec_ = 0;
+	sequenceStartTime_.uSec_ = 0;
+
 	imageCounter_ = 0;
 	thd_->Start( numImages, interval_ms);
 	stopOnOverflow_ = stopOnOverflow;
@@ -1071,7 +1114,7 @@ int XIMEACamera::InsertImage()
 {
 	int ret = DEVICE_OK;
 
-	MM::MMTime timeStamp = this->GetCurrentMMTime();
+	MM::MMTime timeStamp = readoutStartTime_;
 	char label[MM::MaxStrLength];
 	this->GetLabel(label);
 
