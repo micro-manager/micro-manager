@@ -3528,6 +3528,7 @@ DemoGalvo::DemoGalvo() :
    currentX_(0.0),
    currentY_(0.0)
 {
+   // handwritten 5x5 gaussian kernel, no longer used
    unsigned short gaussianMask[5][5] = {
       {1, 4, 7, 4, 1},
       {4, 16, 26, 16, 4},
@@ -3537,6 +3538,7 @@ DemoGalvo::DemoGalvo() :
    };
 
 }
+
 
 DemoGalvo::~DemoGalvo() 
 {
@@ -3549,14 +3551,18 @@ void DemoGalvo::GetName(char* pName) const
 }
 int DemoGalvo::Initialize() 
 {
-   for (int x = 0; x < sizeof(gaussianMask_)/sizeof(gaussianMask_[0]); x++)
+   // generate Gaussian kernal
+   // Size is determined in the header file
+   int xSize = sizeof(gaussianMask_) / sizeof(gaussianMask_[0]);
+   int ySize = sizeof(gaussianMask_[0]) / 2;
+   for (int x = 0; x < xSize; x++)
    { 
-      for (int y =0; y < sizeof(gaussianMask_[0]); y++) 
+      for (int y =0; y < ySize; y++) 
       {
-         gaussianMask_[x][y] = GaussValue(41, 0.5, 0.5, 5, 5, x, y);
-         LogMessage("Hello");
+         gaussianMask_[x][y] = GaussValue(41, 0.5, 0.5, xSize / 2, ySize / 2, x, y);
       }
    }
+
    DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (!pHub)
    {
@@ -3700,7 +3706,7 @@ int DemoGalvo::ChangePixels(ImgBuffer& img)
       std::ostringstream os;
       os << "state: " << illuminationState_ << ", pointAndFire: " << pointAndFire_;
       LogMessage(os.str().c_str());
-      //return DEVICE_OK;
+      return DEVICE_OK;
    }
    int offsetX = 20;
    double vMaxX = 10.0;
@@ -3714,7 +3720,7 @@ int DemoGalvo::ChangePixels(ImgBuffer& img)
    os << "XPos: " << xPos << ", YPos: " << yPos;
    LogMessage(os.str().c_str());
    int xSpotSize = sizeof(gaussianMask_) / sizeof(gaussianMask_[0]);
-   int ySpotSize = sizeof(gaussianMask_[0]);
+   int ySpotSize = sizeof(gaussianMask_[0]) / 2;
 
    if (xPos > xSpotSize && xPos < img.Width() - xSpotSize - 1  && yPos > ySpotSize && yPos < img.Height() - 
          ySpotSize - 1)

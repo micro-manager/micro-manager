@@ -1103,7 +1103,7 @@ public:
 
 private:
 
-   unsigned short gaussianMask_[5][5];
+   unsigned short gaussianMask_[10][10];
 
    double GaussValue(double amplitude, double sigmaX, double sigmaY, int muX, int muY, int x, int y);
    MM::MMTime pfExpirationTime_;
