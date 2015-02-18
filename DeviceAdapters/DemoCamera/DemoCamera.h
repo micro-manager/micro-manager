@@ -1063,7 +1063,19 @@ private:
    bool initialized_;
 };
 
+struct Point
+{
+   public:
+   int x;
+   int y;
+};
 
+struct PointD
+{
+   public:
+   double x;
+   double y;
+};
 //////////////////////////////////////////////////////////////////////////////
 // DemoGalvo class
 // Simulation of Galvo device
@@ -1100,6 +1112,7 @@ public:
    double GetYRange(); 
 
    int ChangePixels(ImgBuffer& img);
+   static bool PointInTriangle(Point p, Point p0, Point p1, Point p2);
 
 private:
 

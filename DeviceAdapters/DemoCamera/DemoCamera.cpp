@@ -3770,6 +3770,24 @@ double DemoGalvo::GaussValue(double amplitude, double sigmaX, double sigmaY, int
 
 }
 
+bool DemoGalvo::PointInTriangle(Point p, Point p0, Point p1, Point p2)
+{
+    long s = (long) p0.y * p2.x - p0.x * p2.y + (p2.y - p0.y) * p.x + (p0.x - p2.x) * p.y;
+    long t = (long) p0.x * p1.y - p0.y * p1.x + (p0.y - p1.y) * p.x + (p1.x - p0.x) * p.y;
+
+    if ((s < 0) != (t < 0))
+        return false;
+
+    long A = (long) -p1.y * p2.x + p0.y * (p2.x - p1.x) + p0.x * (p1.y - p2.y) + p1.x * p2.y;
+    if (A < 0.0)
+    {
+        s = -s;
+        t = -t;
+        A = -A;
+    }
+    return s > 0 && t > 0 && (s + t) < A;
+}
+
 ////////// BEGINNING OF POORLY ORGANIZED CODE //////////////
 //////////  CLEANUP NEEDED ////////////////////////////
 
