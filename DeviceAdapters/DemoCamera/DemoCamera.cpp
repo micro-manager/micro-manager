@@ -3535,13 +3535,6 @@ DemoGalvo::DemoGalvo() :
       {4, 16, 26, 16, 4},
       {1, 4, 7, 4, 1}
    };
-   for (int x = 0; x < 5; x++)
-   { 
-      for (int y =0; y < 5; y++) 
-      {
-         gaussianMask_[x][y] = gaussianMask[x][y];
-      }
-   }
 
 }
 
@@ -3556,6 +3549,14 @@ void DemoGalvo::GetName(char* pName) const
 }
 int DemoGalvo::Initialize() 
 {
+   for (int x = 0; x < sizeof(gaussianMask_)/sizeof(gaussianMask_[0]); x++)
+   { 
+      for (int y =0; y < sizeof(gaussianMask_[0]); y++) 
+      {
+         gaussianMask_[x][y] = GaussValue(41, 0.5, 0.5, 5, 5, x, y);
+         LogMessage("Hello");
+      }
+   }
    DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
    if (!pHub)
    {
@@ -3699,12 +3700,12 @@ int DemoGalvo::ChangePixels(ImgBuffer& img)
       std::ostringstream os;
       os << "state: " << illuminationState_ << ", pointAndFire: " << pointAndFire_;
       LogMessage(os.str().c_str());
-      return DEVICE_OK;
+      //return DEVICE_OK;
    }
-   int offsetX = -100;
-   double vMaxX = 7.5;
-   int offsetY = -150;
-   double vMaxY = 8.0;
+   int offsetX = 20;
+   double vMaxX = 10.0;
+   int offsetY = 15;
+   double vMaxY = 10.0;
 
    int xPos = offsetX + (currentX_ / vMaxX) * ((double) img.Width() - (double) offsetX);
    int yPos = offsetY + (currentY_ / vMaxY) * ((double) img.Height() - (double) offsetY);
@@ -3712,8 +3713,11 @@ int DemoGalvo::ChangePixels(ImgBuffer& img)
    std::ostringstream os;
    os << "XPos: " << xPos << ", YPos: " << yPos;
    LogMessage(os.str().c_str());
+   int xSpotSize = sizeof(gaussianMask_) / sizeof(gaussianMask_[0]);
+   int ySpotSize = sizeof(gaussianMask_[0]);
 
-   if (xPos > 5 && xPos < img.Width() - 6  && yPos > 5 && yPos < img.Height() - 6)
+   if (xPos > xSpotSize && xPos < img.Width() - xSpotSize - 1  && yPos > ySpotSize && yPos < img.Height() - 
+         ySpotSize - 1)
    {
       if (img.Depth() == 1)
       {
@@ -3723,14 +3727,14 @@ int DemoGalvo::ChangePixels(ImgBuffer& img)
       else if (img.Depth() == 2)
       {
          unsigned short* pBuf = (unsigned short*) const_cast<unsigned char*>(img.GetPixels());
-         for (int x = 0; x < 5; x++) 
+         for (int x = 0; x < xSpotSize; x++) 
          {
-            for (int y = 0; y < 5; y++) 
+            for (int y = 0; y < ySpotSize; y++) 
             {
                int w = xPos + x;
                int h = yPos + y;
                long count = h * img.Width() + w;
-               *(pBuf + count) = *(pBuf + count) + 3 * (unsigned short) gaussianMask_[x][y];
+               *(pBuf + count) = *(pBuf + count) + 30 * (unsigned short) gaussianMask_[x][y];
             }
          }
          img.SetPixels(pBuf);
@@ -3745,6 +3749,19 @@ int DemoGalvo::ChangePixels(ImgBuffer& img)
    }
 
    return DEVICE_OK;
+}
+
+double DemoGalvo::GaussValue(double amplitude, double sigmaX, double sigmaY, int muX, int muY, int x, int y)
+{
+   double factor = - ( ((double)(x - muX) * (double)(x - muX) / 2 * sigmaX * sigmaX) +
+         (double)(y - muY) * (double)(y - muY) / 2 * sigmaY * sigmaY);
+
+   double result = amplitude * exp(factor);
+   std::ostringstream os;
+   os << "x: " << x << ", y: " << y << ", value: " << result;
+   LogMessage(os.str().c_str());
+   return result;
+
 }
 
 ////////// BEGINNING OF POORLY ORGANIZED CODE //////////////

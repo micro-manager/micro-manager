@@ -1105,6 +1105,7 @@ private:
 
    unsigned short gaussianMask_[5][5];
 
+   double GaussValue(double amplitude, double sigmaX, double sigmaY, int muX, int muY, int x, int y);
    MM::MMTime pfExpirationTime_;
    bool initialized_;
    bool busy_;
