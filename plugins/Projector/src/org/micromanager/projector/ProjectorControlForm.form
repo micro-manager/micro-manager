@@ -161,7 +161,7 @@
             </Component>
             <Component class="javax.swing.JLabel" name="phototargetInstructionsLabel">
               <Properties>
-                <Property name="text" type="java.lang.String" value="(To phototarget, Control + click on the image.)"/>
+                <Property name="text" type="java.lang.String" value="(To phototarget, Shift + click on the image.)"/>
               </Properties>
             </Component>
           </SubComponents>

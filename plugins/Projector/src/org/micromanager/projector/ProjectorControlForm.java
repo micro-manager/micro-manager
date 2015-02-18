@@ -357,6 +357,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          long originalExposure = dev_.getExposure();
          dev_.setExposure(500000);
          displaySpot(projectionPoint.x, projectionPoint.y);
+         dev_.waitForDevice();
          core_.snapImage();
          Thread.sleep(500);
          dev_.setExposure(originalExposure);
@@ -401,7 +402,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       double x = dev_.getWidth() / 2;
       double y = dev_.getHeight() / 2;
 
-      int s = 50;
+      double s = dev_.getWidth() / 10;
       Map<Point2D.Double, Point2D.Double> spotMap
             = new HashMap<Point2D.Double, Point2D.Double>();
 
@@ -517,8 +518,6 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                   AffineTransform firstApproxAffine = generateLinearMapping();
 
                   HashMap<Polygon, AffineTransform> mapping = (HashMap<Polygon, AffineTransform>) generateNonlinearMapping(firstApproxAffine);
-                  //LocalWeightedMean lwm = multipleAffineTransforms(mapping_);
-                  //AffineTransform affineTransform = MathFunctions.generateAffineTransformFromPointPairs(mapping_);
                   dev_.turnOff();
                   try {
                      Thread.sleep(500);
@@ -528,7 +527,6 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                   if (!stopRequested_.get()) {
                      saveMapping(mapping);
                   }
-                  //saveAffineTransform(affineTransform);
                   app_.enableLiveMode(liveModeRunning);
                   JOptionPane.showMessageDialog(IJ.getImage().getWindow(), "Calibration "
                         + (!stopRequested_.get() ? "finished." : "canceled."));
@@ -536,6 +534,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                   calibrateButton_.setText("Calibrate");
                } catch (Exception e) {
                   ReportingUtils.showError(e);
+                  calibrateButton_.setText("Calibrate");
                } finally {
                   isRunning_.set(false);
                   stopRequested_.set(false);
@@ -560,13 +559,13 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
      
    // Transform a point, pt, given the mapping, which is a Map of polygon cells
    // to AffineTransforms.
-   private static Point transformPoint(Map<Polygon, AffineTransform> mapping, Point pt) {
+   private static Point2D.Double transformPoint(Map<Polygon, AffineTransform> mapping, Point2D.Double pt) {
       Set<Polygon> set = mapping.keySet();
       // First find out if the given point is inside a cell, and if so,
       // transform it with that cell's AffineTransform.
       for (Polygon poly : set) {
          if (poly.contains(pt)) {
-            return toIntPoint((Point2D.Double) mapping.get(poly).transform(toDoublePoint(pt), null));
+            return (Point2D.Double) mapping.get(poly).transform(pt, null);
          }
       }
       // The point isn't inside any cell, so search for the closest cell
@@ -583,7 +582,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       if (bestPoly == null) {
          throw new RuntimeException("Unable to map point to device.");
       }
-      return toIntPoint((Point2D.Double) mapping.get(bestPoly).transform(toDoublePoint(pt), null));
+      return (Point2D.Double) mapping.get(bestPoly).transform(pt, null);
    }
    
       
@@ -599,9 +598,9 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    }
 
    // Flips a point if it has been mirrored.
-   private static Point mirrorIfNecessary(Point pOffscreen, ImagePlus imgp) {
+   private static Point2D.Double mirrorIfNecessary(Point2D.Double pOffscreen, ImagePlus imgp) {
       if (isImageMirrored(imgp)) {
-         return new Point(imgp.getWidth() - pOffscreen.x, pOffscreen.y);
+         return new Point2D.Double(imgp.getWidth() - pOffscreen.x, pOffscreen.y);
       } else {
          return pOffscreen;
       }
@@ -609,8 +608,9 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    
    // Transform and mirror (if necessary) a point on an image to 
    // a point on phototargeter coordinates.
-   private static Point transformAndMirrorPoint(Map<Polygon, AffineTransform> mapping, ImagePlus imgp, Point pt) {
-      Point pOffscreen = mirrorIfNecessary(pt, imgp);
+   private static Point2D.Double transformAndMirrorPoint(Map<Polygon, AffineTransform> mapping, 
+           ImagePlus imgp, Point2D.Double pt) {
+      Point2D.Double pOffscreen = mirrorIfNecessary(pt, imgp);
       return transformPoint(mapping, pOffscreen);
    }
 
@@ -623,12 +623,12 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       return new MouseAdapter() {
          @Override
          public void mouseClicked(MouseEvent e) {
-            if (e.isControlDown()) {
+            if (e.isShiftDown()) {
                Point p = e.getPoint();
                ImageCanvas canvas = (ImageCanvas) e.getSource();
                Point pOffscreen = new Point(canvas.offScreenX(p.x), canvas.offScreenY(p.y));
-               Point devP = transformAndMirrorPoint(loadMapping(), canvas.getImage(), 
-                       new Point(pOffscreen.x, pOffscreen.y));
+               Point2D.Double devP = transformAndMirrorPoint(loadMapping(), canvas.getImage(), 
+                       new Point2D.Double(pOffscreen.x, pOffscreen.y));
                Configuration originalConfig = prepareChannel();
                boolean originalShutterState = prepareShutter();
                if (devP != null) {
@@ -834,7 +834,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          try {
             Point2D targeterPoint;
             for (int i = 0; i < roiPolygon.npoints; ++i) {
-               Point imagePoint = new Point(roiPolygon.xpoints[i], roiPolygon.ypoints[i]);
+               Point2D.Double imagePoint = new Point2D.Double(roiPolygon.xpoints[i], roiPolygon.ypoints[i]);
                targeterPoint = transformAndMirrorPoint(mapping, imgp, imagePoint);
                if (targeterPoint == null) {
                   throw new Exception();
@@ -1284,7 +1284,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          }
       });
 
-      phototargetInstructionsLabel.setText("(To phototarget, Control + click on the image.)");
+      phototargetInstructionsLabel.setText("(To phototarget, Shift + click on the image.)");
 
       javax.swing.GroupLayout pointAndShootTabLayout = new javax.swing.GroupLayout(pointAndShootTab);
       pointAndShootTab.setLayout(pointAndShootTabLayout);
