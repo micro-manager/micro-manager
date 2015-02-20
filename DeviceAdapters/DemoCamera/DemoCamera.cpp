@@ -3523,10 +3523,15 @@ DemoGalvo::DemoGalvo() :
    busy_(false),
    illuminationState_(false),
    pointAndFire_(false),
+   runROIS_(false),
    xRange_(10.0),
    yRange_(10.0),
    currentX_(0.0),
-   currentY_(0.0)
+   currentY_(0.0),
+   offsetX_(20),
+   vMaxX_(10.0),
+   offsetY_(15),
+   vMaxY_(10.0)
 {
    // handwritten 5x5 gaussian kernel, no longer used
    unsigned short gaussianMask[5][5] = {
@@ -3639,14 +3644,26 @@ int DemoGalvo::SetIlluminationState(bool on)
 
 int DemoGalvo::AddPolygonVertex(int polygonIndex, double x, double y) 
 {
+   std::vector<PointD> vertex = vertices_[polygonIndex];
+   vertices_[polygonIndex].push_back(PointD(x, y));
+   std::ostringstream os;
+   os << "Adding point to polygon " << polygonIndex << ", ROI has " << vertices_[polygonIndex].size() <<
+      " points";
+   LogMessage(os.str().c_str());
+
    return DEVICE_OK;
 }
 
 int DemoGalvo::DeletePolygons()
 {
+   vertices_.clear();
    return DEVICE_OK;
 }
 
+/**
+ * This is to load the polygons into the device
+ * Since we are virtual, there is nothing to do here
+ */
 int DemoGalvo::LoadPolygons()
 {
    return DEVICE_OK;
@@ -3659,6 +3676,14 @@ int DemoGalvo::SetPolygonRepetitions(int repetitions)
 
 int DemoGalvo::RunPolygons()
 {
+   std::ostringstream os;
+   os << "# of polygons: " << vertices_.size() << std::endl;
+   for (std::map<int, std::vector<PointD> >::iterator it = vertices_.begin();
+         it != vertices_.end(); ++it)
+   {
+      os << "ROI " << it->first << " has " << it->second.size() << "points" << std::endl;
+   }
+   LogMessage(os.str().c_str());
    return DEVICE_OK;
 }
 
@@ -3701,20 +3726,23 @@ double DemoGalvo::GetYRange()
  */
 int DemoGalvo::ChangePixels(ImgBuffer& img) 
 {
-   if (!illuminationState_ && !pointAndFire_)
+   if (!illuminationState_ && !pointAndFire_ && !runROIS_)
    {
       std::ostringstream os;
-      os << "state: " << illuminationState_ << ", pointAndFire: " << pointAndFire_;
+      os << "No action requested in ChangePixels";
       LogMessage(os.str().c_str());
       return DEVICE_OK;
    }
-   int offsetX = 20;
-   double vMaxX = 10.0;
-   int offsetY = 15;
-   double vMaxY = 10.0;
 
-   int xPos = offsetX + (currentX_ / vMaxX) * ((double) img.Width() - (double) offsetX);
-   int yPos = offsetY + (currentY_ / vMaxY) * ((double) img.Height() - (double) offsetY);
+   if (runROIS_)
+   {
+      // TODO:
+
+   }
+
+
+   Point cp = GalvoToCameraPoint(PointD(currentX_, currentY_), img);
+   int xPos = cp.x; int yPos = cp.y;
 
    std::ostringstream os;
    os << "XPos: " << xPos << ", YPos: " << yPos;
@@ -3755,6 +3783,14 @@ int DemoGalvo::ChangePixels(ImgBuffer& img)
    }
 
    return DEVICE_OK;
+}
+
+Point DemoGalvo::GalvoToCameraPoint(PointD galvoPoint, ImgBuffer& img)
+{
+   int xPos = offsetX_ + (galvoPoint.x / vMaxX_) * ((double) img.Width() - (double) offsetX_);
+   int yPos = offsetY_ + (galvoPoint.y / vMaxY_) * ((double) img.Height() - (double) offsetY_);
+
+   return Point(xPos, yPos);
 }
 
 double DemoGalvo::GaussValue(double amplitude, double sigmaX, double sigmaY, int muX, int muY, int x, int y)

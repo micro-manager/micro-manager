@@ -1066,6 +1066,7 @@ private:
 struct Point
 {
    public:
+      Point(int lx, int ly) {x = lx; y = ly;};
    int x;
    int y;
 };
@@ -1073,6 +1074,7 @@ struct Point
 struct PointD
 {
    public:
+      PointD(double lx, double ly) {x = lx; y = ly;};
    double x;
    double y;
 };
@@ -1119,15 +1121,23 @@ private:
    unsigned short gaussianMask_[10][10];
 
    double GaussValue(double amplitude, double sigmaX, double sigmaY, int muX, int muY, int x, int y);
+   Point GalvoToCameraPoint(PointD GalvoPoint, ImgBuffer& img);
+
+   std::map<int, std::vector<PointD> > vertices_;
    MM::MMTime pfExpirationTime_;
    bool initialized_;
    bool busy_;
    bool illuminationState_;
    bool pointAndFire_;
+   bool runROIS_;
    double xRange_;
    double yRange_;
    double currentX_;
    double currentY_;
+   int offsetX_;
+   double vMaxX_;
+   int offsetY_;
+   double vMaxY_;
 };
 
 
