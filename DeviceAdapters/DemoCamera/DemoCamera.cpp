@@ -3647,8 +3647,8 @@ int DemoGalvo::AddPolygonVertex(int polygonIndex, double x, double y)
    std::vector<PointD> vertex = vertices_[polygonIndex];
    vertices_[polygonIndex].push_back(PointD(x, y));
    std::ostringstream os;
-   os << "Adding point to polygon " << polygonIndex << ", ROI has " << vertices_[polygonIndex].size() <<
-      " points";
+   os << "Adding point to polygon " << polygonIndex << ", x: " << x  <<
+      ", y: " << y;
    LogMessage(os.str().c_str());
 
    return DEVICE_OK;
@@ -3681,9 +3681,10 @@ int DemoGalvo::RunPolygons()
    for (std::map<int, std::vector<PointD> >::iterator it = vertices_.begin();
          it != vertices_.end(); ++it)
    {
-      os << "ROI " << it->first << " has " << it->second.size() << "points" << std::endl;
+      os << "ROI " << it->first << " has " << it->second.size() << " points" << std::endl;
    }
    LogMessage(os.str().c_str());
+   runROIS_ = true;
    return DEVICE_OK;
 }
 
@@ -3736,49 +3737,98 @@ int DemoGalvo::ChangePixels(ImgBuffer& img)
 
    if (runROIS_)
    {
-      // TODO:
-
-   }
-
-
-   Point cp = GalvoToCameraPoint(PointD(currentX_, currentY_), img);
-   int xPos = cp.x; int yPos = cp.y;
-
-   std::ostringstream os;
-   os << "XPos: " << xPos << ", YPos: " << yPos;
-   LogMessage(os.str().c_str());
-   int xSpotSize = sizeof(gaussianMask_) / sizeof(gaussianMask_[0]);
-   int ySpotSize = sizeof(gaussianMask_[0]) / 2;
-
-   if (xPos > xSpotSize && xPos < img.Width() - xSpotSize - 1  && yPos > ySpotSize && yPos < img.Height() - 
-         ySpotSize - 1)
-   {
-      if (img.Depth() == 1)
-      {
-         unsigned char* pBuf = (unsigned char*) const_cast<unsigned char*>(img.GetPixels());
-         img.SetPixels(pBuf);
-      }
-      else if (img.Depth() == 2)
-      {
-         unsigned short* pBuf = (unsigned short*) const_cast<unsigned char*>(img.GetPixels());
-         for (int x = 0; x < xSpotSize; x++) 
+      // establish the bounding boxes around the ROIs in image coordinates
+      std::vector<std::vector<Point> > bBoxes = std::vector<std::vector<
+         Point> >();
+      for (int i = 0; i < vertices_.size(); i++) {
+         std::vector<Point> vertex;
+         std::ostringstream o;
+         o << "Points: ";
+         for (std::vector<PointD>::iterator it = vertices_[i].begin();
+               it != vertices_[i].end(); ++it)
          {
-            for (int y = 0; y < ySpotSize; y++) 
+            Point p = GalvoToCameraPoint(*it, img);
+            vertex.push_back(p);
+            o << p.x << ", " << p.y << ", ";
+         }
+         LogMessage(o.str().c_str());
+         std::vector<Point> bBox;
+         GetBoundingBox(vertex, bBox);
+         bBoxes.push_back(bBox);
+         std::ostringstream os;
+         os << "BBox: " << bBox[0].x << ", " << bBox[0].y << ", " <<
+            bBox[1].x << ", " << bBox[1].y;
+         LogMessage(os.str().c_str());
+      }
+      if (img.Depth() == 2)
+      {
+         const unsigned short highValue = 2048;
+         unsigned short* pBuf = (unsigned short*) const_cast<unsigned char*>(img.GetPixels());
+         LogMessage("4");
+
+         // now iterate through the image pixels and set the high 
+         // if they are within a bounding box
+         for (int x = 0; x < img.Width(); x++)
+         {
+            for (int y = 0; y < img.Height(); y++)
             {
-               int w = xPos + x;
-               int h = yPos + y;
-               long count = h * img.Width() + w;
-               *(pBuf + count) = *(pBuf + count) + 30 * (unsigned short) gaussianMask_[x][y];
+               bool inROI = false;
+               for (int i = 0; i < bBoxes.size(); i++) 
+               {
+                  if (InBoundingBox(bBoxes[i], Point(x, y)))
+                     inROI = true;
+               }
+               if (inROI)
+               {
+                  long count = y * img.Width() + x;
+                  *(pBuf + count) = *(pBuf + count) + highValue;
+               }
             }
          }
          img.SetPixels(pBuf);
       }
-   }
-   if (pointAndFire_)
+      runROIS_ = false;
+   } else
    {
-      if (GetCurrentMMTime() > pfExpirationTime_)
+      Point cp = GalvoToCameraPoint(PointD(currentX_, currentY_), img);
+      int xPos = cp.x; int yPos = cp.y;
+
+      std::ostringstream os;
+      os << "XPos: " << xPos << ", YPos: " << yPos;
+      LogMessage(os.str().c_str());
+      int xSpotSize = sizeof(gaussianMask_) / sizeof(gaussianMask_[0]);
+      int ySpotSize = sizeof(gaussianMask_[0]) / 2;
+
+      if (xPos > xSpotSize && xPos < img.Width() - xSpotSize - 1  && yPos > ySpotSize && yPos < img.Height() - 
+            ySpotSize - 1)
       {
-         pointAndFire_ = false;
+         if (img.Depth() == 1)
+         {
+            unsigned char* pBuf = (unsigned char*) const_cast<unsigned char*>(img.GetPixels());
+            img.SetPixels(pBuf);
+         }
+         else if (img.Depth() == 2)
+         {
+            unsigned short* pBuf = (unsigned short*) const_cast<unsigned char*>(img.GetPixels());
+            for (int x = 0; x < xSpotSize; x++) 
+            {
+               for (int y = 0; y < ySpotSize; y++) 
+               {
+                  int w = xPos + x;
+                  int h = yPos + y;
+                  long count = h * img.Width() + w;
+                  *(pBuf + count) = *(pBuf + count) + 30 * (unsigned short) gaussianMask_[x][y];
+               }
+            }
+            img.SetPixels(pBuf);
+         }
+      }
+      if (pointAndFire_)
+      {
+         if (GetCurrentMMTime() > pfExpirationTime_)
+         {
+            pointAndFire_ = false;
+         }
       }
    }
 
@@ -3787,8 +3837,8 @@ int DemoGalvo::ChangePixels(ImgBuffer& img)
 
 Point DemoGalvo::GalvoToCameraPoint(PointD galvoPoint, ImgBuffer& img)
 {
-   int xPos = offsetX_ + (galvoPoint.x / vMaxX_) * ((double) img.Width() - (double) offsetX_);
-   int yPos = offsetY_ + (galvoPoint.y / vMaxY_) * ((double) img.Height() - (double) offsetY_);
+   int xPos = (double) offsetX_ + (double) (galvoPoint.x / vMaxX_) * ((double) img.Width() - (double) offsetX_);
+   int yPos = (double) offsetY_ + (double) (galvoPoint.y / vMaxY_) * ((double) img.Height() - (double) offsetY_);
 
    return Point(xPos, yPos);
 }
@@ -3804,6 +3854,44 @@ double DemoGalvo::GaussValue(double amplitude, double sigmaX, double sigmaY, int
    LogMessage(os.str().c_str());
    return result;
 
+}
+/**
+ * Returns the bounding box around the points defined in vertex
+ * bBox is a Point[2] array
+ * It is the callers responsibility that the memore for bBox is 
+ * allocated
+ */
+void DemoGalvo::GetBoundingBox(std::vector<Point>& vertex, std::vector<Point>& bBox)
+{
+   if (vertex.size() < 1)
+   {
+      return;
+   }
+   int minX = vertex[0].x;
+   int maxX = minX;
+   int minY = vertex[0].y;
+   int maxY = minY;
+   for (int i = 1; i < vertex.size(); i++)
+   {
+      if (vertex[i].x < minX)
+         minX = vertex[i].x;
+      if (vertex[i].x > maxX)
+         maxX = vertex[i].x;
+      if (vertex[i].y < minY)
+         minY = vertex[i].y;
+      if (vertex[i].y > maxY)
+         maxY = vertex[i].y;
+   }
+   bBox.push_back(Point(minX, minY));
+   bBox.push_back(Point(maxX, maxY));
+}
+
+bool DemoGalvo::InBoundingBox(std::vector<Point> boundingBox, Point testPoint)
+{
+   if (testPoint.x >= boundingBox[0].x && testPoint.x <= boundingBox[1].x &&
+         testPoint.y >= boundingBox[0].y && testPoint.y <= boundingBox[1].y)
+      return true;
+   return false;
 }
 
 bool DemoGalvo::PointInTriangle(Point p, Point p0, Point p1, Point p2)

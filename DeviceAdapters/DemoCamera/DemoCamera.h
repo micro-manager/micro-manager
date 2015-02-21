@@ -1122,6 +1122,8 @@ private:
 
    double GaussValue(double amplitude, double sigmaX, double sigmaY, int muX, int muY, int x, int y);
    Point GalvoToCameraPoint(PointD GalvoPoint, ImgBuffer& img);
+   void GetBoundingBox(std::vector<Point>& vertex, std::vector<Point>& bBox);
+   bool InBoundingBox(std::vector<Point> boundingBox, Point testPoint);
 
    std::map<int, std::vector<PointD> > vertices_;
    MM::MMTime pfExpirationTime_;
