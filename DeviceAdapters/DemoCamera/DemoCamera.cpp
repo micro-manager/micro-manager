@@ -3611,9 +3611,9 @@ int DemoGalvo::PointAndFire(double x, double y, double pulseTime_us)
    MM::MMTime offset(pulseTime_us);
    pfExpirationTime_ = GetCurrentMMTime() + offset;
    pointAndFire_ = true;
-   std::ostringstream os;
-   os << "PointAndFire set galvo to : " << x << " - " << y;
-   LogMessage(os.str().c_str());
+   //std::ostringstream os;
+   //os << "PointAndFire set galvo to : " << x << " - " << y;
+   //LogMessage(os.str().c_str());
    return DEVICE_OK;
 }
 
@@ -3646,10 +3646,10 @@ int DemoGalvo::AddPolygonVertex(int polygonIndex, double x, double y)
 {
    std::vector<PointD> vertex = vertices_[polygonIndex];
    vertices_[polygonIndex].push_back(PointD(x, y));
-   std::ostringstream os;
-   os << "Adding point to polygon " << polygonIndex << ", x: " << x  <<
-      ", y: " << y;
-   LogMessage(os.str().c_str());
+   //std::ostringstream os;
+   //os << "Adding point to polygon " << polygonIndex << ", x: " << x  <<
+   //   ", y: " << y;
+   //LogMessage(os.str().c_str());
 
    return DEVICE_OK;
 }
@@ -3676,6 +3676,7 @@ int DemoGalvo::SetPolygonRepetitions(int repetitions)
 
 int DemoGalvo::RunPolygons()
 {
+   /*
    std::ostringstream os;
    os << "# of polygons: " << vertices_.size() << std::endl;
    for (std::map<int, std::vector<PointD> >::iterator it = vertices_.begin();
@@ -3684,6 +3685,7 @@ int DemoGalvo::RunPolygons()
       os << "ROI " << it->first << " has " << it->second.size() << " points" << std::endl;
    }
    LogMessage(os.str().c_str());
+   */
    runROIS_ = true;
    return DEVICE_OK;
 }
@@ -3721,17 +3723,17 @@ double DemoGalvo::GetYRange()
  * Callback function that will be called by DemoCamera everytime
  * a new image is generated.
  * We insert a Gaussian spot if the state of our device suggests to do so
- * The position of the spot is set by the relation:
- *
- *
+ * The position of the spot is set by the relation defined in the function
+ * GalvoToCameraPoint
+ * Also will draw ROIs when requested 
  */
 int DemoGalvo::ChangePixels(ImgBuffer& img) 
 {
    if (!illuminationState_ && !pointAndFire_ && !runROIS_)
    {
-      std::ostringstream os;
-      os << "No action requested in ChangePixels";
-      LogMessage(os.str().c_str());
+      //std::ostringstream os;
+      //os << "No action requested in ChangePixels";
+      //LogMessage(os.str().c_str());
       return DEVICE_OK;
    }
 
@@ -3742,31 +3744,26 @@ int DemoGalvo::ChangePixels(ImgBuffer& img)
          Point> >();
       for (int i = 0; i < vertices_.size(); i++) {
          std::vector<Point> vertex;
-         std::ostringstream o;
-         o << "Points: ";
          for (std::vector<PointD>::iterator it = vertices_[i].begin();
                it != vertices_[i].end(); ++it)
          {
             Point p = GalvoToCameraPoint(*it, img);
             vertex.push_back(p);
-            o << p.x << ", " << p.y << ", ";
          }
-         LogMessage(o.str().c_str());
          std::vector<Point> bBox;
          GetBoundingBox(vertex, bBox);
          bBoxes.push_back(bBox);
-         std::ostringstream os;
-         os << "BBox: " << bBox[0].x << ", " << bBox[0].y << ", " <<
-            bBox[1].x << ", " << bBox[1].y;
-         LogMessage(os.str().c_str());
+         //std::ostringstream os;
+         //os << "BBox: " << bBox[0].x << ", " << bBox[0].y << ", " <<
+         //  bBox[1].x << ", " << bBox[1].y;
+         //LogMessage(os.str().c_str());
       }
       if (img.Depth() == 2)
       {
          const unsigned short highValue = 2048;
          unsigned short* pBuf = (unsigned short*) const_cast<unsigned char*>(img.GetPixels());
-         LogMessage("4");
 
-         // now iterate through the image pixels and set the high 
+         // now iterate through the image pixels and set high 
          // if they are within a bounding box
          for (int x = 0; x < img.Width(); x++)
          {
@@ -3835,14 +3832,22 @@ int DemoGalvo::ChangePixels(ImgBuffer& img)
    return DEVICE_OK;
 }
 
+/**
+ * Function that converts between the Galvo and Camera coordinate system
+ */
 Point DemoGalvo::GalvoToCameraPoint(PointD galvoPoint, ImgBuffer& img)
 {
-   int xPos = (double) offsetX_ + (double) (galvoPoint.x / vMaxX_) * ((double) img.Width() - (double) offsetX_);
-   int yPos = (double) offsetY_ + (double) (galvoPoint.y / vMaxY_) * ((double) img.Height() - (double) offsetY_);
-
+   int xPos = (double) offsetX_ + (double) (galvoPoint.x / vMaxX_) * 
+                                 ((double) img.Width() - (double) offsetX_);
+   int yPos = (double) offsetY_ + (double) (galvoPoint.y / vMaxY_) * 
+                                 ((double) img.Height() - (double) offsetY_);
    return Point(xPos, yPos);
 }
 
+/**
+ * Utility function to calculate a 2D Gaussian
+ * Used in the initialize function to get a 10x10 2D Gaussian
+ */
 double DemoGalvo::GaussValue(double amplitude, double sigmaX, double sigmaY, int muX, int muY, int x, int y)
 {
    double factor = - ( ((double)(x - muX) * (double)(x - muX) / 2 * sigmaX * sigmaX) +
@@ -3857,9 +3862,7 @@ double DemoGalvo::GaussValue(double amplitude, double sigmaX, double sigmaY, int
 }
 /**
  * Returns the bounding box around the points defined in vertex
- * bBox is a Point[2] array
- * It is the callers responsibility that the memore for bBox is 
- * allocated
+ * bBox is a vector with 2 points
  */
 void DemoGalvo::GetBoundingBox(std::vector<Point>& vertex, std::vector<Point>& bBox)
 {
@@ -3886,6 +3889,11 @@ void DemoGalvo::GetBoundingBox(std::vector<Point>& vertex, std::vector<Point>& b
    bBox.push_back(Point(maxX, maxY));
 }
 
+/**
+ * Determines whether the given point is in the boundingBox
+ * boundingBox should have two members, one with the minimum x, y position,
+ * the second with the maximum x, y positions
+ */
 bool DemoGalvo::InBoundingBox(std::vector<Point> boundingBox, Point testPoint)
 {
    if (testPoint.x >= boundingBox[0].x && testPoint.x <= boundingBox[1].x &&
@@ -3894,6 +3902,10 @@ bool DemoGalvo::InBoundingBox(std::vector<Point> boundingBox, Point testPoint)
    return false;
 }
 
+/**
+ * Not used (yet), intent was to use this to determine whether 
+ * a point is within the ROI, rather than drawing a bounding box
+ */
 bool DemoGalvo::PointInTriangle(Point p, Point p0, Point p1, Point p2)
 {
     long s = (long) p0.y * p2.x - p0.x * p2.y + (p2.y - p0.y) * p.x + (p0.x - p2.x) * p.y;
