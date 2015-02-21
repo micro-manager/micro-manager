@@ -16,6 +16,7 @@
 
 package org.micromanager.projector;
 
+import ij.process.FloatPolygon;
 import java.awt.Polygon;
 import java.awt.geom.Point2D;
 import java.util.HashSet;
@@ -168,7 +169,7 @@ public class Galvo implements ProjectionDevice {
    }
 
    @Override
-   public void loadRois(final List<Polygon> rois) {
+   public void loadRois(final List<FloatPolygon> rois) {
       galvoExecutor_.submit(new Runnable() {
          @Override
          public void run() {
@@ -179,20 +180,23 @@ public class Galvo implements ProjectionDevice {
             }
             int roiCount = 0;
             try {
-               for (Polygon poly : rois) {
+               for (FloatPolygon poly : rois) {
                   Point2D lastGalvoPoint = null;
                   for (int i = 0; i < poly.npoints; ++i) {
-                     Point2D.Double galvoPoint = new Point2D.Double(poly.xpoints[i], poly.ypoints[i]);
+                     Point2D.Double galvoPoint = new Point2D.Double(
+                             poly.xpoints[i], poly.ypoints[i]);
                      if (i == 0) {
                         lastGalvoPoint = galvoPoint;
                      }
-                     mmc_.addGalvoPolygonVertex(galvo_, roiCount, galvoPoint.getX(), galvoPoint.getY());
+                     mmc_.addGalvoPolygonVertex(galvo_, roiCount, galvoPoint.getX(), 
+                             galvoPoint.getY());
                      if (poly.npoints == 1) {
                         ++roiCount;
                      }
                   }
                   if (poly.npoints > 1) {
-                     mmc_.addGalvoPolygonVertex(galvo_, roiCount, lastGalvoPoint.getX(), lastGalvoPoint.getY());
+                     mmc_.addGalvoPolygonVertex(galvo_, roiCount, 
+                             lastGalvoPoint.getX(), lastGalvoPoint.getY());
                      ++roiCount;
                   }
                }

@@ -19,6 +19,7 @@ package org.micromanager.projector;
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import ij.process.ByteProcessor;
+import ij.process.FloatPolygon;
 import ij.process.ImageProcessor;
 import java.awt.Color;
 import java.awt.Polygon;
@@ -33,7 +34,7 @@ public class SLM implements ProjectionDevice {
    CMMCore mmc_;
    final int slmWidth_;
    final int slmHeight_;
-   private double spotDiameter_;
+   private final double spotDiameter_;
    private boolean imageOn_ = false;
    HashSet<OnStateListener> onStateListeners_ = new HashSet<OnStateListener>();
 
@@ -215,8 +216,9 @@ public class SLM implements ProjectionDevice {
 
    // Convert roiPolygons to an image, and upload that image to the SLM.
    @Override
-   public void loadRois(List<Polygon> roiPolygons) {
+   public void loadRois(List<FloatPolygon> roiFloatPolygons) {
       try {
+         List<Polygon> roiPolygons = Utils.FloatToNormalPolygon(roiFloatPolygons);
          mmc_.setSLMImage(slm_, roisToPixels(slmWidth_, slmHeight_, roiPolygons));
       } catch (Exception ex) {
          ReportingUtils.showError(ex);

@@ -37,6 +37,7 @@ import ij.gui.Roi;
 import ij.io.RoiEncoder;
 import ij.plugin.filter.GaussianBlur;
 import ij.plugin.frame.RoiManager;
+import ij.process.FloatPolygon;
 import ij.process.ImageProcessor;
 import java.awt.AWTEvent;
 import java.awt.Point;
@@ -827,19 +828,22 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    }
    
    // Transform the Roi polygons with the given nonlinear mapping.
-   private static List<Polygon> transformRoiPolygons(final ImagePlus imgp, Polygon[] roiPolygons, Map<Polygon, AffineTransform> mapping) {
-      ArrayList<Polygon> transformedROIs = new ArrayList<Polygon>();
+   private static List<FloatPolygon> transformRoiPolygons(final ImagePlus imgp, 
+           Polygon[] roiPolygons, Map<Polygon, AffineTransform> mapping) {
+      ArrayList<FloatPolygon> transformedROIs = new ArrayList<FloatPolygon>();
       for (Polygon roiPolygon : roiPolygons) {
-         Polygon targeterPolygon = new Polygon();
+         FloatPolygon targeterPolygon = new FloatPolygon();
          try {
             Point2D targeterPoint;
             for (int i = 0; i < roiPolygon.npoints; ++i) {
-               Point2D.Double imagePoint = new Point2D.Double(roiPolygon.xpoints[i], roiPolygon.ypoints[i]);
+               Point2D.Double imagePoint = new Point2D.Double(
+                       roiPolygon.xpoints[i], roiPolygon.ypoints[i]);
                targeterPoint = transformAndMirrorPoint(mapping, imgp, imagePoint);
                if (targeterPoint == null) {
                   throw new Exception();
                }
-               targeterPolygon.addPoint((int) (0.5 + targeterPoint.getX()), (int) (0.5 + targeterPoint.getY()));
+               targeterPolygon.addPoint( (float) targeterPoint.getX(), 
+                       (float) targeterPoint.getY() );
             }
             transformedROIs.add(targeterPolygon);
          } catch (Exception ex) {
@@ -853,7 +857,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    // ## Saving, sending, and running ROIs.
      
    // Returns ROIs, transformed by the current mapping.
-   public List<Polygon> transformROIs(ImagePlus contextImagePlus, Roi[] rois) {
+   public List<FloatPolygon> transformROIs(ImagePlus contextImagePlus, Roi[] rois) {
       return transformRoiPolygons(contextImagePlus, roisAsPolygons(rois), mapping_);
    }
    
@@ -892,7 +896,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       if (rois.length == 0) {
          throw new RuntimeException("Please first draw the desired phototargeting ROIs.");
       }
-      List<Polygon> transformedRois = transformROIs(imgp, rois);
+      List<FloatPolygon> transformedRois = transformROIs(imgp, rois);
       dev_.loadRois(transformedRois);
       individualRois_ = rois;
    }
