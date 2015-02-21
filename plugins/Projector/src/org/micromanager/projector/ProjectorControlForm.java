@@ -875,6 +875,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    }
    
    // Upload current Window's ROIs, transformed, to the phototargeting device.
+   // BUG!!! Since Polygons store coordinates in integers whereas Galvo
+   // devices have an input as double, there is an enormous loss of precision.
+   // The Type "Polygon" should be replaced with Path2D.Double throughout the code
+   // or possible the ImageJ class FloatPolygon
    public void sendCurrentImageWindowRois() {
       if (mapping_ == null) {
          throw new RuntimeException("Please calibrate the phototargeting device first, using the Setup tab.");
