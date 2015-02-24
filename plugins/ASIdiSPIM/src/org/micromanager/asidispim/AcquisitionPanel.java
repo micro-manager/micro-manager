@@ -1362,7 +1362,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       final int counterLSBAddress = 3;
       final int counterMSBAddress = 4;
-      final int laserTTLAddress = 42;
+      final int laserTriggerAddress = 10;  // this should be (42 || 8) = (TTL1 || manual laser on)
       final int invertAddress = 64;
       
       if (!devices_.isValidMMDevice(Devices.Keys.PLOGIC)) {
@@ -1418,7 +1418,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       for (int cellNum=13; cellNum<=16; cellNum++) {
          props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_POINTER_POSITION, cellNum);
          props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_TYPE, Properties.Values.PLOGIC_AND4);
-         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_2, laserTTLAddress);
+         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_2, laserTriggerAddress);
          // note that PLC diSPIM assumes "laser + side" output mode is selected for micro-mirror card
       }
       
@@ -1448,7 +1448,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          // inputs should be either 3 (for LSB high) or 67 (for LSB low)
          //                     and 4 (for MSB high) or 68 (for MSB low)
          int in3 = (channelNum & 0x01) > 0 ? counterLSBAddress : counterLSBAddress + invertAddress;
-         int in4 = (channelNum & 0x10) > 0 ? counterMSBAddress : counterMSBAddress + invertAddress; 
+         int in4 = (channelNum & 0x02) > 0 ? counterMSBAddress : counterMSBAddress + invertAddress; 
          props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_3, in3);
          props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_4, in4);
       }
