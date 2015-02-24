@@ -190,7 +190,7 @@ public class MMIntroDlg extends JDialog {
       userProfileLabel.setBounds(5, 268, 319, 19);
       getContentPane().add(userProfileLabel);
 
-      if (options.shouldAskForProfile_) {
+      if (options_.shouldAskForProfile_) {
          addProfileDropdown();
       }
 
@@ -280,6 +280,7 @@ public class MMIntroDlg extends JDialog {
          tmp = configs.toArray(tmp);
          profileManager_.setStringArray(MMIntroDlg.class,
                RECENTLY_USED_CONFIGS, tmp);
+         profileManager_.saveSettings();
       }
 
       // Add on global default configs.
