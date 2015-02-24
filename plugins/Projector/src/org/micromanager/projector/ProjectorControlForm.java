@@ -20,10 +20,12 @@ package org.micromanager.projector;
 // file call methods earlier in the file, with the exception of generated
 // code (found at the end of file).
 
-// This source file is formatted to be processed
+// This source file is partially formatted to be processed
 // with [docco](http://jashkenas.github.io/docco/),
 // which generates nice HTML documentation side-by-side with the
 // source code.
+
+// TODO: finish converting to Javadoc
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -107,6 +109,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    AtomicBoolean isRunning_ = new AtomicBoolean(false);
    private MosaicSequencingFrame mosaicSequencingFrame_;
    private String targetingShutter_;
+   private Boolean disposing_ = false;
 
    // ## Simple utility methods for points
    
@@ -149,36 +152,48 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
 
    // ## Methods for handling targeting channel and shutter
    
-   // Read the available channels from Micro-Manager Channel Group
-   // and populate the targeting channel drop-down menu.
+   /**
+    * Read the available channels from Micro-Manager Channel Group
+    * and populate the targeting channel drop-down menu.
+    */
    final void populateChannelComboBox(String initialChannel) {
       if (initialChannel == null) {
          initialChannel = (String) channelComboBox.getSelectedItem();
       }
       channelComboBox.removeAllItems();
       channelComboBox.addItem("");
-      for (String preset : core_.getAvailableConfigs(core_.getChannelGroup())) {
-         channelComboBox.addItem(preset);
+      // try to avoid crash on shutdown
+      if (core_ != null) {
+         for (String preset : core_.getAvailableConfigs(core_.getChannelGroup())) {
+            channelComboBox.addItem(preset);
+         }
+         channelComboBox.setSelectedItem(initialChannel);
       }
-      channelComboBox.setSelectedItem(initialChannel);
    }
 
-   // Read the available shutters from Micro-Manager and
-   // list them in the targeting shutter drop-down menu.
+   /**
+    * Read the available shutters from Micro-Manager and
+    * list them in the targeting shutter drop-down menu.
+    */
    final void populateShutterComboBox(String initialShutter) {
       if (initialShutter == null) {
          initialShutter = (String) shutterComboBox.getSelectedItem();
       }
       shutterComboBox.removeAllItems();
       shutterComboBox.addItem("");
-      for (String shutter : core_.getLoadedDevicesOfType(DeviceType.ShutterDevice)) {
-         shutterComboBox.addItem(shutter);
+      // trying to avoid crashes on shutdown
+      if (core_ != null) {
+         for (String shutter : core_.getLoadedDevicesOfType(DeviceType.ShutterDevice)) {
+            shutterComboBox.addItem(shutter);
+         }
+         shutterComboBox.setSelectedItem(initialShutter);
       }
-      shutterComboBox.setSelectedItem(initialShutter);
    }
    
-   // Sets the targeting channel. channelName should be
-   // a channel from the current ChannelGroup.
+   /**
+    * Sets the targeting channel. channelName should be
+    * a channel from the current ChannelGroup.
+    */
    void setTargetingChannel(String channelName) {
       targetingChannel_ = channelName;
        if (channelName != null) {
@@ -186,7 +201,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
        }
    }
    
-   // Sets the targeting shutter. Should be the name of a loaded Shutter device.
+   /**
+    * Sets the targeting shutter. 
+    * Should be the name of a loaded Shutter device.
+    */
    void setTargetingShutter(String shutterName) {
       targetingShutter_ = shutterName;
       if (shutterName != null) {
@@ -194,7 +212,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       }
    }
    
-   // Set the Channel Group to the targeting channel, if it exists.
+   /**
+    * Sets the Channel Group to the targeting channel, if it exists.
+    * @return 
+    */
    public Configuration prepareChannel() {
       Configuration originalConfig = null;
       String channelGroup = core_.getChannelGroup();
@@ -510,10 +531,12 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       return bigMap;
    }
 
-   // Runs the full calibration. First
-   // generates a linear mapping (a first approximation) and then runs
-   // a second, non-linear, mapping using the first mapping as a guide. Saves
-   // the mapping to Java Preferences.
+   /**
+    * Runs the full calibration. First
+    * generates a linear mapping (a first approximation) and then runs
+    * a second, non-linear, mapping using the first mapping as a guide. Saves
+    * the mapping to Java Preferences.
+    */
    public void runCalibration() {
       final boolean liveModeRunning = app_.isLiveModeOn();
       app_.enableLiveMode(false);
@@ -557,12 +580,17 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       }
    }
    
-   // Returns true if the calibration is currently running.
+   /**
+    * Returns true if the calibration is currently running.
+    * @return true if calibration is running
+    */
    public boolean isCalibrating() {
       return isRunning_.get();
    }
    
-   // Requests an interruption to calibration while it is running.
+   /**
+    * Requests an interruption to calibration while it is running.
+    */
    public void stopCalibration() {
       stopRequested_.set(true);
    }
@@ -759,7 +787,9 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       return roiPolygons.toArray(new Polygon[0]);
    }
    
-   // Gets the label of an ROI with the given index n. Borrowed from ImageJ.
+   /**
+    * Gets the label of an ROI with the given index n. Borrowed from ImageJ.
+    */
    private static String getROILabel(ImagePlus imp, Roi roi, int n) {
       Rectangle r = roi.getBounds();
       int xc = r.x + r.width / 2;
@@ -1137,8 +1167,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       });
    }
    
-   // Show the Mosaic Sequencing window (a JFrame). Should only be called
-   // if we already know the Mosaic is attached.
+   /**
+    * Show the Mosaic Sequencing window (a JFrame). Should only be called
+    * if we already know the Mosaic is attached.
+    */
    void showMosaicSequencingWindow() {
       if (mosaicSequencingFrame_ == null) {
          mosaicSequencingFrame_ = new MosaicSequencingFrame(app_, core_, this, (SLM) dev_);
@@ -1146,7 +1178,9 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       mosaicSequencingFrame_.setVisible(true);
    }
    
-   // Constructor. Creates the main window for the Projector plugin.
+   /**
+    * Constructor. Creates the main window for the Projector plugin.
+    */
    private ProjectorControlForm(CMMCore core, ScriptInterface app) {
       initComponents();
       app_ = app;
@@ -1185,8 +1219,11 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       this.addWindowFocusListener(new WindowAdapter() {
          @Override
          public void windowGainedFocus(WindowEvent e) {
-            populateChannelComboBox(null);
-            populateShutterComboBox(null);
+            if (!disposing_)
+            {
+               populateChannelComboBox(null);
+               populateShutterComboBox(null);
+            }
          }
       });
       
@@ -1219,6 +1256,13 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       }
       formSingleton_.setVisible(true);
       return formSingleton_;
+   }
+   
+   @Override
+   public void dispose()
+   {
+      disposing_ = true;
+      super.dispose();
    }
    
    // ## Generated code

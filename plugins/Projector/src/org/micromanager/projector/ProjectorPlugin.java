@@ -54,10 +54,13 @@ public class ProjectorPlugin implements MMPlugin {
       return roiManager;
    }
    
+   @Override
    public void dispose() {
-      //throw new UnsupportedOperationException("Not supported yet.");
+      ProjectorControlForm.showSingleton(core_, app_).dispose();
+      
    }
 
+   @Override
    public void setApp(ScriptInterface app) {
       app_ = app;
       core_ = app_.getMMCore();
@@ -65,6 +68,7 @@ public class ProjectorPlugin implements MMPlugin {
 
    // Instantiate the ProjectorControlForm window if necessary, and show it
    // if it's not visible.
+   @Override
    public void show() {
       if (core_.getSLMDevice().length()==0 && core_.getGalvoDevice().length()==0) {
          ReportingUtils.showMessage("Please load an SLM (Spatial Light Modulator) " +
@@ -79,18 +83,22 @@ public class ProjectorPlugin implements MMPlugin {
       throw new UnsupportedOperationException("Not supported yet.");
    }
 
+   @Override
    public String getDescription() {
       return tooltipDescription;
    }
 
+   @Override
    public String getInfo() {
       throw new UnsupportedOperationException("Not supported yet.");
    }
 
+   @Override
    public String getVersion() {
       throw new UnsupportedOperationException("Not supported yet.");
    }
 
+   @Override
    public String getCopyright() {
       throw new UnsupportedOperationException("Not supported yet.");
    }
