@@ -5,6 +5,8 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.Scanner;
 import java.util.Set;
@@ -85,7 +87,7 @@ public class DefaultUserSettings implements UserSettings {
       try {
          FileWriter writer = new FileWriter(
                JavaUtils.getApplicationDataPath() + "/" + USERNAME_MAPPING_FILE);
-         writer.write(mapping.toString(2));
+         writer.write(mapping.toString(2) + "\n");
          writer.close();
       }
       catch (FileNotFoundException e) {
@@ -101,11 +103,13 @@ public class DefaultUserSettings implements UserSettings {
 
    /**
     * Load a PropertyMap for a given user; return an empty PropertyMap if that
-    * user doesn't yet exist.
+    * user doesn't yet exist, creating the profile for them in the process.
     */
    private DefaultPropertyMap loadUser(String userName) {
       if (!nameToFile_.containsKey(userName)) {
-         ReportingUtils.logError("User name " + userName + " not found in profile mapping");
+         // Create a new profile.
+         ReportingUtils.logMessage("User name " + userName + " not found in profile mapping; creating that user");
+         addUser(userName);
          return (DefaultPropertyMap) (new DefaultPropertyMap.Builder().build());
       }
       String filename = nameToFile_.get(userName);
@@ -165,7 +169,7 @@ public class DefaultUserSettings implements UserSettings {
     * key.
     */
    private String genKey(Class<?> c, String key) {
-      return c.toString() + ":" + key;
+      return c.getCanonicalName() + ":" + key;
    }
 
    // Getters/setters. There is a ton of duplication here; unfortunately, I
@@ -385,7 +389,7 @@ public class DefaultUserSettings implements UserSettings {
       try {
          FileWriter writer = new FileWriter(
                JavaUtils.getApplicationDataPath() + "/" + nameToFile_.get(userName_));
-         writer.write(serialization.toString(2));
+         writer.write(serialization.toString(2) + "\n");
          writer.close();
       }
       catch (FileNotFoundException e) {
@@ -399,21 +403,34 @@ public class DefaultUserSettings implements UserSettings {
       }
    }
 
+   @Override
+   public void saveSettings() throws IOException {
+      JavaUtils.createApplicationDataPathIfNeeded();
+      saveSettingsToFile(JavaUtils.getApplicationDataPath() +
+            "/" + nameToFile_.get(userName_));
+   }
+
    public Set<String> getUserNames() {
-      return nameToFile_.keySet();
+      // HACK: don't reveal the global profile since it's not technically a
+      // "user".
+      HashSet<String> result = new HashSet<String>(nameToFile_.keySet());
+      result.remove(GLOBAL_USER);
+      return result;
    }
 
    public void addUser(String userName) {
       // Assign a filename for the user, which should be 1 greater than the
       // largest current numerical filename we're using.
+      Pattern pattern = Pattern.compile("profile-(\\d+).txt");
       int fileIndex = 0;
       for (String key : nameToFile_.keySet()) {
          String fileName = nameToFile_.get(key);
-         if (!fileName.endsWith(".txt")) {
+         Matcher matcher = pattern.matcher(fileName);
+         if (!matcher.matches()) {
             continue;
          }
          try {
-            int index = Integer.parseInt(fileName.substring(0, fileName.length() - 4));
+            int index = Integer.parseInt(matcher.group(1));
             fileIndex = Math.max(index, fileIndex);
          }
          catch (NumberFormatException e) {
@@ -421,7 +438,7 @@ public class DefaultUserSettings implements UserSettings {
             continue;
          }
       }
-      String newFile = (fileIndex + 1) + ".txt";
+      String newFile = "profile-" + (fileIndex + 1) + ".txt";
       nameToFile_.put(userName, newFile);
       writeUserMapping(nameToFile_);
    }

@@ -66,6 +66,17 @@ public interface UserSettings {
    /** As above, but for Boolean arrays. */
    public void setBooleanArray(Class<?> c, String key, Boolean[] value);
 
+   /** Save the current user's settings. If the program is closed before this
+     * method is called, then any changes made since the last call will not
+     * be persisted to the next session. This will not include any values
+     * "inherited" from the global defaults.
+     * Generates the same output as saveSettingsToFile(), but the file is
+     * automatically selected (stored in an OS-appropriate location for user
+     * data).
+     * @throws IOException if the file cannot be written for any reason.
+     */
+   public void saveSettings() throws IOException;
+
    /** Save the current user's settings to the specified file. This will not
      * include any "inherited" values from the global defaults.
      * @throws IOException if the file cannot be written for any reason.
