@@ -737,7 +737,7 @@ public class DefaultMetadata implements Metadata {
       }
 
       try {
-         builder.userData(DefaultPropertyMap.legacyFromJSON(
+         builder.userData(DefaultPropertyMap.fromJSON(
                   tags.getJSONObject("userData")));
       }
       catch (JSONException e) {
