@@ -489,6 +489,18 @@ public class JavaUtils {
       return null;
    }
 
+   public static void createApplicationDataPathIfNeeded() {
+      String path = getApplicationDataPath();
+      if (path == null) {
+         ReportingUtils.logError("Unable to determine application data path");
+         return;
+      }
+      File file = new File(path);
+      if (!file.exists()) {
+         file.mkdirs();
+      }
+   }
+
    public static void printAllStackTraces() {
       System.err.println("\n\nDumping all stack traces:");
       Map<Thread, StackTraceElement[]> liveThreads = Thread.getAllStackTraces();
