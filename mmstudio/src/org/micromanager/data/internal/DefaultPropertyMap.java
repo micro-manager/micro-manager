@@ -320,10 +320,10 @@ public class DefaultPropertyMap implements PropertyMap {
          String key = keys.getString(i);
          String val = map.getString(key);
          if (val.startsWith("String:")) {
-            builder.putString(key, val.substring(6, val.length()));
+            builder.putString(key, val.substring(7, val.length()));
          }
          else if (val.startsWith("StringArr:")) {
-            JSONArray tmp = new JSONArray(val.substring(9, val.length()));
+            JSONArray tmp = new JSONArray(val.substring(10, val.length()));
             String[] valArr = new String[tmp.length()];
             for (int j = 0; j < tmp.length(); ++j) {
                valArr[j] = tmp.getString(j);
@@ -332,10 +332,10 @@ public class DefaultPropertyMap implements PropertyMap {
          }
          else if (val.startsWith("Integer:")) {
             builder.putInt(key,
-                  Integer.parseInt(val.substring(7, val.length())));
+                  Integer.parseInt(val.substring(8, val.length())));
          }
          else if (val.startsWith("IntegerArr:")) {
-            JSONArray tmp = new JSONArray(val.substring(10, val.length()));
+            JSONArray tmp = new JSONArray(val.substring(11, val.length()));
             Integer[] valArr = new Integer[tmp.length()];
             for (int j = 0; j < tmp.length(); ++j) {
                valArr[j] = tmp.getInt(j);
@@ -344,10 +344,10 @@ public class DefaultPropertyMap implements PropertyMap {
          }
          else if (val.startsWith("Double:")) {
             builder.putDouble(key,
-                  Double.parseDouble(val.substring(6, val.length())));
+                  Double.parseDouble(val.substring(7, val.length())));
          }
          else if (val.startsWith("DoubleArr:")) {
-            JSONArray tmp = new JSONArray(val.substring(9, val.length()));
+            JSONArray tmp = new JSONArray(val.substring(10, val.length()));
             Double[] valArr = new Double[tmp.length()];
             for (int j = 0; j < tmp.length(); ++j) {
                valArr[j] = tmp.getDouble(j);
@@ -356,10 +356,10 @@ public class DefaultPropertyMap implements PropertyMap {
          }
          else if (val.startsWith("Boolean:")) {
             builder.putBoolean(key,
-                  Boolean.parseBoolean(val.substring(7, val.length())));
+                  Boolean.parseBoolean(val.substring(8, val.length())));
          }
          else if (val.startsWith("BooleanArr:")) {
-            JSONArray tmp = new JSONArray(val.substring(10, val.length()));
+            JSONArray tmp = new JSONArray(val.substring(11, val.length()));
             Boolean[] valArr = new Boolean[tmp.length()];
             for (int j = 0; j < tmp.length(); ++j) {
                valArr[j] = tmp.getBoolean(j);
