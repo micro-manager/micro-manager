@@ -105,7 +105,7 @@
                           </Group>
                           <Component id="phototargetInstructionsLabel" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace pref="109" max="32767" attributes="0"/>
+                      <EmptySpace pref="68" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -161,7 +161,7 @@
             </Component>
             <Component class="javax.swing.JLabel" name="phototargetInstructionsLabel">
               <Properties>
-                <Property name="text" type="java.lang.String" value="(To phototarget, Shift + click on the image.)"/>
+                <Property name="text" type="java.lang.String" value="(To phototarget, Shift + click on the image, use ImageJ hand-tool)"/>
               </Properties>
             </Component>
           </SubComponents>
@@ -197,7 +197,13 @@
                                   <Component id="channelComboBox" min="-2" pref="126" max="-2" attributes="0"/>
                               </Group>
                           </Group>
-                          <Component id="calibrateButton_" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Group type="102" alignment="0" attributes="0">
+                              <Component id="calibrateButton_" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace type="separate" max="-2" attributes="0"/>
+                              <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="delayField_" min="-2" pref="82" max="-2" attributes="0"/>
+                          </Group>
                       </Group>
                       <EmptySpace pref="127" max="32767" attributes="0"/>
                   </Group>
@@ -212,7 +218,11 @@
                           <Component id="allPixelsButton" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace type="separate" max="-2" attributes="0"/>
-                      <Component id="calibrateButton_" min="-2" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="calibrateButton_" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="jLabel1" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="delayField_" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
                       <EmptySpace pref="89" max="32767" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="phototargetingChannelDropdownLabel" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -291,6 +301,16 @@
             <Component class="javax.swing.JLabel" name="phototargetingShutterDropdownLabel">
               <Properties>
                 <Property name="text" type="java.lang.String" value="Phototargeting shutter:"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="jLabel1">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Delay(ms):"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JTextField" name="delayField_">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="0"/>
               </Properties>
             </Component>
           </SubComponents>

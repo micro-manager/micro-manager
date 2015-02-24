@@ -17,7 +17,6 @@
 package org.micromanager.projector;
 
 import ij.process.FloatPolygon;
-import java.awt.Polygon;
 import java.awt.geom.Point2D;
 import java.util.HashSet;
 import java.util.List;

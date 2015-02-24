@@ -40,6 +40,7 @@ import ij.plugin.frame.RoiManager;
 import ij.process.FloatPolygon;
 import ij.process.ImageProcessor;
 import java.awt.AWTEvent;
+import java.awt.HeadlessException;
 import java.awt.Point;
 import java.awt.Polygon;
 import java.awt.Rectangle;
@@ -56,6 +57,7 @@ import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -343,8 +345,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       return x;
    }
    
-   // Display a spot using the projection device, and return its current
-   // location on the camera.
+   /**
+    * Display a spot using the projection device, and return its current
+    * location on the camera.
+   */
    private Point measureSpot(Point projectionPoint) {
       if (stopRequested_.get()) {
          return null;
@@ -358,8 +362,14 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          long originalExposure = dev_.getExposure();
          dev_.setExposure(500000);
          displaySpot(projectionPoint.x, projectionPoint.y);
-         dev_.waitForDevice();
+         // NS: Timimg between displaySPot and snapImage is critical
+         // we have no idea how fast the device will respond
+         // if we add "dev_.waitForDevie(), then the RAPP UGA-40 will already have ended
+         // its exposure before returning control
+         // For now, wait for a user specified delay
+         Thread.sleep(Integer.parseInt(delayField_.getText()));
          core_.snapImage();
+         // NS: just make sure to wait until the spot is no longer displayed
          Thread.sleep(500);
          dev_.setExposure(originalExposure);
          TaggedImage taggedImage2 = core_.getTaggedImage();
@@ -369,6 +379,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          Point peak = findPeak(diffImage);
          Point maxPt = peak;
          IJ.getImage().setRoi(new PointRoi(maxPt.x, maxPt.y));
+         // NS: what is this second sleep good for????
          core_.sleep(500);
          return maxPt;
       } catch (Exception e) {
@@ -533,7 +544,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                         + (!stopRequested_.get() ? "finished." : "canceled."));
                   IJ.getImage().setRoi(originalROI);
                   calibrateButton_.setText("Calibrate");
-               } catch (Exception e) {
+               } catch (HeadlessException e) {
                   ReportingUtils.showError(e);
                   calibrateButton_.setText("Calibrate");
                } finally {
@@ -628,15 +639,26 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                Point p = e.getPoint();
                ImageCanvas canvas = (ImageCanvas) e.getSource();
                Point pOffscreen = new Point(canvas.offScreenX(p.x), canvas.offScreenY(p.y));
-               Point2D.Double devP = transformAndMirrorPoint(loadMapping(), canvas.getImage(), 
+               final Point2D.Double devP = transformAndMirrorPoint(loadMapping(), canvas.getImage(),
                        new Point2D.Double(pOffscreen.x, pOffscreen.y));
-               Configuration originalConfig = prepareChannel();
-               boolean originalShutterState = prepareShutter();
-               if (devP != null) {
-                  displaySpot(devP.x, devP.y);
-               }
-               returnShutter(originalShutterState);
-               returnChannel(originalConfig);
+               final Configuration originalConfig = prepareChannel();
+               final boolean originalShutterState = prepareShutter();
+               makeRunnableAsync(
+                       new Runnable() {
+                          @Override
+                          public void run() {
+                             try {
+                                if (devP != null) {
+                                   displaySpot(devP.x, devP.y);
+                                }
+                                returnShutter(originalShutterState);
+                                returnChannel(originalConfig);
+                             } catch (Exception e) {
+                                ReportingUtils.showError(e);
+                             }
+                          }
+                       }).run();
+
             }
          }
       };
@@ -796,7 +818,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
             out.flush();
          }
          out.close();
-      } catch (Exception e) {
+      } catch (IOException e) {
          ReportingUtils.logError(e);
       }
    }
@@ -901,8 +923,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       individualRois_ = rois;
    }
    
-   // Illuminate the polygons ROIs that have been previously uploaded to
-   // phototargeter.
+   /**
+    * Illuminate the polygons ROIs that have been previously uploaded to
+    * phototargeter.
+    */
    void runRois() {
       Configuration originalConfig = prepareChannel();
       boolean originalShutterState = prepareShutter();
@@ -1225,6 +1249,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       phototargetingChannelDropdownLabel = new javax.swing.JLabel();
       shutterComboBox = new javax.swing.JComboBox();
       phototargetingShutterDropdownLabel = new javax.swing.JLabel();
+      jLabel1 = new javax.swing.JLabel();
+      delayField_ = new javax.swing.JTextField();
       roisTab = new javax.swing.JPanel();
       roiLoopLabel = new javax.swing.JLabel();
       roiLoopTimesLabel = new javax.swing.JLabel();
@@ -1292,7 +1318,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          }
       });
 
-      phototargetInstructionsLabel.setText("(To phototarget, Shift + click on the image.)");
+      phototargetInstructionsLabel.setText("(To phototarget, Shift + click on the image, use ImageJ hand-tool)");
 
       javax.swing.GroupLayout pointAndShootTabLayout = new javax.swing.GroupLayout(pointAndShootTab);
       pointAndShootTab.setLayout(pointAndShootTabLayout);
@@ -1308,7 +1334,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                   .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                   .addComponent(pointAndShootOffButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                .addComponent(phototargetInstructionsLabel))
-            .addContainerGap(109, Short.MAX_VALUE))
+            .addContainerGap(68, Short.MAX_VALUE))
       );
       pointAndShootTabLayout.setVerticalGroup(
          pointAndShootTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1364,6 +1390,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
 
       phototargetingShutterDropdownLabel.setText("Phototargeting shutter:");
 
+      jLabel1.setText("Delay(ms):");
+
+      delayField_.setText("0");
+
       javax.swing.GroupLayout setupTabLayout = new javax.swing.GroupLayout(setupTab);
       setupTab.setLayout(setupTabLayout);
       setupTabLayout.setHorizontalGroup(
@@ -1383,7 +1413,12 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                   .addGroup(setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                      .addComponent(shutterComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)
                      .addComponent(channelComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)))
-               .addComponent(calibrateButton_))
+               .addGroup(setupTabLayout.createSequentialGroup()
+                  .addComponent(calibrateButton_)
+                  .addGap(18, 18, 18)
+                  .addComponent(jLabel1)
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                  .addComponent(delayField_, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE)))
             .addContainerGap(127, Short.MAX_VALUE))
       );
       setupTabLayout.setVerticalGroup(
@@ -1394,7 +1429,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                .addComponent(centerButton)
                .addComponent(allPixelsButton))
             .addGap(18, 18, 18)
-            .addComponent(calibrateButton_)
+            .addGroup(setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+               .addComponent(calibrateButton_)
+               .addComponent(jLabel1)
+               .addComponent(delayField_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 89, Short.MAX_VALUE)
             .addGroup(setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                .addComponent(phototargetingChannelDropdownLabel)
@@ -1773,7 +1811,14 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    }//GEN-LAST:event_roiLoopSpinnerStateChanged
 
    private void runROIsNowButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_runROIsNowButtonActionPerformed
-      runRois();
+      makeRunnableAsync(
+              new Runnable() {
+                 @Override
+                 public void run() {
+                    phototargetROIsRunnable("Asynchronous phototargeting of ROIs").run();
+                 }
+              }
+      ).run();
    }//GEN-LAST:event_runROIsNowButtonActionPerformed
 
    private void setRoiButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_setRoiButtonActionPerformed
@@ -1854,6 +1899,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    private javax.swing.JButton calibrateButton_;
    private javax.swing.JButton centerButton;
    private javax.swing.JComboBox channelComboBox;
+   private javax.swing.JTextField delayField_;
+   private javax.swing.JLabel jLabel1;
    private javax.swing.JLabel jLabel2;
    private javax.swing.JSeparator jSeparator1;
    private javax.swing.JSeparator jSeparator3;
