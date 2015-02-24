@@ -41,8 +41,8 @@ import org.micromanager.utils.ReportingUtils;
  *
  */
 public final class XYZKeyListener implements KeyListener, LiveModeListener {
-	private CMMCore core_;
-   private MMStudio studio_;
+	private final CMMCore core_;
+   private final MMStudio studio_;
 	private ImageCanvas canvas_;
 	private static boolean isRunning_ = false;
 	private boolean mirrorX_;
@@ -67,7 +67,7 @@ public final class XYZKeyListener implements KeyListener, LiveModeListener {
    @Override
 	public void keyPressed(KeyEvent e) {
 
-		core_.logMessage(Integer.toString(e.getKeyCode()));
+		//core_.logMessage(Integer.toString(e.getKeyCode()));
 
 		switch (e.getKeyCode()) {
 		case KeyEvent.VK_LEFT:
@@ -254,33 +254,22 @@ public final class XYZKeyListener implements KeyListener, LiveModeListener {
 		}
 		try {
 			String tmp = core_.getProperty(camera, "TransposeCorrection");
-			if (tmp.equals("0"))
-				correction_ = false;
-			else
-				correction_ = true;
+         correction_ = !tmp.equals("0");
 			tmp = core_.getProperty(camera, MMCoreJ
 					.getG_Keyword_Transpose_MirrorX());
-			if (tmp.equals("0"))
-				mirrorX_ = false;
-			else
-				mirrorX_ = true;
+         mirrorX_ = !tmp.equals("0");
 			tmp = core_.getProperty(camera, MMCoreJ
 					.getG_Keyword_Transpose_MirrorY());
-			if (tmp.equals("0"))
-				mirrorY_ = false;
-			else
-				mirrorY_ = true;
+         mirrorY_ = !tmp.equals("0");
 			tmp = core_.getProperty(camera, MMCoreJ
 					.getG_Keyword_Transpose_SwapXY());
-			if (tmp.equals("0"))
-				transposeXY_ = false;
-			else
-				transposeXY_ = true;
+         transposeXY_ = !tmp.equals("0");
 		} catch (Exception exc) {
 			ReportingUtils.showError(exc);
 		}
 	}
 
+   @Override
    public void liveModeEnabled(boolean enabled) {
       if (enabled) {
          start();

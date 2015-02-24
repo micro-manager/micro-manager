@@ -74,8 +74,8 @@ public class MMStudioPlugin implements PlugIn, CommandListener {
                      Executer.addCommandListener(MMStudioPlugin.this);
                   }
                   studio_ = new MMStudio(true);
-                  studio_.getFrame().setVisible(true);
-                  studio_.getFrame().setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+                  MMStudio.getFrame().setVisible(true);
+                  MMStudio.getFrame().setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
                }
                if (arg.equals("OpenAcq")) {
                   studio_.promptForAcquisitionToOpen(true);
