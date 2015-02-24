@@ -56,7 +56,7 @@ import javax.swing.border.LineBorder;
 
 import org.micromanager.internal.MMOptions;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.internal.utils.DefaultUserSettings;
+import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -76,7 +76,7 @@ public class MMIntroDlg extends JDialog {
    ArrayList<String> mruCFGFileList_;
 
    private MMOptions options_;
-   private DefaultUserSettings profileManager_;
+   private DefaultUserProfile profileManager_;
    private JComboBox cfgFileDropperDown_;
    private JComboBox userSelect_;
    
@@ -96,7 +96,7 @@ public class MMIntroDlg extends JDialog {
       "If you have found this software useful, please cite Micro-Manager in your publications.";
 
    public MMIntroDlg(String ver, MMOptions options,
-         DefaultUserSettings profileManager) {
+         DefaultUserProfile profileManager) {
       super();
       options_ = options;
       profileManager_ = profileManager;
@@ -218,14 +218,14 @@ public class MMIntroDlg extends JDialog {
       Set<String> users = profileManager_.getUserNames();
       final ArrayList<String> usersAsList = new ArrayList<String>(users);
       // HACK: put the "new" and "default" options first in the list.
-      usersAsList.remove(DefaultUserSettings.DEFAULT_USER);
-      usersAsList.add(0, DefaultUserSettings.DEFAULT_USER);
+      usersAsList.remove(DefaultUserProfile.DEFAULT_USER);
+      usersAsList.add(0, DefaultUserProfile.DEFAULT_USER);
       usersAsList.add(0, USERNAME_NEW);
       userSelect_ = new JComboBox();
       for (String userName : usersAsList) {
          userSelect_.addItem(userName);
       }
-      userSelect_.setSelectedItem(DefaultUserSettings.DEFAULT_USER);
+      userSelect_.setSelectedItem(DefaultUserProfile.DEFAULT_USER);
       userSelect_.setBounds(5, 285, 342, 26);
       userSelect_.addActionListener(new ActionListener() {
          @Override
@@ -280,7 +280,12 @@ public class MMIntroDlg extends JDialog {
          tmp = configs.toArray(tmp);
          profileManager_.setStringArray(MMIntroDlg.class,
                RECENTLY_USED_CONFIGS, tmp);
-         profileManager_.saveSettings();
+         try {
+            profileManager_.saveProfile();
+         }
+         catch (java.io.IOException e) {
+            ReportingUtils.showError(e, "There was an error when saving your profile.");
+         }
       }
 
       // Add on global default configs.

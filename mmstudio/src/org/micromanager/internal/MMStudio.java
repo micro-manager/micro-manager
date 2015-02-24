@@ -96,7 +96,7 @@ import org.micromanager.display.OverlayPanel;
 import org.micromanager.PositionList;
 import org.micromanager.ScriptInterface;
 import org.micromanager.SequenceSettings;
-import org.micromanager.UserSettings;
+import org.micromanager.UserProfile;
 import org.micromanager.events.ExposureChangedEvent;
 import org.micromanager.events.PropertiesChangedEvent;
 import org.micromanager.internal.conf2.MMConfigFileException;
@@ -131,7 +131,7 @@ import org.micromanager.internal.positionlist.PositionListDlg;
 import org.micromanager.internal.script.ScriptPanel;
 import org.micromanager.internal.utils.AutofocusManager;
 import org.micromanager.internal.utils.ContrastSettings;
-import org.micromanager.internal.utils.DefaultUserSettings;
+import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.FileDialogs.FileType;
 import org.micromanager.internal.utils.GUIColors;
@@ -196,7 +196,7 @@ public class MMStudio implements ScriptInterface {
    private AcqControlDlg acqControlWin_;
    private DataManager dataManager_;
    private DisplayManager displayManager_;
-   private DefaultUserSettings profileManager_;
+   private DefaultUserProfile profileManager_;
    private PluginManager pluginManager_;
    private final SnapLiveManager snapLiveManager_;
    private final ToolsMenu toolsMenu_;
@@ -459,7 +459,7 @@ public class MMStudio implements ScriptInterface {
 
       dataManager_ = new DefaultDataManager(this);
       displayManager_ = new DefaultDisplayManager(this);
-      profileManager_ = new DefaultUserSettings();
+      profileManager_ = new DefaultUserProfile();
 
       loadMRUConfigFiles();
       afMgr_ = new AutofocusManager(studio_);
@@ -2548,7 +2548,7 @@ public class MMStudio implements ScriptInterface {
    }
 
    @Override
-   public UserSettings profile() {
+   public UserProfile profile() {
       return profileManager_;
    }
 }

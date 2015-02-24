@@ -15,12 +15,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import org.micromanager.PropertyMap;
-import org.micromanager.UserSettings;
+import org.micromanager.UserProfile;
 import org.micromanager.data.internal.DefaultPropertyMap;
 import org.micromanager.internal.utils.MDUtils;
 
-// TODO: rename Settings -> Profile
-public class DefaultUserSettings implements UserSettings {
+public class DefaultUserProfile implements UserProfile {
    private static final String USERNAME_MAPPING_FILE = "Profiles.txt";
    private static final String GLOBAL_USER = "Global defaults";
    public static final String DEFAULT_USER = "Default user";
@@ -29,7 +28,7 @@ public class DefaultUserSettings implements UserSettings {
    private String userName_;
    private DefaultPropertyMap globalProfile_;
    private DefaultPropertyMap userProfile_;
-   public DefaultUserSettings() {
+   public DefaultUserProfile() {
       nameToFile_ = loadUserMapping();
       globalProfile_ = loadUser(GLOBAL_USER);
       // Naturally we start with the default user loaded.
@@ -37,7 +36,7 @@ public class DefaultUserSettings implements UserSettings {
    }
 
    /**
-    * Read the username mapping file so we know which user's settings are in
+    * Read the username mapping file so we know which user's profile is in
     * which file.
     */
    private HashMap<String, String> loadUserMapping() {
@@ -47,7 +46,7 @@ public class DefaultUserSettings implements UserSettings {
       if (!tmp.exists()) {
          ReportingUtils.logMessage("Creating user profile mapping file");
          // No file to be found; create it with the default user.
-         result.put(GLOBAL_USER, UserSettings.GLOBAL_SETTINGS_FILE);
+         result.put(GLOBAL_USER, UserProfile.GLOBAL_SETTINGS_FILE);
          writeUserMapping(result);
       }
       try {
@@ -70,7 +69,7 @@ public class DefaultUserSettings implements UserSettings {
    }
 
    /**
-    * Write out the current mapping of usernames to settings files.
+    * Write out the current mapping of usernames to profile files.
     */
    private void writeUserMapping(HashMap<String, String> nameToFile) {
       JSONObject mapping = new JSONObject();
@@ -381,7 +380,7 @@ public class DefaultUserSettings implements UserSettings {
    }
 
    @Override
-   public void saveSettingsToFile(String path) throws IOException {
+   public void saveProfileToFile(String path) throws IOException {
       JSONObject serialization;
       synchronized(userProfile_) {
          serialization = userProfile_.toJSON();
@@ -404,9 +403,9 @@ public class DefaultUserSettings implements UserSettings {
    }
 
    @Override
-   public void saveSettings() throws IOException {
+   public void saveProfile() throws IOException {
       JavaUtils.createApplicationDataPathIfNeeded();
-      saveSettingsToFile(JavaUtils.getApplicationDataPath() +
+      saveProfileToFile(JavaUtils.getApplicationDataPath() +
             "/" + nameToFile_.get(userName_));
    }
 

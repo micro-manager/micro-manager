@@ -9,14 +9,14 @@ import java.io.IOException;
  * the same system-level user accuont) to have different customizations of the
  * program.
  */
-public interface UserSettings {
+public interface UserProfile {
    /**
-    * Settings found in this file provide default values for all users; these
+    * Profile found in this file provide default values for all users; these
     * values will be used only if the user has not set their own values (which
     * often happens automatically as a side-effect of interacting with the
     * program).
     */
-   public static final String GLOBAL_SETTINGS_FILE = "GlobalUserSettings.txt";
+   public static final String GLOBAL_SETTINGS_FILE = "GlobalUserProfile.txt";
 
    /**
     * Retrieve a specific value from the parameter storage, as a String.
@@ -66,20 +66,20 @@ public interface UserSettings {
    /** As above, but for Boolean arrays. */
    public void setBooleanArray(Class<?> c, String key, Boolean[] value);
 
-   /** Save the current user's settings. If the program is closed before this
+   /** Save the current user's profile. If the program is closed before this
      * method is called, then any changes made since the last call will not
      * be persisted to the next session. This will not include any values
      * "inherited" from the global defaults.
-     * Generates the same output as saveSettingsToFile(), but the file is
+     * Generates the same output as saveProfileToFile(), but the file is
      * automatically selected (stored in an OS-appropriate location for user
      * data).
      * @throws IOException if the file cannot be written for any reason.
      */
-   public void saveSettings() throws IOException;
+   public void saveProfile() throws IOException;
 
-   /** Save the current user's settings to the specified file. This will not
+   /** Save the current user's profile to the specified file. This will not
      * include any "inherited" values from the global defaults.
      * @throws IOException if the file cannot be written for any reason.
      */
-   public void saveSettingsToFile(String path) throws IOException;
+   public void saveProfileToFile(String path) throws IOException;
 }

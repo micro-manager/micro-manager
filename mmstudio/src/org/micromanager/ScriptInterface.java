@@ -759,8 +759,8 @@ public interface ScriptInterface {
    public DisplayManager display();
 
    /**
-    * Provides access to the UserSettings instance for accessing per-user
-    * saved settings.
+    * Provides access to the UserProfile instance for accessing per-user
+    * profiles.
     */
-   public UserSettings profile();
+   public UserProfile profile();
 }
