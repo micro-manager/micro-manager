@@ -70,13 +70,13 @@ public class MMIntroDlg extends JDialog {
    private static final String USERNAME_NEW = "Create new user";
    private static final String RECENTLY_USED_CONFIGS = "recently-used config files";
    private static final String GLOBAL_CONFIGS = "config files supplied from a central authority";
+   private static final String DEFAULT_CONFIG_FILE_NAME = "MMConfig_demo.cfg";
    private JTextArea welcomeTextArea_;
    private boolean okFlag_ = true;
    
    ArrayList<String> mruCFGFileList_;
 
    private MMOptions options_;
-   private DefaultUserProfile profileManager_;
    private JComboBox cfgFileDropperDown_;
    private JComboBox userSelect_;
    
@@ -95,11 +95,9 @@ public class MMIntroDlg extends JDialog {
    public static String CITATION_TEXT =
       "If you have found this software useful, please cite Micro-Manager in your publications.";
 
-   public MMIntroDlg(String ver, MMOptions options,
-         DefaultUserProfile profileManager) {
+   public MMIntroDlg(String ver, MMOptions options) {
       super();
       options_ = options;
-      profileManager_ = profileManager;
       setFont(new Font("Arial", Font.PLAIN, 10));
       setTitle("Micro-Manager Startup");
       getContentPane().setLayout(null);
@@ -215,7 +213,8 @@ public class MMIntroDlg extends JDialog {
    }
 
    private void addProfileDropdown() {
-      Set<String> users = profileManager_.getUserNames();
+      final DefaultUserProfile profile = DefaultUserProfile.getInstance();
+      Set<String> users = profile.getUserNames();
       final ArrayList<String> usersAsList = new ArrayList<String>(users);
       // HACK: put the "new" and "default" options first in the list.
       usersAsList.remove(DefaultUserProfile.DEFAULT_USER);
@@ -240,14 +239,14 @@ public class MMIntroDlg extends JDialog {
                else {
                   usersAsList.add(userName);
                   userSelect_.addItem(userName);
-                  profileManager_.addUser(userName);
+                  profile.addUser(userName);
                }
                // TODO: will this re-invoke our listener, causing us to call
                // setConfigFile twice?
                userSelect_.setSelectedItem(userName);
             }
             // Set the current active user.
-            profileManager_.setCurrentUser(userName);
+            profile.setCurrentUser(userName);
             // Update the list of hardware config files.
             setConfigFile(null);
          }
@@ -262,8 +261,9 @@ public class MMIntroDlg extends JDialog {
    // Add a new config file to the dropdown menu.
    public void setConfigFile(String path) {
       cfgFileDropperDown_.removeAllItems();
+      DefaultUserProfile profile = DefaultUserProfile.getInstance();
       ArrayList<String> configs = new ArrayList<String>(
-            Arrays.asList(profileManager_.getStringArray(MMIntroDlg.class,
+            Arrays.asList(profile.getStringArray(MMIntroDlg.class,
                RECENTLY_USED_CONFIGS, new String[0])));
       Boolean doesExist = false;
       if (path != null) {
@@ -278,10 +278,10 @@ public class MMIntroDlg extends JDialog {
          }
          String[] tmp = new String[configs.size()];
          tmp = configs.toArray(tmp);
-         profileManager_.setStringArray(MMIntroDlg.class,
+         profile.setStringArray(MMIntroDlg.class,
                RECENTLY_USED_CONFIGS, tmp);
          try {
-            profileManager_.saveProfile();
+            profile.saveProfile();
          }
          catch (java.io.IOException e) {
             ReportingUtils.showError(e, "There was an error when saving your profile.");
@@ -289,8 +289,9 @@ public class MMIntroDlg extends JDialog {
       }
 
       // Add on global default configs.
-      for (String config : profileManager_.getStringArray(MMIntroDlg.class,
-               GLOBAL_CONFIGS, new String[0])) {
+      for (String config : profile.getStringArray(MMIntroDlg.class,
+               GLOBAL_CONFIGS,
+               new String[] {new File(DEFAULT_CONFIG_FILE_NAME).getAbsolutePath()})) {
          configs.add(config);
       }
       for (String config : configs) {

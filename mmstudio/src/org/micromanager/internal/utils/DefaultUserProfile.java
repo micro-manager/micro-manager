@@ -19,15 +19,24 @@ import org.micromanager.UserProfile;
 import org.micromanager.data.internal.DefaultPropertyMap;
 import org.micromanager.internal.utils.MDUtils;
 
+// TODO: Use getters/setters for each object that "gate" access to relevant
+// preferences when those values are shared across objects? How do we handle
+// ensuring objects have references to each other? Or do we make those methods
+// static as well? 
 public class DefaultUserProfile implements UserProfile {
    private static final String USERNAME_MAPPING_FILE = "Profiles.txt";
    private static final String GLOBAL_USER = "Global defaults";
    public static final String DEFAULT_USER = "Default user";
 
+   private static DefaultUserProfile staticInstance_;
+   static {
+      staticInstance_ = new DefaultUserProfile();
+   }
    private HashMap<String, String> nameToFile_;
    private String userName_;
    private DefaultPropertyMap globalProfile_;
    private DefaultPropertyMap userProfile_;
+
    public DefaultUserProfile() {
       nameToFile_ = loadUserMapping();
       globalProfile_ = loadUser(GLOBAL_USER);
@@ -445,5 +454,9 @@ public class DefaultUserProfile implements UserProfile {
    public void setCurrentUser(String userName) {
       userName_ = userName;
       userProfile_ = loadUser(userName);
+   }
+
+   public static DefaultUserProfile getInstance() {
+      return staticInstance_;
    }
 }

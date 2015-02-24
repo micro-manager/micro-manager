@@ -196,7 +196,6 @@ public class MMStudio implements ScriptInterface {
    private AcqControlDlg acqControlWin_;
    private DataManager dataManager_;
    private DisplayManager displayManager_;
-   private DefaultUserProfile profileManager_;
    private PluginManager pluginManager_;
    private final SnapLiveManager snapLiveManager_;
    private final ToolsMenu toolsMenu_;
@@ -459,7 +458,6 @@ public class MMStudio implements ScriptInterface {
 
       dataManager_ = new DefaultDataManager(this);
       displayManager_ = new DefaultDisplayManager(this);
-      profileManager_ = new DefaultUserProfile();
 
       loadMRUConfigFiles();
       afMgr_ = new AutofocusManager(studio_);
@@ -484,8 +482,7 @@ public class MMStudio implements ScriptInterface {
          // Ask the user for a configuration file.
          // TODO: excise MRUConfigFiles_
          MMIntroDlg introDlg = new MMIntroDlg(
-               MMVersion.VERSION_STRING, options_,
-               profileManager_);
+               MMVersion.VERSION_STRING, options_);
          introDlg.setConfigFile(sysConfigFile_);
          introDlg.setVisible(true);
          introDlg.toFront();
@@ -2549,6 +2546,6 @@ public class MMStudio implements ScriptInterface {
 
    @Override
    public UserProfile profile() {
-      return profileManager_;
+      return DefaultUserProfile.getInstance();
    }
 }
