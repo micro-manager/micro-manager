@@ -39,8 +39,7 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.prefs.BackingStoreException;
-import java.util.prefs.Preferences;
+import java.util.Set;
 
 import java.util.ArrayList;
 
@@ -55,7 +54,9 @@ import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.border.LineBorder;
 
+import org.micromanager.internal.MMOptions;
 import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.utils.DefaultUserSettings;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -66,14 +67,16 @@ import org.micromanager.internal.utils.ReportingUtils;
  */
 public class MMIntroDlg extends JDialog {
    private static final long serialVersionUID = 1L;
-   private static final String PREFS_USERNAMES = "Usernames";
-   public static final String USERNAME_DEFAULT = "Default user";
    private static final String USERNAME_NEW = "Create new user";
+   private static final String RECENTLY_USED_CONFIGS = "recently-used config files";
+   private static final String GLOBAL_CONFIGS = "config files supplied from a central authority";
    private JTextArea welcomeTextArea_;
    private boolean okFlag_ = true;
    
    ArrayList<String> mruCFGFileList_;
 
+   private MMOptions options_;
+   private DefaultUserSettings profileManager_;
    private JComboBox cfgFileDropperDown_;
    private JComboBox userSelect_;
    
@@ -92,10 +95,11 @@ public class MMIntroDlg extends JDialog {
    public static String CITATION_TEXT =
       "If you have found this software useful, please cite Micro-Manager in your publications.";
 
-   
-   public MMIntroDlg(String ver, ArrayList<String> mruCFGFileList) {
+   public MMIntroDlg(String ver, MMOptions options,
+         DefaultUserSettings profileManager) {
       super();
-      mruCFGFileList_ = mruCFGFileList;
+      options_ = options;
+      profileManager_ = profileManager;
       setFont(new Font("Arial", Font.PLAIN, 10));
       setTitle("Micro-Manager Startup");
       getContentPane().setLayout(null);
@@ -186,52 +190,9 @@ public class MMIntroDlg extends JDialog {
       userProfileLabel.setBounds(5, 268, 319, 19);
       getContentPane().add(userProfileLabel);
 
-      final Preferences prefs = Preferences.userNodeForPackage(MMIntroDlg.class);
-      String[] users = new String[0];
-      try {
-         if (!prefs.nodeExists(PREFS_USERNAMES)) {
-            // Create the list of user names, with two default options.
-            Preferences node = prefs.node(PREFS_USERNAMES);
-            node.put(USERNAME_DEFAULT, "");
-            node.put(USERNAME_NEW, "");
-         }
-         users = prefs.node(PREFS_USERNAMES).keys();
+      if (options.shouldAskForProfile_) {
+         addProfileDropdown();
       }
-      catch (BackingStoreException e) {
-         ReportingUtils.logError(e, "Couldn't recover list of user names");
-      }
-      final ArrayList<String> usersAsList = new ArrayList<String>(Arrays.asList(users));
-      // HACK: put the "new" and "default" options first in the list.
-      usersAsList.remove(USERNAME_DEFAULT);
-      usersAsList.remove(USERNAME_NEW);
-      usersAsList.add(0, USERNAME_DEFAULT);
-      usersAsList.add(0, USERNAME_NEW);
-      userSelect_ = new JComboBox();
-      for (String userName : usersAsList) {
-         userSelect_.addItem(userName);
-      }
-      userSelect_.setSelectedItem(USERNAME_DEFAULT);
-      userSelect_.setBounds(5, 285, 342, 26);
-      userSelect_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            String userName = (String) userSelect_.getSelectedItem();
-            if (!userName.contentEquals(USERNAME_NEW)) {
-               return;
-            }
-            // Prompt the user for the new user name.
-            userName = JOptionPane.showInputDialog("Please input the new user name:");
-            if (usersAsList.contains(userName)) {
-               ReportingUtils.showError("That user name is already in use.");
-               return;
-            }
-            usersAsList.add(userName);
-            userSelect_.addItem(userName);
-            userSelect_.setSelectedItem(userName);
-            prefs.node(PREFS_USERNAMES).put(userName, "");
-         }
-      });
-      getContentPane().add(userSelect_);
 
       welcomeTextArea_ = new JTextArea() {
          @Override
@@ -253,46 +214,90 @@ public class MMIntroDlg extends JDialog {
 
    }
 
+   private void addProfileDropdown() {
+      Set<String> users = profileManager_.getUserNames();
+      final ArrayList<String> usersAsList = new ArrayList<String>(users);
+      // HACK: put the "new" and "default" options first in the list.
+      usersAsList.remove(DefaultUserSettings.DEFAULT_USER);
+      usersAsList.add(0, DefaultUserSettings.DEFAULT_USER);
+      usersAsList.add(0, USERNAME_NEW);
+      userSelect_ = new JComboBox();
+      for (String userName : usersAsList) {
+         userSelect_.addItem(userName);
+      }
+      userSelect_.setSelectedItem(DefaultUserSettings.DEFAULT_USER);
+      userSelect_.setBounds(5, 285, 342, 26);
+      userSelect_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            String userName = (String) userSelect_.getSelectedItem();
+            if (userName.contentEquals(USERNAME_NEW)) {
+               // Prompt the user for the new user name.
+               userName = JOptionPane.showInputDialog("Please input the new user name:");
+               if (usersAsList.contains(userName)) {
+                  ReportingUtils.showError("That user name is already in use.");
+               }
+               else {
+                  usersAsList.add(userName);
+                  userSelect_.addItem(userName);
+                  profileManager_.addUser(userName);
+               }
+               // TODO: will this re-invoke our listener, causing us to call
+               // setConfigFile twice?
+               userSelect_.setSelectedItem(userName);
+            }
+            // Set the current active user.
+            profileManager_.setCurrentUser(userName);
+            // Update the list of hardware config files.
+            setConfigFile(null);
+         }
+      });
+      getContentPane().add(userSelect_);
+   }
+
    public boolean okChosen() {
       return okFlag_;
    }
 
+   // Add a new config file to the dropdown menu.
    public void setConfigFile(String path) {
-      // using the provided path, setup the drop down list of config files in the same directory
       cfgFileDropperDown_.removeAllItems();
-      //java.io.FileFilter iocfgFilter = new IOcfgFileFilter();
-      File cfg = new File(path);
-      Boolean doesExist = cfg.exists();
-
-      if(doesExist)
-      {
-      // add the new configuration file to the list
-        if(!mruCFGFileList_.contains(path)){
-            // in case persistant data is inconsistent
-            if( 6 <= mruCFGFileList_.size() ) {
-                mruCFGFileList_.remove(mruCFGFileList_.size()-2);
-            }
-            mruCFGFileList_.add(0, path);
-        }
+      ArrayList<String> configs = new ArrayList<String>(
+            Arrays.asList(profileManager_.getStringArray(MMIntroDlg.class,
+               RECENTLY_USED_CONFIGS, new String[0])));
+      Boolean doesExist = false;
+      if (path != null) {
+         doesExist = new File(path).exists();
       }
-      // if the previously selected config file no longer exists, still use the directory where it had been stored
-      //File cfgpath = new File(cfg.getParent());
-     // File matches[] = cfgpath.listFiles(iocfgFilter);
+      if (doesExist) {
+         // Update the user's preferences for recently-used config files.
+         configs.add(path);
+         // Don't remember more than six user-specific config files.
+         if (configs.size() > 6) {
+            configs.remove(configs.get(0));
+         }
+         String[] tmp = new String[configs.size()];
+         tmp = configs.toArray(tmp);
+         profileManager_.setStringArray(MMIntroDlg.class,
+               RECENTLY_USED_CONFIGS, tmp);
+      }
 
-      for (Object ofi : mruCFGFileList_){
-          cfgFileDropperDown_.addItem(ofi.toString());
-          if(doesExist){
-              String tvalue = ofi.toString();
-              if(tvalue.equals(path)){
-                  cfgFileDropperDown_.setSelectedIndex(cfgFileDropperDown_.getItemCount()-1);
-              }
-          }
+      // Add on global default configs.
+      for (String config : profileManager_.getStringArray(MMIntroDlg.class,
+               GLOBAL_CONFIGS, new String[0])) {
+         configs.add(config);
+      }
+      for (String config : configs) {
+         cfgFileDropperDown_.addItem(config);
       }
       cfgFileDropperDown_.addItem("(none)");
-      // selected configuration path does not exist
-      if( !doesExist)
-          cfgFileDropperDown_.setSelectedIndex(cfgFileDropperDown_.getItemCount()-1);
 
+      if (doesExist) {
+         cfgFileDropperDown_.setSelectedItem(path);
+      }
+      else {
+         cfgFileDropperDown_.setSelectedItem(configs.size() - 1);
+      }
    }
       
    public String getConfigFile() {
@@ -312,6 +317,7 @@ public class MMIntroDlg extends JDialog {
       return "";
    }
    
+   // User wants to use a file browser to select a hardware config file.
    protected void loadConfigFile() {
       File f = FileDialogs.openFile(this, "Choose a config file", MMStudio.MM_CONFIG_FILE);
       if (f != null) {

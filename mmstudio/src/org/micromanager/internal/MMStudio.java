@@ -196,7 +196,7 @@ public class MMStudio implements ScriptInterface {
    private AcqControlDlg acqControlWin_;
    private DataManager dataManager_;
    private DisplayManager displayManager_;
-   private UserSettings settingsManager_;
+   private DefaultUserSettings profileManager_;
    private PluginManager pluginManager_;
    private final SnapLiveManager snapLiveManager_;
    private final ToolsMenu toolsMenu_;
@@ -459,6 +459,7 @@ public class MMStudio implements ScriptInterface {
 
       dataManager_ = new DefaultDataManager(this);
       displayManager_ = new DefaultDisplayManager(this);
+      profileManager_ = new DefaultUserSettings();
 
       loadMRUConfigFiles();
       afMgr_ = new AutofocusManager(studio_);
@@ -479,11 +480,12 @@ public class MMStudio implements ScriptInterface {
       hotKeys_ = new org.micromanager.internal.utils.HotKeys();
       hotKeys_.loadSettings();
 
-      String userName = MMIntroDlg.USERNAME_DEFAULT;
       if (!options_.doNotAskForConfigFile_) {
          // Ask the user for a configuration file.
+         // TODO: excise MRUConfigFiles_
          MMIntroDlg introDlg = new MMIntroDlg(
-               MMVersion.VERSION_STRING, MRUConfigFiles_);
+               MMVersion.VERSION_STRING, options_,
+               profileManager_);
          introDlg.setConfigFile(sysConfigFile_);
          introDlg.setVisible(true);
          introDlg.toFront();
@@ -493,9 +495,7 @@ public class MMStudio implements ScriptInterface {
             return;
          }
          sysConfigFile_ = introDlg.getConfigFile();
-         userName = introDlg.getUserName();
       }
-      settingsManager_ = new DefaultUserSettings(userName);
       saveMRUConfigFiles();
 
       mainPrefs_.put(SYSTEM_CONFIG_FILE, sysConfigFile_);
@@ -2548,7 +2548,7 @@ public class MMStudio implements ScriptInterface {
    }
 
    @Override
-   public UserSettings settings() {
-      return settingsManager_;
+   public UserSettings profile() {
+      return profileManager_;
    }
 }

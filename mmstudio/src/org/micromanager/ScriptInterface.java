@@ -762,5 +762,5 @@ public interface ScriptInterface {
     * Provides access to the UserSettings instance for accessing per-user
     * saved settings.
     */
-   public UserSettings settings();
+   public UserSettings profile();
 }

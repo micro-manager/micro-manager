@@ -50,6 +50,7 @@ public class MMOptions {
 
    public boolean debugLogEnabled_;
    public boolean doNotAskForConfigFile_;
+   public boolean shouldAskForProfile_;
    public boolean closeOnExit_;
    public int circularBufferSizeMB_;
    public String displayBackground_;
