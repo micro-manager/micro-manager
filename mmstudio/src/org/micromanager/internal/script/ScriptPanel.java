@@ -89,6 +89,7 @@ import org.fife.ui.rtextarea.SearchResult;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.PropertyEditor;
 import org.micromanager.ScriptInterface;
+import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.FileDialogs.FileType;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.HotKeysDialog;
@@ -101,6 +102,7 @@ import org.micromanager.internal.utils.TooltipTextMaker;
 public final class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI {
    private static final long serialVersionUID = 1L;
    private static final int HISTORYSIZE = 100;
+   private static final String STARTUP_SCRIPT = "path to the Beanshell script to run when the program starts up";
    private JTable scriptTable_;
    private static ScriptTableModel model_;
    private final RSyntaxTextArea scriptArea_;
@@ -1446,4 +1448,13 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
          interp_.sleep(ms);
    }
 
+   public static String getStartupScript() {
+      return DefaultUserProfile.getInstance().getString(ScriptPanel.class,
+            STARTUP_SCRIPT, "MMStartup.bsh");
+   }
+
+   public static void setStartupScript(String path) {
+      DefaultUserProfile.getInstance().setString(ScriptPanel.class,
+            STARTUP_SCRIPT, path);
+   }
 }

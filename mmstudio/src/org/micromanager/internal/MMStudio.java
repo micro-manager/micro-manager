@@ -325,8 +325,8 @@ public class MMStudio implements ScriptInterface {
       sysConfigFile_ = System.getProperty(DEFAULT_CONFIG_FILE_PROPERTY,
             sysConfigFile_);
 
-      if (options_.startupScript_.length() > 0) {
-         startupScriptFile_ = new File(options_.startupScript_).getAbsolutePath();
+      if (ScriptPanel.getStartupScript().length() > 0) {
+         startupScriptFile_ = new File(ScriptPanel.getStartupScript()).getAbsolutePath();
       } else {
          startupScriptFile_ = "";
       }

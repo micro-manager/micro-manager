@@ -46,6 +46,7 @@ import org.micromanager.ScriptInterface;
 import org.micromanager.internal.logging.LogFileManager;
 import org.micromanager.internal.MMOptions;
 import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.script.ScriptPanel;
 import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.GUIColors;
 import org.micromanager.internal.utils.MMDialog;
@@ -239,7 +240,7 @@ public class OptionsDlg extends MMDialog {
          }
       });
 
-      startupScriptFile_ = new JTextField(opts_.startupScript_);
+      startupScriptFile_ = new JTextField(ScriptPanel.getStartupScript());
 
       final JCheckBox closeOnExitCheckBox = new JCheckBox();
       closeOnExitCheckBox.setText("Close app when quitting MM");
@@ -466,10 +467,11 @@ public class OptionsDlg extends MMDialog {
       }
 
       opts_.circularBufferSizeMB_ = seqBufSize;
-      opts_.startupScript_ = startupScriptFile_.getText();
       opts_.deleteCoreLogAfterDays_ = deleteLogDays;
       opts_.saveSettings();
 
+      ScriptPanel.setStartupScript(startupScriptFile_.getText());
+      saveProfile();
       parent_.makeActive();
       dispose();
    }
