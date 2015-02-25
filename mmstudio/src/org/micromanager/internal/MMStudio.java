@@ -529,7 +529,7 @@ public class MMStudio implements ScriptInterface {
       // Create Multi-D window here but do not show it.
       // This window needs to be created in order to properly set the 
       // "ChannelGroup" based on the Multi-D parameters
-      acqControlWin_ = new AcqControlDlg(engine_, studio_, options_);
+      acqControlWin_ = new AcqControlDlg(engine_, studio_);
 
       frame_.initializeConfigPad();
 
@@ -1646,7 +1646,7 @@ public class MMStudio implements ScriptInterface {
    public void openAcqControlDialog() {
       try {
          if (acqControlWin_ == null) {
-            acqControlWin_ = new AcqControlDlg(engine_, studio_, options_);
+            acqControlWin_ = new AcqControlDlg(engine_, studio_);
          }
          if (acqControlWin_.isActive()) {
             acqControlWin_.setTopPosition();

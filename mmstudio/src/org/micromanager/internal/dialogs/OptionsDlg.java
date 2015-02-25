@@ -349,11 +349,17 @@ public class OptionsDlg extends MMDialog {
   
       final JCheckBox syncExposureMainAndMDA = new JCheckBox();
       syncExposureMainAndMDA.setText("Sync exposure between Main and MDA windows");
-      syncExposureMainAndMDA.setSelected(opts_.syncExposureMainAndMDA_);
+      syncExposureMainAndMDA.setSelected(AcqControlDlg.getShouldSyncExposure());
       syncExposureMainAndMDA.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
-            opts_.syncExposureMainAndMDA_ = syncExposureMainAndMDA.isSelected();
+            AcqControlDlg.setShouldSyncExposure(syncExposureMainAndMDA.isSelected());
+            try {
+               DefaultUserProfile.getInstance().saveProfile();
+            }
+            catch (java.io.IOException e) {
+               ReportingUtils.showError(e, "Error saving user profile");
+            }
          }
       });
   

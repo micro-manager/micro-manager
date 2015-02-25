@@ -11,7 +11,6 @@ import javax.swing.table.TableModel;
 
 import org.micromanager.acquisition.internal.AcquisitionEngine;
 import org.micromanager.ScriptInterface;
-import org.micromanager.internal.MMOptions;
 import org.micromanager.internal.utils.ChannelSpec;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.TooltipTextMaker;
@@ -25,7 +24,6 @@ public class ChannelTableModel extends AbstractTableModel implements TableModelL
    private ArrayList<ChannelSpec> channels_;
    private final ScriptInterface studio_;
    private final AcquisitionEngine acqEng_;
-   private final MMOptions options_;
    public final String[] COLUMN_NAMES = new String[]{
       "Use?",
       "Configuration",
@@ -55,11 +53,9 @@ public class ChannelTableModel extends AbstractTableModel implements TableModelL
       return TOOLTIPS[columnIndex];
    }
 
-   public ChannelTableModel(ScriptInterface studio, AcquisitionEngine eng, 
-         MMOptions options) {
+   public ChannelTableModel(ScriptInterface studio, AcquisitionEngine eng) {
       studio_ = studio;
       acqEng_ = eng;
-      options_ = options;
    }
 
    @Override
@@ -125,7 +121,7 @@ public class ChannelTableModel extends AbstractTableModel implements TableModelL
          channel.exposure = ((Double) value);
          AcqControlDlg.setChannelExposure(acqEng_.getChannelGroup(),
                channel.config, channel.exposure);
-         if (options_.syncExposureMainAndMDA_) {
+         if (AcqControlDlg.getShouldSyncExposure()) {
             studio_.setChannelExposureTime(acqEng_.getChannelGroup(), 
                     channel.config, channel.exposure);
          }

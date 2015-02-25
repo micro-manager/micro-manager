@@ -48,7 +48,6 @@ import org.micromanager.acquisition.internal.AcquisitionEngine;
 import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
 import org.micromanager.ScriptInterface;
 import org.micromanager.internal.interfaces.AcqSettingsListener;
-import org.micromanager.internal.MMOptions;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.AcqOrderMode;
 import org.micromanager.internal.utils.ChannelSpec;
@@ -86,6 +85,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
    public static final String ACQ_SETTINGS_NODE = "AcquistionSettings";
    public static final String COLOR_SETTINGS_NODE = "ColorSettings";
    private static final String EXPOSURE_SETTINGS_NODE = "AcqExposureSettings";
+   private static final String SHOULD_SYNC_EXPOSURE = "should sync exposure times between main window and Acquire dialog";
    private JComboBox channelGroupCombo_;
    private final JTextArea commentTextArea_;
    private final JComboBox zValCombo_;
@@ -102,7 +102,6 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
    private JTable channelTable_;
    private final JSpinner numFrames_;
    private ChannelTableModel model_;
-   private final MMOptions options_;
    private File acqFile_;
    private String acqDir_;
    private int zVals_ = 0;
@@ -189,7 +188,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
    private boolean disableGUItoSettings_ = false;
 
    public final void createChannelTable() {
-      model_ = new ChannelTableModel(studio_, acqEng_, options_);
+      model_ = new ChannelTableModel(studio_, acqEng_);
       model_.addTableModelListener(model_);
 
       channelTable_ = new JTable() {
@@ -337,13 +336,11 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
     * @param acqEng - acquisition engine
     * @param prefs - application preferences node
     */
-   public AcqControlDlg(AcquisitionEngine acqEng, ScriptInterface gui,
-         MMOptions options) {
+   public AcqControlDlg(AcquisitionEngine acqEng, ScriptInterface gui) {
       super();
 
       studio_ = gui;
       guiColors_ = new GUIColors();
-      options_ = options;
 
       setIconImage(SwingResourceManager.getImage(MMStudio.class,
             "icons/microscope.gif"));
@@ -2086,5 +2083,15 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
          int color) {
       DefaultUserProfile.getInstance().setInt(AcqControlDlg.class,
             "Color_" + channelGroup + "_" + channel, color);
+   }
+
+   public static boolean getShouldSyncExposure() {
+      return DefaultUserProfile.getInstance().getBoolean(AcqControlDlg.class,
+            SHOULD_SYNC_EXPOSURE, false);
+   }
+
+   public static void setShouldSyncExposure(boolean shouldSync) {
+      DefaultUserProfile.getInstance().setBoolean(AcqControlDlg.class,
+            SHOULD_SYNC_EXPOSURE, shouldSync);
    }
 }
