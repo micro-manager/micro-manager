@@ -48,7 +48,8 @@ public class DefaultUserProfile implements UserProfile {
    private HashMap<String, String> loadUserMapping() {
       JSONObject mapping = new JSONObject();
       HashMap<String, String> result = new HashMap<String, String>();
-      File tmp = new File(USERNAME_MAPPING_FILE);
+      File tmp = new File(JavaUtils.getApplicationDataPath() +
+            "/" + USERNAME_MAPPING_FILE);
       if (!tmp.exists()) {
          ReportingUtils.logMessage("Creating user profile mapping file");
          // No file to be found; create it with the default user.
