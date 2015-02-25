@@ -183,12 +183,7 @@ public class MMIntroDlg extends JDialog {
       cfgFileDropperDown_.setBounds(5, 245, 342, 26);
       getContentPane().add(cfgFileDropperDown_);
 
-      JLabel userProfileLabel = new JLabel("User profile:");
-      userProfileLabel.setFont(new Font("Arial", Font.PLAIN, 10));
-      userProfileLabel.setBounds(5, 268, 319, 19);
-      getContentPane().add(userProfileLabel);
-
-      if (options_.shouldAskForProfile_) {
+      if (!DefaultUserProfile.getShouldAlwaysUseDefaultProfile()) {
          addProfileDropdown();
       }
 
@@ -213,6 +208,11 @@ public class MMIntroDlg extends JDialog {
    }
 
    private void addProfileDropdown() {
+      JLabel userProfileLabel = new JLabel("User profile:");
+      userProfileLabel.setFont(new Font("Arial", Font.PLAIN, 10));
+      userProfileLabel.setBounds(5, 268, 319, 19);
+      getContentPane().add(userProfileLabel);
+
       final DefaultUserProfile profile = DefaultUserProfile.getInstance();
       Set<String> users = profile.getUserNames();
       final ArrayList<String> usersAsList = new ArrayList<String>(users);
@@ -330,5 +330,5 @@ public class MMIntroDlg extends JDialog {
       if (f != null) {
          setConfigFile(f.getAbsolutePath());
       }
-   }   
+   }
 }

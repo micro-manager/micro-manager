@@ -19,14 +19,11 @@ import org.micromanager.UserProfile;
 import org.micromanager.data.internal.DefaultPropertyMap;
 import org.micromanager.internal.utils.MDUtils;
 
-// TODO: Use getters/setters for each object that "gate" access to relevant
-// preferences when those values are shared across objects? How do we handle
-// ensuring objects have references to each other? Or do we make those methods
-// static as well? 
 public class DefaultUserProfile implements UserProfile {
    private static final String USERNAME_MAPPING_FILE = "Profiles.txt";
    private static final String GLOBAL_USER = "Global defaults";
    public static final String DEFAULT_USER = "Default user";
+   private static final String ALWAYS_USE_DEFAULT_USER = "always use the default user profile";
 
    private static DefaultUserProfile staticInstance_;
    static {
@@ -458,5 +455,49 @@ public class DefaultUserProfile implements UserProfile {
 
    public static DefaultUserProfile getInstance() {
       return staticInstance_;
+   }
+
+   /**
+    * This special property controls whether or not we always use the
+    * "Default user" profile.
+    */
+   public static boolean getShouldAlwaysUseDefaultProfile() {
+      DefaultUserProfile profile = getInstance();
+      // This parameter is stored for the default user. Just in case we *are*
+      // using the default user, wrap this in synchronized.
+      synchronized(profile.userProfile_) {
+         PropertyMap defaultUser = profile.loadUser(DEFAULT_USER);
+         Boolean result = defaultUser.getBoolean(
+               profile.genKey(DefaultUserProfile.class, ALWAYS_USE_DEFAULT_USER));
+         if (result == null) {
+            return false;
+         }
+         return result;
+      }
+   }
+
+   /**
+    * As above, but set the value. It will only take effect after a restart.
+    */
+   public static void setShouldAlwaysUseDefaultProfile(boolean shouldUseDefault) {
+      DefaultUserProfile profile = getInstance();
+      // Again, in case we're using the default user already, we wrap this
+      // in synchronized.
+      synchronized(profile.userProfile_) {
+         // In order to simplify saving things (since saveProfile() always
+         // saves the current user), we temporarily switch to the
+         // default user for this operation.
+         String curUser = profile.userName_;
+         profile.setCurrentUser(DEFAULT_USER);
+         profile.setBoolean(DefaultUserProfile.class,
+               ALWAYS_USE_DEFAULT_USER, shouldUseDefault);
+         try {
+            profile.saveProfile();
+         }
+         catch (IOException e) {
+            ReportingUtils.logError(e, "Unable to save whether or not to always use the default profile");
+         }
+         profile.setCurrentUser(curUser);
+      }
    }
 }
