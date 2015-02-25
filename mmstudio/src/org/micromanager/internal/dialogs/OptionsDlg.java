@@ -61,6 +61,7 @@ public class OptionsDlg extends MMDialog {
    private static final long serialVersionUID = 1L;
    private static final String IS_DEBUG_LOG_ENABLED = "is debug logging enabled";
    private static final String SHOULD_CLOSE_ON_EXIT = "should close the entire program when the Micro-Manager plugin is closed";
+   private static final String BACKGROUND_MODE = "current window style (should be \"Day\" or \"Night\")";
 
    private final JTextField startupScriptFile_;
    private final JTextField bufSizeField_;
@@ -230,7 +231,7 @@ public class OptionsDlg extends MMDialog {
 
       comboDisplayBackground_ = new JComboBox(guiColors_.styleOptions);
       comboDisplayBackground_.setMaximumRowCount(2);
-      comboDisplayBackground_.setSelectedItem(opts_.displayBackground_);
+      comboDisplayBackground_.setSelectedItem(getBackgroundMode());
       comboDisplayBackground_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -445,7 +446,8 @@ public class OptionsDlg extends MMDialog {
    private void changeBackground() {
       String background = (String) comboDisplayBackground_.getSelectedItem();
 
-      opts_.displayBackground_ = background;
+      setBackgroundMode(background);
+      saveProfile();
       parent_.setBackgroundStyle(background);
    }
 
@@ -499,5 +501,15 @@ public class OptionsDlg extends MMDialog {
    public static void setShouldCloseOnExit(boolean shouldClose) {
       DefaultUserProfile.getInstance().setBoolean(OptionsDlg.class,
             SHOULD_CLOSE_ON_EXIT, shouldClose);
+   }
+
+   public static String getBackgroundMode() {
+      return DefaultUserProfile.getInstance().getString(OptionsDlg.class,
+            BACKGROUND_MODE, ScriptInterface.DAY);
+   }
+
+   public static void setBackgroundMode(String mode) {
+      DefaultUserProfile.getInstance().setString(OptionsDlg.class,
+            BACKGROUND_MODE, mode);
    }
 }

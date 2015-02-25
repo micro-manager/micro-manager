@@ -357,7 +357,7 @@ public class MMStudio implements ScriptInterface {
          ReportingUtils.logError(e);
       }
 
-      setBackgroundStyle(options_.displayBackground_);
+      setBackgroundStyle(OptionsDlg.getBackgroundMode());
 
       showRegistrationDialogMaybe();
 
@@ -1828,7 +1828,7 @@ public class MMStudio implements ScriptInterface {
          throw new IllegalArgumentException("Invalid background style \"" +
                backgroundType + "\"");
       }
-      options_.displayBackground_ = backgroundType;
+      OptionsDlg.setBackgroundMode(backgroundType);
       // Ensure every GUI object type gets the right background color.
       for (String key : BACKGROUND_COLOR_KEYS) {
          UIManager.put(key + ".background",
@@ -1842,7 +1842,7 @@ public class MMStudio implements ScriptInterface {
 
    @Override
    public String getBackgroundStyle() {
-      return options_.displayBackground_;
+      return OptionsDlg.getBackgroundMode();
    }
 
    

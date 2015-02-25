@@ -32,7 +32,6 @@ import java.util.prefs.Preferences;
 public class MMOptions {
    private static final String PREF_DIR = "MMOptions";
    private static final String BUFFSIZE_MB = "bufsize_mb";
-   private static final String DISPLAY_BACKGROUND = "displayBackground";
    private static final String STARTUP_SCRIPT_FILE = "startupScript";
    private static final String AUTORELOAD_DEVICES = "autoreloadDevices"; // No longer used but should not be reused
    private static final String PREF_WINDOW_MAG = "windowMag";
@@ -45,7 +44,6 @@ public class MMOptions {
       "DeleteCoreLogAfterDays";
 
    public int circularBufferSizeMB_;
-   public String displayBackground_;
    public String startupScript_;
    public double windowMag_;
    public boolean mpTiffMetadataFile_;
@@ -61,7 +59,6 @@ public class MMOptions {
       boolean is64BitJVM =
          System.getProperty("sun.arch.data.model", "32").equals("64");
       circularBufferSizeMB_ = is64BitJVM ? 250 : 25;
-      displayBackground_ = "Day";
       startupScript_ = "MMStartup.bsh";
       windowMag_ = 1.0;
       mpTiffMetadataFile_ = false;
@@ -80,7 +77,6 @@ public class MMOptions {
       Preferences prefs = getPrefNode();
 
       prefs.putInt(BUFFSIZE_MB, circularBufferSizeMB_);
-      prefs.put(DISPLAY_BACKGROUND, displayBackground_);
       prefs.put(STARTUP_SCRIPT_FILE, startupScript_);
       prefs.putDouble(PREF_WINDOW_MAG, windowMag_);
       prefs.putBoolean(MPTIFF_METADATA_FILE, mpTiffMetadataFile_);
@@ -93,7 +89,6 @@ public class MMOptions {
       Preferences prefs = getPrefNode();
 
       circularBufferSizeMB_ = prefs.getInt(BUFFSIZE_MB, circularBufferSizeMB_);
-      displayBackground_ = prefs.get(DISPLAY_BACKGROUND, displayBackground_);
       startupScript_ = prefs.get(STARTUP_SCRIPT_FILE, startupScript_);
       windowMag_ = prefs.getDouble(PREF_WINDOW_MAG, windowMag_);
       mpTiffMetadataFile_ = prefs.getBoolean(MPTIFF_METADATA_FILE, mpTiffMetadataFile_);
