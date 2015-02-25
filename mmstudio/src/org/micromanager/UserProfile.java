@@ -11,10 +11,10 @@ import java.io.IOException;
  */
 public interface UserProfile {
    /**
-    * Profile found in this file provide default values for all users; these
-    * values will be used only if the user has not set their own values (which
-    * often happens automatically as a side-effect of interacting with the
-    * program).
+    * The profile found in this file provide default values for all users;
+    * these values will be used only if the user has not set their own values
+    * for a key (and such values are often set automatically as a side-effect
+    * of interacting with the program).
     */
    public static final String GLOBAL_SETTINGS_FILE = "GlobalUserProfile.txt";
 
@@ -28,8 +28,7 @@ public interface UserProfile {
     * @param key The identifier for the parameter.
     * @param fallback The value to return if the key is not found or the key
     *                 points to null.
-    * @return The value in storage, or null if the value does not exist or the
-    *         value does not have the type String.
+    * @return The value in storage, or null if the value does not exist.
     */
    public String getString(Class<?> c, String key, String fallback);
    /** As above, but for String arrays. */
