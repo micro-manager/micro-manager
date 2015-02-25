@@ -1,6 +1,7 @@
 package org.micromanager.data.internal;
 
 import java.util.HashMap;
+import java.util.Set;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -298,6 +299,25 @@ public class DefaultPropertyMap implements PropertyMap {
          return propMap_.get(key).getAsBooleanArray();
       }
       return null;
+   }
+
+   @Override
+   public PropertyMap merge(PropertyMap alt) {
+      // We need access to "internal" methods that aren't exposed in the API.
+      DefaultPropertyMap defaultAlt = (DefaultPropertyMap) alt;
+      Builder builder = (Builder) copy();
+      for (String key : defaultAlt.getKeys()) {
+         builder.putProperty(key, defaultAlt.getProperty(key));
+      }
+      return builder.build();
+   }
+
+   public Set<String> getKeys() {
+      return propMap_.keySet();
+   }
+
+   public PropertyValue getProperty(String key) {
+      return propMap_.get(key);
    }
 
    public JSONObject toJSON() {

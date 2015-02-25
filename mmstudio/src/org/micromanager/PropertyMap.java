@@ -66,4 +66,8 @@ public interface PropertyMap {
    public Boolean getBoolean(String key);
    /** Retrieve an array of Booleans from the mapping, with a similar caveat. */
    public Boolean[] getBooleanArray(String key);
+
+   /** Create a new PropertyMap that is this map but with values copied across
+     * from the provided PropertyMap. */
+   public PropertyMap merge(PropertyMap alt);
 }
