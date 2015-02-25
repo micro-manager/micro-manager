@@ -209,10 +209,13 @@ public class MultipleAcquisitionManager {
       
       //stop future acquisitions
       managerThread_.interrupt();
-      //abort current acquisition
+      //abort current parallel acquisition group
       if (currentAcqs_ != null) {
          currentAcqs_.abort();
       }      
+      //abort blocks until all the acquisition stuff is closed, so can reset GUI here
+      //this call is redundant to normal finishing mechanism but useful in case of acq errors
+      multipleAcquisitionsFinsihed();           
    }
 
    public void runAllAcquisitions() {
@@ -236,7 +239,7 @@ public class MultipleAcquisitionManager {
                }
                //run one or more acquisitions in parallel group 
                currentAcqs_ = eng_.runInterleavedAcquisitions(acquisitions_.subList(
-                       getFirstIndexOfGroup(groupIndex), getFirstIndexOfGroup(groupIndex) + getGroupSize(groupIndex)));
+                       getFirstIndexOfGroup(groupIndex), getFirstIndexOfGroup(groupIndex) + getGroupSize(getFirstIndexOfGroup(groupIndex)) ));
                while (currentAcqs_ != null) {
                   try {
                      Thread.sleep(50);
@@ -244,33 +247,37 @@ public class MultipleAcquisitionManager {
                      managerThread_.interrupt();
                   }
                }
-               //mark as finished
+               //mark as finished, unless already marked as aborted
                for (int i = 0; i < numberInGroup_.get(groupIndex); i++) {
-                  acqStatus_[getFirstIndexOfGroup(groupIndex) + i] = "Finished";
+                  if (!getAcqStatus( getFirstIndexOfGroup(groupIndex) + i).equals("Aborted") ) {
+                     acqStatus_[getFirstIndexOfGroup(groupIndex) + i] = "Finished";
+                  }
                }
                gui_.repaint();
             }
-            running_ = false;
-            acqStatus_ = null;            
-            gui_.enableMultiAcquisitionControls(true);            
+            multipleAcquisitionsFinsihed();          
          }
       }, "Multiple acquisition manager thread");
      managerThread_.start();
    }
    
-   public void updateAcquisitionStatuses() {
-      if (managerThread_ != null && managerThread_.isAlive()) {
-         //LEFT OFF HERE
-         //Make sure when aborting single acq in parallel group statuses update appropriately
-      } else {
-         acqStatus_ = null;
+   private void multipleAcquisitionsFinsihed() {
+      running_ = false;
+      acqStatus_ = null;
+      gui_.enableMultiAcquisitionControls(true);
+   }
+   
+   public void markAsAborted(FixedAreaAcquisitionSettings settings) {
+      if (acqStatus_ != null) {
+         acqStatus_[acquisitions_.indexOf(settings)] = "Aborted";
+         gui_.repaint();
       }
    }
    
    /**
     * Called by parallel acquisition group when it is finished so that manager knows to move onto next one
     */
-   public void acquisitionFinished() {
+   public void parallelAcqGroupFinished() {
       currentAcqs_ = null;
    }
    

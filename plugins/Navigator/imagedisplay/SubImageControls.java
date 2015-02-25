@@ -38,11 +38,10 @@ public class SubImageControls extends Panel {
    private DisplayPlus display_;
    private ScrollerPanel scrollerPanel_;
    private JPanel sliderPanel_;
-   private JScrollBar zTopSlider_, zBottomSlider_;
+   private JScrollBar zTopScrollbar_, zBottomScrollbar_;
    private JTextField zTopTextField_, zBottomTextField_;
    private Acquisition acq_;
-   private double zMin_, zMax_, zStep_;
-   private int numZSteps_;
+   private double zStep_, zOrigin_;
    private int displayHeight_ = -1;
 
    public SubImageControls(DisplayPlus disp, EventBus bus, Acquisition acq) {
@@ -55,6 +54,67 @@ public class SubImageControls extends Panel {
       initComponents();
    }
 
+   private void updateZTopAndBottom() {
+      //Update the text fields next to the sliders in response to adjustment
+      double zBottom = zStep_ * zBottomScrollbar_.getValue() + zOrigin_;
+      zBottomTextField_.setText(TWO_DECIMAL_FORMAT.format(zBottom));
+      double zTop = zStep_ * zTopScrollbar_.getValue() + zOrigin_;
+      zTopTextField_.setText(TWO_DECIMAL_FORMAT.format(zTop));
+      //Update the acquisition 
+      ((ExploreAcquisition) acq_).setZLimits(zTop, zBottom);
+   }
+   
+   private void expandZLimitsIfNeeded(int topScrollbarIndex, int bottomScrollbarIndex) {
+      //extent of 1 needs to be accounted for on top
+      if (topScrollbarIndex >= zTopScrollbar_.getMaximum() - 1 || bottomScrollbarIndex >= zBottomScrollbar_.getMaximum() - 1) {         
+         zTopScrollbar_.setMaximum(Math.max(topScrollbarIndex,bottomScrollbarIndex) + 2); 
+         zBottomScrollbar_.setMaximum(Math.max(topScrollbarIndex,bottomScrollbarIndex) + 2); 
+      }      
+      if (bottomScrollbarIndex <= zBottomScrollbar_.getMinimum() || topScrollbarIndex <= zTopScrollbar_.getMinimum()) {
+         zTopScrollbar_.setMinimum(Math.min(bottomScrollbarIndex, topScrollbarIndex) - 1); 
+         zBottomScrollbar_.setMinimum(Math.min(bottomScrollbarIndex, topScrollbarIndex) - 1); 
+      }     
+   }
+   
+   private void zTopTextFieldAction() {
+      //check if new position is outside bounds of current z range
+      //and if so expand sliders as needed
+      double val = Double.parseDouble(zTopTextField_.getText());
+      int newSliderindex =  (int) Math.round((val  - zOrigin_) / zStep_);
+      expandZLimitsIfNeeded(newSliderindex, zBottomScrollbar_.getValue());
+      //now that scollbar expanded, set value
+      zTopScrollbar_.setValue(newSliderindex);
+      updateZTopAndBottom();
+   }
+
+   private void zBottomTextFieldAction() {
+      //check if new position is outside bounds of current z range
+      //and if so expand sliders as needed
+      double val = Double.parseDouble(zBottomTextField_.getText());
+      int newSliderindex =  (int) Math.round((val  - zOrigin_) / zStep_);
+      expandZLimitsIfNeeded(zTopScrollbar_.getValue(),newSliderindex);
+      zBottomScrollbar_.setValue(newSliderindex);
+      updateZTopAndBottom();
+   }
+   
+   private void zTopSliderAdjustment() {
+      //Top must be <= to bottom
+      if (zTopScrollbar_.getValue() > zBottomScrollbar_.getValue()) {
+         zBottomScrollbar_.setValue(zTopScrollbar_.getValue());
+      }
+      expandZLimitsIfNeeded(zTopScrollbar_.getValue(), zBottomScrollbar_.getValue());
+      updateZTopAndBottom();
+   }
+   
+   private void zBottomSliderAdjustment() {
+      //Top must be <= to bottom
+      if (zTopScrollbar_.getValue() > zBottomScrollbar_.getValue()) {
+         zTopScrollbar_.setValue(zBottomScrollbar_.getValue());
+      }
+      expandZLimitsIfNeeded(zTopScrollbar_.getValue(), zBottomScrollbar_.getValue());
+      updateZTopAndBottom();
+   }
+
    private void initComponents() {
       final JPanel controlsPanel = new JPanel(new MigLayout("insets 0, fillx, align center", "", "[]0[]0[]"));
 
@@ -63,70 +123,40 @@ public class SubImageControls extends Panel {
 
       if (acq_ instanceof ExploreAcquisition) {
          sliderPanel_ = new JPanel(new MigLayout("insets 0", "[][][grow]", ""));
-         //get slider min and max
          //TODO: what if no z device enabled?
          try {
             CMMCore core = MMStudio.getInstance().getCore();
             String z = core.getFocusDevice();
-            double zPos = core.getPosition(z);
-            zMin_ = (int) core.getPropertyLowerLimit(z, "Position");
-            zMax_ = (int) core.getPropertyUpperLimit(z, "Position");
-            if (SettingsDialog.getDemoMode()) {
-               zMin_ = 0;
-               zMax_ = 399;
-            }
-            //Always initialize so current position falls exactly on a step, 
-            //so don't have to auto move z when launching explore
-            int stepsAbove = (int) Math.floor((zPos - zMin_) / zStep_);
-            int stepsBelow = (int) Math.floor((zMax_ - zPos) / zStep_);
-            //change min and max to reflect stepped positions
-            zMin_ = zPos - stepsAbove * zStep_;
-            zMax_ = zPos + stepsBelow * zStep_;
-            numZSteps_ = stepsBelow + stepsAbove + 1;
-            zTopSlider_ = new JScrollBar(JScrollBar.HORIZONTAL, stepsAbove, 1, 0, numZSteps_);
-            zBottomSlider_ = new JScrollBar(JScrollBar.HORIZONTAL, stepsAbove, 1, 0, numZSteps_);
-            zTopTextField_ = new JTextField(zPos + "");
+            zOrigin_ = core.getPosition(z);
+            //Initialize z to current position with space to move one above or below           
+            //value, extent, min, max
+            //max value of scrollbar is max - extent
+            zTopScrollbar_ = new JScrollBar(JScrollBar.HORIZONTAL, 0, 1, -1, 2);
+            zBottomScrollbar_ = new JScrollBar(JScrollBar.HORIZONTAL, 0, 1, -1, 2);
+            zTopTextField_ = new JTextField(zOrigin_ + "");
             zTopTextField_.addActionListener(new ActionListener() {
-
                @Override
                public void actionPerformed(ActionEvent ae) {
-                  double val = Double.parseDouble(zTopTextField_.getText());
-                  int sliderPos = (int) (val / ((double) Math.abs(zMax_ - zMin_)) * numZSteps_);
-                  zTopSlider_.setValue(sliderPos);
-                  updateZTopAndBottom();
+                  zTopTextFieldAction();
                }
             });
-            zBottomTextField_ = new JTextField(zPos + "");
+            zBottomTextField_ = new JTextField(zOrigin_ + "");
             zBottomTextField_.addActionListener(new ActionListener() {
-
                @Override
                public void actionPerformed(ActionEvent ae) {
-                  double val = Double.parseDouble(zBottomTextField_.getText());
-                  int sliderPos = (int) (val / ((double) Math.abs(zMax_ - zMin_)) * numZSteps_);
-                  zBottomSlider_.setValue(sliderPos);
-                  updateZTopAndBottom();
+                  zBottomTextFieldAction();
                }
             });
-            zTopSlider_.addAdjustmentListener(new AdjustmentListener() {
-
+            zTopScrollbar_.addAdjustmentListener(new AdjustmentListener() {
                @Override
                public void adjustmentValueChanged(AdjustmentEvent ae) {
-
-                  if (zTopSlider_.getValue() > zBottomSlider_.getValue()) {
-                     zBottomSlider_.setValue(zTopSlider_.getValue());
-                  }
-                  updateZTopAndBottom();
+                  zTopSliderAdjustment();
                }
             });
-
-            zBottomSlider_.addAdjustmentListener(new AdjustmentListener() {
-
+            zBottomScrollbar_.addAdjustmentListener(new AdjustmentListener() {
                @Override
                public void adjustmentValueChanged(AdjustmentEvent ae) {
-                  if (zTopSlider_.getValue() > zBottomSlider_.getValue()) {
-                     zTopSlider_.setValue(zBottomSlider_.getValue());
-                  }
-                  updateZTopAndBottom();
+                  zBottomSliderAdjustment();
                }
             });
             //initialize properly
@@ -135,18 +165,17 @@ public class SubImageControls extends Panel {
             zTopTextField_.getActionListeners()[0].actionPerformed(null);
             zBottomTextField_.getActionListeners()[0].actionPerformed(null);
 
-
             sliderPanel_.add(new JLabel("Z limits"), "span 1 2");
             if (JavaUtils.isMac()) {
                sliderPanel_.add(zTopTextField_, "w 80!");
-               sliderPanel_.add(zTopSlider_, "growx, wrap");
+               sliderPanel_.add(zTopScrollbar_, "growx, wrap");
                sliderPanel_.add(zBottomTextField_, "w 80!");
-               sliderPanel_.add(zBottomSlider_, "growx");
+               sliderPanel_.add(zBottomScrollbar_, "growx");
             } else {
                sliderPanel_.add(zTopTextField_, "w 50!");
-               sliderPanel_.add(zTopSlider_, "growx, wrap");
+               sliderPanel_.add(zTopScrollbar_, "growx, wrap");
                sliderPanel_.add(zBottomTextField_, "w 50!");
-               sliderPanel_.add(zBottomSlider_, "growx");
+               sliderPanel_.add(zBottomScrollbar_, "growx");
 
             }
             controlsPanel.add(sliderPanel_, "span, growx, align center, wrap");
@@ -219,18 +248,6 @@ public class SubImageControls extends Panel {
             super.onNewImageEvent(new NewImageEvent(axisToPosition));
          }
       };
-   }
-
-   private void updateZTopAndBottom() {
-      double zBottom = zStep_ * zBottomSlider_.getValue() + zMin_;
-      zBottomTextField_.setText(TWO_DECIMAL_FORMAT.format(zBottom));
-      double zTop = zStep_ * zTopSlider_.getValue() + zMin_;
-      zTopTextField_.setText(TWO_DECIMAL_FORMAT.format(zTop));
-      ((ExploreAcquisition) acq_).setZLimits(zTop, zBottom);
-   }
-
-   public ScrollerPanel getScrollerPanel() {
-      return scrollerPanel_;
    }
 
    /**

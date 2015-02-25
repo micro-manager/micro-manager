@@ -1,20 +1,51 @@
 package acq;
 
+import java.util.prefs.Preferences;
+import javax.swing.filechooser.FileSystemView;
+import main.Navigator;
+
 /**
  * Container for settings specific to explore acquisition
  * @author Henry
  */
 public class ExploreAcqSettings {
-
-   public final double zTop_, zBottom_, zStep_;
+   
+   private static final String EXPLORE_NAME_PREF = "Explore acq name";
+   private static final String EXPLORE_DIR_PREF = "Explore acq dir";
+   private static final String EXPLORE_Z_STEP = "Explore acq zStep";
+   
+   
+   public final double zStep_;
    public final String dir_, name_;
 
-   public ExploreAcqSettings(double zTop, double zBottom, double zStep, String dir, String name) {
-      zTop_ = zTop;
-      zBottom_ = zBottom;
+   public ExploreAcqSettings(double zStep, String dir, String name) {
       zStep_ = zStep;
       dir_ = dir;
-      name_ = name;      
+      name_ = name;   
+      Preferences prefs = Navigator.getPrefs();
+      //now that explore acquisition is being run, store values
+      prefs.put(EXPLORE_DIR_PREF, dir);
+      prefs.put(EXPLORE_NAME_PREF, name);
+      prefs.putDouble(EXPLORE_Z_STEP, zStep_);
    }
+   
+   public static String getNameFromPrefs() {
+      Preferences prefs = Navigator.getPrefs();
+      return prefs.get(EXPLORE_NAME_PREF, "Untitled Explore Acquisition" );
+   }
+   
+   
+   public static String getDirFromPrefs() {
+      Preferences prefs = Navigator.getPrefs();
+      return prefs.get(EXPLORE_DIR_PREF, FileSystemView.getFileSystemView().getHomeDirectory().getAbsolutePath() );
+   }
+   
+   public static double getZStepFromPrefs() {
+      Preferences prefs = Navigator.getPrefs();
+      return prefs.getDouble(EXPLORE_Z_STEP, 1);
+   }
+   
+   
+   
 
 }

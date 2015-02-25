@@ -63,6 +63,10 @@ public class FixedAreaAcquisition extends Acquisition {
       createEventGenerator();
    }
    
+   public FixedAreaAcquisitionSettings getSettings() {
+      return settings_;
+   }
+   
    private void readSettings() {
       numTimePoints_ = settings_.timeEnabled_ ? settings_.numTimePoints_ : 1;
    }
@@ -71,6 +75,10 @@ public class FixedAreaAcquisition extends Acquisition {
     * abort acquisition. Block until successfully finished
     */
    public void abort() {
+      if (finished_) {
+         //acq already aborted
+         return;
+      }
       eventGeneratingThread_.interrupt();
       try {
          eventGeneratingThread_.join();
@@ -137,11 +145,9 @@ public class FixedAreaAcquisition extends Acquisition {
    public long getNextWakeTime_ms() {
       return nextTimePointStartTime_ms_;
    }
-   
-   
-   
-   public void readyForNextTimePoint() {
-       readyForTP_.getAndIncrement();
+    
+   public int readyForNextTimePoint() {
+       return readyForTP_.getAndIncrement() + 1;
    }
 
    private void createEventGenerator() {
@@ -157,7 +163,8 @@ public class FixedAreaAcquisition extends Acquisition {
                   try {
                      Thread.sleep(5);
                   } catch (InterruptedException ex) {
-                     return; //thread has been interrupted due to abort request, return;
+                     //thread has been interrupted due to abort request, return
+                     return; 
                   }
                }
                //set the next time point start time

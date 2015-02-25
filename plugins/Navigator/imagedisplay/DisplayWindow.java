@@ -29,7 +29,7 @@ public class DisplayWindow extends StackWindow {
    public static int CANVAS_PIXEL_BORDER = 4;
    private static int RESIZE_WINDOW_DELAY = 50;
    private static int MINIMUM_CANVAS_DIMENSION = 200;
-   private static int MINIMUM_SAVED_WINDOW_DIMENSION = 400;
+   private static int MINIMUM_SAVED_WINDOW_DIMENSION = 700;
    private boolean closed_ = false;
    private final EventBus bus_;
    private ImagePlus plus_;
@@ -48,22 +48,29 @@ public class DisplayWindow extends StackWindow {
    private static final int DEFAULTPOSX = 300;
    private static final int DEFAULTPOSY = 100;
    private static Preferences displayPrefs_;
-   private static final String WINDOWPOSX = "WindowPosX";
-   private static final String WINDOWPOSY = "WindowPosY";
+   private static final String EXPLOREWINDOWPOSX = "ExploreWindowPosX";
+   private static final String EXPLOREWINDOWPOSY = "ExploreWindowPosY";
+   private static final String FIXEDWINDOWPOSX = "FixedWindowPosX";
+   private static final String FIXEDWINDOWPOSY = "FixedWindowPosY";
    private static final String WINDOWSIZEX_EXPLORE = "ExploreWindowSizeX";
    private static final String WINDOWSIZEY_EXPLORE = "ExploreWindowSizeY";
    private static final String WINDOWSIZEX_FIXED = "FixedWindowSizeX";
    private static final String WINDOWSIZEY_FIXED = "FixedWindowSizeY";
 
    // This class is used to signal that a window is closing.
-   public static class RequestToCloseEvent {
+   public class RequestToCloseEvent {
 
       public DisplayWindow window_;
 
       public RequestToCloseEvent(DisplayWindow window) {
          if (displayPrefs_ != null) {
-            displayPrefs_.putInt(WINDOWPOSX, window.getLocation().x);
-            displayPrefs_.putInt(WINDOWPOSY, window.getLocation().y);
+            if (acq_ instanceof ExploreAcquisition) {
+               displayPrefs_.putInt(EXPLOREWINDOWPOSX, window.getLocation().x);
+               displayPrefs_.putInt(EXPLOREWINDOWPOSY, window.getLocation().y);
+            } else {
+               displayPrefs_.putInt(EXPLOREWINDOWPOSX, window.getLocation().x);
+               displayPrefs_.putInt(EXPLOREWINDOWPOSY, window.getLocation().y);
+            }
          }
          window_ = window;
       }
@@ -90,8 +97,13 @@ public class DisplayWindow extends StackWindow {
       initializePrefs();
       int posX = DEFAULTPOSX, posY = DEFAULTPOSY;
       if (displayPrefs_ != null) {
-         posX = displayPrefs_.getInt(WINDOWPOSX, DEFAULTPOSX);
-         posY = displayPrefs_.getInt(WINDOWPOSY, DEFAULTPOSY);
+         if (acq_ instanceof ExploreAcquisition) {
+            posX = displayPrefs_.getInt(EXPLOREWINDOWPOSX, DEFAULTPOSX);
+            posY = displayPrefs_.getInt(EXPLOREWINDOWPOSY, DEFAULTPOSY);
+         } else {
+            posX = displayPrefs_.getInt(FIXEDWINDOWPOSX, DEFAULTPOSX);
+            posY = displayPrefs_.getInt(FIXEDWINDOWPOSY, DEFAULTPOSY);         
+         }
       }
       setLocation(posX, posY);
 
@@ -410,7 +422,6 @@ public class DisplayWindow extends StackWindow {
          this.validate();
          //now that canvas is shrunk, shrink window
          if (shrinkWindow) {
-            saveWindowResize_ = false;
             shrinkWindowToFitCanvas();
          }
          return true;

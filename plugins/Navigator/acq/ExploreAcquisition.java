@@ -28,10 +28,16 @@ public class ExploreAcquisition extends Acquisition {
 
    public ExploreAcquisition(ExploreAcqSettings settings) {
       super(settings.zStep_);
-      zTop_ = settings.zTop_;
-      zBottom_ = settings.zBottom_;
-      zOrigin_ = zTop_;
-      initialize(settings.dir_, settings.name_);
+      try {
+         //start at current z position
+         zTop_ = core_.getPosition(zStage_);
+         zBottom_ = core_.getPosition(zStage_);
+         zOrigin_ = core_.getPosition(zStage_);
+         initialize(settings.dir_, settings.name_);
+      } catch (Exception ex) {
+        ReportingUtils.showError("Couldn't get focus device position");
+        throw new RuntimeException();
+      }
    }
    
    public void abort() {

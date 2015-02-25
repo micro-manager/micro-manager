@@ -37,8 +37,9 @@ public class ParallelAcquisitionGroup {
     * @param acq 
     */
    public void acqAborted(FixedAreaAcquisition acq) {
+      multiAcqManager_.markAsAborted(acq.getSettings());
       if (activeIndex_ == acqs_.indexOf(acq)) {
-         //if this one was active, move on to next
+         //if this one was active, move on to next         
          finishedTimePoint(acq);
       }
    }
@@ -47,7 +48,7 @@ public class ParallelAcquisitionGroup {
     * Called by acquisition to signal that it has completed its time point
     * @param acq 
     */
-   public void finishedTimePoint(FixedAreaAcquisition acq) {
+   public void finishedTimePoint(FixedAreaAcquisition acq) {    
       int currentIndex = acqs_.indexOf(acq);   
       int nextIndex = (currentIndex + 1) % acqs_.size();
       //skip over finished acquisitions when determining which to run next
@@ -55,11 +56,13 @@ public class ParallelAcquisitionGroup {
          int index = i % acqs_.size();
          if (!acqs_.get(index).isFinished()) {
             //signal next acq to begin
-            acqs_.get(nextIndex).readyForNextTimePoint();
-            activeIndex_ = nextIndex;
+            acqs_.get(index).readyForNextTimePoint();
+            activeIndex_ = index;
             return;
          }
       }   
+      //all acquisition finished, let multi acq manager know
+      multiAcqManager_.parallelAcqGroupFinished();
    }
    
    public boolean isPaused() {
@@ -74,9 +77,14 @@ public class ParallelAcquisitionGroup {
       return acqs_.get(activeIndex_).getEventQueue();
    }
    
+   /**
+    * abort all acquisitions in group
+    * Individual acquisitions can be aborted by Xing their windows, 
+    */
    public void abort() {
-      //TODO: check how this works
-      acqs_.get(activeIndex_).abort();
+      for (Acquisition acq : acqs_) {
+         acq.abort();
+      }
    }
 
    
