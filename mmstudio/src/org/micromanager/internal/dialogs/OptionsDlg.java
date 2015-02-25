@@ -118,13 +118,14 @@ public class OptionsDlg extends MMDialog {
          }
       });
 
-      final JCheckBox doNotAskForConfigFileCheckBox = new JCheckBox();
-      doNotAskForConfigFileCheckBox.setText("Do not ask for config file at startup");
-      doNotAskForConfigFileCheckBox.setSelected(opts_.doNotAskForConfigFile_);
-      doNotAskForConfigFileCheckBox.addActionListener(new ActionListener() {
+      final JCheckBox askForConfigFileCheckBox = new JCheckBox();
+      askForConfigFileCheckBox.setText("Ask for config file at startup");
+      askForConfigFileCheckBox.setSelected(MMIntroDlg.getShouldAskForConfigFile());
+      askForConfigFileCheckBox.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
-            opts_.doNotAskForConfigFile_ = doNotAskForConfigFileCheckBox.isSelected();
+            MMIntroDlg.setShouldAskForConfigFile(askForConfigFileCheckBox.isSelected());
+            saveProfile();
          }
       });
 
@@ -408,7 +409,7 @@ public class OptionsDlg extends MMDialog {
 
       add(new JSeparator(), "wrap");
 
-      add(doNotAskForConfigFileCheckBox, "wrap");
+      add(askForConfigFileCheckBox, "wrap");
       add(alwaysUseDefaultProfileCheckBox, "wrap");
 
       add(new JLabel("Startup Script:"), "split 2, grow 0, gapright related");

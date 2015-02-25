@@ -480,9 +480,9 @@ public class MMStudio implements ScriptInterface {
       hotKeys_ = new org.micromanager.internal.utils.HotKeys();
       hotKeys_.loadSettings();
 
-      if (!options_.doNotAskForConfigFile_) {
-         // Ask the user for a configuration file.
-         // TODO: excise MRUConfigFiles_
+      if (MMIntroDlg.getShouldAskForConfigFile() ||
+            !DefaultUserProfile.getShouldAlwaysUseDefaultProfile()) {
+         // Ask the user for a configuration file and/or user profile.
          MMIntroDlg introDlg = new MMIntroDlg(MMVersion.VERSION_STRING);
          introDlg.setConfigFile(sysConfigFile_);
          introDlg.setVisible(true);
