@@ -54,7 +54,6 @@ import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.border.LineBorder;
 
-import org.micromanager.internal.MMOptions;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.FileDialogs;
@@ -76,7 +75,6 @@ public class MMIntroDlg extends JDialog {
    
    ArrayList<String> mruCFGFileList_;
 
-   private MMOptions options_;
    private JComboBox cfgFileDropperDown_;
    private JComboBox userSelect_;
    
@@ -95,9 +93,8 @@ public class MMIntroDlg extends JDialog {
    public static String CITATION_TEXT =
       "If you have found this software useful, please cite Micro-Manager in your publications.";
 
-   public MMIntroDlg(String ver, MMOptions options) {
+   public MMIntroDlg(String ver) {
       super();
-      options_ = options;
       setFont(new Font("Arial", Font.PLAIN, 10));
       setTitle("Micro-Manager Startup");
       getContentPane().setLayout(null);

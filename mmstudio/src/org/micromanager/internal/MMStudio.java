@@ -481,8 +481,7 @@ public class MMStudio implements ScriptInterface {
       if (!options_.doNotAskForConfigFile_) {
          // Ask the user for a configuration file.
          // TODO: excise MRUConfigFiles_
-         MMIntroDlg introDlg = new MMIntroDlg(
-               MMVersion.VERSION_STRING, options_);
+         MMIntroDlg introDlg = new MMIntroDlg(MMVersion.VERSION_STRING);
          introDlg.setConfigFile(sysConfigFile_);
          introDlg.setVisible(true);
          introDlg.toFront();
