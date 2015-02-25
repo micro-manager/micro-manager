@@ -375,7 +375,8 @@ public class MMStudio implements ScriptInterface {
       frame_ = new MainFrame(this, core_, snapLiveManager_, mainPrefs_);
       frame_.setIconImage(SwingResourceManager.getImage(MMStudio.class,
             "icons/microscope.gif"));
-      frame_.loadApplicationPrefs(mainPrefs_, options_.closeOnExit_);
+      frame_.loadApplicationPrefs(mainPrefs_,
+            OptionsDlg.getShouldCloseOnExit());
       ReportingUtils.SetContainingFrame(frame_);
 
       // move ImageJ window to place where it last was if possible
@@ -1489,7 +1490,7 @@ public class MMStudio implements ScriptInterface {
          if (core_ != null)
             logError(e);
       }
-      if (options_.closeOnExit_) {
+      if (OptionsDlg.getShouldCloseOnExit()) {
          if (!amRunningAsPlugin_) {
             System.exit(0);
          } else {

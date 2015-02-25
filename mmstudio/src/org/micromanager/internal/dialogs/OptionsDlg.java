@@ -60,6 +60,7 @@ import org.micromanager.internal.utils.UIMonitor;
 public class OptionsDlg extends MMDialog {
    private static final long serialVersionUID = 1L;
    private static final String IS_DEBUG_LOG_ENABLED = "is debug logging enabled";
+   private static final String SHOULD_CLOSE_ON_EXIT = "should close the entire program when the Micro-Manager plugin is closed";
 
    private final JTextField startupScriptFile_;
    private final JTextField bufSizeField_;
@@ -111,12 +112,7 @@ public class OptionsDlg extends MMDialog {
          public void actionPerformed(final ActionEvent e) {
             boolean isEnabled = debugLogEnabledCheckBox.isSelected();
             setIsDebugLogEnabled(isEnabled);
-            try {
-               DefaultUserProfile.getInstance().saveProfile();
-            }
-            catch (java.io.IOException ex) {
-               ReportingUtils.showError(ex, "Error saving user profile");
-            }
+            saveProfile();
             core_.enableDebugLog(isEnabled);
             UIMonitor.enable(isEnabled);
          }
@@ -245,12 +241,14 @@ public class OptionsDlg extends MMDialog {
 
       final JCheckBox closeOnExitCheckBox = new JCheckBox();
       closeOnExitCheckBox.setText("Close app when quitting MM");
-      closeOnExitCheckBox.setSelected(opts_.closeOnExit_);
+      closeOnExitCheckBox.setSelected(getShouldCloseOnExit());
       closeOnExitCheckBox.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
-            opts_.closeOnExit_ = closeOnExitCheckBox.isSelected();
-            MMStudio.getFrame().setExitStrategy(opts_.closeOnExit_);
+            boolean shouldClose = closeOnExitCheckBox.isSelected();
+            setShouldCloseOnExit(shouldClose);
+            saveProfile();
+            MMStudio.getFrame().setExitStrategy(shouldClose);
          }
       });
 
@@ -362,12 +360,7 @@ public class OptionsDlg extends MMDialog {
          @Override
          public void actionPerformed(ActionEvent arg0) {
             AcqControlDlg.setShouldSyncExposure(syncExposureMainAndMDA.isSelected());
-            try {
-               DefaultUserProfile.getInstance().saveProfile();
-            }
-            catch (java.io.IOException e) {
-               ReportingUtils.showError(e, "Error saving user profile");
-            }
+            saveProfile();
          }
       });
   
@@ -478,6 +471,15 @@ public class OptionsDlg extends MMDialog {
       dispose();
    }
 
+   private void saveProfile() {
+      try {
+         DefaultUserProfile.getInstance().saveProfile();
+      }
+      catch (java.io.IOException e) {
+         ReportingUtils.showError(e, "Error saving user profile");
+      }
+   }
+
    public static boolean getIsDebugLogEnabled() {
       return DefaultUserProfile.getInstance().getBoolean(OptionsDlg.class,
             IS_DEBUG_LOG_ENABLED, false);
@@ -486,5 +488,15 @@ public class OptionsDlg extends MMDialog {
    public static void setIsDebugLogEnabled(boolean isEnabled) {
       DefaultUserProfile.getInstance().setBoolean(OptionsDlg.class,
             IS_DEBUG_LOG_ENABLED, isEnabled);
+   }
+
+   public static boolean getShouldCloseOnExit() {
+      return DefaultUserProfile.getInstance().getBoolean(OptionsDlg.class,
+            SHOULD_CLOSE_ON_EXIT, true);
+   }
+
+   public static void setShouldCloseOnExit(boolean shouldClose) {
+      DefaultUserProfile.getInstance().setBoolean(OptionsDlg.class,
+            SHOULD_CLOSE_ON_EXIT, shouldClose);
    }
 }
