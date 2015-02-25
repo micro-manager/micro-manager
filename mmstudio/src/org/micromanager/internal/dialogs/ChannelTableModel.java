@@ -3,7 +3,6 @@ package org.micromanager.internal.dialogs;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.prefs.Preferences;
 
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
@@ -26,8 +25,6 @@ public class ChannelTableModel extends AbstractTableModel implements TableModelL
    private ArrayList<ChannelSpec> channels_;
    private final ScriptInterface studio_;
    private final AcquisitionEngine acqEng_;
-   private final Preferences exposurePrefs_;
-   private final Preferences colorPrefs_;
    private final MMOptions options_;
    public final String[] COLUMN_NAMES = new String[]{
       "Use?",
@@ -59,12 +56,9 @@ public class ChannelTableModel extends AbstractTableModel implements TableModelL
    }
 
    public ChannelTableModel(ScriptInterface studio, AcquisitionEngine eng, 
-         Preferences exposurePrefs, Preferences colorPrefs, 
          MMOptions options) {
       studio_ = studio;
       acqEng_ = eng;
-      exposurePrefs_ = exposurePrefs;
-      colorPrefs_ = colorPrefs;
       options_ = options;
    }
 
@@ -125,13 +119,12 @@ public class ChannelTableModel extends AbstractTableModel implements TableModelL
          channel.useChannel = ((Boolean) value);
       } else if (col == 1) {
          channel.config = value.toString();
-         channel.exposure = exposurePrefs_.getDouble(
-                 "Exposure_" + acqEng_.getChannelGroup() + "_" + 
-                 channel.config, 10.0);
+         channel.exposure = AcqControlDlg.getChannelExposure(
+               acqEng_.getChannelGroup(), channel.config, 10.0);
       } else if (col == 2) {
          channel.exposure = ((Double) value);
-         exposurePrefs_.putDouble("Exposure_" + acqEng_.getChannelGroup() 
-                 + "_" + channel.config,channel.exposure);
+         AcqControlDlg.setChannelExposure(acqEng_.getChannelGroup(),
+               channel.config, channel.exposure);
          if (options_.syncExposureMainAndMDA_) {
             studio_.setChannelExposureTime(acqEng_.getChannelGroup(), 
                     channel.config, channel.exposure);
@@ -178,7 +171,8 @@ public class ChannelTableModel extends AbstractTableModel implements TableModelL
       TableModel model = (TableModel) e.getSource();
       if (col == 6) {
          Color color = (Color) model.getValueAt(row, col);
-         colorPrefs_.putInt("Color_" + acqEng_.getChannelGroup() + "_" + channel.config, color.getRGB());
+         AcqControlDlg.setChannelColor(acqEng_.getChannelGroup(),
+               channel.config, color.getRGB());
       }
    }
 
@@ -212,12 +206,11 @@ public class ChannelTableModel extends AbstractTableModel implements TableModelL
          if (channel.config.length() == 0) {
             ReportingUtils.showMessage("No more channels are available\nin this channel group.");
          } else {
-            channel.color = new Color(colorPrefs_.getInt(
-                    "Color_" + acqEng_.getChannelGroup() + "_" + 
-                    channel.config, Color.white.getRGB()));
-            channel.exposure = exposurePrefs_.getDouble(
-                    "Exposure_" + acqEng_.getChannelGroup() + "_" + 
-                    channel.config, 10.0);
+            channel.color = new Color(AcqControlDlg.getChannelColor(
+                     acqEng_.getChannelGroup(), channel.config,
+                     Color.white.getRGB()));
+            channel.exposure = AcqControlDlg.getChannelExposure(
+                  acqEng_.getChannelGroup(), channel.config, 10.0);
             channels_.add(channel);
          }
       }

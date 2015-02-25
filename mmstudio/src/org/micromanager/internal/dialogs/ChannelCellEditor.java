@@ -6,7 +6,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.prefs.Preferences;
 
 import javax.swing.AbstractCellEditor;
 import javax.swing.JCheckBox;
@@ -39,14 +38,9 @@ public class ChannelCellEditor extends AbstractCellEditor implements TableCellEd
    ChannelSpec channel_ = null;
 
    private AcquisitionEngine acqEng_;
-   private Preferences exposurePrefs_;
-   private Preferences colorPrefs_;
 
-   public ChannelCellEditor(AcquisitionEngine engine, 
-         Preferences exposurePrefs, Preferences colorPrefs) {
+   public ChannelCellEditor(AcquisitionEngine engine) {
       acqEng_ = engine;
-      exposurePrefs_ = exposurePrefs;
-      colorPrefs_ = colorPrefs;
    }
 
    // This method is called when a cell value is edited by the user.
@@ -104,12 +98,12 @@ public class ChannelCellEditor extends AbstractCellEditor implements TableCellEd
 
             @Override
             public void actionPerformed(ActionEvent e) {
-               channel_.color = new Color(colorPrefs_.getInt(
-                       "Color_" + acqEng_.getChannelGroup() + "_" + 
-                       (String) combo_.getSelectedItem(), Color.white.getRGB()));
-               channel_.exposure = exposurePrefs_.getDouble(
-                    "Exposure_" + acqEng_.getChannelGroup() + "_" + 
-                    (String) combo_.getSelectedItem(), 10.0);
+               channel_.color = new Color(AcqControlDlg.getChannelColor(
+                     acqEng_.getChannelGroup(),
+                     (String) combo_.getSelectedItem(), Color.white.getRGB()));
+               channel_.exposure = AcqControlDlg.getChannelExposure(
+                  acqEng_.getChannelGroup(),
+                  (String) combo_.getSelectedItem(), 10.0);
                fireEditingStopped();
             }
          });
@@ -134,10 +128,11 @@ public class ChannelCellEditor extends AbstractCellEditor implements TableCellEd
             return checkBox_.isSelected();
          } else if (editCol_ == 1) {
             // As a side effect, change to the color and exposure of the new channel
-            channel_.color = new Color(colorPrefs_.getInt("Color_" + acqEng_.getChannelGroup() + "_" + combo_.getSelectedItem(), Color.white.getRGB()));
-            channel_.exposure = exposurePrefs_.getDouble(
-                    "Exposure_" + acqEng_.getChannelGroup() + "_" + 
-                    channel_.config, 10.0);
+            channel_.color = new Color(AcqControlDlg.getChannelColor(
+                     acqEng_.getChannelGroup(),
+                     (String) combo_.getSelectedItem(), Color.white.getRGB()));
+            channel_.exposure = AcqControlDlg.getChannelExposure(
+                  acqEng_.getChannelGroup(), channel_.config, 10.0);
             return combo_.getSelectedItem();
          } else if (editCol_ == 2 || editCol_ == 3) {
             return new Double(NumberUtils.displayStringToDouble(text_.getText()));
