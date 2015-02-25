@@ -44,7 +44,6 @@ public class MMOptions {
    private static final String DELETE_CORELOG_AFTER_DAYS =
       "DeleteCoreLogAfterDays";
 
-   public boolean shouldAskForProfile_;
    public int circularBufferSizeMB_;
    public String displayBackground_;
    public String startupScript_;
