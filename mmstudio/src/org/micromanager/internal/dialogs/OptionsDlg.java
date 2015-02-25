@@ -47,6 +47,7 @@ import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.internal.logging.LogFileManager;
 import org.micromanager.internal.MMOptions;
 import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.GUIColors;
 import org.micromanager.internal.utils.MMDialog;
 import org.micromanager.internal.utils.NumberUtils;
@@ -121,6 +122,19 @@ public class OptionsDlg extends MMDialog {
          @Override
          public void actionPerformed(ActionEvent arg0) {
             opts_.doNotAskForConfigFile_ = doNotAskForConfigFileCheckBox.isSelected();
+         }
+      });
+
+      final JCheckBox alwaysUseDefaultProfileCheckBox = new JCheckBox(
+            "Always use the default user profile");
+      alwaysUseDefaultProfileCheckBox.setToolTipText("Always use the default user profile; no prompt will be displayed to select a profile at startup. Won't take effect until after a restart.");
+      alwaysUseDefaultProfileCheckBox.setSelected(
+            DefaultUserProfile.getShouldAlwaysUseDefaultProfile());
+      alwaysUseDefaultProfileCheckBox.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            DefaultUserProfile.setShouldAlwaysUseDefaultProfile(
+               alwaysUseDefaultProfileCheckBox.isSelected());
          }
       });
 
@@ -390,6 +404,7 @@ public class OptionsDlg extends MMDialog {
       add(new JSeparator(), "wrap");
 
       add(doNotAskForConfigFileCheckBox, "wrap");
+      add(alwaysUseDefaultProfileCheckBox, "wrap");
 
       add(new JLabel("Startup Script:"), "split 2, grow 0, gapright related");
       add(startupScriptFile_, "wrap");
