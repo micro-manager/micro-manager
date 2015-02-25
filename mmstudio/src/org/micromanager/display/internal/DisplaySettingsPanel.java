@@ -378,7 +378,13 @@ public class DisplaySettingsPanel extends JPanel {
     * Save the current display settings as default settings.
     */
    private void saveAsDefaults() {
-      DefaultDisplaySettings.setStandardSettings(display_.getDisplaySettings());
+      try {
+         DefaultDisplaySettings.setStandardSettings(
+               display_.getDisplaySettings());
+      }
+      catch (java.io.IOException e) {
+         ReportingUtils.showError(e, "Unable to save display settings");
+      }
    }
 
    /**

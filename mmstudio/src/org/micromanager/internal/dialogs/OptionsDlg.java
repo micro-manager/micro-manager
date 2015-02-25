@@ -43,7 +43,6 @@ import javax.swing.WindowConstants;
 import mmcorej.CMMCore;
 
 import org.micromanager.ScriptInterface;
-import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.internal.logging.LogFileManager;
 import org.micromanager.internal.MMOptions;
 import org.micromanager.internal.MMStudio;
@@ -208,7 +207,6 @@ public class OptionsDlg extends MMDialog {
                mainPrefs_.clear();
                Preferences acqPrefs = mainPrefs_.node(mainPrefs_.absolutePath() + "/" + AcqControlDlg.ACQ_SETTINGS_NODE);
                acqPrefs.clear();
-               DefaultDisplaySettings.clearPrefs();
 
                // restore registration flag
                mainPrefs_.putBoolean(RegistrationDlg.REGISTRATION, previouslyRegistered);

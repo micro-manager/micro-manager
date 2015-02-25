@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.prefs.Preferences;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -20,7 +19,7 @@ import org.micromanager.data.Coords;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.MultiStagePosition;
 
-import org.micromanager.internal.utils.ImageUtils;
+import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -29,103 +28,120 @@ import org.micromanager.PropertyMap;
 public class DefaultDisplaySettings implements DisplaySettings {
 
    /**
-    * Clear preferences associated with this class.
-    */
-   public static void clearPrefs() {
-      Preferences prefs = Preferences.userNodeForPackage(DefaultDisplaySettings.class);
-      try {
-         prefs.clear();
-      }
-      catch (Exception e) {
-         ReportingUtils.logError(e, "Unable to clear preferences for DefaultDisplaySettings");
-      }
-   }
-
-   /**
     * Retrieve the display settings that have been saved in the preferences.
     * Note: we explicitly don't cache these settings, to ensure that
     * displays don't end up with copies of the same settings.
     */
    public static DefaultDisplaySettings getStandardSettings() {
+      DefaultUserProfile profile = DefaultUserProfile.getInstance();
       Builder builder = new Builder();
-      Preferences prefs = Preferences.userNodeForPackage(DefaultDisplaySettings.class);
-      if (prefs == null) {
-         // No saved settings.
-         return builder.build();
-      }
-      // We have to convert colors to/from byte arrays, that being the only
-      // way to store complex datatypes in Preferences. Fortunately colors
-      // aren't that complex.
+      // We have to convert colors to/from int arrays.
+      // TODO: assuming RGB tuples in the colors array.
       // Seven colors because ImageJ only supports 7 channels; put yellow/cyan
       // first for colorblind-friendliness.
       Color[] defaultColors = new Color[] {Color.YELLOW, Color.CYAN,
          Color.MAGENTA, Color.RED, Color.GREEN, Color.BLUE, Color.ORANGE};
-      byte[] defaultByteColors = colorsToBytes(defaultColors);
-      byte[] preferenceColors = prefs.getByteArray("channelColors", defaultByteColors);
-      builder.channelColors(bytesToColors(preferenceColors));
+      Integer[] defaultIntColors = colorsToInts(defaultColors);
+      Integer[] savedColors = profile.getIntArray(DefaultDisplaySettings.class,
+            "channelColors", defaultIntColors);
+      builder.channelColors(intsToColors(savedColors));
 
-      builder.channelDisplayModeIndex(prefs.getInt("channelDisplayModeIndex", 0));
-      builder.histogramUpdateRate(prefs.getDouble("histogramUpdateRate", 0));
-      builder.shouldSyncChannels(prefs.getBoolean("shouldSyncChannels", false));
-      builder.scaleBarColorIndex(prefs.getInt("scaleBarColorIndex", 0));
-      builder.scaleBarLocationIndex(prefs.getInt("scaleBarLocationIndex", 0));
-      builder.scaleBarShouldDrawText(prefs.getBoolean("scaleBarShouldDrawText", true));
-      builder.scaleBarSize(prefs.getDouble("scaleBarSize", 80));
-      builder.scaleBarOffsetX(prefs.getInt("scaleBarOffsetX", 15));
-      builder.scaleBarOffsetY(prefs.getInt("scaleBarOffsetY", 15));
-      builder.scaleBarIsFilled(prefs.getBoolean("scaleBarIsFilled", true));
-      builder.shouldShowScaleBar(prefs.getBoolean("shouldShowScaleBar", false));
-      builder.shouldAutostretch(prefs.getBoolean("shouldAutostretch", false));
-      builder.trimPercentage(prefs.getDouble("trimPercentage", 0));
-      builder.shouldUseLogScale(prefs.getBoolean("shouldUseLogScale", false));
+      builder.channelDisplayModeIndex(profile.getInt(
+            DefaultDisplaySettings.class, "channelDisplayModeIndex", 0));
+      builder.histogramUpdateRate(profile.getDouble(
+            DefaultDisplaySettings.class, "histogramUpdateRate", 0.0));
+      builder.shouldSyncChannels(profile.getBoolean(
+            DefaultDisplaySettings.class, "shouldSyncChannels", false));
+      builder.scaleBarColorIndex(profile.getInt(
+            DefaultDisplaySettings.class, "scaleBarColorIndex", 0));
+      builder.scaleBarLocationIndex(profile.getInt(
+            DefaultDisplaySettings.class, "scaleBarLocationIndex", 0));
+      builder.scaleBarShouldDrawText(profile.getBoolean(
+            DefaultDisplaySettings.class, "scaleBarShouldDrawText", true));
+      builder.scaleBarSize(profile.getDouble(
+            DefaultDisplaySettings.class, "scaleBarSize", 80.0));
+      builder.scaleBarOffsetX(profile.getInt(
+            DefaultDisplaySettings.class, "scaleBarOffsetX", 15));
+      builder.scaleBarOffsetY(profile.getInt(
+            DefaultDisplaySettings.class, "scaleBarOffsetY", 15));
+      builder.scaleBarIsFilled(profile.getBoolean(
+            DefaultDisplaySettings.class, "scaleBarIsFilled", true));
+      builder.shouldShowScaleBar(profile.getBoolean(
+            DefaultDisplaySettings.class, "shouldShowScaleBar", false));
+      builder.shouldAutostretch(profile.getBoolean(
+            DefaultDisplaySettings.class, "shouldAutostretch", true));
+      builder.trimPercentage(profile.getDouble(
+            DefaultDisplaySettings.class, "trimPercentage", 0.0));
+      builder.shouldUseLogScale(profile.getBoolean(
+            DefaultDisplaySettings.class, "shouldUseLogScale", false));
       // TODO: should we store user data in the display prefs?
       return builder.build();
    }
 
    /**
-    * Set new settings in the preferences.
+    * Set new settings in the user's profile.
     */
-   public static void setStandardSettings(DisplaySettings settings) {
-      Preferences prefs = Preferences.userNodeForPackage(DefaultDisplaySettings.class);
-      prefs.putByteArray("channelColors", colorsToBytes(settings.getChannelColors()));
-      prefs.putInt("channelDisplayModeIndex", settings.getChannelDisplayModeIndex());
-      prefs.putDouble("histogramUpdateRate", settings.getHistogramUpdateRate());
-      prefs.putBoolean("shouldSyncChannels", settings.getShouldSyncChannels());
-      prefs.putInt("scaleBarColorIndex", settings.getScaleBarColorIndex());
-      prefs.putInt("scaleBarLocationIndex", settings.getScaleBarLocationIndex());
-      prefs.putBoolean("scaleBarShouldDrawText", settings.getScaleBarShouldDrawText());
-      prefs.putDouble("scaleBarSize", settings.getScaleBarSize());
-      prefs.putInt("scaleBarOffsetX", settings.getScaleBarOffsetX());
-      prefs.putInt("scaleBarOffsetY", settings.getScaleBarOffsetY());
-      prefs.putBoolean("scaleBarIsFilled", settings.getScaleBarIsFilled());
-      prefs.putBoolean("shouldShowScaleBar", settings.getShouldShowScaleBar());
-      prefs.putBoolean("shouldAutostretch", settings.getShouldAutostretch());
-      prefs.putDouble("trimPercentage", settings.getTrimPercentage());
-      prefs.putBoolean("shouldUseLogScale", settings.getShouldUseLogScale());
+   public static void setStandardSettings(DisplaySettings settings) throws IOException {
+      DefaultUserProfile profile = DefaultUserProfile.getInstance();
+      profile.setIntArray(DefaultDisplaySettings.class,
+            "channelColors", colorsToInts(settings.getChannelColors()));
+      profile.setInt(DefaultDisplaySettings.class,
+            "channelDisplayModeIndex", settings.getChannelDisplayModeIndex());
+      profile.setDouble(DefaultDisplaySettings.class,
+            "histogramUpdateRate", settings.getHistogramUpdateRate());
+      profile.setBoolean(DefaultDisplaySettings.class,
+            "shouldSyncChannels", settings.getShouldSyncChannels());
+      profile.setInt(DefaultDisplaySettings.class,
+            "scaleBarColorIndex", settings.getScaleBarColorIndex());
+      profile.setInt(DefaultDisplaySettings.class,
+            "scaleBarLocationIndex", settings.getScaleBarLocationIndex());
+      profile.setBoolean(DefaultDisplaySettings.class,
+            "scaleBarShouldDrawText", settings.getScaleBarShouldDrawText());
+      profile.setDouble(DefaultDisplaySettings.class,
+            "scaleBarSize", settings.getScaleBarSize());
+      profile.setInt(DefaultDisplaySettings.class,
+            "scaleBarOffsetX", settings.getScaleBarOffsetX());
+      profile.setInt(DefaultDisplaySettings.class,
+            "scaleBarOffsetY", settings.getScaleBarOffsetY());
+      profile.setBoolean(DefaultDisplaySettings.class,
+            "scaleBarIsFilled", settings.getScaleBarIsFilled());
+      profile.setBoolean(DefaultDisplaySettings.class,
+            "shouldShowScaleBar", settings.getShouldShowScaleBar());
+      profile.setBoolean(DefaultDisplaySettings.class,
+            "shouldAutostretch", settings.getShouldAutostretch());
+      profile.setDouble(DefaultDisplaySettings.class,
+            "trimPercentage", settings.getTrimPercentage());
+      profile.setBoolean(DefaultDisplaySettings.class,
+            "shouldUseLogScale", settings.getShouldUseLogScale());
+      profile.saveProfile();
    }
 
    /**
-    * Convert the provided array of Colors to an array of Bytes, in RGB order.
+    * Convert the provided array of Colors to an array of Integers, in RGB
+    * order.
     */
-   private static byte[] colorsToBytes(Color[] colors) {
-      byte[] result = new byte[colors.length * 3];
+   private static Integer[] colorsToInts(Color[] colors) {
+      Integer[] result = new Integer[colors.length * 3];
       for (int i = 0; i < colors.length; ++i) {
-         result[i * 3] = (byte) colors[i].getRed();
-         result[i * 3 + 1] = (byte) colors[i].getGreen();
-         result[i * 3 + 2] = (byte) colors[i].getBlue();
+         result[i * 3] = colors[i].getRed();
+         result[i * 3 + 1] = colors[i].getGreen();
+         result[i * 3 + 2] = colors[i].getBlue();
       }
       return result;
    }
 
    /**
-    * Reverse the process performed by colorsToBytes().
+    * Reverse the process performed by colorsToInts().
     */
-   private static Color[] bytesToColors(byte[] bytes) {
-      Color[] result = new Color[bytes.length / 3];
+   private static Color[] intsToColors(Integer[] ints) {
+      if (ints == null) {
+         return null;
+      }
+      Color[] result = new Color[ints.length / 3];
       for (int i = 0; i < result.length; ++i) {
-         int red = ImageUtils.unsignedValue(bytes[i * 3]);
-         int green = ImageUtils.unsignedValue(bytes[i * 3 + 1]);
-         int blue = ImageUtils.unsignedValue(bytes[i * 3 + 2]);
+         int red = ints[i * 3];
+         int green = ints[i * 3 + 1];
+         int blue = ints[i * 3 + 2];
          result[i] = new Color(red, green, blue);
       }
       return result;
