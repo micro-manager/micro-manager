@@ -30,7 +30,6 @@ import java.util.prefs.Preferences;
  * Options data for MMStudio.
  */
 public class MMOptions {
-   private static final String DEBUG_LOG = "DebugLog";
    private static final String PREF_DIR = "MMOptions";
    private static final String CLOSE_ON_EXIT = "CloseOnExit";
    private static final String SKIP_CONFIG = "SkipSplashScreen";
@@ -47,7 +46,6 @@ public class MMOptions {
    private static final String DELETE_CORELOG_AFTER_DAYS =
       "DeleteCoreLogAfterDays";
 
-   public boolean debugLogEnabled_;
    public boolean doNotAskForConfigFile_;
    public boolean shouldAskForProfile_;
    public boolean closeOnExit_;
@@ -57,8 +55,6 @@ public class MMOptions {
    public double windowMag_;
    public boolean mpTiffMetadataFile_;
    public boolean mpTiffSeparateFilesForPositions_;
-   public boolean syncExposureMainAndMDA_;
-   public boolean hideMDADisplay_;
    public boolean deleteOldCoreLogs_;
    public int deleteCoreLogAfterDays_;
 
@@ -67,7 +63,6 @@ public class MMOptions {
    }
 
    private void setDefaultValues() {
-      debugLogEnabled_ = false;
       doNotAskForConfigFile_ = false;
       closeOnExit_ = true;
       boolean is64BitJVM =
@@ -78,8 +73,6 @@ public class MMOptions {
       windowMag_ = 1.0;
       mpTiffMetadataFile_ = false;
       mpTiffSeparateFilesForPositions_ = true;
-      syncExposureMainAndMDA_ = false;
-      hideMDADisplay_ = false;
       deleteOldCoreLogs_ = false;
       deleteCoreLogAfterDays_ = 7;
    }
@@ -93,7 +86,6 @@ public class MMOptions {
    public void saveSettings() {
       Preferences prefs = getPrefNode();
 
-      prefs.putBoolean(DEBUG_LOG, debugLogEnabled_);
       prefs.putBoolean(SKIP_CONFIG, doNotAskForConfigFile_);
       prefs.putBoolean(CLOSE_ON_EXIT, closeOnExit_);
       prefs.putInt(BUFFSIZE_MB, circularBufferSizeMB_);
@@ -102,7 +94,6 @@ public class MMOptions {
       prefs.putDouble(PREF_WINDOW_MAG, windowMag_);
       prefs.putBoolean(MPTIFF_METADATA_FILE, mpTiffMetadataFile_);
       prefs.putBoolean(MPTIFF_SEPARATE_FILES_FOR_POSITIONS, mpTiffSeparateFilesForPositions_);
-      prefs.putBoolean(HIDE_MDA_DISPLAY, hideMDADisplay_);
       prefs.putBoolean(DELETE_OLD_CORELOGS, deleteOldCoreLogs_);
       prefs.putInt(DELETE_CORELOG_AFTER_DAYS, deleteCoreLogAfterDays_);
    }
@@ -110,7 +101,6 @@ public class MMOptions {
    public void loadSettings() {
       Preferences prefs = getPrefNode();
 
-      debugLogEnabled_ = prefs.getBoolean(DEBUG_LOG, debugLogEnabled_);
       doNotAskForConfigFile_ = prefs.getBoolean(SKIP_CONFIG, doNotAskForConfigFile_);
       closeOnExit_ = prefs.getBoolean(CLOSE_ON_EXIT, closeOnExit_);
       circularBufferSizeMB_ = prefs.getInt(BUFFSIZE_MB, circularBufferSizeMB_);
@@ -119,7 +109,6 @@ public class MMOptions {
       windowMag_ = prefs.getDouble(PREF_WINDOW_MAG, windowMag_);
       mpTiffMetadataFile_ = prefs.getBoolean(MPTIFF_METADATA_FILE, mpTiffMetadataFile_);
       mpTiffSeparateFilesForPositions_ = prefs.getBoolean(MPTIFF_SEPARATE_FILES_FOR_POSITIONS, mpTiffSeparateFilesForPositions_);
-      hideMDADisplay_ = prefs.getBoolean(HIDE_MDA_DISPLAY, hideMDADisplay_);
       deleteOldCoreLogs_ =
          prefs.getBoolean(DELETE_OLD_CORELOGS, deleteOldCoreLogs_);
       deleteCoreLogAfterDays_ =

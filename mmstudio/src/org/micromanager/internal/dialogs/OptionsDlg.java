@@ -59,6 +59,7 @@ import org.micromanager.internal.utils.UIMonitor;
  */
 public class OptionsDlg extends MMDialog {
    private static final long serialVersionUID = 1L;
+   private static final String IS_DEBUG_LOG_ENABLED = "is debug logging enabled";
 
    private final JTextField startupScriptFile_;
    private final JTextField bufSizeField_;
@@ -104,13 +105,20 @@ public class OptionsDlg extends MMDialog {
       final JCheckBox debugLogEnabledCheckBox = new JCheckBox();
       debugLogEnabledCheckBox.setText("Enable debug logging");
       debugLogEnabledCheckBox.setToolTipText("Enable verbose logging for troubleshooting and debugging");
-      debugLogEnabledCheckBox.setSelected(opts_.debugLogEnabled_);
+      debugLogEnabledCheckBox.setSelected(getIsDebugLogEnabled());
       debugLogEnabledCheckBox.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(final ActionEvent e) {
-            opts_.debugLogEnabled_ = debugLogEnabledCheckBox.isSelected();
-            core_.enableDebugLog(opts_.debugLogEnabled_);
-            UIMonitor.enable(opts_.debugLogEnabled_);
+            boolean isEnabled = debugLogEnabledCheckBox.isSelected();
+            setIsDebugLogEnabled(isEnabled);
+            try {
+               DefaultUserProfile.getInstance().saveProfile();
+            }
+            catch (java.io.IOException ex) {
+               ReportingUtils.showError(ex, "Error saving user profile");
+            }
+            core_.enableDebugLog(isEnabled);
+            UIMonitor.enable(isEnabled);
          }
       });
 
@@ -365,11 +373,11 @@ public class OptionsDlg extends MMDialog {
   
       final JCheckBox hideMDAdisplay = new JCheckBox();
       hideMDAdisplay.setText("Hide MDA display");
-      hideMDAdisplay.setSelected(opts_.hideMDADisplay_);
+      hideMDAdisplay.setSelected(AcqControlDlg.getShouldHideMDADisplay());
       hideMDAdisplay.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
-            opts_.hideMDADisplay_ = hideMDAdisplay.isSelected();
+            AcqControlDlg.setShouldHideMDADisplay(hideMDAdisplay.isSelected());
          }
       });
 
@@ -468,5 +476,15 @@ public class OptionsDlg extends MMDialog {
 
       parent_.makeActive();
       dispose();
+   }
+
+   public static boolean getIsDebugLogEnabled() {
+      return DefaultUserProfile.getInstance().getBoolean(OptionsDlg.class,
+            IS_DEBUG_LOG_ENABLED, false);
+   }
+
+   public static void setIsDebugLogEnabled(boolean isEnabled) {
+      DefaultUserProfile.getInstance().setBoolean(OptionsDlg.class,
+            IS_DEBUG_LOG_ENABLED, isEnabled);
    }
 }

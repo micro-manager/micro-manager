@@ -110,6 +110,7 @@ import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.dialogs.CalibrationListDlg;
 import org.micromanager.internal.dialogs.MMIntroDlg;
+import org.micromanager.internal.dialogs.OptionsDlg;
 import org.micromanager.internal.dialogs.RegistrationDlg;
 
 import org.micromanager.events.internal.EventManager;
@@ -309,7 +310,7 @@ public class MMStudio implements ScriptInterface {
          ReportingUtils.logError(ex);
       }
 
-      UIMonitor.enable(options_.debugLogEnabled_);
+      UIMonitor.enable(OptionsDlg.getIsDebugLogEnabled());
       
       guiColors_ = new GUIColors();
 
@@ -433,7 +434,7 @@ public class MMStudio implements ScriptInterface {
       catch (Exception ignore) {
          // The Core will have logged the error to stderr, so do nothing.
       }
-      core_.enableDebugLog(options_.debugLogEnabled_);
+      core_.enableDebugLog(OptionsDlg.getIsDebugLogEnabled());
 
       if (options_.deleteOldCoreLogs_) {
          LogFileManager.deleteLogFilesDaysOld(
@@ -700,7 +701,7 @@ public class MMStudio implements ScriptInterface {
             if (!channel.equals("") ) {
                exposurePrefs_.putDouble("Exposure_" + channelGroup + "_"
                     + channel, exposure);
-               if (options_.syncExposureMainAndMDA_) {
+               if (AcqControlDlg.getShouldSyncExposure()) {
                   getAcqDlg().setChannelExposureTime(channelGroup, channel, exposure);
                }
             }
@@ -725,7 +726,7 @@ public class MMStudio implements ScriptInterface {
    
    @Override
    public boolean getHideMDADisplayOption() {
-      return options_.hideMDADisplay_;
+      return AcqControlDlg.getShouldHideMDADisplay();
    }
 
    @Override
