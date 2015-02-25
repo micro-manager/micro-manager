@@ -82,4 +82,14 @@ public interface UserProfile {
      * @throws IOException if the file cannot be written for any reason.
      */
    public void saveProfileToFile(String path) throws IOException;
+
+   /** As above, but only keys that are specific to the provided class are
+     * preserved. This can be useful if you want to be able to save/load your
+     * settings, in conjunction with appendFile(), below. */
+   public void saveProfileSubsetToFile(Class<?> c, String path) throws IOException;
+
+   /** Merge the profile at the specified path into the current active user
+     * profile. All keys specified in the file will overwrite keys in the
+     * active profile. */
+   public void appendFile(String path);
 }

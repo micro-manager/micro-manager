@@ -121,10 +121,15 @@ public class DefaultUserProfile implements UserProfile {
       String filename = nameToFile_.get(userName);
       JavaUtils.createApplicationDataPathIfNeeded();
       String path = JavaUtils.getApplicationDataPath() + "/" + filename;
+      return loadPropertyMap(path);
+   }
+
+   private DefaultPropertyMap loadPropertyMap(String path) {
       String contents = loadFileToString(path);
       if (contents == null) {
          // That file doesn't exist yet; create a new empty user.
-         ReportingUtils.logMessage("Creating new map for user " + userName);
+         ReportingUtils.logMessage("Asked to load file at path " + path +
+               " which doesn't exist; instead providing a default empty PropertyMap.");
          return (DefaultPropertyMap) (new DefaultPropertyMap.Builder().build());
       }
       try {
@@ -173,6 +178,8 @@ public class DefaultUserProfile implements UserProfile {
    /**
     * Append a class name to the provided key to generate a unique-across-MM
     * key.
+    * Note that saveProfileSubsetToFile() assumes that keys start with the
+    * class' canonical name.
     */
    private String genKey(Class<?> c, String key) {
       return c.getCanonicalName() + ":" + key;
@@ -387,14 +394,40 @@ public class DefaultUserProfile implements UserProfile {
    }
 
    @Override
-   public void saveProfileToFile(String path) throws IOException {
-      JSONObject serialization;
+   public void saveProfileSubsetToFile(Class<?> c, String path) throws IOException {
+      // Make a copy profile, and save that.
+      DefaultPropertyMap.Builder builder = new DefaultPropertyMap.Builder();
+      // NOTE: this should match genKey()
+      String className = c.getCanonicalName();
       synchronized(userProfile_) {
-         serialization = userProfile_.toJSON();
+         for (String key : userProfile_.getKeys()) {
+            if (key.startsWith(className)) {
+               builder.putProperty(key, userProfile_.getProperty(key));
+            }
+         }
+      }
+      savePropertyMapToFile((DefaultPropertyMap) builder.build(), path);
+   }
+
+   @Override
+   public void saveProfile() throws IOException {
+      JavaUtils.createApplicationDataPathIfNeeded();
+      saveProfileToFile(JavaUtils.getApplicationDataPath() +
+            "/" + nameToFile_.get(userName_));
+   }
+
+   @Override
+   public void saveProfileToFile(String path) throws IOException {
+      savePropertyMapToFile(userProfile_, path);
+   }
+
+   private void savePropertyMapToFile(DefaultPropertyMap properties, String path) throws IOException {
+      JSONObject serialization;
+      synchronized(properties) {
+         serialization = properties.toJSON();
       }
       try {
-         FileWriter writer = new FileWriter(
-               JavaUtils.getApplicationDataPath() + "/" + nameToFile_.get(userName_));
+         FileWriter writer = new FileWriter(path);
          writer.write(serialization.toString(2) + "\n");
          writer.close();
       }
@@ -404,16 +437,17 @@ public class DefaultUserProfile implements UserProfile {
       catch (JSONException e) {
          ReportingUtils.logError(e, "Unable to convert JSON mapping into string");
       }
-      catch (IOException e) {
-         ReportingUtils.logError(e, "Exception when writing user profile mapping file");
-      }
    }
 
    @Override
-   public void saveProfile() throws IOException {
-      JavaUtils.createApplicationDataPathIfNeeded();
-      saveProfileToFile(JavaUtils.getApplicationDataPath() +
-            "/" + nameToFile_.get(userName_));
+   public void appendFile(String path) {
+      File file = new File(path);
+      if (!file.exists()) {
+         ReportingUtils.logError("Asked to load file at " + path + " that does not exist.");
+         return;
+      }
+      PropertyMap properties = loadPropertyMap(path);
+      userProfile_ = (DefaultPropertyMap) userProfile_.merge(properties);
    }
 
    public Set<String> getUserNames() {
