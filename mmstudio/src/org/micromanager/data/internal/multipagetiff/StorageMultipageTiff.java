@@ -58,6 +58,7 @@ import org.micromanager.data.internal.DefaultDatastore;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.display.internal.DefaultDisplaySettings;
+import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.MMException;
@@ -72,6 +73,8 @@ import org.micromanager.internal.utils.ReportingUtils;
  * TODO: extricate DisplaySettings from this code.
  */
 public final class StorageMultipageTiff implements Storage {
+   private static final String SHOULD_GENERATE_METADATA_FILE = "generate a metadata file when saving datasets as multipage TIFF files";
+   private static final String SHOULD_USE_SEPARATE_FILES_FOR_POSITIONS = "generate a separate multipage TIFF file for each stage position";
    private DefaultSummaryMetadata summaryMetadata_;
    private boolean amInWriteMode_;
    private int lastFrameOpenedDataSet_ = -1;
@@ -103,17 +106,17 @@ public final class StorageMultipageTiff implements Storage {
   
    public StorageMultipageTiff(Datastore store, String dir, Boolean amInWriteMode)
          throws IOException {
-      this(store, dir, amInWriteMode,
-            MMStudio.getInstance().getMetadataFileWithMultipageTiff(),
-            MMStudio.getInstance().getSeparateFilesForPositionsMPTiff());
+      this(store, dir, amInWriteMode, getShouldGenerateMetadataFile(),
+            getShouldSplitPositions());
    }
    
    /*
     * Constructor that doesn't make reference to MMStudio so it can be used
     * independently of MM GUI
     */
-   public StorageMultipageTiff(Datastore store, String dir, boolean amInWriteMode,
-         boolean separateMDFile, boolean separateFilesForPositions) throws IOException {
+   public StorageMultipageTiff(Datastore store, String dir,
+         boolean amInWriteMode, boolean separateMDFile,
+         boolean separateFilesForPositions) throws IOException {
       // We must be notified of changes in the Datastore before everyone else,
       // so that others can read those changes out of the Datastore later.
       ((DefaultDatastore) store).registerForEvents(this, 0);
@@ -653,5 +656,28 @@ public final class StorageMultipageTiff implements Storage {
    @Override
    public Iterable<Coords> getUnorderedImageCoords() {
       return coordsToReader_.keySet();
+   }
+
+   public static boolean getShouldGenerateMetadataFile() {
+      return DefaultUserProfile.getInstance().getBoolean(
+            StorageMultipageTiff.class, SHOULD_GENERATE_METADATA_FILE, false);
+   }
+
+   public static void setShouldGenerateMetadataFile(boolean shouldGen) {
+      DefaultUserProfile.getInstance().setBoolean(
+            StorageMultipageTiff.class,
+            SHOULD_GENERATE_METADATA_FILE, shouldGen);
+   }
+
+   public static boolean getShouldSplitPositions() {
+      return DefaultUserProfile.getInstance().getBoolean(
+            StorageMultipageTiff.class,
+            SHOULD_USE_SEPARATE_FILES_FOR_POSITIONS, true);
+   }
+
+   public static void setShouldSplitPositions(boolean shouldSplit) {
+      DefaultUserProfile.getInstance().setBoolean(
+            StorageMultipageTiff.class,
+            SHOULD_USE_SEPARATE_FILES_FOR_POSITIONS, shouldSplit);
    }
 }

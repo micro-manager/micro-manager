@@ -38,16 +38,12 @@ public class MMOptions {
    private static final String HIDE_MDA_DISPLAY = "HideMDADisplay";
    private static final String FAST_STORAGE = "FastStorage"; // No longer used but should not be reused
 
-   public boolean mpTiffMetadataFile_;
-   public boolean mpTiffSeparateFilesForPositions_;
 
    public MMOptions() {
       setDefaultValues();
    }
 
    private void setDefaultValues() {
-      mpTiffMetadataFile_ = false;
-      mpTiffSeparateFilesForPositions_ = true;
    }
 
    private Preferences getPrefNode() {
@@ -59,15 +55,11 @@ public class MMOptions {
    public void saveSettings() {
       Preferences prefs = getPrefNode();
 
-      prefs.putBoolean(MPTIFF_METADATA_FILE, mpTiffMetadataFile_);
-      prefs.putBoolean(MPTIFF_SEPARATE_FILES_FOR_POSITIONS, mpTiffSeparateFilesForPositions_);
    }
 
    public void loadSettings() {
       Preferences prefs = getPrefNode();
 
-      mpTiffMetadataFile_ = prefs.getBoolean(MPTIFF_METADATA_FILE, mpTiffMetadataFile_);
-      mpTiffSeparateFilesForPositions_ = prefs.getBoolean(MPTIFF_SEPARATE_FILES_FOR_POSITIONS, mpTiffSeparateFilesForPositions_);
    }
 
    public void resetSettings() throws BackingStoreException {

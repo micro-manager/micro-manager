@@ -42,6 +42,7 @@ import javax.swing.WindowConstants;
 
 import mmcorej.CMMCore;
 
+import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
 import org.micromanager.ScriptInterface;
 import org.micromanager.internal.logging.LogFileManager;
 import org.micromanager.internal.MMOptions;
@@ -255,21 +256,23 @@ public class OptionsDlg extends MMDialog {
 
       final JCheckBox metadataFileWithMultipageTiffCheckBox = new JCheckBox();
       metadataFileWithMultipageTiffCheckBox.setText("Create metadata.txt file with Image Stack Files");
-      metadataFileWithMultipageTiffCheckBox.setSelected(opts_.mpTiffMetadataFile_);
+      metadataFileWithMultipageTiffCheckBox.setSelected(
+            StorageMultipageTiff.getShouldGenerateMetadataFile());
       metadataFileWithMultipageTiffCheckBox.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
-            opts_.mpTiffMetadataFile_ = metadataFileWithMultipageTiffCheckBox.isSelected();
+            StorageMultipageTiff.setShouldGenerateMetadataFile(metadataFileWithMultipageTiffCheckBox.isSelected());
          }
       });
       
       final JCheckBox separateFilesForPositionsMPTiffCheckBox = new JCheckBox();
       separateFilesForPositionsMPTiffCheckBox.setText("Save XY positions in separate Image Stack Files");
-      separateFilesForPositionsMPTiffCheckBox.setSelected(opts_.mpTiffSeparateFilesForPositions_);
+      separateFilesForPositionsMPTiffCheckBox.setSelected(
+            StorageMultipageTiff.getShouldSplitPositions());
       separateFilesForPositionsMPTiffCheckBox.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
-            opts_.mpTiffSeparateFilesForPositions_ = separateFilesForPositionsMPTiffCheckBox.isSelected();
+            StorageMultipageTiff.setShouldSplitPositions(separateFilesForPositionsMPTiffCheckBox.isSelected());
          }
       });
   

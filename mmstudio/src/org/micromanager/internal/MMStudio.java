@@ -716,14 +716,6 @@ public class MMStudio implements ScriptInterface {
       } // End synchronization check
    }
 
-   public boolean getMetadataFileWithMultipageTiff() {
-      return options_.mpTiffMetadataFile_;
-   }
-
-   public boolean getSeparateFilesForPositionsMPTiff() {
-      return options_.mpTiffSeparateFilesForPositions_;
-   }
-   
    @Override
    public boolean getHideMDADisplayOption() {
       return AcqControlDlg.getShouldHideMDADisplay();
