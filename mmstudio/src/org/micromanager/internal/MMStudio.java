@@ -713,10 +713,6 @@ public class MMStudio implements ScriptInterface {
       } // End synchronization check
    }
 
-   public double getPreferredWindowMag() {
-      return options_.windowMag_;
-   }
-
    public boolean getMetadataFileWithMultipageTiff() {
       return options_.mpTiffMetadataFile_;
    }

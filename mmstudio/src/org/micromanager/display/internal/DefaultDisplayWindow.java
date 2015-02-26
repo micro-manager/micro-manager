@@ -393,7 +393,8 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
    public void zoomToPreferredSize() {
       Point location = getLocation();
 
-      double mag = MMStudio.getInstance().getPreferredWindowMag();
+      double mag = displaySettings_.getMagnification();
+      ReportingUtils.logError("Zooming to " + mag);
 
       // Use approximation here because ImageJ has fixed allowed magnification
       // levels and we want to be able to be a bit more approximate and snap
