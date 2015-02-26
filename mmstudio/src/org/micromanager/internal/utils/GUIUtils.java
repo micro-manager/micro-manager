@@ -222,6 +222,8 @@ public class GUIUtils {
 
    // ******* Utility methods for persisting windows *******
    
+   // TODO: these methods for storing/retrieving window positions should be
+   // replaced by using MMDialog/MMFrame instead.
    private static HashSet<Class> windowsWithPersistedPositions = new HashSet<Class>();
    
    private static void storePosition(final Window win) {
