@@ -1028,10 +1028,6 @@ public class MMStudio implements ScriptInterface {
       if (posListDlg_ == null) {
          posListDlg_ = new PositionListDlg(core_, studio_, posList_, 
                  acqControlWin_);
-         // TODO: instead of using these methods in GUIUtils, we should make
-         // the position list dialog be an MMDialog, so its position gets
-         // remembered through that mechanism instead.
-         GUIUtils.recallPosition(posListDlg_);
          posListDlg_.addListeners();
       }
    }
