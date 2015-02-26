@@ -408,7 +408,7 @@ public class MMStudio implements ScriptInterface {
 
       initializationSequence();
            
-      helpMenu.initializeHelpMenu(menuBar_, systemPrefs_);
+      helpMenu.initializeHelpMenu(menuBar_);
 
       new DisplayGroupManager(studio_);
    }
@@ -581,17 +581,13 @@ public class MMStudio implements ScriptInterface {
    private void showRegistrationDialogMaybe() {
       // show registration dialog if not already registered
       // first check user preferences (for legacy compatibility reasons)
-      boolean userReg = mainPrefs_.getBoolean(RegistrationDlg.REGISTRATION,
-            false) || mainPrefs_.getBoolean(RegistrationDlg.REGISTRATION_NEVER, false);
+      boolean shouldShow = !(RegistrationDlg.getHaveRegistered() ||
+            RegistrationDlg.getShouldNeverRegister());
 
-      if (!userReg) {
-         boolean systemReg = systemPrefs_.getBoolean(
-               RegistrationDlg.REGISTRATION, false) || systemPrefs_.getBoolean(RegistrationDlg.REGISTRATION_NEVER, false);
-         if (!systemReg) {
-            // prompt for registration info
-            RegistrationDlg dlg = new RegistrationDlg(systemPrefs_);
-            dlg.setVisible(true);
-         }
+      if (shouldShow) {
+         // prompt for registration info
+         RegistrationDlg dlg = new RegistrationDlg();
+         dlg.setVisible(true);
       }
    }
 

@@ -70,22 +70,18 @@ public class OptionsDlg extends MMDialog {
    private final JComboBox comboDisplayBackground_;
 
    private CMMCore core_;
-   private Preferences mainPrefs_;
    private ScriptInterface parent_;
    private GUIColors guiColors_;
 
    /**
     * Create the dialog
     * @param core - The Micro-Manager Core object
-    * @param mainPrefs - Preferences of the encapsulating app (i.e. MMStudio Prefs)
     * @param parent - MMStudio api 
     */
-   public OptionsDlg(CMMCore core, Preferences mainPrefs,
-           ScriptInterface parent) {
+   public OptionsDlg(CMMCore core, ScriptInterface parent) {
       super();
       parent_ = parent;
       core_ = core;
-      mainPrefs_ = mainPrefs;
       guiColors_ = new GUIColors();
 
       setResizable(false);
@@ -199,27 +195,14 @@ public class OptionsDlg extends MMDialog {
             if (answer != JOptionPane.YES_OPTION) {
                return;
             }
-
-            try {
-               // TODO: just call removeNode() on mainPrefs_. This will require
-               // updating every object that has a reference to mainPrefs_
-               // (or alternatively setting things up so that nobody maintains
-               // such a reference).
-               boolean previouslyRegistered = mainPrefs_.getBoolean(RegistrationDlg.REGISTRATION, false);
-               mainPrefs_.clear();
-               Preferences acqPrefs = mainPrefs_.node(mainPrefs_.absolutePath() + "/" + AcqControlDlg.ACQ_SETTINGS_NODE);
-               acqPrefs.clear();
-
-               // restore registration flag
-               mainPrefs_.putBoolean(RegistrationDlg.REGISTRATION, previouslyRegistered);
-
-               // Rather than updating all the GUI elements, let's just close
-               // the dialog.
-               dispose();
-               DefaultUserProfile.getInstance().clearProfile();
-            } catch (BackingStoreException exc) {
-               ReportingUtils.showError(e);
-            }
+            // Clear everything except whether or not this user has
+            // registered.
+            boolean haveRegistered = RegistrationDlg.getHaveRegistered();
+            DefaultUserProfile.getInstance().clearProfile();
+            RegistrationDlg.setHaveRegistered(haveRegistered);
+            // Rather than updating all the GUI elements, let's just close
+            // the dialog.
+            dispose();
          }
       });
 

@@ -1,7 +1,5 @@
 package org.micromanager.internal.menus;
 
-import java.util.prefs.Preferences;
-
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 
@@ -27,7 +25,7 @@ public class HelpMenu {
       core_ = core;
    }
    
-   public void initializeHelpMenu(JMenuBar menuBar, final Preferences prefs) {
+   public void initializeHelpMenu(JMenuBar menuBar) {
       final JMenu helpMenu = GUIUtils.createMenuInMenuBar(menuBar, "Help");
         
       GUIUtils.addMenuItem(helpMenu, "User's Guide", null,
@@ -38,14 +36,14 @@ public class HelpMenu {
          GUIUtils.makeURLRunnable("http://micro-manager.org/wiki/Micro-Manager_Configuration_Guide")
       );
         
-      if (!prefs.getBoolean(RegistrationDlg.REGISTRATION, false)) {
+      if (!RegistrationDlg.getHaveRegistered()) {
          GUIUtils.addMenuItem(helpMenu, 
             "Register your copy of Micro-Manager...", null,
             new Runnable() {
                @Override
                public void run() {
                   try {
-                     RegistrationDlg regDlg = new RegistrationDlg(prefs);
+                     RegistrationDlg regDlg = new RegistrationDlg();
                      regDlg.setVisible(true);
                   } catch (Exception e1) {
                      ReportingUtils.showError(e1);

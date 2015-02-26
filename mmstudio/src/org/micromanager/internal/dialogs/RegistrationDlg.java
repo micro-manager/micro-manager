@@ -37,7 +37,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -45,28 +44,30 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+
+import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.ReportingUtils;
 
+// TODO: the change to the Profile system (away from Preferences) has caused
+// registration state to be lost.
 public class RegistrationDlg extends JDialog {
    private static final long serialVersionUID = 1L;
-   public static final String REGISTRATION = "registered";
-   public static final String REGISTRATION_NEVER = "reg_never";
-   public static final String REGISTRATION_ATTEMPTS = "registration_attempts";
-   public static final String REGISTRATION_NAME = "reg_name";
-   public static final String REGISTRATION_INST = "reg_institution";
+   public static final String HAVE_REGISTERED = "this user has registered with Micro-Manager";
+   public static final String SHOULD_NEVER_REGISTER = "this user never wants to be prompted to register";
+   public static final String REGISTRATION_ATTEMPTS = "number of times we've shown the registration dialog to this user";
+   public static final String REGISTRATION_NAME = "name under which this user has registered";
+   public static final String REGISTRATION_INST = "institution at which this user works";
 
    private JTextArea welcomeTextArea_;
    private JTextField email_;
    private JTextField inst_;
    private JTextField name_;
-   private Preferences prefs_;
 
    /**
     * Dialog to collect registration data from the user.
     */
-   public RegistrationDlg(Preferences prefs) {
+   public RegistrationDlg() {
       super();
-      prefs_ = prefs;
       
       incrementRegistrationAttempts();
       
@@ -121,9 +122,12 @@ public class RegistrationDlg extends JDialog {
                   InputStream is;
                   BufferedReader br;
                   
-                  // save registration information to registry
-                  prefs_.put(REGISTRATION_NAME, name_.getText());
-                  prefs_.put(REGISTRATION_INST, inst_.getText());
+                  // save registration information to profile
+                  DefaultUserProfile profile = DefaultUserProfile.getInstance();
+                  profile.setString(RegistrationDlg.class, REGISTRATION_NAME,
+                     name_.getText());
+                  profile.setString(RegistrationDlg.class, REGISTRATION_INST,
+                     inst_.getText());
                   
                   // replace special characters to properly format the command string
                   String name = name_.getText().replaceAll("[ \t]", "%20");
@@ -145,28 +149,28 @@ public class RegistrationDlg extends JDialog {
                      dispose();
                      return;
                   }
-                  
-                  } catch (java.net.UnknownHostException e) {
-                     ReportingUtils.showError(e, "Registration did not succeed. You are probably not connected to the Internet.\n" +
-                                                   "You will be prompted again next time you start.");
-                  } catch (MalformedURLException e) {
-                     ReportingUtils.showError(e);
-                  } catch (IOException e) {
-                     ReportingUtils.showError(e);
-                  } catch (SecurityException e){
-                     ReportingUtils.showError(e,
-                           "\nThe program failed to save registration status.\n" +
-                           "Most likely you are not logged in with administrator privileges.\n" +
-                     "Please try registering again using the administrator's account.");
-   
-                  } catch (Exception e) {
-                     ReportingUtils.logError(e);
-                  } finally {
-                     dispose();
-                  
-                  }   
-                  // save to registry
-                  prefs_.putBoolean(REGISTRATION, true);
+
+               } catch (java.net.UnknownHostException e) {
+                  ReportingUtils.showError(e, "Registration did not succeed. You are probably not connected to the Internet.\n" +
+                                                "You will be prompted again next time you start.");
+               } catch (MalformedURLException e) {
+                  ReportingUtils.showError(e);
+               } catch (IOException e) {
+                  ReportingUtils.showError(e);
+               } catch (SecurityException e){
+                  ReportingUtils.showError(e,
+                        "\nThe program failed to save registration status.\n" +
+                        "Most likely you are not logged in with administrator privileges.\n" +
+                  "Please try registering again using the administrator's account.");
+
+               } catch (Exception e) {
+                  ReportingUtils.logError(e);
+               } finally {
+                  dispose();
+               }   
+               // save to profile
+               setHaveRegistered(true);
+               saveProfile();
             }
 
          }
@@ -197,7 +201,8 @@ public class RegistrationDlg extends JDialog {
          public void actionPerformed(ActionEvent arg0) {
             JOptionPane.showMessageDialog(RegistrationDlg.this, "You choose to postpone registration.\n" +
                   "This prompt will appear again next time you start the application.");
-            prefs_.putBoolean(REGISTRATION_NEVER,false);
+            setShouldNeverRegister(false);
+            saveProfile();
             dispose();
          }
       });
@@ -206,14 +211,15 @@ public class RegistrationDlg extends JDialog {
       getContentPane().add(skipButton);
       //
       
-      if (getRegistrationAttempts() > 1) {        // Don't show "never" button the first time
+      if (getNumRegistrationAttempts() > 1) {        // Don't show "never" button the first time
          final JButton neverButton = new JButton();
          neverButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent arg0) {
                JOptionPane.showMessageDialog(RegistrationDlg.this, "You have chosen never to register. \n" +
                      "If you change your mind in the future, please\nchoose the \"Register\" option in the Help menu.");
-               prefs_.putBoolean(REGISTRATION_NEVER,true);
+               setShouldNeverRegister(true);
+               saveProfile();
                dispose();
             }
          });
@@ -226,14 +232,44 @@ public class RegistrationDlg extends JDialog {
    }
    
    private int incrementRegistrationAttempts() {
-      int attempts = getRegistrationAttempts();
-      attempts++;
-      prefs_.putInt(REGISTRATION_ATTEMPTS, attempts);
+      DefaultUserProfile profile = DefaultUserProfile.getInstance();
+      int attempts = getNumRegistrationAttempts() + 1;
+      profile.setInt(RegistrationDlg.class, REGISTRATION_ATTEMPTS, attempts);
+      saveProfile();
       return attempts;
    }
    
-   public final int getRegistrationAttempts() {
-      return prefs_.getInt(REGISTRATION_ATTEMPTS,0);
+   public static boolean getHaveRegistered() {
+      return DefaultUserProfile.getInstance().getBoolean(
+            RegistrationDlg.class, HAVE_REGISTERED, false);
    }
 
+   public static void setHaveRegistered(boolean haveRegistered) {
+      DefaultUserProfile.getInstance().setBoolean(
+            RegistrationDlg.class, HAVE_REGISTERED, haveRegistered);
+   }
+
+   public static boolean getShouldNeverRegister() {
+      return DefaultUserProfile.getInstance().getBoolean(
+            RegistrationDlg.class, SHOULD_NEVER_REGISTER, false);
+   }
+
+   public static void setShouldNeverRegister(boolean haveRegistered) {
+      DefaultUserProfile.getInstance().setBoolean(
+            RegistrationDlg.class, SHOULD_NEVER_REGISTER, haveRegistered);
+   }
+
+   private static int getNumRegistrationAttempts() {
+      return DefaultUserProfile.getInstance().getInt(
+            RegistrationDlg.class, REGISTRATION_ATTEMPTS, 0);
+   }
+
+   private static void saveProfile() {
+      try {
+         DefaultUserProfile.getInstance().saveProfile();
+      }
+      catch (java.io.IOException e) {
+         ReportingUtils.showError(e, "There was an error saving your profile; we may have forgotten whether or not you have registered.");
+      }
+   }
 }

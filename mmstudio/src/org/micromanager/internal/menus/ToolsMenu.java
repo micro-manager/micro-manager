@@ -202,7 +202,7 @@ public class ToolsMenu {
          public void run() {
             final int oldBufsize = MMStudio.getCircularBufferSize();
 
-            OptionsDlg dlg = new OptionsDlg(core_, prefs, studio_);
+            OptionsDlg dlg = new OptionsDlg(core_, studio_);
             dlg.setVisible(true);
             // adjust memory footprint if necessary
             if (oldBufsize != MMStudio.getCircularBufferSize()) {
