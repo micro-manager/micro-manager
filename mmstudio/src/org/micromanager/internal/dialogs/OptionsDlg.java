@@ -45,7 +45,6 @@ import mmcorej.CMMCore;
 import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
 import org.micromanager.ScriptInterface;
 import org.micromanager.internal.logging.LogFileManager;
-import org.micromanager.internal.MMOptions;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.script.ScriptPanel;
 import org.micromanager.internal.utils.DefaultUserProfile;
@@ -70,7 +69,6 @@ public class OptionsDlg extends MMDialog {
    private JTextField logDeleteDaysField_;
    private final JComboBox comboDisplayBackground_;
 
-   private MMOptions opts_;
    private CMMCore core_;
    private Preferences mainPrefs_;
    private ScriptInterface parent_;
@@ -78,16 +76,14 @@ public class OptionsDlg extends MMDialog {
 
    /**
     * Create the dialog
-    * @param opts - Application wide preferences
     * @param core - The Micro-Manager Core object
     * @param mainPrefs - Preferences of the encapsulating app (i.e. MMStudio Prefs)
     * @param parent - MMStudio api 
     */
-   public OptionsDlg(MMOptions opts, CMMCore core, Preferences mainPrefs, 
+   public OptionsDlg(CMMCore core, Preferences mainPrefs,
            ScriptInterface parent) {
       super();
       parent_ = parent;
-      opts_ = opts;
       core_ = core;
       mainPrefs_ = mainPrefs;
       guiColors_ = new GUIColors();
@@ -220,7 +216,7 @@ public class OptionsDlg extends MMDialog {
                // Rather than updating all the GUI elements, let's just close
                // the dialog.
                dispose();
-               opts_.resetSettings();
+               DefaultUserProfile.getInstance().clearProfile();
             } catch (BackingStoreException exc) {
                ReportingUtils.showError(e);
             }
@@ -382,7 +378,6 @@ public class OptionsDlg extends MMDialog {
 
       MMStudio.setCircularBufferSize(seqBufSize);
       MMStudio.setCoreLogLifetimeDays(deleteLogDays);
-      opts_.saveSettings();
       try {
          DefaultUserProfile.getInstance().saveProfile();
       }

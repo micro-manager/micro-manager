@@ -192,7 +192,6 @@ public class MMStudio implements ScriptInterface {
    // cfg file saving
    private static final String CFGFILE_ENTRY_BASE = "CFGFileEntry";
    // GUI components
-   private MMOptions options_;
    private boolean amRunningAsPlugin_;
    private GUIColors guiColors_;
    private PropertyEditor propertyBrowser_;
@@ -306,13 +305,6 @@ public class MMStudio implements ScriptInterface {
 
       prepAcquisitionEngine();
 
-      options_ = new MMOptions();
-      try {
-         options_.loadSettings();
-      } catch (NullPointerException ex) {
-         ReportingUtils.logError(ex);
-      }
-
       UIMonitor.enable(OptionsDlg.getIsDebugLogEnabled());
       
       guiColors_ = new GUIColors();
@@ -409,7 +401,7 @@ public class MMStudio implements ScriptInterface {
       FileMenu fileMenu = new FileMenu(studio_);
       fileMenu.initializeFileMenu(menuBar_);
 
-      toolsMenu_ = new ToolsMenu(studio_, core_, options_);
+      toolsMenu_ = new ToolsMenu(studio_, core_);
       toolsMenu_.initializeToolsMenu(menuBar_, mainPrefs_);
 
       HelpMenu helpMenu = new HelpMenu(studio_, core_);
@@ -1039,7 +1031,7 @@ public class MMStudio implements ScriptInterface {
    private void checkPosListDlg() {
       if (posListDlg_ == null) {
          posListDlg_ = new PositionListDlg(core_, studio_, posList_, 
-                 acqControlWin_,options_);
+                 acqControlWin_);
          GUIUtils.recallPosition(posListDlg_);
          posListDlg_.addListeners();
       }
@@ -1475,11 +1467,18 @@ public class MMStudio implements ScriptInterface {
       saveSettings();
       try {
          frame_.getConfigPad().saveSettings();
-         options_.saveSettings();
          hotKeys_.saveSettings();
       } catch (NullPointerException e) {
          if (core_ != null)
             logError(e);
+      }
+      try {
+         DefaultUserProfile.getInstance().saveProfile();
+      }
+      catch (IOException e) {
+         if (core_ != null) {
+            logError(e);
+         }
       }
       if (OptionsDlg.getShouldCloseOnExit()) {
          if (!amRunningAsPlugin_) {

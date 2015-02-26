@@ -54,7 +54,6 @@ import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
-import org.micromanager.internal.MMOptions;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
@@ -93,7 +92,6 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
    private CMMCore core_;
    private ScriptInterface studio_;
    private AcqControlDlg acqControlDlg_;
-   private MMOptions opts_;
    private Preferences prefs_;
    private GUIColors guiColors_;
    private AxisList axisList_;
@@ -137,7 +135,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
     */
    @SuppressWarnings("LeakingThisInConstructor")
    public PositionListDlg(CMMCore core, ScriptInterface gui, 
-                     PositionList posList, AcqControlDlg acd, MMOptions opts) {
+                     PositionList posList, AcqControlDlg acd) {
       super();
       addWindowListener(new WindowAdapter() {
          @Override
@@ -152,7 +150,6 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       studio_ = gui;
       bus_ = new EventBus();
       bus_.register(this);
-      opts_ = opts;
       acqControlDlg_ = acd;
       guiColors_ = new GUIColors();
 
@@ -836,7 +833,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
    }
 
    protected void showCreateTileDlg() {
-      TileCreatorDlg tileCreatorDlg = new TileCreatorDlg(core_, opts_, this);
+      TileCreatorDlg tileCreatorDlg = new TileCreatorDlg(core_, this);
       studio_.addMMListener(tileCreatorDlg);
       tileCreatorDlg.setVisible(true);
    }

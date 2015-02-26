@@ -40,7 +40,6 @@ import mmcorej.MMCoreJ;
 import org.micromanager.MMListenerInterface;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.StagePosition;
-import org.micromanager.internal.MMOptions;
 import org.micromanager.internal.utils.MMDialog;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -72,10 +71,9 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
    /**
     * Create the dialog
     * @param core - Micro-Manager Core object
-    * @param opts - App wide settings stored in singleton MMOptions object
     * @param positionListDlg - The position list dialog
     */
-   public TileCreatorDlg(CMMCore core, MMOptions opts, 
+   public TileCreatorDlg(CMMCore core,
            PositionListDlg positionListDlg) {
       super();
       setResizable(false);

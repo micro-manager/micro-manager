@@ -18,7 +18,6 @@ import mmcorej.CMMCore;
 import org.micromanager.internal.conf2.ConfiguratorDlg2;
 import org.micromanager.internal.dialogs.OptionsDlg;
 import org.micromanager.internal.MainFrame;
-import org.micromanager.internal.MMOptions;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.GUIUtils;
@@ -34,12 +33,10 @@ public class ToolsMenu {
 
    private final MMStudio studio_;
    private final CMMCore core_;
-   private final MMOptions options_;
    
-   public ToolsMenu(MMStudio studio, CMMCore core, MMOptions options) {
+   public ToolsMenu(MMStudio studio, CMMCore core) {
       studio_ = studio;
       core_ = core;
-      options_ = options;
       switchConfigurationMenu_ = new JMenu();
    }
    
@@ -205,8 +202,7 @@ public class ToolsMenu {
          public void run() {
             final int oldBufsize = MMStudio.getCircularBufferSize();
 
-            OptionsDlg dlg = new OptionsDlg(options_, core_, prefs,
-                    studio_);
+            OptionsDlg dlg = new OptionsDlg(core_, prefs, studio_);
             dlg.setVisible(true);
             // adjust memory footprint if necessary
             if (oldBufsize != MMStudio.getCircularBufferSize()) {

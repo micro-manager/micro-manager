@@ -488,6 +488,13 @@ public class DefaultUserProfile implements UserProfile {
       userProfile_ = loadUser(userName);
    }
 
+   /**
+    * Delete all parameters for the current user.
+    */
+   public void clearProfile() {
+      userProfile_ = (DefaultPropertyMap) (new DefaultPropertyMap.Builder().build());
+   }
+
    public static DefaultUserProfile getInstance() {
       return staticInstance_;
    }

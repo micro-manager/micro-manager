@@ -9,7 +9,6 @@ import mmcorej.CMMCore;
 
 import org.micromanager.internal.dialogs.MMAboutDlg;
 import org.micromanager.internal.dialogs.RegistrationDlg;
-import org.micromanager.internal.MMOptions;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.MMVersion;
 import org.micromanager.internal.utils.GUIUtils;
@@ -22,7 +21,6 @@ import org.micromanager.internal.utils.ReportingUtils;
 public class HelpMenu {
    private MMStudio studio_;
    private CMMCore core_;
-   private MMOptions options_;
 
    public HelpMenu(MMStudio studio, CMMCore core) {
       studio_ = studio;
