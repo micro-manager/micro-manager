@@ -38,7 +38,6 @@ import java.awt.event.*;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.prefs.Preferences;
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
 import javax.swing.table.AbstractTableModel;
@@ -82,13 +81,10 @@ public class CalibrationEditor extends MMDialog {
       label_ = label;
       pixelSize_ = pixelSize;
       changed_ = false;
-      Preferences root = Preferences.userNodeForPackage(this.getClass());
-      // Share Prefs with PresetEditor
-      setPrefsNode(root.node(root.absolutePath() + "/CalibrationEditor"));
       initialCfg_ = new Configuration();
       
       flags_ = new ShowFlags();
-      flags_.load(getPrefsNode());
+      flags_.load(CalibrationEditor.class);
       
       springLayout = new SpringLayout();
       getContentPane().setLayout(springLayout);
@@ -96,7 +92,7 @@ public class CalibrationEditor extends MMDialog {
          @Override
          public void windowClosing(WindowEvent e) {
             savePosition();
-            flags_.save(getPrefsNode());
+            flags_.save(CalibrationEditor.class);
          }
          @Override
          public void windowOpened(WindowEvent e) {
@@ -108,7 +104,7 @@ public class CalibrationEditor extends MMDialog {
          @Override
          public void windowClosed(WindowEvent arg0) {
             savePosition();
-            flags_.save(getPrefsNode());
+            flags_.save(CalibrationEditor.class);
          }
       });
       setTitle("Calibration Group Editor");

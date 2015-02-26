@@ -34,7 +34,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
-import java.util.prefs.Preferences;
 import javax.swing.AbstractCellEditor;
 import javax.swing.DefaultCellEditor;
 import javax.swing.DefaultComboBoxModel;
@@ -59,7 +58,6 @@ public final class HotKeysDialog extends MMDialog {
    private final ArrayList<HotKeyAction> possibleActions_ = new ArrayList<HotKeyAction>();
    private String[] possibleActionsAsString_;
    private final Font ourFont_ = new Font("Lucida Grande", java.awt.Font.PLAIN, 10);
-   private final Preferences prefs_;
 
    public static FileType MM_HOTKEYS
            = new FileType("MM_HOTKEYS",
@@ -144,7 +142,6 @@ public final class HotKeysDialog extends MMDialog {
     public  HotKeysDialog() {
         initComponents();
 
-        prefs_ = getPrefsNode();
         loadAndRestorePosition(100, 100, 377, 378);
 
         readKeys();

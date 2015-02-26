@@ -241,7 +241,7 @@ public class ConfigDialog extends MMDialog {
       flags_ = new ShowFlags();
 
       if (showFlagsPanelVisible ) {
-         flags_.load(getPrefsNode());
+         flags_.load(ConfigDialog.class);
          Configuration cfg;
          try {
             if (presetName_.length()==0)

@@ -26,7 +26,6 @@ package org.micromanager.internal.utils;
 import java.awt.Rectangle;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.util.prefs.Preferences;
 
 import javax.swing.JFrame;
 
@@ -38,7 +37,6 @@ import org.micromanager.internal.MMStudio;
  */
 public class MMFrame extends JFrame {
    private static final long serialVersionUID = 1L;
-   private Preferences prefs_;
    private final String prefPrefix_;
    private static final String WINDOW_X = "frame_x";
    private static final String WINDOW_Y = "frame_y";
@@ -58,7 +56,6 @@ public class MMFrame extends JFrame {
    }
    
       private void finishConstructor() {
-      prefs_ = Preferences.userNodeForPackage(this.getClass());
    }
 
    /**
@@ -71,40 +68,37 @@ public class MMFrame extends JFrame {
     * @param y new WINDOW_Y position if current value isn't valid
     */
    private void ensureSafeWindowPosition(int x, int y) {
-      int prefX = prefs_.getInt(prefPrefix_ + WINDOW_X, 0);
-      int prefY = prefs_.getInt(prefPrefix_ + WINDOW_Y, 0);
+      DefaultUserProfile profile = DefaultUserProfile.getInstance();
+      int prefX = profile.getInt(MMFrame.class, prefPrefix_ + WINDOW_X, 0);
+      int prefY = profile.getInt(MMFrame.class, prefPrefix_ + WINDOW_Y, 0);
       if (GUIUtils.getGraphicsConfigurationContaining(prefX, prefY) == null) {
          // only reach this code if the pref coordinates are off screen
-         prefs_.putInt(prefPrefix_ + WINDOW_X, x);
-         prefs_.putInt(prefPrefix_ + WINDOW_Y, y);
+         profile.setInt(MMFrame.class, prefPrefix_ + WINDOW_X, x);
+         profile.setInt(MMFrame.class, prefPrefix_ + WINDOW_Y, y);
       }
    }
 
    public void loadPosition(int x, int y, int width, int height) {
-      if (prefs_ == null)
-         return;
-
       ensureSafeWindowPosition(x, y);
-      setBounds(prefs_.getInt(prefPrefix_ + WINDOW_X, x),
-                prefs_.getInt(prefPrefix_ + WINDOW_Y, y),
-                prefs_.getInt(prefPrefix_ + WINDOW_WIDTH, width),
-                prefs_.getInt(prefPrefix_ + WINDOW_HEIGHT, height));
+      DefaultUserProfile profile = DefaultUserProfile.getInstance();
+      setBounds(profile.getInt(MMFrame.class, prefPrefix_ + WINDOW_X, x),
+                profile.getInt(MMFrame.class, prefPrefix_ + WINDOW_Y, y),
+                profile.getInt(MMFrame.class, prefPrefix_ + WINDOW_WIDTH, width),
+                profile.getInt(MMFrame.class, prefPrefix_ + WINDOW_HEIGHT, height));
    }
 
    public void loadPosition(int x, int y) {
-      if (prefs_ == null)
-         return;
-      
       ensureSafeWindowPosition(x, y);
-      setBounds(prefs_.getInt(prefPrefix_ + WINDOW_X, x),
-                prefs_.getInt(prefPrefix_ + WINDOW_Y, y),
+      DefaultUserProfile profile = DefaultUserProfile.getInstance();
+      setBounds(profile.getInt(MMFrame.class, prefPrefix_ + WINDOW_X, x),
+                profile.getInt(MMFrame.class, prefPrefix_ + WINDOW_Y, y),
                 getWidth(),
                 getHeight());
    }
    
    
     /**
-    * Load window position and size from preferences if possible.
+    * Load window position and size from profile if possible.
     * If not possible then sets them from arguments
     * Attaches a listener to the window that will save the position when the
     * window closing event is received
@@ -145,16 +139,14 @@ public class MMFrame extends JFrame {
    
 
    public void savePosition() {
-      if (prefs_ == null)
-         return;
-      
       Rectangle r = getBounds();
       
       // save window position
-      prefs_.putInt(prefPrefix_ + WINDOW_X, r.x);
-      prefs_.putInt(prefPrefix_ + WINDOW_Y, r.y);
-      prefs_.putInt(prefPrefix_ + WINDOW_WIDTH, r.width);
-      prefs_.putInt(prefPrefix_ + WINDOW_HEIGHT, r.height);
+      DefaultUserProfile profile = DefaultUserProfile.getInstance();
+      profile.setInt(MMFrame.class, prefPrefix_ + WINDOW_X, r.x);
+      profile.setInt(MMFrame.class, prefPrefix_ + WINDOW_Y, r.y);
+      profile.setInt(MMFrame.class, prefPrefix_ + WINDOW_WIDTH, r.width);
+      profile.setInt(MMFrame.class, prefPrefix_ + WINDOW_HEIGHT, r.height);
    }
    
          
@@ -163,14 +155,4 @@ public class MMFrame extends JFrame {
       savePosition();
       super.dispose();
    }
-   
-   
-   public Preferences getPrefsNode() {
-      return prefs_;
-   }
-   
-   public void setPrefsNode(Preferences prefs) {
-      prefs_ = prefs;
-   }
-  
 }

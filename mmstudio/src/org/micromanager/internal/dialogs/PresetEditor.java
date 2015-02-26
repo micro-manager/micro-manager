@@ -33,9 +33,6 @@ import org.micromanager.internal.utils.ReportingUtils;
 
 public class PresetEditor extends ConfigDialog {
 
-   /**
-    * 
-    */
    private static final long serialVersionUID = 8281144157746745260L;
 
    public PresetEditor(String groupName, String presetName, ScriptInterface gui, CMMCore core, boolean newItem) {

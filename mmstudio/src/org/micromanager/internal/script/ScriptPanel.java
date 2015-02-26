@@ -48,7 +48,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.prefs.Preferences;
 
 import javax.swing.BoxLayout;
 import javax.swing.InputMap;
@@ -116,7 +115,6 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
    private JButton stopButton_;
    private List<String> immediatePaneHistory_ = new ArrayList<String>(HISTORYSIZE);
    private int immediatePaneHistoryIndex_ = 0;
-   private Preferences prefs_;
    private static ScriptingEngine interp_;
    private ScriptInterface parentGUI_;
    private JTextPane messagePane_;
@@ -370,13 +368,16 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
       // Needed when Cancel button is pressed upon save file warning
       setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
+      final DefaultUserProfile profile = DefaultUserProfile.getInstance();
       addWindowListener(new WindowAdapter() {
          @Override
          public void windowClosing(WindowEvent arg0) {
             if (!promptToSave(-1))
                return;
-            prefs_.putInt(RIGHT_DIVIDER_LOCATION, rightSplitPane_.getDividerLocation());
-            prefs_.putInt(DIVIDER_LOCATION, splitPane_.getDividerLocation());
+            profile.setInt(ScriptPanel.class, RIGHT_DIVIDER_LOCATION,
+               rightSplitPane_.getDividerLocation());
+            profile.setInt(ScriptPanel.class, DIVIDER_LOCATION,
+               splitPane_.getDividerLocation());
             saveScriptsToPrefs();
             setVisible(false);
          }
@@ -393,8 +394,6 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
       int buttonHeight = 15;
       Dimension buttonSize = new Dimension(80, buttonHeight);
       int gap = 5; // determines gap between buttons
-
-      prefs_ = getPrefsNode();
 
       loadAndRestorePosition(100, 100, 550, 495);
 
@@ -729,11 +728,13 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
       leftPanel.setMinimumSize(new Dimension(180, 130));
       rightSplitPane_ = new JSplitPane(JSplitPane.VERTICAL_SPLIT, topRightPanel, bottomRightPanel);
       rightSplitPane_.setOneTouchExpandable(true);
-      int rightDividerLocation = prefs_.getInt(RIGHT_DIVIDER_LOCATION, 200);
+      int rightDividerLocation = profile.getInt(ScriptPanel.class,
+            RIGHT_DIVIDER_LOCATION, 200);
       rightSplitPane_.setDividerLocation(rightDividerLocation);
       splitPane_ = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, rightSplitPane_);
       splitPane_.setOneTouchExpandable(true);
-      int dividerLocation = prefs_.getInt(DIVIDER_LOCATION, 200);
+      int dividerLocation = profile.getInt(ScriptPanel.class,
+            DIVIDER_LOCATION, 200);
       splitPane_.setDividerLocation(dividerLocation);
       splitPane_.setMinimumSize(new Dimension(180, 130));
       rightSplitPane_.setResizeWeight(1.0);
@@ -869,7 +870,8 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
          File curFile = FileDialogs.openFile(this, "Select a Beanshell script", BSH_FILE);
 
          if (curFile != null) {
-               prefs_.put(SCRIPT_FILE, curFile.getAbsolutePath());
+               DefaultUserProfile.getInstance().setString(ScriptPanel.class,
+                     SCRIPT_FILE, curFile.getAbsolutePath());
                // only creates a new file when a file with this name does not exist
                addScriptToModel(curFile);
          }
@@ -961,7 +963,8 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
             fw.write(scriptArea_.getText());
             fw.close();
             scriptFile_ = saveFile;
-            prefs_.put(SCRIPT_FILE, saveFile.getAbsolutePath());
+            DefaultUserProfile.getInstance().setString(ScriptPanel.class,
+                  SCRIPT_FILE, saveFile.getAbsolutePath());
             scriptPaneSaved_ = true;
             this.setTitle(saveFile.getName());
          } catch (IOException ioe){
@@ -1122,7 +1125,8 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
 
       if (curFile != null) {
          try {
-            prefs_.put(SCRIPT_FILE, curFile.getAbsolutePath());
+            DefaultUserProfile.getInstance().setString(ScriptPanel.class,
+                  SCRIPT_FILE, curFile.getAbsolutePath());
             int row = scriptTable_.getSelectedRow();
             int column = scriptTable_.getSelectedColumn();
             scriptTable_.changeSelection(row, column, true, false);
@@ -1288,12 +1292,13 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
 
    public void getScriptsFromPrefs ()
    { 
-      // restore previously listed scripts from prefs
+      // restore previously listed scripts from profile
       int j = 0;
       String script;
       boolean isFile = false;
+      DefaultUserProfile profile = DefaultUserProfile.getInstance();
       do {
-         script = prefs_.get(SCRIPT_FILE + j, null);
+         script = profile.getString(ScriptPanel.class, SCRIPT_FILE + j, null);
          if ( (script != null) && (!script.equals("") ) )
          {
             File file = new File(script);
@@ -1316,24 +1321,30 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
    { 
       File file;
       ArrayList<File> scriptFileArray = model_.getFileArray();
+      DefaultUserProfile profile = DefaultUserProfile.getInstance();
       for (int i = 0; i < scriptFileArray.size(); i ++) 
       {
          file = scriptFileArray.get(i);
          if (file != null) {
-            prefs_.put(SCRIPT_FILE + i, file.getAbsolutePath() );
+            profile.setString(ScriptPanel.class,
+                  SCRIPT_FILE + i, file.getAbsolutePath());
          }
       }
 
       // Add one empty script, so as not to read in stale variables
-      prefs_.put(SCRIPT_FILE + scriptFileArray.size(), "");
+      profile.setString(ScriptPanel.class,
+            SCRIPT_FILE + scriptFileArray.size(), "");
    }
    
    private void finishUp() {
       if (!promptToSave(-1)) {
          return;
       }
-      prefs_.putInt(RIGHT_DIVIDER_LOCATION, rightSplitPane_.getDividerLocation());
-      prefs_.putInt(DIVIDER_LOCATION, splitPane_.getDividerLocation());
+      DefaultUserProfile profile = DefaultUserProfile.getInstance();
+      profile.setInt(ScriptPanel.class, RIGHT_DIVIDER_LOCATION,
+            rightSplitPane_.getDividerLocation());
+      profile.setInt(ScriptPanel.class, DIVIDER_LOCATION,
+            splitPane_.getDividerLocation());
       saveScriptsToPrefs();
       setVisible(false);
    }

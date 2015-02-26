@@ -1,12 +1,12 @@
 package org.micromanager.internal.positionlist;
 
 import java.util.ArrayList;
-import java.util.prefs.Preferences;
 
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
 
+import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
@@ -16,23 +16,24 @@ import org.micromanager.internal.utils.ReportingUtils;
 class AxisList {
    private ArrayList<AxisData> axisList_ = new ArrayList<AxisData>();
    private CMMCore core_;
-   private Preferences prefs_;
    
-   public AxisList(CMMCore core, Preferences prefs) {
+   public AxisList(CMMCore core) {
       core_ = core;
-      prefs_ = prefs;
       // Initialize the axisList.
+      DefaultUserProfile profile = DefaultUserProfile.getInstance();
       try {
          // add 1D stages
          StrVector stages = core_.getLoadedDevicesOfType(DeviceType.StageDevice);
          for (int i=0; i<stages.size(); i++) {
-            axisList_.add(new AxisData(prefs_.getBoolean(stages.get(i),true), 
+            axisList_.add(new AxisData(profile.getBoolean(
+                        AxisList.class, stages.get(i), true), 
                     stages.get(i), AxisData.AxisType.oneD));
          }
          // read 2-axis stages
          StrVector stages2D = core_.getLoadedDevicesOfType(DeviceType.XYStageDevice);
          for (int i=0; i<stages2D.size(); i++) {
-            axisList_.add(new AxisData(prefs_.getBoolean(stages2D.get(i),true), 
+            axisList_.add(new AxisData(profile.getBoolean(
+                        AxisList.class, stages2D.get(i), true), 
                     stages2D.get(i), AxisData.AxisType.twoD));
          }
       } catch (Exception e) {

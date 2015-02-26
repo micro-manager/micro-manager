@@ -27,7 +27,6 @@ import java.awt.Frame;
 import java.awt.Rectangle;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.util.prefs.Preferences;
 
 import javax.swing.JDialog;
 import org.micromanager.internal.MMStudio;
@@ -38,7 +37,6 @@ import org.micromanager.internal.MMStudio;
  */
 public class MMDialog extends JDialog {
    private static final long serialVersionUID = -3144618980027203294L;
-   private Preferences mmDialogPrefs_;
    private final String prefPrefix_;
    private static final String WINDOW_X = "mmdlg_y";
    private static final String WINDOW_Y = "mmdlg_x";
@@ -47,27 +45,19 @@ public class MMDialog extends JDialog {
    
    public MMDialog() {
       super();
-      finishConstructor();
       prefPrefix_ = "";
    }
    public MMDialog(String prefPrefix) {
       super();
-      finishConstructor();
       prefPrefix_ = prefPrefix;
    }
    public MMDialog(Frame owner) {
       super(owner);
-      finishConstructor();
       prefPrefix_ = "";
    }
    public MMDialog(Frame owner, boolean isModal) {
       super(owner, isModal);
-      finishConstructor();
       prefPrefix_ = "";
-   }
-
-   private void finishConstructor() {
-      mmDialogPrefs_ = Preferences.userNodeForPackage(this.getClass());
    }
 
    /**
@@ -79,12 +69,13 @@ public class MMDialog extends JDialog {
     * @param y new WINDOW_Y position if current value isn't valid
     */
    private void ensureSafeWindowPosition(int x, int y) {
-      int prefX = mmDialogPrefs_.getInt(prefPrefix_ + WINDOW_X, 0);
-      int prefY = mmDialogPrefs_.getInt(prefPrefix_ + WINDOW_Y, 0);
+      DefaultUserProfile profile = DefaultUserProfile.getInstance();
+      int prefX = profile.getInt(MMDialog.class, prefPrefix_ + WINDOW_X, 0);
+      int prefY = profile.getInt(MMDialog.class, prefPrefix_ + WINDOW_Y, 0);
       if (GUIUtils.getGraphicsConfigurationContaining(prefX, prefY) == null) {
          // only reach this code if the pref coordinates are off screen
-         mmDialogPrefs_.putInt(prefPrefix_ + WINDOW_X, x);
-         mmDialogPrefs_.putInt(prefPrefix_ + WINDOW_Y, y);
+         profile.setInt(MMDialog.class, prefPrefix_ + WINDOW_X, x);
+         profile.setInt(MMDialog.class, prefPrefix_ + WINDOW_Y, y);
       }
    }
 
@@ -138,10 +129,11 @@ public class MMDialog extends JDialog {
     */
    protected void loadPosition(int x, int y, int width, int height) {
       ensureSafeWindowPosition(x, y);
-      setBounds(mmDialogPrefs_.getInt(prefPrefix_ + WINDOW_X, x),
-                mmDialogPrefs_.getInt(prefPrefix_ + WINDOW_Y, y),
-                mmDialogPrefs_.getInt(prefPrefix_ + WINDOW_WIDTH, width),
-                mmDialogPrefs_.getInt(prefPrefix_ + WINDOW_HEIGHT, height));
+      DefaultUserProfile profile = DefaultUserProfile.getInstance();
+      setBounds(profile.getInt(MMDialog.class, prefPrefix_ + WINDOW_X, x),
+                profile.getInt(MMDialog.class, prefPrefix_ + WINDOW_Y, y),
+                profile.getInt(MMDialog.class, prefPrefix_ + WINDOW_WIDTH, width),
+                profile.getInt(MMDialog.class, prefPrefix_ + WINDOW_HEIGHT, height));
    }
    
    @Override
@@ -152,8 +144,9 @@ public class MMDialog extends JDialog {
    
    protected void loadPosition(int x, int y) {
       ensureSafeWindowPosition(x, y);
-      setLocation(mmDialogPrefs_.getInt(WINDOW_X, x),
-                mmDialogPrefs_.getInt(WINDOW_Y, y));
+      DefaultUserProfile profile = DefaultUserProfile.getInstance();
+      setLocation(profile.getInt(MMDialog.class, prefPrefix_ + WINDOW_X, x),
+                profile.getInt(MMDialog.class, prefPrefix_ + WINDOW_Y, y));
    }
 
    /**
@@ -161,21 +154,12 @@ public class MMDialog extends JDialog {
     */
    protected void savePosition() {
       Rectangle r = getBounds();
+      DefaultUserProfile profile = DefaultUserProfile.getInstance();
       if (r != null) {
-         mmDialogPrefs_.putInt(prefPrefix_ + WINDOW_X, r.x);
-         mmDialogPrefs_.putInt(prefPrefix_ + WINDOW_Y, r.y);
-         mmDialogPrefs_.putInt(prefPrefix_ + WINDOW_WIDTH, r.width);
-         mmDialogPrefs_.putInt(prefPrefix_ + WINDOW_HEIGHT, r.height);
+         profile.setInt(MMDialog.class, prefPrefix_ + WINDOW_X, r.x);
+         profile.setInt(MMDialog.class, prefPrefix_ + WINDOW_Y, r.y);
+         profile.setInt(MMDialog.class, prefPrefix_ + WINDOW_WIDTH, r.width);
+         profile.setInt(MMDialog.class, prefPrefix_ + WINDOW_HEIGHT, r.height);
       }
    }
-   
-   public Preferences getPrefsNode() {
-      return mmDialogPrefs_;
-   }
-   
-   public void setPrefsNode(Preferences p) {
-      mmDialogPrefs_ = p;
-   }
-
-
 }
