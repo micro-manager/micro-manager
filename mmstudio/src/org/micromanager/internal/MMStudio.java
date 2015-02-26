@@ -402,7 +402,7 @@ public class MMStudio implements ScriptInterface {
       fileMenu.initializeFileMenu(menuBar_);
 
       toolsMenu_ = new ToolsMenu(studio_, core_);
-      toolsMenu_.initializeToolsMenu(menuBar_, mainPrefs_);
+      toolsMenu_.initializeToolsMenu(menuBar_);
 
       HelpMenu helpMenu = new HelpMenu(studio_, core_);
 
