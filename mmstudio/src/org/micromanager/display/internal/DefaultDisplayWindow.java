@@ -394,7 +394,6 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       Point location = getLocation();
 
       double mag = displaySettings_.getMagnification();
-      ReportingUtils.logError("Zooming to " + mag);
 
       // Use approximation here because ImageJ has fixed allowed magnification
       // levels and we want to be able to be a bit more approximate and snap
