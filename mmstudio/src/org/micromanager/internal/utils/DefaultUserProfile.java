@@ -178,8 +178,8 @@ public class DefaultUserProfile implements UserProfile {
    /**
     * Append a class name to the provided key to generate a unique-across-MM
     * key.
-    * Note that saveProfileSubsetToFile() assumes that keys start with the
-    * class' canonical name.
+    * Note that saveProfileSubsetToFile() and clearProfileSubset() assume that
+    * keys start with the class' canonical name.
     */
    private String genKey(Class<?> c, String key) {
       return c.getCanonicalName() + ":" + key;
@@ -486,6 +486,21 @@ public class DefaultUserProfile implements UserProfile {
    public void setCurrentUser(String userName) {
       userName_ = userName;
       userProfile_ = loadUser(userName);
+   }
+
+   @Override
+   public void clearProfileSubset(Class<?> c) {
+      // Make a copy of the map that contains everything except the keys for
+      // the specified class.
+      synchronized(userProfile_) {
+         DefaultPropertyMap.Builder builder = new DefaultPropertyMap.Builder();
+         for (String key : userProfile_.getKeys()) {
+            if (!key.startsWith(c.getCanonicalName())) {
+               builder.putProperty(key, userProfile_.getProperty(key));
+            }
+         }
+         userProfile_ = (DefaultPropertyMap) builder.build();
+      }
    }
 
    /**
