@@ -114,7 +114,6 @@ public class OptionsDlg extends MMDialog {
          public void actionPerformed(final ActionEvent e) {
             boolean isEnabled = debugLogEnabledCheckBox.isSelected();
             setIsDebugLogEnabled(isEnabled);
-            saveProfile();
             core_.enableDebugLog(isEnabled);
             UIMonitor.enable(isEnabled);
          }
@@ -127,7 +126,6 @@ public class OptionsDlg extends MMDialog {
          @Override
          public void actionPerformed(ActionEvent arg0) {
             MMIntroDlg.setShouldAskForConfigFile(askForConfigFileCheckBox.isSelected());
-            saveProfile();
          }
       });
 
@@ -146,16 +144,16 @@ public class OptionsDlg extends MMDialog {
 
       final JCheckBox deleteLogCheckBox = new JCheckBox();
       deleteLogCheckBox.setText("Delete log files after");
-      deleteLogCheckBox.setSelected(opts_.deleteOldCoreLogs_);
+      deleteLogCheckBox.setSelected(MMStudio.getShouldDeleteOldCoreLogs());
       deleteLogCheckBox.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            opts_.deleteOldCoreLogs_ = deleteLogCheckBox.isSelected();
+            MMStudio.setShouldDeleteOldCoreLogs(deleteLogCheckBox.isSelected());
          }
       });
 
       logDeleteDaysField_ =
-         new JTextField(Integer.toString(opts_.deleteCoreLogAfterDays_), 2);
+         new JTextField(Integer.toString(MMStudio.getCoreLogLifetimeDays()), 2);
 
       final JButton deleteLogFilesButton = new JButton();
       deleteLogFilesButton.setText("Delete Log Files Now");
@@ -250,7 +248,6 @@ public class OptionsDlg extends MMDialog {
          public void actionPerformed(ActionEvent arg0) {
             boolean shouldClose = closeOnExitCheckBox.isSelected();
             setShouldCloseOnExit(shouldClose);
-            saveProfile();
             MMStudio.getFrame().setExitStrategy(shouldClose);
          }
       });
@@ -282,7 +279,6 @@ public class OptionsDlg extends MMDialog {
          @Override
          public void actionPerformed(ActionEvent arg0) {
             AcqControlDlg.setShouldSyncExposure(syncExposureMainAndMDA.isSelected());
-            saveProfile();
          }
       });
   
@@ -363,7 +359,6 @@ public class OptionsDlg extends MMDialog {
       String background = (String) comboDisplayBackground_.getSelectedItem();
 
       setBackgroundMode(background);
-      saveProfile();
       parent_.setBackgroundStyle(background);
    }
 
@@ -382,22 +377,18 @@ public class OptionsDlg extends MMDialog {
       }
 
       opts_.circularBufferSizeMB_ = seqBufSize;
-      opts_.deleteCoreLogAfterDays_ = deleteLogDays;
+      MMStudio.setCoreLogLifetimeDays(deleteLogDays);
       opts_.saveSettings();
-
-      ScriptPanel.setStartupScript(startupScriptFile_.getText());
-      saveProfile();
-      parent_.makeActive();
-      dispose();
-   }
-
-   private void saveProfile() {
       try {
          DefaultUserProfile.getInstance().saveProfile();
       }
       catch (java.io.IOException e) {
-         ReportingUtils.showError(e, "Error saving user profile");
+         ReportingUtils.showError(e, "An error occurred while saving your options");
       }
+
+      ScriptPanel.setStartupScript(startupScriptFile_.getText());
+      parent_.makeActive();
+      dispose();
    }
 
    public static boolean getIsDebugLogEnabled() {

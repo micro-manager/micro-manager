@@ -37,15 +37,10 @@ public class MMOptions {
    private static final String MPTIFF_SEPARATE_FILES_FOR_POSITIONS = "SplitXYPostionsInFilesMPTiff";
    private static final String HIDE_MDA_DISPLAY = "HideMDADisplay";
    private static final String FAST_STORAGE = "FastStorage"; // No longer used but should not be reused
-   private static final String DELETE_OLD_CORELOGS = "DeleteOldCoreLogs";
-   private static final String DELETE_CORELOG_AFTER_DAYS =
-      "DeleteCoreLogAfterDays";
 
    public int circularBufferSizeMB_;
    public boolean mpTiffMetadataFile_;
    public boolean mpTiffSeparateFilesForPositions_;
-   public boolean deleteOldCoreLogs_;
-   public int deleteCoreLogAfterDays_;
 
    public MMOptions() {
       setDefaultValues();
@@ -57,8 +52,6 @@ public class MMOptions {
       circularBufferSizeMB_ = is64BitJVM ? 250 : 25;
       mpTiffMetadataFile_ = false;
       mpTiffSeparateFilesForPositions_ = true;
-      deleteOldCoreLogs_ = false;
-      deleteCoreLogAfterDays_ = 7;
    }
 
    private Preferences getPrefNode() {
@@ -73,8 +66,6 @@ public class MMOptions {
       prefs.putInt(BUFFSIZE_MB, circularBufferSizeMB_);
       prefs.putBoolean(MPTIFF_METADATA_FILE, mpTiffMetadataFile_);
       prefs.putBoolean(MPTIFF_SEPARATE_FILES_FOR_POSITIONS, mpTiffSeparateFilesForPositions_);
-      prefs.putBoolean(DELETE_OLD_CORELOGS, deleteOldCoreLogs_);
-      prefs.putInt(DELETE_CORELOG_AFTER_DAYS, deleteCoreLogAfterDays_);
    }
 
    public void loadSettings() {
@@ -83,10 +74,6 @@ public class MMOptions {
       circularBufferSizeMB_ = prefs.getInt(BUFFSIZE_MB, circularBufferSizeMB_);
       mpTiffMetadataFile_ = prefs.getBoolean(MPTIFF_METADATA_FILE, mpTiffMetadataFile_);
       mpTiffSeparateFilesForPositions_ = prefs.getBoolean(MPTIFF_SEPARATE_FILES_FOR_POSITIONS, mpTiffSeparateFilesForPositions_);
-      deleteOldCoreLogs_ =
-         prefs.getBoolean(DELETE_OLD_CORELOGS, deleteOldCoreLogs_);
-      deleteCoreLogAfterDays_ =
-         prefs.getInt(DELETE_CORELOG_AFTER_DAYS, deleteCoreLogAfterDays_);
    }
 
    public void resetSettings() throws BackingStoreException {

@@ -170,6 +170,8 @@ public class MMStudio implements ScriptInterface {
    private static final int TOOLTIP_DISPLAY_INITIAL_DELAY_MILLISECONDS = 2000;
    private static final String DEFAULT_CONFIG_FILE_NAME = "MMConfig_demo.cfg";
    private static final String DEFAULT_CONFIG_FILE_PROPERTY = "org.micromanager.default.config.file";
+   private static final String SHOULD_DELETE_OLD_CORE_LOGS = "whether or not to delete old MMCore log files";
+   private static final String CORE_LOG_LIFETIME_DAYS = "how many days to keep MMCore log files, before they get deleted";
 
    // List of keys to UIManager.put() method for setting the background color
    // look and feel. Selected from this page:
@@ -437,9 +439,9 @@ public class MMStudio implements ScriptInterface {
       }
       core_.enableDebugLog(OptionsDlg.getIsDebugLogEnabled());
 
-      if (options_.deleteOldCoreLogs_) {
+      if (getShouldDeleteOldCoreLogs()) {
          LogFileManager.deleteLogFilesDaysOld(
-               options_.deleteCoreLogAfterDays_, logFileName);
+               getCoreLogLifetimeDays(), logFileName);
       }
 
       ReportingUtils.setCore(core_);
@@ -2543,5 +2545,25 @@ public class MMStudio implements ScriptInterface {
    @Override
    public UserProfile profile() {
       return DefaultUserProfile.getInstance();
+   }
+
+   public static boolean getShouldDeleteOldCoreLogs() {
+      return DefaultUserProfile.getInstance().getBoolean(MMStudio.class,
+            SHOULD_DELETE_OLD_CORE_LOGS, false);
+   }
+
+   public static void setShouldDeleteOldCoreLogs(boolean shouldDelete) {
+      DefaultUserProfile.getInstance().setBoolean(MMStudio.class,
+            SHOULD_DELETE_OLD_CORE_LOGS, shouldDelete);
+   }
+
+   public static int getCoreLogLifetimeDays() {
+      return DefaultUserProfile.getInstance().getInt(MMStudio.class,
+            CORE_LOG_LIFETIME_DAYS, 7);
+   }
+
+   public static void setCoreLogLifetimeDays(int days) {
+      DefaultUserProfile.getInstance().setInt(MMStudio.class,
+            CORE_LOG_LIFETIME_DAYS, days);
    }
 }
