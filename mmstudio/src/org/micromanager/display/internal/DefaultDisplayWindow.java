@@ -619,7 +619,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
    @Override
    public boolean getIsClosed() {
       // TODO: is this a proper indicator for if the window is closed?
-      return !isVisible();
+      return (!isVisible() && fullScreenFrame_ == null);
    }
 
    /**
