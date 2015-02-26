@@ -50,6 +50,8 @@ public class DefaultDisplaySettings implements DisplaySettings {
             DefaultDisplaySettings.class, "channelDisplayModeIndex", 0));
       builder.histogramUpdateRate(profile.getDouble(
             DefaultDisplaySettings.class, "histogramUpdateRate", 0.0));
+      builder.magnification(profile.getDouble(
+            DefaultDisplaySettings.class, "magnification", 1.0));
       builder.shouldSyncChannels(profile.getBoolean(
             DefaultDisplaySettings.class, "shouldSyncChannels", false));
       builder.scaleBarColorIndex(profile.getInt(
@@ -89,6 +91,8 @@ public class DefaultDisplaySettings implements DisplaySettings {
             "channelDisplayModeIndex", settings.getChannelDisplayModeIndex());
       profile.setDouble(DefaultDisplaySettings.class,
             "histogramUpdateRate", settings.getHistogramUpdateRate());
+      profile.setDouble(DefaultDisplaySettings.class,
+            "magnification", settings.getMagnification());
       profile.setBoolean(DefaultDisplaySettings.class,
             "shouldSyncChannels", settings.getShouldSyncChannels());
       profile.setInt(DefaultDisplaySettings.class,
