@@ -159,12 +159,12 @@ public class MMIntroDlg extends JDialog {
       version10betaLabel.setBounds(5, 216, 193, 13);
       getContentPane().add(version10betaLabel);
 
-      if (getShouldAskForConfigFile()) {
-         addConfigFileSelect();
-      }
-
       if (!DefaultUserProfile.getShouldAlwaysUseDefaultProfile()) {
          addProfileDropdown();
+      }
+
+      if (getShouldAskForConfigFile()) {
+         addConfigFileSelect();
       }
 
       welcomeTextArea_ = new JTextArea() {
@@ -191,7 +191,7 @@ public class MMIntroDlg extends JDialog {
       final JLabel loadConfigurationLabel = new JLabel();
       loadConfigurationLabel.setFont(new Font("Arial", Font.PLAIN, 10));
       loadConfigurationLabel.setText("Configuration file:");
-      loadConfigurationLabel.setBounds(5, 225, 319, 19);
+      loadConfigurationLabel.setBounds(5, 270, 319, 19);
       getContentPane().add(loadConfigurationLabel);
 
       final JButton browseButton = new JButton();
@@ -202,19 +202,19 @@ public class MMIntroDlg extends JDialog {
          }
       });
       browseButton.setText("...");
-      browseButton.setBounds(350, 245, 36, 26);
+      browseButton.setBounds(350, 287, 36, 26);
       getContentPane().add(browseButton);
 
       cfgFileDropperDown_ = new JComboBox();
       cfgFileDropperDown_.setFont(new Font("Arial", Font.PLAIN, 10));
-      cfgFileDropperDown_.setBounds(5, 245, 342, 26);
+      cfgFileDropperDown_.setBounds(5, 287, 342, 26);
       getContentPane().add(cfgFileDropperDown_);
    }
 
    private void addProfileDropdown() {
       JLabel userProfileLabel = new JLabel("User profile:");
       userProfileLabel.setFont(new Font("Arial", Font.PLAIN, 10));
-      userProfileLabel.setBounds(5, 268, 319, 19);
+      userProfileLabel.setBounds(5, 228, 319, 19);
       getContentPane().add(userProfileLabel);
 
       final DefaultUserProfile profile = DefaultUserProfile.getInstance();
@@ -229,7 +229,7 @@ public class MMIntroDlg extends JDialog {
          userSelect_.addItem(userName);
       }
       userSelect_.setSelectedItem(DefaultUserProfile.DEFAULT_USER);
-      userSelect_.setBounds(5, 285, 342, 26);
+      userSelect_.setBounds(5, 244, 342, 26);
       userSelect_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
