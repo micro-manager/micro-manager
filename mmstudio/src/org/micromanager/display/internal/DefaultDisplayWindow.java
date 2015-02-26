@@ -106,6 +106,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
    private MMImageCanvas canvas_;
    private JPanel controlsPanel_;
    private HyperstackControls hyperstackControls_;
+   private JButton fullButton_;
    private List<Component> customControls_;
    private MultiModePanel modePanel_;
    private HistogramsPanel histograms_;
@@ -286,15 +287,15 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       for (Component c : customControls_) {
          controlsPanel_.add(c);
       }
-      JButton fullButton = new JButton("Fullscreen");
-      fullButton.setToolTipText("Turn fullscreen mode on or off.");
-      fullButton.addActionListener(new ActionListener() {
+      fullButton_ = new JButton("Fullscreen");
+      fullButton_.setToolTipText("Turn fullscreen mode on or off.");
+      fullButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent event) {
             toggleFullScreen();
          }
       });
-      controlsPanel_.add(fullButton);
+      controlsPanel_.add(fullButton_);
       controlsPanel_.add(new SaveButton(store_, this));
       contentsPanel_.add(controlsPanel_, "align center, wrap, growx, growy 0");
 
@@ -634,12 +635,14 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
          add(contentsPanel_);
          fullScreenFrame_.dispose();
          fullScreenFrame_ = null;
+         fullButton_.setText("Fullscreen");
          setWindowSize();
          setVisible(true);
       }
       else {
          // Transfer our contents to a new JFrame for the fullscreen mode.
          setVisible(false);
+         fullButton_.setText("Windowed");
          fullScreenFrame_ = new JFrame();
          fullScreenFrame_.setUndecorated(true);
          fullScreenFrame_.setBounds(
