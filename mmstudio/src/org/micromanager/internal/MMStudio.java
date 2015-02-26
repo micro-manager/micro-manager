@@ -172,6 +172,7 @@ public class MMStudio implements ScriptInterface {
    private static final String DEFAULT_CONFIG_FILE_PROPERTY = "org.micromanager.default.config.file";
    private static final String SHOULD_DELETE_OLD_CORE_LOGS = "whether or not to delete old MMCore log files";
    private static final String CORE_LOG_LIFETIME_DAYS = "how many days to keep MMCore log files, before they get deleted";
+   private static final String CIRCULAR_BUFFER_SIZE = "size, in megabytes of the circular buffer used to temporarily store images before they are written to disk";
 
    // List of keys to UIManager.put() method for setting the background color
    // look and feel. Selected from this page:
@@ -453,7 +454,7 @@ public class MMStudio implements ScriptInterface {
       coreCallback_ = new CoreEventCallback(core_, engine_);
 
       try {
-         core_.setCircularBufferMemoryFootprint(options_.circularBufferSizeMB_);
+         core_.setCircularBufferMemoryFootprint(getCircularBufferSize());
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
       }
@@ -2565,5 +2566,17 @@ public class MMStudio implements ScriptInterface {
    public static void setCoreLogLifetimeDays(int days) {
       DefaultUserProfile.getInstance().setInt(MMStudio.class,
             CORE_LOG_LIFETIME_DAYS, days);
+   }
+
+   public static int getCircularBufferSize() {
+      // Default to more MB for 64-bit systems.
+      int defaultVal = System.getProperty("sun.arch.data.model", "32").equals("64") ? 250 : 25;
+      return DefaultUserProfile.getInstance().getInt(MMStudio.class,
+            CIRCULAR_BUFFER_SIZE, defaultVal);
+   }
+
+   public static void setCircularBufferSize(int newSize) {
+      DefaultUserProfile.getInstance().setInt(MMStudio.class,
+            CIRCULAR_BUFFER_SIZE, newSize);
    }
 }

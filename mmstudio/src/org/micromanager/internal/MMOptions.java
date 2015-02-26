@@ -38,7 +38,6 @@ public class MMOptions {
    private static final String HIDE_MDA_DISPLAY = "HideMDADisplay";
    private static final String FAST_STORAGE = "FastStorage"; // No longer used but should not be reused
 
-   public int circularBufferSizeMB_;
    public boolean mpTiffMetadataFile_;
    public boolean mpTiffSeparateFilesForPositions_;
 
@@ -47,9 +46,6 @@ public class MMOptions {
    }
 
    private void setDefaultValues() {
-      boolean is64BitJVM =
-         System.getProperty("sun.arch.data.model", "32").equals("64");
-      circularBufferSizeMB_ = is64BitJVM ? 250 : 25;
       mpTiffMetadataFile_ = false;
       mpTiffSeparateFilesForPositions_ = true;
    }
@@ -63,7 +59,6 @@ public class MMOptions {
    public void saveSettings() {
       Preferences prefs = getPrefNode();
 
-      prefs.putInt(BUFFSIZE_MB, circularBufferSizeMB_);
       prefs.putBoolean(MPTIFF_METADATA_FILE, mpTiffMetadataFile_);
       prefs.putBoolean(MPTIFF_SEPARATE_FILES_FOR_POSITIONS, mpTiffSeparateFilesForPositions_);
    }
@@ -71,7 +66,6 @@ public class MMOptions {
    public void loadSettings() {
       Preferences prefs = getPrefNode();
 
-      circularBufferSizeMB_ = prefs.getInt(BUFFSIZE_MB, circularBufferSizeMB_);
       mpTiffMetadataFile_ = prefs.getBoolean(MPTIFF_METADATA_FILE, mpTiffMetadataFile_);
       mpTiffSeparateFilesForPositions_ = prefs.getBoolean(MPTIFF_SEPARATE_FILES_FOR_POSITIONS, mpTiffSeparateFilesForPositions_);
    }

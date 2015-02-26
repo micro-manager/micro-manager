@@ -226,7 +226,8 @@ public class OptionsDlg extends MMDialog {
          }
       });
 
-      bufSizeField_ = new JTextField(Integer.toString(opts_.circularBufferSizeMB_), 5);
+      bufSizeField_ = new JTextField(
+            Integer.toString(MMStudio.getCircularBufferSize()), 5);
 
       comboDisplayBackground_ = new JComboBox(guiColors_.styleOptions);
       comboDisplayBackground_.setMaximumRowCount(2);
@@ -376,7 +377,7 @@ public class OptionsDlg extends MMDialog {
          return;
       }
 
-      opts_.circularBufferSizeMB_ = seqBufSize;
+      MMStudio.setCircularBufferSize(seqBufSize);
       MMStudio.setCoreLogLifetimeDays(deleteLogDays);
       opts_.saveSettings();
       try {
