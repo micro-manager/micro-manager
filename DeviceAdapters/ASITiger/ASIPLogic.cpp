@@ -480,6 +480,7 @@ int CPLogic::OnRefreshProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
 int CPLogic::RefreshEditCellPropertyValues()
 {
    if (editCellUpdates_ && currentPosition_<=numCells_) {
+      // if it's on a cell
       bool refreshPropsOriginal = refreshProps_;
       refreshProps_ = true;
       UpdateProperty(g_EditCellTypePropertyName);
@@ -488,6 +489,15 @@ int CPLogic::RefreshEditCellPropertyValues()
       UpdateProperty(g_EditCellInput2PropertyName);
       UpdateProperty(g_EditCellInput3PropertyName);
       UpdateProperty(g_EditCellInput4PropertyName);
+      refreshProps_ = refreshPropsOriginal;
+   } else if (editCellUpdates_ && currentPosition_>=PLOGIC_PHYSICAL_IO_START_ADDRESS
+         && currentPosition_<=PLOGIC_PHYSICAL_IO_END_ADDRESS) {
+      // if position is an I/O
+      // CellType overlaps with the IOType, but different list of possibilities so
+      //    let's not worry about that for now
+      bool refreshPropsOriginal = refreshProps_;
+      refreshProps_ = true;
+      UpdateProperty(g_EditCellConfigPropertyName);  // this is the source address
       refreshProps_ = refreshPropsOriginal;
    }
    return DEVICE_OK;
