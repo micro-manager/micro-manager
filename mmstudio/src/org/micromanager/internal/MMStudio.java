@@ -54,7 +54,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.prefs.Preferences;
 
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
@@ -210,16 +209,6 @@ public class MMStudio implements ScriptInterface {
    private static final int maxMRUCfgs_ = 5;
    private String sysConfigFile_;
    private String startupScriptFile_;
-   // applications settings
-   // TODO: move these objects out of MMStudio wherever possible, and avoid
-   // letting multiple objects keep references to them. Then we can also fix
-   // the OptionsDlg's "clear preferences" button to actually remove all
-   // preferences objects with removeNode() instead of manually clearing
-   // individual nodes.
-   private Preferences mainPrefs_;
-   private Preferences systemPrefs_;
-   private Preferences colorPrefs_;
-   private Preferences exposurePrefs_;
 
    // MMcore
    private CMMCore core_;
@@ -326,32 +315,6 @@ public class MMStudio implements ScriptInterface {
          startupScriptFile_ = "";
       }
 
-      // set the location for app preferences
-      try {
-         mainPrefs_ = Preferences.userNodeForPackage(getClass());
-      } catch (Exception e) {
-         ReportingUtils.logError(e);
-      }
-      systemPrefs_ = mainPrefs_;
-      
-      colorPrefs_ = mainPrefs_.node(mainPrefs_.absolutePath() + "/" + 
-              AcqControlDlg.COLOR_SETTINGS_NODE);
-      exposurePrefs_ = mainPrefs_.node(mainPrefs_.absolutePath() + "/" + 
-              EXPOSURE_SETTINGS_NODE);
-
-      // check system preferences
-      try {
-         Preferences p = Preferences.systemNodeForPackage(getClass());
-         if (null != p) {
-            // if we can not write to the systemPrefs, use AppPrefs instead
-            if (JavaUtils.backingStoreAvailable(p)) {
-               systemPrefs_ = p;
-            }
-         }
-      } catch (Exception e) {
-         ReportingUtils.logError(e);
-      }
-
       setBackgroundStyle(OptionsDlg.getBackgroundMode());
 
       showRegistrationDialogMaybe();
@@ -367,11 +330,10 @@ public class MMStudio implements ScriptInterface {
 
       snapLiveManager_ = new SnapLiveManager(core_);
 
-      frame_ = new MainFrame(this, core_, snapLiveManager_, mainPrefs_);
+      frame_ = new MainFrame(this, core_, snapLiveManager_);
       frame_.setIconImage(SwingResourceManager.getImage(MMStudio.class,
             "icons/microscope.gif"));
-      frame_.loadApplicationPrefs(mainPrefs_,
-            OptionsDlg.getShouldCloseOnExit());
+      frame_.loadApplicationPrefs(OptionsDlg.getShouldCloseOnExit());
       ReportingUtils.SetContainingFrame(frame_);
 
       // move ImageJ window to place where it last was if possible
@@ -386,7 +348,8 @@ public class MMStudio implements ScriptInterface {
 
       staticInfo_ = new StaticInfo(core_, frame_);
 
-      openAcqDirectory_ = mainPrefs_.get(OPEN_ACQ_DIR, "");
+      openAcqDirectory_ = DefaultUserProfile.getInstance().getString(
+            MMStudio.class, OPEN_ACQ_DIR, "");
       ReportingUtils.logError("TODO: restore previous default data saving method");
 
       ToolTipManager ttManager = ToolTipManager.sharedInstance();
@@ -491,7 +454,8 @@ public class MMStudio implements ScriptInterface {
       }
       saveMRUConfigFiles();
 
-      mainPrefs_.put(SYSTEM_CONFIG_FILE, sysConfigFile_);
+      DefaultUserProfile profile = DefaultUserProfile.getInstance();
+      profile.setString(MMStudio.class, SYSTEM_CONFIG_FILE, sysConfigFile_);
       
       // before loading the system configuration, we need to wait 
       // until the plugins are loaded
@@ -529,7 +493,7 @@ public class MMStudio implements ScriptInterface {
 
       frame_.initializeConfigPad();
 
-      String afDevice = mainPrefs_.get(AUTOFOCUS_DEVICE, "");
+      String afDevice = profile.getString(MMStudio.class, AUTOFOCUS_DEVICE, "");
       if (afMgr_.hasDevice(afDevice)) {
          try {
             afMgr_.selectDevice(afDevice);
@@ -566,16 +530,13 @@ public class MMStudio implements ScriptInterface {
    }
 
    public void saveChannelColor(String chName, int rgb) {
-      if (colorPrefs_ != null) {
-         colorPrefs_.putInt("Color_" + chName, rgb);      
-      }          
+      DefaultUserProfile.getInstance().setInt(MMStudio.class,
+            "Color_" + chName, rgb);
    }
    
    public Color getChannelColor(String chName, int defaultColor) {  
-      if (colorPrefs_ != null) {
-         defaultColor = colorPrefs_.getInt("Color_" + chName, defaultColor);
-      }
-      return new Color(defaultColor);
+      return new Color(DefaultUserProfile.getInstance().getInt(
+               MMStudio.class, "Color_" + chName, defaultColor));
    }
 
    private void showRegistrationDialogMaybe() {
@@ -691,8 +652,8 @@ public class MMStudio implements ScriptInterface {
             String channelGroup = core_.getChannelGroup();
             String channel = core_.getCurrentConfigFromCache(channelGroup);
             if (!channel.equals("") ) {
-               exposurePrefs_.putDouble("Exposure_" + channelGroup + "_"
-                    + channel, exposure);
+               AcqControlDlg.setChannelExposure(channelGroup, channel,
+                     exposure);
                if (AcqControlDlg.getShouldSyncExposure()) {
                   getAcqDlg().setChannelExposureTime(channelGroup, channel, exposure);
                }
@@ -840,7 +801,8 @@ public class MMStudio implements ScriptInterface {
          if (f != null) {
             model.saveToFile(f.getAbsolutePath());
             sysConfigFile_ = f.getAbsolutePath();
-            mainPrefs_.put(SYSTEM_CONFIG_FILE, sysConfigFile_);
+            DefaultUserProfile.getInstance().setString(MMStudio.class,
+                  SYSTEM_CONFIG_FILE, sysConfigFile_);
             configChanged_ = false;
             frame_.setConfigSaveButtonStatus(configChanged_);
             frame_.updateTitle(sysConfigFile_);
@@ -862,7 +824,8 @@ public class MMStudio implements ScriptInterface {
       sysConfigFile_ = newFile;
       configChanged_ = false;
       frame_.setConfigSaveButtonStatus(configChanged_);
-      mainPrefs_.put(SYSTEM_CONFIG_FILE, sysConfigFile_);
+      DefaultUserProfile.getInstance().setString(MMStudio.class,
+            SYSTEM_CONFIG_FILE, sysConfigFile_);
       loadSystemConfiguration();
    }
 
@@ -1414,14 +1377,16 @@ public class MMStudio implements ScriptInterface {
    }
 
    private void saveSettings() {
-      frame_.savePrefs(mainPrefs_);
+      frame_.savePrefs();
       
-      mainPrefs_.put(OPEN_ACQ_DIR, openAcqDirectory_);
+      DefaultUserProfile profile = DefaultUserProfile.getInstance();
+      profile.setString(MMStudio.class, OPEN_ACQ_DIR, openAcqDirectory_);
       ReportingUtils.logError("TODO: record default data-saving method");
 
       // NOTE: do not save auto shutter state
       if (afMgr_ != null && afMgr_.getDevice() != null) {
-         mainPrefs_.put(AUTOFOCUS_DEVICE, afMgr_.getDevice().getDeviceName());
+         profile.setString(MMStudio.class,
+               AUTOFOCUS_DEVICE, afMgr_.getDevice().getDeviceName());
       }
    }
 
@@ -1589,7 +1554,8 @@ public class MMStudio implements ScriptInterface {
             if (null != MRUConfigFiles_.get(icfg)) {
                value = MRUConfigFiles_.get(icfg);
             }
-            mainPrefs_.put(CFGFILE_ENTRY_BASE + icfg.toString(), value);
+            DefaultUserProfile.getInstance().setString(
+                  MMStudio.class, CFGFILE_ENTRY_BASE + icfg.toString(), value);
          }
       }
    }
@@ -1603,11 +1569,14 @@ public class MMStudio implements ScriptInterface {
     * selecting which one to use.
     */
    private void loadMRUConfigFiles() {
-      sysConfigFile_ = mainPrefs_.get(SYSTEM_CONFIG_FILE, sysConfigFile_);
+      DefaultUserProfile profile = DefaultUserProfile.getInstance();
+      sysConfigFile_ = profile.getString(MMStudio.class,
+            SYSTEM_CONFIG_FILE, sysConfigFile_);
       MRUConfigFiles_ = new ArrayList<String>();
       for (Integer icfg = 0; icfg < maxMRUCfgs_; ++icfg) {
          String value = "";
-         value = mainPrefs_.get(CFGFILE_ENTRY_BASE + icfg.toString(), value);
+         value = profile.getString(MMStudio.class,
+               CFGFILE_ENTRY_BASE + icfg.toString(), value);
          if (0 < value.length()) {
             File ruFile = new File(value);
             if (ruFile.exists()) {
@@ -1766,8 +1735,8 @@ public class MMStudio implements ScriptInterface {
    @Override
    public double getChannelExposureTime(String channelGroup, String channel,
            double defaultExp) {
-      return exposurePrefs_.getDouble("Exposure_" + channelGroup
-              + "_" + channel, defaultExp);
+      return AcqControlDlg.getChannelExposure(channelGroup, channel,
+            defaultExp);
    }
 
    /**
@@ -1784,8 +1753,7 @@ public class MMStudio implements ScriptInterface {
    public void setChannelExposureTime(String channelGroup, String channel,
            double exposure) {
       try {
-         exposurePrefs_.putDouble("Exposure_" + channelGroup + "_"
-                 + channel, exposure);
+         AcqControlDlg.setChannelExposure(channelGroup, channel, exposure);
          if (channelGroup != null && channelGroup.equals(core_.getChannelGroup())) {
             if (channel != null && !channel.equals("") && 
                     channel.equals(core_.getCurrentConfigFromCache(channelGroup))) {
@@ -1793,7 +1761,7 @@ public class MMStudio implements ScriptInterface {
             }
          }
       } catch (Exception ex) {
-         ReportingUtils.logError("Failed to set Exposure prefs using Channelgroup: "
+         ReportingUtils.logError("Failed to set exposure using Channelgroup: "
                  + channelGroup + ", channel: " + channel + ", exposure: " + exposure);
       }
    }

@@ -75,7 +75,7 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
     */
    public TileCreatorDlg(CMMCore core,
            PositionListDlg positionListDlg) {
-      super();
+      super("grid tile creator");
       setResizable(false);
       setName("tileDialog");
       getContentPane().setLayout(null);

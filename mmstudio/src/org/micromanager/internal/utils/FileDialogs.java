@@ -21,7 +21,6 @@ import java.awt.FileDialog;
 import java.awt.Frame;
 import java.awt.Window;
 import java.io.File;
-import java.util.prefs.Preferences;
 import javax.swing.JFileChooser;
 
 public class FileDialogs {

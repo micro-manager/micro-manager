@@ -80,7 +80,7 @@ public class MMDialog extends JDialog {
    }
 
     /**
-    * Load window position and size from preferences if possible.
+    * Load window position and size from profile if possible.
     * If not possible then sets them from arguments
     * Attaches a listener to the window that will save the position when the
     * window closing event is received
@@ -101,7 +101,7 @@ public class MMDialog extends JDialog {
    }
    
     /**
-    * Load window position from preferences if possible.
+    * Load window position from profile if possible.
     * If not possible then sets it from arguments
     * Attaches a listener to the window that will save the position when the
     * window closing event is received
@@ -120,7 +120,7 @@ public class MMDialog extends JDialog {
    }
    
    /**
-    * Load window position and size from preferences
+    * Load window position and size from profile
     * Makes sure that the window can be displayed
     * @param x - X position of this dialog
     * @param y - y position of this dialog
@@ -150,7 +150,7 @@ public class MMDialog extends JDialog {
    }
 
    /**
-    * Writes window position and size to preferences
+    * Writes window position and size to profile
     */
    protected void savePosition() {
       Rectangle r = getBounds();

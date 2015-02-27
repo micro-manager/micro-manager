@@ -25,7 +25,6 @@ package org.micromanager.internal.conf2;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.prefs.Preferences;
 
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -52,7 +51,7 @@ public class RolesPage extends PagePanel {
    /**
     * Create the panel
     */
-   public RolesPage(Preferences prefs) {
+   public RolesPage() {
       super();
       title_ = "Select default devices and choose auto-shutter setting";
       helpText_ = "Default device roles must be defined so that GUI can send adequate commands to them.\n" +
@@ -60,7 +59,6 @@ public class RolesPage extends PagePanel {
       " The GUI needs to know which ones are going to be treated as default.\n\n" +
       "These roles can be changed on-the-fly thorugh configuration presets (in one of the subsequent steps).";
       setHelpFileName(HELP_FILE_NAME);
-      prefs_ = prefs;
       setLayout(null);
       
       final JLabel cameraLabel = new JLabel();

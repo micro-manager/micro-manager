@@ -88,7 +88,7 @@ public class ConfigDialog extends MMDialog {
    protected int scrollPaneTop_;
 
    public ConfigDialog(String groupName, String presetName, ScriptInterface gui, CMMCore core, boolean newItem) {
-      super();
+      super("config editing for " + groupName);
       groupName_ = groupName;
       presetName_ = presetName;
       newItem_ = newItem;

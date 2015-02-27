@@ -48,7 +48,6 @@ import java.util.List;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
 import javax.swing.JEditorPane;
@@ -63,6 +62,7 @@ import mmcorej.CMMCore;
 import mmcorej.StrVector;
 
 import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.HttpUtils;
 import org.micromanager.internal.utils.MMDialog;
@@ -83,7 +83,6 @@ public class ConfiguratorDlg2 extends MMDialog {
     private int curPage_ = 0;
     private MicroscopeModel microModel_;
     private final CMMCore core_;
-    private Preferences prefs_;
     private static final String APP_NAME = "Configurator";
     private JLabel titleLabel_;
     private JEditorPane helpTextPane_;
@@ -96,7 +95,7 @@ public class ConfiguratorDlg2 extends MMDialog {
      * Create the application
      */
     public ConfiguratorDlg2(CMMCore core, String defFile) {
-        super();
+        super("hardware configuration wizard");
         core_ = core;
         defaultPath_ = defFile;
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
@@ -108,8 +107,6 @@ public class ConfiguratorDlg2 extends MMDialog {
      * Initialize the contents of the frame
      */
     private void initialize() {
-        prefs_ = Preferences.userNodeForPackage(this.getClass());
-        
         org.micromanager.internal.utils.HotKeys.active_ = false;
 
         addWindowListener(new WindowAdapter() {
@@ -179,16 +176,17 @@ public class ConfiguratorDlg2 extends MMDialog {
         pages_ = new PagePanel[6];
 
         int pageNumber = 0;
-        pages_[pageNumber++] = new IntroPage(prefs_);
-        pages_[pageNumber++] = new DevicesPage(prefs_);
-        pages_[pageNumber++] = new RolesPage(prefs_);
-        pages_[pageNumber++] = new DelayPage(prefs_);
-        pages_[pageNumber++] = new LabelsPage(prefs_);
-        pages_[pageNumber++] = new FinishPage(prefs_);
+        pages_[pageNumber++] = new IntroPage();
+        pages_[pageNumber++] = new DevicesPage();
+        pages_[pageNumber++] = new RolesPage();
+        pages_[pageNumber++] = new DelayPage();
+        pages_[pageNumber++] = new LabelsPage();
+        pages_[pageNumber++] = new FinishPage();
 
         microModel_ = new MicroscopeModel();
         // default to allow sending of configuration to micro-manager.org server
-        boolean bvalue = prefs_.getBoolean(CFG_OKAY_TO_SEND, true);
+        boolean bvalue = DefaultUserProfile.getInstance().getBoolean(
+              ConfiguratorDlg2.class, CFG_OKAY_TO_SEND, true);
         microModel_.setSendConfiguration( bvalue);
         microModel_.loadAvailableDeviceList(core_);
         microModel_.setFileName(defaultPath_);
@@ -442,7 +440,9 @@ public class ConfiguratorDlg2 extends MMDialog {
             }
         }
 
-        prefs_.putBoolean(CFG_OKAY_TO_SEND, microModel_.getSendConfiguration());
+        DefaultUserProfile.getInstance().setBoolean(
+              ConfiguratorDlg2.class, CFG_OKAY_TO_SEND,
+              microModel_.getSendConfiguration());
         
         org.micromanager.internal.utils.HotKeys.active_ = true;
         dispose();

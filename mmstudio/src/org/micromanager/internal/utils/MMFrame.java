@@ -45,19 +45,14 @@ public class MMFrame extends JFrame {
    
    public MMFrame() {
       super();
-      finishConstructor();
       prefPrefix_ = "";
    }
 
    public MMFrame(String prefPrefix) {
       super();
-      finishConstructor();
       prefPrefix_ = prefPrefix;
    }
    
-      private void finishConstructor() {
-   }
-
    /**
     * Checks whether WINDOW_X and WINDOW_Y coordinates are on the screen(s).
     * If not then it sets the prefs to the values specified.
@@ -119,7 +114,7 @@ public class MMFrame extends JFrame {
    }
    
     /**
-    * Load window position and size from preferences if possible.
+    * Load window position and size from profile if possible.
     * If not possible then sets it from arguments
     * Attaches a listener to the window that will save the position when the
     * window closing event is received

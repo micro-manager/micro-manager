@@ -8,7 +8,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
-import java.util.prefs.Preferences;
 import java.util.Set;
 
 import javax.swing.JOptionPane;
@@ -941,10 +940,6 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    @Override
    public void setAfSkipInterval(int interval) {
       afSkipInterval_ = interval;
-   }
-
-   public void setParameterPreferences(Preferences prefs) {
-      // do nothing
    }
 
    @Override

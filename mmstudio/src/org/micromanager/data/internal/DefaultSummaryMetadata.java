@@ -3,7 +3,6 @@ package org.micromanager.data.internal;
 import java.awt.Color;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.prefs.Preferences;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -14,6 +13,7 @@ import org.micromanager.MultiStagePosition;
 
 import org.micromanager.internal.MMStudio;
 
+import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -28,16 +28,6 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
     */
    private static final String METADATA_VERSION = "11.0.0";
 
-   public static void clearPrefs() {
-      Preferences prefs = Preferences.userNodeForPackage(DefaultSummaryMetadata.class);
-      try {
-         prefs.clear();
-      }
-      catch (Exception e) {
-         ReportingUtils.logError(e, "Unable to clear preferences for DefaultSummaryMetadata");
-      }
-   }
-
    /**
     * Retrieve the summary metadata that has been saved in the preferences.
     * NB not all parameters of the SummaryMetadata are preserved in the
@@ -45,26 +35,24 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
     * in reference to a specific dataset).
     */
    public static DefaultSummaryMetadata getStandardSummaryMetadata() {
+      DefaultUserProfile profile = DefaultUserProfile.getInstance();
       Builder builder = new Builder();
-      Preferences prefs = Preferences.userNodeForPackage(DefaultSummaryMetadata.class);
-      if (prefs == null) {
-         // No saved settings.
-         return builder.build();
-      }
 
-      builder.userName(prefs.get("userName",
-            System.getProperty("user.name")));
+      builder.userName(profile.getString(DefaultSummaryMetadata.class,
+               "userName", System.getProperty("user.name")));
       builder.microManagerVersion(MMStudio.getInstance().getVersion());
       builder.metadataVersion(METADATA_VERSION);
 
       try {
          String computerName = InetAddress.getLocalHost().getHostName();
-         builder.computerName(prefs.get("computerName", computerName));
+         builder.computerName(profile.getString(DefaultSummaryMetadata.class,
+                  "computerName", computerName));
       } catch (UnknownHostException e) {
          ReportingUtils.logError(e, "Couldn't get computer name for standard summary metadata.");
       }
 
-      builder.comments(prefs.get("comments", ""));
+      builder.comments(profile.getString(DefaultSummaryMetadata.class,
+               "comments", ""));
 
       return builder.build();
    }
@@ -74,10 +62,13 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
     * a few fields are preserved.
     */
    public static void setStandardSummaryMetadata(SummaryMetadata summary) {
-      Preferences prefs = Preferences.userNodeForPackage(DefaultSummaryMetadata.class);
-      prefs.put("userName", summary.getUserName());
-      prefs.put("computerName", summary.getComputerName());
-      prefs.put("comments", summary.getComments());
+      DefaultUserProfile profile = DefaultUserProfile.getInstance();
+      profile.setString(DefaultSummaryMetadata.class,
+             "userName", summary.getUserName());
+      profile.setString(DefaultSummaryMetadata.class,
+             "computerName", summary.getComputerName());
+      profile.setString(DefaultSummaryMetadata.class,
+             "comments", summary.getComments());
    }
 
    public static class Builder implements SummaryMetadata.SummaryMetadataBuilder {

@@ -113,7 +113,7 @@ public class PropertyEditor extends MMFrame {
 
 
    public PropertyEditor() {
-      super();
+      super("property editor");
       
       final DefaultUserProfile profile = DefaultUserProfile.getInstance();
       flags_ = new ShowFlags();

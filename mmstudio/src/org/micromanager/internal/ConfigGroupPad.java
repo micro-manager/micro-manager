@@ -32,7 +32,6 @@ import org.micromanager.internal.utils.StatePresetCellRenderer;
 import org.micromanager.internal.utils.StateItem;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.prefs.Preferences;
 
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -46,7 +45,7 @@ import mmcorej.StrVector;
 
 import org.micromanager.ScriptInterface;
 import org.micromanager.internal.dialogs.PresetEditor;
-
+import org.micromanager.internal.utils.DefaultUserProfile;
 
 
 /**
@@ -59,7 +58,6 @@ public class ConfigGroupPad extends JScrollPane{
    private JTable table_;
    private StateTableData data_;
    private ScriptInterface parentGUI_;
-   Preferences prefs_;
    private final String COLUMN_WIDTH = "group_col_width";
    public PresetEditor presetEditor_ = null;
    public String groupName_ = "";
@@ -67,8 +65,6 @@ public class ConfigGroupPad extends JScrollPane{
    
    public ConfigGroupPad() {
       super();
-      Preferences root = Preferences.userNodeForPackage(this.getClass());
-      prefs_ = root.node(root.absolutePath() + "/PresetPad");
    }
 
    private void handleException (Exception e) {
@@ -89,15 +85,17 @@ public class ConfigGroupPad extends JScrollPane{
       table_.addColumn(new TableColumn(0,200,new StateGroupCellRenderer(),null));
       table_.addColumn(new TableColumn(1,200,new StatePresetCellRenderer(), new StatePresetCellEditor()));
       
-      int colWidth = prefs_.getInt(COLUMN_WIDTH , 0);
+      int colWidth = DefaultUserProfile.getInstance().getInt(
+            this.getClass(), COLUMN_WIDTH , 0);
       if (colWidth > 0) {
          table_.getColumnModel().getColumn(0).setPreferredWidth(colWidth);
       }
    }
    
    public void saveSettings() {
-      if (prefs_ != null && table_ != null) {
-           prefs_.putInt(COLUMN_WIDTH, table_.getColumnModel().getColumn(0).getWidth());
+      if (table_ != null) {
+           DefaultUserProfile.getInstance().setInt(this.getClass(),
+                 COLUMN_WIDTH, table_.getColumnModel().getColumn(0).getWidth());
       }
    }
 

@@ -25,7 +25,6 @@ package org.micromanager.internal.conf2;
 
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
-import java.util.prefs.Preferences;
 
 import javax.swing.CellEditor;
 import javax.swing.InputMap;
@@ -130,7 +129,7 @@ public class DelayPage extends PagePanel {
    /**
     * Create the panel
     */
-   public DelayPage(Preferences prefs) {
+   public DelayPage() {
       super();
       title_ = "Set delays for devices without synchronization capabilities";
       helpText_ = "Some devices can't signal when they are done with the command, so that we have to guess by manually setting the delay. " +
@@ -138,7 +137,6 @@ public class DelayPage extends PagePanel {
       " Devices that may require setting the delay manually are mostly shutters or filter wheels. " +
       "\n\nIf device has normal synchronization capabilities, or you are not sure about it, leave this parameter at 0.";
       setHelpFileName("conf_delays_page.html");
-      prefs_ = prefs;
       setLayout(null);
 
       final JScrollPane scrollPane = new JScrollPane();
