@@ -34,7 +34,6 @@ import java.awt.event.MouseListener;
 import java.io.IOException;
 import java.util.Hashtable;
 import java.util.Vector;
-import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -223,7 +222,7 @@ private JComboBox byLibCombo_;
    /**
     * Create the panel
     */
-   public DevicesPage(Preferences prefs) {
+   public DevicesPage() {
       super();
       title_ = "Add or remove devices";
       helpText_ = "The list of selected devices is displayed above. " +
@@ -235,7 +234,6 @@ private JComboBox byLibCombo_;
       listByLib_ = true;
 
       setLayout(null);
-      prefs_ = prefs;
       setHelpFileName(HELP_FILE_NAME);
       documentationURLroot_ = "https://micro-manager.org/wiki/";
 

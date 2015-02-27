@@ -140,7 +140,7 @@ public class CalibrationListDlg extends MMDialog {
     * @param core - The Micro-Manager core object
     */
    public CalibrationListDlg(CMMCore core) {
-      super();
+      super("calibration list");
       core_ = core;
       setTitle("Pixel Size Calibration");
       springLayout = new SpringLayout();

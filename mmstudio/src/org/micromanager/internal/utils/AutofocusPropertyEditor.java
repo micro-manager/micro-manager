@@ -77,7 +77,7 @@ public class AutofocusPropertyEditor extends MMDialog {
    private JComboBox methodCombo_;
    
    public AutofocusPropertyEditor(AutofocusManager afmgr) {
-      super();
+      super("autofocus property editor");
       afMgr_ = afmgr;
       setModal(false);
       data_ = new PropertyTableData();
@@ -93,9 +93,6 @@ public class AutofocusPropertyEditor extends MMDialog {
          table_.addColumn(column);
       }
             
-      //Preferences root = Preferences.userNodeForPackage(this.getClass());
-      //setPrefsNode(root.node(root.absolutePath() + "/AutofocusPropertyEditor"));
-      
       springLayout = new SpringLayout();
       getContentPane().setLayout(springLayout);
       setSize(551, 514);

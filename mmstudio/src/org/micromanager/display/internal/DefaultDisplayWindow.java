@@ -35,7 +35,6 @@ import java.lang.Math;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.prefs.Preferences;
 
 import javax.swing.event.MouseInputAdapter;
 import javax.swing.JButton;
@@ -76,6 +75,7 @@ import org.micromanager.internal.MMStudio;
 
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.JavaUtils;
+import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.ReportingUtils;
 
 
@@ -86,7 +86,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * DummyImageWindow instance for liaising with ImageJ. See that class for
  * more information on why we do this.
  */
-public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
+public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
 
    private Datastore store_;
    private DisplaySettings displaySettings_;
@@ -146,6 +146,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
     */
    public DefaultDisplayWindow(Datastore store, List<Component> customControls,
          DisplaySettings settings) {
+      super("image display window");
       store_ = store;
       store_.registerForEvents(this);
       if (settings == null) {
@@ -256,6 +257,7 @@ public class DefaultDisplayWindow extends JFrame implements DisplayWindow {
       setDisplayedImageTo(builder.build());
       resetTitle();
       setWindowSize();
+      loadAndRestorePosition(getLocation().x, getLocation().y);
    }
 
    /**

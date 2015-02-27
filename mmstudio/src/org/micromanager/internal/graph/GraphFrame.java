@@ -121,7 +121,7 @@ public class GraphFrame extends MMFrame {
    }
 
    public GraphFrame() {
-      super();
+      super("graph frame");
      
       setFont(new Font("Arial", Font.PLAIN, 10));
       

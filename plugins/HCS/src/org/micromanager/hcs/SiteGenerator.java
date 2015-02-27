@@ -5,7 +5,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.Point2D;
-import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -70,7 +69,6 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
    private final String POINTER_SELECT = "Select";
    private final String ROOT_DIR = "root";
    private final String PLATE_DIR = "plate";
-   private final String INCREMENTAL_AF = "incremental_af";
    public static final String menuName = "HCS Site Generator";
    public static final String tooltipDescription =
            "Generate position list for multi-well plates";
@@ -447,27 +445,25 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
    }
 
    protected void saveSettings() {
-      Preferences prefs = getPrefsNode();
-      prefs.put(PLATE_FORMAT_ID, (String) plateIDCombo_.getSelectedItem());
-      prefs.put(SITE_SPACING, spacingField_.getText());
-      prefs.put(SITE_ROWS, rowsField_.getText());
-      prefs.put(SITE_COLS, columnsField_.getText());
-      //prefs.putBoolean(LOCK_ASPECT, lockAspectCheckBox_.isSelected());
-      //prefs.put(PLATE_DIR, plateNameField_.getText());
-      //prefs.put(ROOT_DIR, rootDirField_.getText());
+      app_.profile().setString(SiteGenerator.class, PLATE_FORMAT_ID,
+            (String) plateIDCombo_.getSelectedItem());
+      app_.profile().setString(SiteGenerator.class, SITE_SPACING,
+            spacingField_.getText());
+      app_.profile().setString(SiteGenerator.class, SITE_ROWS,
+            rowsField_.getText());
+      app_.profile().setString(SiteGenerator.class, SITE_COLS,
+            columnsField_.getText());
    }
 
    protected final void loadSettings() {
-      Preferences prefs = getPrefsNode();
-      plateIDCombo_.setSelectedItem(prefs.get(PLATE_FORMAT_ID, SBSPlate.SBS_96_WELL));
-      spacingField_.setText(prefs.get(SITE_SPACING, "200"));
-      rowsField_.setText(prefs.get(SITE_ROWS, "1"));
-      columnsField_.setText(prefs.get(SITE_COLS, "1"));
-      //lockAspectCheckBox_.setSelected(prefs.getBoolean(LOCK_ASPECT, true));
-      //platePanel_.setLockAspect(lockAspectCheckBox_.isSelected());
-      //plateNameField_.setText(prefs.get(PLATE_DIR, "plate"));
-      //rootDirField_.setText(prefs.get(ROOT_DIR, "C:/ScreeningData"));
-      boolean incaf = prefs.getBoolean(INCREMENTAL_AF, false);
+      plateIDCombo_.setSelectedItem(app_.profile().getString(
+               SiteGenerator.class, PLATE_FORMAT_ID, SBSPlate.SBS_96_WELL));
+      spacingField_.setText(app_.profile().getString(SiteGenerator.class,
+               SITE_SPACING, "200"));
+      rowsField_.setText(app_.profile().getString(SiteGenerator.class,
+               SITE_ROWS, "1"));
+      columnsField_.setText(app_.profile().getString(SiteGenerator.class,
+               SITE_COLS, "1"));
    }
 
    private void setPositionList() {

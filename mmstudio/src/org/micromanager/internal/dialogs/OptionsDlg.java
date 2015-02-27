@@ -27,8 +27,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.text.ParseException;
-import java.util.prefs.BackingStoreException;
-import java.util.prefs.Preferences;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
@@ -79,7 +77,7 @@ public class OptionsDlg extends MMDialog {
     * @param parent - MMStudio api 
     */
    public OptionsDlg(CMMCore core, ScriptInterface parent) {
-      super();
+      super("global micro-manager options");
       parent_ = parent;
       core_ = core;
       guiColors_ = new GUIColors();

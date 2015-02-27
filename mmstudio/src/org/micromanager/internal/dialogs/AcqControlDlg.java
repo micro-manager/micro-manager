@@ -338,7 +338,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
     * @param prefs - application preferences node
     */
    public AcqControlDlg(AcquisitionEngine acqEng, ScriptInterface gui) {
-      super();
+      super("acquisition configuration dialog");
 
       studio_ = gui;
       guiColors_ = new GUIColors();

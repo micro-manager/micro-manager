@@ -27,6 +27,7 @@ import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.OverlayPanel;
 
 import org.micromanager.display.internal.events.DefaultRequestToDrawEvent;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * This class provides a GUI for drawing a scale bar.
@@ -52,6 +53,8 @@ public class ScaleBarOverlayPanel extends OverlayPanel {
    private JTextField yOffset_;
    private JTextField scaleSize_;
    private JComboBox position_;
+
+   private boolean haveLoggedError_ = false;
    
    public ScaleBarOverlayPanel(DisplayWindow display) {
       setBorder(new TitledBorder("Scale bar"));
@@ -153,7 +156,13 @@ public class ScaleBarOverlayPanel extends OverlayPanel {
          return;
       }
       Double pixelSize = image.getMetadata().getPixelSizeUm();
-      if (pixelSize == null) {
+      if (pixelSize == null || Math.abs(pixelSize - 0) < .0001) {
+         // No pixel size info available. Log an error message, once, and then
+         // do not proceed.
+         if (!haveLoggedError_) {
+            ReportingUtils.logError("Unable to display scale bar: pixel size information not available.");
+            haveLoggedError_ = true;
+         }
          return;
       }
 

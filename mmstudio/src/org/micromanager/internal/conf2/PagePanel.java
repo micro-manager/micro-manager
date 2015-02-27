@@ -26,7 +26,6 @@ package org.micromanager.internal.conf2;
 
 import java.awt.Color;
 import java.awt.Dialog;
-import java.util.prefs.Preferences;
 
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -42,7 +41,6 @@ public abstract class PagePanel extends JPanel{
    private static final long serialVersionUID = -4598248516499305300L;
    protected MicroscopeModel model_;
    protected CMMCore core_;
-   protected Preferences prefs_;
    protected String title_;
    protected String helpText_;
    protected String helpFileName_;
@@ -80,10 +78,6 @@ public abstract class PagePanel extends JPanel{
       return title_;
    }
    
-   public void setPrefrences(Preferences prefs) {
-      prefs_ = prefs;
-   }
-      
    public String getHelpFileName() {
       return helpFileName_;
    }

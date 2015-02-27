@@ -358,7 +358,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
     */
    @SuppressWarnings("LeakingThisInConstructor")
    public ScriptPanel(CMMCore core, MMStudio gui) {
-      super();
+      super("script panel");
       gui_ = gui;
       final MMFrame scriptPanelFrame = this;
 

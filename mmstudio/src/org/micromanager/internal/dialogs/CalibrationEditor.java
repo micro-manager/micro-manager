@@ -76,7 +76,7 @@ public class CalibrationEditor extends MMDialog {
    private boolean tableEditable_ = true;
     
    public CalibrationEditor(String label, String pixelSize) {
-      super();
+      super("calibration editor");
       setModal(true);
       label_ = label;
       pixelSize_ = pixelSize;

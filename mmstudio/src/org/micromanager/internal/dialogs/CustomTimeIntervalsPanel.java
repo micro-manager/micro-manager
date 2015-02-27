@@ -241,7 +241,7 @@ public class CustomTimeIntervalsPanel extends JPanel {
        private int n_;
 
         public LogTimeDialog() {
-            super();
+            super("logarithmic spacing");
             this.setModal(true);
             this.setSize(new Dimension(520, 300));
             this.setResizable(false);
@@ -594,8 +594,8 @@ public class CustomTimeIntervalsPanel extends JPanel {
         private JComboBox creationTypeCombo_;
 
         public LinearTimeDialog() {
-            super();
-             this.setModal(true);
+            super("linear spacing");
+            this.setModal(true);
             this.setSize(new Dimension(350, 200));
             this.setResizable(false);
             initComponents();

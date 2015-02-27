@@ -55,6 +55,7 @@ public class DeviceSetupDlg extends MMDialog {
     * Create the dialog.
     */
    public DeviceSetupDlg(MicroscopeModel mod, CMMCore c, Device d) {
+      super("hardware config wizard: device setup dialog");
       setModal(true);
       setBounds(100, 100, 478, 528);
       loadPosition(100, 100);

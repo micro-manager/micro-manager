@@ -1,19 +1,15 @@
 package org.micromanager.internal.utils;
 
 import java.util.ArrayList;
-import java.util.prefs.Preferences;
 
 import org.micromanager.Autofocus;
 
 public abstract class AutofocusBase implements Autofocus{
    //private Hashtable<String, PropertyItem> properties_;
    private ArrayList<PropertyItem> properties_;
-   Preferences prefs_;
    private static final String AF_UNIMPLEMENTED_FUNCTION = "Operation not supported.";
 
    public AutofocusBase() {
-      Preferences root = Preferences.userNodeForPackage(this.getClass());
-      prefs_ = root.node(root.absolutePath() + "/settings");
       properties_ = new ArrayList<PropertyItem>();
    }
 
@@ -128,14 +124,18 @@ public abstract class AutofocusBase implements Autofocus{
 
    @Override
    public void saveSettings() {
+      DefaultUserProfile profile = DefaultUserProfile.getInstance();
       for (int i=0; i<properties_.size(); i++) {
-         prefs_.put(properties_.get(i).name, properties_.get(i).value);
+         profile.setString(this.getClass(),
+               properties_.get(i).name, properties_.get(i).value);
       }      
    }
 
    public void loadSettings() {
+      DefaultUserProfile profile = DefaultUserProfile.getInstance();
       for (int i=0; i<properties_.size(); i++) {
-         properties_.get(i).value = prefs_.get(properties_.get(i).name, properties_.get(i).value);
+         properties_.get(i).value = profile.getString(this.getClass(),
+               properties_.get(i).name, properties_.get(i).value);
       }      
    }
 
