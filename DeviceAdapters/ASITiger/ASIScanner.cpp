@@ -577,19 +577,18 @@ int CScanner::SetPosition(double x, double y)
 {
    if (!illuminationState_) return DEVICE_OK;  // don't do anything if beam is turned off
    ostringstream command; command.str("");
-   char SAModeX[MM::MaxStrLength];
-   RETURN_ON_MM_ERROR ( GetProperty(g_SAModeXPropertyName, SAModeX) );
-   if (strcmp(SAModeX, g_SAMode_0) == 0)
-   {
-      command.str("");
+   char SAMode[MM::MaxStrLength];
+   RETURN_ON_MM_ERROR ( GetProperty(g_SAModeXPropertyName, SAMode) );
+   bool xMovable = strcmp(SAMode, g_SAMode_0) == 0;
+   RETURN_ON_MM_ERROR ( GetProperty(g_SAModeYPropertyName, SAMode) );
+   bool yMovable = strcmp(SAMode, g_SAMode_0) == 0;
+   if (xMovable && yMovable) {
+      command << "M " << axisLetterX_ << "=" << x*unitMultX_ << " " << axisLetterY_ << "=" << y*unitMultY_;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
+   } else if (xMovable && !yMovable) {
       command << "M " << axisLetterX_ << "=" << x*unitMultX_;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
-   }
-   char SAModeY[MM::MaxStrLength];
-   RETURN_ON_MM_ERROR ( GetProperty(g_SAModeYPropertyName, SAModeY) );
-   if (strcmp(SAModeY, g_SAMode_0) == 0)
-   {
-      command.str("");
+   } else if (!xMovable && yMovable) {
       command << "M " << axisLetterY_ << "=" << y*unitMultY_;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
    }
