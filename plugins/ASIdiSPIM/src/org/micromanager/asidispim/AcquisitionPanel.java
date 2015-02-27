@@ -71,6 +71,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import mmcorej.CMMCore;
+import mmcorej.Configuration;
 import mmcorej.TaggedImage;
 
 import org.micromanager.api.MultiStagePosition;
@@ -148,7 +149,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final JTextField nameField_;
    private final JLabel acquisitionStatusLabel_;
    private int numTimePointsDone_;
-   private final AtomicBoolean stop_ = new AtomicBoolean(false);  // true if we should stop acquisition
+   private final AtomicBoolean cancelAcquisition_ = new AtomicBoolean(false);  // true if we should stop acquisition
+   private final AtomicBoolean acquisitionRunning_ = new AtomicBoolean(false);  // true if acquisition is in progress
    private final StagePositionUpdater posUpdater_;
    private final JSpinner stepSize_;
    private final JLabel desiredSlicePeriodLabel_;
@@ -614,10 +616,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       buttonStart_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            updateStartButton();
+            if (acquisitionRunning_.get()) {
+               cancelAcquisition_.set(true);
+            } else {
+               runAcquisition();
+            }
          }
       });
-      updateStartButton();  // do once to start, isSelected() will be false
+      updateStartButton();  // call once to initialize, isSelected() will be false
 
       acquisitionStatusLabel_ = new JLabel("");
       updateAcquisitionStatus(AcquisitionStatus.NONE);
@@ -753,25 +759,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    }
    
    private void updateStartButton() {
-      boolean started = buttonStart_.isSelected();
-      stop_.set(!started);
-      if (started) {
-         class acqThread extends Thread {
-            acqThread(String threadName) {
-               super(threadName);
-            }
-
-            @Override
-            public void run() {
-               runAcquisition();
-               if (buttonStart_.isSelected()) {
-                  buttonStart_.doClick();
-               }
-            }
-         }            
-         acqThread acqt = new acqThread("diSPIM Acquisition");
-         acqt.start(); 
-      }
+      boolean started = acquisitionRunning_.get();
+      buttonStart_.setSelected(started);
       buttonStart_.setText(started ? "Stop!" : "Start!");
       buttonStart_.setBackground(started ? Color.red : Color.green);
       buttonStart_.setIcon(started ?
@@ -1233,16 +1222,24 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             return false;
       }
 
-      props_.setPropValue(galvoDevice, Properties.Keys.SPIM_NUM_REPEATS, 1, skipScannerWarnings);
-      
-      // if we are changing color slice by slice then set controller
-      //   to do multiple slices per piezo move
-      // TODO fix this with new multicolor approach
+      // if we are changing color slice by slice then set controller to do multiple slices per piezo move
+      // otherwise just set to 1 slice per piezo move
+      int numSlicesPerPiezo = 1;
       if (props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_MULTICHANNEL_MODE)
-            == MultichannelModes.Keys.SLICE.getPrefCode()) {
-         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_NUM_SLICES_PER_PIEZO,
-            1, skipScannerWarnings);
+            == MultichannelModes.Keys.SLICE_HW.getPrefCode()) {
+         numSlicesPerPiezo = getNumChannels();
       }
+      props_.setPropValue(galvoDevice, Properties.Keys.SPIM_NUM_SLICES_PER_PIEZO,
+            numSlicesPerPiezo, skipScannerWarnings);
+      
+      // if we are changing color volume by volume then set controller to do multiple volumes per start trigger
+      // otherwise just set to 1 volume per start trigger
+      int numVolumesPerTrigger = 1;
+      if (props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_MULTICHANNEL_MODE)
+            == MultichannelModes.Keys.VOLUME_HW.getPrefCode()) {
+         numVolumesPerTrigger = getNumChannels();
+      }
+      props_.setPropValue(galvoDevice, Properties.Keys.SPIM_NUM_REPEATS, numVolumesPerTrigger, skipScannerWarnings);
       
       AcquisitionModes.Keys spimMode = (AcquisitionModes.Keys) spimMode_.getSelectedItem();
       
@@ -1324,20 +1321,189 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       return true;
    }
+   
+   /**
+    * Gets the associated PLogic BNC from the channel (containing preset name) 
+    * @param channel
+    * @return value 5, 6, 7, or 8; returns 0 if there is an error
+    */
+   private int getPLogicOutputFromChannel(ChannelSpec channel) {
+      try {
+         Configuration configData = core_.getConfigData(multiChannelPanel_.getChannelGroup(), channel.config_);
+         if (!configData.isPropertyIncluded(devices_.getMMDevice(Devices.Keys.PLOGIC), Properties.Keys.PLOGIC_OUTPUT_CHANNEL.toString())) {
+            MyDialogUtils.showError("Must include PLogic \"OutputChannel\" in preset for hardware switching");
+            return 0;
+         }
+         String setting = configData.getSetting(devices_.getMMDevice(Devices.Keys.PLOGIC), Properties.Keys.PLOGIC_OUTPUT_CHANNEL.toString()).getPropertyValue();
+         if (setting.equals(Properties.Values.PLOGIC_CHANNEL_BNC5.toString())) {
+            return 5;
+         } else if (setting.equals(Properties.Values.PLOGIC_CHANNEL_BNC6.toString())) {
+            return 6;
+         } else if (setting.equals(Properties.Values.PLOGIC_CHANNEL_BNC7.toString())) {
+            return 7;
+         } else if (setting.equals(Properties.Values.PLOGIC_CHANNEL_BNC8.toString())) {
+            return 8;
+         } else {
+            MyDialogUtils.showError("Channel preset setting must use PLogic \"OutputChannel\" and be set to one of outputs 5-8 only");
+            return 0;
+         }
+      } catch (Exception e) {
+         MyDialogUtils.showError(e, "Could not get PLogic output from channel");
+         return 0;
+      }
+   }
+
+   /**
+    * Programs the PLogic card for hardware channel switching
+    * according to the selections in the Multichannel subpanel
+    * @return false if there is a fatal error, true if successful
+    */
+   private boolean setupHardwareChannelSwitching() {
+      
+      final int counterLSBAddress = 3;
+      final int counterMSBAddress = 4;
+      final int laserTriggerAddress = 10;  // this should be (42 || 8) = (TTL1 || manual laser on)
+      final int invertAddress = 64;
+      
+      if (!devices_.isValidMMDevice(Devices.Keys.PLOGIC)) {
+         MyDialogUtils.showError("PLogic card required for hardware switching");
+         return false;
+      }
+      
+      // set up clock for counters
+      MultichannelModes.Keys prefCode = MultichannelModes.getKeyFromPrefCode(
+            props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_MULTICHANNEL_MODE));
+      switch (prefCode) {
+      case SLICE_HW:
+         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_PRESET,
+               Properties.Values.PLOGIC_PRESET_CLOCK_LASER);
+         break;
+      case VOLUME_HW:
+         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_PRESET,
+               Properties.Values.PLOGIC_PRESET_CLOCK_SIDE);
+         break;
+      default:
+         MyDialogUtils.showError("Unknown multichannel mode for hardware switching");
+         return false;
+      }
+      
+      // set up hardware counter
+      switch (getNumChannels()) {
+      case 1:
+         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_PRESET,
+               Properties.Values.PLOGIC_PRESET_COUNT_1);
+      break;
+      case 2:
+         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_PRESET,
+               Properties.Values.PLOGIC_PRESET_COUNT_2);
+         break;
+      case 3:
+         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_PRESET,
+               Properties.Values.PLOGIC_PRESET_COUNT_3);
+         break;
+      case 4:
+         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_PRESET,
+               Properties.Values.PLOGIC_PRESET_COUNT_4);
+         break;
+      default:
+         MyDialogUtils.showError("Hardware channel switching only supports 1-4 channels");
+         return false;
+      }
+      
+      // speed things up by turning off updates, will restore value later
+      String editCellUpdates = props_.getPropValueString(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_UPDATES);
+      props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_UPDATES, Properties.Values.NO);
+      
+      // initialize cells 13-16 which control BNCs 5-8
+      for (int cellNum=13; cellNum<=16; cellNum++) {
+         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_POINTER_POSITION, cellNum);
+         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_TYPE, Properties.Values.PLOGIC_AND4);
+         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_2, laserTriggerAddress);
+         // note that PLC diSPIM assumes "laser + side" output mode is selected for micro-mirror card
+      }
+      
+      // identify BNC from the preset and set counter inputs for 13-16 appropriately 
+      ChannelSpec[] channels = multiChannelPanel_.getUsedChannels();
+      boolean[] hardwareChannelUsed = new boolean[4]; // initialized to all false
+      for (int channelNum = 0; channelNum < channels.length; channelNum++) {
+         // we already know there are between 1 and 4 channels
+         int outputNum = getPLogicOutputFromChannel(channels[channelNum]);
+         if (outputNum<5) {  // check for error in getPLogicOutputFromChannel()
+            // restore update setting
+            props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_UPDATES, editCellUpdates);
+            return false;  // already displayed error
+         }
+         // make sure we don't have multiple Micro-Manager channels using same hardware channel
+         if (hardwareChannelUsed[outputNum-5]) {
+            // restore update setting
+            props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_UPDATES, editCellUpdates);
+            MyDialogUtils.showError("Multiple channels cannot use same laser for PLogic triggering");
+            return false;
+         } else {
+            hardwareChannelUsed[outputNum-5] = true;
+         }
+         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_POINTER_POSITION, outputNum + 8);
+         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_1, invertAddress);  // enable this AND4
+         // map the channel number to the equivalent addresses for the AND4
+         // inputs should be either 3 (for LSB high) or 67 (for LSB low)
+         //                     and 4 (for MSB high) or 68 (for MSB low)
+         int in3 = (channelNum & 0x01) > 0 ? counterLSBAddress : counterLSBAddress + invertAddress;
+         int in4 = (channelNum & 0x02) > 0 ? counterMSBAddress : counterMSBAddress + invertAddress; 
+         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_3, in3);
+         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_4, in4);
+      }
+      
+      // make sure cells 13-16 are controlling BNCs 5-8
+      props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_PRESET,
+            Properties.Values.PLOGIC_PRESET_BNC5_8_ON_13_16);
+      
+      // restore update setting
+      props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_UPDATES, editCellUpdates);
+      
+      return true;
+   }
 
    /**
     * Implementation of acquisition that orchestrates image
-    * acquisition itself rather than using the acquisition engine
+    * acquisition itself rather than using the acquisition engine.
     * 
     * This methods is public so that the ScriptInterface can call it
     * Please do not access this yourself directly, instead use the API, e.g.
     *   import org.micromanager.asidispim.api.*;
     *   ASIdiSPIMInterface diSPIM = new ASIdiSPIMImplementation();
     *   diSPIM.runAcquisition();
-    *
-    * @return
     */
-   public boolean runAcquisition() {
+   public void runAcquisition() {
+      class acqThread extends Thread {
+         acqThread(String threadName) {
+            super(threadName);
+         }
+
+         @Override
+         public void run() {
+            ReportingUtils.logMessage("User requested start of diSPIM acquisition.");
+            cancelAcquisition_.set(false);
+            acquisitionRunning_.set(true);
+            updateStartButton();
+            boolean success = runAcquisitionPrivate();
+            if (!success) {
+               ReportingUtils.logError("Fatal error running diSPIM acquisition.");
+            }
+            acquisitionRunning_.set(false);
+            updateStartButton();
+         }
+      }            
+      acqThread acqt = new acqThread("diSPIM Acquisition");
+      acqt.start(); 
+   }
+   
+   /**
+    * Actually runs the acquisition; does the dirty work of setting
+    * up the controller, the circular buffer, starting the cameras,
+    * grabbing the images and putting them into the acquisition, etc.
+    * @return true if ran without any fatal errors.
+    */
+   private boolean runAcquisitionPrivate() {
       
       if (gui_.isAcquisitionRunning()) {
          MyDialogUtils.showError("An acquisition is already running");
@@ -1377,27 +1543,46 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
       
       int nrSides = getNumSides();
-      
-      // Channels
-      
+      int nrSlices = getNumSlices();
       int nrChannels = getNumChannels();
+      
+      // set up channels
+      int nrChannelsSoftware = nrChannels;  // how many times we trigger the controller
+      int nrSlicesSoftware = nrSlices;
       String originalConfig = "";
+      boolean changeChannelPerVolumeSoftware = false;
       boolean useChannels =  multiChannelPanel_.isPanelEnabled();
-      boolean changeChannelPerVolume = MultichannelModes.getKeyFromPrefCode(
-            props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_MULTICHANNEL_MODE))
-            .equals(MultichannelModes.Keys.VOLUME);
+      MultichannelModes.Keys multichannelMode = MultichannelModes.Keys.NONE;
       if (useChannels) {
          if (nrChannels < 1) {
             MyDialogUtils.showError("\"Channels\" is checked, but no channels are selected");
             return false;
          }
-         multiChannelPanel_.initializeChannelCycle();
-         // get current channel so that we can restore it
-         // I tried core_.get/setSystemStateCache, but that made the Tiger controller very confused and I had to re-apply the firmware
-         originalConfig = multiChannelPanel_.getCurrentConfig();
+         multichannelMode = MultichannelModes.getKeyFromPrefCode(
+               props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_MULTICHANNEL_MODE));
+         switch (multichannelMode) {
+         case VOLUME:
+            changeChannelPerVolumeSoftware = true;
+            multiChannelPanel_.initializeChannelCycle();
+            // get current channel so that we can restore it
+            // I tried core_.get/setSystemStateCache, but that made the Tiger controller very confused and I had to re-apply the firmware
+            originalConfig = multiChannelPanel_.getCurrentConfig();
+            break;
+         case VOLUME_HW:
+         case SLICE_HW:
+            if (!setupHardwareChannelSwitching()) {
+               return false;
+            }
+            nrChannelsSoftware = 1;
+            nrSlicesSoftware = nrSlices * nrChannels; 
+            break;
+         default:
+            MyDialogUtils.showError("Unsupported multichannel mode \"" + multichannelMode.toString() + "\"");
+            return false;
+         }
       }
       
-      // XY positions
+      // set up XY positions
       int nrPositions = 1;
       boolean usePositions = usePositionsCB_.isSelected();
       PositionList positionList = new PositionList();
@@ -1406,7 +1591,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             positionList = gui_.getPositionList();
             nrPositions = positionList.getNumberOfPositions();
          } catch (MMScriptException ex) {
-            MyDialogUtils.showError(ex, "Error getting position list for multiple XY posiitions");
+            MyDialogUtils.showError(ex, "Error getting position list for multiple XY positions");
          }
          if (nrPositions < 1) {
             MyDialogUtils.showError("\"Positions\" is checked, but no positions are in position list");
@@ -1446,7 +1631,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
       long timepointsIntervalMs = Math.round(
               PanelUtils.getSpinnerFloatValue(acquisitionInterval_) * 1000d);
-      int nrSlices = getNumSlices();
       
       AcquisitionModes.Keys spimMode = (AcquisitionModes.Keys) spimMode_.getSelectedItem();
       
@@ -1564,7 +1748,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
          try {
             // check for stop button before each acquisition
-            if (stop_.get()) {
+            if (cancelAcquisition_.get()) {
                throw new IllegalMonitorStateException("User stopped the acquisition");
             }
             
@@ -1588,9 +1772,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                ChannelSpec[] channels = multiChannelPanel_.getUsedChannels();
                for (int i = 0; i < channels.length; i++) {
                   String chName = "-" + channels[i].config_;
-                  gui_.setChannelName(acqName, i * 2, firstCamera + chName);
+                  // same algorithm for channel index vs. specified channel and side as below
+                  int channelIndex = i;
                   if (twoSided) {
-                     gui_.setChannelName(acqName, i * 2 + 1, secondCamera + chName);
+                     channelIndex *= 2;
+                  }
+                  gui_.setChannelName(acqName, channelIndex, firstCamera + chName);
+                  if (twoSided) {
+                     gui_.setChannelName(acqName, channelIndex + 1, secondCamera + chName);
                   }
                }
             } else {
@@ -1655,7 +1844,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                // handle intervals between time points
                long acqNow = System.currentTimeMillis();
                long delay = acqStart + timePoint * timepointsIntervalMs - acqNow;
-               while (delay > 0 && !stop_.get()) {
+               while (delay > 0 && !cancelAcquisition_.get()) {
                   updateAcquisitionStatus(AcquisitionStatus.WAITING, (int) (delay / 1000));
                   long sleepTime = Math.min(1000, delay);
                   Thread.sleep(sleepTime);
@@ -1664,7 +1853,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                }
 
                // check for stop button before each time point
-               if (stop_.get()) {
+               if (cancelAcquisition_.get()) {
                   throw new IllegalMonitorStateException("User stopped the acquisition");
                }
 
@@ -1681,13 +1870,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      Thread.sleep(Math.round(PanelUtils.getSpinnerFloatValue(positionDelay_)));
                   }
 
-                  // loop over all channels
-                  for (int channelNum = 0; channelNum < nrChannels; channelNum++) {
+                  // loop over all the times we trigger the controller
+                  for (int channelNum = 0; channelNum < nrChannelsSoftware; channelNum++) {
 
                      // start the cameras
-                     core_.startSequenceAcquisition(firstCamera, nrSlices, 0, true);
+                     core_.startSequenceAcquisition(firstCamera, nrSlicesSoftware, 0, true);
                      if (twoSided) {
-                        core_.startSequenceAcquisition(secondCamera, nrSlices, 0, true);
+                        core_.startSequenceAcquisition(secondCamera, nrSlicesSoftware, 0, true);
                      }
 
                      // deal with shutter
@@ -1699,8 +1888,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         }
                      }
 
-                     // deal with channel
-                     if (useChannels && changeChannelPerVolume) {
+                     // deal with channel if needed (hardware channel switching doesn't happen here)
+                     if (changeChannelPerVolumeSoftware) {
                         multiChannelPanel_.selectNextChannel();
                      }
 
@@ -1725,7 +1914,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      long timeout;  // wait 5 seconds for first image to come
                      timeout = Math.max(5000, Math.round(1.2*computeActualVolumeDuration()));
                      while (core_.getRemainingImageCount() == 0 && (now - start < timeout)
-                           && !stop_.get()) {
+                           && !cancelAcquisition_.get()) {
                         now = System.currentTimeMillis();
                         Thread.sleep(5);
                      }
@@ -1734,7 +1923,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      }
 
                      // grab all the images from the cameras, put them into the acquisition
-                     int[] frNumber = new int[2];
+                     int[] frNumber = new int[nrChannels*2];  // keep track of how many frames we have received for each "channel" (MM channel is our channel * 2 for the 2 cameras)
+                     int[] cameraFrNumber = new int[2];     // keep track of how many frames we have received from the camera
                      boolean done = false;
                      long timeout2;  // how long to wait between images before timing out
                      timeout2 = Math.max(2000, Math.round(5*computeActualSlicePeriod()));
@@ -1749,32 +1939,52 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                            if (core_.getRemainingImageCount() > 0) {  // we have an image to grab
                               TaggedImage timg = core_.popNextTaggedImage();
                               String camera = (String) timg.tags.get("Camera");
-                              int frBufferIndex = 0;
-                              int ch = channelNum;
+                              
+                              // figure out which channel index the acquisition is using
+                              int cameraIndex = camera.equals(firstCamera) ? 0: 1;
+                              int channelIndex;
+                              switch (multichannelMode) {
+                              case NONE:
+                              case VOLUME:
+                                 channelIndex = channelNum;
+                                 break;
+                              case VOLUME_HW:
+                                 channelIndex = cameraFrNumber[cameraIndex] / nrSlices;  // want quotient only
+                                 break;
+                              case SLICE_HW:
+                                 channelIndex = cameraFrNumber[cameraIndex] % nrChannels;  // want modulo arithmetic
+                                 break;
+                              default:
+                                 // should never get here
+                                 throw new Exception("Undefined channel mode");
+                              }
+                              
+                              // 2nd camera always gets odd channel index 
+                              // second side always comes after first side
                               if (twoSided) {
-                                 ch = ch * 2;
+                                 channelIndex *= 2;
                               }
-                              if (camera.equals(secondCamera)) {
-                                 ch += 1;
-                                 frBufferIndex = 1;
-                              }
+                              channelIndex += cameraIndex;
+                              
+                              // add image to acquisition
                               if (spimMode.equals(AcquisitionModes.Keys.NO_SCAN) && ! singleTimePointViewers) {
-                                 addImageToAcquisition(acqName, 
-                                         frNumber[frBufferIndex], ch, timePoint, 
+                                 // create time series for no scan
+                                 addImageToAcquisition(acqName,
+                                         frNumber[channelIndex], channelIndex, timePoint, 
                                          positionNum, now - acqStart, timg, bq);
-                              } else { // standard
-                                 addImageToAcquisition(acqName, timePoint, ch, 
-                                       frNumber[frBufferIndex], positionNum,
+                              } else { // standard, create Z-stacks
+                                 addImageToAcquisition(acqName, timePoint, channelIndex,
+                                       frNumber[channelIndex], positionNum,
                                        now - acqStart, timg, bq);
                               }
-                              frNumber[frBufferIndex]++;
-                              last = now;  // keep track of last image time
-                              // check to see if we are finished
-                              if (frNumber[0] == frNumber[1] && frNumber[0] == nrSlices) {
-                                 done = true;
-                              }
+                              
+                              // update our counters
+                              frNumber[channelIndex]++;
+                              cameraFrNumber[cameraIndex]++;
+                              last = now;  // keep track of last image timestamp
+                              
                            } else {  // no image ready yet
-                              done = stop_.get();
+                              done = cancelAcquisition_.get();
                               Thread.sleep(1);
                               if (now - last >= timeout2) {
                                  ReportingUtils.logError("Camera did not send all expected images within" +
@@ -1793,6 +2003,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                               }
                            }
                         }
+                        
+                        // update count if we stopped in the middle
+                        if (cancelAcquisition_.get()) {
+                           numTimePointsDone_--;
+                        }
+                        
                      } catch (InterruptedException iex) {
                         MyDialogUtils.showError(iex);
                      }
@@ -1839,7 +2055,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
       
       // cleanup after end of all acquisitions
-      if (useChannels && changeChannelPerVolume) {
+      
+      // reset channel to original
+      if (changeChannelPerVolumeSoftware) {
          multiChannelPanel_.setConfig(originalConfig);
       }
       // the controller will end with both beams disabled and scan off so reflect
@@ -1854,6 +2072,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             Properties.Values.SAM_DISABLED, true);
       
       // sets BNC3 output low again
+      // this only happens after images have all been received (or timeout occurred)
+      // but if using DemoCam devices then it happens too early
+      // at least part of the problem is that both DemoCam devices "acquire" at the same time
+      // instead of actually obeying the controller's triggers
+      // as a result with DemoCam the side select (BNC4) isn't correct
       props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_PRESET, 
             Properties.Values.PLOGIC_PRESET_2, true);
 
@@ -1865,8 +2088,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          positions_.setPosition(Devices.Keys.PIEZOB, Joystick.Directions.NONE, 0.0);
       }
       
-      if (stop_.get()) {  // if user stopped us in middle
-         numTimePointsDone_--;  
+      if (cancelAcquisition_.get()) {  // if user stopped us in middle
          // make sure to stop the SPIM state machine in case the acquisition was cancelled
          props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SPIM_STATE,
                Properties.Values.SPIM_IDLE, true);

@@ -26,6 +26,7 @@
 package edu.valelab.gaussianfit.utils;
 
 import org.apache.commons.math3.analysis.function.Exp;
+import org.jfree.data.function.Function2D;
 
 /**
  * Utility functions to calculate and fit the Probability density function
@@ -39,7 +40,9 @@ L. Stirling Churchman,*† Henrik Flyvbjerg,‡ and James A. Spudich*
 * 
  * @author nico
  */
-public class P2D {
+public class P2D implements Function2D {
+   private final double mu_;
+   private final double sigma_;
    /**
     * Calculates the probability density function:
     * p2D(r) = (r / sigma2) exp(-(mu2 + r2)/2sigma2) I0(rmu/sigma2)
@@ -56,6 +59,16 @@ public class P2D {
       double third = Besseli.bessi(0, (r * mu) / (sigma * sigma) );
       
       return first * second * third;
+   }
+
+   public P2D(double mu, double sigma) {
+      mu_ = mu;
+      sigma_ = sigma;
+   }
+   
+   @Override
+   public double getValue(double d) {
+      return p2d(d, mu_, sigma_);
    }
    
 }

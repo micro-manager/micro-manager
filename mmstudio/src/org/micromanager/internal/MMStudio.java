@@ -1977,6 +1977,22 @@ public class MMStudio implements ScriptInterface {
    public void openAcquisition(String name, String rootDir, int nrFrames,
          int nrChannels, int nrSlices, int nrPositions, boolean show, boolean save)
          throws MMScriptException {
+      if (nrFrames <= 0) {
+         nrFrames = 1;
+         ReportingUtils.logError("Coercing frame count to 1");
+      }
+      if (nrChannels <= 0) {
+         nrChannels = 1;
+         ReportingUtils.logError("Coercing channel count to 1");
+      }
+      if (nrSlices <= 0) {
+         nrSlices = 1;
+         ReportingUtils.logError("Coercing slice count to 1");
+      }
+      if (nrPositions <= 0) {
+         nrPositions = 1;
+         ReportingUtils.logError("Coercing position count to 1");
+      }
       acqMgr_.openAcquisition(name, rootDir, show, save);
       MMAcquisition acq = acqMgr_.getAcquisition(name);
       acq.setDimensions(nrFrames, nrChannels, nrSlices, nrPositions);

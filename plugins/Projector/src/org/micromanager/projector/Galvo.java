@@ -16,11 +16,12 @@
 
 package org.micromanager.projector;
 
-import java.awt.Polygon;
+import ij.process.FloatPolygon;
 import java.awt.geom.Point2D;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -42,12 +43,15 @@ public class Galvo implements ProjectionDevice {
       galvoExecutor_ = Executors.newSingleThreadExecutor();
    }
 
+   @Override
    public String getName() {
        return galvo_;
    }
    
+   @Override
    public void displaySpot(final double x, final double y) {
       galvoExecutor_.execute(new Runnable() {
+         @Override
          public void run() {
             try {
                mmc_.pointGalvoAndFire(galvo_, x, y, Galvo.this.getExposure());
@@ -57,25 +61,30 @@ public class Galvo implements ProjectionDevice {
          }
       });
    }
-   
+
+   @Override
    public void waitForDevice() {
-       Future result = galvoExecutor_.submit(new Runnable() {
-           @Override
-           public void run() {
-               // do nothing;
-           }
-       });
-        try {
-            result.get();
-        } catch (Exception ex) {
-            ReportingUtils.logError(ex);
-        }
+      Future result = galvoExecutor_.submit(new Runnable() {
+         @Override
+         public void run() {
+            // do nothing;
+         }
+      });
+      try {
+         result.get();
+      } catch (InterruptedException ex) {
+         ReportingUtils.logError(ex);
+      } catch (ExecutionException ex) {
+         ReportingUtils.logError(ex);
+      }
    }
 
+   @Override
    public double getWidth() {
       try {
          Double result = galvoExecutor_.submit(new Callable<Double>() {
 
+            @Override
             public Double call() {
                try {
                   return mmc_.getGalvoXRange(galvo_);
@@ -88,16 +97,21 @@ public class Galvo implements ProjectionDevice {
             ReportingUtils.logError("Unable to get galvo width");
          }
          return result;
-      } catch (Exception ex) {
+      } catch (InterruptedException ex) {
+         ReportingUtils.logError("Unable to get galvo width");
+         return 0;
+      } catch (ExecutionException ex) {
          ReportingUtils.logError("Unable to get galvo width");
          return 0;
       }
    }
 
+   @Override
    public double getHeight() {
       try {
          Double result = galvoExecutor_.submit(new Callable<Double>() {
 
+            @Override
             public Double call() {
                try {
                   return mmc_.getGalvoYRange(galvo_);
@@ -110,14 +124,19 @@ public class Galvo implements ProjectionDevice {
             ReportingUtils.logError("Unable to get galvo width");
          }
          return result;
-      } catch (Exception ex) {
+      } catch (InterruptedException ex) {
+         ReportingUtils.logError("Unable to get galvo width");
+         return 0;
+      } catch (ExecutionException ex) {
          ReportingUtils.logError("Unable to get galvo width");
          return 0;
       }
    }
 
+   @Override
    public void turnOn() {
       galvoExecutor_.submit(new Runnable() {
+         @Override
          public void run() {
             try {
                mmc_.setGalvoIlluminationState(galvo_, true);
@@ -131,8 +150,10 @@ public class Galvo implements ProjectionDevice {
       }
    }
 
+   @Override
    public void turnOff() {
       galvoExecutor_.submit(new Runnable() {
+         @Override
          public void run() {
             try {
                mmc_.setGalvoIlluminationState(galvo_, false);
@@ -146,8 +167,10 @@ public class Galvo implements ProjectionDevice {
       }
    }
 
-   public void loadRois(final List<Polygon> rois) {
+   @Override
+   public void loadRois(final List<FloatPolygon> rois) {
       galvoExecutor_.submit(new Runnable() {
+         @Override
          public void run() {
             try {
                mmc_.deleteGalvoPolygons(galvo_);
@@ -156,20 +179,23 @@ public class Galvo implements ProjectionDevice {
             }
             int roiCount = 0;
             try {
-               for (Polygon poly : rois) {
+               for (FloatPolygon poly : rois) {
                   Point2D lastGalvoPoint = null;
                   for (int i = 0; i < poly.npoints; ++i) {
-                     Point2D.Double galvoPoint = new Point2D.Double(poly.xpoints[i], poly.ypoints[i]);
+                     Point2D.Double galvoPoint = new Point2D.Double(
+                             poly.xpoints[i], poly.ypoints[i]);
                      if (i == 0) {
                         lastGalvoPoint = galvoPoint;
                      }
-                     mmc_.addGalvoPolygonVertex(galvo_, roiCount, galvoPoint.getX(), galvoPoint.getY());
+                     mmc_.addGalvoPolygonVertex(galvo_, roiCount, galvoPoint.getX(), 
+                             galvoPoint.getY());
                      if (poly.npoints == 1) {
                         ++roiCount;
                      }
                   }
                   if (poly.npoints > 1) {
-                     mmc_.addGalvoPolygonVertex(galvo_, roiCount, lastGalvoPoint.getX(), lastGalvoPoint.getY());
+                     mmc_.addGalvoPolygonVertex(galvo_, roiCount, 
+                             lastGalvoPoint.getX(), lastGalvoPoint.getY());
                      ++roiCount;
                   }
                }
@@ -187,8 +213,10 @@ public class Galvo implements ProjectionDevice {
    }
 
 
+   @Override
    public void runPolygons() {
       galvoExecutor_.submit(new Runnable() {
+         @Override
          public void run() {
             try {
                mmc_.runGalvoPolygons(galvo_);
@@ -200,6 +228,7 @@ public class Galvo implements ProjectionDevice {
 
    }
 
+   @Override
    public void addOnStateListener(OnStateListener listener) {
       onStateListeners_.add(listener);
    }
@@ -208,8 +237,10 @@ public class Galvo implements ProjectionDevice {
       onStateListeners_.remove(listener);
    }
 
+   @Override
    public void setPolygonRepetitions(final int reps) {
       galvoExecutor_.submit(new Runnable() {
+         @Override
          public void run() {
 
             try {
@@ -224,6 +255,7 @@ public class Galvo implements ProjectionDevice {
     @Override
     public String getChannel() {
         Future<String> channel = galvoExecutor_.submit(new Callable<String>() {
+            @Override
             public String call() {
                 try {
                     return mmc_.getGalvoChannel(galvo_);
@@ -235,9 +267,11 @@ public class Galvo implements ProjectionDevice {
         });
         try {
             return channel.get();
-        } catch (Exception e) {
+        } catch (InterruptedException e) {
             return null;
-        }
+        } catch (ExecutionException e) {
+           return null;
+      }
     }
 
    @Override
@@ -251,6 +285,7 @@ public class Galvo implements ProjectionDevice {
    }
    
       // Reads the exposure time.
+   @Override
    public long getExposure() {
       return interval_us_;
    }

@@ -314,6 +314,7 @@ private:
 
    Universal(Universal&) {}
    int GetPvExposureSettings( int16& pvExposeOutMode, uns32& pvExposureValue );
+   unsigned int EstimateMaxReadoutTimeMs() const;
    int ResizeImageBufferContinuous();
    int ResizeImageBufferSingle();
    bool WaitForExposureDone() throw();

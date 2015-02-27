@@ -50,6 +50,7 @@ const char* g_XYStageDeviceName = "DXYStage";
 const char* g_AutoFocusDeviceName = "DAutoFocus";
 const char* g_ShutterDeviceName = "DShutter";
 const char* g_DADeviceName = "D-DA";
+const char* g_GalvoDeviceName = "DGalvo";
 const char* g_MagnifierDeviceName = "DOptovar";
 const char* g_HubDeviceName = "DHub";
 
@@ -60,6 +61,9 @@ const char* g_PixelType_32bitRGB = "32bitRGB";
 const char* g_PixelType_64bitRGB = "64bitRGB";
 const char* g_PixelType_32bit = "32bit";  // floating point greyscale
 
+// constants for naming camera modes
+const char* g_Sine_Wave = "Artificial Waves";
+const char* g_Norm_Noise = "Noise";
 
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API
@@ -78,6 +82,7 @@ MODULE_API void InitializeModuleData()
    RegisterDevice(g_ShutterDeviceName, MM::ShutterDevice, "Demo shutter");
    RegisterDevice(g_DADeviceName, MM::SignalIODevice, "Demo DA");
    RegisterDevice(g_MagnifierDeviceName, MM::MagnifierDevice, "Demo Optovar");
+   RegisterDevice(g_GalvoDeviceName, MM::GalvoDevice, "Demo Galvo");
    RegisterDevice("TransposeProcessor", MM::ImageProcessorDevice, "TransposeProcessor");
    RegisterDevice("ImageFlipX", MM::ImageProcessorDevice, "ImageFlipX");
    RegisterDevice("ImageFlipY", MM::ImageProcessorDevice, "ImageFlipY");
@@ -145,6 +150,11 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    {
       // create Optovar 
       return new DemoMagnifier();
+   }
+   else if (strcmp(deviceName, g_GalvoDeviceName) == 0)
+   {
+      // create Galvo 
+      return new DemoGalvo();
    }
 
    else if(strcmp(deviceName, "TransposeProcessor") == 0)
@@ -216,10 +226,12 @@ CDemoCamera::CDemoCamera() :
    fastImage_(false),
    saturatePixels_(false),
 	fractionOfPixelsToDropOrSaturate_(0.002),
-    shouldRotateImages_(false),
-    shouldDisplayImageNumber_(false),
-    stripeWidth_(1.0),
-   nComponents_(1)
+   shouldRotateImages_(false),
+   shouldDisplayImageNumber_(false),
+   stripeWidth_(1.0),
+   nComponents_(1),
+   mode_(0),
+   imgManpl_(0)
 {
    memset(testProperty_,0,sizeof(testProperty_));
 
@@ -456,6 +468,13 @@ int CDemoCamera::Initialize()
    CreateStringProperty(propName.c_str(), "No", false, pAct);
    AddAllowedValue(propName.c_str(), "Yes");
    AddAllowedValue(propName.c_str(), "No");
+
+   // Camera mode: 
+   pAct = new CPropertyAction (this, &CDemoCamera::OnMode);
+   propName = "Mode";
+   CreateStringProperty(propName.c_str(), g_Sine_Wave, false, pAct);
+   AddAllowedValue(propName.c_str(), g_Sine_Wave);
+   AddAllowedValue(propName.c_str(), g_Norm_Noise);
 
    // synchronize all properties
    // --------------------------
@@ -1106,8 +1125,12 @@ int CDemoCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
          pProp->Get(binFactor);
 			if(binFactor > 0 && binFactor < 10)
 			{
-				img_.Resize(cameraCCDXSize_/binFactor, cameraCCDYSize_/binFactor);
-				binSize_ = binFactor;
+            // calculate ROI using the previous bin settings
+            double factor = (double) binFactor / (double) binSize_;
+            roiX_ /= factor;
+            roiY_ /= factor;
+            img_.Resize(img_.Width()/factor, img_.Height()/factor);
+            binSize_ = binFactor;
             std::ostringstream os;
             os << binSize_;
             OnPropertyChanged("Binning", os.str().c_str());
@@ -1585,6 +1608,33 @@ int CDemoCamera::OnIsSequenceable(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
 
+int CDemoCamera::OnMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   std::string val;
+   if (eAct == MM::BeforeGet)
+   {
+      if (mode_ == 0)
+      {
+         val = g_Sine_Wave;
+      } else 
+      {
+         val = g_Norm_Noise;
+      }
+      pProp->Set(val.c_str());
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(val);
+      if (val == g_Sine_Wave) 
+      {
+         mode_ = 0;
+      } else
+      {
+         mode_ = 1;
+      }
+   }
+   return DEVICE_OK;
+}
 ///////////////////////////////////////////////////////////////////////////////
 // Private CDemoCamera methods
 ///////////////////////////////////////////////////////////////////////////////
@@ -1644,12 +1694,32 @@ void CDemoCamera::GenerateEmptyImage(ImgBuffer& img)
 
 
 /**
-* Generate a spatial sine wave.
+* Generates an image.
+*
+* Options:
+* 1. a spatial sine wave.
+* 2. Gaussian noise
 */
 void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
 { 
   
    MMThreadGuard g(imgPixelsLock_);
+
+   if (mode_ == 1)
+   {
+      double max = 1 << GetBitDepth();
+      int mean = 10;
+      if (max > 256)
+      {
+         mean = 100;
+      }
+      AddBackgroundAndNoise(img, mean, 3.0);
+      if (imgManpl_ != 0)
+      {
+         imgManpl_->ChangePixels(img);
+      }
+      return;
+   }
 
 	//std::string pixelType;
 	char buf[MM::MaxStrLength];
@@ -1974,6 +2044,82 @@ void CDemoCamera::TestResourceLocking(const bool recurse)
 {
    if(recurse)
       TestResourceLocking(false);
+}
+
+/**
+* Generate an image with offsetplus noise
+*/
+void CDemoCamera::AddBackgroundAndNoise(ImgBuffer& img, double mean, double stdDev)
+{ 
+	char buf[MM::MaxStrLength];
+   GetProperty(MM::g_Keyword_PixelType, buf);
+	std::string pixelType(buf);
+
+   int maxValue = 1 << GetBitDepth();
+   long nrPixels = img.Width() * img.Height();
+   if (pixelType.compare(g_PixelType_8bit) == 0)
+   {
+      unsigned char* pBuf = (unsigned char*) const_cast<unsigned char*>(img.GetPixels());
+      for (long i = 0; i < nrPixels; i++) 
+      {
+         double value = GaussDistributedValue(mean, stdDev);
+         if (value < 0) 
+         {
+            value = 0;
+         }
+         else if (value > maxValue)
+         {
+            value = maxValue;
+         }
+         *(pBuf + i) = (unsigned char) value;
+      }
+   }
+   else if (pixelType.compare(g_PixelType_16bit) == 0)
+   {
+      unsigned short* pBuf = (unsigned short*) const_cast<unsigned char*>(img.GetPixels());
+      for (long i = 0; i < nrPixels; i++) 
+      {
+         double value = GaussDistributedValue(mean, stdDev);
+         if (value < 0) 
+         {
+            value = 0;
+         }
+         else if (value > maxValue)
+         {
+            value = maxValue;
+         }
+         *(pBuf + i) = (unsigned short) value;
+      }
+   }
+}
+
+/**
+ * Uses Marsaglia polar method to generate Gaussian distributed value.  
+ * Then distributes this around mean with the desired std
+ */
+double CDemoCamera::GaussDistributedValue(double mean, double std)
+{
+   double s = 2;
+   double u;
+   double v;
+   double halfRandMax = RAND_MAX / 2;
+   while (s >= 1 || s <= 0) 
+   {
+      // get random values between -1 and 1
+      u = rand() / halfRandMax - 1.0;
+      v = rand() / halfRandMax - 1.0;
+      s = u * u + v * v;
+   }
+   double tmp = sqrt( -2 * log(s) / s);
+   double x = u * tmp;
+
+   return mean + std * x;
+}
+
+int CDemoCamera::RegisterImgManipulatorCallBack(ImgManipulator* imgManpl)
+{
+   imgManpl_ = imgManpl;
+   return DEVICE_OK;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -3365,6 +3511,421 @@ int DemoAutoFocus::Initialize()
    return DEVICE_OK;
 }
 
+// End of CDemoAutofocus
+//
+
+
+///////////////////////////////////////////////////////////
+// DemoGalvo
+DemoGalvo::DemoGalvo() :
+   pfExpirationTime_(0),
+   initialized_(false),
+   busy_(false),
+   illuminationState_(false),
+   pointAndFire_(false),
+   runROIS_(false),
+   xRange_(10.0),
+   yRange_(10.0),
+   currentX_(0.0),
+   currentY_(0.0),
+   offsetX_(20),
+   vMaxX_(10.0),
+   offsetY_(15),
+   vMaxY_(10.0)
+{
+   // handwritten 5x5 gaussian kernel, no longer used
+   unsigned short gaussianMask[5][5] = {
+      {1, 4, 7, 4, 1},
+      {4, 16, 26, 16, 4},
+      {7, 26, 41, 26, 7},
+      {4, 16, 26, 16, 4},
+      {1, 4, 7, 4, 1}
+   };
+
+}
+
+
+DemoGalvo::~DemoGalvo() 
+{
+   Shutdown();
+}
+
+void DemoGalvo::GetName(char* pName) const
+{
+   CDeviceUtils::CopyLimitedString(pName, g_GalvoDeviceName);
+}
+int DemoGalvo::Initialize() 
+{
+   // generate Gaussian kernal
+   // Size is determined in the header file
+   int xSize = sizeof(gaussianMask_) / sizeof(gaussianMask_[0]);
+   int ySize = sizeof(gaussianMask_[0]) / 2;
+   for (int x = 0; x < xSize; x++)
+   { 
+      for (int y =0; y < ySize; y++) 
+      {
+         gaussianMask_[x][y] = GaussValue(41, 0.5, 0.5, xSize / 2, ySize / 2, x, y);
+      }
+   }
+
+   DemoHub* pHub = static_cast<DemoHub*>(GetParentHub());
+   if (!pHub)
+   {
+      LogMessage(NoHubError);
+   }
+   else {
+      char deviceName[MM::MaxStrLength];
+      unsigned int deviceIterator = 0;
+      for (;;)
+      {
+         GetLoadedDeviceOfType(MM::CameraDevice, deviceName, deviceIterator);
+         if (0 < strlen(deviceName)) 
+         {
+            std::ostringstream os;
+            os << "Galvo detected: " << deviceName;
+            LogMessage(os.str().c_str());
+            MM::Camera* camera = (MM::Camera*) GetDevice(deviceName);
+            MM::Hub* cHub = GetCoreCallback()->GetParentHub(camera);
+            if (cHub == pHub)
+            {
+               CDemoCamera* demoCamera = (CDemoCamera*) camera;
+               demoCamera->RegisterImgManipulatorCallBack(this);
+               LogMessage("DemoGalvo registered as callback");
+               break;
+            }
+         }
+         else
+         {
+            LogMessage("Galvo detected no camera devices");
+            break;
+         }
+         deviceIterator++;
+      }
+   }
+   return DEVICE_OK;
+}
+
+int DemoGalvo::PointAndFire(double x, double y, double pulseTime_us) 
+{
+   SetPosition(x, y);
+   MM::MMTime offset(pulseTime_us);
+   pfExpirationTime_ = GetCurrentMMTime() + offset;
+   pointAndFire_ = true;
+   //std::ostringstream os;
+   //os << "PointAndFire set galvo to : " << x << " - " << y;
+   //LogMessage(os.str().c_str());
+   return DEVICE_OK;
+}
+
+int DemoGalvo::SetSpotInterval(double pulseInterval_us) 
+{
+   return DEVICE_OK;
+}
+
+int DemoGalvo::SetPosition(double x, double y) 
+{
+   currentX_ = x;
+   currentY_ = y;
+   return DEVICE_OK;
+}
+
+int DemoGalvo::GetPosition(double& x, double& y) 
+{
+   x = currentX_;
+   y = currentY_;
+   return DEVICE_OK;
+}
+
+int DemoGalvo::SetIlluminationState(bool on) 
+{
+   illuminationState_ = on;
+   return DEVICE_OK;
+}
+
+int DemoGalvo::AddPolygonVertex(int polygonIndex, double x, double y) 
+{
+   std::vector<PointD> vertex = vertices_[polygonIndex];
+   vertices_[polygonIndex].push_back(PointD(x, y));
+   //std::ostringstream os;
+   //os << "Adding point to polygon " << polygonIndex << ", x: " << x  <<
+   //   ", y: " << y;
+   //LogMessage(os.str().c_str());
+
+   return DEVICE_OK;
+}
+
+int DemoGalvo::DeletePolygons()
+{
+   vertices_.clear();
+   return DEVICE_OK;
+}
+
+/**
+ * This is to load the polygons into the device
+ * Since we are virtual, there is nothing to do here
+ */
+int DemoGalvo::LoadPolygons()
+{
+   return DEVICE_OK;
+}
+
+int DemoGalvo::SetPolygonRepetitions(int repetitions) 
+{
+   return DEVICE_OK;
+}
+
+int DemoGalvo::RunPolygons()
+{
+   /*
+   std::ostringstream os;
+   os << "# of polygons: " << vertices_.size() << std::endl;
+   for (std::map<int, std::vector<PointD> >::iterator it = vertices_.begin();
+         it != vertices_.end(); ++it)
+   {
+      os << "ROI " << it->first << " has " << it->second.size() << " points" << std::endl;
+   }
+   LogMessage(os.str().c_str());
+   */
+   runROIS_ = true;
+   return DEVICE_OK;
+}
+
+int DemoGalvo::RunSequence()
+{
+   return DEVICE_OK;
+}
+
+int DemoGalvo::StopSequence() 
+{
+   return DEVICE_OK;
+}
+
+// What can this function be doing?
+// A channel is never set, so how come we can return one????
+// Documentation of the Galvo interface is severely lacking!!!!
+int DemoGalvo::GetChannel (char* channelName) 
+{
+   return DEVICE_OK;
+}
+
+double DemoGalvo::GetXRange()
+{
+   return xRange_;
+}
+
+double DemoGalvo::GetYRange()
+{
+   return yRange_;
+}
+
+
+/**
+ * Callback function that will be called by DemoCamera everytime
+ * a new image is generated.
+ * We insert a Gaussian spot if the state of our device suggests to do so
+ * The position of the spot is set by the relation defined in the function
+ * GalvoToCameraPoint
+ * Also will draw ROIs when requested 
+ */
+int DemoGalvo::ChangePixels(ImgBuffer& img) 
+{
+   if (!illuminationState_ && !pointAndFire_ && !runROIS_)
+   {
+      //std::ostringstream os;
+      //os << "No action requested in ChangePixels";
+      //LogMessage(os.str().c_str());
+      return DEVICE_OK;
+   }
+
+   if (runROIS_)
+   {
+      // establish the bounding boxes around the ROIs in image coordinates
+      std::vector<std::vector<Point> > bBoxes = std::vector<std::vector<
+         Point> >();
+      for (int i = 0; i < vertices_.size(); i++) {
+         std::vector<Point> vertex;
+         for (std::vector<PointD>::iterator it = vertices_[i].begin();
+               it != vertices_[i].end(); ++it)
+         {
+            Point p = GalvoToCameraPoint(*it, img);
+            vertex.push_back(p);
+         }
+         std::vector<Point> bBox;
+         GetBoundingBox(vertex, bBox);
+         bBoxes.push_back(bBox);
+         //std::ostringstream os;
+         //os << "BBox: " << bBox[0].x << ", " << bBox[0].y << ", " <<
+         //  bBox[1].x << ", " << bBox[1].y;
+         //LogMessage(os.str().c_str());
+      }
+      if (img.Depth() == 2)
+      {
+         const unsigned short highValue = 2048;
+         unsigned short* pBuf = (unsigned short*) const_cast<unsigned char*>(img.GetPixels());
+
+         // now iterate through the image pixels and set high 
+         // if they are within a bounding box
+         for (int x = 0; x < img.Width(); x++)
+         {
+            for (int y = 0; y < img.Height(); y++)
+            {
+               bool inROI = false;
+               for (int i = 0; i < bBoxes.size(); i++) 
+               {
+                  if (InBoundingBox(bBoxes[i], Point(x, y)))
+                     inROI = true;
+               }
+               if (inROI)
+               {
+                  long count = y * img.Width() + x;
+                  *(pBuf + count) = *(pBuf + count) + highValue;
+               }
+            }
+         }
+         img.SetPixels(pBuf);
+      }
+      runROIS_ = false;
+   } else
+   {
+      Point cp = GalvoToCameraPoint(PointD(currentX_, currentY_), img);
+      int xPos = cp.x; int yPos = cp.y;
+
+      std::ostringstream os;
+      os << "XPos: " << xPos << ", YPos: " << yPos;
+      LogMessage(os.str().c_str());
+      int xSpotSize = sizeof(gaussianMask_) / sizeof(gaussianMask_[0]);
+      int ySpotSize = sizeof(gaussianMask_[0]) / 2;
+
+      if (xPos > xSpotSize && xPos < img.Width() - xSpotSize - 1  && yPos > ySpotSize && yPos < img.Height() - 
+            ySpotSize - 1)
+      {
+         if (img.Depth() == 1)
+         {
+            unsigned char* pBuf = (unsigned char*) const_cast<unsigned char*>(img.GetPixels());
+            img.SetPixels(pBuf);
+         }
+         else if (img.Depth() == 2)
+         {
+            unsigned short* pBuf = (unsigned short*) const_cast<unsigned char*>(img.GetPixels());
+            for (int x = 0; x < xSpotSize; x++) 
+            {
+               for (int y = 0; y < ySpotSize; y++) 
+               {
+                  int w = xPos + x;
+                  int h = yPos + y;
+                  long count = h * img.Width() + w;
+                  *(pBuf + count) = *(pBuf + count) + 30 * (unsigned short) gaussianMask_[x][y];
+               }
+            }
+            img.SetPixels(pBuf);
+         }
+      }
+      if (pointAndFire_)
+      {
+         if (GetCurrentMMTime() > pfExpirationTime_)
+         {
+            pointAndFire_ = false;
+         }
+      }
+   }
+
+   return DEVICE_OK;
+}
+
+/**
+ * Function that converts between the Galvo and Camera coordinate system
+ */
+Point DemoGalvo::GalvoToCameraPoint(PointD galvoPoint, ImgBuffer& img)
+{
+   int xPos = (double) offsetX_ + (double) (galvoPoint.x / vMaxX_) * 
+                                 ((double) img.Width() - (double) offsetX_);
+   int yPos = (double) offsetY_ + (double) (galvoPoint.y / vMaxY_) * 
+                                 ((double) img.Height() - (double) offsetY_);
+   return Point(xPos, yPos);
+}
+
+/**
+ * Utility function to calculate a 2D Gaussian
+ * Used in the initialize function to get a 10x10 2D Gaussian
+ */
+double DemoGalvo::GaussValue(double amplitude, double sigmaX, double sigmaY, int muX, int muY, int x, int y)
+{
+   double factor = - ( ((double)(x - muX) * (double)(x - muX) / 2 * sigmaX * sigmaX) +
+         (double)(y - muY) * (double)(y - muY) / 2 * sigmaY * sigmaY);
+
+   double result = amplitude * exp(factor);
+   std::ostringstream os;
+   os << "x: " << x << ", y: " << y << ", value: " << result;
+   LogMessage(os.str().c_str());
+   return result;
+
+}
+/**
+ * Returns the bounding box around the points defined in vertex
+ * bBox is a vector with 2 points
+ */
+void DemoGalvo::GetBoundingBox(std::vector<Point>& vertex, std::vector<Point>& bBox)
+{
+   if (vertex.size() < 1)
+   {
+      return;
+   }
+   int minX = vertex[0].x;
+   int maxX = minX;
+   int minY = vertex[0].y;
+   int maxY = minY;
+   for (int i = 1; i < vertex.size(); i++)
+   {
+      if (vertex[i].x < minX)
+         minX = vertex[i].x;
+      if (vertex[i].x > maxX)
+         maxX = vertex[i].x;
+      if (vertex[i].y < minY)
+         minY = vertex[i].y;
+      if (vertex[i].y > maxY)
+         maxY = vertex[i].y;
+   }
+   bBox.push_back(Point(minX, minY));
+   bBox.push_back(Point(maxX, maxY));
+}
+
+/**
+ * Determines whether the given point is in the boundingBox
+ * boundingBox should have two members, one with the minimum x, y position,
+ * the second with the maximum x, y positions
+ */
+bool DemoGalvo::InBoundingBox(std::vector<Point> boundingBox, Point testPoint)
+{
+   if (testPoint.x >= boundingBox[0].x && testPoint.x <= boundingBox[1].x &&
+         testPoint.y >= boundingBox[0].y && testPoint.y <= boundingBox[1].y)
+      return true;
+   return false;
+}
+
+/**
+ * Not used (yet), intent was to use this to determine whether 
+ * a point is within the ROI, rather than drawing a bounding box
+ */
+bool DemoGalvo::PointInTriangle(Point p, Point p0, Point p1, Point p2)
+{
+    long s = (long) p0.y * p2.x - p0.x * p2.y + (p2.y - p0.y) * p.x + (p0.x - p2.x) * p.y;
+    long t = (long) p0.x * p1.y - p0.y * p1.x + (p0.y - p1.y) * p.x + (p1.x - p0.x) * p.y;
+
+    if ((s < 0) != (t < 0))
+        return false;
+
+    long A = (long) -p1.y * p2.x + p0.y * (p2.x - p1.x) + p0.x * (p1.y - p2.y) + p1.x * p2.y;
+    if (A < 0.0)
+    {
+        s = -s;
+        t = -t;
+        A = -A;
+    }
+    return s > 0 && t > 0 && (s + t) < A;
+}
+
+////////// BEGINNING OF POORLY ORGANIZED CODE //////////////
+//////////  CLEANUP NEEDED ////////////////////////////
 
 int TransposeProcessor::Initialize()
 {

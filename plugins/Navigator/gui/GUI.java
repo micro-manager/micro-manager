@@ -2,6 +2,7 @@ package gui;
 
 
 import acq.CustomAcqEngine;
+import acq.ExploreAcqSettings;
 import acq.FixedAreaAcquisitionSettings;
 import acq.MultipleAcquisitionManager;
 import java.awt.Color;
@@ -156,6 +157,11 @@ public class GUI extends javax.swing.JFrame {
       });
       //Table column widths
       multipleAcqTable_.getColumnModel().getColumn(0).setMaxWidth(40); //order column
+      
+      //load explore settings
+      exploreSavingDirTextField_.setText(ExploreAcqSettings.getDirFromPrefs());
+      exploreSavingNameTextField_.setText(ExploreAcqSettings.getNameFromPrefs());
+      ExploreZStepSpinner_.setValue(ExploreAcqSettings.getZStepFromPrefs());
       
       populateAcqControls(multiAcqManager_.getAcquisition(0));     
       enableAcquisitionComponentsAsNeeded();  
@@ -361,6 +367,8 @@ public class GUI extends javax.swing.JFrame {
       removeAcqButton_.setEnabled(enable);
       moveAcqDownButton_.setEnabled(enable);
       moveAcqUpButton_.setEnabled(enable);
+      intereaveButton_.setEnabled(enable);
+      deinterleaveButton_.setEnabled(enable);
       runMultipleAcquisitionsButton_.setText(enable ? "Run all acquisitions" : "Abort");
       repaint();
    }
@@ -375,30 +383,8 @@ public class GUI extends javax.swing.JFrame {
     private void initComponents() {
 
         zStackModeButtonGroup_ = new javax.swing.ButtonGroup();
-        jPanel2 = new javax.swing.JPanel();
-        jTabbedPane1 = new javax.swing.JTabbedPane();
-        customPropsScrollPane_ = new javax.swing.JScrollPane();
-        propertyControlTable_ = new javax.swing.JTable();
-        multipleAcquisitionsPanel = new javax.swing.JPanel();
-        multipleAcqScrollPane_ = new javax.swing.JScrollPane();
-        multipleAcqTable_ = new javax.swing.JTable();
-        jPanel1 = new javax.swing.JPanel();
-        addAcqButton_ = new javax.swing.JButton();
-        removeAcqButton_ = new javax.swing.JButton();
-        moveAcqUpButton_ = new javax.swing.JButton();
-        moveAcqDownButton_ = new javax.swing.JButton();
-        runMultipleAcquisitionsButton_ = new javax.swing.JButton();
-        gridsPanel_ = new javax.swing.JPanel();
-        jScrollPane2 = new javax.swing.JScrollPane();
-        gridTable_ = new javax.swing.JTable();
-        deleteSelectedRegionButton_ = new javax.swing.JButton();
-        deleteAllRegionsButton_ = new javax.swing.JButton();
-        surfacesPanel_ = new javax.swing.JPanel();
-        deleteSelectedSurfaceButton_ = new javax.swing.JButton();
-        deleteAllSurfacesButton_ = new javax.swing.JButton();
-        jScrollPane3 = new javax.swing.JScrollPane();
-        surfacesTable_ = new javax.swing.JTable();
-        jLabel1 = new javax.swing.JLabel();
+        SettingsButton = new javax.swing.JButton();
+        runAcqButton_ = new javax.swing.JButton();
         acqTabbedPane_ = new javax.swing.JTabbedPane();
         savingTab_ = new javax.swing.JPanel();
         savingDirLabel_ = new javax.swing.JLabel();
@@ -446,6 +432,7 @@ public class GUI extends javax.swing.JFrame {
         checkBox3D_ = new javax.swing.JCheckBox();
         checkBox2D_ = new javax.swing.JCheckBox();
         zStepSpinner_ = new javax.swing.JSpinner();
+        jLabel4 = new javax.swing.JLabel();
         ChannelsTab_ = new javax.swing.JPanel();
         channelsPanel_ = new javax.swing.JPanel();
         channelsCheckBox_ = new javax.swing.JCheckBox();
@@ -459,202 +446,56 @@ public class GUI extends javax.swing.JFrame {
         jLabel7 = new javax.swing.JLabel();
         autofocusFiducialCombo_ = new javax.swing.JComboBox();
         jPanel7 = new javax.swing.JPanel();
-        runAcqButton_ = new javax.swing.JButton();
+        jLabel1 = new javax.swing.JLabel();
         newExploreWindowButton_ = new javax.swing.JButton();
+        jTabbedPane1 = new javax.swing.JTabbedPane();
+        controlPanelName_ = new javax.swing.JPanel();
         configPropsButton_ = new javax.swing.JButton();
-        SettingsButton = new javax.swing.JButton();
+        customPropsScrollPane_ = new javax.swing.JScrollPane();
+        propertyControlTable_ = new javax.swing.JTable();
+        multipleAcquisitionsPanel = new javax.swing.JPanel();
+        multipleAcqScrollPane_ = new javax.swing.JScrollPane();
+        multipleAcqTable_ = new javax.swing.JTable();
+        jPanel1 = new javax.swing.JPanel();
+        addAcqButton_ = new javax.swing.JButton();
+        removeAcqButton_ = new javax.swing.JButton();
+        moveAcqUpButton_ = new javax.swing.JButton();
+        moveAcqDownButton_ = new javax.swing.JButton();
+        runMultipleAcquisitionsButton_ = new javax.swing.JButton();
+        intereaveButton_ = new javax.swing.JButton();
+        deinterleaveButton_ = new javax.swing.JButton();
+        gridsPanel_ = new javax.swing.JPanel();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        gridTable_ = new javax.swing.JTable();
+        deleteSelectedRegionButton_ = new javax.swing.JButton();
+        deleteAllRegionsButton_ = new javax.swing.JButton();
+        surfacesPanel_ = new javax.swing.JPanel();
+        deleteSelectedSurfaceButton_ = new javax.swing.JButton();
+        deleteAllSurfacesButton_ = new javax.swing.JButton();
+        jScrollPane3 = new javax.swing.JScrollPane();
+        surfacesTable_ = new javax.swing.JTable();
+        jLabel6 = new javax.swing.JLabel();
+        jLabel8 = new javax.swing.JLabel();
+        ExploreZStepSpinner_ = new javax.swing.JSpinner();
+        exploreSavingDirLabel_ = new javax.swing.JLabel();
+        exploreBrowseButton_ = new javax.swing.JButton();
+        exploreSavingDirTextField_ = new javax.swing.JTextField();
+        exploreSavingNameLabel_ = new javax.swing.JLabel();
+        exploreSavingNameTextField_ = new javax.swing.JTextField();
 
-        customPropsScrollPane_.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-
-        PropertyControlTableModel model = new PropertyControlTableModel(prefs_);
-        propertyControlTable_.setAutoCreateColumnsFromModel(false);
-        propertyControlTable_.setModel(model);
-        propertyControlTable_.addColumn(new TableColumn(0, 200, new DefaultTableCellRenderer(), null));
-        propertyControlTable_.addColumn(new TableColumn(1, 200, new PropertyValueCellRenderer(false), new PropertyValueCellEditor(false)));
-        propertyControlTable_.setTableHeader(null);
-        propertyControlTable_.setCellSelectionEnabled(false);
-        propertyControlTable_.setModel(model);
-        customPropsScrollPane_.setViewportView(propertyControlTable_);
-
-        jTabbedPane1.addTab("Device control", customPropsScrollPane_);
-
-        multipleAcqTable_.setModel(new MultipleAcquisitionTableModel(multiAcqManager_,this));
-        multipleAcqTable_.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-        multipleAcqScrollPane_.setViewportView(multipleAcqTable_);
-
-        addAcqButton_.setText("Add");
-        addAcqButton_.addActionListener(new java.awt.event.ActionListener() {
+        SettingsButton.setText("Settings");
+        SettingsButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                addAcqButton_ActionPerformed(evt);
+                SettingsButtonActionPerformed(evt);
             }
         });
 
-        removeAcqButton_.setText("Remove selected");
-        removeAcqButton_.addActionListener(new java.awt.event.ActionListener() {
+        runAcqButton_.setText("Run acquisition");
+        runAcqButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                removeAcqButton_ActionPerformed(evt);
+                runAcqButton_ActionPerformed(evt);
             }
         });
-
-        moveAcqUpButton_.setText("↑");
-        moveAcqUpButton_.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                moveAcqUpButton_ActionPerformed(evt);
-            }
-        });
-
-        moveAcqDownButton_.setText("↓");
-        moveAcqDownButton_.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                moveAcqDownButton_ActionPerformed(evt);
-            }
-        });
-
-        runMultipleAcquisitionsButton_.setText("Run all acquisitions");
-        runMultipleAcquisitionsButton_.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                runMultipleAcquisitionsButton_ActionPerformed(evt);
-            }
-        });
-
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(addAcqButton_)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(removeAcqButton_)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(moveAcqUpButton_)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(moveAcqDownButton_)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(runMultipleAcquisitionsButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 132, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(addAcqButton_)
-                    .addComponent(removeAcqButton_)
-                    .addComponent(moveAcqUpButton_)
-                    .addComponent(moveAcqDownButton_)
-                    .addComponent(runMultipleAcquisitionsButton_)))
-        );
-
-        javax.swing.GroupLayout multipleAcquisitionsPanelLayout = new javax.swing.GroupLayout(multipleAcquisitionsPanel);
-        multipleAcquisitionsPanel.setLayout(multipleAcquisitionsPanelLayout);
-        multipleAcquisitionsPanelLayout.setHorizontalGroup(
-            multipleAcquisitionsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(multipleAcqScrollPane_, javax.swing.GroupLayout.DEFAULT_SIZE, 774, Short.MAX_VALUE)
-            .addGroup(multipleAcquisitionsPanelLayout.createSequentialGroup()
-                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
-        );
-        multipleAcquisitionsPanelLayout.setVerticalGroup(
-            multipleAcquisitionsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, multipleAcquisitionsPanelLayout.createSequentialGroup()
-                .addGap(0, 0, Short.MAX_VALUE)
-                .addComponent(multipleAcqScrollPane_, javax.swing.GroupLayout.PREFERRED_SIZE, 106, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(50, 50, 50))
-        );
-
-        jTabbedPane1.addTab("Setup multiple acquisitions", multipleAcquisitionsPanel);
-
-        gridTable_.setModel(regionManager_.createGridTableModel());
-        gridTable_.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-        jScrollPane2.setViewportView(gridTable_);
-
-        deleteSelectedRegionButton_.setText("Delete selected");
-        deleteSelectedRegionButton_.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                deleteSelectedRegionButton_ActionPerformed(evt);
-            }
-        });
-
-        deleteAllRegionsButton_.setText("Delete all");
-        deleteAllRegionsButton_.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                deleteAllRegionsButton_ActionPerformed(evt);
-            }
-        });
-
-        javax.swing.GroupLayout gridsPanel_Layout = new javax.swing.GroupLayout(gridsPanel_);
-        gridsPanel_.setLayout(gridsPanel_Layout);
-        gridsPanel_Layout.setHorizontalGroup(
-            gridsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 774, Short.MAX_VALUE)
-            .addGroup(gridsPanel_Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(deleteSelectedRegionButton_)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(deleteAllRegionsButton_)
-                .addGap(0, 0, Short.MAX_VALUE))
-        );
-        gridsPanel_Layout.setVerticalGroup(
-            gridsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(gridsPanel_Layout.createSequentialGroup()
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(gridsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(deleteSelectedRegionButton_)
-                    .addComponent(deleteAllRegionsButton_))
-                .addContainerGap(57, Short.MAX_VALUE))
-        );
-
-        jTabbedPane1.addTab("Grids", gridsPanel_);
-
-        deleteSelectedSurfaceButton_.setText("Delete selected");
-        deleteSelectedSurfaceButton_.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                deleteSelectedSurfaceButton_ActionPerformed(evt);
-            }
-        });
-
-        deleteAllSurfacesButton_.setText("Delete all");
-        deleteAllSurfacesButton_.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                deleteAllSurfacesButton_ActionPerformed(evt);
-            }
-        });
-
-        surfacesTable_.setModel(surfaceManager_.createSurfaceTableModel());
-        surfacesTable_.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-        jScrollPane3.setViewportView(surfacesTable_);
-
-        javax.swing.GroupLayout surfacesPanel_Layout = new javax.swing.GroupLayout(surfacesPanel_);
-        surfacesPanel_.setLayout(surfacesPanel_Layout);
-        surfacesPanel_Layout.setHorizontalGroup(
-            surfacesPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(surfacesPanel_Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(deleteSelectedSurfaceButton_)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(deleteAllSurfacesButton_)
-                .addGap(0, 0, Short.MAX_VALUE))
-            .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 774, Short.MAX_VALUE)
-        );
-        surfacesPanel_Layout.setVerticalGroup(
-            surfacesPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(surfacesPanel_Layout.createSequentialGroup()
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 52, Short.MAX_VALUE)
-                .addGroup(surfacesPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(deleteAllSurfacesButton_)
-                    .addComponent(deleteSelectedSurfaceButton_))
-                .addContainerGap())
-        );
-
-        jTabbedPane1.addTab("Surfaces", surfacesPanel_);
-
-        jLabel1.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
-        jLabel1.setText("Acquisition Settings");
 
         savingDirLabel_.setText("Saving directory: ");
 
@@ -666,6 +507,11 @@ public class GUI extends javax.swing.JFrame {
         });
 
         savingDirTextField_.setText("jTextField1");
+        savingDirTextField_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                savingDirTextField_ActionPerformed(evt);
+            }
+        });
 
         savingNameLabel_.setText("Saving name: ");
 
@@ -1107,6 +953,8 @@ public class GUI extends javax.swing.JFrame {
             }
         });
 
+        jLabel4.setText("TODO: add tile overlaps");
+
         javax.swing.GroupLayout spaceTab_Layout = new javax.swing.GroupLayout(spaceTab_);
         spaceTab_.setLayout(spaceTab_Layout);
         spaceTab_Layout.setHorizontalGroup(
@@ -1119,7 +967,9 @@ public class GUI extends javax.swing.JFrame {
                         .addGap(40, 40, 40)
                         .addComponent(zStepLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(zStepSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 77, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(zStepSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 77, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(37, 37, 37)
+                        .addComponent(jLabel4))
                     .addGroup(spaceTab_Layout.createSequentialGroup()
                         .addComponent(simpleZPanel_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(10, 10, 10)
@@ -1142,7 +992,8 @@ public class GUI extends javax.swing.JFrame {
                     .addComponent(checkBox3D_)
                     .addGroup(spaceTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(zStepSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(zStepLabel)))
+                        .addComponent(zStepLabel)
+                        .addComponent(jLabel4)))
                 .addGroup(spaceTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(spaceTab_Layout.createSequentialGroup()
                         .addGap(6, 6, 6)
@@ -1301,117 +1152,367 @@ public class GUI extends javax.swing.JFrame {
 
         acqTabbedPane_.addTab("Focus varying properties", jPanel7);
 
-        runAcqButton_.setText("Run acquisition");
-        runAcqButton_.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                runAcqButton_ActionPerformed(evt);
-            }
-        });
+        jLabel1.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
+        jLabel1.setText("Acquisition Settings");
 
-        newExploreWindowButton_.setText("New explore acquisition");
+        newExploreWindowButton_.setText("Explore!");
         newExploreWindowButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 newExploreWindowButton_ActionPerformed(evt);
             }
         });
 
-        configPropsButton_.setText("Configure device control properties");
+        configPropsButton_.setText("Configure");
         configPropsButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 configPropsButton_ActionPerformed(evt);
             }
         });
 
-        SettingsButton.setText("Settings");
-        SettingsButton.addActionListener(new java.awt.event.ActionListener() {
+        customPropsScrollPane_.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+
+        PropertyControlTableModel model = new PropertyControlTableModel(prefs_);
+        propertyControlTable_.setAutoCreateColumnsFromModel(false);
+        propertyControlTable_.setModel(model);
+        propertyControlTable_.addColumn(new TableColumn(0, 200, new DefaultTableCellRenderer(), null));
+        propertyControlTable_.addColumn(new TableColumn(1, 200, new PropertyValueCellRenderer(false), new PropertyValueCellEditor(false)));
+        propertyControlTable_.setTableHeader(null);
+        propertyControlTable_.setCellSelectionEnabled(false);
+        propertyControlTable_.setModel(model);
+        customPropsScrollPane_.setViewportView(propertyControlTable_);
+
+        javax.swing.GroupLayout controlPanelName_Layout = new javax.swing.GroupLayout(controlPanelName_);
+        controlPanelName_.setLayout(controlPanelName_Layout);
+        controlPanelName_Layout.setHorizontalGroup(
+            controlPanelName_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(controlPanelName_Layout.createSequentialGroup()
+                .addComponent(customPropsScrollPane_, javax.swing.GroupLayout.PREFERRED_SIZE, 796, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 0, Short.MAX_VALUE))
+            .addGroup(controlPanelName_Layout.createSequentialGroup()
+                .addGap(346, 346, 346)
+                .addComponent(configPropsButton_)
+                .addContainerGap())
+        );
+        controlPanelName_Layout.setVerticalGroup(
+            controlPanelName_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(controlPanelName_Layout.createSequentialGroup()
+                .addComponent(customPropsScrollPane_, javax.swing.GroupLayout.PREFERRED_SIZE, 195, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(configPropsButton_)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        jTabbedPane1.addTab("Device control", controlPanelName_);
+
+        multipleAcqTable_.setModel(new MultipleAcquisitionTableModel(multiAcqManager_,this));
+        multipleAcqTable_.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        multipleAcqScrollPane_.setViewportView(multipleAcqTable_);
+
+        addAcqButton_.setText("Add");
+        addAcqButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                SettingsButtonActionPerformed(evt);
+                addAcqButton_ActionPerformed(evt);
             }
         });
 
-        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addGap(16, 16, 16)
-                .addComponent(jLabel1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(newExploreWindowButton_))
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addGap(30, 30, 30)
-                        .addComponent(runAcqButton_))
-                    .addComponent(acqTabbedPane_, javax.swing.GroupLayout.PREFERRED_SIZE, 799, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(0, 0, Short.MAX_VALUE))
-            .addGroup(jPanel2Layout.createSequentialGroup()
+        removeAcqButton_.setText("Remove");
+        removeAcqButton_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                removeAcqButton_ActionPerformed(evt);
+            }
+        });
+
+        moveAcqUpButton_.setText("Move↑");
+        moveAcqUpButton_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                moveAcqUpButton_ActionPerformed(evt);
+            }
+        });
+
+        moveAcqDownButton_.setText("Move↓");
+        moveAcqDownButton_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                moveAcqDownButton_ActionPerformed(evt);
+            }
+        });
+
+        runMultipleAcquisitionsButton_.setText("Run all");
+        runMultipleAcquisitionsButton_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                runMultipleAcquisitionsButton_ActionPerformed(evt);
+            }
+        });
+
+        intereaveButton_.setText("Interleave");
+        intereaveButton_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                intereaveButton_ActionPerformed(evt);
+            }
+        });
+
+        deinterleaveButton_.setText("Deinterleave");
+        deinterleaveButton_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deinterleaveButton_ActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(configPropsButton_)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(SettingsButton))
-                    .addComponent(jTabbedPane1))
+                .addComponent(addAcqButton_)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(removeAcqButton_)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(moveAcqUpButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 67, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(moveAcqDownButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(intereaveButton_)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(deinterleaveButton_)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(runMultipleAcquisitionsButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 132, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(58, 58, 58))
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(addAcqButton_)
+                    .addComponent(removeAcqButton_)
+                    .addComponent(moveAcqUpButton_)
+                    .addComponent(moveAcqDownButton_)
+                    .addComponent(runMultipleAcquisitionsButton_)
+                    .addComponent(intereaveButton_)
+                    .addComponent(deinterleaveButton_)))
+        );
+
+        javax.swing.GroupLayout multipleAcquisitionsPanelLayout = new javax.swing.GroupLayout(multipleAcquisitionsPanel);
+        multipleAcquisitionsPanel.setLayout(multipleAcquisitionsPanelLayout);
+        multipleAcquisitionsPanelLayout.setHorizontalGroup(
+            multipleAcquisitionsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(multipleAcqScrollPane_)
+            .addGroup(multipleAcquisitionsPanelLayout.createSequentialGroup()
+                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
         );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jTabbedPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 218, javax.swing.GroupLayout.PREFERRED_SIZE)
+        multipleAcquisitionsPanelLayout.setVerticalGroup(
+            multipleAcquisitionsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, multipleAcquisitionsPanelLayout.createSequentialGroup()
+                .addGap(0, 30, Short.MAX_VALUE)
+                .addComponent(multipleAcqScrollPane_, javax.swing.GroupLayout.PREFERRED_SIZE, 106, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel1)
-                    .addComponent(newExploreWindowButton_))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(acqTabbedPane_, javax.swing.GroupLayout.PREFERRED_SIZE, 306, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(runAcqButton_)
-                .addGap(41, 41, 41)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(configPropsButton_)
-                    .addComponent(SettingsButton)))
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(50, 50, 50))
         );
+
+        jTabbedPane1.addTab("Setup multiple acquisitions", multipleAcquisitionsPanel);
+
+        gridTable_.setModel(regionManager_.createGridTableModel());
+        gridTable_.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        jScrollPane2.setViewportView(gridTable_);
+
+        deleteSelectedRegionButton_.setText("Delete selected");
+        deleteSelectedRegionButton_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deleteSelectedRegionButton_ActionPerformed(evt);
+            }
+        });
+
+        deleteAllRegionsButton_.setText("Delete all");
+        deleteAllRegionsButton_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deleteAllRegionsButton_ActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout gridsPanel_Layout = new javax.swing.GroupLayout(gridsPanel_);
+        gridsPanel_.setLayout(gridsPanel_Layout);
+        gridsPanel_Layout.setHorizontalGroup(
+            gridsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 796, Short.MAX_VALUE)
+            .addGroup(gridsPanel_Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(deleteSelectedRegionButton_)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(deleteAllRegionsButton_)
+                .addGap(0, 0, Short.MAX_VALUE))
+        );
+        gridsPanel_Layout.setVerticalGroup(
+            gridsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(gridsPanel_Layout.createSequentialGroup()
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(gridsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(deleteSelectedRegionButton_)
+                    .addComponent(deleteAllRegionsButton_))
+                .addContainerGap(93, Short.MAX_VALUE))
+        );
+
+        jTabbedPane1.addTab("Grids", gridsPanel_);
+
+        deleteSelectedSurfaceButton_.setText("Delete selected");
+        deleteSelectedSurfaceButton_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deleteSelectedSurfaceButton_ActionPerformed(evt);
+            }
+        });
+
+        deleteAllSurfacesButton_.setText("Delete all");
+        deleteAllSurfacesButton_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deleteAllSurfacesButton_ActionPerformed(evt);
+            }
+        });
+
+        surfacesTable_.setModel(surfaceManager_.createSurfaceTableModel());
+        surfacesTable_.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        jScrollPane3.setViewportView(surfacesTable_);
+
+        javax.swing.GroupLayout surfacesPanel_Layout = new javax.swing.GroupLayout(surfacesPanel_);
+        surfacesPanel_.setLayout(surfacesPanel_Layout);
+        surfacesPanel_Layout.setHorizontalGroup(
+            surfacesPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(surfacesPanel_Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(deleteSelectedSurfaceButton_)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(deleteAllSurfacesButton_)
+                .addGap(0, 0, Short.MAX_VALUE))
+            .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 796, Short.MAX_VALUE)
+        );
+        surfacesPanel_Layout.setVerticalGroup(
+            surfacesPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(surfacesPanel_Layout.createSequentialGroup()
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 88, Short.MAX_VALUE)
+                .addGroup(surfacesPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(deleteAllSurfacesButton_)
+                    .addComponent(deleteSelectedSurfaceButton_))
+                .addContainerGap())
+        );
+
+        jTabbedPane1.addTab("Surfaces", surfacesPanel_);
+
+        jLabel6.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
+        jLabel6.setText("Explore sample");
+
+        jLabel8.setText("Z-step (µm):");
+
+        ExploreZStepSpinner_.setModel(new javax.swing.SpinnerNumberModel(Double.valueOf(1.0d), null, null, Double.valueOf(1.0d)));
+        ExploreZStepSpinner_.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                ExploreZStepSpinner_StateChanged(evt);
+            }
+        });
+
+        exploreSavingDirLabel_.setText("Saving directory: ");
+
+        exploreBrowseButton_.setText("Browse");
+        exploreBrowseButton_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                exploreBrowseButton_ActionPerformed(evt);
+            }
+        });
+
+        exploreSavingDirTextField_.setText("jTextField1");
+
+        exploreSavingNameLabel_.setText("Saving name: ");
+
+        exploreSavingNameTextField_.setText("jTextField2");
+        exploreSavingNameTextField_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                exploreSavingNameTextField_ActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGroup(layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(2, 2, 2)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jTabbedPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 801, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(acqTabbedPane_, javax.swing.GroupLayout.PREFERRED_SIZE, 799, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(325, 325, 325)
+                                .addComponent(newExploreWindowButton_))
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(319, 319, 319)
+                                .addComponent(runAcqButton_)
+                                .addGap(254, 254, 254)
+                                .addComponent(SettingsButton))))
+                    .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(jLabel6)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jLabel8)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(ExploreZStepSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 77, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(exploreSavingDirLabel_)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(exploreSavingDirTextField_, javax.swing.GroupLayout.PREFERRED_SIZE, 618, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(exploreBrowseButton_)))
+                .addContainerGap())
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel1)
+                        .addContainerGap())
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(exploreSavingNameLabel_)
+                        .addGap(3, 3, 3)
+                        .addComponent(exploreSavingNameTextField_, javax.swing.GroupLayout.PREFERRED_SIZE, 699, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(jTabbedPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 254, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel6)
+                    .addComponent(jLabel8)
+                    .addComponent(ExploreZStepSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(exploreSavingDirLabel_)
+                    .addComponent(exploreSavingDirTextField_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(exploreBrowseButton_))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(exploreSavingNameTextField_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(exploreSavingNameLabel_))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(newExploreWindowButton_)
+                .addGap(5, 5, 5)
+                .addComponent(jLabel1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(acqTabbedPane_, javax.swing.GroupLayout.PREFERRED_SIZE, 306, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(runAcqButton_)
+                    .addComponent(SettingsButton))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
+
+        addTextEditListener(zStepSpinner_);
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
  
-//   private void setZSliderPosition(double pos) {
-//      int ticks = (int) (((pos - zMin_) / (zMax_ - zMin_)) * SLIDER_TICKS);
-//      zSlider_.setValue(ticks);
-//   }
-   
-   private void newChannelButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newChannelButton_ActionPerformed
-            storeCurrentAcqSettings();
-
-   }//GEN-LAST:event_newChannelButton_ActionPerformed
-
-   private void volumeBetweenSurfacesRadioButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_volumeBetweenSurfacesRadioButton_ActionPerformed
-      enableAcquisitionComponentsAsNeeded();
-      storeCurrentAcqSettings();
-   }//GEN-LAST:event_volumeBetweenSurfacesRadioButton_ActionPerformed
-
-   private void timePointsCheckBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_timePointsCheckBox_ActionPerformed
-      for (Component c : timePointsPanel_.getComponents()) {
-         c.setEnabled(timePointsCheckBox_.isSelected());
-      }
-      storeCurrentAcqSettings();
-      setTabTitleText();
-   }//GEN-LAST:event_timePointsCheckBox_ActionPerformed
-
    private void SettingsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SettingsButtonActionPerformed
 
          settings_.setVisible(true);      
@@ -1420,26 +1521,6 @@ public class GUI extends javax.swing.JFrame {
    private void configPropsButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_configPropsButton_ActionPerformed
       new PickPropertiesGUI(prefs_, this);
    }//GEN-LAST:event_configPropsButton_ActionPerformed
-
-   private void deleteSelectedRegionButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteSelectedRegionButton_ActionPerformed
-      if (gridTable_.getSelectedRow() != -1) {
-         regionManager_.delete(gridTable_.getSelectedRow());
-      }
-   }//GEN-LAST:event_deleteSelectedRegionButton_ActionPerformed
-
-   private void deleteAllRegionsButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteAllRegionsButton_ActionPerformed
-      regionManager_.deleteAll();
-   }//GEN-LAST:event_deleteAllRegionsButton_ActionPerformed
-
-   private void deleteAllSurfacesButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteAllSurfacesButton_ActionPerformed
-      surfaceManager_.deleteAll();
-   }//GEN-LAST:event_deleteAllSurfacesButton_ActionPerformed
-
-   private void deleteSelectedSurfaceButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteSelectedSurfaceButton_ActionPerformed
-     if (surfacesTable_.getSelectedRow() != -1) {
-         surfaceManager_.delete(surfacesTable_.getSelectedRow());
-      }
-   }//GEN-LAST:event_deleteSelectedSurfaceButton_ActionPerformed
 
    private void runAcqButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_runAcqButton_ActionPerformed
       //run acquisition
@@ -1450,6 +1531,138 @@ public class GUI extends javax.swing.JFrame {
          }
       }).start();
    }//GEN-LAST:event_runAcqButton_ActionPerformed
+
+   private void newExploreWindowButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newExploreWindowButton_ActionPerformed
+      ExploreAcqSettings settings = new ExploreAcqSettings(
+              ((Number) ExploreZStepSpinner_.getValue()).doubleValue(), savingDirTextField_.getText(), savingNameTextField_.getText());
+      eng_.newExploreAcquisition(settings);
+   }//GEN-LAST:event_newExploreWindowButton_ActionPerformed
+
+   private void autofocusFiducialCombo_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_autofocusFiducialCombo_ActionPerformed
+      storeCurrentAcqSettings();
+   }//GEN-LAST:event_autofocusFiducialCombo_ActionPerformed
+
+   private void jComboBox2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox2ActionPerformed
+      storeCurrentAcqSettings();
+   }//GEN-LAST:event_jComboBox2ActionPerformed
+
+   private void removeChannelButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removeChannelButton_ActionPerformed
+      storeCurrentAcqSettings();
+   }//GEN-LAST:event_removeChannelButton_ActionPerformed
+
+//   private void setZSliderPosition(double pos) {
+//      int ticks = (int) (((pos - zMin_) / (zMax_ - zMin_)) * SLIDER_TICKS);
+//      zSlider_.setValue(ticks);
+//   }
+   
+   private void newChannelButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newChannelButton_ActionPerformed
+      storeCurrentAcqSettings();
+   }//GEN-LAST:event_newChannelButton_ActionPerformed
+
+   private void channelsCheckBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_channelsCheckBox_ActionPerformed
+      storeCurrentAcqSettings();
+   }//GEN-LAST:event_channelsCheckBox_ActionPerformed
+
+   private void zStepSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_zStepSpinner_StateChanged
+      storeCurrentAcqSettings();
+   }//GEN-LAST:event_zStepSpinner_StateChanged
+
+   private void checkBox2D_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_checkBox2D_ActionPerformed
+      if (checkBox2D_.isSelected()) {
+         checkBox3D_.setSelected(false);
+      }
+      enableAcquisitionComponentsAsNeeded();
+      storeCurrentAcqSettings();
+      setTabTitleText();
+   }//GEN-LAST:event_checkBox2D_ActionPerformed
+
+   private void checkBox3D_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_checkBox3D_ActionPerformed
+      if (checkBox3D_.isSelected()) {
+         checkBox2D_.setSelected(false);
+      }
+      if ((!simpleZStackRadioButton_.isSelected()) && (!volumeBetweenSurfacesRadioButton_.isSelected())
+              && (!fixedDistanceFromSurfaceRadioButton_.isSelected())) {
+         simpleZStackRadioButton_.setSelected(true);
+      }
+      enableAcquisitionComponentsAsNeeded();
+      storeCurrentAcqSettings();
+      setTabTitleText();
+   }//GEN-LAST:event_checkBox3D_ActionPerformed
+
+   private void footprint2DComboBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_footprint2DComboBox_ActionPerformed
+      storeCurrentAcqSettings();
+   }//GEN-LAST:event_footprint2DComboBox_ActionPerformed
+
+   private void distanceAboveSurfaceSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_distanceAboveSurfaceSpinner_StateChanged
+      storeCurrentAcqSettings();
+   }//GEN-LAST:event_distanceAboveSurfaceSpinner_StateChanged
+
+   private void distanceBelowSurfaceSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_distanceBelowSurfaceSpinner_StateChanged
+      storeCurrentAcqSettings();
+   }//GEN-LAST:event_distanceBelowSurfaceSpinner_StateChanged
+
+   private void fixedDistanceSurfaceComboBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fixedDistanceSurfaceComboBox_ActionPerformed
+      storeCurrentAcqSettings();
+   }//GEN-LAST:event_fixedDistanceSurfaceComboBox_ActionPerformed
+
+   private void fixedDistanceFromSurfaceRadioButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fixedDistanceFromSurfaceRadioButton_ActionPerformed
+      enableAcquisitionComponentsAsNeeded();
+      storeCurrentAcqSettings();
+   }//GEN-LAST:event_fixedDistanceFromSurfaceRadioButton_ActionPerformed
+
+   private void volumeBetweenFootprintCombo_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_volumeBetweenFootprintCombo_ActionPerformed
+      storeCurrentAcqSettings();
+   }//GEN-LAST:event_volumeBetweenFootprintCombo_ActionPerformed
+
+   private void bottomSurfaceCombo_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bottomSurfaceCombo_ActionPerformed
+      storeCurrentAcqSettings();
+   }//GEN-LAST:event_bottomSurfaceCombo_ActionPerformed
+
+   private void topSurfaceCombo_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_topSurfaceCombo_ActionPerformed
+      storeCurrentAcqSettings();
+   }//GEN-LAST:event_topSurfaceCombo_ActionPerformed
+
+   private void volumeBetweenSurfacesRadioButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_volumeBetweenSurfacesRadioButton_ActionPerformed
+      enableAcquisitionComponentsAsNeeded();
+      storeCurrentAcqSettings();
+   }//GEN-LAST:event_volumeBetweenSurfacesRadioButton_ActionPerformed
+
+   private void zEndSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_zEndSpinner_StateChanged
+      storeCurrentAcqSettings();
+   }//GEN-LAST:event_zEndSpinner_StateChanged
+
+   private void zStartSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_zStartSpinner_StateChanged
+      storeCurrentAcqSettings();
+   }//GEN-LAST:event_zStartSpinner_StateChanged
+
+   private void simpleZStackFootprintCombo_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_simpleZStackFootprintCombo_ActionPerformed
+      storeCurrentAcqSettings();
+   }//GEN-LAST:event_simpleZStackFootprintCombo_ActionPerformed
+
+   private void simpleZStackRadioButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_simpleZStackRadioButton_ActionPerformed
+      enableAcquisitionComponentsAsNeeded();
+      storeCurrentAcqSettings();
+   }//GEN-LAST:event_simpleZStackRadioButton_ActionPerformed
+
+   private void timePointsCheckBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_timePointsCheckBox_ActionPerformed
+      for (Component c : timePointsPanel_.getComponents()) {
+         c.setEnabled(timePointsCheckBox_.isSelected());
+      }
+      storeCurrentAcqSettings();
+      setTabTitleText();
+   }//GEN-LAST:event_timePointsCheckBox_ActionPerformed
+
+   private void timeIntervalSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_timeIntervalSpinner_StateChanged
+      storeCurrentAcqSettings();
+   }//GEN-LAST:event_timeIntervalSpinner_StateChanged
+
+   private void numTimePointsSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_numTimePointsSpinner_StateChanged
+      storeCurrentAcqSettings();
+   }//GEN-LAST:event_numTimePointsSpinner_StateChanged
+
+   private void timeIntevalUnitCombo_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_timeIntevalUnitCombo_ActionPerformed
+      storeCurrentAcqSettings();
+   }//GEN-LAST:event_timeIntevalUnitCombo_ActionPerformed
 
    private void browseButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseButton_ActionPerformed
       String root = "";
@@ -1469,101 +1682,53 @@ public class GUI extends javax.swing.JFrame {
       savingDirTextField_.setText(f.getAbsolutePath());
    }//GEN-LAST:event_browseButton_ActionPerformed
 
-   private void fixedDistanceSurfaceComboBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fixedDistanceSurfaceComboBox_ActionPerformed
-           storeCurrentAcqSettings();
-   }//GEN-LAST:event_fixedDistanceSurfaceComboBox_ActionPerformed
+   private void deleteAllSurfacesButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteAllSurfacesButton_ActionPerformed
+      surfaceManager_.deleteAll();
+   }//GEN-LAST:event_deleteAllSurfacesButton_ActionPerformed
 
-   private void fixedDistanceFromSurfaceRadioButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fixedDistanceFromSurfaceRadioButton_ActionPerformed
-     enableAcquisitionComponentsAsNeeded();      
-     storeCurrentAcqSettings();
-   }//GEN-LAST:event_fixedDistanceFromSurfaceRadioButton_ActionPerformed
-
-   private void simpleZStackRadioButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_simpleZStackRadioButton_ActionPerformed
-     enableAcquisitionComponentsAsNeeded();      
-     storeCurrentAcqSettings();
-   }//GEN-LAST:event_simpleZStackRadioButton_ActionPerformed
-
-   private void checkBox3D_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_checkBox3D_ActionPerformed
-      if (checkBox3D_.isSelected()) {
-         checkBox2D_.setSelected(false);
+   private void deleteSelectedSurfaceButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteSelectedSurfaceButton_ActionPerformed
+      if (surfacesTable_.getSelectedRow() != -1) {
+         surfaceManager_.delete(surfacesTable_.getSelectedRow());
       }
-      if ((!simpleZStackRadioButton_.isSelected()) && (!volumeBetweenSurfacesRadioButton_.isSelected())
-              && (!fixedDistanceFromSurfaceRadioButton_.isSelected())) {
-         simpleZStackRadioButton_.setSelected(true);
+   }//GEN-LAST:event_deleteSelectedSurfaceButton_ActionPerformed
+
+   private void deleteAllRegionsButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteAllRegionsButton_ActionPerformed
+      regionManager_.deleteAll();
+   }//GEN-LAST:event_deleteAllRegionsButton_ActionPerformed
+
+   private void deleteSelectedRegionButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteSelectedRegionButton_ActionPerformed
+      if (gridTable_.getSelectedRow() != -1) {
+         regionManager_.delete(gridTable_.getSelectedRow());
       }
-      enableAcquisitionComponentsAsNeeded();
-      storeCurrentAcqSettings();
-      setTabTitleText();
-   }//GEN-LAST:event_checkBox3D_ActionPerformed
+   }//GEN-LAST:event_deleteSelectedRegionButton_ActionPerformed
 
-   private void checkBox2D_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_checkBox2D_ActionPerformed
-      if (checkBox2D_.isSelected()) {
-         checkBox3D_.setSelected(false);
+   private void deinterleaveButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deinterleaveButton_ActionPerformed
+      multiAcqManager_.removeFromParallelGrouping(multiAcqSelectedIndex_);
+      multipleAcqTable_.repaint();
+   }//GEN-LAST:event_deinterleaveButton_ActionPerformed
+
+   private void intereaveButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_intereaveButton_ActionPerformed
+      multiAcqManager_.addToParallelGrouping(multiAcqSelectedIndex_);
+      multipleAcqTable_.repaint();
+   }//GEN-LAST:event_intereaveButton_ActionPerformed
+
+   private void runMultipleAcquisitionsButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_runMultipleAcquisitionsButton_ActionPerformed
+      if (multiAcqManager_.isRunning()) {
+         multiAcqManager_.abort();
+      } else {
+         multiAcqManager_.runAllAcquisitions();
       }
-      enableAcquisitionComponentsAsNeeded();
-      storeCurrentAcqSettings();
-      setTabTitleText();
-   }//GEN-LAST:event_checkBox2D_ActionPerformed
+   }//GEN-LAST:event_runMultipleAcquisitionsButton_ActionPerformed
 
-   private void numTimePointsSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_numTimePointsSpinner_StateChanged
-      storeCurrentAcqSettings();
-   }//GEN-LAST:event_numTimePointsSpinner_StateChanged
-
-   private void timeIntevalUnitCombo_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_timeIntevalUnitCombo_ActionPerformed
-      storeCurrentAcqSettings();
-   }//GEN-LAST:event_timeIntevalUnitCombo_ActionPerformed
-
-   private void simpleZStackFootprintCombo_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_simpleZStackFootprintCombo_ActionPerformed
-            storeCurrentAcqSettings();
-   }//GEN-LAST:event_simpleZStackFootprintCombo_ActionPerformed
-
-   private void topSurfaceCombo_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_topSurfaceCombo_ActionPerformed
-            storeCurrentAcqSettings();
-   }//GEN-LAST:event_topSurfaceCombo_ActionPerformed
-
-   private void bottomSurfaceCombo_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bottomSurfaceCombo_ActionPerformed
-            storeCurrentAcqSettings();
-
-   }//GEN-LAST:event_bottomSurfaceCombo_ActionPerformed
-
-   private void volumeBetweenFootprintCombo_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_volumeBetweenFootprintCombo_ActionPerformed
-           storeCurrentAcqSettings();
-
-   }//GEN-LAST:event_volumeBetweenFootprintCombo_ActionPerformed
-
-   private void distanceBelowSurfaceSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_distanceBelowSurfaceSpinner_StateChanged
-            storeCurrentAcqSettings();
-   }//GEN-LAST:event_distanceBelowSurfaceSpinner_StateChanged
-
-   private void distanceAboveSurfaceSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_distanceAboveSurfaceSpinner_StateChanged
-            storeCurrentAcqSettings();
-   }//GEN-LAST:event_distanceAboveSurfaceSpinner_StateChanged
-
-   private void footprint2DComboBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_footprint2DComboBox_ActionPerformed
-           storeCurrentAcqSettings();
-   }//GEN-LAST:event_footprint2DComboBox_ActionPerformed
-
-   private void channelsCheckBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_channelsCheckBox_ActionPerformed
-            storeCurrentAcqSettings();
-   }//GEN-LAST:event_channelsCheckBox_ActionPerformed
-
-   private void removeChannelButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removeChannelButton_ActionPerformed
-           storeCurrentAcqSettings();
-
-   }//GEN-LAST:event_removeChannelButton_ActionPerformed
-
-   private void jComboBox2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox2ActionPerformed
-            storeCurrentAcqSettings();
-   }//GEN-LAST:event_jComboBox2ActionPerformed
-
-   private void autofocusFiducialCombo_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_autofocusFiducialCombo_ActionPerformed
-           storeCurrentAcqSettings();
-   }//GEN-LAST:event_autofocusFiducialCombo_ActionPerformed
+   private void moveAcqDownButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_moveAcqDownButton_ActionPerformed
+      int move = multiAcqManager_.moveDown(multipleAcqTable_.getSelectedRow());
+      multipleAcqTable_.getSelectionModel().setSelectionInterval(multiAcqSelectedIndex_ + move, multiAcqSelectedIndex_ + move);
+      multipleAcqTable_.repaint();
+   }//GEN-LAST:event_moveAcqDownButton_ActionPerformed
 
    private void moveAcqUpButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_moveAcqUpButton_ActionPerformed
-      if (multiAcqManager_.moveUp(multipleAcqTable_.getSelectedRow())) {
-         multipleAcqTable_.getSelectionModel().setSelectionInterval(multiAcqSelectedIndex_ - 1, multiAcqSelectedIndex_ - 1);
-      }
+      int move = multiAcqManager_.moveUp(multipleAcqTable_.getSelectedRow());
+      multipleAcqTable_.getSelectionModel().setSelectionInterval(multiAcqSelectedIndex_ + move, multiAcqSelectedIndex_ + move);
       multipleAcqTable_.repaint();
    }//GEN-LAST:event_moveAcqUpButton_ActionPerformed
 
@@ -1579,45 +1744,41 @@ public class GUI extends javax.swing.JFrame {
       multipleAcqTable_.repaint();
    }//GEN-LAST:event_addAcqButton_ActionPerformed
 
-   private void moveAcqDownButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_moveAcqDownButton_ActionPerformed
-      if (multiAcqManager_.moveDown(multipleAcqTable_.getSelectedRow())) {
-         multipleAcqTable_.getSelectionModel().setSelectionInterval(multiAcqSelectedIndex_ + 1, multiAcqSelectedIndex_ + 1);
+   private void ExploreZStepSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_ExploreZStepSpinner_StateChanged
+      // TODO add your handling code here:
+   }//GEN-LAST:event_ExploreZStepSpinner_StateChanged
+
+   private void exploreBrowseButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exploreBrowseButton_ActionPerformed
+       String root = "";
+      if (exploreSavingDirTextField_.getText() != null && !exploreSavingDirTextField_.getText().equals("")) {
+         root = exploreSavingDirTextField_.getText();
       }
-      multipleAcqTable_.repaint();
-   }//GEN-LAST:event_moveAcqDownButton_ActionPerformed
-
-   private void timeIntervalSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_timeIntervalSpinner_StateChanged
-           storeCurrentAcqSettings();
-   }//GEN-LAST:event_timeIntervalSpinner_StateChanged
-
-   private void zStepSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_zStepSpinner_StateChanged
-           storeCurrentAcqSettings();
-   }//GEN-LAST:event_zStepSpinner_StateChanged
-
-   private void zStartSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_zStartSpinner_StateChanged
-           storeCurrentAcqSettings();
-   }//GEN-LAST:event_zStartSpinner_StateChanged
-
-   private void zEndSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_zEndSpinner_StateChanged
-           storeCurrentAcqSettings();
-   }//GEN-LAST:event_zEndSpinner_StateChanged
-
-   private void newExploreWindowButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newExploreWindowButton_ActionPerformed
-      new ExploreInitDialog(eng_, savingDirTextField_.getText(), savingNameTextField_.getText() );
-   }//GEN-LAST:event_newExploreWindowButton_ActionPerformed
-
-   private void runMultipleAcquisitionsButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_runMultipleAcquisitionsButton_ActionPerformed
-      if (multiAcqManager_.isRunning()) {
-         multiAcqManager_.abort();
-      } else {
-         multiAcqManager_.runAllAcquisitions();
+      JFileChooser chooser = new JFileChooser(root);
+      chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+      int option = chooser.showSaveDialog(this);
+      if (option != JFileChooser.APPROVE_OPTION) {
+         return;
       }
-   }//GEN-LAST:event_runMultipleAcquisitionsButton_ActionPerformed
+      File f = chooser.getSelectedFile();
+      if (!f.isDirectory()) {
+         f = f.getParentFile();
+      }
+      exploreSavingDirTextField_.setText(f.getAbsolutePath());
+   }//GEN-LAST:event_exploreBrowseButton_ActionPerformed
+
+   private void savingDirTextField_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_savingDirTextField_ActionPerformed
+      // TODO add your handling code here:
+   }//GEN-LAST:event_savingDirTextField_ActionPerformed
+
+   private void exploreSavingNameTextField_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exploreSavingNameTextField_ActionPerformed
+      // TODO add your handling code here:
+   }//GEN-LAST:event_exploreSavingNameTextField_ActionPerformed
 
  
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel ChannelsTab_;
+    private javax.swing.JSpinner ExploreZStepSpinner_;
     private javax.swing.JButton SettingsButton;
     private javax.swing.JTabbedPane acqTabbedPane_;
     private javax.swing.JButton addAcqButton_;
@@ -1631,7 +1792,9 @@ public class GUI extends javax.swing.JFrame {
     private javax.swing.JCheckBox checkBox2D_;
     private javax.swing.JCheckBox checkBox3D_;
     private javax.swing.JButton configPropsButton_;
+    private javax.swing.JPanel controlPanelName_;
     private javax.swing.JScrollPane customPropsScrollPane_;
+    private javax.swing.JButton deinterleaveButton_;
     private javax.swing.JButton deleteAllRegionsButton_;
     private javax.swing.JButton deleteAllSurfacesButton_;
     private javax.swing.JButton deleteSelectedRegionButton_;
@@ -1640,6 +1803,11 @@ public class GUI extends javax.swing.JFrame {
     private javax.swing.JSpinner distanceAboveSurfaceSpinner_;
     private javax.swing.JLabel distanceBelowSurfaceLabel_;
     private javax.swing.JSpinner distanceBelowSurfaceSpinner_;
+    private javax.swing.JButton exploreBrowseButton_;
+    private javax.swing.JLabel exploreSavingDirLabel_;
+    private javax.swing.JTextField exploreSavingDirTextField_;
+    private javax.swing.JLabel exploreSavingNameLabel_;
+    private javax.swing.JTextField exploreSavingNameTextField_;
     private javax.swing.JRadioButton fixedDistanceFromSurfaceRadioButton_;
     private javax.swing.JComboBox fixedDistanceSurfaceComboBox_;
     private javax.swing.JPanel fixedDistanceZPanel_;
@@ -1648,14 +1816,17 @@ public class GUI extends javax.swing.JFrame {
     private javax.swing.JComboBox footprint2DComboBox_;
     private javax.swing.JTable gridTable_;
     private javax.swing.JPanel gridsPanel_;
+    private javax.swing.JButton intereaveButton_;
     private javax.swing.JComboBox jComboBox2;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
+    private javax.swing.JLabel jLabel8;
     private javax.swing.JPanel jPanel1;
-    private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel7;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;

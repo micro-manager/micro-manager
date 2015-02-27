@@ -16,6 +16,7 @@
 
 package org.micromanager.projector;
 
+import ij.process.FloatPolygon;
 import java.awt.Polygon;
 import java.util.List;
 
@@ -40,7 +41,7 @@ public interface ProjectionDevice {
    public void activateAllPixels();
 
    // ## ROIs
-   public void loadRois(List<Polygon> rois);
+   public void loadRois(List<FloatPolygon> rois);
    public void setPolygonRepetitions(int reps);
    public void runPolygons();
 

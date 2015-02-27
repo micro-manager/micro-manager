@@ -7,6 +7,7 @@ package acq;
 import coordinates.XYStagePosition;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import mmcorej.CMMCore;
@@ -30,8 +31,9 @@ public class FixedAreaAcquisition extends Acquisition {
    private Thread eventGeneratingThread_;
    private ArrayList<XYStagePosition> positions_;
    private long nextTimePointStartTime_ms_;
-   private MultipleAcquisitionManager multiAcqManager_;
    private CustomAcqEngine eng_;
+   private ParallelAcquisitionGroup acqGroup_;
+   private AtomicInteger readyForTP_ = new AtomicInteger(-1);
    
    /**
     * Acquisition with fixed XY positions (although they can potentially all be
@@ -42,9 +44,10 @@ public class FixedAreaAcquisition extends Acquisition {
     * acquisition has another thread that generates events
     */
    public FixedAreaAcquisition(FixedAreaAcquisitionSettings settings, MultipleAcquisitionManager multiAcqManager,
-           CustomAcqEngine eng){
+           CustomAcqEngine eng, ParallelAcquisitionGroup acqGroup){
       super(settings.zStep_);
       eng_ = eng;
+      acqGroup_ = acqGroup;
       settings_ = settings;
       readSettings();
       //get positions to be imaged
@@ -57,23 +60,24 @@ public class FixedAreaAcquisition extends Acquisition {
       }
       initialize(settings.dir_, settings.name_);
       createEventGenerator();
-      multiAcqManager_ = multiAcqManager;
+   }
+   
+   public FixedAreaAcquisitionSettings getSettings() {
+      return settings_;
    }
    
    private void readSettings() {
       numTimePoints_ = settings_.timeEnabled_ ? settings_.numTimePoints_ : 1;
-   }
-   
-   @Override
-   public void finish() {
-      super.finish();
-      multiAcqManager_.acquisitionFinished();
    }
 
    /**
     * abort acquisition. Block until successfully finished
     */
    public void abort() {
+      if (finished_) {
+         //acq already aborted
+         return;
+      }
       eventGeneratingThread_.interrupt();
       try {
          eventGeneratingThread_.join();
@@ -88,6 +92,7 @@ public class FixedAreaAcquisition extends Acquisition {
       //wait for image sink to drain
       imageSink_.waitToDie();
       //when image sink dies it will call finish
+      acqGroup_.acqAborted(this);
    }
 
    public boolean isPaused() {
@@ -139,6 +144,10 @@ public class FixedAreaAcquisition extends Acquisition {
    public long getNextWakeTime_ms() {
       return nextTimePointStartTime_ms_;
    }
+    
+   public int readyForNextTimePoint() {
+       return readyForTP_.getAndIncrement() + 1;
+   }
 
    private void createEventGenerator() {
       eventGeneratingThread_ = new Thread(new Runnable() {
@@ -146,13 +155,15 @@ public class FixedAreaAcquisition extends Acquisition {
          @Override
          public void run() {
             nextTimePointStartTime_ms_ = 0;
-            for (int timeIndex = 0; timeIndex < numTimePoints_; timeIndex++) {
+            for (int timeIndex = 0; timeIndex < numTimePoints_; timeIndex++) {               
                //wait enough time to pass to start new time point
-               while (System.currentTimeMillis() < nextTimePointStartTime_ms_) {
+               while (System.currentTimeMillis() < nextTimePointStartTime_ms_  || 
+                       timeIndex > readyForTP_.get()) {
                   try {
                      Thread.sleep(5);
                   } catch (InterruptedException ex) {
-                     return; //thread has been interrupted due to abort request, return;
+                     //thread has been interrupted due to abort request, return
+                     return; 
                   }
                }
                //set the next time point start time
@@ -209,6 +220,11 @@ public class FixedAreaAcquisition extends Acquisition {
                      addEvent(event);
                   }
                }
+               
+               if (timeIndex == numTimePoints_ - 1) {
+                  //acquisition now finished, add event with null ac w field so engine will mark acquisition as finished
+                  events_.add(AcquisitionEvent.createAcquisitionFinishedEvent(FixedAreaAcquisition.this));
+               }
 
                //wait for final image of timepoint to be written before beginning end of timepoint stuff
                while (!( eng_.isIdle() && events_.isEmpty() && imageSink_.isIdle())) {
@@ -219,10 +235,9 @@ public class FixedAreaAcquisition extends Acquisition {
                   }
                }
                //do end of timepoint stuff (autofocus, swap to another acq, etc)
+              acqGroup_.finishedTimePoint(FixedAreaAcquisition.this);
                endOfTimePoint(timeIndex);
             }
-            //acquisition now finished, add event with null ac w field so engine will mark acquisition as finished
-            events_.add(new AcquisitionEvent(null, 0, 0, 0, 0, 0, 0, 0));
          }
       }, "Fixed Area Acquisition Event generating thread");
       eventGeneratingThread_.start();

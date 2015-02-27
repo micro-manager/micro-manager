@@ -32,6 +32,7 @@ import ij.gui.ImageWindow;
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import ij.plugin.frame.RoiManager;
+import ij.process.FloatPolygon;
 import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.io.File;
@@ -477,7 +478,9 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
    private ArrayList<SequenceEvent> getSequenceEvents() {
       final ImageWindow snapLiveWin = gui_.getSnapLiveWin();
       final ImagePlus snapLiveImage = snapLiveWin.getImagePlus();
-      List<Polygon> availableRoiPolygons = projectorControlForm_.transformROIs(snapLiveImage, getRois());
+      List<FloatPolygon> availableFloatRoiPolygons = projectorControlForm_.transformROIs(snapLiveImage, getRois());
+      List<Polygon> availableRoiPolygons = Utils.FloatToNormalPolygon(
+              availableFloatRoiPolygons);
       ArrayList<SequenceEvent> events = new ArrayList<SequenceEvent>();
       for (int i = 0; i < sequenceTableModel_.getRowCount(); ++i) {
          events.add(sequenceRowToSequenceEvent(i, availableRoiPolygons));
@@ -521,6 +524,7 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
          throw new RuntimeException("Please first define a sequence for the Mosaic.");
       }
       mosaicExecutor_.submit(new Runnable() {
+         @Override
          public void run() {
             try {
                core_.stopSLMSequence(mosaicName_);

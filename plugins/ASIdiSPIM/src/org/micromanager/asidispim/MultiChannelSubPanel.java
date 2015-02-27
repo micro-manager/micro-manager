@@ -322,8 +322,13 @@ public class MultiChannelSubPanel extends ListeningJPanel {
       return strGroups.toArray(new String[0]);
    }
    
+   public String getChannelGroup() {
+      return channelGroup_.getSelectedItem().toString();
+   }
+   
    /**
-    * @return array of channels that are currently set be "used"
+    * @return array of channels that are currently set be "used".
+    * Ordered same as in the GUI.
     */
    public ChannelSpec[] getUsedChannels() {
       return channelTableModel_.getUsedChannels();

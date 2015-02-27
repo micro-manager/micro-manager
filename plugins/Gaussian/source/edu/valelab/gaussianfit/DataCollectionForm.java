@@ -1287,16 +1287,16 @@ public class DataCollectionForm extends javax.swing.JFrame {
    
    public void listPairTracks(double maxDistance, boolean showTrack, 
            boolean showSummary, boolean showOverlay, boolean saveFile, 
-           String filePath) {
+           String filePath, boolean p2d) {
       final int[] rows = jTable1_.getSelectedRows();
       if (rows.length < 1) {
          JOptionPane.showMessageDialog(getInstance(), 
                  "Please select a dataset");
          return;
       }
-      if (showTrack || showSummary || showOverlay || saveFile) {
+      if (showTrack || showSummary || showOverlay || saveFile || p2d) {
          ParticlePairLister.listParticlePairTracks(rows, maxDistance, showTrack, 
-                 showSummary, showOverlay, saveFile, filePath);
+                 showSummary, showOverlay, saveFile, p2d, filePath);
       }
    }
    
