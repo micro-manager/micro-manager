@@ -95,7 +95,7 @@ public class ConfiguratorDlg2 extends MMDialog {
      * Create the application
      */
     public ConfiguratorDlg2(CMMCore core, String defFile) {
-        super();
+        super("hardware configuration wizard");
         core_ = core;
         defaultPath_ = defFile;
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);

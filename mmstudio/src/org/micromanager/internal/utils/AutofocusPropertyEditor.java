@@ -77,7 +77,7 @@ public class AutofocusPropertyEditor extends MMDialog {
    private JComboBox methodCombo_;
    
    public AutofocusPropertyEditor(AutofocusManager afmgr) {
-      super();
+      super("autofocus property editor");
       afMgr_ = afmgr;
       setModal(false);
       data_ = new PropertyTableData();

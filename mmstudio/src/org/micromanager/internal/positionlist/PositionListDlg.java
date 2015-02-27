@@ -140,7 +140,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
    @SuppressWarnings("LeakingThisInConstructor")
    public PositionListDlg(CMMCore core, ScriptInterface gui, 
                      PositionList posList, AcqControlDlg acd) {
-      super();
+      super("position list");
       final DefaultUserProfile profile = DefaultUserProfile.getInstance();
       addWindowListener(new WindowAdapter() {
          @Override

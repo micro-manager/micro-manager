@@ -77,7 +77,7 @@ public class OptionsDlg extends MMDialog {
     * @param parent - MMStudio api 
     */
    public OptionsDlg(CMMCore core, ScriptInterface parent) {
-      super();
+      super("global micro-manager options");
       parent_ = parent;
       core_ = core;
       guiColors_ = new GUIColors();

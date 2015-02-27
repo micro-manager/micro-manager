@@ -149,6 +149,7 @@ public class PeripheralSetupDlg extends MMDialog {
    private Vector<Device> peripherals_;
 
    public PeripheralSetupDlg(MicroscopeModel mod, CMMCore c, String hub, Vector<Device> per) {
+      super("hardware config wizard: peripheral setup");
       setTitle("Peripheral Devices Setup");
       setBounds(100, 100, 479, 353);
       loadPosition(100, 100);

@@ -32,7 +32,7 @@ public class AdvancedOptionsDialog extends MMDialog {
     private final CustomTimeIntervalsPanel customTimeIntervalsPanel_;
 
     public AdvancedOptionsDialog(AcquisitionEngine acqEng, ScriptInterface gui) {
-        super();
+        super("advanced acquisition configuration");
         this.setModal(true);
         acqEng_ = acqEng;
         loadPosition(0,0,600,500);
