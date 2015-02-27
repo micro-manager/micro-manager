@@ -35,7 +35,6 @@ import java.lang.Math;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.prefs.Preferences;
 
 import javax.swing.event.MouseInputAdapter;
 import javax.swing.JButton;
