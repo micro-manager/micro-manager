@@ -28,7 +28,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Hashtable;
-import java.util.prefs.Preferences;
 
 import javax.swing.InputMap;
 import javax.swing.JButton;
@@ -200,14 +199,13 @@ public class LabelsPage extends PagePanel {
    /**
     * Create the panel
     */
-   public LabelsPage(Preferences prefs) {
+   public LabelsPage() {
       super();
       title_ = "Define position labels for state devices";
       helpText_ = "State devices with discrete positions, such as filter changers or objective turrets, etc. can have mnemonic labels assigned for each position.\n\n" +
       "Select the device in the left-hand list and edit corresponding position labels in the right-hand list.\n\n" +
       "Use the 'Read' button to read label info from the hardware. This will override your changes!\n\n";
       setHelpFileName("conf_labels_page.html");
-      prefs_ = prefs;
       setLayout(null);
 
       final JScrollPane labelsScrollPane = new JScrollPane();

@@ -27,7 +27,6 @@ import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.util.prefs.Preferences;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
@@ -54,7 +53,7 @@ public class IntroPage extends PagePanel {
    /**
     * Create the panel
     */
-   public IntroPage(Preferences prefs) {
+   public IntroPage() {
       super();
       title_ = "Select the configuration file";
       helpText_ = "Welcome to the Micro-Manager Configurator.\n" +
@@ -62,7 +61,6 @@ public class IntroPage extends PagePanel {
                   "In this step you choose if you are creating a new hardware configuration or editing an existing one.";
       
       setLayout(null);
-      prefs_ = prefs;
       setHelpFileName(HELP_FILE_NAME);
 
       createNewRadioButton_ = new JRadioButton();
@@ -113,7 +111,6 @@ public class IntroPage extends PagePanel {
    
    public void loadSettings() {
       // load settings
-      //filePathField_.setText(prefs_.get(CFG_PATH, ""));
       if (model_ != null)
          filePathField_.setText(model_.getFileName());
       
@@ -126,7 +123,6 @@ public class IntroPage extends PagePanel {
 
    public void saveSettings() {
       // save settings
-      //prefs_.put(CFG_PATH, filePathField_.getText());      
    }
    
    public boolean enterPage(boolean fromNextPage) {

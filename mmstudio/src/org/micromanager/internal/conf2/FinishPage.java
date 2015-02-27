@@ -29,7 +29,6 @@ import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -57,11 +56,10 @@ public class FinishPage extends PagePanel {
     /**
      * Create the panel
      */
-    public FinishPage(Preferences prefs) {
+    public FinishPage() {
         super();
         title_ = "Save configuration and exit";
         setHelpFileName("conf_finish_page.html");
-        prefs_ = prefs;
         setLayout(null);
 
         final JLabel configurationWillBeLabel = new JLabel();
