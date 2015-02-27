@@ -354,11 +354,10 @@ public class MMStudio implements ScriptInterface {
 
       snapLiveManager_ = new SnapLiveManager(core_);
 
-      frame_ = new MainFrame(this, core_, snapLiveManager_, mainPrefs_);
+      frame_ = new MainFrame(this, core_, snapLiveManager_);
       frame_.setIconImage(SwingResourceManager.getImage(MMStudio.class,
             "icons/microscope.gif"));
-      frame_.loadApplicationPrefs(mainPrefs_,
-            OptionsDlg.getShouldCloseOnExit());
+      frame_.loadApplicationPrefs(OptionsDlg.getShouldCloseOnExit());
       ReportingUtils.SetContainingFrame(frame_);
 
       // move ImageJ window to place where it last was if possible
@@ -1401,7 +1400,7 @@ public class MMStudio implements ScriptInterface {
    }
 
    private void saveSettings() {
-      frame_.savePrefs(mainPrefs_);
+      frame_.savePrefs();
       
       mainPrefs_.put(OPEN_ACQ_DIR, openAcqDirectory_);
       ReportingUtils.logError("TODO: record default data-saving method");

@@ -47,7 +47,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.prefs.Preferences;
 
 import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
@@ -71,6 +70,7 @@ import mmcorej.StrVector;
 import org.micromanager.events.ConfigGroupChangedEvent;
 import org.micromanager.events.internal.EventManager;
 import org.micromanager.internal.interfaces.LiveModeListener;
+import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.DragDropUtil;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.MMFrame;
@@ -114,8 +114,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
    private AbstractButton clearRoiButton_;
 
    @SuppressWarnings("LeakingThisInConstructor")
-   public MainFrame(MMStudio studio, CMMCore core, SnapLiveManager manager, 
-         Preferences prefs) {
+   public MainFrame(MMStudio studio, CMMCore core, SnapLiveManager manager) {
       super("main_");
       org.micromanager.internal.diagnostics.ThreadExceptionLogger.setUp();
 
@@ -156,8 +155,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
         
    }
 
-   public void loadApplicationPrefs(Preferences prefs, 
-         boolean shouldCloseOnExit) {
+   public void loadApplicationPrefs(boolean shouldCloseOnExit) {
       // put frame back where it was last time if possible
       this.loadAndRestorePosition(100, 100, 644, 220);
       setExitStrategy(shouldCloseOnExit);
@@ -658,12 +656,12 @@ public class MainFrame extends MMFrame implements LiveModeListener {
    }
 
    /**
-    * Save our settings to the provided Preferences object.
-    * @param prefs local preferences to be saved
+    * Save our settings to the user profile.
     */
-   public void savePrefs(Preferences prefs) {
+   public void savePrefs() {
       this.savePosition();
-      prefs.put(MAIN_EXPOSURE, textFieldExp_.getText());
+      DefaultUserProfile.getInstance().setString(MainFrame.class,
+            MAIN_EXPOSURE, textFieldExp_.getText());
    }
 
    public void setDisplayedExposureTime(double exposure) {
