@@ -31,7 +31,7 @@ import java.awt.event.FocusListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
-import java.util.prefs.Preferences;
+import java.io.IOException;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -58,7 +58,6 @@ public class MultiChannelShadingMigForm extends MMDialog {
    private  MMDialog mcsPluginWindow;
    private final ScriptInterface gui_;
    private final mmcorej.CMMCore mmc_;
-   private final Preferences prefs_;
    
    private final ShadingProcessor processor_;
 
@@ -88,7 +87,6 @@ public class MultiChannelShadingMigForm extends MMDialog {
       processor_ = processor;
       gui_ = gui;
       mmc_ = gui_.getMMCore();
-      prefs_ = this.getPrefsNode();
       this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
       this.addWindowListener(new WindowAdapter() {
          @Override
@@ -118,7 +116,8 @@ public class MultiChannelShadingMigForm extends MMDialog {
       String[] channelGroups = mmc_.getAvailableConfigGroups().toArray();
       groupComboBox.setModel(new javax.swing.DefaultComboBoxModel(
               channelGroups));
-      groupName_ = prefs_.get(CHANNELGROUP, "");
+      groupName_ = gui_.profile().getString(MultiChannelShadingMigForm.class, 
+              CHANNELGROUP, "");
       groupComboBox.setSelectedItem(groupName_);
       groupComboBox.addActionListener(new java.awt.event.ActionListener() {
          @Override
@@ -126,7 +125,8 @@ public class MultiChannelShadingMigForm extends MMDialog {
             groupName_ = (String) groupComboBox.getSelectedItem();
             shadingTableModel_.setChannelGroup(groupName_);
             updateAddAndRemoveButtons(addButton, removeButton);
-            prefs_.put(CHANNELGROUP, groupName_);
+            gui_.profile().setString(MultiChannelShadingMigForm.class, 
+                    CHANNELGROUP, groupName_);
          }
       });
       add(groupComboBox);
@@ -149,7 +149,8 @@ public class MultiChannelShadingMigForm extends MMDialog {
       final JTextField darkFieldTextField = new JTextField();
       darkFieldTextField.setFont(arialSmallFont_);
       //populate darkFieldName from preferences and process it.
-      darkFieldTextField.setText(prefs_.get(DARKFIELDFILENAME, ""));
+      darkFieldTextField.setText(gui_.profile().getString(
+              MultiChannelShadingMigForm.class, DARKFIELDFILENAME, ""));
       darkFieldTextField.setHorizontalAlignment(JTextField.RIGHT);
       darkFieldTextField.addActionListener(new java.awt.event.ActionListener() {
          @Override
@@ -243,11 +244,13 @@ public class MultiChannelShadingMigForm extends MMDialog {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             processor_.setEnabled(useCheckBox_.isSelected());
-            prefs_.putBoolean(USECHECKBOX, useCheckBox_.isSelected());
+            gui_.profile().setBoolean(MultiChannelShadingMigForm.class, 
+                    USECHECKBOX, useCheckBox_.isSelected());
             statusLabel_.setText(" ");
          }
       });
-      useCheckBox_.setSelected(prefs_.getBoolean(USECHECKBOX, true));
+      useCheckBox_.setSelected(gui_.profile().getBoolean(
+              MultiChannelShadingMigForm.class,USECHECKBOX, true));
       add(useCheckBox_, "span 3, wrap");     
       add(statusLabel_, "span 3, wrap");
       updateAddAndRemoveButtons(addButton, removeButton);
@@ -259,6 +262,11 @@ public class MultiChannelShadingMigForm extends MMDialog {
    @Override
    public void dispose() {
       super.dispose();
+      try {
+         gui_.profile().saveProfile();
+      } catch (IOException ex) {
+         ReportingUtils.logError(ex, "Failed to save UserProfile");
+      }
       processor_.setMyFrameToNull();
    }
 
@@ -321,7 +329,8 @@ public class MultiChannelShadingMigForm extends MMDialog {
          ImageCollection ic = processor_.getImageCollection();
          ic.setBackground(fileName);
          backgroundFileName_ = fileName;
-         prefs_.put(DARKFIELDFILENAME, backgroundFileName_);
+         gui_.profile().setString(MultiChannelShadingMigForm.class,
+                 DARKFIELDFILENAME, backgroundFileName_);
       } catch (MMException ex) {
          ReportingUtils.showError(ex, "Failed to set background image");
          return "";
@@ -333,7 +342,8 @@ public class MultiChannelShadingMigForm extends MMDialog {
       useCheckBox_.setSelected(enabled);
       // useCheckBox may already be doing the following:
       // processor_.setEnabled(enabled);
-      prefs_.putBoolean(USECHECKBOX, enabled);
+      gui_.profile().setBoolean(MultiChannelShadingMigForm.class, 
+              USECHECKBOX, enabled);
    }
     
    public ShadingTableModel getShadingTableModel() {
