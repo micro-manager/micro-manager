@@ -25,6 +25,7 @@ package org.micromanager.internal.positionlist;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
+
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
@@ -38,7 +39,7 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.prefs.Preferences;
+
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
@@ -50,11 +51,13 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.table.TableCellRenderer;
+
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
+
 import net.miginfocom.swing.MigLayout;
-import org.micromanager.internal.MMOptions;
+
 import org.micromanager.internal.MMStudio;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
@@ -64,6 +67,7 @@ import org.micromanager.events.StagePositionChangedEvent;
 import org.micromanager.events.XYStagePositionChangedEvent;
 import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.events.internal.EventManager;
+import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.FileDialogs.FileType;
 import org.micromanager.internal.utils.GUIColors;
@@ -93,8 +97,6 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
    private CMMCore core_;
    private ScriptInterface studio_;
    private AcqControlDlg acqControlDlg_;
-   private MMOptions opts_;
-   private Preferences prefs_;
    private GUIColors guiColors_;
    private AxisList axisList_;
    private final JButton tileButton_;
@@ -137,27 +139,25 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
     */
    @SuppressWarnings("LeakingThisInConstructor")
    public PositionListDlg(CMMCore core, ScriptInterface gui, 
-                     PositionList posList, AcqControlDlg acd, MMOptions opts) {
+                     PositionList posList, AcqControlDlg acd) {
       super();
+      final DefaultUserProfile profile = DefaultUserProfile.getInstance();
       addWindowListener(new WindowAdapter() {
          @Override
          public void windowClosing(WindowEvent arg0) {
             int posCol0Width = posTable_.getColumnModel().getColumn(0).getWidth();
-            prefs_.putInt(POS_COL0_WIDTH, posCol0Width);
+            profile.setInt(PositionListDlg.class, POS_COL0_WIDTH, posCol0Width);
             int axisCol0Width = axisTable_.getColumnModel().getColumn(0).getWidth();
-            prefs_.putInt(AXIS_COL0_WIDTH, axisCol0Width);
+            profile.setInt(PositionListDlg.class, AXIS_COL0_WIDTH, axisCol0Width);
          }
       });
       core_ = core;
       studio_ = gui;
       bus_ = new EventBus();
       bus_.register(this);
-      opts_ = opts;
       acqControlDlg_ = acd;
       guiColors_ = new GUIColors();
 
-      prefs_ = getPrefsNode();
-      
       setTitle("Stage Position List");
       setLayout(new MigLayout("flowy, filly, insets 8", "[grow][]", 
               "[top]"));
@@ -196,15 +196,16 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       posTable_.setDefaultEditor(Object.class, cellEditor_);
       posTable_.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
       // set column divider location
-      int posCol0Width = prefs_.getInt(POS_COL0_WIDTH, 75);
+      int posCol0Width = profile.getInt(PositionListDlg.class,
+            POS_COL0_WIDTH, 75);
       posTable_.getColumnModel().getColumn(0).setWidth(posCol0Width);
       posTable_.getColumnModel().getColumn(0).setPreferredWidth(posCol0Width);
       posTable_.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
       
       axisTable_ = new JTable();
       axisTable_.setFont(arialSmallFont_);
-      axisList_ = new AxisList(core_, prefs_);
-      axisModel_ = new AxisTableModel(axisList_, axisTable_, bus_, prefs_);
+      axisList_ = new AxisList(core_);
+      axisModel_ = new AxisTableModel(axisList_, axisTable_, bus_);
       axisTable_.setModel(axisModel_);
       axisPane.setViewportView(axisTable_);
       // make sure that the complete axis Table will always be visible
@@ -212,7 +213,8 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       axisPane.setMaximumSize(new Dimension(32767, 30 + tableHeight));
       axisPane.setMinimumSize(new Dimension(50, 30 + tableHeight));
       // set divider location
-      int axisCol0Width = prefs_.getInt(AXIS_COL0_WIDTH, 75);
+      int axisCol0Width = profile.getInt(PositionListDlg.class,
+            AXIS_COL0_WIDTH, 75);
       axisTable_.getColumnModel().getColumn(0).setWidth(axisCol0Width);
       axisTable_.getColumnModel().getColumn(0).setPreferredWidth(axisCol0Width);
       axisTable_.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
@@ -552,7 +554,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
    }
    
    public void rebuildAxisList() {
-      axisList_ = new AxisList(core_, prefs_);
+      axisList_ = new AxisList(core_);
       AxisTableModel axm = (AxisTableModel)axisTable_.getModel();
       axm.fireTableDataChanged();
    }
@@ -836,7 +838,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
    }
 
    protected void showCreateTileDlg() {
-      TileCreatorDlg tileCreatorDlg = new TileCreatorDlg(core_, opts_, this);
+      TileCreatorDlg tileCreatorDlg = new TileCreatorDlg(core_, this);
       studio_.addMMListener(tileCreatorDlg);
       tileCreatorDlg.setVisible(true);
    }

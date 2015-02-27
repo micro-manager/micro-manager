@@ -19,6 +19,7 @@ package org.micromanager.projector;
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import ij.process.ByteProcessor;
+import ij.process.FloatPolygon;
 import ij.process.ImageProcessor;
 import java.awt.Color;
 import java.awt.Polygon;
@@ -33,7 +34,7 @@ public class SLM implements ProjectionDevice {
    CMMCore mmc_;
    final int slmWidth_;
    final int slmHeight_;
-   private double spotDiameter_;
+   private final double spotDiameter_;
    private boolean imageOn_ = false;
    HashSet<OnStateListener> onStateListeners_ = new HashSet<OnStateListener>();
 
@@ -47,6 +48,7 @@ public class SLM implements ProjectionDevice {
    }
 
    // Adds a state listener that lets a third party know if we are on or off.
+   @Override
    public void addOnStateListener(OnStateListener listener) {
       onStateListeners_.add(listener);
    }
@@ -57,25 +59,30 @@ public class SLM implements ProjectionDevice {
    }
 
    // Returns the name of the SLM.
+   @Override
    public String getName() {
       return slm_;
    }
 
    // Returns the SLM's width in pixels.
+   @Override
    public double getWidth() {
       return this.slmWidth_;
    }
 
    // Returns the SLM's height in pixels.
+   @Override
    public double getHeight() {
       return this.slmHeight_;
    }
 
    // TODO: Looks like a stub. Do we need to implement this method?
+   @Override
    public String getChannel() {
       return "Default";
    }
 
+   @Override
    public void waitForDevice() {
       try {
          mmc_.waitForDevice(slm_);
@@ -86,6 +93,7 @@ public class SLM implements ProjectionDevice {
 
    // Sets how long the SLM will be illuminated when we display an
    // image.
+   @Override
    public void setExposure(long interval_us) {
       try {
          mmc_.setSLMExposure(slm_, interval_us / 1000.);
@@ -95,6 +103,7 @@ public class SLM implements ProjectionDevice {
    }
    
    // Reads the exposure time in microseconds.
+   @Override
    public long getExposure() {
       try {
          return (long) (mmc_.getSLMExposure(slm_) * 1000.);
@@ -105,6 +114,7 @@ public class SLM implements ProjectionDevice {
    }
 
    // Makes sure all pixels are illuminated at maximum intensity (white).
+   @Override
    public void activateAllPixels() {
       try {
          mmc_.setSLMPixelsTo(slm_, (short) 255);
@@ -137,11 +147,13 @@ public class SLM implements ProjectionDevice {
    }
 
    // Display a spot at location x,y for the given duration.
+   @Override
    public void displaySpot(double x, double y) {
       displaySpot((int) x, (int) y);
    }
 
    // Set all pixels to off.
+   @Override
    public void turnOff() {
       try {
          mmc_.setSLMPixelsTo(slm_, (byte) 0);
@@ -156,6 +168,7 @@ public class SLM implements ProjectionDevice {
 
    // Turn the SLM device on (illuminate whatever image has already been
    // uploaded).
+   @Override
    public void turnOn() {
       try {
          if (imageOn_ == false) {
@@ -202,8 +215,10 @@ public class SLM implements ProjectionDevice {
    }
 
    // Convert roiPolygons to an image, and upload that image to the SLM.
-   public void loadRois(List<Polygon> roiPolygons) {
+   @Override
+   public void loadRois(List<FloatPolygon> roiFloatPolygons) {
       try {
+         List<Polygon> roiPolygons = Utils.FloatToNormalPolygon(roiFloatPolygons);
          mmc_.setSLMImage(slm_, roisToPixels(slmWidth_, slmHeight_, roiPolygons));
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
@@ -211,11 +226,13 @@ public class SLM implements ProjectionDevice {
    }
 
    // This only applies to galvo devices. Don't use.
+   @Override
    public void setPolygonRepetitions(int reps) {
       // Ignore!
    }
 
    // Assumes we have an image of polygons, and now we want to show them.
+   @Override
    public void runPolygons() {
       try {
          mmc_.displaySLMImage(slm_);

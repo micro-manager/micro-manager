@@ -13,7 +13,7 @@
 //                Karl Hoover (stuff such as programmable CCD size  & the various image processors)
 //                Arther Edelstein ( equipment error simulation)
 //
-// COPYRIGHT:     University of California, San Francisco, 2006
+// COPYRIGHT:     University of California, San Francisco, 2006-2015
 //                100X Imaging Inc, 2008
 //
 // LICENSE:       This file is distributed under the BSD license.
@@ -66,6 +66,12 @@ const int SEVEN_SEGMENT_HORIZONTALITY[] = {1, 0, 0, 1, 0, 0, 1};
 const int SEVEN_SEGMENT_X_OFFSET[] = {0, 0, 1, 0, 0, 1, 0};
 // Y offset for this segment.
 const int SEVEN_SEGMENT_Y_OFFSET[] = {0, 0, 0, 1, 1, 1, 2};
+
+class ImgManipulator 
+{
+   public:
+      virtual int ChangePixels(ImgBuffer& img) = 0;
+};
 
 ////////////////////////
 // DemoHub
@@ -178,6 +184,15 @@ public:
    int OnStripeWidth(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnCCDTemp(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnIsSequenceable(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+   // Special public DemoCamera methods
+   void AddBackgroundAndNoise(ImgBuffer& img, double mean, double stdDev);
+   // this function replace normal_distribution in C++11
+   double GaussDistributedValue(double mean, double std);
+
+   int RegisterImgManipulatorCallBack(ImgManipulator* imgManpl);
+
 
 private:
    int SetAllowedBinning();
@@ -229,6 +244,8 @@ private:
    friend class MySequenceThread;
    int nComponents_;
    MySequenceThread * thd_;
+   int mode_;
+   ImgManipulator* imgManpl_;
 };
 
 class MySequenceThread : public MMDeviceThreadBase
@@ -1046,7 +1063,84 @@ private:
    bool initialized_;
 };
 
+struct Point
+{
+   public:
+      Point(int lx, int ly) {x = lx; y = ly;};
+   int x;
+   int y;
+};
 
+struct PointD
+{
+   public:
+      PointD(double lx, double ly) {x = lx; y = ly;};
+   double x;
+   double y;
+};
+//////////////////////////////////////////////////////////////////////////////
+// DemoGalvo class
+// Simulation of Galvo device
+//////////////////////////////////////////////////////////////////////////////
+class DemoGalvo : public CGalvoBase<DemoGalvo>, ImgManipulator
+{
+public:
+   DemoGalvo();
+   ~DemoGalvo();
+      
+   // MMDevice API
+   bool Busy() {return busy_;}
+   void GetName(char* pszName) const;
+
+   int Initialize();
+   int Shutdown(){initialized_ = false; return DEVICE_OK;}
+
+   // Galvo API
+   int PointAndFire(double x, double y, double pulseTime_us); 
+   int SetSpotInterval(double pulseTime_us);
+   int SetPosition(double x, double y);
+   int GetPosition(double& x, double& y);
+   int SetIlluminationState(bool on);
+   int AddPolygonVertex(int polygonIndex, double x, double y);
+   int DeletePolygons();
+   int LoadPolygons();
+   int SetPolygonRepetitions(int repetitions);
+   int RunPolygons();
+   int RunSequence();
+   int StopSequence();
+   int GetChannel(char* channelName);                         
+
+   double GetXRange();                         
+   double GetYRange(); 
+
+   int ChangePixels(ImgBuffer& img);
+   static bool PointInTriangle(Point p, Point p0, Point p1, Point p2);
+
+private:
+
+   unsigned short gaussianMask_[10][10];
+
+   double GaussValue(double amplitude, double sigmaX, double sigmaY, int muX, int muY, int x, int y);
+   Point GalvoToCameraPoint(PointD GalvoPoint, ImgBuffer& img);
+   void GetBoundingBox(std::vector<Point>& vertex, std::vector<Point>& bBox);
+   bool InBoundingBox(std::vector<Point> boundingBox, Point testPoint);
+
+   std::map<int, std::vector<PointD> > vertices_;
+   MM::MMTime pfExpirationTime_;
+   bool initialized_;
+   bool busy_;
+   bool illuminationState_;
+   bool pointAndFire_;
+   bool runROIS_;
+   double xRange_;
+   double yRange_;
+   double currentX_;
+   double currentY_;
+   int offsetX_;
+   double vMaxX_;
+   int offsetY_;
+   double vMaxY_;
+};
 
 
 

@@ -27,7 +27,6 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Rectangle;
 import java.awt.event.*;
-import java.util.prefs.Preferences;
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import mmcorej.CMMCore;
@@ -50,7 +49,6 @@ public class CalibrationListDlg extends MMDialog {
    private JTable calTable_;
    private SpringLayout springLayout;
    private CMMCore core_;
-   private Preferences prefs_;
    private CalibrationList calibrationList_;
    private ScriptInterface parentGUI_;
 
@@ -148,10 +146,6 @@ public class CalibrationListDlg extends MMDialog {
       springLayout = new SpringLayout();
       getContentPane().setLayout(springLayout);
 
-      Preferences root = Preferences.userNodeForPackage(this.getClass());
-      prefs_ = root.node(root.absolutePath() + "/CalibrationListDlg");
-      setPrefsNode(prefs_);
-      
       setMinimumSize(new Dimension(263, 239));
       loadAndRestorePosition(100, 100, 365, 495);
       Rectangle r = this.getBounds();

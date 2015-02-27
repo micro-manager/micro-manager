@@ -42,10 +42,11 @@ import javax.swing.WindowConstants;
 
 import mmcorej.CMMCore;
 
+import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
 import org.micromanager.ScriptInterface;
 import org.micromanager.internal.logging.LogFileManager;
-import org.micromanager.internal.MMOptions;
 import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.script.ScriptPanel;
 import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.GUIColors;
 import org.micromanager.internal.utils.MMDialog;
@@ -59,32 +60,28 @@ import org.micromanager.internal.utils.UIMonitor;
  */
 public class OptionsDlg extends MMDialog {
    private static final long serialVersionUID = 1L;
+   private static final String IS_DEBUG_LOG_ENABLED = "is debug logging enabled";
+   private static final String SHOULD_CLOSE_ON_EXIT = "should close the entire program when the Micro-Manager plugin is closed";
+   private static final String BACKGROUND_MODE = "current window style (should be \"Day\" or \"Night\")";
 
    private final JTextField startupScriptFile_;
    private final JTextField bufSizeField_;
    private JTextField logDeleteDaysField_;
    private final JComboBox comboDisplayBackground_;
 
-   private MMOptions opts_;
    private CMMCore core_;
-   private Preferences mainPrefs_;
    private ScriptInterface parent_;
    private GUIColors guiColors_;
 
    /**
     * Create the dialog
-    * @param opts - Application wide preferences
     * @param core - The Micro-Manager Core object
-    * @param mainPrefs - Preferences of the encapsulating app (i.e. MMStudio Prefs)
     * @param parent - MMStudio api 
     */
-   public OptionsDlg(MMOptions opts, CMMCore core, Preferences mainPrefs, 
-           ScriptInterface parent) {
+   public OptionsDlg(CMMCore core, ScriptInterface parent) {
       super();
       parent_ = parent;
-      opts_ = opts;
       core_ = core;
-      mainPrefs_ = mainPrefs;
       guiColors_ = new GUIColors();
 
       setResizable(false);
@@ -104,23 +101,24 @@ public class OptionsDlg extends MMDialog {
       final JCheckBox debugLogEnabledCheckBox = new JCheckBox();
       debugLogEnabledCheckBox.setText("Enable debug logging");
       debugLogEnabledCheckBox.setToolTipText("Enable verbose logging for troubleshooting and debugging");
-      debugLogEnabledCheckBox.setSelected(opts_.debugLogEnabled_);
+      debugLogEnabledCheckBox.setSelected(getIsDebugLogEnabled());
       debugLogEnabledCheckBox.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(final ActionEvent e) {
-            opts_.debugLogEnabled_ = debugLogEnabledCheckBox.isSelected();
-            core_.enableDebugLog(opts_.debugLogEnabled_);
-            UIMonitor.enable(opts_.debugLogEnabled_);
+            boolean isEnabled = debugLogEnabledCheckBox.isSelected();
+            setIsDebugLogEnabled(isEnabled);
+            core_.enableDebugLog(isEnabled);
+            UIMonitor.enable(isEnabled);
          }
       });
 
-      final JCheckBox doNotAskForConfigFileCheckBox = new JCheckBox();
-      doNotAskForConfigFileCheckBox.setText("Do not ask for config file at startup");
-      doNotAskForConfigFileCheckBox.setSelected(opts_.doNotAskForConfigFile_);
-      doNotAskForConfigFileCheckBox.addActionListener(new ActionListener() {
+      final JCheckBox askForConfigFileCheckBox = new JCheckBox();
+      askForConfigFileCheckBox.setText("Ask for config file at startup");
+      askForConfigFileCheckBox.setSelected(MMIntroDlg.getShouldAskForConfigFile());
+      askForConfigFileCheckBox.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
-            opts_.doNotAskForConfigFile_ = doNotAskForConfigFileCheckBox.isSelected();
+            MMIntroDlg.setShouldAskForConfigFile(askForConfigFileCheckBox.isSelected());
          }
       });
 
@@ -139,16 +137,16 @@ public class OptionsDlg extends MMDialog {
 
       final JCheckBox deleteLogCheckBox = new JCheckBox();
       deleteLogCheckBox.setText("Delete log files after");
-      deleteLogCheckBox.setSelected(opts_.deleteOldCoreLogs_);
+      deleteLogCheckBox.setSelected(MMStudio.getShouldDeleteOldCoreLogs());
       deleteLogCheckBox.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            opts_.deleteOldCoreLogs_ = deleteLogCheckBox.isSelected();
+            MMStudio.setShouldDeleteOldCoreLogs(deleteLogCheckBox.isSelected());
          }
       });
 
       logDeleteDaysField_ =
-         new JTextField(Integer.toString(opts_.deleteCoreLogAfterDays_), 2);
+         new JTextField(Integer.toString(MMStudio.getCoreLogLifetimeDays()), 2);
 
       final JButton deleteLogFilesButton = new JButton();
       deleteLogFilesButton.setText("Delete Log Files Now");
@@ -197,35 +195,23 @@ public class OptionsDlg extends MMDialog {
             if (answer != JOptionPane.YES_OPTION) {
                return;
             }
-
-            try {
-               // TODO: just call removeNode() on mainPrefs_. This will require
-               // updating every object that has a reference to mainPrefs_
-               // (or alternatively setting things up so that nobody maintains
-               // such a reference).
-               boolean previouslyRegistered = mainPrefs_.getBoolean(RegistrationDlg.REGISTRATION, false);
-               mainPrefs_.clear();
-               Preferences acqPrefs = mainPrefs_.node(mainPrefs_.absolutePath() + "/" + AcqControlDlg.ACQ_SETTINGS_NODE);
-               acqPrefs.clear();
-
-               // restore registration flag
-               mainPrefs_.putBoolean(RegistrationDlg.REGISTRATION, previouslyRegistered);
-
-               // Rather than updating all the GUI elements, let's just close
-               // the dialog.
-               dispose();
-               opts_.resetSettings();
-            } catch (BackingStoreException exc) {
-               ReportingUtils.showError(e);
-            }
+            // Clear everything except whether or not this user has
+            // registered.
+            boolean haveRegistered = RegistrationDlg.getHaveRegistered();
+            DefaultUserProfile.getInstance().clearProfile();
+            RegistrationDlg.setHaveRegistered(haveRegistered);
+            // Rather than updating all the GUI elements, let's just close
+            // the dialog.
+            dispose();
          }
       });
 
-      bufSizeField_ = new JTextField(Integer.toString(opts_.circularBufferSizeMB_), 5);
+      bufSizeField_ = new JTextField(
+            Integer.toString(MMStudio.getCircularBufferSize()), 5);
 
       comboDisplayBackground_ = new JComboBox(guiColors_.styleOptions);
       comboDisplayBackground_.setMaximumRowCount(2);
-      comboDisplayBackground_.setSelectedItem(opts_.displayBackground_);
+      comboDisplayBackground_.setSelectedItem(getBackgroundMode());
       comboDisplayBackground_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -233,117 +219,39 @@ public class OptionsDlg extends MMDialog {
          }
       });
 
-      startupScriptFile_ = new JTextField(opts_.startupScript_);
+      startupScriptFile_ = new JTextField(ScriptPanel.getStartupScript());
 
       final JCheckBox closeOnExitCheckBox = new JCheckBox();
       closeOnExitCheckBox.setText("Close app when quitting MM");
-      closeOnExitCheckBox.setSelected(opts_.closeOnExit_);
+      closeOnExitCheckBox.setSelected(getShouldCloseOnExit());
       closeOnExitCheckBox.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
-            opts_.closeOnExit_ = closeOnExitCheckBox.isSelected();
-            MMStudio.getFrame().setExitStrategy(opts_.closeOnExit_);
+            boolean shouldClose = closeOnExitCheckBox.isSelected();
+            setShouldCloseOnExit(shouldClose);
+            MMStudio.getFrame().setExitStrategy(shouldClose);
          }
       });
 
-      final JComboBox prefZoomCombo = new JComboBox();
-      prefZoomCombo.setModel(new DefaultComboBoxModel(new String[]{
-         "8%", "12%", "16%",  "25%",  "33%", "50%", "75%", "100%", "150%","200%","300%","400%","600%"
-      }));
-      double mag = opts_.windowMag_;
-      int index = 0;
-      if (mag == 0.25 / 3.0) {
-         index = 0;
-      } else if (mag == 0.125) {
-         index = 1;
-      } else if (mag == 0.16) {
-         index = 2;
-      } else if (mag == 0.25) {
-         index = 3;
-      } else if (mag == 0.33) {
-         index = 4;
-      } else if (mag == 0.5) {
-         index = 5;
-      } else if (mag == 0.75) {
-         index = 6;
-      } else if (mag == 1.0) {
-         index = 7;
-      } else if (mag == 1.5) {
-         index = 8;
-      } else if (mag == 2.0) {
-         index = 9;
-      } else if (mag == 3.0) {
-         index = 10;
-      } else if (mag == 4.0) {
-         index = 11;
-      } else if (mag == 6.0) {
-         index = 12;
-      }
-      prefZoomCombo.setSelectedIndex(index);
-      prefZoomCombo.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            switch (prefZoomCombo.getSelectedIndex()) {
-               case (0):
-                  opts_.windowMag_ = 0.25 / 3.0;
-                  break;
-               case (1):
-                  opts_.windowMag_ = 0.125;
-                  break;
-               case (2):
-                  opts_.windowMag_ = 0.16;
-                  break;
-               case (3):
-                  opts_.windowMag_ = 0.25;
-                  break;
-               case (4):
-                  opts_.windowMag_ = 0.33;
-                  break;
-               case (5):
-                  opts_.windowMag_ = 0.5;
-                  break;
-               case (6):
-                  opts_.windowMag_ = 0.75;
-                  break;
-               case (7):
-                  opts_.windowMag_ = 1.0;
-                  break;
-               case (8):
-                  opts_.windowMag_ = 1.5;
-                  break;
-               case (9):
-                  opts_.windowMag_ = 2.0;
-                  break;
-               case (10):
-                  opts_.windowMag_ = 3.0;
-                  break;
-               case (11):
-                  opts_.windowMag_ = 4.0;
-                  break;
-               case (12):
-                  opts_.windowMag_ = 6.0;
-                  break;
-            }
-         }
-      });
-      
       final JCheckBox metadataFileWithMultipageTiffCheckBox = new JCheckBox();
       metadataFileWithMultipageTiffCheckBox.setText("Create metadata.txt file with Image Stack Files");
-      metadataFileWithMultipageTiffCheckBox.setSelected(opts_.mpTiffMetadataFile_);
+      metadataFileWithMultipageTiffCheckBox.setSelected(
+            StorageMultipageTiff.getShouldGenerateMetadataFile());
       metadataFileWithMultipageTiffCheckBox.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
-            opts_.mpTiffMetadataFile_ = metadataFileWithMultipageTiffCheckBox.isSelected();
+            StorageMultipageTiff.setShouldGenerateMetadataFile(metadataFileWithMultipageTiffCheckBox.isSelected());
          }
       });
       
       final JCheckBox separateFilesForPositionsMPTiffCheckBox = new JCheckBox();
       separateFilesForPositionsMPTiffCheckBox.setText("Save XY positions in separate Image Stack Files");
-      separateFilesForPositionsMPTiffCheckBox.setSelected(opts_.mpTiffSeparateFilesForPositions_);
+      separateFilesForPositionsMPTiffCheckBox.setSelected(
+            StorageMultipageTiff.getShouldSplitPositions());
       separateFilesForPositionsMPTiffCheckBox.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
-            opts_.mpTiffSeparateFilesForPositions_ = separateFilesForPositionsMPTiffCheckBox.isSelected();
+            StorageMultipageTiff.setShouldSplitPositions(separateFilesForPositionsMPTiffCheckBox.isSelected());
          }
       });
   
@@ -354,22 +262,16 @@ public class OptionsDlg extends MMDialog {
          @Override
          public void actionPerformed(ActionEvent arg0) {
             AcqControlDlg.setShouldSyncExposure(syncExposureMainAndMDA.isSelected());
-            try {
-               DefaultUserProfile.getInstance().saveProfile();
-            }
-            catch (java.io.IOException e) {
-               ReportingUtils.showError(e, "Error saving user profile");
-            }
          }
       });
   
       final JCheckBox hideMDAdisplay = new JCheckBox();
       hideMDAdisplay.setText("Hide MDA display");
-      hideMDAdisplay.setSelected(opts_.hideMDADisplay_);
+      hideMDAdisplay.setSelected(AcqControlDlg.getShouldHideMDADisplay());
       hideMDAdisplay.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
-            opts_.hideMDADisplay_ = hideMDAdisplay.isSelected();
+            AcqControlDlg.setShouldHideMDADisplay(hideMDAdisplay.isSelected());
          }
       });
 
@@ -390,10 +292,6 @@ public class OptionsDlg extends MMDialog {
       add(new JLabel("Display Background:"), "split 2, gapright push");
       add(comboDisplayBackground_, "wrap");
 
-      add(new JLabel("Preferred Image Window Zoom:"),
-            "split 2, gapright push");
-      add(prefZoomCombo, "wrap");
-
       add(new JSeparator(), "wrap");
 
       add(new JLabel("Sequence Buffer Size:"), "split 3, gapright push");
@@ -407,7 +305,7 @@ public class OptionsDlg extends MMDialog {
 
       add(new JSeparator(), "wrap");
 
-      add(doNotAskForConfigFileCheckBox, "wrap");
+      add(askForConfigFileCheckBox, "wrap");
       add(alwaysUseDefaultProfileCheckBox, "wrap");
 
       add(new JLabel("Startup Script:"), "split 2, grow 0, gapright related");
@@ -443,7 +341,7 @@ public class OptionsDlg extends MMDialog {
    private void changeBackground() {
       String background = (String) comboDisplayBackground_.getSelectedItem();
 
-      opts_.displayBackground_ = background;
+      setBackgroundMode(background);
       parent_.setBackgroundStyle(background);
    }
 
@@ -461,12 +359,47 @@ public class OptionsDlg extends MMDialog {
          return;
       }
 
-      opts_.circularBufferSizeMB_ = seqBufSize;
-      opts_.startupScript_ = startupScriptFile_.getText();
-      opts_.deleteCoreLogAfterDays_ = deleteLogDays;
-      opts_.saveSettings();
+      MMStudio.setCircularBufferSize(seqBufSize);
+      MMStudio.setCoreLogLifetimeDays(deleteLogDays);
+      try {
+         DefaultUserProfile.getInstance().saveProfile();
+      }
+      catch (java.io.IOException e) {
+         ReportingUtils.showError(e, "An error occurred while saving your options");
+      }
 
+      ScriptPanel.setStartupScript(startupScriptFile_.getText());
       parent_.makeActive();
       dispose();
+   }
+
+   public static boolean getIsDebugLogEnabled() {
+      return DefaultUserProfile.getInstance().getBoolean(OptionsDlg.class,
+            IS_DEBUG_LOG_ENABLED, false);
+   }
+
+   public static void setIsDebugLogEnabled(boolean isEnabled) {
+      DefaultUserProfile.getInstance().setBoolean(OptionsDlg.class,
+            IS_DEBUG_LOG_ENABLED, isEnabled);
+   }
+
+   public static boolean getShouldCloseOnExit() {
+      return DefaultUserProfile.getInstance().getBoolean(OptionsDlg.class,
+            SHOULD_CLOSE_ON_EXIT, true);
+   }
+
+   public static void setShouldCloseOnExit(boolean shouldClose) {
+      DefaultUserProfile.getInstance().setBoolean(OptionsDlg.class,
+            SHOULD_CLOSE_ON_EXIT, shouldClose);
+   }
+
+   public static String getBackgroundMode() {
+      return DefaultUserProfile.getInstance().getString(OptionsDlg.class,
+            BACKGROUND_MODE, ScriptInterface.DAY);
+   }
+
+   public static void setBackgroundMode(String mode) {
+      DefaultUserProfile.getInstance().setString(OptionsDlg.class,
+            BACKGROUND_MODE, mode);
    }
 }

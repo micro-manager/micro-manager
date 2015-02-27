@@ -164,10 +164,10 @@ public class FileDialogs {
       return selectedFile;
    }
 
-   public static File show(Window parent, String title, FileType type,
+   private static File show(Window parent, String title, FileType type,
                     boolean selectDirectories, boolean load) {
-      Preferences node = Preferences.userNodeForPackage(FileDialogs.class);
-      String startFile = node.get(type.name, type.defaultFileName);
+      String startFile = DefaultUserProfile.getInstance().getString(
+            FileDialogs.class, type.name, type.defaultFileName);
       File startDir = null;
       if (startFile != null) {
          startDir = new File(startFile);
@@ -175,14 +175,21 @@ public class FileDialogs {
       File result = show(parent, title, startDir, selectDirectories, load,
                          type.description, type.suffixes, type.suggestFileOnSave);
       if (result != null) {
-         node.put(type.name, result.getAbsolutePath());
+         storePath(type, result);
       }
       return result;
    }
 
    public static void storePath(FileType type, File path) {
-      Preferences.userNodeForPackage(FileDialogs.class)
-              .put(type.name, path.getAbsolutePath());
+      DefaultUserProfile profile = DefaultUserProfile.getInstance();
+      profile.setString(FileDialogs.class, type.name,
+            path.getAbsolutePath());
+      try {
+         profile.saveProfile();
+      }
+      catch (java.io.IOException e) {
+         ReportingUtils.logError(e, "Unable to save profile.");
+      }
    }
 
    public static File openFile(Window parent, String title, FileType type) {

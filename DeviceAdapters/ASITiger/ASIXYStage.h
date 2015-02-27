@@ -114,6 +114,7 @@ private:
    double stepSizeYUm_;
    string axisLetterX_;
    string axisLetterY_;
+   bool advancedPropsEnabled_;
 
    // private helper functions
    int OnSaveJoystickSettings();

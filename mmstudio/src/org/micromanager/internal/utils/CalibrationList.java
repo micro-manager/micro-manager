@@ -141,5 +141,4 @@ public class CalibrationList {
    public void setLabel(String lab) {
       label_ = lab;
    }
-   
 }

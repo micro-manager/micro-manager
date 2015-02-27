@@ -35,7 +35,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -53,6 +52,7 @@ import mmcorej.StrVector;
 
 import org.micromanager.ScriptInterface;
 import org.micromanager.MMListenerAdapter;
+import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.PropertyValueCellEditor;
 import org.micromanager.internal.utils.PropertyValueCellRenderer;
@@ -115,8 +115,9 @@ public class PropertyEditor extends MMFrame {
    public PropertyEditor() {
       super();
       
+      final DefaultUserProfile profile = DefaultUserProfile.getInstance();
       flags_ = new ShowFlags();
-      flags_.load(getPrefsNode());
+      flags_.load(PropertyEditor.class);
       
       setIconImage(SwingResourceManager.getImage(PropertyEditor.class, "icons/microscope.gif"));
       springLayout = new SpringLayout();
@@ -125,15 +126,16 @@ public class PropertyEditor extends MMFrame {
       addWindowListener(new WindowAdapter() {
          @Override
          public void windowClosing(WindowEvent e) {
-            Preferences prefs = getPrefsNode();
-            prefs.putBoolean(PREF_SHOW_READONLY, showReadonlyCheckBox_.isSelected());
-            flags_.save(getPrefsNode());
+            profile.setBoolean(PropertyEditor.class, PREF_SHOW_READONLY,
+               showReadonlyCheckBox_.isSelected());
+            flags_.save(PropertyEditor.class);
          }
          @Override
          public void windowOpened(WindowEvent e) {
             // restore values from the previous session
-            Preferences prefs = getPrefsNode();
-            showReadonlyCheckBox_.setSelected(prefs.getBoolean(PREF_SHOW_READONLY, true));
+            showReadonlyCheckBox_.setSelected(
+               profile.getBoolean(PropertyEditor.class,
+                  PREF_SHOW_READONLY, true));
             data_.update(false);
             data_.fireTableStructureChanged();
         }
@@ -188,8 +190,8 @@ public class PropertyEditor extends MMFrame {
       springLayout.putConstraint(SpringLayout.NORTH, showReadonlyCheckBox_, 40, SpringLayout.NORTH, getContentPane());
       
       // restore values from the previous session
-      Preferences prefs = getPrefsNode();
-      showReadonlyCheckBox_.setSelected(prefs.getBoolean(PREF_SHOW_READONLY, true));
+      showReadonlyCheckBox_.setSelected(profile.getBoolean(
+               PropertyEditor.class, PREF_SHOW_READONLY, true));
 
       showCamerasCheckBox_ = new JCheckBox();
       showCamerasCheckBox_.setFont(new Font("", Font.PLAIN, 10));

@@ -42,7 +42,7 @@ public class MultipleAcquisitionTableModel extends AbstractTableModel {
    @Override
    public Object getValueAt(int rowIndex, int columnIndex) {
       if (columnIndex == 0) {
-         return 0; //TODO: acq order
+         return manager_.getGroupIndex(rowIndex) + 1;
       } else if (columnIndex == 1) {
          return manager_.getAcquisitionName(rowIndex);
       } else {
@@ -52,10 +52,7 @@ public class MultipleAcquisitionTableModel extends AbstractTableModel {
 
    @Override
    public void setValueAt(Object value, int row, int col) {
-      if (col == 0) {       
-         //acquisition order
-         
-      } else if (col == 1) {
+       if (col == 1) {
          manager_.getAcquisition(row).name_ = (String) value;
          gui_.refreshAcquisitionSettings(); // update name as shown in acq settings
 
@@ -64,7 +61,7 @@ public class MultipleAcquisitionTableModel extends AbstractTableModel {
    
    @Override
    public boolean isCellEditable(int rowIndex, int colIndex) {
-      return true;
+      return colIndex == 1 ? true : false;
    }
 
 

@@ -1,6 +1,7 @@
 package acq;
 
 import java.util.prefs.Preferences;
+import javax.swing.filechooser.FileSystemView;
 import main.Navigator;
 import surfacesandregions.MultiPosRegion;
 import surfacesandregions.SurfaceInterpolator;
@@ -41,7 +42,7 @@ public class FixedAreaAcquisitionSettings  {
    
    public FixedAreaAcquisitionSettings() {
       Preferences prefs = Navigator.getPrefs();
-      dir_ =  prefs.get(PREF_PREFIX + "DIR", "");
+      dir_ =  prefs.get(PREF_PREFIX + "DIR", FileSystemView.getFileSystemView().getHomeDirectory().getAbsolutePath());
       name_ = prefs.get(PREF_PREFIX + "NAME", "Untitled");
       timeEnabled_ = prefs.getBoolean(PREF_PREFIX + "TE", false);
       timePointInterval_ = prefs.getDouble(PREF_PREFIX + "TPI", 0);

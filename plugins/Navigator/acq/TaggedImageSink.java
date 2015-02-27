@@ -46,9 +46,7 @@ public class TaggedImageSink  {
    }
    
    public boolean isIdle() {    
-      synchronized (idleLock_) {
-         return imageProducingQueue_.size() == 0 && idle_;
-      }
+      return imageProducingQueue_.size() == 0 && idle_;
    }
    
    public void start() {
@@ -61,10 +59,7 @@ public class TaggedImageSink  {
             try {
                while (true) {
                   TaggedImage image;
-                  synchronized (idleLock_) {
-                     image = imageProducingQueue_.poll(1, TimeUnit.SECONDS);
-                     idle_ = image == null;
-                  }
+                  image = imageProducingQueue_.poll(1, TimeUnit.SECONDS);
                   if (image != null) {
                      if (((image.pix == null) && (image.tags == null))) { //check for Poison final image
                         break;
@@ -72,6 +67,8 @@ public class TaggedImageSink  {
                      ++imageCount;
                      imageCache_.putImage(image);
                      lastImageLabel_ = MDUtils.getLabel(image.tags);
+                  } else {
+                     idle_ = true;
                   }
                }
             } catch (Exception ex2) {
@@ -79,7 +76,7 @@ public class TaggedImageSink  {
             }
             long t2 = System.currentTimeMillis();
             ReportingUtils.logMessage(imageCount + " images stored in " + (t2 - t1) + " ms.");          
-            acq_.finish();
+            acq_.markAsFinished();
             imageCache_.finished();
          }
       };

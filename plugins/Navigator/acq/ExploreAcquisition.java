@@ -28,10 +28,16 @@ public class ExploreAcquisition extends Acquisition {
 
    public ExploreAcquisition(ExploreAcqSettings settings) {
       super(settings.zStep_);
-      zTop_ = settings.zTop_;
-      zBottom_ = settings.zBottom_;
-      zOrigin_ = zTop_;
-      initialize(settings.dir_, settings.name_);
+      try {
+         //start at current z position
+         zTop_ = core_.getPosition(zStage_);
+         zBottom_ = core_.getPosition(zStage_);
+         zOrigin_ = core_.getPosition(zStage_);
+         initialize(settings.dir_, settings.name_);
+      } catch (Exception ex) {
+        ReportingUtils.showError("Couldn't get focus device position");
+        throw new RuntimeException();
+      }
    }
    
    public void abort() {
@@ -41,10 +47,6 @@ public class ExploreAcquisition extends Acquisition {
       engineOutputQueue_.add(new TaggedImage(null, null));
       imageSink_.waitToDie();
       //image sink will call finish when it completes
-   }
-
-   public void finish() {
-      finished_ = true;
    }
 
    public void acquireTiles(int row1, int col1, int row2, int col2) {

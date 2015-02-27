@@ -86,6 +86,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
    public static final String COLOR_SETTINGS_NODE = "ColorSettings";
    private static final String EXPOSURE_SETTINGS_NODE = "AcqExposureSettings";
    private static final String SHOULD_SYNC_EXPOSURE = "should sync exposure times between main window and Acquire dialog";
+   private static final String SHOULD_HIDE_DISPLAY = "should hide image display windows for multi-dimensional acquisitions";
    private JComboBox channelGroupCombo_;
    private final JTextArea commentTextArea_;
    private final JComboBox zValCombo_;
@@ -2093,5 +2094,15 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
    public static void setShouldSyncExposure(boolean shouldSync) {
       DefaultUserProfile.getInstance().setBoolean(AcqControlDlg.class,
             SHOULD_SYNC_EXPOSURE, shouldSync);
+   }
+
+   public static boolean getShouldHideMDADisplay() {
+      return DefaultUserProfile.getInstance().getBoolean(AcqControlDlg.class,
+            SHOULD_HIDE_DISPLAY, false);
+   }
+
+   public static void setShouldHideMDADisplay(boolean shouldHide) {
+      DefaultUserProfile.getInstance().setBoolean(AcqControlDlg.class,
+            SHOULD_HIDE_DISPLAY, shouldHide);
    }
 }

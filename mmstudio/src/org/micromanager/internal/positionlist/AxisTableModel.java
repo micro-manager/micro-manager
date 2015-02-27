@@ -2,10 +2,10 @@ package org.micromanager.internal.positionlist;
 
 import com.google.common.eventbus.EventBus;
 
-import java.util.prefs.Preferences;
-
 import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
+
+import org.micromanager.internal.utils.DefaultUserProfile;
 
 /**
  * Model holding axis data, used to determine which axis will be recorded
@@ -16,18 +16,15 @@ class AxisTableModel extends AbstractTableModel {
    private AxisList axisList_;
    private JTable axisTable_;
    private EventBus bus_;
-   private Preferences prefs_;
    public final String[] COLUMN_NAMES = new String[] {
          "Use",
          "Stage name"
    };
   
-   public AxisTableModel(AxisList list, JTable table, EventBus bus, 
-         Preferences prefs) {
+   public AxisTableModel(AxisList list, JTable table, EventBus bus) {
       axisList_ = list;
       axisTable_ = table;
       bus_ = bus;
-      prefs_ = prefs;
    }
 
    @Override
@@ -77,7 +74,8 @@ class AxisTableModel extends AbstractTableModel {
    public void setValueAt(Object value, int rowIndex, int columnIndex) {
       if (columnIndex == 0) { // I.e. action was in the column with checkboxes
          axisList_.get(rowIndex).setUse((Boolean) value);
-         prefs_.putBoolean(axisList_.get(rowIndex).getAxisName(), 
+         DefaultUserProfile.getInstance().setBoolean(
+               AxisTableModel.class, axisList_.get(rowIndex).getAxisName(), 
                (Boolean) value); 
          bus_.post(new MoversChangedEvent());
       }

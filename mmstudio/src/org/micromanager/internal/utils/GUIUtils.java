@@ -53,7 +53,6 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashSet;
 import java.util.Vector;
-import java.util.prefs.Preferences;
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
@@ -223,23 +222,34 @@ public class GUIUtils {
 
    // ******* Utility methods for persisting windows *******
    
+   // TODO: these methods for storing/retrieving window positions should be
+   // replaced by using MMDialog/MMFrame instead.
    private static HashSet<Class> windowsWithPersistedPositions = new HashSet<Class>();
    
    private static void storePosition(final Window win) {
-      Preferences prefs = Preferences.userRoot().node(win.getClass().getName());
-      JavaUtils.putObjectInPrefs(prefs, DIALOG_POSITION, win.getLocation());
+      Point loc = win.getLocation();
+      // Note we don't write to disk here; we'll rely on the profile getting
+      // saved at program exit, if it doesn't happen sooner. We don't want to
+      // spam disk writes every time a window changes position.
+      DefaultUserProfile.getInstance().setIntArray(
+            win.getClass(), DIALOG_POSITION,
+            new Integer[] {loc.x, loc.y});
    }
    
    public static void recallPosition(final Window win) {
       if (!windowsWithPersistedPositions.contains(win.getClass())) {
-         Preferences prefs = Preferences.userRoot().node(win.getClass().getName());
-         Point dialogPosition = JavaUtils.getObjectFromPrefs(prefs, DIALOG_POSITION, (Point) null);
-         if (dialogPosition == null ||
-               !isLocationInScreenBounds(dialogPosition)) {
-            Dimension screenDims = JavaUtils.getScreenDimensions();
-            dialogPosition = new Point((screenDims.width - win.getWidth()) / 2, (screenDims.height - win.getHeight()) / 2);
+         Integer[] loc = DefaultUserProfile.getInstance().getIntArray(
+               win.getClass(), DIALOG_POSITION, null);
+         Point winPos = null;
+         if (loc != null) {
+            winPos = new Point(loc[0], loc[1]);
          }
-         win.setLocation(dialogPosition);
+         if (winPos == null || !isLocationInScreenBounds(winPos)) {
+            Dimension screenDims = JavaUtils.getScreenDimensions();
+            winPos = new Point((screenDims.width - win.getWidth()) / 2,
+                  (screenDims.height - win.getHeight()) / 2);
+         }
+         win.setLocation(winPos);
          win.addComponentListener(new ComponentAdapter() {
             @Override
             public void componentMoved(ComponentEvent e) {

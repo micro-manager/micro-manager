@@ -11,10 +11,10 @@ import java.io.IOException;
  */
 public interface UserProfile {
    /**
-    * Profile found in this file provide default values for all users; these
-    * values will be used only if the user has not set their own values (which
-    * often happens automatically as a side-effect of interacting with the
-    * program).
+    * The profile found in this file provide default values for all users;
+    * these values will be used only if the user has not set their own values
+    * for a key (and such values are often set automatically as a side-effect
+    * of interacting with the program).
     */
    public static final String GLOBAL_SETTINGS_FILE = "GlobalUserProfile.txt";
 
@@ -28,13 +28,13 @@ public interface UserProfile {
     * @param key The identifier for the parameter.
     * @param fallback The value to return if the key is not found or the key
     *                 points to null.
-    * @return The value in storage, or null if the value does not exist or the
-    *         value does not have the type String.
+    * @return The value in storage, or null if the value does not exist.
     */
    public String getString(Class<?> c, String key, String fallback);
    /** As above, but for String arrays. */
    public String[] getStringArray(Class<?> c, String key, String[] fallback);
-   /** Set a new String value in the storage */
+   /** Set a new String value in the storage. Changes will not be saved until
+    * and unless saveProfile() is called, below. */
    public void setString(Class<?> c, String key, String value);
    /** As above, but for String arrays. */
    public void setStringArray(Class<?> c, String key, String[] value);
@@ -87,6 +87,13 @@ public interface UserProfile {
      * preserved. This can be useful if you want to be able to save/load your
      * settings, in conjunction with appendFile(), below. */
    public void saveProfileSubsetToFile(Class<?> c, String path) throws IOException;
+
+   /** Remove all keys from the profile that are associated with the provided
+     * class. This functionally allows you to reset the profile to use the
+     * default values (or the values specified in the global settings file).
+     * Changes will not be saved until and unless saveProfile() is called.
+     */
+   public void clearProfileSubset(Class<?> c);
 
    /** Merge the profile at the specified path into the current active user
      * profile. All keys specified in the file will overwrite keys in the

@@ -71,7 +71,6 @@ private:
    unsigned int height_;
    unsigned int pixDepth_;
    std::string name_;
-   //MM::ImageMetadata metadata_;
    Metadata metadata_;
 };
 

@@ -29,6 +29,7 @@ import org.micromanager.SequenceSettings;
 import org.micromanager.events.internal.EventManager;
 import org.micromanager.events.internal.PipelineEvent;
 import org.micromanager.events.internal.ProcessorEvent;
+import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.interfaces.AcqSettingsListener;
 import org.micromanager.internal.utils.AcqOrderMode;
 import org.micromanager.internal.utils.AutofocusManager;
@@ -155,7 +156,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
          // and VirtualImageDisplay if desired
          String acqName = acqManager.createAcquisition(
                  summaryMetadata_, acquisitionSettings.save, this,
-                 studio_.getHideMDADisplayOption());
+                 AcqControlDlg.getShouldHideMDADisplay());
          MMAcquisition acq = acqManager.getAcquisition(acqName);
          store_ = acq.getDatastore();
 

@@ -69,6 +69,7 @@ public class MMIntroDlg extends JDialog {
    private static final String USERNAME_NEW = "Create new user";
    private static final String RECENTLY_USED_CONFIGS = "recently-used config files";
    private static final String GLOBAL_CONFIGS = "config files supplied from a central authority";
+   private static final String SHOULD_ASK_FOR_CONFIG = "whether or not the intro dialog should include a prompt for the config file";
    private static final String DEFAULT_CONFIG_FILE_NAME = "MMConfig_demo.cfg";
    private JTextArea welcomeTextArea_;
    private boolean okFlag_ = true;
@@ -158,30 +159,12 @@ public class MMIntroDlg extends JDialog {
       version10betaLabel.setBounds(5, 216, 193, 13);
       getContentPane().add(version10betaLabel);
 
-      final JLabel loadConfigurationLabel = new JLabel();
-      loadConfigurationLabel.setFont(new Font("Arial", Font.PLAIN, 10));
-      loadConfigurationLabel.setText("Configuration file:");
-      loadConfigurationLabel.setBounds(5, 225, 319, 19);
-      getContentPane().add(loadConfigurationLabel);
-
-      final JButton browseButton = new JButton();
-      browseButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            loadConfigFile();
-         }
-      });
-      browseButton.setText("...");
-      browseButton.setBounds(350, 245, 36, 26);
-      getContentPane().add(browseButton);
-
-      cfgFileDropperDown_ = new JComboBox();
-      cfgFileDropperDown_.setFont(new Font("Arial", Font.PLAIN, 10));
-      cfgFileDropperDown_.setBounds(5, 245, 342, 26);
-      getContentPane().add(cfgFileDropperDown_);
-
       if (!DefaultUserProfile.getShouldAlwaysUseDefaultProfile()) {
          addProfileDropdown();
+      }
+
+      if (getShouldAskForConfigFile()) {
+         addConfigFileSelect();
       }
 
       welcomeTextArea_ = new JTextArea() {
@@ -204,10 +187,34 @@ public class MMIntroDlg extends JDialog {
 
    }
 
+   private void addConfigFileSelect() {
+      final JLabel loadConfigurationLabel = new JLabel();
+      loadConfigurationLabel.setFont(new Font("Arial", Font.PLAIN, 10));
+      loadConfigurationLabel.setText("Configuration file:");
+      loadConfigurationLabel.setBounds(5, 270, 319, 19);
+      getContentPane().add(loadConfigurationLabel);
+
+      final JButton browseButton = new JButton();
+      browseButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            loadConfigFile();
+         }
+      });
+      browseButton.setText("...");
+      browseButton.setBounds(350, 287, 36, 26);
+      getContentPane().add(browseButton);
+
+      cfgFileDropperDown_ = new JComboBox();
+      cfgFileDropperDown_.setFont(new Font("Arial", Font.PLAIN, 10));
+      cfgFileDropperDown_.setBounds(5, 287, 342, 26);
+      getContentPane().add(cfgFileDropperDown_);
+   }
+
    private void addProfileDropdown() {
       JLabel userProfileLabel = new JLabel("User profile:");
       userProfileLabel.setFont(new Font("Arial", Font.PLAIN, 10));
-      userProfileLabel.setBounds(5, 268, 319, 19);
+      userProfileLabel.setBounds(5, 228, 319, 19);
       getContentPane().add(userProfileLabel);
 
       final DefaultUserProfile profile = DefaultUserProfile.getInstance();
@@ -222,7 +229,7 @@ public class MMIntroDlg extends JDialog {
          userSelect_.addItem(userName);
       }
       userSelect_.setSelectedItem(DefaultUserProfile.DEFAULT_USER);
-      userSelect_.setBounds(5, 285, 342, 26);
+      userSelect_.setBounds(5, 244, 342, 26);
       userSelect_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -257,6 +264,10 @@ public class MMIntroDlg extends JDialog {
 
    // Add a new config file to the dropdown menu.
    public void setConfigFile(String path) {
+      if (cfgFileDropperDown_ == null) {
+         // Prompting for config files is disabled.
+         return;
+      }
       cfgFileDropperDown_.removeAllItems();
       DefaultUserProfile profile = DefaultUserProfile.getInstance();
       ArrayList<String> configs = new ArrayList<String>(
@@ -305,6 +316,10 @@ public class MMIntroDlg extends JDialog {
    }
       
    public String getConfigFile() {
+      if (cfgFileDropperDown_ == null) {
+         // Prompting for config files is disabled.
+         return "";
+      }
        String tvalue = cfgFileDropperDown_.getSelectedItem().toString();
        String nvalue = "(none)";
        if( nvalue.equals(tvalue))
@@ -327,5 +342,15 @@ public class MMIntroDlg extends JDialog {
       if (f != null) {
          setConfigFile(f.getAbsolutePath());
       }
+   }
+
+   public static boolean getShouldAskForConfigFile() {
+      return DefaultUserProfile.getInstance().getBoolean(MMIntroDlg.class,
+            SHOULD_ASK_FOR_CONFIG, true);
+   }
+
+   public static void setShouldAskForConfigFile(boolean shouldAsk) {
+      DefaultUserProfile.getInstance().setBoolean(MMIntroDlg.class,
+            SHOULD_ASK_FOR_CONFIG, shouldAsk);
    }
 }

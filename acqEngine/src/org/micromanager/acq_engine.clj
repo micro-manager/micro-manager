@@ -30,7 +30,7 @@
   (:import
     [ij ImagePlus]
     [java.io EOFException] ; abused to indicate canceled burst image collection
-    [java.net InetAddress]
+    [java.net InetAddress UnknownHostException]
     [java.util Date UUID]
     [java.util.concurrent CountDownLatch LinkedBlockingQueue TimeUnit]
     [mmcorej Configuration Metadata TaggedImage]
@@ -895,7 +895,8 @@
                           [{:name "Default" :color java.awt.Color/WHITE}])
         super-channels (all-super-channels simple-channels 
                                            (get-camera-channel-names))
-        ch-names (vec (map :name super-channels))]
+        ch-names (vec (map :name super-channels))
+        computer (try (.. InetAddress getLocalHost getHostName) (catch UnknownHostException e ""))]
      (JSONObject. {
       "BitDepth" (core getImageBitDepth)
       "Channels" (max 1 (count super-channels))
@@ -904,7 +905,7 @@
       "ChContrastMax" (JSONArray. (repeat (count super-channels) 65536))
       "ChContrastMin" (JSONArray. (repeat (count super-channels) 0))
       "Comment" (:comment settings)
-      "ComputerName" (.. InetAddress getLocalHost getHostName)
+      "ComputerName" computer
       "Depth" (core getBytesPerPixel)
       "Directory" (if (:save settings) (settings :root) "")
       "Frames" (max 1 (count (:frames settings)))

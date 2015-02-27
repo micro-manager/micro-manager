@@ -67,6 +67,7 @@ public class PairDisplayForm extends GUFrame{
    private static final String SHOWTRACKSUMMARYPREF = "showtracksummary";
    private static final String SAVETRACKSUMMARYFILEPREF = "savetracksummaryfile";
    private static final String SHOWOVERLAYPREF = "showoverlay";
+   private static final String P2DPREF = "p2d";
    private final Preferences prefs_;
    public static FileDialogs.FileType PAIR_DATA 
            = new FileDialogs.FileType("PAIR_DATA",
@@ -151,6 +152,11 @@ public class PairDisplayForm extends GUFrame{
               makeCheckBox("Show Pair Track Arrow overlay", SHOWOVERLAYPREF);
       panel.add(showOverlay, "wrap");
       
+      // Distance estimate
+      final JCheckBox distanceEstimate =
+              makeCheckBox("Estimate average distance (P2D)", P2DPREF);
+      panel.add(distanceEstimate, "wrap");
+      
       // basepath for the text file
       panel.add(filePathLabel, "split 3, span 3");
       filePath.setMinimumSize(new Dimension(250, 20));
@@ -187,7 +193,7 @@ public class PairDisplayForm extends GUFrame{
             DataCollectionForm.getInstance().listPairTracks(maxDistance, 
                     showTracks.isSelected(), showTrackSummary.isSelected(), 
                     showOverlay.isSelected(), saveTrackSummaryFile.isSelected(), 
-                    filePath.getText());
+                    filePath.getText(), distanceEstimate.isSelected());
 
             myFrame.dispose();
          }

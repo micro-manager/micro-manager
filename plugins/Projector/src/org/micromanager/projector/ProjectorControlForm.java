@@ -20,10 +20,12 @@ package org.micromanager.projector;
 // file call methods earlier in the file, with the exception of generated
 // code (found at the end of file).
 
-// This source file is formatted to be processed
+// This source file is partially formatted to be processed
 // with [docco](http://jashkenas.github.io/docco/),
 // which generates nice HTML documentation side-by-side with the
 // source code.
+
+// TODO: finish converting to Javadoc
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -37,8 +39,10 @@ import ij.gui.Roi;
 import ij.io.RoiEncoder;
 import ij.plugin.filter.GaussianBlur;
 import ij.plugin.frame.RoiManager;
+import ij.process.FloatPolygon;
 import ij.process.ImageProcessor;
 import java.awt.AWTEvent;
+import java.awt.HeadlessException;
 import java.awt.Point;
 import java.awt.Polygon;
 import java.awt.Rectangle;
@@ -55,6 +59,7 @@ import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -62,8 +67,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -90,7 +93,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 
 // The main window for the Projector plugin. Contains logic for calibration,
 // and control for SLMs and Galvos.
-public class ProjectorControlForm extends javax.swing.JFrame implements OnStateListener {
+public class ProjectorControlForm extends MMFrame implements OnStateListener {
    private static ProjectorControlForm formSingleton_;
    private final ProjectionDevice dev_;
    private final MouseListener pointAndShootMouseListener;
@@ -107,6 +110,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
    AtomicBoolean isRunning_ = new AtomicBoolean(false);
    private MosaicSequencingFrame mosaicSequencingFrame_;
    private String targetingShutter_;
+   private Boolean disposing_ = false;
 
    // ## Simple utility methods for points
    
@@ -149,36 +153,48 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
 
    // ## Methods for handling targeting channel and shutter
    
-   // Read the available channels from Micro-Manager Channel Group
-   // and populate the targeting channel drop-down menu.
+   /**
+    * Read the available channels from Micro-Manager Channel Group
+    * and populate the targeting channel drop-down menu.
+    */
    final void populateChannelComboBox(String initialChannel) {
       if (initialChannel == null) {
          initialChannel = (String) channelComboBox.getSelectedItem();
       }
       channelComboBox.removeAllItems();
       channelComboBox.addItem("");
-      for (String preset : core_.getAvailableConfigs(core_.getChannelGroup())) {
-         channelComboBox.addItem(preset);
+      // try to avoid crash on shutdown
+      if (core_ != null) {
+         for (String preset : core_.getAvailableConfigs(core_.getChannelGroup())) {
+            channelComboBox.addItem(preset);
+         }
+         channelComboBox.setSelectedItem(initialChannel);
       }
-      channelComboBox.setSelectedItem(initialChannel);
    }
 
-   // Read the available shutters from Micro-Manager and
-   // list them in the targeting shutter drop-down menu.
+   /**
+    * Read the available shutters from Micro-Manager and
+    * list them in the targeting shutter drop-down menu.
+    */
    final void populateShutterComboBox(String initialShutter) {
       if (initialShutter == null) {
          initialShutter = (String) shutterComboBox.getSelectedItem();
       }
       shutterComboBox.removeAllItems();
       shutterComboBox.addItem("");
-      for (String shutter : core_.getLoadedDevicesOfType(DeviceType.ShutterDevice)) {
-         shutterComboBox.addItem(shutter);
+      // trying to avoid crashes on shutdown
+      if (core_ != null) {
+         for (String shutter : core_.getLoadedDevicesOfType(DeviceType.ShutterDevice)) {
+            shutterComboBox.addItem(shutter);
+         }
+         shutterComboBox.setSelectedItem(initialShutter);
       }
-      shutterComboBox.setSelectedItem(initialShutter);
    }
    
-   // Sets the targeting channel. channelName should be
-   // a channel from the current ChannelGroup.
+   /**
+    * Sets the targeting channel. channelName should be
+    * a channel from the current ChannelGroup.
+    */
    void setTargetingChannel(String channelName) {
       targetingChannel_ = channelName;
        if (channelName != null) {
@@ -186,7 +202,10 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
        }
    }
    
-   // Sets the targeting shutter. Should be the name of a loaded Shutter device.
+   /**
+    * Sets the targeting shutter. 
+    * Should be the name of a loaded Shutter device.
+    */
    void setTargetingShutter(String shutterName) {
       targetingShutter_ = shutterName;
       if (shutterName != null) {
@@ -194,7 +213,10 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       }
    }
    
-   // Set the Channel Group to the targeting channel, if it exists.
+   /**
+    * Sets the Channel Group to the targeting channel, if it exists.
+    * @return 
+    */
    public Configuration prepareChannel() {
       Configuration originalConfig = null;
       String channelGroup = core_.getChannelGroup();
@@ -345,8 +367,10 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       return x;
    }
    
-   // Display a spot using the projection device, and return its current
-   // location on the camera.
+   /**
+    * Display a spot using the projection device, and return its current
+    * location on the camera.
+   */
    private Point measureSpot(Point projectionPoint) {
       if (stopRequested_.get()) {
          return null;
@@ -360,7 +384,14 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
          long originalExposure = dev_.getExposure();
          dev_.setExposure(500000);
          displaySpot(projectionPoint.x, projectionPoint.y);
+         // NS: Timimg between displaySPot and snapImage is critical
+         // we have no idea how fast the device will respond
+         // if we add "dev_.waitForDevie(), then the RAPP UGA-40 will already have ended
+         // its exposure before returning control
+         // For now, wait for a user specified delay
+         Thread.sleep(Integer.parseInt(delayField_.getText()));
          core_.snapImage();
+         // NS: just make sure to wait until the spot is no longer displayed
          Thread.sleep(500);
          dev_.setExposure(originalExposure);
          TaggedImage taggedImage2 = core_.getTaggedImage();
@@ -370,6 +401,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
          Point peak = findPeak(diffImage);
          Point maxPt = peak;
          IJ.getImage().setRoi(new PointRoi(maxPt.x, maxPt.y));
+         // NS: what is this second sleep good for????
          core_.sleep(500);
          return maxPt;
       } catch (Exception e) {
@@ -404,7 +436,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       double x = dev_.getWidth() / 2;
       double y = dev_.getHeight() / 2;
 
-      int s = 50;
+      double s = dev_.getWidth() / 10;
       Map<Point2D.Double, Point2D.Double> spotMap
             = new HashMap<Point2D.Double, Point2D.Double>();
 
@@ -500,10 +532,12 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       return bigMap;
    }
 
-   // Runs the full calibration. First
-   // generates a linear mapping (a first approximation) and then runs
-   // a second, non-linear, mapping using the first mapping as a guide. Saves
-   // the mapping to Java Preferences.
+   /**
+    * Runs the full calibration. First
+    * generates a linear mapping (a first approximation) and then runs
+    * a second, non-linear, mapping using the first mapping as a guide. Saves
+    * the mapping to Java Preferences.
+    */
    public void runCalibration() {
       final boolean liveModeRunning = app_.isLiveModeOn();
       app_.enableLiveMode(false);
@@ -520,8 +554,6 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
                   AffineTransform firstApproxAffine = generateLinearMapping();
 
                   HashMap<Polygon, AffineTransform> mapping = (HashMap<Polygon, AffineTransform>) generateNonlinearMapping(firstApproxAffine);
-                  //LocalWeightedMean lwm = multipleAffineTransforms(mapping_);
-                  //AffineTransform affineTransform = MathFunctions.generateAffineTransformFromPointPairs(mapping_);
                   dev_.turnOff();
                   try {
                      Thread.sleep(500);
@@ -531,14 +563,14 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
                   if (!stopRequested_.get()) {
                      saveMapping(mapping);
                   }
-                  //saveAffineTransform(affineTransform);
                   app_.enableLiveMode(liveModeRunning);
                   JOptionPane.showMessageDialog(IJ.getImage().getWindow(), "Calibration "
                         + (!stopRequested_.get() ? "finished." : "canceled."));
                   IJ.getImage().setRoi(originalROI);
                   calibrateButton_.setText("Calibrate");
-               } catch (Exception e) {
+               } catch (HeadlessException e) {
                   ReportingUtils.showError(e);
+                  calibrateButton_.setText("Calibrate");
                } finally {
                   isRunning_.set(false);
                   stopRequested_.set(false);
@@ -549,12 +581,17 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       }
    }
    
-   // Returns true if the calibration is currently running.
+   /**
+    * Returns true if the calibration is currently running.
+    * @return true if calibration is running
+    */
    public boolean isCalibrating() {
       return isRunning_.get();
    }
    
-   // Requests an interruption to calibration while it is running.
+   /**
+    * Requests an interruption to calibration while it is running.
+    */
    public void stopCalibration() {
       stopRequested_.set(true);
    }
@@ -563,13 +600,13 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
      
    // Transform a point, pt, given the mapping, which is a Map of polygon cells
    // to AffineTransforms.
-   private static Point transformPoint(Map<Polygon, AffineTransform> mapping, Point pt) {
+   private static Point2D.Double transformPoint(Map<Polygon, AffineTransform> mapping, Point2D.Double pt) {
       Set<Polygon> set = mapping.keySet();
       // First find out if the given point is inside a cell, and if so,
       // transform it with that cell's AffineTransform.
       for (Polygon poly : set) {
          if (poly.contains(pt)) {
-            return toIntPoint((Point2D.Double) mapping.get(poly).transform(toDoublePoint(pt), null));
+            return (Point2D.Double) mapping.get(poly).transform(pt, null);
          }
       }
       // The point isn't inside any cell, so search for the closest cell
@@ -586,7 +623,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       if (bestPoly == null) {
          throw new RuntimeException("Unable to map point to device.");
       }
-      return toIntPoint((Point2D.Double) mapping.get(bestPoly).transform(toDoublePoint(pt), null));
+      return (Point2D.Double) mapping.get(bestPoly).transform(pt, null);
    }
    
       
@@ -601,9 +638,9 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
    }
 
    // Flips a point if it has been mirrored.
-   private static Point mirrorIfNecessary(Point pOffscreen, ImagePlus imgp) {
+   private static Point2D.Double mirrorIfNecessary(Point2D.Double pOffscreen, ImagePlus imgp) {
       if (isImageMirrored(imgp)) {
-         return new Point(imgp.getWidth() - pOffscreen.x, pOffscreen.y);
+         return new Point2D.Double(imgp.getWidth() - pOffscreen.x, pOffscreen.y);
       } else {
          return pOffscreen;
       }
@@ -611,8 +648,9 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
    
    // Transform and mirror (if necessary) a point on an image to 
    // a point on phototargeter coordinates.
-   private static Point transformAndMirrorPoint(Map<Polygon, AffineTransform> mapping, ImagePlus imgp, Point pt) {
-      Point pOffscreen = mirrorIfNecessary(pt, imgp);
+   private static Point2D.Double transformAndMirrorPoint(Map<Polygon, AffineTransform> mapping, 
+           ImagePlus imgp, Point2D.Double pt) {
+      Point2D.Double pOffscreen = mirrorIfNecessary(pt, imgp);
       return transformPoint(mapping, pOffscreen);
    }
 
@@ -625,19 +663,30 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       return new MouseAdapter() {
          @Override
          public void mouseClicked(MouseEvent e) {
-            if (e.isControlDown()) {
+            if (e.isShiftDown()) {
                Point p = e.getPoint();
                ImageCanvas canvas = (ImageCanvas) e.getSource();
                Point pOffscreen = new Point(canvas.offScreenX(p.x), canvas.offScreenY(p.y));
-               Point devP = transformAndMirrorPoint(loadMapping(), canvas.getImage(), 
-                       new Point(pOffscreen.x, pOffscreen.y));
-               Configuration originalConfig = prepareChannel();
-               boolean originalShutterState = prepareShutter();
-               if (devP != null) {
-                  displaySpot(devP.x, devP.y);
-               }
-               returnShutter(originalShutterState);
-               returnChannel(originalConfig);
+               final Point2D.Double devP = transformAndMirrorPoint(loadMapping(), canvas.getImage(),
+                       new Point2D.Double(pOffscreen.x, pOffscreen.y));
+               final Configuration originalConfig = prepareChannel();
+               final boolean originalShutterState = prepareShutter();
+               makeRunnableAsync(
+                       new Runnable() {
+                          @Override
+                          public void run() {
+                             try {
+                                if (devP != null) {
+                                   displaySpot(devP.x, devP.y);
+                                }
+                                returnShutter(originalShutterState);
+                                returnChannel(originalConfig);
+                             } catch (Exception e) {
+                                ReportingUtils.showError(e);
+                             }
+                          }
+                       }).run();
+
             }
          }
       };
@@ -738,7 +787,9 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       return roiPolygons.toArray(new Polygon[0]);
    }
    
-   // Gets the label of an ROI with the given index n. Borrowed from ImageJ.
+   /**
+    * Gets the label of an ROI with the given index n. Borrowed from ImageJ.
+    */
    private static String getROILabel(ImagePlus imp, Roi roi, int n) {
       Rectangle r = roi.getBounds();
       int xc = r.x + r.width / 2;
@@ -797,7 +848,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
             out.flush();
          }
          out.close();
-      } catch (Exception e) {
+      } catch (IOException e) {
          ReportingUtils.logError(e);
       }
    }
@@ -829,19 +880,22 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
    }
    
    // Transform the Roi polygons with the given nonlinear mapping.
-   private static List<Polygon> transformRoiPolygons(final ImagePlus imgp, Polygon[] roiPolygons, Map<Polygon, AffineTransform> mapping) {
-      ArrayList<Polygon> transformedROIs = new ArrayList<Polygon>();
+   private static List<FloatPolygon> transformRoiPolygons(final ImagePlus imgp, 
+           Polygon[] roiPolygons, Map<Polygon, AffineTransform> mapping) {
+      ArrayList<FloatPolygon> transformedROIs = new ArrayList<FloatPolygon>();
       for (Polygon roiPolygon : roiPolygons) {
-         Polygon targeterPolygon = new Polygon();
+         FloatPolygon targeterPolygon = new FloatPolygon();
          try {
             Point2D targeterPoint;
             for (int i = 0; i < roiPolygon.npoints; ++i) {
-               Point imagePoint = new Point(roiPolygon.xpoints[i], roiPolygon.ypoints[i]);
+               Point2D.Double imagePoint = new Point2D.Double(
+                       roiPolygon.xpoints[i], roiPolygon.ypoints[i]);
                targeterPoint = transformAndMirrorPoint(mapping, imgp, imagePoint);
                if (targeterPoint == null) {
                   throw new Exception();
                }
-               targeterPolygon.addPoint((int) (0.5 + targeterPoint.getX()), (int) (0.5 + targeterPoint.getY()));
+               targeterPolygon.addPoint( (float) targeterPoint.getX(), 
+                       (float) targeterPoint.getY() );
             }
             transformedROIs.add(targeterPolygon);
          } catch (Exception ex) {
@@ -855,7 +909,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
    // ## Saving, sending, and running ROIs.
      
    // Returns ROIs, transformed by the current mapping.
-   public List<Polygon> transformROIs(ImagePlus contextImagePlus, Roi[] rois) {
+   public List<FloatPolygon> transformROIs(ImagePlus contextImagePlus, Roi[] rois) {
       return transformRoiPolygons(contextImagePlus, roisAsPolygons(rois), mapping_);
    }
    
@@ -879,6 +933,10 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
    }
    
    // Upload current Window's ROIs, transformed, to the phototargeting device.
+   // BUG!!! Since Polygons store coordinates in integers whereas Galvo
+   // devices have an input as double, there is an enormous loss of precision.
+   // The Type "Polygon" should be replaced with Path2D.Double throughout the code
+   // or possible the ImageJ class FloatPolygon
    public void sendCurrentImageWindowRois() {
       if (mapping_ == null) {
          throw new RuntimeException("Please calibrate the phototargeting device first, using the Setup tab.");
@@ -892,13 +950,15 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       if (rois.length == 0) {
          throw new RuntimeException("Please first draw the desired phototargeting ROIs.");
       }
-      List<Polygon> transformedRois = transformROIs(imgp, rois);
+      List<FloatPolygon> transformedRois = transformROIs(imgp, rois);
       dev_.loadRois(transformedRois);
       individualRois_ = rois;
    }
    
-   // Illuminate the polygons ROIs that have been previously uploaded to
-   // phototargeter.
+   /**
+    * Illuminate the polygons ROIs that have been previously uploaded to
+    * phototargeter.
+    */
    void runRois() {
       Configuration originalConfig = prepareChannel();
       boolean originalShutterState = prepareShutter();
@@ -972,8 +1032,10 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
    // Converts a Runnable to one that runs asynchronously.
    public static Runnable makeRunnableAsync(final Runnable runnable) { 
       return new Runnable() {
+         @Override
          public void run() {
             new Thread() {
+               @Override
                public void run() {
                   runnable.run();            
                }
@@ -1000,6 +1062,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
    private Runnable runAtIntervals(final long firstTimeMs, final boolean repeat,
       final long intervalTimeMs, final Runnable runnable, final Callable<Boolean> shouldContinue) {
       return new Runnable() {
+         @Override
          public void run() {
             try {
                final long startTime = System.currentTimeMillis() + firstTimeMs;
@@ -1021,7 +1084,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
    
    // Update the GUI's roi settings so they reflect the user's current choices.
    public final void updateROISettings() {
-      boolean roisSubmitted = false;
+      boolean roisSubmitted;
       int numROIs = individualRois_.length;
       if (numROIs == 0) {
          roiStatusLabel.setText("No ROIs submitted");
@@ -1069,6 +1132,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
                   phototargetROIsRunnable("Synchronous phototargeting of ROIs"));
          } else {
             final Callable<Boolean> mdaRunning = new Callable<Boolean>() {
+               @Override
                public Boolean call() throws Exception {
                   return app_.isAcquisitionRunning();
                }
@@ -1094,8 +1158,10 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
    }
    
    // Method called if the phototargeting device has turned on or off.
+   @Override
    public void stateChanged(final boolean onState) {
       SwingUtilities.invokeLater(new Runnable() {
+         @Override
          public void run() {
             onButton.setSelected(onState);
             offButton.setSelected(!onState);
@@ -1103,8 +1169,10 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       });
    }
    
-   // Show the Mosaic Sequencing window (a JFrame). Should only be called
-   // if we already know the Mosaic is attached.
+   /**
+    * Show the Mosaic Sequencing window (a JFrame). Should only be called
+    * if we already know the Mosaic is attached.
+    */
    void showMosaicSequencingWindow() {
       if (mosaicSequencingFrame_ == null) {
          mosaicSequencingFrame_ = new MosaicSequencingFrame(app_, core_, this, (SLM) dev_);
@@ -1112,7 +1180,9 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       mosaicSequencingFrame_.setVisible(true);
    }
    
-   // Constructor. Creates the main window for the Projector plugin.
+   /**
+    * Constructor. Creates the main window for the Projector plugin.
+    */
    private ProjectorControlForm(CMMCore core, ScriptInterface app) {
       initComponents();
       app_ = app;
@@ -1151,8 +1221,11 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       this.addWindowFocusListener(new WindowAdapter() {
          @Override
          public void windowGainedFocus(WindowEvent e) {
-            populateChannelComboBox(null);
-            populateShutterComboBox(null);
+            if (!disposing_)
+            {
+               populateChannelComboBox(null);
+               populateShutterComboBox(null);
+            }
          }
       });
       
@@ -1172,6 +1245,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
          }
       });
 
+      this.loadAndRestorePosition(500, 300);
       updateROISettings();
    }
    
@@ -1184,6 +1258,13 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       }
       formSingleton_.setVisible(true);
       return formSingleton_;
+   }
+   
+   @Override
+   public void dispose()
+   {
+      disposing_ = true;
+      super.dispose();
    }
    
    // ## Generated code
@@ -1214,6 +1295,8 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
       phototargetingChannelDropdownLabel = new javax.swing.JLabel();
       shutterComboBox = new javax.swing.JComboBox();
       phototargetingShutterDropdownLabel = new javax.swing.JLabel();
+      jLabel1 = new javax.swing.JLabel();
+      delayField_ = new javax.swing.JTextField();
       roisTab = new javax.swing.JPanel();
       roiLoopLabel = new javax.swing.JLabel();
       roiLoopTimesLabel = new javax.swing.JLabel();
@@ -1281,7 +1364,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
          }
       });
 
-      phototargetInstructionsLabel.setText("(To phototarget, Control + click on the image.)");
+      phototargetInstructionsLabel.setText("(To phototarget, Shift + click on the image, use ImageJ hand-tool)");
 
       javax.swing.GroupLayout pointAndShootTabLayout = new javax.swing.GroupLayout(pointAndShootTab);
       pointAndShootTab.setLayout(pointAndShootTabLayout);
@@ -1297,7 +1380,7 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
                   .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                   .addComponent(pointAndShootOffButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                .addComponent(phototargetInstructionsLabel))
-            .addContainerGap(109, Short.MAX_VALUE))
+            .addContainerGap(68, Short.MAX_VALUE))
       );
       pointAndShootTabLayout.setVerticalGroup(
          pointAndShootTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1353,6 +1436,10 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
 
       phototargetingShutterDropdownLabel.setText("Phototargeting shutter:");
 
+      jLabel1.setText("Delay(ms):");
+
+      delayField_.setText("0");
+
       javax.swing.GroupLayout setupTabLayout = new javax.swing.GroupLayout(setupTab);
       setupTab.setLayout(setupTabLayout);
       setupTabLayout.setHorizontalGroup(
@@ -1372,7 +1459,12 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
                   .addGroup(setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                      .addComponent(shutterComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)
                      .addComponent(channelComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)))
-               .addComponent(calibrateButton_))
+               .addGroup(setupTabLayout.createSequentialGroup()
+                  .addComponent(calibrateButton_)
+                  .addGap(18, 18, 18)
+                  .addComponent(jLabel1)
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                  .addComponent(delayField_, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE)))
             .addContainerGap(127, Short.MAX_VALUE))
       );
       setupTabLayout.setVerticalGroup(
@@ -1383,7 +1475,10 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
                .addComponent(centerButton)
                .addComponent(allPixelsButton))
             .addGap(18, 18, 18)
-            .addComponent(calibrateButton_)
+            .addGroup(setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+               .addComponent(calibrateButton_)
+               .addComponent(jLabel1)
+               .addComponent(delayField_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 89, Short.MAX_VALUE)
             .addGroup(setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                .addComponent(phototargetingChannelDropdownLabel)
@@ -1762,7 +1857,14 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
    }//GEN-LAST:event_roiLoopSpinnerStateChanged
 
    private void runROIsNowButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_runROIsNowButtonActionPerformed
-      runRois();
+      makeRunnableAsync(
+              new Runnable() {
+                 @Override
+                 public void run() {
+                    phototargetROIsRunnable("Asynchronous phototargeting of ROIs").run();
+                 }
+              }
+      ).run();
    }//GEN-LAST:event_runROIsNowButtonActionPerformed
 
    private void setRoiButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_setRoiButtonActionPerformed
@@ -1843,6 +1945,8 @@ public class ProjectorControlForm extends javax.swing.JFrame implements OnStateL
    private javax.swing.JButton calibrateButton_;
    private javax.swing.JButton centerButton;
    private javax.swing.JComboBox channelComboBox;
+   private javax.swing.JTextField delayField_;
+   private javax.swing.JLabel jLabel1;
    private javax.swing.JLabel jLabel2;
    private javax.swing.JSeparator jSeparator1;
    private javax.swing.JSeparator jSeparator3;

@@ -23,8 +23,6 @@
 //
 package org.micromanager.internal.utils;
 
-import java.util.prefs.Preferences;
-
 /**
  * Utility class for the PropertyBrowser to specify which devices
  * are currently visible.
@@ -43,19 +41,21 @@ public class ShowFlags {
    private static final String SHOW_STATE = "show_state";
    private static final String SHOW_OTHER = "show_other";
    
-   public void load(Preferences prefs) {
-      cameras_ = prefs.getBoolean(SHOW_CAMERAS, cameras_);
-      shutters_ = prefs.getBoolean(SHOW_SHUTTERS, shutters_);
-      stages_ = prefs.getBoolean(SHOW_STAGES, stages_);
-      state_ = prefs.getBoolean(SHOW_STATE, state_);
-      other_ = prefs.getBoolean(SHOW_OTHER, other_);
+   public void load(Class<?> c) {
+      DefaultUserProfile profile = DefaultUserProfile.getInstance();
+      cameras_ = profile.getBoolean(c, SHOW_CAMERAS, cameras_);
+      shutters_ = profile.getBoolean(c, SHOW_SHUTTERS, shutters_);
+      stages_ = profile.getBoolean(c, SHOW_STAGES, stages_);
+      state_ = profile.getBoolean(c, SHOW_STATE, state_);
+      other_ = profile.getBoolean(c, SHOW_OTHER, other_);
    }
    
-   public void save(Preferences prefs) {
-      prefs.putBoolean(SHOW_CAMERAS, cameras_);
-      prefs.putBoolean(SHOW_SHUTTERS, shutters_);
-      prefs.putBoolean(SHOW_STAGES, stages_);
-      prefs.putBoolean(SHOW_STATE, state_);
-      prefs.putBoolean(SHOW_OTHER, other_);
+   public void save(Class<?> c) {
+      DefaultUserProfile profile = DefaultUserProfile.getInstance();
+      profile.setBoolean(c, SHOW_CAMERAS, cameras_);
+      profile.setBoolean(c, SHOW_SHUTTERS, shutters_);
+      profile.setBoolean(c, SHOW_STAGES, stages_);
+      profile.setBoolean(c, SHOW_STATE, state_);
+      profile.setBoolean(c, SHOW_OTHER, other_);
    }
  }

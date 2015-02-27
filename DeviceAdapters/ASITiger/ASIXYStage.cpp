@@ -52,7 +52,8 @@ CXYStage::CXYStage(const char* name) :
    stepSizeXUm_(g_StageMinStepSize),    // we'll use 1 nm as our smallest possible step size, this is somewhat arbitrary
    stepSizeYUm_(g_StageMinStepSize),    //   and doesn't change during the program
    axisLetterX_(g_EmptyAxisLetterStr),    // value determined by extended name
-   axisLetterY_(g_EmptyAxisLetterStr)     // value determined by extended name
+   axisLetterY_(g_EmptyAxisLetterStr),    // value determined by extended name
+   advancedPropsEnabled_(false)
 {
    if (IsExtendedName(name))  // only set up these properties if we have the required information in the name
    {
@@ -499,9 +500,10 @@ int CXYStage::OnAdvancedProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
    else if (eAct == MM::AfterSet) {
       string tmpstr;
       pProp->Get(tmpstr);
-      if (tmpstr.compare(g_YesState) == 0)
+      if ((tmpstr.compare(g_YesState) == 0) && !advancedPropsEnabled_) // after creating advanced properties once no need to repeat
       {
          CPropertyAction* pAct;
+         advancedPropsEnabled_ = true;
 
          // Backlash (B)
          pAct = new CPropertyAction (this, &CXYStage::OnBacklash);

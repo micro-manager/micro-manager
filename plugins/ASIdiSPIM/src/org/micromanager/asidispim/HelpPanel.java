@@ -23,6 +23,7 @@ package org.micromanager.asidispim;
 
 
 import java.awt.Desktop;
+import java.awt.Dimension;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -56,12 +57,18 @@ public class HelpPanel extends ListeningJPanel {
       final JTextPane textPane = new JTextPane();
       textPane.setEditable(false);
       textPane.setContentType("text/html");
-      textPane.setText("This plugin is a work in progress; please contact the authors "
-            + "if you have bug reports or feature requests."
-            + "(<a href='mailto:jon@asiimaging.com'>jon@asiimaging.com</a>)"
-            + "<p>Further information and instructions are at "
-            + "<a href='http://micro-manager.org/wiki/ASIdiSPIM_Plugin'>"
-            + "http://micro-manager.org/wiki/ASIdiSPIM_Plugin</a>.");
+      textPane.setText(
+            "This plugin is a work in progress; please contact the authors "
+            + "if you have bug reports or feature requests "
+            + "(<a href='mailto:jon@asiimaging.com'>jon@asiimaging.com</a>, "
+            + "<a href='mailto:info@micro-manager.org'>info@micro-manager.org</a>)"
+            + "<p>Further information and instructions are on the Micro-Manager wiki "
+            + "(<a href='http://micro-manager.org/wiki/ASIdiSPIM_Plugin'>"
+            + "http://micro-manager.org/wiki/ASIdiSPIM_Plugin</a>)"
+            + " as well as in the diSPIM User Manual ("
+            + "<a href='http://www.asiimaging.com/downloads/manuals/diSPIM_Manual.pdf'>"
+            + "http://www.asiimaging.com/downloads/manuals/diSPIM_Manual.pdf</a>)."
+            );
       textPane.addHyperlinkListener(new HyperlinkListener() {
          @Override
          public void hyperlinkUpdate(HyperlinkEvent hle) {
@@ -78,6 +85,9 @@ public class HelpPanel extends ListeningJPanel {
          }
       });
       final JScrollPane editScroll = new JScrollPane(textPane);
+      // TODO figure out way to ensure textPane wraps so we can be more elegant about letting
+      // this fill the space without resorting to such heavy-handed measures
+      editScroll.setMaximumSize(new Dimension(750, 300));
       editScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
       editScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
       add(editScroll, "center, grow");

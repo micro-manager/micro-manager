@@ -110,6 +110,7 @@ import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.dialogs.CalibrationListDlg;
 import org.micromanager.internal.dialogs.MMIntroDlg;
+import org.micromanager.internal.dialogs.OptionsDlg;
 import org.micromanager.internal.dialogs.RegistrationDlg;
 
 import org.micromanager.events.internal.EventManager;
@@ -169,6 +170,9 @@ public class MMStudio implements ScriptInterface {
    private static final int TOOLTIP_DISPLAY_INITIAL_DELAY_MILLISECONDS = 2000;
    private static final String DEFAULT_CONFIG_FILE_NAME = "MMConfig_demo.cfg";
    private static final String DEFAULT_CONFIG_FILE_PROPERTY = "org.micromanager.default.config.file";
+   private static final String SHOULD_DELETE_OLD_CORE_LOGS = "whether or not to delete old MMCore log files";
+   private static final String CORE_LOG_LIFETIME_DAYS = "how many days to keep MMCore log files, before they get deleted";
+   private static final String CIRCULAR_BUFFER_SIZE = "size, in megabytes of the circular buffer used to temporarily store images before they are written to disk";
 
    // List of keys to UIManager.put() method for setting the background color
    // look and feel. Selected from this page:
@@ -188,7 +192,6 @@ public class MMStudio implements ScriptInterface {
    // cfg file saving
    private static final String CFGFILE_ENTRY_BASE = "CFGFileEntry";
    // GUI components
-   private MMOptions options_;
    private boolean amRunningAsPlugin_;
    private GUIColors guiColors_;
    private PropertyEditor propertyBrowser_;
@@ -302,14 +305,7 @@ public class MMStudio implements ScriptInterface {
 
       prepAcquisitionEngine();
 
-      options_ = new MMOptions();
-      try {
-         options_.loadSettings();
-      } catch (NullPointerException ex) {
-         ReportingUtils.logError(ex);
-      }
-
-      UIMonitor.enable(options_.debugLogEnabled_);
+      UIMonitor.enable(OptionsDlg.getIsDebugLogEnabled());
       
       guiColors_ = new GUIColors();
 
@@ -324,8 +320,8 @@ public class MMStudio implements ScriptInterface {
       sysConfigFile_ = System.getProperty(DEFAULT_CONFIG_FILE_PROPERTY,
             sysConfigFile_);
 
-      if (options_.startupScript_.length() > 0) {
-         startupScriptFile_ = new File(options_.startupScript_).getAbsolutePath();
+      if (ScriptPanel.getStartupScript().length() > 0) {
+         startupScriptFile_ = new File(ScriptPanel.getStartupScript()).getAbsolutePath();
       } else {
          startupScriptFile_ = "";
       }
@@ -356,7 +352,7 @@ public class MMStudio implements ScriptInterface {
          ReportingUtils.logError(e);
       }
 
-      setBackgroundStyle(options_.displayBackground_);
+      setBackgroundStyle(OptionsDlg.getBackgroundMode());
 
       showRegistrationDialogMaybe();
 
@@ -374,7 +370,8 @@ public class MMStudio implements ScriptInterface {
       frame_ = new MainFrame(this, core_, snapLiveManager_, mainPrefs_);
       frame_.setIconImage(SwingResourceManager.getImage(MMStudio.class,
             "icons/microscope.gif"));
-      frame_.loadApplicationPrefs(mainPrefs_, options_.closeOnExit_);
+      frame_.loadApplicationPrefs(mainPrefs_,
+            OptionsDlg.getShouldCloseOnExit());
       ReportingUtils.SetContainingFrame(frame_);
 
       // move ImageJ window to place where it last was if possible
@@ -404,14 +401,14 @@ public class MMStudio implements ScriptInterface {
       FileMenu fileMenu = new FileMenu(studio_);
       fileMenu.initializeFileMenu(menuBar_);
 
-      toolsMenu_ = new ToolsMenu(studio_, core_, options_);
-      toolsMenu_.initializeToolsMenu(menuBar_, mainPrefs_);
+      toolsMenu_ = new ToolsMenu(studio_, core_);
+      toolsMenu_.initializeToolsMenu(menuBar_);
 
       HelpMenu helpMenu = new HelpMenu(studio_, core_);
 
       initializationSequence();
            
-      helpMenu.initializeHelpMenu(menuBar_, systemPrefs_);
+      helpMenu.initializeHelpMenu(menuBar_);
 
       new DisplayGroupManager(studio_);
    }
@@ -433,11 +430,11 @@ public class MMStudio implements ScriptInterface {
       catch (Exception ignore) {
          // The Core will have logged the error to stderr, so do nothing.
       }
-      core_.enableDebugLog(options_.debugLogEnabled_);
+      core_.enableDebugLog(OptionsDlg.getIsDebugLogEnabled());
 
-      if (options_.deleteOldCoreLogs_) {
+      if (getShouldDeleteOldCoreLogs()) {
          LogFileManager.deleteLogFilesDaysOld(
-               options_.deleteCoreLogAfterDays_, logFileName);
+               getCoreLogLifetimeDays(), logFileName);
       }
 
       ReportingUtils.setCore(core_);
@@ -449,7 +446,7 @@ public class MMStudio implements ScriptInterface {
       coreCallback_ = new CoreEventCallback(core_, engine_);
 
       try {
-         core_.setCircularBufferMemoryFootprint(options_.circularBufferSizeMB_);
+         core_.setCircularBufferMemoryFootprint(getCircularBufferSize());
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
       }
@@ -478,9 +475,9 @@ public class MMStudio implements ScriptInterface {
       hotKeys_ = new org.micromanager.internal.utils.HotKeys();
       hotKeys_.loadSettings();
 
-      if (!options_.doNotAskForConfigFile_) {
-         // Ask the user for a configuration file.
-         // TODO: excise MRUConfigFiles_
+      if (MMIntroDlg.getShouldAskForConfigFile() ||
+            !DefaultUserProfile.getShouldAlwaysUseDefaultProfile()) {
+         // Ask the user for a configuration file and/or user profile.
          MMIntroDlg introDlg = new MMIntroDlg(MMVersion.VERSION_STRING);
          introDlg.setConfigFile(sysConfigFile_);
          introDlg.setVisible(true);
@@ -584,17 +581,13 @@ public class MMStudio implements ScriptInterface {
    private void showRegistrationDialogMaybe() {
       // show registration dialog if not already registered
       // first check user preferences (for legacy compatibility reasons)
-      boolean userReg = mainPrefs_.getBoolean(RegistrationDlg.REGISTRATION,
-            false) || mainPrefs_.getBoolean(RegistrationDlg.REGISTRATION_NEVER, false);
+      boolean shouldShow = !(RegistrationDlg.getHaveRegistered() ||
+            RegistrationDlg.getShouldNeverRegister());
 
-      if (!userReg) {
-         boolean systemReg = systemPrefs_.getBoolean(
-               RegistrationDlg.REGISTRATION, false) || systemPrefs_.getBoolean(RegistrationDlg.REGISTRATION_NEVER, false);
-         if (!systemReg) {
-            // prompt for registration info
-            RegistrationDlg dlg = new RegistrationDlg(systemPrefs_);
-            dlg.setVisible(true);
-         }
+      if (shouldShow) {
+         // prompt for registration info
+         RegistrationDlg dlg = new RegistrationDlg();
+         dlg.setVisible(true);
       }
    }
 
@@ -700,7 +693,7 @@ public class MMStudio implements ScriptInterface {
             if (!channel.equals("") ) {
                exposurePrefs_.putDouble("Exposure_" + channelGroup + "_"
                     + channel, exposure);
-               if (options_.syncExposureMainAndMDA_) {
+               if (AcqControlDlg.getShouldSyncExposure()) {
                   getAcqDlg().setChannelExposureTime(channelGroup, channel, exposure);
                }
             }
@@ -711,21 +704,9 @@ public class MMStudio implements ScriptInterface {
       } // End synchronization check
    }
 
-   public double getPreferredWindowMag() {
-      return options_.windowMag_;
-   }
-
-   public boolean getMetadataFileWithMultipageTiff() {
-      return options_.mpTiffMetadataFile_;
-   }
-
-   public boolean getSeparateFilesForPositionsMPTiff() {
-      return options_.mpTiffSeparateFilesForPositions_;
-   }
-   
    @Override
    public boolean getHideMDADisplayOption() {
-      return options_.hideMDADisplay_;
+      return AcqControlDlg.getShouldHideMDADisplay();
    }
 
    @Override
@@ -1046,8 +1027,7 @@ public class MMStudio implements ScriptInterface {
    private void checkPosListDlg() {
       if (posListDlg_ == null) {
          posListDlg_ = new PositionListDlg(core_, studio_, posList_, 
-                 acqControlWin_,options_);
-         GUIUtils.recallPosition(posListDlg_);
+                 acqControlWin_);
          posListDlg_.addListeners();
       }
    }
@@ -1482,13 +1462,20 @@ public class MMStudio implements ScriptInterface {
       saveSettings();
       try {
          frame_.getConfigPad().saveSettings();
-         options_.saveSettings();
          hotKeys_.saveSettings();
       } catch (NullPointerException e) {
          if (core_ != null)
             logError(e);
       }
-      if (options_.closeOnExit_) {
+      try {
+         DefaultUserProfile.getInstance().saveProfile();
+      }
+      catch (IOException e) {
+         if (core_ != null) {
+            logError(e);
+         }
+      }
+      if (OptionsDlg.getShouldCloseOnExit()) {
          if (!amRunningAsPlugin_) {
             System.exit(0);
          } else {
@@ -1826,7 +1813,7 @@ public class MMStudio implements ScriptInterface {
          throw new IllegalArgumentException("Invalid background style \"" +
                backgroundType + "\"");
       }
-      options_.displayBackground_ = backgroundType;
+      OptionsDlg.setBackgroundMode(backgroundType);
       // Ensure every GUI object type gets the right background color.
       for (String key : BACKGROUND_COLOR_KEYS) {
          UIManager.put(key + ".background",
@@ -1840,7 +1827,7 @@ public class MMStudio implements ScriptInterface {
 
    @Override
    public String getBackgroundStyle() {
-      return options_.displayBackground_;
+      return OptionsDlg.getBackgroundMode();
    }
 
    
@@ -1990,6 +1977,22 @@ public class MMStudio implements ScriptInterface {
    public void openAcquisition(String name, String rootDir, int nrFrames,
          int nrChannels, int nrSlices, int nrPositions, boolean show, boolean save)
          throws MMScriptException {
+      if (nrFrames <= 0) {
+         nrFrames = 1;
+         ReportingUtils.logError("Coercing frame count to 1");
+      }
+      if (nrChannels <= 0) {
+         nrChannels = 1;
+         ReportingUtils.logError("Coercing channel count to 1");
+      }
+      if (nrSlices <= 0) {
+         nrSlices = 1;
+         ReportingUtils.logError("Coercing slice count to 1");
+      }
+      if (nrPositions <= 0) {
+         nrPositions = 1;
+         ReportingUtils.logError("Coercing position count to 1");
+      }
       acqMgr_.openAcquisition(name, rootDir, show, save);
       MMAcquisition acq = acqMgr_.getAcquisition(name);
       acq.setDimensions(nrFrames, nrChannels, nrSlices, nrPositions);
@@ -2545,5 +2548,37 @@ public class MMStudio implements ScriptInterface {
    @Override
    public UserProfile profile() {
       return DefaultUserProfile.getInstance();
+   }
+
+   public static boolean getShouldDeleteOldCoreLogs() {
+      return DefaultUserProfile.getInstance().getBoolean(MMStudio.class,
+            SHOULD_DELETE_OLD_CORE_LOGS, false);
+   }
+
+   public static void setShouldDeleteOldCoreLogs(boolean shouldDelete) {
+      DefaultUserProfile.getInstance().setBoolean(MMStudio.class,
+            SHOULD_DELETE_OLD_CORE_LOGS, shouldDelete);
+   }
+
+   public static int getCoreLogLifetimeDays() {
+      return DefaultUserProfile.getInstance().getInt(MMStudio.class,
+            CORE_LOG_LIFETIME_DAYS, 7);
+   }
+
+   public static void setCoreLogLifetimeDays(int days) {
+      DefaultUserProfile.getInstance().setInt(MMStudio.class,
+            CORE_LOG_LIFETIME_DAYS, days);
+   }
+
+   public static int getCircularBufferSize() {
+      // Default to more MB for 64-bit systems.
+      int defaultVal = System.getProperty("sun.arch.data.model", "32").equals("64") ? 250 : 25;
+      return DefaultUserProfile.getInstance().getInt(MMStudio.class,
+            CIRCULAR_BUFFER_SIZE, defaultVal);
+   }
+
+   public static void setCircularBufferSize(int newSize) {
+      DefaultUserProfile.getInstance().setInt(MMStudio.class,
+            CIRCULAR_BUFFER_SIZE, newSize);
    }
 }

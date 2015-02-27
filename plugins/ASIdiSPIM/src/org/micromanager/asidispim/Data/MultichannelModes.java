@@ -53,8 +53,8 @@ public class MultichannelModes {
     */
    public static enum Keys {
       VOLUME("Every volume", 1),
-//      SIDE("Every side", 2),
-      SLICE("Every slice", 3),
+      VOLUME_HW("Every volume (PLogic)", 2),
+      SLICE_HW("Every slice (PLogic)", 3),
       NONE("None", 0);
       private final String text;
       private final int prefCode;
@@ -169,12 +169,12 @@ public class MultichannelModes {
       private List<Keys> getValidModeKeys() {
          List<Keys> keyList = new ArrayList<Keys>();
          keyList.add(Keys.VOLUME);
-//         keyList.add(Keys.SIDE);
-         // PLogic required to change slice by slice
-         // TODO add support of slice by slice switching
-//         if (devices_.isValidMMDevice(Devices.Keys.PLOGIC)) {
-//            keyList.add(Keys.SLICE);
-//         }
+         // PLogic required for hardware switching
+         if (devices_.isValidMMDevice(Devices.Keys.PLOGIC) &&
+               props_.getPropValueFloat(Devices.Keys.PLOGIC, Properties.Keys.FIRMWARE_VERSION) > 3.069) {
+            keyList.add(Keys.VOLUME_HW);
+            keyList.add(Keys.SLICE_HW);
+         }
          return keyList;
       }
 

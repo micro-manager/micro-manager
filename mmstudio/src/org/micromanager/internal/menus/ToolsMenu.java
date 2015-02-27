@@ -5,7 +5,6 @@ import ij.IJ;
 
 import java.awt.Cursor;
 import java.io.File;
-import java.util.prefs.Preferences;
 
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenu;
@@ -18,15 +17,15 @@ import mmcorej.CMMCore;
 import org.micromanager.internal.conf2.ConfiguratorDlg2;
 import org.micromanager.internal.dialogs.OptionsDlg;
 import org.micromanager.internal.MainFrame;
-import org.micromanager.internal.MMOptions;
 import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.HotKeysDialog;
 import org.micromanager.internal.utils.ReportingUtils;
 
 public class ToolsMenu {
-   private static final String MOUSE_MOVES_STAGE = "mouse_moves_stage";
+   private static final String MOUSE_MOVES_STAGE = "whether or not the hand tool can be used to move the stage";
 
    private JMenu toolsMenu_;
    private final JMenu switchConfigurationMenu_;
@@ -34,17 +33,14 @@ public class ToolsMenu {
 
    private final MMStudio studio_;
    private final CMMCore core_;
-   private final MMOptions options_;
    
-   public ToolsMenu(MMStudio studio, CMMCore core, MMOptions options) {
+   public ToolsMenu(MMStudio studio, CMMCore core) {
       studio_ = studio;
       core_ = core;
-      options_ = options;
       switchConfigurationMenu_ = new JMenu();
    }
    
-   public void initializeToolsMenu(JMenuBar menuBar, 
-         final Preferences prefs) {
+   public void initializeToolsMenu(JMenuBar menuBar) {
       toolsMenu_ = GUIUtils.createMenuInMenuBar(menuBar, "Tools");
 
       GUIUtils.addMenuItem(toolsMenu_, "Refresh GUI",
@@ -128,10 +124,16 @@ public class ToolsMenu {
                  public void run() {
                     studio_.updateCenterAndDragListener();
                     IJ.setTool(Toolbar.HAND);
-                    prefs.putBoolean(MOUSE_MOVES_STAGE, centerAndDragMenuItem_.isSelected());
+                    setMouseMovesStage(centerAndDragMenuItem_.isSelected());
+                    try {
+                       DefaultUserProfile.getInstance().saveProfile();
+                     }
+                    catch (java.io.IOException e) {
+                       ReportingUtils.showError(e, "Unable to save your profile");
+                     }
                  }
               },
-              prefs.getBoolean(MOUSE_MOVES_STAGE, false));
+              getMouseMovesStage());
       
       GUIUtils.addMenuItem(toolsMenu_, "Pixel Size Calibration...",
               "Define size calibrations specific to each objective lens.  "
@@ -151,7 +153,7 @@ public class ToolsMenu {
               new Runnable() {
                  @Override
                  public void run() {
-                    runHardwareWizard(prefs);
+                    runHardwareWizard();
                  }
               });
 
@@ -203,15 +205,15 @@ public class ToolsMenu {
               new Runnable() {
          @Override
          public void run() {
-            final int oldBufsize = options_.circularBufferSizeMB_;
+            final int oldBufsize = MMStudio.getCircularBufferSize();
 
-            OptionsDlg dlg = new OptionsDlg(options_, core_, prefs,
-                    studio_);
+            OptionsDlg dlg = new OptionsDlg(core_, studio_);
             dlg.setVisible(true);
             // adjust memory footprint if necessary
-            if (oldBufsize != options_.circularBufferSizeMB_) {
+            if (oldBufsize != MMStudio.getCircularBufferSize()) {
                try {
-                  core_.setCircularBufferMemoryFootprint(options_.circularBufferSizeMB_);
+                  core_.setCircularBufferMemoryFootprint(
+                     MMStudio.getCircularBufferSize());
                } catch (Exception exc) {
                   ReportingUtils.showError(exc);
                }
@@ -228,7 +230,7 @@ public class ToolsMenu {
       }
    }
 
-   private void runHardwareWizard(Preferences prefs) {
+   private void runHardwareWizard() {
       try {
          if (studio_.getIsConfigChanged()) {
             Object[] options = {"Yes", "No"};
@@ -302,5 +304,15 @@ public class ToolsMenu {
             });
          }
       }
+   }
+
+   public static boolean getMouseMovesStage() {
+      return DefaultUserProfile.getInstance().getBoolean(
+            ToolsMenu.class, MOUSE_MOVES_STAGE, false);
+   }
+
+   public static void setMouseMovesStage(boolean doesMove) {
+      DefaultUserProfile.getInstance().setBoolean(
+            ToolsMenu.class, MOUSE_MOVES_STAGE, doesMove);
    }
 }
