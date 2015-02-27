@@ -45,19 +45,14 @@ public class MMFrame extends JFrame {
    
    public MMFrame() {
       super();
-      finishConstructor();
       prefPrefix_ = "";
    }
 
    public MMFrame(String prefPrefix) {
       super();
-      finishConstructor();
       prefPrefix_ = prefPrefix;
    }
    
-      private void finishConstructor() {
-   }
-
    /**
     * Checks whether WINDOW_X and WINDOW_Y coordinates are on the screen(s).
     * If not then it sets the prefs to the values specified.
