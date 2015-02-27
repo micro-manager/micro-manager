@@ -93,9 +93,6 @@ public class AutofocusPropertyEditor extends MMDialog {
          table_.addColumn(column);
       }
             
-      //Preferences root = Preferences.userNodeForPackage(this.getClass());
-      //setPrefsNode(root.node(root.absolutePath() + "/AutofocusPropertyEditor"));
-      
       springLayout = new SpringLayout();
       getContentPane().setLayout(springLayout);
       setSize(551, 514);
