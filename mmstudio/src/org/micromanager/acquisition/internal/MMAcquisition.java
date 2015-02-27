@@ -34,7 +34,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
-import java.util.prefs.Preferences;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -481,15 +480,12 @@ public class MMAcquisition {
    }
    
    public static int getMultiCamDefaultChannelColor(int index, String channelName) {
-      Preferences root = Preferences.userNodeForPackage(AcqControlDlg.class);
-      Preferences colorPrefs = root.node(root.absolutePath() + "/" + AcqControlDlg.COLOR_SETTINGS_NODE);
       int color = DEFAULT_COLORS[index % DEFAULT_COLORS.length].getRGB();
       String channelGroup = MMStudio.getInstance().getCore().getChannelGroup();
       if (channelGroup == null)
          channelGroup = "";
-      color = colorPrefs.getInt("Color_Camera_" + channelName, colorPrefs.getInt("Color_" + channelGroup
-                 + "_" + channelName, color));
-      
+      color = AcqControlDlg.getChannelColor("Camera", channelName,
+            AcqControlDlg.getChannelColor(channelGroup, channelName, color));
       return color;
    }
 
