@@ -119,7 +119,7 @@ public class MMFrame extends JFrame {
    }
    
     /**
-    * Load window position and size from preferences if possible.
+    * Load window position and size from profile if possible.
     * If not possible then sets it from arguments
     * Attaches a listener to the window that will save the position when the
     * window closing event is received
