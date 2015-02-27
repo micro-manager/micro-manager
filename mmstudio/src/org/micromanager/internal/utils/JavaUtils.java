@@ -28,8 +28,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
-import java.util.prefs.Preferences;
 import java.util.prefs.BackingStoreException;
+import java.util.prefs.Preferences;
 
 public class JavaUtils {
 
@@ -238,22 +238,6 @@ public class JavaUtils {
       } catch (IllegalAccessException ex) {
          ReportingUtils.logError(ex);
       }
-   }
-
-   /**
-    * Test whether preference can be written to disk
-    * from:
-    * http://java.sun.com/j2se/1.4.2/docs/guide/lang/preferences.html#prefs-usage-backingstore
-    */
-   public static boolean backingStoreAvailable(Preferences prefs) {
-      try {
-         boolean oldValue = prefs.getBoolean(BACKING_STORE_AVAIL, false);
-         prefs.putBoolean(BACKING_STORE_AVAIL, !oldValue);
-         prefs.flush();
-      } catch (BackingStoreException e) {
-         return false;
-      }
-      return true;
    }
 
    /**

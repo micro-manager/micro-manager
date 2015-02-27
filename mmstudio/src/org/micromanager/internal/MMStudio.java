@@ -339,19 +339,6 @@ public class MMStudio implements ScriptInterface {
       exposurePrefs_ = mainPrefs_.node(mainPrefs_.absolutePath() + "/" + 
               EXPOSURE_SETTINGS_NODE);
 
-      // check system preferences
-      try {
-         Preferences p = Preferences.systemNodeForPackage(getClass());
-         if (null != p) {
-            // if we can not write to the systemPrefs, use AppPrefs instead
-            if (JavaUtils.backingStoreAvailable(p)) {
-               systemPrefs_ = p;
-            }
-         }
-      } catch (Exception e) {
-         ReportingUtils.logError(e);
-      }
-
       setBackgroundStyle(OptionsDlg.getBackgroundMode());
 
       showRegistrationDialogMaybe();
