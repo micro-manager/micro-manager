@@ -37,8 +37,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.Arrays;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 
 import java.util.ArrayList;
@@ -71,7 +69,7 @@ public class MMIntroDlg extends JDialog {
    private static final String GLOBAL_CONFIGS = "config files supplied from a central authority";
    private static final String SHOULD_ASK_FOR_CONFIG = "whether or not the intro dialog should include a prompt for the config file";
    private static final String DEFAULT_CONFIG_FILE_NAME = "MMConfig_demo.cfg";
-   private JTextArea welcomeTextArea_;
+   private final JTextArea welcomeTextArea_;
    private boolean okFlag_ = true;
    
    ArrayList<String> mruCFGFileList_;
@@ -213,7 +211,8 @@ public class MMIntroDlg extends JDialog {
 
    private void addProfileDropdown() {
       JLabel userProfileLabel = new JLabel("User profile:");
-      userProfileLabel.setFont(new Font("Arial", Font.PLAIN, 10));
+      Font stdFont = new Font("Arial", Font.PLAIN, 10);
+      userProfileLabel.setFont(stdFont);
       userProfileLabel.setBounds(5, 228, 319, 19);
       getContentPane().add(userProfileLabel);
 
@@ -225,6 +224,7 @@ public class MMIntroDlg extends JDialog {
       usersAsList.add(0, DefaultUserProfile.DEFAULT_USER);
       usersAsList.add(0, USERNAME_NEW);
       userSelect_ = new JComboBox();
+      userSelect_.setFont(stdFont);
       for (String userName : usersAsList) {
          userSelect_.addItem(userName);
       }
@@ -297,11 +297,9 @@ public class MMIntroDlg extends JDialog {
       }
 
       // Add on global default configs.
-      for (String config : profile.getStringArray(MMIntroDlg.class,
-               GLOBAL_CONFIGS,
-               new String[] {new File(DEFAULT_CONFIG_FILE_NAME).getAbsolutePath()})) {
-         configs.add(config);
-      }
+      configs.addAll(Arrays.asList(profile.getStringArray(MMIntroDlg.class,
+              GLOBAL_CONFIGS,
+              new String[] {new File(DEFAULT_CONFIG_FILE_NAME).getAbsolutePath()})));
       for (String config : configs) {
          cfgFileDropperDown_.addItem(config);
       }
