@@ -2,7 +2,6 @@ package org.micromanager.pixelcalibrator;
 import org.apache.commons.math.util.MathUtils;
 
 import java.awt.geom.AffineTransform;
-import java.util.prefs.Preferences;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
@@ -26,9 +25,11 @@ public class PixelCalibratorPlugin implements MMPlugin {
    private MMStudio app_;
    private CalibrationThread calibrationThread_;
    private PixelCalibratorDialog dialog_;
+   private final Class cp_ = MMStudio.class;
 
    double safeTravelRadiusUm_ = 1000;
 
+   @Override
    public void dispose() {
       stopCalibration();
       if (dialog_ != null) {
@@ -38,32 +39,38 @@ public class PixelCalibratorPlugin implements MMPlugin {
       }
    }
 
+   @Override
    public String getCopyright() {
       // TODO Auto-generated method stub
       return "University of California, San Francisco, 2009. Author: Arthur Edelstein";
    }
 
+   @Override
    public String getDescription() {
       // TODO Auto-generated method stub
       return tooltipDescription;
    }
 
+   @Override
    public String getInfo() {
       // TODO Auto-generated method stub
       return null;
    }
 
+   @Override
    public String getVersion() {
       // TODO Auto-generated method stub
       return null;
    }
 
+   @Override
    public void setApp(ScriptInterface app) {
       app_ = (MMStudio) app;
       core_ = app.getMMCore();
 
    }
 
+   @Override
    public void show() {
       if (dialog_ == null) {
          dialog_ = new PixelCalibratorDialog(this);
@@ -131,15 +138,15 @@ public class PixelCalibratorPlugin implements MMPlugin {
       CalibrationListDlg calDialog = app_.getCalibrationListDlg();
       calDialog.updateCalibrations();
       calDialog.setVisible(true);
-
-
-      Preferences prefs = Preferences.userNodeForPackage(MMStudio.class);
-
+      
+      double[] affValues = null;
+      result.getMatrix(affValues);
       try {
-         JavaUtils.putObjectInPrefs(prefs, "affine_transform_" + core_.getCurrentPixelSizeConfig(), result);
-      }
-      catch (Exception ex) {
-         ReportingUtils.logError(ex);
+         app_.profile().setDoubleArray(cp_, "affine_transform_" +
+                 core_.getCurrentPixelSizeConfig(),
+                 JavaUtils.doubleArrayToClass(affValues));
+      } catch (Exception ex) {
+         app_.logError(ex);
       }
 
       int response = JOptionPane.showConfirmDialog(null,
@@ -147,8 +154,6 @@ public class PixelCalibratorPlugin implements MMPlugin {
             "<html>The Pixel Calibrator plugin has measured a pixel size of " + pixelSize + " &#956;m.<br>" + "Do you wish to store this value in your pixel calibration settings?</html>",
             "Pixel calibration succeeded!",
             JOptionPane.YES_NO_OPTION);
-
-      String reply;
 
       if (response == JOptionPane.YES_OPTION) {
          String pixelConfig;
