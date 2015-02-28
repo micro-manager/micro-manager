@@ -46,31 +46,26 @@
                           </Group>
                           <Group type="102" attributes="0">
                               <Group type="103" groupAlignment="0" attributes="0">
-                                  <Group type="102" attributes="0">
-                                      <Group type="103" groupAlignment="0" attributes="0">
-                                          <Component id="jLabel2" alignment="0" min="-2" max="-2" attributes="0"/>
-                                          <Component id="jLabel3" alignment="0" min="-2" max="-2" attributes="0"/>
-                                      </Group>
-                                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                      <Group type="103" groupAlignment="0" attributes="0">
-                                          <Component id="scriptTextField_" alignment="0" min="-2" pref="223" max="-2" attributes="0"/>
-                                          <Component id="acqTextField2_" alignment="0" min="-2" pref="223" max="-2" attributes="0"/>
-                                          <Component id="acqTextField1_" alignment="0" min="-2" pref="223" max="-2" attributes="0"/>
-                                      </Group>
-                                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                      <Group type="103" groupAlignment="0" attributes="0">
-                                          <Component id="acqSettingsButton1_" alignment="0" min="-2" pref="45" max="-2" attributes="0"/>
-                                          <Component id="acqSettingsButton2_" alignment="0" min="-2" pref="45" max="-2" attributes="0"/>
-                                          <Component id="scriptButton_" alignment="0" min="-2" pref="45" max="-2" attributes="0"/>
-                                      </Group>
-                                  </Group>
-                                  <Component id="jLabel4" alignment="0" min="-2" max="-2" attributes="0"/>
-                                  <Component id="jLabel1" alignment="0" min="-2" max="-2" attributes="0"/>
-                                  <Component id="jLabel10" min="-2" max="-2" attributes="0"/>
-                                  <Component id="jLabel5" alignment="0" min="-2" pref="130" max="-2" attributes="0"/>
+                                  <Component id="jLabel2" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jLabel3" alignment="0" min="-2" max="-2" attributes="0"/>
                               </Group>
-                              <EmptySpace max="32767" attributes="0"/>
+                              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Component id="scriptTextField_" alignment="0" min="-2" pref="223" max="-2" attributes="0"/>
+                                  <Component id="acqTextField2_" alignment="0" min="-2" pref="223" max="-2" attributes="0"/>
+                                  <Component id="acqTextField1_" alignment="0" min="-2" pref="223" max="-2" attributes="0"/>
+                              </Group>
+                              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Component id="acqSettingsButton1_" alignment="0" min="-2" pref="45" max="-2" attributes="0"/>
+                                  <Component id="acqSettingsButton2_" alignment="0" min="-2" pref="45" max="-2" attributes="0"/>
+                                  <Component id="scriptButton_" alignment="0" min="-2" pref="45" max="-2" attributes="0"/>
+                              </Group>
                           </Group>
+                          <Component id="jLabel4" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="jLabel1" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="jLabel10" min="-2" max="-2" attributes="0"/>
+                          <Component id="jLabel5" alignment="0" min="-2" pref="130" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace type="separate" max="-2" attributes="0"/>
                       <Component id="jTextField5" min="-2" pref="0" max="-2" attributes="1"/>

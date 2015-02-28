@@ -26,20 +26,21 @@ import java.awt.Polygon;
 import java.util.HashSet;
 import java.util.List;
 import mmcorej.CMMCore;
-import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.ScriptInterface;
 
 public class SLM implements ProjectionDevice {
-
-   String slm_;
-   CMMCore mmc_;
-   final int slmWidth_;
-   final int slmHeight_;
+   private final String slm_;
+   private final CMMCore mmc_;
+   private final ScriptInterface app_;
+   private final int slmWidth_;
+   private final int slmHeight_;
    private final double spotDiameter_;
    private boolean imageOn_ = false;
    HashSet<OnStateListener> onStateListeners_ = new HashSet<OnStateListener>();
 
    // The constructor.
-   public SLM(CMMCore mmc, double spotDiameter) {
+   public SLM(ScriptInterface app, CMMCore mmc, double spotDiameter) {
+      app_ = app;
       mmc_ = mmc;
       slm_ = mmc_.getSLMDevice();
       spotDiameter_ = spotDiameter;
@@ -87,7 +88,7 @@ public class SLM implements ProjectionDevice {
       try {
          mmc_.waitForDevice(slm_);
       } catch (Exception ex) {
-         ReportingUtils.logError(ex);
+         app_.logError(ex);
       }
    }
 
@@ -98,7 +99,7 @@ public class SLM implements ProjectionDevice {
       try {
          mmc_.setSLMExposure(slm_, interval_us / 1000.);
       } catch (Exception ex) {
-         ReportingUtils.showError(ex);
+         app_.showError(ex);
       }
    }
    
@@ -108,7 +109,7 @@ public class SLM implements ProjectionDevice {
       try {
          return (long) (mmc_.getSLMExposure(slm_) * 1000.);
       } catch (Exception ex) {
-         ReportingUtils.showError(ex);
+         app_.showError(ex);
       }
       return 0;
    }
@@ -122,7 +123,7 @@ public class SLM implements ProjectionDevice {
             mmc_.displaySLMImage(slm_);
          }
       } catch (Exception ex) {
-         ReportingUtils.showError(ex);
+         app_.showError(ex);
       }
    }
 
@@ -142,7 +143,7 @@ public class SLM implements ProjectionDevice {
          mmc_.setSLMImage(slm_, (byte[]) proc.getPixels());
          mmc_.displaySLMImage(slm_);
       } catch (Throwable e) {
-         ReportingUtils.showError("SLM not connecting properly.");
+         app_.showError("SLM not connecting properly.");
       }
    }
 
@@ -162,7 +163,7 @@ public class SLM implements ProjectionDevice {
             listener.stateChanged(false);
          }
       } catch (Exception ex) {
-         ReportingUtils.showError(ex);
+         app_.showError(ex);
       }
    }
 
@@ -179,7 +180,7 @@ public class SLM implements ProjectionDevice {
             listener.stateChanged(true);
          }
       } catch (Exception ex) {
-         ReportingUtils.showError(ex);
+         app_.showError(ex);
       }
    }
 
@@ -221,7 +222,7 @@ public class SLM implements ProjectionDevice {
          List<Polygon> roiPolygons = Utils.FloatToNormalPolygon(roiFloatPolygons);
          mmc_.setSLMImage(slm_, roisToPixels(slmWidth_, slmHeight_, roiPolygons));
       } catch (Exception ex) {
-         ReportingUtils.showError(ex);
+         app_.showError(ex);
       }
    }
 
@@ -237,7 +238,7 @@ public class SLM implements ProjectionDevice {
       try {
          mmc_.displaySLMImage(slm_);
       } catch (Exception ex) {
-         ReportingUtils.showError(ex);
+         app_.showError(ex);
       }
    }
 }

@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 
 /*
  * PixelCalibratorDialog.java
@@ -12,15 +8,15 @@
 package org.micromanager.pixelcalibrator;
 
 import java.lang.reflect.InvocationTargetException;
-import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.GUIUtils;
+import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  *
  * @author arthur
  */
-public class PixelCalibratorDialog extends javax.swing.JFrame {
+public class PixelCalibratorDialog extends MMFrame {
    private PixelCalibratorPlugin plugin_;
 
 
@@ -28,7 +24,7 @@ public class PixelCalibratorDialog extends javax.swing.JFrame {
    PixelCalibratorDialog(PixelCalibratorPlugin plugin) {
       plugin_ = plugin;
       initComponents();
-      GUIUtils.recallPosition(this);
+      loadPosition(200, 200);
    }
 
 
@@ -150,6 +146,7 @@ public class PixelCalibratorDialog extends javax.swing.JFrame {
     public void updateStatus(final boolean running, final double progress) {
       try {
          GUIUtils.invokeLater(new Runnable() {
+            @Override
             public void run() {
                if (!running) {
                   startButton.setEnabled(true);
@@ -186,6 +183,7 @@ public class PixelCalibratorDialog extends javax.swing.JFrame {
    private javax.swing.JButton stopButton;
    // End of variables declaration//GEN-END:variables
 
+   @Override
    public void dispose() {
       super.dispose();
    }

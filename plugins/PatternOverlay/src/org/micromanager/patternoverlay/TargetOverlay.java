@@ -5,7 +5,7 @@ import ij.gui.ShapeRoi;
 
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.GeneralPath;
-import java.util.prefs.Preferences;
+import org.micromanager.UserProfile;
 
 
 /**
@@ -15,8 +15,8 @@ import java.util.prefs.Preferences;
  */
 public class TargetOverlay extends GenericOverlay {
    
-   public TargetOverlay(Preferences prefs, String prefPrefix) {
-      super(prefs, prefPrefix);
+   public TargetOverlay(UserProfile profile, String prefPrefix) {
+      super(profile, prefPrefix);
    }
 
    @Override

@@ -5,8 +5,9 @@
 //-----------------------------------------------------------------------------
 //
 // AUTHOR:       Nenad Amodaj, nenad@amodaj.com, December 3, 2006
+//               Chris Weisiger, 2015
 //
-// COPYRIGHT:    University of California, San Francisco, 2006
+// COPYRIGHT:    University of California, San Francisco, 2006-2015
 //
 // LICENSE:      This file is distributed under the BSD license.
 //               License text is included with the source distribution.
@@ -24,7 +25,6 @@ package org.micromanager;
 
 import ij.gui.ImageWindow;
 
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Rectangle;
 import java.awt.geom.Point2D;
@@ -34,18 +34,14 @@ import java.util.List;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 
-// These ought not be part of the public API and methods that refer to them are
-// deprecated.
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import org.micromanager.data.Coords;
 import org.micromanager.data.DataManager;
 import org.micromanager.data.Datastore;
-import org.micromanager.data.Image;
 import org.micromanager.display.DisplayManager;
-import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.OverlayPanel;
+
+// These ought not be part of the public API and methods that refer to them are
+// deprecated.
+import org.json.JSONObject;
 import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.positionlist.PositionListDlg;
 import org.micromanager.acquisition.internal.MMAcquisition;
@@ -165,6 +161,7 @@ public interface ScriptInterface {
     * Typically there is no need to use this low-level method and interfere with the default acquisition execution.
     * Intended use is within advanced plugins.
     * @param name - data set name
+    * @return deprecated MMAcquisition
     * @throws MMScriptException
     *
     * @deprecated Because it returns an internal object that is subject to change.
@@ -174,6 +171,8 @@ public interface ScriptInterface {
 
    /**
     * Return the Datastore for the named acquisition.
+    * @param name of acquisition
+    * @return DataStore associated with this acquisition
     * @throws MMScriptException if the acquisition name is invalid.
     */
    public Datastore getAcquisitionDatastore(String name) throws MMScriptException;
@@ -181,6 +180,7 @@ public interface ScriptInterface {
    /**
     * Returns a name beginning with stem that is not yet used.
     * @param stem Base name from which a unique name will be constructed
+    * @return name beginning with stem that is not yet used
     */
    public String getUniqueAcquisitionName(String stem);
    
@@ -195,14 +195,17 @@ public interface ScriptInterface {
 
    /**
     * Checks whether an acquisition with the given name already exists.
+    * @param name name of acquisition 
+    * @return true is an acquisition with that name exists
     */
    public Boolean acquisitionExists(String name);
 
    /**
     * Closes the acquisition.
-    * After this command metadata is complete, all the references to this data set are cleaned-up,
-    * and no additional images can be added to the acquisition
+    * After this command metadata is complete, all the references to this data 
+    * set are cleaned-up, and no additional images can be added to the acquisition
     * Does not close the window in which the acquisition data is displayed
+    * @param name of acquisition
     * @throws MMScriptException 
     */
    public void closeAcquisition(String name) throws MMScriptException;
@@ -210,6 +213,8 @@ public interface ScriptInterface {
    /**
     * Close all open displays for the specified acquisition. They will be
     * forced closed with no prompt to save data.
+    * @param name of acquisition
+    * @throws org.micromanager.internal.utils.MMScriptException
     */
    public void closeAcquisitionDisplays(String name) throws MMScriptException;
    
@@ -227,26 +232,42 @@ public interface ScriptInterface {
    
    /**
     * Returns the width (in pixels) of images in this acquisition
+    * @param acqName name of acquisition
+    * @return width of the images in this acquisition
+    * @throws org.micromanager.internal.utils.MMScriptException 
     */
    public int getAcquisitionImageWidth(String acqName) throws MMScriptException;
 
    /**
     * Returns the width (in pixels) of images in this acquisition
+    * @param acqName name of acquisition
+    * @return height of the images in this acquisition
+    * @throws org.micromanager.internal.utils.MMScriptException
     */
    public int getAcquisitionImageHeight(String acqName) throws MMScriptException;
    
    /**
     * Returns the number of bits used per pixel
+    * @param acqName name of the acquisition
+    * @return bit-depth of the images in this acquisition
+    * @throws org.micromanager.internal.utils.MMScriptException
     */
    public int getAcquisitionImageBitDepth(String acqName) throws MMScriptException;
    
    /**
     * Returns the number of bytes used per pixel
+    * @param acqName name of the acquisition
+    * @return number of bytes per pixel for the images in this acquisition
+    * @throws org.micromanager.internal.utils.MMScriptException
     */
    public int getAcquisitionImageByteDepth(String acqName) throws MMScriptException;
 
    /**
-    * Returns boolean specifying whether multiple cameras used in this acquisition
+    * TODO: what exactly does this function return?????
+    * Returns ???
+    * @param acqName name of this acquisition
+    * @return number 
+    * @throws org.micromanager.internal.utils.MMScriptException
     */
    public int getAcquisitionMultiCamNumChannels(String acqName) throws MMScriptException;
    
@@ -277,27 +298,33 @@ public interface ScriptInterface {
    /**
     * Loads setting for Acquisition Dialog from file
     * Will open Acquisition Dialog when it is not open yet
+    * @param path file path from which setting for acquisition dialog should 
+    * be loaded
     * @throws MMScriptException
     */  
    public void loadAcquisition(String path) throws MMScriptException;
    
    /**
-    * Makes this the 'current' PositionList, i.e., the one used by the Acquisition Protocol
+    * Makes this the 'current' PositionList, i.e., the one used by the 
+    * Acquisition Protocol.
     * Replaces the list in the PositionList Window
     * It will open a position list dialog if it was not already open.
+    * @param pl PosiionLIst to be made the current one
     * @throws MMScriptException
     */
    public void setPositionList(PositionList pl) throws MMScriptException;
    
    /**
-    * Returns a copy of the current PositionList, the one used by the Acquisition Protocol
+    * Returns a copy of the current PositionList, the one used by the 
+    * Acquisition Protocol
+    * @return copy of the current PositionList
     * @throws MMScriptException
     */
    public PositionList getPositionList() throws MMScriptException;
    
    /**
     * Updates the exposure time associated with the given preset
-    * If the channelgroup and channel name match the current state
+    * If the channel-group and channel name match the current state
     * the exposure time will also be updated
     * 
     * @param channelGroup - 
@@ -324,6 +351,7 @@ public interface ScriptInterface {
    /**
     * Obtain the current XY stage position.
     * Returns a point in device coordinates in microns.
+    * @return current XY stage position
     * @throws MMScriptException
     */
    public Point2D.Double getXYStagePosition()  throws MMScriptException;
@@ -369,6 +397,8 @@ public interface ScriptInterface {
    /**
     * Assigns the current stage position of the default xy-stage to be (x,y),
     * thereby offseting the coordinates of all other positions.
+    * @param x
+    * @param y
     * @throws MMScriptException
     */
    public void setXYOrigin(double x, double y) throws MMScriptException;
@@ -380,11 +410,14 @@ public interface ScriptInterface {
 
    /**
     * Returns the ImageJ ImageWindow instance that is used for Snap and Live display.
+    * @return ImageJ ImageWindow instance currently used for Snap/Live display
     */
    public ImageWindow getSnapLiveWin();
 
    /**
-   * Installs an autofocus plugin class from the class path.
+    * Installs an autofocus plugin class from the class path.
+    * @param className
+    * @return ???
    */
    public String installAutofocusPlugin(String className);
 
@@ -501,6 +534,8 @@ public interface ScriptInterface {
     * Show a TaggedImage in the snap/live window (uses current camera settings
     * to figure out the shape of the image)
     * @param image TaggedImage (pixel data and metadata tags) to be displayed
+    * TODO:
+    * @return ????
     */
    public boolean displayImage(TaggedImage image);
 
@@ -562,6 +597,7 @@ public interface ScriptInterface {
    /**
     * Returns true when an acquisition is currently running (note: this function will
     * not return true if live mode, snap, or "Camera --&gt; Album" is currently running
+    * @return true when an acquisition is currently running
     */
    public boolean isAcquisitionRunning();
 
@@ -577,6 +613,8 @@ public interface ScriptInterface {
     * When a date is appended to a version number, it will be newer than the same version 
     * without a date
     * @param version - minimum version needen to run this code
+    * @return true if the run-time Micro-Manager version is less than the 
+    * one specified
     * @throws MMScriptException
     */
    public boolean versionLessThan(String version) throws MMScriptException;
@@ -635,49 +673,63 @@ public interface ScriptInterface {
 
    /**
     * Open an existing data set. Shows the acquisition in a window.
-    * @return The acquisition object.
+    * @param location file path to load
+    * @param inRAM if set to false, data will not be loaded into RAM
+    * @return acquisition name
+    * @throws org.micromanager.internal.utils.MMScriptException
     */
    public String openAcquisitionData(String location, boolean inRAM) throws MMScriptException;
 
 
    /**
     * Open an existing data set.
+    * @param location file path to load
+    * @param inRAM if set to false, data will not be loaded into RAM
+    * @param show if true, data will be shown in a viewer
     * @return The name of the acquisition object.
+    * @throws org.micromanager.internal.utils.MMScriptException
     */
    public String openAcquisitionData(String location, boolean inRAM, boolean show) throws MMScriptException;
 
    /**
     * Enabled or disable the ROI buttons on the main window.
+    * @param enabled true: enable, false: disable ROI buttons
     */
    public void enableRoiButtons(final boolean enabled);
 
-   /*
+   /**
     * Returns the pipeline
+    * @return instance of the acquisition engine
     */
    public IAcquisitionEngine2010 getAcquisitionEngine2010();
    
-   /*
+   /**
     * Returns true if user has chosen to hide MDA window when it runs.
+    * @return true if user has chosen to hide MDA window
     */
    public boolean getHideMDADisplayOption();
    
    /**
     * Adds an image processor to the DataProcessor pipeline.
+    * @param processor the processor to be added to the DataProcessor pipeline
     */
    public void addImageProcessor(DataProcessor<TaggedImage> processor);
 
    /**
     * Removes an image processor from the DataProcessor pipeline.
+    * @param taggedImageProcessor processor to be removed from the pipeline
     */
    public void removeImageProcessor(DataProcessor<TaggedImage> taggedImageProcessor);
 
    /**
     * Retrieve a copy of the current DataProcessor pipeline.
+    * @return copy of the current DataProcessor pieline
     */
    public List<DataProcessor<TaggedImage>> getImageProcessorPipeline();
 
    /**
     * Replace the current DataProcessor pipeline with the provided one.
+    * @param pipeline pipeline that will be used from now on
     */
    public void setImageProcessorPipeline(List<DataProcessor<TaggedImage>> pipeline);
 
@@ -686,16 +738,22 @@ public interface ScriptInterface {
     * example, if your processor class is named MyProcessor, then you would
     * call this function as:
     * gui.registerProcessorClass(MyProcessor.class, "My Processor");
+    * TODO: Explain what one achieves by registering a processor
+    * @param processorClass processor to be registered
+    * @param name name displayed to the user for this class
     */
-   public void registerProcessorClass(Class<? extends DataProcessor<TaggedImage>> processorClass, String name);
+   public void registerProcessorClass(Class<? extends DataProcessor<TaggedImage>> 
+           processorClass, String name);
    
    /**
-    * Pause/Unpause a running acquistion
+    * Pause/Unpause a running acquisition
+    * @param state true if paused, false if no longer paused
     */
    public void setPause(boolean state);
    
    /**
     * Returns true if the acquisition is currently paused.
+    * @return true if paused, false if not paused
     */
    public boolean isPaused();
 
@@ -704,8 +762,14 @@ public interface ScriptInterface {
     * be specified. Passing a value of -1 should result in the runnable being attached
     * at all values of that index. For example, if the first argument is -1,
     * then the runnable should execute at every frame.
+    * @param frame 0-based frame number
+    * @param position 0-based position number
+    * @param channel 0-based channel number
+    * @param slice 0-based (z) slice number 
+    * @param runnable code to be run
     */
-   public void attachRunnable(int frame, int position, int channel, int slice, Runnable runnable);
+   public void attachRunnable(int frame, int position, int channel, int slice, 
+           Runnable runnable);
 
    /**
     * Remove runnables from the acquisition engine
@@ -714,23 +778,30 @@ public interface ScriptInterface {
    
    /**
     * Return current acquisition settings
+    * @return acquisition settings instance
     */ 
     SequenceSettings getAcquisitionSettings();
     
-    /**
-     * Apply new acquisition settings
-     */ 
+   /**
+    * Apply new acquisition settings
+    * @param settings acquisition settings
+    */ 
     public void setAcquisitionSettings(SequenceSettings settings);
  
-    /**
-     * Display dialog to save data for one of the currently open acquisitions
-     */
+   /**
+    * Displays dialog to save data for one of the currently open acquisitions
+    * @param name file-path where to save the data
+    * TODO:  What does this flag do????
+    * @param prompt 
+    * @throws org.micromanager.internal.utils.MMScriptException
+    */
     public void promptToSaveAcquisition(String name, boolean prompt) throws MMScriptException;
 
    /**
     * Request that the given object be added to our EventBus for notification
     * of events occurring. The available event types that subscribers can
     * listen for is in the org.micromanager.api.events package.
+    * @param obj object to be added to the EventBus
     */
     public void registerForEvents(Object obj);
 
@@ -743,24 +814,28 @@ public interface ScriptInterface {
    /**
     * Register an OverlayPanel with the program so that it is attached to all
     * existing and new image display windows.
+    * @param panel OverlayPanel to be attached to all display windows
     */
    public void registerOverlay(OverlayPanel panel);
 
    /**
     * Provide access to the DataManager instance for accessing Micro-Manager
     * data constructs.
+    * @return DataManager instance
     */
    public DataManager data();
 
    /**
     * Provides access to the DisplayManager instance for accessing
     * Micro-Manager display constructs.
+    * @return DisplayManager instance
     */
    public DisplayManager display();
 
    /**
     * Provides access to the UserProfile instance for accessing per-user
     * profiles.
+    * @return UserProfile instance
     */
    public UserProfile profile();
 }

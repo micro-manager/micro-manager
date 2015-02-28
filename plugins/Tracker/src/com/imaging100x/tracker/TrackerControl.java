@@ -39,7 +39,6 @@ import java.awt.Insets;
 import java.io.File;
 import java.util.GregorianCalendar;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.prefs.Preferences;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
@@ -54,17 +53,17 @@ import mmcorej.TaggedImage;
 import org.jfree.data.xy.XYSeries;
 import org.json.JSONException;
 
-import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.MMPlugin;
 import org.micromanager.ScriptInterface;
+import org.micromanager.UserProfile;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.MMScriptException;
-import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.TextUtils;
 
 public class TrackerControl extends MMFrame implements MMPlugin {
@@ -100,7 +99,6 @@ public class TrackerControl extends MMFrame implements MMPlugin {
    private boolean rotate_ = false;
    private double dxUmPrev_ = 0.0;
    private double dyUmPrev_ = 0.0;
-   private Preferences prefs_;
    private MMRect limits_;
    //private AcquisitionData acq_;
    private int imageCounter_;
@@ -191,18 +189,19 @@ public class TrackerControl extends MMFrame implements MMPlugin {
       super();
       imageCounter_ = 0;
       limits_ = new MMRect();
-      prefs_ = getPrefsNode();
       initialize();
+      final UserProfile up  = MMStudio.getInstance().profile();
 
       addWindowListener(new WindowAdapter() {
          @Override
          public void windowOpened(WindowEvent e) {
-            resolutionPix_ = prefs_.getInt(RESOLUTION_PIX, resolutionPix_);
-            offsetPix_ = prefs_.getInt(OFFSET_PIX, offsetPix_);
-            intervalMs_ = prefs_.getInt(INTERVAL_MS, intervalMs_);
-            diskRadioButton_.setSelected(prefs_.getBoolean(DISK_RECORDING, diskRadioButton_.isSelected()));
-            rootField_.setText(prefs_.get(ROOT, ""));
-            nameField_.setText(prefs_.get(NAME, ""));
+            resolutionPix_ = up.getInt(this.getClass(), RESOLUTION_PIX, resolutionPix_);
+            offsetPix_ = up.getInt(this.getClass(), OFFSET_PIX, offsetPix_);
+            intervalMs_ = up.getInt(this.getClass(), INTERVAL_MS, intervalMs_);
+            diskRadioButton_.setSelected(up.getBoolean(this.getClass(), 
+                    DISK_RECORDING, diskRadioButton_.isSelected()));
+            rootField_.setText(up.getString(this.getClass(), ROOT, ""));
+            nameField_.setText(up.getString(this.getClass(), NAME, ""));
 
             resField_.setText(Integer.toString(resolutionPix_));
             offsetField_.setText(Integer.toString(offsetPix_));
@@ -212,12 +211,13 @@ public class TrackerControl extends MMFrame implements MMPlugin {
 
          @Override
          public void windowClosing(final WindowEvent e) {
-            prefs_.putInt(RESOLUTION_PIX, resolutionPix_);
-            prefs_.putInt(OFFSET_PIX, offsetPix_);
-            prefs_.putInt(INTERVAL_MS, intervalMs_);
-            prefs_.putBoolean(DISK_RECORDING, diskRadioButton_.isSelected());
-            prefs_.put(ROOT, rootField_.getText());
-            prefs_.put(NAME, nameField_.getText());
+            up.setInt(this.getClass(), RESOLUTION_PIX, resolutionPix_);
+            up.setInt(this.getClass(), OFFSET_PIX, offsetPix_);
+            up.setInt(this.getClass(), INTERVAL_MS, intervalMs_);
+            up.setBoolean(this.getClass(), DISK_RECORDING, 
+                    diskRadioButton_.isSelected());
+            up.setString(this.getClass(), ROOT, rootField_.getText());
+            up.setString(this.getClass(), NAME, nameField_.getText());
          }
       });
 

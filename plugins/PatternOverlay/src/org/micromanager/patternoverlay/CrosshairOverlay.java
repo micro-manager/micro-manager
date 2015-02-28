@@ -4,7 +4,7 @@ import ij.gui.Roi;
 import ij.gui.ShapeRoi;
 
 import java.awt.geom.GeneralPath;
-import java.util.prefs.Preferences;
+import org.micromanager.UserProfile;
 
 
 /**
@@ -15,8 +15,8 @@ import java.util.prefs.Preferences;
  */
 public class CrosshairOverlay extends GenericOverlay {
    
-   public CrosshairOverlay(Preferences prefs, String prefPrefix) {
-      super(prefs, prefPrefix);
+   public CrosshairOverlay(UserProfile profile, String prefPrefix) {
+      super(profile, prefPrefix);
    }
 
    @Override

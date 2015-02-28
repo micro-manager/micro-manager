@@ -6,16 +6,11 @@ import java.awt.GraphicsEnvironment;
 import java.awt.Rectangle;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -30,9 +25,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 
 public class JavaUtils {
-
-   private static final String BACKING_STORE_AVAIL = "BackingStoreAvail";
-
+ 
    /**
     * Add directories and JARs to the classpath, and return the classes found
     * in the process.
@@ -150,7 +143,20 @@ public class JavaUtils {
          method.setAccessible(true);
          method.invoke(loader, new Object[]{u});
          ReportingUtils.logMessage("Added URL to system class loader: " + u);
-      } catch (Throwable t) {
+      } catch (NoSuchMethodException t) {
+         ReportingUtils.logError(t, "Failed to add URL to system class loader: " + u);
+         throw new IOException("Failed to add URL to system class loader: " + u);
+      } catch (SecurityException t) {
+         ReportingUtils.logError(t, "Failed to add URL to system class loader: " + u);
+         throw new IOException("Failed to add URL to system class loader: " + u);
+      } //end try catch
+      catch (IllegalAccessException t) {
+         ReportingUtils.logError(t, "Failed to add URL to system class loader: " + u);
+         throw new IOException("Failed to add URL to system class loader: " + u);
+      } catch (IllegalArgumentException t) {
+         ReportingUtils.logError(t, "Failed to add URL to system class loader: " + u);
+         throw new IOException("Failed to add URL to system class loader: " + u);
+      } catch (InvocationTargetException t) {
          ReportingUtils.logError(t, "Failed to add URL to system class loader: " + u);
          throw new IOException("Failed to add URL to system class loader: " + u);
       }//end try catch
@@ -159,6 +165,13 @@ public class JavaUtils {
 
    /**
     * Call a private method without arguments.
+    * @param obj
+    * @param theClass
+    * @param methodName
+    * @return 
+    * @throws java.lang.NoSuchMethodException
+    * @throws java.lang.IllegalAccessException
+    * @throws java.lang.reflect.InvocationTargetException
     */
    public static Object invokeRestrictedMethod(Object obj, Class theClass, String methodName) throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
       return invokeRestrictedMethod(obj, theClass, methodName, (Object) null);
@@ -167,6 +180,14 @@ public class JavaUtils {
    /**
     * Call a private method using reflection. Use looks like
     * invokeRestrictedMethod(Object obj, Class theClass, String methodName, Object param1, Class paramType1, Object param2, Class paramType2, ...)
+    * @param obj
+    * @param theClass
+    * @param methodName
+    * @param paramsAndTypes
+    * @return 
+    * @throws java.lang.NoSuchMethodException
+    * @throws java.lang.IllegalAccessException
+    * @throws java.lang.reflect.InvocationTargetException
     */
    public static Object invokeRestrictedMethod(Object obj, Class theClass, String methodName, Object... paramsAndTypes) throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
       Object[] params;
@@ -257,18 +278,18 @@ public class JavaUtils {
 
    public static boolean isWindows() {
       String os = System.getProperty("os.name").toLowerCase();
-      return (os.indexOf("win") >= 0);
+      return (os.contains("win"));
    }
 
    public static boolean isMac() {
       String os = System.getProperty("os.name").toLowerCase();
-      return (os.indexOf("mac") >= 0);
+      return (os.contains("mac"));
    }
 
    public static boolean isUnix() {
       String os = System.getProperty("os.name").toLowerCase();
       //linux or unix
-      return (os.indexOf("nix") >= 0 || os.indexOf("nux") >= 0);
+      return (os.contains("nix") || os.contains("nux"));
    }
 
    public static void sleep(int time_ms) {
@@ -335,6 +356,7 @@ public class JavaUtils {
     * Find out how much unused memory (in bytes) is still available 
     * for the JVM to use.
     * On a MacBook Pro this call takes 0.5 usec.
+    * @return amount of unused memory in bytes
     */
    public static long getAvailableUnusedMemory() {
       Runtime r = Runtime.getRuntime();
@@ -391,9 +413,9 @@ public class JavaUtils {
       }
       if (isWindows()) {
          String os = System.getProperty("os.name").toLowerCase();
-         if (os.indexOf("xp") >= 0) {
+         if (os.contains("xp")) {
             return System.getenv("USERPROFILE") + "/Local Settings/Application Data/Micro-Manager/";
-         } else if ((os.indexOf("windows 7") >= 0) || (os.indexOf("windows vista") >= 0)) {
+         } else if ((os.contains("windows 7")) || (os.contains("windows vista"))) {
             return System.getenv("USERPROFILE") + "/AppData/Local/Micro-Manager/";
          }
       }
@@ -421,12 +443,41 @@ public class JavaUtils {
       for (Thread key : liveThreads.keySet()) {
          System.err.println("Thread " + key.getName());
          StackTraceElement[] trace = liveThreads.get(key);
-         for (int j = 0; j < trace.length; j++) {
-            System.err.println("\tat " + trace[j]);
+         for (StackTraceElement trace1 : trace) {
+            System.err.println("\tat " + trace1);
          }
       }
       System.err.println("End all stack traces. =============");
    }
 
+   /**
+    * Utility function that converts a double array to a Double array
+    * @param input double[] to be converted
+    * @return Double[]
+    */
+   public static Double[] doubleArrayToClass (double[] input)
+   {
+      Double[] newArray = new Double[input.length];
+      for (int i = 0; i < input.length; i++)
+      {
+         newArray[i] = input[i];
+      }
+      return newArray;
+   }
+   
+   /**
+    * Utility function that converts a Double array to a double array
+    * @param input Double[] to be converted
+    * @return double[]
+    */
+   public static double[] doubleArrayToPrimitive(Double[] input)
+   {
+      double[] newArray = new double[input.length];
+      for (int i = 0; i < input.length; i++)
+      {
+         newArray[i] = input[i];
+      }
+      return newArray;
+   }
 
 }
