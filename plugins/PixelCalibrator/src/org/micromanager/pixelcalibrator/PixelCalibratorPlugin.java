@@ -142,7 +142,7 @@ public class PixelCalibratorPlugin implements MMPlugin {
       double[] affValues = null;
       result.getMatrix(affValues);
       try {
-         app_.profile().setDoubleArray(cp_, "affine_transform_" +
+         app_.profile().setDoubleArray(MMStudio.class, "affine_transform_" +
                  core_.getCurrentPixelSizeConfig(),
                  JavaUtils.doubleArrayToClass(affValues));
       } catch (Exception ex) {
