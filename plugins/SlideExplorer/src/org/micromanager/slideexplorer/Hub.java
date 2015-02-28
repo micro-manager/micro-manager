@@ -8,8 +8,8 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 
-import java.util.Hashtable;
-import java.util.prefs.Preferences;
+import java.util.HashMap;
+import java.util.Map;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
@@ -18,6 +18,7 @@ import mmcorej.CMMCore;
 import mmcorej.StrVector;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.ScriptInterface;
+import org.micromanager.UserProfile;
 import org.micromanager.pixelcalibrator.PixelCalibratorPlugin;
 import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.internal.utils.JavaUtils;
@@ -41,19 +42,11 @@ public class Hub {
    private boolean running_ = false;
    private CMMCore core_;
    private ConfigurationDialog configDialog_;
-   private static String angleKey = "angle";
-   private static String pixelSizeKey = "pixelSize";
-   private double angle_;
-   private double pixelSize_;
-   private final Preferences prefs_;
    private final MMStudio app_;
    private RoiManager roiManager_;
    private String surveyPixelSizeConfig_ = "";
    private String navigatePixelSizeConfig_ = "";
-   private String currentPixelSizeConfig_ = "None";
-   private Hashtable<String, OffsetsRow> offsetsData_ = new Hashtable<String, OffsetsRow>();
-   private double autofocusOffset_ = 0;
-//   private AcqControlDlgMosaic mosaicDlg_ = null;
+   private Map<String, OffsetsRow> offsetsData_ = new HashMap<String, OffsetsRow>();
 
    /*
     * Hub constructor.
@@ -62,11 +55,6 @@ public class Hub {
       app_ = (MMStudio) app;
       Hub.appRef_ = app;
       core_ = app_.getMMCore();
-      prefs_ = Preferences.systemNodeForPackage(this.getClass());
-      angle_ = prefs_.getDouble(angleKey, 0.0);
-      //pixelSize_ = prefs_.getDouble(pixelSizeKey, core.getPixelSizeUm());
-      pixelSize_ = core_.getPixelSizeUm();
-
 
       int width = 950;
       int height = 600;
@@ -111,20 +99,20 @@ public class Hub {
 
 
    public static AffineTransform getCurrentAffineTransform(CMMCore core) {
-      Preferences prefs = Preferences.userNodeForPackage(MMStudio.class);
 
       AffineTransform transform = null;
       try {
-         transform = JavaUtils.getObjectFromPrefs(prefs, "affine_transform_" + core.getCurrentPixelSizeConfig(), (AffineTransform) null);
+         String key = "affine_transform_" + core.getCurrentPixelSizeConfig();
+         Double[] affValues = MMStudio.getInstance().profile().getDoubleArray(
+                 MMStudio.class, key, null);
+         transform = new AffineTransform(JavaUtils.doubleArrayToPrimitive(affValues));
       } catch (Exception ex) {
-         ReportingUtils.logError(ex);
       }
-
 
       if (transform == null) {
          int result = JOptionPane.showConfirmDialog(null,
-                 "The current magnification setting needs to be calibrated.\n" +
-                 "Would you like to run automatic pixel calibration?",
+                 "The current magnification setting needs to be calibrated.\n"
+                 + "Would you like to run automatic pixel calibration?",
                  "Pixel caliberatrion required.",
                  JOptionPane.YES_NO_OPTION);
          if (result == JOptionPane.YES_OPTION) {
@@ -141,7 +129,7 @@ public class Hub {
       return transform;
    }
 
-   public void applyVendorSpecificSettings() {
+   public final void applyVendorSpecificSettings() {
       // Keep ASI stages from being too slow.
       String stage = core_.getXYStageDevice();
       try {
@@ -161,8 +149,7 @@ public class Hub {
       }
    }
 
-   public void start() {
-
+   public final void start() {
 
       if (!running_) {
          controller_.setMapOriginToCurrentStagePosition();
@@ -202,7 +189,7 @@ public class Hub {
    /*
     * The size of the display changed.
     */
-   public void resize(Dimension newViewDimensionsOnScreen) {
+   public final void resize(Dimension newViewDimensionsOnScreen) {
       coords_.setViewDimensionsOnScreen(newViewDimensionsOnScreen);
       coords_.setViewDimensionsOffScreen(new Dimension(3 * newViewDimensionsOnScreen.width, 3 * newViewDimensionsOnScreen.height));
    }
@@ -264,6 +251,7 @@ public class Hub {
       SwingUtilities.invokeLater(new GUIUpdater(null));
    }
 
+   @Override
    protected void finalize() throws Throwable {
       configDialog_.dispose();
       shutdown();
@@ -292,7 +280,7 @@ public class Hub {
       configDialog_.setVisible(true);
    }
 
-   void deployRoiManager() {
+   final void deployRoiManager() {
       roiManager_ = RoiManager.getInstance();
       if (roiManager_ == null) {
          roiManager_ = new RoiManager(this);
@@ -342,7 +330,7 @@ public class Hub {
       return zoomLevel_;
    }
 
-   public void startupOffsets() {
+   public final void startupOffsets() {
       loadOffsets();
       try {
          surveyPixelSizeConfig_ = core_.getCurrentPixelSizeConfig();
@@ -356,7 +344,7 @@ public class Hub {
       setOffsets(surveyPixelSizeConfig_);
    }
 
-   public Hashtable<String, OffsetsRow> getOffsets() {
+   public Map<String, OffsetsRow> getOffsets() {
       return offsetsData_;
    }
 
@@ -365,14 +353,14 @@ public class Hub {
       for (int i = 0; i < resolutionNames.size(); ++i) {
          OffsetsRow offsetsRow = new OffsetsRow();
          offsetsRow.resolutionName = resolutionNames.get(i);
-         offsetsRow.readFromPrefs(prefs_);
+         offsetsRow.readFromProfile(app_.profile());
          offsetsData_.put(offsetsRow.resolutionName, offsetsRow);
       }
    }
 
    public void saveOffsets() {
       for (OffsetsRow offsetsRow : offsetsData_.values()) {
-         offsetsRow.writeToPrefs(prefs_);
+         offsetsRow.writeToProfile(app_.profile());
       }
    }
 
@@ -467,14 +455,10 @@ public class Hub {
       try {
          String autofocusDevice = core_.getAutoFocusDevice();
          if (autofocusDevice.length() > 0) {
-            autofocusOffset_ = core_.getAutoFocusOffset();
-            //core_.enableContinuousFocus(false);
-
             if (autofocusDevice.equals("PerfectFocus")) {
                core_.setProperty(autofocusDevice, "State", "off");
             }
             core_.waitForDevice(autofocusDevice);
-
          }
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
@@ -556,6 +540,7 @@ public class Hub {
          regenerate_ = regenerate;
       }
 
+      @Override
       public void run() {
          if (tileIndex_ == null) {
             if (regenerate_) {
@@ -623,6 +608,7 @@ public class Hub {
          setName("SlideExplorer hardware thread");
       }
 
+      @Override
       public void run() {
          while (stopTileGrabberThread_ == false) {
 
@@ -790,21 +776,21 @@ public class Hub {
 
    public class OffsetsRow {
 
-      String resolutionName;
-      double x = 0;
-      double y = 0;
-      double z = 0;
+      public String resolutionName;
+      public double x = 0;
+      public double y = 0;
+      public double z = 0;
 
-      public void writeToPrefs(Preferences prefs) {
-         prefs.putDouble(resolutionName + "-xoffset", x);
-         prefs.putDouble(resolutionName + "-yoffset", y);
-         prefs.putDouble(resolutionName + "-zoffset", z);
+      public void writeToProfile(UserProfile profile) {
+         profile.setDouble(this.getClass(), resolutionName + "-xoffset", x);
+         profile.setDouble(this.getClass(), resolutionName + "-yoffset", y);
+         profile.setDouble(this.getClass(), resolutionName + "-zoffset", z);
       }
 
-      public void readFromPrefs(Preferences prefs) {
-         x = prefs.getDouble(resolutionName + "-xoffset", 0);
-         y = prefs.getDouble(resolutionName + "-yoffset", 0);
-         z = prefs.getDouble(resolutionName + "-zoffset", 0);
+      public void readFromProfile(UserProfile profile) {
+         x = profile.getDouble(this.getClass(), resolutionName + "-xoffset", 0.0);
+         y = profile.getDouble(this.getClass(), resolutionName + "-yoffset", 0.0);
+         z = profile.getDouble(this.getClass(), resolutionName + "-zoffset", 0.0);
       }
    }
 }
