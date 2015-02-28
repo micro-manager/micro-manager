@@ -5,8 +5,9 @@
 //-----------------------------------------------------------------------------
 //
 // AUTHOR:       Nenad Amodaj, nenad@amodaj.com, December 3, 2006
+//               Chris Weisiger, 2015
 //
-// COPYRIGHT:    University of California, San Francisco, 2006
+// COPYRIGHT:    University of California, San Francisco, 2006-2015
 //
 // LICENSE:      This file is distributed under the BSD license.
 //               License text is included with the source distribution.
@@ -33,14 +34,14 @@ import java.util.List;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 
-// These ought not be part of the public API and methods that refer to them are
-// deprecated.
-import org.json.JSONObject;
-
 import org.micromanager.data.DataManager;
 import org.micromanager.data.Datastore;
 import org.micromanager.display.DisplayManager;
 import org.micromanager.display.OverlayPanel;
+
+// These ought not be part of the public API and methods that refer to them are
+// deprecated.
+import org.json.JSONObject;
 import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.positionlist.PositionListDlg;
 import org.micromanager.acquisition.internal.MMAcquisition;
@@ -682,7 +683,7 @@ public interface ScriptInterface {
 
    /**
     * Open an existing data set.
-     * @param location file path to load
+    * @param location file path to load
     * @param inRAM if set to false, data will not be loaded into RAM
     * @param show if true, data will be shown in a viewer
     * @return The name of the acquisition object.
@@ -696,33 +697,39 @@ public interface ScriptInterface {
     */
    public void enableRoiButtons(final boolean enabled);
 
-   /*
+   /**
     * Returns the pipeline
+    * @return instance of the acquisition engine
     */
    public IAcquisitionEngine2010 getAcquisitionEngine2010();
    
-   /*
+   /**
     * Returns true if user has chosen to hide MDA window when it runs.
+    * @return true if user has chosen to hide MDA window
     */
    public boolean getHideMDADisplayOption();
    
    /**
     * Adds an image processor to the DataProcessor pipeline.
+    * @param processor the processor to be added to the DataProcessor pipeline
     */
    public void addImageProcessor(DataProcessor<TaggedImage> processor);
 
    /**
     * Removes an image processor from the DataProcessor pipeline.
+    * @param taggedImageProcessor processor to be removed from the pipeline
     */
    public void removeImageProcessor(DataProcessor<TaggedImage> taggedImageProcessor);
 
    /**
     * Retrieve a copy of the current DataProcessor pipeline.
+    * @return copy of the current DataProcessor pieline
     */
    public List<DataProcessor<TaggedImage>> getImageProcessorPipeline();
 
    /**
     * Replace the current DataProcessor pipeline with the provided one.
+    * @param pipeline pipeline that will be used from now on
     */
    public void setImageProcessorPipeline(List<DataProcessor<TaggedImage>> pipeline);
 
@@ -731,16 +738,22 @@ public interface ScriptInterface {
     * example, if your processor class is named MyProcessor, then you would
     * call this function as:
     * gui.registerProcessorClass(MyProcessor.class, "My Processor");
+    * TODO: Explain what one achieves by registering a processor
+    * @param processorClass processor to be registered
+    * @param name name displayed to the user for this class
     */
-   public void registerProcessorClass(Class<? extends DataProcessor<TaggedImage>> processorClass, String name);
+   public void registerProcessorClass(Class<? extends DataProcessor<TaggedImage>> 
+           processorClass, String name);
    
    /**
-    * Pause/Unpause a running acquistion
+    * Pause/Unpause a running acquisition
+    * @param state true if paused, false if no longer paused
     */
    public void setPause(boolean state);
    
    /**
     * Returns true if the acquisition is currently paused.
+    * @return true if paused, false if not paused
     */
    public boolean isPaused();
 
@@ -749,8 +762,14 @@ public interface ScriptInterface {
     * be specified. Passing a value of -1 should result in the runnable being attached
     * at all values of that index. For example, if the first argument is -1,
     * then the runnable should execute at every frame.
+    * @param frame 0-based frame number
+    * @param position 0-based position number
+    * @param channel 0-based channel number
+    * @param slice 0-based (z) slice number 
+    * @param runnable code to be run
     */
-   public void attachRunnable(int frame, int position, int channel, int slice, Runnable runnable);
+   public void attachRunnable(int frame, int position, int channel, int slice, 
+           Runnable runnable);
 
    /**
     * Remove runnables from the acquisition engine
@@ -759,23 +778,30 @@ public interface ScriptInterface {
    
    /**
     * Return current acquisition settings
+    * @return acquisition settings instance
     */ 
     SequenceSettings getAcquisitionSettings();
     
-    /**
-     * Apply new acquisition settings
-     */ 
+   /**
+    * Apply new acquisition settings
+    * @param settings acquisition settings
+    */ 
     public void setAcquisitionSettings(SequenceSettings settings);
  
-    /**
-     * Display dialog to save data for one of the currently open acquisitions
-     */
+   /**
+    * Displays dialog to save data for one of the currently open acquisitions
+    * @param name file-path where to save the data
+    * TODO:  What does this flag do????
+    * @param prompt 
+    * @throws org.micromanager.internal.utils.MMScriptException
+    */
     public void promptToSaveAcquisition(String name, boolean prompt) throws MMScriptException;
 
    /**
     * Request that the given object be added to our EventBus for notification
     * of events occurring. The available event types that subscribers can
     * listen for is in the org.micromanager.api.events package.
+    * @param obj object to be added to the EventBus
     */
     public void registerForEvents(Object obj);
 
@@ -788,24 +814,28 @@ public interface ScriptInterface {
    /**
     * Register an OverlayPanel with the program so that it is attached to all
     * existing and new image display windows.
+    * @param panel OverlayPanel to be attached to all display windows
     */
    public void registerOverlay(OverlayPanel panel);
 
    /**
     * Provide access to the DataManager instance for accessing Micro-Manager
     * data constructs.
+    * @return DataManager instance
     */
    public DataManager data();
 
    /**
     * Provides access to the DisplayManager instance for accessing
     * Micro-Manager display constructs.
+    * @return DisplayManager instance
     */
    public DisplayManager display();
 
    /**
     * Provides access to the UserProfile instance for accessing per-user
     * profiles.
+    * @return UserProfile instance
     */
    public UserProfile profile();
 }
