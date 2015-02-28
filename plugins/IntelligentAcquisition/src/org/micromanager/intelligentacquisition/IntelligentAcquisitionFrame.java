@@ -47,6 +47,8 @@ import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.micromanager.data.Coords;
 import org.micromanager.display.DisplayWindow;
+import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.utils.JavaUtils;
 
 /**
  *
@@ -585,32 +587,16 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
             
             AffineTransform af = null;
             try {
-               // TODO: get the affine object from the user profile!!!!!!
-               //af = (AffineTransform) JavaUtils.getObjectFromPrefs
-               //     (Preferences.userNodeForPackage(MMStudio.class), "affine_transform_" + core_.getCurrentPixelSizeConfig(), null);
+               Double[] affValues = gui_.profile().getDoubleArray(
+                           MMStudio.class, "affine_transform_" +
+                           core_.getCurrentPixelSizeConfig(), null);
+               af = new AffineTransform(JavaUtils.doubleArrayToPrimitive(affValues));
             } catch (Exception ex) {
             }
             if (af == null) {
                gui_.logError("No pixel calibration data found, please run the Pixel Calibrator");
-            }
-            
-            /*
-            boolean transposeMirorX = false;
-            boolean transposeMirorY = false;
-            boolean transposeXY = false;
-            try {
-               transposeMirorX = core_.getProperty(core_.getCameraDevice(),
-                       "TransposeMirrorX").equals("1");
-               transposeMirorY = core_.getProperty(core_.getCameraDevice(),
-                       "TransposeMirrorY").equals("1");
-               transposeXY = core_.getProperty(core_.getCameraDevice(),
-                       "TransposeXY").equals("1");
-            } catch (Exception ex) {
-               gui_.showError("Problem reading transpose settings from camera");
                return;
             }
-            */  
-
 
             // Preload acqFileNameB_ to make sure that it works
             try {
@@ -676,28 +662,23 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
                      // X and Y coordinates of object found in microns
                      double xPos = res.getValue("X", 0);
                      double yPos = res.getValue("Y", 0);
-                     
-                     
-                     if (af != null) {
-                        
-                        // TODO: testing!!!
-                        Point2D newStagePos = af.inverseTransform(new Point2D.Double(xPos, yPos), null);
-                        core_.setRelativeXYPosition(xyStage_, newStagePos.getX(),
-                                newStagePos.getY() );
-                        core_.setROI((int) (core_.getImageWidth() / 2 - roiWidthX_ / 2),
-                                (int) (core_.getImageHeight() / 2 - roiWidthY_ / 2),
-                                (int) roiWidthX_, (int) roiWidthY_);
-                     }
+
+                     // TODO: testing!!!
+                     Point2D newStagePos = af.inverseTransform(new Point2D.Double(xPos, yPos), null);
+                     core_.setRelativeXYPosition(xyStage_, newStagePos.getX(),
+                             newStagePos.getY());
+                     core_.setROI((int) (core_.getImageWidth() / 2 - roiWidthX_ / 2),
+                             (int) (core_.getImageHeight() / 2 - roiWidthY_ / 2),
+                             (int) roiWidthX_, (int) roiWidthY_);
+
                      gui_.showMessage("Imaging interesting cell at position: "
                              + xPos + ", " + yPos);
 
                      gui_.loadAcquisition(acqFileNameB_);
                      String goodStuff = gui_.runAcquisition();
                      gui_.closeAcquisitionDisplays(goodStuff);
-                     if (af != null) {
-                        core_.setRelativeXYPosition(xyStage_, -xPos * pixelWidthMicron_, -yPos * pixelWidthMicron_);
-                        core_.clearROI();
-                     }
+                     core_.setRelativeXYPosition(xyStage_, -xPos * pixelWidthMicron_, -yPos * pixelWidthMicron_);
+                     core_.clearROI();
                      // org.micromanager.internal.utils.JavaUtils.sleep(200);
                   } catch (Exception ex) {
                      gui_.showError(ex, "Imaging acquisition failed...");
