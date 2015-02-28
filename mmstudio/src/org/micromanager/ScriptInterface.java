@@ -24,7 +24,6 @@ package org.micromanager;
 
 import ij.gui.ImageWindow;
 
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Rectangle;
 import java.awt.geom.Point2D;
@@ -36,15 +35,11 @@ import mmcorej.TaggedImage;
 
 // These ought not be part of the public API and methods that refer to them are
 // deprecated.
-import org.json.JSONException;
 import org.json.JSONObject;
 
-import org.micromanager.data.Coords;
 import org.micromanager.data.DataManager;
 import org.micromanager.data.Datastore;
-import org.micromanager.data.Image;
 import org.micromanager.display.DisplayManager;
-import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.OverlayPanel;
 import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.positionlist.PositionListDlg;
@@ -165,6 +160,7 @@ public interface ScriptInterface {
     * Typically there is no need to use this low-level method and interfere with the default acquisition execution.
     * Intended use is within advanced plugins.
     * @param name - data set name
+    * @return deprecated MMAcquisition
     * @throws MMScriptException
     *
     * @deprecated Because it returns an internal object that is subject to change.
@@ -174,6 +170,8 @@ public interface ScriptInterface {
 
    /**
     * Return the Datastore for the named acquisition.
+    * @param name of acquisition
+    * @return DataStore associated with this acquisition
     * @throws MMScriptException if the acquisition name is invalid.
     */
    public Datastore getAcquisitionDatastore(String name) throws MMScriptException;
@@ -181,6 +179,7 @@ public interface ScriptInterface {
    /**
     * Returns a name beginning with stem that is not yet used.
     * @param stem Base name from which a unique name will be constructed
+    * @return name beginning with stem that is not yet used
     */
    public String getUniqueAcquisitionName(String stem);
    
@@ -195,14 +194,17 @@ public interface ScriptInterface {
 
    /**
     * Checks whether an acquisition with the given name already exists.
+    * @param name name of acquisition 
+    * @return true is an acquisition with that name exists
     */
    public Boolean acquisitionExists(String name);
 
    /**
     * Closes the acquisition.
-    * After this command metadata is complete, all the references to this data set are cleaned-up,
-    * and no additional images can be added to the acquisition
+    * After this command metadata is complete, all the references to this data 
+    * set are cleaned-up, and no additional images can be added to the acquisition
     * Does not close the window in which the acquisition data is displayed
+    * @param name of acquisition
     * @throws MMScriptException 
     */
    public void closeAcquisition(String name) throws MMScriptException;
@@ -210,6 +212,8 @@ public interface ScriptInterface {
    /**
     * Close all open displays for the specified acquisition. They will be
     * forced closed with no prompt to save data.
+    * @param name of acquisition
+    * @throws org.micromanager.internal.utils.MMScriptException
     */
    public void closeAcquisitionDisplays(String name) throws MMScriptException;
    
@@ -227,26 +231,42 @@ public interface ScriptInterface {
    
    /**
     * Returns the width (in pixels) of images in this acquisition
+    * @param acqName name of acquisition
+    * @return width of the images in this acquisition
+    * @throws org.micromanager.internal.utils.MMScriptException 
     */
    public int getAcquisitionImageWidth(String acqName) throws MMScriptException;
 
    /**
     * Returns the width (in pixels) of images in this acquisition
+    * @param acqName name of acquisition
+    * @return height of the images in this acquisition
+    * @throws org.micromanager.internal.utils.MMScriptException
     */
    public int getAcquisitionImageHeight(String acqName) throws MMScriptException;
    
    /**
     * Returns the number of bits used per pixel
+    * @param acqName name of the acquisition
+    * @return bit-depth of the images in this acquisition
+    * @throws org.micromanager.internal.utils.MMScriptException
     */
    public int getAcquisitionImageBitDepth(String acqName) throws MMScriptException;
    
    /**
     * Returns the number of bytes used per pixel
+    * @param acqName name of the acquisition
+    * @return number of bytes per pixel for the images in this acquisition
+    * @throws org.micromanager.internal.utils.MMScriptException
     */
    public int getAcquisitionImageByteDepth(String acqName) throws MMScriptException;
 
    /**
-    * Returns boolean specifying whether multiple cameras used in this acquisition
+    * TODO: what exactly does this function return?????
+    * Returns ???
+    * @param acqName name of this acquisition
+    * @return number 
+    * @throws org.micromanager.internal.utils.MMScriptException
     */
    public int getAcquisitionMultiCamNumChannels(String acqName) throws MMScriptException;
    
@@ -277,27 +297,33 @@ public interface ScriptInterface {
    /**
     * Loads setting for Acquisition Dialog from file
     * Will open Acquisition Dialog when it is not open yet
+    * @param path file path from which setting for acquisition dialog should 
+    * be loaded
     * @throws MMScriptException
     */  
    public void loadAcquisition(String path) throws MMScriptException;
    
    /**
-    * Makes this the 'current' PositionList, i.e., the one used by the Acquisition Protocol
+    * Makes this the 'current' PositionList, i.e., the one used by the 
+    * Acquisition Protocol.
     * Replaces the list in the PositionList Window
     * It will open a position list dialog if it was not already open.
+    * @param pl PosiionLIst to be made the current one
     * @throws MMScriptException
     */
    public void setPositionList(PositionList pl) throws MMScriptException;
    
    /**
-    * Returns a copy of the current PositionList, the one used by the Acquisition Protocol
+    * Returns a copy of the current PositionList, the one used by the 
+    * Acquisition Protocol
+    * @return copy of the current PositionList
     * @throws MMScriptException
     */
    public PositionList getPositionList() throws MMScriptException;
    
    /**
     * Updates the exposure time associated with the given preset
-    * If the channelgroup and channel name match the current state
+    * If the channel-group and channel name match the current state
     * the exposure time will also be updated
     * 
     * @param channelGroup - 
@@ -324,6 +350,7 @@ public interface ScriptInterface {
    /**
     * Obtain the current XY stage position.
     * Returns a point in device coordinates in microns.
+    * @return current XY stage position
     * @throws MMScriptException
     */
    public Point2D.Double getXYStagePosition()  throws MMScriptException;
@@ -369,6 +396,8 @@ public interface ScriptInterface {
    /**
     * Assigns the current stage position of the default xy-stage to be (x,y),
     * thereby offseting the coordinates of all other positions.
+    * @param x
+    * @param y
     * @throws MMScriptException
     */
    public void setXYOrigin(double x, double y) throws MMScriptException;
@@ -380,11 +409,14 @@ public interface ScriptInterface {
 
    /**
     * Returns the ImageJ ImageWindow instance that is used for Snap and Live display.
+    * @return ImageJ ImageWindow instance currently used for Snap/Live display
     */
    public ImageWindow getSnapLiveWin();
 
    /**
-   * Installs an autofocus plugin class from the class path.
+    * Installs an autofocus plugin class from the class path.
+    * @param className
+    * @return ???
    */
    public String installAutofocusPlugin(String className);
 
@@ -501,6 +533,8 @@ public interface ScriptInterface {
     * Show a TaggedImage in the snap/live window (uses current camera settings
     * to figure out the shape of the image)
     * @param image TaggedImage (pixel data and metadata tags) to be displayed
+    * TODO:
+    * @return ????
     */
    public boolean displayImage(TaggedImage image);
 
@@ -562,6 +596,7 @@ public interface ScriptInterface {
    /**
     * Returns true when an acquisition is currently running (note: this function will
     * not return true if live mode, snap, or "Camera --&gt; Album" is currently running
+    * @return true when an acquisition is currently running
     */
    public boolean isAcquisitionRunning();
 
@@ -577,6 +612,8 @@ public interface ScriptInterface {
     * When a date is appended to a version number, it will be newer than the same version 
     * without a date
     * @param version - minimum version needen to run this code
+    * @return true if the run-time Micro-Manager version is less than the 
+    * one specified
     * @throws MMScriptException
     */
    public boolean versionLessThan(String version) throws MMScriptException;
@@ -635,19 +672,27 @@ public interface ScriptInterface {
 
    /**
     * Open an existing data set. Shows the acquisition in a window.
-    * @return The acquisition object.
+    * @param location file path to load
+    * @param inRAM if set to false, data will not be loaded into RAM
+    * @return acquisition name
+    * @throws org.micromanager.internal.utils.MMScriptException
     */
    public String openAcquisitionData(String location, boolean inRAM) throws MMScriptException;
 
 
    /**
     * Open an existing data set.
+     * @param location file path to load
+    * @param inRAM if set to false, data will not be loaded into RAM
+    * @param show if true, data will be shown in a viewer
     * @return The name of the acquisition object.
+    * @throws org.micromanager.internal.utils.MMScriptException
     */
    public String openAcquisitionData(String location, boolean inRAM, boolean show) throws MMScriptException;
 
    /**
     * Enabled or disable the ROI buttons on the main window.
+    * @param enabled true: enable, false: disable ROI buttons
     */
    public void enableRoiButtons(final boolean enabled);
 
