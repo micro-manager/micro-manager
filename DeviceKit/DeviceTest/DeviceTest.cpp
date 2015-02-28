@@ -27,7 +27,8 @@ int main(int argc, char* argv[])
    string deviceName(argv[2]);
 
    CMMCore core;
-   core.enableStderrLog(false);
+   core.enableStderrLog(true);
+   core.enableDebugLog(true);
    string label("Device");
    try
    {
