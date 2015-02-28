@@ -5,7 +5,7 @@ import ij.gui.Overlay;
 import ij.gui.Roi;
 
 import java.awt.Color;
-import java.util.prefs.Preferences;
+import org.micromanager.UserProfile;
 
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -29,15 +29,16 @@ public abstract class GenericOverlay {
    private Overlay overlay_;
    private int colorCode_;
    private boolean isShowing_;
-   private final Preferences prefs_;
    private final String prefPrefix_;
+   private final UserProfile profile_;
+   private final Class cp_ = PatternOverlayFrame.class;
 
-   public GenericOverlay(Preferences prefs, String prefPrefix) {
+   public GenericOverlay(UserProfile profile, String prefPrefix) {
       isShowing_ = false;
-      prefs_ = prefs;
+      profile_ = profile;
       prefPrefix_ = prefPrefix;
-      size_ = prefs_.getInt(prefPrefix_ + Constants.SIZE_SLIDER, 50);
-      colorCode_ = prefs_.getInt(prefPrefix_ + Constants.COLOR_BOX_IDX, 0);
+      size_ = profile_.getInt(cp_, prefPrefix_ + Constants.SIZE_SLIDER, 50);
+      colorCode_ = profile_.getInt(cp_, prefPrefix_ + Constants.COLOR_BOX_IDX, 0);
    }
 
    /**
@@ -46,7 +47,7 @@ public abstract class GenericOverlay {
     */
    public void setSize(int size) {
       size_ = size;
-      prefs_.putInt(prefPrefix_ + Constants.SIZE_SLIDER, size);
+      profile_.setInt(cp_, prefPrefix_ + Constants.SIZE_SLIDER, size);
       refresh();
    }
    
@@ -64,7 +65,7 @@ public abstract class GenericOverlay {
     */
    public void setColorCode(int colorCode) {
       colorCode_ = colorCode;
-      prefs_.putInt(prefPrefix_ + Constants.COLOR_BOX_IDX, colorCode);
+      profile_.setInt(cp_, prefPrefix_ + Constants.COLOR_BOX_IDX, colorCode);
       color_ = Constants.LOOKUP_COLOR_BY_INDEX.get(colorCode_);
       refresh();
    }

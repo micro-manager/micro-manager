@@ -4,7 +4,7 @@ import ij.gui.Roi;
 import ij.gui.ShapeRoi;
 
 import java.awt.geom.Ellipse2D;
-import java.util.prefs.Preferences;
+import org.micromanager.UserProfile;
 
 
 /**
@@ -14,8 +14,8 @@ import java.util.prefs.Preferences;
  */
 public class CircleOverlay extends GenericOverlay {
    
-   public CircleOverlay(Preferences prefs, String prefPrefix) {
-      super(prefs, prefPrefix);
+   public CircleOverlay(UserProfile profile, String prefPrefix) {
+      super(profile, prefPrefix);
    }
 
    @Override
