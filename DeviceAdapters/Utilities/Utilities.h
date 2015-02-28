@@ -42,7 +42,7 @@
 #define ERR_NO_AUTOFOCUS_DEVICE            10008
 #define ERR_NO_AUTOFOCUS_DEVICE_FOUND      10009
 #define ERR_NO_AUTOFOCUS_DEVICE_FOUND      10009
-#define ERR_DEFINITE_FOCUS_TIMEOUT         10020
+#define ERR_NO_PHYSICAL_CAMERA             10010
 #define ERR_TIMEOUT                        10021
 
 

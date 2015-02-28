@@ -275,6 +275,7 @@ MultiCamera::MultiCamera() :
    InitializeDefaultErrorMessages();
 
    SetErrorText(ERR_INVALID_DEVICE_NAME, "Please select a valid camera");
+   SetErrorText(ERR_NO_PHYSICAL_CAMERA, "No physical camera assigned");
 
    // Name                                                                   
    CreateProperty(MM::g_Keyword_Name, g_DeviceNameMultiCamera, MM::String, true); 
@@ -357,6 +358,9 @@ void MultiCamera::GetName(char* name) const
 
 int MultiCamera::SnapImage()
 {
+   if (nrCamerasInUse_ < 1)
+      return ERR_NO_PHYSICAL_CAMERA;
+
    CameraSnapThread t[MAX_NUMBER_PHYSICAL_CAMERAS];
    for (unsigned int i = 0; i < physicalCameras_.size(); i++)
    {
@@ -377,6 +381,9 @@ int MultiCamera::SnapImage()
  */
 const unsigned char* MultiCamera::GetImageBuffer()
 {
+   if (nrCamerasInUse_ < 1)
+      return 0;
+
    return GetImageBuffer(0);
 }
 
@@ -606,6 +613,9 @@ int MultiCamera::ClearROI()
 
 int MultiCamera::PrepareSequenceAcqusition()
 {
+   if (nrCamerasInUse_ < 1)
+      return ERR_NO_PHYSICAL_CAMERA;
+
    for (unsigned int i = 0; i < physicalCameras_.size(); i++)
    {
       if (physicalCameras_[i] != 0)
@@ -621,6 +631,9 @@ int MultiCamera::PrepareSequenceAcqusition()
 
 int MultiCamera::StartSequenceAcquisition(double interval)
 {
+   if (nrCamerasInUse_ < 1)
+      return ERR_NO_PHYSICAL_CAMERA;
+
    for (unsigned int i = 0; i < physicalCameras_.size(); i++)
    {
       if (physicalCameras_[i] != 0)
@@ -642,6 +655,9 @@ int MultiCamera::StartSequenceAcquisition(double interval)
 
 int MultiCamera::StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow)
 {
+   if (nrCamerasInUse_ < 1)
+      return ERR_NO_PHYSICAL_CAMERA;
+
    for (unsigned int i = 0; i < physicalCameras_.size(); i++)
    {
       if (physicalCameras_[i] != 0)
@@ -2301,7 +2317,6 @@ AutoFocusStage::AutoFocusStage() :
    SetErrorText(ERR_INVALID_DEVICE_NAME, "Please select a valid AutoFocus device");
    SetErrorText(ERR_NO_AUTOFOCUS_DEVICE, "No AutoFocus Device selected");
    SetErrorText(ERR_NO_AUTOFOCUS_DEVICE_FOUND, "No AutoFocus Device loaded");
-   SetErrorText(ERR_DEFINITE_FOCUS_TIMEOUT, "Definite Focus timed out.  Increase the value of Core-Timeout if the definite focus is still searching");
 
    // Name                                                                   
    CreateProperty(MM::g_Keyword_Name, g_DeviceNameAutoFocusStage, MM::String, true); 
