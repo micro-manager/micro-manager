@@ -26,19 +26,20 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import mmcorej.CMMCore;
-import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.ScriptInterface;
 
 public class Galvo implements ProjectionDevice {
+   private final String galvo_;
+   private final CMMCore mmc_;
+   private final ScriptInterface app_;
+   private final ExecutorService galvoExecutor_;
+   private final HashSet<OnStateListener> onStateListeners_ = 
+           new HashSet<OnStateListener>();
+   private long interval_us_;
 
-   String galvo_;
-   CMMCore mmc_;
-   int side_ = 4096;
-   ExecutorService galvoExecutor_;
-   HashSet<OnStateListener> onStateListeners_ = new HashSet<OnStateListener>();
-   long interval_us_;
-
-   public Galvo(CMMCore mmc) {
+   public Galvo(ScriptInterface app, CMMCore mmc) {
       mmc_ = mmc;
+      app_ = app;
       galvo_ = mmc_.getGalvoDevice();
       galvoExecutor_ = Executors.newSingleThreadExecutor();
    }
@@ -56,7 +57,7 @@ public class Galvo implements ProjectionDevice {
             try {
                mmc_.pointGalvoAndFire(galvo_, x, y, Galvo.this.getExposure());
             } catch (Exception ex) {
-               ReportingUtils.logError(ex);
+               app_.logError(ex);
             }
          }
       });
@@ -73,9 +74,9 @@ public class Galvo implements ProjectionDevice {
       try {
          result.get();
       } catch (InterruptedException ex) {
-         ReportingUtils.logError(ex);
+         app_.logError(ex);
       } catch (ExecutionException ex) {
-         ReportingUtils.logError(ex);
+         app_.logError(ex);
       }
    }
 
@@ -94,14 +95,14 @@ public class Galvo implements ProjectionDevice {
             }
          }).get();
          if (result == 0) {
-            ReportingUtils.logError("Unable to get galvo width");
+            app_.logError("Unable to get galvo width");
          }
          return result;
       } catch (InterruptedException ex) {
-         ReportingUtils.logError("Unable to get galvo width");
+         app_.logError("Unable to get galvo width");
          return 0;
       } catch (ExecutionException ex) {
-         ReportingUtils.logError("Unable to get galvo width");
+         app_.logError("Unable to get galvo width");
          return 0;
       }
    }
@@ -121,14 +122,14 @@ public class Galvo implements ProjectionDevice {
             }
          }).get();
          if (result == 0) {
-            ReportingUtils.logError("Unable to get galvo width");
+            app_.logError("Unable to get galvo width");
          }
          return result;
       } catch (InterruptedException ex) {
-         ReportingUtils.logError("Unable to get galvo width");
+         app_.logError("Unable to get galvo width");
          return 0;
       } catch (ExecutionException ex) {
-         ReportingUtils.logError("Unable to get galvo width");
+         app_.logError("Unable to get galvo width");
          return 0;
       }
    }
@@ -141,7 +142,7 @@ public class Galvo implements ProjectionDevice {
             try {
                mmc_.setGalvoIlluminationState(galvo_, true);
             } catch (Exception ex) {
-               ReportingUtils.showError(ex);
+               app_.showError(ex);
             }
          }
       });
@@ -158,7 +159,7 @@ public class Galvo implements ProjectionDevice {
             try {
                mmc_.setGalvoIlluminationState(galvo_, false);
             } catch (Exception ex) {
-               ReportingUtils.showError(ex);
+               app_.showError(ex);
             }
          }
       });
@@ -175,7 +176,7 @@ public class Galvo implements ProjectionDevice {
             try {
                mmc_.deleteGalvoPolygons(galvo_);
             } catch (Exception ex) {
-               ReportingUtils.logError(ex);
+               app_.logError(ex);
             }
             int roiCount = 0;
             try {
@@ -193,20 +194,20 @@ public class Galvo implements ProjectionDevice {
                         ++roiCount;
                      }
                   }
-                  if (poly.npoints > 1) {
+                  if (poly.npoints > 1 && lastGalvoPoint != null) {
                      mmc_.addGalvoPolygonVertex(galvo_, roiCount, 
                              lastGalvoPoint.getX(), lastGalvoPoint.getY());
                      ++roiCount;
                   }
                }
             } catch (Exception e) {
-               ReportingUtils.showError(e);
+               app_.showError(e);
             }
 
             try {
                mmc_.loadGalvoPolygons(galvo_);
             } catch (Exception ex) {
-               ReportingUtils.showError(ex);
+               app_.showError(ex);
             }
          }
       });
@@ -221,7 +222,7 @@ public class Galvo implements ProjectionDevice {
             try {
                mmc_.runGalvoPolygons(galvo_);
             } catch (Exception ex) {
-               ReportingUtils.showError(ex);
+               app_.showError(ex);
             }
          }
       });
@@ -246,7 +247,7 @@ public class Galvo implements ProjectionDevice {
             try {
                mmc_.setGalvoPolygonRepetitions(galvo_, reps);
             } catch (Exception ex) {
-               ReportingUtils.showError(ex);
+               app_.showError(ex);
             }
          }
       });
@@ -260,7 +261,7 @@ public class Galvo implements ProjectionDevice {
                 try {
                     return mmc_.getGalvoChannel(galvo_);
                 } catch (Exception ex) {
-                    ReportingUtils.logError(ex);
+                    app_.logError(ex);
                     return null;
                 }
             }
@@ -280,7 +281,7 @@ public class Galvo implements ProjectionDevice {
          interval_us_ = interval_us;
          mmc_.setGalvoSpotInterval(galvo_, interval_us);
       } catch (Exception ex) {
-         ReportingUtils.showError(ex);
+         app_.showError(ex);
       }
    }
    

@@ -25,7 +25,6 @@ import mmcorej.CMMCore;
 import org.micromanager.MMPlugin;
 import org.micromanager.ScriptInterface;
 import org.micromanager.internal.utils.GUIUtils;
-import org.micromanager.internal.utils.ReportingUtils;
 
 
 // The Projector plugin provides a user interface for calibration and control
@@ -71,7 +70,7 @@ public class ProjectorPlugin implements MMPlugin {
    @Override
    public void show() {
       if (core_.getSLMDevice().length()==0 && core_.getGalvoDevice().length()==0) {
-         ReportingUtils.showMessage("Please load an SLM (Spatial Light Modulator) " +
+         app_.showMessage("Please load an SLM (Spatial Light Modulator) " +
                "or a Galvo-based phototargeting device " +
                "before using the Projector plugin.");
          return;

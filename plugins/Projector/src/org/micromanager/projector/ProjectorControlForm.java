@@ -56,10 +56,14 @@ import java.awt.event.WindowEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -67,7 +71,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.prefs.Preferences;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import javax.swing.JOptionPane;
@@ -79,20 +82,21 @@ import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.DeviceType;
 import mmcorej.TaggedImage;
-import org.json.JSONException;
 import org.micromanager.data.Datastore;
 import org.micromanager.ScriptInterface;
 // TODO should not depend on this module.
 import org.micromanager.display.internal.MMVirtualStack;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ImageUtils;
-import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.MMListenerAdapter;
+import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.MathFunctions;
 import org.micromanager.internal.utils.ReportingUtils;
 
-// The main window for the Projector plugin. Contains logic for calibration,
-// and control for SLMs and Galvos.
+/**
+ * The main window for the Projector plugin. Contains logic for calibration,
+ * and control for SLMs and Galvos.
+*/
 public class ProjectorControlForm extends MMFrame implements OnStateListener {
    private static ProjectorControlForm formSingleton_;
    private final ProjectionDevice dev_;
@@ -198,7 +202,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    void setTargetingChannel(String channelName) {
       targetingChannel_ = channelName;
        if (channelName != null) {
-          Preferences.userNodeForPackage(this.getClass()).put("channel", channelName);
+          app_.profile().setString(this.getClass(),"channel", channelName);
        }
    }
    
@@ -209,7 +213,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    void setTargetingShutter(String shutterName) {
       targetingShutter_ = shutterName;
       if (shutterName != null) {
-         Preferences.userNodeForPackage(this.getClass()).put("shutter", shutterName);
+         app_.profile().setString(this.getClass(), "shutter", shutterName);
       }
    }
    
@@ -321,35 +325,73 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    
    // ## Generating, loading and saving calibration mappings
    
-   // Returns the java Preferences node where we store the Calibration mapping.
-   // Each channel/camera combination is assigned a different node.
-   private Preferences getCalibrationNode() {
-      return Preferences.userNodeForPackage(ProjectorPlugin.class)
-            .node("calibration")
-            .node(dev_.getChannel())
-            .node(core_.getCameraDevice());
+   /**
+    * Returns the key where we store the Calibration mapping.
+    * Each channel/camera combination is assigned a different node.
+    */
+   private String getCalibrationNode() {
+      return "calibration" + dev_.getChannel() + core_.getCameraDevice();
+   }
+   
+   private String getCalibrationKey() {
+      return getCalibrationNode() + "-" + dev_.getName();
    }
    
    // Load the mapping for the current calibration node. The mapping
    // maps each polygon cell to an AffineTransform.
    private Map<Polygon, AffineTransform> loadMapping() {
-      String nodeStr = getCalibrationNode().toString();
+      String nodeStr = getCalibrationNode();
       if (mappingNode_ == null || !nodeStr.contentEquals(mappingNode_)) {
-         mappingNode_ = nodeStr;
-         mapping_ = (Map<Polygon, AffineTransform>) JavaUtils.getObjectFromPrefs(
-                 getCalibrationNode(), 
-                 dev_.getName(), 
-                 new HashMap<Polygon, AffineTransform>());
+         ObjectInputStream oInputStream = null;
+         try {
+            mappingNode_ = nodeStr;
+            String map = app_.profile().getString(this.getClass(),
+                    getCalibrationKey(), "");
+            ByteArrayInputStream bis = new ByteArrayInputStream(map.getBytes());
+            oInputStream = new ObjectInputStream(bis);
+            mapping_ = (Map<Polygon, AffineTransform>) oInputStream.readObject();
+            oInputStream.close();
+         } catch (IOException ex) {
+            app_.logError(ex, "Error loading object from profile");
+         } catch (ClassNotFoundException ex) {
+            app_.logError(ex, "Failed to find object in profile stream");
+         } 
+         finally {
+            try {
+               if (oInputStream != null)
+                  oInputStream.close();
+            } catch (IOException ex) {
+               app_.logError(ex, "Failed to close inputStream");
+            }
+         }
       }
       return  mapping_;
    }
 
-   // Save the mapping for the current calibration node. The mapping
-   // maps each polygon cell to an AffineTransform.
+   /**
+    * Save the mapping for the current calibration node. The mapping
+    * maps each polygon cell to an AffineTransform.
+    */
+   // TODO: debug and test this code!
    private void saveMapping(HashMap<Polygon, AffineTransform> mapping) {
-      JavaUtils.putObjectInPrefs(getCalibrationNode(), dev_.getName(), mapping);
-      mapping_ = mapping;
-      mappingNode_ = getCalibrationNode().toString();
+      ObjectOutputStream os = null;
+      try {
+         ByteArrayOutputStream bos = new ByteArrayOutputStream();
+         os = new ObjectOutputStream(bos);
+         os.writeObject(mapping);
+         String serialized_mapping = bos.toString();
+         os.close();
+         app_.profile().setString(this.getClass(), getCalibrationKey(),
+                 serialized_mapping);
+      } catch (IOException ex) {
+         app_.logError(ex, "Error storing an object in UserProfile"); 
+      } finally {
+         try {
+            if (os != null)
+            os.close();
+         } catch (IOException ex) {
+            app_.logError(ex, "Failed to close outputStream");}
+      }
    }
    
    // ## Methods for generating a calibration mapping.
@@ -1191,9 +1233,9 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       String galvo = core_.getGalvoDevice();
 
       if (slm.length() > 0) {
-         dev_ = new SLM(core_, 20);
+         dev_ = new SLM(app_, core_, 20);
       } else if (galvo.length() > 0) {
-         dev_ = new Galvo(core_);
+         dev_ = new Galvo(app_, core_);
       } else {
          dev_ = null;
       }
@@ -1216,8 +1258,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       roiLoopLabel.setVisible(!isSLM_);
       roiLoopTimesLabel.setVisible(!isSLM_);
       pointAndShootOffButton.setSelected(true);
-      populateChannelComboBox(Preferences.userNodeForPackage(this.getClass()).get("channel", ""));
-      populateShutterComboBox(Preferences.userNodeForPackage(this.getClass()).get("shutter", ""));
+      populateChannelComboBox(app_.profile().getString(
+              this.getClass(),"channel", ""));
+      populateShutterComboBox(app_.profile().getString(
+              this.getClass(), "shutter", ""));
       this.addWindowFocusListener(new WindowAdapter() {
          @Override
          public void windowGainedFocus(WindowEvent e) {
