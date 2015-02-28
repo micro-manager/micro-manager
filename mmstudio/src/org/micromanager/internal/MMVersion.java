@@ -27,5 +27,5 @@ package org.micromanager.internal;
  * Micro-Manager. Build scripts will temporarily alter this file.
  */
 public class MMVersion {
-   public static final String VERSION_STRING = "1.4.x dev";
+   public static final String VERSION_STRING = "2.0.x dev";
 }
