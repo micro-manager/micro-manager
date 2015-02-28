@@ -25,7 +25,6 @@ import ij.process.ImageProcessor;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.internal.MMStudio;
 import org.micromanager.acquisition.internal.TaggedImageQueue;
 import org.micromanager.DataProcessor;
 import org.micromanager.internal.utils.ImageUtils;
