@@ -24,7 +24,6 @@ package org.micromanager.newimageflipper;
 
 import ij.ImagePlus;
 import ij.process.ByteProcessor;
-import java.util.prefs.Preferences;
 import javax.swing.ImageIcon;
 import mmcorej.StrVector;
 import mmcorej.TaggedImage;
@@ -32,6 +31,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.DataProcessor;
+import org.micromanager.ScriptInterface;
 import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.MMFrame;
@@ -54,9 +54,11 @@ public class NewImageFlipperControls extends MMFrame {
    private final String ROTATE = "_Rotation";
    private final String MIRROR = "_Mirror";
    private final String SELECTEDCAMERA = "SelectedCamera";
-   private final Preferences prefs_;
    private final int frameXPos_ = 300;
    private final int frameYPos_ = 300;   
+   
+   private final ScriptInterface gui_;
+   private final Class me_ = NewImageFlipperControls.class;
 
    /** 
     * Creates form NewImageFlipperControls 
@@ -64,21 +66,21 @@ public class NewImageFlipperControls extends MMFrame {
     */
    public NewImageFlipperControls(NewImageFlippingProcessor processor) {
       processor_ = processor;
-
-      prefs_ = getPrefsNode();
+      gui_ = MMStudio.getInstance();
 
       initComponents();
       
-      selectedCamera_ = prefs_.get(SELECTEDCAMERA, 
+      selectedCamera_ = gui_.profile().getString(me_, SELECTEDCAMERA, 
               MMStudio.getInstance().getCore().getCameraDevice());
-      
-      mirrorCheckBox_.setSelected(prefs_.getBoolean(selectedCamera_ + MIRROR, false));
-            
+      mirrorCheckBox_.setSelected(gui_.profile().getBoolean(me_, 
+              selectedCamera_ + MIRROR, false));
       rotateComboBox_.removeAllItems();
       for (String item: RS)
+      {
          rotateComboBox_.addItem(item);
-      rotateComboBox_.setSelectedItem(prefs_.get(selectedCamera_ + ROTATE, R0));
-
+      }
+      rotateComboBox_.setSelectedItem(gui_.profile().getString(me_, 
+              selectedCamera_ + ROTATE, R0));
       this.loadAndRestorePosition(frameXPos_, frameYPos_);
        
       updateCameras();
@@ -208,7 +210,8 @@ public class NewImageFlipperControls extends MMFrame {
        processExample();
        String camera = (String) cameraComboBox_.getSelectedItem();
        if (camera != null) {
-          prefs_.putBoolean(camera + MIRROR, mirrorCheckBox_.isSelected());
+          gui_.profile().setBoolean(me_, camera + MIRROR, 
+                  mirrorCheckBox_.isSelected());
           if (processor_ != null) {
              processor_.setIsMirrored(getMirror());
           }
@@ -219,7 +222,8 @@ public class NewImageFlipperControls extends MMFrame {
       processExample();
       String camera = (String) cameraComboBox_.getSelectedItem();
       if (camera != null && rotateComboBox_.getSelectedItem() != null) {
-         prefs_.put(camera + ROTATE, (String) rotateComboBox_.getSelectedItem());
+         gui_.profile().setString(me_, camera + ROTATE, 
+                 (String) rotateComboBox_.getSelectedItem());
          if (processor_ != null) {
             processor_.setRotation(getRotate());
          }
@@ -232,9 +236,11 @@ public class NewImageFlipperControls extends MMFrame {
          if (processor_ != null) {
             processor_.setCamera(camera);
          }
-         mirrorCheckBox_.setSelected(prefs_.getBoolean(camera + MIRROR, false));
-         rotateComboBox_.setSelectedItem(prefs_.get(camera + ROTATE, R0));
-         prefs_.put(SELECTEDCAMERA, camera);
+         mirrorCheckBox_.setSelected(gui_.profile().getBoolean(me_, 
+                 camera + MIRROR, false));
+         rotateComboBox_.setSelectedItem(gui_.profile().getString(me_, 
+                 camera + ROTATE, R0));
+         gui_.profile().setString(me_, SELECTEDCAMERA, camera);
       }
    }//GEN-LAST:event_cameraComboBox_ActionPerformed
 
