@@ -41,7 +41,6 @@ import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.event.TableModelListener;
 import javax.swing.table.*;
 
 import mmcorej.CMMCore;
@@ -345,6 +344,8 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
     * Specification of all parameters required for the acquisition.
     * @param acqEng - acquisition engine
     * @param prefs - application preferences node
+    * @param gui
+    * @param options
     */
    public AcqControlDlg(AcquisitionEngine acqEng, Preferences prefs, 
            ScriptInterface gui, MMOptions options) {
@@ -464,7 +465,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
 
       interval_ = new JFormattedTextField(numberFormat_);
       interval_.setFont(new Font("Arial", Font.PLAIN, 10));
-      interval_.setValue(new Double(1.0));
+      interval_.setValue(1.0);
       interval_.addPropertyChangeListener("value", this);
       defaultPanel.add(interval_);
       interval_.setBounds(60, 27, 55, 24);
@@ -550,7 +551,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       zTop_ = new JFormattedTextField(numberFormat_);
       zTop_.setFont(new Font("Arial", Font.PLAIN, 10));
       zTop_.setBounds(95, 50, 54, 21);
-      zTop_.setValue(new Double(1.0));
+      zTop_.setValue(1.0);
       zTop_.addPropertyChangeListener("value", this);
       slicesPanel_.add(zTop_);
 
@@ -578,7 +579,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       zStep_ = new JFormattedTextField(numberFormat_);
       zStep_.setFont(new Font("Arial", Font.PLAIN, 10));
       zStep_.setBounds(95, 73, 54, 21);
-      zStep_.setValue(new Double(1.0));
+      zStep_.setValue(1.0);
       zStep_.addPropertyChangeListener("value", this);
       slicesPanel_.add(zStep_);
 
@@ -685,7 +686,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
          @Override
          public void stateChanged(ChangeEvent e) {
             applySettings();
-            afSkipInterval_.setValue(new Integer(acqEng_.getAfSkipInterval()));
+            afSkipInterval_.setValue(acqEng_.getAfSkipInterval());
          }
       });
       afPanel_.add(afSkipInterval_);
@@ -1051,8 +1052,6 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       // update GUI contents
       // -------------------
 
-      // load window position from prefs
-      this.loadAndRestorePosition(100, 100, 521, 690);
 
       // add update event listeners
       positionsPanel_.addActionListener(new ActionListener() {
@@ -1091,6 +1090,10 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       applySettings();
 
       createToolTips();
+      
+      // load window position from prefs
+      this.loadAndRestorePosition(100, 100);
+      this.setSize(521, 690);
 
    }
 
