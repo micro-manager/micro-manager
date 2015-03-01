@@ -9,7 +9,7 @@ import ij.ImagePlus;
 import ij.process.ImageProcessor;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
-import org.micromanager.internal.utils.ReportingUtils;
+import edu.valelab.gaussianfit.utils.ReportingUtils;
 
 
 /**
@@ -80,8 +80,8 @@ public class GaussianFitStackThread extends GaussianInfo implements Runnable {
             double[] paramsOut = gs_.dogaussianfit(ip, maxIterations_);
             // Note that the copy constructor will not copy pixel data, so we loose those when spot goes out of scope
             SpotData spotData = new SpotData(spot);
-            double sx = 0;
-            double sy = 0;
+            double sx;
+            double sy;
             double a = 1;
             double theta = 0;
             if (paramsOut.length >= 5) {
@@ -103,7 +103,7 @@ public class GaussianFitStackThread extends GaussianInfo implements Runnable {
                   sy = paramsOut[GaussianFit.S2] * pixelSize_;
                   a = sx / sy;
                   
-                  double z = 0.0;              
+                  double z;              
                
                   if (zc.hasFitFunctions()) {
                      z = zc.getZ(2 * sx, 2 * sy);

@@ -301,6 +301,7 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
       t.start();
    }
 
+   @Override
    public void run() {
       trackGaussians(false);
    }
