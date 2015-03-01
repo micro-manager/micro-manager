@@ -24,7 +24,6 @@ import java.awt.event.ItemEvent;
 import mmcorej.CMMCore;
 import org.micromanager.MMPlugin;
 import org.micromanager.ScriptInterface;
-import org.micromanager.internal.utils.GUIUtils;
 
 
 // The Projector plugin provides a user interface for calibration and control
