@@ -1,22 +1,18 @@
 /*
-* ASI_CRISP_V2.java
-* Micro Manager Plugin for ASIs CRISP Autofocus
-* Based on Nico Stuurman's original ASI CRISP Control plugin.
-* Modified by Vikram Kopuri, ASI
-* Last Updated 9/12/2014
-* Changelog
-* 2.0
-* First Draft
+ * ASI_CRISP_V2.java
+ * Micro Manager Plugin for ASIs CRISP Autofocus
+ * Based on Nico Stuurman's original ASI CRISP Control plugin.
+ * Modified by Vikram Kopuri, ASI
+ * Last Updated 9/12/2014
+ * Changelog
+ * 2.0
+ * First Draft
 
  */
 package com.asiimaging.CRISPv2;
 
-
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.prefs.Preferences;
 
 import javax.swing.SpinnerModel;
 
@@ -24,44 +20,44 @@ import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 
 import org.micromanager.ScriptInterface;
-import org.micromanager.internal.utils.ReportingUtils;
-//import java.util.Timer;
+
 /**
  *
  * @author Vik
  */
 public class ASI_CRISP_Frame extends javax.swing.JFrame {
 
-    private final ScriptInterface gui_;
-    private final CMMCore core_;
-    private Preferences prefs_;
-    private String CRISP_;
-    private int timer_poll=200;//200 millisec
-    private int frameXPos_ = 100;
-    private int frameYPos_ = 100;
-    javax.swing.Timer myTimer ;//= new javax.swing.Timer(timer_poll, taskPerformer);
-    private static final String FRAMEXPOS = "FRAMEXPOS";
-    private static final String FRAMEYPOS = "FRAMEYPOS";
-    /**
-     * Creates new form ASI_CRISP_Frame
-     */
-    public ASI_CRISP_Frame(ScriptInterface gui) {
-       initComponents();
-        
-       gui_=gui;
-       core_=gui.getMMCore();
-       prefs_ = Preferences.userNodeForPackage(this.getClass());
-       CRISP_ = "";
-            
-       jLabel1.setText("ASI CRISP Control v2.0");
-       mmcorej.StrVector afs =
-               core_.getLoadedDevicesOfType(DeviceType.AutoFocusDevice);
-       boolean found = false;
-       for (String af : afs) {
+   private final ScriptInterface gui_;
+   private final CMMCore core_;
+   private String CRISP_;
+   private int timer_poll = 200;//200 millisec
+   private int frameXPos_ = 100;
+   private int frameYPos_ = 100;
+   javax.swing.Timer myTimer;//= new javax.swing.Timer(timer_poll, taskPerformer);
+   private static final String FRAMEXPOS = "FRAMEXPOS";
+   private static final String FRAMEYPOS = "FRAMEYPOS";
+
+   /**
+    * Creates new form ASI_CRISP_Frame
+    *
+    * @param gui MM ScriptInterface
+    */
+   public ASI_CRISP_Frame(ScriptInterface gui) {
+      initComponents();
+
+      gui_ = gui;
+      core_ = gui.getMMCore();
+      CRISP_ = "";
+
+      jLabel1.setText("ASI CRISP Control v2.0");
+      mmcorej.StrVector afs
+              = core_.getLoadedDevicesOfType(DeviceType.AutoFocusDevice);
+      boolean found = false;
+      for (String af : afs) {
          try {
             if (core_.hasProperty(af, "Description")) {
-               if (core_.getProperty(af, "Description").equals("ASI CRISP Autofocus adapter") ||
-                     core_.getProperty(af, "Description").startsWith("ASI CRISP AutoFocus")) {  // this line is for Tiger
+               if (core_.getProperty(af, "Description").equals("ASI CRISP Autofocus adapter")
+                       || core_.getProperty(af, "Description").startsWith("ASI CRISP AutoFocus")) {  // this line is for Tiger
                   found = true;
                   CRISP_ = af;
                   jLabel6.setText(af);
@@ -72,156 +68,130 @@ public class ASI_CRISP_Frame extends javax.swing.JFrame {
                }
             }
          } catch (Exception ex) {
-            Logger.getLogger(ASI_CRISP_Frame.class.getName()).log(Level.SEVERE, null, ex);
-         }
-       }
+            gui_.logError(ex);
+           }
+      }
 
-       if (!found) {
-          gui_.showError("This plugin needs the ASI CRISP Autofcous");
-          throw new IllegalArgumentException("This plugin needs at least one camera");
-       }
+      if (!found) {
+         gui_.showError("This plugin needs the ASI CRISP Autofcous");
+         throw new IllegalArgumentException("This plugin needs at least one camera");
+      }
 
-      frameXPos_ = prefs_.getInt(FRAMEXPOS, frameXPos_);
-      frameYPos_ = prefs_.getInt(FRAMEYPOS, frameYPos_);
-
-
+      frameXPos_ = gui_.profile().getInt(this.getClass(), FRAMEXPOS, frameXPos_);
+      frameYPos_ = gui_.profile().getInt(this.getClass(), FRAMEYPOS, frameYPos_);
 
       setLocation(frameXPos_, frameYPos_);
 
       updateValues();
-    }
-
-    private void updateValues() {
-       
-         String val;
-         int intVal;
-         try {
-                val = core_.getProperty(CRISP_, "LED Intensity");
-                
-            } catch (Exception ex) 
-            {
-                try
-                {// sometimes this property is also called led intensity with a %
-                val = core_.getProperty(CRISP_, "LED Intensity(%)");
-                }
-                catch (Exception ex1) 
-                {
-                ReportingUtils.showError("Error reading LED Intensity from CRISP");
-                val="0";
-                }
-            }
-                intVal = Integer.parseInt(val);
-                LEDSpinner_.getModel().setValue(intVal);
-         
-          try {
-                val = core_.getProperty(CRISP_, "GainMultiplier");
-                
-                } catch (Exception ex) 
-                {
-                    try
-                    {
-                    val = core_.getProperty(CRISP_, "LoopGainMultiplier");
-                    }
-                    catch (Exception ex1)
-                    {
-                    ReportingUtils.showError("Error reading Gain Multiplier from CRISP");
-                    val="0";
-                    }
-                }
-                intVal = Integer.parseInt(val);
-                GainSpinner_.getModel().setValue(intVal);
-          
-          try {
-               val = core_.getProperty(CRISP_, "Number of Averages");
-               intVal = Integer.parseInt(val);
-               NrAvgsSpinner_.getModel().setValue(intVal);
-            } catch (Exception ex) 
-            {
-          ReportingUtils.showError("Error reading No of Avg from CRISP");
-             }
-          try {
-               val = core_.getProperty(CRISP_, "Objective NA");
-               float floatVal = Float.parseFloat(val);
-               NASpinner_.getModel().setValue(floatVal);
-         } catch (Exception ex) 
-         {
-          ReportingUtils.showError("Error reading Objective NA from CRISP");
-         }
-       
-update_status();
-    }
-    
-    private void update_status()
-    {
-    try{
-        label_crisp_error.setText(core_.getProperty(CRISP_, "Dither Error"));
-    }
-    catch(Exception ex) 
-            {
-                label_crisp_error.setText("read error");            
-                // getting errors, best to stop
-                //myTimer.stop();
-            }
-    
-    try{
-        label_crisp_state.setText(core_.getProperty(CRISP_, "CRISP State"));
-    }
-    catch(Exception ex) 
-            {
-            label_crisp_state.setText("read error");
-                // getting errors , best to stop
-                //myTimer.stop();
-            }
-    
-    try{
-        label_snr.setText(core_.getProperty(CRISP_, "Signal Noise Ratio"));
-    }
-    catch(Exception ex) 
-            {
-                try
-                {
-                label_snr.setText(core_.getProperty(CRISP_, "Signal to Noise Ratio"));
-                }
-                catch(Exception ex1)
-                {
-                label_snr.setText("read error");
-                }
-                // getting errors , best to stop
-                //myTimer.stop();
-            }
-    
-    try{
-        label_agc.setText(core_.getProperty(CRISP_, "LogAmpAGC"));
-    }
-    catch(Exception ex) 
-            {
-                
-                label_snr.setText("read error");
-                // getting errors , best to stop
-                //myTimer.stop();
-            }
-    
-    
-    }
-    ActionListener taskPerformer = new ActionListener() {
-      public void actionPerformed(ActionEvent evt) {
-          update_status();
-      }
-            };
-    
-      public void safePrefs() {
-      prefs_.putInt(FRAMEXPOS, this.getX());
-      prefs_.putInt(FRAMEYPOS, this.getY());
    }
-    
-    
-    
-    /**
-     * This method is called from within the constructor to initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is always
-     * regenerated by the Form Editor.
-     */
-    @SuppressWarnings("unchecked")
+
+   private void updateValues() {
+
+      String val;
+      int intVal;
+      try {
+         val = core_.getProperty(CRISP_, "LED Intensity");
+
+      } catch (Exception ex) {
+         try {// sometimes this property is also called led intensity with a %
+            val = core_.getProperty(CRISP_, "LED Intensity(%)");
+         } catch (Exception ex1) {
+            gui_.showError("Error reading LED Intensity from CRISP");
+            val = "0";
+         }
+      }
+      intVal = Integer.parseInt(val);
+      LEDSpinner_.getModel().setValue(intVal);
+
+      try {
+         val = core_.getProperty(CRISP_, "GainMultiplier");
+
+      } catch (Exception ex) {
+         try {
+            val = core_.getProperty(CRISP_, "LoopGainMultiplier");
+         } catch (Exception ex1) {
+            gui_.showError("Error reading Gain Multiplier from CRISP");
+            val = "0";
+         }
+      }
+      intVal = Integer.parseInt(val);
+      GainSpinner_.getModel().setValue(intVal);
+
+      try {
+         val = core_.getProperty(CRISP_, "Number of Averages");
+         intVal = Integer.parseInt(val);
+         NrAvgsSpinner_.getModel().setValue(intVal);
+      } catch (Exception ex) {
+         gui_.showError("Error reading No of Avg from CRISP");
+      }
+      try {
+         val = core_.getProperty(CRISP_, "Objective NA");
+         float floatVal = Float.parseFloat(val);
+         NASpinner_.getModel().setValue(floatVal);
+      } catch (Exception ex) {
+         gui_.showError("Error reading Objective NA from CRISP");
+      }
+
+      update_status();
+   }
+
+   private void update_status() {
+      try {
+         label_crisp_error.setText(core_.getProperty(CRISP_, "Dither Error"));
+      } catch (Exception ex) {
+         label_crisp_error.setText("read error");
+                // getting errors, best to stop
+         //myTimer.stop();
+      }
+
+      try {
+         label_crisp_state.setText(core_.getProperty(CRISP_, "CRISP State"));
+      } catch (Exception ex) {
+         label_crisp_state.setText("read error");
+                // getting errors , best to stop
+         //myTimer.stop();
+      }
+
+      try {
+         label_snr.setText(core_.getProperty(CRISP_, "Signal Noise Ratio"));
+      } catch (Exception ex) {
+         try {
+            label_snr.setText(core_.getProperty(CRISP_, "Signal to Noise Ratio"));
+         } catch (Exception ex1) {
+            label_snr.setText("read error");
+         }
+                // getting errors , best to stop
+         //myTimer.stop();
+      }
+
+      try {
+         label_agc.setText(core_.getProperty(CRISP_, "LogAmpAGC"));
+      } catch (Exception ex) {
+
+         label_snr.setText("read error");
+                // getting errors , best to stop
+         //myTimer.stop();
+      }
+
+   }
+   ActionListener taskPerformer = new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent evt) {
+         update_status();
+      }
+   };
+
+   public void safePrefs() {
+      gui_.profile().setInt(this.getClass(), FRAMEXPOS, this.getX());
+      gui_.profile().setInt(this.getClass(), FRAMEYPOS, this.getY());
+   }
+
+   /**
+    * This method is called from within the constructor to initialize the form.
+    * WARNING: Do NOT modify this code. The content of this method is always
+    * regenerated by the Form Editor.
+    */
+   @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
@@ -539,179 +509,158 @@ update_status();
        try {
           core_.setProperty(CRISP_, "LED Intensity", newLEDValue);
        } catch (Exception ex) {
-          try
-          {
-           core_.setProperty(CRISP_, "LED Intensity(%)", newLEDValue);
-          }
-          catch (Exception ex1)
-          {
-           ReportingUtils.showError("Problem while setting LED intensity");
+          try {
+             core_.setProperty(CRISP_, "LED Intensity(%)", newLEDValue);
+          } catch (Exception ex1) {
+             gui_.showError("Problem while setting LED intensity");
           }
        }
     }//GEN-LAST:event_LEDSpinner_StateChanged
 
     private void GainSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_GainSpinner_StateChanged
-        SpinnerModel numberModel = GainSpinner_.getModel();
+       SpinnerModel numberModel = GainSpinner_.getModel();
 
        int newGainValue = (Integer) numberModel.getValue();
        try {
           core_.setProperty(CRISP_, "GainMultiplier", newGainValue);
        } catch (Exception ex) {
-          try
-          {
-           core_.setProperty(CRISP_, "LoopGainMultiplier", newGainValue);
-          }
-          catch (Exception ex1)
-          {
-           ReportingUtils.showError("Problem while setting Gain Multiplier");
+          try {
+             core_.setProperty(CRISP_, "LoopGainMultiplier", newGainValue);
+          } catch (Exception ex1) {
+             gui_.showError("Problem while setting Gain Multiplier");
           }
        }
     }//GEN-LAST:event_GainSpinner_StateChanged
 
     private void NrAvgsSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_NrAvgsSpinner_StateChanged
-        SpinnerModel numberModel = NrAvgsSpinner_.getModel();
+       SpinnerModel numberModel = NrAvgsSpinner_.getModel();
 
        int newNrAvgValue = (Integer) numberModel.getValue();
        try {
           core_.setProperty(CRISP_, "Number of Averages", newNrAvgValue);
        } catch (Exception ex) {
-          ReportingUtils.showError("Problem while setting LED intensity");
+          gui_.showError("Problem while setting LED intensity");
        }
     }//GEN-LAST:event_NrAvgsSpinner_StateChanged
 
     private void NASpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_NASpinner_StateChanged
-        SpinnerModel numberModel = NASpinner_.getModel();
+       SpinnerModel numberModel = NASpinner_.getModel();
 
        float newNAValue = (Float) numberModel.getValue();
        try {
           core_.setProperty(CRISP_, "Objective NA", newNAValue);
        } catch (Exception ex) {
-          ReportingUtils.showError("Problem while setting LED intensity");
+          gui_.showError("Problem while setting LED intensity");
        }
     }//GEN-LAST:event_NASpinner_StateChanged
 
     private void btn_idleMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btn_idleMouseClicked
-       try{
-        core_.setProperty(CRISP_, "CRISP State", "Idle");
-       }
-       catch (Exception ex) {
-          ReportingUtils.showError("Problem while Dithering");
+       try {
+          core_.setProperty(CRISP_, "CRISP State", "Idle");
+       } catch (Exception ex) {
+          gui_.showError("Problem while Dithering");
        }
     }//GEN-LAST:event_btn_idleMouseClicked
 
     private void btn_logcalMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btn_logcalMouseClicked
-       try{
-        core_.setProperty(CRISP_, "CRISP State", "loG_cal");
-       }
-       catch (Exception ex) {
-          ReportingUtils.showError("Problem while Log Cal");
+       try {
+          core_.setProperty(CRISP_, "CRISP State", "loG_cal");
+       } catch (Exception ex) {
+          gui_.showError("Problem while Log Cal");
        }
     }//GEN-LAST:event_btn_logcalMouseClicked
 
     private void btn_bitherMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btn_bitherMouseClicked
-        
-               try{
-        core_.setProperty(CRISP_, "CRISP State", "Dither");
-       }
-       catch (Exception ex) {
-          ReportingUtils.showError("Problem while Dithering");
+
+       try {
+          core_.setProperty(CRISP_, "CRISP State", "Dither");
+       } catch (Exception ex) {
+          gui_.showError("Problem while Dithering");
        }
     }//GEN-LAST:event_btn_bitherMouseClicked
 
     private void btn_setgainMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btn_setgainMouseClicked
-        try{
-        core_.setProperty(CRISP_, "CRISP State", "gain_Cal");
-       }
-       catch (Exception ex) {
-          ReportingUtils.showError("Problem while Dithering");
+       try {
+          core_.setProperty(CRISP_, "CRISP State", "gain_Cal");
+       } catch (Exception ex) {
+          gui_.showError("Problem while Dithering");
        }
     }//GEN-LAST:event_btn_setgainMouseClicked
 
     private void btn_lockMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btn_lockMouseClicked
-        try {
-             core_.enableContinuousFocus(true);
-          } catch (Exception ex) {
-             ReportingUtils.displayNonBlockingMessage("Failed to lock");
-          }
+       try {
+          core_.enableContinuousFocus(true);
+       } catch (Exception ex) {
+          gui_.showError("Failed to lock");
+       }
     }//GEN-LAST:event_btn_lockMouseClicked
 
     private void btn_unlockMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btn_unlockMouseClicked
-        try {
-             core_.enableContinuousFocus(false);
-          } catch (Exception ex) {
-             ReportingUtils.displayNonBlockingMessage("Failed to lock");
-          }
+       try {
+          core_.enableContinuousFocus(false);
+       } catch (Exception ex) {
+          gui_.showError("Failed to lock");
+       }
     }//GEN-LAST:event_btn_unlockMouseClicked
 
     private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
-        try {
-        core_.setProperty(CRISP_, "RefreshPropertyValues", "No");
-        }
-        catch(Exception ex)
-                {
-                }
-        myTimer.stop();
+       try {
+          core_.setProperty(CRISP_, "RefreshPropertyValues", "No");
+       } catch (Exception ex) {
+       }
+       myTimer.stop();
     }//GEN-LAST:event_formWindowClosing
 
     private void formWindowOpened(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowOpened
-         try {
-        //core_.setProperty(CRISP_, "RefreshPropertyValues", "Yes");
-        }
-        catch(Exception ex)
-                {
-                }
-        //myTimer.start();
+       try {
+          //core_.setProperty(CRISP_, "RefreshPropertyValues", "Yes");
+       } catch (Exception ex) {
+       }
+       //myTimer.start();
     }//GEN-LAST:event_formWindowOpened
 
     private void cb_pollingStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_cb_pollingStateChanged
-       if(cb_polling.isSelected() == true)
-       {
-       myTimer.start();
-       panel_poll_data.setEnabled(true);
-       try {
+       if (cb_polling.isSelected() == true) {
+          myTimer.start();
+          panel_poll_data.setEnabled(true);
+          try {
              core_.setProperty(CRISP_, "RefreshPropertyValues", "Yes");
-             }
-        catch(Exception ex)
-                {
-                }
-        
+          } catch (Exception ex) {
+          }
+
+       } else {
+          panel_poll_data.setEnabled(false);
+          try {
+             core_.setProperty(CRISP_, "RefreshPropertyValues", "No");
+          } catch (Exception ex) {
+          }
+          myTimer.stop();
        }
-       else
-        {
-         panel_poll_data.setEnabled(false);
-        try {
-        core_.setProperty(CRISP_, "RefreshPropertyValues", "No");
-        }
-        catch(Exception ex)
-                {
-                }
-        myTimer.stop();
-        }
     }//GEN-LAST:event_cb_pollingStateChanged
 
     private void btn_lockActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btn_lockActionPerformed
-        // TODO add your handling code here:
+       // TODO add your handling code here:
     }//GEN-LAST:event_btn_lockActionPerformed
 
     private void btn_offsetMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btn_offsetMouseClicked
-        try {
+       try {
           core_.setProperty(CRISP_, "CRISP State", "Reset Focus Offset");
        } catch (Exception ex) {
-          ReportingUtils.showError("Problem resetting Focus Offset");
+          gui_.showError("Problem resetting Focus Offset");
        }
     }//GEN-LAST:event_btn_offsetMouseClicked
 
     private void btn_saveMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btn_saveMouseClicked
-        try {
+       try {
           core_.setProperty(CRISP_, "CRISP State", "Save to Controller");
        } catch (Exception ex) {
-          ReportingUtils.showError("Problem acquiring focus curve");
+          gui_.showError("Problem acquiring focus curve");
        }
     }//GEN-LAST:event_btn_saveMouseClicked
 
-    /**
-     * @param args the command line arguments
-     */
+   /**
+    * @param args the command line arguments
+    */
 //    public static void main(String args[]) {
 //        /* Set the Nimbus look and feel */
 //        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
