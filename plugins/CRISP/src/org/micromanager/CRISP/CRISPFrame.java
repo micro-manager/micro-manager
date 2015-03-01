@@ -20,9 +20,6 @@ import java.awt.Shape;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.geom.Ellipse2D;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.prefs.Preferences;
 
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -42,6 +39,7 @@ import org.micromanager.ScriptInterface;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
+import org.micromanager.internal.utils.MMFrame;
 
 /**
  * Micro-Manager plugin for control of the ASI CRISP autofocus
@@ -49,26 +47,24 @@ import org.jfree.data.xy.XYSeriesCollection;
  * @author Nico Stuurman
  */
 @SuppressWarnings("serial")
-public class CRISPFrame extends javax.swing.JFrame {
+public class CRISPFrame extends MMFrame {
 
     private final ScriptInterface gui_;
     private final CMMCore core_;
-    private Preferences prefs_;
     private String CRISP_;
 
     private int frameXPos_ = 100;
     private int frameYPos_ = 100;
-    private boolean tiger_ = false;
-
-    private static final String FRAMEXPOS = "FRAMEXPOS";
-    private static final String FRAMEYPOS = "FRAMEYPOS";
 
 
-    /** Creates new form CRISPFrame */
+    /** 
+     * Creates new form CRISPFrame
+     * 
+     * @param gui MM scriptInterface
+     */
     public CRISPFrame(ScriptInterface gui)  {
        gui_ = gui;
        core_ = gui.getMMCore();
-       prefs_ = Preferences.userNodeForPackage(this.getClass());
        CRISP_ = "";
 
        mmcorej.StrVector afs =
@@ -80,7 +76,6 @@ public class CRISPFrame extends javax.swing.JFrame {
             if (core_.getDeviceLibrary(af).equals("ASITiger") &&
                   core_.hasProperty(af, "Description") &&
                   core_.getProperty(af, "Description").startsWith("ASI CRISP AutoFocus")) {
-               tiger_ = true;
                CRISP_ = af;
                found = true;
                break;
@@ -93,8 +88,8 @@ public class CRISPFrame extends javax.swing.JFrame {
                break;
             }
          } catch (Exception ex) {
-            Logger.getLogger(CRISPFrame.class.getName()).log(Level.SEVERE, null, ex);
-         }
+            gui_.logError(ex);
+            }
        }
 
        if (!found) {
@@ -102,12 +97,9 @@ public class CRISPFrame extends javax.swing.JFrame {
           throw new IllegalArgumentException("This plugin needs at least one camera");
        }
 
-      frameXPos_ = prefs_.getInt(FRAMEXPOS, frameXPos_);
-      frameYPos_ = prefs_.getInt(FRAMEYPOS, frameYPos_);
-
       initComponents();
 
-      setLocation(frameXPos_, frameYPos_);
+      loadAndRestorePosition(frameXPos_, frameYPos_);
 
       updateValues();
     }
@@ -140,6 +132,12 @@ public class CRISPFrame extends javax.swing.JFrame {
 
     /**
     * Create a frame with a plot of the data given in XYSeries
+    * @param title title of the ploy
+    * @param data data series to be plotted
+    * @param xTitle name of X-axis
+    * @param yTitle name of Y-axis
+    * @param xLocation position on the screen
+    * @param yLocation position on the screen
     */
    public static void plotData(String title, XYSeries data, String xTitle,
            String yTitle, int xLocation, int yLocation) {
@@ -431,6 +429,7 @@ public class CRISPFrame extends javax.swing.JFrame {
          Object[] msg = {msg1, jl, msg2};
 
          ActionListener al = new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent evt) {
                try {
                  jl.setText(core_.getProperty(CRISP_, "Dither Error"));
@@ -541,8 +540,8 @@ public class CRISPFrame extends javax.swing.JFrame {
           
           XYSeries data = new XYSeries("");
           String[] valLines = vals.split("\r\n");
-          for (int i=0; i < valLines.length; i++) {
-             String[] tokens = valLines[i].split("\\s+");
+          for (String valLine : valLines) {
+             String[] tokens = valLine.split("\\s+");
              data.add(Float.parseFloat(tokens[2]), Integer.parseInt(tokens[3]));
           }
 
@@ -564,11 +563,6 @@ public class CRISPFrame extends javax.swing.JFrame {
           ReportingUtils.showError("Problem acquiring focus curve");
        }
     }//GEN-LAST:event_SaveButton_ActionPerformed
-
-  public void safePrefs() {
-      prefs_.putInt(FRAMEXPOS, this.getX());
-      prefs_.putInt(FRAMEYPOS, this.getY());
-   }
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
