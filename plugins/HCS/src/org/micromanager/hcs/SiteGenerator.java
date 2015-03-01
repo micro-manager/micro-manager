@@ -34,7 +34,6 @@ import javax.swing.JRadioButton;
 import javax.swing.ButtonGroup;
 
 import java.awt.Dimension;
-import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * @author nenad
@@ -234,6 +233,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       springLayout.putConstraint(SpringLayout.EAST, refreshButton, -4, SpringLayout.EAST, getContentPane());
       refreshButton.setIcon(SwingResourceManager.getIcon(SiteGenerator.class, "/org/micromanager/icons/arrow_refresh.png"));
       refreshButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(final ActionEvent e) {
             regenerate();
          }
@@ -348,6 +348,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       springLayout.putConstraint(SpringLayout.WEST, chckbxThreePt_, 6, SpringLayout.EAST, platePanel_);
       springLayout.putConstraint(SpringLayout.EAST, chckbxThreePt_, -4, SpringLayout.EAST, getContentPane());
       chckbxThreePt_.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent e) {
             platePanel_.repaint();
          }
@@ -386,6 +387,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
 
       rdbtnSelectWells_ = new JRadioButton("Select Wells");
       rdbtnSelectWells_.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             if (rdbtnSelectWells_.isSelected()) {
                platePanel_.setTool(PlatePanel.Tool.SELECT);
@@ -469,18 +471,16 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
    private void setPositionList() {
       WellPositionList[] wpl = platePanel_.getSelectedWellPositions();
       PositionList platePl = new PositionList();
-      for (int i = 0; i < wpl.length; i++) {
-         PositionList pl = PositionList.newInstance(wpl[i].getSitePositions());
+      for (WellPositionList wpl1 : wpl) {
+         PositionList pl = PositionList.newInstance(wpl1.getSitePositions());
          for (int j = 0; j < pl.getNumberOfPositions(); j++) {
             MultiStagePosition mpl = pl.getPosition(j);
-
             // make label unique
-            mpl.setLabel(wpl[i].getLabel() + "-" + mpl.getLabel());
+            mpl.setLabel(wpl1.getLabel() + "-" + mpl.getLabel());
             if (app_ != null) {
                mpl.setDefaultXYStage(app_.getXYStageName());
                mpl.setDefaultZStage(app_.getMMCore().getFocusDevice());
             }
-
             // set the proper XYstage name
             for (int k = 0; k < mpl.size(); k++) {
                StagePosition sp = mpl.get(k);
@@ -488,7 +488,6 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
                   sp.stageName = mpl.getDefaultXYStage();
                }
             }
-
             // add Z position if 3-point focus is enabled
             if (useThreePtAF()) {
                if (focusPlane_ == null) {
@@ -502,7 +501,6 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
                sp.stageName = mpl.getDefaultZStage();
                mpl.add(sp);
             }
-
             platePl.addPosition(pl.getPosition(j));
          }
       }
@@ -665,6 +663,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       platePanel_.repaint();
    }
 
+   @Override
    public void setApp(ScriptInterface app) {
       app_ = app;
       try {
