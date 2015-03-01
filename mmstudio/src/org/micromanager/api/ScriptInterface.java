@@ -184,6 +184,7 @@ public interface ScriptInterface {
     * Typically there is no need to use this low-level method and interfere with the default acquisition execution.
     * Intended use is within advanced plugins.
     * @param name - data set name
+    * @return MMAcqusition object
     * @throws MMScriptException
     *
     * @deprecated Because it returns an internal object that is subject to change.
@@ -194,6 +195,7 @@ public interface ScriptInterface {
    /**
     * Returns a name beginning with stem that is not yet used.
     * @param stem Base name from which a unique name will be constructed
+    * @return a name beginning with stem that is not yet used
     */
    public String getUniqueAcquisitionName(String stem);
    
@@ -212,11 +214,15 @@ public interface ScriptInterface {
     * The current album is the most recently created one
     * Albums are also used by the "Camera --&gt; Album" button in the main window of Micro-Manager and 
     * the "--&gt; Album" button on the snap/live window
+    * @param image - TaggedImage to be added to album
+    * @throws org.micromanager.utils.MMScriptException
     */
    public void addToAlbum(TaggedImage image) throws MMScriptException;
    
    /**
     * Checks whether an acquisition with the given name already exists.
+    * @param name name to be tested for existence
+    * @return true when name already exists
     */
    public Boolean acquisitionExists(String name);
 
@@ -225,6 +231,7 @@ public interface ScriptInterface {
     * After this command metadata is complete, all the references to this data set are cleaned-up,
     * and no additional images can be added to the acquisition
     * Does not close the window in which the acquisition data is displayed
+    * @param name name of acquisition to be closed
     * @throws MMScriptException 
     */
    public void closeAcquisition(String name) throws MMScriptException;
