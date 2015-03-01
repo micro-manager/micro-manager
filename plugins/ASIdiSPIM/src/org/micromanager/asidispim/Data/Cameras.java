@@ -28,9 +28,9 @@ import java.util.List;
 
 import mmcorej.CMMCore;
 
-import org.micromanager.api.ScriptInterface;
+import org.micromanager.ScriptInterface;
 import org.micromanager.asidispim.Utils.MyDialogUtils;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * Holds utility functions for cameras

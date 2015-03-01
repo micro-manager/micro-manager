@@ -31,9 +31,10 @@ import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.micromanager.acquisition.ComponentTitledBorder;
-import org.micromanager.api.ScriptInterface;
+import org.micromanager.internal.dialogs.ComponentTitledBorder;
+import org.micromanager.ScriptInterface;
 import org.micromanager.asidispim.Data.ChannelConfigEditor;
+import org.micromanager.asidispim.Data.ChannelSpec;
 import org.micromanager.asidispim.Data.ChannelTableModel;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.MultichannelModes;
@@ -43,7 +44,6 @@ import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.MyDialogUtils;
 import org.micromanager.asidispim.Utils.PanelUtils;
-import org.micromanager.utils.ReportingUtils;
 
 import javax.swing.BorderFactory;
 import javax.swing.DefaultComboBoxModel;
@@ -65,7 +65,6 @@ import mmcorej.CMMCore;
 import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
 
-import org.micromanager.asidispim.Data.ChannelSpec;
 
 
 /**
@@ -75,6 +74,7 @@ import org.micromanager.asidispim.Data.ChannelSpec;
  */
 @SuppressWarnings("serial")
 public class MultiChannelSubPanel extends ListeningJPanel {
+   private final ScriptInterface gui_;
    private final CMMCore core_;
    private final Devices devices_;
    private final Properties props_;
@@ -137,6 +137,7 @@ public class MultiChannelSubPanel extends ListeningJPanel {
                   "[right]10[left]",
                   "[]8[]"));
       core_ = gui.getMMCore();
+      gui_ = gui;
       devices_ = devices;
       props_ = props;
       prefs_ = prefs;
@@ -309,7 +310,7 @@ public class MultiChannelSubPanel extends ListeningJPanel {
       try {
          groups = core_.getAllowedPropertyValues("Core", "ChannelGroup");
       } catch (Exception ex) {
-         ReportingUtils.logError(ex);
+         gui_.logError(ex);
          return new String[0];
       }
       ArrayList<String> strGroups = new ArrayList<String>();
@@ -365,7 +366,7 @@ public class MultiChannelSubPanel extends ListeningJPanel {
       try {
          return core_.getCurrentConfigFromCache(channelGroup_.getSelectedItem().toString());
       } catch (Exception e) {
-         ReportingUtils.logError("Failed to get current configuration");
+         gui_.logError("Failed to get current configuration");
       }
       return null;
    }
@@ -374,7 +375,7 @@ public class MultiChannelSubPanel extends ListeningJPanel {
       try {
          core_.setConfig(channelGroup_.getSelectedItem().toString(), config);
       } catch (Exception e) {
-         ReportingUtils.logError(e, "Failed to set config.");
+         gui_.logError(e, "Failed to set config.");
       }
    }
 

@@ -33,7 +33,7 @@ import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
 
-import org.micromanager.api.ScriptInterface;
+import org.micromanager.ScriptInterface;
 import org.micromanager.asidispim.Utils.DevicesListenerInterface;
 import org.micromanager.asidispim.Utils.MyDialogUtils;
 

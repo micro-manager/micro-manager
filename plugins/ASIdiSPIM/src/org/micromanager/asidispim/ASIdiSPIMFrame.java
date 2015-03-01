@@ -40,12 +40,12 @@ import javax.swing.JTabbedPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import org.micromanager.api.MMListenerInterface;
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.MMStudio;
+import org.micromanager.MMListenerInterface;
+import org.micromanager.ScriptInterface;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.asidispim.Utils.StagePositionUpdater;
-import org.micromanager.internalinterfaces.LiveModeListener; 
-import org.micromanager.utils.MMFrame;
+import org.micromanager.internal.interfaces.LiveModeListener; 
+import org.micromanager.internal.utils.MMFrame;
 
 //TODO devices tab automatically recognize default device names
 //TODO "swap sides" button (during alignment)

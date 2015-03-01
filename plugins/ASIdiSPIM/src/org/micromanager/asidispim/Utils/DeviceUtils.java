@@ -34,7 +34,7 @@ import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
 
-import org.micromanager.api.ScriptInterface;
+import org.micromanager.ScriptInterface;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.Properties;
 
@@ -220,6 +220,7 @@ public class DeviceUtils {
          box_ = box;
       }
       
+      @Override
       public void actionPerformed(ActionEvent ae) {
          devices_.setMMDevice(key_, (String) box_.getSelectedItem());
          checkDeviceLibrary(key_);
@@ -259,6 +260,7 @@ public class DeviceUtils {
     * Constructs a special JComboBox with all cameras that have more than 1 channel,
     * which we expect to just be a single Multicamera device
     * @param deviceName
+    * @param maximumWidth - maximum width of the dropdown box
     * @return
     */
    public JComboBox makeMultiCameraDeviceBox(Devices.Keys deviceName, int maximumWidth) {
@@ -293,6 +295,7 @@ public class DeviceUtils {
    /**
     * Constructs a special JComboBox with all cameras that have only 1 channel
     * @param deviceName
+    * @param maximumWidth maximum width of the dropdown box
     * @return
     */
    public JComboBox makeSingleCameraDeviceBox(Devices.Keys deviceName, int maximumWidth) {

@@ -74,24 +74,24 @@ import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.TaggedImage;
 
-import org.micromanager.api.MultiStagePosition;
-import org.micromanager.api.PositionList;
-import org.micromanager.api.ScriptInterface;
+import org.micromanager.MultiStagePosition;
+import org.micromanager.PositionList;
+import org.micromanager.ScriptInterface;
 import org.micromanager.api.ImageCache;
 import org.micromanager.api.MMTags;
-import org.micromanager.MMStudio;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.acquisition.DefaultTaggedImageSink;
 import org.micromanager.acquisition.MMAcquisition;
 import org.micromanager.acquisition.TaggedImageQueue;
 import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
 import org.micromanager.acquisition.TaggedImageStorageMultipageTiff;
 import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
-import org.micromanager.utils.ImageUtils;
-import org.micromanager.utils.NumberUtils;
-import org.micromanager.utils.FileDialogs;
-import org.micromanager.utils.MDUtils;
-import org.micromanager.utils.MMScriptException;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.internal.utils.ImageUtils;
+import org.micromanager.internal.utils.NumberUtils;
+import org.micromanager.internal.utils.FileDialogs;
+import org.micromanager.internal.utils.MDUtils;
+import org.micromanager.internal.utils.MMScriptException;
+import org.micromanager.internal.utils.ReportingUtils;
 
 import com.swtdesigner.SwingResourceManager;
 
