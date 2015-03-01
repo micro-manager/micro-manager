@@ -77,15 +77,7 @@ import mmcorej.TaggedImage;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
 import org.micromanager.ScriptInterface;
-import org.micromanager.api.ImageCache;
-import org.micromanager.api.MMTags;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.acquisition.DefaultTaggedImageSink;
-import org.micromanager.acquisition.MMAcquisition;
-import org.micromanager.acquisition.TaggedImageQueue;
-import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
-import org.micromanager.acquisition.TaggedImageStorageMultipageTiff;
-import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
 import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.FileDialogs;
@@ -102,9 +94,9 @@ import java.awt.event.WindowEvent;
 
 import javax.swing.BorderFactory;
 
-import org.micromanager.acquisition.ComponentTitledBorder;
+import org.micromanager.internal.dialogs.ComponentTitledBorder;
 import org.micromanager.asidispim.Data.ChannelSpec;
-import org.micromanager.utils.MMFrame;
+import org.micromanager.internal.utils.MMFrame;
 
 /**
  *
