@@ -25,7 +25,7 @@ import javax.swing.JOptionPane;
 
 import org.micromanager.asidispim.ASIdiSPIM;
 
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  *
@@ -82,7 +82,6 @@ public class MyDialogUtils {
     * Convenience method to show an error message (also logged) over the plugin frame.
     * Calls org.micromanager.utils.ReportingUtils() 
     * @param e exception
-    * @param message
     */
    public static void showError(Throwable e) {
       ReportingUtils.showError(e, ASIdiSPIM.getFrame());

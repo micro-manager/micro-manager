@@ -86,7 +86,6 @@ import org.micromanager.data.Datastore;
 import org.micromanager.ScriptInterface;
 // TODO should not depend on this module.
 import org.micromanager.display.internal.MMVirtualStack;
-import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.MMListenerAdapter;
 import org.micromanager.internal.utils.MMFrame;
@@ -1297,8 +1296,6 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    public static ProjectorControlForm showSingleton(CMMCore core, ScriptInterface app) {
       if (formSingleton_ == null) {
          formSingleton_ = new ProjectorControlForm(core, app);
-         // Place window where it was last.
-         GUIUtils.recallPosition(formSingleton_);
       }
       formSingleton_.setVisible(true);
       return formSingleton_;

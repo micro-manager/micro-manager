@@ -33,9 +33,9 @@ public class TestSBSPlate {
       plate.initialize(SBSPlate.SBS_96_WELL);
       WellPositionList wpl[] = plate.generatePositions(SBSPlate.DEFAULT_XYSTAGE_NAME);
       System.out.println("Created plate with " + wpl.length + " wells.");
-      for (int i=0; i<wpl.length; i++) {
-         for (int j=0; j<wpl[i].getSitePositions().getNumberOfPositions(); j++) {
-            MultiStagePosition mps = wpl[i].getSitePositions().getPosition(j);
+      for (WellPositionList wpl1 : wpl) {
+         for (int j = 0; j < wpl1.getSitePositions().getNumberOfPositions(); j++) {
+            MultiStagePosition mps = wpl1.getSitePositions().getPosition(j);
             System.out.println("Well " + mps.getLabel() + " : X=" + mps.getX() + ", Y=" + mps.getY());
          }
       }

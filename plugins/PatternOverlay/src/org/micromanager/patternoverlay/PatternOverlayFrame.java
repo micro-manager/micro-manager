@@ -38,12 +38,11 @@ import javax.swing.JSlider;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import org.micromanager.internal.MMStudio;
 import org.micromanager.ScriptInterface;
 import org.micromanager.internal.utils.MMFrame;
+import org.micromanager.events.NewDisplayEvent;
 
 import net.miginfocom.swing.MigLayout;
-import org.micromanager.events.NewDisplayEvent;
 
 
 /**
@@ -64,7 +63,7 @@ import org.micromanager.events.NewDisplayEvent;
  */
 @SuppressWarnings("LeakingThisInConstructor")
 public class PatternOverlayFrame extends MMFrame {
-   private final ScriptInterface gui_;
+   private static ScriptInterface gui_;
    private final JComboBox overlayBox_;
    private final JToggleButton toggleButton_;
    private final JSlider sizeSlider_;
@@ -203,7 +202,7 @@ public class PatternOverlayFrame extends MMFrame {
     *          window. Will return null if no live image is currently active.
     */
    public static ImagePlus getLiveWindowImage () {
-      ImageWindow window = MMStudio.getInstance().getSnapLiveWin();
+      ImageWindow window = gui_.getSnapLiveWin();
       if (window == null) {
          return null;
       } else {

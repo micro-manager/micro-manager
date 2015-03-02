@@ -1,6 +1,5 @@
 package edu.valelab.gaussianfit;
 
-
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.Roi;
@@ -17,25 +16,25 @@ import java.lang.reflect.Method;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-
 /**
  *
  * @author nico
  */
 /**
- * KeyListener and MouseListenerclass for ResultsTable
- * When user selected a line in the ResulsTable and presses a key,
- * the corresponding image will move to the correct slice and draw the ROI
- * that was used to calculate the Gaussian fit
- * Works only in conjunction with appropriate column names
- * Up and down keys also work as expected
+ * KeyListener and MouseListenerclass for ResultsTable When user selected a line
+ * in the ResulsTable and presses a key, the corresponding image will move to
+ * the correct slice and draw the ROI that was used to calculate the Gaussian
+ * fit Works only in conjunction with appropriate column names Up and down keys
+ * also work as expected
  */
-public class ResultsTableListener implements KeyListener, MouseListener{
+public class ResultsTableListener implements KeyListener, MouseListener {
+
    ImagePlus siPlus_;
    ResultsTable res_;
    TextWindow win_;
    TextPanel tp_;
    int hBS_;
+
    public ResultsTableListener(ImagePlus siPlus, ResultsTable res, TextWindow win, int halfBoxSize) {
       siPlus_ = siPlus;
       res_ = res;
@@ -43,6 +42,8 @@ public class ResultsTableListener implements KeyListener, MouseListener{
       tp_ = win.getTextPanel();
       hBS_ = halfBoxSize;
    }
+
+   @Override
    public void keyPressed(KeyEvent e) {
       int key = e.getKeyCode();
       int row = tp_.getSelectionStart();
@@ -52,23 +53,45 @@ public class ResultsTableListener implements KeyListener, MouseListener{
             tp_.setSelection(row, row);
          }
       } else if (key == KeyEvent.VK_K) {
-         if  (row < tp_.getLineCount() - 1) {
+         if (row < tp_.getLineCount() - 1) {
             row++;
             tp_.setSelection(row, row);
          }
       }
       update();
    }
-   public void keyReleased(KeyEvent e) {}
-   public void keyTyped(KeyEvent e) {}
 
+   @Override
+   public void keyReleased(KeyEvent e) {
+   }
+
+   @Override
+   public void keyTyped(KeyEvent e) {
+   }
+
+   @Override
    public void mouseReleased(MouseEvent e) {
       update();
    }
-   public void mousePressed(MouseEvent e) {}
-   public void mouseClicked(MouseEvent e) {}
-   public void mouseEntered(MouseEvent e) {};
-   public void mouseExited(MouseEvent e) {};
+
+   @Override
+   public void mousePressed(MouseEvent e) {
+   }
+
+   @Override
+   public void mouseClicked(MouseEvent e) {
+   }
+
+   @Override
+   public void mouseEntered(MouseEvent e) {
+   }
+
+   ;
+   @Override
+   public void mouseExited(MouseEvent e) {
+   }
+
+   ;
 
    private void update() {
       if (siPlus_ == null) {
@@ -129,7 +152,7 @@ public class ResultsTableListener implements KeyListener, MouseListener{
             Logger.getLogger(ResultsTableListener.class.getName()).log(Level.SEVERE, null, ex);
          } catch (InstantiationException ex) {
             Logger.getLogger(ResultsTableListener.class.getName()).log(Level.SEVERE, null, ex);
-         } 
+         }
 
          int frame = (int) res_.getValue(Terms.FRAME, row);
          int slice = (int) res_.getValue(Terms.SLICE, row);

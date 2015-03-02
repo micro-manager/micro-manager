@@ -30,7 +30,7 @@ import javax.swing.BorderFactory;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 
-import org.micromanager.api.ScriptInterface;
+import org.micromanager.ScriptInterface;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Prefs;
@@ -159,6 +159,7 @@ public final class BeamSubPanel extends ListeningJPanel {
       }
 
       // only called when the user selects/deselects from GUI
+      @Override
       public void actionPerformed(ActionEvent e) {
          if (beamBox_.isSelected()) {
             sheetBox_.setEnabled(true);

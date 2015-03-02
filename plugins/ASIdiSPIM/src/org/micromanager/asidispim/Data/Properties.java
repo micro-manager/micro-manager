@@ -27,11 +27,11 @@ import java.util.List;
 
 import mmcorej.CMMCore;
 
-import org.micromanager.api.ScriptInterface;
+import org.micromanager.ScriptInterface;
 import org.micromanager.asidispim.Utils.MyDialogUtils;
 import org.micromanager.asidispim.Utils.UpdateFromPropertyListenerInterface;
-import org.micromanager.utils.NumberUtils;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.internal.utils.NumberUtils;
+import org.micromanager.internal.utils.ReportingUtils;
 
 
 /**
@@ -289,8 +289,7 @@ public class Properties {
    /**
     * sees if property exists in given device
     * @param device enum key for device 
-    * @param name enum key for property 
-    * @param ignoreError false (default) will do error checking, true means ignores non-existing property
+    * @param name enum key for property
     * @param propNameSubstitute string to substitute for pattern in property name, or null if not used
     * @return
     */
@@ -608,12 +607,11 @@ public class Properties {
     */
    private String getPropValue(Devices.Keys device, Properties.Keys name,
          String propNameSubstitute) {
-      String val = "";
+      String val;
       if (device == Devices.Keys.PLUGIN) {
          val = prefs_.getString(PLUGIN_PREF_NODE, name, "");
       } else {
-         String mmDevice = null;
-         mmDevice = devices_.getMMDevice(device);
+         String mmDevice = devices_.getMMDevice(device);
          val = "";  // set to be empty string to avoid null pointer exceptions
          if (mmDevice != null) {
             try {

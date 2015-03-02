@@ -1,4 +1,4 @@
-<?xml version="1.1" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8" ?>
 
 <Form version="1.5" maxVersion="1.7" type="org.netbeans.modules.form.forminfo.JFrameFormInfo">
   <Properties>
@@ -7,6 +7,7 @@
   </Properties>
   <SyntheticProperties>
     <SyntheticProperty name="formSizePolicy" type="int" value="1"/>
+    <SyntheticProperty name="generateCenter" type="boolean" value="false"/>
   </SyntheticProperties>
   <AuxValues>
     <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="0"/>
@@ -57,9 +58,9 @@
                               </Group>
                               <EmptySpace min="-2" pref="16" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="1" attributes="0">
-                                  <Component id="UpdateButton_" pref="127" max="32767" attributes="1"/>
-                                  <Component id="ResetOffsetButton_" alignment="1" pref="127" max="32767" attributes="1"/>
-                                  <Component id="CurveButton_" alignment="0" pref="127" max="32767" attributes="1"/>
+                                  <Component id="UpdateButton_" max="32767" attributes="1"/>
+                                  <Component id="ResetOffsetButton_" alignment="1" max="32767" attributes="1"/>
+                                  <Component id="CurveButton_" alignment="0" max="32767" attributes="1"/>
                                   <Component id="SaveButton_" alignment="0" min="-2" pref="127" max="-2" attributes="1"/>
                               </Group>
                           </Group>
@@ -101,13 +102,13 @@
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
-                  <Component id="jLabel2" alignment="3" pref="26" max="32767" attributes="1"/>
+                  <Component id="jLabel2" alignment="3" max="32767" attributes="1"/>
                   <Component id="GainSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="SaveButton_" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
-                  <Component id="jLabel3" alignment="3" pref="26" max="32767" attributes="1"/>
+                  <Component id="jLabel3" alignment="3" max="32767" attributes="1"/>
                   <Component id="NrAvgsSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="ResetOffsetButton_" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>

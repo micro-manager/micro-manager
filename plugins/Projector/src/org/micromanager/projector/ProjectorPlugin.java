@@ -24,7 +24,6 @@ import java.awt.event.ItemEvent;
 import mmcorej.CMMCore;
 import org.micromanager.MMPlugin;
 import org.micromanager.ScriptInterface;
-import org.micromanager.internal.utils.GUIUtils;
 
 
 // The Projector plugin provides a user interface for calibration and control
@@ -43,7 +42,7 @@ public class ProjectorPlugin implements MMPlugin {
    public static RoiManager showRoiManager() {
       IJ.run("ROI Manager...");
       final RoiManager roiManager = RoiManager.getInstance();
-      GUIUtils.recallPosition(roiManager);
+      //GUIUtils.recallPosition(roiManager);
       // "Get the "Show All" checkbox and make sure it is checked.
       Checkbox checkbox = (Checkbox) ((Panel) roiManager.getComponent(1)).getComponent(9);
       checkbox.setState(true);

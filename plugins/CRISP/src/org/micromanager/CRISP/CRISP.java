@@ -1,11 +1,4 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package org.micromanager.CRISP;
-
-import mmcorej.CMMCore;
 
 import org.micromanager.MMPlugin;
 import org.micromanager.ScriptInterface;
@@ -20,32 +13,25 @@ public class CRISP implements MMPlugin {
    public static final String tooltipDescription =
       "Control the ASI CRISP Autofocus System";
    @SuppressWarnings("unused")
-   private CMMCore core_;
    private ScriptInterface gui_;
    private CRISPFrame myFrame_;
 
     @Override
    public void setApp(ScriptInterface app) {
       gui_ = app;
-      core_ = app.getMMCore();
       if (myFrame_ == null) {
          try {
             myFrame_ = new CRISPFrame(gui_);
          } catch (Exception e) {
-            e.printStackTrace();
+            gui_.logError(e);
             return;
          }
       }
       myFrame_.setVisible(true);
    }
 
-    @Override
-   public void dispose() {
-      if (myFrame_ != null)
-         myFrame_.safePrefs();
-   }
-
-    @Override
+   
+   @Override
    public void show() {
        @SuppressWarnings("unused")
        String ig = "ASI CRISP Control";
@@ -69,5 +55,10 @@ public class CRISP implements MMPlugin {
     @Override
    public String getCopyright() {
       return "University of California, 20111";
+   }
+
+   @Override
+   public void dispose() {
+      // nothing to do....
    }
 }

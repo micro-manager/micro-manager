@@ -26,10 +26,10 @@ import java.util.HashMap;
 
 import mmcorej.CMMCore;
 
-import org.micromanager.api.ScriptInterface;
+import org.micromanager.ScriptInterface;
 import org.micromanager.asidispim.Utils.MyDialogUtils;
-import org.micromanager.utils.NumberUtils;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.internal.utils.NumberUtils;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * Holds information about device positions
@@ -37,13 +37,15 @@ import org.micromanager.utils.ReportingUtils;
  * @author Jon
  */
 public class Positions {
-   private HashMap<Devices.Keys, Double> oneAxisDrivePositions_;
-   private HashMap<Devices.Keys, Point2D.Double> twoAxisDrivePositions_;
+   private final HashMap<Devices.Keys, Double> oneAxisDrivePositions_;
+   private final HashMap<Devices.Keys, Point2D.Double> twoAxisDrivePositions_;
    private final Devices devices_;
    private final CMMCore core_;
    
    /**
     * Constructor
+    * @param gui MM ScriptInterface
+    * @param devices Devices that should be tracked
     */
    public Positions(ScriptInterface gui, Devices devices) {
       devices_ = devices;
@@ -92,7 +94,7 @@ public class Positions {
       if (devices_.is1DStage(devKey)) {
          Double pos = getOneAxisStagePosition(devKey);
          if (pos != null) {
-            return pos.doubleValue();
+            return pos;
          }
       }
       if (devices_.isGalvo(devKey) || devices_.isXYStage(devKey)) {
@@ -157,7 +159,7 @@ public class Positions {
       if (devices_.is1DStage(devKey) || dir==Joystick.Directions.NONE) {
          Double pt = getOneAxisStagePosition(devKey);
          if (pt != null) {
-            return posToDisplayStringUm(pt.doubleValue());
+            return posToDisplayStringUm(pt);
          }
       }
       if (devices_.isXYStage(devKey)) {
@@ -228,12 +230,14 @@ public class Positions {
    }
    
    /**
-    * Sets the relative position of specified stage to the specified value using appropriate core calls
+    * Sets the relative position of specified stage to the specified value 
+    * using appropriate core calls
     * @param devKey
     * @param dir
-    * @param pos new position of the stage
+    * @param delta desired change in position (in microns)
     */
-   public void setPositionRelative(Devices.Keys devKey, Joystick.Directions dir, double delta) {
+   public void setPositionRelative(Devices.Keys devKey, Joystick.Directions dir, 
+           double delta) {
       try {
          String mmDevice = devices_.getMMDeviceException(devKey);
          if (devices_.is1DStage(devKey)) {
@@ -261,7 +265,6 @@ public class Positions {
     * Sets the current position to be the origin.
     * @param devKey
     * @param dir
-    * @param pos
     */
    public void setOrigin(Devices.Keys devKey, Joystick.Directions dir) {
       try {

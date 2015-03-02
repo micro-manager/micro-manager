@@ -47,10 +47,9 @@ import javax.swing.*;
 
 import net.miginfocom.swing.MigLayout;
 
-import org.micromanager.MMStudio;
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.internalinterfaces.LiveModeListener;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.ScriptInterface;
+import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.interfaces.LiveModeListener;
 
 /**
  *
@@ -524,7 +523,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
                devices_.getMMDeviceException(micromirrorDeviceKey_),
                0, sliceCenterPos);
       } catch (Exception ex) {
-         ReportingUtils.logError(ex);
+         gui_.logError(ex);
       }
    }
    

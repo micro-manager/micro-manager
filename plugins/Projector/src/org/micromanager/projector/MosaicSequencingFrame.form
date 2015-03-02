@@ -40,7 +40,7 @@
                       <Component id="jPanel5" max="32767" attributes="0"/>
                   </Group>
                   <Component id="jPanel1" max="32767" attributes="0"/>
-                  <Component id="jPanel2" pref="554" max="32767" attributes="0"/>
+                  <Component id="jPanel2" pref="578" max="32767" attributes="0"/>
               </Group>
               <EmptySpace max="32767" attributes="0"/>
           </Group>
@@ -51,7 +51,7 @@
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                  <Component id="roiListPanel_" pref="0" max="32767" attributes="0"/>
+                  <Component id="roiListPanel_" max="32767" attributes="0"/>
                   <Component id="jPanel5" max="32767" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
@@ -73,7 +73,6 @@
                 <EtchetBorder/>
               </Border>
               <Font PropertyName="font" name="Tahoma" size="11" style="1"/>
-              <Color PropertyName="color" blue="0" green="0" red="0" type="rgb"/>
             </TitledBorder>
           </Border>
         </Property>
@@ -207,7 +206,6 @@
                 <EtchetBorder/>
               </Border>
               <Font PropertyName="font" name="Tahoma" size="11" style="1"/>
-              <Color PropertyName="color" blue="0" green="0" red="0" type="rgb"/>
             </TitledBorder>
           </Border>
         </Property>
@@ -507,7 +505,6 @@
                 <EtchetBorder/>
               </Border>
               <Font PropertyName="font" name="Tahoma" size="11" style="1"/>
-              <Color PropertyName="color" blue="0" green="0" red="0" type="rgb"/>
             </TitledBorder>
           </Border>
         </Property>

@@ -38,9 +38,9 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JToggleButton;
 
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.MMStudio;
-import org.micromanager.internalinterfaces.LiveModeListener;
+import org.micromanager.ScriptInterface;
+import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.interfaces.LiveModeListener;
 
 import com.swtdesigner.SwingResourceManager;
 

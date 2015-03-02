@@ -67,13 +67,14 @@ import org.json.JSONObject;
 import org.micromanager.ScriptInterface;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.GUIUtils;
+import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.TextUtils;
 
 // The Mosaic Sequencing Window is for use with Andor's Mosaic3 device adapter.
 // It allows the creation of complex phototargeting sequences, for use with
 // Micro-Manager's multi-dimensional acquisition.
-public class MosaicSequencingFrame extends javax.swing.JFrame {
+public class MosaicSequencingFrame extends MMFrame {
    private final CMMCore core_;
    private final ScriptInterface gui_;
    private final String mosaicName_;
@@ -172,12 +173,15 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
       final ListModel roiListModel = ((JList) ((JScrollPane) RoiManager.getInstance().getComponent(0)).getViewport().getComponent(0)).getModel();
       updateRoiTable(roiListModel);
       roiListModel.addListDataListener(new ListDataListener() {
+         @Override
          public void intervalAdded(ListDataEvent e) {
             updateRoiTable(roiListModel);
          }
+         @Override
          public void intervalRemoved(ListDataEvent e) {
             updateRoiTable(roiListModel);
          }
+         @Override
          public void contentsChanged(ListDataEvent e) {
             updateRoiTable(roiListModel);
          }
@@ -520,7 +524,7 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
    // Upload the provided SequenceEvents to the Mosaic, by using the
    // "SequenceSettings" property.
    private void uploadSequence(final ArrayList<SequenceEvent> events) {
-      if (events.size() == 0) {
+      if (events.isEmpty()) {
          throw new RuntimeException("Please first define a sequence for the Mosaic.");
       }
       mosaicExecutor_.submit(new Runnable() {
@@ -554,6 +558,7 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
          throw new Exception("Please upload a sequence to the Mosaic before pressing \"Run\".");
       }
       mosaicExecutor_.submit(new Runnable() {
+         @Override
          public void run() {
             try {
                // Make sure a sequence isn't running.
@@ -745,6 +750,7 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
       gui_.attachRunnable(0, 0, 0, 0,
             ProjectorControlForm.makeRunnableAsync(
                   new Runnable() {
+                     @Override
                      public void run() {
                         try {
                            runSequence();
@@ -782,7 +788,7 @@ public class MosaicSequencingFrame extends javax.swing.JFrame {
       // in sequence, but off the GUI thread.
       mosaicExecutor_ = Executors.newFixedThreadPool(1);
       
-      GUIUtils.recallPosition(this);
+      loadAndRestorePosition(300, 400);
       GUIUtils.enforceIntegerTextField(onDurationTextField_, 0, 200000);
       GUIUtils.enforceIntegerTextField(offDurationTextField_, 0, 200000);
       GUIUtils.enforceIntegerTextField(loopCountTextField_, 0, 65535);

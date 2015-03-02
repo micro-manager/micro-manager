@@ -1,15 +1,10 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+
 
 package org.micromanager.acquiremultipleregions;
 
 import java.awt.Font;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.prefs.Preferences;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.swing.AbstractListModel;
@@ -38,10 +33,8 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
    private final RegionListModel rlm_;
    private Region currentRegion_;
    private static final String msgPrefix_ = "AcquireMultipleRegions: ";
-   private JTable posTable_;
    private final JTable axisTable_;
    private final AxisTableModel axisModel_;
-   private Preferences prefs_;
    private final AxisList axisList_;
    private ZGeneratorType zGenType_;
    public  int userParameter1;
