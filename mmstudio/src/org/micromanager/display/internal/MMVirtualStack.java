@@ -83,7 +83,7 @@ public class MMVirtualStack extends ij.VirtualStack {
       // TODO: is this always what we want to do? It makes an implicit
       // assumption that all images in the datastore have the same axes.
       for (String axis : store_.getAxes()) {
-         if (builder.getPositionAt(axis) == -1) {
+         if (curCoords_.getPositionAt(axis) == -1) {
             builder.position(axis, 0);
          }
       }

@@ -56,12 +56,6 @@ public interface Coords {
        *         position.
        */
       CoordsBuilder offset(String axis, int offset) throws IllegalArgumentException;
-
-      /**
-       * Return the position for the Builder at the specified axis, as per
-       * Coords.getPositionAt(), below.
-       */
-      int getPositionAt(String axis);
    }
    
    /**

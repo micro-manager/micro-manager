@@ -95,14 +95,6 @@ public class DefaultCoords implements Coords, Comparable<DefaultCoords> {
          position(axis, curVal + offset);
          return this;
       }
-      
-      @Override
-      public int getPositionAt(String axis) {
-         if (axisToPos_.containsKey(axis)) {
-            return axisToPos_.get(axis);
-         }
-         return -1;
-      }
    }
 
    // Maps axis labels to our position along those axes.

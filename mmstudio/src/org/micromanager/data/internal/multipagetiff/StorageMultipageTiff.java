@@ -582,13 +582,18 @@ public final class StorageMultipageTiff implements Storage {
       // TODO: this method is pretty poorly-implemented at current.
       if (maxIndices_ == null) {
          // Calculate max indices by examining all registered Readers.
-         DefaultCoords.Builder builder = new DefaultCoords.Builder();
+         HashMap<String, Integer> maxIndices = new HashMap<String, Integer>();
          for (Coords coords : coordsToReader_.keySet()) {
             for (String axis : coords.getAxes()) {
-               if (coords.getPositionAt(axis) > builder.getPositionAt(axis)) {
-                  builder.position(axis, coords.getPositionAt(axis));
+               if (!maxIndices.containsKey(axis) ||
+                     coords.getPositionAt(axis) > maxIndices.get(axis)) {
+                  maxIndices.put(axis, coords.getPositionAt(axis));
                }
             }
+         }
+         DefaultCoords.Builder builder = new DefaultCoords.Builder();
+         for (String axis : maxIndices.keySet()) {
+            builder.position(axis, maxIndices.get(axis));
          }
          maxIndices_ = builder.build();
       }
