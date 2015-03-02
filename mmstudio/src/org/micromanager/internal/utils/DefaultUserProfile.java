@@ -292,6 +292,57 @@ public class DefaultUserProfile implements UserProfile {
    }
 
    @Override
+   public Long getLong(Class<?> c, String key, Long fallback) {
+      key = genKey(c, key);
+      synchronized(userProfile_) {
+         Long result = userProfile_.getLong(key);
+         if (result != null) {
+            return result;
+         }
+      }
+      // Try the global profile.
+      synchronized(globalProfile_) {
+         Long result = globalProfile_.getLong(key);
+         if (result != null) {
+            return result;
+         }
+      }
+      // Give up.
+      return fallback;
+   }
+   @Override
+   public Long[] getLongArray(Class<?> c, String key, Long[] fallback) {
+      key = genKey(c, key);
+      synchronized(userProfile_) {
+         Long[] result = userProfile_.getLongArray(key);
+         if (result != null) {
+            return result;
+         }
+      }
+      // Try the global profile.
+      synchronized(globalProfile_) {
+         Long[] result = globalProfile_.getLongArray(key);
+         if (result != null) {
+            return result;
+         }
+      }
+      // Give up.
+      return fallback;
+   }
+   @Override
+   public void setLong(Class<?> c, String key, Long value) {
+      synchronized(userProfile_) {
+         userProfile_ = (DefaultPropertyMap) userProfile_.copy().putLong(genKey(c, key), value).build();
+      }
+   }
+   @Override
+   public void setLongArray(Class<?> c, String key, Long[] value) {
+      synchronized(userProfile_) {
+         userProfile_ = (DefaultPropertyMap) userProfile_.copy().putLongArray(genKey(c, key), value).build();
+      }
+   }
+
+   @Override
    public Double getDouble(Class<?> c, String key, Double fallback) {
       key = genKey(c, key);
       synchronized(userProfile_) {
