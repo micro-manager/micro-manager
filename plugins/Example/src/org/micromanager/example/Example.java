@@ -45,40 +45,45 @@ public class Example implements MMPlugin {
    private ScriptInterface gui_;
    private ExampleFrame myFrame_;
 
+   @Override
    public void setApp(ScriptInterface app) {
       gui_ = app;                                        
       core_ = app.getMMCore();
       if (myFrame_ == null)
          myFrame_ = new ExampleFrame(gui_);
       myFrame_.setVisible(true);
-      
-      // Used to change the background layout of the form.  Does not work on Windows
-      gui_.addMMBackgroundListener(myFrame_);
    }
 
+   @Override
    public void dispose() {
       // nothing todo:
    }
 
+   @Override
    public void show() {
+      myFrame_.setVisible(true);
    }
 
    public void configurationChanged() {
    }
 
+   @Override
    public String getInfo () {
       return "Example plugin";
    }
 
+   @Override
    public String getDescription() {
       return tooltipDescription;
    }
    
+   @Override
    public String getVersion() {
-      return "1.0";
+      return "1.1";
    }
    
+   @Override
    public String getCopyright() {
-      return "University of California, 2012";
+      return "University of California, 2012-2015";
    }
 }
