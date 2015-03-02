@@ -39,6 +39,17 @@ public interface PropertyMap {
       PropertyMapBuilder putIntArray(String key, Integer[] values);
 
       /**
+       * Put a new Long value into the mapping.
+       * @return The PropertyMapBuilder, so that puts can be chained together
+       */
+      PropertyMapBuilder putLong(String key, Long value);
+      /**
+       * Put an array of Longs into the mapping.
+       * @return The PropertyMapBuilder, so that puts can be chained together
+       */
+      PropertyMapBuilder putLongArray(String key, Long[] values);
+
+      /**
        * Put a new Double value into the mapping.
        * @return The PropertyMapBuilder, so that puts can be chained together
        */
@@ -77,7 +88,11 @@ public interface PropertyMap {
     */
    public String getString(String key);
    /**
-    * Retrieve an array of Strings from the mapping, with a similar caveat. */
+    * Retrieve a String array from the mapping. Will return null if the key is
+    * not found. If the mapped value is not a String[], a RuntimeException will
+    * be thrown.
+    * @return the String array corresponding to the specified key.
+    */
    public String[] getStringArray(String key);
 
    /**
@@ -88,38 +103,53 @@ public interface PropertyMap {
     */
    public Integer getInt(String key);
    /**
-    * Retrieve an Integer value from the mapping. Will return null if the key
-    * is not found. If the mapped value is not an Integer, a RuntimeException
+    * Retrieve an Integer array from the mapping. Will return null if the key
+    * is not found. If the mapped value is not an Integer[], a RuntimeException
     * will be thrown.
     * @return The Integer[] corresponding to the provided key.
     */
    public Integer[] getIntArray(String key);
 
    /**
-    * Retrieve an Double value from the mapping. Will return null if the key
+    * Retrieve a Long value from the mapping. Will return null if the key
+    * is not found. If the mapped value is not an Long, a RuntimeException
+    * will be thrown.
+    * @return The Long corresponding to the provided key.
+    */
+   public Long getLong(String key);
+   /**
+    * Retrieve a Long array from the mapping. Will return null if the key
+    * is not found. If the mapped value is not an Long, a RuntimeException
+    * will be thrown.
+    * @return The Long[] corresponding to the provided key.
+    */
+   public Long[] getLongArray(String key);
+
+   /**
+    * Retrieve a Double value from the mapping. Will return null if the key
     * is not found. If the mapped value is not a Double, a RuntimeException
     * will be thrown.
     * @return The Double corresponding to the provided key.
     */
    public Double getDouble(String key);
    /**
-    * Retrieve an Integer value from the mapping. Will return null if the key
-    * is not found. If the mapped value is not an Integer, a RuntimeException
+    * Retrieve a Double array from the mapping. Will return null if the key
+    * is not found. If the mapped value is not an Double, a RuntimeException
     * will be thrown.
     * @return The Double[] corresponding to the provided key.
     */
    public Double[] getDoubleArray(String key);
 
    /**
-    * Retrieve an Boolean value from the mapping. Will return null if the key
+    * Retrieve a Boolean value from the mapping. Will return null if the key
     * is not found. If the mapped value is not a Boolean, a RuntimeException
     * will be thrown.
     * @return The Boolean corresponding to the provided key.
     */
    public Boolean getBoolean(String key);
    /**
-    * Retrieve an Integer value from the mapping. Will return null if the key
-    * is not found. If the mapped value is not an Integer, a RuntimeException
+    * Retrieve a Boolean array from the mapping. Will return null if the key
+    * is not found. If the mapped value is not an Boolean, a RuntimeException
     * will be thrown.
     * @return The Boolean[] corresponding to the provided key.
     */

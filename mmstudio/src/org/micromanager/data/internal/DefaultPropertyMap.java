@@ -42,6 +42,15 @@ public class DefaultPropertyMap implements PropertyMap {
          type_ = Integer[].class;
       }
 
+      public PropertyValue(Long val) {
+         val_ = val;
+         type_ = Long.class;
+      }
+      public PropertyValue(Long[] val) {
+         val_ = val;
+         type_ = Long[].class;
+      }
+
       public PropertyValue(Double val) {
          val_ = val;
          type_ = Double.class;
@@ -84,6 +93,19 @@ public class DefaultPropertyMap implements PropertyMap {
             throw new PropertyValueMismatchException("Type of value is not Integer[]");
          }
          return (Integer[]) val_;
+      }
+
+      public Long getAsLong() {
+         if (type_ != Long.class) {
+            throw new PropertyValueMismatchException("Type of value is not Long");
+         }
+         return (Long) val_;
+      }
+      public Long[] getAsLongArray() {
+         if (type_ != Long[].class) {
+            throw new PropertyValueMismatchException("Type of value is not Long[]");
+         }
+         return (Long[]) val_;
       }
 
       public Double getAsDouble() {
@@ -134,6 +156,17 @@ public class DefaultPropertyMap implements PropertyMap {
                tmp.put(vals[i]);
             }
             return "IntegerArr:" + tmp.toString();
+         }
+         else if (type_ == Long.class) {
+            return "Long:" + Long.toString((Long) val_);
+         }
+         else if (type_ == Long[].class) {
+            JSONArray tmp = new JSONArray();
+            Long[] vals = (Long[]) val_;
+            for (int i = 0; i < vals.length; ++i) {
+               tmp.put(vals[i]);
+            }
+            return "LongArr:" + tmp.toString();
          }
          else if (type_ == Double.class) {
             return "Double:" + Double.toString((Double) val_);
@@ -192,6 +225,17 @@ public class DefaultPropertyMap implements PropertyMap {
       }
       @Override
       public PropertyMap.PropertyMapBuilder putIntArray(String key, Integer[] values) {
+         propMap_.put(key, new PropertyValue(values));
+         return this;
+      }
+
+      @Override
+      public PropertyMap.PropertyMapBuilder putLong(String key, Long value) {
+         propMap_.put(key, new PropertyValue(value));
+         return this;
+      }
+      @Override
+      public PropertyMap.PropertyMapBuilder putLongArray(String key, Long[] values) {
          propMap_.put(key, new PropertyValue(values));
          return this;
       }
@@ -267,6 +311,21 @@ public class DefaultPropertyMap implements PropertyMap {
    public Integer[] getIntArray(String key) {
       if (propMap_.containsKey(key)) {
          return propMap_.get(key).getAsIntegerArray();
+      }
+      return null;
+   }
+
+   @Override
+   public Long getLong(String key) {
+      if (propMap_.containsKey(key)) {
+         return propMap_.get(key).getAsLong();
+      }
+      return null;
+   }
+   @Override
+   public Long[] getLongArray(String key) {
+      if (propMap_.containsKey(key)) {
+         return propMap_.get(key).getAsLongArray();
       }
       return null;
    }
@@ -361,6 +420,18 @@ public class DefaultPropertyMap implements PropertyMap {
                valArr[j] = tmp.getInt(j);
             }
             builder.putIntArray(key, valArr);
+         }
+         else if (val.startsWith("Long:")) {
+            builder.putLong(key,
+                  Long.parseLong(val.substring(5, val.length())));
+         }
+         else if (val.startsWith("LongArr:")) {
+            JSONArray tmp = new JSONArray(val.substring(8, val.length()));
+            Long[] valArr = new Long[tmp.length()];
+            for (int j = 0; j < tmp.length(); ++j) {
+               valArr[j] = tmp.getLong(j);
+            }
+            builder.putLongArray(key, valArr);
          }
          else if (val.startsWith("Double:")) {
             builder.putDouble(key,
