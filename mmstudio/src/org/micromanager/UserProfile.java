@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 //FILE:          UserProfile.java
 //PROJECT:       Micro-Manager
-//SUBSYSTEM:     
+//SUBSYSTEM:
 //-----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
@@ -49,169 +49,208 @@ public interface UserProfile {
     *          the scope is specific to the class, not the package the class
     *          is in.
     * @param key The identifier for the parameter.
-    * @param fallback Value that will be returned if the key is not found or the 
+    * @param fallback Value that will be returned if the key is not found or the
     *          key points to null.
     * @return The value in storage, or null if the value does not exist.
     */
    public String getString(Class<?> c, String key, String fallback);
-   
-   /** 
-    * Retrieve a specific value from the parameter storage, as a String array. 
+
+   /**
+    * Retrieve a specific value from the parameter storage, as a String array.
     * @param c class providing scope for the key
     * @param key  Identifier for the parameter
-    * @param fallback Value that will be returned if the key is not found or the 
+    * @param fallback Value that will be returned if the key is not found or the
     * key points to null.
     * @return Stored value, or null if the value does not exist
     */
    public String[] getStringArray(Class<?> c, String key, String[] fallback);
-   
-   /** 
-    * Sets a String value in the storage. Changes will not be saved to file 
-    * until and unless saveProfile() is called. 
+
+   /**
+    * Sets a String value in the storage. Changes will not be saved to file
+    * until and unless saveProfile() is called.
     * @param c class providing scope for the key
     * @param key  Identifier for the parameter
     * @param value String value to be stored
     */
    public void setString(Class<?> c, String key, String value);
-   
-   /** 
-    * Sets a String Array in the storage. Changes will not be saved to file 
-    * until and unless saveProfile() is called. 
+
+   /**
+    * Sets a String Array in the storage. Changes will not be saved to file
+    * until and unless saveProfile() is called.
     * @param c class providing scope for the key
     * @param key  Identifier for the parameter
     * @param value String Array to be stored
     */
    public void setStringArray(Class<?> c, String key, String[] value);
 
-   /** 
-    * Retrieves a specific value from the parameter storage, as an Integer. 
+   /**
+    * Retrieves a specific value from the parameter storage, as an Integer.
     * @param c class providing scope for the key
     * @param key  Identifier for the parameter
-    * @param fallback Value that will be returned if the key is not found or the 
-    * key points to null. 
+    * @param fallback Value that will be returned if the key is not found or the
+    * key points to null.
     * @return Stored value, or null if the value does not exist
     */
    public Integer getInt(Class<?> c, String key, Integer fallback);
-   
-   /** 
-    * Retrieves a specific value from the parameter storage, as an Arry of 
-    * Integers. 
+
+   /**
+    * Retrieves a specific value from the parameter storage, as an Array of
+    * Integers.
     * @param c class providing scope for the key
     * @param key  Identifier for the parameter
-    * @param fallback Value that will be returned if the key is not found or the 
+    * @param fallback Value that will be returned if the key is not found or the
     * key points to null.
     * @return Stored value, or null if the value does not exist
     */
    public Integer[] getIntArray(Class<?> c, String key, Integer[] fallback);
-   
-   /** 
-    * Sets an Integer in the storage. Changes will not be saved to file 
-    * until and unless saveProfile() is called. 
+
+   /**
+    * Sets an Integer in the storage. Changes will not be saved to file
+    * until and unless saveProfile() is called.
     * @param c class providing scope for the key
     * @param key  Identifier for the parameter
     * @param value Integer to be stored
     */
    public void setInt(Class<?> c, String key, Integer value);
-   
-   /** 
-    * Sets a new Integer Array in the storage. Changes will not be saved to file 
-    * until and unless saveProfile() is called. 
+
+   /**
+    * Sets a new Integer Array in the storage. Changes will not be saved to file
+    * until and unless saveProfile() is called.
     * @param c class providing scope for the key
     * @param key  Identifier for the parameter
     * @param value Integer Array to be stored
-    */   
+    */
    public void setIntArray(Class<?> c, String key, Integer[] value);
 
-   /** 
+   /**
+    * Retrieves a specific value from the parameter storage, as a Long.
+    * @param c class providing scope for the key
+    * @param key  Identifier for the parameter
+    * @param fallback Value that will be returned if the key is not found or the
+    * key points to null.
+    * @return Stored value, or null if the value does not exist
+    */
+   public Long getLong(Class<?> c, String key, Long fallback);
+
+   /**
+    * Retrieves a specific value from the parameter storage, as an Array of
+    * Longs.
+    * @param c class providing scope for the key
+    * @param key  Identifier for the parameter
+    * @param fallback Value that will be returned if the key is not found or the
+    * key points to null.
+    * @return Stored value, or null if the value does not exist
+    */
+   public Long[] getLongArray(Class<?> c, String key, Long[] fallback);
+
+   /**
+    * Sets a Long in the storage. Changes will not be saved to file
+    * until and unless saveProfile() is called.
+    * @param c class providing scope for the key
+    * @param key  Identifier for the parameter
+    * @param value Long to be stored
+    */
+   public void setLong(Class<?> c, String key, Long value);
+
+   /**
+    * Sets a new Long Array in the storage. Changes will not be saved to file
+    * until and unless saveProfile() is called.
+    * @param c class providing scope for the key
+    * @param key  Identifier for the parameter
+    * @param value Long Array to be stored
+    */
+   public void setLongArray(Class<?> c, String key, Long[] value);
+
+   /**
     * Retrieves a specific value from the parameter storage, as a Double.
     * @param c class providing scope for the key
     * @param key  Identifier for the parameter
-    * @param fallback Value that will be returned if the key is not found or the 
-    * key points to null. 
+    * @param fallback Value that will be returned if the key is not found or the
+    * key points to null.
     * @return Stored value, or null if the value does not exist
-    */   
+    */
    public Double getDouble(Class<?> c, String key, Double fallback);
-   
-   /** 
-    * Retrieves a specific value from the parameter storage, as anArray of 
+
+   /**
+    * Retrieves a specific value from the parameter storage, as anArray of
     * Doubles.
     * @param c class providing scope for the key
     * @param key  Identifier for the parameter
-    * @param fallback Value that will be returned if the key is not found or the 
-    * key points to null. 
+    * @param fallback Value that will be returned if the key is not found or the
+    * key points to null.
     * @return Stored value, or null if the value does not exist
-    */    
+    */
    public Double[] getDoubleArray(Class<?> c, String key, Double[] fallback);
-   
-   /** 
-    * Sets a Double in the storage. Changes will not be saved to file 
-    * until and unless saveProfile() is called. 
+
+   /**
+    * Sets a Double in the storage. Changes will not be saved to file
+    * until and unless saveProfile() is called.
     * @param c class providing scope for the key
     * @param key  Identifier for the parameter
     * @param value Double to be stored
-    */   
+    */
    public void setDouble(Class<?> c, String key, Double value);
-   
-   /** 
-    * Sets a Double Array in the storage. Changes will not be saved to file 
-    * until and unless saveProfile() is called. 
+
+   /**
+    * Sets a Double Array in the storage. Changes will not be saved to file
+    * until and unless saveProfile() is called.
     * @param c class providing scope for the key
     * @param key  Identifier for the parameter
     * @param value Double Array to be stored
-    */   
+    */
    public void setDoubleArray(Class<?> c, String key, Double[] value);
 
-   /** 
+   /**
     * Retrieves a specific value from the parameter storage, as a Boolean
     * @param c class providing scope for the key
     * @param key  Identifier for the parameter
-    * @param fallback Value that will be returned if the key is not found or the 
-    * key points to null. 
+    * @param fallback Value that will be returned if the key is not found or the
+    * key points to null.
     * @return Stored value, or null if the value does not exist
-    */   
+    */
    public Boolean getBoolean(Class<?> c, String key, Boolean fallback);
-   
-   /** 
+
+   /**
     * Retrieves a specific value from the parameter storage, as a Boolean Array
     * @param c class providing scope for the key
     * @param key  Identifier for the parameter
-    * @param fallback Value that will be returned if the key is not found or the 
-    * key points to null. 
+    * @param fallback Value that will be returned if the key is not found or the
+    * key points to null.
     * @return Stored value, or null if the value does not exist
-    */   
+    */
    public Boolean[] getBooleanArray(Class<?> c, String key, Boolean[] fallback);
-   
-   /** 
-    * Sets a Boolean value in the storage. Changes will not be saved to file 
-    * until and unless saveProfile() is called. 
+
+   /**
+    * Sets a Boolean value in the storage. Changes will not be saved to file
+    * until and unless saveProfile() is called.
     * @param c class providing scope for the key
     * @param key  Identifier for the parameter
     * @param value Boolean to be stored
-    */ 
+    */
    public void setBoolean(Class<?> c, String key, Boolean value);
-   
-   /** 
-    * Sets a Boolean Array in the storage. Changes will not be saved to file 
-    * until and unless saveProfile() is called. 
+
+   /**
+    * Sets a Boolean Array in the storage. Changes will not be saved to file
+    * until and unless saveProfile() is called.
     * @param c class providing scope for the key
     * @param key  Identifier for the parameter
     * @param value Boolean Array to be stored
-    */ 
+    */
    public void setBooleanArray(Class<?> c, String key, Boolean[] value);
 
-   /** 
+   /**
     * Saves the current user's profile. If the program is closed before this
     * method is called, then any changes made since the last call will not
-    * be persisted to the next session. This will not include any values     
+    * be persisted to the next session. This will not include any values
     * "inherited" from the global defaults.
     * Generates the same output as saveProfileToFile(), but the file i
     * automatically selected (stored in an OS-appropriate location for user
-    * data).     
+    * data).
     * @throws IOException if the file cannot be written for any reason.
     */
    public void saveProfile() throws IOException;
 
-   /** 
+   /**
     * Saves the current user's profile to the specified file. This will not
     * include any "inherited" values from the global defaults.
     * @param path file path for user profile file
@@ -219,19 +258,19 @@ public interface UserProfile {
     */
    public void saveProfileToFile(String path) throws IOException;
 
-   /** 
+   /**
     * Saves the current user's profile to the specified file. This will not
-    * include any "inherited" values from the global defaults, and only keys 
-    * that are specific to the provided class are preserved. 
+    * include any "inherited" values from the global defaults, and only keys
+    * that are specific to the provided class are preserved.
     * This can be useful if you want to be able to save/load your
-    * settings, in conjunction with appendFile(), below. 
+    * settings, in conjunction with appendFile(), below.
     * @param c only setting belonging to this class will be saved
     * @param path file path where the data will be saved
     * @throws java.io.IOException
     */
    public void saveProfileSubsetToFile(Class<?> c, String path) throws IOException;
 
-   /** 
+   /**
     * Remove all keys from the profile that are associated with the provided
     * class. This functionally allows you to reset the profile to use the
     * default values (or the values specified in the global settings file).
@@ -240,7 +279,7 @@ public interface UserProfile {
     */
    public void clearProfileSubset(Class<?> c);
 
-   /** 
+   /**
     * Merge the profile at the specified path into the current active user
     * profile. All keys specified in the file will overwrite keys in the
     * active profile.
