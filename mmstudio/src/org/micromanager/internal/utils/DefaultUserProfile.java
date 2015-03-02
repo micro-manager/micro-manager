@@ -31,7 +31,7 @@ public class DefaultUserProfile implements UserProfile {
    }
    private HashMap<String, String> nameToFile_;
    private String userName_;
-   private DefaultPropertyMap globalProfile_;
+   private final DefaultPropertyMap globalProfile_;
    private DefaultPropertyMap userProfile_;
 
    public DefaultUserProfile() {

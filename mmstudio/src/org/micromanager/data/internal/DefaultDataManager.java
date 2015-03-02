@@ -23,6 +23,7 @@ import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.RequestToCloseEvent;
 import org.micromanager.events.DatastoreClosingEvent;
 
+import org.micromanager.data.Coords;
 import org.micromanager.data.internal.StorageRAM;
 
 import org.micromanager.display.internal.DefaultDisplayWindow;
@@ -79,7 +80,7 @@ public class DefaultDataManager implements DataManager {
       }
       // Adjust image coordinates to be at the N+1th timepoint.
       Coords newCoords = image.getCoords().copy()
-         .position("time", albumDatastore_.getAxisLength("time"))
+         .time(albumDatastore_.getAxisLength(Coords.TIME))
          .build();
       try {
          DefaultImage temp = new DefaultImage(image, newCoords, image.getMetadata());

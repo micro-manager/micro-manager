@@ -132,8 +132,8 @@ public class TimestampOverlayPanel extends OverlayPanel {
       ArrayList<Color> colors = new ArrayList<Color>();
       Datastore store = display.getDatastore();
       if (amMultiChannel_.isSelected()) {
-         for (int i = 0; i < store.getAxisLength("channel"); ++i) {
-            Coords channelCoords = image.getCoords().copy().position("channel", i).build();
+         for (int i = 0; i < store.getAxisLength(Coords.CHANNEL); ++i) {
+            Coords channelCoords = image.getCoords().copy().channel(i).build();
             Image channelImage = store.getImage(channelCoords);
             if (channelImage != null) {
                addTimestamp(channelImage, display, timestamps, colors);
@@ -211,7 +211,7 @@ public class TimestampOverlayPanel extends OverlayPanel {
       else if (textMode.equals("Channel color")) {
          DisplaySettings settings = display.getDisplaySettings();
          Color[] channelColors = settings.getChannelColors();
-         int channel = image.getCoords().getPositionAt("channel");
+         int channel = image.getCoords().getChannel();
          if (channelColors != null && channelColors.length >= channel) {
             textColor = channelColors[channel];
          }

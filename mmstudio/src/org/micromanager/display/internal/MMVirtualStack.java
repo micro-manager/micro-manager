@@ -70,21 +70,22 @@ public class MMVirtualStack extends ij.VirtualStack {
       }
       // Only augment a given axis if it's actually present in our datastore.
       Coords.CoordsBuilder builder = curCoords_.copy();
-      if (store_.getAxisLength("channel") != 0) {
-         builder.position("channel", channel);
+      Coords axisLengths = store_.getMaxIndices();
+      if (axisLengths.getChannel() != 0) {
+         builder.channel(channel);
       }
-      if (store_.getAxisLength("z") != 0) {
-         builder.position("z", z);
+      if (axisLengths.getZ() != 0) {
+         builder.z(z);
       }
-      if (store_.getAxisLength("time") != 0) {
-         builder.position("time", frame);
+      if (axisLengths.getTime() != 0) {
+         builder.time(frame);
       }
       // Augment all missing axes with zeros.
       // TODO: is this always what we want to do? It makes an implicit
       // assumption that all images in the datastore have the same axes.
       for (String axis : store_.getAxes()) {
-         if (builder.getPositionAt(axis) == -1) {
-            builder.position(axis, 0);
+         if (curCoords_.getIndex(axis) == -1) {
+            builder.index(axis, 0);
          }
       }
       return builder.build();
@@ -94,7 +95,7 @@ public class MMVirtualStack extends ij.VirtualStack {
     * Retrieve the image at the specified index, which we map into a
     * channel/frame/z offset. This will also update curCoords_ as needed.
     * Note that we only pay attention to a given offset if we already have
-    * a position along that axis (e.g. so that we don't try to ask the
+    * an index along that axis (e.g. so that we don't try to ask the
     * Datastore for an image at time=0 when none of the images in the Datastore
     * have a time axis whatsoever).
     */
@@ -107,7 +108,7 @@ public class MMVirtualStack extends ij.VirtualStack {
       }
       Coords coords = mapFlatIndexToCoords(flatIndex);
       Image result = store_.getImage(coords);
-      int channel = coords.getPositionAt("channel");
+      int channel = coords.getChannel();
       if (result == null) {
          // HACK: ImageJ may ask us for images that aren't available yet,
          // for example if a draw attempt happens in-between images for a
@@ -247,7 +248,7 @@ public class MMVirtualStack extends ij.VirtualStack {
    public int getSize() {
       // Calculate the total number of "addressable" images along the
       // axes that ImageJ knows about.
-      String[] axes = {"channel", "time", "z"};
+      String[] axes = {Coords.CHANNEL, Coords.TIME, Coords.Z};
       int result = 1;
       for (String axis : axes) {
          if (store_.getAxisLength(axis) != 0) {
@@ -263,15 +264,15 @@ public class MMVirtualStack extends ij.VirtualStack {
    }
 
    /**
-    * Update the current position we are centered on. This in turn will affect
+    * Update the current index we are centered on. This in turn will affect
     * future calls to getPixels(). In the process we also ensure that the
     * ImagePlus object has the right dimensions to encompass these coordinates.
     */
    public void setCoords(Coords coords) {
       curCoords_ = coords;
-      int numChannels = Math.max(1, store_.getAxisLength("channel"));
-      int numFrames = Math.max(1, store_.getAxisLength("time"));
-      int numSlices = Math.max(1, store_.getAxisLength("z"));
+      int numChannels = Math.max(1, store_.getAxisLength(Coords.CHANNEL));
+      int numFrames = Math.max(1, store_.getAxisLength(Coords.TIME));
+      int numSlices = Math.max(1, store_.getAxisLength(Coords.Z));
       if (plus_ instanceof IMMImagePlus) {
          IMMImagePlus temp = (IMMImagePlus) plus_;
          temp.setNChannelsUnverified(numChannels);
@@ -284,9 +285,9 @@ public class MMVirtualStack extends ij.VirtualStack {
       if (numChannels != 1 || numSlices != 1 || numFrames != 1) {
          plus_.setDimensions(numChannels, numSlices, numFrames);
       }
-      int channel = coords.getPositionAt("channel") + 1;
-      int z = coords.getPositionAt("z") + 1;
-      int time = coords.getPositionAt("time") + 1;
+      int channel = coords.getChannel() + 1;
+      int z = coords.getZ() + 1;
+      int time = coords.getTime() + 1;
       boolean isCompositeMode = (plus_.isComposite() &&
             ((CompositeImage) plus_).getMode() == CompositeImage.COMPOSITE);
       if (z != plus_.getSlice() || time != plus_.getFrame() ||

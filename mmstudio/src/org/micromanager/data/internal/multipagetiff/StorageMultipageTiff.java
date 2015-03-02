@@ -176,8 +176,7 @@ public final class StorageMultipageTiff implements Storage {
                Set<Coords> readerCoords = reader.getIndexKeys();
                for (Coords coords : readerCoords) {
                   coordsToReader_.put(coords, reader);
-                  lastFrameOpenedDataSet_ = Math.max(
-                        coords.getPositionAt("time"),
+                  lastFrameOpenedDataSet_ = Math.max(coords.getTime(),
                         lastFrameOpenedDataSet_);
                   if (firstImage_ == null) {
                      firstImage_ = reader.readImage(coords);
@@ -277,9 +276,9 @@ public final class StorageMultipageTiff implements Storage {
       }
       else {
          for (String axis : image.getCoords().getAxes()) {
-            int pos = image.getCoords().getPositionAt(axis);
-            if (pos > maxIndices_.getPositionAt(axis)) {
-               maxIndices_ = maxIndices_.copy().position(axis, pos).build();
+            int pos = image.getCoords().getIndex(axis);
+            if (pos > maxIndices_.getIndex(axis)) {
+               maxIndices_ = maxIndices_.copy().index(axis, pos).build();
             }
          }
       }
@@ -293,7 +292,7 @@ public final class StorageMultipageTiff implements Storage {
       }
       int fileSetIndex = 0;
       if (splitByXYPosition_) {
-         fileSetIndex = image.getCoords().getPositionAt("position");
+         fileSetIndex = image.getCoords().getStagePosition();
          if (fileSetIndex == -1) {
             // No position axis, so just default to 0.
             fileSetIndex = 0;
@@ -582,13 +581,18 @@ public final class StorageMultipageTiff implements Storage {
       // TODO: this method is pretty poorly-implemented at current.
       if (maxIndices_ == null) {
          // Calculate max indices by examining all registered Readers.
-         DefaultCoords.Builder builder = new DefaultCoords.Builder();
+         HashMap<String, Integer> maxIndices = new HashMap<String, Integer>();
          for (Coords coords : coordsToReader_.keySet()) {
             for (String axis : coords.getAxes()) {
-               if (coords.getPositionAt(axis) > builder.getPositionAt(axis)) {
-                  builder.position(axis, coords.getPositionAt(axis));
+               if (!maxIndices.containsKey(axis) ||
+                     coords.getIndex(axis) > maxIndices.get(axis)) {
+                  maxIndices.put(axis, coords.getIndex(axis));
                }
             }
+         }
+         DefaultCoords.Builder builder = new DefaultCoords.Builder();
+         for (String axis : maxIndices.keySet()) {
+            builder.index(axis, maxIndices.get(axis));
          }
          maxIndices_ = builder.build();
       }
@@ -605,7 +609,7 @@ public final class StorageMultipageTiff implements Storage {
 
    @Override
    public Integer getMaxIndex(String axis) {
-      return getMaxIndices().getPositionAt(axis);
+      return getMaxIndices().getIndex(axis);
    }
 
    public Integer getIntendedSize(String axis) {
@@ -613,7 +617,7 @@ public final class StorageMultipageTiff implements Storage {
          ReportingUtils.logError("Can't get intended dimensions of dataset");
          return null;
       }
-      return summaryMetadata_.getIntendedDimensions().getPositionAt(axis);
+      return summaryMetadata_.getIntendedDimensions().getIndex(axis);
    }
 
    @Override

@@ -121,14 +121,14 @@ public class DummyImageWindow extends StackWindow {
    public void onStackChanged(StackPositionChangedEvent event) {
       Coords coords = event.getCoords();
       try {
-         if (cSelector != null && coords.getPositionAt("channel") != -1) {
-            cSelector.setValue(coords.getPositionAt("channel"));
+         if (cSelector != null && coords.getChannel() != -1) {
+            cSelector.setValue(coords.getChannel());
          }
-         if (zSelector != null && coords.getPositionAt("z") != -1) {
-            zSelector.setValue(coords.getPositionAt("z"));
+         if (zSelector != null && coords.getZ() != -1) {
+            zSelector.setValue(coords.getZ());
          }
-         if (tSelector != null && coords.getPositionAt("time") != -1) {
-            tSelector.setValue(coords.getPositionAt("time"));
+         if (tSelector != null && coords.getTime() != -1) {
+            tSelector.setValue(coords.getTime());
          }
       }
       catch (Exception e) {

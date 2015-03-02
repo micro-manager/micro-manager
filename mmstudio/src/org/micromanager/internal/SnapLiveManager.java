@@ -220,8 +220,8 @@ public class SnapLiveManager {
                }
                DefaultImage image = new DefaultImage(tagged);
                Coords newCoords = image.getCoords().copy()
-                  .position("time", 0)
-                  .position("channel", imageChannel).build();
+                  .time(0)
+                  .channel(imageChannel).build();
                displayImage(image.copyAtCoords(newCoords));
                channelsSet.add(imageChannel);
                if (channelsSet.size() == numChannels) {
@@ -365,7 +365,7 @@ public class SnapLiveManager {
          else if (display_ == null || display_.getIsClosed()) {
             createDisplay();
          }
-         channelToLastImage_.put(newImage.getCoords().getPositionAt("channel"),
+         channelToLastImage_.put(newImage.getCoords().getChannel(),
                newImage);
          // This will put the images into the datastore, which in turn will
          // cause them to be displayed.
@@ -404,8 +404,7 @@ public class SnapLiveManager {
          for (int c = 0; c < core_.getNumberOfCameraChannels(); ++c) {
             TaggedImage tagged = core_.getTaggedImage(c);
             Image temp = new DefaultImage(tagged);
-            Coords newCoords = temp.getCoords().copy()
-               .position("channel", c).build();
+            Coords newCoords = temp.getCoords().copy().channel(c).build();
             temp = temp.copyAtCoords(newCoords);
             result.add(temp);
          }

@@ -290,25 +290,25 @@ class FileSet {
     */
    private void completeFrameWithBlankImages(int frame) throws JSONException, MMScriptException {
       
-      int numFrames = masterStorage_.getIntendedSize("time");
-      int numSlices = masterStorage_.getIntendedSize("z");
-      int numChannels = masterStorage_.getIntendedSize("channel");
+      int numFrames = masterStorage_.getIntendedSize(Coords.TIME);
+      int numSlices = masterStorage_.getIntendedSize(Coords.Z);
+      int numChannels = masterStorage_.getIntendedSize(Coords.CHANNEL);
       if (numFrames > frame + 1 ) {
          TreeSet<Coords> writtenImages = new TreeSet<Coords>();
          for (MultipageTiffWriter w : tiffWriters_) {
             writtenImages.addAll(w.getIndexMap().keySet());
             w.setAbortedNumFrames(frame + 1);
          }
-         int positionIndex = writtenImages.first().getPositionAt("position");
+         int positionIndex = writtenImages.first().getStagePosition();
          omeMetadata_.setNumFrames(positionIndex, frame + 1);
          TreeSet<Coords> lastFrameCoords = new TreeSet<Coords>();
          DefaultCoords.Builder builder = new DefaultCoords.Builder();
-         builder.position("time", frame);
-         builder.position("position", positionIndex);
+         builder.time(frame);
+         builder.stagePosition(positionIndex);
          for (int c = 0; c < numChannels; c++) {
-            builder.position("channel", c);
+            builder.channel(c);
             for (int z = 0; z < numSlices; z++) {
-               builder.position("z", z);
+               builder.z(z);
                lastFrameCoords.add(builder.build());
             }
          }
@@ -317,8 +317,8 @@ class FileSet {
             for (Coords coords : lastFrameCoords) {
                tiffWriters_.getLast().writeBlankImage();
                JSONObject dummyTags = new JSONObject();
-               int channel = coords.getPositionAt("channel");
-               int slice = coords.getPositionAt("slice");
+               int channel = coords.getChannel();
+               int slice = coords.getZ();
                MDUtils.setChannelIndex(dummyTags, channel);
                MDUtils.setFrameIndex(dummyTags, frame);
                MDUtils.setSliceIndex(dummyTags, slice);

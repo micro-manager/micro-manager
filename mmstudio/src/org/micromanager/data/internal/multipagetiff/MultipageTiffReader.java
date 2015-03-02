@@ -398,10 +398,10 @@ public class MultipageTiffReader {
          //If a duplicate label is read, forget about the previous one
          //if data has been intentionally overwritten, this gives the most current version
          DefaultCoords.Builder builder = new DefaultCoords.Builder();
-         builder.position("channel", channel)
-               .position("z", slice)
-               .position("time", frame)
-               .position("position", position);
+         builder.channel(channel)
+               .z(slice)
+               .time(frame)
+               .stagePosition(position);
          coordsToOffset_.put(builder.build(), imageOffset);
       }
    }
@@ -665,7 +665,7 @@ public class MultipageTiffReader {
       int position = 2;
       for (Coords coords : coordsToOffset_.keySet()) {
          for (String axis : ALLOWED_AXES) {
-            buffer.putInt(4 * position, coords.getPositionAt(axis));
+            buffer.putInt(4 * position, coords.getIndex(axis));
             position++;
          }
          // TODO: this probably doesn't help our performance any, but I want
