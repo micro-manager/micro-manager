@@ -157,7 +157,6 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       }
       displayBus_ = new EventBus();
       displayBus_.register(this);
-      EventManager.post(new DefaultNewDisplayEvent(this));
       customControls_ = customControls;
       if (customControls_ == null) {
          customControls_ = new ArrayList<Component>();
@@ -258,6 +257,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       resetTitle();
       setWindowSize();
       loadAndRestorePosition(getLocation().x, getLocation().y);
+      EventManager.post(new DefaultNewDisplayEvent(this));
    }
 
    /**
