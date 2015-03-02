@@ -5,7 +5,7 @@
 //-----------------------------------------------------------------------------
 // DESCRIPTION:   Zaber Controller Driver
 //                
-// AUTHOR:        David Goosen (david.goosen@zaber.com) & Athabasca Witschi (athabasca.witschi@zaber.com)
+// AUTHOR:        David Goosen & Athabasca Witschi (contact@zaber.com)
 //                
 // COPYRIGHT:     Zaber Technologies, 2014
 //

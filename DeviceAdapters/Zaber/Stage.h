@@ -5,7 +5,7 @@
 //-----------------------------------------------------------------------------
 // DESCRIPTION:   Stage
 //
-// AUTHOR:        Athabasca Witschi, athabasca@zaber.com
+// AUTHOR:        Athabasca Witschi (contact@zaber.com)
 
 // COPYRIGHT:     Zaber Technologies, 2014
 
