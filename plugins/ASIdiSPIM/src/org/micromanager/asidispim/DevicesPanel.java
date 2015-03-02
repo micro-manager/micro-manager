@@ -34,7 +34,7 @@ import javax.swing.JSeparator;
 
 import net.miginfocom.swing.MigLayout;
 
-import org.micromanager.api.ScriptInterface;
+import org.micromanager.ScriptInterface;
 
 
 /**

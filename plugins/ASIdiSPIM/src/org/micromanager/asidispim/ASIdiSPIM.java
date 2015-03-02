@@ -24,8 +24,8 @@ package org.micromanager.asidispim;
 import java.awt.Color;
 import java.awt.event.WindowEvent;
 
-import org.micromanager.api.MMPlugin;
-import org.micromanager.api.ScriptInterface;
+import org.micromanager.MMPlugin;
+import org.micromanager.ScriptInterface;
 
 
 public class ASIdiSPIM implements MMPlugin {
@@ -48,9 +48,7 @@ public class ASIdiSPIM implements MMPlugin {
       // create brand new instance of plugin frame every time
       try {
          myFrame_ = new ASIdiSPIMFrame(gui_);
-         myFrame_.setBackground(gui_.getBackgroundColor());
          gui_.addMMListener(myFrame_);
-         gui_.addMMBackgroundListener(myFrame_);
       } catch (Exception e) {
          gui_.showError(e);
       }

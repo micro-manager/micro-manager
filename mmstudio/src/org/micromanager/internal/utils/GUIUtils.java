@@ -219,47 +219,7 @@ public class GUIUtils {
       }
       return null;
    }
-
-   // ******* Utility methods for persisting windows *******
    
-   // TODO: these methods for storing/retrieving window positions should be
-   // replaced by using MMDialog/MMFrame instead.
-   private static HashSet<Class> windowsWithPersistedPositions = new HashSet<Class>();
-   
-   private static void storePosition(final Window win) {
-      Point loc = win.getLocation();
-      // Note we don't write to disk here; we'll rely on the profile getting
-      // saved at program exit, if it doesn't happen sooner. We don't want to
-      // spam disk writes every time a window changes position.
-      DefaultUserProfile.getInstance().setIntArray(
-            win.getClass(), DIALOG_POSITION,
-            new Integer[] {loc.x, loc.y});
-   }
-   
-   public static void recallPosition(final Window win) {
-      if (!windowsWithPersistedPositions.contains(win.getClass())) {
-         Integer[] loc = DefaultUserProfile.getInstance().getIntArray(
-               win.getClass(), DIALOG_POSITION, null);
-         Point winPos = null;
-         if (loc != null) {
-            winPos = new Point(loc[0], loc[1]);
-         }
-         if (winPos == null || !isLocationInScreenBounds(winPos)) {
-            Dimension screenDims = JavaUtils.getScreenDimensions();
-            winPos = new Point((screenDims.width - win.getWidth()) / 2,
-                  (screenDims.height - win.getHeight()) / 2);
-         }
-         win.setLocation(winPos);
-         win.addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentMoved(ComponentEvent e) {
-               storePosition(win);
-            }
-         });
-         windowsWithPersistedPositions.add(win.getClass());
-      }
-   }
-
    public static void registerImageFocusListener(final ImageFocusListener listener) {
       AWTEventListener awtEventListener = new AWTEventListener() {
          private ImageWindow currentImageWindow_ = null;

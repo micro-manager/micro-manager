@@ -50,8 +50,8 @@ import javax.swing.JPanel;
 import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
 
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.internalinterfaces.LiveModeListener;
+import org.micromanager.ScriptInterface;
+import org.micromanager.internal.interfaces.LiveModeListener;
 
 
 /**

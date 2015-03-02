@@ -29,7 +29,6 @@ import java.awt.event.WindowEvent;
 
 import javax.swing.JFrame;
 
-import org.micromanager.internal.MMStudio;
 
 /**
  * Base class for Micro-Manager frame windows.

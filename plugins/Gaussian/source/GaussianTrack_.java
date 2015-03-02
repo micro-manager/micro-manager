@@ -1,5 +1,5 @@
 /*
- * GaussianTrack).java
+ * GaussianTrack_.java
  *
  * ImageJ plugin whose sole function is to invoke the MainForm UI
  *

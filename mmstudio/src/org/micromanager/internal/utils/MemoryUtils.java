@@ -10,6 +10,7 @@ import ij.plugin.Memory;
 public class MemoryUtils {
    /**
     * Returns the currently allocated memory.
+    * @return estimate of the currently allocated memory in bytes
     */
    public static long currentMemory() {
       long freeMem = Runtime.getRuntime().freeMemory();
@@ -25,7 +26,10 @@ public class MemoryUtils {
       return maxMemory - (totalMemory - freeMemory);
    }
 
-   /** Returns the maximum amount of memory available */
+   /** 
+    * Returns the maximum amount of memory available 
+    * @return estimate of maximum amount of memory available in bytes
+    */
    public static long maxMemory() {
       Memory mem = new Memory();
       long maxMemory = mem.getMemorySetting();

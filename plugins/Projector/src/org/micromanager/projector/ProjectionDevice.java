@@ -17,14 +17,13 @@
 package org.micromanager.projector;
 
 import ij.process.FloatPolygon;
-import java.awt.Polygon;
 import java.util.List;
 
 public interface ProjectionDevice {
    // Properties of device.
    public String getName();
    public String getChannel();
-    public double getHeight();
+   public double getHeight();
    public double getWidth();
  
    // ## Alert when something has changed.

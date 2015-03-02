@@ -34,9 +34,7 @@ import ij.ImageJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.ImageWindow;
-import ij.gui.Line;
 import ij.gui.Roi;
-import ij.process.ImageProcessor;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -53,7 +51,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
@@ -76,19 +73,13 @@ import org.json.JSONObject;
 import org.micromanager.acquisition.internal.AcquisitionManager;
 
 import org.micromanager.Autofocus;
-import org.micromanager.data.Coords;
 import org.micromanager.data.DataManager;
 import org.micromanager.data.Datastore;
-import org.micromanager.data.DatastoreLockedException;
 import org.micromanager.data.Image;
-import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
-import org.micromanager.data.internal.StorageRAM;
 import org.micromanager.DataProcessor;
 import org.micromanager.display.DisplayManager;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
-import org.micromanager.events.ExposureChangedEvent;
-import org.micromanager.events.PropertiesChangedEvent;
 import org.micromanager.IAcquisitionEngine2010;
 import org.micromanager.MMListenerInterface;
 import org.micromanager.display.OverlayPanel;
@@ -101,9 +92,7 @@ import org.micromanager.events.PropertiesChangedEvent;
 import org.micromanager.internal.conf2.MMConfigFileException;
 import org.micromanager.internal.conf2.MicroscopeModel;
 
-import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.data.internal.DefaultDataManager;
-import org.micromanager.data.internal.DefaultDatastore;
 import org.micromanager.data.internal.DefaultImage;
 
 import org.micromanager.internal.dialogs.AcqControlDlg;
@@ -115,7 +104,6 @@ import org.micromanager.internal.dialogs.RegistrationDlg;
 import org.micromanager.events.internal.EventManager;
 
 import org.micromanager.display.internal.DefaultDisplayManager;
-import org.micromanager.display.internal.DefaultDisplayWindow;
 import org.micromanager.display.internal.link.DisplayGroupManager;
 
 import org.micromanager.internal.logging.LogFileManager;
@@ -130,14 +118,11 @@ import org.micromanager.internal.pluginmanagement.PluginManager;
 import org.micromanager.internal.positionlist.PositionListDlg;
 import org.micromanager.internal.script.ScriptPanel;
 import org.micromanager.internal.utils.AutofocusManager;
-import org.micromanager.internal.utils.ContrastSettings;
 import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.FileDialogs.FileType;
 import org.micromanager.internal.utils.GUIColors;
 import org.micromanager.internal.utils.GUIUtils;
-import org.micromanager.internal.utils.ImageUtils;
-import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.MMScriptException;
@@ -373,7 +358,7 @@ public class MMStudio implements ScriptInterface {
            
       helpMenu.initializeHelpMenu(menuBar_);
 
-      new DisplayGroupManager(studio_);
+      DisplayGroupManager displayGroupManager = new DisplayGroupManager(studio_);
    }
 
    /**
@@ -1775,7 +1760,7 @@ public class MMStudio implements ScriptInterface {
     * Changes background color of this window and all other MM windows
     */
    @Override
-   public void setBackgroundStyle(String backgroundType) {
+   public final void setBackgroundStyle(String backgroundType) {
       if (!(backgroundType.contentEquals(ScriptInterface.DAY) ||
             backgroundType.contentEquals(ScriptInterface.NIGHT))) {
          throw new IllegalArgumentException("Invalid background style \"" +

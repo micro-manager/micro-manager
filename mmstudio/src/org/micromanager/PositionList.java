@@ -28,7 +28,9 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 
@@ -46,7 +48,7 @@ import org.micromanager.internal.utils.MMSerializationException;
  * Used for multi site acquisition support.
  */
 public class PositionList {
-   private ArrayList<MultiStagePosition> positions_;
+   private final ArrayList<MultiStagePosition> positions_;
    private final static String ID = "Micro-Manager XY-position list";
    private final static String ID_KEY = "ID";
    private final static int VERSION = 3;
@@ -70,12 +72,11 @@ public class PositionList {
    public final static String AF_VALUE_INCREMENTAL = "incremental";
    public final static String AF_VALUE_NONE = "none";
 
-   private HashSet<ChangeListener> listeners_ = new HashSet<ChangeListener>();
+   private final HashSet<ChangeListener> listeners_ = new HashSet<ChangeListener>();
    
    public PositionList() {
       positions_ = new ArrayList<MultiStagePosition>();
    }
-   
    
    public static PositionList newInstance(PositionList aPl) {
       PositionList pl = new PositionList();
@@ -83,7 +84,6 @@ public class PositionList {
       while (it.hasNext())
          pl.addPosition(MultiStagePosition.newInstance(it.next()));
       return pl;
-      
    }
    
    public void addChangeListener(ChangeListener listener) {
@@ -110,7 +110,6 @@ public class PositionList {
          return null;
       
       return positions_.get(idx);
-
    }
    
    /**
@@ -128,7 +127,7 @@ public class PositionList {
    /**
     * Returns position index associated with the position name.
     * @param posLabel - label (name) of the position
-    * @return index
+    * @return index, or -1 when the name was not found
     */
    public int getPositionIndex(String posLabel) {
       for (int i=0; i<positions_.size(); i++) {
@@ -153,6 +152,7 @@ public class PositionList {
 
    /**
     * Insert a position into the list.
+    * @param in0 - place in the list where the position should be inserted
     * @param pos - multi-stage position
     */
    public void addPosition(int in0, MultiStagePosition pos) {
@@ -166,6 +166,7 @@ public class PositionList {
    
    /**
     * Replaces position in the list with the new position
+    * @param index index of the position to be replaced
     * @param pos - multi-stage position
     */
    public void replacePosition(int index, MultiStagePosition pos) {
@@ -177,6 +178,7 @@ public class PositionList {
    
    /**
     * Returns the number of positions contained within the list
+    * @return number of positions contained in the position list
     */
    public int getNumberOfPositions() {
       return positions_.size();
@@ -195,9 +197,10 @@ public class PositionList {
     * @param idx - position index
     */
    public void removePosition(int idx) {
-      if (idx >= 0 && idx < positions_.size())
+      if (idx >= 0 && idx < positions_.size()) {
          positions_.remove(idx);
-         notifyChangeListeners();
+      }
+      notifyChangeListeners();
    }
    
    /**
@@ -206,9 +209,7 @@ public class PositionList {
     */
    public void setPositions(MultiStagePosition[] posArray) {
       positions_.clear();
-      for (int i=0; i<posArray.length; i++) {
-         positions_.add(posArray[i]);
-      }
+      positions_.addAll(Arrays.asList(posArray));
       notifyChangeListeners();
    }
 
@@ -240,6 +241,7 @@ public class PositionList {
    
    /**
     * Serialize object into the JSON encoded stream.
+    * @return JSON encoded string with position list and metadata 
     * @throws MMSerializationException
     */
    public String serialize() throws MMSerializationException {
@@ -277,9 +279,9 @@ public class PositionList {
             // insert properties
             JSONObject props = new JSONObject();
             String keys[] = msp.getPropertyNames();
-            for (int k=0; k<keys.length; k++) {
-               String val = msp.getProperty(keys[k]);
-               props.put(keys[k], val);
+            for (String key : keys) {
+               String val = msp.getProperty(key);
+               props.put(key, val);
             }
             
             mspData.put(PROPERTIES_KEY, props);
@@ -372,9 +374,10 @@ public class PositionList {
     * @return true if label does not exist
     */
    public boolean isLabelUnique(String label) {
-      for (int i=0; i<positions_.size(); i++) {
-         if (positions_.get(i).getLabel().compareTo(label) == 0)
+      for (MultiStagePosition positions_1 : positions_) {
+         if (positions_1.getLabel().compareTo(label) == 0) {
             return false;
+         }
       }
       return true;
    }
@@ -391,7 +394,9 @@ public class PositionList {
          FileWriter fw = new FileWriter(f);
          fw.write(serList);
          fw.close();
-      } catch (Exception e) {
+      } catch (MMSerializationException e) {
+         throw new MMException(e.getMessage());
+      } catch (IOException e) {
          throw new MMException(e.getMessage());
       }
    }
@@ -404,15 +409,17 @@ public class PositionList {
    public void load(String path) throws MMException {
       File f = new File(path);
       try {
-         StringBuffer contents = new StringBuffer();
+         StringBuilder contents = new StringBuilder();
          BufferedReader input = new BufferedReader(new FileReader(f));
-         String line = null;
+         String line;
          while (( line = input.readLine()) != null){
             contents.append(line);
             contents.append(System.getProperty("line.separator"));
          }
          restore(contents.toString());
-      } catch (Exception e) {
+      } catch (IOException e) {
+         throw new MMException(e.getMessage());
+      } catch (MMSerializationException e) {
          throw new MMException(e.getMessage());
       }
       notifyChangeListeners();
