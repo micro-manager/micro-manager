@@ -26,69 +26,68 @@ public interface Coords {
       Coords build();
 
       /** Convenience function, equivalent to
-        * position(Coords.CHANNEL, channel) */
+        * index(Coords.CHANNEL, channel) */
       CoordsBuilder channel(int channel);
-      /** Convenience function, equivalent to position(Coords.TIME, time) */
+      /** Convenience function, equivalent to index(Coords.TIME, time) */
       CoordsBuilder time(int time);
-      /** Convenience function, equivalent to position(Coords.Z, z) */
+      /** Convenience function, equivalent to index(Coords.Z, z) */
       CoordsBuilder z(int z);
       /** Convenience function, equivalent to
-        * position(Coords.STAGE_POSITION, stagePosition) */
+        * index(Coords.STAGE_POSITION, stagePosition) */
       CoordsBuilder stagePosition(int stagePosition);
 
       /**
-       * Set the position of the Coords along the provided axis to the 
+       * Set the index of the Coords along the provided axis to the
        * specified value. If you set a negative value, then the axis will be
        * removed from the Coords.
        */
-      CoordsBuilder position(String axis, int position);
+      CoordsBuilder index(String axis, int index);
 
       /**
        * Remove the specified axis from the Coords. Equivalent to calling
-       * position(axis, -1).
+       * index(axis, -1).
        */
       CoordsBuilder removeAxis(String axis);
 
       /**
-       * Apply an offset to a pre-existing position.
+       * Apply an offset to a pre-existing index.
        * @throws IllegalArgumentException If there is no pre-existing value for
        *         this axis, or if adding the offset would result in a negative
-       *         position.
+       *         index.
        */
       CoordsBuilder offset(String axis, int offset) throws IllegalArgumentException;
    }
    
    /**
     * Given an axis label (for example "t" or "z" or "polarization"), returns
-    * the position of this Coords along that axis. Returns -1 if this Coords
-    * has no defined position along the axis; otherwise, values are assumed
+    * the index of this Coords along that axis. Returns -1 if this Coords
+    * has no defined index along the axis; otherwise, values are assumed
     * to be non-negative integers. 
     */
-   public int getPositionAt(String axis);
+   public int getIndex(String axis);
 
-   /** Convenience function, equivalent to getPositionAt(Coords.CHANNEL) */
+   /** Convenience function, equivalent to getIndex(Coords.CHANNEL) */
    public int getChannel();
 
-   /** Convenience function, equivalent to getPositionAt(Coords.TIME) */
+   /** Convenience function, equivalent to getIndex(Coords.TIME) */
    public int getTime();
 
-   /** Convenience function, equivalent to getPositionAt(Coords.Z) */
+   /** Convenience function, equivalent to getIndex(Coords.Z) */
    public int getZ();
 
-   /** Convenience function, equivalent to
-     * getPositionAt(Coords.STAGE_POSITION) */
+   /** Convenience function, equivalent to getIndex(Coords.STAGE_POSITION) */
    public int getStagePosition();
 
    /**
-    * Returns a list of all axes that this Coords has a position for.
+    * Returns a list of all axes that this Coords has an index for.
     */
    public List<String> getAxes();
 
    /**
-    * Return true if, for every position in the provided Coords, we have a
-    * matching and equal position in ourself. Returns false if either any
-    * position in the provided Coords differs from our own position, or we
-    * have no position for an axis that is specified in the provided Coords.
+    * Return true if, for every index in the provided Coords, we have a
+    * matching and equal index in ourself. Returns false if either any
+    * index in the provided Coords differs from our own index, or we
+    * have no index for an axis that is specified in the provided Coords.
     */
    public boolean matches(Coords alt);
 

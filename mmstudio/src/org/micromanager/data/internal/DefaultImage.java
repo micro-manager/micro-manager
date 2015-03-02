@@ -29,7 +29,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 /**
  * This class represents a single image from a single camera. It contains
  * the image pixel data, metadata (in the form of a Metadata instance), and
- * the image's position as part of a larger dataset (in the form of an
+ * the image's index as part of a larger dataset (in the form of an
  * Coords instance).
  *
  * For efficiency during high-speed acquisitions, we store the image data in
@@ -38,6 +38,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * getRawPixels(), the method exposed in the Image interface to access pixel
  * data, returns an ImageJ-style array, while getPixelBuffer (which is not
  * exposed in the API) returns the raw buffer.
+ * TODO: add method to generate an ImagePlus from the image.
  */
 public class DefaultImage implements Image {
    private DefaultMetadata metadata_;
@@ -102,19 +103,19 @@ public class DefaultImage implements Image {
 
       DefaultCoords.Builder cBuilder = new DefaultCoords.Builder();
       try {
-         cBuilder.position("time", MDUtils.getFrameIndex(tags));
+         cBuilder.time(MDUtils.getFrameIndex(tags));
       }
       catch (JSONException e) {}
       try {
-         cBuilder.position("position", MDUtils.getPositionIndex(tags));
+         cBuilder.stagePosition(MDUtils.getPositionIndex(tags));
       }
       catch (JSONException e) {}
       try {
-         cBuilder.position("z", MDUtils.getSliceIndex(tags));
+         cBuilder.z(MDUtils.getSliceIndex(tags));
       }
       catch (JSONException e) {}
       try {
-         cBuilder.position("channel", MDUtils.getChannelIndex(tags));
+         cBuilder.channel(MDUtils.getChannelIndex(tags));
       }
       catch (JSONException e) {}
       coords_ = cBuilder.build();
@@ -299,11 +300,11 @@ public class DefaultImage implements Image {
    /**
     * Split this multi-component Image into several single-component Images
     * and add them to the Datastore. They will be positioned based on our
-    * current position, with the channel incrementing by 1 for each new
+    * current index, with the channel incrementing by 1 for each new
     * component.
     * TODO: this will work horribly if there are any cameras located "after"
     * this camera along the channel axis, since it blindly inserts new images
-    * at C, C+1...C+N where C is its channel position and N is the number of
+    * at C, C+1...C+N where C is its channel index and N is the number of
     * components.
     */
    public List<Image> splitMultiComponentIntoStore(Datastore store) throws DatastoreLockedException {
@@ -318,7 +319,7 @@ public class DefaultImage implements Image {
          Object pixels = getRawPixelsForComponent(i);
          Image newImage = new DefaultImage(pixels, pixelWidth_, pixelHeight_,
                bytesPerPixel_ / numComponents_, 1,
-               coords_.copy().position("channel", coords_.getPositionAt("channel") + i).build(),
+               coords_.copy().channel(coords_.getChannel() + i).build(),
                metadata_);
          store.putImage(newImage);
          result.add(newImage);
@@ -333,22 +334,22 @@ public class DefaultImage implements Image {
       JSONObject tags = metadata_.toJSON();
       // Fill in fields that we know about and that our metadata doesn't.
       try {
-         MDUtils.setFrameIndex(tags, coords_.getPositionAt("time"));
-         MDUtils.setSliceIndex(tags, coords_.getPositionAt("z"));
-         MDUtils.setChannelIndex(tags, coords_.getPositionAt("channel"));
-         MDUtils.setPositionIndex(tags, coords_.getPositionAt("position"));
+         MDUtils.setFrameIndex(tags, coords_.getTime());
+         MDUtils.setSliceIndex(tags, coords_.getZ());
+         MDUtils.setChannelIndex(tags, coords_.getChannel());
+         MDUtils.setPositionIndex(tags, coords_.getStagePosition());
          int type = getImageJPixelType();
          MDUtils.setPixelType(tags, type);
-         // Create a redundant copy of position information in a format that
+         // Create a redundant copy of index information in a format that
          // lets us store all axis information.
          JSONObject fullCoords = new JSONObject();
          for (String axis : coords_.getAxes()) {
-            fullCoords.put(axis, coords_.getPositionAt(axis));
+            fullCoords.put(axis, coords_.getIndex(axis));
          }
          tags.put("completeCoords", fullCoords);
       }
       catch (JSONException e) {
-         ReportingUtils.logError("Unable to set image position indices: " + e);
+         ReportingUtils.logError("Unable to set image indices: " + e);
       }
       return new TaggedImage(getRawPixels(), tags);
    }

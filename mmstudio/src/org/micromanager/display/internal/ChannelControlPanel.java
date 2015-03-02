@@ -28,6 +28,7 @@ import mmcorej.CMMCore;
 
 import net.miginfocom.swing.MigLayout;
 
+import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreLockedException;
 import org.micromanager.data.Image;
@@ -138,7 +139,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       // Datastore for our channel.
       bitDepth_ = -1;
       List<Image> images = store_.getImagesMatching(
-            new DefaultCoords.Builder().position("channel", channelIndex_).build()
+            new DefaultCoords.Builder().channel(channelIndex_).build()
       );
       if (images != null && images.size() > 0) {
          // Found an image for our channel
@@ -422,7 +423,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             return;
          } else {
             // Change which channel the stack is pointing at.
-            stack_.setCoords(stack_.getCurrentImageCoords().copy().position("channel", channelIndex_).build());
+            stack_.setCoords(stack_.getCurrentImageCoords().copy().channel(channelIndex_).build());
             composite_.updateAndDraw();
          }
       }
@@ -527,7 +528,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       Color[] allColors = settings.getChannelColors();
       // Coerce white when there's only one channel (i.e. ignore the chosen
       // color).
-      if (store_.getAxisLength("channel") > 1 &&
+      if (store_.getAxisLength(Coords.CHANNEL) > 1 &&
             allColors != null && allColors.length > channelIndex_) {
          result = allColors[channelIndex_];
       }
@@ -943,7 +944,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    @Subscribe
    public void onNewImage(NewImageEvent event) {
       if (bitDepth_ == -1 && 
-            event.getCoords().getPositionAt("channel") == channelIndex_) {
+            event.getCoords().getIndex("channel") == channelIndex_) {
          bitDepth_ = event.getImage().getMetadata().getBitDepth();
          initialize();
       }

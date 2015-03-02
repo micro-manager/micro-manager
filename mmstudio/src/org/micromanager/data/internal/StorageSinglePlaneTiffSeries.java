@@ -149,10 +149,10 @@ public class StorageSinglePlaneTiffSeries implements Storage {
       // TODO: is this in fact always the correct fileName? What if it isn't?
       // See the above code that branches based on amLoading_.
       coordsToFilename_.put(coords, fileName);
-      // Update our tracking of the max position along each axis.
+      // Update our tracking of the max index along each axis.
       for (String axis : coords.getAxes()) {
-         if (coords.getPositionAt(axis) > maxIndices_.getPositionAt(axis)) {
-            maxIndices_ = maxIndices_.copy().position(axis, coords.getPositionAt(axis)).build();
+         if (coords.getIndex(axis) > maxIndices_.getIndex(axis)) {
+            maxIndices_ = maxIndices_.copy().index(axis, coords.getIndex(axis)).build();
          }
       }
    }
@@ -240,7 +240,7 @@ public class StorageSinglePlaneTiffSeries implements Storage {
       for (Coords altCoords : coordsToFilename_.keySet()) {
          boolean canUse = true;
          for (String axis : coords.getAxes()) {
-            if (coords.getPositionAt(axis) != altCoords.getPositionAt(axis)) {
+            if (coords.getIndex(axis) != altCoords.getIndex(axis)) {
                canUse = false;
                break;
             }
@@ -254,7 +254,7 @@ public class StorageSinglePlaneTiffSeries implements Storage {
 
    @Override
    public Integer getMaxIndex(String axis) {
-      return maxIndices_.getPositionAt(axis);
+      return maxIndices_.getIndex(axis);
    }
 
    @Override
@@ -286,7 +286,7 @@ public class StorageSinglePlaneTiffSeries implements Storage {
             precision = "%09d";
          }
          filename += String.format("_%s" + precision, axis,
-               coords.getPositionAt(axis));
+               coords.getIndex(axis));
       }
       return filename + ".tif";
    }
@@ -294,11 +294,11 @@ public class StorageSinglePlaneTiffSeries implements Storage {
    private void writeFrameMetadata(Image image) {
       try {
          String title = "Coords-" + createFileName(image.getCoords());
-         // Use 0 for situations where there's no position information.
+         // Use 0 for situations where there's no index information.
          int pos = Math.max(0, image.getCoords().getStagePosition());
          JSONObject coords = new JSONObject();
          for (String axis : image.getCoords().getAxes()) {
-            coords.put(axis, image.getCoords().getPositionAt(axis));
+            coords.put(axis, image.getCoords().getIndex(axis));
          }
          writeJSONMetadata(pos, coords, title);
       } catch (Exception ex) {
@@ -505,7 +505,7 @@ public class StorageSinglePlaneTiffSeries implements Storage {
                try {
                   DefaultCoords.Builder builder = new DefaultCoords.Builder();
                   for (String axis : makeJsonIterableKeys(chunk)) {
-                     builder.position(axis, chunk.getInt(axis));
+                     builder.index(axis, chunk.getInt(axis));
                   }
                   // TODO: omitting pixel type information.
 

@@ -21,7 +21,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 public class DefaultCoords implements Coords, Comparable<DefaultCoords> {
 
    public static class Builder implements Coords.CoordsBuilder {
-      // Maps axis labels to our position along those axes.
+      // Maps axis labels to our index along those axes.
       private HashMap<String, Integer> axisToPos_;
       // Convenience/optimization: we maintain a sorted list of our axes.
       private ArrayList<String> sortedAxes_;
@@ -38,34 +38,34 @@ public class DefaultCoords implements Coords, Comparable<DefaultCoords> {
 
       @Override
       public CoordsBuilder time(int time) {
-         return position(Coords.TIME, time);
+         return index(Coords.TIME, time);
       }
 
       @Override
       public CoordsBuilder channel(int channel) {
-         return position(Coords.CHANNEL, channel);
+         return index(Coords.CHANNEL, channel);
       }
 
       @Override
       public CoordsBuilder stagePosition(int stagePosition) {
-         return position(Coords.STAGE_POSITION, stagePosition);
+         return index(Coords.STAGE_POSITION, stagePosition);
       }
 
       @Override
       public CoordsBuilder z(int z) {
-         return position(Coords.Z, z);
+         return index(Coords.Z, z);
       }
       
       @Override
-      public CoordsBuilder position(String axis, int position) {
-         if (position < 0 && axisToPos_.containsKey(axis)) {
+      public CoordsBuilder index(String axis, int index) {
+         if (index < 0 && axisToPos_.containsKey(axis)) {
             // Delete the axis instead.
             axisToPos_.remove(axis);
             sortedAxes_.remove(axis);
             return this;
          }
 
-         axisToPos_.put(axis, new Integer(position));
+         axisToPos_.put(axis, new Integer(index));
          if (!sortedAxes_.contains(axis)) {
             sortedAxes_.add(axis);
             try {
@@ -80,7 +80,7 @@ public class DefaultCoords implements Coords, Comparable<DefaultCoords> {
 
       @Override
       public CoordsBuilder removeAxis(String axis) {
-         return position(axis, -1);
+         return index(axis, -1);
       }
 
       @Override
@@ -90,14 +90,14 @@ public class DefaultCoords implements Coords, Comparable<DefaultCoords> {
          }
          int curVal = axisToPos_.get(axis);
          if (curVal + offset < 0) {
-            throw new IllegalArgumentException("Adding offset " + offset + " to current position " + curVal + " for axis " + axis + " would result in a negative position.");
+            throw new IllegalArgumentException("Adding offset " + offset + " to current index " + curVal + " for axis " + axis + " would result in a negative index.");
          }
-         position(axis, curVal + offset);
+         index(axis, curVal + offset);
          return this;
       }
    }
 
-   // Maps axis labels to our position along those axes.
+   // Maps axis labels to our index along those axes.
    private HashMap<String, Integer> axisToPos_;
    // Convenience/optimization: we maintain a sorted list of our axes.
    private ArrayList<String> sortedAxes_;
@@ -108,7 +108,7 @@ public class DefaultCoords implements Coords, Comparable<DefaultCoords> {
    }
    
    @Override
-   public int getPositionAt(String axis) {
+   public int getIndex(String axis) {
       if (axisToPos_.containsKey(axis)) {
          return axisToPos_.get(axis);
       }
@@ -117,22 +117,22 @@ public class DefaultCoords implements Coords, Comparable<DefaultCoords> {
 
    @Override
    public int getChannel() {
-      return getPositionAt(Coords.CHANNEL);
+      return getIndex(Coords.CHANNEL);
    }
    
    @Override
    public int getTime() {
-      return getPositionAt(Coords.TIME);
+      return getIndex(Coords.TIME);
    }
 
    @Override
    public int getZ() {
-      return getPositionAt(Coords.Z);
+      return getIndex(Coords.Z);
    }
 
    @Override
    public int getStagePosition() {
-      return getPositionAt(Coords.STAGE_POSITION);
+      return getIndex(Coords.STAGE_POSITION);
    }
    
    @Override
@@ -143,7 +143,7 @@ public class DefaultCoords implements Coords, Comparable<DefaultCoords> {
    @Override
    public boolean matches(Coords alt) {
       for (String axis : alt.getAxes()) {
-         if (getPositionAt(axis) != alt.getPositionAt(axis)) {
+         if (getIndex(axis) != alt.getIndex(axis)) {
             return false;
          }
       }
@@ -154,7 +154,7 @@ public class DefaultCoords implements Coords, Comparable<DefaultCoords> {
    public CoordsBuilder copy() {
       Builder result = new Builder();
       for (String axis : axisToPos_.keySet()) {
-         result.position(axis, axisToPos_.get(axis));
+         result.index(axis, axisToPos_.get(axis));
       }
       return result;
    }
@@ -168,14 +168,14 @@ public class DefaultCoords implements Coords, Comparable<DefaultCoords> {
    @Override
    public int compareTo(DefaultCoords alt) {
       for (String axis : sortedAxes_) {
-         int ourPosition = getPositionAt(axis);
-         int altPosition = alt.getPositionAt(axis);
+         int ourPosition = getIndex(axis);
+         int altPosition = alt.getIndex(axis);
          if (altPosition == -1) {
-            // They have no position along this axis, so we come first.
+            // They have no index along this axis, so we come first.
             return -1;
          }
          else if (altPosition != ourPosition) {
-            // They have a position on this axis and it's different from ours.
+            // They have a index on this axis and it's different from ours.
             return (ourPosition < altPosition) ? -1 : 1;
          }
       }
@@ -194,7 +194,7 @@ public class DefaultCoords implements Coords, Comparable<DefaultCoords> {
       int multiplier = 23; // Semi-randomly-chosen prime number
       for (String axis : sortedAxes_) {
          result = result * multiplier + axis.hashCode();
-         result = result * multiplier + getPositionAt(axis);
+         result = result * multiplier + getIndex(axis);
       }
       return result;
    }
@@ -225,14 +225,14 @@ public class DefaultCoords implements Coords, Comparable<DefaultCoords> {
             result += ", ";
          }
          isFirst = false;
-         result += String.format("%s: %d", axis, getPositionAt(axis));
+         result += String.format("%s: %d", axis, getIndex(axis));
       }
       result += ">";
       return result;
    }
 
    /**
-    * Legacy method: convert from the position information in the JSONObject
+    * Legacy method: convert from the index information in the JSONObject
     * of a TaggedImage. This is pretty messy with all the try/catches, but we
     * don't want to lose all the positions just because a single one is
     * unavailable.
@@ -241,7 +241,7 @@ public class DefaultCoords implements Coords, Comparable<DefaultCoords> {
       Builder builder = new Builder();
       try {
          if (MDUtils.hasChannelIndex(tags)) {
-            builder.position("channel", MDUtils.getChannelIndex(tags));
+            builder.channel(MDUtils.getChannelIndex(tags));
          }
       }
       catch (JSONException e) {
@@ -249,7 +249,7 @@ public class DefaultCoords implements Coords, Comparable<DefaultCoords> {
       }
       try {
          if (MDUtils.hasSliceIndex(tags)) {
-            builder.position("z", MDUtils.getSliceIndex(tags));
+            builder.z(MDUtils.getSliceIndex(tags));
          }
       }
       catch (JSONException e) {
@@ -257,7 +257,7 @@ public class DefaultCoords implements Coords, Comparable<DefaultCoords> {
       }
       try {
          if (MDUtils.hasFrameIndex(tags)) {
-            builder.position("time", MDUtils.getFrameIndex(tags));
+            builder.time(MDUtils.getFrameIndex(tags));
          }
       }
       catch (JSONException e) {
@@ -265,7 +265,7 @@ public class DefaultCoords implements Coords, Comparable<DefaultCoords> {
       }
       try {
          if (MDUtils.hasPositionIndex(tags)) {
-            builder.position("position", MDUtils.getPositionIndex(tags));
+            builder.stagePosition(MDUtils.getPositionIndex(tags));
          }
       }
       catch (JSONException e) {

@@ -215,7 +215,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       // the number of channels in the Datastore. However, we may not
       // have all of the channels available to us at the time this display is
       // created, so we may need to re-create things down the road.
-      if (store_.getAxisLength("channel") > 1) {
+      if (store_.getAxisLength(Coords.CHANNEL) > 1) {
          // Have multiple channels.
          shiftToCompositeImage();
       }
@@ -251,7 +251,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       // to an image that does exist.
       DefaultCoords.Builder builder = new DefaultCoords.Builder();
       for (String axis : store_.getAxes()) {
-         builder.position(axis, 0);
+         builder.index(axis, 0);
       }
       setDisplayedImageTo(builder.build());
       resetTitle();
@@ -434,7 +434,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       ijImage_ = new MMCompositeImage(ijImage_, 1, ijImage_.getTitle());
       ijImage_.setOpenAsHyperStack(true);
       MMCompositeImage composite = (MMCompositeImage) ijImage_;
-      int numChannels = store_.getAxisLength("channel");
+      int numChannels = store_.getAxisLength(Coords.CHANNEL);
       composite.setNChannelsUnverified(numChannels);
       composite.reset();
       setImagePlusMetadata(ijImage_);
@@ -572,7 +572,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       ArrayList<Image> result = new ArrayList<Image>();
       Coords curCoords = stack_.getCurrentImageCoords();
       for (int i = 0; i < store_.getAxisLength("channel"); ++i) {
-         result.add(store_.getImage(curCoords.copy().position("channel", i).build()));
+         result.add(store_.getImage(curCoords.copy().index("channel", i).build()));
       }
       if (result.size() == 0) {
          // No "channel" axis; just return the current image.
@@ -748,7 +748,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       try {
          // Check if we're transitioning from grayscale to multi-channel at this
          // time.
-         int imageChannel = image.getCoords().getPositionAt("channel");
+         int imageChannel = image.getCoords().getIndex("channel");
          if (!(ijImage_ instanceof MMCompositeImage) &&
                imageChannel > 0) {
             // Have multiple channels.

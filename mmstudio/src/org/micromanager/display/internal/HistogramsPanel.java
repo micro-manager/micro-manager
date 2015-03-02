@@ -14,6 +14,7 @@ import javax.swing.JPanel;
 
 import net.miginfocom.swing.MigLayout;
 
+import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.NewImageEvent;
 import org.micromanager.display.DisplaySettings;
@@ -64,7 +65,7 @@ public final class HistogramsPanel extends JPanel implements Histograms {
       }
 
       // TODO: ignoring the possibility of RGB images for now.
-      final int nChannels = store_.getAxisLength("channel");
+      final int nChannels = store_.getAxisLength(Coords.CHANNEL);
       if (nChannels == 0) {
          ReportingUtils.logError("Have zero channels to work with.");
          return;
@@ -251,7 +252,7 @@ public final class HistogramsPanel extends JPanel implements Histograms {
 
    @Subscribe
    public void onNewImage(NewImageEvent event) {
-      if (event.getImage().getCoords().getPositionAt("channel") >= channelPanels_.size()) {
+      if (event.getImage().getCoords().getIndex("channel") >= channelPanels_.size()) {
          // Need to add a new channel histogram.
          setupChannelControls();
       }

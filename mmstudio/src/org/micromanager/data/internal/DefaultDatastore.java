@@ -203,7 +203,7 @@ public class DefaultDatastore implements Datastore {
       if (summary.getIntendedDimensions() == null) {
          DefaultCoords.Builder builder = new DefaultCoords.Builder();
          for (String axis : getAxes()) {
-            builder.position(axis, getAxisLength(axis));
+            builder.index(axis, getAxisLength(axis));
          }
          summary = summary.copy().intendedDimensions(builder.build()).build();
       }

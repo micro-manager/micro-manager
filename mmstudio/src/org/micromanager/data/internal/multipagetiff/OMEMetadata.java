@@ -31,6 +31,7 @@ import loci.formats.services.OMEXMLService;
 import ome.xml.model.primitives.*;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.micromanager.data.Coords;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.SummaryMetadata;
@@ -135,7 +136,7 @@ public class OMEMetadata {
          }
       }
 
-      String positionName = "pos" + repImage.getCoords().getPositionAt("position");
+      String positionName = "pos" + repImage.getCoords().getStagePosition();
       if (repMetadata.getPositionName() != null) {
          positionName = repMetadata.getPositionName();
       }
@@ -155,7 +156,7 @@ public class OMEMetadata {
       // viewing data in Micro-Manager.
       DisplaySettings displaySettings = DefaultDisplaySettings.getStandardSettings();
       String[] names = mptStorage_.getSummaryMetadata().getChannelNames();
-      for (int channel = 0; channel < mptStorage_.getIntendedSize("channel");
+      for (int channel = 0; channel < mptStorage_.getIntendedSize(Coords.CHANNEL);
             channel++) {
          java.awt.Color color = displaySettings.getChannelColors()[channel];
          metadata_.setChannelColor(new ome.xml.model.primitives.Color(

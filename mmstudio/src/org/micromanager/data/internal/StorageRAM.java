@@ -55,11 +55,11 @@ public class StorageRAM implements Storage {
       Coords coords = image.getCoords();
       coordsToImage_.put(coords, image);
       for (String axis : coords.getAxes()) {
-         if (maxIndex_.getPositionAt(axis) < coords.getPositionAt(axis)) {
+         if (maxIndex_.getIndex(axis) < coords.getIndex(axis)) {
             // Either this image is further along on this axis, or we have
-            // no position for this axis yet.
+            // no index for this axis yet.
             maxIndex_ = maxIndex_.copy()
-                  .position(axis, coords.getPositionAt(axis))
+                  .index(axis, coords.getIndex(axis))
                   .build();
          }
       }
@@ -117,7 +117,7 @@ public class StorageRAM implements Storage {
 
    @Override
    public Integer getMaxIndex(String axis) {
-      return maxIndex_.getPositionAt(axis);
+      return maxIndex_.getIndex(axis);
    }
 
    @Override

@@ -36,13 +36,13 @@ public class ImageCoordsLinker extends SettingsLinker {
          // We don't have image coordinates, so we must de facto differ.
          return true;
       }
-      int newPos = event.getImageCoords().getPositionAt(axis_);
-      int oldPos = parent_.getDisplaySettings().getImageCoords().getPositionAt(axis_);
+      int newPos = event.getImageCoords().getIndex(axis_);
+      int oldPos = parent_.getDisplaySettings().getImageCoords().getIndex(axis_);
       return oldPos != newPos;
    }
 
    /**
-    * Copy over just the position we are linked for.
+    * Copy over just the index we are linked for.
     */
    @Override
    public void applyChange(DisplayWindow source,
@@ -55,7 +55,7 @@ public class ImageCoordsLinker extends SettingsLinker {
          // Gotta have some valid coords to start; just copy the new ones.
          curCoords = newCoords;
       }
-      curCoords = curCoords.copy().position(axis_, newCoords.getPositionAt(axis_)).build();
+      curCoords = curCoords.copy().index(axis_, newCoords.getIndex(axis_)).build();
       settings = settings.copy().imageCoords(curCoords).build();
       parent_.setDisplaySettings(settings);
    }
@@ -69,11 +69,11 @@ public class ImageCoordsLinker extends SettingsLinker {
          destCoords = sourceCoords;
       }
       if (sourceCoords == null ||
-            sourceCoords.getPositionAt(axis_) == destCoords.getPositionAt(axis_)) {
+            sourceCoords.getIndex(axis_) == destCoords.getIndex(axis_)) {
          // Nothing can/should be done.
          return dest;
       }
-      destCoords = destCoords.copy().position(axis_, sourceCoords.getPositionAt(axis_)).build();
+      destCoords = destCoords.copy().index(axis_, sourceCoords.getIndex(axis_)).build();
       return dest.copy().imageCoords(destCoords).build();
    }
 
