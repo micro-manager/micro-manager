@@ -324,7 +324,7 @@ public class ImageUtils {
       return (int[]) intsAsObject;
    }
 
-   public static int findArrayMax(Object pix) {
+   private static int findArrayMax(Object pix) {
       if (pix instanceof byte [])
          return findArrayMax((byte []) pix);
       if (pix instanceof int [])
@@ -338,7 +338,7 @@ public class ImageUtils {
    }
 
 
-   public static int findArrayMax(float[] pix) {
+   private static int findArrayMax(float[] pix) {
       float pixel;
       int imax = -1;
       float max = Float.MIN_VALUE;
@@ -352,7 +352,7 @@ public class ImageUtils {
       return imax;
    }
 
-   public static int findArrayMax(short[] pix) {
+   private static int findArrayMax(short[] pix) {
       short pixel;
       int imax = -1;
       short max = Short.MIN_VALUE;
@@ -366,7 +366,7 @@ public class ImageUtils {
       return imax;
    }
 
-   public static int findArrayMax(byte[] pix) {
+   private static int findArrayMax(byte[] pix) {
       byte pixel;
       int imax = -1;
       byte max = Byte.MIN_VALUE;
@@ -380,7 +380,7 @@ public class ImageUtils {
       return imax;
    }
 
-   public static int findArrayMax(int[] pix) {
+   private static int findArrayMax(int[] pix) {
       int pixel;
       int imax = -1;
       int max = Integer.MIN_VALUE;
