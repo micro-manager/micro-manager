@@ -40,6 +40,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
 
       builder.userName(profile.getString(DefaultSummaryMetadata.class,
                "userName", System.getProperty("user.name")));
+      builder.profileName(profile.getProfileName());
       builder.microManagerVersion(MMStudio.getInstance().getVersion());
       builder.metadataVersion(METADATA_VERSION);
 
@@ -76,6 +77,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       private String fileName_ = null;
       private String prefix_ = null;
       private String userName_ = null;
+      private String profileName_ = null;
       private String microManagerVersion_ = null;
       private String metadataVersion_ = null;
       private String computerName_ = null;
@@ -112,6 +114,12 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       @Override
       public SummaryMetadataBuilder userName(String userName) {
          userName_ = userName;
+         return this;
+      }
+
+      @Override
+      public SummaryMetadataBuilder profileName(String profileName) {
+         profileName_ = profileName;
          return this;
       }
 
@@ -197,6 +205,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
    private String fileName_ = null;
    private String prefix_ = null;
    private String userName_ = null;
+   private String profileName_ = null;
    private String microManagerVersion_ = null;
    private String metadataVersion_ = null;
    private String computerName_ = null;
@@ -217,6 +226,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       fileName_ = builder.fileName_;
       prefix_ = builder.prefix_;
       userName_ = builder.userName_;
+      profileName_ = builder.profileName_;
       microManagerVersion_ = builder.microManagerVersion_;
       metadataVersion_ = builder.metadataVersion_;
       computerName_ = builder.computerName_;
@@ -247,6 +257,11 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
    @Override
    public String getUserName() {
       return userName_;
+   }
+
+   @Override
+   public String getProfileName() {
+      return profileName_;
    }
 
    @Override
@@ -320,6 +335,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
             .fileName(fileName_)
             .prefix(prefix_)
             .userName(userName_)
+            .profileName(profileName_)
             .microManagerVersion(microManagerVersion_)
             .metadataVersion(metadataVersion_)
             .computerName(computerName_)
@@ -362,6 +378,13 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       }
       catch (JSONException e) {
          ReportingUtils.logDebugMessage("SummaryMetadata failed to extract field userName");
+      }
+
+      try {
+         builder.profileName(tags.getString("ProfileName"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logDebugMessage("SummaryMetadata failed to extract field profileName");
       }
 
       try {
@@ -473,6 +496,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
          MDUtils.setFileName(result, fileName_);
          result.put("Prefix", prefix_);
          result.put("UserName", userName_);
+         result.put("ProfileName", profileName_);
          result.put("MicroManagerVersion", microManagerVersion_);
          result.put("MetadataVersion", metadataVersion_);
          result.put("ComputerName", computerName_);

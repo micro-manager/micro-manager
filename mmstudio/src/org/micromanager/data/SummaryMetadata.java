@@ -34,6 +34,8 @@ public interface SummaryMetadata {
 
       SummaryMetadataBuilder userName(String userName);
 
+      SummaryMetadataBuilder profileName(String profileName);
+
       SummaryMetadataBuilder microManagerVersion(String microManagerVersion);
 
       SummaryMetadataBuilder metadataVersion(String metadataVersion);
@@ -90,6 +92,12 @@ public interface SummaryMetadata {
     * @return signed-in user of the machine that collected this data
     */
    public String getUserName();
+
+   /**
+    * The name of the Micro-Manager profile used to collect this data.
+    * @return name of the micro-Manager profile used to collect this data
+    */
+   public String getProfileName();
 
    /**
     * The version of Micro-Manager used to collect the data
