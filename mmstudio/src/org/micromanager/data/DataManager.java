@@ -23,12 +23,12 @@ public interface DataManager {
    public Coords.CoordsBuilder getCoordsBuilder();
 
    /**
-    * Generate a new, "blank" Datastore with no Reader or subscribers, and
-    * return it. This Datastore will not be tracked by MicroManager by
-    * default (see the org.micromanager.api.display.DisplayManager.track()
-    * method for more information).
+    * Generate a new, "blank" Datastore with RAM-based Storage and return it.
+    * This Datastore will not be tracked by MicroManager by default (see the
+    * org.micromanager.api.display.DisplayManager.track() method for more
+    * information).
     */
-   public Datastore createNewDatastore();
+   public Datastore createDatastore();
 
    /**
     * Retrieve the Datastore associated with the current open album, or null
