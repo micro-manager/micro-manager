@@ -9,6 +9,8 @@ import java.util.List;
 import javax.swing.JOptionPane;
 
 import org.micromanager.data.Datastore;
+import org.micromanager.data.DatastoreLockedException;
+import org.micromanager.data.Image;
 import org.micromanager.display.DisplayManager;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.DisplaySettings;
@@ -27,6 +29,20 @@ public class DefaultDisplayManager implements DisplayManager {
    public DefaultDisplayManager(MMStudio studio) {
       studio_ = studio;
       storeToDisplays_ = new HashMap<Datastore, ArrayList<DisplayWindow>>();
+   }
+
+   @Override
+   public Datastore show(Image image) {
+      Datastore result = studio_.data().createRAMDatastore();
+      try {
+         result.putImage(image);
+      }
+      catch (DatastoreLockedException e) {
+         // This should never happen.
+         ReportingUtils.showError(e, "Somehow managed to create an immediately-locked RAM datastore.");
+      }
+      createDisplay(result);
+      return result;
    }
 
    @Override
