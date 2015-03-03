@@ -128,7 +128,7 @@ public class MMAcquisition {
       existing_ = false;
       show_ = show;
       store_ = new DefaultDatastore();
-      MMStudio.getInstance().display().track(store_);
+      MMStudio.getInstance().displays().track(store_);
       try {
          if (summaryMetadata.has("Directory") && summaryMetadata.get("Directory").toString().length() > 0) {
             // Set up saving to the target directory.
@@ -270,7 +270,7 @@ public class MMAcquisition {
       String name = name_;
       
       store_ = new DefaultDatastore();
-      MMStudio.getInstance().display().track(store_);
+      MMStudio.getInstance().displays().track(store_);
 
       if (virtual_ && existing_) {
          String dirName = rootDirectory_ + File.separator + name;
@@ -297,7 +297,7 @@ public class MMAcquisition {
          }
          // Now that the datastore is set up, create the display(s).
          if (show_) {
-            List<DisplayWindow> displays = MMStudio.getInstance().display().loadDisplaySettings(
+            List<DisplayWindow> displays = MMStudio.getInstance().displays().loadDisplaySettings(
                   store_, dirName);
             if (displays.size() == 0) {
                // Just create a new default display.
@@ -372,7 +372,7 @@ public class MMAcquisition {
          duplicate.copyFrom(store_);
          store_ = duplicate;
          if (show_) {
-            List<DisplayWindow> displays = MMStudio.getInstance().display().loadDisplaySettings(
+            List<DisplayWindow> displays = MMStudio.getInstance().displays().loadDisplaySettings(
                   store_, dirName);
             if (displays.size() == 0) {
                // Just create a new default display.

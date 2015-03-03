@@ -826,11 +826,25 @@ public interface ScriptInterface {
    public DataManager data();
 
    /**
+    * Provide access to the DataManager instance for accessing Micro-Manager
+    * data constructs. Identical to data() except in name.
+    * @return DataManager instance
+    */
+   public DataManager getDataManager();
+
+   /**
     * Provides access to the DisplayManager instance for accessing
     * Micro-Manager display constructs.
     * @return DisplayManager instance
     */
-   public DisplayManager display();
+   public DisplayManager displays();
+
+   /**
+    * Provides access to the DisplayManager instance for accessing
+    * Micro-Manager display constructs. Identical to displays() except in name.
+    * @return DisplayManager instance
+    */
+   public DisplayManager getDisplayManager();
 
    /**
     * Provides access to the UserProfile instance for accessing per-user
@@ -838,4 +852,11 @@ public interface ScriptInterface {
     * @return UserProfile instance
     */
    public UserProfile profile();
+
+   /**
+    * Provides access to the UserProfile instance for accessing per-user
+    * profiles. Identical to profile() except in name.
+    * @return UserProfile instance
+    */
+   public UserProfile getUserProfile();
 }
