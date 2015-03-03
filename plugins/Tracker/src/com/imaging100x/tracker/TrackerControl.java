@@ -495,7 +495,7 @@ public class TrackerControl extends MMFrame implements MMPlugin {
             MDUtils.setFrameIndex(tagged.tags, imageCounter_);
             Image image = app_.data().convertTaggedImage(tagged);
             image = image.copyAtCoords(app_.data().getCoordsBuilder()
-                  .position("time", imageCounter_).build());
+                  .time(imageCounter_).build());
             store_.putImage(image);
             int size = image.getWidth() * image.getHeight();
             if (tagged.pix instanceof byte[]) {

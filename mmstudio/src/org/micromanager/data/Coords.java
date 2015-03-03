@@ -68,7 +68,7 @@ public interface Coords {
        * the Coords.
        * 
        * @param axis Coords axis, such as Coords.CHANNEL
-       * @param position 0-based position index
+       * @param index 0-based position index
        * @return this instance of the CoordsBuilder, so that you can chain 
        * function calls
        */

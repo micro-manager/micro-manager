@@ -48,7 +48,6 @@ import org.micromanager.ScriptInterface;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.MMDialog;
 import org.micromanager.internal.utils.MMException;
-import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  *
@@ -265,7 +264,7 @@ public class MultiChannelShadingMigForm extends MMDialog {
       try {
          gui_.profile().saveProfile();
       } catch (IOException ex) {
-         ReportingUtils.logError(ex, "Failed to save UserProfile");
+         gui_.logError(ex, "Failed to save UserProfile");
       }
       processor_.setMyFrameToNull();
    }
@@ -332,7 +331,7 @@ public class MultiChannelShadingMigForm extends MMDialog {
          gui_.profile().setString(MultiChannelShadingMigForm.class,
                  DARKFIELDFILENAME, backgroundFileName_);
       } catch (MMException ex) {
-         ReportingUtils.showError(ex, "Failed to set background image");
+         gui_.showError(ex, "Failed to set background image");
          return "";
       }
       return fileName;
