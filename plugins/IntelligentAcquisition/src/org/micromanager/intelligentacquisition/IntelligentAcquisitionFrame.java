@@ -751,7 +751,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
                return;
             }
             // TODO: the below code was broken by the MM2.0 refactor.
-            DisplayWindow dw = gui_.display().getCurrentWindow();
+            DisplayWindow dw = gui_.displays().getCurrentWindow();
            
             ResultsTable outTable = new ResultsTable();
             String outTableName = Terms.RESULTTABLENAME;

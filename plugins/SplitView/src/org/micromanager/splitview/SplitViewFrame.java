@@ -256,8 +256,8 @@ public class SplitViewFrame extends javax.swing.JFrame {
       gui_.promptToSaveAcquisition(ACQNAME, false);
 
       Datastore store = gui_.getAcquisitionDatastore(ACQNAME);
-      gui_.display().track(store);
-      DisplayWindow display = gui_.display().createDisplay(store);
+      gui_.displays().track(store);
+      DisplayWindow display = gui_.displays().createDisplay(store);
       updateDisplaySettings();
    }
 
@@ -284,7 +284,7 @@ public class SplitViewFrame extends javax.swing.JFrame {
                  || gui_.getAcquisitionImageWidth(ACQNAME) != newWidth_
                  || gui_.getAcquisitionImageByteDepth(ACQNAME) != imgDepth_) {
             Datastore store = gui_.getAcquisitionDatastore(ACQNAME);
-            for (DisplayWindow display : gui_.display().getDisplays(store)) {
+            for (DisplayWindow display : gui_.displays().getDisplays(store)) {
                display.forceClosed();
             }
             gui_.closeAcquisition(ACQNAME);
@@ -506,7 +506,7 @@ public class SplitViewFrame extends javax.swing.JFrame {
          catch (DatastoreLockedException e) {
             ReportingUtils.logError("Can't set channel names as datastore is locked");
          }
-         for (DisplayWindow display : gui_.display().getDisplays(store)) {
+         for (DisplayWindow display : gui_.displays().getDisplays(store)) {
             DisplaySettings settings = display.getDisplaySettings();
             Color[] newColors = new Color[] {col1_, col2_};
             settings = settings.copy().channelColors(newColors).build();
