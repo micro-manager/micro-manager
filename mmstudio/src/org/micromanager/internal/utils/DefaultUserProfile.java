@@ -1,9 +1,16 @@
 package org.micromanager.internal.utils;
 
+import com.google.common.io.BaseEncoding;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.regex.Matcher;
@@ -442,6 +449,47 @@ public class DefaultUserProfile implements UserProfile {
       synchronized(userProfile_) {
          userProfile_ = (DefaultPropertyMap) userProfile_.copy().putBooleanArray(genKey(c, key), value).build();
       }
+   }
+
+   /**
+    * Adapted from the old JavaUtils.getObjectFromPrefs() method, which was
+    * removed when we moved over to the Profile-based system. We store
+    * objects as base64-encoded Strings, so we have to reverse that process
+    * to retrieve the original Object.
+    */
+   @Override
+   public Object getObject(Class<?> c, String key, Object fallback) throws IOException {
+      String encoded = getString(c, key, null);
+      if (encoded == null) {
+         return fallback;
+      }
+      byte[] bytes = BaseEncoding.base64().decode(encoded);
+      ByteArrayInputStream byteStream = new ByteArrayInputStream(bytes);
+      ObjectInputStream objectStream = new ObjectInputStream(byteStream);
+      try {
+         return objectStream.readObject();
+      }
+      catch (ClassNotFoundException e) {
+         throw new IOException(e);
+      }
+   }
+
+   /**
+    * Adapted from the old JavaUtils.putObjectInPrefs() method, which was
+    * removed when we moved over to the Profile-based system. We convert the
+    * Object into a base64-encoded String and store it that way.
+    */
+   @Override
+   public void setObject(Class<?> c, String key, Serializable value) throws IOException {
+      ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+      try {
+         ObjectOutputStream objectStream = new ObjectOutputStream(byteStream);
+         objectStream.writeObject(value);
+      } catch (Exception e) {
+         throw new IOException("Failed to serialize object");
+      }
+      String encoded = BaseEncoding.base64().encode(byteStream.toByteArray());
+      setString(c, key, encoded);
    }
 
    @Override

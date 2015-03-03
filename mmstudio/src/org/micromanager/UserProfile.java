@@ -24,6 +24,7 @@
 package org.micromanager;
 
 import java.io.IOException;
+import java.io.Serializable;
 
 /**
  * This interface provides a way to save and recall parameters across multiple
@@ -237,6 +238,30 @@ public interface UserProfile {
     * @param value Boolean Array to be stored
     */
    public void setBooleanArray(Class<?> c, String key, Boolean[] value);
+
+   /**
+    * Retrieve a serialized object from the profile.
+    * @param c class providing scope for the key
+    * @param key Identifier for the parameter
+    * @param fallback Value that will be returned if the key is not found or
+    * the key points to null.
+    * @return The stored object, or the fallback if that value is not found.
+    * @throws IOException if deserialization of the object fails
+    */
+   public Object getObject(Class<?> c, String key, Object fallback) throws IOException;
+
+   /**
+    * Save a serializable object in the profile. The object will be serialized
+    * and converted into base64 for storage.
+    * NOTE: it is recommended that you avoid storing large objects in the
+    * profile, as they can take up a substantial amount of space and be slow
+    * to save/load.
+    * @param c class providing scope for the key
+    * @param key Identifier for the parameter
+    * @param value Serializable Object to be stored
+    * @throws IOException if the serialization fails for any reason
+    */
+   public void setObject(Class<?> c, String key, Serializable value) throws IOException;
 
    /**
     * Saves the current user's profile. If the program is closed before this
