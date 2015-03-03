@@ -1,5 +1,6 @@
 package org.micromanager.data;
 
+import java.io.IOException;
 import java.util.List;
 
 import mmcorej.TaggedImage;
@@ -24,11 +25,63 @@ public interface DataManager {
 
    /**
     * Generate a new, "blank" Datastore with RAM-based Storage and return it.
-    * This Datastore will not be tracked by MicroManager by default (see the
+    * This Datastore will not be tracked by Micro-Manager by default (see the
     * org.micromanager.api.display.DisplayManager.track() method for more
     * information).
+    * @return an empty Datastore backed by the appropriate Storage
     */
-   public Datastore createDatastore();
+   public Datastore createRAMDatastore();
+
+   /**
+    * Generate a new, "blank" Datastore with multipage TIFF-based Storage and
+    * return it. This format stores multiple 2D image planes in the same file,
+    * up to 4GB per file. This Datastore will not be tracked by Micro-Manager by
+    * default (see the org.micromanager.api.display.DisplayManager.track()
+    * method for more information). Be certain to call the save() method of
+    * the Datastore when you have finished adding data to it, as the Storage
+    * must finalize the dataset before it is properly completed.
+    * @param directory Location on disk to store the file(s).
+    * @param shouldGenerateSeparateMetadata if true, a separate metadata.txt
+    *        file will be generated.
+    * @param shouldSplitPositions if true, then each stage position (per
+    *        Coords.STAGE_POSITION) will be in a separate file.
+    * @return an empty Datastore backed by the appropriate Storage
+    * @throws IOException if any errors occur while opening files for writing.
+    */
+   public Datastore createMultipageTIFFDatastore(String directory,
+         boolean shouldGenerateSeparateMetadata, boolean shouldSplitPositions)
+         throws IOException;
+
+   /**
+    * Generate a new, "blank" Datastore whose Storage is a series of
+    * single-plane TIFF files. This Datastore will not be tracked by
+    * Micro-Manager by default (see the
+    * org.micromanager.api.display.DisplayManager.track() method for more
+    * information).  Be certain to call the save() method of the Datastore when
+    * you have finished adding data to it, as the Storage must finalize the
+    * dataset before it is properly completed.
+    * @param directory Location on disk to store the files.
+    * @return an empty Datastore backed by the appropriate Storage
+    */
+   public Datastore createSinglePlaneTIFFSeriesDatastore(String directory);
+
+   /**
+    * Load the image data at the specified location on disk, and return a
+    * Datastore for that data. This Datastore will not be tracked by
+    * Micro-Manager by default (see the
+    * org.micromanager.api.display.DisplayManager.track() method for more
+    * information).
+    * TODO: replace all uses of ScriptInterface.openAcquisitionData with this.
+    * @param directory Location on disk from which to pull image data.
+    * @param isVirtual If true, then only load images into RAM as they are
+    *        requested. This reduces RAM utilization and has a lesser delay
+    *        at the start of image viewing, but has worse performance if the
+    *        entire dataset needs to be viewed or manipulated.
+    * @return A Datastore backed by appropriate Storage that provides access
+    *        to the images.
+    * @throws IOException if there was any error in reading the data.
+    */
+   public Datastore loadData(String directory, boolean isVirtual) throws IOException;
 
    /**
     * Retrieve the Datastore associated with the current open album, or null
