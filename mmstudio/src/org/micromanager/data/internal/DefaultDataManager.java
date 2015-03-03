@@ -144,6 +144,12 @@ public class DefaultDataManager implements DataManager {
    }
 
    @Override
+   public Image convertTaggedImage(TaggedImage tagged, Coords coords,
+         Metadata metadata) throws JSONException, MMScriptException {
+      return new DefaultImage(tagged, coords, metadata);
+   }
+
+   @Override
    public Metadata.MetadataBuilder getMetadataBuilder() {
       return new DefaultMetadata.Builder();
    }
