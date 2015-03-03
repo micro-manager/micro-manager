@@ -3,7 +3,6 @@ package org.micromanager.multicamera;
 import mmcorej.CMMCore;
 import org.micromanager.MMPlugin;
 import org.micromanager.ScriptInterface;
-import org.micromanager.internal.utils.ReportingUtils;
 
 
 public class MultiCamera implements MMPlugin {
@@ -25,20 +24,18 @@ public class MultiCamera implements MMPlugin {
             myFrame_ = new MultiCameraFrame(gui_);
             gui_.addMMListener(myFrame_);
          } catch (Exception e) {
-            ReportingUtils.showError(e);
+            gui_.showError(e);
             return;
          }
       }
       myFrame_.setVisible(true);
    }
 
-    @Override
+   @Override
    public void dispose() {
-      if (myFrame_ != null)
-         myFrame_.safePrefs();
    }
 
-    @Override
+   @Override
    public void show() {
          String ig = "Andor Control";
    }

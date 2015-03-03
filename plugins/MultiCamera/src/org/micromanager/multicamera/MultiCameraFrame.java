@@ -11,7 +11,6 @@
 package org.micromanager.multicamera;
 
 import java.text.ParseException;
-import java.util.prefs.Preferences;
 
 import javax.swing.DefaultComboBoxModel;
 
@@ -24,20 +23,17 @@ import mmcorej.StrVector;
 
 import org.micromanager.ScriptInterface;
 import org.micromanager.MMListenerInterface;
+import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.NumberUtils;
-import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  *
  * @author Nico Stuurman
  */
-public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerInterface {
+public class MultiCameraFrame extends MMFrame implements MMListenerInterface {
    private static final long serialVersionUID = 1L;
    private final ScriptInterface gui_;
    private final CMMCore core_;
-   final private Preferences prefs_;
-   private int frameXPos_ = 100;
-   private int frameYPos_ = 100;
    private int EMGainMin_ = 4;
    private int EMGainMax_ = 1000;
    private final String[] cameras_;
@@ -79,7 +75,6 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
    public MultiCameraFrame(ScriptInterface gui) throws Exception {
       gui_ = gui;
       core_ = gui_.getMMCore();
-      prefs_ = Preferences.userNodeForPackage(this.getClass());
 
       mmcorej.StrVector cameras = core_.getLoadedDevicesOfType(DeviceType.CameraDevice);
       cameras_ = cameras.toArray();
@@ -105,12 +100,9 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
       // channel camera should be tested
       String testCamera = camerasInUse_.get(0);
 
-      frameXPos_ = prefs_.getInt(FRAMEXPOS, frameXPos_);
-      frameYPos_ = prefs_.getInt(FRAMEYPOS, frameYPos_);
-
       initComponents();
 
-      setLocation(frameXPos_, frameYPos_);
+      loadAndRestorePosition(100, 100);
 
       cameraSelectComboBox.removeAllItems();
 
@@ -202,11 +194,6 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
       core_.setCameraDevice(currentCamera);
    }
 
-   public void safePrefs() {
-      prefs_.putInt(FRAMEXPOS, this.getX());
-      prefs_.putInt(FRAMEYPOS, this.getY());
-
-   }
 
    private synchronized boolean initialized(boolean set, boolean value) {
       if (set) {
@@ -481,7 +468,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
             }
          }
       } catch (Exception ex) {
-         ReportingUtils.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
+         gui_.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
       }
       return gain;
    }
@@ -500,7 +487,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
          gui_.enableLiveMode(liveRunning);
          gui_.refreshGUI();
       } catch (Exception ex) {
-         ReportingUtils.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
+         gui_.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
       }
       EMGainTextField.setText(NumberUtils.intToDisplayString(val));
    }
@@ -522,7 +509,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
 
          }
       } catch (Exception ex) {
-         ReportingUtils.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
+         gui_.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
       }
       return false;
    }
@@ -571,7 +558,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
           }
           gui_.enableLiveMode(liveRunning);
        } catch (Exception ex) {
-          ReportingUtils.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
+          gui_.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
        }
     }//GEN-LAST:event_EMCheckBoxActionPerformed
 
@@ -619,7 +606,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
             }
          }
       } catch (Exception ex) {
-         ReportingUtils.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
+         gui_.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
       }
       return mode;
    }
@@ -674,7 +661,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
           gui_.enableLiveMode(liveRunning);
           gui_.refreshGUI();
        } catch (Exception ex) {
-          ReportingUtils.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
+          gui_.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
        }
     }//GEN-LAST:event_modeComboBoxItemStateChanged
 
@@ -789,7 +776,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
 
           gui_.enableLiveMode(liveRunning);
        } catch (Exception ex) {
-          ReportingUtils.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
+          gui_.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
        }
 
        gui_.refreshGUI();
@@ -817,7 +804,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
 
          }
       } catch (Exception ex) {
-         ReportingUtils.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
+         gui_.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
       }
       tempLabel.setText(tempText);
    }
@@ -836,7 +823,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
             comboBox.setModel(new DefaultComboBoxModel(newVals));
 
          } catch (Exception ex) {
-            ReportingUtils.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
+            gui_.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
          }
          getComboSelection(comboBox, property);
       }
@@ -859,7 +846,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
          }
          comboBox.setSelectedItem(val);
       } catch (Exception ex) {
-         ReportingUtils.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
+         gui_.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
       }
    }
 
@@ -881,7 +868,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
 
          gui_.enableLiveMode(liveRunning);
       } catch (Exception ex) {
-         ReportingUtils.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
+         gui_.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
       }
    }
    // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -957,7 +944,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
             core_.setProperty(device, property, value);
          }
       } catch (Exception ex) {
-         ReportingUtils.logError(ex);
+         gui_.logError(ex);
       }
    }
 

@@ -761,11 +761,12 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
                ij.IJ.runMacroFile(scriptFileName_);
                // results should be in results window
             } else { 
-               Coords c = dw.getDatastore().getMaxIndices();
-               int nrPositions = c.getPositionAt("p");
+               int nrPositions = dw.getDatastore().
+                       getMaxIndex(Coords.STAGE_POSITION) + 1;
 
                for (int p = 1; p <= nrPositions && !stop_.get(); p++) {
-                  dw.setDisplayedImageTo(c.copy().position("p", p).build());
+                  Coords c = dw.getDatastore().getAnyImage().getCoords();
+                  dw.setDisplayedImageTo(c.copy().stagePosition(p).build());
 
                   ij.IJ.runMacroFile(scriptFileName_);
                   ResultsTable res = ij.measure.ResultsTable.getResultsTable();

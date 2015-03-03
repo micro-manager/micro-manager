@@ -24,12 +24,9 @@ package org.micromanager.multichannelshading;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.prefs.BackingStoreException;
-import java.util.prefs.Preferences;
 import javax.swing.table.AbstractTableModel;
 import org.micromanager.ScriptInterface;
 import org.micromanager.internal.utils.MMException;
-import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  *
@@ -46,17 +43,16 @@ public class ShadingTableModel extends AbstractTableModel {
          ""
    };
    private String channelGroup_;
-   private final Preferences prefs_;
-   private Preferences channelPrefs_;
    private List<String> presetList_;
    private List<String> fileList_;
    private final ImageCollection imageCollection_;
+   
+   private final static String CHANNELS = "channels";
    
    public ShadingTableModel(ScriptInterface gui, ImageCollection 
            imageCollection) {
       gui_ = gui;
       imageCollection_ = imageCollection;
-      prefs_ = Preferences.userNodeForPackage(this.getClass());
       presetList_ = new ArrayList<String>();
       fileList_ = new ArrayList<String>();
    }
@@ -123,30 +119,34 @@ public class ShadingTableModel extends AbstractTableModel {
    
    public void setChannelGroup(String newGroup) {
       try {
+         // first save our settings
          if (channelGroup_ != null) {
-            channelPrefs_ = prefs_.node(channelGroup_);
-            channelPrefs_.clear();
-            for (int i = 0; i < presetList_.size() && i < fileList_.size(); i++) {
-               channelPrefs_.put(presetList_.get(i), fileList_.get(i));
-            }
+            String[] channels = presetList_.toArray(
+                    new String[presetList_.size()]);
+            String[] files = fileList_.toArray(
+                    new String[fileList_.size()]);
+
+            gui_.profile().setStringArray(this.getClass(), 
+                    channelGroup_ + "-channels", channels);
+            gui_.profile().setStringArray(this.getClass(), 
+                    channelGroup_ + "-files", files);
          }
          imageCollection_.clearFlatFields();
          channelGroup_ = newGroup;
-         // restore mapping from preferences
+         
+         // then restore mapping from preferences
          fileList_.clear();
          presetList_.clear();
-         channelPrefs_ = prefs_.node(channelGroup_);
-
-         for (String key : channelPrefs_.keys()) {
-            String file = channelPrefs_.get(key, "");
-            if (file.length() > 0) {
-               imageCollection_.addFlatField(key, file);
-               presetList_.add(key);
-               fileList_.add(file);
-            }
+         String[] channels = gui_.profile().getStringArray(this.getClass(), 
+                 channelGroup_ + "-channels", null);
+         String[] files = gui_.profile().getStringArray(this.getClass(), 
+                 channelGroup_ + "-files", null);
+         for (int i = 0; i < channels.length && i < files.length; i++) {
+            imageCollection_.addFlatField(channels[i], files[i]);
+            presetList_.add(channels[i]);
+            fileList_.add(files[i]);
          }
-      } catch (BackingStoreException ex) {
-         gui_.logError(ex);
+
       } catch (MMException ex) {
          gui_.showError(ex);
       }
@@ -175,8 +175,8 @@ public class ShadingTableModel extends AbstractTableModel {
       for (String preset : presets) {
          boolean found = false;
          int j = 0;
-         for (int i = 0; i < usedPresets.length; i++) {
-            if (preset.equals(usedPresets[i])) {
+         for (String usedPreset : usedPresets) {
+            if (preset.equals(usedPreset)) {
                found = true;
             }
          }
@@ -237,7 +237,7 @@ public class ShadingTableModel extends AbstractTableModel {
          for (int j = 0; j < selectedRows.length; j++) {
             if (i == selectedRows[j]) {
                removeRow = true;
-               channelPrefs_.remove(presetList_.get(i));
+               // TODO: channelPrefs_.remove(presetList_.get(i));
                imageCollection_.removeFlatField(presetList_.get(i));
             }
          }
@@ -259,9 +259,9 @@ public class ShadingTableModel extends AbstractTableModel {
             try {
                imageCollection_.addFlatField(preset, fileList_.get(row));
             } catch (MMException ex) {
-               ReportingUtils.showError(ex);
+               gui_.showError(ex);
             }
-            channelPrefs_.put(preset, fileList_.get(row));
+            gui_.profile().setString(this.getClass(), preset, fileList_.get(row));
          }
       }
          
