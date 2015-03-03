@@ -37,22 +37,22 @@ public class DefaultUserProfile implements UserProfile {
       staticInstance_ = new DefaultUserProfile();
    }
    private HashMap<String, String> nameToFile_;
-   private String userName_;
+   private String profileName_;
    private final DefaultPropertyMap globalProfile_;
    private DefaultPropertyMap userProfile_;
 
    public DefaultUserProfile() {
-      nameToFile_ = loadUserMapping();
-      globalProfile_ = loadUser(GLOBAL_USER);
+      nameToFile_ = loadProfileMapping();
+      globalProfile_ = loadProfile(GLOBAL_USER);
       // Naturally we start with the default user loaded.
-      setCurrentUser(DEFAULT_USER);
+      setCurrentProfile(DEFAULT_USER);
    }
 
    /**
     * Read the username mapping file so we know which user's profile is in
     * which file.
     */
-   private HashMap<String, String> loadUserMapping() {
+   private HashMap<String, String> loadProfileMapping() {
       JSONObject mapping = new JSONObject();
       HashMap<String, String> result = new HashMap<String, String>();
       File tmp = new File(JavaUtils.getApplicationDataPath() +
@@ -61,7 +61,7 @@ public class DefaultUserProfile implements UserProfile {
          ReportingUtils.logMessage("Creating user profile mapping file");
          // No file to be found; create it with the default user.
          result.put(GLOBAL_USER, UserProfile.GLOBAL_SETTINGS_FILE);
-         writeUserMapping(result);
+         writeProfileMapping(result);
       }
       try {
          mapping = new JSONObject(
@@ -85,7 +85,7 @@ public class DefaultUserProfile implements UserProfile {
    /**
     * Write out the current mapping of usernames to profile files.
     */
-   private void writeUserMapping(HashMap<String, String> nameToFile) {
+   private void writeProfileMapping(HashMap<String, String> nameToFile) {
       JSONObject mapping = new JSONObject();
       for (String name : nameToFile.keySet()) {
          try {
@@ -118,14 +118,14 @@ public class DefaultUserProfile implements UserProfile {
     * Load a PropertyMap for a given user; return an empty PropertyMap if that
     * user doesn't yet exist, creating the profile for them in the process.
     */
-   private DefaultPropertyMap loadUser(String userName) {
-      if (!nameToFile_.containsKey(userName)) {
+   private DefaultPropertyMap loadProfile(String profileName) {
+      if (!nameToFile_.containsKey(profileName)) {
          // Create a new profile.
-         ReportingUtils.logMessage("User name " + userName + " not found in profile mapping; creating that user");
-         addUser(userName);
+         ReportingUtils.logMessage("Profile name " + profileName + " not found in profile mapping; creating that user");
+         addProfile(profileName);
          return (DefaultPropertyMap) (new DefaultPropertyMap.Builder().build());
       }
-      String filename = nameToFile_.get(userName);
+      String filename = nameToFile_.get(profileName);
       JavaUtils.createApplicationDataPathIfNeeded();
       String path = JavaUtils.getApplicationDataPath() + "/" + filename;
       return loadPropertyMap(path);
@@ -512,7 +512,7 @@ public class DefaultUserProfile implements UserProfile {
    public void saveProfile() throws IOException {
       JavaUtils.createApplicationDataPathIfNeeded();
       saveProfileToFile(JavaUtils.getApplicationDataPath() +
-            "/" + nameToFile_.get(userName_));
+            "/" + nameToFile_.get(profileName_));
    }
 
    @Override
@@ -549,7 +549,7 @@ public class DefaultUserProfile implements UserProfile {
       userProfile_ = (DefaultPropertyMap) userProfile_.merge(properties);
    }
 
-   public Set<String> getUserNames() {
+   public Set<String> getProfileNames() {
       // HACK: don't reveal the global profile since it's not technically a
       // "user".
       HashSet<String> result = new HashSet<String>(nameToFile_.keySet());
@@ -557,7 +557,7 @@ public class DefaultUserProfile implements UserProfile {
       return result;
    }
 
-   public void addUser(String userName) {
+   public void addProfile(String profileName) {
       // Assign a filename for the user, which should be 1 greater than the
       // largest current numerical filename we're using.
       Pattern pattern = Pattern.compile("profile-(\\d+).txt");
@@ -578,13 +578,17 @@ public class DefaultUserProfile implements UserProfile {
          }
       }
       String newFile = "profile-" + (fileIndex + 1) + ".txt";
-      nameToFile_.put(userName, newFile);
-      writeUserMapping(nameToFile_);
+      nameToFile_.put(profileName, newFile);
+      writeProfileMapping(nameToFile_);
    }
 
-   public void setCurrentUser(String userName) {
-      userName_ = userName;
-      userProfile_ = loadUser(userName);
+   public void setCurrentProfile(String profileName) {
+      profileName_ = profileName;
+      userProfile_ = loadProfile(profileName);
+   }
+
+   public String getProfileName() {
+      return profileName_;
    }
 
    @Override
@@ -622,8 +626,8 @@ public class DefaultUserProfile implements UserProfile {
       // This parameter is stored for the default user. Just in case we *are*
       // using the default user, wrap this in synchronized.
       synchronized(profile.userProfile_) {
-         PropertyMap defaultUser = profile.loadUser(DEFAULT_USER);
-         Boolean result = defaultUser.getBoolean(
+         PropertyMap defaultProfile = profile.loadProfile(DEFAULT_USER);
+         Boolean result = defaultProfile.getBoolean(
                profile.genKey(DefaultUserProfile.class, ALWAYS_USE_DEFAULT_USER));
          if (result == null) {
             return false;
@@ -643,8 +647,8 @@ public class DefaultUserProfile implements UserProfile {
          // In order to simplify saving things (since saveProfile() always
          // saves the current user), we temporarily switch to the
          // default user for this operation.
-         String curUser = profile.userName_;
-         profile.setCurrentUser(DEFAULT_USER);
+         String curProfile = profile.profileName_;
+         profile.setCurrentProfile(DEFAULT_USER);
          profile.setBoolean(DefaultUserProfile.class,
                ALWAYS_USE_DEFAULT_USER, shouldUseDefault);
          try {
@@ -653,7 +657,7 @@ public class DefaultUserProfile implements UserProfile {
          catch (IOException e) {
             ReportingUtils.logError(e, "Unable to save whether or not to always use the default profile");
          }
-         profile.setCurrentUser(curUser);
+         profile.setCurrentProfile(curProfile);
       }
    }
 }
