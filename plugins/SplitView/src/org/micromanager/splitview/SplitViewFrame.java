@@ -56,6 +56,7 @@ import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.ScriptInterface;
+import org.micromanager.display.RequestToDrawEvent;
 import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.MMTags;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -296,7 +297,7 @@ public class SplitViewFrame extends javax.swing.JFrame {
          firstChannel.tags.put(MMTags.Image.WIDTH, newWidth_);
          firstChannel.tags.put(MMTags.Image.HEIGHT, newHeight_);
          Image image = gui_.data().convertTaggedImage(firstChannel);
-         Coords c = gui_.data().getCoordsBuilder().channel(0).time(0).build();
+         final Coords c = gui_.data().getCoordsBuilder().channel(0).build();
          image = image.copyAtCoords(c);
          gui_.getAcquisitionDatastore(ACQNAME).putImage(image);
          
@@ -312,6 +313,14 @@ public class SplitViewFrame extends javax.swing.JFrame {
          image = gui_.data().convertTaggedImage(secondChannel);
          image = image.copyAtCoords(c.copy().channel(1).build());
          gui_.getAcquisitionDatastore(ACQNAME).putImage(image);
+         gui_.getAcquisitionDatastore(ACQNAME).publishEvent(
+                 new RequestToDrawEvent() {
+
+            @Override
+            public Coords getCoords() {
+               return c;
+               }
+         });
 
       } catch (Exception e) {
          if (gui_.isLiveModeOn())
