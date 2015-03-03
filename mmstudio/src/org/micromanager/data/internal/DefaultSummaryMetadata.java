@@ -347,7 +347,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       // functionally read-only from the perspective of the Java layer, 
       // excepting the acquisition engine (which is presumably what sets them
       // in the first place).
-      // TODO: not preserving the position-related metadata.
+      // TODO: not preserving the index-related metadata.
       Builder builder = new Builder();
 
       try {
@@ -429,25 +429,25 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       // accessing a slightly different set of tags.
       DefaultCoords.Builder dimsBuilder = new DefaultCoords.Builder();
       try {
-         dimsBuilder.position("time", MDUtils.getNumFrames(tags));
+         dimsBuilder.time(MDUtils.getNumFrames(tags));
       }
       catch (JSONException e) {
          ReportingUtils.logDebugMessage("Failed to extract intended time axis length: " + e);
       }
       try {
-         dimsBuilder.position("z", MDUtils.getNumSlices(tags));
+         dimsBuilder.z(MDUtils.getNumSlices(tags));
       }
       catch (JSONException e) {
          ReportingUtils.logDebugMessage("Failed to extract intended z axis length: " + e);
       }
       try {
-         dimsBuilder.position("channel", MDUtils.getNumChannels(tags));
+         dimsBuilder.channel(MDUtils.getNumChannels(tags));
       }
       catch (JSONException e) {
          ReportingUtils.logDebugMessage("Failed to extract intended channel axis length: " + e);
       }
       try {
-         dimsBuilder.position("position", MDUtils.getNumPositions(tags));
+         dimsBuilder.stagePosition(MDUtils.getNumPositions(tags));
       }
       catch (JSONException e) {
          ReportingUtils.logDebugMessage("Failed to extract intended position axis length: " + e);
@@ -488,13 +488,13 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
          result.put("CustomIntervals_ms", customIntervalsMs_);
          if (intendedDimensions_ != null) {
             MDUtils.setNumChannels(result,
-                  intendedDimensions_.getPositionAt("channel"));
+                  intendedDimensions_.getChannel());
             MDUtils.setNumFrames(result,
-                  intendedDimensions_.getPositionAt("time"));
+                  intendedDimensions_.getTime());
             MDUtils.setNumSlices(result,
-                  intendedDimensions_.getPositionAt("z"));
+                  intendedDimensions_.getZ());
             MDUtils.setNumPositions(result,
-                  intendedDimensions_.getPositionAt("position"));
+                  intendedDimensions_.getStagePosition());
          }
          result.put("StartTime", startDate_);
          result.put("Positions", stagePositions_);

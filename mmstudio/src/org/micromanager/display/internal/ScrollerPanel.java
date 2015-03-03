@@ -54,11 +54,11 @@ class ScrollerPanel extends JPanel {
       JLabel maxLabel_;
       JScrollBar scrollbar_;
       ScrollbarLockIcon.LockedState lockState_;
-      // The saved position is the position we need to snap back to later.
-      int savedPosition_;
-      // The cached position is the position we last recorded for the
+      // The saved index is the index we need to snap back to later.
+      int savedIndex_;
+      // The cached index is the index we last recorded for the
       // scrollbar.
-      int cachedPosition_;
+      int cachedIndex_;
       
       public AxisState(JLabel posLabel, JScrollBar scrollbar, JLabel maxLabel) {
          isAnimated_ = false;
@@ -66,8 +66,8 @@ class ScrollerPanel extends JPanel {
          scrollbar_ = scrollbar;
          maxLabel_ = maxLabel;
          lockState_ = ScrollbarLockIcon.LockedState.UNLOCKED;
-         savedPosition_ = 0;
-         cachedPosition_ = 0;
+         savedIndex_ = 0;
+         cachedIndex_ = 0;
       }
    }
 
@@ -203,10 +203,10 @@ class ScrollerPanel extends JPanel {
       // moved to a position it already has. Don't bother publishing redundant
       // events.
       int pos = scrollbar.getValue();
-      if (pos == axisToState_.get(axis).cachedPosition_) {
+      if (pos == axisToState_.get(axis).cachedIndex_) {
          return;
       }
-      axisToState_.get(axis).cachedPosition_ = pos;
+      axisToState_.get(axis).cachedIndex_ = pos;
       axisToState_.get(axis).posLabel_.setText(String.valueOf(pos));
       postDrawEvent();
    }
@@ -225,11 +225,11 @@ class ScrollerPanel extends JPanel {
       // Fill in default positions for all axes, including those we don't have
       // scrollbars for.
       for (String axis : store_.getAxes()) {
-         builder.position(axis, 0);
+         builder.index(axis, 0);
       }
       for (String axis : axisToState_.keySet()) {
          int pos = axisToState_.get(axis).scrollbar_.getValue();
-         builder.position(axis, pos);
+         builder.index(axis, pos);
       }
       Coords target = builder.build();
       DisplaySettings settings = parent_.getDisplaySettings();
@@ -268,7 +268,7 @@ class ScrollerPanel extends JPanel {
       }
       shouldPostEvents_ = false;
       for (String axis : axisToState_.keySet()) {
-         axisToState_.get(axis).scrollbar_.setValue(coords.getPositionAt(axis));
+         axisToState_.get(axis).scrollbar_.setValue(coords.getIndex(axis));
       }
       shouldPostEvents_ = true;
    }
@@ -331,7 +331,7 @@ class ScrollerPanel extends JPanel {
          Coords.CoordsBuilder displayedBuilder = coords.copy();
          boolean didAddScrollers = false;
          for (String axis : store_.getAxes()) {
-            int newPos = coords.getPositionAt(axis);
+            int newPos = coords.getIndex(axis);
             if (!axisToState_.containsKey(axis)) {
                if (newPos != 0) {
                   // Now have at least two positions along this axis; add a
@@ -346,7 +346,7 @@ class ScrollerPanel extends JPanel {
                }
             }
             JScrollBar scrollbar = axisToState_.get(axis).scrollbar_;
-            int axisLen = coords.getPositionAt(axis) + 1;
+            int axisLen = coords.getIndex(axis) + 1;
             if (scrollbar.getMaximum() < axisLen) {
                // Expand the range on the scrollbar.
                scrollbar.setMaximum(axisLen);
@@ -356,11 +356,11 @@ class ScrollerPanel extends JPanel {
             ScrollbarLockIcon.LockedState lockState = axisToState_.get(axis).lockState_;
             if (lockState == ScrollbarLockIcon.LockedState.SUPERLOCKED) {
                // This axis is not allowed to move.
-               displayedBuilder.position(axis, pos);
+               displayedBuilder.index(axis, pos);
             }
             else if (lockState == ScrollbarLockIcon.LockedState.LOCKED) {
                // This axis can change, but must be snapped back later. Only if
-               // we don't already have a saved position, though.
+               // we don't already have a saved index, though.
                if (!axisToSavedPosition_.containsKey(axis)) {
                   axisToSavedPosition_.put(axis, pos);
                }

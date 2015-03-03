@@ -280,7 +280,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
                         ReportingUtils.logError(ee);
                      }
                   } else if (EXT_ACQ.equals(getExtension(file))) {
-                     scriptArea_.setText("gui.loadAcquisition(\"" + file.getAbsolutePath() + 
+                     scriptArea_.setText("mm.loadAcquisition(\"" + file.getAbsolutePath() + 
                         "\");\ngui.startAcquisition();");
                      scriptPaneSaved_ = true;
                   }
@@ -1158,7 +1158,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
 
    public void setParentGUI(ScriptInterface parent) {
       parentGUI_ = parent;      
-      insertScriptingObject("gui", parent);
+      insertScriptingObject("mm", parent);
    } 
 
    private void runImmediatePane() 

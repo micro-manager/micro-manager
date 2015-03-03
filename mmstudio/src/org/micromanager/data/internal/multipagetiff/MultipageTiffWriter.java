@@ -481,7 +481,7 @@ public class MultipageTiffWriter {
       ByteBuffer buffer = allocateByteBuffer(20);
       int bufOffset = 0;
       for (String axis : MultipageTiffReader.ALLOWED_AXES) {
-         buffer.putInt(4 * bufOffset, coords.getPositionAt(axis));
+         buffer.putInt(4 * bufOffset, coords.getIndex(axis));
          bufOffset++;
       }
       // TODO: this probably doesn't help our performance any, but I want

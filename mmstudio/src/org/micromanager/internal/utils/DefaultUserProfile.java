@@ -31,7 +31,7 @@ public class DefaultUserProfile implements UserProfile {
    }
    private HashMap<String, String> nameToFile_;
    private String userName_;
-   private DefaultPropertyMap globalProfile_;
+   private final DefaultPropertyMap globalProfile_;
    private DefaultPropertyMap userProfile_;
 
    public DefaultUserProfile() {
@@ -288,6 +288,57 @@ public class DefaultUserProfile implements UserProfile {
    public void setIntArray(Class<?> c, String key, Integer[] value) {
       synchronized(userProfile_) {
          userProfile_ = (DefaultPropertyMap) userProfile_.copy().putIntArray(genKey(c, key), value).build();
+      }
+   }
+
+   @Override
+   public Long getLong(Class<?> c, String key, Long fallback) {
+      key = genKey(c, key);
+      synchronized(userProfile_) {
+         Long result = userProfile_.getLong(key);
+         if (result != null) {
+            return result;
+         }
+      }
+      // Try the global profile.
+      synchronized(globalProfile_) {
+         Long result = globalProfile_.getLong(key);
+         if (result != null) {
+            return result;
+         }
+      }
+      // Give up.
+      return fallback;
+   }
+   @Override
+   public Long[] getLongArray(Class<?> c, String key, Long[] fallback) {
+      key = genKey(c, key);
+      synchronized(userProfile_) {
+         Long[] result = userProfile_.getLongArray(key);
+         if (result != null) {
+            return result;
+         }
+      }
+      // Try the global profile.
+      synchronized(globalProfile_) {
+         Long[] result = globalProfile_.getLongArray(key);
+         if (result != null) {
+            return result;
+         }
+      }
+      // Give up.
+      return fallback;
+   }
+   @Override
+   public void setLong(Class<?> c, String key, Long value) {
+      synchronized(userProfile_) {
+         userProfile_ = (DefaultPropertyMap) userProfile_.copy().putLong(genKey(c, key), value).build();
+      }
+   }
+   @Override
+   public void setLongArray(Class<?> c, String key, Long[] value) {
+      synchronized(userProfile_) {
+         userProfile_ = (DefaultPropertyMap) userProfile_.copy().putLongArray(genKey(c, key), value).build();
       }
    }
 

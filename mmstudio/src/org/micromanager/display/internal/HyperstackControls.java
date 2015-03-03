@@ -142,7 +142,7 @@ public class HyperstackControls extends JPanel {
          // Multi-channel case: display each channel with a "/" in-between.
          String intensity = "[";
          for (int i = 0; i < numChannels; ++i) {
-            Coords imageCoords = stack_.getCurrentImageCoords().copy().position("channel", i).build();
+            Coords imageCoords = stack_.getCurrentImageCoords().copy().channel(i).build();
             Image image = store_.getImage(imageCoords);
             // It can be null if not all channels for this imaging event have
             // arrived yet.
