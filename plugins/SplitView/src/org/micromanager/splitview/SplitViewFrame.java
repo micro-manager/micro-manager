@@ -40,8 +40,6 @@ import java.awt.event.ActionListener;
 
 import javax.swing.Timer;
 
-import java.util.prefs.Preferences;
-
 import javax.swing.JColorChooser;
 
 import mmcorej.CMMCore;
@@ -73,7 +71,6 @@ public class SplitViewFrame extends javax.swing.JFrame {
 
    private final ScriptInterface gui_;
    private final CMMCore core_;
-   private Preferences prefs_;
    private long imgDepth_;
    private int width_;
    private int height_;
@@ -84,7 +81,7 @@ public class SplitViewFrame extends javax.swing.JFrame {
    Color col2_;
    private int frameXPos_ = 100;
    private int frameYPos_ = 100;
-   private Timer timer_;
+   private final Timer timer_;
    private double interval_ = 30;
    private static final String ACQNAME = "Split View";
    public static final String LR = "lr";
@@ -97,7 +94,7 @@ public class SplitViewFrame extends javax.swing.JFrame {
    private boolean autoShutterOrg_;
    private String shutterLabel_;
    private boolean shutterOrg_;
-   private SplitViewProcessor processor_;
+   private final SplitViewProcessor processor_;
 
    
 
@@ -106,11 +103,12 @@ public class SplitViewFrame extends javax.swing.JFrame {
       processor_ = processor;
       gui_ = gui;
       core_ = gui_.getMMCore();
-      prefs_ = Preferences.userNodeForPackage(this.getClass());
 
-      col1_ = new Color(prefs_.getInt(TOPLEFTCOLOR, Color.red.getRGB()));
-      col2_ = new Color(prefs_.getInt(BOTTOMRIGHTCOLOR, Color.green.getRGB()));
-      orientation_ = prefs_.get(ORIENTATION, LR);
+      col1_ = new Color(gui_.profile().getInt(this.getClass(), TOPLEFTCOLOR, 
+              Color.red.getRGB()));
+      col2_ = new Color(gui_.profile().getInt(this.getClass(), BOTTOMRIGHTCOLOR, 
+              Color.green.getRGB()));
+      orientation_ = gui_.profile().getString(this.getClass(), ORIENTATION, LR);
       processor_.setOrientation(orientation_);
 
       // initialize timer
@@ -128,8 +126,8 @@ public class SplitViewFrame extends javax.swing.JFrame {
       timer_.stop();
 
 
-      frameXPos_ = prefs_.getInt(FRAMEXPOS, frameXPos_);
-      frameYPos_ = prefs_.getInt(FRAMEYPOS, frameYPos_);
+      frameXPos_ = gui_.profile().getInt(this.getClass(),FRAMEXPOS, frameXPos_);
+      frameYPos_ = gui_.profile().getInt(this.getClass(),FRAMEYPOS, frameYPos_);
 
       Font buttonFont = new Font("Arial", Font.BOLD, 10);
 
@@ -298,8 +296,8 @@ public class SplitViewFrame extends javax.swing.JFrame {
          firstChannel.tags.put(MMTags.Image.WIDTH, newWidth_);
          firstChannel.tags.put(MMTags.Image.HEIGHT, newHeight_);
          Image image = gui_.data().convertTaggedImage(firstChannel);
-         Coords.CoordsBuilder builder = gui_.data().getCoordsBuilder();
-         image = image.copyAtCoords(builder.position("channel", 0).build());
+         Coords c = gui_.data().getCoordsBuilder().channel(0).time(0).build();
+         image = image.copyAtCoords(c);
          gui_.getAcquisitionDatastore(ACQNAME).putImage(image);
          
          // second channel
@@ -312,7 +310,7 @@ public class SplitViewFrame extends javax.swing.JFrame {
          secondChannel.tags.put(MMTags.Image.WIDTH, newWidth_);
          secondChannel.tags.put(MMTags.Image.HEIGHT, newHeight_);
          image = gui_.data().convertTaggedImage(secondChannel);
-         image = image.copyAtCoords(builder.position("channel", 1).build());
+         image = image.copyAtCoords(c.copy().channel(1).build());
          gui_.getAcquisitionDatastore(ACQNAME).putImage(image);
 
       } catch (Exception e) {
@@ -324,8 +322,8 @@ public class SplitViewFrame extends javax.swing.JFrame {
    }
 
    public void safePrefs() {
-      prefs_.putInt(FRAMEXPOS, this.getX());
-      prefs_.putInt(FRAMEYPOS, this.getY());
+      gui_.profile().getInt(this.getClass(),FRAMEXPOS, this.getX());
+      gui_.profile().getInt(this.getClass(),FRAMEYPOS, this.getY());
 
    }
 
@@ -450,7 +448,7 @@ public class SplitViewFrame extends javax.swing.JFrame {
     private void lrRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_lrRadioButtonActionPerformed
        processor_.setOrientation(LR);
        orientation_ = LR;
-       prefs_.put(ORIENTATION, LR);
+       gui_.profile().setString(this.getClass(),ORIENTATION, LR);
        topLeftColorButton.setText("Left Color");
        bottomRightColorButton.setText("Right Color");
     }//GEN-LAST:event_lrRadioButtonActionPerformed
@@ -458,7 +456,7 @@ public class SplitViewFrame extends javax.swing.JFrame {
     private void tbRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tbRadioButtonActionPerformed
        processor_.setOrientation(TB);
        orientation_ = TB;
-       prefs_.put(ORIENTATION, TB);
+       gui_.profile().setString(this.getClass(),ORIENTATION, TB);
        topLeftColorButton.setText("Top Color");
        bottomRightColorButton.setText("Bottom Color");
     }//GEN-LAST:event_tbRadioButtonActionPerformed
@@ -514,14 +512,14 @@ public class SplitViewFrame extends javax.swing.JFrame {
     private void topLeftColorButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_topLeftColorButtonActionPerformed
        col1_ = JColorChooser.showDialog(getContentPane(), "Choose left/top color", col1_);
        topLeftColorButton.setForeground(col1_);
-       prefs_.putInt(TOPLEFTCOLOR, col1_.getRGB());
+       gui_.profile().setInt(this.getClass(),TOPLEFTCOLOR, col1_.getRGB());
        updateDisplaySettings();
     }//GEN-LAST:event_topLeftColorButtonActionPerformed
 
     private void bottomRightColorButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bottomRightColorButtonActionPerformed
        col2_ = JColorChooser.showDialog(getContentPane(), "Choose right/bottom color", col2_);
        bottomRightColorButton.setForeground(col2_);
-       prefs_.putInt(BOTTOMRIGHTCOLOR, col2_.getRGB());
+       gui_.profile().setInt(this.getClass(),BOTTOMRIGHTCOLOR, col2_.getRGB());
        updateDisplaySettings();
     }//GEN-LAST:event_bottomRightColorButtonActionPerformed
 
