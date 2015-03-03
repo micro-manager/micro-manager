@@ -2,6 +2,7 @@ package org.micromanager.data.internal;
 
 import com.google.common.eventbus.Subscribe;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -24,6 +25,7 @@ import org.micromanager.display.RequestToCloseEvent;
 import org.micromanager.events.DatastoreClosingEvent;
 
 import org.micromanager.data.Coords;
+import org.micromanager.data.internal.multipagetiff.MultipageTiffReader;
 import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
 import org.micromanager.data.internal.StorageRAM;
 import org.micromanager.data.internal.StorageSinglePlaneTiffSeries;
@@ -54,9 +56,50 @@ public class DefaultDataManager implements DataManager {
    }
 
    @Override
-   public Datastore createDatastore() {
+   public Datastore createRAMDatastore() {
       Datastore result = new DefaultDatastore();
       result.setStorage(new StorageRAM(result));
+      return result;
+   }
+
+   @Override
+   public Datastore createMultipageTIFFDatastore(String directory,
+         boolean shouldGenerateSeparateMetadata, boolean shouldSplitPositions)
+         throws IOException {
+      DefaultDatastore result = new DefaultDatastore();
+      result.setStorage(new StorageMultipageTiff(result, directory, true,
+               shouldGenerateSeparateMetadata, shouldSplitPositions));
+      return result;
+   }
+
+   @Override
+   public Datastore createSinglePlaneTIFFSeriesDatastore(String directory) {
+      DefaultDatastore result = new DefaultDatastore();
+      result.setStorage(new StorageSinglePlaneTiffSeries(result, directory,
+            true));
+      return result;
+   }
+
+   @Override
+   public Datastore loadData(String directory, boolean isVirtual) throws IOException {
+      DefaultDatastore result = new DefaultDatastore();
+      // TODO: future additional file formats will need to be handled here.
+      // For now we just choose between StorageMultipageTiff and
+      // StorageSinglePlaneTiffSeries.
+      boolean isMultipageTiff = MultipageTiffReader.isMMMultipageTiff(directory);
+      if (isMultipageTiff) {
+         result.setStorage(new StorageMultipageTiff(result, directory, false));
+      }
+      else {
+         result.setStorage(new StorageSinglePlaneTiffSeries(result, directory,
+                  false));
+      }
+      if (!isVirtual) {
+         // Copy into a StorageRAM.
+         DefaultDatastore tmp = (DefaultDatastore) createRAMDatastore();
+         tmp.copyFrom(result);
+         result = tmp;
+      }
       return result;
    }
 
