@@ -28,10 +28,10 @@ import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import java.awt.Rectangle;
 import java.util.HashMap;
+import org.micromanager.ScriptInterface;
 
 import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.internal.utils.MMException;
-import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * Utility class for Shading plugin that holds the background and flatfield
@@ -42,12 +42,14 @@ import org.micromanager.internal.utils.ReportingUtils;
  * @author nico
  */
 public class ImageCollection {
+   private final ScriptInterface gui_;
    private final HashMap<String, ImagePlusInfo> background_;
    private final HashMap<String, HashMap<String, ImagePlusInfo>> flatFields_;
    
    private final String BASEIMAGE = "base";
    
-   public ImageCollection() {
+   public ImageCollection(ScriptInterface gui) {
+      gui_ = gui;
       background_ = new HashMap<String, ImagePlusInfo>();
       flatFields_ = new HashMap<String, HashMap<String, ImagePlusInfo>>();
    }
@@ -164,7 +166,7 @@ public class ImageCollection {
          newFlatField.put(makeKey(1, fp.getRoi()), flatField);
          flatFields_.put(preset, newFlatField);
       } catch (MMException ex) {
-         ReportingUtils.logError("Shading plugin, addFlatField in ImageCollection: " + 
+         gui_.logError("Shading plugin, addFlatField in ImageCollection: " + 
                  ex.getMessage());
       }
    }

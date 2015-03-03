@@ -32,7 +32,9 @@ import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
+
 import net.miginfocom.swing.MigLayout;
+
 import org.micromanager.ScriptInterface;
 
 /**

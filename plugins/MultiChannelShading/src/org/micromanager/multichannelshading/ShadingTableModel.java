@@ -47,8 +47,6 @@ public class ShadingTableModel extends AbstractTableModel {
    private List<String> fileList_;
    private final ImageCollection imageCollection_;
    
-   private final static String CHANNELS = "channels";
-   
    public ShadingTableModel(ScriptInterface gui, ImageCollection 
            imageCollection) {
       gui_ = gui;

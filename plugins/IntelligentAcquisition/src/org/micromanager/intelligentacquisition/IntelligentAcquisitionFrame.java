@@ -762,7 +762,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
                // results should be in results window
             } else { 
                int nrPositions = dw.getDatastore().
-                       getMaxIndex(Coords.STAGE_POSITION) + 1;
+                       getAxisLength(Coords.STAGE_POSITION);
 
                for (int p = 1; p <= nrPositions && !stop_.get(); p++) {
                   Coords c = dw.getDatastore().getAnyImage().getCoords();
