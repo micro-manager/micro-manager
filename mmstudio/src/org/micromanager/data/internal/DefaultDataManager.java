@@ -24,7 +24,9 @@ import org.micromanager.display.RequestToCloseEvent;
 import org.micromanager.events.DatastoreClosingEvent;
 
 import org.micromanager.data.Coords;
+import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
 import org.micromanager.data.internal.StorageRAM;
+import org.micromanager.data.internal.StorageSinglePlaneTiffSeries;
 
 import org.micromanager.display.internal.DefaultDisplayWindow;
 import org.micromanager.internal.MMStudio;
@@ -52,8 +54,10 @@ public class DefaultDataManager implements DataManager {
    }
 
    @Override
-   public Datastore createNewDatastore() {
-      return new DefaultDatastore();
+   public Datastore createDatastore() {
+      Datastore result = new DefaultDatastore();
+      result.setStorage(new StorageRAM(result));
+      return result;
    }
 
    @Override
