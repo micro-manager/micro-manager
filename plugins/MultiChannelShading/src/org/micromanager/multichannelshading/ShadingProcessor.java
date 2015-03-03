@@ -36,7 +36,6 @@ import org.micromanager.DataProcessor;
 import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.MMScriptException;
-import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  *
@@ -72,14 +71,14 @@ public class ShadingProcessor extends DataProcessor<TaggedImage> {
             } catch (Exception ex) {
                produce(nextImage);
                myFrame_.setStatus(ex.getMessage());
-               ReportingUtils.logError(ex);
+               gui_.logError(ex);
             }
          } else {
             // Must produce Poison (sentinel) image to terminate tagged image pipeline
             produce(nextImage);
          }
       } catch (Exception ex) {
-         ReportingUtils.logError(ex);
+         gui_.logError(ex);
       }
    }
 
@@ -108,7 +107,7 @@ public class ShadingProcessor extends DataProcessor<TaggedImage> {
       if (! (ijType == ImagePlus.GRAY8 || ijType == ImagePlus.GRAY16) ) {
          String msg = "Cannot flatfield correct images other than 8 or 16 bit grayscale";
          myFrame_.setStatus(msg);
-         ReportingUtils.logError(msg);
+         gui_.logError(msg);
          return nextImage;
       }
       JSONObject newTags = nextImage.tags;
@@ -219,7 +218,7 @@ public class ShadingProcessor extends DataProcessor<TaggedImage> {
                return imageCollection_.getFlatField(preset, binning, rect);
             }
          } catch (Exception ex) {
-            ReportingUtils.logError(ex, "Exception in tag matching");
+            gui_.logError(ex, "Exception in tag matching");
          }
       }
       
@@ -230,7 +229,7 @@ public class ShadingProcessor extends DataProcessor<TaggedImage> {
    @Override
    public void makeConfigurationGUI() {
       if (myFrame_ == null) {
-         imageCollection_ = new ImageCollection();
+         imageCollection_ = new ImageCollection(gui_);
          myFrame_ = new MultiChannelShadingMigForm(this, gui_);
          shadingTableModel_ = myFrame_.getShadingTableModel();
       }
