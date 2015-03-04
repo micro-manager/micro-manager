@@ -1286,7 +1286,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // SA_AMPLITUDE_X_DEG and SA_OFFSET_X_DEG done by setup tabs
       boolean triangleWave = prefs_.getBoolean(
             MyStrings.PanelNames.SETTINGS.toString(),  
-            Properties.Keys.PREFS_SCAN_OPPOSITE_DIRECTIONS, true);
+            Properties.Keys.PREFS_SCAN_OPPOSITE_DIRECTIONS, false);
       Properties.Values scanPattern = triangleWave ?
             Properties.Values.SAM_TRIANGLE : Properties.Values.SAM_RAMP;
       props_.setPropValue(galvoDevice, Properties.Keys.SA_PATTERN_X, 
