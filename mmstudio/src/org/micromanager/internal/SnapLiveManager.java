@@ -29,7 +29,7 @@ import org.micromanager.data.internal.StorageRAM;
 
 import org.micromanager.data.AbortEvent;
 import org.micromanager.data.Coords;
-import org.micromanager.data.DatastoreLockedException;
+import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.DisplayWindow;
@@ -282,7 +282,7 @@ public class SnapLiveManager {
       try {
          store_.setSummaryMetadata(summary);
       }
-      catch (DatastoreLockedException e) {
+      catch (DatastoreFrozenException e) {
          ReportingUtils.showError(e, "Failed to set snap/live title; what on Earth is going on?");
       }
    }
@@ -371,7 +371,7 @@ public class SnapLiveManager {
          // cause them to be displayed.
          newImage.splitMultiComponentIntoStore(store_);
       }
-      catch (DatastoreLockedException e) {
+      catch (DatastoreFrozenException e) {
          ReportingUtils.showError(e, "Snap/Live display datastore locked.");
       }
    }

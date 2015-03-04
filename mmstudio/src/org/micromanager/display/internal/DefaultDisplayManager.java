@@ -1,3 +1,23 @@
+///////////////////////////////////////////////////////////////////////////////
+//PROJECT:       Micro-Manager
+//SUBSYSTEM:     Display implementation
+//-----------------------------------------------------------------------------
+//
+// AUTHOR:       Chris Weisiger, 2015
+//
+// COPYRIGHT:    University of California, San Francisco, 2015
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+
 package org.micromanager.display.internal;
 
 import com.google.common.eventbus.Subscribe;
@@ -9,7 +29,7 @@ import java.util.List;
 import javax.swing.JOptionPane;
 
 import org.micromanager.data.Datastore;
-import org.micromanager.data.DatastoreLockedException;
+import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
 import org.micromanager.display.DisplayManager;
 import org.micromanager.display.DisplayWindow;
@@ -37,9 +57,9 @@ public class DefaultDisplayManager implements DisplayManager {
       try {
          result.putImage(image);
       }
-      catch (DatastoreLockedException e) {
+      catch (DatastoreFrozenException e) {
          // This should never happen.
-         ReportingUtils.showError(e, "Somehow managed to create an immediately-locked RAM datastore.");
+         ReportingUtils.showError(e, "Somehow managed to create an immediately-frozen RAM datastore.");
       }
       createDisplay(result);
       return result;
@@ -201,7 +221,7 @@ public class DefaultDisplayManager implements DisplayManager {
          }
       }
       removeDisplay(display);
-      store.lock();
+      store.freeze();
       // This will invoke our onDatastoreClosed() method.
       store.close();
    }

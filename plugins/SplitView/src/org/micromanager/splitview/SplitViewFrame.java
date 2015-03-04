@@ -50,7 +50,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
-import org.micromanager.data.DatastoreLockedException;
+import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.DisplaySettings;
@@ -487,7 +487,7 @@ public class SplitViewFrame extends MMFrame {
       summary = summary.copy().channelNames(newNames).build();
       try {
          store.setSummaryMetadata(summary);
-      } catch (DatastoreLockedException e) {
+      } catch (DatastoreFrozenException e) {
          gui_.logError("Can't set channel names as datastore is locked");
       }
    }

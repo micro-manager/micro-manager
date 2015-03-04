@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //PROJECT:       Micro-Manager
-//SUBSYSTEM:     Data API implementation
+//SUBSYSTEM:     Data API
 //-----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
@@ -18,23 +18,10 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.data.internal;
-
-import org.micromanager.data.SummaryMetadata;
+package org.micromanager.data;
 
 /**
- * This class signifies that new summary metadata has been set for a 
- * Datastore.
- * TODO: should be renamed to DefaultNewSummaryMetadataEvent.
+ * This exception is raised when an attempt is made to modify a Datastore after
+ * its freeze() method has been called.
  */
-public class NewSummaryMetadataEvent implements org.micromanager.data.NewSummaryMetadataEvent {
-   private SummaryMetadata metadata_;
-   public NewSummaryMetadataEvent(SummaryMetadata metadata) {
-      metadata_ = metadata;
-   }
-
-   @Override
-   public SummaryMetadata getSummaryMetadata() {
-      return metadata_;
-   }
-}
+public class DatastoreFrozenException extends Exception {}

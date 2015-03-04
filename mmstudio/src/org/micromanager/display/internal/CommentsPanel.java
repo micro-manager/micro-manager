@@ -1,11 +1,11 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          CommentsPanel.java
 //PROJECT:       Micro-Manager
-//SUBSYSTEM:     mmstudio
+//SUBSYSTEM:     Display implementation
 //-----------------------------------------------------------------------------
 //
+// AUTHOR:       Chris Weisiger, 2015
 //
-// COPYRIGHT:    University of California, San Francisco, 2012
+// COPYRIGHT:    University of California, San Francisco, 2015
 //
 // LICENSE:      This file is distributed under the BSD license.
 //               License text is included with the source distribution.
@@ -17,7 +17,7 @@
 //               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-//
+
 package org.micromanager.display.internal;
 
 import ij.gui.ImageWindow;
@@ -38,7 +38,7 @@ import javax.swing.event.DocumentListener;
 import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.data.Datastore;
-import org.micromanager.data.DatastoreLockedException;
+import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.SummaryMetadata;
@@ -120,7 +120,7 @@ public class CommentsPanel extends JPanel {
             store_.setSummaryMetadata(summary);
          }
       }
-      catch (DatastoreLockedException e) {
+      catch (DatastoreFrozenException e) {
          ReportingUtils.showError("Comments cannot be changed because the datastore has been locked.");
       }
    }

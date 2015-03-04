@@ -1,10 +1,11 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          StorageMultipageTiff.java
 //PROJECT:       Micro-Manager
-//SUBSYSTEM:     mmstudio
+//SUBSYSTEM:     Multipage TIFF
 //-----------------------------------------------------------------------------
 //
-// COPYRIGHT:    University of California, San Francisco, 2012
+// AUTHOR:       Chris Weisiger, cweisiger@msg.ucsf.edu
+//
+// COPYRIGHT:    University of California, San Francisco, 2012-2015
 //
 // LICENSE:      This file is distributed under the BSD license.
 //               License text is included with the source distribution.

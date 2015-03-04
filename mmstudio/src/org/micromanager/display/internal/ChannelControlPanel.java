@@ -1,3 +1,23 @@
+///////////////////////////////////////////////////////////////////////////////
+//PROJECT:       Micro-Manager
+//SUBSYSTEM:     Display implementation
+//-----------------------------------------------------------------------------
+//
+// AUTHOR:       Chris Weisiger, 2015
+//
+// COPYRIGHT:    University of California, San Francisco, 2015
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+
 package org.micromanager.display.internal;
 
 import com.google.common.eventbus.EventBus;
@@ -30,7 +50,7 @@ import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
-import org.micromanager.data.DatastoreLockedException;
+import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
 import org.micromanager.data.NewImageEvent;
 import org.micromanager.data.NewSummaryMetadataEvent;
@@ -569,7 +589,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       Runnable run = new Runnable() {
          @Override
          public void run() {
-            if (store_.getIsLocked()) {
+            if (store_.getIsFrozen()) {
                // TODO: why do we not do this when the store is locked?
                ReportingUtils.logError("Store locked; no LUT for us");
                return;

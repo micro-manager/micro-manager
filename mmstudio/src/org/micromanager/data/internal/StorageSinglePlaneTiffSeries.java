@@ -1,3 +1,23 @@
+///////////////////////////////////////////////////////////////////////////////
+//PROJECT:       Micro-Manager
+//SUBSYSTEM:     Data API implementation
+//-----------------------------------------------------------------------------
+//
+// AUTHOR:       Chris Weisiger, 2015
+//
+// COPYRIGHT:    University of California, San Francisco, 2015
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+
 package org.micromanager.data.internal;
 
 import com.google.common.eventbus.Subscribe;
@@ -34,8 +54,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import org.micromanager.data.Coords;
-import org.micromanager.data.DatastoreLockedEvent;
-import org.micromanager.data.DatastoreLockedException;
+import org.micromanager.data.DatastoreFrozenEvent;
+import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.NewImageEvent;
@@ -449,7 +469,7 @@ public class StorageSinglePlaneTiffSeries implements Storage {
    }
 
    @Subscribe
-   public void onDatastoreLocked(DatastoreLockedEvent event) {
+   public void onDatastoreFrozen(DatastoreFrozenEvent event) {
       finish();
    }
 

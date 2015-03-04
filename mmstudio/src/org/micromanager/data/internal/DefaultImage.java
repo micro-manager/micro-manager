@@ -1,3 +1,23 @@
+///////////////////////////////////////////////////////////////////////////////
+//PROJECT:       Micro-Manager
+//SUBSYSTEM:     Data API implementation
+//-----------------------------------------------------------------------------
+//
+// AUTHOR:       Chris Weisiger, 2015
+//
+// COPYRIGHT:    University of California, San Francisco, 2015
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+
 package org.micromanager.data.internal;
 
 import ij.ImagePlus;
@@ -17,7 +37,7 @@ import org.json.JSONObject;
 
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
-import org.micromanager.data.DatastoreLockedException;
+import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.internal.utils.DirectBuffers;
@@ -323,7 +343,7 @@ public class DefaultImage implements Image {
     * at C, C+1...C+N where C is its channel index and N is the number of
     * components.
     */
-   public List<Image> splitMultiComponentIntoStore(Datastore store) throws DatastoreLockedException {
+   public List<Image> splitMultiComponentIntoStore(Datastore store) throws DatastoreFrozenException {
       ArrayList<Image> result = new ArrayList<Image>();
       if (numComponents_ == 1) {
          // No need to do anything fancy.

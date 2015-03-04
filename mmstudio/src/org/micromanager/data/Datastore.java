@@ -1,3 +1,23 @@
+///////////////////////////////////////////////////////////////////////////////
+//PROJECT:       Micro-Manager
+//SUBSYSTEM:     Data API
+//-----------------------------------------------------------------------------
+//
+// AUTHOR:       Chris Weisiger, 2015
+//
+// COPYRIGHT:    University of California, San Francisco, 2015
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+
 package org.micromanager.data;
 
 import java.awt.Window;
@@ -85,9 +105,9 @@ public interface Datastore extends Closeable {
     * bus.
     *
     * @param image Micro-Manager Image object
-    * @throws DatastoreLockedException if the lock() method has been called.
+    * @throws DatastoreFrozenException if the freeze() method has been called.
     */
-   public void putImage(Image image) throws DatastoreLockedException;
+   public void putImage(Image image) throws DatastoreFrozenException;
 
    /**
     * Return the maximum Image position along the specified access that this
@@ -140,24 +160,24 @@ public interface Datastore extends Closeable {
     * Set the SummaryMetadata. Posts a NewSummaryMetadataEvent to the event bus.
     *
     * @param metadata Object representing the summary metadata
-    * @throws DatastoreLockedException if the lock() method has been called.
+    * @throws DatastoreFrozenException if the freeze() method has been called.
     */
    public void setSummaryMetadata(SummaryMetadata metadata) 
-           throws DatastoreLockedException;
+           throws DatastoreFrozenException;
 
    /**
-    * Lock the Datastore. Methods that modify its contents will throw
-    * DatastoreLockedExceptions, and a DatastoreLockedEvent() will be posted to
+    * Freeze the Datastore. Methods that modify its contents will throw
+    * DatastoreFrozenExceptions, and a DatastoreFrozenEvent() will be posted to
     * any subscribers.
     */
-   public void lock();
+   public void freeze();
 
    /**
-    * Returns whether or not the Datastore has been locked.
+    * Returns whether or not the Datastore has been frozen.
     * 
-    * @return true if the data store is currently locked
+    * @return true if the data store is currently frozen
     */
-   public boolean getIsLocked();
+   public boolean getIsFrozen();
 
    /**
     * Close the Datastore, removing all references to it from MicroManager's

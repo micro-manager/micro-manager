@@ -1,3 +1,23 @@
+///////////////////////////////////////////////////////////////////////////////
+//PROJECT:       Micro-Manager
+//SUBSYSTEM:     Data API implementation
+//-----------------------------------------------------------------------------
+//
+// AUTHOR:       Chris Weisiger, 2015
+//
+// COPYRIGHT:    University of California, San Francisco, 2015
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+
 package org.micromanager.data.internal;
 
 import java.awt.Window;
@@ -7,7 +27,7 @@ import java.util.List;
 
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
-import org.micromanager.data.DatastoreLockedException;
+import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
 import org.micromanager.data.Storage;
 import org.micromanager.data.SummaryMetadata;
@@ -24,7 +44,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 public class DefaultDatastore implements Datastore {
    private Storage storage_ = null;
    private PrioritizedEventBus bus_;
-   private boolean isLocked_ = false;
+   private boolean isFrozen_ = false;
    private boolean isSaved_ = false;
 
    public DefaultDatastore() {
@@ -41,8 +61,8 @@ public class DefaultDatastore implements Datastore {
             putImage(alt.getImage(coords));
          }
       }
-      catch (DatastoreLockedException e) {
-         ReportingUtils.logError("Can't copy to datastore: we're locked");
+      catch (DatastoreFrozenException e) {
+         ReportingUtils.logError("Can't copy to datastore: we're frozen");
       }
    }
 
@@ -106,9 +126,9 @@ public class DefaultDatastore implements Datastore {
    }
 
    @Override
-   public void putImage(Image image) throws DatastoreLockedException {
-      if (isLocked_) {
-         throw new DatastoreLockedException();
+   public void putImage(Image image) throws DatastoreFrozenException {
+      if (isFrozen_) {
+         throw new DatastoreFrozenException();
       }
       bus_.post(new NewImageEvent(image));
    }
@@ -151,22 +171,22 @@ public class DefaultDatastore implements Datastore {
    }
    
    @Override
-   public void setSummaryMetadata(SummaryMetadata metadata) throws DatastoreLockedException {
-      if (isLocked_) {
-         throw new DatastoreLockedException();
+   public void setSummaryMetadata(SummaryMetadata metadata) throws DatastoreFrozenException {
+      if (isFrozen_) {
+         throw new DatastoreFrozenException();
       }
       bus_.post(new NewSummaryMetadataEvent(metadata));
    }
 
    @Override
-   public void lock() {
-      bus_.post(new DatastoreLockedEvent());
-      isLocked_ = true;
+   public void freeze() {
+      bus_.post(new DefaultDatastoreFrozenEvent());
+      isFrozen_ = true;
    }
 
    @Override
-   public boolean getIsLocked() {
-      return isLocked_;
+   public boolean getIsFrozen() {
+      return isFrozen_;
    }
 
    @Override
@@ -235,7 +255,7 @@ public class DefaultDatastore implements Datastore {
       catch (java.io.IOException e) {
          ReportingUtils.showError(e, "Failed to save image data");
       }
-      catch (DatastoreLockedException e) {
+      catch (DatastoreFrozenException e) {
          ReportingUtils.logError("Couldn't modify newly-created datastore; this should never happen!");
       }
       return false;

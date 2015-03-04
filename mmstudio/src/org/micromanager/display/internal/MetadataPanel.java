@@ -1,11 +1,11 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          MetadataPanel.java
 //PROJECT:       Micro-Manager
-//SUBSYSTEM:     mmstudio
+//SUBSYSTEM:     Display implementation
 //-----------------------------------------------------------------------------
 //
+// AUTHOR:       Chris Weisiger, 2015
 //
-// COPYRIGHT:    University of California, San Francisco, 2012
+// COPYRIGHT:    University of California, San Francisco, 2015
 //
 // LICENSE:      This file is distributed under the BSD license.
 //               License text is included with the source distribution.
@@ -17,7 +17,7 @@
 //               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-//
+
 package org.micromanager.display.internal;
 
 import ij.gui.ImageWindow;

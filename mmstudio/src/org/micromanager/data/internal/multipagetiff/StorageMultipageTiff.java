@@ -1,10 +1,9 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          StorageMultipageTiff.java
 //PROJECT:       Micro-Manager
-//SUBSYSTEM:     mmstudio
+//SUBSYSTEM:     Multipage TIFF
 //-----------------------------------------------------------------------------
 //
-// COPYRIGHT:    University of California, San Francisco, 2012
+// COPYRIGHT:    University of California, San Francisco, 2012-2015
 //
 // LICENSE:      This file is distributed under the BSD license.
 //               License text is included with the source distribution.
@@ -47,7 +46,7 @@ import org.json.JSONObject;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
-import org.micromanager.data.DatastoreLockedEvent;
+import org.micromanager.data.DatastoreFrozenEvent;
 import org.micromanager.data.Image;
 import org.micromanager.data.NewImageEvent;
 import org.micromanager.data.NewSummaryMetadataEvent;
@@ -218,7 +217,7 @@ public final class StorageMultipageTiff implements Storage {
    }
 
    @Subscribe
-   public void onDatastoreLocked(DatastoreLockedEvent event) {
+   public void onDatastoreFrozen(DatastoreFrozenEvent event) {
       finished();
    }
 
