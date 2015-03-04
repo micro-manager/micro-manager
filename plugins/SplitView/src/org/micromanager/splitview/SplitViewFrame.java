@@ -56,10 +56,9 @@ import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.ScriptInterface;
-import org.micromanager.display.RequestToDrawEvent;
+import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.MMTags;
-import org.micromanager.internal.utils.ReportingUtils;
 
 /** 
  * Micro-Manager plugin that can split the acquired image top-down or left-right
@@ -68,7 +67,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  *
  * @author nico
  */
-public class SplitViewFrame extends javax.swing.JFrame {
+public class SplitViewFrame extends MMFrame {
 
    private final ScriptInterface gui_;
    private final CMMCore core_;
@@ -80,8 +79,8 @@ public class SplitViewFrame extends javax.swing.JFrame {
    private String orientation_;
    Color col1_;
    Color col2_;
-   private int frameXPos_ = 100;
-   private int frameYPos_ = 100;
+   private final int frameXPos_ = 100;
+   private final int frameYPos_ = 100;
    private final Timer timer_;
    private double interval_ = 30;
    private static final String ACQNAME = "Split View";
@@ -90,12 +89,11 @@ public class SplitViewFrame extends javax.swing.JFrame {
    private static final String TOPLEFTCOLOR = "TopLeftColor";
    private static final String BOTTOMRIGHTCOLOR = "BottomRightColor";
    private static final String ORIENTATION = "Orientation";
-   private static final String FRAMEXPOS = "FRAMEXPOS";
-   private static final String FRAMEYPOS = "FRAMEYPOS";
    private boolean autoShutterOrg_;
    private String shutterLabel_;
    private boolean shutterOrg_;
    private final SplitViewProcessor processor_;
+   private Datastore dataStore_;
 
    
 
@@ -126,15 +124,11 @@ public class SplitViewFrame extends javax.swing.JFrame {
       timer_ = new Timer((int) interval_, timerHandler);
       timer_.stop();
 
-
-      frameXPos_ = gui_.profile().getInt(this.getClass(),FRAMEXPOS, frameXPos_);
-      frameYPos_ = gui_.profile().getInt(this.getClass(),FRAMEYPOS, frameYPos_);
-
       Font buttonFont = new Font("Arial", Font.BOLD, 10);
 
       initComponents();
 
-      setLocation(frameXPos_, frameYPos_);
+      loadAndRestorePosition(frameXPos_, frameYPos_);
 
       Dimension buttonSize = new Dimension(120, 20);
 
@@ -170,14 +164,14 @@ public class SplitViewFrame extends javax.swing.JFrame {
 
    private void doSnap() {
       calculateSize();
-      if (!gui_.acquisitionExists(ACQNAME)) {
+      if (dataStore_ == null) {
          try {
-            openAcq();
+            dataStore_ = openAcq();
          } catch (MMScriptException ex) {
-            ReportingUtils.showError(ex, "Failed to open acquisition Window");
+            gui_.showError(ex, "Failed to open acquisition Window");
          }
       }
-      if (gui_.acquisitionExists(ACQNAME)) {
+      if (dataStore_ != null) {
          addSnapToImage();
       }
    }
@@ -194,9 +188,9 @@ public class SplitViewFrame extends javax.swing.JFrame {
             if (!gui_.acquisitionExists(ACQNAME)) {
                try {
                   calculateSize();
-                  openAcq();
+                  dataStore_ = openAcq();
                } catch (MMScriptException ex) {
-                  ReportingUtils.showError(ex, "Failed to open acquisition Window");
+                  gui_.showError(ex, "Failed to open acquisition Window");
                }
             }
 
@@ -235,7 +229,7 @@ public class SplitViewFrame extends javax.swing.JFrame {
             liveButton.setText("Live");
          }
       } catch (Exception err) {
-         ReportingUtils.showError(err);
+         gui_.showError(err);
       }
    }
 
@@ -249,20 +243,16 @@ public class SplitViewFrame extends javax.swing.JFrame {
       newHeight_ = processor_.calculateHeight(height_);
    }
    
-   private void openAcq() throws MMScriptException {
-
-      gui_.openAcquisition(ACQNAME, "", 1, 2, 1, 1, false, false);
-      gui_.initializeAcquisition(ACQNAME, newWidth_, newHeight_, (int) imgDepth_, 8 * (int)imgDepth_);
-      gui_.promptToSaveAcquisition(ACQNAME, false);
-
-      Datastore store = gui_.getAcquisitionDatastore(ACQNAME);
-      gui_.display().track(store);
-      DisplayWindow display = gui_.display().createDisplay(store);
-      updateDisplaySettings();
+   private Datastore openAcq() throws MMScriptException {
+      Datastore dataStore = gui_.data().createRAMDatastore();
+      DisplayWindow display = gui_.display().createDisplay(dataStore);
+      updateMetadata(dataStore);
+      updateColors (display);      
+      return dataStore;
    }
 
    private void addSnapToImage() {
-     TaggedImage img;
+      TaggedImage img;
       ImageProcessor tmpImg;
       try {
          core_.snapImage();
@@ -276,20 +266,19 @@ public class SplitViewFrame extends javax.swing.JFrame {
             return;
          }
          tmpImg.setPixels(img.pix);
-
-         if (!gui_.acquisitionExists(ACQNAME)) {
-            enableLiveMode(false);
-            return;
-         } else if (gui_.getAcquisitionImageHeight(ACQNAME) != newHeight_
-                 || gui_.getAcquisitionImageWidth(ACQNAME) != newWidth_
-                 || gui_.getAcquisitionImageByteDepth(ACQNAME) != imgDepth_) {
-            Datastore store = gui_.getAcquisitionDatastore(ACQNAME);
-            for (DisplayWindow display : gui_.display().getDisplays(store)) {
-               display.forceClosed();
-            }
-            gui_.closeAcquisition(ACQNAME);
-            openAcq();
+         if (dataStore_ == null) {
+            dataStore_ = openAcq();
          }
+         Image testImage = dataStore_.getAnyImage();
+         if (testImage != null) {
+            if (testImage.getBytesPerPixel() != imgDepth_
+                    || testImage.getHeight() != newHeight_
+                    || testImage.getWidth() != newWidth_) {
+               dataStore_.close();
+               dataStore_ = openAcq();
+            }
+         }
+
 
          tmpImg.setRoi(0, 0, newWidth_, newHeight_);
          // first channel
@@ -299,7 +288,7 @@ public class SplitViewFrame extends javax.swing.JFrame {
          Image image = gui_.data().convertTaggedImage(firstChannel);
          final Coords c = gui_.data().getCoordsBuilder().channel(0).build();
          image = image.copyAtCoords(c);
-         gui_.getAcquisitionDatastore(ACQNAME).putImage(image);
+         dataStore_.putImage(image);
          
          // second channel
          if (orientation_.equals(LR)) {
@@ -312,28 +301,14 @@ public class SplitViewFrame extends javax.swing.JFrame {
          secondChannel.tags.put(MMTags.Image.HEIGHT, newHeight_);
          image = gui_.data().convertTaggedImage(secondChannel);
          image = image.copyAtCoords(c.copy().channel(1).build());
-         gui_.getAcquisitionDatastore(ACQNAME).putImage(image);
-         gui_.getAcquisitionDatastore(ACQNAME).publishEvent(
-                 new RequestToDrawEvent() {
-
-            @Override
-            public Coords getCoords() {
-               return c;
-               }
-         });
+         dataStore_.putImage(image);
 
       } catch (Exception e) {
          if (gui_.isLiveModeOn())
             enableLiveMode(false);
          else
-            ReportingUtils.showError(e);
+            gui_.showError(e);
       }
-   }
-
-   public void safePrefs() {
-      gui_.profile().getInt(this.getClass(),FRAMEXPOS, this.getX());
-      gui_.profile().getInt(this.getClass(),FRAMEYPOS, this.getY());
-
    }
 
    /** This method is called from within the constructor to
@@ -475,7 +450,7 @@ public class SplitViewFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_snapButtonActionPerformed
 
     private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
-       safePrefs();
+     
     }//GEN-LAST:event_formWindowClosed
 
     private void liveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_liveButtonActionPerformed
@@ -490,46 +465,41 @@ public class SplitViewFrame extends javax.swing.JFrame {
        }
     }//GEN-LAST:event_liveButtonActionPerformed
 
-   private void updateDisplaySettings() {
-      try {
-         Datastore store = gui_.getAcquisitionDatastore(ACQNAME);
-         String[] newNames = new String[] {"Left", "Right"};
-         if (orientation_.equals(TB)) {
-            newNames[0] = "Top";
-            newNames[1] = "Bottom";
-         }
-         SummaryMetadata summary = store.getSummaryMetadata();
-         summary = summary.copy().channelNames(newNames).build();
-         try {
-            store.setSummaryMetadata(summary);
-         }
-         catch (DatastoreLockedException e) {
-            ReportingUtils.logError("Can't set channel names as datastore is locked");
-         }
-         for (DisplayWindow display : gui_.display().getDisplays(store)) {
-            DisplaySettings settings = display.getDisplaySettings();
-            Color[] newColors = new Color[] {col1_, col2_};
-            settings = settings.copy().channelColors(newColors).build();
-            display.setDisplaySettings(settings);
-         }
+   private void updateMetadata(Datastore store) {
+      String[] newNames = new String[]{"Left", "Right"};
+      if (orientation_.equals(TB)) {
+         newNames[0] = "Top";
+         newNames[1] = "Bottom";
       }
-      catch (MMScriptException e) {
-         gui_.logError(e, "Unable to update display settings");
+      SummaryMetadata summary = store.getSummaryMetadata();
+      summary = summary.copy().channelNames(newNames).build();
+      try {
+         store.setSummaryMetadata(summary);
+      } catch (DatastoreLockedException e) {
+         gui_.logError("Can't set channel names as datastore is locked");
       }
    }
+   
+   private void updateColors(DisplayWindow display) {
+      DisplaySettings settings = display.getDisplaySettings();
+      Color[] newColors = new Color[]{col1_, col2_};
+      settings = settings.copy().channelColors(newColors).build();
+      //TODO: restore once upstream works.  display.setDisplaySettings(settings);
+   }
+
 
     private void topLeftColorButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_topLeftColorButtonActionPerformed
        col1_ = JColorChooser.showDialog(getContentPane(), "Choose left/top color", col1_);
        topLeftColorButton.setForeground(col1_);
        gui_.profile().setInt(this.getClass(),TOPLEFTCOLOR, col1_.getRGB());
-       updateDisplaySettings();
+       updateMetadata(dataStore_);
     }//GEN-LAST:event_topLeftColorButtonActionPerformed
 
     private void bottomRightColorButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bottomRightColorButtonActionPerformed
        col2_ = JColorChooser.showDialog(getContentPane(), "Choose right/bottom color", col2_);
        bottomRightColorButton.setForeground(col2_);
        gui_.profile().setInt(this.getClass(),BOTTOMRIGHTCOLOR, col2_.getRGB());
-       updateDisplaySettings();
+       updateMetadata(dataStore_);
     }//GEN-LAST:event_bottomRightColorButtonActionPerformed
 
     public JSONArray getColors() throws JSONException {
