@@ -262,7 +262,7 @@ public class DefaultImage implements Image {
 
    @Override
    public long getComponentIntensityAt(int x, int y, int component) {
-      int pixelIndex = y * pixelHeight_ + x + component;
+      int pixelIndex = y * pixelWidth_ + x + component;
       if (pixelIndex < 0 || pixelIndex >= rawPixels_.capacity()) {
          throw new IllegalArgumentException(
                String.format("Asked for pixel at (%d, %d) component %d outside of pixel array size of %d (calculated index %d)",
@@ -278,7 +278,7 @@ public class DefaultImage implements Image {
       for (int i = 0; i < bytesPerPixel_ / divisor; ++i) {
          // NB Java will let you use "<<=" in this situation.
          result = result << exponent;
-         int index = y * pixelHeight_ + x + component + i;
+         int index = y * pixelWidth_ + x + component + i;
          // Java doesn't have unsigned number types, so we have to manually
          // convert; otherwise large numbers will set the sign bit and show
          // as negative.
