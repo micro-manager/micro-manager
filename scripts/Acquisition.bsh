@@ -1,2 +1,0 @@
-gui.loadAcquisition("/Users/nico/acq1.xml");
-gui.startAcquisition();
