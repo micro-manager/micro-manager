@@ -1,12 +1,12 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          MultipageTiffReader.java
 //PROJECT:       Micro-Manager
-//SUBSYSTEM:     mmstudio
+//SUBSYSTEM:     Multipage TIFF
 //-----------------------------------------------------------------------------
 //
-// AUTHOR:       Henry Pinkard, henry.pinkard@gmail.com, 2012
+// AUTHOR:       Henry Pinkard, henry.pinkard@gmail.com
+//               Chris Weisiger, cweisiger@msg.ucsf.edu
 //
-// COPYRIGHT:    University of California, San Francisco, 2012
+// COPYRIGHT:    University of California, San Francisco, 2012-2015
 //
 // LICENSE:      This file is distributed under the BSD license.
 //               License text is included with the source distribution.
