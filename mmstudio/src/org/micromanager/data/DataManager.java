@@ -14,7 +14,7 @@ import org.micromanager.PropertyMap;
 /**
  * This class provides general utility functions for working with
  * Micro-Manager data. You can access it via ScriptInterface's data() method
- * (for example, "gui.data().getCoordsBuilder()").
+ * (for example, "mm.data().getCoordsBuilder()").
  */
 public interface DataManager {
    /**
