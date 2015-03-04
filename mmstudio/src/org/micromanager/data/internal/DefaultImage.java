@@ -265,7 +265,8 @@ public class DefaultImage implements Image {
       int pixelIndex = y * pixelHeight_ + x + component;
       if (pixelIndex < 0 || pixelIndex >= rawPixels_.capacity()) {
          throw new IllegalArgumentException(
-               String.format("Asked for pixel at (%d, %d) outside of pixel array size of %d", x, y, rawPixels_.capacity()));
+               String.format("Asked for pixel at (%d, %d) component %d outside of pixel array size of %d (calculated index %d)",
+                  x, y, component, rawPixels_.capacity(), pixelIndex));
       }
       long result = 0;
       int divisor = numComponents_;
