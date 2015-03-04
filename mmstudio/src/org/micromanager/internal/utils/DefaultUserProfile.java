@@ -46,7 +46,8 @@ public class DefaultUserProfile implements UserProfile {
    public DefaultUserProfile() {
       accessLock_ = new ReentrantLock();
       nameToFile_ = loadProfileMapping();
-      globalProfile_ = loadProfile(GLOBAL_USER);
+      String globalPath = new File(UserProfile.GLOBAL_SETTINGS_FILE).getAbsolutePath();
+      globalProfile_ = loadPropertyMap(globalPath);
       // Naturally we start with the default user loaded.
       setCurrentProfile(DEFAULT_USER);
    }
@@ -62,8 +63,7 @@ public class DefaultUserProfile implements UserProfile {
             "/" + USERNAME_MAPPING_FILE);
       if (!tmp.exists()) {
          ReportingUtils.logMessage("Creating user profile mapping file");
-         // No file to be found; create it with the default user.
-         result.put(GLOBAL_USER, UserProfile.GLOBAL_SETTINGS_FILE);
+         // No file to be found; create it with no entry.
          writeProfileMapping(result);
       }
       try {
