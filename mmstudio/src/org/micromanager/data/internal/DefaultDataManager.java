@@ -16,7 +16,7 @@ import org.json.JSONException;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataManager;
 import org.micromanager.data.Datastore;
-import org.micromanager.data.DatastoreLockedException;
+import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.SummaryMetadata;
@@ -118,7 +118,7 @@ public class DefaultDataManager implements DataManager {
 
    @Override
    public void addToAlbum(Image image) {
-      if (albumDatastore_ == null || albumDatastore_.getIsLocked()) {
+      if (albumDatastore_ == null || albumDatastore_.getIsFrozen()) {
          // Need to create a new album.
          albumDatastore_ = new DefaultDatastore();
          studio_.displays().track(albumDatastore_);
@@ -133,7 +133,7 @@ public class DefaultDataManager implements DataManager {
          DefaultImage temp = new DefaultImage(image, newCoords, image.getMetadata());
          temp.splitMultiComponentIntoStore(albumDatastore_);
       }
-      catch (DatastoreLockedException e) {
+      catch (DatastoreFrozenException e) {
          ReportingUtils.showError(e, "Album datastore is locked.");
       }
    }

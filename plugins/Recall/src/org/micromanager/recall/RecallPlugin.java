@@ -42,7 +42,7 @@ import org.micromanager.ScriptInterface;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.acquisition.internal.TaggedImageQueue;
 import org.micromanager.data.Datastore;
-import org.micromanager.data.DatastoreLockedException;
+import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.internal.utils.MMTags;
 import org.micromanager.internal.utils.MDUtils;
@@ -81,7 +81,7 @@ public class RecallPlugin implements MMPlugin {
                }
             } catch (MMScriptException e) {
                gui_.logError(e);
-            } catch (DatastoreLockedException ex) {
+            } catch (DatastoreFrozenException ex) {
                gui_.logError(ex);
             } catch (JSONException ex) {
                gui_.logError(ex);
@@ -98,8 +98,8 @@ public class RecallPlugin implements MMPlugin {
    @Override
    public void show() {
       store_ = gui_.data().createRAMDatastore();
-      DisplayWindow display = gui_.display().createDisplay(store_);
-      gui_.display().track(store_);
+      DisplayWindow display = gui_.displays().createDisplay(store_);
+      gui_.displays().track(store_);
 
       int remaining = core_.getRemainingImageCount();
       if (remaining < 1) {

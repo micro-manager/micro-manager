@@ -34,8 +34,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import org.micromanager.data.Coords;
-import org.micromanager.data.DatastoreLockedEvent;
-import org.micromanager.data.DatastoreLockedException;
+import org.micromanager.data.DatastoreFrozenEvent;
+import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.NewImageEvent;
@@ -449,7 +449,7 @@ public class StorageSinglePlaneTiffSeries implements Storage {
    }
 
    @Subscribe
-   public void onDatastoreLocked(DatastoreLockedEvent event) {
+   public void onDatastoreFrozen(DatastoreFrozenEvent event) {
       finish();
    }
 

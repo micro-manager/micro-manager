@@ -9,7 +9,7 @@ import java.util.List;
 import javax.swing.JOptionPane;
 
 import org.micromanager.data.Datastore;
-import org.micromanager.data.DatastoreLockedException;
+import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
 import org.micromanager.display.DisplayManager;
 import org.micromanager.display.DisplayWindow;
@@ -37,9 +37,9 @@ public class DefaultDisplayManager implements DisplayManager {
       try {
          result.putImage(image);
       }
-      catch (DatastoreLockedException e) {
+      catch (DatastoreFrozenException e) {
          // This should never happen.
-         ReportingUtils.showError(e, "Somehow managed to create an immediately-locked RAM datastore.");
+         ReportingUtils.showError(e, "Somehow managed to create an immediately-frozen RAM datastore.");
       }
       createDisplay(result);
       return result;
@@ -201,7 +201,7 @@ public class DefaultDisplayManager implements DisplayManager {
          }
       }
       removeDisplay(display);
-      store.lock();
+      store.freeze();
       // This will invoke our onDatastoreClosed() method.
       store.close();
    }

@@ -38,7 +38,7 @@ import javax.swing.event.DocumentListener;
 import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.data.Datastore;
-import org.micromanager.data.DatastoreLockedException;
+import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.SummaryMetadata;
@@ -120,7 +120,7 @@ public class CommentsPanel extends JPanel {
             store_.setSummaryMetadata(summary);
          }
       }
-      catch (DatastoreLockedException e) {
+      catch (DatastoreFrozenException e) {
          ReportingUtils.showError("Comments cannot be changed because the datastore has been locked.");
       }
    }

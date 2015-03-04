@@ -49,7 +49,7 @@ import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
 import org.micromanager.data.internal.StorageSinglePlaneTiffSeries;
 import org.micromanager.data.internal.StorageRAM;
 import org.micromanager.data.Datastore;
-import org.micromanager.data.DatastoreLockedException;
+import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Storage;
 import org.micromanager.data.SummaryMetadata;
 
@@ -154,7 +154,7 @@ public class MMAcquisition {
       try {
          store_.setSummaryMetadata(DefaultSummaryMetadata.legacyFromJSON(summaryMetadata));
       }
-      catch (DatastoreLockedException e) {
+      catch (DatastoreFrozenException e) {
          ReportingUtils.logError(e, "Couldn't set summary metadata");
       }
       if (show_) {
@@ -292,7 +292,7 @@ public class MMAcquisition {
          try {
             store_.setSummaryMetadata((new DefaultSummaryMetadata.Builder().build()));
          }
-         catch (DatastoreLockedException e) {
+         catch (DatastoreFrozenException e) {
             ReportingUtils.logError(e, "Couldn't set summary metadata");
          }
          // Now that the datastore is set up, create the display(s).
@@ -332,7 +332,7 @@ public class MMAcquisition {
          catch (java.io.IOException e) {
             ReportingUtils.showError(e, "Unable to prepare saving");
          }
-         catch (DatastoreLockedException e) {
+         catch (DatastoreFrozenException e) {
             ReportingUtils.logError("Unable to set summary metadata; datastore pre-emptively locked. This should never happen!");
          }
       }
@@ -342,7 +342,7 @@ public class MMAcquisition {
          try {
             store_.setSummaryMetadata((new DefaultSummaryMetadata.Builder().build()));
          }
-         catch (DatastoreLockedException e) {
+         catch (DatastoreFrozenException e) {
             ReportingUtils.logError(e, "Couldn't set summary metadata");
          }
       }
@@ -471,7 +471,7 @@ public class MMAcquisition {
          try {
             store_.setSummaryMetadata(DefaultSummaryMetadata.legacyFromJSON(summaryMetadata));
          }
-         catch (DatastoreLockedException e) {
+         catch (DatastoreFrozenException e) {
             ReportingUtils.logError(e, "Couldn't set summary metadata");
          }
       } catch (JSONException ex) {
@@ -591,7 +591,7 @@ public class MMAcquisition {
       catch (JSONException e) {
          ReportingUtils.logError(e, "Couldn't generate DefaultImage from TaggedImage.");
       }
-      catch (DatastoreLockedException e) {
+      catch (DatastoreFrozenException e) {
          ReportingUtils.showError(e, "Couldn't insert image into datastore.");
       }
    }

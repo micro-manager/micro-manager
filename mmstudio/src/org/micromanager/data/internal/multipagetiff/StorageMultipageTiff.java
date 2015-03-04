@@ -47,7 +47,7 @@ import org.json.JSONObject;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
-import org.micromanager.data.DatastoreLockedEvent;
+import org.micromanager.data.DatastoreFrozenEvent;
 import org.micromanager.data.Image;
 import org.micromanager.data.NewImageEvent;
 import org.micromanager.data.NewSummaryMetadataEvent;
@@ -218,7 +218,7 @@ public final class StorageMultipageTiff implements Storage {
    }
 
    @Subscribe
-   public void onDatastoreLocked(DatastoreLockedEvent event) {
+   public void onDatastoreFrozen(DatastoreFrozenEvent event) {
       finished();
    }
 

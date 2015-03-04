@@ -30,7 +30,7 @@ import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
-import org.micromanager.data.DatastoreLockedException;
+import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
 import org.micromanager.data.NewImageEvent;
 import org.micromanager.data.NewSummaryMetadataEvent;
@@ -569,7 +569,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       Runnable run = new Runnable() {
          @Override
          public void run() {
-            if (store_.getIsLocked()) {
+            if (store_.getIsFrozen()) {
                // TODO: why do we not do this when the store is locked?
                ReportingUtils.logError("Store locked; no LUT for us");
                return;
