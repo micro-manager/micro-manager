@@ -109,8 +109,8 @@ public interface DisplayWindow {
     * then you should have a class that is subscribed to the display's EventBus
     * and that is listening for the RequestToCloseEvent; otherwise, the
     * display cannot be closed. If you do not want this responsibility, you can
-    * request that Micro-Manager track a Datastore and its associated displays
-    * for you via DisplayManager.track().
+    * request that Micro-Manager manage a Datastore and its associated displays
+    * for you via DisplayManager.manage().
     *
     * @return True if the window is closed, false if it remains open.
     */

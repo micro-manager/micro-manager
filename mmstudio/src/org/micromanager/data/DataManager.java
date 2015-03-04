@@ -45,8 +45,8 @@ public interface DataManager {
 
    /**
     * Generate a new, "blank" Datastore with RAM-based Storage and return it.
-    * This Datastore will not be tracked by Micro-Manager by default (see the
-    * org.micromanager.api.display.DisplayManager.track() method for more
+    * This Datastore will not be managed by Micro-Manager by default (see the
+    * org.micromanager.api.display.DisplayManager.manage() method for more
     * information).
     * @return an empty Datastore backed by the appropriate Storage
     */
@@ -55,8 +55,8 @@ public interface DataManager {
    /**
     * Generate a new, "blank" Datastore with multipage TIFF-based Storage and
     * return it. This format stores multiple 2D image planes in the same file,
-    * up to 4GB per file. This Datastore will not be tracked by Micro-Manager by
-    * default (see the org.micromanager.api.display.DisplayManager.track()
+    * up to 4GB per file. This Datastore will not be managed by Micro-Manager
+    * by default (see the org.micromanager.api.display.DisplayManager.manage()
     * method for more information). Be certain to call the save() method of
     * the Datastore when you have finished adding data to it, as the Storage
     * must finalize the dataset before it is properly completed.
@@ -74,9 +74,9 @@ public interface DataManager {
 
    /**
     * Generate a new, "blank" Datastore whose Storage is a series of
-    * single-plane TIFF files. This Datastore will not be tracked by
+    * single-plane TIFF files. This Datastore will not be managed by
     * Micro-Manager by default (see the
-    * org.micromanager.api.display.DisplayManager.track() method for more
+    * org.micromanager.api.display.DisplayManager.manage() method for more
     * information).  Be certain to call the save() method of the Datastore when
     * you have finished adding data to it, as the Storage must finalize the
     * dataset before it is properly completed.
@@ -87,9 +87,9 @@ public interface DataManager {
 
    /**
     * Load the image data at the specified location on disk, and return a
-    * Datastore for that data. This Datastore will not be tracked by
+    * Datastore for that data. This Datastore will not be managed by
     * Micro-Manager by default (see the
-    * org.micromanager.api.display.DisplayManager.track() method for more
+    * org.micromanager.api.display.DisplayManager.manage() method for more
     * information).
     * TODO: replace all uses of ScriptInterface.openAcquisitionData with this.
     * @param directory Location on disk from which to pull image data.

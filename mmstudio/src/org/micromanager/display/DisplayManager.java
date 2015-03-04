@@ -34,7 +34,7 @@ public interface DisplayManager {
    /**
     * Create a new Datastore with an associated DisplayWindow that will
     * display the provided Image. The Datastore will use RAM-based storage,
-    * and will not be tracked by Micro-Manager by default (see the track()
+    * and will not be managed by Micro-Manager by default (see the manage()
     * method, below).
     * @param image The Image to display.
     * @return The Datastore created to hold the Image.
@@ -70,8 +70,11 @@ public interface DisplayManager {
    public DisplayWindow createDisplay(Datastore store);
 
    /**
-    * Request that MicroManager track the specified Datastore for you.
-    * Tracking does the following things:
+    * Request that MicroManager manage the specified Datastore for you.
+    * In brief: if you want users to receive a prompt to save their data when
+    * the last window for a Datastore you created is closed, then use this
+    * method.
+    * Specifically, this method does the following things:
     * - Add the Datastore to the list returned by getDatastores().
     * - Find all currently-existing DisplayWindows for this Datastore and
     *   associate them (thus, getDisplays() for this Datastore will return the
@@ -79,24 +82,24 @@ public interface DisplayManager {
     * - When the last DisplayWindow for the Datastore is closed:
     * -- If the Datastore has not been saved, prompt the user to save (and if
     *    they cancel, closing the DisplayWindow is halted)
-    * -- The Datastore is locked, which may have side-effects like finalizing
+    * -- The Datastore is frozen, which may have side-effects like finalizing
     *    writing of image data to disk
     * -- The Datastore is removed from the list returned by getDatastores().
     * By default, new Datastores created by the createNewDatastore() method
-    * are not tracked, which means you are responsible for ensuring that they
+    * are not managed, which means you are responsible for ensuring that they
     * are properly closed and saved. Datastores created by MicroManager itself
-    * (e.g. by running an MDA) are automatically tracked.
+    * (e.g. by running an MDA) are automatically managed.
     */
-   public void track(Datastore store);
+   public void manage(Datastore store);
 
    /**
-    * Return a list of all Datastores that MicroManager is tracking (see the
-    * track() method for more information).
+    * Return a list of all Datastores that MicroManager is managing (see the
+    * manage() method for more information).
     */
    public List<Datastore> getTrackedDatastores();
 
    /**
-    * Returns true iff the Datastore is being tracked by MicroManager.
+    * Returns true iff the Datastore is being managed by MicroManager.
     */
    public boolean getIsTracked(Datastore store);
 
@@ -106,21 +109,21 @@ public interface DisplayManager {
     * Datastore; second, when the last DisplayWindow for a Datastore is closed,
     * the user is prompted to save (if the Datastore has not already been
     * saved), and if the user cancels, the window is not closed.
-    * @throws IllegalArgumentException if the Datastore is not tracked by
+    * @throws IllegalArgumentException if the Datastore is not managed by
     *         MicroManager.
     */
    public void associateDisplay(DisplayWindow window, Datastore store) throws IllegalArgumentException;
 
    /**
     * Remove the specified DisplayWindow from the list of associated displays
-    * for the Datastore. Does nothing if the Datastore is not tracked or if
+    * for the Datastore. Does nothing if the Datastore is not managed or if
     * the display is already not associated.
     */
    public void removeDisplay(DisplayWindow window, Datastore store);
 
    /**
     * Return all associated DisplayWindows for the Datastore. Returns null if
-    * the Datastore is not tracked.
+    * the Datastore is not managed.
     */
    public List<DisplayWindow> getDisplays(Datastore store);
 

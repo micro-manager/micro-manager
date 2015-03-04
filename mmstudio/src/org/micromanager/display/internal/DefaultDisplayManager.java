@@ -71,7 +71,7 @@ public class DefaultDisplayManager implements DisplayManager {
    }
 
    @Override
-   public void track(Datastore store) {
+   public void manage(Datastore store) {
       // Iterate over all display windows, find those associated with this
       // datastore, and manually associate them now.
       ArrayList<DisplayWindow> displays = new ArrayList<DisplayWindow>();
@@ -138,7 +138,7 @@ public class DefaultDisplayManager implements DisplayManager {
    public void associateDisplay(DisplayWindow window, Datastore store)
          throws IllegalArgumentException {
       if (!storeToDisplays_.containsKey(store)) {
-         throw new IllegalArgumentException("Asked to associate a display with datastore " + store + " that is not tracked.");
+         throw new IllegalArgumentException("Asked to associate a display with datastore " + store + " that is not managed.");
       }
       storeToDisplays_.get(store).add(window);
       window.registerForEvents(this);
@@ -168,7 +168,7 @@ public class DefaultDisplayManager implements DisplayManager {
    }
 
    /**
-    * Check if this is the last display for a Datastore that we are tracking,
+    * Check if this is the last display for a Datastore that we are managing,
     * and verify closing without saving (if appropriate).
     */
    @Subscribe
@@ -177,7 +177,7 @@ public class DefaultDisplayManager implements DisplayManager {
       Datastore store = display.getDatastore();
       if (!storeToDisplays_.containsKey(store)) {
          // This should never happen.
-         ReportingUtils.logError("Somehow got notified of a request to close for a display that isn't associated with a datastore that we are tracking.");
+         ReportingUtils.logError("Somehow got notified of a request to close for a display that isn't associated with a datastore that we are managing.");
          return;
       }
       ArrayList<DisplayWindow> displays = storeToDisplays_.get(store);
@@ -235,7 +235,7 @@ public class DefaultDisplayManager implements DisplayManager {
 
    /**
     * Newly-created DisplayWindows should be associated with their Datastores
-    * if the Datastore is being tracked.
+    * if the Datastore is being managed.
     */
    @Subscribe
    public void onNewDisplayEvent(NewDisplayEvent event) {

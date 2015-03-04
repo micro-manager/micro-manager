@@ -141,7 +141,7 @@ public class DefaultDataManager implements DataManager {
       if (albumDatastore_ == null || albumDatastore_.getIsFrozen()) {
          // Need to create a new album.
          albumDatastore_ = new DefaultDatastore();
-         studio_.displays().track(albumDatastore_);
+         studio_.displays().manage(albumDatastore_);
          albumDatastore_.setStorage(new StorageRAM(albumDatastore_));
          new DefaultDisplayWindow(albumDatastore_, null);
       }
