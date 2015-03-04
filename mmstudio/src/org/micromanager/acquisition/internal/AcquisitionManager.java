@@ -155,7 +155,7 @@ public class AcquisitionManager {
       for (String name : getAcquisitionNames()) {
          MMAcquisition acq = acqs_.get(name);
          Datastore store = acq.getDatastore();
-         for (DisplayWindow display : MMStudio.getInstance().display().getDisplays(store)) {
+         for (DisplayWindow display : MMStudio.getInstance().displays().getDisplays(store)) {
             if (!display.requestToClose()) {
                return false;
             }

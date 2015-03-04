@@ -87,7 +87,7 @@ public class LinkButton extends JToggleButton {
     */
    public void showLinkMenu(Point p) {
       JPopupMenu menu = new JPopupMenu();
-      final List<DisplayWindow> displays = MMStudio.getInstance().display().getAllImageWindows();
+      final List<DisplayWindow> displays = MMStudio.getInstance().displays().getAllImageWindows();
       if (displays.size() > 2) { // i.e. at least two potential candidates
          JMenuItem allItem = new JMenuItem("All");
          allItem.addActionListener(new ActionListener() {

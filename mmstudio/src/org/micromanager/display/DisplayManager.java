@@ -3,13 +3,24 @@ package org.micromanager.display;
 import java.util.List;
 
 import org.micromanager.data.Datastore;
+import org.micromanager.data.Image;
 import org.micromanager.PropertyMap;
 
 /**
  * This interface declares generic display-related methods. You can access
- * a class instance that implements this interface by calling gui.display().
+ * a class instance that implements this interface by calling mm.display().
  */
 public interface DisplayManager {
+   /**
+    * Create a new Datastore with an associated DisplayWindow that will
+    * display the provided Image. The Datastore will use RAM-based storage,
+    * and will not be tracked by Micro-Manager by default (see the track()
+    * method, below).
+    * @param image The Image to display.
+    * @return The Datastore created to hold the Image.
+    */
+   public Datastore show(Image image);
+
    /**
     * Retrieve a DisplaySettings holding the values the user has saved as their
     * default values.

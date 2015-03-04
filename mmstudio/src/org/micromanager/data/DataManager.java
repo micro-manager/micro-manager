@@ -14,7 +14,7 @@ import org.micromanager.PropertyMap;
 /**
  * This class provides general utility functions for working with
  * Micro-Manager data. You can access it via ScriptInterface's data() method
- * (for example, "gui.data().getCoordsBuilder()").
+ * (for example, "mm.data().getCoordsBuilder()").
  */
 public interface DataManager {
    /**
@@ -105,9 +105,30 @@ public interface DataManager {
          Metadata metadata);
 
    /**
-    * Given a TaggedImage input, output an Image.
+    * Given a TaggedImage input, output an Image based on the TaggedImage.
+    * @param tagged TaggedImage to be converted
+    * @return An Image based on the TaggedImage
+    * @throws JSONException if the TaggedImage's metadata cannot be read
+    * @throws MMScriptException if portions of the TaggedImage's metadata are
+    *         malformed.
     */
    public Image convertTaggedImage(TaggedImage tagged) throws JSONException, MMScriptException;
+
+   /**
+    * Given a TaggedImage input, output an Image based on the TaggedImage,
+    * but with the Coords and/or Metadata optionally overridden.
+    * @param tagged TaggedImage to be converted
+    * @param coords Coords at which the new image is located. If null, then
+    *        the coordinate information in the TaggedImage will be used.
+    * @param metadata Metadata for the new image. If null, then the metadata
+    *        will be derived from the TaggedImage instead.
+    * @return An Image based on the TaggedImage
+    * @throws JSONException if the TaggedImage's metadata cannot be read
+    * @throws MMScriptException if portions of the TaggedImage's metadata are
+    *         malformed.
+    */
+   public Image convertTaggedImage(TaggedImage tagged, Coords coords,
+         Metadata metadata) throws JSONException, MMScriptException;
 
    /**
     * Add the specified image to the current album datastore. If the current

@@ -468,7 +468,7 @@ public class TrackerControl extends MMFrame implements MMPlugin {
          app_.openAcquisition(acqName_, rootField_.getText(),
                  2, 1, 1, 1, true, diskRadioButton_.isSelected());
          store_ = app_.getAcquisitionDatastore(acqName_);
-         display_ = app_.display().getDisplays(store_).get(0);
+         display_ = app_.displays().getDisplays(store_).get(0);
       } catch (MMScriptException ex) {
          app_.showError(ex, "Problem while tracking", this);
       }

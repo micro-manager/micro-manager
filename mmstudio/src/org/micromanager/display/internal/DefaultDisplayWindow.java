@@ -612,7 +612,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       }
       displayBus_.post(new DisplayDestroyedEvent(this));
       MMStudio studio = MMStudio.getInstance();
-      studio.display().removeDisplay(this, store_);
+      studio.displays().removeDisplay(this, store_);
       store_.unregisterForEvents(this);
       dispose();
       haveClosed_ = true;

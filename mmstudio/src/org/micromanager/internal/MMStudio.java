@@ -709,7 +709,7 @@ public class MMStudio implements ScriptInterface {
          // necessary).
          Rectangle originalROI = null;
 
-         DisplayWindow curWindow = display().getCurrentWindow();
+         DisplayWindow curWindow = displays().getCurrentWindow();
          if (curWindow != null) {
             List<Image> images = curWindow.getDisplayedImages();
             // Just take the first one.
@@ -2031,7 +2031,7 @@ public class MMStudio implements ScriptInterface {
    @Override
    public void closeAcquisitionDisplays(String name) throws MMScriptException {
       Datastore store = acqMgr_.getAcquisition(name).getDatastore();
-      for (DisplayWindow display : display().getDisplays(store)) {
+      for (DisplayWindow display : displays().getDisplays(store)) {
          display.forceClosed();
       }
    }
@@ -2470,7 +2470,7 @@ public class MMStudio implements ScriptInterface {
 
    @Override
    public void autostretchCurrentWindow() {
-      DisplayWindow display = display().getCurrentWindow();
+      DisplayWindow display = displays().getCurrentWindow();
       DisplaySettings settings = display.getDisplaySettings();
       if (settings.getShouldAutostretch() != true) {
          // Autostretch is not currently enabled; toggle it to perform the
@@ -2492,15 +2492,27 @@ public class MMStudio implements ScriptInterface {
    public DataManager data() {
       return dataManager_;
    }
+   @Override
+   public DataManager getDataManager() {
+      return data();
+   }
 
    @Override
-   public DisplayManager display() {
+   public DisplayManager displays() {
       return displayManager_;
+   }
+   @Override
+   public DisplayManager getDisplayManager() {
+      return displays();
    }
 
    @Override
    public UserProfile profile() {
       return DefaultUserProfile.getInstance();
+   }
+   @Override
+   public UserProfile getUserProfile() {
+      return profile();
    }
 
    public static boolean getShouldDeleteOldCoreLogs() {

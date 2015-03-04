@@ -121,7 +121,7 @@ public class DefaultDataManager implements DataManager {
       if (albumDatastore_ == null || albumDatastore_.getIsLocked()) {
          // Need to create a new album.
          albumDatastore_ = new DefaultDatastore();
-         studio_.display().track(albumDatastore_);
+         studio_.displays().track(albumDatastore_);
          albumDatastore_.setStorage(new StorageRAM(albumDatastore_));
          new DefaultDisplayWindow(albumDatastore_, null);
       }
@@ -141,6 +141,12 @@ public class DefaultDataManager implements DataManager {
    @Override
    public Image convertTaggedImage(TaggedImage tagged) throws JSONException, MMScriptException {
       return new DefaultImage(tagged);
+   }
+
+   @Override
+   public Image convertTaggedImage(TaggedImage tagged, Coords coords,
+         Metadata metadata) throws JSONException, MMScriptException {
+      return new DefaultImage(tagged, coords, metadata);
    }
 
    @Override

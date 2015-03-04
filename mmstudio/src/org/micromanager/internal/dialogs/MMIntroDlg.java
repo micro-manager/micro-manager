@@ -64,7 +64,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  */
 public class MMIntroDlg extends JDialog {
    private static final long serialVersionUID = 1L;
-   private static final String USERNAME_NEW = "Create new user";
+   private static final String USERNAME_NEW = "Create new profile";
    private static final String RECENTLY_USED_CONFIGS = "recently-used config files";
    private static final String GLOBAL_CONFIGS = "config files supplied from a central authority";
    private static final String SHOULD_ASK_FOR_CONFIG = "whether or not the intro dialog should include a prompt for the config file";
@@ -75,7 +75,7 @@ public class MMIntroDlg extends JDialog {
    ArrayList<String> mruCFGFileList_;
 
    private JComboBox cfgFileDropperDown_;
-   private JComboBox userSelect_;
+   private JComboBox profileSelect_;
    
    public static String DISCLAIMER_TEXT = 
       
@@ -217,45 +217,45 @@ public class MMIntroDlg extends JDialog {
       getContentPane().add(userProfileLabel);
 
       final DefaultUserProfile profile = DefaultUserProfile.getInstance();
-      Set<String> users = profile.getUserNames();
-      final ArrayList<String> usersAsList = new ArrayList<String>(users);
+      Set<String> profiles = profile.getProfileNames();
+      final ArrayList<String> profilesAsList = new ArrayList<String>(profiles);
       // HACK: put the "new" and "default" options first in the list.
-      usersAsList.remove(DefaultUserProfile.DEFAULT_USER);
-      usersAsList.add(0, DefaultUserProfile.DEFAULT_USER);
-      usersAsList.add(0, USERNAME_NEW);
-      userSelect_ = new JComboBox();
-      userSelect_.setFont(stdFont);
-      for (String userName : usersAsList) {
-         userSelect_.addItem(userName);
+      profilesAsList.remove(DefaultUserProfile.DEFAULT_USER);
+      profilesAsList.add(0, DefaultUserProfile.DEFAULT_USER);
+      profilesAsList.add(0, USERNAME_NEW);
+      profileSelect_ = new JComboBox();
+      profileSelect_.setFont(stdFont);
+      for (String profileName : profilesAsList) {
+         profileSelect_.addItem(profileName);
       }
-      userSelect_.setSelectedItem(DefaultUserProfile.DEFAULT_USER);
-      userSelect_.setBounds(5, 244, 342, 26);
-      userSelect_.addActionListener(new ActionListener() {
+      profileSelect_.setSelectedItem(DefaultUserProfile.DEFAULT_USER);
+      profileSelect_.setBounds(5, 244, 342, 26);
+      profileSelect_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            String userName = (String) userSelect_.getSelectedItem();
-            if (userName.contentEquals(USERNAME_NEW)) {
-               // Prompt the user for the new user name.
-               userName = JOptionPane.showInputDialog("Please input the new user name:");
-               if (usersAsList.contains(userName)) {
-                  ReportingUtils.showError("That user name is already in use.");
+            String profileName = (String) profileSelect_.getSelectedItem();
+            if (profileName.contentEquals(USERNAME_NEW)) {
+               // Prompt the user for the new profile name.
+               profileName = JOptionPane.showInputDialog("Please input the new profile name:");
+               if (profilesAsList.contains(profileName)) {
+                  ReportingUtils.showError("That profile name is already in use.");
                }
                else {
-                  usersAsList.add(userName);
-                  userSelect_.addItem(userName);
-                  profile.addUser(userName);
+                  profilesAsList.add(profileName);
+                  profileSelect_.addItem(profileName);
+                  profile.addProfile(profileName);
                }
                // TODO: will this re-invoke our listener, causing us to call
                // setConfigFile twice?
-               userSelect_.setSelectedItem(userName);
+               profileSelect_.setSelectedItem(profileName);
             }
-            // Set the current active user.
-            profile.setCurrentUser(userName);
+            // Set the current active profile.
+            profile.setCurrentProfile(profileName);
             // Update the list of hardware config files.
             setConfigFile(null);
          }
       });
-      getContentPane().add(userSelect_);
+      getContentPane().add(profileSelect_);
    }
 
    public boolean okChosen() {
@@ -280,7 +280,7 @@ public class MMIntroDlg extends JDialog {
       if (doesExist) {
          // Update the user's preferences for recently-used config files.
          configs.add(path);
-         // Don't remember more than six user-specific config files.
+         // Don't remember more than six profile-specific config files.
          if (configs.size() > 6) {
             configs.remove(configs.get(0));
          }
@@ -327,7 +327,7 @@ public class MMIntroDlg extends JDialog {
    }
 
    public String getUserName() {
-      return (String) userSelect_.getSelectedItem();
+      return (String) profileSelect_.getSelectedItem();
    }
    
    public String getScriptFile() {

@@ -61,64 +61,79 @@ public class DefaultImage implements Image {
     * @param tagged A TaggedImage to base the Image on.
     */
    public DefaultImage(TaggedImage tagged) throws JSONException, MMScriptException {
-      JSONObject tags = tagged.tags;
-      DefaultMetadata.Builder builder = new DefaultMetadata.Builder();
-      try {
-         builder.camera(MDUtils.getChannelName(tags));
-      }
-      catch (JSONException e) {}
-      try {
-         builder.ROI(MDUtils.getROI(tags));
-      }
-      catch (JSONException e) {}
-      try {
-         builder.binning(MDUtils.getBinning(tags));
-      }
-      catch (JSONException e) {}
-      try {
-         builder.bitDepth(MDUtils.getBitDepth(tags));
-      }
-      catch (JSONException e) {}
-      try {
-         builder.pixelSizeUm(MDUtils.getPixelSizeUm(tags));
-      }
-      catch (JSONException e) {}
-      try {
-         builder.uuid(MDUtils.getUUID(tags));
-      }
-      catch (JSONException e) {}
-      try {
-         builder.elapsedTimeMs(MDUtils.getElapsedTimeMs(tags));
-      }
-      catch (JSONException e) {}
-      try {
-         builder.comments(MDUtils.getComments(tags));
-      }
-      catch (JSONException e) {}
-      try {
-         builder.imageNumber(MDUtils.getSequenceNumber(tags));
-      }
-      catch (JSONException e) {}
-      metadata_ = builder.build();
+      this(tagged, null, null);
+   }
 
-      DefaultCoords.Builder cBuilder = new DefaultCoords.Builder();
-      try {
-         cBuilder.time(MDUtils.getFrameIndex(tags));
+   /**
+    * As above but allows either or both of the image coords and metadata to be
+    * overridden.
+    */
+   public DefaultImage(TaggedImage tagged, Coords coords, Metadata metadata)
+         throws JSONException, MMScriptException {
+      JSONObject tags = tagged.tags;
+      if (metadata == null) {
+         DefaultMetadata.Builder builder = new DefaultMetadata.Builder();
+         try {
+            builder.camera(MDUtils.getChannelName(tags));
+         }
+         catch (JSONException e) {}
+         try {
+            builder.ROI(MDUtils.getROI(tags));
+         }
+         catch (JSONException e) {}
+         try {
+            builder.binning(MDUtils.getBinning(tags));
+         }
+         catch (JSONException e) {}
+         try {
+            builder.bitDepth(MDUtils.getBitDepth(tags));
+         }
+         catch (JSONException e) {}
+         try {
+            builder.pixelSizeUm(MDUtils.getPixelSizeUm(tags));
+         }
+         catch (JSONException e) {}
+         try {
+            builder.uuid(MDUtils.getUUID(tags));
+         }
+         catch (JSONException e) {}
+         try {
+            builder.elapsedTimeMs(MDUtils.getElapsedTimeMs(tags));
+         }
+         catch (JSONException e) {}
+         try {
+            builder.comments(MDUtils.getComments(tags));
+         }
+         catch (JSONException e) {}
+         try {
+            builder.imageNumber(MDUtils.getSequenceNumber(tags));
+         }
+         catch (JSONException e) {}
+         metadata = builder.build();
       }
-      catch (JSONException e) {}
-      try {
-         cBuilder.stagePosition(MDUtils.getPositionIndex(tags));
+      metadata_ = (DefaultMetadata) metadata;
+
+      if (coords == null) {
+         DefaultCoords.Builder cBuilder = new DefaultCoords.Builder();
+         try {
+            cBuilder.time(MDUtils.getFrameIndex(tags));
+         }
+         catch (JSONException e) {}
+         try {
+            cBuilder.stagePosition(MDUtils.getPositionIndex(tags));
+         }
+         catch (JSONException e) {}
+         try {
+            cBuilder.z(MDUtils.getSliceIndex(tags));
+         }
+         catch (JSONException e) {}
+         try {
+            cBuilder.channel(MDUtils.getChannelIndex(tags));
+         }
+         catch (JSONException e) {}
+         coords = cBuilder.build();
       }
-      catch (JSONException e) {}
-      try {
-         cBuilder.z(MDUtils.getSliceIndex(tags));
-      }
-      catch (JSONException e) {}
-      try {
-         cBuilder.channel(MDUtils.getChannelIndex(tags));
-      }
-      catch (JSONException e) {}
-      coords_ = cBuilder.build();
+      coords_ = coords;
 
       rawPixels_ = DirectBuffers.bufferFromArray(tagged.pix);
       if (rawPixels_.capacity() == 0) {
@@ -250,7 +265,8 @@ public class DefaultImage implements Image {
       int pixelIndex = y * pixelWidth_ + x + component;
       if (pixelIndex < 0 || pixelIndex >= rawPixels_.capacity()) {
          throw new IllegalArgumentException(
-               String.format("Asked for pixel at (%d, %d) outside of pixel array size of %d", x, y, rawPixels_.capacity()));
+               String.format("Asked for pixel at (%d, %d) component %d outside of pixel array size of %d (calculated index %d)",
+                  x, y, component, rawPixels_.capacity(), pixelIndex));
       }
       long result = 0;
       int divisor = numComponents_;

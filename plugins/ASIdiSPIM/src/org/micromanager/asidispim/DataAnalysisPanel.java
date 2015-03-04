@@ -300,7 +300,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
       @Override
       protected Void doInBackground() throws Exception {
          setProgress(0);
-         DisplayWindow dw = gui_.display().getCurrentWindow();
+         DisplayWindow dw = gui_.displays().getCurrentWindow();
 
          if (null == dw) {
             throw new SaveTaskException("Can only convert Micro-Manager data set ");
