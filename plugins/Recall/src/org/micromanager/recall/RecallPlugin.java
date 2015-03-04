@@ -74,7 +74,11 @@ public class RecallPlugin implements MMPlugin {
          @Override
          public void show(final TaggedImage ti) {
             try {
-               store_.putImage(gui_.data().convertTaggedImage(ti));
+               if (ti == TaggedImageQueue.POISON) {
+                  store_ = null;
+               } else {
+                  store_.putImage(gui_.data().convertTaggedImage(ti));
+               }
             } catch (MMScriptException e) {
                gui_.logError(e);
             } catch (DatastoreLockedException ex) {
