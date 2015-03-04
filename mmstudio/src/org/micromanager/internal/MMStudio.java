@@ -1820,7 +1820,7 @@ public class MMStudio implements ScriptInterface {
          try {
             MMAcquisition acq = acqMgr_.getAcquisition(acqName);
             Datastore store = acq.getDatastore();
-            while (!store.getIsLocked()) {
+            while (!store.getIsFrozen()) {
                Thread.sleep(100);
             }
          } catch (InterruptedException e) {
