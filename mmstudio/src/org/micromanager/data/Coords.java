@@ -29,6 +29,23 @@ import java.util.List;
  * to implement your own Coords class. If you need to generate a new Coords, use
  * the getCoordsBuilder() method of the DataManager class, or call the copy()
  * method of an existing Coords instance.
+ * The Builder is an object that can be used to generate any number of new
+ * Coords instances (which are themselves immutable). You can adjust the
+ * positions recorded in the Builder using functions like time(), z(),
+ * etc. or the general-purpose index() method. Since each of these methods
+ * returns the Builder, you can chain them together. Call the build() method
+ * when you are done. For example:
+ *
+ * Coords.Builder builder = mm.data().getCoordsBuilder()
+ *       .channel(0)
+ *       .time(10)
+ *       .z(5)
+ *       .stagePosition(2)
+ *       .index("polarization", 3);
+ * Coords coords1 = builder.build();
+ * // Construct another Coords at an identical location except for channel.
+ * builder = builder.channel(1);
+ * Coords coords2 = builder.build();
  */
 public interface Coords {
 
