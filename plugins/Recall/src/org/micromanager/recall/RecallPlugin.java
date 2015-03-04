@@ -41,10 +41,12 @@ import org.micromanager.MMPlugin;
 import org.micromanager.ScriptInterface;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.acquisition.internal.TaggedImageQueue;
+import org.micromanager.data.Datastore;
+import org.micromanager.data.DatastoreLockedException;
+import org.micromanager.display.DisplayWindow;
 import org.micromanager.internal.utils.MMTags;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.MMScriptException;
-import org.micromanager.internal.utils.ReportingUtils;
 
 
 
@@ -56,8 +58,10 @@ public class RecallPlugin implements MMPlugin {
    private CMMCore core_;
    private MMStudio gui_;
    private MMStudio.DisplayImageRoutine displayImageRoutine_;
+   // TODO: figure out how to assign this name to the viewer window
    private final String ACQ_NAME = "Live Replay";
    private int multiChannelCameraNrCh_;
+   private Datastore store_;
    
   
 
@@ -70,9 +74,13 @@ public class RecallPlugin implements MMPlugin {
          @Override
          public void show(final TaggedImage ti) {
             try {
-               gui_.addImage(ACQ_NAME, ti, true, true);
+               store_.putImage(gui_.data().convertTaggedImage(ti));
             } catch (MMScriptException e) {
-               ReportingUtils.logError(e);
+               gui_.logError(e);
+            } catch (DatastoreLockedException ex) {
+               gui_.logError(ex);
+            } catch (JSONException ex) {
+               gui_.logError(ex);
             }
          }
       };
@@ -82,75 +90,58 @@ public class RecallPlugin implements MMPlugin {
    public void dispose() {
       // nothing todo:
    }
-
+   
    @Override
    public void show() {
-      try {
-         if (gui_.acquisitionExists(ACQ_NAME))
-            gui_.closeAcquisition(ACQ_NAME);
+      store_ = gui_.data().createRAMDatastore();
+      DisplayWindow display = gui_.display().createDisplay(store_);
+      gui_.display().track(store_);
 
-         int remaining = core_.getRemainingImageCount();
+      int remaining = core_.getRemainingImageCount();
+      if (remaining < 1) {
+         gui_.showMessage("There are no Images in the Micro-Manage buffer");
+         return;
+      }
+      LinkedBlockingQueue<TaggedImage> imageQueue_ =
+              new LinkedBlockingQueue<TaggedImage>();
+      gui_.runDisplayThread(imageQueue_, displayImageRoutine_);
+      
+      multiChannelCameraNrCh_ = (int) core_.getNumberOfCameraChannels();
+      String camera = core_.getCameraDevice();
 
-         if (remaining < 1) {
-            ReportingUtils.showMessage("There are no Images in the Micro-Manage buffer");
-            return;
-         }       
-         
-         LinkedBlockingQueue<TaggedImage> imageQueue_ = 
-                 new LinkedBlockingQueue<TaggedImage>();
-         
-         multiChannelCameraNrCh_ = (int) core_.getNumberOfCameraChannels();
-         
-         gui_.openAcquisition(ACQ_NAME, "tmp", core_.getRemainingImageCount(), 
-                 multiChannelCameraNrCh_, 1, true);
-
-         String camera = core_.getCameraDevice();
-         long width = core_.getImageWidth();
-         long height = core_.getImageHeight();
-         long depth = core_.getBytesPerPixel();
-         long bitDepth = core_.getImageBitDepth();
-
-         gui_.initializeAcquisition(ACQ_NAME, (int) width,(int) height, (int) depth, (int)bitDepth);
-
-         gui_.runDisplayThread(imageQueue_, displayImageRoutine_);
-         
-         if (multiChannelCameraNrCh_ == 1) {                    
-            int frameCounter = 0;
-            try {
-               for (int i = 0; i < remaining; i++) {
-                  TaggedImage tImg = core_.popNextTaggedImage();
-                  normalizeTags(tImg, frameCounter);
-                  frameCounter++;
+      if (multiChannelCameraNrCh_ == 1) {
+         int frameCounter = 0;
+         try {
+            for (int i = 0; i < remaining; i++) {
+               TaggedImage tImg = core_.popNextTaggedImage();
+               normalizeTags(tImg, frameCounter);
+               frameCounter++;
+               imageQueue_.put(tImg);
+            }
+            imageQueue_.put(TaggedImageQueue.POISON);
+         } catch (Exception ex) {
+            gui_.logError(ex, "Error in Live Replay");
+         }
+      } else if (multiChannelCameraNrCh_ > 1) {
+         int[] frameCounters = new int[multiChannelCameraNrCh_];
+         try {
+            for (int i = 0; i < remaining; i++) {
+               TaggedImage tImg = core_.popNextTaggedImage();
+               
+               if (tImg.tags.has(camera + "-CameraChannelName")) {
+                  String channelName = tImg.tags.getString(camera + "-CameraChannelName");
+                  tImg.tags.put("Channel", channelName);
+                  int channelIndex = tImg.tags.getInt(camera + "-CameraChannelIndex");
+                  tImg.tags.put("ChannelIndex", channelIndex);
+                  normalizeTags(tImg, frameCounters[channelIndex]);
+                  frameCounters[channelIndex]++;
                   imageQueue_.put(tImg);
                }
-               imageQueue_.put(TaggedImageQueue.POISON);
-            } catch (Exception ex) {
-               ReportingUtils.logError(ex, "Error in Live Replay");
             }
-         } else if (multiChannelCameraNrCh_ > 1) {
-            int[] frameCounters = new int[multiChannelCameraNrCh_];
-            try {
-               for (int i = 0; i < remaining; i++) {
-                  TaggedImage tImg = core_.popNextTaggedImage();
-                  
-                  if (tImg.tags.has(camera + "-CameraChannelName")) {
-                     String channelName = tImg.tags.getString(camera + "-CameraChannelName");
-                     tImg.tags.put("Channel", channelName);
-                     int channelIndex = tImg.tags.getInt(camera + "-CameraChannelIndex");
-                     tImg.tags.put("ChannelIndex", channelIndex);
-                     normalizeTags(tImg, frameCounters[channelIndex]);
-                     frameCounters[channelIndex]++;
-                     imageQueue_.put(tImg);
-                  }
-               }  
-               imageQueue_.put(TaggedImageQueue.POISON);
-            } catch (Exception ex) {
-               ReportingUtils.logError(ex, "Error in Live Replay Plugin");
-            }
+            imageQueue_.put(TaggedImageQueue.POISON);
+         } catch (Exception ex) {
+            gui_.logError(ex, "Error in Live Replay Plugin");
          }
-        
-      } catch (MMScriptException e) {
-         ReportingUtils.showError(e);
       }        
    }
 
@@ -172,7 +163,7 @@ public class RecallPlugin implements MMPlugin {
             ti.tags.put(MMTags.Image.FRAME, frameIndex);
 
          } catch (JSONException ex) {
-            ReportingUtils.logError(ex);
+            gui_.logError(ex);
          }
       }
    }
@@ -197,6 +188,6 @@ public class RecallPlugin implements MMPlugin {
    
    @Override
    public String getCopyright() {
-      return "University of California, 2010";
+      return "University of California, 2010-2015";
    }
 }

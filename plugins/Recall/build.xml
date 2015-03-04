@@ -1,3 +1,6 @@
 <project name="Recall" default="jar">
-	<import file="../javapluginbuild.xml"/>
+   <import file="../javapluginbuild.xml"/>
+   <path id="plugin.classpath">
+      <pathelement location="${mm.java.lib.guava}"/>
+   </path>
 </project>

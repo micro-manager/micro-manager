@@ -40,6 +40,8 @@ import org.micromanager.internal.utils.ReportingUtils;
  * If you use your own constructor, make sure that it accepts no arguments.
  * If you need to initialize variables, do this in the makeConfigurationGUI 
  * method instead.  That method is the first to be called.
+ * 
+ * @param <E>
  */
 public abstract class DataProcessor<E> extends Thread {
    private BlockingQueue<E> input_;
@@ -51,7 +53,7 @@ public abstract class DataProcessor<E> extends Thread {
    private boolean isEnabled_ = true;
 
    /**
-    * The scripting interface (commonly known as the "gui" object).
+    * The scripting interface (formerly known as the "gui" object, now "mm").
     */
    protected ScriptInterface gui_;
 
@@ -92,6 +94,8 @@ public abstract class DataProcessor<E> extends Thread {
     *
     * Normally, it is not necessary to override this method. If overriding,
     * make sure to call super.setApp().
+    * 
+    * @param gui MM ScriptInterface
     */
    public void setApp(ScriptInterface gui) {
       gui_ = gui;
@@ -135,6 +139,8 @@ public abstract class DataProcessor<E> extends Thread {
     * are being processed as they arrive.
     *
     * Do not override this method (it should have been final).
+    * 
+    * @return true if the DataProcessor has started up
     */
    public synchronized boolean isStarted() {
       return started_;
@@ -146,6 +152,9 @@ public abstract class DataProcessor<E> extends Thread {
     *
     * Do not override this method (it should have been final). This method is
     * automatically called by the system to set up data processors.
+    * 
+    * @param input Queue where objects to be processed are received by the 
+    * DataProcessor
     */
    public synchronized void setInput(BlockingQueue<E> input) {
       input_ = input;
@@ -155,8 +164,11 @@ public abstract class DataProcessor<E> extends Thread {
     * Sets the output queue where objects that have been processed
     * exit the DataProcessor.
     *
-    * Do not override this method (it should have been final). This methods is
+    * Do not override this method (it should have been final). This method is
     * automatically called by the system to set up data processors.
+    * 
+    * @param output Queue where objects that have been processed exit the 
+    * DataProcessor
     */
    public void setOutput(BlockingQueue<E> output) {
       output_ = output;
@@ -170,6 +182,8 @@ public abstract class DataProcessor<E> extends Thread {
     * receive the image to process.
     *
     * Do not override this method (it should have been final).
+    * 
+    * @return 
     */
    protected E poll() {
       while (!stopRequested()) {
@@ -202,6 +216,8 @@ public abstract class DataProcessor<E> extends Thread {
     * on the input queue to a collection.
     *
     * Do not override this method (it should have been final).
+    * 
+    * @param data Collection that will receive all available data objects
     */
    protected void drainTo(Collection<E> data) {
       input_.drainTo(data);
@@ -214,6 +230,8 @@ public abstract class DataProcessor<E> extends Thread {
     * send out the processed image(s).
     *
     * Do not override this method (it should have been final).
+    * 
+    * @param datum posts a data object to the output queue
     */
    protected void produce(E datum) {
       try {
@@ -228,6 +246,8 @@ public abstract class DataProcessor<E> extends Thread {
     *
     * Usually, subclasses need not care about stop requests, as they are
     * handled automatically.
+    * 
+    * @return true if stop has been requested
     */
    protected synchronized boolean stopRequested() {
       return stopRequested_;
@@ -241,6 +261,8 @@ public abstract class DataProcessor<E> extends Thread {
     *
     * It is usually not necessary to override this method. If overriding, make
     * sure to call super.setEnabled(isEnabled).
+    * 
+    * @param isEnabled turns processor on if true, off otherwise
     */
    public void setEnabled(boolean isEnabled) {
       if (isEnabled_ == isEnabled) {
@@ -264,6 +286,8 @@ public abstract class DataProcessor<E> extends Thread {
     * Get whether or not this Processor is enabled.
     *
     * Do not override this method (it should have been final).
+    * 
+    * @return whether or not this Processor is enabled
     */
    public boolean getIsEnabled() {
       return isEnabled_;
