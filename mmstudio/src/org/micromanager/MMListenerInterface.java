@@ -27,19 +27,26 @@ package org.micromanager;
  * Micro-Manager.
  */
 public interface MMListenerInterface{
-   /*
+   /**
     * Implement this callback when any property has changed.
     */
    public void propertiesChangedAlert();
 
-   /*
+   /**
     * Implement this callback to be alerted when each property changes.
+    * 
+    * @param device name of device whose property changed
+    * @param property name of the changed property
+    * @param value new value of the property
     */
    public void propertyChangedAlert(String device, String property, String value);
 
-   /*
+   /**
     * Implement this callback to be informed of a new value in a
     * configuration group.
+    * 
+    * @param groupName groupname that changed configuration
+    * @param newConfig currently active configuration in the group
     */
    public void configGroupChangedAlert(String groupName, String newConfig);
 
@@ -51,25 +58,35 @@ public interface MMListenerInterface{
     */
    public void systemConfigurationLoaded();
    
-   /*
+   /**
     * Implement this callback to be informed when the current pixel size
     * changes.
+    * 
+    * @param newPixelSizeUm new pixel size (in micron)
     */
    public void pixelSizeChangedAlert(double newPixelSizeUm);
 
-   /*
+   /**
     * Implement this callback to be informed when a one-axis
     * drive (e.g. focus drive) has moved.
+    * 
+    * @param deviceName name of the stage that changed position
+    * @param pos new position
     */
    public void stagePositionChangedAlert(String deviceName, double pos);
 
-   /*
+   /**
     * Implement this callback to be informed when an XY stage has moved.
+    * 
+    * @param deviceName XY stage device that changed position
+    * @param xPos new x position
+    * @param yPos new y positon
     */
    public void xyStagePositionChanged(String deviceName, double xPos, double yPos);
    
    /**
     * Implement to be notified that the exposure time given camera has changed
+    * 
     * @param cameraName - label of camera whose exposure changed
     * @param newExposureTime - new exposure time
     */
@@ -77,9 +94,9 @@ public interface MMListenerInterface{
 
    /**
     * Implement to be notified that the exposure time given camera has changed
+    * 
     * @param slmName - label of SLM/Galvo whose exposure changed
     * @param newExposureTime - new exposure time
     */
    public void slmExposureChanged(String slmName, double newExposureTime);
 }
-
