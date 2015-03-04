@@ -256,7 +256,7 @@ public class SplitViewFrame extends MMFrame {
    
    private Datastore openAcq() throws MMScriptException {
       Datastore dataStore = gui_.data().createRAMDatastore();
-      DisplayWindow display = gui_.displays().createDisplay(dataStore);
+      DisplayWindow display = gui_.getDisplayManager().createDisplay(dataStore);
       display.registerForEvents(this);
       updateMetadata(dataStore);
       updateColors (display);      
@@ -496,7 +496,7 @@ public class SplitViewFrame extends MMFrame {
       DisplaySettings settings = display.getDisplaySettings();
       Color[] newColors = new Color[]{col1_, col2_};
       settings = settings.copy().channelColors(newColors).build();
-      //TODO: restore once upstream works.  display.setDisplaySettings(settings);
+      display.setDisplaySettings(settings);
    }
 
 
