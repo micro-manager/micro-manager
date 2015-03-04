@@ -283,6 +283,15 @@ public interface UserProfile {
    public void saveProfileToFile(String path) throws IOException;
 
    /**
+    * Saves the current "combined profile" state to the specified file. This
+    * includes both values in the current user profile and values
+    * "inherited" from the global defaults.
+    * @param path file path to save to
+    * @throws IOException if the file cannot be written for any reason.
+    */
+   public void saveCombinedProfileToFile(String path) throws IOException;
+
+   /**
     * Saves the current user's profile to the specified file. This will not
     * include any "inherited" values from the global defaults, and only keys
     * that are specific to the provided class are preserved.

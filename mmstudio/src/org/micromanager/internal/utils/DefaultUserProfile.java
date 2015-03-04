@@ -484,6 +484,12 @@ public class DefaultUserProfile implements UserProfile {
       savePropertyMapToFile(userProfile_, path);
    }
 
+   @Override
+   public void saveCombinedProfileToFile(String path) throws IOException {
+      savePropertyMapToFile(
+            (DefaultPropertyMap) (userProfile_.merge(globalProfile_)), path);
+   }
+
    private void savePropertyMapToFile(DefaultPropertyMap properties, String path) throws IOException {
       JSONObject serialization;
       synchronized(properties) {
