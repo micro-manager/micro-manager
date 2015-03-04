@@ -98,8 +98,8 @@ public class RecallPlugin implements MMPlugin {
    @Override
    public void show() {
       store_ = gui_.data().createRAMDatastore();
-      DisplayWindow display = gui_.display().createDisplay(store_);
-      gui_.display().track(store_);
+      DisplayWindow display = gui_.getDisplayManager().createDisplay(store_);
+      gui_.displays().track(store_);
 
       int remaining = core_.getRemainingImageCount();
       if (remaining < 1) {
