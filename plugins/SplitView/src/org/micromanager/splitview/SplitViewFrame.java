@@ -26,6 +26,7 @@
  */
 package org.micromanager.splitview;
 
+import com.google.common.eventbus.Subscribe;
 import com.swtdesigner.SwingResourceManager;
 
 import ij.process.ByteProcessor;
@@ -56,6 +57,7 @@ import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.ScriptInterface;
+import org.micromanager.display.RequestToCloseEvent;
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.MMTags;
@@ -242,10 +244,20 @@ public class SplitViewFrame extends MMFrame {
       newWidth_ = processor_.calculateWidth(width_);
       newHeight_ = processor_.calculateHeight(height_);
    }
+  
+   @Subscribe
+   public void onRequestToClose(RequestToCloseEvent event) {
+      if (dataStore_ != null) {
+         dataStore_.close();
+         dataStore_ = null;
+      }
+      event.getDisplay().forceClosed();
+   }
    
    private Datastore openAcq() throws MMScriptException {
       Datastore dataStore = gui_.data().createRAMDatastore();
       DisplayWindow display = gui_.display().createDisplay(dataStore);
+      display.registerForEvents(this);
       updateMetadata(dataStore);
       updateColors (display);      
       return dataStore;
