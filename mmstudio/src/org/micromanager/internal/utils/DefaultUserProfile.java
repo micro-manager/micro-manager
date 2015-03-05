@@ -212,7 +212,6 @@ public class DefaultUserProfile implements UserProfile {
          // Give up.
          result = fallback;
       }
-      accessLock_.unlock();
       return result;
    }
    @Override
@@ -228,7 +227,6 @@ public class DefaultUserProfile implements UserProfile {
          // Give up.
          result = fallback;
       }
-      accessLock_.unlock();
       return result;
    }
 
@@ -258,7 +256,6 @@ public class DefaultUserProfile implements UserProfile {
          // Give up.
          result = fallback;
       }
-      accessLock_.unlock();
       return result;
    }
    @Override
@@ -274,7 +271,6 @@ public class DefaultUserProfile implements UserProfile {
          // Give up.
          result = fallback;
       }
-      accessLock_.unlock();
       return result;
    }
    @Override
@@ -303,7 +299,6 @@ public class DefaultUserProfile implements UserProfile {
          // Give up.
          result = fallback;
       }
-      accessLock_.unlock();
       return result;
    }
    @Override
@@ -319,7 +314,6 @@ public class DefaultUserProfile implements UserProfile {
          // Give up.
          result = fallback;
       }
-      accessLock_.unlock();
       return result;
    }
    @Override
@@ -348,7 +342,6 @@ public class DefaultUserProfile implements UserProfile {
          // Give up.
          result = fallback;
       }
-      accessLock_.unlock();
       return result;
    }
    @Override
@@ -364,7 +357,6 @@ public class DefaultUserProfile implements UserProfile {
          // Give up.
          result = fallback;
       }
-      accessLock_.unlock();
       return result;
    }
    @Override
@@ -393,7 +385,6 @@ public class DefaultUserProfile implements UserProfile {
          // Give up.
          result = fallback;
       }
-      accessLock_.unlock();
       return result;
    }
    @Override
@@ -409,7 +400,6 @@ public class DefaultUserProfile implements UserProfile {
          // Give up.
          result = fallback;
       }
-      accessLock_.unlock();
       return result;
    }
    @Override
