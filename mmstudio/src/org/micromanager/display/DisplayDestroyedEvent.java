@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //PROJECT:       Micro-Manager
-//SUBSYSTEM:     Display implementation
+//SUBSYSTEM:     Display API
 //-----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
@@ -18,22 +18,15 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.display.internal;
-
-import org.micromanager.display.DisplayWindow;
+package org.micromanager.display;
 
 /**
- * This event signifies that a display has been destroyed via its
- * forceClosed() method.
+ * This event signifies that a display has been closed (that its
+ * forceClosed() method was called).
  */
-public class DisplayDestroyedEvent implements org.micromanager.display.DisplayDestroyedEvent {
-   private DisplayWindow display_;
-
-   public DisplayDestroyedEvent(DisplayWindow display) {
-      display_ = display;
-   }
-
-   public DisplayWindow getDisplay() {
-      return display_;
-   }
+public interface DisplayDestroyedEvent {
+   /**
+    * @return The DisplayWindow that was just closed.
+    */
+   public DisplayWindow getDisplay();
 }

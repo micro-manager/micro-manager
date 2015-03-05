@@ -33,6 +33,7 @@ import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.ControlsGenerator;
+import org.micromanager.display.DisplayDestroyedEvent;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.RequestToCloseEvent;
 
@@ -41,6 +42,10 @@ import org.micromanager.data.internal.DefaultDatastore;
 import org.micromanager.data.internal.DefaultImage;
 
 import org.micromanager.display.internal.DefaultDisplayWindow;
+
+import org.micromanager.events.LiveModeEvent;
+import org.micromanager.events.internal.DefaultLiveModeEvent;
+import org.micromanager.events.internal.EventManager;
 
 import org.micromanager.internal.interfaces.LiveModeListener;
 
@@ -65,9 +70,6 @@ public class SnapLiveManager {
    // Maps channel to the last image we have received for that channel.
    private HashMap<Integer, DefaultImage> channelToLastImage_;
 
-   private JButton snapButton_;
-   private JButton liveButton_;
-
    public SnapLiveManager(CMMCore core) {
       core_ = core;
       channelToLastImage_ = new HashMap<Integer, DefaultImage>();
@@ -88,20 +90,15 @@ public class SnapLiveManager {
       for (LiveModeListener listener : listeners_) {
          listener.liveModeEnabled(isOn_);
       }
-
-      // Update our buttons, if they exist yet.
-      if (snapButton_ != null) {
-         snapButton_.setEnabled(!isOn_);
-         setLiveButtonMode();
-      }
+      EventManager.post(new DefaultLiveModeEvent(isOn_));
    }
 
-   private void setLiveButtonMode() {
-      String label = isOn_ ? "Stop Live" : "Live";
-      String iconPath = isOn_ ? "/org/micromanager/internal/icons/cancel.png" : "/org/micromanager/internal/icons/camera_go.png";
-      liveButton_.setIcon(
+   private void setLiveButtonMode(JButton button, boolean isOn) {
+      String label = isOn ? "Stop Live" : "Live";
+      String iconPath = isOn ? "/org/micromanager/internal/icons/cancel.png" : "/org/micromanager/internal/icons/camera_go.png";
+      button.setIcon(
             SwingResourceManager.getIcon(MMStudio.class, iconPath));
-      liveButton_.setText(label);
+      button.setText(label);
    }
 
    /**
@@ -296,48 +293,77 @@ public class SnapLiveManager {
          new ControlsGenerator() {
             @Override
             public List<Component> generateControls(DisplayWindow display) {
-               ArrayList<Component> controls = new ArrayList<Component>();
-               snapButton_ = new JButton("Snap",
-                     SwingResourceManager.getIcon(MMStudio.class,
-                        "/org/micromanager/internal/icons/camera.png"));
-               snapButton_.setToolTipText("Take a new image");
-               snapButton_.setPreferredSize(new Dimension(90, 28));
-               snapButton_.addActionListener(new ActionListener() {
-                  @Override
-                  public void actionPerformed(ActionEvent event) {
-                     snap(true);
-                  }
-               });
-               controls.add(snapButton_);
-
-               liveButton_ = new JButton();
-               liveButton_.setToolTipText("Continuously acquire new images");
-               setLiveButtonMode();
-               liveButton_.setPreferredSize(new Dimension(90, 28));
-               liveButton_.addActionListener(new ActionListener() {
-                  @Override
-                  public void actionPerformed(ActionEvent event) {
-                     setLiveMode(!isOn_);
-                  }
-               });
-               controls.add(liveButton_);
-
-               JButton toAlbumButton = new JButton("Album",
-                     SwingResourceManager.getIcon(MMStudio.class,
-                        "/org/micromanager/internal/icons/arrow_right.png"));
-               toAlbumButton.setToolTipText("Add the current image to the Album collection");
-               toAlbumButton.setPreferredSize(new Dimension(90, 28));
-               toAlbumButton.addActionListener(new ActionListener() {
-                  @Override
-                  public void actionPerformed(ActionEvent event) {
-                     MMStudio.getInstance().doSnap(true);
-                  }
-               });
-               controls.add(toAlbumButton);
-               return controls;
+               return createControls(display);
             }
       });
       display_.registerForEvents(this);
+   }
+
+   private List<Component> createControls(final DisplayWindow display) {
+      ArrayList<Component> controls = new ArrayList<Component>();
+      // This button needs to be enabled/disabled when live mode is turned
+      // off/on.
+      JButton snapButton = new JButton("Snap",
+            SwingResourceManager.getIcon(MMStudio.class,
+               "/org/micromanager/internal/icons/camera.png")) {
+         @Subscribe
+         public void onLiveMode(LiveModeEvent event) {
+            setEnabled(!event.getIsOn());
+         }
+         @Subscribe
+         public void onDisplayDestroyed(DisplayDestroyedEvent event) {
+            EventManager.unregister(this);
+         }
+      };
+      EventManager.register(snapButton);
+      snapButton.setToolTipText("Take a new image");
+      snapButton.setPreferredSize(new Dimension(90, 28));
+      snapButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent event) {
+            snap(true);
+         }
+      });
+      controls.add(snapButton);
+
+      // This button needs to change when live mode is turned on/off.
+      JButton liveButton = new JButton() {
+         @Subscribe
+         public void onLiveMode(LiveModeEvent event) {
+            setLiveButtonMode(this, event.getIsOn());
+         }
+         @Subscribe
+         public void onDisplayDestroyed(DisplayDestroyedEvent event) {
+            display.unregisterForEvents(this);
+            EventManager.unregister(this);
+         }
+      };
+      EventManager.register(liveButton);
+      display.registerForEvents(liveButton);
+      liveButton.setToolTipText("Continuously acquire new images");
+      setLiveButtonMode(liveButton, isOn_);
+      liveButton.setPreferredSize(new Dimension(90, 28));
+      liveButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent event) {
+            setLiveMode(!isOn_);
+         }
+      });
+      controls.add(liveButton);
+
+      JButton toAlbumButton = new JButton("Album",
+            SwingResourceManager.getIcon(MMStudio.class,
+               "/org/micromanager/internal/icons/arrow_right.png"));
+      toAlbumButton.setToolTipText("Add the current image to the Album collection");
+      toAlbumButton.setPreferredSize(new Dimension(90, 28));
+      toAlbumButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent event) {
+            MMStudio.getInstance().doSnap(true);
+         }
+      });
+      controls.add(toAlbumButton);
+      return controls;
    }
 
    /**

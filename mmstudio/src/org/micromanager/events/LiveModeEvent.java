@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //PROJECT:       Micro-Manager
-//SUBSYSTEM:     Display implementation
+//SUBSYSTEM:     Events API
 //-----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
@@ -18,22 +18,16 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.display.internal;
-
-import org.micromanager.display.DisplayWindow;
+package org.micromanager.events;
 
 /**
- * This event signifies that a display has been destroyed via its
- * forceClosed() method.
+ * This class is used to signify that live mode has been turned on or off.
  */
-public class DisplayDestroyedEvent implements org.micromanager.display.DisplayDestroyedEvent {
-   private DisplayWindow display_;
-
-   public DisplayDestroyedEvent(DisplayWindow display) {
-      display_ = display;
-   }
-
-   public DisplayWindow getDisplay() {
-      return display_;
-   }
+public interface LiveModeEvent {
+   /**
+    * Informs the caller if live mode is on or off.
+    * @return True if live mode has been turned on, false if it has been turned
+    *         off.
+    */
+   public boolean getIsOn();
 }

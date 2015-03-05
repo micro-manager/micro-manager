@@ -16,6 +16,10 @@ public class EventManager {
       bus_.register(obj);
    }
 
+   public static void unregister(Object obj) {
+      bus_.unregister(obj);
+   }
+
    public static void post(Object obj) {
       bus_.post(obj);
    }
