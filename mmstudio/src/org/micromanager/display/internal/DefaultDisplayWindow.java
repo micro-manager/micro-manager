@@ -71,6 +71,7 @@ import org.micromanager.data.NewImageEvent;
 import org.micromanager.data.NewSummaryMetadataEvent;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.DatastoreSavedEvent;
+import org.micromanager.display.ControlsGenerator;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.RequestToDrawEvent;
@@ -120,6 +121,9 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    // Properties related to fullscreen mode.
    private JFrame fullScreenFrame_;
 
+   // Used to generate custom display controls.
+   private ControlsGenerator generator_;
+
    // GUI components
    private JPanel contentsPanel_;
    private JPanel canvasPanel_;
@@ -127,7 +131,6 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    private JPanel controlsPanel_;
    private HyperstackControls hyperstackControls_;
    private JButton fullButton_;
-   private List<Component> customControls_;
    private MultiModePanel modePanel_;
    private HistogramsPanel histograms_;
    private MetadataPanel metadata_;
@@ -152,19 +155,16 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
     * Convenience constructor that uses default DisplaySettings.
     */
    public DefaultDisplayWindow(Datastore store,
-         List<Component> customControls) {
-      this(store, customControls, null);
+         ControlsGenerator generator) {
+      this(store, generator, null);
    }
 
    /**
-    * customControls are Components that will be displayed immediately beneath
-    * the HyperstackControls (the scrollbars), alongside the save button and
-    * any other buttons that we provide by default. The creator is responsible
-    * for the logic implemented by these controls. They may be null or an
-    * empty list.
+    * @param generator ControlsGenerator to generate any custom controls. May
+    *        be null if the creator does not want any.
     * @param settings DisplaySettings to use as initial state for this display
     */
-   public DefaultDisplayWindow(Datastore store, List<Component> customControls,
+   public DefaultDisplayWindow(Datastore store, ControlsGenerator generator,
          DisplaySettings settings) {
       super("image display window");
       store_ = store;
@@ -177,10 +177,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       }
       displayBus_ = new EventBus();
       displayBus_.register(this);
-      customControls_ = customControls;
-      if (customControls_ == null) {
-         customControls_ = new ArrayList<Component>();
-      }
+      generator_ = generator;
 
       titleID++;
       displayNum_ = titleID;
@@ -306,9 +303,15 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       controlsPanel_.add(hyperstackControls_,
             "align center, span, growx, wrap");
 
-      for (Component c : customControls_) {
+      // Add user-supplied custom controls, if any.
+      List<Component> customControls = new ArrayList<Component>();
+      if (generator_ != null) {
+         customControls = generator_.generateControls(this);
+      }
+      for (Component c : customControls) {
          controlsPanel_.add(c);
       }
+
       fullButton_ = new JButton("Fullscreen");
       fullButton_.setToolTipText("Turn fullscreen mode on or off.");
       fullButton_.addActionListener(new ActionListener() {
@@ -676,6 +679,10 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       }
       displayBus_.post(
             new FullScreenEvent(getScreenConfig(), fullScreenFrame_ != null));
+   }
+
+   public ControlsGenerator getControlsGenerator() {
+      return generator_;
    }
 
    @Override

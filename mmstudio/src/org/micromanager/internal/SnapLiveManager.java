@@ -32,6 +32,7 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
 import org.micromanager.data.SummaryMetadata;
+import org.micromanager.display.ControlsGenerator;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.RequestToCloseEvent;
 
@@ -291,46 +292,51 @@ public class SnapLiveManager {
     * We need to [re]create the display and its associated custom controls.
     */
    private void createDisplay() {
-      ArrayList<Component> controls = new ArrayList<Component>();
-      snapButton_ = new JButton("Snap",
-            SwingResourceManager.getIcon(MMStudio.class,
-               "/org/micromanager/internal/icons/camera.png"));
-      snapButton_.setToolTipText("Take a new image");
-      snapButton_.setPreferredSize(new Dimension(90, 28));
-      snapButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent event) {
-            snap(true);
-         }
-      });
-      controls.add(snapButton_);
+      display_ = new DefaultDisplayWindow(store_,
+         new ControlsGenerator() {
+            @Override
+            public List<Component> generateControls(DisplayWindow display) {
+               ArrayList<Component> controls = new ArrayList<Component>();
+               snapButton_ = new JButton("Snap",
+                     SwingResourceManager.getIcon(MMStudio.class,
+                        "/org/micromanager/internal/icons/camera.png"));
+               snapButton_.setToolTipText("Take a new image");
+               snapButton_.setPreferredSize(new Dimension(90, 28));
+               snapButton_.addActionListener(new ActionListener() {
+                  @Override
+                  public void actionPerformed(ActionEvent event) {
+                     snap(true);
+                  }
+               });
+               controls.add(snapButton_);
 
-      liveButton_ = new JButton();
-      liveButton_.setToolTipText("Continuously acquire new images");
-      setLiveButtonMode();
-      liveButton_.setPreferredSize(new Dimension(90, 28));
-      liveButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent event) {
-            setLiveMode(!isOn_);
-         }
-      });
-      controls.add(liveButton_);
+               liveButton_ = new JButton();
+               liveButton_.setToolTipText("Continuously acquire new images");
+               setLiveButtonMode();
+               liveButton_.setPreferredSize(new Dimension(90, 28));
+               liveButton_.addActionListener(new ActionListener() {
+                  @Override
+                  public void actionPerformed(ActionEvent event) {
+                     setLiveMode(!isOn_);
+                  }
+               });
+               controls.add(liveButton_);
 
-      JButton toAlbumButton = new JButton("Album",
-            SwingResourceManager.getIcon(MMStudio.class,
-               "/org/micromanager/internal/icons/arrow_right.png"));
-      toAlbumButton.setToolTipText("Add the current image to the Album collection");
-      toAlbumButton.setPreferredSize(new Dimension(90, 28));
-      toAlbumButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent event) {
-            MMStudio.getInstance().doSnap(true);
-         }
+               JButton toAlbumButton = new JButton("Album",
+                     SwingResourceManager.getIcon(MMStudio.class,
+                        "/org/micromanager/internal/icons/arrow_right.png"));
+               toAlbumButton.setToolTipText("Add the current image to the Album collection");
+               toAlbumButton.setPreferredSize(new Dimension(90, 28));
+               toAlbumButton.addActionListener(new ActionListener() {
+                  @Override
+                  public void actionPerformed(ActionEvent event) {
+                     MMStudio.getInstance().doSnap(true);
+                  }
+               });
+               controls.add(toAlbumButton);
+               return controls;
+            }
       });
-      controls.add(toAlbumButton);
-
-      display_ = new DefaultDisplayWindow(store_, controls);
       display_.registerForEvents(this);
    }
 

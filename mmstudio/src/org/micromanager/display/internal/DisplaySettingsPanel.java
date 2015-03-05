@@ -77,7 +77,7 @@ public class DisplaySettingsPanel extends JPanel {
 
    private Datastore store_;
    private ImagePlus ijImage_;
-   private DisplayWindow display_;
+   private DefaultDisplayWindow display_;
    private EventBus displayBus_;
    private JComboBox displayMode_;
    private JComboBox colorPresets_;
@@ -86,7 +86,7 @@ public class DisplaySettingsPanel extends JPanel {
    private JCheckBox shouldAutostretch_;
 
    public DisplaySettingsPanel(Datastore store, ImagePlus ijImage,
-         DisplayWindow display, EventBus displayBus) {
+         DefaultDisplayWindow display, EventBus displayBus) {
       super(new MigLayout());
 
       store_ = store;
@@ -233,9 +233,7 @@ public class DisplaySettingsPanel extends JPanel {
       dupeButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            // TODO: ideally we would copy the custom controls from the
-            // existing DefaultDisplayWindow, but that's not available here.
-            new DefaultDisplayWindow(store_, null);
+            new DefaultDisplayWindow(store_, display_.getControlsGenerator());
          }
       });
       add(dupeButton, "align right, wrap");

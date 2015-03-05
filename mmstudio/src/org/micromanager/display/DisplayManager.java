@@ -44,11 +44,14 @@ public interface DisplayManager {
    /**
     * Retrieve a DisplaySettings holding the values the user has saved as their
     * default values.
+    * @return The DisplaySettings as of the last time the user clicked the
+    *         "Set as default" button in the Settings tab of a DisplayWindow.
     */
    public DisplaySettings getStandardDisplaySettings();
 
    /**
     * Generate a "blank" DisplaySettings.Builder with all null values.
+    * @return A DisplaySettingsBuilder with no pre-set values.
     */
    public DisplaySettings.DisplaySettingsBuilder getDisplaySettingsBuilder();
 
@@ -56,23 +59,42 @@ public interface DisplayManager {
     * Load the contents of the display settings file in the specified
     * path, and create a new DisplayWindow for each distinct set of settings,
     * attached to the provided Datastore.
+    * @param store The Datastore to load data for
+    * @param path The path of the display settings file
+    * @return A list of DisplayWindows created according to the display
+    *         settings file.
     */
    public List<DisplayWindow> loadDisplaySettings(Datastore store, String path);
 
    /**
     * Generate a "blank" PropertyMap.PropertyMapBuilder with empty mappings.
+    * @return A PropertyMapBuilder with no pre-set values.
     */
    public PropertyMap.PropertyMapBuilder getPropertyMapBuilder();
 
    /**
     * Create a new DisplayWindow for the specified Datastore and return it.
+    * @param store The Datastore whose data should be displayed.
+    * @return The created DisplayWindow.
     */
    public DisplayWindow createDisplay(Datastore store);
 
    /**
+    * Create a new DisplayWindow for the specified Datastore and return it.
+    * This version allows you to add your own custom controls to the display
+    * that will appear underneath the axis scrollbars.
+    * @param store The Datastore whose data should be displayed.
+    * @param generator A ControlsGenerator used to create custom controls for
+    *        the DisplayWindow. May be null.
+    * @return The created DisplayWindow.
+    */
+   public DisplayWindow createDisplay(Datastore store,
+         ControlsGenerator generator);
+
+   /**
     * Request that MicroManager manage the specified Datastore for you.
     * In brief: if you want users to receive a prompt to save their data when
-    * the last window for a Datastore you created is closed, then use this
+    * the last display for a Datastore you created is closed, then use this
     * method.
     * Specifically, this method does the following things:
     * - Add the Datastore to the list returned by getDatastores().
@@ -89,17 +111,21 @@ public interface DisplayManager {
     * are not managed, which means you are responsible for ensuring that they
     * are properly closed and saved. Datastores created by MicroManager itself
     * (e.g. by running an MDA) are automatically managed.
+    * @param store The Datastore to manage.
     */
    public void manage(Datastore store);
 
    /**
     * Return a list of all Datastores that MicroManager is managing (see the
     * manage() method for more information).
+    * @return A list of all Datastores that Micro-Manager is managing.
     */
    public List<Datastore> getTrackedDatastores();
 
    /**
     * Returns true iff the Datastore is being managed by MicroManager.
+    * @param store The Datastore whose management status is under question.
+    * @return Whether or not Micro-Manager is managing the Datastore.
     */
    public boolean getIsTracked(Datastore store);
 
@@ -108,22 +134,31 @@ public interface DisplayManager {
     * effects: first, it will be in the list returned by getDisplays() for that
     * Datastore; second, when the last DisplayWindow for a Datastore is closed,
     * the user is prompted to save (if the Datastore has not already been
-    * saved), and if the user cancels, the window is not closed.
+    * saved), and if the user cancels, the display is not closed.
+    * NOTE: you should only need to call this if you have created displays
+    * prior to calling manage() above, and you want to be able to retrieve
+    * those displays using getDisplays() later.
+    * @param display The DisplayWindow to be associated with the Datastore.
+    * @param store The Datastore this DisplayWindow is associated with.
     * @throws IllegalArgumentException if the Datastore is not managed by
     *         MicroManager.
     */
-   public void associateDisplay(DisplayWindow window, Datastore store) throws IllegalArgumentException;
+   public void associateDisplay(DisplayWindow display, Datastore store) throws IllegalArgumentException;
 
    /**
     * Remove the specified DisplayWindow from the list of associated displays
     * for the Datastore. Does nothing if the Datastore is not managed or if
     * the display is already not associated.
+    * @param display The DisplayWindow that should no longer be associated.
+    * @param store The Datastore to remove the association with.
     */
-   public void removeDisplay(DisplayWindow window, Datastore store);
+   public void removeDisplay(DisplayWindow display, Datastore store);
 
    /**
     * Return all associated DisplayWindows for the Datastore. Returns null if
     * the Datastore is not managed.
+    * @return A list of all DisplayWindows Micro-Manager knows are associated
+    *         with the specified Datastore, or null.
     */
    public List<DisplayWindow> getDisplays(Datastore store);
 
@@ -131,12 +166,14 @@ public interface DisplayManager {
     * Return the DisplayWindow for the top-level window. Will be null if there
     * is no such window or that window is not a DisplayWindow (e.g. it is an
     * ImageJ window instead).
+    * @return The top-level DisplayWindow, or null.
     */
    public DisplayWindow getCurrentWindow();
 
    /**
     * Return all active DisplayWindows. Note this is limited to windows created
     * by Micro-Manager (e.g. not windows created by ImageJ).
+    * @return A list of all DisplayWindows that Micro-Manager knows about.
     */
    public List<DisplayWindow> getAllImageWindows();
 }

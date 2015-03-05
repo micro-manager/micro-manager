@@ -31,6 +31,7 @@ import javax.swing.JOptionPane;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
+import org.micromanager.display.ControlsGenerator;
 import org.micromanager.display.DisplayManager;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.DisplaySettings;
@@ -135,20 +136,26 @@ public class DefaultDisplayManager implements DisplayManager {
    }
 
    @Override
-   public void associateDisplay(DisplayWindow window, Datastore store)
+   public DisplayWindow createDisplay(Datastore store,
+         ControlsGenerator generator) {
+      return new DefaultDisplayWindow(store, generator);
+   }
+
+   @Override
+   public void associateDisplay(DisplayWindow display, Datastore store)
          throws IllegalArgumentException {
       if (!storeToDisplays_.containsKey(store)) {
          throw new IllegalArgumentException("Asked to associate a display with datastore " + store + " that is not managed.");
       }
-      storeToDisplays_.get(store).add(window);
-      window.registerForEvents(this);
+      storeToDisplays_.get(store).add(display);
+      display.registerForEvents(this);
    }
 
    @Override
-   public void removeDisplay(DisplayWindow window, Datastore store) {
+   public void removeDisplay(DisplayWindow display, Datastore store) {
       if (storeToDisplays_.containsKey(store) &&
-            storeToDisplays_.get(store).contains(window)) {
-         storeToDisplays_.get(store).remove(window);
+            storeToDisplays_.get(store).contains(display)) {
+         storeToDisplays_.get(store).remove(display);
       }
    }
 
