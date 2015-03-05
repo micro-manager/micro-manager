@@ -137,6 +137,8 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    private CommentsPanel comments_;
    private OverlaysPanel overlays_;
 
+   private boolean haveCreatedGUI_ = false;
+
    // Used by the pack() method to track changes in our size.
    private Dimension prevModeSize_;
    private Dimension prevControlsSize_;
@@ -222,6 +224,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
     * our UI and the objects we'll use to communicate with ImageJ.
     */
    private void makeWindowAndIJObjects() {
+      loadAndRestorePosition(getLocation().x, getLocation().y);
       stack_ = new MMVirtualStack(store_, displayBus_);
       ijImage_ = new MMImagePlus();
       setImagePlusMetadata(ijImage_);
@@ -273,7 +276,8 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       setDisplayedImageTo(builder.build());
       resetTitle();
       setWindowSize();
-      loadAndRestorePosition(getLocation().x, getLocation().y);
+
+      haveCreatedGUI_ = true;
       EventManager.post(new DefaultNewDisplayEvent(this));
    }
 
@@ -583,10 +587,12 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    public void setDisplaySettings(DisplaySettings settings) {
       displaySettings_ = settings;
       displayBus_.post(new NewDisplaySettingsEvent(settings, this));
-      // Assume any change in display settings will necessitate a redraw.
-      displayBus_.post(new DefaultRequestToDrawEvent(null));
-      // And the magnification may have changed.
-      resetTitle();
+      if (haveCreatedGUI_) {
+         // Assume any change in display settings will necessitate a redraw.
+         displayBus_.post(new DefaultRequestToDrawEvent(null));
+         // And the magnification may have changed.
+         resetTitle();
+      }
    }
 
    // TODO: this method assumes we're in Composite view mode.
