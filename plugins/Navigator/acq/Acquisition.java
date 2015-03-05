@@ -6,6 +6,8 @@ import imagedisplay.DisplayPlus;
 import java.awt.Color;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
@@ -121,7 +123,11 @@ public abstract class Acquisition {
    }
 
    public void addImage(TaggedImage img) {
-      engineOutputQueue_.add(img);
+      try {
+         engineOutputQueue_.put(img);
+      } catch (InterruptedException ex) {
+         ReportingUtils.showError("Acquisition engine thread interrupted");
+      }
    }
 
    protected abstract JSONArray createInitialPositionList();
