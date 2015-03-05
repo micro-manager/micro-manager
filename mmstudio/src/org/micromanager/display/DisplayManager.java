@@ -84,12 +84,12 @@ public interface DisplayManager {
     * This version allows you to add your own custom controls to the display
     * that will appear underneath the axis scrollbars.
     * @param store The Datastore whose data should be displayed.
-    * @param generator A ControlsGenerator used to create custom controls for
+    * @param factory A ControlsFactory used to create custom controls for
     *        the DisplayWindow. May be null.
     * @return The created DisplayWindow.
     */
    public DisplayWindow createDisplay(Datastore store,
-         ControlsGenerator generator);
+         ControlsFactory factory);
 
    /**
     * Request that MicroManager manage the specified Datastore for you.

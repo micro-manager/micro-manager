@@ -71,7 +71,7 @@ import org.micromanager.data.NewImageEvent;
 import org.micromanager.data.NewSummaryMetadataEvent;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.DatastoreSavedEvent;
-import org.micromanager.display.ControlsGenerator;
+import org.micromanager.display.ControlsFactory;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.RequestToDrawEvent;
@@ -122,7 +122,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    private JFrame fullScreenFrame_;
 
    // Used to generate custom display controls.
-   private ControlsGenerator generator_;
+   private ControlsFactory controlsFactory_;
 
    // GUI components
    private JPanel contentsPanel_;
@@ -155,17 +155,17 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
     * Convenience constructor that uses default DisplaySettings.
     */
    public DefaultDisplayWindow(Datastore store,
-         ControlsGenerator generator) {
-      this(store, generator, null);
+         ControlsFactory controlsFactory) {
+      this(store, controlsFactory, null);
    }
 
    /**
-    * @param generator ControlsGenerator to generate any custom controls. May
-    *        be null if the creator does not want any.
+    * @param controlsFactory ControlsFactory to generate any custom controls.
+    *        May be null if the creator does not want any.
     * @param settings DisplaySettings to use as initial state for this display
     */
-   public DefaultDisplayWindow(Datastore store, ControlsGenerator generator,
-         DisplaySettings settings) {
+   public DefaultDisplayWindow(Datastore store,
+         ControlsFactory controlsFactory, DisplaySettings settings) {
       super("image display window");
       store_ = store;
       store_.registerForEvents(this);
@@ -177,7 +177,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       }
       displayBus_ = new EventBus();
       displayBus_.register(this);
-      generator_ = generator;
+      controlsFactory_ = controlsFactory;
 
       titleID++;
       displayNum_ = titleID;
@@ -305,8 +305,8 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
 
       // Add user-supplied custom controls, if any.
       List<Component> customControls = new ArrayList<Component>();
-      if (generator_ != null) {
-         customControls = generator_.generateControls(this);
+      if (controlsFactory_ != null) {
+         customControls = controlsFactory_.makeControls(this);
       }
       for (Component c : customControls) {
          controlsPanel_.add(c);
@@ -681,8 +681,8 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
             new FullScreenEvent(getScreenConfig(), fullScreenFrame_ != null));
    }
 
-   public ControlsGenerator getControlsGenerator() {
-      return generator_;
+   public ControlsFactory getControlsFactory() {
+      return controlsFactory_;
    }
 
    @Override

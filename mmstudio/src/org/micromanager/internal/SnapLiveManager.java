@@ -32,7 +32,7 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
 import org.micromanager.data.SummaryMetadata;
-import org.micromanager.display.ControlsGenerator;
+import org.micromanager.display.ControlsFactory;
 import org.micromanager.display.DisplayDestroyedEvent;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.RequestToCloseEvent;
@@ -290,9 +290,9 @@ public class SnapLiveManager {
     */
    private void createDisplay() {
       display_ = new DefaultDisplayWindow(store_,
-         new ControlsGenerator() {
+         new ControlsFactory() {
             @Override
-            public List<Component> generateControls(DisplayWindow display) {
+            public List<Component> makeControls(DisplayWindow display) {
                return createControls(display);
             }
       });

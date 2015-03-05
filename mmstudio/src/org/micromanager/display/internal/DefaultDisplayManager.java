@@ -31,7 +31,7 @@ import javax.swing.JOptionPane;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
-import org.micromanager.display.ControlsGenerator;
+import org.micromanager.display.ControlsFactory;
 import org.micromanager.display.DisplayManager;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.DisplaySettings;
@@ -137,8 +137,8 @@ public class DefaultDisplayManager implements DisplayManager {
 
    @Override
    public DisplayWindow createDisplay(Datastore store,
-         ControlsGenerator generator) {
-      return new DefaultDisplayWindow(store, generator);
+         ControlsFactory factory) {
+      return new DefaultDisplayWindow(store, factory);
    }
 
    @Override
