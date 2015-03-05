@@ -43,7 +43,6 @@ import org.micromanager.internal.MMStudio;
 import org.micromanager.acquisition.internal.TaggedImageQueue;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
-import org.micromanager.display.DisplayWindow;
 import org.micromanager.internal.utils.MMTags;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.MMScriptException;
@@ -58,7 +57,7 @@ public class RecallPlugin implements MMPlugin {
    private CMMCore core_;
    private MMStudio gui_;
    private MMStudio.DisplayImageRoutine displayImageRoutine_;
-   // TODO: figure out how to assign this name to the viewer window
+   // TODO: assign this name to the viewer window once the api has that ability
    private final String ACQ_NAME = "Live Replay";
    private int multiChannelCameraNrCh_;
    private Datastore store_;
@@ -98,8 +97,8 @@ public class RecallPlugin implements MMPlugin {
    @Override
    public void show() {
       store_ = gui_.data().createRAMDatastore();
-      DisplayWindow display = gui_.getDisplayManager().createDisplay(store_);
-      gui_.displays().track(store_);
+      gui_.getDisplayManager().createDisplay(store_);
+      gui_.getDisplayManager().manage(store_);
 
       int remaining = core_.getRemainingImageCount();
       if (remaining < 1) {
