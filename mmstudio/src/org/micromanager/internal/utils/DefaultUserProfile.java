@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.regex.Matcher;
@@ -37,14 +36,12 @@ public class DefaultUserProfile implements UserProfile {
    static {
       staticInstance_ = new DefaultUserProfile();
    }
-   private ReentrantLock accessLock_;
    private HashMap<String, String> nameToFile_;
    private String profileName_;
    private final DefaultPropertyMap globalProfile_;
    private DefaultPropertyMap userProfile_;
 
    public DefaultUserProfile() {
-      accessLock_ = new ReentrantLock();
       nameToFile_ = loadProfileMapping();
       String globalPath = new File(UserProfile.GLOBAL_SETTINGS_FILE).getAbsolutePath();
       globalProfile_ = loadPropertyMap(globalPath);
@@ -202,217 +199,256 @@ public class DefaultUserProfile implements UserProfile {
    @Override
    public String getString(Class<?> c, String key, String fallback) {
       key = genKey(c, key);
-      accessLock_.lock();
-      String result = userProfile_.getString(key);
-      if (result == null) {
-         // Try the global profile
-         result = globalProfile_.getString(key);
+      synchronized(userProfile_) {
+         String result = userProfile_.getString(key);
+         if (result != null) {
+            return result;
+         }
       }
-      if (result == null) {
-         // Give up.
-         result = fallback;
+      // Try the global profile.
+      synchronized(globalProfile_) {
+         String result = globalProfile_.getString(key);
+         if (result != null) {
+            return result;
+         }
       }
-      return result;
+      // Give up.
+      return fallback;
    }
    @Override
    public String[] getStringArray(Class<?> c, String key, String[] fallback) {
       key = genKey(c, key);
-      accessLock_.lock();
-      String[] result = userProfile_.getStringArray(key);
-      if (result == null) {
-         // Try the global profile
-         result = globalProfile_.getStringArray(key);
+      synchronized(userProfile_) {
+         String[] result = userProfile_.getStringArray(key);
+         if (result != null) {
+            return result;
+         }
       }
-      if (result == null) {
-         // Give up.
-         result = fallback;
+      // Try the global profile.
+      synchronized(globalProfile_) {
+         String[] result = globalProfile_.getStringArray(key);
+         if (result != null) {
+            return result;
+         }
       }
-      return result;
+      // Give up.
+      return fallback;
    }
-
    @Override
    public void setString(Class<?> c, String key, String value) {
-      accessLock_.lock();
-      userProfile_ = (DefaultPropertyMap) userProfile_.copy().putString(genKey(c, key), value).build();
-      accessLock_.unlock();
+      synchronized(userProfile_) {
+         userProfile_ = (DefaultPropertyMap) userProfile_.copy().putString(genKey(c, key), value).build();
+      }
    }
    @Override
    public void setStringArray(Class<?> c, String key, String[] value) {
-      accessLock_.lock();
-      userProfile_ = (DefaultPropertyMap) userProfile_.copy().putStringArray(genKey(c, key), value).build();
-      accessLock_.unlock();
+      synchronized(userProfile_) {
+         userProfile_ = (DefaultPropertyMap) userProfile_.copy().putStringArray(genKey(c, key), value).build();
+      }
    }
 
    @Override
    public Integer getInt(Class<?> c, String key, Integer fallback) {
       key = genKey(c, key);
-      accessLock_.lock();
-      Integer result = userProfile_.getInt(key);
-      if (result == null) {
-         // Try the global profile
-         result = globalProfile_.getInt(key);
+      synchronized(userProfile_) {
+         Integer result = userProfile_.getInt(key);
+         if (result != null) {
+            return result;
+         }
       }
-      if (result == null) {
-         // Give up.
-         result = fallback;
+      // Try the global profile.
+      synchronized(globalProfile_) {
+         Integer result = globalProfile_.getInt(key);
+         if (result != null) {
+            return result;
+         }
       }
-      return result;
+      // Give up.
+      return fallback;
    }
    @Override
    public Integer[] getIntArray(Class<?> c, String key, Integer[] fallback) {
       key = genKey(c, key);
-      accessLock_.lock();
-      Integer[] result = userProfile_.getIntArray(key);
-      if (result == null) {
-         // Try the global profile
-         result = globalProfile_.getIntArray(key);
+      synchronized(userProfile_) {
+         Integer[] result = userProfile_.getIntArray(key);
+         if (result != null) {
+            return result;
+         }
       }
-      if (result == null) {
-         // Give up.
-         result = fallback;
+      // Try the global profile.
+      synchronized(globalProfile_) {
+         Integer[] result = globalProfile_.getIntArray(key);
+         if (result != null) {
+            return result;
+         }
       }
-      return result;
+      // Give up.
+      return fallback;
    }
    @Override
    public void setInt(Class<?> c, String key, Integer value) {
-      accessLock_.lock();
-      userProfile_ = (DefaultPropertyMap) userProfile_.copy().putInt(genKey(c, key), value).build();
-      accessLock_.unlock();
+      synchronized(userProfile_) {
+         userProfile_ = (DefaultPropertyMap) userProfile_.copy().putInt(genKey(c, key), value).build();
+      }
    }
    @Override
    public void setIntArray(Class<?> c, String key, Integer[] value) {
-      accessLock_.lock();
-      userProfile_ = (DefaultPropertyMap) userProfile_.copy().putIntArray(genKey(c, key), value).build();
-      accessLock_.unlock();
+      synchronized(userProfile_) {
+         userProfile_ = (DefaultPropertyMap) userProfile_.copy().putIntArray(genKey(c, key), value).build();
+      }
    }
 
    @Override
    public Long getLong(Class<?> c, String key, Long fallback) {
       key = genKey(c, key);
-      accessLock_.lock();
-      Long result = userProfile_.getLong(key);
-      if (result == null) {
-         // Try the global profile
-         result = globalProfile_.getLong(key);
+      synchronized(userProfile_) {
+         Long result = userProfile_.getLong(key);
+         if (result != null) {
+            return result;
+         }
       }
-      if (result == null) {
-         // Give up.
-         result = fallback;
+      // Try the global profile.
+      synchronized(globalProfile_) {
+         Long result = globalProfile_.getLong(key);
+         if (result != null) {
+            return result;
+         }
       }
-      return result;
+      // Give up.
+      return fallback;
    }
    @Override
    public Long[] getLongArray(Class<?> c, String key, Long[] fallback) {
       key = genKey(c, key);
-      accessLock_.lock();
-      Long[] result = userProfile_.getLongArray(key);
-      if (result == null) {
-         // Try the global profile
-         result = globalProfile_.getLongArray(key);
+      synchronized(userProfile_) {
+         Long[] result = userProfile_.getLongArray(key);
+         if (result != null) {
+            return result;
+         }
       }
-      if (result == null) {
-         // Give up.
-         result = fallback;
+      // Try the global profile.
+      synchronized(globalProfile_) {
+         Long[] result = globalProfile_.getLongArray(key);
+         if (result != null) {
+            return result;
+         }
       }
-      return result;
+      // Give up.
+      return fallback;
    }
    @Override
    public void setLong(Class<?> c, String key, Long value) {
-      accessLock_.lock();
-      userProfile_ = (DefaultPropertyMap) userProfile_.copy().putLong(genKey(c, key), value).build();
-      accessLock_.unlock();
+      synchronized(userProfile_) {
+         userProfile_ = (DefaultPropertyMap) userProfile_.copy().putLong(genKey(c, key), value).build();
+      }
    }
    @Override
    public void setLongArray(Class<?> c, String key, Long[] value) {
-      accessLock_.lock();
-      userProfile_ = (DefaultPropertyMap) userProfile_.copy().putLongArray(genKey(c, key), value).build();
-      accessLock_.unlock();
+      synchronized(userProfile_) {
+         userProfile_ = (DefaultPropertyMap) userProfile_.copy().putLongArray(genKey(c, key), value).build();
+      }
    }
 
    @Override
    public Double getDouble(Class<?> c, String key, Double fallback) {
       key = genKey(c, key);
-      accessLock_.lock();
-      Double result = userProfile_.getDouble(key);
-      if (result == null) {
-         // Try the global profile
-         result = globalProfile_.getDouble(key);
+      synchronized(userProfile_) {
+         Double result = userProfile_.getDouble(key);
+         if (result != null) {
+            return result;
+         }
       }
-      if (result == null) {
-         // Give up.
-         result = fallback;
+      // Try the global profile.
+      synchronized(globalProfile_) {
+         Double result = globalProfile_.getDouble(key);
+         if (result != null) {
+            return result;
+         }
       }
-      return result;
+      // Give up.
+      return fallback;
    }
    @Override
    public Double[] getDoubleArray(Class<?> c, String key, Double[] fallback) {
       key = genKey(c, key);
-      accessLock_.lock();
-      Double[] result = userProfile_.getDoubleArray(key);
-      if (result == null) {
-         // Try the global profile
-         result = globalProfile_.getDoubleArray(key);
+      synchronized(userProfile_) {
+         Double[] result = userProfile_.getDoubleArray(key);
+         if (result != null) {
+            return result;
+         }
       }
-      if (result == null) {
-         // Give up.
-         result = fallback;
+      // Try the global profile.
+      synchronized(globalProfile_) {
+         Double[] result = globalProfile_.getDoubleArray(key);
+         if (result != null) {
+            return result;
+         }
       }
-      return result;
+      // Give up.
+      return fallback;
    }
    @Override
    public void setDouble(Class<?> c, String key, Double value) {
-      accessLock_.lock();
-      userProfile_ = (DefaultPropertyMap) userProfile_.copy().putDouble(genKey(c, key), value).build();
-      accessLock_.unlock();
+      synchronized(userProfile_) {
+         userProfile_ = (DefaultPropertyMap) userProfile_.copy().putDouble(genKey(c, key), value).build();
+      }
    }
    @Override
    public void setDoubleArray(Class<?> c, String key, Double[] value) {
-      accessLock_.lock();
-      userProfile_ = (DefaultPropertyMap) userProfile_.copy().putDoubleArray(genKey(c, key), value).build();
-      accessLock_.unlock();
+      synchronized(userProfile_) {
+         userProfile_ = (DefaultPropertyMap) userProfile_.copy().putDoubleArray(genKey(c, key), value).build();
+      }
    }
 
    @Override
    public Boolean getBoolean(Class<?> c, String key, Boolean fallback) {
       key = genKey(c, key);
-      accessLock_.lock();
-      Boolean result = userProfile_.getBoolean(key);
-      if (result == null) {
-         // Try the global profile
-         result = globalProfile_.getBoolean(key);
+      synchronized(userProfile_) {
+         Boolean result = userProfile_.getBoolean(key);
+         if (result != null) {
+            return result;
+         }
       }
-      if (result == null) {
-         // Give up.
-         result = fallback;
+      // Try the global profile.
+      synchronized(globalProfile_) {
+         Boolean result = globalProfile_.getBoolean(key);
+         if (result != null) {
+            return result;
+         }
       }
-      return result;
+      // Give up.
+      return fallback;
    }
    @Override
    public Boolean[] getBooleanArray(Class<?> c, String key, Boolean[] fallback) {
       key = genKey(c, key);
-      accessLock_.lock();
-      Boolean[] result = userProfile_.getBooleanArray(key);
-      if (result == null) {
-         // Try the global profile
-         result = globalProfile_.getBooleanArray(key);
+      synchronized(userProfile_) {
+         Boolean[] result = userProfile_.getBooleanArray(key);
+         if (result != null) {
+            return result;
+         }
       }
-      if (result == null) {
-         // Give up.
-         result = fallback;
+      // Try the global profile.
+      synchronized(globalProfile_) {
+         Boolean[] result = globalProfile_.getBooleanArray(key);
+         if (result != null) {
+            return result;
+         }
       }
-      return result;
+      // Give up.
+      return fallback;
    }
    @Override
    public void setBoolean(Class<?> c, String key, Boolean value) {
-      accessLock_.lock();
-      userProfile_ = (DefaultPropertyMap) userProfile_.copy().putBoolean(genKey(c, key), value).build();
-      accessLock_.unlock();
+      synchronized(userProfile_) {
+         userProfile_ = (DefaultPropertyMap) userProfile_.copy().putBoolean(genKey(c, key), value).build();
+      }
    }
    @Override
    public void setBooleanArray(Class<?> c, String key, Boolean[] value) {
-      accessLock_.lock();
-      userProfile_ = (DefaultPropertyMap) userProfile_.copy().putBooleanArray(genKey(c, key), value).build();
-      accessLock_.unlock();
+      synchronized(userProfile_) {
+         userProfile_ = (DefaultPropertyMap) userProfile_.copy().putBooleanArray(genKey(c, key), value).build();
+      }
    }
 
    /**
@@ -462,13 +498,13 @@ public class DefaultUserProfile implements UserProfile {
       DefaultPropertyMap.Builder builder = new DefaultPropertyMap.Builder();
       // NOTE: this should match genKey()
       String className = c.getCanonicalName();
-      accessLock_.lock();
-      for (String key : userProfile_.getKeys()) {
-         if (key.startsWith(className)) {
-            builder.putProperty(key, userProfile_.getProperty(key));
+      synchronized(userProfile_) {
+         for (String key : userProfile_.getKeys()) {
+            if (key.startsWith(className)) {
+               builder.putProperty(key, userProfile_.getProperty(key));
+            }
          }
       }
-      accessLock_.unlock();
       savePropertyMapToFile((DefaultPropertyMap) builder.build(), path);
    }
 
@@ -565,15 +601,15 @@ public class DefaultUserProfile implements UserProfile {
    public void clearProfileSubset(Class<?> c) {
       // Make a copy of the map that contains everything except the keys for
       // the specified class.
-      accessLock_.lock();
-      DefaultPropertyMap.Builder builder = new DefaultPropertyMap.Builder();
-      for (String key : userProfile_.getKeys()) {
-         if (!key.startsWith(c.getCanonicalName())) {
-            builder.putProperty(key, userProfile_.getProperty(key));
+      synchronized(userProfile_) {
+         DefaultPropertyMap.Builder builder = new DefaultPropertyMap.Builder();
+         for (String key : userProfile_.getKeys()) {
+            if (!key.startsWith(c.getCanonicalName())) {
+               builder.putProperty(key, userProfile_.getProperty(key));
+            }
          }
+         userProfile_ = (DefaultPropertyMap) builder.build();
       }
-      userProfile_ = (DefaultPropertyMap) builder.build();
-      accessLock_.unlock();
    }
 
    /**
