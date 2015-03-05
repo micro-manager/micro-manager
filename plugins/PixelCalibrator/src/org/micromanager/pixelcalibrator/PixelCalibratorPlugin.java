@@ -66,7 +66,7 @@ public class PixelCalibratorPlugin implements MMPlugin {
    @Override
    public void setApp(ScriptInterface app) {
       app_ = (MMStudio) app;
-      core_ = app.getMMCore();
+      core_ = app.getCMMCore();
 
    }
 

@@ -67,7 +67,7 @@ public class RecallPlugin implements MMPlugin {
    @Override
    public void setApp(ScriptInterface app) {
       gui_ = (MMStudio) app;                                        
-      core_ = app.getMMCore(); 
+      core_ = app.getCMMCore(); 
       
       displayImageRoutine_ = new MMStudio.DisplayImageRoutine() {
          @Override

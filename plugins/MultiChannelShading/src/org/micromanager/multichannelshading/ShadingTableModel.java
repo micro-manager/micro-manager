@@ -146,7 +146,7 @@ public class ShadingTableModel extends AbstractTableModel {
          }
 
       } catch (MMException ex) {
-         gui_.showError(ex);
+         gui_.logs().showError(ex);
       }
       fireTableDataChanged();
    }
@@ -166,7 +166,7 @@ public class ShadingTableModel extends AbstractTableModel {
    }
    
    public String[] getAvailablePresets() {
-      String[] presets = gui_.getMMCore().getAvailableConfigs(channelGroup_).
+      String[] presets = gui_.getCMMCore().getAvailableConfigs(channelGroup_).
               toArray();
       String[] usedPresets = getUsedPresets();
       String[] availablePresets = new String[presets.length - usedPresets.length];
@@ -207,7 +207,7 @@ public class ShadingTableModel extends AbstractTableModel {
    }
    
    public int getNumberOfPresetsInCurrentGroup() {
-      return (int) gui_.getMMCore().getAvailableConfigs(channelGroup_).size();
+      return (int) gui_.getCMMCore().getAvailableConfigs(channelGroup_).size();
    }
    
    public int getUnusedNumberOfPresetsInCurrentGroup() {
@@ -257,7 +257,7 @@ public class ShadingTableModel extends AbstractTableModel {
             try {
                imageCollection_.addFlatField(preset, fileList_.get(row));
             } catch (MMException ex) {
-               gui_.showError(ex);
+               gui_.logs().showError(ex);
             }
             gui_.profile().setString(this.getClass(), preset, fileList_.get(row));
          }

@@ -34,7 +34,7 @@ public class IntelligentAcquisition implements MMPlugin {
 
    public void setApp(ScriptInterface app) {
       gui_ = app;                                        
-      core_ = app.getMMCore();
+      core_ = app.getCMMCore();
       if (myFrame_ == null)
          myFrame_ = new IntelligentAcquisitionFrame(gui_);
       myFrame_.setVisible(true);

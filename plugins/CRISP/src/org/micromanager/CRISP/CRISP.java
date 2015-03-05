@@ -23,7 +23,7 @@ public class CRISP implements MMPlugin {
          try {
             myFrame_ = new CRISPFrame(gui_);
          } catch (Exception e) {
-            gui_.logError(e);
+            gui_.logs().logError(e);
             return;
          }
       }

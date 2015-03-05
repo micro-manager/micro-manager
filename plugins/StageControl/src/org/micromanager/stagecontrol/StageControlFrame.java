@@ -81,7 +81,7 @@ implements MMListenerInterface {
     */
    public StageControlFrame(ScriptInterface gui) {
       gui_ = gui;
-      core_ = gui_.getMMCore();
+      core_ = gui_.getCMMCore();
       nf_ = NumberFormat.getInstance();
       prefs_ = Preferences.userNodeForPackage(this.getClass());
       zStageExecutor_ = Executors.newFixedThreadPool(1);
@@ -880,7 +880,7 @@ implements MMListenerInterface {
          if (!core_.deviceBusy(core_.getXYStageDevice()))
             core_.setRelativeXYPosition(core_.getXYStageDevice(), x, y);
        } catch(Exception e) {
-          gui_.logError(e);
+          gui_.logs().logError(e);
        }
    }
    
@@ -899,7 +899,7 @@ implements MMListenerInterface {
             core_.waitForDevice(drive_);
             updateZPosLabel();
          } catch (Exception ex) {
-            gui_.logError(ex); 
+            gui_.logs().logError(ex); 
          }
       }
    }
@@ -911,7 +911,7 @@ implements MMListenerInterface {
             zStageExecutor_.execute(st);
          }
       } catch (Exception ex) {
-         gui_.showError(ex);
+         gui_.logs().showError(ex);
       }
    }
 

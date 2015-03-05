@@ -46,7 +46,7 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
     public AcquireMultipleRegionsForm(ScriptInterface gui) {
         rlm_ = new RegionListModel();
         gui_ = gui;
-        mmc_ = gui_.getMMCore();
+        mmc_ = gui_.core();
         initComponents();        
         currentRegion_ = new Region(new PositionList(), DirectoryText.getText(), FilenameText.getText());
       
@@ -227,18 +227,18 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
             try {
                 statusText.setText("Acquiring region " + String.valueOf(i));
                 //turn on position list, turn off time lapse
-                SequenceSettings currSettings = gui_.getAcquisitionSettings();
+                SequenceSettings currSettings = gui_.compat().getAcquisitionSettings();
                 currSettings.usePositionList = true;
                 currSettings.numFrames = 1;
-                gui_.setAcquisitionSettings(currSettings);
+                gui_.compat().setAcquisitionSettings(currSettings);
                 // TODO: ensure saving chooses the correct format. This logic
                 // became lost in the MM2.0 refactoring.
-//                gui_.setImageSavingFormat(org.micromanager.acquisition.internal.TaggedImageStorageMultipageTiff.class);
+//                gui_.compat().setImageSavingFormat(org.micromanager.acquisition.internal.TaggedImageStorageMultipageTiff.class);
                 //update positionlist with grid
-                gui_.setPositionList(currRegion.tileGrid(getXFieldSize(), getYFieldSize(), axisList_, zGenType_));               
-                gui_.refreshGUI();
-                String acqName = gui_.runAcquisition(currRegion.filename, currRegion.directory);
-                gui_.closeAcquisitionDisplays(acqName);
+                gui_.compat().setPositionList(currRegion.tileGrid(getXFieldSize(), getYFieldSize(), axisList_, zGenType_));               
+                gui_.compat().refreshGUI();
+                String acqName = gui_.compat().runAcquisition(currRegion.filename, currRegion.directory);
+                gui_.compat().closeAcquisitionDisplays(acqName);
             } catch (MMScriptException ex) {
                 handleError(ex);
             }
@@ -661,7 +661,7 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
         center = r.center();
         minPos = bBox.getPosition(0);
        try {
-           gui_.setXYStagePosition(minPos.getX(), center.getY());
+           gui_.compat().setXYStagePosition(minPos.getX(), center.getY());
        } catch (MMScriptException ex) {
            handleError(ex);
        }
@@ -678,7 +678,7 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
         r = rlm_.getRegion(AcquireList.getSelectedIndex());
         center = r.center();
        try {
-           gui_.setXYStagePosition(center.getX(), center.getY());
+           gui_.compat().setXYStagePosition(center.getX(), center.getY());
        } catch (MMScriptException ex) {
            handleError(ex);
        }
@@ -694,7 +694,7 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
         center = r.center();
         maxPos = bBox.getPosition(1);
        try {
-           gui_.setXYStagePosition(center.getX(), maxPos.getY());
+           gui_.compat().setXYStagePosition(center.getX(), maxPos.getY());
        } catch (MMScriptException ex) {
            handleError(ex);
        }
@@ -712,7 +712,7 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
         center = r.center();
         minPos = bBox.getPosition(0);
        try {
-           gui_.setXYStagePosition(center.getX(), minPos.getY());
+           gui_.compat().setXYStagePosition(center.getX(), minPos.getY());
        } catch (MMScriptException ex) {
            handleError(ex);
        }
@@ -728,7 +728,7 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
         center = r.center();
         maxPos = bBox.getPosition(1);
        try {
-           gui_.setXYStagePosition(maxPos.getX(), center.getY());
+           gui_.compat().setXYStagePosition(maxPos.getX(), center.getY());
        } catch (MMScriptException ex) {
             handleError(ex);
        }

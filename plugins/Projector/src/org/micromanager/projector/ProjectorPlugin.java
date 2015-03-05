@@ -60,7 +60,7 @@ public class ProjectorPlugin implements MMPlugin {
    @Override
    public void setApp(ScriptInterface app) {
       app_ = app;
-      core_ = app_.getMMCore();
+      core_ = app_.getCMMCore();
    }
 
    // Instantiate the ProjectorControlForm window if necessary, and show it
@@ -68,7 +68,7 @@ public class ProjectorPlugin implements MMPlugin {
    @Override
    public void show() {
       if (core_.getSLMDevice().length()==0 && core_.getGalvoDevice().length()==0) {
-         app_.showMessage("Please load an SLM (Spatial Light Modulator) " +
+         app_.logs().showMessage("Please load an SLM (Spatial Light Modulator) " +
                "or a Galvo-based phototargeting device " +
                "before using the Projector plugin.");
          return;

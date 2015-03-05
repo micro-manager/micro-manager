@@ -103,7 +103,7 @@ public class SplitViewFrame extends MMFrame {
          ScriptInterface gui) throws Exception {
       processor_ = processor;
       gui_ = gui;
-      core_ = gui_.getMMCore();
+      core_ = gui_.getCMMCore();
 
       col1_ = new Color(gui_.profile().getInt(this.getClass(), TOPLEFTCOLOR, 
               Color.red.getRGB()));
@@ -170,7 +170,7 @@ public class SplitViewFrame extends MMFrame {
          try {
             dataStore_ = openAcq();
          } catch (MMScriptException ex) {
-            gui_.showError(ex, "Failed to open acquisition Window");
+            gui_.logs().showError(ex, "Failed to open acquisition Window");
          }
       }
       if (dataStore_ != null) {
@@ -181,18 +181,18 @@ public class SplitViewFrame extends MMFrame {
    private void enableLiveMode(boolean enable) {
       try {
          if (enable) {
-            if (gui_.isLiveModeOn()) {
-               gui_.enableLiveMode(false);
+            if (gui_.compat().isLiveModeOn()) {
+               gui_.compat().enableLiveMode(false);
             }
             if (timer_.isRunning()) {
                return;
             }
-            if (!gui_.acquisitionExists(ACQNAME)) {
+            if (!gui_.compat().acquisitionExists(ACQNAME)) {
                try {
                   calculateSize();
                   dataStore_ = openAcq();
                } catch (MMScriptException ex) {
-                  gui_.showError(ex, "Failed to open acquisition Window");
+                  gui_.logs().showError(ex, "Failed to open acquisition Window");
                }
             }
 
@@ -231,7 +231,7 @@ public class SplitViewFrame extends MMFrame {
             liveButton.setText("Live");
          }
       } catch (Exception err) {
-         gui_.showError(err);
+         gui_.logs().showError(err);
       }
    }
 
@@ -316,10 +316,10 @@ public class SplitViewFrame extends MMFrame {
          dataStore_.putImage(image);
 
       } catch (Exception e) {
-         if (gui_.isLiveModeOn())
+         if (gui_.compat().isLiveModeOn())
             enableLiveMode(false);
          else
-            gui_.showError(e);
+            gui_.logs().showError(e);
       }
    }
 
@@ -488,7 +488,7 @@ public class SplitViewFrame extends MMFrame {
       try {
          store.setSummaryMetadata(summary);
       } catch (DatastoreFrozenException e) {
-         gui_.logError("Can't set channel names as datastore is locked");
+         gui_.logs().logError("Can't set channel names as datastore is locked");
       }
    }
    

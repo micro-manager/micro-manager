@@ -85,7 +85,7 @@ public class MultiChannelShadingMigForm extends MMDialog {
    public MultiChannelShadingMigForm(ShadingProcessor processor, ScriptInterface gui) {
       processor_ = processor;
       gui_ = gui;
-      mmc_ = gui_.getMMCore();
+      mmc_ = gui_.getCMMCore();
       this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
       this.addWindowListener(new WindowAdapter() {
          @Override
@@ -264,7 +264,7 @@ public class MultiChannelShadingMigForm extends MMDialog {
       try {
          gui_.profile().saveProfile();
       } catch (IOException ex) {
-         gui_.logError(ex, "Failed to save UserProfile");
+         gui_.logs().logError(ex, "Failed to save UserProfile");
       }
       processor_.setMyFrameToNull();
    }
@@ -331,7 +331,7 @@ public class MultiChannelShadingMigForm extends MMDialog {
          gui_.profile().setString(MultiChannelShadingMigForm.class,
                  DARKFIELDFILENAME, backgroundFileName_);
       } catch (MMException ex) {
-         gui_.showError(ex, "Failed to set background image");
+         gui_.logs().showError(ex, "Failed to set background image");
          return "";
       }
       return fileName;

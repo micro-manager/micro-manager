@@ -101,7 +101,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
     */
     public IntelligentAcquisitionFrame(ScriptInterface gui) {
        gui_ = gui;
-       core_ = gui_.getMMCore();
+       core_ = gui_.getCMMCore();
        nf_ = NumberFormat.getInstance();
        //prefs_ = Preferences.userNodeForPackage(this.getClass());
        
@@ -498,7 +498,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
       try {
          roiWidthX_ = NumberUtils.displayStringToInt(roiFieldX_.getText());
       } catch (ParseException ex) {
-         gui_.logError(ex);
+         gui_.logs().logError(ex);
       }
       gui_.profile().setInt(cl_, ROIWIDTHX, roiWidthX_);
       
@@ -508,7 +508,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
       try {
          roiWidthY_ = NumberUtils.displayStringToInt(roiFieldY_.getText());
       } catch (ParseException ex) {
-         gui_.logError(ex);
+         gui_.logs().logError(ex);
       } 
       gui_.profile().setInt(cl_, ROIWIDTHY, roiWidthY_);
    }//GEN-LAST:event_roiFieldY_ActionPerformed
@@ -518,7 +518,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
          explorationY_ = NumberUtils.displayStringToInt(expAreaFieldY_.getText());
          gui_.profile().setInt(cl_, EXPFIELDSY, explorationY_);
       } catch (ParseException ex) {
-         gui_.logError(ex);
+         gui_.logs().logError(ex);
       }
    }//GEN-LAST:event_expAreaFieldY_ActionPerformed
 
@@ -527,7 +527,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
          explorationX_ = NumberUtils.displayStringToInt(expAreaFieldX_.getText());
          gui_.profile().setInt(cl_, EXPFIELDSX, explorationX_);
       } catch (ParseException ex) {
-         gui_.logError(ex);
+         gui_.logs().logError(ex);
       }
    }//GEN-LAST:event_expAreaFieldX_ActionPerformed
 
@@ -550,9 +550,9 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
       @Override
       public void run() {
          try {
-            gui_.runAcquisition();
+            gui_.compat().runAcquisition();
          } catch (MMScriptException ex) {
-            gui_.showError(ex, "Error during acquisition");
+            gui_.logs().showError(ex, "Error during acquisition");
          }
       }
    }
@@ -594,16 +594,16 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
             } catch (Exception ex) {
             }
             if (af == null) {
-               gui_.logError("No pixel calibration data found, please run the Pixel Calibrator");
+               gui_.logs().logError("No pixel calibration data found, please run the Pixel Calibrator");
                return;
             }
 
             // Preload acqFileNameB_ to make sure that it works
             try {
                acqFileNameB_ = acqTextField2_.getText();
-               gui_.loadAcquisition(acqFileNameB_);
+               gui_.compat().loadAcquisition(acqFileNameB_);
             } catch (MMScriptException ex) {
-               gui_.showError("Unable to load Imaging Acquisition Settings. "
+               gui_.logs().showError("Unable to load Imaging Acquisition Settings. "
                        + "Please select a valid file and try again");
                return;
             }
@@ -611,13 +611,13 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
             // load the exploration acq settings, give a second chance if it does not work
             try {
                acqFileNameA_ = acqTextField1_.getText();
-               gui_.loadAcquisition(acqFileNameA_);
+               gui_.compat().loadAcquisition(acqFileNameA_);
             } catch (MMScriptException ex) {
                try {
                   acqSettingsButton1_ActionPerformed(null);
-                  gui_.loadAcquisition(acqFileNameA_);
+                  gui_.compat().loadAcquisition(acqFileNameA_);
                } catch (MMScriptException ex1) {
-                  gui_.showError(ex1, "Failed to load exploration acquisition settings");
+                  gui_.logs().showError(ex1, "Failed to load exploration acquisition settings");
                   return;
                }
             }
@@ -625,22 +625,22 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
             try {
                explorationX_ = NumberUtils.displayStringToInt(expAreaFieldX_.getText());
             } catch (ParseException ex) {
-               gui_.showError("Failed to parse Number of fields in X");
+               gui_.logs().showError("Failed to parse Number of fields in X");
             }
 
             try {
                explorationY_ = NumberUtils.displayStringToInt(expAreaFieldY_.getText());
             } catch (ParseException ex) {
-               gui_.showError("Failed to parse Number of fields in Y");
+               gui_.logs().showError("Failed to parse Number of fields in Y");
             }
 
             while (!stop_.get()) {
                // run exploration acquisition
                String expAcq;
                try {
-                  expAcq = gui_.runAcquisition();
+                  expAcq = gui_.compat().runAcquisition();
                } catch (MMScriptException e) {
-                  gui_.showError(e, "Exploration acquisition failed");
+                  gui_.logs().showError(e, "Exploration acquisition failed");
                   break;
                }
 
@@ -650,7 +650,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
                   double yPos = core_.getYPosition(xyStage_);
 
                } catch (Exception ex) {
-                  gui_.showError(ex, "Failed to read XY stage position");
+                  gui_.logs().showError(ex, "Failed to read XY stage position");
                }
 
                scriptFileName_ = scriptTextField_.getText();
@@ -671,25 +671,26 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
                              (int) (core_.getImageHeight() / 2 - roiWidthY_ / 2),
                              (int) roiWidthX_, (int) roiWidthY_);
 
-                     gui_.showMessage("Imaging interesting cell at position: "
-                             + xPos + ", " + yPos);
+                     gui_.logs().showMessage(
+                           "Imaging interesting cell at position: " +
+                           xPos + ", " + yPos);
 
-                     gui_.loadAcquisition(acqFileNameB_);
-                     String goodStuff = gui_.runAcquisition();
-                     gui_.closeAcquisitionDisplays(goodStuff);
+                     gui_.compat().loadAcquisition(acqFileNameB_);
+                     String goodStuff = gui_.compat().runAcquisition();
+                     gui_.compat().closeAcquisitionDisplays(goodStuff);
                      core_.setRelativeXYPosition(xyStage_, -xPos * pixelWidthMicron_, -yPos * pixelWidthMicron_);
                      core_.clearROI();
                      // org.micromanager.internal.utils.JavaUtils.sleep(200);
                   } catch (Exception ex) {
-                     gui_.showError(ex, "Imaging acquisition failed...");
+                     gui_.logs().showError(ex, "Imaging acquisition failed...");
                   }
                }
                try {
                   // need sleep to ensure that data have been written to disk
-                  //gui_.sleep(100);
-                  gui_.closeAcquisitionDisplays(expAcq);
+                  //gui_.compat().sleep(100);
+                  gui_.compat().closeAcquisitionDisplays(expAcq);
                } catch (MMScriptException ex) {
-                  gui_.showError(ex, "Failed to close acquisition window");
+                  gui_.logs().showError(ex, "Failed to close acquisition window");
                }
 
                imageIndex++;
@@ -706,7 +707,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
                      core_.setRelativeXYPosition(xyStage_, xDirection * imageWidthMicronX, 0);
                   }
                } catch (Exception ex) {
-                  gui_.showError(ex, "Problem moving XY Stage");
+                  gui_.logs().showError(ex, "Problem moving XY Stage");
                   // what to do now???
                }
                
@@ -724,7 +725,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
    private void stopButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_stopButton_ActionPerformed
       stop_.set(true);
       // try to stop ongoing acquisitions here
-      gui_.getAcquisitionEngine2010().stop();
+      gui_.compat().getAcquisitionEngine2010().stop();
    }//GEN-LAST:event_stopButton_ActionPerformed
 
    private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
@@ -822,7 +823,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
           try {
                ij.plugin.BrowserLauncher.openURL("http://micro-manager.org/wiki/Intelligent_Acquisition");
             } catch (IOException e1) {
-               gui_.showError(e1);
+               gui_.logs().showError(e1);
             }
          }
 

@@ -166,7 +166,7 @@ public class ImageCollection {
          newFlatField.put(makeKey(1, fp.getRoi()), flatField);
          flatFields_.put(preset, newFlatField);
       } catch (MMException ex) {
-         gui_.logError("Shading plugin, addFlatField in ImageCollection: " + 
+         gui_.logs().logError("Shading plugin, addFlatField in ImageCollection: " + 
                  ex.getMessage());
       }
    }

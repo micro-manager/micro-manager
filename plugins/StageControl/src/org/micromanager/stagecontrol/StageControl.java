@@ -38,7 +38,7 @@ public class StageControl implements MMPlugin {
       gui_ = app;       
       if (myFrame_ == null) {
          myFrame_ = new StageControlFrame(gui_);
-         gui_.addMMListener(myFrame_);
+         gui_.compat().addMMListener(myFrame_);
       }
       myFrame_.initialize();
       myFrame_.setVisible(true);

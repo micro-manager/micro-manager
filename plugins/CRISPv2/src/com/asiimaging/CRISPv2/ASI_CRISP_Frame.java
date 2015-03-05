@@ -46,7 +46,7 @@ public class ASI_CRISP_Frame extends javax.swing.JFrame {
       initComponents();
 
       gui_ = gui;
-      core_ = gui.getMMCore();
+      core_ = gui.getCMMCore();
       CRISP_ = "";
 
       jLabel1.setText("ASI CRISP Control v2.0");
@@ -68,12 +68,12 @@ public class ASI_CRISP_Frame extends javax.swing.JFrame {
                }
             }
          } catch (Exception ex) {
-            gui_.logError(ex);
+            gui_.logs().logError(ex);
            }
       }
 
       if (!found) {
-         gui_.showError("This plugin needs the ASI CRISP Autofcous");
+         gui_.logs().showError("This plugin needs the ASI CRISP Autofcous");
          throw new IllegalArgumentException("This plugin needs at least one camera");
       }
 
@@ -96,7 +96,7 @@ public class ASI_CRISP_Frame extends javax.swing.JFrame {
          try {// sometimes this property is also called led intensity with a %
             val = core_.getProperty(CRISP_, "LED Intensity(%)");
          } catch (Exception ex1) {
-            gui_.showError("Error reading LED Intensity from CRISP");
+            gui_.logs().showError("Error reading LED Intensity from CRISP");
             val = "0";
          }
       }
@@ -110,7 +110,7 @@ public class ASI_CRISP_Frame extends javax.swing.JFrame {
          try {
             val = core_.getProperty(CRISP_, "LoopGainMultiplier");
          } catch (Exception ex1) {
-            gui_.showError("Error reading Gain Multiplier from CRISP");
+            gui_.logs().showError("Error reading Gain Multiplier from CRISP");
             val = "0";
          }
       }
@@ -122,14 +122,14 @@ public class ASI_CRISP_Frame extends javax.swing.JFrame {
          intVal = Integer.parseInt(val);
          NrAvgsSpinner_.getModel().setValue(intVal);
       } catch (Exception ex) {
-         gui_.showError("Error reading No of Avg from CRISP");
+         gui_.logs().showError("Error reading No of Avg from CRISP");
       }
       try {
          val = core_.getProperty(CRISP_, "Objective NA");
          float floatVal = Float.parseFloat(val);
          NASpinner_.getModel().setValue(floatVal);
       } catch (Exception ex) {
-         gui_.showError("Error reading Objective NA from CRISP");
+         gui_.logs().showError("Error reading Objective NA from CRISP");
       }
 
       update_status();
@@ -512,7 +512,7 @@ public class ASI_CRISP_Frame extends javax.swing.JFrame {
           try {
              core_.setProperty(CRISP_, "LED Intensity(%)", newLEDValue);
           } catch (Exception ex1) {
-             gui_.showError("Problem while setting LED intensity");
+             gui_.logs().showError("Problem while setting LED intensity");
           }
        }
     }//GEN-LAST:event_LEDSpinner_StateChanged
@@ -527,7 +527,7 @@ public class ASI_CRISP_Frame extends javax.swing.JFrame {
           try {
              core_.setProperty(CRISP_, "LoopGainMultiplier", newGainValue);
           } catch (Exception ex1) {
-             gui_.showError("Problem while setting Gain Multiplier");
+             gui_.logs().showError("Problem while setting Gain Multiplier");
           }
        }
     }//GEN-LAST:event_GainSpinner_StateChanged
@@ -539,7 +539,7 @@ public class ASI_CRISP_Frame extends javax.swing.JFrame {
        try {
           core_.setProperty(CRISP_, "Number of Averages", newNrAvgValue);
        } catch (Exception ex) {
-          gui_.showError("Problem while setting LED intensity");
+          gui_.logs().showError("Problem while setting LED intensity");
        }
     }//GEN-LAST:event_NrAvgsSpinner_StateChanged
 
@@ -550,7 +550,7 @@ public class ASI_CRISP_Frame extends javax.swing.JFrame {
        try {
           core_.setProperty(CRISP_, "Objective NA", newNAValue);
        } catch (Exception ex) {
-          gui_.showError("Problem while setting LED intensity");
+          gui_.logs().showError("Problem while setting LED intensity");
        }
     }//GEN-LAST:event_NASpinner_StateChanged
 
@@ -558,7 +558,7 @@ public class ASI_CRISP_Frame extends javax.swing.JFrame {
        try {
           core_.setProperty(CRISP_, "CRISP State", "Idle");
        } catch (Exception ex) {
-          gui_.showError("Problem while Dithering");
+          gui_.logs().showError("Problem while Dithering");
        }
     }//GEN-LAST:event_btn_idleMouseClicked
 
@@ -566,7 +566,7 @@ public class ASI_CRISP_Frame extends javax.swing.JFrame {
        try {
           core_.setProperty(CRISP_, "CRISP State", "loG_cal");
        } catch (Exception ex) {
-          gui_.showError("Problem while Log Cal");
+          gui_.logs().showError("Problem while Log Cal");
        }
     }//GEN-LAST:event_btn_logcalMouseClicked
 
@@ -575,7 +575,7 @@ public class ASI_CRISP_Frame extends javax.swing.JFrame {
        try {
           core_.setProperty(CRISP_, "CRISP State", "Dither");
        } catch (Exception ex) {
-          gui_.showError("Problem while Dithering");
+          gui_.logs().showError("Problem while Dithering");
        }
     }//GEN-LAST:event_btn_bitherMouseClicked
 
@@ -583,7 +583,7 @@ public class ASI_CRISP_Frame extends javax.swing.JFrame {
        try {
           core_.setProperty(CRISP_, "CRISP State", "gain_Cal");
        } catch (Exception ex) {
-          gui_.showError("Problem while Dithering");
+          gui_.logs().showError("Problem while Dithering");
        }
     }//GEN-LAST:event_btn_setgainMouseClicked
 
@@ -591,7 +591,7 @@ public class ASI_CRISP_Frame extends javax.swing.JFrame {
        try {
           core_.enableContinuousFocus(true);
        } catch (Exception ex) {
-          gui_.showError("Failed to lock");
+          gui_.logs().showError("Failed to lock");
        }
     }//GEN-LAST:event_btn_lockMouseClicked
 
@@ -599,7 +599,7 @@ public class ASI_CRISP_Frame extends javax.swing.JFrame {
        try {
           core_.enableContinuousFocus(false);
        } catch (Exception ex) {
-          gui_.showError("Failed to lock");
+          gui_.logs().showError("Failed to lock");
        }
     }//GEN-LAST:event_btn_unlockMouseClicked
 
@@ -646,7 +646,7 @@ public class ASI_CRISP_Frame extends javax.swing.JFrame {
        try {
           core_.setProperty(CRISP_, "CRISP State", "Reset Focus Offset");
        } catch (Exception ex) {
-          gui_.showError("Problem resetting Focus Offset");
+          gui_.logs().showError("Problem resetting Focus Offset");
        }
     }//GEN-LAST:event_btn_offsetMouseClicked
 
@@ -654,7 +654,7 @@ public class ASI_CRISP_Frame extends javax.swing.JFrame {
        try {
           core_.setProperty(CRISP_, "CRISP State", "Save to Controller");
        } catch (Exception ex) {
-          gui_.showError("Problem acquiring focus curve");
+          gui_.logs().showError("Problem acquiring focus curve");
        }
     }//GEN-LAST:event_btn_saveMouseClicked
 

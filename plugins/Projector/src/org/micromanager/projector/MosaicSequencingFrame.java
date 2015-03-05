@@ -119,7 +119,7 @@ public class MosaicSequencingFrame extends MMFrame {
    private Roi[] getRois() {
       ImageWindow win;
       try {
-         win = gui_.getSnapLiveWin();
+         win = gui_.compat().getSnapLiveWin();
       } catch (Exception e) {
          return new Roi[0]; // empty array
       }
@@ -480,7 +480,7 @@ public class MosaicSequencingFrame extends MMFrame {
      
    // Get a list of SequenceEvents by extracting information from the sequenceTable_.
    private ArrayList<SequenceEvent> getSequenceEvents() {
-      final ImageWindow snapLiveWin = gui_.getSnapLiveWin();
+      final ImageWindow snapLiveWin = gui_.compat().getSnapLiveWin();
       final ImagePlus snapLiveImage = snapLiveWin.getImagePlus();
       List<FloatPolygon> availableFloatRoiPolygons = projectorControlForm_.transformROIs(snapLiveImage, getRois());
       List<Polygon> availableRoiPolygons = Utils.FloatToNormalPolygon(
@@ -747,7 +747,7 @@ public class MosaicSequencingFrame extends MMFrame {
       if (getSequenceCount() == 0) {
          throw new Exception("Please upload a sequence to the Mosaic for attaching to multi-dimensional acquisition.");
       }
-      gui_.attachRunnable(0, 0, 0, 0,
+      gui_.compat().attachRunnable(0, 0, 0, 0,
             ProjectorControlForm.makeRunnableAsync(
                   new Runnable() {
                      @Override
@@ -764,7 +764,7 @@ public class MosaicSequencingFrame extends MMFrame {
    // The acquisition engine will no longer run phototargeting after this
    // is called. Called by the "detach" button.
    public void detachFromAcquisition() {
-      gui_.clearRunnables();
+      gui_.compat().clearRunnables();
    }
    
    // ## Constructor and main window.

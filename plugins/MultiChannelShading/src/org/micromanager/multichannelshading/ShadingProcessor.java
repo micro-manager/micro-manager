@@ -71,14 +71,14 @@ public class ShadingProcessor extends DataProcessor<TaggedImage> {
             } catch (Exception ex) {
                produce(nextImage);
                myFrame_.setStatus(ex.getMessage());
-               gui_.logError(ex);
+               gui_.logs().logError(ex);
             }
          } else {
             // Must produce Poison (sentinel) image to terminate tagged image pipeline
             produce(nextImage);
          }
       } catch (Exception ex) {
-         gui_.logError(ex);
+         gui_.logs().logError(ex);
       }
    }
 
@@ -107,7 +107,7 @@ public class ShadingProcessor extends DataProcessor<TaggedImage> {
       if (! (ijType == ImagePlus.GRAY8 || ijType == ImagePlus.GRAY16) ) {
          String msg = "Cannot flatfield correct images other than 8 or 16 bit grayscale";
          myFrame_.setStatus(msg);
-         gui_.logError(msg);
+         gui_.logs().logError(msg);
          return nextImage;
       }
       JSONObject newTags = nextImage.tags;
@@ -194,7 +194,7 @@ public class ShadingProcessor extends DataProcessor<TaggedImage> {
       String[] presets = shadingTableModel_.getUsedPresets();
       for (String preset : presets) {
          try {
-            Configuration config = gui_.getMMCore().getConfigData(
+            Configuration config = gui_.getCMMCore().getConfigData(
                     channelGroup, preset);
             boolean presetMatch = true;
             for (int i = 0; i < config.size() && presetMatch; i++) {
@@ -218,7 +218,7 @@ public class ShadingProcessor extends DataProcessor<TaggedImage> {
                return imageCollection_.getFlatField(preset, binning, rect);
             }
          } catch (Exception ex) {
-            gui_.logError(ex, "Exception in tag matching");
+            gui_.logs().logError(ex, "Exception in tag matching");
          }
       }
       

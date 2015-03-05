@@ -227,8 +227,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          if (targetingChannel_.length() > 0) {
             originalConfig = core_.getConfigGroupState(channelGroup);
             if (!originalConfig.isConfigurationIncluded(core_.getConfigData(channelGroup, targetingChannel_))) {
-               if (app_.isAcquisitionRunning()) {
-                  app_.setPause(true);
+               if (app_.compat().isAcquisitionRunning()) {
+                  app_.compat().setPause(true);
                }
                core_.setConfig(channelGroup, targetingChannel_);
             }
@@ -245,8 +245,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       if (originalConfig != null) {
          try {
             core_.setSystemState(originalConfig);
-            if (app_.isAcquisitionRunning() && app_.isPaused()) {
-               app_.setPause(false);
+            if (app_.compat().isAcquisitionRunning() && app_.compat().isPaused()) {
+               app_.compat().setPause(false);
             }
          } catch (Exception ex) {
             ReportingUtils.logError(ex);
@@ -351,16 +351,16 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
             mapping_ = (Map<Polygon, AffineTransform>) oInputStream.readObject();
             oInputStream.close();
          } catch (IOException ex) {
-            app_.logError(ex, "Error loading object from profile");
+            app_.logs().logError(ex, "Error loading object from profile");
          } catch (ClassNotFoundException ex) {
-            app_.logError(ex, "Failed to find object in profile stream");
+            app_.logs().logError(ex, "Failed to find object in profile stream");
          } 
          finally {
             try {
                if (oInputStream != null)
                   oInputStream.close();
             } catch (IOException ex) {
-               app_.logError(ex, "Failed to close inputStream");
+               app_.logs().logError(ex, "Failed to close inputStream");
             }
          }
       }
@@ -383,13 +383,13 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          app_.profile().setString(this.getClass(), getCalibrationKey(),
                  serialized_mapping);
       } catch (IOException ex) {
-         app_.logError(ex, "Error storing an object in UserProfile"); 
+         app_.logs().logError(ex, "Error storing an object in UserProfile"); 
       } finally {
          try {
             if (os != null)
             os.close();
          } catch (IOException ex) {
-            app_.logError(ex, "Failed to close outputStream");}
+            app_.logs().logError(ex, "Failed to close outputStream");}
       }
    }
    
@@ -437,7 +437,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          dev_.setExposure(originalExposure);
          TaggedImage taggedImage2 = core_.getTaggedImage();
          ImageProcessor proc2 = ImageUtils.makeMonochromeProcessor(taggedImage2);
-         app_.displayImage(taggedImage2);
+         app_.compat().displayImage(taggedImage2);
          ImageProcessor diffImage = ImageUtils.subtractImageProcessors(proc2.convertToFloatProcessor(), proc1.convertToFloatProcessor());
          Point peak = findPeak(diffImage);
          Point maxPt = peak;
@@ -580,8 +580,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     * the mapping to Java Preferences.
     */
    public void runCalibration() {
-      final boolean liveModeRunning = app_.isLiveModeOn();
-      app_.enableLiveMode(false);
+      final boolean liveModeRunning = app_.compat().isLiveModeOn();
+      app_.compat().enableLiveMode(false);
       if (!isRunning_.get()) {
          stopRequested_.set(false);
          Thread th = new Thread("Projector calibration thread") {
@@ -590,7 +590,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                try {
                   isRunning_.set(true);
                   Roi originalROI = IJ.getImage().getRoi();
-                  app_.snapSingleImage();
+                  app_.compat().snapSingleImage();
 
                   AffineTransform firstApproxAffine = generateLinearMapping();
 
@@ -604,7 +604,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                   if (!stopRequested_.get()) {
                      saveMapping(mapping);
                   }
-                  app_.enableLiveMode(liveModeRunning);
+                  app_.compat().enableLiveMode(liveModeRunning);
                   JOptionPane.showMessageDialog(IJ.getImage().getWindow(), "Calibration "
                         + (!stopRequested_.get() ? "finished." : "canceled."));
                   IJ.getImage().setRoi(originalROI);
@@ -956,10 +956,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    
    // Save ROIs in the acquisition path, if it exists.
    private void recordPolygons() {
-      if (app_.isAcquisitionRunning()) {
+      if (app_.compat().isAcquisitionRunning()) {
          // TODO: The MM2.0 refactor broke this code by removing the below
          // method.
-//         String location = app_.getAcquisitionPath();
+//         String location = app_.compat().getAcquisitionPath();
 //         if (location != null) {
 //            try {
 //               File f = new File(location, "ProjectorROIs.zip");
@@ -1015,19 +1015,19 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    // they will run on a particular firstFrame and, if repeat is true,
    // thereafter again every frameRepeatInterval frames.
    public void attachRoisToMDA(int firstFrame, boolean repeat, int frameRepeatInveral, Runnable runPolygons) {
-      app_.clearRunnables();
+      app_.compat().clearRunnables();
       if (repeat) {
-         for (int i = firstFrame; i < app_.getAcquisitionSettings().numFrames * 10; i += frameRepeatInveral) {
-            app_.attachRunnable(i, -1, 0, 0, runPolygons);
+         for (int i = firstFrame; i < app_.compat().getAcquisitionSettings().numFrames * 10; i += frameRepeatInveral) {
+            app_.compat().attachRunnable(i, -1, 0, 0, runPolygons);
          }
       } else {
-         app_.attachRunnable(firstFrame, -1, 0, 0, runPolygons);
+         app_.compat().attachRunnable(firstFrame, -1, 0, 0, runPolygons);
       }
    }
 
    // Remove the attached ROIs from the multi-dimensional acquisition.
    public void removeFromMDA() {
-      app_.clearRunnables();
+      app_.compat().clearRunnables();
    }
   
    // ## GUI
@@ -1175,7 +1175,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
             final Callable<Boolean> mdaRunning = new Callable<Boolean>() {
                @Override
                public Boolean call() throws Exception {
-                  return app_.isAcquisitionRunning();
+                  return app_.compat().isAcquisitionRunning();
                }
             };
             attachRoisToMDA(1, false, 0,
@@ -1227,7 +1227,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    private ProjectorControlForm(CMMCore core, ScriptInterface app) {
       initComponents();
       app_ = app;
-      core_ = app.getMMCore();
+      core_ = app.getCMMCore();
       String slm = core_.getSLMDevice();
       String galvo = core_.getGalvoDevice();
 
@@ -1279,7 +1279,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       pointAndShootIntervalSpinner.setValue(dev_.getExposure() / 1000);
       sequencingButton.setVisible(MosaicSequencingFrame.getMosaicDevices(core).size() > 0);
      
-      app_.addMMListener(new MMListenerAdapter() {
+      app_.compat().addMMListener(new MMListenerAdapter() {
          @Override
          public void slmExposureChanged(String deviceName, double exposure) {
             if (deviceName.equals(dev_.getName())) {

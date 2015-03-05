@@ -432,18 +432,18 @@ public class TrackerControl extends MMFrame implements MMPlugin {
      
       // Detect desired ROI in Snap/Live Window
       ImagePlus implus = null;
-      ImageWindow win = app_.getSnapLiveWin();
+      ImageWindow win = app_.compat().getSnapLiveWin();
       if (win != null) {
          implus = win.getImagePlus();
       }
       if (implus == null) {
-         app_.showMessage("First snap an image and select ROI to be tracked.", this);
+         app_.logs().showMessage("First snap an image and select ROI to be tracked.", this);
          return;
       }
 
       roi_ = implus.getRoi();
       if (roi_ == null || roi_.getType() != Roi.RECTANGLE) {
-         app_.showError("Rectangular roi required.", this);
+         app_.logs().showError("Rectangular roi required.", this);
          return;
       }
 
@@ -456,21 +456,21 @@ public class TrackerControl extends MMFrame implements MMPlugin {
       corrImplus_ = new ij.ImagePlus("Cross Correlation", corrStack_);
       corrImplus_.show();
       
-      app_.logMessage("Tracking started at " + GregorianCalendar.getInstance().getTime());
+      app_.logs().logMessage("Tracking started at " + GregorianCalendar.getInstance().getTime());
 
       try {
          acqName_ = nameField_.getText();
          if (acqName_.length() == 0) {
             acqName_ = ACQNAME;
          }
-         acqName_ = app_.getUniqueAcquisitionName(acqName_);
+         acqName_ = app_.compat().getUniqueAcquisitionName(acqName_);
          nameField_.setText(acqName_);
-         app_.openAcquisition(acqName_, rootField_.getText(),
+         app_.compat().openAcquisition(acqName_, rootField_.getText(),
                  2, 1, 1, 1, true, diskRadioButton_.isSelected());
-         store_ = app_.getAcquisitionDatastore(acqName_);
+         store_ = app_.compat().getAcquisitionDatastore(acqName_);
          display_ = app_.displays().getDisplays(store_).get(0);
       } catch (MMScriptException ex) {
-         app_.showError(ex, "Problem while tracking", this);
+         app_.logs().showError(ex, "Problem while tracking", this);
       }
       xySeries_ = new XYSeries("Track",false);
       TrackerUtils.plotData("Cell Track: " + acqName_, xySeries_, "X (micron)", 
@@ -481,15 +481,15 @@ public class TrackerControl extends MMFrame implements MMPlugin {
    
    public void stopTracking() {
 
-      app_.logMessage("Tracking stopped at " + GregorianCalendar.getInstance().getTime());
+      app_.logs().logMessage("Tracking stopped at " + GregorianCalendar.getInstance().getTime());
       timer_.stop();
       roi_ = null;
    }
 
    private TaggedImage snapSingleImage() {
       try {
-         app_.getMMCore().snapImage();
-         TaggedImage tagged = app_.getMMCore().getTaggedImage();
+         app_.core().snapImage();
+         TaggedImage tagged = app_.core().getTaggedImage();
         
          if (acqName_ != null) {
             MDUtils.setFrameIndex(tagged.tags, imageCounter_);
@@ -624,7 +624,7 @@ public class TrackerControl extends MMFrame implements MMPlugin {
             // NOTE: due to Java parameter passing convention, x and y parameters must be arrays
             double[] xCur = new double[1];
             double[] yCur = new double[1];            
-            app_.getMMCore().getXYPosition(stage_, xCur, yCur);
+            app_.core().getXYPosition(stage_, xCur, yCur);
             tagged.tags.put(TRACK_X, xCur[0]);
             tagged.tags.put(TRACK_Y, yCur[0]);
             tagged.tags.put(TRACK_DX, lMax);
@@ -646,12 +646,12 @@ public class TrackerControl extends MMFrame implements MMPlugin {
             xySeries_.add(firstX_ - newX, firstY_ - newY);
 
             if ((limits_.isValid() && limits_.isWithin(newX, newY)) || (!limits_.isValid())) {
-               app_.getMMCore().setXYPosition(stage_, newX, newY);
-               app_.getMMCore().waitForDevice(stage_);
-               app_.getMMCore().getXYPosition(stage_, xCur, yCur);
-               app_.logMessage(xCur[0] + "," + yCur[0]);
+               app_.core().setXYPosition(stage_, newX, newY);
+               app_.core().waitForDevice(stage_);
+               app_.core().getXYPosition(stage_, xCur, yCur);
+               app_.logs().logMessage(xCur[0] + "," + yCur[0]);
             } else {
-               app_.logMessage("Skipped. Stage limits reached.");
+               app_.logs().logMessage("Skipped. Stage limits reached.");
             }
          } catch (Exception e) {
             IJ.error(e.getMessage());
@@ -674,7 +674,7 @@ public class TrackerControl extends MMFrame implements MMPlugin {
          tagged.tags.put(V, v);
          tagged.tags.put(L, distUm_);
       } catch (JSONException ex) {
-         app_.showError(ex, "Problem adding tags to image", this);
+         app_.logs().showError(ex, "Problem adding tags to image", this);
       }
 
       imageCounter_++;
@@ -690,17 +690,17 @@ public class TrackerControl extends MMFrame implements MMPlugin {
       if (app_ == null)
          return;
       
-      stage_ = app_.getMMCore().getXYStageDevice();
-      pixelSizeUm_ = app_.getMMCore().getPixelSizeUm();
-      String camera = app_.getMMCore().getCameraDevice();
+      stage_ = app_.core().getXYStageDevice();
+      pixelSizeUm_ = app_.core().getPixelSizeUm();
+      String camera = app_.core().getCameraDevice();
       try {
-         mirrorX_ = app_.getMMCore().getProperty(camera, MMCoreJ.getG_Keyword_Transpose_MirrorX()).equals("1");
-         mirrorY_ = app_.getMMCore().getProperty(camera, MMCoreJ.getG_Keyword_Transpose_MirrorY()).equals("1");
-         rotate_ = app_.getMMCore().getProperty(camera, MMCoreJ.getG_Keyword_Transpose_SwapXY()).equals("1");
+         mirrorX_ = app_.core().getProperty(camera, MMCoreJ.getG_Keyword_Transpose_MirrorX()).equals("1");
+         mirrorY_ = app_.core().getProperty(camera, MMCoreJ.getG_Keyword_Transpose_MirrorY()).equals("1");
+         rotate_ = app_.core().getProperty(camera, MMCoreJ.getG_Keyword_Transpose_SwapXY()).equals("1");
 
       } catch (Exception e1) {
          // TODO Auto-generated catch block
-         app_.showError(e1, "Problem initializing Live Tracking plugin", this);
+         app_.logs().showError(e1, "Problem initializing Live Tracking plugin", this);
       }
       
       topLeftButton_.addActionListener(new ActionListener() {
@@ -709,7 +709,7 @@ public class TrackerControl extends MMFrame implements MMPlugin {
             double[] x = new double[1];
             double[] y = new double[1];
             try {
-               app_.getMMCore().getXYPosition(stage_, x, y);
+               app_.core().getXYPosition(stage_, x, y);
                limits_.xmin = x[0];
                limits_.ymin = y[0];
                labelTopLeft_.setText(Double.toString(x[0]) + "," + Double.toString(y[0]));
@@ -726,7 +726,7 @@ public class TrackerControl extends MMFrame implements MMPlugin {
             double[] x = new double[1];
             double[] y = new double[1];
             try {
-               app_.getMMCore().getXYPosition(stage_, x, y);
+               app_.core().getXYPosition(stage_, x, y);
                limits_.xmax = x[0];
                limits_.ymax = y[0];
                labelBottomRight_.setText(Double.toString(x[0]) + "," + Double.toString(y[0]));

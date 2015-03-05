@@ -117,7 +117,7 @@ public class pgFocusFrame extends JFrame {
     	
    
        gui_ = gui;
-       core_ = gui.getMMCore();
+       core_ = gui.getCMMCore();
        prefs_ = Preferences.userNodeForPackage(this.getClass());
        pgFocus_ = "";
 
@@ -141,7 +141,7 @@ public class pgFocusFrame extends JFrame {
        }
 
        if (!found) {
-          gui_.showError("This plugin needs pgFocus by: \n\nKarl Bellve\nBiomedical Imaging Group\nMolecular Medicine\nUniversity of Massachusetts Medical School\n");
+          gui_.logs().showError("This plugin needs pgFocus by: \n\nKarl Bellve\nBiomedical Imaging Group\nMolecular Medicine\nUniversity of Massachusetts Medical School\n");
           throw new IllegalArgumentException("Could not find the pgFocus hardware");
        }
 

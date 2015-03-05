@@ -107,7 +107,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    
    protected IAcquisitionEngine2010 getAcquisitionEngine2010() {
       if (acquisitionEngine2010 == null) {
-         acquisitionEngine2010 = studio_.getAcquisitionEngine2010();
+         acquisitionEngine2010 = studio_.compat().getAcquisitionEngine2010();
       }
       return acquisitionEngine2010;
    }
@@ -143,7 +143,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
          // Start up the acquisition engine
          BlockingQueue<TaggedImage> engineOutputQueue = getAcquisitionEngine2010().run(
                  acquisitionSettings, true,
-                 studio_.getPositionList(),
+                 studio_.compat().getPositionList(),
                  studio_.getAutofocusManager().getDevice());
          summaryMetadata_ = getAcquisitionEngine2010().getSummaryMetadata();
 
@@ -225,7 +225,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    private long getTotalMB() {
-      CMMCore core = studio_.getMMCore();
+      CMMCore core = studio_.core();
       long totalMB = core.getImageWidth() * core.getImageHeight() * core.getBytesPerPixel() * ((long) getTotalImages()) / 1048576L;
       return totalMB;
    }

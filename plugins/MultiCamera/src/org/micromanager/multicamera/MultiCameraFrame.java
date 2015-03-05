@@ -74,13 +74,13 @@ public class MultiCameraFrame extends MMFrame implements MMListenerInterface {
      */
    public MultiCameraFrame(ScriptInterface gui) throws Exception {
       gui_ = gui;
-      core_ = gui_.getMMCore();
+      core_ = gui_.getCMMCore();
 
       mmcorej.StrVector cameras = core_.getLoadedDevicesOfType(DeviceType.CameraDevice);
       cameras_ = cameras.toArray();
 
       if (cameras_.length < 1) {
-         gui_.showError("This plugin needs at least one camera");
+         gui_.logs().showError("This plugin needs at least one camera");
          throw new IllegalArgumentException("This plugin needs at least one camera");
       }
 
@@ -91,7 +91,7 @@ public class MultiCameraFrame extends MMFrame implements MMListenerInterface {
       core_.getImageHeight();
 
       if (cameras_.length < 1) {
-         gui_.showError("This plugin needs at least one camera");
+         gui_.logs().showError("This plugin needs at least one camera");
          throw new IllegalArgumentException("This plugin needs at least one camera");
       }
 
@@ -468,7 +468,7 @@ public class MultiCameraFrame extends MMFrame implements MMListenerInterface {
             }
          }
       } catch (Exception ex) {
-         gui_.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
+         gui_.logs().showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
       }
       return gain;
    }
@@ -477,17 +477,17 @@ public class MultiCameraFrame extends MMFrame implements MMListenerInterface {
       if (!initialized(false, false)) {
          return;
       }
-      boolean liveRunning = gui_.isLiveModeOn();
+      boolean liveRunning = gui_.compat().isLiveModeOn();
       int val = EMGainSlider.getValue();
       try {
-         gui_.enableLiveMode(false);
+         gui_.compat().enableLiveMode(false);
          for (String camera : camerasInUse_) {
             setPropertyIfPossible(camera, EMGAIN, NumberUtils.intToCoreString(val));
          }
-         gui_.enableLiveMode(liveRunning);
-         gui_.refreshGUI();
+         gui_.compat().enableLiveMode(liveRunning);
+         gui_.compat().refreshGUI();
       } catch (Exception ex) {
-         gui_.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
+         gui_.logs().showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
       }
       EMGainTextField.setText(NumberUtils.intToDisplayString(val));
    }
@@ -509,7 +509,7 @@ public class MultiCameraFrame extends MMFrame implements MMListenerInterface {
 
          }
       } catch (Exception ex) {
-         gui_.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
+         gui_.logs().showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
       }
       return false;
    }
@@ -545,20 +545,20 @@ public class MultiCameraFrame extends MMFrame implements MMListenerInterface {
        if (!initialized(false, false)) {
           return;
        }
-       boolean liveRunning = gui_.isLiveModeOn();
+       boolean liveRunning = gui_.compat().isLiveModeOn();
        boolean on = EMCheckBox.isSelected();
        String command = "Off";
        if (on) {
           command = "On";
        }
        try {
-          gui_.enableLiveMode(false);
+          gui_.compat().enableLiveMode(false);
           for (String camera : camerasInUse_) {
              setPropertyIfPossible(camera, EMSWITCH, command);
           }
-          gui_.enableLiveMode(liveRunning);
+          gui_.compat().enableLiveMode(liveRunning);
        } catch (Exception ex) {
-          gui_.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
+          gui_.logs().showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
        }
     }//GEN-LAST:event_EMCheckBoxActionPerformed
 
@@ -606,21 +606,21 @@ public class MultiCameraFrame extends MMFrame implements MMListenerInterface {
             }
          }
       } catch (Exception ex) {
-         gui_.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
+         gui_.logs().showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
       }
       return mode;
    }
 
     private void EMGainSliderMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_EMGainSliderMouseReleased
        setEMGain();
-       gui_.refreshGUI();
+       gui_.compat().refreshGUI();
     }//GEN-LAST:event_EMGainSliderMouseReleased
 
     private void tempButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tempButtonActionPerformed
-       boolean liveRunning = gui_.isLiveModeOn();
-       gui_.enableLiveMode(false);
+       boolean liveRunning = gui_.compat().isLiveModeOn();
+       gui_.compat().enableLiveMode(false);
        updateTemp();
-       gui_.enableLiveMode(liveRunning);
+       gui_.compat().enableLiveMode(liveRunning);
     }//GEN-LAST:event_tempButtonActionPerformed
 
     private void modeComboBoxItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_modeComboBoxItemStateChanged
@@ -637,10 +637,10 @@ public class MultiCameraFrame extends MMFrame implements MMListenerInterface {
           return;
        }
 
-       boolean liveRunning = gui_.isLiveModeOn();
+       boolean liveRunning = gui_.compat().isLiveModeOn();
        String mode = item.toString();
        try {
-          gui_.enableLiveMode(false);
+          gui_.compat().enableLiveMode(false);
           for (String camera : camerasInUse_) {
              if (mode.equals(MODEEM14)) {
                 core_.setProperty(camera, ADCONVERTER, AD14BIT);
@@ -658,10 +658,10 @@ public class MultiCameraFrame extends MMFrame implements MMListenerInterface {
           updateItems(gainComboBox, AMPGAIN);
           updateItems(speedComboBox, SPEED);
 
-          gui_.enableLiveMode(liveRunning);
-          gui_.refreshGUI();
+          gui_.compat().enableLiveMode(liveRunning);
+          gui_.compat().refreshGUI();
        } catch (Exception ex) {
-          gui_.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
+          gui_.logs().showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
        }
     }//GEN-LAST:event_modeComboBoxItemStateChanged
 
@@ -670,7 +670,7 @@ public class MultiCameraFrame extends MMFrame implements MMListenerInterface {
           return;
        }
        setComboSelection(gainComboBox, AMPGAIN);
-       gui_.refreshGUI();
+       gui_.compat().refreshGUI();
     }//GEN-LAST:event_gainComboBoxItemStateChanged
 
     private void speedComboBoxItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_speedComboBoxItemStateChanged
@@ -678,7 +678,7 @@ public class MultiCameraFrame extends MMFrame implements MMListenerInterface {
           return;
        }
        setComboSelection(speedComboBox, SPEED);
-       gui_.refreshGUI();
+       gui_.compat().refreshGUI();
     }//GEN-LAST:event_speedComboBoxItemStateChanged
 
     private void frameTransferComboBoxItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_frameTransferComboBoxItemStateChanged
@@ -686,7 +686,7 @@ public class MultiCameraFrame extends MMFrame implements MMListenerInterface {
           return;
        }
        setComboSelection(frameTransferComboBox, FRAMETRANSFER);
-       gui_.refreshGUI();
+       gui_.compat().refreshGUI();
     }//GEN-LAST:event_frameTransferComboBoxItemStateChanged
 
     private void triggerComboBoxItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_triggerComboBoxItemStateChanged
@@ -694,7 +694,7 @@ public class MultiCameraFrame extends MMFrame implements MMListenerInterface {
           return;
        }
        setComboSelection(triggerComboBox, TRIGGER);
-       gui_.refreshGUI();
+       gui_.compat().refreshGUI();
     }//GEN-LAST:event_triggerComboBoxItemStateChanged
 
    private void updateCamerasInUse(String camera) {
@@ -728,8 +728,8 @@ public class MultiCameraFrame extends MMFrame implements MMListenerInterface {
           return;
        }
 
-       boolean liveRunning = gui_.isLiveModeOn();
-       gui_.enableLiveMode(false);
+       boolean liveRunning = gui_.compat().isLiveModeOn();
+       gui_.compat().enableLiveMode(false);
 
        try {
           // Use the initialize flag to prevent pushing settings back to the hardware
@@ -774,12 +774,12 @@ public class MultiCameraFrame extends MMFrame implements MMListenerInterface {
           updateTemp();
           initialized(true, true);
 
-          gui_.enableLiveMode(liveRunning);
+          gui_.compat().enableLiveMode(liveRunning);
        } catch (Exception ex) {
-          gui_.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
+          gui_.logs().showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
        }
 
-       gui_.refreshGUI();
+       gui_.compat().refreshGUI();
     }//GEN-LAST:event_cameraSelectComboBoxItemStateChanged
 
     private void modeComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_modeComboBoxActionPerformed
@@ -804,7 +804,7 @@ public class MultiCameraFrame extends MMFrame implements MMListenerInterface {
 
          }
       } catch (Exception ex) {
-         gui_.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
+         gui_.logs().showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
       }
       tempLabel.setText(tempText);
    }
@@ -823,7 +823,7 @@ public class MultiCameraFrame extends MMFrame implements MMListenerInterface {
             comboBox.setModel(new DefaultComboBoxModel(newVals));
 
          } catch (Exception ex) {
-            gui_.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
+            gui_.logs().showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
          }
          getComboSelection(comboBox, property);
       }
@@ -846,7 +846,7 @@ public class MultiCameraFrame extends MMFrame implements MMListenerInterface {
          }
          comboBox.setSelectedItem(val);
       } catch (Exception ex) {
-         gui_.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
+         gui_.logs().showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
       }
    }
 
@@ -854,8 +854,8 @@ public class MultiCameraFrame extends MMFrame implements MMListenerInterface {
       if (!initialized(false, false)) {
          return;
       }
-      boolean liveRunning = gui_.isLiveModeOn();
-      gui_.enableLiveMode(false);
+      boolean liveRunning = gui_.compat().isLiveModeOn();
+      gui_.compat().enableLiveMode(false);
       String val = (String) comboBox.getSelectedItem();
       if (val.equals(MIXED)) {
          getComboSelection(comboBox, property);
@@ -866,9 +866,9 @@ public class MultiCameraFrame extends MMFrame implements MMListenerInterface {
             core_.setProperty(camera, property, val);
          }
 
-         gui_.enableLiveMode(liveRunning);
+         gui_.compat().enableLiveMode(liveRunning);
       } catch (Exception ex) {
-         gui_.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
+         gui_.logs().showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
       }
    }
    // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -944,7 +944,7 @@ public class MultiCameraFrame extends MMFrame implements MMListenerInterface {
             core_.setProperty(device, property, value);
          }
       } catch (Exception ex) {
-         gui_.logError(ex);
+         gui_.logs().logError(ex);
       }
    }
 

@@ -119,7 +119,7 @@ public class PatternOverlayFrame extends MMFrame {
                currentOverlay.setVisible(toggleButton_.isSelected());
                
             } catch (NoLiveWindowException e1) {
-               gui_.showError(e1, ourFrame_);
+               gui_.logs().showError(e1, ourFrame_);
             }
             lastOverlay_ = currentOverlay;
          }
@@ -177,7 +177,7 @@ public class PatternOverlayFrame extends MMFrame {
             }
          }
       });
-      gui_.registerForEvents(this);
+      gui_.compat().registerForEvents(this);
 
    }//constructor
    
@@ -202,7 +202,7 @@ public class PatternOverlayFrame extends MMFrame {
     *          window. Will return null if no live image is currently active.
     */
    public static ImagePlus getLiveWindowImage () {
-      ImageWindow window = gui_.getSnapLiveWin();
+      ImageWindow window = gui_.compat().getSnapLiveWin();
       if (window == null) {
          return null;
       } else {
@@ -225,10 +225,10 @@ public class PatternOverlayFrame extends MMFrame {
          selectedOverlay.setVisible(visible);
       } catch (NoLiveWindowException ex) {
          if (event != null) { // there is only a problem if there was a displayCreated Event
-            gui_.logError("Could not enable overlay ("
+            gui_.logs().logError("Could not enable overlay ("
                     + ((OverlayOption) overlayBox_.getSelectedItem()).toString() + "). "
                     + "Error Message: " + ex.getMessage());
-            gui_.showMessage(
+            gui_.logs().showMessage(
                     "The overlay could not be shown. Is the live image window active?",
                     ourFrame_);
             toggleButton_.setSelected(false);

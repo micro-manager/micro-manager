@@ -90,7 +90,7 @@ public class RoiManager extends ij.plugin.frame.RoiManager{
 		overlap_ = 8;
 		
 
-		mmc = app_.getMMCore();
+		mmc = app_.getCMMCore();
         
 
 

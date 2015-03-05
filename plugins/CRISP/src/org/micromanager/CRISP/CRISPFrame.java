@@ -64,7 +64,7 @@ public class CRISPFrame extends MMFrame {
      */
     public CRISPFrame(ScriptInterface gui)  {
        gui_ = gui;
-       core_ = gui.getMMCore();
+       core_ = gui.getCMMCore();
        CRISP_ = "";
 
        mmcorej.StrVector afs =
@@ -88,12 +88,12 @@ public class CRISPFrame extends MMFrame {
                break;
             }
          } catch (Exception ex) {
-            gui_.logError(ex);
+            gui_.logs().logError(ex);
             }
        }
 
        if (!found) {
-          gui_.showError("This plugin needs the ASI CRISP Autofcous");
+          gui_.logs().showError("This plugin needs the ASI CRISP Autofcous");
           throw new IllegalArgumentException("This plugin needs at least one camera");
        }
 

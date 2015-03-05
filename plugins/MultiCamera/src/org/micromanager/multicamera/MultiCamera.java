@@ -18,13 +18,13 @@ public class MultiCamera implements MMPlugin {
     @Override
    public void setApp(ScriptInterface app) {
       gui_ = app;                                        
-      core_ = app.getMMCore();
+      core_ = app.getCMMCore();
       if (myFrame_ == null) {
          try {
             myFrame_ = new MultiCameraFrame(gui_);
-            gui_.addMMListener(myFrame_);
+            gui_.compat().addMMListener(myFrame_);
          } catch (Exception e) {
-            gui_.showError(e);
+            gui_.logs().showError(e);
             return;
          }
       }

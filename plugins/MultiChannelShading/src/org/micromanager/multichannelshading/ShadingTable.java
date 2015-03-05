@@ -141,7 +141,7 @@ public class ShadingTable extends JTable {
       public Component getTableCellEditorComponent(JTable table, Object value, 
               boolean isSelected, int row, int column) {
          row_ = row;
-         String[] presets = gui_.getMMCore().getAvailableConfigs(
+         String[] presets = gui_.getCMMCore().getAvailableConfigs(
                  model_.getChannelGroup()).toArray();
          // remove presets that are already in use
          String[] usedPresets = model_.getUsedPresets(row);

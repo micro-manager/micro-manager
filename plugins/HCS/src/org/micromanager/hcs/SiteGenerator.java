@@ -90,7 +90,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
          dlg.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
          dlg.setVisible(true);
       } catch (Exception e) {
-         app_.logError(e);
+         app_.logs().logs().logError(e);
       }
    }
    */
@@ -136,7 +136,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       try {
          platePanel_.setApp(app_);
       } catch (HCSException e1) {
-         app_.logError(e1);
+         app_.logs().logError(e1);
       }
 
       getContentPane().add(platePanel_);
@@ -162,7 +162,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
             try {
                platePanel_.refreshImagingSites(sites);
             } catch (HCSException e1) {
-               app_.logError(e1);
+               app_.logs().logError(e1);
             }
             platePanel_.repaint();
          }
@@ -441,7 +441,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       try {
          platePanel_.refreshImagingSites(sites);
       } catch (HCSException e1) {
-         app_.logError(e1);
+         app_.logs().logError(e1);
       }
 
    }
@@ -478,8 +478,8 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
             // make label unique
             mpl.setLabel(wpl1.getLabel() + "-" + mpl.getLabel());
             if (app_ != null) {
-               mpl.setDefaultXYStage(app_.getXYStageName());
-               mpl.setDefaultZStage(app_.getMMCore().getFocusDevice());
+               mpl.setDefaultXYStage(app_.compat().getXYStageName());
+               mpl.setDefaultZStage(app_.getCMMCore().getFocusDevice());
             }
             // set the proper XYstage name
             for (int k = 0; k < mpl.size(); k++) {
@@ -507,7 +507,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
 
       try {
          if (app_ != null) {
-            app_.setPositionList(platePl);
+            app_.compat().setPositionList(platePl);
          }
       } catch (MMScriptException e) {
          displayError(e.getMessage());
@@ -519,12 +519,12 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
     * Mark current position as one point in the 3-pt set
     */
    private void markOnePoint() {
-      app_.markCurrentPosition();
+      app_.compat().markCurrentPosition();
    }
 
    private void setThreePoint() {
       try {
-         PositionList plist = app_.getPositionList();
+         PositionList plist = app_.compat().getPositionList();
          if (plist.getNumberOfPositions() != 3) {
             displayError("We need exactly three positions to fit AF plane. Please create XY list with 3 positions.");
             return;
@@ -610,7 +610,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
    @Override
    public String getXYStageName() {
       if (app_ != null) {
-         return app_.getXYStageName();
+         return app_.compat().getXYStageName();
       } else {
          return SBSPlate.DEFAULT_XYSTAGE_NAME;
       }
@@ -629,7 +629,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
     */
    @Override
    public void displayError(String txt) {
-      app_.showError(txt, this);
+      app_.logs().showError(txt, this);
    }
 
    protected void calibrateXY() {
@@ -641,9 +641,9 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       if (ret == JOptionPane.OK_OPTION) {
          try {
 
-            app_.setXYOrigin(plate_.getFirstWellX(), plate_.getFirstWellY());
+            app_.compat().setXYOrigin(plate_.getFirstWellX(), plate_.getFirstWellY());
             regenerate();
-            Point2D.Double pt = app_.getXYStagePosition();
+            Point2D.Double pt = app_.compat().getXYStagePosition();
             JOptionPane.showMessageDialog(this, "XY Stage set at position: " + pt.x + "," + pt.y);
          } catch (MMScriptException e) {
             displayError(e.getMessage());

@@ -28,7 +28,7 @@ public class pgFocus implements MMPlugin {
     @Override
    public void setApp(ScriptInterface app) {
       gui_ = app;
-      setCore_(app.getMMCore());
+      setCore_(app.getCMMCore());
       if (myFrame_ == null) {
          try {
             myFrame_ = new pgFocusFrame(gui_);

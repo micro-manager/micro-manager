@@ -90,7 +90,7 @@ class SequenceBufferMonitorFrame extends javax.swing.JFrame {
    }
 
    private void update() {
-      mmcorej.CMMCore core = app_.getMMCore();
+      mmcorej.CMMCore core = app_.getCMMCore();
       if (core == null) {
          usageBar_.setValue(0);
          usageBar_.setString("Core unavailable");

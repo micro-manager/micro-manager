@@ -235,12 +235,12 @@ public class PlatePanel extends JPanel {
             return;
 
          try {
-            app_.setXYStagePosition(pt.x, pt.y);
+            app_.compat().setXYStagePosition(pt.x, pt.y);
             if (gui_.useThreePtAF() && gui_.getThreePointZPos(pt.x, pt.y) != null)
-               app_.setStagePosition(gui_.getThreePointZPos(pt.x, pt.y));
+               app_.compat().setStagePosition(gui_.getThreePointZPos(pt.x, pt.y));
             
-            xyStagePos_ = app_.getXYStagePosition();
-            zStagePos_ = app_.getMMCore().getPosition(app_.getMMCore().getFocusDevice());
+            xyStagePos_ = app_.compat().getXYStagePosition();
+            zStagePos_ = app_.getCMMCore().getPosition(app_.getCMMCore().getFocusDevice());
             gui_.updateStagePositions(xyStagePos_.x, xyStagePos_.y, zStagePos_, well, "undefined");
             refreshStagePosition();
             repaint();
@@ -672,9 +672,9 @@ public class PlatePanel extends JPanel {
    public void refreshStagePosition() throws HCSException {
       try {
          if (app_ != null) {
-            xyStagePos_ = app_.getXYStagePosition();
+            xyStagePos_ = app_.compat().getXYStagePosition();
             try {
-               zStagePos_ = app_.getMMCore().getPosition(app_.getMMCore().getFocusDevice());
+               zStagePos_ = app_.getCMMCore().getPosition(app_.getCMMCore().getFocusDevice());
             } catch (Exception e) {
                throw new HCSException(e);
             }

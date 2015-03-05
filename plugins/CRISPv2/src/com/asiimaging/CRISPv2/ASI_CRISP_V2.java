@@ -42,7 +42,7 @@ public class ASI_CRISP_V2 implements org.micromanager.MMPlugin {
          try {
             myFrame_ = new ASI_CRISP_Frame(gui_);
          } catch (Exception e) {
-            gui_.showError(e, "Failed to open " + menuName);
+            gui_.logs().showError(e, "Failed to open " + menuName);
             return;
          }
       }

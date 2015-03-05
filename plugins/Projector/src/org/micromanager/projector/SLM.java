@@ -88,7 +88,7 @@ public class SLM implements ProjectionDevice {
       try {
          mmc_.waitForDevice(slm_);
       } catch (Exception ex) {
-         app_.logError(ex);
+         app_.logs().logError(ex);
       }
    }
 
@@ -99,7 +99,7 @@ public class SLM implements ProjectionDevice {
       try {
          mmc_.setSLMExposure(slm_, interval_us / 1000.);
       } catch (Exception ex) {
-         app_.showError(ex);
+         app_.logs().showError(ex);
       }
    }
    
@@ -109,7 +109,7 @@ public class SLM implements ProjectionDevice {
       try {
          return (long) (mmc_.getSLMExposure(slm_) * 1000.);
       } catch (Exception ex) {
-         app_.showError(ex);
+         app_.logs().showError(ex);
       }
       return 0;
    }
@@ -123,7 +123,7 @@ public class SLM implements ProjectionDevice {
             mmc_.displaySLMImage(slm_);
          }
       } catch (Exception ex) {
-         app_.showError(ex);
+         app_.logs().showError(ex);
       }
    }
 
@@ -143,7 +143,7 @@ public class SLM implements ProjectionDevice {
          mmc_.setSLMImage(slm_, (byte[]) proc.getPixels());
          mmc_.displaySLMImage(slm_);
       } catch (Throwable e) {
-         app_.showError("SLM not connecting properly.");
+         app_.logs().showError("SLM not connecting properly.");
       }
    }
 
@@ -163,7 +163,7 @@ public class SLM implements ProjectionDevice {
             listener.stateChanged(false);
          }
       } catch (Exception ex) {
-         app_.showError(ex);
+         app_.logs().showError(ex);
       }
    }
 
@@ -180,7 +180,7 @@ public class SLM implements ProjectionDevice {
             listener.stateChanged(true);
          }
       } catch (Exception ex) {
-         app_.showError(ex);
+         app_.logs().showError(ex);
       }
    }
 
@@ -222,7 +222,7 @@ public class SLM implements ProjectionDevice {
          List<Polygon> roiPolygons = Utils.FloatToNormalPolygon(roiFloatPolygons);
          mmc_.setSLMImage(slm_, roisToPixels(slmWidth_, slmHeight_, roiPolygons));
       } catch (Exception ex) {
-         app_.showError(ex);
+         app_.logs().showError(ex);
       }
    }
 
@@ -238,7 +238,7 @@ public class SLM implements ProjectionDevice {
       try {
          mmc_.displaySLMImage(slm_);
       } catch (Exception ex) {
-         app_.showError(ex);
+         app_.logs().showError(ex);
       }
    }
 }
