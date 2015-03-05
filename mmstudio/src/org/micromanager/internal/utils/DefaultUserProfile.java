@@ -40,6 +40,8 @@ public class DefaultUserProfile implements UserProfile {
    private String profileName_;
    private final DefaultPropertyMap globalProfile_;
    private DefaultPropertyMap userProfile_;
+   // This object exists to give us something consistent to lock on.
+   private static final Object lockObject_ = new Object();
 
    public DefaultUserProfile() {
       nameToFile_ = loadProfileMapping();
@@ -199,7 +201,7 @@ public class DefaultUserProfile implements UserProfile {
    @Override
    public String getString(Class<?> c, String key, String fallback) {
       key = genKey(c, key);
-      synchronized(userProfile_) {
+      synchronized(lockObject_) {
          String result = userProfile_.getString(key);
          if (result != null) {
             return result;
@@ -218,7 +220,7 @@ public class DefaultUserProfile implements UserProfile {
    @Override
    public String[] getStringArray(Class<?> c, String key, String[] fallback) {
       key = genKey(c, key);
-      synchronized(userProfile_) {
+      synchronized(lockObject_) {
          String[] result = userProfile_.getStringArray(key);
          if (result != null) {
             return result;
@@ -236,13 +238,13 @@ public class DefaultUserProfile implements UserProfile {
    }
    @Override
    public void setString(Class<?> c, String key, String value) {
-      synchronized(userProfile_) {
+      synchronized(lockObject_) {
          userProfile_ = (DefaultPropertyMap) userProfile_.copy().putString(genKey(c, key), value).build();
       }
    }
    @Override
    public void setStringArray(Class<?> c, String key, String[] value) {
-      synchronized(userProfile_) {
+      synchronized(lockObject_) {
          userProfile_ = (DefaultPropertyMap) userProfile_.copy().putStringArray(genKey(c, key), value).build();
       }
    }
@@ -250,7 +252,7 @@ public class DefaultUserProfile implements UserProfile {
    @Override
    public Integer getInt(Class<?> c, String key, Integer fallback) {
       key = genKey(c, key);
-      synchronized(userProfile_) {
+      synchronized(lockObject_) {
          Integer result = userProfile_.getInt(key);
          if (result != null) {
             return result;
@@ -269,7 +271,7 @@ public class DefaultUserProfile implements UserProfile {
    @Override
    public Integer[] getIntArray(Class<?> c, String key, Integer[] fallback) {
       key = genKey(c, key);
-      synchronized(userProfile_) {
+      synchronized(lockObject_) {
          Integer[] result = userProfile_.getIntArray(key);
          if (result != null) {
             return result;
@@ -287,13 +289,13 @@ public class DefaultUserProfile implements UserProfile {
    }
    @Override
    public void setInt(Class<?> c, String key, Integer value) {
-      synchronized(userProfile_) {
+      synchronized(lockObject_) {
          userProfile_ = (DefaultPropertyMap) userProfile_.copy().putInt(genKey(c, key), value).build();
       }
    }
    @Override
    public void setIntArray(Class<?> c, String key, Integer[] value) {
-      synchronized(userProfile_) {
+      synchronized(lockObject_) {
          userProfile_ = (DefaultPropertyMap) userProfile_.copy().putIntArray(genKey(c, key), value).build();
       }
    }
@@ -301,7 +303,7 @@ public class DefaultUserProfile implements UserProfile {
    @Override
    public Long getLong(Class<?> c, String key, Long fallback) {
       key = genKey(c, key);
-      synchronized(userProfile_) {
+      synchronized(lockObject_) {
          Long result = userProfile_.getLong(key);
          if (result != null) {
             return result;
@@ -320,7 +322,7 @@ public class DefaultUserProfile implements UserProfile {
    @Override
    public Long[] getLongArray(Class<?> c, String key, Long[] fallback) {
       key = genKey(c, key);
-      synchronized(userProfile_) {
+      synchronized(lockObject_) {
          Long[] result = userProfile_.getLongArray(key);
          if (result != null) {
             return result;
@@ -338,13 +340,13 @@ public class DefaultUserProfile implements UserProfile {
    }
    @Override
    public void setLong(Class<?> c, String key, Long value) {
-      synchronized(userProfile_) {
+      synchronized(lockObject_) {
          userProfile_ = (DefaultPropertyMap) userProfile_.copy().putLong(genKey(c, key), value).build();
       }
    }
    @Override
    public void setLongArray(Class<?> c, String key, Long[] value) {
-      synchronized(userProfile_) {
+      synchronized(lockObject_) {
          userProfile_ = (DefaultPropertyMap) userProfile_.copy().putLongArray(genKey(c, key), value).build();
       }
    }
@@ -352,7 +354,7 @@ public class DefaultUserProfile implements UserProfile {
    @Override
    public Double getDouble(Class<?> c, String key, Double fallback) {
       key = genKey(c, key);
-      synchronized(userProfile_) {
+      synchronized(lockObject_) {
          Double result = userProfile_.getDouble(key);
          if (result != null) {
             return result;
@@ -371,7 +373,7 @@ public class DefaultUserProfile implements UserProfile {
    @Override
    public Double[] getDoubleArray(Class<?> c, String key, Double[] fallback) {
       key = genKey(c, key);
-      synchronized(userProfile_) {
+      synchronized(lockObject_) {
          Double[] result = userProfile_.getDoubleArray(key);
          if (result != null) {
             return result;
@@ -389,13 +391,13 @@ public class DefaultUserProfile implements UserProfile {
    }
    @Override
    public void setDouble(Class<?> c, String key, Double value) {
-      synchronized(userProfile_) {
+      synchronized(lockObject_) {
          userProfile_ = (DefaultPropertyMap) userProfile_.copy().putDouble(genKey(c, key), value).build();
       }
    }
    @Override
    public void setDoubleArray(Class<?> c, String key, Double[] value) {
-      synchronized(userProfile_) {
+      synchronized(lockObject_) {
          userProfile_ = (DefaultPropertyMap) userProfile_.copy().putDoubleArray(genKey(c, key), value).build();
       }
    }
@@ -403,7 +405,7 @@ public class DefaultUserProfile implements UserProfile {
    @Override
    public Boolean getBoolean(Class<?> c, String key, Boolean fallback) {
       key = genKey(c, key);
-      synchronized(userProfile_) {
+      synchronized(lockObject_) {
          Boolean result = userProfile_.getBoolean(key);
          if (result != null) {
             return result;
@@ -422,7 +424,7 @@ public class DefaultUserProfile implements UserProfile {
    @Override
    public Boolean[] getBooleanArray(Class<?> c, String key, Boolean[] fallback) {
       key = genKey(c, key);
-      synchronized(userProfile_) {
+      synchronized(lockObject_) {
          Boolean[] result = userProfile_.getBooleanArray(key);
          if (result != null) {
             return result;
@@ -440,13 +442,13 @@ public class DefaultUserProfile implements UserProfile {
    }
    @Override
    public void setBoolean(Class<?> c, String key, Boolean value) {
-      synchronized(userProfile_) {
+      synchronized(lockObject_) {
          userProfile_ = (DefaultPropertyMap) userProfile_.copy().putBoolean(genKey(c, key), value).build();
       }
    }
    @Override
    public void setBooleanArray(Class<?> c, String key, Boolean[] value) {
-      synchronized(userProfile_) {
+      synchronized(lockObject_) {
          userProfile_ = (DefaultPropertyMap) userProfile_.copy().putBooleanArray(genKey(c, key), value).build();
       }
    }
@@ -498,7 +500,7 @@ public class DefaultUserProfile implements UserProfile {
       DefaultPropertyMap.Builder builder = new DefaultPropertyMap.Builder();
       // NOTE: this should match genKey()
       String className = c.getCanonicalName();
-      synchronized(userProfile_) {
+      synchronized(lockObject_) {
          for (String key : userProfile_.getKeys()) {
             if (key.startsWith(className)) {
                builder.putProperty(key, userProfile_.getProperty(key));
@@ -601,7 +603,7 @@ public class DefaultUserProfile implements UserProfile {
    public void clearProfileSubset(Class<?> c) {
       // Make a copy of the map that contains everything except the keys for
       // the specified class.
-      synchronized(userProfile_) {
+      synchronized(lockObject_) {
          DefaultPropertyMap.Builder builder = new DefaultPropertyMap.Builder();
          for (String key : userProfile_.getKeys()) {
             if (!key.startsWith(c.getCanonicalName())) {
@@ -631,7 +633,7 @@ public class DefaultUserProfile implements UserProfile {
       DefaultUserProfile profile = getInstance();
       // This parameter is stored for the default user. Just in case we *are*
       // using the default user, wrap this in synchronized.
-      synchronized(profile.userProfile_) {
+      synchronized(lockObject_) {
          PropertyMap defaultProfile = profile.loadProfile(DEFAULT_USER);
          Boolean result = defaultProfile.getBoolean(
                profile.genKey(DefaultUserProfile.class, ALWAYS_USE_DEFAULT_USER));
@@ -649,7 +651,7 @@ public class DefaultUserProfile implements UserProfile {
       DefaultUserProfile profile = getInstance();
       // Again, in case we're using the default user already, we wrap this
       // in synchronized.
-      synchronized(profile.userProfile_) {
+      synchronized(lockObject_) {
          // In order to simplify saving things (since saveProfile() always
          // saves the current user), we temporarily switch to the
          // default user for this operation.
