@@ -24,11 +24,16 @@ package org.micromanager.acquisition.internal;
 import ij.ImagePlus;
 
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.concurrent.BlockingQueue;
 import java.util.Iterator;
@@ -36,6 +41,10 @@ import java.util.List;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JToggleButton;
 
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
@@ -59,6 +68,7 @@ import org.micromanager.data.internal.DefaultSummaryMetadata;
 
 import org.micromanager.internal.dialogs.AcqControlDlg;
 
+import org.micromanager.display.ControlsFactory;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.DefaultDisplayWindow;
 
@@ -100,6 +110,7 @@ public class MMAcquisition {
    private DefaultDisplayWindow display_;
    private final boolean existing_;
    private final boolean virtual_;
+   private AcquisitionEngine eng_;
    private final boolean show_;
    private JSONObject summary_ = new JSONObject();
    private final String NOTINITIALIZED = "Acquisition was not initialized";
@@ -126,6 +137,7 @@ public class MMAcquisition {
       name_ = name;
       virtual_ = diskCached;
       existing_ = false;
+      eng_ = eng;
       show_ = show;
       store_ = new DefaultDatastore();
       MMStudio.getInstance().displays().manage(store_);
@@ -158,7 +170,7 @@ public class MMAcquisition {
          ReportingUtils.logError(e, "Couldn't set summary metadata");
       }
       if (show_) {
-         display_ = new DefaultDisplayWindow(store_, null);
+         display_ = new DefaultDisplayWindow(store_, makeControlsFactory());
       }
   }
    
@@ -396,7 +408,7 @@ public class MMAcquisition {
       if (store_.getSummaryMetadata() != null) {
          if (show_ && !existing_) {
             // NB pre-existing setups will have loaded saved display settings.
-            display_ = new DefaultDisplayWindow(store_, null);
+            display_ = new DefaultDisplayWindow(store_, makeControlsFactory());
          }
          initialized_ = true;
       }
@@ -404,7 +416,58 @@ public class MMAcquisition {
          ReportingUtils.logError("Null summary metadata");
       }
    }
-   
+
+   /**
+    * Generate the abort and pause buttons. These are only used for display
+    * windows for ongoing acquisitions (i.e. not for opening files from
+    * disk).
+    * TODO: remove these special controls (or at least hide them) when the
+    * acquisition ends.
+    */
+   private ControlsFactory makeControlsFactory() {
+      return new ControlsFactory() {
+         @Override
+         public List<Component> makeControls(DisplayWindow display) {
+            ArrayList<Component> result = new ArrayList<Component>();
+            JButton abortButton = new JButton(new ImageIcon(
+                     getClass().getResource("/org/micromanager/internal/icons/cancel.png")));
+            abortButton.setBackground(new Color(255, 255, 255));
+            abortButton.setToolTipText("Halt data acquisition");
+            abortButton.setFocusable(false);
+            abortButton.setMaximumSize(new Dimension(30, 28));
+            abortButton.setMinimumSize(new Dimension(30, 28));
+            abortButton.setPreferredSize(new Dimension(30, 28));
+            abortButton.addActionListener(new ActionListener() {
+               @Override
+               public void actionPerformed(ActionEvent e) {
+                  eng_.abortRequest();
+               }
+            });
+            result.add(abortButton);
+
+            JToggleButton pauseButton = new JToggleButton(new ImageIcon(
+                     getClass().getResource("/org/micromanager/internal/icons/control_pause.png")));
+            ImageIcon icon = new ImageIcon(getClass().getResource(
+                  "/org/micromanager/internal/icons/resultset_next.png"));
+            pauseButton.setPressedIcon(icon);
+            pauseButton.setSelectedIcon(icon);
+            pauseButton.setToolTipText("Pause data acquisition");
+            pauseButton.setFocusable(false);
+            pauseButton.setMaximumSize(new Dimension(30, 28));
+            pauseButton.setMinimumSize(new Dimension(30, 28));
+            pauseButton.setPreferredSize(new Dimension(30, 28));
+            pauseButton.addActionListener(new ActionListener() {
+               @Override
+               public void actionPerformed(ActionEvent e) {
+                  eng_.setPause(!eng_.isPaused());
+               }
+            });
+            result.add(pauseButton);
+
+            return result;
+         }
+      };
+   }
   
    private void createDefaultAcqSettings() {
       String keys[] = new String[summary_.length()];
