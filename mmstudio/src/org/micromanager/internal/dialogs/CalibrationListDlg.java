@@ -98,8 +98,8 @@ public class CalibrationListDlg extends MMDialog {
                double val = Double.parseDouble(value.toString());
                core_.setPixelSizeUm(cal.getLabel(), val);
                cal.setPixelSizeUm(val);
-               parentGUI_.setConfigChanged(true);
-               parentGUI_.refreshGUI();
+               parentGUI_.compat().setConfigChanged(true);
+               parentGUI_.compat().refreshGUI();
             } catch (Exception e) {                                                              
                handleException(e);                                                               
             }  
@@ -278,8 +278,8 @@ public class CalibrationListDlg extends MMDialog {
          calibrationList_.getCalibrationsFromCore();
          CalTableModel ptm = (CalTableModel)calTable_.getModel();
          ptm.fireTableDataChanged();
-         parentGUI_.setConfigChanged(true);
-         parentGUI_.refreshGUI();
+         parentGUI_.compat().setConfigChanged(true);
+         parentGUI_.compat().refreshGUI();
       }
    }
 
@@ -295,15 +295,15 @@ public class CalibrationListDlg extends MMDialog {
       if (editPreset(label, size)) {
          calibrationList_.getCalibrationsFromCore();
          ptm.fireTableDataChanged();
-         parentGUI_.setConfigChanged(true);
-         parentGUI_.refreshGUI();
+         parentGUI_.compat().setConfigChanged(true);
+         parentGUI_.compat().refreshGUI();
       }
    }
 
    public void updateCalibrations() {
       refreshCalibrations();
-      parentGUI_.setConfigChanged(true);
-      parentGUI_.refreshGUI();
+      parentGUI_.compat().setConfigChanged(true);
+      parentGUI_.compat().refreshGUI();
    }
    
    public void refreshCalibrations() {
@@ -334,8 +334,8 @@ public class CalibrationListDlg extends MMDialog {
          }
          calibrationList_.getCalibrationsFromCore();
          ptm.fireTableDataChanged();
-         parentGUI_.refreshGUI();
-         parentGUI_.setConfigChanged(true);
+         parentGUI_.compat().refreshGUI();
+         parentGUI_.compat().setConfigChanged(true);
       }
    }
 
@@ -354,8 +354,8 @@ public class CalibrationListDlg extends MMDialog {
          calibrationList_.getCalibrationsFromCore();
          CalTableModel ptm = (CalTableModel)calTable_.getModel();
          ptm.fireTableDataChanged();
-         parentGUI_.refreshGUI();
-         parentGUI_.setConfigChanged(true);
+         parentGUI_.compat().refreshGUI();
+         parentGUI_.compat().setConfigChanged(true);
       }
    }
 
@@ -370,7 +370,7 @@ public class CalibrationListDlg extends MMDialog {
          dlg.setCore(core_);
          dlg.setVisible(true);
          if (dlg.isChanged()) {
-            parentGUI_.setConfigChanged(true);
+            parentGUI_.compat().setConfigChanged(true);
          }
          return dlg.isChanged();
       }

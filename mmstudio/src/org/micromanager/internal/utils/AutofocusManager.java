@@ -95,7 +95,7 @@ public class AutofocusManager {
     */
    public void refresh() throws MMException {
       afs_.clear();
-      CMMCore core = app_.getMMCore();
+      CMMCore core = app_.getCMMCore();
 
       // first check core autofocus
       StrVector afDevs = core.getLoadedDevicesOfType(DeviceType.AutoFocusDevice);

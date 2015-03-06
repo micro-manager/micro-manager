@@ -240,7 +240,7 @@ public class CoreAutofocus implements Autofocus {
 
    @Override
    public void setApp(ScriptInterface app) {
-      core_ = app.getMMCore();
+      core_ = app.getCMMCore();
       devName_ = core_.getAutoFocusDevice();      
    }
 

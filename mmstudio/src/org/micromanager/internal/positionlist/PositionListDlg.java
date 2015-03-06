@@ -839,7 +839,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
 
    protected void showCreateTileDlg() {
       TileCreatorDlg tileCreatorDlg = new TileCreatorDlg(core_, this);
-      studio_.addMMListener(tileCreatorDlg);
+      studio_.compat().addMMListener(tileCreatorDlg);
       tileCreatorDlg.setVisible(true);
    }
 

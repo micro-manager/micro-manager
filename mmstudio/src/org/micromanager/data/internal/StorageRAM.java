@@ -99,7 +99,7 @@ public class StorageRAM implements Storage {
       MMStudio studio = MMStudio.getInstance();
       try {
          studio.snapSingleImage();
-         TaggedImage tagged = studio.getMMCore().getTaggedImage();
+         TaggedImage tagged = studio.getCMMCore().getTaggedImage();
          Image result = new DefaultImage(tagged).copyAtCoords(coords);
          addImage(result);
          return result;

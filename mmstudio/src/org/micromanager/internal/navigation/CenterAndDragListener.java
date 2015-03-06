@@ -39,7 +39,7 @@ public class CenterAndDragListener implements MouseListener,
 
       public CenterAndDragListener(MMStudio gui) {
          studio_ = gui;
-         core_ = gui.getMMCore();
+         core_ = gui.getCMMCore();
       }
 
       public void start () {

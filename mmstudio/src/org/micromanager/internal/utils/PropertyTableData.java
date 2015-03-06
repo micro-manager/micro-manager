@@ -175,7 +175,7 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
             setValueInCore(item, value);
             core_.updateSystemStateCache();
             refresh(true);
-            gui_.refreshGUIFromCache();
+            gui_.compat().refreshGUIFromCache();
          }
       } else if (col == PropertyUsedColumn_) {
          item.confInclude = ((Boolean) value).booleanValue();
@@ -237,8 +237,8 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
 
          Configuration cfg = core_.getConfigGroupState(groupName);
 
-         boolean liveMode = gui_.isLiveModeOn();
-         gui_.enableLiveMode(false);
+         boolean liveMode = gui_.compat().isLiveModeOn();
+         gui_.compat().enableLiveMode(false);
 
          setUpdating(true);
 
@@ -271,7 +271,7 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
 
          updateRowVisibility(flags);
 
-         gui_.enableLiveMode(liveMode);
+         gui_.compat().enableLiveMode(liveMode);
       } catch (Exception e) {
          handleException(e);
       }

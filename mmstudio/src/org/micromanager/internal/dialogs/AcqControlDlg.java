@@ -110,7 +110,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
    private final JButton setBottomButton_;
    private final JButton setTopButton_;
    protected JComboBox displayModeCombo_;
-   private ScriptInterface studio_;
+   private MMStudio studio_;
    private final GUIColors guiColors_;
    private final NumberFormat numberFormat_;
    private final JLabel namePrefixLabel_;
@@ -259,19 +259,9 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       dayBorder_ = BorderFactory.createEtchedBorder();
       nightBorder_ = BorderFactory.createEtchedBorder(Color.gray, Color.darkGray);
 
-      //updatePanelBorder(thePanel);
       thePanel.setLayout(null);
       getContentPane().add(thePanel);
       return thePanel;
-   }
-
-   public void updatePanelBorder(JPanel thePanel) {
-      TitledBorder border = (TitledBorder) thePanel.getBorder();
-      if (studio_.getBackgroundStyle().contentEquals("Day")) {
-         border.setBorder(dayBorder_);
-      } else {
-         border.setBorder(nightBorder_);
-      }
    }
 
    public final void createEmptyPanels() {
@@ -337,7 +327,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
     * @param acqEng - acquisition engine
     * @param prefs - application preferences node
     */
-   public AcqControlDlg(AcquisitionEngine acqEng, ScriptInterface gui) {
+   public AcqControlDlg(AcquisitionEngine acqEng, MMStudio gui) {
       super("acquisition configuration dialog");
 
       studio_ = gui;
@@ -453,13 +443,6 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       interval_.setBounds(60, 27, 55, 24);
 
       timeUnitCombo_ = new JComboBox();
-      timeUnitCombo_.addActionListener(new ActionListener() {
-
-         @Override
-         public void actionPerformed(final ActionEvent e) {
-            //interval_.setText(NumberUtils.doubleToDisplayString(convertMsToTime(acqEng_.getFrameIntervalMs(), timeUnitCombo_.getSelectedIndex())));
-         }
-      });
       timeUnitCombo_.setModel(new DefaultComboBoxModel(new String[]{"ms", "s", "min"}));
       timeUnitCombo_.setFont(new Font("Arial", Font.PLAIN, 10));
       timeUnitCombo_.setBounds(120, 27, 67, 24);
@@ -471,7 +454,6 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
 
       listButton_ = new JButton();
       listButton_.addActionListener(new ActionListener() {
-
          @Override
          public void actionPerformed(ActionEvent e) {
             studio_.showXYPositionList();

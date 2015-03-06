@@ -211,7 +211,7 @@ final public class PipelineFrame extends MMFrame
    private void removeSelectedProcessor() {
       DataProcessor<TaggedImage> processor
             = pipelineTable_.getSelectedProcessor();
-      gui_.removeImageProcessor(processor);
+      gui_.compat().removeImageProcessor(processor);
    }
 
    private void moveSelectedProcessor(int offset) {
@@ -225,7 +225,7 @@ final public class PipelineFrame extends MMFrame
    private void moveProcessor(DataProcessor<TaggedImage> processor,
          int offset) {
       List<DataProcessor<TaggedImage>> pipeline
-            = gui_.getImageProcessorPipeline();
+            = gui_.compat().getImageProcessorPipeline();
       int oldIndex = pipeline.indexOf(processor);
       if (oldIndex < 0) {
          return;
@@ -237,6 +237,6 @@ final public class PipelineFrame extends MMFrame
       pipeline.remove(oldIndex);
       pipeline.add(newIndex, processor);
 
-      gui_.setImageProcessorPipeline(pipeline);
+      gui_.compat().setImageProcessorPipeline(pipeline);
    }
 }

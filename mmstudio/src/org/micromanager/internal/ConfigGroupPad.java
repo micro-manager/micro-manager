@@ -203,9 +203,9 @@ public class ConfigGroupPad extends JScrollPane{
             try {
                if (value != null && value.toString().length() > 0)
                {
-                 boolean restartLive = parentGUI_.isLiveModeOn();
+                 boolean restartLive = parentGUI_.compat().isLiveModeOn();
                  if (restartLive)
-                    parentGUI_.enableLiveMode(false);
+                    parentGUI_.compat().enableLiveMode(false);
                  
                   if (item.singleProp) {
                      if (item.hasLimits && item.isInteger()) {
@@ -223,7 +223,8 @@ public class ConfigGroupPad extends JScrollPane{
                   
                   // Associate exposure time with presets in current channel group
                   if (item.group.equals(core_.getChannelGroup())) {
-                     core_.setExposure(parentGUI_.getChannelExposureTime(
+                     core_.setExposure(
+                           parentGUI_.compat().getChannelExposureTime(
                              item.group, value.toString(), core_.getExposure()) );
                   }
                   
@@ -243,12 +244,12 @@ public class ConfigGroupPad extends JScrollPane{
                         parentGUI.updateGUI(false);
                      }
                      else {
-                        parentGUI_.refreshGUI();
+                        parentGUI_.compat().refreshGUI();
                      }
                   }
                   
                   if (restartLive)
-                       parentGUI_.enableLiveMode(true);
+                       parentGUI_.compat().enableLiveMode(true);
                }
             } catch (Exception e) {
                handleException(e);

@@ -422,7 +422,7 @@ public interface CompatibilityInterface {
     * Provides access to the Core and its functionality.
     * @return Micro-Manager core object. 
     */
-   public CMMCore getMMCore();
+   public CMMCore getCMMCore();
 
    /**
     * Currently active autofocus device (can be either a Java or C++ coded device).

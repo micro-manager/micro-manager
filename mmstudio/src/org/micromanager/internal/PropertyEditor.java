@@ -107,7 +107,7 @@ public class PropertyEditor extends MMFrame {
 
    public void setGui(ScriptInterface gui) {
       gui_ = gui;
-      gui_.addMMListener(myMMListener_);
+      gui_.compat().addMMListener(myMMListener_);
    }
 
 
@@ -323,13 +323,13 @@ public class PropertyEditor extends MMFrame {
       @Override
       public void setValueAt(Object value, int row, int col) {
          PropertyItem item = propListVisible_.get(row);
-         gui_.logMessage("Setting value " + value + " at row " + row);
+         gui_.logs().logMessage("Setting value " + value + " at row " + row);
          if (col == PropertyValueColumn_) {
             setValueInCore(item,value);
          }
          core_.updateSystemStateCache();
          refresh(true);
-         gui_.refreshGUIFromCache();
+         gui_.compat().refreshGUIFromCache();
          fireTableCellUpdated(row, col);
       }
 
@@ -348,8 +348,8 @@ public class PropertyEditor extends MMFrame {
             StrVector devices = core_.getLoadedDevices();
             propList_.clear();
 
-            boolean liveMode = gui_.isLiveModeOn();
-            gui_.enableLiveMode(false);
+            boolean liveMode = gui_.compat().isLiveModeOn();
+            gui_.compat().enableLiveMode(false);
             for (int i=0; i<devices.size(); i++) { 
                if (data_.showDevice(flags, devices.get(i))) {
                   StrVector properties = core_.getDevicePropertyNames(devices.get(i));
@@ -367,7 +367,7 @@ public class PropertyEditor extends MMFrame {
             updateRowVisibility(flags); 
 
 
-            gui_.enableLiveMode(liveMode);
+            gui_.compat().enableLiveMode(liveMode);
          } catch (Exception e) {
             handleException(e);
          }

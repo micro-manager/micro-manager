@@ -105,6 +105,7 @@ public class PresetEditor extends ConfigDialog {
       }
 
       // Rename the preset if its name has changed
+      // TODO: shouldn't there be some curly braces here?!
       if (! newItem_ && !initName.contentEquals(newName))
          try {
             core_.renameConfig(groupName_, initName, newName);
@@ -123,8 +124,7 @@ public class PresetEditor extends ConfigDialog {
             }
          }
 
-         gui_.setConfigChanged(true);
+         gui_.compat().setConfigChanged(true);
          return true;
-
    }
 }

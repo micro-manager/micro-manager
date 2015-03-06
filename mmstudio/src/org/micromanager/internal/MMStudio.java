@@ -73,6 +73,7 @@ import org.json.JSONObject;
 import org.micromanager.acquisition.internal.AcquisitionManager;
 
 import org.micromanager.Autofocus;
+import org.micromanager.CompatibilityInterface;
 import org.micromanager.data.DataManager;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
@@ -81,6 +82,7 @@ import org.micromanager.display.DisplayManager;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.IAcquisitionEngine2010;
+import org.micromanager.LogManager;
 import org.micromanager.MMListenerInterface;
 import org.micromanager.display.OverlayPanel;
 import org.micromanager.PositionList;
@@ -139,7 +141,7 @@ import org.micromanager.internal.utils.WaitDialog;
  * Implements the ScriptInterface (i.e. primary API) and does various other
  * tasks that should probably be refactored out at some point.
  */
-public class MMStudio implements ScriptInterface {
+public class MMStudio implements ScriptInterface, CompatibilityInterface, LogManager {
 
    private static final long serialVersionUID = 3556500289598574541L;
    private static final String MAIN_SAVE_METHOD = "saveMethod";
@@ -749,11 +751,16 @@ public class MMStudio implements ScriptInterface {
       }
    }
 
+   @Override
+   public CMMCore core() {
+      return core_;
+   }
+
    /**
     * Returns instance of the core uManager object;
     */
    @Override
-   public CMMCore getMMCore() {
+   public CMMCore getCMMCore() {
       return core_;
    }
 
@@ -1761,8 +1768,8 @@ public class MMStudio implements ScriptInterface {
     */
    @Override
    public final void setBackgroundStyle(String backgroundType) {
-      if (!(backgroundType.contentEquals(ScriptInterface.DAY) ||
-            backgroundType.contentEquals(ScriptInterface.NIGHT))) {
+      if (!(backgroundType.contentEquals(CompatibilityInterface.DAY) ||
+            backgroundType.contentEquals(CompatibilityInterface.NIGHT))) {
          throw new IllegalArgumentException("Invalid background style \"" +
                backgroundType + "\"");
       }
@@ -2513,6 +2520,28 @@ public class MMStudio implements ScriptInterface {
    @Override
    public UserProfile getUserProfile() {
       return profile();
+   }
+
+   // TODO: split associated methods out to a separate object (ReportingUtils
+   // or something similar)
+   @Override
+   public LogManager logs() {
+      return this;
+   }
+   @Override
+   public LogManager getLogManager() {
+      return this;
+   }
+
+   // TODO: split methods associated with this interface out to a separate
+   // object.
+   @Override
+   public CompatibilityInterface compat() {
+      return this;
+   }
+   @Override
+   public CompatibilityInterface getCompatibilityInterface() {
+      return this;
    }
 
    public static boolean getShouldDeleteOldCoreLogs() {

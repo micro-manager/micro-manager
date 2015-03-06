@@ -222,7 +222,7 @@ public class GroupEditor extends ConfigDialog {
          }
       }
 
-      gui_.setConfigChanged(true);
+      gui_.compat().setConfigChanged(true);
       return true;
    }
 }

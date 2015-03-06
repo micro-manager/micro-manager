@@ -1287,7 +1287,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
    }
 
    public void updateGUI () {
-      parentGUI_.refreshGUI();
+      parentGUI_.compat().refreshGUI();
    }
 
    public void getScriptsFromPrefs ()

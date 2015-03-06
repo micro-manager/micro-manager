@@ -163,7 +163,7 @@ public final class ConfigPadButtonPanel extends JPanel {
          removePreset();
       if (e.getSource() == editPresetButton_)
          editPreset();
-      studio_.refreshGUI();
+      studio_.compat().refreshGUI();
    }
 
    @SuppressWarnings("ResultOfObjectAllocationIgnored")
@@ -181,7 +181,7 @@ public final class ConfigPadButtonPanel extends JPanel {
          if (result == JOptionPane.OK_OPTION) {
             try {
                core_.deleteConfigGroup(groupName);
-               studio_.setConfigChanged(true);
+               studio_.compat().setConfigChanged(true);
             } catch (Exception e) {
                handleException(e);
             }
