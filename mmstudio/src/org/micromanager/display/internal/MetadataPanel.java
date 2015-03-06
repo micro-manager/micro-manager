@@ -38,6 +38,9 @@ import javax.swing.table.DefaultTableModel;
 
 import net.miginfocom.swing.MigLayout;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
@@ -179,7 +182,23 @@ public class MetadataPanel extends JPanel {
          @Override
          public void run() {
             Metadata data = image.getMetadata();
-            imageMetadataModel_.setMetadata(((DefaultMetadata) data).toJSON(),
+            JSONObject metadata = ((DefaultMetadata) data).toJSON();
+            // Enhance this structure with information about basic image
+            // properties.
+            try {
+               metadata.put("Width", image.getWidth());
+               metadata.put("Height", image.getHeight());
+               if (image.getCoords() != null) {
+                  for (String axis : image.getCoords().getAxes()) {
+                     metadata.put(axis + " index",
+                           image.getCoords().getIndex(axis));
+                  }
+               }
+            }
+            catch (JSONException e) {
+               ReportingUtils.logError(e, "Failed to update metadata display");
+            }
+            imageMetadataModel_.setMetadata(metadata,
                   showUnchangingPropertiesCheckbox_.isSelected());
             summaryMetadataModel_.setMetadata(
                   ((DefaultSummaryMetadata) store_.getSummaryMetadata()).toJSON(),
