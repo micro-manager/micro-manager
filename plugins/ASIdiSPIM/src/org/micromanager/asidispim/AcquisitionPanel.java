@@ -1515,6 +1515,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          gui_.enableLiveMode(false);
       }
       
+      // stop the serial traffic for position updates during acquisition
+      posUpdater_.pauseUpdates(true);
+      
       // get MM device names for first/second cameras to acquire
       String firstCamera, secondCamera;
       boolean firstSideA = isFirstSideA(); 
@@ -1703,9 +1706,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       cameras_.setSPIMCamerasForAcquisition(true);
 
-      // stop the serial traffic for position updates during acquisition
-      posUpdater_.setAcqRunning(true);
-      
       numTimePointsDone_ = 0;
       
       // force saving as image stacks, not individual files
@@ -2096,7 +2096,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                Properties.Values.SPIM_IDLE, true);
       }
       updateAcquisitionStatus(AcquisitionStatus.DONE);
-      posUpdater_.setAcqRunning(false);
+      posUpdater_.pauseUpdates(false);
       
       if (separateImageFilesOriginally) {
          ImageUtils.setImageStorageClass(TaggedImageStorageDiskDefault.class);

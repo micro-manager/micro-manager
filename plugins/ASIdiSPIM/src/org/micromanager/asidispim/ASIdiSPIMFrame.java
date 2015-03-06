@@ -50,7 +50,7 @@ import org.micromanager.utils.MMFrame;
 //TODO devices tab automatically recognize default device names
 //TODO "swap sides" button (during alignment)
 //TODO setup tab have piezo/scanner go to 0 (eliminate calibration position display)
-//TODO alignment wizard that would guide through all steps
+//TODO alignment wizard that would guide through alignment steps
 //TODO easy mode that pulls most-used bits from all panels
 //TODO autofocus for finding calibration endpoints (http://dx.doi.org/10.1364/OE.16.008670, FFT method, or other)
 //TODO calibration for sheet width/offset (automatic based on image analysis?) and then optimize based on ROI
@@ -62,7 +62,7 @@ import org.micromanager.utils.MMFrame;
 //TODO hardware Z-projection
 //TODO camera control ROI panel
 //TODO track Z/F for sample finding
-//TODO Z/F position list
+//TODO Z/F position dropdown for often-used positions
 //TODO factor out common code for JComboBoxes like MulticolorModes, CameraModes, AcquisitionModes, etc.
 //TODO cleanup prefs vs. props... maybe add boolean support for plugin device use only?
 //TODO finish eliminating Prefs.Keys in favor of Properties.Keys with plugin values

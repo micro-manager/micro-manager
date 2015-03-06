@@ -194,7 +194,7 @@ public final class StatusSubPanel extends ListeningJPanel {
     */
    @Override
    public final void stoppedStagePositions() {
-      Color c = stagePosUpdater_.isAcqRunning() ? Color.WHITE : Color.LIGHT_GRAY;
+      Color c = stagePosUpdater_.isPaused() ? Color.WHITE : Color.LIGHT_GRAY;
       galvoA_.setColor(c);
       galvoB_.setColor(c);
       piezoA_.setColor(c);

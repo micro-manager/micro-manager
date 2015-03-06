@@ -41,9 +41,8 @@ public class StagePositionUpdater {
    private Timer timer_;
    private final Positions positions_;
    private final Properties props_;
-   private final AtomicBoolean acqRunning_ = new AtomicBoolean(false);  // flag set externally to indicate that acquisition is happening (and so we should disable updates)
    private final AtomicBoolean updatingNow_ = new AtomicBoolean(false);  // true iff in middle of update right now, use to skip updates if last one is running instead of letting them pile up
-   private final AtomicBoolean pauseUpdates_ = new AtomicBoolean(false);  // true iff updates temporarily disabled
+   private final AtomicBoolean pauseUpdates_ = new AtomicBoolean(false);  // true iff updates temporarily disabled (e.g. running acquisition)
    private boolean timerRunning; // whether we are set to update positions currently
    
    /**
@@ -60,7 +59,6 @@ public class StagePositionUpdater {
       positions_ = positions;
       props_ = props;
       panels_ = new ArrayList<ListeningJPanel>();
-      acqRunning_.set(false);
       updatingNow_.set(false);
       pauseUpdates_.set(false);
       timerRunning = false;
@@ -89,7 +87,7 @@ public class StagePositionUpdater {
    
    /**
     * Start the updater at whatever interval is.  Uses its own thread
-    * via java.util.Timer.scheduleAtFixedRate()
+    * via java.util.Timer.scheduleAtFixedRate().  Call stop() to stop.
     */
    public void start() {
       // end any existing updater before starting (anew)
@@ -119,7 +117,7 @@ public class StagePositionUpdater {
    }
    
    /**
-    * stops the timer
+    * Stops the timer.  To restart call start().
     */
    public void stop() {
       if (timer_ != null) {
@@ -132,47 +130,35 @@ public class StagePositionUpdater {
    }
    
    /**
-    * sets the "acquisition running" flag that disables position updates
-    * @param running true if starting acquisition, false if ended
-    */
-   public void setAcqRunning(boolean running) {
-      acqRunning_.set(running);
-      if (running & timerRunning) {
-         for (ListeningJPanel panel : panels_) {
-            panel.stoppedStagePositions();
-         }
-      }
-   }
-   
-   /**
-    * checks whether "acquisition running" flag is set 
+    * checks whether updates have been paused (likely because acquisition is running) 
     * @return 
     */
-   public boolean isAcqRunning() {
-      return acqRunning_.get();
+   public boolean isPaused() {
+      return pauseUpdates_.get();
    }
+
    
    /**
     * Call this with true to temporarily turn off updates.
-    * Be sure to call it again with false
+    * Be sure to call it again with false.
     * @param pause true disables updates temporarily, false goes back to normal
     */
    public void pauseUpdates(boolean pause) {
       pauseUpdates_.set(pause);
+      for (ListeningJPanel panel : panels_) {
+         panel.stoppedStagePositions();
+      }
    }
    
    /**
     * Updates the stage positions.  Called whenever the timer "dings", or can be called separately.
-    * If acquisition is running then does nothing.
     */
    public void oneTimeUpdate() {
-      if (!acqRunning_.get()) {
-         // update stage positions in devices
-         positions_.refreshStagePositions();
-         // notify listeners that positions are updated
-         for (ListeningJPanel panel : panels_) {
-            panel.updateStagePositions();
-         }
+      // update stage positions in devices
+      positions_.refreshStagePositions();
+      // notify listeners that positions are updated
+      for (ListeningJPanel panel : panels_) {
+         panel.updateStagePositions();
       }
    }
    
