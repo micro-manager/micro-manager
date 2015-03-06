@@ -32,6 +32,19 @@ import org.micromanager.internal.utils.ReportingUtils;
 
 // TODO: there is an awful lot of duplicated code here!
 public class DefaultPropertyMap implements PropertyMap {
+   private static final String TYPE = "PropType";
+   private static final String VALUE = "PropVal";
+   private static final String STRING = "String";
+   private static final String STRING_ARRAY = "String array";
+   private static final String INTEGER = "Integer";
+   private static final String INTEGER_ARRAY = "Integer array";
+   private static final String LONG = "Long";
+   private static final String LONG_ARRAY = "Long array";
+   private static final String DOUBLE = "Double";
+   private static final String DOUBLE_ARRAY = "Double array";
+   private static final String BOOLEAN = "Boolean";
+   private static final String BOOLEAN_ARRAY = "Boolean array";
+
    // This gets thrown when someone tries to retrieve a value as the wrong type
    public static class PropertyValueMismatchException extends RuntimeException {
       public PropertyValueMismatchException(String message) {
@@ -154,65 +167,82 @@ public class DefaultPropertyMap implements PropertyMap {
          return (Boolean[]) val_;
       }
 
-      public String serialize() {
-         if (type_ == String.class) {
-            return "String:" + ((String) val_);
-         }
-         else if (type_ == String[].class) {
-            JSONArray tmp = new JSONArray();
-            String[] vals = (String[]) val_;
-            for (int i = 0; i < vals.length; ++i) {
-               tmp.put(vals[i]);
+      public JSONObject serialize() {
+         JSONObject result = new JSONObject();
+         try {
+            if (type_ == String.class) {
+               result.put(TYPE, STRING);
+               result.put(VALUE, (String) val_);
             }
-            return "StringArr:" + tmp.toString();
-         }
-         else if (type_ == Integer.class) {
-            return "Integer:" + Integer.toString((Integer) val_);
-         }
-         else if (type_ == Integer[].class) {
-            JSONArray tmp = new JSONArray();
-            Integer[] vals = (Integer[]) val_;
-            for (int i = 0; i < vals.length; ++i) {
-               tmp.put(vals[i]);
+            else if (type_ == String[].class) {
+               result.put(TYPE, STRING_ARRAY);
+               JSONArray tmp = new JSONArray();
+               String[] vals = (String[]) val_;
+               for (int i = 0; i < vals.length; ++i) {
+                  tmp.put(vals[i]);
+               }
+               result.put(VALUE, tmp);
             }
-            return "IntegerArr:" + tmp.toString();
-         }
-         else if (type_ == Long.class) {
-            return "Long:" + Long.toString((Long) val_);
-         }
-         else if (type_ == Long[].class) {
-            JSONArray tmp = new JSONArray();
-            Long[] vals = (Long[]) val_;
-            for (int i = 0; i < vals.length; ++i) {
-               tmp.put(vals[i]);
+            else if (type_ == Integer.class) {
+               result.put(TYPE, INTEGER);
+               result.put(VALUE, (Integer) val_);
             }
-            return "LongArr:" + tmp.toString();
-         }
-         else if (type_ == Double.class) {
-            return "Double:" + Double.toString((Double) val_);
-         }
-         else if (type_ == Double[].class) {
-            JSONArray tmp = new JSONArray();
-            Double[] vals = (Double[]) val_;
-            for (int i = 0; i < vals.length; ++i) {
-               tmp.put(vals[i]);
+            else if (type_ == Integer[].class) {
+               result.put(TYPE, INTEGER_ARRAY);
+               JSONArray tmp = new JSONArray();
+               Integer[] vals = (Integer[]) val_;
+               for (int i = 0; i < vals.length; ++i) {
+                  tmp.put(vals[i]);
+               }
+               result.put(VALUE, tmp);
             }
-            return "DoubleArr:" + tmp.toString();
-         }
-         else if (type_ == Boolean.class) {
-            return "Boolean:" + Boolean.toString((Boolean) val_);
-         }
-         else if (type_ == Boolean[].class) {
-            JSONArray tmp = new JSONArray();
-            Boolean[] vals = (Boolean[]) val_;
-            for (int i = 0; i < vals.length; ++i) {
-               tmp.put(vals[i]);
+            else if (type_ == Long.class) {
+               result.put(TYPE, LONG);
+               result.put(VALUE, (Long) val_);
             }
-            return "BooleanArr:" + tmp.toString();
+            else if (type_ == Long[].class) {
+               result.put(TYPE, LONG_ARRAY);
+               JSONArray tmp = new JSONArray();
+               Long[] vals = (Long[]) val_;
+               for (int i = 0; i < vals.length; ++i) {
+                  tmp.put(vals[i]);
+               }
+               result.put(VALUE, tmp);
+            }
+            else if (type_ == Double.class) {
+               result.put(TYPE, DOUBLE);
+               result.put(VALUE, (Double) val_);
+            }
+            else if (type_ == Double[].class) {
+               result.put(TYPE, DOUBLE_ARRAY);
+               JSONArray tmp = new JSONArray();
+               Double[] vals = (Double[]) val_;
+               for (int i = 0; i < vals.length; ++i) {
+                  tmp.put(vals[i]);
+               }
+               result.put(VALUE, tmp);
+            }
+            else if (type_ == Boolean.class) {
+               result.put(TYPE, BOOLEAN);
+               result.put(VALUE, (Boolean) val_);
+            }
+            else if (type_ == Boolean[].class) {
+               result.put(TYPE, BOOLEAN_ARRAY);
+               JSONArray tmp = new JSONArray();
+               Boolean[] vals = (Boolean[]) val_;
+               for (int i = 0; i < vals.length; ++i) {
+                  tmp.put(vals[i]);
+               }
+               result.put(VALUE, tmp);
+            }
+            else {
+               throw new RuntimeException("Unexpected property value type " + type_);
+            }
          }
-         else {
-            throw new RuntimeException("Unexpected property value type " + type_);
+         catch (JSONException e) {
+            ReportingUtils.logError(e, "Error generating JSON for a property");
          }
+         return result;
       }
    }
    public static class Builder implements PropertyMap.PropertyMapBuilder {
@@ -417,60 +447,57 @@ public class DefaultPropertyMap implements PropertyMap {
       JSONArray keys = map.names();
       for (int i = 0; i < keys.length(); ++i) {
          String key = keys.getString(i);
-         String val = map.getString(key);
-         if (val.startsWith("String:")) {
-            builder.putString(key, val.substring(7, val.length()));
+         JSONObject property = map.getJSONObject(key);
+         String type = property.getString(TYPE);
+         if (type.contentEquals(STRING)) {
+            builder.putString(key, property.getString(VALUE));
          }
-         else if (val.startsWith("StringArr:")) {
-            JSONArray tmp = new JSONArray(val.substring(10, val.length()));
+         else if (type.contentEquals(STRING_ARRAY)) {
+            JSONArray tmp = property.getJSONArray(VALUE);
             String[] valArr = new String[tmp.length()];
             for (int j = 0; j < tmp.length(); ++j) {
                valArr[j] = tmp.getString(j);
             }
             builder.putStringArray(key, valArr);
          }
-         else if (val.startsWith("Integer:")) {
-            builder.putInt(key,
-                  Integer.parseInt(val.substring(8, val.length())));
+         else if (type.contentEquals(INTEGER)) {
+            builder.putInt(key, property.getInt(VALUE));
          }
-         else if (val.startsWith("IntegerArr:")) {
-            JSONArray tmp = new JSONArray(val.substring(11, val.length()));
+         else if (type.contentEquals(INTEGER_ARRAY)) {
+            JSONArray tmp = property.getJSONArray(VALUE);
             Integer[] valArr = new Integer[tmp.length()];
             for (int j = 0; j < tmp.length(); ++j) {
                valArr[j] = tmp.getInt(j);
             }
             builder.putIntArray(key, valArr);
          }
-         else if (val.startsWith("Long:")) {
-            builder.putLong(key,
-                  Long.parseLong(val.substring(5, val.length())));
+         else if (type.contentEquals(LONG)) {
+            builder.putLong(key, property.getLong(VALUE));
          }
-         else if (val.startsWith("LongArr:")) {
-            JSONArray tmp = new JSONArray(val.substring(8, val.length()));
+         else if (type.contentEquals(LONG_ARRAY)) {
+            JSONArray tmp = property.getJSONArray(VALUE);
             Long[] valArr = new Long[tmp.length()];
             for (int j = 0; j < tmp.length(); ++j) {
                valArr[j] = tmp.getLong(j);
             }
             builder.putLongArray(key, valArr);
          }
-         else if (val.startsWith("Double:")) {
-            builder.putDouble(key,
-                  Double.parseDouble(val.substring(7, val.length())));
+         else if (type.contentEquals(DOUBLE)) {
+            builder.putDouble(key, property.getDouble(VALUE));
          }
-         else if (val.startsWith("DoubleArr:")) {
-            JSONArray tmp = new JSONArray(val.substring(10, val.length()));
+         else if (type.contentEquals(DOUBLE_ARRAY)) {
+            JSONArray tmp = property.getJSONArray(VALUE);
             Double[] valArr = new Double[tmp.length()];
             for (int j = 0; j < tmp.length(); ++j) {
                valArr[j] = tmp.getDouble(j);
             }
             builder.putDoubleArray(key, valArr);
          }
-         else if (val.startsWith("Boolean:")) {
-            builder.putBoolean(key,
-                  Boolean.parseBoolean(val.substring(8, val.length())));
+         else if (type.contentEquals(BOOLEAN)) {
+            builder.putBoolean(key, property.getBoolean(VALUE));
          }
-         else if (val.startsWith("BooleanArr:")) {
-            JSONArray tmp = new JSONArray(val.substring(11, val.length()));
+         else if (type.contentEquals(BOOLEAN_ARRAY)) {
+            JSONArray tmp = property.getJSONArray(VALUE);
             Boolean[] valArr = new Boolean[tmp.length()];
             for (int j = 0; j < tmp.length(); ++j) {
                valArr[j] = tmp.getBoolean(j);
@@ -479,7 +506,8 @@ public class DefaultPropertyMap implements PropertyMap {
          }
          else {
             throw new IllegalArgumentException(
-                  "Illegal value for property: [" + val + "]");
+                  "Illegal property type " + type + " for property " +
+                  property);
          }
       }
       return (DefaultPropertyMap) builder.build();
