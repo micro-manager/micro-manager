@@ -130,6 +130,7 @@ libraries by typing
 
 Assuming `configure` succeeded, you can now run
 
+    make fetchdeps
     make
 
 to build.
