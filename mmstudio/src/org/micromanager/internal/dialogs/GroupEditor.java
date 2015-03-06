@@ -192,7 +192,7 @@ public class GroupEditor extends ConfigDialog {
          }
       } else {// An existing configuration group is being modified.
          // Apply configuration settings to all properties in the group.
-         String cfg = null;
+         String cfg;
          Configuration unionCfg;
          try {
             // Get a configuration with the full list of properties.
@@ -222,7 +222,7 @@ public class GroupEditor extends ConfigDialog {
          }
       }
 
-      gui_.setConfigChanged(true);
+      gui_.compat().setConfigChanged(true);
       return true;
    }
 }

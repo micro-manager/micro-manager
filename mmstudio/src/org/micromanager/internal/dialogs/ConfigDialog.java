@@ -149,7 +149,7 @@ public class ConfigDialog extends MMDialog {
    }
 
    public void initializeData() {
-      data_.setGUI(gui_);
+      data_.setGUI(gui_.compat());
       data_.setShowUnused(showUnused_);
    }
 
@@ -303,7 +303,7 @@ public class ConfigDialog extends MMDialog {
    public void dispose() {
       super.dispose();
       savePosition();
-      gui_.refreshGUI();
+      gui_.compat().refreshGUI();
    }
 
    public void update() {

@@ -122,7 +122,7 @@ public class ChannelTableModel extends AbstractTableModel implements TableModelL
          AcqControlDlg.setChannelExposure(acqEng_.getChannelGroup(),
                channel.config, channel.exposure);
          if (AcqControlDlg.getShouldSyncExposure()) {
-            studio_.setChannelExposureTime(acqEng_.getChannelGroup(), 
+            studio_.compat().setChannelExposureTime(acqEng_.getChannelGroup(), 
                     channel.config, channel.exposure);
          }
       } else if (col == 3) {
@@ -234,7 +234,9 @@ public class ChannelTableModel extends AbstractTableModel implements TableModelL
    }
 
    /**
-    * Used to change the order of the channels in the MDA window
+    * Used to change the order of the channels in the Window
+    * @param rowIdx
+    * @return 
     */
    public int rowUp(int rowIdx) {
       if (rowIdx >= 1 && rowIdx < channels_.size()) {
@@ -267,6 +269,7 @@ public class ChannelTableModel extends AbstractTableModel implements TableModelL
 
    /**
     * reports if the same channel name is used twice
+    * @return 
     */
    public boolean duplicateChannels() {
       for (int i = 0; i < channels_.size() - 1; i++) {

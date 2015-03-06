@@ -28,7 +28,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.text.ParseException;
 
-import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -39,6 +38,7 @@ import javax.swing.JTextField;
 import javax.swing.WindowConstants;
 
 import mmcorej.CMMCore;
+import org.micromanager.CompatibilityInterface;
 
 import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
 import org.micromanager.ScriptInterface;
@@ -340,7 +340,7 @@ public class OptionsDlg extends MMDialog {
       String background = (String) comboDisplayBackground_.getSelectedItem();
 
       setBackgroundMode(background);
-      parent_.setBackgroundStyle(background);
+      parent_.compat().setBackgroundStyle(background);
    }
 
    private void closeRequested() {
@@ -367,7 +367,7 @@ public class OptionsDlg extends MMDialog {
       }
 
       ScriptPanel.setStartupScript(startupScriptFile_.getText());
-      parent_.makeActive();
+      parent_.compat().makeActive();
       dispose();
    }
 
@@ -393,7 +393,7 @@ public class OptionsDlg extends MMDialog {
 
    public static String getBackgroundMode() {
       return DefaultUserProfile.getInstance().getString(OptionsDlg.class,
-            BACKGROUND_MODE, ScriptInterface.DAY);
+            BACKGROUND_MODE, CompatibilityInterface.DAY);
    }
 
    public static void setBackgroundMode(String mode) {
