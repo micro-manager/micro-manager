@@ -89,7 +89,7 @@ public class AutofocusDuo extends AutofocusBase implements Autofocus  {
 
       if (core_ == null) {
          // if core object is not set attempt to get its global handle
-         core_ = MMStudioPlugin.getMMCoreInstance();
+         core_ = MMStudioPlugin.getCMMCoreInstance();
       }
 
       if (core_ == null) {
