@@ -122,10 +122,7 @@ public class CalibrationListDlg extends MMDialog {
 
       @Override
       public boolean isCellEditable(int rowIndex, int columnIndex) {
-         if (columnIndex == 1)
-            return true;
-         else
-            return false;
+         return columnIndex == 1;
       }
 
       private void handleException (Exception e) {
