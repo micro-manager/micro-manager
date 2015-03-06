@@ -111,7 +111,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       prefs_ = prefs;
       posUpdater_ = posUpdater;
       gui_ = gui;
-      core_ = gui_.getMMCore();
+      core_ = gui_.getCMMCore();
       PanelUtils pu = new PanelUtils(prefs_, props_, devices);
 
       piezoImagingDeviceKey_ = Devices.getSideSpecificKey(Devices.Keys.PIEZOA, side);

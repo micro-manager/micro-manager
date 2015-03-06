@@ -54,7 +54,7 @@ public class Hub {
    public Hub(ScriptInterface app) {
       app_ = (MMStudio) app;
       Hub.appRef_ = app;
-      core_ = app_.getMMCore();
+      core_ = app_.getCMMCore();
 
       int width = 950;
       int height = 600;

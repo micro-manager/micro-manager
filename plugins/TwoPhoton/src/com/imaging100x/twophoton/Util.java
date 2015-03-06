@@ -57,7 +57,7 @@ public class Util {
 
       AffineTransform transform = null;
       try {
-         transform = (AffineTransform) JavaUtils.getObjectFromPrefs(prefs, "affine_transform_" + app.getMMCore().getCurrentPixelSizeConfig(), null);
+         transform = (AffineTransform) JavaUtils.getObjectFromPrefs(prefs, "affine_transform_" + app.getCMMCore().getCurrentPixelSizeConfig(), null);
          //set map origin to current stage position
          double[] matrix = new double[6];
          transform.getMatrix(matrix);
@@ -69,8 +69,8 @@ public class Util {
          ReportingUtils.showError("Couldnt get affine transform");
       }
 
-      long height = app.getMMCore().getImageHeight();
-      long width = app.getMMCore().getImageWidth();
+      long height = app.getCMMCore().getImageHeight();
+      long width = app.getCMMCore().getImageWidth();
       ArrayList<MultiStagePosition> positions = new ArrayList<MultiStagePosition>();
       //due to affine transform, xindex and yindex correspond to image space
       for (int xIndex = 0; xIndex < xSize; xIndex++) {
@@ -86,7 +86,7 @@ public class Util {
             MultiStagePosition mpl = new MultiStagePosition();
             StagePosition sp = new StagePosition();
             sp.numAxes = 2;
-            sp.stageName = app.getMMCore().getXYStageDevice();
+            sp.stageName = app.getCMMCore().getXYStageDevice();
             sp.x = stagePos.x;
             sp.y = stagePos.y;
             mpl.add(sp);

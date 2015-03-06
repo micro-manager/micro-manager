@@ -716,7 +716,7 @@ public class Devices {
     */
    public Devices(ScriptInterface gui, Prefs prefs) {
       prefs_ = prefs;
-      core_ = gui.getMMCore();
+      core_ = gui.getCMMCore();
 
       // create synchronized version of data structure containing Device
       // information and populate it

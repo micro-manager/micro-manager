@@ -261,11 +261,6 @@ public class MultiChannelShadingMigForm extends MMDialog {
    @Override
    public void dispose() {
       super.dispose();
-      try {
-         gui_.profile().saveProfile();
-      } catch (IOException ex) {
-         gui_.logs().logError(ex, "Failed to save UserProfile");
-      }
       processor_.setMyFrameToNull();
    }
 

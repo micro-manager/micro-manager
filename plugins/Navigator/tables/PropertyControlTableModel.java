@@ -33,7 +33,7 @@ public class PropertyControlTableModel extends AbstractTableModel implements MMP
    
    public PropertyControlTableModel(Preferences prefs) {
       mmAPI_ = MMStudio.getInstance();
-      core_ = mmAPI_.getMMCore();
+      core_ = mmAPI_.getCMMCore();
       storedProps_ = PropertyManager.readStoredProperties(prefs);
       prefs_ = prefs;
    }

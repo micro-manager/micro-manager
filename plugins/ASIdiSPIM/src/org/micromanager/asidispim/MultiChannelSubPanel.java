@@ -136,7 +136,7 @@ public class MultiChannelSubPanel extends ListeningJPanel {
                   "",
                   "[right]10[left]",
                   "[]8[]"));
-      core_ = gui.getMMCore();
+      core_ = gui.getCMMCore();
       gui_ = gui;
       devices_ = devices;
       props_ = props;

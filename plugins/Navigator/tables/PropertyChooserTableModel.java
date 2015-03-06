@@ -38,7 +38,7 @@ public class PropertyChooserTableModel  extends AbstractTableModel {
    
    public PropertyChooserTableModel(Preferences prefs) {
       mmAPI_ = MMStudio.getInstance();
-      core_ = mmAPI_.getMMCore();
+      core_ = mmAPI_.getCMMCore();
       allProps_ = PropertyManager.readAllProperties();
       storedProps_ = PropertyManager.readStoredProperties(prefs, allProps_);
       propLabels_ = new TreeMap<String, String>();

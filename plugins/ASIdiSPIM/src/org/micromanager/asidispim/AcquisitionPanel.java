@@ -186,7 +186,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       prefs_ = prefs;
       posUpdater_ = posUpdater;
       positions_ = positions;
-      core_ = gui_.getMMCore();
+      core_ = gui_.getCMMCore();
       numTimePointsDone_ = 0;
       sliceTiming_ = new SliceTiming();
       

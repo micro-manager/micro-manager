@@ -55,7 +55,7 @@ public class CalibrationThread extends Thread {
    CalibrationThread(ScriptInterface app, PixelCalibratorPlugin plugin) {
       app_ = (MMStudio) app;
       plugin_ = plugin;
-      core_ = app_.getMMCore();
+      core_ = app_.getCMMCore();
       xystage_ = core_.getXYStageDevice();
    }
 

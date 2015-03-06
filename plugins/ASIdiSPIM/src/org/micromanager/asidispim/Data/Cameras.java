@@ -53,7 +53,7 @@ public class Cameras {
       props_ = props;
       prefs_ = prefs;
       gui_ = gui;
-      core_ = gui_.getMMCore();
+      core_ = gui_.getCMMCore();
    }// constructor
 
    /**

@@ -909,7 +909,7 @@ private JCheckBox drawGrid_, drawPosNames_;
    }
 
    private void initialize() {
-      core_ = app_.getMMCore();
+      core_ = app_.getCMMCore();
       pmtData_.setCore(core_);
       
       try {

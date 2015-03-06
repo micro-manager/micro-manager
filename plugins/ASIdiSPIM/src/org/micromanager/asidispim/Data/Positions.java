@@ -49,7 +49,7 @@ public class Positions {
     */
    public Positions(ScriptInterface gui, Devices devices) {
       devices_ = devices;
-      core_ = gui.getMMCore();
+      core_ = gui.getCMMCore();
       
       // fill the hashmaps with correct keys, leave values blank for now
       oneAxisDrivePositions_ = new HashMap<Devices.Keys, Double>();

@@ -76,7 +76,7 @@ public class PropertyManager {
 
    public static ArrayList<PropertyItem> readAllProperties() {
       ScriptInterface mmapi = MMStudio.getInstance();
-      CMMCore core = mmapi.getMMCore();
+      CMMCore core = mmapi.getCMMCore();
       ArrayList<PropertyItem> props = new ArrayList<PropertyItem>();
       try {
          StrVector devices = core.getLoadedDevices();

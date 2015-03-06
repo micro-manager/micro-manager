@@ -416,9 +416,9 @@ public class PositionManager {
    private Point2D.Double getStagePositionCoordinates(int row, int col, int pixelOverlapX, int pixelOverlapY) {
       try {
          ScriptInterface app = MMStudio.getInstance();
-         CMMCore core = app.getMMCore();
-         long height = app.getMMCore().getImageHeight();
-         long width = app.getMMCore().getImageWidth();
+         CMMCore core = app.getCMMCore();
+         long height = app.getCMMCore().getImageHeight();
+         long width = app.getCMMCore().getImageWidth();
          if ( positionList_.length() == 0) {
             try {
                //create position 0 based on current XY stage position

@@ -47,7 +47,7 @@ public class DeviceUtils {
    private final Properties props_;
    
    public DeviceUtils(ScriptInterface gui, Devices devices, Properties props) {  // prefs needed?
-      core_ = gui.getMMCore();
+      core_ = gui.getCMMCore();
       devices_ = devices;
       props_ = props;
    }

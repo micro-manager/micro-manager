@@ -280,7 +280,7 @@ public class Properties {
     * @param prefs
     */
    public Properties (ScriptInterface gui, Devices devices, Prefs prefs) {
-      core_ = gui.getMMCore();
+      core_ = gui.getCMMCore();
       devices_ = devices;
       prefs_ = prefs;
       listeners_ = new ArrayList<UpdateFromPropertyListenerInterface>();

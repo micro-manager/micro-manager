@@ -113,7 +113,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       cameras_ = cameras;
       posUpdater_ = posUpdater;
       gui_ = gui;
-      core_ = gui_.getMMCore();
+      core_ = gui_.getCMMCore();
       PanelUtils pu = new PanelUtils(prefs_, props_, devices_);
       
       final int positionWidth = 60;

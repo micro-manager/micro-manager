@@ -68,7 +68,7 @@ public class GUI extends javax.swing.JFrame {
       prefs_ = prefs;   
       settings_ = new SettingsDialog(prefs_, this);
       mmAPI_ = mmapi;
-      core_ = mmapi.getMMCore();
+      core_ = mmapi.getCMMCore();
       this.setTitle("5D Navigator " + version);
       
       //Demo mode 
@@ -79,7 +79,7 @@ public class GUI extends javax.swing.JFrame {
          }
       } catch (Exception e) {
       }
-      eng_ = new CustomAcqEngine(mmAPI_.getMMCore());
+      eng_ = new CustomAcqEngine(mmAPI_.getCMMCore());
       multiAcqManager_ = new MultipleAcquisitionManager(this, eng_);
       initComponents();
       moreInitialization();

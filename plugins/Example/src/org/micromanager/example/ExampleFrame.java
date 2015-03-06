@@ -54,7 +54,7 @@ public class ExampleFrame extends MMFrame {
     */
    public ExampleFrame(ScriptInterface gui) {
       gui_ = gui;
-      core_ = gui_.getMMCore();
+      core_ = gui_.getCMMCore();
       nf_ = NumberFormat.getInstance();
       
       counter_ = gui_.profile().getInt(this.getClass(), COUNTER, 0);
