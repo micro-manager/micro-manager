@@ -75,7 +75,7 @@ public enum AutoLase {
      */
     public void setup(ScriptInterface app) {
         gui = (MMStudio) app;
-        core = gui.getMMCore();
+        core = gui.getCMMCore();
         
         log("Starting lasing thread and density calculation thread");
         
