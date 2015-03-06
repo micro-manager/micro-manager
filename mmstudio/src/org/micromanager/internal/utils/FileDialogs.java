@@ -183,12 +183,6 @@ public class FileDialogs {
       DefaultUserProfile profile = DefaultUserProfile.getInstance();
       profile.setString(FileDialogs.class, type.name,
             path.getAbsolutePath());
-      try {
-         profile.saveProfile();
-      }
-      catch (java.io.IOException e) {
-         ReportingUtils.logError(e, "Unable to save profile.");
-      }
    }
 
    public static File openFile(Window parent, String title, FileType type) {

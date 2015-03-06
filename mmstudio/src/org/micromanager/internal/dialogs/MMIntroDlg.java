@@ -288,12 +288,6 @@ public class MMIntroDlg extends JDialog {
          tmp = configs.toArray(tmp);
          profile.setStringArray(MMIntroDlg.class,
                RECENTLY_USED_CONFIGS, tmp);
-         try {
-            profile.saveProfile();
-         }
-         catch (java.io.IOException e) {
-            ReportingUtils.showError(e, "There was an error when saving your profile.");
-         }
       }
 
       // Add on global default configs.

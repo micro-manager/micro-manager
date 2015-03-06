@@ -137,7 +137,6 @@ public class DefaultDisplaySettings implements DisplaySettings {
             "trimPercentage", settings.getTrimPercentage());
       profile.setBoolean(DefaultDisplaySettings.class,
             "shouldUseLogScale", settings.getShouldUseLogScale());
-      profile.saveProfile();
    }
 
    /**

@@ -1347,11 +1347,6 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
          profile.setInt(this.getClass(), ACQ_COLUMN_WIDTH + k, findTableColumn(channelTable_, k).getWidth());
          profile.setInt(this.getClass(), ACQ_COLUMN_ORDER + k, channelTable_.convertColumnIndexToView(k));
       }
-      try {
-         profile.saveProfile();
-      } catch (java.io.IOException ex) {
-         ReportingUtils.logError(ex, "Error saving MDA dialog profile");
-      }
    }
 
    // Returns the TableColumn associated with the specified column

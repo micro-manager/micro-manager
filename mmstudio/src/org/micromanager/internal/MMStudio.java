@@ -1425,7 +1425,7 @@ public class MMStudio implements ScriptInterface, CompatibilityInterface, LogMan
             logError(e);
       }
       try {
-         DefaultUserProfile.getInstance().saveProfile();
+         DefaultUserProfile.getInstance().syncToDisk();
       }
       catch (IOException e) {
          if (core_ != null) {

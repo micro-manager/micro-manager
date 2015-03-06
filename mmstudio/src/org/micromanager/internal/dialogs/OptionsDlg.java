@@ -360,12 +360,6 @@ public class OptionsDlg extends MMDialog {
 
       MMStudio.setCircularBufferSize(seqBufSize);
       MMStudio.setCoreLogLifetimeDays(deleteLogDays);
-      try {
-         DefaultUserProfile.getInstance().saveProfile();
-      }
-      catch (java.io.IOException e) {
-         ReportingUtils.showError(e, "An error occurred while saving your options");
-      }
 
       ScriptPanel.setStartupScript(startupScriptFile_.getText());
       parent_.compat().makeActive();

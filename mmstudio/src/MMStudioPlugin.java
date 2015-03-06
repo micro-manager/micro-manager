@@ -145,11 +145,11 @@ public class MMStudioPlugin implements PlugIn, CommandListener {
        return studio_;
    }
 
-   public static CMMCore getMMCoreInstance() {
+   public static CMMCore getCMMCoreInstance() {
       if (studio_ == null || !studio_.getIsProgramRunning())
          return null;
       else
-         return studio_.getMMCore();
+         return studio_.getCMMCore();
    }
 
    public static AutofocusManager getAutofocusManager() {

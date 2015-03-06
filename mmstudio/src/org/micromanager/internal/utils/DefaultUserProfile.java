@@ -42,6 +42,10 @@ public class DefaultUserProfile implements UserProfile {
    private DefaultPropertyMap userProfile_;
    // This object exists to give us something consistent to lock on.
    private static final Object lockObject_ = new Object();
+   // This thread will be periodically checking if it should save.
+   private Thread saveThread_;
+   private static final Object syncObject_ = new Object();
+   private IOException saveException_;
 
    public DefaultUserProfile() {
       nameToFile_ = loadProfileMapping();
@@ -49,6 +53,7 @@ public class DefaultUserProfile implements UserProfile {
       globalProfile_ = loadPropertyMap(globalPath);
       // Naturally we start with the default user loaded.
       setCurrentProfile(DEFAULT_USER);
+      startSaveThread();
    }
 
    /**
@@ -182,6 +187,75 @@ public class DefaultUserProfile implements UserProfile {
          scanner.close();
       }
       return contents.toString();
+   }
+
+   private void startSaveThread() {
+      saveThread_ = new Thread() {
+         @Override
+         public void run() {
+            runSaveThread();
+         }
+      };
+      saveThread_.start();
+   }
+
+   /**
+    * Periodically check for changes in the profile (by seeing if this method's
+    * copy of the userProfile_ reference is different from the current
+    * reference), and save the profile to disk after a) a change has occurred,
+    * and b) it has been at least 5s since the change.
+    * We also can be interrupted and forced to save immediately, in which
+    * case we immediately write to disk, set the saveException_ exception if
+    * an exception occurred, and then exit (we'll be restarted immediately
+    * afterwards; check the syncToDisk() method).
+    */
+   private void runSaveThread() {
+      PropertyMap curRef = userProfile_;
+      boolean wasInterrupted = false;
+      long targetSaveTime = 0;
+      boolean haveLoggedFailure = false;
+      while (true) {
+         try {
+            Thread.sleep(100);
+         }
+         catch (InterruptedException e) {
+            wasInterrupted = true;
+         }
+         if (wasInterrupted || Thread.interrupted() ||
+               (targetSaveTime != 0 && System.currentTimeMillis() > targetSaveTime)) {
+            // Either enough time has passed or we were interrupted; time to
+            // save the profile.
+            JavaUtils.createApplicationDataPathIfNeeded();
+            try {
+               saveProfileToFile(JavaUtils.getApplicationDataPath() +
+                     "/" + nameToFile_.get(profileName_));
+            }
+            catch (IOException e) {
+               if (wasInterrupted) {
+                  // Record the exception for our "caller"
+                  saveException_ = e;
+               }
+               else if (!haveLoggedFailure) {
+                  // Log write failures once per thread, so a) errors aren't
+                  // silently swallowed, but b) we don't spam the logs.
+                  ReportingUtils.logError(e,
+                        "Failed to sync user profile to disk. Further logging of this error will be suppressed.");
+                  haveLoggedFailure = true;
+               }
+            }
+            if (wasInterrupted) {
+               // Now time to exit.
+               return;
+            }
+            targetSaveTime = 0;
+         }
+         // Check for changes in the profile, and if the profile changes,
+         // start/update the countdown to when we should save.
+         if (userProfile_ != curRef) {
+            targetSaveTime = System.currentTimeMillis() + 5000;
+            curRef = userProfile_;
+         }
+      }
    }
 
    /**
@@ -511,10 +585,26 @@ public class DefaultUserProfile implements UserProfile {
    }
 
    @Override
-   public void saveProfile() throws IOException {
-      JavaUtils.createApplicationDataPathIfNeeded();
-      saveProfileToFile(JavaUtils.getApplicationDataPath() +
-            "/" + nameToFile_.get(profileName_));
+   public void syncToDisk() throws IOException {
+      // Only one caller can invoke this method at a time.
+      synchronized(syncObject_) {
+         saveException_ = null;
+         saveThread_.interrupt();
+         // Wait for saving to complete, indicated by the thread exiting.
+         try {
+            saveThread_.join();
+         }
+         catch (InterruptedException e) {
+            // This should never happen.
+            ReportingUtils.logError(e, "Interrupted while waiting for sync-to-disk to complete");
+         }
+         // Now re-start the thread.
+         startSaveThread();
+         if (saveException_ != null) {
+            // Something went wrong while saving.
+            throw(saveException_);
+         }
+      }
    }
 
    @Override
@@ -660,10 +750,10 @@ public class DefaultUserProfile implements UserProfile {
          profile.setBoolean(DefaultUserProfile.class,
                ALWAYS_USE_DEFAULT_USER, shouldUseDefault);
          try {
-            profile.saveProfile();
+            profile.syncToDisk();
          }
          catch (IOException e) {
-            ReportingUtils.logError(e, "Unable to save whether or not to always use the default profile");
+            ReportingUtils.logError(e, "Unable to set whether default user should be used");
          }
          profile.setCurrentProfile(curProfile);
       }

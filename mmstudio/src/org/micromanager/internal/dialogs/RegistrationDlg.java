@@ -170,7 +170,6 @@ public class RegistrationDlg extends JDialog {
                }   
                // save to profile
                setHaveRegistered(true);
-               saveProfile();
             }
 
          }
@@ -202,7 +201,6 @@ public class RegistrationDlg extends JDialog {
             JOptionPane.showMessageDialog(RegistrationDlg.this, "You choose to postpone registration.\n" +
                   "This prompt will appear again next time you start the application.");
             setShouldNeverRegister(false);
-            saveProfile();
             dispose();
          }
       });
@@ -219,7 +217,6 @@ public class RegistrationDlg extends JDialog {
                JOptionPane.showMessageDialog(RegistrationDlg.this, "You have chosen never to register. \n" +
                      "If you change your mind in the future, please\nchoose the \"Register\" option in the Help menu.");
                setShouldNeverRegister(true);
-               saveProfile();
                dispose();
             }
          });
@@ -235,7 +232,6 @@ public class RegistrationDlg extends JDialog {
       DefaultUserProfile profile = DefaultUserProfile.getInstance();
       int attempts = getNumRegistrationAttempts() + 1;
       profile.setInt(RegistrationDlg.class, REGISTRATION_ATTEMPTS, attempts);
-      saveProfile();
       return attempts;
    }
    
@@ -262,14 +258,5 @@ public class RegistrationDlg extends JDialog {
    private static int getNumRegistrationAttempts() {
       return DefaultUserProfile.getInstance().getInt(
             RegistrationDlg.class, REGISTRATION_ATTEMPTS, 0);
-   }
-
-   private static void saveProfile() {
-      try {
-         DefaultUserProfile.getInstance().saveProfile();
-      }
-      catch (java.io.IOException e) {
-         ReportingUtils.showError(e, "There was an error saving your profile; we may have forgotten whether or not you have registered.");
-      }
    }
 }

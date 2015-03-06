@@ -66,8 +66,7 @@ public interface UserProfile {
    public String[] getStringArray(Class<?> c, String key, String[] fallback);
 
    /**
-    * Sets a String value in the storage. Changes will not be saved to file
-    * until and unless saveProfile() is called.
+    * Sets a String value in the storage. 
     * @param c class providing scope for the key
     * @param key  Identifier for the parameter
     * @param value String value to be stored
@@ -75,8 +74,7 @@ public interface UserProfile {
    public void setString(Class<?> c, String key, String value);
 
    /**
-    * Sets a String Array in the storage. Changes will not be saved to file
-    * until and unless saveProfile() is called.
+    * Sets a String Array in the storage. 
     * @param c class providing scope for the key
     * @param key  Identifier for the parameter
     * @param value String Array to be stored
@@ -105,8 +103,7 @@ public interface UserProfile {
    public Integer[] getIntArray(Class<?> c, String key, Integer[] fallback);
 
    /**
-    * Sets an Integer in the storage. Changes will not be saved to file
-    * until and unless saveProfile() is called.
+    * Sets an Integer in the storage. 
     * @param c class providing scope for the key
     * @param key  Identifier for the parameter
     * @param value Integer to be stored
@@ -114,8 +111,7 @@ public interface UserProfile {
    public void setInt(Class<?> c, String key, Integer value);
 
    /**
-    * Sets a new Integer Array in the storage. Changes will not be saved to file
-    * until and unless saveProfile() is called.
+    * Sets a new Integer Array in the storage. 
     * @param c class providing scope for the key
     * @param key  Identifier for the parameter
     * @param value Integer Array to be stored
@@ -144,8 +140,7 @@ public interface UserProfile {
    public Long[] getLongArray(Class<?> c, String key, Long[] fallback);
 
    /**
-    * Sets a Long in the storage. Changes will not be saved to file
-    * until and unless saveProfile() is called.
+    * Sets a Long in the storage. 
     * @param c class providing scope for the key
     * @param key  Identifier for the parameter
     * @param value Long to be stored
@@ -153,8 +148,7 @@ public interface UserProfile {
    public void setLong(Class<?> c, String key, Long value);
 
    /**
-    * Sets a new Long Array in the storage. Changes will not be saved to file
-    * until and unless saveProfile() is called.
+    * Sets a new Long Array in the storage. 
     * @param c class providing scope for the key
     * @param key  Identifier for the parameter
     * @param value Long Array to be stored
@@ -183,8 +177,7 @@ public interface UserProfile {
    public Double[] getDoubleArray(Class<?> c, String key, Double[] fallback);
 
    /**
-    * Sets a Double in the storage. Changes will not be saved to file
-    * until and unless saveProfile() is called.
+    * Sets a Double in the storage. 
     * @param c class providing scope for the key
     * @param key  Identifier for the parameter
     * @param value Double to be stored
@@ -192,8 +185,7 @@ public interface UserProfile {
    public void setDouble(Class<?> c, String key, Double value);
 
    /**
-    * Sets a Double Array in the storage. Changes will not be saved to file
-    * until and unless saveProfile() is called.
+    * Sets a Double Array in the storage. 
     * @param c class providing scope for the key
     * @param key  Identifier for the parameter
     * @param value Double Array to be stored
@@ -221,8 +213,7 @@ public interface UserProfile {
    public Boolean[] getBooleanArray(Class<?> c, String key, Boolean[] fallback);
 
    /**
-    * Sets a Boolean value in the storage. Changes will not be saved to file
-    * until and unless saveProfile() is called.
+    * Sets a Boolean value in the storage. 
     * @param c class providing scope for the key
     * @param key  Identifier for the parameter
     * @param value Boolean to be stored
@@ -230,8 +221,7 @@ public interface UserProfile {
    public void setBoolean(Class<?> c, String key, Boolean value);
 
    /**
-    * Sets a Boolean Array in the storage. Changes will not be saved to file
-    * until and unless saveProfile() is called.
+    * Sets a Boolean Array in the storage. 
     * @param c class providing scope for the key
     * @param key  Identifier for the parameter
     * @param value Boolean Array to be stored
@@ -263,16 +253,17 @@ public interface UserProfile {
    public void setObject(Class<?> c, String key, Serializable value) throws IOException;
 
    /**
-    * Saves the current user's profile. If the program is closed before this
-    * method is called, then any changes made since the last call will not
-    * be persisted to the next session. This will not include any values
-    * "inherited" from the global defaults.
-    * Generates the same output as saveProfileToFile(), but the file i
+    * The UserProfile normally routinely saves changes
+    * to disk on a periodic basis; calling this method will force a save to
+    * happen immediately, and this method will wait until saving is completed.
+    * The saved file contains all values specific to this user (i.e. not
+    * "inherited" from the global profile). The contents of the file are
+    * identical to those generated by saveProfileToFile(), but the file is
     * automatically selected (stored in an OS-appropriate location for user
     * data).
     * @throws IOException if the file cannot be written for any reason.
     */
-   public void saveProfile() throws IOException;
+   public void syncToDisk() throws IOException;
 
    /**
     * Saves the current user's profile to the specified file. This will not
@@ -307,7 +298,6 @@ public interface UserProfile {
     * Remove all keys from the profile that are associated with the provided
     * class. This functionally allows you to reset the profile to use the
     * default values (or the values specified in the global settings file).
-    * Changes will not be saved until and unless saveProfile() is called.
     * @param c Key-values belonging to this class will be removed
     */
    public void clearProfileSubset(Class<?> c);

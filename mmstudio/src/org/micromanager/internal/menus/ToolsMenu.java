@@ -125,12 +125,6 @@ public class ToolsMenu {
                     studio_.updateCenterAndDragListener();
                     IJ.setTool(Toolbar.HAND);
                     setMouseMovesStage(centerAndDragMenuItem_.isSelected());
-                    try {
-                       DefaultUserProfile.getInstance().saveProfile();
-                     }
-                    catch (java.io.IOException e) {
-                       ReportingUtils.showError(e, "Unable to save your profile");
-                     }
                  }
               },
               getMouseMovesStage());
