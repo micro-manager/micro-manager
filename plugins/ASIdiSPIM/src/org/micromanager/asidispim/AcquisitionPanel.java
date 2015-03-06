@@ -1552,7 +1552,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // set up channels
       int nrChannelsSoftware = nrChannels;  // how many times we trigger the controller
       int nrSlicesSoftware = nrSlices;
-      String originalConfig = "";
+      String originalChannelConfig = "";
       boolean changeChannelPerVolumeSoftware = false;
       boolean useChannels =  multiChannelPanel_.isPanelEnabled();
       MultichannelModes.Keys multichannelMode = MultichannelModes.Keys.NONE;
@@ -1561,15 +1561,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             MyDialogUtils.showError("\"Channels\" is checked, but no channels are selected");
             return false;
          }
+         // get current channel so that we can restore it
+         originalChannelConfig = multiChannelPanel_.getCurrentConfig();
          multichannelMode = MultichannelModes.getKeyFromPrefCode(
                props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_MULTICHANNEL_MODE));
          switch (multichannelMode) {
          case VOLUME:
             changeChannelPerVolumeSoftware = true;
             multiChannelPanel_.initializeChannelCycle();
-            // get current channel so that we can restore it
-            // I tried core_.get/setSystemStateCache, but that made the Tiger controller very confused and I had to re-apply the firmware
-            originalConfig = multiChannelPanel_.getCurrentConfig();
             break;
          case VOLUME_HW:
          case SLICE_HW:
@@ -2056,10 +2055,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       // cleanup after end of all acquisitions
       
-      // reset channel to original
-      if (changeChannelPerVolumeSoftware) {
-         multiChannelPanel_.setConfig(originalConfig);
+      // reset channel to original if we clobbered it
+      if (useChannels) {
+         multiChannelPanel_.setConfig(originalChannelConfig);
       }
+      
       // the controller will end with both beams disabled and scan off so reflect
       // that in device properties
       props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.BEAM_ENABLED,

@@ -361,6 +361,12 @@ public class MultiChannelSubPanel extends ListeningJPanel {
       }
    }
    
+   /**
+    * Gets the current configuration/preset from the selected channel group, even if that
+    * preset isn't represented in the channel table.  Thus we can go back to the original
+    * preset after changing it via selectNextChannel.
+    * @return
+    */
    public String getCurrentConfig() {
       try {
          return core_.getCurrentConfigFromCache(channelGroup_.getSelectedItem().toString());
