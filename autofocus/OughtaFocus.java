@@ -90,6 +90,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.Autof
       imageCount_ = 0;
    }
 
+   @Override
    public void applySettings() {
       try {
          searchRange = NumberUtils.displayStringToDouble(getPropertyValue(SEARCH_RANGE));
@@ -108,17 +109,19 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.Autof
       }
    }
 
+   @Override
    public String getDeviceName() {
       return AF_DEVICE_NAME;
    }
 
+   @Override
    public double fullFocus() throws MMException {
       startTimeMs_ = System.currentTimeMillis();
       applySettings();
       try {
-         Rectangle oldROI = app_.getROI();
-         CMMCore core = app_.getMMCore();
-         liveModeOn_ = app_.isLiveModeOn();
+         Rectangle oldROI = app_.compat().getROI();
+         CMMCore core = app_.compat().getMMCore();
+         liveModeOn_ = app_.compat().isLiveModeOn();
 
          //ReportingUtils.logMessage("Original ROI: " + oldROI);
          int w = (int) (oldROI.width * cropFactor);
@@ -136,7 +139,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.Autof
 
          // avoid wasting time on setting roi if it is the same
          if (cropFactor < 1.0) {
-            app_.setROI(newROI);
+            app_.compat().setROI(newROI);
             core.waitForDevice(core.getCameraDevice());
          }
          double oldExposure = core.getExposure();
@@ -145,7 +148,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.Autof
          double z = runAutofocusAlgorithm();
 
          if (cropFactor < 1.0) {
-            app_.setROI(oldROI);
+            app_.compat().setROI(oldROI);
             core.waitForDevice(core.getCameraDevice());
          }
          if (oldState != null) {
@@ -162,6 +165,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.Autof
    private double runAutofocusAlgorithm() throws Exception {
       UnivariateRealFunction scoreFun = new UnivariateRealFunction() {
 
+         @Override
          public double value(double d) throws FunctionEvaluationException {
             try {
                return measureFocusScore(d);
@@ -174,7 +178,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.Autof
       brentOptimizer.setAbsoluteAccuracy(tolerance);
       imageCount_ = 0;
 
-      CMMCore core = app_.getMMCore();
+      CMMCore core = app_.compat().getMMCore();
       double z = core.getPosition(core.getFocusDevice());
       startZUm_ = z;
 //      getCurrentFocusScore();
@@ -187,7 +191,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.Autof
    }
 
    private void setZPosition(double z) throws Exception {
-      CMMCore core = app_.getMMCore();
+      CMMCore core = app_.compat().getMMCore();
       String focusDevice = core.getFocusDevice();
       core.setPosition(focusDevice, z);
       core.waitForDevice(focusDevice);
@@ -230,7 +234,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.Autof
 
 
    public double measureFocusScore(double z) throws Exception {
-      CMMCore core = app_.getMMCore();
+      CMMCore core = app_.compat().getMMCore();
       long start = System.currentTimeMillis();
       try {
          setZPosition(z);
@@ -247,8 +251,9 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.Autof
             if (show.contentEquals("Yes")) {
                SwingUtilities.invokeLater(new Runnable() {
 
+                  @Override
                   public void run() {
-                     app_.displayImage(img1);
+                     app_.compat().displayImage(img1);
                   }
                });
             }
@@ -269,20 +274,24 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.Autof
       }
    }
 
+   @Override
    public double incrementalFocus() throws MMException {
       throw new UnsupportedOperationException("Not supported yet.");
    }
 
+   @Override
    public int getNumberOfImages() {
       return imageCount_;
    }
 
+   @Override
    public String getVerboseStatus() {
       throw new UnsupportedOperationException("Not supported yet.");
    }
 
+   @Override
    public double getCurrentFocusScore() {
-      CMMCore core = app_.getMMCore();
+      CMMCore core = app_.compat().getMMCore();
       double score = 0.0;
       try {
          double z = core.getPosition(core.getFocusDevice());
@@ -290,7 +299,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.Autof
          core.snapImage();
          TaggedImage img = core.getTaggedImage();
          if (show.contentEquals("Yes")) {
-            app_.displayImage(img);
+            app_.compat().displayImage(img);
          }
          ImageProcessor proc = ImageUtils.makeProcessor(core, img);
          score = computeScore(proc);
@@ -302,6 +311,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.Autof
       return score;
    }
 
+   @Override
    public void focus(double coarseStep, int numCoarse, double fineStep, int numFine) throws MMException {
       throw new UnsupportedOperationException("Not supported yet.");
    }
@@ -444,9 +454,10 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.Autof
       }
    }
 
+   @Override
    public void setApp(ScriptInterface app) {
       app_ = app;
-      CMMCore core = app_.getMMCore();
+      CMMCore core = app_.compat().getMMCore();
       String chanGroup = core.getChannelGroup();
       String curChan;
       try {

@@ -81,7 +81,7 @@ public class Autofocus extends AutofocusBase implements org.micromanager.Autofoc
    public double CROP_SIZE = 0.2; 
    public String CHANNEL="";
 
-   private double indx = 0; //snapshot show new window iff indx = 1 
+   private final double indx = 0; //snapshot show new window iff indx = 1 
 
    private boolean verbose_ = true; // displaying debug info or not
 
@@ -114,6 +114,7 @@ public class Autofocus extends AutofocusBase implements org.micromanager.Autofoc
       loadSettings();
    }
    
+   @Override
    public void applySettings() {
       try {
          SIZE_FIRST = Double.parseDouble(getPropertyValue(KEY_SIZE_FIRST));
@@ -139,10 +140,7 @@ public class Autofocus extends AutofocusBase implements org.micromanager.Autofoc
       bestDist = 5000;
       bestSh = 0;
       //############# CHECK INPUT ARG AND CORE ########
-      if (arg.compareTo("silent") == 0)
-         verbose_ = false;
-      else
-         verbose_ = true;
+      verbose_ = arg.compareTo("silent") != 0;
 
       if (arg.compareTo("options") == 0){
          MMStudioPlugin.getAutofocusManager().showOptionsDialog();
@@ -448,20 +446,24 @@ public class Autofocus extends AutofocusBase implements org.micromanager.Autofoc
       return (newArray.length%2 == 1) ? newArray[middle] : (newArray[middle-1] + newArray[middle]) / 2.0;
    }
 
+   @Override
    public double fullFocus() {
       run("silent");
       return 0;
    }
 
+   @Override
    public String getVerboseStatus() {
-      return new String("OK");
+      return "OK";
    }
 
+   @Override
    public double incrementalFocus() {
       run("silent");
       return 0;
    }
 
+   @Override
    public void focus(double coarseStep, int numCoarse, double fineStep, int numFine) {
       SIZE_FIRST = coarseStep;
       NUM_FIRST = numCoarse;
@@ -471,6 +473,7 @@ public class Autofocus extends AutofocusBase implements org.micromanager.Autofoc
       run("silent");
    }
 
+   @Override
    public PropertyItem[] getProperties() {
       // use default dialog
       // make sure we have the right list of channels
@@ -508,21 +511,25 @@ public class Autofocus extends AutofocusBase implements org.micromanager.Autofoc
       THRES = thr;
    }
 
+   @Override
    public double getCurrentFocusScore() {
       // TODO Auto-generated method stub
       return 0;
    }
 
+   @Override
    public int getNumberOfImages() {
       // TODO Auto-generated method stub
       return 0;
    }
 
+   @Override
    public String getDeviceName() {
       return AF_DEVICE_NAME;
    }
 
+   @Override
    public void setApp(ScriptInterface app) {
-      core_ = app.getMMCore();
+      core_ = app.compat().getMMCore();
    }
 }   
