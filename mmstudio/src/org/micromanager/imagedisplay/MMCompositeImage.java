@@ -168,8 +168,13 @@ public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
          return;
       }
       CanvasPaintPending.setPaintPending(super.getCanvas(), this);
-      
-      superUpdateImage(); 
+      try {
+         superUpdateImage();
+      } catch (ArrayIndexOutOfBoundsException aex) {
+         ReportingUtils.logError(aex);
+         CanvasPaintPending.removePaintPending(super.getCanvas(), this);
+         return;
+      }
       bus_.post(new DrawEvent());
       try {
          GUIUtils.invokeLater(new Runnable() {
@@ -185,6 +190,7 @@ public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
                superDraw();
             }
          });
+
       } catch (InterruptedException e) {
          ReportingUtils.logError(e);
       } catch (InvocationTargetException e) {
