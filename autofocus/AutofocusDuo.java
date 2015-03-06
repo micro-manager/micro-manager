@@ -67,6 +67,7 @@ public class AutofocusDuo extends AutofocusBase implements Autofocus  {
       applySettings();
    }
    
+   @Override
    public final void applySettings() {
       try {
          autoFocus1_ = getPropertyValue(KEY_AUTOFOCUS1);
@@ -80,10 +81,7 @@ public class AutofocusDuo extends AutofocusBase implements Autofocus  {
 
    public void run(String arg) {
 
-      if (arg.compareTo("silent") == 0)
-         verbose_ = false;
-      else
-         verbose_ = true;
+      verbose_ = arg.compareTo("silent") != 0;
 
       if (arg.compareTo("options") == 0){
          MMStudioPlugin.getAutofocusManager().showOptionsDialog();
@@ -127,15 +125,18 @@ public class AutofocusDuo extends AutofocusBase implements Autofocus  {
       return 0;
    }
 
+   @Override
    public String getVerboseStatus() {
       return "OK";
    }
 
+   @Override
    public double incrementalFocus() {
       run("silent");
       return 0;
    }
 
+   @Override
    public void focus(double coarseStep, int numCoarse, double fineStep, int numFine) {
       run("silent");
    }
@@ -179,22 +180,26 @@ public class AutofocusDuo extends AutofocusBase implements Autofocus  {
       return super.getProperties();
    }
       
+   @Override
    public double getCurrentFocusScore() {
       // TODO Auto-generated method stub
       return 0;
    }
 
+   @Override
    public int getNumberOfImages() {
       // TODO Auto-generated method stub
       return 0;
    }
 
+   @Override
    public String getDeviceName() {
       return AF_DEVICE_NAME;
    }
    
+   @Override
    public void setApp(ScriptInterface app) {
-      core_ = app.getMMCore();
+      core_ = app.getCMMCore();
    }
 
 }   

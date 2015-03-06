@@ -28,7 +28,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.text.ParseException;
 
-import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -39,6 +38,7 @@ import javax.swing.JTextField;
 import javax.swing.WindowConstants;
 
 import mmcorej.CMMCore;
+import org.micromanager.CompatibilityInterface;
 
 import org.micromanager.CompatibilityInterface;
 import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;

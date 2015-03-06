@@ -105,26 +105,27 @@ public class PresetEditor extends ConfigDialog {
       }
 
       // Rename the preset if its name has changed
-      // TODO: shouldn't there be some curly braces here?!
-      if (! newItem_ && !initName.contentEquals(newName))
+      if (!newItem_ && !initName.contentEquals(newName)) {
          try {
             core_.renameConfig(groupName_, initName, newName);
          } catch (Exception e1) {
             ReportingUtils.logError(e1);
          }
+      }
 
-         // Define the preset.   
-         for (PropertyItem item_:data_.getPropList()) {
-            if (item_.confInclude) {
-               try {
-                  core_.defineConfig(groupName_, newName, item_.device, item_.name, item_.getValueInCoreFormat());
-               } catch (Exception e) {
-                  ReportingUtils.logError(e);
-               }
+      // Define the preset.   
+      for (PropertyItem item_ : data_.getPropList()) {
+         if (item_.confInclude) {
+            try {
+               core_.defineConfig(groupName_, newName, item_.device, item_.name, item_.getValueInCoreFormat());
+            } catch (Exception e) {
+               ReportingUtils.logError(e);
             }
          }
+      }
 
-         gui_.compat().setConfigChanged(true);
-         return true;
+      gui_.compat().setConfigChanged(true);
+      return true;
+
    }
 }
