@@ -28,6 +28,7 @@ import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -39,14 +40,11 @@ import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.event.TableModelListener;
 import javax.swing.table.*;
 
 import mmcorej.CMMCore;
 
 import org.micromanager.acquisition.internal.AcquisitionEngine;
-import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
-import org.micromanager.ScriptInterface;
 import org.micromanager.internal.interfaces.AcqSettingsListener;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.AcqOrderMode;
@@ -60,7 +58,6 @@ import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.FileDialogs.FileType;
 import org.micromanager.internal.utils.GUIColors;
 import org.micromanager.internal.utils.GUIUtils;
-import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.MMScriptException;
@@ -325,7 +322,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
     * Acquisition control dialog box.
     * Specification of all parameters required for the acquisition.
     * @param acqEng - acquisition engine
-    * @param prefs - application preferences node
+    * @param gui - ScriptINterface
     */
    public AcqControlDlg(AcquisitionEngine acqEng, MMStudio gui) {
       super("acquisition configuration dialog");
@@ -437,7 +434,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
 
       interval_ = new JFormattedTextField(numberFormat_);
       interval_.setFont(new Font("Arial", Font.PLAIN, 10));
-      interval_.setValue(new Double(1.0));
+      interval_.setValue(1.0);
       interval_.addPropertyChangeListener("value", this);
       defaultPanel.add(interval_);
       interval_.setBounds(60, 27, 55, 24);
@@ -456,7 +453,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       listButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            studio_.showXYPositionList();
+            studio_.compat().showXYPositionList();
          }
       });
       listButton_.setToolTipText("Open XY list dialog");
@@ -515,7 +512,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       zTop_ = new JFormattedTextField(numberFormat_);
       zTop_.setFont(new Font("Arial", Font.PLAIN, 10));
       zTop_.setBounds(95, 50, 54, 21);
-      zTop_.setValue(new Double(1.0));
+      zTop_.setValue(1.0);
       zTop_.addPropertyChangeListener("value", this);
       slicesPanel_.add(zTop_);
 
@@ -543,7 +540,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       zStep_ = new JFormattedTextField(numberFormat_);
       zStep_.setFont(new Font("Arial", Font.PLAIN, 10));
       zStep_.setBounds(95, 73, 54, 21);
-      zStep_.setValue(new Double(1.0));
+      zStep_.setValue(1.0);
       zStep_.addPropertyChangeListener("value", this);
       slicesPanel_.add(zStep_);
 
@@ -650,7 +647,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
          @Override
          public void stateChanged(ChangeEvent e) {
             applySettings();
-            afSkipInterval_.setValue(new Integer(acqEng_.getAfSkipInterval()));
+            afSkipInterval_.setValue(acqEng_.getAfSkipInterval());
          }
       });
       afPanel_.add(afSkipInterval_);
@@ -927,7 +924,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
             saveSettings();
             saveAcqSettings();
             AcqControlDlg.this.dispose();
-            studio_.makeActive();
+            studio_.compat().makeActive();
          }
       });
       closeButton.setText("Close");
@@ -1062,6 +1059,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
    /** 
     * Called when a field's "value" property changes. 
     * Causes the Summary to be updated
+    * @param e
     */
    @Override
    public void propertyChange(PropertyChangeEvent e) {
@@ -1118,8 +1116,8 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
    }
 
    public boolean inArray(String member, String[] group) {
-      for (int i = 0; i < group.length; i++) {
-         if (member.equals(group[i])) {
+      for (String group1 : group) {
+         if (member.equals(group1)) {
             return true;
          }
       }
@@ -1148,7 +1146,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       }
       if (null != studio_) {
          try {
-            studio_.makeActive();
+            studio_.compat().makeActive();
          } catch (Throwable t) {
             ReportingUtils.logError(t, "in makeActive");
          }
@@ -1206,7 +1204,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
          step = acqEng_.getMinZStepUm();
       }
       zVals_ = profile.getInt(this.getClass(), ACQ_Z_VALUES, 0);
-      acqEng_.setSlices(bottom, top, step, zVals_ == 0 ? false : true);
+      acqEng_.setSlices(bottom, top, step, (zVals_ != 0));
       acqEng_.enableZSliceSetting(profile.getBoolean(this.getClass(), ACQ_ENABLE_SLICE_SETTINGS, acqEng_.isZSliceSettingEnabled()));
       acqEng_.enableMultiPosition(profile.getBoolean(this.getClass(), ACQ_ENABLE_MULTI_POSITION, acqEng_.isMultiPositionEnabled()));
       positionsPanel_.setSelected(acqEng_.isMultiPositionEnabled());
@@ -1422,7 +1420,9 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
          if (acqDir_ != null) {
             profile.setString(this.getClass(), ACQ_FILE_DIR, acqDir_);
          }
-      } catch (Exception e) {
+      } catch (InterruptedException e) {
+         throw new MMScriptException (e);
+      } catch (InvocationTargetException e) {
          throw new MMScriptException (e);
       }
    }
@@ -1474,7 +1474,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
               (Math.abs(zTop - zBottom) /  zStep))));
       int numPositions = 1;
       try {
-         numPositions = Math.max(1, studio_.getPositionList().getNumberOfPositions());
+         numPositions = Math.max(1, studio_.compat().getPositionList().getNumberOfPositions());
       } catch (MMScriptException ex) {
          ReportingUtils.showError(ex);
       }
@@ -1484,14 +1484,15 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       if (channels) {
          ArrayList<ChannelSpec> list = ((ChannelTableModel) channelTable_.getModel() ).getChannels();
          ArrayList<Integer> imagesPerChannel = new ArrayList<Integer>();
-         for (int i = 0; i < list.size(); i++) {
-            if (!list.get(i).useChannel )
+         for (ChannelSpec list1 : list) {
+            if (!list1.useChannel) {
                continue;
+            }
             int num = 1;
             if (frames) {
-               num *= Math.max(1,numFrames / (list.get(i).skipFactorFrame + 1));
+               num *= Math.max(1, numFrames / (list1.skipFactorFrame + 1));
             }
-            if (slices && list.get(i).doZStack) {
+            if (slices && list1.doZStack) {
                num *= numSlices;
             }
             if (positions) {
@@ -1558,9 +1559,19 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       try { // Use HotSpot extensions if available
          Class<?> sunOSMXBClass = Class.forName("com.sun.management.OperatingSystemMXBean");
          java.lang.reflect.Method freeMemMethod = sunOSMXBClass.getMethod("getFreePhysicalMemorySize");
-         freeRAM = ((Long) freeMemMethod.invoke(osMXB)).longValue();
+         freeRAM = ((Long) freeMemMethod.invoke(osMXB));
       }
-      catch (Exception e) {
+      catch (ClassNotFoundException e) {
+         return true; // We just don't warn the user in this case.
+      } catch (NoSuchMethodException e) {
+         return true; // We just don't warn the user in this case.
+      } catch (SecurityException e) {
+         return true; // We just don't warn the user in this case.
+      } catch (IllegalAccessException e) {
+         return true; // We just don't warn the user in this case.
+      } catch (IllegalArgumentException e) {
+         return true; // We just don't warn the user in this case.
+      } catch (InvocationTargetException e) {
          return true; // We just don't warn the user in this case.
       }
 
@@ -1575,7 +1586,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
                "</body></html>",
                "Insufficient memory warning",
                JOptionPane.YES_NO_OPTION);
-         return answer == 0 ? true : false;
+         return answer == 0;
       }
       return true;
    }
@@ -1799,7 +1810,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
          if (Math.abs(zStep) < acqEng_.getMinZStepUm()) {
             zStep = acqEng_.getMinZStepUm();
          }
-         acqEng_.setSlices(NumberUtils.displayStringToDouble(zBottom_.getText()), NumberUtils.displayStringToDouble(zTop_.getText()), zStep, zVals_ == 0 ? false : true);
+         acqEng_.setSlices(NumberUtils.displayStringToDouble(zBottom_.getText()), NumberUtils.displayStringToDouble(zTop_.getText()), zStep, (zVals_ != 0));
          acqEng_.enableZSliceSetting(slicesPanel_.isSelected());
          acqEng_.enableMultiPosition(positionsPanel_.isSelected());
 
@@ -1940,6 +1951,8 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
        * components are supposed to get updated. For some reason, our custom
        * titled components don't receive this update, so we have to propagate
        * it manually.
+       * 
+       * @param c Color to use for custom title components
        */
       @Override
       public void setBackground(Color c) {
@@ -2006,14 +2019,14 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
 
       public void setChildrenEnabled(boolean enabled) {
          Component comp[] = this.getComponents();
-         for (int i = 0; i < comp.length; i++) {
-            if (comp[i].getClass().equals(JPanel.class)) {
-               Component subComp[] = ((JPanel) comp[i]).getComponents();
-               for (int c = 0; c < subComp.length; c++) {
-                  subComp[c].setEnabled(enabled);
+         for (Component comp1 : comp) {
+            if (comp1.getClass().equals(JPanel.class)) {
+               Component[] subComp = ((JPanel) comp1).getComponents();
+               for (Component subComp1 : subComp) {
+                  subComp1.setEnabled(enabled);
                }
             } else {
-               comp[i].setEnabled(enabled);
+               comp1.setEnabled(enabled);
             }
          }
       }

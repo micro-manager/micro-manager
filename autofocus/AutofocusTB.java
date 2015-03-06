@@ -80,7 +80,7 @@ public class AutofocusTB extends AutofocusBase implements Autofocus {
     */
    public String CHANNEL2 = "DAPI";
 
-   private double indx = 0;
+   private final double indx = 0;
    //snapshot show new window iff indx = 1
 
    private boolean verbose_ = true;
@@ -120,6 +120,7 @@ public class AutofocusTB extends AutofocusBase implements Autofocus {
       loadSettings();
    }
 
+   @Override
    public void applySettings() {
       try {
          SIZE_FIRST = Double.parseDouble(getPropertyValue(KEY_SIZE_FIRST));
@@ -631,21 +632,25 @@ public class AutofocusTB extends AutofocusBase implements Autofocus {
    }
    */
 
+   @Override
    public double getCurrentFocusScore() {
       return 0;
    }
 
+   @Override
    public int getNumberOfImages() {
       // TODO Auto-generated method stub
       return 0;
    }
 
+   @Override
    public String getDeviceName() {
       return AF_DEVICE_NAME;
    }
 
+   @Override
    public void setApp(ScriptInterface app) {
-      core_ = app.getMMCore();
+      core_ = app.getCMMCore();
    }
 
 }

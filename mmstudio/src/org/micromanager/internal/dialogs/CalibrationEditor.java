@@ -422,16 +422,14 @@ public class CalibrationEditor extends MMDialog {
       public String findMatchingPreset() {
          // find selected rows
          ArrayList<PropertyItem> selected = new ArrayList<PropertyItem>();
-         for (int i=0; i<propList_.size(); i++) {
-            PropertyItem item = propList_.get(i);
+         for (PropertyItem item : propList_) {
             if (item.confInclude)
                selected.add(item);
          }
                 
          for (int i=0; i<groupData_.length; i++) {
             int matchCount = 0;
-            for (int j=0; j<selected.size(); j++) {
-               PropertyItem pi = selected.get(j);
+            for (PropertyItem pi : selected) {
                PropertySetting ps = new PropertySetting(pi.device, pi.name, pi.value);
                if (groupData_[i].isSettingIncluded(ps)) {
                   matchCount++;
@@ -461,8 +459,7 @@ public class CalibrationEditor extends MMDialog {
          }
          // find selected rows
          ArrayList<PropertyItem> selected = new ArrayList<PropertyItem>();
-         for (int i=0; i<propList_.size(); i++) {
-            PropertyItem item = propList_.get(i);
+         for (PropertyItem item : propList_) {
             if (item.confInclude)
                selected.add(item);
          }
@@ -477,12 +474,11 @@ public class CalibrationEditor extends MMDialog {
          // check signature for mismatched or missing items
          if (!isEditingGroup()) {
             // mismatched
-            for (int i=0; i<selected.size(); i++) {
-               PropertyItem item = selected.get(i);
+            for (PropertyItem item : selected) {
                int j;
                for (j=0; j<groupSignature_.length; j++) {
                   if (item.device.compareTo(groupSignature_[j].getDeviceLabel()) == 0 &&
-                      item.name.compareTo(groupSignature_[j].getPropertyName()) == 0 ) {
+                          item.name.compareTo(groupSignature_[j].getPropertyName()) == 0 ) {
                      break;
                   }
                }
@@ -492,28 +488,29 @@ public class CalibrationEditor extends MMDialog {
             }
             
             // missing
-            for (int i=0; i<groupSignature_.length; i++) {
+            for (PropertySetting groupSignature_1 : groupSignature_) {
                int j;
                for (j=0; j<selected.size(); j++) {
                   PropertyItem item = selected.get(j);
-                  if (item.device.compareTo(groupSignature_[i].getDeviceLabel()) == 0 &&
-                      item.name.compareTo(groupSignature_[i].getPropertyName()) == 0 ) {
+                  if (item.device.compareTo(groupSignature_1.getDeviceLabel()) == 0 && item.name.compareTo(groupSignature_1.getPropertyName()) == 0) {
                      break;
                   }
                }
                if (selected.size() == j) {
-                  missing.add(groupSignature_[i]);
+                  missing.add(groupSignature_1);
                }
             }
          }
          
          if (mismatched.size() > 0 || missing.size() > 0) {
             String mismatchedList = "";
-            for (int i=0; i<mismatched.size(); i++)
-               mismatchedList += mismatched.get(i).device + "-" + mismatched.get(i).name + "\n";
+            for (PropertyItem mismatched1 : mismatched) {
+               mismatchedList += mismatched1.device + "-" + mismatched1.name + "\n";
+            }
             String missingList = "";
-            for (int i=0; i<missing.size(); i++)
-               missingList += missing.get(i).getDeviceLabel() + "-" + missing.get(i).getPropertyName() + "\n";
+            for (PropertySetting missing1 : missing) {
+               missingList += missing1.getDeviceLabel() + "-" + missing1.getPropertyName() + "\n";
+            }
             
             String msgText = "All presets within a group should operate on the same set of device properties.\n" +
                              "Based on the previously defined presets in this group, the following inconsistencises were detected:\n\n" +
@@ -531,8 +528,7 @@ public class CalibrationEditor extends MMDialog {
                core_.deletePixelSizeConfig(newLabel);
             
             // define a new preset
-            for (int i=0; i<selected.size(); i++) {
-               PropertyItem item = selected.get(i);
+            for (PropertyItem item : selected) {
                core_.definePixelSizeConfig(newLabel, item.device, item.name, item.value);
             }
             core_.setPixelSizeUm(newLabel, NumberUtils.displayStringToDouble(pixelSize));
@@ -598,9 +594,9 @@ public class CalibrationEditor extends MMDialog {
          if (col == 1) {
             try {
                if (item.isInteger()) {
-                  core_.setProperty(item.device, item.name, new Integer (NumberUtils.displayStringToInt((String)value)).toString());
+                  core_.setProperty(item.device, item.name, Integer.toString(NumberUtils.displayStringToInt((String)value)));
                } else if (item.isFloat()) {
-                  core_.setProperty(item.device, item.name, new Double (NumberUtils.displayStringToDouble((String)value)).toString());
+                  core_.setProperty(item.device, item.name, Double.toString(NumberUtils.displayStringToDouble((String)value)));
                } else  {
                   core_.setProperty(item.device, item.name, value.toString());
                }
@@ -615,7 +611,7 @@ public class CalibrationEditor extends MMDialog {
                ReportingUtils.showError(e);
             }
          }  else if (col == 2)  {
-            item.confInclude = ((Boolean)value).booleanValue();
+            item.confInclude = ((Boolean)value);
          }
       }
       
@@ -629,9 +625,7 @@ public class CalibrationEditor extends MMDialog {
          if (nCol == 1)
             return tableEditable_ && !propList_.get(nRow).readOnly;
          else if (nCol == 2) {
-            if (!isEditingGroup())
-               return false;
-            return true;
+            return isEditingGroup();
          } else
             return false;
       }
@@ -642,8 +636,7 @@ public class CalibrationEditor extends MMDialog {
       
       public void refresh(){
          try {            
-            for (int i=0; i<propList_.size(); i++){
-               PropertyItem item = propList_.get(i);
+            for (PropertyItem item : propList_) {
                item.value = core_.getProperty(item.device, item.name);
             }
             this.fireTableDataChanged();
@@ -740,8 +733,8 @@ public class CalibrationEditor extends MMDialog {
                         boolean allNumeric = true;
                         // test that first character of every possible value is a numeral
                         // if so, show user the list sorted by the numeric prefix
-                        for (int k = 0; k < item.allowed.length; k++) {
-                           if (item.allowed[k].equals("") || !Character.isDigit(item.allowed[k].charAt(0))) {
+                        for (String allowed : item.allowed) {
+                           if (allowed.equals("") || !Character.isDigit(allowed.charAt(0))) {
                               allNumeric = false;
                               break;
                            }
@@ -754,11 +747,7 @@ public class CalibrationEditor extends MMDialog {
                      }
 
                      if (!item.preInit && (!item.readOnly || showReadonly_)) {
-                        if (initialCfg_.isPropertyIncluded(item.device, item.name)) {
-                           item.confInclude = true;
-                        } else {
-                           item.confInclude = false;
-                        }
+                        item.confInclude = initialCfg_.isPropertyIncluded(item.device, item.name);
 
                         if (isMatchingSignature(item)) {
                            if (!((dtype == DeviceType.CameraDevice) && (item.name.equals("Binning")))) {
@@ -789,10 +778,7 @@ public class CalibrationEditor extends MMDialog {
                   break;
                }
             }
-            if (j == groupSignature_.length)
-               return false;
-            else
-               return true;
+            return j != groupSignature_.length;
          }
       }
 
@@ -838,15 +824,11 @@ public class CalibrationEditor extends MMDialog {
        */
       public void showOriginalSelection() {
          // set appropriate selection
-         for (int i=0; i<propList_.size(); i++) {
-            PropertyItem item = propList_.get(i);
+         for (PropertyItem item : propList_) {
             if (initialCfg_.size() == 0)
                item.confInclude = false;
             else {
-               if(initialCfg_.isPropertyIncluded(item.device, item.name)) {
-                  item.confInclude = true;
-               } else
-                  item.confInclude = false;
+               item.confInclude = initialCfg_.isPropertyIncluded(item.device, item.name);
             }
          }
          this.fireTableDataChanged();
@@ -939,11 +921,12 @@ public class CalibrationEditor extends MMDialog {
             }
          
             ActionListener[] l = combo_.getActionListeners();
-            for (int i=0; i<l.length; i++)
-               combo_.removeActionListener(l[i]);
+            for (ActionListener l1 : l) {
+               combo_.removeActionListener(l1);
+            }
             combo_.removeAllItems();
-            for (int i=0; i<item_.allowed.length; i++){
-               combo_.addItem(item_.allowed[i]);
+            for (String allowed : item_.allowed) {
+               combo_.addItem(allowed);
             }
             combo_.setSelectedItem(item_.value);
                                    
@@ -1029,7 +1012,7 @@ public class CalibrationEditor extends MMDialog {
                slider.setToolTipText((String)value);
                comp = slider;
             } else {
-               lab.setText(item_.value.toString());
+               lab.setText(item_.value);
                comp = lab;
             }
          } else if (colIndex == 2) {
@@ -1058,6 +1041,6 @@ public class CalibrationEditor extends MMDialog {
    }
 
    public boolean isChanged() {
-      return changed_.booleanValue();
+      return changed_;
    }
 }

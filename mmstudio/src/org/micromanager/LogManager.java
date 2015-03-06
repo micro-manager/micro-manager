@@ -22,30 +22,8 @@
 
 package org.micromanager;
 
-import ij.gui.ImageWindow;
 
 import java.awt.Component;
-import java.awt.Rectangle;
-import java.awt.geom.Point2D;
-
-import java.util.List;
-
-import mmcorej.CMMCore;
-import mmcorej.TaggedImage;
-
-import org.micromanager.data.DataManager;
-import org.micromanager.data.Datastore;
-import org.micromanager.display.DisplayManager;
-import org.micromanager.display.OverlayPanel;
-
-// These ought not be part of the public API and methods that refer to them are
-// deprecated.
-import org.json.JSONObject;
-import org.micromanager.internal.dialogs.AcqControlDlg;
-import org.micromanager.internal.positionlist.PositionListDlg;
-import org.micromanager.acquisition.internal.MMAcquisition;
-import org.micromanager.internal.utils.AutofocusManager;
-import org.micromanager.internal.utils.MMScriptException;
 
 
 /**
