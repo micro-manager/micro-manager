@@ -268,16 +268,16 @@ public abstract class DataProcessor<E> extends Thread {
          return;
       }
 
-      final boolean liveWasOn = gui_.isLiveModeOn();
+      final boolean liveWasOn = gui_.compat().isLiveModeOn();
       if (liveWasOn) {
-         gui_.enableLiveMode(false);
+         gui_.compat().enableLiveMode(false);
       }
 
       isEnabled_ = isEnabled;
       EventManager.post(new ProcessorEnabledEvent(this, isEnabled));
 
       if (liveWasOn) {
-         gui_.enableLiveMode(true);
+         gui_.compat().enableLiveMode(true);
       }
    }
 
