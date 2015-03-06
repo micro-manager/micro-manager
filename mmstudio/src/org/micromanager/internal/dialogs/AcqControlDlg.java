@@ -1432,7 +1432,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       File f = FileDialogs.save(this, "Save the acquisition settings file", ACQ_SETTINGS_FILE);
       if (f != null) {
          try {
-            DefaultUserProfile.getInstance().saveProfileSubsetToFile(
+            DefaultUserProfile.getInstance().exportProfileSubsetToFile(
                   this.getClass(), f.getAbsolutePath());
          } catch (IOException e) {
             ReportingUtils.showError(e);

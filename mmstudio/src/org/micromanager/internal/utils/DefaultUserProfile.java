@@ -227,7 +227,7 @@ public class DefaultUserProfile implements UserProfile {
             // save the profile.
             JavaUtils.createApplicationDataPathIfNeeded();
             try {
-               saveProfileToFile(JavaUtils.getApplicationDataPath() +
+               exportProfileToFile(JavaUtils.getApplicationDataPath() +
                      "/" + nameToFile_.get(profileName_));
             }
             catch (IOException e) {
@@ -261,7 +261,7 @@ public class DefaultUserProfile implements UserProfile {
    /**
     * Append a class name to the provided key to generate a unique-across-MM
     * key.
-    * Note that saveProfileSubsetToFile() and clearProfileSubset() assume that
+    * Note that exportProfileSubsetToFile() and clearProfileSubset() assume that
     * keys start with the class' canonical name.
     */
    private String genKey(Class<?> c, String key) {
@@ -569,7 +569,7 @@ public class DefaultUserProfile implements UserProfile {
    }
 
    @Override
-   public void saveProfileSubsetToFile(Class<?> c, String path) throws IOException {
+   public void exportProfileSubsetToFile(Class<?> c, String path) throws IOException {
       // Make a copy profile, and save that.
       DefaultPropertyMap.Builder builder = new DefaultPropertyMap.Builder();
       // NOTE: this should match genKey()
@@ -581,7 +581,7 @@ public class DefaultUserProfile implements UserProfile {
             }
          }
       }
-      savePropertyMapToFile((DefaultPropertyMap) builder.build(), path);
+      exportPropertyMapToFile((DefaultPropertyMap) builder.build(), path);
    }
 
    @Override
@@ -608,17 +608,17 @@ public class DefaultUserProfile implements UserProfile {
    }
 
    @Override
-   public void saveProfileToFile(String path) throws IOException {
-      savePropertyMapToFile(userProfile_, path);
+   public void exportProfileToFile(String path) throws IOException {
+      exportPropertyMapToFile(userProfile_, path);
    }
 
    @Override
-   public void saveCombinedProfileToFile(String path) throws IOException {
-      savePropertyMapToFile(
+   public void exportCombinedProfileToFile(String path) throws IOException {
+      exportPropertyMapToFile(
             (DefaultPropertyMap) (userProfile_.merge(globalProfile_)), path);
    }
 
-   private void savePropertyMapToFile(DefaultPropertyMap properties, String path) throws IOException {
+   private void exportPropertyMapToFile(DefaultPropertyMap properties, String path) throws IOException {
       JSONObject serialization;
       synchronized(properties) {
          serialization = properties.toJSON();
@@ -742,7 +742,7 @@ public class DefaultUserProfile implements UserProfile {
       // Again, in case we're using the default user already, we wrap this
       // in synchronized.
       synchronized(lockObject_) {
-         // In order to simplify saving things (since saveProfile() always
+         // In order to simplify saving things (since syncToDisk() always
          // saves the current user), we temporarily switch to the
          // default user for this operation.
          String curProfile = profile.profileName_;
