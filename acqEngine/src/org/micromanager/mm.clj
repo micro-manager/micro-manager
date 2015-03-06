@@ -46,7 +46,7 @@
   "Load Micro-Manager gui and mmc objects."
   ([gui]
     (def gui gui)
-    (def mmc (.getMMCore gui)))
+    (def mmc (.getCMMCore gui)))
   ([]
     (org.micromanager.internal.MMStudio/getInstance)))
 
