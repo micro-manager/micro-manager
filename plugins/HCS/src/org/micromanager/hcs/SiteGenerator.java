@@ -82,18 +82,6 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
    private JRadioButton rdbtnSelectWells_;
    private JRadioButton rdbtnMoveStage_;
 
-   /*
-   public static void main(String args[]) {
-      try {
-         UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-         SiteGenerator dlg = new SiteGenerator();
-         dlg.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-         dlg.setVisible(true);
-      } catch (Exception e) {
-         app_.logs().logs().logError(e);
-      }
-   }
-   */
 
    /**
     * Create the frame
@@ -133,11 +121,6 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       springLayout.putConstraint(SpringLayout.NORTH, platePanel_, 5, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.EAST, platePanel_, -136, SpringLayout.EAST, getContentPane());
       springLayout.putConstraint(SpringLayout.WEST, platePanel_, 5, SpringLayout.WEST, getContentPane());
-      try {
-         platePanel_.setApp(app_);
-      } catch (HCSException e1) {
-         app_.logs().logError(e1);
-      }
 
       getContentPane().add(platePanel_);
 
@@ -162,7 +145,9 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
             try {
                platePanel_.refreshImagingSites(sites);
             } catch (HCSException e1) {
-               app_.logs().logError(e1);
+               if (app_ != null) {
+                  app_.logs().logError(e1);
+               }
             }
             platePanel_.repaint();
          }
@@ -431,9 +416,6 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       springLayout.putConstraint(SpringLayout.EAST, btnAbout, 0, SpringLayout.EAST, plateIDCombo_);
       getContentPane().add(btnAbout);
 
-      //
-
-      loadSettings();
 
       PositionList sites = generateSites(Integer.parseInt(rowsField_.getText()), Integer.parseInt(columnsField_.getText()),
               Double.parseDouble(spacingField_.getText()));
@@ -441,9 +423,10 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       try {
          platePanel_.refreshImagingSites(sites);
       } catch (HCSException e1) {
-         app_.logs().logError(e1);
+         if (app_ != null) {
+            app_.logs().logError(e1);
+         }
       }
-
    }
 
    protected void saveSettings() {
@@ -458,7 +441,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
    }
 
    protected final void loadSettings() {
-      plateIDCombo_.setSelectedItem(app_.profile().getString(
+      plateIDCombo_.setSelectedItem(app_.getUserProfile().getString(
                SiteGenerator.class, PLATE_FORMAT_ID, SBSPlate.SBS_96_WELL));
       spacingField_.setText(app_.profile().getString(SiteGenerator.class,
                SITE_SPACING, "200"));
@@ -616,20 +599,12 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       }
    }
 
-   /*
-    private void setRootDirectory() {
-    JFileChooser fc = new JFileChooser();
-    fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-    fc.setCurrentDirectory(new File(rootDirField_.getText()));
-    int retVal = fc.showOpenDialog(this);
-    if (retVal == JFileChooser.APPROVE_OPTION) {
-    rootDirField_.setText(fc.getSelectedFile().getAbsolutePath());
-    }
-    }
-    */
+
    @Override
    public void displayError(String txt) {
-      app_.logs().showError(txt, this);
+      if (app_ !=null) {
+         app_.logs().showError(txt, this);
+      }
    }
 
    protected void calibrateXY() {
@@ -668,9 +643,11 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       app_ = app;
       try {
          platePanel_.setApp(app);
+         loadSettings();
+         
       } catch (HCSException e) {
          // commented out to avod displaying this error at startup
-         //displayError(e.getMessage());
+         displayError(e.getMessage());
       }
    }
 
