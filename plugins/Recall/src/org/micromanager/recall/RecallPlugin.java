@@ -102,7 +102,7 @@ public class RecallPlugin implements MMPlugin {
 
       int remaining = core_.getRemainingImageCount();
       if (remaining < 1) {
-         gui_.showMessage("There are no Images in the Micro-Manage buffer");
+         gui_.showMessage("There are no Images in the Micro-Manager buffer");
          return;
       }
       LinkedBlockingQueue<TaggedImage> imageQueue_ =
