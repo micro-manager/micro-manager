@@ -177,11 +177,17 @@ public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
       if (CanvasPaintPending.isMyPaintPending(super.getCanvas(), this)) {
          return;
       }
-      CanvasPaintPending.setPaintPending(super.getCanvas(), this);
-      
-      superUpdateImage(); 
-      bus_.post(new DrawEvent());
-      try {
+       CanvasPaintPending.setPaintPending(super.getCanvas(), this);
+
+       try {
+           superUpdateImage();
+       } catch (ArrayIndexOutOfBoundsException aex) {
+           ReportingUtils.logError(aex);
+           CanvasPaintPending.removePaintPending(super.getCanvas(), this);
+           return;
+       }
+       bus_.post(new DrawEvent());
+       try {
          GUIUtils.invokeLater(new Runnable() {
             @Override
             public void run() {
