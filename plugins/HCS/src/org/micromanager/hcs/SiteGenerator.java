@@ -34,6 +34,8 @@ import javax.swing.JRadioButton;
 import javax.swing.ButtonGroup;
 
 import java.awt.Dimension;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 
 /**
  * @author nenad
@@ -152,6 +154,18 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
             platePanel_.repaint();
          }
       });
+      
+      
+      FocusListener regeneratePlateOnLossOfFocus = new FocusListener() {
+         @Override
+         public void focusGained(FocusEvent e) {
+         }
+
+         @Override
+         public void focusLost(FocusEvent e) {
+            regenerate();
+         }
+      };
 
       final JLabel plateFormatLabel = new JLabel();
       springLayout.putConstraint(SpringLayout.NORTH, plateIDCombo_, 6, SpringLayout.SOUTH, plateFormatLabel);
@@ -170,7 +184,8 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       springLayout.putConstraint(SpringLayout.WEST, rowsField_, -105, SpringLayout.EAST, getContentPane());
       springLayout.putConstraint(SpringLayout.SOUTH, rowsField_, 215, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.NORTH, rowsField_, 195, SpringLayout.NORTH, getContentPane());
-
+      rowsField_.addFocusListener(regeneratePlateOnLossOfFocus);
+      
       final JLabel imagingSitesLabel = new JLabel();
       springLayout.putConstraint(SpringLayout.SOUTH, plateIDCombo_, -31, SpringLayout.NORTH, imagingSitesLabel);
       springLayout.putConstraint(SpringLayout.NORTH, imagingSitesLabel, 155, SpringLayout.NORTH, getContentPane());
@@ -178,7 +193,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       springLayout.putConstraint(SpringLayout.EAST, imagingSitesLabel, -24, SpringLayout.EAST, getContentPane());
       imagingSitesLabel.setText("Imaging Sites");
       getContentPane().add(imagingSitesLabel);
-
+      
       columnsField_ = new JTextField();
       columnsField_.setText("1");
       getContentPane().add(columnsField_);
@@ -186,21 +201,23 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       springLayout.putConstraint(SpringLayout.NORTH, columnsField_, 195, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.EAST, columnsField_, -20, SpringLayout.EAST, getContentPane());
       springLayout.putConstraint(SpringLayout.WEST, columnsField_, -60, SpringLayout.EAST, getContentPane());
-
+      columnsField_.addFocusListener(regeneratePlateOnLossOfFocus);
+      
       spacingField_ = new JTextField();
       spacingField_.setText("1000");
       getContentPane().add(spacingField_);
-      springLayout.putConstraint(SpringLayout.EAST, spacingField_, -65, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.EAST, spacingField_, -45, SpringLayout.EAST, getContentPane());
       springLayout.putConstraint(SpringLayout.WEST, spacingField_, -105, SpringLayout.EAST, getContentPane());
       springLayout.putConstraint(SpringLayout.SOUTH, spacingField_, 260, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.NORTH, spacingField_, 240, SpringLayout.NORTH, getContentPane());
-
+      spacingField_.addFocusListener(regeneratePlateOnLossOfFocus);
+      
       final JLabel rowsColumnsLabel = new JLabel();
       springLayout.putConstraint(SpringLayout.SOUTH, imagingSitesLabel, -4, SpringLayout.NORTH, rowsColumnsLabel);
       springLayout.putConstraint(SpringLayout.NORTH, rowsColumnsLabel, 173, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.WEST, rowsColumnsLabel, 6, SpringLayout.EAST, platePanel_);
       springLayout.putConstraint(SpringLayout.SOUTH, rowsColumnsLabel, -6, SpringLayout.NORTH, rowsField_);
-      springLayout.putConstraint(SpringLayout.EAST, rowsColumnsLabel, -40, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.EAST, rowsColumnsLabel, -30, SpringLayout.EAST, getContentPane());
       rowsColumnsLabel.setText("Rows, Columns");
       getContentPane().add(rowsColumnsLabel);
 
@@ -558,7 +575,8 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
    }
 
    @Override
-   public void updatePointerXYPosition(double x, double y, String wellLabel, String siteLabel) {
+   public void updatePointerXYPosition(double x, double y, String wellLabel, 
+           String siteLabel) {
       cursorPos_.x = x;
       cursorPos_.y = y;
       cursorWell_ = wellLabel;
@@ -627,6 +645,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
    }
 
    private void regenerate() {
+      WellPositionList[] selectedWells = platePanel_.getSelectedWellPositions();
       PositionList sites = generateSites(Integer.parseInt(rowsField_.getText()), Integer.parseInt(columnsField_.getText()),
               Double.parseDouble(spacingField_.getText()));
       plate_.initialize((String) plateIDCombo_.getSelectedItem());
@@ -635,6 +654,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       } catch (HCSException e) {
          displayError(e.getMessage());
       }
+      platePanel_.setSelectedWells(selectedWells);
       platePanel_.repaint();
    }
 
@@ -642,9 +662,9 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
    public void setApp(ScriptInterface app) {
       app_ = app;
       try {
-         platePanel_.setApp(app);
          loadSettings();
-         
+         platePanel_.setApp(app);
+         regenerate();
       } catch (HCSException e) {
          // commented out to avod displaying this error at startup
          displayError(e.getMessage());
