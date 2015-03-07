@@ -22,9 +22,10 @@ import javax.swing.JLabel;
 import javax.swing.JProgressBar;
 import javax.swing.JTextField;
 import javax.swing.Timer;
+import org.micromanager.internal.utils.MMFrame;
 
 
-class SequenceBufferMonitorFrame extends javax.swing.JFrame {
+class SequenceBufferMonitorFrame extends MMFrame {
    org.micromanager.ScriptInterface app_;
    JProgressBar usageBar_;
    Timer timer_;
@@ -34,7 +35,6 @@ class SequenceBufferMonitorFrame extends javax.swing.JFrame {
 
    SequenceBufferMonitorFrame(org.micromanager.ScriptInterface app) {
       super("Sequence Buffer Monitor");
-      setLocationRelativeTo(null);
 
       app_ = app;
 
@@ -87,6 +87,7 @@ class SequenceBufferMonitorFrame extends javax.swing.JFrame {
       });
 
       update();
+      loadAndRestorePosition(200, 200);
    }
 
    private void update() {
