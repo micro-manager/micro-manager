@@ -657,6 +657,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
    }
 
    private void regenerate() {
+      WellPositionList[] selectedWells = platePanel_.getSelectedWellPositions();
       PositionList sites = generateSites(Integer.parseInt(rowsField_.getText()), Integer.parseInt(columnsField_.getText()),
               Double.parseDouble(spacingField_.getText()));
       plate_.initialize((String) plateIDCombo_.getSelectedItem());
@@ -665,6 +666,8 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       } catch (HCSException e) {
          displayError(e.getMessage());
       }
+      
+      platePanel_.setSelectedWells(selectedWells);
       platePanel_.repaint();
    }
 
