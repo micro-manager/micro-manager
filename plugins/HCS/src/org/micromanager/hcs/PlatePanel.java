@@ -213,12 +213,12 @@ public class PlatePanel extends JPanel {
       wellMap_ = new Hashtable<String, Integer>();
       for (int i=0; i<wellBoxes_.length; i++) {
          wellBoxes_[i] = new WellBox(wells_[i].getSitePositions());         
-         wellMap_.put(getWellKey(wells_[i].getRow(), wells_[i].getColumn()), new Integer(i));
+         wellMap_.put(getWellKey(wells_[i].getRow(), wells_[i].getColumn()), i);
       }
    }
 
    private String getWellKey(int row, int column) {
-      return new String(row + "-" + column);
+      return row + "-" + column;
    }
 
    protected void onMouseClicked(MouseEvent e) throws HCSException {
@@ -285,10 +285,12 @@ public class PlatePanel extends JPanel {
    protected void onMouseReleased(MouseEvent e) {
       System.out.println("Mouse released: " + e.getX() + "," + e.getY());
       drawSelRect(previous_);
-      Rectangle selRect = new Rectangle(anchor_.x, anchor_.y, e.getX()- anchor_.x, e.getY() - anchor_.y);
-      for (int i=0; i<wellBoxes_.length; i++) {
-         if (wellBoxes_[i].wellRect.intersects(selRect))
-            wellBoxes_[i].selected = true;
+      Rectangle selRect = new Rectangle(anchor_.x, anchor_.y, 
+              e.getX()- anchor_.x, e.getY() - anchor_.y);
+      for (WellBox wellBoxes_1 : wellBoxes_) {
+         if (wellBoxes_1.wellRect.intersects(selRect)) {
+            wellBoxes_1.selected = true;
+         }
       }
       repaint();
    }
@@ -342,6 +344,7 @@ public class PlatePanel extends JPanel {
       return mode_;
    }
 
+   @Override
    public void paintComponent(Graphics g) {
 
       super.paintComponent(g); // JPanel draws background
@@ -580,7 +583,7 @@ public class PlatePanel extends JPanel {
       wellMap_.clear();
       for (int i=0; i<wellBoxes_.length; i++) {
          wellBoxes_[i] = new WellBox(wells_[i].getSitePositions());
-         wellMap_.put(getWellKey(wells_[i].getRow(), wells_[i].getColumn()), new Integer(i));
+         wellMap_.put(getWellKey(wells_[i].getRow(), wells_[i].getColumn()), i);
       }
 
       double wellX = plate_.getWellSpacingX() * drawingParams_.xFactor;
@@ -627,6 +630,12 @@ public class PlatePanel extends JPanel {
       wellBoxes_[index].draw(g);
    }
    
+   public void setSelectedWells(WellPositionList[] wal) {
+      for (WellPositionList wpl : wal) {
+         selectWell(wpl.getRow(), wpl.getColumn(), true);
+      }
+   }
+   
    void toggleWell(int row, int col) {
       int index = wellMap_.get(getWellKey(row, col));
       wellBoxes_[index].selected = !wellBoxes_[index].selected;
@@ -635,8 +644,9 @@ public class PlatePanel extends JPanel {
    }
 
    void clearSelection() {
-      for (int i=0; i<wellBoxes_.length; i++)
-         wellBoxes_[i].selected = false;
+      for (WellBox wellBoxes_1 : wellBoxes_) {
+         wellBoxes_1.selected = false;
+      }
       repaint();
    }
 
@@ -648,8 +658,9 @@ public class PlatePanel extends JPanel {
    }
 
    void clearActive() {
-      for (int i=0; i<wellBoxes_.length; i++)
-         wellBoxes_[i].active = false;
+      for (WellBox wellBoxes_1 : wellBoxes_) {
+         wellBoxes_1.active = false;
+      }
       repaint();
    }
 

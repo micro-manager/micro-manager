@@ -329,11 +329,17 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     * Each channel/camera combination is assigned a different node.
     */
    private String getCalibrationNode() {
-      return "calibration" + dev_.getChannel() + core_.getCameraDevice();
+      if (dev_ != null && core_ != null) {
+         return "calibration" + dev_.getChannel() + core_.getCameraDevice();
+      }
+      return "";
    }
    
    private String getCalibrationKey() {
-      return getCalibrationNode() + "-" + dev_.getName();
+      if (dev_ != null) {
+         return getCalibrationNode() + "-" + dev_.getName();
+      }
+      return "";
    }
    
    // Load the mapping for the current calibration node. The mapping
@@ -1298,6 +1304,15 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          formSingleton_ = new ProjectorControlForm(core, app);
       }
       formSingleton_.setVisible(true);
+      return formSingleton_;
+   }
+   
+   /**
+    * Returns singleton instance if it exists, null otherwise
+    * 
+    * @return singleton instance if it exists, null otherwise
+    */
+   public static ProjectorControlForm getSingleton() {
       return formSingleton_;
    }
    

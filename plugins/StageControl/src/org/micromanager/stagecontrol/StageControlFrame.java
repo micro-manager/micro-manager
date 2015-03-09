@@ -31,37 +31,36 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import java.util.prefs.Preferences;
 import javax.swing.BorderFactory;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
 
 import org.micromanager.MMListenerInterface;
 import org.micromanager.ScriptInterface;
+import org.micromanager.internal.utils.MMFrame;
 
 /**
  *
  * @author nico
  */
-public class StageControlFrame extends javax.swing.JFrame 
+public class StageControlFrame extends MMFrame 
 implements MMListenerInterface {
    private final ScriptInterface gui_;
    private final CMMCore core_;
-   private Preferences prefs_;
 
    private double smallMovement_ = 1.0;
    private double mediumMovement_ = 10.0;
    private double largeMovement_ = 100.0;
-   private Map<String, Double> smallMovementZ_ = new HashMap<String, Double>();
-   private Map<String, Double> mediumMovementZ_ = new HashMap<String, Double>();
-   private NumberFormat nf_;
+   private final Map<String, Double> smallMovementZ_ = new HashMap<String, Double>();
+   private final Map<String, Double> mediumMovementZ_ = new HashMap<String, Double>();
+   private final NumberFormat nf_;
    private String currentZDrive_ = "";
    private boolean initialized_ = false;
 
-   private int frameXPos_ = 100;
-   private int frameYPos_ = 100;
+   private final int frameXPos_ = 100;
+   private final int frameYPos_ = 100;
    
-   private LayoutManager frameLayout_;
+   private final LayoutManager frameLayout_;
    
    private final ExecutorService zStageExecutor_;
 
@@ -78,17 +77,15 @@ implements MMListenerInterface {
 
    /**
     * Creates new form StageControlFrame
+    * @param gui the MM api
     */
    public StageControlFrame(ScriptInterface gui) {
       gui_ = gui;
       core_ = gui_.getCMMCore();
       nf_ = NumberFormat.getInstance();
-      prefs_ = Preferences.userNodeForPackage(this.getClass());
       zStageExecutor_ = Executors.newFixedThreadPool(1);
 
       // Read values from PREFS
-      frameXPos_ = prefs_.getInt(FRAMEXPOS, frameXPos_);
-      frameYPos_ = prefs_.getInt(FRAMEYPOS, frameYPos_);
       double pixelSize = core_.getPixelSizeUm();
       long nrPixelsX = core_.getImageWidth();
       if (pixelSize != 0) {
@@ -96,16 +93,20 @@ implements MMListenerInterface {
          mediumMovement_ = pixelSize * nrPixelsX * 0.1;
          largeMovement_ = pixelSize * nrPixelsX;
       }
-      smallMovement_ = prefs_.getDouble(SMALLMOVEMENT, smallMovement_);
-      mediumMovement_ = prefs_.getDouble(MEDIUMMOVEMENT, mediumMovement_);
-      largeMovement_ = prefs_.getDouble(LARGEMOVEMENT, largeMovement_);
-      currentZDrive_ = prefs_.get(CURRENTZDRIVE, currentZDrive_);
+      smallMovement_ = gui_.getUserProfile().getDouble(this.getClass(), 
+              SMALLMOVEMENT, smallMovement_);
+      mediumMovement_ = gui_.getUserProfile().getDouble(this.getClass(),
+              MEDIUMMOVEMENT, mediumMovement_);
+      largeMovement_ = gui_.getUserProfile().getDouble(this.getClass(), 
+              LARGEMOVEMENT, largeMovement_);
+      currentZDrive_ = gui_.getUserProfile().getString(this.getClass(),
+              CURRENTZDRIVE, currentZDrive_);
 
       initComponents();
       
       frameLayout_ = this.getContentPane().getLayout();
 
-      setLocation(frameXPos_, frameYPos_);
+      loadAndRestorePosition(frameXPos_, frameYPos_);
 
    }
    
@@ -156,8 +157,10 @@ implements MMListenerInterface {
          }
          for (int i = 0; i < zDrives.size(); i++) {
             String drive = zDrives.get(i);
-            smallMovementZ_.put(drive, prefs_.getDouble(SMALLMOVEMENTZ + drive, 1.0));
-            mediumMovementZ_.put(drive, prefs_.getDouble(MEDIUMMOVEMENTZ + drive, 10.0));
+            smallMovementZ_.put(drive, gui_.getUserProfile().getDouble(
+                    this.getClass(),SMALLMOVEMENTZ + drive, 1.0));
+            mediumMovementZ_.put(drive, gui_.getUserProfile().getDouble(
+                    this.getClass(),MEDIUMMOVEMENTZ + drive, 10.0));
             zDriveSelect_.addItem(drive);
             if (currentZDrive_.equals(zDrives.get(i))) {
                zDriveFound = true;
@@ -892,6 +895,7 @@ implements MMListenerInterface {
          z_ = z;
       }
       
+      @Override
       public void run() {
          try {
             core_.waitForDevice(drive_);
@@ -921,18 +925,20 @@ implements MMListenerInterface {
    }
 
     private void onWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_onWindowClosing
-       prefs_.putInt(FRAMEXPOS, (int) getLocation().getX());
-       prefs_.putInt(FRAMEYPOS, (int) getLocation().getY());
-       prefs_.putDouble(SMALLMOVEMENT, smallMovement_);
-       prefs_.putDouble(MEDIUMMOVEMENT, mediumMovement_);
-       prefs_.putDouble(LARGEMOVEMENT, largeMovement_);
+       gui_.getUserProfile().setDouble(this.getClass(), 
+               SMALLMOVEMENT, smallMovement_);
+       gui_.getUserProfile().setDouble(this.getClass(),
+               MEDIUMMOVEMENT, mediumMovement_);
+       gui_.getUserProfile().setDouble(this.getClass(),
+               LARGEMOVEMENT, largeMovement_);
     }//GEN-LAST:event_onWindowClosing
 
    private void updateSmallZMove() {
       try {
          double smallZMove = nf_.parse(smallZTextField_.getText()).doubleValue();
          smallMovementZ_.put(currentZDrive_, smallZMove);
-         prefs_.putDouble(SMALLMOVEMENTZ + currentZDrive_, smallZMove);
+         gui_.getUserProfile().setDouble(this.getClass(),
+                 SMALLMOVEMENTZ + currentZDrive_, smallZMove);
       } catch (ParseException e) {
          // ignore if parsing fails
       }
@@ -942,7 +948,8 @@ implements MMListenerInterface {
       try {
          double mediumZMove = nf_.parse(mediumZTextField_.getText()).doubleValue();
          mediumMovementZ_.put(currentZDrive_, mediumZMove);
-         prefs_.putDouble(MEDIUMMOVEMENTZ + currentZDrive_, mediumZMove);
+         gui_.getUserProfile().setDouble(this.getClass(),
+                 MEDIUMMOVEMENTZ + currentZDrive_, mediumZMove);
       } catch (ParseException e) {
          // ignore if parsing fails
       }
@@ -1138,7 +1145,8 @@ implements MMListenerInterface {
       String currentZDrive = (String) zDriveSelect_.getSelectedItem();
       if (initialized_ && currentZDrive != null) {
          currentZDrive_ = currentZDrive;
-         prefs_.put(CURRENTZDRIVE, currentZDrive_);
+         gui_.getUserProfile().setString(this.getClass(),
+                 CURRENTZDRIVE, currentZDrive_);
          updateZMovements();   // Sets the small and medium Z movement to whatever we had for this new drive
          try {
             updateZPosLabel();
