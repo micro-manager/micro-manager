@@ -474,12 +474,17 @@ public:
    ///@{
    void setXYPosition(const char* xyStageLabel,
          double x, double y) throw (CMMError);
+   void setXYPosition(double x, double y) throw (CMMError);
    void setRelativeXYPosition(const char* xyStageLabel,
          double dx, double dy) throw (CMMError);
+   void setRelativeXYPosition(double dx, double dy) throw (CMMError);
    void getXYPosition(const char* xyStageLabel,
          double &x_stage, double &y_stage) throw (CMMError);
+   void getXYPosition(double &x_stage, double &y_stage) throw (CMMError);
    double getXPosition(const char* xyStageLabel) throw (CMMError);
    double getYPosition(const char* xyStageLabel) throw (CMMError);
+   double getXPosition() throw (CMMError);
+   double getYPosition() throw (CMMError);
    void stop(const char* xyStageLabel) throw (CMMError);
    void home(const char* xyStageLabel) throw (CMMError);
    void setOriginXY(const char* xyStageLabel) throw (CMMError);

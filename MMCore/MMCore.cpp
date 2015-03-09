@@ -1385,6 +1385,17 @@ void CMMCore::setXYPosition(const char* label, double x, double y) throw (CMMErr
 }
 
 /**
+ * Sets the position of the XY stage in microns. Uses the current XY stage
+ * device.
+ * @param x      the X axis position in microns
+ * @param y      the Y axis position in microns
+ */
+void CMMCore::setXYPosition(double x, double y) throw (CMMError)
+{
+    setXYPosition(getXYStageDevice().c_str(), x, y);
+}
+
+/**
  * Sets the relative position of the XY stage in microns.
  * @param label  the xy stage device label
  * @param dx     the distance to move in X (positive or negative)
@@ -1409,6 +1420,16 @@ void CMMCore::setRelativeXYPosition(const char* label, double dx, double dy) thr
 }
 
 /**
+ * Sets the relative position of the XY stage in microns. Uses the current
+ * XY stage device.
+ * @param dx     the distance to move in X (positive or negative)
+ * @param dy     the distance to move in Y (positive or negative)
+ */
+void CMMCore::setRelativeXYPosition(double dx, double dy) throw (CMMError) {
+    setRelativeXYPosition(getXYStageDevice().c_str(), dx, dy);
+}
+
+/**
  * Obtains the current position of the XY stage in microns.
  * @param label   the stage device label
  * @param x            a return parameter yielding the X position in microns
@@ -1426,6 +1447,17 @@ void CMMCore::getXYPosition(const char* label, double& x, double& y) throw (CMME
       logError(pXYStage->GetName().c_str(), getDeviceErrorText(ret, pXYStage).c_str());
       throw CMMError(getDeviceErrorText(ret, pXYStage).c_str(), MMERR_DEVICE_GENERIC);
    }
+}
+
+/**
+ * Obtains the current position of the XY stage in microns. Uses the current
+ * XY stage device.
+ * @param x            a return parameter yielding the X position in microns
+ * @param y            a return parameter yielding the Y position in microns
+ */
+void CMMCore::getXYPosition(double& x, double& y) throw (CMMError)
+{
+    getXYPosition(getXYStageDevice().c_str(), x, y);
 }
 
 /**
@@ -1451,6 +1483,17 @@ double CMMCore::getXPosition(const char* label) throw (CMMError)
 }
 
 /**
+ * Obtains the current position of the X axis of the XY stage in microns. Uses
+ * the current XY stage device.
+ * @return    the x position 
+ * @param  label   the stage device label
+ */
+double CMMCore::getXPosition() throw (CMMError)
+{
+    return getXPosition(getXYStageDevice().c_str());
+}
+
+/**
  * Obtains the current position of the Y axis of the XY stage in microns.
  * @return   the y position 
  * @param   label   the stage device label
@@ -1470,6 +1513,17 @@ double CMMCore::getYPosition(const char* label) throw (CMMError)
    }
 
    return y;
+}
+
+/**
+ * Obtains the current position of the Y axis of the XY stage in microns. Uses
+ * the current XY stage device.
+ * @return    the y position 
+ * @param  label   the stage device label
+ */
+double CMMCore::getYPosition() throw (CMMError)
+{
+    return getYPosition(getXYStageDevice().c_str());
 }
 
 /**
