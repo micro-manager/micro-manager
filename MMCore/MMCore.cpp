@@ -1315,6 +1315,15 @@ void CMMCore::setPosition(const char* label, double position) throw (CMMError)
       throw CMMError(getDeviceErrorText(ret, pStage).c_str(), MMERR_DEVICE_GENERIC);
    }
 }
+/**
+ * Sets the position of the stage in microns. Uses the current Z positioner
+ * (focus) device.
+ * @param position  the desired stage position, in microns
+ */
+void CMMCore::setPosition(double position) throw (CMMError)
+{
+    setPosition(getFocusDevice().c_str(), position);
+}
 
 /**
  * Sets the relative position of the stage in microns.
@@ -1340,6 +1349,16 @@ void CMMCore::setRelativePosition(const char* label, double d) throw (CMMError)
 }
 
 /**
+ * Sets the relative position of the stage in microns. Uses the current Z
+ * positioner (focus) device.
+ * @param d        the amount to move the stage, in microns (positive or negative)
+ */
+void CMMCore::setRelativePosition(double d) throw (CMMError)
+{
+    setRelativePosition(getFocusDevice().c_str(), d);
+}
+
+/**
  * Returns the current position of the stage in microns.
  * @return the position in microns
  * @param label     the single-axis drive device label
@@ -1358,6 +1377,16 @@ double CMMCore::getPosition(const char* label) throw (CMMError)
       throw CMMError(getDeviceErrorText(ret, pStage).c_str(), MMERR_DEVICE_GENERIC);
    }
    return pos;
+}
+
+/**
+ * Returns the current position of the stage in microns. Uses the current
+ * Z positioner (focus) device.
+ * @return the position in microns
+ */
+double CMMCore::getPosition() throw (CMMError)
+{
+    return getPosition(getFocusDevice().c_str());
 }
 
 /**
@@ -1588,6 +1617,14 @@ void CMMCore::setOriginXY(const char* label) throw (CMMError)
 }
 
 /**
+ * zero the current XY position. Uses the current XY stage device.
+ */
+void CMMCore::setOriginXY() throw (CMMError)
+{
+    setOriginXY(getXYStageDevice().c_str());
+}
+
+/**
  * zero the current stage position.
  * @param label    the stage device label
  */
@@ -1605,6 +1642,15 @@ void CMMCore::setOrigin(const char* label) throw (CMMError)
    }
 
    LOG_DEBUG(coreLogger_) << "Zeroed stage " << label << " at current position";
+}
+
+/**
+ * zero the current stage position. Uses the current Z positioner (focus)
+ * device.
+ */
+void CMMCore::setOrigin() throw (CMMError)
+{
+    setOrigin(getFocusDevice().c_str());
 }
 
 /**
@@ -1629,9 +1675,18 @@ void CMMCore::setAdapterOrigin(const char* label, double d) throw (CMMError)
       std::fixed << std::setprecision(5) << d << " um";
 }
 
+/**
+ * Zero the stage at a particular position (in microns). Uses the current Z
+ * positioner (focus) device.
+ * @param d             the position in the old coordinate (in microns)
+ */
+void CMMCore::setAdapterOrigin(double d) throw (CMMError)
+{
+    setAdapterOrigin(getFocusDevice().c_str(), d);
+}
 
 /**
- * Reset a parcitular x,y position to be the origin of the XY stage's coordinate system
+ * Reset a particular x,y position to be the origin of the XY stage's coordinate system
  * @param label    the XY stage device label
  * @param x             the x position in the old coordinate system
  * @param y             the y position in the old coordinate system
@@ -1652,6 +1707,18 @@ void CMMCore::setAdapterOriginXY(const char* label, double x, double y) throw (C
    LOG_DEBUG(coreLogger_) << "Zeroed xy stage " << label <<
       " at position (" << std::fixed << std::setprecision(3) << x << ", " <<
       y << ") um";
+}
+
+
+/**
+ * Reset a particular x,y position to be the origin of the XY stage's 
+ * coordinate system. Uses the current XY stage device.
+ * @param x             the x position in the old coordinate system
+ * @param y             the y position in the old coordinate system
+ */
+void CMMCore::setAdapterOriginXY(double x, double y) throw (CMMError)
+{
+    setAdapterOriginXY(getXYStageDevice().c_str(), x, y);
 }
 
 
