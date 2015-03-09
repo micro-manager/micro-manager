@@ -76,7 +76,7 @@
    stage to pixel transform."
   []
   (when-let [transform (get-stage-to-pixel-transform)]
-    (affine/set-destination-origin transform (.getXYStagePosition mm/gui))))
+    (affine/set-destination-origin transform (.getXYPosition mm/core))))
 
 (defn pixel-size-um
   "Compute the pixel size from a stage-to-pixel transform."
@@ -105,7 +105,7 @@
 
 (defn get-xy-position []
   (mm/core waitForDevice (mm/core getXYStageDevice))
-  (.getXYStagePosition mm/gui))
+  (.getXYPosition mm/core))
 
 (defn set-xy-position
   ([^Point2D$Double position]

@@ -109,11 +109,11 @@ public class CalibrationThread extends Thread {
          return simulateAcquire(theSlide,(int) (x+(3*Math.random()-1.5)),(int) (y+(3*Math.random()-1.5)));
       } else {
          try {
-            Point2D.Double p0 = app_.getXYStagePosition();
+            Point2D.Double p0 = app_.getCMMCore().getXYPosition();
             if (p0.distance(x, y) > (plugin_.safeTravelRadiusUm_ / 2)) {
                throw new CalibrationFailedException("XY stage safety limit reached.");
             }
-            app_.setXYStagePosition(x, y);
+            app_.getCMMCore().setXYPosition(x, y);
             core_.waitForDevice(core_.getXYStageDevice());
             core_.snapImage();
             TaggedImage image = core_.getTaggedImage();
@@ -177,8 +177,8 @@ public class CalibrationThread extends Thread {
       }
       Point2D.Double stagePos;
       try {
-         stagePos = app_.getXYStagePosition();
-      } catch (MMScriptException ex) {
+         stagePos = app_.getCMMCore().getXYPosition();
+      } catch (Exception ex) {
          ReportingUtils.logError(ex);
          stagePos = null;
          throw new CalibrationFailedException(ex.getMessage());
@@ -208,8 +208,8 @@ public class CalibrationThread extends Thread {
       } else {
          Point2D.Double p;
          try {
-            p = app_.getXYStagePosition();
-         } catch (MMScriptException ex) {
+            p = app_.getCMMCore().getXYPosition();
+         } catch (Exception ex) {
             ReportingUtils.logError(ex);
             throw new CalibrationFailedException(ex.getMessage());
          }
@@ -251,8 +251,8 @@ public class CalibrationThread extends Thread {
       Point2D.Double c2 = measureDisplacement(s1.x, s1.y, c1d, false, sim);
       Point2D.Double s2;
       try {
-         s2 = app_.getXYStagePosition();
-      } catch (MMScriptException ex) {
+         s2 = app_.getCMMCore().getXYPosition();
+      } catch (Exception ex) {
          ReportingUtils.logError(ex);
          throw new CalibrationFailedException(ex.getMessage());
       }
@@ -303,9 +303,9 @@ public class CalibrationThread extends Thread {
       pointPairs_ = new Hashtable<Point2D.Double, Point2D.Double>();
       Point2D.Double xy0 = null;
       try {
-         xy0 = app_.getXYStagePosition();
+         xy0 = app_.getCMMCore().getXYPosition();
       }
-      catch (MMScriptException e) {
+      catch (Exception e) {
          throw new CalibrationFailedException(e.getMessage());
       }
       firstApprox = getFirstApprox(sim);
@@ -314,10 +314,10 @@ public class CalibrationThread extends Thread {
       if (secondApprox != null)
          ReportingUtils.logMessage(secondApprox.toString());
       try {
-         app_.setXYStagePosition(xy0.x, xy0.y);
+         app_.getCMMCore().setXYPosition(xy0.x, xy0.y);
          app_.snapSingleImage();
       }
-      catch (MMScriptException e) {
+      catch (Exception e) {
          throw new CalibrationFailedException(e.getMessage());
       }
       liveWin_.setTitle("Calibrating...done.");

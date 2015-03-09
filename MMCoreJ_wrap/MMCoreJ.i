@@ -787,7 +787,7 @@
    /* 
     * Convenience function. Returns the current x,y position of the stage in a Point2D.Double.
     */
-   public Point2D.Double getXYStagePosition(String stage) throws java.lang.Exception {
+   public Point2D.Double getXYPosition(String stage) throws java.lang.Exception {
       // stage position is given as x,y in individual one-member arrays (pointers in C++):
       double p[][] = new double[2][1];
       getXYPosition(stage, p[0], p[1]);
@@ -798,7 +798,7 @@
     * Convenience function: returns the current XY position of the current
     * XY stage device as a Point2D.Double.
     */
-   public Point2D.Double getXYStagePosition() throws java.lang.Exception {
+   public Point2D.Double getXYPosition() throws java.lang.Exception {
       double x[] = new double[1];
       double y[] = new double[1];
       getXYPosition(x, y);

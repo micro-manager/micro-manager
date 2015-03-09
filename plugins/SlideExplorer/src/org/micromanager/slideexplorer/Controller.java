@@ -55,7 +55,7 @@ public class Controller {
     public synchronized ImageProcessor grabImageAtMapPosition(Point mapPosition) {
         goToMapPosition(mapPosition);
         ImageProcessor img = hardware_.acquireImage();
-        Point measuredMapPosition = stageToMap(hardware_.getXYStagePosition());
+        Point measuredMapPosition = stageToMap(hardware_.getXYPosition());
         return trimImage(img, mapPosition, measuredMapPosition);
     }
 
@@ -75,11 +75,11 @@ public class Controller {
     }
 
     public synchronized Point getCurrentMapPosition() {
-        return stageToMap(hardware_.getXYStagePosition());
+        return stageToMap(hardware_.getXYPosition());
     }
 
     public synchronized void specifyMapRelativeToStage(double angle, double pixelSize) {
-        specifyMapRelativeToStage(hardware_.getXYStagePosition(), angle, pixelSize);
+        specifyMapRelativeToStage(hardware_.getXYPosition(), angle, pixelSize);
     }
 
     public synchronized void specifyMapRelativeToStage(AffineTransform transform) {
@@ -105,7 +105,7 @@ public class Controller {
     }
 
     public void setMapOriginToCurrentStagePosition() {
-        mapOriginOnStage_ = hardware_.getXYStagePosition();
+        mapOriginOnStage_ = hardware_.getXYPosition();
         double [] matrix = new double[6];
         mapToStageTransform_.getMatrix(matrix);
         matrix[4] = mapOriginOnStage_.x;

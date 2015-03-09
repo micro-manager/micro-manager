@@ -47,7 +47,7 @@ public class Hardware {
     }
 
     // Stage commands -------------------------------------------
-    Point2D.Double getXYStagePosition() {
+    Point2D.Double getXYPosition() {
         String stage = core_.getXYStageDevice();
         if (stage.length() == 0) {
             return null;
@@ -64,7 +64,7 @@ public class Hardware {
         return null;
     }
 
-    void setXYStagePosition(double x, double y) {
+    void setXYPosition(double x, double y) {
         try {
             core_.setXYPosition(stage_, x, y);
         } catch (Exception e) {
@@ -73,13 +73,13 @@ public class Hardware {
 
     }
 
-    void setXYStagePosition(Point2D.Double pos) {
-        setXYStagePosition(pos.x, pos.y);
+    void setXYPosition(Point2D.Double pos) {
+        setXYPosition(pos.x, pos.y);
     }
 
     public void stageGo(Point2D.Double stagePos) {
         String xystage = core_.getXYStageDevice();
-        Point2D.Double oldPos = getXYStagePosition();
+        Point2D.Double oldPos = getXYPosition();
 
         if ((oldPos.x != stagePos.x) || (oldPos.y != stagePos.y)) {
             try {
@@ -87,7 +87,7 @@ public class Hardware {
             } catch (Exception e) {
                 ReportingUtils.logError(e);
             }
-            setXYStagePosition(stagePos.x, stagePos.y);
+            setXYPosition(stagePos.x, stagePos.y);
             try {
                 while (core_.deviceBusy(xystage)) {
                     //updateStagePositionRect();

@@ -346,61 +346,6 @@ public interface CompatibilityInterface {
            double defaultExp);
    
    /**
-    * Obtain the current XY stage position.
-    * Returns a point in device coordinates in microns.
-    * @return current XY stage position
-    * @throws MMScriptException
-    */
-   public Point2D.Double getXYStagePosition()  throws MMScriptException;
-
-    /**
-    * Move default Focus (Z) and block until done
-    * @param z absolute z position
-    * @throws MMScriptException
-    */
-   public void setStagePosition(double z) throws MMScriptException;
-
-   /**
-    * Move default Focus (Z) relative to current position and block until done
-    * @param z
-    * @throws MMScriptException
-    */
-   public void setRelativeStagePosition(double z) throws MMScriptException;
-
-   /**
-    * Move default XY stage and block until done.
-    * @param x - coordinate in um
-    * @param y - coordinate in um
-    * @throws MMScriptException
-    */
-   public void setXYStagePosition(double x, double y)  throws MMScriptException ;
-
-    /**
-    * Move default XY stage relative to current position and block until done.
-    * @param x - coordinate in um
-    * @param y - coordinate in um
-    * @throws MMScriptException
-    */
-   public void setRelativeXYStagePosition(double x, double y)  throws MMScriptException ;
-
-    /**
-    * There can be multiple XY stage devices in a system.  This function returns
-    * the name of the currently active one
-    * @return Name of the active XYStage device
-    */
-   public String getXYStageName();
-
-
-   /**
-    * Assigns the current stage position of the default xy-stage to be (x,y),
-    * thereby offseting the coordinates of all other positions.
-    * @param x
-    * @param y
-    * @throws MMScriptException
-    */
-   public void setXYOrigin(double x, double y) throws MMScriptException;
-   
-   /**
     * Save current configuration
     */
    public void saveConfigPresets();
@@ -597,7 +542,6 @@ public interface CompatibilityInterface {
     * @throws org.micromanager.internal.utils.MMScriptException
     */
    public String openAcquisitionData(String location, boolean inRAM) throws MMScriptException;
-
 
    /**
     * Open an existing data set.

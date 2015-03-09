@@ -133,7 +133,7 @@ public class FixedAreaAcquisition extends Acquisition {
          //no space mode, use current stage positon
          positions_ = new ArrayList<XYStagePosition>();
          try {
-            positions_.add(new XYStagePosition(MMStudio.getInstance().getCore().getXYStagePosition(MMStudio.getInstance().getCore().getXYStageDevice()),
+            positions_.add(new XYStagePosition(MMStudio.getInstance().getCore().getXYPosition(MMStudio.getInstance().getCore().getXYStageDevice()),
                     0,0,0,0,null));
          } catch (Exception ex) {
             ReportingUtils.showError("Couldn't get XY stage position");

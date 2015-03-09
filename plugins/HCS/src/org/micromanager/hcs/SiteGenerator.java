@@ -478,7 +478,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
             // make label unique
             mpl.setLabel(wpl1.getLabel() + "-" + mpl.getLabel());
             if (app_ != null) {
-               mpl.setDefaultXYStage(app_.compat().getXYStageName());
+               mpl.setDefaultXYStage(app_.getCMMCore().getXYStageDevice());
                mpl.setDefaultZStage(app_.getCMMCore().getFocusDevice());
             }
             // set the proper XYstage name
@@ -611,7 +611,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
    @Override
    public String getXYStageName() {
       if (app_ != null) {
-         return app_.compat().getXYStageName();
+         return app_.getCMMCore().getXYStageDevice();
       } else {
          return SBSPlate.DEFAULT_XYSTAGE_NAME;
       }
@@ -634,11 +634,12 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       if (ret == JOptionPane.OK_OPTION) {
          try {
 
-            app_.compat().setXYOrigin(plate_.getFirstWellX(), plate_.getFirstWellY());
+            app_.getCMMCore().setAdapterOriginXY(
+                  plate_.getFirstWellX(), plate_.getFirstWellY());
             regenerate();
-            Point2D.Double pt = app_.compat().getXYStagePosition();
+            Point2D.Double pt = app_.getCMMCore().getXYPosition();
             JOptionPane.showMessageDialog(this, "XY Stage set at position: " + pt.x + "," + pt.y);
-         } catch (MMScriptException e) {
+         } catch (Exception e) {
             displayError(e.getMessage());
          }
       }

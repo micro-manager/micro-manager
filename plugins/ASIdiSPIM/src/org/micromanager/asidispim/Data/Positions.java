@@ -130,7 +130,7 @@ public class Positions {
          }
          Point2D.Double pt;
          if (devices_.isXYStage(devKey)) {
-            pt = core_.getXYStagePosition(mmDevice);
+            pt = core_.getXYPosition(mmDevice);
          } else if (devices_.isGalvo(devKey)) {
             pt = core_.getGalvoPosition(mmDevice);
          } else {
@@ -314,7 +314,7 @@ public class Positions {
          Point2D.Double pt;
          try {
             if (devices_.isXYStage(devKey)) {
-               pt = core_.getXYStagePosition(mmDevice);
+               pt = core_.getXYPosition(mmDevice);
             } else if (devices_.isGalvo(devKey)) {
                pt = core_.getGalvoPosition(mmDevice);
             } else {

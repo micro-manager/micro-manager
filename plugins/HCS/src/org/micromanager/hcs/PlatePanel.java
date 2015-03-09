@@ -235,11 +235,12 @@ public class PlatePanel extends JPanel {
             return;
 
          try {
-            app_.compat().setXYStagePosition(pt.x, pt.y);
+            app_.getCMMCore().setXYPosition(pt.x, pt.y);
             if (gui_.useThreePtAF() && gui_.getThreePointZPos(pt.x, pt.y) != null)
-               app_.compat().setStagePosition(gui_.getThreePointZPos(pt.x, pt.y));
+               app_.getCMMCore().setPosition(
+                     gui_.getThreePointZPos(pt.x, pt.y));
             
-            xyStagePos_ = app_.compat().getXYStagePosition();
+            xyStagePos_ = app_.getCMMCore().getXYPosition();
             zStagePos_ = app_.getCMMCore().getPosition(app_.getCMMCore().getFocusDevice());
             gui_.updateStagePositions(xyStagePos_.x, xyStagePos_.y, zStagePos_, well, "undefined");
             refreshStagePosition();
@@ -681,27 +682,21 @@ public class PlatePanel extends JPanel {
    }
    
    public void refreshStagePosition() throws HCSException {
-      try {
-         if (app_ != null) {
-            xyStagePos_ = app_.compat().getXYStagePosition();
-            try {
-               zStagePos_ = app_.getCMMCore().getPosition(app_.getCMMCore().getFocusDevice());
-            } catch (Exception e) {
-               throw new HCSException(e);
-            }
-         } else {
-            xyStagePos_ = new Point2D.Double(0.0, 0.0);
-            zStagePos_ = 0.0;
+      if (app_ != null) {
+         try {
+            xyStagePos_ = app_.getCMMCore().getXYPosition();
+            zStagePos_ = app_.getCMMCore().getPosition(app_.getCMMCore().getFocusDevice());
+         } catch (Exception e) {
+            throw new HCSException(e);
          }
-        
-         Graphics2D g = (Graphics2D) getGraphics();
-         drawStagePointer(g);
-         String well = plate_.getWellLabel(xyStagePos_.x, xyStagePos_.y);
-         gui_.updateStagePositions(xyStagePos_.x, xyStagePos_.y, zStagePos_, well, "undefined");
-      } catch (MMScriptException e) {
+      } else {
          xyStagePos_ = new Point2D.Double(0.0, 0.0);
          zStagePos_ = 0.0;
-         throw new HCSException(e.getMessage());
       }
+     
+      Graphics2D g = (Graphics2D) getGraphics();
+      drawStagePointer(g);
+      String well = plate_.getWellLabel(xyStagePos_.x, xyStagePos_.y);
+      gui_.updateStagePositions(xyStagePos_.x, xyStagePos_.y, zStagePos_, well, "undefined");
    }
 }

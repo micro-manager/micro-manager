@@ -289,7 +289,7 @@ public class DisplayPlus implements ImageCacheListener {
 
                     Point2D stagePos = stagePositionFromPixelPosition(xPixelDisp, yPixelDisp);
                     try {
-                        MMStudio.getInstance().setXYStagePosition(stagePos.getX(), stagePos.getY());
+                        MMStudio.getInstance().setXYPosition(stagePos.getX(), stagePos.getY());
                     } catch (MMScriptException ex) {
                         ReportingUtils.showError("Couldn't move xy stage");
                     }

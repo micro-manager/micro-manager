@@ -661,8 +661,8 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
         center = r.center();
         minPos = bBox.getPosition(0);
        try {
-           gui_.compat().setXYStagePosition(minPos.getX(), center.getY());
-       } catch (MMScriptException ex) {
+           gui_.core().setXYPosition(minPos.getX(), center.getY());
+       } catch (Exception ex) {
            handleError(ex);
        }
     }//GEN-LAST:event_GotoLeftActionPerformed
@@ -678,8 +678,8 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
         r = rlm_.getRegion(AcquireList.getSelectedIndex());
         center = r.center();
        try {
-           gui_.compat().setXYStagePosition(center.getX(), center.getY());
-       } catch (MMScriptException ex) {
+           gui_.core().setXYPosition(center.getX(), center.getY());
+       } catch (Exception ex) {
            handleError(ex);
        }
     }//GEN-LAST:event_GotoCenterActionPerformed
@@ -694,8 +694,8 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
         center = r.center();
         maxPos = bBox.getPosition(1);
        try {
-           gui_.compat().setXYStagePosition(center.getX(), maxPos.getY());
-       } catch (MMScriptException ex) {
+           gui_.core().setXYPosition(center.getX(), maxPos.getY());
+       } catch (Exception ex) {
            handleError(ex);
        }
     }//GEN-LAST:event_GotoTopActionPerformed
@@ -712,8 +712,8 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
         center = r.center();
         minPos = bBox.getPosition(0);
        try {
-           gui_.compat().setXYStagePosition(center.getX(), minPos.getY());
-       } catch (MMScriptException ex) {
+           gui_.core().setXYPosition(center.getX(), minPos.getY());
+       } catch (Exception ex) {
            handleError(ex);
        }
     }//GEN-LAST:event_GotoBottomActionPerformed
@@ -728,8 +728,8 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
         center = r.center();
         maxPos = bBox.getPosition(1);
        try {
-           gui_.compat().setXYStagePosition(maxPos.getX(), center.getY());
-       } catch (MMScriptException ex) {
+           gui_.core().setXYPosition(maxPos.getX(), center.getY());
+       } catch (Exception ex) {
             handleError(ex);
        }
     }//GEN-LAST:event_GotoRightActionPerformed
