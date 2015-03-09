@@ -457,10 +457,15 @@ public:
    /** \name Focus (Z) stage control. */
    ///@{
    void setPosition(const char* stageLabel, double position) throw (CMMError);
+   void setPosition(double position) throw (CMMError);
    double getPosition(const char* stageLabel) throw (CMMError);
+   double getPosition() throw (CMMError);
    void setRelativePosition(const char* stageLabel, double d) throw (CMMError);
+   void setRelativePosition(double d) throw (CMMError);
    void setOrigin(const char* stageLabel) throw (CMMError);
+   void setOrigin() throw (CMMError);
    void setAdapterOrigin(const char* stageLabel, double d) throw (CMMError);
+   void setAdapterOrigin(double d) throw (CMMError);
 
    bool isStageSequenceable(const char* stageLabel) throw (CMMError);
    void startStageSequence(const char* stageLabel) throw (CMMError);
@@ -488,8 +493,10 @@ public:
    void stop(const char* xyStageLabel) throw (CMMError);
    void home(const char* xyStageLabel) throw (CMMError);
    void setOriginXY(const char* xyStageLabel) throw (CMMError);
+   void setOriginXY() throw (CMMError);
    void setAdapterOriginXY(const char* xyStageLabel,
          double x, double y) throw (CMMError);
+   void setAdapterOriginXY(double x, double y) throw (CMMError);
 
    bool isXYStageSequenceable(const char* xyStageLabel) throw (CMMError);
    void startXYStageSequence(const char* xyStageLabel) throw (CMMError);
