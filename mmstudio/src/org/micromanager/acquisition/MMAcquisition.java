@@ -465,7 +465,6 @@ public class MMAcquisition {
          channelGroup = "";
       color = colorPrefs.getInt("Color_Camera_" + channelName, colorPrefs.getInt("Color_" + channelGroup
                  + "_" + channelName, color));
-      
       return color;
    }
 
@@ -503,7 +502,7 @@ public class MMAcquisition {
       }
       channelColors_ = newColors;
       channelNames_ = newNames;
-      if (numChannels_ == 1)
+      if (numChannels_ == 1) {
          try {
             if (channelColors_.length() == 0) {
                // No preset color for this channel.
@@ -527,11 +526,12 @@ public class MMAcquisition {
          } catch (JSONException ex) {
             ReportingUtils.logError(ex);
          }
-      else
-         for (Integer i = 0; i < numChannels_; i++) {
-            if (channelColors_.length() <= i) {
+      }
+      else {
+         for (int i = 0; i < numChannels_; i++) {
+            if (channelColors_.length() > i) {
                try {
-                  channelColors_.put(getMultiCamDefaultChannelColor(i, channelNames_.getString(i)));
+                  channelColors_.put(i, getMultiCamDefaultChannelColor(i, channelNames_.getString(i)));
                } catch (JSONException ex) {
                   ReportingUtils.logError(ex);
                }
@@ -553,6 +553,7 @@ public class MMAcquisition {
                ReportingUtils.logError(e);
             }
          }
+      }
       try {
          md.put("ChColors", channelColors_);
          md.put("ChNames", channelNames_);
