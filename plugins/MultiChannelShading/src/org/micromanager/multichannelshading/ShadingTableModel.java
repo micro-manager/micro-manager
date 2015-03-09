@@ -139,10 +139,12 @@ public class ShadingTableModel extends AbstractTableModel {
                  channelGroup_ + "-channels", null);
          String[] files = gui_.profile().getStringArray(this.getClass(), 
                  channelGroup_ + "-files", null);
-         for (int i = 0; i < channels.length && i < files.length; i++) {
-            imageCollection_.addFlatField(channels[i], files[i]);
-            presetList_.add(channels[i]);
-            fileList_.add(files[i]);
+         if (channels != null && files != null) {
+            for (int i = 0; i < channels.length && i < files.length; i++) {
+               imageCollection_.addFlatField(channels[i], files[i]);
+               presetList_.add(channels[i]);
+               fileList_.add(files[i]);
+            }
          }
 
       } catch (MMException ex) {

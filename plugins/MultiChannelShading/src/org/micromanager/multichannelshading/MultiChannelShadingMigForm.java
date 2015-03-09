@@ -82,7 +82,8 @@ public class MultiChannelShadingMigForm extends MMDialog {
      * @param gui
      */
    @SuppressWarnings("LeakingThisInConstructor")
-   public MultiChannelShadingMigForm(ShadingProcessor processor, ScriptInterface gui) {
+   public MultiChannelShadingMigForm(ShadingProcessor processor, 
+           ScriptInterface gui) {
       processor_ = processor;
       gui_ = gui;
       mmc_ = gui_.getCMMCore();
@@ -104,7 +105,7 @@ public class MultiChannelShadingMigForm extends MMDialog {
       this.setLayout(new MigLayout("flowx, fill, insets 8"));
       this.setTitle(MultiChannelShading.menuName);
 
-      loadAndRestorePosition(100, 100, 350, 250);
+      loadAndRestorePosition(100, 100, 375, 275);
       
       JLabel channelGroupLabel = new JLabel("Channel Group:");
       channelGroupLabel.setFont(arialSmallFont_);
@@ -208,7 +209,7 @@ public class MultiChannelShadingMigForm extends MMDialog {
       addButton.setMinimumSize(buttonSize_);
       addButton.setFont(arialSmallFont_);
       addButton.setIcon(new ImageIcon(MMStudio.class.getResource(
-            "/org/micromanager/icons/plus.png")));
+            "/org/micromanager/internal/icons/plus.png")));
       addButton.addActionListener(new java.awt.event.ActionListener() {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -222,7 +223,7 @@ public class MultiChannelShadingMigForm extends MMDialog {
       removeButton.setMinimumSize(buttonSize_);
       removeButton.setFont(arialSmallFont_);
       removeButton.setIcon(new ImageIcon (MMStudio.class.getResource(
-            "/org/micromanager/icons/minus.png")));
+            "/org/micromanager/internal/icons/minus.png")));
       removeButton.addActionListener(new java.awt.event.ActionListener() {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -260,6 +261,7 @@ public class MultiChannelShadingMigForm extends MMDialog {
    
    @Override
    public void dispose() {
+      shadingTableModel_.setChannelGroup(groupName_);
       super.dispose();
       processor_.setMyFrameToNull();
    }

@@ -53,8 +53,10 @@ public class ProjectorPlugin implements MMPlugin {
    
    @Override
    public void dispose() {
-      ProjectorControlForm.showSingleton(core_, app_).dispose();
-      
+      ProjectorControlForm pcf = ProjectorControlForm.getSingleton();
+      if (pcf != null) {
+         pcf.dispose();
+      }
    }
 
    @Override
