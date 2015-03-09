@@ -78,10 +78,6 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
    private final JButton afButton_;
    private JSpinner afSkipInterval_;
    private final JComboBox acqOrderBox_;
-   public static final String NEW_ACQFILE_NAME = "MMAcquistion.xml";
-   public static final String ACQ_SETTINGS_NODE = "AcquistionSettings";
-   public static final String COLOR_SETTINGS_NODE = "ColorSettings";
-   private static final String EXPOSURE_SETTINGS_NODE = "AcqExposureSettings";
    private static final String SHOULD_SYNC_EXPOSURE = "should sync exposure times between main window and Acquire dialog";
    private static final String SHOULD_HIDE_DISPLAY = "should hide image display windows for multi-dimensional acquisitions";
    private JComboBox channelGroupCombo_;
