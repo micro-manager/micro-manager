@@ -793,6 +793,17 @@
       getXYPosition(stage, p[0], p[1]);
       return new Point2D.Double(p[0][0], p[1][0]);
    }
+
+   /**
+    * Convenience function: returns the current XY position of the current
+    * XY stage device as a Point2D.Double.
+    */
+   public Point2D.Double getXYStagePosition() throws java.lang.Exception {
+      double x[] = new double[1];
+      double y[] = new double[1];
+      getXYPosition(x, y);
+      return new Point2D.Double(x[0], y[0]);
+   }
    
    /* 
     * Convenience function. Returns the current x,y position of the galvo in a Point2D.Double.
