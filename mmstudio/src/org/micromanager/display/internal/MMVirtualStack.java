@@ -91,13 +91,13 @@ public class MMVirtualStack extends ij.VirtualStack {
       // Only augment a given axis if it's actually present in our datastore.
       Coords.CoordsBuilder builder = curCoords_.copy();
       Coords axisLengths = store_.getMaxIndices();
-      if (axisLengths.getChannel() != 0) {
+      if (axisLengths.getChannel() >= 0) {
          builder.channel(channel);
       }
-      if (axisLengths.getZ() != 0) {
+      if (axisLengths.getZ() >= 0) {
          builder.z(z);
       }
-      if (axisLengths.getTime() != 0) {
+      if (axisLengths.getTime() >= 0) {
          builder.time(frame);
       }
       // Augment all missing axes with zeros.
