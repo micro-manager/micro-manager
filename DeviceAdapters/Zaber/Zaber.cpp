@@ -218,7 +218,7 @@ bool ZaberBase::IsBusy(long device) const
 		ostringstream os;
 		os << "SendSerialCommand failed in ZaberBase::IsBusy, error code: " << ret;
 		core_->LogMessage(device_, os.str().c_str(), false);
-		return true; // Better than segfaulting later.
+		return false;
 	}
 	return (resp[3] == ("BUSY"));
 }
