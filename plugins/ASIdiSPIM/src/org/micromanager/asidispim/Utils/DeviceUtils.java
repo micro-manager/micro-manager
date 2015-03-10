@@ -191,8 +191,6 @@ public class DeviceUtils {
                      + devices_.getMMDevice(key) + " on Step 2). Then reload the "
                      + " changed configuration and restart the diSPIM plugin.");
             }
-            // execute the preset to put in diSPIM mode
-            props_.setPropValue(key, Properties.Keys.PLOGIC_PRESET, Properties.Values.PLOGIC_PRESET_14);
             checkPropertyValueEquals(key, Properties.Keys.PLOGIC_TRIGGER_SOURCE, Properties.Values.PLOGIC_TRIGGER_MMIRROR);
             // PLogic use in the plugin assumes "laser + side" output mode
             for (Devices.Keys galvoKey : Devices.GALVOS) {
