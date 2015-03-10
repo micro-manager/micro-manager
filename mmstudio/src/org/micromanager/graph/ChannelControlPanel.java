@@ -68,10 +68,10 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private static final int NUM_BINS = 256;
    private final int channelIndex_;
    private HistogramPanel hp_;
-   private MultiChannelHistograms mcHistograms_;
-   private VirtualAcquisitionDisplay display_;
-   private ImageCache cache_;
-   private CompositeImage img_;
+   private final MultiChannelHistograms mcHistograms_;
+   private final VirtualAcquisitionDisplay display_;
+   private final ImageCache cache_;
+   private final CompositeImage img_;
    private JButton autoButton_;
    private JButton zoomInButton_;
    private JButton zoomOutButton_;
@@ -97,7 +97,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    final private int maxIntensity_;
    final private int bitDepth_;
    private Color color_;
-   private String name_;
+   private final String name_;
 
    public ChannelControlPanel(int channelIndex, MultiChannelHistograms mcHistograms, VirtualAcquisitionDisplay disp) {
       display_ = disp;
@@ -600,14 +600,18 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             //uses lut.min and lut.max to set min and max of precessor
             img_.setChannelLut(lut, channelIndex_ + 1);
 
-            //ImageJ workaround: do this so the appropriate color model and min/max get applied 
-            //in color or grayscael mode
+            // ImageJ workaround: do this so the appropriate color model and 
+            // min/max get applied in color or grayscale mode
             try {
-               JavaUtils.setRestrictedFieldValue(img_, CompositeImage.class, "currentChannel", -1);
+               if (img_.getMode() == CompositeImage.COLOR
+                       || img_.getMode() == CompositeImage.GRAYSCALE) {
+                  JavaUtils.setRestrictedFieldValue(img_, CompositeImage.class, 
+                          "currentChannel", -1);
+               }
             } catch (NoSuchFieldException ex) {
                ReportingUtils.logError(ex);
             }
-
+            
             if (img_.getChannel() == channelIndex_ + 1) {
                LUT grayLut = ImageUtils.makeLUT(Color.white, gamma_);
                ImageProcessor processor = img_.getProcessor();
@@ -762,6 +766,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       
    }
    
+   @Override
    public void contrastMaxInput(int max) {
       display_.disableAutoStretchCheckBox();
       contrastMax_ = max;
@@ -792,6 +797,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       applyLUT();
    }
 
+   @Override
    public void onLeftCursor(double pos) {
       display_.disableAutoStretchCheckBox();
       contrastMin_ = (int) (Math.max(0, pos) * binSize_);
