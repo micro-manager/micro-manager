@@ -483,27 +483,30 @@ int CPLogic::OnRefreshProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int CPLogic::RefreshEditCellPropertyValues()
 {
+   // force on property refresh
+   char refreshPropValsStr[5];
+   GetProperty(g_RefreshPropValsPropertyName, refreshPropValsStr);
+   SetProperty(g_RefreshPropValsPropertyName, g_YesState);
+
    if (editCellUpdates_ && currentPosition_<=numCells_) {
       // if it's on a cell
-      bool refreshPropsOriginal = refreshProps_;
-      refreshProps_ = true;
       UpdateProperty(g_EditCellTypePropertyName);
       UpdateProperty(g_EditCellConfigPropertyName);
       UpdateProperty(g_EditCellInput1PropertyName);
       UpdateProperty(g_EditCellInput2PropertyName);
       UpdateProperty(g_EditCellInput3PropertyName);
       UpdateProperty(g_EditCellInput4PropertyName);
-      refreshProps_ = refreshPropsOriginal;
    } else if (editCellUpdates_ && currentPosition_>=PLOGIC_PHYSICAL_IO_START_ADDRESS
          && currentPosition_<=PLOGIC_PHYSICAL_IO_END_ADDRESS) {
       // if position is an I/O
       // CellType overlaps with the IOType, but different list of possibilities so
       //    let's not worry about that for now
-      bool refreshPropsOriginal = refreshProps_;
-      refreshProps_ = true;
       UpdateProperty(g_EditCellConfigPropertyName);  // this is the source address
-      refreshProps_ = refreshPropsOriginal;
    }
+
+   // restore setting
+   SetProperty(g_RefreshPropValsPropertyName, refreshPropValsStr);
+
    return DEVICE_OK;
 }
 
@@ -616,8 +619,10 @@ int CPLogic::OnAdvancedProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
 
          advancedPropsEnabled_ = true;
 
-         bool refreshPropsOriginal = refreshProps_;
-         refreshProps_ = true;
+         // force-on refresh
+         char refreshPropValsStr[5];
+         GetProperty(g_RefreshPropValsPropertyName, refreshPropValsStr);
+         SetProperty(g_RefreshPropValsPropertyName, g_YesState);
 
          for (long i=1; i<=(long)numCells_; i++) {
 
@@ -690,7 +695,8 @@ int CPLogic::OnAdvancedProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
             UpdateProperty(propName);
          }
 
-         refreshProps_ = refreshPropsOriginal;
+         // restore refresh setting
+         SetProperty(g_RefreshPropValsPropertyName, refreshPropValsStr);
       }
    }
    return DEVICE_OK;
@@ -699,8 +705,11 @@ int CPLogic::OnAdvancedProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
 int CPLogic::RefreshAdvancedCellPropertyValues(long index)
 {
    char propName[MM::MaxStrLength];
-   bool refreshPropsOriginal = refreshProps_;
-   refreshProps_ = true;
+
+   // force property refresh turned on
+   char refreshPropValsStr[5];
+   GetProperty(g_RefreshPropValsPropertyName, refreshPropValsStr);
+   SetProperty(g_RefreshPropValsPropertyName, g_YesState);
 
    GetCellPropertyName(index, "_Config", propName);
    UpdateProperty(propName);
@@ -713,7 +722,9 @@ int CPLogic::RefreshAdvancedCellPropertyValues(long index)
    GetCellPropertyName(index, "_Input4", propName);
    UpdateProperty(propName);
 
-   refreshProps_ = refreshPropsOriginal;
+   // restore refresh property state
+   SetProperty(g_RefreshPropValsPropertyName, refreshPropValsStr);
+
    return DEVICE_OK;
 }
 
@@ -983,6 +994,9 @@ int CPLogic::OnSetCardPreset(MM::PropertyBase* pProp, MM::ActionType eAct)
       if (tmp < 0) return DEVICE_OK;  // g_PresetCodeNone and other "signaling" preset codes are negative
       command << addressChar_ << "CCA X=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
+      if (useAsdiSPIMShutter_ && (tmp == 14)) {  // preset 14 affects the channel too
+         SetProperty(g_SetChannelPropertyName, g_ChannelNone);
+      }
    }
    return DEVICE_OK;
 }
