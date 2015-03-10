@@ -120,7 +120,7 @@ public class DefaultDisplayManager implements DisplayManager {
       List<DisplaySettings> allSettings = DefaultDisplaySettings.load(path);
       ArrayList<DisplayWindow> result = new ArrayList<DisplayWindow>();
       for (DisplaySettings settings : allSettings) {
-         result.add(new DefaultDisplayWindow(store, null, settings));
+         result.add(new DefaultDisplayWindow(store, null, settings, null));
       }
       return result;
    }
