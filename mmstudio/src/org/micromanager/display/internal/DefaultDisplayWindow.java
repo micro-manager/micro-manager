@@ -223,59 +223,64 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
     * our UI and the objects we'll use to communicate with ImageJ.
     */
    private void makeWindowAndIJObjects() {
-      loadAndRestorePosition(getLocation().x, getLocation().y);
-      stack_ = new MMVirtualStack(store_, displayBus_);
-      ijImage_ = new MMImagePlus();
-      setImagePlusMetadata(ijImage_);
-      stack_.setImagePlus(ijImage_);
-      ijImage_.setStack(getName(), stack_);
-      ijImage_.setOpenAsHyperStack(true);
-      // The ImagePlus object needs to be pseudo-polymorphic, depending on
-      // the number of channels in the Datastore. However, we may not
-      // have all of the channels available to us at the time this display is
-      // created, so we may need to re-create things down the road.
-      if (store_.getAxisLength(Coords.CHANNEL) > 1) {
-         // Have multiple channels.
-         shiftToCompositeImage();
-      }
-      if (ijImage_ instanceof MMCompositeImage) {
-         ((MMCompositeImage) ijImage_).reset();
-      }
-
-      // Make the canvas thread before any of our other control objects, which
-      // may perform draw requests that need to be processed.
-      canvasThread_ = new CanvasUpdateThread(store_, stack_, ijImage_, displayBus_);
-      canvasThread_.start();
-
-      makeWindowControls();
-      // This needs to be done after the canvas is created, but before we
-      // call zoomToPreferredSize.
-      dummyWindow_ = DummyImageWindow.makeWindow(ijImage_, this, displayBus_);
-      zoomToPreferredSize();
-      setVisible(true);
-      histograms_.calcAndDisplayHistAndStats();
-
-      addWindowListener(new WindowAdapter() {
-         @Override
-         public void windowClosing(WindowEvent event) {
-            requestToClose();
+      // Nothing that touches the GUI should run while we do this.
+      synchronized(this) {
+         loadAndRestorePosition(getLocation().x, getLocation().y);
+         stack_ = new MMVirtualStack(store_, displayBus_);
+         ijImage_ = new MMImagePlus();
+         setImagePlusMetadata(ijImage_);
+         stack_.setImagePlus(ijImage_);
+         ijImage_.setStack(getName(), stack_);
+         ijImage_.setOpenAsHyperStack(true);
+         // The ImagePlus object needs to be pseudo-polymorphic, depending on
+         // the number of channels in the Datastore. However, we may not have
+         // all of the channels available to us at the time this display is
+         // created, so we may need to re-create things down the road.
+         if (store_.getAxisLength(Coords.CHANNEL) > 1) {
+            // Have multiple channels.
+            shiftToCompositeImage();
          }
-      });
-      setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+         if (ijImage_ instanceof MMCompositeImage) {
+            ((MMCompositeImage) ijImage_).reset();
+         }
 
-      // Set us to draw the first image in the dataset.
-      // TODO: potentially there could be no image at these Coords, though
-      // that seems unlikely. Such an edge case isn't all that harmful anyway;
-      // we'll just display a blank image until the user adjusts the display
-      // to an image that does exist.
-      DefaultCoords.Builder builder = new DefaultCoords.Builder();
-      for (String axis : store_.getAxes()) {
-         builder.index(axis, 0);
+         // Make the canvas thread before any of our other control objects,
+         // which may perform draw requests that need to be processed.
+         canvasThread_ = new CanvasUpdateThread(store_, stack_, ijImage_,
+               displayBus_);
+         canvasThread_.start();
+
+         makeWindowControls();
+         // This needs to be done after the canvas is created, but before we
+         // call zoomToPreferredSize.
+         dummyWindow_ = DummyImageWindow.makeWindow(ijImage_, this,
+               displayBus_);
+         zoomToPreferredSize();
+         setVisible(true);
+         histograms_.calcAndDisplayHistAndStats();
+
+         addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent event) {
+               requestToClose();
+            }
+         });
+         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+
+         // Set us to draw the first image in the dataset.
+         // TODO: potentially there could be no image at these Coords, though
+         // that seems unlikely. Such an edge case isn't all that harmful
+         // anyway; we'll just display a blank image until the user adjusts the
+         // display to an image that does exist.
+         DefaultCoords.Builder builder = new DefaultCoords.Builder();
+         for (String axis : store_.getAxes()) {
+            builder.index(axis, 0);
+         }
+         setDisplayedImageTo(builder.build());
+
+         // Must set this before we call resetTitle(), which checks it.
+         haveCreatedGUI_ = true;
       }
-      setDisplayedImageTo(builder.build());
-
-      // Must set this before we call resetTitle(), which checks it.
-      haveCreatedGUI_ = true;
       resetTitle();
       setWindowSize();
 
@@ -426,9 +431,19 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
             title += " (Saved)";
          }
       }
-      setTitle(title);
-      // Ensure that ImageJ's opinion of our name reflects our own.
-      ijImage_.setStack(getName(), stack_);
+      // Don't mindlessly change the title, as calling setStack can
+      // potentially create new ImageJ windows that we don't want if called
+      // in rapid succession (for unknown reasons that would require
+      // a better understanding of the ImageJ codebase).
+      if (!title.contentEquals(getTitle())) {
+         // Don't have multiple threads adjusting the GUI at the same time.
+         synchronized(this) {
+            setTitle(title);
+            // Ensure that ImageJ's opinion of our name reflects our own; this
+            // is important for ImageJ's "Windows" menu.
+            ijImage_.setStack(getName(), stack_);
+         }
+      }
    }
 
    /**
@@ -471,14 +486,18 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
     * We've discovered that we need to represent a multichannel image.
     */
    private void shiftToCompositeImage() {
-      // TODO: assuming mode 1 for now.
-      ijImage_ = new MMCompositeImage(ijImage_, 1, ijImage_.getTitle());
-      ijImage_.setOpenAsHyperStack(true);
-      MMCompositeImage composite = (MMCompositeImage) ijImage_;
-      int numChannels = store_.getAxisLength(Coords.CHANNEL);
-      composite.setNChannelsUnverified(numChannels);
-      composite.reset();
-      setImagePlusMetadata(ijImage_);
+      // Don't want to run this from a separate thread when we're in the middle
+      // of building our GUI
+      synchronized(this) {
+         // TODO: assuming mode 1 for now.
+         ijImage_ = new MMCompositeImage(ijImage_, 1, ijImage_.getTitle());
+         ijImage_.setOpenAsHyperStack(true);
+         MMCompositeImage composite = (MMCompositeImage) ijImage_;
+         int numChannels = store_.getAxisLength(Coords.CHANNEL);
+         composite.setNChannelsUnverified(numChannels);
+         composite.reset();
+         setImagePlusMetadata(ijImage_);
+      }
       displayBus_.post(new DefaultNewImagePlusEvent(ijImage_));
    }
 
@@ -767,7 +786,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    @Subscribe
    public void onNewImage(final NewImageEvent event) {
       try {
-         if (dummyWindow_ == null) {
+         if (!haveCreatedGUI_) {
             // Time to make our components, but we should only do so in the EDT.
             final DefaultDisplayWindow thisWindow = this;
             try {
