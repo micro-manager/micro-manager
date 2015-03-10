@@ -40,7 +40,8 @@ public:
    ASIPeripheralBase(const char* name) :
       ASIBase<TDeviceBase, UConcreteDevice>(name),
       hub_(NULL),
-      addressString_(g_EmptyCardAddressStr)
+      addressString_(g_EmptyCardAddressStr),
+      refreshProps_(false)
    {
       // sometimes constructor gets called without the full name like in the case of the hub
       //   so only set up these properties if we have the required information
@@ -70,8 +71,7 @@ public:
       // get the firmware version and expose that as property plus store it
       // also the firmware compile date and build name
       // skip in special cases (when called with true flag, false is default) including
-      //    FWheel: different serial terminator => own Initialize() handles
-      //    TigerCommTub: needs to return different value plus doesn't have address
+      //    FWheel: different serial terminator and command set => own Initialize() handles
       if (!skipFirmware)
       {
          ostringstream command; command.str("");
@@ -98,6 +98,19 @@ public:
          RETURN_ON_MM_ERROR ( this->CreateProperty(g_FirmwareBuildPropertyName, this->firmwareBuild_.c_str(), MM::String, true) );
       }
 
+      // I can't seem to define action handlers here that will apply to derived classes
+      // I'd like to do that to avoid so much boilerplate in separate device code
+      // problem is likely my misunderstanding of inheritance
+      // my next thing to try is typecast on &ASIPeripheralBase to something related to UConcreteDevice
+//      // create properties that apply to all Tiger peripheral devices
+//      CPropertyAction* pAct;
+//
+//      // refresh properties from controller every time - default is not to refresh (speeds things up by not redoing so much serial comm)
+//      pAct = new CPropertyAction (this, &ASIPeripheralBase::OnRefreshProperties);
+//      RETURN_ON_MM_ERROR ( this->CreateProperty(g_RefreshPropValsPropertyName, g_NoState, MM::String, false, pAct) );
+//      RETURN_ON_MM_ERROR ( this->AddAllowedValue(g_RefreshPropValsPropertyName, g_NoState) );
+//      RETURN_ON_MM_ERROR ( this->AddAllowedValue(g_RefreshPropValsPropertyName, g_YesState) );
+
       return DEVICE_OK;
    }
 
@@ -107,6 +120,7 @@ protected:
                            // generally two characters (e.g. '31') but could be four characters (e.g. '3132') if device axes are split between cards
    string addressChar_;    // address within hub, in single character (possibly extended ASCII)
                            // in case of XY device, the MM device is split across two HW cards so it will be two characters
+   bool refreshProps_;     // true when property values should be read anew from controller each time
 
    // related to creating "extended" names containing address and axis letters
    static bool IsExtendedName(const char* name)
