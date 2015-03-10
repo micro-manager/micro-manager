@@ -233,7 +233,9 @@ public class DisplaySettingsPanel extends JPanel {
       dupeButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            new DefaultDisplayWindow(store_, display_.getControlsFactory());
+            new DefaultDisplayWindow(store_,
+               display_.getControlsFactory(), display_.getDisplaySettings(),
+               display_.getCustomName());
          }
       });
       add(dupeButton, "align right, wrap");

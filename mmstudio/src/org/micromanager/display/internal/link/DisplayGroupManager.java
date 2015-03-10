@@ -28,14 +28,15 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
+import org.micromanager.data.Datastore;
 import org.micromanager.display.DisplayManager;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.events.NewDisplayEvent;
 
+import org.micromanager.display.internal.DefaultDisplayWindow;
 import org.micromanager.display.internal.DisplayDestroyedEvent;
 import org.micromanager.display.internal.events.FullScreenEvent;
-
-import org.micromanager.internal.MMStudio;
+import org.micromanager.events.internal.EventManager;
 
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -90,28 +91,45 @@ public class DisplayGroupManager {
       }
    }
 
-   private MMStudio studio_;
+   private static DisplayGroupManager staticInstance_;
+   static {
+      staticInstance_ = new DisplayGroupManager();
+   }
+
    private HashMap<DisplayWindow, HashSet<SettingsLinker>> displayToLinkers_;
    private HashMap<GraphicsConfiguration, DisplayWindow> screenToDisplay_;
+   private HashMap<Datastore, ArrayList<DisplayWindow>> storeToDisplays_;
    private ArrayList<WindowListener> listeners_;
 
-   public DisplayGroupManager(MMStudio studio) {
+   public DisplayGroupManager() {
       displayToLinkers_ = new HashMap<DisplayWindow, HashSet<SettingsLinker>>();
       screenToDisplay_ = new HashMap<GraphicsConfiguration, DisplayWindow>();
+      storeToDisplays_ = new HashMap<Datastore, ArrayList<DisplayWindow>>();
       listeners_ = new ArrayList<WindowListener>();
-      studio_ = studio;
-      // So we can be notified of newly-created displays.
-      studio_.registerForEvents(this);
+      EventManager.register(this);
    }
 
    /**
-    * A new display has arrived; register for its events.
+    * A new display has arrived; register for its events, and add it to our
+    * list of displays for its datastore.
     */
    @Subscribe
    public void onNewDisplay(NewDisplayEvent event) {
       DisplayWindow display = event.getDisplayWindow();
       listeners_.add(new WindowListener(display, this));
       displayToLinkers_.put(display, new HashSet<SettingsLinker>());
+      Datastore store = display.getDatastore();
+      if (!storeToDisplays_.containsKey(store)) {
+         storeToDisplays_.put(store, new ArrayList<DisplayWindow>());
+      }
+      ArrayList<DisplayWindow> displays = storeToDisplays_.get(store);
+      displays.add(display);
+      if (displays.size() > 1) {
+         // Multiple displays; numbers in titles need to be shown.
+         for (DisplayWindow alt : displays) {
+            ((DefaultDisplayWindow) alt).resetTitle();
+         }
+      }
    }
 
    /**
@@ -136,6 +154,25 @@ public class DisplayGroupManager {
             screenToDisplay_.remove(config);
             break;
          }
+      }
+
+      // Remove from our datastore-based tracking, and update other displays'
+      // titles if necessary.
+      Datastore store = source.getDatastore();
+      if (storeToDisplays_.containsKey(store)) {
+         ArrayList<DisplayWindow> displays = storeToDisplays_.get(store);
+         displays.remove(source);
+         if (displays.size() == 1) {
+            // Back down to one display; hide display numbers.
+            ((DefaultDisplayWindow) displays.get(0)).resetTitle();
+         }
+         else if (displays.size() == 0) {
+            // Stop tracking.
+            storeToDisplays_.remove(store);
+         }
+      }
+      else {
+         ReportingUtils.logError("Display was destroyed, but somehow we don't know about its datastore.");
       }
    }
 
@@ -225,5 +262,16 @@ public class DisplayGroupManager {
       catch (Exception e) {
          ReportingUtils.logError(e, "Error dispatching settings change event");
       }
+   }
+
+   /**
+    * Return all displays that we know about for the specified Datastore, or
+    * an empty list if we aren't tracking it.
+    */
+   public static List<DisplayWindow> getDisplaysForDatastore(Datastore store) {
+      if (staticInstance_.storeToDisplays_.containsKey(store)) {
+         return staticInstance_.storeToDisplays_.get(store);
+      }
+      return new ArrayList<DisplayWindow>();
    }
 }

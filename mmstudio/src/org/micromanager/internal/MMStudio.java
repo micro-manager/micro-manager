@@ -106,7 +106,6 @@ import org.micromanager.internal.dialogs.RegistrationDlg;
 import org.micromanager.events.internal.EventManager;
 
 import org.micromanager.display.internal.DefaultDisplayManager;
-import org.micromanager.display.internal.link.DisplayGroupManager;
 
 import org.micromanager.internal.logging.LogFileManager;
 import org.micromanager.internal.menus.FileMenu;
@@ -274,9 +273,6 @@ public class MMStudio implements ScriptInterface, CompatibilityInterface, LogMan
    public MMStudio(boolean shouldRunAsPlugin) {
       org.micromanager.internal.diagnostics.ThreadExceptionLogger.setUp();
 
-      // Set up event handling early, so following code can subscribe/publish
-      // events as needed.
-      EventManager manager = new EventManager();
       EventManager.register(this);
 
       prepAcquisitionEngine();
@@ -359,8 +355,6 @@ public class MMStudio implements ScriptInterface, CompatibilityInterface, LogMan
       initializationSequence();
            
       helpMenu.initializeHelpMenu(menuBar_);
-
-      DisplayGroupManager displayGroupManager = new DisplayGroupManager(studio_);
    }
 
    /**

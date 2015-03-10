@@ -7,8 +7,7 @@ import com.google.common.eventbus.EventBus;
 public class EventManager {
    // Singleton.
    public static EventBus bus_;
-
-   public EventManager() {
+   static {
       bus_ = new EventBus();
    }
 

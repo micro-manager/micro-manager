@@ -90,6 +90,7 @@ import org.micromanager.display.internal.events.LayoutChangedEvent;
 import org.micromanager.display.internal.events.NewDisplaySettingsEvent;
 import org.micromanager.display.internal.events.RequestToCloseEvent;
 import org.micromanager.display.internal.events.StatusEvent;
+import org.micromanager.display.internal.link.DisplayGroupManager;
 
 import org.micromanager.internal.LineProfile;
 import org.micromanager.internal.MMStudio;
@@ -147,29 +148,27 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
 
    private boolean haveClosed_ = false;
 
-   private static int titleID = 0;
-   // We give a unique ID to each window, which will show up in the title,
-   // since just the filename isn't enough to identify each window if there
-   // are multiple displays for the same dataset.
-   private int displayNum_;
    // Custom string in the title.
    private String customName_;
    
    /**
-    * Convenience constructor that uses default DisplaySettings.
+    * Convenience constructor that uses default DisplaySettings and no custom
+    * title.
     */
    public DefaultDisplayWindow(Datastore store,
          ControlsFactory controlsFactory) {
-      this(store, controlsFactory, null);
+      this(store, controlsFactory, null, null);
    }
 
    /**
     * @param controlsFactory ControlsFactory to generate any custom controls.
     *        May be null if the creator does not want any.
     * @param settings DisplaySettings to use as initial state for this display
+    * @param customName Custom title to show in title bar, or null for none.
     */
    public DefaultDisplayWindow(Datastore store,
-         ControlsFactory controlsFactory, DisplaySettings settings) {
+         ControlsFactory controlsFactory, DisplaySettings settings,
+         String customName) {
       super("image display window");
       store_ = store;
       store_.registerForEvents(this);
@@ -179,12 +178,10 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       else {
          displaySettings_ = settings;
       }
+      customName_ = customName;
       displayBus_ = new EventBus();
       displayBus_.register(this);
       controlsFactory_ = controlsFactory;
-
-      titleID++;
-      displayNum_ = titleID;
 
       // Wait to actually create our GUI until there's at least one image
       // to display.
@@ -405,9 +402,14 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       }
    }
 
-   // In addition to the display's name, we also append magnification and
-   // save status.
-   private void resetTitle() {
+   /**
+    * In addition to the display's name, we also append magnification and
+    * save status.
+    * This method is public so that DisplayGroupManager can force a re-set
+    * of the title when other displays are created or destroyed (and our
+    * display number is shown/hidden).
+    */
+   public void resetTitle() {
       if (!haveCreatedGUI_) {
          // No window to adjust yet.
          return;
@@ -425,6 +427,8 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          }
       }
       setTitle(title);
+      // Ensure that ImageJ's opinion of our name reflects our own.
+      ijImage_.setStack(getName(), stack_);
    }
 
    /**
@@ -701,6 +705,10 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       return controlsFactory_;
    }
 
+   public String getCustomName() {
+      return customName_;
+   }
+
    @Override
    public GraphicsConfiguration getScreenConfig() {
       Point p = getLocation();
@@ -885,9 +893,18 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          // Use a fallback name.
          name = "MM image display";
       }
-      // TODO: only show the number if there are multiple displays for this
-      // Datastore.
-      return String.format("#%d: %s", displayNum_, name);
+      List<DisplayWindow> displays = DisplayGroupManager.getDisplaysForDatastore(store_);
+      if (displays.size() > 1) {
+         // Append a number so we can tell different displays for the
+         // same datastore apart.
+         for (int i = 0; i < displays.size(); ++i) {
+            if (displays.get(i) == this) {
+               name = String.format("#%d: %s", i + 1, name);
+               break;
+            }
+         }
+      }
+      return name;
    }
 
    @Override
