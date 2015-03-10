@@ -152,6 +152,8 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    // since just the filename isn't enough to identify each window if there
    // are multiple displays for the same dataset.
    private int displayNum_;
+   // Custom string in the title.
+   private String customName_;
    
    /**
     * Convenience constructor that uses default DisplaySettings.
@@ -274,10 +276,12 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          builder.index(axis, 0);
       }
       setDisplayedImageTo(builder.build());
+
+      // Must set this before we call resetTitle(), which checks it.
+      haveCreatedGUI_ = true;
       resetTitle();
       setWindowSize();
 
-      haveCreatedGUI_ = true;
       EventManager.post(new DefaultNewDisplayEvent(this));
    }
 
@@ -401,7 +405,13 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       }
    }
 
+   // In addition to the display's name, we also append magnification and
+   // save status.
    private void resetTitle() {
+      if (!haveCreatedGUI_) {
+         // No window to adjust yet.
+         return;
+      }
       String title = getName();
       title += String.format(" (%d%%)",
             (int) (canvas_.getMagnification() * 100));
@@ -866,14 +876,24 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
 
    @Override
    public String getName() {
-      String filename = store_.getSummaryMetadata().getFileName();
-      String result = "MM image display";
-      if (filename != null && !filename.contentEquals("") &&
-            !filename.contentEquals("null")) {
-         result = filename;
+      String name = customName_;
+      if (name == null) {
+         // Use the filename instead.
+         name = store_.getSummaryMetadata().getFileName();
       }
-      result = String.format("#%d: %s", displayNum_, result);
-      return result;
+      if (name == null || name.contentEquals("")) {
+         // Use a fallback name.
+         name = "MM image display";
+      }
+      // TODO: only show the number if there are multiple displays for this
+      // Datastore.
+      return String.format("#%d: %s", displayNum_, name);
+   }
+
+   @Override
+   public void setCustomTitle(String title) {
+      customName_ = title;
+      resetTitle();
    }
 
    // Implemented to help out DummyImageWindow.

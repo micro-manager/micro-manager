@@ -273,16 +273,6 @@ public class SnapLiveManager {
       store_ = new DefaultDatastore();
       store_.registerForEvents(this);
       store_.setStorage(new StorageRAM(store_));
-      // Update the summary metadata so that the "filename" field is used to
-      // generate an appropriate display window title.
-      SummaryMetadata summary = store_.getSummaryMetadata();
-      summary = summary.copy().fileName("Snap/Live View").build();
-      try {
-         store_.setSummaryMetadata(summary);
-      }
-      catch (DatastoreFrozenException e) {
-         ReportingUtils.showError(e, "Failed to set snap/live title; what on Earth is going on?");
-      }
    }
 
    /**
@@ -297,6 +287,7 @@ public class SnapLiveManager {
             }
       });
       display_.registerForEvents(this);
+      display_.setCustomTitle("Snap/Live View");
    }
 
    private List<Component> createControls(final DisplayWindow display) {

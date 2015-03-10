@@ -167,9 +167,22 @@ public interface DisplayWindow {
    /**
     * Return the unique name of this display. Typically this will include the
     * display number and the filename of the dataset; if no filename is
-    * available, then "MM image display" will be used instead.
+    * available, then "MM image display" will be used instead. This string
+    * is displayed in ImageJ's "Windows" menu, and is also used when linking
+    * display properties.
     */
    public String getName();
+
+   /**
+    * Add a custom extra string to the title of this display. The usual format
+    * for the window title is "#num: filename (magnification) (saved status)".
+    * If you call this method, then the filename will be replaced by your
+    * custom string. If there is no filename and this method has not been
+    * called, then "MM image display" is used instead. You can call this method
+    * with a null argument to revert to the default title.
+    * @param title Custom title component to insert into the window's title.
+    */
+   public void setCustomTitle(String title);
 
    /**
     * Register for access to the EventBus that the window uses for propagating
