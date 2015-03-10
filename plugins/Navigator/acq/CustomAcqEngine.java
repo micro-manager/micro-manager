@@ -34,7 +34,6 @@ public class CustomAcqEngine {
 
    private CMMCore core_;
    private AcquisitionEvent lastEvent_ = null;
-   private String xyStageName_, zName_;
    private Thread acquisitionThread_;
    private ExploreAcquisition currentExploreAcq_;
    private ParallelAcquisitionGroup currentFixedAcqs_;
@@ -43,7 +42,6 @@ public class CustomAcqEngine {
 
    public CustomAcqEngine(CMMCore core) {
       core_ = core;
-      updateDeviceNamesForAcquisition();   
       createAndStartAcquisitionThread();
    }
    
@@ -86,11 +84,6 @@ public class CustomAcqEngine {
    public void setMultiAcqManager(MultipleAcquisitionManager multiAcqManager) {
       multiAcqManager_ = multiAcqManager;
    }
-   
-   private void updateDeviceNamesForAcquisition() {
-      xyStageName_ = core_.getXYStageDevice();
-      zName_ = core_.getFocusDevice();
-   }
 
    public boolean isIdle() {
       return idle_;
@@ -107,7 +100,6 @@ public class CustomAcqEngine {
          currentExploreAcq_.getEventQueue().clear();
       }
 
-      updateDeviceNamesForAcquisition();
       currentFixedAcqs_ = new ParallelAcquisitionGroup(acqs, multiAcqManager_, this);
       return currentFixedAcqs_;
    }
@@ -131,7 +123,6 @@ public class CustomAcqEngine {
                   return;
                }
             }
-            updateDeviceNamesForAcquisition();
             currentExploreAcq_ = new ExploreAcquisition(settings);
          }
       }).start();
@@ -190,18 +181,20 @@ public class CustomAcqEngine {
       if (lastEvent_ != null && lastEvent_.acquisition_ != event.acquisition_) {
          lastEvent_ = null; //update all hardware if switching to a new acquisition
       }
-
+      //Get the hardware specific to this acquisition
+      String xyStage = event.acquisition_.getXYStageName();
+      String zStage = event.acquisition_.getZStageName();
       //XY Stage
       if (lastEvent_ == null || event.positionIndex_ != lastEvent_.positionIndex_) {
          try {
-            while (core_.deviceBusy(xyStageName_)) {
+            while (core_.deviceBusy(xyStage)) {
                try {
                   Thread.sleep(2);
                } catch (InterruptedException e) {
                   Thread.currentThread().interrupt();
                }
             }
-            core_.setXYPosition(xyStageName_, event.xPosition_, event.yPosition_);
+            core_.setXYPosition(xyStage, event.xPosition_, event.yPosition_);
          } catch (Exception ex) {
             ReportingUtils.showError("Couldn't move XY stage");
             ex.printStackTrace();
@@ -212,7 +205,7 @@ public class CustomAcqEngine {
       if (lastEvent_ == null || event.sliceIndex_ != lastEvent_.sliceIndex_) {
          try {
             //TODO: add checks for device business??
-            core_.setPosition(zName_, event.zPosition_);
+            core_.setPosition(zStage, event.zPosition_);
          } catch (Exception e) {
             IJ.showMessage("Setting focus position failed");
             //TODO: try again a couple times?

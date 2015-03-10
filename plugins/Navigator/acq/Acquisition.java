@@ -51,6 +51,14 @@ public abstract class Acquisition {
       }
    }
 
+   public String getXYStageName() {
+       return xyStage_;
+   }
+   
+   public String getZStageName() {
+       return zStage_;
+   }
+   
    /**
     * indices are 1 based and positive
     *
