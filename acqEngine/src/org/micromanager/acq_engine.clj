@@ -42,7 +42,7 @@
     :name org.micromanager.internal.AcquisitionEngine2010
     :implements [org.micromanager.IAcquisitionEngine2010]
     :init init
-    :constructors {[org.micromanager.ScriptInterface] [] [mmcorej.CMMCore] []}
+    :constructors {[org.micromanager.Studio] [] [mmcorej.CMMCore] []}
     :state state))
 
 ;; test utils
@@ -959,7 +959,7 @@
 
 (defn -init
   ([one-arg]
-    [[] (do (if (isa? (type one-arg) org.micromanager.ScriptInterface)
+    [[] (do (if (isa? (type one-arg) org.micromanager.Studio)
               (load-mm one-arg)
               (store-mmcore one-arg))
             (atom {:stop false}))]))
