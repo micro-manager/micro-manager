@@ -443,7 +443,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          dev_.setExposure(originalExposure);
          TaggedImage taggedImage2 = core_.getTaggedImage();
          ImageProcessor proc2 = ImageUtils.makeMonochromeProcessor(taggedImage2);
-         app_.compat().displayImage(taggedImage2);
+         app_.live().displayImage(app_.data().convertTaggedImage(taggedImage2));
          ImageProcessor diffImage = ImageUtils.subtractImageProcessors(proc2.convertToFloatProcessor(), proc1.convertToFloatProcessor());
          Point peak = findPeak(diffImage);
          Point maxPt = peak;
@@ -586,8 +586,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     * the mapping to Java Preferences.
     */
    public void runCalibration() {
-      final boolean liveModeRunning = app_.compat().isLiveModeOn();
-      app_.compat().enableLiveMode(false);
+      app_.live().setSuspended(true);
       if (!isRunning_.get()) {
          stopRequested_.set(false);
          Thread th = new Thread("Projector calibration thread") {
@@ -610,7 +609,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                   if (!stopRequested_.get()) {
                      saveMapping(mapping);
                   }
-                  app_.compat().enableLiveMode(liveModeRunning);
+                  app_.live().setSuspended(false);
                   JOptionPane.showMessageDialog(IJ.getImage().getWindow(), "Calibration "
                         + (!stopRequested_.get() ? "finished." : "canceled."));
                   IJ.getImage().setRoi(originalROI);
@@ -903,10 +902,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    // Returns the current ROIs for a given ImageWindow. If selectedOnly
    // is true, then returns only those ROIs selected in the ROI Manager.
    // If no ROIs are selected, then all ROIs are returned.
-   public static Roi[] getRois(ImageWindow window, boolean selectedOnly) {
+   public static Roi[] getRois(ImagePlus plus, boolean selectedOnly) {
       Roi[] rois = new Roi[]{};
       Roi[] roiMgrRois = {};
-      Roi singleRoi = window.getImagePlus().getRoi();
+      Roi singleRoi = plus.getRoi();
       final RoiManager mgr = RoiManager.getInstance();
       if (mgr != null) {
          if (selectedOnly) {
@@ -993,7 +992,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          throw new RuntimeException("No image window with ROIs is open.");
       }
       ImagePlus imgp = window.getImagePlus();
-      Roi[] rois = getRois(window, true);
+      Roi[] rois = getRois(imgp, true);
       if (rois.length == 0) {
          throw new RuntimeException("Please first draw the desired phototargeting ROIs.");
       }

@@ -432,7 +432,7 @@ public class TrackerControl extends MMFrame implements MMPlugin {
      
       // Detect desired ROI in Snap/Live Window
       ImagePlus implus = null;
-      ImageWindow win = app_.compat().getSnapLiveWin();
+      DisplayWindow win = app_.live().getDisplay();
       if (win != null) {
          implus = win.getImagePlus();
       }

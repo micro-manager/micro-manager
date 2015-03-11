@@ -348,8 +348,7 @@ public class PropertyEditor extends MMFrame {
             StrVector devices = core_.getLoadedDevices();
             propList_.clear();
 
-            boolean liveMode = gui_.compat().isLiveModeOn();
-            gui_.compat().enableLiveMode(false);
+            gui_.live().setSuspended(true);
             for (int i=0; i<devices.size(); i++) { 
                if (data_.showDevice(flags, devices.get(i))) {
                   StrVector properties = core_.getDevicePropertyNames(devices.get(i));
@@ -366,8 +365,7 @@ public class PropertyEditor extends MMFrame {
 
             updateRowVisibility(flags); 
 
-
-            gui_.compat().enableLiveMode(liveMode);
+            gui_.live().setSuspended(false);
          } catch (Exception e) {
             handleException(e);
          }

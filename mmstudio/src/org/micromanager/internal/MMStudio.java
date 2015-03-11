@@ -505,7 +505,7 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
    }
 
    private void handleError(String message) {
-      snapLiveManager_.setLiveMode(false);
+      live().setLiveMode(false);
       JOptionPane.showMessageDialog(frame_, message);
       core_.logMessage(message);
    }
@@ -570,41 +570,6 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
 
    }
 
-   /**
-    * Shows images as they appear in the default display window. Uses
-    * the default processor stack to process images as they arrive on
-    * the rawImageQueue.
-    * @param rawImageQueue
-    * @param displayImageRoutine
-    */
-   public void runDisplayThread(BlockingQueue<TaggedImage> rawImageQueue, 
-            final DisplayImageRoutine displayImageRoutine) {
-      final BlockingQueue<TaggedImage> processedImageQueue = 
-            ProcessorStack.run(rawImageQueue, 
-            getAcquisitionEngine().getImageProcessors());
-        
-      new Thread("Display thread") {
-       @Override
-         public void run() {
-            try {
-               TaggedImage image;
-               do {
-                  image = processedImageQueue.take();
-                  if (image != TaggedImageQueue.POISON) {
-                     displayImageRoutine.show(image);
-                  }
-               } while (image != TaggedImageQueue.POISON);
-            } catch (InterruptedException ex) {
-               ReportingUtils.logError(ex);
-            }
-         }
-      }.start();
-   }
-
-   public interface DisplayImageRoutine {
-      public void show(TaggedImage image);
-   }
-   
    public void setExposure(double exposureTime) {
       // This is synchronized with the shutdown lock primarily so that
       // the exposure-time field in MainFrame won't cause issues when it loses
@@ -614,14 +579,14 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
             // Just give up.
             return;
          }
-         snapLiveManager_.setSuspended(true);
+         live().setSuspended(true);
          try {
             core_.setExposure(exposureTime);
          }
          catch (Exception e) {
             ReportingUtils.logError(e, "Failed to set core exposure time.");
          }
-         snapLiveManager_.setSuspended(false);
+         live().setSuspended(false);
 
          // Display the new exposure time
          double exposure;
@@ -730,15 +695,10 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
    public void clearROI() {
       try {
          boolean liveRunning = false;
-         if (isLiveModeOn()) {
-            liveRunning = true;
-            enableLiveMode(false);
-         }
+         live().setSuspended(true);
          core_.clearROI();
          staticInfo_.refreshValues();
-         if (liveRunning) {
-            enableLiveMode(true);
-         }
+         live().setSuspended(false);
 
       } catch (Exception e) {
          ReportingUtils.showError(e);
@@ -874,11 +834,7 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
 
    protected void changeBinning() {
       try {
-         boolean liveRunning = false;
-         if (isLiveModeOn() ) {
-            liveRunning = true;
-            enableLiveMode(false);
-        } 
+         live().setSuspended(true);
          
          if (isCameraAvailable()) {
             String item = frame_.getBinMode();
@@ -887,10 +843,7 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
             }
          }
          staticInfo_.refreshValues();
-
-         if (liveRunning) {
-            enableLiveMode(true);
-         }
+         live().setSuspended(false);
 
       } catch (Exception e) {
          ReportingUtils.showError(e);
@@ -1065,11 +1018,6 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
       }
    } 
 
-   @Override
-   public boolean isLiveModeOn() {
-      return snapLiveManager_.getIsLiveModeOn();
-   }
-
    private boolean isCurrentImageFormatSupported() {
       long channels = core_.getNumberOfComponents();
       long bpp = core_.getBytesPerPixel();
@@ -1091,7 +1039,7 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
          ReportingUtils.showError("No camera configured");
          return;
       }
-      List<Image> images = snapLiveManager_.snap(!shouldAddToAlbum);
+      List<Image> images = live().snap(!shouldAddToAlbum);
       if (shouldAddToAlbum) {
          for (Image image : images) {
             dataManager_.addToAlbum(image);
@@ -1124,26 +1072,6 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
       }
    }
 
-   private boolean displayTaggedImage(TaggedImage ti, boolean update) {
-      try {
-         frame_.setCursor(new Cursor(Cursor.WAIT_CURSOR));
-         // Ensure that the acquisition is ready before we add the image.
-         staticInfo_.addStagePositionToTags(ti);
-         snapLiveManager_.displayImage(new DefaultImage(ti));
-      } catch (JSONException ex) {
-         ReportingUtils.logError(ex);
-         return false;
-      } catch (MMScriptException ex) {
-         ReportingUtils.logError(ex);
-         return false;
-      }
-      if (update) {
-         frame_.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-         LineProfile.updateLineProfile();
-      }
-      return true;
-   }
-   
    private void configureBinningCombo() throws Exception {
       if (StaticInfo.cameraLabel_.length() > 0) {
          frame_.configureBinningComboForCamera(StaticInfo.cameraLabel_);
@@ -1236,7 +1164,7 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
          // Set Shutter button
          frame_.setShutterButton(core_.getShutterOpen());
             
-         if (snapLiveManager_.getIsLiveModeOn()) {
+         if (live().getIsLiveModeOn()) {
             frame_.setToggleShutterButtonEnabled(!core_.getAutoShutter());
          }
 
@@ -1270,10 +1198,10 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
 
    // Cancel acquisitions and stop live mode.
    public void stopAllActivity() {
-        if (acquisitionEngine2010_ != null) {
-            acquisitionEngine2010_.stop();
-        }
-      enableLiveMode(false);
+      if (acquisitionEngine2010_ != null) {
+         acquisitionEngine2010_.stop();
+      }
+      live().setLiveMode(false);
    }
 
    /**
@@ -1301,7 +1229,7 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
             }
          }
       }
-      snapLiveManager_.setLiveMode(false);
+      live().setLiveMode(false);
 
       // check needed to avoid deadlock
       if (!calledByImageJ) {
@@ -1616,14 +1544,9 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
             @Override
             public void run() {
                try {
-                  boolean lmo = isLiveModeOn();
-                  if (lmo) {
-                     enableLiveMode(false);
-                  }
+                  live().setSuspended(true);
                   afMgr_.getDevice().fullFocus();
-                  if (lmo) {
-                     enableLiveMode(true);
-                  }
+                  live().setSuspended(false);
                } catch (MMException ex) {
                   ReportingUtils.logError(ex);
                }
@@ -1678,13 +1601,6 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
    @Override
    public void makeActive() {
       frame_.toFront();
-   }
-   
-   
-   @Override
-   public boolean displayImage(TaggedImage ti) {
-      normalizeTags(ti);
-      return displayTaggedImage(ti, true);
    }
    
    /**
@@ -1784,11 +1700,6 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
    }
 
    
-   @Override
-   public ImageWindow getSnapLiveWin() {
-      return snapLiveManager_.getSnapLiveWindow();
-   }
-
    @Override
    public String runAcquisition() throws MMScriptException {
       if (SwingUtilities.isEventDispatchThread()) {
@@ -2042,14 +1953,6 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
    }
    
    @Override
-   public void enableLiveMode(boolean enable) {
-      if (core_ == null) {
-         return;
-      }
-      snapLiveManager_.setLiveMode(enable);
-   }
-
-   @Override
    public void setAcquisitionAddImageAsynchronous(String name) throws MMScriptException {
       MMAcquisition acq = acqMgr_.getAcquisition(name);
       acq.setAsynchronous();
@@ -2092,10 +1995,6 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
    
    public AcquisitionWrapperEngine getAcquisitionEngine() {
       return engine_;
-   }
-
-   public SnapLiveManager getSnapLiveManager() {
-      return snapLiveManager_;
    }
 
    @Override
@@ -2241,20 +2140,14 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
 
    @Override
    public void setROI(Rectangle r) throws MMScriptException {
-      boolean liveRunning = false;
-      if (isLiveModeOn()) {
-         liveRunning = true;
-         enableLiveMode(false);
-      }
+      live().setSuspended(true);
       try {
          core_.setROI(r.x, r.y, r.width, r.height);
       } catch (Exception e) {
          throw new MMScriptException(e.getMessage());
       }
       staticInfo_.refreshValues();
-      if (liveRunning) {
-         enableLiveMode(true);
-      }
+      live().setSuspended(false);
    }
 
    public void setAcquisitionEngine(AcquisitionWrapperEngine eng) {
@@ -2434,6 +2327,17 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
    public ScriptController getScriptController() {
       return scriptPanel_;
    }
+
+   @Override
+   public org.micromanager.SnapLiveManager live() {
+      return snapLiveManager_;
+   }
+
+   @Override
+   public org.micromanager.SnapLiveManager getSnapLiveManager() {
+      return snapLiveManager_;
+   }
+
 
    public static boolean getShouldDeleteOldCoreLogs() {
       return DefaultUserProfile.getInstance().getBoolean(MMStudio.class,

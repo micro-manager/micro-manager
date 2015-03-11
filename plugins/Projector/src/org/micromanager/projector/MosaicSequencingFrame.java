@@ -117,13 +117,13 @@ public class MosaicSequencingFrame extends MMFrame {
    
    // Returns the current Rois on the live window.
    private Roi[] getRois() {
-      ImageWindow win;
+      ImagePlus plus;
       try {
-         win = gui_.compat().getSnapLiveWin();
+         plus = gui_.live().getDisplay().getImagePlus();
       } catch (Exception e) {
          return new Roi[0]; // empty array
       }
-      return ProjectorControlForm.getRois(win, false);  
+      return ProjectorControlForm.getRois(plus, false);
    }
    
    // Get the total number of ROIs available in the Snap/Live window.
@@ -480,8 +480,7 @@ public class MosaicSequencingFrame extends MMFrame {
      
    // Get a list of SequenceEvents by extracting information from the sequenceTable_.
    private ArrayList<SequenceEvent> getSequenceEvents() {
-      final ImageWindow snapLiveWin = gui_.compat().getSnapLiveWin();
-      final ImagePlus snapLiveImage = snapLiveWin.getImagePlus();
+      final ImagePlus snapLiveImage = gui_.live().getDisplay().getImagePlus();
       List<FloatPolygon> availableFloatRoiPolygons = projectorControlForm_.transformROIs(snapLiveImage, getRois());
       List<Polygon> availableRoiPolygons = Utils.FloatToNormalPolygon(
               availableFloatRoiPolygons);

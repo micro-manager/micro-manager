@@ -125,6 +125,19 @@ public interface Studio {
    public ScriptController getScriptController();
 
    /**
+    * Provides access to the Snap/Live display and associated logic.
+    * @return SnapLiveManager instance.
+    */
+   public SnapLiveManager live();
+
+   /**
+    * Provides access to the Snap/Live display and associated logic. Identical
+    * to live() except in name.
+    * @return SnapLiveManager instance. 
+    */
+   public SnapLiveManager getSnapLiveManager();
+
+   /**
     * Provides access to the UserProfile instance for accessing per-user
     * profiles.
     * @return UserProfile instance

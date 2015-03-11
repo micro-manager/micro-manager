@@ -16,6 +16,7 @@ import java.util.Map;
 import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
+import org.micromanager.display.DisplayWindow;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.Studio;
 import org.micromanager.internal.utils.ImageUtils;
@@ -36,7 +37,7 @@ public class CalibrationThread extends Thread {
 
    private int progress_ = 0;
    private final PixelCalibratorPlugin plugin_;
-   private ImageWindow liveWin_;
+   private DisplayWindow liveWin_;
    private ImageProcessor referenceImage_;
 
    private double x;
@@ -117,10 +118,10 @@ public class CalibrationThread extends Thread {
             core_.snapImage();
             TaggedImage image = core_.getTaggedImage();
             Object pix = image.pix;
-            app_.displayImage(image);
+            app_.live().displayImage(app_.data().convertTaggedImage(image));
             if (liveWin_ == null)
-               liveWin_ = app_.getSnapLiveManager().getSnapLiveWindow();
-            liveWin_.setTitle("Calibrating...");
+               liveWin_ = app_.getSnapLiveManager().getDisplay();
+            liveWin_.setCustomTitle("Calibrating...");
             return ImageUtils.makeMonochromeProcessor(image);
          } catch (CalibrationFailedException e) {
             throw e;
@@ -319,7 +320,7 @@ public class CalibrationThread extends Thread {
       catch (Exception e) {
          throw new CalibrationFailedException(e.getMessage());
       }
-      liveWin_.setTitle("Calibrating...done.");
+      liveWin_.setCustomTitle("Calibrating...done.");
       liveWin_.getImagePlus().killRoi();
       return secondApprox;
    }

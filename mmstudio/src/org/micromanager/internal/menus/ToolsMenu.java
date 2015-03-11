@@ -239,12 +239,7 @@ public class ToolsMenu {
             studio_.setConfigChanged(false);
          }
 
-         // Track whether we should turn live mode back on after reloading.
-         boolean liveRunning = false;
-         if (studio_.isLiveModeOn()) {
-            liveRunning = true;
-            studio_.enableLiveMode(false);
-         }
+         studio_.live().setSuspended(true);
 
          // unload all devices before starting configurator
          core_.reset();
@@ -272,9 +267,7 @@ public class ToolsMenu {
          studio_.setSysConfigFile(cfg2.getFileName());
 
          GUIUtils.preventDisplayAdapterChangeExceptions();
-         if (liveRunning) {
-            studio_.enableLiveMode(liveRunning);
-         }
+         studio_.live().setSuspended(false);
       } catch (Exception e) {
          ReportingUtils.showError(e);
       }

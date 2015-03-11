@@ -237,8 +237,7 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
 
          Configuration cfg = core_.getConfigGroupState(groupName);
 
-         boolean liveMode = gui_.compat().isLiveModeOn();
-         gui_.compat().enableLiveMode(false);
+         gui_.live().setSuspended(true);
 
          setUpdating(true);
 
@@ -271,7 +270,7 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
 
          updateRowVisibility(flags);
 
-         gui_.compat().enableLiveMode(liveMode);
+         gui_.live().setSuspended(false);
       } catch (Exception e) {
          handleException(e);
       }

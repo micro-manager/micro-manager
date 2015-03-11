@@ -181,9 +181,7 @@ public class SplitViewFrame extends MMFrame {
    private void enableLiveMode(boolean enable) {
       try {
          if (enable) {
-            if (gui_.compat().isLiveModeOn()) {
-               gui_.compat().enableLiveMode(false);
-            }
+            gui_.live().setLiveMode(false);
             if (timer_.isRunning()) {
                return;
             }
@@ -316,10 +314,12 @@ public class SplitViewFrame extends MMFrame {
          dataStore_.putImage(image);
 
       } catch (Exception e) {
-         if (gui_.compat().isLiveModeOn())
+         if (gui_.live().getIsLiveModeOn()) {
             enableLiveMode(false);
-         else
+         }
+         else {
             gui_.logs().showError(e);
+         }
       }
    }
 

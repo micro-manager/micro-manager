@@ -1,5 +1,8 @@
 package org.micromanager.internal.utils;
 
+import org.micromanager.SnapLiveManager;
+import org.micromanager.internal.MMStudio;
+
 /**
  * Storage container for HotKeyActions
  *
@@ -20,9 +23,8 @@ public class HotKeyAction {
       public int type_;  // either GUICOMMAND or BEANSHELLSCRIPT
       public int guiCommand_;
       public java.io.File beanShellScript_;
-      private org.micromanager.internal.MMStudio studio_ =
-              org.micromanager.internal.MMStudio.getInstance();
-      private org.micromanager.internal.SnapLiveManager snapLiveManager_;
+      private MMStudio studio_ = MMStudio.getInstance();
+      private SnapLiveManager snapLiveManager_;
 
       public HotKeyAction(int guiCommand) {
          type_ = GUICOMMAND;

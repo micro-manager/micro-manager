@@ -56,7 +56,6 @@ public class RecallPlugin implements MMPlugin {
       "Recalls (live) images left over in the internal sequence buffer";
    private CMMCore core_;
    private MMStudio gui_;
-   private MMStudio.DisplayImageRoutine displayImageRoutine_;
    // TODO: assign this name to the viewer window once the api has that ability
    private final String ACQ_NAME = "Live Replay";
    private int multiChannelCameraNrCh_;
@@ -68,25 +67,6 @@ public class RecallPlugin implements MMPlugin {
    public void setApp(Studio app) {
       gui_ = (MMStudio) app;                                        
       core_ = app.getCMMCore(); 
-      
-      displayImageRoutine_ = new MMStudio.DisplayImageRoutine() {
-         @Override
-         public void show(final TaggedImage ti) {
-            try {
-               if (ti == TaggedImageQueue.POISON) {
-                  store_ = null;
-               } else {
-                  store_.putImage(gui_.data().convertTaggedImage(ti));
-               }
-            } catch (MMScriptException e) {
-               gui_.logError(e);
-            } catch (DatastoreFrozenException ex) {
-               gui_.logError(ex);
-            } catch (JSONException ex) {
-               gui_.logError(ex);
-            }
-         }
-      };
    }
 
    @Override
@@ -105,50 +85,59 @@ public class RecallPlugin implements MMPlugin {
          gui_.showMessage("There are no Images in the Micro-Manager buffer");
          return;
       }
-      LinkedBlockingQueue<TaggedImage> imageQueue_ =
-              new LinkedBlockingQueue<TaggedImage>();
-      gui_.runDisplayThread(imageQueue_, displayImageRoutine_);
       
       multiChannelCameraNrCh_ = (int) core_.getNumberOfCameraChannels();
       String camera = core_.getCameraDevice();
 
       if (multiChannelCameraNrCh_ == 1) {
          int frameCounter = 0;
-         try {
-            for (int i = 0; i < remaining; i++) {
+         for (int i = 0; i < remaining; i++) {
+            try {
                TaggedImage tImg = core_.popNextTaggedImage();
                normalizeTags(tImg, frameCounter);
                frameCounter++;
-               imageQueue_.put(tImg);
+               store_.putImage(gui_.data().convertTaggedImage(tImg));
             }
-            imageQueue_.put(TaggedImageQueue.POISON);
-         } catch (Exception ex) {
-            gui_.logError(ex, "Error in Live Replay");
+            catch (DatastoreFrozenException e) { // Can't add to datastore.
+               gui_.logError(e);
+            }
+            catch (JSONException e) { // Error in TaggedImage tags
+               gui_.logError(e);
+            }
+            catch (Exception e) { // Error in popNextTaggedImage
+               gui_.logError(e);
+            }
          }
       } else if (multiChannelCameraNrCh_ > 1) {
          int[] frameCounters = new int[multiChannelCameraNrCh_];
-         try {
-            for (int i = 0; i < remaining; i++) {
+         for (int i = 0; i < remaining; i++) {
+            try {
                TaggedImage tImg = core_.popNextTaggedImage();
-               
-               if (tImg.tags.has(camera + "-CameraChannelName")) {
-                  String channelName = tImg.tags.getString(camera + "-CameraChannelName");
-                  tImg.tags.put("Channel", channelName);
-                  int channelIndex = tImg.tags.getInt(camera + "-CameraChannelIndex");
-                  tImg.tags.put("ChannelIndex", channelIndex);
-                  normalizeTags(tImg, frameCounters[channelIndex]);
-                  frameCounters[channelIndex]++;
-                  imageQueue_.put(tImg);
+            
+               if (!tImg.tags.has(camera + "-CameraChannelName")) {
+                  continue;
                }
+               String channelName = tImg.tags.getString(camera + "-CameraChannelName");
+               tImg.tags.put("Channel", channelName);
+               int channelIndex = tImg.tags.getInt(camera + "-CameraChannelIndex");
+               tImg.tags.put("ChannelIndex", channelIndex);
+               normalizeTags(tImg, frameCounters[channelIndex]);
+               frameCounters[channelIndex]++;
+               store_.putImage(gui_.data().convertTaggedImage(tImg));
             }
-            imageQueue_.put(TaggedImageQueue.POISON);
-         } catch (Exception ex) {
-            gui_.logError(ex, "Error in Live Replay Plugin");
+            catch (DatastoreFrozenException e) { // Can't add to datastore.
+               gui_.logError(e);
+            }
+            catch (JSONException e) { // Error in TaggedImage tags
+               gui_.logError(e);
+            }
+            catch (Exception e) { // Error in popNextTaggedImage
+               gui_.logError(e);
+            }
          }
       }        
    }
 
-   
    private void normalizeTags(TaggedImage ti, int frameIndex) {
       if (ti != TaggedImageQueue.POISON) {
          int channel = 0;

@@ -317,7 +317,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
          new Runnable() {
             @Override
             public void run() {
-               studio_.enableLiveMode(!studio_.isLiveModeOn());
+               studio_.live().setLiveMode(!studio_.live().getIsLiveModeOn());
             }
          },
          "camera_go.png", topPanel, 7, 26, 95, 47);

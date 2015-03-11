@@ -41,6 +41,7 @@ import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.data.internal.DefaultDatastore;
 import org.micromanager.data.internal.DefaultImage;
 
+import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.DefaultDisplayWindow;
 
 import org.micromanager.events.LiveModeEvent;
@@ -55,7 +56,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * This class is responsible for all logic surrounding live mode and the
  * "snap image" display (which is the same display as that used for live mode).
  */
-public class SnapLiveManager {
+public class SnapLiveManager implements org.micromanager.SnapLiveManager {
    private CMMCore core_;
    private DisplayWindow display_;
    private DefaultDatastore store_;
@@ -76,6 +77,7 @@ public class SnapLiveManager {
       listeners_ = new ArrayList<LiveModeListener>();
    }
 
+   @Override
    public void setLiveMode(boolean isOn) {
       if (isOn_ == isOn) {
          return;
@@ -107,6 +109,7 @@ public class SnapLiveManager {
     * to stop it and then setSuspended(false) to resume-only-if-necessary.
     * Note that this function will not notify listeners.
     */
+   @Override
    public void setSuspended(boolean shouldSuspend) {
       if (shouldSuspend && isOn_) {
          // Need to stop now.`
@@ -250,15 +253,9 @@ public class SnapLiveManager {
       }
    }
 
+   @Override
    public boolean getIsLiveModeOn() {
       return isOn_;
-   }
-
-   public ImageWindow getSnapLiveWindow() {
-      if (display_ != null && !display_.getIsClosed()) {
-         return display_.getImageWindow();
-      }
-      return null;
    }
 
    /**
@@ -362,6 +359,7 @@ public class SnapLiveManager {
     * parameters (width, height, or pixel type) change, we have to recreate
     * the display and datastore.
     */
+   @Override
    public void displayImage(Image image) {
       try {
          DefaultImage newImage = new DefaultImage(image, image.getCoords(), image.getMetadata());
@@ -399,17 +397,12 @@ public class SnapLiveManager {
       }
    }
 
-   public void moveDisplayToFront() {
-      if (display_ != null && !display_.getIsClosed()) {
-         display_.toFront();
-      }
-   }
-
    /**
     * Snap an image, display it if indicated, and return it.
     * TODO: for multichannel images we are just returning the last channel's
     * image.
     */
+   @Override
    public List<Image> snap(boolean shouldDisplay) {
       if (isOn_) {
          // Just return the most recent images.
@@ -441,6 +434,14 @@ public class SnapLiveManager {
       }
       catch (Exception e) {
          ReportingUtils.showError(e, "Failed to snap image");
+      }
+      return null;
+   }
+
+   @Override
+   public DisplayWindow getDisplay() {
+      if (display_ != null && !display_.getIsClosed()) {
+         return display_;
       }
       return null;
    }

@@ -38,6 +38,7 @@ import javax.swing.JSlider;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import org.micromanager.display.DisplayWindow;
 import org.micromanager.Studio;
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.events.NewDisplayEvent;
@@ -202,7 +203,7 @@ public class PatternOverlayFrame extends MMFrame {
     *          window. Will return null if no live image is currently active.
     */
    public static ImagePlus getLiveWindowImage () {
-      ImageWindow window = gui_.compat().getSnapLiveWin();
+      DisplayWindow window = gui_.live().getDisplay();
       if (window == null) {
          return null;
       } else {

@@ -203,10 +203,7 @@ public class ConfigGroupPad extends JScrollPane{
             try {
                if (value != null && value.toString().length() > 0)
                {
-                 boolean restartLive = parentGUI_.compat().isLiveModeOn();
-                 if (restartLive)
-                    parentGUI_.compat().enableLiveMode(false);
-                 
+                  parentGUI_.live().setSuspended(true);
                   if (item.singleProp) {
                      if (item.hasLimits && item.isInteger()) {
                         core_.setProperty(item.device, item.name, NumberUtils.intStringDisplayToCore(value));
@@ -248,8 +245,7 @@ public class ConfigGroupPad extends JScrollPane{
                      }
                   }
                   
-                  if (restartLive)
-                       parentGUI_.compat().enableLiveMode(true);
+                  parentGUI_.live().setSuspended(false);
                }
             } catch (Exception e) {
                handleException(e);

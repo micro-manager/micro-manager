@@ -121,7 +121,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.Autof
       try {
          Rectangle oldROI = app_.compat().getROI();
          CMMCore core = app_.getCMMCore();
-         liveModeOn_ = app_.compat().isLiveModeOn();
+         liveModeOn_ = app_.live().getIsLiveModeOn();
 
          //ReportingUtils.logMessage("Original ROI: " + oldROI);
          int w = (int) (oldROI.width * cropFactor);
@@ -253,7 +253,12 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.Autof
 
                   @Override
                   public void run() {
-                     app_.compat().displayImage(img1);
+                     try {
+                        app_.live().displayImage(app_.data().convertTaggedImage(img1));
+                     }
+                     catch (Exception e) {
+                        app_.logs().showError(e);
+                     }
                   }
                });
             }
@@ -299,7 +304,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.Autof
          core.snapImage();
          TaggedImage img = core.getTaggedImage();
          if (show.contentEquals("Yes")) {
-            app_.compat().displayImage(img);
+            app_.live().displayImage(app_.data().convertTaggedImage(img));
          }
          ImageProcessor proc = ImageUtils.makeProcessor(core, img);
          score = computeScore(proc);

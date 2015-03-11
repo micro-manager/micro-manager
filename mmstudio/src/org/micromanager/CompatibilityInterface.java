@@ -329,23 +329,11 @@ public interface CompatibilityInterface {
    public void saveConfigPresets();
 
    /**
-    * Returns the ImageJ ImageWindow instance that is used for Snap and Live display.
-    * @return ImageJ ImageWindow instance currently used for Snap/Live display
-    */
-   public ImageWindow getSnapLiveWin();
-
-   /**
     * Installs an autofocus plugin class from the class path.
     * @param className
     * @return ???
    */
    public String installAutofocusPlugin(String className);
-
-   /**
-    * Provides access to the Core and its functionality.
-    * @return Micro-Manager core object. 
-    */
-   public CMMCore getCMMCore();
 
    /**
     * Currently active autofocus device (can be either a Java or C++ coded device).
@@ -370,27 +358,6 @@ public interface CompatibilityInterface {
     * @param oldL
     */
    public void removeMMListener(MMListenerInterface oldL);
-
-   /**
-    * Show a TaggedImage in the snap/live window (uses current camera settings
-    * to figure out the shape of the image)
-    * @param image TaggedImage (pixel data and metadata tags) to be displayed
-    * TODO:
-    * @return ????
-    */
-   public boolean displayImage(TaggedImage image);
-
-   /**
-    * Determines whether live mode is currently running.
-    * @return when true, live mode is running, when false live mode is not running.
-    */
-   public boolean isLiveModeOn();
-
-   /**
-    * Turn live mode on or off (equivalent to pressing the Live mode button).
-    * @param b true starts live mode, false stops live mode.
-    */
-   public void enableLiveMode(boolean b);
 
    /**
     * Get the default camera's ROI -- a convenience function.
