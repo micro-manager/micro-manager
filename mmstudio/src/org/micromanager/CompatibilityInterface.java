@@ -37,9 +37,6 @@ import org.micromanager.display.OverlayPanel;
 // These ought not be part of the public API and methods that refer to them are
 // deprecated.
 import org.json.JSONObject;
-import org.micromanager.internal.dialogs.AcqControlDlg;
-import org.micromanager.internal.positionlist.PositionListDlg;
-import org.micromanager.acquisition.internal.MMAcquisition;
 import org.micromanager.internal.utils.AutofocusManager;
 import org.micromanager.internal.utils.MMScriptException;
 
@@ -88,22 +85,6 @@ public interface CompatibilityInterface {
            throws MMScriptException;
    
    /**
-    * Another way to create data set, an alternative to the 
-    *  openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, int nrPositions, boolean show, boolean save)
-    * 
-    * The caller is responsible for providing all required metadata within the summaryMetadata argument
-    * @param summaryMetadata The metadata describing the acquisition parameters
-    * @param diskCached True if images are cached on disk; false if they are kept in RAM only.
-    * @param displayOff True if no display is to be created or shown.
-    * @return 
-    *
-    * @deprecated Use openAcquisition() instead.
-    */
-   @Deprecated
-   public String createAcquisition(JSONObject summaryMetadata, boolean diskCached, 
-           boolean displayOff);
-
-   /**
     * Set up image physical dimensions for the data set that has already been opened.
     * Once dimensions of the image has been set, they can't be changed, i.e. subsequent calls to this method will generate an error.
     * Typically there is no need to call this method, except when display options have to be set before the first image is inserted.
@@ -130,19 +111,6 @@ public interface CompatibilityInterface {
     */
    public void setAcquisitionAddImageAsynchronous(String name) 
            throws MMScriptException;
-
-   /**
-    * Provides access to the data set through the MMAcquisition interface.
-    * Typically there is no need to use this low-level method and interfere with the default acquisition execution.
-    * Intended use is within advanced plugins.
-    * @param name - data set name
-    * @return deprecated MMAcquisition
-    * @throws MMScriptException
-    *
-    * @deprecated Because it returns an internal object that is subject to change.
-    */
-   @Deprecated
-   public MMAcquisition getAcquisition(String name) throws MMScriptException;
 
    /**
     * Return the Datastore for the named acquisition.
@@ -378,29 +346,6 @@ public interface CompatibilityInterface {
     * Adds the current position to the list (same as pressing the "Mark" button in the XYPositionList)
     */
    public void markCurrentPosition();
-
-   /**
-    * Returns the Multi-Dimensional Acquisition Window.
-    * To show the window, call:
-    * AcqControlDlg dlg = gui.getAcqDlg();
-    * dlg.setVisible(true);
-    * @return Handle to the MDA acquisition dialog
-    *
-    * @deprecated Use the get/setAcquisitionSettings() interface instead.
-    */
-   @Deprecated
-   public AcqControlDlg getAcqDlg();
-
-   /**
-    * Returns the PositionList Dialog.
-    * If the Dialog did not yet exist, it will be created.
-    * The Dialog will not necessarily be shown, call the setVisibile method of the dialog to do so
-    * @return Handle to the positionList Dialog
-    *
-    * @deprecated Use the get/setPositionList() interface instead.
-    */
-   @Deprecated
-   public PositionListDlg getXYPosListDlg();
 
    /**
     * Returns true when an acquisition is currently running (note: this function will

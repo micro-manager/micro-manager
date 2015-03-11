@@ -601,7 +601,8 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
                AcqControlDlg.setChannelExposure(channelGroup, channel,
                      exposure);
                if (AcqControlDlg.getShouldSyncExposure()) {
-                  getAcqDlg().setChannelExposureTime(channelGroup, channel, exposure);
+                  acqControlWin_.setChannelExposureTime(channelGroup,
+                        channel, exposure);
                }
             }
          }
@@ -812,7 +813,7 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
       name = acqMgr_.getUniqueAcquisitionName(name);
       acqMgr_.openAcquisition(name, rootDir, show, !inRAM, true);
       try {
-         getAcquisition(name).initialize();
+         getAcquisitionWithName(name).initialize();
       } catch (MMScriptException mex) {
          acqMgr_.closeAcquisition(name);
          throw (mex);
@@ -960,22 +961,6 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
       if (posListDlg_ != null) {
          posListDlg_.markPosition();
       }
-   }
-
-   /**
-    * Implements Studio
-    */
-   @Override
-   @Deprecated
-   public AcqControlDlg getAcqDlg() {
-      return acqControlWin_;
-   }
-   
-   @Override
-   @Deprecated
-   public PositionListDlg getXYPosListDlg() {
-      checkPosListDlg();
-      return posListDlg_;
    }
 
    @Override
@@ -1860,12 +1845,6 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
             show, virtual);
    }
 
-   @Override
-   @Deprecated
-   public String createAcquisition(JSONObject summaryMetadata, boolean diskCached, boolean displayOff) {
-      return acqMgr_.createAcquisition(summaryMetadata, diskCached, engine_, displayOff);
-   }
-   
    /**
     * Call initializeAcquisition with values extracted from the provided 
     * JSONObject.
@@ -1973,15 +1952,6 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
    public String[] getAcquisitionNames()
    {
       return acqMgr_.getAcquisitionNames();
-   }
-
-   // This function shouldn't be exposed in the API since users shouldn't need
-   // direct access to Acquisition objects. For internal use, we have
-   // getAcquisitionWithName(), below.
-   @Override
-   @Deprecated
-   public MMAcquisition getAcquisition(String name) throws MMScriptException {
-      return acqMgr_.getAcquisition(name);
    }
 
    public MMAcquisition getAcquisitionWithName(String name) throws MMScriptException {
@@ -2123,14 +2093,9 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
       acqControlWin_.updateGUIContents();
    }
 
-   // Deprecated; use correctly spelled version. (Used to be part of API.)
-   public void setAcqusitionSettings(SequenceSettings ss) {
-      setAcquisitionSettings(ss);
-   }
-   
    @Override
    public void promptToSaveAcquisition(String name, boolean prompt) throws MMScriptException {
-      getAcquisition(name).promptToSave(prompt);
+      getAcquisitionWithName(name).promptToSave(prompt);
    }
 
    @Override
