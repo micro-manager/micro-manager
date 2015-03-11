@@ -151,7 +151,7 @@ public class DefaultUserProfile implements UserProfile {
                new JSONObject(loadFileToString(path)));
       }
       catch (JSONException e) {
-         ReportingUtils.logError(e, "Failed to convert file contents for file at " + path + " to JSON");
+         ReportingUtils.showError(e, "There was an error when loading saved user preferences. Please delete the file at " + path + " and re-start Micro-Manager.");
          return null;
       }
    }
