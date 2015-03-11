@@ -11,14 +11,14 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
-import java.util.Hashtable;
+import java.util.HashMap;
+import java.util.Map;
 import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.ScriptInterface;
 import org.micromanager.internal.utils.ImageUtils;
-import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.MathFunctions;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -30,9 +30,8 @@ public class CalibrationThread extends Thread {
    private final MMStudio app_;
    private final CMMCore core_;
    private final String xystage_;
-   private Hashtable<Point2D.Double, Point2D.Double> pointPairs_;
+   private Map<Point2D.Double, Point2D.Double> pointPairs_;
 
-   private boolean isDone_ = false;
    private AffineTransform result_ = null;
 
    private int progress_ = 0;
@@ -300,7 +299,7 @@ public class CalibrationThread extends Thread {
    private AffineTransform runCalibration(boolean sim)
       throws InterruptedException, CalibrationFailedException
    {
-      pointPairs_ = new Hashtable<Point2D.Double, Point2D.Double>();
+      pointPairs_ = new HashMap<Point2D.Double, Point2D.Double>();
       Point2D.Double xy0 = null;
       try {
          xy0 = app_.getCMMCore().getXYPosition();

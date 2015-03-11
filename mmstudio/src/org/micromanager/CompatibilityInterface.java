@@ -24,18 +24,14 @@ package org.micromanager;
 
 import ij.gui.ImageWindow;
 
-import java.awt.Component;
 import java.awt.Rectangle;
-import java.awt.geom.Point2D;
 
 import java.util.List;
 
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 
-import org.micromanager.data.DataManager;
 import org.micromanager.data.Datastore;
-import org.micromanager.display.DisplayManager;
 import org.micromanager.display.OverlayPanel;
 
 // These ought not be part of the public API and methods that refer to them are
@@ -110,7 +106,10 @@ public interface CompatibilityInterface {
     * @param save Whether or not save data during acquisition.
     * @throws MMScriptException
     */
-   public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, int nrPositions, boolean show, boolean save) throws MMScriptException;
+   public void openAcquisition(String name, String rootDir, int nrFrames, 
+           int nrChannels, int nrSlices, int nrPositions, boolean show, 
+           boolean save) 
+           throws MMScriptException;
    
    /**
     * Another way to create data set, an alternative to the 
@@ -142,7 +141,9 @@ public interface CompatibilityInterface {
     * @param bitDepth - Dynamic range in bits per pixel
     * @throws MMScriptException
     */
-   public void initializeAcquisition(String name, int width, int height, int bytesPerPixel, int bitDepth) throws MMScriptException;
+   public void initializeAcquisition(String name, int width, int height, 
+           int bytesPerPixel, int bitDepth) 
+           throws MMScriptException;
         
    /**
     * Change an acquisition so that adding images to it is done asynchronously.
@@ -151,7 +152,8 @@ public interface CompatibilityInterface {
     * @param name of acquisition
     * @throws MMScriptException if the specified acquisition does not exist.
     */
-   public void setAcquisitionAddImageAsynchronous(String name) throws MMScriptException;
+   public void setAcquisitionAddImageAsynchronous(String name) 
+           throws MMScriptException;
 
    /**
     * Provides access to the data set through the MMAcquisition interface.
