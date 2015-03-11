@@ -26,7 +26,7 @@ import java.util.prefs.Preferences;
 import mmcorej.CMMCore;
 
 import org.micromanager.Autofocus;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.internal.utils.AutofocusBase;
 import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.PropertyItem;
@@ -198,7 +198,7 @@ public class AutofocusDuo extends AutofocusBase implements Autofocus  {
    }
    
    @Override
-   public void setApp(ScriptInterface app) {
+   public void setApp(Studio app) {
       core_ = app.getCMMCore();
    }
 

@@ -39,7 +39,7 @@ import java.util.prefs.Preferences;
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
 
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.internal.utils.AutofocusBase;
 import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.PropertyItem;
@@ -529,7 +529,7 @@ public class Autofocus extends AutofocusBase implements org.micromanager.Autofoc
    }
 
    @Override
-   public void setApp(ScriptInterface app) {
+   public void setApp(Studio app) {
       core_ = app.getCMMCore();
    }
 }   

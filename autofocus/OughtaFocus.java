@@ -42,7 +42,7 @@ import org.apache.commons.math.analysis.UnivariateRealFunction;
 import org.apache.commons.math.optimization.GoalType;
 import org.apache.commons.math.optimization.univariate.BrentOptimizer;
 import org.json.JSONException;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.internal.utils.AutofocusBase;
 import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.internal.utils.MDUtils;
@@ -55,7 +55,7 @@ import org.micromanager.internal.utils.TextUtils;
 
 public class OughtaFocus extends AutofocusBase implements org.micromanager.Autofocus {
 
-   private ScriptInterface app_;
+   private Studio app_;
    private static final String AF_DEVICE_NAME = "OughtaFocus";
    private static final String SEARCH_RANGE = "SearchRange_um";
    private static final String TOLERANCE = "Tolerance_um";
@@ -455,7 +455,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.Autof
    }
 
    @Override
-   public void setApp(ScriptInterface app) {
+   public void setApp(Studio app) {
       app_ = app;
       CMMCore core = app_.getCMMCore();
       String chanGroup = core.getChannelGroup();
