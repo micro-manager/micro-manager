@@ -50,30 +50,6 @@ import org.micromanager.internal.utils.MMScriptException;
  * "mm.getCompatibilityInterface()".
  */
 public interface CompatibilityInterface {
-	
-   /**
-    * Request a pause in script execution for the specified number of 
-    * milliseconds.  Most systems will guarantee a pause of at least 
-    * the desired duration, but may wait longer than requested before 
-    * continuing execution.
-    * @param ms Time in millisecond that the script should pause
-    * @throws org.micromanager.internal.utils.MMScriptException
-    */
-   public void sleep(long ms) throws MMScriptException;
-         
-   /**
-    * Displays text in the scripting console output window.
-    * @param text 
-    * @throws MMScriptException 
-    */
-   public void message(String text) throws MMScriptException;
-   
-   /**
-    * Clears scripting console output window.
-    * @throws MMScriptException 
-    */
-   public void clearMessageWindow() throws MMScriptException;
-
    /**
     * Brings GUI up to date with the recent changes in the mmcore.
     */

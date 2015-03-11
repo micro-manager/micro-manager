@@ -1,6 +1,7 @@
 package org.micromanager.internal.script;
 
 import org.micromanager.internal.utils.MMScriptException;
+import org.micromanager.ScriptController;
 
 import bsh.Interpreter;
 
@@ -11,7 +12,6 @@ public interface ScriptingEngine {
    public void insertGlobalObject(String name, Object obj) throws MMScriptException;
    public void stopRequest(boolean shouldInterrupt);
    public boolean stopRequestPending();
-   public void sleep(long ms) throws MMScriptException;
    public void setInterpreter(Interpreter interp);
    public void resetInterpreter();
 }

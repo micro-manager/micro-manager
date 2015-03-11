@@ -13,7 +13,7 @@ public class BeanshellEngine implements ScriptingEngine {
    boolean error_ = false;
    EvalThread evalThd_;
    boolean stop_ = false;
-   private ScriptingGUI gui_;
+   private ScriptPanel panel_;
    private Interpreter interp_old_;
 
    public class EvalThread extends Thread {
@@ -34,16 +34,16 @@ public class BeanshellEngine implements ScriptingEngine {
             interp_.eval(script_);
          } catch (TargetError e){
             int lineNo = e.getErrorLineNumber(); 
-            gui_.displayError(formatBeanshellError(e, lineNo), lineNo);
+            panel_.displayError(formatBeanshellError(e, lineNo), lineNo);
          } catch (ParseException e) {
             // special handling of the parse errors beacuse beanshell error object
             // has bugs and does not return line numbers
             String msg = e.getMessage();
             String lineNumberTxt = msg.substring(20, msg.indexOf(','));
-            gui_.displayError("Parse error: " + msg, Integer.parseInt(lineNumberTxt));
+            panel_.displayError("Parse error: " + msg, Integer.parseInt(lineNumberTxt));
          } catch (EvalError e) {
             int lineNo = e.getErrorLineNumber(); 
-            gui_.displayError(formatBeanshellError(e, lineNo), lineNo);
+            panel_.displayError(formatBeanshellError(e, lineNo), lineNo);
          } finally {
             running_ = false;
          }
@@ -66,11 +66,11 @@ public class BeanshellEngine implements ScriptingEngine {
 	   interp_ = interp_old_;
    }
    
-   public BeanshellEngine(ScriptingGUI gui) {
+   public BeanshellEngine(ScriptPanel panel) {
       //interp_ = new Interpreter();
       running_ = false;
       evalThd_ = new EvalThread("");
-      gui_ = gui;
+      panel_ = panel;
    }
 
    @Override
@@ -142,14 +142,5 @@ public class BeanshellEngine implements ScriptingEngine {
          return "Line " + line + ": general error : " + (t != null ? t.getMessage() : e.getErrorText());
       }
       
-   }
-
-   @Override
-   public void sleep(long ms) throws MMScriptException {
-      try {
-         Thread.sleep(ms);
-      } catch (InterruptedException e) {
-         throw new MMScriptException	("Execution interrupted by the user");
-      }
    }
 }

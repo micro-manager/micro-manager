@@ -111,6 +111,20 @@ public interface ScriptInterface {
    public DisplayManager getDisplayManager();
 
    /**
+    * Provides access to some utility methods for use in the Beanshell
+    * scripting panel.
+    * @return ScriptController instance.
+    */
+   public ScriptController scripter();
+
+   /**
+    * Provides access to some utility methods for use in the Beanshell
+    * scripting panel. Identical to scripter() except in name.
+    * @return ScriptController instance.
+    */
+   public ScriptController getScriptController();
+
+   /**
     * Provides access to the UserProfile instance for accessing per-user
     * profiles.
     * @return UserProfile instance

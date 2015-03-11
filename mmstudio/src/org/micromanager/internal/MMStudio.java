@@ -86,6 +86,7 @@ import org.micromanager.LogManager;
 import org.micromanager.MMListenerInterface;
 import org.micromanager.display.OverlayPanel;
 import org.micromanager.PositionList;
+import org.micromanager.ScriptController;
 import org.micromanager.ScriptInterface;
 import org.micromanager.SequenceSettings;
 import org.micromanager.UserProfile;
@@ -928,12 +929,10 @@ public class MMStudio implements ScriptInterface, CompatibilityInterface, LogMan
    }
 
    private void createScriptPanel() {
-      if (scriptPanel_ == null) {
-         scriptPanel_ = new ScriptPanel(core_, studio_);
-         scriptPanel_.insertScriptingObject(SCRIPT_CORE_OBJECT, core_);
-         scriptPanel_.insertScriptingObject(SCRIPT_ACQENG_OBJECT, engine_);
-         scriptPanel_.setParentGUI(studio_);
-      }
+      scriptPanel_ = new ScriptPanel(core_, studio_);
+      scriptPanel_.insertScriptingObject(SCRIPT_CORE_OBJECT, core_);
+      scriptPanel_.insertScriptingObject(SCRIPT_ACQENG_OBJECT, engine_);
+      scriptPanel_.setParentGUI(studio_);
    }
 
    private void createPipelinePanel() {
@@ -1883,16 +1882,6 @@ public class MMStudio implements ScriptInterface, CompatibilityInterface, LogMan
    }
 
    @Override
-   public void sleep(long ms) throws MMScriptException {
-      if (scriptPanel_ != null) {
-         if (scriptPanel_.stopRequestPending()) {
-            throw new MMScriptException("Script interrupted by the user!");
-         }
-         scriptPanel_.sleep(ms);
-      }
-   }
-
-   @Override
    public String getUniqueAcquisitionName(String stub) {
       return acqMgr_.getUniqueAcquisitionName(stub);
    }
@@ -2101,34 +2090,6 @@ public class MMStudio implements ScriptInterface, CompatibilityInterface, LogMan
       return acqMgr_.getAcquisition(name).getDatastore();
    }
    
-   @Override
-   public void message(final String text) throws MMScriptException {
-      if (scriptPanel_ != null) {
-         if (scriptPanel_.stopRequestPending()) {
-            throw new MMScriptException("Script interrupted by the user!");
-         }
-
-         SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-               if (scriptPanel_ != null) {
-                  scriptPanel_.message(text);
-               }
-            }
-         });            
-      }
-   }
-
-   @Override
-   public void clearMessageWindow() throws MMScriptException {
-      if (scriptPanel_ != null) {
-         if (scriptPanel_.stopRequestPending()) {
-            throw new MMScriptException("Script interrupted by the user!");
-         }
-         scriptPanel_.clearOutput();
-      }
-   }
-
    public AcquisitionWrapperEngine getAcquisitionEngine() {
       return engine_;
    }
@@ -2462,6 +2423,16 @@ public class MMStudio implements ScriptInterface, CompatibilityInterface, LogMan
    @Override
    public CompatibilityInterface getCompatibilityInterface() {
       return this;
+   }
+
+   @Override
+   public ScriptController scripter() {
+      return scriptPanel_;
+   }
+
+   @Override
+   public ScriptController getScriptController() {
+      return scriptPanel_;
    }
 
    public static boolean getShouldDeleteOldCoreLogs() {

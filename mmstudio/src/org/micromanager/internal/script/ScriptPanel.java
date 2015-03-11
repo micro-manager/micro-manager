@@ -87,6 +87,7 @@ import org.fife.ui.rtextarea.SearchResult;
 
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.PropertyEditor;
+import org.micromanager.ScriptController;
 import org.micromanager.ScriptInterface;
 import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.FileDialogs.FileType;
@@ -98,7 +99,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.TooltipTextMaker;
 
 
-public final class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI {
+public final class ScriptPanel extends MMFrame implements MouseListener, ScriptController {
    private static final long serialVersionUID = 1L;
    private static final int HISTORYSIZE = 100;
    private static final String STARTUP_SCRIPT = "path to the Beanshell script to run when the program starts up";
@@ -937,11 +938,9 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
          int[] cellAddress = new int[2];
          model_.GetCell(scriptFile_, cellAddress);
          model_.setLastMod(cellAddress[0], 0, scriptFile_.lastModified());
-         gui_.message("Saved file: " + scriptFile_.getName());
+         showMessage("Saved file: " + scriptFile_.getName());
       } catch (IOException ioe){
          ReportingUtils.showError(ioe, this);
-      } catch (MMScriptException mex) {
-         ReportingUtils.logError(mex);
       }
    }
 
@@ -1211,18 +1210,6 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
    }
 
    /**
-    * Displays text string in message window
-    * @param text
-    */
-   public void message (String text) {
-      messagePane_.setCharacterAttributes(sc_.getStyle(blackStyleName_), false);
-      messagePane_.replaceSelection(text + "\n");
-      cons_.print("\n"+text,java.awt.Color.black);
-      showPrompt();
-   }
-
-
-   /**
     * Displays text string in message window in color red
     * @param text - text to be displayed
     * @param lineNumber - line to be highlighted in red
@@ -1432,19 +1419,16 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
       }
    }
    
-   @Override
    public void displayMessage(String message) {
       SwingUtilities.invokeLater(new ExecuteDisplayMessage(message));
       gui_.logMessage(message);
    }
 
-   @Override
    public void displayError(String text) {
       SwingUtilities.invokeLater(new ExecuteDisplayMessage(text, true));
       ReportingUtils.logError(text);
    }
    
-   @Override
    public void displayError(String text, int lineNumber) {
       SwingUtilities.invokeLater(new ExecuteDisplayMessage(text, true, lineNumber));
       ReportingUtils.logError(text);
@@ -1452,11 +1436,6 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
 
    public boolean stopRequestPending() {
       return interp_.stopRequestPending();
-   }
-
-   public void sleep(long ms) throws MMScriptException {
-      if (ms > 0)
-         interp_.sleep(ms);
    }
 
    public static String getStartupScript() {
@@ -1467,5 +1446,39 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
    public static void setStartupScript(String path) {
       DefaultUserProfile.getInstance().setString(ScriptPanel.class,
             STARTUP_SCRIPT, path);
+   }
+
+   private void showMessage(String text) {
+      messagePane_.setCharacterAttributes(
+         sc_.getStyle(blackStyleName_), false);
+      messagePane_.replaceSelection(text + "\n");
+      cons_.print("\n" + text, java.awt.Color.black);
+      showPrompt();
+   }
+
+   @Override
+   public void message(final String text)
+         throws ScriptController.ScriptStoppedException {
+      if (stopRequestPending()) {
+         throw new ScriptController.ScriptStoppedException(
+               "Script interrupted by the user!");
+      }
+
+      SwingUtilities.invokeLater(new Runnable() {
+         @Override
+         public void run() {
+            showMessage(text);
+         }
+      });
+   }
+
+   @Override
+   public void clearMessageWindow()
+         throws ScriptController.ScriptStoppedException {
+      if (stopRequestPending()) {
+         throw new ScriptController.ScriptStoppedException(
+               "Script interrupted by the user!");
+      }
+      clearOutput();
    }
 }
