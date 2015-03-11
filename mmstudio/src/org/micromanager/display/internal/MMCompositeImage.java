@@ -130,7 +130,7 @@ public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
 
    @Override
    public synchronized void updateImage() {
-        superUpdateImage();
+      superUpdateImage();
    }
 
    private void superUpdateImage() {

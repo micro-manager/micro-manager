@@ -607,13 +607,17 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
                // uses lut.min and lut.max to set min and max of processor
                composite_.setChannelLut(lut, channelIndex_ + 1);
 
-               // ImageJ workaround: do this so the appropriate color model and
-               // min/max get applied in color or grayscale mode
-               try {
-                  JavaUtils.setRestrictedFieldValue(composite_, 
-                        CompositeImage.class, "currentChannel", -1);
-               } catch (NoSuchFieldException ex) {
-                  ReportingUtils.logError(ex);
+               if (composite_.getMode() == CompositeImage.COLOR ||
+                     composite_.getMode() == CompositeImage.GRAYSCALE) {
+                  // ImageJ workaround: do this so the appropriate color model
+                  // gets applied in color or grayscale mode. Otherwise we
+                  // can end up with erroneously grayscale images.
+                  try {
+                     JavaUtils.setRestrictedFieldValue(composite_, 
+                           CompositeImage.class, "currentChannel", -1);
+                  } catch (NoSuchFieldException ex) {
+                     ReportingUtils.logError(ex);
+                  }
                }
 
                if (composite_.getChannel() == channelIndex_ + 1) {
