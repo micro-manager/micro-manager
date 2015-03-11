@@ -20,7 +20,7 @@
 package org.micromanager.plugins.sequencebuffermonitor;
 
 import org.micromanager.MMPlugin;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 
 
 public class SequenceBufferMonitor implements MMPlugin {
@@ -28,10 +28,10 @@ public class SequenceBufferMonitor implements MMPlugin {
    public static final String tooltipDescription =
       "Display sequence buffer usage";
 
-   private ScriptInterface app_;
+   private Studio app_;
 
    @Override
-   public void setApp(ScriptInterface app) {
+   public void setApp(Studio app) {
       app_ = app;
    }
 

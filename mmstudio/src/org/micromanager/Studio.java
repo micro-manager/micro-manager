@@ -35,7 +35,7 @@ import org.micromanager.internal.utils.AutofocusManager;
  * MMStudio and available as the "mm" object in the Beanshell
  * scripting panel.
  */
-public interface ScriptInterface {
+public interface Studio {
    /**
     * Provides access to the compatibility layer that exposes some old 1.4
     * API methods.

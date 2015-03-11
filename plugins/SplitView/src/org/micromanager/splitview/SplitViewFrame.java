@@ -56,7 +56,7 @@ import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.display.RequestToCloseEvent;
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.MMScriptException;
@@ -71,7 +71,7 @@ import org.micromanager.internal.utils.MMTags;
  */
 public class SplitViewFrame extends MMFrame {
 
-   private final ScriptInterface gui_;
+   private final Studio gui_;
    private final CMMCore core_;
    private long imgDepth_;
    private int width_;
@@ -100,7 +100,7 @@ public class SplitViewFrame extends MMFrame {
    
 
    public SplitViewFrame(SplitViewProcessor processor, 
-         ScriptInterface gui) throws Exception {
+         Studio gui) throws Exception {
       processor_ = processor;
       gui_ = gui;
       core_ = gui_.getCMMCore();

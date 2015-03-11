@@ -1,5 +1,4 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          MMStudio.java
 //PROJECT:       Micro-Manager
 //SUBSYSTEM:     mmstudio
 //-----------------------------------------------------------------------------
@@ -87,7 +86,7 @@ import org.micromanager.MMListenerInterface;
 import org.micromanager.display.OverlayPanel;
 import org.micromanager.PositionList;
 import org.micromanager.ScriptController;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.SequenceSettings;
 import org.micromanager.UserProfile;
 import org.micromanager.events.ExposureChangedEvent;
@@ -138,10 +137,10 @@ import org.micromanager.internal.utils.WaitDialog;
 
 
 /*
- * Implements the ScriptInterface (i.e. primary API) and does various other
+ * Implements the Studio (i.e. primary API) and does various other
  * tasks that should probably be refactored out at some point.
  */
-public class MMStudio implements ScriptInterface, CompatibilityInterface, LogManager {
+public class MMStudio implements Studio, CompatibilityInterface, LogManager {
 
    private static final long serialVersionUID = 3556500289598574541L;
    private static final String MAIN_SAVE_METHOD = "saveMethod";
@@ -995,9 +994,10 @@ public class MMStudio implements ScriptInterface, CompatibilityInterface, LogMan
    }
 
    /**
-    * Part of ScriptInterface API
+    * Part of Studio API
     * Opens the XYPositionList when it is not opened
-    * Adds the current position to the list (same as pressing the "Mark" button)
+    * Adds the current position to the list (same as pressing the "Mark"
+    * button)
     */
    @Override
    public void markCurrentPosition() {
@@ -1010,7 +1010,7 @@ public class MMStudio implements ScriptInterface, CompatibilityInterface, LogMan
    }
 
    /**
-    * Implements ScriptInterface
+    * Implements Studio
     */
    @Override
    @Deprecated
@@ -2134,7 +2134,7 @@ public class MMStudio implements ScriptInterface, CompatibilityInterface, LogMan
       try {
          acquisitionEngine2010LoadingThread_.join();
          if (acquisitionEngine2010_ == null) {
-            acquisitionEngine2010_ = (IAcquisitionEngine2010) acquisitionEngine2010Class_.getConstructor(ScriptInterface.class).newInstance(studio_);
+            acquisitionEngine2010_ = (IAcquisitionEngine2010) acquisitionEngine2010Class_.getConstructor(Studio.class).newInstance(studio_);
          }
          return acquisitionEngine2010_;
       } catch (IllegalAccessException e) {
@@ -2182,7 +2182,7 @@ public class MMStudio implements ScriptInterface, CompatibilityInterface, LogMan
    }
 
    // NB will need @Override tags once these functions are exposed in the 
-   // ScriptInterface.
+   // Studio.
    @Override
    public void setImageProcessorPipeline(List<DataProcessor<TaggedImage>> pipeline) {
       getAcquisitionEngine().setImageProcessorPipeline(pipeline);

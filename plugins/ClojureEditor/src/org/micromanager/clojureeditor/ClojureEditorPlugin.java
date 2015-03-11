@@ -5,7 +5,7 @@
 package org.micromanager.clojureeditor;
 
 import org.micromanager.MMPlugin;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 
 public class ClojureEditorPlugin implements MMPlugin {
    public static final String menuName = "Clojure editor";
@@ -16,7 +16,7 @@ public class ClojureEditorPlugin implements MMPlugin {
       // do nothing
    }
 
-   public void setApp(ScriptInterface app) {
+   public void setApp(Studio app) {
       // do nothing.
    }
 

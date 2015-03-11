@@ -16,7 +16,7 @@ import mmcorej.CMMCore;
 import org.micromanager.MMOptions;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.acquisition.AcquisitionEngine;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.internal.utils.ChannelSpec;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.TooltipTextMaker;

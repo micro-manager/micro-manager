@@ -3,7 +3,7 @@ package org.micromanager.slideexplorer;
 import mmcorej.CMMCore;
 
 import org.micromanager.MMPlugin;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.internal.utils.ReportingUtils;
 
 public class SlideExplorerPlugin implements MMPlugin {
@@ -14,7 +14,7 @@ public class SlideExplorerPlugin implements MMPlugin {
 
 	private CMMCore core_;
 	private Hub hub_;
-    private ScriptInterface app_;
+    private Studio app_;
 	
 	
 	public void configurationChanged() {
@@ -46,7 +46,7 @@ public class SlideExplorerPlugin implements MMPlugin {
 		return null;
 	}
 
-	public void setApp(ScriptInterface app) {
+	public void setApp(Studio app) {
 		app_ = app;
 	}
 

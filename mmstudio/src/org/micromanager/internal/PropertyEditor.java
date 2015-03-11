@@ -50,7 +50,7 @@ import com.swtdesigner.SwingResourceManager;
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
 
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.MMListenerAdapter;
 import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.MMFrame;
@@ -85,7 +85,7 @@ public class PropertyEditor extends MMFrame {
    private JCheckBox showOtherCheckBox_;
    private JCheckBox showReadonlyCheckBox_;
    private final JScrollPane scrollPane_;
-   private ScriptInterface gui_;
+   private Studio gui_;
    
    public class myMMListener extends MMListenerAdapter {
 
@@ -105,7 +105,7 @@ public class PropertyEditor extends MMFrame {
 
    private final myMMListener myMMListener_ = new myMMListener();
 
-   public void setGui(ScriptInterface gui) {
+   public void setGui(Studio gui) {
       gui_ = gui;
       gui_.compat().addMMListener(myMMListener_);
    }

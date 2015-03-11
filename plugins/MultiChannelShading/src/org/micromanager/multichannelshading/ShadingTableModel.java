@@ -25,7 +25,7 @@ package org.micromanager.multichannelshading;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.table.AbstractTableModel;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.internal.utils.MMException;
 
 /**
@@ -33,7 +33,7 @@ import org.micromanager.internal.utils.MMException;
  * @author nico
  */
 public class ShadingTableModel extends AbstractTableModel {
-   private final ScriptInterface gui_;
+   private final Studio gui_;
    public final int PRESET = 0;
    public final int IMAGEFILE = 1;
    public final int LOADBUTTON = 2;
@@ -47,7 +47,7 @@ public class ShadingTableModel extends AbstractTableModel {
    private List<String> fileList_;
    private final ImageCollection imageCollection_;
    
-   public ShadingTableModel(ScriptInterface gui, ImageCollection 
+   public ShadingTableModel(Studio gui, ImageCollection 
            imageCollection) {
       gui_ = gui;
       imageCollection_ = imageCollection;

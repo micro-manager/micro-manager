@@ -42,7 +42,7 @@ import javax.swing.border.BevelBorder;
 import javax.swing.table.TableColumn;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 
 /*
  * A base class from which GroupEditor and PresetEditor are derived.
@@ -52,7 +52,7 @@ public class ConfigDialog extends MMDialog {
    private static final long serialVersionUID = 5819669941239786807L;
 
    protected CMMCore core_;
-   protected ScriptInterface gui_;
+   protected Studio gui_;
 
    private JTable table_;
    protected PropertyTableData data_;
@@ -87,7 +87,7 @@ public class ConfigDialog extends MMDialog {
 
    protected int scrollPaneTop_;
 
-   public ConfigDialog(String groupName, String presetName, ScriptInterface gui, CMMCore core, boolean newItem) {
+   public ConfigDialog(String groupName, String presetName, Studio gui, CMMCore core, boolean newItem) {
       super("config editing for " + groupName);
       groupName_ = groupName;
       presetName_ = presetName;

@@ -10,7 +10,7 @@ import org.micromanager.internal.dialogs.CalibrationEditor;
 import org.micromanager.internal.dialogs.CalibrationListDlg;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.MMPlugin;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -64,7 +64,7 @@ public class PixelCalibratorPlugin implements MMPlugin {
    }
 
    @Override
-   public void setApp(ScriptInterface app) {
+   public void setApp(Studio app) {
       app_ = (MMStudio) app;
       core_ = app.getCMMCore();
 

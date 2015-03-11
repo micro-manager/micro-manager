@@ -31,7 +31,7 @@ import javax.xml.transform.stream.StreamResult;
 import net.miginfocom.swing.MigLayout;
 
 import org.json.JSONObject;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
@@ -61,7 +61,7 @@ import org.w3c.dom.Element;
 @SuppressWarnings("serial")
 public class DataAnalysisPanel extends ListeningJPanel {
 
-   private final ScriptInterface gui_;
+   private final Studio gui_;
    private final Prefs prefs_;
    private final JPanel exportPanel_;
    private final JPanel imageJPanel_;
@@ -83,7 +83,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
     * @param gui
     * @param prefs - Plugin-wide preferences
     */
-   public DataAnalysisPanel(ScriptInterface gui, Prefs prefs) {
+   public DataAnalysisPanel(Studio gui, Prefs prefs) {
       super(MyStrings.PanelNames.DATAANALYSIS.toString(),
               new MigLayout(
                       "",

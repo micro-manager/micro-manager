@@ -10,7 +10,7 @@ import mmcorej.DeviceType;
 import mmcorej.PropertySetting;
 import mmcorej.StrVector;
 
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 
 /**
  * Property table data model, representing MMCore data
@@ -25,7 +25,7 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
    public String groupName_;
    public String presetName_;
    public ShowFlags flags_;
-   public ScriptInterface gui_;
+   public Studio gui_;
    public boolean showUnused_;
    protected boolean showReadOnly_;
    String[] columnNames_ = new String[3];
@@ -340,7 +340,7 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
       ReportingUtils.showError(e);
    }
 
-   public void setGUI(ScriptInterface gui) {
+   public void setGUI(Studio gui) {
       gui_ = gui;
    }
 

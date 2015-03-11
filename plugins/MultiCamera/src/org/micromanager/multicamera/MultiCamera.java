@@ -2,7 +2,7 @@ package org.micromanager.multicamera;
 
 import mmcorej.CMMCore;
 import org.micromanager.MMPlugin;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 
 
 public class MultiCamera implements MMPlugin {
@@ -12,11 +12,11 @@ public class MultiCamera implements MMPlugin {
       "Multi Camera device"; 
 
    private CMMCore core_;
-   private ScriptInterface gui_;
+   private Studio gui_;
    private MultiCameraFrame myFrame_;
 
     @Override
-   public void setApp(ScriptInterface app) {
+   public void setApp(Studio app) {
       gui_ = app;                                        
       core_ = app.getCMMCore();
       if (myFrame_ == null) {

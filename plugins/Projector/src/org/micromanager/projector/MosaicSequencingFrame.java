@@ -64,7 +64,7 @@ import mmcorej.StrVector;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.MMFrame;
@@ -76,7 +76,7 @@ import org.micromanager.internal.utils.TextUtils;
 // Micro-Manager's multi-dimensional acquisition.
 public class MosaicSequencingFrame extends MMFrame {
    private final CMMCore core_;
-   private final ScriptInterface gui_;
+   private final Studio gui_;
    private final String mosaicName_;
    private final SLM mosaicDevice_;
    private final int mosaicWidth_;
@@ -772,7 +772,7 @@ public class MosaicSequencingFrame extends MMFrame {
    // Creates a new window, the MosaicSequencingFrame. This frame allows the
    // user to generate sequences of ROIs, and optionally, generate ROIs in
    // a grid pattern.
-   public MosaicSequencingFrame(ScriptInterface gui, CMMCore core, ProjectorControlForm projectorControlForm, SLM mosaicDevice) {
+   public MosaicSequencingFrame(Studio gui, CMMCore core, ProjectorControlForm projectorControlForm, SLM mosaicDevice) {
       initComponents();
       gui_ = gui;
       core_ = core;

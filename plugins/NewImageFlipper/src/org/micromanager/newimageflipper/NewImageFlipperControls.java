@@ -31,7 +31,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.DataProcessor;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.MMFrame;
@@ -57,7 +57,7 @@ public class NewImageFlipperControls extends MMFrame {
    private final int frameXPos_ = 300;
    private final int frameYPos_ = 300;   
    
-   private final ScriptInterface gui_;
+   private final Studio gui_;
    private final Class me_ = NewImageFlipperControls.class;
 
    /** 

@@ -11,7 +11,7 @@ import java.util.prefs.Preferences;
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.internal.utils.PropertyItem;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -75,7 +75,7 @@ public class PropertyManager {
    }
 
    public static ArrayList<PropertyItem> readAllProperties() {
-      ScriptInterface mmapi = MMStudio.getInstance();
+      Studio mmapi = MMStudio.getInstance();
       CMMCore core = mmapi.getCMMCore();
       ArrayList<PropertyItem> props = new ArrayList<PropertyItem>();
       try {

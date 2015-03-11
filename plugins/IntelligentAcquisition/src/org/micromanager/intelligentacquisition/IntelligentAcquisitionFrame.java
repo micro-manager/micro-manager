@@ -28,7 +28,7 @@ import mmcorej.CMMCore;
 import java.text.NumberFormat;
 
 
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.FileDialogs.FileType;
@@ -55,7 +55,7 @@ import org.micromanager.internal.utils.JavaUtils;
  * @author nico
  */
 public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
-   private final ScriptInterface gui_;
+   private final Studio gui_;
    private final CMMCore core_;
    //private Preferences prefs_;
    
@@ -99,7 +99,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
     * 
     * @param gui - Reference to MM script interface
     */
-    public IntelligentAcquisitionFrame(ScriptInterface gui) {
+    public IntelligentAcquisitionFrame(Studio gui) {
        gui_ = gui;
        core_ = gui_.getCMMCore();
        nf_ = NumberFormat.getInstance();

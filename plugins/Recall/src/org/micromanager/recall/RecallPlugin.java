@@ -38,7 +38,7 @@ import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.micromanager.MMPlugin;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.acquisition.internal.TaggedImageQueue;
 import org.micromanager.data.Datastore;
@@ -65,7 +65,7 @@ public class RecallPlugin implements MMPlugin {
   
 
    @Override
-   public void setApp(ScriptInterface app) {
+   public void setApp(Studio app) {
       gui_ = (MMStudio) app;                                        
       core_ = app.getCMMCore(); 
       

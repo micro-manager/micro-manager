@@ -4,7 +4,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import mmcorej.CMMCore;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 
 /**
  * Main class for Autolase, an automatic activation control plugin for Micro-Manager
@@ -73,7 +73,7 @@ public enum AutoLase {
      * 
      * @param app 
      */
-    public void setup(ScriptInterface app) {
+    public void setup(Studio app) {
         gui = (MMStudio) app;
         core = gui.getCMMCore();
         

@@ -45,7 +45,7 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import mmcorej.*;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 
 /**
  * Dialog for editing of a pixel size configuration preset.
@@ -62,7 +62,7 @@ public class CalibrationEditor extends MMDialog {
    
    private JTable table_;
    private PropertyTableData data_;
-   private ScriptInterface parentGUI_;
+   private Studio parentGUI_;
    private ShowFlags flags_;
    
    private JCheckBox showCamerasCheckBox_;
@@ -387,7 +387,7 @@ public class CalibrationEditor extends MMDialog {
       
   }
    
-   public void setParentGUI(ScriptInterface parent) {
+   public void setParentGUI(Studio parent) {
       parentGUI_ = parent;
    }
 

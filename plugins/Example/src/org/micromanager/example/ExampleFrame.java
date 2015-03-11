@@ -30,7 +30,7 @@ import mmcorej.CMMCore;
 
 import java.text.NumberFormat;
 
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.internal.utils.MMFrame;
 
 /**
@@ -39,7 +39,7 @@ import org.micromanager.internal.utils.MMFrame;
  */
 public class ExampleFrame extends MMFrame {
 
-   private final ScriptInterface gui_;
+   private final Studio gui_;
    private final CMMCore core_;
 
    private final NumberFormat nf_;
@@ -52,7 +52,7 @@ public class ExampleFrame extends MMFrame {
     *
     * @param gui - Reference to MM script interface
     */
-   public ExampleFrame(ScriptInterface gui) {
+   public ExampleFrame(Studio gui) {
       gui_ = gui;
       core_ = gui_.getCMMCore();
       nf_ = NumberFormat.getInstance();

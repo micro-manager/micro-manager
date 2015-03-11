@@ -17,7 +17,7 @@ import mmcorej.CMMCore;
 
 import mmcorej.StrVector;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.UserProfile;
 import org.micromanager.pixelcalibrator.PixelCalibratorPlugin;
 import org.micromanager.internal.utils.ImageUtils;
@@ -26,7 +26,7 @@ import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.ReportingUtils;
 
 public class Hub {
-   public static ScriptInterface appRef_;
+   public static Studio appRef_;
 
    Controller controller_;
    MultiTileCache cache_;
@@ -51,7 +51,7 @@ public class Hub {
    /*
     * Hub constructor.
     */
-   public Hub(ScriptInterface app) {
+   public Hub(Studio app) {
       app_ = (MMStudio) app;
       Hub.appRef_ = app;
       core_ = app_.getCMMCore();
@@ -292,7 +292,7 @@ public class Hub {
       display_.setRoiManager(roiManager_);
    }
 
-   ScriptInterface getApp() {
+   Studio getApp() {
       return app_;
    }
 
@@ -491,7 +491,7 @@ public class Hub {
 
       protected static final long serialVersionUID = 1L;
 
-      public AcqControlDlgMosaic(MMAcquisitionEngineMTMosaic eng, ScriptInterface app) {
+      public AcqControlDlgMosaic(MMAcquisitionEngineMTMosaic eng, Studio app) {
          super(eng, null, (DeviceControlGUI) app_);
 
          //multiPosCheckBox_.setVisible(false);

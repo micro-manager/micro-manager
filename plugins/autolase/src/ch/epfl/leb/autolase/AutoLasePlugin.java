@@ -1,6 +1,6 @@
 package ch.epfl.leb.autolase;
 
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 
 /**
  * The plugin class for MicroManager which works as a bridge between AutoLase
@@ -21,7 +21,7 @@ public class AutoLasePlugin implements org.micromanager.MMPlugin {
     }
 
     @Override
-    public void setApp(ScriptInterface app) {
+    public void setApp(Studio app) {
         AutoLase.INSTANCE.setup(app);
     }
 

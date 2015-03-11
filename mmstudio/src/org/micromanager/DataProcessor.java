@@ -54,7 +54,7 @@ public abstract class DataProcessor<E> extends Thread {
    /**
     * The scripting interface (formerly known as the "gui" object, now "mm").
     */
-   protected ScriptInterface gui_;
+   protected Studio gui_;
 
    /**
     * The process method should be overridden by classes implementing
@@ -89,14 +89,14 @@ public abstract class DataProcessor<E> extends Thread {
    public void dispose() {};
 
    /**
-    * Receive the ScriptInterface object.
+    * Receive the Studio object.
     *
     * Normally, it is not necessary to override this method. If overriding,
     * make sure to call super.setApp().
     * 
-    * @param gui MM ScriptInterface
+    * @param gui MM Studio
     */
-   public void setApp(ScriptInterface gui) {
+   public void setApp(Studio gui) {
       gui_ = gui;
    }
 

@@ -61,7 +61,7 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.StagePosition;
 import org.micromanager.events.StagePositionChangedEvent;
 import org.micromanager.events.XYStagePositionChangedEvent;
@@ -95,7 +95,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
    private final JTable axisTable_;
    private final AxisTableModel axisModel_;
    private CMMCore core_;
-   private ScriptInterface studio_;
+   private Studio studio_;
    private AcqControlDlg acqControlDlg_;
    private GUIColors guiColors_;
    private AxisList axisList_;
@@ -132,13 +132,13 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
    /**
     * Create the dialog
     * @param core -  MMCore
-    * @param gui - ScriptInterface
+    * @param gui - Studio
     * @param posList - Position list to be displayed in this dialog
     * @param acd - MDA window
     * @param opts - MicroManager Options
     */
    @SuppressWarnings("LeakingThisInConstructor")
-   public PositionListDlg(CMMCore core, ScriptInterface gui, 
+   public PositionListDlg(CMMCore core, Studio gui, 
                      PositionList posList, AcqControlDlg acd) {
       super("position list");
       final DefaultUserProfile profile = DefaultUserProfile.getInstance();

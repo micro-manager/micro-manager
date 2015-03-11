@@ -30,7 +30,7 @@ import javax.swing.BorderFactory;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Prefs;
@@ -68,7 +68,7 @@ public final class BeamSubPanel extends ListeningJPanel {
     * @param prefs 
     * @param props
     */
-   public BeamSubPanel(ScriptInterface gui, Devices devices, String instanceLabel, 
+   public BeamSubPanel(Studio gui, Devices devices, String instanceLabel, 
          Devices.Sides side, Prefs prefs, Properties props) {    
       super (MyStrings.PanelNames.BEAM_SUBPANEL.toString() + instanceLabel,
             new MigLayout(

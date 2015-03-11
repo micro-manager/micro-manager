@@ -57,7 +57,7 @@ import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.MMPlugin;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.UserProfile;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.FileDialogs;
@@ -81,7 +81,7 @@ public class TrackerControl extends MMFrame implements MMPlugin {
    private JTextField offsetField_;
    private JTextField pixelSizeField_;
    private JTextField intervalField_;
-   private ScriptInterface app_;
+   private Studio app_;
    private int intervalMs_ = 1000;
    private double pixelSizeUm_ = 1.0;
    private int resolutionPix_ = 5;
@@ -681,7 +681,7 @@ public class TrackerControl extends MMFrame implements MMPlugin {
    }
 
    @Override
-   public void setApp(ScriptInterface app) {
+   public void setApp(Studio app) {
       app_ = app;
       initialize();
    }

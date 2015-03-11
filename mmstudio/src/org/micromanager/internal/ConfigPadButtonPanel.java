@@ -39,7 +39,7 @@ import javax.swing.SwingConstants;
 
 import mmcorej.CMMCore;
 
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.internal.dialogs.GroupEditor;
 import org.micromanager.internal.dialogs.PresetEditor;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -62,7 +62,7 @@ public final class ConfigPadButtonPanel extends JPanel {
 
    private CMMCore core_;
 
-   private ScriptInterface studio_;
+   private Studio studio_;
 
    
    

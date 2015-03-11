@@ -47,7 +47,7 @@ import javax.swing.*;
 
 import net.miginfocom.swing.MigLayout;
 
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.interfaces.LiveModeListener;
 
@@ -66,7 +66,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    private final Cameras cameras_;
    private final Prefs prefs_;
    private final StagePositionUpdater posUpdater_;
-   private final ScriptInterface gui_;
+   private final Studio gui_;
    private final CMMCore core_;
    private final JoystickSubPanel joystickPanel_;
    private final CameraSubPanel cameraPanel_;
@@ -94,7 +94,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    private final StoredFloatLabel imagingPiezoStartPositionLabel_;
    private final StoredFloatLabel imagingPiezoStopPositionLabel_;
 
-   public SetupPanel(ScriptInterface gui, Devices devices, Properties props, 
+   public SetupPanel(Studio gui, Devices devices, Properties props, 
            Joystick joystick, Devices.Sides side, Positions positions, 
            Cameras cameras, Prefs prefs, StagePositionUpdater posUpdater) {
       super(MyStrings.PanelNames.SETUP.toString() + side.toString(),

@@ -26,7 +26,7 @@ import java.util.Hashtable;
 import javax.swing.JPanel;
 
 import org.micromanager.PositionList;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.internal.utils.MMScriptException;
 
 
@@ -46,7 +46,7 @@ public class PlatePanel extends JPanel {
    private Point2D.Double xyStagePos_;
    public enum Tool {SELECT, MOVE}
    private Tool mode_;
-   private ScriptInterface app_;
+   private Studio app_;
    private boolean lockAspect_;
    private ParentPlateGUI gui_;
    private Point anchor_;
@@ -665,7 +665,7 @@ public class PlatePanel extends JPanel {
       repaint();
    }
 
-   public void setApp(ScriptInterface app) throws HCSException {
+   public void setApp(Studio app) throws HCSException {
       app_ = app;
       xyStagePos_ = null;
       zStagePos_ = 0.0;

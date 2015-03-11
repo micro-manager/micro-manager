@@ -17,7 +17,7 @@ import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.internal.utils.MathFunctions;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -51,7 +51,7 @@ public class CalibrationThread extends Thread {
       }
    }
 
-   CalibrationThread(ScriptInterface app, PixelCalibratorPlugin plugin) {
+   CalibrationThread(Studio app, PixelCalibratorPlugin plugin) {
       app_ = (MMStudio) app;
       plugin_ = plugin;
       core_ = app_.getCMMCore();

@@ -43,7 +43,7 @@ import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.StrVector;
 
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.internal.dialogs.PresetEditor;
 import org.micromanager.internal.utils.DefaultUserProfile;
 
@@ -57,7 +57,7 @@ public class ConfigGroupPad extends JScrollPane{
    private static final long serialVersionUID = 1L;
    private JTable table_;
    private StateTableData data_;
-   private ScriptInterface parentGUI_;
+   private Studio parentGUI_;
    private final String COLUMN_WIDTH = "group_col_width";
    public PresetEditor presetEditor_ = null;
    public String groupName_ = "";
@@ -99,7 +99,7 @@ public class ConfigGroupPad extends JScrollPane{
       }
    }
 
-   public void setParentGUI(ScriptInterface parentGUI) {
+   public void setParentGUI(Studio parentGUI) {
       parentGUI_ = parentGUI;
    }
 
@@ -232,7 +232,7 @@ public class ConfigGroupPad extends JScrollPane{
                   table_.repaint();
                   if (parentGUI_ != null) {
                      // This is a little superfluous, but it is nice that we
-                     // are depending only on ScriptInterface, not MMStudio
+                     // are depending only on Studio, not MMStudio
                      // directly, so keep it that way.
                      if (parentGUI_ instanceof MMStudio) {
                         // But it appears to be important for performance that

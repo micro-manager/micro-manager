@@ -8,7 +8,7 @@
  */
 package com.asiimaging.CRISPv2;
 
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import java.awt.event.WindowEvent;
 
 /**
@@ -20,7 +20,7 @@ public class ASI_CRISP_V2 implements org.micromanager.MMPlugin {
 
    public static String menuName = "ASI CRISP V2[Beta]";
    public static String tooltipDescription = "Interface for ASIs CRISP Autofocus ";
-   private ScriptInterface gui_;
+   private Studio gui_;
    private ASI_CRISP_Frame myFrame_;
 
    @Override
@@ -31,7 +31,7 @@ public class ASI_CRISP_V2 implements org.micromanager.MMPlugin {
    }
 
    @Override
-   public void setApp(ScriptInterface app) {
+   public void setApp(Studio app) {
       gui_ = app;
       if (myFrame_ != null) {
          WindowEvent wev = new WindowEvent(myFrame_, WindowEvent.WINDOW_CLOSING);

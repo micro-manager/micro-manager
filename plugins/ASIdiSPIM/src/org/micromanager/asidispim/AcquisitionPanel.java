@@ -76,7 +76,7 @@ import mmcorej.TaggedImage;
 
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.internal.utils.NumberUtils;
@@ -113,7 +113,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final Prefs prefs_;
    private final Positions positions_;
    private final CMMCore core_;
-   private final ScriptInterface gui_;
+   private final Studio gui_;
    private final JCheckBox advancedSliceTimingCB_;
    private final JSpinner numSlices_;
    private final JComboBox numSides_;
@@ -165,7 +165,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private SliceTiming sliceTiming_;
    private final MultiChannelSubPanel multiChannelPanel_;
    
-   public AcquisitionPanel(ScriptInterface gui, 
+   public AcquisitionPanel(Studio gui, 
            Devices devices, 
            Properties props, 
            Joystick joystick,
@@ -1459,7 +1459,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * Implementation of acquisition that orchestrates image
     * acquisition itself rather than using the acquisition engine.
     * 
-    * This methods is public so that the ScriptInterface can call it
+    * This methods is public so that the Studio can call it
     * Please do not access this yourself directly, instead use the API, e.g.
     *   import org.micromanager.asidispim.api.*;
     *   ASIdiSPIMInterface diSPIM = new ASIdiSPIMImplementation();
@@ -2184,8 +2184,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * The basic method for adding images to an existing data set. If the
     * acquisition was not previously initialized, it will attempt to initialize
     * it from the available image data. This version uses a blocking queue and is 
-    * much faster than the one currently implemented in the ScriptInterface
-    * Eventually, this function should be replaced by the ScriptInterface version
+    * much faster than the one currently implemented in the Studio
+    * Eventually, this function should be replaced by the Studio version
     * of the same.
     * @param name - named acquisition to add image to
     * @param frame - frame nr at which to insert the image

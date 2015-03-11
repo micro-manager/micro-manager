@@ -21,7 +21,7 @@ import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
 
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.MMListenerInterface;
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.NumberUtils;
@@ -32,7 +32,7 @@ import org.micromanager.internal.utils.NumberUtils;
  */
 public class MultiCameraFrame extends MMFrame implements MMListenerInterface {
    private static final long serialVersionUID = 1L;
-   private final ScriptInterface gui_;
+   private final Studio gui_;
    private final CMMCore core_;
    private int EMGainMin_ = 4;
    private int EMGainMax_ = 1000;
@@ -69,10 +69,10 @@ public class MultiCameraFrame extends MMFrame implements MMListenerInterface {
    private static final String PHYSCAM4 = "Physical Camera 4";
 
    /** Creates new form MultiCameraFrame
-     * @param gui - handle to instance of the ScriptInterface
+     * @param gui - handle to instance of the Studio
      * @throws java.lang.Exception 
      */
-   public MultiCameraFrame(ScriptInterface gui) throws Exception {
+   public MultiCameraFrame(Studio gui) throws Exception {
       gui_ = gui;
       core_ = gui_.getCMMCore();
 

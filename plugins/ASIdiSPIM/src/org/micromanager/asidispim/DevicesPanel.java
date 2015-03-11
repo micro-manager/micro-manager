@@ -34,7 +34,7 @@ import javax.swing.JSeparator;
 
 import net.miginfocom.swing.MigLayout;
 
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 
 
 /**
@@ -68,7 +68,7 @@ public class DevicesPanel extends ListeningJPanel {
     * @param devices - instance of class that holds information about devices
     * @param props
     */
-   public DevicesPanel(ScriptInterface gui, Devices devices, Properties props) {
+   public DevicesPanel(Studio gui, Devices devices, Properties props) {
       super(MyStrings.PanelNames.DEVICES.toString(), 
             new MigLayout(
               "",

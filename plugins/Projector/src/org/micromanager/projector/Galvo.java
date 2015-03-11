@@ -26,18 +26,18 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import mmcorej.CMMCore;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 
 public class Galvo implements ProjectionDevice {
    private final String galvo_;
    private final CMMCore mmc_;
-   private final ScriptInterface app_;
+   private final Studio app_;
    private final ExecutorService galvoExecutor_;
    private final HashSet<OnStateListener> onStateListeners_ = 
            new HashSet<OnStateListener>();
    private long interval_us_;
 
-   public Galvo(ScriptInterface app, CMMCore mmc) {
+   public Galvo(Studio app, CMMCore mmc) {
       mmc_ = mmc;
       app_ = app;
       galvo_ = mmc_.getGalvoDevice();

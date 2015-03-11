@@ -34,7 +34,7 @@ package org.micromanager.example;
 
 import mmcorej.CMMCore;
 import org.micromanager.MMPlugin;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 
 
 public class Example implements MMPlugin {
@@ -42,11 +42,11 @@ public class Example implements MMPlugin {
    public static String tooltipDescription = "This Micro-Manager plugin does nothing. "
 		   +"Its only purpose is to be an example for developers wishing to write their own plugin.";
    private CMMCore core_;
-   private ScriptInterface gui_;
+   private Studio gui_;
    private ExampleFrame myFrame_;
 
    @Override
-   public void setApp(ScriptInterface app) {
+   public void setApp(Studio app) {
       gui_ = app;                                        
       core_ = app.getCMMCore();
       if (myFrame_ == null)

@@ -26,14 +26,14 @@ import org.micromanager.internal.utils.MMFrame;
 
 
 class SequenceBufferMonitorFrame extends MMFrame {
-   org.micromanager.ScriptInterface app_;
+   org.micromanager.Studio app_;
    JProgressBar usageBar_;
    Timer timer_;
 
    int previousTotalCapacity_ = -1;
    int updateIntervalMs_ = 100;
 
-   SequenceBufferMonitorFrame(org.micromanager.ScriptInterface app) {
+   SequenceBufferMonitorFrame(org.micromanager.Studio app) {
       super("Sequence Buffer Monitor");
 
       app_ = app;

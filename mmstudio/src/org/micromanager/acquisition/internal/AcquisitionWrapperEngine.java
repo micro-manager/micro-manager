@@ -23,7 +23,7 @@ import org.micromanager.data.Datastore;
 import org.micromanager.DataProcessor;
 import org.micromanager.IAcquisitionEngine2010;
 import org.micromanager.PositionList;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.SequenceSettings;
 import org.micromanager.events.internal.EventManager;
 import org.micromanager.events.internal.PipelineEvent;
@@ -42,7 +42,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    private CMMCore core_;
-   protected ScriptInterface studio_;
+   protected Studio studio_;
    private PositionList posList_;
    private String zstage_;
    private double sliceZStepUm_;
@@ -319,7 +319,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    @Override
-   public DataProcessor<TaggedImage> makeProcessor(String name, ScriptInterface gui) {
+   public DataProcessor<TaggedImage> makeProcessor(String name, Studio gui) {
       Class<? extends DataProcessor<TaggedImage>> processorClass = nameToProcessorClass_.get(name);
       DataProcessor<TaggedImage> newProcessor;
       try {
@@ -602,7 +602,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    @Override
-   public void setParentGUI(ScriptInterface parent) {
+   public void setParentGUI(Studio parent) {
       studio_ = parent;
    }
 

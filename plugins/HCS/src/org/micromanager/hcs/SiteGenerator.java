@@ -17,7 +17,7 @@ import javax.swing.SpringLayout;
 import org.micromanager.MMPlugin;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.StagePosition;
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.MMScriptException;
@@ -51,7 +51,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
    private final SpringLayout springLayout;
    private SBSPlate plate_;
    private PlatePanel platePanel_;
-   private ScriptInterface app_;
+   private Studio app_;
    private final Point2D.Double xyStagePos_;
    private double zStagePos_;
    private final Point2D.Double cursorPos_;
@@ -660,7 +660,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
    }
 
    @Override
-   public void setApp(ScriptInterface app) {
+   public void setApp(Studio app) {
       app_ = app;
       try {
          loadSettings();

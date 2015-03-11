@@ -25,7 +25,7 @@ import java.awt.Color;
 import java.awt.event.WindowEvent;
 
 import org.micromanager.MMPlugin;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 
 
 public class ASIdiSPIM implements MMPlugin {
@@ -33,11 +33,11 @@ public class ASIdiSPIM implements MMPlugin {
    public final static String tooltipDescription = "Control the ASI diSPIM";
    public final static Color borderColor = Color.gray;
 
-   private ScriptInterface gui_;
+   private Studio gui_;
    private static ASIdiSPIMFrame myFrame_ = null;
 
    @Override
-   public void setApp(ScriptInterface app) {
+   public void setApp(Studio app) {
       gui_ = app;
       // close frame before re-load if already open
       // if frame has been opened and then closed (myFrame != null) but it won't be displayable 

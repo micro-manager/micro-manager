@@ -1,7 +1,7 @@
 
 package org.micromanager.acquiremultipleregions;
 
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 
 /**
  *
@@ -12,7 +12,7 @@ public class AcquireMultipleRegions  implements org.micromanager.MMPlugin {
    public static final String tooltipDescription =
       "Automatically acquire multiple regions of a sample";
    public static String versionNumber = "0.4";
-   private ScriptInterface gui_;
+   private Studio gui_;
    private AcquireMultipleRegionsForm myFrame_;
    //Static variables so we can use script panel to tweak interpolation params
    //Exponent for Shepard interpolation
@@ -27,7 +27,7 @@ public class AcquireMultipleRegions  implements org.micromanager.MMPlugin {
     }
 
     @Override
-    public void setApp(ScriptInterface si) {
+    public void setApp(Studio si) {
       gui_ = si;                                        
       if (myFrame_ == null)
          myFrame_ = new AcquireMultipleRegionsForm(gui_);

@@ -11,7 +11,7 @@ import java.util.prefs.Preferences;
 import javax.swing.table.AbstractTableModel;
 import mmcorej.CMMCore;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.internal.utils.MMPropertyTableModel;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.PropertyItem;
@@ -27,7 +27,7 @@ public class PropertyControlTableModel extends AbstractTableModel implements MMP
    private LinkedList<PropertyItem> storedProps_;
    
    private CMMCore core_;
-   private ScriptInterface mmAPI_;
+   private Studio mmAPI_;
    private Preferences prefs_;
 
    

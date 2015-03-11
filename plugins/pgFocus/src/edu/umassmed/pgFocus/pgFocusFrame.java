@@ -54,7 +54,7 @@ import org.jfree.data.xy.XYSeriesCollection;
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.internal.utils.ReportingUtils;
 
 import javax.swing.JTextField;
@@ -71,7 +71,7 @@ import java.awt.event.WindowEvent;
 
 public class pgFocusFrame extends JFrame {
 
-	private final ScriptInterface gui_;
+	private final Studio gui_;
     private final CMMCore core_;
     private Preferences prefs_;
     private static String pgFocus_;
@@ -113,7 +113,7 @@ public class pgFocusFrame extends JFrame {
     private String savedCalibrationCurve = "";
     
     /** Creates pgFocus */
-    public pgFocusFrame(ScriptInterface gui)  {
+    public pgFocusFrame(Studio gui)  {
     	
    
        gui_ = gui;

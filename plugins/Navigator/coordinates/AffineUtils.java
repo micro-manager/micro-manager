@@ -10,7 +10,7 @@ import java.util.prefs.Preferences;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.StagePosition;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.MMScriptException;

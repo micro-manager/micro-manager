@@ -23,7 +23,7 @@ import java.awt.Panel;
 import java.awt.event.ItemEvent;
 import mmcorej.CMMCore;
 import org.micromanager.MMPlugin;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 
 
 // The Projector plugin provides a user interface for calibration and control
@@ -35,7 +35,7 @@ public class ProjectorPlugin implements MMPlugin {
       "Control galvo or SLM devices that project a spot or pattern " +
       "on the sample";
    
-   private ScriptInterface app_;
+   private Studio app_;
    private CMMCore core_;
 
   // Show the ImageJ Roi Manager and return a reference to it.   
@@ -60,7 +60,7 @@ public class ProjectorPlugin implements MMPlugin {
    }
 
    @Override
-   public void setApp(ScriptInterface app) {
+   public void setApp(Studio app) {
       app_ = app;
       core_ = app_.getCMMCore();
    }

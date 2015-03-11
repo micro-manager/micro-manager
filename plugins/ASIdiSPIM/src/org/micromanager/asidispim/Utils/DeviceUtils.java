@@ -34,7 +34,7 @@ import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
 
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.Properties;
 
@@ -46,7 +46,7 @@ public class DeviceUtils {
    private final Devices devices_;
    private final Properties props_;
    
-   public DeviceUtils(ScriptInterface gui, Devices devices, Properties props) {  // prefs needed?
+   public DeviceUtils(Studio gui, Devices devices, Properties props) {  // prefs needed?
       core_ = gui.getCMMCore();
       devices_ = devices;
       props_ = props;

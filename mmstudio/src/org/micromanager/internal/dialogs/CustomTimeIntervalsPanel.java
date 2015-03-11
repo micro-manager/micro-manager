@@ -39,7 +39,7 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 
 import org.micromanager.acquisition.internal.AcquisitionEngine;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.internal.utils.MMDialog;
 import org.micromanager.internal.utils.TooltipTextMaker;
 
@@ -57,7 +57,7 @@ public class CustomTimeIntervalsPanel extends JPanel {
     private final JTabbedPane window_;
 
     @SuppressWarnings("LeakingThisInConstructor")
-    public CustomTimeIntervalsPanel(AcquisitionEngine acqEng, JTabbedPane window, ScriptInterface gui) {
+    public CustomTimeIntervalsPanel(AcquisitionEngine acqEng, JTabbedPane window, Studio gui) {
         super();
         window_ = window;
         acqEng_ = acqEng;

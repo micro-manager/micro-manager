@@ -88,7 +88,7 @@ import org.fife.ui.rtextarea.SearchResult;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.PropertyEditor;
 import org.micromanager.ScriptController;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.FileDialogs.FileType;
 import org.micromanager.internal.utils.FileDialogs;
@@ -117,7 +117,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
    private List<String> immediatePaneHistory_ = new ArrayList<String>(HISTORYSIZE);
    private int immediatePaneHistoryIndex_ = 0;
    private static ScriptingEngine interp_;
-   private ScriptInterface parentGUI_;
+   private Studio parentGUI_;
    private JTextPane messagePane_;
    private StyleContext sc_;
    private Interpreter beanshellREPLint_;
@@ -1155,7 +1155,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
       }
    }  
 
-   public void setParentGUI(ScriptInterface parent) {
+   public void setParentGUI(Studio parent) {
       parentGUI_ = parent;      
       insertScriptingObject("mm", parent);
    } 

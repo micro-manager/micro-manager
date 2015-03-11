@@ -26,7 +26,7 @@ import java.util.HashMap;
 
 import mmcorej.CMMCore;
 
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.asidispim.Utils.MyDialogUtils;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -44,10 +44,10 @@ public class Positions {
    
    /**
     * Constructor
-    * @param gui MM ScriptInterface
+    * @param gui MM Studio
     * @param devices Devices that should be tracked
     */
-   public Positions(ScriptInterface gui, Devices devices) {
+   public Positions(Studio gui, Devices devices) {
       devices_ = devices;
       core_ = gui.getCMMCore();
       

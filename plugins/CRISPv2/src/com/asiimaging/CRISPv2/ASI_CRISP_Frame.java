@@ -19,7 +19,7 @@ import javax.swing.SpinnerModel;
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 
 /**
  *
@@ -27,7 +27,7 @@ import org.micromanager.ScriptInterface;
  */
 public class ASI_CRISP_Frame extends javax.swing.JFrame {
 
-   private final ScriptInterface gui_;
+   private final Studio gui_;
    private final CMMCore core_;
    private String CRISP_;
    private int timer_poll = 200;//200 millisec
@@ -40,9 +40,9 @@ public class ASI_CRISP_Frame extends javax.swing.JFrame {
    /**
     * Creates new form ASI_CRISP_Frame
     *
-    * @param gui MM ScriptInterface
+    * @param gui MM Studio
     */
-   public ASI_CRISP_Frame(ScriptInterface gui) {
+   public ASI_CRISP_Frame(Studio gui) {
       initComponents();
 
       gui_ = gui;

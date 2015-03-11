@@ -12,7 +12,7 @@ import edu.valelab.gaussianfit.MainForm;
 
 import ij.plugin.*;
 import org.micromanager.MMPlugin;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 
 /**
  *
@@ -44,7 +44,7 @@ public class GaussianTrack_ implements PlugIn, MMPlugin {
 
 
     @Override
-   public void setApp(ScriptInterface app) {
+   public void setApp(Studio app) {
       
       run("");
    }

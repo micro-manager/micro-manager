@@ -13,7 +13,7 @@ import java.util.prefs.Preferences;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.StagePosition;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.MMScriptException;
@@ -29,7 +29,7 @@ public class Util {
    public static String DL_OFFSET_KEY = "Depth list offset";
 
    public static void setDepthListOffset(int posIndex, int offset) {
-      ScriptInterface app = MMStudio.getInstance();
+      Studio app = MMStudio.getInstance();
       try {
          app.getPositionList().getPosition(posIndex).setProperty(DL_OFFSET_KEY,""+offset);
       } catch (MMScriptException ex) {
@@ -41,7 +41,7 @@ public class Util {
       if (posIndex == -1) {
          return 0;
       }
-      ScriptInterface app = MMStudio.getInstance();
+      Studio app = MMStudio.getInstance();
       try {
          return Integer.parseInt(app.getPositionList().getPosition(posIndex).getProperty(DL_OFFSET_KEY));
       } catch (MMScriptException ex) {
@@ -51,7 +51,7 @@ public class Util {
    }
 
    public static void createGrid(double xCenter, double yCenter, int xSize, int ySize, int pixelOverlapX, int pixelOverlapY) {      
-      ScriptInterface app = MMStudio.getInstance();
+      Studio app = MMStudio.getInstance();
       //Get affine transform
       Preferences prefs = Preferences.userNodeForPackage(MMStudio.class);
 

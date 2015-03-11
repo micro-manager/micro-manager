@@ -33,7 +33,7 @@ import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
 
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.asidispim.Utils.DevicesListenerInterface;
 import org.micromanager.asidispim.Utils.MyDialogUtils;
 
@@ -714,7 +714,7 @@ public class Devices {
     * @param gui
     * @param prefs
     */
-   public Devices(ScriptInterface gui, Prefs prefs) {
+   public Devices(Studio gui, Prefs prefs) {
       prefs_ = prefs;
       core_ = gui.getCMMCore();
 

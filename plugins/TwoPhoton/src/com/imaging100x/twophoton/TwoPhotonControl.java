@@ -67,7 +67,7 @@ import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
 import org.micromanager.MMPlugin;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.StagePosition;
 import org.micromanager.internal.utils.*;
 
@@ -98,7 +98,7 @@ public class TwoPhotonControl extends MMFrame implements MMPlugin, KeyListener,
    static private final String INFO = "Not available";
    private static Preferences prefs_;
    private CMMCore core_;
-   private ScriptInterface app_;
+   private Studio app_;
    private JTable pmtTable_;
    private PMTDataModel pmtData_;
    private JTable depthTable_;
@@ -903,7 +903,7 @@ private JCheckBox drawGrid_, drawPosNames_;
       loadPosition(100, 100);
    }
 
-   public void setApp(ScriptInterface app) {
+   public void setApp(Studio app) {
       app_ = app;
       initialize();
    }

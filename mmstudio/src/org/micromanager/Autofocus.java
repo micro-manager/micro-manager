@@ -38,7 +38,7 @@ public interface Autofocus {
    /*
     * Provides the autofocus plugin with a reference to the Micro-Manager GUI.
     */
-   public void setApp(ScriptInterface app);
+   public void setApp(Studio app);
 
    /*
     * Run a full, one-shot autofocus protocol. Blocks until focusing is

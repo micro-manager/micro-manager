@@ -42,7 +42,7 @@ import org.micromanager.CompatibilityInterface;
 
 import org.micromanager.CompatibilityInterface;
 import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.internal.logging.LogFileManager;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.script.ScriptPanel;
@@ -69,7 +69,7 @@ public class OptionsDlg extends MMDialog {
    private final JComboBox comboDisplayBackground_;
 
    private CMMCore core_;
-   private ScriptInterface parent_;
+   private Studio parent_;
    private GUIColors guiColors_;
 
    /**
@@ -77,7 +77,7 @@ public class OptionsDlg extends MMDialog {
     * @param core - The Micro-Manager Core object
     * @param parent - MMStudio api 
     */
-   public OptionsDlg(CMMCore core, ScriptInterface parent) {
+   public OptionsDlg(CMMCore core, Studio parent) {
       super("global micro-manager options");
       parent_ = parent;
       core_ = core;

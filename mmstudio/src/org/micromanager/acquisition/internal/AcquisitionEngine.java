@@ -35,7 +35,7 @@ import org.json.JSONObject;
 import org.micromanager.data.Datastore;
 import org.micromanager.DataProcessor;
 import org.micromanager.PositionList;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.internal.interfaces.AcqSettingsListener;
 import org.micromanager.internal.utils.AutofocusManager;
 import org.micromanager.internal.utils.ChannelSpec;
@@ -67,7 +67,7 @@ public interface AcquisitionEngine {
    /**
     * Provides the acquisition engine with the parent Micro-Manager gui.
     */
-   public void setParentGUI(ScriptInterface parent);
+   public void setParentGUI(Studio parent);
 
    /**
     * Sets which device will be used as the Z (focus) axis
@@ -534,7 +534,7 @@ public interface AcquisitionEngine {
     * Given a DataProcessor name (see above), create a new DataProcessor
     * and add it to the image processor pipeline.
     */
-   public DataProcessor<TaggedImage> makeProcessor(String Name, ScriptInterface gui);
+   public DataProcessor<TaggedImage> makeProcessor(String Name, Studio gui);
 
    /**
     * Return the first DataProcessor in the pipeline registered under the 

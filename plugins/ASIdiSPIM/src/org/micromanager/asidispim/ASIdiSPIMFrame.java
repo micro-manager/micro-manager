@@ -41,7 +41,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import org.micromanager.MMListenerInterface;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.asidispim.Utils.StagePositionUpdater;
 import org.micromanager.internal.interfaces.LiveModeListener; 
@@ -105,7 +105,7 @@ public class ASIdiSPIMFrame extends MMFrame
     * Creates the ASIdiSPIM plugin frame
     * @param gui - Micro-Manager script interface
     */
-   public ASIdiSPIMFrame(ScriptInterface gui)  {
+   public ASIdiSPIMFrame(Studio gui)  {
 
       // create interface objects used by panels
       prefs_ = new Prefs(Preferences.userNodeForPackage(this.getClass()));
@@ -200,7 +200,7 @@ public class ASIdiSPIMFrame extends MMFrame
    }
    
    /**
-    * This accessor function should really only be used by the ScriptInterface
+    * This accessor function should really only be used by the Studio
     * Do not get into the internals of this plugin without relying on
     * ASIdiSPIM.api
     * @return 

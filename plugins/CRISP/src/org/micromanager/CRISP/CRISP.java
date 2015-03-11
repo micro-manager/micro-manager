@@ -1,7 +1,7 @@
 package org.micromanager.CRISP;
 
 import org.micromanager.MMPlugin;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 
 /**
  *
@@ -13,11 +13,11 @@ public class CRISP implements MMPlugin {
    public static final String tooltipDescription =
       "Control the ASI CRISP Autofocus System";
    @SuppressWarnings("unused")
-   private ScriptInterface gui_;
+   private Studio gui_;
    private CRISPFrame myFrame_;
 
     @Override
-   public void setApp(ScriptInterface app) {
+   public void setApp(Studio app) {
       gui_ = app;
       if (myFrame_ == null) {
          try {

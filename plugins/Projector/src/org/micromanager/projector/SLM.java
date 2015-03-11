@@ -26,12 +26,12 @@ import java.awt.Polygon;
 import java.util.HashSet;
 import java.util.List;
 import mmcorej.CMMCore;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 
 public class SLM implements ProjectionDevice {
    private final String slm_;
    private final CMMCore mmc_;
-   private final ScriptInterface app_;
+   private final Studio app_;
    private final int slmWidth_;
    private final int slmHeight_;
    private final double spotDiameter_;
@@ -39,7 +39,7 @@ public class SLM implements ProjectionDevice {
    HashSet<OnStateListener> onStateListeners_ = new HashSet<OnStateListener>();
 
    // The constructor.
-   public SLM(ScriptInterface app, CMMCore mmc, double spotDiameter) {
+   public SLM(Studio app, CMMCore mmc, double spotDiameter) {
       app_ = app;
       mmc_ = mmc;
       slm_ = mmc_.getSLMDevice();

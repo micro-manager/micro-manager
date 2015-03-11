@@ -6,7 +6,7 @@ import mmcorej.CMMCore;
 import mmcorej.StrVector;
 
 import org.micromanager.Autofocus;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 
 /**
  * Makes C++ autofocus devices appear similarly to autofocus devices implemented
@@ -239,7 +239,7 @@ public class CoreAutofocus implements Autofocus {
    }
 
    @Override
-   public void setApp(ScriptInterface app) {
+   public void setApp(Studio app) {
       core_ = app.getCMMCore();
       devName_ = core_.getAutoFocusDevice();      
    }

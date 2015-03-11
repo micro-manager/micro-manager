@@ -15,11 +15,11 @@ import mmcorej.TaggedImage;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.acquisition.internal.AcquisitionEngine;
 import org.micromanager.DataProcessor;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 
 public class PipelineTable extends JTable {
 
-   private final ScriptInterface gui_;
+   private final Studio gui_;
 
    private static final String buttonCellLayoutConstraints =
          "fill, insets 0, align center center";
@@ -90,7 +90,7 @@ public class PipelineTable extends JTable {
       }
    }
 
-   PipelineTable(ScriptInterface gui, AcquisitionEngine engine) {
+   PipelineTable(Studio gui, AcquisitionEngine engine) {
       super(new PipelineTableModel(engine));
       gui_ = gui;
 

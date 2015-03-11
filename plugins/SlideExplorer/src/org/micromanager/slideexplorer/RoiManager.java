@@ -37,7 +37,7 @@ import mmcorej.CMMCore;
 
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.StagePosition;
 //import org.micromanager.slideexplorer.SlideExplorer.CoordinateMap;
 import org.micromanager.internal.utils.MMScriptException;
@@ -68,7 +68,7 @@ public class RoiManager extends ij.plugin.frame.RoiManager{
 
 	//private CoordinateMap mosaicCoords_;
 	private Coordinates slideexplorerCoords_;
-	private ScriptInterface app_;
+	private Studio app_;
 	private Hub hub_;
     private Controller controller_;
 	private Dimension tileDimensions_;

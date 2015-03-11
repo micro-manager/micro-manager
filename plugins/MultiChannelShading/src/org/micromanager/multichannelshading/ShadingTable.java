@@ -35,7 +35,7 @@ import javax.swing.table.TableCellRenderer;
 
 import net.miginfocom.swing.MigLayout;
 
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 
 /**
  *
@@ -44,7 +44,7 @@ import org.micromanager.ScriptInterface;
 
 public class ShadingTable extends JTable {
 
-   private final ScriptInterface gui_;
+   private final Studio gui_;
 
    private static final String buttonCellLayoutConstraints =
          "insets 0, align center, center";
@@ -124,7 +124,7 @@ public class ShadingTable extends JTable {
       private String selectedPreset_;
       
       @SuppressWarnings("LeakingThisInConstructor")
-      public PresetCellEditor(ScriptInterface gui, ShadingTableModel model) {
+      public PresetCellEditor(Studio gui, ShadingTableModel model) {
          model_ = model;
          row_ = -1;
          panel_.setLayout(new MigLayout("fill, insets 0, align center, center"));
@@ -178,7 +178,7 @@ public class ShadingTable extends JTable {
    private final PresetCellEditor presetCellEditor_;
    private final LoadFileButtonCellEditor loadFileButtonCellEditor_;
    
-   ShadingTable(ScriptInterface gui, ShadingTableModel model, 
+   ShadingTable(Studio gui, ShadingTableModel model, 
            MultiChannelShadingMigForm form) {
       super(model);
       gui_ = gui;

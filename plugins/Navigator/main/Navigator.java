@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.prefs.Preferences;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.MMPlugin;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 
 /**
  *
@@ -27,7 +27,7 @@ public class Navigator implements MMPlugin{
    public static final String tooltipDescription = "Navigator plugin";
 
    private static Preferences prefs_;
-   private static ScriptInterface mmAPI_;
+   private static Studio mmAPI_;
    private static GUI gui_;
    
    public Navigator() {
@@ -46,7 +46,7 @@ public class Navigator implements MMPlugin{
    }
 
    @Override
-   public void setApp(ScriptInterface si) {
+   public void setApp(Studio si) {
    }
 
    @Override

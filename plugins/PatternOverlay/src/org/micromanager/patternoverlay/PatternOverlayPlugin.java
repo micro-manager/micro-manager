@@ -5,7 +5,7 @@ import java.awt.event.WindowEvent;
 
 import org.micromanager.internal.MMStudio;
 import org.micromanager.MMPlugin;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 
 /**
  * Add a overlay to the live view image.
@@ -26,7 +26,7 @@ public class PatternOverlayPlugin implements MMPlugin {
    
     
     @Override
-    public void setApp(ScriptInterface app) {
+    public void setApp(Studio app) {
        gui_ = (MMStudio) app;
        if (myFrame_ != null) {
           WindowEvent wev = new WindowEvent(myFrame_, WindowEvent.WINDOW_CLOSING);

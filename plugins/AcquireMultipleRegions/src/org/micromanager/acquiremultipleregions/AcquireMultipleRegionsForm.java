@@ -16,7 +16,7 @@ import mmcorej.StrVector;
 import org.micromanager.acquiremultipleregions.ZGenerator.ZGeneratorType;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.SequenceSettings;
 import org.micromanager.StagePosition;
 import org.micromanager.internal.utils.FileDialogs;
@@ -28,7 +28,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * @author kthorn
  */
 public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
-   private final ScriptInterface gui_;
+   private final Studio gui_;
    private final mmcorej.CMMCore mmc_;
    private final RegionListModel rlm_;
    private Region currentRegion_;
@@ -43,7 +43,7 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
      * Creates new form AcquireMultipleRegionsForm
      * @param gui
      */
-    public AcquireMultipleRegionsForm(ScriptInterface gui) {
+    public AcquireMultipleRegionsForm(Studio gui) {
         rlm_ = new RegionListModel();
         gui_ = gui;
         mmc_ = gui_.core();

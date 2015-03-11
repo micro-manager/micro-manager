@@ -44,7 +44,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.MMDialog;
 import org.micromanager.internal.utils.MMException;
@@ -55,7 +55,7 @@ import org.micromanager.internal.utils.MMException;
  */
 public class MultiChannelShadingMigForm extends MMDialog {
    private  MMDialog mcsPluginWindow;
-   private final ScriptInterface gui_;
+   private final Studio gui_;
    private final mmcorej.CMMCore mmc_;
    
    private final ShadingProcessor processor_;
@@ -83,7 +83,7 @@ public class MultiChannelShadingMigForm extends MMDialog {
      */
    @SuppressWarnings("LeakingThisInConstructor")
    public MultiChannelShadingMigForm(ShadingProcessor processor, 
-           ScriptInterface gui) {
+           Studio gui) {
       processor_ = processor;
       gui_ = gui;
       mmc_ = gui_.getCMMCore();

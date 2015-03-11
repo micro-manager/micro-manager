@@ -36,7 +36,7 @@ import mmcorej.DeviceType;
 import mmcorej.StrVector;
 
 import org.micromanager.MMListenerInterface;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.internal.utils.MMFrame;
 
 /**
@@ -45,7 +45,7 @@ import org.micromanager.internal.utils.MMFrame;
  */
 public class StageControlFrame extends MMFrame 
 implements MMListenerInterface {
-   private final ScriptInterface gui_;
+   private final Studio gui_;
    private final CMMCore core_;
 
    private double smallMovement_ = 1.0;
@@ -79,7 +79,7 @@ implements MMListenerInterface {
     * Creates new form StageControlFrame
     * @param gui the MM api
     */
-   public StageControlFrame(ScriptInterface gui) {
+   public StageControlFrame(Studio gui) {
       gui_ = gui;
       core_ = gui_.getCMMCore();
       nf_ = NumberFormat.getInstance();

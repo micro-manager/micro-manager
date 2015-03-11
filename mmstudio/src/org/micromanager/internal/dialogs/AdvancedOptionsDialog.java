@@ -14,7 +14,7 @@ import javax.swing.JTabbedPane;
 
 
 import org.micromanager.acquisition.internal.AcquisitionEngine;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.internal.utils.MMDialog;
 
 /*
@@ -31,7 +31,7 @@ public class AdvancedOptionsDialog extends MMDialog {
     private final JPanel closeButtonPanel_;
     private final CustomTimeIntervalsPanel customTimeIntervalsPanel_;
 
-    public AdvancedOptionsDialog(AcquisitionEngine acqEng, ScriptInterface gui) {
+    public AdvancedOptionsDialog(AcquisitionEngine acqEng, Studio gui) {
         super("advanced acquisition configuration");
         this.setModal(true);
         acqEng_ = acqEng;

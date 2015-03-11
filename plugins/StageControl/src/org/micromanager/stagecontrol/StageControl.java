@@ -22,7 +22,7 @@
 package org.micromanager.stagecontrol;
 
 import org.micromanager.MMPlugin;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 
 
 public class StageControl implements MMPlugin {
@@ -30,11 +30,11 @@ public class StageControl implements MMPlugin {
    public static final String tooltipDescription =
       "A virtual joystick for manual control of the current XY and Z stages";
 
-   private ScriptInterface gui_;
+   private Studio gui_;
    private StageControlFrame myFrame_;
 
    @Override
-   public void setApp(ScriptInterface app) {
+   public void setApp(Studio app) {
       gui_ = app;       
       if (myFrame_ == null) {
          myFrame_ = new StageControlFrame(gui_);

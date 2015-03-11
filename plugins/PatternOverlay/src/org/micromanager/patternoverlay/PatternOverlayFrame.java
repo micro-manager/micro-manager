@@ -38,7 +38,7 @@ import javax.swing.JSlider;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.events.NewDisplayEvent;
 
@@ -63,7 +63,7 @@ import net.miginfocom.swing.MigLayout;
  */
 @SuppressWarnings("LeakingThisInConstructor")
 public class PatternOverlayFrame extends MMFrame {
-   private static ScriptInterface gui_;
+   private static Studio gui_;
    private final JComboBox overlayBox_;
    private final JToggleButton toggleButton_;
    private final JSlider sizeSlider_;
@@ -73,7 +73,7 @@ public class PatternOverlayFrame extends MMFrame {
    
    private GenericOverlay lastOverlay_;
 
-   public PatternOverlayFrame(ScriptInterface gui) {
+   public PatternOverlayFrame(Studio gui) {
       this.setLayout(new MigLayout(
             "",
             "[right]10[center]",

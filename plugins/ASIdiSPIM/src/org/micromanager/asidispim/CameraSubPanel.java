@@ -38,7 +38,7 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JToggleButton;
 
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.interfaces.LiveModeListener;
 
@@ -57,7 +57,7 @@ public final class CameraSubPanel extends ListeningJPanel implements LiveModeLis
    private final Devices devices_;
    private final Prefs prefs_;
    private final Cameras cameras_;
-   private final ScriptInterface gui_;
+   private final Studio gui_;
    private final Devices.Sides side_;
    private final String instanceLabel_;
    private final JComboBox cameraBox_;
@@ -74,7 +74,7 @@ public final class CameraSubPanel extends ListeningJPanel implements LiveModeLis
     * @param prefs
     * @param showLiveButton if false then the live button is omitted
     */
-   public CameraSubPanel(ScriptInterface gui, 
+   public CameraSubPanel(Studio gui, 
            Cameras cameras, 
            Devices devices, 
            String instanceLabel,

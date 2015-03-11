@@ -27,7 +27,7 @@ import java.util.List;
 
 import mmcorej.CMMCore;
 
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.asidispim.Utils.MyDialogUtils;
 import org.micromanager.asidispim.Utils.UpdateFromPropertyListenerInterface;
 import org.micromanager.internal.utils.NumberUtils;
@@ -279,7 +279,7 @@ public class Properties {
     * @author Jon
     * @param prefs
     */
-   public Properties (ScriptInterface gui, Devices devices, Prefs prefs) {
+   public Properties (Studio gui, Devices devices, Prefs prefs) {
       core_ = gui.getCMMCore();
       devices_ = devices;
       prefs_ = prefs;

@@ -32,7 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.micromanager.internal.dialogs.ComponentTitledBorder;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.asidispim.Data.ChannelConfigEditor;
 import org.micromanager.asidispim.Data.ChannelSpec;
 import org.micromanager.asidispim.Data.ChannelTableModel;
@@ -74,7 +74,7 @@ import net.miginfocom.swing.MigLayout;
  */
 @SuppressWarnings("serial")
 public class MultiChannelSubPanel extends ListeningJPanel {
-   private final ScriptInterface gui_;
+   private final Studio gui_;
    private final CMMCore core_;
    private final Devices devices_;
    private final Properties props_;
@@ -129,7 +129,7 @@ public class MultiChannelSubPanel extends ListeningJPanel {
     * @param props
     * @param prefs
     */
-   public MultiChannelSubPanel(ScriptInterface gui, Devices devices, 
+   public MultiChannelSubPanel(Studio gui, Devices devices, 
            Properties props, Prefs prefs) {
       super (MyStrings.PanelNames.CHANNELS_SUBPANEL.toString(),
             new MigLayout(

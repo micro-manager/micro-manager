@@ -83,7 +83,7 @@ import mmcorej.Configuration;
 import mmcorej.DeviceType;
 import mmcorej.TaggedImage;
 import org.micromanager.data.Datastore;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 // TODO should not depend on this module.
 import org.micromanager.display.internal.MMVirtualStack;
 import org.micromanager.internal.utils.ImageUtils;
@@ -102,7 +102,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    private final MouseListener pointAndShootMouseListener;
    private final AtomicBoolean pointAndShooteModeOn_ = new AtomicBoolean(false);
    private final CMMCore core_;
-   private final ScriptInterface app_;
+   private final Studio app_;
    private final boolean isSLM_;
    private int numROIs_;
    private Roi[] individualRois_ = {};
@@ -1230,7 +1230,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    /**
     * Constructor. Creates the main window for the Projector plugin.
     */
-   private ProjectorControlForm(CMMCore core, ScriptInterface app) {
+   private ProjectorControlForm(CMMCore core, Studio app) {
       initComponents();
       app_ = app;
       core_ = app.getCMMCore();
@@ -1299,7 +1299,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    }
    
    // Show the form, which is a singleton.
-   public static ProjectorControlForm showSingleton(CMMCore core, ScriptInterface app) {
+   public static ProjectorControlForm showSingleton(CMMCore core, Studio app) {
       if (formSingleton_ == null) {
          formSingleton_ = new ProjectorControlForm(core, app);
       }

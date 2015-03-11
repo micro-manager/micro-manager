@@ -15,7 +15,7 @@ import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.StrVector;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.internal.utils.PropertyItem;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -32,7 +32,7 @@ public class PropertyChooserTableModel  extends AbstractTableModel {
    private TreeMap<String, String> propLabels_;
    
    private CMMCore core_;
-   private ScriptInterface mmAPI_;
+   private Studio mmAPI_;
    private Preferences prefs_;
 
    

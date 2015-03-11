@@ -35,7 +35,7 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
@@ -49,7 +49,7 @@ import org.micromanager.internal.utils.MMFrame;
 @SuppressWarnings("serial")
 public class CRISPFrame extends MMFrame {
 
-    private final ScriptInterface gui_;
+    private final Studio gui_;
     private final CMMCore core_;
     private String CRISP_;
 
@@ -62,7 +62,7 @@ public class CRISPFrame extends MMFrame {
      * 
      * @param gui MM scriptInterface
      */
-    public CRISPFrame(ScriptInterface gui)  {
+    public CRISPFrame(Studio gui)  {
        gui_ = gui;
        core_ = gui.getCMMCore();
        CRISP_ = "";

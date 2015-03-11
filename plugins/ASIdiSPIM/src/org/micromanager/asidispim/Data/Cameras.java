@@ -28,7 +28,7 @@ import java.util.List;
 
 import mmcorej.CMMCore;
 
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.asidispim.Utils.MyDialogUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -43,12 +43,12 @@ public class Cameras {
                                    // selected/available devices
    private final Properties props_; // object handling all property read/writes
    private final Prefs prefs_;
-   private final ScriptInterface gui_;
+   private final Studio gui_;
    private final CMMCore core_;
    private Devices.Keys currentCameraKey_;
 
 
-   public Cameras(ScriptInterface gui, Devices devices, Properties props, Prefs prefs) {
+   public Cameras(Studio gui, Devices devices, Properties props, Prefs prefs) {
       devices_ = devices;
       props_ = props;
       prefs_ = prefs;

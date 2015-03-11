@@ -31,7 +31,7 @@ import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.internal.utils.Calibration;
 import org.micromanager.internal.utils.CalibrationList;
 import org.micromanager.internal.utils.MMDialog;
@@ -50,7 +50,7 @@ public class CalibrationListDlg extends MMDialog {
    private SpringLayout springLayout;
    private CMMCore core_;
    private CalibrationList calibrationList_;
-   private ScriptInterface parentGUI_;
+   private Studio parentGUI_;
 
    private class CalTableModel extends AbstractTableModel {
       private static final long serialVersionUID = 1L;
@@ -312,7 +312,7 @@ public class CalibrationListDlg extends MMDialog {
           calTable_.setRowSelectionInterval(row, row);
    }
 
-   public void setParentGUI(ScriptInterface parent) {
+   public void setParentGUI(Studio parent) {
       parentGUI_ = parent;
    }
 

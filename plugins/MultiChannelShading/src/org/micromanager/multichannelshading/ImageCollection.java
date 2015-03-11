@@ -28,7 +28,7 @@ import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import java.awt.Rectangle;
 import java.util.HashMap;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 
 import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.internal.utils.MMException;
@@ -42,13 +42,13 @@ import org.micromanager.internal.utils.MMException;
  * @author nico
  */
 public class ImageCollection {
-   private final ScriptInterface gui_;
+   private final Studio gui_;
    private final HashMap<String, ImagePlusInfo> background_;
    private final HashMap<String, HashMap<String, ImagePlusInfo>> flatFields_;
    
    private final String BASEIMAGE = "base";
    
-   public ImageCollection(ScriptInterface gui) {
+   public ImageCollection(Studio gui) {
       gui_ = gui;
       background_ = new HashMap<String, ImagePlusInfo>();
       flatFields_ = new HashMap<String, HashMap<String, ImagePlusInfo>>();

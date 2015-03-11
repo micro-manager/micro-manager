@@ -20,7 +20,7 @@ package org.micromanager.intelligentacquisition;
 
 import mmcorej.CMMCore;
 import org.micromanager.MMPlugin;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 
 
 public class IntelligentAcquisition implements MMPlugin {
@@ -29,10 +29,10 @@ public class IntelligentAcquisition implements MMPlugin {
       "Use image analysis to drive image acquisition";
 
    private CMMCore core_;
-   private ScriptInterface gui_;
+   private Studio gui_;
    private IntelligentAcquisitionFrame myFrame_;
 
-   public void setApp(ScriptInterface app) {
+   public void setApp(Studio app) {
       gui_ = app;                                        
       core_ = app.getCMMCore();
       if (myFrame_ == null)

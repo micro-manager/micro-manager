@@ -29,7 +29,7 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import mmcorej.CMMCore;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.internal.utils.PropertyValueCellEditor;
 import org.micromanager.internal.utils.PropertyValueCellRenderer;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -53,7 +53,7 @@ public class GUI extends javax.swing.JFrame {
    private static final DecimalFormat TWO_DECIMAL_FORMAT = new DecimalFormat("0.00");
    private static final Color DARK_GREEN = new Color(0,128,0);
    
-   private ScriptInterface mmAPI_;
+   private Studio mmAPI_;
    private CMMCore core_;
    private CustomAcqEngine eng_;
    private Preferences prefs_;
@@ -64,7 +64,7 @@ public class GUI extends javax.swing.JFrame {
    private boolean storeAcqSettings_ = true;
    private int multiAcqSelectedIndex_ = 0;
 
-   public GUI(Preferences prefs, ScriptInterface mmapi, String version) {
+   public GUI(Preferences prefs, Studio mmapi, String version) {
       prefs_ = prefs;   
       settings_ = new SettingsDialog(prefs_, this);
       mmAPI_ = mmapi;

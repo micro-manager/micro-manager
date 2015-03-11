@@ -35,11 +35,11 @@ public interface MMPlugin extends MMBasePlugin {
    public void dispose();
    
    /**
-    * The main app passes its ScriptInterface to the module. This
+    * The main app passes its Studio to the module. This
     * method is typically called after the module is instantiated.
-    * @param app - ScriptInterface implementation
+    * @param app - Studio implementation
     */
-   public void setApp(ScriptInterface app);
+   public void setApp(Studio app);
    
    /**
     * Open the module window

@@ -31,7 +31,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.acquisition.internal.TaggedImageQueue;
 import org.micromanager.DataProcessor;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.ReportingUtils;

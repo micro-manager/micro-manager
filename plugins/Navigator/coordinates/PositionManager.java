@@ -19,7 +19,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.internal.utils.ReportingUtils;
 
 
@@ -415,7 +415,7 @@ public class PositionManager {
     */
    private Point2D.Double getStagePositionCoordinates(int row, int col, int pixelOverlapX, int pixelOverlapY) {
       try {
-         ScriptInterface app = MMStudio.getInstance();
+         Studio app = MMStudio.getInstance();
          CMMCore core = app.getCMMCore();
          long height = app.getCMMCore().getImageHeight();
          long width = app.getCMMCore().getImageWidth();

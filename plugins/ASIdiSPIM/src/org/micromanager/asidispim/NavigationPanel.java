@@ -50,7 +50,7 @@ import javax.swing.JPanel;
 import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
 
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.internal.interfaces.LiveModeListener;
 
 
@@ -68,7 +68,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
    private final Prefs prefs_;
    private final Cameras cameras_;
    private final StagePositionUpdater posUpdater_;
-   private final ScriptInterface gui_;
+   private final Studio gui_;
    private final CMMCore core_;
    
    private final JoystickSubPanel joystickPanel_;
@@ -97,7 +97,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
     * @param cameras
     * @param posUpdater Class that will continuously update the stage positions
     */
-   public NavigationPanel(ScriptInterface gui, Devices devices, Properties props, 
+   public NavigationPanel(Studio gui, Devices devices, Properties props, 
            Joystick joystick, Positions positions, Prefs prefs, Cameras cameras,
            StagePositionUpdater posUpdater) {    
       super (MyStrings.PanelNames.NAVIGATION.toString(),

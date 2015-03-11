@@ -24,7 +24,7 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.acquisition.internal.AcquisitionEngine;
 import org.micromanager.DataProcessor;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.events.internal.EventManager;
 import org.micromanager.events.internal.ProcessorEvent;
 import org.micromanager.internal.utils.MMFrame;
@@ -33,7 +33,7 @@ import org.micromanager.internal.utils.MMFrame;
 final public class PipelineFrame extends MMFrame
       implements ListSelectionListener {
 
-   private final ScriptInterface gui_;
+   private final Studio gui_;
    private final AcquisitionEngine engine_;
 
    private final JPopupMenu addProcessorPopup_;
@@ -45,7 +45,7 @@ final public class PipelineFrame extends MMFrame
    private final JButton moveUpButton_;
    private final JButton moveDownButton_;
 
-   public PipelineFrame(ScriptInterface gui, AcquisitionEngine engine) {
+   public PipelineFrame(Studio gui, AcquisitionEngine engine) {
       super("On-The-Fly Processor Pipeline");
       gui_ = gui;
       engine_ = engine;

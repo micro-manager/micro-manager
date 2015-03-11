@@ -29,7 +29,7 @@ import mmcorej.DeviceType;
 import mmcorej.StrVector;
 
 import org.micromanager.Autofocus;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 
 /**
  * Manages different instances of autofocus devices, both Java plugin and MMCore based.
@@ -37,13 +37,13 @@ import org.micromanager.ScriptInterface;
  * the list of available focusing devices, as well as for selecting a default one.
  */
 public class AutofocusManager {
-   private ScriptInterface app_;
+   private Studio app_;
    private Vector<Autofocus> afs_;
    private Vector<String> afPluginClassNames_;
    private Autofocus currentAfDevice_;
    private AutofocusPropertyEditor afDlg_;
    
-   public AutofocusManager(ScriptInterface app) {
+   public AutofocusManager(Studio app) {
       afs_ = new Vector<Autofocus>();
       afPluginClassNames_ = new Vector<String>();
       currentAfDevice_ = null;

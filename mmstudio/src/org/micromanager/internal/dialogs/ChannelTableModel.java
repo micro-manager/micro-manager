@@ -10,7 +10,7 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 
 import org.micromanager.acquisition.internal.AcquisitionEngine;
-import org.micromanager.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.internal.utils.ChannelSpec;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.TooltipTextMaker;
@@ -22,7 +22,7 @@ public class ChannelTableModel extends AbstractTableModel implements TableModelL
 
    private static final long serialVersionUID = 3290621191844925827L;
    private ArrayList<ChannelSpec> channels_;
-   private final ScriptInterface studio_;
+   private final Studio studio_;
    private final AcquisitionEngine acqEng_;
    public final String[] COLUMN_NAMES = new String[]{
       "Use?",
@@ -53,7 +53,7 @@ public class ChannelTableModel extends AbstractTableModel implements TableModelL
       return TOOLTIPS[columnIndex];
    }
 
-   public ChannelTableModel(ScriptInterface studio, AcquisitionEngine eng) {
+   public ChannelTableModel(Studio studio, AcquisitionEngine eng) {
       studio_ = studio;
       acqEng_ = eng;
    }
