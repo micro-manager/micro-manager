@@ -84,8 +84,8 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
    
    private int explorationX_ = 5;
    private int explorationY_ = 5;
-   private int roiWidthX_ = 256;
-   private int roiWidthY_ = 256;
+   private long roiWidthX_ = 256;
+   private long roiWidthY_ = 256;
    
    private double pixelWidthMicron_ = 0.1;
   
@@ -114,8 +114,8 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
                scriptFileName_); 
        explorationX_ = gui_.profile().getInt(cl_, EXPFIELDSX, explorationX_);
        explorationY_ = gui_.profile().getInt(cl_, EXPFIELDSY, explorationY_);
-       roiWidthX_ = gui_.profile().getInt(cl_, ROIWIDTHX, roiWidthX_);
-       roiWidthY_ = gui_.profile().getInt(cl_, ROIWIDTHY, roiWidthY_);
+       roiWidthX_ = gui_.profile().getLong(cl_, ROIWIDTHX, roiWidthX_);
+       roiWidthY_ = gui_.profile().getLong(cl_, ROIWIDTHY, roiWidthY_);
        
        initComponents();
 
@@ -496,21 +496,21 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
 
    private void roiFieldX_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_roiFieldX_ActionPerformed
       try {
-         roiWidthX_ = NumberUtils.displayStringToInt(roiFieldX_.getText());
+         roiWidthX_ = NumberUtils.displayStringToLong(roiFieldX_.getText());
       } catch (ParseException ex) {
          gui_.logs().logError(ex);
       }
-      gui_.profile().setInt(cl_, ROIWIDTHX, roiWidthX_);
+      gui_.profile().setLong(cl_, ROIWIDTHX, roiWidthX_);
       
    }//GEN-LAST:event_roiFieldX_ActionPerformed
 
    private void roiFieldY_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_roiFieldY_ActionPerformed
       try {
-         roiWidthY_ = NumberUtils.displayStringToInt(roiFieldY_.getText());
+         roiWidthY_ = NumberUtils.displayStringToLong(roiFieldY_.getText());
       } catch (ParseException ex) {
          gui_.logs().logError(ex);
       } 
-      gui_.profile().setInt(cl_, ROIWIDTHY, roiWidthY_);
+      gui_.profile().setLong(cl_, ROIWIDTHY, roiWidthY_);
    }//GEN-LAST:event_roiFieldY_ActionPerformed
 
    private void expAreaFieldY_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_expAreaFieldY_ActionPerformed
@@ -532,14 +532,14 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
    }//GEN-LAST:event_expAreaFieldX_ActionPerformed
 
    private void fullROIButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fullROIButton_ActionPerformed
-      roiWidthX_ = (int) core_.getImageWidth();
-      roiWidthY_ = (int) core_.getImageHeight();
+      roiWidthX_ = core_.getImageWidth();
+      roiWidthY_ = core_.getImageHeight();
       updateROI();
    }//GEN-LAST:event_fullROIButton_ActionPerformed
 
    private void halfROIButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_halfROIButton_ActionPerformed
-      roiWidthX_ = (int) core_.getImageWidth() / 2;
-      roiWidthY_ = (int) core_.getImageHeight() / 2;
+      roiWidthX_ = core_.getImageWidth() / 2;
+      roiWidthY_ = core_.getImageHeight() / 2;
       updateROI();
    }//GEN-LAST:event_halfROIButton_ActionPerformed
 
@@ -840,8 +840,8 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
    private void updateROI() {
       roiFieldX_.setText(NumberUtils.longToDisplayString(roiWidthX_));
       roiFieldY_.setText(NumberUtils.longToDisplayString(roiWidthY_));
-      gui_.profile().setInt(cl_, ROIWIDTHX, roiWidthX_);
-      gui_.profile().setInt(cl_, ROIWIDTHY, roiWidthY_);
+      gui_.profile().setLong(cl_, ROIWIDTHX, roiWidthX_);
+      gui_.profile().setLong(cl_, ROIWIDTHY, roiWidthY_);
    }
    // Variables declaration - do not modify//GEN-BEGIN:variables
    private javax.swing.JButton acqSettingsButton1_;
