@@ -17,7 +17,6 @@
 package org.micromanager.projector;
 
 import ij.process.FloatPolygon;
-import java.awt.Polygon;
 import java.util.List;
 
 public interface ProjectionDevice {
