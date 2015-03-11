@@ -718,6 +718,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    @Override
+   @Deprecated
    public double getMinZStepUm() {
       return minZStepUm_;
    }
@@ -822,6 +823,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    @Override
+   @Deprecated
    public void setCameraConfig(String cfg) {
       // do nothing
    }
@@ -883,12 +885,15 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
     * @param zOffset
     * @param c8
     * @param c16
+    * @param skip
     * @param c
     * @return - true if successful
-    * @deprecated
+    * @Deprecated
     */
    @Override
-   public boolean addChannel(String config, double exp, double zOffset, ContrastSettings c8, ContrastSettings c16, int skip, Color c) {
+   @Deprecated
+   public boolean addChannel(String config, double exp, double zOffset, 
+           ContrastSettings c8, ContrastSettings c16, int skip, Color c) {
       return addChannel(config, exp, true, zOffset, c16, skip, c, true);
    }
 
@@ -903,6 +908,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    @Override
+   @Deprecated
    public void setDisplayMode(int mode) {
       //Ignore
    }
@@ -913,6 +919,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    @Override
+   @Deprecated
    public int getDisplayMode() {
       return 0;
    }
@@ -943,16 +950,19 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    @Override
+   @Deprecated
    public void setSingleFrame(boolean selected) {
       //Ignore
    }
 
    @Override
+   @Deprecated
    public void setSingleWindow(boolean selected) {
       //Ignore
    }
 
    @Override
+   @Deprecated
    public String installAutofocusPlugin(String className) {
       throw new UnsupportedOperationException("Not supported yet.");
    }
@@ -1046,6 +1056,8 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
     * Find out if the configuration is compatible with the current group.
     * This method should be used to verify if the acquisition protocol is consistent
     * with the current settings.
+    * @param config Configuration to be tested
+    * @return True if the parameter is in the current group
     */
    @Override
    public boolean isConfigAvailable(String config) {
@@ -1059,6 +1071,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    @Override
+   @Deprecated
    public String[] getCameraConfigs() {
       if (core_ == null) {
          return new String[0];
