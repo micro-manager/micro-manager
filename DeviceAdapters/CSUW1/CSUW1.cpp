@@ -934,7 +934,7 @@ int BrightField::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 Disk::Disk () :
    initialized_ (false),
    name_ (g_CSUW1Disk),
-   numPos_ (2)
+   numPos_ (3)
 {
    InitializeDefaultErrorMessages();
 }
@@ -964,14 +964,14 @@ int Disk::Initialize()
 
    // State
    CPropertyAction* pAct = new CPropertyAction (this, &Disk::OnState);
-   ret = CreateProperty("Disk", "Disk 1", MM::String, false, pAct); 
+   ret = CreateIntegerProperty(MM::g_Keyword_State, 0, false, pAct); 
    if (ret != DEVICE_OK) 
       return ret; 
-   AddAllowedValue("Disk", "Disk 1");
-   AddAllowedValue("Disk", "Disk 2");
+
 
    SetPositionLabel(0, "Disk 1");
    SetPositionLabel(1, "Disk 2");
+   SetPositionLabel(2, "BrightField");
 
    ret = UpdateStatus();
    if (ret != DEVICE_OK) 
@@ -1000,29 +1000,36 @@ int Disk::Shutdown()
 ///////////////////////////////////////////////////////////////////////////////
 // Action handlers                                                           
 ///////////////////////////////////////////////////////////////////////////////
-
+// Native disk positions:
+// -1 - BrightField (state 2)
+//  1 - Disk 1 (state 0)
+//  2 - Disk 2 (state 1)
 int Disk::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
-      int pos;
+      int pos = 1;
       int ret = g_hub.GetDiskPosition(*this, *GetCoreCallback(), pos);
       if (ret != DEVICE_OK)
          return ret;
-      if (pos == 0)
-         pProp->Set("Disk 1");
+      if (pos == -1)
+         pProp->Set(2l);
       else if (pos == 1)
-         pProp->Set("Disk 2");
+         pProp->Set(0l);
+      else if (pos == 2)
+         pProp->Set(2l);
 	  else
-	     ;         // Bright Field
+	     ;         // TODO: Error!!!
    }
    else if (eAct == MM::AfterSet)
    {
-      std::string setting;
-      pProp->Get(setting);
+      long state;
+      pProp->Get(state);
       int pos = 1;
-      if (setting == "Disk 1")
-         pos = 0;
+      if (state == 2)
+         pos = -1;
+      if (state == 1)
+         pos = 2;
       return g_hub.SetDiskPosition(*this, *GetCoreCallback(), pos);
    }
 
