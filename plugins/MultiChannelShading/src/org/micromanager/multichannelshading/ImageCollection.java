@@ -148,9 +148,9 @@ public class ImageCollection {
 
                int pValue = dp.get(i);
                if (dp instanceof ShortProcessor) {
-                  pValue &= (int) pValue & 0x0000ffff;
+                  pValue &= pValue & 0x0000ffff;
                } else if (dp instanceof ByteProcessor) {
-                  pValue &= (int) pValue & 0x000000ff;
+                  pValue &= pValue & 0x000000ff;
                }
                fPixels[i] = mean / (float) pValue;
             }
