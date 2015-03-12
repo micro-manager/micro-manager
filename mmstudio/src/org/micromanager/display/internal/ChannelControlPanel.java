@@ -589,12 +589,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       Runnable run = new Runnable() {
          @Override
          public void run() {
-            if (store_.getIsFrozen()) {
-               // TODO: why do we not do this when the store is locked?
-               ReportingUtils.logError("Store locked; no LUT for us");
-               return;
-            }
-
             LUT lut = ImageUtils.makeLUT(color_, gamma_);
             lut.min = contrastMin_;
             lut.max = contrastMax_;
