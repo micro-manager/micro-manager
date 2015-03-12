@@ -484,7 +484,7 @@ int CPLogic::OnRefreshProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
 int CPLogic::RefreshEditCellPropertyValues()
 {
    // force on property refresh
-   char refreshPropValsStr[5];
+   char refreshPropValsStr[MM::MaxStrLength];
    GetProperty(g_RefreshPropValsPropertyName, refreshPropValsStr);
    SetProperty(g_RefreshPropValsPropertyName, g_YesState);
 
@@ -620,7 +620,7 @@ int CPLogic::OnAdvancedProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
          advancedPropsEnabled_ = true;
 
          // force-on refresh
-         char refreshPropValsStr[5];
+         char refreshPropValsStr[MM::MaxStrLength];
          GetProperty(g_RefreshPropValsPropertyName, refreshPropValsStr);
          SetProperty(g_RefreshPropValsPropertyName, g_YesState);
 
@@ -707,7 +707,7 @@ int CPLogic::RefreshAdvancedCellPropertyValues(long index)
    char propName[MM::MaxStrLength];
 
    // force property refresh turned on
-   char refreshPropValsStr[5];
+   char refreshPropValsStr[MM::MaxStrLength];
    GetProperty(g_RefreshPropValsPropertyName, refreshPropValsStr);
    SetProperty(g_RefreshPropValsPropertyName, g_YesState);
 
