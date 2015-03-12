@@ -24,14 +24,14 @@ import org.micromanager.display.DisplayWindow;
 import org.micromanager.events.NewDisplayEvent;
 
 public class DefaultNewDisplayEvent implements NewDisplayEvent {
-   private DisplayWindow window_;
+   private DisplayWindow display_;
 
-   public DefaultNewDisplayEvent(DisplayWindow window) {
-      window_ = window;
+   public DefaultNewDisplayEvent(DisplayWindow display) {
+      display_ = display;
    }
 
    @Override
-   public DisplayWindow getDisplayWindow() {
-      return window_;
+   public DisplayWindow getDisplay() {
+      return display_;
    }
 }

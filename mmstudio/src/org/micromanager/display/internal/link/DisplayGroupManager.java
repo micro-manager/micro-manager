@@ -115,7 +115,7 @@ public class DisplayGroupManager {
     */
    @Subscribe
    public void onNewDisplay(NewDisplayEvent event) {
-      DisplayWindow display = event.getDisplayWindow();
+      DisplayWindow display = event.getDisplay();
       listeners_.add(new WindowListener(display, this));
       displayToLinkers_.put(display, new HashSet<SettingsLinker>());
       Datastore store = display.getDatastore();

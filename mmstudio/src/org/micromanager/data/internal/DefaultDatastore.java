@@ -45,7 +45,7 @@ public class DefaultDatastore implements Datastore {
    private Storage storage_ = null;
    private PrioritizedEventBus bus_;
    private boolean isFrozen_ = false;
-   private boolean isSaved_ = false;
+   private String savePath_ = null;
 
    public DefaultDatastore() {
       bus_ = new PrioritizedEventBus();
@@ -195,13 +195,14 @@ public class DefaultDatastore implements Datastore {
    }
 
    @Override
-   public void setIsSaved(boolean isSaved) {
-      isSaved_ = isSaved;
+   public void setSavePath(String path) {
+      savePath_ = path;
+      bus_.post(new DefaultDatastoreSavedEvent(path));
    }
 
    @Override
-   public boolean getIsSaved() {
-      return isSaved_;
+   public String getSavePath() {
+      return savePath_;
    }
 
    @Override
@@ -249,7 +250,8 @@ public class DefaultDatastore implements Datastore {
          for (Coords coords : getUnorderedImageCoords()) {
             duplicate.putImage(getImage(coords));
          }
-         bus_.post(new DatastoreSavedEvent(path));
+         setSavePath(path);
+         freeze();
          return true;
       }
       catch (java.io.IOException e) {

@@ -191,21 +191,21 @@ public interface Datastore extends Closeable {
    public void close();
 
    /**
-    * Tell the Datastore whether or not its image data has been saved. It's
-    * unlikely that most users will ever need to call this; it is set
-    * automatically by the save() method, below.
+    * Tell the Datastore that it has been saved to disk at the specified path.
+    * This will cause a DatastoreSaveEvent to be posted on the Datastore's
+    * event bus.
     * 
-    * @param isSaved flag that tells the data store whether or not the data have
-    * been saved
+    * @param path The location on disk at which the data has been stored.
     */
-   public void setIsSaved(boolean isSaved);
+   public void setSavePath(String path);
 
    /**
-    * Retrieve whether or not the image data has been saved.
+    * Return the path for where the data has been saved to disk. Will be null
+    * if the data has not been saved yet.
     * 
-    * @return true if the data have been saved
+    * @return The directory path to the saved data.
     */
-   public boolean getIsSaved();
+   public String getSavePath();
 
    /**
     * These are the valid inputs to the save() methods. 
@@ -218,7 +218,6 @@ public interface Datastore extends Closeable {
     * This enum will likely be expanded in the future
     */
    public enum SaveMode {
-
       SINGLEPLANE_TIFF_SERIES,
       MULTIPAGE_TIFF
    }
@@ -226,8 +225,8 @@ public interface Datastore extends Closeable {
    /**
     * Prompts the user for a directory and filename, then pulls image data from
     * the Storage and saves it according to the mode. After this method,
-    * getIsSaved() will be true, unless the user cancels when prompted for
-    * directory/filename or there is an error while saving.
+    * getSavePath() will return the selected save path, unless the user cancels
+    * when prompted for directory/filename or there is an error while saving.
     *
     * @param mode
     * @param window Window  on top of which to display the dialog prompt; 
@@ -239,7 +238,8 @@ public interface Datastore extends Closeable {
    /**
     * As above, except uses the provided path (the last element of which is
     * assumed to be a filename), instead of prompting the user. After this
-    * method, getIsSaved() will be true, unless there is an error while saving.
+    * method, getSavePath() will return the input save path, unless there is an
+    * error while saving.
     *
     * @param mode
     * @param path

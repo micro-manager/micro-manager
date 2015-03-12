@@ -185,7 +185,7 @@ public class DefaultDisplayManager implements DisplayManager {
       }
 
       // Last display; check for saving now.
-      if (store.getIsSaved()) {
+      if (store.getSavePath() != null) {
          // No problem with saving.
          removeDisplay(display);
          return;
@@ -231,11 +231,23 @@ public class DefaultDisplayManager implements DisplayManager {
     */
    @Subscribe
    public void onNewDisplayEvent(NewDisplayEvent event) {
-      DisplayWindow display = event.getDisplayWindow();
+      DisplayWindow display = event.getDisplay();
       Datastore store = display.getDatastore();
       if (getIsTracked(store)) {
          storeToDisplays_.get(store).add(display);
          display.registerForEvents(this);
+      }
+   }
+
+   /**
+    * Ensure that we don't think the display still exists.
+    */
+   @Subscribe
+   public void onDisplayDestroyed(DisplayDestroyedEvent event) {
+      DisplayWindow display = event.getDisplay();
+      Datastore store = display.getDatastore();
+      if (getIsTracked(store)) {
+      storeToDisplays_.get(store).remove(display);
       }
    }
 }

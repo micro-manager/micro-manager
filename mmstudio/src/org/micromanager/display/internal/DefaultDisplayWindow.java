@@ -66,18 +66,17 @@ import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
+import org.micromanager.data.DatastoreSavedEvent;
 import org.micromanager.data.Image;
 import org.micromanager.data.NewImageEvent;
 import org.micromanager.data.NewSummaryMetadataEvent;
 import org.micromanager.data.SummaryMetadata;
-import org.micromanager.data.internal.DatastoreSavedEvent;
 import org.micromanager.display.ControlsFactory;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.RequestToDrawEvent;
 import org.micromanager.events.DatastoreClosingEvent;
 
-import org.micromanager.data.internal.DatastoreSavedEvent;
 import org.micromanager.data.internal.DefaultCoords;
 
 import org.micromanager.events.internal.EventManager;
@@ -424,7 +423,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
             (int) (canvas_.getMagnification() * 100));
       // HACK: don't display save status for the snap/live view.
       if (!title.contains("Snap/Live")) {
-         if (!store_.getIsSaved()) {
+         if (store_.getSavePath() == null) {
             title += " (Not yet saved)";
          }
          else {
@@ -674,7 +673,6 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       }
       displayBus_.post(new DisplayDestroyedEvent(this));
       MMStudio studio = MMStudio.getInstance();
-      studio.displays().removeDisplay(this, store_);
       store_.unregisterForEvents(this);
       dispose();
       haveClosed_ = true;

@@ -300,7 +300,7 @@ public class MMAcquisition {
          }
 
          store_.setStorage(imageFileManager);
-         store_.setIsSaved(true);
+         store_.setSavePath(dirName);
          try {
             store_.setSummaryMetadata((new DefaultSummaryMetadata.Builder().build()));
          }
@@ -380,7 +380,7 @@ public class MMAcquisition {
          store_.setStorage(tempImageFileManager);
          DefaultDatastore duplicate = new DefaultDatastore();
          duplicate.setStorage(new StorageRAM(duplicate));
-         duplicate.setIsSaved(true);
+         duplicate.setSavePath(dirName);
          duplicate.copyFrom(store_);
          store_ = duplicate;
          if (show_) {

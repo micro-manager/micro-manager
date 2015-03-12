@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //PROJECT:       Micro-Manager
-//SUBSYSTEM:     Events API
+//SUBSYSTEM:     Data API implementation
 //-----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
@@ -18,19 +18,17 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.events;
+package org.micromanager.data.internal;
 
-import org.micromanager.display.DisplayWindow;
+public class DefaultDatastoreSavedEvent implements org.micromanager.data.DatastoreSavedEvent {
+   private String path_;
 
-/**
- * This event is posted whenever a new display window is created for *any*
- * Datastore. Register for this event using the MMStudio.registerForEvents()
- * method (i.e. not the equivalent Datastore or DisplayWindow methods).
- */
-public interface NewDisplayEvent {
-   /**
-    * Provides access to the newly-created DisplayWindow.
-    * @return the new DisplayWindow.
-    */
-   public DisplayWindow getDisplay();
+   public DefaultDatastoreSavedEvent(String path) {
+      path_ = path;
+   }
+
+   @Override
+   public String getPath() {
+      return path_;
+   }
 }
