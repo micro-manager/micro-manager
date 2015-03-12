@@ -28,6 +28,7 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
+import org.micromanager.display.DisplayWindow;
 
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -54,7 +55,8 @@ public class DefaultAlbum implements Album {
          // Need to create a new album.
          store_ = studio.data().createRAMDatastore();
          studio.displays().manage(store_);
-         studio.displays().createDisplay(store_);
+         DisplayWindow display = studio.displays().createDisplay(store_);
+         display.setCustomTitle("Album");
          curTime_ = null;
          didCreateNew = true;
       }
