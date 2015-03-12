@@ -554,15 +554,15 @@
      (when (and gui
                 (< 1000 delta)
                 (@state :live-mode-on)
-                (not (.isLiveModeOn gui)))
-      (.enableLiveMode gui true))
+                (not (.getIsLiveModeOn (.live gui))))
+      (.setLiveMode (.live gui) true))
     (when (pos? delta)
       (interruptible-sleep delta))
     (await-resume)
     (when gui
-      (swap! state assoc :live-mode-on (.isLiveModeOn gui))
-      (when (.isLiveModeOn gui)
-        (.enableLiveMode gui false)))
+      (swap! state assoc :live-mode-on (.getIsLiveModeOn (.live gui)))
+      (when (.getIsLiveModeOn (.live gui))
+        (.setLiveMode (.live gui) false)))
     (let [now (jvm-time-ms)
           wake-time (if (> now (+ target-time 10)) now target-time)]
       (swap! state assoc :last-wake-time wake-time))))
@@ -770,9 +770,8 @@
       (def acq-settings settings) ; for debugging
       (log "Starting MD Acquisition:" settings)
       (when gui
-        (doto gui
-          (.enableLiveMode false)
-          (.enableRoiButtons false)))
+        (.. gui (live) (setLiveMode false))
+        (.enableRoiButtons gui false))
       (prepare-state state (when (:use-position-list settings) position-list) autofocus-device)
       (def last-state state) ; for debugging
       (let [acq-seq (generate-acq-sequence settings @attached-runnables)]
