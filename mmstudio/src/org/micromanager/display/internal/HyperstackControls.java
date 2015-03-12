@@ -28,8 +28,6 @@ package org.micromanager.display.internal;
 import com.google.common.eventbus.Subscribe;
 
 import java.awt.Dimension;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentAdapter;
 import java.awt.FlowLayout;
 import java.lang.Math;
 import java.util.concurrent.TimeUnit;
@@ -41,8 +39,6 @@ import javax.swing.JToggleButton;
 
 import net.miginfocom.swing.MigLayout;
 
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
@@ -53,8 +49,6 @@ import org.micromanager.data.internal.NewImageEvent;
 import org.micromanager.display.internal.events.FPSEvent;
 import org.micromanager.display.internal.events.MouseMovedEvent;
 import org.micromanager.display.internal.events.StatusEvent;
-import org.micromanager.internal.utils.MDUtils;
-import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
 

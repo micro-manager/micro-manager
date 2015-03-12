@@ -29,7 +29,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 import javax.swing.JDialog;
-import org.micromanager.internal.MMStudio;
 
 /**
  * Base class for the Micro-Manager dialogs.

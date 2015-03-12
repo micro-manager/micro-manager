@@ -24,14 +24,12 @@
 
 package org.micromanager.internal.conf2;
 
-import java.awt.Color;
 import java.awt.Dialog;
 
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
 import mmcorej.CMMCore;
-import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**

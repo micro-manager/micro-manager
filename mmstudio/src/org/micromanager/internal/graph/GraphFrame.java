@@ -37,9 +37,7 @@ import javax.swing.SpringLayout;
 import javax.swing.border.LineBorder;
 
 import org.micromanager.internal.LineProfile;
-import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.MMFrame;
-import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * XY Graph window.

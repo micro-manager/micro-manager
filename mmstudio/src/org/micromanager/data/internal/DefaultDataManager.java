@@ -20,29 +20,17 @@
 
 package org.micromanager.data.internal;
 
-import com.google.common.eventbus.Subscribe;
-
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-
-import javax.swing.JOptionPane;
 
 import mmcorej.TaggedImage;
 
 import org.json.JSONException;
 
-import org.micromanager.data.Coords;
 import org.micromanager.data.DataManager;
 import org.micromanager.data.Datastore;
-import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.SummaryMetadata;
-import org.micromanager.display.DisplayWindow;
-import org.micromanager.display.RequestToCloseEvent;
-import org.micromanager.events.DatastoreClosingEvent;
 
 import org.micromanager.data.Coords;
 import org.micromanager.data.internal.multipagetiff.MultipageTiffReader;
@@ -50,11 +38,9 @@ import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
 import org.micromanager.data.internal.StorageRAM;
 import org.micromanager.data.internal.StorageSinglePlaneTiffSeries;
 
-import org.micromanager.display.internal.DefaultDisplayWindow;
 import org.micromanager.internal.MMStudio;
 // TODO: this should be moved into the API.
 import org.micromanager.internal.utils.MMScriptException;
-import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.PropertyMap;
 
 /**

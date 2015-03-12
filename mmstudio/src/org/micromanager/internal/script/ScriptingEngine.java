@@ -1,7 +1,6 @@
 package org.micromanager.internal.script;
 
 import org.micromanager.internal.utils.MMScriptException;
-import org.micromanager.ScriptController;
 
 import bsh.Interpreter;
 

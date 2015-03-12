@@ -1,12 +1,10 @@
 package org.micromanager.internal.utils;
 
-import com.google.common.eventbus.DeadEvent;
 import com.google.common.eventbus.EventBus;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 
 /**
  * The PrioritizedEventBus allows registrants to provide a priority value; when

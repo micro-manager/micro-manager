@@ -44,23 +44,19 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
-import mmcorej.CMMCore;
 
 import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
-import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
 import org.micromanager.data.NewImageEvent;
 import org.micromanager.data.NewSummaryMetadataEvent;
-import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.NewDisplaySettingsEvent;
 
 import org.micromanager.data.internal.DefaultCoords;
-import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.graph.GraphData;
 import org.micromanager.internal.graph.HistogramPanel;
 import org.micromanager.internal.graph.HistogramPanel.CursorListener;

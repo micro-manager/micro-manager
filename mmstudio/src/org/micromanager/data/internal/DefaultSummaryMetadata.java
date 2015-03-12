@@ -20,7 +20,6 @@
 
 package org.micromanager.data.internal;
 
-import java.awt.Color;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 

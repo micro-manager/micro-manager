@@ -1,6 +1,5 @@
 package org.micromanager.events.internal;
 
-import mmcorej.TaggedImage;
 import org.micromanager.DataProcessor;
 
 /**

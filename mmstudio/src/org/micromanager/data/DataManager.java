@@ -21,13 +21,11 @@
 package org.micromanager.data;
 
 import java.io.IOException;
-import java.util.List;
 
 import mmcorej.TaggedImage;
 
 import org.json.JSONException;
 
-import org.micromanager.display.DisplayWindow;
 import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.PropertyMap;
 

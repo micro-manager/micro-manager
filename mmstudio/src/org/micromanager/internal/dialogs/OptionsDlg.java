@@ -38,7 +38,6 @@ import javax.swing.JTextField;
 import javax.swing.WindowConstants;
 
 import mmcorej.CMMCore;
-import org.micromanager.CompatibilityInterface;
 
 import org.micromanager.CompatibilityInterface;
 import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;

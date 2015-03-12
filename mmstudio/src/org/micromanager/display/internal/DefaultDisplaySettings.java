@@ -37,7 +37,6 @@ import org.json.JSONObject;
 
 import org.micromanager.data.Coords;
 import org.micromanager.display.DisplaySettings;
-import org.micromanager.MultiStagePosition;
 
 import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.MDUtils;

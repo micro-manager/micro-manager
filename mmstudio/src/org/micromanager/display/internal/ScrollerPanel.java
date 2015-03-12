@@ -20,7 +20,6 @@
 
 package org.micromanager.display.internal;
 
-import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
 import java.awt.Dimension;
@@ -51,7 +50,6 @@ import org.micromanager.display.NewDisplaySettingsEvent;
 import org.micromanager.data.internal.DefaultCoords;
 
 import org.micromanager.display.internal.events.DefaultRequestToDrawEvent;
-import org.micromanager.display.internal.events.FPSEvent;
 import org.micromanager.display.internal.events.LayoutChangedEvent;
 import org.micromanager.display.internal.link.ImageCoordsEvent;
 import org.micromanager.display.internal.link.ImageCoordsLinker;

@@ -20,8 +20,6 @@
 
 package org.micromanager.data;
 
-import mmcorej.TaggedImage;
-
 /**
  * An Image is a single image plane with associated metadata. Functionally 
  * similar to TaggedImage, but with more rigidly-defined metadata and 

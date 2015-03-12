@@ -20,7 +20,6 @@
 
 package org.micromanager.display.internal;
 
-import com.google.common.eventbus.EventBus;
 
 import ij.CompositeImage;
 import ij.ImagePlus;

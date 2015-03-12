@@ -22,7 +22,6 @@ package org.micromanager.data.internal;
 
 import java.awt.Window;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.micromanager.data.Coords;
@@ -32,11 +31,9 @@ import org.micromanager.data.Image;
 import org.micromanager.data.Storage;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
-import org.micromanager.display.DisplaySettings;
 import org.micromanager.events.internal.EventManager;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.FileDialogs;
-import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.PrioritizedEventBus;
 import org.micromanager.internal.utils.ReportingUtils;
 

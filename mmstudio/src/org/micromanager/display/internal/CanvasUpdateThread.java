@@ -39,7 +39,6 @@ import org.micromanager.data.Image;
 import org.micromanager.display.internal.events.FPSEvent;
 
 import org.micromanager.internal.utils.CanvasPaintPending;
-import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * This class handles the logic related to updating the image displayed on

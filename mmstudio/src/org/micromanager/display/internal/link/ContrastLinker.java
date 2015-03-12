@@ -20,7 +20,6 @@
 
 package org.micromanager.display.internal.link;
 
-import java.awt.Color;
 import java.util.Arrays;
 import java.util.List;
 
@@ -29,7 +28,6 @@ import org.micromanager.display.DisplayWindow;
 
 import org.micromanager.display.internal.DefaultDisplaySettings;
 
-import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * The ContrastLinker links the contrast settings for a specific channel.

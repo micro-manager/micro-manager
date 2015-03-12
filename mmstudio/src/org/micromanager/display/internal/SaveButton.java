@@ -31,7 +31,6 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 
 import org.micromanager.data.Datastore;
-import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * This class provides a button for saving the current datastore to TIFF.

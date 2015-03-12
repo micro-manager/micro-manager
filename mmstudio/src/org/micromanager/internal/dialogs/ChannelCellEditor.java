@@ -14,11 +14,9 @@ import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.table.TableCellEditor;
-import javax.swing.table.TableColumn;
 
 import org.micromanager.acquisition.internal.AcquisitionEngine;
 import org.micromanager.internal.utils.ChannelSpec;
-import org.micromanager.internal.utils.ColorEditor;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 

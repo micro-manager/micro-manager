@@ -31,7 +31,6 @@ import org.micromanager.internal.MMStudio;
 import org.micromanager.acquisition.internal.AcquisitionEngine;
 import org.micromanager.Autofocus;
 import org.micromanager.DataProcessor;
-import org.micromanager.MMBasePlugin;
 import org.micromanager.MMPlugin;
 import org.micromanager.MMProcessorPlugin;
 import org.micromanager.internal.utils.JavaUtils;

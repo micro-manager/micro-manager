@@ -29,7 +29,6 @@ import java.util.HashSet;
 import java.util.List;
 
 import org.micromanager.data.Datastore;
-import org.micromanager.display.DisplayManager;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.events.NewDisplayEvent;
 

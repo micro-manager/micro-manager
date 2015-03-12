@@ -6,8 +6,6 @@
 
 package org.micromanager.internal.conf2;
 
-import org.micromanager.internal.MMStudio;
-
 /**
  *
  * @author karlhoover

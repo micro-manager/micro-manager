@@ -22,7 +22,6 @@ package org.micromanager.display.internal.events;
 
 import java.awt.GraphicsConfiguration;
 
-import org.micromanager.display.DisplayWindow;
 
 /**
  * Indicates that full-screen mode has been turned on/off for the given

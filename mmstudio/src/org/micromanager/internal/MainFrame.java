@@ -25,9 +25,6 @@ package org.micromanager.internal;
 import com.google.common.eventbus.Subscribe;
 import com.swtdesigner.SwingResourceManager;
 
-import ij.gui.ImageCanvas;
-import ij.gui.ImageWindow;
-import ij.WindowManager;
 
 import java.awt.Dimension;
 import java.awt.dnd.DropTarget;
@@ -41,7 +38,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.Font;
 import java.awt.KeyboardFocusManager;
-import java.awt.Rectangle;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;

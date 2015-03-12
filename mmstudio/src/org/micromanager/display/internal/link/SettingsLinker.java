@@ -20,14 +20,12 @@
 
 package org.micromanager.display.internal.link;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 
-import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * This class is for setting up links across DisplayWindows for specific

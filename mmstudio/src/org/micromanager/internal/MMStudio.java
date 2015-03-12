@@ -21,7 +21,6 @@ package org.micromanager.internal;
 import org.micromanager.acquisition.internal.MMAcquisition;
 import org.micromanager.acquisition.internal.AcquisitionWrapperEngine;
 import org.micromanager.acquisition.internal.TaggedImageQueue;
-import org.micromanager.acquisition.internal.ProcessorStack;
 import bsh.EvalError;
 import bsh.Interpreter;
 
@@ -32,24 +31,20 @@ import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.WindowManager;
-import ij.gui.ImageWindow;
 import ij.gui.Roi;
 
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Cursor;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Window;
 import java.awt.event.WindowEvent;
-import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
 
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
@@ -96,7 +91,6 @@ import org.micromanager.internal.conf2.MMConfigFileException;
 import org.micromanager.internal.conf2.MicroscopeModel;
 
 import org.micromanager.data.internal.DefaultDataManager;
-import org.micromanager.data.internal.DefaultImage;
 
 import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.dialogs.CalibrationListDlg;

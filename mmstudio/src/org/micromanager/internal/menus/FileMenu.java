@@ -1,6 +1,5 @@
 package org.micromanager.internal.menus;
 
-import java.io.File;
 
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;

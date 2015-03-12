@@ -20,7 +20,6 @@
 
 package org.micromanager.display.internal;
 
-import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
 import ij.gui.ImageCanvas;
@@ -44,7 +43,6 @@ import org.micromanager.display.internal.events.CanvasDrawEvent;
 import org.micromanager.display.internal.events.DefaultRequestToDrawEvent;
 import org.micromanager.display.internal.events.LayoutChangedEvent;
 import org.micromanager.display.internal.events.MouseMovedEvent;
-import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * MMImageCanvas is a customization of ImageJ's ImageCanvas class with

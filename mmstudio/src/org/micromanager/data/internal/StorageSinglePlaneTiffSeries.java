@@ -22,12 +22,9 @@ package org.micromanager.data.internal;
 
 import com.google.common.eventbus.Subscribe;
 
-import ij.CompositeImage;
 import ij.ImagePlus;
-import ij.ImageStack;
 import ij.io.FileSaver;
 import ij.io.Opener;
-import ij.io.TiffDecoder;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
@@ -36,7 +33,6 @@ import ij.process.ShortProcessor;
 import java.awt.Dimension;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileFilter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
@@ -47,15 +43,11 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
-import mmcorej.TaggedImage;
-
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import org.micromanager.data.Coords;
 import org.micromanager.data.DatastoreFrozenEvent;
-import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.NewImageEvent;

@@ -23,7 +23,6 @@ package org.micromanager.display;
 import java.awt.Color;
 
 import org.micromanager.data.Coords;
-import org.micromanager.MultiStagePosition;
 import org.micromanager.PropertyMap;
 
 /**

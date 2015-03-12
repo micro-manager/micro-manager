@@ -3,7 +3,6 @@ package org.micromanager.internal;
 import com.google.common.eventbus.Subscribe;
 import com.swtdesigner.SwingResourceManager;
 
-import ij.gui.ImageWindow;
 
 import java.awt.Component;
 import java.awt.Dimension;
@@ -16,12 +15,10 @@ import java.util.HashSet;
 import java.util.List;
 
 import javax.swing.JButton;
-import javax.swing.JPanel;
 
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 
-import net.miginfocom.swing.MigLayout;
 
 import org.json.JSONObject;
 
@@ -31,13 +28,10 @@ import org.micromanager.data.AbortEvent;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
-import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.ControlsFactory;
 import org.micromanager.display.DisplayDestroyedEvent;
-import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.RequestToCloseEvent;
 
-import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.data.internal.DefaultDatastore;
 import org.micromanager.data.internal.DefaultImage;
 

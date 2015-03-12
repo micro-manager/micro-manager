@@ -1,6 +1,5 @@
 package org.micromanager.acquisition.internal;
 
-import ij.gui.ImageWindow;
 
 import java.util.Enumeration;
 import java.util.Hashtable;

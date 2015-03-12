@@ -29,7 +29,6 @@ import org.micromanager.display.DisplayWindow;
 
 import org.micromanager.data.internal.DefaultCoords;
 
-import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * The ImageCoordsLinker links a specific axis of the ImageCoords attribute.

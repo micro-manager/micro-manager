@@ -38,7 +38,6 @@ import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.display.internal.events.LayoutChangedEvent;
 
-import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * This class is a JPanel that displays a set of vertically-oriented buttons

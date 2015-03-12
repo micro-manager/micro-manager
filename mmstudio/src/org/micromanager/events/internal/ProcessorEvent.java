@@ -1,9 +1,8 @@
 package org.micromanager.events.internal;
 
-import org.micromanager.DataProcessor;
-
-
-// This class represents the registration of a new DataProcessor class.
+/**
+ * This class represents the registration of a new DataProcessor class.
+ */
 public class ProcessorEvent {
    private String name_;
    private Class<?> processorClass_;

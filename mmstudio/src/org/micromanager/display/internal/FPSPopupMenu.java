@@ -20,10 +20,8 @@
 
 package org.micromanager.display.internal;
 
-import com.google.common.eventbus.EventBus;
 
 import java.awt.Component;
-import java.awt.event.KeyEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -41,7 +39,6 @@ import javax.swing.MenuSelectionManager;
 
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
-import org.micromanager.display.internal.events.FPSEvent;
 
 /**
  * This class provides an interface for selecting the FPS at which to display
