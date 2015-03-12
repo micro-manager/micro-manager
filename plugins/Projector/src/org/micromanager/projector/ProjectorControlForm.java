@@ -595,7 +595,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                try {
                   isRunning_.set(true);
                   Roi originalROI = IJ.getImage().getRoi();
-                  app_.compat().snapSingleImage();
+                  app_.live().snap(true);
 
                   AffineTransform firstApproxAffine = generateLinearMapping();
 

@@ -315,7 +315,7 @@ public class CalibrationThread extends Thread {
          ReportingUtils.logMessage(secondApprox.toString());
       try {
          app_.getCMMCore().setXYPosition(xy0.x, xy0.y);
-         app_.snapSingleImage();
+         app_.live().snap(true);
       }
       catch (Exception e) {
          throw new CalibrationFailedException(e.getMessage());

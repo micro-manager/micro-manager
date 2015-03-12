@@ -484,7 +484,7 @@ public class Hub {
    }
 
    void snap() {
-      app_.snapSingleImage();
+      app_.live().snap(true);
    }
 /*
    public class AcqControlDlgMosaic extends AcqControlDlg {
