@@ -130,31 +130,6 @@ public interface DisplayManager {
    public boolean getIsTracked(Datastore store);
 
    /**
-    * Associate the specified DisplayWindow with the Datastore. This has two
-    * effects: first, it will be in the list returned by getDisplays() for that
-    * Datastore; second, when the last DisplayWindow for a Datastore is closed,
-    * the user is prompted to save (if the Datastore has not already been
-    * saved), and if the user cancels, the display is not closed.
-    * NOTE: you should only need to call this if you have created displays
-    * prior to calling manage() above, and you want to be able to retrieve
-    * those displays using getDisplays() later.
-    * @param display The DisplayWindow to be associated with the Datastore.
-    * @param store The Datastore this DisplayWindow is associated with.
-    * @throws IllegalArgumentException if the Datastore is not managed by
-    *         MicroManager.
-    */
-   public void associateDisplay(DisplayWindow display, Datastore store) throws IllegalArgumentException;
-
-   /**
-    * Remove the specified DisplayWindow from the list of associated displays
-    * for the Datastore. Does nothing if the Datastore is not managed or if
-    * the display is already not associated.
-    * @param display The DisplayWindow that should no longer be associated.
-    * @param store The Datastore to remove the association with.
-    */
-   public void removeDisplay(DisplayWindow display, Datastore store);
-
-   /**
     * Return all associated DisplayWindows for the Datastore. Returns null if
     * the Datastore is not managed.
     * @return A list of all DisplayWindows Micro-Manager knows are associated

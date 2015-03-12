@@ -37,6 +37,7 @@ import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.RequestToCloseEvent;
 import org.micromanager.events.DatastoreClosingEvent;
+import org.micromanager.events.internal.EventManager;
 import org.micromanager.events.NewDisplayEvent;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -50,6 +51,7 @@ public class DefaultDisplayManager implements DisplayManager {
    public DefaultDisplayManager(MMStudio studio) {
       studio_ = studio;
       storeToDisplays_ = new HashMap<Datastore, ArrayList<DisplayWindow>>();
+      EventManager.register(this);
    }
 
    @Override
@@ -79,6 +81,7 @@ public class DefaultDisplayManager implements DisplayManager {
       for (DisplayWindow display : getAllImageWindows()) {
          if (display.getDatastore() == store) {
             displays.add(display);
+            display.registerForEvents(this);
          }
       }
       storeToDisplays_.put(store, displays);
@@ -139,24 +142,6 @@ public class DefaultDisplayManager implements DisplayManager {
    public DisplayWindow createDisplay(Datastore store,
          ControlsFactory factory) {
       return new DefaultDisplayWindow(store, factory);
-   }
-
-   @Override
-   public void associateDisplay(DisplayWindow display, Datastore store)
-         throws IllegalArgumentException {
-      if (!storeToDisplays_.containsKey(store)) {
-         throw new IllegalArgumentException("Asked to associate a display with datastore " + store + " that is not managed.");
-      }
-      storeToDisplays_.get(store).add(display);
-      display.registerForEvents(this);
-   }
-
-   @Override
-   public void removeDisplay(DisplayWindow display, Datastore store) {
-      if (storeToDisplays_.containsKey(store) &&
-            storeToDisplays_.get(store).contains(display)) {
-         storeToDisplays_.get(store).remove(display);
-      }
    }
 
    @Override
@@ -247,8 +232,10 @@ public class DefaultDisplayManager implements DisplayManager {
    @Subscribe
    public void onNewDisplayEvent(NewDisplayEvent event) {
       DisplayWindow display = event.getDisplayWindow();
-      if (getIsTracked(display.getDatastore())) {
-         associateDisplay(display, display.getDatastore());
+      Datastore store = display.getDatastore();
+      if (getIsTracked(store)) {
+         storeToDisplays_.get(store).add(display);
+         display.registerForEvents(this);
       }
    }
 }
