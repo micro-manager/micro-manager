@@ -347,7 +347,8 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
       toAlbumButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent event) {
-            MMStudio.getInstance().doSnap(true);
+            List<Image> images = snap(false);
+            DefaultAlbum.getInstance().addImages(images);
          }
       });
       controls.add(toAlbumButton);
@@ -404,6 +405,10 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
     */
    @Override
    public List<Image> snap(boolean shouldDisplay) {
+      if (core_.getCameraDevice().length() == 0) {
+         ReportingUtils.showError("No camera configured.");
+         return new ArrayList<Image>();
+      }
       if (isOn_) {
          // Just return the most recent images.
          ArrayList<Image> result = new ArrayList<Image>();

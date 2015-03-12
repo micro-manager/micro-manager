@@ -16,11 +16,7 @@ import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.ReportingUtils;
 
 public class AcquisitionManager {
-   private static final String ALBUM_WIN_X = "album_x";
-   private static final String ALBUM_WIN_Y = "album_y";
-   
    Hashtable<String, MMAcquisition> acqs_;
-   private String album_ = null;
    
    public AcquisitionManager() {
       acqs_ = new Hashtable<String, MMAcquisition>();
@@ -124,19 +120,6 @@ public class AcquisitionManager {
          }
       }
       return name;
-   }
-
-   public String getCurrentAlbum() {
-      if (album_ == null) {
-         return createNewAlbum();
-      } else {
-         return album_;
-      }
-   }
-
-   public String createNewAlbum() {
-      album_ = getUniqueAcquisitionName("Album");
-      return album_;
    }
 
    public String[] getAcquisitionNames() {

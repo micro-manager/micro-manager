@@ -59,14 +59,6 @@ public interface CompatibilityInterface {
    public void refreshGUIFromCache();
 
    /**
-    * Snaps image and displays in AcqWindow.
-    * Opens a new AcqWindow when current one is not open.
-    * Calling this function is the same as pressing the "Snap" button on the main
-    * Micro-manager GUI
-    */
-   public void snapSingleImage();
-   
-   /**
     * Opens a new acquisition data set
     * 
     * @param name - Name of the data set
@@ -127,15 +119,6 @@ public interface CompatibilityInterface {
     */
    public String getUniqueAcquisitionName(String stem);
    
-   /**
-    * Returns the name of the current album (i.e. the most recently created one)
-    * In addition to their use through the scripting interface, Albums are used
-    * by the "Camera --&gt; Album" button in the main window of Micro-Manager and 
-    * the "--&gt; Album" button on the snap/live window
-    * @return Name of the current Album.
-    */
-   public String getCurrentAlbum();
-
    /**
     * Checks whether an acquisition with the given name already exists.
     * @param name name of acquisition 

@@ -41,7 +41,7 @@ public class HotKeyAction {
          if (type_ == GUICOMMAND) {
             switch (guiCommand_) {
                case SNAP:
-                  studio_.snapSingleImage();
+                  studio_.live().snap(true);
                   return true;
                case TOGGLELIVE:
                   snapLiveManager_.setLiveMode(!snapLiveManager_.getIsLiveModeOn());
@@ -50,7 +50,7 @@ public class HotKeyAction {
                   studio_.toggleShutter();
                   return true;
                case ADD_TO_ALBUM:
-                  studio_.doSnap(true);
+                  studio_.album().addImages(studio_.live().snap(false));
                   return true;
                case MARK:
                   studio_.markCurrentPosition();

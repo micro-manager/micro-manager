@@ -71,6 +71,7 @@ import org.json.JSONObject;
 
 import org.micromanager.acquisition.internal.AcquisitionManager;
 
+import org.micromanager.Album;
 import org.micromanager.Autofocus;
 import org.micromanager.CompatibilityInterface;
 import org.micromanager.data.DataManager;
@@ -935,11 +936,6 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
    // public interface available for scripting access
    // //////////////////////////////////////////////////////////////////////////
 
-   @Override
-   public void snapSingleImage() {
-      doSnap();
-   }
-
    private boolean isCameraAvailable() {
       return StaticInfo.cameraLabel_.length() > 0;
    }
@@ -1010,23 +1006,6 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
          return true;
       }
       return false;
-   }
-
-   public void doSnap() {
-      doSnap(false);
-   }
-
-   public void doSnap(final boolean shouldAddToAlbum) {
-      if (core_.getCameraDevice().length() == 0) {
-         ReportingUtils.showError("No camera configured");
-         return;
-      }
-      List<Image> images = live().snap(!shouldAddToAlbum);
-      if (shouldAddToAlbum) {
-         for (Image image : images) {
-            dataManager_.addToAlbum(image);
-         }
-      }
    }
 
    /**
@@ -1922,11 +1901,6 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
    }
 
    @Override
-   public String getCurrentAlbum() {
-      return acqMgr_.getCurrentAlbum();
-   }
-   
-   @Override
    public void setAcquisitionAddImageAsynchronous(String name) throws MMScriptException {
       MMAcquisition acq = acqMgr_.getAcquisition(name);
       acq.setAsynchronous();
@@ -2298,6 +2272,15 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
       return snapLiveManager_;
    }
 
+   @Override
+   public Album album() {
+      return DefaultAlbum.getInstance();
+   }
+
+   @Override
+   public Album getAlbum() {
+      return album();
+   }
 
    public static boolean getShouldDeleteOldCoreLogs() {
       return DefaultUserProfile.getInstance().getBoolean(MMStudio.class,

@@ -62,7 +62,6 @@ import org.micromanager.PropertyMap;
  * access to Micro-Manager's data objects.
  */
 public class DefaultDataManager implements DataManager {
-   private Datastore albumDatastore_;
    private MMStudio studio_;
 
    public DefaultDataManager(MMStudio studio) {
@@ -124,38 +123,11 @@ public class DefaultDataManager implements DataManager {
    }
 
    @Override
-   public Datastore getAlbumDatastore() {
-      return albumDatastore_;
-   }
-
-   @Override
    public Image createImage(Object pixels, int width, int height,
          int bytesPerPixel, int numComponents, Coords coords,
          Metadata metadata) {
       return new DefaultImage(pixels, width, height, bytesPerPixel,
             numComponents, coords, metadata);
-   }
-
-   @Override
-   public void addToAlbum(Image image) {
-      if (albumDatastore_ == null || albumDatastore_.getIsFrozen()) {
-         // Need to create a new album.
-         albumDatastore_ = new DefaultDatastore();
-         studio_.displays().manage(albumDatastore_);
-         albumDatastore_.setStorage(new StorageRAM(albumDatastore_));
-         new DefaultDisplayWindow(albumDatastore_, null);
-      }
-      // Adjust image coordinates to be at the N+1th timepoint.
-      Coords newCoords = image.getCoords().copy()
-         .time(albumDatastore_.getAxisLength(Coords.TIME))
-         .build();
-      try {
-         DefaultImage temp = new DefaultImage(image, newCoords, image.getMetadata());
-         temp.splitMultiComponentIntoStore(albumDatastore_);
-      }
-      catch (DatastoreFrozenException e) {
-         ReportingUtils.showError(e, "Album datastore is locked.");
-      }
    }
 
    @Override

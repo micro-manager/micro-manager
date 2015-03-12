@@ -37,6 +37,21 @@ import org.micromanager.internal.utils.AutofocusManager;
  */
 public interface Studio {
    /**
+    * Provides access to and control of the contents of the Album, the
+    * implicit, temporary image storage datastore.
+    * @return An implementation of the Album API.
+    */
+   public Album album();
+
+   /**
+    * Provides access to and control of the contents of the Album, the
+    * implicit, temporary image storage datastore. Identical to album() except
+    * in name.
+    * @return An implementation of the Album API.
+    */
+   public Album getAlbum();
+
+   /**
     * Provides access to the compatibility layer that exposes some old 1.4
     * API methods.
     * @return An implementation of the compatibility API.

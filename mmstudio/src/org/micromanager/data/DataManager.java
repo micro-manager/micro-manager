@@ -104,12 +104,6 @@ public interface DataManager {
    public Datastore loadData(String directory, boolean isVirtual) throws IOException;
 
    /**
-    * Retrieve the Datastore associated with the current open album, or null
-    * if there is no album.
-    */
-   public Datastore getAlbumDatastore();
-
-   /**
     * Generate a new Image with the provided pixel data, rules for interpreting
     * that pixel data, coordinates, and metadata.
     * @param width Width of the image, in pixels
@@ -149,12 +143,6 @@ public interface DataManager {
     */
    public Image convertTaggedImage(TaggedImage tagged, Coords coords,
          Metadata metadata) throws JSONException, MMScriptException;
-
-   /**
-    * Add the specified image to the current album datastore. If the current
-    * album doesn't exist or has been locked, a new album will be created.
-    */
-   public void addToAlbum(Image image);
 
    /**
     * Generate a "blank" MetadataBuilder for use in constructing new
