@@ -147,8 +147,6 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
    private static final String SYSTEM_CONFIG_FILE = "sysconfig_file";
    private static final String OPEN_ACQ_DIR = "openDataDir";
    private static final String SCRIPT_CORE_OBJECT = "mmc";
-   private static final String SCRIPT_ACQENG_OBJECT = "acq";
-   private static final String SCRIPT_GUI_OBJECT = "gui";
    private static final String AUTOFOCUS_DEVICE = "autofocus_device";
    private static final String EXPOSURE_SETTINGS_NODE = "MainExposureSettings";
    private static final int TOOLTIP_DISPLAY_DURATION_MILLISECONDS = 15000;
@@ -884,7 +882,6 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
    private void createScriptPanel() {
       scriptPanel_ = new ScriptPanel(core_, studio_);
       scriptPanel_.insertScriptingObject(SCRIPT_CORE_OBJECT, core_);
-      scriptPanel_.insertScriptingObject(SCRIPT_ACQENG_OBJECT, engine_);
       scriptPanel_.setParentGUI(studio_);
    }
 
@@ -1372,8 +1369,6 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
          Interpreter interp = new Interpreter();
          try {
             interp.set(SCRIPT_CORE_OBJECT, core_);
-            interp.set(SCRIPT_ACQENG_OBJECT, engine_);
-            interp.set(SCRIPT_GUI_OBJECT, studio_);
 
             // read text file and evaluate
             interp.eval(TextUtils.readTextFile(startupScriptFile_));
