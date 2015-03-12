@@ -39,6 +39,7 @@ public class DefaultAlbum implements Album {
    }
 
    private Datastore store_;
+   private Integer curTime_ = null;
 
    @Override
    public Datastore getDatastore() {
@@ -54,15 +55,28 @@ public class DefaultAlbum implements Album {
          store_ = studio.data().createRAMDatastore();
          studio.displays().manage(store_);
          studio.displays().createDisplay(store_);
+         curTime_ = null;
          didCreateNew = true;
       }
-      // Adjust image coordinates to be at the N+1th timepoint, except for the
-      // first timepoint of course.
-      int time = store_.getAxisLength(Coords.TIME);
-      if (time > 0) {
-         time++;
+      // We want to add new images to the next timepoint, or to the current
+      // timepoint if there's no image for this channel at the current
+      // timepoint.
+      if (curTime_ == null) {
+         curTime_ = 0;
       }
-      Coords newCoords = image.getCoords().copy().time(time).build();
+      else {
+         // Try to find images at this timepoint and channel, which would mean
+         // we need to move to the next timepoint.
+         Coords matcher = studio.data().getCoordsBuilder()
+            .channel(image.getCoords().getChannel())
+            .time(curTime_)
+            .build();
+         if (store_.getImagesMatching(matcher).size() > 0) {
+            // Have an image at this time/channel pair already.
+            curTime_++;
+         }
+      }
+      Coords newCoords = image.getCoords().copy().time(curTime_).build();
       try {
          store_.putImage(image.copyAtCoords(newCoords));
       }
@@ -76,7 +90,9 @@ public class DefaultAlbum implements Album {
    public boolean addImages(Collection<Image> images) {
       boolean result = false;
       for (Image image : images) {
-         result = result || addImage(image);
+         // Watch out for boolean logic short-circuiting here!
+         boolean tmp = addImage(image);
+         result = result || tmp;
       }
       return result;
    }
