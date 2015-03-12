@@ -183,4 +183,16 @@ public class DummyImageWindow extends StackWindow {
          ReportingUtils.logError(e, "NullPointerException in ImageJ code while disposing of dummy image window");
       }
    }
+
+   /**
+    * HACK: make ImageJ think that its image windows always have the correct
+    * dimensions. This in turn protects us from certain edge cases
+    * (particularly, in ImagePlus.setStack()) that can cause ImageJ to decide
+    * it needs to create a new image window, which we definitely do *not*
+    * want.
+    */
+   @Override
+   public boolean validDimensions() {
+      return true;
+   }
 }
