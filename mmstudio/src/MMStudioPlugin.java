@@ -125,7 +125,7 @@ public class MMStudioPlugin implements PlugIn, CommandListener {
          // this may backfire!
          if (IJ.getImage().getStack() instanceof MMVirtualStack) {
             MMVirtualStack stack = (MMVirtualStack) IJ.getImage().getStack();
-            if (stack.getDatastore().getIsSaved()) {
+            if (stack.getDatastore().getSavePath() != null) {
                // duplicate the image and then run the ImageJ command on what is now the new image
                new Duplicator().run(IJ.getImage()).show();
             } else {
