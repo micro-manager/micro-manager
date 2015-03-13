@@ -2,8 +2,9 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package tables;
+package propsandcovariants;
 
+import propsandcovariants.PropertyAndGroupUtils;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.TreeMap;
@@ -12,39 +13,37 @@ import javax.swing.table.AbstractTableModel;
 import mmcorej.CMMCore;
 import org.micromanager.MMStudio;
 import org.micromanager.api.ScriptInterface;
-import org.micromanager.utils.MMPropertyTableModel;
 import org.micromanager.utils.NumberUtils;
-import org.micromanager.utils.PropertyItem;
 import org.micromanager.utils.ReportingUtils;
 
 /**
  *
  * @author Henry
  */
-public class PropertyControlTableModel extends AbstractTableModel implements MMPropertyTableModel {
+public class DeviceControlTableModel extends AbstractTableModel  {
      
    
-   private LinkedList<PropertyItem> storedProps_;
+   private LinkedList<SinglePropertyOrGroup> storedGroupsAndProps_;
    
    private CMMCore core_;
    private ScriptInterface mmAPI_;
    private Preferences prefs_;
 
    
-   public PropertyControlTableModel(Preferences prefs) {
+   public DeviceControlTableModel(Preferences prefs) {
       mmAPI_ = MMStudio.getInstance();
       core_ = mmAPI_.getMMCore();
-      storedProps_ = PropertyManager.readStoredProperties(prefs);
+      storedGroupsAndProps_ = PropertyAndGroupUtils.readStoredGroupsAndProperties(prefs);
       prefs_ = prefs;
    }
    
    public void updateStoredProps() {
-      storedProps_ = PropertyManager.readStoredProperties(prefs_);      
+      storedGroupsAndProps_ = PropertyAndGroupUtils.readStoredGroupsAndProperties(prefs_);      
    }
    
    @Override
    public int getRowCount() {
-     return storedProps_.size();
+     return storedGroupsAndProps_.size();
    }
 
    @Override
@@ -55,7 +54,7 @@ public class PropertyControlTableModel extends AbstractTableModel implements MMP
    @Override
    public void setValueAt(Object value, int row, int col) {
       if (col == 1) {
-         PropertyItem item = storedProps_.get(row);
+         SinglePropertyOrGroup item = storedGroupsAndProps_.get(row);
          setValueInCore(item, value);
          core_.updateSystemStateCache();
          mmAPI_.refreshGUIFromCache();
@@ -65,10 +64,10 @@ public class PropertyControlTableModel extends AbstractTableModel implements MMP
 
    @Override
    public Object getValueAt(int rowIndex, int columnIndex) {
-      PropertyItem item = storedProps_.get(rowIndex);
+      SinglePropertyOrGroup item = storedGroupsAndProps_.get(rowIndex);
       if (columnIndex == 0) {
          //prop label
-         return PropertyManager.getPropLabel(prefs_, storedProps_.get(rowIndex));
+         return PropertyAndGroupUtils.getPropNickname(prefs_, storedGroupsAndProps_.get(rowIndex));
       } else {
          //prop value
          return item.value;
@@ -80,14 +79,16 @@ public class PropertyControlTableModel extends AbstractTableModel implements MMP
       if (nCol == 0) {
          return false;
       } else {
-         return !storedProps_.get(nRow).readOnly;
+         return !storedGroupsAndProps_.get(nRow).readOnly;
       }
    }
   
-   private void setValueInCore(PropertyItem item, Object value) {
+   private void setValueInCore(SinglePropertyOrGroup item, Object value) {
       ReportingUtils.logMessage(item.device + "/" + item.name + ":" + value);
       try {
-         if (item.isInteger()) {
+         if (item.isGroup()) {
+            core_.setConfig(item.name, value.toString());
+         } else if (item.isInteger()) {
             core_.setProperty(item.device, item.name, NumberUtils.intStringDisplayToCore(value));
          } else if (item.isFloat()) {
             core_.setProperty(item.device, item.name, NumberUtils.doubleStringDisplayToCore(value));
@@ -95,16 +96,17 @@ public class PropertyControlTableModel extends AbstractTableModel implements MMP
             core_.setProperty(item.device, item.name, value.toString());
          }
          item.value = value.toString();
-         core_.waitForDevice(item.device);
+         if (!item.isGroup()) {
+            core_.waitForDevice(item.device);
+         }
       } catch (Exception e) {
          ReportingUtils.showError(e);         
       }
 
    }
 
-   @Override
-   public PropertyItem getPropertyItem(int rowIndex) {
-      return storedProps_.get(rowIndex);
+   public SinglePropertyOrGroup getPropertyItem(int rowIndex) {
+      return storedGroupsAndProps_.get(rowIndex);
    }
 
 }

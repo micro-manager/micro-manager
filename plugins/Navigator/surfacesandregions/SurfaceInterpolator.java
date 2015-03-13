@@ -4,15 +4,17 @@
  */
 package surfacesandregions;
 
+import propsandcovariants.SurfaceData;
+import coordinates.AffineUtils;
 import coordinates.XYStagePosition;
 import gui.SettingsDialog;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
-import java.util.LinkedList;
-import coordinates.AffineUtils;
+import java.util.Collection;
 import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -526,6 +528,17 @@ public abstract class SurfaceInterpolator implements XYFootprint {
 
    public Point3d[] getPoints() {
       return points_.toArray(new Point3d[0]);
+   }
+
+   /**
+    * return list of stats relevant to this surface
+    * @return 
+    */
+   Collection<SurfaceData> getStats() {
+      ArrayList<SurfaceData> list = new ArrayList<SurfaceData>();
+      
+      
+      return list;
    }
    
 }

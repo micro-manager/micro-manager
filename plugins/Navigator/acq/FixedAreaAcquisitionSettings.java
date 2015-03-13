@@ -1,8 +1,12 @@
 package acq;
 
+import propsandcovariants.CovariantPairing;
+import propsandcovariants.CovariantPairingsManager;
+import java.util.ArrayList;
 import java.util.prefs.Preferences;
 import javax.swing.filechooser.FileSystemView;
 import main.Navigator;
+import org.micromanager.utils.ReportingUtils;
 import surfacesandregions.MultiPosRegion;
 import surfacesandregions.SurfaceInterpolator;
 import surfacesandregions.XYFootprint;
@@ -40,6 +44,11 @@ public class FixedAreaAcquisitionSettings  {
    public XYFootprint footprint_;
    public int useTopOrBottomFootprint_;
    
+   //Covarying props
+   private ArrayList<CovariantPairing> propPairings_ = new ArrayList<CovariantPairing>();
+   
+   
+   
    public FixedAreaAcquisitionSettings() {
       Preferences prefs = Navigator.getPrefs();
       dir_ =  prefs.get(PREF_PREFIX + "DIR", FileSystemView.getFileSystemView().getHomeDirectory().getAbsolutePath());
@@ -54,6 +63,44 @@ public class FixedAreaAcquisitionSettings  {
       distanceBelowSurface_ = prefs.getDouble(PREF_PREFIX + "ZDISTBELOW", 0);
       distanceAboveSurface_ = prefs.getDouble(PREF_PREFIX + "ZDISTABOVE", 0);
       spaceMode_ = prefs.getInt(PREF_PREFIX + "SPACEMODE", 0);
+      //add all pairings currently present
+      CovariantPairingsManager pairManager = CovariantPairingsManager.getInstance();
+      //null on startup, but no pairings to add anyway  
+      if (pairManager != null) {
+         for (int i = 0; i < pairManager.getNumPairings(); i++) {
+            CovariantPairing potentialPair = pairManager.getPair(i);
+            if (!checkForRedundantPairing(potentialPair)) {
+               propPairings_.add(potentialPair);
+            }
+         }
+      }
+   }
+   
+   public boolean hasPairing(CovariantPairing pair) {
+      return propPairings_.contains(pair);
+   }
+   
+   public void removePropPairing(CovariantPairing pair) {
+      propPairings_.remove(pair);
+   }
+   
+   public void addPropPairing(CovariantPairing pair) {
+      if (propPairings_.contains(pair)) {
+         ReportingUtils.showError("Tried to add property pair that was already present");
+      }
+      if (checkForRedundantPairing(pair)) {
+         ReportingUtils.showMessage("Must existing pairing between same two properties first");
+      }
+      propPairings_.add(pair);
+   }
+   
+   private boolean checkForRedundantPairing(CovariantPairing pair) {
+      for (CovariantPairing p : propPairings_) {
+         if (p.getIndependentName().equals(pair.getIndependentName()) && p.getDependentName().equals(pair.getDependentName())) {
+            return true;
+         }
+      }
+      return false;
    }
    
    public void storePreferedValues() {

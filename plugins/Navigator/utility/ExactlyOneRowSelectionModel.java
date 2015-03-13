@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package tables;
+package utility;
 
 import javax.swing.DefaultListSelectionModel;
 import javax.swing.ListSelectionModel;

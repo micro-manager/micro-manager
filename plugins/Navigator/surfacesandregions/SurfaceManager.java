@@ -1,5 +1,6 @@
 package surfacesandregions;
 
+import propsandcovariants.SurfaceData;
 import clojure.test.junit$suite_attrs;
 import imagedisplay.DisplayPlus;
 import java.util.ArrayList;
@@ -22,6 +23,15 @@ public class SurfaceManager {
    
    public static SurfaceManager getInstance() {
       return singletonInstance_;
+   }
+   
+   public SurfaceInterpolator getSurfaceNamed(String name) {
+      for (SurfaceInterpolator s : surfaces_) {
+         if (s.getName().equals(name)) {
+            return s;
+         }
+      }
+      return null;
    }
    
    public int getIndex(SurfaceInterpolator surface) {
@@ -113,5 +123,17 @@ public class SurfaceManager {
          m.update();
       }
       tableModel_.fireTableDataChanged();
+   }
+
+   /**
+    * Generate statistics for all available surfaces
+    * @return 
+    */
+   public ArrayList<SurfaceData> getSurfaceStats() {
+      ArrayList<SurfaceData> stats = new ArrayList<SurfaceData>();
+      for (SurfaceInterpolator surface : surfaces_) {
+         stats.addAll(surface.getStats());
+      }
+      return stats;
    }
 }

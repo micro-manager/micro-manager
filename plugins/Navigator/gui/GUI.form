@@ -7,7 +7,6 @@
   </NonVisualComponents>
   <SyntheticProperties>
     <SyntheticProperty name="formSizePolicy" type="int" value="1"/>
-    <SyntheticProperty name="generateCenter" type="boolean" value="false"/>
   </SyntheticProperties>
   <AuxValues>
     <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="0"/>
@@ -44,11 +43,15 @@
                   <Component id="acqTabbedPane_" alignment="0" min="-2" pref="799" max="-2" attributes="0"/>
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="jLabel6" min="-2" max="-2" attributes="0"/>
+                      <Component id="exploreSampleLabel_" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                      <Component id="jLabel8" min="-2" max="-2" attributes="0"/>
+                      <Component id="exploreZStepLabel_" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="ExploreZStepSpinner_" min="-2" pref="77" max="-2" attributes="0"/>
+                      <Component id="exploreZStepSpinner_" min="-2" pref="77" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="28" max="-2" attributes="0"/>
+                      <Component id="channelGroupLabel_" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                      <Component id="exploreChannelGroupCombo_" min="-2" pref="92" max="-2" attributes="0"/>
                   </Group>
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
@@ -79,9 +82,11 @@
               <Component id="jTabbedPane1" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
-                  <Component id="jLabel6" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="jLabel8" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="ExploreZStepSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="exploreSampleLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="exploreZStepLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="exploreZStepSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="channelGroupLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="exploreChannelGroupCombo_" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
@@ -183,7 +188,7 @@
                       <Component id="savingNameLabel_" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="savingNameTextField_" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="220" max="32767" attributes="0"/>
+                      <EmptySpace pref="167" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -880,7 +885,7 @@
                               <Component id="footprin2DLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="footprint2DComboBox_" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
-                          <EmptySpace max="32767" attributes="0"/>
+                          <EmptySpace pref="27" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -1130,11 +1135,11 @@
             </Component>
           </SubComponents>
         </Container>
-        <Container class="javax.swing.JPanel" name="jPanel7">
+        <Container class="javax.swing.JPanel" name="covariedSettingsTab_">
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout$JTabbedPaneConstraintsDescription">
-              <JTabbedPaneConstraints tabName="Focus varying properties">
-                <Property name="tabTitle" type="java.lang.String" value="Focus varying properties"/>
+              <JTabbedPaneConstraints tabName="Covaried settings">
+                <Property name="tabTitle" type="java.lang.String" value="Covaried settings"/>
               </JTabbedPaneConstraints>
             </Constraint>
           </Constraints>
@@ -1142,15 +1147,139 @@
           <Layout>
             <DimensionLayout dim="0">
               <Group type="103" groupAlignment="0" attributes="0">
-                  <EmptySpace min="0" pref="794" max="32767" attributes="0"/>
+                  <Group type="102" alignment="1" attributes="0">
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Group type="102" attributes="0">
+                              <Component id="propertyPairingsScrollpane_" pref="0" max="32767" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                          </Group>
+                          <Group type="102" alignment="0" attributes="0">
+                              <Component id="newParingButton_" min="-2" pref="89" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="removePairingButton" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="savePairingsButton_" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="loadPairingsButton_" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace min="-2" pref="31" max="-2" attributes="0"/>
+                          </Group>
+                      </Group>
+                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                          <Group type="102" attributes="0">
+                              <EmptySpace min="10" pref="10" max="-2" attributes="0"/>
+                              <Component id="addCovariedPairingValueButton_" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="deleteCovariedPairingValueButton_" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="32767" attributes="0"/>
+                          </Group>
+                          <Component id="propertyPairValuesScrollpane_" min="-2" pref="425" max="-2" attributes="0"/>
+                      </Group>
+                  </Group>
               </Group>
             </DimensionLayout>
             <DimensionLayout dim="1">
               <Group type="103" groupAlignment="0" attributes="0">
-                  <EmptySpace min="0" pref="278" max="32767" attributes="0"/>
+                  <Group type="102" attributes="0">
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="propertyPairingsScrollpane_" pref="233" max="32767" attributes="0"/>
+                          <Component id="propertyPairValuesScrollpane_" pref="0" max="32767" attributes="0"/>
+                      </Group>
+                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="newParingButton_" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="removePairingButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="savePairingsButton_" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="loadPairingsButton_" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="addCovariedPairingValueButton_" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="deleteCovariedPairingValueButton_" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace max="-2" attributes="0"/>
+                  </Group>
               </Group>
             </DimensionLayout>
           </Layout>
+          <SubComponents>
+            <Container class="javax.swing.JScrollPane" name="propertyPairValuesScrollpane_">
+              <AuxValues>
+                <AuxValue name="autoScrollPane" type="java.lang.Boolean" value="true"/>
+              </AuxValues>
+
+              <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
+              <SubComponents>
+                <Component class="javax.swing.JTable" name="covariantPairValuesTable_">
+                  <Properties>
+                    <Property name="model" type="javax.swing.table.TableModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
+                      <Connection code="cpvtModel" type="code"/>
+                    </Property>
+                  </Properties>
+                  <AuxValues>
+                    <AuxValue name="JavaCodeGenerator_InitCodePre" type="java.lang.String" value="&#xd;&#xa;CovariantPairValuesTableModel cpvtModel = new CovariantPairValuesTableModel();&#xd;&#xa;covariantPairValuesTable_.setAutoCreateColumnsFromModel(false);&#xd;&#xa;covariantPairValuesTable_.addColumn(new TableColumn(0, 100, new CovariantValueCellRenderer(), new CovariantValueCellEditor()));&#xd;&#xa;covariantPairValuesTable_.addColumn(new TableColumn(1, 100, new CovariantValueCellRenderer(), new CovariantValueCellEditor()));&#xd;&#xa;covariantPairValuesTable_.setCellSelectionEnabled(false);&#xd;&#xa;&#xd;&#xa;"/>
+                  </AuxValues>
+                </Component>
+              </SubComponents>
+            </Container>
+            <Component class="javax.swing.JButton" name="newParingButton_">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="New pairing"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="newParingButton_ActionPerformed"/>
+              </Events>
+            </Component>
+            <Component class="javax.swing.JButton" name="removePairingButton">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Remove pairing"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="removePairingButtonActionPerformed"/>
+              </Events>
+            </Component>
+            <Container class="javax.swing.JScrollPane" name="propertyPairingsScrollpane_">
+              <AuxValues>
+                <AuxValue name="autoScrollPane" type="java.lang.Boolean" value="true"/>
+              </AuxValues>
+
+              <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
+              <SubComponents>
+                <Component class="javax.swing.JTable" name="covariantPairingsTable_">
+                  <Properties>
+                    <Property name="model" type="javax.swing.table.TableModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
+                      <Connection code="new propsandcovariants.CovariantPairingsTableModel()" type="code"/>
+                    </Property>
+                  </Properties>
+                </Component>
+              </SubComponents>
+            </Container>
+            <Component class="javax.swing.JButton" name="savePairingsButton_">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Save all"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="savePairingsButton_ActionPerformed"/>
+              </Events>
+            </Component>
+            <Component class="javax.swing.JButton" name="loadPairingsButton_">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Load"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="loadPairingsButton_ActionPerformed"/>
+              </Events>
+            </Component>
+            <Component class="javax.swing.JButton" name="addCovariedPairingValueButton_">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Add row"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="addCovariedPairingValueButton_ActionPerformed"/>
+              </Events>
+            </Component>
+            <Component class="javax.swing.JButton" name="deleteCovariedPairingValueButton_">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Delete"/>
+              </Properties>
+            </Component>
+          </SubComponents>
         </Container>
       </SubComponents>
     </Container>
@@ -1177,8 +1306,8 @@
         <Container class="javax.swing.JPanel" name="controlPanelName_">
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout$JTabbedPaneConstraintsDescription">
-              <JTabbedPaneConstraints tabName="Device control">
-                <Property name="tabTitle" type="java.lang.String" value="Device control"/>
+              <JTabbedPaneConstraints tabName="Device status/control">
+                <Property name="tabTitle" type="java.lang.String" value="Device status/control"/>
               </JTabbedPaneConstraints>
             </Constraint>
           </Constraints>
@@ -1203,7 +1332,7 @@
                       <Component id="customPropsScrollPane_" min="-2" pref="195" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="configPropsButton_" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="32767" attributes="0"/>
+                      <EmptySpace pref="16" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -1231,7 +1360,8 @@
                     </Property>
                   </Properties>
                   <AuxValues>
-                    <AuxValue name="JavaCodeGenerator_InitCodePre" type="java.lang.String" value="PropertyControlTableModel model = new PropertyControlTableModel(prefs_);&#xa;propertyControlTable_.setAutoCreateColumnsFromModel(false);&#xa;propertyControlTable_.setModel(model);&#xa;propertyControlTable_.addColumn(new TableColumn(0, 200, new DefaultTableCellRenderer(), null));&#xa;propertyControlTable_.addColumn(new TableColumn(1, 200, new PropertyValueCellRenderer(false), new PropertyValueCellEditor(false)));&#xa;propertyControlTable_.setTableHeader(null);&#xa;propertyControlTable_.setCellSelectionEnabled(false);"/>
+                    <AuxValue name="JavaCodeGenerator_InitCodePre" type="java.lang.String" value="DeviceControlTableModel model = new DeviceControlTableModel(prefs_);&#xa;propertyControlTable_.setAutoCreateColumnsFromModel(false);&#xa;propertyControlTable_.setModel(model);&#xa;propertyControlTable_.addColumn(new TableColumn(0, 200, new DefaultTableCellRenderer(), null));&#xa;propertyControlTable_.addColumn(new TableColumn(1, 200, new PropertyValueCellRenderer(false), new PropertyValueCellEditor()));&#xa;propertyControlTable_.setTableHeader(null);&#xa;propertyControlTable_.setCellSelectionEnabled(false);"/>
+                    <AuxValue name="JavaCodeGenerator_SerializeTo" type="java.lang.String" value="GUI_propertyControlTable_"/>
                   </AuxValues>
                 </Component>
               </SubComponents>
@@ -1399,7 +1529,7 @@
           <Layout>
             <DimensionLayout dim="0">
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="jScrollPane2" pref="780" max="32767" attributes="0"/>
+                  <Component id="jScrollPane2" pref="796" max="32767" attributes="0"/>
                   <Group type="102" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="deleteSelectedRegionButton_" min="-2" max="-2" attributes="0"/>
@@ -1412,7 +1542,7 @@
             <DimensionLayout dim="1">
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
-                      <Component id="jScrollPane2" pref="201" max="32767" attributes="0"/>
+                      <Component id="jScrollPane2" pref="211" max="32767" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="deleteSelectedRegionButton_" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -1482,7 +1612,7 @@
             <DimensionLayout dim="1">
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
-                      <Component id="jScrollPane3" pref="189" max="32767" attributes="0"/>
+                      <Component id="jScrollPane3" pref="195" max="32767" attributes="0"/>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="deleteAllSurfacesButton_" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -1530,7 +1660,7 @@
         </Container>
       </SubComponents>
     </Container>
-    <Component class="javax.swing.JLabel" name="jLabel6">
+    <Component class="javax.swing.JLabel" name="exploreSampleLabel_">
       <Properties>
         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
           <Font name="Tahoma" size="11" style="1"/>
@@ -1538,19 +1668,19 @@
         <Property name="text" type="java.lang.String" value="Explore sample"/>
       </Properties>
     </Component>
-    <Component class="javax.swing.JLabel" name="jLabel8">
+    <Component class="javax.swing.JLabel" name="exploreZStepLabel_">
       <Properties>
         <Property name="text" type="java.lang.String" value="Z-step (&#xb5;m):"/>
       </Properties>
     </Component>
-    <Component class="javax.swing.JSpinner" name="ExploreZStepSpinner_">
+    <Component class="javax.swing.JSpinner" name="exploreZStepSpinner_">
       <Properties>
         <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
           <SpinnerModel initial="1.0" numberType="java.lang.Double" stepSize="1.0" type="number"/>
         </Property>
       </Properties>
       <Events>
-        <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="ExploreZStepSpinner_StateChanged"/>
+        <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="exploreZStepSpinner_StateChanged"/>
       </Events>
       <AuxValues>
         <AuxValue name="JavaCodeGenerator_allCodePost" type="java.lang.String" value="addTextEditListener(zStepSpinner_);"/>
@@ -1586,6 +1716,23 @@
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="exploreSavingNameTextField_ActionPerformed"/>
       </Events>
+    </Component>
+    <Component class="javax.swing.JLabel" name="channelGroupLabel_">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Channel Group: "/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JComboBox" name="exploreChannelGroupCombo_">
+      <Properties>
+        <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
+          <StringArray count="4">
+            <StringItem index="0" value="Item 1"/>
+            <StringItem index="1" value="Item 2"/>
+            <StringItem index="2" value="Item 3"/>
+            <StringItem index="3" value="Item 4"/>
+          </StringArray>
+        </Property>
+      </Properties>
     </Component>
   </SubComponents>
 </Form>

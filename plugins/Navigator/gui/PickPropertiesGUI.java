@@ -6,7 +6,7 @@ package gui;
 
 import java.awt.Dialog;
 import java.awt.Window;
-import tables.PropertyChooserTableModel;
+import propsandcovariants.DeviceControlChooserTableModel;
 import java.util.prefs.Preferences;
 import javax.swing.JDialog;
 
@@ -16,14 +16,14 @@ import javax.swing.JDialog;
  */
 public class PickPropertiesGUI extends javax.swing.JFrame {
 
-   private PropertyChooserTableModel propChooserModel_;
+   private DeviceControlChooserTableModel propChooserModel_;
    private GUI parentGUI_;
    
    /**
     * Creates new form PickPropertiesGUI
     */
    public PickPropertiesGUI(Preferences prefs, GUI parentGUI) {
-      propChooserModel_ = new PropertyChooserTableModel(prefs);
+      propChooserModel_ = new DeviceControlChooserTableModel(prefs);
       initComponents();
       this.setVisible(true);
       //set column sizes
