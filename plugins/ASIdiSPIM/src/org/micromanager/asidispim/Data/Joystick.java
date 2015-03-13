@@ -187,6 +187,8 @@ public class Joystick {
     * Loops over all devices that could be associated with joysticks and sets appropriate property.
     */
    public void unsetAllJoysticks() {
+      // TODO update to gather list of AxisLetter (or AxisLetterX/AxisLetterY) and send at same time
+      // manually via TigerComm device (which need to add somehow)
       try {
          for (Devices.Keys dev : Devices.STAGES1D) {
             if (devices_.isTigerDevice(dev)) {

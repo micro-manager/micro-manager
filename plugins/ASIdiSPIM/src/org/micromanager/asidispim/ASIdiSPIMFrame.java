@@ -49,7 +49,7 @@ import org.micromanager.utils.MMFrame;
 
 //TODO devices tab automatically recognize default device names
 //TODO "swap sides" button (during alignment)
-//TODO setup tab have piezo/scanner go to 0 (eliminate calibration position display)
+//TODO setup tab have button for piezo/scanner go to 0 (eliminate calibration position display)
 //TODO alignment wizard that would guide through alignment steps
 //TODO easy mode that pulls most-used bits from all panels
 //TODO autofocus for finding calibration endpoints (http://dx.doi.org/10.1364/OE.16.008670, FFT method, or other)
@@ -60,7 +60,7 @@ import org.micromanager.utils.MMFrame;
 //TODO make it easy to discard a data set
 //TODO make it easy to look through series of data sets
 //TODO hardware Z-projection
-//TODO camera control ROI panel
+//TODO camera control tab: set ROI, set separate acquisition/alignment exposure times and sweep rate, etc.
 //TODO track Z/F for sample finding
 //TODO Z/F position dropdown for often-used positions
 //TODO factor out common code for JComboBoxes like MulticolorModes, CameraModes, AcquisitionModes, etc.
@@ -161,7 +161,7 @@ public class ASIdiSPIMFrame extends MMFrame
       MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) setupPanelA_);
       MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) navigationPanel_);
       
-      // make sure gotSelected() gets called whenever we switch tabs
+      // make sure gotDeSelected() and gotSelected() get called whenever we switch tabs
       tabbedPane_.addChangeListener(new ChangeListener() {
          int lastSelectedIndex_ = tabbedPane_.getSelectedIndex();
          @Override
@@ -174,6 +174,9 @@ public class ASIdiSPIMFrame extends MMFrame
       
       // put frame back where it was last time
       this.loadAndRestorePosition(100, 100);
+      
+      // clear any previous joystick settings
+      joystick_.unsetAllJoysticks();
     
       // gotSelected will be called because we put this after adding the ChangeListener
       tabbedPane_.setSelectedIndex(helpTabIndex);  // setSelectedIndex(0) just after initialization doesn't fire ChangeListener, so switch to help panel first
@@ -196,7 +199,6 @@ public class ASIdiSPIMFrame extends MMFrame
             "[" + this.getWidth() + "]",
             "[" + this.getHeight() + "]"));
       glassPane.add(statusSubPanel_, "dock south");
-      
    }
    
    /**

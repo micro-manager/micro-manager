@@ -680,10 +680,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             Properties.Keys.PLUGIN_USE_NAVIGATION_JOYSTICKS, false));
       navigationJoysticksCB_.addActionListener(new ActionListener() {
          @Override
-         public void actionPerformed(ActionEvent e) { 
-            if (navigationJoysticksCB_.isSelected()) {
-               ASIdiSPIM.getFrame().getNavigationPanel().doJoystickSettings();
-            } else {
+         public void actionPerformed(ActionEvent e) {
+            updateJoysticks();
+            if (!navigationJoysticksCB_.isSelected()) {
                joystick_.unsetAllJoysticks();
             }
             prefs_.putBoolean(panelName_, Properties.Keys.PLUGIN_USE_NAVIGATION_JOYSTICKS,
@@ -742,6 +741,16 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       
    }//end constructor
+   
+   private void updateJoysticks() {
+      if (navigationJoysticksCB_.isSelected()) {
+         if (ASIdiSPIM.getFrame() != null) {
+            ASIdiSPIM.getFrame().getNavigationPanel().doJoystickSettings();
+         }
+      }
+      // unsetAllJoysticks() should have been called when leaving last tab
+      // so no need to do it again now
+   }
    
    public final void updateDurationLabels() {
       updateActualSlicePeriodLabel();
@@ -1497,6 +1506,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       acqt.start(); 
    }
    
+   private Color getChannelColor(int channelIndex) {
+      final Color[] colors = {Color.RED, Color.GREEN, Color.BLUE, Color.MAGENTA,
+            Color.PINK, Color.CYAN, Color.YELLOW, Color.ORANGE};
+      return (colors[channelIndex % colors.length]);
+   }
+   
    /**
     * Actually runs the acquisition; does the dirty work of setting
     * up the controller, the circular buffer, starting the cameras,
@@ -1767,8 +1782,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             }
             
             // set up channels (side A/B is treated as channel too)
-            Color[] colors = {Color.RED, Color.GREEN, Color.BLUE, Color.MAGENTA, 
-               Color.PINK};
             if (useChannels) {
                ChannelSpec[] channels = multiChannelPanel_.getUsedChannels();
                for (int i = 0; i < channels.length; i++) {
@@ -1779,20 +1792,18 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      channelIndex *= 2;
                   }
                   gui_.setChannelName(acqName, channelIndex, firstCamera + chName);
-                  int cIndex = channelIndex % colors.length;
-                  gui_.setChannelColor(acqName, channelIndex, colors[cIndex]);
+                  gui_.setChannelColor(acqName, channelIndex, getChannelColor(channelIndex));
                   if (twoSided) {
                      gui_.setChannelName(acqName, channelIndex + 1, secondCamera + chName);
-                     cIndex = (channelIndex +1) % colors.length;
-                     gui_.setChannelColor(acqName, channelIndex + 1, colors[cIndex]);
+                     gui_.setChannelColor(acqName, channelIndex + 1, getChannelColor(channelIndex + 1));
                   }
                }
             } else {
                gui_.setChannelName(acqName, 0, firstCamera);
+               gui_.setChannelColor(acqName, 0, getChannelColor(0));
                if (twoSided) {
                   gui_.setChannelName(acqName, 1, secondCamera);
-                  gui_.setChannelColor(acqName, 0, colors[0]);
-                  gui_.setChannelColor(acqName, 1, colors[1]);
+                  gui_.setChannelColor(acqName, 1, getChannelColor(1));
                }
             }
             
@@ -2147,15 +2158,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     */
    @Override
    public void gotSelected() {
+      // TODO figure out why posUpdater_ is paused and then unpaused here
       posUpdater_.pauseUpdates(true);
       props_.callListeners();
-      if (navigationJoysticksCB_.isSelected()) {
-         if (ASIdiSPIM.getFrame() != null) {
-            ASIdiSPIM.getFrame().getNavigationPanel().doJoystickSettings();
-         }
-      } else {
-         joystick_.unsetAllJoysticks();  // disable all joysticks on this tab
-      }
+      updateJoysticks();
       sliceFrameAdvanced_.setVisible(advancedSliceTimingCB_.isSelected());
       posUpdater_.pauseUpdates(false);
    }

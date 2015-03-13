@@ -416,6 +416,11 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       posUpdater_.pauseUpdates(false);
    }
    
+   @Override
+   public void gotDeSelected() {
+      joystickPanel_.gotDeSelected();
+   }
+   
    /**
     * Called whenever position updater has refreshed positions
     */

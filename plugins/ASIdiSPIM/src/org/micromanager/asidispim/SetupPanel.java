@@ -629,4 +629,9 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       
       posUpdater_.pauseUpdates(false);
    }
+   
+   @Override
+   public void gotDeSelected() {
+      joystickPanel_.gotDeSelected();
+   }
 }
