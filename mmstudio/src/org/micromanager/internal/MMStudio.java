@@ -136,7 +136,7 @@ import org.micromanager.internal.utils.WaitDialog;
  * Implements the Studio (i.e. primary API) and does various other
  * tasks that should probably be refactored out at some point.
  */
-public class MMStudio implements Studio, CompatibilityInterface, LogManager {
+public class MMStudio implements Studio, CompatibilityInterface {
 
    private static final long serialVersionUID = 3556500289598574541L;
    private static final String MAIN_SAVE_METHOD = "saveMethod";
@@ -1299,14 +1299,14 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
          hotKeys_.saveSettings();
       } catch (NullPointerException e) {
          if (core_ != null)
-            logError(e);
+            ReportingUtils.logError(e);
       }
       try {
          DefaultUserProfile.getInstance().syncToDisk();
       }
       catch (IOException e) {
          if (core_ != null) {
-            logError(e);
+            ReportingUtils.logError(e);
          }
       }
       if (OptionsDlg.getShouldCloseOnExit()) {
@@ -2114,66 +2114,6 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
    }
 
    @Override
-   public void logMessage(String msg) {
-      ReportingUtils.logMessage(msg);
-   }
-
-   @Override
-   public void showMessage(String msg) {
-      ReportingUtils.showMessage(msg);
-   }
-   
-   @Override
-   public void showMessage(String msg, Component parent) {
-      ReportingUtils.showMessage(msg, parent);
-   }
-
-   @Override
-   public void logError(Exception e, String msg) {
-      ReportingUtils.logError(e, msg);
-   }
-
-   @Override
-   public void logError(Exception e) {
-      ReportingUtils.logError(e);
-   }
-
-   @Override
-   public void logError(String msg) {
-      ReportingUtils.logError(msg);
-   }
-
-   @Override
-   public void showError(Exception e, String msg) {
-      ReportingUtils.showError(e, msg);
-   }
-
-   @Override
-   public void showError(Exception e) {
-      ReportingUtils.showError(e);
-   }
-
-   @Override
-   public void showError(String msg) {
-      ReportingUtils.showError(msg);
-   }
-
-   @Override
-   public void showError(Exception e, String msg, Component parent) {
-      ReportingUtils.showError(e, msg, parent);
-   }
-
-   @Override
-   public void showError(Exception e, Component parent) {
-      ReportingUtils.showError(e, parent);
-   }
-
-   @Override
-   public void showError(String msg, Component parent) {
-      ReportingUtils.showError(msg, parent);
-   }
-
-   @Override
    public void autostretchCurrentWindow() {
       DisplayWindow display = displays().getCurrentWindow();
       DisplaySettings settings = display.getDisplaySettings();
@@ -2220,15 +2160,13 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
       return profile();
    }
 
-   // TODO: split associated methods out to a separate object (ReportingUtils
-   // or something similar)
    @Override
    public LogManager logs() {
-      return this;
+      return ReportingUtils.getWrapper();
    }
    @Override
    public LogManager getLogManager() {
-      return this;
+      return logs();
    }
 
    // TODO: split methods associated with this interface out to a separate
