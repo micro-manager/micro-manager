@@ -139,15 +139,14 @@ import org.micromanager.internal.utils.WaitDialog;
 public class MMStudio implements Studio, CompatibilityInterface {
 
    private static final long serialVersionUID = 3556500289598574541L;
-   private static final String MAIN_SAVE_METHOD = "saveMethod";
    private static final String SYSTEM_CONFIG_FILE = "sysconfig_file";
    private static final String OPEN_ACQ_DIR = "openDataDir";
    private static final String SCRIPT_CORE_OBJECT = "mmc";
    private static final String AUTOFOCUS_DEVICE = "autofocus_device";
-   private static final String EXPOSURE_SETTINGS_NODE = "MainExposureSettings";
    private static final int TOOLTIP_DISPLAY_DURATION_MILLISECONDS = 15000;
    private static final int TOOLTIP_DISPLAY_INITIAL_DELAY_MILLISECONDS = 2000;
    private static final String DEFAULT_CONFIG_FILE_NAME = "MMConfig_demo.cfg";
+   // Note that this property is set by one of the launcher scripts.
    private static final String DEFAULT_CONFIG_FILE_PROPERTY = "org.micromanager.default.config.file";
    private static final String SHOULD_DELETE_OLD_CORE_LOGS = "whether or not to delete old MMCore log files";
    private static final String CORE_LOG_LIFETIME_DAYS = "how many days to keep MMCore log files, before they get deleted";
@@ -1751,36 +1750,6 @@ public class MMStudio implements Studio, CompatibilityInterface {
       return acqMgr_.getUniqueAcquisitionName(stub);
    }
    
-   //@Override
-   public void openAcquisition(String name, String rootDir, int nrFrames,
-         int nrChannels, int nrSlices, int nrPositions) throws MMScriptException {
-      openAcquisition(name, rootDir, nrFrames, nrChannels, nrSlices,
-            nrPositions, true, false);
-   }
-
-   //@Override
-   public void openAcquisition(String name, String rootDir, int nrFrames,
-         int nrChannels, int nrSlices) throws MMScriptException {
-      openAcquisition(name, rootDir, nrFrames, nrChannels, nrSlices, 0);
-   }
-   
-   //@Override
-   public void openAcquisition(String name, String rootDir, int nrFrames,
-         int nrChannels, int nrSlices, int nrPositions, boolean show)
-         throws MMScriptException {
-      openAcquisition(name, rootDir, nrFrames, nrChannels, nrSlices, 
-            nrPositions, show, false);
-   }
-
-
-   //@Override
-   public void openAcquisition(String name, String rootDir, int nrFrames,
-         int nrChannels, int nrSlices, boolean show)
-         throws MMScriptException {
-      openAcquisition(name, rootDir, nrFrames, nrChannels, nrSlices, 0, 
-            show, false);
-   }   
-
    @Override
    public void openAcquisition(String name, String rootDir, int nrFrames,
          int nrChannels, int nrSlices, int nrPositions, boolean show, boolean save)
@@ -1804,14 +1773,6 @@ public class MMStudio implements Studio, CompatibilityInterface {
       acqMgr_.openAcquisition(name, rootDir, show, save);
       MMAcquisition acq = acqMgr_.getAcquisition(name);
       acq.setDimensions(nrFrames, nrChannels, nrSlices, nrPositions);
-   }
-
-   //@Override
-   public void openAcquisition(String name, String rootDir, int nrFrames,
-         int nrChannels, int nrSlices, boolean show, boolean virtual)
-         throws MMScriptException {
-      openAcquisition(name, rootDir, nrFrames, nrChannels, nrSlices, 0, 
-            show, virtual);
    }
 
    /**
