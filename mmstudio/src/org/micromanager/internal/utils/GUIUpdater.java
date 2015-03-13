@@ -32,6 +32,7 @@ import javax.swing.SwingUtilities;
  * 
  * @deprecated
  */
+@Deprecated
 public class GUIUpdater {
 
    final AtomicReference<Runnable> latestTask = new AtomicReference<Runnable>();
