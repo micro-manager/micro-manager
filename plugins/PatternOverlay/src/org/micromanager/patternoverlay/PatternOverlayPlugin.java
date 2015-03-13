@@ -38,7 +38,7 @@ public class PatternOverlayPlugin implements MMPlugin {
              myFrame_ = new PatternOverlayFrame(gui_);
              myFrame_.setTitle(menuName);
           } catch (Exception e) {
-             gui_.showError(e);
+             gui_.logs().showError(e);
           }
        }
        myFrame_.setVisible(true);

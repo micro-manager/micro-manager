@@ -146,7 +146,7 @@ public class PixelCalibratorPlugin implements MMPlugin {
                  core_.getCurrentPixelSizeConfig(),
                  JavaUtils.doubleArrayToClass(affValues));
       } catch (Exception ex) {
-         app_.logError(ex);
+         app_.logs().logError(ex);
       }
 
       int response = JOptionPane.showConfirmDialog(null,
