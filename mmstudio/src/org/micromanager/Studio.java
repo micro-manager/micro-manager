@@ -126,6 +126,21 @@ public interface Studio {
    public DisplayManager getDisplayManager();
 
    /**
+    * Provides access to the EventManager instance for subscribing to and
+    * posting events on the application-wide EventBus.
+    * @return EventManager instance
+    */
+   public EventManager events();
+
+   /**
+    * Provides access to the EventManager instance for subscribing to and
+    * posting events on the application-wide EventBus. Identical to events()
+    * except in name.
+    * @return EventManager instance
+    */
+   public EventManager getEventManager();
+
+   /**
     * Provides access to some utility methods for use in the Beanshell
     * scripting panel.
     * @return ScriptController instance.

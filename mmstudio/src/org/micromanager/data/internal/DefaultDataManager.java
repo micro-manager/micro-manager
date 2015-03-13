@@ -37,6 +37,7 @@ import org.micromanager.data.internal.multipagetiff.MultipageTiffReader;
 import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
 import org.micromanager.data.internal.StorageRAM;
 import org.micromanager.data.internal.StorageSinglePlaneTiffSeries;
+import org.micromanager.events.internal.DefaultEventManager;
 
 import org.micromanager.internal.MMStudio;
 // TODO: this should be moved into the API.
@@ -52,7 +53,7 @@ public class DefaultDataManager implements DataManager {
 
    public DefaultDataManager(MMStudio studio) {
       studio_ = studio;
-      studio_.registerForEvents(this);
+      DefaultEventManager.getInstance().registerForEvents(this);
    }
 
    @Override

@@ -178,7 +178,7 @@ public class PatternOverlayFrame extends MMFrame {
             }
          }
       });
-      gui_.compat().registerForEvents(this);
+      gui_.events().registerForEvents(this);
 
    }//constructor
    

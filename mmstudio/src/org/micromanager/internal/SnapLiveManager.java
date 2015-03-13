@@ -40,7 +40,7 @@ import org.micromanager.display.internal.DefaultDisplayWindow;
 
 import org.micromanager.events.LiveModeEvent;
 import org.micromanager.events.internal.DefaultLiveModeEvent;
-import org.micromanager.events.internal.EventManager;
+import org.micromanager.events.internal.DefaultEventManager;
 
 import org.micromanager.internal.interfaces.LiveModeListener;
 
@@ -86,7 +86,7 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
       for (LiveModeListener listener : listeners_) {
          listener.liveModeEnabled(isOn_);
       }
-      EventManager.post(new DefaultLiveModeEvent(isOn_));
+      DefaultEventManager.getInstance().post(new DefaultLiveModeEvent(isOn_));
    }
 
    private void setLiveButtonMode(JButton button, boolean isOn) {
@@ -294,10 +294,10 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
          }
          @Subscribe
          public void onDisplayDestroyed(DisplayDestroyedEvent event) {
-            EventManager.unregister(this);
+            DefaultEventManager.getInstance().unregisterForEvents(this);
          }
       };
-      EventManager.register(snapButton);
+      DefaultEventManager.getInstance().registerForEvents(snapButton);
       snapButton.setToolTipText("Take a new image");
       snapButton.setPreferredSize(new Dimension(90, 28));
       snapButton.addActionListener(new ActionListener() {
@@ -317,10 +317,10 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
          @Subscribe
          public void onDisplayDestroyed(DisplayDestroyedEvent event) {
             display.unregisterForEvents(this);
-            EventManager.unregister(this);
+            DefaultEventManager.getInstance().unregisterForEvents(this);
          }
       };
-      EventManager.register(liveButton);
+      DefaultEventManager.getInstance().registerForEvents(liveButton);
       display.registerForEvents(liveButton);
       liveButton.setToolTipText("Continuously acquire new images");
       setLiveButtonMode(liveButton, isOn_);

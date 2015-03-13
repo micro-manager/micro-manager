@@ -25,7 +25,7 @@ import org.micromanager.IAcquisitionEngine2010;
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
 import org.micromanager.SequenceSettings;
-import org.micromanager.events.internal.EventManager;
+import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.events.internal.PipelineEvent;
 import org.micromanager.events.internal.ProcessorEvent;
 import org.micromanager.internal.dialogs.AcqControlDlg;
@@ -273,7 +273,8 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    public void addImageProcessor(DataProcessor<TaggedImage> taggedImageProcessor) {
       if (!taggedImageProcessors_.contains(taggedImageProcessor)) {
          taggedImageProcessors_.add(taggedImageProcessor);
-         EventManager.post(new PipelineEvent(taggedImageProcessors_));
+         DefaultEventManager.getInstance().post(
+               new PipelineEvent(taggedImageProcessors_));
       }
    }
 
@@ -281,14 +282,16 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    public void removeImageProcessor(DataProcessor<TaggedImage> taggedImageProcessor) {
       taggedImageProcessors_.remove(taggedImageProcessor);
       taggedImageProcessor.dispose();
-      EventManager.post(new PipelineEvent(taggedImageProcessors_));
+      DefaultEventManager.getInstance().post(
+            new PipelineEvent(taggedImageProcessors_));
    }
 
    @Override
    public void setImageProcessorPipeline(List<DataProcessor<TaggedImage>> pipeline) {
       taggedImageProcessors_.clear();
       taggedImageProcessors_.addAll(pipeline);
-      EventManager.post(new PipelineEvent(taggedImageProcessors_));
+      DefaultEventManager.getInstance().post(
+            new PipelineEvent(taggedImageProcessors_));
    }
 
    @Override
@@ -305,7 +308,8 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
          nameToProcessorClass_.put(name, processorClass);
          // Post an event informing listeners that there's a newly-registered
          // DataProcessor class.
-         EventManager.post(new ProcessorEvent(name, processorClass));
+         DefaultEventManager.getInstance().post(
+               new ProcessorEvent(name, processorClass));
       }
    }
 

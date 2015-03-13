@@ -76,6 +76,7 @@ import org.micromanager.DataProcessor;
 import org.micromanager.display.DisplayManager;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
+import org.micromanager.EventManager;
 import org.micromanager.IAcquisitionEngine2010;
 import org.micromanager.LogManager;
 import org.micromanager.MMListenerInterface;
@@ -98,7 +99,7 @@ import org.micromanager.internal.dialogs.MMIntroDlg;
 import org.micromanager.internal.dialogs.OptionsDlg;
 import org.micromanager.internal.dialogs.RegistrationDlg;
 
-import org.micromanager.events.internal.EventManager;
+import org.micromanager.events.internal.DefaultEventManager;
 
 import org.micromanager.display.internal.DefaultDisplayManager;
 
@@ -266,7 +267,7 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
    public MMStudio(boolean shouldRunAsPlugin) {
       org.micromanager.internal.diagnostics.ThreadExceptionLogger.setUp();
 
-      EventManager.register(this);
+      DefaultEventManager.getInstance().registerForEvents(this);
 
       prepAcquisitionEngine();
 
@@ -2062,11 +2063,6 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
    }
 
    @Override
-   public void registerForEvents(Object obj) {
-      EventManager.register(obj);
-   }
-
-   @Override
    public void setROI(Rectangle r) throws MMScriptException {
       live().setSuspended(true);
       try {
@@ -2274,6 +2270,16 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
    @Override
    public Album getAlbum() {
       return album();
+   }
+
+   @Override
+   public EventManager events() {
+      return DefaultEventManager.getInstance();
+   }
+
+   @Override
+   public EventManager getEventManager() {
+      return events();
    }
 
    public static boolean getShouldDeleteOldCoreLogs() {

@@ -6,7 +6,7 @@ import javax.swing.table.AbstractTableModel;
 import mmcorej.TaggedImage;
 import org.micromanager.acquisition.internal.AcquisitionEngine;
 import org.micromanager.DataProcessor;
-import org.micromanager.events.internal.EventManager;
+import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.events.internal.PipelineEvent;
 import org.micromanager.events.internal.ProcessorEnabledEvent;
 
@@ -23,7 +23,7 @@ public class PipelineTableModel extends AbstractTableModel {
    PipelineTableModel(AcquisitionEngine engine) {
       engine_ = engine;
       pipeline_ = engine_.getImageProcessorPipeline();
-      EventManager.register(this);
+      DefaultEventManager.getInstance().registerForEvents(this);
    }
 
    @Subscribe

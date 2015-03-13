@@ -75,7 +75,7 @@ import org.micromanager.events.DatastoreClosingEvent;
 
 import org.micromanager.data.internal.DefaultCoords;
 
-import org.micromanager.events.internal.EventManager;
+import org.micromanager.events.internal.DefaultEventManager;
 
 import org.micromanager.display.internal.events.DefaultNewDisplayEvent;
 import org.micromanager.display.internal.events.DefaultNewImagePlusEvent;
@@ -210,7 +210,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          });
       }
 
-      EventManager.register(this);
+      DefaultEventManager.getInstance().registerForEvents(this);
    }
 
    /**
@@ -279,7 +279,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       resetTitle();
       setWindowSize();
 
-      EventManager.post(new DefaultNewDisplayEvent(this));
+      DefaultEventManager.getInstance().post(new DefaultNewDisplayEvent(this));
    }
 
    /**

@@ -23,7 +23,7 @@ package org.micromanager;
 import java.util.Collection;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
-import org.micromanager.events.internal.EventManager;
+import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.events.internal.ProcessorEnabledEvent;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -271,7 +271,8 @@ public abstract class DataProcessor<E> extends Thread {
       gui_.live().setSuspended(true);
 
       isEnabled_ = isEnabled;
-      EventManager.post(new ProcessorEnabledEvent(this, isEnabled));
+      DefaultEventManager.getInstance().post(
+            new ProcessorEnabledEvent(this, isEnabled));
 
       gui_.live().setSuspended(false);
    }

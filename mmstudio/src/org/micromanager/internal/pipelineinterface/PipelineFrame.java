@@ -25,7 +25,7 @@ import org.micromanager.internal.MMStudio;
 import org.micromanager.acquisition.internal.AcquisitionEngine;
 import org.micromanager.DataProcessor;
 import org.micromanager.Studio;
-import org.micromanager.events.internal.EventManager;
+import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.events.internal.ProcessorEvent;
 import org.micromanager.internal.utils.MMFrame;
 
@@ -153,7 +153,7 @@ final public class PipelineFrame extends MMFrame
       
       this.loadAndRestorePosition(200, 200);
 
-      EventManager.register(this);
+      DefaultEventManager.getInstance().registerForEvents(this);
       reloadProcessors();
       updateEditButtonStatus(pipelineTable_.getSelectionModel());
    }
