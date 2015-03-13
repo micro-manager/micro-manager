@@ -1767,6 +1767,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             }
             
             // set up channels (side A/B is treated as channel too)
+            Color[] colors = {Color.RED, Color.GREEN, Color.BLUE, Color.MAGENTA, 
+               Color.PINK};
             if (useChannels) {
                ChannelSpec[] channels = multiChannelPanel_.getUsedChannels();
                for (int i = 0; i < channels.length; i++) {
@@ -1777,14 +1779,20 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      channelIndex *= 2;
                   }
                   gui_.setChannelName(acqName, channelIndex, firstCamera + chName);
+                  int cIndex = channelIndex % colors.length;
+                  gui_.setChannelColor(acqName, channelIndex, colors[cIndex]);
                   if (twoSided) {
                      gui_.setChannelName(acqName, channelIndex + 1, secondCamera + chName);
+                     cIndex = (channelIndex +1) % colors.length;
+                     gui_.setChannelColor(acqName, channelIndex + 1, colors[cIndex]);
                   }
                }
             } else {
                gui_.setChannelName(acqName, 0, firstCamera);
                if (twoSided) {
                   gui_.setChannelName(acqName, 1, secondCamera);
+                  gui_.setChannelColor(acqName, 0, colors[0]);
+                  gui_.setChannelColor(acqName, 1, colors[1]);
                }
             }
             
