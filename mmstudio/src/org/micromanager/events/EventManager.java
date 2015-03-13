@@ -19,7 +19,7 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package org.micromanager;
+package org.micromanager.events;
 
 /**
  * This interface provides access to the application-wide EventBus, on which

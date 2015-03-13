@@ -27,6 +27,7 @@ import mmcorej.CMMCore;
 
 import org.micromanager.data.DataManager;
 import org.micromanager.display.DisplayManager;
+import org.micromanager.events.EventManager;
 import org.micromanager.internal.utils.AutofocusManager;
 
 
