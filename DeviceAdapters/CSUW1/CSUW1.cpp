@@ -968,6 +968,11 @@ int Disk::Initialize()
    if (ret != DEVICE_OK) 
       return ret; 
 
+   // create default positions and labels
+   pAct = new CPropertyAction (this, &CStateBase::OnLabel);
+   ret = CreateProperty(MM::g_Keyword_Label, "Disk 1", MM::String, false, pAct);
+   if (ret != DEVICE_OK)
+      return ret;
 
    SetPositionLabel(0, "Disk 1");
    SetPositionLabel(1, "Disk 2");
