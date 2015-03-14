@@ -22,7 +22,7 @@ public class CovariantPairingsTableModel extends AbstractTableModel {
    
     @Override
    public String getColumnName(int index) {
-      return index == 0 ? "Active" : "Pairing";
+      return index == 0 ? "Active" : "Pairing (Independent Variable : Dependent Variable)";
    }
 
    @Override
@@ -61,5 +61,14 @@ public class CovariantPairingsTableModel extends AbstractTableModel {
       if (col == 0) {
          manager_.enablePairingForCurrentAcq(row, (Boolean) value);
       } 
+   }
+
+   public boolean isAnyPairingActive() {
+      for (int i = 0; i < manager_.getNumPairings(); i++) {
+         if (manager_.isPairActiveForCurrentAcq(i) ) {
+            return true;
+         }
+      }
+      return false;
    }
 }

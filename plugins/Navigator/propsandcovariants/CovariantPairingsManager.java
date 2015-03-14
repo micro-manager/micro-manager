@@ -63,6 +63,7 @@ public class CovariantPairingsManager {
       } else {
          gui_.getActiveAcquisitionSettings().removePropPairing(pairs_.get(index));
       }
+      gui_.refreshAcqTabTitleText();
    }
    
    public void deleteValuePair(int pairingIndex, int valueIndex) {

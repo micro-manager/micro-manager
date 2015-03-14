@@ -92,6 +92,7 @@ public class FixedAreaAcquisitionSettings  {
          ReportingUtils.showMessage("Must existing pairing between same two properties first");
       }
       propPairings_.add(pair);
+      
    }
    
    private boolean checkForRedundantPairing(CovariantPairing pair) {

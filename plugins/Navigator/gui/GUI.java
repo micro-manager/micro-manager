@@ -218,7 +218,7 @@ public class GUI extends javax.swing.JFrame {
       populateAcqControls(multiAcqManager_.getAcquisition(multiAcqSelectedIndex_));
    }
 
-   private void setTabTitleText() {
+   public void refreshAcqTabTitleText() {
       JLabel l1 = new JLabel("Saving");
       l1.setForeground(DARK_GREEN);
       l1.setFont(acqTabbedPane_.getComponent(0).getFont().deriveFont(Font.BOLD));
@@ -231,13 +231,25 @@ public class GUI extends javax.swing.JFrame {
       l3.setForeground(checkBox3D_.isSelected() || checkBox2D_.isSelected() ? DARK_GREEN : Color.black);
       l3.setFont(acqTabbedPane_.getComponent(1).getFont().deriveFont(checkBox3D_.isSelected() || checkBox2D_.isSelected() ? Font.BOLD : Font.PLAIN));
       acqTabbedPane_.setTabComponentAt(2, l3);
+      
+      
+      //TODO: channels 
+      
+      
+      JLabel l4 = new JLabel("Covaried Settings");
+      l4.setForeground(((CovariantPairingsTableModel) covariantPairingsTable_.getModel()).isAnyPairingActive() ? DARK_GREEN : Color.black);
+      l4.setFont(acqTabbedPane_.getComponent(1).getFont().deriveFont(((CovariantPairingsTableModel)
+              covariantPairingsTable_.getModel()).isAnyPairingActive() ? Font.BOLD : Font.PLAIN));
+      acqTabbedPane_.setTabComponentAt(4, l4);
+      
+      //TODO: autofocus
       acqTabbedPane_.invalidate();
       acqTabbedPane_.validate();
    }
 
    private void enableAcquisitionComponentsAsNeeded() {
       //Set Tab titles
-      setTabTitleText();
+      refreshAcqTabTitleText();
       //Enable or disable time point stuff
       boolean enableTime = timePointsCheckBox_.isSelected();
       for (Component c : timePointsPanel_.getComponents()) {
@@ -488,9 +500,6 @@ public class GUI extends javax.swing.JFrame {
       removeChannelButton_ = new javax.swing.JButton();
       jComboBox2 = new javax.swing.JComboBox();
       jLabel3 = new javax.swing.JLabel();
-      autofocusTab_l = new javax.swing.JPanel();
-      jLabel7 = new javax.swing.JLabel();
-      autofocusFiducialCombo_ = new javax.swing.JComboBox();
       covariedSettingsTab_ = new javax.swing.JPanel();
       propertyPairValuesScrollpane_ = new javax.swing.JScrollPane();
       covariantPairValuesTable_ = covariantPairValuesTable_ = new javax.swing.JTable() {
@@ -514,6 +523,11 @@ public class GUI extends javax.swing.JFrame {
       loadPairingsButton_ = new javax.swing.JButton();
       addCovariedPairingValueButton_ = new javax.swing.JButton();
       deleteCovariedPairingValueButton_ = new javax.swing.JButton();
+      jLabel6 = new javax.swing.JLabel();
+      jLabel8 = new javax.swing.JLabel();
+      autofocusTab_l = new javax.swing.JPanel();
+      jLabel7 = new javax.swing.JLabel();
+      autofocusFiducialCombo_ = new javax.swing.JComboBox();
       jLabel1 = new javax.swing.JLabel();
       newExploreWindowButton_ = new javax.swing.JButton();
       jTabbedPane1 = new javax.swing.JTabbedPane();
@@ -1107,14 +1121,14 @@ public class GUI extends javax.swing.JFrame {
       jTable1.setModel(new SimpleChannelTableModel());
       jScrollPane1.setViewportView(jTable1);
 
-      newChannelButton_.setText("New");
+      newChannelButton_.setText("Add");
       newChannelButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             newChannelButton_ActionPerformed(evt);
          }
       });
 
-      removeChannelButton_.setText("Remove");
+      removeChannelButton_.setText("Delete");
       removeChannelButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             removeChannelButton_ActionPerformed(evt);
@@ -1142,7 +1156,7 @@ public class GUI extends javax.swing.JFrame {
                   .addComponent(newChannelButton_)
                   .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                   .addComponent(removeChannelButton_)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 283, Short.MAX_VALUE)
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 292, Short.MAX_VALUE)
                   .addComponent(jLabel3)
                   .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                   .addComponent(jComboBox2, javax.swing.GroupLayout.PREFERRED_SIZE, 107, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -1177,6 +1191,135 @@ public class GUI extends javax.swing.JFrame {
 
       acqTabbedPane_.addTab("Channels", ChannelsTab_);
 
+      CovariantPairValuesTableModel cpvtModel = new CovariantPairValuesTableModel();
+      covariantPairValuesTable_.setAutoCreateColumnsFromModel(false);
+      covariantPairValuesTable_.addColumn(new TableColumn(0, 100, new CovariantValueCellRenderer(), new CovariantValueCellEditor()));
+      covariantPairValuesTable_.addColumn(new TableColumn(1, 100, new CovariantValueCellRenderer(), new CovariantValueCellEditor()));
+      covariantPairValuesTable_.setModel(cpvtModel);
+      covariantPairValuesTable_.setCellSelectionEnabled(true);
+      covariantPairValuesTable_.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_INTERVAL_SELECTION);
+      covariantPairValuesTable_.setSelectionModel(new DefaultListSelectionModel () {
+         @Override
+         public void clearSelection() {
+            super.clearSelection();
+         }
+      });
+      propertyPairValuesScrollpane_.setViewportView(covariantPairValuesTable_);
+
+      newParingButton_.setText("Add");
+      newParingButton_.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            newParingButton_ActionPerformed(evt);
+         }
+      });
+
+      removePairingButton.setText("Delete");
+      removePairingButton.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            removePairingButtonActionPerformed(evt);
+         }
+      });
+
+      covariantPairingsTable_.setModel(new propsandcovariants.CovariantPairingsTableModel());
+      propertyPairingsScrollpane_.setViewportView(covariantPairingsTable_);
+
+      savePairingsButton_.setText("Save");
+      savePairingsButton_.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            savePairingsButton_ActionPerformed(evt);
+         }
+      });
+
+      loadPairingsButton_.setText("Load");
+      loadPairingsButton_.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            loadPairingsButton_ActionPerformed(evt);
+         }
+      });
+
+      addCovariedPairingValueButton_.setText("Add");
+      addCovariedPairingValueButton_.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            addCovariedPairingValueButton_ActionPerformed(evt);
+         }
+      });
+
+      deleteCovariedPairingValueButton_.setText("Delete");
+      deleteCovariedPairingValueButton_.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            deleteCovariedPairingValueButton_ActionPerformed(evt);
+         }
+      });
+
+      jLabel6.setText("Covariant pairings");
+
+      jLabel8.setText("Interpolation points");
+
+      javax.swing.GroupLayout covariedSettingsTab_Layout = new javax.swing.GroupLayout(covariedSettingsTab_);
+      covariedSettingsTab_.setLayout(covariedSettingsTab_Layout);
+      covariedSettingsTab_Layout.setHorizontalGroup(
+         covariedSettingsTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+         .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, covariedSettingsTab_Layout.createSequentialGroup()
+            .addGroup(covariedSettingsTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+               .addGroup(covariedSettingsTab_Layout.createSequentialGroup()
+                  .addContainerGap(55, Short.MAX_VALUE)
+                  .addComponent(newParingButton_)
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                  .addComponent(removePairingButton)
+                  .addGap(56, 56, 56)
+                  .addComponent(savePairingsButton_)
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED))
+               .addGroup(covariedSettingsTab_Layout.createSequentialGroup()
+                  .addGroup(covariedSettingsTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                     .addGroup(covariedSettingsTab_Layout.createSequentialGroup()
+                        .addGap(15, 15, 15)
+                        .addComponent(jLabel6))
+                     .addComponent(propertyPairingsScrollpane_, javax.swing.GroupLayout.PREFERRED_SIZE, 345, javax.swing.GroupLayout.PREFERRED_SIZE))
+                  .addGap(1, 1, 1)))
+            .addGroup(covariedSettingsTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+               .addGroup(covariedSettingsTab_Layout.createSequentialGroup()
+                  .addGroup(covariedSettingsTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                     .addComponent(propertyPairValuesScrollpane_, javax.swing.GroupLayout.PREFERRED_SIZE, 415, javax.swing.GroupLayout.PREFERRED_SIZE)
+                     .addGroup(covariedSettingsTab_Layout.createSequentialGroup()
+                        .addGap(8, 8, 8)
+                        .addComponent(jLabel8)))
+                  .addContainerGap())
+               .addGroup(covariedSettingsTab_Layout.createSequentialGroup()
+                  .addComponent(loadPairingsButton_)
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                  .addComponent(addCovariedPairingValueButton_)
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                  .addComponent(deleteCovariedPairingValueButton_)
+                  .addGap(106, 106, 106))))
+      );
+      covariedSettingsTab_Layout.setVerticalGroup(
+         covariedSettingsTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+         .addGroup(covariedSettingsTab_Layout.createSequentialGroup()
+            .addGroup(covariedSettingsTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+               .addComponent(jLabel6)
+               .addComponent(jLabel8))
+            .addGap(8, 8, 8)
+            .addGroup(covariedSettingsTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+               .addComponent(propertyPairingsScrollpane_, javax.swing.GroupLayout.DEFAULT_SIZE, 196, Short.MAX_VALUE)
+               .addComponent(propertyPairValuesScrollpane_, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, 4, Short.MAX_VALUE)
+            .addGroup(covariedSettingsTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+               .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, covariedSettingsTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                  .addComponent(newParingButton_)
+                  .addComponent(removePairingButton)
+                  .addComponent(savePairingsButton_)
+                  .addComponent(loadPairingsButton_))
+               .addGroup(covariedSettingsTab_Layout.createSequentialGroup()
+                  .addGap(8, 8, 8)
+                  .addGroup(covariedSettingsTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                     .addComponent(deleteCovariedPairingValueButton_)
+                     .addComponent(addCovariedPairingValueButton_))
+                  .addGap(0, 0, Short.MAX_VALUE)))
+            .addContainerGap())
+      );
+
+      acqTabbedPane_.addTab("Covaried settings", covariedSettingsTab_);
+
       jLabel7.setText("Fiducial channel index:");
 
       autofocusFiducialCombo_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
@@ -1208,112 +1351,6 @@ public class GUI extends javax.swing.JFrame {
       );
 
       acqTabbedPane_.addTab("Autofocus", autofocusTab_l);
-
-      CovariantPairValuesTableModel cpvtModel = new CovariantPairValuesTableModel();
-      covariantPairValuesTable_.setAutoCreateColumnsFromModel(false);
-      covariantPairValuesTable_.addColumn(new TableColumn(0, 100, new CovariantValueCellRenderer(), new CovariantValueCellEditor()));
-      covariantPairValuesTable_.addColumn(new TableColumn(1, 100, new CovariantValueCellRenderer(), new CovariantValueCellEditor()));
-      covariantPairValuesTable_.setModel(cpvtModel);
-      covariantPairValuesTable_.setCellSelectionEnabled(true);
-      covariantPairValuesTable_.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_INTERVAL_SELECTION);
-      covariantPairValuesTable_.setSelectionModel(new DefaultListSelectionModel () {
-         @Override
-         public void clearSelection() {
-            super.clearSelection();
-         }
-      });
-      propertyPairValuesScrollpane_.setViewportView(covariantPairValuesTable_);
-
-      newParingButton_.setText("New pairing");
-      newParingButton_.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            newParingButton_ActionPerformed(evt);
-         }
-      });
-
-      removePairingButton.setText("Remove pairing");
-      removePairingButton.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            removePairingButtonActionPerformed(evt);
-         }
-      });
-
-      covariantPairingsTable_.setModel(new propsandcovariants.CovariantPairingsTableModel());
-      propertyPairingsScrollpane_.setViewportView(covariantPairingsTable_);
-
-      savePairingsButton_.setText("Save all");
-      savePairingsButton_.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            savePairingsButton_ActionPerformed(evt);
-         }
-      });
-
-      loadPairingsButton_.setText("Load");
-      loadPairingsButton_.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            loadPairingsButton_ActionPerformed(evt);
-         }
-      });
-
-      addCovariedPairingValueButton_.setText("Add row");
-      addCovariedPairingValueButton_.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            addCovariedPairingValueButton_ActionPerformed(evt);
-         }
-      });
-
-      deleteCovariedPairingValueButton_.setText("Delete");
-      deleteCovariedPairingValueButton_.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            deleteCovariedPairingValueButton_ActionPerformed(evt);
-         }
-      });
-
-      javax.swing.GroupLayout covariedSettingsTab_Layout = new javax.swing.GroupLayout(covariedSettingsTab_);
-      covariedSettingsTab_.setLayout(covariedSettingsTab_Layout);
-      covariedSettingsTab_Layout.setHorizontalGroup(
-         covariedSettingsTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, covariedSettingsTab_Layout.createSequentialGroup()
-            .addGroup(covariedSettingsTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-               .addGroup(covariedSettingsTab_Layout.createSequentialGroup()
-                  .addComponent(propertyPairingsScrollpane_, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED))
-               .addGroup(covariedSettingsTab_Layout.createSequentialGroup()
-                  .addComponent(newParingButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 89, javax.swing.GroupLayout.PREFERRED_SIZE)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                  .addComponent(removePairingButton)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                  .addComponent(savePairingsButton_)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                  .addComponent(loadPairingsButton_)
-                  .addGap(31, 31, 31)))
-            .addGroup(covariedSettingsTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-               .addGroup(covariedSettingsTab_Layout.createSequentialGroup()
-                  .addGap(10, 10, 10)
-                  .addComponent(addCovariedPairingValueButton_)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                  .addComponent(deleteCovariedPairingValueButton_)
-                  .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-               .addComponent(propertyPairValuesScrollpane_, javax.swing.GroupLayout.PREFERRED_SIZE, 425, javax.swing.GroupLayout.PREFERRED_SIZE)))
-      );
-      covariedSettingsTab_Layout.setVerticalGroup(
-         covariedSettingsTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addGroup(covariedSettingsTab_Layout.createSequentialGroup()
-            .addGroup(covariedSettingsTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-               .addComponent(propertyPairingsScrollpane_, javax.swing.GroupLayout.DEFAULT_SIZE, 233, Short.MAX_VALUE)
-               .addComponent(propertyPairValuesScrollpane_, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-            .addGroup(covariedSettingsTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-               .addComponent(newParingButton_)
-               .addComponent(removePairingButton)
-               .addComponent(savePairingsButton_)
-               .addComponent(loadPairingsButton_)
-               .addComponent(addCovariedPairingValueButton_)
-               .addComponent(deleteCovariedPairingValueButton_))
-            .addContainerGap())
-      );
-
-      acqTabbedPane_.addTab("Covaried settings", covariedSettingsTab_);
 
       jLabel1.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
       jLabel1.setText("Acquisition Settings");
@@ -1378,7 +1415,7 @@ public class GUI extends javax.swing.JFrame {
          }
       });
 
-      removeAcqButton_.setText("Remove");
+      removeAcqButton_.setText("Delete");
       removeAcqButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             removeAcqButton_ActionPerformed(evt);
@@ -1479,7 +1516,7 @@ public class GUI extends javax.swing.JFrame {
       gridTable_.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
       jScrollPane2.setViewportView(gridTable_);
 
-      deleteSelectedRegionButton_.setText("Delete selected");
+      deleteSelectedRegionButton_.setText("Delete");
       deleteSelectedRegionButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             deleteSelectedRegionButton_ActionPerformed(evt);
@@ -1497,13 +1534,13 @@ public class GUI extends javax.swing.JFrame {
       gridsPanel_.setLayout(gridsPanel_Layout);
       gridsPanel_Layout.setHorizontalGroup(
          gridsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 796, Short.MAX_VALUE)
+         .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 780, Short.MAX_VALUE)
          .addGroup(gridsPanel_Layout.createSequentialGroup()
-            .addContainerGap()
+            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(deleteSelectedRegionButton_)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
             .addComponent(deleteAllRegionsButton_)
-            .addGap(0, 0, Short.MAX_VALUE))
+            .addGap(284, 284, 284))
       );
       gridsPanel_Layout.setVerticalGroup(
          gridsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1517,7 +1554,7 @@ public class GUI extends javax.swing.JFrame {
 
       jTabbedPane1.addTab("Grids", gridsPanel_);
 
-      deleteSelectedSurfaceButton_.setText("Delete selected");
+      deleteSelectedSurfaceButton_.setText("Delete");
       deleteSelectedSurfaceButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             deleteSelectedSurfaceButton_ActionPerformed(evt);
@@ -1540,17 +1577,17 @@ public class GUI extends javax.swing.JFrame {
       surfacesPanel_Layout.setHorizontalGroup(
          surfacesPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
          .addGroup(surfacesPanel_Layout.createSequentialGroup()
-            .addContainerGap()
+            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(deleteSelectedSurfaceButton_)
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addComponent(deleteAllSurfacesButton_)
-            .addGap(0, 0, Short.MAX_VALUE))
-         .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 796, Short.MAX_VALUE)
+            .addGap(275, 275, 275))
+         .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 780, Short.MAX_VALUE)
       );
       surfacesPanel_Layout.setVerticalGroup(
          surfacesPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
          .addGroup(surfacesPanel_Layout.createSequentialGroup()
-            .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 195, Short.MAX_VALUE)
+            .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 199, Short.MAX_VALUE)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
             .addGroup(surfacesPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                .addComponent(deleteAllSurfacesButton_)
@@ -1742,7 +1779,7 @@ public class GUI extends javax.swing.JFrame {
       }
       enableAcquisitionComponentsAsNeeded();
       storeCurrentAcqSettings();
-      setTabTitleText();
+      refreshAcqTabTitleText();
    }//GEN-LAST:event_checkBox2D_ActionPerformed
 
    private void checkBox3D_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_checkBox3D_ActionPerformed
@@ -1755,7 +1792,7 @@ public class GUI extends javax.swing.JFrame {
       }
       enableAcquisitionComponentsAsNeeded();
       storeCurrentAcqSettings();
-      setTabTitleText();
+      refreshAcqTabTitleText();
    }//GEN-LAST:event_checkBox3D_ActionPerformed
 
    private void footprint2DComboBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_footprint2DComboBox_ActionPerformed
@@ -1818,7 +1855,7 @@ public class GUI extends javax.swing.JFrame {
          c.setEnabled(timePointsCheckBox_.isSelected());
       }
       storeCurrentAcqSettings();
-      setTabTitleText();
+      refreshAcqTabTitleText();
    }//GEN-LAST:event_timePointsCheckBox_ActionPerformed
 
    private void timeIntervalSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_timeIntervalSpinner_StateChanged
@@ -2039,7 +2076,9 @@ public class GUI extends javax.swing.JFrame {
    private javax.swing.JLabel jLabel3;
    private javax.swing.JLabel jLabel4;
    private javax.swing.JLabel jLabel5;
+   private javax.swing.JLabel jLabel6;
    private javax.swing.JLabel jLabel7;
+   private javax.swing.JLabel jLabel8;
    private javax.swing.JPanel jPanel1;
    private javax.swing.JScrollPane jScrollPane1;
    private javax.swing.JScrollPane jScrollPane2;
