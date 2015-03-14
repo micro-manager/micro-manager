@@ -47,7 +47,9 @@ public class CovariantPairingsTableModel extends AbstractTableModel {
 
    @Override
    public Object getValueAt(int rowIndex, int columnIndex) {    
-      if (columnIndex == 0) {
+      if (rowIndex == -1) {
+         return null;
+      } else if (columnIndex == 0) {
          return manager_.isPairActiveForCurrentAcq(rowIndex);
       }  else {
          return manager_.getPair(rowIndex);

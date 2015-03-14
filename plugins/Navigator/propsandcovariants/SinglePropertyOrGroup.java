@@ -1,5 +1,6 @@
 package propsandcovariants;
 
+import java.text.ParseException;
 import propsandcovariants.Covariant;
 import java.util.Arrays;
 
@@ -198,6 +199,9 @@ public class SinglePropertyOrGroup implements Covariant{
             }
          }
       } else if (potentialValue.getType() == CovariantType.STRING) {
+         if (allowed.length == 0) {
+            return true; //we don't know
+         }
          boolean allowedVal = false;
          for(String s : allowed) {
             if (s.equals(potentialValue.stringValue())) {
@@ -213,11 +217,23 @@ public class SinglePropertyOrGroup implements Covariant{
 
    @Override
    public CovariantValue[] getAllowedValues() {
-      CovariantValue[] vals = new CovariantValue[allowed.length];
-      for (int i = 0; i < allowed.length; i++) {
-         vals[i] = new CovariantValue(allowed[i]);
+      try {
+         CovariantValue[] vals = new CovariantValue[allowed.length];
+         for (int i = 0; i < allowed.length; i++) {
+            if (isInteger()) {
+               vals[i] = new CovariantValue( NumberUtils.coreStringToInt(allowed[i]));
+            } else if (isFloat()) {
+               vals[i] = new CovariantValue( NumberUtils.coreStringToDouble(allowed[i]));
+            } else {
+               vals[i] = new CovariantValue(allowed[i]);
+            }
+            
+         }
+         return vals;
+      } catch (ParseException e) {
+         ReportingUtils.showError("Couldn't parse property value");
+         throw new RuntimeException();
       }
-      return vals;
    }
 
    @Override
@@ -250,4 +266,23 @@ public class SinglePropertyOrGroup implements Covariant{
          return CovariantType.STRING;
       }
    }
+
+   @Override
+   public CovariantValue getValidValue() {
+      try {
+         if (isGroup()) {
+            return new CovariantValue(allowed[0]);
+         } else if (isInteger()) {
+            return new CovariantValue(NumberUtils.displayStringToInt(value));
+         } else if (isFloat()) {                
+            return new CovariantValue(NumberUtils.displayStringToDouble(value));
+         } else {
+            return new CovariantValue(value);
+         }
+      } catch (ParseException e) {
+         ReportingUtils.showError("Error parsing property value");
+         throw new RuntimeException();
+      }
+   }
+   
 }

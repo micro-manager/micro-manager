@@ -46,6 +46,8 @@ public class CovariantPairing {
    public void addNewValuePairing() {
       //Independent can be float, int, or string
       //can have limits if float or int
+      //can have discrete values to choose from, or it can allow only some values 
+      //(such as strings that only accept certain values)
       //Get a valid independent value
       CovariantValue newPairingIndependentValue = null;
       if (independent_.isDiscrete()) {
@@ -62,9 +64,7 @@ public class CovariantPairing {
             return;
          }
       } else {
-         //independent is continuous
-         newPairingIndependentValue = independent_.hasLimits()
-                 ? independent_.getLowerLimit() : new CovariantValue(independent_.getType() == CovariantType.DOUBLE ? 0.0 : 0);
+         newPairingIndependentValue = independent_.getValidValue();
       }
       //get a valid dependent value       
       CovariantValue newPairingDependentValue = null;
@@ -72,13 +72,17 @@ public class CovariantPairing {
          //get valid value
          newPairingDependentValue = dependent_.getAllowedValues()[0];
       } else {
-         newPairingDependentValue = dependent_.hasLimits()
-                 ? dependent_.getLowerLimit() : new CovariantValue(independent_.getType() == CovariantType.DOUBLE ? 0.0 : 0);
+         newPairingDependentValue = dependent_.getValidValue();
       }
       //add pairing
       independentValues_.add(newPairingIndependentValue);
       valueMap_.put(newPairingIndependentValue, newPairingDependentValue);
       Collections.sort(independentValues_);
+   }
+   
+   public void deleteValuePair(int index) {
+      CovariantValue val = independentValues_.remove(index);
+      valueMap_.remove(val);
    }
    
    /**
@@ -110,6 +114,7 @@ public class CovariantPairing {
          //new independent, exisiting dependent 
          if (!independent_.isValid(value)) {
             ReportingUtils.showMessage("Invalid value");
+            throw new RuntimeException();
          }
          valueMap_.put(value, valueMap_.remove(independentValues_.get(rowIndex)));
          independentValues_.remove(rowIndex);
@@ -120,6 +125,7 @@ public class CovariantPairing {
          value.restrainWithinLimits(dependent_);
          if (!dependent_.isValid(value)) {
             ReportingUtils.showMessage("Invalid value");
+            throw new RuntimeException();
          }
          valueMap_.put(independentValues_.get(rowIndex), value);
          //no need to re sort, only dependent value changed

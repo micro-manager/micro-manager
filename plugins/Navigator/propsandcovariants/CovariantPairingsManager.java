@@ -64,10 +64,15 @@ public class CovariantPairingsManager {
          gui_.getActiveAcquisitionSettings().removePropPairing(pairs_.get(index));
       }
    }
+   
+   public void deleteValuePair(int pairingIndex, int valueIndex) {
+      pairs_.get(pairingIndex).deleteValuePair(valueIndex);
+   }
   
    public void addPair(CovariantPairing pair) {
       pairs_.add(pair);
       pairingsTableModel_.fireTableDataChanged();
+      gui_.selectNewCovariantPair();
    }
    
    public void deletePair(CovariantPairing pair) {
@@ -81,7 +86,7 @@ public class CovariantPairingsManager {
    }
 
    public CovariantPairing getPair(int index) {
-      return pairs_.get(index);
+      return index < pairs_.size() ? pairs_.get(index) : null;
    }
    
    public int getNumPairings() {
@@ -105,7 +110,7 @@ public class CovariantPairingsManager {
          fd.setVisible(true);
          if (fd.getFile() != null) {
             selectedFile = new File(fd.getDirectory() + File.separator + fd.getFile());
-            selectedFile = new File(selectedFile.getAbsolutePath() + ".txt");
+            selectedFile = new File(selectedFile.getAbsolutePath());
          }
          fd.dispose();
       } else {
@@ -160,10 +165,12 @@ public class CovariantPairingsManager {
          CovariantPairing pairing = new CovariantPairing(independent, dependent);
          for (int i = 1; i < lines.length; i++) {
             String[] vals = lines[i].split(",");
-            CovariantValue iVal = independent.getType() == CovariantType.STRING ? new CovariantValue(vals[0]) :
-                    new CovariantValue(independent.getType() == CovariantType.DOUBLE ? Double.parseDouble(vals[0]) : Integer.parseInt(vals[0]));
-             CovariantValue dVal = independent.getType() == CovariantType.STRING ? new CovariantValue(vals[1]) :
-                    new CovariantValue(independent.getType() == CovariantType.DOUBLE ? Double.parseDouble(vals[1]) : Integer.parseInt(vals[1]));           
+              CovariantValue iVal = independent.getType() == CovariantType.STRING ? new CovariantValue(vals[0]) :
+                    independent.getType() == CovariantType.DOUBLE ? new CovariantValue(Double.parseDouble(vals[0])) :
+                     new CovariantValue(Integer.parseInt(vals[0]));
+             CovariantValue dVal = dependent.getType() == CovariantType.STRING ? new CovariantValue(vals[1]) :
+                    dependent.getType() == CovariantType.DOUBLE ? new CovariantValue(Double.parseDouble(vals[1])) :
+                     new CovariantValue(Integer.parseInt(vals[1]));   
             pairing.addValuePair(iVal, dVal);
          }
          this.addPair(pairing);

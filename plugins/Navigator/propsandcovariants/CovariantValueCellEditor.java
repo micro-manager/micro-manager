@@ -1,6 +1,5 @@
 package propsandcovariants;
 
-import propsandcovariants.SinglePropertyOrGroup;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -10,16 +9,12 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.text.ParseException;
-
 import javax.swing.AbstractCellEditor;
 import javax.swing.JComboBox;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.table.TableCellEditor;
 import mmcloneclasses.utils.SliderPanel;
-import org.micromanager.utils.ReportingUtils;
-import propsandcovariants.DeviceControlTableModel;
 
 /**
  * Cell editing using either JTextField or JComboBox depending on whether the
@@ -130,6 +125,8 @@ public class CovariantValueCellEditor extends AbstractCellEditor implements Tabl
          return combo_;
       }
    }
+   
+   
 
    // This method is called when editing is completed.
    // It must return the new value to be stored in the cell.
@@ -144,5 +141,6 @@ public class CovariantValueCellEditor extends AbstractCellEditor implements Tabl
       } else {
          return combo_.getSelectedItem();
       }
+      
    }
 }

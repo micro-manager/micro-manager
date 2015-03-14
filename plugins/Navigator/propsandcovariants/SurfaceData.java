@@ -78,6 +78,11 @@ public class SurfaceData implements Covariant {
    public CovariantType getType() {
       return CovariantType.DOUBLE;
    }
+
+   @Override
+   public CovariantValue getValidValue() {
+      return new CovariantValue(0.0);
+   }
    
    
 }

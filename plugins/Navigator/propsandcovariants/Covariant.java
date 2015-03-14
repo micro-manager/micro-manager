@@ -27,5 +27,7 @@ public interface Covariant {
    public CovariantValue getUpperLimit();
    
    public CovariantType getType();
+
+   public CovariantValue getValidValue();
    
 }

@@ -7,6 +7,7 @@ import java.text.ParseException;
 
 import javax.swing.JLabel;
 import javax.swing.JTable;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import org.micromanager.utils.ReportingUtils;
 import org.micromanager.utils.SliderPanel;
@@ -29,7 +30,7 @@ public class CovariantValueCellRenderer implements TableCellRenderer {
 
       CovariantPairValuesTableModel data = (CovariantPairValuesTableModel) table.getModel();       
       Covariant cv = colIndex == 0 ?  data.getPairing().getIndependentCovariant() : data.getPairing().getDependentCovariant();
-
+      
       lab_.setOpaque(true);
       lab_.setHorizontalAlignment(JLabel.LEFT);
       Component comp;
@@ -55,11 +56,15 @@ public class CovariantValueCellRenderer implements TableCellRenderer {
 
 //      }
       
-//      if (pair_.readOnly) {
-//         comp.setBackground(Color.LIGHT_GRAY);
-//      } else {
+      if (rowIndex == table.getSelectedRow()) {
+         Component c = (new DefaultTableCellRenderer()).getTableCellRendererComponent(table, value, 
+                 true, hasFocus, rowIndex, colIndex);
+         comp.setForeground(c.getForeground());
+         comp.setBackground(c.getBackground());
+      } else {
          comp.setBackground(Color.WHITE);
-//      }
+         comp.setForeground(Color.black);
+      }
 
       } catch (Exception e) {
          System.out.println();

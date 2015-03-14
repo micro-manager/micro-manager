@@ -7,6 +7,7 @@
   </NonVisualComponents>
   <SyntheticProperties>
     <SyntheticProperty name="formSizePolicy" type="int" value="1"/>
+    <SyntheticProperty name="generateCenter" type="boolean" value="false"/>
   </SyntheticProperties>
   <AuxValues>
     <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="0"/>
@@ -885,7 +886,7 @@
                               <Component id="footprin2DLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="footprint2DComboBox_" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
-                          <EmptySpace pref="27" max="32767" attributes="0"/>
+                          <EmptySpace max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -1211,9 +1212,15 @@
                     <Property name="model" type="javax.swing.table.TableModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
                       <Connection code="cpvtModel" type="code"/>
                     </Property>
+                    <Property name="cellSelectionEnabled" type="boolean" value="true"/>
+                    <Property name="selectionModel" type="javax.swing.ListSelectionModel" editor="org.netbeans.modules.form.editors2.JTableSelectionModelEditor">
+                      <JTableSelectionModel selectionMode="1"/>
+                    </Property>
                   </Properties>
                   <AuxValues>
-                    <AuxValue name="JavaCodeGenerator_InitCodePre" type="java.lang.String" value="&#xd;&#xa;CovariantPairValuesTableModel cpvtModel = new CovariantPairValuesTableModel();&#xd;&#xa;covariantPairValuesTable_.setAutoCreateColumnsFromModel(false);&#xd;&#xa;covariantPairValuesTable_.addColumn(new TableColumn(0, 100, new CovariantValueCellRenderer(), new CovariantValueCellEditor()));&#xd;&#xa;covariantPairValuesTable_.addColumn(new TableColumn(1, 100, new CovariantValueCellRenderer(), new CovariantValueCellEditor()));&#xd;&#xa;covariantPairValuesTable_.setCellSelectionEnabled(false);&#xd;&#xa;&#xd;&#xa;"/>
+                    <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="covariantPairValuesTable_ = new javax.swing.JTable() {&#xa;@Override&#xa;        public void editingStopped(ChangeEvent e) {&#xa;            //allows selections to persist even though fireTableData changed called&#xa;            //after every edit to resort rows&#xa;            int row = covariantPairValuesTable_.getSelectedRow();&#xa;            super.editingStopped(e);&#xa;            if (row != -1) {&#xa;               covariantPairValuesTable_.setRowSelectionInterval(row, row);&#xa;            }&#xa;         }&#xa;}&#xa;"/>
+                    <AuxValue name="JavaCodeGenerator_InitCodePost" type="java.lang.String" value="covariantPairValuesTable_.setSelectionModel(new DefaultListSelectionModel () {&#xa;@Override&#xa;public void clearSelection() {&#xa;super.clearSelection();&#xa;}&#xa;});&#xa;"/>
+                    <AuxValue name="JavaCodeGenerator_InitCodePre" type="java.lang.String" value="&#xd;&#xa;CovariantPairValuesTableModel cpvtModel = new CovariantPairValuesTableModel();&#xd;&#xa;covariantPairValuesTable_.setAutoCreateColumnsFromModel(false);&#xd;&#xa;covariantPairValuesTable_.addColumn(new TableColumn(0, 100, new CovariantValueCellRenderer(), new CovariantValueCellEditor()));&#xd;&#xa;covariantPairValuesTable_.addColumn(new TableColumn(1, 100, new CovariantValueCellRenderer(), new CovariantValueCellEditor()));&#xd;&#xa;"/>
                   </AuxValues>
                 </Component>
               </SubComponents>
@@ -1278,6 +1285,9 @@
               <Properties>
                 <Property name="text" type="java.lang.String" value="Delete"/>
               </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="deleteCovariedPairingValueButton_ActionPerformed"/>
+              </Events>
             </Component>
           </SubComponents>
         </Container>
