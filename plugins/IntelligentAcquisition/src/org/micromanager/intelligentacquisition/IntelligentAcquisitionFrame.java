@@ -761,14 +761,13 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
 
             stop_.set(false);
             // take the active ImageJ image
-            ImagePlus siPlus = null;
+            ImagePlus siPlus;
             try {
                siPlus = IJ.getImage();
             } catch (Exception ex) {
                return;
             }
             MMWindow mw = new MMWindow(siPlus);
-
             
             ResultsTable outTable = new ResultsTable();
             String outTableName = Terms.RESULTTABLENAME;
@@ -786,17 +785,18 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
                   } catch (MMScriptException ms) {
                      ReportingUtils.showError(ms, "Error setting position in MMWindow");
                   }
+                  ij.IJ.run("Duplicate...", "title=" + p);
                   ij.IJ.runMacroFile(scriptFileName_);
                   ResultsTable res = ij.measure.ResultsTable.getResultsTable();
                   // get results out, stick them in new window that has listeners coupling to image window 
                   if (res.getCounter() > 0) {
+                     String[] headings = res.getHeadings();
                      for (int i = 0; i < res.getCounter(); i++) {
-                        double xPos = res.getValue(Terms.X, i);
-                        double yPos = res.getValue(Terms.Y, i);
                         outTable.incrementCounter();
                         outTable.addValue(Terms.POSITION, p);
-                        outTable.addValue(Terms.X, xPos);
-                        outTable.addValue(Terms.Y, yPos);
+                        for (String header : headings) {
+                           outTable.addValue(header, res.getValue(header, i));
+                        }
                      }
                   }
                   outTable.show(outTableName);

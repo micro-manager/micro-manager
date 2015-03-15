@@ -103,7 +103,6 @@ public class ResultsListener implements KeyListener, MouseListener{
          double y = (int) res_.getValue(Terms.Y, row);
 
          GeneralPath path = new GeneralPath();
-         path = new GeneralPath();
          drawCross(siPlus_, new Point2D.Double(x, y), path);
          siPlus_.setOverlay(path, Color.RED, new BasicStroke(1));
       }
@@ -118,13 +117,18 @@ public class ResultsListener implements KeyListener, MouseListener{
     * @param path - product of this function, i.e. use path to draw the symbol
     */
 	void drawCross(ImagePlus imp, Point2D.Double p, GeneralPath path) {
+      double es = 0.4;
       double x  = imp.getCalibration().getRawX(p.x);
       double y = imp.getCalibration().getRawY(p.y);
 		int width=imp.getWidth() / 20;
 		int height=imp.getHeight() / 20;
 		path.moveTo(x, y - height);
-		path.lineTo(x, y + height);
+		path.lineTo(x, y - es * height);
+      path.moveTo(x, y + es * height);
+      path.lineTo(x, y + height);
 		path.moveTo(x - width, y);
+      path.lineTo(x - es * width, y);
+      path.moveTo(x + es * width, y);
 		path.lineTo(x + width, y);	
 	}
    
