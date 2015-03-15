@@ -50,6 +50,7 @@ public class SingleResolutionInterpolation {
          }
       });
       convexHullVertices_.addAll(Arrays.asList(convexHullVertices));
+      allPoints_ = allPoints;
    }
    
    public int getPixelsPerInterpPoint() {
@@ -97,6 +98,7 @@ public class SingleResolutionInterpolation {
          int yIndex = (int) Math.round(((y - boundYMin_) / (boundYMax_ - boundYMin_)) * (numInterpPointsY - 1));
          return interpolation_[yIndex][xIndex];
       } catch (Exception e) {
+         e.printStackTrace();
          ReportingUtils.showError("Problem interpolating");
          return null;
       }

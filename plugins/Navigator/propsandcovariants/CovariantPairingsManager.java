@@ -80,6 +80,7 @@ public class CovariantPairingsManager {
       //now remove from the list of pairings
       pairs_.remove(pair);
       pairingsTableModel_.fireTableDataChanged();
+      
    }
 
    public CovariantPairing getPair(int index) {

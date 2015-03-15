@@ -10,6 +10,7 @@ import java.text.ParseException;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.LinkedList;
+import java.util.TreeMap;
 import org.apache.commons.math3.analysis.interpolation.LinearInterpolator;
 import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
 import org.micromanager.utils.NumberUtils;
@@ -23,7 +24,7 @@ public class CovariantPairing {
    //list of independent values--determines order of pairings
    LinkedList<CovariantValue> independentValues_ = new LinkedList<CovariantValue>();
    //map that stores dependent values
-   private IdentityHashMap<CovariantValue, CovariantValue> valueMap_ = new IdentityHashMap<CovariantValue, CovariantValue>();
+   private TreeMap<CovariantValue, CovariantValue> valueMap_ = new TreeMap<CovariantValue, CovariantValue>();
    private Covariant independent_, dependent_;
    //set of acquisitions for which this pairing has been explicitly marked as inactive
    private IdentityHashMap<Acquisition, Object> excludedAcqs_; //not actually a map, but theres no IdentityHashSet

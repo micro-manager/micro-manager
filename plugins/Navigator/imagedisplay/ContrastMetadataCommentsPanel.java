@@ -193,7 +193,7 @@ public class ContrastMetadataCommentsPanel extends Panel  {
          }
       });
 
-      jLabel2.setText("Per-image properties");
+      jLabel2.setText("Per-image metadata (from top left displayed tile)");
 
       javax.swing.GroupLayout imageMetadataScrollPaneLayout = new javax.swing.GroupLayout(imageMetadataScrollPane);
       imageMetadataScrollPane.setLayout(imageMetadataScrollPaneLayout);
@@ -233,7 +233,7 @@ public class ContrastMetadataCommentsPanel extends Panel  {
       summaryMetadataTable.setToolTipText("Metadata tags for the whole acquisition");
       summaryMetadataScrollPane.setViewportView(summaryMetadataTable);
 
-      jLabel3.setText("Acquisition properties");
+      jLabel3.setText("Acquisition metadata");
 
       javax.swing.GroupLayout summaryMetadataPanelLayout = new javax.swing.GroupLayout(summaryMetadataPanel);
       summaryMetadataPanel.setLayout(summaryMetadataPanelLayout);

@@ -82,7 +82,7 @@ public class GUI extends javax.swing.JFrame {
       //Demo mode 
       try {
          String s = ((MMStudio) mmAPI_).getSysConfigFile();
-         if (s.endsWith("NavDemo.cfg")) {
+         if (s.endsWith("NavDemo.cfg") ||s.endsWith("NavDemo16Bit.cfg") ) {
             SettingsDialog.setDemoMode(true);
          }
       } catch (Exception e) {
@@ -492,14 +492,12 @@ public class GUI extends javax.swing.JFrame {
         zStepSpinner_ = new javax.swing.JSpinner();
         jLabel4 = new javax.swing.JLabel();
         ChannelsTab_ = new javax.swing.JPanel();
-        channelsPanel_ = new javax.swing.JPanel();
-        channelsCheckBox_ = new javax.swing.JCheckBox();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
         newChannelButton_ = new javax.swing.JButton();
         removeChannelButton_ = new javax.swing.JButton();
-        jComboBox2 = new javax.swing.JComboBox();
         jLabel3 = new javax.swing.JLabel();
+        jComboBox2 = new javax.swing.JComboBox();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        channelsTable_ = new javax.swing.JTable();
         covariedSettingsTab_ = new javax.swing.JPanel();
         propertyPairValuesScrollpane_ = new javax.swing.JScrollPane();
         covariantPairValuesTable_ = covariantPairValuesTable_ = new javax.swing.JTable() {
@@ -1109,31 +1107,23 @@ public class GUI extends javax.swing.JFrame {
 
         acqTabbedPane_.addTab("Space", spaceTab_);
 
-        channelsPanel_.setBorder(javax.swing.BorderFactory.createTitledBorder(""));
-
-        channelsCheckBox_.setText("Channels");
-        channelsCheckBox_.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                channelsCheckBox_ActionPerformed(evt);
-            }
-        });
-
-        jTable1.setModel(new SimpleChannelTableModel());
-        jScrollPane1.setViewportView(jTable1);
-
-        newChannelButton_.setText("Add");
+        newChannelButton_.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
+        newChannelButton_.setText("+");
         newChannelButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 newChannelButton_ActionPerformed(evt);
             }
         });
 
-        removeChannelButton_.setText("Delete");
+        removeChannelButton_.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
+        removeChannelButton_.setText("-");
         removeChannelButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 removeChannelButton_ActionPerformed(evt);
             }
         });
+
+        jLabel3.setText("Channel group:");
 
         jComboBox2.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
         jComboBox2.addActionListener(new java.awt.event.ActionListener() {
@@ -1142,51 +1132,39 @@ public class GUI extends javax.swing.JFrame {
             }
         });
 
-        jLabel3.setText("Channel group:");
-
-        javax.swing.GroupLayout channelsPanel_Layout = new javax.swing.GroupLayout(channelsPanel_);
-        channelsPanel_.setLayout(channelsPanel_Layout);
-        channelsPanel_Layout.setHorizontalGroup(
-            channelsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(channelsPanel_Layout.createSequentialGroup()
-                .addGroup(channelsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(channelsPanel_Layout.createSequentialGroup()
-                        .addComponent(channelsCheckBox_)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(newChannelButton_)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(removeChannelButton_)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 292, Short.MAX_VALUE)
-                        .addComponent(jLabel3)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jComboBox2, javax.swing.GroupLayout.PREFERRED_SIZE, 107, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 780, Short.MAX_VALUE))
-                .addContainerGap())
-        );
-        channelsPanel_Layout.setVerticalGroup(
-            channelsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(channelsPanel_Layout.createSequentialGroup()
-                .addGroup(channelsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(channelsCheckBox_)
-                    .addComponent(newChannelButton_)
-                    .addComponent(removeChannelButton_)
-                    .addComponent(jComboBox2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel3))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 98, Short.MAX_VALUE))
-        );
+        channelsTable_.setModel(new SimpleChannelTableModel());
+        jScrollPane1.setViewportView(channelsTable_);
 
         javax.swing.GroupLayout ChannelsTab_Layout = new javax.swing.GroupLayout(ChannelsTab_);
         ChannelsTab_.setLayout(ChannelsTab_Layout);
         ChannelsTab_Layout.setHorizontalGroup(
             ChannelsTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(channelsPanel_, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(ChannelsTab_Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(ChannelsTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(ChannelsTab_Layout.createSequentialGroup()
+                        .addComponent(newChannelButton_)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(removeChannelButton_)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jLabel3)
+                        .addGap(18, 18, 18)
+                        .addComponent(jComboBox2, javax.swing.GroupLayout.PREFERRED_SIZE, 107, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 774, Short.MAX_VALUE))
+                .addContainerGap())
         );
         ChannelsTab_Layout.setVerticalGroup(
             ChannelsTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(ChannelsTab_Layout.createSequentialGroup()
-                .addComponent(channelsPanel_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 146, Short.MAX_VALUE))
+                .addContainerGap()
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 218, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(ChannelsTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jComboBox2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel3)
+                    .addComponent(newChannelButton_)
+                    .addComponent(removeChannelButton_))
+                .addGap(20, 20, 20))
         );
 
         acqTabbedPane_.addTab("Channels", ChannelsTab_);
@@ -1206,14 +1184,16 @@ public class GUI extends javax.swing.JFrame {
         });
         propertyPairValuesScrollpane_.setViewportView(covariantPairValuesTable_);
 
-        newParingButton_.setText("Add");
+        newParingButton_.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
+        newParingButton_.setText("+");
         newParingButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 newParingButton_ActionPerformed(evt);
             }
         });
 
-        removePairingButton.setText("Delete");
+        removePairingButton.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
+        removePairingButton.setText("-");
         removePairingButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 removePairingButtonActionPerformed(evt);
@@ -1237,14 +1217,16 @@ public class GUI extends javax.swing.JFrame {
             }
         });
 
-        addCovariedPairingValueButton_.setText("Add");
+        addCovariedPairingValueButton_.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
+        addCovariedPairingValueButton_.setText("+");
         addCovariedPairingValueButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 addCovariedPairingValueButton_ActionPerformed(evt);
             }
         });
 
-        deleteCovariedPairingValueButton_.setText("Delete");
+        deleteCovariedPairingValueButton_.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
+        deleteCovariedPairingValueButton_.setText("-");
         deleteCovariedPairingValueButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 deleteCovariedPairingValueButton_ActionPerformed(evt);
@@ -1283,9 +1265,9 @@ public class GUI extends javax.swing.JFrame {
                         .addComponent(loadPairingsButton_)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(addCovariedPairingValueButton_)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(deleteCovariedPairingValueButton_)
-                        .addGap(148, 148, 148))
+                        .addGap(185, 185, 185))
                     .addGroup(covariedSettingsTab_Layout.createSequentialGroup()
                         .addGap(8, 8, 8)
                         .addGroup(covariedSettingsTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1303,14 +1285,14 @@ public class GUI extends javax.swing.JFrame {
                 .addGroup(covariedSettingsTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(propertyPairingsScrollpane_, javax.swing.GroupLayout.DEFAULT_SIZE, 196, Short.MAX_VALUE)
                     .addComponent(propertyPairValuesScrollpane_, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+                .addGap(18, 18, 18)
                 .addGroup(covariedSettingsTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(covariedSettingsTab_Layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, 26, Short.MAX_VALUE)
+                        .addGap(0, 8, Short.MAX_VALUE)
                         .addGroup(covariedSettingsTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(savePairingsButton_)
                             .addComponent(loadPairingsButton_)))
                     .addGroup(covariedSettingsTab_Layout.createSequentialGroup()
-                        .addGap(18, 18, 18)
                         .addGroup(covariedSettingsTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(covariedSettingsTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                 .addComponent(newParingButton_)
@@ -1403,7 +1385,7 @@ public class GUI extends javax.swing.JFrame {
                 .addComponent(customPropsScrollPane_, javax.swing.GroupLayout.PREFERRED_SIZE, 195, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(configPropsButton_)
-                .addContainerGap(20, Short.MAX_VALUE))
+                .addContainerGap(23, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Device status/control", controlPanelName_);
@@ -1412,14 +1394,16 @@ public class GUI extends javax.swing.JFrame {
         multipleAcqTable_.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         multipleAcqScrollPane_.setViewportView(multipleAcqTable_);
 
-        addAcqButton_.setText("Add");
+        addAcqButton_.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
+        addAcqButton_.setText("+");
         addAcqButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 addAcqButton_ActionPerformed(evt);
             }
         });
 
-        removeAcqButton_.setText("Delete");
+        removeAcqButton_.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
+        removeAcqButton_.setText("-");
         removeAcqButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 removeAcqButton_ActionPerformed(evt);
@@ -1478,9 +1462,9 @@ public class GUI extends javax.swing.JFrame {
                 .addComponent(intereaveButton_)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(deinterleaveButton_)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(runMultipleAcquisitionsButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 132, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(58, 58, 58))
+                .addGap(58, 58, 58)
+                .addComponent(runMultipleAcquisitionsButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1509,7 +1493,7 @@ public class GUI extends javax.swing.JFrame {
             multipleAcquisitionsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, multipleAcquisitionsPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(multipleAcqScrollPane_, javax.swing.GroupLayout.DEFAULT_SIZE, 193, Short.MAX_VALUE)
+                .addComponent(multipleAcqScrollPane_, javax.swing.GroupLayout.DEFAULT_SIZE, 196, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
@@ -1520,7 +1504,8 @@ public class GUI extends javax.swing.JFrame {
         gridTable_.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         jScrollPane2.setViewportView(gridTable_);
 
-        deleteSelectedRegionButton_.setText("Delete");
+        deleteSelectedRegionButton_.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
+        deleteSelectedRegionButton_.setText("-");
         deleteSelectedRegionButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 deleteSelectedRegionButton_ActionPerformed(evt);
@@ -1542,15 +1527,15 @@ public class GUI extends javax.swing.JFrame {
             .addGroup(gridsPanel_Layout.createSequentialGroup()
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(deleteSelectedRegionButton_)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGap(41, 41, 41)
                 .addComponent(deleteAllRegionsButton_)
-                .addGap(284, 284, 284))
+                .addGap(333, 333, 333))
         );
         gridsPanel_Layout.setVerticalGroup(
             gridsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(gridsPanel_Layout.createSequentialGroup()
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 215, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 213, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(gridsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(deleteSelectedRegionButton_)
                     .addComponent(deleteAllRegionsButton_)))
@@ -1558,7 +1543,8 @@ public class GUI extends javax.swing.JFrame {
 
         jTabbedPane1.addTab("Grids", gridsPanel_);
 
-        deleteSelectedSurfaceButton_.setText("Delete");
+        deleteSelectedSurfaceButton_.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
+        deleteSelectedSurfaceButton_.setText("-");
         deleteSelectedSurfaceButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 deleteSelectedSurfaceButton_ActionPerformed(evt);
@@ -1583,16 +1569,16 @@ public class GUI extends javax.swing.JFrame {
             .addGroup(surfacesPanel_Layout.createSequentialGroup()
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(deleteSelectedSurfaceButton_)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(42, 42, 42)
                 .addComponent(deleteAllSurfacesButton_)
-                .addGap(275, 275, 275))
+                .addGap(325, 325, 325))
             .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 796, Short.MAX_VALUE)
         );
         surfacesPanel_Layout.setVerticalGroup(
             surfacesPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(surfacesPanel_Layout.createSequentialGroup()
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 199, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 207, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(surfacesPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(deleteAllSurfacesButton_)
                     .addComponent(deleteSelectedSurfaceButton_))
@@ -1768,10 +1754,6 @@ public class GUI extends javax.swing.JFrame {
    private void newChannelButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newChannelButton_ActionPerformed
       storeCurrentAcqSettings();
    }//GEN-LAST:event_newChannelButton_ActionPerformed
-
-   private void channelsCheckBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_channelsCheckBox_ActionPerformed
-      storeCurrentAcqSettings();
-   }//GEN-LAST:event_channelsCheckBox_ActionPerformed
 
    private void zStepSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_zStepSpinner_StateChanged
       storeCurrentAcqSettings();
@@ -2010,6 +1992,8 @@ public class GUI extends javax.swing.JFrame {
    private void deleteCovariedPairingValueButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteCovariedPairingValueButton_ActionPerformed
       int selectedRow = covariantPairValuesTable_.getSelectedRow();
       if (selectedRow != -1) {
+         //finish editing so editor doesn't refer to a deleted row index
+         covariantPairValuesTable_.editingStopped(null);
          covariantPairManager_.deleteValuePair(covariantPairingsTable_.getSelectedRow(), selectedRow);
          ((CovariantPairValuesTableModel) covariantPairValuesTable_.getModel()).fireTableDataChanged();
          //re add selection for quick serial deleting
@@ -2036,8 +2020,7 @@ public class GUI extends javax.swing.JFrame {
     private javax.swing.JLabel bottomSurfaceLabel_;
     private javax.swing.JButton browseButton_;
     private javax.swing.JLabel channelGroupLabel_;
-    private javax.swing.JCheckBox channelsCheckBox_;
-    private javax.swing.JPanel channelsPanel_;
+    private javax.swing.JTable channelsTable_;
     private javax.swing.JCheckBox checkBox2D_;
     private javax.swing.JCheckBox checkBox3D_;
     private javax.swing.JButton configPropsButton_;
@@ -2088,7 +2071,6 @@ public class GUI extends javax.swing.JFrame {
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JTabbedPane jTabbedPane1;
-    private javax.swing.JTable jTable1;
     private javax.swing.JButton loadPairingsButton_;
     private javax.swing.JButton moveAcqDownButton_;
     private javax.swing.JButton moveAcqUpButton_;

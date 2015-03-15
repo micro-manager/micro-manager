@@ -164,9 +164,15 @@ public class CustomAcqEngine {
 
             //substitute in dummy pixel data for demo mode
             if (SettingsDialog.getDemoMode()) {
-               byte[] demoPix = DemoModeImageData.getPixelData(c, (int) event.xPosition_, (int) event.yPosition_,
-                       (int) event.zPosition_, MDUtils.getWidth(img.tags), MDUtils.getHeight(img.tags));
-               img = new TaggedImage(demoPix, img.tags);
+               Object demoPix;
+               if (core_.getBytesPerPixel() == 1) {
+                  demoPix = DemoModeImageData.getBytePixelData(c, (int) event.xPosition_, (int) event.yPosition_,
+                          (int) event.zPosition_, MDUtils.getWidth(img.tags), MDUtils.getHeight(img.tags));
+               } else {
+                  demoPix = DemoModeImageData.getShortPixelData(c, (int) event.xPosition_, (int) event.yPosition_,
+                          (int) event.zPosition_, MDUtils.getWidth(img.tags), MDUtils.getHeight(img.tags));
+               
+               }img = new TaggedImage(demoPix, img.tags);
             }
             //add metadata
             addImageMetadata(img, event, numCamChannels, c, currentTime - event.acquisition_.getStartTime_ms());
@@ -284,11 +290,11 @@ public class CustomAcqEngine {
             r.run();
             return;
          } catch (Exception e) {
-            IJ.showMessage(getCurrentDateAndTime() + ": Problem "+commandName+ "\n Retry #" + i + " in " + DELWAY_BETWEEN_RETRIES_MS + " ms");
+            IJ.log(getCurrentDateAndTime() + ": Problem "+commandName+ "\n Retry #" + i + " in " + DELWAY_BETWEEN_RETRIES_MS + " ms");
             Thread.sleep(DELWAY_BETWEEN_RETRIES_MS);
          }
       }
-      IJ.showMessage("Couldn't successfully " + commandName);
+      IJ.log("Couldn't successfully " + commandName);
    }
 
    private String getCurrentDateAndTime() {
@@ -333,8 +339,8 @@ public class CustomAcqEngine {
          summary.put("Frames", 1);
          summary.put("SlicesFirst", true);
          summary.put("TimeFirst", false);
-         summary.put("PixelType", "GRAY8");
-         summary.put("BitDepth", 8);
+         summary.put("PixelType", core.getBytesPerPixel() == 1 ? "GRAY8" : "GRAY16");
+         summary.put("BitDepth", core.getImageBitDepth());
          summary.put("Width", core.getImageWidth());
          summary.put("Height", core.getImageHeight());
          summary.put("Prefix", prefix);
@@ -354,7 +360,8 @@ public class CustomAcqEngine {
          summary.put("GridPixelOverlapY", SettingsDialog.getOverlapY());
          summary.put("NavigatorExploreAcquisition", acq instanceof ExploreAcquisition);
 
-
+         
+         //TODO: make this legit
          JSONArray chNames = new JSONArray();
          JSONArray chColors = new JSONArray();
          for (int i = 0; i < numChannels; i++) {

@@ -252,7 +252,11 @@ public class SinglePropertyOrGroup implements Covariant{
    public CovariantValue[] getAllowedValues() {
       CovariantValue[] vals = new CovariantValue[allowed.length];
       for (int i = 0; i < allowed.length; i++) {
-         vals[i] = convertValueToCovariantValue(allowed[i]);
+         if (isGroup()) {
+            vals[i] = new CovariantValue(allowed[i]);
+         } else {
+            vals[i] = convertValueToCovariantValue(allowed[i]);
+         }
       }
       return vals;
    }
