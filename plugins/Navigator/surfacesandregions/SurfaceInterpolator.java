@@ -42,10 +42,12 @@ public abstract class SurfaceInterpolator implements XYFootprint {
    public static final int NUM_XY_TEST_POINTS = 8;
    
    private String name_;
+   //surface coordinates are neccessarily associated with the coordinate space of particular xy and z devices
+   private String xyDeviceName_, zDeviceName_;
    private TreeSet<Point3d> points_;
    private MonotoneChain mChain_;
    private RegionFactory<Euclidean2D> regionFacotry_ = new RegionFactory<Euclidean2D>();
-   private volatile Vector2D[] convexHullVertices_;
+   protected volatile Vector2D[] convexHullVertices_;
    protected Region<Euclidean2D> convexHullRegion_;
    private int numRows_, numCols_;
    private volatile ArrayList<XYStagePosition> xyPositions_;
@@ -58,8 +60,10 @@ public abstract class SurfaceInterpolator implements XYFootprint {
    private Future currentInterpolationTask_;
    private String pixelSizeConfig_;
    
-   public SurfaceInterpolator(SurfaceManager manager) {
+   public SurfaceInterpolator(SurfaceManager manager, String xyDevice, String zDevice) {
       name_ = manager.getNewName();
+      xyDeviceName_ = xyDevice;
+      zDeviceName_ = zDevice;
       manager_ = manager;
       try {
          pixelSizeConfig_ = MMStudio.getInstance().getCore().getCurrentPixelSizeConfig();
@@ -98,6 +102,10 @@ public abstract class SurfaceInterpolator implements XYFootprint {
             return new Thread(r, "Interpolation calculation thread ");
          }
       });      
+   }
+   
+   public String getPixelSizeConfig() {
+      return pixelSizeConfig_;
    }
    
    public void shutdown() {
@@ -209,7 +217,7 @@ public abstract class SurfaceInterpolator implements XYFootprint {
       Point2D.Double[] corners = getPositionCornersWithPadding(pos);
       //First check position corners before going into a more detailed set of test points
       for (Point2D.Double point : corners) {
-         Float interpVal = interp.getInterpolatedValue(point.x, point.y);
+         Float interpVal = interp.getInterpolatedValue(point.x, point.y, false);
          if (interpVal == null) {
             continue;
          }
@@ -249,7 +257,7 @@ public abstract class SurfaceInterpolator implements XYFootprint {
             Point2D.Double stageCoords = new Point2D.Double();
             transform.transform(new Point2D.Double(x, y), stageCoords);
             //test point for inclusion of position
-            Float interpVal = interp.getInterpolatedValue(stageCoords.x, stageCoords.y);
+            Float interpVal = interp.getInterpolatedValue(stageCoords.x, stageCoords.y, false);
             if (interpVal == null) {
                continue;
             }
@@ -294,11 +302,11 @@ public abstract class SurfaceInterpolator implements XYFootprint {
    
    private Point2D.Double[] getPositionCornersWithPadding(XYStagePosition pos) {
       if (xyPadding_um_ == 0) {
-         return pos.getCorners();
+         return pos.getDisplayedTileCorners();
       } else {
          //expand to bigger square to acount for padding
          //make two lines that criss cross the smaller square
-         Point2D.Double[] corners = pos.getCorners();
+         Point2D.Double[] corners = pos.getDisplayedTileCorners();
          double diagonalLength = new Vector2D(corners[0].x, corners[0].y).distance(new Vector2D(corners[2].x, corners[2].y));
          Vector2D center = new Vector2D(pos.getCenter().x, pos.getCenter().y);
          Point2D.Double[] paddedCorners = new Point2D.Double[4];
@@ -321,7 +329,7 @@ public abstract class SurfaceInterpolator implements XYFootprint {
     */
    private Region<Euclidean2D> getStagePositionRegion(XYStagePosition pos) {
        Region<Euclidean2D> square;
-       Point2D.Double[] corners = pos.getCorners();
+       Point2D.Double[] corners = pos.getDisplayedTileCorners();
       if (xyPadding_um_ == 0) {
          square = new PolygonsSet(0.0001, new Vector2D[]{
                     new Vector2D(corners[0].x, corners[0].y),
@@ -378,12 +386,13 @@ public abstract class SurfaceInterpolator implements XYFootprint {
    protected abstract void interpolateSurface(LinkedList<Point3d> points);
 
    private void fitXYPositionsToConvexHull() throws InterruptedException {
-      
-      int tileWidth = (int) MMStudio.getInstance().getCore().getImageWidth() - SettingsDialog.getOverlapX();
-      int tileHeight = (int) MMStudio.getInstance().getCore().getImageHeight() - SettingsDialog.getOverlapY();
+      int fullTileWidth = (int) MMStudio.getInstance().getCore().getImageWidth();
+      int fullTileHeight = (int) MMStudio.getInstance().getCore().getImageHeight();
+      int tileWidthMinusOverlap = fullTileWidth - SettingsDialog.getOverlapX();
+      int tileHeightMinusOverlap =  fullTileHeight - SettingsDialog.getOverlapY();
       int pixelPadding = (int) (xyPadding_um_ / MMStudio.getInstance().getCore().getPixelSizeUm());
-      numRows_ = (int) Math.ceil( (boundYPixelMax_ - boundYPixelMin_ + pixelPadding) / (double) tileHeight );
-      numCols_ = (int) Math.ceil( (boundXPixelMax_ - boundXPixelMin_ + pixelPadding) / (double) tileWidth );    
+      numRows_ = (int) Math.ceil( (boundYPixelMax_ - boundYPixelMin_ + pixelPadding) / (double) tileHeightMinusOverlap );
+      numCols_ = (int) Math.ceil( (boundXPixelMax_ - boundXPixelMin_ + pixelPadding) / (double) tileWidthMinusOverlap );    
       
       //take center of bounding box and create grid
       int pixelCenterX = boundXPixelMin_ + (boundXPixelMax_ - boundXPixelMin_) / 2;
@@ -404,13 +413,14 @@ public abstract class SurfaceInterpolator implements XYFootprint {
       transform = new AffineTransform(transformMaxtrix);
       //add all positions of rectangle around convex hull
       for (int col = 0; col < numCols_; col++) {
-         double xPixelOffset = (col - (numCols_ - 1) / 2.0) * (tileWidth);
+         double xPixelOffset = (col - (numCols_ - 1) / 2.0) * (tileWidthMinusOverlap);
          for (int row = 0; row < numRows_; row++) {
-            double yPixelOffset = (row - (numRows_ - 1) / 2.0) * (tileHeight);
+            double yPixelOffset = (row - (numRows_ - 1) / 2.0) * (tileHeightMinusOverlap);
             Point2D.Double pixelPos = new Point2D.Double(xPixelOffset, yPixelOffset);
             Point2D.Double stagePos = new Point2D.Double();
             transform.transform(pixelPos, stagePos);
-            positions.add(new XYStagePosition(stagePos, tileWidth, tileHeight, row, col,pixelSizeConfig_));
+            positions.add(new XYStagePosition(stagePos, tileWidthMinusOverlap, tileHeightMinusOverlap,
+                    fullTileWidth, fullTileHeight, row, col,pixelSizeConfig_));
             if (Thread.interrupted()) {
                throw new InterruptedException();
             }
@@ -531,13 +541,14 @@ public abstract class SurfaceInterpolator implements XYFootprint {
    }
 
    /**
-    * return list of stats relevant to this surface
+    * return list of surface Data.
     * @return 
     */
-   Collection<SurfaceData> getStats() {
+   Collection<SurfaceData> getData() {
       ArrayList<SurfaceData> list = new ArrayList<SurfaceData>();
-      
-      
+      for (String datumName : SurfaceData.enumerateDataTypes()) {
+         list.add(new SurfaceData(this, datumName));
+      }
       return list;
    }
    

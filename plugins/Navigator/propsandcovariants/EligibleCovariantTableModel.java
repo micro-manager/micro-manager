@@ -15,12 +15,12 @@ import surfacesandregions.SurfaceManager;
 public class EligibleCovariantTableModel extends AbstractTableModel {
 
    private ArrayList<SinglePropertyOrGroup> propsAndGroups_;
-   private ArrayList<SurfaceData> surfaceStats_;
+   private ArrayList<SurfaceData> surfaceData_;
    private boolean independent_;
    
    public EligibleCovariantTableModel(boolean includeStats) {
       propsAndGroups_ = PropertyAndGroupUtils.readConfigGroupsAndProperties(includeStats);
-      surfaceStats_ = includeStats ? SurfaceManager.getInstance().getSurfaceStats() : new ArrayList<SurfaceData>();
+      surfaceData_ = includeStats ? SurfaceManager.getInstance().getSurfaceData() : new ArrayList<SurfaceData>();
       independent_ = includeStats;
    }
 
@@ -31,7 +31,7 @@ public class EligibleCovariantTableModel extends AbstractTableModel {
 
    @Override
    public int getRowCount() {
-      return surfaceStats_.size() + propsAndGroups_.size();
+      return surfaceData_.size() + propsAndGroups_.size();
    }
 
    @Override
@@ -46,10 +46,10 @@ public class EligibleCovariantTableModel extends AbstractTableModel {
    
    @Override
    public Object getValueAt(int rowIndex, int columnIndex) {
-      if (rowIndex < surfaceStats_.size()) {
-         return surfaceStats_.get(rowIndex);
+      if (rowIndex < surfaceData_.size()) {
+         return surfaceData_.get(rowIndex);
       }
-      return propsAndGroups_.get(rowIndex - surfaceStats_.size());
+      return propsAndGroups_.get(rowIndex - surfaceData_.size());
    }
    
    

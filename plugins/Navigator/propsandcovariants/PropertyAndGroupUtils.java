@@ -110,7 +110,6 @@ public class PropertyAndGroupUtils {
                SinglePropertyOrGroup item = new SinglePropertyOrGroup();
                item.readFromCore(devices.get(i), properties.get(j), false);
                if (!item.preInit && (!item.readOnly || includeReadOnly) ) {
-                  item.setValueFromCoreString(core.getProperty(devices.get(i), properties.get(j)));
                   props.add(item);
                }
             }

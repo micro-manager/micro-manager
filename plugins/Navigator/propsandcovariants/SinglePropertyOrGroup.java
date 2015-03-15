@@ -1,8 +1,12 @@
 package propsandcovariants;
 
+import acq.AcquisitionEvent;
 import java.text.ParseException;
 import propsandcovariants.Covariant;
 import java.util.Arrays;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
@@ -48,34 +52,35 @@ public class SinglePropertyOrGroup implements Covariant{
       return getName();
    }
   
-   public void setValueFromCoreString(String coreValue) {
+   private String setValueFromCoreString(String coreValue) {
 	   try {
 		   if (isInteger())
-			   value = NumberUtils.intStringCoreToDisplay(coreValue);
+			   return NumberUtils.intStringCoreToDisplay(coreValue);
 		   else if (isFloat())
-			   value = NumberUtils.doubleStringCoreToDisplay(coreValue);
+			   return NumberUtils.doubleStringCoreToDisplay(coreValue);
 		   else
-			   value = coreValue;
+			   return coreValue;
 	   } catch (Exception e) {
          ReportingUtils.logError(e);
-		   value = coreValue;
+		   return coreValue;
 	   }
    }
    
-   public String getValueInCoreFormat() {
-	   try {
-	   if (isInteger())
-		   return NumberUtils.intStringDisplayToCore(value);
-	   else if (isFloat())
-		   return NumberUtils.doubleStringDisplayToCore(value);
-	   else
-		   return value;
-	   } catch (Exception e) {
-           ReportingUtils.logError(e);
-		   return value;
-	   }
+   private String getValueInCoreFormat(String val) {
+      try {
+         if (isInteger()) {
+            return NumberUtils.intStringDisplayToCore(val);
+         } else if (isFloat()) {
+            return NumberUtils.doubleStringDisplayToCore(val);
+         } else {
+            return val;
+         }
+      } catch (Exception e) {
+         ReportingUtils.logError(e);
+         return null;
+      }
    }
-   
+
    public void readGroupValuesFromConfig(String groupName) {
       CMMCore core = MMStudio.getInstance().getCore();
       name = groupName;
@@ -98,21 +103,22 @@ public class SinglePropertyOrGroup implements Covariant{
          StrVector values = core.getAllowedPropertyValues(deviceName, propertyName);
          allowed = new String[(int) values.size()];
          for (int k = 0; k < values.size(); k++) {
-            allowed[k] = values.get(k);
+            allowed[k] = setValueFromCoreString(values.get(k));
          }
 
          sort();
 
          String coreVal;
-         if (cached)
-            coreVal = core.getPropertyFromCache(deviceName,propertyName);
-         else
-            coreVal = core.getProperty(deviceName,propertyName);
-         setValueFromCoreString(coreVal);
- 		 } catch (Exception e) {
-			ReportingUtils.logError(e);
-		 }
-	}
+         if (cached) {
+            coreVal = core.getPropertyFromCache(deviceName, propertyName);
+         } else {
+            coreVal = core.getProperty(deviceName, propertyName);
+         }
+         value = setValueFromCoreString(coreVal);
+      } catch (Exception e) {
+         ReportingUtils.logError(e);
+      }
+   }
 
    public void sort() {
       try {
@@ -167,6 +173,24 @@ public class SinglePropertyOrGroup implements Covariant{
    public boolean isUndefined() {
 	   return type == PropertyType.Undef;
    }
+   
+   private CovariantValue convertValueToCovariantValue(String val) {
+     try {
+      //only valid for props, not groups
+      if (isGroup()) {
+         throw new RuntimeException();
+      } else if (isInteger()) {
+         return new CovariantValue(NumberUtils.displayStringToInt(val));
+      } else if (isFloat()) {
+         return new CovariantValue(NumberUtils.displayStringToDouble(val));
+      } else {
+         return new CovariantValue(val);
+      }
+     } catch (ParseException e ) {
+        ReportingUtils.showError("Problem parsing property value");
+        throw new RuntimeException();
+     }
+   }
 
    /////////////////////////////////////////////////////////////////////////
    //////////////////Covariant interface methods////////////////////////////
@@ -175,6 +199,15 @@ public class SinglePropertyOrGroup implements Covariant{
    public String getName() {
       if (isGroup()) {
          return GROUP_PREFIX + name;
+      } else {
+         return device + "-" + name;
+      }
+   }
+   
+   @Override
+   public String getAbbreviatedName() {
+      if (isGroup()) {
+         return name;
       } else {
          return device + "-" + name;
       }
@@ -217,23 +250,11 @@ public class SinglePropertyOrGroup implements Covariant{
 
    @Override
    public CovariantValue[] getAllowedValues() {
-      try {
-         CovariantValue[] vals = new CovariantValue[allowed.length];
-         for (int i = 0; i < allowed.length; i++) {
-            if (isInteger()) {
-               vals[i] = new CovariantValue( NumberUtils.coreStringToInt(allowed[i]));
-            } else if (isFloat()) {
-               vals[i] = new CovariantValue( NumberUtils.coreStringToDouble(allowed[i]));
-            } else {
-               vals[i] = new CovariantValue(allowed[i]);
-            }
-            
-         }
-         return vals;
-      } catch (ParseException e) {
-         ReportingUtils.showError("Couldn't parse property value");
-         throw new RuntimeException();
+      CovariantValue[] vals = new CovariantValue[allowed.length];
+      for (int i = 0; i < allowed.length; i++) {
+         vals[i] = convertValueToCovariantValue(allowed[i]);
       }
+      return vals;
    }
 
    @Override
@@ -268,21 +289,78 @@ public class SinglePropertyOrGroup implements Covariant{
    }
 
    @Override
-   public CovariantValue getValidValue() {
-      try {
-         if (isGroup()) {
-            return new CovariantValue(allowed[0]);
-         } else if (isInteger()) {
-            return new CovariantValue(NumberUtils.displayStringToInt(value));
-         } else if (isFloat()) {                
-            return new CovariantValue(NumberUtils.displayStringToDouble(value));
+   public CovariantValue getValidValue(List<CovariantValue> values) {
+      //this function is called in non discrete cases (so don't worry about groups)
+      if (values == null) {
+         //no values already taken so just return the one we have
+         return convertValueToCovariantValue(value);         
+      } else {
+         //return a valid value thats not already in the list
+         if (isInteger()) {
+            int intVal = (int) lowerLimit;
+            while (true) {
+               if (!values.contains(new CovariantValue(intVal))) {
+                  return new CovariantValue(intVal);
+               }
+               intVal++;
+               if (hasRange && intVal > upperLimit) {
+                  return null; //all values taken
+               }
+            }            
+         } else if (isFloat()) {
+            double dVal = (int) lowerLimit;
+            while (true) {
+               if (!values.contains(new CovariantValue(dVal))) {
+                  return new CovariantValue(dVal);
+               }
+               dVal++;
+               if (hasRange && dVal > upperLimit) {
+                  //all int values taken, just try random shit until one works
+                  dVal = Math.random();
+                  if (!values.contains(new CovariantValue(dVal))) {
+                     return new CovariantValue(dVal);
+                  }
+               }
+            }
          } else {
-            return new CovariantValue(value);
+            //its some String property without allowed values
+            String base = "Independent value";
+            int i = 0;
+            while (true) {
+               String val = base + "_" + i;
+               if (!values.contains(new CovariantValue(val))) {
+                  return new CovariantValue(val);
+               }
+               i++;
+            }
+         }         
+      }
+   }
+
+   @Override
+   public CovariantValue getCurrentValue(AcquisitionEvent evt) {
+      try {
+         CMMCore core = MMStudio.getInstance().getCore();
+         if (isGroup()) {
+            return new CovariantValue(core.getCurrentConfig(name));
          }
-      } catch (ParseException e) {
-         ReportingUtils.showError("Error parsing property value");
+         String coreVal;
+         coreVal = core.getProperty(device, name);
+         return convertValueToCovariantValue(coreVal);
+      } catch (Exception ex) {
+         ReportingUtils.showError("Couldn't get " + name + " from core");
          throw new RuntimeException();
       }
    }
-   
+
+   @Override
+   public void updateHardwareToValue(CovariantValue dVal) throws Exception {
+      CMMCore core = MMStudio.getInstance().getCore();
+      if (isGroup()) {
+         core.setConfig(name, dVal.stringValue());
+      } else {
+         core.setProperty(device, name, getValueInCoreFormat(dVal.toString()));     
+      }
+   }
+
 }

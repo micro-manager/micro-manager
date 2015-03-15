@@ -80,16 +80,19 @@ public class MultiPosRegion implements XYFootprint{
       try {
          AffineTransform transform = AffineUtils.getAffineTransform(MMStudio.getInstance().getCore().getCurrentPixelSizeConfig(), center_.x, center_.y);
          ArrayList<XYStagePosition> positions = new ArrayList<XYStagePosition>();
-         int tileWidth = (int) MMStudio.getInstance().getCore().getImageWidth() - SettingsDialog.getOverlapX();
-         int tileHeight = (int) MMStudio.getInstance().getCore().getImageHeight() - SettingsDialog.getOverlapY();
+         int fullTileWidth = (int) MMStudio.getInstance().getCore().getImageWidth();
+         int fullTileHeight = (int) MMStudio.getInstance().getCore().getImageHeight();
+         int tileWidthMinusOverlap = fullTileWidth - SettingsDialog.getOverlapX();
+         int tileHeightMinusOverlap = fullTileHeight - SettingsDialog.getOverlapY();
          for (int col = 0; col < cols_; col++) {
-            double xPixelOffset = (col - (cols_ - 1) / 2.0) * tileWidth;
+            double xPixelOffset = (col - (cols_ - 1) / 2.0) * tileWidthMinusOverlap;
             for (int row = 0; row < rows_; row++) {
-               double yPixelOffset = (row - (rows_ - 1) / 2.0) * tileHeight;
+               double yPixelOffset = (row - (rows_ - 1) / 2.0) * tileHeightMinusOverlap;
                Point2D.Double pixelPos = new Point2D.Double(xPixelOffset, yPixelOffset);
                Point2D.Double stagePos = new Point2D.Double();
                transform.transform(pixelPos, stagePos);
-               positions.add(new XYStagePosition(stagePos, tileWidth, tileHeight, row, col, pixelSizeConfig_));
+               positions.add(new XYStagePosition(stagePos, tileWidthMinusOverlap, tileHeightMinusOverlap,
+                       fullTileWidth, fullTileHeight, row, col, pixelSizeConfig_));
             }
          }
          return positions;

@@ -327,7 +327,7 @@ public class DisplayOverlayer {
       for (int x = 0; x < numTestPointsX; x++) {
          for (int y = 0; y < numTestPointsY; y++) {
             Point2D.Double stageCoord = display_.stageCoordFromImageCoords((int) ((x + 0.5) * roiWidth), (int) ((y + 0.5) * roiHeight));
-            Float interpZ = interp.getInterpolatedValue(stageCoord.x, stageCoord.y);
+            Float interpZ = interp.getInterpolatedValue(stageCoord.x, stageCoord.y, false);
             if (interpZ == null) {
                continue;
             }
@@ -363,7 +363,7 @@ public class DisplayOverlayer {
             return; //interpolation isn't detailed enough yet
          }
          for (XYStagePosition pos : positionsAtSlice) {
-            Point2D.Double[] corners = pos.getCorners();
+            Point2D.Double[] corners = pos.getDisplayedTileCorners();
             Point corner1 = display_.imageCoordsFromStageCoords(corners[0].x, corners[0].y);
             Point corner2 = display_.imageCoordsFromStageCoords(corners[1].x, corners[1].y);
             Point corner3 = display_.imageCoordsFromStageCoords(corners[2].x, corners[2].y);

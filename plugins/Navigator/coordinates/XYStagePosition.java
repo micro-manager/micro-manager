@@ -20,23 +20,36 @@ public class XYStagePosition {
    
    private final String label_;
    private Point2D.Double center_;
-   private Point2D.Double[] corners_;
+   private Point2D.Double[] displayedTileCorners_;
+   private Point2D.Double[] fullTileCorners_;
    private int gridRow_, gridCol_;
    
-   public XYStagePosition(Point2D.Double stagePosCenter, int tileWidth, int tileHeight, int row, int col, String pixelSizeConfig) {
+   public XYStagePosition(Point2D.Double stagePosCenter, int displayTileWidth, int displayTileHeight, 
+           int fullTileWidth, int fullTileHeight, int row, int col, String pixelSizeConfig) {
       label_ = "Grid_" + col + "_" + row;
       center_ = stagePosCenter;
       if (pixelSizeConfig != null) {
          AffineTransform transform = AffineUtils.getAffineTransform(pixelSizeConfig, center_.x, center_.y);
-         corners_ = new Point2D.Double[4];
-         corners_[0] = new Point2D.Double();
-         corners_[1] = new Point2D.Double();
-         corners_[2] = new Point2D.Double();
-         corners_[3] = new Point2D.Double();
-         transform.transform(new Point2D.Double(-tileWidth / 2, -tileHeight / 2), corners_[0]);
-         transform.transform(new Point2D.Double(-tileWidth / 2, tileHeight / 2), corners_[1]);
-         transform.transform(new Point2D.Double(tileWidth / 2, tileHeight / 2), corners_[2]);
-         transform.transform(new Point2D.Double(tileWidth / 2, -tileHeight / 2), corners_[3]);
+         //coreners of displayed tiles (tiles - overlap)
+         displayedTileCorners_ = new Point2D.Double[4];
+         displayedTileCorners_[0] = new Point2D.Double();
+         displayedTileCorners_[1] = new Point2D.Double();
+         displayedTileCorners_[2] = new Point2D.Double();
+         displayedTileCorners_[3] = new Point2D.Double();
+         transform.transform(new Point2D.Double(-displayTileWidth / 2, -displayTileHeight / 2), displayedTileCorners_[0]);
+         transform.transform(new Point2D.Double(-displayTileWidth / 2, displayTileHeight / 2), displayedTileCorners_[1]);
+         transform.transform(new Point2D.Double(displayTileWidth / 2, displayTileHeight / 2), displayedTileCorners_[2]);
+         transform.transform(new Point2D.Double(displayTileWidth / 2, -displayTileHeight / 2), displayedTileCorners_[3]);
+         //corners of full tile (which may not be fully shown)
+         fullTileCorners_ = new Point2D.Double[4];
+         fullTileCorners_[0] = new Point2D.Double();
+         fullTileCorners_[1] = new Point2D.Double();
+         fullTileCorners_[2] = new Point2D.Double();
+         fullTileCorners_[3] = new Point2D.Double();
+         transform.transform(new Point2D.Double(-fullTileWidth / 2, -fullTileHeight / 2), displayedTileCorners_[0]);
+         transform.transform(new Point2D.Double(-fullTileWidth / 2, fullTileHeight / 2), displayedTileCorners_[1]);
+         transform.transform(new Point2D.Double(fullTileWidth / 2, fullTileHeight / 2), displayedTileCorners_[2]);
+         transform.transform(new Point2D.Double(fullTileWidth / 2, -fullTileHeight / 2), displayedTileCorners_[3]);
       }
       gridCol_ = col;
       gridRow_ = row;
@@ -54,8 +67,12 @@ public class XYStagePosition {
       return center_;
    }
    
-   public Point2D.Double[] getCorners() {
-      return corners_;
+   public Point2D.Double[] getDisplayedTileCorners() {
+      return displayedTileCorners_;
+   }
+   
+   public Point2D.Double[] getFullTileCorners() {
+      return fullTileCorners_;
    }
    
    public String getName() {

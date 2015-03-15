@@ -58,6 +58,14 @@ public class CovariantValue  implements Comparable<CovariantValue>{
    }
 
    @Override
+   public boolean equals(Object o) {
+      if (!(o instanceof CovariantValue)) {
+         return false;
+      }
+      return this.compareTo((CovariantValue)o) == 0;
+   }
+   
+   @Override
    public int compareTo(CovariantValue o) {
       if (type_ == CovariantType.STRING) {
          return this.stringValue().compareTo(o.stringValue());

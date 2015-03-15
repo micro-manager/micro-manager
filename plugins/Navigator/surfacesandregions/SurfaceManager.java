@@ -5,6 +5,7 @@ import clojure.test.junit$suite_attrs;
 import imagedisplay.DisplayPlus;
 import java.util.ArrayList;
 import java.util.LinkedList;
+import org.micromanager.MMStudio;
 
 /**
  *
@@ -86,7 +87,7 @@ public class SurfaceManager {
    
    public void addNewSurface() {
 //      surfaces_.add(new SurfaceInterpolatorSibson(this));
-      surfaces_.add(new SurfaceInterpolatorSimple(this));
+      surfaces_.add(new SurfaceInterpolatorSimple(this, MMStudio.getInstance().getCore().getXYStageDevice(), MMStudio.getInstance().getCore().getFocusDevice()));
       updateSurfaceTableAndCombos();
    }
    
@@ -126,13 +127,13 @@ public class SurfaceManager {
    }
 
    /**
-    * Generate statistics for all available surfaces
+    * Generate surface data for all available surfaces
     * @return 
     */
-   public ArrayList<SurfaceData> getSurfaceStats() {
+   public ArrayList<SurfaceData> getSurfaceData() {
       ArrayList<SurfaceData> stats = new ArrayList<SurfaceData>();
       for (SurfaceInterpolator surface : surfaces_) {
-         stats.addAll(surface.getStats());
+         stats.addAll(surface.getData());
       }
       return stats;
    }

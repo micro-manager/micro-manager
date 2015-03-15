@@ -25,6 +25,8 @@ import org.micromanager.acquisition.MMAcquisition;
 import org.micromanager.api.MMTags;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
+import propsandcovariants.CovariantPairing;
+import propsandcovariants.CovariantValue;
 
 /**
  *
@@ -32,6 +34,9 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class CustomAcqEngine {
 
+   private static final int HARDWARE_ERROR_RETRIES = 4;
+   private static final int DELWAY_BETWEEN_RETRIES_MS = 50;
+   
    private CMMCore core_;
    private AcquisitionEvent lastEvent_ = null;
    private Thread acquisitionThread_;
@@ -63,17 +68,17 @@ public class CustomAcqEngine {
                } else {
                   events = null;
                }
-               if (events != null && events.size() > 0) {
-                  idle_ = false;
-                  runEvent(events.poll());
-               } else {
-                  idle_ = true;
-                  try {
+               try {
+                  if (events != null && events.size() > 0) {
+                     idle_ = false;
+                     runEvent(events.poll());
+                  } else {
+                     idle_ = true;
                      //wait for more events to acquire
                      Thread.sleep(2);
-                  } catch (InterruptedException ex) {
-                     Thread.currentThread().interrupt();
                   }
+               } catch (InterruptedException ex) {
+                  break;
                }
             }
          }
@@ -128,7 +133,7 @@ public class CustomAcqEngine {
       }).start();
    }
 
-   private void runEvent(AcquisitionEvent event) {
+   private void runEvent(AcquisitionEvent event) throws InterruptedException {
       if (event.isFinishingEvent()) {
          //event will be null when fixed acquisitions run to compeletion in normal operation
          //signal to TaggedImageSink to finish saving thread and mark acquisition as finished
@@ -175,52 +180,121 @@ public class CustomAcqEngine {
       }
    }
 
-   private void updateHardware(AcquisitionEvent event) {
+   private void updateHardware(final AcquisitionEvent event) throws InterruptedException {
       //compare to last event to see what needs to change
-      //TODO: handling of errors when deviecs don't respond as expected
       if (lastEvent_ != null && lastEvent_.acquisition_ != event.acquisition_) {
          lastEvent_ = null; //update all hardware if switching to a new acquisition
       }
       //Get the hardware specific to this acquisition
-      String xyStage = event.acquisition_.getXYStageName();
-      String zStage = event.acquisition_.getZStageName();
-      //XY Stage
+      final String xyStage = event.acquisition_.getXYStageName();
+      final String zStage = event.acquisition_.getZStageName();
+      
+      /////////////////////////////XY Stage/////////////////////////////
       if (lastEvent_ == null || event.positionIndex_ != lastEvent_.positionIndex_) {
-         try {
-            while (core_.deviceBusy(xyStage)) {
-               try {
+         //wait for it to not be busy (is this even needed??)
+         loopHardwareCommandRetries(new HardwareCommand() {
+            @Override
+            public void run() throws Exception {
+               while (core_.deviceBusy(xyStage)) {
                   Thread.sleep(2);
-               } catch (InterruptedException e) {
-                  Thread.currentThread().interrupt();
+                  IJ.log(getCurrentDateAndTime() + ": waiting for XY stage to not be busy...");
                }
             }
-            core_.setXYPosition(xyStage, event.xPosition_, event.yPosition_);
-         } catch (Exception ex) {
-            ReportingUtils.showError("Couldn't move XY stage");
-            ex.printStackTrace();
-         }
+         }, "waiting for XY stage to not be busy");
+         //move to new position
+         loopHardwareCommandRetries(new HardwareCommand() {
+            @Override
+            public void run() throws Exception {
+               core_.setXYPosition(xyStage, event.xPosition_, event.yPosition_);
+            }
+         }, "moving XY stage");
+         //wait for it to not be busy (is this even needed??)
+         loopHardwareCommandRetries(new HardwareCommand() {
+            @Override
+            public void run() throws Exception {
+               while (core_.deviceBusy(xyStage)) {
+                  Thread.sleep(2);
+                  IJ.log(getCurrentDateAndTime() + ": waiting for XY stage to not be busy...");
+               }
+            }
+         }, "waiting for XY stage to not be busy");
       }
 
-      //Z stage
+      /////////////////////////////Z stage/////////////////////////////
       if (lastEvent_ == null || event.sliceIndex_ != lastEvent_.sliceIndex_) {
-         try {
-            //TODO: add checks for device business??
-            core_.setPosition(zStage, event.zPosition_);
-         } catch (Exception e) {
-            IJ.showMessage("Setting focus position failed");
-            //TODO: try again a couple times?
-            e.printStackTrace();
-         }
+         //wait for it to not be busy (is this even needed?)
+         loopHardwareCommandRetries(new HardwareCommand() {
+            @Override
+            public void run() throws Exception {
+               while (core_.deviceBusy(zStage)) {
+                  Thread.sleep(2);
+                  IJ.log(getCurrentDateAndTime() + ": waiting for Z stage to not be busy...");
+               }
+            }
+         }, "waiting for Z stage to not be busy");
+         //move Z stage
+         loopHardwareCommandRetries(new HardwareCommand() {
+            @Override
+            public void run() throws Exception {
+               core_.setPosition(zStage, event.zPosition_);
+            }
+         }, "move Z device");
+         //wait for it to not be busy (is this even needed?)
+         loopHardwareCommandRetries(new HardwareCommand() {
+            @Override
+            public void run() throws Exception {
+               while (core_.deviceBusy(zStage)) {
+                  Thread.sleep(2);
+                  IJ.log(getCurrentDateAndTime() + ": waiting for Z stage to not be busy...");
+               }  
+            }
+         }, "waiting for Z stage to not be busy");
       }
 
-      //Channels
-      if (lastEvent_ == null || event.channelIndex_ != lastEvent_.channelIndex_) {
-         try {
+      /////////////////////////////Channels/////////////////////////////
+//      if (lastEvent_ == null || event.channelIndex_ != lastEvent_.channelIndex_) {
+//         try {
 //            core_.setConfig("Channel", event.channelIndex_ == 0 ? "DAPI" : "FITC");
-         } catch (Exception ex) {
-            ReportingUtils.showError("Couldn't change channel group");
+//         } catch (Exception ex) {
+//            ReportingUtils.showError("Couldn't change channel group");
+//         }
+//      }
+      
+      /////////////////////////////Covariants/////////////////////////////
+      if (event.covariants_ != null) {
+         outerloop:
+         for (final CovariantPairing cp : event.covariants_) {
+            //get the value of dependent covariant based on state of independent, and
+            //change hardware settings as appropriate
+            loopHardwareCommandRetries(new HardwareCommand() {
+               @Override
+               public void run() throws Exception {
+                  cp.updateHardwareBasedOnPairing(event);
+               }
+            }, "settng Covariant value pair " + cp.toString());
          }
       }
+      lastEvent_ = event;
+   }
+   
+
+   private void loopHardwareCommandRetries(HardwareCommand r, String commandName) throws InterruptedException {
+      for (int i = 0; i < HARDWARE_ERROR_RETRIES; i++) {
+         try {
+            r.run();
+            return;
+         } catch (Exception e) {
+            IJ.showMessage(getCurrentDateAndTime() + ": Problem "+commandName+ "\n Retry #" + i + " in " + DELWAY_BETWEEN_RETRIES_MS + " ms");
+            Thread.sleep(DELWAY_BETWEEN_RETRIES_MS);
+         }
+      }
+      IJ.showMessage("Couldn't successfully " + commandName);
+   }
+
+   private String getCurrentDateAndTime() {
+      DateFormat df = new SimpleDateFormat("dd/MM/yy HH:mm:ss");
+      Calendar calobj = Calendar.getInstance();
+      return df.format(calobj.getTime());
    }
 
    private void addImageMetadata(TaggedImage img, AcquisitionEvent event,
@@ -304,5 +378,9 @@ public class CustomAcqEngine {
          ex.printStackTrace();
       }
       return null;
+   }
+
+   private interface HardwareCommand {
+      void run() throws Exception;
    }
 }

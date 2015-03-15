@@ -6,9 +6,7 @@ package propsandcovariants;
 
 import acq.MultipleAcquisitionManager;
 import gui.GUI;
-import java.awt.Dialog;
 import java.awt.FileDialog;
-import java.awt.Frame;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -17,14 +15,10 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import javax.swing.table.TableColumnModel;
 import org.micromanager.MMStudio;
-import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.ReportingUtils;
 import surfacesandregions.SurfaceInterpolator;
@@ -72,6 +66,8 @@ public class CovariantPairingsManager {
   
    public void addPair(CovariantPairing pair) {
       pairs_.add(pair);
+      //enable this pair for the acquisitiuon currently showing
+      enablePairingForCurrentAcq(pairs_.size() - 1, true);
       pairingsTableModel_.fireTableDataChanged();
       gui_.selectNewCovariantPair();
    }

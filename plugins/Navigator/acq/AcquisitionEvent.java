@@ -5,6 +5,8 @@
 package acq;
 
 import java.awt.geom.Point2D;
+import java.util.List;
+import propsandcovariants.CovariantPairing;
 
 /**
  * Information about the acquisition of a single image
@@ -15,9 +17,10 @@ public class AcquisitionEvent {
    final public int timeIndex_, sliceIndex_, channelIndex_, positionIndex_;
    final public double zPosition_, xPosition_, yPosition_;
    private boolean finishingEvent_ = false;
+   final public List<CovariantPairing> covariants_;
    
    public AcquisitionEvent(Acquisition acq, int frameIndex, int channelIndex, int sliceIndex, int positionIndex, 
-           double zPos, double xPos, double yPos) {
+           double zPos, double xPos, double yPos, List<CovariantPairing> covariants) {
       timeIndex_ = frameIndex;
       sliceIndex_ = sliceIndex;
       channelIndex_ = channelIndex;
@@ -26,10 +29,11 @@ public class AcquisitionEvent {
       xPosition_ = xPos;
       yPosition_ = yPos;
       acquisition_ = acq;
+      covariants_ = covariants;
    }
    
    public static AcquisitionEvent createAcquisitionFinishedEvent(Acquisition acq) {
-      AcquisitionEvent evt = new AcquisitionEvent(acq, 0, 0, 0, 0, 0, 0, 0);
+      AcquisitionEvent evt = new AcquisitionEvent(acq, 0, 0, 0, 0, 0, 0, 0, null);
       evt.finishingEvent_ = true;
       return evt;
    }

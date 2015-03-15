@@ -5,6 +5,7 @@
 package acq;
 
 import coordinates.XYStagePosition;
+import gui.SettingsDialog;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -134,8 +135,13 @@ public class FixedAreaAcquisition extends Acquisition {
          //no space mode, use current stage positon
          positions_ = new ArrayList<XYStagePosition>();
          try {
-            positions_.add(new XYStagePosition(MMStudio.getInstance().getCore().getXYStagePosition(MMStudio.getInstance().getCore().getXYStageDevice()),
-                    0,0,0,0,null));
+            int fullTileWidth = (int) MMStudio.getInstance().getCore().getImageWidth();
+            int fullTileHeight = (int) MMStudio.getInstance().getCore().getImageHeight();
+            int tileWidthMinusOverlap = fullTileWidth - SettingsDialog.getOverlapX();
+            int tileHeightMinusOverlap = fullTileHeight - SettingsDialog.getOverlapY();
+
+            positions_.add(new XYStagePosition(MMStudio.getInstance().getCore().getXYStagePosition(xyStage_),
+                    tileWidthMinusOverlap,tileHeightMinusOverlap,fullTileWidth,fullTileHeight,0,0,null));
          } catch (Exception ex) {
             ReportingUtils.showError("Couldn't get XY stage position");
          }
@@ -212,7 +218,7 @@ public class FixedAreaAcquisition extends Acquisition {
                      }
 
                      AcquisitionEvent event = new AcquisitionEvent(FixedAreaAcquisition.this, timeIndex, channelIndex, sliceIndex,
-                             positionIndex, zPos, position.getCenter().x, position.getCenter().y);
+                             positionIndex, zPos, position.getCenter().x, position.getCenter().y, settings_.propPairings_);
                      if (Thread.interrupted()) {
                         //Acquisition has been aborted, clear pending events and return
                         events_.clear();

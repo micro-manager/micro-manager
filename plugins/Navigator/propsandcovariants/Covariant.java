@@ -4,11 +4,16 @@
  */
 package propsandcovariants;
 
+import acq.AcquisitionEvent;
+import java.util.List;
+
 /**
  * Interface for device property, group, or surface statistic that can be covaried
  */
 public interface Covariant {
 
+   public String getAbbreviatedName();
+   
    public String getName();
       
    public boolean isValid(CovariantValue potentialValue);
@@ -28,6 +33,15 @@ public interface Covariant {
    
    public CovariantType getType();
 
-   public CovariantValue getValidValue();
+   /**
+    * Assumes that the covariant in question is not discrete
+    * @param vals
+    * @return null if there aren't any more values given the ones already taken in list
+    */
+   public CovariantValue getValidValue(List<CovariantValue> vals);
+
+   public CovariantValue getCurrentValue(AcquisitionEvent evt);
+
+   public void updateHardwareToValue(CovariantValue dVal) throws Exception;
    
 }

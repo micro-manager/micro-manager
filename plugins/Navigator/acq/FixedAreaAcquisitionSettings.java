@@ -45,7 +45,7 @@ public class FixedAreaAcquisitionSettings  {
    public int useTopOrBottomFootprint_;
    
    //Covarying props
-   private ArrayList<CovariantPairing> propPairings_ = new ArrayList<CovariantPairing>();
+   public ArrayList<CovariantPairing> propPairings_ = new ArrayList<CovariantPairing>();
    
    
    

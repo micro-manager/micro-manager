@@ -4,15 +4,9 @@
  */
 package acq;
 
-import coordinates.XYStagePosition;
-import gui.SettingsDialog;
-import java.awt.geom.Point2D;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
-import org.json.JSONObject;
 import org.micromanager.MMStudio;
 import org.micromanager.utils.ReportingUtils;
 
@@ -93,7 +87,7 @@ public class ExploreAcquisition extends Acquisition {
             updateLowestAndHighestSlices();
             //Add events for each channel, slice            
             for (int sliceIndex = getMinSliceIndex(); sliceIndex <= getMaxSliceIndex(); sliceIndex++) {
-               addEvent(new AcquisitionEvent(this, 0, 0, sliceIndex, posIndices[i], getZCoordinate(sliceIndex), x, y));
+               addEvent(new AcquisitionEvent(this, 0, 0, sliceIndex, posIndices[i], getZCoordinate(sliceIndex), x, y, null));
             }
          }
       } catch (Exception e) {
