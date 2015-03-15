@@ -434,30 +434,16 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       if (core == null || summary == null) {
          return;
       }
-      int numMultiCamChannels = (int) core.getNumberOfCameraChannels();
-      int numDataChannels;
-      JSONArray dataNames;
-      String[] cameraNames = new String[numMultiCamChannels];
       try {
-         numDataChannels = MDUtils.getNumChannels(summary);
-         dataNames = summary.getJSONArray("ChNames");
-         for (int i = 0; i < numMultiCamChannels; i++) {
-            cameraNames[i] = core.getCameraChannelName(i);
-         }
+         JSONArray dataNames = summary.getJSONArray("ChNames");
 
-         if (numMultiCamChannels > 1 && numDataChannels == numMultiCamChannels
-                 && cameraNames.length == dataNames.length()) {
-            for (int h = 0; h < cameraNames.length; h++) {
-               if (!cameraNames[h].equals(dataNames.getString(h))) {
-                  return;
-               }
-            }
-            Preferences root = Preferences.userNodeForPackage(AcqControlDlg.class);
-            Preferences colorPrefs = root.node(root.absolutePath() + "/" + AcqControlDlg.COLOR_SETTINGS_NODE);
-            colorPrefs.putInt("Color_Camera_" + cameraNames[channelIndex_], color);
-         }
+         Preferences root = Preferences.userNodeForPackage(AcqControlDlg.class);
+         Preferences colorPrefs = root.node(root.absolutePath() + "/" +
+               AcqControlDlg.COLOR_SETTINGS_NODE);
+         colorPrefs.putInt("Color_Camera_" + dataNames.getString(channelIndex_),
+               color);
       } catch (Exception ex) {
-         
+         ReportingUtils.logError(ex, "Error storing color preferences");
       }
    }
 
