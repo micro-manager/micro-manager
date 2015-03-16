@@ -59,7 +59,9 @@ public class FileMenu {
                   @Override
                   public void run() {
                      File f = studio_.promptForAcquisitionToOpen(true);
-                     recentFiles_.add(f);
+                     if (!recentFiles_.contains(f)) {
+                        recentFiles_.add(f);
+                     }
                      writeFilesToPref(prefs_, PREFKEYBASE, recentFiles_);
                      makeRecentFileRamMenu(openRecentRamMenu_, recentFiles_);
                   }
