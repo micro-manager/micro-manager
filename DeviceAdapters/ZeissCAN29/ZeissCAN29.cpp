@@ -611,7 +611,7 @@ int ZeissAxis::FindHardwareStop(MM::Device& device, MM::Core& core, ZeissUByte d
 int ZeissAxis::StopMove(MM::Device& device, MM::Core& core, ZeissUByte devId, ZeissByte moveMode)
 {
    int ret;
-   const int commandLength = 11;
+   const int commandLength = 7;
    unsigned char command[commandLength];
    // Size of data block
    command[0] = 0x04;
@@ -630,6 +630,66 @@ int ZeissAxis::StopMove(MM::Device& device, MM::Core& core, ZeissUByte devId, Ze
    ret = g_hub.ExecuteCommand(device, core,  command, commandLength);
    if (ret != DEVICE_OK)
       return ret;
+
+   return DEVICE_OK;
+}
+
+/*
+ * Sets Trajectory Velocity 
+ */
+int ZeissAxis::SetTrajectoryVelocity(MM::Device& device, MM::Core& core, ZeissUByte devId, long velocity)
+{
+   int ret;
+   const int commandLength = 10;
+   unsigned char command[commandLength];
+   // Size of data block
+   command[0] = 0x07;
+   // Write command, do not expect answer:
+   command[1] = 0x1B;
+   command[2] = 0xA3; 
+   // ProcessID
+   command[3] = 0x11;
+   // SubID
+   command[4] = 0x2B;
+   // Device ID
+   command[5] = devId;
+   // position is a ZeissLong (4-byte) in big endian format...
+   ZeissLong tmp = htonl((ZeissLong) velocity);
+   memcpy(command+6, &tmp, ZeissLongSize); 
+   ret = g_hub.ExecuteCommand(device, core,  command, commandLength);
+   if (ret != DEVICE_OK)
+      return ret;
+   g_hub.SetModelBusy(devId, true);
+
+   return DEVICE_OK;
+}
+
+/*
+ * Sets Trajectory Acceleration
+ */
+int ZeissAxis::SetTrajectoryAcceleration(MM::Device& device, MM::Core& core, ZeissUByte devId, long acceleration)
+{
+   int ret;
+   const int commandLength = 10;
+   unsigned char command[commandLength];
+   // Size of data block
+   command[0] = 0x07;
+   // Write command, do not expect answer:
+   command[1] = 0x1B;
+   command[2] = 0xA3; 
+   // ProcessID
+   command[3] = 0x11;
+   // SubID
+   command[4] = 0x2C;
+   // Device ID
+   command[5] = devId;
+   // position is a ZeissLong (4-byte) in big endian format...
+   ZeissLong tmp = htonl((ZeissLong) acceleration);
+   memcpy(command+6, &tmp, ZeissLongSize); 
+   ret = g_hub.ExecuteCommand(device, core,  command, commandLength);
+   if (ret != DEVICE_OK)
+      return ret;
+   g_hub.SetModelBusy(devId, true);
 
    return DEVICE_OK;
 }

@@ -574,6 +574,8 @@ class ZeissAxis : public ZeissDevice
       int SetRelativePosition(MM::Device& device, MM::Core& core, ZeissUByte devId, long increment, ZeissByte moveMode);
       int FindHardwareStop(MM::Device& device, MM::Core& core, ZeissUByte devId, HardwareStops stop);
       int StopMove(MM::Device& device, MM::Core& core, ZeissUByte devId, ZeissByte moveMode);
+      int SetTrajectoryVelocity(MM::Device& device, MM::Core& core, ZeissUByte devId, long velocity);
+      int SetTrajectoryAcceleration(MM::Device& device, MM::Core& core, ZeissUByte devId, long acceleration);
 
    private:
       const static ZeissUByte commandGroup_ = 0xA3;
