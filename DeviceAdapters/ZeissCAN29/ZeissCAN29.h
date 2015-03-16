@@ -155,6 +155,8 @@ struct ZeissDeviceInfo {
    ZeissLong typeDeviation;
    ZeissLong maxDeviation;
    ZeissLong measuringOrigin;
+   ZeissLong trajectoryVelocity_;
+   ZeissLong trajectoryAcceleration_;
    ZeissULong status;
    std::vector<std::string> deviceScalings;
    std::map<std::string, std::vector<ZeissLong> > nativeScale;
@@ -418,6 +420,8 @@ class ZeissHub
       int SetUpperHardwareStop(ZeissUByte devId, ZeissLong position);
       int SetLowerHardwareStop(ZeissUByte devId, ZeissLong position);
       int SetModelStatus(ZeissUByte devId, ZeissULong status);
+      int SetTrajectoryVelocity(ZeissUByte devId, ZeissLong velocity);
+      int SetTrajectoryAcceleration(ZeissUByte devId, ZeissLong acceleration);
 
       // Helper function for GetAnswer
       bool signatureFound(unsigned char* answer, unsigned char* signature, unsigned long signatureStart, unsigned long signatureLength);

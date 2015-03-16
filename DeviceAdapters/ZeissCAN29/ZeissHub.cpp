@@ -1755,6 +1755,24 @@ int ZeissHub::SetModelStatus(ZeissUByte devId, ZeissULong status) {
    return DEVICE_OK;
 }
 
+/*
+ * Sets Trajectory Velocity in the scope model
+ */
+int ZeissHub::SetTrajectoryVelocity(ZeissUByte devId, ZeissLong velocity) {
+   MMThreadGuard guard(mutex_);
+   deviceInfo_[devId].trajectoryVelocity_ = velocity;
+   return DEVICE_OK;
+}
+
+/*
+ * Sets Trajectory Velocity in the scope model
+ */
+int ZeissHub::SetTrajectoryAcceleration(ZeissUByte devId, ZeissLong accel) {
+   MMThreadGuard guard(mutex_);
+   deviceInfo_[devId].trajectoryAcceleration_ = accel;
+   return DEVICE_OK;
+}
+
 
 /*
  * Sets busy flag in scope model.  

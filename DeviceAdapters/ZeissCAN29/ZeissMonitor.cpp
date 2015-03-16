@@ -201,6 +201,18 @@ void ZeissMonitoringThread::interpretMessage(unsigned char* message)
             position = ntohl(position);
             hub_.SetLowerHardwareStop(message[5], position);
             // TODO: How to unlock the stage from here?
+         } else if (message[6] == 0x2B) { // Axis:: Trajectory Velocity
+            hub_.SetModelBusy(message[5], false);
+            ZeissLong velocity = 0;
+            memcpy(&velocity, message + 8, 4);
+            velocity = ntohl(velocity);
+            hub_.SetTrajectoryVelocity(message[5], velocity);
+         } else if (message[6] == 0x2C) { // Axis:: Trajectory Acceleration
+            hub_.SetModelBusy(message[5], false);
+            ZeissLong accel = 0;
+            memcpy(&accel, message + 8, 4);
+            accel = ntohl(accel);
+            hub_.SetTrajectoryAcceleration(message[5], accel);
           } else if (message[6] == 0x07) { // Status updated as we requested (only on AxioImager)
              ZeissShort status = 0;
              memcpy(&status, message + 8, 2);
