@@ -337,8 +337,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       }
    }
    
-   // Illuminate a spot at the center of the Galvo/SLM range, for
-   // the exposure time.
+   /**
+    * Illuminate a spot at the center of the Galvo/SLM range, for
+    * the exposure time.
+    */
    void displayCenterSpot() {
       double x = dev_.getWidth() / 2;
       double y = dev_.getHeight() / 2;
@@ -347,8 +349,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    
    // ## Generating, loading and saving calibration mappings
    
-   // Returns the java Preferences node where we store the Calibration mapping.
-   // Each channel/camera combination is assigned a different node.
+   /**
+    * Returns the java Preferences node where we store the Calibration mapping.
+    * Each channel/camera combination is assigned a different node.
+    */
    private Preferences getCalibrationNode() {
       return Preferences.userNodeForPackage(ProjectorPlugin.class)
             .node("calibration")
@@ -356,8 +360,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
             .node(core_.getCameraDevice());
    }
    
-   // Load the mapping for the current calibration node. The mapping
-   // maps each polygon cell to an AffineTransform.
+   /**
+    * Load the mapping for the current calibration node. The mapping
+    * maps each polygon cell to an AffineTransform.
+    */
    private Map<Polygon, AffineTransform> loadMapping() {
       String nodeStr = getCalibrationNode().toString();
       if (mappingNode_ == null || !nodeStr.contentEquals(mappingNode_)) {
@@ -370,8 +376,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       return  mapping_;
    }
 
-   // Save the mapping for the current calibration node. The mapping
-   // maps each polygon cell to an AffineTransform.
+   /**
+    * Save the mapping for the current calibration node. The mapping
+    * maps each polygon cell to an AffineTransform.
+    */ 
    private void saveMapping(HashMap<Polygon, AffineTransform> mapping) {
       JavaUtils.putObjectInPrefs(getCalibrationNode(), dev_.getName(), mapping);
       mapping_ = mapping;
@@ -436,8 +444,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       }
    }
 
-   // Illuminate a spot at ptSLM, measure its location on the camera, and
-   // add the resulting point pair to the spotMap.
+   /**
+    * Illuminate a spot at ptSLM, measure its location on the camera, and
+    * add the resulting point pair to the spotMap.
+    */
    private void mapSpot(Map<Point2D.Double, Point2D.Double> spotMap,
          Point ptSLM) {
       Point2D.Double ptSLMDouble = new Point2D.Double(ptSLM.x, ptSLM.y);
@@ -446,8 +456,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       spotMap.put(ptCamDouble, ptSLMDouble);
    }
 
-   // Illuminate a spot at ptSLM, measure its location on the camera, and
-   // add the resulting point pair to the spotMap.
+   /**
+    * Illuminate a spot at ptSLM, measure its location on the camera, and
+    * add the resulting point pair to the spotMap.
+    */
    private void mapSpot(Map<Point2D.Double, Point2D.Double> spotMap,
          Point2D.Double ptSLM) {
       if (!stopRequested_.get()) {
@@ -455,9 +467,11 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       }
    }
 
-   // Illuminates and images five control points, and returns
-   // an affine transform mapping from image coordinates to
-   // phototargeter coordinates.
+   /**
+    * Illuminates and images five control points, and returns
+    * an affine transform mapping from image coordinates to
+    * phototargeter coordinates.
+    */
    private AffineTransform generateLinearMapping() {
       double x = dev_.getWidth() / 2;
       double y = dev_.getHeight() / 2;
@@ -481,14 +495,16 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       }
    }
 
-   // Generate a nonlinear calibration mapping for the current device settings.
-   // A rectangular lattice of points is illuminated one-by-one on the
-   // projection device, and locations in camera pixels of corresponding
-   // spots on the camera image are recorded. For each rectangular
-   // cell in the grid, we take the four point mappings (camera to projector)
-   // and generate a local AffineTransform using linear least squares.
-   // Cells with suspect measured corner positions are discarded.
-   // A mapping of cell polygon to AffineTransform is generated. 
+   /**
+    * Generate a nonlinear calibration mapping for the current device settings.
+    * A rectangular lattice of points is illuminated one-by-one on the
+    * projection device, and locations in camera pixels of corresponding
+    * spots on the camera image are recorded. For each rectangular
+    * cell in the grid, we take the four point mappings (camera to projector)
+    * and generate a local AffineTransform using linear least squares.
+    * Cells with suspect measured corner positions are discarded.
+    * A mapping of cell polygon to AffineTransform is generated. 
+    */
    private Map<Polygon, AffineTransform> generateNonlinearMapping(AffineTransform firstApprox) {
       if (firstApprox == null) {
          return null;
@@ -858,7 +874,9 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       return label;
    }
      
-   // Save a list of ROIs to a given path.
+   /**
+    * Save a list of ROIs to a given path.
+    */
    private static void saveROIs(File path, Roi[] rois) {
       try {
          ImagePlus imgp = IJ.getImage();
@@ -880,9 +898,14 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       }
    }
    
-   // Returns the current ROIs for a given ImageWindow. If selectedOnly
-   // is true, then returns only those ROIs selected in the ROI Manager.
-   // If no ROIs are selected, then all ROIs are returned.
+   /**
+    * Returns the current ROIs for a given ImageWindow. If selectedOnly
+    * is true, then returns only those ROIs selected in the ROI Manager.
+    * If no ROIs are selected, then all ROIs are returned.
+    * @param window
+    * @param selectedOnly
+    * @return 
+    */
    public static Roi[] getRois(ImageWindow window, boolean selectedOnly) {
       Roi[] rois = new Roi[]{};
       Roi[] roiMgrRois = {};
@@ -906,7 +929,9 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       return rois;
    }
    
-   // Transform the Roi polygons with the given nonlinear mapping.
+   /**
+    * Transform the Roi polygons with the given nonlinear mapping.
+    */
    private static List<FloatPolygon> transformRoiPolygons(final ImagePlus imgp, 
            Polygon[] roiPolygons, Map<Polygon, AffineTransform> mapping) {
       ArrayList<FloatPolygon> transformedROIs = new ArrayList<FloatPolygon>();
@@ -935,7 +960,13 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
        
    // ## Saving, sending, and running ROIs.
      
-   // Returns ROIs, transformed by the current mapping.
+   /**
+    * Returns ROIs, transformed by the current mapping.
+    * @param contextImagePlus ImageJ Imageplus for the image we are working with
+    * @param rois Array of ImageJ Rois to be converted
+    * @return list of Rois converted into Polygons
+    * 
+    */
    public List<FloatPolygon> transformROIs(ImagePlus contextImagePlus, Roi[] rois) {
       return transformRoiPolygons(contextImagePlus, roisAsPolygons(rois), mapping_);
    }
@@ -957,11 +988,13 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       }
    }
    
-   // Upload current Window's ROIs, transformed, to the phototargeting device.
-   // BUG!!! Since Polygons store coordinates in integers whereas Galvo
-   // devices have an input as double, there is an enormous loss of precision.
-   // The Type "Polygon" should be replaced with Path2D.Double throughout the code
-   // or possible the ImageJ class FloatPolygon
+   /**
+    * Upload current Window's ROIs, transformed, to the phototargeting device.
+    * BUG!!! Since Polygons store coordinates in integers whereas Galvo
+    * devices have an input as double, there is an enormous loss of precision.
+    * The Type "Polygon" should be replaced with Path2D.Double throughout the code
+    * or possibly the ImageJ class FloatPolygon
+    */
    public void sendCurrentImageWindowRois() {
       if (mapping_ == null) {
          throw new RuntimeException("Please calibrate the phototargeting device first, using the Setup tab.");
@@ -984,7 +1017,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     * Illuminate the polygons ROIs that have been previously uploaded to
     * phototargeter.
     */
-   void runRois() {
+   public void runRois() {
       Configuration originalConfig = prepareChannel();
       boolean originalShutterState = prepareShutter();
       dev_.runPolygons();
@@ -1325,6 +1358,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    {
       disposing_ = true;
       super.dispose();
+   }
+   
+   public ProjectionDevice getDevice() {
+      return dev_;
    }
    
    // ## Generated code
