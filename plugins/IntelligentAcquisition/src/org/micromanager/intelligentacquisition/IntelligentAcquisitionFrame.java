@@ -59,9 +59,9 @@ import org.micromanager.utils.JavaUtils;
 public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
    private final ScriptInterface gui_;
    private final CMMCore core_;
-   private Preferences prefs_;
+   private final Preferences prefs_;
    
-   private NumberFormat nf_;
+   private final NumberFormat nf_;
 
    private int frameXPos_ = 100;
    private int frameYPos_ = 100;
@@ -92,7 +92,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
   
    private String xyStage_ = "";
    
-   private AtomicBoolean stop_;
+   private final AtomicBoolean stop_;
 
 
     /** 
@@ -650,7 +650,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
 
             while (!stop_.get()) {
                // run exploration acquisition
-               String expAcq = "";
+               String expAcq;
                try {
                   expAcq = gui_.runAcquisition();
                } catch (MMScriptException e) {
@@ -785,7 +785,6 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
                   } catch (MMScriptException ms) {
                      ReportingUtils.showError(ms, "Error setting position in MMWindow");
                   }
-                  ij.IJ.run("Duplicate...", "title=" + p);
                   ij.IJ.runMacroFile(scriptFileName_);
                   ResultsTable res = ij.measure.ResultsTable.getResultsTable();
                   // get results out, stick them in new window that has listeners coupling to image window 

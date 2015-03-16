@@ -3,6 +3,7 @@ package org.micromanager.intelligentacquisition;
 
 import ij.IJ;
 import ij.ImagePlus;
+import ij.gui.Overlay;
 import ij.measure.ResultsTable;
 import ij.text.TextPanel;
 import ij.text.TextWindow;
@@ -43,6 +44,7 @@ public class ResultsListener implements KeyListener, MouseListener{
       win_ = win;
       tp_ = win.getTextPanel();
    }
+   @Override
    public void keyPressed(KeyEvent e) {
       int key = e.getKeyCode();
       int row = tp_.getSelectionStart();
@@ -59,15 +61,22 @@ public class ResultsListener implements KeyListener, MouseListener{
       }
       update();
    }
+   @Override
    public void keyReleased(KeyEvent e) {}
+   @Override
    public void keyTyped(KeyEvent e) {}
 
+   @Override
    public void mouseReleased(MouseEvent e) {
       update();
    }
+   @Override
    public void mousePressed(MouseEvent e) {}
+   @Override
    public void mouseClicked(MouseEvent e) {}
+   @Override
    public void mouseEntered(MouseEvent e) {};
+   @Override
    public void mouseExited(MouseEvent e) {};
 
    /**
@@ -103,8 +112,26 @@ public class ResultsListener implements KeyListener, MouseListener{
          double y = (int) res_.getValue(Terms.Y, row);
 
          GeneralPath path = new GeneralPath();
-         drawCross(siPlus_, new Point2D.Double(x, y), path);
+         drawCross(siPlus_, new Point2D.Double(x, y), path, 0.3);
+         
+         try {
+            double nx = res_.getValue("nX", row);
+            double ny = res_.getValue("nY", row);
+            drawCross(siPlus_, new Point2D.Double(nx, ny), path, 0.8);
+         } catch (IllegalArgumentException iaep) {
+            // nothing to do
+         }
          siPlus_.setOverlay(path, Color.RED, new BasicStroke(1));
+         /*
+         java.awt.EventQueue.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+               siPlus_.getWindow().toFront();
+               siPlus_.getWindow().repaint();
+            }
+         });
+         */
+
       }
    }
 
@@ -116,19 +143,19 @@ public class ResultsListener implements KeyListener, MouseListener{
     * @param p - Point around which the symbol will be centered
     * @param path - product of this function, i.e. use path to draw the symbol
     */
-	void drawCross(ImagePlus imp, Point2D.Double p, GeneralPath path) {
-      double es = 0.4;
+	void drawCross(ImagePlus imp, Point2D.Double p, GeneralPath path, 
+           double space) {
       double x  = imp.getCalibration().getRawX(p.x);
       double y = imp.getCalibration().getRawY(p.y);
 		int width=imp.getWidth() / 20;
 		int height=imp.getHeight() / 20;
 		path.moveTo(x, y - height);
-		path.lineTo(x, y - es * height);
-      path.moveTo(x, y + es * height);
+		path.lineTo(x, y - space * height);
+      path.moveTo(x, y + space * height);
       path.lineTo(x, y + height);
 		path.moveTo(x - width, y);
-      path.lineTo(x - es * width, y);
-      path.moveTo(x + es * width, y);
+      path.lineTo(x - space * width, y);
+      path.moveTo(x + space * width, y);
 		path.lineTo(x + width, y);	
 	}
    
