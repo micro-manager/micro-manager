@@ -1382,6 +1382,7 @@ Axis::Axis (ZeissUByte devId, std::string name, std::string description):
    uni_ ("Unidirectional backlash compensation"),
    biSup_ ("Bidirectional Precision suppress small upwards"),
    biAlways_ ("Bidirectional Precision Always"),
+   default_ ("Default"),
    fast_ ("Fast"),
    smooth_ ("Smooth"),
    busyCounter_(0)
@@ -1461,6 +1462,7 @@ int Axis::Initialize()
    ret = CreateProperty("Velocity-Acceleration", fast_.c_str(), MM::String, false, pAct);
    if (ret != DEVICE_OK)
       return ret;
+   AddAllowedValue("Velocity-Acceleration", default_.c_str());
    AddAllowedValue("Velocity-Acceleration", fast_.c_str());
    AddAllowedValue("Velocity-Acceleration", smooth_.c_str());
    
@@ -1582,8 +1584,9 @@ int Axis::OnVelocity(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)   {
       switch (velocity_) {
-         case 0: pProp->Set(fast_.c_str()); break;
+         case 0: pProp->Set(default_.c_str()); break;
          case 4: pProp->Set(smooth_.c_str()); break;
+         case 8: pProp->Set(fast_.c_str()); break;
          default: pProp->Set(fast_.c_str());
       }
    }
@@ -1591,10 +1594,12 @@ int Axis::OnVelocity(MM::PropertyBase* pProp, MM::ActionType eAct)
    {  
       string result;                                             
       pProp->Get(result);                                        
-      if (result == fast_)
+      if (result == default_)
          velocity_ = 0;
       else if (result == smooth_)
          velocity_ = 4;
+      else if (result == fast_)
+         velocity_ = 8;
    }                                                          
                                                               
    return DEVICE_OK;                                          
@@ -1613,6 +1618,7 @@ XYStage::XYStage ():
    uni_ ("Unidirectional backlash compensation"),
    biSup_ ("Bidirectional Precision suppress small upwards"),
    biAlways_ ("Bidirectional Precision Always"),
+   default_ ("Default"),
    fast_ ("Fast"),
    smooth_ ("Smooth")
 {
@@ -1682,6 +1688,7 @@ int XYStage::Initialize()
    ret = CreateProperty("Velocity-Acceleration", fast_.c_str(), MM::String, false, pAct);
    if (ret != DEVICE_OK)
       return ret;
+   AddAllowedValue("Velocity-Acceleration", default_.c_str());
    AddAllowedValue("Velocity-Acceleration", fast_.c_str());
    AddAllowedValue("Velocity-Acceleration", smooth_.c_str());
    
@@ -1839,19 +1846,22 @@ int XYStage::OnVelocity(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)   {
       switch (velocity_) {
-         case 0: pProp->Set(fast_.c_str()); break;
+         case 0: pProp->Set(default_.c_str()); break;
          case 4: pProp->Set(smooth_.c_str()); break;
-         default: pProp->Set(fast_.c_str());
+         case 8: pProp->Set(fast_.c_str()); break;
+         default: pProp->Set(default_.c_str());
       }
    }
    else if (eAct == MM::AfterSet)                             
    {  
       string result;                                             
       pProp->Get(result);                                        
-      if (result == fast_)
+      if (result == default_)
          velocity_ = 0;
       else if (result == smooth_)
          velocity_ = 4;
+      else if (result == fast_)
+         velocity_ = 8;
    }                                                          
                                                               
    return DEVICE_OK;                                          

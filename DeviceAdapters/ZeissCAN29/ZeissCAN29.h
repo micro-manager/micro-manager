@@ -794,7 +794,7 @@ private:
    long velocity_;
    std::string name_;
    std::string description_;
-   std::string direct_, uni_, biSup_, biAlways_, fast_, smooth_;
+   std::string direct_, uni_, biSup_, biAlways_, default_, fast_, smooth_;
    long busyCounter_;
 
 };
@@ -839,7 +839,7 @@ private:
    long velocity_;
    std::string name_;
    std::string description_;
-   std::string direct_, uni_, biSup_, biAlways_, fast_, smooth_;
+   std::string direct_, uni_, biSup_, biAlways_, default_, fast_, smooth_;
 };
 
 class DefiniteFocus : public CAutoFocusBase<DefiniteFocus>
