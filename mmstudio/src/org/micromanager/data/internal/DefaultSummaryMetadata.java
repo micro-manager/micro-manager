@@ -103,6 +103,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       private String directory_ = null;
       private String comments_ = null;
       
+      private String channelGroup_ = null;
       private String[] channelNames_ = null;
       private Double zStepUm_ = null;
       private Double waitInterval_ = null;
@@ -173,6 +174,12 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       }
 
       @Override
+      public SummaryMetadataBuilder channelGroup(String channelGroup) {
+         channelGroup_ = channelGroup;
+         return this;
+      }
+
+      @Override
       public SummaryMetadataBuilder channelNames(String[] channelNames) {
          channelNames_ = (channelNames == null) ? null : channelNames.clone();
          return this;
@@ -231,6 +238,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
    private String directory_ = null;
    private String comments_ = null;
 
+   private String channelGroup_ = null;
    private String[] channelNames_ = null;
    private Double zStepUm_ = null;
    private Double waitInterval_ = null;
@@ -252,6 +260,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       directory_ = builder.directory_;
       comments_ = builder.comments_;
 
+      channelGroup_ = builder.channelGroup_;
       channelNames_ = builder.channelNames_;
       zStepUm_ = builder.zStepUm_;
       waitInterval_ = builder.waitInterval_;
@@ -309,6 +318,11 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
    }
 
    @Override
+   public String getChannelGroup() {
+      return channelGroup_;
+   }
+
+   @Override
    public String[] getChannelNames() {
       return channelNames_;
    }
@@ -360,6 +374,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
             .computerName(computerName_)
             .directory(directory_)
             .comments(comments_)
+            .channelGroup(channelGroup_)
             .channelNames(channelNames_)
             .zStepUm(zStepUm_)
             .waitInterval(waitInterval_)
@@ -432,6 +447,13 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       }
       catch (JSONException e) {
          ReportingUtils.logDebugMessage("SummaryMetadata failed to extract field directory");
+      }
+
+      try {
+         builder.channelGroup(tags.getString("ChannelGroup"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logDebugMessage("SummaryMetadata failed to extract field channelGroup");
       }
 
       try {
@@ -521,6 +543,9 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
          result.put("ComputerName", computerName_);
          result.put("Directory", directory_);
          MDUtils.setComments(result, comments_);
+         result.put("ChannelGroup", channelGroup_);
+         // HACK: only preserve one channel name as there's only room for one
+         // in this method.
          MDUtils.setChannelName(result,
                (channelNames_ == null) ? "" : channelNames_[0]);
          // Manually set 0 for null Z-step since the parameter for setZStepUm

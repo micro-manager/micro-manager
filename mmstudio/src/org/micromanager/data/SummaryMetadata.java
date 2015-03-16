@@ -49,37 +49,25 @@ public interface SummaryMetadata {
       // SummaryMetadata. See the corresponding getter methods of
       // SummaryMetadata, below, for the meaning of these properties.
       SummaryMetadataBuilder fileName(String fileName);
-
       SummaryMetadataBuilder prefix(String prefix);
-
       SummaryMetadataBuilder userName(String userName);
-
       SummaryMetadataBuilder profileName(String profileName);
 
       SummaryMetadataBuilder microManagerVersion(String microManagerVersion);
-
       SummaryMetadataBuilder metadataVersion(String metadataVersion);
-
       SummaryMetadataBuilder computerName(String computerName);
-
       SummaryMetadataBuilder directory(String directory);
-
       SummaryMetadataBuilder comments(String comments);
 
+      SummaryMetadataBuilder channelGroup(String channelGroup);
       SummaryMetadataBuilder channelNames(String[] channelNames);
-
       SummaryMetadataBuilder zStepUm(Double zStepUm);
-
       SummaryMetadataBuilder waitInterval(Double waitInterval);
-
       SummaryMetadataBuilder customIntervalsMs(Double[] customIntervalsMs);
-
       SummaryMetadataBuilder intendedDimensions(Coords intendedDimensions);
 
       SummaryMetadataBuilder startDate(String startDate);
-
       SummaryMetadataBuilder stagePositions(MultiStagePosition[] stagePositions);
-
       SummaryMetadataBuilder userData(PropertyMap userData);
    }
 
@@ -149,6 +137,12 @@ public interface SummaryMetadata {
     * @return Any comments attached to the acquisition as a whole
     */
    public String getComments();
+
+   /**
+    * The config group that was used to switch between channels.
+    * @return name of the channel config group
+    */
+   public String getChannelGroup();
 
    /**
     * Array of names of channels
