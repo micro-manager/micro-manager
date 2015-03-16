@@ -507,7 +507,7 @@ public class DeviceSetupDlg extends MMDialog {
             String looking = "";
 
             // during detection we'll generate lots of spurious error messages.
-            core.enableDebugLog(false);
+            ReportingUtils.logMessage("Starting port scanning; expect lots of spurious error messages");
             for (int i = 0; i < ports.size(); i++) {
                looking = "";
                try {
@@ -585,7 +585,7 @@ public class DeviceSetupDlg extends MMDialog {
             }
          } finally { // matches try at entry
             progressDialog.setVisible(false);
-            core.enableDebugLog(currentDebugLogSetting);
+            ReportingUtils.logMessage("Finished port scanning; spurious error messages no longer expected");
             rebuildPropTable();
             if (! (selectedPort.length() == 0)) {
                Device pd = model.findSerialPort(selectedPort);
