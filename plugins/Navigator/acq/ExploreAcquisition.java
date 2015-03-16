@@ -4,21 +4,30 @@
  */
 package acq;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.micromanager.MMStudio;
 import org.micromanager.utils.ReportingUtils;
 
 /**
  * A single time point acquisition that can dynamically expand in X,Y, and Z
+ *
  * @author Henry
  */
 public class ExploreAcquisition extends Acquisition {
 
    private volatile double zTop_, zBottom_;
-   private final double zOrigin_;   
+   private final double zOrigin_;
    private int lowestSliceIndex_ = 0, highestSliceIndex_ = 0;
+   private ExecutorService eventAdderExecutor_ = Executors.newSingleThreadExecutor();
 
    public ExploreAcquisition(ExploreAcqSettings settings) {
       super(settings.zStep_);
@@ -29,12 +38,13 @@ public class ExploreAcquisition extends Acquisition {
          zOrigin_ = core_.getPosition(zStage_);
          initialize(settings.dir_, settings.name_);
       } catch (Exception ex) {
-        ReportingUtils.showError("Couldn't get focus device position");
-        throw new RuntimeException();
+         ReportingUtils.showError("Couldn't get focus device position");
+         throw new RuntimeException();
       }
    }
-   
+
    public void abort() {
+      eventAdderExecutor_.shutdownNow();
       //abort all pending events
       events_.clear();
       engineOutputQueue_.clear();
@@ -43,60 +53,76 @@ public class ExploreAcquisition extends Acquisition {
       //image sink will call finish when it completes
    }
 
-   public void acquireTiles(int row1, int col1, int row2, int col2) {
-      try {
-         //update positionList and get index
-         int[] posIndices = null;
-         try {
-            //order tile indices properly
-            if (row1 > row2) {
-               int temp = row1;
-               row1 = row2;
-               row2 = temp;
+   public void acquireTiles(final int r1, final int c1, final int r2, final int c2) {
+      eventAdderExecutor_.submit(new Runnable() {
+
+         @Override
+         public void run() {
+            //update positionList and get index
+            int[] posIndices = null;
+            try {
+               int row1, row2, col1, col2;
+               //order tile indices properly
+               if (r1 > r2) {
+                  row1 = r2;
+                  row2 = r1;
+               } else {
+                  row1 = r1;
+                  row2 = r2;
+               }
+               if (c1 > c2) {
+                  col1 = c2;
+                  col2 = c1;
+               } else {
+                  col1 = c1;
+                  col2 = c2;
+               }
+
+               //Get position Indices from manager based on row and column
+               //it will create new metadata as needed
+               int[] newPositionRows = new int[(row2 - row1 + 1) * (col2 - col1 + 1)];
+               int[] newPositionCols = new int[(row2 - row1 + 1) * (col2 - col1 + 1)];
+               for (int r = row1; r <= row2; r++) {
+                  for (int c = col1; c <= col2; c++) {
+                     int i = (r - row1) + (1 + row2 - row1) * (c - col1);
+                     newPositionRows[i] = r;
+                     newPositionCols[i] = c;
+                  }
+               }
+               posIndices = getPositionManager().getPositionIndices(newPositionRows, newPositionCols);
+            } catch (Exception e) {
+               e.printStackTrace();
+               ReportingUtils.showError("Problem with position metadata: couldn't add tile");
+               return;
             }
-            if (col1 > col2) {
-               int temp = col1;
-               col1 = col2;
-               col2 = temp;
-            }
-            
-            //Get position Indices from manager based on row and column
-            //it will create new metadata as needed
-            int[] newPositionRows = new int[(row2 - row1 + 1) * (col2 - col1 + 1)];
-            int[] newPositionCols = new int[(row2 - row1 + 1) * (col2 - col1 + 1)];
-            for (int r = row1; r <= row2; r++) {
-               for (int c = col1; c <= col2; c++) {
-                  int i = (r - row1) + (1 + row2 - row1) * (c - col1);
-                  newPositionRows[i] = r;
-                  newPositionCols[i] = c;
+
+            //create set of hardware instructions for an acquisition event
+            for (int i = 0; i < posIndices.length; i++) {
+               //get x and y coordinates of current position
+               double x = 0, y = 0;
+               try {
+                  x = getPositionManager().getXCoordinate(posIndices[i]);
+                  y = getPositionManager().getYCoordinate(posIndices[i]);
+               } catch (JSONException e) {
+                  ReportingUtils.showError("JSONException: Couldn't get correct coordinates");
+                  return;
+               }
+               //update lowest slice for the benefit of the zScrollbar in the viewer
+               updateLowestAndHighestSlices();
+               //Add events for each channel, slice            
+               for (int sliceIndex = getMinSliceIndex(); sliceIndex <= getMaxSliceIndex(); sliceIndex++) {
+                  try {
+                     events_.put(new AcquisitionEvent(ExploreAcquisition.this, 0, 0, sliceIndex, posIndices[i], getZCoordinate(sliceIndex), x, y, null));
+                  } catch (InterruptedException ex) {
+                     //aborted acqusition
+                     return;
+                  }
                }
             }
-            posIndices = getPositionManager().getPositionIndices(newPositionRows, newPositionCols);
-         } catch (Exception e) {
-            e.printStackTrace();
-            ReportingUtils.showError("Problem with position metadata: couldn't add tile");
-            return;
          }
-
-         //create set of hardware instructions for an acquisition event
-         for (int i = 0; i < posIndices.length; i++) {
-            //get x and y coordinates of current position
-            double x = getPositionManager().getXCoordinate(posIndices[i]);
-            double y = getPositionManager().getYCoordinate(posIndices[i]);
-            //update lowest slice for the benefit of the zScrollbar in the viewer
-            updateLowestAndHighestSlices();
-            //Add events for each channel, slice            
-            for (int sliceIndex = getMinSliceIndex(); sliceIndex <= getMaxSliceIndex(); sliceIndex++) {
-               addEvent(new AcquisitionEvent(this, 0, 0, sliceIndex, posIndices[i], getZCoordinate(sliceIndex), x, y, null));
-            }
-         }
-      } catch (Exception e) {
-         e.printStackTrace();
-         ReportingUtils.showError("Couldn't create acquistion events");
-      }
+      });
    }
-   
-   
+
    @Override
    public double getZCoordinateOfSlice(int displaySliceIndex, int displayFrameIndex) {
       //No frames in explorer acquisition
@@ -108,8 +134,6 @@ public class ExploreAcquisition extends Acquisition {
    public int getDisplaySliceIndexFromZCoordinate(double z, int displayFrameIndex) {
       return (int) Math.round((z - zOrigin_) / zStep_) - lowestSliceIndex_ + 1;
    }
-
-
 
    /**
     * return the slice index of the lowest slice seen in this acquisition
@@ -150,7 +174,8 @@ public class ExploreAcquisition extends Acquisition {
 
    /**
     * get z coordinate for slice position
-    * @return 
+    *
+    * @return
     */
    public double getZCoordinate(int sliceIndex) {
       return zOrigin_ + zStep_ * sliceIndex;
@@ -161,27 +186,25 @@ public class ExploreAcquisition extends Acquisition {
       zBottom_ = Math.max(zTop, zBottom);
       zTop_ = Math.min(zTop, zBottom);
    }
-   
+
    public double getZTop() {
       return zTop_;
    }
-   
+
    public double getZBottom() {
       return zBottom_;
    }
-   
+
    @Override
    protected JSONArray createInitialPositionList() {
       try {
          //create empty position list that gets filled in as tiles are explored
          CMMCore core = MMStudio.getInstance().getCore();
-         JSONArray pList = new JSONArray();        
+         JSONArray pList = new JSONArray();
          return pList;
       } catch (Exception e) {
          ReportingUtils.showError("Couldn't create initial position list");
          return null;
       }
    }
-
- 
 }

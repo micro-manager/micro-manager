@@ -4,6 +4,7 @@ import coordinates.PositionManager;
 import gui.SettingsDialog;
 import imagedisplay.DisplayPlus;
 import java.awt.Color;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
@@ -25,6 +26,8 @@ public abstract class Acquisition {
 
    //max numberof images that are held in queue to be saved
    private static final int OUTPUT_QUEUE_SIZE = 40;
+   //number of acquisiton events held at any given time
+   private static final int ACQ_EVENT_QUEUE_SIZE = 40;
    
    protected volatile double zStep_ = 1;
    protected BlockingQueue<TaggedImage> engineOutputQueue_;
@@ -43,7 +46,7 @@ public abstract class Acquisition {
       xyStage_ = core_.getXYStageDevice();
       zStage_ = core_.getFocusDevice();
       zStep_ = zStep;
-      events_ = new LinkedBlockingQueue<AcquisitionEvent>();
+      events_ = new LinkedBlockingQueue<AcquisitionEvent>(ACQ_EVENT_QUEUE_SIZE);
       try {
          pixelSizeConfig_ = MMStudio.getInstance().getCore().getCurrentPixelSizeConfig();
       } catch (Exception ex) {
@@ -113,10 +116,6 @@ public abstract class Acquisition {
    public String getName() {
       return name_;
    }
-   
-   public BlockingQueue<AcquisitionEvent> getEventQueue() {
-      return events_;
-   }
 
    public double getZStep() {
       return zStep_;
@@ -124,10 +123,6 @@ public abstract class Acquisition {
 
    public PositionManager getPositionManager() {
       return posManager_;
-   }
-
-   public void addEvent(AcquisitionEvent e) {
-      events_.add(e);
    }
 
    public void addImage(TaggedImage img) {

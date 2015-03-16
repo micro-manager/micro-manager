@@ -4,6 +4,7 @@
  */
 package surfacesandregions;
 
+import ij.IJ;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.TreeSet;
@@ -65,43 +66,43 @@ public class SingleResolutionInterpolation {
     */
    public Float getInterpolatedValue(double x, double y, boolean extrapolate) {
       try {
-         //check if theres anyhting to interpolate
-         if (!isInsideConvexHull(x, y)) {
-            if (extrapolate) {
-               //find closest convex hull vertex
-               Vector2D closest;
-               double minDistance = Integer.MAX_VALUE;
-               for (Vector2D vertex : convexHullVertices_) {
-                  double distance = vertex.distance(new Vector2D(x,y));
-                  if (distance < minDistance) {
-                     distance = minDistance;
-                     closest = vertex;
-                  }
-               }
-               //find 3d point with same xy as convex hull vertex and use its z coordinate
-               for (Point3d p : allPoints_) {
-                  if (convexHullVertices_.contains(new Vector2D(p.x,p.y))) {
-                     return (float)p.z;
-                  }
-               }    
-               //if I ever get this error, either the two lists are out of sync or creating vecotrs causes some loss of precision
-               ReportingUtils.showError("Couldn't find 3d point with same XY as convex hull");
-            } else {
-               return null; // no extrapolation
-            }
+         if (!isInsideConvexHull(x, y) && !extrapolate) {
+            return null; //if not extrapolating, everything outside convex hull is null
          }
-
+         //try to get the value from the calulated interpolation
          int numInterpPointsX = interpolation_[0].length;
          int numInterpPointsY = interpolation_.length;
-
          int xIndex = (int) Math.round(((x - boundXMin_) / (boundXMax_ - boundXMin_)) * (numInterpPointsX - 1));
          int yIndex = (int) Math.round(((y - boundYMin_) / (boundYMax_ - boundYMin_)) * (numInterpPointsY - 1));
-         return interpolation_[yIndex][xIndex];
+         if (xIndex >= 0 && yIndex >= 0 && xIndex < interpolation_[0].length && yIndex < interpolation_.length &&
+                 interpolation_[yIndex][xIndex] != null) {
+            return interpolation_[yIndex][xIndex];
+         }
+         //if interpolation is null, its either outside convex hull, or just inside and not calculated due
+         //to sampling artifacts. Either way, setting value equal to closest convex hull point should do just fine   
+         //find closest convex hull vertex
+         Vector2D closest = null;
+         double minDistance = Integer.MAX_VALUE;
+         for (Vector2D vertex : convexHullVertices_) {
+            double distance = vertex.distance(new Vector2D(x, y));
+            if (distance < minDistance) {
+               minDistance = distance;
+               closest = vertex;
+            }
+         }
+         //find 3d point with same xy as convex hull vertex and use its z coordinate
+         for (Point3d p : allPoints_) {
+            if (closest.equals(new Vector2D(p.x, p.y))) {
+               return (float) p.z;
+            }
+         }
+         //if I ever get this error, either the two lists are out of sync or creating vecotrs causes some loss of precision
+         IJ.log("Couldn't find 3d point with same XY as convex hull");   
       } catch (Exception e) {
          e.printStackTrace();
          ReportingUtils.showError("Problem interpolating");
-         return null;
       }
+      return null;
    }
 
    private boolean isInsideConvexHull(double x, double y) {

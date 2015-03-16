@@ -50,7 +50,7 @@ class SurfaceTableModel extends AbstractTableModel  {
          manager_.getSurface(row).setXYPadding(Double.parseDouble((String) value));
       } else if (col == 2) {
          manager_.getSurface(row).setZPadding(Double.parseDouble((String) value));         
-      }
+      }      
    }
    
    @Override

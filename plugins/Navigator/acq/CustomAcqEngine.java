@@ -14,6 +14,8 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
@@ -43,11 +45,41 @@ public class CustomAcqEngine {
    private ExploreAcquisition currentExploreAcq_;
    private ParallelAcquisitionGroup currentFixedAcqs_;
    private MultipleAcquisitionManager multiAcqManager_;
-   private volatile boolean idle_ = true;
+   private CustomAcqEngine singleton_;
+   private ExecutorService acqExecutor_ = Executors.newSingleThreadExecutor();
 
    public CustomAcqEngine(CMMCore core) {
+      singleton_ = this;
       core_ = core;
       createAndStartAcquisitionThread();
+   }
+   
+   public CustomAcqEngine getInstance() {
+      return singleton_;
+   }
+   
+   public void runEvent(AcquisitionEvent event) {
+      BlockingQueue<AcquisitionEvent> events;
+      //Fixed acq take priority
+      //TODO: might be an alternative way of doing this since the explore event queue is cleared when starting a 
+      //fixed acqusiition anyway
+      if (currentFixedAcqs_ != null && !currentFixedAcqs_.isPaused() && !currentFixedAcqs_.isFinished()) {
+         events = currentFixedAcqs_.getEventQueue();
+      } else if (currentExploreAcq_ != null) {
+         events = currentExploreAcq_.getEventQueue();
+      } else {
+         events = null;
+      }
+      try {
+         if (events != null && events.size() > 0) {
+            runEvent(events.poll());
+         } else {
+            //wait for more events to acquire
+            Thread.sleep(2);
+         }
+      } catch (InterruptedException ex) {
+         break;
+      }
    }
    
    private void createAndStartAcquisitionThread() {
@@ -57,29 +89,7 @@ public class CustomAcqEngine {
          @Override
          public void run() {
             while (!Thread.interrupted()) {
-               BlockingQueue<AcquisitionEvent> events;
-               //Fixed acq take priority
-               //TODO: might be an alternative way of doing this since the explore event queue is cleared when starting a 
-               //fixed acqusiition anyway
-               if (currentFixedAcqs_ != null && !currentFixedAcqs_.isPaused() && !currentFixedAcqs_.isFinished()) {
-                  events = currentFixedAcqs_.getEventQueue();
-               } else if (currentExploreAcq_ != null) {
-                  events = currentExploreAcq_.getEventQueue();
-               } else {
-                  events = null;
-               }
-               try {
-                  if (events != null && events.size() > 0) {
-                     idle_ = false;
-                     runEvent(events.poll());
-                  } else {
-                     idle_ = true;
-                     //wait for more events to acquire
-                     Thread.sleep(2);
-                  }
-               } catch (InterruptedException ex) {
-                  break;
-               }
+               
             }
          }
       }, "Custom acquisition engine thread");
@@ -88,10 +98,6 @@ public class CustomAcqEngine {
 
    public void setMultiAcqManager(MultipleAcquisitionManager multiAcqManager) {
       multiAcqManager_ = multiAcqManager;
-   }
-
-   public boolean isIdle() {
-      return idle_;
    }
    
    public ParallelAcquisitionGroup runInterleavedAcquisitions(List<FixedAreaAcquisitionSettings> acqs) {
@@ -290,6 +296,7 @@ public class CustomAcqEngine {
             r.run();
             return;
          } catch (Exception e) {
+            e.printStackTrace();
             IJ.log(getCurrentDateAndTime() + ": Problem "+commandName+ "\n Retry #" + i + " in " + DELWAY_BETWEEN_RETRIES_MS + " ms");
             Thread.sleep(DELWAY_BETWEEN_RETRIES_MS);
          }

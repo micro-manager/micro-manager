@@ -29,28 +29,27 @@ import surfacesandregions.SurfaceManager;
  * Manager class for an unsorted list of paired values
  */
 public class CovariantPairingsManager {
-   
 
    private ArrayList<CovariantPairing> pairs_ = new ArrayList<CovariantPairing>();
    private MultipleAcquisitionManager multiAcqManager_;
    private static CovariantPairingsManager singleton_;
    private GUI gui_;
    private CovariantPairingsTableModel pairingsTableModel_;
-   
+
    public CovariantPairingsManager(GUI gui, MultipleAcquisitionManager multiAcqManager) {
       multiAcqManager_ = multiAcqManager;
       singleton_ = this;
       gui_ = gui;
    }
-   
+
    public static CovariantPairingsManager getInstance() {
       return singleton_;
    }
-   
+
    public boolean isPairActiveForCurrentAcq(int index) {
       return gui_.getActiveAcquisitionSettings().hasPairing(pairs_.get(index));
    }
-   
+
    public void enablePairingForCurrentAcq(int index, boolean enable) {
       if (enable) {
          gui_.getActiveAcquisitionSettings().addPropPairing(pairs_.get(index));
@@ -59,11 +58,11 @@ public class CovariantPairingsManager {
       }
       gui_.refreshAcqTabTitleText();
    }
-   
+
    public void deleteValuePair(int pairingIndex, int valueIndex) {
       pairs_.get(pairingIndex).deleteValuePair(valueIndex);
    }
-  
+
    public void addPair(CovariantPairing pair) {
       pairs_.add(pair);
       //enable this pair for the acquisitiuon currently showing
@@ -71,7 +70,7 @@ public class CovariantPairingsManager {
       pairingsTableModel_.fireTableDataChanged();
       gui_.selectNewCovariantPair();
    }
-   
+
    public void deletePair(CovariantPairing pair) {
       //Remove from all acquisiton settings that have a reference
       for (int i = 0; i < multiAcqManager_.getSize(); i++) {
@@ -80,13 +79,13 @@ public class CovariantPairingsManager {
       //now remove from the list of pairings
       pairs_.remove(pair);
       pairingsTableModel_.fireTableDataChanged();
-      
+
    }
 
    public CovariantPairing getPair(int index) {
       return index < pairs_.size() ? pairs_.get(index) : null;
    }
-   
+
    public int getNumPairings() {
       return pairs_.size();
    }
@@ -94,12 +93,13 @@ public class CovariantPairingsManager {
    public void registerCovariantPairingsTableModel(CovariantPairingsTableModel model) {
       pairingsTableModel_ = model;
    }
-   
+
    public void loadPairingsFile(GUI gui) {
       File selectedFile = null;
       if (JavaUtils.isMac()) {
          FileDialog fd = new FileDialog(gui, "Save covariant pairing values", FileDialog.LOAD);
          fd.setFilenameFilter(new FilenameFilter() {
+
             @Override
             public boolean accept(File dir, String name) {
                return name.endsWith(".txt") || name.endsWith(".TXT");
@@ -140,7 +140,7 @@ public class CovariantPairingsManager {
             sb.append("\n");
             line = br.readLine();
          }
-         fileContents =  sb.toString();
+         fileContents = sb.toString();
          br.close();
       } catch (IOException e) {
          ReportingUtils.logError("Problem reading file");
@@ -163,50 +163,55 @@ public class CovariantPairingsManager {
          CovariantPairing pairing = new CovariantPairing(independent, dependent);
          for (int i = 1; i < lines.length; i++) {
             String[] vals = lines[i].split(",");
-              CovariantValue iVal = independent.getType() == CovariantType.STRING ? new CovariantValue(vals[0]) :
-                    independent.getType() == CovariantType.DOUBLE ? new CovariantValue(Double.parseDouble(vals[0])) :
-                     new CovariantValue(Integer.parseInt(vals[0]));
-             CovariantValue dVal = dependent.getType() == CovariantType.STRING ? new CovariantValue(vals[1]) :
-                    dependent.getType() == CovariantType.DOUBLE ? new CovariantValue(Double.parseDouble(vals[1])) :
-                     new CovariantValue(Integer.parseInt(vals[1]));   
+            CovariantValue iVal = independent.getType() == CovariantType.STRING ? new CovariantValue(vals[0])
+                    : independent.getType() == CovariantType.DOUBLE ? new CovariantValue(Double.parseDouble(vals[0]))
+                    : new CovariantValue(Integer.parseInt(vals[0]));
+            CovariantValue dVal = dependent.getType() == CovariantType.STRING ? new CovariantValue(vals[1])
+                    : dependent.getType() == CovariantType.DOUBLE ? new CovariantValue(Double.parseDouble(vals[1]))
+                    : new CovariantValue(Integer.parseInt(vals[1]));
             pairing.addValuePair(iVal, dVal);
          }
          this.addPair(pairing);
       }
    }
-   
-   private Covariant initCovariantFromString(String covariantName) throws Exception{
+
+   private Covariant initCovariantFromString(String covariantName) throws Exception {
       Covariant cov;
       if (covariantName.startsWith(SinglePropertyOrGroup.GROUP_PREFIX)) {
-            cov = new SinglePropertyOrGroup();
-            String groupName = covariantName.substring(SinglePropertyOrGroup.GROUP_PREFIX.length());
-            //check that group exists
-            if (!Arrays.asList(MMStudio.getInstance().getCore().getAvailableConfigGroups().toArray()).contains(groupName)) {
-               JOptionPane.showMessageDialog(null, "Group: \"" + groupName + "\"is not present in current config and will not be loaded");
-               throw new Exception();
-            }
-            //group exists, initialize its representative object
-            ((SinglePropertyOrGroup) cov).readGroupValuesFromConfig(groupName);
-         } else if (covariantName.startsWith(SurfaceData.PREFIX)) {
-            //check if there is a surface with a valid name for this data
-            String surfaceName = covariantName.substring(SurfaceData.PREFIX.length()).split("--")[0];
-            SurfaceInterpolator surface = SurfaceManager.getInstance().getSurfaceNamed(surfaceName);  
-            if (surface == null) {
-               JOptionPane.showMessageDialog(null, "No surface named \"" + surfaceName + "\"found. Skipping covariant pairing");
-               throw new Exception();
-            }
-            cov = new SurfaceData(surface, surfaceName);
-         } else {
-            //its a property
-            cov = new SinglePropertyOrGroup();
-            String device = covariantName.split("-")[0];
-            String propName = covariantName.split("-")[1];
-            if (! MMStudio.getInstance().getCore().hasProperty(device, propName)) {
-               JOptionPane.showMessageDialog(null, "Cannot locate property: \"" + covariantName + "\". Skipping covariant pairing");
-               throw new Exception();
-            }
-            ((SinglePropertyOrGroup) cov).readFromCore(device, propName, false);
+         cov = new SinglePropertyOrGroup();
+         String groupName = covariantName.substring(SinglePropertyOrGroup.GROUP_PREFIX.length());
+         //check that group exists
+         if (!Arrays.asList(MMStudio.getInstance().getCore().getAvailableConfigGroups().toArray()).contains(groupName)) {
+            JOptionPane.showMessageDialog(null, "Group: \"" + groupName + "\"is not present in current config and will not be loaded");
+            throw new Exception();
          }
+         //group exists, initialize its representative object
+         ((SinglePropertyOrGroup) cov).readGroupValuesFromConfig(groupName);
+      } else if (covariantName.startsWith(SurfaceData.PREFIX)) {
+         //check if there is a surface with a valid name for this data
+         String surfaceName = covariantName.substring(SurfaceData.PREFIX.length()).split("--")[0];
+         SurfaceInterpolator surface = SurfaceManager.getInstance().getSurfaceNamed(surfaceName);
+         if (surface == null) {
+            JOptionPane.showMessageDialog(null, "No surface named \"" + surfaceName + "\"found. Skipping covariant pairing");
+            throw new Exception();
+         }
+         try {
+            cov = new SurfaceData(surface, "--" + covariantName.split("--")[1]);
+         } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "Unknown surface data type. Skipping covariant pairing");
+            throw new Exception();
+         }
+      } else {
+         //its a property
+         cov = new SinglePropertyOrGroup();
+         String device = covariantName.split("-")[0];
+         String propName = covariantName.split("-")[1];
+         if (!MMStudio.getInstance().getCore().hasProperty(device, propName)) {
+            JOptionPane.showMessageDialog(null, "Cannot locate property: \"" + covariantName + "\". Skipping covariant pairing");
+            throw new Exception();
+         }
+         ((SinglePropertyOrGroup) cov).readFromCore(device, propName, false);
+      }
       return cov;
    }
 
@@ -237,7 +242,7 @@ public class CovariantPairingsManager {
          name += ".txt";
       }
       selectedFile = new File(new File(selectedFile.getParent()).getPath() + File.separator + name);
-      
+
       if (selectedFile.exists()) {
          int reply = JOptionPane.showConfirmDialog(null, "OVerwrite exisitng file?", "Confirm overwrite", JOptionPane.YES_NO_OPTION);
          if (reply == JOptionPane.NO_OPTION) {
@@ -250,7 +255,7 @@ public class CovariantPairingsManager {
          selectedFile.createNewFile();
          FileWriter writer = new FileWriter(selectedFile);
          for (CovariantPairing pairing : pairs_) {
-            writer.write(pairing.getIndependentName() + "," + pairing.getDependentName() + "\n");
+            writer.write(pairing.getIndependentName(false) + "," + pairing.getDependentName(false) + "\n");
             for (int i = 0; i < pairing.getNumPairings(); i++) {
                writer.write(pairing.getValue(0, i).toString() + "," + pairing.getValue(1, i).toString() + "\n");
             }
@@ -262,5 +267,9 @@ public class CovariantPairingsManager {
          ReportingUtils.showError("Couldn't write file");
          return;
       }
+   }
+
+   public void surfaceorRegionNameChanged() {
+      pairingsTableModel_.fireTableDataChanged();
    }
 }

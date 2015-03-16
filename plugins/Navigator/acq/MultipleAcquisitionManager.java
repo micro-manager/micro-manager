@@ -232,7 +232,7 @@ public class MultipleAcquisitionManager {
                if (managerThread_.isInterrupted()) {
                   break; //user aborted
                }
-               //mark as running
+               //mark all in parallel group as running
                for (int i = 0; i < numberInGroup_.get(groupIndex); i++) {
                   acqStatus_[getFirstIndexOfGroup(groupIndex) + i] = "Running";
                   gui_.repaint();

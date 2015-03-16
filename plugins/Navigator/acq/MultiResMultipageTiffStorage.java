@@ -54,7 +54,7 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
          yOverlap_ = overlapY;
          if (summaryMetadata != null) {
             try {
-               byteDepth_ = MDUtils.getBytesPerPixel(summaryMD_);
+               byteDepth_ = MDUtils.getBytesPerPixel(summaryMetadata);
                fullResImageWidth_ = MDUtils.getWidth(summaryMetadata);
                fullResImageHeight_ = MDUtils.getHeight(summaryMetadata);
                tileWidth_ = fullResImageWidth_ - xOverlap_;
@@ -493,7 +493,11 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
    public void finished() {
       fullResStorage_.finished();
       for (TaggedImageStorageMultipageTiff s : lowResStorages_.values()) {
-         s.finished();
+         if (s != null) {
+            //s shouldn't be null ever, this check is to prevent window from getting into unclosable state
+            //when other bugs prevent storage from being properly created
+            s.finished();
+         }
       }
       finished_ = true;
    }

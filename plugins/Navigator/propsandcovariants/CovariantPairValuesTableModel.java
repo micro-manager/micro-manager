@@ -35,7 +35,7 @@ public class CovariantPairValuesTableModel extends AbstractTableModel{
       if (pair_ == null) {
          return index == 0 ? " " : " ";
       }
-      return index == 0 ? pair_.getIndependentName() : pair_.getDependentName();
+      return index == 0 ? pair_.getIndependentName(true) : pair_.getDependentName(true);
    }
 
    @Override

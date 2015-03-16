@@ -11,7 +11,7 @@ import propsandcovariants.CovariantPairing;
 /**
  * Information about the acquisition of a single image
  */
-public class AcquisitionEvent {
+public class AcquisitionEvent implements Runnable{
        
    final public Acquisition acquisition_;
    final public int timeIndex_, sliceIndex_, channelIndex_, positionIndex_;
@@ -45,6 +45,11 @@ public class AcquisitionEvent {
    @Override
    public String toString() {
       return "P: " + positionIndex_ + "\t\tT: " + timeIndex_ + "\t\tZ: " + sliceIndex_ + "\t\tC: " + channelIndex_; 
+   }
+
+   @Override
+   public void run() {
+      CustomAcqEngine.getInstance().runEvent(this);
    }
    
 }

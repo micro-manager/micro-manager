@@ -6,17 +6,11 @@ package acq;
 
 import coordinates.XYStagePosition;
 import gui.SettingsDialog;
-import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
-import org.json.JSONObject;
 import org.micromanager.MMStudio;
-import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
 import surfacesandregions.Point3d;
 
@@ -26,7 +20,6 @@ import surfacesandregions.Point3d;
  */
 public class FixedAreaAcquisition extends Acquisition {
 
-   private static final int ACQUISITION_EVENT_BUFFER_SIZE = 100;
    private volatile boolean paused_ = false;
    private FixedAreaAcquisitionSettings settings_;
    private int numTimePoints_;
@@ -88,6 +81,7 @@ public class FixedAreaAcquisition extends Acquisition {
          throw new RuntimeException("Abort request interrupted");
       }
       eventGeneratingThread_ = null;
+      events_.clear();
       engineOutputQueue_.clear();
       //signal image sink that it is done
       engineOutputQueue_.add(new TaggedImage(null, null));
@@ -187,20 +181,9 @@ public class FixedAreaAcquisition extends Acquisition {
                   //get highest possible z position to image, which is slice index 0
                   double zTop = getZTopCoordinate();
                   int sliceIndex = -1;
-                  while (true) {
-                     //if buffer is full of events waiting to execute, wait
-                     while (events_.size() >= ACQUISITION_EVENT_BUFFER_SIZE) {
-                        try {
-                           Thread.sleep(5);
-                        } catch (InterruptedException ex) {
-                           //thread has been interrupted due to abort request, return;
-                           return;
-                        }
-                     }
-
+                  while (true) {                   
                      sliceIndex++;
                      double zPos = zTop + sliceIndex * zStep_;
-
                      if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.REGION_2D) {
                         //2D region
                         if (sliceIndex > 0) {
@@ -219,17 +202,18 @@ public class FixedAreaAcquisition extends Acquisition {
 
                      AcquisitionEvent event = new AcquisitionEvent(FixedAreaAcquisition.this, timeIndex, channelIndex, sliceIndex,
                              positionIndex, zPos, position.getCenter().x, position.getCenter().y, settings_.propPairings_);
-                     if (Thread.interrupted()) {
-                        //Acquisition has been aborted, clear pending events and return
-                        events_.clear();
+
+                     try {
+                        events_.put(event); //event generator will block if event queueu is full
+                     } catch (InterruptedException ex) {
+                        //aborted acq
                         return;
                      }
-                     addEvent(event);
                   }
                }
                
                if (timeIndex == numTimePoints_ - 1) {
-                  //acquisition now finished, add event with null ac w field so engine will mark acquisition as finished
+                  //acquisition now finished, add event with null acq field so engine will mark acquisition as finished
                   events_.add(AcquisitionEvent.createAcquisitionFinishedEvent(FixedAreaAcquisition.this));
                }
 
@@ -243,7 +227,7 @@ public class FixedAreaAcquisition extends Acquisition {
                }
                //do end of timepoint stuff (autofocus, swap to another acq, etc)
               acqGroup_.finishedTimePoint(FixedAreaAcquisition.this);
-               endOfTimePoint(timeIndex);
+              endOfTimePoint(timeIndex);
             }
          }
       }, "Fixed Area Acquisition Event generating thread");

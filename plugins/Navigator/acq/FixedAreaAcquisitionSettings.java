@@ -97,7 +97,7 @@ public class FixedAreaAcquisitionSettings  {
    
    private boolean checkForRedundantPairing(CovariantPairing pair) {
       for (CovariantPairing p : propPairings_) {
-         if (p.getIndependentName().equals(pair.getIndependentName()) && p.getDependentName().equals(pair.getDependentName())) {
+         if (p.getIndependentName(false).equals(pair.getIndependentName(false)) && p.getDependentName(false).equals(pair.getDependentName(false))) {
             return true;
          }
       }

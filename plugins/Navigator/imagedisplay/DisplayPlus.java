@@ -479,6 +479,8 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
 
          @Override
          public void mousePressed(MouseEvent e) {
+           //to make zoom respond properly when switching between windows
+           canvas_.requestFocusInWindow();
             if (SwingUtilities.isRightMouseButton(e)) {
                mouseDragStartPointRight_ = e.getPoint();
             } else if (SwingUtilities.isLeftMouseButton(e)) {

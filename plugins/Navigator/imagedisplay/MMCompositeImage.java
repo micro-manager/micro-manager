@@ -2,6 +2,7 @@ package imagedisplay;
 
 import com.google.common.eventbus.EventBus;
 import ij.CompositeImage;
+import ij.IJ;
 import ij.ImagePlus;
 import ij.plugin.frame.ContrastAdjuster;
 import ij.process.LUT;
@@ -117,7 +118,7 @@ public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
 
    @Override
    public synchronized void updateImage() {
-        superUpdateImage();
+      superUpdateImage();
    }
 
    private void superUpdateImage() {
@@ -125,28 +126,37 @@ public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
 
          @Override
          public void run() {
-            // Need to set this field to null, or else an infinite loop can be 
-            // entered when the imageJ contrast adjuster is open
-            Object curVal = null;
             try {
-               curVal = JavaUtils.getRestrictedFieldValue(null,
-                       ContrastAdjuster.class, "instance");
-               JavaUtils.setRestrictedFieldValue(null, ContrastAdjuster.class, "instance", null);
-            } catch (NoSuchFieldException e) {
-               ReportingUtils.logError(e, "ImageJ ContrastAdjuster doesn't have field named instance");
-            }
-          
-            MMCompositeImage.super.updateImage();
+               // Need to set this field to null, or else an infinite loop can be 
+               // entered when the imageJ contrast adjuster is open
+               Object curVal = null;
+               try {
+                  curVal = JavaUtils.getRestrictedFieldValue(null,
+                          ContrastAdjuster.class, "instance");
+                  JavaUtils.setRestrictedFieldValue(null, ContrastAdjuster.class, "instance", null);
+               } catch (NoSuchFieldException e) {
+                  ReportingUtils.logError(e, "ImageJ ContrastAdjuster doesn't have field named instance");
+               }
 
-            // Restore the value we had previously set. Bizarrely, not doing this
-            // creates significant memory leaks (several MB per file we open/close).
-            // I have no idea why.
-            try {
-               JavaUtils.setRestrictedFieldValue(null, ContrastAdjuster.class,
-                       "instance", curVal);
-            } catch (NoSuchFieldException e) {
-               ReportingUtils.logError(e, "Couldn't restore ImageJ ContrastAdjuster instance.");
+               MMCompositeImage.super.updateImage();
 
+               // Restore the value we had previously set. Bizarrely, not doing this
+               // creates significant memory leaks (several MB per file we open/close).
+               // I have no idea why.
+               try {
+                  JavaUtils.setRestrictedFieldValue(null, ContrastAdjuster.class,
+                          "instance", curVal);
+               } catch (NoSuchFieldException e) {
+                  ReportingUtils.logError(e, "Couldn't restore ImageJ ContrastAdjuster instance.");
+
+               }
+
+            } catch (NullPointerException exx) {
+               exx.printStackTrace();
+               //swallow null pointer exception that happens at startup of acq and breaks everything
+               //exception is because rgbPixels gets set to null while CompositeImage.updateImage is running
+               //TODO: disable at soem point
+               IJ.log("Null RGB pixels");
             }
          }
       };

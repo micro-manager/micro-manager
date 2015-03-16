@@ -7,9 +7,11 @@ package propsandcovariants;
 import acq.AcquisitionEvent;
 import coordinates.AffineUtils;
 import coordinates.XYStagePosition;
+import ij.IJ;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
+import java.util.Arrays;
 import java.util.List;
 import org.micromanager.utils.ReportingUtils;
 import surfacesandregions.SurfaceInterpolator;
@@ -32,9 +34,13 @@ public class SurfaceData implements Covariant {
    private String category_;
    private SurfaceInterpolator surface_;
    
-   public SurfaceData(SurfaceInterpolator surface, String type) {
+   public SurfaceData(SurfaceInterpolator surface, String type) throws Exception {
       category_ = type;
       surface_ = surface;
+      if (!Arrays.asList(enumerateDataTypes()).contains(type)) {
+         //not a recognized type
+         throw new Exception();
+      }
    }
    
    public static String[] enumerateDataTypes() {
@@ -128,9 +134,7 @@ public class SurfaceData implements Covariant {
     * @param min true to get min, false to get max
     * @return 
     */
-   private double distanceToSurface(Point2D.Double[] corners, double zVal, boolean min) {
-      long start = System.currentTimeMillis();
-      
+   private double distanceToSurface(Point2D.Double[] corners, double zVal, boolean min) {      
       //check a grid of points spanning entire position        
       //square is aligned with axes in pixel space, so convert to pixel space to generate test points
       double xSpan = corners[2].getX() - corners[0].getX();
@@ -157,15 +161,13 @@ public class SurfaceData implements Covariant {
             transform.transform(new Point2D.Double(x, y), stageCoords);
             //test point for inclusion of position
             Float interpVal = surface_.getCurrentInterpolation().getInterpolatedValue(stageCoords.x, stageCoords.y, true);
-            minDistance = Math.min(zVal - interpVal,minDistance);
-            maxDistance = Math.max(zVal - interpVal,maxDistance);
             if (interpVal == null) {
-               ReportingUtils.showError("Null surface interpolation value!");
+              IJ.log("Null surface interpolation value!");
             }
+            minDistance = Math.min(zVal - interpVal, minDistance);
+            maxDistance = Math.max(zVal - interpVal, maxDistance);
          }
       }
-      
-      System.out.println("Minmax distance calc time: " + (System.currentTimeMillis() - start));
       return min ? minDistance : maxDistance;
    }
 

@@ -254,12 +254,12 @@ public class CovariantPairing {
       return valueMap_.size();
    }
    
-   public String getIndependentName() {
-      return independent_.getName();
+   public String getIndependentName(boolean abbreviated) {
+      return abbreviated ? independent_.getAbbreviatedName() : independent_.getName();
    }
    
-   public String getDependentName() {
-      return dependent_.getName();
+   public String getDependentName(boolean abbreviated) {
+      return abbreviated ? dependent_.getAbbreviatedName() : dependent_.getName();
    }
 
    /**

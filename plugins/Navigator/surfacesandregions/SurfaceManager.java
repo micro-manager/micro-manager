@@ -6,6 +6,7 @@ import imagedisplay.DisplayPlus;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import org.micromanager.MMStudio;
+import propsandcovariants.CovariantPairingsManager;
 
 /**
  *
@@ -124,6 +125,7 @@ public class SurfaceManager {
          m.update();
       }
       tableModel_.fireTableDataChanged();
+      CovariantPairingsManager.getInstance().surfaceorRegionNameChanged();
    }
 
    /**

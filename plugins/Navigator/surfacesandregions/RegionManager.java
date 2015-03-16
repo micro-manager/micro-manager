@@ -2,6 +2,7 @@ package surfacesandregions;
 
 import imagedisplay.DisplayPlus;
 import java.util.ArrayList;
+import propsandcovariants.CovariantPairingsManager;
 
 /**
  *
@@ -106,5 +107,6 @@ public class RegionManager {
          m.update();
       }
       tableModel_.fireTableDataChanged();
+      CovariantPairingsManager.getInstance().surfaceorRegionNameChanged();
    }
 }

@@ -547,7 +547,11 @@ public abstract class SurfaceInterpolator implements XYFootprint {
    Collection<SurfaceData> getData() {
       ArrayList<SurfaceData> list = new ArrayList<SurfaceData>();
       for (String datumName : SurfaceData.enumerateDataTypes()) {
-         list.add(new SurfaceData(this, datumName));
+         try {
+            list.add(new SurfaceData(this, datumName));
+         } catch (Exception e) {
+            //this will never happen
+         }
       }
       return list;
    }

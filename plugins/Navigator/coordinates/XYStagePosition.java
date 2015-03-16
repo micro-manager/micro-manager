@@ -46,10 +46,10 @@ public class XYStagePosition {
          fullTileCorners_[1] = new Point2D.Double();
          fullTileCorners_[2] = new Point2D.Double();
          fullTileCorners_[3] = new Point2D.Double();
-         transform.transform(new Point2D.Double(-fullTileWidth / 2, -fullTileHeight / 2), displayedTileCorners_[0]);
-         transform.transform(new Point2D.Double(-fullTileWidth / 2, fullTileHeight / 2), displayedTileCorners_[1]);
-         transform.transform(new Point2D.Double(fullTileWidth / 2, fullTileHeight / 2), displayedTileCorners_[2]);
-         transform.transform(new Point2D.Double(fullTileWidth / 2, -fullTileHeight / 2), displayedTileCorners_[3]);
+         transform.transform(new Point2D.Double(-fullTileWidth / 2, -fullTileHeight / 2), fullTileCorners_[0]);
+         transform.transform(new Point2D.Double(-fullTileWidth / 2, fullTileHeight / 2), fullTileCorners_[1]);
+         transform.transform(new Point2D.Double(fullTileWidth / 2, fullTileHeight / 2), fullTileCorners_[2]);
+         transform.transform(new Point2D.Double(fullTileWidth / 2, -fullTileHeight / 2), fullTileCorners_[3]);
       }
       gridCol_ = col;
       gridRow_ = row;
