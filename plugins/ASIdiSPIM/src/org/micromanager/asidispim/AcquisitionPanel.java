@@ -1250,7 +1250,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // otherwise (no channels, software switching, slice by slice HW switching)
       //   just do one volume per start trigger
       int numVolumesPerTrigger = 1;
-      if (props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_MULTICHANNEL_MODE)
+      if (multiChannelPanel_.isPanelEnabled() &&
+            props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_MULTICHANNEL_MODE)
             == MultichannelModes.Keys.VOLUME_HW.getPrefCode()) {
          if (hardwareTimepoints) {
             MyDialogUtils.showError("Cannot use hardware time points (small time point interval)"
@@ -1263,7 +1264,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       //  have the number of repeats pre-programmed (hardware timing)
       //  or let plugin send trigger for each time point (software timing)
       float delayRepeats = 0f;
-      if (hardwareTimepoints) {
+      if (hardwareTimepoints && useTimepointsCB_.isSelected()) {
          float volumeDurationMs = (float) computeActualVolumeDuration();
          float volumeIntervalMs = (float) getTimePointInterval() * 1000f;
          delayRepeats = volumeIntervalMs - volumeDurationMs;
