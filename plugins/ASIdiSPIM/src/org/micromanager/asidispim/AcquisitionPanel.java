@@ -484,7 +484,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       timepointPanel_.add(numTimepoints_, "wrap");
 
       timepointPanel_.add(new JLabel("Interval [s]:"));
-      acquisitionInterval_ = pu.makeSpinnerFloat(1, 32000, 0.1,
+      acquisitionInterval_ = pu.makeSpinnerFloat(0.1, 32000, 0.1,
               Devices.Keys.PLUGIN,
               Properties.Keys.PLUGIN_ACQUISITION_INTERVAL, 60);
       acquisitionInterval_.addChangeListener(recalculateTimeLapseDisplay);
@@ -813,6 +813,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       return (Integer) numTimepoints_.getValue();
    }
    
+   private double getTimePointInterval() {
+      return (double) PanelUtils.getSpinnerFloatValue(acquisitionInterval_);
+   }
+   
    private int getNumChannels() {
       if (!multiChannelPanel_.isPanelEnabled()) {
          return 1;
@@ -1037,8 +1041,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * @return duration in s
     */
    private double computeActualTimeLapseDuration() {
-      double duration = (getNumTimepoints() - 1) * 
-            PanelUtils.getSpinnerFloatValue(acquisitionInterval_)
+      double duration = (getNumTimepoints() - 1) * getTimePointInterval() 
             + computeActualVolumeDuration()/1000;
       return duration;
    }
@@ -1213,9 +1216,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * and otherwise gets controller all ready for acquisition
     * (except for final trigger).
     * @param side
+    * @param hardwareTimepoints
     * @return false if there was some error that should abort acquisition
     */
-   private boolean prepareControllerForAquisition(Devices.Sides side) {
+   private boolean prepareControllerForAquisition(Devices.Sides side, boolean hardwareTimepoints) {
       
       Devices.Keys galvoDevice = Devices.getSideSpecificKey(Devices.Keys.GALVOA, side);
       Devices.Keys piezoDevice = Devices.getSideSpecificKey(Devices.Keys.PIEZOA, side);
@@ -1241,13 +1245,31 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       props_.setPropValue(galvoDevice, Properties.Keys.SPIM_NUM_SLICES_PER_PIEZO,
             numSlicesPerPiezo, skipScannerWarnings);
       
-      // if we are changing color volume by volume then set controller to do multiple volumes per start trigger
-      // otherwise just set to 1 volume per start trigger
+      // set controller to do multiple volumes per start trigger if we are doing
+      //   multiple channels with  hardware switching of channel volume by volume
+      // otherwise (no channels, software switching, slice by slice HW switching)
+      //   just do one volume per start trigger
       int numVolumesPerTrigger = 1;
       if (props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_MULTICHANNEL_MODE)
             == MultichannelModes.Keys.VOLUME_HW.getPrefCode()) {
+         if (hardwareTimepoints) {
+            MyDialogUtils.showError("Cannot use hardware time points (small time point interval)"
+                  + " with hardware channel switching volume-by-volume.");
+            return false;
+         }
          numVolumesPerTrigger = getNumChannels();
       }
+      // can either trigger controller once for all the timepoints and
+      //  have the number of repeats pre-programmed (hardware timing)
+      //  or let plugin send trigger for each time point (software timing)
+      float delayRepeats = 0f;
+      if (hardwareTimepoints) {
+         float volumeDurationMs = (float) computeActualVolumeDuration();
+         float volumeIntervalMs = (float) getTimePointInterval() * 1000f;
+         delayRepeats = volumeIntervalMs - volumeDurationMs;
+         numVolumesPerTrigger = getNumTimepoints();
+      }
+      props_.setPropValue(galvoDevice, Properties.Keys.SPIM_DELAY_REPEATS, delayRepeats, skipScannerWarnings);
       props_.setPropValue(galvoDevice, Properties.Keys.SPIM_NUM_REPEATS, numVolumesPerTrigger, skipScannerWarnings);
       
       AcquisitionModes.Keys spimMode = (AcquisitionModes.Keys) spimMode_.getSelectedItem();
@@ -1663,18 +1685,18 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          return false;
       }
       double volumeDuration = computeActualVolumeDuration();
+      // use hardware timing if < 1 second between timepoints
+      // experimentally need ~0.5 sec to set up acquisition, this gives a bit of cushion
+      boolean hardwareTimepoints = false;
+      if (timepointsIntervalMs < (volumeDuration + 750)
+            && getNumTimepoints() > 1) {
+         hardwareTimepoints = true;
+      }
       if (getNumTimepoints() > 1) {
          if (timepointsIntervalMs < volumeDuration) {
             MyDialogUtils.showError("Time point interval shorter than" +
                   " the time to collect a single volume.\n");
             return false;
-         }
-         // TODO verify if 0.5 second is good value for overhead time
-         if (timepointsIntervalMs < (volumeDuration + 500)) {
-            MyDialogUtils.showError("Micro-Manager requires ~0.5 second overhead time "
-                  + "to finish up a volume before starting next one. "
-                  + "Pester the developers if you need faster, it is probably possible.");
-          return false;
          }
       }
       if (nrRepeats > 10 && separateTimePointsCB_.isSelected()) {
@@ -1731,13 +1753,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       // Set up controller SPIM parameters (including from Setup panel settings)
       if (sideActiveA) {
-         boolean success = prepareControllerForAquisition(Devices.Sides.A);
+         boolean success = prepareControllerForAquisition(Devices.Sides.A, hardwareTimepoints);
          if (! success) {
             return false;
          }
       }
       if (sideActiveB) {
-         boolean success = prepareControllerForAquisition(Devices.Sides.B);
+         boolean success = prepareControllerForAquisition(Devices.Sides.B, hardwareTimepoints);
          if (! success) {
             return false;
          }
@@ -1747,8 +1769,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_PRESET, 
             Properties.Values.PLOGIC_PRESET_3, true);
 
-      long acqStart = System.currentTimeMillis();
       boolean nonfatalError = false;
+      long acqButtonStart = System.currentTimeMillis();
 
       // do not want to return from within this loop
       // loop is executed once per acquisition (i.e. once if separate viewers isn't selected)
@@ -1854,12 +1876,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             sink.start();
 
             // Loop over all the times we trigger the controller's acquisition
-            // If the interval between frames is shorter than the time to acquire
-            // them, we can switch to hardware based solution.  Not sure how important 
-            // that feature is, so leave it out for now.
+            // For hardware-timed timepoints then we only trigger the controller once
+            long acqStart = System.currentTimeMillis();
             for (int timePoint = 0; timePoint < nrFrames; timePoint++) {
 
-               // handle intervals between time points
+               // handle intervals between (software-timed) time points
                long acqNow = System.currentTimeMillis();
                long delay = acqStart + timePoint * timepointsIntervalMs - acqNow;
                while (delay > 0 && !cancelAcquisition_.get()) {
@@ -2062,7 +2083,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                // changed r14705 (2014-11-24)
                // gui_.closeAcquisition(acqName);
                ReportingUtils.logMessage("diSPIM plugin acquisition " + acqName + 
-                     " took: " + (System.currentTimeMillis() - acqStart) + "ms");
+                     " took: " + (System.currentTimeMillis() - acqButtonStart) + "ms");
                
             } catch (Exception ex) {
                // exception while stopping sequence acquisition, not sure what to do...
