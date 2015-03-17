@@ -139,6 +139,8 @@ struct ZeissDeviceInfo {
       lowerHardwareStop = 0;
       status = 0;
       measuringOrigin = 0;
+      trajectoryVelocity = 0;
+      trajectoryAcceleration = 0;
       busy = false;
       present = false;
    }
@@ -155,8 +157,8 @@ struct ZeissDeviceInfo {
    ZeissLong typeDeviation;
    ZeissLong maxDeviation;
    ZeissLong measuringOrigin;
-   ZeissLong trajectoryVelocity_;
-   ZeissLong trajectoryAcceleration_;
+   ZeissLong trajectoryVelocity;
+   ZeissLong trajectoryAcceleration;
    ZeissULong status;
    std::vector<std::string> deviceScalings;
    std::map<std::string, std::vector<ZeissLong> > nativeScale;

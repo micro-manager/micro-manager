@@ -1760,7 +1760,7 @@ int ZeissHub::SetModelStatus(ZeissUByte devId, ZeissULong status) {
  */
 int ZeissHub::SetTrajectoryVelocity(ZeissUByte devId, ZeissLong velocity) {
    MMThreadGuard guard(mutex_);
-   deviceInfo_[devId].trajectoryVelocity_ = velocity;
+   deviceInfo_[devId].trajectoryVelocity = velocity;
    return DEVICE_OK;
 }
 
@@ -1769,7 +1769,7 @@ int ZeissHub::SetTrajectoryVelocity(ZeissUByte devId, ZeissLong velocity) {
  */
 int ZeissHub::SetTrajectoryAcceleration(ZeissUByte devId, ZeissLong accel) {
    MMThreadGuard guard(mutex_);
-   deviceInfo_[devId].trajectoryAcceleration_ = accel;
+   deviceInfo_[devId].trajectoryAcceleration = accel;
    return DEVICE_OK;
 }
 
@@ -1860,3 +1860,46 @@ int ZeissHub::GetModelBusy(MM::Device& device, MM::Core& core, ZeissUByte devId,
    busy = deviceInfo_[devId].busy;
    return DEVICE_OK;
 }
+
+/*
+ * Starts initialize or returns cached position
+ */
+int ZeissHub::GetModelTrajectoryVelocity(MM::Device& device, MM::Core& core, ZeissUByte devId, ZeissLong& velocity) 
+{
+   if (! scopeInitialized_) {
+      int ret = Initialize(device, core);
+      if (ret != DEVICE_OK)
+         return ret;
+   }
+   {
+      MMThreadGuard guard(mutex_);
+      velocity = deviceInfo_[devId].trajectoryVelocity;
+   }
+   // TODO: Remove after debugging!!!
+   std::ostringstream os;
+   os << "GetModel TV is reporting TV " << velocity << " for device with ID: " << std::hex << (unsigned int) devId;
+   core.LogMessage (&device, os.str().c_str(), false);
+   return DEVICE_OK;
+}
+
+/*
+ * Starts initialize or returns cached position
+ */
+int ZeissHub::GetModelTrajectoryAcceleration(MM::Device& device, MM::Core& core, ZeissUByte devId, ZeissLong& acceleration) 
+{
+   if (! scopeInitialized_) {
+      int ret = Initialize(device, core);
+      if (ret != DEVICE_OK)
+         return ret;
+   }
+   {
+      MMThreadGuard guard(mutex_);
+      acceleration = deviceInfo_[devId].trajectoryAcceleration;
+   }
+   // TODO: Remove after debugging!!!
+   std::ostringstream os;
+   os << "GetModel TA is reporting TA " << acceleration << " for device with ID: " << std::hex << (unsigned int) devId;
+   core.LogMessage (&device, os.str().c_str(), false);
+   return DEVICE_OK;
+}
+
