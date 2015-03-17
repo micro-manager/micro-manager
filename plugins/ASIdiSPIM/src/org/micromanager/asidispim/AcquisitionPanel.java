@@ -172,6 +172,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final MMFrame sliceFrameAdvanced_;
    private SliceTiming sliceTiming_;
    private final MultiChannelSubPanel multiChannelPanel_;
+   private final Color[] colors = {Color.RED, Color.GREEN, Color.BLUE, Color.MAGENTA,
+            Color.PINK, Color.CYAN, Color.YELLOW, Color.ORANGE};
    
    public AcquisitionPanel(ScriptInterface gui, 
            Devices devices, 
@@ -1530,8 +1532,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    }
    
    private Color getChannelColor(int channelIndex) {
-      final Color[] colors = {Color.RED, Color.GREEN, Color.BLUE, Color.MAGENTA,
-            Color.PINK, Color.CYAN, Color.YELLOW, Color.ORANGE};
       return (colors[channelIndex % colors.length]);
    }
    
