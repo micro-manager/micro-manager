@@ -934,7 +934,7 @@ int BrightField::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 Disk::Disk () :
    initialized_ (false),
    name_ (g_CSUW1Disk),
-   numPos_ (3)
+   numPos_ (2)
 {
    InitializeDefaultErrorMessages();
 }
@@ -976,7 +976,7 @@ int Disk::Initialize()
 
    SetPositionLabel(0, "Disk 1");
    SetPositionLabel(1, "Disk 2");
-   SetPositionLabel(2, "BrightField");
+  // SetPositionLabel(2, "BrightField");
 
    ret = UpdateStatus();
    if (ret != DEVICE_OK) 
@@ -1005,10 +1005,10 @@ int Disk::Shutdown()
 ///////////////////////////////////////////////////////////////////////////////
 // Action handlers                                                           
 ///////////////////////////////////////////////////////////////////////////////
-// Native disk positions:
+// Hub disk positions:
 // -1 - BrightField (state 2)
-//  1 - Disk 1 (state 0)
-//  2 - Disk 2 (state 1)
+//  0 - Disk 1 (state 0)
+//  1 - Disk 2 (state 1)
 int Disk::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
@@ -1017,25 +1017,13 @@ int Disk::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
       int ret = g_hub.GetDiskPosition(*this, *GetCoreCallback(), pos);
       if (ret != DEVICE_OK)
          return ret;
-      if (pos == -1)
-         pProp->Set(2l);
-      else if (pos == 1)
-         pProp->Set(0l);
-      else if (pos == 2)
-         pProp->Set(2l);
-	  else
-	     ;         // TODO: Error!!!
+      pProp->Set( (long) pos);
    }
    else if (eAct == MM::AfterSet)
    {
       long state;
       pProp->Get(state);
-      int pos = 1;
-      if (state == 2)
-         pos = -1;
-      if (state == 1)
-         pos = 2;
-      return g_hub.SetDiskPosition(*this, *GetCoreCallback(), pos);
+      return g_hub.SetDiskPosition(*this, *GetCoreCallback(), state);
    }
 
    return DEVICE_OK;
