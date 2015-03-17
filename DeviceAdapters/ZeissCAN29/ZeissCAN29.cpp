@@ -694,6 +694,16 @@ int ZeissAxis::SetTrajectoryAcceleration(MM::Device& device, MM::Core& core, Zei
    return DEVICE_OK;
 }
 
+int ZeissAxis::GetTrajectoryVelocity(MM::Device& device, MM::Core& core, ZeissUByte devId, ZeissLong& velocity)
+{
+   return g_hub.GetModelTrajectoryVelocity(device, core, devId, velocity);
+}
+
+int ZeissAxis::GetTrajectoryAcceleration(MM::Device& device, MM::Core& core, ZeissUByte devId, ZeissLong& velocity)
+{
+   return g_hub.GetModelTrajectoryAcceleration(device, core, devId, velocity);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 // ZeissScope
@@ -1927,6 +1937,49 @@ int XYStage::OnVelocity(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;                                          
 }
 
+int XYStage::OnTrajectoryVelocity(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet) {
+      // we are lazy and only check the x axis
+      long velocity;
+      int ret = ZeissAxis::GetTrajectoryVelocity(*this, *GetCoreCallback(), g_StageXAxis, (ZeissLong&) velocity);
+      if (ret != DEVICE_OK)
+         return ret;
+      pProp->Set(velocity);
+   } else if (eAct == MM::AfterSet) {
+      long velocity;
+      pProp->Get(velocity);
+      int ret = ZeissAxis::SetTrajectoryVelocity(*this, *GetCoreCallback(), g_StageXAxis, (ZeissLong) velocity);
+      if (ret != DEVICE_OK)
+         return ret;
+      ret = ZeissAxis::SetTrajectoryVelocity(*this, *GetCoreCallback(), g_StageYAxis, (ZeissLong) velocity);
+      if (ret != DEVICE_OK)
+         return ret;
+   }
+   return DEVICE_OK;
+}
+
+int XYStage::OnTrajectoryAcceleration(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet) {
+      // we are lazy and only check the x axis
+      long accel;
+      int ret = ZeissAxis::GetTrajectoryAcceleration(*this, *GetCoreCallback(), g_StageXAxis, (ZeissLong&) accel);
+      if (ret != DEVICE_OK)
+         return ret;
+      pProp->Set(accel);
+   } else if (eAct == MM::AfterSet) {
+      long accel;
+      pProp->Get(accel);
+      int ret = ZeissAxis::SetTrajectoryAcceleration(*this, *GetCoreCallback(), g_StageXAxis, (ZeissLong) accel);
+      if (ret != DEVICE_OK)
+         return ret;
+      ret = ZeissAxis::SetTrajectoryAcceleration(*this, *GetCoreCallback(), g_StageYAxis, (ZeissLong) accel);
+      if (ret != DEVICE_OK)
+         return ret;
+   }
+   return DEVICE_OK;
+}
 
 /***********************************
  * Definite Focus
