@@ -276,8 +276,8 @@ int CScanner::Initialize()
    CreateProperty(g_ScannerBeamEnabledPropertyName, g_YesState, MM::String, false, pAct);
    AddAllowedValue(g_ScannerBeamEnabledPropertyName, g_NoState);
    AddAllowedValue(g_ScannerBeamEnabledPropertyName, g_YesState);
-   UpdateProperty(g_ScannerBeamEnabledPropertyName);  // calls UpdateIlluminationState()
    UpdateIlluminationState();
+   UpdateProperty(g_ScannerBeamEnabledPropertyName);
 
    // single-axis mode settings
    // todo fix firmware TTL initialization problem where SAM p=2 triggers by itself 1st time
@@ -500,21 +500,6 @@ int CScanner::Initialize()
 
    if (firmwareVersion_ > 2.875)  // 2.88+
    {
-      laserTTLenabled_ = hub_->IsDefinePresent(build, "MM_LASER_TTL");
-      if (laserTTLenabled_)
-      {
-         pAct = new CPropertyAction (this, &CScanner::OnLaserOutputMode);
-         CreateProperty(g_LaserOutputModePropertyName, "0", MM::String, false, pAct);
-         AddAllowedValue(g_LaserOutputModePropertyName, g_SPIMLaserOutputMode_0);
-         AddAllowedValue(g_LaserOutputModePropertyName, g_SPIMLaserOutputMode_1);
-         AddAllowedValue(g_LaserOutputModePropertyName, g_SPIMLaserOutputMode_2);
-         UpdateProperty(g_LaserOutputModePropertyName);
-
-         pAct = new CPropertyAction (this, &CScanner::OnLaserSwitchTime);
-         CreateProperty(g_LaserSwitchTimePropertyName, "0", MM::Float, false, pAct);
-         UpdateProperty(g_LaserSwitchTimePropertyName);
-      }
-
       // populate laser_side_ appropriately
       command.str("");
       command << "Z2B " << axisLetterX_ << "?";
@@ -530,6 +515,24 @@ int CScanner::Initialize()
          case 0: laser_side_ = 1; break;
          case 3:
          case 2: laser_side_ = 2; break;
+      }
+
+      laserTTLenabled_ = hub_->IsDefinePresent(build, "MM_LASER_TTL");
+      if (laserTTLenabled_)
+      {
+         pAct = new CPropertyAction (this, &CScanner::OnLaserOutputMode);
+         CreateProperty(g_LaserOutputModePropertyName, "0", MM::String, false, pAct);
+         AddAllowedValue(g_LaserOutputModePropertyName, g_SPIMLaserOutputMode_0);
+         AddAllowedValue(g_LaserOutputModePropertyName, g_SPIMLaserOutputMode_1);
+         AddAllowedValue(g_LaserOutputModePropertyName, g_SPIMLaserOutputMode_2);
+         UpdateProperty(g_LaserOutputModePropertyName);
+
+         pAct = new CPropertyAction (this, &CScanner::OnLaserSwitchTime);
+         CreateProperty(g_LaserSwitchTimePropertyName, "0", MM::Float, false, pAct);
+         UpdateProperty(g_LaserSwitchTimePropertyName);
+
+         // update the laser settings based on the beam on/off
+         SetIlluminationStateHelper(illuminationState_);
       }
    }
 
