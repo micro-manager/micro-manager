@@ -23,6 +23,7 @@ package org.micromanager.data.internal;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -457,7 +458,12 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       }
 
       try {
-         builder.channelNames(new String[] {MDUtils.getChannelName(tags)});
+         JSONArray names = tags.getJSONArray("ChNames");
+         String[] namesArr = new String[names.length()];
+         for (int i = 0; i < namesArr.length; ++i ){
+            namesArr[i] = names.getString(i);
+         }
+         builder.channelNames(namesArr);
       }
       catch (JSONException e) {
          ReportingUtils.logDebugMessage("SummaryMetadata failed to extract field channelNames");
@@ -544,10 +550,13 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
          result.put("Directory", directory_);
          MDUtils.setComments(result, comments_);
          result.put("ChannelGroup", channelGroup_);
-         // HACK: only preserve one channel name as there's only room for one
-         // in this method.
-         MDUtils.setChannelName(result,
-               (channelNames_ == null) ? "" : channelNames_[0]);
+         if (channelNames_ != null) {
+            JSONArray names = new JSONArray();
+            for (int i = 0; i < channelNames_.length; ++i) {
+               names.put(channelNames_[i]);
+            }
+            result.put("ChNames", names);
+         }
          // Manually set 0 for null Z-step since the parameter for setZStepUm
          // is a lowercase-d double.
          MDUtils.setZStepUm(result,
