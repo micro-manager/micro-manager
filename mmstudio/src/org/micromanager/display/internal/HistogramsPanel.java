@@ -48,6 +48,10 @@ import org.micromanager.internal.interfaces.Histograms;
 import org.micromanager.internal.utils.ContrastSettings;
 import org.micromanager.internal.utils.ReportingUtils;
 
+// HACK TODO: all methods that interact with channelPanels_ are synchronized
+// to prevent concurrent modification exceptions. In fact, I don't think we
+// really need this class in the first place, or at least we don't need it to
+// be so tightly-bound to the ChannelControlPanels it contains.
 public final class HistogramsPanel extends JPanel implements Histograms {
    private ArrayList<ChannelControlPanel> channelPanels_;
    private Datastore store_;
@@ -103,7 +107,7 @@ public final class HistogramsPanel extends JPanel implements Histograms {
       validate();
    }
    
-   public void fullScaleChannels() {
+   public synchronized void fullScaleChannels() {
       if (channelPanels_ == null) {
          return;
       }
@@ -115,7 +119,7 @@ public final class HistogramsPanel extends JPanel implements Histograms {
    }
 
    @Override
-   public ContrastSettings getChannelContrastSettings(int channel) {
+   public synchronized ContrastSettings getChannelContrastSettings(int channel) {
       if (channelPanels_ == null || channelPanels_.size() - 1 > channel) {
          return null;
       }
@@ -124,7 +128,7 @@ public final class HistogramsPanel extends JPanel implements Histograms {
               panel.getContrastMax(), panel.getContrastGamma());
    }
 
-   public void updateOtherDisplayCombos(int selectedIndex) {
+   public synchronized void updateOtherDisplayCombos(int selectedIndex) {
       if (updatingCombos_) {
          return;
       }
@@ -135,7 +139,7 @@ public final class HistogramsPanel extends JPanel implements Histograms {
       updatingCombos_ = false;
    }
 
-   public void setChannelDisplayModeFromFirst() {
+   public synchronized void setChannelDisplayModeFromFirst() {
       if (channelPanels_ == null || channelPanels_.size() <= 1) {
          return;
       }
@@ -144,7 +148,7 @@ public final class HistogramsPanel extends JPanel implements Histograms {
       channelPanels_.get(0).setDisplayComboIndex(displayIndex);
    }
 
-   public void setChannelContrastFromFirst() {
+   public synchronized void setChannelContrastFromFirst() {
       if (channelPanels_ == null || channelPanels_.size() <= 1) {
          return;
       }
@@ -156,7 +160,7 @@ public final class HistogramsPanel extends JPanel implements Histograms {
    }
 
    @Override
-   public void setChannelHistogramDisplayMax(int channelIndex, int histMax) {
+   public synchronized void setChannelHistogramDisplayMax(int channelIndex, int histMax) {
       if (channelPanels_ == null || channelPanels_.size() <= channelIndex) {
          return;
       }
@@ -174,7 +178,7 @@ public final class HistogramsPanel extends JPanel implements Histograms {
    }
 
    @Override
-   public void setChannelContrast(int channelIndex, int min, int max, double gamma) {
+   public synchronized void setChannelContrast(int channelIndex, int min, int max, double gamma) {
       if (channelIndex >= channelPanels_.size()) {
          return;
       }
@@ -182,7 +186,7 @@ public final class HistogramsPanel extends JPanel implements Histograms {
    }
    
    @Override
-   public void autoscaleAllChannels() {
+   public synchronized void autoscaleAllChannels() {
       if (channelPanels_ != null && channelPanels_.size() > 0) {
          for (ChannelControlPanel panel : channelPanels_) {
             panel.autoButtonAction();
@@ -191,7 +195,7 @@ public final class HistogramsPanel extends JPanel implements Histograms {
    }
 
    @Override
-   public void rejectOutliersChangeAction() {
+   public synchronized void rejectOutliersChangeAction() {
       if (channelPanels_ != null && channelPanels_.size() > 0) {
          for (ChannelControlPanel panel : channelPanels_) {
             panel.calcAndDisplayHistAndStats(true);
@@ -210,7 +214,7 @@ public final class HistogramsPanel extends JPanel implements Histograms {
    }
 
    @Override
-   public void calcAndDisplayHistAndStats() {
+   public synchronized void calcAndDisplayHistAndStats() {
       if (channelPanels_ == null) {
          return;
       }
@@ -240,7 +244,7 @@ public final class HistogramsPanel extends JPanel implements Histograms {
 
    // Ensure it's been the right amount of time since the last update, then
    // redraw histograms.
-   private void updateHistograms() {
+   private synchronized void updateHistograms() {
       long curTime = System.currentTimeMillis();
       if (curTime - lastUpdateTime_ > getHistogramUpdateRate() * 1000) {
          // It's time to do an update.
@@ -252,7 +256,7 @@ public final class HistogramsPanel extends JPanel implements Histograms {
    }
 
    @Override
-   public void autostretch() {
+   public synchronized void autostretch() {
       if (channelPanels_ != null) {
          for (ChannelControlPanel panel : channelPanels_) {
             panel.autostretch();
@@ -261,7 +265,7 @@ public final class HistogramsPanel extends JPanel implements Histograms {
    }
 
    @Override
-   public int getNumberOfChannels() {
+   public synchronized int getNumberOfChannels() {
       return channelPanels_.size();
    }
 
@@ -271,7 +275,7 @@ public final class HistogramsPanel extends JPanel implements Histograms {
    }
 
    @Subscribe
-   public void onNewImage(NewImageEvent event) {
+   public synchronized void onNewImage(NewImageEvent event) {
       if (event.getImage().getCoords().getIndex("channel") >= channelPanels_.size()) {
          // Need to add a new channel histogram.
          setupChannelControls();
@@ -289,7 +293,7 @@ public final class HistogramsPanel extends JPanel implements Histograms {
    }
 
    @Subscribe
-   public void onDisplayDestroyed(DisplayDestroyedEvent event) {
+   public synchronized void onDisplayDestroyed(DisplayDestroyedEvent event) {
       for (ChannelControlPanel panel : channelPanels_) {
          panel.cleanup();
       }
