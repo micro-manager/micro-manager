@@ -300,7 +300,18 @@ int CXYStage::SetPositionSteps(long x, long y)
 int CXYStage::SetRelativePositionSteps(long x, long y)
 {
    ostringstream command; command.str("");
-   command << "R " << axisLetterX_ << "=" << x*unitMultX_*stepSizeXUm_ << " " << axisLetterY_ << "=" << y*unitMultY_*stepSizeYUm_;
+   if ( (x == 0) && (y != 0) )
+   {
+      command << "R " << axisLetterY_ << "=" << y*unitMultY_*stepSizeYUm_;
+   }
+   else if ( (x != 0) && (y == 0) )
+   {
+      command << "R " << axisLetterX_ << "=" << x*unitMultX_*stepSizeXUm_;
+   }
+   else
+   {
+      command << "R " << axisLetterX_ << "=" << x*unitMultX_*stepSizeXUm_ << " " << axisLetterY_ << "=" << y*unitMultY_*stepSizeYUm_;
+   }
    return hub_->QueryCommandVerify(command.str(),":A");
 }
 
