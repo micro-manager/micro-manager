@@ -1803,6 +1803,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                gui_.openAcquisition(acqName, rootDir, nrFrames, nrSides * nrChannels,
                   nrSlices, nrPositions, show, save);
             }
+            
+            // because demo camera sends images without waiting for controller
+            // set exposure time to be slice duration (or x2 for 2-sided)
+            // so the sequence acquisition takes about the right amount of time
+            if (usingDemoCam) {
+               exposureTime = sliceDuration * nrSides;
+            }
             core_.setExposure(firstCamera, exposureTime);
             if (twoSided) {
                core_.setExposure(secondCamera, exposureTime);
@@ -1918,15 +1925,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   for (int channelNum = 0; channelNum < nrChannelsSoftware; channelNum++) {
 
                      // start the cameras
-                     // unless we have demo cameras say the interval is 0 for hardware-timed
-                     double cameraIntervalMs = 0;
-                     if (usingDemoCam) {
-                        // specify an interval to try to mimic actual cameras
-                        cameraIntervalMs = sliceDuration * nrSides;
-                     }
-                     core_.startSequenceAcquisition(firstCamera, nrSlicesSoftware, cameraIntervalMs, true);
+                     core_.startSequenceAcquisition(firstCamera, nrSlicesSoftware, 0, true);
                      if (twoSided) {
-                        core_.startSequenceAcquisition(secondCamera, nrSlicesSoftware, cameraIntervalMs, true);
+                        core_.startSequenceAcquisition(secondCamera, nrSlicesSoftware, 0, true);
                      }
 
                      // deal with shutter
@@ -2073,6 +2074,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             MyDialogUtils.showError(ex);
          } finally {  // end of this acquisition (could be about to restart if separate viewers)
             try {
+               // if we are using demo camera then add some extra time to let controller finish
+               // since it returned images without waiting for controller to start sending triggers
+               if (usingDemoCam) {
+                  Thread.sleep(150);
+               }
+               
                if (core_.isSequenceRunning(firstCamera)) {
                   core_.stopSequenceAcquisition(firstCamera);
                }
