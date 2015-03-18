@@ -69,6 +69,7 @@ import org.micromanager.internal.dialogs.AcqControlDlg;
 
 import org.micromanager.display.ControlsFactory;
 import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.DefaultDisplayWindow;
 
 import org.micromanager.internal.utils.JavaUtils;
@@ -167,6 +168,7 @@ public class MMAcquisition {
       }
       if (show_) {
          display_ = new DefaultDisplayWindow(store_, makeControlsFactory());
+         display_.setDisplaySettings(DefaultDisplaySettings.legacyFromJSON(summaryMetadata));
       }
   }
    

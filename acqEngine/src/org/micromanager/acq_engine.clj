@@ -29,6 +29,7 @@
     [org.micromanager.mm :as mm])
   (:import
     [ij ImagePlus]
+    [java.awt Color]
     [java.io EOFException] ; abused to indicate canceled burst image collection
     [java.net InetAddress UnknownHostException]
     [java.util Date UUID]
@@ -36,6 +37,7 @@
     [mmcorej Configuration Metadata TaggedImage]
     [org.json JSONArray JSONObject]
     [org.micromanager.acquisition.internal MMAcquisition TaggedImageQueue]
+    [org.micromanager.display.internal ChannelSettings]
     [org.micromanager PositionList SequenceSettings]
     [org.micromanager.internal.utils MDUtils ReportingUtils])
   (:gen-class
@@ -862,11 +864,10 @@
 (defn all-super-channels [simple-channels camera-channel-names]
   (flatten (map #(super-channels % camera-channel-names) simple-channels)))
 
-(defn channel-colors [simple-channels super-channels channel-names]
+(defn channel-colors [simple-channels super-channels channel-names settings]
   (if (= (count simple-channels) (count super-channels))
     (map #(.getRGB (:color %)) super-channels)
-    (map #(. MMAcquisition getMultiCamDefaultChannelColor % (channel-names %))
-         (range (count super-channels)))))
+    (map #(. ChannelSettings getColorForChannel % (:channel-group settings) (. Color WHITE)) channel-names)))
 
 (defn summarize-position-list [position-list]
   (let [positions (seq (.getPositions position-list))]
@@ -900,9 +901,10 @@
       "BitDepth" (core getImageBitDepth)
       "Channels" (max 1 (count super-channels))
       "ChNames" (JSONArray. ch-names)
-      "ChColors" (JSONArray. (channel-colors simple-channels super-channels ch-names))
+      "ChColors" (JSONArray. (map #(.getRGB %) (channel-colors simple-channels super-channels ch-names settings)))
       "ChContrastMax" (JSONArray. (repeat (count super-channels) 65536))
       "ChContrastMin" (JSONArray. (repeat (count super-channels) 0))
+      "ChannelGroup" (:channel-group settings)
       "Comment" (:comment settings)
       "ComputerName" computer
       "Depth" (core getBytesPerPixel)

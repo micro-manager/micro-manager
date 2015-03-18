@@ -137,10 +137,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          composite_ = (CompositeImage) plus_;
       }
       displayBus_ = displayBus;
-      // Default to white; select a better color if available.
-      color_ = getColorFromSettings();
 
-      DisplaySettings settings = display.getDisplaySettings();
+      // Default to a generic name based on our channel index.
       name_ = String.format("channel %d", channelIndex_);
       String[] allNames = store_.getSummaryMetadata().getChannelNames();
       if (allNames != null && allNames.length > channelIndex_) {
@@ -406,13 +404,39 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          name = channelNames[channelIndex_];
       }
       DisplaySettings settings = display_.getDisplaySettings();
+      Color defaultColor = color_;
       Color[] channelColors = settings.getChannelColors();
+      if (channelColors != null && channelColors.length > channelIndex_) {
+         defaultColor = channelColors[channelIndex_];
+      }
       Color newColor = JColorChooser.showDialog(this, "Choose a color for the "
-              + name + " channel", channelColors[channelIndex_]);
+              + name + " channel", defaultColor);
       if (newColor != null) {
          // Update the display settings.
-         channelColors[channelIndex_] = newColor;
-         DisplaySettings newSettings = settings.copy().channelColors(channelColors).build();
+         Color[] newColors = channelColors;
+         if (newColors == null) {
+            // Create a new array and fill it in with white.
+            // TODO: use differentiated colors instead of white everywhere.
+            newColors = new Color[channelIndex_ + 1];
+            for (int i = 0; i < newColors.length; ++i) {
+               newColors[i] = Color.WHITE;
+            }
+         }
+         else if (newColors.length <= channelIndex_) {
+            // Expand the array and fill the new entries with white.
+            // TODO: use differentiated colors instead of white everywhere.
+            newColors = new Color[channelIndex_ + 1];
+            for (int i = 0; i < newColors.length; ++i) {
+               if (i < channelColors.length) {
+                  newColors[i] = channelColors[i];
+               }
+               else {
+                  newColors[i] = Color.WHITE;
+               }
+            }
+         }
+         newColors[channelIndex_] = newColor;
+         DisplaySettings newSettings = settings.copy().channelColors(newColors).build();
          display_.setDisplaySettings(newSettings);
       }
       reloadDisplaySettings();
@@ -510,12 +534,19 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    /**
-    * Pull new contrast settings from our DisplayWindow's DisplaySettings.
+    * Pull new color and contrast settings from our DisplayWindow's
+    * DisplaySettings, or from the ChannelSettings for our channel name if our
+    * DisplaySettings are deficient.
+    * The priorities for values here are:
+    * 1) If single-channel, then we use a white color
+    * 2) Use the values in the display settings
+    * 3) If those values aren't available, use the values in the
+    *    ChannelSettings for our channel name.
+    * 4) If *those* values aren't available, use hardcoded defaults.
+    * TODO: for now only loading the color from ChannelSettings; need to extend
+    * this to the other values as well.
     */
    public void reloadDisplaySettings() {
-      color_ = getColorFromSettings();
-      colorPickerLabel_.setBackground(color_);
-      histogram_.setTraceStyle(true, color_);
       DisplaySettings settings = display_.getDisplaySettings();
       Integer[] mins = settings.getChannelContrastMins();
       if (mins != null && mins.length > channelIndex_ &&
@@ -533,22 +564,42 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          gamma_ = gammas[channelIndex_];
       }
 
+      if (store_.getAxisLength(Coords.CHANNEL) <= 1) {
+         // Default to white.
+         color_ = Color.WHITE;
+      }
+      else {
+         // Use the ChannelSettings value, or override with DisplaySettings
+         // if available.
+         ChannelSettings channelSettings = ChannelSettings.loadSettings(
+               name_, store_.getSummaryMetadata().getChannelGroup(),
+               Color.WHITE, contrastMin_, contrastMax_, true);
+         color_ = channelSettings.getColor();
+         Color[] colors = settings.getChannelColors();
+         if (colors != null && colors.length > channelIndex_ &&
+               colors[channelIndex_] != null) {
+            color_ = colors[channelIndex_];
+         }
+      }
+
+      colorPickerLabel_.setBackground(color_);
+      histogram_.setTraceStyle(true, color_);
+
+      saveChannelSettings();
       updateHistogram();
       calcAndDisplayHistAndStats(true);
       applyLUT(true);
    }
 
-   private Color getColorFromSettings() {
-      Color result = Color.WHITE;
-      DisplaySettings settings = display_.getDisplaySettings();
-      Color[] allColors = settings.getChannelColors();
-      // Coerce white when there's only one channel (i.e. ignore the chosen
-      // color).
-      if (store_.getAxisLength(Coords.CHANNEL) > 1 &&
-            allColors != null && allColors.length > channelIndex_) {
-         result = allColors[channelIndex_];
-      }
-      return result;
+   /**
+    * Save our current settings into the profile, so they'll be used by default
+    * by future displays for our channel name/group.
+    */
+   private void saveChannelSettings() {
+      ChannelSettings settings = new ChannelSettings(name_,
+            store_.getSummaryMetadata().getChannelGroup(),
+            color_, contrastMin_, contrastMax_, autoButton_.isSelected());
+      settings.saveToProfile();
    }
 
    public int getContrastMin() {
@@ -953,14 +1004,20 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
    /**
     * A new image has arrived; if it's for our channel and we haven't set bit
-    * depth yet, then do so now.
+    * depth yet, then do so now. And if we're the first channel, our color is
+    * white (i.e. the default color), and an image for another channel arrives,
+    * then we need to re-load our color.
     */
    @Subscribe
    public void onNewImage(NewImageEvent event) {
-      if (bitDepth_ == -1 && 
-            event.getCoords().getIndex("channel") == channelIndex_) {
+      int channel = event.getCoords().getChannel();
+      if (bitDepth_ == -1 && channel == channelIndex_) {
          bitDepth_ = event.getImage().getMetadata().getBitDepth();
          initialize();
+      }
+      if (channelIndex_ == 0 && channel != channelIndex_ &&
+            color_.equals(Color.WHITE)) {
+         reloadDisplaySettings();
       }
    }
 
