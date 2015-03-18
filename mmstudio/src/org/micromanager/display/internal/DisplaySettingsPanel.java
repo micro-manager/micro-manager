@@ -307,7 +307,8 @@ public class DisplaySettingsPanel extends JPanel {
       DisplaySettings settings = event.getDisplaySettings();
       try {
          setColorPresetIndex(settings);
-         if (shouldAutostretch_ != null) {
+         if (shouldAutostretch_ != null &&
+               settings.getShouldAutostretch() != null) {
             shouldAutostretch_.setSelected(settings.getShouldAutostretch());
          }
       }
