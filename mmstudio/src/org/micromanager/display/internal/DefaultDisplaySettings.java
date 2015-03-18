@@ -530,8 +530,8 @@ public class DefaultDisplaySettings implements DisplaySettings {
          if (MDUtils.hasChannelColor(tags)) {
             builder.channelColors(new Color[] {rgbToColor(MDUtils.getChannelColor(tags))});
          }
-         if (tags.has("channelColors")) {
-            JSONArray colorTags = tags.getJSONArray("channelColors");
+         if (tags.has("ChColors")) {
+            JSONArray colorTags = tags.getJSONArray("ChColors");
             Color[] colors = new Color[colorTags.length()];
             for (int i = 0; i < colorTags.length(); ++i) {
                colors[i] = rgbToColor(colorTags.getInt(i));
@@ -540,10 +540,20 @@ public class DefaultDisplaySettings implements DisplaySettings {
          }
 
          if (tags.has("ChContrastMin")) {
-            builder.channelContrastMins(new Integer[] {tags.getInt("ChContrastMin")});
+            JSONArray mins = tags.getJSONArray("ChContrastMin");
+            Integer[] minsArr = new Integer[mins.length()];
+            for (int i = 0; i < minsArr.length; ++i) {
+               minsArr[i] = mins.getInt(i);
+            }
+            builder.channelContrastMins(minsArr);
          }
          if (tags.has("ChContrastMax")) {
-            builder.channelContrastMaxes(new Integer[] {tags.getInt("ChContrastMax")});
+            JSONArray maxes = tags.getJSONArray("ChContrastMax");
+            Integer[] maxesArr = new Integer[maxes.length()];
+            for (int i = 0; i < maxesArr.length; ++i) {
+               maxesArr[i] = maxes.getInt(i);
+            }
+            builder.channelContrastMins(maxesArr);
          }
          if (tags.has("magnification")) {
             builder.magnification(tags.getDouble("magnification"));
@@ -662,13 +672,21 @@ public class DefaultDisplaySettings implements DisplaySettings {
             for (Color color : channelColors_) {
                colors.put(colorToRGB(color));
             }
-            result.put("channelColors", colors);
+            result.put("ChColors", colors);
          }
          if (channelContrastMins_ != null && channelContrastMins_.length > 0) {
-            result.put("ChContrastMin", channelContrastMins_[0]);
+            JSONArray mins = new JSONArray();
+            for (int i = 0; i < channelContrastMins_.length; ++i) {
+               mins.put(channelContrastMins_[i]);
+            }
+            result.put("ChContrastMin", mins);
          }
          if (channelContrastMaxes_ != null && channelContrastMaxes_.length > 0) {
-            result.put("ChContrastMax", channelContrastMaxes_[0]);
+            JSONArray maxes = new JSONArray();
+            for (int i = 0; i < channelContrastMaxes_.length; ++i) {
+               maxes.put(channelContrastMaxes_[i]);
+            }
+            result.put("ChContrastMax", maxes);
          }
          result.put("magnification", magnification_);
          result.put("animationFPS", animationFPS_);
