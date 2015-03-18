@@ -10,6 +10,8 @@ import ij.gui.StackWindow;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.Comparator;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import javax.swing.*;
 import mmcloneclasses.graph.ContrastPanel;
@@ -210,24 +212,30 @@ public class DisplayWindow extends StackWindow {
       cmcPanel_.initialize(disp);
       doLayout();
 
-      initWindow();
-
-      windowResizeTimer_ = new Timer(RESIZE_WINDOW_DELAY, new ActionListener() {
+      SwingUtilities.invokeLater(new Runnable() {
 
          @Override
-         public void actionPerformed(ActionEvent ae) {
-            windowResizeTimerAction();
-         }
-      });
-      windowResizeTimer_.setRepeats(false);
+         public void run() {
+            initWindow();
+            windowResizeTimer_ = new Timer(RESIZE_WINDOW_DELAY, new ActionListener() {
+               @Override
+               public void actionPerformed(ActionEvent ae) {
+                  windowResizeTimerAction();
+               }
+            });
+            windowResizeTimer_.setRepeats(false);
 
-      // Activate dynamic resizing
-      this.addComponentListener(new ComponentAdapter() {
-         @Override
-         public void componentResized(ComponentEvent e) {
-            windowResizedAction();
+            // Activate dynamic resizing
+            DisplayWindow.this.addComponentListener(new ComponentAdapter() {
+
+               @Override
+               public void componentResized(ComponentEvent e) {
+                  windowResizedAction();
+               }
+            });
          }
       });
+
    }
 
    /**
@@ -342,10 +350,11 @@ public class DisplayWindow extends StackWindow {
          saveWindowResize_ = true;
       } else {
          //Explore acq, resize to use all available space
-         fitCanvasToWindow();
-         //store explore acquisition size       
-         displayPrefs_.putInt(WINDOWSIZEX_EXPLORE, Math.max(MINIMUM_SAVED_WINDOW_DIMENSION, DisplayWindow.this.getSize().width));
-         displayPrefs_.putInt(WINDOWSIZEY_EXPLORE, Math.max(MINIMUM_SAVED_WINDOW_DIMENSION, DisplayWindow.this.getSize().height));
+         if (fitCanvasToWindow()) {
+            //store explore acquisition size if resize successful    
+            displayPrefs_.putInt(WINDOWSIZEX_EXPLORE, Math.max(MINIMUM_SAVED_WINDOW_DIMENSION, DisplayWindow.this.getSize().width));
+            displayPrefs_.putInt(WINDOWSIZEY_EXPLORE, Math.max(MINIMUM_SAVED_WINDOW_DIMENSION, DisplayWindow.this.getSize().height));
+         }
       }
    }
 
@@ -381,13 +390,20 @@ public class DisplayWindow extends StackWindow {
     * Used by explore acquisitions to resize canvas to grow or shrink with
     * window changes
     */
-   public void fitCanvasToWindow() {
+   private boolean fitCanvasToWindow() {
       synchronized (canvasPanel_) {
+         if (!canvasPanel_.isValid()) {
+            return false; // cant resize to size of panel if its not layed out yet
+         }
          Dimension panelSize = canvasPanel_.getSize();
+         if (panelSize.width < CANVAS_PIXEL_BORDER*2 || panelSize.height < CANVAS_PIXEL_BORDER*2 ) {
+            return false; //dont set it to invisible sizes
+         }
          //expand canvas to take up full size of viewing window
          disp_.changeStack(new ZoomableVirtualStack((ZoomableVirtualStack) plus_.getStack(),
                  panelSize.width - 2 * CANVAS_PIXEL_BORDER, panelSize.height - 2 * CANVAS_PIXEL_BORDER));
          this.validate();
+         return true;
       }
    }
 

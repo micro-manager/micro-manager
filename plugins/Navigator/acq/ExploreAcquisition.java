@@ -28,27 +28,46 @@ public class ExploreAcquisition extends Acquisition {
    private final double zOrigin_;
    private int lowestSliceIndex_ = 0, highestSliceIndex_ = 0;
    private ExecutorService eventAdderExecutor_ = Executors.newSingleThreadExecutor();
+   private CustomAcqEngine eng_;
 
-   public ExploreAcquisition(ExploreAcqSettings settings) {
+   public ExploreAcquisition(ExploreAcqSettings settings, CustomAcqEngine eng) {
       super(settings.zStep_);
       try {
          //start at current z position
          zTop_ = core_.getPosition(zStage_);
          zBottom_ = core_.getPosition(zStage_);
          zOrigin_ = core_.getPosition(zStage_);
+         eng_ = eng;
          initialize(settings.dir_, settings.name_);
       } catch (Exception ex) {
          ReportingUtils.showError("Couldn't get focus device position");
          throw new RuntimeException();
       }
    }
+   
+   public void clearEventQueue() {
+      events_.clear();
+   }
 
    public void abort() {
       eventAdderExecutor_.shutdownNow();
+      //wait for shutdown
+      try {
+         //wait for it to exit
+         while (!eventAdderExecutor_.awaitTermination(5, TimeUnit.MILLISECONDS)) {}
+      } catch (InterruptedException ex) {
+         ReportingUtils.showError("Unexpected interrupt whil trying to abort acquisition");
+         //shouldn't happen
+      }
       //abort all pending events
-      events_.clear();
-      engineOutputQueue_.clear();
-      engineOutputQueue_.add(new TaggedImage(null, null));
+      events_.clear();      
+      //signal acquisition engine to start finishigng process
+      try {
+         events_.put(AcquisitionEvent.createAcquisitionFinishedEvent(this));         
+         events_.put(AcquisitionEvent.createEngineTaskFinishedEvent());
+      } catch (InterruptedException ex) {
+         ReportingUtils.showError("Unexpected interrupted exception while trying to abort"); //shouldnt happen
+      }
       imageSink_.waitToDie();
       //image sink will call finish when it completes
    }
@@ -112,6 +131,10 @@ public class ExploreAcquisition extends Acquisition {
                //Add events for each channel, slice            
                for (int sliceIndex = getMinSliceIndex(); sliceIndex <= getMaxSliceIndex(); sliceIndex++) {
                   try {
+                     //in case interupt occurs in between blocking calls of a really big loop
+                     if (Thread.interrupted()){
+                        throw new InterruptedException();
+                     }
                      events_.put(new AcquisitionEvent(ExploreAcquisition.this, 0, 0, sliceIndex, posIndices[i], getZCoordinate(sliceIndex), x, y, null));
                   } catch (InterruptedException ex) {
                      //aborted acqusition

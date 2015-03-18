@@ -6,9 +6,17 @@ package acq;
 
 import coordinates.XYStagePosition;
 import gui.SettingsDialog;
+import ij.IJ;
 import java.util.ArrayList;
-import java.util.concurrent.atomic.AtomicInteger;
-import mmcorej.TaggedImage;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import org.json.JSONArray;
 import org.micromanager.MMStudio;
 import org.micromanager.utils.ReportingUtils;
@@ -23,13 +31,19 @@ public class FixedAreaAcquisition extends Acquisition {
    private volatile boolean paused_ = false;
    private FixedAreaAcquisitionSettings settings_;
    private int numTimePoints_;
-   private Thread eventGeneratingThread_;
    private ArrayList<XYStagePosition> positions_;
    private long nextTimePointStartTime_ms_;
-   private CustomAcqEngine eng_;
    private ParallelAcquisitionGroup acqGroup_;
-   private AtomicInteger readyForTP_ = new AtomicInteger(-1);
-   
+   //barrier to wait for event generation at successive time points
+   //signals come from 1) event genreating thread 2) Parallel acq group
+   private CyclicBarrier startNextTPBarrier_ = new CyclicBarrier(2);
+   //barrier to wait for all images to be written before starting nex time point stuff
+   //signals come from 1) event generating thread 2) tagged iamge sink
+   private CyclicBarrier tpFinishedBarrier_ = new CyclicBarrier(2);
+   //executor service to wait for next execution
+   private ScheduledExecutorService waitForNextTPSerivice_ = Executors.newScheduledThreadPool(1);
+   private ExecutorService eventGenerator_;
+
    /**
     * Acquisition with fixed XY positions (although they can potentially all be
     * translated between time points Supports time points Z stacks that can
@@ -38,12 +52,16 @@ public class FixedAreaAcquisition extends Acquisition {
     * Acquisition engine manages a thread that reads events, fixed area
     * acquisition has another thread that generates events
     */
-   public FixedAreaAcquisition(FixedAreaAcquisitionSettings settings, MultipleAcquisitionManager multiAcqManager,
-           CustomAcqEngine eng, ParallelAcquisitionGroup acqGroup){
+   public FixedAreaAcquisition(FixedAreaAcquisitionSettings settings, ParallelAcquisitionGroup acqGroup) {
       super(settings.zStep_);
-      eng_ = eng;
       acqGroup_ = acqGroup;
       settings_ = settings;
+      eventGenerator_ = Executors.newSingleThreadExecutor(new ThreadFactory() {
+         @Override
+         public Thread newThread(Runnable r) {
+            return new Thread(r, settings_.name_ + ": Event generator");
+         }
+      });
       readSettings();
       //get positions to be imaged
       //z slices to be dynamically calculated at the start of each time point?
@@ -56,49 +74,23 @@ public class FixedAreaAcquisition extends Acquisition {
       initialize(settings.dir_, settings.name_);
       createEventGenerator();
    }
-   
+
    public FixedAreaAcquisitionSettings getSettings() {
       return settings_;
    }
-   
+
    private void readSettings() {
       numTimePoints_ = settings_.timeEnabled_ ? settings_.numTimePoints_ : 1;
-   }
-
-   /**
-    * abort acquisition. Block until successfully finished
-    */
-   public void abort() {
-      if (finished_) {
-         //acq already aborted
-         return;
-      }
-      eventGeneratingThread_.interrupt();
-      try {
-         eventGeneratingThread_.join();
-      } catch (InterruptedException ex) {
-         //shouldn't happen
-         throw new RuntimeException("Abort request interrupted");
-      }
-      eventGeneratingThread_ = null;
-      events_.clear();
-      engineOutputQueue_.clear();
-      //signal image sink that it is done
-      engineOutputQueue_.add(new TaggedImage(null, null));
-      //wait for image sink to drain
-      imageSink_.waitToDie();
-      //when image sink dies it will call finish
-      acqGroup_.acqAborted(this);
    }
 
    public boolean isPaused() {
       return paused_;
    }
-   
+
    public double getTimeInterval_ms() {
       return settings_.timePointInterval_ * (settings_.timeIntervalUnit_ == 1 ? 1000 : (settings_.timeIntervalUnit_ == 2 ? 60000 : 1));
    }
-   
+
    public int getNumRows() {
       int maxIndex = 0;
       for (XYStagePosition p : positions_) {
@@ -114,7 +106,7 @@ public class FixedAreaAcquisition extends Acquisition {
       }
       return maxIndex + 1;
    }
-   
+
    private void storeXYPositions() {
       //get XY positions
       if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
@@ -135,7 +127,7 @@ public class FixedAreaAcquisition extends Acquisition {
             int tileHeightMinusOverlap = fullTileHeight - SettingsDialog.getOverlapY();
 
             positions_.add(new XYStagePosition(MMStudio.getInstance().getCore().getXYStagePosition(xyStage_),
-                    tileWidthMinusOverlap,tileHeightMinusOverlap,fullTileWidth,fullTileHeight,0,0,null));
+                    tileWidthMinusOverlap, tileHeightMinusOverlap, fullTileWidth, fullTileHeight, 0, 0, null));
          } catch (Exception ex) {
             ReportingUtils.showError("Couldn't get XY stage position");
          }
@@ -145,93 +137,186 @@ public class FixedAreaAcquisition extends Acquisition {
    public long getNextWakeTime_ms() {
       return nextTimePointStartTime_ms_;
    }
-    
-   public int readyForNextTimePoint() {
-       return readyForTP_.getAndIncrement() + 1;
+
+   /**
+    * abort acquisition. Block until successfully finished
+    */
+   public void abort() {
+      
+      if (finished_) {
+         //acq already aborted
+         return;
+      }
+      //interrupt event generating thread
+      eventGenerator_.shutdownNow();
+      try {
+         //wait for it to exit
+         while (!eventGenerator_.awaitTermination(5, TimeUnit.MILLISECONDS)) {}
+      } catch (InterruptedException ex) {
+         ReportingUtils.showError("Unexpected interrupt whil trying to abort acquisition");
+         //shouldn't happen
+      }
+      //clear any pending events, specific to this acqusition (since parallel acquisitions
+      //share their event queue
+      events_.clear();
+      try {
+         //add finishing evnets to shoutdown all the downstream stuff
+         events_.put(AcquisitionEvent.createAcquisitionFinishedEvent(this));
+      } catch (InterruptedException ex) {
+         ReportingUtils.showError("Unexpected interrupted exception while trying to abort"); //shouldnt happen
+      }
+      acqGroup_.signalAborted(this);
+      //singal aborted should wait for the image sink to die so this function doesnt return until abort complete
+   }
+   
+   public void signalReadyForNextTP() throws InterruptedException, BrokenBarrierException {
+      //called by event generating thread and and parallel manager thread to
+     //ensure enough time has passed to start next TP and that parallel group allows it 
+      startNextTPBarrier_.await();
+   }
+   
+   /**
+    * called by image sink when acquisition is finsihed or aborted
+    */
+   public void allImagesFinishedWriting() {
+      if (tpFinishedBarrier_.getNumberWaiting() == 1) {
+         try {
+            //release event generator if needed
+            tpFinishedBarrier_.await();
+         } catch (Exception ex) {
+            ReportingUtils.showError("Unexpected interrupt while wiating for acqusition finished");
+         }
+      }
+   }
+   
+   /**
+    * Called by image sink at the end of writing images of each time point
+    */
+   public void timepointImagesFinishedWriting() {
+      try {
+         tpFinishedBarrier_.await();
+         //these exception should never happen because event generating thread will always be awaiting first
+      } catch (InterruptedException ex) {
+         ReportingUtils.showError("Image sink interrupeted");
+      } catch (BrokenBarrierException ex) {
+         ReportingUtils.showError("Image sink broken barrier");
+      }
+   }
+
+   private void pauseUntilReadyForTP() throws InterruptedException {
+      try {
+         //Pause here bfore next time point starts
+         long timeUntilNext = nextTimePointStartTime_ms_ - System.currentTimeMillis();
+         if (timeUntilNext > 0) {
+            //wait for enough time to pass and parallel group to signal ready
+            ScheduledFuture future = waitForNextTPSerivice_.schedule(new Runnable() {
+
+               @Override
+               public void run() {
+                  try {
+                     startNextTPBarrier_.await();                     
+                  } catch (Exception ex) {
+                     throw new RuntimeException(); //propogate interrupt
+                  }
+               }
+            }, timeUntilNext, TimeUnit.MILLISECONDS);
+            future.get();
+         } else {
+            //already enough time passed, just wait for go-ahead from parallel group
+            startNextTPBarrier_.await();
+         }
+      } catch (BrokenBarrierException e) {
+         throw new InterruptedException(); //acq aborted
+      } catch (ExecutionException ex) {
+         throw new InterruptedException(); //acq aborted         
+      }
    }
 
    private void createEventGenerator() {
-      eventGeneratingThread_ = new Thread(new Runnable() {
-
+      eventGenerator_.submit(new Runnable() {
+         //check interupt status before any blocking call is entered
          @Override
          public void run() {
-            nextTimePointStartTime_ms_ = 0;
-            for (int timeIndex = 0; timeIndex < numTimePoints_; timeIndex++) {               
-               //wait enough time to pass to start new time point
-               while (System.currentTimeMillis() < nextTimePointStartTime_ms_  || 
-                       timeIndex > readyForTP_.get()) {
-                  try {
-                     Thread.sleep(5);
-                  } catch (InterruptedException ex) {
-                     //thread has been interrupted due to abort request, return
-                     return; 
+            try {
+               nextTimePointStartTime_ms_ = 0;
+               for (int timeIndex = 0; timeIndex < numTimePoints_; timeIndex++) {
+                  if (Thread.interrupted()) {
+                     throw new InterruptedException();
                   }
-               }
-               //set the next time point start time
-               double interval_ms = settings_.timePointInterval_ * (settings_.timeIntervalUnit_ == 1 ? 1000 : (settings_.timeIntervalUnit_ == 2 ? 60000 : 1));
-               nextTimePointStartTime_ms_ = (long) (System.currentTimeMillis() + interval_ms);
+                  
+                  pauseUntilReadyForTP();                  
+                  //set the next time point start time
+                  double interval_ms = settings_.timePointInterval_ * (settings_.timeIntervalUnit_ == 1 ? 1000 : (settings_.timeIntervalUnit_ == 2 ? 60000 : 1));
+                  nextTimePointStartTime_ms_ = (long) (System.currentTimeMillis() + interval_ms);
 
-               for (int positionIndex = 0; positionIndex < positions_.size(); positionIndex++) {
-                  //add events for all slices/channels at this position
-                  XYStagePosition position = positions_.get(positionIndex);
+                  for (int positionIndex = 0; positionIndex < positions_.size(); positionIndex++) {
+                     //add events for all slices/channels at this position
+                     XYStagePosition position = positions_.get(positionIndex);
 
-                  int channelIndex = 0; //TODO: channels
+                     int channelIndex = 0; //TODO: channels
 
-                  //TODO: check signs for all of these
-                  //get highest possible z position to image, which is slice index 0
-                  double zTop = getZTopCoordinate();
-                  int sliceIndex = -1;
-                  while (true) {                   
-                     sliceIndex++;
-                     double zPos = zTop + sliceIndex * zStep_;
-                     if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.REGION_2D) {
-                        //2D region
-                        if (sliceIndex > 0) {
-                           break;
+                     //TODO: check signs for all of these
+                     //get highest possible z position to image, which is slice index 0
+                     double zTop = getZTopCoordinate();
+                     int sliceIndex = -1;
+                     while (true) {
+                        sliceIndex++;
+                        double zPos = zTop + sliceIndex * zStep_;
+                        if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.REGION_2D) {
+                           //2D region
+                           if (sliceIndex > 0) {
+                              break;
+                           }
+                        } else {
+                           //3D region
+                           if (isZAboveImagingVolume(position, zPos)) {
+                              continue; //position is above imaging volume
+                           }
+                           if (isZBelowImagingVolume(position, zPos)) {
+                              //position is below z stack, z stack finished
+                              break;
+                           }
                         }
-                     } else {
-                        //3D region
-                        if (isZAboveImagingVolume(position, zPos)) {
-                           continue; //position is above imaging volume
+                        AcquisitionEvent event = new AcquisitionEvent(FixedAreaAcquisition.this, timeIndex, channelIndex, sliceIndex,
+                                positionIndex, zPos, position.getCenter().x, position.getCenter().y, settings_.propPairings_);                        
+                        if (Thread.interrupted()) {
+                           throw new InterruptedException();
                         }
-                        if (isZBelowImagingVolume(position, zPos)) {
-                           //position is below z stack, z stack finished
-                           break;
-                        }
-                     }
-
-                     AcquisitionEvent event = new AcquisitionEvent(FixedAreaAcquisition.this, timeIndex, channelIndex, sliceIndex,
-                             positionIndex, zPos, position.getCenter().x, position.getCenter().y, settings_.propPairings_);
-
-                     try {
                         events_.put(event); //event generator will block if event queueu is full
-                     } catch (InterruptedException ex) {
-                        //aborted acq
-                        return;
                      }
-                  }
-               }
-               
-               if (timeIndex == numTimePoints_ - 1) {
-                  //acquisition now finished, add event with null acq field so engine will mark acquisition as finished
-                  events_.add(AcquisitionEvent.createAcquisitionFinishedEvent(FixedAreaAcquisition.this));
-               }
+                  } //position loop finished
 
-               //wait for final image of timepoint to be written before beginning end of timepoint stuff
-               while (!( eng_.isIdle() && events_.isEmpty() && imageSink_.isIdle())) {
-                  try {
-                     Thread.sleep(5);
-                  } catch (InterruptedException ex) {                   
-                     return; //thread has been interrupted due to abort request, return;
+                  if (timeIndex == numTimePoints_ - 1) {
+                     //acquisition now finished, add event with null acq field so engine will mark acquisition as finished                    
+                     events_.put(AcquisitionEvent.createAcquisitionFinishedEvent(FixedAreaAcquisition.this));
+                  } else {
+                     events_.put(AcquisitionEvent.createTimepointFinishedEvent(FixedAreaAcquisition.this));
                   }
+
+                  //wait for final image of timepoint to be written before beginning end of timepoint stuff
+                  if (Thread.interrupted()) {
+                     throw new InterruptedException();
+                  }
+
+                  tpFinishedBarrier_.await();
+
+                  //this call starts a new thread to not hang up cyclic barriers   
+                  acqGroup_.finishedTimePoint(FixedAreaAcquisition.this);
                }
-               //do end of timepoint stuff (autofocus, swap to another acq, etc)
-              acqGroup_.finishedTimePoint(FixedAreaAcquisition.this);
-              endOfTimePoint(timeIndex);
+               //acqusiition has generated all of its events
+               eventGenerator_.shutdown();
+            } catch (BrokenBarrierException ex) {
+               ReportingUtils.showError("Unexpected broken barrier exception in event generator");
+               ex.printStackTrace();
+               return; //acq aborted
+            } catch (InterruptedException e) {
+               return; //acq aborted
+            } finally {
+               eventGenerator_.shutdown();
+               waitForNextTPSerivice_.shutdown();
             }
          }
-      }, "Fixed Area Acquisition Event generating thread");
-      eventGeneratingThread_.start();
+      }); 
    }
 
    private void endOfTimePoint(int timeIndex) {
@@ -297,8 +382,8 @@ public class FixedAreaAcquisition extends Acquisition {
             ReportingUtils.showError("Couldn't read z position from core");
             throw new RuntimeException();
          }
-      } 
-   }  
+      }
+   }
 
    //TODO account for autofocusing via frame on both of these
    @Override
@@ -319,4 +404,5 @@ public class FixedAreaAcquisition extends Acquisition {
       }
       return pList;
    }
+
 }

@@ -3,34 +3,28 @@ package acq;
 import coordinates.PositionManager;
 import gui.SettingsDialog;
 import imagedisplay.DisplayPlus;
-import java.awt.Color;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.micromanager.MMStudio;
-import org.micromanager.acquisition.MMAcquisition;
-import org.micromanager.api.MMTags;
 import org.micromanager.utils.ReportingUtils;
 
 /**
  * Abstract class that manages a generic acquisition. Subclassed into specific
  * types of acquisition
  */
-public abstract class Acquisition {
+public abstract class Acquisition implements AcquisitionEventSource{
 
    //max numberof images that are held in queue to be saved
    private static final int OUTPUT_QUEUE_SIZE = 40;
    //number of acquisiton events held at any given time
-   private static final int ACQ_EVENT_QUEUE_SIZE = 40;
+   public static final int ACQ_EVENT_QUEUE_SIZE = 40;
    
    protected volatile double zStep_ = 1;
-   protected BlockingQueue<TaggedImage> engineOutputQueue_;
+   private BlockingQueue<TaggedImage> engineOutputQueue_;
    protected CMMCore core_ = MMStudio.getInstance().getCore();
    protected String xyStage_, zStage_;
    protected PositionManager posManager_;
@@ -41,18 +35,18 @@ public abstract class Acquisition {
    private String name_;
    private long startTime_ms_ = -1;
 
-
-   public Acquisition(double zStep) {
-      xyStage_ = core_.getXYStageDevice();
+   public Acquisition(double zStep ) {
+            xyStage_ = core_.getXYStageDevice();
       zStage_ = core_.getFocusDevice();
       zStep_ = zStep;
-      events_ = new LinkedBlockingQueue<AcquisitionEvent>(ACQ_EVENT_QUEUE_SIZE);
+         events_ = new LinkedBlockingQueue<AcquisitionEvent>(ACQ_EVENT_QUEUE_SIZE);
       try {
          pixelSizeConfig_ = MMStudio.getInstance().getCore().getCurrentPixelSizeConfig();
       } catch (Exception ex) {
          ReportingUtils.showError("couldnt get pixel size config");
       }
    }
+
 
    public String getXYStageName() {
        return xyStage_;
@@ -80,6 +74,11 @@ public abstract class Acquisition {
    
    public boolean isFinished() {
       return finished_;
+   }
+   
+   @Override
+   public AcquisitionEvent getNextEvent() throws InterruptedException {
+      return events_.take();
    }
    
    public abstract void abort();
@@ -111,6 +110,10 @@ public abstract class Acquisition {
       new DisplayPlus(imageCache, this, summaryMetadata, storage);         
       imageSink_ = new TaggedImageSink(engineOutputQueue_, imageCache, this);
       imageSink_.start();
+   }
+   
+   public BlockingQueue<TaggedImage> getImageSavingQueue() {
+      return engineOutputQueue_;
    }
    
    public String getName() {

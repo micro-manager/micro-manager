@@ -10,12 +10,16 @@ import ij.IJ;
 import java.awt.Color;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
@@ -28,11 +32,9 @@ import org.micromanager.api.MMTags;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
 import propsandcovariants.CovariantPairing;
-import propsandcovariants.CovariantValue;
 
 /**
- *
- * @author henrypinkard
+ * Engine has a single thread executor, which sits idly waiting for new acquisitions when not in use
  */
 public class CustomAcqEngine {
 
@@ -41,109 +43,119 @@ public class CustomAcqEngine {
    
    private CMMCore core_;
    private AcquisitionEvent lastEvent_ = null;
-   private Thread acquisitionThread_;
    private ExploreAcquisition currentExploreAcq_;
    private ParallelAcquisitionGroup currentFixedAcqs_;
    private MultipleAcquisitionManager multiAcqManager_;
    private CustomAcqEngine singleton_;
-   private ExecutorService acqExecutor_ = Executors.newSingleThreadExecutor();
+   private ExecutorService acqExecutor_;
 
    public CustomAcqEngine(CMMCore core) {
       singleton_ = this;
       core_ = core;
-      createAndStartAcquisitionThread();
-   }
-   
-   public CustomAcqEngine getInstance() {
-      return singleton_;
-   }
-   
-   public void runEvent(AcquisitionEvent event) {
-      BlockingQueue<AcquisitionEvent> events;
-      //Fixed acq take priority
-      //TODO: might be an alternative way of doing this since the explore event queue is cleared when starting a 
-      //fixed acqusiition anyway
-      if (currentFixedAcqs_ != null && !currentFixedAcqs_.isPaused() && !currentFixedAcqs_.isFinished()) {
-         events = currentFixedAcqs_.getEventQueue();
-      } else if (currentExploreAcq_ != null) {
-         events = currentExploreAcq_.getEventQueue();
-      } else {
-         events = null;
-      }
-      try {
-         if (events != null && events.size() > 0) {
-            runEvent(events.poll());
-         } else {
-            //wait for more events to acquire
-            Thread.sleep(2);
-         }
-      } catch (InterruptedException ex) {
-         break;
-      }
-   }
-   
-   private void createAndStartAcquisitionThread() {
-      //create and start acquisition thread
-      acquisitionThread_ = new Thread(new Runnable() {
-
+      acqExecutor_ = Executors.newSingleThreadExecutor(new ThreadFactory() {
          @Override
-         public void run() {
-            while (!Thread.interrupted()) {
-               
-            }
+         public Thread newThread(Runnable r) {
+            return new Thread(r, "Custom Acquisition Engine Thread");
          }
-      }, "Custom acquisition engine thread");
-      acquisitionThread_.start();
+      });
    }
 
-   public void setMultiAcqManager(MultipleAcquisitionManager multiAcqManager) {
-      multiAcqManager_ = multiAcqManager;
+   /**
+    * CAlled by run acquisition button
+    */
+   public void runFixedAreaAcquisition(final FixedAreaAcquisitionSettings settings) {
+      runInterleavedAcquisitions(Arrays.asList(new FixedAreaAcquisitionSettings[]{settings}), false);
    }
    
-   public ParallelAcquisitionGroup runInterleavedAcquisitions(List<FixedAreaAcquisitionSettings> acqs) {
-           //check if current fixed acquisition is running
+   /**
+    * Called by run all button
+    */
+   public synchronized ParallelAcquisitionGroup runInterleavedAcquisitions(List<FixedAreaAcquisitionSettings> acqs, boolean multiAcq) {
+      //check if current fixed acquisition is running
+      //abort existing fixed acq if needed
       if (currentFixedAcqs_ != null && !currentFixedAcqs_.isFinished()) {
-         //TODO: is there a check if user tries to start acq when acq in progress
-         currentFixedAcqs_.abort();
+         int result = JOptionPane.showConfirmDialog(null, "Finish exisiting acquisition?", "Finish Current Acquisition", JOptionPane.OK_CANCEL_OPTION);
+         if (result == JOptionPane.OK_OPTION) {
+            currentFixedAcqs_.abort();
+         } else {
+            return null;
+         }
       }
-      //clear explore acquisition events so that they dont unexpectedly restart after acquisition
       if (currentExploreAcq_ != null && !currentExploreAcq_.isFinished()) {
-         currentExploreAcq_.getEventQueue().clear();
+         //clear events so exploring doesn't surprisingly restart after acquisition
+         currentExploreAcq_.clearEventQueue();
+         try {
+            currentExploreAcq_.events_.put(AcquisitionEvent.createEngineTaskFinishedEvent());
+         } catch (InterruptedException ex) {
+            ReportingUtils.showError("Unexpected interrupt when trying to switch acquisition tasks");
+         }
       }
 
-      currentFixedAcqs_ = new ParallelAcquisitionGroup(acqs, multiAcqManager_, this);
+      currentFixedAcqs_ = new ParallelAcquisitionGroup(acqs, multiAcq ? multiAcqManager_ : null);
+      runAcq(currentFixedAcqs_);
+      //return to exploring once this acquisition finished
+      if (currentExploreAcq_ != null && !currentExploreAcq_.isFinished()) {
+         runAcq(currentExploreAcq_);
+      }
       return currentFixedAcqs_;
    }
-   
-   public void runFixedAreaAcquisition(final FixedAreaAcquisitionSettings settings) {
-      ArrayList<FixedAreaAcquisitionSettings> list = new ArrayList<FixedAreaAcquisitionSettings>();
-      list.add(settings);
-      runInterleavedAcquisitions(list);
+
+   public synchronized void runExploreAcquisition(final ExploreAcqSettings settings) {      
+      //abort existing explore acq if needed
+      if (currentExploreAcq_ != null && !currentExploreAcq_.isFinished()) {
+         int result = JOptionPane.showConfirmDialog(null, "Finish exisiting explore acquisition?", "Finish Current Explore Acquisition", JOptionPane.OK_CANCEL_OPTION);
+         if (result == JOptionPane.OK_OPTION) {
+            currentExploreAcq_.abort();
+         } else {
+            return;
+         }
+      }
+      //abort existing fixed acq if needed
+      if (currentFixedAcqs_ != null && !currentFixedAcqs_.isFinished()) {
+         int result = JOptionPane.showConfirmDialog(null, "Finish exisiting acquisition?", "Finish Current Acquisition", JOptionPane.OK_CANCEL_OPTION);
+         if (result == JOptionPane.OK_OPTION) {
+            currentFixedAcqs_.abort();
+         } else {
+            return;
+         }
+      }   
+      
+      currentExploreAcq_ = new ExploreAcquisition(settings, this);
+      runAcq(currentExploreAcq_);
    }
 
-   public void newExploreAcquisition(final ExploreAcqSettings settings) {
-      new Thread(new Runnable() {
-
+   private void runAcq(final AcquisitionEventSource acq) {
+      acqExecutor_.submit(new Runnable() {
          @Override
          public void run() {
-            if (currentExploreAcq_ != null && !currentExploreAcq_.isFinished()) {
-               int result = JOptionPane.showConfirmDialog(null, "Finish exisiting explore acquisition?", "Finish Current Explore Acquisition", JOptionPane.OK_CANCEL_OPTION);
-               if (result == JOptionPane.OK_OPTION) {
-                  currentExploreAcq_.abort();
-               } else {
+            while (true) {
+               try {
+                  if (Thread.interrupted()) {
+                     return;
+                  }                 
+                  AcquisitionEvent event = acq.getNextEvent();
+                  if (event.isEngineTaskFinishedEvent()) {
+                     break; //this parallel group or explore acqusition is done
+                  }
+                  executeAcquisitionEvent(event);
+               } catch (InterruptedException ex) {
+                  ReportingUtils.showError("Unexpected interrupt to acquisiton engine thread");
                   return;
                }
             }
-            currentExploreAcq_ = new ExploreAcquisition(settings);
          }
-      }).start();
+      });
    }
 
-   private void runEvent(AcquisitionEvent event) throws InterruptedException {
-      if (event.isFinishingEvent()) {
-         //event will be null when fixed acquisitions run to compeletion in normal operation
+   private void executeAcquisitionEvent(AcquisitionEvent event) throws InterruptedException {
+      if (event.isReQueryEvent()) {
+         //nothing to do, just a dummy event to get of blocking call when switching between parallel acquisitions
+      } else if (event.isAcquisitionFinishedEvent()) {
          //signal to TaggedImageSink to finish saving thread and mark acquisition as finished
-         event.acquisition_.engineOutputQueue_.add(new TaggedImage(null, null));
+         event.acquisition_.getImageSavingQueue().put(new SignalTaggedImage(SignalTaggedImage.AcqSingal.AcqusitionFinsihed));
+      } else if (event.isTimepointFinishedEvent()) {
+         //signal to TaggedImageSink to let acqusition know that saving for the current time point has completed            
+         event.acquisition_.getImageSavingQueue().put(new SignalTaggedImage(SignalTaggedImage.AcqSingal.TimepointFinished));
       } else {
          updateHardware(event);
          acquireImage(event);
@@ -209,7 +221,7 @@ public class CustomAcqEngine {
             public void run() throws Exception {
                while (core_.deviceBusy(xyStage)) {
                   Thread.sleep(2);
-                  IJ.log(getCurrentDateAndTime() + ": waiting for XY stage to not be busy...");
+//                  IJ.log(getCurrentDateAndTime() + ": waiting for XY stage to not be busy...");
                }
             }
          }, "waiting for XY stage to not be busy");
@@ -226,7 +238,7 @@ public class CustomAcqEngine {
             public void run() throws Exception {
                while (core_.deviceBusy(xyStage)) {
                   Thread.sleep(2);
-                  IJ.log(getCurrentDateAndTime() + ": waiting for XY stage to not be busy...");
+//                  IJ.log(getCurrentDateAndTime() + ": waiting for XY stage to not be busy...");
                }
             }
          }, "waiting for XY stage to not be busy");
@@ -289,7 +301,6 @@ public class CustomAcqEngine {
       lastEvent_ = event;
    }
    
-
    private void loopHardwareCommandRetries(HardwareCommand r, String commandName) throws InterruptedException {
       for (int i = 0; i < HARDWARE_ERROR_RETRIES; i++) {
          try {
@@ -397,4 +408,13 @@ public class CustomAcqEngine {
    private interface HardwareCommand {
       void run() throws Exception;
    }
+     
+   public CustomAcqEngine getInstance() {
+      return singleton_;
+   }
+   
+   public void setMultiAcqManager(MultipleAcquisitionManager multiAcqManager) {
+      multiAcqManager_ = multiAcqManager;
+   }
+   
 }

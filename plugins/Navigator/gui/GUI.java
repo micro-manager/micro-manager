@@ -1731,7 +1731,7 @@ public class GUI extends javax.swing.JFrame {
    private void newExploreWindowButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newExploreWindowButton_ActionPerformed
       ExploreAcqSettings settings = new ExploreAcqSettings(
               ((Number) exploreZStepSpinner_.getValue()).doubleValue(), exploreSavingDirTextField_.getText(), exploreSavingNameTextField_.getText());
-      eng_.newExploreAcquisition(settings);
+      eng_.runExploreAcquisition(settings);
    }//GEN-LAST:event_newExploreWindowButton_ActionPerformed
 
    private void autofocusFiducialCombo_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_autofocusFiducialCombo_ActionPerformed

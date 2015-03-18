@@ -276,13 +276,22 @@ public class SubImageControls extends Panel {
          StackWindow win = (StackWindow) display_.getHyperImage().getWindow();
          try {
             JavaUtils.setRestrictedFieldValue(win, StackWindow.class, "nSlices", ((MMCompositeImage) display_.getHyperImage()).getNSlicesUnverified());
-            //also set z position since it doesn't automatically work due to null z scrollbat              
-            JavaUtils.setRestrictedFieldValue(win, StackWindow.class, "z", slice);
          } catch (NoSuchFieldException ex) {
             ReportingUtils.showError("Couldn't set number of slices in ImageJ stack window");
          }
       }
-
+      //set the imageJ scrollbar positions here. We don't rely on exactly the same
+      //hacky mechanism as MM, I think because dynamic changes required by the explore
+      //window. Instead we use the differnet hacky mechanism seen here    
+      StackWindow win = (StackWindow) display_.getHyperImage().getWindow();
+      try {
+         JavaUtils.setRestrictedFieldValue(win, StackWindow.class, "t", frame);
+         JavaUtils.setRestrictedFieldValue(win, StackWindow.class, "z", slice);
+         JavaUtils.setRestrictedFieldValue(win, StackWindow.class, "c", channel);
+      } catch (NoSuchFieldException e) {
+         ReportingUtils.showError("Unexpected exception when trying to set image position");
+      }
+      
       display_.getHyperImage().setPosition(channel, slice, frame);
       display_.drawOverlay(true);
    }

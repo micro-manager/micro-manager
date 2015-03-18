@@ -5,9 +5,15 @@
 package acq;
 
 import gui.GUI;
+import ij.IJ;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JOptionPane;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  *
@@ -23,6 +29,7 @@ public class MultipleAcquisitionManager {
    private volatile boolean running_ = false;
    private Thread managerThread_;
    private volatile ParallelAcquisitionGroup currentAcqs_;
+   private CyclicBarrier acqGroupFinishedBarrier_ = new CyclicBarrier(2);
    
    public MultipleAcquisitionManager(GUI gui, CustomAcqEngine eng ) {
       gui_ = gui;
@@ -214,8 +221,7 @@ public class MultipleAcquisitionManager {
          currentAcqs_.abort();
       }      
       //abort blocks until all the acquisition stuff is closed, so can reset GUI here
-      //this call is redundant to normal finishing mechanism but useful in case of acq errors
-      multipleAcquisitionsFinsihed();           
+         
    }
 
    public void runAllAcquisitions() {
@@ -238,15 +244,27 @@ public class MultipleAcquisitionManager {
                   gui_.repaint();
                }
                //run one or more acquisitions in parallel group 
-               currentAcqs_ = eng_.runInterleavedAcquisitions(acquisitions_.subList(
-                       getFirstIndexOfGroup(groupIndex), getFirstIndexOfGroup(groupIndex) + getGroupSize(getFirstIndexOfGroup(groupIndex)) ));
-               while (currentAcqs_ != null) {
-                  try {
-                     Thread.sleep(50);
-                  } catch (InterruptedException ex) {
-                     managerThread_.interrupt();
-                  }
+               try {
+                  currentAcqs_ = eng_.runInterleavedAcquisitions(acquisitions_.subList(
+                          getFirstIndexOfGroup(groupIndex), getFirstIndexOfGroup(groupIndex) + getGroupSize(getFirstIndexOfGroup(groupIndex))), true);
+               } catch (Exception e) {
+                  //abort all if any has an error
+                  multipleAcquisitionsFinsihed();
+                  return;
                }
+               if (currentAcqs_ == null) {
+                  //user has responded to dialog and doesnt want to interupt currently running ones
+                  break;
+               }   
+               try {
+                  System.out.println("Multi acq manager waiting");
+                  acqGroupFinishedBarrier_.await();
+                  System.out.println("Multi acq Manager released");
+               } catch (Exception ex) {
+                  //all multiple acquisitions aborted
+                  break;
+               }
+               
                //mark as finished, unless already marked as aborted
                for (int i = 0; i < numberInGroup_.get(groupIndex); i++) {
                   if (!getAcqStatus( getFirstIndexOfGroup(groupIndex) + i).equals("Aborted") ) {
@@ -262,6 +280,9 @@ public class MultipleAcquisitionManager {
    }
    
    private void multipleAcquisitionsFinsihed() {
+      //reset barier for a new round
+      acqGroupFinishedBarrier_ = new CyclicBarrier(2);
+      //update GUI
       running_ = false;
       acqStatus_ = null;
       gui_.enableMultiAcquisitionControls(true);
@@ -278,6 +299,18 @@ public class MultipleAcquisitionManager {
     * Called by parallel acquisition group when it is finished so that manager knows to move onto next one
     */
    public void parallelAcqGroupFinished() {
+      try {
+         IJ.log("Parallel group finished and awaiting");
+         if (managerThread_.isAlive()) {
+            acqGroupFinishedBarrier_.await();
+         } //otherwise it was aborted, so othing to do        
+         IJ.log("Parallel group released");
+      } catch (Exception ex) {
+         //exceptions should never happen because this is always the second await to be called
+         ReportingUtils.showError("Unexpected exception: multi acq manager interrupted or barrier broken");
+         ex.printStackTrace();
+         throw new RuntimeException();
+      }
       currentAcqs_ = null;
    }
    
