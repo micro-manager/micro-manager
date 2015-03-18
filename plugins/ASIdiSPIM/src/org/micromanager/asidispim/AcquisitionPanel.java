@@ -1583,6 +1583,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
       }
       
+      boolean usingDemoCam = (devices_.getMMDeviceLibrary(Devices.Keys.CAMERAA).equals(Devices.Libraries.DEMOCAM) && sideActiveA)
+            || (devices_.getMMDeviceLibrary(Devices.Keys.CAMERAB).equals(Devices.Libraries.DEMOCAM) && sideActiveB);
+      
       int nrSides = getNumSides();
       int nrSlices = getNumSlices();
       int nrChannels = getNumChannels();
@@ -1678,8 +1681,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       boolean shutterOpen = false;
 
       // more sanity checks
-      double lineScanTime = computeActualSlicePeriod();
-      if (exposureTime + cameraReadoutTime > lineScanTime) {
+      double sliceDuration = computeActualSlicePeriod();
+      if (exposureTime + cameraReadoutTime > sliceDuration) {
+         // only possible to mess this up using advanced timing settings
          MyDialogUtils.showError("Exposure time is longer than time needed for a line scan.\n" +
                  "This will result in dropped frames.\n" +
                  "Please change input");
@@ -1914,9 +1918,15 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   for (int channelNum = 0; channelNum < nrChannelsSoftware; channelNum++) {
 
                      // start the cameras
-                     core_.startSequenceAcquisition(firstCamera, nrSlicesSoftware, 0, true);
+                     // unless we have demo cameras say the interval is 0 for hardware-timed
+                     double cameraIntervalMs = 0;
+                     if (usingDemoCam) {
+                        // specify an interval to try to mimic actual cameras
+                        cameraIntervalMs = sliceDuration * nrSides;
+                     }
+                     core_.startSequenceAcquisition(firstCamera, nrSlicesSoftware, cameraIntervalMs, true);
                      if (twoSided) {
-                        core_.startSequenceAcquisition(secondCamera, nrSlicesSoftware, 0, true);
+                        core_.startSequenceAcquisition(secondCamera, nrSlicesSoftware, cameraIntervalMs, true);
                      }
 
                      // deal with shutter
@@ -1967,7 +1977,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      int[] cameraFrNumber = new int[2];     // keep track of how many frames we have received from the camera
                      boolean done = false;
                      long timeout2;  // how long to wait between images before timing out
-                     timeout2 = Math.max(2000, Math.round(5*computeActualSlicePeriod()));
+                     timeout2 = Math.max(2000, Math.round(5*sliceDuration));
                      start = System.currentTimeMillis();
                      long last = start;
                      try {
@@ -2129,13 +2139,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          positions_.setPosition(Devices.Keys.PIEZOB, Joystick.Directions.NONE, 0.0);
       }
       
-      if (cancelAcquisition_.get()) {  // if user stopped us in middle
-         // make sure to stop the SPIM state machine in case the acquisition was cancelled
-         props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SPIM_STATE,
-               Properties.Values.SPIM_IDLE, true);
-         props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.SPIM_STATE,
-               Properties.Values.SPIM_IDLE, true);
-      }
+      // make sure to stop the SPIM state machine in case the acquisition was cancelled
+      // even if the acquisition wasn't cancelled make sure the Micro-Manager properties are updated
+      props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SPIM_STATE,
+            Properties.Values.SPIM_IDLE, true);
+      props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.SPIM_STATE,
+            Properties.Values.SPIM_IDLE, true);
+         
       updateAcquisitionStatus(AcquisitionStatus.DONE);
       posUpdater_.pauseUpdates(false);
       
