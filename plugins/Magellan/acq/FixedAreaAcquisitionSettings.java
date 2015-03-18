@@ -47,6 +47,12 @@ public class FixedAreaAcquisitionSettings  {
    //Covarying props
    public ArrayList<CovariantPairing> propPairings_ = new ArrayList<CovariantPairing>();
    
+   //autofocus
+   public boolean autofocusEnabled_;
+   public String autoFocusZDevice_;
+   public String autofocuChannelName_;
+   public double autofocusMaxDisplacemnet_um_;
+   
    
    
    public FixedAreaAcquisitionSettings() {
@@ -63,6 +69,10 @@ public class FixedAreaAcquisitionSettings  {
       distanceBelowSurface_ = prefs.getDouble(PREF_PREFIX + "ZDISTBELOW", 0);
       distanceAboveSurface_ = prefs.getDouble(PREF_PREFIX + "ZDISTABOVE", 0);
       spaceMode_ = prefs.getInt(PREF_PREFIX + "SPACEMODE", 0);
+      //autofocus/
+      autofocusMaxDisplacemnet_um_ =  prefs.getDouble(PREF_PREFIX + "AFMAXDISP", 0.0);
+      autofocuChannelName_ = prefs.get(PREF_PREFIX + "AFCHANNELNAME", null);
+      autoFocusZDevice_ = prefs.get(PREF_PREFIX + "AFZNAME", null);      
       //add all pairings currently present
       CovariantPairingsManager pairManager = CovariantPairingsManager.getInstance();
       //null on startup, but no pairings to add anyway  
@@ -118,6 +128,11 @@ public class FixedAreaAcquisitionSettings  {
       prefs.putDouble(PREF_PREFIX + "ZDISTBELOW", distanceBelowSurface_);
       prefs.putDouble(PREF_PREFIX + "ZDISTABOVE", distanceAboveSurface_);
       prefs.putInt(PREF_PREFIX + "SPACEMODE", spaceMode_);
+      //autofocus
+      prefs.putDouble(PREF_PREFIX + "AFMAXDISP", autofocusMaxDisplacemnet_um_);
+      prefs.put(PREF_PREFIX + "AFCHANNELNAME", autofocuChannelName_);
+      prefs.put(PREF_PREFIX + "AFZNAME", autoFocusZDevice_);
+      
    }
    
 }

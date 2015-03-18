@@ -2,24 +2,17 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package utility;
+package channels;
 
 import java.awt.Color;
 import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.prefs.Preferences;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableModel;
 import mmcorej.CMMCore;
-import org.micromanager.MMOptions;
 import org.micromanager.MMStudio;
-import org.micromanager.acquisition.AcquisitionEngine;
-import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.ChannelSpec;
 import org.micromanager.utils.ReportingUtils;
-import org.micromanager.utils.TooltipTextMaker;
 
 /**
  *
@@ -31,7 +24,6 @@ public class SimpleChannelTableModel extends AbstractTableModel implements Table
       private final CMMCore core_;
       public final String[] COLUMN_NAMES = new String[]{
          "Configuration",
-         "Exposure",
          "Color"
       };
 
