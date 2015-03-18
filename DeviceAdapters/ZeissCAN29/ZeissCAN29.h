@@ -141,6 +141,7 @@ struct ZeissDeviceInfo {
       measuringOrigin = 0;
       trajectoryVelocity = 0;
       trajectoryAcceleration = 0;
+      hasTrajectoryInfo = false;
       busy = false;
       present = false;
    }
@@ -159,6 +160,7 @@ struct ZeissDeviceInfo {
    ZeissLong measuringOrigin;
    ZeissLong trajectoryVelocity;
    ZeissLong trajectoryAcceleration;
+   bool hasTrajectoryInfo;
    ZeissULong status;
    std::vector<std::string> deviceScalings;
    std::map<std::string, std::vector<ZeissLong> > nativeScale;
@@ -436,6 +438,8 @@ class ZeissHub
       int GetDeviceScalings(MM::Device& device, MM::Core& core, ZeissUByte commandGroup, ZeissUByte devId, ZeissDeviceInfo& deviceInfo);
       int GetScalingTable(MM::Device& device, MM::Core& core, ZeissUByte commandGroup, ZeissUByte devId, ZeissDeviceInfo& deviceInfo, std::string unit);
       int GetMeasuringOrigin(MM::Device& device, MM::Core& core, ZeissUByte commandGroup, ZeissUByte devId, ZeissDeviceInfo& deviceInfo);
+      int GetTrajectoryVelocity(MM::Device& device, MM::Core& core, ZeissUByte commandGroup, ZeissUByte devId, ZeissDeviceInfo& deviceInfo);
+      int GetTrajectoryAcceleration(MM::Device& device, MM::Core& core, ZeissUByte commandGroup, ZeissUByte devId, ZeissDeviceInfo& deviceInfo);
       int GetPermanentParameter(MM::Device& device, MM::Core& core, ZeissUShort descriptor, ZeissByte entry, ZeissUByte& dataType, unsigned char* data, unsigned char& dataLength);
       int GetReflectorLabels(MM::Device& device, MM::Core& core);
       int GetObjectiveLabels(MM::Device& device, MM::Core& core);

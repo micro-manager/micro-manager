@@ -173,7 +173,11 @@ int ZeissHub::Initialize(MM::Device& device, MM::Core& core)
             }
          }
          if (commandGroup_[devId] == 0xA3)
+         {
             GetMeasuringOrigin(device, core, commandGroup_[devId], devId, deviceInfo_[devId]);
+            GetTrajectoryVelocity(device, core, commandGroup_[devId], devId, deviceInfo_[devId]);
+            GetTrajectoryAcceleration(device, core, commandGroup_[devId], devId, deviceInfo_[devId]);
+         }
       }
       deviceInfo_[devId].busy = false;
       deviceInfo_[devId].lastRequestTime = core.GetCurrentMMTime();
@@ -826,6 +830,91 @@ int ZeissHub::GetMeasuringOrigin(MM::Device& device, MM::Core& core, ZeissUByte 
 
    return DEVICE_OK;
 }
+
+/*
+ * Queries the microscope directly for the trajectory velocity of the given axis
+ * Should only be called from the Initialize function
+ * Only to be called from ZeissHub::Initialize
+ */
+int ZeissHub::GetTrajectoryVelocity(MM::Device& device, MM::Core& core, ZeissUByte commandGroup, ZeissUByte devId, ZeissDeviceInfo& deviceInfo)
+{
+   int ret;
+   unsigned char command[8];
+   // Size of data block
+   command[0] = 0x03;
+   // Read command, immediate answer
+   command[1] = 0x18;
+   command[2] = commandGroup;
+   // ProcessID
+   command[3] = 0x11;
+   // SubID
+   command[4] = 0x2B;
+   // Device ID
+   command[5] = (ZeissUByte) devId;
+
+   ret = ExecuteCommand(device, core, command, 6);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   long unsigned int responseLength = RCV_BUF_LENGTH;
+   unsigned char response[RCV_BUF_LENGTH];
+   unsigned long signatureLength = 5;
+   unsigned char signature[] = { 0x08, commandGroup, command[3], command[4], devId };
+   ret = GetAnswer(device, core, response, responseLength, signature, 1, signatureLength);
+   if (ret != DEVICE_OK) // if the device does not support this command, this is likely where we will go
+      return ret;
+
+   ZeissLong tmp = 0;
+   memcpy (&tmp, response + 6, ZeissLongSize);
+   tmp = (long) ntohl(tmp);
+   deviceInfo.trajectoryVelocity = tmp;
+   deviceInfo.hasTrajectoryInfo = true;
+
+   return DEVICE_OK;
+}
+
+/*
+ * Queries the microscope directly for the trajectory acceleration of the given axis
+ * Should only be called from the Initialize function
+ * Only to be called from ZeissHub::Initialize
+ */
+int ZeissHub::GetTrajectoryAcceleration(MM::Device& device, MM::Core& core, ZeissUByte commandGroup, ZeissUByte devId, ZeissDeviceInfo& deviceInfo)
+{
+   int ret;
+   unsigned char command[8];
+   // Size of data block
+   command[0] = 0x03;
+   // Read command, immediate answer
+   command[1] = 0x18;
+   command[2] = commandGroup;
+   // ProcessID
+   command[3] = 0x11;
+   // SubID
+   command[4] = 0x2C;
+   // Device ID
+   command[5] = (ZeissUByte) devId;
+
+   ret = ExecuteCommand(device, core, command, 6);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   long unsigned int responseLength = RCV_BUF_LENGTH;
+   unsigned char response[RCV_BUF_LENGTH];
+   unsigned long signatureLength = 5;
+   unsigned char signature[] = { 0x08, commandGroup, command[3], command[4], devId };
+   ret = GetAnswer(device, core, response, responseLength, signature, 1, signatureLength);
+   if (ret != DEVICE_OK) // if the device does not support this command, this is likely where we will go
+      return ret;
+
+   ZeissLong tmp = 0;
+   memcpy (&tmp, response + 6, ZeissLongSize);
+   tmp = (long) ntohl(tmp);
+   deviceInfo.trajectoryAcceleration = tmp;
+   deviceInfo.hasTrajectoryInfo = true;
+
+   return DEVICE_OK;
+}
+
 
 /**
  * Queries the microscope for available motorized devices
