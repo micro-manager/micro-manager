@@ -594,7 +594,18 @@ int XYStage::SetRelativePositionSteps(long x, long y)
    ClearPort();
 
    ostringstream command;
-   command << fixed << "R X=" << x/ASISerialUnit_  << " Y=" << y/ASISerialUnit_; // in 10th of micros
+   if ( (x == 0) && (y != 0) )
+   {
+      command << fixed << "R Y=" << y/ASISerialUnit_;
+   }
+   else if ( (x != 0) && (y == 0) )
+   {
+      command << fixed << "R X=" << x/ASISerialUnit_;
+   }
+   else
+   {
+      command << fixed << "R X=" << x/ASISerialUnit_  << " Y=" << y/ASISerialUnit_; // in 10th of microns
+   }
 
    string answer;
    // query the device
