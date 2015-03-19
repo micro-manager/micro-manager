@@ -149,6 +149,7 @@ private:
    double lastX_;   // used to cache position
    double lastY_;   // used to cache position
    bool illuminationState_;  // true if on, false if beam is turned off
+   bool refreshOverride_;  // true temporarily if refreshing property
 
    struct saStateType {
       long mode;
