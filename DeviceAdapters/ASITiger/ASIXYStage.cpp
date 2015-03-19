@@ -292,6 +292,7 @@ int CXYStage::Initialize()
       CreateProperty(g_ScanSlowAxisPropertyName, g_ScanAxisX, MM::String, false, pAct);
       AddAllowedValue(g_ScanSlowAxisPropertyName, g_ScanAxisX);
       AddAllowedValue(g_ScanSlowAxisPropertyName, g_ScanAxisY);
+      AddAllowedValue(g_ScanSlowAxisPropertyName, g_ScanAxisNull);
       UpdateProperty(g_ScanSlowAxisPropertyName);
 
       pAct = new CPropertyAction (this, &CXYStage::OnScanPattern);
@@ -1590,9 +1591,10 @@ int CXYStage::OnScanSlowAxis(MM::PropertyBase* pProp, MM::ActionType eAct)
       RETURN_ON_MM_ERROR( hub_->GetAnswerCharAtPosition3(c) );
       switch ( c )
       {
-         case g_ScanAxisXCode:  success = pProp->Set(g_ScanAxisX); break;
-         case g_ScanAxisYCode:  success = pProp->Set(g_ScanAxisY); break;
-         default:               success = false; break;
+         case g_ScanAxisXCode:    success = pProp->Set(g_ScanAxisX); break;
+         case g_ScanAxisYCode:    success = pProp->Set(g_ScanAxisY); break;
+         case g_ScanAxisNullCode: success = pProp->Set(g_ScanAxisNull); break;
+         default:                 success = false; break;
       }
       if (!success)
          return DEVICE_INVALID_PROPERTY_VALUE;
@@ -1605,6 +1607,8 @@ int CXYStage::OnScanSlowAxis(MM::PropertyBase* pProp, MM::ActionType eAct)
          c = g_ScanAxisXCode;
       } else if (tmpstr.compare(g_ScanAxisY) == 0) {
          c = g_ScanAxisYCode;
+      } else if (tmpstr.compare(g_ScanAxisNull) == 0) {
+         c = g_ScanAxisNullCode;
       }
       if (c == ' ')
       {

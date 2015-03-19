@@ -444,8 +444,10 @@ const char g_ScanStateCodeStop = 'P';
 // scan axes
 const char* const g_ScanAxisX = "1st axis";
 const char* const g_ScanAxisY = "2nd axis";
+const char* const g_ScanAxisNull = "Null (1D scan)";
 const char g_ScanAxisXCode = '0';
 const char g_ScanAxisYCode = '1';
+const char g_ScanAxisNullCode = '9';
 // scan pattern
 const char* const g_ScanPatternRaster = "Raster";
 const char* const g_ScanPatternSerpentine = "Serpentine";
