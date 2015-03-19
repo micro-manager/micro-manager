@@ -347,7 +347,8 @@ XYStage::XYStage() :
    nrMoveRepetitions_(0),
    answerTimeoutMs_(1000),
    serialOnlySendChanged_(true),
-   manualSerialAnswer_("")
+   manualSerialAnswer_(""),
+   post2010firmware_(false)
 {
    InitializeDefaultErrorMessages();
 
@@ -403,9 +404,21 @@ int XYStage::Initialize()
    CreateProperty("CompileDate", "", MM::String, true, pAct);
    UpdateProperty("CompileDate");
 
-   pAct = new CPropertyAction (this, &XYStage::OnBuildName);
-   CreateProperty("BuildName", "", MM::String, true, pAct);
-   UpdateProperty("BuildName");
+   // see if firmware date is 201x;
+   // this snippet will need to be updated in 2020 ;-)
+   char compile_date[MM::MaxStrLength];
+   post2010firmware_ =  (GetProperty("CompileDate", compile_date) == DEVICE_OK
+               && compile_date[9]=='1');  // i.e. between 2010 and 2019
+
+   // if really old firmware then don't get build name
+   // build name is really just for diagnostic purposes anyway
+   // I think it was present before 2010 but this is easy way
+   if (post2010firmware_)
+   {
+      pAct = new CPropertyAction (this, &XYStage::OnBuildName);
+      CreateProperty("BuildName", "", MM::String, true, pAct);
+      UpdateProperty("BuildName");
+   }
 
    // Most ASIStages have the origin in the top right corner, the following reverses direction of the X-axis:
    ret = SetAxisDirection();
@@ -1088,9 +1101,7 @@ int XYStage::OnWait(MM::PropertyBase* pProp, MM::ActionType eAct)
       // would be better to parse firmware (8.4 and earlier used unsigned char)
       // and that transition occurred ~2008 but this is easier than trying to
       // parse version strings
-      char compile_date[MM::MaxStrLength];
-      if (GetProperty("CompileDate", compile_date) == DEVICE_OK
-            && compile_date[9]=='1')  // i.e. between 2010 and 2019
+      if (post2010firmware_)
       {
          // don't enforce upper limit
       }
