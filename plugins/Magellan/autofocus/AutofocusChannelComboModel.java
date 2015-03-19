@@ -26,15 +26,15 @@ public class AutofocusChannelComboModel extends DefaultComboBoxModel{
       return selectedItem_;
    }
 
-   @Override
-   public int getSize() {
-      
-   }
-
-   @Override
-   public Object getElementAt(int index) {
-      
-   }
+//   @Override
+//   public int getSize() {
+//      
+//   }
+//
+//   @Override
+//   public Object getElementAt(int index) {
+//      
+//   }
 
    
 }
