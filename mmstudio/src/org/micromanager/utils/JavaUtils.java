@@ -113,6 +113,10 @@ public class JavaUtils {
                         ReportingUtils.logError(e, "Failed to load class: " +
                               className + " (expected in " +
                               file.getAbsolutePath() + " based on JAR entry");
+                     } catch (NoClassDefFoundError ncfe) {
+                        ReportingUtils.logError(ncfe, "Failed to load class: " +
+                              className + " (expected in " +
+                              file.getAbsolutePath() + " based on JAR entry");
                      }
                   }
                }
