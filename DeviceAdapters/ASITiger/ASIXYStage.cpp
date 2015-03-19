@@ -252,7 +252,6 @@ int CXYStage::Initialize()
       UpdateProperty(g_WheelMirrorPropertyName);
    }
 
-
    // generates a set of additional advanced properties that are rarely used
    pAct = new CPropertyAction (this, &CXYStage::OnAdvancedProperties);
    CreateProperty(g_AdvancedPropertiesPropertyName, g_NoState, MM::String, false, pAct);
@@ -269,6 +268,38 @@ int CXYStage::Initialize()
    CreateProperty(g_AxisPolarityY, g_AxisPolarityNormal, MM::String, false, pAct);
    AddAllowedValue(g_AxisPolarityY, g_AxisPolarityReversed);
    AddAllowedValue(g_AxisPolarityY, g_AxisPolarityNormal);
+
+   // get build info so we can add optional properties
+   build_info_type build;
+   RETURN_ON_MM_ERROR( hub_->GetBuildInfo(addressChar_, build) );
+
+   // add SCAN properties if supported
+   if (build.vAxesProps[0] & BIT2)
+   {
+      pAct = new CPropertyAction (this, &CXYStage::OnScanState);
+      CreateProperty(g_ScanStatePropertyName, g_ScanStateIdle, MM::String, false, pAct);
+      AddAllowedValue(g_ScanStatePropertyName, g_ScanStateIdle);
+      AddAllowedValue(g_ScanStatePropertyName, g_ScanStateRunning);
+      UpdateProperty(g_ScanStatePropertyName);
+
+      pAct = new CPropertyAction (this, &CXYStage::OnScanFastAxis);
+      CreateProperty(g_ScanFastAxisPropertyName, g_ScanAxisX, MM::String, false, pAct);
+      AddAllowedValue(g_ScanFastAxisPropertyName, g_ScanAxisX);
+      AddAllowedValue(g_ScanFastAxisPropertyName, g_ScanAxisY);
+      UpdateProperty(g_ScanFastAxisPropertyName);
+
+      pAct = new CPropertyAction (this, &CXYStage::OnScanSlowAxis);
+      CreateProperty(g_ScanSlowAxisPropertyName, g_ScanAxisX, MM::String, false, pAct);
+      AddAllowedValue(g_ScanSlowAxisPropertyName, g_ScanAxisX);
+      AddAllowedValue(g_ScanSlowAxisPropertyName, g_ScanAxisY);
+      UpdateProperty(g_ScanSlowAxisPropertyName);
+
+      pAct = new CPropertyAction (this, &CXYStage::OnScanPattern);
+      CreateProperty(g_ScanPatternPropertyName, g_ScanPatternRaster, MM::String, false, pAct);
+      AddAllowedValue(g_ScanPatternPropertyName, g_ScanPatternRaster);
+      AddAllowedValue(g_ScanPatternPropertyName, g_ScanPatternSerpentine);
+      UpdateProperty(g_ScanPatternPropertyName);
+   }
 
    initialized_ = true;
    return DEVICE_OK;
@@ -1419,4 +1450,183 @@ int CXYStage::OnAxisPolarityY(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int CXYStage::OnScanState(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "SN X?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+      bool success;
+      char c;
+      RETURN_ON_MM_ERROR( hub_->GetAnswerCharAtPosition3(c) );
+      switch ( c )
+      {
+         case g_ScanStateCodeIdle:  success = pProp->Set(g_ScanStateIdle); break;
+         default:                   success = pProp->Set(g_ScanStateRunning); break;  // a bunch of different codes are possible while running
+      }
+      if (!success)
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      char c;
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_ScanStateIdle) == 0)
+      {
+         // TODO cleanup code by calling action handler with MM::BeforeGet?
+         // check status and stop if it's not idle already
+         command << addressChar_ << "SN X?";
+         RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+         RETURN_ON_MM_ERROR( hub_->GetAnswerCharAtPosition3(c) );
+         if (c!=g_ScanStateCodeIdle)
+         {
+            // this will stop state machine if it's running, if we do SN without args we run the risk of it stopping itself before we send the next command
+            // after we stop it, it will automatically go to idle state
+            command.str("");
+            command << addressChar_ << "SN X=" << (int)g_ScanStateCodeStop;
+            RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+         }
+      }
+      else if (tmpstr.compare(g_ScanStateRunning) == 0)
+      {
+         // check status and start if it's idle
+         command << addressChar_ << "SN X?";
+         RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+         RETURN_ON_MM_ERROR( hub_->GetAnswerCharAtPosition3(c) );
+         if ((c==g_SPIMStateCode_Idle))
+         {
+            // if we are idle or armed then start it
+            // assume that nothing else could have started it since our query moments ago
+            command.str("");
+            command << addressChar_ << "SN";
+            RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+         }
+      }
+      else
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   return DEVICE_OK;
+}
 
+int CXYStage::OnScanFastAxis(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "SN Y?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+      bool success;
+      char c;
+      RETURN_ON_MM_ERROR( hub_->GetAnswerCharAtPosition3(c) );
+      switch ( c )
+      {
+         case g_ScanAxisXCode:  success = pProp->Set(g_ScanAxisX); break;
+         case g_ScanAxisYCode:  success = pProp->Set(g_ScanAxisY); break;
+         default:               success = false; break;
+      }
+      if (!success)
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      char c = ' ';
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_ScanAxisX) == 0) {
+         c = g_ScanAxisXCode;
+      } else if (tmpstr.compare(g_ScanAxisY) == 0) {
+         c = g_ScanAxisYCode;
+      }
+      if (c == ' ')
+      {
+         return DEVICE_INVALID_PROPERTY_VALUE;
+      }
+      command << addressChar_ << "SN Y=" << c;
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+   }
+   return DEVICE_OK;
+}
+
+int CXYStage::OnScanSlowAxis(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "SN Z?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+      bool success;
+      char c;
+      RETURN_ON_MM_ERROR( hub_->GetAnswerCharAtPosition3(c) );
+      switch ( c )
+      {
+         case g_ScanAxisXCode:  success = pProp->Set(g_ScanAxisX); break;
+         case g_ScanAxisYCode:  success = pProp->Set(g_ScanAxisY); break;
+         default:               success = false; break;
+      }
+      if (!success)
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      char c = ' ';
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_ScanAxisX) == 0) {
+         c = g_ScanAxisXCode;
+      } else if (tmpstr.compare(g_ScanAxisY) == 0) {
+         c = g_ScanAxisYCode;
+      }
+      if (c == ' ')
+      {
+         return DEVICE_INVALID_PROPERTY_VALUE;
+      }
+      command << addressChar_ << "SN Z=" << c;
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+   }
+   return DEVICE_OK;
+}
+
+int CXYStage::OnScanPattern(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "SN F?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+      bool success;
+      char c;
+      RETURN_ON_MM_ERROR( hub_->GetAnswerCharAtPosition3(c) );
+      switch ( c )
+      {
+         case g_ScanPatternRasterCode:      success = pProp->Set(g_ScanPatternRaster); break;
+         case g_ScanPatternSerpentineCode:  success = pProp->Set(g_ScanPatternSerpentine); break;
+         default:               success = false; break;
+      }
+      if (!success)
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      char c = ' ';
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_ScanPatternRaster) == 0) {
+         c = g_ScanPatternRasterCode;
+      } else if (tmpstr.compare(g_ScanPatternSerpentine) == 0) {
+         c = g_ScanPatternSerpentineCode;
+      }
+      if (c == ' ')
+      {
+         return DEVICE_INVALID_PROPERTY_VALUE;
+      }
+      command << addressChar_ << "SN F=" << c;
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+   }
+   return DEVICE_OK;
+}

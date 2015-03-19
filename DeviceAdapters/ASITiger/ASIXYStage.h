@@ -106,6 +106,10 @@ public:
    int OnWheelMirror          (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnAxisPolarityX        (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnAxisPolarityY        (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnScanState            (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnScanFastAxis         (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnScanSlowAxis         (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnScanPattern          (MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    double unitMultX_;

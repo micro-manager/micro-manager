@@ -266,6 +266,12 @@ const char* const g_SATTLOutYPropertyName = "SingleAxisYTTLOut";
 const char* const g_SATTLPolYPropertyName = "SingleAxisYTTLPolarity";
 const char* const g_SAPatternModeYPropertyName = "SingleAxisYPatternByte";
 
+// SCAN firmware property names
+const char* const g_ScanStatePropertyName = "ScanState";
+const char* const g_ScanFastAxisPropertyName = "ScanFastAxis";
+const char* const g_ScanSlowAxisPropertyName = "ScanSlowAxis";
+const char* const g_ScanPatternPropertyName = "ScanPattern";
+
 // CRISP property names
 const char* const g_CRISPWaitAfterLockPropertyName = "Wait ms after Lock";
 const char* const g_CRISPObjectiveNAPropertyName = "Objective NA";
@@ -421,6 +427,24 @@ const char g_PZSPIMStateCode_Armed ='A';
 const char g_PZSPIMStateCode_Stop = 'P';
 const char g_PZSPIMStateCode_Timing='t';
 
+// SCAN state for micro-manager
+const char* const g_ScanStateIdle = "Idle";
+const char* const g_ScanStateStart = "Start";
+const char* const g_ScanStateRunning = "Running";
+// SCAN state for XY card
+const char g_ScanStateCodeIdle = 'I';
+const char g_ScanStateCodeStart = 'S';
+const char g_ScanStateCodeStop = 'P';
+// scan axes
+const char* const g_ScanAxisX = "1st axis";
+const char* const g_ScanAxisY = "2nd axis";
+const char g_ScanAxisXCode = '0';
+const char g_ScanAxisYCode = '1';
+// scan pattern
+const char* const g_ScanPatternRaster = "Raster";
+const char* const g_ScanPatternSerpentine = "Serpentine";
+const char g_ScanPatternRasterCode = '0';
+const char g_ScanPatternSerpentineCode = '1';
 
 // property descriptions for enums
 // serial terminators for hub
