@@ -1667,7 +1667,6 @@ int CXYStage::OnScanFastStartPosition(MM::PropertyBase* pProp, MM::ActionType eA
       command << addressChar_ << "NR X?";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A X="));
       RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
-      tmp = abs(tmp);
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -1690,7 +1689,6 @@ int CXYStage::OnScanFastStopPosition(MM::PropertyBase* pProp, MM::ActionType eAc
       command << addressChar_ << "NR Y?";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Y="));
       RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
-      tmp = abs(tmp);
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -1713,7 +1711,6 @@ int CXYStage::OnScanSlowStartPosition(MM::PropertyBase* pProp, MM::ActionType eA
       command << addressChar_ << "NV X?";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A X="));
       RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
-      tmp = abs(tmp);
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -1736,7 +1733,6 @@ int CXYStage::OnScanSlowStopPosition(MM::PropertyBase* pProp, MM::ActionType eAc
       command << addressChar_ << "NV Y?";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Y="));
       RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
-      tmp = abs(tmp);
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -1782,7 +1778,6 @@ int CXYStage::OnScanOvershootFactor(MM::PropertyBase* pProp, MM::ActionType eAct
       command << addressChar_ << "NV F?";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A F="));
       RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
-      tmp = abs(tmp);
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
