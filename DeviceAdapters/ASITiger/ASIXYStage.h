@@ -110,6 +110,12 @@ public:
    int OnScanFastAxis         (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnScanSlowAxis         (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnScanPattern          (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnScanFastStartPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnScanFastStopPosition (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnScanSlowStartPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnScanSlowStopPosition (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnScanNumLines         (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnScanOvershootFactor  (MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    double unitMultX_;

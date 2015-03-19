@@ -271,6 +271,12 @@ const char* const g_ScanStatePropertyName = "ScanState";
 const char* const g_ScanFastAxisPropertyName = "ScanFastAxis";
 const char* const g_ScanSlowAxisPropertyName = "ScanSlowAxis";
 const char* const g_ScanPatternPropertyName = "ScanPattern";
+const char* const g_ScanFastAxisStartPositionPropertyName = "ScanFastAxisStartPosition(mm)";
+const char* const g_ScanFastAxisStopPositionPropertyName = "ScanFastAxisStopPosition(mm)";
+const char* const g_ScanSlowAxisStartPositionPropertyName = "ScanSlowAxisStartPosition(mm)";
+const char* const g_ScanSlowAxisStopPositionPropertyName = "ScanSlowAxisStopPosition(mm)";
+const char* const g_ScanNumLinesPropertyName = "ScanNumLines";
+const char* const g_ScanOvershootFactorPropertyName = "ScanOvershootFactor";
 
 // CRISP property names
 const char* const g_CRISPWaitAfterLockPropertyName = "Wait ms after Lock";
