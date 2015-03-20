@@ -103,7 +103,7 @@ public class ChannelSettings {
             // record the new names. We'll also need to expand every other
             // array we work with.
             keys.add(ourKey);
-            index = keys.size() - 1;
+            index = keys.indexOf(ourKey);
             mustExpand = true;
             keysArr = keys.toArray(keysArr);
             profile.setStringArray(ChannelSettings.class, NAMES, keysArr);
@@ -112,52 +112,60 @@ public class ChannelSettings {
          // Save settings, inserting/replacing our value as appropriate.
          Integer[] colorsArr = profile.getIntArray(ChannelSettings.class,
                COLORS, new Integer[] {});
-         if (mustExpand) {
-            ArrayList<Integer> colors = new ArrayList<Integer>(Arrays.asList(colorsArr));
-            colors.add(color_.getRGB());
-            colorsArr = colors.toArray(colorsArr);
+         if (mustExpand || colorsArr[index] != color_.getRGB()) {
+            if (mustExpand) {
+               ArrayList<Integer> colors = new ArrayList<Integer>(Arrays.asList(colorsArr));
+               colors.add(color_.getRGB());
+               colorsArr = colors.toArray(colorsArr);
+            }
+            else {
+               colorsArr[index] = color_.getRGB();
+            }
+            profile.setIntArray(ChannelSettings.class, COLORS, colorsArr);
          }
-         else {
-            colorsArr[index] = color_.getRGB();
-         }
-         profile.setIntArray(ChannelSettings.class, COLORS, colorsArr);
 
          Integer[] minsArr = profile.getIntArray(ChannelSettings.class,
                MINS, new Integer[] {});
-         if (mustExpand) {
-            ArrayList<Integer> mins = new ArrayList<Integer>(Arrays.asList(minsArr));
-            mins.add(histogramMin_);
-            minsArr = mins.toArray(minsArr);
+         if (mustExpand || minsArr[index] != histogramMin_) {
+            if (mustExpand) {
+               ArrayList<Integer> mins = new ArrayList<Integer>(Arrays.asList(minsArr));
+               mins.add(histogramMin_);
+               minsArr = mins.toArray(minsArr);
+            }
+            else {
+               minsArr[index] = histogramMin_;
+            }
+            profile.setIntArray(ChannelSettings.class, MINS, minsArr);
          }
-         else {
-            minsArr[index] = histogramMin_;
-         }
-         profile.setIntArray(ChannelSettings.class, MINS, minsArr);
 
          Integer[] maxesArr = profile.getIntArray(ChannelSettings.class,
                MAXES, new Integer[] {});
-         if (mustExpand) {
-            ArrayList<Integer> maxes = new ArrayList<Integer>(Arrays.asList(maxesArr));
-            maxes.add(histogramMax_);
-            maxesArr = maxes.toArray(maxesArr);
+         if (mustExpand || maxesArr[index] != histogramMax_) {
+            if (mustExpand) {
+               ArrayList<Integer> maxes = new ArrayList<Integer>(Arrays.asList(maxesArr));
+               maxes.add(histogramMax_);
+               maxesArr = maxes.toArray(maxesArr);
+            }
+            else {
+               maxesArr[index] = histogramMax_;
+            }
+            profile.setIntArray(ChannelSettings.class, MAXES, maxesArr);
          }
-         else {
-            maxesArr[index] = histogramMax_;
-         }
-         profile.setIntArray(ChannelSettings.class, MAXES, maxesArr);
 
          Boolean[] autoscalesArr = profile.getBooleanArray(
                ChannelSettings.class, AUTOSCALES, new Boolean[] {});
-         if (mustExpand) {
-            ArrayList<Boolean> autoscales = new ArrayList<Boolean>(Arrays.asList(autoscalesArr));
-            autoscales.add(shouldAutoscale_);
-            autoscalesArr = autoscales.toArray(autoscalesArr);
+         if (mustExpand || autoscalesArr[index] != shouldAutoscale_) {
+            if (mustExpand) {
+               ArrayList<Boolean> autoscales = new ArrayList<Boolean>(Arrays.asList(autoscalesArr));
+               autoscales.add(shouldAutoscale_);
+               autoscalesArr = autoscales.toArray(autoscalesArr);
+            }
+            else {
+               autoscalesArr[index] = shouldAutoscale_;
+            }
+            profile.setBooleanArray(ChannelSettings.class, AUTOSCALES,
+                  autoscalesArr);
          }
-         else {
-            autoscalesArr[index] = shouldAutoscale_;
-         }
-         profile.setBooleanArray(ChannelSettings.class, AUTOSCALES,
-               autoscalesArr);
       }
    }
 
@@ -222,7 +230,6 @@ public class ChannelSettings {
     */
    public static Color getColorForChannel(String channelName,
          String channelGroup, Color defaultColor) {
-      ReportingUtils.logError("Asked for color for " + channelName + ", " + channelGroup + ", " + defaultColor);
       synchronized(profileLock_) {
          int index = getIndex(channelName, channelGroup);
          if (index == -1) {
@@ -234,5 +241,10 @@ public class ChannelSettings {
                COLORS, new Integer[] {});
          return new Color(colors[index]);
       }
+   }
+
+   @Override
+   public String toString() {
+      return String.format("<ChannelSettings color %s, min %d, max %d, auto %s>", color_, histogramMin_, histogramMax_, shouldAutoscale_);
    }
 }
