@@ -543,26 +543,35 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
     * 3) If those values aren't available, use the values in the
     *    ChannelSettings for our channel name.
     * 4) If *those* values aren't available, use hardcoded defaults.
-    * TODO: for now only loading the color from ChannelSettings; need to extend
-    * this to the other values as well.
     */
    public void reloadDisplaySettings() {
       DisplaySettings settings = display_.getDisplaySettings();
+      ChannelSettings channelSettings = ChannelSettings.loadSettings(
+            name_, store_.getSummaryMetadata().getChannelGroup(),
+            Color.WHITE, contrastMin_, contrastMax_, true);
+
+      contrastMin_ = channelSettings.getHistogramMin();
       Integer[] mins = settings.getChannelContrastMins();
       if (mins != null && mins.length > channelIndex_ &&
             mins[channelIndex_] != null) {
          contrastMin_ = mins[channelIndex_];
       }
+
+      contrastMax_ = channelSettings.getHistogramMax();
       Integer[] maxes = settings.getChannelContrastMaxes();
       if (maxes != null && maxes.length > channelIndex_ &&
             maxes[channelIndex_] != null) {
          contrastMax_ = maxes[channelIndex_];
       }
+
+      // TODO: gamma not stored in channel settings.
       Double[] gammas = settings.getChannelGammas();
       if (gammas != null && gammas.length > channelIndex_ &&
             gammas[channelIndex_] != null) {
          gamma_ = gammas[channelIndex_];
       }
+
+      autoButton_.setSelected(channelSettings.getShouldAutoscale());
 
       if (store_.getAxisLength(Coords.CHANNEL) <= 1) {
          // Default to white.
@@ -571,9 +580,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       else {
          // Use the ChannelSettings value, or override with DisplaySettings
          // if available.
-         ChannelSettings channelSettings = ChannelSettings.loadSettings(
-               name_, store_.getSummaryMetadata().getChannelGroup(),
-               Color.WHITE, contrastMin_, contrastMax_, true);
          color_ = channelSettings.getColor();
          Color[] colors = settings.getChannelColors();
          if (colors != null && colors.length > channelIndex_ &&
