@@ -76,17 +76,30 @@ public:
    int OnRefreshProperties    (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnWaitTime             (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnNrExtraMoveReps      (MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnMaxSpeed             (MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnSpeed                (MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnBacklash             (MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnDriftError           (MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnFinishError          (MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnAcceleration         (MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnLowerLimX            (MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnLowerLimY            (MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnUpperLimX            (MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnUpperLimY            (MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnMaintainState        (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSpeedGeneric         (MM::PropertyBase* pProp, MM::ActionType eAct, string axisLetter);
+   int OnSpeedX               (MM::PropertyBase* pProp, MM::ActionType eAct) { return OnSpeedGeneric(pProp, eAct, axisLetterX_); }
+   int OnSpeedY               (MM::PropertyBase* pProp, MM::ActionType eAct) { return OnSpeedGeneric(pProp, eAct, axisLetterY_); }
+   int OnBacklashGeneric      (MM::PropertyBase* pProp, MM::ActionType eAct, string axisLetter);
+   int OnBacklashX            (MM::PropertyBase* pProp, MM::ActionType eAct) { return OnBacklashGeneric(pProp, eAct, axisLetterX_); }
+   int OnBacklashY            (MM::PropertyBase* pProp, MM::ActionType eAct) { return OnBacklashGeneric(pProp, eAct, axisLetterY_); }
+   int OnDriftErrorGeneric    (MM::PropertyBase* pProp, MM::ActionType eAct, string axisLetter);
+   int OnDriftErrorX          (MM::PropertyBase* pProp, MM::ActionType eAct) { return OnDriftErrorGeneric(pProp, eAct, axisLetterX_); }
+   int OnDriftErrorY          (MM::PropertyBase* pProp, MM::ActionType eAct) { return OnDriftErrorGeneric(pProp, eAct, axisLetterY_); }
+   int OnFinishErrorGeneric   (MM::PropertyBase* pProp, MM::ActionType eAct, string axisLetter);
+   int OnFinishErrorX         (MM::PropertyBase* pProp, MM::ActionType eAct) { return OnFinishErrorGeneric(pProp, eAct, axisLetterX_); }
+   int OnFinishErrorY         (MM::PropertyBase* pProp, MM::ActionType eAct) { return OnFinishErrorGeneric(pProp, eAct, axisLetterY_); }
+   int OnAccelerationGeneric  (MM::PropertyBase* pProp, MM::ActionType eAct, string axisLetter);
+   int OnAccelerationX        (MM::PropertyBase* pProp, MM::ActionType eAct) { return OnAccelerationGeneric(pProp, eAct, axisLetterX_); }
+   int OnAccelerationY        (MM::PropertyBase* pProp, MM::ActionType eAct) { return OnAccelerationGeneric(pProp, eAct, axisLetterY_); }
+   int OnLowerLimGeneric      (MM::PropertyBase* pProp, MM::ActionType eAct, string axisLetter);
+   int OnLowerLimX            (MM::PropertyBase* pProp, MM::ActionType eAct) { return OnLowerLimGeneric(pProp, eAct, axisLetterX_); }
+   int OnLowerLimY            (MM::PropertyBase* pProp, MM::ActionType eAct) { return OnLowerLimGeneric(pProp, eAct, axisLetterY_); }
+   int OnUpperLimGeneric      (MM::PropertyBase* pProp, MM::ActionType eAct, string axisLetter);
+   int OnUpperLimX            (MM::PropertyBase* pProp, MM::ActionType eAct) { return OnUpperLimGeneric(pProp, eAct, axisLetterX_); }
+   int OnUpperLimY            (MM::PropertyBase* pProp, MM::ActionType eAct) { return OnUpperLimGeneric(pProp, eAct, axisLetterY_); }
+   int OnMaintainStateGeneric (MM::PropertyBase* pProp, MM::ActionType eAct, string axisLetter);
+   int OnMaintainStateX       (MM::PropertyBase* pProp, MM::ActionType eAct) { return OnMaintainStateGeneric(pProp, eAct, axisLetterX_); }
+   int OnMaintainStateY       (MM::PropertyBase* pProp, MM::ActionType eAct) { return OnMaintainStateGeneric(pProp, eAct, axisLetterY_); }
    int OnAdvancedProperties   (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnOvershoot            (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnKIntegral            (MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -95,7 +108,9 @@ public:
    int OnAAlign               (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnAZeroX               (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnAZeroY               (MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnMotorControl         (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnMotorControlGeneric  (MM::PropertyBase* pProp, MM::ActionType eAct, string axisLetter);
+   int OnMotorControlX        (MM::PropertyBase* pProp, MM::ActionType eAct) { return OnMotorControlGeneric(pProp, eAct, axisLetterX_); }
+   int OnMotorControlY        (MM::PropertyBase* pProp, MM::ActionType eAct) { return OnMotorControlGeneric(pProp, eAct, axisLetterY_); }
    int OnJoystickFastSpeed    (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnJoystickSlowSpeed    (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnJoystickMirror       (MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -128,6 +143,7 @@ private:
 
    // private helper functions
    int OnSaveJoystickSettings();
+   double getMaxSpeed(string axisLetter, ASIHub *hub_);
 };
 
 #endif //_ASIXYStage_H_

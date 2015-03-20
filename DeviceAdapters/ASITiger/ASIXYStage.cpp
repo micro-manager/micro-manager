@@ -105,23 +105,12 @@ int CXYStage::Initialize()
    CreateProperty(MM::g_Keyword_Description, command.str().c_str(), MM::String, true);
 
    // max motor speed - read only property
-   command.str("");
-   command << "S " << axisLetterX_ << "?";
-   RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
-   double origSpeed;
-   RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(origSpeed) );
-   ostringstream command2; command2.str("");
-   command2 << "S " << axisLetterX_ << "=10000";
-   RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command2.str(), ":A")); // set too high
-   RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));  // read actual max
-   double maxSpeed;
-   RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(maxSpeed) );
-   command2.str("");
-   command2 << "S " << axisLetterX_ << "=" << origSpeed;
-   RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command2.str(), ":A")); // restore
-   command2.str("");
-   command2 << maxSpeed;
-   CreateProperty(g_MaxMotorSpeedPropertyName, command2.str().c_str(), MM::Float, true);
+   double maxSpeedX = getMaxSpeed(axisLetterX_, hub_);
+   command << maxSpeedX;
+   CreateProperty(g_MaxMotorSpeedXPropertyName, command.str().c_str(), MM::Float, true);
+   double maxSpeedY = getMaxSpeed(axisLetterY_, hub_);
+   command << maxSpeedY;
+   CreateProperty(g_MaxMotorSpeedYPropertyName, command.str().c_str(), MM::Float, true);
 
    // now for properties that are read-write, mostly parameters that set aspects of stage behavior
    // our approach to parameters: read in value for X, if user changes it in MM then change for both X and Y
@@ -148,28 +137,49 @@ int CXYStage::Initialize()
    AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsOrig);
    AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsDone);
 
-   // Motor speed (S)
-   pAct = new CPropertyAction (this, &CXYStage::OnSpeed);
-   CreateProperty(g_MotorSpeedPropertyName, "1", MM::Float, false, pAct);
-   SetPropertyLimits(g_MotorSpeedPropertyName, 0, maxSpeed);
-   UpdateProperty(g_MotorSpeedPropertyName);
+   // Motor speed (S) for X and Y
+   pAct = new CPropertyAction (this, &CXYStage::OnSpeedX);
+   CreateProperty(g_MotorSpeedXPropertyName, "1", MM::Float, false, pAct);
+   SetPropertyLimits(g_MotorSpeedXPropertyName, 0, maxSpeedX);
+   UpdateProperty(g_MotorSpeedXPropertyName);
+   pAct = new CPropertyAction (this, &CXYStage::OnSpeedY);
+   CreateProperty(g_MotorSpeedYPropertyName, "1", MM::Float, false, pAct);
+   SetPropertyLimits(g_MotorSpeedYPropertyName, 0, maxSpeedY);
+   UpdateProperty(g_MotorSpeedYPropertyName);
 
-   // drift error (E)
-   pAct = new CPropertyAction (this, &CXYStage::OnDriftError);
-   CreateProperty(g_DriftErrorPropertyName, "0", MM::Float, false, pAct);
-   UpdateProperty(g_DriftErrorPropertyName);
+   // Backlash (B) for X and Y
+   pAct = new CPropertyAction (this, &CXYStage::OnBacklashX);
+   CreateProperty(g_BacklashXPropertyName, "0", MM::Float, false, pAct);
+   UpdateProperty(g_BacklashXPropertyName);
+   pAct = new CPropertyAction (this, &CXYStage::OnBacklashY);
+   CreateProperty(g_BacklashYPropertyName, "0", MM::Float, false, pAct);
+   UpdateProperty(g_BacklashYPropertyName);
 
-   // finish error (PC)
-   pAct = new CPropertyAction (this, &CXYStage::OnFinishError);
-   CreateProperty(g_FinishErrorPropertyName, "0", MM::Float, false, pAct);
-   UpdateProperty(g_FinishErrorPropertyName);
+   // drift error (E) for both X and Y
+   pAct = new CPropertyAction (this, &CXYStage::OnDriftErrorX);
+   CreateProperty(g_DriftErrorXPropertyName, "0", MM::Float, false, pAct);
+   UpdateProperty(g_DriftErrorXPropertyName);
+   pAct = new CPropertyAction (this, &CXYStage::OnDriftErrorY);
+   CreateProperty(g_DriftErrorYPropertyName, "0", MM::Float, false, pAct);
+   UpdateProperty(g_DriftErrorYPropertyName);
 
-   // acceleration (AC)
-   pAct = new CPropertyAction (this, &CXYStage::OnAcceleration);
-   CreateProperty(g_AccelerationPropertyName, "0", MM::Integer, false, pAct);
-   UpdateProperty(g_AccelerationPropertyName);
+   // finish error (PC) for X and Y
+   pAct = new CPropertyAction (this, &CXYStage::OnFinishErrorX);
+   CreateProperty(g_FinishErrorXPropertyName, "0", MM::Float, false, pAct);
+   UpdateProperty(g_FinishErrorXPropertyName);
+   pAct = new CPropertyAction (this, &CXYStage::OnFinishErrorY);
+   CreateProperty(g_FinishErrorYPropertyName, "0", MM::Float, false, pAct);
+   UpdateProperty(g_FinishErrorYPropertyName);
 
-   // upper and lower limits (SU and SL)
+   // acceleration (AC) for X and Y
+   pAct = new CPropertyAction (this, &CXYStage::OnAccelerationX);
+   CreateProperty(g_AccelerationXPropertyName, "0", MM::Integer, false, pAct);
+   UpdateProperty(g_AccelerationXPropertyName);
+   pAct = new CPropertyAction (this, &CXYStage::OnAccelerationY);
+   CreateProperty(g_AccelerationYPropertyName, "0", MM::Integer, false, pAct);
+   UpdateProperty(g_AccelerationYPropertyName);
+
+   // upper and lower limits (SU and SL) for X and Y
    pAct = new CPropertyAction (this, &CXYStage::OnLowerLimX);
    CreateProperty(g_LowerLimXPropertyName, "0", MM::Float, false, pAct);
    UpdateProperty(g_LowerLimXPropertyName);
@@ -183,14 +193,33 @@ int CXYStage::Initialize()
    CreateProperty(g_UpperLimYPropertyName, "0", MM::Float, false, pAct);
    UpdateProperty(g_UpperLimYPropertyName);
 
-   // maintain behavior (MA)
-   pAct = new CPropertyAction (this, &CXYStage::OnMaintainState);
-   CreateProperty(g_MaintainStatePropertyName, g_StageMaintain_0, MM::String, false, pAct);
-   AddAllowedValue(g_MaintainStatePropertyName, g_StageMaintain_0);
-   AddAllowedValue(g_MaintainStatePropertyName, g_StageMaintain_1);
-   AddAllowedValue(g_MaintainStatePropertyName, g_StageMaintain_2);
-   AddAllowedValue(g_MaintainStatePropertyName, g_StageMaintain_3);
-   UpdateProperty(g_MaintainStatePropertyName);
+   // maintain behavior (MA) for X and Y
+   pAct = new CPropertyAction (this, &CXYStage::OnMaintainStateX);
+   CreateProperty(g_MaintainStateXPropertyName, g_StageMaintain_0, MM::String, false, pAct);
+   AddAllowedValue(g_MaintainStateXPropertyName, g_StageMaintain_0);
+   AddAllowedValue(g_MaintainStateXPropertyName, g_StageMaintain_1);
+   AddAllowedValue(g_MaintainStateXPropertyName, g_StageMaintain_2);
+   AddAllowedValue(g_MaintainStateXPropertyName, g_StageMaintain_3);
+   UpdateProperty(g_MaintainStateXPropertyName);
+   pAct = new CPropertyAction (this, &CXYStage::OnMaintainStateY);
+   CreateProperty(g_MaintainStateYPropertyName, g_StageMaintain_0, MM::String, false, pAct);
+   AddAllowedValue(g_MaintainStateYPropertyName, g_StageMaintain_0);
+   AddAllowedValue(g_MaintainStateYPropertyName, g_StageMaintain_1);
+   AddAllowedValue(g_MaintainStateYPropertyName, g_StageMaintain_2);
+   AddAllowedValue(g_MaintainStateYPropertyName, g_StageMaintain_3);
+   UpdateProperty(g_MaintainStateYPropertyName);
+
+   // Motor enable/disable (MC) for X and Y
+   pAct = new CPropertyAction (this, &CXYStage::OnMotorControlX);
+   CreateProperty(g_MotorControlXPropertyName, g_OnState, MM::String, false, pAct);
+   AddAllowedValue(g_MotorControlXPropertyName, g_OnState);
+   AddAllowedValue(g_MotorControlXPropertyName, g_OffState);
+   UpdateProperty(g_MotorControlPropertyName);
+   pAct = new CPropertyAction (this, &CXYStage::OnMotorControlY);
+   CreateProperty(g_MotorControlYPropertyName, g_OnState, MM::String, false, pAct);
+   AddAllowedValue(g_MotorControlYPropertyName, g_OnState);
+   AddAllowedValue(g_MotorControlYPropertyName, g_OffState);
+   UpdateProperty(g_MotorControlYPropertyName);
 
    // Wait time, default is 0 (WT)
    pAct = new CPropertyAction (this, &CXYStage::OnWaitTime);
@@ -319,16 +348,37 @@ int CXYStage::Initialize()
 
       pAct = new CPropertyAction (this, &CXYStage::OnScanNumLines);
       CreateProperty(g_ScanNumLinesPropertyName, "1", MM::Integer, false, pAct);
+      SetPropertyLimits(g_ScanNumLinesPropertyName, 1, 100);  // upper limit is arbitrary, have limits to enforce > 0
       UpdateProperty(g_ScanNumLinesPropertyName);
 
       pAct = new CPropertyAction (this, &CXYStage::OnScanOvershootFactor);
       CreateProperty(g_ScanOvershootFactorPropertyName, "1", MM::Float, false, pAct);
+      SetPropertyLimits(g_ScanNumLinesPropertyName, 0., 5.);  // limits are arbitrary really, just give a reasonable range
       UpdateProperty(g_ScanOvershootFactorPropertyName);
 
    }
 
    initialized_ = true;
    return DEVICE_OK;
+}
+
+double CXYStage::getMaxSpeed(string axisLetter, ASIHub *hub_)
+{
+   double maxSpeed;
+   ostringstream command;
+   command << "S " << axisLetter << "?";
+   RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+   double origSpeed;
+   RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(origSpeed) );
+   ostringstream command2; command2.str("");
+   command2 << "S " << axisLetter << "=10000";
+   RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command2.str(), ":A")); // set too high
+   RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));  // read actual max
+   RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(maxSpeed) );
+   command2.str("");
+   command2 << "S " << axisLetter << "=" << origSpeed;
+   RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command2.str(), ":A")); // restore
+   return maxSpeed;
 }
 
 int CXYStage::GetPositionSteps(long& x, long& y)
@@ -573,11 +623,6 @@ int CXYStage::OnAdvancedProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
          CPropertyAction* pAct;
          advancedPropsEnabled_ = true;
 
-         // Backlash (B)
-         pAct = new CPropertyAction (this, &CXYStage::OnBacklash);
-         CreateProperty(g_BacklashPropertyName, "0", MM::Float, false, pAct);
-         UpdateProperty(g_BacklashPropertyName);
-
          // overshoot (OS)
          pAct = new CPropertyAction (this, &CXYStage::OnOvershoot);
          CreateProperty(g_OvershootPropertyName, "0", MM::Float, false, pAct);
@@ -609,13 +654,6 @@ int CXYStage::OnAdvancedProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
          pAct = new CPropertyAction (this, &CXYStage::OnAZeroY);
          CreateProperty(g_AZeroYPropertyName, "0", MM::String, false, pAct);
          UpdateProperty(g_AZeroYPropertyName);
-
-         // Motor enable/disable (MC)
-         pAct = new CPropertyAction (this, &CXYStage::OnMotorControl);
-         CreateProperty(g_MotorControlPropertyName, g_OnState, MM::String, false, pAct);
-         AddAllowedValue(g_MotorControlPropertyName, g_OnState);
-         AddAllowedValue(g_MotorControlPropertyName, g_OffState);
-         UpdateProperty(g_MotorControlPropertyName);
 
          // number of extra move repetitions
          pAct = new CPropertyAction (this, &CXYStage::OnNrExtraMoveReps);
@@ -650,7 +688,7 @@ int CXYStage::OnWaitTime(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-int CXYStage::OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
+int CXYStage::OnSpeedGeneric(MM::PropertyBase* pProp, MM::ActionType eAct, string axisLetter)
 {
    ostringstream command; command.str("");
    ostringstream response; response.str("");
@@ -659,8 +697,8 @@ int CXYStage::OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
-      command << "S " << axisLetterX_ << "?";
-      response << ":A " << axisLetterX_ << "=";
+      command << "S " << axisLetter << "?";
+      response << ":A " << axisLetter << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
       RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
@@ -668,13 +706,13 @@ int CXYStage::OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
-      command << "S " << axisLetterX_ << "=" << tmp << " " << axisLetterY_ << "=" << tmp;
+      command << "S " << axisLetter << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;
 }
 
-int CXYStage::OnDriftError(MM::PropertyBase* pProp, MM::ActionType eAct)
+int CXYStage::OnBacklashGeneric(MM::PropertyBase* pProp, MM::ActionType eAct, string axisLetter)
 // note ASI units are in millimeters but MM units are in micrometers
 {
    ostringstream command; command.str("");
@@ -684,8 +722,8 @@ int CXYStage::OnDriftError(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
-      command << "E " << axisLetterX_ << "?";
-      response << ":" << axisLetterX_ << "=";
+      command << "B " << axisLetter << "?";
+      response << ":" << axisLetter << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
       RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       tmp = 1000*tmp;
@@ -694,13 +732,13 @@ int CXYStage::OnDriftError(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
-      command << "E " << axisLetterX_ << "=" << tmp/1000 << " " << axisLetterY_ << "=" << tmp/1000;
+      command << "B " << axisLetter << "=" << tmp/1000;;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;
 }
 
-int CXYStage::OnFinishError(MM::PropertyBase* pProp, MM::ActionType eAct)
+int CXYStage::OnDriftErrorGeneric(MM::PropertyBase* pProp, MM::ActionType eAct, string axisLetter)
 // note ASI units are in millimeters but MM units are in micrometers
 {
    ostringstream command; command.str("");
@@ -710,8 +748,8 @@ int CXYStage::OnFinishError(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
-      command << "PC " << axisLetterX_ << "?";
-      response << ":A " << axisLetterX_ << "=";
+      command << "E " << axisLetter << "?";
+      response << ":" << axisLetter << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
       RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       tmp = 1000*tmp;
@@ -720,13 +758,14 @@ int CXYStage::OnFinishError(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
-      command << "PC " << axisLetterX_ << "=" << tmp/1000 << " " << axisLetterY_ << "=" << tmp/1000;
+      command << "E " << axisLetter << "=" << tmp/1000;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;
 }
 
-int CXYStage::OnLowerLimX(MM::PropertyBase* pProp, MM::ActionType eAct)
+int CXYStage::OnFinishErrorGeneric(MM::PropertyBase* pProp, MM::ActionType eAct, string axisLetter)
+// note ASI units are in millimeters but MM units are in micrometers
 {
    ostringstream command; command.str("");
    ostringstream response; response.str("");
@@ -735,22 +774,23 @@ int CXYStage::OnLowerLimX(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
-      command << "SL " << axisLetterX_ << "?";
-      response << ":A " << axisLetterX_ << "=";
+      command << "PC " << axisLetter << "?";
+      response << ":A " << axisLetter << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
       RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      tmp = 1000*tmp;
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
-      command << "SL " << axisLetterX_ << "=" << tmp;
+      command << "PC " << axisLetter << "=" << tmp/1000;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;
 }
 
-int CXYStage::OnLowerLimY(MM::PropertyBase* pProp, MM::ActionType eAct)
+int CXYStage::OnLowerLimGeneric(MM::PropertyBase* pProp, MM::ActionType eAct, string axisLetter)
 {
    ostringstream command; command.str("");
    ostringstream response; response.str("");
@@ -759,8 +799,8 @@ int CXYStage::OnLowerLimY(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
-      command << "SL " << axisLetterY_ << "?";
-      response << ":A " << axisLetterY_ << "=";
+      command << "SL " << axisLetter << "?";
+      response << ":A " << axisLetter << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
       RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
@@ -768,13 +808,13 @@ int CXYStage::OnLowerLimY(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
-      command << "SL " << axisLetterY_ << "=" << tmp;
+      command << "SL " << axisLetter << "=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;
 }
 
-int CXYStage::OnUpperLimX(MM::PropertyBase* pProp, MM::ActionType eAct)
+int CXYStage::OnUpperLimGeneric(MM::PropertyBase* pProp, MM::ActionType eAct, string axisLetter)
 {
    ostringstream command; command.str("");
    ostringstream response; response.str("");
@@ -783,8 +823,8 @@ int CXYStage::OnUpperLimX(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
-      command << "SU " << axisLetterX_ << "?";
-      response << ":A " << axisLetterX_ << "=";
+      command << "SU " << axisLetter << "?";
+      response << ":A " << axisLetter << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
       RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
@@ -792,37 +832,13 @@ int CXYStage::OnUpperLimX(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
-      command << "SU " << axisLetterX_ << "=" << tmp;
+      command << "SU " << axisLetter << "=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;
 }
 
-int CXYStage::OnUpperLimY(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   ostringstream command; command.str("");
-   ostringstream response; response.str("");
-   double tmp = 0;
-   if (eAct == MM::BeforeGet)
-   {
-      if (!refreshProps_ && initialized_)
-         return DEVICE_OK;
-      command << "SU " << axisLetterY_ << "?";
-      response << ":A " << axisLetterY_ << "=";
-      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
-      if (!pProp->Set(tmp))
-         return DEVICE_INVALID_PROPERTY_VALUE;
-   }
-   else if (eAct == MM::AfterSet) {
-      pProp->Get(tmp);
-      command << "SU " << axisLetterY_ << "=" << tmp;
-      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
-   }
-   return DEVICE_OK;
-}
-
-int CXYStage::OnAcceleration(MM::PropertyBase* pProp, MM::ActionType eAct)
+int CXYStage::OnAccelerationGeneric(MM::PropertyBase* pProp, MM::ActionType eAct, string axisLetter)
 {
    ostringstream command; command.str("");
    long tmp = 0;
@@ -830,8 +846,8 @@ int CXYStage::OnAcceleration(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
-      command << "AC " << axisLetterX_ << "?";
-      ostringstream response; response.str(""); response << ":" << axisLetterX_ << "=";
+      command << "AC " << axisLetter << "?";
+      ostringstream response; response.str(""); response << ":" << axisLetter << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
@@ -839,13 +855,13 @@ int CXYStage::OnAcceleration(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
-      command << "AC " << axisLetterX_ << "=" << tmp << " " << axisLetterY_ << "=" << tmp;
+      command << "AC " << axisLetter << "=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;
 }
 
-int CXYStage::OnMaintainState(MM::PropertyBase* pProp, MM::ActionType eAct)
+int CXYStage::OnMaintainStateGeneric(MM::PropertyBase* pProp, MM::ActionType eAct, string axisLetter)
 {
    ostringstream command; command.str("");
    long tmp = 0;
@@ -853,8 +869,8 @@ int CXYStage::OnMaintainState(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
-      command << "MA " << axisLetterX_ << "?";
-      ostringstream response; response.str(""); response << ":A " << axisLetterX_ << "=";
+      command << "MA " << axisLetter << "?";
+      ostringstream response; response.str(""); response << ":A " << axisLetter << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       bool success = 0;
@@ -882,33 +898,7 @@ int CXYStage::OnMaintainState(MM::PropertyBase* pProp, MM::ActionType eAct)
          tmp = 3;
       else
          return DEVICE_INVALID_PROPERTY_VALUE;
-      command << "MA " << axisLetterX_ << "=" << tmp << " " << axisLetterY_ << tmp;
-      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
-   }
-   return DEVICE_OK;
-}
-
-int CXYStage::OnBacklash(MM::PropertyBase* pProp, MM::ActionType eAct)
-// note ASI units are in millimeters but MM units are in micrometers
-{
-   ostringstream command; command.str("");
-   ostringstream response; response.str("");
-   double tmp = 0;
-   if (eAct == MM::BeforeGet)
-   {
-      if (!refreshProps_ && initialized_)
-         return DEVICE_OK;
-      command << "B " << axisLetterX_ << "?";
-      response << ":" << axisLetterX_ << "=";
-      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
-      tmp = 1000*tmp;
-      if (!pProp->Set(tmp))
-         return DEVICE_INVALID_PROPERTY_VALUE;
-   }
-   else if (eAct == MM::AfterSet) {
-      pProp->Get(tmp);
-      command << "B " << axisLetterX_ << "=" << tmp/1000 << " " << axisLetterY_ << "=" << tmp/1000;
+      command << "MA " << axisLetter << "=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;
@@ -1075,7 +1065,7 @@ int CXYStage::OnAZeroY(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-int CXYStage::OnMotorControl(MM::PropertyBase* pProp, MM::ActionType eAct)
+int CXYStage::OnMotorControlGeneric(MM::PropertyBase* pProp, MM::ActionType eAct, string axisLetter)
 {
    ostringstream command; command.str("");
    ostringstream response; response.str("");
@@ -1084,7 +1074,7 @@ int CXYStage::OnMotorControl(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
-      command << "MC " << axisLetterX_ << "?";
+      command << "MC " << axisLetter << "?";
       response << ":A ";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
       RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterPosition3(tmp) );
@@ -1100,9 +1090,9 @@ int CXYStage::OnMotorControl(MM::PropertyBase* pProp, MM::ActionType eAct)
       string tmpstr;
       pProp->Get(tmpstr);
       if (tmpstr.compare(g_OffState) == 0)
-         command << "MC " << axisLetterX_ << "-" << " " << axisLetterY_ << "-";
+         command << "MC " << axisLetter << "-";
       else
-         command << "MC " << axisLetterX_ << "+" << " " << axisLetterY_ << "+";
+         command << "MC " << axisLetter << "+";
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;

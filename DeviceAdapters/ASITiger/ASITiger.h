@@ -142,9 +142,7 @@ const char* const g_AxisLetterYPropertyName = "AxisLetterY";
 const char* const g_AxisLetterPropertyName = "AxisLetter";
 const char* const g_SetHomeHerePropertyName = "SetHomeToCurrentPosition";
 const char* const g_MoveToHomePropertyName = "MoveToHome";
-const char* const g_AxisPolarity = "AxisPolarity";
-const char* const g_AxisPolarityX = "AxisPolarityX";
-const char* const g_AxisPolarityY = "AxisPolarityY";
+const char* const g_AdvancedPropertiesPropertyName = "EnableAdvancedProperties";
 
 // Hub property names
 const char* const g_HubDevicePropertyName = "HubDeviceName";
@@ -157,24 +155,39 @@ const char* const g_SerialCommandRepeatDurationPropertyName = "SerialCommandRepe
 const char* const g_SerialCommandRepeatPeriodPropertyName = "SerialCommandRepeatPeriod(ms)";
 const char* const g_SerialComPortPropertyName = "SerialComPort";
 
-// XY stage property names
+// motorized stage property names (XY and Z)
 const char* const g_StepSizeXPropertyName = "StepSizeX(um)";
 const char* const g_StepSizeYPropertyName = "StepSizeY(um)";
 const char* const g_StageWaitTimePropertyName = "WaitTime(ms)";
 const char* const g_NrExtraMoveRepsPropertyName = "ExtraMoveRepetitions";
 const char* const g_MotorSpeedPropertyName = "MotorSpeed-S(mm/s)";
+const char* const g_MotorSpeedXPropertyName = "MotorSpeedX-S(mm/s)";
+const char* const g_MotorSpeedYPropertyName = "MotorSpeedY-S(mm/s)";
 const char* const g_MaxMotorSpeedPropertyName = "MotorSpeedMaximum(mm/s)";
+const char* const g_MaxMotorSpeedXPropertyName = "MotorSpeedMaximumX(mm/s)";
+const char* const g_MaxMotorSpeedYPropertyName = "MotorSpeedMaximumY(mm/s)";
 const char* const g_BacklashPropertyName = "Backlash-B(um)";
+const char* const g_BacklashXPropertyName = "BacklashX-B(um)";
+const char* const g_BacklashYPropertyName = "BacklashY-B(um)";
 const char* const g_DriftErrorPropertyName =  "DriftError-E(um)";
+const char* const g_DriftErrorXPropertyName =  "DriftErrorX-E(um)";
+const char* const g_DriftErrorYPropertyName =  "DriftErrorY-E(um)";
 const char* const g_FinishErrorPropertyName =  "FinishError-PC(um)";
+const char* const g_FinishErrorXPropertyName =  "FinishErrorX-PC(um)";
+const char* const g_FinishErrorYPropertyName =  "FinishErrorY-PC(um)";
 const char* const g_AccelerationPropertyName = "Acceleration-AC(ms)";
+const char* const g_AccelerationXPropertyName = "AccelerationX-AC(ms)";
+const char* const g_AccelerationYPropertyName = "AccelerationY-AC(ms)";
 const char* const g_LowerLimXPropertyName =  "LowerLimX(mm)";
 const char* const g_LowerLimYPropertyName =  "LowerLimY(mm)";
 const char* const g_UpperLimXPropertyName =  "UpperLimX(mm)";
 const char* const g_UpperLimYPropertyName =  "UpperLimY(mm)";
 const char* const g_MaintainStatePropertyName = "MaintainState-MA";
-const char* const g_AdvancedPropertiesPropertyName = "EnableAdvancedProperties";
-const char* const g_CellEditingPropertyName = "EnableCellEditing";
+const char* const g_MaintainStateXPropertyName = "MaintainStateX-MA";
+const char* const g_MaintainStateYPropertyName = "MaintainStateY-MA";
+const char* const g_AxisPolarity = "AxisPolarity";
+const char* const g_AxisPolarityX = "AxisPolarityX";
+const char* const g_AxisPolarityY = "AxisPolarityY";
 const char* const g_OvershootPropertyName = "Overshoot-O(um)";
 const char* const g_KIntegralPropertyName = "ServoIntegral-KI";
 const char* const g_KProportionalPropertyName = "ServoProportional-KP";
@@ -183,6 +196,8 @@ const char* const g_AAlignPropertyName = "MotorAlign-AA";
 const char* const g_AZeroXPropertyName = "AutoZeroXResult-AZ";
 const char* const g_AZeroYPropertyName = "AutoZeroYResult-AZ";
 const char* const g_MotorControlPropertyName = "MotorOnOff";
+const char* const g_MotorControlXPropertyName = "MotorOnOffX";
+const char* const g_MotorControlYPropertyName = "MotorOnOffY";
 const char* const g_JoystickMirrorPropertyName = "JoystickReverse";
 const char* const g_JoystickRotatePropertyName = "JoystickRotate";
 const char* const g_JoystickSlowSpeedPropertyName = "JoystickSlowSpeed";
@@ -348,6 +363,7 @@ const char* const g_SetCardPresetPropertyName = "SetCardPreset";
 const char* const g_SetChannelPropertyName = "OutputChannel";
 const char* const g_CellGenericPropertyName = "Cell";
 const char* const g_TypeGenericPropertyName = "Type";
+const char* const g_CellEditingPropertyName = "EnableCellEditing";
 
 // programmable logic enums
 const char* const g_CellTypeCode0 = "0 - constant";
