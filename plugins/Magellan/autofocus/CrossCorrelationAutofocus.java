@@ -2,9 +2,11 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package acq;
+package autofocus;
 
 import acq.FixedAreaAcquisition;
+import acq.FixedAreaAcquisition;
+import acq.MultiResMultipageTiffStorage;
 import acq.MultiResMultipageTiffStorage;
 import ij.IJ;
 import ij.ImagePlus;

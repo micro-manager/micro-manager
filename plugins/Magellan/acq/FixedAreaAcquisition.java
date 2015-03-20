@@ -4,6 +4,7 @@
  */
 package acq;
 
+import autofocus.CrossCorrelationAutofocus;
 import coordinates.XYStagePosition;
 import gui.SettingsDialog;
 import ij.IJ;
