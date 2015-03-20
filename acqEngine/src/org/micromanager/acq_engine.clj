@@ -872,8 +872,13 @@
 (defn channel-colors [simple-channels super-channels channel-names channel-group]
   (if (= (count simple-channels) (count super-channels)) ; i.e. not multicam
     ; Grab colors from super-channels (which is the same as simple-channels?
-    (map #(:color (super-channels %) channel-names))
-    ; Ask ChannelSettings for color for this group/channel combination.
+    (map
+      #(
+        :color (nth super-channels (.indexOf channel-names %))
+      )
+      channel-names
+    )
+    ; else, ask ChannelSettings for color for this group/channel combination.
     (map #(ChannelSettings/getColorForChannel % channel-group (. Color WHITE)) channel-names)))
 
 (defn summarize-position-list [position-list]
