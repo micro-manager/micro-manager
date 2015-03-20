@@ -265,4 +265,5 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
               xView_, yView_, displayImageWidth_, displayImageHeight_);
 
    }
+   
 }

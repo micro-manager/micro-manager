@@ -4,6 +4,7 @@
  */
 package channels;
 
+import gui.SettingsDialog;
 import java.awt.Color;
 import java.util.ArrayList;
 import javax.swing.event.TableModelEvent;
@@ -11,7 +12,6 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
 import mmcorej.CMMCore;
 import org.micromanager.MMStudio;
-import org.micromanager.utils.ChannelSpec;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -20,7 +20,7 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class SimpleChannelTableModel extends AbstractTableModel implements TableModelListener {
 
-      private ArrayList<ChannelSpec> channels_;
+      private ArrayList<ChannelSettings> channels_ = new ArrayList<ChannelSettings>();
       private final CMMCore core_;
       public final String[] COLUMN_NAMES = new String[]{
          "Configuration",
@@ -29,6 +29,43 @@ public class SimpleChannelTableModel extends AbstractTableModel implements Table
 
       public SimpleChannelTableModel() {
          core_ = MMStudio.getInstance().getCore();
+      }
+      
+      //TODO: freeze channelspec
+      public String[] getActiveChannelNames() {
+         int numCameraChannels = (int) ( SettingsDialog.getDemoMode() ? 6 :
+                        MMStudio.getInstance().getCore().getNumberOfCameraChannels());
+         int numActive = 0;
+         
+         for (ChannelSettings c : channels_) {
+            numActive += c.useChannel ? 1 : 0;
+         }
+         if (numActive == 0) {
+            if (numCameraChannels == 1) {
+               return new String[]{"no channels active"};
+            } else {
+               //multichannel camera channels only
+               if (SettingsDialog.getDemoMode()) {
+                  return new String[] {"Violet","Blue","Green","Yellow","Red","FarRed"};
+               }
+               String[] names = new String[numCameraChannels];
+               for (int i = 0; i < numCameraChannels; i++) {
+                  names[i] = MMStudio.getInstance().getCore().getCameraChannelName(i);
+               }
+               return names;
+            }
+         } else {
+            if (numCameraChannels == 1) {
+               String[] names = new String[numActive];
+               for (int i = 0; i < names.length; i++) {
+                  names[i]  = channels_.get(i).config;
+               }
+               return names;
+            } else {
+               //tODO: multichannelcam with multiple channels, how are names generated?
+               return null;
+            }           
+         }
       }
 
       @Override
@@ -75,7 +112,7 @@ public class SimpleChannelTableModel extends AbstractTableModel implements Table
          return;
       }
 
-      ChannelSpec channel = channels_.get(row);
+      ChannelSettings channel = channels_.get(row);
       if (col == 0) {
          channel.config = value.toString();
       } else if (col == 1) {
@@ -113,13 +150,13 @@ public class SimpleChannelTableModel extends AbstractTableModel implements Table
 
 
       public void addNewChannel() {
-         ChannelSpec channel = new ChannelSpec();
+         ChannelSettings channel = new ChannelSettings();
          channel.config = "";
          String[] configs = core_.getAvailableConfigs(core_.getChannelGroup()).toArray();        
          if (configs.length > 0) {
             for (String config : configs) {
                boolean unique = true;
-               for (ChannelSpec chan : channels_) {
+               for (ChannelSettings chan : channels_) {
                   if (config.contentEquals(chan.config)) {
                      unique = false;
                   }
@@ -157,7 +194,7 @@ public class SimpleChannelTableModel extends AbstractTableModel implements Table
          if (!channelGroup.equals(core_.getChannelGroup())) {
             return;
          }
-         for (ChannelSpec ch : channels_) {
+         for (ChannelSettings ch : channels_) {
             if (ch.config.equals(channel)) {
                ch.exposure = exposure;
                this.fireTableDataChanged();

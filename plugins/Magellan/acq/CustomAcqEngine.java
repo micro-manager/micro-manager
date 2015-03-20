@@ -15,11 +15,7 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
@@ -156,6 +152,8 @@ public class CustomAcqEngine {
       } else if (event.isTimepointFinishedEvent()) {
          //signal to TaggedImageSink to let acqusition know that saving for the current time point has completed            
          event.acquisition_.getImageSavingQueue().put(new SignalTaggedImage(SignalTaggedImage.AcqSingal.TimepointFinished));
+      } else if (event.isAutofocusAdjustmentEvent()) {
+         setAutofocusPosition(event.autofocusZName_, event.autofocusPosition_);
       } else {
          updateHardware(event);
          acquireImage(event);
@@ -202,6 +200,16 @@ public class CustomAcqEngine {
          ex.printStackTrace();
          ReportingUtils.showError("Couldn't acquire Z stack");
       }
+   }
+   
+   private void setAutofocusPosition(final String zName, final double pos) throws InterruptedException {
+      //TODO: account for hyteresis by moving away and then back towards
+      loopHardwareCommandRetries(new HardwareCommand() {
+            @Override
+            public void run() throws Exception {
+               core_.setPosition(zName, pos);       
+            }
+         }, "Setting autofocus position");
    }
 
    private void updateHardware(final AcquisitionEvent event) throws InterruptedException {

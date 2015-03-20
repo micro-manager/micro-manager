@@ -124,7 +124,7 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
     * It doesnt matter what resolution level the pixel is at since tiles
     * are the same size at every level
     */
-   private int tileIndexFromPixelIndex(int i, int dsIndex, boolean xDirection) {
+   private int tileIndexFromPixelIndex(int i, boolean xDirection) {
       if (i >= 0) {
          return i / (xDirection ? tileWidth_ : tileHeight_);
       } else {
@@ -159,10 +159,10 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
       JSONObject topLeftMD = null;
       //first calculate how many columns and rows of tiles are relevant and the number of pixels
       //of each tile to copy into the returned image
-      int previousCol = tileIndexFromPixelIndex(x, dsIndex, true) - 1; //make it one less than the first col in loop
+      int previousCol = tileIndexFromPixelIndex(x, true) - 1; //make it one less than the first col in loop
       LinkedList<Integer> lineWidths = new LinkedList<Integer>();
       for (int i = x; i < x + width; i++) { //Iterate through every column of pixels in the image to be returned
-         int colIndex = tileIndexFromPixelIndex(i, dsIndex, true);
+         int colIndex = tileIndexFromPixelIndex(i, true);
          if (colIndex != previousCol) {
             lineWidths.add(0);
          }
@@ -171,10 +171,10 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
          previousCol = colIndex;
       }
       //do the same thing for rows
-      int previousRow = tileIndexFromPixelIndex(y, dsIndex, false) - 1; //one less than first row in loop?
+      int previousRow = tileIndexFromPixelIndex(y, false) - 1; //one less than first row in loop?
       LinkedList<Integer> lineHeights = new LinkedList<Integer>();
       for (int i = y; i < y + height; i++) {
-         int rowIndex = tileIndexFromPixelIndex(i, dsIndex, false);
+         int rowIndex = tileIndexFromPixelIndex(i, false);
          if (rowIndex != previousRow) {
             lineHeights.add(0);
          }
@@ -183,8 +183,8 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
          previousRow = rowIndex;
       }
       //get starting row and column
-      int rowStart = tileIndexFromPixelIndex(y, dsIndex, false);
-      int colStart = tileIndexFromPixelIndex(x, dsIndex, true);
+      int rowStart = tileIndexFromPixelIndex(y, false);
+      int colStart = tileIndexFromPixelIndex(x, true);
       //xOffset and y offset are the distance from the top left of the display image into which 
       //we are copying data
       int xOffset = 0;

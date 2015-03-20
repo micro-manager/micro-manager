@@ -122,6 +122,10 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
       activeDisplays_.add(this);
    }
 
+   public ZoomableVirtualStack getZoomableStack() {
+      return zoomableStack_;
+   }
+   
    protected void applyPixelSizeCalibration() {
       try {
          JSONObject summary = getSummaryMetadata();

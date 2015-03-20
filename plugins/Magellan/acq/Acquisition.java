@@ -3,6 +3,7 @@ package acq;
 import coordinates.PositionManager;
 import gui.SettingsDialog;
 import imagedisplay.DisplayPlus;
+import imagedisplay.ZoomableVirtualStack;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import mmcorej.CMMCore;
@@ -28,12 +29,14 @@ public abstract class Acquisition implements AcquisitionEventSource{
    protected CMMCore core_ = MMStudio.getInstance().getCore();
    protected String xyStage_, zStage_;
    protected PositionManager posManager_;
+   private DisplayPlus display_;
    protected BlockingQueue<AcquisitionEvent> events_;
    protected TaggedImageSink imageSink_;
    protected String pixelSizeConfig_;
    protected volatile boolean finished_ = false;
    private String name_;
    private long startTime_ms_ = -1;
+   private MultiResMultipageTiffStorage imageStorage_;
 
    public Acquisition(double zStep ) {
             xyStage_ = core_.getXYStageDevice();
@@ -47,6 +50,9 @@ public abstract class Acquisition implements AcquisitionEventSource{
       }
    }
 
+   public MultiResMultipageTiffStorage getStorage() {
+      return imageStorage_;
+   }
 
    public String getXYStageName() {
        return xyStage_;
@@ -55,7 +61,7 @@ public abstract class Acquisition implements AcquisitionEventSource{
    public String getZStageName() {
        return zStage_;
    }
-   
+
    /**
     * indices are 1 based and positive
     *
@@ -101,13 +107,13 @@ public abstract class Acquisition implements AcquisitionEventSource{
       engineOutputQueue_ = new LinkedBlockingQueue<TaggedImage>(OUTPUT_QUEUE_SIZE);
 
       JSONObject summaryMetadata = CustomAcqEngine.makeSummaryMD(this, name);
-      MultiResMultipageTiffStorage storage = new MultiResMultipageTiffStorage(dir, true, summaryMetadata, xOverlap, yOverlap, pixelSizeConfig_);
+      imageStorage_ = new MultiResMultipageTiffStorage(dir, true, summaryMetadata, xOverlap, yOverlap, pixelSizeConfig_);
       //storage class has determined unique acq name, so it can now be stored
-      name_ = storage.getUniqueAcqName();
-      MMImageCache imageCache = new MMImageCache(storage);
+      name_ = imageStorage_.getUniqueAcqName();
+      MMImageCache imageCache = new MMImageCache(imageStorage_);
       imageCache.setSummaryMetadata(summaryMetadata);
-      posManager_ = storage.getPositionManager();      
-      new DisplayPlus(imageCache, this, summaryMetadata, storage);         
+      posManager_ = imageStorage_.getPositionManager();      
+      new DisplayPlus(imageCache, this, summaryMetadata, imageStorage_);         
       imageSink_ = new TaggedImageSink(engineOutputQueue_, imageCache, this);
       imageSink_.start();
    }

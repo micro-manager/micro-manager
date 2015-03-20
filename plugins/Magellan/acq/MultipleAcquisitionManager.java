@@ -5,14 +5,15 @@
 package acq;
 
 import gui.GUI;
+import gui.SettingsDialog;
 import ij.IJ;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
+import org.micromanager.MMStudio;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -228,6 +229,16 @@ public class MultipleAcquisitionManager {
      managerThread_ = new Thread(new Runnable() {
          @Override
          public void run() {
+            FixedAreaAcquisition firstAcq = null;
+            double secretAFDriveInitialPos = 0;
+            boolean secretAutofocus = SettingsDialog.getAutofocusBetweenSerialAcqusitions();
+            if (secretAutofocus) {
+               IJ.log("Secret autofocus between acquisitions activated!");
+               if (!acquisitions_.get(0).autofocusEnabled_) {
+                  ReportingUtils.showError("Must enable autofocus on first acquisition for secret autofocus");
+               }
+            }
+            
             gui_.enableMultiAcquisitionControls(false); //disallow changes while running
             running_ = true;
             acqStatus_ = new String[acquisitions_.size()];
@@ -243,6 +254,29 @@ public class MultipleAcquisitionManager {
                   acqStatus_[getFirstIndexOfGroup(groupIndex) + i] = "Running";
                   gui_.repaint();
                }
+               ////////////////////////////////////SECRET AUTOFOCUS///////////////////////////////////////////////////////////////////
+               if (secretAutofocus && groupIndex > 0) {
+                  if (groupIndex == 1) {
+                     try {
+                        //get the initial position
+                        secretAFDriveInitialPos = MMStudio.getInstance().getCore().getPosition(firstAcq.getSettings().autoFocusZDevice_);
+                     } catch (Exception ex) {
+                        ReportingUtils.showError("Couldn't get initial position of AF drive for secret AF");
+                     }
+                  }
+                  //run the first acquistion again
+                  currentAcqs_ = eng_.runInterleavedAcquisitions(acquisitions_.subList(0, 1), true);
+                  FixedAreaAcquisition current = currentAcqs_.acqs_.get(0);
+                  try {
+                     acqGroupFinishedBarrier_.await();
+                  } catch (Exception ex) {
+                     //all multiple acquisitions aborted
+                     break;
+                  }
+                  //now can compare current secret acq to first and adjust accordingly
+                  CrossCorrelationAutofocus.runSecretSerialAutofocus(firstAcq, current, secretAFDriveInitialPos);
+               }
+               ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                //run one or more acquisitions in parallel group 
                try {
                   currentAcqs_ = eng_.runInterleavedAcquisitions(acquisitions_.subList(
@@ -256,10 +290,14 @@ public class MultipleAcquisitionManager {
                   //user has responded to dialog and doesnt want to interupt currently running ones
                   break;
                }   
+               ////////////////////////////////////SECRET AUTOFOCUS////////////////////////////////////////////////////////////////////
+               if (secretAutofocus && groupIndex == 0) {
+                  //get the stack from this acquisition
+                  firstAcq = currentAcqs_.acqs_.get(0);                             
+               }
+               //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                try {
-                  System.out.println("Multi acq manager waiting");
                   acqGroupFinishedBarrier_.await();
-                  System.out.println("Multi acq Manager released");
                } catch (Exception ex) {
                   //all multiple acquisitions aborted
                   break;
@@ -272,7 +310,7 @@ public class MultipleAcquisitionManager {
                   }
                }
                gui_.repaint();
-            }
+            }          
             multipleAcquisitionsFinsihed();          
          }
       }, "Multiple acquisition manager thread");

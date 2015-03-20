@@ -13,13 +13,15 @@ import propsandcovariants.CovariantPairing;
  */
 public class AcquisitionEvent  {
 
-   enum SpecialFlag {TimepointFinished, AcqusitionFinished, SwappingQueues, EngineTaskFinished};
+   enum SpecialFlag {TimepointFinished, AcqusitionFinished, SwappingQueues, EngineTaskFinished, AutofocusAdjustment};
    
    final public Acquisition acquisition_;
    final public int timeIndex_, sliceIndex_, channelIndex_, positionIndex_;
    final public double zPosition_, xPosition_, yPosition_;
    private SpecialFlag specialFlag_;
    final public List<CovariantPairing> covariants_;
+   public String autofocusZName_;
+   public double autofocusPosition_;
    
    public AcquisitionEvent(Acquisition acq, int frameIndex, int channelIndex, int sliceIndex, int positionIndex, 
            double zPos, double xPos, double yPos, List<CovariantPairing> covariants) {
@@ -32,6 +34,17 @@ public class AcquisitionEvent  {
       yPosition_ = yPos;
       acquisition_ = acq;
       covariants_ = covariants;
+   }
+   
+   public static AcquisitionEvent createAutofocusEvent(String zName, double pos ) {   
+      AcquisitionEvent evt = new AcquisitionEvent(null, 0, 0, 0, 0, 0, 0, 0, null);
+      evt.autofocusZName_ = zName;
+      evt.autofocusPosition_ = pos;
+      return evt;
+   }
+   
+    public boolean isAutofocusAdjustmentEvent() {
+      return specialFlag_ == SpecialFlag.AutofocusAdjustment;
    }
    
    public static AcquisitionEvent createEngineTaskFinishedEvent() {

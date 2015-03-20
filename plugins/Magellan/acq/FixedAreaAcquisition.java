@@ -8,6 +8,7 @@ import coordinates.XYStagePosition;
 import gui.SettingsDialog;
 import ij.IJ;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutionException;
@@ -17,6 +18,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.json.JSONArray;
 import org.micromanager.MMStudio;
 import org.micromanager.utils.ReportingUtils;
@@ -43,6 +46,8 @@ public class FixedAreaAcquisition extends Acquisition {
    //executor service to wait for next execution
    private ScheduledExecutorService waitForNextTPSerivice_ = Executors.newScheduledThreadPool(1);
    private ExecutorService eventGenerator_;
+   private CrossCorrelationAutofocus autofocus_;
+   private int maxSliceIndex_ = 0;
 
    /**
     * Acquisition with fixed XY positions (although they can potentially all be
@@ -73,8 +78,42 @@ public class FixedAreaAcquisition extends Acquisition {
       }
       initialize(settings.dir_, settings.name_);
       createEventGenerator();
+      createAutofocus();
+   }
+   
+   private void createAutofocus() {
+      if (settings_.autofocusEnabled_) {
+         //convert channel name to channel index
+         int cIndex = 0;
+         if (settings_.channels_.size() == 0) {
+            if (MMStudio.getInstance().getCore().getNumberOfCameraChannels() == 1) {
+               cIndex = 0;
+            } else if (SettingsDialog.getDemoMode()) {
+               cIndex = Arrays.asList(new String[]{"Violet","Blue","Green","Yellow","Red","FarRed"}).indexOf(settings_.autofocusChannelName_);
+            } else {
+               //multichannel cam only
+               for (int i = 0; i < MMStudio.getInstance().getCore().getNumberOfCameraChannels(); i++) {
+                  if (MMStudio.getInstance().getCore().getCameraChannelName(i).equals(settings_.autofocusChannelName_)) {
+                     cIndex = i;
+                     break;
+                  }
+                  if (i == MMStudio.getInstance().getCore().getNumberOfCameraChannels() -1) {
+                     ReportingUtils.showError("Couldn't find channel: " + settings_.autofocusChannelName_ + ", Aborting autofocus");
+                     return;
+                  }
+               }
+            }
+         } else {
+            //TODO, convert channel name to index
+         }        
+         autofocus_ = new CrossCorrelationAutofocus(this,cIndex, settings_.autofocusMaxDisplacemnet_um_, settings_.autoFocusZDevice_);
+      }
    }
 
+   public int getMaxSliceIndex() {
+      return maxSliceIndex_;
+   }
+   
    public FixedAreaAcquisitionSettings getSettings() {
       return settings_;
    }
@@ -244,7 +283,11 @@ public class FixedAreaAcquisition extends Acquisition {
                      throw new InterruptedException();
                   }
                   
-                  pauseUntilReadyForTP();                  
+                  pauseUntilReadyForTP();         
+                  //set autofocus position
+                  if (autofocus_ != null) {
+                     events_.put(AcquisitionEvent.createAutofocusEvent(settings_.autoFocusZDevice_, autofocus_.getAutofocusPosition()));
+                  }
                   //set the next time point start time
                   double interval_ms = settings_.timePointInterval_ * (settings_.timeIntervalUnit_ == 1 ? 1000 : (settings_.timeIntervalUnit_ == 2 ? 60000 : 1));
                   nextTimePointStartTime_ms_ = (long) (System.currentTimeMillis() + interval_ms);
@@ -282,6 +325,8 @@ public class FixedAreaAcquisition extends Acquisition {
                         if (Thread.interrupted()) {
                            throw new InterruptedException();
                         }
+                        //keep track of biggest slice index
+                        maxSliceIndex_ = Math.max(maxSliceIndex_, event.sliceIndex_);
                         events_.put(event); //event generator will block if event queueu is full
                      }
                   } //position loop finished
@@ -297,8 +342,15 @@ public class FixedAreaAcquisition extends Acquisition {
                   if (Thread.interrupted()) {
                      throw new InterruptedException();
                   }
-
-                  tpFinishedBarrier_.await();
+                  tpFinishedBarrier_.await();  
+                  //all images finished writing--can now run autofocus
+                  if (autofocus_ != null) {
+                     try {
+                        autofocus_.run(timeIndex);
+                     } catch (Exception ex) {
+                        IJ.log("Problem running autofocus");
+                     }
+                  }
 
                   //this call starts a new thread to not hang up cyclic barriers   
                   acqGroup_.finishedTimePoint(FixedAreaAcquisition.this);
@@ -319,9 +371,6 @@ public class FixedAreaAcquisition extends Acquisition {
       }); 
    }
 
-   private void endOfTimePoint(int timeIndex) {
-      //TODO: run autofocus
-   }
 
    /**
     * This function and the one below determine which slices will be collected

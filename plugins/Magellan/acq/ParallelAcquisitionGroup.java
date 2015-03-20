@@ -17,7 +17,7 @@ import org.micromanager.utils.ReportingUtils;
 public class ParallelAcquisitionGroup implements AcquisitionEventSource {
 
    private MultipleAcquisitionManager multiAcqManager_;
-   private List<FixedAreaAcquisition> acqs_;
+   protected List<FixedAreaAcquisition> acqs_;
    private volatile int activeIndex_;
    private LinkedBlockingQueue<AcquisitionEvent> pendingFinishingEvents_ = new LinkedBlockingQueue<AcquisitionEvent>();
    private ExecutorService parallelGroupExecutor_ = Executors.newSingleThreadExecutor(new ThreadFactory() {

@@ -7,6 +7,7 @@ package gui;
 import demo.DemoModeImageData;
 import java.awt.Dialog;
 import java.util.prefs.Preferences;
+import org.micromanager.MMStudio;
 
 /**
  *
@@ -19,6 +20,7 @@ public class SettingsDialog extends javax.swing.JDialog {
    private static int overlapX_ = 0;
    private static int overlapY_ = 0;
    private static boolean demoMode_ = false;
+   private static boolean afBetweenAcqs_ = false;
    
    
    public SettingsDialog(Preferences prefs, GUI gui) {
@@ -27,14 +29,28 @@ public class SettingsDialog extends javax.swing.JDialog {
       prefs_ = prefs;
       gui_ = gui;
       initComponents();
-      loadPrefs();
+      
+          //Demo mode 
+      try {
+         String s = MMStudio.getInstance().getSysConfigFile();
+         if (s.endsWith("NavDemo.cfg") ||s.endsWith("NavDemo16Bit.cfg") ) {
+            SettingsDialog.setDemoMode(true);
+         } else if (s.startsWith("BIDC")) {
+            //secret features!           
+         
+         } else {
+            //no secret features :(
+           autofocusBetweenSerialAcqsCheckBox_.setVisible(false);
+         }
+      } catch (Exception e) {
+      }
    }
    
-   private void loadPrefs() {
+   
+   public static boolean getAutofocusBetweenSerialAcqusitions() {
+      return afBetweenAcqs_;
    }
    
-   private void savePrefs() {
-   }
 
    public static int getOverlapX() {
       return overlapX_;
@@ -72,6 +88,7 @@ public class SettingsDialog extends javax.swing.JDialog {
         jLabel2 = new javax.swing.JLabel();
         yOverlapSpinner_ = new javax.swing.JSpinner();
         jButton2 = new javax.swing.JButton();
+        autofocusBetweenSerialAcqsCheckBox_ = new javax.swing.JCheckBox();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Micro-Magellan settings");
@@ -102,6 +119,13 @@ public class SettingsDialog extends javax.swing.JDialog {
             }
         });
 
+        autofocusBetweenSerialAcqsCheckBox_.setText("autofocus between serial acqusitions");
+        autofocusBetweenSerialAcqsCheckBox_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                autofocusBetweenSerialAcqsCheckBox_ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -113,13 +137,16 @@ public class SettingsDialog extends javax.swing.JDialog {
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(jButton2))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel1)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(xOverlapSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jLabel2)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(yOverlapSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(jLabel1)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(xOverlapSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(jLabel2)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(yOverlapSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(autofocusBetweenSerialAcqsCheckBox_))
                         .addGap(0, 210, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -132,7 +159,9 @@ public class SettingsDialog extends javax.swing.JDialog {
                     .addComponent(xOverlapSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel2)
                     .addComponent(yOverlapSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 182, Short.MAX_VALUE)
+                .addGap(41, 41, 41)
+                .addComponent(autofocusBetweenSerialAcqsCheckBox_)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 118, Short.MAX_VALUE)
                 .addComponent(jButton2)
                 .addContainerGap())
         );
@@ -150,10 +179,14 @@ public class SettingsDialog extends javax.swing.JDialog {
 
    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
       this.setVisible(false);
-      savePrefs();
    }//GEN-LAST:event_jButton2ActionPerformed
 
+   private void autofocusBetweenSerialAcqsCheckBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_autofocusBetweenSerialAcqsCheckBox_ActionPerformed
+      afBetweenAcqs_ = autofocusBetweenSerialAcqsCheckBox_.isSelected();
+   }//GEN-LAST:event_autofocusBetweenSerialAcqsCheckBox_ActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JCheckBox autofocusBetweenSerialAcqsCheckBox_;
     private javax.swing.JButton jButton2;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
