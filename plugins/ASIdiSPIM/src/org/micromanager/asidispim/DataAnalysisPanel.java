@@ -25,6 +25,7 @@ import javax.swing.JProgressBar;
 import javax.swing.JTextField;
 import javax.swing.SwingWorker;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
@@ -561,11 +562,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
                for (int angle = 0; angle < 2; angle++) {
                   Element viewRegistration = getViewRegistration(domTree, t,
                           angle, MDUtils.getPixelSizeUm(summary),
-                          MDUtils.getZStepUm(imageTags));
-                  if (1 == angle) {
-                     Element rotY = getViewRegistrationRotY(domTree, t, angle);
-                     viewRegistrations.appendChild(rotY);
-                  }
+                          MDUtils.getZStepUm(imageTags), true);
                   viewRegistrations.appendChild(viewRegistration);
                }
             }
@@ -577,6 +574,13 @@ public class DataAnalysisPanel extends ListeningJPanel {
             // write out the DOM to an xml file
             TransformerFactory tFactory = TransformerFactory.newInstance();
             Transformer transformer = tFactory.newTransformer();
+            //transformer.setOutputProperty(OutputKeys.METHOD, "xml");
+            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+            //transformer.setOutputProperty(OutputKeys.DOCTYPE_PUBLIC, 
+            //        "-//W3C//DTD XHTML 1.0 Transitional//EN");
+            //transformer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, 
+            //        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd");
             DOMSource source = new DOMSource(domTree);
             StreamResult result = new StreamResult(new File(dir +
                     File.separator + "dataset.xml"));
@@ -642,10 +646,26 @@ public class DataAnalysisPanel extends ListeningJPanel {
       }
 
       private Element getViewRegistration(Document dom, int t, int angle, 
-              double xUm, double zUm) {
+              double xUm, double zUm, boolean rotateY90) {
          Element elvr = dom.createElement("ViewRegistration");
          elvr.setAttribute("timepoint" , "" + t);
          elvr.setAttribute("setup", "" + angle);
+         
+         if (angle == 1 && rotateY90) {
+            Element elvt2 = dom.createElement("ViewTransform");
+            elvt2.setAttribute("type", "affine");
+            elvr.appendChild(elvt2);
+            Element name2 = dom.createElement("Name");
+            name2.insertBefore(dom.createTextNode("Manually defined transformation "
+                    + "(Rotation around y-axis by 90.0 degrees)"),
+                    name2.getLastChild());
+            elvt2.appendChild(name2);
+            Element affine2 = dom.createElement("affine");
+            String transform2 = "6.123233995736766E-17 0.0 1.0 0.0 0.0 1.0 0.0 0.0 -1.0 0.0 6.123233995736766E-17 0.0";
+            affine2.insertBefore(dom.createTextNode(transform2), affine2.getLastChild());
+            elvt2.appendChild(affine2);
+         }
+         
          Element elvt = dom.createElement("ViewTransform");
          elvt.setAttribute("type", "affine");
          elvr.appendChild(elvt);
@@ -657,27 +677,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
                  zUm/xUm + " 0.0";
          affine.insertBefore(dom.createTextNode(transform), affine.getLastChild());
          elvt.appendChild(affine);
-         
-         return elvr;
-      }
-      
-      private Element getViewRegistrationRotY(Document dom, int t, int angle) { 
-         Element elvr = dom.createElement("ViewRegistration");
-         elvr.setAttribute("timepoint" , "" + t);
-         elvr.setAttribute("setup", "" + angle);
-         Element elvt = dom.createElement("ViewTransform");
-         elvt.setAttribute("type", "affine");
-         elvr.appendChild(elvt);
-         Element name = dom.createElement("Name");
-         name.insertBefore(dom.createTextNode("Manually defined transformation " +
-                 "(Rotation around y-axis by 90.0 degrees)"), 
-                 name.getLastChild());
-         elvt.appendChild(name);
-         Element affine = dom.createElement("affine");
-         String transform = "6.123233995736766E-17 0.0 1.0 0.0 0.0 1.0 0.0 0.0 -1.0 0.0 6.123233995736766E-17 0.0";
-         affine.insertBefore(dom.createTextNode(transform), affine.getLastChild());
-         elvt.appendChild(affine);
-         
+
          return elvr;
       }
       
