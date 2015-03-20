@@ -245,6 +245,8 @@ public class ChannelSettings {
 
    @Override
    public String toString() {
-      return String.format("<ChannelSettings color %s, min %d, max %d, auto %s>", color_, histogramMin_, histogramMax_, shouldAutoscale_);
+      return String.format("<ChannelSettings name %s, color %s, min %d, max %d, auto %s>",
+            genKey(channelName_, channelGroup_), color_, histogramMin_,
+            histogramMax_, shouldAutoscale_);
    }
 }

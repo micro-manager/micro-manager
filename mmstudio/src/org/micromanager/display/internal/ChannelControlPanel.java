@@ -571,7 +571,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          gamma_ = gammas[channelIndex_];
       }
 
-      autoButton_.setSelected(channelSettings.getShouldAutoscale());
+      // TODO: no autoscale checkbox for individual channels, so can't apply
+      // the autoscale property of ChannelSettings.
 
       if (store_.getAxisLength(Coords.CHANNEL) <= 1) {
          // Default to white.
@@ -591,6 +592,11 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       colorPickerLabel_.setBackground(color_);
       histogram_.setTraceStyle(true, color_);
 
+      if (contrastMin_ == -1 || contrastMax_ == -1) {
+         // Invalid settings; we'll have to autoscale.
+         autostretch();
+      }
+
       saveChannelSettings();
       updateHistogram();
       calcAndDisplayHistAndStats(true);
@@ -602,9 +608,10 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
     * by future displays for our channel name/group.
     */
    private void saveChannelSettings() {
+      // TODO: no per-channel autoscale controls, so defaulting to true here.
       ChannelSettings settings = new ChannelSettings(name_,
             store_.getSummaryMetadata().getChannelGroup(),
-            color_, contrastMin_, contrastMax_, autoButton_.isSelected());
+            color_, contrastMin_, contrastMax_, true);
       settings.saveToProfile();
    }
 
@@ -910,7 +917,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    /**
-    * Update our parent's DisplaySettings, and post a ContrastEvent.
+    * Update our parent's DisplaySettings, post a ContrastEvent, and save
+    * our new settings to the profile (via the ChannelSettings).
     */
    private void postNewSettings() {
       if (!haveInitialized_.get()) {
@@ -944,6 +952,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       }
       settings = builder.build();
       display_.setDisplaySettings(settings);
+      saveChannelSettings();
       postContrastEvent(settings);
    }
 
