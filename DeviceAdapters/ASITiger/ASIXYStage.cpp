@@ -353,7 +353,7 @@ int CXYStage::Initialize()
 
       pAct = new CPropertyAction (this, &CXYStage::OnScanOvershootFactor);
       CreateProperty(g_ScanOvershootFactorPropertyName, "1", MM::Float, false, pAct);
-      SetPropertyLimits(g_ScanNumLinesPropertyName, 0., 5.);  // limits are arbitrary really, just give a reasonable range
+      SetPropertyLimits(g_ScanOvershootFactorPropertyName, 0., 5.);  // limits are arbitrary really, just give a reasonable range
       UpdateProperty(g_ScanOvershootFactorPropertyName);
 
    }
