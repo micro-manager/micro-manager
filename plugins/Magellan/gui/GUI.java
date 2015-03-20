@@ -6,7 +6,7 @@ import acq.ExploreAcqSettings;
 import acq.FixedAreaAcquisitionSettings;
 import acq.MultipleAcquisitionManager;
 import acq.MultipleAcquisitionTableModel;
-import channels.AutofocusChannelComboModel;
+import autofocus.AutofocusChannelComboModel;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
