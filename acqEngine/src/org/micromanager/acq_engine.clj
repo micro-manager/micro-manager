@@ -914,8 +914,6 @@
       "Channels" (max 1 (count super-channels))
       "ChNames" (JSONArray. ch-names)
       "ChColors" (JSONArray. (map #(.getRGB %) (channel-colors simple-channels super-channels ch-names (:channel-group settings))))
-      "ChContrastMax" (JSONArray. (repeat (count super-channels) 65536))
-      "ChContrastMin" (JSONArray. (repeat (count super-channels) 0))
       "ChannelGroup" (:channel-group settings)
       "Comment" (:comment settings)
       "ComputerName" computer
