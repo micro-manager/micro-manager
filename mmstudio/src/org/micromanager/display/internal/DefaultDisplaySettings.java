@@ -528,13 +528,13 @@ public class DefaultDisplaySettings implements DisplaySettings {
          Builder builder = new Builder();
          // Check for both methods of storing colors (see toJSON, below)
          if (MDUtils.hasChannelColor(tags)) {
-            builder.channelColors(new Color[] {rgbToColor(MDUtils.getChannelColor(tags))});
+            builder.channelColors(new Color[] {new Color(MDUtils.getChannelColor(tags))});
          }
          if (tags.has("ChColors")) {
             JSONArray colorTags = tags.getJSONArray("ChColors");
             Color[] colors = new Color[colorTags.length()];
             for (int i = 0; i < colorTags.length(); ++i) {
-               colors[i] = rgbToColor(colorTags.getInt(i));
+               colors[i] = new Color(colorTags.getInt(i));
             }
             builder.channelColors(colors);
          }
@@ -667,10 +667,10 @@ public class DefaultDisplaySettings implements DisplaySettings {
          // "ChColor" tag (via setChannelColor()), and a method that preserves
          // all channel colors.
          if (channelColors_ != null && channelColors_.length > 0) {
-            MDUtils.setChannelColor(result, colorToRGB(channelColors_[0]));
+            MDUtils.setChannelColor(result, channelColors_[0].getRGB());
             JSONArray colors = new JSONArray();
             for (Color color : channelColors_) {
-               colors.put(colorToRGB(color));
+               colors.put(color.getRGB());
             }
             result.put("ChColors", colors);
          }
@@ -707,23 +707,6 @@ public class DefaultDisplaySettings implements DisplaySettings {
          ReportingUtils.logError(e, "Couldn't convert DefaultDisplaySettings to JSON");
          return null;
       }
-   }
-
-   /**
-    * Given a java.awt.Color, convert it into a 24-bit RGB int.
-    */
-   private static int colorToRGB(Color color) {
-      return color.getRed() + (color.getBlue() << 8) + (color.getGreen() << 16);
-   }
-
-   /**
-    * Given a 24-bit RGB int, convert into a java.awt.Color.
-    */
-   private static Color rgbToColor(int rgb) {
-      int red = rgb & 0xff;
-      int blue = (rgb >> 8) & 0xff;
-      int green = (rgb >> 16) & 0xff;
-      return new Color(red, green, blue);
    }
 
    /**
