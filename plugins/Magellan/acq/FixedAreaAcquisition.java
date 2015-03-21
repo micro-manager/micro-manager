@@ -19,8 +19,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.json.JSONArray;
 import org.micromanager.MMStudio;
 import org.micromanager.utils.ReportingUtils;
@@ -286,7 +284,7 @@ public class FixedAreaAcquisition extends Acquisition {
                   
                   pauseUntilReadyForTP();         
                   //set autofocus position
-                  if (autofocus_ != null) {
+                  if (autofocus_ != null && timeIndex > 1) {
                      events_.put(AcquisitionEvent.createAutofocusEvent(settings_.autoFocusZDevice_, autofocus_.getAutofocusPosition()));
                   }
                   //set the next time point start time

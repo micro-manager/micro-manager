@@ -5,8 +5,6 @@
 package autofocus;
 
 import acq.FixedAreaAcquisition;
-import acq.FixedAreaAcquisition;
-import acq.MultiResMultipageTiffStorage;
 import acq.MultiResMultipageTiffStorage;
 import ij.IJ;
 import ij.ImagePlus;
@@ -15,8 +13,6 @@ import ij.process.ByteProcessor;
 import ij.process.ImageConverter;
 import ij.process.ShortProcessor;
 import ij3d.image3d.FHTImage3D;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.apache.commons.math.ArgumentOutsideDomainException;
 import org.apache.commons.math.analysis.interpolation.SplineInterpolator;
 import org.apache.commons.math.analysis.polynomials.PolynomialSplineFunction;
@@ -105,12 +101,12 @@ public class CrossCorrelationAutofocus {
          downsampledHeight_ = (int) (fullResPixelHeight / Math.pow(2, downsampleIndex_));
          return;
       }      
-      
+      IJ.log("Calculating xCorr");
       ImageStack tp0Stack = createAFStack(acq_, 0, channelIndex_, downsampledWidth_, downsampledHeight_, downsampleIndex_);
       ImageStack currentTPStack = createAFStack(acq_, timeIndex, channelIndex_, downsampledWidth_, downsampledHeight_, downsampleIndex_);
       //run autofocus
       double drift = calcFocusDrift(tp0Stack, currentTPStack, acq_.getZStep());
-
+      IJ.log("xCorr calculation finished");
       //check if outside max displacement
       if (Math.abs(currentPosition_ - drift - initialPosition_) > maxDisplacement_) {
          IJ.log("Calculated focus drift of " + drift + " um exceeds tolerance. Leaving autofocus offset unchanged");

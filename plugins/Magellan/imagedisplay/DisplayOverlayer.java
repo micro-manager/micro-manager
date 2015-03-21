@@ -2,7 +2,6 @@ package imagedisplay;
 
 import acq.Acquisition;
 import coordinates.XYStagePosition;
-import ij.ImagePlus;
 import ij.gui.ImageCanvas;
 import ij.gui.Line;
 import ij.gui.OvalRoi;
@@ -425,13 +424,13 @@ public class DisplayOverlayer {
       Point displayTopLeft = new Point(displayCenter.x - roiWidth / 2, displayCenter.y - roiHeight / 2);
       //draw boundries of tiles
       for (int row = 1; row < newGrid.numRows(); row++) {
-         int yPos = (int) (displayTopLeft.y + row * dsTileWidth + (newGrid.overlapY() / 2) / zoomableStack_.getDownsampleFactor());
+         int yPos = (int) (displayTopLeft.y + row * dsTileHeight + (newGrid.overlapY() / 2) / zoomableStack_.getDownsampleFactor());
          Line l = new Line(displayTopLeft.x, yPos, displayTopLeft.x + roiWidth, yPos);
          l.setStrokeColor(NEW_GRID_COLOR);
          overlay.add(l);
       }
       for (int col = 1; col < newGrid.numCols(); col++) {
-         int xPos = (int) (displayTopLeft.x + col * dsTileHeight + (newGrid.overlapX() / 2) / zoomableStack_.getDownsampleFactor());
+         int xPos = (int) (displayTopLeft.x + col * dsTileWidth + (newGrid.overlapX() / 2) / zoomableStack_.getDownsampleFactor());
          Line l = new Line(xPos, displayTopLeft.y, xPos, displayTopLeft.y + roiHeight);
          l.setStrokeColor(NEW_GRID_COLOR);
          overlay.add(l);

@@ -40,6 +40,7 @@ public class AcquisitionEvent  {
       AcquisitionEvent evt = new AcquisitionEvent(null, 0, 0, 0, 0, 0, 0, 0, null);
       evt.autofocusZName_ = zName;
       evt.autofocusPosition_ = pos;
+      evt.specialFlag_ = SpecialFlag.AutofocusAdjustment;
       return evt;
    }
    
