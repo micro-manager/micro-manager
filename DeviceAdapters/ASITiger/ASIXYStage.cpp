@@ -706,7 +706,7 @@ int CXYStage::OnSpeedGeneric(MM::PropertyBase* pProp, MM::ActionType eAct, strin
    }
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
-      command << "S " << axisLetter << tmp;
+      command << "S " << axisLetter << "=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;
