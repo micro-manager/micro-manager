@@ -53,7 +53,9 @@ CXYStage::CXYStage(const char* name) :
    stepSizeYUm_(g_StageMinStepSize),    //   and doesn't change during the program
    axisLetterX_(g_EmptyAxisLetterStr),    // value determined by extended name
    axisLetterY_(g_EmptyAxisLetterStr),    // value determined by extended name
-   advancedPropsEnabled_(false)
+   advancedPropsEnabled_(false),
+   speedTruth_(false),
+   refreshOverride_(false)
 {
    if (IsExtendedName(name))  // only set up these properties if we have the required information in the name
    {
@@ -301,6 +303,7 @@ int CXYStage::Initialize()
    // get build info so we can add optional properties
    build_info_type build;
    RETURN_ON_MM_ERROR( hub_->GetBuildInfo(addressChar_, build) );
+   speedTruth_ = hub_->IsDefinePresent(build, "SPEED TRUTH");
 
    // add SCAN properties if supported
    if (build.vAxesProps[0] & BIT2)
@@ -695,8 +698,9 @@ int CXYStage::OnSpeedGeneric(MM::PropertyBase* pProp, MM::ActionType eAct, strin
    double tmp = 0;
    if (eAct == MM::BeforeGet)
    {
-      if (!refreshProps_ && initialized_)
+      if (!refreshProps_ && initialized_ && !refreshOverride_)
          return DEVICE_OK;
+      refreshOverride_ = false;
       command << "S " << axisLetter << "?";
       response << ":A " << axisLetter << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
@@ -708,6 +712,10 @@ int CXYStage::OnSpeedGeneric(MM::PropertyBase* pProp, MM::ActionType eAct, strin
       pProp->Get(tmp);
       command << "S " << axisLetter << "=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+      if (speedTruth_) {
+         refreshOverride_ = true;
+         return OnSpeedGeneric(pProp, MM::BeforeGet, axisLetter);
+      }
    }
    return DEVICE_OK;
 }
