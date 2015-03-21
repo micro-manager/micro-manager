@@ -40,7 +40,6 @@ import org.micromanager.asidispim.Utils.DevicesListenerInterface;
 public class AcquisitionModes {
    
    private Devices devices_;   // object holding information about selected/available devices
-   @SuppressWarnings("unused") // will be used in future
    private Properties props_;  // object handling all property read/writes
    private Prefs prefs_;
    
@@ -50,10 +49,11 @@ public class AcquisitionModes {
     * can be easily changed. 
     */
    public static enum Keys { 
-      PIEZO_SLICE_SCAN("Synchronous piezo/slice scan (standard)", 1),
+      PIEZO_SLICE_SCAN("Synchronous piezo/slice scan", 1),
       SLICE_SCAN_ONLY( "Slice scan only (beam thickness)", 2),
-      NO_SCAN(         "No piezo or slice scan (vibration)", 3),
+      NO_SCAN(         "No scan (vibration)", 3),
       STAGE_SCAN(      "Stage scan", 4),
+      STAGE_SCAN_INTERLEAVED("Stage scan interleaved", 5),  // TODO implement
       NONE(            "None", 0);
       private final String text;
       private final int prefCode;
@@ -160,6 +160,11 @@ public class AcquisitionModes {
          keyList.add(Keys.PIEZO_SLICE_SCAN);
          keyList.add(Keys.SLICE_SCAN_ONLY);
          keyList.add(Keys.NO_SCAN);
+         if (devices_.isTigerDevice(Devices.Keys.XYSTAGE)
+               && props_.hasProperty(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_NUMLINES)) {
+            keyList.add(Keys.STAGE_SCAN);
+            keyList.add(Keys.STAGE_SCAN_INTERLEAVED);
+         }
          return keyList;
       }
 
