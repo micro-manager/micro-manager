@@ -1013,6 +1013,24 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       individualRois_ = rois;
    }
    
+
+   public void setROIs(Roi[] rois) {
+      if (mapping_ == null) {
+         throw new RuntimeException("Please calibrate the phototargeting device first, using the Setup tab.");
+      }
+      if (rois.length == 0) {
+         throw new RuntimeException("Please provide ROIs.");
+      }
+      ImageWindow window = WindowManager.getCurrentWindow();
+      if (window == null) {
+         throw new RuntimeException("No image window with ROIs is open.");
+      }
+      ImagePlus imgp = window.getImagePlus();
+      List<FloatPolygon> transformedRois = transformROIs(imgp, rois);
+      dev_.loadRois(transformedRois);
+      individualRois_ = rois;
+   }
+   
    /**
     * Illuminate the polygons ROIs that have been previously uploaded to
     * phototargeter.
@@ -1161,6 +1179,11 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
             }
          }
       };
+   }
+   
+   public void setNrRepetitions(int nr) {
+      roiLoopSpinner.setValue(nr);
+      updateROISettings();
    }
    
    /**
@@ -1973,6 +1996,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       }
    }//GEN-LAST:event_setRoiButtonActionPerformed
 
+   
    private void centerButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_centerButtonActionPerformed
       offButtonActionPerformed(null);
       displayCenterSpot();
