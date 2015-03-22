@@ -110,11 +110,12 @@ public class DisplayOverlayer {
    }
 
    /**
-    * Calculate the surface on a different thread, and block until it returns
-    * an overlay, then add the rendering of that overlay back onto EDT. 
-    * 
+    * Calculate the surface on a different thread, and block until it returns an
+    * overlay, then add the rendering of that overlay back onto EDT.
+    *
     * needs to support interrupts when new rendering instructions come from GUI
-    * @return 
+    *
+    * @return
     */
    private void createAndRenderOverlay() {
       //submit tasks for rendering the overlay at multiple levels of detail, drawing each as it becomes available
@@ -126,6 +127,7 @@ public class DisplayOverlayer {
          //Computing overlays is going to be the limiting step in this process,
          //because the setOverlay method just sets a reference and calls repaint    
          SwingUtilities.invokeLater(new Runnable() {
+
             @Override
             public void run() {
                canvas_.setOverlay(baseOverlay);
@@ -137,7 +139,7 @@ public class DisplayOverlayer {
             if (showConvexHull_) {
                final Overlay overlay = createBackgroundOverlay();
                addInterpPoints(display_.getCurrentSurface(), overlay);
-               addConvexHull(overlay);             
+               addConvexHull(overlay);
                SwingUtilities.invokeLater(new Runnable() {
 
                   @Override
@@ -162,6 +164,7 @@ public class DisplayOverlayer {
                   }
                });
             }
+
             //finally, draw surface at increasing high resolutions, blocking if interpolation hasn't progressed far enough to
             //supply the desired resolution yet
             if (showSurface_ && display_.getCurrentSurface() != null) {
@@ -332,14 +335,14 @@ public class DisplayOverlayer {
             }
             surfOverlay.add(startingOverlay.get(i));
          }
-         SingleResolutionInterpolation interp = display_.getCurrentSurface().getCurrentInterpolation();
+         SingleResolutionInterpolation interp = display_.getCurrentSurface().waitForCurentInterpolation();
          //wait until surface is interpolated at sufficent resolution to draw
          while (pixPerInterpPoint < interp.getPixelsPerInterpPoint()) {
             if (Thread.interrupted()) {
                throw new InterruptedException();
             }
             display_.getCurrentSurface().waitForHigherResolutionInterpolation();
-            interp = display_.getCurrentSurface().getCurrentInterpolation();
+            interp = display_.getCurrentSurface().waitForCurentInterpolation();
          }
          if (showStagePositions_) {
             //these could concieveably change as function of interpolation detail

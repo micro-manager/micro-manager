@@ -10,7 +10,6 @@ import gui.SettingsDialog;
 import ij.IJ;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
@@ -76,7 +75,8 @@ public class FixedAreaAcquisition extends Acquisition {
          if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
             positions_ = settings_.fixedSurface_.getXYPositions();
          } else if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK) {
-            //TODO
+            positions_ = settings_.useTopOrBottomFootprint_ == FixedAreaAcquisitionSettings.FOOTPRINT_FROM_TOP ?
+                    settings_.topSurface_.getXYPositions() : settings_.bottomSurface_.getXYPositions();
          } else if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.SIMPLE_Z_STACK) {
             positions_ = settings_.footprint_.getXYPositions();
          } else if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.REGION_2D) {
@@ -92,7 +92,7 @@ public class FixedAreaAcquisition extends Acquisition {
                     tileWidthMinusOverlap, tileHeightMinusOverlap, fullTileWidth, fullTileHeight, 0, 0, 
                     MMStudio.getInstance().getCore().getCurrentPixelSizeConfig()));
          }
-      } catch (Exception e) {      
+      } catch (Exception e) { 
          ReportingUtils.showError("Problem with Acquisition's XY positions. Check acquisition settings");
          throw new RuntimeException();
       }
@@ -377,13 +377,9 @@ public class FixedAreaAcquisition extends Acquisition {
     */
    private boolean isZAboveImagingVolume(XYStagePosition position, double zPos) throws InterruptedException {
       if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
-         return settings_.fixedSurface_.isPositionCompletelyAboveSurface(position, settings_.fixedSurface_.getCurrentInterpolation(),
-                 zPos, settings_.fixedSurface_.getZPadding());
+         return settings_.fixedSurface_.isPositionCompletelyAboveSurface(position, settings_.fixedSurface_, zPos);
       } else if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK) {
-//         return settings_.surface_.isPositionCompletelyAboveSurface(position, settings_.surface_.getCurrentInterpolation(),
-//                 zPos, settings_.surface_.getZPadding());
-         //TODO: fix
-         return false;
+         return settings_.topSurface_.isPositionCompletelyAboveSurface(position, settings_.topSurface_,zPos);
       } else if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.SIMPLE_Z_STACK) {
          return zPos < settings_.zStart_;
       } else {
@@ -394,11 +390,9 @@ public class FixedAreaAcquisition extends Acquisition {
 
    private boolean isZBelowImagingVolume(XYStagePosition position, double zPos) throws InterruptedException {
       if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
-         return settings_.fixedSurface_.isPositionCompletelyBelowSurface(position,
-                 settings_.fixedSurface_.getCurrentInterpolation(), zPos, settings_.distanceBelowSurface_);
+         return settings_.fixedSurface_.isPositionCompletelyBelowSurface(position,settings_.fixedSurface_, zPos);
       } else if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK) {
-         return settings_.bottomSurface_.isPositionCompletelyBelowSurface(position,
-                 settings_.bottomSurface_.getCurrentInterpolation(), zPos, settings_.bottomSurface_.getZPadding());
+         return settings_.bottomSurface_.isPositionCompletelyBelowSurface(position,settings_.bottomSurface_, zPos);
       } else if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.SIMPLE_Z_STACK) {
          return zPos > settings_.zEnd_;
       } else {

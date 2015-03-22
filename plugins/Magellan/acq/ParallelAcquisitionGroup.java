@@ -37,7 +37,11 @@ public class ParallelAcquisitionGroup implements AcquisitionEventSource {
       acqs_ = new ArrayList<FixedAreaAcquisition>();
       //create all
       for (int i = 0; i < settingsList.size(); i++) {
-         acqs_.add(new FixedAreaAcquisition(settingsList.get(i), ParallelAcquisitionGroup.this));
+         try {
+            acqs_.add(new FixedAreaAcquisition(settingsList.get(i), ParallelAcquisitionGroup.this));
+         } catch (Exception ex) {
+            ReportingUtils.showError("Couldn't create acqusition: " + settingsList.get(i).name_); 
+         }
       }
       try {
          //start first

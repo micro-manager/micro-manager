@@ -163,13 +163,7 @@ public class SurfaceData implements Covariant {
             Point2D.Double stageCoords = new Point2D.Double();
             transform.transform(new Point2D.Double(x, y), stageCoords);
             //test point for inclusion of position
-            Float interpVal = null;
-            try {
-               interpVal = surface_.getCurrentInterpolation().getInterpolatedValue(stageCoords.x, stageCoords.y, true);
-            } catch (InterruptedException ex) {
-               //aborted acquisition
-               return 0;
-            }
+            Float interpVal = surface_.getCurrentInterpolation().getInterpolatedValue(stageCoords.x, stageCoords.y, true);
             if (interpVal == null) {
               IJ.log("Null surface interpolation value!");
             }
@@ -185,13 +179,7 @@ public class SurfaceData implements Covariant {
       XYStagePosition xyPos = event.xyPosition_;
       if (category_.equals(DISTANCE_BELOW_SURFACE_CENTER)) {
          Point2D.Double center = xyPos.getCenter();
-         SingleResolutionInterpolation interp;
-         try {
-               interp = surface_.getCurrentInterpolation();
-            } catch (InterruptedException ex) {
-               //must be an aborted acquisition
-               return null;
-            }
+         SingleResolutionInterpolation interp = surface_.getCurrentInterpolation();
          return new CovariantValue(event.zPosition_ - interp.getInterpolatedValue(center.x, center.y, true));
       } else if (category_.equals(DISTANCE_BELOW_SURFACE_MINIMUM)) {
          return new CovariantValue(distanceToSurface(xyPos.getFullTileCorners(), event.zPosition_, true));

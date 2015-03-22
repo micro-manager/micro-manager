@@ -199,7 +199,7 @@ public abstract class SurfaceInterpolator implements XYFootprint {
       }
    }
    
-   public SingleResolutionInterpolation getCurrentInterpolation() throws InterruptedException {
+   public SingleResolutionInterpolation waitForCurentInterpolation() throws InterruptedException {
       synchronized (interpolationLock_) {
          while (currentInterpolation_ == null) {
             interpolationLock_.wait();
@@ -207,14 +207,18 @@ public abstract class SurfaceInterpolator implements XYFootprint {
          return currentInterpolation_;
       }
    }
+   
+   public SingleResolutionInterpolation getCurrentInterpolation() {
+      return currentInterpolation_;
+   }
 
    /**
     * tests whether any part of XY stage position is lies above the interpolated surface
     * 
     * @return true if every part of position is above surface, false otherwise
     */
-   public boolean isPositionCompletelyAboveSurface(XYStagePosition pos, SingleResolutionInterpolation interp, double zPos, double padding) {
-      return testPositionRelativeToSurface(pos, interp, zPos, true, padding);
+   public boolean isPositionCompletelyAboveSurface(XYStagePosition pos, SurfaceInterpolator surface, double zPos) {
+      return testPositionRelativeToSurface(pos, surface, zPos, true);
    }
   
    /**
@@ -222,26 +226,26 @@ public abstract class SurfaceInterpolator implements XYFootprint {
     *
     * @return true if every part of position is above surface, false otherwise
     */
-   public boolean isPositionCompletelyBelowSurface(XYStagePosition pos, SingleResolutionInterpolation interp, double zPos, double padding) {
-      return testPositionRelativeToSurface(pos, interp, zPos, false, padding); //no padding for testing below
+   public boolean isPositionCompletelyBelowSurface(XYStagePosition pos, SurfaceInterpolator surface, double zPos ) {
+      return testPositionRelativeToSurface(pos, surface, zPos, false); //no padding for testing below
    }
    
-   public boolean testPositionRelativeToSurface(XYStagePosition pos, SingleResolutionInterpolation interp, double zPos, boolean above, double padding) {
+   public static boolean testPositionRelativeToSurface(XYStagePosition pos, SurfaceInterpolator surface, double zPos, boolean above) {
       //get the corners with padding added in
-      Point2D.Double[] corners = getPositionCornersWithPadding(pos);
+      Point2D.Double[] corners = getPositionCornersWithPadding(pos, surface.xyPadding_um_);
       //First check position corners before going into a more detailed set of test points
       for (Point2D.Double point : corners) {
-         Float interpVal = interp.getInterpolatedValue(point.x, point.y, false);
+         Float interpVal = surface.getCurrentInterpolation().getInterpolatedValue(point.x, point.y, true);
          if (interpVal == null) {
             continue;
          }
          if (above) { //test if point lies bleow surface + padding
-            if (zPos >= interpVal - padding ) {   //TODO: account for different signs of Z
+            if (zPos >= interpVal - surface.zPadding_um_ ) {   //TODO: account for different signs of Z
                return false;
             }
          } else {
             //test if point lies below surface + padding
-            if (zPos <= interpVal + padding) {   //TODO: account for different signs of Z
+            if (zPos <= interpVal + surface.zPadding_um_) {   //TODO: account for different signs of Z
                return false;
             }
          }
@@ -252,7 +256,7 @@ public abstract class SurfaceInterpolator implements XYFootprint {
       double xSpan = corners[2].getX() - corners[0].getX();
       double ySpan = corners[2].getY() - corners[0].getY();
       Point2D.Double pixelSpan = new Point2D.Double();
-      AffineTransform transform = AffineUtils.getAffineTransform(pixelSizeConfig_,0, 0);
+      AffineTransform transform = AffineUtils.getAffineTransform(surface.pixelSizeConfig_,0, 0);
       try {
          transform.inverseTransform(new Point2D.Double(xSpan, ySpan), pixelSpan);
       } catch (NoninvertibleTransformException ex) {
@@ -271,17 +275,17 @@ public abstract class SurfaceInterpolator implements XYFootprint {
             Point2D.Double stageCoords = new Point2D.Double();
             transform.transform(new Point2D.Double(x, y), stageCoords);
             //test point for inclusion of position
-            Float interpVal = interp.getInterpolatedValue(stageCoords.x, stageCoords.y, false);
+            Float interpVal = surface.getCurrentInterpolation().getInterpolatedValue(stageCoords.x, stageCoords.y, true);
             if (interpVal == null) {
                continue;
             }
             if (above) { //test if point lies bleow surface + padding
-               if (zPos >= interpVal - padding) {   //TODO: account for different signs of Z
+               if (zPos >= interpVal - surface.zPadding_um_) {   //TODO: account for different signs of Z
                   return false;
                }
             } else {
                //test if point lies below surface + padding
-               if (zPos <= interpVal + padding) {   //TODO: account for different signs of Z
+               if (zPos <= interpVal + surface.zPadding_um_) {   //TODO: account for different signs of Z
                   return false;
                }
             }
@@ -300,19 +304,19 @@ public abstract class SurfaceInterpolator implements XYFootprint {
     * @param zPos 
     */
    public ArrayList<XYStagePosition> getXYPositonsAtSlice(double zPos) throws InterruptedException {
-      SingleResolutionInterpolation interp = getCurrentInterpolation();
+      SingleResolutionInterpolation interp = waitForCurentInterpolation();
       int tileWidth = (int) MMStudio.getInstance().getCore().getImageWidth() - SettingsDialog.getOverlapX();
       int tileHeight = (int) MMStudio.getInstance().getCore().getImageHeight() - SettingsDialog.getOverlapY();
       while (interp.getPixelsPerInterpPoint() >= Math.max(tileWidth,tileHeight) / NUM_XY_TEST_POINTS ) {
          synchronized (interpolationLock_) {
             interpolationLock_.wait();
          }
-         interp = getCurrentInterpolation();
+         interp = waitForCurentInterpolation();
       }
       ArrayList<XYStagePosition> positionsAtSlice = new ArrayList<XYStagePosition>();
       for (XYStagePosition pos : xyPositions_) {
          //TODO: support other modes of showing positions?
-         if (!isPositionCompletelyAboveSurface(pos, interp, zPos, zPadding_um_)) {
+         if (!isPositionCompletelyAboveSurface(pos, this, zPos)) {
             positionsAtSlice.add(pos);
          }
       }
@@ -320,8 +324,8 @@ public abstract class SurfaceInterpolator implements XYFootprint {
       return positionsAtSlice;
    }
 
-   private Point2D.Double[] getPositionCornersWithPadding(XYStagePosition pos) {
-      if (xyPadding_um_ == 0) {
+   private static Point2D.Double[] getPositionCornersWithPadding(XYStagePosition pos, double xyPadding) {
+      if (xyPadding == 0) {
          return pos.getDisplayedTileCorners();
       } else {
          //expand to bigger square to acount for padding
@@ -330,10 +334,10 @@ public abstract class SurfaceInterpolator implements XYFootprint {
          double diagonalLength = new Vector2D(corners[0].x, corners[0].y).distance(new Vector2D(corners[2].x, corners[2].y));
          Vector2D center = new Vector2D(pos.getCenter().x, pos.getCenter().y);
          Point2D.Double[] paddedCorners = new Point2D.Double[4];
-         Vector2D c0 = center.add(xyPadding_um_ + 0.5 * diagonalLength, new Vector2D(corners[0].x - corners[2].x, corners[0].y - corners[2].y).normalize());
-         Vector2D c1 = center.add(xyPadding_um_ + 0.5 * diagonalLength, new Vector2D(corners[1].x - corners[3].x, corners[1].y - corners[3].y).normalize());
-         Vector2D c2 = center.add(xyPadding_um_ + 0.5 * diagonalLength, new Vector2D(corners[2].x - corners[0].x, corners[2].y - corners[0].y).normalize());
-         Vector2D c3 = center.add(xyPadding_um_ + 0.5 * diagonalLength, new Vector2D(corners[3].x - corners[1].x, corners[3].y - corners[1].y).normalize());
+         Vector2D c0 = center.add(xyPadding + 0.5 * diagonalLength, new Vector2D(corners[0].x - corners[2].x, corners[0].y - corners[2].y).normalize());
+         Vector2D c1 = center.add(xyPadding + 0.5 * diagonalLength, new Vector2D(corners[1].x - corners[3].x, corners[1].y - corners[3].y).normalize());
+         Vector2D c2 = center.add(xyPadding + 0.5 * diagonalLength, new Vector2D(corners[2].x - corners[0].x, corners[2].y - corners[0].y).normalize());
+         Vector2D c3 = center.add(xyPadding + 0.5 * diagonalLength, new Vector2D(corners[3].x - corners[1].x, corners[3].y - corners[1].y).normalize());
          paddedCorners[0] = new Point2D.Double(c0.getX(), c0.getY());
          paddedCorners[1] = new Point2D.Double(c1.getX(), c1.getY());
          paddedCorners[2] = new Point2D.Double(c2.getX(), c2.getY());
