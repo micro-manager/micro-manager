@@ -76,6 +76,7 @@ import org.micromanager.DataProcessor;
 import org.micromanager.display.DisplayManager;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
+import org.micromanager.events.EventManager;
 import org.micromanager.IAcquisitionEngine2010;
 import org.micromanager.LogManager;
 import org.micromanager.MMListenerInterface;
@@ -98,7 +99,7 @@ import org.micromanager.internal.dialogs.MMIntroDlg;
 import org.micromanager.internal.dialogs.OptionsDlg;
 import org.micromanager.internal.dialogs.RegistrationDlg;
 
-import org.micromanager.events.internal.EventManager;
+import org.micromanager.events.internal.DefaultEventManager;
 
 import org.micromanager.display.internal.DefaultDisplayManager;
 
@@ -135,18 +136,17 @@ import org.micromanager.internal.utils.WaitDialog;
  * Implements the Studio (i.e. primary API) and does various other
  * tasks that should probably be refactored out at some point.
  */
-public class MMStudio implements Studio, CompatibilityInterface, LogManager {
+public class MMStudio implements Studio, CompatibilityInterface {
 
    private static final long serialVersionUID = 3556500289598574541L;
-   private static final String MAIN_SAVE_METHOD = "saveMethod";
    private static final String SYSTEM_CONFIG_FILE = "sysconfig_file";
    private static final String OPEN_ACQ_DIR = "openDataDir";
    private static final String SCRIPT_CORE_OBJECT = "mmc";
    private static final String AUTOFOCUS_DEVICE = "autofocus_device";
-   private static final String EXPOSURE_SETTINGS_NODE = "MainExposureSettings";
    private static final int TOOLTIP_DISPLAY_DURATION_MILLISECONDS = 15000;
    private static final int TOOLTIP_DISPLAY_INITIAL_DELAY_MILLISECONDS = 2000;
    private static final String DEFAULT_CONFIG_FILE_NAME = "MMConfig_demo.cfg";
+   // Note that this property is set by one of the launcher scripts.
    private static final String DEFAULT_CONFIG_FILE_PROPERTY = "org.micromanager.default.config.file";
    private static final String SHOULD_DELETE_OLD_CORE_LOGS = "whether or not to delete old MMCore log files";
    private static final String CORE_LOG_LIFETIME_DAYS = "how many days to keep MMCore log files, before they get deleted";
@@ -266,7 +266,7 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
    public MMStudio(boolean shouldRunAsPlugin) {
       org.micromanager.internal.diagnostics.ThreadExceptionLogger.setUp();
 
-      EventManager.register(this);
+      DefaultEventManager.getInstance().registerForEvents(this);
 
       prepAcquisitionEngine();
 
@@ -1298,14 +1298,14 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
          hotKeys_.saveSettings();
       } catch (NullPointerException e) {
          if (core_ != null)
-            logError(e);
+            ReportingUtils.logError(e);
       }
       try {
          DefaultUserProfile.getInstance().syncToDisk();
       }
       catch (IOException e) {
          if (core_ != null) {
-            logError(e);
+            ReportingUtils.logError(e);
          }
       }
       if (OptionsDlg.getShouldCloseOnExit()) {
@@ -1750,36 +1750,6 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
       return acqMgr_.getUniqueAcquisitionName(stub);
    }
    
-   //@Override
-   public void openAcquisition(String name, String rootDir, int nrFrames,
-         int nrChannels, int nrSlices, int nrPositions) throws MMScriptException {
-      openAcquisition(name, rootDir, nrFrames, nrChannels, nrSlices,
-            nrPositions, true, false);
-   }
-
-   //@Override
-   public void openAcquisition(String name, String rootDir, int nrFrames,
-         int nrChannels, int nrSlices) throws MMScriptException {
-      openAcquisition(name, rootDir, nrFrames, nrChannels, nrSlices, 0);
-   }
-   
-   //@Override
-   public void openAcquisition(String name, String rootDir, int nrFrames,
-         int nrChannels, int nrSlices, int nrPositions, boolean show)
-         throws MMScriptException {
-      openAcquisition(name, rootDir, nrFrames, nrChannels, nrSlices, 
-            nrPositions, show, false);
-   }
-
-
-   //@Override
-   public void openAcquisition(String name, String rootDir, int nrFrames,
-         int nrChannels, int nrSlices, boolean show)
-         throws MMScriptException {
-      openAcquisition(name, rootDir, nrFrames, nrChannels, nrSlices, 0, 
-            show, false);
-   }   
-
    @Override
    public void openAcquisition(String name, String rootDir, int nrFrames,
          int nrChannels, int nrSlices, int nrPositions, boolean show, boolean save)
@@ -1803,14 +1773,6 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
       acqMgr_.openAcquisition(name, rootDir, show, save);
       MMAcquisition acq = acqMgr_.getAcquisition(name);
       acq.setDimensions(nrFrames, nrChannels, nrSlices, nrPositions);
-   }
-
-   //@Override
-   public void openAcquisition(String name, String rootDir, int nrFrames,
-         int nrChannels, int nrSlices, boolean show, boolean virtual)
-         throws MMScriptException {
-      openAcquisition(name, rootDir, nrFrames, nrChannels, nrSlices, 0, 
-            show, virtual);
    }
 
    /**
@@ -2062,11 +2024,6 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
    }
 
    @Override
-   public void registerForEvents(Object obj) {
-      EventManager.register(obj);
-   }
-
-   @Override
    public void setROI(Rectangle r) throws MMScriptException {
       live().setSuspended(true);
       try {
@@ -2118,66 +2075,6 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
    }
 
    @Override
-   public void logMessage(String msg) {
-      ReportingUtils.logMessage(msg);
-   }
-
-   @Override
-   public void showMessage(String msg) {
-      ReportingUtils.showMessage(msg);
-   }
-   
-   @Override
-   public void showMessage(String msg, Component parent) {
-      ReportingUtils.showMessage(msg, parent);
-   }
-
-   @Override
-   public void logError(Exception e, String msg) {
-      ReportingUtils.logError(e, msg);
-   }
-
-   @Override
-   public void logError(Exception e) {
-      ReportingUtils.logError(e);
-   }
-
-   @Override
-   public void logError(String msg) {
-      ReportingUtils.logError(msg);
-   }
-
-   @Override
-   public void showError(Exception e, String msg) {
-      ReportingUtils.showError(e, msg);
-   }
-
-   @Override
-   public void showError(Exception e) {
-      ReportingUtils.showError(e);
-   }
-
-   @Override
-   public void showError(String msg) {
-      ReportingUtils.showError(msg);
-   }
-
-   @Override
-   public void showError(Exception e, String msg, Component parent) {
-      ReportingUtils.showError(e, msg, parent);
-   }
-
-   @Override
-   public void showError(Exception e, Component parent) {
-      ReportingUtils.showError(e, parent);
-   }
-
-   @Override
-   public void showError(String msg, Component parent) {
-      ReportingUtils.showError(msg, parent);
-   }
-
-   @Override
    public void autostretchCurrentWindow() {
       DisplayWindow display = displays().getCurrentWindow();
       DisplaySettings settings = display.getDisplaySettings();
@@ -2224,15 +2121,13 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
       return profile();
    }
 
-   // TODO: split associated methods out to a separate object (ReportingUtils
-   // or something similar)
    @Override
    public LogManager logs() {
-      return this;
+      return ReportingUtils.getWrapper();
    }
    @Override
    public LogManager getLogManager() {
-      return this;
+      return logs();
    }
 
    // TODO: split methods associated with this interface out to a separate
@@ -2274,6 +2169,16 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
    @Override
    public Album getAlbum() {
       return album();
+   }
+
+   @Override
+   public EventManager events() {
+      return DefaultEventManager.getInstance();
+   }
+
+   @Override
+   public EventManager getEventManager() {
+      return events();
    }
 
    public static boolean getShouldDeleteOldCoreLogs() {

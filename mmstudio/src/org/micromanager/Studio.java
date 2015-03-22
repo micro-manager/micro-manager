@@ -27,6 +27,7 @@ import mmcorej.CMMCore;
 
 import org.micromanager.data.DataManager;
 import org.micromanager.display.DisplayManager;
+import org.micromanager.events.EventManager;
 import org.micromanager.internal.utils.AutofocusManager;
 
 
@@ -124,6 +125,21 @@ public interface Studio {
     * @return DisplayManager instance
     */
    public DisplayManager getDisplayManager();
+
+   /**
+    * Provides access to the EventManager instance for subscribing to and
+    * posting events on the application-wide EventBus.
+    * @return EventManager instance
+    */
+   public EventManager events();
+
+   /**
+    * Provides access to the EventManager instance for subscribing to and
+    * posting events on the application-wide EventBus. Identical to events()
+    * except in name.
+    * @return EventManager instance
+    */
+   public EventManager getEventManager();
 
    /**
     * Provides access to some utility methods for use in the Beanshell

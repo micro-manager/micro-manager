@@ -69,6 +69,7 @@ import org.micromanager.internal.dialogs.AcqControlDlg;
 
 import org.micromanager.display.ControlsFactory;
 import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.DefaultDisplayWindow;
 
 import org.micromanager.internal.utils.JavaUtils;
@@ -81,9 +82,6 @@ import org.micromanager.internal.utils.ReportingUtils;
  * functionality in the ScriptInterface
  */
 public class MMAcquisition {
-   
-   public static final Color[] DEFAULT_COLORS = {Color.red, Color.green, Color.blue,
-      Color.pink, Color.orange, Color.yellow};
    
    /** 
     * Final queue of images immediately prior to insertion into the ImageCache.
@@ -170,6 +168,7 @@ public class MMAcquisition {
       }
       if (show_) {
          display_ = new DefaultDisplayWindow(store_, makeControlsFactory());
+         display_.setDisplaySettings(DefaultDisplaySettings.legacyFromJSON(summaryMetadata));
       }
   }
    
@@ -541,16 +540,6 @@ public class MMAcquisition {
       }
    }
    
-   public static int getMultiCamDefaultChannelColor(int index, String channelName) {
-      int color = DEFAULT_COLORS[index % DEFAULT_COLORS.length].getRGB();
-      String channelGroup = MMStudio.getInstance().getCore().getChannelGroup();
-      if (channelGroup == null)
-         channelGroup = "";
-      color = AcqControlDlg.getChannelColor("Camera", channelName,
-            AcqControlDlg.getChannelColor(channelGroup, channelName, color));
-      return color;
-   }
-
    // Somebody please comment on why this is a separate method from insertImage.
    public void insertTaggedImage(TaggedImage taggedImg, int frame, int channel, int slice)
            throws MMScriptException {

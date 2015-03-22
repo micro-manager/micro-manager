@@ -31,7 +31,7 @@ import org.micromanager.data.Image;
 import org.micromanager.data.Storage;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
-import org.micromanager.events.internal.EventManager;
+import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.PrioritizedEventBus;
@@ -188,7 +188,8 @@ public class DefaultDatastore implements Datastore {
 
    @Override
    public void close() {
-      EventManager.post(new DefaultDatastoreClosingEvent(this));
+      DefaultEventManager.getInstance().post(
+            new DefaultDatastoreClosingEvent(this));
    }
 
    @Override

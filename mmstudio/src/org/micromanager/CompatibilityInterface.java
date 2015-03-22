@@ -530,14 +530,6 @@ public interface CompatibilityInterface {
     public void promptToSaveAcquisition(String name, boolean prompt) throws MMScriptException;
 
    /**
-    * Request that the given object be added to our EventBus for notification
-    * of events occurring. The available event types that subscribers can
-    * listen for is in the org.micromanager.api.events package.
-    * @param obj object to be added to the EventBus
-    */
-    public void registerForEvents(Object obj);
-
-   /**
     * Autostretch each histogram for the currently-active window, as if the
     * "Auto" button had been clicked for each one.
     */

@@ -37,7 +37,6 @@ import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.RequestToCloseEvent;
 import org.micromanager.events.DatastoreClosingEvent;
-import org.micromanager.events.internal.EventManager;
 import org.micromanager.events.NewDisplayEvent;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -51,7 +50,7 @@ public class DefaultDisplayManager implements DisplayManager {
    public DefaultDisplayManager(MMStudio studio) {
       studio_ = studio;
       storeToDisplays_ = new HashMap<Datastore, ArrayList<DisplayWindow>>();
-      EventManager.register(this);
+      studio_.events().registerForEvents(this);
    }
 
    @Override

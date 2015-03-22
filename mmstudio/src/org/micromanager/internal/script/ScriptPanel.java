@@ -815,7 +815,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
 
       SearchResult found = SearchEngine.find(scriptArea_, context);
       if (!found.wasFound()) {
-         gui_.showMessage("\"" + text + "\" was not found", this);
+         gui_.logs().showMessage("\"" + text + "\" was not found", this);
       }
       
    }
@@ -1421,7 +1421,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
    
    public void displayMessage(String message) {
       SwingUtilities.invokeLater(new ExecuteDisplayMessage(message));
-      gui_.logMessage(message);
+      gui_.logs().logMessage(message);
    }
 
    public void displayError(String text) {

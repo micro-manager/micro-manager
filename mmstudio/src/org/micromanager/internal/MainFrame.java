@@ -64,7 +64,7 @@ import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
 
 import org.micromanager.events.ConfigGroupChangedEvent;
-import org.micromanager.events.internal.EventManager;
+import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.internal.interfaces.LiveModeListener;
 import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.DragDropUtil;
@@ -131,7 +131,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
       setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
       setupWindowHandlers();
 
-      EventManager.register(this);
+      DefaultEventManager.getInstance().registerForEvents(this);
       
       // Add our own keyboard manager that handles Micro-Manager shortcuts
       MMKeyDispatcher mmKD = new MMKeyDispatcher();

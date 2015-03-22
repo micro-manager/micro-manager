@@ -82,7 +82,7 @@ public class RecallPlugin implements MMPlugin {
 
       int remaining = core_.getRemainingImageCount();
       if (remaining < 1) {
-         gui_.showMessage("There are no Images in the Micro-Manager buffer");
+         gui_.logs().showMessage("There are no Images in the Micro-Manager buffer");
          return;
       }
       
@@ -99,13 +99,13 @@ public class RecallPlugin implements MMPlugin {
                store_.putImage(gui_.data().convertTaggedImage(tImg));
             }
             catch (DatastoreFrozenException e) { // Can't add to datastore.
-               gui_.logError(e);
+               gui_.logs().logError(e);
             }
             catch (JSONException e) { // Error in TaggedImage tags
-               gui_.logError(e);
+               gui_.logs().logError(e);
             }
             catch (Exception e) { // Error in popNextTaggedImage
-               gui_.logError(e);
+               gui_.logs().logError(e);
             }
          }
       } else if (multiChannelCameraNrCh_ > 1) {
@@ -126,13 +126,13 @@ public class RecallPlugin implements MMPlugin {
                store_.putImage(gui_.data().convertTaggedImage(tImg));
             }
             catch (DatastoreFrozenException e) { // Can't add to datastore.
-               gui_.logError(e);
+               gui_.logs().logError(e);
             }
             catch (JSONException e) { // Error in TaggedImage tags
-               gui_.logError(e);
+               gui_.logs().logError(e);
             }
             catch (Exception e) { // Error in popNextTaggedImage
-               gui_.logError(e);
+               gui_.logs().logError(e);
             }
          }
       }        
@@ -155,7 +155,7 @@ public class RecallPlugin implements MMPlugin {
             ti.tags.put(MMTags.Image.FRAME, frameIndex);
 
          } catch (JSONException ex) {
-            gui_.logError(ex);
+            gui_.logs().logError(ex);
          }
       }
    }
