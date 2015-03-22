@@ -5,11 +5,6 @@ package main;
  * and open the template in the editor.
  */
 import gui.GUI;
-import java.awt.AWTEvent;
-import java.awt.EventQueue;
-import java.awt.Toolkit;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.prefs.Preferences;
 import org.micromanager.MMStudio;
 import org.micromanager.api.MMPlugin;
@@ -47,6 +42,7 @@ public class Magellan implements MMPlugin{
 
    @Override
    public void setApp(ScriptInterface si) {
+      
    }
 
    @Override
@@ -56,12 +52,12 @@ public class Magellan implements MMPlugin{
 
    @Override
    public String getDescription() {
-      return "test description";
+      return "Explore samples in space and time";
    }
 
    @Override
    public String getInfo() {
-      return "test info";
+      return "";
    }
 
    @Override

@@ -15,13 +15,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import org.apache.commons.math3.geometry.euclidean.twod.Euclidean2D;
 import org.apache.commons.math3.geometry.euclidean.twod.PolygonsSet;
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
@@ -38,27 +37,29 @@ import org.micromanager.utils.ReportingUtils;
  */
 public abstract class SurfaceInterpolator implements XYFootprint {
    
-   public static final int MIN_PIXELS_PER_INTERP_POINT = 4;
+   public static final int MIN_PIXELS_PER_INTERP_POINT = 1;
    public static final int NUM_XY_TEST_POINTS = 8;
    
    private String name_;
    //surface coordinates are neccessarily associated with the coordinate space of particular xy and z devices
    private String xyDeviceName_, zDeviceName_;
-   private TreeSet<Point3d> points_;
+   private volatile TreeSet<Point3d> points_;
    private MonotoneChain mChain_;
    private RegionFactory<Euclidean2D> regionFacotry_ = new RegionFactory<Euclidean2D>();
    protected volatile Vector2D[] convexHullVertices_;
-   protected Region<Euclidean2D> convexHullRegion_;
-   private int numRows_, numCols_;
-   private volatile ArrayList<XYStagePosition> xyPositions_;
-   private double xyPadding_um_ = 0, zPadding_um_;
-   protected double boundXMin_, boundXMax_, boundYMin_, boundYMax_;
-   private int boundXPixelMin_,boundXPixelMax_,boundYPixelMin_,boundYPixelMax_;
+   protected volatile Region<Euclidean2D> convexHullRegion_;
+   private volatile int numRows_, numCols_;
+   private volatile List<XYStagePosition> xyPositions_;
+   private volatile double xyPadding_um_ = 0, zPadding_um_;
+   protected volatile double boundXMin_, boundXMax_, boundYMin_, boundYMax_;
+   private volatile int boundXPixelMin_,boundXPixelMax_,boundYPixelMin_,boundYPixelMax_;
    private ExecutorService executor_; 
    protected volatile SingleResolutionInterpolation currentInterpolation_;
    private SurfaceManager manager_;
    private Future currentInterpolationTask_;
    private String pixelSizeConfig_;
+   //Objects for wait/notify sync of calcualtions
+   protected Object xyPositionLock_ = new Object(), interpolationLock_ = new Object(), convexHullLock_ = new Object();
    
    public SurfaceInterpolator(SurfaceManager manager, String xyDevice, String zDevice) {
       name_ = manager.getNewName();
@@ -96,7 +97,7 @@ public abstract class SurfaceInterpolator implements XYFootprint {
          }
       });
       mChain_ = new MonotoneChain(true);      
-      executor_ = new ThreadPoolExecutor(1,1,0,TimeUnit.MILLISECONDS,new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
+      executor_ = Executors.newSingleThreadExecutor(new ThreadFactory() {
          @Override
          public Thread newThread(Runnable r) {
             return new Thread(r, "Interpolation calculation thread ");
@@ -152,19 +153,10 @@ public abstract class SurfaceInterpolator implements XYFootprint {
    
    public void setXYPadding(double pad) {
       xyPadding_um_ = pad;
-      xyPositions_ = null;
-      new Thread(new Runnable() {
-
-         @Override
-         public void run() {
-            try {
-               fitXYPositionsToConvexHull();
-               manager_.drawSurfaceOverlay(SurfaceInterpolator.this);
-            } catch (InterruptedException ex) {
-               return; //can't think of scenario in which this is interrupted, so just ignore
-            }
-         }
-      }, "Update XY padding thread").start();
+      synchronized (xyPositionLock_) {
+         xyPositions_ = null;
+      }
+      updateXYPositionsOnly();
    }
    
    public double getWidth_um() {
@@ -181,17 +173,39 @@ public abstract class SurfaceInterpolator implements XYFootprint {
       return pixelSize * pixelHeight;
    }
 
-   public Vector2D[] getConvexHullPoints() {
-      return convexHullVertices_;
+   /**
+    * Blocks until convex hull vertices have been calculated
+    * @return
+    * @throws InterruptedException 
+    */
+   public Vector2D[] getConvexHullPoints() throws InterruptedException {
+      // block until convex hull points available
+      synchronized (convexHullLock_) {
+         while (convexHullVertices_ == null) {
+            convexHullLock_.wait();
+         }
+         return convexHullVertices_;
+      }
    }
-   
+
+
    @Override
-   public ArrayList<XYStagePosition> getXYPositions() {
-      return xyPositions_;
+   public List<XYStagePosition> getXYPositions() throws InterruptedException {
+      synchronized (xyPositionLock_) {
+         while (xyPositions_ == null) {
+            xyPositionLock_.wait();
+         }
+         return xyPositions_;
+      }
    }
    
-   public SingleResolutionInterpolation getCurrentInterpolation() {
-      return currentInterpolation_;
+   public SingleResolutionInterpolation getCurrentInterpolation() throws InterruptedException {
+      synchronized (interpolationLock_) {
+         while (currentInterpolation_ == null) {
+            interpolationLock_.wait();
+         }
+         return currentInterpolation_;
+      }
    }
 
    /**
@@ -282,24 +296,30 @@ public abstract class SurfaceInterpolator implements XYFootprint {
    /**
     * figure out which of the positions need to be collected at a given slice
     * Assumes positions_ contains list of all possible positions for fitting  
-    * returns null if interpolation isn't yet detailed enough for calculating positions
+    * block until interpolation is detailed enough to calculate stage positions
     * @param zPos 
     */
-   public ArrayList<XYStagePosition> getXYPositonsAtSlice(double zPos, SingleResolutionInterpolation interp) {
+   public ArrayList<XYStagePosition> getXYPositonsAtSlice(double zPos) throws InterruptedException {
+      SingleResolutionInterpolation interp = getCurrentInterpolation();
       int tileWidth = (int) MMStudio.getInstance().getCore().getImageWidth() - SettingsDialog.getOverlapX();
       int tileHeight = (int) MMStudio.getInstance().getCore().getImageHeight() - SettingsDialog.getOverlapY();
-      if (interp.getPixelsPerInterpPoint() >= Math.max(tileWidth,tileHeight) / NUM_XY_TEST_POINTS ) {
-         return null; //don't calculate posisiitons unless interp is detailed enough for them to make sense
+      while (interp.getPixelsPerInterpPoint() >= Math.max(tileWidth,tileHeight) / NUM_XY_TEST_POINTS ) {
+         synchronized (interpolationLock_) {
+            interpolationLock_.wait();
+         }
+         interp = getCurrentInterpolation();
       }
       ArrayList<XYStagePosition> positionsAtSlice = new ArrayList<XYStagePosition>();
       for (XYStagePosition pos : xyPositions_) {
+         //TODO: support other modes of showing positions?
          if (!isPositionCompletelyAboveSurface(pos, interp, zPos, zPadding_um_)) {
-            positionsAtSlice.add(pos);            
+            positionsAtSlice.add(pos);
          }
       }
+
       return positionsAtSlice;
    }
-   
+
    private Point2D.Double[] getPositionCornersWithPadding(XYStagePosition pos) {
       if (xyPadding_um_ == 0) {
          return pos.getDisplayedTileCorners();
@@ -383,7 +403,7 @@ public abstract class SurfaceInterpolator implements XYFootprint {
       }
    }
 
-   protected abstract void interpolateSurface(LinkedList<Point3d> points);
+   protected abstract void interpolateSurface(LinkedList<Point3d> points) throws InterruptedException;
 
    private void fitXYPositionsToConvexHull() throws InterruptedException {
       int fullTileWidth = (int) MMStudio.getInstance().getCore().getImageWidth();
@@ -415,19 +435,22 @@ public abstract class SurfaceInterpolator implements XYFootprint {
       for (int col = 0; col < numCols_; col++) {
          double xPixelOffset = (col - (numCols_ - 1) / 2.0) * (tileWidthMinusOverlap);
          for (int row = 0; row < numRows_; row++) {
+            if (Thread.interrupted()) {
+               throw new InterruptedException();
+            }
             double yPixelOffset = (row - (numRows_ - 1) / 2.0) * (tileHeightMinusOverlap);
             Point2D.Double pixelPos = new Point2D.Double(xPixelOffset, yPixelOffset);
             Point2D.Double stagePos = new Point2D.Double();
             transform.transform(pixelPos, stagePos);
             positions.add(new XYStagePosition(stagePos, tileWidthMinusOverlap, tileHeightMinusOverlap,
-                    fullTileWidth, fullTileHeight, row, col,pixelSizeConfig_));
-            if (Thread.interrupted()) {
-               throw new InterruptedException();
-            }
+                    fullTileWidth, fullTileHeight, row, col, pixelSizeConfig_));
          }
       }
       //delete positions squares (+padding) that do not overlap convex hull
       for (int i = positions.size() - 1; i >= 0; i--) {
+         if (Thread.interrupted()) {
+            throw new InterruptedException();
+         }
          XYStagePosition pos = positions.get(i);
          //create square region correpsonding to stage pos
          Region<Euclidean2D> square = getStagePositionRegion(pos);     
@@ -437,11 +460,15 @@ public abstract class SurfaceInterpolator implements XYFootprint {
             positions.remove(i);
          }
          square.getBoundarySize();
-         if (Thread.interrupted()) {
-            throw new InterruptedException();
-         }
-      }             
-      xyPositions_ = positions;
+      }
+      if (Thread.interrupted()) {
+         throw new InterruptedException();
+      }
+      synchronized (xyPositionLock_) {
+         xyPositions_ = positions;
+         xyPositionLock_.notifyAll();
+      }
+         
       //let manger know new parmas caluclated
       manager_.updateSurfaceTableAndCombos();
    }
@@ -452,7 +479,7 @@ public abstract class SurfaceInterpolator implements XYFootprint {
     * @param y
     * @param tolerance radius in stage space
     */
-   public void deleteClosestPoint(double x, double y, double tolerance) {
+   public synchronized void deleteClosestPoint(double x, double y, double tolerance) {
       double minDistance = tolerance + 1;
       Point3d minDistancePoint = null;      
       for (Point3d point : points_) {
@@ -466,77 +493,111 @@ public abstract class SurfaceInterpolator implements XYFootprint {
       if (minDistance < tolerance && minDistancePoint != null) {
          points_.remove(minDistancePoint);
       }
-      //duplicate points for use on caluclation thread
-      LinkedList<Point3d> points = new LinkedList<Point3d>(points_);
-      updateConvexHullAndInterpolate(points); 
+
+      updateConvexHullAndInterpolate(); 
       manager_.drawSurfaceOverlay(this);
    }
    
-   public void addPoint(double x, double y, double z) {
+   public synchronized void addPoint(double x, double y, double z) {
       points_.add(new Point3d(x,y,z)); //for interpolation
-      //duplicate points for use on caluclation thread
-      LinkedList<Point3d> points = new LinkedList<Point3d>(points_);
-      updateConvexHullAndInterpolate(points); 
+      updateConvexHullAndInterpolate(); 
       manager_.drawSurfaceOverlay(this);
    }
    
-   /**
-    * Constantly checks for interrupts in case list of points is updated
-    * @param points
-    * @param xyPoints 
-    */
-   private synchronized void updateConvexHullAndInterpolate(final LinkedList<Point3d> points) {
-      xyPositions_ = null;
-      convexHullVertices_ = null;
-      if (currentInterpolationTask_ != null) {
-         //interpolation points have changed so cancel exisiting ones
-         currentInterpolationTask_.cancel(true);
-         currentInterpolation_ = null;
+   
+   //redo XY position fitting, but dont need to reinterpolate
+   private void updateXYPositionsOnly() {
+      //duplicate points for use on caluclation thread
+      final LinkedList<Point3d> points = new LinkedList<Point3d>(points_);
+      synchronized (xyPositionLock_) {
+         xyPositions_ = null;
       }
-      Runnable interpRunnable = new Runnable() {
+      executor_.submit( new Runnable() {
          @Override
          public void run() {
+            try {
+               fitXYPositionsToConvexHull();
+            } catch (InterruptedException ex) {
+               //this won't happen
+               return;
+            }
+            manager_.drawSurfaceOverlay(SurfaceInterpolator.this);
+         }         
+      });
+   }
 
+   private synchronized void updateConvexHullAndInterpolate() {
+      //duplicate points for use on caluclation thread
+      final LinkedList<Point3d> points = new LinkedList<Point3d>(points_);
+      if (currentInterpolationTask_ != null && !currentInterpolationTask_.isDone()) {
+         //cancel current interpolation because interpolation points have changed, call does not block
+         currentInterpolationTask_.cancel(true);
+      }
+      //don't want one of the get methods returning a null object thinking it has a value
+      synchronized (convexHullLock_) {
+         convexHullVertices_ = null;
+         convexHullRegion_ = null;
+      }
+      synchronized (interpolationLock_) {
+         currentInterpolation_ = null;
+      }
+      synchronized (xyPositionLock_) {
+         xyPositions_ = null;
+      }
+      numRows_ = 0;
+      numCols_ = 0;
+
+
+      currentInterpolationTask_ = executor_.submit( new Runnable() {
+         @Override
+         public void run() {
             if (points.size() > 2) {
-               LinkedList<Vector2D> xyPoints = new LinkedList<Vector2D>();
-               for (Point3d p : points) {
-                  xyPoints.add(new Vector2D(p.x, p.y));
-               }
-               ConvexHull2D hull = mChain_.generate(xyPoints);
-               if (Thread.interrupted()) {
-                  return;
-               }
-               convexHullVertices_ = hull.getVertices();
-               if (Thread.interrupted()) {
-                  return;
-               }
-               convexHullRegion_ = hull.createRegion();
-               if (Thread.interrupted()) {
-                  return;
-               }
-               calculateConvexHullBounds();
-               if (Thread.interrupted()) {
-                  return;
-               }
                try {
+                  //convert xyPoints to a vector2d for convex hull calculation
+                  LinkedList<Vector2D> xyPoints = new LinkedList<Vector2D>();
+                  for (Point3d p : points) {
+                     xyPoints.add(new Vector2D(p.x, p.y));
+                  }
+                  ConvexHull2D hull = mChain_.generate(xyPoints);
+                  if (Thread.interrupted()) {
+                     throw new InterruptedException();
+                  }
+                  synchronized (convexHullLock_) {
+                     convexHullVertices_ = hull.getVertices();
+                     convexHullLock_.notifyAll();
+                  }
+                  if (Thread.interrupted()) {
+                     throw new InterruptedException();
+                  }
+                  convexHullRegion_ = hull.createRegion();
+                  if (Thread.interrupted()) {
+                     throw new InterruptedException();
+                  }
+                  calculateConvexHullBounds();
+                  if (Thread.interrupted()) {
+                     throw new InterruptedException();
+                  }
                   fitXYPositionsToConvexHull();
+                  interpolateSurface(points);
                } catch (InterruptedException e) {
                   return;
                }
-               interpolateSurface(points);
-            } else {
-               convexHullRegion_ = null;
-               convexHullVertices_ = null;
-               numRows_ = 0; 
-               numCols_ = 0;
             }
-
          }
-      };
-      currentInterpolationTask_ = executor_.submit(interpRunnable);
+      });
+   }
+   
+   /**
+    * block until a higher resolution surface is available. Might experience spurious wakeups
+    * @throws InterruptedException 
+    */
+   public void waitForHigherResolutionInterpolation() throws InterruptedException {
+      synchronized (interpolationLock_) {
+         interpolationLock_.wait();
+      }
    }
 
-   public Point3d[] getPoints() {
+   public synchronized Point3d[] getPoints() {
       return points_.toArray(new Point3d[0]);
    }
 
@@ -555,5 +616,5 @@ public abstract class SurfaceInterpolator implements XYFootprint {
       }
       return list;
    }
-   
+
 }

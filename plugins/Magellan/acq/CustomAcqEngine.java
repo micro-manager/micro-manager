@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
@@ -115,8 +117,12 @@ public class CustomAcqEngine {
             return;
          }
       }   
-      
-      currentExploreAcq_ = new ExploreAcquisition(settings, this);
+      try {
+         currentExploreAcq_ = new ExploreAcquisition(settings, this);
+      } catch (Exception ex) {
+         ReportingUtils.showError("Couldn't initialize explore acquisiton");
+         return;
+      }
       runAcq(currentExploreAcq_);
    }
 
@@ -182,10 +188,10 @@ public class CustomAcqEngine {
             if (SettingsDialog.getDemoMode()) {
                Object demoPix;
                if (core_.getBytesPerPixel() == 1) {
-                  demoPix = DemoModeImageData.getBytePixelData(c, (int) event.xPosition_, (int) event.yPosition_,
+                  demoPix = DemoModeImageData.getBytePixelData(c, (int) event.xyPosition_.getCenter().x, (int) event.xyPosition_.getCenter().y,
                           (int) event.zPosition_, MDUtils.getWidth(img.tags), MDUtils.getHeight(img.tags));
                } else {
-                  demoPix = DemoModeImageData.getShortPixelData(c, (int) event.xPosition_, (int) event.yPosition_,
+                  demoPix = DemoModeImageData.getShortPixelData(c, (int) event.xyPosition_.getCenter().x, (int) event.xyPosition_.getCenter().y,
                           (int) event.zPosition_, MDUtils.getWidth(img.tags), MDUtils.getHeight(img.tags));
                
                }img = new TaggedImage(demoPix, img.tags);
@@ -237,7 +243,7 @@ public class CustomAcqEngine {
          loopHardwareCommandRetries(new HardwareCommand() {
             @Override
             public void run() throws Exception {
-               core_.setXYPosition(xyStage, event.xPosition_, event.yPosition_);
+               core_.setXYPosition(xyStage, event.xyPosition_.getCenter().x, event.xyPosition_.getCenter().y);
             }
          }, "moving XY stage");
          //wait for it to not be busy (is this even needed??)

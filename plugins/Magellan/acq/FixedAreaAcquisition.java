@@ -10,6 +10,8 @@ import gui.SettingsDialog;
 import ij.IJ;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutionException;
@@ -33,7 +35,7 @@ public class FixedAreaAcquisition extends Acquisition {
    private volatile boolean paused_ = false;
    private FixedAreaAcquisitionSettings settings_;
    private int numTimePoints_;
-   private ArrayList<XYStagePosition> positions_;
+   private List<XYStagePosition> positions_;
    private long nextTimePointStartTime_ms_;
    private ParallelAcquisitionGroup acqGroup_;
    //barrier to wait for event generation at successive time points
@@ -56,7 +58,7 @@ public class FixedAreaAcquisition extends Acquisition {
     * Acquisition engine manages a thread that reads events, fixed area
     * acquisition has another thread that generates events
     */
-   public FixedAreaAcquisition(FixedAreaAcquisitionSettings settings, ParallelAcquisitionGroup acqGroup) {
+   public FixedAreaAcquisition(FixedAreaAcquisitionSettings settings, ParallelAcquisitionGroup acqGroup) throws Exception {
       super(settings.zStep_);
       acqGroup_ = acqGroup;
       settings_ = settings;
@@ -70,8 +72,27 @@ public class FixedAreaAcquisition extends Acquisition {
       //get positions to be imaged
       //z slices to be dynamically calculated at the start of each time point?
       try {
-         storeXYPositions();
-      } catch (Exception e) {
+         //get XY positions
+         if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
+            positions_ = settings_.fixedSurface_.getXYPositions();
+         } else if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK) {
+            //TODO
+         } else if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.SIMPLE_Z_STACK) {
+            positions_ = settings_.footprint_.getXYPositions();
+         } else if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.REGION_2D) {
+            positions_ = settings_.footprint_.getXYPositions();
+         } else {
+            //no space mode, use current stage positon
+            positions_ = new ArrayList<XYStagePosition>();
+            int fullTileWidth = (int) MMStudio.getInstance().getCore().getImageWidth();
+            int fullTileHeight = (int) MMStudio.getInstance().getCore().getImageHeight();
+            int tileWidthMinusOverlap = fullTileWidth - SettingsDialog.getOverlapX();
+            int tileHeightMinusOverlap = fullTileHeight - SettingsDialog.getOverlapY();
+            positions_.add(new XYStagePosition(MMStudio.getInstance().getCore().getXYStagePosition(xyStage_),
+                    tileWidthMinusOverlap, tileHeightMinusOverlap, fullTileWidth, fullTileHeight, 0, 0, 
+                    MMStudio.getInstance().getCore().getCurrentPixelSizeConfig()));
+         }
+      } catch (Exception e) {      
          ReportingUtils.showError("Problem with Acquisition's XY positions. Check acquisition settings");
          throw new RuntimeException();
       }
@@ -131,8 +152,10 @@ public class FixedAreaAcquisition extends Acquisition {
 
    public int getNumRows() {
       int maxIndex = 0;
-      for (XYStagePosition p : positions_) {
-         maxIndex = Math.max(maxIndex, p.getGridRow());
+      synchronized (positions_) {
+         for (XYStagePosition p : positions_) {
+            maxIndex = Math.max(maxIndex, p.getGridRow());
+         }
       }
       return maxIndex + 1;
    }
@@ -143,33 +166,6 @@ public class FixedAreaAcquisition extends Acquisition {
          maxIndex = Math.max(maxIndex, p.getGridCol());
       }
       return maxIndex + 1;
-   }
-
-   private void storeXYPositions() {
-      //get XY positions
-      if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
-         positions_ = settings_.fixedSurface_.getXYPositions();
-      } else if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK) {
-         //TODO
-      } else if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.SIMPLE_Z_STACK) {
-         positions_ = settings_.footprint_.getXYPositions();
-      } else if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.REGION_2D) {
-         positions_ = settings_.footprint_.getXYPositions();
-      } else {
-         //no space mode, use current stage positon
-         positions_ = new ArrayList<XYStagePosition>();
-         try {
-            int fullTileWidth = (int) MMStudio.getInstance().getCore().getImageWidth();
-            int fullTileHeight = (int) MMStudio.getInstance().getCore().getImageHeight();
-            int tileWidthMinusOverlap = fullTileWidth - SettingsDialog.getOverlapX();
-            int tileHeightMinusOverlap = fullTileHeight - SettingsDialog.getOverlapY();
-
-            positions_.add(new XYStagePosition(MMStudio.getInstance().getCore().getXYStagePosition(xyStage_),
-                    tileWidthMinusOverlap, tileHeightMinusOverlap, fullTileWidth, fullTileHeight, 0, 0, null));
-         } catch (Exception ex) {
-            ReportingUtils.showError("Couldn't get XY stage position");
-         }
-      }
    }
 
    public long getNextWakeTime_ms() {
@@ -320,7 +316,7 @@ public class FixedAreaAcquisition extends Acquisition {
                            }
                         }
                         AcquisitionEvent event = new AcquisitionEvent(FixedAreaAcquisition.this, timeIndex, channelIndex, sliceIndex,
-                                positionIndex, zPos, position.getCenter().x, position.getCenter().y, settings_.propPairings_);                        
+                                positionIndex, zPos, position, settings_.propPairings_);                        
                         if (Thread.interrupted()) {
                            throw new InterruptedException();
                         }
@@ -379,7 +375,7 @@ public class FixedAreaAcquisition extends Acquisition {
     * @param zPos
     * @return
     */
-   private boolean isZAboveImagingVolume(XYStagePosition position, double zPos) {
+   private boolean isZAboveImagingVolume(XYStagePosition position, double zPos) throws InterruptedException {
       if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
          return settings_.fixedSurface_.isPositionCompletelyAboveSurface(position, settings_.fixedSurface_.getCurrentInterpolation(),
                  zPos, settings_.fixedSurface_.getZPadding());
@@ -396,7 +392,7 @@ public class FixedAreaAcquisition extends Acquisition {
       }
    }
 
-   private boolean isZBelowImagingVolume(XYStagePosition position, double zPos) {
+   private boolean isZBelowImagingVolume(XYStagePosition position, double zPos) throws InterruptedException {
       if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
          return settings_.fixedSurface_.isPositionCompletelyBelowSurface(position,
                  settings_.fixedSurface_.getCurrentInterpolation(), zPos, settings_.distanceBelowSurface_);
@@ -424,24 +420,18 @@ public class FixedAreaAcquisition extends Acquisition {
          return settings_.zStart_;
       } else {
          //region2D or no region
-         try {
-            return core_.getPosition(zStage_);
-         } catch (Exception ex) {
-            ReportingUtils.showError("Couldn't read z position from core");
-            throw new RuntimeException();
-         }
+         return zOrigin_;
       }
    }
 
-   //TODO account for autofocusing via frame on both of these
    @Override
-   public double getZCoordinateOfSlice(int displaySliceIndex, int displayFrameIndex) {
-      return getZTopCoordinate() + (displaySliceIndex - 1) * zStep_;
+   public double getZCoordinateOfSlice(int sliceIndex, int frameIndex) {
+      return getZTopCoordinate() + sliceIndex  * zStep_;
    }
 
    @Override
-   public int getDisplaySliceIndexFromZCoordinate(double z, int displayFrameIndex) {
-      return (int) Math.round((z - getZTopCoordinate()) / zStep_) + 1;
+   public int getSliceIndexFromZCoordinate(double z, int frameIndex) {
+      return (int) Math.round((z - getZTopCoordinate()) / zStep_);
    }
 
    @Override

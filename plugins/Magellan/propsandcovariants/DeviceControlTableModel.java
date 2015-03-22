@@ -12,6 +12,7 @@ import java.util.prefs.Preferences;
 import javax.swing.table.AbstractTableModel;
 import mmcorej.CMMCore;
 import org.micromanager.MMStudio;
+import org.micromanager.api.MMListenerInterface;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
@@ -20,7 +21,7 @@ import org.micromanager.utils.ReportingUtils;
  *
  * @author Henry
  */
-public class DeviceControlTableModel extends AbstractTableModel  {
+public class DeviceControlTableModel extends AbstractTableModel implements MMListenerInterface {
      
    
    private LinkedList<SinglePropertyOrGroup> storedGroupsAndProps_;
@@ -107,6 +108,58 @@ public class DeviceControlTableModel extends AbstractTableModel  {
 
    public SinglePropertyOrGroup getPropertyItem(int rowIndex) {
       return storedGroupsAndProps_.get(rowIndex);
+   }
+
+   @Override
+   public void propertiesChangedAlert() {
+      
+   }
+
+   @Override
+   public void propertyChangedAlert(String device, String property, String value) {
+      for (int i = 0; i <storedGroupsAndProps_.size(); i++) {
+         SinglePropertyOrGroup g = storedGroupsAndProps_.get(i);
+         if (!g.isGroup() && g.getName().equals(device+"-"+property)) {
+            g.value = value;
+            fireTableRowsUpdated(i, i);
+         }
+      }
+   }
+
+   @Override
+   public void configGroupChangedAlert(String groupName, String newConfig) {
+      for (int i = 0; i <storedGroupsAndProps_.size(); i++) {
+         SinglePropertyOrGroup g = storedGroupsAndProps_.get(i);
+         if (g.isGroup() && g.getName().equals(SinglePropertyOrGroup.GROUP_PREFIX + groupName)) {
+            g.value = newConfig;
+            fireTableRowsUpdated(i, i);
+         }
+      }
+   }
+
+   @Override
+   public void systemConfigurationLoaded() {
+      fireTableDataChanged();
+   }
+
+   @Override
+   public void pixelSizeChangedAlert(double newPixelSizeUm) {
+   }
+
+   @Override
+   public void stagePositionChangedAlert(String deviceName, double pos) {
+   }
+
+   @Override
+   public void xyStagePositionChanged(String deviceName, double xPos, double yPos) {
+   }
+
+   @Override
+   public void exposureChanged(String cameraName, double newExposureTime) {
+   }
+
+   @Override
+   public void slmExposureChanged(String slmName, double newExposureTime) {
    }
 
 }

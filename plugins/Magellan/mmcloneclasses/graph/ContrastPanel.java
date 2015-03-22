@@ -65,6 +65,10 @@ public class ContrastPanel extends JPanel {
    private VirtualAcquisitionDisplay currentDisplay_;
    private HistogramControlsState histControlsState_;
    private DisplayOverlayer overlayer_;
+   //volatile because accessed by overlayer creation thread
+   private volatile boolean showScaleBar_ = false;
+   private volatile String sizeBarColorSelection_ = "White";
+   private volatile int sizeBarPosition_ = 0;
 
    public ContrastPanel() {
       initializeGUI();
@@ -314,8 +318,9 @@ public class ContrastPanel extends JPanel {
 
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
+            sizeBarPosition_ = sizeBarComboBox_.getSelectedIndex();
             if (overlayer_ != null) {
-               overlayer_.renderOverlay(false);
+               overlayer_.redrawOverlay();
             }
          }
       });
@@ -325,8 +330,9 @@ public class ContrastPanel extends JPanel {
 
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
+            sizeBarColorSelection_ = (String) sizeBarColorComboBox_.getSelectedItem();
             if (overlayer_ != null) {
-               overlayer_.renderOverlay(false);
+               overlayer_.redrawOverlay();
             }
          }
       });
@@ -473,14 +479,14 @@ public class ContrastPanel extends JPanel {
    }
 
    public void sizeBarCheckBoxActionPerformed() {
-      boolean checked = sizeBarCheckBox_.isSelected();
-      sizeBarComboBox_.setEnabled(checked);
-      sizeBarColorComboBox_.setEnabled(checked);
-      overlayer_.renderOverlay(false);
+      showScaleBar_ = sizeBarCheckBox_.isSelected();
+      sizeBarComboBox_.setEnabled(showScaleBar_);
+      sizeBarColorComboBox_.setEnabled(showScaleBar_);
+      overlayer_.redrawOverlay();
    }
 
    public MMScaleBar.Position getScaleBarPosition() {
-      switch (sizeBarComboBox_.getSelectedIndex()) {
+      switch (sizeBarPosition_) {
          case 0:
             return MMScaleBar.Position.TOPLEFT;
          case 1:
@@ -493,11 +499,11 @@ public class ContrastPanel extends JPanel {
    }
 
    public Color getScaleBarColor() {
-      if ((sizeBarColorComboBox_.getSelectedItem()).equals("Black")) {
+      if (sizeBarColorSelection_.equals("Black")) {
          return Color.black;
-      } else if ((sizeBarColorComboBox_.getSelectedItem()).equals("White")) {
+      } else if (sizeBarColorSelection_.equals("White")) {
          return Color.white;
-      } else if ((sizeBarColorComboBox_.getSelectedItem()).equals("Green")) {
+      } else if (sizeBarColorSelection_.equals("Green")) {
          return Color.green;
       } else {
          return Color.gray;
@@ -505,7 +511,7 @@ public class ContrastPanel extends JPanel {
    }
 
    public boolean showScaleBar() {
-      return sizeBarCheckBox_.isSelected();
+      return showScaleBar_;
    }
 
    public void autostretch() {

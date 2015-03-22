@@ -428,9 +428,12 @@ public class DisplayPlusControls extends Panel {
       ChangeListener gridCL = new ChangeListener() {
 
          @Override
-         public void stateChanged(ChangeEvent e) { 
-            regionManager_.getRegion(regionsCombo_.getSelectedIndex()).updateParams((Integer) gridRowSpinner_.getValue(), 
-                    (Integer) gridColSpinner_.getValue());
+         public void stateChanged(ChangeEvent e) {
+            int index = regionsCombo_.getSelectedIndex();
+            if (index != -1) {
+               MultiPosRegion r = regionManager_.getRegion(index);
+               r.updateParams((Integer) gridRowSpinner_.getValue(), (Integer) gridColSpinner_.getValue());
+            }
          }
       };
       gridRowSpinner_.addChangeListener(gridCL);

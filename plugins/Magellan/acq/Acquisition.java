@@ -24,12 +24,12 @@ public abstract class Acquisition implements AcquisitionEventSource{
    //number of acquisiton events held at any given time
    public static final int ACQ_EVENT_QUEUE_SIZE = 40;
    
-   protected volatile double zStep_ = 1;
+   protected final double zStep_;
+   protected final double zOrigin_;
    private BlockingQueue<TaggedImage> engineOutputQueue_;
    protected CMMCore core_ = MMStudio.getInstance().getCore();
    protected String xyStage_, zStage_;
    protected PositionManager posManager_;
-   private DisplayPlus display_;
    protected BlockingQueue<AcquisitionEvent> events_;
    protected TaggedImageSink imageSink_;
    protected String pixelSizeConfig_;
@@ -38,16 +38,13 @@ public abstract class Acquisition implements AcquisitionEventSource{
    private long startTime_ms_ = -1;
    private MultiResMultipageTiffStorage imageStorage_;
 
-   public Acquisition(double zStep ) {
+   public Acquisition(double zStep ) throws Exception {
             xyStage_ = core_.getXYStageDevice();
       zStage_ = core_.getFocusDevice();
       zStep_ = zStep;
-         events_ = new LinkedBlockingQueue<AcquisitionEvent>(ACQ_EVENT_QUEUE_SIZE);
-      try {
-         pixelSizeConfig_ = MMStudio.getInstance().getCore().getCurrentPixelSizeConfig();
-      } catch (Exception ex) {
-         ReportingUtils.showError("couldnt get pixel size config");
-      }
+      events_ = new LinkedBlockingQueue<AcquisitionEvent>(ACQ_EVENT_QUEUE_SIZE);
+      zOrigin_ = core_.getPosition(zStage_);
+      pixelSizeConfig_ = core_.getCurrentPixelSizeConfig();
    }
 
    public MultiResMultipageTiffStorage getStorage() {
@@ -71,7 +68,7 @@ public abstract class Acquisition implements AcquisitionEventSource{
     */
    public abstract double getZCoordinateOfSlice(int displaySliceIndex, int displayFrameIndex);
 
-   public abstract int getDisplaySliceIndexFromZCoordinate(double z, int displayFrameIndex);
+   public abstract int getSliceIndexFromZCoordinate(double z, int displayFrameIndex);
 
    //TODO: change this when number of channels acutally implemented
    public int getNumChannels() {

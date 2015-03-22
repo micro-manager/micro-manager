@@ -52,6 +52,7 @@ import surfacesandregions.SurfaceRegionComboBoxModel;
 import surfacesandregions.XYFootprint;
 import utility.ExactlyOneRowSelectionModel;
 import channels.SimpleChannelTableModel;
+import org.micromanager.api.MMListenerInterface;
 
 
 /**
@@ -88,9 +89,9 @@ public class GUI extends javax.swing.JFrame {
       this.setVisible(true);
       updatePropertiesTable();
       addTextFieldListeners();
-      storeCurrentAcqSettings();
+      storeCurrentAcqSettings();    
    }
-   
+    
    public void acquisitionSettingsChanged() {
       //refresh GUI and store its state in current acq settings
       refreshAcqTabTitleText();
@@ -127,24 +128,24 @@ public class GUI extends javax.swing.JFrame {
       new Thread(new Runnable() {
          @Override
          public void run() {
-            ((DeviceControlTableModel) (propertyControlTable_.getModel())).updateStoredProps();
-            ((AbstractTableModel) propertyControlTable_.getModel()).fireTableDataChanged();
+            ((DeviceControlTableModel) (deviceControlTable_.getModel())).updateStoredProps();
+            ((AbstractTableModel) deviceControlTable_.getModel()).fireTableDataChanged();
 
             //autofit columns
-            propertyControlTable_.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-            TableColumn col1 = propertyControlTable_.getColumnModel().getColumn(0);
+            deviceControlTable_.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+            TableColumn col1 = deviceControlTable_.getColumnModel().getColumn(0);
             int preferredWidth = col1.getMinWidth();
-            for (int row = 0; row < propertyControlTable_.getRowCount(); row++) {
-               TableCellRenderer cellRenderer = propertyControlTable_.getCellRenderer(row, 0);
-               Component c = propertyControlTable_.prepareRenderer(cellRenderer, row, 0);
-               int width = c.getPreferredSize().width + propertyControlTable_.getIntercellSpacing().width;
+            for (int row = 0; row < deviceControlTable_.getRowCount(); row++) {
+               TableCellRenderer cellRenderer = deviceControlTable_.getCellRenderer(row, 0);
+               Component c = deviceControlTable_.prepareRenderer(cellRenderer, row, 0);
+               int width = c.getPreferredSize().width + deviceControlTable_.getIntercellSpacing().width;
                preferredWidth = Math.max(preferredWidth, width);
             }
             col1.setPreferredWidth(preferredWidth);
-            TableColumn col2 = propertyControlTable_.getColumnModel().getColumn(1);
-            propertyControlTable_.getHeight();
-            col2.setPreferredWidth(propertyControlTable_.getParent().getParent().getWidth() - preferredWidth
-                    - (customPropsScrollPane_.getVerticalScrollBar().isVisible() ? customPropsScrollPane_.getVerticalScrollBar().getWidth() : 0));
+            TableColumn col2 = deviceControlTable_.getColumnModel().getColumn(1);
+            deviceControlTable_.getHeight();
+            col2.setPreferredWidth(deviceControlTable_.getParent().getParent().getWidth() - preferredWidth
+                    - (deviceControlScrollPane_.getVerticalScrollBar().isVisible() ? deviceControlScrollPane_.getVerticalScrollBar().getWidth() : 0));
          }
       }).start();
    }
@@ -558,8 +559,8 @@ public class GUI extends javax.swing.JFrame {
         jTabbedPane1 = new javax.swing.JTabbedPane();
         controlPanelName_ = new javax.swing.JPanel();
         configPropsButton_ = new javax.swing.JButton();
-        customPropsScrollPane_ = new javax.swing.JScrollPane();
-        propertyControlTable_ = new javax.swing.JTable();
+        deviceControlScrollPane_ = new javax.swing.JScrollPane();
+        deviceControlTable_ = new javax.swing.JTable();
         multipleAcquisitionsPanel = new javax.swing.JPanel();
         multipleAcqScrollPane_ = new javax.swing.JScrollPane();
         multipleAcqTable_ = new javax.swing.JTable();
@@ -1425,24 +1426,24 @@ public class GUI extends javax.swing.JFrame {
             }
         });
 
-        customPropsScrollPane_.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        deviceControlScrollPane_.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
         DeviceControlTableModel model = new DeviceControlTableModel(prefs_);
-        propertyControlTable_.setAutoCreateColumnsFromModel(false);
-        propertyControlTable_.setModel(model);
-        propertyControlTable_.addColumn(new TableColumn(0, 200, new DefaultTableCellRenderer(), null));
-        propertyControlTable_.addColumn(new TableColumn(1, 200, new PropertyValueCellRenderer(false), new PropertyValueCellEditor()));
-        propertyControlTable_.setTableHeader(null);
-        propertyControlTable_.setCellSelectionEnabled(false);
-        propertyControlTable_.setModel(model);
-        customPropsScrollPane_.setViewportView(propertyControlTable_);
+        deviceControlTable_.setAutoCreateColumnsFromModel(false);
+        deviceControlTable_.setModel(model);
+        deviceControlTable_.addColumn(new TableColumn(0, 200, new DefaultTableCellRenderer(), null));
+        deviceControlTable_.addColumn(new TableColumn(1, 200, new PropertyValueCellRenderer(false), new PropertyValueCellEditor()));
+        deviceControlTable_.setTableHeader(null);
+        deviceControlTable_.setCellSelectionEnabled(false);
+        deviceControlTable_.setModel(model);
+        deviceControlScrollPane_.setViewportView(deviceControlTable_);
 
         javax.swing.GroupLayout controlPanelName_Layout = new javax.swing.GroupLayout(controlPanelName_);
         controlPanelName_.setLayout(controlPanelName_Layout);
         controlPanelName_Layout.setHorizontalGroup(
             controlPanelName_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(controlPanelName_Layout.createSequentialGroup()
-                .addComponent(customPropsScrollPane_, javax.swing.GroupLayout.PREFERRED_SIZE, 796, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(deviceControlScrollPane_, javax.swing.GroupLayout.PREFERRED_SIZE, 796, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, Short.MAX_VALUE))
             .addGroup(controlPanelName_Layout.createSequentialGroup()
                 .addGap(346, 346, 346)
@@ -1452,7 +1453,7 @@ public class GUI extends javax.swing.JFrame {
         controlPanelName_Layout.setVerticalGroup(
             controlPanelName_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(controlPanelName_Layout.createSequentialGroup()
-                .addComponent(customPropsScrollPane_, javax.swing.GroupLayout.PREFERRED_SIZE, 195, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(deviceControlScrollPane_, javax.swing.GroupLayout.PREFERRED_SIZE, 195, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(configPropsButton_)
                 .addContainerGap(23, Short.MAX_VALUE))
@@ -2103,13 +2104,14 @@ public class GUI extends javax.swing.JFrame {
     private javax.swing.JTable covariantPairValuesTable_;
     private javax.swing.JTable covariantPairingsTable_;
     private javax.swing.JPanel covariedSettingsTab_;
-    private javax.swing.JScrollPane customPropsScrollPane_;
     private javax.swing.JButton deinterleaveButton_;
     private javax.swing.JButton deleteAllRegionsButton_;
     private javax.swing.JButton deleteAllSurfacesButton_;
     private javax.swing.JButton deleteCovariedPairingValueButton_;
     private javax.swing.JButton deleteSelectedRegionButton_;
     private javax.swing.JButton deleteSelectedSurfaceButton_;
+    private javax.swing.JScrollPane deviceControlScrollPane_;
+    private javax.swing.JTable deviceControlTable_;
     private javax.swing.JLabel distanceAboveSurfaceLabel_;
     private javax.swing.JSpinner distanceAboveSurfaceSpinner_;
     private javax.swing.JLabel distanceBelowSurfaceLabel_;
@@ -2158,7 +2160,6 @@ public class GUI extends javax.swing.JFrame {
     private javax.swing.JLabel numTimePointsLabel_;
     private javax.swing.JSpinner numTimePointsSpinner_;
     private javax.swing.JPanel panel2D_;
-    private javax.swing.JTable propertyControlTable_;
     private javax.swing.JScrollPane propertyPairValuesScrollpane_;
     private javax.swing.JScrollPane propertyPairingsScrollpane_;
     private javax.swing.JButton removeAcqButton_;

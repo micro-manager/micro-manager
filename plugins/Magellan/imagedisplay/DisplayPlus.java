@@ -18,21 +18,21 @@ import ij.gui.Toolbar;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Point2D;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import acq.MMImageCache;
 import ij.measure.Calibration;
-import mmcorej.TaggedImage;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.RunnableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.api.MMTags;
@@ -48,21 +48,23 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
    public static final int NONE = 0, EXPLORE = 1, NEWGRID = 2, NEWSURFACE = 3;
    private static ArrayList<DisplayPlus> activeDisplays_ = new ArrayList<DisplayPlus>();
    private Acquisition acq_;
-   private Point mouseDragStartPointLeft_, mouseDragStartPointRight_, currentMouseLocation_;
+   //all these are volatile because they are accessed by overlayer
+   private volatile Point mouseDragStartPointLeft_, mouseDragStartPointRight_, currentMouseLocation_;
    private ZoomableVirtualStack zoomableStack_;
    private final boolean exploreAcq_;
    private PositionManager posManager_;
    private boolean cursorOverImage_;
-   private int mode_ = NONE;
+   private volatile int mode_ = NONE;
    private boolean mouseDragging_ = false;
    private DisplayOverlayer overlayer_;
-   private SurfaceInterpolator currentSurface_;
-   private MultiPosRegion currentRegion_;
-   private ThreadPoolExecutor redrawPixelsExecutor_;
+   private volatile SurfaceInterpolator currentSurface_;
+   private volatile MultiPosRegion currentRegion_;
+   private ExecutorService redrawPixelsExecutor_;
+   private Future previousPixelDrawTask_;
    private int fullResPixelWidth_ = -1, fullResPixelHeight_ = -1; //used for scaling in fixed area acqs
    private int tileWidth_, tileHeight_;
 
-   public DisplayPlus(final MMImageCache stitchedCache, Acquisition acq, JSONObject summaryMD,
+   public DisplayPlus(final MMImageCache stitchedCache, final Acquisition acq, JSONObject summaryMD,
            MultiResMultipageTiffStorage multiResStorage) {
       super(stitchedCache, acq.getName(), summaryMD);
       tileWidth_ = multiResStorage.getTileWidth();
@@ -72,11 +74,11 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
       exploreAcq_ = acq instanceof ExploreAcquisition;
 
       //create redraw pixels executor
-      redrawPixelsExecutor_ = new ThreadPoolExecutor(1, 1, 0, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
+      redrawPixelsExecutor_ = Executors.newSingleThreadExecutor(new ThreadFactory() {
 
          @Override
          public Thread newThread(Runnable r) {
-            return new Thread(r, "Pixel update thread ");
+            return new Thread(r, acq.getName() + ": Pixel update thread ");
          }
       });
 
@@ -122,10 +124,23 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
       activeDisplays_.add(this);
    }
 
+   //Thread safe calls for getting displayed indices
+   public int getVisibleSliceIndex() {
+      return subImageControls_.getDisplayedSlice();
+   }
+
+   public int getVisibleFrameIndex() {
+      return subImageControls_.getDisplayedFrame();
+   }
+
+   public int getVisibleChannelIndex() {
+      return subImageControls_.getDisplayedChannel();
+   }
+
    public ZoomableVirtualStack getZoomableStack() {
       return zoomableStack_;
    }
-   
+
    protected void applyPixelSizeCalibration() {
       try {
          JSONObject summary = getSummaryMetadata();
@@ -138,41 +153,43 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
          }
          //multiply by zoom factor
          pixSizeUm *= zoomableStack_.getDownsampleFactor();
-                
+
          if (pixSizeUm > 0) {
             Calibration cal = new Calibration();
             if (pixSizeUm < 10) {
                cal.setUnit("um");
                cal.pixelWidth = pixSizeUm;
                cal.pixelHeight = pixSizeUm;
-            } else if (pixSizeUm < 1000) {               
+            } else if (pixSizeUm < 1000) {
                cal.setUnit("mm");
                cal.pixelWidth = pixSizeUm / 1000;
                cal.pixelHeight = pixSizeUm / 1000;
             } else {
-                cal.setUnit("cm");
+               cal.setUnit("cm");
                cal.pixelWidth = pixSizeUm / 10000;
                cal.pixelHeight = pixSizeUm / 10000;
             }
             String intMs = "Interval_ms";
-            if (summary.has(intMs))
+            if (summary.has(intMs)) {
                cal.frameInterval = summary.getDouble(intMs) / 1000.0;
+            }
             String zStepUm = "z-step_um";
-            if (summary.has(zStepUm))
+            if (summary.has(zStepUm)) {
                cal.pixelDepth = summary.getDouble(zStepUm);
+            }
             this.getHyperImage().setCalibration(cal);
          }
       } catch (JSONException ex) {
          // no pixelsize defined.  Nothing to do
       }
    }
-   
+
    protected void updateWindowTitleAndStatus() {
       String name = title_ + " ";
       name += acq_.isFinished() ? "(Finished)" : "(Running)";
       this.getHyperImage().getWindow().setTitle(name);
    }
-   
+
    public void windowAndCanvasReady() {
       canvas_ = this.getImagePlus().getCanvas();
       overlayer_ = new DisplayOverlayer(this, acq_, tileWidth_, tileHeight_, zoomableStack_);
@@ -218,7 +235,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
       }
       overlayer_.setStack(newStack);
    }
-   
+
    @Subscribe
    public void onWindowClose(DisplayWindow.RequestToCloseEvent event) {
       //make sure user wants to close if it involves aborting acq
@@ -237,14 +254,14 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
       }
       overlayer_.shutdown();
       activeDisplays_.remove(this);
-      
+      redrawPixelsExecutor_.shutdownNow();
 
       super.onWindowClose(event);
    }
 
    public void setSurfaceDisplaySettings(boolean convexHull, boolean stagePos, boolean surf) {
       overlayer_.setSurfaceDisplayParams(convexHull, stagePos, surf);
-      overlayer_.renderOverlay(true);
+      overlayer_.redrawOverlay();
    }
 
    public int getMode() {
@@ -254,7 +271,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
    public static void redrawRegionOverlay(MultiPosRegion region) {
       for (DisplayPlus display : activeDisplays_) {
          if (display.getCurrentRegion() == region) {
-            display.drawOverlay(true);
+            display.drawOverlay();
          }
       }
    }
@@ -262,7 +279,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
    public static void redrawSurfaceOverlay(SurfaceInterpolator surface) {
       for (DisplayPlus display : activeDisplays_) {
          if (display.getCurrentSurface() == surface) {
-            display.drawOverlay(true);
+            display.drawOverlay();
          }
       }
    }
@@ -270,14 +287,14 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
    public void setCurrentSurface(SurfaceInterpolator surf) {
       currentSurface_ = surf;
       if (surf != null) {
-         drawOverlay(true);
+         drawOverlay();
       }
    }
 
    public void setCurrentRegion(MultiPosRegion region) {
       currentRegion_ = region;
       if (currentRegion_ != null) {
-         drawOverlay(false);
+         drawOverlay();
       }
    }
 
@@ -289,8 +306,8 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
       return currentRegion_;
    }
 
-   public void drawOverlay(boolean interruptSurfcaeRendering) {
-      overlayer_.renderOverlay(interruptSurfcaeRendering);
+   public void drawOverlay() {
+      overlayer_.redrawOverlay();
    }
 
    private void mouseReleasedActions(MouseEvent e) {
@@ -314,7 +331,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
             //convert to real coordinates in 3D space
             //Click point --> full res pixel point --> stage coordinate
             Point2D.Double stagePos = stageCoordFromImageCoords(e.getPoint().x, e.getPoint().y);
-            double z = zoomableStack_.getZCoordinateOfDisplayedSlice(this.getHyperImage().getSlice(), this.getHyperImage().getFrame());
+            double z = zoomableStack_.getZCoordinateOfDisplayedSlice(this.getVisibleSliceIndex(), this.getVisibleFrameIndex());
             if (currentSurface_ == null) {
                ReportingUtils.showError("Can't add point--No surface selected");
             } else {
@@ -347,6 +364,8 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
             Point2D.Double p1 = stageCoordFromImageCoords(dx, dy);
             currentRegion_.translate(p1.x - p0.x, p1.y - p0.y);
             mouseDragStartPointLeft_ = currentPoint;
+         } else if (mode_ == EXPLORE) {
+            overlayer_.redrawOverlay();
          }
       }
    }
@@ -375,54 +394,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
 
    public void setMode(int mode) {
       mode_ = mode;
-      drawOverlay(true);
-   }
-
-   private void redrawPixels(final boolean forcePaint) {
-      redrawPixelsExecutor_.execute(new Runnable() {
-
-         @Override
-         public void run() {
-            //put all this stuff on EDT because stuff that interacts with CompositeImage
-            //should occur a single threaded, orderly fashion
-            SwingUtilities.invokeLater(new Runnable() {
-               @Override
-               public void run() {
-                  //Make sure correct pixels are set...think this is redundant when showing acquired 
-                  //images, but needed for zooming and panning
-                  if (!DisplayPlus.this.getHyperImage().isComposite()) {
-                     //monochrome images
-                     int index = DisplayPlus.this.getHyperImage().getCurrentSlice();
-                     Object pixels = zoomableStack_.getPixels(index);
-                     DisplayPlus.this.getHyperImage().getProcessor().setPixels(pixels);
-                  } else {
-                     CompositeImage ci = (CompositeImage) DisplayPlus.this.getHyperImage();
-                     if (ci.getMode() == CompositeImage.COMPOSITE) {
-                        //in case number of pixels has changed, update channel processors wih this call
-                        ((MMCompositeImage) DisplayPlus.this.getHyperImage()).updateImage();
-                        //now make sure each channel processor has pixels correctly
-                        for (int i = 0; i < ((MMCompositeImage) ci).getNChannelsUnverified(); i++) {
-                           //Dont need to set pixels if processor is null because it will get them from stack automatically  
-                           Object pixels = zoomableStack_.getPixels(ci.getCurrentSlice() - ci.getChannel() + i + 1);
-                           if (ci.getProcessor(i + 1) != null && pixels != null) {
-                              ci.getProcessor(i + 1).setPixels(pixels);
-                           }
-                        }
-                     }
-                     Object pixels = zoomableStack_.getPixels(DisplayPlus.this.getHyperImage().getCurrentSlice());
-                     if (pixels != null) {
-                        ci.getProcessor().setPixels(pixels);
-                     }
-                  }
-                  //always draw overlay when pixels need to be updated, because this call will interrupt itself if need be     
-                  drawOverlay(true);
-
-                  DisplayPlus.this.updateAndDraw(forcePaint);
-               }
-            });
-
-         }
-      });
+      drawOverlay();
    }
 
    public boolean cursorOverImage() {
@@ -465,13 +437,14 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
          public void mouseDragged(MouseEvent e) {
             currentMouseLocation_ = e.getPoint();
             mouseDraggedActions(e);
-            drawOverlay(false);
          }
 
          @Override
          public void mouseMoved(MouseEvent e) {
             currentMouseLocation_ = e.getPoint();
-            drawOverlay(false);
+            if (mode_ == EXPLORE) {
+               drawOverlay();
+            }
          }
       });
 
@@ -483,8 +456,8 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
 
          @Override
          public void mousePressed(MouseEvent e) {
-           //to make zoom respond properly when switching between windows
-           canvas_.requestFocusInWindow();
+            //to make zoom respond properly when switching between windows
+            canvas_.requestFocusInWindow();
             if (SwingUtilities.isRightMouseButton(e)) {
                mouseDragStartPointRight_ = e.getPoint();
             } else if (SwingUtilities.isLeftMouseButton(e)) {
@@ -502,14 +475,18 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
          @Override
          public void mouseEntered(MouseEvent e) {
             cursorOverImage_ = true;
-            drawOverlay(false);
+            if (mode_ == EXPLORE) {
+               drawOverlay();
+            }
          }
 
          @Override
          public void mouseExited(MouseEvent e) {
             currentMouseLocation_ = null;
             cursorOverImage_ = false;
-            drawOverlay(false);
+            if (mode_ == EXPLORE) {
+               drawOverlay();
+            }
          }
       });
    }
@@ -564,28 +541,128 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
 
    @Override
    public void intervalAdded(ListDataEvent e) {
-      if (mode_ == NEWSURFACE) {
-         drawOverlay(true);
-      } else if (mode_ == NEWGRID) {
-         drawOverlay(false);
+      if (mode_ == NEWSURFACE || mode_ == NEWGRID) {
+         drawOverlay();
       }
    }
 
    @Override
    public void intervalRemoved(ListDataEvent e) {
-      if (mode_ == NEWSURFACE) {
-         drawOverlay(true);
-      } else if (mode_ == NEWGRID) {
-         drawOverlay(false);
+      if (mode_ == NEWSURFACE || mode_ == NEWGRID) {
+         drawOverlay();
       }
    }
 
    @Override
    public void contentsChanged(ListDataEvent e) {
-      if (mode_ == NEWSURFACE) {
-         drawOverlay(true);
-      } else if (mode_ == NEWGRID) {
-         drawOverlay(false);
+      if (mode_ == NEWSURFACE || mode_ == NEWGRID) {
+         drawOverlay();
+      }
+   }
+
+   private synchronized void redrawPixels(final boolean forcePaint) {
+      if (previousPixelDrawTask_ != null && !previousPixelDrawTask_.isDone()) {
+         previousPixelDrawTask_.cancel(true);
+      }
+
+      previousPixelDrawTask_ = new RedrawPixelsRunnable(forcePaint);
+      redrawPixelsExecutor_.submit((Runnable)previousPixelDrawTask_);
+   }
+
+   private class RedrawPixelsRunnable implements RunnableFuture {
+
+      private volatile boolean cancel_ = false;
+      private final boolean forcePaint_;
+      private volatile boolean done_ = false;
+
+      public RedrawPixelsRunnable(boolean forcePaint) {
+         forcePaint_ = forcePaint;
+      }
+
+      @Override
+      public void run() {
+         if (cancel_) {
+            System.out.println("Canceled before invoke later, returning");
+         }
+         //put all this stuff on EDT because stuff that interacts with CompositeImage
+         //should occur a single threaded, orderly fashion
+         SwingUtilities.invokeLater(new Runnable() {
+
+            @Override
+            public void run() {
+               //Make sure correct pixels are set...think this is redundant when showing acquired 
+               //images, but needed for zooming and panning
+               if (!DisplayPlus.this.getHyperImage().isComposite()) {
+                  //monochrome images
+                  Object pixels = zoomableStack_.getPixels(DisplayPlus.this.getHyperImage().getCurrentSlice());
+                  DisplayPlus.this.getHyperImage().getProcessor().setPixels(pixels);
+               } else {
+                  CompositeImage ci = (CompositeImage) DisplayPlus.this.getHyperImage();
+                  if (ci.getMode() == CompositeImage.COMPOSITE) {
+                     //in case number of pixels has changed, update channel processors wih this call
+                     ((MMCompositeImage) DisplayPlus.this.getHyperImage()).updateImage();
+                     //now make sure each channel processor has pixels correctly
+                     for (int i = 0; i < ((MMCompositeImage) ci).getNChannelsUnverified(); i++) {
+                        //Dont need to set pixels if processor is null because it will get them from stack automatically  
+                        Object pixels = zoomableStack_.getPixels(ci.getCurrentSlice() - ci.getChannel() + i + 1);
+                        if (ci.getProcessor(i + 1) != null && pixels != null) {
+                           ci.getProcessor(i + 1).setPixels(pixels);
+                        }
+                     }
+                  }
+                  if (cancel_) {
+                     System.out.println("canceled");
+                     done_ = true;
+                     return;
+                  }
+                  Object pixels = zoomableStack_.getPixels(DisplayPlus.this.getHyperImage().getCurrentSlice());
+                  if (pixels != null) {
+                     ci.getProcessor().setPixels(pixels);
+                  }
+               }
+               if (cancel_) {
+                  done_ = true;
+                  System.out.println("canceled");
+                  return;
+               }
+               //always draw overlay when pixels need to be updated, because this call will interrupt itself if need be     
+               drawOverlay();
+
+               if (cancel_) {
+                  done_ = true;
+                  System.out.println("canceled");
+                  return;
+               }
+               DisplayPlus.this.updateAndDraw(forcePaint_);
+               done_ = true;
+            }
+         });
+      }
+
+      @Override
+      public boolean cancel(boolean mayInterruptIfRunning) {
+         cancel_ = true;
+         return true;
+      }
+
+      @Override
+      public boolean isCancelled() {
+         throw new UnsupportedOperationException("Not supported yet.");
+      }
+
+      @Override
+      public boolean isDone() {
+         return done_;
+      }
+
+      @Override
+      public Object get() throws InterruptedException, ExecutionException {
+         throw new UnsupportedOperationException("Not supported yet.");
+      }
+
+      @Override
+      public Object get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+         throw new UnsupportedOperationException("Not supported yet.");
       }
    }
 }

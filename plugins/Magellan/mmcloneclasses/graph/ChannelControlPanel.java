@@ -34,6 +34,7 @@ import acq.MMImageCache;
 import mmcloneclasses.graph.HistogramPanel.CursorListener;
 import imagedisplay.MMCompositeImage;
 import imagedisplay.ContrastMetadataCommentsPanel;
+import imagedisplay.DisplayPlus;
 import imagedisplay.VirtualAcquisitionDisplay;
 import mmcorej.CMMCore;
 import org.json.JSONArray;
@@ -652,7 +653,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
       } else {
          MMCompositeImage ci = (MMCompositeImage) img_;
-         int flatIndex = 1 + channelIndex_ + (img_.getSlice() - 1) * ci.getNChannelsUnverified()
+         int flatIndex = 1 + channelIndex_ + (((DisplayPlus)display_).getVisibleSliceIndex()) * ci.getNChannelsUnverified()
                  + (img_.getFrame() - 1) * ci.getNSlicesUnverified() * ci.getNChannelsUnverified();
          ip = img_.getStack().getProcessor(flatIndex);
 

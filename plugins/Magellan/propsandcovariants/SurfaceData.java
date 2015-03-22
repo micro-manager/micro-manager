@@ -13,7 +13,10 @@ import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.micromanager.utils.ReportingUtils;
+import surfacesandregions.SingleResolutionInterpolation;
 import surfacesandregions.SurfaceInterpolator;
 
 /**
@@ -160,7 +163,13 @@ public class SurfaceData implements Covariant {
             Point2D.Double stageCoords = new Point2D.Double();
             transform.transform(new Point2D.Double(x, y), stageCoords);
             //test point for inclusion of position
-            Float interpVal = surface_.getCurrentInterpolation().getInterpolatedValue(stageCoords.x, stageCoords.y, true);
+            Float interpVal = null;
+            try {
+               interpVal = surface_.getCurrentInterpolation().getInterpolatedValue(stageCoords.x, stageCoords.y, true);
+            } catch (InterruptedException ex) {
+               //aborted acquisition
+               return 0;
+            }
             if (interpVal == null) {
               IJ.log("Null surface interpolation value!");
             }
@@ -173,10 +182,17 @@ public class SurfaceData implements Covariant {
 
    @Override
    public CovariantValue getCurrentValue(AcquisitionEvent event) {
-      XYStagePosition xyPos = surface_.getXYPositions().get(event.positionIndex_);
+      XYStagePosition xyPos = event.xyPosition_;
       if (category_.equals(DISTANCE_BELOW_SURFACE_CENTER)) {
          Point2D.Double center = xyPos.getCenter();
-         return new CovariantValue(event.zPosition_ - surface_.getCurrentInterpolation().getInterpolatedValue(center.x, center.y, true));
+         SingleResolutionInterpolation interp;
+         try {
+               interp = surface_.getCurrentInterpolation();
+            } catch (InterruptedException ex) {
+               //must be an aborted acquisition
+               return null;
+            }
+         return new CovariantValue(event.zPosition_ - interp.getInterpolatedValue(center.x, center.y, true));
       } else if (category_.equals(DISTANCE_BELOW_SURFACE_MINIMUM)) {
          return new CovariantValue(distanceToSurface(xyPos.getFullTileCorners(), event.zPosition_, true));
       } else if (category_.equals(DISTANCE_BELOW_SURFACE_MAXIMUM)) {

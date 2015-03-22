@@ -10,8 +10,6 @@ import gui.SettingsDialog;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.micromanager.MMStudio;
 import org.micromanager.utils.ReportingUtils;
 
@@ -21,8 +19,8 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class MultiPosRegion implements XYFootprint{
 
-   private Point2D.Double center_; //stored in stage space
-   private int overlapX_, overlapY_, rows_, cols_;
+   private volatile Point2D.Double center_; //stored in stage space
+   private volatile int overlapX_, overlapY_, rows_, cols_;
    private RegionManager manager_;
    private String name_;
    private String pixelSizeConfig_;
@@ -76,6 +74,7 @@ public class MultiPosRegion implements XYFootprint{
       manager_.drawRegionOverlay(this);
    }
 
+   @Override
    public ArrayList<XYStagePosition> getXYPositions() {
       try {
          AffineTransform transform = AffineUtils.getAffineTransform(MMStudio.getInstance().getCore().getCurrentPixelSizeConfig(), center_.x, center_.y);

@@ -103,7 +103,7 @@ public abstract class VirtualAcquisitionDisplay implements ImageCacheListener {
    // Tracks when we last sent an FPS update.
    private long lastFPSUpdateTimestamp_ = -1;
    private ImagePlus hyperImage_;
-   private SubImageControls subImageControls_;
+   protected SubImageControls subImageControls_;
    public AcquisitionVirtualStack virtualStack_;
    private ContrastMetadataCommentsPanel cmcPanel_;
    private boolean contrastInitialized_ = false; //used for autostretching on window opening
@@ -639,10 +639,6 @@ public abstract class VirtualAcquisitionDisplay implements ImageCacheListener {
       hyperImage_.setPosition(c, i + 1, f);
    }
 
-   public int getSliceIndex() {
-      return hyperImage_.getSlice() - 1;
-   }
-
    /**
     * used by checkboxes on contrast panel when in color mode
     * @param c 
@@ -873,35 +869,6 @@ public abstract class VirtualAcquisitionDisplay implements ImageCacheListener {
 
    public final JSONObject getSummaryMetadata() {
       return imageCache_.getSummaryMetadata();
-   }
-   
-   /**
-    * Closes the ImageWindow and associated ImagePlus
-    * 
-    * @return false if canceled by user, true otherwise 
-    */
-   public boolean close() {
-      try {
-         if (hyperImage_ != null) {
-            if (hyperImage_.getWindow() != null && 
-                  !hyperImage_.getWindow().close()) {
-               return false;
-            }
-            hyperImage_.close();
-         }
-      } catch (NullPointerException npe) {
-         // instead of handing when exiting MM, log the issue
-         ReportingUtils.logError(npe);
-      }
-      return true;
-   }
-
-   public synchronized boolean windowClosed() {
-      if (hyperImage_ != null) {
-         ImageWindow win = hyperImage_.getWindow();
-         return (win == null || win.isClosed());
-      }
-      return true;
    }
 
    public void showFolder() {

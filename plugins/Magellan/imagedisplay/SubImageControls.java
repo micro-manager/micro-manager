@@ -43,6 +43,8 @@ public class SubImageControls extends Panel {
    private Acquisition acq_;
    private double zStep_, zOrigin_;
    private int displayHeight_ = -1;
+   //thread safe fields for currently displaye dimage
+   private volatile int sliceIndex_ = 0, frameIndex_ = 0, channelIndex_ = 0;
 
    public SubImageControls(DisplayPlus disp, EventBus bus, Acquisition acq) {
       super(new FlowLayout(FlowLayout.LEADING));
@@ -292,10 +294,28 @@ public class SubImageControls extends Panel {
          ReportingUtils.showError("Unexpected exception when trying to set image position");
       }
       
-      display_.getHyperImage().setPosition(channel, slice, frame);
-      display_.drawOverlay(true);
+      synchronized (this) {
+         channelIndex_ = channel - 1;
+         frameIndex_ = frame - 1;
+         sliceIndex_ = slice - 1;
+         display_.getHyperImage().setPosition(channel, slice, frame);
+      }
+      
+      display_.drawOverlay();
+   }
+   
+   public int getDisplayedSlice() {
+      return sliceIndex_;
    }
 
+   public int getDisplayedChannel() {
+      return channelIndex_;
+   }
+   
+   public int getDisplayedFrame() {
+      return frameIndex_;
+   }
+   
    @Subscribe
    public void onLayoutChange(ScrollerPanel.LayoutChangedEvent event) {
       this.setPreferredSize(new Dimension(this.getPreferredSize().width,

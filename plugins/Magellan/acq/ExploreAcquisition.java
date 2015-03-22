@@ -6,12 +6,8 @@ package acq;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import mmcorej.CMMCore;
-import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.micromanager.MMStudio;
@@ -25,18 +21,16 @@ import org.micromanager.utils.ReportingUtils;
 public class ExploreAcquisition extends Acquisition {
 
    private volatile double zTop_, zBottom_;
-   private final double zOrigin_;
-   private int lowestSliceIndex_ = 0, highestSliceIndex_ = 0;
+   private volatile int lowestSliceIndex_ = 0, highestSliceIndex_ = 0;
    private ExecutorService eventAdderExecutor_ = Executors.newSingleThreadExecutor();
    private CustomAcqEngine eng_;
 
-   public ExploreAcquisition(ExploreAcqSettings settings, CustomAcqEngine eng) {
+   public ExploreAcquisition(ExploreAcqSettings settings, CustomAcqEngine eng) throws Exception {
       super(settings.zStep_);
       try {
          //start at current z position
          zTop_ = core_.getPosition(zStage_);
          zBottom_ = core_.getPosition(zStage_);
-         zOrigin_ = core_.getPosition(zStage_);
          eng_ = eng;
          initialize(settings.dir_, settings.name_);
       } catch (Exception ex) {
@@ -116,16 +110,7 @@ public class ExploreAcquisition extends Acquisition {
             }
 
             //create set of hardware instructions for an acquisition event
-            for (int i = 0; i < posIndices.length; i++) {
-               //get x and y coordinates of current position
-               double x = 0, y = 0;
-               try {
-                  x = getPositionManager().getXCoordinate(posIndices[i]);
-                  y = getPositionManager().getYCoordinate(posIndices[i]);
-               } catch (JSONException e) {
-                  ReportingUtils.showError("JSONException: Couldn't get correct coordinates");
-                  return;
-               }
+            for (int i = 0; i < posIndices.length; i++) {       
                //update lowest slice for the benefit of the zScrollbar in the viewer
                updateLowestAndHighestSlices();
                //Add events for each channel, slice            
@@ -135,7 +120,8 @@ public class ExploreAcquisition extends Acquisition {
                      if (Thread.interrupted()){
                         throw new InterruptedException();
                      }
-                     events_.put(new AcquisitionEvent(ExploreAcquisition.this, 0, 0, sliceIndex, posIndices[i], getZCoordinate(sliceIndex), x, y, null));
+                     events_.put(new AcquisitionEvent(ExploreAcquisition.this, 0, 0, sliceIndex, posIndices[i], getZCoordinate(sliceIndex), 
+                             posManager_.getXYPosition(posIndices[i]), null));
                   } catch (InterruptedException ex) {
                      //aborted acqusition
                      return;
@@ -147,15 +133,15 @@ public class ExploreAcquisition extends Acquisition {
    }
 
    @Override
-   public double getZCoordinateOfSlice(int displaySliceIndex, int displayFrameIndex) {
+   public double getZCoordinateOfSlice(int sliceIndex, int frameIndex) {
       //No frames in explorer acquisition
-      int sliceIndex = (displaySliceIndex - 1 + lowestSliceIndex_);
+      sliceIndex += lowestSliceIndex_;
       return zOrigin_ + zStep_ * sliceIndex;
    }
 
    @Override
-   public int getDisplaySliceIndexFromZCoordinate(double z, int displayFrameIndex) {
-      return (int) Math.round((z - zOrigin_) / zStep_) - lowestSliceIndex_ + 1;
+   public int getSliceIndexFromZCoordinate(double z, int frameIndex) {
+      return (int) Math.round((z - zOrigin_) / zStep_) - lowestSliceIndex_;
    }
 
    /**

@@ -10,12 +10,9 @@ import ij.gui.StackWindow;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.Comparator;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import javax.swing.*;
 import mmcloneclasses.graph.ContrastPanel;
-import net.miginfocom.swing.MigLayout;
 import org.micromanager.MMStudio;
 import org.micromanager.utils.CanvasPaintPending;
 import org.micromanager.utils.ReportingUtils;
@@ -443,7 +440,7 @@ public class DisplayWindow extends StackWindow {
          return true;
       }
    }
-
+   
    public void paint(Graphics g) {
       drawInfo(g);
    }

@@ -4,7 +4,7 @@
  */
 package acq;
 
-import java.awt.geom.Point2D;
+import coordinates.XYStagePosition;
 import java.util.List;
 import propsandcovariants.CovariantPairing;
 
@@ -17,27 +17,27 @@ public class AcquisitionEvent  {
    
    final public Acquisition acquisition_;
    final public int timeIndex_, sliceIndex_, channelIndex_, positionIndex_;
-   final public double zPosition_, xPosition_, yPosition_;
+   final public double zPosition_;
+   final public XYStagePosition xyPosition_;
    private SpecialFlag specialFlag_;
    final public List<CovariantPairing> covariants_;
    public String autofocusZName_;
    public double autofocusPosition_;
    
    public AcquisitionEvent(Acquisition acq, int frameIndex, int channelIndex, int sliceIndex, int positionIndex, 
-           double zPos, double xPos, double yPos, List<CovariantPairing> covariants) {
+           double zPos, XYStagePosition xyPos, List<CovariantPairing> covariants) {
       timeIndex_ = frameIndex;
       sliceIndex_ = sliceIndex;
       channelIndex_ = channelIndex;
       positionIndex_ = positionIndex;    
       zPosition_ = zPos;
-      xPosition_ = xPos;
-      yPosition_ = yPos;
       acquisition_ = acq;
+      xyPosition_ = xyPos;
       covariants_ = covariants;
    }
    
    public static AcquisitionEvent createAutofocusEvent(String zName, double pos ) {   
-      AcquisitionEvent evt = new AcquisitionEvent(null, 0, 0, 0, 0, 0, 0, 0, null);
+      AcquisitionEvent evt = new AcquisitionEvent(null, 0, 0, 0, 0, 0, null, null);
       evt.autofocusZName_ = zName;
       evt.autofocusPosition_ = pos;
       evt.specialFlag_ = SpecialFlag.AutofocusAdjustment;
@@ -49,7 +49,7 @@ public class AcquisitionEvent  {
    }
    
    public static AcquisitionEvent createEngineTaskFinishedEvent() {
-      AcquisitionEvent evt = new AcquisitionEvent(null, 0, 0, 0, 0, 0, 0, 0, null);
+      AcquisitionEvent evt = new AcquisitionEvent(null, 0, 0, 0, 0, 0, null, null);
       evt.specialFlag_ = SpecialFlag.EngineTaskFinished;
       return evt;
    }
@@ -59,7 +59,7 @@ public class AcquisitionEvent  {
    }
    
    public static AcquisitionEvent createTimepointFinishedEvent(Acquisition acq) {
-      AcquisitionEvent evt = new AcquisitionEvent(acq, 0, 0, 0, 0, 0, 0, 0, null);
+      AcquisitionEvent evt = new AcquisitionEvent(acq, 0, 0, 0, 0, 0, null, null);
       evt.specialFlag_ = SpecialFlag.TimepointFinished;
       return evt;
    }
@@ -69,7 +69,7 @@ public class AcquisitionEvent  {
    }
    
    public static AcquisitionEvent createReQuerieEventQueueEvent() {
-      AcquisitionEvent evt = new AcquisitionEvent(null, 0, 0, 0, 0, 0, 0, 0, null);
+      AcquisitionEvent evt = new AcquisitionEvent(null, 0, 0, 0, 0, 0, null, null);
       evt.specialFlag_ = SpecialFlag.SwappingQueues;
       return evt;
    }
@@ -79,7 +79,7 @@ public class AcquisitionEvent  {
    }
    
    public static AcquisitionEvent createAcquisitionFinishedEvent(Acquisition acq) {
-      AcquisitionEvent evt = new AcquisitionEvent(acq, 0, 0, 0, 0, 0, 0, 0, null);
+      AcquisitionEvent evt = new AcquisitionEvent(acq, 0, 0, 0, 0, 0, null, null);
       evt.specialFlag_ = SpecialFlag.AcqusitionFinished;
       return evt;
    }

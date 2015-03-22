@@ -6,6 +6,7 @@ package surfacesandregions;
 
 import coordinates.XYStagePosition;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -13,7 +14,10 @@ import java.util.ArrayList;
  */
 public interface XYFootprint {
    
-      public ArrayList<XYStagePosition> getXYPositions();
+   /**
+    * @return read only list of XY positions
+    */
+    public List<XYStagePosition> getXYPositions() throws InterruptedException;
 
    
 }
