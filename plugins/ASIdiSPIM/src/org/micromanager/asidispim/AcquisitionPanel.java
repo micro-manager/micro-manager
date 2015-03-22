@@ -1044,15 +1044,19 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * @return duration in ms
     */
    private double computeActualVolumeDuration() {
+      double stackDuration = getNumSlices() * computeActualSlicePeriod();
       switch (getAcquisitionMode()) {
       case STAGE_SCAN:
       case STAGE_SCAN_INTERLEAVED:
-         // TODO compute this
-         return 0;
+         // 20 ms acceleration time, and we go twice the acceleration distance
+         // which ends up being acceleration time plus half again
+         // TODO make this computation more general
+         double rampDuration = 20 * 1.5;
+         return getNumSides() * getNumChannels() * 
+               (rampDuration*2 + stackDuration);
       default: // piezo scan
          return getNumSides() * getNumChannels() * 
-         (PanelUtils.getSpinnerFloatValue(delaySide_) +
-               getNumSlices() * computeActualSlicePeriod());
+         (PanelUtils.getSpinnerFloatValue(delaySide_) + stackDuration);
       }
    }
    
@@ -1396,19 +1400,21 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          //    slow axis start = current Y position
          //    slow axis stop = current Y position
          //    X motor speed = slice step size * sqrt(2) / slice duration
-         //    scan overshoot factor = 2 (may need optimization, depend on X speed)
-         //    number of scans = 2
+         //    number of scans = number of sides (1 or 2)
          //    scan mode = serpentine
          //    X acceleration time = 20 ms (may need optimization, depend on X speed)
+         //    scan overshoot factor = 1 (may need optimization, depend on X speed)
+         //    note that "ramp length" is actually twice the distance covered during acceleration
+         //      so it takes 1.5*acceleration time to cover the ramp length
          final Devices.Keys xyDevice = Devices.Keys.XYSTAGE;
          double sliceDuration = computeActualSlicePeriod();
          
-         double requestedMotorSpeed = getStepSizeUm() / 1000d / sliceDuration;
+         double requestedMotorSpeed = getStepSizeUm() * Math.sqrt(2.) / sliceDuration;
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED, (float)requestedMotorSpeed);
          // get the actual speed and calculate the actual step size
          // TODO maybe want to not actually update spinner but still take it into account in metadata?
          double actualMotorSpeed = props_.getPropValueFloat(xyDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED);
-         stepSize_.setValue(actualMotorSpeed * 1000d * sliceDuration);
+         stepSize_.setValue(actualMotorSpeed / Math.sqrt(2.) * sliceDuration);
          
          double scanDistance = getNumSlices() * getStepSizeUm() * Math.sqrt(2.);  // updated stepSize_
          Point2D.Double posUm;
@@ -1422,15 +1428,15 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                (float)(posUm.x / 1000d));
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_FAST_STOP,
                (float)((posUm.x + scanDistance) / 1000d));
-         props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_FAST_STOP,
+         props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_SLOW_START,
                (float)(posUm.y / 1000d));
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_SLOW_STOP,
                (float)(posUm.y / 1000d));
-         props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_NUMLINES, 2);
+         props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_NUMLINES, getNumSides());
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_PATTERN,
                Properties.Values.SERPENTINE);
-         props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_OVERSHOOT_FACTOR, 2.0f);
-
+         props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_OVERSHOOT_FACTOR, 1.0f);
+         props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_MOTOR_ACCEL, 20);
       }
       
       return true;
@@ -2200,7 +2206,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                // if we are using demo camera then add some extra time to let controller finish
                // since it returned images without waiting for controller to start sending triggers
                if (usingDemoCam) {
-                  Thread.sleep(150);
+                  Thread.sleep(1000);
                }
                
                if (core_.isSequenceRunning(firstCamera)) {
