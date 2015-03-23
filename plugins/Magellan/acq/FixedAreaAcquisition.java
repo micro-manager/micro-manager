@@ -104,7 +104,13 @@ public class FixedAreaAcquisition extends Acquisition {
    private void createAutofocus() {
       if (settings_.autofocusEnabled_) {
          //convert channel name to channel index
-         int cIndex = 0;
+         int cIndex = getAutofocusChannelIndex();     
+         autofocus_ = new CrossCorrelationAutofocus(this,cIndex, settings_.autofocusMaxDisplacemnet_um_, settings_.autoFocusZDevice_);
+      }
+   }
+
+   public int getAutofocusChannelIndex() {
+       int cIndex = 0;
          if (settings_.channels_.size() == 0) {
             if (MMStudio.getInstance().getCore().getNumberOfCameraChannels() == 1) {
                cIndex = 0;
@@ -119,17 +125,15 @@ public class FixedAreaAcquisition extends Acquisition {
                   }
                   if (i == MMStudio.getInstance().getCore().getNumberOfCameraChannels() -1) {
                      ReportingUtils.showError("Couldn't find channel: " + settings_.autofocusChannelName_ + ", Aborting autofocus");
-                     return;
                   }
                }
             }
          } else {
-            //TODO, convert channel name to index
-         }        
-         autofocus_ = new CrossCorrelationAutofocus(this,cIndex, settings_.autofocusMaxDisplacemnet_um_, settings_.autoFocusZDevice_);
-      }
+             //TODO:
+         }   
+            return cIndex;
    }
-
+   
    public int getMaxSliceIndex() {
       return maxSliceIndex_;
    }
@@ -377,7 +381,7 @@ public class FixedAreaAcquisition extends Acquisition {
     */
    private boolean isZAboveImagingVolume(XYStagePosition position, double zPos) throws InterruptedException {
       if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
-         return settings_.fixedSurface_.isPositionCompletelyAboveSurface(position, settings_.fixedSurface_, zPos);
+         return settings_.fixedSurface_.isPositionCompletelyAboveSurface(position, settings_.fixedSurface_, zPos + settings_.distanceAboveSurface_);
       } else if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK) {
          return settings_.topSurface_.isPositionCompletelyAboveSurface(position, settings_.topSurface_,zPos);
       } else if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.SIMPLE_Z_STACK) {
@@ -390,7 +394,7 @@ public class FixedAreaAcquisition extends Acquisition {
 
    private boolean isZBelowImagingVolume(XYStagePosition position, double zPos) throws InterruptedException {
       if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
-         return settings_.fixedSurface_.isPositionCompletelyBelowSurface(position,settings_.fixedSurface_, zPos);
+         return settings_.fixedSurface_.isPositionCompletelyBelowSurface(position,settings_.fixedSurface_, zPos - settings_.distanceBelowSurface_);
       } else if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK) {
          return settings_.bottomSurface_.isPositionCompletelyBelowSurface(position,settings_.bottomSurface_, zPos);
       } else if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.SIMPLE_Z_STACK) {
@@ -400,16 +404,14 @@ public class FixedAreaAcquisition extends Acquisition {
          throw new RuntimeException(); //TODO: something better
       }
    }
-
+   //TODO: check sign of Z
    private double getZTopCoordinate() {
       if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
          Point3d[] interpPoints = settings_.fixedSurface_.getPoints();
-         return interpPoints[0].z - settings_.fixedSurface_.getZPadding();
+         return interpPoints[0].z - settings_.fixedSurface_.getZPadding() - settings_.distanceAboveSurface_;
       } else if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK) {
-         //TODO
-         return 0;
-//         Point3d[] interpPoints = settings_.getPoints();
-//         return interpPoints[0].z - settings_.surface_.getZPadding();
+         Point3d[] interpPoints = settings_.topSurface_.getPoints();
+         return interpPoints[0].z - settings_.topSurface_.getZPadding();
       } else if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.SIMPLE_Z_STACK) {
          return settings_.zStart_;
       } else {

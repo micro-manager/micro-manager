@@ -21,14 +21,14 @@ import org.micromanager.utils.ReportingUtils;
 public class SingleResolutionInterpolation {
    
    private final int pixPerInterpPoint_;
-   private final Float[][] interpolation_;
+   private final Double[][] interpolation_;
    private final double boundXMin_, boundXMax_, boundYMin_, boundYMax_;
    private Region<Euclidean2D> convexHullRegion_;
    //for extrapolation
    private TreeSet<Vector2D> convexHullVertices_;
    private Point3d[] allPoints_;
    
-   public SingleResolutionInterpolation(int pixPerPoint, Float[][] interp, double boundXMin, double boundXMax, double boundYMin, double boundYMax, 
+   public SingleResolutionInterpolation(int pixPerPoint, Double[][] interp, double boundXMin, double boundXMax, double boundYMin, double boundYMax, 
            Region<Euclidean2D> ch, Vector2D[] convexHullVertices, Point3d[] allPoints ) {
       pixPerInterpPoint_ = pixPerPoint;
       interpolation_ = interp;      
@@ -64,7 +64,7 @@ public class SingleResolutionInterpolation {
     * @param y
     * @return null if not inside
     */
-   public Float getInterpolatedValue(double x, double y, boolean extrapolate) {
+   public Double getInterpolatedValue(double x, double y, boolean extrapolate) {
       try {
          if (!isInsideConvexHull(x, y) && !extrapolate) {
             return null; //if not extrapolating, everything outside convex hull is null
@@ -93,7 +93,7 @@ public class SingleResolutionInterpolation {
          //find 3d point with same xy as convex hull vertex and use its z coordinate
          for (Point3d p : allPoints_) {
             if (closest.equals(new Vector2D(p.x, p.y))) {
-               return (float) p.z;
+               return (double) p.z;
             }
          }
          //if I ever get this error, either the two lists are out of sync or creating vecotrs causes some loss of precision

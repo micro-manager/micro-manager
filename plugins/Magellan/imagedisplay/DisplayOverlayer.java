@@ -390,7 +390,7 @@ public class DisplayOverlayer {
                throw new InterruptedException();
             }
             Point2D.Double stageCoord = display_.stageCoordFromImageCoords((int) ((x + 0.5) * roiWidth), (int) ((y + 0.5) * roiHeight));
-            Float interpZ = interp.getInterpolatedValue(stageCoord.x, stageCoord.y, false);
+            Double interpZ = interp.getInterpolatedValue(stageCoord.x, stageCoord.y, false);
             if (interpZ == null) {
                continue;
             }

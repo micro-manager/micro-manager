@@ -36,6 +36,7 @@ public class DeviceControlTableModel extends AbstractTableModel implements MMLis
       core_ = mmAPI_.getMMCore();
       storedGroupsAndProps_ = PropertyAndGroupUtils.readStoredGroupsAndProperties(prefs);
       prefs_ = prefs;
+      MMStudio.getInstance().removeMMListener(this);
    }
    
    public void updateStoredProps() {

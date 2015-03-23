@@ -37,7 +37,7 @@ import org.micromanager.utils.ReportingUtils;
  */
 public abstract class SurfaceInterpolator implements XYFootprint {
    
-   public static final int MIN_PIXELS_PER_INTERP_POINT = 1;
+   public static final int MIN_PIXELS_PER_INTERP_POINT = 4;
    public static final int NUM_XY_TEST_POINTS = 8;
    
    private String name_;
@@ -71,7 +71,7 @@ public abstract class SurfaceInterpolator implements XYFootprint {
       } catch (Exception ex) {
          ReportingUtils.showError("couldnt get pixel size config");
       }
-      //store points sorted by z coordinate to easily find the top
+      //store points sorted by z coordinate to easily find the top, for generating slice index 0 position
       points_ = new TreeSet<Point3d>(new Comparator<Point3d>() {
          @Override
          public int compare(Point3d p1, Point3d p2) {
@@ -235,13 +235,14 @@ public abstract class SurfaceInterpolator implements XYFootprint {
       Point2D.Double[] corners = getPositionCornersWithPadding(pos, surface.xyPadding_um_);
       //First check position corners before going into a more detailed set of test points
       for (Point2D.Double point : corners) {
-         Float interpVal = surface.getCurrentInterpolation().getInterpolatedValue(point.x, point.y, true);
+         Double interpVal = surface.getCurrentInterpolation().getInterpolatedValue(point.x, point.y, true);
          if (interpVal == null) {
             continue;
          }
+         
          if (above) { //test if point lies bleow surface + padding
-            if (zPos >= interpVal - surface.zPadding_um_ ) {   //TODO: account for different signs of Z
-               return false;
+            if (zPos >=  interpVal - surface.zPadding_um_ ) {   //TODO: account for different signs of Z
+                return false;
             }
          } else {
             //test if point lies below surface + padding
@@ -275,7 +276,7 @@ public abstract class SurfaceInterpolator implements XYFootprint {
             Point2D.Double stageCoords = new Point2D.Double();
             transform.transform(new Point2D.Double(x, y), stageCoords);
             //test point for inclusion of position
-            Float interpVal = surface.getCurrentInterpolation().getInterpolatedValue(stageCoords.x, stageCoords.y, true);
+            Double interpVal = surface.getCurrentInterpolation().getInterpolatedValue(stageCoords.x, stageCoords.y, true);
             if (interpVal == null) {
                continue;
             }
@@ -562,7 +563,8 @@ public abstract class SurfaceInterpolator implements XYFootprint {
                   for (Point3d p : points) {
                      xyPoints.add(new Vector2D(p.x, p.y));
                   }
-                  ConvexHull2D hull = mChain_.generate(xyPoints);
+                  ConvexHull2D hull = null;
+                   hull = mChain_.generate(xyPoints);
                   if (Thread.interrupted()) {
                      throw new InterruptedException();
                   }

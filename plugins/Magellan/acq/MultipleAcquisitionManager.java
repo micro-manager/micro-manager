@@ -23,7 +23,7 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class MultipleAcquisitionManager {
    
-   private ArrayList<FixedAreaAcquisitionSettings> acquisitions_ = new ArrayList<FixedAreaAcquisitionSettings>();
+   private ArrayList<FixedAreaAcquisitionSettings> acqSettingsList_ = new ArrayList<FixedAreaAcquisitionSettings>();
    private ArrayList<Integer> numberInGroup_ = new ArrayList<Integer>();
    private String[] acqStatus_;
    private GUI gui_;
@@ -35,22 +35,22 @@ public class MultipleAcquisitionManager {
    
    public MultipleAcquisitionManager(GUI gui, CustomAcqEngine eng ) {
       gui_ = gui;
-      acquisitions_.add(new FixedAreaAcquisitionSettings());
+      acqSettingsList_.add(new FixedAreaAcquisitionSettings());
       eng_ = eng;
       eng_.setMultiAcqManager(this);
       numberInGroup_.add(1);
    }
       
    public FixedAreaAcquisitionSettings getAcquisition(int index) {
-      return acquisitions_.get(index);
+      return acqSettingsList_.get(index);
    }
    
    public int getSize() {
-      return acquisitions_.size();
+      return acqSettingsList_.size();
    }
    
    public String getAcquisitionName(int index) {
-      return acquisitions_.get(index).name_;
+      return acqSettingsList_.get(index).name_;
    }
    
    /**
@@ -62,7 +62,7 @@ public class MultipleAcquisitionManager {
          return 0;
       } else if (getIndexInGroup(index) != 0) {
          //if its within group, move up within group      
-         acquisitions_.add(index - 1, acquisitions_.remove(index));
+         acqSettingsList_.add(index - 1, acqSettingsList_.remove(index));
          return -1;
       } else {
          //move this group above entire group above
@@ -73,7 +73,7 @@ public class MultipleAcquisitionManager {
          //remove in reverse order and readd to new position
          int groupSize = getGroupSize(index);
          for (int i = 0; i < groupSize; i++) {
-            acquisitions_.add(insertIndex, acquisitions_.remove(extractIndex));
+            acqSettingsList_.add(insertIndex, acqSettingsList_.remove(extractIndex));
          }
          //swap num in group with one above
          numberInGroup_.add(groupIndex - 1, numberInGroup_.remove(groupIndex));
@@ -82,12 +82,12 @@ public class MultipleAcquisitionManager {
    }
    
    public int moveDown(int index) {
-      if (index == acquisitions_.size() - 1) {
+      if (index == acqSettingsList_.size() - 1) {
          //nothing to do
          return 0;
       } else if (getIndexInGroup(index) != getGroupSize(index) - 1) {
          //if its within group, move down within group      
-         acquisitions_.add(index + 1, acquisitions_.remove(index));
+         acqSettingsList_.add(index + 1, acqSettingsList_.remove(index));
          return 1;
       } else {
          //move group below above this group   
@@ -97,7 +97,7 @@ public class MultipleAcquisitionManager {
          //remove in reverse order and readd to new position
          int groupSize = numberInGroup_.get(getGroupIndex(index) + 1);
          for (int i = 0; i < groupSize; i++) {
-            acquisitions_.add(insertIndex, acquisitions_.remove(extractIndex));
+            acqSettingsList_.add(insertIndex, acqSettingsList_.remove(extractIndex));
          }     
          //swap num in group below with this one 
          numberInGroup_.add(groupIndex, numberInGroup_.remove(groupIndex + 1));
@@ -106,14 +106,14 @@ public class MultipleAcquisitionManager {
    }
    
    public void addNew() {
-      acquisitions_.add(new FixedAreaAcquisitionSettings());
+      acqSettingsList_.add(new FixedAreaAcquisitionSettings());
             numberInGroup_.add(1);
    }
    
    public void remove(int index) {
       //must always have at least one acquisition
-      if (index != -1 && acquisitions_.size() > 1) {
-         acquisitions_.remove(index);
+      if (index != -1 && acqSettingsList_.size() > 1) {
+         acqSettingsList_.remove(index);
          int groupIndex = getGroupIndex(index);
          if (numberInGroup_.get(groupIndex) == 1) {
             numberInGroup_.remove(groupIndex);
@@ -151,7 +151,7 @@ public class MultipleAcquisitionManager {
    }
    
    public int getFirstIndexOfGroup(int groupIndex) {
-      for (int i = 0; i < acquisitions_.size(); i++) {
+      for (int i = 0; i < acqSettingsList_.size(); i++) {
          if (getGroupIndex(i) == groupIndex) {
             return i;
          }
@@ -165,7 +165,7 @@ public class MultipleAcquisitionManager {
    
    public void addToParallelGrouping(int index) {
       //make sure there is one below 
-      if (index != acquisitions_.size() - 1) {
+      if (index != acqSettingsList_.size() - 1) {
          //if one below is in same group, try again with one below that
          if (getGroupIndex(index) == getGroupIndex(index+1)) {
             addToParallelGrouping(index + 1);
@@ -189,12 +189,12 @@ public class MultipleAcquisitionManager {
             //move down
             numberInGroup_.add(groupIndex, numberInGroup_.remove(groupIndex) - 1);
             numberInGroup_.add(groupIndex+1,1);
-            acquisitions_.add(getFirstIndexOfGroup(groupIndex+1), acquisitions_.remove(index));
+            acqSettingsList_.add(getFirstIndexOfGroup(groupIndex+1), acqSettingsList_.remove(index));
          } else {
             //move up
             numberInGroup_.add(groupIndex, numberInGroup_.remove(groupIndex) - 1);
             numberInGroup_.add(groupIndex,1);
-            acquisitions_.add(getFirstIndexOfGroup(groupIndex), acquisitions_.remove(index));
+            acqSettingsList_.add(getFirstIndexOfGroup(groupIndex), acqSettingsList_.remove(index));
          }
       } 
    }
@@ -223,7 +223,7 @@ public class MultipleAcquisitionManager {
          currentAcqs_.abort();
       }      
       //abort blocks until all the acquisition stuff is closed, so can reset GUI here
-         
+         multipleAcquisitionsFinsihed();
    }
 
    public void runAllAcquisitions() {
@@ -231,18 +231,18 @@ public class MultipleAcquisitionManager {
          @Override
          public void run() {
             FixedAreaAcquisition firstAcq = null;
-            double secretAFDriveInitialPos = 0;
+            double secretAFDrivePos = 0;
             boolean secretAutofocus = SettingsDialog.getAutofocusBetweenSerialAcqusitions();
             if (secretAutofocus) {
                IJ.log("Secret autofocus between acquisitions activated!");
-               if (!acquisitions_.get(0).autofocusEnabled_) {
+               if (!acqSettingsList_.get(0).autofocusEnabled_) {
                   ReportingUtils.showError("Must enable autofocus on first acquisition for secret autofocus");
                }
             }
             
             gui_.enableMultiAcquisitionControls(false); //disallow changes while running
             running_ = true;
-            acqStatus_ = new String[acquisitions_.size()];
+            acqStatus_ = new String[acqSettingsList_.size()];
             Arrays.fill(acqStatus_, "Waiting");
             gui_.repaint();
             //run acquisitions
@@ -256,31 +256,33 @@ public class MultipleAcquisitionManager {
                   gui_.repaint();
                }
                ////////////////////////////////////SECRET AUTOFOCUS///////////////////////////////////////////////////////////////////
-               if (secretAutofocus && groupIndex > 0) {
-                  if (groupIndex == 1) {
-                     try {
-                        //get the initial position
-                        secretAFDriveInitialPos = MMStudio.getInstance().getCore().getPosition(firstAcq.getSettings().autoFocusZDevice_);
-                     } catch (Exception ex) {
-                        ReportingUtils.showError("Couldn't get initial position of AF drive for secret AF");
-                     }
-                  }
-                  //run the first acquistion again
-                  currentAcqs_ = eng_.runInterleavedAcquisitions(acquisitions_.subList(0, 1), true);
-                  FixedAreaAcquisition current = currentAcqs_.acqs_.get(0);
-                  try {
-                     acqGroupFinishedBarrier_.await();
-                  } catch (Exception ex) {
-                     //all multiple acquisitions aborted
-                     break;
-                  }
-                  //now can compare current secret acq to first and adjust accordingly
-                  CrossCorrelationAutofocus.runSecretSerialAutofocus(firstAcq, current, secretAFDriveInitialPos);
-               }
+                if (secretAutofocus && groupIndex > 0) {
+                    if (groupIndex == 1) {
+                        try {
+                            //before the first "real" acq, get the intial position
+                            secretAFDrivePos = MMStudio.getInstance().getCore().getPosition(firstAcq.getSettings().autoFocusZDevice_);
+                        } catch (Exception ex) {
+                            ReportingUtils.showError("Couldn't get initial position of AF drive for secret AF");
+                        }
+                    } else {
+                        //before every acqusiition from the second "real" one and on,
+                        //run the autofocus acq and adjust position
+                        currentAcqs_ = eng_.runInterleavedAcquisitions(acqSettingsList_.subList(0, 1), true);
+                        FixedAreaAcquisition current = currentAcqs_.acqs_.get(0);
+                        try {
+                            acqGroupFinishedBarrier_.await();
+                        } catch (Exception ex) {
+                            //all multiple acquisitions aborted
+                            break;
+                        }
+                        //now can compare current secret acq to first and adjust accordingly
+                        secretAFDrivePos = CrossCorrelationAutofocus.runSecretSerialAutofocus(firstAcq, current, secretAFDrivePos);
+                    }
+                }
                ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                //run one or more acquisitions in parallel group 
                try {
-                  currentAcqs_ = eng_.runInterleavedAcquisitions(acquisitions_.subList(
+                  currentAcqs_ = eng_.runInterleavedAcquisitions(acqSettingsList_.subList(
                           getFirstIndexOfGroup(groupIndex), getFirstIndexOfGroup(groupIndex) + getGroupSize(getFirstIndexOfGroup(groupIndex))), true);
                } catch (Exception e) {
                   //abort all if any has an error
@@ -329,7 +331,7 @@ public class MultipleAcquisitionManager {
    
    public void markAsAborted(FixedAreaAcquisitionSettings settings) {
       if (acqStatus_ != null) {
-         acqStatus_[acquisitions_.indexOf(settings)] = "Aborted";
+         acqStatus_[acqSettingsList_.indexOf(settings)] = "Aborted";
          gui_.repaint();
       }
    }

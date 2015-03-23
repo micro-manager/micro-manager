@@ -588,11 +588,11 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
       String theName;
       for (File acqDir : rootDir.listFiles()) {
          theName = acqDir.getName();
-         if (theName.startsWith(prefix)) {
+         if (theName.toUpperCase().startsWith(prefix.toUpperCase())) {
             try {
                //e.g.: "blah_32.ome.tiff"
-               Pattern p = Pattern.compile("\\Q" + prefix + "\\E" + "(\\d+).*+");
-               Matcher m = p.matcher(theName);
+               Pattern p = Pattern.compile("\\Q" + prefix.toUpperCase() + "\\E" + "(\\d+).*+");
+               Matcher m = p.matcher(theName.toUpperCase());
                if (m.matches()) {
                   number = Integer.parseInt(m.group(1));
                   if (number >= maxNumber) {

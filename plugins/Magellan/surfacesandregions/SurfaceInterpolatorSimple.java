@@ -53,7 +53,7 @@ public class SurfaceInterpolatorSimple extends SurfaceInterpolator {
          double dx = (boundXMax_ - boundXMin_) / (numInterpPointsX - 1);
          double dy = (boundYMax_ - boundYMin_) / (numInterpPointsY - 1);
 
-         Float[][] interpVals = new Float[numInterpPointsY][numInterpPointsX];
+         Double[][] interpVals = new Double[numInterpPointsY][numInterpPointsX];
          for (int yInd = 0; yInd < interpVals.length; yInd++) {
             for (int xInd = 0; xInd < interpVals[0].length; xInd++) {
                if (Thread.interrupted()) {
@@ -71,7 +71,7 @@ public class SurfaceInterpolatorSimple extends SurfaceInterpolator {
                   Plane plane = new Plane(v1, v2, v3);
 
                   Vector3D pointInPlane = (Vector3D) plane.intersection(new Line(new Vector3D(xVal, yVal, 0), new Vector3D(xVal, yVal, 1)));
-                  float zVal = (float) pointInPlane.getZ();
+                  double zVal = (double) pointInPlane.getZ();
                   interpVals[yInd][xInd] = zVal;
                } else {
                   interpVals[yInd][xInd] = null;

@@ -35,7 +35,7 @@ public class SettingsDialog extends javax.swing.JDialog {
          String s = MMStudio.getInstance().getSysConfigFile();
          if (s.endsWith("NavDemo.cfg") ||s.endsWith("NavDemo16Bit.cfg") ) {
             SettingsDialog.setDemoMode(true);
-         } else if (s.startsWith("BIDC")) {
+         } else if (s.contains("BIDC")) {
             //secret features!           
          
          } else {

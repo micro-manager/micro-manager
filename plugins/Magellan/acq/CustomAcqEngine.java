@@ -209,10 +209,14 @@ public class CustomAcqEngine {
    }
    
    private void setAutofocusPosition(final String zName, final double pos) throws InterruptedException {
-      //TODO: account for hyteresis by moving away and then back towards
+      
       loopHardwareCommandRetries(new HardwareCommand() {
             @Override
             public void run() throws Exception {
+                //TODO: remove this once hysteresis accounted for in device adapter
+                if (zName.equals("Sutter MPC Z")) {
+                    core_.setPosition(zName, pos - 50);
+                }
                core_.setPosition(zName, pos);       
             }
          }, "Setting autofocus position");

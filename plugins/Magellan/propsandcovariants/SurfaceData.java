@@ -163,14 +163,22 @@ public class SurfaceData implements Covariant {
             Point2D.Double stageCoords = new Point2D.Double();
             transform.transform(new Point2D.Double(x, y), stageCoords);
             //test point for inclusion of position
-            Float interpVal = surface_.getCurrentInterpolation().getInterpolatedValue(stageCoords.x, stageCoords.y, true);
+            Double interpVal = surface_.getCurrentInterpolation().getInterpolatedValue(stageCoords.x, stageCoords.y, false);
             if (interpVal == null) {
-              IJ.log("Null surface interpolation value!");
+              //if position is outside of convex hull, assume min distance is 0
+                if (min) {
+                    return 0;
+                } else  {
+                    //get extrapolated value
+                    interpVal = surface_.getCurrentInterpolation().getInterpolatedValue(stageCoords.x, stageCoords.y, false);
+                    maxDistance = Math.max(zVal - interpVal, maxDistance);
+                }
+            } else {
+                minDistance = Math.min(zVal - interpVal, minDistance);
+                maxDistance = Math.max(zVal - interpVal, maxDistance);
             }
-            minDistance = Math.min(zVal - interpVal, minDistance);
-            maxDistance = Math.max(zVal - interpVal, maxDistance);
-         }
-      }
+           }
+       }
       return min ? minDistance : maxDistance;
    }
 
@@ -180,7 +188,9 @@ public class SurfaceData implements Covariant {
       if (category_.equals(DISTANCE_BELOW_SURFACE_CENTER)) {
          Point2D.Double center = xyPos.getCenter();
          SingleResolutionInterpolation interp = surface_.getCurrentInterpolation();
-         return new CovariantValue(event.zPosition_ - interp.getInterpolatedValue(center.x, center.y, true));
+         Double interpValue = interp.getInterpolatedValue(center.x, center.y, false);
+         //if interpolation is undefined at position center, assume distance below is 0
+         return new CovariantValue(event.zPosition_ - (interpValue == null ? 0 : interpValue) );
       } else if (category_.equals(DISTANCE_BELOW_SURFACE_MINIMUM)) {
          return new CovariantValue(distanceToSurface(xyPos.getFullTileCorners(), event.zPosition_, true));
       } else if (category_.equals(DISTANCE_BELOW_SURFACE_MAXIMUM)) {

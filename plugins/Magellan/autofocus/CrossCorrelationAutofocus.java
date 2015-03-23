@@ -13,6 +13,7 @@ import ij.process.ByteProcessor;
 import ij.process.ImageConverter;
 import ij.process.ShortProcessor;
 import ij3d.image3d.FHTImage3D;
+import java.util.Arrays;
 import org.apache.commons.math.ArgumentOutsideDomainException;
 import org.apache.commons.math.analysis.interpolation.SplineInterpolator;
 import org.apache.commons.math.analysis.polynomials.PolynomialSplineFunction;
@@ -32,7 +33,7 @@ public class CrossCorrelationAutofocus {
    //4e7--92 s
    //1e8--92 s
    //8e8--682 s
-   private static final int NUM_VOXEL_TARGET = 100000000;
+   private static final int NUM_VOXEL_TARGET = 10000000;
    
    
    private final int channelIndex_;
@@ -58,15 +59,16 @@ public class CrossCorrelationAutofocus {
       return currentPosition_;
    }
     
-   public static void runSecretSerialAutofocus(FixedAreaAcquisition refAcq, FixedAreaAcquisition currentAcq, double initalPos) {    
-      ImageStack tp0Stack = createAFStack(refAcq, 0, 0, refAcq.getStorage().getTileWidth(), refAcq.getStorage().getTileHeight(), 0);
-      ImageStack currentTPStack = createAFStack(currentAcq,  0, 0, refAcq.getStorage().getTileWidth(), refAcq.getStorage().getTileHeight(), 0);
+   public static double runSecretSerialAutofocus(FixedAreaAcquisition refAcq, FixedAreaAcquisition currentAcq, double initalPos) {   
+       int channelIndex = refAcq.getAutofocusChannelIndex();
+      ImageStack tp0Stack = createAFStack(refAcq, 0, channelIndex, refAcq.getStorage().getTileWidth(), refAcq.getStorage().getTileHeight(), 0);
+      ImageStack currentTPStack = createAFStack(currentAcq,  0, channelIndex, currentAcq.getStorage().getTileWidth(), currentAcq.getStorage().getTileHeight(), 0);
       //run autofocus
       double drift = calcFocusDrift(tp0Stack, currentTPStack, refAcq.getZStep());
       
       if (Math.abs(drift) > refAcq.getSettings().autofocusMaxDisplacemnet_um_) {
          ReportingUtils.showError("Focus drift exceeds max displacement");
-         return;
+         return initalPos;
       }
       try {
          //move autofocus focus
@@ -74,6 +76,7 @@ public class CrossCorrelationAutofocus {
       } catch (Exception ex) {
          ReportingUtils.showError("Coulndt move secret autofocus drive");
       }
+      return initalPos - drift;
    }
    
    /**
@@ -120,21 +123,38 @@ public class CrossCorrelationAutofocus {
       int numSlices = 2*(acq.getMaxSliceIndex() + 1);
       ImageStack stack = new ImageStack(width, height);
       int frontPadding = (acq.getMaxSliceIndex() + 1) / 2;
-      for (int slice = 0; slice < numSlices; slice++) {
-         if (slice >= frontPadding && slice < frontPadding + acq.getMaxSliceIndex() + 1) {
-            int dataSlice = slice - frontPadding;
-            stack.addSlice(null, acq.getStorage().getImageForDisplay(channelIndex, dataSlice, timeIndex, dsIndex, 0, 0, width, height).pix);
-         } else {
-            //add dummy slices
-            if (MMStudio.getInstance().getCore().getBytesPerPixel() == 1) {
-               stack.addSlice(new ByteProcessor(width, height));
+       //get background pixel value
+       int backgroundVal;
+      if (MMStudio.getInstance().getCore().getBytesPerPixel() == 1) {
+           byte[] pix = (byte[]) acq.getStorage().getImageForDisplay(channelIndex, 0, timeIndex, dsIndex, 0, 0, width, height).pix;
+           Arrays.sort(pix);
+           //assume 10th percentile is background
+           backgroundVal = pix[(int)(0.1*pix.length)];
+       } else {
+           short[] pix = (short[]) acq.getStorage().getImageForDisplay(channelIndex, 0, timeIndex, dsIndex, 0, 0, width, height).pix;
+           Arrays.sort(pix);
+           backgroundVal = pix[(int) (0.1 * pix.length)];
+       }
+        for (int slice = 0; slice < numSlices; slice++) {
+            if (slice >= frontPadding && slice < frontPadding + acq.getMaxSliceIndex() + 1) {
+                int dataSlice = slice - frontPadding;
+                stack.addSlice(null, acq.getStorage().getImageForDisplay(channelIndex, dataSlice, timeIndex, dsIndex, 0, 0, width, height).pix);
             } else {
-               stack.addSlice(new ShortProcessor(width, height));
+                //add dummy slices, which need to have backround pixels with the same 
+                //value as the background of the actual data
+                Object pix;
+                if (MMStudio.getInstance().getCore().getBytesPerPixel() == 1) {
+                    pix = new byte[width * height];
+                    Arrays.fill((byte[]) pix, (byte) backgroundVal);
+                } else {
+                    pix = new short[width * height];
+                    Arrays.fill((short[]) pix, (short) backgroundVal);
+                }
+                stack.addSlice(null, pix);
             }
-         }
-      }
-      return stack;
-   }
+        }
+        return stack;
+    }
 
    /**
     *
@@ -154,7 +174,7 @@ public class CrossCorrelationAutofocus {
       ImageStack xCorrStack = FHTImage3D.crossCorrelation(original.getStack(), current.getStack());
       ImagePlus xCorr = new ImagePlus("XCorr", xCorrStack);      
 //      System.out.println("Time to generate xCorr: " + ((System.currentTimeMillis() - start)/1000) + " s");       
-      
+      xCorr.show();
       //find the maximum cross correlation intensity at each z slice
       double[] ccIntensity = new double[xCorr.getNSlices()], interpolatedCCMax = new double[xCorr.getNSlices()];
       for (int i = 1; i <= ccIntensity.length; i++) {
@@ -180,7 +200,6 @@ public class CrossCorrelationAutofocus {
       double ccMaxSliceIndex = sliceIndexInterpolationPoints[maxIndex];
       //convert to um
       double drift_um = (ccMaxSliceIndex - (((double) xCorr.getNSlices()) / 2.0)) * pixelSizeZ;
-
       original.close();
       current.close();
       xCorr.close();
