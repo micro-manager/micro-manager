@@ -95,7 +95,7 @@ import org.micromanager.data.internal.DefaultDataManager;
 
 import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.dialogs.CalibrationListDlg;
-import org.micromanager.internal.dialogs.MMIntroDlg;
+import org.micromanager.internal.dialogs.IntroDlg;
 import org.micromanager.internal.dialogs.OptionsDlg;
 import org.micromanager.internal.dialogs.RegistrationDlg;
 
@@ -412,10 +412,10 @@ public class MMStudio implements Studio, CompatibilityInterface {
       hotKeys_ = new org.micromanager.internal.utils.HotKeys();
       hotKeys_.loadSettings();
 
-      if (MMIntroDlg.getShouldAskForConfigFile() ||
+      if (IntroDlg.getShouldAskForConfigFile() ||
             !DefaultUserProfile.getShouldAlwaysUseDefaultProfile()) {
          // Ask the user for a configuration file and/or user profile.
-         MMIntroDlg introDlg = new MMIntroDlg(MMVersion.VERSION_STRING);
+         IntroDlg introDlg = new IntroDlg(MMVersion.VERSION_STRING);
          introDlg.setConfigFile(sysConfigFile_);
          introDlg.setVisible(true);
          introDlg.toFront();
