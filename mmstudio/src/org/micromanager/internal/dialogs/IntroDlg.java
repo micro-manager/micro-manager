@@ -35,10 +35,11 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.util.Arrays;
-import java.util.Set;
-
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.swing.BorderFactory;
 import javax.swing.border.EtchedBorder;
@@ -293,6 +294,9 @@ public class IntroDlg extends JDialog {
       configs.addAll(Arrays.asList(profile.getStringArray(IntroDlg.class,
               GLOBAL_CONFIGS,
               new String[] {new File(DEFAULT_CONFIG_FILE_NAME).getAbsolutePath()})));
+      // Remove duplicates, and then sort alphabetically.
+      configs = new ArrayList<String>(new HashSet<String>(configs));
+      Collections.sort(configs);
       for (String config : configs) {
          cfgFileDropperDown_.addItem(config);
       }
