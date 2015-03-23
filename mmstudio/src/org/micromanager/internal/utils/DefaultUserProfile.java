@@ -685,6 +685,7 @@ public class DefaultUserProfile implements UserProfile {
       userProfile_ = loadProfile(profileName);
    }
 
+   @Override
    public String getProfileName() {
       return profileName_;
    }
