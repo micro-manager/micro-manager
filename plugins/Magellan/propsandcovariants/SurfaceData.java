@@ -190,7 +190,7 @@ public class SurfaceData implements Covariant {
          SingleResolutionInterpolation interp = surface_.getCurrentInterpolation();
          Double interpValue = interp.getInterpolatedValue(center.x, center.y, false);
          //if interpolation is undefined at position center, assume distance below is 0
-         return new CovariantValue(event.zPosition_ - (interpValue == null ? 0 : interpValue) );
+         return new CovariantValue((interpValue == null ? 0 : event.zPosition_ - interpValue) );
       } else if (category_.equals(DISTANCE_BELOW_SURFACE_MINIMUM)) {
          return new CovariantValue(distanceToSurface(xyPos.getFullTileCorners(), event.zPosition_, true));
       } else if (category_.equals(DISTANCE_BELOW_SURFACE_MAXIMUM)) {
