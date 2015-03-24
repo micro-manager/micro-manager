@@ -1952,7 +1952,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             
             // Use thes to build metadata for MVR plugin
             String viewString = "";
-            String channelString = "";
             final String SEPARATOR = "_";
             // set up channels (side A/B is treated as channel too)
             if (useChannels) {
@@ -1967,29 +1966,24 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   gui_.setChannelName(acqName, channelIndex, firstCamera + chName);
                   gui_.setChannelColor(acqName, channelIndex, getChannelColor(channelIndex));
                   viewString += NumberUtils.intToDisplayString(0) + SEPARATOR;
-                  channelString += channels[i].config_ + SEPARATOR;
                   if (twoSided) {
                      gui_.setChannelName(acqName, channelIndex + 1, secondCamera + chName);
                      gui_.setChannelColor(acqName, channelIndex + 1, getChannelColor(channelIndex + 1));
                      viewString += NumberUtils.intToDisplayString(90) + SEPARATOR;
-                     channelString += channels[i].config_ + SEPARATOR;
                   }
                }
             } else {
                gui_.setChannelName(acqName, 0, firstCamera);
                gui_.setChannelColor(acqName, 0, getChannelColor(0));
                viewString += NumberUtils.intToDisplayString(0) + SEPARATOR;
-               channelString += firstCamera + SEPARATOR;
                if (twoSided) {
                   gui_.setChannelName(acqName, 1, secondCamera);
                   gui_.setChannelColor(acqName, 1, getChannelColor(1));
                   viewString += NumberUtils.intToDisplayString(90) + SEPARATOR;
-                  channelString += firstCamera + SEPARATOR;
                }
             }
             // strip last separators:
             viewString = viewString.substring(0, viewString.length() - 1);
-            channelString = channelString.substring(0, channelString.length() -1);
             
             // initialize acquisition
             gui_.initializeAcquisition(acqName, (int) core_.getImageWidth(),
@@ -2021,7 +2015,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             // Properties for use by MultiViewRegistration plugin
             gui_.setAcquisitionProperty(acqName, "MVRotationAxis", "0_1_0");
             gui_.setAcquisitionProperty(acqName, "MVRotations", viewString);
-            gui_.setAcquisitionProperty(acqName, "MVRealChannels", channelString);
                       
             // get circular buffer ready
             // do once here but not per-acquisition; need to ensure ROI changes registered
