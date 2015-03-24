@@ -478,8 +478,8 @@ public class Devices {
       case GALVOA:
       case GALVOB:
          switch (dir) {
-         case X: ret += ", sheet (X)"; break;
-         case Y: ret += ", slice (Y)"; break;
+         case X: ret += ", sheet"; break;
+         case Y: ret += ", slice"; break;
          default: break;
          }
          break;
@@ -676,10 +676,10 @@ public class Devices {
       case XYSTAGE:
          return new DeviceData(key, "XY Stage", Sides.NONE, true);
       case LOWERZDRIVE:
-         return new DeviceData(key, "Lower Z Drive", Sides.NONE,
+         return new DeviceData(key, "Lower Z Height", Sides.NONE,
                true);
       case UPPERZDRIVE:
-         return new DeviceData(key, "Upper (SPIM) Z Drive",
+         return new DeviceData(key, "SPIM Head Height",
                Sides.NONE, true);
          // case ASGALVOA: return new DeviceData(Keys.ASGALVOA,
          // "Anti-striping Micromirror", Sides.A, true);
