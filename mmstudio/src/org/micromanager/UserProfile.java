@@ -42,6 +42,12 @@ public interface UserProfile {
    public static final String GLOBAL_SETTINGS_FILE = "GlobalUserProfile.txt";
 
    /**
+    * Return the name of the profile currently being used.
+    * @return The selected profile name.
+    */
+   public String getProfileName();
+
+   /**
     * Retrieves a specific value from the parameter storage, as a String.
     * @param c A Class<?> which provides scope for where to look for the key;
     *          this is analogous to the parameter to

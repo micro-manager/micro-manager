@@ -936,6 +936,7 @@
       "PixelType" (get-pixel-type)
       "Positions" (max 1 (count (:positions settings)))
       "Prefix" (if (:save settings) (:prefix settings) "")
+      "ProfileName" (.getProfileName (.profile gui))
       "ROI" (JSONArray. (get-camera-roi))
       "Slices" (max 1 (count (:slices settings)))
       "SlicesFirst" (:slices-first settings)
