@@ -40,6 +40,7 @@ import org.json.JSONObject;
 import org.micromanager.imagedisplay.DisplaySettings;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMException;
+import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ProgressBar;
 import org.micromanager.utils.ReportingUtils;
 
@@ -73,6 +74,7 @@ public class MultipageTiffReader {
    
    /**
     * This constructor is used for a file that is currently being written
+    * @param summaryMD - summary metadata in JSON format
     */
    public MultipageTiffReader(JSONObject summaryMD) {
       displayAndComments_ = new JSONObject();
@@ -92,6 +94,8 @@ public class MultipageTiffReader {
   
    /**
     * This constructor is used for opening datasets that have already been saved
+    * @param file File to be opened
+    * @throws java.io.IOException
     */
    public MultipageTiffReader(File file) throws IOException {
       displayAndComments_ = new JSONObject();
@@ -106,7 +110,13 @@ public class MultipageTiffReader {
       summaryMetadata_ = readSummaryMD();
       try {
          readIndexMap();
-      } catch (Exception e) {
+      } catch (IOException e) {
+         try {
+            fixIndexMap(firstIFD, file.getName());
+         } catch (JSONException ex) {
+            ReportingUtils.showError("Fixing of dataset unsuccessful for file: " + file_.getName());
+         }
+      } catch (MMException e) {
          try {
             fixIndexMap(firstIFD, file.getName());
          } catch (JSONException ex) {
@@ -163,16 +173,14 @@ public class MultipageTiffReader {
       } else if (zeroOne == 0x4d4d ) {
          bo = ByteOrder.BIG_ENDIAN;
       } else {
+         ra.close();
          throw new IOException("Error reading Tiff header");
       }
       tiffHeader.order(bo);
       int summaryMDHeader = tiffHeader.getInt(32);
       channel.close();
       ra.close();
-      if (summaryMDHeader == MultipageTiffWriter.SUMMARY_MD_HEADER) {
-         return true;
-      }
-      return false;
+      return summaryMDHeader == MultipageTiffWriter.SUMMARY_MD_HEADER;
    }
 
 
@@ -190,7 +198,9 @@ public class MultipageTiffReader {
             } else {
                byteDepth_ = 2;
             }
-      } catch (Exception ex) {
+      } catch (JSONException ex) {
+         ReportingUtils.showError(ex);
+      } catch (MMScriptException ex) {
          ReportingUtils.showError(ex);
       }
    }
@@ -254,7 +264,10 @@ public class MultipageTiffReader {
             summaryMD.put("Comment", displayAndComments_.getJSONObject("Comments").getString("Summary"));
          }
          return summaryMD;
-      } catch (Exception ex) {
+      } catch (IOException ex) {
+         ReportingUtils.showError("Couldn't read summary Metadata from file: " + file_.getName());
+         return null;
+      } catch (JSONException ex) {
          ReportingUtils.showError("Couldn't read summary Metadata from file: " + file_.getName());
          return null;
       }
@@ -270,9 +283,12 @@ public class MultipageTiffReader {
          }
          ByteBuffer buffer = readIntoBuffer(offset + 8, header.getInt(4));
          return new JSONObject(getString(buffer));
-      } catch (Exception ex) {
+      } catch (IOException ex) {
          ReportingUtils.logError("Can't find image comments in file: " + file_.getName());
             return null;
+      } catch (JSONException ex) {
+         ReportingUtils.logError("Can't find image comments in file: " + file_.getName());
+         return null;
       }
    }
    
@@ -314,7 +330,10 @@ public class MultipageTiffReader {
           }
           ByteBuffer buffer = readIntoBuffer(offset + 8, header.getInt(4));
          return new JSONArray(getString(buffer));
-      } catch (Exception ex) {
+      } catch (IOException ex) {
+         ReportingUtils.logError("Can't find display settings in file: " + file_.getName());
+         return null;
+      } catch (JSONException ex) {
          ReportingUtils.logError("Can't find display settings in file: " + file_.getName());
          return null;
       }
