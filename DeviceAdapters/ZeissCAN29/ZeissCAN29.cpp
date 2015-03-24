@@ -664,6 +664,11 @@ int ZeissAxis::SetTrajectoryVelocity(MM::Device& device, MM::Core& core, ZeissUB
    return DEVICE_OK;
 }
 
+int ZeissAxis::HasTrajectoryVelocity(MM::Device& device, MM::Core& core, ZeissUByte devId, bool& hasTV)
+{
+   return g_hub.HasModelTrajectoryVelocity(device, core, devId, hasTV);
+}
+
 /*
  * Sets Trajectory Acceleration
  */
@@ -1762,6 +1767,22 @@ int XYStage::Initialize()
    AddAllowedValue("Velocity-Acceleration", fast_.c_str());
    AddAllowedValue("Velocity-Acceleration", smooth_.c_str());
    
+   // Trajectory Velocity and Acceleration:
+   bool hasTV = false;;
+   ret = HasTrajectoryVelocity(*this, *GetCoreCallback(), g_StageYAxis, hasTV);
+   if (ret != DEVICE_OK)
+      return ret;
+   if (hasTV) 
+   {
+      pAct = new CPropertyAction(this, &XYStage::OnTrajectoryVelocity);
+      ret = CreateProperty("Velocity", "0", MM::Integer, false, pAct);
+      if (ret != DEVICE_OK)
+         return ret;
+      pAct = new CPropertyAction(this, &XYStage::OnTrajectoryAcceleration);
+      ret = CreateProperty("Acceleration", "0", MM::Integer, false, pAct);
+      if (ret != DEVICE_OK)
+         return ret;
+   }
 
    // Update lower and upper limits.  These values are cached, so if they change during a session, the adapter will need to be re-initialized
 /*

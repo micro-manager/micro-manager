@@ -383,6 +383,7 @@ class ZeissHub
       int GetModelStatus(MM::Device& device, MM::Core& core, ZeissUByte devId, ZeissULong& status);
       int GetModelPresent(MM::Device& device, MM::Core& core, ZeissUByte devId, bool &present);
       int GetModelTrajectoryVelocity(MM::Device& device, MM::Core& core, ZeissUByte devId, ZeissLong& velocity);
+      int HasModelTrajectoryVelocity(MM::Device& device, MM::Core& core, ZeissUByte devId, bool &hasTV);
       int GetModelTrajectoryAcceleration(MM::Device& device, MM::Core& core, ZeissUByte devId, ZeissLong& acceleration);
       int GetModelBusy(MM::Device& device, MM::Core& core, ZeissUByte devId, bool &busy);
       int GetUpperHardwareStop(ZeissUByte devId, ZeissLong& position);
@@ -586,6 +587,7 @@ class ZeissAxis : public ZeissDevice
       int SetRelativePosition(MM::Device& device, MM::Core& core, ZeissUByte devId, long increment, ZeissByte moveMode);
       int FindHardwareStop(MM::Device& device, MM::Core& core, ZeissUByte devId, HardwareStops stop);
       int StopMove(MM::Device& device, MM::Core& core, ZeissUByte devId, ZeissByte moveMode);
+      int HasTrajectoryVelocity(MM::Device& device, MM::Core& core, ZeissUByte devId, bool& hasTV);
       int SetTrajectoryVelocity(MM::Device& device, MM::Core& core, ZeissUByte devId, long velocity);
       int SetTrajectoryAcceleration(MM::Device& device, MM::Core& core, ZeissUByte devId, long acceleration);
       int GetTrajectoryVelocity(MM::Device& device, MM::Core& core, ZeissUByte devId, ZeissLong& velocity);
