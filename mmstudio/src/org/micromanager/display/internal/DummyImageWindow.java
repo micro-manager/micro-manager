@@ -70,6 +70,8 @@ public class DummyImageWindow extends StackWindow {
       masterLock_.lock();
       staticMaster_ = master;
       DummyImageWindow result = new DummyImageWindow(plus, master, displayBus);
+      // And of course if we keep this around, then we leak memory.
+      staticMaster_ = null;
       masterLock_.unlock();
       return result;
    }
