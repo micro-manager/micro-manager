@@ -835,7 +835,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * @return MultichannelModes.Keys.NONE if channels is disabled, or actual selection otherwise
     */
    private MultichannelModes.Keys getChannelMode() {
-      if (!isMultichannel()) {
+      if (isMultichannel()) {
       return MultichannelModes.getKeyFromPrefCode(
             props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_MULTICHANNEL_MODE));
       } else {
@@ -1892,13 +1892,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       ImageUtils.setImageStorageClass(TaggedImageStorageMultipageTiff.class);
       
       // Set up controller SPIM parameters (including from Setup panel settings)
-      if (sideActiveA) {
+      if (sideActiveA && !usingDemoCam) {
          boolean success = prepareControllerForAquisition(Devices.Sides.A, hardwareTimepoints);
          if (! success) {
             return false;
          }
       }
-      if (sideActiveB) {
+      if (sideActiveB && !usingDemoCam) {
          boolean success = prepareControllerForAquisition(Devices.Sides.B, hardwareTimepoints);
          if (! success) {
             return false;
@@ -1950,6 +1950,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                core_.setExposure(secondCamera, exposureTime);
             }
             
+            // Use thes to build metadata for MVR plugin
+            String viewString = "";
+            String channelString = "";
+            final String SEPARATOR = "_";
             // set up channels (side A/B is treated as channel too)
             if (useChannels) {
                ChannelSpec[] channels = multiChannelPanel_.getUsedChannels();
@@ -1962,19 +1966,30 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   }
                   gui_.setChannelName(acqName, channelIndex, firstCamera + chName);
                   gui_.setChannelColor(acqName, channelIndex, getChannelColor(channelIndex));
+                  viewString += NumberUtils.intToDisplayString(0) + SEPARATOR;
+                  channelString += channels[i].config_ + SEPARATOR;
                   if (twoSided) {
                      gui_.setChannelName(acqName, channelIndex + 1, secondCamera + chName);
                      gui_.setChannelColor(acqName, channelIndex + 1, getChannelColor(channelIndex + 1));
+                     viewString += NumberUtils.intToDisplayString(90) + SEPARATOR;
+                     channelString += channels[i].config_ + SEPARATOR;
                   }
                }
             } else {
                gui_.setChannelName(acqName, 0, firstCamera);
                gui_.setChannelColor(acqName, 0, getChannelColor(0));
+               viewString += NumberUtils.intToDisplayString(0) + SEPARATOR;
+               channelString += firstCamera + SEPARATOR;
                if (twoSided) {
                   gui_.setChannelName(acqName, 1, secondCamera);
                   gui_.setChannelColor(acqName, 1, getChannelColor(1));
+                  viewString += NumberUtils.intToDisplayString(90) + SEPARATOR;
+                  channelString += firstCamera + SEPARATOR;
                }
             }
+            // strip last separators:
+            viewString = viewString.substring(0, viewString.length() - 1);
+            channelString = channelString.substring(0, channelString.length() -1);
             
             // initialize acquisition
             gui_.initializeAcquisition(acqName, (int) core_.getImageWidth(),
@@ -2003,7 +2018,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             gui_.setAcquisitionProperty(acqName, "PixelType", "GRAY16");
             gui_.setAcquisitionProperty(acqName, "z-step_um",  
                   NumberUtils.doubleToDisplayString(getStepSizeUm()) );
-            
+            // Properties for use by MultiViewRegistration plugin
+            gui_.setAcquisitionProperty(acqName, "MVRotationAxis", "0_1_0");
+            gui_.setAcquisitionProperty(acqName, "MVRotations", viewString);
+            gui_.setAcquisitionProperty(acqName, "MVRealChannels", channelString);
+                      
             // get circular buffer ready
             // do once here but not per-acquisition; need to ensure ROI changes registered
             core_.initializeCircularBuffer();
@@ -2079,9 +2098,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      }
 
                      // trigger the state machine on the controller
-                     boolean success = triggerControllerStartAcquisition(spimMode); 
-                     if (!success) {
-                        return false;
+                     if (!usingDemoCam) {
+                        boolean success = triggerControllerStartAcquisition(spimMode);
+                        if (!success) {
+                           return false;
+                        }
                      }
 
                      ReportingUtils.logDebugMessage("Starting time point " + (timePoint+1) + " of " + nrFrames

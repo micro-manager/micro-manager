@@ -39,9 +39,9 @@ import org.micromanager.asidispim.Utils.DevicesListenerInterface;
  */
 public class AcquisitionModes {
    
-   private Devices devices_;   // object holding information about selected/available devices
-   private Properties props_;  // object handling all property read/writes
-   private Prefs prefs_;
+   private final Devices devices_;   // object holding information about selected/available devices
+   private final Properties props_;  // object handling all property read/writes
+   private final Prefs prefs_;
    
    /**
     * Enum to store the acquisition mode along with associated preference code.
@@ -77,6 +77,7 @@ public class AcquisitionModes {
    }
    
    /**
+    * @param prefCode
     * @return null if prefCode not found, or the Key if it is
     */
    public static Keys getKeyFromPrefCode(int prefCode) {
