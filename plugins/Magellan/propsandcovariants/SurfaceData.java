@@ -170,7 +170,7 @@ public class SurfaceData implements Covariant {
                     return 0;
                 } else  {
                     //get extrapolated value
-                    interpVal = surface_.getCurrentInterpolation().getInterpolatedValue(stageCoords.x, stageCoords.y, false);
+                    interpVal = surface_.getCurrentInterpolation().getInterpolatedValue(stageCoords.x, stageCoords.y, true);
                     maxDistance = Math.max(zVal - interpVal, maxDistance);
                 }
             } else {

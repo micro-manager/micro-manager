@@ -145,6 +145,9 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
    }
 
    private void readBackgroundPixelValue(int channel, TaggedImage img) {
+       if (!estimateBackground_ || backgroundPix_.containsKey(channel)) {
+           return;
+       }
 //      ArrayList<String> labelsToUse = new ArrayList<String>();
 //      for (String key : fullResStorage_.imageKeys()) {
 //         int[] indices = MDUtils.getIndices(key); //c s f p
@@ -181,11 +184,11 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
       int[] pixVals = new int[fullResTileHeightIncludingOverlap_ * fullResTileWidthIncludingOverlap_];
       if (byteDepth_ == 1) {
          for (int j = 0; j < pixVals.length; j++) {
-            pixVals[pixVals.length + j] = ((byte[])img.pix)[j] & 0xff;
+            pixVals[j] = ((byte[])img.pix)[j] & 0xff;
          }
       } else {
          for (int j = 0; j < pixVals.length; j++) {
-            pixVals[pixVals.length + j] = ((short[])img.pix)[j] & 0xffff;
+            pixVals[j] = ((short[])img.pix)[j] & 0xffff;
          }
       }
       Arrays.sort(pixVals);
