@@ -30,6 +30,8 @@ import java.text.NumberFormat;
 
 import org.micromanager.Studio;
 
+import org.micromanager.data.Datastore;
+
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.FileDialogs.FileType;
 import org.micromanager.internal.utils.MMScriptException;
@@ -636,9 +638,9 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
 
             while (!stop_.get()) {
                // run exploration acquisition
-               String expAcq;
+               Datastore store;
                try {
-                  expAcq = gui_.compat().runAcquisition();
+                  store = gui_.compat().runAcquisition();
                } catch (MMScriptException e) {
                   gui_.logs().showError(e, "Exploration acquisition failed");
                   break;
@@ -676,8 +678,8 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
                            xPos + ", " + yPos);
 
                      gui_.compat().loadAcquisition(acqFileNameB_);
-                     String goodStuff = gui_.compat().runAcquisition();
-                     gui_.compat().closeAcquisitionDisplays(goodStuff);
+                     Datastore tmpStore = gui_.compat().runAcquisition();
+                     gui_.displays().closeDisplaysFor(tmpStore);
                      core_.setRelativeXYPosition(xyStage_, -xPos * pixelWidthMicron_, -yPos * pixelWidthMicron_);
                      core_.clearROI();
                      // org.micromanager.internal.utils.JavaUtils.sleep(200);
@@ -685,13 +687,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
                      gui_.logs().showError(ex, "Imaging acquisition failed...");
                   }
                }
-               try {
-                  // need sleep to ensure that data have been written to disk
-                  //gui_.compat().sleep(100);
-                  gui_.compat().closeAcquisitionDisplays(expAcq);
-               } catch (MMScriptException ex) {
-                  gui_.logs().showError(ex, "Failed to close acquisition window");
-               }
+               gui_.displays().closeDisplaysFor(store);
 
                imageIndex++;
                int xDirection = 1;
