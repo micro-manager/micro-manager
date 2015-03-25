@@ -223,7 +223,7 @@ public class AutofocusTB extends AutofocusBase implements Autofocus {
             // indx =0;
 
 
-            curSh = sharpNess(ipCurrent_);
+            curSh = computeScore(ipCurrent_);
 
             if (curSh > bestSh) {
                bestSh = curSh;
@@ -261,7 +261,7 @@ public class AutofocusTB extends AutofocusBase implements Autofocus {
             snapSingleImage();
             // indx =0;
 
-            curSh = sharpNess(ipCurrent_);
+            curSh = computeScore(ipCurrent_);
 
             if (curSh > bestSh) {
                bestSh = curSh;
@@ -399,7 +399,7 @@ public class AutofocusTB extends AutofocusBase implements Autofocus {
     *@param  impro  Description of the Parameter
     *@return        Description of the Return Value
     */
-   private double sharpNess(ImageProcessor impro) {
+   public double computeScore(final ImageProcessor impro) {
 
       int width = (int) (CROP_SIZE * core_.getImageWidth());
       int height = (int) (CROP_SIZE * core_.getImageHeight());

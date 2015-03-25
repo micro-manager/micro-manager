@@ -21,6 +21,7 @@
 //
 
 import ij.IJ;
+import ij.process.ImageProcessor;
 import java.util.prefs.Preferences;
 
 import mmcorej.CMMCore;
@@ -179,6 +180,10 @@ public class AutofocusDuo extends AutofocusBase implements Autofocus  {
       return super.getProperties();
    }
       
+   public double computeScore(final ImageProcessor ip) {
+      return 0.0;
+   }
+   
    public double getCurrentFocusScore() {
       // TODO Auto-generated method stub
       return 0;

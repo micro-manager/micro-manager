@@ -122,7 +122,6 @@ import org.micromanager.utils.WaitDialog;
 
 
 
-
 /*
  * Implements the ScriptInterface (i.e. primary API) and does various other
  * tasks that should probably be refactored out at some point.
