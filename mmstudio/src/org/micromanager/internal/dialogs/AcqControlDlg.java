@@ -43,7 +43,7 @@ import javax.swing.table.*;
 import mmcorej.CMMCore;
 
 import org.micromanager.acquisition.internal.AcquisitionEngine;
-import org.micromanager.acquisition.internal.MMAcquisition;
+import org.micromanager.data.Datastore;
 import org.micromanager.internal.interfaces.AcqSettingsListener;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.AcqOrderMode;
@@ -1554,7 +1554,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       return true;
    }
 
-   public MMAcquisition runAcquisition() {
+   public Datastore runAcquisition() {
       if (acqEng_.isAcquisitionRunning()) {
          JOptionPane.showMessageDialog(this, "Cannot start acquisition: previous acquisition still in progress.");
          return null;
@@ -1579,7 +1579,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       }
    }
 
-   public MMAcquisition runAcquisition(String acqName, String acqRoot) {
+   public Datastore runAcquisition(String acqName, String acqRoot) {
       if (acqEng_.isAcquisitionRunning()) {
          JOptionPane.showMessageDialog(this, "Unable to start the new acquisition task: previous acquisition still in progress.");
          return null;

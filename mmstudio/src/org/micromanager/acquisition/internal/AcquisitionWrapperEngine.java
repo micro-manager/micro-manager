@@ -82,7 +82,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    @Override
-   public MMAcquisition acquire() throws MMException {
+   public Datastore acquire() throws MMException {
       return runAcquisition(getSequenceSettings());
    }
 
@@ -109,7 +109,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       return acquisitionEngine2010;
    }
 
-   protected MMAcquisition runAcquisition(SequenceSettings acquisitionSettings) {
+   protected Datastore runAcquisition(SequenceSettings acquisitionSettings) {
       //Make sure computer can write to selected location and that there is enough space to do so
       if (saveFiles_) {
          File root = new File(rootName_);
@@ -147,8 +147,6 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
          BlockingQueue<TaggedImage> procStackOutputQueue = ProcessorStack.run(
                  engineOutputQueue, taggedImageProcessors_);
 
-         // Create an MMAcquisition object, which will result in an ImageCache
-         // and VirtualImageDisplay if desired
          MMAcquisition acq = new MMAcquisition("Acq",
                  summaryMetadata_, acquisitionSettings.save, this,
                  AcqControlDlg.getShouldHideMDADisplay());
@@ -164,7 +162,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
             }
          });
         
-         return acq;
+         return store;
 
       } catch (Throwable ex) {
          ReportingUtils.showError(ex);

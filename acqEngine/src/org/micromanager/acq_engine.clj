@@ -36,7 +36,7 @@
     [java.util.concurrent CountDownLatch LinkedBlockingQueue TimeUnit]
     [mmcorej Configuration Metadata TaggedImage]
     [org.json JSONArray JSONObject]
-    [org.micromanager.acquisition.internal MMAcquisition TaggedImageQueue]
+    [org.micromanager.acquisition.internal TaggedImageQueue]
     [org.micromanager.display.internal ChannelSettings]
     [org.micromanager PositionList SequenceSettings]
     [org.micromanager.internal.utils MDUtils ReportingUtils])

@@ -18,7 +18,6 @@
 //
 package org.micromanager.internal;
 
-import org.micromanager.acquisition.internal.MMAcquisition;
 import org.micromanager.acquisition.internal.AcquisitionWrapperEngine;
 import org.micromanager.acquisition.internal.TaggedImageQueue;
 import bsh.EvalError;
@@ -1600,7 +1599,7 @@ public class MMStudio implements Studio, CompatibilityInterface {
       }
       testForAbortRequests();
       if (acqControlWin_ != null) {
-         MMAcquisition acq = acqControlWin_.runAcquisition();
+         Datastore store = acqControlWin_.runAcquisition();
          try {
             while (acqControlWin_.isAcquisitionRunning()) {
                Thread.sleep(50);
@@ -1608,7 +1607,7 @@ public class MMStudio implements Studio, CompatibilityInterface {
          } catch (InterruptedException e) {
             ReportingUtils.showError(e);
          }
-         return acq.getDatastore();
+         return store;
       } else {
          throw new MMScriptException(
                "Acquisition setup window must be open for this command to work.");
@@ -1620,16 +1619,15 @@ public class MMStudio implements Studio, CompatibilityInterface {
          throws MMScriptException {
       testForAbortRequests();
       if (acqControlWin_ != null) {
-         MMAcquisition acq = acqControlWin_.runAcquisition(name, root);
+         Datastore store = acqControlWin_.runAcquisition(name, root);
          try {
-            Datastore store = acq.getDatastore();
             while (!store.getIsFrozen()) {
                Thread.sleep(100);
             }
          } catch (InterruptedException e) {
             ReportingUtils.showError(e);
          }
-         return acq.getDatastore();
+         return store;
       } else {
          throw new MMScriptException(
                "Acquisition setup window must be open for this command to work.");

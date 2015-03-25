@@ -31,6 +31,7 @@ import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 
 import org.json.JSONObject;
+import org.micromanager.data.Datastore;
 import org.micromanager.DataProcessor;
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
@@ -81,10 +82,10 @@ public interface AcquisitionEngine {
 
    /**
     * Starts acquisition as defined in the Multi-Dimensional Acquistion Window.
-    * Returns the MMAcquisition object.
+    * Returns the Datastore for the acquisition.
     * @throws MMException
     */
-   public MMAcquisition acquire() throws MMException;
+   public Datastore acquire() throws MMException;
 
    /**
     * Stops a running Acquisition
