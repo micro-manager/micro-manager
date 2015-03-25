@@ -241,7 +241,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          // Make the canvas thread before any of our other control objects,
          // which may perform draw requests that need to be processed.
          canvasThread_ = new CanvasUpdateThread(store_, stack_, ijImage_,
-               displayBus_);
+               this);
          canvasThread_.start();
 
          makeWindowControls();
@@ -501,7 +501,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          composite.reset();
          setImagePlusMetadata(ijImage_);
          canvasThread_ = new CanvasUpdateThread(store_, stack_, ijImage_,
-               displayBus_);
+               this);
          canvasThread_.start();
       }
       displayBus_.post(new DefaultNewImagePlusEvent(ijImage_));

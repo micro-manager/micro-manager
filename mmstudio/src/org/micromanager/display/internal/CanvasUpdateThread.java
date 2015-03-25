@@ -36,6 +36,7 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 
+import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.events.FPSEvent;
 
 import org.micromanager.internal.utils.ReportingUtils;
@@ -63,7 +64,7 @@ public class CanvasUpdateThread extends Thread {
    private Datastore store_;
    private MMVirtualStack stack_;
    private ImagePlus plus_;
-   private EventBus displayBus_;
+   private DisplayWindow display_;
    
    private LinkedBlockingQueue<Coords> coordsQueue_;
    private AtomicBoolean shouldStop_;
@@ -72,15 +73,14 @@ public class CanvasUpdateThread extends Thread {
    private long lastImageIndex_ = 0;
    private long lastFPSUpdateTimestamp_ = -1;
 
-   // TODO: pass along the DisplayWindow instead of its EventBus.
    public CanvasUpdateThread(Datastore store, MMVirtualStack stack,
-         ImagePlus plus, EventBus bus) {
+         ImagePlus plus, DisplayWindow display) {
       setName("Canvas display thread for store " + store.hashCode());
       store_ = store;
       stack_ = stack;
       plus_ = plus;
-      displayBus_ = bus;
-      displayBus_.register(this);
+      display_ = display;
+      display_.registerForEvents(this);
       coordsQueue_ = new LinkedBlockingQueue<Coords>();
       shouldStop_ = new AtomicBoolean(false);
    }
@@ -177,7 +177,7 @@ public class CanvasUpdateThread extends Thread {
          stack_.setCoords(image.getCoords());
          plus_.getProcessor().setPixels(image.getRawPixels());
          plus_.updateAndDraw();
-         displayBus_.post(new PixelsSetEvent(image));
+         display_.postEvent(new PixelsSetEvent(image));
       }
    }
 
@@ -189,7 +189,7 @@ public class CanvasUpdateThread extends Thread {
       long curTimestamp = System.currentTimeMillis();
       // Hack: if we have null image, then post a "blank" FPS event.
       if (image == null) {
-         displayBus_.post(new FPSEvent(0, 0));
+         display_.postEvent(new FPSEvent(0, 0));
          return;
       }
       if (lastFPSUpdateTimestamp_ == -1) {
@@ -205,7 +205,7 @@ public class CanvasUpdateThread extends Thread {
                // HACK: Ignore the first FPS display event, to prevent us from
                // showing FPS for the Snap window.
                if (lastImageIndex_ != 0) {
-                  displayBus_.post(new FPSEvent((imageIndex - lastImageIndex_) / elapsedTime,
+                  display_.postEvent(new FPSEvent((imageIndex - lastImageIndex_) / elapsedTime,
                            imagesDisplayed_ / elapsedTime));
                }
                lastImageIndex_ = imageIndex;
@@ -214,7 +214,7 @@ public class CanvasUpdateThread extends Thread {
          catch (Exception e) {
             // Post a "blank" event. This likely happens because the image
             // image don't contain a sequence number (e.g. during an MDA).
-            displayBus_.post(new FPSEvent(0, 0));
+            display_.postEvent(new FPSEvent(0, 0));
          }
          imagesDisplayed_ = 0;
          lastFPSUpdateTimestamp_ = curTimestamp;
@@ -242,7 +242,7 @@ public class CanvasUpdateThread extends Thread {
    public void onDisplayDestroyed(DisplayDestroyedEvent event) {
       try {
          stopDisplayUpdates();
-         displayBus_.unregister(this);
+         display_.unregisterForEvents(this);
       }
       catch (Exception e) {
          ReportingUtils.logError(e, "Error cleaning up display thread");
