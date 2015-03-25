@@ -9,9 +9,7 @@ import acq.MultiResMultipageTiffStorage;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
-import ij.process.ByteProcessor;
 import ij.process.ImageConverter;
-import ij.process.ShortProcessor;
 import ij3d.image3d.FHTImage3D;
 import java.util.Arrays;
 import org.apache.commons.math.ArgumentOutsideDomainException;
@@ -124,17 +122,7 @@ public class CrossCorrelationAutofocus {
       ImageStack stack = new ImageStack(width, height);
       int frontPadding = (acq.getMaxSliceIndex() + 1) / 2;
        //get background pixel value
-       int backgroundVal;
-      if (MMStudio.getInstance().getCore().getBytesPerPixel() == 1) {
-           byte[] pix = (byte[]) acq.getStorage().getImageForDisplay(channelIndex, 0, timeIndex, dsIndex, 0, 0, width, height).pix;
-           Arrays.sort(pix);
-           //assume 10th percentile is background
-           backgroundVal = pix[(int)(0.1*pix.length)];
-       } else {
-           short[] pix = (short[]) acq.getStorage().getImageForDisplay(channelIndex, 0, timeIndex, dsIndex, 0, 0, width, height).pix;
-           Arrays.sort(pix);
-           backgroundVal = pix[(int) (0.1 * pix.length)];
-       }
+       int backgroundVal = acq.getStorage().getBackgroundPixelValue(channelIndex);
         for (int slice = 0; slice < numSlices; slice++) {
             if (slice >= frontPadding && slice < frontPadding + acq.getMaxSliceIndex() + 1) {
                 int dataSlice = slice - frontPadding;

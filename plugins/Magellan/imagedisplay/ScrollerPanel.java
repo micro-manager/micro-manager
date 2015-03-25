@@ -14,6 +14,7 @@ import javax.swing.JPanel;
  * AxisScrollers, and how they affect the display of a collection of images.
  */
 public class ScrollerPanel extends Panel {
+
    
    /**
     * This class signifies that the currently-displayed image needs to be 
@@ -60,6 +61,7 @@ public class ScrollerPanel extends Panel {
    private Timer snapBackTimer_ = null;
    // Rate at which we update images when animating. Defaults to 10.
    private double framesPerSec_;
+   private AxisScroller zScroller_;
 
    /**
     * @param axes List of Strings labeling the axes that the caller wants to 
@@ -88,16 +90,27 @@ public class ScrollerPanel extends Panel {
             // Scroll bars do not allow zero "ticks".
             max = 1;
          }
-         AxisScroller scroller = new AxisScroller(axes[i], 
-               max, bus, true);
+         AxisScroller scroller = new AxisScroller(axes[i], max, bus, true);
+         if (axes[i].equals("z")) {
+            zScroller_ = scroller;
+         }
          if (max <= 1) {
             scroller.setVisible(false);
-         }
-         else {
+         } else {
             add(scroller, "wrap 0px, align center, growx");
          }
          scrollers_.add(scroller);
       }
+   }
+   
+   /**
+    * 
+    * @param minExploreIndex
+    * @param maxExploreIndex 
+    */
+   public void setExploreZIndices(int minExploreIndex, int maxExploreIndex) {
+      ((ColorableScrollbarUI) zScroller_.getScrollBar().getUI()).setColorIndices(minExploreIndex, maxExploreIndex);
+      this.repaint();
    }
 
    /**

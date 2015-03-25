@@ -105,8 +105,10 @@ public class AxisScroller extends JPanel {
       }
       add(animateIcon_, "grow 0");
 
-      scrollbar_ = new JScrollBar(JScrollBar.HORIZONTAL, 0, 1, 
-            0, maximum);
+      scrollbar_ = new JScrollBar(JScrollBar.HORIZONTAL, 0, 1, 0, maximum);
+      if (axis.equals("z")) {
+         scrollbar_.setUI(new ColorableScrollbarUI());
+      }
       scrollbar_.addAdjustmentListener(new java.awt.event.AdjustmentListener() {
          @Override
          public void adjustmentValueChanged(java.awt.event.AdjustmentEvent e) {
@@ -120,6 +122,10 @@ public class AxisScroller extends JPanel {
       add(lock_, "grow 0");
 
       bus.register(this);
+   }
+   
+   public JScrollBar getScrollBar() {
+      return scrollbar_;
    }
 
    /**

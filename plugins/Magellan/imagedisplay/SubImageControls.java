@@ -9,10 +9,18 @@ import acq.ExploreAcquisition;
 import acq.FixedAreaAcquisition;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
-import gui.SettingsDialog;
 import ij.gui.StackWindow;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.GraphicsEnvironment;
+import java.awt.Panel;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.AdjustmentEvent;
+import java.awt.event.AdjustmentListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.text.DecimalFormat;
 import java.util.HashMap;
 import javax.swing.JLabel;
@@ -21,7 +29,6 @@ import javax.swing.JScrollBar;
 import javax.swing.JTextField;
 import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
-import org.json.JSONObject;
 import org.micromanager.MMStudio;
 import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.ReportingUtils;
@@ -64,6 +71,11 @@ public class SubImageControls extends Panel {
       zTopTextField_.setText(TWO_DECIMAL_FORMAT.format(zTop));
       //Update the acquisition 
       ((ExploreAcquisition) acq_).setZLimits(zTop, zBottom);
+      //update colored areas on z scrollbar
+      //convert to 0 based index based on which slices have been explored
+      int minExploreIndex = ((ExploreAcquisition) acq_).getMinSliceIndex() - ((ExploreAcquisition) acq_).getLowestExploredSliceIndex();
+      int maxExploreIndex = ((ExploreAcquisition) acq_).getMaxSliceIndex() - ((ExploreAcquisition) acq_).getLowestExploredSliceIndex();
+      scrollerPanel_.setExploreZIndices(minExploreIndex, maxExploreIndex);
    }
    
    private void expandZLimitsIfNeeded(int topScrollbarIndex, int bottomScrollbarIndex) {
@@ -229,9 +241,9 @@ public class SubImageControls extends Panel {
                //intercept event and edit slice index
                int z = event.getPositionForAxis("z");
                //make slice index >= 0 for viewer   
-               z -= ((ExploreAcquisition) acq_).getLowestSliceIndex();
+               z -= ((ExploreAcquisition) acq_).getLowestExploredSliceIndex();
                // show/expand z scroll bar if needed
-               if (((ExploreAcquisition) acq_).getHighestSliceIndex() - ((ExploreAcquisition) acq_).getLowestSliceIndex() + 1 > scrollerPanel_.getMaxPosition("z")) {
+               if (((ExploreAcquisition) acq_).getHighestExploredSliceIndex() - ((ExploreAcquisition) acq_).getLowestExploredSliceIndex() + 1 > scrollerPanel_.getMaxPosition("z")) {
                   for (AxisScroller scroller : scrollers_) {
                      if (scroller.getAxis().equals("z") && scroller.getMaximum() == 1) {
                         scroller.setVisible(true);
@@ -240,7 +252,7 @@ public class SubImageControls extends Panel {
                         bus_.post(new ScrollerPanel.LayoutChangedEvent());
                      }
                   }
-                  this.setMaxPosition("z", ((ExploreAcquisition) acq_).getHighestSliceIndex() - ((ExploreAcquisition) acq_).getLowestSliceIndex() + 1);
+                  this.setMaxPosition("z", ((ExploreAcquisition) acq_).getHighestExploredSliceIndex() - ((ExploreAcquisition) acq_).getLowestExploredSliceIndex() + 1);
                   //tell the imageplus about new number of slices so everything works properly
                   ((IMMImagePlus) display_.getHyperImage()).setNSlicesUnverified(scrollerPanel_.getMaxPosition("z"));
                }

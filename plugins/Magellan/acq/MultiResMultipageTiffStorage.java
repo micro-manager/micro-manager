@@ -7,9 +7,12 @@ package acq;
 import coordinates.PositionManager;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import mmcorej.TaggedImage;
@@ -32,7 +35,8 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class MultiResMultipageTiffStorage implements TaggedImageStorage {
 
-//   private static final byte EMPTY_PIXEL_VALUE = (byte) 30;
+   private final double BACKGROUND_PIXEL_PERCENTILE = 0.1; // assume background pixels are at 10th percentile of histogram
+   private final int MAX_PIXELS_FOR_BACKGROUND_CALC = 1000000;
    private static final String FULL_RES_SUFFIX = "Full resolution";
    private static final String DOWNSAMPLE_SUFFIX = "Downsampled_x";
    private TaggedImageStorageMultipageTiff fullResStorage_;
@@ -46,9 +50,12 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
    private boolean finished_ = false;
    private String uniqueAcqName_;
    private int byteDepth_;
-
+   private TreeMap<Integer, Integer> backgroundPix_ = new TreeMap<Integer, Integer>(); //map of channel index to background pixel value
+   private final boolean estimateBackground_;
+   
    public MultiResMultipageTiffStorage(String dir, boolean newDataSet, JSONObject summaryMetadata,
-           int overlapX, int overlapY, String pixelSizeConfig) {
+           int overlapX, int overlapY, String pixelSizeConfig, boolean estimateBackground) {
+      estimateBackground_ = estimateBackground;
       try {
          xOverlap_ = overlapX;
          yOverlap_ = overlapY;
@@ -132,6 +139,58 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
          return (i +  1) / (xDirection ? tileWidth_ : tileHeight_) - 1;
       }
    }
+   
+   public int getBackgroundPixelValue(int channelIndex) {
+      return backgroundPix_.containsKey(channelIndex) ? backgroundPix_.get(channelIndex) : 0;
+   }
+
+   private void readBackgroundPixelValue(int channel, TaggedImage img) {
+//      ArrayList<String> labelsToUse = new ArrayList<String>();
+//      for (String key : fullResStorage_.imageKeys()) {
+//         int[] indices = MDUtils.getIndices(key); //c s f p
+//         if (indices[0] == channel && indices[2] == 0) { //correct channel from frame 0
+//               labelsToUse.add(key);
+//         }
+//         if (indices[2] > 0) {
+//            break; // past frame 0
+//         }
+//      }
+//      if (labelsToUse.size() == 0) {
+//         ReportingUtils.showError("No valid images for generating background value found!");
+//         throw new RuntimeException();
+//      }
+//      int pixPerImage = fullResTileHeightIncludingOverlap_ * fullResTileWidthIncludingOverlap_;
+//      int imagesToUse = Math.min(MAX_PIXELS_FOR_BACKGROUND_CALC, labelsToUse.size() * pixPerImage) / pixPerImage;
+//      int[] pixVals = new int[imagesToUse * pixPerImage];
+//      for (int i = 0; i < imagesToUse; i++) {
+//         String label = labelsToUse.get(i);
+//         int[] indices = MDUtils.getIndices(label);
+//         if (byteDepth_ == 1) {
+//            byte[] pix = (byte[]) fullResStorage_.getImage(indices[0], indices[1], indices[2], indices[3]).pix;
+//            for (int j = 0; j < pixPerImage; j++) {
+//               pixVals[i * pixPerImage + j] = pix[j] & 0xff;
+//            }
+//         } else {
+//            short[] pix = (short[]) fullResStorage_.getImage(indices[0], indices[1], indices[2], indices[3]).pix;
+//            for (int j = 0; j < pixPerImage; j++) {
+//               pixVals[i * pixPerImage + j] = pix[j] & 0xffff;
+//            }
+//         }
+//      }
+
+      int[] pixVals = new int[fullResTileHeightIncludingOverlap_ * fullResTileWidthIncludingOverlap_];
+      if (byteDepth_ == 1) {
+         for (int j = 0; j < pixVals.length; j++) {
+            pixVals[pixVals.length + j] = ((byte[])img.pix)[j] & 0xff;
+         }
+      } else {
+         for (int j = 0; j < pixVals.length; j++) {
+            pixVals[pixVals.length + j] = ((short[])img.pix)[j] & 0xffff;
+         }
+      }
+      Arrays.sort(pixVals);
+      backgroundPix_.put(channel, (int) pixVals[(int) (pixVals.length * BACKGROUND_PIXEL_PERCENTILE)]);
+   }
 
    /**
     * Return a subimage of the larger stitched image at the appropriate zoom
@@ -146,14 +205,22 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
     * @param y coordinate of topmost pixel in requested resolution
     * @param width pixel width of image at requested resolution
     * @param height pixel height of image at requested resolution
+    * @param fillEmptyPixelsWithBackground determine the value of background pixels and use this for autofocus 
     * @return
     */
-   public TaggedImage getImageForDisplay(int channel, int slice, int frame, int dsIndex, int x, int y, int width, int height) {
+   public TaggedImage getImageForDisplay(int channel, int slice, int frame, int dsIndex, int x, int y, 
+           int width, int height) {
       Object pixels;
       if (byteDepth_ == 1) {
-         pixels = new byte[width * height];      
+         pixels = new byte[width * height]; 
+         if (backgroundPix_.containsKey(channel)) {
+            Arrays.fill((byte[]) pixels, (byte)getBackgroundPixelValue(channel));
+         }
       } else {            
          pixels = new short[width * height];      
+         if (backgroundPix_.containsKey(channel)) {
+            Arrays.fill((short[]) pixels, (short)getBackgroundPixelValue(channel));
+         }
       }
       //go line by line through one column of tiles at a time, then move to next column
       JSONObject topLeftMD = null;
@@ -298,7 +365,9 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
       } catch (JSONException e) {
          ReportingUtils.showError("Couldn't find tags");
       }
-
+      if (estimateBackground_) {
+         readBackgroundPixelValue(channel, img); //find a background pixel value in the first image
+      }
       Object previousLevelPix = img.pix;
       int resolutionIndex = previousResIndex + 1;
       
@@ -330,9 +399,20 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
          //Create pixels or get appropriate pixels to add to
          TaggedImage existingImage = lowResStorages_.get(resolutionIndex).getImage(channel, slice, frame,
                  posManager_.getLowResPositionIndex(fullResPositionIndex, resolutionIndex));
-         Object currentLevelPix = (existingImage == null ? 
-                 (byteDepth_ == 1 ? new byte[tileWidth_*tileHeight_] : new short[tileWidth_*tileHeight_]) : existingImage.pix);
+         Object currentLevelPix;
+         if (existingImage == null) {
+            currentLevelPix = byteDepth_ == 1 ? new byte[tileWidth_ * tileHeight_] : new short[tileWidth_ * tileHeight_];
+            //fill in with background pixel value
+            if (byteDepth_ == 1) {
+               Arrays.fill((byte[]) currentLevelPix, (byte) getBackgroundPixelValue(channel));
+            } else {
+               Arrays.fill((short[]) currentLevelPix, (short) getBackgroundPixelValue(channel));
+            }
+         } else {
+            currentLevelPix = existingImage.pix; 
+         }     
 
+         
          //Determine which position in 2x2 this tile sits in
          int xPos = (int) Math.abs((posManager_.getGridCol(fullResPositionIndex, resolutionIndex - 1) % 2));
          int yPos = (int) Math.abs((posManager_.getGridRow(fullResPositionIndex, resolutionIndex - 1) % 2));

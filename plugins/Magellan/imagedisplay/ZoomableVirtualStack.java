@@ -267,7 +267,7 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
       
       //compensate for the possibility of negative slice indices in explore acquisition
       if (acquisition_ instanceof ExploreAcquisition) {
-         slice += ((ExploreAcquisition) acquisition_).getLowestSliceIndex();
+         slice += ((ExploreAcquisition) acquisition_).getLowestExploredSliceIndex();
       }
 
       return multiResStorage_.getImageForDisplay(channel, slice, frame, resolutionIndex_,

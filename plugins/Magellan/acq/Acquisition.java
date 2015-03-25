@@ -104,7 +104,8 @@ public abstract class Acquisition implements AcquisitionEventSource{
       engineOutputQueue_ = new LinkedBlockingQueue<TaggedImage>(OUTPUT_QUEUE_SIZE);
 
       JSONObject summaryMetadata = CustomAcqEngine.makeSummaryMD(this, name);
-      imageStorage_ = new MultiResMultipageTiffStorage(dir, true, summaryMetadata, xOverlap, yOverlap, pixelSizeConfig_);
+      imageStorage_ = new MultiResMultipageTiffStorage(dir, true, summaryMetadata, xOverlap, yOverlap, pixelSizeConfig_, 
+              (this instanceof FixedAreaAcquisition)); //estimatye background pixel values for fixed acqs but not explore
       //storage class has determined unique acq name, so it can now be stored
       name_ = imageStorage_.getUniqueAcqName();
       MMImageCache imageCache = new MMImageCache(imageStorage_);

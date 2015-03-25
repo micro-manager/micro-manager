@@ -149,11 +149,11 @@ public class ExploreAcquisition extends Acquisition {
     *
     * @return
     */
-   public int getLowestSliceIndex() {
+   public int getLowestExploredSliceIndex() {
       return lowestSliceIndex_;
    }
 
-   public int getHighestSliceIndex() {
+   public int getHighestExploredSliceIndex() {
       return highestSliceIndex_;
    }
 
@@ -164,7 +164,7 @@ public class ExploreAcquisition extends Acquisition {
    }
 
    /**
-    * get min slice index for current settings in explore acquisition
+    * get min slice index for according to z limit sliders
     *
     * @return
     */
