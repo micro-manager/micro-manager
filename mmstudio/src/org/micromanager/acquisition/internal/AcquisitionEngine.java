@@ -1,5 +1,4 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          AcquisitionEngine.java
 //PROJECT:       Micro-Manager
 //SUBSYSTEM:     mmstudio
 //-----------------------------------------------------------------------------
@@ -32,7 +31,6 @@ import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 
 import org.json.JSONObject;
-import org.micromanager.data.Datastore;
 import org.micromanager.DataProcessor;
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
@@ -83,10 +81,10 @@ public interface AcquisitionEngine {
 
    /**
     * Starts acquisition as defined in the Multi-Dimensional Acquistion Window.
-    * Returns the acquisition name.
+    * Returns the MMAcquisition object.
     * @throws MMException
     */
-   public String acquire() throws MMException;
+   public MMAcquisition acquire() throws MMException;
 
    /**
     * Stops a running Acquisition
@@ -591,8 +589,6 @@ public interface AcquisitionEngine {
     * Get the summary metadata for the most recent acquisition.
     */
    public JSONObject getSummaryMetadata();
-
-   public Datastore getDatastore();
 
    public List<DataProcessor<TaggedImage>> getImageProcessors();
 

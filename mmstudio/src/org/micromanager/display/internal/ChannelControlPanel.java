@@ -1036,9 +1036,28 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       }
    }
 
+   @Subscribe
+   public void onDisplayDestroyed(DisplayDestroyedEvent event) {
+      try {
+         cleanup();
+      }
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Error when cleaning up histogram");
+      }
+   }
+
    public void cleanup() {
       store_.unregisterForEvents(this);
-      display_.unregisterForEvents(this);
+      if (display_ != null) {
+         try {
+            display_.unregisterForEvents(this);
+         }
+         catch (IllegalArgumentException e) {
+            // We were already unregistered because cleanup() was called
+            // from HistogramsPanel after it was called from
+            // onDisplayDestroyed; ignore it.
+         }
+      }
       linkButton_.cleanup();
    }
 }

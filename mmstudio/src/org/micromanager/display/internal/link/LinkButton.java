@@ -38,6 +38,7 @@ import javax.swing.JPopupMenu;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 
+import org.micromanager.display.DisplayDestroyedEvent;
 import org.micromanager.display.DisplayWindow;
 
 import org.micromanager.internal.MMStudio;
@@ -170,5 +171,13 @@ public class LinkButton extends JToggleButton {
       catch (Exception e) {
          ReportingUtils.logError(e, "Unable to respond to remote link event");
       }
+   }
+
+   /**
+    * Unregister for events so that garbage collection can go through.
+    */
+   @Subscribe
+   public void onDisplayDestroyed(DisplayDestroyedEvent event) {
+      display_.unregisterForEvents(this);
    }
 }

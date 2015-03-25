@@ -773,59 +773,6 @@ public class MMStudio implements Studio, CompatibilityInterface {
       openAcqDirectory_ = dir;
    }
 
-   /**
-    * Open an existing acquisition directory and build viewer window.
-    * @param inRAM whether or not to keep data in RAM 
-    * @return selected File object 
-    */
-   public File promptForAcquisitionToOpen(boolean inRAM) {
-      File f = FileDialogs.openDir(frame_,
-            "Please select an image data set", MM_DATA_SET);
-      if (f == null) {
-         return null;
-      }
-      String path = f.getParent();
-      if (f.isDirectory()) {
-         path = f.getAbsolutePath();
-      }
-
-      try {
-         openAcquisitionData(path, inRAM);
-      } catch (MMScriptException ex) {
-         ReportingUtils.showError(ex);
-      }
-      return f;
-   }
-
-   @Override
-   public String openAcquisitionData(String dir, boolean inRAM, boolean show) 
-           throws MMScriptException {
-      String rootDir = new File(dir).getAbsolutePath();
-      String name = new File(dir).getName();
-      rootDir = rootDir.substring(0, rootDir.length() - (name.length() + 1));
-      name = acqMgr_.getUniqueAcquisitionName(name);
-      acqMgr_.openAcquisition(name, rootDir, show, !inRAM, true);
-      try {
-         getAcquisitionWithName(name).initialize();
-      } catch (MMScriptException mex) {
-         acqMgr_.closeAcquisition(name);
-         throw (mex);
-      }
-      return name;
-   }
-
-   /**
-    * Opens an existing data set. Shows the acquisition in a window.
-    * @param dir location of data set
-    * @param inRam whether not to open completely in RAM
-    * @return The acquisition object.
-    * @throws MMScriptException
-    */
-   @Override
-   public String openAcquisitionData(String dir, boolean inRam) throws MMScriptException {
-      return openAcquisitionData(dir, inRam, true);
-   }
-
    protected void changeBinning() {
       try {
          live().setSuspended(true);
@@ -1280,11 +1227,9 @@ public class MMStudio implements Studio, CompatibilityInterface {
 
       stopAllActivity();
       
-      // Close all image windows associated with MM.  Canceling saving of 
-      // any of these should abort shutdown
-      if (!acqMgr_.closeAllImageWindows()) {
-         return false;
-      }
+      // TODO: we should close all open image display windows, and if the
+      // user cancels any of them, then we should abort shutdown.
+      ReportingUtils.logError("TODO: allow cancellation of shutdown if close-display option is selected for open display window");
 
       if (!cleanupOnClose(calledByImageJ)) {
          return false;
@@ -1654,13 +1599,13 @@ public class MMStudio implements Studio, CompatibilityInterface {
 
    
    @Override
-   public String runAcquisition() throws MMScriptException {
+   public Datastore runAcquisition() throws MMScriptException {
       if (SwingUtilities.isEventDispatchThread()) {
          throw new MMScriptException("Acquisition can not be run from this (EDT) thread");
       }
       testForAbortRequests();
       if (acqControlWin_ != null) {
-         String name = acqControlWin_.runAcquisition();
+         MMAcquisition acq = acqControlWin_.runAcquisition();
          try {
             while (acqControlWin_.isAcquisitionRunning()) {
                Thread.sleep(50);
@@ -1668,7 +1613,7 @@ public class MMStudio implements Studio, CompatibilityInterface {
          } catch (InterruptedException e) {
             ReportingUtils.showError(e);
          }
-         return name;
+         return acq.getDatastore();
       } else {
          throw new MMScriptException(
                "Acquisition setup window must be open for this command to work.");
@@ -1676,13 +1621,12 @@ public class MMStudio implements Studio, CompatibilityInterface {
    }
 
    @Override
-   public String runAcquisition(String name, String root)
+   public Datastore runAcquisition(String name, String root)
          throws MMScriptException {
       testForAbortRequests();
       if (acqControlWin_ != null) {
-         String acqName = acqControlWin_.runAcquisition(name, root);
+         MMAcquisition acq = acqControlWin_.runAcquisition(name, root);
          try {
-            MMAcquisition acq = acqMgr_.getAcquisition(acqName);
             Datastore store = acq.getDatastore();
             while (!store.getIsFrozen()) {
                Thread.sleep(100);
@@ -1690,7 +1634,7 @@ public class MMStudio implements Studio, CompatibilityInterface {
          } catch (InterruptedException e) {
             ReportingUtils.showError(e);
          }
-         return acqName;
+         return acq.getDatastore();
       } else {
          throw new MMScriptException(
                "Acquisition setup window must be open for this command to work.");
@@ -1746,107 +1690,6 @@ public class MMStudio implements Studio, CompatibilityInterface {
    }
 
    @Override
-   public String getUniqueAcquisitionName(String stub) {
-      return acqMgr_.getUniqueAcquisitionName(stub);
-   }
-   
-   @Override
-   public void openAcquisition(String name, String rootDir, int nrFrames,
-         int nrChannels, int nrSlices, int nrPositions, boolean show, boolean save)
-         throws MMScriptException {
-      if (nrFrames <= 0) {
-         nrFrames = 1;
-         ReportingUtils.logError("Coercing frame count to 1");
-      }
-      if (nrChannels <= 0) {
-         nrChannels = 1;
-         ReportingUtils.logError("Coercing channel count to 1");
-      }
-      if (nrSlices <= 0) {
-         nrSlices = 1;
-         ReportingUtils.logError("Coercing slice count to 1");
-      }
-      if (nrPositions <= 0) {
-         nrPositions = 1;
-         ReportingUtils.logError("Coercing position count to 1");
-      }
-      acqMgr_.openAcquisition(name, rootDir, show, save);
-      MMAcquisition acq = acqMgr_.getAcquisition(name);
-      acq.setDimensions(nrFrames, nrChannels, nrSlices, nrPositions);
-   }
-
-   /**
-    * Call initializeAcquisition with values extracted from the provided 
-    * JSONObject.
-    */
-   private void initializeAcquisitionFromTags(String name, JSONObject tags) throws JSONException, MMScriptException {
-      int width = MDUtils.getWidth(tags);
-      int height = MDUtils.getHeight(tags);
-      int byteDepth = MDUtils.getDepth(tags);
-      int bitDepth = byteDepth * 8;
-      if (MDUtils.hasBitDepth(tags)) {
-         bitDepth = MDUtils.getBitDepth(tags);
-      }
-      initializeAcquisition(name, width, height, byteDepth, bitDepth);
-   }
-
-   @Override
-   public void initializeAcquisition(String name, int width, int height, int byteDepth, int bitDepth) throws MMScriptException {
-      MMAcquisition acq = acqMgr_.getAcquisition(name);
-      //number of multi-cam cameras is set to 1 here for backwards compatibility
-      //might want to change this later
-      acq.setImagePhysicalDimensions(width, height, byteDepth, bitDepth, 1);
-      acq.initialize();
-   }
-
-   @Override
-   public int getAcquisitionImageWidth(String acqName) throws MMScriptException {
-      MMAcquisition acq = acqMgr_.getAcquisition(acqName);
-      return acq.getWidth();
-   }
-
-   @Override
-   public int getAcquisitionImageHeight(String acqName) throws MMScriptException{
-      MMAcquisition acq = acqMgr_.getAcquisition(acqName);
-      return acq.getHeight();
-   }
-
-   @Override
-   public int getAcquisitionImageBitDepth(String acqName) throws MMScriptException {
-      MMAcquisition acq = acqMgr_.getAcquisition(acqName);
-      return acq.getBitDepth();
-   }
-   
-   @Override
-   public int getAcquisitionImageByteDepth(String acqName) throws MMScriptException{
-      MMAcquisition acq = acqMgr_.getAcquisition(acqName);
-      return acq.getByteDepth();
-   }
-
-   @Override public int getAcquisitionMultiCamNumChannels(String acqName) throws MMScriptException{
-      MMAcquisition acq = acqMgr_.getAcquisition(acqName);
-      return acq.getMultiCameraNumChannels();
-   }
-   
-   @Override
-   public Boolean acquisitionExists(String name) {
-      return acqMgr_.acquisitionExists(name);
-   }
-
-   @Override
-   public void closeAcquisition(String name) throws MMScriptException {
-      acqMgr_.closeAcquisition(name);
-   }
-
-   @Override
-   public void closeAcquisitionDisplays(String name) throws MMScriptException {
-      Datastore store = acqMgr_.getAcquisition(name).getDatastore();
-      for (DisplayWindow display : displays().getDisplays(store)) {
-         display.forceClosed();
-      }
-   }
-
-   @Override
    public void refreshGUI() {
       updateGUI(true);
    }
@@ -1856,38 +1699,6 @@ public class MMStudio implements Studio, CompatibilityInterface {
       updateGUI(true, true);
    }
 
-   @Override
-   public void setAcquisitionAddImageAsynchronous(String name) throws MMScriptException {
-      MMAcquisition acq = acqMgr_.getAcquisition(name);
-      acq.setAsynchronous();
-   }
-
-   public void addImage(String name, TaggedImage taggedImg,
-           boolean updateDisplay,
-           boolean waitForDisplay) throws MMScriptException {
-      acqMgr_.getAcquisition(name).insertImage(taggedImg, updateDisplay, waitForDisplay);
-   }
-
-   @Override
-   public void closeAllAcquisitions() {
-      acqMgr_.closeAll();
-   }
-
-   @Override
-   public String[] getAcquisitionNames()
-   {
-      return acqMgr_.getAcquisitionNames();
-   }
-
-   public MMAcquisition getAcquisitionWithName(String name) throws MMScriptException {
-      return acqMgr_.getAcquisition(name);
-   }
-
-   @Override
-   public Datastore getAcquisitionDatastore(String name) throws MMScriptException {
-      return acqMgr_.getAcquisition(name).getDatastore();
-   }
-   
    public AcquisitionWrapperEngine getAcquisitionEngine() {
       return engine_;
    }
@@ -2016,11 +1827,6 @@ public class MMStudio implements Studio, CompatibilityInterface {
       
       engine_.setSequenceSettings(ss);
       acqControlWin_.updateGUIContents();
-   }
-
-   @Override
-   public void promptToSaveAcquisition(String name, boolean prompt) throws MMScriptException {
-      getAcquisitionWithName(name).promptToSave(prompt);
    }
 
    @Override

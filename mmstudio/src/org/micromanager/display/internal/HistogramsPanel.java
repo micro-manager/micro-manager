@@ -294,8 +294,13 @@ public final class HistogramsPanel extends JPanel implements Histograms {
 
    @Subscribe
    public synchronized void onDisplayDestroyed(DisplayDestroyedEvent event) {
-      for (ChannelControlPanel panel : channelPanels_) {
-         panel.cleanup();
+      try {
+         for (ChannelControlPanel panel : channelPanels_) {
+            panel.cleanup();
+         }
+      }
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Error during histograms cleanup");
       }
    }
 }

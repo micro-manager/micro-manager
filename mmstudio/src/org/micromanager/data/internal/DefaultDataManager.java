@@ -22,6 +22,8 @@ package org.micromanager.data.internal;
 
 import java.io.IOException;
 
+import javax.swing.JFileChooser;
+
 import mmcorej.TaggedImage;
 
 import org.json.JSONException;
@@ -84,6 +86,17 @@ public class DefaultDataManager implements DataManager {
       result.setStorage(new StorageSinglePlaneTiffSeries(result, directory,
             true));
       return result;
+   }
+
+   @Override
+   public Datastore promptForDataToLoad(boolean isVirtual) throws IOException {
+      // TODO: long-term, we should probably rip out most of the logic from
+      // utils.FileDialogs.show() and insert it here.
+      JFileChooser chooser = new JFileChooser();
+      if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+         return loadData(chooser.getSelectedFile().getName(), isVirtual);
+      }
+      return null;
    }
 
    @Override

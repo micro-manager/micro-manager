@@ -61,9 +61,6 @@ public class DefaultDisplaySettings implements DisplaySettings {
       Color[] defaultColors = new Color[] {Color.YELLOW, Color.CYAN,
          Color.MAGENTA, Color.RED, Color.GREEN, Color.BLUE, Color.ORANGE};
       Integer[] defaultIntColors = colorsToInts(defaultColors);
-      Integer[] savedColors = profile.getIntArray(DefaultDisplaySettings.class,
-            "channelColors", defaultIntColors);
-      builder.channelColors(intsToColors(savedColors));
 
       builder.channelDisplayModeIndex(profile.getInt(
             DefaultDisplaySettings.class, "channelDisplayModeIndex", 0));
@@ -104,8 +101,6 @@ public class DefaultDisplaySettings implements DisplaySettings {
     */
    public static void setStandardSettings(DisplaySettings settings) throws IOException {
       DefaultUserProfile profile = DefaultUserProfile.getInstance();
-      profile.setIntArray(DefaultDisplaySettings.class,
-            "channelColors", colorsToInts(settings.getChannelColors()));
       profile.setInt(DefaultDisplaySettings.class,
             "channelDisplayModeIndex", settings.getChannelDisplayModeIndex());
       profile.setDouble(DefaultDisplaySettings.class,

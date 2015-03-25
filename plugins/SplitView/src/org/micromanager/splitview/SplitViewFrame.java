@@ -185,7 +185,7 @@ public class SplitViewFrame extends MMFrame {
             if (timer_.isRunning()) {
                return;
             }
-            if (!gui_.compat().acquisitionExists(ACQNAME)) {
+            if (dataStore_ == null) {
                try {
                   calculateSize();
                   dataStore_ = openAcq();
