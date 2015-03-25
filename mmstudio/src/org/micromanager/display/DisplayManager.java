@@ -151,4 +151,13 @@ public interface DisplayManager {
     * @return A list of all DisplayWindows that Micro-Manager knows about.
     */
    public List<DisplayWindow> getAllImageWindows();
+
+   /**
+    * Given a Datastore, close any open DisplayWindows for that Datastore.
+    * If the Datastore is managed, then the user may receive a prompt to
+    * save their data, which they have the option to cancel.
+    * @return True if all windows were closed; false otherwise (e.g. because
+    *         the user cancelled saving).
+    */
+   public boolean closeDisplaysFor(Datastore store);
 }

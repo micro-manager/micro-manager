@@ -61,7 +61,7 @@ public interface CompatibilityInterface {
     * Returns after Acquisition finishes
     * Note that this function should not be executed on the EDT (which is the
     * thread running the UI).  
-    * @return The name of the acquisition created.
+    * @return The Datastore containing the images from the acquisition.
     * @throws MMScriptException
     */
    public Datastore runAcquisition() throws MMScriptException;
@@ -74,7 +74,7 @@ public interface CompatibilityInterface {
     * thread running the UI).
     * @param name Name of this acquisition.
     * @param root Place in the file system where data can be stored.
-    * @return The name of the acquisition created
+    * @return The Datastore containing the images from the acquisition.
     * @throws MMScriptException
     */
    public Datastore runAcquisition(String name, String root) throws MMScriptException;
