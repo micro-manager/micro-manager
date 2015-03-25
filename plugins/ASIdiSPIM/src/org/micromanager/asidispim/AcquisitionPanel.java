@@ -2013,6 +2013,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             gui_.setAcquisitionProperty(acqName, "z-step_um",  
                   NumberUtils.doubleToDisplayString(getStepSizeUm()) );
             // Properties for use by MultiViewRegistration plugin
+            // Format is: x_y_z, set to 1 if we should rotate around this axis.
             gui_.setAcquisitionProperty(acqName, "MVRotationAxis", "0_1_0");
             gui_.setAcquisitionProperty(acqName, "MVRotations", viewString);
                       
