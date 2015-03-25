@@ -148,39 +148,6 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
        if (!estimateBackground_ || backgroundPix_.containsKey(channel)) {
            return;
        }
-//      ArrayList<String> labelsToUse = new ArrayList<String>();
-//      for (String key : fullResStorage_.imageKeys()) {
-//         int[] indices = MDUtils.getIndices(key); //c s f p
-//         if (indices[0] == channel && indices[2] == 0) { //correct channel from frame 0
-//               labelsToUse.add(key);
-//         }
-//         if (indices[2] > 0) {
-//            break; // past frame 0
-//         }
-//      }
-//      if (labelsToUse.size() == 0) {
-//         ReportingUtils.showError("No valid images for generating background value found!");
-//         throw new RuntimeException();
-//      }
-//      int pixPerImage = fullResTileHeightIncludingOverlap_ * fullResTileWidthIncludingOverlap_;
-//      int imagesToUse = Math.min(MAX_PIXELS_FOR_BACKGROUND_CALC, labelsToUse.size() * pixPerImage) / pixPerImage;
-//      int[] pixVals = new int[imagesToUse * pixPerImage];
-//      for (int i = 0; i < imagesToUse; i++) {
-//         String label = labelsToUse.get(i);
-//         int[] indices = MDUtils.getIndices(label);
-//         if (byteDepth_ == 1) {
-//            byte[] pix = (byte[]) fullResStorage_.getImage(indices[0], indices[1], indices[2], indices[3]).pix;
-//            for (int j = 0; j < pixPerImage; j++) {
-//               pixVals[i * pixPerImage + j] = pix[j] & 0xff;
-//            }
-//         } else {
-//            short[] pix = (short[]) fullResStorage_.getImage(indices[0], indices[1], indices[2], indices[3]).pix;
-//            for (int j = 0; j < pixPerImage; j++) {
-//               pixVals[i * pixPerImage + j] = pix[j] & 0xffff;
-//            }
-//         }
-//      }
-
       int[] pixVals = new int[fullResTileHeightIncludingOverlap_ * fullResTileWidthIncludingOverlap_];
       if (byteDepth_ == 1) {
          for (int j = 0; j < pixVals.length; j++) {
@@ -480,6 +447,8 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
                   //it is the bottom right corner, no more pix to add
                }
                //add averaged pixel into appropriate quadrant of current res level
+               //if full res tile has an odd number of pix, the last one gets chopped off
+               //to make it fit into tile containers
                try {
                   int index = ((y + yPos * tileHeight_)/2) * tileWidth_ + (x + xPos * tileWidth_)/2;
                   if (byteDepth_ == 1) {
