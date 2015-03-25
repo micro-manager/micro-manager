@@ -73,19 +73,17 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private boolean useCustomIntervals_;
    protected JSONObject summaryMetadata_;
    private ArrayList<AcqSettingsListener> settingsListeners_;
-   private AcquisitionManager acqManager_;
 
-   public AcquisitionWrapperEngine(AcquisitionManager mgr) {
+   public AcquisitionWrapperEngine() {
       nameToProcessorClass_ = new HashMap<String, Class<? extends DataProcessor<TaggedImage>>>();
       taggedImageProcessors_ = new ArrayList<DataProcessor<TaggedImage>>();
       useCustomIntervals_ = false;
       settingsListeners_ = new ArrayList<AcqSettingsListener>();
-      acqManager_ = mgr;
    }
 
    @Override
    public MMAcquisition acquire() throws MMException {
-      return runAcquisition(getSequenceSettings(), acqManager_);
+      return runAcquisition(getSequenceSettings());
    }
 
    @Override
@@ -111,8 +109,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       return acquisitionEngine2010;
    }
 
-   protected MMAcquisition runAcquisition(SequenceSettings acquisitionSettings, 
-           AcquisitionManager acqManager) {
+   protected MMAcquisition runAcquisition(SequenceSettings acquisitionSettings) {
       //Make sure computer can write to selected location and that there is enough space to do so
       if (saveFiles_) {
          File root = new File(rootName_);
@@ -152,7 +149,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
          // Create an MMAcquisition object, which will result in an ImageCache
          // and VirtualImageDisplay if desired
-         MMAcquisition acq = acqManager.createAcquisition(
+         MMAcquisition acq = new MMAcquisition("Acq",
                  summaryMetadata_, acquisitionSettings.save, this,
                  AcqControlDlg.getShouldHideMDADisplay());
          Datastore store = acq.getDatastore();
