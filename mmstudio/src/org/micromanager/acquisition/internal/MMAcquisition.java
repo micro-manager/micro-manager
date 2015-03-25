@@ -20,6 +20,8 @@
 
 package org.micromanager.acquisition.internal;
 
+import com.google.common.eventbus.Subscribe;
+
 import ij.ImagePlus;
 
 import java.awt.Color;
@@ -67,6 +69,7 @@ import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.internal.dialogs.AcqControlDlg;
 
 import org.micromanager.display.ControlsFactory;
+import org.micromanager.display.DisplayDestroyedEvent;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.DefaultDisplayWindow;
@@ -168,6 +171,7 @@ public class MMAcquisition {
       if (show_) {
          display_ = new DefaultDisplayWindow(store_, makeControlsFactory());
          display_.setDisplaySettings(DefaultDisplaySettings.legacyFromJSON(summaryMetadata));
+         display_.registerForEvents(this);
       }
   }
    
@@ -406,6 +410,7 @@ public class MMAcquisition {
          if (show_ && !existing_) {
             // NB pre-existing setups will have loaded saved display settings.
             display_ = new DefaultDisplayWindow(store_, makeControlsFactory());
+            display_.registerForEvents(this);
          }
          initialized_ = true;
       }
@@ -674,6 +679,12 @@ public class MMAcquisition {
          return true;
       }
       return false;
+   }
+
+   @Subscribe
+   public void onDisplayDestroyed(DisplayDestroyedEvent event) {
+      display_.unregisterForEvents(this);
+      display_ = null;
    }
    
    /**

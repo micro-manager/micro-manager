@@ -72,7 +72,6 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private ArrayList<Double> customTimeIntervalsMs_;
    private boolean useCustomIntervals_;
    protected JSONObject summaryMetadata_;
-   protected Datastore store_;
    private ArrayList<AcqSettingsListener> settingsListeners_;
    private AcquisitionManager acqManager_;
 
@@ -85,7 +84,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    @Override
-   public String acquire() throws MMException {
+   public MMAcquisition acquire() throws MMException {
       return runAcquisition(getSequenceSettings(), acqManager_);
    }
 
@@ -112,7 +111,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       return acquisitionEngine2010;
    }
 
-   protected String runAcquisition(SequenceSettings acquisitionSettings, 
+   protected MMAcquisition runAcquisition(SequenceSettings acquisitionSettings, 
            AcquisitionManager acqManager) {
       //Make sure computer can write to selected location and that there is enough space to do so
       if (saveFiles_) {
@@ -153,15 +152,14 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
          // Create an MMAcquisition object, which will result in an ImageCache
          // and VirtualImageDisplay if desired
-         String acqName = acqManager.createAcquisition(
+         MMAcquisition acq = acqManager.createAcquisition(
                  summaryMetadata_, acquisitionSettings.save, this,
                  AcqControlDlg.getShouldHideMDADisplay());
-         MMAcquisition acq = acqManager.getAcquisition(acqName);
-         store_ = acq.getDatastore();
+         Datastore store = acq.getDatastore();
 
          // Start pumping processed images into the ImageCache
          DefaultTaggedImageSink sink = new DefaultTaggedImageSink(
-                 procStackOutputQueue, store_);
+                 procStackOutputQueue, store);
          sink.start(new Runnable() {
             @Override
             public void run() {
@@ -169,7 +167,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
             }
          });
         
-         return acqName;
+         return acq;
 
       } catch (Throwable ex) {
          ReportingUtils.showError(ex);
@@ -1209,11 +1207,6 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    @Override
    public JSONObject getSummaryMetadata() {
       return summaryMetadata_;
-   }
-
-   @Override
-   public Datastore getDatastore() {
-      return store_;
    }
 
     @Override

@@ -77,6 +77,7 @@ public class DisplayGroupManager {
 
       @Subscribe
       public void onDisplayDestroyed(DisplayDestroyedEvent event) {
+         display_.unregisterForEvents(this);
          master_.onDisplayDestroyed(display_, event);
       }
 

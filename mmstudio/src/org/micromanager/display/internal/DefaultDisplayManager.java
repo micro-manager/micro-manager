@@ -246,7 +246,7 @@ public class DefaultDisplayManager implements DisplayManager {
       DisplayWindow display = event.getDisplay();
       Datastore store = display.getDatastore();
       if (getIsTracked(store)) {
-      storeToDisplays_.get(store).remove(display);
+         storeToDisplays_.get(store).remove(display);
       }
    }
 }

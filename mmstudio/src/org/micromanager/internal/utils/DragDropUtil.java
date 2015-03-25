@@ -93,9 +93,9 @@ public class DragDropUtil implements DropTargetListener {
                      @Override
                      public void run() {
                         try {
-                           MMStudio.getInstance().openAcquisitionData(dir, true);
-                        } catch (MMScriptException ex) {
-                           ReportingUtils.showError(ex);
+                           MMStudio.getInstance().data().loadData(dir, false);
+                        } catch (IOException e) {
+                           ReportingUtils.showError(e, "There was an error when opening the file at " + dir);
                         }
                      }
                   }.start();

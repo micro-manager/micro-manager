@@ -38,7 +38,7 @@ import org.micromanager.data.Image;
 
 import org.micromanager.display.internal.events.FPSEvent;
 
-import org.micromanager.internal.utils.CanvasPaintPending;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * This class handles the logic related to updating the image displayed on
@@ -72,6 +72,7 @@ public class CanvasUpdateThread extends Thread {
    private long lastImageIndex_ = 0;
    private long lastFPSUpdateTimestamp_ = -1;
 
+   // TODO: pass along the DisplayWindow instead of its EventBus.
    public CanvasUpdateThread(Datastore store, MMVirtualStack stack,
          ImagePlus plus, EventBus bus) {
       setName("Canvas display thread for store " + store.hashCode());
@@ -79,6 +80,7 @@ public class CanvasUpdateThread extends Thread {
       stack_ = stack;
       plus_ = plus;
       displayBus_ = bus;
+      displayBus_.register(this);
       coordsQueue_ = new LinkedBlockingQueue<Coords>();
       shouldStop_ = new AtomicBoolean(false);
    }
@@ -132,8 +134,7 @@ public class CanvasUpdateThread extends Thread {
             // Wait for the canvas to be available. If we don't do this,
             // then our framerate tanks, possibly because of repaint
             // events piling up in the EDT. It's hard to tell. 
-            while (!shouldStop_.get() && CanvasPaintPending.isMyPaintPending(
-                  plus_.getCanvas(), plus_)) {
+            while (!shouldStop_.get() && plus_.getCanvas().getPaintPending()) {
                try {
                   Thread.sleep(10);
                }
@@ -144,8 +145,7 @@ public class CanvasUpdateThread extends Thread {
                   }
                }
             }
-            CanvasPaintPending.setPaintPending(
-                  plus_.getCanvas(), plus_);
+            plus_.getCanvas().setPaintPending(true);
          }
          final Image image = store_.getImage(coords);
          if (image != null) {
@@ -159,10 +159,10 @@ public class CanvasUpdateThread extends Thread {
                }
             });
          }
-         else {
+         else if (plus_ != null && plus_.getCanvas() != null) {
             // TODO: is this an error situation? I.e. that the image is null?
             // Manually clear the paint pending; otherwise the display breaks.
-            CanvasPaintPending.removePaintPending(plus_.getCanvas(), plus_);
+            plus_.getCanvas().setPaintPending(false);
          }
       } // End while loop
    }
@@ -240,6 +240,12 @@ public class CanvasUpdateThread extends Thread {
 
    @Subscribe
    public void onDisplayDestroyed(DisplayDestroyedEvent event) {
-      stopDisplayUpdates();
+      try {
+         stopDisplayUpdates();
+         displayBus_.unregister(this);
+      }
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Error cleaning up display thread");
+      }
    }
 }
