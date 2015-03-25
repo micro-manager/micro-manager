@@ -1395,8 +1395,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          // for now use the current X position as the start of acquisition and always start in positive X direction
          // for now always do serpentine scan with 2 passes at the same Y location, one pass each direction over the sample
          // => total scan distance = # slices * slice step size * sqrt(2)
-         //    scan start position = current X position
-         //    scan stop position = scan start position + total distance
+         //    scan start position = current X position - total distance/2
+         //    scan stop position = scan start position + total distance/2
          //    slow axis start = current Y position
          //    slow axis stop = current Y position
          //    X motor speed = slice step size * sqrt(2) / slice duration
@@ -1425,9 +1425,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             return false;
          }
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_FAST_START,
-               (float)(posUm.x / 1000d));
+               (float)((posUm.x - (scanDistance / 2)) / 1000d));
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_FAST_STOP,
-               (float)((posUm.x + scanDistance) / 1000d));
+               (float)((posUm.x + (scanDistance / 2)) / 1000d));
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_SLOW_START,
                (float)(posUm.y / 1000d));
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_SLOW_STOP,
@@ -1950,7 +1950,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                core_.setExposure(secondCamera, exposureTime);
             }
             
-            // Use thes to build metadata for MVR plugin
+            // seems to have a problem if the core's camera has been set otherwise
+            core_.setCameraDevice(firstCamera);
+            
+            // Use this to build metadata for MVR plugin
             String viewString = "";
             final String SEPARATOR = "_";
             // set up channels (side A/B is treated as channel too)
