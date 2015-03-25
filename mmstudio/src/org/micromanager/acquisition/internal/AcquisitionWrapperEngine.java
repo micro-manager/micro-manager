@@ -149,7 +149,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
          MMAcquisition acq = new MMAcquisition("Acq",
                  summaryMetadata_, acquisitionSettings.save, this,
-                 AcqControlDlg.getShouldHideMDADisplay());
+                 !AcqControlDlg.getShouldHideMDADisplay());
          Datastore store = acq.getDatastore();
 
          // Start pumping processed images into the ImageCache
