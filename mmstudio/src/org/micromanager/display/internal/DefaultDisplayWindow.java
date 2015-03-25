@@ -485,12 +485,14 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          // Halt our canvas draw thread, clear all paint pending for the old
          // canvas, then create a new draw thread, so that lingering references
          // to the old canvas are not kept around.
-         canvasThread_.stopDisplayUpdates();
-         try {
-            canvasThread_.join();
-         }
-         catch (InterruptedException e) {
-            ReportingUtils.logError(e, "Interrupted while waiting for canvas update thread to terminate");
+         if (canvasThread_ != null) {
+            canvasThread_.stopDisplayUpdates();
+            try {
+               canvasThread_.join();
+            }
+            catch (InterruptedException e) {
+               ReportingUtils.logError(e, "Interrupted while waiting for canvas update thread to terminate");
+            }
          }
          // TODO: assuming mode 1 for now.
          ijImage_ = new MMCompositeImage(ijImage_, 1, ijImage_.getTitle());
