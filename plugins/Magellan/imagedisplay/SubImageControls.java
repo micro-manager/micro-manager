@@ -62,7 +62,7 @@ public class SubImageControls extends Panel {
       zStep_ = acq_.getZStep();
       initComponents();
    }
-
+   
    private void updateZTopAndBottom() {
       //Update the text fields next to the sliders in response to adjustment
       double zBottom = zStep_ * zBottomScrollbar_.getValue() + zOrigin_;
@@ -73,9 +73,6 @@ public class SubImageControls extends Panel {
       ((ExploreAcquisition) acq_).setZLimits(zTop, zBottom);
       //update colored areas on z scrollbar
       //convert to 0 based index based on which slices have been explored
-      int minExploreIndex = ((ExploreAcquisition) acq_).getMinSliceIndex() - ((ExploreAcquisition) acq_).getLowestExploredSliceIndex();
-      int maxExploreIndex = ((ExploreAcquisition) acq_).getMaxSliceIndex() - ((ExploreAcquisition) acq_).getLowestExploredSliceIndex();
-      scrollerPanel_.setExploreZIndices(minExploreIndex, maxExploreIndex);
    }
    
    private void expandZLimitsIfNeeded(int topScrollbarIndex, int bottomScrollbarIndex) {
@@ -88,6 +85,7 @@ public class SubImageControls extends Panel {
          zTopScrollbar_.setMinimum(Math.min(bottomScrollbarIndex, topScrollbarIndex) - 1); 
          zBottomScrollbar_.setMinimum(Math.min(bottomScrollbarIndex, topScrollbarIndex) - 1); 
       }     
+      this.repaint();
    }
    
    private void zTopTextFieldAction() {
@@ -147,6 +145,8 @@ public class SubImageControls extends Panel {
             //max value of scrollbar is max - extent
             zTopScrollbar_ = new JScrollBar(JScrollBar.HORIZONTAL, 0, 1, -1, 2);
             zBottomScrollbar_ = new JScrollBar(JScrollBar.HORIZONTAL, 0, 1, -1, 2);
+            zTopScrollbar_.setUI(new ColorableScrollbarUI());
+            zBottomScrollbar_.setUI(new ColorableScrollbarUI());
             zTopTextField_ = new JTextField(zOrigin_ + "");
             zTopTextField_.addActionListener(new ActionListener() {
                @Override
@@ -314,6 +314,15 @@ public class SubImageControls extends Panel {
       }
       
       display_.drawOverlay();
+      if (acq_ instanceof ExploreAcquisition) {
+         //convert slice index to explore scrollbar index       
+         ((ColorableScrollbarUI)zTopScrollbar_.getUI()).setHighlightedIndices(sliceIndex_ + ((ExploreAcquisition) acq_).getLowestExploredSliceIndex(),
+                 ((ExploreAcquisition) acq_).getLowestExploredSliceIndex(), ((ExploreAcquisition) acq_).getHighestExploredSliceIndex());
+         ((ColorableScrollbarUI)zBottomScrollbar_.getUI()).setHighlightedIndices(sliceIndex_ + ((ExploreAcquisition) acq_).getLowestExploredSliceIndex() ,
+                 ((ExploreAcquisition) acq_).getLowestExploredSliceIndex(), ((ExploreAcquisition) acq_).getHighestExploredSliceIndex());
+         this.repaint();
+      }
+      
    }
    
    public int getDisplayedSlice() {

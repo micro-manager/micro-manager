@@ -102,16 +102,6 @@ public class ScrollerPanel extends Panel {
          scrollers_.add(scroller);
       }
    }
-   
-   /**
-    * 
-    * @param minExploreIndex
-    * @param maxExploreIndex 
-    */
-   public void setExploreZIndices(int minExploreIndex, int maxExploreIndex) {
-      ((ColorableScrollbarUI) zScroller_.getScrollBar().getUI()).setColorIndices(minExploreIndex, maxExploreIndex);
-      this.repaint();
-   }
 
    /**
     * One of our AxisScrollers changed position; update the image.
