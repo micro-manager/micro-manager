@@ -43,6 +43,8 @@ import javax.swing.event.ChangeListener;
 import org.micromanager.api.MMListenerInterface;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.MMStudio;
+import org.micromanager.asidispim.Utils.ControllerUtils;
+import static org.micromanager.asidispim.Utils.MyJavaUtils.isMac;
 import org.micromanager.asidispim.Utils.StagePositionUpdater;
 import org.micromanager.internalinterfaces.LiveModeListener; 
 import org.micromanager.utils.MMFrame;
@@ -86,6 +88,7 @@ public class ASIdiSPIMFrame extends MMFrame
    private final Joystick joystick_;
    private final Positions positions_;
    private final Cameras cameras_;
+   private final ControllerUtils controller_;
    
    private final DevicesPanel devicesPanel_;
    private final AcquisitionPanel acquisitionPanel_;
@@ -114,6 +117,7 @@ public class ASIdiSPIMFrame extends MMFrame
       positions_ = new Positions(gui, devices_);
       joystick_ = new Joystick(devices_, props_);
       cameras_ = new Cameras(gui, devices_, props_, prefs_);
+      controller_ = new ControllerUtils(gui, props_, prefs_, devices_);
       
       // create the panels themselves
       // in some cases dependencies create required ordering
@@ -126,7 +130,7 @@ public class ASIdiSPIMFrame extends MMFrame
       navigationPanel_ = new NavigationPanel(gui, devices_, props_, joystick_,
             positions_, prefs_, cameras_, stagePosUpdater_);
       acquisitionPanel_ = new AcquisitionPanel(gui, devices_, props_, joystick_, 
-            cameras_, prefs_, stagePosUpdater_, positions_);
+            cameras_, prefs_, stagePosUpdater_, positions_, controller_);
       dataAnalysisPanel_ = new DataAnalysisPanel(gui, prefs_);
       settingsPanel_ = new SettingsPanel(devices_, props_, prefs_, stagePosUpdater_);
       stagePosUpdater_.oneTimeUpdate();  // needed for NavigationPanel
@@ -137,7 +141,11 @@ public class ASIdiSPIMFrame extends MMFrame
       // all added tabs must be of type ListeningJPanel
       // only use addLTab, not addTab to guarantee this
       tabbedPane_ = new ListeningJTabbedPane();
-      tabbedPane_.setTabPlacement(JTabbedPane.LEFT);
+      if (isMac()) {
+         tabbedPane_.setTabPlacement(JTabbedPane.TOP);
+      } else {
+         tabbedPane_.setTabPlacement(JTabbedPane.LEFT);
+      }
       tabbedPane_.addLTab(navigationPanel_);  // tabIndex = 0
       tabbedPane_.addLTab(setupPanelA_);      // tabIndex = 1
       tabbedPane_.addLTab(setupPanelB_);      // tabIndex = 2

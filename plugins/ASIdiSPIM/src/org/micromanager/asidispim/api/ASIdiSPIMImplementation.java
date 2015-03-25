@@ -38,10 +38,12 @@ import org.micromanager.asidispim.AcquisitionPanel;
  */
 public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
 
+   @Override
    public void runAcquisition() throws ASIdiSPIMException {
       getAcquisitionPanel().runAcquisition();
    }
    
+   @Override
    public void setAcquisitionNamePrefix(String acqName) throws ASIdiSPIMException {
       getAcquisitionPanel().setAcquisitionNamePrefix(acqName);
    }

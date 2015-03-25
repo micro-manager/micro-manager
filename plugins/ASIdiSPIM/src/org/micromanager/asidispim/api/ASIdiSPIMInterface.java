@@ -39,6 +39,7 @@ public interface ASIdiSPIMInterface {
     * as visible in the acquisition panel.  The definition of current
     * settings may change in the future.
     * 
+    * @throws org.micromanager.asidispim.api.ASIdiSPIMException
     */
    public void runAcquisition() throws ASIdiSPIMException;
    
