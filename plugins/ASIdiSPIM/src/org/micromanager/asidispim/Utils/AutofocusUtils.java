@@ -1,5 +1,5 @@
 
-package org.micromanager.asidispim;
+package org.micromanager.asidispim.Utils;
 
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Data.Devices;
@@ -8,13 +8,13 @@ import org.micromanager.asidispim.Data.Devices;
  *
  * @author nico
  */
-public class ASIdiSPIMAutofocus {
+public class AutofocusUtils {
    private final ScriptInterface gui_;
    private final Devices devices_;
    private int nrImages_ = 10;
    private double step_ = 0.2;
    
-   public ASIdiSPIMAutofocus(ScriptInterface gui, Devices devices) {
+   public AutofocusUtils(ScriptInterface gui, Devices devices) {
       gui_ = gui;
       devices_ = devices;
    }
