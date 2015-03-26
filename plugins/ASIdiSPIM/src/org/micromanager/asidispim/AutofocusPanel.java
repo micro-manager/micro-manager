@@ -67,7 +67,6 @@ public class AutofocusPanel extends ListeningJPanel{
 
       
       // start options panel
-      
       optionsPanel_ = new JPanel(new MigLayout(
             "",
             "[right]16[center]",
@@ -84,6 +83,7 @@ public class AutofocusPanel extends ListeningJPanel{
          }
       });
       optionsPanel_.add(debugCheckBox, "center, span 2, wrap");
+      autofocus_.setDebug(debugCheckBox.isSelected());
  
       // spinner with number of images:
       optionsPanel_.add(new JLabel("Number of Images:"));
@@ -99,6 +99,7 @@ public class AutofocusPanel extends ListeningJPanel{
          }
       };
       pu.addListenerLast(nrImagesSpinner, listenerLast);
+      autofocus_.setNumberOfImages((Integer) nrImagesSpinner.getValue());
       optionsPanel_.add(nrImagesSpinner, "wrap");
       
       // spinner with stepsize:
@@ -116,8 +117,8 @@ public class AutofocusPanel extends ListeningJPanel{
          }
       };
       pu.addListenerLast(stepSizeSpinner, listenerLast);
+      autofocus_.setStepSize(PanelUtils.getSpinnerFloatValue(stepSizeSpinner));
       optionsPanel_.add(stepSizeSpinner, "wrap");
-      
       // end options subpanel
       
       
