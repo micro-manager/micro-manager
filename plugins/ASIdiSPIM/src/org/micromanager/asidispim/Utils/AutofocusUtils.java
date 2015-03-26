@@ -40,7 +40,6 @@ public class AutofocusUtils {
 
    private boolean debug_; // debug mode will display the image sequence
    private int nrImages_;
-   private float stepSize_;
    
    public AutofocusUtils(ScriptInterface gui, Devices devices, Properties props,
          Prefs prefs, Cameras cameras, StagePositionUpdater stagePosUpdater,
@@ -57,13 +56,10 @@ public class AutofocusUtils {
       // defaults
       nrImages_ = 10;
       debug_ = false;
-      stepSize_ = 0.1f;
    }
 
-   public String getAutofocusMethod() {
-      return gui_.getAutofocus().getDeviceName();
-   }
-   
+
+   // TODO eliminate these and read via props object like step size
    public void setDebug(boolean debug) {
       debug_ = debug;
    }
@@ -72,10 +68,6 @@ public class AutofocusUtils {
       nrImages_ = nr;
    }
    
-   public void setStepSize(float stepSize) {
-      stepSize_ = stepSize;
-   }
-
    /**
     * Acquires image stack by scanning the mirror, calculates focus scores
     *
@@ -97,7 +89,9 @@ public class AutofocusUtils {
       final float center = prefs_.getFloat(
             MyStrings.PanelNames.SETUP.toString() + side.toString(), 
             Properties.Keys.PLUGIN_PIEZO_CENTER_POS, 0);
-      final double start = center - ( 0.5 * (nrImages_ * stepSize_));
+      final float stepSize = props_.getPropValueFloat(Devices.Keys.PLUGIN,
+            Properties.Keys.PLUGIN_AUTOFOCUS_STEPSIZE); 
+      final double start = center - ( 0.5 * (nrImages_ - 1) * stepSize);
               
       // TODO: run this on its own thread
       controller_.prepareControllerForAquisition(
@@ -114,7 +108,7 @@ public class AutofocusUtils {
               false, // useTimepoints
               AcquisitionModes.Keys.SLICE_SCAN_ONLY, // scan only the mirror
               100.0f, // delay before side (can go to 0?)
-              stepSize_, // stepSize in microns
+              stepSize, // stepSize in microns
               sliceTiming);
 
       double[] focusScores = new double[nrImages_];
@@ -206,7 +200,9 @@ public class AutofocusUtils {
                // no images within a reasonable amount of time => exit
                throw new ASIdiSPIMException("No images arrived in 5 seconds");
             }
-         }       
+         }
+      } catch (ASIdiSPIMException ex) {
+         throw ex;
       } catch (Exception ex) {
          throw new ASIdiSPIMException("Hardware Error while executing Autofocus");
       } finally {
@@ -215,6 +211,7 @@ public class AutofocusUtils {
             gui_.getMMCore().setShutterOpen(shutterOpen);
             
             // move piezos back to center (neutral) position
+            // TODO move to center position instead of to 0
             if (devices_.isValidMMDevice(Devices.Keys.PIEZOA)) {
                positions_.setPosition(Devices.Keys.PIEZOA, Joystick.Directions.NONE, 0.0);
             }
@@ -254,7 +251,7 @@ public class AutofocusUtils {
 
       // return the position of the scanning device associated with the highest
       // focus score
-      double bestScore = start + stepSize_ * highestIndex;
+      double bestScore = start + stepSize * highestIndex;
       
       return bestScore;
    }

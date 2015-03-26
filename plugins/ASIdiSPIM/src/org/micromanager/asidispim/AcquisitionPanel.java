@@ -1976,6 +1976,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             Properties.Values.PLOGIC_PRESET_2, true);
 
       // move piezos back to center (neutral) position
+      // TODO move to center position instead of to 0
       if (devices_.isValidMMDevice(Devices.Keys.PIEZOA)) {
          positions_.setPosition(Devices.Keys.PIEZOA, Joystick.Directions.NONE, 0.0);
       }
