@@ -5,6 +5,8 @@ import java.io.IOException;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 
+import org.micromanager.data.Datastore;
+
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -32,7 +34,14 @@ public class FileMenu {
                   @Override
                   public void run() {
                      try {
-                        studio_.data().promptForDataToLoad(true);
+                        // TODO: this (and the RAM load below) should recreate
+                        // displays from saved DisplaySettings, when available.
+                        Datastore store = 
+                           studio_.data().promptForDataToLoad(
+                           MMStudio.getInstance().getFrame(), true);
+                        if (store != null) {
+                           studio_.displays().loadDisplays(store);
+                        }
                      }
                      catch (IOException e) {
                         ReportingUtils.showError(e, "There was an error when opening data");
@@ -51,7 +60,12 @@ public class FileMenu {
                   @Override
                   public void run() {
                      try {
-                        studio_.data().promptForDataToLoad(false);
+                        Datastore store = 
+                           studio_.data().promptForDataToLoad(
+                           MMStudio.getInstance().getFrame(), false);
+                        if (store != null) {
+                           studio_.displays().loadDisplays(store);
+                        }
                      }
                      catch (IOException e) {
                         ReportingUtils.showError(e, "There was an error when opening data");

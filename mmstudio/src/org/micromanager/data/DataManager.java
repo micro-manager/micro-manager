@@ -20,6 +20,7 @@
 
 package org.micromanager.data;
 
+import java.awt.Window;
 import java.io.IOException;
 
 import mmcorej.TaggedImage;
@@ -85,7 +86,11 @@ public interface DataManager {
 
    /**
     * Display a dialog prompting the user to select a location on disk, and
-    * invoke loadData() on that selection.
+    * invoke loadData() on that selection. If you then want that data to be
+    * displayed in an image display window, use the
+    * DisplayManager.createDisplay() method or the
+    * DisplayManager.loadDisplays() method.
+    * @param parent Window to show the dialog on top of. May be null.
     * @param isVirtual if true, then only the data required will be loaded from
     *        disk; otherwise the entire dataset will be loaded. See note on
     *        loadData.
@@ -93,7 +98,7 @@ public interface DataManager {
     *         cancels the dialog.
     * @throws IOException if loadData() encountered difficulties.
     */
-   public Datastore promptForDataToLoad(boolean isVirtual) throws IOException;
+   public Datastore promptForDataToLoad(Window parent, boolean isVirtual) throws IOException;
 
    /**
     * Load the image data at the specified location on disk, and return a

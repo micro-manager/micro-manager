@@ -310,12 +310,7 @@ public class MMAcquisition {
          }
          // Now that the datastore is set up, create the display(s).
          if (show_) {
-            List<DisplayWindow> displays = MMStudio.getInstance().displays().loadDisplaySettings(
-                  store_, dirName);
-            if (displays.size() == 0) {
-               // Just create a new default display.
-               new DefaultDisplayWindow(store_, null);
-            }
+            List<DisplayWindow> displays = MMStudio.getInstance().displays().loadDisplays(store_);
          }
       }
 
@@ -385,12 +380,7 @@ public class MMAcquisition {
          duplicate.copyFrom(store_);
          store_ = duplicate;
          if (show_) {
-            List<DisplayWindow> displays = MMStudio.getInstance().displays().loadDisplaySettings(
-                  store_, dirName);
-            if (displays.size() == 0) {
-               // Just create a new default display.
-               new DefaultDisplayWindow(store_, null);
-            }
+            List<DisplayWindow> displays = MMStudio.getInstance().displays().loadDisplays(store_);
          }
          // TODO: re-implement the check below before loading images into RAM
 //         imageCache_ = new MMImageCache(tempImageFileManager);

@@ -20,6 +20,9 @@
 
 package org.micromanager.data.internal;
 
+import java.awt.Window;
+
+import java.io.File;
 import java.io.IOException;
 
 import javax.swing.JFileChooser;
@@ -42,6 +45,7 @@ import org.micromanager.data.internal.StorageSinglePlaneTiffSeries;
 import org.micromanager.events.internal.DefaultEventManager;
 
 import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.utils.FileDialogs;
 // TODO: this should be moved into the API.
 import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.PropertyMap;
@@ -89,14 +93,13 @@ public class DefaultDataManager implements DataManager {
    }
 
    @Override
-   public Datastore promptForDataToLoad(boolean isVirtual) throws IOException {
-      // TODO: long-term, we should probably rip out most of the logic from
-      // utils.FileDialogs.show() and insert it here.
-      JFileChooser chooser = new JFileChooser();
-      if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-         return loadData(chooser.getSelectedFile().getName(), isVirtual);
+   public Datastore promptForDataToLoad(Window parent, boolean isVirtual) throws IOException {
+      File file = FileDialogs.openDir(parent,
+            "Please select an image data set", MMStudio.MM_DATA_SET);
+      if (file == null) {
+         return null;
       }
-      return null;
+      return loadData(file.getPath(), isVirtual);
    }
 
    @Override
@@ -119,6 +122,8 @@ public class DefaultDataManager implements DataManager {
          tmp.copyFrom(result);
          result = tmp;
       }
+      result.setSavePath(directory);
+      result.freeze();
       return result;
    }
 

@@ -118,16 +118,6 @@ public class DefaultDisplayManager implements DisplayManager {
    }
 
    @Override
-   public List<DisplayWindow> loadDisplaySettings(Datastore store, String path) {
-      List<DisplaySettings> allSettings = DefaultDisplaySettings.load(path);
-      ArrayList<DisplayWindow> result = new ArrayList<DisplayWindow>();
-      for (DisplaySettings settings : allSettings) {
-         result.add(new DefaultDisplayWindow(store, null, settings, null));
-      }
-      return result;
-   }
-
-   @Override
    public PropertyMap.PropertyMapBuilder getPropertyMapBuilder() {
       return new DefaultPropertyMap.Builder();
    }
@@ -135,6 +125,23 @@ public class DefaultDisplayManager implements DisplayManager {
    @Override
    public DisplayWindow createDisplay(Datastore store) {
       return new DefaultDisplayWindow(store, null);
+   }
+
+   @Override
+   public List<DisplayWindow> loadDisplays(Datastore store) {
+      String path = store.getSavePath();
+      ArrayList<DisplayWindow> result = new ArrayList<DisplayWindow>();
+      if (path != null) {
+         List<DisplaySettings> allSettings = DefaultDisplaySettings.load(path);
+         for (DisplaySettings settings : allSettings) {
+            result.add(new DefaultDisplayWindow(store, null, settings, null));
+         }
+      }
+      else {
+         // Just create a blank new display.
+         result.add(new DefaultDisplayWindow(store, null));
+      }
+      return result;
    }
 
    @Override

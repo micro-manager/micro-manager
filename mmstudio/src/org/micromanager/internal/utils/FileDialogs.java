@@ -80,7 +80,7 @@ public class FileDialogs {
       }
    }
 
-   public static File show(Window parent,
+   public static File promptForFile(Window parent,
                     String title,
                     File startFile,
                     boolean selectDirectories, boolean load,
@@ -162,16 +162,16 @@ public class FileDialogs {
       return selectedFile;
    }
 
-   private static File show(Window parent, String title, FileType type,
-                    boolean selectDirectories, boolean load) {
+   private static File promptForFile(Window parent, String title,
+         FileType type, boolean selectDirectories, boolean load) {
       String startFile = DefaultUserProfile.getInstance().getString(
             FileDialogs.class, type.name, type.defaultFileName);
       File startDir = null;
       if (startFile != null) {
          startDir = new File(startFile);
       }
-      File result = show(parent, title, startDir, selectDirectories, load,
-                         type.description, type.suffixes, type.suggestFileOnSave);
+      File result = promptForFile(parent, title, startDir, selectDirectories,
+            load, type.description, type.suffixes, type.suggestFileOnSave);
       if (result != null) {
          storePath(type, result);
       }
@@ -185,14 +185,14 @@ public class FileDialogs {
    }
 
    public static File openFile(Window parent, String title, FileType type) {
-      return show(parent, title, type, false, true);
+      return promptForFile(parent, title, type, false, true);
    }
 
    public static File openDir(Window parent, String title, FileType type) {
-      return show(parent, title, type, true, true);
+      return promptForFile(parent, title, type, true, true);
    }
 
    public static File save(Window parent, String title, FileType type) {
-      return show(parent, title, type, false, false);
+      return promptForFile(parent, title, type, false, false);
    }
 }

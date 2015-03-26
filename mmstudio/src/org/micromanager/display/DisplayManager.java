@@ -56,17 +56,6 @@ public interface DisplayManager {
    public DisplaySettings.DisplaySettingsBuilder getDisplaySettingsBuilder();
 
    /**
-    * Load the contents of the display settings file in the specified
-    * path, and create a new DisplayWindow for each distinct set of settings,
-    * attached to the provided Datastore.
-    * @param store The Datastore to load data for
-    * @param path The path of the display settings file
-    * @return A list of DisplayWindows created according to the display
-    *         settings file.
-    */
-   public List<DisplayWindow> loadDisplaySettings(Datastore store, String path);
-
-   /**
     * Generate a "blank" PropertyMap.PropertyMapBuilder with empty mappings.
     * @return A PropertyMapBuilder with no pre-set values.
     */
@@ -78,6 +67,17 @@ public interface DisplayManager {
     * @return The created DisplayWindow.
     */
    public DisplayWindow createDisplay(Datastore store);
+
+   /**
+    * Load saved DisplayWindows for the given Datastore, which is assumed to
+    * represent data that is saved on disk. DisplayWindow settings are saved
+    * in a separate display settings file; one new DisplayWindow will be
+    * created for every entry in that file. If no file is found then a single
+    * default DisplayWindow will be created, as per createDisplay() above.
+    * @param store The Datastore to load display settings for.
+    * @return The list of DisplayWindows that were created by this method.
+    */
+   public List<DisplayWindow> loadDisplays(Datastore store);
 
    /**
     * Create a new DisplayWindow for the specified Datastore and return it.
