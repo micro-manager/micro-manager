@@ -42,6 +42,7 @@ import javax.swing.JColorChooser;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 
 
@@ -94,7 +95,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private JButton autoButton_;
    private JButton zoomInButton_;
    private JButton zoomOutButton_;
-   private JCheckBox channelNameCheckbox_;
+   private JToggleButton isEnabledButton_;
+   private JLabel nameLabel_;
    private JLabel colorPickerLabel_;
    private JButton fullButton_;
    private JLabel minMaxLabel_;
@@ -184,7 +186,12 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       fullButton_ = new javax.swing.JButton();
       autoButton_ = new javax.swing.JButton();
       colorPickerLabel_ = new javax.swing.JLabel();
-      channelNameCheckbox_ = new javax.swing.JCheckBox();
+      // This icon is adapted from one of the many on this page:
+      // http://thenounproject.com/term/eye/421/
+      // (this particular one is public domain)
+      isEnabledButton_ = new javax.swing.JToggleButton(
+            SwingResourceManager.getIcon(ChannelControlPanel.class,
+               "/org/micromanager/internal/icons/eye.png"));
       minMaxLabel_ = new javax.swing.JLabel();
 
       setOpaque(false);
@@ -226,13 +233,11 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
       });
 
-      channelNameCheckbox_.setText(name_);
-      channelNameCheckbox_.setToolTipText("Show/hide this channel in the multi-dimensional viewer");
-      channelNameCheckbox_.addActionListener(new java.awt.event.ActionListener() {
-
+      isEnabledButton_.setToolTipText("Show/hide this channel in the multi-dimensional viewer");
+      isEnabledButton_.addActionListener(new java.awt.event.ActionListener() {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            channelNameCheckboxAction();
+            isEnabledAction();
          }
       });
 
@@ -287,7 +292,9 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
       JPanel firstRow = new JPanel(new MigLayout("insets 0"));
 
-      firstRow.add(channelNameCheckbox_);
+      firstRow.add(isEnabledButton_);
+      nameLabel_ = new JLabel(name_);
+      firstRow.add(nameLabel_);
 
       firstRow.add(colorPickerLabel_);
 
@@ -451,7 +458,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       display_.postEvent(new ContrastEvent(channelIndex_, name, newSettings));
    }
 
-   private void channelNameCheckboxAction() {
+   private void isEnabledAction() {
       if (composite_ == null) {
          // Not multi-channel; ignore.
          return;
@@ -459,7 +466,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       boolean[] active = composite_.getActiveChannels();
       if (composite_.getMode() != CompositeImage.COMPOSITE) {
          if (active[channelIndex_]) {
-            channelNameCheckbox_.setSelected(true);
+            isEnabledButton_.setSelected(true);
             return;
          } else {
             // Change which channel the stack is pointing at.
@@ -468,7 +475,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
       }
 
-      composite_.getActiveChannels()[channelIndex_] = channelNameCheckbox_.isSelected();
+      composite_.getActiveChannels()[channelIndex_] = isEnabledButton_.isSelected();
       composite_.updateAndDraw();
    }
 
@@ -741,7 +748,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       if (composite_ != null) {
          if (((MMCompositeImage) composite_).getNChannelsUnverified() <= 7) {
             boolean active = composite_.getActiveChannels()[channelIndex_];
-            channelNameCheckbox_.setSelected(active);
+            isEnabledButton_.setSelected(active);
             if (!active) {
                shouldDrawHistogram = false;
             }
@@ -1013,7 +1020,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       String[] names = event.getSummaryMetadata().getChannelNames();
       if (names != null && names.length > channelIndex_) {
          name_ = names[channelIndex_];
-         channelNameCheckbox_.setText(name_);
+         nameLabel_.setText(name_);
       }
    }
 
