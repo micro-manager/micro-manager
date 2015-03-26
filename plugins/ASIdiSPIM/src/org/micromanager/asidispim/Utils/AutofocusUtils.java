@@ -67,7 +67,6 @@ public class AutofocusUtils {
     * Acquires image stack by scanning the mirror, calculates focus scores
     *
     * @param side
-    * @param start
     * @param sliceTiming
     * 
     * @return position of the moving device associated with highest focus score
@@ -124,13 +123,14 @@ public class AutofocusUtils {
          gui_.getMMCore().setExposure((double) sliceTiming.cameraExposure);
          gui_.getMMCore().startSequenceAcquisition(camera, nrImages_, 0, true);
          
-         boolean autoShutter = gui_.getMMCore().getAutoShutter();
-         boolean shutterOpen = false;
+         
          // deal with shutter
+         
+      boolean autoShutter = gui_.getMMCore().getAutoShutter();
          if (autoShutter) {
             gui_.getMMCore().setAutoShutter(false);
          }
-         shutterOpen = gui_.getMMCore().getShutterOpen();
+         boolean shutterOpen = gui_.getMMCore().getShutterOpen();
          if (!shutterOpen) {
             gui_.getMMCore().setShutterOpen(true);
          }
@@ -161,6 +161,7 @@ public class AutofocusUtils {
          // Store the scores in an array
          boolean done = false;
          int counter = 0;
+         startTime = System.currentTimeMillis();
          while ((gui_.getMMCore().getRemainingImageCount() > 0
                  || gui_.getMMCore().isSequenceRunning(camera))
                  && !done) {
@@ -181,6 +182,13 @@ public class AutofocusUtils {
                   done = true;
                }
             }
+            if (now - startTime > timeout) {
+               // no images within a reasonable amount of time:
+               // exit, but cleanup
+               gui_.getMMCore().setShutterOpen(false);
+               gui_.getMMCore().setAutoShutter(autoShutter);
+               throw new ASIdiSPIMException("No images arrived in 5 seconds");
+            }
          }
          
          gui_.getMMCore().setShutterOpen(false);
@@ -188,7 +196,7 @@ public class AutofocusUtils {
          
       } catch (Exception ex) {
          throw new ASIdiSPIMException("Hardware Error while executing Autofocus");
-      }
+      } 
 
       
       
