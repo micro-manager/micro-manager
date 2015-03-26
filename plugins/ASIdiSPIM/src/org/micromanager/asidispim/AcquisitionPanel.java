@@ -22,6 +22,7 @@ package org.micromanager.asidispim;
 
 
 import org.micromanager.asidispim.Data.AcquisitionModes;
+import org.micromanager.asidispim.Data.AcquisitionModes.Keys;
 import org.micromanager.asidispim.Data.CameraModes;
 import org.micromanager.asidispim.Data.Cameras;
 import org.micromanager.asidispim.Data.Devices;
@@ -98,6 +99,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.geom.Point2D;
 
 import javax.swing.BorderFactory;
 
@@ -844,6 +846,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       return multiChannelPanel_.getUsedChannels().length;
    }
    
+   private boolean isStageScanning() {
+      AcquisitionModes.Keys spimMode = getAcquisitionMode();
+      return (spimMode == AcquisitionModes.Keys.STAGE_SCAN || spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED);
+   }
+   
    /**
     * @return MultichannelModes.Keys.NONE if channels are disabled, or actual 
     * selection otherwise
@@ -1489,7 +1496,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   + " with hardware channel switching volume-by-volume.");
             return false;
          }
-         if (spimMode == AcquisitionModes.Keys.STAGE_SCAN || spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED) {
+         if (isStageScanning()) {
             // stage scanning needs to be triggered for each time point
             MyDialogUtils.showError("Cannot use hardware time points (small time point interval)"
                   + " with stage scanning.");
@@ -1543,6 +1550,16 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       } catch (Exception ex) {
          MyDialogUtils.showError(ex, "Error emptying out the circular buffer");
          return false;
+      }
+      
+      Point2D.Double xyPosUm = new Point2D.Double();
+      if (isStageScanning()) {
+         try {
+            xyPosUm = core_.getXYStagePosition(devices_.getMMDevice(Devices.Keys.XYSTAGE));
+         } catch (Exception ex) {
+            MyDialogUtils.showError("Could not get XY stage position for stage scan initialization");
+            return false;
+         }
       }
       
       cameras_.setSPIMCamerasForAcquisition(true);
@@ -1958,6 +1975,15 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
       if (devices_.isValidMMDevice(Devices.Keys.PIEZOB)) {
          positions_.setPosition(Devices.Keys.PIEZOB, Joystick.Directions.NONE, 0.0);
+      }
+      
+      if ( isStageScanning() ) {
+         try {
+            core_.setXYPosition(devices_.getMMDevice(Devices.Keys.XYSTAGE), xyPosUm.x, xyPosUm.y);
+         } catch (Exception ex) {
+            MyDialogUtils.showError("Could not get XY stage position for stage scan initialization");
+            return false;
+         }
       }
       
       // make sure to stop the SPIM state machine in case the acquisition was cancelled
