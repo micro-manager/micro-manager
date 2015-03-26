@@ -98,14 +98,13 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.geom.Point2D;
 
 import javax.swing.BorderFactory;
 
 import org.micromanager.acquisition.ComponentTitledBorder;
 import org.micromanager.asidispim.Data.ChannelSpec;
-import org.micromanager.asidispim.Data.Devices.Sides;
 import org.micromanager.asidispim.Utils.ControllerUtils;
+import org.micromanager.asidispim.Utils.AutofocusUtils;
 import org.micromanager.utils.MMFrame;
 
 /**
@@ -122,6 +121,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final Cameras cameras_;
    private final Prefs prefs_;
    private final ControllerUtils controller_;
+   private final AutofocusUtils autofocus_;
    private final Positions positions_;
    private final CMMCore core_;
    private final ScriptInterface gui_;
@@ -186,7 +186,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
            Prefs prefs, 
            StagePositionUpdater posUpdater,
            Positions positions,
-           ControllerUtils controller) {
+           ControllerUtils controller,
+           AutofocusUtils autofocus) {
       super(MyStrings.PanelNames.ACQUSITION.toString(),
               new MigLayout(
               "",
@@ -201,6 +202,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       posUpdater_ = posUpdater;
       positions_ = positions;
       controller_ = controller;
+      autofocus_ = autofocus;
       core_ = gui_.getMMCore();
       numTimePointsDone_ = 0;
       sliceTiming_ = new SliceTiming();

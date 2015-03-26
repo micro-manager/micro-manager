@@ -43,6 +43,7 @@ import javax.swing.event.ChangeListener;
 import org.micromanager.api.MMListenerInterface;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.MMStudio;
+import org.micromanager.asidispim.Utils.AutofocusUtils;
 import org.micromanager.asidispim.Utils.ControllerUtils;
 import static org.micromanager.asidispim.Utils.MyJavaUtils.isMac;
 import org.micromanager.asidispim.Utils.StagePositionUpdater;
@@ -89,6 +90,7 @@ public class ASIdiSPIMFrame extends MMFrame
    private final Positions positions_;
    private final Cameras cameras_;
    private final ControllerUtils controller_;
+   private final AutofocusUtils autofocus_;
    
    private final DevicesPanel devicesPanel_;
    private final AcquisitionPanel acquisitionPanel_;
@@ -118,6 +120,7 @@ public class ASIdiSPIMFrame extends MMFrame
       joystick_ = new Joystick(devices_, props_);
       cameras_ = new Cameras(gui, devices_, props_, prefs_);
       controller_ = new ControllerUtils(gui, props_, prefs_, devices_);
+      autofocus_ = new AutofocusUtils(gui, devices_);
       
       // create the panels themselves
       // in some cases dependencies create required ordering
@@ -130,7 +133,7 @@ public class ASIdiSPIMFrame extends MMFrame
       navigationPanel_ = new NavigationPanel(gui, devices_, props_, joystick_,
             positions_, prefs_, cameras_, stagePosUpdater_);
       acquisitionPanel_ = new AcquisitionPanel(gui, devices_, props_, joystick_, 
-            cameras_, prefs_, stagePosUpdater_, positions_, controller_);
+            cameras_, prefs_, stagePosUpdater_, positions_, controller_, autofocus_);
       dataAnalysisPanel_ = new DataAnalysisPanel(gui, prefs_);
       settingsPanel_ = new SettingsPanel(devices_, props_, prefs_, stagePosUpdater_);
       stagePosUpdater_.oneTimeUpdate();  // needed for NavigationPanel
