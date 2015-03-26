@@ -21,6 +21,7 @@
 //
 package org.micromanager.data.internal.multipagetiff;
 
+import java.awt.Color;
 import java.nio.ByteOrder;
 import java.util.TreeMap;
 import loci.common.DateTools;
@@ -156,12 +157,15 @@ public class OMEMetadata {
       // viewing data in Micro-Manager.
       DisplaySettings displaySettings = DefaultDisplaySettings.getStandardSettings();
       String[] names = mptStorage_.getSummaryMetadata().getChannelNames();
+      Color[] colors = displaySettings.getChannelColors();
       for (int channel = 0; channel < mptStorage_.getIntendedSize(Coords.CHANNEL);
             channel++) {
-         java.awt.Color color = displaySettings.getChannelColors()[channel];
-         metadata_.setChannelColor(new ome.xml.model.primitives.Color(
-                  color.getRed(), color.getGreen(), color.getBlue(), 1),
-               seriesIndex, channel);
+         if (colors != null && colors.length > channel) {
+            Color color = colors[channel];
+            metadata_.setChannelColor(new ome.xml.model.primitives.Color(
+                     color.getRed(), color.getGreen(), color.getBlue(), 1),
+                  seriesIndex, channel);
+         }
          if (names != null && names.length > channel) {
             metadata_.setChannelName(names[channel], seriesIndex, channel);
          }
