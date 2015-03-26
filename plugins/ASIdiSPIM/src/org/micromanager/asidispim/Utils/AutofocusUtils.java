@@ -105,6 +105,7 @@ public class AutofocusUtils {
               sliceTiming);
 
       double[] focusScores = new double[nrImages_];
+      boolean autoShutter = false;
       
       try {
          String acqName = "";
@@ -126,7 +127,7 @@ public class AutofocusUtils {
          
          // deal with shutter
          
-      boolean autoShutter = gui_.getMMCore().getAutoShutter();
+      autoShutter = gui_.getMMCore().getAutoShutter();
          if (autoShutter) {
             gui_.getMMCore().setAutoShutter(false);
          }
@@ -189,14 +190,17 @@ public class AutofocusUtils {
                gui_.getMMCore().setAutoShutter(autoShutter);
                throw new ASIdiSPIMException("No images arrived in 5 seconds");
             }
-         }
-         
-         gui_.getMMCore().setShutterOpen(false);
-         gui_.getMMCore().setAutoShutter(autoShutter);
-         
+         }       
       } catch (Exception ex) {
          throw new ASIdiSPIMException("Hardware Error while executing Autofocus");
-      } 
+      } finally {
+         try {
+            gui_.getMMCore().setShutterOpen(false);
+            gui_.getMMCore().setAutoShutter(autoShutter);
+         } catch (Exception ex) {
+            ReportingUtils.logError("Error while playing with shutter");
+         }
+      }
 
       
       
