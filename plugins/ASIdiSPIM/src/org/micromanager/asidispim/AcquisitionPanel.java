@@ -772,6 +772,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       updateActualTimeLapseDurationLabel();
    }
    
+   public SliceTiming getSliceTiming() {
+      return sliceTiming_;
+   }
+   
    /**
     * Sets the acquisition name prefix programmatically.
     * Added so that name prefix can be changed from a script.

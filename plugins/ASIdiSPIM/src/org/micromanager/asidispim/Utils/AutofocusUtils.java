@@ -13,9 +13,11 @@ import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Data.AcquisitionModes;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.MultichannelModes;
+import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.api.ASIdiSPIMException;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  *
@@ -25,15 +27,18 @@ public class AutofocusUtils {
 
    private final ScriptInterface gui_;
    private final Devices devices_;
+   private final Prefs prefs_;
    private final ControllerUtils controller_;
 
    private boolean debug_; // debug mode will display the image sequence
    private int nrImages_;
    private float stepSize_;
    
-   public AutofocusUtils(ScriptInterface gui, Devices devices, ControllerUtils controller) {
+   public AutofocusUtils(ScriptInterface gui, Devices devices, Prefs prefs, 
+           ControllerUtils controller) {
       gui_ = gui;
       devices_ = devices;
+      prefs_ = prefs;
       controller_ = controller;
       
       // defaults
@@ -70,7 +75,6 @@ public class AutofocusUtils {
     */
    public double runFocus(
            final Devices.Sides side,
-           final double start,
            final SliceTiming sliceTiming) throws ASIdiSPIMException {
 
       String camera = devices_.getMMDevice(Devices.Keys.CAMERAA);
@@ -78,6 +82,11 @@ public class AutofocusUtils {
          camera = devices_.getMMDevice(Devices.Keys.CAMERAB);
       }
 
+      final float center = prefs_.getFloat(
+            MyStrings.PanelNames.SETUP.toString() + side.toString(), 
+            Properties.Keys.PLUGIN_PIEZO_CENTER_POS, 0);
+      final double start = center - ( 0.5 * (nrImages_ * stepSize_));
+              
       // TODO: run this on its own thread
       controller_.prepareControllerForAquisition(
               side,
@@ -93,7 +102,7 @@ public class AutofocusUtils {
               false, // useTimepoints
               AcquisitionModes.Keys.SLICE_SCAN_ONLY, // scan only the mirror
               100.0f, // delay before side (can go to 0?)
-              stepSize_, // stepSize of whom?
+              stepSize_, // stepSize in microns
               sliceTiming);
 
       double[] focusScores = new double[nrImages_];
@@ -126,11 +135,11 @@ public class AutofocusUtils {
          long timeout = 5000;  // wait 5 seconds for first image to come
          //timeout = Math.max(5000, Math.round(1.2*controller_.computeActualVolumeDuration(sliceTiming)));
          while (gui_.getMMCore().getRemainingImageCount() == 0
-                 && (now - start < timeout)) {
+                 && (now - startTime < timeout)) {
             now = System.currentTimeMillis();
             Thread.sleep(5);
          }
-         if (now - start >= timeout) {
+         if (now - startTime >= timeout) {
             throw new ASIdiSPIMException(
                     "Camera did not send first image within a reasonable time");
          }
@@ -148,6 +157,8 @@ public class AutofocusUtils {
                TaggedImage timg = gui_.getMMCore().popNextTaggedImage();
                ImageProcessor ip = makeProcessor(timg);
                focusScores[counter] = gui_.getAutofocus().computeScore(ip);
+               ReportingUtils.logDebugMessage("Autofocus, image: " + counter
+                       + ", score: " + focusScores[counter]);
                counter++;
                if (counter >= nrImages_) {
                   done = true;
@@ -157,6 +168,7 @@ public class AutofocusUtils {
                   // as long as the circulat buffer is big enough
                   gui_.addImageToAcquisition(acqName, counter, 0, 0, 0, timg);
                }
+
             }
          }
       } catch (Exception ex) {

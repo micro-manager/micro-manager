@@ -50,6 +50,7 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.MMStudio;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Utils.AutofocusUtils;
+import org.micromanager.asidispim.api.ASIdiSPIMException;
 import org.micromanager.internalinterfaces.LiveModeListener;
 import org.micromanager.utils.ReportingUtils;
 
@@ -101,7 +102,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
            Devices devices, 
            Properties props, 
            Joystick joystick, 
-           Devices.Sides side, 
+           final Devices.Sides side, 
            Positions positions, 
            Cameras cameras, 
            Prefs prefs, 
@@ -293,6 +294,22 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
             } catch (Exception ex) {
                MyDialogUtils.showError(ex);
             }
+         }
+      });
+      sheetPanel.add(tmp_but, "center");
+      
+      tmp_but = new JButton("Focus");
+      tmp_but.setMargin(new Insets(4,8,4,8));
+      tmp_but.setToolTipText("Autofocus");
+      tmp_but.setBackground(Color.green);
+      tmp_but.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            try {
+               autofocus_.runFocus(side,
+                  ASIdiSPIM.getFrame().getAcquisitionPanel().getSliceTiming());
+            } catch (ASIdiSPIMException ex) {
+               MyDialogUtils.showError(ex, "Autofocus failed.  Sorry!");}
          }
       });
       sheetPanel.add(tmp_but, "center, wrap");
