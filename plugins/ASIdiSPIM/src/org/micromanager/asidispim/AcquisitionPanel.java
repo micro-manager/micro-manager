@@ -80,6 +80,7 @@ import org.micromanager.api.ScriptInterface;
 import org.micromanager.api.ImageCache;
 import org.micromanager.api.MMTags;
 import org.micromanager.MMStudio;
+import org.micromanager.acquisition.ComponentTitledBorder;
 import org.micromanager.acquisition.DefaultTaggedImageSink;
 import org.micromanager.acquisition.MMAcquisition;
 import org.micromanager.acquisition.TaggedImageQueue;
@@ -90,6 +91,7 @@ import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.MDUtils;
+import org.micromanager.utils.MMFrame;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
@@ -103,11 +105,10 @@ import java.awt.geom.Point2D;
 
 import javax.swing.BorderFactory;
 
-import org.micromanager.acquisition.ComponentTitledBorder;
+
 import org.micromanager.asidispim.Data.ChannelSpec;
 import org.micromanager.asidispim.Utils.ControllerUtils;
 import org.micromanager.asidispim.Utils.AutofocusUtils;
-import org.micromanager.utils.MMFrame;
 
 /**
  *

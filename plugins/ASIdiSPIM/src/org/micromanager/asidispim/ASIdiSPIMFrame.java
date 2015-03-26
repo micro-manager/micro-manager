@@ -120,16 +120,18 @@ public class ASIdiSPIMFrame extends MMFrame
       joystick_ = new Joystick(devices_, props_);
       cameras_ = new Cameras(gui, devices_, props_, prefs_);
       controller_ = new ControllerUtils(gui, props_, prefs_, devices_);
-      autofocus_ = new AutofocusUtils(gui, devices_);
+      autofocus_ = new AutofocusUtils(gui, devices_, controller_);
       
       // create the panels themselves
       // in some cases dependencies create required ordering
       devicesPanel_ = new DevicesPanel(gui, devices_, props_);
       stagePosUpdater_ = new StagePositionUpdater(positions_, props_);  // needed for setup and navigation
       setupPanelA_ = new SetupPanel(gui, devices_, props_, joystick_, 
-            Devices.Sides.A, positions_, cameras_, prefs_, stagePosUpdater_);
+            Devices.Sides.A, positions_, cameras_, prefs_, stagePosUpdater_,
+            autofocus_);
       setupPanelB_ = new SetupPanel(gui, devices_, props_, joystick_,
-            Devices.Sides.B, positions_, cameras_, prefs_, stagePosUpdater_);
+            Devices.Sides.B, positions_, cameras_, prefs_, stagePosUpdater_,
+            autofocus_);
       navigationPanel_ = new NavigationPanel(gui, devices_, props_, joystick_,
             positions_, prefs_, cameras_, stagePosUpdater_);
       acquisitionPanel_ = new AcquisitionPanel(gui, devices_, props_, joystick_, 

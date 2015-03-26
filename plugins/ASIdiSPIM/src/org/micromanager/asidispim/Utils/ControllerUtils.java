@@ -136,13 +136,11 @@ public class ControllerUtils {
       if (hardwareTimepoints && useTimepoints) {
          double actualSlicePeriod = computeActualSlicePeriod(
                      sliceTiming);
-         float volumeDurationMs = (float) computeActualVolumeDuration(
-                 numChannels, 
+         float volumeDurationMs = (float) computeActualVolumeDuration(numChannels, 
                  numSlices, 
                  numSides,
-                 spimMode,
                  delayBeforeSide,
-                 actualSlicePeriod);
+                 actualSlicePeriod, spimMode);
          float volumeIntervalMs = (float) timePointInterval * 1000f;
          delayRepeats = volumeIntervalMs - volumeDurationMs;
          numVolumesPerTrigger = numTimepoints;
@@ -452,6 +450,7 @@ public class ControllerUtils {
               sliceTiming.cameraDelay,
               sliceTiming.cameraDuration);
    }
+
    
    /**
     * @return MultichannelModes.Keys.NONE if channels is disabled, or actual selection otherwise
@@ -505,10 +504,10 @@ public class ControllerUtils {
    private double computeActualVolumeDuration(
            final int numChannels, 
            final int numSlices, 
-           final int numSides,
-           final AcquisitionModes.Keys acquisitionMode,
-           final float delayBeforeSide,
-           final double actualSlicePeriod) {
+           final int numSides, 
+           final float delayBeforeSide, 
+           final double actualSlicePeriod, 
+           final AcquisitionModes.Keys acquisitionMode) {
       double stackDuration = numSlices * actualSlicePeriod;
       switch (acquisitionMode) {
       case STAGE_SCAN:
