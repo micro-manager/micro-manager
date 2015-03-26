@@ -44,6 +44,7 @@ public class MyStrings {
      CAMERA_SUBPANEL("Camera_"),
      JOYSTICK_SUBPANEL("Joystick_"),
      STATUS_SUBPANEL("Status_"),
+     AUTOFOCUS("Autofocus")
       ;
       private final String text;
       PanelNames(String text) {

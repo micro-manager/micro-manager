@@ -99,6 +99,7 @@ public class ASIdiSPIMFrame extends MMFrame
    private final NavigationPanel navigationPanel_;
    private final SettingsPanel settingsPanel_;
    private final DataAnalysisPanel dataAnalysisPanel_;
+   private final AutofocusPanel autofocusPanel_;
    private final HelpPanel helpPanel_;
    private final StatusSubPanel statusSubPanel_;
    private final StagePositionUpdater stagePosUpdater_;
@@ -137,6 +138,7 @@ public class ASIdiSPIMFrame extends MMFrame
       acquisitionPanel_ = new AcquisitionPanel(gui, devices_, props_, joystick_, 
             cameras_, prefs_, stagePosUpdater_, positions_, controller_, autofocus_);
       dataAnalysisPanel_ = new DataAnalysisPanel(gui, prefs_);
+      autofocusPanel_ = new AutofocusPanel(devices_, props_, prefs_, autofocus_);
       settingsPanel_ = new SettingsPanel(devices_, props_, prefs_, stagePosUpdater_);
       stagePosUpdater_.oneTimeUpdate();  // needed for NavigationPanel
       helpPanel_ = new HelpPanel();
@@ -159,7 +161,8 @@ public class ASIdiSPIMFrame extends MMFrame
       tabbedPane_.addLTab(devicesPanel_);     // tabIndex = 5
       final int deviceTabIndex = tabbedPane_.getTabCount() - 1;
       tabbedPane_.addLTab(settingsPanel_);    // tabIndex = 6
-      tabbedPane_.addLTab(helpPanel_);        // tabIndex = 7
+      tabbedPane_.addLTab(autofocusPanel_);   // tabIndex = 7
+      tabbedPane_.addLTab(helpPanel_);        // tabIndex = 8
       final int helpTabIndex = tabbedPane_.getTabCount() - 1;
       
 

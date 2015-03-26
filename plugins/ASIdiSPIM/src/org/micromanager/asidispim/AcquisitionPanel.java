@@ -22,7 +22,6 @@ package org.micromanager.asidispim;
 
 
 import org.micromanager.asidispim.Data.AcquisitionModes;
-import org.micromanager.asidispim.Data.AcquisitionModes.Keys;
 import org.micromanager.asidispim.Data.CameraModes;
 import org.micromanager.asidispim.Data.Cameras;
 import org.micromanager.asidispim.Data.Devices;

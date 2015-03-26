@@ -190,6 +190,9 @@ public class Properties {
       PLUGIN_MULTICHANNEL_MODE("MultiChannelMode"),
       PREFS_USE_MULTIPOSITION("MultiPositionMode"),
       PREFS_USE_TIMEPOINTS("UseTimePoints"),
+      PLUGIN_AUTOFOCUS_DEBUG("DebugMode"),
+      PLUGIN_AUTOFOCUS_NRIMAGES("AutofocusNrImages"),
+      PLUGIN_AUTOFOCUS_STEPSIZE("AutofocusStepSize")
       ;
       private final String text;
       private final boolean hasPattern;  // true if string has substitution pattern

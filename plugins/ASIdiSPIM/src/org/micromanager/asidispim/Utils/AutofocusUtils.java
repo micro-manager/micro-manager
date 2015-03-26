@@ -13,6 +13,8 @@ import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Data.AcquisitionModes;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.MultichannelModes;
+import org.micromanager.asidispim.Data.Prefs;
+import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.api.ASIdiSPIMException;
 
 /**
@@ -25,38 +27,51 @@ public class AutofocusUtils {
    private final Devices devices_;
    private final ControllerUtils controller_;
 
-   public AutofocusUtils(ScriptInterface gui,
-           Devices devices,
-           ControllerUtils controller) {
+   private boolean debug_; // debug mode will display the image sequence
+   private int nrImages_;
+   private float stepSize_;
+   
+   public AutofocusUtils(ScriptInterface gui, Devices devices, ControllerUtils controller) {
       gui_ = gui;
       devices_ = devices;
       controller_ = controller;
+      
+      // defaults
+      nrImages_ = 10;
+      debug_ = false;
+      stepSize_ = 0.1f;
    }
 
    public String getAutofocusMethod() {
       return gui_.getAutofocus().getDeviceName();
+   }
+   
+   public void setDebug(boolean debug) {
+      debug_ = debug;
+   }
+   
+   public void setNumberOfImages(int nr) {
+      nrImages_ = nr;
+   }
+   
+   public void setStepSize(float stepSize) {
+      stepSize_ = stepSize;
    }
 
    /**
     * Acquires image stack by scanning the mirror, calculates focus scores
     *
     * @param side
-    * @param nrImages
     * @param start
-    * @param stepSize
     * @param sliceTiming
-    * @param debug debug mode will display the image sequence
     * 
     * @return position of the moving device associated with highest focus score
     * @throws org.micromanager.asidispim.api.ASIdiSPIMException
     */
    public double runFocus(
            final Devices.Sides side,
-           final int nrImages,
            final double start,
-           final float stepSize,
-           final SliceTiming sliceTiming,
-           boolean debug) throws ASIdiSPIMException {
+           final SliceTiming sliceTiming) throws ASIdiSPIMException {
 
       String camera = devices_.getMMDevice(Devices.Keys.CAMERAA);
       if (side.equals(Devices.Sides.B)) {
@@ -70,7 +85,7 @@ public class AutofocusUtils {
               MultichannelModes.Keys.NONE,
               false, // do not use channels
               1, // numChannels
-              nrImages, // numSlices
+              nrImages_, // numSlices
               1, // numTimepoints
               0, // timeInterval
               1, // numSides
@@ -78,16 +93,16 @@ public class AutofocusUtils {
               false, // useTimepoints
               AcquisitionModes.Keys.SLICE_SCAN_ONLY, // scan only the mirror
               100.0f, // delay before side (can go to 0?)
-              stepSize, // stepSize of whom?
+              stepSize_, // stepSize of whom?
               sliceTiming);
 
-      double[] focusScores = new double[nrImages];
+      double[] focusScores = new double[nrImages_];
       
       try {
          String acqName = "";
-         if (debug) {
+         if (debug_) {
             acqName = gui_.getUniqueAcquisitionName("diSPIM Autofocus");
-            gui_.openAcquisition(acqName, "", nrImages, 1, 1, 1, true, false);
+            gui_.openAcquisition(acqName, "", nrImages_, 1, 1, 1, true, false);
             // initialize acquisition
             gui_.initializeAcquisition(acqName, 
                     (int) gui_.getMMCore().getImageWidth(),
@@ -97,7 +112,7 @@ public class AutofocusUtils {
          }
          gui_.getMMCore().setCameraDevice(camera);
          gui_.getMMCore().setExposure((double) sliceTiming.cameraExposure);
-         gui_.getMMCore().startSequenceAcquisition(camera, nrImages, 0, true);
+         gui_.getMMCore().startSequenceAcquisition(camera, nrImages_, 0, true);
 
          boolean success = controller_.triggerControllerStartAcquisition(
                  AcquisitionModes.Keys.SLICE_SCAN_ONLY,
@@ -134,10 +149,10 @@ public class AutofocusUtils {
                ImageProcessor ip = makeProcessor(timg);
                focusScores[counter] = gui_.getAutofocus().computeScore(ip);
                counter++;
-               if (counter >= nrImages) {
+               if (counter >= nrImages_) {
                   done = true;
                }
-               if (debug) {
+               if (debug_) {
                   // we are using the slow way to insert images, should be OK
                   // as long as the circulat buffer is big enough
                   gui_.addImageToAcquisition(acqName, counter, 0, 0, 0, timg);
@@ -160,7 +175,7 @@ public class AutofocusUtils {
 
       // return the position of the scanning device associated with the highest
       // focus score
-      double bestScore = start + stepSize * highestIndex;
+      double bestScore = start + stepSize_ * highestIndex;
       
       return bestScore;
    }
