@@ -59,7 +59,8 @@ public class HotKeyAction {
                   studio_.autostretchCurrentWindow();
             }
          } else {
-            org.micromanager.internal.script.ScriptPanel.runFile(beanShellScript_);
+            // Assume it's a script to run.
+            studio_.scripter().runFile(beanShellScript_);
             return true;
          }
          return false;

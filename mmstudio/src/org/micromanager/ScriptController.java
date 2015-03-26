@@ -22,6 +22,8 @@
 
 package org.micromanager;
 
+import java.io.File;
+
 /**
  * Provides access to some utility methods for use in the Beanshell scripting
  * panel. Accessible via "mm.scripter()" or "mm.getScriptController()".
@@ -36,6 +38,12 @@ public interface ScriptController {
          super(message);
       }
    }
+
+   /**
+    * Execute the script located in the given file.
+    * @param file File containing the script to be run.
+    */
+   public void runFile(File file);
 
    /**
     * Displays text in the scripting console output window.
