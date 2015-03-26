@@ -102,7 +102,7 @@ public class AutofocusPanel extends ListeningJPanel{
       optionsPanel_.add(nrImagesSpinner, "wrap");
       
       // spinner with stepsize:
-      optionsPanel_.add(new JLabel("Stepsize [um]:"));
+      optionsPanel_.add(new JLabel("Stepsize [\u00B5m]:"));
       final JSpinner stepSizeSpinner = pu.makeSpinnerFloat(0.001, 1.0, 0.01,
             Devices.Keys.PLUGIN,
             Properties.Keys.PLUGIN_AUTOFOCUS_STEPSIZE, 10);

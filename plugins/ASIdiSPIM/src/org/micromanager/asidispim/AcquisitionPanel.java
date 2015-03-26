@@ -1547,6 +1547,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             MyDialogUtils.showError(ex, "Problem getting camera ROIs");
          }
       }
+      
+      // seems to have a problem if the core's camera has been set to some other
+      // camera before we start doing things, so set to a SPIM camera
+      try {
+         core_.setCameraDevice(firstCamera);
+      } catch (Exception ex) {
+         MyDialogUtils.showError(ex, "could not set camera");
+      }
 
       // empty out circular buffer
       try {
@@ -1635,9 +1643,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             if (twoSided) {
                core_.setExposure(secondCamera, exposureTime);
             }
-            
-            // seems to have a problem if the core's camera has been set otherwise
-            core_.setCameraDevice(firstCamera);
             
             // Use this to build metadata for MVR plugin
             String viewString = "";

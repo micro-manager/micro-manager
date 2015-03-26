@@ -119,9 +119,21 @@ public class AutofocusUtils {
                     (int) gui_.getMMCore().getBytesPerPixel(),
                     (int) gui_.getMMCore().getImageBitDepth());
          }
+         gui_.getMMCore().clearCircularBuffer();
          gui_.getMMCore().setCameraDevice(camera);
          gui_.getMMCore().setExposure((double) sliceTiming.cameraExposure);
          gui_.getMMCore().startSequenceAcquisition(camera, nrImages_, 0, true);
+         
+         boolean autoShutter = gui_.getMMCore().getAutoShutter();
+         boolean shutterOpen = false;
+         // deal with shutter
+         if (autoShutter) {
+            gui_.getMMCore().setAutoShutter(false);
+         }
+         shutterOpen = gui_.getMMCore().getShutterOpen();
+         if (!shutterOpen) {
+            gui_.getMMCore().setShutterOpen(true);
+         }
 
          boolean success = controller_.triggerControllerStartAcquisition(
                  AcquisitionModes.Keys.SLICE_SCAN_ONLY,
@@ -159,21 +171,27 @@ public class AutofocusUtils {
                focusScores[counter] = gui_.getAutofocus().computeScore(ip);
                ReportingUtils.logDebugMessage("Autofocus, image: " + counter
                        + ", score: " + focusScores[counter]);
+               if (debug_) {
+                  // we are using the slow way to insert images, should be OK
+                  // as long as the circular buffer is big enough
+                  gui_.addImageToAcquisition(acqName, counter, 0, 0, 0, timg);
+               }
                counter++;
                if (counter >= nrImages_) {
                   done = true;
                }
-               if (debug_) {
-                  // we are using the slow way to insert images, should be OK
-                  // as long as the circulat buffer is big enough
-                  gui_.addImageToAcquisition(acqName, counter, 0, 0, 0, timg);
-               }
-
             }
          }
+         
+         gui_.getMMCore().setShutterOpen(false);
+         gui_.getMMCore().setAutoShutter(autoShutter);
+         
       } catch (Exception ex) {
          throw new ASIdiSPIMException("Hardware Error while executing Autofocus");
       }
+
+      
+      
       // now find the position in the focus Score array with the highest score
       // TODO: use more sophisticated analysis here
       double highestScore = focusScores[0];

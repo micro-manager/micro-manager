@@ -121,7 +121,7 @@ public class ASIdiSPIMFrame extends MMFrame
       joystick_ = new Joystick(devices_, props_);
       cameras_ = new Cameras(gui, devices_, props_, prefs_);
       controller_ = new ControllerUtils(gui, props_, prefs_, devices_);
-      autofocus_ = new AutofocusUtils(gui, devices_, null, controller_);
+      autofocus_ = new AutofocusUtils(gui, devices_, prefs_, controller_);
       
       // create the panels themselves
       // in some cases dependencies create required ordering

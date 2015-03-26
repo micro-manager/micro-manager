@@ -253,14 +253,15 @@ public class ControllerUtils {
          final Devices.Keys xyDevice = Devices.Keys.XYSTAGE;
          double sliceDuration = computeActualSlicePeriod(sliceTiming);
          
-         double requestedMotorSpeed = stepSizeUm * Math.sqrt(2.) / sliceDuration;
+         double requestedMotorSpeed = stepSizeUm * Math.sqrt(2.) / sliceDuration / numChannels;
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED, (float)requestedMotorSpeed);
-         // get the actual speed and calculate the actual step size
-         // TODO maybe want to not actually update spinner but still take it into account in metadata?
-         double actualMotorSpeed = props_.getPropValueFloat(xyDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED);
+         
+         // we could ask for the actual speed and calculate the actual step size
+         // TODO maybe want to update spinner in AcquisitionPanel and/or report actual one in metadata
+         // double actualMotorSpeed = props_.getPropValueFloat(xyDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED);
          // stepSize_.setValue(actualMotorSpeed / Math.sqrt(2.) * sliceDuration);
          
-         double scanDistance = numSlices * stepSizeUm * Math.sqrt(2.);  // updated stepSize_
+         double scanDistance = numSlices * stepSizeUm * Math.sqrt(2.);
          Point2D.Double posUm;
          try {
             posUm = core_.getXYStagePosition(devices_.getMMDevice(xyDevice));
@@ -268,6 +269,7 @@ public class ControllerUtils {
             MyDialogUtils.showError("Could not get XY stage position for stage scan initialization");
             return false;
          }
+         
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_FAST_START,
                (float)(posUm.x / 1000d));
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_FAST_STOP,
@@ -281,6 +283,14 @@ public class ControllerUtils {
                Properties.Values.SERPENTINE);
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_OVERSHOOT_FACTOR, 1.0f);
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_MOTOR_ACCEL, 20);
+         
+         if (useChannels && channelMode == MultichannelModes.Keys.SLICE_HW) {
+            props_.setPropValue(galvoDevice, Properties.Keys.SPIM_NUM_SLICES_PER_PIEZO,
+                  numChannels, skipScannerWarnings);
+         }
+       
+         // TODO handle other multichannel modes with stage scanning
+         
       }
       
       return true;
