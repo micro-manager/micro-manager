@@ -7,13 +7,17 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import mmcorej.TaggedImage;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Data.AcquisitionModes;
+import org.micromanager.asidispim.Data.Cameras;
 import org.micromanager.asidispim.Data.Devices;
+import org.micromanager.asidispim.Data.Joystick;
 import org.micromanager.asidispim.Data.MultichannelModes;
 import org.micromanager.asidispim.Data.MyStrings;
+import org.micromanager.asidispim.Data.Positions;
 import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.api.ASIdiSPIMException;
@@ -27,18 +31,27 @@ public class AutofocusUtils {
 
    private final ScriptInterface gui_;
    private final Devices devices_;
+   private final Properties props_;
    private final Prefs prefs_;
+   private final Cameras cameras_;
+   private final StagePositionUpdater posUpdater_;
+   private final Positions positions_;
    private final ControllerUtils controller_;
 
    private boolean debug_; // debug mode will display the image sequence
    private int nrImages_;
    private float stepSize_;
    
-   public AutofocusUtils(ScriptInterface gui, Devices devices, Prefs prefs, 
-           ControllerUtils controller) {
+   public AutofocusUtils(ScriptInterface gui, Devices devices, Properties props,
+         Prefs prefs, Cameras cameras, StagePositionUpdater stagePosUpdater,
+           Positions positions, ControllerUtils controller) {
       gui_ = gui;
       devices_ = devices;
+      props_ = props;
       prefs_ = prefs;
+      cameras_ = cameras;
+      posUpdater_ = stagePosUpdater;
+      positions_ = positions;
       controller_ = controller;
       
       // defaults
@@ -105,7 +118,9 @@ public class AutofocusUtils {
               sliceTiming);
 
       double[] focusScores = new double[nrImages_];
-      boolean autoShutter = false;
+      boolean autoShutter = gui_.getMMCore().getAutoShutter();
+      boolean shutterOpen = false;  // will read later
+      boolean liveModeOriginally = false;
       
       try {
          String acqName = "";
@@ -121,20 +136,24 @@ public class AutofocusUtils {
          }
          gui_.getMMCore().clearCircularBuffer();
          gui_.getMMCore().setCameraDevice(camera);
+         cameras_.setSPIMCamerasForAcquisition(true);
          gui_.getMMCore().setExposure((double) sliceTiming.cameraExposure);
-         gui_.getMMCore().startSequenceAcquisition(camera, nrImages_, 0, true);
          
+         liveModeOriginally = gui_.isLiveModeOn();
+         if (liveModeOriginally) {
+            gui_.enableLiveMode(false);
+         }
          
          // deal with shutter
-         
-      autoShutter = gui_.getMMCore().getAutoShutter();
+         shutterOpen = gui_.getMMCore().getShutterOpen();
          if (autoShutter) {
             gui_.getMMCore().setAutoShutter(false);
+            if (!shutterOpen) {
+               gui_.getMMCore().setShutterOpen(true);
+            }
          }
-         boolean shutterOpen = gui_.getMMCore().getShutterOpen();
-         if (!shutterOpen) {
-            gui_.getMMCore().setShutterOpen(true);
-         }
+         
+         gui_.getMMCore().startSequenceAcquisition(camera, nrImages_, 0, true);
 
          boolean success = controller_.triggerControllerStartAcquisition(
                  AcquisitionModes.Keys.SLICE_SCAN_ONLY,
@@ -184,10 +203,7 @@ public class AutofocusUtils {
                }
             }
             if (now - startTime > timeout) {
-               // no images within a reasonable amount of time:
-               // exit, but cleanup
-               gui_.getMMCore().setShutterOpen(false);
-               gui_.getMMCore().setAutoShutter(autoShutter);
+               // no images within a reasonable amount of time => exit
                throw new ASIdiSPIMException("No images arrived in 5 seconds");
             }
          }       
@@ -195,15 +211,36 @@ public class AutofocusUtils {
          throw new ASIdiSPIMException("Hardware Error while executing Autofocus");
       } finally {
          try {
-            gui_.getMMCore().setShutterOpen(false);
             gui_.getMMCore().setAutoShutter(autoShutter);
+            gui_.getMMCore().setShutterOpen(shutterOpen);
+            
+            // move piezos back to center (neutral) position
+            if (devices_.isValidMMDevice(Devices.Keys.PIEZOA)) {
+               positions_.setPosition(Devices.Keys.PIEZOA, Joystick.Directions.NONE, 0.0);
+            }
+            if (devices_.isValidMMDevice(Devices.Keys.PIEZOB)) {
+               positions_.setPosition(Devices.Keys.PIEZOB, Joystick.Directions.NONE, 0.0);
+            }
+
+            // make sure to stop the SPIM state machine in case the acquisition was cancelled
+            // even if the acquisition wasn't cancelled make sure the Micro-Manager properties are updated
+            props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SPIM_STATE,
+                  Properties.Values.SPIM_IDLE, true);
+            props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.SPIM_STATE,
+                  Properties.Values.SPIM_IDLE, true);
+
+            posUpdater_.pauseUpdates(false);
+            
+            cameras_.setSPIMCamerasForAcquisition(false);
+            if (liveModeOriginally) {
+               gui_.enableLiveMode(true);
+            }
+            
          } catch (Exception ex) {
             ReportingUtils.logError("Error while playing with shutter");
          }
       }
 
-      
-      
       // now find the position in the focus Score array with the highest score
       // TODO: use more sophisticated analysis here
       double highestScore = focusScores[0];

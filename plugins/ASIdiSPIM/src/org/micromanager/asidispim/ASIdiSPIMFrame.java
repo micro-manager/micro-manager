@@ -121,12 +121,15 @@ public class ASIdiSPIMFrame extends MMFrame
       joystick_ = new Joystick(devices_, props_);
       cameras_ = new Cameras(gui, devices_, props_, prefs_);
       controller_ = new ControllerUtils(gui, props_, prefs_, devices_);
-      autofocus_ = new AutofocusUtils(gui, devices_, prefs_, controller_);
       
       // create the panels themselves
       // in some cases dependencies create required ordering
       devicesPanel_ = new DevicesPanel(gui, devices_, props_);
       stagePosUpdater_ = new StagePositionUpdater(positions_, props_);  // needed for setup and navigation
+      
+      autofocus_ = new AutofocusUtils(gui, devices_, props_, prefs_,
+            cameras_, stagePosUpdater_, positions_, controller_);
+      
       acquisitionPanel_ = new AcquisitionPanel(gui, devices_, props_, joystick_, 
             cameras_, prefs_, stagePosUpdater_, positions_, controller_, autofocus_);
       setupPanelA_ = new SetupPanel(gui, devices_, props_, joystick_, 
@@ -161,8 +164,8 @@ public class ASIdiSPIMFrame extends MMFrame
       tabbedPane_.addLTab(dataAnalysisPanel_);// tabIndex = 4
       tabbedPane_.addLTab(devicesPanel_);     // tabIndex = 5
       final int deviceTabIndex = tabbedPane_.getTabCount() - 1;
-      tabbedPane_.addLTab(settingsPanel_);    // tabIndex = 6
-      tabbedPane_.addLTab(autofocusPanel_);   // tabIndex = 7
+      tabbedPane_.addLTab(autofocusPanel_);   // tabIndex = 6
+      tabbedPane_.addLTab(settingsPanel_);    // tabIndex = 7
       tabbedPane_.addLTab(helpPanel_);        // tabIndex = 8
       final int helpTabIndex = tabbedPane_.getTabCount() - 1;
       

@@ -1472,7 +1472,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       AcquisitionModes.Keys spimMode = getAcquisitionMode();
       
       boolean autoShutter = core_.getAutoShutter();
-      boolean shutterOpen = false;
+      boolean shutterOpen = false;  // will read later
 
       // more sanity checks
       double sliceDuration = controller_.computeActualSlicePeriod(sliceTiming_);
@@ -1765,19 +1765,19 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   // loop over all the times we trigger the controller
                   for (int channelNum = 0; channelNum < nrChannelsSoftware; channelNum++) {
 
+                     // deal with shutter before starting acquisition
+                     shutterOpen = core_.getShutterOpen();
+                     if (autoShutter) {
+                        core_.setAutoShutter(false);
+                        if (!shutterOpen) {
+                           core_.setShutterOpen(true);
+                        }
+                     }
+                     
                      // start the cameras
                      core_.startSequenceAcquisition(firstCamera, nrSlicesSoftware, 0, true);
                      if (twoSided) {
                         core_.startSequenceAcquisition(secondCamera, nrSlicesSoftware, 0, true);
-                     }
-
-                     // deal with shutter
-                     if (autoShutter) {
-                        core_.setAutoShutter(false);
-                        shutterOpen = core_.getShutterOpen();
-                        if (!shutterOpen) {
-                           core_.setShutterOpen(true);
-                        }
                      }
 
                      // deal with channel if needed (hardware channel switching doesn't happen here)
@@ -1926,12 +1926,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                if (twoSided && core_.isSequenceRunning(secondCamera)) {
                   core_.stopSequenceAcquisition(secondCamera);
                }
-               if (autoShutter) {
-                  core_.setAutoShutter(true);
-                  if (shutterOpen) {
-                     core_.setShutterOpen(false);
-                  }
-               }
+
+               core_.setShutterOpen(shutterOpen);
+               core_.setAutoShutter(autoShutter);
                
                bq.put(TaggedImageQueue.POISON);
                // TODO: evaluate closeAcquisition call

@@ -23,19 +23,21 @@ package org.micromanager.asidispim;
 
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+
 import net.miginfocom.swing.MigLayout;
+
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Utils.AutofocusUtils;
-
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.PanelUtils;
 
@@ -43,6 +45,7 @@ import org.micromanager.asidispim.Utils.PanelUtils;
  *
  * @author nico
  */
+@SuppressWarnings("serial")
 public class AutofocusPanel extends ListeningJPanel{
    final private Properties props_;
    final private Prefs prefs_;
