@@ -37,9 +37,6 @@ public class AutofocusUtils {
    private final StagePositionUpdater posUpdater_;
    private final Positions positions_;
    private final ControllerUtils controller_;
-
-   private boolean debug_; // debug mode will display the image sequence
-   private int nrImages_;
    
    public AutofocusUtils(ScriptInterface gui, Devices devices, Properties props,
          Prefs prefs, Cameras cameras, StagePositionUpdater stagePosUpdater,
@@ -52,21 +49,8 @@ public class AutofocusUtils {
       posUpdater_ = stagePosUpdater;
       positions_ = positions;
       controller_ = controller;
-      
-      // defaults
-      nrImages_ = 10;
-      debug_ = false;
    }
 
-
-   // TODO eliminate these and read via props object like step size
-   public void setDebug(boolean debug) {
-      debug_ = debug;
-   }
-   
-   public void setNumberOfImages(int nr) {
-      nrImages_ = nr;
-   }
    
    /**
     * Acquires image stack by scanning the mirror, calculates focus scores
@@ -86,12 +70,19 @@ public class AutofocusUtils {
          camera = devices_.getMMDevice(Devices.Keys.CAMERAB);
       }
 
+      final int nrImages = props_.getPropValueInteger(
+              Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_AUTOFOCUS_NRIMAGES); 
+      final boolean debug = prefs_.getBoolean(
+              MyStrings.PanelNames.AUTOFOCUS.toString(), 
+              Properties.Keys.PLUGIN_AUTOFOCUS_DEBUG, false);
       final float center = prefs_.getFloat(
             MyStrings.PanelNames.SETUP.toString() + side.toString(), 
             Properties.Keys.PLUGIN_PIEZO_CENTER_POS, 0);
       final float stepSize = props_.getPropValueFloat(Devices.Keys.PLUGIN,
             Properties.Keys.PLUGIN_AUTOFOCUS_STEPSIZE); 
-      final double start = center - ( 0.5 * (nrImages_ - 1) * stepSize);
+      final double start = center - ( 0.5 * (nrImages - 1) * stepSize);
+      
+           
               
       // TODO: run this on its own thread
       controller_.prepareControllerForAquisition(
@@ -100,7 +91,7 @@ public class AutofocusUtils {
               MultichannelModes.Keys.NONE,
               false, // do not use channels
               1, // numChannels
-              nrImages_, // numSlices
+              nrImages, // numSlices
               1, // numTimepoints
               0, // timeInterval
               1, // numSides
@@ -111,16 +102,16 @@ public class AutofocusUtils {
               stepSize, // stepSize in microns
               sliceTiming);
 
-      double[] focusScores = new double[nrImages_];
+      double[] focusScores = new double[nrImages];
       boolean autoShutter = gui_.getMMCore().getAutoShutter();
       boolean shutterOpen = false;  // will read later
       boolean liveModeOriginally = false;
       
       try {
          String acqName = "";
-         if (debug_) {
+         if (debug) {
             acqName = gui_.getUniqueAcquisitionName("diSPIM Autofocus");
-            gui_.openAcquisition(acqName, "", nrImages_, 1, 1, 1, true, false);
+            gui_.openAcquisition(acqName, "", nrImages, 1, 1, 1, true, false);
             // initialize acquisition
             gui_.initializeAcquisition(acqName, 
                     (int) gui_.getMMCore().getImageWidth(),
@@ -147,7 +138,7 @@ public class AutofocusUtils {
             }
          }
          
-         gui_.getMMCore().startSequenceAcquisition(camera, nrImages_, 0, true);
+         gui_.getMMCore().startSequenceAcquisition(camera, nrImages, 0, true);
 
          boolean success = controller_.triggerControllerStartAcquisition(
                  AcquisitionModes.Keys.SLICE_SCAN_ONLY,
@@ -186,13 +177,13 @@ public class AutofocusUtils {
                focusScores[counter] = gui_.getAutofocus().computeScore(ip);
                ReportingUtils.logDebugMessage("Autofocus, image: " + counter
                        + ", score: " + focusScores[counter]);
-               if (debug_) {
+               if (debug) {
                   // we are using the slow way to insert images, should be OK
                   // as long as the circular buffer is big enough
                   gui_.addImageToAcquisition(acqName, counter, 0, 0, 0, timg);
                }
                counter++;
-               if (counter >= nrImages_) {
+               if (counter >= nrImages) {
                   done = true;
                }
             }
