@@ -185,6 +185,18 @@ void ZeissMonitoringThread::interpretMessage(unsigned char* message)
                   core_.LogMessage(&device_, os.str().c_str(), true);
                }
             }
+         } else if (message[6] == 0x2B) { // Axis:: Trajectory Velocity
+            ZeissLong velocity = 0;
+            memcpy(&velocity, message + 8, 4);
+            velocity = ntohl(velocity);
+            hub_.SetTrajectoryVelocity(message[5], velocity);
+            hub_.SetModelBusy(message[5], false);
+         } else if (message[6] == 0x2C) { // Axis:: Trajectory Acceleration
+            ZeissLong accel = 0;
+            memcpy(&accel, message + 8, 4);
+            accel = ntohl(accel);
+            hub_.SetTrajectoryAcceleration(message[5], accel);
+            hub_.SetModelBusy(message[5], false);
          }
       } else if (message[3] == 0x08) { // Some direct answers that we want to interpret
          if (message[6] == 0x20) { // Axis: Upper hardware stop reached
