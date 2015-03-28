@@ -18,7 +18,6 @@
 //
 package org.micromanager.internal;
 
-import org.micromanager.acquisition.internal.MMAcquisition;
 import org.micromanager.acquisition.internal.AcquisitionWrapperEngine;
 import org.micromanager.acquisition.internal.TaggedImageQueue;
 import bsh.EvalError;
@@ -63,8 +62,6 @@ import mmcorej.TaggedImage;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import org.micromanager.acquisition.internal.AcquisitionManager;
 
 import org.micromanager.Album;
 import org.micromanager.Autofocus;
@@ -205,7 +202,6 @@ public class MMStudio implements Studio, CompatibilityInterface {
    private CenterAndDragListener centerAndDragListener_;
    private ZWheelListener zWheelListener_;
    private XYZKeyListener xyzKeyListener_;
-   private AcquisitionManager acqMgr_;
    public static final FileType MM_CONFIG_FILE
             = new FileType("MM_CONFIG_FILE",
                            "Micro-Manager Config File",
@@ -279,8 +275,6 @@ public class MMStudio implements Studio, CompatibilityInterface {
       amRunningAsPlugin_ = shouldRunAsPlugin;
       isProgramRunning_ = true;
 
-      acqMgr_ = new AcquisitionManager();
-      
       sysConfigFile_ = new File(DEFAULT_CONFIG_FILE_NAME).getAbsolutePath();
       sysConfigFile_ = System.getProperty(DEFAULT_CONFIG_FILE_PROPERTY,
             sysConfigFile_);
@@ -377,7 +371,7 @@ public class MMStudio implements Studio, CompatibilityInterface {
       ReportingUtils.setCore(core_);
       logStartupProperties();
               
-      engine_ = new AcquisitionWrapperEngine(acqMgr_);
+      engine_ = new AcquisitionWrapperEngine();
 
       // This entity is a class property to avoid garbage collection.
       coreCallback_ = new CoreEventCallback(core_, engine_);
@@ -1605,7 +1599,7 @@ public class MMStudio implements Studio, CompatibilityInterface {
       }
       testForAbortRequests();
       if (acqControlWin_ != null) {
-         MMAcquisition acq = acqControlWin_.runAcquisition();
+         Datastore store = acqControlWin_.runAcquisition();
          try {
             while (acqControlWin_.isAcquisitionRunning()) {
                Thread.sleep(50);
@@ -1613,7 +1607,7 @@ public class MMStudio implements Studio, CompatibilityInterface {
          } catch (InterruptedException e) {
             ReportingUtils.showError(e);
          }
-         return acq.getDatastore();
+         return store;
       } else {
          throw new MMScriptException(
                "Acquisition setup window must be open for this command to work.");
@@ -1625,16 +1619,15 @@ public class MMStudio implements Studio, CompatibilityInterface {
          throws MMScriptException {
       testForAbortRequests();
       if (acqControlWin_ != null) {
-         MMAcquisition acq = acqControlWin_.runAcquisition(name, root);
+         Datastore store = acqControlWin_.runAcquisition(name, root);
          try {
-            Datastore store = acq.getDatastore();
             while (!store.getIsFrozen()) {
                Thread.sleep(100);
             }
          } catch (InterruptedException e) {
             ReportingUtils.showError(e);
          }
-         return acq.getDatastore();
+         return store;
       } else {
          throw new MMScriptException(
                "Acquisition setup window must be open for this command to work.");
