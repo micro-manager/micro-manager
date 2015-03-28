@@ -12,7 +12,7 @@ import javax.swing.table.AbstractTableModel;
  */
 class SurfaceTableModel extends AbstractTableModel  {
 
-   private final String[] COLUMNS = {"Name", "XY padding (µm)", "Z padding (µm)", "# Positions", "Width (µm)", "Height (µm)"};
+   private final String[] COLUMNS = {"Name", "XY padding (µm)", "# Positions"};
    private SurfaceManager manager_;
    
    public SurfaceTableModel(SurfaceManager manager) {
@@ -36,7 +36,7 @@ class SurfaceTableModel extends AbstractTableModel  {
 
    @Override
    public boolean isCellEditable(int rowIndex, int colIndex) {
-      if (colIndex == 0 || colIndex == 1|| colIndex == 2) {
+      if (colIndex == 0 || colIndex == 1) {
          return true;
       }
       return false;
@@ -48,9 +48,7 @@ class SurfaceTableModel extends AbstractTableModel  {
          manager_.getSurface(row).rename((String) value);
       } else if (col == 1) {
          manager_.getSurface(row).setXYPadding(Double.parseDouble((String) value));
-      } else if (col == 2) {
-         manager_.getSurface(row).setZPadding(Double.parseDouble((String) value));         
-      }      
+      }  
    }
    
    @Override
@@ -60,17 +58,9 @@ class SurfaceTableModel extends AbstractTableModel  {
          return manager_.getSurface(rowIndex).getName();
       } else if (columnIndex == 1) {
          return surface.getXYPadding();
-      } else if (columnIndex == 2) {
-         return surface.getZPadding();
-      } else if (columnIndex == 3) {
+      } else {
          int numPositions = surface.getNumPositions();
          return numPositions == -1 ? "" : numPositions;
-      } else if (columnIndex == 4) {
-         double width = surface.getWidth_um();         
-         return width == 0 ? "" : width;
-      } else {
-         double height =  surface.getHeight_um();
-         return height == 0 ? "" : height;
       }
    }
    

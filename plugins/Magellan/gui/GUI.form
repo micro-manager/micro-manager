@@ -52,6 +52,12 @@
                       <Component id="channelGroupLabel_" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="exploreChannelGroupCombo_" min="-2" pref="92" max="-2" attributes="0"/>
+                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                      <Component id="exploreOverlapLabel_" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="exploreTileOverlapSpinner_" min="-2" pref="65" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="explorePercentLabel_" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
@@ -87,6 +93,9 @@
                   <Component id="exploreZStepSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="channelGroupLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="exploreChannelGroupCombo_" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="exploreOverlapLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="exploreTileOverlapSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="explorePercentLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
@@ -389,30 +398,39 @@
                   <Group type="102" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Group type="102" alignment="0" attributes="0">
-                              <Component id="checkBox3D_" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace min="-2" pref="40" max="-2" attributes="0"/>
-                              <Component id="zStepLabel" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Component id="zStepSpinner_" min="-2" pref="77" max="-2" attributes="0"/>
-                              <EmptySpace min="-2" pref="37" max="-2" attributes="0"/>
-                              <Component id="jLabel4" min="-2" max="-2" attributes="0"/>
-                          </Group>
                           <Group type="102" attributes="0">
                               <Component id="simpleZPanel_" min="-2" max="-2" attributes="0"/>
                               <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                              <Component id="volumeBetweenZPanel_" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                              <Component id="volumeBetweenZPanel_" max="32767" attributes="0"/>
+                              <EmptySpace type="separate" max="-2" attributes="0"/>
                               <Component id="fixedDistanceZPanel_" min="-2" max="-2" attributes="0"/>
                           </Group>
-                          <Group type="102" alignment="0" attributes="0">
-                              <EmptySpace min="-2" pref="169" max="-2" attributes="0"/>
-                              <Component id="checkBox2D_" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace type="separate" max="-2" attributes="0"/>
-                              <Component id="panel2D_" min="-2" max="-2" attributes="0"/>
+                          <Group type="102" attributes="0">
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Group type="102" attributes="0">
+                                      <Component id="checkBox3D_" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace min="-2" pref="40" max="-2" attributes="0"/>
+                                      <Component id="zStepLabel" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="zStepSpinner_" min="-2" pref="77" max="-2" attributes="0"/>
+                                      <EmptySpace min="-2" pref="37" max="-2" attributes="0"/>
+                                      <Component id="acqTileOverlapLabel_" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="acqOverlapPercentSpinner_" min="-2" pref="65" max="-2" attributes="0"/>
+                                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                                      <Component id="jLabel4" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <Group type="102" alignment="0" attributes="0">
+                                      <EmptySpace min="-2" pref="169" max="-2" attributes="0"/>
+                                      <Component id="checkBox2D_" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                                      <Component id="panel2D_" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                              </Group>
+                              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                           </Group>
                       </Group>
-                      <EmptySpace pref="55" max="32767" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -425,24 +443,31 @@
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="zStepSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="zStepLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="acqTileOverlapLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="acqOverlapPercentSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="jLabel4" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                       </Group>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Group type="102" alignment="0" attributes="0">
+                          <Group type="102" attributes="0">
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="simpleZPanel_" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace min="-2" pref="8" max="-2" attributes="0"/>
+                          </Group>
+                          <Group type="102" alignment="0" attributes="0">
+                              <EmptySpace min="-2" pref="11" max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                                  <Component id="volumeBetweenZPanel_" max="32767" attributes="0"/>
+                                  <Component id="fixedDistanceZPanel_" max="32767" attributes="0"/>
+                              </Group>
+                          </Group>
+                      </Group>
+                      <EmptySpace min="-2" pref="8" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Group type="102" alignment="0" attributes="0">
                               <Component id="checkBox2D_" min="-2" max="-2" attributes="0"/>
                               <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                           </Group>
                           <Group type="102" attributes="0">
-                              <EmptySpace min="-2" pref="11" max="-2" attributes="0"/>
-                              <Group type="103" groupAlignment="1" attributes="0">
-                                  <Component id="volumeBetweenZPanel_" min="-2" max="-2" attributes="0"/>
-                                  <Component id="fixedDistanceZPanel_" min="-2" max="-2" attributes="0"/>
-                              </Group>
-                              <EmptySpace type="separate" max="-2" attributes="0"/>
                               <Component id="panel2D_" max="32767" attributes="0"/>
                               <EmptySpace min="-2" pref="22" max="-2" attributes="0"/>
                           </Group>
@@ -476,7 +501,7 @@
                                       <Component id="simpleZStackRadioButton_" alignment="0" min="-2" max="-2" attributes="0"/>
                                       <Component id="jLabel2" alignment="0" min="-2" max="-2" attributes="0"/>
                                   </Group>
-                                  <EmptySpace min="0" pref="52" max="32767" attributes="0"/>
+                                  <EmptySpace min="0" pref="30" max="32767" attributes="0"/>
                               </Group>
                               <Group type="102" alignment="0" attributes="0">
                                   <Group type="103" groupAlignment="0" attributes="0">
@@ -611,6 +636,16 @@
                                       <Component id="bottomSurfaceLabel_" alignment="0" min="-2" max="-2" attributes="0"/>
                                   </Group>
                                   <EmptySpace max="-2" attributes="0"/>
+                                  <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                                      <Component id="umAboveTopSurfaceSpinner_" pref="53" max="32767" attributes="0"/>
+                                      <Component id="umBelowBottomSurfaceSpinner_" max="32767" attributes="0"/>
+                                  </Group>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Group type="103" groupAlignment="0" attributes="0">
+                                      <Component id="umAboveVolBetweenLabel_" min="-2" max="-2" attributes="0"/>
+                                      <Component id="umBelowVolBetweenLabel_" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <EmptySpace max="-2" attributes="0"/>
                                   <Group type="103" groupAlignment="0" attributes="0">
                                       <Component id="topSurfaceCombo_" max="32767" attributes="0"/>
                                       <Component id="bottomSurfaceCombo_" max="32767" attributes="0"/>
@@ -619,7 +654,7 @@
                               <Group type="102" alignment="0" attributes="0">
                                   <Component id="jLabel5" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="volumeBetweenFootprintCombo_" pref="137" max="32767" attributes="0"/>
+                                  <Component id="volumeBetweenFootprintCombo_" pref="226" max="32767" attributes="0"/>
                               </Group>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
@@ -635,18 +670,22 @@
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="topSurfaceLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="topSurfaceCombo_" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="umAboveTopSurfaceSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="umAboveVolBetweenLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace type="unrelated" max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="bottomSurfaceLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="bottomSurfaceCombo_" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="umBelowBottomSurfaceSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="umBelowVolBetweenLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace type="unrelated" max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="jLabel5" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="volumeBetweenFootprintCombo_" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
-                          <EmptySpace pref="13" max="32767" attributes="0"/>
+                          <EmptySpace pref="15" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -665,12 +704,12 @@
                 </Component>
                 <Component class="javax.swing.JLabel" name="topSurfaceLabel_">
                   <Properties>
-                    <Property name="text" type="java.lang.String" value="Top surface:"/>
+                    <Property name="text" type="java.lang.String" value="Z-start"/>
                   </Properties>
                 </Component>
                 <Component class="javax.swing.JLabel" name="bottomSurfaceLabel_">
                   <Properties>
-                    <Property name="text" type="java.lang.String" value="Bottom surface: "/>
+                    <Property name="text" type="java.lang.String" value="Z-end"/>
                   </Properties>
                 </Component>
                 <Component class="javax.swing.JComboBox" name="topSurfaceCombo_">
@@ -711,6 +750,36 @@
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="volumeBetweenFootprintCombo_ActionPerformed"/>
                   </Events>
                 </Component>
+                <Component class="javax.swing.JSpinner" name="umAboveTopSurfaceSpinner_">
+                  <Properties>
+                    <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
+                      <SpinnerModel initial="0.0" minimum="0.0" numberType="java.lang.Double" stepSize="1.0" type="number"/>
+                    </Property>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="umAboveTopSurfaceSpinner_StateChanged"/>
+                  </Events>
+                </Component>
+                <Component class="javax.swing.JLabel" name="umAboveVolBetweenLabel_">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="&#xb5;m above"/>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JSpinner" name="umBelowBottomSurfaceSpinner_">
+                  <Properties>
+                    <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
+                      <SpinnerModel initial="0.0" minimum="0.0" numberType="java.lang.Double" stepSize="1.0" type="number"/>
+                    </Property>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="umBelowBottomSurfaceSpinner_StateChanged"/>
+                  </Events>
+                </Component>
+                <Component class="javax.swing.JLabel" name="umBelowVolBetweenLabel_">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="&#xb5;m below"/>
+                  </Properties>
+                </Component>
               </SubComponents>
             </Container>
             <Container class="javax.swing.JPanel" name="fixedDistanceZPanel_">
@@ -727,27 +796,45 @@
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" attributes="0">
                           <EmptySpace max="-2" attributes="0"/>
-                          <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                              <Group type="102" attributes="0">
+                          <Group type="103" groupAlignment="0" attributes="0">
+                              <Group type="102" alignment="0" attributes="0">
+                                  <Group type="103" groupAlignment="0" attributes="0">
+                                      <Group type="102" alignment="0" attributes="0">
+                                          <Group type="103" groupAlignment="1" max="-2" attributes="0">
+                                              <Component id="distanceBelowSurfaceLabel_" max="32767" attributes="0"/>
+                                              <Component id="distanceAboveSurfaceLabel_" max="32767" attributes="0"/>
+                                          </Group>
+                                          <Group type="103" groupAlignment="0" attributes="0">
+                                              <Group type="102" alignment="0" attributes="0">
+                                                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                                                  <Component id="distanceAboveFixedSurfaceSpinner_" max="32767" attributes="0"/>
+                                                  <EmptySpace min="-2" pref="2" max="-2" attributes="0"/>
+                                              </Group>
+                                              <Group type="102" attributes="0">
+                                                  <EmptySpace min="-2" pref="9" max="-2" attributes="0"/>
+                                                  <Component id="distanceBelowFixedSurfaceSpinner_" max="32767" attributes="0"/>
+                                              </Group>
+                                          </Group>
+                                          <EmptySpace pref="8" max="-2" attributes="0"/>
+                                          <Group type="103" groupAlignment="0" attributes="0">
+                                              <Component id="umAboveLabel_" alignment="1" min="-2" max="-2" attributes="0"/>
+                                              <Component id="umBelowLabel_" alignment="1" min="-2" max="-2" attributes="0"/>
+                                          </Group>
+                                      </Group>
+                                      <Group type="102" attributes="0">
+                                          <Component id="fixedDistanceFromSurfaceRadioButton_" min="-2" max="-2" attributes="0"/>
+                                          <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                                      </Group>
+                                  </Group>
+                                  <EmptySpace min="-2" pref="17" max="-2" attributes="0"/>
+                              </Group>
+                              <Group type="102" alignment="0" attributes="0">
                                   <Component id="fixedSurfaceLabel_" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="fixedDistanceSurfaceComboBox_" max="32767" attributes="0"/>
+                                  <Component id="fixedDistanceSurfaceComboBox_" min="-2" pref="156" max="-2" attributes="0"/>
+                                  <EmptySpace min="0" pref="10" max="32767" attributes="0"/>
                               </Group>
-                              <Group type="103" alignment="0" groupAlignment="1" max="-2" attributes="0">
-                                  <Group type="102" alignment="1" attributes="0">
-                                      <Component id="distanceAboveSurfaceLabel_" min="-2" pref="111" max="-2" attributes="0"/>
-                                      <EmptySpace min="-2" max="-2" attributes="0"/>
-                                      <Component id="distanceAboveSurfaceSpinner_" min="-2" pref="79" max="-2" attributes="0"/>
-                                  </Group>
-                                  <Group type="102" alignment="1" attributes="0">
-                                      <Component id="distanceBelowSurfaceLabel_" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace min="-2" pref="14" max="-2" attributes="0"/>
-                                      <Component id="distanceBelowSurfaceSpinner_" min="-2" pref="79" max="-2" attributes="0"/>
-                                  </Group>
-                              </Group>
-                              <Component id="fixedDistanceFromSurfaceRadioButton_" alignment="0" min="-2" max="-2" attributes="0"/>
                           </Group>
-                          <EmptySpace pref="50" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -756,20 +843,22 @@
                       <Group type="102" alignment="0" attributes="0">
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="fixedDistanceFromSurfaceRadioButton_" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
-                              <Component id="fixedSurfaceLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="fixedDistanceSurfaceComboBox_" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="distanceAboveSurfaceLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="distanceAboveFixedSurfaceSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="umAboveLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace type="unrelated" max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="distanceBelowSurfaceLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="distanceBelowSurfaceSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="distanceBelowFixedSurfaceSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="umBelowLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace type="unrelated" max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
-                              <Component id="distanceAboveSurfaceLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="distanceAboveSurfaceSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="fixedSurfaceLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="fixedDistanceSurfaceComboBox_" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace max="32767" attributes="0"/>
                       </Group>
@@ -788,6 +877,52 @@
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="fixedDistanceFromSurfaceRadioButton_ActionPerformed"/>
                   </Events>
                 </Component>
+                <Component class="javax.swing.JLabel" name="distanceBelowSurfaceLabel_">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="Z-end"/>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JSpinner" name="distanceBelowFixedSurfaceSpinner_">
+                  <Properties>
+                    <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
+                      <SpinnerModel initial="0.0" minimum="0.0" numberType="java.lang.Double" stepSize="0.001" type="number"/>
+                    </Property>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="distanceBelowFixedSurfaceSpinner_StateChanged"/>
+                  </Events>
+                  <AuxValues>
+                    <AuxValue name="JavaCodeGenerator_allCodePost" type="java.lang.String" value="addTextEditListener(distanceBelowFixedSurfaceSpinner_);"/>
+                  </AuxValues>
+                </Component>
+                <Component class="javax.swing.JLabel" name="distanceAboveSurfaceLabel_">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="Z-start"/>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JSpinner" name="distanceAboveFixedSurfaceSpinner_">
+                  <Properties>
+                    <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
+                      <SpinnerModel initial="0.0" minimum="0.0" numberType="java.lang.Double" stepSize="0.001" type="number"/>
+                    </Property>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="distanceAboveFixedSurfaceSpinner_StateChanged"/>
+                  </Events>
+                  <AuxValues>
+                    <AuxValue name="JavaCodeGenerator_allCodePost" type="java.lang.String" value="addTextEditListener(distanceAboveFixedSurfaceSpinner_);"/>
+                  </AuxValues>
+                </Component>
+                <Component class="javax.swing.JLabel" name="umAboveLabel_">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="&#xb5;m above"/>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JLabel" name="umBelowLabel_">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="&#xb5;m below"/>
+                  </Properties>
+                </Component>
                 <Component class="javax.swing.JLabel" name="fixedSurfaceLabel_">
                   <Properties>
                     <Property name="text" type="java.lang.String" value="Surface: "/>
@@ -802,42 +937,6 @@
                   <Events>
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="fixedDistanceSurfaceComboBox_ActionPerformed"/>
                   </Events>
-                </Component>
-                <Component class="javax.swing.JLabel" name="distanceBelowSurfaceLabel_">
-                  <Properties>
-                    <Property name="text" type="java.lang.String" value="Distance below (&#xb5;m):"/>
-                  </Properties>
-                </Component>
-                <Component class="javax.swing.JSpinner" name="distanceBelowSurfaceSpinner_">
-                  <Properties>
-                    <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
-                      <SpinnerModel initial="0.0" minimum="0.0" numberType="java.lang.Double" stepSize="0.001" type="number"/>
-                    </Property>
-                  </Properties>
-                  <Events>
-                    <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="distanceBelowSurfaceSpinner_StateChanged"/>
-                  </Events>
-                  <AuxValues>
-                    <AuxValue name="JavaCodeGenerator_allCodePost" type="java.lang.String" value="addTextEditListener(distanceBelowSurfaceSpinner_);"/>
-                  </AuxValues>
-                </Component>
-                <Component class="javax.swing.JLabel" name="distanceAboveSurfaceLabel_">
-                  <Properties>
-                    <Property name="text" type="java.lang.String" value="Distance above (&#xb5;m):"/>
-                  </Properties>
-                </Component>
-                <Component class="javax.swing.JSpinner" name="distanceAboveSurfaceSpinner_">
-                  <Properties>
-                    <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
-                      <SpinnerModel initial="0.0" minimum="0.0" numberType="java.lang.Double" stepSize="0.001" type="number"/>
-                    </Property>
-                  </Properties>
-                  <Events>
-                    <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="distanceAboveSurfaceSpinner_StateChanged"/>
-                  </Events>
-                  <AuxValues>
-                    <AuxValue name="JavaCodeGenerator_allCodePost" type="java.lang.String" value="addTextEditListener(distanceAboveSurfaceSpinner_);"/>
-                  </AuxValues>
                 </Component>
               </SubComponents>
             </Container>
@@ -875,7 +974,7 @@
                               <Component id="footprin2DLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="footprint2DComboBox_" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
-                          <EmptySpace pref="27" max="32767" attributes="0"/>
+                          <EmptySpace pref="24" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -927,9 +1026,24 @@
                 <AuxValue name="JavaCodeGenerator_allCodePost" type="java.lang.String" value="addTextEditListener(zStepSpinner_);"/>
               </AuxValues>
             </Component>
+            <Component class="javax.swing.JLabel" name="acqTileOverlapLabel_">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Tile overlap:"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JSpinner" name="acqOverlapPercentSpinner_">
+              <Properties>
+                <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
+                  <SpinnerModel initial="5.0" maximum="99.0" minimum="0.0" numberType="java.lang.Double" stepSize="1.0" type="number"/>
+                </Property>
+              </Properties>
+              <Events>
+                <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="acqOverlapPercentSpinner_StateChanged"/>
+              </Events>
+            </Component>
             <Component class="javax.swing.JLabel" name="jLabel4">
               <Properties>
-                <Property name="text" type="java.lang.String" value="TODO: add tile overlaps"/>
+                <Property name="text" type="java.lang.String" value="%"/>
               </Properties>
             </Component>
           </SubComponents>
@@ -1832,6 +1946,23 @@
             <StringItem index="3" value="Item 4"/>
           </StringArray>
         </Property>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="exploreOverlapLabel_">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Tile overlap:"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JSpinner" name="exploreTileOverlapSpinner_">
+      <Properties>
+        <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
+          <SpinnerModel initial="0.0" maximum="99.0" minimum="0.0" numberType="java.lang.Double" stepSize="1.0" type="number"/>
+        </Property>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="explorePercentLabel_">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="%"/>
       </Properties>
     </Component>
   </SubComponents>

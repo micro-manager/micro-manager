@@ -43,9 +43,10 @@ public class PositionManager {
    private TreeMap<Integer,TreeSet<MultiResPositionNode>> positionNodes_; 
    private final int displayTileWidth_, displayTileHeight_;
    private final int fullTileWidth_, fullTileHeight_;
+   private final int overlapX_, overlapY_;
    
    public PositionManager(String pixelSizeConfig, JSONObject summaryMD, int displayTileWidth, int displayTileHeight,
-           int fullTileWidth, int fullTileHeight) {
+           int fullTileWidth, int fullTileHeight, int overlapX, int overlapY) {
       pixelSizeConfig_ = pixelSizeConfig;
       positionNodes_ = new TreeMap<Integer,TreeSet<MultiResPositionNode>>();
       readRowsAndColsFromPositionList(summaryMD);
@@ -53,6 +54,8 @@ public class PositionManager {
       displayTileHeight_ = displayTileHeight;
       fullTileWidth_ = fullTileWidth;
       fullTileHeight_ = fullTileHeight;
+      overlapX_ = overlapX; 
+      overlapY_ = overlapY;
    }
    
    public synchronized String getSerializedPositionList() {
@@ -241,9 +244,7 @@ public class PositionManager {
    private JSONObject createPosition(int row, int col) {
       try {
          JSONArray xy = new JSONArray();         
-         int xOverlap = SettingsDialog.getOverlapX();
-         int yOverlap = SettingsDialog.getOverlapY();
-         Point2D.Double stageCoords = getStagePositionCoordinates(row, col, xOverlap, yOverlap);
+         Point2D.Double stageCoords = getStagePositionCoordinates(row, col, overlapX_, overlapY_);
 
          JSONObject coords = new JSONObject();
          xy.put(stageCoords.x);

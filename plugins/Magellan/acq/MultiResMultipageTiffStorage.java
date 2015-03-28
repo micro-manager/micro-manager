@@ -96,7 +96,8 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
          try {
             //make a copy in case tag changes are needed later
             summaryMD_ = new JSONObject(summaryMetadata.toString());
-            posManager_ = new PositionManager(pixelSizeConfig, summaryMD_, tileWidth_, tileHeight_, fullResTileWidthIncludingOverlap_, fullResTileHeightIncludingOverlap_);
+            posManager_ = new PositionManager(pixelSizeConfig, summaryMD_, tileWidth_, tileHeight_, 
+                    fullResTileWidthIncludingOverlap_, fullResTileHeightIncludingOverlap_, xOverlap_, yOverlap_);
          } catch (JSONException ex) {
             ReportingUtils.showError("Couldnt copy summary metadata");
          }

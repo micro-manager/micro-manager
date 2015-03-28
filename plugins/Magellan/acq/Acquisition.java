@@ -3,7 +3,6 @@ package acq;
 import coordinates.PositionManager;
 import gui.SettingsDialog;
 import imagedisplay.DisplayPlus;
-import imagedisplay.ZoomableVirtualStack;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import mmcorej.CMMCore;
@@ -37,9 +36,10 @@ public abstract class Acquisition implements AcquisitionEventSource{
    private String name_;
    private long startTime_ms_ = -1;
    private MultiResMultipageTiffStorage imageStorage_;
+   private int overlapX_, overlapY_;
 
-   public Acquisition(double zStep ) throws Exception {
-            xyStage_ = core_.getXYStageDevice();
+   public Acquisition(double zStep) throws Exception {
+      xyStage_ = core_.getXYStageDevice();
       zStage_ = core_.getFocusDevice();
       zStep_ = zStep;
       events_ = new LinkedBlockingQueue<AcquisitionEvent>(ACQ_EVENT_QUEUE_SIZE);
@@ -97,14 +97,20 @@ public abstract class Acquisition implements AcquisitionEventSource{
       startTime_ms_ = time;
    }
    
-   protected void initialize(String dir, String name) {
-      int xOverlap = SettingsDialog.getOverlapX();
-      int yOverlap = SettingsDialog.getOverlapY();
-      
+   public int getOverlapX() {
+      return overlapX_;
+   }
+   
+   public int getOverlapY() {
+      return overlapY_;
+   }
+   
+   protected void initialize(String dir, String name, double overlapPercent) {
       engineOutputQueue_ = new LinkedBlockingQueue<TaggedImage>(OUTPUT_QUEUE_SIZE);
-
+      overlapX_ = (int) (MMStudio.getInstance().getCore().getImageWidth() * overlapPercent / 100);
+      overlapY_ = (int) (MMStudio.getInstance().getCore().getImageHeight() * overlapPercent / 100);
       JSONObject summaryMetadata = CustomAcqEngine.makeSummaryMD(this, name);
-      imageStorage_ = new MultiResMultipageTiffStorage(dir, true, summaryMetadata, xOverlap, yOverlap, pixelSizeConfig_, 
+      imageStorage_ = new MultiResMultipageTiffStorage(dir, true, summaryMetadata, overlapX_, overlapY_, pixelSizeConfig_,
               (this instanceof FixedAreaAcquisition)); //estimatye background pixel values for fixed acqs but not explore
       //storage class has determined unique acq name, so it can now be stored
       name_ = imageStorage_.getUniqueAcqName();

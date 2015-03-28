@@ -32,7 +32,7 @@ public class ExploreAcquisition extends Acquisition {
          zTop_ = core_.getPosition(zStage_);
          zBottom_ = core_.getPosition(zStage_);
          eng_ = eng;
-         initialize(settings.dir_, settings.name_);
+         initialize(settings.dir_, settings.name_, settings.tileOverlap_);
       } catch (Exception ex) {
          ReportingUtils.showError("Couldn't get focus device position");
          throw new RuntimeException();

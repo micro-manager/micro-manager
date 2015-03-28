@@ -336,7 +336,7 @@ public class DisplayWindow extends StackWindow {
          if (zoomsNeeded > 0) { //if zoom out
             disp_.zoom(-zoomsNeeded);
          } else {
-            resizeCanvas(false); 
+            resizeCanvas(false, 0, false); 
          }
 
          //store fixed acq size, but only if this call comes from user resizing the window
@@ -354,12 +354,45 @@ public class DisplayWindow extends StackWindow {
          }
       }
    }
+   
+   /**
+    * Used only for fixed area acquisitions
+    * If window was zoomed in while showing the full area, 
+    * expand the window so that the full are is still shown, or the window takes up
+    * the full space on the screen, whichever is smaller
+    */
+   private void expandWindowToFitCanvas() {     
+      Dimension cpSize = canvasPanel_.getSize();
+      Dimension windowSize = this.getSize();
+      Dimension newWindowSize = new Dimension();
+
+      //get the number of pixels in the image
+      int dsFactor = ((ZoomableVirtualStack) disp_.getHyperImage().getStack()).getDownsampleFactor();
+      int dsHeight = disp_.getFullResHeight() / dsFactor;
+      int dsWidth = disp_.getFullResWidth() / dsFactor;
+
+      Rectangle screenSize = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
+      //if there is space 
+      int extraWidthOnScreen = screenSize.width - windowSize.width;
+      int extraHeightOnScreen = screenSize.height - windowSize.height;
+      int extraHeightNeeded = dsHeight - cpSize.height+ 2*CANVAS_PIXEL_BORDER;
+      int extraWidthNeeded = dsWidth - cpSize.width + 2*CANVAS_PIXEL_BORDER;
+         
+      newWindowSize.width = windowSize.width + Math.min((extraWidthNeeded), extraWidthOnScreen);
+      newWindowSize.height = windowSize.height + Math.min((extraHeightNeeded), extraHeightOnScreen);
+      
+      this.setSize(newWindowSize);
+      fitCanvasToWindow();
+      //if window is off the screen now, move it
+      this.setLocation(Math.min(this.getLocation().x,screenSize.width - this.getSize().width),
+              Math.min(this.getLocation().y,screenSize.height - this.getSize().height));
+
+   }
 
    /**
     * Used only for fixed area acquisition 
     * 1) At startup to fit window around canvas with correct aspect ratio 
-    * 2) When zooming out, to shrink window (but not when zooming in to expand--this 
-    * is done by dragging the size of the window to be bigger)
+    * 2) When zooming out, to shrink window 
     */
    private void shrinkWindowToFitCanvas() {
       Dimension cpSize = canvasPanel_.getSize();
@@ -405,13 +438,13 @@ public class DisplayWindow extends StackWindow {
    }
 
    /**
-    * Used for fixed area acquisitions
+    * Used for fixed area acquisitions only
     * Called when zooming or user resize of window
     * Shrink canvas as needed when zooming out
     *
     * @return true if redraw was included
     */
-   public boolean resizeCanvas(boolean shrinkWindow) {
+   public boolean resizeCanvas(boolean zoomOut, int previousDSFactor, boolean autoExpandWindow) {
       synchronized (canvasPanel_) {
          Dimension panelSize = canvasPanel_.getSize();
          //get the area available for viewing in canvas panel
@@ -421,22 +454,28 @@ public class DisplayWindow extends StackWindow {
          int dsFactor = ((ZoomableVirtualStack) disp_.getHyperImage().getStack()).getDownsampleFactor();
          int fullWidth = disp_.getFullResWidth();
          int fullHeight = disp_.getFullResHeight();
-         //shrink canvas to eliminate empty space, but do not expand to accomodate more canvas
-         int newCanvasWidth = Math.min(displayWidth, fullWidth / dsFactor);
-         int newCanvasHeight = Math.min(displayHeight, fullHeight / dsFactor);
-
-         ZoomableVirtualStack newStack = new ZoomableVirtualStack((ZoomableVirtualStack) plus_.getStack(), newCanvasWidth, newCanvasHeight);
-         //Replace stack if number of pixels in stack has changed
-         if (!((ZoomableVirtualStack) plus_.getStack()).equalDisplaySize(newStack)) {
-            disp_.changeStack(newStack);
+         
+         boolean wasShownInFull = autoExpandWindow && displayWidth >= fullWidth / previousDSFactor && displayHeight >= fullHeight / previousDSFactor;
+         if (wasShownInFull && !zoomOut) {
+            expandWindowToFitCanvas();
          } else {
-            return false;
+            //shrink canvas to eliminate empty space, but do not expand to accomodate more canvas
+            int newCanvasWidth = Math.min(displayWidth, fullWidth / dsFactor);
+            int newCanvasHeight = Math.min(displayHeight, fullHeight / dsFactor);
+            ZoomableVirtualStack newStack = new ZoomableVirtualStack((ZoomableVirtualStack) plus_.getStack(), newCanvasWidth, newCanvasHeight);
+            //Replace stack if number of pixels in stack has changed
+            if (!((ZoomableVirtualStack) plus_.getStack()).equalDisplaySize(newStack)) {
+               disp_.changeStack(newStack);
+            } else {
+               return false;
+            }
+            this.validate();
+            //now that canvas is shrunk, shrink window
+            if (zoomOut) {
+               shrinkWindowToFitCanvas();
+            }
          }
-         this.validate();
-         //now that canvas is shrunk, shrink window
-         if (shrinkWindow) {
-            shrinkWindowToFitCanvas();
-         }
+         
          return true;
       }
    }

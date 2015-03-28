@@ -215,7 +215,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
     *
     * @param newStack
     */
-   public void changeStack(ZoomableVirtualStack newStack) {
+   public synchronized void changeStack(ZoomableVirtualStack newStack) {
       zoomableStack_ = newStack;
       super.virtualStack_ = newStack;
       try {

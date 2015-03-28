@@ -4,6 +4,7 @@
  */
 package surfacesandregions;
 
+import acq.FixedAreaAcquisitionSettings;
 import coordinates.AffineUtils;
 import coordinates.XYStagePosition;
 import gui.SettingsDialog;
@@ -66,23 +67,28 @@ public class MultiPosRegion implements XYFootprint{
    }
 
    public void updateParams(int rows, int cols) {
-      overlapX_ = SettingsDialog.getOverlapX();
-      overlapY_ = SettingsDialog.getOverlapY();
+      updateOverlap(FixedAreaAcquisitionSettings.getStoredTileOverlapPercentage() / 100);
       rows_ = rows;
       cols_ = cols;
       manager_.updateRegionTableAndCombos();
       manager_.drawRegionOverlay(this);
    }
+   
+   private void updateOverlap(double overlapPercent) {
+      overlapX_ = (int) (MMStudio.getInstance().getCore().getImageWidth() * overlapPercent);
+      overlapY_ = (int) (MMStudio.getInstance().getCore().getImageHeight() * overlapPercent);
+   }
 
    @Override
-   public ArrayList<XYStagePosition> getXYPositions() {
+   public ArrayList<XYStagePosition> getXYPositions(double tileOverlapPercent) {
       try {
          AffineTransform transform = AffineUtils.getAffineTransform(MMStudio.getInstance().getCore().getCurrentPixelSizeConfig(), center_.x, center_.y);
          ArrayList<XYStagePosition> positions = new ArrayList<XYStagePosition>();
          int fullTileWidth = (int) MMStudio.getInstance().getCore().getImageWidth();
          int fullTileHeight = (int) MMStudio.getInstance().getCore().getImageHeight();
-         int tileWidthMinusOverlap = fullTileWidth - SettingsDialog.getOverlapX();
-         int tileHeightMinusOverlap = fullTileHeight - SettingsDialog.getOverlapY();
+         updateOverlap(tileOverlapPercent);
+         int tileWidthMinusOverlap = fullTileWidth - overlapX_;
+         int tileHeightMinusOverlap = fullTileHeight - overlapY_;
          for (int col = 0; col < cols_; col++) {
             double xPixelOffset = (col - (cols_ - 1) / 2.0) * tileWidthMinusOverlap;
             for (int row = 0; row < rows_; row++) {

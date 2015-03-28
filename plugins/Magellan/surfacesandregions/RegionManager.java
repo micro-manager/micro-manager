@@ -98,8 +98,12 @@ public class RegionManager {
       return potentialName;
    }
 
+   /**
+    * redraw overlay for all displays showing this surface
+    * @param region 
+    */
    public void drawRegionOverlay(MultiPosRegion region) {
-      DisplayPlus.redrawRegionOverlay(region); //redraw overlay for all displays showing this surface
+      DisplayPlus.redrawRegionOverlay(region);
    }
    
    public void updateRegionTableAndCombos() {

@@ -122,7 +122,7 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
     * @param mouseLocation
     * @param numLevels
     */
-   public void zoom(Point mouseLocation, int numLevels) {
+   public synchronized void zoom(Point mouseLocation, int numLevels) {
       //don't let fixed area acquisitions zoom out past the point where the area is too small
       if (!(acquisition_ instanceof ExploreAcquisition)) {
          int maxZoomIndex = multiResStorage_.getNumResLevels() - 1;
@@ -149,6 +149,7 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
          }
       }
 
+      int previousDSFactor = (int) Math.pow(2, resolutionIndex_);
       //keep cursor in same location relative to full res data for fast zooming/unzooming
       if (resolutionIndex_ + numLevels >= 0 && resolutionIndex_ + numLevels < multiResStorage_.getNumResLevels()) {
          //get pixel location in full res image
@@ -169,7 +170,7 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
       
       if (acquisition_ instanceof FixedAreaAcquisition) {
          //change the canvas size, and shrink canvas only if moving out
-         ((DisplayWindow) vad_.getHyperImage().getWindow()).resizeCanvas(numLevels > 0);
+         ((DisplayWindow) vad_.getHyperImage().getWindow()).resizeCanvas(numLevels > 0, previousDSFactor, true);
       }
    }
 

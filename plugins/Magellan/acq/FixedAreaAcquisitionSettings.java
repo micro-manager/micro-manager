@@ -8,7 +8,6 @@ import java.util.prefs.Preferences;
 import javax.swing.filechooser.FileSystemView;
 import main.Magellan;
 import org.micromanager.utils.ReportingUtils;
-import surfacesandregions.MultiPosRegion;
 import surfacesandregions.SurfaceInterpolator;
 import surfacesandregions.XYFootprint;
 
@@ -39,11 +38,13 @@ public class FixedAreaAcquisitionSettings  {
    public int timeIntervalUnit_; 
 
    //space
-   public double zStep_, zStart_, zEnd_, distanceBelowSurface_, distanceAboveSurface_;
+   public double zStep_, zStart_, zEnd_, distanceBelowFixedSurface_, distanceAboveFixedSurface_,
+           distanceAboveTopSurface_, distanceBelowBottomSurface_;
    public int spaceMode_;
    public SurfaceInterpolator topSurface_, bottomSurface_, fixedSurface_;
    public XYFootprint footprint_;
    public int useTopOrBottomFootprint_;
+   public double tileOverlap_; //stored as percent * 100, i.e. 55 => 55%
    
    //channels
    public ArrayList<ChannelSettings> channels_ = new ArrayList<ChannelSettings>();
@@ -67,13 +68,17 @@ public class FixedAreaAcquisitionSettings  {
       timePointInterval_ = prefs.getDouble(PREF_PREFIX + "TPI", 0);
       numTimePoints_ = prefs.getInt(PREF_PREFIX + "NTP", 1);
       timeIntervalUnit_ = prefs.getInt(PREF_PREFIX + "TPIU", 0);
+      //space
       zStep_ = prefs.getDouble(PREF_PREFIX + "ZSTEP", 1);
       zStart_ = prefs.getDouble(PREF_PREFIX + "ZSTART", 0);
       zEnd_ = prefs.getDouble(PREF_PREFIX + "ZEND", 0);
-      distanceBelowSurface_ = prefs.getDouble(PREF_PREFIX + "ZDISTBELOW", 0);
-      distanceAboveSurface_ = prefs.getDouble(PREF_PREFIX + "ZDISTABOVE", 0);
+      distanceBelowFixedSurface_ = prefs.getDouble(PREF_PREFIX + "ZDISTBELOWFIXED", 0);
+      distanceAboveFixedSurface_ = prefs.getDouble(PREF_PREFIX + "ZDISTABOVEFIXED", 0);
+      distanceBelowBottomSurface_ = prefs.getDouble(PREF_PREFIX + "ZDISTBELOWBOTTOM", 0);
+      distanceAboveTopSurface_ = prefs.getDouble(PREF_PREFIX + "ZDISTABOVETOP", 0);
       spaceMode_ = prefs.getInt(PREF_PREFIX + "SPACEMODE", 0);
-      //autofocus/
+      tileOverlap_ = prefs.getDouble(PREF_PREFIX + "TILEOVERLAP", 5);
+      //autofocus
       autofocusMaxDisplacemnet_um_ =  prefs.getDouble(PREF_PREFIX + "AFMAXDISP", 0.0);
       autofocusChannelName_ = prefs.get(PREF_PREFIX + "AFCHANNELNAME", null);
       autoFocusZDevice_ = prefs.get(PREF_PREFIX + "AFZNAME", null);      
@@ -109,6 +114,10 @@ public class FixedAreaAcquisitionSettings  {
       
    }
    
+   public static double getStoredTileOverlapPercentage() {
+      return Magellan.getPrefs().getDouble(PREF_PREFIX + "TILEOVERLAP", 5);
+   }
+   
    private boolean checkForRedundantPairing(CovariantPairing pair) {
       for (CovariantPairing p : propPairings_) {
          if (p.getIndependentName(false).equals(pair.getIndependentName(false)) && p.getDependentName(false).equals(pair.getDependentName(false))) {
@@ -126,12 +135,16 @@ public class FixedAreaAcquisitionSettings  {
       prefs.putDouble(PREF_PREFIX + "TPI", timePointInterval_);
       prefs.putInt(PREF_PREFIX + "NTP", numTimePoints_);
       prefs.putInt(PREF_PREFIX + "TPIU", timeIntervalUnit_);
+      //space
       prefs.putDouble(PREF_PREFIX + "ZSTEP", zStep_);
       prefs.putDouble(PREF_PREFIX + "ZSTART", zStart_);
       prefs.putDouble(PREF_PREFIX + "ZEND", zEnd_);
-      prefs.putDouble(PREF_PREFIX + "ZDISTBELOW", distanceBelowSurface_);
-      prefs.putDouble(PREF_PREFIX + "ZDISTABOVE", distanceAboveSurface_);
+      prefs.putDouble(PREF_PREFIX + "ZDISTBELOWFIXED", distanceBelowFixedSurface_);
+      prefs.putDouble(PREF_PREFIX + "ZDISTABOVEFIXED", distanceAboveFixedSurface_);
+      prefs.putDouble(PREF_PREFIX + "ZDISTBELOWBOTTOM", distanceBelowBottomSurface_);
+      prefs.putDouble(PREF_PREFIX + "ZDISTABOVETOP", distanceAboveTopSurface_);
       prefs.putInt(PREF_PREFIX + "SPACEMODE", spaceMode_);
+      prefs.putDouble(PREF_PREFIX + "TILEOVERLAP", tileOverlap_);
       //autofocus
       prefs.putDouble(PREF_PREFIX + "AFMAXDISP", autofocusMaxDisplacemnet_um_);
       if (autofocusChannelName_ != null) {

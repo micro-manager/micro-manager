@@ -4,6 +4,7 @@
  */
 package surfacesandregions;
 
+import acq.FixedAreaAcquisitionSettings;
 import propsandcovariants.SurfaceData;
 import coordinates.AffineUtils;
 import coordinates.XYStagePosition;
@@ -50,7 +51,7 @@ public abstract class SurfaceInterpolator implements XYFootprint {
    protected volatile Region<Euclidean2D> convexHullRegion_;
    private volatile int numRows_, numCols_;
    private volatile List<XYStagePosition> xyPositions_;
-   private volatile double xyPadding_um_ = 0, zPadding_um_;
+   private volatile double xyPadding_um_ = 0;
    protected volatile double boundXMin_, boundXMax_, boundYMin_, boundYMax_;
    private volatile int boundXPixelMin_,boundXPixelMax_,boundYPixelMin_,boundYPixelMax_;
    private ExecutorService executor_; 
@@ -138,15 +139,6 @@ public abstract class SurfaceInterpolator implements XYFootprint {
       return xyPositions_.size();
    }
    
-   public double getZPadding() {
-      return zPadding_um_;
-   }
-   
-   public void setZPadding(double pad) {
-      zPadding_um_ = pad;
-      manager_.drawSurfaceOverlay(this);
-   }
-   
    public double getXYPadding() {
       return xyPadding_um_;
    }
@@ -156,21 +148,7 @@ public abstract class SurfaceInterpolator implements XYFootprint {
       synchronized (xyPositionLock_) {
          xyPositions_ = null;
       }
-      updateXYPositionsOnly();
-   }
-   
-   public double getWidth_um() {
-      double pixelSize = MMStudio.getInstance().getCore().getPixelSizeUm();        
-      int imageWidth = (int) MMStudio.getInstance().getCore().getImageWidth();
-      int pixelWidth = numCols_ * (imageWidth - SettingsDialog.getOverlapX()) + SettingsDialog.getOverlapX();
-      return pixelSize * pixelWidth;
-   }
-   
-   public double getHeight_um() {
-      double pixelSize = MMStudio.getInstance().getCore().getPixelSizeUm();
-      int imageHeight = (int) MMStudio.getInstance().getCore().getImageHeight();
-      int pixelHeight = numRows_ * (imageHeight - SettingsDialog.getOverlapY()) + SettingsDialog.getOverlapY();
-      return pixelSize * pixelHeight;
+      updateXYPositionsOnly(FixedAreaAcquisitionSettings.getStoredTileOverlapPercentage());
    }
 
    /**
@@ -190,8 +168,9 @@ public abstract class SurfaceInterpolator implements XYFootprint {
 
 
    @Override
-   public List<XYStagePosition> getXYPositions() throws InterruptedException {
+   public List<XYStagePosition> getXYPositions(double overlap) throws InterruptedException {
       synchronized (xyPositionLock_) {
+         updateXYPositionsOnly(overlap);
          while (xyPositions_ == null) {
             xyPositionLock_.wait();
          }
@@ -241,12 +220,12 @@ public abstract class SurfaceInterpolator implements XYFootprint {
          }
          
          if (above) { //test if point lies bleow surface + padding
-            if (zPos >=  interpVal - surface.zPadding_um_ ) {   //TODO: account for different signs of Z
+            if (zPos >=  interpVal ) {   //TODO: account for different signs of Z
                 return false;
             }
          } else {
             //test if point lies below surface + padding
-            if (zPos <= interpVal + surface.zPadding_um_) {   //TODO: account for different signs of Z
+            if (zPos <= interpVal ) {   //TODO: account for different signs of Z
                return false;
             }
          }
@@ -281,12 +260,12 @@ public abstract class SurfaceInterpolator implements XYFootprint {
                continue;
             }
             if (above) { //test if point lies bleow surface + padding
-               if (zPos >= interpVal - surface.zPadding_um_) {   //TODO: account for different signs of Z
+               if (zPos >= interpVal ) {   //TODO: account for different signs of Z
                   return false;
                }
             } else {
                //test if point lies below surface + padding
-               if (zPos <= interpVal + surface.zPadding_um_) {   //TODO: account for different signs of Z
+               if (zPos <= interpVal ) {   //TODO: account for different signs of Z
                   return false;
                }
             }
@@ -306,8 +285,11 @@ public abstract class SurfaceInterpolator implements XYFootprint {
     */
    public ArrayList<XYStagePosition> getXYPositonsAtSlice(double zPos) throws InterruptedException {
       SingleResolutionInterpolation interp = waitForCurentInterpolation();
-      int tileWidth = (int) MMStudio.getInstance().getCore().getImageWidth() - SettingsDialog.getOverlapX();
-      int tileHeight = (int) MMStudio.getInstance().getCore().getImageHeight() - SettingsDialog.getOverlapY();
+      double overlapPercent = FixedAreaAcquisitionSettings.getStoredTileOverlapPercentage() / 100;
+      int overlapX = (int) (MMStudio.getInstance().getCore().getImageWidth() * overlapPercent);
+      int overlapY = (int) (MMStudio.getInstance().getCore().getImageHeight() * overlapPercent);
+      int tileWidth = (int) MMStudio.getInstance().getCore().getImageWidth() - overlapX;
+      int tileHeight = (int) MMStudio.getInstance().getCore().getImageHeight() - overlapY;
       while (interp.getPixelsPerInterpPoint() >= Math.max(tileWidth,tileHeight) / NUM_XY_TEST_POINTS ) {
          synchronized (interpolationLock_) {
             interpolationLock_.wait();
@@ -410,11 +392,13 @@ public abstract class SurfaceInterpolator implements XYFootprint {
 
    protected abstract void interpolateSurface(LinkedList<Point3d> points) throws InterruptedException;
 
-   private void fitXYPositionsToConvexHull() throws InterruptedException {
+   private void fitXYPositionsToConvexHull(double overlap) throws InterruptedException {
       int fullTileWidth = (int) MMStudio.getInstance().getCore().getImageWidth();
       int fullTileHeight = (int) MMStudio.getInstance().getCore().getImageHeight();
-      int tileWidthMinusOverlap = fullTileWidth - SettingsDialog.getOverlapX();
-      int tileHeightMinusOverlap =  fullTileHeight - SettingsDialog.getOverlapY();
+      int overlapX = (int) (MMStudio.getInstance().getCore().getImageWidth() * overlap / 100);
+      int overlapY = (int) (MMStudio.getInstance().getCore().getImageHeight() * overlap / 100);
+      int tileWidthMinusOverlap = fullTileWidth - overlapX;
+      int tileHeightMinusOverlap =  fullTileHeight - overlapY;
       int pixelPadding = (int) (xyPadding_um_ / MMStudio.getInstance().getCore().getPixelSizeUm());
       numRows_ = (int) Math.ceil( (boundYPixelMax_ - boundYPixelMin_ + pixelPadding) / (double) tileHeightMinusOverlap );
       numCols_ = (int) Math.ceil( (boundXPixelMax_ - boundXPixelMin_ + pixelPadding) / (double) tileWidthMinusOverlap );    
@@ -511,9 +495,7 @@ public abstract class SurfaceInterpolator implements XYFootprint {
    
    
    //redo XY position fitting, but dont need to reinterpolate
-   private void updateXYPositionsOnly() {
-      //duplicate points for use on caluclation thread
-      final LinkedList<Point3d> points = new LinkedList<Point3d>(points_);
+   private void updateXYPositionsOnly(final double overlap) {
       synchronized (xyPositionLock_) {
          xyPositions_ = null;
       }
@@ -521,7 +503,7 @@ public abstract class SurfaceInterpolator implements XYFootprint {
          @Override
          public void run() {
             try {
-               fitXYPositionsToConvexHull();
+               fitXYPositionsToConvexHull(overlap);
             } catch (InterruptedException ex) {
                //this won't happen
                return;
@@ -583,7 +565,9 @@ public abstract class SurfaceInterpolator implements XYFootprint {
                   if (Thread.interrupted()) {
                      throw new InterruptedException();
                   }
-                  fitXYPositionsToConvexHull();
+                  //use the most recently set overlap value for display purposes. When it comes time to calc the real thing, 
+                  //get it from the acquisition settings
+                  fitXYPositionsToConvexHull(FixedAreaAcquisitionSettings.getStoredTileOverlapPercentage());
                   interpolateSurface(points);
                } catch (InterruptedException e) {
                   return;

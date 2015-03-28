@@ -392,8 +392,8 @@ public class CustomAcqEngine {
          /////////////////////////////////////////////////////////////////
 
          //write pixel overlap into metadata
-         summary.put("GridPixelOverlapX", SettingsDialog.getOverlapX());
-         summary.put("GridPixelOverlapY", SettingsDialog.getOverlapY());
+         summary.put("GridPixelOverlapX", acq.getOverlapX());
+         summary.put("GridPixelOverlapY", acq.getOverlapY());
          summary.put("MagellanExploreAcquisition", acq instanceof ExploreAcquisition);
 
          

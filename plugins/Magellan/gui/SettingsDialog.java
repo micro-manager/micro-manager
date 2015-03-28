@@ -17,8 +17,6 @@ public class SettingsDialog extends javax.swing.JDialog {
    
    Preferences prefs_;
    private GUI gui_;
-   private static int overlapX_ = 0;
-   private static int overlapY_ = 0;
    private static boolean demoMode_ = false;
    private static boolean afBetweenAcqs_ = false;
    
@@ -51,15 +49,6 @@ public class SettingsDialog extends javax.swing.JDialog {
       return afBetweenAcqs_;
    }
    
-
-   public static int getOverlapX() {
-      return overlapX_;
-   }
-   
-   public static int getOverlapY() {
-      return overlapY_;
-   }
-   
    public static boolean getDemoMode() {
       return demoMode_;
    }
@@ -83,34 +72,12 @@ public class SettingsDialog extends javax.swing.JDialog {
     private void initComponents() {
 
         windowSizeButtonGroup_ = new javax.swing.ButtonGroup();
-        jLabel1 = new javax.swing.JLabel();
-        xOverlapSpinner_ = new javax.swing.JSpinner();
-        jLabel2 = new javax.swing.JLabel();
-        yOverlapSpinner_ = new javax.swing.JSpinner();
         jButton2 = new javax.swing.JButton();
         autofocusBetweenSerialAcqsCheckBox_ = new javax.swing.JCheckBox();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Micro-Magellan settings");
         setModalExclusionType(java.awt.Dialog.ModalExclusionType.APPLICATION_EXCLUDE);
-
-        jLabel1.setText("Tile pixel overlap x: ");
-
-        xOverlapSpinner_.setModel(new javax.swing.SpinnerNumberModel(0, 0, 1000, 1));
-        xOverlapSpinner_.addChangeListener(new javax.swing.event.ChangeListener() {
-            public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                xOverlapSpinner_StateChanged(evt);
-            }
-        });
-
-        jLabel2.setText("y:");
-
-        yOverlapSpinner_.setModel(new javax.swing.SpinnerNumberModel(0, 0, 1000, 1));
-        yOverlapSpinner_.addChangeListener(new javax.swing.event.ChangeListener() {
-            public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                yOverlapSpinner_StateChanged(evt);
-            }
-        });
 
         jButton2.setText("Close");
         jButton2.addActionListener(new java.awt.event.ActionListener() {
@@ -131,51 +98,28 @@ public class SettingsDialog extends javax.swing.JDialog {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addContainerGap(381, Short.MAX_VALUE)
                         .addComponent(jButton2))
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jLabel1)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(xOverlapSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(jLabel2)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(yOverlapSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(autofocusBetweenSerialAcqsCheckBox_))
-                        .addGap(0, 210, Short.MAX_VALUE)))
+                        .addGap(104, 104, 104)
+                        .addComponent(autofocusBetweenSerialAcqsCheckBox_)
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(12, 12, 12)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel1)
-                    .addComponent(xOverlapSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel2)
-                    .addComponent(yOverlapSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(41, 41, 41)
+                .addGap(92, 92, 92)
                 .addComponent(autofocusBetweenSerialAcqsCheckBox_)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 118, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 99, Short.MAX_VALUE)
                 .addComponent(jButton2)
                 .addContainerGap())
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
-
-   private void xOverlapSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_xOverlapSpinner_StateChanged
-      overlapX_ = (Integer) xOverlapSpinner_.getValue();
-   }//GEN-LAST:event_xOverlapSpinner_StateChanged
-
-   private void yOverlapSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_yOverlapSpinner_StateChanged
-      overlapY_ = (Integer) yOverlapSpinner_.getValue();
-   }//GEN-LAST:event_yOverlapSpinner_StateChanged
 
    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
       this.setVisible(false);
@@ -188,10 +132,6 @@ public class SettingsDialog extends javax.swing.JDialog {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox autofocusBetweenSerialAcqsCheckBox_;
     private javax.swing.JButton jButton2;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
     private javax.swing.ButtonGroup windowSizeButtonGroup_;
-    private javax.swing.JSpinner xOverlapSpinner_;
-    private javax.swing.JSpinner yOverlapSpinner_;
     // End of variables declaration//GEN-END:variables
 }
