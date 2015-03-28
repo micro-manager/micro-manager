@@ -30,7 +30,7 @@ public class ColorableScrollbarUI extends WindowsScrollBarUI {
    @Override
    protected void paintThumb(Graphics g, JComponent c, Rectangle thumbBounds) {
       super.paintThumb(g, c, thumbBounds);
-      if (((JScrollBar) c).getValue() - 1 == displayedSliceIndex_) { //subtract one to account for extra explore position
+      if (((JScrollBar) c).getValue() == displayedSliceIndex_) { 
          g.setColor(DARK_GREEN);
          g.drawRect(thumbBounds.x, thumbBounds.y, thumbBounds.width, thumbBounds.height);
       }
@@ -43,14 +43,14 @@ public class ColorableScrollbarUI extends WindowsScrollBarUI {
       //show range of z scrollbar inlight green
       g.setColor(new Color(180,220,180));
         
-      int rangeStart = (int) ((minSliceIndex_- ((JScrollBar) c).getMinimum() + 1) / (double) numPositions * trackBounds.width) + trackBounds.x;
+      int rangeStart = (int) ((minSliceIndex_- ((JScrollBar) c).getMinimum()) / (double) numPositions * trackBounds.width) + trackBounds.x;
       int rangeWidth = (int) ((maxSliceIndex_ - minSliceIndex_ + 1) / (double) numPositions * trackBounds.width);
       g.fillRect(rangeStart, trackBounds.y, rangeWidth, trackBounds.height);
 
       
       //show the position in dark green
       g.setColor(DARK_GREEN);
-      int start = (int) ((displayedSliceIndex_- ((JScrollBar) c).getMinimum() + 1) / (double) numPositions * trackBounds.width) + trackBounds.x;
+      int start = (int) ((displayedSliceIndex_- ((JScrollBar) c).getMinimum()) / (double) numPositions * trackBounds.width) + trackBounds.x;
       int width = (int) (1 / (double) numPositions * trackBounds.width);
       g.fillRect(start, trackBounds.y, width, trackBounds.height);
 

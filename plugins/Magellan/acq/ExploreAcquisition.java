@@ -169,7 +169,7 @@ public class ExploreAcquisition extends Acquisition {
     * @return
     */
    public int getMinSliceIndex() {
-      return (int) ((zTop_ - zOrigin_) / zStep_);
+      return (int) Math.round((zTop_ - zOrigin_) / zStep_);
    }
 
    /**
@@ -178,7 +178,7 @@ public class ExploreAcquisition extends Acquisition {
     * @return
     */
    public int getMaxSliceIndex() {
-      return (int) ((zBottom_ - zOrigin_) / zStep_);
+      return (int) Math.round((zBottom_ - zOrigin_) / zStep_);
    }
 
    /**
