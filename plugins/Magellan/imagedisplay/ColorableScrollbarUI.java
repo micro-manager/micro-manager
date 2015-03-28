@@ -7,16 +7,9 @@ package imagedisplay;
 import com.sun.java.swing.plaf.windows.WindowsScrollBarUI;
 import java.awt.Color;
 import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Image;
 import java.awt.Rectangle;
-import java.awt.geom.AffineTransform;
-import java.io.File;
-import java.io.IOException;
-import javax.imageio.ImageIO;
 import javax.swing.JComponent;
 import javax.swing.JScrollBar;
-import javax.swing.plaf.metal.MetalScrollBarUI;
 
 /**
  *
@@ -37,7 +30,7 @@ public class ColorableScrollbarUI extends WindowsScrollBarUI {
    @Override
    protected void paintThumb(Graphics g, JComponent c, Rectangle thumbBounds) {
       super.paintThumb(g, c, thumbBounds);
-      if (((JScrollBar) c).getValue() == displayedSliceIndex_) {
+      if (((JScrollBar) c).getValue() - 1 == displayedSliceIndex_) { //subtract one to account for extra explore position
          g.setColor(DARK_GREEN);
          g.drawRect(thumbBounds.x, thumbBounds.y, thumbBounds.width, thumbBounds.height);
       }
@@ -50,14 +43,14 @@ public class ColorableScrollbarUI extends WindowsScrollBarUI {
       //show range of z scrollbar inlight green
       g.setColor(new Color(180,220,180));
         
-      int rangeStart = (int) ((minSliceIndex_- ((JScrollBar) c).getMinimum()) / (double) numPositions * trackBounds.width) + trackBounds.x;
+      int rangeStart = (int) ((minSliceIndex_- ((JScrollBar) c).getMinimum() + 1) / (double) numPositions * trackBounds.width) + trackBounds.x;
       int rangeWidth = (int) ((maxSliceIndex_ - minSliceIndex_ + 1) / (double) numPositions * trackBounds.width);
       g.fillRect(rangeStart, trackBounds.y, rangeWidth, trackBounds.height);
 
       
       //show the position in dark green
       g.setColor(DARK_GREEN);
-      int start = (int) ((displayedSliceIndex_- ((JScrollBar) c).getMinimum()) / (double) numPositions * trackBounds.width) + trackBounds.x;
+      int start = (int) ((displayedSliceIndex_- ((JScrollBar) c).getMinimum() + 1) / (double) numPositions * trackBounds.width) + trackBounds.x;
       int width = (int) (1 / (double) numPositions * trackBounds.width);
       g.fillRect(start, trackBounds.y, width, trackBounds.height);
 

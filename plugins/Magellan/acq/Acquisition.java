@@ -28,6 +28,8 @@ public abstract class Acquisition implements AcquisitionEventSource{
    private BlockingQueue<TaggedImage> engineOutputQueue_;
    protected CMMCore core_ = MMStudio.getInstance().getCore();
    protected String xyStage_, zStage_;
+   protected boolean zStageHasLimits_;
+   protected double zStageLowerLimit_, zStageUpperLimit_;
    protected PositionManager posManager_;
    protected BlockingQueue<AcquisitionEvent> events_;
    protected TaggedImageSink imageSink_;
@@ -41,6 +43,10 @@ public abstract class Acquisition implements AcquisitionEventSource{
    public Acquisition(double zStep) throws Exception {
       xyStage_ = core_.getXYStageDevice();
       zStage_ = core_.getFocusDevice();
+      //TODO: "postion" is not generic name??
+      zStageHasLimits_ = core_.hasPropertyLimits(zStage_, "Position");
+      zStageLowerLimit_ = core_.getPropertyLowerLimit(zStage_, "Position");
+      zStageUpperLimit_ = core_.getPropertyUpperLimit(zStage_, "Position");
       zStep_ = zStep;
       events_ = new LinkedBlockingQueue<AcquisitionEvent>(ACQ_EVENT_QUEUE_SIZE);
       zOrigin_ = core_.getPosition(zStage_);

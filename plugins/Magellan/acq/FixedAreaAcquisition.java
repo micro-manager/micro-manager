@@ -313,11 +313,11 @@ public class FixedAreaAcquisition extends Acquisition {
                            }
                         } else {
                            //3D region
-                           if (isZAboveImagingVolume(position, zPos)) {
-                              continue; //position is above imaging volume
+                           if (isZAboveImagingVolume(position, zPos) || (zStageHasLimits_ && zPos < zStageLowerLimit_)) {
+                              continue; //position is above imaging volume or range of focus device
                            }
-                           if (isZBelowImagingVolume(position, zPos)) {
-                              //position is below z stack, z stack finished
+                           if (isZBelowImagingVolume(position, zPos) || (zStageHasLimits_ && zPos > zStageUpperLimit_)) {
+                              //position is below z stack or limit of focus device, z stack finished
                               break;
                            }
                         }
