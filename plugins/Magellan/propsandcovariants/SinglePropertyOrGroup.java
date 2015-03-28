@@ -358,13 +358,16 @@ public class SinglePropertyOrGroup implements Covariant{
    }
 
    @Override
-   public void updateHardwareToValue(CovariantValue dVal) throws Exception {
-      CMMCore core = MMStudio.getInstance().getCore();
-      if (isGroup()) {
-         core.setConfig(name, dVal.stringValue());
-      } else {
-         core.setProperty(device, name, getValueInCoreFormat(dVal.toString()));     
-      }
-   }
-
+    public void updateHardwareToValue(CovariantValue dVal) throws Exception {
+        CMMCore core = MMStudio.getInstance().getCore();
+        if (isGroup()) {
+            core.setConfig(name, dVal.stringValue());
+        } else {
+            try {
+                core.setProperty(device, name, dVal.toString());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
 }

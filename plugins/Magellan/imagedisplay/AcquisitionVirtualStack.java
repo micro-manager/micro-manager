@@ -141,8 +141,10 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
       Object pixels = null;
       try {
          TaggedImage image = getTaggedImage(flatIndex);
-         if (image == null) {
+         if (image == null || image.pix == null) {
             pixels = ImageUtils.makeProcessor(type_, width_, height_).getPixels();
+         } else if (image != null && image.tags == null) {
+             pixels = image.pix;
          } else if (MDUtils.isGRAY(image)) {
             pixels = image.pix;
          } else if (MDUtils.isRGB32(image)) {

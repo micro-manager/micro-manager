@@ -239,7 +239,6 @@ public class CustomAcqEngine {
             public void run() throws Exception {
                while (core_.deviceBusy(xyStage)) {
                   Thread.sleep(2);
-//                  IJ.log(getCurrentDateAndTime() + ": waiting for XY stage to not be busy...");
                }
             }
          }, "waiting for XY stage to not be busy");
@@ -256,7 +255,6 @@ public class CustomAcqEngine {
             public void run() throws Exception {
                while (core_.deviceBusy(xyStage)) {
                   Thread.sleep(2);
-//                  IJ.log(getCurrentDateAndTime() + ": waiting for XY stage to not be busy...");
                }
             }
          }, "waiting for XY stage to not be busy");
@@ -270,16 +268,15 @@ public class CustomAcqEngine {
             public void run() throws Exception {
                while (core_.deviceBusy(zStage)) {
                   Thread.sleep(2);
-                  IJ.log(getCurrentDateAndTime() + ": waiting for Z stage to not be busy...");
                }
             }
          }, "waiting for Z stage to not be busy");
          //move Z stage
          loopHardwareCommandRetries(new HardwareCommand() {
-            @Override
-            public void run() throws Exception {
-               core_.setPosition(zStage, event.zPosition_);
-            }
+             @Override
+             public void run() throws Exception {
+                 core_.setPosition(zStage, event.zPosition_);
+             }
          }, "move Z device");
          //wait for it to not be busy (is this even needed?)
          loopHardwareCommandRetries(new HardwareCommand() {
@@ -287,7 +284,6 @@ public class CustomAcqEngine {
             public void run() throws Exception {
                while (core_.deviceBusy(zStage)) {
                   Thread.sleep(2);
-                  IJ.log(getCurrentDateAndTime() + ": waiting for Z stage to not be busy...");
                }  
             }
          }, "waiting for Z stage to not be busy");
@@ -311,7 +307,7 @@ public class CustomAcqEngine {
             loopHardwareCommandRetries(new HardwareCommand() {
                @Override
                public void run() throws Exception {
-                  cp.updateHardwareBasedOnPairing(event);
+                  cp.updateHardwareBasedOnPairing(event); 
                }
             }, "settng Covariant value pair " + cp.toString());
          }

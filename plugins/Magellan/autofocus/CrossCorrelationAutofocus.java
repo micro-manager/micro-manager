@@ -102,12 +102,11 @@ public class CrossCorrelationAutofocus {
          downsampledHeight_ = (int) (fullResPixelHeight / Math.pow(2, downsampleIndex_));
          return;
       }      
-      IJ.log("Calculating xCorr");
       ImageStack tp0Stack = createAFStack(acq_, 0, channelIndex_, downsampledWidth_, downsampledHeight_, downsampleIndex_);
       ImageStack currentTPStack = createAFStack(acq_, timeIndex, channelIndex_, downsampledWidth_, downsampledHeight_, downsampleIndex_);
+
       //run autofocus
       double drift = calcFocusDrift(tp0Stack, currentTPStack, acq_.getZStep());
-      IJ.log("xCorr calculation finished");
       //check if outside max displacement
       if (Math.abs(currentPosition_ - drift - initialPosition_) > maxDisplacement_) {
          IJ.log("Calculated focus drift of " + drift + " um exceeds tolerance. Leaving autofocus offset unchanged");
@@ -162,7 +161,7 @@ public class CrossCorrelationAutofocus {
       ImageStack xCorrStack = FHTImage3D.crossCorrelation(original.getStack(), current.getStack());
       ImagePlus xCorr = new ImagePlus("XCorr", xCorrStack);      
 //      System.out.println("Time to generate xCorr: " + ((System.currentTimeMillis() - start)/1000) + " s");       
-      xCorr.show();
+//      xCorr.show();
       //find the maximum cross correlation intensity at each z slice
       double[] ccIntensity = new double[xCorr.getNSlices()], interpolatedCCMax = new double[xCorr.getNSlices()];
       for (int i = 1; i <= ccIntensity.length; i++) {
@@ -170,6 +169,7 @@ public class CrossCorrelationAutofocus {
          ccIntensity[i - 1] = xCorr.getStatistics(ImagePlus.MIN_MAX).max;        
          interpolatedCCMax[i - 1] = i - 1;
       }
+
       //find maximum value of interpolated spline function
       PolynomialSplineFunction func = new SplineInterpolator().interpolate(interpolatedCCMax, ccIntensity);
       double[] sliceIndexInterpolationPoints = new double[(int) (SPLINE_PRECISION * (interpolatedCCMax.length - 1))];

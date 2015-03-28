@@ -70,10 +70,10 @@ public class CovariantPairing {
          double indHighLimit = independent_.getType() == CovariantType.INT ? independentValues_.getLast().intValue() : independentValues_.getLast().doubleValue();
          if (indVal <= indLowLimit) {
             interpolatedVal = dependent_.getType() == CovariantType.INT ? valueMap_.get(independentValues_.getFirst()).intValue() :
-                    valueMap_.get(independentValues_.getFirst()).doubleValue();
+                    valueMap_.get(independentValues_.getFirst()).doubleValue();                                    
          } else if (indVal >= indHighLimit) {
              interpolatedVal = dependent_.getType() == CovariantType.INT ? valueMap_.get(independentValues_.getLast()).intValue() :
-                    valueMap_.get(independentValues_.getLast()).doubleValue();
+                    valueMap_.get(independentValues_.getLast()).doubleValue();                      
          } else {
             interpolatedVal  = interpolant_.value(indVal);
          }

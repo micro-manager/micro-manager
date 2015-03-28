@@ -338,6 +338,11 @@ public class FixedAreaAcquisition extends Acquisition {
                   } else {
                      events_.put(AcquisitionEvent.createTimepointFinishedEvent(FixedAreaAcquisition.this));
                   }
+                  
+                   //this call starts a new thread to not hang up cyclic barriers   
+                  //signal to next autofocus to start running, then continue using the event generator thread
+                  //to calculate autofocus
+                   acqGroup_.finishedTimePoint(FixedAreaAcquisition.this);
 
                   //wait for final image of timepoint to be written before beginning end of timepoint stuff
                   if (Thread.interrupted()) {
@@ -349,12 +354,10 @@ public class FixedAreaAcquisition extends Acquisition {
                      try {
                         autofocus_.run(timeIndex);
                      } catch (Exception ex) {
-                        IJ.log("Problem running autofocus");
+                        
+                        IJ.log("Problem running autofocus " + ex.getMessage());
                      }
                   }
-
-                  //this call starts a new thread to not hang up cyclic barriers   
-                  acqGroup_.finishedTimePoint(FixedAreaAcquisition.this);
                }
                //acqusiition has generated all of its events
                eventGenerator_.shutdown();

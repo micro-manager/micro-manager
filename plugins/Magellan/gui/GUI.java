@@ -1427,6 +1427,11 @@ public class GUI extends javax.swing.JFrame {
         autofocusMaxDisplacementLabel_.setText("Maxmimum displacement (um): ");
 
         autofocusMaxDisplacementSpinner_.setModel(new javax.swing.SpinnerNumberModel(Double.valueOf(1.0d), Double.valueOf(0.0d), null, Double.valueOf(1.0d)));
+        autofocusMaxDisplacementSpinner_.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                autofocusMaxDisplacementSpinner_StateChanged(evt);
+            }
+        });
 
         useAutofocusCheckBox_.setText("Activate cross-correlation based autofocus");
         useAutofocusCheckBox_.addActionListener(new java.awt.event.ActionListener() {
@@ -1444,6 +1449,11 @@ public class GUI extends javax.swing.JFrame {
         }
         ComboBoxModel afzModel = new DefaultComboBoxModel(zNames);
         autofocusZDeviceComboBox_.setModel(afzModel);
+        autofocusZDeviceComboBox_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                autofocusZDeviceComboBox_ActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout autofocusTab_lLayout = new javax.swing.GroupLayout(autofocusTab_l);
         autofocusTab_l.setLayout(autofocusTab_lLayout);
@@ -1529,7 +1539,7 @@ public class GUI extends javax.swing.JFrame {
             .addGroup(controlPanelName_Layout.createSequentialGroup()
                 .addGap(346, 346, 346)
                 .addComponent(configPropsButton_)
-                .addContainerGap())
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         controlPanelName_Layout.setVerticalGroup(
             controlPanelName_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1832,7 +1842,7 @@ public class GUI extends javax.swing.JFrame {
                     .addGroup(layout.createSequentialGroup()
                         .addGap(329, 329, 329)
                         .addComponent(newExploreWindowButton_)))
-                .addContainerGap())
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -2195,6 +2205,14 @@ public class GUI extends javax.swing.JFrame {
    private void umBelowBottomSurfaceSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_umBelowBottomSurfaceSpinner_StateChanged
       storeCurrentAcqSettings();
    }//GEN-LAST:event_umBelowBottomSurfaceSpinner_StateChanged
+
+    private void autofocusZDeviceComboBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_autofocusZDeviceComboBox_ActionPerformed
+        storeCurrentAcqSettings();
+    }//GEN-LAST:event_autofocusZDeviceComboBox_ActionPerformed
+
+    private void autofocusMaxDisplacementSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_autofocusMaxDisplacementSpinner_StateChanged
+        storeCurrentAcqSettings();
+    }//GEN-LAST:event_autofocusMaxDisplacementSpinner_StateChanged
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

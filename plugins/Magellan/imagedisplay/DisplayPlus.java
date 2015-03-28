@@ -611,7 +611,6 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
                      }
                   }
                   if (cancel_) {
-                     System.out.println("canceled");
                      done_ = true;
                      return;
                   }
@@ -622,7 +621,6 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
                }
                if (cancel_) {
                   done_ = true;
-                  System.out.println("canceled");
                   return;
                }
                //always draw overlay when pixels need to be updated, because this call will interrupt itself if need be     
@@ -630,7 +628,6 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
 
                if (cancel_) {
                   done_ = true;
-                  System.out.println("canceled");
                   return;
                }
                DisplayPlus.this.updateAndDraw(forcePaint_);

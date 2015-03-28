@@ -4,6 +4,8 @@
  */
 package propsandcovariants;
 
+import java.text.DecimalFormat;
+
 /**
  *
  * @author Henry
@@ -39,7 +41,7 @@ public class CovariantValue  implements Comparable<CovariantValue>{
       if (stringValue_ != null) {
          return stringValue_;
       } else if (type_ == CovariantType.DOUBLE) {
-         return doubleValue_ + "";
+          return new DecimalFormat("0.0000").format(doubleValue_); //formatted correctly for the core
       } else {
          return intValue_ + "";
       }

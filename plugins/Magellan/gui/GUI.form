@@ -7,6 +7,7 @@
   </NonVisualComponents>
   <SyntheticProperties>
     <SyntheticProperty name="formSizePolicy" type="int" value="1"/>
+    <SyntheticProperty name="generateCenter" type="boolean" value="false"/>
   </SyntheticProperties>
   <AuxValues>
     <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="0"/>
@@ -1457,6 +1458,9 @@
                   <SpinnerModel initial="1.0" minimum="0.0" numberType="java.lang.Double" stepSize="1.0" type="number"/>
                 </Property>
               </Properties>
+              <Events>
+                <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="autofocusMaxDisplacementSpinner_StateChanged"/>
+              </Events>
             </Component>
             <Component class="javax.swing.JCheckBox" name="useAutofocusCheckBox_">
               <Properties>
@@ -1477,6 +1481,9 @@
                   <Connection code="afzModel" type="code"/>
                 </Property>
               </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="autofocusZDeviceComboBox_ActionPerformed"/>
+              </Events>
               <AuxValues>
                 <AuxValue name="JavaCodeGenerator_InitCodePre" type="java.lang.String" value="StrVector zVec = MMStudio.getInstance().getCore().getLoadedDevicesOfType(mmcorej.DeviceType.StageDevice);&#xd;&#xa;String[] zNames = new String[(int)zVec.size()];&#xd;&#xa;for (int i = 0; i &lt; zNames.length; i++) {&#xd;&#xa;   zNames[i] = zVec.get(i);&#xd;&#xa;}&#xd;&#xa;ComboBoxModel afzModel = new DefaultComboBoxModel(zNames);"/>
               </AuxValues>

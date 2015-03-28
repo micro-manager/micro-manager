@@ -177,7 +177,8 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
     * @param width pixel width of image at requested resolution
     * @param height pixel height of image at requested resolution
     * @param fillEmptyPixelsWithBackground determine the value of background pixels and use this for autofocus 
-    * @return
+    * @return Tagged image or taggeded image with background pixels and null tags if no
+    * pixel data is present
     */
    public TaggedImage getImageForDisplay(int channel, int slice, int frame, int dsIndex, int x, int y, 
            int width, int height) {
@@ -281,10 +282,6 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
 
          }
          xOffset += lineWidths.get(col - colStart);
-      }
-      if (topLeftMD == null) {
-         //no tiles for the selected field of view
-         return null;
       }
       return new TaggedImage(pixels, topLeftMD);
    }
