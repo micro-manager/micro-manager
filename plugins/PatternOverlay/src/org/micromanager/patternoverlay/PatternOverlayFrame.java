@@ -41,7 +41,7 @@ import javax.swing.event.ChangeListener;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.Studio;
 import org.micromanager.internal.utils.MMFrame;
-import org.micromanager.events.NewDisplayEvent;
+import org.micromanager.events.DisplayAboutToShowEvent;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -217,7 +217,7 @@ public class PatternOverlayFrame extends MMFrame {
     * @param event Event indicating that a new window was created
     */
    @Subscribe
-   public void toggleOverlay(NewDisplayEvent event) {
+   public void toggleOverlay(DisplayAboutToShowEvent event) {
       try {
          boolean visible = toggleButton_.isSelected();
          updateToggleButtonLabel();
