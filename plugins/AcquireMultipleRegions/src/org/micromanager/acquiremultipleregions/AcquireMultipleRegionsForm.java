@@ -14,6 +14,7 @@ import javax.swing.table.AbstractTableModel;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
 import org.micromanager.acquiremultipleregions.ZGenerator.ZGeneratorType;
+import org.micromanager.data.Datastore;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
@@ -237,8 +238,8 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
                 //update positionlist with grid
                 gui_.compat().setPositionList(currRegion.tileGrid(getXFieldSize(), getYFieldSize(), axisList_, zGenType_));               
                 gui_.compat().refreshGUI();
-                String acqName = gui_.compat().runAcquisition(currRegion.filename, currRegion.directory);
-                gui_.compat().closeAcquisitionDisplays(acqName);
+                Datastore store = gui_.compat().runAcquisition(currRegion.filename, currRegion.directory);
+                gui_.displays().closeDisplaysFor(store);
             } catch (MMScriptException ex) {
                 handleError(ex);
             }

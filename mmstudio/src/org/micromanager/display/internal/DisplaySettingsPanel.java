@@ -231,9 +231,7 @@ public class DisplaySettingsPanel extends JPanel {
       dupeButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            new DefaultDisplayWindow(store_,
-               display_.getControlsFactory(), display_.getDisplaySettings(),
-               display_.getCustomName());
+            duplicateDisplay();
          }
       });
       add(dupeButton, "align right, wrap");
@@ -307,7 +305,8 @@ public class DisplaySettingsPanel extends JPanel {
       DisplaySettings settings = event.getDisplaySettings();
       try {
          setColorPresetIndex(settings);
-         if (shouldAutostretch_ != null) {
+         if (shouldAutostretch_ != null &&
+               settings.getShouldAutostretch() != null) {
             shouldAutostretch_.setSelected(settings.getShouldAutostretch());
          }
       }
@@ -402,6 +401,15 @@ public class DisplaySettingsPanel extends JPanel {
       catch (java.io.IOException e) {
          ReportingUtils.showError(e, "Unable to save display settings");
       }
+   }
+
+   /**
+    * Duplicate the display we are a part of.
+    */
+   private void duplicateDisplay() {
+      new DefaultDisplayWindow(store_,
+         display_.getControlsFactory(), display_.getDisplaySettings(),
+         display_.getCustomName());
    }
 
    /**

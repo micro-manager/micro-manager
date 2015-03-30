@@ -1,5 +1,4 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          MMIntroDlg.java
 //PROJECT:       Micro-Manager
 //SUBSYSTEM:     mmstudio
 //-----------------------------------------------------------------------------
@@ -36,10 +35,11 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.util.Arrays;
-import java.util.Set;
-
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.swing.BorderFactory;
 import javax.swing.border.EtchedBorder;
@@ -62,7 +62,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * Splash screen and introduction dialog. 
  * Opens up at startup and allows selection of the configuration file.
  */
-public class MMIntroDlg extends JDialog {
+public class IntroDlg extends JDialog {
    private static final long serialVersionUID = 1L;
    private static final String USERNAME_NEW = "Create new profile";
    private static final String RECENTLY_USED_CONFIGS = "recently-used config files";
@@ -92,7 +92,7 @@ public class MMIntroDlg extends JDialog {
    public static String CITATION_TEXT =
       "If you have found this software useful, please cite Micro-Manager in your publications.";
 
-   public MMIntroDlg(String ver) {
+   public IntroDlg(String ver) {
       super();
       setFont(new Font("Arial", Font.PLAIN, 10));
       setTitle("Micro-Manager Startup");
@@ -109,7 +109,7 @@ public class MMIntroDlg extends JDialog {
       setLocation(screenSize.width/2 - (winSize.width/2), screenSize.height/2 - (winSize.height/2));
 
       JLabel introImage = new JLabel();
-      introImage.setIcon(SwingResourceManager.getIcon(MMIntroDlg.class, "/org/micromanager/internal/icons/splash.gif"));
+      introImage.setIcon(SwingResourceManager.getIcon(IntroDlg.class, "/org/micromanager/internal/icons/splash.gif"));
       introImage.setLayout(null);
       introImage.setBounds(0, 0, 392, 197);
       introImage.setFocusable(false);
@@ -271,7 +271,7 @@ public class MMIntroDlg extends JDialog {
       cfgFileDropperDown_.removeAllItems();
       DefaultUserProfile profile = DefaultUserProfile.getInstance();
       ArrayList<String> configs = new ArrayList<String>(
-            Arrays.asList(profile.getStringArray(MMIntroDlg.class,
+            Arrays.asList(profile.getStringArray(IntroDlg.class,
                RECENTLY_USED_CONFIGS, new String[0])));
       Boolean doesExist = false;
       if (path != null) {
@@ -286,14 +286,17 @@ public class MMIntroDlg extends JDialog {
          }
          String[] tmp = new String[configs.size()];
          tmp = configs.toArray(tmp);
-         profile.setStringArray(MMIntroDlg.class,
+         profile.setStringArray(IntroDlg.class,
                RECENTLY_USED_CONFIGS, tmp);
       }
 
       // Add on global default configs.
-      configs.addAll(Arrays.asList(profile.getStringArray(MMIntroDlg.class,
+      configs.addAll(Arrays.asList(profile.getStringArray(IntroDlg.class,
               GLOBAL_CONFIGS,
               new String[] {new File(DEFAULT_CONFIG_FILE_NAME).getAbsolutePath()})));
+      // Remove duplicates, and then sort alphabetically.
+      configs = new ArrayList<String>(new HashSet<String>(configs));
+      Collections.sort(configs);
       for (String config : configs) {
          cfgFileDropperDown_.addItem(config);
       }
@@ -337,12 +340,12 @@ public class MMIntroDlg extends JDialog {
    }
 
    public static boolean getShouldAskForConfigFile() {
-      return DefaultUserProfile.getInstance().getBoolean(MMIntroDlg.class,
+      return DefaultUserProfile.getInstance().getBoolean(IntroDlg.class,
             SHOULD_ASK_FOR_CONFIG, true);
    }
 
    public static void setShouldAskForConfigFile(boolean shouldAsk) {
-      DefaultUserProfile.getInstance().setBoolean(MMIntroDlg.class,
+      DefaultUserProfile.getInstance().setBoolean(IntroDlg.class,
             SHOULD_ASK_FOR_CONFIG, shouldAsk);
    }
 }

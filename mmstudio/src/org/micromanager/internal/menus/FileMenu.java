@@ -1,11 +1,13 @@
 package org.micromanager.internal.menus;
 
+import java.io.IOException;
 
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.GUIUtils;
+import org.micromanager.internal.utils.ReportingUtils;
 
 
 
@@ -29,7 +31,12 @@ public class FileMenu {
                new Thread() {
                   @Override
                   public void run() {
-                     studio_.promptForAcquisitionToOpen(false);
+                     try {
+                        studio_.data().promptForDataToLoad(true);
+                     }
+                     catch (IOException e) {
+                        ReportingUtils.showError(e, "There was an error when opening data");
+                     }
                   }
                }.start();
             }
@@ -43,7 +50,12 @@ public class FileMenu {
                new Thread() {
                   @Override
                   public void run() {
-                     studio_.promptForAcquisitionToOpen(true);
+                     try {
+                        studio_.data().promptForDataToLoad(false);
+                     }
+                     catch (IOException e) {
+                        ReportingUtils.showError(e, "There was an error when opening data");
+                     }
                   }
                }.start();
             }

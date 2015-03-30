@@ -1,5 +1,4 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          XYPositionListDlg.java
 //PROJECT:       Micro-Manager
 //SUBSYSTEM:     mmstudio
 //-----------------------------------------------------------------------------
@@ -66,7 +65,7 @@ import org.micromanager.StagePosition;
 import org.micromanager.events.StagePositionChangedEvent;
 import org.micromanager.events.XYStagePositionChangedEvent;
 import org.micromanager.internal.dialogs.AcqControlDlg;
-import org.micromanager.events.internal.EventManager;
+import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.FileDialogs.FileType;
@@ -440,7 +439,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       add(closeButton, "wrap");
 
       // Register to be informed when the current stage position changes.
-      EventManager.register(this);
+      DefaultEventManager.getInstance().registerForEvents(this);
       refreshCurrentPosition();
    }
    

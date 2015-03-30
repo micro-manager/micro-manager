@@ -18,7 +18,6 @@
 //
 package org.micromanager.internal;
 
-import org.micromanager.acquisition.internal.MMAcquisition;
 import org.micromanager.acquisition.internal.AcquisitionWrapperEngine;
 import org.micromanager.acquisition.internal.TaggedImageQueue;
 import bsh.EvalError;
@@ -64,8 +63,6 @@ import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import org.micromanager.acquisition.internal.AcquisitionManager;
-
 import org.micromanager.Album;
 import org.micromanager.Autofocus;
 import org.micromanager.CompatibilityInterface;
@@ -76,6 +73,7 @@ import org.micromanager.DataProcessor;
 import org.micromanager.display.DisplayManager;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
+import org.micromanager.events.EventManager;
 import org.micromanager.IAcquisitionEngine2010;
 import org.micromanager.LogManager;
 import org.micromanager.MMListenerInterface;
@@ -94,11 +92,11 @@ import org.micromanager.data.internal.DefaultDataManager;
 
 import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.dialogs.CalibrationListDlg;
-import org.micromanager.internal.dialogs.MMIntroDlg;
+import org.micromanager.internal.dialogs.IntroDlg;
 import org.micromanager.internal.dialogs.OptionsDlg;
 import org.micromanager.internal.dialogs.RegistrationDlg;
 
-import org.micromanager.events.internal.EventManager;
+import org.micromanager.events.internal.DefaultEventManager;
 
 import org.micromanager.display.internal.DefaultDisplayManager;
 
@@ -135,18 +133,17 @@ import org.micromanager.internal.utils.WaitDialog;
  * Implements the Studio (i.e. primary API) and does various other
  * tasks that should probably be refactored out at some point.
  */
-public class MMStudio implements Studio, CompatibilityInterface, LogManager {
+public class MMStudio implements Studio, CompatibilityInterface {
 
    private static final long serialVersionUID = 3556500289598574541L;
-   private static final String MAIN_SAVE_METHOD = "saveMethod";
    private static final String SYSTEM_CONFIG_FILE = "sysconfig_file";
    private static final String OPEN_ACQ_DIR = "openDataDir";
    private static final String SCRIPT_CORE_OBJECT = "mmc";
    private static final String AUTOFOCUS_DEVICE = "autofocus_device";
-   private static final String EXPOSURE_SETTINGS_NODE = "MainExposureSettings";
    private static final int TOOLTIP_DISPLAY_DURATION_MILLISECONDS = 15000;
    private static final int TOOLTIP_DISPLAY_INITIAL_DELAY_MILLISECONDS = 2000;
    private static final String DEFAULT_CONFIG_FILE_NAME = "MMConfig_demo.cfg";
+   // Note that this property is set by one of the launcher scripts.
    private static final String DEFAULT_CONFIG_FILE_PROPERTY = "org.micromanager.default.config.file";
    private static final String SHOULD_DELETE_OLD_CORE_LOGS = "whether or not to delete old MMCore log files";
    private static final String CORE_LOG_LIFETIME_DAYS = "how many days to keep MMCore log files, before they get deleted";
@@ -205,7 +202,6 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
    private CenterAndDragListener centerAndDragListener_;
    private ZWheelListener zWheelListener_;
    private XYZKeyListener xyzKeyListener_;
-   private AcquisitionManager acqMgr_;
    public static final FileType MM_CONFIG_FILE
             = new FileType("MM_CONFIG_FILE",
                            "Micro-Manager Config File",
@@ -266,7 +262,7 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
    public MMStudio(boolean shouldRunAsPlugin) {
       org.micromanager.internal.diagnostics.ThreadExceptionLogger.setUp();
 
-      EventManager.register(this);
+      DefaultEventManager.getInstance().registerForEvents(this);
 
       prepAcquisitionEngine();
 
@@ -279,8 +275,6 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
       amRunningAsPlugin_ = shouldRunAsPlugin;
       isProgramRunning_ = true;
 
-      acqMgr_ = new AcquisitionManager();
-      
       sysConfigFile_ = new File(DEFAULT_CONFIG_FILE_NAME).getAbsolutePath();
       sysConfigFile_ = System.getProperty(DEFAULT_CONFIG_FILE_PROPERTY,
             sysConfigFile_);
@@ -377,7 +371,7 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
       ReportingUtils.setCore(core_);
       logStartupProperties();
               
-      engine_ = new AcquisitionWrapperEngine(acqMgr_);
+      engine_ = new AcquisitionWrapperEngine();
 
       // This entity is a class property to avoid garbage collection.
       coreCallback_ = new CoreEventCallback(core_, engine_);
@@ -412,10 +406,10 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
       hotKeys_ = new org.micromanager.internal.utils.HotKeys();
       hotKeys_.loadSettings();
 
-      if (MMIntroDlg.getShouldAskForConfigFile() ||
+      if (IntroDlg.getShouldAskForConfigFile() ||
             !DefaultUserProfile.getShouldAlwaysUseDefaultProfile()) {
          // Ask the user for a configuration file and/or user profile.
-         MMIntroDlg introDlg = new MMIntroDlg(MMVersion.VERSION_STRING);
+         IntroDlg introDlg = new IntroDlg(MMVersion.VERSION_STRING);
          introDlg.setConfigFile(sysConfigFile_);
          introDlg.setVisible(true);
          introDlg.toFront();
@@ -771,59 +765,6 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
 
    public void setAcqDirectory(String dir) {
       openAcqDirectory_ = dir;
-   }
-
-   /**
-    * Open an existing acquisition directory and build viewer window.
-    * @param inRAM whether or not to keep data in RAM 
-    * @return selected File object 
-    */
-   public File promptForAcquisitionToOpen(boolean inRAM) {
-      File f = FileDialogs.openDir(frame_,
-            "Please select an image data set", MM_DATA_SET);
-      if (f == null) {
-         return null;
-      }
-      String path = f.getParent();
-      if (f.isDirectory()) {
-         path = f.getAbsolutePath();
-      }
-
-      try {
-         openAcquisitionData(path, inRAM);
-      } catch (MMScriptException ex) {
-         ReportingUtils.showError(ex);
-      }
-      return f;
-   }
-
-   @Override
-   public String openAcquisitionData(String dir, boolean inRAM, boolean show) 
-           throws MMScriptException {
-      String rootDir = new File(dir).getAbsolutePath();
-      String name = new File(dir).getName();
-      rootDir = rootDir.substring(0, rootDir.length() - (name.length() + 1));
-      name = acqMgr_.getUniqueAcquisitionName(name);
-      acqMgr_.openAcquisition(name, rootDir, show, !inRAM, true);
-      try {
-         getAcquisitionWithName(name).initialize();
-      } catch (MMScriptException mex) {
-         acqMgr_.closeAcquisition(name);
-         throw (mex);
-      }
-      return name;
-   }
-
-   /**
-    * Opens an existing data set. Shows the acquisition in a window.
-    * @param dir location of data set
-    * @param inRam whether not to open completely in RAM
-    * @return The acquisition object.
-    * @throws MMScriptException
-    */
-   @Override
-   public String openAcquisitionData(String dir, boolean inRam) throws MMScriptException {
-      return openAcquisitionData(dir, inRam, true);
    }
 
    protected void changeBinning() {
@@ -1280,11 +1221,9 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
 
       stopAllActivity();
       
-      // Close all image windows associated with MM.  Canceling saving of 
-      // any of these should abort shutdown
-      if (!acqMgr_.closeAllImageWindows()) {
-         return false;
-      }
+      // TODO: we should close all open image display windows, and if the
+      // user cancels any of them, then we should abort shutdown.
+      ReportingUtils.logError("TODO: allow cancellation of shutdown if close-display option is selected for open display window");
 
       if (!cleanupOnClose(calledByImageJ)) {
          return false;
@@ -1298,14 +1237,14 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
          hotKeys_.saveSettings();
       } catch (NullPointerException e) {
          if (core_ != null)
-            logError(e);
+            ReportingUtils.logError(e);
       }
       try {
          DefaultUserProfile.getInstance().syncToDisk();
       }
       catch (IOException e) {
          if (core_ != null) {
-            logError(e);
+            ReportingUtils.logError(e);
          }
       }
       if (OptionsDlg.getShouldCloseOnExit()) {
@@ -1654,13 +1593,13 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
 
    
    @Override
-   public String runAcquisition() throws MMScriptException {
+   public Datastore runAcquisition() throws MMScriptException {
       if (SwingUtilities.isEventDispatchThread()) {
          throw new MMScriptException("Acquisition can not be run from this (EDT) thread");
       }
       testForAbortRequests();
       if (acqControlWin_ != null) {
-         String name = acqControlWin_.runAcquisition();
+         Datastore store = acqControlWin_.runAcquisition();
          try {
             while (acqControlWin_.isAcquisitionRunning()) {
                Thread.sleep(50);
@@ -1668,7 +1607,7 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
          } catch (InterruptedException e) {
             ReportingUtils.showError(e);
          }
-         return name;
+         return store;
       } else {
          throw new MMScriptException(
                "Acquisition setup window must be open for this command to work.");
@@ -1676,21 +1615,19 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
    }
 
    @Override
-   public String runAcquisition(String name, String root)
+   public Datastore runAcquisition(String name, String root)
          throws MMScriptException {
       testForAbortRequests();
       if (acqControlWin_ != null) {
-         String acqName = acqControlWin_.runAcquisition(name, root);
+         Datastore store = acqControlWin_.runAcquisition(name, root);
          try {
-            MMAcquisition acq = acqMgr_.getAcquisition(acqName);
-            Datastore store = acq.getDatastore();
             while (!store.getIsFrozen()) {
                Thread.sleep(100);
             }
          } catch (InterruptedException e) {
             ReportingUtils.showError(e);
          }
-         return acqName;
+         return store;
       } else {
          throw new MMScriptException(
                "Acquisition setup window must be open for this command to work.");
@@ -1746,145 +1683,6 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
    }
 
    @Override
-   public String getUniqueAcquisitionName(String stub) {
-      return acqMgr_.getUniqueAcquisitionName(stub);
-   }
-   
-   //@Override
-   public void openAcquisition(String name, String rootDir, int nrFrames,
-         int nrChannels, int nrSlices, int nrPositions) throws MMScriptException {
-      openAcquisition(name, rootDir, nrFrames, nrChannels, nrSlices,
-            nrPositions, true, false);
-   }
-
-   //@Override
-   public void openAcquisition(String name, String rootDir, int nrFrames,
-         int nrChannels, int nrSlices) throws MMScriptException {
-      openAcquisition(name, rootDir, nrFrames, nrChannels, nrSlices, 0);
-   }
-   
-   //@Override
-   public void openAcquisition(String name, String rootDir, int nrFrames,
-         int nrChannels, int nrSlices, int nrPositions, boolean show)
-         throws MMScriptException {
-      openAcquisition(name, rootDir, nrFrames, nrChannels, nrSlices, 
-            nrPositions, show, false);
-   }
-
-
-   //@Override
-   public void openAcquisition(String name, String rootDir, int nrFrames,
-         int nrChannels, int nrSlices, boolean show)
-         throws MMScriptException {
-      openAcquisition(name, rootDir, nrFrames, nrChannels, nrSlices, 0, 
-            show, false);
-   }   
-
-   @Override
-   public void openAcquisition(String name, String rootDir, int nrFrames,
-         int nrChannels, int nrSlices, int nrPositions, boolean show, boolean save)
-         throws MMScriptException {
-      if (nrFrames <= 0) {
-         nrFrames = 1;
-         ReportingUtils.logError("Coercing frame count to 1");
-      }
-      if (nrChannels <= 0) {
-         nrChannels = 1;
-         ReportingUtils.logError("Coercing channel count to 1");
-      }
-      if (nrSlices <= 0) {
-         nrSlices = 1;
-         ReportingUtils.logError("Coercing slice count to 1");
-      }
-      if (nrPositions <= 0) {
-         nrPositions = 1;
-         ReportingUtils.logError("Coercing position count to 1");
-      }
-      acqMgr_.openAcquisition(name, rootDir, show, save);
-      MMAcquisition acq = acqMgr_.getAcquisition(name);
-      acq.setDimensions(nrFrames, nrChannels, nrSlices, nrPositions);
-   }
-
-   //@Override
-   public void openAcquisition(String name, String rootDir, int nrFrames,
-         int nrChannels, int nrSlices, boolean show, boolean virtual)
-         throws MMScriptException {
-      openAcquisition(name, rootDir, nrFrames, nrChannels, nrSlices, 0, 
-            show, virtual);
-   }
-
-   /**
-    * Call initializeAcquisition with values extracted from the provided 
-    * JSONObject.
-    */
-   private void initializeAcquisitionFromTags(String name, JSONObject tags) throws JSONException, MMScriptException {
-      int width = MDUtils.getWidth(tags);
-      int height = MDUtils.getHeight(tags);
-      int byteDepth = MDUtils.getDepth(tags);
-      int bitDepth = byteDepth * 8;
-      if (MDUtils.hasBitDepth(tags)) {
-         bitDepth = MDUtils.getBitDepth(tags);
-      }
-      initializeAcquisition(name, width, height, byteDepth, bitDepth);
-   }
-
-   @Override
-   public void initializeAcquisition(String name, int width, int height, int byteDepth, int bitDepth) throws MMScriptException {
-      MMAcquisition acq = acqMgr_.getAcquisition(name);
-      //number of multi-cam cameras is set to 1 here for backwards compatibility
-      //might want to change this later
-      acq.setImagePhysicalDimensions(width, height, byteDepth, bitDepth, 1);
-      acq.initialize();
-   }
-
-   @Override
-   public int getAcquisitionImageWidth(String acqName) throws MMScriptException {
-      MMAcquisition acq = acqMgr_.getAcquisition(acqName);
-      return acq.getWidth();
-   }
-
-   @Override
-   public int getAcquisitionImageHeight(String acqName) throws MMScriptException{
-      MMAcquisition acq = acqMgr_.getAcquisition(acqName);
-      return acq.getHeight();
-   }
-
-   @Override
-   public int getAcquisitionImageBitDepth(String acqName) throws MMScriptException {
-      MMAcquisition acq = acqMgr_.getAcquisition(acqName);
-      return acq.getBitDepth();
-   }
-   
-   @Override
-   public int getAcquisitionImageByteDepth(String acqName) throws MMScriptException{
-      MMAcquisition acq = acqMgr_.getAcquisition(acqName);
-      return acq.getByteDepth();
-   }
-
-   @Override public int getAcquisitionMultiCamNumChannels(String acqName) throws MMScriptException{
-      MMAcquisition acq = acqMgr_.getAcquisition(acqName);
-      return acq.getMultiCameraNumChannels();
-   }
-   
-   @Override
-   public Boolean acquisitionExists(String name) {
-      return acqMgr_.acquisitionExists(name);
-   }
-
-   @Override
-   public void closeAcquisition(String name) throws MMScriptException {
-      acqMgr_.closeAcquisition(name);
-   }
-
-   @Override
-   public void closeAcquisitionDisplays(String name) throws MMScriptException {
-      Datastore store = acqMgr_.getAcquisition(name).getDatastore();
-      for (DisplayWindow display : displays().getDisplays(store)) {
-         display.forceClosed();
-      }
-   }
-
-   @Override
    public void refreshGUI() {
       updateGUI(true);
    }
@@ -1894,38 +1692,6 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
       updateGUI(true, true);
    }
 
-   @Override
-   public void setAcquisitionAddImageAsynchronous(String name) throws MMScriptException {
-      MMAcquisition acq = acqMgr_.getAcquisition(name);
-      acq.setAsynchronous();
-   }
-
-   public void addImage(String name, TaggedImage taggedImg,
-           boolean updateDisplay,
-           boolean waitForDisplay) throws MMScriptException {
-      acqMgr_.getAcquisition(name).insertImage(taggedImg, updateDisplay, waitForDisplay);
-   }
-
-   @Override
-   public void closeAllAcquisitions() {
-      acqMgr_.closeAll();
-   }
-
-   @Override
-   public String[] getAcquisitionNames()
-   {
-      return acqMgr_.getAcquisitionNames();
-   }
-
-   public MMAcquisition getAcquisitionWithName(String name) throws MMScriptException {
-      return acqMgr_.getAcquisition(name);
-   }
-
-   @Override
-   public Datastore getAcquisitionDatastore(String name) throws MMScriptException {
-      return acqMgr_.getAcquisition(name).getDatastore();
-   }
-   
    public AcquisitionWrapperEngine getAcquisitionEngine() {
       return engine_;
    }
@@ -2057,16 +1823,6 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
    }
 
    @Override
-   public void promptToSaveAcquisition(String name, boolean prompt) throws MMScriptException {
-      getAcquisitionWithName(name).promptToSave(prompt);
-   }
-
-   @Override
-   public void registerForEvents(Object obj) {
-      EventManager.register(obj);
-   }
-
-   @Override
    public void setROI(Rectangle r) throws MMScriptException {
       live().setSuspended(true);
       try {
@@ -2118,66 +1874,6 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
    }
 
    @Override
-   public void logMessage(String msg) {
-      ReportingUtils.logMessage(msg);
-   }
-
-   @Override
-   public void showMessage(String msg) {
-      ReportingUtils.showMessage(msg);
-   }
-   
-   @Override
-   public void showMessage(String msg, Component parent) {
-      ReportingUtils.showMessage(msg, parent);
-   }
-
-   @Override
-   public void logError(Exception e, String msg) {
-      ReportingUtils.logError(e, msg);
-   }
-
-   @Override
-   public void logError(Exception e) {
-      ReportingUtils.logError(e);
-   }
-
-   @Override
-   public void logError(String msg) {
-      ReportingUtils.logError(msg);
-   }
-
-   @Override
-   public void showError(Exception e, String msg) {
-      ReportingUtils.showError(e, msg);
-   }
-
-   @Override
-   public void showError(Exception e) {
-      ReportingUtils.showError(e);
-   }
-
-   @Override
-   public void showError(String msg) {
-      ReportingUtils.showError(msg);
-   }
-
-   @Override
-   public void showError(Exception e, String msg, Component parent) {
-      ReportingUtils.showError(e, msg, parent);
-   }
-
-   @Override
-   public void showError(Exception e, Component parent) {
-      ReportingUtils.showError(e, parent);
-   }
-
-   @Override
-   public void showError(String msg, Component parent) {
-      ReportingUtils.showError(msg, parent);
-   }
-
-   @Override
    public void autostretchCurrentWindow() {
       DisplayWindow display = displays().getCurrentWindow();
       DisplaySettings settings = display.getDisplaySettings();
@@ -2224,15 +1920,13 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
       return profile();
    }
 
-   // TODO: split associated methods out to a separate object (ReportingUtils
-   // or something similar)
    @Override
    public LogManager logs() {
-      return this;
+      return ReportingUtils.getWrapper();
    }
    @Override
    public LogManager getLogManager() {
-      return this;
+      return logs();
    }
 
    // TODO: split methods associated with this interface out to a separate
@@ -2274,6 +1968,16 @@ public class MMStudio implements Studio, CompatibilityInterface, LogManager {
    @Override
    public Album getAlbum() {
       return album();
+   }
+
+   @Override
+   public EventManager events() {
+      return DefaultEventManager.getInstance();
+   }
+
+   @Override
+   public EventManager getEventManager() {
+      return events();
    }
 
    public static boolean getShouldDeleteOldCoreLogs() {

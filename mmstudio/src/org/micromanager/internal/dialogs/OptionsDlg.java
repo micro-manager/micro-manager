@@ -1,5 +1,4 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          OptionsDlg.java
 //PROJECT:       Micro-Manager
 //SUBSYSTEM:     mmstudio
 //-----------------------------------------------------------------------------
@@ -112,11 +111,11 @@ public class OptionsDlg extends MMDialog {
 
       final JCheckBox askForConfigFileCheckBox = new JCheckBox();
       askForConfigFileCheckBox.setText("Ask for config file at startup");
-      askForConfigFileCheckBox.setSelected(MMIntroDlg.getShouldAskForConfigFile());
+      askForConfigFileCheckBox.setSelected(IntroDlg.getShouldAskForConfigFile());
       askForConfigFileCheckBox.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
-            MMIntroDlg.setShouldAskForConfigFile(askForConfigFileCheckBox.isSelected());
+            IntroDlg.setShouldAskForConfigFile(askForConfigFileCheckBox.isSelected());
          }
       });
 

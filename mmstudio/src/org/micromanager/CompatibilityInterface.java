@@ -54,145 +54,6 @@ public interface CompatibilityInterface {
     * Does not communicate with hardware, only checks Cache
     */
    public void refreshGUIFromCache();
-
-   /**
-    * Opens a new acquisition data set
-    * 
-    * @param name - Name of the data set
-    * @param rootDir - Directory where the new data set is going to be created 
-    * @param nrFrames - Number of Frames (time points) in this acquisition
-    * @param nrChannels - Number of Channels in this acquisition
-    * @param nrSlices - Number of Slices (Z-positions) in this acquisition
-    * @param nrPositions Number of (XY) Positions in this acquisition.
-    * @param show Whether or not to show this acquisition.
-    * @param save Whether or not save data during acquisition.
-    * @throws MMScriptException
-    */
-   public void openAcquisition(String name, String rootDir, int nrFrames, 
-           int nrChannels, int nrSlices, int nrPositions, boolean show, 
-           boolean save) 
-           throws MMScriptException;
-   
-   /**
-    * Set up image physical dimensions for the data set that has already been opened.
-    * Once dimensions of the image has been set, they can't be changed, i.e. subsequent calls to this method will generate an error.
-    * Typically there is no need to call this method, except when display options have to be set before the first image is inserted.
-    * If this method is not explicitly called after openAcquisition(), the image dimensions will be automatically initialized based
-    * on the first image inserted in the data set.
-    * 
-    * @param name - Name of the data set
-    * @param width - Image width in pixels 
-    * @param height - Image height in pixels
-    * @param bytesPerPixel - Number of bytes per pixel
-    * @param bitDepth - Dynamic range in bits per pixel
-    * @throws MMScriptException
-    */
-   public void initializeAcquisition(String name, int width, int height, 
-           int bytesPerPixel, int bitDepth) 
-           throws MMScriptException;
-        
-   /**
-    * Change an acquisition so that adding images to it is done asynchronously.
-    * All calls to e.g. addImageToAcquisition() and other similar functions
-    * will return nearly-instantly.
-    * @param name of acquisition
-    * @throws MMScriptException if the specified acquisition does not exist.
-    */
-   public void setAcquisitionAddImageAsynchronous(String name) 
-           throws MMScriptException;
-
-   /**
-    * Return the Datastore for the named acquisition.
-    * @param name of acquisition
-    * @return DataStore associated with this acquisition
-    * @throws MMScriptException if the acquisition name is invalid.
-    */
-   public Datastore getAcquisitionDatastore(String name) throws MMScriptException;
-
-   /**
-    * Returns a name beginning with stem that is not yet used.
-    * @param stem Base name from which a unique name will be constructed
-    * @return name beginning with stem that is not yet used
-    */
-   public String getUniqueAcquisitionName(String stem);
-   
-   /**
-    * Checks whether an acquisition with the given name already exists.
-    * @param name name of acquisition 
-    * @return true is an acquisition with that name exists
-    */
-   public Boolean acquisitionExists(String name);
-
-   /**
-    * Closes the acquisition.
-    * After this command metadata is complete, all the references to this data 
-    * set are cleaned-up, and no additional images can be added to the acquisition
-    * Does not close the window in which the acquisition data is displayed
-    * @param name of acquisition
-    * @throws MMScriptException 
-    */
-   public void closeAcquisition(String name) throws MMScriptException;
-
-   /**
-    * Close all open displays for the specified acquisition. They will be
-    * forced closed with no prompt to save data.
-    * @param name of acquisition
-    * @throws org.micromanager.internal.utils.MMScriptException
-    */
-   public void closeAcquisitionDisplays(String name) throws MMScriptException;
-   
-   /**
-    * Closes all currently open acquisitions.
-    */
-   public void closeAllAcquisitions();
-      
-   /**
-    * Gets an Array with names of all open acquisitions
-    * @return Arrays with names of all acquisitions that are currently open
-    */
-   public String[] getAcquisitionNames();
-
-   
-   /**
-    * Returns the width (in pixels) of images in this acquisition
-    * @param acqName name of acquisition
-    * @return width of the images in this acquisition
-    * @throws org.micromanager.internal.utils.MMScriptException 
-    */
-   public int getAcquisitionImageWidth(String acqName) throws MMScriptException;
-
-   /**
-    * Returns the width (in pixels) of images in this acquisition
-    * @param acqName name of acquisition
-    * @return height of the images in this acquisition
-    * @throws org.micromanager.internal.utils.MMScriptException
-    */
-   public int getAcquisitionImageHeight(String acqName) throws MMScriptException;
-   
-   /**
-    * Returns the number of bits used per pixel
-    * @param acqName name of the acquisition
-    * @return bit-depth of the images in this acquisition
-    * @throws org.micromanager.internal.utils.MMScriptException
-    */
-   public int getAcquisitionImageBitDepth(String acqName) throws MMScriptException;
-   
-   /**
-    * Returns the number of bytes used per pixel
-    * @param acqName name of the acquisition
-    * @return number of bytes per pixel for the images in this acquisition
-    * @throws org.micromanager.internal.utils.MMScriptException
-    */
-   public int getAcquisitionImageByteDepth(String acqName) throws MMScriptException;
-
-   /**
-    * TODO: what exactly does this function return?????
-    * Returns ???
-    * @param acqName name of this acquisition
-    * @return number 
-    * @throws org.micromanager.internal.utils.MMScriptException
-    */
-   public int getAcquisitionMultiCamNumChannels(String acqName) throws MMScriptException;
    
    /**
     * Executes Acquisition with current settings
@@ -200,10 +61,10 @@ public interface CompatibilityInterface {
     * Returns after Acquisition finishes
     * Note that this function should not be executed on the EDT (which is the
     * thread running the UI).  
-    * @return The name of the acquisition created.
+    * @return The Datastore containing the images from the acquisition.
     * @throws MMScriptException
     */
-   public String runAcquisition() throws MMScriptException;
+   public Datastore runAcquisition() throws MMScriptException;
    
    /**
     * Executes Acquisition with current settings but allows for changing the data path.
@@ -213,10 +74,10 @@ public interface CompatibilityInterface {
     * thread running the UI).
     * @param name Name of this acquisition.
     * @param root Place in the file system where data can be stored.
-    * @return The name of the acquisition created
+    * @return The Datastore containing the images from the acquisition.
     * @throws MMScriptException
     */
-   public String runAcquisition(String name, String root) throws MMScriptException;
+   public Datastore runAcquisition(String name, String root) throws MMScriptException;
 
    /**
     * Loads setting for Acquisition Dialog from file
@@ -405,25 +266,6 @@ public interface CompatibilityInterface {
    public void showXYPositionList();
 
    /**
-    * Open an existing data set. Shows the acquisition in a window.
-    * @param location file path to load
-    * @param inRAM if set to false, data will not be loaded into RAM
-    * @return acquisition name
-    * @throws org.micromanager.internal.utils.MMScriptException
-    */
-   public String openAcquisitionData(String location, boolean inRAM) throws MMScriptException;
-
-   /**
-    * Open an existing data set.
-    * @param location file path to load
-    * @param inRAM if set to false, data will not be loaded into RAM
-    * @param show if true, data will be shown in a viewer
-    * @return The name of the acquisition object.
-    * @throws org.micromanager.internal.utils.MMScriptException
-    */
-   public String openAcquisitionData(String location, boolean inRAM, boolean show) throws MMScriptException;
-
-   /**
     * Enabled or disable the ROI buttons on the main window.
     * @param enabled true: enable, false: disable ROI buttons
     */
@@ -520,23 +362,6 @@ public interface CompatibilityInterface {
     */ 
     public void setAcquisitionSettings(SequenceSettings settings);
  
-   /**
-    * Displays dialog to save data for one of the currently open acquisitions
-    * @param name file-path where to save the data
-    * TODO:  What does this flag do????
-    * @param prompt 
-    * @throws org.micromanager.internal.utils.MMScriptException
-    */
-    public void promptToSaveAcquisition(String name, boolean prompt) throws MMScriptException;
-
-   /**
-    * Request that the given object be added to our EventBus for notification
-    * of events occurring. The available event types that subscribers can
-    * listen for is in the org.micromanager.api.events package.
-    * @param obj object to be added to the EventBus
-    */
-    public void registerForEvents(Object obj);
-
    /**
     * Autostretch each histogram for the currently-active window, as if the
     * "Auto" button had been clicked for each one.

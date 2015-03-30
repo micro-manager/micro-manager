@@ -20,11 +20,13 @@
 
 package org.micromanager.display.internal.link;
 
+import com.google.common.eventbus.Subscribe;
 import java.util.HashSet;
 import java.util.List;
 
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.internal.DisplayDestroyedEvent;
 
 
 /**
@@ -42,6 +44,7 @@ public abstract class SettingsLinker {
    public SettingsLinker(DisplayWindow parent,
          List<Class<?>> relevantEventClasses) {
       parent_ = parent;
+      parent_.registerForEvents(this);
       isActive_ = false;
       linkedLinkers_ = new HashSet<SettingsLinker>();
       relevantEvents_ = relevantEventClasses;
@@ -183,6 +186,11 @@ public abstract class SettingsLinker {
          // I.e. copySettings() actually made a change.
          display.setDisplaySettings(newSettings);
       }
+   }
+
+   @Subscribe
+   public void onDisplayDestroyed(DisplayDestroyedEvent event) {
+      parent_.unregisterForEvents(this);
    }
 
    /**

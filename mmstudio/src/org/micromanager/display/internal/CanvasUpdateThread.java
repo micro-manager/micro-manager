@@ -36,9 +36,10 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 
+import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.events.FPSEvent;
 
-import org.micromanager.internal.utils.CanvasPaintPending;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * This class handles the logic related to updating the image displayed on
@@ -63,7 +64,7 @@ public class CanvasUpdateThread extends Thread {
    private Datastore store_;
    private MMVirtualStack stack_;
    private ImagePlus plus_;
-   private EventBus displayBus_;
+   private DisplayWindow display_;
    
    private LinkedBlockingQueue<Coords> coordsQueue_;
    private AtomicBoolean shouldStop_;
@@ -73,12 +74,13 @@ public class CanvasUpdateThread extends Thread {
    private long lastFPSUpdateTimestamp_ = -1;
 
    public CanvasUpdateThread(Datastore store, MMVirtualStack stack,
-         ImagePlus plus, EventBus bus) {
+         ImagePlus plus, DisplayWindow display) {
       setName("Canvas display thread for store " + store.hashCode());
       store_ = store;
       stack_ = stack;
       plus_ = plus;
-      displayBus_ = bus;
+      display_ = display;
+      display_.registerForEvents(this);
       coordsQueue_ = new LinkedBlockingQueue<Coords>();
       shouldStop_ = new AtomicBoolean(false);
    }
@@ -132,8 +134,7 @@ public class CanvasUpdateThread extends Thread {
             // Wait for the canvas to be available. If we don't do this,
             // then our framerate tanks, possibly because of repaint
             // events piling up in the EDT. It's hard to tell. 
-            while (!shouldStop_.get() && CanvasPaintPending.isMyPaintPending(
-                  plus_.getCanvas(), plus_)) {
+            while (!shouldStop_.get() && plus_.getCanvas().getPaintPending()) {
                try {
                   Thread.sleep(10);
                }
@@ -144,8 +145,7 @@ public class CanvasUpdateThread extends Thread {
                   }
                }
             }
-            CanvasPaintPending.setPaintPending(
-                  plus_.getCanvas(), plus_);
+            plus_.getCanvas().setPaintPending(true);
          }
          final Image image = store_.getImage(coords);
          if (image != null) {
@@ -159,10 +159,10 @@ public class CanvasUpdateThread extends Thread {
                }
             });
          }
-         else {
+         else if (plus_ != null && plus_.getCanvas() != null) {
             // TODO: is this an error situation? I.e. that the image is null?
             // Manually clear the paint pending; otherwise the display breaks.
-            CanvasPaintPending.removePaintPending(plus_.getCanvas(), plus_);
+            plus_.getCanvas().setPaintPending(false);
          }
       } // End while loop
    }
@@ -177,7 +177,7 @@ public class CanvasUpdateThread extends Thread {
          stack_.setCoords(image.getCoords());
          plus_.getProcessor().setPixels(image.getRawPixels());
          plus_.updateAndDraw();
-         displayBus_.post(new PixelsSetEvent(image));
+         display_.postEvent(new PixelsSetEvent(image));
       }
    }
 
@@ -189,7 +189,7 @@ public class CanvasUpdateThread extends Thread {
       long curTimestamp = System.currentTimeMillis();
       // Hack: if we have null image, then post a "blank" FPS event.
       if (image == null) {
-         displayBus_.post(new FPSEvent(0, 0));
+         display_.postEvent(new FPSEvent(0, 0));
          return;
       }
       if (lastFPSUpdateTimestamp_ == -1) {
@@ -205,7 +205,7 @@ public class CanvasUpdateThread extends Thread {
                // HACK: Ignore the first FPS display event, to prevent us from
                // showing FPS for the Snap window.
                if (lastImageIndex_ != 0) {
-                  displayBus_.post(new FPSEvent((imageIndex - lastImageIndex_) / elapsedTime,
+                  display_.postEvent(new FPSEvent((imageIndex - lastImageIndex_) / elapsedTime,
                            imagesDisplayed_ / elapsedTime));
                }
                lastImageIndex_ = imageIndex;
@@ -214,7 +214,7 @@ public class CanvasUpdateThread extends Thread {
          catch (Exception e) {
             // Post a "blank" event. This likely happens because the image
             // image don't contain a sequence number (e.g. during an MDA).
-            displayBus_.post(new FPSEvent(0, 0));
+            display_.postEvent(new FPSEvent(0, 0));
          }
          imagesDisplayed_ = 0;
          lastFPSUpdateTimestamp_ = curTimestamp;
@@ -240,6 +240,12 @@ public class CanvasUpdateThread extends Thread {
 
    @Subscribe
    public void onDisplayDestroyed(DisplayDestroyedEvent event) {
-      stopDisplayUpdates();
+      try {
+         stopDisplayUpdates();
+         display_.unregisterForEvents(this);
+      }
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Error cleaning up display thread");
+      }
    }
 }

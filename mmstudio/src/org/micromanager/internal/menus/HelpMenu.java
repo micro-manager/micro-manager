@@ -5,7 +5,7 @@ import javax.swing.JMenuBar;
 
 import mmcorej.CMMCore;
 
-import org.micromanager.internal.dialogs.MMAboutDlg;
+import org.micromanager.internal.dialogs.AboutDlg;
 import org.micromanager.internal.dialogs.RegistrationDlg;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.MMVersion;
@@ -66,7 +66,7 @@ public class HelpMenu {
          new Runnable() {
             @Override
             public void run() {
-               MMAboutDlg dlg = new MMAboutDlg();
+               AboutDlg dlg = new AboutDlg();
                String versionInfo = "MM Studio version: " + MMVersion.VERSION_STRING;
                versionInfo += "\n" + core_.getVersionInfo();
                versionInfo += "\n" + core_.getAPIVersionInfo();

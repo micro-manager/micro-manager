@@ -1,5 +1,4 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          StaticInfo.java
 //PROJECT:       Micro-Manager
 //SUBSYSTEM:     mmstudio
 //-----------------------------------------------------------------------------
@@ -33,7 +32,7 @@ import org.micromanager.events.PixelSizeChangedEvent;
 import org.micromanager.events.StagePositionChangedEvent;
 import org.micromanager.events.XYStagePositionChangedEvent;
 
-import org.micromanager.events.internal.EventManager;
+import org.micromanager.events.internal.DefaultEventManager;
 
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.MDUtils;
@@ -64,7 +63,7 @@ class StaticInfo {
    public StaticInfo(CMMCore core, MainFrame frame) {
       core_ = core;
       frame_ = frame;
-      EventManager.register(this);
+      DefaultEventManager.getInstance().registerForEvents(this);
    }
 
    public void updateXYPos(double x, double y) {

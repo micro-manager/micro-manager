@@ -213,4 +213,9 @@ class MMImageCanvas extends ImageCanvas {
          this.magnification = newMag;
       }
    }
+
+   @Subscribe
+   public void onDisplayDestroyed(DisplayDestroyedEvent event) {
+      display_.unregisterForEvents(this);
+   }
 }

@@ -1,5 +1,4 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          ReportingUtils.java
 //PROJECT:       Micro-Manager
 //SUBSYSTEM:     mmstudio
 //-----------------------------------------------------------------------------
@@ -37,13 +36,90 @@ import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 
 import mmcorej.CMMCore;
+
 import org.micromanager.internal.MMStudio;
+import org.micromanager.LogManager;
 
 /**
  *
  * @author arthur
  */
 public class ReportingUtils {
+
+   /**
+    * This class acts as a thin wrapper around ReportingUtils to present its
+    * static methods in a non-static context, for use in the API.
+    */
+   public static class Wrapper implements LogManager {
+      @Override
+      public void logMessage(String msg) {
+         ReportingUtils.logMessage(msg);
+      }
+
+      @Override
+      public void showMessage(String msg) {
+         ReportingUtils.showMessage(msg);
+      }
+
+      @Override
+      public void showMessage(String msg, Component parent) {
+         ReportingUtils.showMessage(msg, parent);
+      }
+
+      @Override
+      public void logError(Exception e, String msg) {
+         ReportingUtils.logError(e, msg);
+      }
+
+      @Override
+      public void logError(Exception e) {
+         ReportingUtils.logError(e);
+      }
+
+      @Override
+      public void logError(String msg) {
+         ReportingUtils.logError(msg);
+      }
+
+      @Override
+      public void showError(Exception e, String msg) {
+         ReportingUtils.showError(e, msg);
+      }
+
+      @Override
+      public void showError(Exception e) {
+         ReportingUtils.showError(e);
+      }
+
+      @Override
+      public void showError(String msg) {
+         ReportingUtils.showError(msg);
+      }
+
+      @Override
+      public void showError(Exception e, String msg, Component parent) {
+         ReportingUtils.showError(e, msg, parent);
+      }
+
+      @Override
+      public void showError(Exception e, Component parent) {
+         ReportingUtils.showError(e, parent);
+      }
+
+      @Override
+      public void showError(String msg, Component parent) {
+         ReportingUtils.showError(msg, parent);
+      }
+   }
+
+   private static final Wrapper staticWrapper_;
+   static {
+      staticWrapper_ = new Wrapper();
+   }
+
+   public static LogManager getWrapper() {
+      return staticWrapper_;
+   }
 
    private static CMMCore core_ = null;
    private static JFrame owningFrame_;

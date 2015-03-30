@@ -35,7 +35,7 @@ import org.micromanager.events.NewDisplayEvent;
 import org.micromanager.display.internal.DefaultDisplayWindow;
 import org.micromanager.display.internal.DisplayDestroyedEvent;
 import org.micromanager.display.internal.events.FullScreenEvent;
-import org.micromanager.events.internal.EventManager;
+import org.micromanager.events.internal.DefaultEventManager;
 
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -77,6 +77,7 @@ public class DisplayGroupManager {
 
       @Subscribe
       public void onDisplayDestroyed(DisplayDestroyedEvent event) {
+         display_.unregisterForEvents(this);
          master_.onDisplayDestroyed(display_, event);
       }
 
@@ -105,7 +106,7 @@ public class DisplayGroupManager {
       screenToDisplay_ = new HashMap<GraphicsConfiguration, DisplayWindow>();
       storeToDisplays_ = new HashMap<Datastore, ArrayList<DisplayWindow>>();
       listeners_ = new ArrayList<WindowListener>();
-      EventManager.register(this);
+      DefaultEventManager.getInstance().registerForEvents(this);
    }
 
    /**

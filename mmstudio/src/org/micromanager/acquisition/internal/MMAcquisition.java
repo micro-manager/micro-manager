@@ -1,5 +1,4 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          MMAcquisition.java
 //PROJECT:       Micro-Manager
 //SUBSYSTEM:     mmstudio
 //-----------------------------------------------------------------------------
@@ -20,6 +19,8 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 package org.micromanager.acquisition.internal;
+
+import com.google.common.eventbus.Subscribe;
 
 import ij.ImagePlus;
 
@@ -68,7 +69,9 @@ import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.internal.dialogs.AcqControlDlg;
 
 import org.micromanager.display.ControlsFactory;
+import org.micromanager.display.DisplayDestroyedEvent;
 import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.DefaultDisplayWindow;
 
 import org.micromanager.internal.utils.JavaUtils;
@@ -81,9 +84,6 @@ import org.micromanager.internal.utils.ReportingUtils;
  * functionality in the ScriptInterface
  */
 public class MMAcquisition {
-   
-   public static final Color[] DEFAULT_COLORS = {Color.red, Color.green, Color.blue,
-      Color.pink, Color.orange, Color.yellow};
    
    /** 
     * Final queue of images immediately prior to insertion into the ImageCache.
@@ -170,6 +170,8 @@ public class MMAcquisition {
       }
       if (show_) {
          display_ = new DefaultDisplayWindow(store_, makeControlsFactory());
+         display_.setDisplaySettings(DefaultDisplaySettings.legacyFromJSON(summaryMetadata));
+         display_.registerForEvents(this);
       }
   }
    
@@ -408,6 +410,7 @@ public class MMAcquisition {
          if (show_ && !existing_) {
             // NB pre-existing setups will have loaded saved display settings.
             display_ = new DefaultDisplayWindow(store_, makeControlsFactory());
+            display_.registerForEvents(this);
          }
          initialized_ = true;
       }
@@ -541,16 +544,6 @@ public class MMAcquisition {
       }
    }
    
-   public static int getMultiCamDefaultChannelColor(int index, String channelName) {
-      int color = DEFAULT_COLORS[index % DEFAULT_COLORS.length].getRGB();
-      String channelGroup = MMStudio.getInstance().getCore().getChannelGroup();
-      if (channelGroup == null)
-         channelGroup = "";
-      color = AcqControlDlg.getChannelColor("Camera", channelName,
-            AcqControlDlg.getChannelColor(channelGroup, channelName, color));
-      return color;
-   }
-
    // Somebody please comment on why this is a separate method from insertImage.
    public void insertTaggedImage(TaggedImage taggedImg, int frame, int channel, int slice)
            throws MMScriptException {
@@ -686,6 +679,12 @@ public class MMAcquisition {
          return true;
       }
       return false;
+   }
+
+   @Subscribe
+   public void onDisplayDestroyed(DisplayDestroyedEvent event) {
+      display_.unregisterForEvents(this);
+      display_ = null;
    }
    
    /**

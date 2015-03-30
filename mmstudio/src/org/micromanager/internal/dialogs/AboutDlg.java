@@ -1,5 +1,4 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          MMAboutDlg.java
 //PROJECT:       Micro-Manager
 //SUBSYSTEM:     mmstudio
 //-----------------------------------------------------------------------------
@@ -46,7 +45,7 @@ import com.swtdesigner.SwingResourceManager;
  * Help | About dialog for MMStudio.
  * Displays version, license, info, etc.
  */
-public class MMAboutDlg extends JDialog {
+public class AboutDlg extends JDialog {
    private static final long serialVersionUID = 1L;
    private JTextArea welcomeTextArea_;
    private JTextArea homeHttphcs100ximagingcomBugTextArea;
@@ -59,7 +58,7 @@ public class MMAboutDlg extends JDialog {
       " Wayne Rasband, NIH, Joachim Walter, BeanShell, JSON, logix4u, libserial, boost.org, Todd Klark, Ramon de Klein, " +
       "MIT, University of Dundee, Board of Regents of the University of Wisconsin-Madison, Glencoe Software, and  SLF4J";
    
-   public MMAboutDlg() {
+   public AboutDlg() {
       super();
       Dimension winSize = new Dimension(384, 392);
       setSize(winSize);
@@ -128,7 +127,7 @@ public class MMAboutDlg extends JDialog {
       getContentPane().add(homeHttphcs100ximagingcomBugTextArea);
 
       final JLabel label = new JLabel();
-      label.setIcon(SwingResourceManager.getIcon(MMAboutDlg.class, "/org/micromanager/internal/icons/microscope.gif"));
+      label.setIcon(SwingResourceManager.getIcon(AboutDlg.class, "/org/micromanager/internal/icons/microscope.gif"));
       label.setBounds(6, 14, 32, 32);
       getContentPane().add(label);
 

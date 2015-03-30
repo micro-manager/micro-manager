@@ -1,5 +1,4 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          AcqControlDlg.java
 //PROJECT:       Micro-Manager
 //SUBSYSTEM:     mmstudio
 //-----------------------------------------------------------------------------
@@ -44,6 +43,7 @@ import javax.swing.table.*;
 import mmcorej.CMMCore;
 
 import org.micromanager.acquisition.internal.AcquisitionEngine;
+import org.micromanager.data.Datastore;
 import org.micromanager.internal.interfaces.AcqSettingsListener;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.AcqOrderMode;
@@ -101,7 +101,6 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
    private final JButton acquireButton_;
    private final JButton setBottomButton_;
    private final JButton setTopButton_;
-   protected JComboBox displayModeCombo_;
    private MMStudio studio_;
    private final GUIColors guiColors_;
    private final NumberFormat numberFormat_;
@@ -111,7 +110,6 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
    private final JRadioButton multiButton_;
    private final JLabel rootLabel_;
    private final JButton browseRootButton_;
-   private final JLabel displayMode_;
    private final JCheckBox stackKeepShutterOpenCheckBox_;
    private final JCheckBox chanKeepShutterOpenCheckBox_;
    private final AcqOrderMode[] acqOrderModes_;
@@ -799,33 +797,12 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
 
 
       // Save panel
-
       savePanel_.addActionListener(new ActionListener() {
-
          @Override
          public void actionPerformed(final ActionEvent e) {
-            if (!savePanel_.isSelected()) {
-               displayModeCombo_.setSelectedIndex(0);
-            }
             applySettings();
          }
       });
-
-      displayMode_ = new JLabel();
-      displayMode_.setFont(new Font("Arial", Font.PLAIN, 10));
-      displayMode_.setText("Display");
-      displayMode_.setBounds(150, 15, 49, 21);
-      //savePanel_.add(displayMode_);
-
-      displayModeCombo_ = new JComboBox();
-      displayModeCombo_.setFont(new Font("", Font.PLAIN, 10));
-      displayModeCombo_.setBounds(188, 14, 150, 24);
-      displayModeCombo_.addItem(new DisplayMode(DisplayMode.ALL));
-      displayModeCombo_.addItem(new DisplayMode(DisplayMode.LAST_FRAME));
-      displayModeCombo_.addItem(new DisplayMode(DisplayMode.SINGLE_WINDOW));
-      displayModeCombo_.setEnabled(false);
-      //savePanel_.add(displayModeCombo_);
-
 
       rootLabel_ = new JLabel();
       rootLabel_.setFont(new Font("Arial", Font.PLAIN, 10));
@@ -1016,13 +993,6 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
 
          @Override
          public void actionPerformed(ActionEvent arg0) {
-            applySettings();
-         }
-      });
-      displayModeCombo_.addActionListener(new ActionListener() {
-
-         @Override
-         public void actionPerformed(ActionEvent e) {
             applySettings();
          }
       });
@@ -1220,7 +1190,6 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
 
       acqEng_.setAcqOrderMode(profile.getInt(this.getClass(), ACQ_ORDER_MODE, acqEng_.getAcqOrderMode()));
 
-      acqEng_.setDisplayMode(profile.getInt(this.getClass(), ACQ_DISPLAY_MODE, acqEng_.getDisplayMode()));
       acqEng_.enableAutoFocus(profile.getBoolean(this.getClass(), ACQ_AF_ENABLE, acqEng_.isAutoFocusEnabled()));
       acqEng_.setAfSkipInterval(profile.getInt(this.getClass(), ACQ_AF_SKIP_INTERVAL, acqEng_.getAfSkipInterval()));
       acqEng_.setChannelGroup(profile.getString(this.getClass(), ACQ_CHANNEL_GROUP, acqEng_.getFirstConfigGroup()));
@@ -1299,7 +1268,6 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
 
       profile.setInt(this.getClass(), ACQ_ORDER_MODE, acqEng_.getAcqOrderMode());
 
-      profile.setInt(this.getClass(), ACQ_DISPLAY_MODE, acqEng_.getDisplayMode());
       profile.setBoolean(this.getClass(), ACQ_AF_ENABLE, acqEng_.isAutoFocusEnabled());
       profile.setInt(this.getClass(), ACQ_AF_SKIP_INTERVAL, acqEng_.getAfSkipInterval());
       profile.setBoolean(this.getClass(), ACQ_CHANNELS_KEEP_SHUTTER_OPEN, acqEng_.isShutterOpenForChannels());
@@ -1586,7 +1554,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       return true;
    }
 
-   public String runAcquisition() {
+   public Datastore runAcquisition() {
       if (acqEng_.isAcquisitionRunning()) {
          JOptionPane.showMessageDialog(this, "Cannot start acquisition: previous acquisition still in progress.");
          return null;
@@ -1611,7 +1579,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       }
    }
 
-   public String runAcquisition(String acqName, String acqRoot) {
+   public Datastore runAcquisition(String acqName, String acqRoot) {
       if (acqEng_.isAcquisitionRunning()) {
          JOptionPane.showMessageDialog(this, "Unable to start the new acquisition task: previous acquisition still in progress.");
          return null;
@@ -1707,11 +1675,6 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       model_.fireTableStructureChanged();
 
       channelGroupCombo_.setSelectedItem(acqEng_.getChannelGroup());
-      try {
-         displayModeCombo_.setSelectedIndex(acqEng_.getDisplayMode());
-      } catch (IllegalArgumentException e) {
-         displayModeCombo_.setSelectedIndex(0);
-      }
 
 
       for (AcqOrderMode mode : acqOrderModes_) {
@@ -1810,7 +1773,6 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
          acqEng_.enableMultiPosition(positionsPanel_.isSelected());
 
 
-         acqEng_.setDisplayMode(((DisplayMode) displayModeCombo_.getSelectedItem()).getID());
          acqEng_.setAcqOrderMode(((AcqOrderMode) acqOrderBox_.getSelectedItem()).getID());
          acqEng_.enableChannelsSetting(channelsPanel_.isSelected());
          acqEng_.setChannels(((ChannelTableModel) channelTable_.getModel()).getChannels());

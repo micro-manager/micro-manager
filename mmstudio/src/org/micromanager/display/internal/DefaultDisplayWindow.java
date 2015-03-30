@@ -75,7 +75,7 @@ import org.micromanager.events.DatastoreClosingEvent;
 
 import org.micromanager.data.internal.DefaultCoords;
 
-import org.micromanager.events.internal.EventManager;
+import org.micromanager.events.internal.DefaultEventManager;
 
 import org.micromanager.display.internal.events.DefaultNewDisplayEvent;
 import org.micromanager.display.internal.events.DefaultNewImagePlusEvent;
@@ -88,7 +88,6 @@ import org.micromanager.display.internal.events.StatusEvent;
 import org.micromanager.display.internal.link.DisplayGroupManager;
 
 import org.micromanager.internal.LineProfile;
-import org.micromanager.internal.MMStudio;
 
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.JavaUtils;
@@ -210,7 +209,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          });
       }
 
-      EventManager.register(this);
+      DefaultEventManager.getInstance().registerForEvents(this);
    }
 
    /**
@@ -242,14 +241,13 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          // Make the canvas thread before any of our other control objects,
          // which may perform draw requests that need to be processed.
          canvasThread_ = new CanvasUpdateThread(store_, stack_, ijImage_,
-               displayBus_);
+               this);
          canvasThread_.start();
 
          makeWindowControls();
          // This needs to be done after the canvas is created, but before we
          // call zoomToPreferredSize.
-         dummyWindow_ = DummyImageWindow.makeWindow(ijImage_, this,
-               displayBus_);
+         dummyWindow_ = DummyImageWindow.makeWindow(ijImage_, this);
          zoomToPreferredSize();
          setVisible(true);
          histograms_.calcAndDisplayHistAndStats();
@@ -279,7 +277,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       resetTitle();
       setWindowSize();
 
-      EventManager.post(new DefaultNewDisplayEvent(this));
+      DefaultEventManager.getInstance().post(new DefaultNewDisplayEvent(this));
    }
 
    /**
@@ -484,6 +482,18 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       // Don't want to run this from a separate thread when we're in the middle
       // of building our GUI
       synchronized(this) {
+         // Halt our canvas draw thread, clear all paint pending for the old
+         // canvas, then create a new draw thread, so that lingering references
+         // to the old canvas are not kept around.
+         if (canvasThread_ != null) {
+            canvasThread_.stopDisplayUpdates();
+            try {
+               canvasThread_.join();
+            }
+            catch (InterruptedException e) {
+               ReportingUtils.logError(e, "Interrupted while waiting for canvas update thread to terminate");
+            }
+         }
          // TODO: assuming mode 1 for now.
          ijImage_ = new MMCompositeImage(ijImage_, 1, ijImage_.getTitle());
          ijImage_.setOpenAsHyperStack(true);
@@ -492,6 +502,9 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          composite.setNChannelsUnverified(numChannels);
          composite.reset();
          setImagePlusMetadata(ijImage_);
+         canvasThread_ = new CanvasUpdateThread(store_, stack_, ijImage_,
+               this);
+         canvasThread_.start();
       }
       displayBus_.post(new DefaultNewImagePlusEvent(ijImage_));
    }
@@ -668,7 +681,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          return;
       }
       displayBus_.post(new DisplayDestroyedEvent(this));
-      MMStudio studio = MMStudio.getInstance();
+      DefaultEventManager.getInstance().unregisterForEvents(this);
       store_.unregisterForEvents(this);
       dispose();
       haveClosed_ = true;
@@ -700,7 +713,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       else {
          // Transfer our contents to a new JFrame for the fullscreen mode.
          setVisible(false);
-         fullButton_.setText("Windowed");
+         //fullButton_.setText("Windowed");
          fullScreenFrame_ = new JFrame();
          fullScreenFrame_.setUndecorated(true);
          fullScreenFrame_.setBounds(

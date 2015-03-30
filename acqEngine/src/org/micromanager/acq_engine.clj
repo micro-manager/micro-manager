@@ -29,13 +29,15 @@
     [org.micromanager.mm :as mm])
   (:import
     [ij ImagePlus]
+    [java.awt Color]
     [java.io EOFException] ; abused to indicate canceled burst image collection
     [java.net InetAddress UnknownHostException]
     [java.util Date UUID]
     [java.util.concurrent CountDownLatch LinkedBlockingQueue TimeUnit]
     [mmcorej Configuration Metadata TaggedImage]
     [org.json JSONArray JSONObject]
-    [org.micromanager.acquisition.internal MMAcquisition TaggedImageQueue]
+    [org.micromanager.acquisition.internal TaggedImageQueue]
+    [org.micromanager.display.internal ChannelSettings]
     [org.micromanager PositionList SequenceSettings]
     [org.micromanager.internal.utils MDUtils ReportingUtils])
   (:gen-class
@@ -862,11 +864,22 @@
 (defn all-super-channels [simple-channels camera-channel-names]
   (flatten (map #(super-channels % camera-channel-names) simple-channels)))
 
-(defn channel-colors [simple-channels super-channels channel-names]
-  (if (= (count simple-channels) (count super-channels))
-    (map #(.getRGB (:color %)) super-channels)
-    (map #(. MMAcquisition getMultiCamDefaultChannelColor % (channel-names %))
-         (range (count super-channels)))))
+; Generate a list of colors to use.
+; Best understanding of input parameters: simple-channels are the channels
+; from the MDA dialog, super-channels are simple-channels as augmented with
+; "dashed" names when using multiple cameras (e.g. "Cy5-Camera2"),
+; channel-names are the "name" fields from super-channels.
+(defn channel-colors [simple-channels super-channels channel-names channel-group]
+  (if (= (count simple-channels) (count super-channels)) ; i.e. not multicam
+    ; Grab colors from super-channels (which is the same as simple-channels?
+    (map
+      #(
+        :color (nth super-channels (.indexOf channel-names %))
+      )
+      channel-names
+    )
+    ; else, ask ChannelSettings for color for this group/channel combination.
+    (map #(ChannelSettings/getColorForChannel % channel-group (. Color WHITE)) channel-names)))
 
 (defn summarize-position-list [position-list]
   (let [positions (seq (.getPositions position-list))]
@@ -900,9 +913,8 @@
       "BitDepth" (core getImageBitDepth)
       "Channels" (max 1 (count super-channels))
       "ChNames" (JSONArray. ch-names)
-      "ChColors" (JSONArray. (channel-colors simple-channels super-channels ch-names))
-      "ChContrastMax" (JSONArray. (repeat (count super-channels) 65536))
-      "ChContrastMin" (JSONArray. (repeat (count super-channels) 0))
+      "ChColors" (JSONArray. (map #(.getRGB %) (channel-colors simple-channels super-channels ch-names (:channel-group settings))))
+      "ChannelGroup" (:channel-group settings)
       "Comment" (:comment settings)
       "ComputerName" computer
       "Depth" (core getBytesPerPixel)
@@ -924,6 +936,7 @@
       "PixelType" (get-pixel-type)
       "Positions" (max 1 (count (:positions settings)))
       "Prefix" (if (:save settings) (:prefix settings) "")
+      "ProfileName" (.getProfileName (.profile gui))
       "ROI" (JSONArray. (get-camera-roi))
       "Slices" (max 1 (count (:slices settings)))
       "SlicesFirst" (:slices-first settings)

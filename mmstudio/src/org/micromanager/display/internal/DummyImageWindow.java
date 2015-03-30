@@ -33,7 +33,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.micromanager.data.Coords;
 import org.micromanager.display.NewImagePlusEvent;
 import org.micromanager.display.internal.events.StackPositionChangedEvent;
-import org.micromanager.internal.utils.CanvasPaintPending;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
@@ -66,23 +65,24 @@ public class DummyImageWindow extends StackWindow {
     * this is a gigantic hack.
     */
    public static DummyImageWindow makeWindow(ImagePlus plus,
-         DefaultDisplayWindow master, EventBus displayBus) {
+         DefaultDisplayWindow master) {
       masterLock_.lock();
       staticMaster_ = master;
-      DummyImageWindow result = new DummyImageWindow(plus, master, displayBus);
+      DummyImageWindow result = new DummyImageWindow(plus, master);
+      // And of course if we keep this around, then we leak memory.
+      staticMaster_ = null;
       masterLock_.unlock();
       return result;
    }
 
    private DefaultDisplayWindow master_;
-   public DummyImageWindow(ImagePlus plus, DefaultDisplayWindow master,
-         EventBus displayBus) {
+   public DummyImageWindow(ImagePlus plus, DefaultDisplayWindow master) {
       super(plus);
       imp = plus;
       master_ = master;
       plus.setWindow(this);
       setVisible(false);
-      displayBus.register(this);
+      master.registerForEvents(this);
    }
 
    /**
@@ -168,20 +168,22 @@ public class DummyImageWindow extends StackWindow {
       WindowManager.removeWindow(this);
       imp = event.getImagePlus();
       imp.setWindow(this);
-      // Ensure nobody's keeping around a reference to our canvas.
-      CanvasPaintPending.removeAllPaintPending(ic);
       ic = new ImageCanvas(imp);
       WindowManager.addWindow(this);
    }
 
    @Subscribe
    public void onDisplayDestroyed(DisplayDestroyedEvent event) {
+      // HACK: setting ij to null prior to calling close() will prevent
+      // the close() method from trying to prompt the user to save.
+      ij = null;
       try {
-         dispose();
+         close();
       }
       catch (NullPointerException e) {
          ReportingUtils.logError(e, "NullPointerException in ImageJ code while disposing of dummy image window");
       }
+      master_.unregisterForEvents(this);
    }
 
    /**

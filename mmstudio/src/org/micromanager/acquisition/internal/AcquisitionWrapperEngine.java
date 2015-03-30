@@ -25,7 +25,7 @@ import org.micromanager.IAcquisitionEngine2010;
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
 import org.micromanager.SequenceSettings;
-import org.micromanager.events.internal.EventManager;
+import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.events.internal.PipelineEvent;
 import org.micromanager.events.internal.ProcessorEvent;
 import org.micromanager.internal.dialogs.AcqControlDlg;
@@ -72,21 +72,18 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private ArrayList<Double> customTimeIntervalsMs_;
    private boolean useCustomIntervals_;
    protected JSONObject summaryMetadata_;
-   protected Datastore store_;
    private ArrayList<AcqSettingsListener> settingsListeners_;
-   private AcquisitionManager acqManager_;
 
-   public AcquisitionWrapperEngine(AcquisitionManager mgr) {
+   public AcquisitionWrapperEngine() {
       nameToProcessorClass_ = new HashMap<String, Class<? extends DataProcessor<TaggedImage>>>();
       taggedImageProcessors_ = new ArrayList<DataProcessor<TaggedImage>>();
       useCustomIntervals_ = false;
       settingsListeners_ = new ArrayList<AcqSettingsListener>();
-      acqManager_ = mgr;
    }
 
    @Override
-   public String acquire() throws MMException {
-      return runAcquisition(getSequenceSettings(), acqManager_);
+   public Datastore acquire() throws MMException {
+      return runAcquisition(getSequenceSettings());
    }
 
    @Override
@@ -112,8 +109,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       return acquisitionEngine2010;
    }
 
-   protected String runAcquisition(SequenceSettings acquisitionSettings, 
-           AcquisitionManager acqManager) {
+   protected Datastore runAcquisition(SequenceSettings acquisitionSettings) {
       //Make sure computer can write to selected location and that there is enough space to do so
       if (saveFiles_) {
          File root = new File(rootName_);
@@ -151,17 +147,14 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
          BlockingQueue<TaggedImage> procStackOutputQueue = ProcessorStack.run(
                  engineOutputQueue, taggedImageProcessors_);
 
-         // Create an MMAcquisition object, which will result in an ImageCache
-         // and VirtualImageDisplay if desired
-         String acqName = acqManager.createAcquisition(
+         MMAcquisition acq = new MMAcquisition("Acq",
                  summaryMetadata_, acquisitionSettings.save, this,
-                 AcqControlDlg.getShouldHideMDADisplay());
-         MMAcquisition acq = acqManager.getAcquisition(acqName);
-         store_ = acq.getDatastore();
+                 !AcqControlDlg.getShouldHideMDADisplay());
+         Datastore store = acq.getDatastore();
 
          // Start pumping processed images into the ImageCache
          DefaultTaggedImageSink sink = new DefaultTaggedImageSink(
-                 procStackOutputQueue, store_);
+                 procStackOutputQueue, store);
          sink.start(new Runnable() {
             @Override
             public void run() {
@@ -169,7 +162,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
             }
          });
         
-         return acqName;
+         return store;
 
       } catch (Throwable ex) {
          ReportingUtils.showError(ex);
@@ -273,7 +266,8 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    public void addImageProcessor(DataProcessor<TaggedImage> taggedImageProcessor) {
       if (!taggedImageProcessors_.contains(taggedImageProcessor)) {
          taggedImageProcessors_.add(taggedImageProcessor);
-         EventManager.post(new PipelineEvent(taggedImageProcessors_));
+         DefaultEventManager.getInstance().post(
+               new PipelineEvent(taggedImageProcessors_));
       }
    }
 
@@ -281,14 +275,16 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    public void removeImageProcessor(DataProcessor<TaggedImage> taggedImageProcessor) {
       taggedImageProcessors_.remove(taggedImageProcessor);
       taggedImageProcessor.dispose();
-      EventManager.post(new PipelineEvent(taggedImageProcessors_));
+      DefaultEventManager.getInstance().post(
+            new PipelineEvent(taggedImageProcessors_));
    }
 
    @Override
    public void setImageProcessorPipeline(List<DataProcessor<TaggedImage>> pipeline) {
       taggedImageProcessors_.clear();
       taggedImageProcessors_.addAll(pipeline);
-      EventManager.post(new PipelineEvent(taggedImageProcessors_));
+      DefaultEventManager.getInstance().post(
+            new PipelineEvent(taggedImageProcessors_));
    }
 
    @Override
@@ -305,7 +301,8 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
          nameToProcessorClass_.put(name, processorClass);
          // Post an event informing listeners that there's a newly-registered
          // DataProcessor class.
-         EventManager.post(new ProcessorEvent(name, processorClass));
+         DefaultEventManager.getInstance().post(
+               new ProcessorEvent(name, processorClass));
       }
    }
 
@@ -1205,11 +1202,6 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    @Override
    public JSONObject getSummaryMetadata() {
       return summaryMetadata_;
-   }
-
-   @Override
-   public Datastore getDatastore() {
-      return store_;
    }
 
     @Override

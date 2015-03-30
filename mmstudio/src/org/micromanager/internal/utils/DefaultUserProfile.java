@@ -32,7 +32,7 @@ public class DefaultUserProfile implements UserProfile {
    public static final String DEFAULT_USER = "Default user";
    private static final String ALWAYS_USE_DEFAULT_USER = "always use the default user profile";
 
-   private static DefaultUserProfile staticInstance_;
+   private static final DefaultUserProfile staticInstance_;
    static {
       staticInstance_ = new DefaultUserProfile();
    }
@@ -685,6 +685,7 @@ public class DefaultUserProfile implements UserProfile {
       userProfile_ = loadProfile(profileName);
    }
 
+   @Override
    public String getProfileName() {
       return profileName_;
    }

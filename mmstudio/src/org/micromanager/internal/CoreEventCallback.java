@@ -1,5 +1,4 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          CoreEventCallback.java
 //PROJECT:       Micro-Manager
 //SUBSYSTEM:     mmstudio
 //-----------------------------------------------------------------------------
@@ -31,7 +30,6 @@ import mmcorej.MMEventCallback;
 
 import org.micromanager.acquisition.internal.AcquisitionWrapperEngine;
 import org.micromanager.MMListenerInterface;
-import org.micromanager.events.internal.EventManager;
 import org.micromanager.events.internal.MMListenerProxy;
 
 
@@ -52,7 +50,7 @@ public class CoreEventCallback extends MMEventCallback {
       core_ = core;
       engine_ = engine;
       core_.registerCallback(this);
-      addMMListener(new MMListenerProxy(EventManager.getBus()));
+      addMMListener(new MMListenerProxy());
    }
 
    @Override

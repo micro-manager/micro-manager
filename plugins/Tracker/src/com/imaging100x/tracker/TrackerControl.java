@@ -458,20 +458,24 @@ public class TrackerControl extends MMFrame implements MMPlugin {
       
       app_.logs().logMessage("Tracking started at " + GregorianCalendar.getInstance().getTime());
 
-      try {
-         acqName_ = nameField_.getText();
-         if (acqName_.length() == 0) {
-            acqName_ = ACQNAME;
-         }
-         acqName_ = app_.compat().getUniqueAcquisitionName(acqName_);
-         nameField_.setText(acqName_);
-         app_.compat().openAcquisition(acqName_, rootField_.getText(),
-                 2, 1, 1, 1, true, diskRadioButton_.isSelected());
-         store_ = app_.compat().getAcquisitionDatastore(acqName_);
-         display_ = app_.displays().getDisplays(store_).get(0);
-      } catch (MMScriptException ex) {
-         app_.logs().showError(ex, "Problem while tracking", this);
+      acqName_ = nameField_.getText();
+      if (acqName_.length() == 0) {
+         acqName_ = ACQNAME;
       }
+      nameField_.setText(acqName_);
+      if (diskRadioButton_.isSelected()) {
+         try {
+            store_ = app_.data().createMultipageTIFFDatastore(
+                  rootField_.getText(), true, false);
+         }
+         catch (java.io.IOException e) {
+            app_.logs().showError(e, "Error opening file " + rootField_.getText() + " for saving");
+         }
+      }
+      else {
+         store_ = app_.data().createRAMDatastore();
+      }
+      display_ = app_.displays().createDisplay(store_);
       xySeries_ = new XYSeries("Track",false);
       TrackerUtils.plotData("Cell Track: " + acqName_, xySeries_, "X (micron)", 
                "Y (micron)", 100, 100);

@@ -37,7 +37,6 @@ import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.RequestToCloseEvent;
 import org.micromanager.events.DatastoreClosingEvent;
-import org.micromanager.events.internal.EventManager;
 import org.micromanager.events.NewDisplayEvent;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -51,7 +50,7 @@ public class DefaultDisplayManager implements DisplayManager {
    public DefaultDisplayManager(MMStudio studio) {
       studio_ = studio;
       storeToDisplays_ = new HashMap<Datastore, ArrayList<DisplayWindow>>();
-      EventManager.register(this);
+      studio_.events().registerForEvents(this);
    }
 
    @Override
@@ -159,6 +158,19 @@ public class DefaultDisplayManager implements DisplayManager {
       return DefaultDisplayWindow.getAllImageWindows();
    }
 
+   @Override
+   public boolean closeDisplaysFor(Datastore store) {
+      for (DisplayWindow display : getAllImageWindows()) {
+         if (display.getDatastore() == store) {
+            if (!display.requestToClose()) {
+               // Fail out immediately; don't try to close other displays.
+               return false;
+            }
+         }
+      }
+      return true;
+   }
+
    /**
     * Check if this is the last display for a Datastore that we are managing,
     * and verify closing without saving (if appropriate).
@@ -247,7 +259,7 @@ public class DefaultDisplayManager implements DisplayManager {
       DisplayWindow display = event.getDisplay();
       Datastore store = display.getDatastore();
       if (getIsTracked(store)) {
-      storeToDisplays_.get(store).remove(display);
+         storeToDisplays_.get(store).remove(display);
       }
    }
 }
