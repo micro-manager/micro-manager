@@ -22,6 +22,7 @@ package org.micromanager.display;
 
 import java.util.List;
 
+import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.PropertyMap;
@@ -69,17 +70,6 @@ public interface DisplayManager {
    public DisplayWindow createDisplay(Datastore store);
 
    /**
-    * Load saved DisplayWindows for the given Datastore, which is assumed to
-    * represent data that is saved on disk. DisplayWindow settings are saved
-    * in a separate display settings file; one new DisplayWindow will be
-    * created for every entry in that file. If no file is found then a single
-    * default DisplayWindow will be created, as per createDisplay() above.
-    * @param store The Datastore to load display settings for.
-    * @return The list of DisplayWindows that were created by this method.
-    */
-   public List<DisplayWindow> loadDisplays(Datastore store);
-
-   /**
     * Create a new DisplayWindow for the specified Datastore and return it.
     * This version allows you to add your own custom controls to the display
     * that will appear underneath the axis scrollbars.
@@ -90,6 +80,28 @@ public interface DisplayManager {
     */
    public DisplayWindow createDisplay(Datastore store,
          ControlsFactory factory);
+
+   /**
+    * Create a RequestToDrawEvent and return it. This event can be posted to
+    * a DisplayWindow's EventBus (using the DisplayWindow.postEvent() method)
+    * to request that the DisplayWindow update its displayed image. This will
+    * also force a redraw of GUI controls, overlays, and metadata display.
+    * @param coords The Coords of the image to draw. May be null, in which
+    *        case the currently-display image(s) will be redrawn.
+    * @return An object that implements the RequestToDrawEvent interface.
+    */
+   public RequestToDrawEvent createRequestToDrawEvent(Coords coords);
+
+   /**
+    * Load saved DisplayWindows for the given Datastore, which is assumed to
+    * represent data that is saved on disk. DisplayWindow settings are saved
+    * in a separate display settings file; one new DisplayWindow will be
+    * created for every entry in that file. If no file is found then a single
+    * default DisplayWindow will be created, as per createDisplay() above.
+    * @param store The Datastore to load display settings for.
+    * @return The list of DisplayWindows that were created by this method.
+    */
+   public List<DisplayWindow> loadDisplays(Datastore store);
 
    /**
     * Request that MicroManager manage the specified Datastore for you.
@@ -160,4 +172,13 @@ public interface DisplayManager {
     *         the user cancelled saving).
     */
    public boolean closeDisplaysFor(Datastore store);
+
+   /**
+    * Register an OverlayPanelFactory with the program, so that the
+    * OverlayPanels it generates can be attached to all current and future
+    * DisplayWindows.
+    * @param factory An OverlayPanelFactory that generates the new
+    *        OverlayPanels.
+    */
+   public void registerOverlay(OverlayPanelFactory factory);
 }

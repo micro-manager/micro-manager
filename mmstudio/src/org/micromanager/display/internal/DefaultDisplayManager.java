@@ -28,28 +28,41 @@ import java.util.List;
 
 import javax.swing.JOptionPane;
 
+import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
+
 import org.micromanager.display.ControlsFactory;
 import org.micromanager.display.DisplayManager;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.RequestToCloseEvent;
+import org.micromanager.display.RequestToDrawEvent;
+import org.micromanager.display.OverlayPanel;
+import org.micromanager.display.OverlayPanelFactory;
+import org.micromanager.display.internal.events.DefaultRequestToDrawEvent;
+
 import org.micromanager.events.DatastoreClosingEvent;
 import org.micromanager.events.NewDisplayEvent;
+
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
+
 import org.micromanager.data.internal.DefaultPropertyMap;
+
 import org.micromanager.PropertyMap;
+
 
 public class DefaultDisplayManager implements DisplayManager {
    private MMStudio studio_;
    private HashMap<Datastore, ArrayList<DisplayWindow>> storeToDisplays_;
+   private ArrayList<OverlayPanelFactory> overlays_;
 
    public DefaultDisplayManager(MMStudio studio) {
       studio_ = studio;
       storeToDisplays_ = new HashMap<Datastore, ArrayList<DisplayWindow>>();
+      overlays_ = new ArrayList<OverlayPanelFactory>();
       studio_.events().registerForEvents(this);
    }
 
@@ -128,6 +141,17 @@ public class DefaultDisplayManager implements DisplayManager {
    }
 
    @Override
+   public DisplayWindow createDisplay(Datastore store,
+         ControlsFactory factory) {
+      return new DefaultDisplayWindow(store, factory);
+   }
+
+   @Override
+   public RequestToDrawEvent createRequestToDrawEvent(Coords coords) {
+      return new DefaultRequestToDrawEvent(coords);
+   }
+
+   @Override
    public List<DisplayWindow> loadDisplays(Datastore store) {
       String path = store.getSavePath();
       ArrayList<DisplayWindow> result = new ArrayList<DisplayWindow>();
@@ -142,12 +166,6 @@ public class DefaultDisplayManager implements DisplayManager {
          result.add(new DefaultDisplayWindow(store, null));
       }
       return result;
-   }
-
-   @Override
-   public DisplayWindow createDisplay(Datastore store,
-         ControlsFactory factory) {
-      return new DefaultDisplayWindow(store, factory);
    }
 
    @Override
@@ -176,6 +194,19 @@ public class DefaultDisplayManager implements DisplayManager {
          }
       }
       return true;
+   }
+
+   @Override
+   public void registerOverlay(OverlayPanelFactory factory) {
+      overlays_.add(factory);
+   }
+
+   public List<OverlayPanel> getOverlayCopies(DisplayWindow display) {
+      ArrayList<OverlayPanel> result = new ArrayList<OverlayPanel>();
+      for (OverlayPanelFactory factory : overlays_) {
+         result.add(factory.createOverlayPanel(display));
+      }
+      return result;
    }
 
    /**

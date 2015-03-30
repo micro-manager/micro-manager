@@ -45,24 +45,21 @@ class OverlaysPanel extends JPanel {
    private DisplayWindow display_;
    private MMVirtualStack stack_;
    private ImagePlus plus_;
-   private EventBus displayBus_;
    
-   public OverlaysPanel(DisplayWindow display, MMVirtualStack stack, ImagePlus plus,
-         EventBus displayBus) {
+   public OverlaysPanel(DisplayWindow display, MMVirtualStack stack,
+         ImagePlus plus) {
       setLayout(new MigLayout("flowy"));
       display_ = display;
       stack_ = stack;
       plus_ = plus;
-      displayBus_ = displayBus;
-
-      displayBus_.register(this);
+      display_.registerForEvents(this);
 
       panels_ = new ArrayList<OverlayPanel>();
       ScaleBarOverlayPanel scalebar = new ScaleBarOverlayPanel(display_);
-      scalebar.setBus(displayBus_);
+      scalebar.setDisplay(display_);
       panels_.add(scalebar);
       TimestampOverlayPanel timestamp = new TimestampOverlayPanel();
-      timestamp.setBus(displayBus_);
+      timestamp.setDisplay(display_);
       panels_.add(timestamp);
 
       redoLayout();
@@ -73,7 +70,7 @@ class OverlaysPanel extends JPanel {
       for (OverlayPanel panel : panels_) {
          add(panel);
       }
-      displayBus_.post(new LayoutChangedEvent());
+      display_.postEvent(new LayoutChangedEvent());
    }
 
    @Subscribe
@@ -86,6 +83,6 @@ class OverlaysPanel extends JPanel {
    }
 
    public void cleanup() {
-      displayBus_.unregister(this);
+      display_.unregisterForEvents(this);
    }
 }

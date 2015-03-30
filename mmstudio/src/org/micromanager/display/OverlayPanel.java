@@ -20,8 +20,6 @@
 
 package org.micromanager.display;
 
-import com.google.common.eventbus.EventBus;
-
 import ij.gui.ImageCanvas;
 
 import java.awt.Graphics;
@@ -29,20 +27,47 @@ import java.awt.Graphics;
 import javax.swing.JPanel;
 
 import org.micromanager.data.Image;
+import org.micromanager.display.DisplayWindow;
 
 /**
  * An OverlayPanel provides a GUI for configuring how to draw an overlay
- * on top of an image canvas. See the API function registerOverlay() for how
- * to attach these panels to image display windows.
+ * on top of an image canvas. See the API function
+ * DisplayManager.registerOverlay() for how to attach these panels to image
+ * display windows.
  */
 public abstract class OverlayPanel extends JPanel {
+   private DisplayManager manager_;
+   private DisplayWindow display_;
+
    /**
-    * Receive the EventBus for the image display. This is mostly useful to
-    * overlay panels so that they can request a redraw by posting a 
-    * DrawEvent to the bus.
+    * Receive a reference to the DisplayManager, for use in instantiating
+    * objects.
     */
-   
-   public void setBus(EventBus bus) {};
+   public void setManager(DisplayManager manager) {
+      manager_ = manager;
+   }
+
+   /**
+    * Receive the DisplayWindow that this instance of the panel will be
+    * drawing on.
+    * Note that you can request a redraw of the DisplayWindow (for example,
+    * after the parameters of your overlay have been changed by the user) by
+    * using DisplayWindow.postEvent(DisplayManager.createRequestToDrawEvent());
+    */
+   public void setDisplay(DisplayWindow display) {
+      display_ = display;
+   };
+
+   /**
+    * Force a redraw of the DisplayWindow, so that changes in the overlay can
+    * be shown.
+    */
+   protected void redraw() {
+      if (display_ != null) {
+         display_.postEvent(manager_.createRequestToDrawEvent(null));
+      }
+   }
+
    /**
     * Draw the overlay using the provided Graphics object. This is called
     * immediately after the canvas has been drawn.

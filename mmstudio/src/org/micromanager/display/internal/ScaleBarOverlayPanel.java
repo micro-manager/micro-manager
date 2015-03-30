@@ -20,8 +20,6 @@
 
 package org.micromanager.display.internal;
 
-import com.google.common.eventbus.EventBus;
-
 import ij.gui.ImageCanvas;
 
 import java.awt.Color;
@@ -61,8 +59,6 @@ public class ScaleBarOverlayPanel extends OverlayPanel {
       "Black", "White", "Gray", "Yellow", "Orange", "Red", "Magenta",
          "Blue", "Cyan", "Green"
    };
-
-   private EventBus displayBus_;
 
    private JCheckBox shouldDraw_;
    private JCheckBox shouldDrawText_;
@@ -158,16 +154,6 @@ public class ScaleBarOverlayPanel extends OverlayPanel {
          yOffset_.setText(String.valueOf(settings.getScaleBarOffsetY()));
       }
       add(yOffset_);
-   }
-
-   public void setBus(EventBus bus) {
-      displayBus_ = bus;
-   }
-
-   private void redraw() {
-      if (displayBus_ != null) {
-         displayBus_.post(new DefaultRequestToDrawEvent());
-      }
    }
 
    public void drawOverlay(Graphics g, DisplayWindow display, Image image, ImageCanvas canvas) {

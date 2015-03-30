@@ -353,7 +353,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          comments_ = new CommentsPanel(store_, stack_);
          modePanel_.addMode("Comments", comments_);
 
-         overlays_ = new OverlaysPanel(this, stack_, ijImage_, displayBus_);
+         overlays_ = new OverlaysPanel(this, stack_, ijImage_);
          modePanel_.addMode("Overlays", overlays_);
       }
 

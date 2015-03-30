@@ -1889,11 +1889,6 @@ public class MMStudio implements Studio, CompatibilityInterface {
    }
    
    @Override
-   public void registerOverlay(OverlayPanel panel) {
-      ReportingUtils.logError("TODO: Implement this");
-   }
-
-   @Override
    public DataManager data() {
       return dataManager_;
    }

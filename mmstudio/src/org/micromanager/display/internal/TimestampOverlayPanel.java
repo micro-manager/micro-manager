@@ -20,8 +20,6 @@
 
 package org.micromanager.display.internal;
 
-import com.google.common.eventbus.EventBus;
-
 import ij.gui.ImageCanvas;
 
 import java.awt.Color;
@@ -60,7 +58,6 @@ import org.micromanager.display.internal.events.DefaultRequestToDrawEvent;
  */
 public class TimestampOverlayPanel extends OverlayPanel {
    private static int LINE_HEIGHT = 13;
-   private EventBus displayBus_;
 
    private JCheckBox shouldDraw_;
    private JCheckBox amMultiChannel_;
@@ -126,16 +123,6 @@ public class TimestampOverlayPanel extends OverlayPanel {
          }
       });
       add(yOffset_, "wrap");
-   }
-
-   public void setBus(EventBus bus) {
-      displayBus_ = bus;
-   }
-
-   private void redraw() {
-      if (displayBus_ != null) {
-         displayBus_.post(new DefaultRequestToDrawEvent());
-      }
    }
 
    /**
