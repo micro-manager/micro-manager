@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //PROJECT:       Micro-Manager
-//SUBSYSTEM:     Display API
+//SUBSYSTEM:     Events API
 //-----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
@@ -18,23 +18,21 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.display;
+package org.micromanager.events;
 
-import ij.ImagePlus;
+import org.micromanager.display.DisplayWindow;
 
 /**
- * This event is published by the display's EventBus to indicate that it is
- * using a new ImagePlus object.
+ * This event is posted immediately prior to a new DisplayWindow drawing
+ * itself to the screen for the first time. This will happen as soon as there
+ * is at least one image in the Datastore for the DisplayWindow. If you want
+ * to be notified of when a DisplayWindow is created, instead, then you should
+ * listen for the NewDisplayEvent.
  */
-public interface NewImagePlusEvent {
+public interface DisplayAboutToShowEvent {
    /**
-    * @return The DisplayWindow that originated the event.
+    * Provides access to the DisplayWindow that is about to be drawn.
+    * @return the DisplayWindow.
     */
    public DisplayWindow getDisplay();
-
-   /**
-    * @return The ImagePlus the DisplayWindow is now using for displaying image
-    * data.
-    */
-   public ImagePlus getImagePlus();
 }

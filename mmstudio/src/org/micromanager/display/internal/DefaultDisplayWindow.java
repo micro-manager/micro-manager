@@ -77,6 +77,7 @@ import org.micromanager.data.internal.DefaultCoords;
 
 import org.micromanager.events.internal.DefaultEventManager;
 
+import org.micromanager.display.internal.events.DefaultDisplayAboutToShowEvent;
 import org.micromanager.display.internal.events.DefaultNewDisplayEvent;
 import org.micromanager.display.internal.events.DefaultNewImagePlusEvent;
 import org.micromanager.display.internal.events.DefaultRequestToDrawEvent;
@@ -177,6 +178,12 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       displayBus_.register(this);
       controlsFactory_ = controlsFactory;
 
+      // The DisplayGroupManager will want to know about us, so this must
+      // happen before our creation event gets posted.
+      DisplayGroupManager.ensureInitialized();
+      DefaultEventManager.getInstance().post(
+            new DefaultNewDisplayEvent(this));
+
       // Wait to actually create our GUI until there's at least one image
       // to display.
       if (store_.getNumImages() > 0) {
@@ -226,6 +233,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          stack_.setImagePlus(ijImage_);
          ijImage_.setStack(getName(), stack_);
          ijImage_.setOpenAsHyperStack(true);
+         displayBus_.post(new DefaultNewImagePlusEvent(this, ijImage_));
          // The ImagePlus object needs to be pseudo-polymorphic, depending on
          // the number of channels in the Datastore. However, we may not have
          // all of the channels available to us at the time this display is
@@ -277,7 +285,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       resetTitle();
       setWindowSize();
 
-      DefaultEventManager.getInstance().post(new DefaultNewDisplayEvent(this));
+      DefaultEventManager.getInstance().post(new DefaultDisplayAboutToShowEvent(this));
    }
 
    /**
@@ -480,7 +488,8 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
     */
    private void shiftToCompositeImage() {
       // Don't want to run this from a separate thread when we're in the middle
-      // of building our GUI
+      // of building our GUI, e.g. because a second image arrived while we're
+      // still responding to the first one.
       synchronized(this) {
          // Halt our canvas draw thread, clear all paint pending for the old
          // canvas, then create a new draw thread, so that lingering references
@@ -506,7 +515,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
                this);
          canvasThread_.start();
       }
-      displayBus_.post(new DefaultNewImagePlusEvent(ijImage_));
+      displayBus_.post(new DefaultNewImagePlusEvent(this, ijImage_));
    }
 
    /**
