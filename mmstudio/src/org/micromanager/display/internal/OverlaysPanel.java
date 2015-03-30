@@ -34,8 +34,10 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.data.Image;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.OverlayPanel;
+import org.micromanager.display.internal.DefaultDisplayManager;
 import org.micromanager.display.internal.events.CanvasDrawEvent;
 import org.micromanager.display.internal.events.LayoutChangedEvent;
+import org.micromanager.internal.MMStudio;
 
 /**
  * This class contains panels used to draw overlays on the image canvas.
@@ -54,13 +56,7 @@ class OverlaysPanel extends JPanel {
       plus_ = plus;
       display_.registerForEvents(this);
 
-      panels_ = new ArrayList<OverlayPanel>();
-      ScaleBarOverlayPanel scalebar = new ScaleBarOverlayPanel(display_);
-      scalebar.setDisplay(display_);
-      panels_.add(scalebar);
-      TimestampOverlayPanel timestamp = new TimestampOverlayPanel();
-      timestamp.setDisplay(display_);
-      panels_.add(timestamp);
+      panels_ = DefaultDisplayManager.getInstance().getOverlayPanels(display_);
 
       redoLayout();
    }

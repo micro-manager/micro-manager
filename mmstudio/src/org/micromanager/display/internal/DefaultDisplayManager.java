@@ -55,6 +55,8 @@ import org.micromanager.PropertyMap;
 
 
 public class DefaultDisplayManager implements DisplayManager {
+   private static DefaultDisplayManager staticInstance_;
+
    private MMStudio studio_;
    private HashMap<Datastore, ArrayList<DisplayWindow>> storeToDisplays_;
    private ArrayList<OverlayPanelFactory> overlays_;
@@ -63,7 +65,11 @@ public class DefaultDisplayManager implements DisplayManager {
       studio_ = studio;
       storeToDisplays_ = new HashMap<Datastore, ArrayList<DisplayWindow>>();
       overlays_ = new ArrayList<OverlayPanelFactory>();
+      // HACK: start out with some hardcoded overlay options for now.
+      overlays_.add(new ScaleBarOverlayFactory());
+      overlays_.add(new TimestampOverlayFactory());
       studio_.events().registerForEvents(this);
+      staticInstance_ = this;
    }
 
    @Override
@@ -201,10 +207,13 @@ public class DefaultDisplayManager implements DisplayManager {
       overlays_.add(factory);
    }
 
-   public List<OverlayPanel> getOverlayCopies(DisplayWindow display) {
+   public ArrayList<OverlayPanel> getOverlayPanels(DisplayWindow display) {
       ArrayList<OverlayPanel> result = new ArrayList<OverlayPanel>();
       for (OverlayPanelFactory factory : overlays_) {
-         result.add(factory.createOverlayPanel(display));
+         OverlayPanel panel = factory.createOverlayPanel(display);
+         panel.setDisplay(display);
+         panel.setManager(this);
+         result.add(panel);
       }
       return result;
    }
@@ -299,5 +308,9 @@ public class DefaultDisplayManager implements DisplayManager {
       if (getIsTracked(store)) {
          storeToDisplays_.get(store).remove(display);
       }
+   }
+
+   public static DefaultDisplayManager getInstance() {
+      return staticInstance_;
    }
 }
