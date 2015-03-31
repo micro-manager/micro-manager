@@ -37,6 +37,8 @@ import org.micromanager.display.OverlayPanel;
 import org.micromanager.display.internal.DefaultDisplayManager;
 import org.micromanager.display.internal.events.CanvasDrawEvent;
 import org.micromanager.display.internal.events.LayoutChangedEvent;
+import org.micromanager.display.internal.events.NewOverlayEvent;
+import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.internal.MMStudio;
 
 /**
@@ -56,7 +58,8 @@ class OverlaysPanel extends JPanel {
       plus_ = plus;
       display_.registerForEvents(this);
 
-      panels_ = DefaultDisplayManager.getInstance().getOverlayPanels(display_);
+      panels_ = DefaultDisplayManager.getInstance().createOverlayPanels(display_);
+      DefaultEventManager.getInstance().registerForEvents(this);
 
       redoLayout();
    }
@@ -78,7 +81,15 @@ class OverlaysPanel extends JPanel {
       }
    }
 
+   @Subscribe
+   public void onNewOverlay(NewOverlayEvent event) {
+      panels_.add(DefaultDisplayManager.getInstance().createOverlayPanel(
+               event.getFactory(), display_));
+      redoLayout();
+   }
+
    public void cleanup() {
       display_.unregisterForEvents(this);
+      DefaultEventManager.getInstance().unregisterForEvents(this);
    }
 }

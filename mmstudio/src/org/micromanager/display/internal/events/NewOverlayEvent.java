@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //PROJECT:       Micro-Manager
-//SUBSYSTEM:     Display API
+//SUBSYSTEM:     Display implementation
 //-----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
@@ -18,20 +18,17 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.display;
+package org.micromanager.display.internal.events;
 
-import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.OverlayPanelFactory;
 
-/**
- * An OverlayPanelFactory is a class which can create OverlayPanels. A
- * separate OverlayPanel is needed for each DisplayWindow; this class is
- * responsible for creating them. 
- */
-public interface OverlayPanelFactory {
-   /**
-    * Create a single OverlayPanel for the specified DisplayWindow.
-    * @param display The DisplayWindow the panel will be embedded into.
-    * @return An OverlayPanel instance for controlling the overlay.
-    */
-   public OverlayPanel createOverlayPanel(DisplayWindow display);
+public class NewOverlayEvent {
+   private OverlayPanelFactory factory_;
+   public NewOverlayEvent(OverlayPanelFactory factory) {
+      factory_ = factory;
+   }
+
+   public OverlayPanelFactory getFactory() {
+      return factory_;
+   }
 }

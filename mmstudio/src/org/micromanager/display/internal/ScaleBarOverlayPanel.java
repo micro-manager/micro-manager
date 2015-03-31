@@ -30,7 +30,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.Graphics;
 
-import javax.swing.border.TitledBorder;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -72,7 +71,6 @@ public class ScaleBarOverlayPanel extends OverlayPanel {
    private boolean haveLoggedError_ = false;
    
    public ScaleBarOverlayPanel(DisplayWindow display) {
-      setBorder(new TitledBorder("Scale bar"));
       setLayout(new MigLayout("flowy"));
       DisplaySettings settings = display.getDisplaySettings();
 
@@ -204,5 +202,10 @@ public class ScaleBarOverlayPanel extends OverlayPanel {
       else {
          g.drawRect(xOffset, yOffset + 6, width, 5);
       }
+   }
+
+   @Override
+   public String getTitle() {
+      return "Scale bar";
    }
 }

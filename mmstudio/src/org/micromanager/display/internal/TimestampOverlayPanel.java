@@ -35,7 +35,6 @@ import java.awt.geom.Rectangle2D;
 import java.awt.Graphics;
 import java.util.ArrayList;
 
-import javax.swing.border.TitledBorder;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -68,7 +67,6 @@ public class TimestampOverlayPanel extends OverlayPanel {
    private JComboBox color_;
 
    public TimestampOverlayPanel() {
-      setBorder(new TitledBorder("Timestamp display"));
       setLayout(new MigLayout("flowx"));
 
       ActionListener redrawListener = new ActionListener() {
@@ -248,5 +246,10 @@ public class TimestampOverlayPanel extends OverlayPanel {
       Rectangle2D textBounds = font.getStringBounds(text,
             new FontRenderContext(new AffineTransform(), true, false));
       return (int) Math.round(textBounds.getWidth());
+   }
+
+   @Override
+   public String getTitle() {
+      return "Timestamp display";
    }
 }

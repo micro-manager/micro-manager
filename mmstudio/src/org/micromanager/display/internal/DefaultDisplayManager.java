@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import javax.swing.border.TitledBorder;
 import javax.swing.JOptionPane;
 
 import org.micromanager.data.Coords;
@@ -42,8 +43,10 @@ import org.micromanager.display.RequestToDrawEvent;
 import org.micromanager.display.OverlayPanel;
 import org.micromanager.display.OverlayPanelFactory;
 import org.micromanager.display.internal.events.DefaultRequestToDrawEvent;
+import org.micromanager.display.internal.events.NewOverlayEvent;
 
 import org.micromanager.events.DatastoreClosingEvent;
+import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.events.NewDisplayEvent;
 
 import org.micromanager.internal.MMStudio;
@@ -205,15 +208,22 @@ public class DefaultDisplayManager implements DisplayManager {
    @Override
    public void registerOverlay(OverlayPanelFactory factory) {
       overlays_.add(factory);
+      DefaultEventManager.getInstance().post(new NewOverlayEvent(factory));
    }
 
-   public ArrayList<OverlayPanel> getOverlayPanels(DisplayWindow display) {
+   public OverlayPanel createOverlayPanel(OverlayPanelFactory factory,
+         DisplayWindow display) {
+      OverlayPanel panel = factory.createOverlayPanel(display);
+      panel.setBorder(new TitledBorder(panel.getTitle()));
+      panel.setDisplay(display);
+      panel.setManager(this);
+      return panel;
+   }
+
+   public ArrayList<OverlayPanel> createOverlayPanels(DisplayWindow display) {
       ArrayList<OverlayPanel> result = new ArrayList<OverlayPanel>();
       for (OverlayPanelFactory factory : overlays_) {
-         OverlayPanel panel = factory.createOverlayPanel(display);
-         panel.setDisplay(display);
-         panel.setManager(this);
-         result.add(panel);
+         result.add(createOverlayPanel(factory, display));
       }
       return result;
    }
