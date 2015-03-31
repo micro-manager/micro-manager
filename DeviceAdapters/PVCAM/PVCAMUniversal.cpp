@@ -127,8 +127,21 @@ const char* g_Keyword_Yes             = "Yes";
 const char* g_Keyword_No              = "No";
 const char* g_Keyword_FrameCapable    = "FTCapable";
 const char* g_Keyword_RGB32           = "Color";
-const char* g_ON                      = "ON";
-const char* g_OFF                     = "OFF";
+const char* g_Keyword_RedScale        = "Color - Red scale";
+const char* g_Keyword_BlueScale       = "Color - Blue scale";
+const char* g_Keyword_GreenScale      = "Color - Green scale";
+const char* g_Keyword_CFAmask         = "Color - Sensor CFA Pattern";
+const char* g_Keyword_InterpolationAlgorithm = "Color - zInterpolation algorithm";
+const char* g_Keyword_ON              = "ON";
+const char* g_Keyword_OFF             = "OFF";
+const char* g_Keyword_RGGB            = "R-G-G-B";
+const char* g_Keyword_BGGR            = "B-G-G-R";
+const char* g_Keyword_GRBG            = "G-R-B-G";
+const char* g_Keyword_GBRG            = "G-B-R-G";
+const char* g_Keyword_Replication     = "Nearest Neighbor Replication";
+const char* g_Keyword_Bilinear        = "Bilinear";
+const char* g_Keyword_SmoothHue       = "Smooth Hue";
+const char* g_Keyword_AdaptiveSmoothHue = "Adaptive Smooth Hue (edge detecting)";
 const char* g_Keyword_AcqMethod           = "AcquisitionMethod";
 const char* g_Keyword_AcqMethod_Callbacks = "Callbacks";
 const char* g_Keyword_AcqMethod_Polling   = "Polling";
@@ -193,6 +206,11 @@ binYSize_(1),
 newBinSize_(1),
 newBinXSize_(1),
 newBinYSize_(1),
+redScale_(1.0),
+greenScale_(1.0),
+blueScale_(1.0),
+selectedCFAmask_(CFA_RGGB),
+selectedInterpolationAlgorithm_(ALG_REPLICATION),
 rgbaColor_(false)
 #ifdef PVCAM_SMART_STREAMING_SUPPORTED
 , smartStreamEntries_(4),
@@ -369,13 +387,48 @@ int Universal::Initialize()
    {
        if ( prmColorMode_->Current() == COLOR_RGGB )
           isColorCcd = true;
+       
+       if (isColorCcd)
+       {
+           pAct = new CPropertyAction (this, &Universal::OnRedScale);
+           CreateProperty(g_Keyword_RedScale, "1.0", MM::Float, !isColorCcd, pAct);
+           nRet = SetPropertyLimits(g_Keyword_RedScale, 0, 20);
+
+           pAct = new CPropertyAction (this, &Universal::OnGreenScale);
+           CreateProperty(g_Keyword_GreenScale, "1.0", MM::Float, !isColorCcd, pAct);
+           nRet = SetPropertyLimits(g_Keyword_GreenScale, 0, 20);
+
+           pAct = new CPropertyAction (this, &Universal::OnBlueScale);
+           CreateProperty(g_Keyword_BlueScale, "1.0", MM::Float, !isColorCcd, pAct);
+           nRet = SetPropertyLimits(g_Keyword_BlueScale, 0, 20);
+
+           pAct = new CPropertyAction (this, &Universal::OnCFAmask);
+           CreateProperty(g_Keyword_CFAmask, g_Keyword_RGGB, MM::String, !isColorCcd, pAct);
+
+           AddAllowedValue(g_Keyword_CFAmask, g_Keyword_RGGB);
+           AddAllowedValue(g_Keyword_CFAmask, g_Keyword_BGGR);
+           AddAllowedValue(g_Keyword_CFAmask, g_Keyword_GRBG);
+           AddAllowedValue(g_Keyword_CFAmask, g_Keyword_GBRG);
+           
+           if (strstr(camChipName_, "QI_OptiMOS_M1"))
+              SetProperty(g_Keyword_CFAmask, g_Keyword_GRBG);
+           
+           pAct = new CPropertyAction (this, &Universal::OnInterpolationAlgorithm);
+           CreateProperty(g_Keyword_InterpolationAlgorithm, g_Keyword_Replication, MM::String, !isColorCcd, pAct);
+           AddAllowedValue(g_Keyword_InterpolationAlgorithm, g_Keyword_Replication);
+           AddAllowedValue(g_Keyword_InterpolationAlgorithm, g_Keyword_Bilinear);
+           AddAllowedValue(g_Keyword_InterpolationAlgorithm, g_Keyword_SmoothHue);
+           AddAllowedValue(g_Keyword_InterpolationAlgorithm, g_Keyword_AdaptiveSmoothHue);
+
+       }
+
    }
    // the camera can interpret pixels as color data with the Bayer pattern
    pAct = new CPropertyAction (this, &Universal::OnColorMode);
    // If not color CCD then make the property OFF and read-only (grayed out)
-   CreateProperty(g_Keyword_RGB32, g_OFF, MM::String, !isColorCcd, pAct);
-   AddAllowedValue(g_Keyword_RGB32, g_ON);
-   AddAllowedValue(g_Keyword_RGB32, g_OFF);
+   CreateProperty(g_Keyword_RGB32, g_Keyword_OFF, MM::String, !isColorCcd, pAct);
+   AddAllowedValue(g_Keyword_RGB32, g_Keyword_ON);
+   AddAllowedValue(g_Keyword_RGB32, g_Keyword_OFF);
 
    /// TRIGGER MODE (EXPOSURE MODE)
    prmTriggerMode_ = new PvEnumParam( g_Keyword_TriggerMode, PARAM_EXPOSURE_MODE, this );
@@ -603,6 +656,13 @@ int Universal::Initialize()
    }
    else
       LogMessage("This Camera does not have EM Gain");
+
+
+   if (strstr(camChipName_, "QI_OptiMOS_M1"))
+   {
+       uns32 clearMode = CLEAR_PRE_SEQUENCE;
+       pl_set_param(hPVCAM_, PARAM_CLEAR_MODE, (void *)&clearMode);
+   }
 
    // create actual interval property, this param is set in PushImage2()
    CreateProperty(MM::g_Keyword_ActualInterval_ms, "0.0", MM::Float, false);
@@ -2035,6 +2095,8 @@ const unsigned char* Universal::GetImageBuffer()
    if (rgbaColor_)
    {
       // debayer the image and convert to color
+      RGBscales rgbScales = {redScale_, greenScale_, blueScale_};
+      debayer_.SetRGBScales(rgbScales);
       debayer_.Process(colorImg_, img_, (unsigned)camCurrentSpeed_.bitDepth);
       pixBuffer = colorImg_.GetPixelsRW();
    }
@@ -2056,7 +2118,8 @@ const unsigned int* Universal::GetImageBufferAsRGB32()
       LogMMMessage(__LINE__, "Warning: GetImageBufferAsRGB32 called before SnapImage()");
       return 0;
    }
-
+   RGBscales rgbScales = {redScale_, greenScale_, blueScale_};
+   debayer_.SetRGBScales(rgbScales);
    debayer_.Process(colorImg_, img_, (unsigned)camCurrentSpeed_.bitDepth);
    void* pixBuffer = colorImg_.GetPixelsRW();
    snappingSingleFrame_ = false;
@@ -2918,7 +2981,9 @@ int Universal::FrameDone()
          // Copy the circular buffer data to our image buffer for bayer processing
          // TODO: We could modify the Debayer::Process() to accept the circular buffer directly and avoid memcpy
          memcpy((void*) img_.GetPixelsRW(), pFramePtr, bufferSize);
-         debayer_.Process(colorImg_, img_, (unsigned)camCurrentSpeed_.bitDepth);
+         RGBscales rgbScales = {redScale_, greenScale_, blueScale_};
+         debayer_.SetRGBScales(rgbScales);
+         debayer_.Process(colorImg_, img_, (unsigned)camCurrentSpeed_.bitDepth); ////******
          finalImageBuf = colorImg_.GetPixels();
       }
 
@@ -3063,18 +3128,170 @@ int Universal::OnColorMode(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       string val;
       pProp->Get(val);
-
-      if (IsCapturing())
-         StopSequenceAcquisition();
-
-      val.compare(g_ON) == 0 ? rgbaColor_ = true : rgbaColor_ = false;
-      nRet = ResizeImageBufferSingle();
+       val.compare(g_Keyword_ON) == 0 ? rgbaColor_ = true : rgbaColor_ = false;
+       sequenceModeReady_ = false;
+       singleFrameModeReady_ = false;
    }
    else if (eAct == MM::BeforeGet)
    {
-      pProp->Set(rgbaColor_ ? g_ON : g_OFF);
+      pProp->Set(rgbaColor_ ? g_Keyword_ON : g_Keyword_OFF);
    }
    return nRet;
+}
+
+int Universal::OnRedScale(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   START_ONPROPERTY("Universal::OnRedScale", eAct);
+
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(redScale_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(redScale_);
+   }
+   return DEVICE_OK;
+}
+
+int Universal::OnGreenScale(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   START_ONPROPERTY("Universal::OnGreenScale", eAct);
+
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(greenScale_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(greenScale_);
+   }
+   return DEVICE_OK;
+}
+
+int Universal::OnBlueScale(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   START_ONPROPERTY("Universal::OnBlueScale", eAct);
+
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(blueScale_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(blueScale_);
+   }
+   return DEVICE_OK;
+}
+
+
+int Universal::OnCFAmask(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   START_ONPROPERTY("Universal::OnCFAmask", eAct);
+   if (eAct == MM::AfterSet)
+   {
+      string val;
+      pProp->Get(val);
+      if (val == g_Keyword_RGGB)
+         selectedCFAmask_ = CFA_RGGB;
+      else if (val == g_Keyword_BGGR)
+         selectedCFAmask_ = CFA_BGGR;
+      else if (val == g_Keyword_GRBG)
+         selectedCFAmask_ = CFA_GRBG;
+      else if (val == g_Keyword_GBRG)
+         selectedCFAmask_ = CFA_GBRG;
+      else
+         selectedCFAmask_ = CFA_RGGB;
+   }
+   else if (eAct == MM::BeforeGet)
+   {
+      switch (selectedCFAmask_)
+      {
+          case CFA_RGGB:
+          pProp->Set(g_Keyword_RGGB);
+          debayer_.SetOrderIndex(CFA_RGGB);
+          break;
+
+          case CFA_BGGR:
+          pProp->Set(g_Keyword_BGGR);
+          debayer_.SetOrderIndex(CFA_BGGR);
+          break;
+
+          case CFA_GRBG:
+          pProp->Set(g_Keyword_GRBG);
+          debayer_.SetOrderIndex(CFA_GRBG);
+          break;
+
+          case CFA_GBRG:
+          pProp->Set(g_Keyword_GBRG);
+          debayer_.SetOrderIndex(CFA_GBRG);
+          break;
+          
+          default:
+          pProp->Set(g_Keyword_RGGB);
+          debayer_.SetOrderIndex(CFA_RGGB);
+          break;
+      }
+      
+   }
+   return DEVICE_OK;
+}
+
+
+int Universal::OnInterpolationAlgorithm(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   START_ONPROPERTY("Universal::OnCFAmask", eAct);
+   if (eAct == MM::AfterSet)
+   {
+      string val;
+      pProp->Get(val);
+
+      if (val == g_Keyword_Replication)
+          selectedInterpolationAlgorithm_ =  ALG_REPLICATION;
+      else if (val == g_Keyword_Bilinear)
+          selectedInterpolationAlgorithm_ = ALG_BILINEAR;
+      else if (val == g_Keyword_SmoothHue)
+          selectedInterpolationAlgorithm_ =  ALG_SMOOTH_HUE;
+      else if (val == g_Keyword_AdaptiveSmoothHue)
+          selectedInterpolationAlgorithm_ =  ALG_ADAPTIVE_SMOOTH_HUE;
+      else 
+          selectedInterpolationAlgorithm_ =  ALG_REPLICATION;
+
+
+      if (IsCapturing())
+         StopSequenceAcquisition();
+   }
+   else if (eAct == MM::BeforeGet)
+   {
+      switch (selectedInterpolationAlgorithm_)
+      {
+          case ALG_REPLICATION:
+          pProp->Set(g_Keyword_Replication);
+          debayer_.SetAlgorithmIndex(ALG_REPLICATION);
+          break;
+
+          case ALG_BILINEAR:
+          pProp->Set(g_Keyword_Bilinear);
+          debayer_.SetAlgorithmIndex(ALG_BILINEAR);
+          break;
+
+          case ALG_SMOOTH_HUE:
+          pProp->Set(g_Keyword_SmoothHue);
+          debayer_.SetAlgorithmIndex(ALG_SMOOTH_HUE);
+          break;
+
+          case ALG_ADAPTIVE_SMOOTH_HUE:
+          pProp->Set(g_Keyword_AdaptiveSmoothHue);
+          debayer_.SetAlgorithmIndex(ALG_ADAPTIVE_SMOOTH_HUE);
+          break;
+          
+          default:
+          pProp->Set(g_Keyword_Replication);
+          debayer_.SetAlgorithmIndex(ALG_REPLICATION);
+          break;
+   }
+}
+   return DEVICE_OK;
 }
 
 #ifdef PVCAM_CALLBACKS_SUPPORTED

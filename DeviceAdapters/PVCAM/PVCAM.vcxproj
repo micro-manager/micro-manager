@@ -160,11 +160,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="PvDebayer.cpp" />
     <ClCompile Include="PVCAMAdapter.cpp" />
     <ClCompile Include="PVCAMParam.cpp" />
     <ClCompile Include="PVCAMUniversal.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="PvDebayer.h" />
     <ClInclude Include="PVCAMAdapter.h" />
     <ClInclude Include="PVCAMParam.h" />
   </ItemGroup>

@@ -24,12 +24,18 @@
     <ClCompile Include="PVCAMUniversal.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="PvDebayer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="PVCAMAdapter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="PVCAMParam.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PvDebayer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

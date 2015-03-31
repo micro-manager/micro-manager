@@ -29,7 +29,7 @@
 
 #include "DeviceBase.h"
 #include "../../MMDevice/ImgBuffer.h"
-#include "../../MMDevice/Debayer.h"
+#include "PvDebayer.h"
 #include "../../MMDevice/DeviceUtils.h"
 #include "../../MMDevice/DeviceThreads.h"
 
@@ -283,6 +283,11 @@ public:
    int OnOutputTriggerFirstMissing(MM::PropertyBase* pProp, MM::ActionType eAct); 
    int OnCircBufferFrameCount(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnColorMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnRedScale(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnGreenScale(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnBlueScale(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnCFAmask(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnInterpolationAlgorithm(MM::PropertyBase* pProp, MM::ActionType eAct);
 #ifdef PVCAM_CALLBACKS_SUPPORTED
    int OnAcquisitionMethod(MM::PropertyBase* pProp, MM::ActionType eAct);
 #endif
@@ -344,17 +349,13 @@ private:
    bool            snappingSingleFrame_;  // Single frame mode acquisition ongoing
    bool            singleFrameModeReady_; // Single frame mode acquisition prepared
    bool            sequenceModeReady_;    // Continuous acquisition prepared
-#ifdef PVCAM_SMART_STREAMING_SUPPORTED
-   bool            ssWasOn_;              // Remember SMART streaming state before Snap was pressed
-#endif
+
    bool            isUsingCallbacks_;
    bool            isAcquiring_;
 
    long            triggerTimeout_;       // Max time to wait for an external trigger
    bool            microsecResSupported_; // True if camera supports microsecond exposures
-#ifdef PVCAM_FRAME_INFO_SUPPORTED
-   PFRAME_INFO     pFrameInfo_;           // PVCAM frame metadata
-#endif
+
    friend class    AcqSequenceThread;
    AcqSequenceThread* uniAcqThd_;         // Pointer to the sequencing thread
 
@@ -367,10 +368,7 @@ private:
    uns16           camSerSize_;           // CCD serial size
    uns32           camFWellCapacity_;     // CCD full well capacity
    double          exposure_;             // Current Exposure
-#ifdef PVCAM_SMART_STREAMING_SUPPORTED
-   double          smartStreamValuesDouble_[SMART_STREAM_MAX_EXPOSURES];
-   uns16           smartStreamEntries_;
-#endif
+
    unsigned        binSize_;              // Symmetric binning value
    unsigned        binXSize_;             // Asymmetric binning value
    unsigned        binYSize_;             // Asymmetric binning value
@@ -386,6 +384,27 @@ private:
    PvParam<int16>* prmTempSetpoint_;      // Desired CCD temperature
    PvParam<int16>* prmGainIndex_;
    PvParam<uns16>* prmGainMultFactor_;
+
+   double           redScale_;
+   double           greenScale_;
+   double           blueScale_;
+
+   // color mode
+   int selectedCFAmask_;
+   int selectedInterpolationAlgorithm_;
+   bool rgbaColor_;
+
+#ifdef PVCAM_SMART_STREAMING_SUPPORTED
+   double          smartStreamValuesDouble_[SMART_STREAM_MAX_EXPOSURES];
+   uns16           smartStreamEntries_;
+   bool            ssWasOn_;              // Remember SMART streaming state before Snap was pressed
+#endif
+
+#ifdef PVCAM_FRAME_INFO_SUPPORTED
+   PFRAME_INFO     pFrameInfo_;           // PVCAM frame metadata
+#endif
+
+
 #ifdef PVCAM_SMART_STREAMING_SUPPORTED
    PvParam<smart_stream_type>* prmSmartStreamingValues_;
    PvParam<rs_bool>* prmSmartStreamingEnabled_;
@@ -398,8 +417,6 @@ private:
    PvEnumParam*    prmReadoutPort_;
    PvParam<int32>* prmColorMode_;
 
-   // color mode
-   bool rgbaColor_;
 
    // List of post processing features
    std::vector<PProc> PostProc_;
