@@ -82,6 +82,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>..\..\MMDevice;$(MM_3RDPARTYPUBLIC)\boost;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -92,7 +93,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>Pvcam32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(MM_3RDPARTYPUBLIC)/Photometrics/PVCAM/SDK/Libs/$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(MM_3RDPARTYPUBLIC)/Photometrics/PVCAM/SDK/Libs/$(Platform);$(MM_3RDPARTYPUBLIC)/boost/stage_Win32/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
@@ -104,6 +105,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>..\..\MMDevice;$(MM_3RDPARTYPUBLIC)\boost;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -114,7 +116,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>Pvcam64.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(MM_3RDPARTYPUBLIC)/Photometrics/PVCAM/SDK/Libs/$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(MM_3RDPARTYPUBLIC)/Photometrics/PVCAM/SDK/Libs/$(Platform);$(MM_3RDPARTYPUBLIC)/boost/stage_x64/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
@@ -122,6 +124,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
+      <AdditionalIncludeDirectories>..\..\MMDevice;$(MM_3RDPARTYPUBLIC)\boost;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <PrecompiledHeader>
@@ -130,7 +133,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>Pvcam32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(MM_3RDPARTYPUBLIC)/Photometrics/PVCAM/SDK/Libs/$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(MM_3RDPARTYPUBLIC)/Photometrics/PVCAM/SDK/Libs/$(Platform);$(MM_3RDPARTYPUBLIC)/boost/stage_Win32/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -143,6 +146,7 @@
       <TargetEnvironment>X64</TargetEnvironment>
     </Midl>
     <ClCompile>
+      <AdditionalIncludeDirectories>..\..\MMDevice;$(MM_3RDPARTYPUBLIC)\boost;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <PrecompiledHeader>
@@ -151,7 +155,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>pvcam64.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(MM_3RDPARTYPUBLIC)/Photometrics/PVCAM/SDK/Libs/$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(MM_3RDPARTYPUBLIC)/Photometrics/PVCAM/SDK/Libs/$(Platform);$(MM_3RDPARTYPUBLIC)/boost/stage_x64/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -160,15 +164,29 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="NotificationEntry.cpp" />
+    <ClCompile Include="NotificationThread.cpp" />
+    <ClCompile Include="PollingThread.cpp" />
+    <ClCompile Include="PpParam.cpp" />
+    <ClCompile Include="PvCircularBuffer.cpp" />
     <ClCompile Include="PvDebayer.cpp" />
     <ClCompile Include="PVCAMAdapter.cpp" />
     <ClCompile Include="PVCAMParam.cpp" />
     <ClCompile Include="PVCAMUniversal.cpp" />
+    <ClCompile Include="PvFrameInfo.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="NotificationEntry.h" />
+    <ClInclude Include="NotificationThread.h" />
+    <ClInclude Include="PollingThread.h" />
+    <ClInclude Include="PpParam.h" />
+    <ClInclude Include="PVCAMIncludes.h" />
+    <ClInclude Include="PvCircularBuffer.h" />
     <ClInclude Include="PvDebayer.h" />
     <ClInclude Include="PVCAMAdapter.h" />
     <ClInclude Include="PVCAMParam.h" />
+    <ClInclude Include="PvFrameInfo.h" />
+    <ClInclude Include="PvRoi.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\MMDevice\MMDevice-SharedRuntime.vcxproj">

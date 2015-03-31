@@ -46,29 +46,14 @@
 #include "PVCAMAdapter.h"
 #include "PVCAMParam.h"
 
-#ifdef WIN32
-#pragma warning(push)
-#include "../../../3rdpartypublic/Photometrics/PVCAM/SDK/Headers/master.h"
-#include "../../../3rdpartypublic/Photometrics/PVCAM/SDK/Headers/pvcam.h"
-#pragma warning(pop)
-#endif
-
-#ifdef __APPLE__
-#define __mac_os_x
-#include <PVCAM/master.h>
-#include <PVCAM/pvcam.h>
-#endif
-
-#ifdef linux
-#include <pvcam/master.h>
-#include <pvcam/pvcam.h>
-#endif
-
 #include <string>
 #include <sstream>
 #include <iomanip>
 #include <algorithm>
 #include <cmath>
+
+#include "PollingThread.h"
+#include "NotificationThread.h"
 
 using namespace std;
 
@@ -96,7 +81,11 @@ const int MAX_PIX_TIME = 1000;
 // Circular buffer default values
 const int CIRC_BUF_FRAME_CNT_DEF = 8;
 const int CIRC_BUF_FRAME_CNT_MIN = 3;
-const int CIRC_BUF_FRAME_CNT_MAX = 32;
+const int CIRC_BUF_FRAME_CNT_MAX = 1024;
+
+// The circular buffer is dynamically allocated based on frame size, the smaller the frame
+// the more frames the CB can hold and the better frame recovery we can provide.
+const int CIRC_BUF_MAX_SIZE_MB     = 64;     // Do not exceed 64MB
 
 // global constants
 extern const char* g_ReadoutRate;
@@ -142,11 +131,13 @@ const char* g_Keyword_Replication     = "Nearest Neighbor Replication";
 const char* g_Keyword_Bilinear        = "Bilinear";
 const char* g_Keyword_SmoothHue       = "Smooth Hue";
 const char* g_Keyword_AdaptiveSmoothHue = "Adaptive Smooth Hue (edge detecting)";
-const char* g_Keyword_AcqMethod           = "AcquisitionMethod";
+const char* g_Keyword_AcqMethod      = "AcquisitionMethod";
 const char* g_Keyword_AcqMethod_Callbacks = "Callbacks";
 const char* g_Keyword_AcqMethod_Polling   = "Polling";
 const char* g_Keyword_OutputTriggerFirstMissing = "OutputTriggerFirstMissing";
-const char* g_Keyword_CircBufFrameCnt     = "CircularBufferFrameCount";
+const char* g_Keyword_CircBufFrameCnt      = "CircularBufferFrameCount";
+const char* g_Keyword_CircBufSizeAuto      = "CircularBufferAutoSize";
+const char* g_Keyword_CircBufFrameRecovery = "CircularBufferFrameRecovery";
 #ifdef PVCAM_SMART_STREAMING_SUPPORTED
 const char* g_Keyword_SmartStreamingValues   = "SMARTStreamingValues[ms]";
 const char* g_Keyword_SmartStreamingEnable   = "SMARTStreamingEnabled";
@@ -184,12 +175,12 @@ const int g_UniversalParamsCount = sizeof(g_UniversalParams)/sizeof(ParamNameIdP
 Universal::Universal(short cameraId) :
 CCameraBase<Universal> (),
 initialized_(false),
-curImageCnt_(0),
+imagesToAcquire_(0), imagesInserted_(0), imagesAcquired_(0), imagesRecovered_(0),
 hPVCAM_(0),
 cameraId_(cameraId),
-circBuffer_(0),
-circBufferSize_(0),
-circBufferFrameCount_(CIRC_BUF_FRAME_CNT_DEF), // Sizes larger than 3 caused image tearing in ICX-674. Reason unknown.
+circBufSizeAuto_(true),
+circBufFrameCount_(CIRC_BUF_FRAME_CNT_DEF), // Sizes larger than 3 caused image tearing in ICX-674. Reason unknown.
+circBufFrameRecoveryEnabled_(true),
 stopOnOverflow_(true),
 snappingSingleFrame_(false),
 singleFrameModeReady_(false),
@@ -198,6 +189,8 @@ isUsingCallbacks_(false),
 isAcquiring_(false),
 triggerTimeout_(2),
 microsecResSupported_(false),
+pollingThd_(0),
+notificationThd_(0),
 outputTriggerFirstMissing_(0),
 exposure_(10),
 binSize_(1),
@@ -227,7 +220,14 @@ ssWasOn_(false)
    SetErrorText(ERR_BUSY_ACQUIRING, "Acquisition already in progress.");
    SetErrorText(ERR_ROI_SIZE_NOT_SUPPORTED, "Selected ROI is not supported by the camera");
    
-   uniAcqThd_ = new AcqSequenceThread(this);             // Pointer to the sequencing thread
+   pollingThd_ = new PollingThread(this);             // Pointer to the sequencing thread
+
+   // The notification thread will have slightly smaller queue than the circular buffer.
+   // This is to reduce the risk of frames being overwritten by PVCAM when the circular
+   // buffer starts to be full. Whith smaller queue we will simply start throwing old
+   // frames away earlier because those old frames could soon get overwritten.
+   notificationThd_ = new NotificationThread(this);
+   notificationThd_->activate();
 
    prmTemp_           = NULL;
    prmTempSetpoint_   = NULL;
@@ -251,13 +251,15 @@ Universal::~Universal()
       // release resources
       if (initialized_)
          Shutdown();
-      delete[] circBuffer_;
    }
-   if (!uniAcqThd_->getStop()) {
-      uniAcqThd_->setStop(true);
-      uniAcqThd_->wait();
+   if (!pollingThd_->getStop()) {
+      pollingThd_->setStop(true);
+      pollingThd_->wait();
    }
-   delete uniAcqThd_;
+   delete pollingThd_;
+
+   delete notificationThd_;
+
 
    if ( prmTemp_ )
        delete prmTemp_;
@@ -371,12 +373,14 @@ int Universal::Initialize()
    nRet = initializeStaticCameraParams();
    if ( nRet != DEVICE_OK )
        return nRet;
+   
 
    /// --- DYNAMIC PROPERTIES
    /// are properties that may be updated by a camera or changed by the user during session.
    /// These are read upon opening the camera and then updated on various events. These usually
    /// needs a handler that is called by MM when the GUI asks for the property value.
    LogMessage( "Initializing Dynamic Camera Properties" );
+
 
    /// COLOR MODE
    bool isColorCcd = false;
@@ -429,6 +433,7 @@ int Universal::Initialize()
    CreateProperty(g_Keyword_RGB32, g_Keyword_OFF, MM::String, !isColorCcd, pAct);
    AddAllowedValue(g_Keyword_RGB32, g_Keyword_ON);
    AddAllowedValue(g_Keyword_RGB32, g_Keyword_OFF);
+
 
    /// TRIGGER MODE (EXPOSURE MODE)
    prmTriggerMode_ = new PvEnumParam( g_Keyword_TriggerMode, PARAM_EXPOSURE_MODE, this );
@@ -679,6 +684,16 @@ int Universal::Initialize()
    }
    else LogMessage( "Frame Transfer mode not available" );
 
+   /// FRAME RECOVERY
+   /// Enable/Disable the feature that attempts to recover from lost callbacks
+#ifdef PVCAM_FRAME_INFO_SUPPORTED
+   pAct = new CPropertyAction (this, &Universal::OnCircBufferFrameRecovery);
+   nRet = CreateProperty(g_Keyword_CircBufFrameRecovery, g_Keyword_ON, MM::String, false, pAct);
+   assert(nRet == DEVICE_OK);
+   AddAllowedValue(g_Keyword_CircBufFrameRecovery, g_Keyword_ON);
+   AddAllowedValue(g_Keyword_CircBufFrameRecovery, g_Keyword_OFF);
+#endif
+
    /// properties that allow to enable/disable/set various post processing features
    /// supported by Photometrics cameras. The parameter properties are read out from
    /// the camera and created automatically.
@@ -695,12 +710,19 @@ int Universal::Initialize()
    AddAllowedValue(g_Keyword_OutputTriggerFirstMissing, "0");
    AddAllowedValue(g_Keyword_OutputTriggerFirstMissing, "1");
 
+   // Circular buffer auto/manual switch
+   pAct = new CPropertyAction(this, &Universal::OnCircBufferSizeAuto);
+   nRet = CreateProperty( g_Keyword_CircBufSizeAuto,
+      circBufSizeAuto_ ? g_Keyword_ON : g_Keyword_OFF, MM::String, false, pAct);
+   AddAllowedValue(g_Keyword_CircBufSizeAuto, g_Keyword_ON);
+   AddAllowedValue(g_Keyword_CircBufSizeAuto, g_Keyword_OFF);
+
    // Circular buffer size. This allows the user to set how many frames we want to allocate the PVCAM
    // PVCAM circular buffer for. The default value is fine for most cases, however chaning this value
    // may help in some cases (e.g. lowering it down to 3 helped to resolve ICX-674 image tearing issues)
    pAct = new CPropertyAction(this, &Universal::OnCircBufferFrameCount);
    nRet = CreateProperty( g_Keyword_CircBufFrameCnt,
-      CDeviceUtils::ConvertToString(CIRC_BUF_FRAME_CNT_DEF), MM::Integer, false, pAct);
+      CDeviceUtils::ConvertToString(CIRC_BUF_FRAME_CNT_DEF), MM::Integer, circBufSizeAuto_, pAct);
    SetPropertyLimits( g_Keyword_CircBufFrameCnt, CIRC_BUF_FRAME_CNT_MIN, CIRC_BUF_FRAME_CNT_MAX );
 
 
@@ -745,6 +767,7 @@ int Universal::Initialize()
    }
 #endif
 
+   
    initialized_ = true;
    START_METHOD("<<< Universal::Initialize");
    return DEVICE_OK;
@@ -1051,36 +1074,84 @@ int Universal::OnOutputTriggerFirstMissing(MM::PropertyBase* pProp, MM::ActionTy
 }
 
 /***
+* Turns the automatic circular buffer sizing ON or OFF
+*/
+int Universal::OnCircBufferSizeAuto(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   START_ONPROPERTY("Universal::OnCircBufferSizeAuto", eAct);
+   int ret = DEVICE_OK;
+   if (eAct == MM::AfterSet)
+   {
+      string choice;
+      pProp->Get(choice);
+      if (choice == g_Keyword_ON) 
+      {
+          circBufSizeAuto_ = true;
+      }
+      else 
+      {
+          circBufSizeAuto_ = false;
+      }
+
+      if (IsCapturing())
+          StopSequenceAcquisition();
+
+      sequenceModeReady_ = false;
+   }
+   else if (eAct == MM::BeforeGet)
+   {
+       pProp->Set(circBufSizeAuto_ ? g_Keyword_ON : g_Keyword_OFF);
+   }
+   return ret;
+}
+
+/***
 * The size of the frame buffer. Increasing this value may help in a situation when
 * camera is delivering frames faster than MM can retrieve them.
 */
 int Universal::OnCircBufferFrameCount(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    START_ONPROPERTY("Universal::OnCircBufferFrameCount", eAct);
-   long value;
    int ret = DEVICE_OK;
    if (eAct == MM::AfterSet)
    {
+      long value;
       pProp->Get(value);
-      if (value < CIRC_BUF_FRAME_CNT_MIN)
-      {
-         ret = DEVICE_INVALID_PROPERTY_VALUE;
-      }
-      else
-      {
-         circBufferFrameCount_ = value;
+      circBufFrameCount_ = value;
 
-         if (IsCapturing())
-            StopSequenceAcquisition();
+      if (IsCapturing())
+         StopSequenceAcquisition();
 
-         sequenceModeReady_ = false;
-      }
+      sequenceModeReady_ = false;
    }
    else if (eAct == MM::BeforeGet)
    {
-       pProp->Set(circBufferFrameCount_);
+       static_cast<MM::Property*>(pProp)->SetReadOnly(circBufSizeAuto_);
+       pProp->Set(static_cast<long>(circBufFrameCount_));
    }
    return ret;
+}
+
+int Universal::OnCircBufferFrameRecovery(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   START_METHOD("Universal::OnCircBufFrameRecovery");
+
+   if (eAct == MM::AfterSet)
+   {
+      string choice;
+      pProp->Get(choice);
+
+      circBufFrameRecoveryEnabled_ = (choice.compare(g_Keyword_ON) == 0);
+   }
+   else if (eAct == MM::BeforeGet)
+   {
+      if ( circBufFrameRecoveryEnabled_ )
+         pProp->Set(g_Keyword_ON);
+      else
+         pProp->Set(g_Keyword_OFF);
+   }
+
+   return DEVICE_OK;
 }
 
 /***
@@ -1852,7 +1923,7 @@ int Universal::initializePostProcessing()
                                  SetPropertyLimits(paramNameStream.str().c_str(), min, max);
                               }
 
-                              PProc* ptr = new PProc(paramNameStream.str().c_str(), i,j);
+                              PpParam* ptr = new PpParam(paramNameStream.str().c_str(), i,j);
                               ptr->SetRange(max-min);
                               PostProc_.push_back (*ptr);
                               delete ptr;
@@ -1925,7 +1996,7 @@ int Universal::SnapImage()
       g_pvcamLock.Lock();
       if (!pl_exp_stop_cont(hPVCAM_, CCS_HALT))
          LogCamError(__LINE__, "");
-      if (!pl_exp_finish_seq(hPVCAM_, circBuffer_, 0))
+      if (!pl_exp_finish_seq(hPVCAM_, circBuf_.Data(), 0))
          LogCamError(__LINE__, "");
       g_pvcamLock.Unlock();
 
@@ -1944,8 +2015,9 @@ int Universal::SnapImage()
    void* pixBuffer = const_cast<unsigned char*> (img_.GetPixels());
 
    snappingSingleFrame_ = true;
-   numImages_ = 1; 
-   curImageCnt_ = 0;
+   imagesToAcquire_ = 1; 
+   imagesInserted_ = 0;
+   lastPvFrameNr_ = 0;
 
    g_pvcamLock.Lock();
    if (!pl_exp_start_seq(hPVCAM_, pixBuffer))
@@ -2015,44 +2087,43 @@ bool Universal::WaitForExposureDone()throw()
       MM::MMTime elapsed(0,0);
 
       if ( !isUsingCallbacks_ )
-      {
-         // Polling
-      do 
-      {
-         CDeviceUtils::SleepMs(1);
-         g_pvcamLock.Lock();
-         rsbRet = pl_exp_check_status(hPVCAM_, &status, &not_needed);
-         g_pvcamLock.Unlock();
-         elapsed = GetCurrentMMTime()  - startTime;
-         } while (rsbRet && (status == EXPOSURE_IN_PROGRESS) && elapsed < timeout); 
+      {  // Polling
+         do 
+         {
+            CDeviceUtils::SleepMs(1);
+            g_pvcamLock.Lock();
+            rsbRet = pl_exp_check_status(hPVCAM_, &status, &not_needed);
+            g_pvcamLock.Unlock();
+            elapsed = GetCurrentMMTime()  - startTime;
+        } while (rsbRet && (status == EXPOSURE_IN_PROGRESS) && elapsed < timeout); 
 
-      while (rsbRet && (status == READOUT_IN_PROGRESS) && elapsed < timeout)
-      {
-         CDeviceUtils::SleepMs(1);
-         g_pvcamLock.Lock();
-         rsbRet = pl_exp_check_status(hPVCAM_, &status, &not_needed);
-         g_pvcamLock.Unlock();
-         elapsed = GetCurrentMMTime() - startTime;
-      }
+         while (rsbRet && (status == READOUT_IN_PROGRESS) && elapsed < timeout)
+         {
+            CDeviceUtils::SleepMs(1);
+            g_pvcamLock.Lock();
+            rsbRet = pl_exp_check_status(hPVCAM_, &status, &not_needed);
+            g_pvcamLock.Unlock();
+            elapsed = GetCurrentMMTime() - startTime;
+         }
         
-      if (rsbRet == TRUE && elapsed < timeout && status != READOUT_FAILED)
-      {
-         bRet=true;
+         if (rsbRet == TRUE && elapsed < timeout && status != READOUT_FAILED)
+         {
+            bRet=true;
+         }
+         else
+         {
+            LogCamError(__LINE__, "Readout Failed");
+            g_pvcamLock.Lock();
+            if (!pl_exp_abort(hPVCAM_, CCS_HALT))
+               LogCamError(__LINE__, "");
+            g_pvcamLock.Unlock();
+         }
       }
       else
-      {
-         LogCamError(__LINE__, "Readout Failed");
-         g_pvcamLock.Lock();
-         if (!pl_exp_abort(hPVCAM_, CCS_HALT))
-            LogCamError(__LINE__, "");
-         g_pvcamLock.Unlock();
-      }    
-      }
-      else
-      {
-         // Callbacks
-         // FrameDone() is called from the callback and increases the curImageCnt_
-         while ( curImageCnt_ != numImages_ && elapsed < timeout )
+      {  // Callbacks
+         // Once the notification thread inserts a frame to the MMCore the
+         // imagesInserted_ is increased
+         while ( imagesInserted_ != imagesToAcquire_ && elapsed < timeout )
          {
             elapsed = GetCurrentMMTime()  - startTime;
             CDeviceUtils::SleepMs(1);
@@ -2539,7 +2610,7 @@ int Universal::ResizeImageBufferContinuous()
       if (prmSmartStreamingEnabled_->IsAvailable() && (prmSmartStreamingEnabled_->Current() == TRUE) )
       {
           SendSmartStreamingToCamera();
-          pvExposure = 10; //make sure non-zero exposure time ise sent in setup in Smart Streaming mode
+          pvExposure = 10; //make sure non-zero exposure time is sent in setup in Smart Streaming mode
       }
 #endif
       g_pvcamLock.Lock();
@@ -2561,10 +2632,18 @@ int Universal::ResizeImageBufferContinuous()
       }
 
       // set up a circular buffer for specified number of frames
-      circBufferSize_ = frameSize * circBufferFrameCount_;
-      if( circBuffer_ != NULL )
-         delete[] circBuffer_;
-      circBuffer_ = new unsigned char[circBufferSize_];
+      if (circBufSizeAuto_)
+      {
+          // Use the maximum size in MB and eventually cap it by max frame count
+          circBufFrameCount_ = static_cast<int>((CIRC_BUF_MAX_SIZE_MB * 1024ULL * 1024ULL) / frameSize);
+          circBufFrameCount_ = (std::min)(circBufFrameCount_, CIRC_BUF_FRAME_CNT_MAX);
+      }
+
+      circBuf_.Resize(frameSize, circBufFrameCount_);
+      //OnPropertiesChanged(); // Notify the Core that the circ buf frame count has chenged
+      // Set the queue size to slightly less than the CB size to avoid PVCAM overwritting
+      // the oldest frame. This way we start throwing old frames away a little earlier.
+      notificationThd_->SetQueueCapacity(static_cast<int>(circBufFrameCount_ * 0.7) + 1);
 
       nRet = DEVICE_OK;
    }
@@ -2675,7 +2754,7 @@ int Universal::ResizeImageBufferSingle()
 * Do actual capture
 * Called from the acquisition thread function
 */
-int Universal::ThreadRun(void)
+int Universal::PollingThreadRun(void)
 {
    START_METHOD(">>>Universal::ThreadRun");
 
@@ -2685,7 +2764,7 @@ int Universal::ThreadRun(void)
    int     ret = DEVICE_ERR;
    rs_bool retVal = TRUE;
    char dbgBuf[128]; // Debug log buffer
-   uniAcqThd_->setStop(false); // make sure this thread's status is updated properly.
+   pollingThd_->setStop(false); // make sure this thread's status is updated properly.
 
    try 
    {
@@ -2704,14 +2783,14 @@ int Universal::ThreadRun(void)
             retVal = pl_exp_check_cont_status(hPVCAM_, &status, &byteCnt, &bufferCnt);
             g_pvcamLock.Unlock();
             elapsed = GetCurrentMMTime()  - startTime;
-         } while (retVal && (status == EXPOSURE_IN_PROGRESS || status == READOUT_NOT_ACTIVE) && elapsed < timeout && !uniAcqThd_->getStop());
+         } while (retVal && (status == EXPOSURE_IN_PROGRESS || status == READOUT_NOT_ACTIVE) && elapsed < timeout && !pollingThd_->getStop());
 
-         if ( uniAcqThd_->getStop() ) {
+         if ( pollingThd_->getStop() ) {
             LogMessage( "Stop called: Breaking the loop" , true);
             break;
          }
 
-         while (retVal && (status == READOUT_IN_PROGRESS) && elapsed < timeout && !uniAcqThd_->getStop())
+         while (retVal && (status == READOUT_IN_PROGRESS) && elapsed < timeout && !pollingThd_->getStop())
          {
             CDeviceUtils::SleepMs(1);
             g_pvcamLock.Lock();
@@ -2720,7 +2799,7 @@ int Universal::ThreadRun(void)
             elapsed = GetCurrentMMTime()  - startTime;
          };
   
-         if ( uniAcqThd_->getStop() ) {
+         if ( pollingThd_->getStop() ) {
             LogMessage( "Stop called: Breaking the loop" , true);
             break;
          }
@@ -2730,23 +2809,23 @@ int Universal::ThreadRun(void)
             // Because we could miss the FRAME_AVAILABLE and the camera could of gone back to EXPOSURE_IN_PROGRESS and so on depending
             // on how long we could of been stalled in this thread we only check for READOUT_FAILED and assume that because we got here
             // we have one or more frames ready.
-            ret = FrameDone();
+            ret = FrameAcquired();
          }
          else
          {
             break;
          } 
       }
-      while (DEVICE_OK == ret && !uniAcqThd_->getStop() && curImageCnt_ < numImages_);
+      while (DEVICE_OK == ret && !pollingThd_->getStop() && imagesInserted_ < imagesToAcquire_);
 
-      sprintf( dbgBuf, "ACQ LOOP FINISHED: thdGetStop:%u, ret:%u, retVal:%u, curImageCnt_: %lu, numImages_: %lu", \
-         uniAcqThd_->getStop(), ret, retVal, curImageCnt_, numImages_);
+      sprintf( dbgBuf, "ACQ LOOP FINISHED: thdGetStop:%u, ret:%u, retVal:%u, imagesInserted_: %lu, imagesToAcquire_: %lu", \
+         pollingThd_->getStop(), ret, retVal, imagesInserted_, imagesToAcquire_);
       LogMMMessage( __LINE__, dbgBuf );
 
-      if (curImageCnt_ >= numImages_)
-         curImageCnt_ = 0;
-      OnThreadExiting();
-      uniAcqThd_->setStop(true);
+      if (imagesInserted_ >= imagesToAcquire_)
+         imagesInserted_ = 0;
+      PollingThreadExiting();
+      pollingThd_->setStop(true);
      
       START_METHOD("<<<Universal::ThreadRun");
       return ret;
@@ -2756,7 +2835,7 @@ int Universal::ThreadRun(void)
    {
       LogMessage(g_Msg_EXCEPTION_IN_THREAD, false);
       OnThreadExiting();
-      uniAcqThd_->setStop(true);
+      pollingThd_->setStop(true);
       return ret;
    }
 
@@ -2811,12 +2890,15 @@ int Universal::StartSequenceAcquisition(long numImages, double interval_ms, bool
       return ret;
 
    stopOnOverflow_  = stopOnOverflow;
-   numImages_       = numImages;
-   curImageCnt_     = 0;
+   imagesToAcquire_ = numImages;
+   imagesInserted_  = 0;
+   imagesAcquired_  = 0;
+   imagesRecovered_ = 0;
+   lastPvFrameNr_   = 0;
 
    MM::MMTime start = GetCurrentMMTime();
    g_pvcamLock.Lock();
-   if (!pl_exp_start_cont(hPVCAM_, circBuffer_, circBufferSize_))
+   if (!pl_exp_start_cont(hPVCAM_, circBuf_.Data(), static_cast<uns32>(circBuf_.Size())))
    {
       g_pvcamLock.Unlock();
       int pvcamErr = LogCamError(__LINE__, "pl_exp_start_cont");
@@ -2834,7 +2916,7 @@ int Universal::StartSequenceAcquisition(long numImages, double interval_ms, bool
 
    if ( !isUsingCallbacks_ )
    {
-      uniAcqThd_->Start();
+      pollingThd_->Start();
    }
    isAcquiring_ = true;
 
@@ -2877,12 +2959,11 @@ int Universal::StopSequenceAcquisition()
       }
       else
       {
-         uniAcqThd_->setStop(true);
-         uniAcqThd_->wait();
+         pollingThd_->setStop(true);
+         pollingThd_->wait();
       }
       isAcquiring_ = false;
    }
-   curImageCnt_ = 0;
 
    // LW: Give the camera some time to stop acquiring. This reduces occasional
    //     crashes/hangs when frequently starting/stopping with some fast cameras.
@@ -2891,40 +2972,22 @@ int Universal::StopSequenceAcquisition()
    return nRet;
 }
 
-
-
-int AcqSequenceThread::svc(void)
-{
-   int ret=DEVICE_ERR;
-   try 
-   {
-      ret = camera_->ThreadRun();
-   }
-   catch(...)
-   {
-      camera_->LogMessage(g_Msg_EXCEPTION_IN_THREAD, false);
-   }
-   return ret;
-}
-
-
-
-void Universal::OnThreadExiting() throw ()
+void Universal::PollingThreadExiting() throw ()
 {
    try
    {
       g_pvcamLock.Lock();
       if (!pl_exp_stop_cont(hPVCAM_, CCS_HALT)) 
          LogCamError(__LINE__, "pl_exp_stop_cont");
-      if (!pl_exp_finish_seq(hPVCAM_, circBuffer_, 0))
+      if (!pl_exp_finish_seq(hPVCAM_, circBuf_.Data(), 0))
          LogCamError(__LINE__, "pl_exp_finish_seq");
       g_pvcamLock.Unlock();
 
       sequenceModeReady_ = false;
       isAcquiring_       = false;
 
-      // The AcqFinished is called inside the parent OnThreadExiting()
-      CCameraBase<Universal>::OnThreadExiting();
+      LogMessage(g_Msg_SEQUENCE_ACQUISITION_THREAD_EXITING);
+      GetCoreCallback()?GetCoreCallback()->AcqFinished(this,0):DEVICE_OK;
    }
    catch (...)
    {
@@ -2938,115 +3001,167 @@ void Universal::OnThreadExiting() throw ()
 * This method is called from the static PVCAM callback or polling thread.
 * The method should finish as fast as possible to avoid blocking the PVCAM.
 * If the execution of this method takes longer than frame readout + exposure,
-* the FrameDone for the next frame may not be called.
+* the FrameAcquired for the next frame may not be called.
 */
-int Universal::FrameDone()
+int Universal::FrameAcquired()
 {
    START_METHOD("Universal::FrameDone");
+   MMThreadGuard scopeLock(&g_pvcamLock);
 
    rs_bool bRet;
-   void_ptr pFramePtr;
-   g_pvcamLock.Lock();
+   void_ptr pCurrFramePtr;
+   PvFrameInfo currFrameNfo;
+   currFrameNfo.SetTimestampMsec(GetCurrentMMTime().getMsec());
+
 #ifdef PVCAM_FRAME_INFO_SUPPORTED
-   bRet = pl_exp_get_latest_frame_ex(hPVCAM_, &pFramePtr, pFrameInfo_ ); 
+   bRet = pl_exp_get_latest_frame_ex(hPVCAM_, &pCurrFramePtr, pFrameInfo_ ); 
+   if (bRet)
+   {
+      currFrameNfo.SetPvHCam(pFrameInfo_->hCam);
+      currFrameNfo.SetPvFrameNr(pFrameInfo_->FrameNr);
+      currFrameNfo.SetPvReadoutTime(pFrameInfo_->ReadoutTime);
+      currFrameNfo.SetPvTimeStamp(pFrameInfo_->TimeStamp);
+      currFrameNfo.SetPvTimeStampBOF(pFrameInfo_->TimeStampBOF);
+
+      const int currFrameNr = currFrameNfo.PvFrameNr();
+      const int prevFrameNr = lastPvFrameNr_;
+
+      if (currFrameNr == prevFrameNr)
+      {
+         // Received a duplicate callback? This seems like a bug in PVCAM,
+         // it occurs for optiMos at high frame rates. For now just silently ignore it,
+         // because the next one will correctly arrive right after that.
+         return DEVICE_OK;
+      }
+
+      // Check whether we haven't missed a callback
+      if (currFrameNr > prevFrameNr + 1)
+      {
+         const int missedCbCount = currFrameNr - prevFrameNr - 1;
+         // We cannot perform frame recovery if our notification queue is full.
+         // This means that the circular buffer has overrun because the application
+         // cannot process the frames fast enough. Increasing the CB may help.
+         if (missedCbCount >= notificationThd_->Capacity())
+         {
+            // TODO: Should we somewhat return an error that our circular
+            // buffer has overrun? For now the behavior is the same as with
+            // previous code - we simply start skipping frames.
+         }
+         else if (circBufFrameRecoveryEnabled_)
+         {
+            // Get the last known frame index in the CB
+            const int lastFrIdx = circBuf_.LatestFrameIndex();
+            if (lastFrIdx < 0)
+            {
+                // We cannot perform frame recovery because we don't have a frame in the buffer yet
+                // so we cannot recover the metadata. This mostly happens with Polling acquisition
+                // because it can easily miss several frames when starting acquisition.
+            }
+            else
+            {
+                const PvFrameInfo& lastFrNfo = circBuf_.FrameInfo(lastFrIdx);
+
+                // We need to re-create the FRAME_INFOs by averaging the known frame infos.
+                // This is not really nice way of fixing things but since the camera is running on
+                // constant rate the recovered data will be accurate enough. Plus, we mark the frame as recovered
+                // so the user will be aware of this.
+                const int recReadoutTm = static_cast<int>((lastFrNfo.PvReadoutTime() + currFrameNfo.PvReadoutTime()) / 2);
+                const long long lastPvTimestampBOF   = lastFrNfo.PvTimeStampBOF();
+                const long long lastPvTimestampEOF   = lastFrNfo.PvTimeStamp();
+                const double    lastApTimestampMsec  = lastFrNfo.TimeStampMsec();
+                const double div = missedCbCount + 1;
+                const double avgBofDiff = (currFrameNfo.PvTimeStampBOF()  - lastPvTimestampBOF) / div;
+                const double avgEofDiff = (currFrameNfo.PvTimeStamp()  - lastPvTimestampEOF) / div;
+                const double avgAppDiff = (currFrameNfo.TimeStampMsec() - lastApTimestampMsec) / div;
+
+                for (int i = 0; i < missedCbCount; ++i)
+                {
+                   // Get the index of the next frame in the CB. The data for this frame has been
+                   // correctly delivered by the driver, however since we missed a callback we also
+                   // missed the FRAME_INFO. Thus we need to recreate the FRAME_INFO ourselves.
+                   // This can be removed once PVCAM implements better way of retrieving particular frames.
+                   const unsigned int nextFrIdx = (lastFrIdx + i + 1) % circBuf_.Capacity();
+
+                   // Retrieve the data pointer for the skipped callback
+                   void* pRecFrameData = circBuf_.FrameData(nextFrIdx);
+
+                   // Re-create the FRAME_INFO
+                   const short int recHCam = lastFrNfo.PvHCam();
+                   const int       recFrameNr = prevFrameNr + i + 1;
+                   const long long recTimeStampBOF = static_cast<long long>(lastPvTimestampBOF + ((i + 1)*avgBofDiff));
+                   const long long recTimeStampEOF = static_cast<long long>(lastPvTimestampEOF + ((i + 1)*avgEofDiff));
+                   const double    recAppTimeStampEOF = lastApTimestampMsec + ((i + 1)*avgAppDiff);
+
+                   PvFrameInfo recFrNfo;
+                   recFrNfo.SetPvHCam(recHCam);
+                   recFrNfo.SetPvFrameNr(recFrameNr);
+                   recFrNfo.SetPvReadoutTime(recReadoutTm);
+                   recFrNfo.SetPvTimeStamp(recTimeStampEOF);
+                   recFrNfo.SetPvTimeStampBOF(recTimeStampBOF);
+                   recFrNfo.SetTimestampMsec(recAppTimeStampEOF);
+                   recFrNfo.SetRecovered(true);
+
+                   // Notify our CB wrapper that a new frame has "arrived", it will increase
+                   // its internal counters and indexes.
+                   circBuf_.ReportFrameArrived(recFrNfo, pRecFrameData);
+
+                   // Prepare the notification and push the new frame + info to our queue, 
+                   // the same way as the frame would arrive correctly with a callback.
+                   NotificationEntry recNotif(pRecFrameData, recFrNfo);
+                   notificationThd_->PushNotification(recNotif);
+                   imagesAcquired_++;
+                   imagesRecovered_++;
+                }
+             }
+         }
+         else
+         {  // Frame recovery is disabled
+            // TODO: Again, should we report an error?
+         }
+      }
+      lastPvFrameNr_ = currFrameNr;
+   }
 #else
-   bRet = pl_exp_get_latest_frame(hPVCAM_, &pFramePtr ); 
-#endif
-   g_pvcamLock.Unlock();
+   // FRAME_INFO is not supported so we cannot do much. Just retrieve the frame pointer.
+   bRet = pl_exp_get_latest_frame(hPVCAM_, &pCurrFramePtr ); 
+#endif // PVCAM_FRAME_INFO_SUPPORTED
+
    if ( bRet != PV_OK )
    {
       pl_exp_abort( hPVCAM_, CCS_CLEAR );
-      LogCamError(__LINE__, "pl_exp_get_latest_frame_ex");
+      LogCamError(__LINE__, "pl_exp_get_latest_frame");
       return DEVICE_ERR;
    }
- 
-   curImageCnt_++; // A new frame has been successfully retrieved from the camera
 
-   // The FrameDone is also called for SnapImage() when using callbacks, so we have to
+   imagesAcquired_++; // A new frame has been successfully retrieved from the camera
+
+   // The FrameDone() is also called for SnapImage() when using callbacks, so we have to
    // check. In case of SnapImage the img_ already contains the data (since its passed
    // to pl_start_seq() and no PushImage is done - the single image is retrieved with GetImageBuffer()
-   int ret = DEVICE_OK;
    if ( !snappingSingleFrame_ )
    {
-      // So far there is no way to use metadada for single frame mode (SnapImage())
-      Metadata md;
-      ret = BuildMetadata( md );
-
-      // If we are in debayer color mode substitute color image for the original one,
-      // otherwise use the circular buffer directly
-      const unsigned char* finalImageBuf = (unsigned char*)pFramePtr;
-      if (rgbaColor_)
-      {
-         const long bufferSize = img_.Width() * img_.Height() * img_.Depth();
-         // Copy the circular buffer data to our image buffer for bayer processing
-         // TODO: We could modify the Debayer::Process() to accept the circular buffer directly and avoid memcpy
-         memcpy((void*) img_.GetPixelsRW(), pFramePtr, bufferSize);
-         RGBscales rgbScales = {redScale_, greenScale_, blueScale_};
-         debayer_.SetRGBScales(rgbScales);
-         debayer_.Process(colorImg_, img_, (unsigned)camCurrentSpeed_.bitDepth); ////******
-         finalImageBuf = colorImg_.GetPixels();
-      }
-
-      ret = PushImage( finalImageBuf, &md );
-      if ( isUsingCallbacks_ )
-      {
-         if ( curImageCnt_ >= numImages_ )
-         {
-            StopSequenceAcquisition();
-         }
-      }
+      circBuf_.ReportFrameArrived(currFrameNfo, pCurrFramePtr);
+      NotificationEntry notif(pCurrFramePtr, currFrameNfo);
+      notificationThd_->PushNotification( notif );
    }
-
-   return ret;
-}
-
-/**
-* Creates metadata for current frame
-*/
-int Universal::BuildMetadata( Metadata& md )
-{
-   char label[MM::MaxStrLength];
-   GetLabel(label);
-
-   MM::MMTime timestamp = GetCurrentMMTime();
-   md.Clear();
-   md.put("Camera", label);
-
-#ifdef PVCAM_FRAME_INFO_SUPPORTED
-   md.PutImageTag<int32>("PVCAM-FrameNr", pFrameInfo_->FrameNr);
-   md.PutImageTag<int32>("PVCAM-ReadoutTime", pFrameInfo_->ReadoutTime);
-   md.PutImageTag<long64>("PVCAM-TimeStamp",  pFrameInfo_->TimeStamp);
-   md.PutImageTag<long64>("PVCAM-TimeStampBOF", pFrameInfo_->TimeStampBOF);
-#endif
-
-   MetadataSingleTag mstStartTime(MM::g_Keyword_Metadata_StartTime, label, true);
-   mstStartTime.SetValue(CDeviceUtils::ConvertToString(startTime_.getMsec()));
-   md.SetTag(mstStartTime);
-
-   MetadataSingleTag mstElapsed(MM::g_Keyword_Elapsed_Time_ms, label, true);
-   MM::MMTime elapsed = timestamp - startTime_;
-   mstElapsed.SetValue(CDeviceUtils::ConvertToString(elapsed.getMsec()));
-   md.SetTag(mstElapsed);
-
-   MetadataSingleTag mstCount(MM::g_Keyword_Metadata_ImageNumber, label, true);
-   mstCount.SetValue(CDeviceUtils::ConvertToString(curImageCnt_));
-   md.SetTag(mstCount);
-
-   double actualInterval = elapsed.getMsec() / curImageCnt_;
-   SetProperty(MM::g_Keyword_ActualInterval_ms, CDeviceUtils::ConvertToString(actualInterval)); 
+   else
+   {
+      // Single snap: just increase the number of actually acquired frames.
+      imagesInserted_++;
+   }
 
    return DEVICE_OK;
 }
 
-int Universal::PushImage(const unsigned char* pixBuffer, Metadata* pMd )
+int Universal::PushImageToMmCore(const unsigned char* pPixBuffer, Metadata* pMd )
 {
-   START_METHOD("Universal::PushImage");
+   START_METHOD("Universal::PushImageToMmCore");
 
    int nRet = DEVICE_ERR;
    MM::Core* pCore = GetCoreCallback();
    // This method inserts a new image into the circular buffer (residing in MMCore)
    nRet = pCore->InsertMultiChannel(this,
-      pixBuffer,
+      pPixBuffer,
       1,
       GetImageWidth(),
       GetImageHeight(),
@@ -3057,7 +3172,7 @@ int Universal::PushImage(const unsigned char* pixBuffer, Metadata* pMd )
       // do not stop on overflow - just reset the buffer
       pCore->ClearImageBuffer(this);
       nRet = pCore->InsertMultiChannel(this,
-         pixBuffer,
+         pPixBuffer,
          1,
          GetImageWidth(),
          GetImageHeight(),
@@ -3066,6 +3181,92 @@ int Universal::PushImage(const unsigned char* pixBuffer, Metadata* pMd )
    }
 
    return nRet;
+}
+
+
+int Universal::ProcessNotification( const NotificationEntry& entry )
+{
+   // Ignore inserts if we already have all images inserted.
+   // This may happen if the notification queue still contains some acquired frames
+   // due to excesssive buffering
+   if ( imagesInserted_ >= imagesToAcquire_ )
+       return DEVICE_OK;
+
+   int ret = DEVICE_ERR;
+
+   // Build the metadata
+   Metadata md;
+
+   char label[MM::MaxStrLength];
+   GetLabel(label);
+
+   md.put("Camera", label);
+   
+   PvFrameInfo frameNfo = entry.FrameMetadata();
+   md.put("TimeStampMsec", CDeviceUtils::ConvertToString(frameNfo.TimeStampMsec()));
+
+#ifdef PVCAM_FRAME_INFO_SUPPORTED
+   md.PutImageTag<int32>( "PVCAM-CameraHandle",  frameNfo.PvHCam() );
+   md.PutImageTag<int32>( "PVCAM-FrameNr",       frameNfo.PvFrameNr() );
+   md.PutImageTag<int32>( "PVCAM-ReadoutTime",   frameNfo.PvReadoutTime() );
+   md.PutImageTag<long64>( "PVCAM-TimeStamp",    frameNfo.PvTimeStamp() );
+   md.PutImageTag<long64>( "PVCAM-TimeStampBOF", frameNfo.PvTimeStampBOF() );
+   if (circBufFrameRecoveryEnabled_)
+   {
+      md.put<bool>("PVCAM-FrameRecovered", frameNfo.IsRecovered());
+      md.PutImageTag<int32>( "PVCAM-FramesRecoveredTotal", imagesRecovered_ );
+   }
+#endif
+
+   const double startTimeMsec   = startTime_.getMsec();
+   const double elapsedTimeMsec = frameNfo.TimeStampMsec() - startTimeMsec;
+
+   // The start time of the acquisition
+   
+   MetadataSingleTag mstStartTime(MM::g_Keyword_Metadata_StartTime, label, true);
+   mstStartTime.SetValue(CDeviceUtils::ConvertToString(startTimeMsec));
+   md.SetTag(mstStartTime);
+
+   /*
+   // The time elapsed since start of the acquisition until current frame readout
+   MetadataSingleTag mstElapsed(MM::g_Keyword_Elapsed_Time_ms, label, true);
+   mstElapsed.SetValue(CDeviceUtils::ConvertToString(elapsedTimeMsec));
+   md.SetTag(mstElapsed);
+   */
+
+   double actualInterval = elapsedTimeMsec / imagesInserted_;
+   SetProperty(MM::g_Keyword_ActualInterval_ms, CDeviceUtils::ConvertToString(actualInterval)); 
+
+   // If we are in debayer color mode substitute color image for the original one,
+   // otherwise use the circular buffer directly
+   const unsigned char* finalImageBuf = (unsigned char*)entry.FrameData();
+   if (rgbaColor_)
+   {
+      const long bufferSize = img_.Width() * img_.Height() * img_.Depth();
+      // Copy the circular buffer data to our image buffer for bayer processing
+      // TODO: We could modify the Debayer::Process() to accept the circular buffer directly and avoid memcpy
+      memcpy((void*) img_.GetPixelsRW(), entry.FrameData(), bufferSize);
+      RGBscales rgbScales = {redScale_, greenScale_, blueScale_};
+      debayer_.SetRGBScales(rgbScales);
+      debayer_.Process(colorImg_, img_, (unsigned)camCurrentSpeed_.bitDepth);
+      finalImageBuf = colorImg_.GetPixels();
+   }
+
+   ret = PushImageToMmCore( finalImageBuf, &md );
+
+   if ( ret == DEVICE_OK )
+      imagesInserted_++;
+
+   // If we already have all frames inserted tell the camera to stop
+   if ( isUsingCallbacks_ )
+   {
+      if ( imagesInserted_ >= imagesToAcquire_ || ret != DEVICE_OK )
+      {
+         StopSequenceAcquisition();
+      }
+   }
+
+   return ret;
 }
 
 
@@ -3126,8 +3327,8 @@ int Universal::OnColorMode(MM::PropertyBase* pProp, MM::ActionType eAct)
    int nRet = DEVICE_OK;
    if (eAct == MM::AfterSet)
    {
-      string val;
-      pProp->Get(val);
+       string val;
+       pProp->Get(val);
        val.compare(g_Keyword_ON) == 0 ? rgbaColor_ = true : rgbaColor_ = false;
        sequenceModeReady_ = false;
        singleFrameModeReady_ = false;
@@ -3289,10 +3490,12 @@ int Universal::OnInterpolationAlgorithm(MM::PropertyBase* pProp, MM::ActionType 
           pProp->Set(g_Keyword_Replication);
           debayer_.SetAlgorithmIndex(ALG_REPLICATION);
           break;
+      }
    }
-}
    return DEVICE_OK;
 }
+
+
 
 #ifdef PVCAM_CALLBACKS_SUPPORTED
 int Universal::OnAcquisitionMethod(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -3533,7 +3736,7 @@ void Universal::PvcamCallbackEofEx3(PFRAME_INFO /*pFrameInfo*/, void* pContext)
 {
     // We don't need the FRAME_INFO because we will get it in FrameDone via get_latest_frame
     Universal* pCam = (Universal*)pContext;
-    pCam->FrameDone();
+    pCam->FrameAcquired();
 }
 #endif // PVCAM_CALLBACKS_SUPPORTED
 

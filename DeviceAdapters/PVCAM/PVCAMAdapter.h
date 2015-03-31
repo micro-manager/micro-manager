@@ -27,29 +27,16 @@
 #ifndef _PVCAMADAPTER_H_
 #define _PVCAMADAPTER_H_
 
-#include "DeviceBase.h"
+#include <string>
+#include <map>
+
 #include "../../MMDevice/ImgBuffer.h"
-#include "PvDebayer.h"
 #include "../../MMDevice/DeviceUtils.h"
 #include "../../MMDevice/DeviceThreads.h"
 
-#ifdef WIN32
-#pragma warning(push)
-#include "../../../3rdpartypublic/Photometrics/PVCAM/SDK/Headers/master.h"
-#include "../../../3rdpartypublic/Photometrics/PVCAM/SDK/Headers/pvcam.h"
-#pragma warning(pop)
-#endif
-
-#ifdef __APPLE__
-#define __mac_os_x
-#include <PVCAM/master.h>
-#include <PVCAM/pvcam.h>
-#endif
-
-#ifdef linux
-#include <pvcam/master.h>
-#include <pvcam/pvcam.h>
-#endif
+#include "DeviceBase.h"
+#include "PvDebayer.h"
+#include "PVCAMIncludes.h"
 
 #if(WIN32 && NDEBUG)
    WINBASEAPI
@@ -71,8 +58,12 @@
 #define PVCAM_SMART_STREAMING_SUPPORTED
 #endif
 
-#include <string>
-#include <map>
+
+#include "NotificationEntry.h"
+#include "PvCircularBuffer.h"
+#include "PpParam.h"
+#include "PvRoi.h"
+
 
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
@@ -89,57 +80,6 @@
 //
 #define SMART_STREAM_MAX_EXPOSURES 128
 
-/***
-* User selected region of interest
-*/
-struct ROI {
-   uns16 x;
-   uns16 newX;
-   uns16 y;
-   uns16 newY;
-   uns16 xSize;
-   uns16 newXSize;
-   uns16 ySize;
-   uns16 newYSize;
-   uns16 binXSize;
-   uns16 binYSize;
-
-   // added this function to the ROI struct because it only applies to this data structure,
-   //  and nothing else.
-   void PVCAMRegion(uns16 x_, uns16 y_, uns16 xSize_, uns16 ySize_, \
-                    unsigned binXSize_, unsigned binYSize_, rgn_type &newRegion)
-   {
-      // set to full frame
-      x = x_;
-      y = y_;
-      xSize = xSize_;
-      ySize = ySize_;
-
-      // set our member binning information
-      binXSize = (uns16) binXSize_;
-      binYSize = (uns16) binYSize_;
-
-      // save ROI-related dimentions into other data members
-      newX = x/binXSize;
-      newY = y/binYSize;
-      newXSize = xSize/binXSize;
-      newYSize = ySize/binYSize;
-
-      // round the sizes to the proper devisible boundaries
-      x = newX * binXSize;
-      y = newY * binYSize;
-      xSize = newXSize * binXSize;
-      ySize = newYSize * binYSize;
-
-      // set PVCAM-specific region
-      newRegion.s1 = x;
-      newRegion.s2 = x + xSize-1;
-      newRegion.sbin = binXSize;
-      newRegion.p1 = y;
-      newRegion.p2 = y + ySize-1;
-      newRegion.pbin = binYSize;
-   }
-};
 
 /***
 * Struct used for Universal Parameters definition
@@ -170,50 +110,11 @@ inline double round( double value )
 };
 
 
-class AcqSequenceThread;
+class PollingThread;
+class NotificationThread;
 template<class T> class PvParam;
 class PvUniversalParam;
 class PvEnumParam;
-
-/***
-* Class used by post processing, a list of these elements is built up one for each post processing function
-* so the call back function in CPropertyActionEx can get to information about that particular feature in
-* the call back function
-*/ 
-class PProc 
-{
-
-public:
-
-   PProc(std::string name = "", int ppIndex = -1, int propIndex = -1)
-   {
-      mName = name, mppIndex = ppIndex, mpropIndex = propIndex, mcurValue = ppIndex;
-   }
-   std::string GetName()        { return mName; }
-   int         GetppIndex()     { return mppIndex; }
-   int         GetpropIndex()   { return mpropIndex; }
-   int         GetRange()       { return mRange; }
-   double      GetcurValue()    { return mcurValue; }
-   void        SetName(std::string name)    { mName      = name; }
-   void        SetppIndex(int ppIndex)      { mppIndex   = ppIndex; }
-   void        SetpropInex(int propIndex)   { mpropIndex = propIndex; }
-   void        SetcurValue(double curValue) { mcurValue  = curValue; }
-   void        SetRange(int range)          { mRange     = range; }
-
-   void SetPostProc(PProc& tmp)
-   {
-      mName = tmp.GetName(), mppIndex = tmp.GetppIndex(), mpropIndex = tmp.GetpropIndex();
-   }
-
-protected:
-
-   std::string mName;
-   int         mppIndex;
-   int         mpropIndex;
-   double      mcurValue;
-   int         mRange;
-
-};
 
 /***
 * Implementation of the MMDevice and MMCamera interfaces for all PVCAM cameras
@@ -281,7 +182,9 @@ public:
    int OnClearCycles(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTriggerTimeOut(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnOutputTriggerFirstMissing(MM::PropertyBase* pProp, MM::ActionType eAct); 
+   int OnCircBufferSizeAuto(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnCircBufferFrameCount(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnCircBufferFrameRecovery(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnColorMode(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnRedScale(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnGreenScale(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -307,13 +210,18 @@ public:
 protected:
 
 #ifndef linux
-   int ThreadRun(void);
-   void OnThreadExiting() throw();
+   int  PollingThreadRun(void);
+   void PollingThreadExiting() throw();
 #endif
 
-   int FrameDone();
-   int BuildMetadata( Metadata& md );
-   int PushImage(const unsigned char* pixBuffer, Metadata* pMd );
+   // Called once we detect an arrival of a new frame from the camera, this
+   // could be called either from PVCAM callback or Polling thread
+   int FrameAcquired();
+   // Pushes a final image with its metadata to the MMCore
+   int PushImageToMmCore(const unsigned char* pixBuffer, Metadata* pMd );
+   // Called from the Notification Thread. Prepares the frame for
+   // insertion to the MMCore.
+   int ProcessNotification( const NotificationEntry& entry );
 
 private:
 
@@ -330,8 +238,10 @@ private:
 
 
    bool            initialized_;          // Driver initialization status in this class instance
-   long            numImages_;            // Number of images to acquire
-   long            curImageCnt_;          // Current number of images acquired
+   long            imagesToAcquire_;      // Number of images to acquire
+   long            imagesInserted_;       // Current number of images inserted to MMCore buffer
+   long            imagesAcquired_;       // Current number of images acquired by the camera
+   long            imagesRecovered_;      // Total number of images recovered from missed callback(s)
    short           hPVCAM_;               // Camera handle
    static int      refCount_;             // This class reference counter
    static bool     PVCAM_initialized_;    // Global PVCAM initialization status
@@ -342,9 +252,13 @@ private:
    MM::MMTime      startTime_;            // Acquisition start time
 
    short           cameraId_;             // 0-based camera ID, used to allow multiple cameras connected
-   unsigned char*  circBuffer_;           // a buffer used for pl_exp_start_cont
-   unsigned long   circBufferSize_;       // total byte-wise size of the circular buffer
-   long            circBufferFrameCount_; // number of frames to allocate the buffer for
+   PvCircularBuffer circBuf_;
+   bool            circBufSizeAuto_;
+   int             circBufFrameCount_; // number of frames to allocate the buffer for
+   bool            circBufFrameRecoveryEnabled_; // True if we perform recovery from lost callbacks
+
+
+
    bool            stopOnOverflow_;       // Stop inserting images to MM buffer if it's full
    bool            snappingSingleFrame_;  // Single frame mode acquisition ongoing
    bool            singleFrameModeReady_; // Single frame mode acquisition prepared
@@ -356,13 +270,15 @@ private:
    long            triggerTimeout_;       // Max time to wait for an external trigger
    bool            microsecResSupported_; // True if camera supports microsecond exposures
 
-   friend class    AcqSequenceThread;
-   AcqSequenceThread* uniAcqThd_;         // Pointer to the sequencing thread
+   friend class    PollingThread;
+   PollingThread*  pollingThd_;           // Pointer to the sequencing thread
+   friend class    NotificationThread;
+   NotificationThread* notificationThd_;  // Frame notification thread
 
    long            outputTriggerFirstMissing_;
 
    /// CAMERA PARAMETERS:
-   ROI             roi_;                  // Current user-selected ROI
+   PvRoi           roi_;                  // Current user-selected ROI
    rgn_type        camRegion_;            // Current PVCAM region based on ROI
    uns16           camParSize_;           // CCD parallel size
    uns16           camSerSize_;           // CCD serial size
@@ -403,7 +319,8 @@ private:
 #ifdef PVCAM_FRAME_INFO_SUPPORTED
    PFRAME_INFO     pFrameInfo_;           // PVCAM frame metadata
 #endif
-
+   int             lastPvFrameNr_;        // The last FrameNr reported by PVCAM
+   bool            enableFrameRecovery_;  // Attempt to recover from missed callbacks
 
 #ifdef PVCAM_SMART_STREAMING_SUPPORTED
    PvParam<smart_stream_type>* prmSmartStreamingValues_;
@@ -417,9 +334,9 @@ private:
    PvEnumParam*    prmReadoutPort_;
    PvParam<int32>* prmColorMode_;
 
-
+   
    // List of post processing features
-   std::vector<PProc> PostProc_;
+   std::vector<PpParam> PostProc_;
 
    // Camera speed table
    //  usage: SpdTabEntry e = camSpdTable_[port][speed];
@@ -454,26 +371,6 @@ private:
    static void PvcamCallbackEofEx3( PFRAME_INFO pNewFrameInfo, void* pContext );
 #endif
 
-};
-
-/***
- * Acquisition thread
- */
-class AcqSequenceThread : public MMDeviceThreadBase
-{
-   public:
-      AcqSequenceThread(Universal* camera) : 
-         stop_(true), camera_(camera) {}
-      ~AcqSequenceThread() {}
-      int svc (void);
-
-      void setStop(bool stop) {stop_ = stop;}
-      bool getStop() {return stop_;}
-      void Start() {stop_ = false; activate();}
-    
-   private:
-      bool stop_;
-      Universal* camera_;
 };
 
 #endif //_PVCAMADAPTER_H_

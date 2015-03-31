@@ -31,24 +31,6 @@
 #include "../../MMDevice/ModuleInterface.h"
 #include "PVCAMAdapter.h"
 
-#ifdef WIN32
-#pragma warning(push)
-#include "../../../3rdpartypublic/Photometrics/PVCAM/SDK/Headers/master.h"
-#include "../../../3rdpartypublic/Photometrics/PVCAM/SDK/Headers/pvcam.h"
-#pragma warning(pop)
-#endif
-
-#ifdef __APPLE__
-#define __mac_os_x
-#include <PVCAM/master.h>
-#include <PVCAM/pvcam.h>
-#endif
-
-#ifdef linux
-#include <pvcam/master.h>
-#include <pvcam/pvcam.h>
-#endif
-
 #include <string>
 #include <sstream>
 #include <iomanip>
