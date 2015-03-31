@@ -18,7 +18,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.display.internal;
+package org.micromanager.display.internal.inspector;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
@@ -38,6 +38,7 @@ import org.micromanager.display.internal.DefaultDisplayManager;
 import org.micromanager.display.internal.events.CanvasDrawEvent;
 import org.micromanager.display.internal.events.LayoutChangedEvent;
 import org.micromanager.display.internal.events.NewOverlayEvent;
+import org.micromanager.display.internal.MMVirtualStack;
 import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.internal.MMStudio;
 

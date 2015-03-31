@@ -18,9 +18,8 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.display.internal;
+package org.micromanager.display.internal.inspector;
 
-import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
 import ij.CompositeImage;
@@ -43,6 +42,9 @@ import org.micromanager.display.NewImagePlusEvent;
 
 import org.micromanager.display.internal.events.DefaultRequestToDrawEvent;
 import org.micromanager.display.internal.events.LUTUpdateEvent;
+import org.micromanager.display.internal.DefaultDisplayWindow;
+import org.micromanager.display.internal.DisplayDestroyedEvent;
+import org.micromanager.display.internal.MMVirtualStack;
 
 import org.micromanager.internal.interfaces.Histograms;
 import org.micromanager.internal.utils.ContrastSettings;
@@ -52,28 +54,18 @@ import org.micromanager.internal.utils.ReportingUtils;
 // to prevent concurrent modification exceptions. In fact, I don't think we
 // really need this class in the first place, or at least we don't need it to
 // be so tightly-bound to the ChannelControlPanels it contains.
-public final class HistogramsPanel extends JPanel implements Histograms {
+public final class HistogramsPanel extends InspectorPanel implements Histograms {
    private ArrayList<ChannelControlPanel> channelPanels_;
    private Datastore store_;
    private DisplayWindow display_;
    private MMVirtualStack stack_;
    private ImagePlus ijImage_;
-   private EventBus displayBus_;
    private Timer histogramUpdateTimer_;
    private long lastUpdateTime_ = 0;
    private boolean updatingCombos_ = false;
 
-   public HistogramsPanel(Datastore store, DisplayWindow display,
-         MMVirtualStack stack, ImagePlus ijImage, EventBus displayBus) {
+   public HistogramsPanel() {
       super();
-      store_ = store;
-      store_.registerForEvents(this);
-      display_ = display;
-      stack_ = stack;
-      ijImage_ = ijImage;
-      displayBus_ = displayBus;
-      displayBus_.register(this);
-      setupChannelControls();
    }
 
    /**
@@ -94,12 +86,13 @@ public final class HistogramsPanel extends JPanel implements Histograms {
          ReportingUtils.logError("Have zero channels to work with.");
          return;
       }
+      ReportingUtils.logError("Making " + nChannels + " histograms");
 
       setLayout(new MigLayout("flowy"));
       channelPanels_ = new ArrayList<ChannelControlPanel>();
       for (int i = 0; i < nChannels; ++i) {
          ChannelControlPanel panel = new ChannelControlPanel(i, this, store_,
-               display_, stack_, ijImage_, displayBus_);
+               display_, stack_, ijImage_);
          add(panel, "growy");
          channelPanels_.add(panel);
       }
@@ -115,7 +108,7 @@ public final class HistogramsPanel extends JPanel implements Histograms {
          panel.setFullScale();
       }
       display_.postEvent(new LUTUpdateEvent(null, null, null));
-      displayBus_.post(new DefaultRequestToDrawEvent());
+      display_.postEvent(new DefaultRequestToDrawEvent());
    }
 
    @Override
@@ -156,7 +149,7 @@ public final class HistogramsPanel extends JPanel implements Histograms {
       int max = channelPanels_.get(0).getContrastMax();
       double gamma = channelPanels_.get(0).getContrastGamma();
       display_.postEvent(new LUTUpdateEvent(min, max, gamma));
-      displayBus_.post(new DefaultRequestToDrawEvent());
+      display_.postEvent(new DefaultRequestToDrawEvent());
    }
 
    @Override
@@ -302,5 +295,19 @@ public final class HistogramsPanel extends JPanel implements Histograms {
       catch (Exception e) {
          ReportingUtils.logError(e, "Error during histograms cleanup");
       }
+   }
+
+   @Override
+   public void setDisplay(DisplayWindow display) {
+      if (display_ != null) {
+         display_.unregisterForEvents(this);
+      }
+      display_ = display;
+      display_.registerForEvents(this);
+      store_ = display_.getDatastore();
+      store_.registerForEvents(this);
+      stack_ = ((DefaultDisplayWindow) display_).getStack();
+      ijImage_ = display_.getImagePlus();
+      setupChannelControls();
    }
 }

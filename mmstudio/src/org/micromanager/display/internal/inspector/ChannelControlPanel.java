@@ -18,7 +18,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.display.internal;
+package org.micromanager.display.internal.inspector;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
@@ -68,6 +68,11 @@ import org.micromanager.display.internal.events.LUTUpdateEvent;
 import org.micromanager.display.internal.link.ContrastEvent;
 import org.micromanager.display.internal.link.ContrastLinker;
 import org.micromanager.display.internal.link.LinkButton;
+import org.micromanager.display.internal.ChannelSettings;
+import org.micromanager.display.internal.DefaultDisplaySettings;
+import org.micromanager.display.internal.DisplayDestroyedEvent;
+import org.micromanager.display.internal.MMCompositeImage;
+import org.micromanager.display.internal.MMVirtualStack;
 
 import org.micromanager.internal.utils.HistogramUtils;
 import org.micromanager.internal.utils.ImageUtils;
@@ -90,7 +95,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private MMVirtualStack stack_;
    private ImagePlus plus_;
    private CompositeImage composite_;
-   private EventBus displayBus_;
 
    private JButton autoButton_;
    private JButton zoomInButton_;
@@ -122,7 +126,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
    public ChannelControlPanel(int channelIndex, HistogramsPanel parent,
          Datastore store, DisplayWindow display, MMVirtualStack stack,
-         ImagePlus plus, EventBus displayBus) {
+         ImagePlus plus) {
       haveInitialized_ = new AtomicBoolean(false);
       channelIndex_ = channelIndex;
       parent_ = parent;
@@ -138,7 +142,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       if (plus_ instanceof CompositeImage) {
          composite_ = (CompositeImage) plus_;
       }
-      displayBus_ = displayBus;
 
       // Default to a generic name based on our channel index.
       name_ = String.format("channel %d", channelIndex_);
@@ -977,7 +980,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          display_.postEvent(new LUTUpdateEvent(null, null, null));
       }
       if (shouldRedisplay) {
-         displayBus_.post(new DefaultRequestToDrawEvent());
+         display_.postEvent(new DefaultRequestToDrawEvent());
       }
    }
 
@@ -1066,5 +1069,12 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
       }
       linkButton_.cleanup();
+   }
+
+   public void setDisplay(DisplayWindow display) {
+      cleanup();
+      display_ = display;
+      haveInitialized_.set(false);
+      initialize();
    }
 }

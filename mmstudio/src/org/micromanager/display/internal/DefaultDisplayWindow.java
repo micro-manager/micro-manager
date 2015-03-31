@@ -81,6 +81,7 @@ import org.micromanager.display.internal.events.DefaultDisplayAboutToShowEvent;
 import org.micromanager.display.internal.events.DefaultNewDisplayEvent;
 import org.micromanager.display.internal.events.DefaultNewImagePlusEvent;
 import org.micromanager.display.internal.events.DefaultRequestToDrawEvent;
+import org.micromanager.display.internal.events.DisplayActivatedEvent;
 import org.micromanager.display.internal.events.FullScreenEvent;
 import org.micromanager.display.internal.events.LayoutChangedEvent;
 import org.micromanager.display.internal.events.NewDisplaySettingsEvent;
@@ -128,7 +129,6 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    private HyperstackControls hyperstackControls_;
    private JButton fullButton_;
    private MultiModePanel modePanel_;
-   private HistogramsPanel histograms_;
    private MetadataPanel metadata_;
    private CommentsPanel comments_;
    private OverlaysPanel overlays_;
@@ -183,6 +183,17 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       DisplayGroupManager.ensureInitialized();
       DefaultEventManager.getInstance().post(
             new DefaultNewDisplayEvent(this));
+
+      final DefaultDisplayWindow thisWindow = this;
+      // Post an event whenever we're made active, so that the InspectorFrame
+      // can update its contents.
+      addWindowListener(new WindowAdapter() {
+         @Override
+         public void windowActivated(WindowEvent e) {
+            DefaultEventManager.getInstance().post(
+               new DisplayActivatedEvent(thisWindow));
+         }
+      });
 
       // Wait to actually create our GUI until there's at least one image
       // to display.
@@ -258,7 +269,8 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          dummyWindow_ = DummyImageWindow.makeWindow(ijImage_, this);
          zoomToPreferredSize();
          setVisible(true);
-         histograms_.calcAndDisplayHistAndStats();
+         ReportingUtils.logError("TODO: update histograms");
+//         histograms_.calcAndDisplayHistAndStats();
 
          addWindowListener(new WindowAdapter() {
             @Override
@@ -342,10 +354,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
             store_, ijImage_, this, displayBus_);
          modePanel_.addMode("Settings", settings);
 
-         histograms_ = new HistogramsPanel(store_, this, stack_, ijImage_,
-               displayBus_);
-         histograms_.setMinimumSize(new java.awt.Dimension(280, 0));
-         modePanel_.addMode("Contrast", histograms_);
+//         histograms_.setMinimumSize(new java.awt.Dimension(280, 0));
 
          metadata_ = new MetadataPanel(this);
          modePanel_.addMode("Metadata", metadata_);
@@ -628,6 +637,10 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       return store_;
    }
 
+   public MMVirtualStack getStack() {
+      return stack_;
+   }
+
    @Override
    public DisplaySettings getDisplaySettings() {
       return displaySettings_;
@@ -783,7 +796,8 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    @Subscribe
    public void onPixelsSet(CanvasUpdateThread.PixelsSetEvent event) {
       try {
-         histograms_.calcAndDisplayHistAndStats();
+         ReportingUtils.logError("TODO: update histograms");
+//         histograms_.calcAndDisplayHistAndStats();
          metadata_.imageChangedUpdate(event.getImage());
          // TODO: I think this means we're on top, but I'm not certain.
          if (isFocusableWindow()) {
@@ -840,7 +854,8 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
             // Have multiple channels.
             shiftToCompositeImage();
             makeWindowControls();
-            histograms_.calcAndDisplayHistAndStats();
+            ReportingUtils.logError("TODO: update histograms");
+//            histograms_.calcAndDisplayHistAndStats();
          }
          if (ijImage_ instanceof MMCompositeImage) {
             // Verify that ImageJ has the right number of channels.
