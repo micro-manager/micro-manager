@@ -873,10 +873,10 @@ void Debayer::AdaptiveSmoothDecode(const T* input, int* output, int width, int h
             R4 = GetPixel(input, x+1, y-2, width, height);
             R5 = GetPixel(input, x+1, y+1, width, height);
 
-            N = abs(R4-R5)*2 + abs(G4-G3);
-            S = abs(R5-R3)*2 + abs(G4-G3);
-			E = abs(R5-R2)*2 + abs(G1-G2);
-			W = abs(R1-R5)*2 + abs(G1-G2);
+            N = fabs(R4-R5)*2 + fabs(G4-G3);
+            S = fabs(R5-R3)*2 + fabs(G4-G3);
+			E = fabs(R5-R2)*2 + fabs(G1-G2);
+			W = fabs(R1-R5)*2 + fabs(G1-G2);
 
             if(N<S && N<E && N<W) 
             {
@@ -928,10 +928,10 @@ void Debayer::AdaptiveSmoothDecode(const T* input, int* output, int width, int h
             R4 = GetPixel(input, x+1, y-2, width, height);
             R5 = GetPixel(input, x+1, y+1, width, height);
 
-            N = abs(R4-R5)*2 + abs(G4-G3);
-            S = abs(R5-R3)*2 + abs(G4-G3);
-			E = abs(R5-R2)*2 + abs(G1-G2);
-			W = abs(R1-R5)*2 + abs(G1-G2);
+            N = fabs(R4-R5)*2 + fabs(G4-G3);
+            S = fabs(R5-R3)*2 + fabs(G4-G3);
+			E = fabs(R5-R2)*2 + fabs(G1-G2);
+			W = fabs(R1-R5)*2 + fabs(G1-G2);
 
             if(N<S && N<E && N<W) 
             {
@@ -1068,10 +1068,10 @@ void Debayer::AdaptiveSmoothDecode(const T* input, int* output, int width, int h
             R4 = GetPixel(input, x+1, y-2, width, height);
             R5 = GetPixel(input, x+1, y+1, width, height);
 
-            N = abs(R4-R5)*2 + abs(G4-G3);
-            S = abs(R5-R3)*2 + abs(G4-G3);
-			E = abs(R5-R2)*2 + abs(G1-G2);
-			W = abs(R1-R5)*2 + abs(G1-G2);
+            N = fabs(R4-R5)*2 + fabs(G4-G3);
+            S = fabs(R5-R3)*2 + fabs(G4-G3);
+			E = fabs(R5-R2)*2 + fabs(G1-G2);
+			W = fabs(R1-R5)*2 + fabs(G1-G2);
 
             if(N<S && N<E && N<W) 
             {
@@ -1123,10 +1123,10 @@ void Debayer::AdaptiveSmoothDecode(const T* input, int* output, int width, int h
             R4 = GetPixel(input, x+1, y-2, width, height);
             R5 = GetPixel(input, x+1, y+1, width, height);
 
-            N = abs(R4-R5)*2 + abs(G4-G3);
-            S = abs(R5-R3)*2 + abs(G4-G3);
-			E = abs(R5-R2)*2 + abs(G1-G2);
-			W = abs(R1-R5)*2 + abs(G1-G2);
+            N = fabs(R4-R5)*2 + fabs(G4-G3);
+            S = fabs(R5-R3)*2 + fabs(G4-G3);
+			E = fabs(R5-R2)*2 + fabs(G1-G2);
+			W = fabs(R1-R5)*2 + fabs(G1-G2);
 
             if(N<S && N<E && N<W) 
             {
