@@ -3244,7 +3244,7 @@ int Universal::ProcessNotification( const NotificationEntry& entry )
    {
       const long bufferSize = img_.Width() * img_.Height() * img_.Depth();
       // Copy the circular buffer data to our image buffer for bayer processing
-      // TODO: We could modify the Debayer::Process() to accept the circular buffer directly and avoid memcpy
+      // TODO: We could modify the PvDebayer::Process() to accept the circular buffer directly and avoid memcpy
       memcpy((void*) img_.GetPixelsRW(), entry.FrameData(), bufferSize);
       RGBscales rgbScales = {redScale_, greenScale_, blueScale_};
       debayer_.SetRGBScales(rgbScales);

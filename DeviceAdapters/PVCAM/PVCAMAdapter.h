@@ -247,7 +247,7 @@ private:
    static bool     PVCAM_initialized_;    // Global PVCAM initialization status
    ImgBuffer       img_;                  // Single image buffer
    ImgBuffer       colorImg_;             // color image buffer
-   Debayer         debayer_;              // debayer processor
+   PvDebayer       debayer_;              // debayer processor
 
    MM::MMTime      startTime_;            // Acquisition start time
 

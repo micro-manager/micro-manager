@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// MODULE:			Debayer.h
+// MODULE:			PvDebayer.h
 // SYSTEM:        ImageBase subsystem
 // AUTHOR:			Jennifer West, jennifer_west@umanitoba.ca,
 //                Nenad Amodaj, nenad@amodaj.com
@@ -56,11 +56,11 @@ typedef struct
  * Utility class to build color image from the Bayer grayscale image
  * Based on the Debayer_Image plugin for ImageJ, by Jennifer West, University of Manitoba
  */
-class Debayer
+class PvDebayer
 {
 public:
-   Debayer();
-   ~Debayer();
+   PvDebayer();
+   ~PvDebayer();
 
    int Process(ImgBuffer& out, const ImgBuffer& in, int bitDepth);
    int Process(ImgBuffer& out, const unsigned char* in, int width, int height, int bitDepth);

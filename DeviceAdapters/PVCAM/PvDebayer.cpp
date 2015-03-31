@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// MODULE:			Debayer.h
+// MODULE:			PvDebayer.h
 // SYSTEM:        ImageBase subsystem
 // AUTHOR:			Jennifer West, jennifer_west@umanitoba.ca,
 //                Nenad Amodaj, nenad@amodaj.com
@@ -33,7 +33,7 @@ using namespace std;
 ///////////////////////////////////////////////////////////////////////////////
 
 
-Debayer::Debayer()
+PvDebayer::PvDebayer()
 {
    orders.push_back("R-G-R-G");
    orders.push_back("B-G-B-G");
@@ -50,11 +50,11 @@ Debayer::Debayer()
    algoIndex = ALG_REPLICATION;
 }
 
-Debayer::~Debayer()
+PvDebayer::~PvDebayer()
 {
 }
 
-int Debayer::Process(ImgBuffer& out, const ImgBuffer& input, int bitDepth)
+int PvDebayer::Process(ImgBuffer& out, const ImgBuffer& input, int bitDepth)
 {
    assert(sizeof(int) == 4);
 
@@ -81,14 +81,14 @@ int Debayer::Process(ImgBuffer& out, const ImgBuffer& input, int bitDepth)
 
 }
 
-int Debayer::Process(ImgBuffer& out, const unsigned char* in, int width, int height, int bitDepth)
+int PvDebayer::Process(ImgBuffer& out, const unsigned char* in, int width, int height, int bitDepth)
 { return ProcessT(out, in, width, height, bitDepth); }
 
-int Debayer::Process(ImgBuffer& out, const unsigned short* in, int width, int height, int bitDepth)
+int PvDebayer::Process(ImgBuffer& out, const unsigned short* in, int width, int height, int bitDepth)
 { return ProcessT(out, in, width, height, bitDepth); }
 
 template <typename T>
-int Debayer::ProcessT(ImgBuffer& out, const T* in, int width, int height, int bitDepth)
+int PvDebayer::ProcessT(ImgBuffer& out, const T* in, int width, int height, int bitDepth)
 {
    assert(sizeof(int) == 4);
    out.Resize(width, height, 4);
@@ -97,7 +97,7 @@ int Debayer::ProcessT(ImgBuffer& out, const T* in, int width, int height, int bi
 }
 
 template<typename T>
-int Debayer::Convert(const T* input, int* output, int width, int height, int bitDepth, int rowOrder, int algorithm)
+int PvDebayer::Convert(const T* input, int* output, int width, int height, int bitDepth, int rowOrder, int algorithm)
 {			
     if (algorithm == ALG_REPLICATION)
        ReplicateDecode(input, output, width, height, bitDepth, rowOrder);
@@ -114,7 +114,7 @@ int Debayer::Convert(const T* input, int* output, int width, int height, int bit
    return DEVICE_OK;
 }
 
-unsigned short Debayer::GetPixel(const unsigned short* v, int x, int y, int width, int height)
+unsigned short PvDebayer::GetPixel(const unsigned short* v, int x, int y, int width, int height)
 {
    if (x >= width || x < 0 || y >= height || y < 0)
       return 0;
@@ -122,13 +122,13 @@ unsigned short Debayer::GetPixel(const unsigned short* v, int x, int y, int widt
       return v[y*width + x];
 }
 
-void Debayer::SetPixel(std::vector<unsigned short>& v, unsigned short val, int x, int y, int width, int height)
+void PvDebayer::SetPixel(std::vector<unsigned short>& v, unsigned short val, int x, int y, int width, int height)
 {
    if (x < width && x >= 0 && y < height && y >= 0)
       v[y*width + x] = val;
 }
 
-unsigned short Debayer::GetPixel(const unsigned char* v, int x, int y, int width, int height)
+unsigned short PvDebayer::GetPixel(const unsigned char* v, int x, int y, int width, int height)
 {
    if (x >= width || x < 0 || y >= height || y < 0)
       return 0;
@@ -138,7 +138,7 @@ unsigned short Debayer::GetPixel(const unsigned char* v, int x, int y, int width
 
 // Replication algorithm
 template <typename T>
-void Debayer::ReplicateDecode(const T* input, int* output, int width, int height, int bitDepth, int rowOrder)
+void PvDebayer::ReplicateDecode(const T* input, int* output, int width, int height, int bitDepth, int rowOrder)
 {
    unsigned numPixels(width*height);
    if (r.size() != numPixels)
@@ -307,7 +307,7 @@ void Debayer::ReplicateDecode(const T* input, int* output, int width, int height
 
 // Bilinear algorithm
 template <typename T>
-void Debayer::BilinearDecode(const T* input, int* output, int width, int height, int bitDepth, int rowOrder)
+void PvDebayer::BilinearDecode(const T* input, int* output, int width, int height, int bitDepth, int rowOrder)
 {
    unsigned numPixels(width*height);
    if (r.size() != numPixels)
@@ -520,7 +520,7 @@ void Debayer::BilinearDecode(const T* input, int* output, int width, int height,
 
 // Smooth Hue algorithm
 template <typename T>
-void Debayer::SmoothDecode(const T* input, int* output, int width, int height, int bitDepth, int rowOrder)
+void PvDebayer::SmoothDecode(const T* input, int* output, int width, int height, int bitDepth, int rowOrder)
 {
    double G1 = 0;
    double G2 = 0;
@@ -823,7 +823,7 @@ void Debayer::SmoothDecode(const T* input, int* output, int width, int height, i
 
 // Adaptive Smooth Hue algorithm (edge detecting)
 template <typename T>
-void Debayer::AdaptiveSmoothDecode(const T* input, int* output, int width, int height, int bitDepth, int rowOrder)
+void PvDebayer::AdaptiveSmoothDecode(const T* input, int* output, int width, int height, int bitDepth, int rowOrder)
 {
    double G1 = 0;
    double G2 = 0;
