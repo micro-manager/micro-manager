@@ -1775,11 +1775,11 @@ int XYStage::Initialize()
    if (hasTV) 
    {
       pAct = new CPropertyAction(this, &XYStage::OnTrajectoryVelocity);
-      ret = CreateProperty("Velocity", "0", MM::Integer, false, pAct);
+      ret = CreateProperty("Velocity (micron/s)", "0", MM::Float, false, pAct);
       if (ret != DEVICE_OK)
          return ret;
       pAct = new CPropertyAction(this, &XYStage::OnTrajectoryAcceleration);
-      ret = CreateProperty("Acceleration", "0", MM::Integer, false, pAct);
+      ret = CreateProperty("Acceleration (micron/s^2)", "0", MM::Float, false, pAct);
       if (ret != DEVICE_OK)
          return ret;
    }
@@ -1966,10 +1966,11 @@ int XYStage::OnTrajectoryVelocity(MM::PropertyBase* pProp, MM::ActionType eAct)
       int ret = ZeissAxis::GetTrajectoryVelocity(*this, *GetCoreCallback(), g_StageXAxis, (ZeissLong&) velocity);
       if (ret != DEVICE_OK)
          return ret;
-      pProp->Set(velocity);
+      pProp->Set( (float) (velocity/1000.0) );
    } else if (eAct == MM::AfterSet) {
-      long velocity;
-      pProp->Get(velocity);
+      double tmp;
+      pProp->Get(tmp);
+      long velocity = (long) (tmp * 1000.0);
       int ret = ZeissAxis::SetTrajectoryVelocity(*this, *GetCoreCallback(), g_StageXAxis, (ZeissLong) velocity);
       if (ret != DEVICE_OK)
          return ret;
@@ -1988,10 +1989,11 @@ int XYStage::OnTrajectoryAcceleration(MM::PropertyBase* pProp, MM::ActionType eA
       int ret = ZeissAxis::GetTrajectoryAcceleration(*this, *GetCoreCallback(), g_StageXAxis, (ZeissLong&) accel);
       if (ret != DEVICE_OK)
          return ret;
-      pProp->Set(accel);
+      pProp->Set( (float) (accel / 1000.0) );
    } else if (eAct == MM::AfterSet) {
-      long accel;
-      pProp->Get(accel);
+      double tmp;
+      pProp->Get(tmp);
+      long accel = (long) (tmp * 1000.0);
       int ret = ZeissAxis::SetTrajectoryAcceleration(*this, *GetCoreCallback(), g_StageXAxis, (ZeissLong) accel);
       if (ret != DEVICE_OK)
          return ret;
