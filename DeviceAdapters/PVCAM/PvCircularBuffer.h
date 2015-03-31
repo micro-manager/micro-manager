@@ -4,6 +4,8 @@
 #include "PVCAMIncludes.h"
 #include "PvFrameInfo.h"
 
+#include <cstdlib>
+
 /**
 * A wrapper class over the PVCAM circular buffer. The class keeps track of
 * arrived frames (via Reporting functions called from callback) and stores
