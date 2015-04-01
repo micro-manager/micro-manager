@@ -20,6 +20,8 @@
 
 package org.micromanager.display.internal.inspector;
 
+import com.google.common.eventbus.Subscribe;
+
 import ij.gui.ImageWindow;
 
 import java.awt.event.FocusEvent;
@@ -43,23 +45,27 @@ import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.SummaryMetadata;
 
+import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.Inspector;
+import org.micromanager.display.InspectorPanel;
+import org.micromanager.display.internal.DefaultDisplayWindow;
 import org.micromanager.display.internal.MMVirtualStack;
+import org.micromanager.display.PixelsSetEvent;
 
 import org.micromanager.internal.utils.ReportingUtils;
 
 
-public class CommentsPanel extends JPanel {
+public class CommentsPanel extends InspectorPanel {
    private JTextArea imageCommentsTextArea_;
    private JTextArea summaryCommentsTextArea_;
    private ImageWindow currentWindow_;
+   private DisplayWindow display_;
    private Datastore store_;
    private MMVirtualStack stack_;
    private Timer updateTimer_;
 
    /** Creates new form CommentsPanel */
-   public CommentsPanel(Datastore store, MMVirtualStack stack) {
-      store_ = store;
-      stack_ = stack;
+   public CommentsPanel() {
       initialize();
       addTextChangeListeners();
       addFocusListeners();
@@ -166,7 +172,7 @@ public class CommentsPanel extends JPanel {
     * is changing rapidly, to ensure that we don't end up with a race condition
     * that causes us to display the wrong metadata.
     */
-   public void imageChangedUpdate(final Image image) { 
+   public synchronized void imageChangedUpdate(final Image image) {
       if (updateTimer_ == null) {
          updateTimer_ = new Timer("Metadata update");
       }
@@ -182,5 +188,28 @@ public class CommentsPanel extends JPanel {
       // 125ms in the future.
       updateTimer_.purge();
       updateTimer_.schedule(task, 125);
+   }
+
+   @Subscribe
+   public void onPixelsSet(PixelsSetEvent event) {
+      imageChangedUpdate(event.getImage());
+   }
+
+   @Override
+   public synchronized void setDisplay(DisplayWindow display) {
+      if (display_ != null) {
+         display_.unregisterForEvents(this);
+      }
+      // Set these before we register for the new display's events, so we have
+      // them set properly before imageChangedUpdate() can be called.
+      store_ = display.getDatastore();
+      stack_ = ((DefaultDisplayWindow) display).getStack();
+      display_ = display;
+      display_.registerForEvents(this);
+   }
+
+   @Override
+   public void setInspector(Inspector inspector) {
+      // We don't care.
    }
 }
