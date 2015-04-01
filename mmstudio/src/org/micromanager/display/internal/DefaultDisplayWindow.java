@@ -266,8 +266,6 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          dummyWindow_ = DummyImageWindow.makeWindow(ijImage_, this);
          zoomToPreferredSize();
          setVisible(true);
-         ReportingUtils.logError("TODO: update histograms");
-//         histograms_.calcAndDisplayHistAndStats();
 
          addWindowListener(new WindowAdapter() {
             @Override
@@ -767,9 +765,6 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    @Subscribe
    public void onPixelsSet(PixelsSetEvent event) {
       try {
-         ReportingUtils.logError("TODO: update histograms");
-//         histograms_.calcAndDisplayHistAndStats();
-//         metadata_.imageChangedUpdate(event.getImage());
          // TODO: I think this means we're on top, but I'm not certain.
          if (isFocusableWindow()) {
             LineProfile.updateLineProfile();
@@ -825,8 +820,6 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
             // Have multiple channels.
             shiftToCompositeImage();
             makeWindowControls();
-            ReportingUtils.logError("TODO: update histograms");
-//            histograms_.calcAndDisplayHistAndStats();
          }
          if (ijImage_ instanceof MMCompositeImage) {
             // Verify that ImageJ has the right number of channels.
