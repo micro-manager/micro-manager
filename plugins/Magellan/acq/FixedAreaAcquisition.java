@@ -288,6 +288,8 @@ public class FixedAreaAcquisition extends Acquisition {
                   //set autofocus position
                   if (autofocus_ != null && timeIndex > 1) {
                      events_.put(AcquisitionEvent.createAutofocusEvent(settings_.autoFocusZDevice_, autofocus_.getAutofocusPosition()));
+                  } else if (autofocus_ != null && timeIndex <= 1 && settings_.setInitialAutofocusPosition_) {
+                     events_.put(AcquisitionEvent.createAutofocusEvent(settings_.autoFocusZDevice_, settings_.initialAutofocusPosition_));
                   }
                   //set the next time point start time
                   double interval_ms = settings_.timePointInterval_ * (settings_.timeIntervalUnit_ == 1 ? 1000 : (settings_.timeIntervalUnit_ == 2 ? 60000 : 1));

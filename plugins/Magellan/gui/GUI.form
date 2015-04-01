@@ -7,7 +7,6 @@
   </NonVisualComponents>
   <SyntheticProperties>
     <SyntheticProperty name="formSizePolicy" type="int" value="1"/>
-    <SyntheticProperty name="generateCenter" type="boolean" value="false"/>
   </SyntheticProperties>
   <AuxValues>
     <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="0"/>
@@ -1377,91 +1376,29 @@
           <Layout>
             <DimensionLayout dim="0">
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" attributes="0">
+                  <Group type="102" alignment="0" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Group type="102" alignment="0" attributes="0">
-                              <Component id="autofocusMaxDisplacementLabel_" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Component id="autofocusMaxDisplacementSpinner_" min="-2" pref="64" max="-2" attributes="0"/>
-                          </Group>
-                          <Group type="102" alignment="0" attributes="0">
-                              <Component id="jLabel7" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Component id="autofocusChannelCombo_" min="-2" pref="115" max="-2" attributes="0"/>
-                          </Group>
-                          <Group type="103" alignment="0" groupAlignment="1" max="-2" attributes="0">
-                              <Group type="102" alignment="0" attributes="0">
-                                  <Component id="autofocusZLabel_" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="autofocusZDeviceComboBox_" max="32767" attributes="0"/>
-                              </Group>
-                              <Component id="useAutofocusCheckBox_" alignment="0" min="-2" max="-2" attributes="0"/>
-                          </Group>
+                          <Component id="useAutofocusCheckBox_" min="-2" max="-2" attributes="0"/>
+                          <Component id="autofocusComponentsPanel_" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace pref="553" max="32767" attributes="0"/>
+                      <EmptySpace pref="518" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
             <DimensionLayout dim="1">
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" alignment="0" attributes="0">
-                      <EmptySpace max="-2" attributes="0"/>
+                  <Group type="102" attributes="0">
+                      <EmptySpace min="-2" pref="15" max="-2" attributes="0"/>
                       <Component id="useAutofocusCheckBox_" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="-2" pref="1" max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="3" attributes="0">
-                          <Component id="jLabel7" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="autofocusChannelCombo_" alignment="3" min="-2" max="-2" attributes="0"/>
-                      </Group>
-                      <EmptySpace type="separate" max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="3" attributes="0">
-                          <Component id="autofocusMaxDisplacementLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="autofocusMaxDisplacementSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
-                      </Group>
-                      <EmptySpace min="-2" pref="21" max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="autofocusZLabel_" min="-2" max="-2" attributes="0"/>
-                          <Component id="autofocusZDeviceComboBox_" alignment="0" min="-2" max="-2" attributes="0"/>
-                      </Group>
-                      <EmptySpace pref="148" max="32767" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="autofocusComponentsPanel_" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace pref="78" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
           </Layout>
           <SubComponents>
-            <Component class="javax.swing.JLabel" name="jLabel7">
-              <Properties>
-                <Property name="text" type="java.lang.String" value="Use channel:"/>
-              </Properties>
-            </Component>
-            <Component class="javax.swing.JComboBox" name="autofocusChannelCombo_">
-              <Properties>
-                <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
-                  <Connection code="afucModel" type="code"/>
-                </Property>
-              </Properties>
-              <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="autofocusChannelCombo_ActionPerformed"/>
-              </Events>
-              <AuxValues>
-                <AuxValue name="JavaCodeGenerator_InitCodePre" type="java.lang.String" value="AutofocusChannelComboModel afucModel = new AutofocusChannelComboModel((SimpleChannelTableModel) channelsTable_.getModel());"/>
-              </AuxValues>
-            </Component>
-            <Component class="javax.swing.JLabel" name="autofocusMaxDisplacementLabel_">
-              <Properties>
-                <Property name="text" type="java.lang.String" value="Maxmimum displacement (um): "/>
-              </Properties>
-            </Component>
-            <Component class="javax.swing.JSpinner" name="autofocusMaxDisplacementSpinner_">
-              <Properties>
-                <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
-                  <SpinnerModel initial="1.0" minimum="0.0" numberType="java.lang.Double" stepSize="1.0" type="number"/>
-                </Property>
-              </Properties>
-              <Events>
-                <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="autofocusMaxDisplacementSpinner_StateChanged"/>
-              </Events>
-            </Component>
             <Component class="javax.swing.JCheckBox" name="useAutofocusCheckBox_">
               <Properties>
                 <Property name="text" type="java.lang.String" value="Activate cross-correlation based autofocus"/>
@@ -1470,24 +1407,139 @@
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="useAutofocusCheckBox_ActionPerformed"/>
               </Events>
             </Component>
-            <Component class="javax.swing.JLabel" name="autofocusZLabel_">
-              <Properties>
-                <Property name="text" type="java.lang.String" value="Autofocus Z device: "/>
-              </Properties>
-            </Component>
-            <Component class="javax.swing.JComboBox" name="autofocusZDeviceComboBox_">
-              <Properties>
-                <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
-                  <Connection code="afzModel" type="code"/>
-                </Property>
-              </Properties>
-              <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="autofocusZDeviceComboBox_ActionPerformed"/>
-              </Events>
-              <AuxValues>
-                <AuxValue name="JavaCodeGenerator_InitCodePre" type="java.lang.String" value="StrVector zVec = MMStudio.getInstance().getCore().getLoadedDevicesOfType(mmcorej.DeviceType.StageDevice);&#xd;&#xa;String[] zNames = new String[(int)zVec.size()];&#xd;&#xa;for (int i = 0; i &lt; zNames.length; i++) {&#xd;&#xa;   zNames[i] = zVec.get(i);&#xd;&#xa;}&#xd;&#xa;ComboBoxModel afzModel = new DefaultComboBoxModel(zNames);"/>
-              </AuxValues>
-            </Component>
+            <Container class="javax.swing.JPanel" name="autofocusComponentsPanel_">
+
+              <Layout>
+                <DimensionLayout dim="0">
+                  <Group type="103" groupAlignment="0" attributes="0">
+                      <Group type="102" attributes="0">
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="0" attributes="0">
+                              <Group type="102" alignment="0" attributes="0">
+                                  <Component id="jLabel7" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                                  <Component id="autofocusChannelCombo_" min="-2" pref="115" max="-2" attributes="0"/>
+                              </Group>
+                              <Group type="102" alignment="0" attributes="0">
+                                  <Component id="autofocusMaxDisplacementLabel_" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="autofocusMaxDisplacementSpinner_" min="-2" pref="64" max="-2" attributes="0"/>
+                              </Group>
+                              <Group type="102" alignment="0" attributes="0">
+                                  <Component id="autofocusZLabel_" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="autofocusZDeviceComboBox_" min="-2" pref="128" max="-2" attributes="0"/>
+                              </Group>
+                              <Group type="102" alignment="0" attributes="0">
+                                  <Component id="autofocusInitialPositionCheckBox_" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="autofocusInitialPositionSpinner_" min="-2" pref="91" max="-2" attributes="0"/>
+                              </Group>
+                          </Group>
+                          <EmptySpace pref="25" max="32767" attributes="0"/>
+                      </Group>
+                  </Group>
+                </DimensionLayout>
+                <DimensionLayout dim="1">
+                  <Group type="103" groupAlignment="0" attributes="0">
+                      <Group type="102" alignment="1" attributes="0">
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="3" attributes="0">
+                              <Component id="jLabel7" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="autofocusChannelCombo_" alignment="3" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <EmptySpace type="separate" max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="0" attributes="0">
+                              <Component id="autofocusMaxDisplacementSpinner_" min="-2" max="-2" attributes="0"/>
+                              <Component id="autofocusMaxDisplacementLabel_" alignment="0" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="3" attributes="0">
+                              <Component id="autofocusZLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="autofocusZDeviceComboBox_" alignment="3" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="3" attributes="0">
+                              <Component id="autofocusInitialPositionSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="autofocusInitialPositionCheckBox_" alignment="3" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <EmptySpace pref="27" max="32767" attributes="0"/>
+                      </Group>
+                  </Group>
+                </DimensionLayout>
+              </Layout>
+              <SubComponents>
+                <Component class="javax.swing.JLabel" name="autofocusZLabel_">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="Autofocus Z device: "/>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JComboBox" name="autofocusZDeviceComboBox_">
+                  <Properties>
+                    <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
+                      <Connection code="afzModel" type="code"/>
+                    </Property>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="autofocusZDeviceComboBox_ActionPerformed"/>
+                  </Events>
+                  <AuxValues>
+                    <AuxValue name="JavaCodeGenerator_InitCodePre" type="java.lang.String" value="StrVector zVec = MMStudio.getInstance().getCore().getLoadedDevicesOfType(mmcorej.DeviceType.StageDevice);&#xd;&#xa;String[] zNames = new String[(int)zVec.size()];&#xd;&#xa;for (int i = 0; i &lt; zNames.length; i++) {&#xd;&#xa;   zNames[i] = zVec.get(i);&#xd;&#xa;}&#xd;&#xa;ComboBoxModel afzModel = new DefaultComboBoxModel(zNames);"/>
+                  </AuxValues>
+                </Component>
+                <Component class="javax.swing.JLabel" name="autofocusMaxDisplacementLabel_">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="Maxmimum displacement (um): "/>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JSpinner" name="autofocusMaxDisplacementSpinner_">
+                  <Properties>
+                    <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
+                      <SpinnerModel initial="1.0" minimum="0.0" numberType="java.lang.Double" stepSize="1.0" type="number"/>
+                    </Property>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="autofocusMaxDisplacementSpinner_StateChanged"/>
+                  </Events>
+                </Component>
+                <Component class="javax.swing.JLabel" name="jLabel7">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="Use channel:"/>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JComboBox" name="autofocusChannelCombo_">
+                  <Properties>
+                    <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
+                      <Connection code="afucModel" type="code"/>
+                    </Property>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="autofocusChannelCombo_ActionPerformed"/>
+                  </Events>
+                  <AuxValues>
+                    <AuxValue name="JavaCodeGenerator_InitCodePre" type="java.lang.String" value="AutofocusChannelComboModel afucModel = new AutofocusChannelComboModel((SimpleChannelTableModel) channelsTable_.getModel());"/>
+                  </AuxValues>
+                </Component>
+                <Component class="javax.swing.JSpinner" name="autofocusInitialPositionSpinner_">
+                  <Properties>
+                    <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
+                      <SpinnerModel initial="1.0" numberType="java.lang.Double" stepSize="1.0" type="number"/>
+                    </Property>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="autofocusInitialPositionSpinner_StateChanged"/>
+                  </Events>
+                </Component>
+                <Component class="javax.swing.JCheckBox" name="autofocusInitialPositionCheckBox_">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="Set initial position"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="autofocusInitialPositionCheckBox_ActionPerformed"/>
+                  </Events>
+                </Component>
+              </SubComponents>
+            </Container>
           </SubComponents>
         </Container>
       </SubComponents>

@@ -57,6 +57,8 @@ public class FixedAreaAcquisitionSettings  {
    public String autoFocusZDevice_;
    public String autofocusChannelName_;
    public double autofocusMaxDisplacemnet_um_;
+   public boolean setInitialAutofocusPosition_;
+   public double initialAutofocusPosition_;
    
    
    

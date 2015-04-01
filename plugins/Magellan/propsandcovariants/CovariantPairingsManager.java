@@ -74,7 +74,7 @@ public class CovariantPairingsManager {
    public void deletePair(CovariantPairing pair) {
       //Remove from all acquisiton settings that have a reference
       for (int i = 0; i < multiAcqManager_.getSize(); i++) {
-         multiAcqManager_.getAcquisition(i).removePropPairing(pair);
+         multiAcqManager_.getAcquisitionSettings(i).removePropPairing(pair);
       }
       //now remove from the list of pairings
       pairs_.remove(pair);

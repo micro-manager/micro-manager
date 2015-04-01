@@ -41,7 +41,7 @@ public class MultipleAcquisitionManager {
       numberInGroup_.add(1);
    }
       
-   public FixedAreaAcquisitionSettings getAcquisition(int index) {
+   public FixedAreaAcquisitionSettings getAcquisitionSettings(int index) {
       return acqSettingsList_.get(index);
    }
    

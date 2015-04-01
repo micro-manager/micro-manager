@@ -13,7 +13,6 @@ import java.awt.Font;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.io.File;
-import java.text.DecimalFormat;
 import java.util.prefs.Preferences;
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
@@ -52,7 +51,6 @@ import surfacesandregions.SurfaceRegionComboBoxModel;
 import surfacesandregions.XYFootprint;
 import utility.ExactlyOneRowSelectionModel;
 import channels.SimpleChannelTableModel;
-import org.micromanager.api.MMListenerInterface;
 
 
 /**
@@ -99,7 +97,7 @@ public class GUI extends javax.swing.JFrame {
    }
    
    public FixedAreaAcquisitionSettings getActiveAcquisitionSettings() {
-      return multiAcqManager_.getAcquisition(multiAcqSelectedIndex_);
+      return multiAcqManager_.getAcquisitionSettings(multiAcqSelectedIndex_);
    }
    
    public XYFootprint getFootprintObject(int index) {
@@ -191,7 +189,7 @@ public class GUI extends javax.swing.JFrame {
             if (multiAcqSelectedIndex_ == multipleAcqTable_.getModel().getRowCount()) {
                multipleAcqTable_.getSelectionModel().setSelectionInterval(multiAcqSelectedIndex_-1, multiAcqSelectedIndex_-1);
             }
-            populateAcqControls(multiAcqManager_.getAcquisition(multiAcqSelectedIndex_));
+            populateAcqControls(multiAcqManager_.getAcquisitionSettings(multiAcqSelectedIndex_));
          }
       });
       //Table column widths
@@ -204,7 +202,7 @@ public class GUI extends javax.swing.JFrame {
       exploreZStepSpinner_.setValue(ExploreAcqSettings.getZStepFromPrefs());
       exploreTileOverlapSpinner_.setValue(ExploreAcqSettings.getExploreTileOverlapFromPrefs());
       
-      populateAcqControls(multiAcqManager_.getAcquisition(0));     
+      populateAcqControls(multiAcqManager_.getAcquisitionSettings(0));     
       enableAcquisitionComponentsAsNeeded();  
    }
    
@@ -216,7 +214,7 @@ public class GUI extends javax.swing.JFrame {
     
    public void refreshAcquisitionSettings() {
       //so that acquisition names can be changed form multi acquisitiion table
-      populateAcqControls(multiAcqManager_.getAcquisition(multiAcqSelectedIndex_));
+      populateAcqControls(multiAcqManager_.getAcquisitionSettings(multiAcqSelectedIndex_));
    }
 
    private void refreshAcqTabTitleText() {
@@ -255,9 +253,8 @@ public class GUI extends javax.swing.JFrame {
       //Set Tab titles
       refreshAcqTabTitleText();
       //Enable or disable time point stuff
-      boolean enableTime = timePointsCheckBox_.isSelected();
       for (Component c : timePointsPanel_.getComponents()) {
-         c.setEnabled(enableTime);
+         c.setEnabled(timePointsCheckBox_.isSelected());
       }
       //disable all Z stuff then renable as apporpriate
       zStepLabel.setEnabled(false);
@@ -304,13 +301,18 @@ public class GUI extends javax.swing.JFrame {
             }
          }
       }
+      //autofocus stuff
+      for (Component c : autofocusComponentsPanel_.getComponents()) {
+         c.setEnabled(useAutofocusCheckBox_.isSelected());
+      }
+      autofocusInitialPositionSpinner_.setEnabled(autofocusInitialPositionCheckBox_.isSelected());
    }
-      
+
    private void storeCurrentAcqSettings() {
       if(!storeAcqSettings_) {
          return;
       }
-      FixedAreaAcquisitionSettings settings = multiAcqManager_.getAcquisition(multiAcqSelectedIndex_);
+      FixedAreaAcquisitionSettings settings = multiAcqManager_.getAcquisitionSettings(multiAcqSelectedIndex_);
       //saving
       settings.dir_ = savingDirTextField_.getText();
       settings.name_ = savingNameTextField_.getText();
@@ -358,6 +360,8 @@ public class GUI extends javax.swing.JFrame {
          settings.autofocusChannelName_ = autofocusChannelCombo_.getSelectedItem().toString();
          settings.autofocusMaxDisplacemnet_um_ = (Double) autofocusMaxDisplacementSpinner_.getValue();
          settings.autoFocusZDevice_ = autofocusZDeviceComboBox_.getSelectedItem().toString();
+         settings.setInitialAutofocusPosition_ = autofocusInitialPositionCheckBox_.isSelected();
+         settings.initialAutofocusPosition_ = (Double) autofocusInitialPositionSpinner_.getValue();
       }
       
       settings.storePreferedValues();
@@ -562,13 +566,16 @@ public class GUI extends javax.swing.JFrame {
         jLabel6 = new javax.swing.JLabel();
         jLabel8 = new javax.swing.JLabel();
         autofocusTab_l = new javax.swing.JPanel();
-        jLabel7 = new javax.swing.JLabel();
-        autofocusChannelCombo_ = new javax.swing.JComboBox();
-        autofocusMaxDisplacementLabel_ = new javax.swing.JLabel();
-        autofocusMaxDisplacementSpinner_ = new javax.swing.JSpinner();
         useAutofocusCheckBox_ = new javax.swing.JCheckBox();
+        autofocusComponentsPanel_ = new javax.swing.JPanel();
         autofocusZLabel_ = new javax.swing.JLabel();
         autofocusZDeviceComboBox_ = new javax.swing.JComboBox();
+        autofocusMaxDisplacementLabel_ = new javax.swing.JLabel();
+        autofocusMaxDisplacementSpinner_ = new javax.swing.JSpinner();
+        jLabel7 = new javax.swing.JLabel();
+        autofocusChannelCombo_ = new javax.swing.JComboBox();
+        autofocusInitialPositionSpinner_ = new javax.swing.JSpinner();
+        autofocusInitialPositionCheckBox_ = new javax.swing.JCheckBox();
         jLabel1 = new javax.swing.JLabel();
         newExploreWindowButton_ = new javax.swing.JButton();
         jTabbedPane1 = new javax.swing.JTabbedPane();
@@ -1414,25 +1421,6 @@ public class GUI extends javax.swing.JFrame {
 
         acqTabbedPane_.addTab("Covaried settings", covariedSettingsTab_);
 
-        jLabel7.setText("Use channel:");
-
-        AutofocusChannelComboModel afucModel = new AutofocusChannelComboModel((SimpleChannelTableModel) channelsTable_.getModel());
-        autofocusChannelCombo_.setModel(afucModel);
-        autofocusChannelCombo_.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                autofocusChannelCombo_ActionPerformed(evt);
-            }
-        });
-
-        autofocusMaxDisplacementLabel_.setText("Maxmimum displacement (um): ");
-
-        autofocusMaxDisplacementSpinner_.setModel(new javax.swing.SpinnerNumberModel(Double.valueOf(1.0d), Double.valueOf(0.0d), null, Double.valueOf(1.0d)));
-        autofocusMaxDisplacementSpinner_.addChangeListener(new javax.swing.event.ChangeListener() {
-            public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                autofocusMaxDisplacementSpinner_StateChanged(evt);
-            }
-        });
-
         useAutofocusCheckBox_.setText("Activate cross-correlation based autofocus");
         useAutofocusCheckBox_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -1455,6 +1443,86 @@ public class GUI extends javax.swing.JFrame {
             }
         });
 
+        autofocusMaxDisplacementLabel_.setText("Maxmimum displacement (um): ");
+
+        autofocusMaxDisplacementSpinner_.setModel(new javax.swing.SpinnerNumberModel(Double.valueOf(1.0d), Double.valueOf(0.0d), null, Double.valueOf(1.0d)));
+        autofocusMaxDisplacementSpinner_.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                autofocusMaxDisplacementSpinner_StateChanged(evt);
+            }
+        });
+
+        jLabel7.setText("Use channel:");
+
+        AutofocusChannelComboModel afucModel = new AutofocusChannelComboModel((SimpleChannelTableModel) channelsTable_.getModel());
+        autofocusChannelCombo_.setModel(afucModel);
+        autofocusChannelCombo_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                autofocusChannelCombo_ActionPerformed(evt);
+            }
+        });
+
+        autofocusInitialPositionSpinner_.setModel(new javax.swing.SpinnerNumberModel(Double.valueOf(1.0d), null, null, Double.valueOf(1.0d)));
+        autofocusInitialPositionSpinner_.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                autofocusInitialPositionSpinner_StateChanged(evt);
+            }
+        });
+
+        autofocusInitialPositionCheckBox_.setText("Set initial position");
+        autofocusInitialPositionCheckBox_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                autofocusInitialPositionCheckBox_ActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout autofocusComponentsPanel_Layout = new javax.swing.GroupLayout(autofocusComponentsPanel_);
+        autofocusComponentsPanel_.setLayout(autofocusComponentsPanel_Layout);
+        autofocusComponentsPanel_Layout.setHorizontalGroup(
+            autofocusComponentsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(autofocusComponentsPanel_Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(autofocusComponentsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(autofocusComponentsPanel_Layout.createSequentialGroup()
+                        .addComponent(jLabel7)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(autofocusChannelCombo_, javax.swing.GroupLayout.PREFERRED_SIZE, 115, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(autofocusComponentsPanel_Layout.createSequentialGroup()
+                        .addComponent(autofocusMaxDisplacementLabel_)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(autofocusMaxDisplacementSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 64, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(autofocusComponentsPanel_Layout.createSequentialGroup()
+                        .addComponent(autofocusZLabel_)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(autofocusZDeviceComboBox_, javax.swing.GroupLayout.PREFERRED_SIZE, 128, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(autofocusComponentsPanel_Layout.createSequentialGroup()
+                        .addComponent(autofocusInitialPositionCheckBox_)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(autofocusInitialPositionSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(25, Short.MAX_VALUE))
+        );
+        autofocusComponentsPanel_Layout.setVerticalGroup(
+            autofocusComponentsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, autofocusComponentsPanel_Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(autofocusComponentsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel7)
+                    .addComponent(autofocusChannelCombo_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(18, 18, 18)
+                .addGroup(autofocusComponentsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(autofocusMaxDisplacementSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(autofocusMaxDisplacementLabel_))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(autofocusComponentsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(autofocusZLabel_)
+                    .addComponent(autofocusZDeviceComboBox_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(autofocusComponentsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(autofocusInitialPositionSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(autofocusInitialPositionCheckBox_))
+                .addContainerGap(27, Short.MAX_VALUE))
+        );
+
         javax.swing.GroupLayout autofocusTab_lLayout = new javax.swing.GroupLayout(autofocusTab_l);
         autofocusTab_l.setLayout(autofocusTab_lLayout);
         autofocusTab_lLayout.setHorizontalGroup(
@@ -1462,40 +1530,18 @@ public class GUI extends javax.swing.JFrame {
             .addGroup(autofocusTab_lLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(autofocusTab_lLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(autofocusTab_lLayout.createSequentialGroup()
-                        .addComponent(autofocusMaxDisplacementLabel_)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(autofocusMaxDisplacementSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 64, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(autofocusTab_lLayout.createSequentialGroup()
-                        .addComponent(jLabel7)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(autofocusChannelCombo_, javax.swing.GroupLayout.PREFERRED_SIZE, 115, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(autofocusTab_lLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                        .addGroup(javax.swing.GroupLayout.Alignment.LEADING, autofocusTab_lLayout.createSequentialGroup()
-                            .addComponent(autofocusZLabel_)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                            .addComponent(autofocusZDeviceComboBox_, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addComponent(useAutofocusCheckBox_, javax.swing.GroupLayout.Alignment.LEADING)))
-                .addContainerGap(553, Short.MAX_VALUE))
+                    .addComponent(useAutofocusCheckBox_)
+                    .addComponent(autofocusComponentsPanel_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(518, Short.MAX_VALUE))
         );
         autofocusTab_lLayout.setVerticalGroup(
             autofocusTab_lLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(autofocusTab_lLayout.createSequentialGroup()
-                .addContainerGap()
+                .addGap(15, 15, 15)
                 .addComponent(useAutofocusCheckBox_)
-                .addGap(1, 1, 1)
-                .addGroup(autofocusTab_lLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel7)
-                    .addComponent(autofocusChannelCombo_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
-                .addGroup(autofocusTab_lLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(autofocusMaxDisplacementLabel_)
-                    .addComponent(autofocusMaxDisplacementSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(21, 21, 21)
-                .addGroup(autofocusTab_lLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(autofocusZLabel_)
-                    .addComponent(autofocusZDeviceComboBox_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(148, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(autofocusComponentsPanel_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(78, Short.MAX_VALUE))
         );
 
         acqTabbedPane_.addTab("Autofocus", autofocusTab_l);
@@ -1539,7 +1585,7 @@ public class GUI extends javax.swing.JFrame {
             .addGroup(controlPanelName_Layout.createSequentialGroup()
                 .addGap(346, 346, 346)
                 .addComponent(configPropsButton_)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
         controlPanelName_Layout.setVerticalGroup(
             controlPanelName_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1842,7 +1888,7 @@ public class GUI extends javax.swing.JFrame {
                     .addGroup(layout.createSequentialGroup()
                         .addGap(329, 329, 329)
                         .addComponent(newExploreWindowButton_)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1900,7 +1946,7 @@ public class GUI extends javax.swing.JFrame {
       new Thread(new Runnable() {
          @Override
          public void run() {
-            eng_.runFixedAreaAcquisition(multiAcqManager_.getAcquisition(multipleAcqTable_.getSelectedRow()));
+            eng_.runFixedAreaAcquisition(multiAcqManager_.getAcquisitionSettings(multipleAcqTable_.getSelectedRow()));
          }
       }).start();
    }//GEN-LAST:event_runAcqButton_ActionPerformed
@@ -2183,6 +2229,7 @@ public class GUI extends javax.swing.JFrame {
    }//GEN-LAST:event_deleteCovariedPairingValueButton_ActionPerformed
 
    private void useAutofocusCheckBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_useAutofocusCheckBox_ActionPerformed
+      enableAcquisitionComponentsAsNeeded();
       acquisitionSettingsChanged();
    }//GEN-LAST:event_useAutofocusCheckBox_ActionPerformed
 
@@ -2214,6 +2261,15 @@ public class GUI extends javax.swing.JFrame {
         storeCurrentAcqSettings();
     }//GEN-LAST:event_autofocusMaxDisplacementSpinner_StateChanged
 
+   private void autofocusInitialPositionSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_autofocusInitialPositionSpinner_StateChanged
+      storeCurrentAcqSettings();
+   }//GEN-LAST:event_autofocusInitialPositionSpinner_StateChanged
+
+   private void autofocusInitialPositionCheckBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_autofocusInitialPositionCheckBox_ActionPerformed
+      enableAcquisitionComponentsAsNeeded();
+      storeCurrentAcqSettings();
+   }//GEN-LAST:event_autofocusInitialPositionCheckBox_ActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel ChannelsTab_;
@@ -2224,6 +2280,9 @@ public class GUI extends javax.swing.JFrame {
     private javax.swing.JButton addAcqButton_;
     private javax.swing.JButton addCovariedPairingValueButton_;
     private javax.swing.JComboBox autofocusChannelCombo_;
+    private javax.swing.JPanel autofocusComponentsPanel_;
+    private javax.swing.JCheckBox autofocusInitialPositionCheckBox_;
+    private javax.swing.JSpinner autofocusInitialPositionSpinner_;
     private javax.swing.JLabel autofocusMaxDisplacementLabel_;
     private javax.swing.JSpinner autofocusMaxDisplacementSpinner_;
     private javax.swing.JPanel autofocusTab_l;

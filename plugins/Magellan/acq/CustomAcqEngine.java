@@ -59,7 +59,7 @@ public class CustomAcqEngine {
    }
 
    /**
-    * CAlled by run acquisition button
+    * Called by run acquisition button
     */
    public void runFixedAreaAcquisition(final FixedAreaAcquisitionSettings settings) {
       runInterleavedAcquisitions(Arrays.asList(new FixedAreaAcquisitionSettings[]{settings}), false);
