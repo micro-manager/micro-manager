@@ -38,6 +38,7 @@ import org.micromanager.data.Image;
 
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.events.FPSEvent;
+import org.micromanager.display.internal.events.DefaultPixelsSetEvent;
 
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -46,21 +47,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * a DisplayWindow's canvas.
  */
 public class CanvasUpdateThread extends Thread {
-   /**
-    * This class signifies that we just updated the pixels that the canvas is
-    * displaying, and thus any associated widgets (e.g. histograms and
-    * metadata) also need to be updated.
-    */
-   public class PixelsSetEvent {
-      private Image image_;
-      public PixelsSetEvent(Image image) {
-         image_ = image;
-      }
-      public Image getImage() {
-         return image_;
-      }
-   }
-   
+
    private Datastore store_;
    private MMVirtualStack stack_;
    private ImagePlus plus_;
@@ -177,7 +164,7 @@ public class CanvasUpdateThread extends Thread {
          stack_.setCoords(image.getCoords());
          plus_.getProcessor().setPixels(image.getRawPixels());
          plus_.updateAndDraw();
-         display_.postEvent(new PixelsSetEvent(image));
+         display_.postEvent(new DefaultPixelsSetEvent(image));
       }
    }
 

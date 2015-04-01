@@ -46,6 +46,8 @@ import javax.swing.UIManager;
 
 import net.miginfocom.swing.MigLayout;
 
+import org.micromanager.display.Inspector;
+import org.micromanager.display.InspectorPanel;
 import org.micromanager.display.internal.events.DisplayActivatedEvent;
 import org.micromanager.display.internal.events.LayoutChangedEvent;
 import org.micromanager.events.internal.DefaultEventManager;
@@ -58,7 +60,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * DisplayWindow (or to a specific DisplayWindow as selected by the user). It
  * consists of a set of expandable panels in a vertical configuration.
  */
-public class InspectorFrame extends MMFrame {
+public class InspectorFrame extends MMFrame implements Inspector {
    ArrayList<InspectorPanel> panels_;
    JPanel contents_;
 
@@ -84,7 +86,12 @@ public class InspectorFrame extends MMFrame {
             DefaultEventManager.getInstance().unregisterForEvents(this);
          }
       });
+
+      // Hard-coded initial panels.
       addPanel("Contrast", new HistogramsPanel());
+//      addPanel("Metadata", new MetadataPanel());
+//      addPanel("Comments", new CommentsPanel());
+//      addPanel("Overlays", new OverlaysPanel());
    }
 
    /**
@@ -92,6 +99,7 @@ public class InspectorFrame extends MMFrame {
     */
    public void addPanel(String title, final InspectorPanel panel) {
       panels_.add(panel);
+      panel.setInspector(this);
       // Wrap the panel in our own panel which includes the header.
       final JPanel wrapper = new JPanel(
             new MigLayout("flowy, insets 0, fillx"));
@@ -126,6 +134,11 @@ public class InspectorFrame extends MMFrame {
 
       contents_.add(wrapper);
       validate();
+   }
+
+   @Override
+   public void relayout() {
+      pack();
    }
 
    @Subscribe

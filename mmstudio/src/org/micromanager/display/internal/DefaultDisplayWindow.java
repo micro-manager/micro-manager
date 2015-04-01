@@ -85,6 +85,7 @@ import org.micromanager.display.internal.events.DisplayActivatedEvent;
 import org.micromanager.display.internal.events.FullScreenEvent;
 import org.micromanager.display.internal.events.LayoutChangedEvent;
 import org.micromanager.display.internal.events.NewDisplaySettingsEvent;
+import org.micromanager.display.PixelsSetEvent;
 import org.micromanager.display.internal.events.RequestToCloseEvent;
 import org.micromanager.display.internal.events.StatusEvent;
 import org.micromanager.display.internal.link.DisplayGroupManager;
@@ -128,10 +129,6 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    private JPanel controlsPanel_;
    private HyperstackControls hyperstackControls_;
    private JButton fullButton_;
-   private MultiModePanel modePanel_;
-   private MetadataPanel metadata_;
-   private CommentsPanel comments_;
-   private OverlaysPanel overlays_;
 
    private boolean haveCreatedGUI_ = false;
 
@@ -346,27 +343,6 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       controlsPanel_.add(fullButton_);
       controlsPanel_.add(new SaveButton(store_, this));
       contentsPanel_.add(controlsPanel_, "align center, wrap, growx, growy 0");
-
-      if (modePanel_ == null) {
-         modePanel_ = new MultiModePanel(displayBus_);
-
-         DisplaySettingsPanel settings = new DisplaySettingsPanel(
-            store_, ijImage_, this, displayBus_);
-         modePanel_.addMode("Settings", settings);
-
-//         histograms_.setMinimumSize(new java.awt.Dimension(280, 0));
-
-         metadata_ = new MetadataPanel(this);
-         modePanel_.addMode("Metadata", metadata_);
-
-         comments_ = new CommentsPanel(store_, stack_);
-         modePanel_.addMode("Comments", comments_);
-
-         overlays_ = new OverlaysPanel(this, stack_, ijImage_);
-         modePanel_.addMode("Overlays", overlays_);
-      }
-
-      contentsPanel_.add(modePanel_, "dock east, growy");
 
       add(contentsPanel_);
       Insets insets = getInsets();
@@ -628,11 +604,6 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    }
       
    @Override
-   public void addControlPanel(String label, Component widget) {
-      modePanel_.addMode(label, widget);
-   }
-
-   @Override
    public Datastore getDatastore() {
       return store_;
    }
@@ -794,11 +765,11 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    }
 
    @Subscribe
-   public void onPixelsSet(CanvasUpdateThread.PixelsSetEvent event) {
+   public void onPixelsSet(PixelsSetEvent event) {
       try {
          ReportingUtils.logError("TODO: update histograms");
 //         histograms_.calcAndDisplayHistAndStats();
-         metadata_.imageChangedUpdate(event.getImage());
+//         metadata_.imageChangedUpdate(event.getImage());
          // TODO: I think this means we're on top, but I'm not certain.
          if (isFocusableWindow()) {
             LineProfile.updateLineProfile();
@@ -979,7 +950,8 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          // Do nothing for now since we aren't visible anyway.
          return;
       }
-      Dimension modeSize = modePanel_.getPreferredSize();
+      ReportingUtils.logError("TODO: rework resizing logic now that multi-mode panel is gone");
+      Dimension modeSize = new Dimension(0, 0);
       Dimension controlsSize = controlsPanel_.getPreferredSize();
       Image image = store_.getAnyImage();
       if (image == null || canvas_ == null) {
@@ -1025,7 +997,8 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
     */
    @Override
    public void pack() {
-      Dimension modeSize = modePanel_.getPreferredSize();
+      ReportingUtils.logError("TODO: rework resizing logic now that multi-mode panel is gone");
+      Dimension modeSize = new Dimension(0, 0);
       Dimension controlsSize = controlsPanel_.getPreferredSize();
       Dimension ourSize = contentsPanel_.getSize();
       boolean isFullScreen = (fullScreenFrame_ != null);

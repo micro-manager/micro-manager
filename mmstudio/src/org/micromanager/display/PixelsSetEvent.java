@@ -18,22 +18,20 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.display.internal.inspector;
+package org.micromanager.display;
 
-import javax.swing.JPanel;
-
-import org.micromanager.display.DisplayWindow;
+import org.micromanager.data.Image;
 
 /**
- * An InspectorPanel is a single component in the inspector window. It has a
- * title bar that can be clicked to show/hide the contents of the panel.
+ * This event is fired immediately after the image data displayed by the
+ * DisplayWindow is updated. Listen for it if you have a control that displays
+ * information pertinent to the currently-displayed image.
  */
-public class InspectorPanel extends JPanel {
+public interface PixelsSetEvent {
    /**
-    * Receive a new DisplayWindow. For panels whose contents change in response
-    * to the DisplayWindow that is currently "active", this method must be
-    * overridden to update those contents.
-    * @param display The newly-active DisplayWindow.
+    * Provides access to the Image whose pixels were just drawn to the
+    * DisplayWindow.
+    * @return The most recently-drawn Image.
     */
-   public void setDisplay(DisplayWindow display) {}
+   public Image getImage();
 }

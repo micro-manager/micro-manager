@@ -63,12 +63,6 @@ public interface DisplayWindow {
    public double getMagnification();
 
    /**
-    * Add an additional "mode button" to the display window, to show/hide
-    * the provided Component when clicked.
-    */
-   public void addControlPanel(String label, Component widget);
-
-   /**
     * Retrieve the Datastore backing this display.
     */
    public Datastore getDatastore();

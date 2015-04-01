@@ -40,11 +40,14 @@ import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.NewImagePlusEvent;
 
+import org.micromanager.display.Inspector;
+import org.micromanager.display.InspectorPanel;
 import org.micromanager.display.internal.events.DefaultRequestToDrawEvent;
 import org.micromanager.display.internal.events.LUTUpdateEvent;
 import org.micromanager.display.internal.DefaultDisplayWindow;
 import org.micromanager.display.internal.DisplayDestroyedEvent;
 import org.micromanager.display.internal.MMVirtualStack;
+import org.micromanager.display.PixelsSetEvent;
 
 import org.micromanager.internal.interfaces.Histograms;
 import org.micromanager.internal.utils.ContrastSettings;
@@ -55,6 +58,8 @@ import org.micromanager.internal.utils.ReportingUtils;
 // really need this class in the first place, or at least we don't need it to
 // be so tightly-bound to the ChannelControlPanels it contains.
 public final class HistogramsPanel extends InspectorPanel implements Histograms {
+   private Inspector inspector_;
+
    private ArrayList<ChannelControlPanel> channelPanels_;
    private Datastore store_;
    private DisplayWindow display_;
@@ -66,6 +71,7 @@ public final class HistogramsPanel extends InspectorPanel implements Histograms 
 
    public HistogramsPanel() {
       super();
+      setMinimumSize(new java.awt.Dimension(280, 0));
    }
 
    /**
@@ -98,6 +104,7 @@ public final class HistogramsPanel extends InspectorPanel implements Histograms 
       }
 
       validate();
+      inspector_.relayout();
    }
    
    public synchronized void fullScaleChannels() {
@@ -276,6 +283,11 @@ public final class HistogramsPanel extends InspectorPanel implements Histograms 
    }
 
    @Subscribe
+   public void onPixelsSet(PixelsSetEvent event) {
+      calcAndDisplayHistAndStats();
+   }
+
+   @Subscribe
    public void onNewImagePlus(NewImagePlusEvent event) {
       try {
          setImagePlus(event.getImagePlus());
@@ -309,5 +321,10 @@ public final class HistogramsPanel extends InspectorPanel implements Histograms 
       stack_ = ((DefaultDisplayWindow) display_).getStack();
       ijImage_ = display_.getImagePlus();
       setupChannelControls();
+   }
+
+   @Override
+   public void setInspector(Inspector inspector) {
+      inspector_ = inspector;
    }
 }
