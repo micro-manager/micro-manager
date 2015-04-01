@@ -6,12 +6,13 @@
 // DESCRIPTION:   The example implementation of the Mightex USB camera.
 //                Simulates generic digital camera and associated automated
 //                microscope devices and enables testing of the rest of the
-//                system without the need to connect to the actual hardware. 
-//                
+//                system without the need to connect to the actual hardware.
+//
 // AUTHOR:        Yihui, mightexsystem.com, 12/17/2014
 //
 // COPYRIGHT:     University of California, San Francisco, 2006
 //                100X Imaging Inc, 2008
+//                Mightex Systems, 2014-2015
 //
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
@@ -23,9 +24,6 @@
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-//
-// CVS:           $Id: Mightex_USBCamera.h 12531 2014-05-30 16:25:20Z mark $
-//
 
 #ifndef _Mightex_USBCamera_H_
 #define _Mightex_USBCamera_H_
