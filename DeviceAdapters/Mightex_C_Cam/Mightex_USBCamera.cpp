@@ -8,7 +8,7 @@
 //                microscope devices and enables testing of the rest of the
 //                system without the need to connect to the actual hardware. 
 //                
-// AUTHOR:        Yihui, mightexsystem.com, 05/30/2014
+// AUTHOR:        Yihui, mightexsystem.com, 12/17/2014
 //
 // COPYRIGHT:     University of California, San Francisco, 2006
 //                100X Imaging Inc, 2008
@@ -179,6 +179,7 @@ BUFCCDUSB_SetXYStartPtr BUFCCDUSB_SetXYStart;
 BUFCCDUSB_SetGainsPtr BUFCCDUSB_SetGains;
 BUFCCDUSB_SetGammaPtr BUFCCDUSB_SetGamma;
 BUFCCDUSB_SetBWModePtr BUFCCDUSB_SetBWMode;
+BUFCCDUSB_SetSoftTriggerPtr BUFCCDUSB_SetSoftTrigger;
 BUFCCDUSB_InstallFrameHookerPtr BUFCCDUSB_InstallFrameHooker;
 BUFCCDUSB_InstallUSBDeviceHookerPtr BUFCCDUSB_InstallUSBDeviceHooker;
 //////////////////////////////////////////////////////////////////////////
@@ -190,6 +191,7 @@ int g_frameSize_width = DEFAULT_WIDTH;
 int g_deviceColorType = 0;
 int g_InstanceCount = 0;
 long g_xStart = 0;
+HANDLE SingleFrameEvent = NULL;
 
 /////////////////////////////////////////////////////////////////////////////
 //CallBack Function
@@ -211,9 +213,12 @@ void FrameCallBack(TProcessedDataProperty *Attributes, unsigned char *BytePtr)
 		bool isInROI;
 		if(Attributes->Bin == 0)
 		{
+
 			if(g_frameSize_width == Attributes->Column)
 			{
 				memcpy(g_pImage, BytePtr, g_frameSize);
+				if ( Attributes->TriggerEventCount == 1 )
+                                       SetEvent( SingleFrameEvent ); 
 				return;
 			}
 
@@ -259,6 +264,8 @@ void FrameCallBack(TProcessedDataProperty *Attributes, unsigned char *BytePtr)
 			}
 			p = NULL;
 			q = NULL;
+			if ( Attributes->TriggerEventCount == 1 )
+                               SetEvent( SingleFrameEvent );
 		}
 	}
 }
@@ -290,6 +297,7 @@ int CMightex_BUF_USBCCDCamera::InitCamera()
 	BUFCCDUSB_SetGains = (BUFCCDUSB_SetGainsPtr)GetProcAddress(HDll,"BUFCCDUSB_SetGains");
 	BUFCCDUSB_SetGamma = (BUFCCDUSB_SetGammaPtr)GetProcAddress(HDll,"BUFCCDUSB_SetGamma");
 	BUFCCDUSB_SetBWMode = (BUFCCDUSB_SetBWModePtr)GetProcAddress(HDll,"BUFCCDUSB_SetBWMode");
+	BUFCCDUSB_SetSoftTrigger = (BUFCCDUSB_SetSoftTriggerPtr)GetProcAddress(HDll,"BUFCCDUSB_SetSoftTrigger");
 	BUFCCDUSB_InstallFrameHooker = (BUFCCDUSB_InstallFrameHookerPtr)GetProcAddress(HDll,"BUFCCDUSB_InstallFrameHooker");
 	BUFCCDUSB_InstallUSBDeviceHooker = (BUFCCDUSB_InstallUSBDeviceHookerPtr)GetProcAddress(HDll,"BUFCCDUSB_InstallUSBDeviceHooker");
   }
@@ -319,11 +327,15 @@ int CMightex_BUF_USBCCDCamera::InitCamera()
 	}
 
 		BUFCCDUSB_AddDeviceToWorkingSet(1);
-		BUFCCDUSB_ActiveDeviceInWorkingSet(1, 0);
+		//BUFCCDUSB_ActiveDeviceInWorkingSet(1, 0);
+		BUFCCDUSB_ActiveDeviceInWorkingSet(1, 1);
 
 	BUFCCDUSB_StartCameraEngine( NULL, 8);
 	BUFCCDUSB_InstallFrameHooker( 1, FrameCallBack );
 	BUFCCDUSB_InstallUSBDeviceHooker( CameraFaultCallBack );
+	BUFCCDUSB_SetCameraWorkMode( 1, 1 ); // TRIGGER MODE
+	BUFCCDUSB_StartFrameGrab( GRAB_FRAME_FOREVER );
+
 
 	//////////////////////////////////////////////////////////////////////////
 	// GetDeviceType
@@ -417,6 +429,8 @@ int CMightex_BUF_USBCCDCamera::InitCamera()
 
 	is_initCamera = true;
     LogMessage("After InitCamera CMightex_BUF_USBCCDCamera\n");
+
+	SingleFrameEvent = CreateEvent( NULL, FALSE, FALSE, "SingleFrameGrabbingEvent");
 
     return DEVICE_OK;
 }
@@ -815,6 +829,7 @@ int CMightex_BUF_USBCCDCamera::Shutdown()
 	//	 return DEVICE_OK;
 
 	if(HDll){
+                BUFCCDUSB_StopFrameGrab();
 		BUFCCDUSB_InstallFrameHooker( 1, NULL );
 		BUFCCDUSB_InstallUSBDeviceHooker( NULL );
         //LogMessage("Before BUFCCDUSB_StopCameraEngine\n");
@@ -828,6 +843,8 @@ int CMightex_BUF_USBCCDCamera::Shutdown()
 		 FreeLibrary( HDll );
 		LogMessage("After FreeLibrary\n");
 		 //HDll = NULL;
+		if ( SingleFrameEvent != NULL )
+		        CloseHandle( SingleFrameEvent );
 	}
 
    if(!is_initCamera)
@@ -865,6 +882,11 @@ int CMightex_BUF_USBCCDCamera::SnapImage()
       exp = GetSequenceExposure();
    }
 
+   // We assume it must be in TRIGGER mode
+   BUFCCDUSB_SetCameraWorkMode(1, 1); // Set "TriggerEventCount" to 0.
+   Sleep(20);
+   BUFCCDUSB_SetSoftTrigger(1); // Assert Once for single frame.
+
    GenerateSyntheticImage(img_, exp);
 
    MM::MMTime s0(0,0);
@@ -883,6 +905,9 @@ int CMightex_BUF_USBCCDCamera::SnapImage()
 
    }
    readoutStartTime_ = GetCurrentMMTime();
+
+   int WaitResult = WaitForSingleObject( SingleFrameEvent, 1000 );
+   GetImageBuffer();
 
    return DEVICE_OK;
 }
@@ -1236,8 +1261,9 @@ int CMightex_BUF_USBCCDCamera::SetAllowedBinning()
  */
 int CMightex_BUF_USBCCDCamera::StartSequenceAcquisition(double interval) {
 
-	BUFCCDUSB_ActiveDeviceInWorkingSet(1, 1);
-	BUFCCDUSB_StartFrameGrab( GRAB_FRAME_FOREVER );
+	//BUFCCDUSB_ActiveDeviceInWorkingSet(1, 1);
+	//BUFCCDUSB_StartFrameGrab( GRAB_FRAME_FOREVER );
+	BUFCCDUSB_SetCameraWorkMode(1, 0); // Set to NORMAL mode
 
    return StartSequenceAcquisition(LONG_MAX, interval, false);            
 }
@@ -1254,8 +1280,9 @@ int CMightex_BUF_USBCCDCamera::StopSequenceAcquisition()
 
   if(is_initCamera){
 	  LogMessage("before BUFCCDUSB_StopFrameGrab\n");
-	  BUFCCDUSB_StopFrameGrab();
-	  BUFCCDUSB_ActiveDeviceInWorkingSet(1, 0);
+	  //BUFCCDUSB_StopFrameGrab();
+	  //BUFCCDUSB_ActiveDeviceInWorkingSet(1, 0);
+  	  BUFCCDUSB_SetCameraWorkMode(1, 1); // Set to TRIGGER mode		
 	}
 
    if (!thd_->IsStopped()) {

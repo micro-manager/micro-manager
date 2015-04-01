@@ -57,3 +57,4 @@ typedef int (WINAPI * BUFCCDUSB_SetGammaPtr) ( int Gamma, int Contrast, int Brig
 typedef int (WINAPI * BUFCCDUSB_SetBWModePtr) ( int BWMode, int H_Mirror, int V_Flip );
 typedef int (WINAPI * BUFCCDUSB_InstallFrameHookerPtr) ( int FrameType, FrameDataCallBack FrameHooker );
 typedef void (WINAPI * BUFCCDUSB_InstallUSBDeviceHookerPtr) ( DeviceFaultCallBack USBDeviceHooker );
+typedef int (WINAPI * BUFCCDUSB_SetSoftTriggerPtr)( int deviceID );

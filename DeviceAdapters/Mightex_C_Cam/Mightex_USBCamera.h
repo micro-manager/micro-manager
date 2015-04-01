@@ -8,7 +8,7 @@
 //                microscope devices and enables testing of the rest of the
 //                system without the need to connect to the actual hardware. 
 //                
-// AUTHOR:        Yihui, mightexsystem.com, 05/30/2014
+// AUTHOR:        Yihui, mightexsystem.com, 12/17/2014
 //
 // COPYRIGHT:     University of California, San Francisco, 2006
 //                100X Imaging Inc, 2008
