@@ -146,7 +146,6 @@ private:
    int SetAllowedBinning();
    void TestResourceLocking(const bool);
    void GenerateEmptyImage(ImgBuffer& img);
-   void GenerateSyntheticImage(ImgBuffer& img, double exp);
    int ResizeImageBuffer();
 
    static const double nominalPixelSizeUm_;

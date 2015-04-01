@@ -194,7 +194,7 @@ HANDLE SingleFrameEvent = NULL;
 /////////////////////////////////////////////////////////////////////////////
 //CallBack Function
 
-void CameraFaultCallBack( int ImageType )
+void CameraFaultCallBack( int /*ImageType*/ )
 {
 	// Note: It's recommended to stop the engine and close the application
 	BUFCCDUSB_StopCameraEngine();
@@ -448,8 +448,6 @@ int CMightex_BUF_USBCCDCamera::GetCameraBufferCount(int width, int height)
 		return CAMERA_BUFFER_BW[tmpIndex+1];	
 	else
 		return CAMERA_BUFFER_COLOR[tmpIndex+1];	
-	
-	return NORMAL_FRAMES;
 }
 
 
@@ -885,8 +883,6 @@ int CMightex_BUF_USBCCDCamera::SnapImage()
    Sleep(20);
    BUFCCDUSB_SetSoftTrigger(1); // Assert Once for single frame.
 
-   GenerateSyntheticImage(img_, exp);
-
    MM::MMTime s0(0,0);
    if( s0 < startTime )
    {
@@ -904,7 +900,7 @@ int CMightex_BUF_USBCCDCamera::SnapImage()
    }
    readoutStartTime_ = GetCurrentMMTime();
 
-   int WaitResult = WaitForSingleObject( SingleFrameEvent, 1000 );
+   /* int WaitResult = */ WaitForSingleObject( SingleFrameEvent, 1000 );
    GetImageBuffer();
 
    return DEVICE_OK;
@@ -1372,11 +1368,6 @@ int CMightex_BUF_USBCCDCamera::ThreadRun (MM::MMTime startTime)
       	LogMessage("trigger requested");
       	triggerDev->SetProperty("Trigger","+");
       }
-   }
-   
-   if (!fastImage_)
-   {
-      GenerateSyntheticImage(img_, GetSequenceExposure());
    }
 
    ret = InsertImage();
@@ -1955,19 +1946,6 @@ void CMightex_BUF_USBCCDCamera::GenerateEmptyImage(ImgBuffer& img)
    unsigned char* pBuf = const_cast<unsigned char*>(img.GetPixels());
    memset(pBuf, 0, img.Height()*img.Width()*img.Depth());
 }
-
-
-
-/**
-* Generate a spatial sine wave.
-*/
-void CMightex_BUF_USBCCDCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
-{ 
-  
-   MMThreadGuard g(imgPixelsLock_);
-
-}
-
 
 void CMightex_BUF_USBCCDCamera::TestResourceLocking(const bool recurse)
 {
