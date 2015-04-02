@@ -88,6 +88,7 @@ import org.micromanager.display.internal.events.NewDisplaySettingsEvent;
 import org.micromanager.display.PixelsSetEvent;
 import org.micromanager.display.internal.events.RequestToCloseEvent;
 import org.micromanager.display.internal.events.StatusEvent;
+import org.micromanager.display.internal.inspector.InspectorFrame;
 import org.micromanager.display.internal.link.DisplayGroupManager;
 
 import org.micromanager.internal.LineProfile;
@@ -106,6 +107,12 @@ import org.micromanager.internal.utils.ReportingUtils;
  * more information on why we do this.
  */
 public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
+
+   // HACK: the first time a DisplayWindow is created, create an
+   // InspectorFrame to go with it.
+   static {
+      new InspectorFrame(null);
+   }
 
    private Datastore store_;
    private DisplaySettings displaySettings_;
@@ -341,6 +348,18 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       controlsPanel_.add(fullButton_);
       controlsPanel_.add(new SaveButton(store_, this));
       contentsPanel_.add(controlsPanel_, "align center, wrap, growx, growy 0");
+
+      JButton infoButton = new JButton(new javax.swing.ImageIcon(
+               getClass().getResource("/org/micromanager/internal/icons/info.png")));
+      infoButton.setToolTipText("Create a new Inspector window keyed to this display");
+      final DefaultDisplayWindow finalThis = this;
+      infoButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent event) {
+            new InspectorFrame(finalThis);
+         }
+      });
+      controlsPanel_.add(infoButton);
 
       add(contentsPanel_);
       Insets insets = getInsets();
