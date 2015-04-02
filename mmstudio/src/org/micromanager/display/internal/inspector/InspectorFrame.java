@@ -191,7 +191,7 @@ public class InspectorFrame extends MMFrame implements Inspector {
       wrapper.add(header, "growx");
       panel.setVisible(false); // So the first click will show it.
 
-      contents_.add(wrapper);
+      contents_.add(wrapper, "growx");
       validate();
    }
 
