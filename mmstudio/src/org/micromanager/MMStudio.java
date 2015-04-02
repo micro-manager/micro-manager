@@ -1011,24 +1011,27 @@ public class MMStudio implements ScriptInterface {
 
    protected void changeBinning() {
       try {
-         boolean liveRunning = false;
-         if (isLiveModeOn() ) {
-            liveRunning = true;
-            enableLiveMode(false);
-        } 
-         
-         if (isCameraAvailable()) {
-            String item = frame_.getBinMode();
-            if (item != null) {
-               core_.setProperty(StaticInfo.cameraLabel_, MMCoreJ.getG_Keyword_Binning(), item);
-            }
+         String mode = frame_.getBinMode();
+         if (!isCameraAvailable() || mode == null) {
+            // No valid option.
+            return;
          }
-         staticInfo_.refreshValues();
+         if (core_.getProperty(StaticInfo.cameraLabel_,
+                  MMCoreJ.getG_Keyword_Binning()).equals(mode)) {
+            // No change in binning mode.
+            return;
+         }
 
-         if (liveRunning) {
+         boolean isLiveOn = false;
+         if (isLiveModeOn()) {
+            isLiveOn = true;
+            enableLiveMode(false);
+         }
+         core_.setProperty(StaticInfo.cameraLabel_, MMCoreJ.getG_Keyword_Binning(), mode);
+         staticInfo_.refreshValues();
+         if (isLiveOn) {
             enableLiveMode(true);
          }
-
       } catch (Exception e) {
          ReportingUtils.showError(e);
       }
