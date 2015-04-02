@@ -23,15 +23,24 @@ package org.micromanager.display;
 import org.micromanager.display.DisplayWindow;
 
 /**
- * An OverlayPanelFactory is a class which can create OverlayPanels. A
- * separate OverlayPanel is needed for each DisplayWindow; this class is
- * responsible for creating them. 
+ * An OverlayPanelFactory is a class which can create OverlayPanels. As it is
+ * possible to have multiple inspector windows with their own overlay controls,
+ * and for that matter it's possible to have multiple overlays of the same
+ * type in a single inspector window, we need an object capable of generating
+ * new overlay panels on demand.
  */
 public interface OverlayPanelFactory {
    /**
-    * Create a single OverlayPanel for the specified DisplayWindow.
-    * @param display The DisplayWindow the panel will be embedded into.
+    * Create a single OverlayPanel.
     * @return An OverlayPanel instance for controlling the overlay.
     */
-   public OverlayPanel createOverlayPanel(DisplayWindow display);
+   public OverlayPanel createOverlayPanel();
+
+   /**
+    * Provide a short textual description of the OverlayPanel this factory
+    * creates. This string must be unique across all OverlayPanelFactories
+    * registered with the program (see DisplayManager.registerOverlay()).
+    * @return A short description (2-3 words) of the overlay.
+    */
+   public String getTitle();
 }

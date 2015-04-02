@@ -25,7 +25,12 @@ import org.micromanager.display.OverlayPanel;
 import org.micromanager.display.OverlayPanelFactory;
 
 public class TimestampOverlayFactory implements OverlayPanelFactory {
-   public OverlayPanel createOverlayPanel(DisplayWindow display) {
+   public OverlayPanel createOverlayPanel() {
       return new TimestampOverlayPanel();
-   }  
+   }
+
+   @Override
+   public String getTitle() {
+      return "Timestamp display";
+   }
 }

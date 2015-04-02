@@ -24,9 +24,10 @@ import com.google.common.eventbus.Subscribe;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
-import javax.swing.border.TitledBorder;
 import javax.swing.JOptionPane;
 
 import org.micromanager.data.Coords;
@@ -62,15 +63,15 @@ public class DefaultDisplayManager implements DisplayManager {
 
    private MMStudio studio_;
    private HashMap<Datastore, ArrayList<DisplayWindow>> storeToDisplays_;
-   private ArrayList<OverlayPanelFactory> overlays_;
+   private LinkedHashMap<String, OverlayPanelFactory> titleToOverlay_;
 
    public DefaultDisplayManager(MMStudio studio) {
       studio_ = studio;
       storeToDisplays_ = new HashMap<Datastore, ArrayList<DisplayWindow>>();
-      overlays_ = new ArrayList<OverlayPanelFactory>();
+      titleToOverlay_ = new LinkedHashMap<String, OverlayPanelFactory>();
       // HACK: start out with some hardcoded overlay options for now.
-      overlays_.add(new ScaleBarOverlayFactory());
-      overlays_.add(new TimestampOverlayFactory());
+      registerOverlay(new ScaleBarOverlayFactory());
+      registerOverlay(new TimestampOverlayFactory());
       studio_.events().registerForEvents(this);
       staticInstance_ = this;
    }
@@ -207,25 +208,27 @@ public class DefaultDisplayManager implements DisplayManager {
 
    @Override
    public void registerOverlay(OverlayPanelFactory factory) {
-      overlays_.add(factory);
+      String title = factory.getTitle();
+      if (titleToOverlay_.containsKey(title)) {
+         throw new RuntimeException("Overlay title " + title + " is already in use");
+      }
+      titleToOverlay_.put(title, factory);
       DefaultEventManager.getInstance().post(new NewOverlayEvent(factory));
    }
 
-   public OverlayPanel createOverlayPanel(OverlayPanelFactory factory,
-         DisplayWindow display) {
-      OverlayPanel panel = factory.createOverlayPanel(display);
-      panel.setBorder(new TitledBorder(panel.getTitle()));
-      panel.setDisplay(display);
+   public OverlayPanel createOverlayPanel(String title) {
+      OverlayPanelFactory factory = titleToOverlay_.get(title);
+      OverlayPanel panel = factory.createOverlayPanel();
       panel.setManager(this);
       return panel;
    }
 
-   public ArrayList<OverlayPanel> createOverlayPanels(DisplayWindow display) {
-      ArrayList<OverlayPanel> result = new ArrayList<OverlayPanel>();
-      for (OverlayPanelFactory factory : overlays_) {
-         result.add(createOverlayPanel(factory, display));
+   public String[] getOverlayTitles() {
+      ArrayList<String> result = new ArrayList<String>();
+      for (Map.Entry<String, OverlayPanelFactory> entry : titleToOverlay_.entrySet()) {
+         result.add(entry.getKey());
       }
-      return result;
+      return result.toArray(new String[result.size()]);
    }
 
    /**

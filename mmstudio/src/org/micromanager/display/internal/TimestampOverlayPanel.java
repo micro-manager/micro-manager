@@ -247,9 +247,4 @@ public class TimestampOverlayPanel extends OverlayPanel {
             new FontRenderContext(new AffineTransform(), true, false));
       return (int) Math.round(textBounds.getWidth());
    }
-
-   @Override
-   public String getTitle() {
-      return "Timestamp display";
-   }
 }

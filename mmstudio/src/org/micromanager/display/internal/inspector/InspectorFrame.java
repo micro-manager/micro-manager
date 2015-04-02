@@ -46,6 +46,7 @@ import javax.swing.UIManager;
 
 import net.miginfocom.swing.MigLayout;
 
+import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.Inspector;
 import org.micromanager.display.InspectorPanel;
 import org.micromanager.display.internal.events.DisplayActivatedEvent;
@@ -61,8 +62,9 @@ import org.micromanager.internal.utils.ReportingUtils;
  * consists of a set of expandable panels in a vertical configuration.
  */
 public class InspectorFrame extends MMFrame implements Inspector {
-   ArrayList<InspectorPanel> panels_;
-   JPanel contents_;
+   private DisplayWindow display_;
+   private ArrayList<InspectorPanel> panels_;
+   private JPanel contents_;
 
    public InspectorFrame() {
       super();
@@ -91,7 +93,7 @@ public class InspectorFrame extends MMFrame implements Inspector {
       addPanel("Contrast", new HistogramsPanel());
       addPanel("Metadata", new MetadataPanel());
       addPanel("Comments", new CommentsPanel());
-//      addPanel("Overlays", new OverlaysPanel());
+      addPanel("Overlays", new OverlaysPanel());
    }
 
    /**
@@ -143,11 +145,14 @@ public class InspectorFrame extends MMFrame implements Inspector {
 
    @Subscribe
    public void onDisplayActivated(DisplayActivatedEvent event) {
-      // TODO: only push this out if the active display is actually different
-      // from the display we are currently "hooked" to.
+      if (display_ == event.getDisplay()) {
+         // We're already keyed to this display, so do nothing.
+         return;
+      }
+      display_ = event.getDisplay();
       for (InspectorPanel panel : panels_) {
          try {
-            panel.setDisplay(event.getDisplay());
+            panel.setDisplay(display_);
          }
          catch (Exception e) {
             ReportingUtils.logError(e, "Error dispatching new display to " + panel);

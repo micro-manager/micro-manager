@@ -25,7 +25,12 @@ import org.micromanager.display.OverlayPanel;
 import org.micromanager.display.OverlayPanelFactory;
 
 public class ScaleBarOverlayFactory implements OverlayPanelFactory {
-   public OverlayPanel createOverlayPanel(DisplayWindow display) {
-      return new ScaleBarOverlayPanel(display);
+   public OverlayPanel createOverlayPanel() {
+      return new ScaleBarOverlayPanel();
+   }
+
+   @Override
+   public String getTitle() {
+      return "Scale bar";
    }
 }

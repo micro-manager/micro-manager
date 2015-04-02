@@ -74,10 +74,4 @@ public abstract class OverlayPanel extends JPanel {
     */
    public abstract void drawOverlay(Graphics g, DisplayWindow display,
          Image image, ImageCanvas canvas);
-
-   /**
-    * Return a short string describing the overlay(s) this panel provides.
-    * These will be used to create a titled border around the panel.
-    */
-   public abstract String getTitle();
 }
