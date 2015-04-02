@@ -36,8 +36,10 @@ import java.awt.event.WindowAdapter;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import javax.swing.BorderFactory;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -50,8 +52,11 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.Inspector;
 import org.micromanager.display.InspectorPanel;
+import org.micromanager.display.internal.DefaultDisplayManager;
+import org.micromanager.display.DisplayDestroyedEvent;
 import org.micromanager.display.internal.events.DisplayActivatedEvent;
 import org.micromanager.display.internal.events.LayoutChangedEvent;
+import org.micromanager.events.DisplayAboutToShowEvent;
 import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -63,11 +68,13 @@ import org.micromanager.internal.utils.ReportingUtils;
  * consists of a set of expandable panels in a vertical configuration.
  */
 public class InspectorFrame extends MMFrame implements Inspector {
+   private static final String TOPMOST_DISPLAY = "Topmost window";
    private DisplayWindow display_;
    private ArrayList<InspectorPanel> panels_;
    private JPanel contents_;
+   private JComboBox displayChooser_;
 
-   public InspectorFrame() {
+   public InspectorFrame(DisplayWindow display) {
       super();
       panels_ = new ArrayList<InspectorPanel>();
       setTitle("Image inspector");
@@ -76,11 +83,27 @@ public class InspectorFrame extends MMFrame implements Inspector {
       getRootPane().putClientProperty("Window.style", "small");
 
       contents_ = new JPanel(new MigLayout("flowy, insets 0, gap 0, fillx"));
+
+      // Create a dropdown menu to select which display to show info/controls
+      // for. By default, we show info on the topmost display (changing when
+      // that display changes).
+      displayChooser_ = new JComboBox();
+      populateChooser();
+      if (display == null) {
+         displayChooser_.setSelectedItem(TOPMOST_DISPLAY);
+      }
+      displayChooser_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            setDisplayByName((String) displayChooser_.getSelectedItem());
+         }
+      });
+      contents_.add(new JLabel("Show info for:"), "flowx, split 2");
+      contents_.add(displayChooser_);
       JScrollPane scroller = new JScrollPane(contents_,
             ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
             ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
       add(scroller);
-      setMinimumSize(new Dimension(200, 200));
       setVisible(true);
 
       DefaultEventManager.getInstance().registerForEvents(this);
@@ -96,6 +119,38 @@ public class InspectorFrame extends MMFrame implements Inspector {
       addPanel("Metadata", new MetadataPanel());
       addPanel("Comments", new CommentsPanel());
       addPanel("Overlays", new OverlaysPanel());
+
+      if (display != null) {
+         displayChooser_.setSelectedItem(display.getName());
+         setDisplay(display);
+      }
+   }
+
+   /**
+    * Fill in the list of DisplayWindows the user can select from.
+    */
+   private void populateChooser() {
+      String curItem = (String) displayChooser_.getSelectedItem();
+      displayChooser_.removeAllItems();
+      displayChooser_.addItem(TOPMOST_DISPLAY);
+      List<DisplayWindow> allDisplays = DefaultDisplayManager.getInstance().getAllImageWindows();
+      for (DisplayWindow display : allDisplays) {
+         displayChooser_.addItem(display.getName());
+      }
+      displayChooser_.setSelectedItem(curItem);
+   }
+
+   /**
+    * Set our current target display based on the provided display name.
+    */
+   private void setDisplayByName(String name) {
+      List<DisplayWindow> allDisplays = DefaultDisplayManager.getInstance().getAllImageWindows();
+      for (DisplayWindow display : allDisplays) {
+         if (display.getName().contentEquals(name)) {
+            setDisplay(display);
+            break;
+         }
+      }
    }
 
    /**
@@ -110,12 +165,12 @@ public class InspectorFrame extends MMFrame implements Inspector {
       wrapper.setBorder(BorderFactory.createRaisedBevelBorder());
 
       // Create a clickable header to show/hide contents.
-      JPanel header = new JPanel();
+      JPanel header = new JPanel(new MigLayout("fillx"));
       header.setLayout(new MigLayout("flowx, insets 0, fillx"));
       final JLabel label = new JLabel(title,
                UIManager.getIcon("Tree.collapsedIcon"),
                SwingConstants.LEFT);
-      header.add(label);
+      header.add(label, "growx");
       header.setCursor(new Cursor(Cursor.HAND_CURSOR));
       header.setBackground(new Color(220, 220, 220));
       header.addMouseListener(new MouseAdapter() {
@@ -146,12 +201,48 @@ public class InspectorFrame extends MMFrame implements Inspector {
    }
 
    @Subscribe
-   public void onDisplayActivated(DisplayActivatedEvent event) {
-      if (display_ == event.getDisplay()) {
-         // We're already keyed to this display, so do nothing.
-         return;
+   public void onNewDisplay(DisplayAboutToShowEvent event) {
+      ReportingUtils.logError("New display " + event.getDisplay().getName());
+      event.getDisplay().registerForEvents(this);
+      displayChooser_.addItem(event.getDisplay().getName());
+   }
+
+   @Subscribe
+   public void onDisplayDestroyed(DisplayDestroyedEvent event) {
+      event.getDisplay().unregisterForEvents(this);
+      String curDisplay = (String) displayChooser_.getSelectedItem();
+      String deadDisplay = event.getDisplay().getName();
+      ReportingUtils.logError("Killing display [" + deadDisplay + "] compare current " + curDisplay);
+      displayChooser_.removeItem(event.getDisplay().getName());
+      if (curDisplay.contentEquals(event.getDisplay().getName())) {
+         // Just removed the one we had selected.
+         ReportingUtils.logError("Gotta switch to topmost");
+         displayChooser_.setSelectedItem(TOPMOST_DISPLAY);
       }
-      display_ = event.getDisplay();
+   }
+
+   @Subscribe
+   public void onDisplayActivated(DisplayActivatedEvent event) {
+      try {
+         String displayName = (String) displayChooser_.getSelectedItem();
+         if (!displayName.contentEquals(TOPMOST_DISPLAY)) {
+            // We're keyed to a specific display, so we don't care that another
+            // one is now on top.
+            return;
+         }
+         if (display_ == event.getDisplay()) {
+            // We're already keyed to this display, so do nothing.
+            return;
+         }
+         setDisplay(event.getDisplay());
+      }
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Error on new display activation");
+      }
+   }
+
+   private void setDisplay(DisplayWindow display) {
+      display_ = display;
       for (InspectorPanel panel : panels_) {
          try {
             panel.setDisplay(display_);
