@@ -41,6 +41,7 @@ import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingConstants;
 import javax.swing.UIManager;
 
@@ -71,14 +72,15 @@ public class InspectorFrame extends MMFrame implements Inspector {
       panels_ = new ArrayList<InspectorPanel>();
       setTitle("Image inspector");
       setAlwaysOnTop(true);
-      setResizable(false);
       // Use a small title bar.
       getRootPane().putClientProperty("Window.style", "small");
 
       contents_ = new JPanel(new MigLayout("flowy, insets 0, gap 0, fillx"));
-      contents_.setBorder(BorderFactory.createRaisedBevelBorder());
-      add(contents_);
-      setMinimumSize(new Dimension(100, 100));
+      JScrollPane scroller = new JScrollPane(contents_,
+            ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+            ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+      add(scroller);
+      setMinimumSize(new Dimension(200, 200));
       setVisible(true);
 
       DefaultEventManager.getInstance().registerForEvents(this);
@@ -105,7 +107,7 @@ public class InspectorFrame extends MMFrame implements Inspector {
       // Wrap the panel in our own panel which includes the header.
       final JPanel wrapper = new JPanel(
             new MigLayout("flowy, insets 0, fillx"));
-      wrapper.setBorder(BorderFactory.createLineBorder(new Color(32, 32, 32)));
+      wrapper.setBorder(BorderFactory.createRaisedBevelBorder());
 
       // Create a clickable header to show/hide contents.
       JPanel header = new JPanel();
@@ -132,7 +134,7 @@ public class InspectorFrame extends MMFrame implements Inspector {
          }
       });
       wrapper.add(header, "growx");
-      wrapper.add(panel);
+      panel.setVisible(false); // So the first click will show it.
 
       contents_.add(wrapper);
       validate();
