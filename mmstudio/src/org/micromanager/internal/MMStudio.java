@@ -769,14 +769,19 @@ public class MMStudio implements Studio, CompatibilityInterface {
 
    protected void changeBinning() {
       try {
-         live().setSuspended(true);
-         
-         if (isCameraAvailable()) {
-            String item = frame_.getBinMode();
-            if (item != null) {
-               core_.setProperty(StaticInfo.cameraLabel_, MMCoreJ.getG_Keyword_Binning(), item);
-            }
+         String mode = frame_.getBinMode();
+         if (!isCameraAvailable() || mode == null) {
+            // No valid option.
+            return;
          }
+         if (core_.getProperty(StaticInfo.cameraLabel_,
+                  MMCoreJ.getG_Keyword_Binning()).equals(mode)) {
+            // No change in binning mode.
+            return;
+         }
+
+         live().setSuspended(true);
+         core_.setProperty(StaticInfo.cameraLabel_, MMCoreJ.getG_Keyword_Binning(), mode);
          staticInfo_.refreshValues();
          live().setSuspended(false);
 
