@@ -409,7 +409,8 @@ public class GUI extends javax.swing.JFrame {
       autofocusChannelCombo_.setSelectedItem(settings.autofocusChannelName_);
       autofocusMaxDisplacementSpinner_.setValue(settings.autofocusMaxDisplacemnet_um_);
       autofocusZDeviceComboBox_.setSelectedItem(settings.autoFocusZDevice_);
-      
+      autofocusInitialPositionCheckBox_.setSelected(settings.setInitialAutofocusPosition_);
+      autofocusInitialPositionSpinner_.setValue(settings.initialAutofocusPosition_);
       
       
       

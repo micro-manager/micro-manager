@@ -90,6 +90,18 @@ public class AcquisitionEvent  {
    
    @Override
    public String toString() {
-      return "P: " + positionIndex_ + "\t\tT: " + timeIndex_ + "\t\tZ: " + sliceIndex_ + "\t\tC: " + channelIndex_; 
+      if (specialFlag_ == SpecialFlag.AcqusitionFinished) {
+          return "Acq finished event";
+      } else if (specialFlag_ == SpecialFlag.AutofocusAdjustment) {       
+          return "Autofocus event";
+      } else if (specialFlag_ == SpecialFlag.EngineTaskFinished) {       
+          return "Engine task finished event";
+      } else if (specialFlag_ == SpecialFlag.SwappingQueues) {
+          return "Swapping queues event";
+      } else if (specialFlag_ == SpecialFlag.TimepointFinished) {
+          return "Timepoint finished event";
+      }
+       
+       return "P: " + positionIndex_ + "\t\tT: " + timeIndex_ + "\t\tZ: " + sliceIndex_ + "\t\tC: " + channelIndex_; 
    }
 }

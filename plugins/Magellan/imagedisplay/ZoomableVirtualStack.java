@@ -114,7 +114,8 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
    }
 
    public int getDownsampleFactor() {
-      return (int) Math.pow(2, resolutionIndex_);
+       int dsFactor = (int) Math.pow(2, resolutionIndex_);
+      return dsFactor ;
    }
 
    /**

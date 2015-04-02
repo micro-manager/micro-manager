@@ -20,6 +20,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.json.JSONArray;
 import org.micromanager.MMStudio;
 import org.micromanager.utils.ReportingUtils;
@@ -200,13 +202,20 @@ public class FixedAreaAcquisition extends Acquisition {
       //share their event queue
       events_.clear();
       try {
-         //add finishing evnets to shoutdown all the downstream stuff
+         //add finishing events to shoutdown all the downstream stuff
+          System.out.println("acq fiunished event added");
+          
          events_.put(AcquisitionEvent.createAcquisitionFinishedEvent(this));
       } catch (InterruptedException ex) {
          ReportingUtils.showError("Unexpected interrupted exception while trying to abort"); //shouldnt happen
       }
+
+      
       acqGroup_.signalAborted(this);
       //singal aborted should wait for the image sink to die so this function doesnt return until abort complete
+      
+            //make sure parallel group doesnt hang waiting to signal this acq to start next TP
+      startNextTPBarrier_.reset();
    }
    
    public void signalReadyForNextTP() throws InterruptedException, BrokenBarrierException {
@@ -344,7 +353,7 @@ public class FixedAreaAcquisition extends Acquisition {
                    //this call starts a new thread to not hang up cyclic barriers   
                   //signal to next autofocus to start running, then continue using the event generator thread
                   //to calculate autofocus
-                   acqGroup_.finishedTimePoint(FixedAreaAcquisition.this);
+                   acqGroup_.finishedTPEventGeneration(FixedAreaAcquisition.this);
 
                   //wait for final image of timepoint to be written before beginning end of timepoint stuff
                   if (Thread.interrupted()) {
