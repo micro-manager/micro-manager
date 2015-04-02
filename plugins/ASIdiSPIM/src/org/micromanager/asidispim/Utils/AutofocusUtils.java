@@ -6,7 +6,24 @@ import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Shape;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Rectangle2D;
 import mmcorej.TaggedImage;
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartFrame;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.LogAxis;
+import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.axis.NumberTickUnit;
+import org.jfree.chart.axis.ValueAxis;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -65,6 +82,7 @@ public class AutofocusUtils {
            final Devices.Sides side,
            final SliceTiming sliceTiming) throws ASIdiSPIMException {
 
+      
       String camera = devices_.getMMDevice(Devices.Keys.CAMERAA);
       if (side.equals(Devices.Sides.B)) {
          camera = devices_.getMMDevice(Devices.Keys.CAMERAB);
@@ -103,6 +121,8 @@ public class AutofocusUtils {
               sliceTiming);
 
       double[] focusScores = new double[nrImages];
+      TaggedImage[] imageStore = new TaggedImage[nrImages];
+      XYSeries[] scoresToPlot = new XYSeries[nrImages];
       boolean autoShutter = gui_.getMMCore().getAutoShutter();
       boolean shutterOpen = false;  // will read later
       boolean liveModeOriginally = false;
@@ -175,12 +195,15 @@ public class AutofocusUtils {
                TaggedImage timg = gui_.getMMCore().popNextTaggedImage();
                ImageProcessor ip = makeProcessor(timg);
                focusScores[counter] = gui_.getAutofocus().computeScore(ip);
+               imageStore[counter] = timg;
                ReportingUtils.logDebugMessage("Autofocus, image: " + counter
                        + ", score: " + focusScores[counter]);
                if (debug) {
                   // we are using the slow way to insert images, should be OK
                   // as long as the circular buffer is big enough
                   gui_.addImageToAcquisition(acqName, counter, 0, 0, 0, timg);
+                  scoresToPlot[counter].add(start + counter * stepSize, 
+                       focusScores[counter]);
                }
                counter++;
                if (counter >= nrImages) {
@@ -189,7 +212,7 @@ public class AutofocusUtils {
             }
             if (now - startTime > timeout) {
                // no images within a reasonable amount of time => exit
-               throw new ASIdiSPIMException("No images arrived in 5 seconds");
+               throw new ASIdiSPIMException("No image arrived in 5 seconds");
             }
          }
       } catch (ASIdiSPIMException ex) {
@@ -239,7 +262,17 @@ public class AutofocusUtils {
             highestScore = focusScores[i];
          }
       }
+      // display the best scoring image in the snap/live window
+      ImageProcessor bestIP = makeProcessor(imageStore[highestIndex]);
+      ImagePlus bestIPlus = new ImagePlus();
+      bestIPlus.setProcessor(bestIP);
+      // TODO: check what happens if the snap live window is not open
+      gui_.getSnapLiveWin().setImage(bestIPlus);
 
+      if (debug) {
+         plotDataN("Focus curve", scoresToPlot, "z (micron)", "Score", 100, 100,
+                 true, false);
+      }
       // return the position of the scanning device associated with the highest
       // focus score
       double bestScore = start + stepSize * highestIndex;
@@ -318,5 +351,126 @@ public class AutofocusUtils {
          }
       }
    }
-   
+      
+   /**
+    * Create a frame with a plot of the data given in XYSeries
+    * @param title
+    * @param data
+    * @param xTitle
+    * @param yTitle
+    * @param xLocation
+    * @param yLocation
+    * @param showShapes
+    * @param logLog
+    */
+   public static void plotDataN(String title, XYSeries[] data, String xTitle,
+                 String yTitle, int xLocation, int yLocation, boolean showShapes, 
+                 Boolean logLog) {
+      
+      // JFreeChart code
+      XYSeriesCollection dataset = new XYSeriesCollection();
+      // calculate min and max to scale the graph
+      double minX, minY, maxX, maxY;
+      minX = data[0].getMinX();
+      minY = data[0].getMinY();
+      maxX = data[0].getMaxX();
+      maxY = data[0].getMaxY();
+      for (XYSeries d : data) {
+         dataset.addSeries(d);
+         if (d.getMinX() < minX)
+            minX = d.getMinX();
+         if (d.getMaxX() > maxX)
+            maxX = d.getMaxX();
+         if (d.getMinY() < minY)
+            minY = d.getMinY();
+         if (d.getMaxY() > maxY)
+            maxY = d.getMaxY();
+      }
+      
+      JFreeChart chart = ChartFactory.createScatterPlot(title, // Title
+                xTitle, // x-axis Label
+                yTitle, // y-axis Label
+                dataset, // Dataset
+                PlotOrientation.VERTICAL, // Plot Orientation
+                true, // Show Legend
+                true, // Use tooltips
+                false // Configure chart to generate URLs?
+            );
+      XYPlot plot = (XYPlot) chart.getPlot();
+      plot.setBackgroundPaint(Color.white);
+      plot.setRangeGridlinePaint(Color.lightGray);
+      if (logLog) {
+         LogAxis xAxis = new LogAxis(xTitle);
+         xAxis.setTickUnit(new NumberTickUnit(1.0, new java.text.DecimalFormat(), 10));
+         plot.setDomainAxis(xAxis);
+         plot.setDomainGridlinePaint(Color.lightGray);
+         plot.setDomainGridlineStroke(new BasicStroke(1.0f));
+         plot.setDomainMinorGridlinePaint(Color.lightGray);
+         plot.setDomainMinorGridlineStroke(new BasicStroke(0.2f));
+         plot.setDomainMinorGridlinesVisible(true);
+         LogAxis yAxis = new LogAxis(yTitle);
+         yAxis.setTickUnit(new NumberTickUnit(1.0, new java.text.DecimalFormat(), 10));
+         plot.setRangeAxis(yAxis);
+         plot.setRangeGridlineStroke(new BasicStroke(1.0f));
+         plot.setRangeMinorGridlinePaint(Color.lightGray);
+         plot.setRangeMinorGridlineStroke(new BasicStroke(0.2f));
+         plot.setRangeMinorGridlinesVisible(true);
+      }
+      
+      
+      XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer) plot.getRenderer();
+      renderer.setBaseShapesVisible(true);
+      
+      for (int i = 0; i < data.length; i++) {
+         renderer.setSeriesFillPaint(i, Color.white);
+         renderer.setSeriesLinesVisible(i, true);
+      } 
+      
+      renderer.setSeriesPaint(0, Color.blue);
+      Shape circle = new Ellipse2D.Float(-2.0f, -2.0f, 4.0f, 4.0f);   
+      renderer.setSeriesShape(0, circle, false);
+           
+      if (data.length > 1) {
+         renderer.setSeriesPaint(1, Color.red);
+         Shape square = new Rectangle2D.Float(-2.0f, -2.0f, 4.0f, 4.0f);
+         renderer.setSeriesShape(1, square, false);
+      }
+      if (data.length > 2) {
+         renderer.setSeriesPaint(2, Color.darkGray);
+         Shape rect = new Rectangle2D.Float(-2.0f, -1.0f, 4.0f, 2.0f);
+         renderer.setSeriesShape(2, rect, false);
+      }
+      if (data.length > 3) {
+         renderer.setSeriesPaint(3, Color.magenta);
+         Shape rect = new Rectangle2D.Float(-1.0f, -2.0f, 2.0f, 4.0f);
+         renderer.setSeriesShape(3, rect, false);
+      }
+      
+      if (!showShapes) {
+         for (int i = 0; i < data.length; i++) {
+            renderer.setSeriesShapesVisible(i, false);
+         }
+      }
+      
+      renderer.setUseFillPaint(true);
+     
+      if (!logLog) {
+         // Since the axis autoscale only on the first dataset, we need to scale ourselves
+         NumberAxis yAxis = (NumberAxis) plot.getRangeAxis();
+         yAxis.setAutoRangeIncludesZero(false);
+         yAxis.setRangeWithMargins(minY, maxY);
+
+         ValueAxis xAxis = plot.getDomainAxis();
+         xAxis.setRangeWithMargins(minX, maxX);
+      }
+      
+      ChartFrame graphFrame = new ChartFrame(title, chart);
+      graphFrame.getChartPanel().setMouseWheelEnabled(true);
+      graphFrame.pack();
+      graphFrame.setLocation(xLocation, yLocation);
+      graphFrame.setVisible(true);
+   }
+      
 }
+   
+
