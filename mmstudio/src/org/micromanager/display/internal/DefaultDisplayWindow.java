@@ -53,6 +53,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.event.MouseInputAdapter;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -105,6 +106,8 @@ import org.micromanager.internal.utils.ReportingUtils;
  * Note that it is *not* an ImageJ ImageWindow; instead, it creates a
  * DummyImageWindow instance for liaising with ImageJ. See that class for
  * more information on why we do this.
+ * TODO: this class is getting kind of unwieldy-huge, and should probably be
+ * refactored.
  */
 public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
 
@@ -337,6 +340,29 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          controlsPanel_.add(c);
       }
 
+      JButton zoomInButton = new JButton();
+      zoomInButton.setIcon(new ImageIcon(
+               getClass().getResource("/org/micromanager/internal/icons/zoom_in.png")));
+      zoomInButton.setToolTipText("Zoom in");
+      zoomInButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            adjustZoom(2.0);
+         }
+      });
+      controlsPanel_.add(zoomInButton);
+      JButton zoomOutButton = new JButton();
+      zoomOutButton.setIcon(new ImageIcon(
+               getClass().getResource("/org/micromanager/internal/icons/zoom_out.png")));
+      zoomOutButton.setToolTipText("Zoom out");
+      zoomOutButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            adjustZoom(0.5);
+         }
+      });
+      controlsPanel_.add(zoomOutButton);
+
       fullButton_ = new JButton("Fullscreen");
       fullButton_.setToolTipText("Turn fullscreen mode on or off.");
       fullButton_.addActionListener(new ActionListener() {
@@ -346,20 +372,8 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          }
       });
       controlsPanel_.add(fullButton_);
-      controlsPanel_.add(new SaveButton(store_, this));
+      controlsPanel_.add(new GearButton(this));
       contentsPanel_.add(controlsPanel_, "align center, wrap, growx, growy 0");
-
-      JButton infoButton = new JButton(new javax.swing.ImageIcon(
-               getClass().getResource("/org/micromanager/internal/icons/info.png")));
-      infoButton.setToolTipText("Create a new Inspector window keyed to this display");
-      final DefaultDisplayWindow finalThis = this;
-      infoButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent event) {
-            new InspectorFrame(finalThis);
-         }
-      });
-      controlsPanel_.add(infoButton);
 
       add(contentsPanel_);
       Insets insets = getInsets();
@@ -447,6 +461,11 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
             ijImage_.setStack(getName(), stack_);
          }
       }
+   }
+
+   @Override
+   public void adjustZoom(double factor) {
+      setMagnification(getMagnification() * factor);
    }
 
    /**
@@ -737,14 +756,6 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
             new FullScreenEvent(getScreenConfig(), fullScreenFrame_ != null));
    }
 
-   public ControlsFactory getControlsFactory() {
-      return controlsFactory_;
-   }
-
-   public String getCustomName() {
-      return customName_;
-   }
-
    @Override
    public GraphicsConfiguration getScreenConfig() {
       Point p = getLocation();
@@ -944,6 +955,12 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    public void setCustomTitle(String title) {
       customName_ = title;
       resetTitle();
+   }
+
+   @Override
+   public DisplayWindow duplicate() {
+      return new DefaultDisplayWindow(store_, controlsFactory_,
+            displaySettings_, customName_);
    }
 
    // Implemented to help out DummyImageWindow.

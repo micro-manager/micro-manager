@@ -133,10 +133,24 @@ public interface DisplayWindow {
    public void toggleFullScreen();
 
    /**
+    * Multiplay the current zoom level of the image canvas by the provided
+    * factor. Thus for example a zoom of 2.0 will double the amount of screen
+    * pixels dedicated to each camera pixel.
+    * @param factor Amount to adjust zoom by.
+    */
+   public void adjustZoom(double factor);
+
+   /**
     * Return the GraphicsConfiguration for the monitor the DisplayWindow's
     * upper-left corner is in.
     */
    public GraphicsConfiguration getScreenConfig();
+
+   /**
+    * Create a new DisplayWindow for the same Datastore as this DisplayWindow.
+    * @return The newly-created DisplayWindow.
+    */
+   public DisplayWindow duplicate();
 
    /**
     * Raise the display to the front.

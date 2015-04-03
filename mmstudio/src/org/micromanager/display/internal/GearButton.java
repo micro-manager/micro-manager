@@ -31,20 +31,45 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 
 import org.micromanager.data.Datastore;
+import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.internal.inspector.InspectorFrame;
 
 /**
- * This class provides a button for saving the current datastore to TIFF.
+ * This class provides access to various rarely-used functions (like save or
+ * duplicate) via a dropdown menu.
  */
-public class SaveButton extends JButton {
+public class GearButton extends JButton {
    private JPopupMenu menu_;
 
-   public SaveButton(final Datastore store, final Window window) {
+   public GearButton(final DisplayWindow display) {
       menu_ = new JPopupMenu();
+      JMenuItem openInspector = new JMenuItem("Open new Inspector window");
+      openInspector.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            new InspectorFrame(display);
+         }
+      });
+      menu_.add(openInspector);
+
+      JMenuItem duplicate = new JMenuItem("Duplicate this display");
+      duplicate.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            display.duplicate();
+         }
+      });
+      menu_.add(duplicate);
+
+      menu_.addSeparator();
+
+      final Datastore store = display.getDatastore();
       JMenuItem separateImages = new JMenuItem("Save to separate image files");
       separateImages.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            store.save(Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES, window);
+            store.save(Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES,
+               display.getAsWindow());
          }
       });
       menu_.add(separateImages);
@@ -52,7 +77,8 @@ public class SaveButton extends JButton {
       multistack.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            store.save(Datastore.SaveMode.MULTIPAGE_TIFF, window);
+            store.save(Datastore.SaveMode.MULTIPAGE_TIFF,
+               display.getAsWindow());
          }
       });
       menu_.add(multistack);
@@ -65,7 +91,9 @@ public class SaveButton extends JButton {
          }
       });
 
+      // This icon adapted from the public domain icon at
+      // https://openclipart.org/detail/35533/tango-emblem-system
       setIcon(new javax.swing.ImageIcon(
-               getClass().getResource("/org/micromanager/internal/icons/disk.png")));
+               getClass().getResource("/org/micromanager/internal/icons/gear.png")));
    }
 }
