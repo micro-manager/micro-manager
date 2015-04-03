@@ -142,7 +142,6 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    private boolean haveCreatedGUI_ = false;
 
    // Used by the pack() method to track changes in our size.
-   private Dimension prevModeSize_;
    private Dimension prevControlsSize_;
 
    private CanvasUpdateThread canvasThread_;
@@ -935,8 +934,6 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          // Do nothing for now since we aren't visible anyway.
          return;
       }
-      ReportingUtils.logError("TODO: rework resizing logic now that multi-mode panel is gone");
-      Dimension modeSize = new Dimension(0, 0);
       Dimension controlsSize = controlsPanel_.getPreferredSize();
       Image image = store_.getAnyImage();
       if (image == null || canvas_ == null) {
@@ -953,7 +950,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       // canvas being a bit too small; no idea why.
       // The extra size ought to go away when we pack, anyway.
       int maxWidth = Math.min(screenSize.width,
-            imageSize.width + modeSize.width + insets.left + insets.right);
+            imageSize.width + insets.left + insets.right);
       int maxHeight = Math.min(screenSize.height,
             imageSize.height + controlsSize.height + insets.top + insets.bottom + 10);
       contentsPanel_.setSize(new Dimension(maxWidth, maxHeight));
@@ -964,26 +961,24 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
     * HACK HACK HACK etc you get the idea.
     * Manually derive the size of components based on our own size. We have
     * a layout that looks roughly like this:
-    * +---------+----+
-    * |         | m  |
-    * |  canvas | o p|
-    * |         | d a|
-    * |         | e n|
-    * |         |   e|
-    * +---------+   l|
-    * |         |    |
-    * | controls|    |
-    * +---------+----+
-    * The sizes of the modePanel and controls can only grow vertically and
-    * horizontally, respectively; the canvas can grow in both dimensions, and
-    * should absorb all remaining extra space. Unfortunately, canvas sizing is
-    * complicated by the fact that the canvas has a "zoom mode" for when there
-    * isn't enough room to display the entire image at the current zoom level.
+    * +---------+
+    * |         |
+    * |  canvas |
+    * |         |
+    * |         |
+    * |         |
+    * +---------+
+    * |         |
+    * | controls|
+    * +---------+
+    * The size of the controls can only grow vertically; the canvas can grow in
+    * both dimensions, and should absorb all remaining extra space.
+    * Unfortunately, canvas sizing is complicated by the fact that the canvas
+    * has a "zoom mode" for when there isn't enough room to display the entire
+    * image at the current zoom level.
     */
    @Override
    public void pack() {
-      ReportingUtils.logError("TODO: rework resizing logic now that multi-mode panel is gone");
-      Dimension modeSize = new Dimension(0, 0);
       Dimension controlsSize = controlsPanel_.getPreferredSize();
       Dimension ourSize = contentsPanel_.getSize();
       boolean isFullScreen = (fullScreenFrame_ != null);
@@ -995,18 +990,14 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       // own size) or shrinking (we need to shrink).
       int widthDelta = 0;
       int heightDelta = 0;
-      if (prevModeSize_ != null) {
-         widthDelta += modeSize.width - prevModeSize_.width;
-      }
       if (prevControlsSize_ != null) {
          heightDelta += controlsSize.height - prevControlsSize_.height;
       }
-      prevModeSize_ = modeSize;
       prevControlsSize_ = controlsSize;
 
       // Resize the canvas to use available spare space.
       // HACK: for some reason, we're off by 2 in width and 10 in height.
-      int spareWidth = ourSize.width + widthDelta - modeSize.width - 2;
+      int spareWidth = ourSize.width + widthDelta - 2;
       int spareHeight = ourSize.height + heightDelta - controlsSize.height - 10;
       canvasPanel_.setSize(spareWidth, spareHeight);
       // Don't adjust the window size when in fullscreen mode.
