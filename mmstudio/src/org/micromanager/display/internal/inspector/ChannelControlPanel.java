@@ -36,6 +36,7 @@ import java.awt.event.ActionListener;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.List;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JColorChooser;
@@ -465,6 +466,13 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          // Not multi-channel; ignore.
          return;
       }
+      // These icons are adapted from the public-domain icon at
+      // https://openclipart.org/detail/182888/eye-icon
+      isEnabledButton_.setIcon(isEnabledButton_.isSelected() ?
+            new ImageIcon(getClass().getResource(
+                  "/org/micromanager/internal/icons/eye.png")) :
+            new ImageIcon(getClass().getResource(
+                  "/org/micromanager/internal/icons/eye-out.png")));
       boolean[] active = composite_.getActiveChannels();
       if (composite_.getMode() != CompositeImage.COMPOSITE) {
          if (active[channelIndex_]) {
