@@ -1,6 +1,7 @@
 package imagedisplay;
 
 import acq.Acquisition;
+import acq.FixedAreaAcquisition;
 import coordinates.XYStagePosition;
 import ij.IJ;
 import ij.gui.ImageCanvas;
@@ -9,6 +10,7 @@ import ij.gui.OvalRoi;
 import ij.gui.Overlay;
 import ij.gui.Roi;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
@@ -241,6 +243,10 @@ public class DisplayOverlayer {
          sizeBar.setPosition(cp.getScaleBarPosition());
          sizeBar.addToOverlay(overlay);
       }
+      
+      if (display_.getAcquisition() instanceof FixedAreaAcquisition) {
+         drawZoomIndicator(overlay);
+      }
       return overlay;
    }
 
@@ -457,25 +463,29 @@ public class DisplayOverlayer {
       return overlay;
    }
 
-   private void drawZoomIndicatorOverlay() {
-//      //draw zoom indicator
-//      Overlay overlay = createBaseOverlay();
-//      Point zoomPos = zoomableStack_.getZoomPosition();      
-//      int outerWidth = 100;
-//      int outerHeight = (int) ((double) storage_.getFullResHeight() / (double) storage_.getFullResWidth() * outerWidth);
-//      //draw outer rectangle representing full image
-//      Roi outerRect = new Roi(10, 10, outerWidth, outerHeight);
-//      outerRect.setStrokeColor(new Color(255, 0, 255)); //magenta
-//      overlay.add(outerRect);
-//      int innerX = (int) Math.round(( (double) outerWidth / (double) storage_.getFullResWidth() ) * zoomPos.x);
-//      int innerY = (int) Math.round(( (double) outerHeight / (double) storage_.getFullResHeight() ) * zoomPos.y);
-//      int innerWidth = (int) Math.round(((double) outerWidth / (double) storage_.getFullResWidth() ) * 
-//              (storage_.getFullResWidth() / storage_.getDSFactor()));
-//      int innerHeight = (int) Math.round(((double) outerHeight / (double) storage_.getFullResHeight() ) * 
-//              (storage_.getFullResHeight() / storage_.getDSFactor()));
-//      Roi innerRect = new Roi(10+innerX,10+innerY,innerWidth,innerHeight );
-//      innerRect.setStrokeColor(new Color(255, 0, 255)); 
-//      overlay.add(innerRect);
-//      canvas_.setOverlay(overlay);
+   private void drawZoomIndicator(Overlay overlay) {
+      Point zoomPos = zoomableStack_.getZoomLocation(); 
+      int outerWidth = 100;
+      int fullResHeight = display_.getAcquisition().getPositionManager().getNumRows() * display_.getAcquisition().getStorage().getTileHeight();
+      int fullResWidth = display_.getAcquisition().getPositionManager().getNumCols() * display_.getAcquisition().getStorage().getTileWidth();
+      int dsFactor = display_.getZoomableStack().getDownsampleFactor();
+      Dimension displayImageSize = display_.getZoomableStack().getDisplayImageSize();
+//      System.out.println(fullResHeight + "\t" + fullResWidth + "\t" + dsFactor + "\t" + displayImageSize.width + "\t" + displayImageSize.height);      
+      int outerHeight = (int) ((double) fullResHeight / (double) fullResWidth * outerWidth);
+      //draw outer rectangle representing full image
+      Roi outerRect = new Roi(10, 10, outerWidth, outerHeight);
+      outerRect.setStrokeColor(new Color(255, 0, 255)); //magenta
+      int innerX = (int) Math.round(( (double) outerWidth / (double) fullResWidth ) * zoomPos.x *  dsFactor);
+      int innerY = (int) Math.round(( (double) outerHeight / (double) fullResHeight ) * zoomPos.y * dsFactor);
+      //outer width * percentage of width of full images that is shown
+      int innerWidth = (int) (outerWidth * ((double) displayImageSize.width / (fullResWidth / dsFactor)));
+      int innerHeight = (int) (outerHeight * ((double) displayImageSize.height / (fullResHeight / dsFactor)));
+      Roi innerRect = new Roi(10+innerX,10+innerY,innerWidth,innerHeight );
+      innerRect.setStrokeColor(new Color(255, 0, 255)); 
+      if (outerWidth != innerWidth || outerHeight != innerHeight) { //dont draw if fully zoomed out
+         overlay.add(outerRect);
+         overlay.add(innerRect);
+      }
+      canvas_.setOverlay(overlay);
    }
 }

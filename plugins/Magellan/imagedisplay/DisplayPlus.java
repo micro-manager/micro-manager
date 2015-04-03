@@ -581,9 +581,6 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
 
       @Override
       public void run() {
-         if (cancel_) {
-            System.out.println("Canceled before invoke later, returning");
-         }
          //put all this stuff on EDT because stuff that interacts with CompositeImage
          //should occur a single threaded, orderly fashion
          SwingUtilities.invokeLater(new Runnable() {

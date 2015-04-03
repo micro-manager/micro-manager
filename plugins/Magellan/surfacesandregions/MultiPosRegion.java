@@ -86,7 +86,7 @@ public class MultiPosRegion implements XYFootprint{
          ArrayList<XYStagePosition> positions = new ArrayList<XYStagePosition>();
          int fullTileWidth = (int) MMStudio.getInstance().getCore().getImageWidth();
          int fullTileHeight = (int) MMStudio.getInstance().getCore().getImageHeight();
-         updateOverlap(tileOverlapPercent);
+         updateOverlap(tileOverlapPercent / 100);
          int tileWidthMinusOverlap = fullTileWidth - overlapX_;
          int tileHeightMinusOverlap = fullTileHeight - overlapY_;
          for (int col = 0; col < cols_; col++) {

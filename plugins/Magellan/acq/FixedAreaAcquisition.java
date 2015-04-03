@@ -202,9 +202,7 @@ public class FixedAreaAcquisition extends Acquisition {
       //share their event queue
       events_.clear();
       try {
-         //add finishing events to shoutdown all the downstream stuff
-          System.out.println("acq fiunished event added");
-          
+         //add finishing events to shoutdown all the downstream stuff          
          events_.put(AcquisitionEvent.createAcquisitionFinishedEvent(this));
       } catch (InterruptedException ex) {
          ReportingUtils.showError("Unexpected interrupted exception while trying to abort"); //shouldnt happen

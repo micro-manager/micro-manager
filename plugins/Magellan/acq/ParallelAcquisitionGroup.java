@@ -149,7 +149,6 @@ public class ParallelAcquisitionGroup implements AcquisitionEventSource {
     @Override
     public AcquisitionEvent getNextEvent() throws InterruptedException {
         AcquisitionEvent evt = pendingFinishingEvents_.isEmpty() ? acqs_.get(activeIndex_).getNextEvent() : pendingFinishingEvents_.take();
-        System.out.println(evt.toString());
         return evt;
     }
 

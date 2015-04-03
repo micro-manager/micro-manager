@@ -475,7 +475,7 @@ public class DisplayWindow extends StackWindow {
                shrinkWindowToFitCanvas();
             }
          }
-         
+         disp_.drawOverlay();
          return true;
       }
    }

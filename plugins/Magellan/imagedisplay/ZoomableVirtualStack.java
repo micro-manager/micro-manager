@@ -9,6 +9,7 @@ import acq.ExploreAcquisition;
 import acq.FixedAreaAcquisition;
 import acq.MultiResMultipageTiffStorage;
 import ij.IJ;
+import java.awt.Dimension;
 import java.awt.Point;
 import javax.swing.SwingUtilities;
 import mmcorej.TaggedImage;
@@ -27,7 +28,7 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
    private int type_, nSlices_;
    private TaggedImageStorage imageCache_;
    private volatile int resolutionIndex_ = 0;
-   private int displayImageWidth_, displayImageHeight_;
+   private volatile int displayImageWidth_, displayImageHeight_;
    private volatile int xView_ = 0, yView_ = 0;  //top left pixel of view in current res
    private MultiResMultipageTiffStorage multiResStorage_;
    private final int tileWidth_, tileHeight_;
@@ -213,6 +214,14 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
       int xTileIndex = fullResX / tileWidth_ - (fullResX >= 0 ? 0 : 1);
       int yTileIndex = fullResY / tileHeight_ - (fullResY >= 0 ? 0 : 1);
       return new Point(xTileIndex, yTileIndex);
+   }
+   
+   public Point getZoomLocation() {
+      return new Point(xView_, yView_);
+   }
+   
+   public Dimension getDisplayImageSize() {
+      return new Dimension(displayImageWidth_, displayImageHeight_);
    }
 
    /**
