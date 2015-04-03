@@ -8,12 +8,15 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.Font;
+import java.awt.Insets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 
 import mmcorej.CMMCore;
@@ -283,6 +286,9 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
 
    private List<Component> createControls(final DisplayWindow display) {
       ArrayList<Component> controls = new ArrayList<Component>();
+      Insets zeroInsets = new Insets(0, 0, 0, 0);
+      // This matches the font used by the main frame.
+      Font buttonFont = new Font("Arial", Font.PLAIN, 10);
       // This button needs to be enabled/disabled when live mode is turned
       // off/on.
       JButton snapButton = new JButton("Snap",
@@ -300,6 +306,8 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
       DefaultEventManager.getInstance().registerForEvents(snapButton);
       snapButton.setToolTipText("Take a new image");
       snapButton.setPreferredSize(new Dimension(90, 28));
+      snapButton.setFont(buttonFont);
+      snapButton.setMargin(zeroInsets);
       snapButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent event) {
@@ -325,6 +333,8 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
       liveButton.setToolTipText("Continuously acquire new images");
       setLiveButtonMode(liveButton, isOn_);
       liveButton.setPreferredSize(new Dimension(90, 28));
+      liveButton.setFont(buttonFont);
+      liveButton.setMargin(zeroInsets);
       liveButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent event) {
@@ -338,6 +348,8 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
                "/org/micromanager/internal/icons/arrow_right.png"));
       toAlbumButton.setToolTipText("Add the current image to the Album collection");
       toAlbumButton.setPreferredSize(new Dimension(90, 28));
+      toAlbumButton.setFont(buttonFont);
+      toAlbumButton.setMargin(zeroInsets);
       toAlbumButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent event) {

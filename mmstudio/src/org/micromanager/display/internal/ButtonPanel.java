@@ -25,9 +25,11 @@ import com.google.common.eventbus.Subscribe;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.Font;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JPanel;
@@ -62,6 +64,9 @@ public class ButtonPanel extends JPanel {
       }
 
       fullButton_ = new JButton("Fullscreen");
+      fullButton_.setIcon(new ImageIcon(
+               getClass().getResource("/org/micromanager/internal/icons/fullscreen.png")));
+      fullButton_.setFont(new Font("Arial", Font.PLAIN, 10));
       fullButton_.setToolTipText("Turn fullscreen mode on or off.");
       fullButton_.addActionListener(new ActionListener() {
          @Override
@@ -98,9 +103,22 @@ public class ButtonPanel extends JPanel {
       display.registerForEvents(this);
    }
 
+   /**
+    * The icons in this method were adapted from
+    * https://openclipart.org/detail/33691/tango-view-fullscreen
+    */
    @Subscribe
    public void onFullScreen(FullScreenEvent event) {
-      fullButton_.setText(event.getIsFullScreen() ? "Windowed" : "Fullscreen");
+      if (event.getIsFullScreen()) {
+         fullButton_.setText("Windowed");
+         fullButton_.setIcon(new ImageIcon(
+                  getClass().getResource("/org/micromanager/internal/icons/windowed.png")));
+      }
+      else {
+         fullButton_.setText("Fullscreen");
+         fullButton_.setIcon(new ImageIcon(
+                  getClass().getResource("/org/micromanager/internal/icons/fullscreen.png")));
+      }
    }
 
    @Subscribe
