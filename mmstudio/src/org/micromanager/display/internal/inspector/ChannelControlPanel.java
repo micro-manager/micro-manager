@@ -328,7 +328,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
       add(secondRow);
 
-      setPreferredSize(getMinimumSize());
       validate();
    }
 

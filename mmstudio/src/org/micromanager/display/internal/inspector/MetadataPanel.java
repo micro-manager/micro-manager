@@ -169,7 +169,7 @@ public class MetadataPanel extends InspectorPanel {
 
       setLayout(new MigLayout("flowy"));
       add(metadataSplitPane, "grow");
-      setMaximumSize(new Dimension(300, 500));
+      setMaximumSize(new Dimension(280, 500));
    }
 
    /**
