@@ -153,7 +153,6 @@ public class CustomAcqEngine {
       if (event.isReQueryEvent()) {
          //nothing to do, just a dummy event to get of blocking call when switching between parallel acquisitions
       } else if (event.isAcquisitionFinishedEvent()) {
-          System.out.println("acq finished event read");
          //signal to TaggedImageSink to finish saving thread and mark acquisition as finished
          event.acquisition_.getImageSavingQueue().put(new SignalTaggedImage(SignalTaggedImage.AcqSingal.AcqusitionFinsihed));
       } else if (event.isTimepointFinishedEvent()) {

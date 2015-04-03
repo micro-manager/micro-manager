@@ -350,16 +350,17 @@ public class FixedAreaAcquisition extends Acquisition {
                      events_.put(AcquisitionEvent.createTimepointFinishedEvent(FixedAreaAcquisition.this));
                   }
                   
-                   //this call starts a new thread to not hang up cyclic barriers   
-                  //signal to next autofocus to start running, then continue using the event generator thread
-                  //to calculate autofocus
-                   acqGroup_.finishedTPEventGeneration(FixedAreaAcquisition.this);
 
                   //wait for final image of timepoint to be written before beginning end of timepoint stuff
                   if (Thread.interrupted()) {
                      throw new InterruptedException();
                   }
-                  tpFinishedBarrier_.await();  
+                  tpFinishedBarrier_.await();
+                  //this call starts a new thread to not hang up cyclic barriers   
+                  //signal to next acquisition in parallel group to start generating events, then continue using the event generator thread
+                  //to calculate autofocus
+                  acqGroup_.finishedTPEventGeneration(FixedAreaAcquisition.this);
+
                   //all images finished writing--can now run autofocus
                   if (autofocus_ != null) {
                      try {
