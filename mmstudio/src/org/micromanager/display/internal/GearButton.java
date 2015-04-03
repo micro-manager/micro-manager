@@ -42,6 +42,7 @@ public class GearButton extends JButton {
    private JPopupMenu menu_;
 
    public GearButton(final DisplayWindow display) {
+      setToolTipText("Access additional commands");
       menu_ = new JPopupMenu();
       JMenuItem openInspector = new JMenuItem("Open New Inspector Window");
       openInspector.addActionListener(new ActionListener() {
