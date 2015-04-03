@@ -92,7 +92,6 @@ public final class HistogramsPanel extends InspectorPanel implements Histograms 
          ReportingUtils.logError("Have zero channels to work with.");
          return;
       }
-      ReportingUtils.logError("Making " + nChannels + " histograms");
 
       setLayout(new MigLayout("flowy"));
       channelPanels_ = new ArrayList<ChannelControlPanel>();

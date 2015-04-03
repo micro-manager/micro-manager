@@ -43,7 +43,7 @@ public class GearButton extends JButton {
 
    public GearButton(final DisplayWindow display) {
       menu_ = new JPopupMenu();
-      JMenuItem openInspector = new JMenuItem("Open new Inspector window");
+      JMenuItem openInspector = new JMenuItem("Open New Inspector Window");
       openInspector.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -52,7 +52,7 @@ public class GearButton extends JButton {
       });
       menu_.add(openInspector);
 
-      JMenuItem duplicate = new JMenuItem("Duplicate this display");
+      JMenuItem duplicate = new JMenuItem("Duplicate This Display");
       duplicate.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -64,7 +64,7 @@ public class GearButton extends JButton {
       menu_.addSeparator();
 
       final Datastore store = display.getDatastore();
-      JMenuItem separateImages = new JMenuItem("Save to separate image files");
+      JMenuItem separateImages = new JMenuItem("Save to Separate Image Files");
       separateImages.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -73,7 +73,7 @@ public class GearButton extends JButton {
          }
       });
       menu_.add(separateImages);
-      JMenuItem multistack = new JMenuItem("Save to single multistack image");
+      JMenuItem multistack = new JMenuItem("Save to Single Multistack Image");
       multistack.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {

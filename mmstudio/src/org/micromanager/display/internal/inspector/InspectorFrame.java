@@ -68,7 +68,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * consists of a set of expandable panels in a vertical configuration.
  */
 public class InspectorFrame extends MMFrame implements Inspector {
-   private static final String TOPMOST_DISPLAY = "Topmost window";
+   private static final String TOPMOST_DISPLAY = "Topmost Window";
    private DisplayWindow display_;
    private ArrayList<InspectorPanel> panels_;
    private JPanel contents_;
@@ -77,7 +77,7 @@ public class InspectorFrame extends MMFrame implements Inspector {
    public InspectorFrame(DisplayWindow display) {
       super();
       panels_ = new ArrayList<InspectorPanel>();
-      setTitle("Image inspector");
+      setTitle("Image Inspector");
       setAlwaysOnTop(true);
       // Use a small title bar.
       getRootPane().putClientProperty("Window.style", "small");

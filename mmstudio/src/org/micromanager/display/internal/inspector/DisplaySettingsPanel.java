@@ -96,7 +96,7 @@ public class DisplaySettingsPanel extends InspectorPanel {
       // the right-aligned combobox.
       add(new JLabel("Display mode: "), "split 2, align left, growx");
       displayMode_ = new JComboBox(
-            new String[] {"Color", "Grayscale", "Composite"});
+            new String[] {"Grayscale", "Color", "Composite"});
       displayMode_.setToolTipText("<html>Set the display mode for the image:<ul><li>Color: single channel, in color<li>Grayscale: single-channel grayscale<li>Composite: multi-channel color overlay</ul></html>");
       displayMode_.addActionListener(new ActionListener() {
          @Override
@@ -119,7 +119,7 @@ public class DisplaySettingsPanel extends InspectorPanel {
 
       add(new JLabel("Histograms update "), "split 2, align left, growx");
       histogramUpdateRate_ = new JComboBox(
-            new String[] {"Never", "Every image", "Once per second"});
+            new String[] {"Never", "Every Image", "Once per Second"});
       histogramUpdateRate_.setToolTipText("Select how frequently to update histograms. Reduced histogram update rate may help reduce CPU load.");
       histogramUpdateRate_.addActionListener(new ActionListener() {
          @Override
