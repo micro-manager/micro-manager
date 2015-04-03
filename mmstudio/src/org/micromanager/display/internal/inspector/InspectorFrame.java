@@ -203,7 +203,6 @@ public class InspectorFrame extends MMFrame implements Inspector {
 
    @Subscribe
    public void onNewDisplay(DisplayAboutToShowEvent event) {
-      ReportingUtils.logError("New display " + event.getDisplay().getName());
       event.getDisplay().registerForEvents(this);
       displayChooser_.addItem(event.getDisplay().getName());
    }
@@ -213,11 +212,9 @@ public class InspectorFrame extends MMFrame implements Inspector {
       event.getDisplay().unregisterForEvents(this);
       String curDisplay = (String) displayChooser_.getSelectedItem();
       String deadDisplay = event.getDisplay().getName();
-      ReportingUtils.logError("Killing display [" + deadDisplay + "] compare current " + curDisplay);
       displayChooser_.removeItem(event.getDisplay().getName());
       if (curDisplay.contentEquals(event.getDisplay().getName())) {
          // Just removed the one we had selected.
-         ReportingUtils.logError("Gotta switch to topmost");
          displayChooser_.setSelectedItem(TOPMOST_DISPLAY);
       }
    }
