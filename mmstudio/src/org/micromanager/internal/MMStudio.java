@@ -1585,6 +1585,12 @@ public class MMStudio implements Studio, CompatibilityInterface {
          UIManager.put(key + ".background",
                guiColors_.background.get(backgroundType));
       }
+      // HACK: ensure that disabled checkboxes and radio buttons have legible
+      // text in both modes.
+      UIManager.put("RadioButton.foreground",
+            guiColors_.textColor.get(backgroundType));
+      UIManager.put("CheckBox.foreground",
+            guiColors_.textColor.get(backgroundType));
       // Update existing components.
       for (Window w : Window.getWindows()) {
          SwingUtilities.updateComponentTreeUI(w);

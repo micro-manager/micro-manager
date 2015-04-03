@@ -26,6 +26,7 @@ import java.awt.Color;
 import java.util.HashMap;
 
 import javax.swing.plaf.ColorUIResource;
+import javax.swing.UIManager;
 
 /*
  * This class controls the colors of the user interface
@@ -43,7 +44,8 @@ public class GUIColors {
    public HashMap<String, ColorUIResource> background;
    // background color of pads in the UI
    public HashMap<String, ColorUIResource> padBackground;
-   // TODO: implement font color
+   // Color of text.
+   public HashMap<String, ColorUIResource> textColor;
 
    public GUIColors() {
       // Possible: make UI to let user set these colors
@@ -54,6 +56,10 @@ public class GUIColors {
       padBackground = new HashMap<String, ColorUIResource>();
       padBackground.put(STYLE_DAY, new ColorUIResource(Color.white));
       padBackground.put(STYLE_NIGHT, new ColorUIResource(java.awt.SystemColor.control));
+
+      textColor = new HashMap<String, ColorUIResource>();
+      textColor.put(STYLE_DAY, new ColorUIResource(UIManager.getColor("TextField.foreground")));
+      textColor.put(STYLE_NIGHT, new ColorUIResource(200, 200, 200));
    }
 
 }
