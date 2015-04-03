@@ -22,6 +22,7 @@ package org.micromanager.display.internal.events;
 
 import ij.ImagePlus;
 
+import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.NewImagePlusEvent;
 
 /**
@@ -29,12 +30,19 @@ import org.micromanager.display.NewImagePlusEvent;
  * to consumers.
  */
 public class DefaultNewImagePlusEvent implements NewImagePlusEvent {
+   private DisplayWindow display_;
    private ImagePlus plus_;
 
-   public DefaultNewImagePlusEvent(ImagePlus plus) {
+   public DefaultNewImagePlusEvent(DisplayWindow display, ImagePlus plus) {
       plus_ = plus;
    }
 
+   @Override
+   public DisplayWindow getDisplay() {
+      return display_;
+   }
+
+   @Override
    public ImagePlus getImagePlus() {
       return plus_;
    }

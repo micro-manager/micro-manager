@@ -92,8 +92,17 @@ public class DisplayGroupManager {
    }
 
    private static DisplayGroupManager staticInstance_;
-   static {
-      staticInstance_ = new DisplayGroupManager();
+   // We need to ensure this exists before any DisplayWindows post any events.
+   // If we just used a static initializer (i.e. not explicitly invoked
+   // anywhere, but just run when the module is first referred to), then that
+   // wouldn't happen until after the first display is created, which is too
+   // late. Instead, this method is called by the DefaultDisplayWindow
+   // constructor early on. I don't like having the explicit linkage, but it
+   // seems to be necessary.
+   public static void ensureInitialized() {
+      if (staticInstance_ == null) {
+         staticInstance_ = new DisplayGroupManager();
+      }
    }
 
    private HashMap<DisplayWindow, HashSet<SettingsLinker>> displayToLinkers_;

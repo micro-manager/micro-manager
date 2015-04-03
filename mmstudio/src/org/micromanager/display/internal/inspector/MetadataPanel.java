@@ -18,7 +18,9 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.display.internal;
+package org.micromanager.display.internal.inspector;
+
+import com.google.common.eventbus.Subscribe;
 
 import ij.gui.ImageWindow;
 
@@ -47,11 +49,14 @@ import org.micromanager.data.Metadata;
 import org.micromanager.data.internal.DefaultMetadata;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.Inspector;
+import org.micromanager.display.InspectorPanel;
+import org.micromanager.display.PixelsSetEvent;
 
 import org.micromanager.internal.utils.ReportingUtils;
 
 
-public class MetadataPanel extends JPanel {
+public class MetadataPanel extends InspectorPanel {
    private JTable imageMetadataTable_;
    private JCheckBox showUnchangingPropertiesCheckbox_;
    private JTable summaryMetadataTable_;
@@ -63,9 +68,7 @@ public class MetadataPanel extends JPanel {
    private Timer updateTimer_;
 
    /** Creates new form MetadataPanel */
-   public MetadataPanel(DisplayWindow display) {
-      display_ = display;
-      store_ = display.getDatastore();
+   public MetadataPanel() {
       imageMetadataModel_ = new MetadataTableModel();
       summaryMetadataModel_ = new MetadataTableModel();
       initialize();
@@ -166,7 +169,7 @@ public class MetadataPanel extends JPanel {
 
       setLayout(new MigLayout("flowy"));
       add(metadataSplitPane, "grow");
-      setMaximumSize(new Dimension(300, 500));
+      setMaximumSize(new Dimension(280, 500));
    }
 
    /**
@@ -209,5 +212,25 @@ public class MetadataPanel extends JPanel {
       // 125ms in the future.
       updateTimer_.purge();
       updateTimer_.schedule(task, 125);
+   }
+
+   @Subscribe
+   public void onPixelsSet(PixelsSetEvent event) {
+      imageChangedUpdate(event.getImage());
+   }
+
+   @Override
+   public void setDisplay(DisplayWindow display) {
+      if (display_ != null) {
+         display_.unregisterForEvents(this);
+      }
+      display_ = display;
+      display_.registerForEvents(this);
+      store_ = display.getDatastore();
+   }
+
+   @Override
+   public void setInspector(Inspector inspector) {
+      // We don't care.
    }
 }

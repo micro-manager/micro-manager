@@ -53,6 +53,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.event.MouseInputAdapter;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -77,14 +78,18 @@ import org.micromanager.data.internal.DefaultCoords;
 
 import org.micromanager.events.internal.DefaultEventManager;
 
+import org.micromanager.display.internal.events.DefaultDisplayAboutToShowEvent;
 import org.micromanager.display.internal.events.DefaultNewDisplayEvent;
 import org.micromanager.display.internal.events.DefaultNewImagePlusEvent;
 import org.micromanager.display.internal.events.DefaultRequestToDrawEvent;
+import org.micromanager.display.internal.events.DisplayActivatedEvent;
 import org.micromanager.display.internal.events.FullScreenEvent;
 import org.micromanager.display.internal.events.LayoutChangedEvent;
 import org.micromanager.display.internal.events.NewDisplaySettingsEvent;
+import org.micromanager.display.PixelsSetEvent;
 import org.micromanager.display.internal.events.RequestToCloseEvent;
 import org.micromanager.display.internal.events.StatusEvent;
+import org.micromanager.display.internal.inspector.InspectorFrame;
 import org.micromanager.display.internal.link.DisplayGroupManager;
 
 import org.micromanager.internal.LineProfile;
@@ -101,8 +106,16 @@ import org.micromanager.internal.utils.ReportingUtils;
  * Note that it is *not* an ImageJ ImageWindow; instead, it creates a
  * DummyImageWindow instance for liaising with ImageJ. See that class for
  * more information on why we do this.
+ * TODO: this class is getting kind of unwieldy-huge, and should probably be
+ * refactored.
  */
 public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
+
+   // HACK: the first time a DisplayWindow is created, create an
+   // InspectorFrame to go with it.
+   static {
+      new InspectorFrame(null);
+   }
 
    private Datastore store_;
    private DisplaySettings displaySettings_;
@@ -125,12 +138,6 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    private MMImageCanvas canvas_;
    private JPanel controlsPanel_;
    private HyperstackControls hyperstackControls_;
-   private JButton fullButton_;
-   private MultiModePanel modePanel_;
-   private HistogramsPanel histograms_;
-   private MetadataPanel metadata_;
-   private CommentsPanel comments_;
-   private OverlaysPanel overlays_;
 
    private boolean haveCreatedGUI_ = false;
 
@@ -176,6 +183,23 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       displayBus_ = new EventBus();
       displayBus_.register(this);
       controlsFactory_ = controlsFactory;
+
+      // The DisplayGroupManager will want to know about us, so this must
+      // happen before our creation event gets posted.
+      DisplayGroupManager.ensureInitialized();
+      DefaultEventManager.getInstance().post(
+            new DefaultNewDisplayEvent(this));
+
+      final DefaultDisplayWindow thisWindow = this;
+      // Post an event whenever we're made active, so that the InspectorFrame
+      // can update its contents.
+      addWindowListener(new WindowAdapter() {
+         @Override
+         public void windowActivated(WindowEvent e) {
+            DefaultEventManager.getInstance().post(
+               new DisplayActivatedEvent(thisWindow));
+         }
+      });
 
       // Wait to actually create our GUI until there's at least one image
       // to display.
@@ -226,6 +250,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          stack_.setImagePlus(ijImage_);
          ijImage_.setStack(getName(), stack_);
          ijImage_.setOpenAsHyperStack(true);
+         displayBus_.post(new DefaultNewImagePlusEvent(this, ijImage_));
          // The ImagePlus object needs to be pseudo-polymorphic, depending on
          // the number of channels in the Datastore. However, we may not have
          // all of the channels available to us at the time this display is
@@ -250,7 +275,6 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          dummyWindow_ = DummyImageWindow.makeWindow(ijImage_, this);
          zoomToPreferredSize();
          setVisible(true);
-         histograms_.calcAndDisplayHistAndStats();
 
          addWindowListener(new WindowAdapter() {
             @Override
@@ -277,7 +301,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       resetTitle();
       setWindowSize();
 
-      DefaultEventManager.getInstance().post(new DefaultNewDisplayEvent(this));
+      DefaultEventManager.getInstance().post(new DefaultDisplayAboutToShowEvent(this));
    }
 
    /**
@@ -305,51 +329,9 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       }
       controlsPanel_.add(hyperstackControls_,
             "align center, span, growx, wrap");
+      controlsPanel_.add(new ButtonPanel(this, controlsFactory_));
 
-      // Add user-supplied custom controls, if any.
-      List<Component> customControls = new ArrayList<Component>();
-      if (controlsFactory_ != null) {
-         customControls = controlsFactory_.makeControls(this);
-      }
-      for (Component c : customControls) {
-         controlsPanel_.add(c);
-      }
-
-      fullButton_ = new JButton("Fullscreen");
-      fullButton_.setToolTipText("Turn fullscreen mode on or off.");
-      fullButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent event) {
-            toggleFullScreen();
-         }
-      });
-      controlsPanel_.add(fullButton_);
-      controlsPanel_.add(new SaveButton(store_, this));
       contentsPanel_.add(controlsPanel_, "align center, wrap, growx, growy 0");
-
-      if (modePanel_ == null) {
-         modePanel_ = new MultiModePanel(displayBus_);
-
-         DisplaySettingsPanel settings = new DisplaySettingsPanel(
-            store_, ijImage_, this, displayBus_);
-         modePanel_.addMode("Settings", settings);
-
-         histograms_ = new HistogramsPanel(store_, this, stack_, ijImage_,
-               displayBus_);
-         histograms_.setMinimumSize(new java.awt.Dimension(280, 0));
-         modePanel_.addMode("Contrast", histograms_);
-
-         metadata_ = new MetadataPanel(this);
-         modePanel_.addMode("Metadata", metadata_);
-
-         comments_ = new CommentsPanel(store_, stack_);
-         modePanel_.addMode("Comments", comments_);
-
-         overlays_ = new OverlaysPanel(this, stack_, ijImage_, displayBus_);
-         modePanel_.addMode("Overlays", overlays_);
-      }
-
-      contentsPanel_.add(modePanel_, "dock east, growy");
 
       add(contentsPanel_);
       Insets insets = getInsets();
@@ -439,6 +421,11 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       }
    }
 
+   @Override
+   public void adjustZoom(double factor) {
+      setMagnification(getMagnification() * factor);
+   }
+
    /**
     * Set our canvas' magnification based on the preferred window magnification.
     */
@@ -480,7 +467,8 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
     */
    private void shiftToCompositeImage() {
       // Don't want to run this from a separate thread when we're in the middle
-      // of building our GUI
+      // of building our GUI, e.g. because a second image arrived while we're
+      // still responding to the first one.
       synchronized(this) {
          // Halt our canvas draw thread, clear all paint pending for the old
          // canvas, then create a new draw thread, so that lingering references
@@ -506,7 +494,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
                this);
          canvasThread_.start();
       }
-      displayBus_.post(new DefaultNewImagePlusEvent(ijImage_));
+      displayBus_.post(new DefaultNewImagePlusEvent(this, ijImage_));
    }
 
    /**
@@ -610,13 +598,12 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    }
       
    @Override
-   public void addControlPanel(String label, Component widget) {
-      modePanel_.addMode(label, widget);
-   }
-
-   @Override
    public Datastore getDatastore() {
       return store_;
+   }
+
+   public MMVirtualStack getStack() {
+      return stack_;
    }
 
    @Override
@@ -706,14 +693,12 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          add(contentsPanel_);
          fullScreenFrame_.dispose();
          fullScreenFrame_ = null;
-         fullButton_.setText("Fullscreen");
          setWindowSize();
          setVisible(true);
       }
       else {
          // Transfer our contents to a new JFrame for the fullscreen mode.
          setVisible(false);
-         //fullButton_.setText("Windowed");
          fullScreenFrame_ = new JFrame();
          fullScreenFrame_.setUndecorated(true);
          fullScreenFrame_.setBounds(
@@ -725,14 +710,6 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       }
       displayBus_.post(
             new FullScreenEvent(getScreenConfig(), fullScreenFrame_ != null));
-   }
-
-   public ControlsFactory getControlsFactory() {
-      return controlsFactory_;
-   }
-
-   public String getCustomName() {
-      return customName_;
    }
 
    @Override
@@ -772,10 +749,8 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    }
 
    @Subscribe
-   public void onPixelsSet(CanvasUpdateThread.PixelsSetEvent event) {
+   public void onPixelsSet(PixelsSetEvent event) {
       try {
-         histograms_.calcAndDisplayHistAndStats();
-         metadata_.imageChangedUpdate(event.getImage());
          // TODO: I think this means we're on top, but I'm not certain.
          if (isFocusableWindow()) {
             LineProfile.updateLineProfile();
@@ -831,7 +806,6 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
             // Have multiple channels.
             shiftToCompositeImage();
             makeWindowControls();
-            histograms_.calcAndDisplayHistAndStats();
          }
          if (ijImage_ instanceof MMCompositeImage) {
             // Verify that ImageJ has the right number of channels.
@@ -939,6 +913,12 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       resetTitle();
    }
 
+   @Override
+   public DisplayWindow duplicate() {
+      return new DefaultDisplayWindow(store_, controlsFactory_,
+            displaySettings_, customName_);
+   }
+
    // Implemented to help out DummyImageWindow.
    public MMImageCanvas getCanvas() {
       return canvas_;
@@ -955,7 +935,8 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          // Do nothing for now since we aren't visible anyway.
          return;
       }
-      Dimension modeSize = modePanel_.getPreferredSize();
+      ReportingUtils.logError("TODO: rework resizing logic now that multi-mode panel is gone");
+      Dimension modeSize = new Dimension(0, 0);
       Dimension controlsSize = controlsPanel_.getPreferredSize();
       Image image = store_.getAnyImage();
       if (image == null || canvas_ == null) {
@@ -1001,7 +982,8 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
     */
    @Override
    public void pack() {
-      Dimension modeSize = modePanel_.getPreferredSize();
+      ReportingUtils.logError("TODO: rework resizing logic now that multi-mode panel is gone");
+      Dimension modeSize = new Dimension(0, 0);
       Dimension controlsSize = controlsPanel_.getPreferredSize();
       Dimension ourSize = contentsPanel_.getSize();
       boolean isFullScreen = (fullScreenFrame_ != null);

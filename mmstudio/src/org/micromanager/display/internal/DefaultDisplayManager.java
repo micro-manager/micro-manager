@@ -24,33 +24,56 @@ import com.google.common.eventbus.Subscribe;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.JOptionPane;
 
+import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
+
 import org.micromanager.display.ControlsFactory;
 import org.micromanager.display.DisplayManager;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.RequestToCloseEvent;
+import org.micromanager.display.RequestToDrawEvent;
+import org.micromanager.display.OverlayPanel;
+import org.micromanager.display.OverlayPanelFactory;
+import org.micromanager.display.internal.events.DefaultRequestToDrawEvent;
+import org.micromanager.display.internal.events.NewOverlayEvent;
+
 import org.micromanager.events.DatastoreClosingEvent;
+import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.events.NewDisplayEvent;
+
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
+
 import org.micromanager.data.internal.DefaultPropertyMap;
+
 import org.micromanager.PropertyMap;
 
+
 public class DefaultDisplayManager implements DisplayManager {
+   private static DefaultDisplayManager staticInstance_;
+
    private MMStudio studio_;
    private HashMap<Datastore, ArrayList<DisplayWindow>> storeToDisplays_;
+   private LinkedHashMap<String, OverlayPanelFactory> titleToOverlay_;
 
    public DefaultDisplayManager(MMStudio studio) {
       studio_ = studio;
       storeToDisplays_ = new HashMap<Datastore, ArrayList<DisplayWindow>>();
+      titleToOverlay_ = new LinkedHashMap<String, OverlayPanelFactory>();
+      // HACK: start out with some hardcoded overlay options for now.
+      registerOverlay(new ScaleBarOverlayFactory());
+      registerOverlay(new TimestampOverlayFactory());
       studio_.events().registerForEvents(this);
+      staticInstance_ = this;
    }
 
    @Override
@@ -118,16 +141,6 @@ public class DefaultDisplayManager implements DisplayManager {
    }
 
    @Override
-   public List<DisplayWindow> loadDisplaySettings(Datastore store, String path) {
-      List<DisplaySettings> allSettings = DefaultDisplaySettings.load(path);
-      ArrayList<DisplayWindow> result = new ArrayList<DisplayWindow>();
-      for (DisplaySettings settings : allSettings) {
-         result.add(new DefaultDisplayWindow(store, null, settings, null));
-      }
-      return result;
-   }
-
-   @Override
    public PropertyMap.PropertyMapBuilder getPropertyMapBuilder() {
       return new DefaultPropertyMap.Builder();
    }
@@ -141,6 +154,28 @@ public class DefaultDisplayManager implements DisplayManager {
    public DisplayWindow createDisplay(Datastore store,
          ControlsFactory factory) {
       return new DefaultDisplayWindow(store, factory);
+   }
+
+   @Override
+   public RequestToDrawEvent createRequestToDrawEvent(Coords coords) {
+      return new DefaultRequestToDrawEvent(coords);
+   }
+
+   @Override
+   public List<DisplayWindow> loadDisplays(Datastore store) {
+      String path = store.getSavePath();
+      ArrayList<DisplayWindow> result = new ArrayList<DisplayWindow>();
+      if (path != null) {
+         List<DisplaySettings> allSettings = DefaultDisplaySettings.load(path);
+         for (DisplaySettings settings : allSettings) {
+            result.add(new DefaultDisplayWindow(store, null, settings, null));
+         }
+      }
+      else {
+         // Just create a blank new display.
+         result.add(new DefaultDisplayWindow(store, null));
+      }
+      return result;
    }
 
    @Override
@@ -169,6 +204,31 @@ public class DefaultDisplayManager implements DisplayManager {
          }
       }
       return true;
+   }
+
+   @Override
+   public void registerOverlay(OverlayPanelFactory factory) {
+      String title = factory.getTitle();
+      if (titleToOverlay_.containsKey(title)) {
+         throw new RuntimeException("Overlay title " + title + " is already in use");
+      }
+      titleToOverlay_.put(title, factory);
+      DefaultEventManager.getInstance().post(new NewOverlayEvent(factory));
+   }
+
+   public OverlayPanel createOverlayPanel(String title) {
+      OverlayPanelFactory factory = titleToOverlay_.get(title);
+      OverlayPanel panel = factory.createOverlayPanel();
+      panel.setManager(this);
+      return panel;
+   }
+
+   public String[] getOverlayTitles() {
+      ArrayList<String> result = new ArrayList<String>();
+      for (Map.Entry<String, OverlayPanelFactory> entry : titleToOverlay_.entrySet()) {
+         result.add(entry.getKey());
+      }
+      return result.toArray(new String[result.size()]);
    }
 
    /**
@@ -261,5 +321,9 @@ public class DefaultDisplayManager implements DisplayManager {
       if (getIsTracked(store)) {
          storeToDisplays_.get(store).remove(display);
       }
+   }
+
+   public static DefaultDisplayManager getInstance() {
+      return staticInstance_;
    }
 }

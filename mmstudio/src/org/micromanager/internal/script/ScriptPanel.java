@@ -1047,7 +1047,8 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
    * Runs the content of the provided file
     * @param curFile - script file to be run
    */
-   public static void runFile(File curFile)
+   @Override
+   public void runFile(File curFile)
    {
       // check if file on disk was modified.
       if (curFile != null) {

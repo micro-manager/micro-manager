@@ -367,11 +367,4 @@ public interface CompatibilityInterface {
     * "Auto" button had been clicked for each one.
     */
     public void autostretchCurrentWindow();
-
-   /**
-    * Register an OverlayPanel with the program so that it is attached to all
-    * existing and new image display windows.
-    * @param panel OverlayPanel to be attached to all display windows
-    */
-   public void registerOverlay(OverlayPanel panel);
 }

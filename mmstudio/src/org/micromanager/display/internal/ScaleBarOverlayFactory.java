@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //PROJECT:       Micro-Manager
-//SUBSYSTEM:     Display API
+//SUBSYSTEM:     Display implementation
 //-----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
@@ -18,23 +18,19 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.display;
+package org.micromanager.display.internal;
 
-import ij.ImagePlus;
+import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.OverlayPanel;
+import org.micromanager.display.OverlayPanelFactory;
 
-/**
- * This event is published by the display's EventBus to indicate that it is
- * using a new ImagePlus object.
- */
-public interface NewImagePlusEvent {
-   /**
-    * @return The DisplayWindow that originated the event.
-    */
-   public DisplayWindow getDisplay();
+public class ScaleBarOverlayFactory implements OverlayPanelFactory {
+   public OverlayPanel createOverlayPanel() {
+      return new ScaleBarOverlayPanel();
+   }
 
-   /**
-    * @return The ImagePlus the DisplayWindow is now using for displaying image
-    * data.
-    */
-   public ImagePlus getImagePlus();
+   @Override
+   public String getTitle() {
+      return "Scale bar";
+   }
 }

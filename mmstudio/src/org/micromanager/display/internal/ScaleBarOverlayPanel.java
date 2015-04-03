@@ -20,8 +20,6 @@
 
 package org.micromanager.display.internal;
 
-import com.google.common.eventbus.EventBus;
-
 import ij.gui.ImageCanvas;
 
 import java.awt.Color;
@@ -32,7 +30,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.Graphics;
 
-import javax.swing.border.TitledBorder;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -62,8 +59,6 @@ public class ScaleBarOverlayPanel extends OverlayPanel {
          "Blue", "Cyan", "Green"
    };
 
-   private EventBus displayBus_;
-
    private JCheckBox shouldDraw_;
    private JCheckBox shouldDrawText_;
    private JCheckBox isBarFilled_;
@@ -75,38 +70,26 @@ public class ScaleBarOverlayPanel extends OverlayPanel {
 
    private boolean haveLoggedError_ = false;
    
-   public ScaleBarOverlayPanel(DisplayWindow display) {
-      setBorder(new TitledBorder("Scale bar"));
-      setLayout(new MigLayout("flowy"));
-      DisplaySettings settings = display.getDisplaySettings();
-
+   public ScaleBarOverlayPanel() {
       ActionListener redrawListener = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent event) {
                redraw();
             }
       };
+      setLayout(new MigLayout("flowy"));
 
       shouldDraw_ = new JCheckBox("Draw scale bar");
       shouldDraw_.addActionListener(redrawListener);
-      if (settings.getShouldShowScaleBar() != null) {
-         shouldDraw_.setSelected(settings.getShouldShowScaleBar());
-      }
       add(shouldDraw_);
-      
+
       add(new JLabel("Color: "));
       color_ = new JComboBox(COLORNAMES);
       color_.addActionListener(redrawListener);
-      if (settings.getScaleBarColorIndex() != null) {
-         color_.setSelectedIndex(settings.getScaleBarColorIndex());
-      }
       add(color_);
 
       shouldDrawText_ = new JCheckBox("Show scale text");
       shouldDrawText_.addActionListener(redrawListener);
-      if (settings.getScaleBarShouldDrawText() != null) {
-         shouldDrawText_.setSelected(settings.getScaleBarShouldDrawText());
-      }
       add(shouldDrawText_);
 
       add(new JLabel("X offset: "), "split 2, flowx");
@@ -117,33 +100,21 @@ public class ScaleBarOverlayPanel extends OverlayPanel {
             redraw();
          }
       });
-      if (settings.getScaleBarOffsetX() != null) {
-         xOffset_.setText(String.valueOf(settings.getScaleBarOffsetX()));
-      }
       add(xOffset_, "wrap");
 
       isBarFilled_ = new JCheckBox("Solid scale bar");
       isBarFilled_.addActionListener(redrawListener);
-      if (settings.getScaleBarIsFilled() != null) {
-         isBarFilled_.setSelected(settings.getScaleBarIsFilled());
-      }
       add(isBarFilled_);
 
       add(new JLabel("Position: "));
       position_ = new JComboBox(new String[] {
             "Upper left", "Upper right", "Lower right", "Lower left"});
       position_.addActionListener(redrawListener);
-      if (settings.getScaleBarLocationIndex() != null) {
-         position_.setSelectedIndex(settings.getScaleBarLocationIndex());
-      }
       add(position_);
 
       add(new JLabel("Size (\u00B5m):"), "split 2, flowx");
       scaleSize_ = new JTextField("80", 3);
       scaleSize_.addActionListener(redrawListener);
-      if (settings.getScaleBarSize() != null) {
-         scaleSize_.setText(settings.getScaleBarSize().toString());
-      }
       add(scaleSize_);
 
       add(new JLabel("Y offset: "), "split 2, flowx");
@@ -154,22 +125,52 @@ public class ScaleBarOverlayPanel extends OverlayPanel {
             redraw();
          }
       });
-      if (settings.getScaleBarOffsetY() != null) {
-         yOffset_.setText(String.valueOf(settings.getScaleBarOffsetY()));
-      }
       add(yOffset_);
    }
 
-   public void setBus(EventBus bus) {
-      displayBus_ = bus;
-   }
+   // Update our controls to reflect the settings stored in the DisplaySettings
+   // TODO: since we don't save settings *to* the DisplaySettings when the user
+   // adjusts them, that means that every time setDisplay() is called, the
+   // controls are reset.
+   @Override
+   public void setDisplay(DisplayWindow display) {
+      super.setDisplay(display);
+      DisplaySettings settings = display.getDisplaySettings();
 
-   private void redraw() {
-      if (displayBus_ != null) {
-         displayBus_.post(new DefaultRequestToDrawEvent());
+      if (settings.getShouldShowScaleBar() != null) {
+         shouldDraw_.setSelected(settings.getShouldShowScaleBar());
+      }
+
+      if (settings.getScaleBarColorIndex() != null) {
+         color_.setSelectedIndex(settings.getScaleBarColorIndex());
+      }
+
+      if (settings.getScaleBarShouldDrawText() != null) {
+         shouldDrawText_.setSelected(settings.getScaleBarShouldDrawText());
+      }
+
+      if (settings.getScaleBarOffsetX() != null) {
+         xOffset_.setText(String.valueOf(settings.getScaleBarOffsetX()));
+      }
+
+      if (settings.getScaleBarIsFilled() != null) {
+         isBarFilled_.setSelected(settings.getScaleBarIsFilled());
+      }
+
+      if (settings.getScaleBarLocationIndex() != null) {
+         position_.setSelectedIndex(settings.getScaleBarLocationIndex());
+      }
+
+      if (settings.getScaleBarSize() != null) {
+         scaleSize_.setText(settings.getScaleBarSize().toString());
+      }
+
+      if (settings.getScaleBarOffsetY() != null) {
+         yOffset_.setText(String.valueOf(settings.getScaleBarOffsetY()));
       }
    }
 
+   @Override
    public void drawOverlay(Graphics g, DisplayWindow display, Image image, ImageCanvas canvas) {
       if (!shouldDraw_.isSelected()) {
          return;

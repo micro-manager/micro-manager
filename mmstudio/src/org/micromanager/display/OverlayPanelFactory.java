@@ -20,21 +20,27 @@
 
 package org.micromanager.display;
 
-import ij.ImagePlus;
+import org.micromanager.display.DisplayWindow;
 
 /**
- * This event is published by the display's EventBus to indicate that it is
- * using a new ImagePlus object.
+ * An OverlayPanelFactory is a class which can create OverlayPanels. As it is
+ * possible to have multiple inspector windows with their own overlay controls,
+ * and for that matter it's possible to have multiple overlays of the same
+ * type in a single inspector window, we need an object capable of generating
+ * new overlay panels on demand.
  */
-public interface NewImagePlusEvent {
+public interface OverlayPanelFactory {
    /**
-    * @return The DisplayWindow that originated the event.
+    * Create a single OverlayPanel.
+    * @return An OverlayPanel instance for controlling the overlay.
     */
-   public DisplayWindow getDisplay();
+   public OverlayPanel createOverlayPanel();
 
    /**
-    * @return The ImagePlus the DisplayWindow is now using for displaying image
-    * data.
+    * Provide a short textual description of the OverlayPanel this factory
+    * creates. This string must be unique across all OverlayPanelFactories
+    * registered with the program (see DisplayManager.registerOverlay()).
+    * @return A short description (2-3 words) of the overlay.
     */
-   public ImagePlus getImagePlus();
+   public String getTitle();
 }

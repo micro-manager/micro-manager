@@ -769,14 +769,19 @@ public class MMStudio implements Studio, CompatibilityInterface {
 
    protected void changeBinning() {
       try {
-         live().setSuspended(true);
-         
-         if (isCameraAvailable()) {
-            String item = frame_.getBinMode();
-            if (item != null) {
-               core_.setProperty(StaticInfo.cameraLabel_, MMCoreJ.getG_Keyword_Binning(), item);
-            }
+         String mode = frame_.getBinMode();
+         if (!isCameraAvailable() || mode == null) {
+            // No valid option.
+            return;
          }
+         if (core_.getProperty(StaticInfo.cameraLabel_,
+                  MMCoreJ.getG_Keyword_Binning()).equals(mode)) {
+            // No change in binning mode.
+            return;
+         }
+
+         live().setSuspended(true);
+         core_.setProperty(StaticInfo.cameraLabel_, MMCoreJ.getG_Keyword_Binning(), mode);
          staticInfo_.refreshValues();
          live().setSuspended(false);
 
@@ -1580,6 +1585,12 @@ public class MMStudio implements Studio, CompatibilityInterface {
          UIManager.put(key + ".background",
                guiColors_.background.get(backgroundType));
       }
+      // HACK: ensure that disabled checkboxes and radio buttons have legible
+      // text in both modes.
+      UIManager.put("RadioButton.foreground",
+            guiColors_.textColor.get(backgroundType));
+      UIManager.put("CheckBox.foreground",
+            guiColors_.textColor.get(backgroundType));
       // Update existing components.
       for (Window w : Window.getWindows()) {
          SwingUtilities.updateComponentTreeUI(w);
@@ -1888,11 +1899,6 @@ public class MMStudio implements Studio, CompatibilityInterface {
       }
    }
    
-   @Override
-   public void registerOverlay(OverlayPanel panel) {
-      ReportingUtils.logError("TODO: Implement this");
-   }
-
    @Override
    public DataManager data() {
       return dataManager_;

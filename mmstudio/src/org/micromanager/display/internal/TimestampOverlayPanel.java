@@ -20,8 +20,6 @@
 
 package org.micromanager.display.internal;
 
-import com.google.common.eventbus.EventBus;
-
 import ij.gui.ImageCanvas;
 
 import java.awt.Color;
@@ -37,7 +35,6 @@ import java.awt.geom.Rectangle2D;
 import java.awt.Graphics;
 import java.util.ArrayList;
 
-import javax.swing.border.TitledBorder;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -60,7 +57,6 @@ import org.micromanager.display.internal.events.DefaultRequestToDrawEvent;
  */
 public class TimestampOverlayPanel extends OverlayPanel {
    private static int LINE_HEIGHT = 13;
-   private EventBus displayBus_;
 
    private JCheckBox shouldDraw_;
    private JCheckBox amMultiChannel_;
@@ -71,7 +67,6 @@ public class TimestampOverlayPanel extends OverlayPanel {
    private JComboBox color_;
 
    public TimestampOverlayPanel() {
-      setBorder(new TitledBorder("Timestamp display"));
       setLayout(new MigLayout("flowx"));
 
       ActionListener redrawListener = new ActionListener() {
@@ -126,16 +121,6 @@ public class TimestampOverlayPanel extends OverlayPanel {
          }
       });
       add(yOffset_, "wrap");
-   }
-
-   public void setBus(EventBus bus) {
-      displayBus_ = bus;
-   }
-
-   private void redraw() {
-      if (displayBus_ != null) {
-         displayBus_.post(new DefaultRequestToDrawEvent());
-      }
    }
 
    /**

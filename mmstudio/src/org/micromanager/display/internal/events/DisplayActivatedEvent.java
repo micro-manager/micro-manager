@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //PROJECT:       Micro-Manager
-//SUBSYSTEM:     Display API
+//SUBSYSTEM:     Display implementation
 //-----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
@@ -18,23 +18,21 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.display;
+package org.micromanager.display.internal.events;
 
-import ij.ImagePlus;
+import org.micromanager.display.DisplayWindow;
 
 /**
- * This event is published by the display's EventBus to indicate that it is
- * using a new ImagePlus object.
+ * This event signifies that a display has been made the current active window.
  */
-public interface NewImagePlusEvent {
-   /**
-    * @return The DisplayWindow that originated the event.
-    */
-   public DisplayWindow getDisplay();
+public class DisplayActivatedEvent {
+   private DisplayWindow display_;
 
-   /**
-    * @return The ImagePlus the DisplayWindow is now using for displaying image
-    * data.
-    */
-   public ImagePlus getImagePlus();
+   public DisplayActivatedEvent(DisplayWindow display) {
+      display_ = display;
+   }
+
+   public DisplayWindow getDisplay() {
+      return display_;
+   }
 }

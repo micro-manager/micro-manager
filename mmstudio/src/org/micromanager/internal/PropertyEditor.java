@@ -342,12 +342,16 @@ public class PropertyEditor extends MMFrame {
       }
       
       @Override
-      public void update(ShowFlags flags, String groupName, String presetName, boolean fromCache) {  
+      public void update(ShowFlags flags, String groupName, String presetName, boolean fromCache) {
          try {
             StrVector devices = core_.getLoadedDevices();
             propList_.clear();
 
-            gui_.live().setSuspended(true);
+            if (!fromCache) {
+               // Some properties may not be readable if we are
+               // mid-acquisition.
+               gui_.live().setSuspended(true);
+            }
             for (int i=0; i<devices.size(); i++) { 
                if (data_.showDevice(flags, devices.get(i))) {
                   StrVector properties = core_.getDevicePropertyNames(devices.get(i));
@@ -364,7 +368,9 @@ public class PropertyEditor extends MMFrame {
 
             updateRowVisibility(flags); 
 
-            gui_.live().setSuspended(false);
+            if (!fromCache) {
+               gui_.live().setSuspended(false);
+            }
          } catch (Exception e) {
             handleException(e);
          }

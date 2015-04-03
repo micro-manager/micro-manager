@@ -20,21 +20,18 @@
 
 package org.micromanager.display;
 
-import ij.ImagePlus;
-
 /**
- * This event is published by the display's EventBus to indicate that it is
- * using a new ImagePlus object.
+ * The Inspector is the floating window that provides access to various
+ * information and controls for image display windows, such as the histograms,
+ * metadata, and overlay controls. This interface provides access to some
+ * useful methods of the Inspector frame that classes implementing the
+ * InspectorPanel interface may want access to.
  */
-public interface NewImagePlusEvent {
+public interface Inspector {
    /**
-    * @return The DisplayWindow that originated the event.
+    * Cause the Inspector frame to re-pack itself. This is useful if your
+    * panel has changed shape, for example due to showing or hiding part of
+    * its contents.
     */
-   public DisplayWindow getDisplay();
-
-   /**
-    * @return The ImagePlus the DisplayWindow is now using for displaying image
-    * data.
-    */
-   public ImagePlus getImagePlus();
+   public void relayout();
 }

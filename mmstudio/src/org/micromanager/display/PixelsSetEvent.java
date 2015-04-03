@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //PROJECT:       Micro-Manager
-//SUBSYSTEM:     Display API
+//SUBSYSTEM:     Display implementation
 //-----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
@@ -20,21 +20,18 @@
 
 package org.micromanager.display;
 
-import ij.ImagePlus;
+import org.micromanager.data.Image;
 
 /**
- * This event is published by the display's EventBus to indicate that it is
- * using a new ImagePlus object.
+ * This event is fired immediately after the image data displayed by the
+ * DisplayWindow is updated. Listen for it if you have a control that displays
+ * information pertinent to the currently-displayed image.
  */
-public interface NewImagePlusEvent {
+public interface PixelsSetEvent {
    /**
-    * @return The DisplayWindow that originated the event.
+    * Provides access to the Image whose pixels were just drawn to the
+    * DisplayWindow.
+    * @return The most recently-drawn Image.
     */
-   public DisplayWindow getDisplay();
-
-   /**
-    * @return The ImagePlus the DisplayWindow is now using for displaying image
-    * data.
-    */
-   public ImagePlus getImagePlus();
+   public Image getImage();
 }

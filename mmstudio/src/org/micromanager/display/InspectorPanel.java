@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //PROJECT:       Micro-Manager
-//SUBSYSTEM:     Display API
+//SUBSYSTEM:     Display implementation
 //-----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
@@ -20,21 +20,26 @@
 
 package org.micromanager.display;
 
-import ij.ImagePlus;
+import javax.swing.JPanel;
+
+import org.micromanager.display.DisplayWindow;
 
 /**
- * This event is published by the display's EventBus to indicate that it is
- * using a new ImagePlus object.
+ * An InspectorPanel is a single component in the inspector window. 
  */
-public interface NewImagePlusEvent {
+public abstract class InspectorPanel extends JPanel {
    /**
-    * @return The DisplayWindow that originated the event.
+    * Set the Inspector instance. This is only needed if your class needs to
+    * be able to invoke the methods exposed in the Inspector interface.
+    * @param inspector An implementation of the Inspector interface.
     */
-   public DisplayWindow getDisplay();
+   public void setInspector(Inspector inspector) {}
 
    /**
-    * @return The ImagePlus the DisplayWindow is now using for displaying image
-    * data.
+    * Receive a new DisplayWindow. For panels whose contents change in response
+    * to the DisplayWindow that is currently "active", this method must be
+    * overridden to update those contents.
+    * @param display The newly-active DisplayWindow.
     */
-   public ImagePlus getImagePlus();
+   public abstract void setDisplay(DisplayWindow display);
 }

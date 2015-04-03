@@ -18,7 +18,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.display.internal;
+package org.micromanager.display.internal.inspector;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
@@ -50,6 +50,10 @@ import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.data.Datastore;
 import org.micromanager.display.DisplaySettings;
+import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.Inspector;
+import org.micromanager.display.InspectorPanel;
+import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.NewDisplaySettingsEvent;
 import org.micromanager.display.NewImagePlusEvent;
 
@@ -63,7 +67,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * distinct from the DisplaySettings metadata in the Datastore for the display;
  * some of that is addressed here, and some in the histograms.
  */
-public class DisplaySettingsPanel extends JPanel {
+public class DisplaySettingsPanel extends InspectorPanel {
    private static String[] COLOR_DESCRIPTORS = new String[] {
       "RGBCMYW", "CMYRGBW", "Custom"};
    private static Color[][] DEFAULT_COLORS = new Color[][] {
@@ -75,33 +79,24 @@ public class DisplaySettingsPanel extends JPanel {
 
    private Datastore store_;
    private ImagePlus ijImage_;
-   private DefaultDisplayWindow display_;
-   private EventBus displayBus_;
+   private DisplayWindow display_;
    private JComboBox displayMode_;
    private JComboBox colorPresets_;
    // Index of colorPresets_ last time its position was set.
    private int prevPresetIndex_ = -1;
    private JCheckBox shouldAutostretch_;
+   private JComboBox histogramUpdateRate_;
+   private JSpinner trimPercentage_;
 
-   public DisplaySettingsPanel(Datastore store, ImagePlus ijImage,
-         DefaultDisplayWindow display, EventBus displayBus) {
-      super(new MigLayout());
-
-      store_ = store;
-      store_.registerForEvents(this);
-      ijImage_ = ijImage;
-      display_ = display;
-      displayBus_ = displayBus;
-      displayBus_.register(this);
-
-      DisplaySettings settings = display_.getDisplaySettings();
+   public DisplaySettingsPanel() {
+      setLayout(new MigLayout());
 
       // We have several controls that consist of a label and a combobox;
       // we want the label to be left-aligned, then a variable gap, then
       // the right-aligned combobox.
       add(new JLabel("Display mode: "), "split 2, align left, growx");
       displayMode_ = new JComboBox(
-            new String[] {"Color", "Grayscale", "Composite"});
+            new String[] {"Grayscale", "Color", "Composite"});
       displayMode_.setToolTipText("<html>Set the display mode for the image:<ul><li>Color: single channel, in color<li>Grayscale: single-channel grayscale<li>Composite: multi-channel color overlay</ul></html>");
       displayMode_.addActionListener(new ActionListener() {
          @Override
@@ -109,16 +104,11 @@ public class DisplaySettingsPanel extends JPanel {
             setDisplayMode(displayMode_);
          }
       });
-      if (settings.getChannelDisplayModeIndex() != null) {
-         displayMode_.setSelectedIndex(settings.getChannelDisplayModeIndex());
-      }
-      displayMode_.setEnabled(ijImage_ instanceof CompositeImage);
       add(displayMode_, "align right, wrap");
 
       add(new JLabel("Channel colors: "), "split 2, align left, growx");
       colorPresets_ = new JComboBox(COLOR_DESCRIPTORS);
       colorPresets_.setToolTipText("Select a preset color combination for multichannel setups");
-      setColorPresetIndex(settings);
       colorPresets_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent event) {
@@ -128,34 +118,16 @@ public class DisplaySettingsPanel extends JPanel {
       add(colorPresets_, "align right, wrap");
 
       add(new JLabel("Histograms update "), "split 2, align left, growx");
-      final JComboBox histogramUpdateRate = new JComboBox(
-            new String[] {"Never", "Every image", "Once per second"});
-      histogramUpdateRate.setToolTipText("Select how frequently to update histograms. Reduced histogram update rate may help reduce CPU load.");
-      histogramUpdateRate.addActionListener(new ActionListener() {
+      histogramUpdateRate_ = new JComboBox(
+            new String[] {"Never", "Every Image", "Once per Second"});
+      histogramUpdateRate_.setToolTipText("Select how frequently to update histograms. Reduced histogram update rate may help reduce CPU load.");
+      histogramUpdateRate_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent event) {
-            setHistogramUpdateRate(histogramUpdateRate);
+            setHistogramUpdateRate();
          }
       });
-      if (settings.getHistogramUpdateRate() != null) {
-         double updateRate = settings.getHistogramUpdateRate();
-         if (updateRate < 0) {
-            histogramUpdateRate.setSelectedIndex(0);
-         }
-         else if (updateRate == 0) {
-            histogramUpdateRate.setSelectedIndex(1);
-         }
-         else {
-            // TODO: this ignores the possibility that the actual update rate
-            // will be a value other than once per second.
-            histogramUpdateRate.setSelectedIndex(2);
-         }
-      }
-      else {
-         // Default to "update every image"
-         histogramUpdateRate.setSelectedIndex(1);
-      }
-      add(histogramUpdateRate, "align right, wrap");
+      add(histogramUpdateRate_, "align right, wrap");
       
       shouldAutostretch_ = new JCheckBox("Autostretch histograms");
       shouldAutostretch_.setToolTipText("Automatically rescale the histograms every time a new image is displayed.");
@@ -165,56 +137,25 @@ public class DisplaySettingsPanel extends JPanel {
             setShouldAutostretch();
          }
       });
-      if (settings.getShouldAutostretch() != null) {
-         shouldAutostretch_.setSelected(settings.getShouldAutostretch());
-      }
       add(shouldAutostretch_, "growx, align right, wrap");
 
       add(new JLabel("Truncate histograms: "), "split 2, align left, growx");
-      final JSpinner trimPercentage = new JSpinner();
-      trimPercentage.setToolTipText("When autostretching histograms, the min and max will be moved inwards by the specified percentage (e.g. if this is set to 10, then the scaling will be from the 10th percentile to the 90th).");
-      trimPercentage.setModel(new SpinnerNumberModel(0.0, 0.0, 100.0, 1.0));
-      trimPercentage.addChangeListener(new ChangeListener() {
+      trimPercentage_ = new JSpinner();
+      trimPercentage_.setToolTipText("When autostretching histograms, the min and max will be moved inwards by the specified percentage (e.g. if this is set to 10, then the scaling will be from the 10th percentile to the 90th).");
+      trimPercentage_.setModel(new SpinnerNumberModel(0.0, 0.0, 100.0, 1.0));
+      trimPercentage_.addChangeListener(new ChangeListener() {
          @Override
          public void stateChanged(ChangeEvent event) {
-            setTrimPercentage(trimPercentage);
+            setTrimPercentage();
          }
       });
-      trimPercentage.addKeyListener(new KeyAdapter() {
+      trimPercentage_.addKeyListener(new KeyAdapter() {
          @Override
          public void keyPressed(KeyEvent event) {
-            setTrimPercentage(trimPercentage);
+            setTrimPercentage();
          }
       });
-      if (settings.getTrimPercentage() != null) {
-         trimPercentage.setValue(settings.getTrimPercentage());
-      }
-      add(trimPercentage, "align right, wrap");
-
-      JButton zoomInButton = new JButton();
-      zoomInButton.setIcon(SwingResourceManager.getIcon(
-               DisplaySettingsPanel.class,
-               "/org/micromanager/internal/icons/zoom_in.png"));
-      zoomInButton.setToolTipText("Zoom in");
-      zoomInButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            adjustZoom(2.0);
-         }
-      });
-      add(zoomInButton, "split 2");
-      JButton zoomOutButton = new JButton();
-      zoomOutButton.setIcon(SwingResourceManager.getIcon(
-               DisplaySettingsPanel.class,
-               "/org/micromanager/internal/icons/zoom_out.png"));
-      zoomOutButton.setToolTipText("Zoom out");
-      zoomOutButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            adjustZoom(0.5);
-         }
-      });
-      add(zoomOutButton, "wrap, gapright push");
+      add(trimPercentage_, "align right, wrap");
 
       JButton saveButton = new JButton("Set as default");
       saveButton.setToolTipText("Save the current display settings as default for all new image windows.");
@@ -225,16 +166,51 @@ public class DisplaySettingsPanel extends JPanel {
          }
       });
       add(saveButton, "split 2, flowx, growx, align left");
+   }
 
-      JButton dupeButton = new JButton("Duplicate");
-      dupeButton.setToolTipText("Create an additional display window for this dataset.");
-      dupeButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            duplicateDisplay();
+   @Override
+   public void setDisplay(DisplayWindow display) {
+      if (display_ != null) {
+         display_.unregisterForEvents(this);
+         display_.getDatastore().unregisterForEvents(this);
+      }
+      display_ = display;
+      display_.registerForEvents(this);
+      store_ = display_.getDatastore();
+      store_.registerForEvents(this);
+      ijImage_ = display_.getImagePlus();
+      DisplaySettings settings = display_.getDisplaySettings();
+
+      if (settings.getChannelDisplayModeIndex() != null) {
+         displayMode_.setSelectedIndex(settings.getChannelDisplayModeIndex());
+      }
+      displayMode_.setEnabled(ijImage_ instanceof CompositeImage);
+
+      setColorPresetIndex(settings);
+      if (settings.getHistogramUpdateRate() != null) {
+         double updateRate = settings.getHistogramUpdateRate();
+         if (updateRate < 0) {
+            histogramUpdateRate_.setSelectedIndex(0);
          }
-      });
-      add(dupeButton, "align right, wrap");
+         else if (updateRate == 0) {
+            histogramUpdateRate_.setSelectedIndex(1);
+         }
+         else {
+            // TODO: this ignores the possibility that the actual update rate
+            // will be a value other than once per second.
+            histogramUpdateRate_.setSelectedIndex(2);
+         }
+      }
+      else {
+         // Default to "update every image"
+         histogramUpdateRate_.setSelectedIndex(1);
+      }
+      if (settings.getShouldAutostretch() != null) {
+         shouldAutostretch_.setSelected(settings.getShouldAutostretch());
+      }
+      if (settings.getTrimPercentage() != null) {
+         trimPercentage_.setValue(settings.getTrimPercentage());
+      }
    }
 
    /**
@@ -274,7 +250,7 @@ public class DisplaySettingsPanel extends JPanel {
       }
       composite.updateAndDraw();
       display_.setDisplaySettings(builder.build());
-      displayBus_.post(new DefaultRequestToDrawEvent());
+      display_.postEvent(new DefaultRequestToDrawEvent());
    }
 
    /**
@@ -293,7 +269,7 @@ public class DisplaySettingsPanel extends JPanel {
 
       // This will end up triggering onNewDisplaySettings, so watch out for
       // potential infinite loops!
-      displayBus_.post(new DefaultRequestToDrawEvent());
+      display_.postEvent(new DefaultRequestToDrawEvent());
    }
 
    /**
@@ -345,8 +321,8 @@ public class DisplaySettingsPanel extends JPanel {
    /** 
     * The user is setting a new update rate for the histograms.
     */
-   private void setHistogramUpdateRate(JComboBox histogramUpdateRate) {
-      String selection = (String) histogramUpdateRate.getSelectedItem();
+   private void setHistogramUpdateRate() {
+      String selection = (String) histogramUpdateRate_.getSelectedItem();
       double rate = 0; // i.e. update as often as possible.
       if (selection.equals("Never")) {
          rate = -1;
@@ -369,25 +345,18 @@ public class DisplaySettingsPanel extends JPanel {
       DisplaySettings settings = display_.getDisplaySettings();
       settings = settings.copy().shouldAutostretch(shouldAutostretch_.isSelected()).build();
       display_.setDisplaySettings(settings);
-      displayBus_.post(new DefaultRequestToDrawEvent());
+      display_.postEvent(new DefaultRequestToDrawEvent());
    }
 
    /**
     * The user set a new trim percentage.
     */
-   private void setTrimPercentage(JSpinner trimPercentage) {
+   private void setTrimPercentage() {
       DisplaySettings settings = display_.getDisplaySettings();
-      double percentage = (Double) trimPercentage.getValue();
+      double percentage = (Double) trimPercentage_.getValue();
       settings = settings.copy().trimPercentage(percentage).build();
       display_.setDisplaySettings(settings);
-      displayBus_.post(new DefaultRequestToDrawEvent());
-   }
-
-   /**
-    * Adjust the magnification of the display by the given factor.
-    */
-   private void adjustZoom(double factor) {
-      display_.setMagnification(display_.getMagnification() * factor);
+      display_.postEvent(new DefaultRequestToDrawEvent());
    }
 
    /**
@@ -401,15 +370,6 @@ public class DisplaySettingsPanel extends JPanel {
       catch (java.io.IOException e) {
          ReportingUtils.showError(e, "Unable to save display settings");
       }
-   }
-
-   /**
-    * Duplicate the display we are a part of.
-    */
-   private void duplicateDisplay() {
-      new DefaultDisplayWindow(store_,
-         display_.getControlsFactory(), display_.getDisplaySettings(),
-         display_.getCustomName());
    }
 
    /**

@@ -25,7 +25,11 @@ import org.micromanager.display.DisplayWindow;
 /**
  * This event is posted whenever a new display window is created for *any*
  * Datastore. Register for this event using the MMStudio.registerForEvents()
- * method (i.e. not the equivalent Datastore or DisplayWindow methods).
+ * method (i.e. not the equivalent Datastore or DisplayWindow methods). Note
+ * that the DisplayWindow will not be visible on-screen until at least one
+ * image is in the Datastore that the DisplayWindow represents. If you want
+ * to be notified when a DisplayWindow is about to be drawn, then you should
+ * listen for the DisplayAboutToShowEvent.
  */
 public interface NewDisplayEvent {
    /**

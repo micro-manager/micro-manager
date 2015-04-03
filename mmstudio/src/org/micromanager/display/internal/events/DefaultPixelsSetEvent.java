@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //PROJECT:       Micro-Manager
-//SUBSYSTEM:     Display API
+//SUBSYSTEM:     Display implementation
 //-----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
@@ -18,23 +18,25 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.display;
+package org.micromanager.display.internal.events;
 
-import ij.ImagePlus;
+import org.micromanager.data.Image;
+import org.micromanager.display.PixelsSetEvent;
 
 /**
- * This event is published by the display's EventBus to indicate that it is
- * using a new ImagePlus object.
+ * This class signifies that we just updated the pixels that the canvas is
+ * displaying, and thus any associated widgets (e.g. histograms and
+ * metadata) also need to be updated.
  */
-public interface NewImagePlusEvent {
-   /**
-    * @return The DisplayWindow that originated the event.
-    */
-   public DisplayWindow getDisplay();
+public class DefaultPixelsSetEvent implements PixelsSetEvent {
+   private Image image_;
 
-   /**
-    * @return The ImagePlus the DisplayWindow is now using for displaying image
-    * data.
-    */
-   public ImagePlus getImagePlus();
+   public DefaultPixelsSetEvent(Image image) {
+      image_ = image;
+   }
+
+   @Override
+   public Image getImage() {
+      return image_;
+   }
 }
