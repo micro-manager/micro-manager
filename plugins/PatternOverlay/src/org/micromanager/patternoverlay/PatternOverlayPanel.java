@@ -10,7 +10,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.JToggleButton;
 
@@ -41,8 +40,9 @@ public class PatternOverlayPanel extends OverlayPanel {
     * NOTE: we store our settings in the profile rather than the display
     * settings, because it's assumed that our use is mostly for during
     * acquisition, where it's appropriate for settings to be more "global".
+    * @param studio Micro-Manager Interface
     */
-   public PatternOverlayPanel(final Studio studio, DisplayWindow display) {
+   public PatternOverlayPanel(final Studio studio) {
       setLayout(new MigLayout("", "[right]10[center]", "[]8[]"));
       overlaySelector_ = new JComboBox(OverlayOptions.OPTIONS);
       overlaySelector_.addActionListener(new ActionListener() {
@@ -124,8 +124,4 @@ public class PatternOverlayPanel extends OverlayPanel {
       }
    }
 
-   @Override
-   public String getTitle() {
-      return "Pattern overlay";
-   }
 }
