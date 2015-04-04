@@ -1,6 +1,5 @@
 package org.micromanager.patternoverlay;
 
-import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.OverlayPanel;
 import org.micromanager.display.OverlayPanelFactory;
 import org.micromanager.Studio;
@@ -10,14 +9,19 @@ import org.micromanager.Studio;
  * displays.
  */
 public class PatternOverlayFactory implements OverlayPanelFactory {
-   private Studio studio_;
+   private final Studio studio_;
 
    public PatternOverlayFactory(Studio studio) {
       studio_ = studio;
    }
 
    @Override
-   public OverlayPanel createOverlayPanel(DisplayWindow display) {
-      return new PatternOverlayPanel(studio_, display);
+   public OverlayPanel createOverlayPanel() {
+      return new PatternOverlayPanel(studio_);
+   }
+
+   @Override
+   public String getTitle() {
+      return "Pattern overlay";
    }
 }
