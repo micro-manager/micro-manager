@@ -423,10 +423,13 @@ public class FixedAreaAcquisition extends Acquisition {
    private double getZTopCoordinate() {
       if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
          Point3d[] interpPoints = settings_.fixedSurface_.getPoints();
-         return interpPoints[0].z - settings_.distanceAboveFixedSurface_;
+         double top = interpPoints[0].z - settings_.distanceAboveFixedSurface_;
+         return zStageHasLimits_ ? Math.max(zStageLowerLimit_, top) : top;
       } else if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK) {
-         Point3d[] interpPoints = settings_.topSurface_.getPoints();
-         return interpPoints[0].z - settings_.distanceAboveTopSurface_;
+         Point3d[] interpPoints = settings_.topSurface_.getPoints();        
+         double top = interpPoints[0].z - settings_.distanceAboveTopSurface_;
+         //TODO: check sign
+         return zStageHasLimits_ ? Math.max(zStageLowerLimit_, top) : top;
       } else if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.SIMPLE_Z_STACK) {
          return settings_.zStart_;
       } else {
