@@ -61,6 +61,7 @@ import javax.swing.text.JTextComponent;
 
 public class GUIUtils {
    private static final String DIALOG_POSITION = "dialogPosition";
+   public static final Font buttonFont = new Font("Arial", Font.PLAIN, 10);
 
    public static void setComboSelection(JComboBox cb, String sel){
       ActionListener[] listeners = cb.getActionListeners();

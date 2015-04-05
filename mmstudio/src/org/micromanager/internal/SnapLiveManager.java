@@ -8,7 +8,6 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.Font;
 import java.awt.Insets;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -16,11 +15,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
-import javax.swing.BorderFactory;
 import javax.swing.JButton;
 
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
+import org.json.JSONException;
 
 
 import org.json.JSONObject;
@@ -46,6 +45,8 @@ import org.micromanager.events.internal.DefaultLiveModeEvent;
 import org.micromanager.events.internal.DefaultEventManager;
 
 import org.micromanager.internal.interfaces.LiveModeListener;
+import org.micromanager.internal.utils.GUIUtils;
+import org.micromanager.internal.utils.MMScriptException;
 
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -54,10 +55,10 @@ import org.micromanager.internal.utils.ReportingUtils;
  * "snap image" display (which is the same display as that used for live mode).
  */
 public class SnapLiveManager implements org.micromanager.SnapLiveManager {
-   private CMMCore core_;
+   private final CMMCore core_;
    private DisplayWindow display_;
    private DefaultDatastore store_;
-   private ArrayList<LiveModeListener> listeners_;
+   private final ArrayList<LiveModeListener> listeners_;
    private boolean isOn_ = false;
    // Suspended means that we *would* be running except we temporarily need
    // to halt for the duration of some action (e.g. changing the exposure
@@ -66,7 +67,7 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
    private boolean shouldStopGrabberThread_ = false;
    private Thread grabberThread_;
    // Maps channel to the last image we have received for that channel.
-   private HashMap<Integer, DefaultImage> channelToLastImage_;
+   private final HashMap<Integer, DefaultImage> channelToLastImage_;
 
    public SnapLiveManager(CMMCore core) {
       core_ = core;
@@ -232,7 +233,9 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
             }
             catch (InterruptedException e) {}
          }
-         catch (Exception e) {
+         catch (JSONException e) {
+            ReportingUtils.logError(e, "Exception in image grabber thread.");
+         } catch (MMScriptException e) {
             ReportingUtils.logError(e, "Exception in image grabber thread.");
          }
       }
@@ -287,8 +290,6 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
    private List<Component> createControls(final DisplayWindow display) {
       ArrayList<Component> controls = new ArrayList<Component>();
       Insets zeroInsets = new Insets(0, 0, 0, 0);
-      // This matches the font used by the main frame.
-      Font buttonFont = new Font("Arial", Font.PLAIN, 10);
       // This button needs to be enabled/disabled when live mode is turned
       // off/on.
       JButton snapButton = new JButton("Snap",
@@ -306,7 +307,7 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
       DefaultEventManager.getInstance().registerForEvents(snapButton);
       snapButton.setToolTipText("Take a new image");
       snapButton.setPreferredSize(new Dimension(90, 28));
-      snapButton.setFont(buttonFont);
+      snapButton.setFont(GUIUtils.buttonFont);
       snapButton.setMargin(zeroInsets);
       snapButton.addActionListener(new ActionListener() {
          @Override
@@ -333,7 +334,7 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
       liveButton.setToolTipText("Continuously acquire new images");
       setLiveButtonMode(liveButton, isOn_);
       liveButton.setPreferredSize(new Dimension(90, 28));
-      liveButton.setFont(buttonFont);
+      liveButton.setFont(GUIUtils.buttonFont);
       liveButton.setMargin(zeroInsets);
       liveButton.addActionListener(new ActionListener() {
          @Override
@@ -348,7 +349,7 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
                "/org/micromanager/internal/icons/arrow_right.png"));
       toAlbumButton.setToolTipText("Add the current image to the Album collection");
       toAlbumButton.setPreferredSize(new Dimension(90, 28));
-      toAlbumButton.setFont(buttonFont);
+      toAlbumButton.setFont(GUIUtils.buttonFont);
       toAlbumButton.setMargin(zeroInsets);
       toAlbumButton.addActionListener(new ActionListener() {
          @Override
@@ -365,6 +366,7 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
     * Display the provided image. Due to limitations of ImageJ, if the image's
     * parameters (width, height, or pixel type) change, we have to recreate
     * the display and datastore.
+    * @param image Image to be displayed
     */
    @Override
    public void displayImage(Image image) {

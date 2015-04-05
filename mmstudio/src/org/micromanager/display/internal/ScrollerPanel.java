@@ -54,6 +54,7 @@ import org.micromanager.display.internal.events.LayoutChangedEvent;
 import org.micromanager.display.internal.link.ImageCoordsEvent;
 import org.micromanager.display.internal.link.ImageCoordsLinker;
 import org.micromanager.display.internal.link.LinkButton;
+import org.micromanager.internal.utils.GUIUtils;
 
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -89,13 +90,13 @@ class ScrollerPanel extends JPanel {
       }
    }
 
-   private Datastore store_;
-   private DisplayWindow parent_;
+   private final Datastore store_;
+   private final DisplayWindow parent_;
 
-   private HashMap<String, AxisState> axisToState_;
-   private HashMap<String, Integer> axisToSavedPosition_;
+   private final HashMap<String, AxisState> axisToState_;
+   private final HashMap<String, Integer> axisToSavedPosition_;
    private JButton fpsButton_;
-   private FPSPopupMenu fpsMenu_;
+   private final FPSPopupMenu fpsMenu_;
    private int fps_;
 
    private Timer snapbackTimer_;
@@ -193,6 +194,7 @@ class ScrollerPanel extends JPanel {
       if (fpsButton_ == null) {
          // We have at least one scroller, so add our FPS control button.
          fpsButton_ = new JButton("FPS: " + fps_);
+         fpsButton_.setFont(GUIUtils.buttonFont);
          fpsButton_.addMouseListener(new MouseInputAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
