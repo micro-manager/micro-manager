@@ -112,10 +112,10 @@ class OverlaysPanel extends InspectorPanel {
       overlays_.add(panel);
 
       final JPanel container = new JPanel(new MigLayout("flowy, insets 0"));
-      // TODO: add X icon here.
       // TODO: add move up/down buttons to change order in which overlays are
       // drawn (and iconify buttons while we're at it)
-      JButton closeButton = new JButton("Remove");
+      JButton closeButton = new JButton("Remove", new ImageIcon(
+               getClass().getResource("/org/micromanager/internal/icons/cross.png")));
       closeButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
