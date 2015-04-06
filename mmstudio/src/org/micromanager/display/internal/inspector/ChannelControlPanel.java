@@ -30,11 +30,16 @@ import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import ij.process.LUT;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.List;
+
+import javax.swing.BorderFactory;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -187,6 +192,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    private void initComponents() {
+      setBorder(BorderFactory.createRaisedBevelBorder());
       fullButton_ = new javax.swing.JButton();
       autoButton_ = new javax.swing.JButton();
       colorPickerLabel_ = new javax.swing.JLabel();
@@ -227,6 +233,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       });
 
       colorPickerLabel_.setBackground(color_);
+      colorPickerLabel_.setMinimumSize(new Dimension(18, 18));
       colorPickerLabel_.setToolTipText("Change the color for displaying this channel");
       colorPickerLabel_.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
       colorPickerLabel_.setOpaque(true);
@@ -268,10 +275,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             "11bit (0-2047)", "12bit (0-4095)", "13bit (0-8191)",
             "14bit (0-16383)", "15bit (0-32767)", "16bit (0-65535)"}));
 
-      zoomInButton_ = new JButton();
-      zoomInButton_.setIcon(SwingResourceManager.getIcon(MMStudio.class,
-            "/org/micromanager/internal/icons/zoom_in.png"));
-      zoomInButton_.setMinimumSize(new Dimension(20, 20));
+      // Looks like < but more compact.
+      zoomInButton_ = new JButton("\u2039");
       zoomInButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -279,10 +284,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
       });
       
-      zoomOutButton_ = new JButton();
-      zoomOutButton_.setIcon(SwingResourceManager.getIcon(MMStudio.class,
-            "/org/micromanager/internal/icons/zoom_out.png"));   
-      zoomOutButton_.setMinimumSize(new Dimension(20, 20));
+      // Looks like > but more compact.
+      zoomOutButton_ = new JButton("\u203a");
       zoomOutButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -294,7 +297,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       setLayout(new MigLayout("fill, flowy, insets 0",
                "[]0[]0[]", "[]0[]0[]"));
 
-      JPanel firstRow = new JPanel(new MigLayout("insets 0"));
+      JPanel firstRow = new JPanel(new MigLayout("fill, insets 0"));
 
       firstRow.add(isEnabledButton_);
       nameLabel_ = new JLabel(name_);
@@ -319,12 +322,11 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
       add(histogram_, "grow");
 
-      JPanel secondRow = new JPanel(new MigLayout("insets 0"));
-      colorPickerLabel_.setMinimumSize(new Dimension(18, 18));
+      JPanel secondRow = new JPanel(new MigLayout("fill, insets 0"));
 
-      secondRow.add(zoomInButton_);
-      secondRow.add(zoomOutButton_);
-      secondRow.add(histRangeComboBox_);
+      secondRow.add(zoomInButton_, "gapright 0, width ::15, height 20!, aligny center center");
+      secondRow.add(histRangeComboBox_, "gapleft 0, gapright 0, height 20!, aligny center center");
+      secondRow.add(zoomOutButton_, "gapleft 0, width ::15, height 20!, aligny center center");
       secondRow.add(minMaxLabel_);
 
       add(secondRow);
