@@ -129,7 +129,7 @@ public class DisplaySettingsPanel extends InspectorPanel {
       });
       add(histogramUpdateRate_, "align right, wrap");
       
-      shouldAutostretch_ = new JCheckBox("Autostretch histograms");
+      shouldAutostretch_ = new JCheckBox("Autostretch images");
       shouldAutostretch_.setToolTipText("Automatically rescale the histograms every time a new image is displayed.");
       shouldAutostretch_.addActionListener(new ActionListener() {
          @Override
