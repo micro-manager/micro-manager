@@ -133,6 +133,7 @@ class OverlaysPanel extends InspectorPanel {
       if (inspector_ != null) {
          inspector_.relayout();
       }
+      panel.redraw();
    }
 
    @Subscribe

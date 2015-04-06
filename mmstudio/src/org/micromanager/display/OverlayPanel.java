@@ -62,7 +62,7 @@ public abstract class OverlayPanel extends JPanel {
     * Force a redraw of the DisplayWindow, so that changes in the overlay can
     * be shown.
     */
-   protected void redraw() {
+   public void redraw() {
       if (display_ != null) {
          display_.postEvent(manager_.createRequestToDrawEvent(null));
       }
