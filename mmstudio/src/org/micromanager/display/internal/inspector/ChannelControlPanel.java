@@ -34,6 +34,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -206,10 +207,13 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
       setOpaque(false);
 
+      Insets zeroInsets = new Insets(0, 0, 0, 0);
+
       fullButton_.setFont(fullButton_.getFont().deriveFont((float) 9));
+      fullButton_.setMargin(zeroInsets);
       fullButton_.setName("Full channel histogram width");
       fullButton_.setText("Full");
-      fullButton_.setToolTipText("Stretch the display gamma curve over the full pixel range");
+      fullButton_.setToolTipText("Set the min to 0 and the max to the current display range");
       fullButton_.addActionListener(new java.awt.event.ActionListener() {
 
          @Override
@@ -219,11 +223,11 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       });
 
       autoButton_.setFont(autoButton_.getFont().deriveFont((float) 9));
+      autoButton_.setMargin(zeroInsets);
       autoButton_.setName("Auto channel histogram width");
-      autoButton_.setText("Auto");
-      autoButton_.setToolTipText("Align the display gamma curve with minimum and maximum measured intensity values");
+      autoButton_.setText("Auto once");
+      autoButton_.setToolTipText("Set the min and max to the min and max in the current image");
       autoButton_.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-      autoButton_.setIconTextGap(0);
       autoButton_.addActionListener(new java.awt.event.ActionListener() {
 
          @Override
@@ -298,19 +302,19 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       JPanel firstRow = new JPanel(new MigLayout("fill, insets 0"));
 
       firstRow.add(isEnabledButton_);
+      firstRow.add(colorPickerLabel_);
+
       nameLabel_ = new JLabel(name_);
       firstRow.add(nameLabel_);
-
-      firstRow.add(colorPickerLabel_);
 
       fullButton_.setPreferredSize(new Dimension(35, 20));
       linkButton_ = new LinkButton(
             new ContrastLinker(channelIndex_, display_), display_);
       firstRow.add(linkButton_);
-      firstRow.add(fullButton_);
+      firstRow.add(fullButton_, "grow 0");
 
       autoButton_.setPreferredSize(new Dimension(35, 20));
-      firstRow.add(autoButton_, "wrap");
+      firstRow.add(autoButton_, "grow 0, wrap");
 
       add(firstRow);
 
