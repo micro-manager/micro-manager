@@ -69,6 +69,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  */
 public class InspectorFrame extends MMFrame implements Inspector {
    private static final String TOPMOST_DISPLAY = "Topmost Window";
+   private static final String CONTRAST_TITLE = "Contrast";
    private DisplayWindow display_;
    private ArrayList<InspectorPanel> panels_;
    private JPanel contents_;
@@ -115,7 +116,7 @@ public class InspectorFrame extends MMFrame implements Inspector {
       });
 
       // Hard-coded initial panels.
-      addPanel("Contrast", new HistogramsPanel());
+      addPanel(CONTRAST_TITLE, new HistogramsPanel());
       addPanel("Settings", new DisplaySettingsPanel());
       addPanel("Metadata", new MetadataPanel());
       addPanel("Comments", new CommentsPanel());
@@ -190,7 +191,15 @@ public class InspectorFrame extends MMFrame implements Inspector {
          }
       });
       wrapper.add(header, "growx");
-      panel.setVisible(false); // So the first click will show it.
+      // HACK: the specific panel with the "Contrast" title is automatically
+      // visible.
+      if (title.contentEquals(CONTRAST_TITLE)) {
+         wrapper.add(panel);
+         panel.setVisible(true);
+      }
+      else {
+         panel.setVisible(false); // So the first click will show it.
+      }
 
       contents_.add(wrapper, "growx");
       validate();
