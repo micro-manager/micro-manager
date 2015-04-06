@@ -180,7 +180,7 @@ public class InspectorFrame extends MMFrame implements Inspector {
          public void mouseClicked(MouseEvent e) {
             panel.setVisible(!panel.isVisible());
             if (panel.isVisible()) {
-               wrapper.add(panel);
+               wrapper.add(panel, "growx");
                label.setIcon(UIManager.getIcon("Tree.expandedIcon"));
             }  
             else {
@@ -194,8 +194,9 @@ public class InspectorFrame extends MMFrame implements Inspector {
       // HACK: the specific panel with the "Contrast" title is automatically
       // visible.
       if (title.contentEquals(CONTRAST_TITLE)) {
-         wrapper.add(panel);
+         wrapper.add(panel, "growx");
          panel.setVisible(true);
+         label.setIcon(UIManager.getIcon("Tree.expandedIcon"));
       }
       else {
          panel.setVisible(false); // So the first click will show it.
