@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import javax.swing.border.TitledBorder;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import net.miginfocom.swing.MigLayout;
@@ -58,6 +59,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * This class contains panels used to draw overlays on the image canvas.
  */
 class OverlaysPanel extends InspectorPanel {
+   private static final String NO_OVERLAY = "   ";
    private ArrayList<OverlayPanel> overlays_;
    private JComboBox chooser_;
    private DisplayWindow display_;
@@ -69,14 +71,26 @@ class OverlaysPanel extends InspectorPanel {
       overlays_ = new ArrayList<OverlayPanel>();
       DefaultEventManager.getInstance().registerForEvents(this);
       setLayout(new MigLayout("flowy"));
+      add(new JLabel("Add overlay:"), "split 2, flowx");
       // Add a chooser that creates a new panel of the appropriate type when
       // selected.
       String[] titles = DefaultDisplayManager.getInstance().getOverlayTitles();
-      chooser_ = new JComboBox(titles);
+      // Add a blank title at the beginning.
+      String[] newTitles = new String[titles.length + 1];
+      newTitles[0] = NO_OVERLAY;
+      for (int i = 0; i < titles.length; ++i) {
+         newTitles[i + 1] = titles[i];
+      }
+      chooser_ = new JComboBox(newTitles);
       chooser_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            addNewPanel((String) chooser_.getSelectedItem());
+            String title = (String) chooser_.getSelectedItem();
+            if (title.contentEquals(NO_OVERLAY)) {
+               return;
+            }
+            addNewPanel(title);
+            chooser_.setSelectedItem(NO_OVERLAY);
          }
       });
       add(chooser_);
