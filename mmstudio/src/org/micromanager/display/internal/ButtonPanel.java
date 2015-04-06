@@ -25,11 +25,9 @@ import com.google.common.eventbus.Subscribe;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.Font;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JPanel;
@@ -40,6 +38,7 @@ import org.micromanager.display.ControlsFactory;
 import org.micromanager.display.DisplayDestroyedEvent;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.events.FullScreenEvent;
+import org.micromanager.internal.utils.GUIUtils;
 
 
 /**
@@ -49,7 +48,7 @@ import org.micromanager.display.internal.events.FullScreenEvent;
  */
 public class ButtonPanel extends JPanel {
 
-   private JButton fullButton_;
+   private final JButton fullButton_;
 
    public ButtonPanel(final DisplayWindow display,
          ControlsFactory controlsFactory) {
@@ -66,7 +65,7 @@ public class ButtonPanel extends JPanel {
       fullButton_ = new JButton("Fullscreen");
       fullButton_.setIcon(new ImageIcon(
                getClass().getResource("/org/micromanager/internal/icons/fullscreen.png")));
-      fullButton_.setFont(new Font("Arial", Font.PLAIN, 10));
+      fullButton_.setFont(GUIUtils.buttonFont);
       fullButton_.setToolTipText("Turn fullscreen mode on or off.");
       fullButton_.addActionListener(new ActionListener() {
          @Override
@@ -106,6 +105,7 @@ public class ButtonPanel extends JPanel {
    /**
     * The icons in this method were adapted from
     * https://openclipart.org/detail/33691/tango-view-fullscreen
+    * @param event
     */
    @Subscribe
    public void onFullScreen(FullScreenEvent event) {
