@@ -93,12 +93,12 @@ public final class HistogramsPanel extends InspectorPanel implements Histograms 
          return;
       }
 
-      setLayout(new MigLayout("flowy, fillx"));
+      setLayout(new MigLayout("flowy, fillx, insets 0"));
       channelPanels_ = new ArrayList<ChannelControlPanel>();
       for (int i = 0; i < nChannels; ++i) {
          ChannelControlPanel panel = new ChannelControlPanel(i, this, store_,
                display_, stack_, ijImage_);
-         add(panel, "grow");
+         add(panel, "grow, gap 0");
          channelPanels_.add(panel);
       }
 

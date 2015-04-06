@@ -293,9 +293,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
       });
 
-      // No insets on the top/bottom/right, only on the left.
-      setLayout(new MigLayout("fill, flowy, insets 0",
-               "[]0[]0[]", "[]0[]0[]"));
+      setLayout(new MigLayout("fill, flowy, insets 0"));
 
       JPanel firstRow = new JPanel(new MigLayout("fill, insets 0"));
 
@@ -320,7 +318,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       histogram_.setMinimumSize(new Dimension(100, 60));
       histogram_.setToolTipText("Adjust the brightness and contrast by dragging triangles at top and bottom. Change the gamma by dragging the curve. (These controls only change display, and do not edit the image data.)");
 
-      add(histogram_, "grow");
+      add(histogram_, "grow, gapright 0");
 
       JPanel secondRow = new JPanel(new MigLayout("fill, insets 0"));
 
