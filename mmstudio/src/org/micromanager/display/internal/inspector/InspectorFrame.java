@@ -69,6 +69,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  */
 public class InspectorFrame extends MMFrame implements Inspector {
    private static final String TOPMOST_DISPLAY = "Topmost Window";
+   private static final String CONTRAST_TITLE = "Contrast";
    private DisplayWindow display_;
    private ArrayList<InspectorPanel> panels_;
    private JPanel contents_;
@@ -115,7 +116,7 @@ public class InspectorFrame extends MMFrame implements Inspector {
       });
 
       // Hard-coded initial panels.
-      addPanel("Contrast", new HistogramsPanel());
+      addPanel(CONTRAST_TITLE, new HistogramsPanel());
       addPanel("Settings", new DisplaySettingsPanel());
       addPanel("Metadata", new MetadataPanel());
       addPanel("Comments", new CommentsPanel());
@@ -179,7 +180,7 @@ public class InspectorFrame extends MMFrame implements Inspector {
          public void mouseClicked(MouseEvent e) {
             panel.setVisible(!panel.isVisible());
             if (panel.isVisible()) {
-               wrapper.add(panel);
+               wrapper.add(panel, "growx, gap 0");
                label.setIcon(UIManager.getIcon("Tree.expandedIcon"));
             }  
             else {
@@ -190,7 +191,16 @@ public class InspectorFrame extends MMFrame implements Inspector {
          }
       });
       wrapper.add(header, "growx");
-      panel.setVisible(false); // So the first click will show it.
+      // HACK: the specific panel with the "Contrast" title is automatically
+      // visible.
+      if (title.contentEquals(CONTRAST_TITLE)) {
+         wrapper.add(panel, "growx, gap 0");
+         panel.setVisible(true);
+         label.setIcon(UIManager.getIcon("Tree.expandedIcon"));
+      }
+      else {
+         panel.setVisible(false); // So the first click will show it.
+      }
 
       contents_.add(wrapper, "growx");
       validate();

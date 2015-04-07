@@ -91,7 +91,11 @@ public class HyperstackControls extends JPanel {
       setLayout(new MigLayout("insets 0, fillx, align center"));
 
       java.awt.Font labelFont = new java.awt.Font("Lucida Grande", 0, 10);
-      Dimension labelDimension = new Dimension(10, 10);
+      // HACK: we allocate excessive height for our text fields on purpose;
+      // if we try to make them precise to the text that will be displayed,
+      // then we risk them growing and taking space that should be used for
+      // the canvas.
+      Dimension labelDimension = new Dimension(10, 13);
       JPanel labelsPanel = new JPanel(new MigLayout("insets 0"));
       pixelInfoLabel_ = new JLabel();
       pixelInfoLabel_.setMinimumSize(labelDimension);

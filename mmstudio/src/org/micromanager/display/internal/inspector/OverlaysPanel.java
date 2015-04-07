@@ -27,12 +27,17 @@ import ij.ImagePlus;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseAdapter;
 import java.util.ArrayList;
 
 import javax.swing.border.TitledBorder;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -49,8 +54,6 @@ import org.micromanager.display.internal.events.LayoutChangedEvent;
 import org.micromanager.display.internal.events.NewOverlayEvent;
 import org.micromanager.display.internal.MMVirtualStack;
 
-import org.micromanager.events.internal.DefaultEventManager;
-
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -58,8 +61,8 @@ import org.micromanager.internal.utils.ReportingUtils;
  * This class contains panels used to draw overlays on the image canvas.
  */
 class OverlaysPanel extends InspectorPanel {
+   private static final String NO_OVERLAY = "   ";
    private ArrayList<OverlayPanel> overlays_;
-   private JComboBox chooser_;
    private DisplayWindow display_;
    private MMVirtualStack stack_;
    private ImagePlus plus_;
@@ -67,19 +70,36 @@ class OverlaysPanel extends InspectorPanel {
    
    public OverlaysPanel() {
       overlays_ = new ArrayList<OverlayPanel>();
-      DefaultEventManager.getInstance().registerForEvents(this);
       setLayout(new MigLayout("flowy"));
-      // Add a chooser that creates a new panel of the appropriate type when
-      // selected.
-      String[] titles = DefaultDisplayManager.getInstance().getOverlayTitles();
-      chooser_ = new JComboBox(titles);
-      chooser_.addActionListener(new ActionListener() {
+      // Provide a button that, when clicked, shows a popup menu of overlays
+      // that can be added.
+      // Icon is public domain, taken from
+      // https://openclipart.org/detail/16950/add
+      JButton adder = new JButton("Add overlay...",
+            new ImageIcon(getClass().getResource("/org/micromanager/internal/icons/plus_green.png")));
+      adder.addMouseListener(new MouseAdapter() {
          @Override
-         public void actionPerformed(ActionEvent e) {
-            addNewPanel((String) chooser_.getSelectedItem());
+         public void mousePressed(MouseEvent e) {
+            showPopup(e);
          }
       });
-      add(chooser_);
+      add(adder);
+   }
+
+   private void showPopup(MouseEvent event) {
+      String[] titles = DefaultDisplayManager.getInstance().getOverlayTitles();
+      final JPopupMenu menu = new JPopupMenu();
+      for (final String title : titles) {
+         JMenuItem item = new JMenuItem(title);
+         item.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+               addNewPanel(title);
+            }
+         });
+         menu.add(item);
+      }
+      menu.show(event.getComponent(), 0, event.getComponent().getHeight());
    }
 
    /**
@@ -92,7 +112,10 @@ class OverlaysPanel extends InspectorPanel {
       overlays_.add(panel);
 
       final JPanel container = new JPanel(new MigLayout("flowy, insets 0"));
-      JButton closeButton = new JButton("Close");
+      // TODO: add move up/down buttons to change order in which overlays are
+      // drawn (and iconify buttons while we're at it)
+      JButton closeButton = new JButton("Remove", new ImageIcon(
+               getClass().getResource("/org/micromanager/internal/icons/cross.png")));
       closeButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -110,6 +133,7 @@ class OverlaysPanel extends InspectorPanel {
       if (inspector_ != null) {
          inspector_.relayout();
       }
+      panel.redraw();
    }
 
    @Subscribe
@@ -121,14 +145,8 @@ class OverlaysPanel extends InspectorPanel {
       }
    }
 
-   @Subscribe
-   public void onNewOverlay(NewOverlayEvent event) {
-      chooser_.addItem(event.getFactory().getTitle());
-   }
-
    public void cleanup() {
       display_.unregisterForEvents(this);
-      DefaultEventManager.getInstance().unregisterForEvents(this);
    }
 
    @Override
