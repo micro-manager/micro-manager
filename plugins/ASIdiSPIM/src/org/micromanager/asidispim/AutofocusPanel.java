@@ -72,7 +72,7 @@ public class AutofocusPanel extends ListeningJPanel{
       
       // debug checkbox
       final JCheckBox debugCheckBox = pu.makeCheckBox("Show images",
-              Properties.Keys.PLUGIN_AUTOFOCUS_DEBUG, panelName_, true);     
+              Properties.Keys.PLUGIN_AUTOFOCUS_DEBUG, panelName_, false);     
       optionsPanel_.add(debugCheckBox, "center, span 2, wrap");
  
       // spinner with number of images:

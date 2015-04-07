@@ -8,9 +8,12 @@ import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Frame;
 import java.awt.Shape;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import mmcorej.TaggedImage;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartFrame;
@@ -38,6 +41,7 @@ import org.micromanager.asidispim.Data.Positions;
 import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.api.ASIdiSPIMException;
+import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -79,9 +83,15 @@ public class AutofocusUtils {
     * @throws org.micromanager.asidispim.api.ASIdiSPIMException
     */
    public double runFocus(
+           final ListeningJPanel caller,
            final Devices.Sides side,
            final SliceTiming sliceTiming) throws ASIdiSPIMException {
 
+      
+      if (gui_.getAutofocus() == null) {
+         throw new ASIdiSPIMException("No Autofocus method defined");
+      }
+      gui_.getAutofocus().applySettings();
       
       String camera = devices_.getMMDevice(Devices.Keys.CAMERAA);
       if (side.equals(Devices.Sides.B)) {
@@ -122,13 +132,24 @@ public class AutofocusUtils {
 
       double[] focusScores = new double[nrImages];
       TaggedImage[] imageStore = new TaggedImage[nrImages];
-      XYSeries[] scoresToPlot = new XYSeries[nrImages];
-      boolean autoShutter = gui_.getMMCore().getAutoShutter();
-      boolean shutterOpen = false;  // will read later
-      boolean liveModeOriginally = false;
+      // Use array to store data so that we can expand to plotting multiple
+      // data sets.  For now, use only 1
+      XYSeries[] scoresToPlot = new XYSeries[1];
+      scoresToPlot[0] = new XYSeries(nrImages);
       
-      try {
-         String acqName = "";
+      // boolean autoShutter = gui_.getMMCore().getAutoShutter();
+      // boolean shutterOpen = false;  // will read later
+      boolean liveModeOriginally = false;
+      String originalCamera = gui_.getMMCore().getCameraDevice();
+      String acqName = "";
+      
+      try {     
+         liveModeOriginally = gui_.isLiveModeOn();
+         if (liveModeOriginally) {
+            gui_.enableLiveMode(false);
+            gui_.getMMCore().waitForDevice(originalCamera);
+         }
+         gui_.getMMCore().setCameraDevice(camera);
          if (debug) {
             acqName = gui_.getUniqueAcquisitionName("diSPIM Autofocus");
             gui_.openAcquisition(acqName, "", nrImages, 1, 1, 1, true, false);
@@ -140,23 +161,8 @@ public class AutofocusUtils {
                     (int) gui_.getMMCore().getImageBitDepth());
          }
          gui_.getMMCore().clearCircularBuffer();
-         gui_.getMMCore().setCameraDevice(camera);
          cameras_.setSPIMCamerasForAcquisition(true);
          gui_.getMMCore().setExposure((double) sliceTiming.cameraExposure);
-         
-         liveModeOriginally = gui_.isLiveModeOn();
-         if (liveModeOriginally) {
-            gui_.enableLiveMode(false);
-         }
-         
-         // deal with shutter
-         shutterOpen = gui_.getMMCore().getShutterOpen();
-         if (autoShutter) {
-            gui_.getMMCore().setAutoShutter(false);
-            if (!shutterOpen) {
-               gui_.getMMCore().setShutterOpen(true);
-            }
-         }
          
          gui_.getMMCore().startSequenceAcquisition(camera, nrImages, 0, true);
 
@@ -202,7 +208,7 @@ public class AutofocusUtils {
                   // we are using the slow way to insert images, should be OK
                   // as long as the circular buffer is big enough
                   gui_.addImageToAcquisition(acqName, counter, 0, 0, 0, timg);
-                  scoresToPlot[counter].add(start + counter * stepSize, 
+                  scoresToPlot[0].add(start + counter * stepSize, 
                        focusScores[counter]);
                }
                counter++;
@@ -221,8 +227,8 @@ public class AutofocusUtils {
          throw new ASIdiSPIMException("Hardware Error while executing Autofocus");
       } finally {
          try {
-            gui_.getMMCore().setAutoShutter(autoShutter);
-            gui_.getMMCore().setShutterOpen(shutterOpen);
+            gui_.getMMCore().stopSequenceAcquisition(camera);
+            gui_.getMMCore().setCameraDevice(originalCamera);
             
             // move piezos back to center (neutral) position
             // TODO move to center position instead of to 0
@@ -243,12 +249,20 @@ public class AutofocusUtils {
             posUpdater_.pauseUpdates(false);
             
             cameras_.setSPIMCamerasForAcquisition(false);
+            
+            gui_.closeAcquisition(acqName);
+            
+            // Let the calling panel restore the settings
+            caller.gotSelected();
+            
             if (liveModeOriginally) {
+               gui_.getMMCore().waitForDevice(camera);
+               gui_.getMMCore().waitForDevice(originalCamera);
                gui_.enableLiveMode(true);
             }
             
          } catch (Exception ex) {
-            ReportingUtils.logError("Error while playing with shutter");
+            ReportingUtils.logError(ex, "Error while restoring hardware state");
          }
       }
 
@@ -262,17 +276,25 @@ public class AutofocusUtils {
             highestScore = focusScores[i];
          }
       }
+      
       // display the best scoring image in the snap/live window
       ImageProcessor bestIP = makeProcessor(imageStore[highestIndex]);
       ImagePlus bestIPlus = new ImagePlus();
       bestIPlus.setProcessor(bestIP);
-      // TODO: check what happens if the snap live window is not open
-      gui_.getSnapLiveWin().setImage(bestIPlus);
+      if (gui_.getSnapLiveWin() != null) {
+         try {
+            gui_.addImageToAcquisition("Snap/Live Window", 0, 0, 0, 0, 
+                    imageStore[highestIndex]);
+         } catch (MMScriptException ex) {
+           ReportingUtils.logError(ex, "Failed to add image to Snap/Live Window");
+         }
+      }
 
       if (debug) {
          plotDataN("Focus curve", scoresToPlot, "z (micron)", "Score", 100, 100,
                  true, false);
       }
+      
       // return the position of the scanning device associated with the highest
       // focus score
       double bestScore = start + stepSize * highestIndex;
@@ -366,6 +388,13 @@ public class AutofocusUtils {
    public static void plotDataN(String title, XYSeries[] data, String xTitle,
                  String yTitle, int xLocation, int yLocation, boolean showShapes, 
                  Boolean logLog) {
+      // if we already have a plot open with this title, close it:
+      Frame[] gfs = ChartFrame.getFrames();
+      for (Frame f :gfs) {
+         if (f.getTitle().equals(title)) {
+            f.dispose();
+         }
+      }
       
       // JFreeChart code
       XYSeriesCollection dataset = new XYSeriesCollection();
@@ -469,6 +498,8 @@ public class AutofocusUtils {
       graphFrame.pack();
       graphFrame.setLocation(xLocation, yLocation);
       graphFrame.setVisible(true);
+      
+
    }
       
 }

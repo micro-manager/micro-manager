@@ -125,6 +125,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       gui_ = gui;
       core_ = gui_.getMMCore();
       PanelUtils pu = new PanelUtils(prefs_, props_, devices);
+      final SetupPanel setupPanel = this;
 
       piezoImagingDeviceKey_ = Devices.getSideSpecificKey(Devices.Keys.PIEZOA, side);
       piezoIlluminationDeviceKey_ = Devices.getSideSpecificKey(Devices.Keys.PIEZOA, Devices.getOppositeSide(side));
@@ -306,11 +307,14 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
          @Override
          public void actionPerformed(ActionEvent e) {
             try {
-               autofocus_.runFocus(side,
+               double piezoPos = autofocus_.runFocus(setupPanel, side,
                   ASIdiSPIM.getFrame().getAcquisitionPanel().getSliceTiming());
+               positions_.setPosition(piezoImagingDeviceKey_,
+                       Joystick.Directions.NONE, piezoPos);
             } catch (ASIdiSPIMException ex) {
                MyDialogUtils.showError(ex, "Autofocus failed.  Sorry!");}
-         }
+            }
+
       });
       sheetPanel.add(tmp_but, "center, wrap");
       
