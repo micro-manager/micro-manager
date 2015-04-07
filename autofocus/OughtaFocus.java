@@ -312,7 +312,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
       ImageProcessor proc1 = proc.duplicate();
       // mean intensity of the edge map
       proc1.findEdges();
-      double meanEdge = proc.getStatistics().mean;
+      double meanEdge = proc1.getStatistics().mean;
 
       return meanEdge / meanIntensity;
    }
@@ -324,7 +324,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
       // mean intensity of the edge map
       proc1.sharpen();
       proc1.findEdges();
-      double meanEdge = proc.getStatistics().mean;
+      double meanEdge = proc1.getStatistics().mean;
 
       return meanEdge / meanIntensity;
    }
