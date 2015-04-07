@@ -450,7 +450,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
          }
       });
       listButton_.setToolTipText("Open XY list dialog");
-      listButton_.setIcon(new ImageIcon( MMStudio.class.getResource(
+      listButton_.setIcon(new ImageIcon(MMStudio.class.getResource(
               "/org/micromanager/internal/icons/application_view_list.png")));
       listButton_.setText("Edit position list...");
       listButton_.setMargin(new Insets(2, 5, 2, 5));
@@ -613,7 +613,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
          }
       });
       afButton_.setText("Options...");
-      afButton_.setIcon(new ImageIcon( MMStudio.class.getResource(
+      afButton_.setIcon(new ImageIcon(MMStudio.class.getResource(
               "/org/micromanager/internal/icons/wrench_orange.png")));
       afButton_.setMargin(new Insets(2, 5, 2, 5));
       afButton_.setFont(new Font("Dialog", Font.PLAIN, 10));

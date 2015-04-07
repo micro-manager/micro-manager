@@ -135,7 +135,7 @@ public class AutofocusPropertyEditor extends MMDialog {
       springLayout.putConstraint(SpringLayout.WEST, refreshButton, 10, SpringLayout.WEST, getContentPane());
       springLayout.putConstraint(SpringLayout.SOUTH, refreshButton, 33, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.EAST, refreshButton, 110, SpringLayout.WEST, getContentPane());
-      refreshButton.setIcon(new ImageIcon( getClass().getResource(
+      refreshButton.setIcon(new ImageIcon(getClass().getResource(
               "/org/micromanager/internal/icons/arrow_refresh.png")));
       refreshButton.setFont(new Font("Arial", Font.PLAIN, 10));
       getContentPane().add(refreshButton);

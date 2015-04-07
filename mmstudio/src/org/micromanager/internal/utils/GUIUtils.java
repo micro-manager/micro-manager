@@ -301,7 +301,7 @@ public class GUIUtils {
     * given file name, to specified the button or menu.
     */
    public static void setIcon(AbstractButton component, String iconFileName) {
-      component.setIcon(new ImageIcon( MMStudio.class.getResource(
+      component.setIcon(new ImageIcon(MMStudio.class.getResource(
               "/org/micromanager/internal/icons/" + iconFileName)));
    }
    

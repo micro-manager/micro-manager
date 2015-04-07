@@ -143,7 +143,7 @@ public final class ConfigPadButtonPanel extends JPanel {
       JButton theButton = createButton();
       theButton.setText(buttonText);
       if (iconPath.length()>0)
-         theButton.setIcon(new ImageIcon( getClass().getResource(iconPath)));
+         theButton.setIcon(new ImageIcon(getClass().getResource(iconPath)));
       return theButton;
    }
 

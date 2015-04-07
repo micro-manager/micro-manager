@@ -127,7 +127,7 @@ public class AboutDlg extends JDialog {
       getContentPane().add(homeHttphcs100ximagingcomBugTextArea);
 
       final JLabel label = new JLabel();
-      label.setIcon(new ImageIcon( getClass().getResource( 
+      label.setIcon(new ImageIcon(getClass().getResource( 
               "/org/micromanager/internal/icons/microscope.gif")));
       label.setBounds(6, 14, 32, 32);
       getContentPane().add(label);

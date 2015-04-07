@@ -198,7 +198,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       // http://thenounproject.com/term/eye/421/
       // (this particular one is public domain)
       isEnabledButton_ = new javax.swing.JToggleButton(
-            new ImageIcon( getClass().getResource(
+            new ImageIcon(getClass().getResource(
                "/org/micromanager/internal/icons/eye.png")));
       minMaxLabel_ = new javax.swing.JLabel();
 

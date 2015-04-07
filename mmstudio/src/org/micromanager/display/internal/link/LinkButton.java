@@ -50,7 +50,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 public class LinkButton extends JToggleButton {
    // This icon is a modified version of
    // http://icon-park.com/icon/black-link-icon-vector-data/
-   private static final ImageIcon LINK_ICON = new ImageIcon( 
+   private static final ImageIcon LINK_ICON = new ImageIcon(
            LinkButton.class.getResource( 
                    "/org/micromanager/internal/icons/linkflat.png") );
 

@@ -96,7 +96,7 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
       String label = isOn ? "Stop Live" : "Live";
       String iconPath = isOn ? "/org/micromanager/internal/icons/cancel.png" : 
               "/org/micromanager/internal/icons/camera_go.png";
-      button.setIcon( new ImageIcon( getClass().getResource(iconPath)));
+      button.setIcon( new ImageIcon(getClass().getResource(iconPath)));
       button.setText(label);
    }
 
@@ -292,7 +292,7 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
       // This button needs to be enabled/disabled when live mode is turned
       // off/on.
       JButton snapButton = new JButton("Snap",
-            new ImageIcon( getClass().getResource(
+            new ImageIcon(getClass().getResource(
                "/org/micromanager/internal/icons/camera.png"))) {
          @Subscribe
          public void onLiveMode(LiveModeEvent event) {
@@ -344,7 +344,7 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
       controls.add(liveButton);
 
       JButton toAlbumButton = new JButton("Album",
-            new ImageIcon( getClass().getResource(
+            new ImageIcon(getClass().getResource(
                "/org/micromanager/internal/icons/arrow_right.png")));
       toAlbumButton.setToolTipText("Add the current image to the Album collection");
       toAlbumButton.setPreferredSize(new Dimension(90, 28));
